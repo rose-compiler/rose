@@ -2,7 +2,6 @@
 #define ROSE_RSIM_SemanticPolicy_H
 
 #include "AsmUnparser_compat.h"         /* needed for unparseInstructionWithAddress() */
-#include "RSIM_Common.h"
 #include "VirtualMachineSemantics.h"
 
 

@@ -1,9 +1,6 @@
 #ifndef ROSE_RSIM_Process_H
 #define ROSE_RSIM_Process_H
 
-#include "sage3basic.h"
-#include "RSIM_Common.h"
-
 class RSIM_Thread;
 
 /** Represents a single simulated process. The process object holds resources that are shared among its threads. Some of the

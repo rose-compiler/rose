@@ -1,4 +1,4 @@
-#include "sage3basic.h"
+#include "rose.h"
 
 #include "BinaryLoaderElf.h"
 #include "RSIM_Simulator.h"
@@ -1082,7 +1082,7 @@ RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsig
             try {
                 start = map->find_free(mmap_start, aligned_size, PAGE_SIZE);
             } catch (const MemoryMap::NoFreeSpace &e) {
-                start = -ENOMEM;
+                start = (rose_addr_t)(int64_t)-ENOMEM;
                 break;
             }
         }
@@ -1096,7 +1096,7 @@ RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsig
             buf = mmap(NULL, size, prot, flags & ~MAP_FIXED, fd, offset);
         }
         if (MAP_FAILED==buf) {
-            start = -errno;
+            start = (rose_addr_t)(int64_t)-errno;
         } else {
             /* Try to figure out a reasonable name for the map element. If we're mapping a file, we can get the file name
              * from the proc filesystem. The name is only used to aid debugging. */

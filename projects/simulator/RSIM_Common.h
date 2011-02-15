@@ -1,7 +1,9 @@
 #ifndef ROSE_RSIM_Common_H
 #define ROSE_RSIM_Common_H
 
+#ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
+#endif
 
 #include "x86print.h"
 

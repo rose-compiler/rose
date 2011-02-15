@@ -1,10 +1,6 @@
 #ifndef ROSE_RSIM_Templates_H
 #define ROSE_RSIM_Templates_H
 
-#include "RSIM_Common.h"
-#include "RSIM_Thread.h"
-#include "RSIM_Process.h"
-
 #include <errno.h>
 #include <syscall.h>
 

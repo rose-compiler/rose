@@ -1726,7 +1726,7 @@ RSIM_Thread::emulate_syscall()
             syscall_enter("writev", "dpd");
             uint32_t fd=syscall_arg(0), iov_va=syscall_arg(1);
             int niov=syscall_arg(2), idx=0;
-            uint32_t retval = 0;
+            int retval = 0;
             if (niov<0 || niov>1024) {
                 retval = -EINVAL;
             } else {
@@ -1756,7 +1756,7 @@ RSIM_Thread::emulate_syscall()
                     }
 
                     /* Make sure total size doesn't overflow a ssize_t */
-                    if ((buf_sz & 0x80000000) || (retval+buf_sz) & 0x80000000) {
+                    if ((buf_sz & 0x80000000) || ((uint32_t)retval+buf_sz) & 0x80000000) {
                         if (0==idx)
                             retval = -EINVAL;
                         if (tracing(TRACE_SYSCALL))
@@ -2569,7 +2569,7 @@ RSIM_Thread::emulate_syscall()
 
                 statfs64_32 guest_statfs;
 #ifdef SYS_statfs64 /* host is 32-bit machine */
-                static statfs_64_native host_statfs;
+                static statfs64_native host_statfs;
                 int result = syscall(SYS_statfs64, path.c_str(), sizeof host_statfs, &host_statfs);
                 convert(&guest_statfs, &host_statfs);
 #else           /* host is 64-bit machine */

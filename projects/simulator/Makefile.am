@@ -574,7 +574,6 @@ MOSTLYCLEANFILES += $(SYS_TEST_TARGETS) $(patsubst %.passed, %.failed, $(SYS_TES
 
 # Main syscall testing target, on which "make check" depends.
 check-syscalls:  $(SYS_TEST_TARGETS)
-	@$(RTH_STATS)
 
 ###############################################################################################################################
 #  PTHREAD TESTS
@@ -1058,7 +1057,6 @@ MOSTLYCLEANFILES += $(PTHREAD_TEST_TARGETS) $(patsubst %.passed, %.failed, $(PTH
 
 
 check-pthread:  $(PTHREAD_TEST_TARGETS)
-	@$(RTH_STATS)
 
 
 ###############################################################################################################################
@@ -1068,7 +1066,6 @@ check-pthread:  $(PTHREAD_TEST_TARGETS)
 
 check-local: check-syscalls check-pthread
 	@$(RTH_STATS)
-
 
 # "tmp-sim" is the temp directory used to run the tests. See x86sim.conf.
 clean-local:

@@ -1,4 +1,4 @@
-#include "sage3basic.h"
+#include "rose.h"
 #include "RSIM_Simulator.h"
 
 FILE *
@@ -73,7 +73,7 @@ RSIM_SemanticPolicy::get_eflags() const
 void
 RSIM_SemanticPolicy::push(VirtualMachineSemantics::ValueType<32> n)
 {
-    VirtualMachineSemantics::ValueType<32> new_sp = add(readGPR(x86_gpr_sp), number<32>(-4));
+    VirtualMachineSemantics::ValueType<32> new_sp = add(readGPR(x86_gpr_sp), number<32>((uint64_t)(int64_t)-4));
     writeMemory(x86_segreg_ss, new_sp, n, true_());
     writeGPR(x86_gpr_sp, new_sp);
 }
