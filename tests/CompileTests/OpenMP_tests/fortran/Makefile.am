@@ -10,30 +10,42 @@ F77_TESTCODES_TO_PASS = \
     helloworld0.f \
     helloworld2.f \
     jacobi.f \
-    parallel-1.f \
-    parallel-2.f \
-    parallel.f \
-    reduction.f \
-    schedule.f \
-    shared-array.f
-
-# Liao 2/11/2010. Workaround for include '', not supported by gfortran 4.2.0 on Mac.
-if !OS_MACOSX
-  F77_TESTCODES_TO_PASS +=  \
     master.f \
+    ompdo-decremental.f \
     ompdo-default.f \
-    ompdo-decremental.f 
     ompdo-multiple.f \
     ompdo-orphaned.f \
     ompdo-static.f \
+    parallel-1.f \
+    parallel-2.f \
+    parallel.f \
     private.f \
+    reduction.f \
+    schedule.f \
+    shared-array.f \
     shared.f \
     single.f \
     task_largenumber.f \
     task_largenumber2.f \
     task_scalar.f \
     task_simplest.f
-endif
+# Liao 2/11/2010. Workaround for include '', not supported by gfortran 4.2.0 on Mac.
+#if !OS_MACOSX
+#  F77_TESTCODES_TO_PASS +=  \
+#    master.f \
+#    ompdo-default.f \
+#    ompdo-decremental.f 
+#    ompdo-multiple.f \
+#    ompdo-orphaned.f \
+#    ompdo-static.f \
+#    private.f \
+#    shared.f \
+#    single.f \
+#    task_largenumber.f \
+#    task_largenumber2.f \
+#    task_scalar.f \
+#    task_simplest.f
+#endif
 
 # DQ (3/4/2010): Added simple test code to debug fortran OFP usage.
 F77_TESTCODES_TO_PASS += testNewOFP.f
