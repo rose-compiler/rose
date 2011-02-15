@@ -41,14 +41,31 @@
  */
 class RSIM_Simulator {
 public:
-    /** Construct a new simulator object by initializing it from the specified command-line arguments and creating the main
-     *  process object and its first thread.  The argv[0] is ignored; the remainder are zero or more simulator switches followed
-     *  by the name of the executable specimen, followed by zero or more specimen arguments. */
-    RSIM_Simulator(int argc, char **argv, char **envp)
+    /** Default constructor. Construct a new simulator object, initializing its properties to sane values, but do not create an
+     *  initial process. */
+    RSIM_Simulator()
         : trace_flags(0), core_flags(CORE_ELF), dump_at(0), btrace_file(NULL), active(0), process(NULL),
           entry_va(0), seen_entry_va(false) {
-        ctor(argc, argv, envp);
+        ctor();
     }
+
+    /** Configure simulator properties from command-line switches.  The ENVP is used only for the --showauxv switch and may be
+     *  a null pointer.  This should normally be called only by constructors, before the main process is created.  The return
+     *  value is the number of switch arguments that were processed.  In other words, argv[parse_cmdline(...)] is probably the
+     *  name of the executable to load and simulate, and the subsequent arguments are the arguments to pass to that executable.
+     *
+     *  Thread safety: This method is thread safe provided it is not invoked on the same object concurrently. Note, however,
+     *  that it may call functions registered with atexit(). */
+    int configure(int argc, char **argv,  char **envp=NULL);
+
+    /** Load program and create process object.  The argument vector, @argv, should contain the name of the executable and any
+     *  arguments to pass to the executable.  The executable file is located by consulting the $PATH environment variable, and
+     *  is loaded into memory and an initial RSIM_Thread is created.  The calling thread is the executor for the RSIM_Thread.
+     *  The return value is zero for success, or a negative error number on failure. This should not be confused with the
+     *  execve system call.
+     *
+     *  Thread safety: This method is thread safe provided it is not invoked on the same object concurrently. */
+    int exec(int argc, char **argv);
 
     /** Activate a new simulator. Only one simulator should be active at any given time since activating a simulator causes the
      *  that simulator to trap all signals.  It is not necessary to activate a simulator if the simulator does not expect to
@@ -80,21 +97,22 @@ public:
         return process;
     }
 
-    /** Enter the main simulation loop. This loop will return when... */
-    void main_loop();
+    /** Enter the main simulation loop. This loop will return when the specimen terminates. The return value is the specimen
+     *  termination status as it would be reported by waitpid().  Since the current process' main thread is the executor for
+     *  the main thread of the specimen, a terminated specimen doesn't actually terminate the main thread -- it just causes
+     *  this method to return the would-be exit status. */
+    int main_loop();
+
+    /** Prints termination status in a human friendly manner. */
+    void describe_termination(FILE*, int status);
+
+    /** Terminates the calling process with the same exit status or signal as the specimen. The @p status argument should be
+     *  the status returned by waitpid(). */
+    void terminate_self(int status);
 
 private:
     /** Helper for object construction. */
-    void ctor(int argc, char **argv, char **envp);
-
-    /** Initialize the simulator object from a command line.  The ENVP is used only for the --showauxv switch and may be a null
-     *  pointer.  This should normally be called only by constructors, before the main process is created.  The return value is
-     *  the number of switch arguments that were processed.  In other words, argv[parse_cmdline(...)] is probably the name of
-     *  the executable to load and simulate, and the subsequent arguments are the arguments to pass to that executable.
-     *
-     *  Thread safety: This method is thread safe provided it is not invoked on the same object concurrently. Note, however,
-     *  that it may call functions registered with atexit(). */
-    int parse_cmdline(int argc, char **argv,  char **envp=NULL);
+    void ctor();
 
     /** Create the main process object for the simulator. The process is initialized from properties already initialized in the
      *  simulator.  This method is normally called from constructors.  A single simulator simulates a single process that

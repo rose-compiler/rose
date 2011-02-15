@@ -7,33 +7,15 @@
 RTS_rwlock_t RSIM_Simulator::class_rwlock = RTS_RWLOCK_INITIALIZER;
 RSIM_Simulator *RSIM_Simulator::active_sim = NULL;
 
+/* Constructor helper: defined here so the constructor can be modified without changing the header file, and therefore without
+ * requiring that the entire librose.so sources be recompiled. */
 void
-RSIM_Simulator::ctor(int argc, char **argv, char **envp)
+RSIM_Simulator::ctor()
 {
-    int argno = parse_cmdline(argc, argv, envp);
-    ROSE_ASSERT(argc-argno>=1); /* executable plus its arguments */
-
-    RSIM_Process *process = create_process();
-    SgAsmGenericHeader *fhdr = process->load(argv[argno]);      /* creates initial thread */
-    entry_va = fhdr->get_base_va()+fhdr->get_entry_rva();
-
-    RSIM_Thread *main_thread = process->get_thread(getpid());
-    process->initialize_stack(fhdr, argc-argno, argv+argno);
-
-    process->binary_trace_start();
-
-    if (process->tracing(TRACE_MMAP)) {
-        fprintf(process->tracing(TRACE_MMAP), "memory map after program load:\n");
-        process->get_memory()->dump(process->tracing(TRACE_MMAP), "  ");
-    }
-    if (main_thread->tracing(TRACE_STATE)) {
-        fprintf(main_thread->tracing(TRACE_STATE), "Initial state:\n");
-        main_thread->policy.dump_registers(main_thread->tracing(TRACE_STATE));
-    }
 }
 
 int
-RSIM_Simulator::parse_cmdline(int argc, char **argv, char **envp)
+RSIM_Simulator::configure(int argc, char **argv, char **envp)
 {
     int argno = 1;
     while (argno<argc && '-'==argv[argno][0]) {
@@ -204,6 +186,41 @@ RSIM_Simulator::parse_cmdline(int argc, char **argv, char **envp)
     return argno;
 }
 
+int
+RSIM_Simulator::exec(int argc, char **argv)
+{
+    ROSE_ASSERT(NULL==process); /* "There can be only one!" (main process, that is) */
+
+    process = new RSIM_Process;
+    process->set_tracing(stderr, trace_flags);
+    process->set_core_styles(core_flags);
+    process->set_interpname(interp_name);
+    process->vdso_paths = vdso_paths;
+
+    process->set_trace_name(trace_file_name);
+    process->open_trace_file();
+
+    SgAsmGenericHeader *fhdr = process->load(argv[0]);
+    entry_va = fhdr->get_base_va() + fhdr->get_entry_rva();
+
+    RSIM_Thread *main_thread = process->get_thread(getpid());
+    assert(main_thread!=NULL);
+    process->initialize_stack(fhdr, argc, argv);
+
+    process->binary_trace_start();
+
+    if (process->tracing(TRACE_MMAP)) {
+        fprintf(process->tracing(TRACE_MMAP), "memory map after program load:\n");
+        process->get_memory()->dump(process->tracing(TRACE_MMAP), "  ");
+    }
+    if (main_thread->tracing(TRACE_STATE)) {
+        fprintf(main_thread->tracing(TRACE_STATE), "Initial state:\n");
+        main_thread->policy.dump_registers(main_thread->tracing(TRACE_STATE));
+    }
+
+    return 0;
+}
+
 RSIM_Process *
 RSIM_Simulator::create_process()
 {
@@ -308,7 +325,7 @@ RSIM_Simulator::signal_handler(int signo)
     simulator->get_process()->get_thread(getpid())->signal_generate(signo);
 }
 
-void
+int
 RSIM_Simulator::main_loop()
 {
     RSIM_Process *process = get_process();
@@ -365,26 +382,52 @@ RSIM_Simulator::main_loop()
             /* specimen has exited */
             if (thread->robust_list_head_va)
                 fprintf(stderr, "warning: robust_list not cleaned up\n"); /* FIXME: see set_robust_list() syscall */
-            if (WIFEXITED(e.status)) {
-                fprintf(stderr, "specimen exited with status %d\n", WEXITSTATUS(e.status));
-		if (WEXITSTATUS(e.status))
-                    exit(WEXITSTATUS(e.status));
-            } else if (WIFSIGNALED(e.status)) {
-                fprintf(stderr, "specimen exited due to signal ");
-                print_enum(stderr, signal_names, WTERMSIG(e.status));
-                fprintf(stderr, " (%s)%s\n", strsignal(WTERMSIG(e.status)), WCOREDUMP(e.status)?" core dumped":"");
-                exit(1);
-            } else if (WIFSTOPPED(e.status)) {
-                fprintf(stderr, "specimen is stopped due to signal ");
-                print_enum(stderr, signal_names, WSTOPSIG(e.status));
-                fprintf(stderr, " (%s)\n", strsignal(WSTOPSIG(e.status)));
-                exit(1);
-            }
-            break;
+            return e.status;
         } catch (const RSIM_SemanticPolicy::Signal &e) {
             thread->signal_generate(e.signo);
         }
     }
 }
 
-            
+void
+RSIM_Simulator::describe_termination(FILE *f, int status)
+{
+    if (WIFEXITED(status)) {
+        fprintf(f, "specimen exited with status %d\n", WEXITSTATUS(status));
+    } else if (WIFSIGNALED(status)) {
+        fprintf(f, "specimen exited due to signal ");
+        print_enum(f, signal_names, WTERMSIG(status));
+        fprintf(f, " (%s)%s\n", strsignal(WTERMSIG(status)), WCOREDUMP(status)?" core dumped":"");
+    } else if (WIFSTOPPED(status)) {
+        fprintf(f, "specimen is stopped due to signal ");
+        print_enum(f, signal_names, WSTOPSIG(status));
+        fprintf(f, " (%s)\n", strsignal(WSTOPSIG(status)));
+    } else {
+        fprintf(f, "unknown termination status: 0x%08x\n", status);
+    }
+}
+
+void
+RSIM_Simulator::terminate_self(int status)
+{
+    RTS_WRITE(class_rwlock) {
+        if (WIFEXITED(status)) {
+            exit(WEXITSTATUS(status));
+        } else if (WIFSIGNALED(status)) {
+            struct sigaction sa, old;
+            memset(&sa, 0, sizeof sa);
+            sa.sa_handler = SIG_DFL;
+            sigaction(WTERMSIG(status), &sa, &old);
+            raise(WTERMSIG(status));
+            sigaction(WTERMSIG(status), &old, NULL);
+        } else if (WIFSTOPPED(status)) {
+            struct sigaction sa, old;
+            memset(&sa, 0, sizeof sa);
+            sa.sa_handler = SIG_DFL;
+            sigaction(WTERMSIG(status), &sa, &old);
+            raise(WTERMSIG(status));
+            sigaction(WTERMSIG(status), &old, NULL);
+        }
+    } RTS_WRITE_END;
+}
+

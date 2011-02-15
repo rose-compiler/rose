@@ -112,7 +112,11 @@ RSIM_Thread::emulate_syscall()
         }
 
         case 5: { /*open*/
-            syscall_enter("open", "sf", open_flags);
+            if (syscall_arg(1) & O_CREAT) {
+                syscall_enter("open", "sff", open_flags, file_mode_flags);
+            } else {
+                syscall_enter("open", "sf-", open_flags);
+            }
             do {
                 uint32_t filename_va=syscall_arg(0);
                 bool error;
@@ -165,7 +169,7 @@ RSIM_Thread::emulate_syscall()
                 ROSE_ASSERT(4==nwritten);
             }
             syscall_return(result);
-            syscall_leave("d");
+            syscall_leave("d-P", 4, print_exit_status_32);
             break;
         }
 
@@ -1063,37 +1067,43 @@ RSIM_Thread::emulate_syscall()
         case 99:    /* 0x63, statfs */
         case 100: { /* 0x63, fstatfs */
 
-            if( 99 == callno )
-              syscall_enter("statfs", "sp");
-            else
-              syscall_enter("fstatfs", "dp");
+            if (99 == callno) {
+                syscall_enter("statfs", "sp");
+            } else {
+                syscall_enter("fstatfs", "dp");
+            }
 
             do {
                 int result;
-                static statfs_64_native host_statfs;
-
-                if(99==callno){
-
-                  bool error;
-                  std::string path = get_process()->read_string(syscall_arg(0), 0, &error);
-                  if (error) {
-                      syscall_return(-EFAULT);
-                      break;
-                  }
+                statfs_32 guest_statfs;
+                if (99==callno) {
+                    bool error;
+                    std::string path = get_process()->read_string(syscall_arg(0), 0, &error);
+                    if (error) {
+                        syscall_return(-EFAULT);
+                        break;
+                    }
 
 #ifdef SYS_statfs64 /* host is 32-bit machine */
-                  result = syscall(SYS_statfs64 , path.c_str(), sizeof host_statfs, &host_statfs);
-#else             /* host is 64-bit machine */
-                  result = syscall(SYS_statfs, path.c_str(), &host_statfs);
+                    static statfs_64_native host_statfs;
+                    result = syscall(SYS_statfs64 , path.c_str(), sizeof host_statfs, &host_statfs);
+                    convert(&guest_statfs, &host_statfs);
+#else               /* host is 64-bit machine */
+                    static statfs_native host_statfs;
+                    result = syscall(SYS_statfs, path.c_str(), &host_statfs);
+                    convert(&guest_statfs, &host_statfs);
 #endif
-                }else{
+                } else {
 
 #ifdef SYS_statfs64 /* host is 32-bit machine */
-                  result = syscall(SYS_fstatfs64 ,syscall_arg(0), sizeof host_statfs, &host_statfs);
-#else             /* host is 64-bit machine */
-                  result = syscall(SYS_fstatfs, syscall_arg(0), &host_statfs);
+                    static statfs_64_native host_statfs;
+                    result = syscall(SYS_fstatfs64 ,syscall_arg(0), sizeof host_statfs, &host_statfs);
+                    convert(&guest_statfs, &host_statfs);
+#else               /* host is 64-bit machine */
+                    static statfs_native host_statfs;
+                    result = syscall(SYS_fstatfs, syscall_arg(0), &host_statfs);
+                    convert(&guest_statfs, &host_statfs);
 #endif
-
                 }
 
                 if (-1==result) {
@@ -1101,23 +1111,6 @@ RSIM_Thread::emulate_syscall()
                     break;
                 }
 
-                statfs_32 guest_statfs;
-                guest_statfs.f_type = host_statfs.f_type;
-                guest_statfs.f_bsize = host_statfs.f_bsize;
-                guest_statfs.f_blocks = host_statfs.f_blocks;
-                guest_statfs.f_bfree = host_statfs.f_bfree;
-                guest_statfs.f_bavail = host_statfs.f_bavail;
-                guest_statfs.f_files = host_statfs.f_files;
-                guest_statfs.f_ffree = host_statfs.f_ffree;
-                guest_statfs.f_fsid[0] = host_statfs.f_fsid[0];
-                guest_statfs.f_fsid[1] = host_statfs.f_fsid[1];
-                guest_statfs.f_namelen = host_statfs.f_namelen;
-                guest_statfs.f_frsize = host_statfs.f_frsize;
-                guest_statfs.f_flags = host_statfs.f_flags;
-                guest_statfs.f_spare[0] = host_statfs.f_spare[0];
-                guest_statfs.f_spare[1] = host_statfs.f_spare[1];
-                guest_statfs.f_spare[2] = host_statfs.f_spare[2];
-                guest_statfs.f_spare[3] = host_statfs.f_spare[3];
                 if (sizeof(guest_statfs)!=get_process()->mem_write(&guest_statfs, syscall_arg(1), sizeof guest_statfs)) {
                     syscall_return(-EFAULT);
                     break;
@@ -1279,7 +1272,7 @@ RSIM_Thread::emulate_syscall()
                 }
             }
             syscall_return(result);
-            syscall_leave("d");
+            syscall_leave("d-P", 4, print_exit_status_32);
             break;
         }
 
@@ -2574,34 +2567,20 @@ RSIM_Thread::emulate_syscall()
                     break;
                 }
 
-                static statfs_64_native host_statfs;
+                statfs64_32 guest_statfs;
 #ifdef SYS_statfs64 /* host is 32-bit machine */
+                static statfs_64_native host_statfs;
                 int result = syscall(SYS_statfs64, path.c_str(), sizeof host_statfs, &host_statfs);
+                convert(&guest_statfs, &host_statfs);
 #else           /* host is 64-bit machine */
+                static statfs_native host_statfs;
                 int result = syscall(SYS_statfs, path.c_str(), &host_statfs);
+                convert(&guest_statfs, &host_statfs);
 #endif
                 if (-1==result) {
                     syscall_return(-errno);
                     break;
                 }
-
-                statfs64_32 guest_statfs;
-                guest_statfs.f_type = host_statfs.f_type;
-                guest_statfs.f_bsize = host_statfs.f_bsize;
-                guest_statfs.f_blocks = host_statfs.f_blocks;
-                guest_statfs.f_bfree = host_statfs.f_bfree;
-                guest_statfs.f_bavail = host_statfs.f_bavail;
-                guest_statfs.f_files = host_statfs.f_files;
-                guest_statfs.f_ffree = host_statfs.f_ffree;
-                guest_statfs.f_fsid[0] = host_statfs.f_fsid[0];
-                guest_statfs.f_fsid[1] = host_statfs.f_fsid[1];
-                guest_statfs.f_namelen = host_statfs.f_namelen;
-                guest_statfs.f_frsize = host_statfs.f_frsize;
-                guest_statfs.f_flags = host_statfs.f_flags;
-                guest_statfs.f_spare[0] = host_statfs.f_spare[0];
-                guest_statfs.f_spare[1] = host_statfs.f_spare[1];
-                guest_statfs.f_spare[2] = host_statfs.f_spare[2];
-                guest_statfs.f_spare[3] = host_statfs.f_spare[3];
                 if (sizeof(guest_statfs)!=get_process()->mem_write(&guest_statfs, syscall_arg(2), sizeof guest_statfs)) {
                     syscall_return(-EFAULT);
                     break;
@@ -3610,6 +3589,9 @@ RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, u
         return -errno;
 
     if (0==pid) {
+        /* Kludge for now. FIXME [RPM 2011-02-14] */
+        get_process()->post_fork();
+
         /* Pending signals are only for the parent */
         signal_pending = 0;
 
@@ -3654,14 +3636,6 @@ RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, u
         }
         if (sizeof(regs)!=get_process()->mem_write(&regs, pt_regs_va, sizeof regs))
             return -EFAULT;
-
-#if 1 /*DEBUGGING*/
-        {
-            struct sigaction sa;
-            sigaction(SIGHUP, NULL, &sa);
-            fprintf(stderr, "ROBB: SIGHUP handler = %p\n", sa.sa_handler);
-        }
-#endif
     }
 
     return pid;
@@ -3670,9 +3644,28 @@ RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, u
 int
 main(int argc, char *argv[], char *envp[])
 {
-    RSIM_Simulator simulator(argc, argv, envp);
-    simulator.activate();
-    simulator.main_loop();
+    RSIM_Simulator sim;
+
+    /* Configure the simulator by parsing command-line switches. The return value is the index of the executable name in argv. */
+    int n = sim.configure(argc, argv, envp);
+
+    /* Create the initial process object by loading a program and initializing the stack.   This also creates the main thread,
+     * but does not start executing it. */
+    sim.exec(argc-n, argv+n);
+
+    /* Get ready to execute by making the specified simulator active. This sets up signal handlers, etc. */
+    sim.activate();
+
+    /* Allow executor threads to run and return when the simulated process terminates. The return value is the termination
+     * status of the simulated program. */
+    int status = sim.main_loop();
+
+    /* Not really necessary since we're not doing anything else. */
+    sim.deactivate();
+
+    /* Describe termination status, and then exit ourselves with that same status. */
+    sim.describe_termination(stderr, status);
+    sim.terminate_self(status); // probably doesn't return
     return 0;
 }
 

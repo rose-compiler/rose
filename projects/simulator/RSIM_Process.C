@@ -1375,3 +1375,13 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
     } RTS_WRITE_END;
 }
 
+void
+RSIM_Process::post_fork()
+{
+    assert(1==threads.size());
+    RSIM_Thread *t = threads.begin()->second;
+    threads.clear();
+    threads[getpid()] = t;
+}
+
+    

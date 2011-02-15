@@ -162,7 +162,7 @@ public:
     /**************************************************************************************************************************
      *                                  Methods dealing with x86 segment registers
      **************************************************************************************************************************/
-
+public:
     /** Returns shadow information for a segment register.
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
@@ -201,6 +201,9 @@ public:
 
 
 
+
+public:
+    void post_fork();
 
     void btrace_close();
 

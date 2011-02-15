@@ -247,7 +247,7 @@ struct flock64_native {
     int l_pid;
 };
 
-/* kernels struct statfs on i686 */
+/* kernel's struct statfs on i686 */
 struct statfs_32 {
     uint32_t f_type;
     uint32_t f_bsize;
@@ -262,6 +262,22 @@ struct statfs_32 {
     uint32_t f_flags;
     uint32_t f_spare[4];
 } __attribute__((packed));
+
+/* kernel's struct statfs on the host */
+struct statfs_native {
+    long f_type;
+    long f_bsize;
+    long f_blocks;
+    long f_bfree;
+    long f_bavail;
+    long f_files;
+    long f_ffree;
+    int  f_fsid[2];
+    long f_namelen;
+    long f_frsize;
+    long f_flags;
+    long f_spare[4];
+};
 
 /* kernel's struct statfs64 on i686 */
 struct statfs64_32 {
@@ -279,19 +295,20 @@ struct statfs64_32 {
     uint32_t f_spare[4];
 } __attribute__((packed));
 
-struct statfs_64_native {
-    unsigned f_type;
-    unsigned f_bsize;
+/* kernel's struct statfs64 on the host */
+struct statfs64_native {
+    long f_type;
+    long f_bsize;
     uint64_t f_blocks;
     uint64_t f_bfree;
     uint64_t f_bavail;
     uint64_t f_files;
     uint64_t f_ffree;
-    unsigned f_fsid[2];
-    unsigned f_namelen;
-    unsigned f_frsize;
-    unsigned f_flags;
-    unsigned f_spare[4];
+    long f_fsid[2];
+    long f_namelen;
+    long f_frsize;
+    long f_flags;
+    long f_spare[4];
 };
 
 struct robust_list_head_32 {
@@ -784,6 +801,11 @@ typedef winsize_32 winsize_native;
 
 
 
+/* Conversion functions */
+void convert(statfs_32 *g, const statfs64_native *h);
+void convert(statfs_32 *g, const statfs_native *h);
+void convert(statfs64_32 *g, const statfs64_native *h);
+void convert(statfs64_32 *g, const statfs_native *h);
 
 
 /* Functions to print various data structures */
@@ -814,5 +836,6 @@ int print_shminfo64_32(FILE *f, const uint8_t *_v, size_t sz);
 int print_pt_regs_32(FILE *f, const uint8_t *_v, size_t sz);
 int print_termios_32(FILE *f, const uint8_t *_v, size_t sz);
 int print_winsize_32(FILE *f, const uint8_t *_v, size_t sz);
+int print_exit_status_32(FILE *f, const uint8_t *_v, size_t sz);
 
 #endif /* ROSE_RSIM_Common_H */

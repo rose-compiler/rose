@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include "RSIM_Simulator.h"
+#include <sys/wait.h>
 
 int
 print_user_desc_32(FILE *f, const uint8_t *_ud, size_t sz)
@@ -365,3 +366,112 @@ print_winsize_32(FILE *f, const uint8_t *_v, size_t sz)
                    v->ws_row, v->ws_col, v->ws_xpixel, v->ws_ypixel);
 }
 
+int
+print_exit_status_32(FILE *f, const uint8_t *_v, size_t sz)
+{
+    assert(4==sz);
+    int status = *(int32_t*)_v;
+    int retval = 0;
+
+    if (WIFEXITED(status)) {
+        retval += fprintf(f, "exit %d", WEXITSTATUS(status));
+    } else if (WIFSIGNALED(status)) {
+        retval += fprintf(f, "terminated by ");
+        retval += print_enum(f, signal_names, WTERMSIG(status));
+        retval += fprintf(f, "%s", WCOREDUMP(status)?" with core dump":"");
+    } else if (WIFSTOPPED(status)) {
+        retval += fprintf(f, "stopped by ");
+        retval += print_enum(f, signal_names, WSTOPSIG(status));
+    } else {
+        retval += fprintf(f, "0x%08x", status);
+    }
+    return retval;
+}
+
+void
+convert(statfs_32 *g, const statfs64_native *h)
+{
+    memset(g, 0, sizeof(*g));
+    g->f_type     = h->f_type;
+    g->f_bsize    = h->f_bsize;
+    g->f_blocks   = h->f_blocks;
+    g->f_bfree    = h->f_bfree;
+    g->f_bavail   = h->f_bavail;
+    g->f_files    = h->f_files;
+    g->f_ffree    = h->f_ffree;
+    g->f_fsid[0]  = h->f_fsid[0];
+    g->f_fsid[1]  = h->f_fsid[1];
+    g->f_namelen  = h->f_namelen;
+    g->f_frsize   = h->f_frsize;
+    g->f_flags    = h->f_flags;
+    g->f_spare[0] = h->f_spare[0];
+    g->f_spare[1] = h->f_spare[1];
+    g->f_spare[2] = h->f_spare[2];
+    g->f_spare[3] = h->f_spare[3];
+}
+
+void
+convert(statfs_32 *g, const statfs_native *h)
+{
+    memset(g, 0, sizeof(*g));
+    g->f_type     = h->f_type;
+    g->f_bsize    = h->f_bsize;
+    g->f_blocks   = h->f_blocks;
+    g->f_bfree    = h->f_bfree;
+    g->f_bavail   = h->f_bavail;
+    g->f_files    = h->f_files;
+    g->f_ffree    = h->f_ffree;
+    g->f_fsid[0]  = h->f_fsid[0];
+    g->f_fsid[1]  = h->f_fsid[1];
+    g->f_namelen  = h->f_namelen;
+    g->f_frsize   = h->f_frsize;
+    g->f_flags    = h->f_flags;
+    g->f_spare[0] = h->f_spare[0];
+    g->f_spare[1] = h->f_spare[1];
+    g->f_spare[2] = h->f_spare[2];
+    g->f_spare[3] = h->f_spare[3];
+}
+
+void
+convert(statfs64_32 *g, const statfs64_native *h)
+{
+    memset(g, 0, sizeof(*g));
+    g->f_type     = h->f_type;
+    g->f_bsize    = h->f_bsize;
+    g->f_blocks   = h->f_blocks;
+    g->f_bfree    = h->f_bfree;
+    g->f_bavail   = h->f_bavail;
+    g->f_files    = h->f_files;
+    g->f_ffree    = h->f_ffree;
+    g->f_fsid[0]  = h->f_fsid[0];
+    g->f_fsid[1]  = h->f_fsid[1];
+    g->f_namelen  = h->f_namelen;
+    g->f_frsize   = h->f_frsize;
+    g->f_flags    = h->f_flags;
+    g->f_spare[0] = h->f_spare[0];
+    g->f_spare[1] = h->f_spare[1];
+    g->f_spare[2] = h->f_spare[2];
+    g->f_spare[3] = h->f_spare[3];
+}
+
+void
+convert(statfs64_32 *g, const statfs_native *h)
+{
+    memset(g, 0, sizeof(*g));
+    g->f_type     = h->f_type;
+    g->f_bsize    = h->f_bsize;
+    g->f_blocks   = h->f_blocks;
+    g->f_bfree    = h->f_bfree;
+    g->f_bavail   = h->f_bavail;
+    g->f_files    = h->f_files;
+    g->f_ffree    = h->f_ffree;
+    g->f_fsid[0]  = h->f_fsid[0];
+    g->f_fsid[1]  = h->f_fsid[1];
+    g->f_namelen  = h->f_namelen;
+    g->f_frsize   = h->f_frsize;
+    g->f_flags    = h->f_flags;
+    g->f_spare[0] = h->f_spare[0];
+    g->f_spare[1] = h->f_spare[1];
+    g->f_spare[2] = h->f_spare[2];
+    g->f_spare[3] = h->f_spare[3];
+}
