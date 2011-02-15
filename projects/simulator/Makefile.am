@@ -1032,6 +1032,9 @@ PTHREAD_TEST_INCLUDES= \
 EXTRA_DIST += ${PTHREAD_TEST_INPUTS_SRC} ${PTHREAD_TEST_INCLUDES}
 
 PTHREAD_TEST_INPUTS = $(basename $(notdir $(PTHREAD_TEST_INPUTS_SRC)))
+MOSTLYCLEANFILES += $(PTHREAD_TEST_INPUTS) $(addsufix .o, $(PTHREAD_TEST_INPUTS))
+
+
 $(PTHREAD_TEST_INPUTS): %: $(srcdir)/pthread_tests/%.c
 	@echo "  CC32    $@"
 	@$(CC) -m32 -g -I$(srcdir)/pthread_tests -Wall -o $@ $^ -lpthread -lrt
@@ -1045,20 +1048,13 @@ pthread_test_inputs: $(PTHREAD_TEST_INPUTS)
 # Without this, the order of this statement and the following if-ENABLE_I386 may be rearranged on MAC
 if ENABLE_I386
 PTHREAD_TEST_TARGETS = $(addsuffix .passed, $(PTHREAD_TEST_INPUTS))
-MOSTLYCLEANFILES += $(patsubst %.passed, %.failed, $(PTHREAD_TEST_TARGETS)) \
-                    $(addsuffix .o, $(PTHREAD_TEST_INPUTS)) \
-	 	    $(addsuffix .o, $(basename $(notdir $(PTHREAD__TEST_SUPPORT_SRC))))
-
 $(PTHREAD_TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
 	@$(RTH_RUN) INPUT=./$< $(srcdir)/x86sim.conf $@
-
-
 else
-
+# warn_no_tests was already defined in the "SYSTEM CALL TESTS" section of this makefile
 PTHREAD_TEST_TARGETS = warn_no_tests
-
 endif
-
+MOSTLYCLEANFILES += $(PTHREAD_TEST_TARGETS) $(patsubst %.passed, %.failed, $(PTHREAD_TEST_TARGETS))
 
 
 check-pthread:  $(PTHREAD_TEST_TARGETS)
