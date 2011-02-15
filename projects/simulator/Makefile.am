@@ -44,7 +44,7 @@ x86sim_CPPFLAGS = $(ROSE_INCLUDES) -DX86_VDSO_PATH_1='"$(srcdir)"' -DX86_VDSO_PA
 x86sim_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
 ###############################################################################################################################
-#  TEST INPUTS
+#  SYSTEM CALL TESTS
 ###############################################################################################################################
 
 # Source and executables for test inputs. The inputs are 32-bit executables. They come in three flavors depending
@@ -530,9 +530,9 @@ $(SYS_TEST_INPUTS_NM): %: $(srcdir)/syscall_tests/%.c
 	@echo "  CC32    $@"
 	@$(CC) $(CFLAGS32) -g -I$(srcdir)/syscall_tests -Wall -o $@ $^ 
 
-# Target to manually build the test inputs. (Not used internally)
-.PHONY: test_inputs
-test_inputs: $(SYS_TEST_INPUTS)
+# Target to manually build the syscall test inputs. (Not used internally)
+.PHONY: sys_test_inputs
+sys_test_inputs: $(SYS_TEST_INPUTS)
 
 
 # The test support library. These will not be generated if ENABLE_I386 is not defined.
@@ -558,9 +558,26 @@ $(IPC_SUPPORT_OBJ): %.o: $(srcdir)/syscall_tests/%.c
 	@$(CC) -m32 -g -I$(srcdir)/syscall_tests -Wall -o $@ -c $^
 MOSTLYCLEANFILES += libipc.a
 
+# Test targets are test names suffixed with ".passed" (but when a test fails it produces ".failed" instead).
+# Each target runs "x86sim" on one of the TEST_INPUT files. Exit status determines success or failure.
+# Test targets must be 32-bit x86; if we don't have that capability then the tests are not run.
+if ENABLE_I386
+SYS_TEST_TARGETS = $(addsuffix .passed, $(SYS_TEST_INPUTS))
+$(SYS_TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
+	@$(RTH_RUN) INPUT=./$< $(srcdir)/x86sim.conf $@
+else
+SYS_TEST_TARGETS = warn_no_tests
+warn_no_tests:
+	@echo "  NOTE    x86sim testing is disabled (no i386 support)"
+endif
+MOSTLYCLEANFILES += $(SYS_TEST_TARGETS) $(patsubst %.passed, %.failed, $(SYS_TEST_TARGETS))
+
+# Main syscall testing target, on which "make check" depends.
+check-syscalls:  $(SYS_TEST_TARGETS)
+	@$(RTH_STATS)
 
 ###############################################################################################################################
-#  PTHREAD THREADS TESTS
+#  PTHREAD TESTS
 ###############################################################################################################################
 
 PTHREAD_TEST_INPUTS_SRC = \
@@ -1020,8 +1037,9 @@ $(PTHREAD_TEST_INPUTS): %: $(srcdir)/pthread_tests/%.c
 	@$(CC) -m32 -g -I$(srcdir)/pthread_tests -Wall -o $@ $^ -lpthread -lrt
  
 # Target to manually build the test inputs. (Not used internally)
-.PHONY: test_inputs_pthread
-test_inputs_pthread: $(PTHREAD_TEST_INPUTS)
+.PHONY: pthread_test_inputs
+pthread_test_inputs: $(PTHREAD_TEST_INPUTS)
+
 # Liao 2/11/2011, ensure PTHREAD_TEST_TARGETS = warn_no_tests on MAC
 # The assignment of PTHREAD_TEST_TARGETS must be in the same if -statement.
 # Without this, the order of this statement and the following if-ENABLE_I386 may be rearranged on MAC
@@ -1047,31 +1065,12 @@ check-pthread:  $(PTHREAD_TEST_TARGETS)
 	@$(RTH_STATS)
 
 
-
 ###############################################################################################################################
-#  TESTS
+# Misc targets
 ###############################################################################################################################
 
-# Test targets are test names suffixed with ".passed" (but when a test fails it produces ".failed" instead).
-# Each target runs "x86sim" on one of the TEST_INPUT files. Exit status determines success or failure.
-# Test targets must be 32-bit x86; if we don't have that capability then the tests are not run.
-if ENABLE_I386
-SYS_TEST_TARGETS = $(addsuffix .passed, $(SYS_TEST_INPUTS))
-$(SYS_TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
-	@$(RTH_RUN) INPUT=./$< $(srcdir)/x86sim.conf $@
-else
-SYS_TEST_TARGETS = warn_no_tests
-warn_no_tests:
-	@echo "  NOTE    x86sim testing is disabled (no i386 support)"
-endif
 
-check-syscalls:  $(SYS_TEST_TARGETS)
-	@$(RTH_STATS)
-
-MOSTLYCLEANFILES += $(SYS_TEST_TARGETS) $(patsubst %.passed, %.failed, $(SYS_TEST_TARGETS))
-
-
-check-local: $(PTHREAD_TEST_TARGETS)  $(SYS_TEST_TARGETS)
+check-local: check-syscalls check-pthread
 	@$(RTH_STATS)
 
 
