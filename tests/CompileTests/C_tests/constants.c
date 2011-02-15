@@ -29,7 +29,7 @@ void foo()
 #ifdef __GNUC__
 // TOO (2/14/11): thrifty compiler (gcc 3.4.4) does not
 // support NAN macro
-#if GNU_CC >= 4 
+#if __GNUC__ >= 4 
      float  a_nan_float  = NAN;
      double a_nan_double = NAN;
 #endif
