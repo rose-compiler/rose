@@ -646,7 +646,6 @@ PTHREAD_TEST_INPUTS_SRC = \
 		    $(srcdir)/pthread_tests/pthread_barrier_wait.2-1.c \
 		    $(srcdir)/pthread_tests/pthread_barrier_wait.3-1.c \
 		    $(srcdir)/pthread_tests/pthread_barrier_wait.3-2.c \
-		    $(srcdir)/pthread_tests/pthread_barrier_wait.6-1.c \
 		    $(srcdir)/pthread_tests/pthread_cancel.1-1.c \
 		    $(srcdir)/pthread_tests/pthread_cancel.1-2.c \
 		    $(srcdir)/pthread_tests/pthread_cancel.1-3.c \
@@ -682,10 +681,8 @@ PTHREAD_TEST_INPUTS_SRC = \
 		    $(srcdir)/pthread_tests/pthread_condattr_setpshared.1-2.c \
 		    $(srcdir)/pthread_tests/pthread_condattr_setpshared.2-1.c \
 		    $(srcdir)/pthread_tests/pthread_cond_broadcast.1-1.c \
-		    $(srcdir)/pthread_tests/pthread_cond_broadcast.1-2.c \
 		    $(srcdir)/pthread_tests/pthread_cond_broadcast.2-1.c \
 		    $(srcdir)/pthread_tests/pthread_cond_broadcast.2-2.c \
-		    $(srcdir)/pthread_tests/pthread_cond_broadcast.2-3.c \
 		    $(srcdir)/pthread_tests/pthread_cond_broadcast.4-1.c \
 		    $(srcdir)/pthread_tests/pthread_cond_broadcast.4-2.c \
 		    $(srcdir)/pthread_tests/pthread_cond_destroy.1-1.c \
@@ -717,7 +714,6 @@ PTHREAD_TEST_INPUTS_SRC = \
 		    $(srcdir)/pthread_tests/pthread_cond_timedwait.4-3.c \
 		    $(srcdir)/pthread_tests/pthread_cond_wait.1-1.c \
 		    $(srcdir)/pthread_tests/pthread_cond_wait.2-1.c \
-		    $(srcdir)/pthread_tests/pthread_cond_wait.2-2.c \
 		    $(srcdir)/pthread_tests/pthread_cond_wait.2-3.c \
 		    $(srcdir)/pthread_tests/pthread_cond_wait.3-1.c \
 		    $(srcdir)/pthread_tests/pthread_cond_wait.4-1.c \
@@ -775,7 +771,6 @@ PTHREAD_TEST_INPUTS_SRC = \
 		    $(srcdir)/pthread_tests/pthread_join.4-1.c \
 		    $(srcdir)/pthread_tests/pthread_join.5-1.c \
 		    $(srcdir)/pthread_tests/pthread_join.6-2.c \
-		    $(srcdir)/pthread_tests/pthread_join.6-3.c \
 		    $(srcdir)/pthread_tests/pthread_key_create.1-1.c \
 		    $(srcdir)/pthread_tests/pthread_key_create.1-2.c \
 		    $(srcdir)/pthread_tests/pthread_key_create.2-1.c \
@@ -819,7 +814,6 @@ PTHREAD_TEST_INPUTS_SRC = \
 		    $(srcdir)/pthread_tests/pthread_mutexattr_setpshared.3-1.c \
 		    $(srcdir)/pthread_tests/pthread_mutexattr_setpshared.3-2.c \
 		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.1-1.c \
-		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.2-1.c \
 		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.3-1.c \
 		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.3-2.c \
 		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.3-3.c \
@@ -971,6 +965,12 @@ PTHREAD_TEST_INPUTS_SRC = \
 #		    $(srcdir)/pthread_tests/pthread_cond_init.4-1.c \
 #		    $(srcdir)/pthread_tests/pthread_mutex_trylock.1-1.c \
 #		    $(srcdir)/pthread_tests/pthread_mutex_init.5-1.c \
+#		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.2-1.c \
+#		    $(srcdir)/pthread_tests/pthread_barrier_wait.6-1.c \
+#		    $(srcdir)/pthread_tests/pthread_join.6-3.c \
+#		    $(srcdir)/pthread_tests/pthread_cond_wait.2-2.c \
+#		    $(srcdir)/pthread_tests/pthread_cond_broadcast.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_cond_broadcast.2-3.c \
 #
 # no main function: 
 #		    $(srcdir)/pthread_tests/pthread_once.4-1.c \
