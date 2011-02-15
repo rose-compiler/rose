@@ -163,6 +163,7 @@ public:
     void sys_bind(int fd, uint32_t addr_va, uint32_t addrlen);
     void sys_listen(int fd, int backlog);
 
+    int sys_clone(unsigned clone_flags, uint32_t newsp, uint32_t parent_tid_va, uint32_t child_tid_va, uint32_t pt_regs_va);
 
     /**************************************************************************************************************************
      *                                  Methods dealing with instruction disassembly

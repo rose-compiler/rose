@@ -59,830 +59,6 @@
 
 #define CONV_FIELD(var1, var2, field) var1.field = var2.field
 
-void
-RSIM_Thread::sys_semtimedop(uint32_t semid, uint32_t sops_va, uint32_t nsops, uint32_t timeout_va)
-{
-    static const Translate sem_flags[] = {
-        TF(IPC_NOWAIT), TF(SEM_UNDO), T_END
-    };
-
-    if (nsops<1) {
-        syscall_return(-EINVAL);
-        return;
-    }
-
-    /* struct sembuf is the same on both 32- and 64-bit platforms */
-    sembuf sops[nsops * sizeof(sembuf)];
-    if (nsops*sizeof(sembuf)!=get_process()->mem_read(sops, sops_va, nsops*sizeof(sembuf))) {
-        syscall_return(-EFAULT);
-        return;
-    }
-    if (tracing(TRACE_SYSCALL)) {
-        fprintf(tracing(TRACE_SYSCALL), " <continued...>\n");
-        for (uint32_t i=0; i<nsops; i++) {
-            fprintf(tracing(TRACE_SYSCALL), "    sops[%"PRIu32"] = { num=%"PRIu16", op=%"PRId16", flg=",
-                    i, sops[i].sem_num, sops[i].sem_op);
-            print_flags(tracing(TRACE_SYSCALL), sem_flags, sops[i].sem_flg);
-            fprintf(tracing(TRACE_SYSCALL), " }\n");
-        }
-        fprintf(tracing(TRACE_SYSCALL), "%32s", "= ");
-    }
-
-    timespec host_timeout;
-    if (timeout_va) {
-        timespec_32 guest_timeout;
-        if (sizeof(guest_timeout)!=get_process()->mem_read(&guest_timeout, timeout_va, sizeof guest_timeout)) {
-            syscall_return(-EFAULT);
-            return;
-        }
-        host_timeout.tv_sec = guest_timeout.tv_sec;
-        host_timeout.tv_nsec = guest_timeout.tv_nsec;
-    }
-
-    int result = semtimedop(semid, sops, nsops, timeout_va?&host_timeout:NULL);
-    syscall_return(-1==result?-errno:result);
-}
-
-void
-RSIM_Thread::sys_semget(uint32_t key, uint32_t nsems, uint32_t semflg)
-{
-#ifdef SYS_ipc /* i686 */
-    int result = syscall(SYS_ipc, 2, key, nsems, semflg);
-#else
-    int result = syscall(SYS_semget, key, nsems, semflg);
-#endif
-    syscall_return(-1==result?-errno:result);
-}
-
-void
-RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t semun_va)
-{
-    int version = cmd & 0x0100/*IPC_64*/;
-    cmd &= ~0x0100;
-
-    ROSE_ASSERT(version!=0);
-
-    union semun_32 {
-        uint32_t val;
-        uint32_t ptr;
-    };
-
-    union semun_native {
-        int val;
-        void *ptr;
-    };
-
-    semun_32 guest_semun;
-    if (sizeof(guest_semun)!=get_process()->mem_read(&guest_semun, semun_va, sizeof guest_semun)) {
-        syscall_return(-EFAULT);
-        return;
-    }
-    
-
-    switch (cmd) {
-        case 3:         /* IPC_INFO */
-        case 19: {      /* SEM_INFO */
-            seminfo host_seminfo;
-#ifdef SYS_ipc /* i686 */
-            ROSE_ASSERT(version!=0);
-            semun_native host_semun;
-            host_semun.ptr = &host_seminfo;
-            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &host_semun);
-#else
-            int result = syscall(SYS_semctl, semid, semnum, cmd, &host_seminfo);
-#endif
-            if (-1==result) {
-                syscall_return(-errno);
-                return;
-            }
-
-            seminfo_32 guest_seminfo;
-            guest_seminfo.semmap = host_seminfo.semmap;
-            guest_seminfo.semmni = host_seminfo.semmni;
-            guest_seminfo.semmns = host_seminfo.semmns;
-            guest_seminfo.semmnu = host_seminfo.semmnu;
-            guest_seminfo.semmsl = host_seminfo.semmsl;
-            guest_seminfo.semopm = host_seminfo.semopm;
-            guest_seminfo.semume = host_seminfo.semume;
-            guest_seminfo.semusz = host_seminfo.semusz;
-            guest_seminfo.semvmx = host_seminfo.semvmx;
-            guest_seminfo.semaem = host_seminfo.semaem;
-            if (sizeof(guest_seminfo)!=get_process()->mem_write(&guest_seminfo, guest_semun.ptr, sizeof guest_seminfo)) {
-                syscall_return(-EFAULT);
-                return;
-            }
-
-            syscall_return(result);
-            break;
-        }
-
-        case 2:         /* IPC_STAT */
-        case 18: {      /* SEM_STAT */
-            semid_ds host_ds;
-#ifdef SYS_ipc /* i686 */
-            ROSE_ASSERT(version!=0);
-            semun_native host_semun;
-            host_semun.ptr = &host_ds;
-            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &host_semun);
-#else
-            int result = syscall(SYS_semctl, semid, semnum, cmd, &host_ds);
-#endif
-            if (-1==result) {
-                syscall_return(-errno);
-                return;
-            }
-
-            semid64_ds_32 guest_ds;
-            guest_ds.sem_perm.key = host_ds.sem_perm.__key;
-            guest_ds.sem_perm.uid = host_ds.sem_perm.uid;
-            guest_ds.sem_perm.gid = host_ds.sem_perm.gid;
-            guest_ds.sem_perm.cuid = host_ds.sem_perm.cuid;
-            guest_ds.sem_perm.cgid = host_ds.sem_perm.cgid;
-            guest_ds.sem_perm.mode = host_ds.sem_perm.mode;
-            guest_ds.sem_perm.pad1 = host_ds.sem_perm.__pad1;
-            guest_ds.sem_perm.seq = host_ds.sem_perm.__seq;
-            guest_ds.sem_perm.pad2 = host_ds.sem_perm.__pad2;
-            guest_ds.sem_perm.unused1 = host_ds.sem_perm.__unused1;
-            guest_ds.sem_perm.unused2 = host_ds.sem_perm.__unused1;
-            guest_ds.sem_otime = host_ds.sem_otime;
-            guest_ds.unused1 = host_ds.__unused1;
-            guest_ds.sem_ctime = host_ds.sem_ctime;
-            guest_ds.unused2 = host_ds.__unused2;
-            guest_ds.sem_nsems = host_ds.sem_nsems;
-            guest_ds.unused3 = host_ds.__unused3;
-            guest_ds.unused4 = host_ds.__unused4;
-            if (sizeof(guest_ds)!=get_process()->mem_write(&guest_ds, guest_semun.ptr, sizeof guest_ds)) {
-                syscall_return(-EFAULT);
-                return;
-            }
-                        
-            syscall_return(result);
-            break;
-        };
-
-        case 1: {       /* IPC_SET */
-            semid64_ds_32 guest_ds;
-            if (sizeof(guest_ds)!=get_process()->mem_read(&guest_ds, guest_semun.ptr, sizeof(guest_ds))) {
-                syscall_return(-EFAULT);
-                return;
-            }
-#ifdef SYS_ipc  /* i686 */
-            ROSE_ASSERT(version!=0);
-            semun_native semun;
-            semun.ptr = &guest_ds;
-            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &semun);
-#else           /* amd64 */
-            semid_ds host_ds;
-            host_ds.sem_perm.__key = guest_ds.sem_perm.key;
-            host_ds.sem_perm.uid = guest_ds.sem_perm.uid;
-            host_ds.sem_perm.gid = guest_ds.sem_perm.gid;
-            host_ds.sem_perm.cuid = guest_ds.sem_perm.cuid;
-            host_ds.sem_perm.cgid = guest_ds.sem_perm.cgid;
-            host_ds.sem_perm.mode = guest_ds.sem_perm.mode;
-            host_ds.sem_perm.__pad1 = guest_ds.sem_perm.pad1;
-            host_ds.sem_perm.__seq = guest_ds.sem_perm.seq;
-            host_ds.sem_perm.__pad2 = guest_ds.sem_perm.pad2;
-            host_ds.sem_perm.__unused1 = guest_ds.sem_perm.unused1;
-            host_ds.sem_perm.__unused1 = guest_ds.sem_perm.unused2;
-            host_ds.sem_otime = guest_ds.sem_otime;
-            host_ds.__unused1 = guest_ds.unused1;
-            host_ds.sem_ctime = guest_ds.sem_ctime;
-            host_ds.__unused2 = guest_ds.unused2;
-            host_ds.sem_nsems = guest_ds.sem_nsems;
-            host_ds.__unused3 = guest_ds.unused3;
-            host_ds.__unused4 = guest_ds.unused4;
-            int result = syscall(SYS_semctl, semid, semnum, cmd, &host_ds);
-#endif
-            syscall_return(-1==result?-errno:result);
-            break;
-        }
-
-        case 13: {      /* GETALL */
-            semid_ds host_ds;
-            int result = semctl(semid, -1, IPC_STAT, &host_ds);
-            if (-1==result) {
-                syscall_return(-errno);
-                return;
-            }
-            if (host_ds.sem_nsems<1) {
-                syscall_return(-EINVAL);
-                return;
-            }
-            size_t nbytes = 2 * host_ds.sem_nsems;
-            if (NULL==get_process()->my_addr(guest_semun.ptr, nbytes)) {
-                syscall_return(-EFAULT);
-                return;
-            }
-            uint16_t *sem_values = new uint16_t[host_ds.sem_nsems];
-#ifdef SYS_ipc  /* i686 */
-            semun_native semun;
-            semun.ptr = sem_values;
-            result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &semun);
-#else
-            result = syscall(SYS_semctl, semid, semnum, cmd, sem_values);
-#endif
-            if (-1==result) {
-                delete[] sem_values;
-                syscall_return(-errno);
-                return;
-            }
-            if (nbytes!=get_process()->mem_write(sem_values, guest_semun.ptr, nbytes)) {
-                delete[] sem_values;
-                syscall_return(-EFAULT);
-                return;
-            }
-            if (tracing(TRACE_SYSCALL)) {
-                fprintf(tracing(TRACE_SYSCALL), "<continued...>\n");
-                for (size_t i=0; i<host_ds.sem_nsems; i++) {
-                    fprintf(tracing(TRACE_SYSCALL), "    value[%zu] = %"PRId16"\n", i, sem_values[i]);
-                }
-                fprintf(tracing(TRACE_SYSCALL), "%32s", "= ");
-            }
-            delete[] sem_values;
-            syscall_return(result);
-            break;
-        }
-            
-        case 17: {      /* SETALL */
-            semid_ds host_ds;
-            int result = semctl(semid, -1, IPC_STAT, &host_ds);
-            if (-1==result) {
-                syscall_return(-errno);
-                return;
-            }
-            if (host_ds.sem_nsems<1) {
-                syscall_return(-EINVAL);
-                return;
-            }
-            uint16_t *sem_values = new uint16_t[host_ds.sem_nsems];
-            size_t nbytes = 2 * host_ds.sem_nsems;
-            if (nbytes!=get_process()->mem_read(sem_values, guest_semun.ptr, nbytes)) {
-                delete[] sem_values;
-                syscall_return(-EFAULT);
-                return;
-            }
-            if (tracing(TRACE_SYSCALL)) {
-                fprintf(tracing(TRACE_SYSCALL), "<continued...>\n");
-                for (size_t i=0; i<host_ds.sem_nsems; i++) {
-                    fprintf(tracing(TRACE_SYSCALL), "    value[%zu] = %"PRId16"\n", i, sem_values[i]);
-                }
-                fprintf(tracing(TRACE_SYSCALL), "%32s", "= ");
-            }
-#ifdef SYS_ipc  /* i686 */
-            semun_native semun;
-            semun.ptr = sem_values;
-            result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &semun);
-#else
-            result = syscall(SYS_semctl, semid, semnum, cmd, sem_values);
-#endif
-            syscall_return(-1==result?-errno:result);
-            delete[] sem_values;
-            break;
-        }
-
-        case 11:        /* GETPID */
-        case 12:        /* GETVAL */
-        case 15:        /* GETZCNT */
-        case 14: {      /* GETNCNT */
-            int result = semctl(semid, semnum, cmd, NULL);
-            syscall_return(-1==result?-errno:result);
-            break;
-        }
-
-        case 16: {      /* SETVAL */
-#ifdef SYS_ipc  /* i686 */
-            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &guest_semun);
-#else
-            int result = syscall(SYS_semctl, semid, semnum, cmd, guest_semun.val);
-#endif
-            syscall_return(-1==result?-errno:result);
-            break;
-        }
-
-        case 0: {       /* IPC_RMID */
-#ifdef SYS_ipc /* i686 */
-            semun_native host_semun;
-            memset(&host_semun, 0, sizeof host_semun);
-            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &host_semun);
-#else
-            int result = semctl(semid, semnum, cmd, NULL);
-#endif
-            syscall_return(-1==result?-errno:result);
-            break;
-        }
-
-        default:
-            syscall_return(-EINVAL);
-            return;
-    }
-}
-
-
-void
-RSIM_Thread::sys_msgsnd(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgflg)
-{
-    if (msgsz>65535) { /* 65535 >= MSGMAX; smaller limit errors are detected in actual syscall */
-        syscall_return(-EINVAL);
-        return;
-    }
-
-    /* Read the message buffer from the specimen. */
-    uint8_t *buf = new uint8_t[msgsz+8]; /* msgsz does not include "long mtype", only "char mtext[]" */
-    if (!buf) {
-        syscall_return(-ENOMEM);
-        return;
-    }
-    if (4+msgsz!=get_process()->mem_read(buf, msgp_va, 4+msgsz)) {
-        delete[] buf;
-        syscall_return(-EFAULT);
-        return;
-    }
-
-    /* Message type must be positive */
-    if (*(int32_t*)buf <= 0) {
-        delete[] buf;
-        syscall_return(-EINVAL);
-        return;
-    }
-
-    /* Convert message type from four to eight bytes if necessary */
-    if (4!=sizeof(long)) {
-        ROSE_ASSERT(8==sizeof(long));
-        memmove(buf+8, buf+4, msgsz);
-        memset(buf+4, 0, 4);
-    }
-
-    /* Try to send the message */
-    int result = msgsnd(msqid, buf, msgsz, msgflg);
-    if (-1==result) {
-        delete[] buf;
-        syscall_return(-errno);
-        return;
-    }
-
-    delete[] buf;
-    syscall_return(result);
-}
-
-void
-RSIM_Thread::sys_msgrcv(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgtyp, uint32_t msgflg)
-{
-    if (msgsz>65535) { /* 65535 >= MSGMAX; smaller limit errors are detected in actual syscall */
-        syscall_return(-EINVAL);
-        return;
-    }
-
-    uint8_t *buf = new uint8_t[msgsz+8]; /* msgsz does not include "long mtype", only "char mtext[]" */
-    int result = msgrcv(msqid, buf, msgsz, msgtyp, msgflg);
-    if (-1==result) {
-        delete[] buf;
-        syscall_return(-errno);
-        return;
-    }
-
-    if (4!=sizeof(long)) {
-        ROSE_ASSERT(8==sizeof(long));
-        uint64_t type = *(uint64_t*)buf;
-        ROSE_ASSERT(0 == (type >> 32));
-        memmove(buf+4, buf+8, msgsz);
-    }
-
-    if (4+msgsz!=get_process()->mem_write(buf, msgp_va, 4+msgsz)) {
-        delete[] buf;
-        syscall_return(-EFAULT);
-        return;
-    }
-
-    delete[] buf;
-    syscall_return(result);
-}
-
-void
-RSIM_Thread::sys_msgget(uint32_t key, uint32_t msgflg)
-{
-    int result = msgget(key, msgflg);
-    syscall_return(-1==result?-errno:result);
-}
-
-void
-RSIM_Thread::sys_msgctl(uint32_t msqid, uint32_t cmd, uint32_t buf_va)
-{
-    int version = cmd & 0x0100/*IPC_64*/;
-    cmd &= ~0x0100;
-
-    switch (cmd) {
-        case 3:    /* IPC_INFO */
-        case 12: { /* MSG_INFO */
-            syscall_return(-ENOSYS);              /* FIXME */
-            break;
-        }
-
-        case 2:    /* IPC_STAT */
-        case 11: { /* MSG_STAT */
-            ROSE_ASSERT(0x0100==version); /* we're assuming ipc64_perm and msqid_ds from the kernel */
-            static msqid_ds host_ds;
-            int result = msgctl(msqid, cmd, &host_ds);
-            if (-1==result) {
-                syscall_return(-errno);
-                break;
-            }
-
-            msqid64_ds_32 guest_ds;
-            guest_ds.msg_perm.key = host_ds.msg_perm.__key;
-            guest_ds.msg_perm.uid = host_ds.msg_perm.uid;
-            guest_ds.msg_perm.gid = host_ds.msg_perm.gid;
-            guest_ds.msg_perm.cuid = host_ds.msg_perm.cuid;
-            guest_ds.msg_perm.cgid = host_ds.msg_perm.cgid;
-            guest_ds.msg_perm.mode = host_ds.msg_perm.mode;
-            guest_ds.msg_perm.pad1 = host_ds.msg_perm.__pad1;
-            guest_ds.msg_perm.seq = host_ds.msg_perm.__seq;
-            guest_ds.msg_perm.pad2 = host_ds.msg_perm.__pad2;
-            guest_ds.msg_perm.unused1 = host_ds.msg_perm.__unused1;
-            guest_ds.msg_perm.unused2 = host_ds.msg_perm.__unused2;
-            guest_ds.msg_stime = host_ds.msg_stime;
-#if 4==SIZEOF_LONG
-            guest_ds.unused1 = host_ds.__unused1;
-#endif
-            guest_ds.msg_rtime = host_ds.msg_rtime;
-#if 4==SIZEOF_LONG
-            guest_ds.unused2 = host_ds.__unused2;
-#endif
-            guest_ds.msg_ctime = host_ds.msg_ctime;
-#if 4==SIZEOF_LONG
-            guest_ds.unused3 = host_ds.__unused3;
-#endif
-            guest_ds.msg_cbytes = host_ds.__msg_cbytes;
-            guest_ds.msg_qnum = host_ds.msg_qnum;
-            guest_ds.msg_qbytes = host_ds.msg_qbytes;
-            guest_ds.msg_lspid = host_ds.msg_lspid;
-            guest_ds.msg_lrpid = host_ds.msg_lrpid;
-            guest_ds.unused4 = host_ds.__unused4;
-            guest_ds.unused5 = host_ds.__unused5;
-
-            if (sizeof(guest_ds)!=get_process()->mem_write(&guest_ds, buf_va, sizeof guest_ds)) {
-                syscall_return(-EFAULT);
-                break;
-            }
-
-            syscall_return(result);
-            break;
-        }
-
-        case 0: { /* IPC_RMID */
-            /* NOTE: syscall tracing will not show "IPC_RMID" if the IPC_64 flag is also present */
-            int result = msgctl(msqid, cmd, NULL);
-            syscall_return(-1==result?-errno:result);
-            break;
-        }
-
-        case 1: { /* IPC_SET */
-            msqid64_ds_32 guest_ds;
-            if (sizeof(guest_ds)!=get_process()->mem_read(&guest_ds, buf_va, sizeof guest_ds)) {
-                syscall_return(-EFAULT);
-                break;
-            }
-
-            static msqid_ds host_ds;
-            host_ds.msg_perm.__key = guest_ds.msg_perm.key;
-            host_ds.msg_perm.uid = guest_ds.msg_perm.uid;
-            host_ds.msg_perm.gid = guest_ds.msg_perm.gid;
-            host_ds.msg_perm.cuid = guest_ds.msg_perm.cuid;
-            host_ds.msg_perm.cgid = guest_ds.msg_perm.cgid;
-            host_ds.msg_perm.mode = guest_ds.msg_perm.mode;
-            host_ds.msg_perm.__seq = guest_ds.msg_perm.seq;
-            host_ds.msg_stime = guest_ds.msg_stime;
-            host_ds.msg_rtime = guest_ds.msg_rtime;
-            host_ds.msg_ctime = guest_ds.msg_ctime;
-            host_ds.__msg_cbytes = guest_ds.msg_cbytes;
-            host_ds.msg_qnum = guest_ds.msg_qnum;
-            host_ds.msg_qbytes = guest_ds.msg_qbytes;
-            host_ds.msg_lspid = guest_ds.msg_lspid;
-            host_ds.msg_lrpid = guest_ds.msg_lrpid;
-
-            int result = msgctl(msqid, cmd, &host_ds);
-            syscall_return(-1==result?-errno:result);
-            break;
-        }
-
-        default: {
-            syscall_return(-EINVAL);
-            break;
-        }
-    }
-}
-
-void
-RSIM_Thread::sys_shmdt(uint32_t shmaddr_va)
-{
-    int result = -ENOSYS;
-
-    RTS_WRITE(get_process()->rwlock()) {
-        const MemoryMap::MapElement *me = get_process()->get_memory()->find(shmaddr_va);
-        if (!me || me->get_va()!=shmaddr_va || me->get_offset()!=0 || me->is_anonymous()) {
-            result = -EINVAL;
-            break;
-        }
-
-        result = shmdt(me->get_base());
-        if (-1==result) {
-            result = -errno;
-            break;
-        }
-
-        get_process()->mem_unmap(me->get_va(), me->get_size());
-        result = 0;
-    } RTS_WRITE_END;
-    syscall_return(result);
-}
-
-void
-RSIM_Thread::sys_shmget(uint32_t key, uint32_t size, uint32_t shmflg)
-{
-    int result = shmget(key, size, shmflg);
-    syscall_return(-1==result?-errno:result);
-}
-
-void
-RSIM_Thread::sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va)
-{
-    int version = cmd & 0x0100/*IPC_64*/;
-    cmd &= ~0x0100;
-
-    switch (cmd) {
-        case 13:  /* SHM_STAT */
-        case 2: { /* IPC_STAT */
-            ROSE_ASSERT(0x0100==version); /* we're assuming ipc64_perm and shmid_ds from the kernel */
-            static shmid_ds host_ds;
-            int result = shmctl(shmid, cmd, &host_ds);
-            if (-1==result) {
-                syscall_return(-errno);
-                break;
-            }
-
-            shmid64_ds_32 guest_ds;
-            guest_ds.shm_perm.key = host_ds.shm_perm.__key;
-            guest_ds.shm_perm.uid = host_ds.shm_perm.uid;
-            guest_ds.shm_perm.gid = host_ds.shm_perm.gid;
-            guest_ds.shm_perm.cuid = host_ds.shm_perm.cuid;
-            guest_ds.shm_perm.cgid = host_ds.shm_perm.cgid;
-            guest_ds.shm_perm.mode = host_ds.shm_perm.mode;
-            guest_ds.shm_perm.pad1 = host_ds.shm_perm.__pad1;
-            guest_ds.shm_perm.seq = host_ds.shm_perm.__seq;
-            guest_ds.shm_perm.pad2 = host_ds.shm_perm.__pad2;
-            guest_ds.shm_perm.unused1 = host_ds.shm_perm.__unused1;
-            guest_ds.shm_perm.unused2 = host_ds.shm_perm.__unused2;
-            guest_ds.shm_segsz = host_ds.shm_segsz;
-            guest_ds.shm_atime = host_ds.shm_atime;
-#if 4==SIZEOF_LONG
-            guest_ds.unused1 = host_ds.__unused1;
-#endif
-            guest_ds.shm_dtime = host_ds.shm_dtime;
-#if 4==SIZEOF_LONG
-            guest_ds.unused2 = host_ds.__unused2;
-#endif
-            guest_ds.shm_ctime = host_ds.shm_ctime;
-#if 4==SIZEOF_LONG
-            guest_ds.unused3 = host_ds.__unused3;
-#endif
-            guest_ds.shm_cpid = host_ds.shm_cpid;
-            guest_ds.shm_lpid = host_ds.shm_lpid;
-            guest_ds.shm_nattch = host_ds.shm_nattch;
-            guest_ds.unused4 = host_ds.__unused4;
-            guest_ds.unused5 = host_ds.__unused5;
-
-            if (sizeof(guest_ds)!=get_process()->mem_write(&guest_ds, buf_va, sizeof guest_ds)) {
-                syscall_return(-EFAULT);
-                break;
-            }
-
-            syscall_return(result);
-            break;
-        }
-
-        case 14: { /* SHM_INFO */
-            shm_info host_info;
-            int result = shmctl(shmid, cmd, (shmid_ds*)&host_info);
-            if (-1==result) {
-                syscall_return(-errno);
-                break;
-            }
-
-            shm_info_32 guest_info;
-            guest_info.used_ids = host_info.used_ids;
-            guest_info.shm_tot = host_info.shm_tot;
-            guest_info.shm_rss = host_info.shm_rss;
-            guest_info.shm_swp = host_info.shm_swp;
-            guest_info.swap_attempts = host_info.swap_attempts;
-            guest_info.swap_successes = host_info.swap_successes;
-
-            if (sizeof(guest_info)!=get_process()->mem_write(&guest_info, buf_va, sizeof guest_info)) {
-                syscall_return(-EFAULT);
-                break;
-            }
-
-            syscall_return(result);
-            break;
-        }
-
-        case 3: { /* IPC_INFO */
-            shminfo64_native host_info;
-            int result = shmctl(shmid, cmd, (shmid_ds*)&host_info);
-            if (-1==result) {
-                syscall_return(-errno);
-                return;
-            }
-
-            shminfo64_32 guest_info;
-            guest_info.shmmax = host_info.shmmax;
-            guest_info.shmmin = host_info.shmmin;
-            guest_info.shmmni = host_info.shmmni;
-            guest_info.shmseg = host_info.shmseg;
-            guest_info.shmall = host_info.shmall;
-            guest_info.unused1 = host_info.unused1;
-            guest_info.unused2 = host_info.unused2;
-            guest_info.unused3 = host_info.unused3;
-            guest_info.unused4 = host_info.unused4;
-            if (sizeof(guest_info)!=get_process()->mem_write(&guest_info, buf_va, sizeof guest_info)) {
-                syscall_return(-EFAULT);
-                return;
-            }
-
-            syscall_return(result);
-            break;
-        }
-
-        case 11:   /* SHM_LOCK */
-        case 12: { /* SHM_UNLOCK */
-            int result = shmctl(shmid, cmd, NULL);
-            syscall_return(-1==result?-errno:result);
-            break;
-        }
-
-        case 1: { /* IPC_SET */
-            ROSE_ASSERT(version!=0);
-            shmid64_ds_32 guest_ds;
-            if (sizeof(guest_ds)!=get_process()->mem_read(&guest_ds, buf_va, sizeof guest_ds)) {
-                syscall_return(-EFAULT);
-                return;
-            }
-            shmid_ds host_ds;
-            host_ds.shm_perm.__key = guest_ds.shm_perm.key;
-            host_ds.shm_perm.uid = guest_ds.shm_perm.uid;
-            host_ds.shm_perm.gid = guest_ds.shm_perm.gid;
-            host_ds.shm_perm.cuid = guest_ds.shm_perm.cuid;
-            host_ds.shm_perm.cgid = guest_ds.shm_perm.cgid;
-            host_ds.shm_perm.mode = guest_ds.shm_perm.mode;
-            host_ds.shm_perm.__pad1 = guest_ds.shm_perm.pad1;
-            host_ds.shm_perm.__seq = guest_ds.shm_perm.seq;
-            host_ds.shm_perm.__pad2 = guest_ds.shm_perm.pad2;
-            host_ds.shm_perm.__unused1 = guest_ds.shm_perm.unused1;
-            host_ds.shm_perm.__unused2 = guest_ds.shm_perm.unused2;
-            host_ds.shm_segsz = guest_ds.shm_segsz;
-            host_ds.shm_atime = guest_ds.shm_atime;
-#if 4==SIZEOF_LONG
-            host_ds.__unused1 = guest_ds.unused1;
-#endif
-            host_ds.shm_dtime = guest_ds.shm_dtime;
-#if 4==SIZEOF_LONG
-            host_ds.__unused2 = guest_ds.unused2;
-#endif
-            host_ds.shm_ctime = guest_ds.shm_ctime;
-#if 4==SIZEOF_LONG
-            host_ds.__unused3 = guest_ds.unused3;
-#endif
-            host_ds.shm_cpid = guest_ds.shm_cpid;
-            host_ds.shm_lpid = guest_ds.shm_lpid;
-            host_ds.shm_nattch = guest_ds.shm_nattch;
-            host_ds.__unused4 = guest_ds.unused4;
-            host_ds.__unused5 = guest_ds.unused5;
-
-            int result = shmctl(shmid, cmd, &host_ds);
-            syscall_return(-1==result?-errno:result);
-            break;
-        }
-
-        case 0: { /* IPC_RMID */
-            int result = shmctl(shmid, cmd, NULL);
-            syscall_return(-1==result?-errno:result);
-            break;
-        }
-
-        default: {
-            syscall_return(-EINVAL);
-            break;
-        }
-    }
-}
-
-void
-RSIM_Thread::sys_shmat(uint32_t shmid, uint32_t shmflg, uint32_t result_va, uint32_t shmaddr)
-{
-    int result = -ENOSYS;
-
-    RTS_WRITE(get_process()->rwlock()) {
-        if (0==shmaddr) {
-            shmaddr = get_process()->get_memory()->find_last_free();
-        } else if (shmflg & SHM_RND) {
-            shmaddr = ALIGN_DN(shmaddr, SHMLBA);
-        } else if (ALIGN_DN(shmaddr, 4096)!=shmaddr) {
-            result = -EINVAL;
-            break;
-        }
-
-        /* We don't handle SHM_REMAP */
-        if (shmflg & SHM_REMAP) {
-            result = -EINVAL;
-            break;
-        }
-
-        /* Map shared memory into the simulator. It's OK to hold the write lock here because this syscall doesn't block. */
-        void *buf = shmat(shmid, NULL, shmflg);
-        if (!buf) {
-            result = -errno;
-            break;
-        }
-
-        /* Map simulator's shared memory into the specimen */
-        shmid_ds ds;
-        int status = shmctl(shmid, IPC_STAT, &ds); // does not block
-        ROSE_ASSERT(status>=0);
-        ROSE_ASSERT(ds.shm_segsz>0);
-        unsigned perms = MemoryMap::MM_PROT_READ | ((shmflg & SHM_RDONLY) ? 0 : MemoryMap::MM_PROT_WRITE);
-        MemoryMap::MapElement shm(shmaddr, ds.shm_segsz, buf, 0, perms);
-        shm.set_name("shmat("+StringUtility::numberToString(shmid)+")");
-        get_process()->get_memory()->insert(shm);
-
-        /* Return values */
-        if (4!=get_process()->mem_write(&shmaddr, result_va, 4)) {
-            result = -EFAULT;
-            break;
-        }
-        syscall_return(shmaddr);
-        result = 0;
-    } RTS_WRITE_END;
-    if (result)
-        syscall_return(result);
-}
-
-void
-RSIM_Thread::sys_socket(int family, int type, int protocol)
-{
-#ifdef SYS_socketcall /* i686 */
-    ROSE_ASSERT(4==sizeof(int));
-    int a[3];
-    a[0] = family;
-    a[1] = type;
-    a[2] = protocol;
-    int result = syscall(SYS_socketcall, 1/*SYS_SOCKET*/, a);
-#else /* amd64 */
-    int result = syscall(SYS_socket, family, type, protocol);
-#endif
-    syscall_return(-1==result?-errno:result);
-}
-
-void
-RSIM_Thread::sys_bind(int fd, uint32_t addr_va, uint32_t addrlen)
-{
-    if (addrlen<1 || addrlen>4096) {
-        syscall_return(-EINVAL);
-        return;
-    }
-    uint8_t *addrbuf = new uint8_t[addrlen];
-    if (addrlen!=get_process()->mem_read(addrbuf, addr_va, addrlen)) {
-        syscall_return(-EFAULT);
-        delete[] addrbuf;
-        return;
-    }
-
-#ifdef SYS_socketcall /* i686 */
-    ROSE_ASSERT(4==sizeof(int));
-    ROSE_ASSERT(4==sizeof(void*));
-    int a[3];
-    a[0] = fd;
-    a[1] = (int)addrbuf;
-    a[2] = addrlen;
-    int result = syscall(SYS_socketcall, 2/*SYS_BIND*/, a);
-#else /* amd64 */
-    int result = syscall(SYS_bind, fd, addrbuf, addrlen);
-#endif
-    syscall_return(-1==result?-errno:result);
-    delete[] addrbuf;
-}
-
-void
-RSIM_Thread::sys_listen(int fd, int backlog)
-{
-#ifdef SYS_socketcall /* i686 */
-    ROSE_ASSERT(4==sizeof(int));
-    int a[2];
-    a[0] = fd;
-    a[1] = backlog;
-    int result = syscall(SYS_socketcall, 4/*SYS_LISTEN*/, a);
-#else /* amd64 */
-    int result = syscall(SYS_listen, fd, backlog);
-#endif
-    syscall_return(-1==result?-errno:result);
-}
 
 void
 RSIM_Thread::emulate_syscall()
@@ -2356,98 +1532,19 @@ RSIM_Thread::emulate_syscall()
              *    long sys_clone(unsigned long clone_flags, unsigned long newsp,
              *                   void __user *parent_tid, void __user *child_tid, struct pt_regs *regs)
              */
-            syscall_enter("clone", "fpppp", clone_flags);
-            do {
-                unsigned flags = syscall_arg(0);
-                unsigned newsp = syscall_arg(1);
-                unsigned parent_tid_va = syscall_arg(2);
-                unsigned child_tid_va = syscall_arg(3);
-                unsigned regs_va = syscall_arg(4);
-                
-                /* We cannot handle multiple threads yet. */
-                if (newsp || parent_tid_va || child_tid_va || (flags & (CLONE_VM|CLONE_THREAD))) {
-                    syscall_return(-EINVAL);
-                    break;
-                }
-
-                /* ROSE simulates signal handling, therefore signal handlers cannot be shared. */
-                if (flags & CLONE_SIGHAND) {
-                    syscall_return(-EINVAL);
-                    break;
-                }
-
-                /* Flush some files so buffered content isn't output twice. */
-                fflush(stdout);
-                fflush(stderr);
-                if (tracing(TRACE_ALL))
-                    fflush(tracing(TRACE_ALL));
-
-                /* We cannot use clone() because it's a wrapper around the clone system call and we'd need to provide a
-                 * function for it to execute. We want fork-like semantics. */
-                pid_t pid = fork();
-                if (-1==pid) {
-                    syscall_return(-errno);
-                    break;
-                }
-
-                if (0==pid) {
-                    /* Pending signals are only for the parent */
-                    signal_pending = 0;
-
-                    /* Open new log files if necessary */
-                    get_process()->open_trace_file();
-                    get_process()->btrace_close();
-
-                    /* Thread-related things. ROSE isn't multi-threaded and the simulator doesn't support multi-threading, but
-                     * we still have to initialize a few data structures because the specimen may be using a thread-aware
-                     * library. */
-                    if (0!=(flags & CLONE_CHILD_SETTID)) {
-                        set_child_tid = child_tid_va;
-                        if (set_child_tid) {
-                            uint32_t pid32 = getpid();
-                            size_t nwritten = get_process()->mem_write(&pid32, set_child_tid, 4);
-                            ROSE_ASSERT(4==nwritten);
-                        }
-                    }
-                    if (0!=(flags & CLONE_CHILD_CLEARTID)) {
-                        clear_child_tid = child_tid_va;
-                    }
-
-                    /* Return register values in child */
-                    pt_regs_32 regs;
-                    regs.bx = policy.readGPR(x86_gpr_bx).known_value();
-                    regs.cx = policy.readGPR(x86_gpr_cx).known_value();
-                    regs.dx = policy.readGPR(x86_gpr_dx).known_value();
-                    regs.si = policy.readGPR(x86_gpr_si).known_value();
-                    regs.di = policy.readGPR(x86_gpr_di).known_value();
-                    regs.bp = policy.readGPR(x86_gpr_bp).known_value();
-                    regs.sp = policy.readGPR(x86_gpr_sp).known_value();
-                    regs.cs = policy.readSegreg(x86_segreg_cs).known_value();
-                    regs.ds = policy.readSegreg(x86_segreg_ds).known_value();
-                    regs.es = policy.readSegreg(x86_segreg_es).known_value();
-                    regs.fs = policy.readSegreg(x86_segreg_fs).known_value();
-                    regs.gs = policy.readSegreg(x86_segreg_gs).known_value();
-                    regs.ss = policy.readSegreg(x86_segreg_ss).known_value();
-                    uint32_t flags = 0;
-                    for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
-                        if (policy.readFlag((X86Flag)i).known_value()) {
-                            flags |= (1u<<i);
-                        }
-                    }
-                    if (sizeof(regs)!=get_process()->mem_write(&regs, regs_va, sizeof regs)) {
-                        syscall_return(-EFAULT);
-                        break;
-                    }
-                }
-
-                syscall_return(pid);
-            } while (0);
-
-            if (policy.readGPR(x86_gpr_ax).known_value()) {
+            syscall_enter("clone", "fpppP", clone_flags, sizeof(pt_regs_32), print_pt_regs_32);
+            unsigned flags = syscall_arg(0);
+            uint32_t newsp = syscall_arg(1);
+            uint32_t parent_tid_va = syscall_arg(2);
+            uint32_t child_tid_va = syscall_arg(3);
+            uint32_t regs_va = syscall_arg(4);
+            syscall_return(sys_clone(flags, newsp, parent_tid_va, child_tid_va, regs_va));
+            if (syscall_arg(-1)) {
+                /* Parent */
                 syscall_leave("d");
             } else {
                 /* Child */
-                syscall_enter("child's clone", "fpppp", clone_flags);
+                syscall_enter("child's clone", "fpppP", clone_flags, sizeof(pt_regs_32), print_pt_regs_32);
                 syscall_leave("d----P", sizeof(pt_regs_32), print_pt_regs_32);
             }
             break;
@@ -3518,12 +2615,11 @@ RSIM_Thread::emulate_syscall()
 
         case 270: { /*0x10e tgkill*/
             syscall_enter("tgkill", "ddf", signal_names);
-            uint32_t /*tgid=syscall_arg(0), pid=syscall_arg(1),*/ sig=syscall_arg(2);
-            // TODO: Actually check thread group and kill properly
-            if (tracing(TRACE_SYSCALL)) fputs("(throwing...)\n", tracing(TRACE_SYSCALL));
-            throw Exit(__W_EXITCODE(0, sig));
+            int tgid=syscall_arg(0), tid=syscall_arg(1), sig=syscall_arg(2);
+            int result = syscall(SYS_tgkill, tgid, tid, sig);
+            syscall_return(-1==result?-errno:result);
+            syscall_leave("d");
             break;
-
         }
 
         case 271: { /* 0x10f, utimes */
@@ -3638,6 +2734,17 @@ RSIM_Thread::emulate_syscall()
             break;
         }
 
+        /******************************************************************************************************************
+         * The following syscalls are defined only when running in the simulator.
+         ******************************************************************************************************************/
+
+
+        case 1000000:
+            syscall_enter("SIM_is_present", "");
+            syscall_return(0);
+            syscall_leave("d");
+            break;
+
         default: {
             fprintf(stderr, "syscall_%u(", callno);
             for (int i=0; i<6; i++)
@@ -3650,8 +2757,915 @@ RSIM_Thread::emulate_syscall()
     ROSE_ASSERT( this != NULL  );
 }
 
+void
+RSIM_Thread::sys_semtimedop(uint32_t semid, uint32_t sops_va, uint32_t nsops, uint32_t timeout_va)
+{
+    static const Translate sem_flags[] = {
+        TF(IPC_NOWAIT), TF(SEM_UNDO), T_END
+    };
+
+    if (nsops<1) {
+        syscall_return(-EINVAL);
+        return;
+    }
+
+    /* struct sembuf is the same on both 32- and 64-bit platforms */
+    sembuf sops[nsops * sizeof(sembuf)];
+    if (nsops*sizeof(sembuf)!=get_process()->mem_read(sops, sops_va, nsops*sizeof(sembuf))) {
+        syscall_return(-EFAULT);
+        return;
+    }
+    if (tracing(TRACE_SYSCALL)) {
+        fprintf(tracing(TRACE_SYSCALL), " <continued...>\n");
+        for (uint32_t i=0; i<nsops; i++) {
+            fprintf(tracing(TRACE_SYSCALL), "    sops[%"PRIu32"] = { num=%"PRIu16", op=%"PRId16", flg=",
+                    i, sops[i].sem_num, sops[i].sem_op);
+            print_flags(tracing(TRACE_SYSCALL), sem_flags, sops[i].sem_flg);
+            fprintf(tracing(TRACE_SYSCALL), " }\n");
+        }
+        fprintf(tracing(TRACE_SYSCALL), "%32s", "= ");
+    }
+
+    timespec host_timeout;
+    if (timeout_va) {
+        timespec_32 guest_timeout;
+        if (sizeof(guest_timeout)!=get_process()->mem_read(&guest_timeout, timeout_va, sizeof guest_timeout)) {
+            syscall_return(-EFAULT);
+            return;
+        }
+        host_timeout.tv_sec = guest_timeout.tv_sec;
+        host_timeout.tv_nsec = guest_timeout.tv_nsec;
+    }
+
+    int result = semtimedop(semid, sops, nsops, timeout_va?&host_timeout:NULL);
+    syscall_return(-1==result?-errno:result);
+}
+
+void
+RSIM_Thread::sys_semget(uint32_t key, uint32_t nsems, uint32_t semflg)
+{
+#ifdef SYS_ipc /* i686 */
+    int result = syscall(SYS_ipc, 2, key, nsems, semflg);
+#else
+    int result = syscall(SYS_semget, key, nsems, semflg);
+#endif
+    syscall_return(-1==result?-errno:result);
+}
+
+void
+RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t semun_va)
+{
+    int version = cmd & 0x0100/*IPC_64*/;
+    cmd &= ~0x0100;
+
+    ROSE_ASSERT(version!=0);
+
+    union semun_32 {
+        uint32_t val;
+        uint32_t ptr;
+    };
+
+    union semun_native {
+        int val;
+        void *ptr;
+    };
+
+    semun_32 guest_semun;
+    if (sizeof(guest_semun)!=get_process()->mem_read(&guest_semun, semun_va, sizeof guest_semun)) {
+        syscall_return(-EFAULT);
+        return;
+    }
+    
+
+    switch (cmd) {
+        case 3:         /* IPC_INFO */
+        case 19: {      /* SEM_INFO */
+            seminfo host_seminfo;
+#ifdef SYS_ipc /* i686 */
+            ROSE_ASSERT(version!=0);
+            semun_native host_semun;
+            host_semun.ptr = &host_seminfo;
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &host_semun);
+#else
+            int result = syscall(SYS_semctl, semid, semnum, cmd, &host_seminfo);
+#endif
+            if (-1==result) {
+                syscall_return(-errno);
+                return;
+            }
+
+            seminfo_32 guest_seminfo;
+            guest_seminfo.semmap = host_seminfo.semmap;
+            guest_seminfo.semmni = host_seminfo.semmni;
+            guest_seminfo.semmns = host_seminfo.semmns;
+            guest_seminfo.semmnu = host_seminfo.semmnu;
+            guest_seminfo.semmsl = host_seminfo.semmsl;
+            guest_seminfo.semopm = host_seminfo.semopm;
+            guest_seminfo.semume = host_seminfo.semume;
+            guest_seminfo.semusz = host_seminfo.semusz;
+            guest_seminfo.semvmx = host_seminfo.semvmx;
+            guest_seminfo.semaem = host_seminfo.semaem;
+            if (sizeof(guest_seminfo)!=get_process()->mem_write(&guest_seminfo, guest_semun.ptr, sizeof guest_seminfo)) {
+                syscall_return(-EFAULT);
+                return;
+            }
+
+            syscall_return(result);
+            break;
+        }
+
+        case 2:         /* IPC_STAT */
+        case 18: {      /* SEM_STAT */
+            semid_ds host_ds;
+#ifdef SYS_ipc /* i686 */
+            ROSE_ASSERT(version!=0);
+            semun_native host_semun;
+            host_semun.ptr = &host_ds;
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &host_semun);
+#else
+            int result = syscall(SYS_semctl, semid, semnum, cmd, &host_ds);
+#endif
+            if (-1==result) {
+                syscall_return(-errno);
+                return;
+            }
+
+            semid64_ds_32 guest_ds;
+            guest_ds.sem_perm.key = host_ds.sem_perm.__key;
+            guest_ds.sem_perm.uid = host_ds.sem_perm.uid;
+            guest_ds.sem_perm.gid = host_ds.sem_perm.gid;
+            guest_ds.sem_perm.cuid = host_ds.sem_perm.cuid;
+            guest_ds.sem_perm.cgid = host_ds.sem_perm.cgid;
+            guest_ds.sem_perm.mode = host_ds.sem_perm.mode;
+            guest_ds.sem_perm.pad1 = host_ds.sem_perm.__pad1;
+            guest_ds.sem_perm.seq = host_ds.sem_perm.__seq;
+            guest_ds.sem_perm.pad2 = host_ds.sem_perm.__pad2;
+            guest_ds.sem_perm.unused1 = host_ds.sem_perm.__unused1;
+            guest_ds.sem_perm.unused2 = host_ds.sem_perm.__unused1;
+            guest_ds.sem_otime = host_ds.sem_otime;
+            guest_ds.unused1 = host_ds.__unused1;
+            guest_ds.sem_ctime = host_ds.sem_ctime;
+            guest_ds.unused2 = host_ds.__unused2;
+            guest_ds.sem_nsems = host_ds.sem_nsems;
+            guest_ds.unused3 = host_ds.__unused3;
+            guest_ds.unused4 = host_ds.__unused4;
+            if (sizeof(guest_ds)!=get_process()->mem_write(&guest_ds, guest_semun.ptr, sizeof guest_ds)) {
+                syscall_return(-EFAULT);
+                return;
+            }
+                        
+            syscall_return(result);
+            break;
+        };
+
+        case 1: {       /* IPC_SET */
+            semid64_ds_32 guest_ds;
+            if (sizeof(guest_ds)!=get_process()->mem_read(&guest_ds, guest_semun.ptr, sizeof(guest_ds))) {
+                syscall_return(-EFAULT);
+                return;
+            }
+#ifdef SYS_ipc  /* i686 */
+            ROSE_ASSERT(version!=0);
+            semun_native semun;
+            semun.ptr = &guest_ds;
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &semun);
+#else           /* amd64 */
+            semid_ds host_ds;
+            host_ds.sem_perm.__key = guest_ds.sem_perm.key;
+            host_ds.sem_perm.uid = guest_ds.sem_perm.uid;
+            host_ds.sem_perm.gid = guest_ds.sem_perm.gid;
+            host_ds.sem_perm.cuid = guest_ds.sem_perm.cuid;
+            host_ds.sem_perm.cgid = guest_ds.sem_perm.cgid;
+            host_ds.sem_perm.mode = guest_ds.sem_perm.mode;
+            host_ds.sem_perm.__pad1 = guest_ds.sem_perm.pad1;
+            host_ds.sem_perm.__seq = guest_ds.sem_perm.seq;
+            host_ds.sem_perm.__pad2 = guest_ds.sem_perm.pad2;
+            host_ds.sem_perm.__unused1 = guest_ds.sem_perm.unused1;
+            host_ds.sem_perm.__unused1 = guest_ds.sem_perm.unused2;
+            host_ds.sem_otime = guest_ds.sem_otime;
+            host_ds.__unused1 = guest_ds.unused1;
+            host_ds.sem_ctime = guest_ds.sem_ctime;
+            host_ds.__unused2 = guest_ds.unused2;
+            host_ds.sem_nsems = guest_ds.sem_nsems;
+            host_ds.__unused3 = guest_ds.unused3;
+            host_ds.__unused4 = guest_ds.unused4;
+            int result = syscall(SYS_semctl, semid, semnum, cmd, &host_ds);
+#endif
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        case 13: {      /* GETALL */
+            semid_ds host_ds;
+            int result = semctl(semid, -1, IPC_STAT, &host_ds);
+            if (-1==result) {
+                syscall_return(-errno);
+                return;
+            }
+            if (host_ds.sem_nsems<1) {
+                syscall_return(-EINVAL);
+                return;
+            }
+            size_t nbytes = 2 * host_ds.sem_nsems;
+            if (NULL==get_process()->my_addr(guest_semun.ptr, nbytes)) {
+                syscall_return(-EFAULT);
+                return;
+            }
+            uint16_t *sem_values = new uint16_t[host_ds.sem_nsems];
+#ifdef SYS_ipc  /* i686 */
+            semun_native semun;
+            semun.ptr = sem_values;
+            result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &semun);
+#else
+            result = syscall(SYS_semctl, semid, semnum, cmd, sem_values);
+#endif
+            if (-1==result) {
+                delete[] sem_values;
+                syscall_return(-errno);
+                return;
+            }
+            if (nbytes!=get_process()->mem_write(sem_values, guest_semun.ptr, nbytes)) {
+                delete[] sem_values;
+                syscall_return(-EFAULT);
+                return;
+            }
+            if (tracing(TRACE_SYSCALL)) {
+                fprintf(tracing(TRACE_SYSCALL), "<continued...>\n");
+                for (size_t i=0; i<host_ds.sem_nsems; i++) {
+                    fprintf(tracing(TRACE_SYSCALL), "    value[%zu] = %"PRId16"\n", i, sem_values[i]);
+                }
+                fprintf(tracing(TRACE_SYSCALL), "%32s", "= ");
+            }
+            delete[] sem_values;
+            syscall_return(result);
+            break;
+        }
+            
+        case 17: {      /* SETALL */
+            semid_ds host_ds;
+            int result = semctl(semid, -1, IPC_STAT, &host_ds);
+            if (-1==result) {
+                syscall_return(-errno);
+                return;
+            }
+            if (host_ds.sem_nsems<1) {
+                syscall_return(-EINVAL);
+                return;
+            }
+            uint16_t *sem_values = new uint16_t[host_ds.sem_nsems];
+            size_t nbytes = 2 * host_ds.sem_nsems;
+            if (nbytes!=get_process()->mem_read(sem_values, guest_semun.ptr, nbytes)) {
+                delete[] sem_values;
+                syscall_return(-EFAULT);
+                return;
+            }
+            if (tracing(TRACE_SYSCALL)) {
+                fprintf(tracing(TRACE_SYSCALL), "<continued...>\n");
+                for (size_t i=0; i<host_ds.sem_nsems; i++) {
+                    fprintf(tracing(TRACE_SYSCALL), "    value[%zu] = %"PRId16"\n", i, sem_values[i]);
+                }
+                fprintf(tracing(TRACE_SYSCALL), "%32s", "= ");
+            }
+#ifdef SYS_ipc  /* i686 */
+            semun_native semun;
+            semun.ptr = sem_values;
+            result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &semun);
+#else
+            result = syscall(SYS_semctl, semid, semnum, cmd, sem_values);
+#endif
+            syscall_return(-1==result?-errno:result);
+            delete[] sem_values;
+            break;
+        }
+
+        case 11:        /* GETPID */
+        case 12:        /* GETVAL */
+        case 15:        /* GETZCNT */
+        case 14: {      /* GETNCNT */
+            int result = semctl(semid, semnum, cmd, NULL);
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        case 16: {      /* SETVAL */
+#ifdef SYS_ipc  /* i686 */
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &guest_semun);
+#else
+            int result = syscall(SYS_semctl, semid, semnum, cmd, guest_semun.val);
+#endif
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        case 0: {       /* IPC_RMID */
+#ifdef SYS_ipc /* i686 */
+            semun_native host_semun;
+            memset(&host_semun, 0, sizeof host_semun);
+            int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &host_semun);
+#else
+            int result = semctl(semid, semnum, cmd, NULL);
+#endif
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        default:
+            syscall_return(-EINVAL);
+            return;
+    }
+}
 
 
+void
+RSIM_Thread::sys_msgsnd(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgflg)
+{
+    if (msgsz>65535) { /* 65535 >= MSGMAX; smaller limit errors are detected in actual syscall */
+        syscall_return(-EINVAL);
+        return;
+    }
+
+    /* Read the message buffer from the specimen. */
+    uint8_t *buf = new uint8_t[msgsz+8]; /* msgsz does not include "long mtype", only "char mtext[]" */
+    if (!buf) {
+        syscall_return(-ENOMEM);
+        return;
+    }
+    if (4+msgsz!=get_process()->mem_read(buf, msgp_va, 4+msgsz)) {
+        delete[] buf;
+        syscall_return(-EFAULT);
+        return;
+    }
+
+    /* Message type must be positive */
+    if (*(int32_t*)buf <= 0) {
+        delete[] buf;
+        syscall_return(-EINVAL);
+        return;
+    }
+
+    /* Convert message type from four to eight bytes if necessary */
+    if (4!=sizeof(long)) {
+        ROSE_ASSERT(8==sizeof(long));
+        memmove(buf+8, buf+4, msgsz);
+        memset(buf+4, 0, 4);
+    }
+
+    /* Try to send the message */
+    int result = msgsnd(msqid, buf, msgsz, msgflg);
+    if (-1==result) {
+        delete[] buf;
+        syscall_return(-errno);
+        return;
+    }
+
+    delete[] buf;
+    syscall_return(result);
+}
+
+void
+RSIM_Thread::sys_msgrcv(uint32_t msqid, uint32_t msgp_va, uint32_t msgsz, uint32_t msgtyp, uint32_t msgflg)
+{
+    if (msgsz>65535) { /* 65535 >= MSGMAX; smaller limit errors are detected in actual syscall */
+        syscall_return(-EINVAL);
+        return;
+    }
+
+    uint8_t *buf = new uint8_t[msgsz+8]; /* msgsz does not include "long mtype", only "char mtext[]" */
+    int result = msgrcv(msqid, buf, msgsz, msgtyp, msgflg);
+    if (-1==result) {
+        delete[] buf;
+        syscall_return(-errno);
+        return;
+    }
+
+    if (4!=sizeof(long)) {
+        ROSE_ASSERT(8==sizeof(long));
+        uint64_t type = *(uint64_t*)buf;
+        ROSE_ASSERT(0 == (type >> 32));
+        memmove(buf+4, buf+8, msgsz);
+    }
+
+    if (4+msgsz!=get_process()->mem_write(buf, msgp_va, 4+msgsz)) {
+        delete[] buf;
+        syscall_return(-EFAULT);
+        return;
+    }
+
+    delete[] buf;
+    syscall_return(result);
+}
+
+void
+RSIM_Thread::sys_msgget(uint32_t key, uint32_t msgflg)
+{
+    int result = msgget(key, msgflg);
+    syscall_return(-1==result?-errno:result);
+}
+
+void
+RSIM_Thread::sys_msgctl(uint32_t msqid, uint32_t cmd, uint32_t buf_va)
+{
+    int version = cmd & 0x0100/*IPC_64*/;
+    cmd &= ~0x0100;
+
+    switch (cmd) {
+        case 3:    /* IPC_INFO */
+        case 12: { /* MSG_INFO */
+            syscall_return(-ENOSYS);              /* FIXME */
+            break;
+        }
+
+        case 2:    /* IPC_STAT */
+        case 11: { /* MSG_STAT */
+            ROSE_ASSERT(0x0100==version); /* we're assuming ipc64_perm and msqid_ds from the kernel */
+            static msqid_ds host_ds;
+            int result = msgctl(msqid, cmd, &host_ds);
+            if (-1==result) {
+                syscall_return(-errno);
+                break;
+            }
+
+            msqid64_ds_32 guest_ds;
+            guest_ds.msg_perm.key = host_ds.msg_perm.__key;
+            guest_ds.msg_perm.uid = host_ds.msg_perm.uid;
+            guest_ds.msg_perm.gid = host_ds.msg_perm.gid;
+            guest_ds.msg_perm.cuid = host_ds.msg_perm.cuid;
+            guest_ds.msg_perm.cgid = host_ds.msg_perm.cgid;
+            guest_ds.msg_perm.mode = host_ds.msg_perm.mode;
+            guest_ds.msg_perm.pad1 = host_ds.msg_perm.__pad1;
+            guest_ds.msg_perm.seq = host_ds.msg_perm.__seq;
+            guest_ds.msg_perm.pad2 = host_ds.msg_perm.__pad2;
+            guest_ds.msg_perm.unused1 = host_ds.msg_perm.__unused1;
+            guest_ds.msg_perm.unused2 = host_ds.msg_perm.__unused2;
+            guest_ds.msg_stime = host_ds.msg_stime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused1 = host_ds.__unused1;
+#endif
+            guest_ds.msg_rtime = host_ds.msg_rtime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused2 = host_ds.__unused2;
+#endif
+            guest_ds.msg_ctime = host_ds.msg_ctime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused3 = host_ds.__unused3;
+#endif
+            guest_ds.msg_cbytes = host_ds.__msg_cbytes;
+            guest_ds.msg_qnum = host_ds.msg_qnum;
+            guest_ds.msg_qbytes = host_ds.msg_qbytes;
+            guest_ds.msg_lspid = host_ds.msg_lspid;
+            guest_ds.msg_lrpid = host_ds.msg_lrpid;
+            guest_ds.unused4 = host_ds.__unused4;
+            guest_ds.unused5 = host_ds.__unused5;
+
+            if (sizeof(guest_ds)!=get_process()->mem_write(&guest_ds, buf_va, sizeof guest_ds)) {
+                syscall_return(-EFAULT);
+                break;
+            }
+
+            syscall_return(result);
+            break;
+        }
+
+        case 0: { /* IPC_RMID */
+            /* NOTE: syscall tracing will not show "IPC_RMID" if the IPC_64 flag is also present */
+            int result = msgctl(msqid, cmd, NULL);
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        case 1: { /* IPC_SET */
+            msqid64_ds_32 guest_ds;
+            if (sizeof(guest_ds)!=get_process()->mem_read(&guest_ds, buf_va, sizeof guest_ds)) {
+                syscall_return(-EFAULT);
+                break;
+            }
+
+            static msqid_ds host_ds;
+            host_ds.msg_perm.__key = guest_ds.msg_perm.key;
+            host_ds.msg_perm.uid = guest_ds.msg_perm.uid;
+            host_ds.msg_perm.gid = guest_ds.msg_perm.gid;
+            host_ds.msg_perm.cuid = guest_ds.msg_perm.cuid;
+            host_ds.msg_perm.cgid = guest_ds.msg_perm.cgid;
+            host_ds.msg_perm.mode = guest_ds.msg_perm.mode;
+            host_ds.msg_perm.__seq = guest_ds.msg_perm.seq;
+            host_ds.msg_stime = guest_ds.msg_stime;
+            host_ds.msg_rtime = guest_ds.msg_rtime;
+            host_ds.msg_ctime = guest_ds.msg_ctime;
+            host_ds.__msg_cbytes = guest_ds.msg_cbytes;
+            host_ds.msg_qnum = guest_ds.msg_qnum;
+            host_ds.msg_qbytes = guest_ds.msg_qbytes;
+            host_ds.msg_lspid = guest_ds.msg_lspid;
+            host_ds.msg_lrpid = guest_ds.msg_lrpid;
+
+            int result = msgctl(msqid, cmd, &host_ds);
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        default: {
+            syscall_return(-EINVAL);
+            break;
+        }
+    }
+}
+
+void
+RSIM_Thread::sys_shmdt(uint32_t shmaddr_va)
+{
+    int result = -ENOSYS;
+
+    RTS_WRITE(get_process()->rwlock()) {
+        const MemoryMap::MapElement *me = get_process()->get_memory()->find(shmaddr_va);
+        if (!me || me->get_va()!=shmaddr_va || me->get_offset()!=0 || me->is_anonymous()) {
+            result = -EINVAL;
+            break;
+        }
+
+        result = shmdt(me->get_base());
+        if (-1==result) {
+            result = -errno;
+            break;
+        }
+
+        get_process()->mem_unmap(me->get_va(), me->get_size());
+        result = 0;
+    } RTS_WRITE_END;
+    syscall_return(result);
+}
+
+void
+RSIM_Thread::sys_shmget(uint32_t key, uint32_t size, uint32_t shmflg)
+{
+    int result = shmget(key, size, shmflg);
+    syscall_return(-1==result?-errno:result);
+}
+
+void
+RSIM_Thread::sys_shmctl(uint32_t shmid, uint32_t cmd, uint32_t buf_va)
+{
+    int version = cmd & 0x0100/*IPC_64*/;
+    cmd &= ~0x0100;
+
+    switch (cmd) {
+        case 13:  /* SHM_STAT */
+        case 2: { /* IPC_STAT */
+            ROSE_ASSERT(0x0100==version); /* we're assuming ipc64_perm and shmid_ds from the kernel */
+            static shmid_ds host_ds;
+            int result = shmctl(shmid, cmd, &host_ds);
+            if (-1==result) {
+                syscall_return(-errno);
+                break;
+            }
+
+            shmid64_ds_32 guest_ds;
+            guest_ds.shm_perm.key = host_ds.shm_perm.__key;
+            guest_ds.shm_perm.uid = host_ds.shm_perm.uid;
+            guest_ds.shm_perm.gid = host_ds.shm_perm.gid;
+            guest_ds.shm_perm.cuid = host_ds.shm_perm.cuid;
+            guest_ds.shm_perm.cgid = host_ds.shm_perm.cgid;
+            guest_ds.shm_perm.mode = host_ds.shm_perm.mode;
+            guest_ds.shm_perm.pad1 = host_ds.shm_perm.__pad1;
+            guest_ds.shm_perm.seq = host_ds.shm_perm.__seq;
+            guest_ds.shm_perm.pad2 = host_ds.shm_perm.__pad2;
+            guest_ds.shm_perm.unused1 = host_ds.shm_perm.__unused1;
+            guest_ds.shm_perm.unused2 = host_ds.shm_perm.__unused2;
+            guest_ds.shm_segsz = host_ds.shm_segsz;
+            guest_ds.shm_atime = host_ds.shm_atime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused1 = host_ds.__unused1;
+#endif
+            guest_ds.shm_dtime = host_ds.shm_dtime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused2 = host_ds.__unused2;
+#endif
+            guest_ds.shm_ctime = host_ds.shm_ctime;
+#if 4==SIZEOF_LONG
+            guest_ds.unused3 = host_ds.__unused3;
+#endif
+            guest_ds.shm_cpid = host_ds.shm_cpid;
+            guest_ds.shm_lpid = host_ds.shm_lpid;
+            guest_ds.shm_nattch = host_ds.shm_nattch;
+            guest_ds.unused4 = host_ds.__unused4;
+            guest_ds.unused5 = host_ds.__unused5;
+
+            if (sizeof(guest_ds)!=get_process()->mem_write(&guest_ds, buf_va, sizeof guest_ds)) {
+                syscall_return(-EFAULT);
+                break;
+            }
+
+            syscall_return(result);
+            break;
+        }
+
+        case 14: { /* SHM_INFO */
+            shm_info host_info;
+            int result = shmctl(shmid, cmd, (shmid_ds*)&host_info);
+            if (-1==result) {
+                syscall_return(-errno);
+                break;
+            }
+
+            shm_info_32 guest_info;
+            guest_info.used_ids = host_info.used_ids;
+            guest_info.shm_tot = host_info.shm_tot;
+            guest_info.shm_rss = host_info.shm_rss;
+            guest_info.shm_swp = host_info.shm_swp;
+            guest_info.swap_attempts = host_info.swap_attempts;
+            guest_info.swap_successes = host_info.swap_successes;
+
+            if (sizeof(guest_info)!=get_process()->mem_write(&guest_info, buf_va, sizeof guest_info)) {
+                syscall_return(-EFAULT);
+                break;
+            }
+
+            syscall_return(result);
+            break;
+        }
+
+        case 3: { /* IPC_INFO */
+            shminfo64_native host_info;
+            int result = shmctl(shmid, cmd, (shmid_ds*)&host_info);
+            if (-1==result) {
+                syscall_return(-errno);
+                return;
+            }
+
+            shminfo64_32 guest_info;
+            guest_info.shmmax = host_info.shmmax;
+            guest_info.shmmin = host_info.shmmin;
+            guest_info.shmmni = host_info.shmmni;
+            guest_info.shmseg = host_info.shmseg;
+            guest_info.shmall = host_info.shmall;
+            guest_info.unused1 = host_info.unused1;
+            guest_info.unused2 = host_info.unused2;
+            guest_info.unused3 = host_info.unused3;
+            guest_info.unused4 = host_info.unused4;
+            if (sizeof(guest_info)!=get_process()->mem_write(&guest_info, buf_va, sizeof guest_info)) {
+                syscall_return(-EFAULT);
+                return;
+            }
+
+            syscall_return(result);
+            break;
+        }
+
+        case 11:   /* SHM_LOCK */
+        case 12: { /* SHM_UNLOCK */
+            int result = shmctl(shmid, cmd, NULL);
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        case 1: { /* IPC_SET */
+            ROSE_ASSERT(version!=0);
+            shmid64_ds_32 guest_ds;
+            if (sizeof(guest_ds)!=get_process()->mem_read(&guest_ds, buf_va, sizeof guest_ds)) {
+                syscall_return(-EFAULT);
+                return;
+            }
+            shmid_ds host_ds;
+            host_ds.shm_perm.__key = guest_ds.shm_perm.key;
+            host_ds.shm_perm.uid = guest_ds.shm_perm.uid;
+            host_ds.shm_perm.gid = guest_ds.shm_perm.gid;
+            host_ds.shm_perm.cuid = guest_ds.shm_perm.cuid;
+            host_ds.shm_perm.cgid = guest_ds.shm_perm.cgid;
+            host_ds.shm_perm.mode = guest_ds.shm_perm.mode;
+            host_ds.shm_perm.__pad1 = guest_ds.shm_perm.pad1;
+            host_ds.shm_perm.__seq = guest_ds.shm_perm.seq;
+            host_ds.shm_perm.__pad2 = guest_ds.shm_perm.pad2;
+            host_ds.shm_perm.__unused1 = guest_ds.shm_perm.unused1;
+            host_ds.shm_perm.__unused2 = guest_ds.shm_perm.unused2;
+            host_ds.shm_segsz = guest_ds.shm_segsz;
+            host_ds.shm_atime = guest_ds.shm_atime;
+#if 4==SIZEOF_LONG
+            host_ds.__unused1 = guest_ds.unused1;
+#endif
+            host_ds.shm_dtime = guest_ds.shm_dtime;
+#if 4==SIZEOF_LONG
+            host_ds.__unused2 = guest_ds.unused2;
+#endif
+            host_ds.shm_ctime = guest_ds.shm_ctime;
+#if 4==SIZEOF_LONG
+            host_ds.__unused3 = guest_ds.unused3;
+#endif
+            host_ds.shm_cpid = guest_ds.shm_cpid;
+            host_ds.shm_lpid = guest_ds.shm_lpid;
+            host_ds.shm_nattch = guest_ds.shm_nattch;
+            host_ds.__unused4 = guest_ds.unused4;
+            host_ds.__unused5 = guest_ds.unused5;
+
+            int result = shmctl(shmid, cmd, &host_ds);
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        case 0: { /* IPC_RMID */
+            int result = shmctl(shmid, cmd, NULL);
+            syscall_return(-1==result?-errno:result);
+            break;
+        }
+
+        default: {
+            syscall_return(-EINVAL);
+            break;
+        }
+    }
+}
+
+void
+RSIM_Thread::sys_shmat(uint32_t shmid, uint32_t shmflg, uint32_t result_va, uint32_t shmaddr)
+{
+    int result = -ENOSYS;
+
+    RTS_WRITE(get_process()->rwlock()) {
+        if (0==shmaddr) {
+            shmaddr = get_process()->get_memory()->find_last_free();
+        } else if (shmflg & SHM_RND) {
+            shmaddr = ALIGN_DN(shmaddr, SHMLBA);
+        } else if (ALIGN_DN(shmaddr, 4096)!=shmaddr) {
+            result = -EINVAL;
+            break;
+        }
+
+        /* We don't handle SHM_REMAP */
+        if (shmflg & SHM_REMAP) {
+            result = -EINVAL;
+            break;
+        }
+
+        /* Map shared memory into the simulator. It's OK to hold the write lock here because this syscall doesn't block. */
+        void *buf = shmat(shmid, NULL, shmflg);
+        if (!buf) {
+            result = -errno;
+            break;
+        }
+
+        /* Map simulator's shared memory into the specimen */
+        shmid_ds ds;
+        int status = shmctl(shmid, IPC_STAT, &ds); // does not block
+        ROSE_ASSERT(status>=0);
+        ROSE_ASSERT(ds.shm_segsz>0);
+        unsigned perms = MemoryMap::MM_PROT_READ | ((shmflg & SHM_RDONLY) ? 0 : MemoryMap::MM_PROT_WRITE);
+        MemoryMap::MapElement shm(shmaddr, ds.shm_segsz, buf, 0, perms);
+        shm.set_name("shmat("+StringUtility::numberToString(shmid)+")");
+        get_process()->get_memory()->insert(shm);
+
+        /* Return values */
+        if (4!=get_process()->mem_write(&shmaddr, result_va, 4)) {
+            result = -EFAULT;
+            break;
+        }
+        syscall_return(shmaddr);
+        result = 0;
+    } RTS_WRITE_END;
+    if (result)
+        syscall_return(result);
+}
+
+void
+RSIM_Thread::sys_socket(int family, int type, int protocol)
+{
+#ifdef SYS_socketcall /* i686 */
+    ROSE_ASSERT(4==sizeof(int));
+    int a[3];
+    a[0] = family;
+    a[1] = type;
+    a[2] = protocol;
+    int result = syscall(SYS_socketcall, 1/*SYS_SOCKET*/, a);
+#else /* amd64 */
+    int result = syscall(SYS_socket, family, type, protocol);
+#endif
+    syscall_return(-1==result?-errno:result);
+}
+
+void
+RSIM_Thread::sys_bind(int fd, uint32_t addr_va, uint32_t addrlen)
+{
+    if (addrlen<1 || addrlen>4096) {
+        syscall_return(-EINVAL);
+        return;
+    }
+    uint8_t *addrbuf = new uint8_t[addrlen];
+    if (addrlen!=get_process()->mem_read(addrbuf, addr_va, addrlen)) {
+        syscall_return(-EFAULT);
+        delete[] addrbuf;
+        return;
+    }
+
+#ifdef SYS_socketcall /* i686 */
+    ROSE_ASSERT(4==sizeof(int));
+    ROSE_ASSERT(4==sizeof(void*));
+    int a[3];
+    a[0] = fd;
+    a[1] = (int)addrbuf;
+    a[2] = addrlen;
+    int result = syscall(SYS_socketcall, 2/*SYS_BIND*/, a);
+#else /* amd64 */
+    int result = syscall(SYS_bind, fd, addrbuf, addrlen);
+#endif
+    syscall_return(-1==result?-errno:result);
+    delete[] addrbuf;
+}
+
+void
+RSIM_Thread::sys_listen(int fd, int backlog)
+{
+#ifdef SYS_socketcall /* i686 */
+    ROSE_ASSERT(4==sizeof(int));
+    int a[2];
+    a[0] = fd;
+    a[1] = backlog;
+    int result = syscall(SYS_socketcall, 4/*SYS_LISTEN*/, a);
+#else /* amd64 */
+    int result = syscall(SYS_listen, fd, backlog);
+#endif
+    syscall_return(-1==result?-errno:result);
+}
+
+int
+RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, uint32_t child_tid_va, uint32_t pt_regs_va)
+{
+    /* We cannot handle multiple threads yet. */
+    if (newsp || parent_tid_va || child_tid_va || (flags & (CLONE_VM|CLONE_THREAD)))
+        return -EINVAL;
+
+    /* ROSE simulates signal handling, therefore signal handlers cannot be shared. */
+    if (flags & CLONE_SIGHAND)
+        return -EINVAL;
+
+    /* We can only handle SIGCHLD (because there's no way to pass this to the fork() lib call */
+    if ((flags & 0xff) != SIGCHLD)
+        return -EINVAL;
+
+    /* Flush some files so buffered content isn't output twice. */
+    fflush(stdout);
+    fflush(stderr);
+    if (tracing(TRACE_ALL))
+        fflush(tracing(TRACE_ALL));
+
+    /* We cannot use clone() because it's a wrapper around the clone system call and we'd need to provide a function for it to
+     * execute. We want fork-like semantics. */
+    pid_t pid = fork();
+    if (-1==pid)
+        return -errno;
+
+    if (0==pid) {
+        /* Pending signals are only for the parent */
+        signal_pending = 0;
+
+        /* Open new log files if necessary */
+        get_process()->open_trace_file();
+        get_process()->btrace_close();
+
+        /* Thread-related things. ROSE isn't multi-threaded and the simulator doesn't support multi-threading, but we still
+         * have to initialize a few data structures because the specimen may be using a thread-aware library. */
+        if (0!=(flags & CLONE_CHILD_SETTID)) {
+            set_child_tid = child_tid_va;
+            if (set_child_tid) {
+                uint32_t pid32 = getpid();
+                size_t nwritten = get_process()->mem_write(&pid32, set_child_tid, 4);
+                ROSE_ASSERT(4==nwritten);
+            }
+        }
+        if (0!=(flags & CLONE_CHILD_CLEARTID)) {
+            clear_child_tid = child_tid_va;
+        }
+
+        /* Return register values in child */
+        pt_regs_32 regs;
+        regs.bx = policy.readGPR(x86_gpr_bx).known_value();
+        regs.cx = policy.readGPR(x86_gpr_cx).known_value();
+        regs.dx = policy.readGPR(x86_gpr_dx).known_value();
+        regs.si = policy.readGPR(x86_gpr_si).known_value();
+        regs.di = policy.readGPR(x86_gpr_di).known_value();
+        regs.bp = policy.readGPR(x86_gpr_bp).known_value();
+        regs.sp = policy.readGPR(x86_gpr_sp).known_value();
+        regs.cs = policy.readSegreg(x86_segreg_cs).known_value();
+        regs.ds = policy.readSegreg(x86_segreg_ds).known_value();
+        regs.es = policy.readSegreg(x86_segreg_es).known_value();
+        regs.fs = policy.readSegreg(x86_segreg_fs).known_value();
+        regs.gs = policy.readSegreg(x86_segreg_gs).known_value();
+        regs.ss = policy.readSegreg(x86_segreg_ss).known_value();
+        uint32_t flags = 0;
+        for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
+            if (policy.readFlag((X86Flag)i).known_value()) {
+                flags |= (1u<<i);
+            }
+        }
+        if (sizeof(regs)!=get_process()->mem_write(&regs, pt_regs_va, sizeof regs))
+            return -EFAULT;
+
+#if 1 /*DEBUGGING*/
+        {
+            struct sigaction sa;
+            sigaction(SIGHUP, NULL, &sa);
+            fprintf(stderr, "ROBB: SIGHUP handler = %p\n", sa.sa_handler);
+        }
+#endif
+    }
+
+    return pid;
+}
 
 int
 main(int argc, char *argv[], char *envp[])

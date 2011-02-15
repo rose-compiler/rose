@@ -364,3 +364,4 @@ print_winsize_32(FILE *f, const uint8_t *_v, size_t sz)
     return fprintf(f, "ws_row=%"PRIu16", ws_col=%"PRIu16", ws_xpixel=%"PRIu16", ws_ypixel=%"PRIu16,
                    v->ws_row, v->ws_col, v->ws_xpixel, v->ws_ypixel);
 }
+

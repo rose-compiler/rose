@@ -239,7 +239,6 @@ RSIM_Simulator::activate()
 
             for (int i=1; i<=_NSIG; i++)
                 signal_installed[i] = -1==sigaction(i, &sa, signal_restore+i) ? -errno : 0;
-
         } else {
             ROSE_ASSERT(active_sim==this);
         }
@@ -297,6 +296,8 @@ RSIM_Simulator::signal_handler(int signo)
      * installed and reset after it is removed. */
     RSIM_Simulator *simulator = active_sim;
     assert(simulator!=NULL);
+    assert(simulator->get_process());
+    assert(simulator->get_process()->get_thread(getpid()));
 
 #if 0   /* not async signal safe */
     if (0==simulator->active)
