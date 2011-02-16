@@ -12,6 +12,15 @@ int main()
   
    /* Example of upc_blocksizeof() operator */
    nbytes = upc_blocksizeof(scatter_B);
+   nbytes = upc_blocksizeof(int);
+
+   /* Example of upc_localsizeof() operator */
+   nbytes = upc_localsizeof(scatter_B);
+   nbytes = upc_localsizeof(int);
+
+   /* Example of upc_elemsizeof() operator */
+   nbytes = upc_elemsizeof(scatter_B);
+   nbytes = upc_elemsizeof(int);
 
    return 0;
 }

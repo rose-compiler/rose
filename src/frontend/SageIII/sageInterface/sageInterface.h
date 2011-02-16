@@ -938,7 +938,7 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
   std::vector<SgGotoStatement*> findGotoStmts(SgStatement* scope, SgLabelStatement* l);
   std::vector<SgStatement*> getSwitchCases(SgSwitchStatement* sw);
 
-  //! Find a declaration given its name, scope, and defining or nondefining flag.
+  //! Find a declaration given its name, scope (optional, can be NULL), and defining or nondefining flag.
   template <typename T>
   T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
   {
@@ -946,9 +946,17 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
     T* decl = dynamic_cast<T*>(root);
     if (decl!=NULL)
     {
-     if ((decl->get_scope() == scope)&&
-       (decl->search_for_symbol_from_symbol_table()->get_name()==name))
-     return decl;
+      if (scope)
+      {
+        if ((decl->get_scope() == scope)&&
+            (decl->search_for_symbol_from_symbol_table()->get_name()==name))
+          return decl;
+      }
+      else // Liao 2/9/2010. We should allow NULL scope
+      {
+        if(decl->search_for_symbol_from_symbol_table()->get_name()==name)
+          return decl;
+      }
     }
 
     std::vector<SgNode*> children = root->get_traversalSuccessorContainer();

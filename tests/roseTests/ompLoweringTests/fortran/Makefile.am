@@ -17,11 +17,11 @@ F77_TESTCODES_REQUIRED_TO_RUN = \
   helloworld.f \
   jacobi.f \
   master.f \
-  ompdo-default.f \
   ompdo-decremental.f \
-  ompdo-static.f \
-  ompdo-orphaned.f \
+  ompdo-default.f \
   ompdo-multiple.f \
+  ompdo-orphaned.f \
+  ompdo-static.f \
   private.f \
   reduction.f \
   shared.f \

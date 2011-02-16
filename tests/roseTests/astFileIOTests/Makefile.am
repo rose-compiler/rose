@@ -413,11 +413,12 @@ check-local:
 	$(MAKE) test-read-tiny_02
 	$(MAKE) test-read-tiny_03
 	$(MAKE) test-read-short
-#	DQ (6/25/2010): Commented out testParallelMerge-short for now
-#	Test the parallel merge mechanism using different numbers of threads.
+# Liao 2/9/2011. boost thread_group may have bug on Mac OS X 10.6
+if !OS_MACOSX	
 	$(MAKE) testParallelMerge-short
 	$(MAKE) testParallelMerge-medium
 	$(MAKE) testParellelMerge-medium-serial
+endif
 if ROSE_USE_LONG_MAKE_CHECK_RULE
 #	DQ (7/4/2010): Make this only if running longer tests.
 	$(MAKE) test-read-medium
