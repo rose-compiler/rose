@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <pthread.h>
-#define TIMESTAMP_LEN 20
+#define TIMESTAMP_LEN 21
 
 typedef enum {FALSE, TRUE} bool;
 
