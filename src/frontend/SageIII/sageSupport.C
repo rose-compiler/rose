@@ -88,8 +88,10 @@ extern const std::string ROSE_GFORTRAN_PATH;
 #define snprintf _snprintf
 #endif
 
+// DQ (2/12/2011): Added const so that this could be called in get_mangled() (and more generally).
+// std::string SgValueExp::get_constant_folded_value_as_string()
 std::string
-SgValueExp::get_constant_folded_value_as_string()
+SgValueExp::get_constant_folded_value_as_string() const
    {
   // DQ (8/18/2009): Added support for generating a string from a SgValueExp.
   // Note that the point is not to call unparse since that would provide the 
@@ -102,7 +104,7 @@ SgValueExp::get_constant_folded_value_as_string()
         {
           case V_SgIntVal: 
              {
-               SgIntVal* integerValueExpression = isSgIntVal(this);
+               const SgIntVal* integerValueExpression = isSgIntVal(this);
                ROSE_ASSERT(integerValueExpression != NULL);
                int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %d \n",numericValue);
@@ -114,7 +116,7 @@ SgValueExp::get_constant_folded_value_as_string()
        // DQ (10/4/2010): Added case
           case V_SgLongIntVal: 
              {
-               SgLongIntVal* integerValueExpression = isSgLongIntVal(this);
+               const SgLongIntVal* integerValueExpression = isSgLongIntVal(this);
                ROSE_ASSERT(integerValueExpression != NULL);
                long int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %ld \n",numericValue);
@@ -126,7 +128,7 @@ SgValueExp::get_constant_folded_value_as_string()
        // DQ (10/5/2010): Added case
           case V_SgShortVal: 
              {
-               SgShortVal* integerValueExpression = isSgShortVal(this);
+               const SgShortVal* integerValueExpression = isSgShortVal(this);
                ROSE_ASSERT(integerValueExpression != NULL);
                short int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %ld \n",numericValue);
@@ -137,7 +139,7 @@ SgValueExp::get_constant_folded_value_as_string()
 
           case V_SgUnsignedLongLongIntVal:
              {
-               SgUnsignedLongLongIntVal* integerValueExpression = isSgUnsignedLongLongIntVal(this);
+               const SgUnsignedLongLongIntVal* integerValueExpression = isSgUnsignedLongLongIntVal(this);
                ROSE_ASSERT(integerValueExpression != NULL);
                unsigned long long int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %llu \n",numericValue);
@@ -149,7 +151,7 @@ SgValueExp::get_constant_folded_value_as_string()
        // DQ (8/19/2009): Added case
           case V_SgUnsignedLongVal:
              {
-               SgUnsignedLongVal* integerValueExpression = isSgUnsignedLongVal(this);
+               const SgUnsignedLongVal* integerValueExpression = isSgUnsignedLongVal(this);
                ROSE_ASSERT(integerValueExpression != NULL);
                unsigned long int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %llu \n",numericValue);
@@ -161,7 +163,7 @@ SgValueExp::get_constant_folded_value_as_string()
        // DQ (8/19/2009): Added case
           case V_SgUnsignedIntVal:
              {
-               SgUnsignedIntVal* integerValueExpression = isSgUnsignedIntVal(this);
+               const SgUnsignedIntVal* integerValueExpression = isSgUnsignedIntVal(this);
                ROSE_ASSERT(integerValueExpression != NULL);
                unsigned int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %llu \n",numericValue);
@@ -173,7 +175,7 @@ SgValueExp::get_constant_folded_value_as_string()
        // DQ (8/19/2009): Added case
           case V_SgBoolValExp:
              {
-               SgBoolValExp* booleanValueExpression = isSgBoolValExp(this);
+               const SgBoolValExp* booleanValueExpression = isSgBoolValExp(this);
                ROSE_ASSERT(booleanValueExpression != NULL);
                bool booleanValue = booleanValueExpression->get_value();
                snprintf (buffer,max_buffer_size,"%s",booleanValue == true ? "true" : "false");
@@ -184,7 +186,7 @@ SgValueExp::get_constant_folded_value_as_string()
        // DQ (8/19/2009): Added case
           case V_SgStringVal:
              {
-               SgStringVal* stringValueExpression = isSgStringVal(this);
+               const SgStringVal* stringValueExpression = isSgStringVal(this);
                ROSE_ASSERT(stringValueExpression != NULL);
                s = stringValueExpression->get_value();
                break;
@@ -193,7 +195,7 @@ SgValueExp::get_constant_folded_value_as_string()
        // DQ (8/19/2009): Added case
           case V_SgCharVal:
              {
-               SgCharVal* charValueExpression = isSgCharVal(this);
+               const SgCharVal* charValueExpression = isSgCharVal(this);
                ROSE_ASSERT(charValueExpression != NULL);
                s = charValueExpression->get_value();
                break;
@@ -202,7 +204,7 @@ SgValueExp::get_constant_folded_value_as_string()
        // DQ (10/4/2010): Added case
           case V_SgFloatVal:
              {
-               SgFloatVal* floatValueExpression = isSgFloatVal(this);
+               const SgFloatVal* floatValueExpression = isSgFloatVal(this);
                ROSE_ASSERT(floatValueExpression != NULL);
                float numericValue = floatValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %f \n",numericValue);
@@ -214,7 +216,7 @@ SgValueExp::get_constant_folded_value_as_string()
        // DQ (10/4/2010): Added case
           case V_SgDoubleVal:
              {
-               SgDoubleVal* floatValueExpression = isSgDoubleVal(this);
+               const SgDoubleVal* floatValueExpression = isSgDoubleVal(this);
                ROSE_ASSERT(floatValueExpression != NULL);
                double numericValue = floatValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %f \n",numericValue);
@@ -226,7 +228,7 @@ SgValueExp::get_constant_folded_value_as_string()
        // DQ (10/4/2010): Added case
           case V_SgLongDoubleVal:
              {
-               SgLongDoubleVal* floatValueExpression = isSgLongDoubleVal(this);
+               const SgLongDoubleVal* floatValueExpression = isSgLongDoubleVal(this);
                ROSE_ASSERT(floatValueExpression != NULL);
                long double numericValue = floatValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %f \n",numericValue);
@@ -238,7 +240,7 @@ SgValueExp::get_constant_folded_value_as_string()
        // DQ (10/4/2010): Added case
           case V_SgEnumVal: 
              {
-               SgEnumVal* enumValueExpression = isSgEnumVal(this);
+               const SgEnumVal* enumValueExpression = isSgEnumVal(this);
                ROSE_ASSERT(enumValueExpression != NULL);
                int numericValue = enumValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %d \n",numericValue);
