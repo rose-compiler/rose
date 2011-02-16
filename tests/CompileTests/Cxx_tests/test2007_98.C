@@ -13,8 +13,11 @@ lt-identityTranslator:
 SgAsmStmt* sage_gen_asm_decl(): Assertion false failed. 
 */
 
+// TOO (2/15/2011): error: "unrecognized opcode `ret`" for Thrifty g++ 3.4.4
+#if !( (__GNUC__ == 3) && (__GNUC_MINOR__ == 4) )
 __asm__ (
 ".text\n\t"
 "ret\n"
 );
+#endif
 

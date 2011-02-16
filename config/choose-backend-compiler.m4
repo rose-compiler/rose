@@ -15,8 +15,9 @@ dnl build using ROSE)
     [
     # Use a different compiler for the backend than for the compilation of ROSE source code
       BACKEND_CXX_COMPILER=$with_alternate_backend_Cxx_compiler
-
       echo "alternative back-end C++ compiler specified for generated translators to use: $BACKEND_CXX_COMPILER"
+
+      AC_SUBST(BACKEND_CXX_COMPILER)
     ] ,
     [ 
     # Alternatively use the specified C++ compiler
@@ -31,6 +32,8 @@ dnl build using ROSE)
     # Use a different compiler for the backend than for the compilation of ROSE source code
       BACKEND_C_COMPILER=$with_alternate_backend_C_compiler
       echo "alternative back-end C compiler specified for generated translators to use: $BACKEND_C_COMPILER"
+
+      AC_SUBST(BACKEND_C_COMPILER)
     ] ,
     [ 
     # Alternatively use the specified C compiler
@@ -46,6 +49,8 @@ dnl build using ROSE)
     # Use a different compiler for the backend than for the compilation of ROSE source code
       BACKEND_FORTRAN_COMPILER=$with_alternate_backend_fortran_compiler
       echo "alternative back-end fortran compiler specified for generated translators to use: $BACKEND_FORTRAN_COMPILER"
+
+      AC_SUBST(BACKEND_FORTRAN_COMPILER)
     ] ,
     [ 
     # Alternatively use the specified fortran compiler
@@ -54,13 +59,72 @@ dnl build using ROSE)
       echo "default back-end fortran compiler for generated translators to use: $BACKEND_FORTRAN_COMPILER"
     ])
 
-# DQ (8/29/2005): Added support for version numbering of backend compiler
+      AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_CXX_COMPILER, [test "x$with_alternate_backend_Cxx_compiler" != "x"])
+      AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_C_COMPILER, [test "x$with_alternate_backend_C_compiler" != "x"])
+      AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_FORTRAN_COMPILER, [test "x$with_alternate_backend_fortran_compiler" != "x"])
+
+# TOO (2/15/2011): TODO: create separate macro call to check cross-compilation
+    IS_ALTERNATE_BACKEND_C_CROSS_COMPILER=false
+    if test "x$with_alternate_backend_C_compiler" != x; then
+      AC_LANG_PUSH([C])
+      save_cc=$CC
+      CC="$with_alternate_backend_C_compiler"
+      echo "Checking if the backend C compiler $CC is cross-compiling..."
+      echo "Running a simple program with the backend C compiler: $CC..."
+      AC_RUN_IFELSE([
+        AC_LANG_SOURCE([[
+          int main (int argc, char* argv[]) {
+            return 0;
+          }
+        ]])
+       ],
+       [echo "Successfully ran a simple program with the backend C compiler: $CC"],
+       [echo "FAILED to run a simple program with the backend C compiler"
+        IS_ALTERNATE_BACKEND_C_CROSS_COMPILER=true
+       ], [])
+      CC=$save_cc
+      AC_LANG_POP([C])
+    fi
+
+echo "=> cross-compiling... $IS_ALTERNATE_BACKEND_C_CROSS_COMPILER"
+AM_CONDITIONAL(ALTERNATE_BACKEND_C_CROSS_COMPILER, ["$IS_ALTERNATE_BACKEND_C_CROSS_COMPILER"])
+
+
+  BACKEND_CXX_COMPILER_VERSION=`echo|$BACKEND_CXX_COMPILER -dumpversion`
+# DQ (8/29/2005): Added support for version numbering of backend C++ compiler
   BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
   BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
 
 # echo "back-end compiler for generated translators to use will be: $BACKEND_CXX_COMPILER"
   echo "     C++ back-end compiler major version number = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
   echo "     C++ back-end compiler minor version number = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+
+
+
+# TOO (2/14/2011): Added support for version numbering of backend C compiler, which assumes
+# a version format of: \d.\d.\d or __GNUC__.__GNUC_MINOR__.__GNUC_PATCHLEVEL__
+# The GNUC_* naming is to be consistent with the pre-defined GNU C macros.
+  BACKEND_C_COMPILER_VERSION=`echo|$BACKEND_C_COMPILER -dumpversion`
+#  BACKEND__GNUC__=`echo|$BACKEND_C_COMPILER -dumpversion | cut -d\. -f1`
+#  BACKEND__GNUC_MINOR__=`echo|$BACKEND_C_COMPILER -dumpversion | cut -d\. -f2`
+#  BACKEND__GNUC_PATCHLEVEL__=`echo|$BACKEND_C_COMPILER -dumpversion | cut -d\. -f3`
+
+#  echo "     C back-end compiler __GNUC__ = $BACKEND__GNUC__"
+#  echo "     C back-end compiler __GNUC_MINOR__ = $BACKEND__GNUC_MINOR__"
+#  echo "     C back-end compiler __GNUC_PATCHLEVEL__ = $BACKEND__GNUC_PATCHLEVEL__"
+
+#  AC_SUBST(BACKEND__GNUC__)
+#  AC_SUBST(BACKEND__GNUC_MINOR__)
+#  AC_SUBST(BACKEND__GNUC_PATCHLEVEL__)
+
+  AM_CONDITIONAL(USING_GCC_3_4_4_BACKEND_COMPILER, [test "x$BACKEND_C_COMPILER_VERSION" == "x3.4.4"])
+
+# TOO (2/14/2011): enforce backend compilers to be the same version
+if test "x$BACKEND_CXX_COMPILER_VERSION" != "x$BACKEND_C_COMPILER_VERSION"; then
+  echo "Error: the backend C++ and C compilers must be the same!"
+  exit 1;
+fi
+
 
 # Use this to get the major and minor version numbers for gfortran (which maps --version to -dumpversion, unlike gcc and g++)
 # gfortran --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f2

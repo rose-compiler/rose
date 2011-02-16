@@ -5,7 +5,9 @@
 // ------------ begin rctest.cc --------------------
 
 // Skip version 4.x gnu compilers
-#if ( __GNUC__ == 3 )
+// TOO (2/15/2011): Thrifty compiler (gcc 3.4.4) has the same error
+// as stated below ("more than one operator "||" matches these operands")...
+#if ( __GNUC__ == 3 && __GNUC_MINOR__ != 4 )
 
 #include <iostream>
 
