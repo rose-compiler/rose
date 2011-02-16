@@ -43,7 +43,9 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2011_04.upc \
    test2011_05.upc \
    test2011_06.upc \
-   test2011_07.upc
+   test2011_07.upc \
+   test2011_08.upc \
+   test2011_09.upc
 
 #upc_XXXsizeof() has two issues:
 # 1. They are evaluated by EDG, operators are not preserved in EDG's IL

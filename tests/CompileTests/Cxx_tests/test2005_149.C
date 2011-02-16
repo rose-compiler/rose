@@ -1,7 +1,8 @@
 // template<class T> class Y;
 
 // Skip version 4.x gnu compilers
-#if ( __GNUC__ == 3 )
+// TOO (2/15/2011): error for Thrifty g++ 3.4.4
+#if ( __GNUC__ == 3 && __GNUC_MINOR__ != 4)
 
 template<class T>
 class X

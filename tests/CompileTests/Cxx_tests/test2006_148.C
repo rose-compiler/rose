@@ -18,6 +18,8 @@ void foo()
   //                                                   "m" (((fds -> fds_bits)[((3) / ((8) * (sizeof(__fd_mask ))))]))); 
   //           __result; }))) { }
 
+// TOO (2/15/2011): error for Thrifty g++ 3.4.4
+#if __GNUC__ != 3
 // Skip testing on 64 bit systems for now!
 #ifndef __LP64__
 
@@ -26,5 +28,7 @@ void foo()
 #else
   #warning "Not tested on 64 bit systems"
 #endif
-
+#else
+  #warning "Not tested on GCC 3.x"
+#endif
    }

@@ -882,7 +882,11 @@ ConstantFoldingTraversal::evaluateSynthesizedAttribute (
                  // (else we can ignore it in constant folding, I think).
                  SgBinaryOp* binaryOperator = isSgBinaryOp(expr);
                  ROSE_ASSERT(binaryOperator != NULL);
-                 ROSE_ASSERT(synthesizedAttributeList.size() == 2);
+
+              // DQ (2/9/2011): This is now 3 with the addition of the original expression tree.
+              // ROSE_ASSERT(synthesizedAttributeList.size() == 2);
+              // ROSE_ASSERT(synthesizedAttributeList.size() == 3);
+
                  // step 1: replace children with their synthesized attribute values 
                  //
                  // Process any SubTreeSynthesizedAttributes so any values there can be reused (propagated up in the AST)
