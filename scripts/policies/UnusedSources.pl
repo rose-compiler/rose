@@ -26,7 +26,7 @@ while (my $file = $files->next_file) {
   if (open FILE, "<", $file) {
     while (<FILE>) {
       s/#.*//;
-      s/([a-zA-Z_0-9\.]+)/delete $index{lc $1}/ge;
+      s/([-a-zA-Z_0-9\.]+)/delete $index{lc $1}/ge;
     }
     close FILE;
   }
