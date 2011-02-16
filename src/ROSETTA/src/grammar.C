@@ -3199,9 +3199,14 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
  // in the traversal island issue, but it does not have a container member,
  // so we need not mention it in this code.)
     std::string nodeName = grammarnode->getName();
-// Liao I made more exceptions for some OpenMP specific nodes for now
-// The traversal generator has already been changed accordingly.
-//    std::cout << "both single and container members in node " << nodeName << std::endl;
+
+ // DQ (2/7/2011): Added message to report which nodes are in violation of ROSETTA rules.
+    printf ("Warning: Detected node violating ROSETTA rules (some exceptions are allowed): nodeName = %s \n",nodeName.c_str());
+
+ // DQ (2/7/2011): Added SgExprListExp to the list so that we can support originalExpressionTree data member in SgExpression.
+ // Liao I made more exceptions for some OpenMP specific nodes for now
+ // The traversal generator has already been changed accordingly.
+ //    std::cout << "both single and container members in node " << nodeName << std::endl;
     ROSE_ASSERT(nodeName == "SgVariableDeclaration"
         ||nodeName == "SgOmpClauseBodyStatement"
         ||nodeName == "SgOmpParallelStatement"
@@ -3209,7 +3214,8 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
         ||nodeName == "SgOmpSingleStatement"
         ||nodeName == "SgOmpTaskStatement"
         ||nodeName == "SgOmpForStatement"
-        ||nodeName == "SgOmpDoStatement");
+        ||nodeName == "SgOmpDoStatement"
+        ||nodeName == "SgExprListExp");
   }
   return info;
 }
