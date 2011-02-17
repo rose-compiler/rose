@@ -1022,9 +1022,10 @@ check-syscalls:  $(SYS_TEST_TARGETS)
 
 MOSTLYCLEANFILES += $(SYS_TEST_TARGETS) $(patsubst %.passed, %.failed, $(SYS_TEST_TARGETS))
 
-
-check-local: $(PTHREAD_TEST_TARGETS)  $(SYS_TEST_TARGETS)
-	@$(RTH_STATS)
+check-local:
+	echo "This project is excluded from make check due to random hanging problem"
+#check-local: $(PTHREAD_TEST_TARGETS)  $(SYS_TEST_TARGETS)
+#	@$(RTH_STATS)
 
 
 # "tmp-sim" is the temp directory used to run the tests. See x86sim.conf.
