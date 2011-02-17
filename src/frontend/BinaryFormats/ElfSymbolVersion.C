@@ -326,7 +326,7 @@ SgAsmElfSymverDefinedSection::ctor(SgAsmElfStringSection *strings)
  *  
  *  There is also nothing in particular that says Aux entries need to be next to each other.  So, the code handles the most
  *  rigidly compliant case, which is to use only the offsets and make no assumptions about layouts.
- *  				
+ *                              
  *  Also note the number of entries is specified in two ways - via null termination on the "linked list", as well as the
  *  number from the .dynamic section [DT_VERDEFNUM].  For now, we'll support the NULL terminator, restricted by ensuring we
  *  don't exceed the size of the section (to keep from running away on a bad file).

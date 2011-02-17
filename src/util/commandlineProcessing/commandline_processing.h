@@ -16,12 +16,12 @@ namespace CommandlineProcessing
        // std::string generateStringFromArgList( Rose_STL_Container<std::string> & argList);
           std::string generateStringFromArgList( const Rose_STL_Container<std::string> & argList);
 
-	  //! Convert an argc-argv pair into a string vector
+          //! Convert an argc-argv pair into a string vector
           Rose_STL_Container<std::string> generateArgListFromArgcArgv ( int argc, const char* argv[] );
-	  
+          
           inline Rose_STL_Container<std::string> generateArgListFromArgcArgv ( int argc, char* argv[] ) 
-	  {return generateArgListFromArgcArgv(argc, (const char**)argv);}
-	  
+          {return generateArgListFromArgcArgv(argc, (const char**)argv);}
+          
           //! Convert a string vector back to an argc-argv pair
           void generateArgcArgvFromList ( Rose_STL_Container<std::string> argList, int & argc, char** & argv );
 

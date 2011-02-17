@@ -13,6 +13,7 @@ BEGIN {push @INC, $1 if $0 =~ /(.*)\//}
 
 use strict;
 use FileLister;
+use Policies;
 
 # If invoked with "--terse" then produce output that looks like
 # compiler error messages.  This is useful for IDEs that understand
@@ -30,6 +31,8 @@ my %uses;  # list of sources using each module
 my $files = FileLister->new("--recursive=0", @ARGV);
 while (my $filename = $files->next_file) {
   next unless $filename =~ /\.(f..)$/;
+  next if is_disabled($filename);
+
   my($dir) = $filename =~ /(.*)\//;
 
   if (open FILE, "<", $filename) {

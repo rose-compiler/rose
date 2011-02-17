@@ -675,12 +675,12 @@ static bool isCompilerGenerated(SgNode *node)
       isSgFunctionDeclaration(node);
     if ( functionDeclaration != NULL ) {
       SgFunctionDeclaration *definingDeclaration =
-	isSgFunctionDeclaration(functionDeclaration->get_definingDeclaration());
+        isSgFunctionDeclaration(functionDeclaration->get_definingDeclaration());
       ROSE_ASSERT(definingDeclaration != NULL);
       SgFunctionDefinition *functionDefinition = 
-	definingDeclaration->get_definition();
+        definingDeclaration->get_definition();
       compilerGenerated = ( functionDefinition == NULL ? true :
-			    isCompilerGenerated(functionDefinition) );
+                            isCompilerGenerated(functionDefinition) );
     }
   }
   return compilerGenerated;
@@ -834,9 +834,9 @@ lookThroughCastExpAndAssignInitializer(SgNode *node)
 
       // This cast is attached to a malloc.
       if ( ( functionCallExp != NULL ) && ( isMalloc(functionCallExp) ) ) {
-	ret = node;
+        ret = node;
       } else {
-	ret = lookThroughCastExpAndAssignInitializer(operand);
+        ret = lookThroughCastExpAndAssignInitializer(operand);
       }
 
       break;
@@ -898,17 +898,17 @@ getClassDeclaration(SgType *type)
       ROSE_ASSERT(baseType != NULL);
 
       if ( isSgTypedefType(baseType) || isSgReferenceType(baseType) || isSgModifierType(baseType) ) {
-	// Recursive case:  base type of typedef is also a typedef type or a reference type.
-	classDeclaration = getClassDeclaration(baseType);
+        // Recursive case:  base type of typedef is also a typedef type or a reference type.
+        classDeclaration = getClassDeclaration(baseType);
       } else if ( isSgNamedType(baseType) ) {
 
-	SgNamedType *namedType = isSgNamedType(baseType);
+        SgNamedType *namedType = isSgNamedType(baseType);
 
-	SgDeclarationStatement *innerDecl = 
-	  namedType->get_declaration();
-	ROSE_ASSERT(innerDecl != NULL);
-	
-	classDeclaration = isSgClassDeclaration(innerDecl);
+        SgDeclarationStatement *innerDecl = 
+          namedType->get_declaration();
+        ROSE_ASSERT(innerDecl != NULL);
+        
+        classDeclaration = isSgClassDeclaration(innerDecl);
       }
 
       break;
@@ -999,7 +999,7 @@ getFunctionDeclaration(SgFunctionCallExp *functionCall)
   case V_SgMemberFunctionRefExp:
     {
       SgMemberFunctionRefExp *memberFunctionRefExp =
-	isSgMemberFunctionRefExp(expression);
+        isSgMemberFunctionRefExp(expression);
       ROSE_ASSERT(memberFunctionRefExp != NULL);
 
       funcDec = memberFunctionRefExp->get_symbol_i()->get_declaration(); 
@@ -1037,7 +1037,7 @@ getFunctionDeclaration(SgFunctionCallExp *functionCall)
   case V_SgFunctionRefExp:
     {
       SgFunctionRefExp *functionRefExp = 
-	isSgFunctionRefExp(expression);
+        isSgFunctionRefExp(expression);
       ROSE_ASSERT(functionRefExp != NULL);
 
       // found a standard function reference  
@@ -1136,7 +1136,7 @@ static SgType *getBaseType(SgType *type)
   case V_SgReferenceType:
     {
       SgReferenceType *referenceType =
-	isSgReferenceType(type);
+        isSgReferenceType(type);
       ROSE_ASSERT(referenceType != NULL);
       
       ret = getBaseType(referenceType->get_base_type());
@@ -1145,7 +1145,7 @@ static SgType *getBaseType(SgType *type)
   case V_SgPointerType:
     {
       SgPointerType *pointerType =
-	isSgPointerType(type);
+        isSgPointerType(type);
       ROSE_ASSERT(pointerType != NULL);
       
       ret = getBaseType(pointerType->get_base_type());
@@ -1154,7 +1154,7 @@ static SgType *getBaseType(SgType *type)
   case V_SgModifierType:
     {
       SgModifierType *modifierType =
-	isSgModifierType(type);
+        isSgModifierType(type);
       ROSE_ASSERT(modifierType != NULL);
       
       ret = getBaseType(modifierType->get_base_type());
@@ -1206,40 +1206,40 @@ static bool isCopyConstructor(SgMemberFunctionDeclaration *memberFunctionDeclara
       ROSE_ASSERT(type != NULL);
 
       SgReferenceType *referenceType = 
-	isSgReferenceType(type);
+        isSgReferenceType(type);
       // Make certain this is a reference.
       if ( referenceType == NULL )
-	return false;
+        return false;
 
       SgClassType *classType =
-	isSgClassType(getBaseType(referenceType));
+        isSgClassType(getBaseType(referenceType));
       if ( classType == NULL )
-	return false;
+        return false;
 
       // Make certain the formal is an object of the
       // method's class.
       SgClassDeclaration *classDeclaration =
-	getClassDeclaration(classType);
+        getClassDeclaration(classType);
 
       if ( classDeclaration == NULL ) 
-	return false;
+        return false;
 
       // Get the class declaration associated with this method.
       SgClassDefinition *methodClassDefinition =
-	memberFunctionDeclaration->get_class_scope();
+        memberFunctionDeclaration->get_class_scope();
       ROSE_ASSERT(methodClassDefinition != NULL);
 
       SgClassDeclaration *methodClassDeclaration =
-	methodClassDefinition->get_declaration();
+        methodClassDefinition->get_declaration();
 
       if ( classDeclaration->get_type()->get_name() != 
            methodClassDeclaration->get_type()->get_name() )
         return false;
 
       if ((*p)->get_initializer() != 0) // default parameter
-	return false;
+        return false;
       else
-	++numNonDefaultParams;
+        ++numNonDefaultParams;
 
       firstParam = false;
     }
@@ -1409,7 +1409,7 @@ static defaultEnumFunctionType declarationToEnumType(SgMemberFunctionDeclaration
  */
 SgMemberFunctionDeclaration *
 lookupMethodInClass(SgMemberFunctionDeclaration *method,
-		    SgClassDefinition *classDefinition)
+                    SgClassDefinition *classDefinition)
 {
   ROSE_ASSERT(method != NULL);
   ROSE_ASSERT(classDefinition != NULL);
@@ -1433,42 +1433,42 @@ lookupMethodInClass(SgMemberFunctionDeclaration *method,
     case V_SgMemberFunctionDeclaration:
     case V_SgTemplateInstantiationMemberFunctionDecl:
       {
-	SgMemberFunctionDeclaration *functionDeclaration =  
-	  isSgMemberFunctionDeclaration(declarationStatement); 
-	ROSE_ASSERT(functionDeclaration != NULL);
-	
-	if ( lookingForDefaultConstructor ) {
-	  if ( isDefaultConstructor(functionDeclaration) ) {
-	    return functionDeclaration;
-	  }
-	} else if ( lookingForCopyConstructor ) {
-	  if ( isCopyConstructor(functionDeclaration) ) {
-	    return functionDeclaration;
-	  }
-	} else if ( lookingForDestructor ) {
-	  if ( isDestructor(functionDeclaration) ) {
-	    return functionDeclaration;
-	  }
-	} else if ( lookingForOperatorEquals ) {
-	  if ( isOperatorEquals(functionDeclaration) ) {
-	    return functionDeclaration;
-	  }
-	} else {
-	  // This is not one of the special methods.  We need
-	  // to compare the types and names of the two methods.
-	  // We can do this easily be comparing mangled names.
-	  if ( method->get_mangled_name() == functionDeclaration->get_mangled_name() ) {
-	    return functionDeclaration;
-	  }
-	  
-	}
+        SgMemberFunctionDeclaration *functionDeclaration =  
+          isSgMemberFunctionDeclaration(declarationStatement); 
+        ROSE_ASSERT(functionDeclaration != NULL);
+        
+        if ( lookingForDefaultConstructor ) {
+          if ( isDefaultConstructor(functionDeclaration) ) {
+            return functionDeclaration;
+          }
+        } else if ( lookingForCopyConstructor ) {
+          if ( isCopyConstructor(functionDeclaration) ) {
+            return functionDeclaration;
+          }
+        } else if ( lookingForDestructor ) {
+          if ( isDestructor(functionDeclaration) ) {
+            return functionDeclaration;
+          }
+        } else if ( lookingForOperatorEquals ) {
+          if ( isOperatorEquals(functionDeclaration) ) {
+            return functionDeclaration;
+          }
+        } else {
+          // This is not one of the special methods.  We need
+          // to compare the types and names of the two methods.
+          // We can do this easily be comparing mangled names.
+          if ( method->get_mangled_name() == functionDeclaration->get_mangled_name() ) {
+            return functionDeclaration;
+          }
+          
+        }
 
-	break;
+        break;
       }
 
     default:
       {
-	break;
+        break;
       }
     }
   }
@@ -1506,20 +1506,20 @@ lookupDefaultConstructorInClass(SgClassDefinition *classDefinition)
     case V_SgMemberFunctionDeclaration:
     case V_SgTemplateInstantiationMemberFunctionDecl:
       {
-	SgMemberFunctionDeclaration *functionDeclaration =  
-	  isSgMemberFunctionDeclaration(declarationStatement); 
-	ROSE_ASSERT(functionDeclaration != NULL);
-	
-	if ( isDefaultConstructor(functionDeclaration) ) {
-	  return functionDeclaration;
-	}
+        SgMemberFunctionDeclaration *functionDeclaration =  
+          isSgMemberFunctionDeclaration(declarationStatement); 
+        ROSE_ASSERT(functionDeclaration != NULL);
+        
+        if ( isDefaultConstructor(functionDeclaration) ) {
+          return functionDeclaration;
+        }
 
-	break;
+        break;
       }
 
     default:
       {
-	break;
+        break;
       }
     }
   }
@@ -1573,44 +1573,44 @@ static void findClassesInvokedViaConstructors(SgNode *subtree, std::set<SgClassD
 
     case V_SgConstructorInitializer:
       {
-	SgConstructorInitializer *ctorInitializer =
-	  isSgConstructorInitializer(initializer);
-	ROSE_ASSERT(ctorInitializer != NULL);
-	
-	// This method will be NULL if the invoked method
-	// is a compiler-generated default constructor,
-	// so don't even both looking at it.
-	// The point is, an constructor has been invoked on this
-	// class.
+        SgConstructorInitializer *ctorInitializer =
+          isSgConstructorInitializer(initializer);
+        ROSE_ASSERT(ctorInitializer != NULL);
+        
+        // This method will be NULL if the invoked method
+        // is a compiler-generated default constructor,
+        // so don't even both looking at it.
+        // The point is, an constructor has been invoked on this
+        // class.
 
-	//	SgMemberFunctionDeclaration *invokedMethodDeclaration =
-	//	  ctorInitializer->get_declaration();
+        //      SgMemberFunctionDeclaration *invokedMethodDeclaration =
+        //        ctorInitializer->get_declaration();
 
-	invokedClasses.insert(classDeclaration);
-	
-	break;
+        invokedClasses.insert(classDeclaration);
+        
+        break;
       }
     case V_SgAssignInitializer:
       {
-	SgAssignInitializer *assignInitializer =
-	  isSgAssignInitializer(initializer);
-	ROSE_ASSERT(assignInitializer != NULL);
+        SgAssignInitializer *assignInitializer =
+          isSgAssignInitializer(initializer);
+        ROSE_ASSERT(assignInitializer != NULL);
 
-	// Invocation on compiler-generated copy constructors
-	// are represented by: 
-	// SgInitializedName -> SgAssignInitializer -> SgVarRef.
+        // Invocation on compiler-generated copy constructors
+        // are represented by: 
+        // SgInitializedName -> SgAssignInitializer -> SgVarRef.
 
-	// Notice that if the type of the SgInitiliazedName
-	// is a class type, we can not do a simple assign.
-	// Instead this assign is standing in for a copy constructor.
+        // Notice that if the type of the SgInitiliazedName
+        // is a class type, we can not do a simple assign.
+        // Instead this assign is standing in for a copy constructor.
 
-	invokedClasses.insert(classDeclaration);
+        invokedClasses.insert(classDeclaration);
 
-	break;
+        break;
       }
     default:
       {
-	break;
+        break;
       }
     }
   }
@@ -1648,10 +1648,10 @@ static SgClassSymbol* lookupClassSymbol(SgClassDeclaration* classDecl) {
 static SgThisExp *getThisExp(SgClassDeclaration *classDecl)
 {
 #if 0
-	SgShallowCopy shallowCopy;
-	SgTreeCopy treeCopy;
-	SgClassDeclaration *classDeclaration = 
-	  isSgClassDeclaration(classDecl->copy(treeCopy));
+        SgShallowCopy shallowCopy;
+        SgTreeCopy treeCopy;
+        SgClassDeclaration *classDeclaration = 
+          isSgClassDeclaration(classDecl->copy(treeCopy));
   SgClassSymbol *classSymbol = new SgClassSymbol(classDeclaration);
 #endif
   return buildThisExp( lookupClassSymbol(classDecl) );
@@ -1680,18 +1680,18 @@ getMethodInvocationLhs(SgFunctionCallExp *functionCall)
     {
       SgDotExp *dotExp = isSgDotExp(expression);
       ROSE_ASSERT(dotExp != NULL);
-	  
+          
       lhs = dotExp->get_lhs_operand();
       ROSE_ASSERT(lhs != NULL);
-	  
+          
       SgPointerDerefExp *pointerDerefExp =
-	isSgPointerDerefExp(lhs);
-	  
+        isSgPointerDerefExp(lhs);
+          
       if ( pointerDerefExp != NULL ) {
-	
-	// This is (*b).foo() == b->foo();
-	lhs = pointerDerefExp->get_operand_i();
-	
+        
+        // This is (*b).foo() == b->foo();
+        lhs = pointerDerefExp->get_operand_i();
+        
       } 
 
       break;
@@ -1775,7 +1775,7 @@ getVarRefForFormal(SgFunctionDefinition *functionDefinition,
 static void 
 findClassesInvokedViaDestructors(SgNode *subtree,
                                  SgThisExp *thisExp,
-				 std::set<SgClassDeclaration *> &explicitlyInvokedClasses)
+                                 std::set<SgClassDeclaration *> &explicitlyInvokedClasses)
 {
   // Find any function callsites within subtree.
   Rose_STL_Container<SgNode *> nodes = NodeQuery::querySubTree(subtree, V_SgFunctionCallExp);
@@ -1811,11 +1811,11 @@ findClassesInvokedViaDestructors(SgNode *subtree,
     if ( receiver != NULL && 
          isSgThisExp(lookThroughCastExpAndAssignInitializer(receiver) ) ) {
       SgClassDefinition *classDefinition = 
-	isSgClassDefinition(invokedMethodDeclaration->get_scope());
+        isSgClassDefinition(invokedMethodDeclaration->get_scope());
       ROSE_ASSERT(classDefinition != NULL);
     
       SgClassDeclaration *classDeclaration = 
-	isSgClassDeclaration(classDefinition->get_declaration());
+        isSgClassDeclaration(classDefinition->get_declaration());
 
       explicitlyInvokedClasses.insert(classDeclaration);
     }
@@ -1834,8 +1834,8 @@ findClassesInvokedViaDestructors(SgNode *subtree,
  */
 static void 
 findClassesInvokedViaOperatorEquals(SgNode *subtree,
-				    SgThisExp *thisExp,
-				    std::set<SgClassDeclaration *> &explicitlyInvokedClasses)
+                                    SgThisExp *thisExp,
+                                    std::set<SgClassDeclaration *> &explicitlyInvokedClasses)
 {
   // Find any function callsites within subtree.
   Rose_STL_Container<SgNode *> nodes = NodeQuery::querySubTree(subtree, V_SgFunctionCallExp);
@@ -1870,11 +1870,11 @@ findClassesInvokedViaOperatorEquals(SgNode *subtree,
     if ( receiver != NULL && 
          isSgThisExp(lookThroughCastExpAndAssignInitializer(receiver) ) ) {
       SgClassDefinition *classDefinition = 
-	isSgClassDefinition(invokedMethodDeclaration->get_scope());
+        isSgClassDefinition(invokedMethodDeclaration->get_scope());
       ROSE_ASSERT(classDefinition != NULL);
     
       SgClassDeclaration *classDeclaration = 
-	isSgClassDeclaration(classDefinition->get_declaration());
+        isSgClassDeclaration(classDefinition->get_declaration());
       ROSE_ASSERT(classDeclaration != NULL);
 
       explicitlyInvokedClasses.insert(classDeclaration);
@@ -1927,7 +1927,7 @@ DefaultFunctionGenerator::getMethodInClass(SgMemberFunctionDeclaration *method,
       generateDefaultFunctionDeclaration(enumFunctionType,
                                          classDefinition);
       targetFunctionDeclaration = 
-	lookupDefaultConstructorInClass(classDefinition);
+        lookupDefaultConstructorInClass(classDefinition);
     }
   } else {
     defaultEnumFunctionType enumFunctionType = 
@@ -1941,7 +1941,7 @@ DefaultFunctionGenerator::getMethodInClass(SgMemberFunctionDeclaration *method,
       generateDefaultFunctionDeclaration(enumFunctionType,
                                          classDefinition);
       targetFunctionDeclaration = 
-	lookupMethodInClass(method, classDefinition);
+        lookupMethodInClass(method, classDefinition);
     }
   }
   ROSE_ASSERT(targetFunctionDeclaration != NULL);
@@ -1979,11 +1979,11 @@ SgMemberFunctionDeclaration*
           if(mfDec1!=NULL){
           SgSpecialFunctionModifier sfMod1= mfDec1->get_specialFunctionModifier();
           if (  // (enumFunctionType==e_constructor)&&(sfMod1.isConstructor ()) ||
-	      ((enumFunctionType==e_constructor)&&( isDefaultConstructor(mfDec1) )) ||
-	        ((enumFunctionType==e_destructor)&&(sfMod1.isDestructor ())) ||
-	      //		(enumFunctionType==e_copy_constructor)&&(sfMod1.isConstructor ()) ||
-	      ((enumFunctionType==e_copy_constructor)&&(isCopyConstructor(mfDec1))) ||
-		((enumFunctionType==e_assignment_operator)&&(isOperatorEquals(mfDec1))) 
+              ((enumFunctionType==e_constructor)&&( isDefaultConstructor(mfDec1) )) ||
+                ((enumFunctionType==e_destructor)&&(sfMod1.isDestructor ())) ||
+              //                (enumFunctionType==e_copy_constructor)&&(sfMod1.isConstructor ()) ||
+              ((enumFunctionType==e_copy_constructor)&&(isCopyConstructor(mfDec1))) ||
+                ((enumFunctionType==e_assignment_operator)&&(isOperatorEquals(mfDec1))) 
               )
                 {
                 func=mfDec1;// keep the constructor's address
@@ -2019,65 +2019,65 @@ SgMemberFunctionDeclaration*
  *  myClass1(const myClass1 &rhs):_count(rhs._count),_data(rhs._data) {}
  */
 void DefaultFunctionGenerator::generateDefaultFunctionDefinition \
-	(defaultEnumFunctionType enumFunctionType, SgMemberFunctionDeclaration * func)
+        (defaultEnumFunctionType enumFunctionType, SgMemberFunctionDeclaration * func)
 {
-	// The default constructor and destructor have empty bodies.
-	// Only the copy constructor and operator= have non-trivial
-	// bodies.  If we were requested to do one of the former,
-	// simply return.
+        // The default constructor and destructor have empty bodies.
+        // Only the copy constructor and operator= have non-trivial
+        // bodies.  If we were requested to do one of the former,
+        // simply return.
         if ( ( enumFunctionType != e_copy_constructor ) &&
              ( enumFunctionType != e_assignment_operator ) )
           return;
 
-	SgClassDefinition* parentClassDef1=func->get_class_scope();
-	SgClassDeclaration * classDec1 = parentClassDef1->get_declaration();
+        SgClassDefinition* parentClassDef1=func->get_class_scope();
+        SgClassDeclaration * classDec1 = parentClassDef1->get_declaration();
 
-	SgShallowCopy shallowCopy;
-	SgTreeCopy treeCopy;
+        SgShallowCopy shallowCopy;
+        SgTreeCopy treeCopy;
 #if 0
-	SgClassDeclaration *classDeclaration = 
-	  isSgClassDeclaration(classDec1->copy(treeCopy));
+        SgClassDeclaration *classDeclaration = 
+          isSgClassDeclaration(classDec1->copy(treeCopy));
 #else
-	SgClassDeclaration *classDeclaration = 
-	  isSgClassDeclaration(classDec1);
+        SgClassDeclaration *classDeclaration = 
+          isSgClassDeclaration(classDec1);
 #endif
-	SgBasicBlock * bBlock1= func->get_definition()->get_body();
-	SgInitializedNamePtrList& argList= func->get_parameterList()->get_args();
-        SgInitializedName* parameter1=*(argList.begin()); //only 1 parameter for copy constructor	
+        SgBasicBlock * bBlock1= func->get_definition()->get_body();
+        SgInitializedNamePtrList& argList= func->get_parameterList()->get_args();
+        SgInitializedName* parameter1=*(argList.begin()); //only 1 parameter for copy constructor       
 
-	SgClassSymbol * classSymbol1 = NULL;
-	if(enumFunctionType==e_assignment_operator){
-	  // "if (this ==&rhs) return *this;" for operator=
-	  classSymbol1=lookupClassSymbol(classDeclaration);
+        SgClassSymbol * classSymbol1 = NULL;
+        if(enumFunctionType==e_assignment_operator){
+          // "if (this ==&rhs) return *this;" for operator=
+          classSymbol1=lookupClassSymbol(classDeclaration);
           ROSE_ASSERT (classSymbol1 != NULL);
               //return *this
-	  SgPointerDerefExp * derefExp1= buildPointerDerefExp( buildThisExp(classSymbol1) );
-	  SgReturnStmt * myReturn1= buildReturnStmt(derefExp1);
+          SgPointerDerefExp * derefExp1= buildPointerDerefExp( buildThisExp(classSymbol1) );
+          SgReturnStmt * myReturn1= buildReturnStmt(derefExp1);
           // true body & false body
-	  SgBasicBlock * trueBody1= buildBasicBlock(myReturn1);
-	  // Need to generate a false body.  Later when we invoke copy(),
-	  // SgScopeStatement::generateStatementList will assume that
-	  // get_false_body() is non-NULL
-	  // SgStatementPtrList falseList = ifStatement->get_false_body()->getStatementList();
-	  SgBasicBlock * falseBody1= buildBasicBlock();
-	  SgVariableSymbol * symbolPar1= isSgVariableSymbol(parameter1->get_symbol_from_symbol_table());
+          SgBasicBlock * trueBody1= buildBasicBlock(myReturn1);
+          // Need to generate a false body.  Later when we invoke copy(),
+          // SgScopeStatement::generateStatementList will assume that
+          // get_false_body() is non-NULL
+          // SgStatementPtrList falseList = ifStatement->get_false_body()->getStatementList();
+          SgBasicBlock * falseBody1= buildBasicBlock();
+          SgVariableSymbol * symbolPar1= isSgVariableSymbol(parameter1->get_symbol_from_symbol_table());
           ROSE_ASSERT (symbolPar1 != NULL);
       SgEqualityOp * equalityOp1= buildEqualityOp( buildThisExp(classSymbol1),
                                                    buildAddressOfOp(buildVarRefExp(symbolPar1)));
-	  SgExprStatement * conditionStmt1= buildExprStatement(equalityOp1);
+          SgExprStatement * conditionStmt1= buildExprStatement(equalityOp1);
 
-	  SgIfStmt * ifStmt1= buildIfStmt(conditionStmt1, trueBody1, falseBody1);
+          SgIfStmt * ifStmt1= buildIfStmt(conditionStmt1, trueBody1, falseBody1);
           bBlock1->append_statement(ifStmt1);
-	  ROSE_ASSERT(ifStmt1->get_scope() != NULL);
-	  ROSE_ASSERT(ifStmt1->get_scope() != ifStmt1);
-	  ROSE_ASSERT(ifStmt1->get_scope() == bBlock1);
-	  ROSE_ASSERT(ifStmt1->get_parent() == bBlock1);
-	  ROSE_ASSERT(trueBody1->get_parent() == ifStmt1);
-	  ROSE_ASSERT(falseBody1->get_parent() == ifStmt1);
-	}
+          ROSE_ASSERT(ifStmt1->get_scope() != NULL);
+          ROSE_ASSERT(ifStmt1->get_scope() != ifStmt1);
+          ROSE_ASSERT(ifStmt1->get_scope() == bBlock1);
+          ROSE_ASSERT(ifStmt1->get_parent() == bBlock1);
+          ROSE_ASSERT(trueBody1->get_parent() == ifStmt1);
+          ROSE_ASSERT(falseBody1->get_parent() == ifStmt1);
+        }
 
 
-	// handling member variables in copy constructor and operator=
+        // handling member variables in copy constructor and operator=
         SgDeclarationStatementPtrList & declareList=parentClassDef1->get_members();
         typedef Rose_STL_Container<SgDeclarationStatement*>::iterator declareListIterator;
         for (declareListIterator listElement=declareList.begin();listElement!=declareList.end();++listElement)
@@ -2099,24 +2099,24 @@ void DefaultFunctionGenerator::generateDefaultFunctionDefinition \
                SgVarRefExp* lhsOperator= buildVarRefExp(varSymbol1);
                SgVarRefExp* rhsOperator= buildVarRefExp(varSymbol2);
                 SgDotExp* dotExp1= buildDotExp(lhsOperator, rhsOperator);
-		//"_member(rhs._member)" for copy constructor
-		if (enumFunctionType==e_copy_constructor) {
+                //"_member(rhs._member)" for copy constructor
+                if (enumFunctionType==e_copy_constructor) {
                    SgAssignInitializer * assignInit1= buildAssignInitializer(dotExp1,varType);
                    SgInitializedName* initName1= buildInitializedName(varName,varType,assignInit1);
-		   initName1->set_file_info(COMPILERGENERATED_FILE_INFO);
-              	   // Must set scope to global here!!
-	           initName1->set_scope(isSgGlobal(parentClassDef1->get_declaration()->get_scope()));
-        	   func->get_CtorInitializerList()->append_ctor_initializer(initName1);
+                   initName1->set_file_info(COMPILERGENERATED_FILE_INFO);
+                   // Must set scope to global here!!
+                   initName1->set_scope(isSgGlobal(parentClassDef1->get_declaration()->get_scope()));
+                   func->get_CtorInitializerList()->append_ctor_initializer(initName1);
                  } //end if    
 
-		// "_member=rhs.member;" for operator=
-		if (enumFunctionType==e_assignment_operator) { 
-		  SgVarRefExp* rhsOperator2= buildVarRefExp(varSymbol2);
-		  SgArrowExp * arrowExp1= buildArrowExp( buildThisExp(classSymbol1), rhsOperator2);
-		  SgAssignOp * assignOp1= buildAssignOp( arrowExp1, dotExp1 );
-		  SgExprStatement* myExpStmt1= buildExprStatement(assignOp1); 
-		  bBlock1->append_statement(myExpStmt1);  
-		}
+                // "_member=rhs.member;" for operator=
+                if (enumFunctionType==e_assignment_operator) { 
+                  SgVarRefExp* rhsOperator2= buildVarRefExp(varSymbol2);
+                  SgArrowExp * arrowExp1= buildArrowExp( buildThisExp(classSymbol1), rhsOperator2);
+                  SgAssignOp * assignOp1= buildAssignOp( arrowExp1, dotExp1 );
+                  SgExprStatement* myExpStmt1= buildExprStatement(assignOp1); 
+                  bBlock1->append_statement(myExpStmt1);  
+                }
               } //end for
             } //end if 
           } //end for 
@@ -2127,7 +2127,7 @@ void DefaultFunctionGenerator::generateDefaultFunctionDefinition \
           SgReturnStmt * myReturn1= buildReturnStmt(derefExp1);
           bBlock1->append_statement(myReturn1);
         }
-	// AstPostProcessing(func->get_definition());
+        // AstPostProcessing(func->get_definition());
    
 }
 
@@ -2215,7 +2215,7 @@ DefaultFunctionGenerator::generateDefaultFunctionType(defaultEnumFunctionType en
     {
       // has to get the type from the firstNodDefiningDeclaration node, runtime abort otherwise
       base_type=isSgClassDeclaration(parentClassDef->get_declaration() \
-				      ->get_firstNondefiningDeclaration())->get_type();
+                                      ->get_firstNondefiningDeclaration())->get_type();
       ROSE_ASSERT(base_type != NULL);
       func_return_type  = buildReferenceType(base_type);
       func_param_type = SgReferenceType::createType(base_type);
@@ -2625,8 +2625,8 @@ DefaultFunctionGenerator::generateDefaultConstructorCall(SgMemberFunctionDeclara
 
   SgInitializedName *initializedName =
     buildInitializedName(className,
-			  classType,
-			  ctorInitializer);
+                          classType,
+                          ctorInitializer);
   //initializedName->set_file_info(COMPILERGENERATED_FILE_INFO);
   //initializedName->set_parent(ctorInitializerList);
   //initializedName->set_scope(func->get_scope());
@@ -2706,7 +2706,7 @@ void DefaultFunctionGenerator::generateImplicitInvocations(SgFunctionDefinition 
     SgThisExp *thisExp = getThisExp(classDeclaration);
     findClassesInvokedViaDestructors(functionDefinition,
                                      thisExp,
-				     invokedBaseClasses);
+                                     invokedBaseClasses);
     delete thisExp;
   } else if ( isOperatorEquals(memberFunctionDeclaration) ) {
     // Look for any operator= which are invoked on base classes.
@@ -2714,8 +2714,8 @@ void DefaultFunctionGenerator::generateImplicitInvocations(SgFunctionDefinition 
     // invocation on this:  this->BaseClass::operator=(arg).
     SgThisExp *thisExp = getThisExp(classDeclaration);
     findClassesInvokedViaOperatorEquals(functionDefinition,
-					thisExp,
-					invokedBaseClasses);
+                                        thisExp,
+                                        invokedBaseClasses);
     
     delete thisExp;
   }
@@ -2802,109 +2802,109 @@ void DefaultFunctionGenerator::generateImplicitInvocations(SgFunctionDefinition 
       SgMemberFunctionDeclaration *targetFunctionDeclaration = NULL;
       SgExpression *arg = NULL;
       SgCtorInitializerList *ctorInitializerList = 
-	memberFunctionDeclaration->get_CtorInitializerList();
+        memberFunctionDeclaration->get_CtorInitializerList();
       SgBasicBlock *basicBlock = functionDefinition->get_body();
       ROSE_ASSERT(basicBlock != NULL);
       if ( isCopyConstructor(memberFunctionDeclaration) ) {
-	if ( compilerGenerated ) {
-	  // Implicitly invoke the base class' copy constructor
-	  // from a compiler-generated copy constructor.
-	  // The argument is the same argument passed to 
-	  // the copy constructor, memberFunctionDeclaration.
-	  // The invocation should be appended to the copy constructor's
-	  // constructor initializer list.
-	  targetFunctionDeclaration = 
-	    getMethodInClass(memberFunctionDeclaration, baseClassDefn);
+        if ( compilerGenerated ) {
+          // Implicitly invoke the base class' copy constructor
+          // from a compiler-generated copy constructor.
+          // The argument is the same argument passed to 
+          // the copy constructor, memberFunctionDeclaration.
+          // The invocation should be appended to the copy constructor's
+          // constructor initializer list.
+          targetFunctionDeclaration = 
+            getMethodInClass(memberFunctionDeclaration, baseClassDefn);
           arg = getVarRefForFormal(functionDefinition, 0);
-	  generateDefaultConstructorCall(targetFunctionDeclaration,
+          generateDefaultConstructorCall(targetFunctionDeclaration,
                                          baseClassDefn,
-					 arg,
-					 ctorInitializerList);
+                                         arg,
+                                         ctorInitializerList);
         } else {
-	  // Implicitly invoke a default constructor from
-	  // a user-defined copy constructor.
-	  // There is no argument to a default constructor.
-	  // The invocation should be appended to the copy constructor's
-	  // constructor initializer list.
-	  targetFunctionDeclaration = 
-	    getMethodInClass(NULL, baseClassDefn);
-	  generateDefaultConstructorCall(targetFunctionDeclaration,
+          // Implicitly invoke a default constructor from
+          // a user-defined copy constructor.
+          // There is no argument to a default constructor.
+          // The invocation should be appended to the copy constructor's
+          // constructor initializer list.
+          targetFunctionDeclaration = 
+            getMethodInClass(NULL, baseClassDefn);
+          generateDefaultConstructorCall(targetFunctionDeclaration,
                                          baseClassDefn,
-					 arg,
-					 ctorInitializerList);
+                                         arg,
+                                         ctorInitializerList);
         }
       } else if ( isConstructor(memberFunctionDeclaration) ) {
-	// In all non-copy constructor cases, invoke the base class'
-	// default constructor.
-	// There is no argument.
-	// The invocation should be appended to the constructor's
-	// initializer list.
-	targetFunctionDeclaration = 
-	  getMethodInClass(NULL, baseClassDefn);
-	generateDefaultConstructorCall(targetFunctionDeclaration,
+        // In all non-copy constructor cases, invoke the base class'
+        // default constructor.
+        // There is no argument.
+        // The invocation should be appended to the constructor's
+        // initializer list.
+        targetFunctionDeclaration = 
+          getMethodInClass(NULL, baseClassDefn);
+        generateDefaultConstructorCall(targetFunctionDeclaration,
                                        baseClassDefn,
-				       arg,
-				       ctorInitializerList);
+                                       arg,
+                                       ctorInitializerList);
       } else if ( isDestructor(memberFunctionDeclaration) ) {
-	// Invoke the base class' destructor.
-	// Invoke the destructor on 'this'.
-	// There is no argument to a destructor.
-	// Prepend the invocation to the function body.
+        // Invoke the base class' destructor.
+        // Invoke the destructor on 'this'.
+        // There is no argument to a destructor.
+        // Prepend the invocation to the function body.
 
-	// Please see the comment below for the isOperatorEquals
-	// case.  We need to case the lhs to get:
-	//    (baseClassType *)this->~baseClassType();
-	// instead of:
-	//    this->~baseClassType();
+        // Please see the comment below for the isOperatorEquals
+        // case.  We need to case the lhs to get:
+        //    (baseClassType *)this->~baseClassType();
+        // instead of:
+        //    this->~baseClassType();
 
-	// Cast the lhs to (baseClassType *)this:
-	SgThisExp *thisExp = getThisExp(classDeclaration);
+        // Cast the lhs to (baseClassType *)this:
+        SgThisExp *thisExp = getThisExp(classDeclaration);
 #if 1
-	SgPointerType *pointerType = 
-	  buildPointerType(baseClassType);
-	
-	SgCastExp *lhs = 
-	  buildCastExp(thisExp, pointerType);
+        SgPointerType *pointerType = 
+          buildPointerType(baseClassType);
+        
+        SgCastExp *lhs = 
+          buildCastExp(thisExp, pointerType);
 #endif
-	targetFunctionDeclaration = 
-	  getMethodInClass(memberFunctionDeclaration, baseClassDefn);
-	generateDefaultFunctionCall(targetFunctionDeclaration, 
-				    baseClassDefn,
-				    lhs,
-				    arg,
-				    basicBlock);
+        targetFunctionDeclaration = 
+          getMethodInClass(memberFunctionDeclaration, baseClassDefn);
+        generateDefaultFunctionCall(targetFunctionDeclaration, 
+                                    baseClassDefn,
+                                    lhs,
+                                    arg,
+                                    basicBlock);
       } else if ( isOperatorEquals(memberFunctionDeclaration) ) {
-	if ( compilerGenerated ) {
-	  // Implicitly invoke the base class' operator= constructor
-	  // from a compiler-generated operator= constructor.
-	  // Invoke operator= on 'this'.
-	  // The argument is the same as passed to the
-	  // operator=, memberFunctionDeclaration.
-	  // Prepend the invocation to the function body.
+        if ( compilerGenerated ) {
+          // Implicitly invoke the base class' operator= constructor
+          // from a compiler-generated operator= constructor.
+          // Invoke operator= on 'this'.
+          // The argument is the same as passed to the
+          // operator=, memberFunctionDeclaration.
+          // Prepend the invocation to the function body.
 
-	  // We have a little extra work to do here, according
-	  // to the e-mail below.  The short of it is the following:
-	  // making an implicit assignment operator call explicit
-	  // as in:
-	  // 
-	  // FooBar &operator=(const class FooBar &rhs) {
-	  //    (*(this))=rhs;
-	  // 
-	  // does not do the intended thing because it would result
-	  // in infinite recursion.
-	  //
-	  // We really want:
-	  // 
-	  // FooBar &operator=(const class FooBar &rhs) {
-	  //     this->Foo::operator=(rhs);
-	  //
-	  // However, there seems to be some bug which prevents us
-	  // from generating this code.  Therefore, we instead emit:
-	  //
-	  // FooBar &operator=(const class FooBar &rhs) {
-	  //     (*((Bar *)this)) = (Bar &)rhs;
-	  // So, just add a cast to the left and right-hand sides.
-	  /**
+          // We have a little extra work to do here, according
+          // to the e-mail below.  The short of it is the following:
+          // making an implicit assignment operator call explicit
+          // as in:
+          // 
+          // FooBar &operator=(const class FooBar &rhs) {
+          //    (*(this))=rhs;
+          // 
+          // does not do the intended thing because it would result
+          // in infinite recursion.
+          //
+          // We really want:
+          // 
+          // FooBar &operator=(const class FooBar &rhs) {
+          //     this->Foo::operator=(rhs);
+          //
+          // However, there seems to be some bug which prevents us
+          // from generating this code.  Therefore, we instead emit:
+          //
+          // FooBar &operator=(const class FooBar &rhs) {
+          //     (*((Bar *)this)) = (Bar &)rhs;
+          // So, just add a cast to the left and right-hand sides.
+          /**
               Date: Tue, 20 Jun 2006 10:31:09 -0400 (EDT)
               From: Brian White <bwhite@csl.cornell.edu>
               To: dan quinlan <dquinlan@llnl.gov>
@@ -2956,10 +2956,10 @@ void DefaultFunctionGenerator::generateImplicitInvocations(SgFunctionDefinition 
               Thanks,
               Brian
 
-	  */
+          */
   
-	  // And Dan's response:
-	  /**
+          // And Dan's response:
+          /**
               Date: Tue, 20 Jun 2006 16:21:19 -0700
               From: Daniel J. Quinlan <dquinlan@llnl.gov>
               To: Brian White <bwhite@csl.cornell.edu>
@@ -2974,40 +2974,40 @@ void DefaultFunctionGenerator::generateImplicitInvocations(SgFunctionDefinition 
               than I expected, so I backed off and I have not
               returned to it.
 
-	  */
+          */
 
-	  // Get the type of the class whose operator= we will invoke.
-	  // We already have it, baseClassType.
+          // Get the type of the class whose operator= we will invoke.
+          // We already have it, baseClassType.
 
-	  targetFunctionDeclaration = 
-	    getMethodInClass(memberFunctionDeclaration, baseClassDefn);
+          targetFunctionDeclaration = 
+            getMethodInClass(memberFunctionDeclaration, baseClassDefn);
 
-	  // Cast the lhs to (baseClassType *)this:
-	  SgThisExp *thisExp = getThisExp(classDeclaration);
+          // Cast the lhs to (baseClassType *)this:
+          SgThisExp *thisExp = getThisExp(classDeclaration);
 #if 1
-	  SgPointerType *pointerType = 
-	    buildPointerType(baseClassType);
+          SgPointerType *pointerType = 
+            buildPointerType(baseClassType);
 
-	  SgCastExp *lhs = 
-	    buildCastExp(thisExp, pointerType);
+          SgCastExp *lhs = 
+            buildCastExp(thisExp, pointerType);
 #endif
-	  // Cast the rhs to (baseClassType &)arg:
+          // Cast the rhs to (baseClassType &)arg:
           arg = getVarRefForFormal(functionDefinition, 0);
 
-	  SgReferenceType *referenceType = 
-	    buildReferenceType(baseClassType);
+          SgReferenceType *referenceType = 
+            buildReferenceType(baseClassType);
 
-	  SgCastExp *rhs = 
-	    buildCastExp(arg, referenceType);
+          SgCastExp *rhs = 
+            buildCastExp(arg, referenceType);
 
-	  generateDefaultFunctionCall(targetFunctionDeclaration, 
-				      baseClassDefn,
-				      lhs,
-				      rhs,
-				      basicBlock);
-	} else {
-	  // Do nothing.
-	}
+          generateDefaultFunctionCall(targetFunctionDeclaration, 
+                                      baseClassDefn,
+                                      lhs,
+                                      rhs,
+                                      basicBlock);
+        } else {
+          // Do nothing.
+        }
       }
     }
   }

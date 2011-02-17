@@ -23,7 +23,7 @@ namespace OmpSupport
   // We put all directive and clause types into one enumerate type
   // since some internal data structure(map) have to access 
   // both directives and clauses uniformly
-  enum	omp_construct_enum 
+  enum  omp_construct_enum 
   {
     e_unknown = 0, 
 
@@ -226,7 +226,7 @@ namespace OmpSupport
       // Pretty print for debugging purpose
       void print();
       ~OmpAttributeList();
-  };			  
+  };                      
 
   class OmpAttribute
   {

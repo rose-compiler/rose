@@ -1977,7 +1977,7 @@ SgType::getCurrentScope()
 bool
 SgType::containsInternalTypes()
    {
-  // DQ (1/14/2011): Added sunction to support collection of types in AST node query support.
+  // DQ (1/14/2011): Added function to support collection of types in AST node query support.
   // Some types can hide internal types and we often want to resolve type based properties 
   // that require us to dig into these specific type IR nodes.  For example, when we traverse
   // an AST subtree we might want to build a list of all referenced types (including indirect
@@ -3845,8 +3845,29 @@ SgArrayType::get_mangled(void) const
      SgName index_name;
      if (index_exp != NULL)
         {
-          index_name = index_exp->unparseToString();
+       // DQ (2/12/2011): Now that we support saving the original expression in an array type's size argument 
+       // we want to generate the name from the cconstant folded expression instead of the original expression.
+       // index_name = index_exp->unparseToString();
        // printf ("In SgArrayType::get_mangled(): index_name = %s index_exp = %p = %s = %s \n",index_name.str(),index_exp,index_exp->class_name().c_str(),SageInterface::generateUniqueName(index_exp,true).c_str());
+       // SgUnsignedLongVal* value = isSgUnsignedLongVal(index_exp);
+          const SgValueExp* value = isSgUnsignedLongVal(index_exp);
+
+       // DQ (2/12/2011): I wonder if we can enforce this...No!
+       // ROSE_ASSERT(value != NULL);
+
+          if (value != NULL)
+             {
+            // index_name = StringUtility::numberToString(value->get_value());
+            // printf ("In SgArrayType::get_mangled() (special case of index as numberToString): index_name = %s index_exp = %p = %s = %s \n",index_name.str(),index_exp,index_exp->class_name().c_str(),SageInterface::generateUniqueName(index_exp,true).c_str());
+
+               index_name = value->get_constant_folded_value_as_string().c_str();
+            // printf ("In SgArrayType::get_mangled() (special case of index as get_constant_folded_value_as_string): index_name = %s index_exp = %p = %s = %s \n",index_name.str(),index_exp,index_exp->class_name().c_str(),SageInterface::generateUniqueName(index_exp,true).c_str());
+             }
+            else
+             {
+               index_name = index_exp->unparseToString();
+            // printf ("In SgArrayType::get_mangled(): index_name = %s index_exp = %p = %s = %s \n",index_name.str(),index_exp,index_exp->class_name().c_str(),SageInterface::generateUniqueName(index_exp,true).c_str());
+             }
         }
 
   // DQ (6/21/2006): Use is_null() instead of counting the size (and fixed case were it is null)

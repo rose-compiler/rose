@@ -10,6 +10,6 @@ int openFortranParser_main(int argc, char **argv)
 
  // This is not considered to be an error, ROSE will return an error code of "0" to the operating system.
  // Even though this function will return an error code of "1" to the caller.
-	 return 1;
+         return 1;
   }
 

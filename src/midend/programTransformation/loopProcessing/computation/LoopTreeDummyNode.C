@@ -242,7 +242,7 @@ bool LoopTreeRestrLoopRange :: MergeSibling( int opt)
           if (lbr.IsNIL() && ubr.IsNIL())
               continue;
           LoopTreeRestrLoopRange *nr = new LoopTreeRestrLoopRange(GetRestrLoop(), 0, lbr, ubr);
-	  nr->Link(this, AsPrevSibling);
+          nr->Link(this, AsPrevSibling);
           Unlink(); Link(nr, AsLastChild);
           n->Unlink();
           if (opt > 0)

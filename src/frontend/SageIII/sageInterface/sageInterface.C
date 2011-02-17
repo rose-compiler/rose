@@ -508,8 +508,8 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
 
 // CH (4/7/2010): It seems that the following code can be compiled under MSVC 9.0
 //#pragma message ("WARNING: this code does not apprear to compile with MSVC.")
-//	 printf ("ERROR: this code does not apprear to compile with MSVC. \n");
-//	 ROSE_ASSERT(false);
+//       printf ("ERROR: this code does not apprear to compile with MSVC. \n");
+//       ROSE_ASSERT(false);
      found_it = scope_stmt->get_symbol_table()->get_table()->insert(pair<SgName,SgSymbol*> ( new_name,associated_symbol));
 #else
      found_it = scope_stmt->get_symbol_table()->get_table()->insert(pair<SgName,SgSymbol*> ( new_name,associated_symbol));
@@ -4325,7 +4325,7 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name,
     if (symbol==NULL)
     {
         //    printf ("Warning: could not locate the specified name %s in any outer symbol table \n"e,
-        //	name.str());
+        //      name.str());
         //  ROSE_ASSERT(false); 
     }
     return symbol;
@@ -4818,9 +4818,9 @@ void SageInterface::changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* 
 //#if 1
           LowLevelRewrite::replace(*i, make_unit_list( gotoStatement ) );
 #else
-		  ROSE_ASSERT(false);
+                  ROSE_ASSERT(false);
 #endif
-	}
+        }
    }
 
 // Add a step statement to the end of a loop body
@@ -4900,7 +4900,7 @@ V_SgForStatement);
     vector<SgGotoStatement*> result;
     for (Rose_STL_Container<SgNode*>::const_iterator i = allGotos.begin(); i != allGotos.end(); ++i) {
       if (isSgGotoStatement(*i)->get_label() == l) {
-	result.push_back(isSgGotoStatement(*i));
+        result.push_back(isSgGotoStatement(*i));
       }
     }
     return result;
@@ -4930,7 +4930,7 @@ static  void getSwitchCasesHelper(SgStatement* top, vector<SgStatement*>& result
     vector<SgNode*> children = top->get_traversalSuccessorContainer();
     for (unsigned int i = 0; i < children.size(); ++i) {
       if (isSgStatement(children[i])) {
-	getSwitchCasesHelper(isSgStatement(children[i]), result);
+        getSwitchCasesHelper(isSgStatement(children[i]), result);
       }
     }
   }
@@ -5291,7 +5291,7 @@ SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingS
     }
   while ((astnode != NULL) &&
          (isSgFunctionDeclaration (astnode) == NULL) &&
-	 (isSgMemberFunctionDeclaration (astnode) == NULL));
+         (isSgMemberFunctionDeclaration (astnode) == NULL));
   if (astnode==NULL) return NULL;
   else return isSgFunctionDeclaration(astnode);
 #endif
@@ -5821,18 +5821,18 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
   }
   else if (isSgInitializedName(parent))
   {
-	  SgInitializedName* initializedNameParent = isSgInitializedName(parent);
-	  if (oldExp == initializedNameParent->get_initializer())
-	  {
-		  //We can only replace an initializer expression with another initializer expression
-		  ROSE_ASSERT(isSgInitializer(newExp));
-		  initializedNameParent->set_initializer(isSgInitializer(newExp));
-	  }
-	  else
-	  {
-		  //What other expressions can be children of an SgInitializedname?
-		  ROSE_ASSERT(false);
-	  }
+          SgInitializedName* initializedNameParent = isSgInitializedName(parent);
+          if (oldExp == initializedNameParent->get_initializer())
+          {
+                  //We can only replace an initializer expression with another initializer expression
+                  ROSE_ASSERT(isSgInitializer(newExp));
+                  initializedNameParent->set_initializer(isSgInitializer(newExp));
+          }
+          else
+          {
+                  //What other expressions can be children of an SgInitializedname?
+                  ROSE_ASSERT(false);
+          }
   }
  else{
   cerr<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
@@ -6110,7 +6110,7 @@ class FindUsedAndAllLabelsVisitor: public AstSimpleProcessing {
     if (isSgForStatement(loopStmt)) return isSgForStatement(loopStmt)->get_loop_body();
     if (isSgDoWhileStmt(loopStmt)) return isSgDoWhileStmt(loopStmt)->get_body();
 
-	ROSE_ASSERT (!"Bad loop kind");
+        ROSE_ASSERT (!"Bad loop kind");
     return NULL;
   }
 
@@ -6132,7 +6132,7 @@ class FindUsedAndAllLabelsVisitor: public AstSimpleProcessing {
     if (isSgForStatement(loopStmt)) return isSgForStatement(loopStmt)->get_test();
     if (isSgDoWhileStmt(loopStmt)) return isSgDoWhileStmt(loopStmt)->get_condition();
 
-	ROSE_ASSERT (!"Bad loop kind");
+        ROSE_ASSERT (!"Bad loop kind");
     return NULL;
   }
 
@@ -7762,7 +7762,7 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
   // Liao,2/5/2008  constructor of SgFunctionDeclaration will automatically generate SgFunctionParameterList, so be cautious when set new paralist!!
     if (func->get_parameterList() != NULL)
       if (func->get_parameterList() != paralist)
-	delete func->get_parameterList();
+        delete func->get_parameterList();
     func->set_parameterList(paralist);
     paralist->set_parent(func);
 
@@ -8108,7 +8108,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                  else
                     if (isSgIfStmt(parent)->get_false_body()==targetStmt)
                        {
-	                   // ensureBasicBlockAsParent(targetStmt);
+                           // ensureBasicBlockAsParent(targetStmt);
                          insertStatement(isSgStatement(parent),newStmt,insertBefore);
                        }
         }
@@ -8242,24 +8242,24 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
         break;
       case V_SgSizeOfOp:
         isSgSizeOfOp(target)->set_operand_expr(operand);
-	break;
+        break;
       case V_SgTypeIdOp:
         isSgTypeIdOp(target)->set_operand_expr(operand);
-	break;
+        break;
       case V_SgVarArgOp:
         isSgVarArgOp(target)->set_operand_expr(operand);
-	break;
+        break;
       case V_SgVarArgStartOneOperandOp:
         isSgVarArgStartOneOperandOp(target)->set_operand_expr(operand);
-	break;
+        break;
       default:
         if (isSgUnaryOp(target)!=NULL) isSgUnaryOp(target)->set_operand_i(operand);
-	else
-	  {
+        else
+          {
             cout<<"SageInterface::setOperand(): unhandled case for target expression of type "
                 <<target->class_name()<<endl;
             ROSE_ASSERT(false);
-	  }
+          }
     }// end switch
     operand->set_parent(target);
     markLhsValues(target);
@@ -8478,7 +8478,7 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
     if (nondefdecl->get_parent() == NULL)
       nondefdecl->set_parent(scope);
 
-	// tps : (09/03/2009) Namespace should not have a scope
+        // tps : (09/03/2009) Namespace should not have a scope
     /*
     if (structDecl->get_scope() == NULL)
       structDecl->set_scope(scope);
@@ -8539,9 +8539,9 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
       else
       { // TODO consider prepend() and insert(), prev_decl_time is position dependent.
     //   cout<<"sageInterface.C:5130 debug: found a previous var declaration!!...."<<endl;
-	SgInitializedName* prev_decl = varSymbol->get_declaration();
-	ROSE_ASSERT(prev_decl);
-	initName->set_prev_decl_item(prev_decl);
+        SgInitializedName* prev_decl = varSymbol->get_declaration();
+        ROSE_ASSERT(prev_decl);
+        initName->set_prev_decl_item(prev_decl);
       } //end if
     } //end for
     // Liao 12/8/2010
@@ -9007,7 +9007,7 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
   {
     bool successful = false;
     if (scope == NULL)
-	scope = SageBuilder::topScopeStack();
+        scope = SageBuilder::topScopeStack();
     ROSE_ASSERT(scope);
     SgGlobal* globalScope = getGlobalScope(scope);
     ROSE_ASSERT(globalScope);
@@ -9025,16 +9025,16 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
       for (SgDeclarationStatementPtrList::iterator j = stmtList.begin ();
            j != stmtList.end (); j++)
       {
-	    //must have this judgement, otherwise wrong file will be modified!
+            //must have this judgement, otherwise wrong file will be modified!
             //It could also be the transformation generated statements with #include attached
-	if ( ((*j)->get_file_info ())->isSameFile(globalScope->get_file_info ())||
+        if ( ((*j)->get_file_info ())->isSameFile(globalScope->get_file_info ())||
               ((*j)->get_file_info ())->isTransformation()
            )
-	 {
+         {
            result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
                                           content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
            ROSE_ASSERT(result);
-	   (*j)->addToAttachedPreprocessingInfo(result,position);
+           (*j)->addToAttachedPreprocessingInfo(result,position);
            successful = true;
            break;
          }
@@ -9140,7 +9140,7 @@ StringUtility::numberToString(++breakLabelCounter),
 
   isSgStatement(breaks[j]->get_parent())->replace_statement(breaks[j],
   newGoto);
-	newGoto->set_parent(breaks[j]->get_parent());
+        newGoto->set_parent(breaks[j]->get_parent());
       }
     }
   }
@@ -9501,107 +9501,107 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatem
 
 SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
 {
-	//SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s) {
-	ROSE_ASSERT(s);
+        //SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s) {
+        ROSE_ASSERT(s);
 
-	//Vulov: The parent of a statement is not necessarily a statement. It could be SgStatementExpression
-	SgLocatedNode* p = isSgLocatedNode(s->get_parent());
-	ROSE_ASSERT(p);
-	switch (p->variantT())
-	{
-		case V_SgBasicBlock: return isSgBasicBlock(p);
-		case V_SgForStatement:
-		{
-			if (isSgForStatement(p)->get_loop_body() == s)
-				return ensureBasicBlockAsBodyOfFor(isSgForStatement(p));
-			else if (isSgForStatement(p)->get_test() == s)
-			{
-			}
-			else if (isSgForStatement(p)->get_for_init_stmt() == s)
-			{
-			}
-			else ROSE_ASSERT(false);
-			break;
-		}
+        //Vulov: The parent of a statement is not necessarily a statement. It could be SgStatementExpression
+        SgLocatedNode* p = isSgLocatedNode(s->get_parent());
+        ROSE_ASSERT(p);
+        switch (p->variantT())
+        {
+                case V_SgBasicBlock: return isSgBasicBlock(p);
+                case V_SgForStatement:
+                {
+                        if (isSgForStatement(p)->get_loop_body() == s)
+                                return ensureBasicBlockAsBodyOfFor(isSgForStatement(p));
+                        else if (isSgForStatement(p)->get_test() == s)
+                        {
+                        }
+                        else if (isSgForStatement(p)->get_for_init_stmt() == s)
+                        {
+                        }
+                        else ROSE_ASSERT(false);
+                        break;
+                }
     case V_SgUpcForAllStatement: // PP
     {
       SgUpcForAllStatement& upcforall = *isSgUpcForAllStatement(p);
 
       if (upcforall.get_loop_body() == s)
-				return ensureBasicBlockAsBodyOfUpcForAll(&upcforall);
+                                return ensureBasicBlockAsBodyOfUpcForAll(&upcforall);
 
       ROSE_ASSERT(  (s == upcforall.get_for_init_stmt())
                  || (s == upcforall.get_test())
                  );
       break;
     }
-		case V_SgWhileStmt:
-		{
-			if (isSgWhileStmt(p)->get_body() == s)
-				return ensureBasicBlockAsBodyOfWhile(isSgWhileStmt(p));
-			else if (isSgWhileStmt(p)->get_condition() == s)
-			{
-			}
-			else ROSE_ASSERT(false);
-			break;
-		}
-		case V_SgDoWhileStmt:
-		{
-			if (isSgDoWhileStmt(p)->get_body() == s)
-				return ensureBasicBlockAsBodyOfDoWhile(isSgDoWhileStmt(p));
-			else if (isSgDoWhileStmt(p)->get_condition() == s)
-			{
-			}
-			else ROSE_ASSERT(false);
-			break;
-		}
-		case V_SgSwitchStatement:
-		{
-			if (isSgSwitchStatement(p)->get_body() == s)
-				return ensureBasicBlockAsBodyOfSwitch(isSgSwitchStatement(p));
-			else if (isSgSwitchStatement(p)->get_item_selector() == s)
-			{
-			}
-			else ROSE_ASSERT(false);
-			break;
-		}
-		case V_SgCatchOptionStmt:
-		{
-			if (isSgCatchOptionStmt(p)->get_body() == s)
-				return ensureBasicBlockAsBodyOfCatch(isSgCatchOptionStmt(p));
-			else if (isSgCatchOptionStmt(p)->get_condition() == s)
-			{
-			}
-			else ROSE_ASSERT(false);
-			break;
-		}
-		case V_SgIfStmt:
-		{
-			if (isSgIfStmt(p)->get_true_body() == s)
-				return ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(p));
-			else if (isSgIfStmt(p)->get_false_body() == s)
-				return ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(p));
-			else if (isSgIfStmt(p)->get_conditional() == s)
-			{
-			}
-			else ROSE_ASSERT(false);
-			break;
-		}
-		default:
-		{
-			if (isSgOmpBodyStatement(p))
-			{
-				return ensureBasicBlockAsBodyOfOmpBodyStmt(isSgOmpBodyStatement(p));
-			}
-			else
-				// Liao, 7/3/2008 We allow other conditions to fall through,
-				// they are legal parents with list of statements as children.
-				//cerr << "Unhandled parent block:"<< p->class_name() << endl;
-				// ROSE_ASSERT (!"Bad parent in ensureBasicBlockAsParent");
-				break;
-		}
-	}
-	return p;
+                case V_SgWhileStmt:
+                {
+                        if (isSgWhileStmt(p)->get_body() == s)
+                                return ensureBasicBlockAsBodyOfWhile(isSgWhileStmt(p));
+                        else if (isSgWhileStmt(p)->get_condition() == s)
+                        {
+                        }
+                        else ROSE_ASSERT(false);
+                        break;
+                }
+                case V_SgDoWhileStmt:
+                {
+                        if (isSgDoWhileStmt(p)->get_body() == s)
+                                return ensureBasicBlockAsBodyOfDoWhile(isSgDoWhileStmt(p));
+                        else if (isSgDoWhileStmt(p)->get_condition() == s)
+                        {
+                        }
+                        else ROSE_ASSERT(false);
+                        break;
+                }
+                case V_SgSwitchStatement:
+                {
+                        if (isSgSwitchStatement(p)->get_body() == s)
+                                return ensureBasicBlockAsBodyOfSwitch(isSgSwitchStatement(p));
+                        else if (isSgSwitchStatement(p)->get_item_selector() == s)
+                        {
+                        }
+                        else ROSE_ASSERT(false);
+                        break;
+                }
+                case V_SgCatchOptionStmt:
+                {
+                        if (isSgCatchOptionStmt(p)->get_body() == s)
+                                return ensureBasicBlockAsBodyOfCatch(isSgCatchOptionStmt(p));
+                        else if (isSgCatchOptionStmt(p)->get_condition() == s)
+                        {
+                        }
+                        else ROSE_ASSERT(false);
+                        break;
+                }
+                case V_SgIfStmt:
+                {
+                        if (isSgIfStmt(p)->get_true_body() == s)
+                                return ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(p));
+                        else if (isSgIfStmt(p)->get_false_body() == s)
+                                return ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(p));
+                        else if (isSgIfStmt(p)->get_conditional() == s)
+                        {
+                        }
+                        else ROSE_ASSERT(false);
+                        break;
+                }
+                default:
+                {
+                        if (isSgOmpBodyStatement(p))
+                        {
+                                return ensureBasicBlockAsBodyOfOmpBodyStmt(isSgOmpBodyStatement(p));
+                        }
+                        else
+                                // Liao, 7/3/2008 We allow other conditions to fall through,
+                                // they are legal parents with list of statements as children.
+                                //cerr << "Unhandled parent block:"<< p->class_name() << endl;
+                                // ROSE_ASSERT (!"Bad parent in ensureBasicBlockAsParent");
+                                break;
+                }
+        }
+        return p;
 }
 
   void SageInterface::changeAllLoopBodiesToBlocks(SgNode* top) {
@@ -9690,7 +9690,7 @@ SageInterface::replaceExpressionWithStatement(SgExpression* from, StatementGener
                     forStatement->get_increment()->set_parent(incrStmt);
 
                     SageInterface::addStepToLoopBody(forStatement, incrStmt);
-		    SgNullExpression* ne = buildNullExpression();
+                    SgNullExpression* ne = buildNullExpression();
                     forStatement->set_increment(ne);
                     ne->set_parent(forStatement);
                     replaceSubexpressionWithStatement(from, to);
@@ -9777,7 +9777,7 @@ SageInterface::replaceExpressionWithStatement(SgExpression* from, StatementGener
                       SageInterface::appendStatement(doWhileStatement, new_statement);
                       assert (varsym);
                       SgCastExp* castExp1 = buildCastExp(root,buildBoolType());
-		      SgVarRefExp* vr = buildVarRefExp(varsym);
+                      SgVarRefExp* vr = buildVarRefExp(varsym);
                       vr->set_lvalue(true);
 
                       SgExprStatement* temp_setup = SageBuilder::buildAssignStatement(vr, castExp1);
@@ -9817,7 +9817,7 @@ SageInterface::replaceExpressionWithStatement(SgExpression* from, StatementGener
                       assert (varsym);
 
                                         SgCastExp* castExp2 = SageBuilder::buildCastExp(root, SageInterface::getBoolType(ifStatement));
-		      SgVarRefExp* vr = buildVarRefExp(varsym);
+                      SgVarRefExp* vr = buildVarRefExp(varsym);
                       vr->set_lvalue(true);
                       SgExprStatement* temp_setup = SageBuilder::buildAssignStatement(vr, castExp2 );
                       SageInterface::appendStatement(temp_setup, new_statement);
@@ -10017,7 +10017,7 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
     }
 
     ROSE_ASSERT (!"Bad kind return in getIntegerConstantValue");
-	return 0;
+        return 0;
   }
 
 
@@ -11757,967 +11757,967 @@ SageInterface::deleteAST ( SgNode* n )
    {
 //Tan, August/25/2010:       //Re-implement DeleteAST function
 
-	//Use MemoryPoolTraversal to count the number of references to a certain symbol
-	//This class defines the visitors for the MemoryPoolTraversal
+        //Use MemoryPoolTraversal to count the number of references to a certain symbol
+        //This class defines the visitors for the MemoryPoolTraversal
 
-	class ClassicVisitor : public ROSE_VisitorPattern
-	{
-		private:
-		int SgVariableSymbol_count;
-		int SgFunctionSymbol_count;
-		int SgClassDeclaration_count;
-		int SgTypedefSymbol_count;
-		int SgMemFuncSymbol_count;
-		int SgTemplateSymbol_count;
-		int SgEnumFieldSymbol_count;
+        class ClassicVisitor : public ROSE_VisitorPattern
+        {
+                private:
+                int SgVariableSymbol_count;
+                int SgFunctionSymbol_count;
+                int SgClassDeclaration_count;
+                int SgTypedefSymbol_count;
+                int SgMemFuncSymbol_count;
+                int SgTemplateSymbol_count;
+                int SgEnumFieldSymbol_count;
 
-		SgVariableSymbol* SgVariableSymbolPtr;
-		SgFunctionSymbol* SgFunctionSymbolPtr;
-		SgClassSymbol * SgClassSymbolPtr;
-		SgTypedefSymbol * SgTypedefPtr;
-		SgEnumFieldSymbol * SgEnumFieldSymbolPtr;
-		SgMemberFunctionSymbol * SgMemFuncSymbolPtr;
-		SgTemplateSymbol * SgTemplateSymbolPtr;
-		SgClassDeclaration * class_defining;
-		SgTemplateDeclaration * template_defining;
-		SgMemberFunctionDeclaration * memFunc;
-		SgTypedefDeclaration * typedef_defining;
-		SgFunctionDeclaration * function_decl;
- 		SgTemplateInstantiationDecl * templateInstantiate_defining;
+                SgVariableSymbol* SgVariableSymbolPtr;
+                SgFunctionSymbol* SgFunctionSymbolPtr;
+                SgClassSymbol * SgClassSymbolPtr;
+                SgTypedefSymbol * SgTypedefPtr;
+                SgEnumFieldSymbol * SgEnumFieldSymbolPtr;
+                SgMemberFunctionSymbol * SgMemFuncSymbolPtr;
+                SgTemplateSymbol * SgTemplateSymbolPtr;
+                SgClassDeclaration * class_defining;
+                SgTemplateDeclaration * template_defining;
+                SgMemberFunctionDeclaration * memFunc;
+                SgTypedefDeclaration * typedef_defining;
+                SgFunctionDeclaration * function_decl;
+                SgTemplateInstantiationDecl * templateInstantiate_defining;
 
-		public:
-		ClassicVisitor(SgVariableSymbol* symbol){
-			SgVariableSymbol_count = 0;
-			SgVariableSymbolPtr = symbol;
-			SgFunctionSymbolPtr =NULL;
-			SgClassSymbolPtr =NULL;
-			SgTypedefPtr = NULL;
-			SgMemFuncSymbolPtr =NULL;
-			class_defining = NULL;
-			memFunc =NULL;
-			typedef_defining =NULL;
-			function_decl = NULL;
-			SgTemplateSymbolPtr = NULL;
-			template_defining = NULL;
-			SgEnumFieldSymbolPtr = NULL;
-			templateInstantiate_defining =NULL;
-		}
+                public:
+                ClassicVisitor(SgVariableSymbol* symbol){
+                        SgVariableSymbol_count = 0;
+                        SgVariableSymbolPtr = symbol;
+                        SgFunctionSymbolPtr =NULL;
+                        SgClassSymbolPtr =NULL;
+                        SgTypedefPtr = NULL;
+                        SgMemFuncSymbolPtr =NULL;
+                        class_defining = NULL;
+                        memFunc =NULL;
+                        typedef_defining =NULL;
+                        function_decl = NULL;
+                        SgTemplateSymbolPtr = NULL;
+                        template_defining = NULL;
+                        SgEnumFieldSymbolPtr = NULL;
+                        templateInstantiate_defining =NULL;
+                }
 
-		ClassicVisitor(SgFunctionSymbol* symbol){
-			SgFunctionSymbol_count = 0;
-			SgFunctionSymbolPtr = symbol;
-			SgVariableSymbolPtr = NULL;
-			SgClassSymbolPtr =NULL;
-			SgTypedefPtr = NULL;
-			SgMemFuncSymbolPtr =NULL;
-			class_defining = NULL;
-			memFunc =NULL;
-			typedef_defining =NULL;
-			function_decl = NULL;
-			SgTemplateSymbolPtr = NULL;
-			template_defining = NULL;
-			SgEnumFieldSymbolPtr = NULL;
-			templateInstantiate_defining =NULL;
-		}
+                ClassicVisitor(SgFunctionSymbol* symbol){
+                        SgFunctionSymbol_count = 0;
+                        SgFunctionSymbolPtr = symbol;
+                        SgVariableSymbolPtr = NULL;
+                        SgClassSymbolPtr =NULL;
+                        SgTypedefPtr = NULL;
+                        SgMemFuncSymbolPtr =NULL;
+                        class_defining = NULL;
+                        memFunc =NULL;
+                        typedef_defining =NULL;
+                        function_decl = NULL;
+                        SgTemplateSymbolPtr = NULL;
+                        template_defining = NULL;
+                        SgEnumFieldSymbolPtr = NULL;
+                        templateInstantiate_defining =NULL;
+                }
 
-		ClassicVisitor(SgClassSymbol* symbol){
-			SgClassDeclaration_count = 0;
-			SgClassSymbolPtr = symbol;
-			SgFunctionSymbolPtr = NULL;
-			SgVariableSymbolPtr = NULL;
-			SgTypedefPtr = NULL;
-			SgMemFuncSymbolPtr =NULL;
-			class_defining = NULL;
-			memFunc =NULL;
-			typedef_defining =NULL;
-			function_decl = NULL;
-			SgTemplateSymbolPtr = NULL;
-			template_defining = NULL;
-			SgEnumFieldSymbolPtr = NULL;
-			templateInstantiate_defining =NULL;
-		}
+                ClassicVisitor(SgClassSymbol* symbol){
+                        SgClassDeclaration_count = 0;
+                        SgClassSymbolPtr = symbol;
+                        SgFunctionSymbolPtr = NULL;
+                        SgVariableSymbolPtr = NULL;
+                        SgTypedefPtr = NULL;
+                        SgMemFuncSymbolPtr =NULL;
+                        class_defining = NULL;
+                        memFunc =NULL;
+                        typedef_defining =NULL;
+                        function_decl = NULL;
+                        SgTemplateSymbolPtr = NULL;
+                        template_defining = NULL;
+                        SgEnumFieldSymbolPtr = NULL;
+                        templateInstantiate_defining =NULL;
+                }
 
-		ClassicVisitor(SgTypedefSymbol* symbol){
-			SgTypedefSymbol_count =0;
-			SgTypedefPtr = symbol;
-			SgClassSymbolPtr = NULL;
-			SgFunctionSymbolPtr = NULL;
-			SgVariableSymbolPtr = NULL;
-			SgMemFuncSymbolPtr =NULL;
-			class_defining = NULL;
-			memFunc =NULL;
-			typedef_defining =NULL;
-			function_decl = NULL;
-			SgTemplateSymbolPtr = NULL;
-			template_defining = NULL;
-			SgEnumFieldSymbolPtr = NULL;
-			templateInstantiate_defining =NULL;
-		}
+                ClassicVisitor(SgTypedefSymbol* symbol){
+                        SgTypedefSymbol_count =0;
+                        SgTypedefPtr = symbol;
+                        SgClassSymbolPtr = NULL;
+                        SgFunctionSymbolPtr = NULL;
+                        SgVariableSymbolPtr = NULL;
+                        SgMemFuncSymbolPtr =NULL;
+                        class_defining = NULL;
+                        memFunc =NULL;
+                        typedef_defining =NULL;
+                        function_decl = NULL;
+                        SgTemplateSymbolPtr = NULL;
+                        template_defining = NULL;
+                        SgEnumFieldSymbolPtr = NULL;
+                        templateInstantiate_defining =NULL;
+                }
 
-		ClassicVisitor(SgMemberFunctionSymbol* symbol){
-			SgMemFuncSymbolPtr = symbol;
-			SgMemFuncSymbol_count =0;
-			SgTypedefPtr = NULL;
-			SgClassSymbolPtr = NULL;
-			SgFunctionSymbolPtr = NULL;
-			SgVariableSymbolPtr = NULL;
-			class_defining = NULL;
-			memFunc =NULL;
-			typedef_defining =NULL;
-			function_decl = NULL;
-			SgTemplateSymbolPtr = NULL;
-			template_defining = NULL;
-			SgEnumFieldSymbolPtr = NULL;
-			templateInstantiate_defining =NULL;
-		}
+                ClassicVisitor(SgMemberFunctionSymbol* symbol){
+                        SgMemFuncSymbolPtr = symbol;
+                        SgMemFuncSymbol_count =0;
+                        SgTypedefPtr = NULL;
+                        SgClassSymbolPtr = NULL;
+                        SgFunctionSymbolPtr = NULL;
+                        SgVariableSymbolPtr = NULL;
+                        class_defining = NULL;
+                        memFunc =NULL;
+                        typedef_defining =NULL;
+                        function_decl = NULL;
+                        SgTemplateSymbolPtr = NULL;
+                        template_defining = NULL;
+                        SgEnumFieldSymbolPtr = NULL;
+                        templateInstantiate_defining =NULL;
+                }
 
-		ClassicVisitor(SgTemplateSymbol* symbol){
-			SgTemplateSymbolPtr = symbol;
-			SgTemplateSymbol_count =0;
-			SgMemFuncSymbolPtr = NULL;
-			SgTypedefPtr = NULL;
-			SgClassSymbolPtr = NULL;
-			SgFunctionSymbolPtr = NULL;
-			SgVariableSymbolPtr = NULL;
-			class_defining = NULL;
-			memFunc =NULL;
-			typedef_defining =NULL;
-			function_decl = NULL;
-			template_defining = NULL;
-			SgEnumFieldSymbolPtr = NULL;
-			templateInstantiate_defining =NULL;
-		}
+                ClassicVisitor(SgTemplateSymbol* symbol){
+                        SgTemplateSymbolPtr = symbol;
+                        SgTemplateSymbol_count =0;
+                        SgMemFuncSymbolPtr = NULL;
+                        SgTypedefPtr = NULL;
+                        SgClassSymbolPtr = NULL;
+                        SgFunctionSymbolPtr = NULL;
+                        SgVariableSymbolPtr = NULL;
+                        class_defining = NULL;
+                        memFunc =NULL;
+                        typedef_defining =NULL;
+                        function_decl = NULL;
+                        template_defining = NULL;
+                        SgEnumFieldSymbolPtr = NULL;
+                        templateInstantiate_defining =NULL;
+                }
 
-		ClassicVisitor(SgEnumFieldSymbol* symbol){
-			SgEnumFieldSymbolPtr = symbol;
-			SgEnumFieldSymbol_count =0;
-			SgTemplateSymbolPtr = NULL;
-			SgMemFuncSymbolPtr = NULL;
-			SgTypedefPtr = NULL;
-			SgClassSymbolPtr = NULL;
-			SgFunctionSymbolPtr = NULL;
-			SgVariableSymbolPtr = NULL;
-			class_defining = NULL;
-			memFunc =NULL;
-			typedef_defining =NULL;
-			function_decl = NULL;
-			template_defining = NULL;
-			templateInstantiate_defining =NULL;
-		}
-
-
-		ClassicVisitor(SgClassDeclaration* node){
-			class_defining = node;
-			SgMemFuncSymbolPtr = NULL;
-			SgTypedefPtr = NULL;
-			SgClassSymbolPtr = NULL;
-			SgFunctionSymbolPtr = NULL;
-			SgVariableSymbolPtr = NULL;
-			memFunc =NULL;
-			typedef_defining =NULL;
-			function_decl = NULL;
-			SgTemplateSymbolPtr = NULL;
-			template_defining = NULL;
-			SgEnumFieldSymbolPtr = NULL;
-			templateInstantiate_defining =NULL;
-		}
-
-		ClassicVisitor(SgTemplateDeclaration* node){
-			template_defining = node;
-			class_defining = NULL;
-			SgMemFuncSymbolPtr = NULL;
-			SgTypedefPtr = NULL;
-			SgClassSymbolPtr = NULL;
-			SgFunctionSymbolPtr = NULL;
-			SgVariableSymbolPtr = NULL;
-			memFunc =NULL;
-			typedef_defining =NULL;
-			function_decl = NULL;
-			SgTemplateSymbolPtr = NULL;
-			SgEnumFieldSymbolPtr = NULL;
-			templateInstantiate_defining =NULL;
-		}
-		ClassicVisitor(SgFunctionDeclaration* node){
-			function_decl =node;
-			class_defining = NULL;
-			SgMemFuncSymbolPtr = NULL;
-			SgTypedefPtr = NULL;
-			SgClassSymbolPtr = NULL;
-			SgFunctionSymbolPtr = NULL;
-			SgVariableSymbolPtr = NULL;
-			memFunc =NULL;
-			typedef_defining =NULL;
-			SgTemplateSymbolPtr = NULL;
-			template_defining = NULL;
-			SgEnumFieldSymbolPtr = NULL;
-			templateInstantiate_defining =NULL;
-		}
-
-		ClassicVisitor(SgMemberFunctionDeclaration* node){
-			memFunc = node;
-			function_decl =NULL;
-			class_defining = NULL;
-			SgMemFuncSymbolPtr = NULL;
-			SgTypedefPtr = NULL;
-			SgClassSymbolPtr = NULL;
-			SgFunctionSymbolPtr = NULL;
-			SgVariableSymbolPtr = NULL;
-			typedef_defining =NULL;
-			SgTemplateSymbolPtr = NULL;
-			template_defining = NULL;
-			SgEnumFieldSymbolPtr = NULL;
-			templateInstantiate_defining =NULL;
-		}
-
-		ClassicVisitor(SgTypedefDeclaration* node){
-			typedef_defining = node;
-			memFunc = NULL;
-			function_decl =NULL;
-			class_defining = NULL;
-			SgMemFuncSymbolPtr = NULL;
-			SgTypedefPtr = NULL;
-			SgClassSymbolPtr = NULL;
-			SgFunctionSymbolPtr = NULL;
-			SgVariableSymbolPtr = NULL;
-			SgTemplateSymbolPtr = NULL;
-			template_defining = NULL;
-			SgEnumFieldSymbolPtr = NULL;
-			templateInstantiate_defining =NULL;
-		}
-
-		ClassicVisitor(SgTemplateInstantiationDecl* node){
-			templateInstantiate_defining =node;
-			typedef_defining = NULL;
-			memFunc = NULL;
-			function_decl =NULL;
-			class_defining = NULL;
-			SgMemFuncSymbolPtr = NULL;
-			SgTypedefPtr = NULL;
-			SgClassSymbolPtr = NULL;
-			SgFunctionSymbolPtr = NULL;
-			SgVariableSymbolPtr = NULL;
-			SgTemplateSymbolPtr = NULL;
-			template_defining = NULL;
-			SgEnumFieldSymbolPtr = NULL;
-		}
+                ClassicVisitor(SgEnumFieldSymbol* symbol){
+                        SgEnumFieldSymbolPtr = symbol;
+                        SgEnumFieldSymbol_count =0;
+                        SgTemplateSymbolPtr = NULL;
+                        SgMemFuncSymbolPtr = NULL;
+                        SgTypedefPtr = NULL;
+                        SgClassSymbolPtr = NULL;
+                        SgFunctionSymbolPtr = NULL;
+                        SgVariableSymbolPtr = NULL;
+                        class_defining = NULL;
+                        memFunc =NULL;
+                        typedef_defining =NULL;
+                        function_decl = NULL;
+                        template_defining = NULL;
+                        templateInstantiate_defining =NULL;
+                }
 
 
-	// SgVariableSymbol and SgEnumFieldSymbol
-		void visit(SgInitializedName* node)
-		{
-			if(SgVariableSymbolPtr !=NULL){
-				if(node->get_scope()!=NULL){
-					if(node->get_scope()->get_symbol_table()!=NULL){
-						SgSymbol* s = node->get_symbol_from_symbol_table();
-						if (isSgVariableSymbol(s) == SgVariableSymbolPtr) SgVariableSymbol_count++;
-					}
-				}
-			}
+                ClassicVisitor(SgClassDeclaration* node){
+                        class_defining = node;
+                        SgMemFuncSymbolPtr = NULL;
+                        SgTypedefPtr = NULL;
+                        SgClassSymbolPtr = NULL;
+                        SgFunctionSymbolPtr = NULL;
+                        SgVariableSymbolPtr = NULL;
+                        memFunc =NULL;
+                        typedef_defining =NULL;
+                        function_decl = NULL;
+                        SgTemplateSymbolPtr = NULL;
+                        template_defining = NULL;
+                        SgEnumFieldSymbolPtr = NULL;
+                        templateInstantiate_defining =NULL;
+                }
 
-			if(SgEnumFieldSymbolPtr !=NULL){
-				if(node->get_scope()!=NULL){
-					if(node->get_scope()->get_symbol_table()!=NULL){
-						SgSymbol* s = node->get_symbol_from_symbol_table();
-						if (isSgEnumFieldSymbol(s) == SgEnumFieldSymbolPtr) SgEnumFieldSymbol_count++;
-					}
-				}
-			}
-		}
+                ClassicVisitor(SgTemplateDeclaration* node){
+                        template_defining = node;
+                        class_defining = NULL;
+                        SgMemFuncSymbolPtr = NULL;
+                        SgTypedefPtr = NULL;
+                        SgClassSymbolPtr = NULL;
+                        SgFunctionSymbolPtr = NULL;
+                        SgVariableSymbolPtr = NULL;
+                        memFunc =NULL;
+                        typedef_defining =NULL;
+                        function_decl = NULL;
+                        SgTemplateSymbolPtr = NULL;
+                        SgEnumFieldSymbolPtr = NULL;
+                        templateInstantiate_defining =NULL;
+                }
+                ClassicVisitor(SgFunctionDeclaration* node){
+                        function_decl =node;
+                        class_defining = NULL;
+                        SgMemFuncSymbolPtr = NULL;
+                        SgTypedefPtr = NULL;
+                        SgClassSymbolPtr = NULL;
+                        SgFunctionSymbolPtr = NULL;
+                        SgVariableSymbolPtr = NULL;
+                        memFunc =NULL;
+                        typedef_defining =NULL;
+                        SgTemplateSymbolPtr = NULL;
+                        template_defining = NULL;
+                        SgEnumFieldSymbolPtr = NULL;
+                        templateInstantiate_defining =NULL;
+                }
 
-		void visit(SgVarRefExp* node)
-		{
-			if(SgVariableSymbolPtr !=NULL){
-				SgVariableSymbol* s = node->get_symbol();
-				if (s == SgVariableSymbolPtr) SgVariableSymbol_count++;
-			}
-		}
+                ClassicVisitor(SgMemberFunctionDeclaration* node){
+                        memFunc = node;
+                        function_decl =NULL;
+                        class_defining = NULL;
+                        SgMemFuncSymbolPtr = NULL;
+                        SgTypedefPtr = NULL;
+                        SgClassSymbolPtr = NULL;
+                        SgFunctionSymbolPtr = NULL;
+                        SgVariableSymbolPtr = NULL;
+                        typedef_defining =NULL;
+                        SgTemplateSymbolPtr = NULL;
+                        template_defining = NULL;
+                        SgEnumFieldSymbolPtr = NULL;
+                        templateInstantiate_defining =NULL;
+                }
 
-		int get_num_variable_pointers(){return SgVariableSymbol_count;}
+                ClassicVisitor(SgTypedefDeclaration* node){
+                        typedef_defining = node;
+                        memFunc = NULL;
+                        function_decl =NULL;
+                        class_defining = NULL;
+                        SgMemFuncSymbolPtr = NULL;
+                        SgTypedefPtr = NULL;
+                        SgClassSymbolPtr = NULL;
+                        SgFunctionSymbolPtr = NULL;
+                        SgVariableSymbolPtr = NULL;
+                        SgTemplateSymbolPtr = NULL;
+                        template_defining = NULL;
+                        SgEnumFieldSymbolPtr = NULL;
+                        templateInstantiate_defining =NULL;
+                }
 
-		int get_num_EnumField_pointers(){return SgEnumFieldSymbol_count;}
+                ClassicVisitor(SgTemplateInstantiationDecl* node){
+                        templateInstantiate_defining =node;
+                        typedef_defining = NULL;
+                        memFunc = NULL;
+                        function_decl =NULL;
+                        class_defining = NULL;
+                        SgMemFuncSymbolPtr = NULL;
+                        SgTypedefPtr = NULL;
+                        SgClassSymbolPtr = NULL;
+                        SgFunctionSymbolPtr = NULL;
+                        SgVariableSymbolPtr = NULL;
+                        SgTemplateSymbolPtr = NULL;
+                        template_defining = NULL;
+                        SgEnumFieldSymbolPtr = NULL;
+                }
 
 
-	// SgFunctionSymbol
-		void visit(SgFunctionDeclaration* node)		{
-			if(SgFunctionSymbolPtr !=NULL){
-				if(node->get_scope()!=NULL){
-					if(node->get_scope()->get_symbol_table()!=NULL){
-						SgSymbol* s = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
-						if ((SgFunctionSymbol *)s == SgFunctionSymbolPtr) SgFunctionSymbol_count++;
-					}
-				}
-			}
+        // SgVariableSymbol and SgEnumFieldSymbol
+                void visit(SgInitializedName* node)
+                {
+                        if(SgVariableSymbolPtr !=NULL){
+                                if(node->get_scope()!=NULL){
+                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                                SgSymbol* s = node->get_symbol_from_symbol_table();
+                                                if (isSgVariableSymbol(s) == SgVariableSymbolPtr) SgVariableSymbol_count++;
+                                        }
+                                }
+                        }
+
+                        if(SgEnumFieldSymbolPtr !=NULL){
+                                if(node->get_scope()!=NULL){
+                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                                SgSymbol* s = node->get_symbol_from_symbol_table();
+                                                if (isSgEnumFieldSymbol(s) == SgEnumFieldSymbolPtr) SgEnumFieldSymbol_count++;
+                                        }
+                                }
+                        }
+                }
+
+                void visit(SgVarRefExp* node)
+                {
+                        if(SgVariableSymbolPtr !=NULL){
+                                SgVariableSymbol* s = node->get_symbol();
+                                if (s == SgVariableSymbolPtr) SgVariableSymbol_count++;
+                        }
+                }
+
+                int get_num_variable_pointers(){return SgVariableSymbol_count;}
+
+                int get_num_EnumField_pointers(){return SgEnumFieldSymbol_count;}
+
+
+        // SgFunctionSymbol
+                void visit(SgFunctionDeclaration* node)         {
+                        if(SgFunctionSymbolPtr !=NULL){
+                                if(node->get_scope()!=NULL){
+                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                                SgSymbol* s = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
+                                                if ((SgFunctionSymbol *)s == SgFunctionSymbolPtr) SgFunctionSymbol_count++;
+                                        }
+                                }
+                        }
 #if 0
-			if(function_decl!=NULL){
-				if(node->get_symbol_from_symbol_table() == NULL){
-					SgDeclarationStatement * define = ((SgDeclarationStatement*)node)->get_definingDeclaration();
-					SgDeclarationStatement * first_nondefine = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
-					if(node!=function_decl && (define==function_decl || first_nondefine==function_decl)) delete node;
-				}
-			}
+                        if(function_decl!=NULL){
+                                if(node->get_symbol_from_symbol_table() == NULL){
+                                        SgDeclarationStatement * define = ((SgDeclarationStatement*)node)->get_definingDeclaration();
+                                        SgDeclarationStatement * first_nondefine = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
+                                        if(node!=function_decl && (define==function_decl || first_nondefine==function_decl)) delete node;
+                                }
+                        }
 #endif
-		}
-
-		void visit(SgFunctionRefExp* node)
-		{
-			if (SgFunctionSymbolPtr !=NULL){
-				SgFunctionSymbol* s = node->get_symbol_i();
-				if (isSgFunctionSymbol(s) == SgFunctionSymbolPtr) SgFunctionSymbol_count++;
-			}
-		}
-
-		void visit(SgUserDefinedBinaryOp* node)
-		{
-			if (SgFunctionSymbolPtr !=NULL){
-				SgFunctionSymbol* s = node->get_symbol();
-				if (isSgFunctionSymbol(s) == SgFunctionSymbolPtr) SgFunctionSymbol_count++;
-			}
-		}
-
-		int get_num_Function_pointers(){return SgFunctionSymbol_count;}
-
-	// SgClassSymbol
-		void visit(SgClassDeclaration* node)
-		{
-			if(SgClassSymbolPtr !=NULL){
-				if(node->get_scope()!=NULL){
-					if(node->get_scope()->get_symbol_table()!=NULL){
-						SgSymbol* s = node->get_symbol_from_symbol_table();
-						if (isSgClassSymbol(s) == SgClassSymbolPtr) SgClassDeclaration_count++;
-					}
-				}
-			}
-
-			if(class_defining!=NULL) {
-				if(node->get_symbol_from_symbol_table() == NULL){
-					SgDeclarationStatement * class_decl = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
-					SgDeclarationStatement * class_decl1 = ((SgDeclarationStatement*)node)->get_definingDeclaration();
-					if((class_decl==class_defining||class_decl1==class_defining) && node!=class_defining )
-						delete node;
-				}
-			}
-		}
-
-		void visit(SgTemplateInstantiationDecl* node)
-		{
-			if(SgClassSymbolPtr !=NULL){
-				if(node->get_scope()!=NULL){
-					if(node->get_scope()->get_symbol_table()!=NULL){
-						SgSymbol* s = node->get_symbol_from_symbol_table();
-						if (isSgClassSymbol(s) == SgClassSymbolPtr) SgClassDeclaration_count++;
-					}
-				}
-			}
-
-			if(templateInstantiate_defining!=NULL) {
-				if(node->get_scope()!=NULL){
-					if(node->get_scope()->get_symbol_table()!=NULL){
-						if(node->get_symbol_from_symbol_table() == NULL){
-							SgDeclarationStatement * template_decl = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
-							SgDeclarationStatement * template_decl1 = ((SgDeclarationStatement*)node)->get_definingDeclaration();
-							if((template_decl==templateInstantiate_defining||template_decl1==templateInstantiate_defining) && node!=templateInstantiate_defining){
- 								/*vector<SgTemplateArgument*> tempargs=  ((SgTemplateInstantiationDecl*)node)->get_templateArguments();
-								foreach (SgTemplateArgument* element, tempargs){
-									SgTemplateArgument* temparg = isSgTemplateArgument(element);
-									if(temparg){
-										delete temparg;
-									}
-									printf("SgTemplateArg in Memory Pool traversal\n");
-								}*/
-								delete node;
-								//printf("SgTemplateInstantiationDecl in Memory Pool traversal\n");
-							}
-						}
-					}
-				}
-			}
-		}
-
-		void visit(SgThisExp* node)
-		{
-			if (SgClassSymbolPtr !=NULL){
-				SgSymbol* s = node->get_class_symbol();
-				if (s == SgClassSymbolPtr) SgClassDeclaration_count++;
-			}
-		}
-
-		void visit(SgClassNameRefExp* node)
-		{
-			if (SgClassSymbolPtr !=NULL){
-				SgSymbol* s = node->get_symbol();
-				if (isSgClassSymbol(s) == SgClassSymbolPtr) SgClassDeclaration_count++;
-			}
-		}
-
-
-		int get_num_Class_pointers(){return SgClassDeclaration_count;}
-
-
-	// SgMemberFunctionSymbol
-		void visit(SgCtorInitializerList* node)
-		{
-			if(memFunc !=NULL){
-				SgMemberFunctionDeclaration * func= (SgMemberFunctionDeclaration*) (node->get_parent());
-				if(func == memFunc){
-					delete node;
-				}
-			}
-		}
-
-
-		void visit(SgMemberFunctionDeclaration* node)
-		{
-			if (SgMemFuncSymbolPtr !=NULL){
-				if(node->get_scope()!=NULL){
-					if(node->get_scope()->get_symbol_table()!=NULL){
-						SgSymbol* symbol = ((SgMemberFunctionDeclaration*)node)->get_symbol_from_symbol_table();
-						if(symbol == SgMemFuncSymbolPtr){
-							SgMemFuncSymbol_count++;
-						}
-					}
-				}
-			}
-		}
-
-		void visit(SgTemplateInstantiationMemberFunctionDecl* node)
-		{
-			if (SgMemFuncSymbolPtr !=NULL){
-				if(node->get_scope()!=NULL){
-					if(node->get_scope()->get_symbol_table()!=NULL){
-						SgSymbol* symbol = ((SgTemplateInstantiationMemberFunctionDecl*)node)->get_symbol_from_symbol_table();
-						if(symbol == SgMemFuncSymbolPtr){
-							SgMemFuncSymbol_count++;
-						}
-					}
-				}
-			}
-		}
-
-
-
-		int get_num_memFunc_pointers(){return SgMemFuncSymbol_count;}
-
-
-	// SgTypedefSymbol
-		void visit(SgTypedefDeclaration* node)
-		{
-			if(SgTypedefPtr!=NULL){
-				if(node->get_scope()!=NULL){
-					if(node->get_scope()->get_symbol_table()!=NULL){
-						SgSymbol* s = ((SgTypedefDeclaration*)node)->get_symbol_from_symbol_table();
-						if ((SgTypedefSymbol *)s == SgTypedefPtr) SgTypedefSymbol_count++;
-					}
-				}
-			}
-			if(typedef_defining!=NULL){
-				SgDeclarationStatement * typedef_define = ((SgDeclarationStatement*)node)->get_definingDeclaration();
-				if(typedef_define == typedef_defining && node != typedef_defining ) {
-					delete node;
-				}
-			}
-		}
-
-		int get_num_Typedef_pointers(){return SgTypedefSymbol_count;}
-
-
-
-		void visit(SgTemplateDeclaration* node)
-		{
-			if (SgTemplateSymbolPtr !=NULL){
-				if(node->get_scope()!=NULL){
-					if(node->get_scope()->get_symbol_table()!=NULL){
-						SgSymbol* symbol = ((SgTemplateDeclaration*)node)->get_symbol_from_symbol_table();
-						if(symbol == SgTemplateSymbolPtr){
-							SgTemplateSymbol_count++;
-						}
-					}
-				}
-			}
-
-			if(template_defining !=NULL) {
-				if(node->get_scope()!=NULL){
-					if(node->get_scope()->get_symbol_table()!=NULL){
-						if(node->get_symbol_from_symbol_table() == NULL){
-							SgDeclarationStatement * template_decl = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
-							SgDeclarationStatement * template_decl1 = ((SgDeclarationStatement*)node)->get_definingDeclaration();
-							if((template_decl==template_defining||template_decl1==template_defining) && node!=template_defining) {
-								delete node;
-
-							}
-						}
-					}
-				}
-			}
-		}
-
-		int get_num_Template_pointers(){return SgTemplateSymbol_count;}
-
-	};
-
-
-	//Tan August,25,2010 //Traverse AST in post order, delete nodes and their symbols if it's safe to do so
-	class DeleteAST : public SgSimpleProcessing,  ROSE_VisitTraversal
-		{
-			public:
-
-			void visit (SgNode* node)
-			{
-			//These nodes are manually deleted because they cannot be visited by the traversal
-				/*////////////////////////////////////////////////
-				/remove SgVariableDefinition, SgVariableSymbol and SgEnumFieldSymbol
-				/////////////////////////////////////////////////*/
-
-				if(isSgInitializedName(node) !=NULL){
-					//remove SgVariableDefinition
-					SgDeclarationStatement* var_def;
-					var_def =  ((SgInitializedName *)node)->get_definition();
-					if(isSgVariableDefinition(var_def) !=NULL){
-						delete var_def;
-						//printf("A SgVariableDefinition was deleted\n");
-					}
-
-
-					//remove SgVariableSymbol
-					if(isSgInitializedName(node)->get_scope()!=NULL){
-						if(isSgInitializedName(node)->get_scope()->get_symbol_table()!=NULL){
-							SgSymbol* symbol = ((SgInitializedName *)node)->get_symbol_from_symbol_table();
-							if(isSgVariableSymbol(symbol) !=NULL){
-								ClassicVisitor visitor((SgVariableSymbol*)symbol);
-								traverseMemoryPoolVisitorPattern(visitor);
-								if(visitor.get_num_variable_pointers()==1){ //only one reference to this symbol => safe to delete
-								((SgInitializedName*)node)->get_scope()->get_symbol_table()->remove(symbol);
-									delete symbol;
-									//printf("A SgVariableSymbol was deleted\n");
-								}
-							}
-
-							if(isSgEnumFieldSymbol(symbol) !=NULL){
-								ClassicVisitor visitor((SgEnumFieldSymbol*)symbol);
-								traverseMemoryPoolVisitorPattern(visitor);
-								if(visitor.get_num_EnumField_pointers()==1){
-									((SgInitializedName*)node)->get_scope()->get_symbol_table()->remove(symbol);
-									delete symbol;
-									//printf("A SgEnumFieldSymbol was deleted\n");
-								}
-							}
-
-						}
-					}
-				}
-
-				if(isSgVarRefExp(node) !=NULL){
-						SgVariableSymbol *symbol = ((SgVarRefExp*)node)->get_symbol();
-						ClassicVisitor visitor(symbol);
-						traverseMemoryPoolVisitorPattern(visitor);
-						if(visitor.get_num_variable_pointers()==1){ //only one reference to this symbol => safe to delete
-							//((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
-							delete symbol;
-							//printf("A SgVariableSymbol was deleted\n");
-						}
-				}
-
-				/*////////////////////////////////////////////////
-				/remove SgFunctionSymbol
-				/////////////////////////////////////////////////*/
-
-				if(isSgFunctionDeclaration(node) && isSgMemberFunctionDeclaration(node)==NULL){
-					if(isSgFunctionDeclaration(node)->get_scope()!=NULL){
-						if(isSgFunctionDeclaration(node)->get_scope()->get_symbol_table()!=NULL){
-							SgSymbol* symbol = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
-							ClassicVisitor visitor((SgFunctionSymbol *)symbol);
-							traverseMemoryPoolVisitorPattern(visitor);
-							if(visitor.get_num_Function_pointers()==1){ //only one reference to this FunctionSymbol => safe to delete
-								((SgFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
-								delete symbol;
-								//printf("A SgFunctionSymbol was deleted\n");
-							}
-							ClassicVisitor visitor1((SgFunctionDeclaration *)node);
-							traverseMemoryPoolVisitorPattern(visitor1);
-						}
-					}
-				}
-
-
-				if(isSgFunctionRefExp(node) !=NULL){
-						SgFunctionSymbol *symbol = ((SgFunctionRefExp*)node)->get_symbol_i();
-						ClassicVisitor visitor(symbol);
-						traverseMemoryPoolVisitorPattern(visitor);
-						if(visitor.get_num_Function_pointers()==1){ //only one reference to this FunctionSymbol => safe to delete
-							//((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
-							delete symbol;
-							//printf("A SgFunctionSymbol was deleted\n");
-						}
-
-				}
-
-				if(isSgUserDefinedBinaryOp(node) !=NULL){
-					SgFunctionSymbol *symbol = ((SgUserDefinedBinaryOp*)node)->get_symbol();
-					ClassicVisitor visitor(symbol);
-					traverseMemoryPoolVisitorPattern(visitor);
-					if(visitor.get_num_Function_pointers()==1){ //only one reference to this FunctionSymbol => safe to delete
-						((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
-						delete symbol;
-						//printf("A SgFunctionSymbol was deleted\n");
-					}
-				}
-
-				/*////////////////////////////////////////////////
-				/remove SgTypedefSymbol
-				/////////////////////////////////////////////////*/
-
-				if(isSgTypedefDeclaration(node) !=NULL){
-					if(((SgTypedefDeclaration*)node)->get_scope()!=NULL){
-						if(((SgTypedefDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
-							SgSymbol* symbol = ((SgTypedefDeclaration*)node)->get_symbol_from_symbol_table();
-							if(isSgTypedefSymbol(symbol)){
-								ClassicVisitor visitor((SgTypedefSymbol*) symbol);
-								traverseMemoryPoolVisitorPattern(visitor);
-								if(visitor.get_num_Typedef_pointers()==1){ //only one reference to this SgTypedefSymbol  => safe to delete
-									((SgTypedefDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
-									delete symbol;
-									//printf("A SgTypedefSymbol was deleted\n");
-								}
-							}
-						}
-					}
-
-					if(node == isSgTypedefDeclaration(node)->get_definingDeclaration()){
-						ClassicVisitor visitor1((SgTypedefDeclaration*) node);
-						traverseMemoryPoolVisitorPattern(visitor1);
-					}
-				}
-
-				/*////////////////////////////////////////////////
-				/remove SgNamespaceDeclarationSymbol
-				/////////////////////////////////////////////////*/
-
-				if(isSgNamespaceDeclarationStatement(node) !=NULL){
-					if(((SgNamespaceDeclarationStatement*)node)->get_scope()!=NULL){
-						if(((SgNamespaceDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
-							SgSymbol* symbol = ((SgNamespaceDeclarationStatement*)node)->get_symbol_from_symbol_table();
-							if(isSgNamespaceSymbol(symbol)){
-								((SgNamespaceDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
-								delete symbol;
-								//printf("A SgNamespaceSymbol was deleted\n");
-							}
-						}
-					}
-				}
-
-
-				if(isSgNamespaceAliasDeclarationStatement(node) !=NULL){
-					if(((SgNamespaceAliasDeclarationStatement*)node)->get_scope()!=NULL){
-						if(((SgNamespaceAliasDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
-							SgSymbol* symbol = ((SgNamespaceAliasDeclarationStatement*)node)->get_symbol_from_symbol_table();
-							if(isSgNamespaceSymbol(symbol)){
-								((SgNamespaceAliasDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
-								delete symbol;
-								//printf("A SgNamespaceSymbol was deleted\n");
-							}
-						}
-					}
-				}
-
-
-				/*////////////////////////////////////////////////
-				/remove SgLabelSymbol
-				/////////////////////////////////////////////////*/
-
-				if(isSgLabelStatement(node) !=NULL){
-					if(((SgLabelStatement*)node)->get_scope()!=NULL){
-						if(((SgLabelStatement*)node)->get_scope()->get_symbol_table()!=NULL){
-							SgSymbol* symbol = ((SgLabelStatement*)node)->get_symbol_from_symbol_table();
-							if(isSgLabelSymbol(symbol)){
-								((SgLabelStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
-								delete symbol;
-								//printf("A SgLabelSymbol was deleted\n");
-							}
-						}
-					}
-				}
-
-				if(isSgLabelRefExp(node) !=NULL){
-					SgLabelSymbol* symbol = ((SgLabelRefExp*)node)->get_symbol();
-					((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
-					delete symbol;
-					//printf("A SgLabelSymbol was deleted\n");
-				}
-
-
-				/*////////////////////////////////////////////////
-				/remove SgEnumSymbol
-				/////////////////////////////////////////////////*/
-
-				if(isSgEnumDeclaration(node) !=NULL){
-					if(((SgEnumDeclaration*)node)->get_scope()!=NULL){
-						if(((SgEnumDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
-							SgSymbol* symbol = ((SgEnumDeclaration*)node)->get_symbol_from_symbol_table();
-							if(isSgEnumSymbol(symbol) !=NULL){
-								((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
-								delete symbol;
-								//printf("A SgEnumSymbol was deleted\n");
-							}
-						}
-					}
-					SgEnumType* type= ((SgEnumDeclaration*)node)->get_type();
-					if(type !=NULL){
-							delete type;
-							//printf("A SgEnumType was deleted\n");
-					}
-				}
-
-
-				/*////////////////////////////////////////////////
-				/remove SgClassSymbol
-				/////////////////////////////////////////////////*/
-
-				if(isSgClassDeclaration(node) !=NULL && isSgTemplateInstantiationDecl(node) ==NULL){
-					if(((SgClassDeclaration*)node)->get_scope()!=NULL){
-						if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
-							SgSymbol* symbol = ((SgClassDeclaration*)node)->get_symbol_from_symbol_table();
-							if(isSgClassSymbol(symbol) !=NULL){
-								ClassicVisitor visitor((SgClassSymbol*)symbol);
-								traverseMemoryPoolVisitorPattern(visitor);
-								if(visitor.get_num_Class_pointers()==1){ //only one reference to this symbol => safe to delete
-									((SgClassDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
-									delete symbol;
-									//printf("A SgClassSymbol was deleted\n");
-								}
-							}
-						}
-					}
-
-					ClassicVisitor visitor((SgClassDeclaration*) node );
-					traverseMemoryPoolVisitorPattern(visitor);
-
-					SgClassType* type= ((SgClassDeclaration*)node)->get_type();
-					if(type !=NULL){
-						delete type;
-						//printf("A SgClassType was deleted\n");
-					}
-				}
-
-				if(isSgThisExp(node) !=NULL){
-					SgSymbol* symbol = ((SgThisExp*)node)->get_class_symbol();
-					ClassicVisitor visitor((SgClassSymbol*)symbol);
-					traverseMemoryPoolVisitorPattern(visitor);
-					if(visitor.get_num_Class_pointers()==1){ //only one reference to this symbol => safe to delete
-						((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
-						delete symbol;
-						//printf("A SgClassSymbol was deleted\n");
-					}
-
-				}
-
-				if(isSgClassNameRefExp(node) !=NULL){
-					SgSymbol* symbol = ((SgClassNameRefExp*)node)->get_symbol();
-					if(isSgClassSymbol(symbol) !=NULL)
-					{
-						ClassicVisitor visitor((SgClassSymbol*)symbol);
-						traverseMemoryPoolVisitorPattern(visitor);
-						if(visitor.get_num_Class_pointers()==1){ //only one reference to this symbol => safe to delete
-							((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
-							delete symbol;
-							//printf("A SgClassSymbol was deleted\n");
-						}
-					}
-				}
-
-				/*////////////////////////////////////////////////
-				/remove SgMemberFunctionSymbol
-				/////////////////////////////////////////////////*/
-
-
-				if(isSgMemberFunctionDeclaration(node) !=NULL){
-				   	if(((SgMemberFunctionDeclaration*)node)->get_scope()!=NULL){
-						if(((SgMemberFunctionDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
-							SgSymbol* symbol = ((SgMemberFunctionDeclaration*)node)->get_symbol_from_symbol_table();
-							if(isSgMemberFunctionSymbol(symbol)){
-								ClassicVisitor visitor((SgMemberFunctionSymbol*)symbol);
-								traverseMemoryPoolVisitorPattern(visitor);
-								if(visitor.get_num_memFunc_pointers()==1){
-									((SgMemberFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
-									delete symbol;
-									//printf("A SgMemberFunctionSymbol was deleted\n");
-								}
-							}
-						}
-					}
-					ClassicVisitor visitor((SgMemberFunctionDeclaration*) node);
-					traverseMemoryPoolVisitorPattern(visitor);
-
-				}
+                }
+
+                void visit(SgFunctionRefExp* node)
+                {
+                        if (SgFunctionSymbolPtr !=NULL){
+                                SgFunctionSymbol* s = node->get_symbol_i();
+                                if (isSgFunctionSymbol(s) == SgFunctionSymbolPtr) SgFunctionSymbol_count++;
+                        }
+                }
+
+                void visit(SgUserDefinedBinaryOp* node)
+                {
+                        if (SgFunctionSymbolPtr !=NULL){
+                                SgFunctionSymbol* s = node->get_symbol();
+                                if (isSgFunctionSymbol(s) == SgFunctionSymbolPtr) SgFunctionSymbol_count++;
+                        }
+                }
+
+                int get_num_Function_pointers(){return SgFunctionSymbol_count;}
+
+        // SgClassSymbol
+                void visit(SgClassDeclaration* node)
+                {
+                        if(SgClassSymbolPtr !=NULL){
+                                if(node->get_scope()!=NULL){
+                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                                SgSymbol* s = node->get_symbol_from_symbol_table();
+                                                if (isSgClassSymbol(s) == SgClassSymbolPtr) SgClassDeclaration_count++;
+                                        }
+                                }
+                        }
+
+                        if(class_defining!=NULL) {
+                                if(node->get_symbol_from_symbol_table() == NULL){
+                                        SgDeclarationStatement * class_decl = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
+                                        SgDeclarationStatement * class_decl1 = ((SgDeclarationStatement*)node)->get_definingDeclaration();
+                                        if((class_decl==class_defining||class_decl1==class_defining) && node!=class_defining )
+                                                delete node;
+                                }
+                        }
+                }
+
+                void visit(SgTemplateInstantiationDecl* node)
+                {
+                        if(SgClassSymbolPtr !=NULL){
+                                if(node->get_scope()!=NULL){
+                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                                SgSymbol* s = node->get_symbol_from_symbol_table();
+                                                if (isSgClassSymbol(s) == SgClassSymbolPtr) SgClassDeclaration_count++;
+                                        }
+                                }
+                        }
+
+                        if(templateInstantiate_defining!=NULL) {
+                                if(node->get_scope()!=NULL){
+                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                                if(node->get_symbol_from_symbol_table() == NULL){
+                                                        SgDeclarationStatement * template_decl = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
+                                                        SgDeclarationStatement * template_decl1 = ((SgDeclarationStatement*)node)->get_definingDeclaration();
+                                                        if((template_decl==templateInstantiate_defining||template_decl1==templateInstantiate_defining) && node!=templateInstantiate_defining){
+                                                                /*vector<SgTemplateArgument*> tempargs=  ((SgTemplateInstantiationDecl*)node)->get_templateArguments();
+                                                                foreach (SgTemplateArgument* element, tempargs){
+                                                                        SgTemplateArgument* temparg = isSgTemplateArgument(element);
+                                                                        if(temparg){
+                                                                                delete temparg;
+                                                                        }
+                                                                        printf("SgTemplateArg in Memory Pool traversal\n");
+                                                                }*/
+                                                                delete node;
+                                                                //printf("SgTemplateInstantiationDecl in Memory Pool traversal\n");
+                                                        }
+                                                }
+                                        }
+                                }
+                        }
+                }
+
+                void visit(SgThisExp* node)
+                {
+                        if (SgClassSymbolPtr !=NULL){
+                                SgSymbol* s = node->get_class_symbol();
+                                if (s == SgClassSymbolPtr) SgClassDeclaration_count++;
+                        }
+                }
+
+                void visit(SgClassNameRefExp* node)
+                {
+                        if (SgClassSymbolPtr !=NULL){
+                                SgSymbol* s = node->get_symbol();
+                                if (isSgClassSymbol(s) == SgClassSymbolPtr) SgClassDeclaration_count++;
+                        }
+                }
+
+
+                int get_num_Class_pointers(){return SgClassDeclaration_count;}
+
+
+        // SgMemberFunctionSymbol
+                void visit(SgCtorInitializerList* node)
+                {
+                        if(memFunc !=NULL){
+                                SgMemberFunctionDeclaration * func= (SgMemberFunctionDeclaration*) (node->get_parent());
+                                if(func == memFunc){
+                                        delete node;
+                                }
+                        }
+                }
+
+
+                void visit(SgMemberFunctionDeclaration* node)
+                {
+                        if (SgMemFuncSymbolPtr !=NULL){
+                                if(node->get_scope()!=NULL){
+                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                                SgSymbol* symbol = ((SgMemberFunctionDeclaration*)node)->get_symbol_from_symbol_table();
+                                                if(symbol == SgMemFuncSymbolPtr){
+                                                        SgMemFuncSymbol_count++;
+                                                }
+                                        }
+                                }
+                        }
+                }
+
+                void visit(SgTemplateInstantiationMemberFunctionDecl* node)
+                {
+                        if (SgMemFuncSymbolPtr !=NULL){
+                                if(node->get_scope()!=NULL){
+                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                                SgSymbol* symbol = ((SgTemplateInstantiationMemberFunctionDecl*)node)->get_symbol_from_symbol_table();
+                                                if(symbol == SgMemFuncSymbolPtr){
+                                                        SgMemFuncSymbol_count++;
+                                                }
+                                        }
+                                }
+                        }
+                }
+
+
+
+                int get_num_memFunc_pointers(){return SgMemFuncSymbol_count;}
+
+
+        // SgTypedefSymbol
+                void visit(SgTypedefDeclaration* node)
+                {
+                        if(SgTypedefPtr!=NULL){
+                                if(node->get_scope()!=NULL){
+                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                                SgSymbol* s = ((SgTypedefDeclaration*)node)->get_symbol_from_symbol_table();
+                                                if ((SgTypedefSymbol *)s == SgTypedefPtr) SgTypedefSymbol_count++;
+                                        }
+                                }
+                        }
+                        if(typedef_defining!=NULL){
+                                SgDeclarationStatement * typedef_define = ((SgDeclarationStatement*)node)->get_definingDeclaration();
+                                if(typedef_define == typedef_defining && node != typedef_defining ) {
+                                        delete node;
+                                }
+                        }
+                }
+
+                int get_num_Typedef_pointers(){return SgTypedefSymbol_count;}
+
+
+
+                void visit(SgTemplateDeclaration* node)
+                {
+                        if (SgTemplateSymbolPtr !=NULL){
+                                if(node->get_scope()!=NULL){
+                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                                SgSymbol* symbol = ((SgTemplateDeclaration*)node)->get_symbol_from_symbol_table();
+                                                if(symbol == SgTemplateSymbolPtr){
+                                                        SgTemplateSymbol_count++;
+                                                }
+                                        }
+                                }
+                        }
+
+                        if(template_defining !=NULL) {
+                                if(node->get_scope()!=NULL){
+                                        if(node->get_scope()->get_symbol_table()!=NULL){
+                                                if(node->get_symbol_from_symbol_table() == NULL){
+                                                        SgDeclarationStatement * template_decl = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
+                                                        SgDeclarationStatement * template_decl1 = ((SgDeclarationStatement*)node)->get_definingDeclaration();
+                                                        if((template_decl==template_defining||template_decl1==template_defining) && node!=template_defining) {
+                                                                delete node;
+
+                                                        }
+                                                }
+                                        }
+                                }
+                        }
+                }
+
+                int get_num_Template_pointers(){return SgTemplateSymbol_count;}
+
+        };
+
+
+        //Tan August,25,2010 //Traverse AST in post order, delete nodes and their symbols if it's safe to do so
+        class DeleteAST : public SgSimpleProcessing,  ROSE_VisitTraversal
+                {
+                        public:
+
+                        void visit (SgNode* node)
+                        {
+                        //These nodes are manually deleted because they cannot be visited by the traversal
+                                /*////////////////////////////////////////////////
+                                /remove SgVariableDefinition, SgVariableSymbol and SgEnumFieldSymbol
+                                /////////////////////////////////////////////////*/
+
+                                if(isSgInitializedName(node) !=NULL){
+                                        //remove SgVariableDefinition
+                                        SgDeclarationStatement* var_def;
+                                        var_def =  ((SgInitializedName *)node)->get_definition();
+                                        if(isSgVariableDefinition(var_def) !=NULL){
+                                                delete var_def;
+                                                //printf("A SgVariableDefinition was deleted\n");
+                                        }
+
+
+                                        //remove SgVariableSymbol
+                                        if(isSgInitializedName(node)->get_scope()!=NULL){
+                                                if(isSgInitializedName(node)->get_scope()->get_symbol_table()!=NULL){
+                                                        SgSymbol* symbol = ((SgInitializedName *)node)->get_symbol_from_symbol_table();
+                                                        if(isSgVariableSymbol(symbol) !=NULL){
+                                                                ClassicVisitor visitor((SgVariableSymbol*)symbol);
+                                                                traverseMemoryPoolVisitorPattern(visitor);
+                                                                if(visitor.get_num_variable_pointers()==1){ //only one reference to this symbol => safe to delete
+                                                                ((SgInitializedName*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                                        delete symbol;
+                                                                        //printf("A SgVariableSymbol was deleted\n");
+                                                                }
+                                                        }
+
+                                                        if(isSgEnumFieldSymbol(symbol) !=NULL){
+                                                                ClassicVisitor visitor((SgEnumFieldSymbol*)symbol);
+                                                                traverseMemoryPoolVisitorPattern(visitor);
+                                                                if(visitor.get_num_EnumField_pointers()==1){
+                                                                        ((SgInitializedName*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                                        delete symbol;
+                                                                        //printf("A SgEnumFieldSymbol was deleted\n");
+                                                                }
+                                                        }
+
+                                                }
+                                        }
+                                }
+
+                                if(isSgVarRefExp(node) !=NULL){
+                                                SgVariableSymbol *symbol = ((SgVarRefExp*)node)->get_symbol();
+                                                ClassicVisitor visitor(symbol);
+                                                traverseMemoryPoolVisitorPattern(visitor);
+                                                if(visitor.get_num_variable_pointers()==1){ //only one reference to this symbol => safe to delete
+                                                        //((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
+                                                        delete symbol;
+                                                        //printf("A SgVariableSymbol was deleted\n");
+                                                }
+                                }
+
+                                /*////////////////////////////////////////////////
+                                /remove SgFunctionSymbol
+                                /////////////////////////////////////////////////*/
+
+                                if(isSgFunctionDeclaration(node) && isSgMemberFunctionDeclaration(node)==NULL){
+                                        if(isSgFunctionDeclaration(node)->get_scope()!=NULL){
+                                                if(isSgFunctionDeclaration(node)->get_scope()->get_symbol_table()!=NULL){
+                                                        SgSymbol* symbol = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
+                                                        ClassicVisitor visitor((SgFunctionSymbol *)symbol);
+                                                        traverseMemoryPoolVisitorPattern(visitor);
+                                                        if(visitor.get_num_Function_pointers()==1){ //only one reference to this FunctionSymbol => safe to delete
+                                                                ((SgFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                                delete symbol;
+                                                                //printf("A SgFunctionSymbol was deleted\n");
+                                                        }
+                                                        ClassicVisitor visitor1((SgFunctionDeclaration *)node);
+                                                        traverseMemoryPoolVisitorPattern(visitor1);
+                                                }
+                                        }
+                                }
+
+
+                                if(isSgFunctionRefExp(node) !=NULL){
+                                                SgFunctionSymbol *symbol = ((SgFunctionRefExp*)node)->get_symbol_i();
+                                                ClassicVisitor visitor(symbol);
+                                                traverseMemoryPoolVisitorPattern(visitor);
+                                                if(visitor.get_num_Function_pointers()==1){ //only one reference to this FunctionSymbol => safe to delete
+                                                        //((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
+                                                        delete symbol;
+                                                        //printf("A SgFunctionSymbol was deleted\n");
+                                                }
+
+                                }
+
+                                if(isSgUserDefinedBinaryOp(node) !=NULL){
+                                        SgFunctionSymbol *symbol = ((SgUserDefinedBinaryOp*)node)->get_symbol();
+                                        ClassicVisitor visitor(symbol);
+                                        traverseMemoryPoolVisitorPattern(visitor);
+                                        if(visitor.get_num_Function_pointers()==1){ //only one reference to this FunctionSymbol => safe to delete
+                                                ((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
+                                                delete symbol;
+                                                //printf("A SgFunctionSymbol was deleted\n");
+                                        }
+                                }
+
+                                /*////////////////////////////////////////////////
+                                /remove SgTypedefSymbol
+                                /////////////////////////////////////////////////*/
+
+                                if(isSgTypedefDeclaration(node) !=NULL){
+                                        if(((SgTypedefDeclaration*)node)->get_scope()!=NULL){
+                                                if(((SgTypedefDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                                        SgSymbol* symbol = ((SgTypedefDeclaration*)node)->get_symbol_from_symbol_table();
+                                                        if(isSgTypedefSymbol(symbol)){
+                                                                ClassicVisitor visitor((SgTypedefSymbol*) symbol);
+                                                                traverseMemoryPoolVisitorPattern(visitor);
+                                                                if(visitor.get_num_Typedef_pointers()==1){ //only one reference to this SgTypedefSymbol  => safe to delete
+                                                                        ((SgTypedefDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                                        delete symbol;
+                                                                        //printf("A SgTypedefSymbol was deleted\n");
+                                                                }
+                                                        }
+                                                }
+                                        }
+
+                                        if(node == isSgTypedefDeclaration(node)->get_definingDeclaration()){
+                                                ClassicVisitor visitor1((SgTypedefDeclaration*) node);
+                                                traverseMemoryPoolVisitorPattern(visitor1);
+                                        }
+                                }
+
+                                /*////////////////////////////////////////////////
+                                /remove SgNamespaceDeclarationSymbol
+                                /////////////////////////////////////////////////*/
+
+                                if(isSgNamespaceDeclarationStatement(node) !=NULL){
+                                        if(((SgNamespaceDeclarationStatement*)node)->get_scope()!=NULL){
+                                                if(((SgNamespaceDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
+                                                        SgSymbol* symbol = ((SgNamespaceDeclarationStatement*)node)->get_symbol_from_symbol_table();
+                                                        if(isSgNamespaceSymbol(symbol)){
+                                                                ((SgNamespaceDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                                delete symbol;
+                                                                //printf("A SgNamespaceSymbol was deleted\n");
+                                                        }
+                                                }
+                                        }
+                                }
+
+
+                                if(isSgNamespaceAliasDeclarationStatement(node) !=NULL){
+                                        if(((SgNamespaceAliasDeclarationStatement*)node)->get_scope()!=NULL){
+                                                if(((SgNamespaceAliasDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
+                                                        SgSymbol* symbol = ((SgNamespaceAliasDeclarationStatement*)node)->get_symbol_from_symbol_table();
+                                                        if(isSgNamespaceSymbol(symbol)){
+                                                                ((SgNamespaceAliasDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                                delete symbol;
+                                                                //printf("A SgNamespaceSymbol was deleted\n");
+                                                        }
+                                                }
+                                        }
+                                }
+
+
+                                /*////////////////////////////////////////////////
+                                /remove SgLabelSymbol
+                                /////////////////////////////////////////////////*/
+
+                                if(isSgLabelStatement(node) !=NULL){
+                                        if(((SgLabelStatement*)node)->get_scope()!=NULL){
+                                                if(((SgLabelStatement*)node)->get_scope()->get_symbol_table()!=NULL){
+                                                        SgSymbol* symbol = ((SgLabelStatement*)node)->get_symbol_from_symbol_table();
+                                                        if(isSgLabelSymbol(symbol)){
+                                                                ((SgLabelStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                                delete symbol;
+                                                                //printf("A SgLabelSymbol was deleted\n");
+                                                        }
+                                                }
+                                        }
+                                }
+
+                                if(isSgLabelRefExp(node) !=NULL){
+                                        SgLabelSymbol* symbol = ((SgLabelRefExp*)node)->get_symbol();
+                                        ((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
+                                        delete symbol;
+                                        //printf("A SgLabelSymbol was deleted\n");
+                                }
+
+
+                                /*////////////////////////////////////////////////
+                                /remove SgEnumSymbol
+                                /////////////////////////////////////////////////*/
+
+                                if(isSgEnumDeclaration(node) !=NULL){
+                                        if(((SgEnumDeclaration*)node)->get_scope()!=NULL){
+                                                if(((SgEnumDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                                        SgSymbol* symbol = ((SgEnumDeclaration*)node)->get_symbol_from_symbol_table();
+                                                        if(isSgEnumSymbol(symbol) !=NULL){
+                                                                ((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
+                                                                delete symbol;
+                                                                //printf("A SgEnumSymbol was deleted\n");
+                                                        }
+                                                }
+                                        }
+                                        SgEnumType* type= ((SgEnumDeclaration*)node)->get_type();
+                                        if(type !=NULL){
+                                                        delete type;
+                                                        //printf("A SgEnumType was deleted\n");
+                                        }
+                                }
+
+
+                                /*////////////////////////////////////////////////
+                                /remove SgClassSymbol
+                                /////////////////////////////////////////////////*/
+
+                                if(isSgClassDeclaration(node) !=NULL && isSgTemplateInstantiationDecl(node) ==NULL){
+                                        if(((SgClassDeclaration*)node)->get_scope()!=NULL){
+                                                if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                                        SgSymbol* symbol = ((SgClassDeclaration*)node)->get_symbol_from_symbol_table();
+                                                        if(isSgClassSymbol(symbol) !=NULL){
+                                                                ClassicVisitor visitor((SgClassSymbol*)symbol);
+                                                                traverseMemoryPoolVisitorPattern(visitor);
+                                                                if(visitor.get_num_Class_pointers()==1){ //only one reference to this symbol => safe to delete
+                                                                        ((SgClassDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                                        delete symbol;
+                                                                        //printf("A SgClassSymbol was deleted\n");
+                                                                }
+                                                        }
+                                                }
+                                        }
+
+                                        ClassicVisitor visitor((SgClassDeclaration*) node );
+                                        traverseMemoryPoolVisitorPattern(visitor);
+
+                                        SgClassType* type= ((SgClassDeclaration*)node)->get_type();
+                                        if(type !=NULL){
+                                                delete type;
+                                                //printf("A SgClassType was deleted\n");
+                                        }
+                                }
+
+                                if(isSgThisExp(node) !=NULL){
+                                        SgSymbol* symbol = ((SgThisExp*)node)->get_class_symbol();
+                                        ClassicVisitor visitor((SgClassSymbol*)symbol);
+                                        traverseMemoryPoolVisitorPattern(visitor);
+                                        if(visitor.get_num_Class_pointers()==1){ //only one reference to this symbol => safe to delete
+                                                ((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
+                                                delete symbol;
+                                                //printf("A SgClassSymbol was deleted\n");
+                                        }
+
+                                }
+
+                                if(isSgClassNameRefExp(node) !=NULL){
+                                        SgSymbol* symbol = ((SgClassNameRefExp*)node)->get_symbol();
+                                        if(isSgClassSymbol(symbol) !=NULL)
+                                        {
+                                                ClassicVisitor visitor((SgClassSymbol*)symbol);
+                                                traverseMemoryPoolVisitorPattern(visitor);
+                                                if(visitor.get_num_Class_pointers()==1){ //only one reference to this symbol => safe to delete
+                                                        ((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
+                                                        delete symbol;
+                                                        //printf("A SgClassSymbol was deleted\n");
+                                                }
+                                        }
+                                }
+
+                                /*////////////////////////////////////////////////
+                                /remove SgMemberFunctionSymbol
+                                /////////////////////////////////////////////////*/
+
+
+                                if(isSgMemberFunctionDeclaration(node) !=NULL){
+                                        if(((SgMemberFunctionDeclaration*)node)->get_scope()!=NULL){
+                                                if(((SgMemberFunctionDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                                        SgSymbol* symbol = ((SgMemberFunctionDeclaration*)node)->get_symbol_from_symbol_table();
+                                                        if(isSgMemberFunctionSymbol(symbol)){
+                                                                ClassicVisitor visitor((SgMemberFunctionSymbol*)symbol);
+                                                                traverseMemoryPoolVisitorPattern(visitor);
+                                                                if(visitor.get_num_memFunc_pointers()==1){
+                                                                        ((SgMemberFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                                        delete symbol;
+                                                                        //printf("A SgMemberFunctionSymbol was deleted\n");
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                        ClassicVisitor visitor((SgMemberFunctionDeclaration*) node);
+                                        traverseMemoryPoolVisitorPattern(visitor);
+
+                                }
 //Tan: I have no idea why the codes below cannot work. Perhaps it conflicts with some prior works
 #if 0
-				if(isSgMemberFunctionRefExp(node) !=NULL){
-					SgMemberFunctionSymbol* symbol = ((SgMemberFunctionRefExp*)node)->get_symbol_i();
-					ClassicVisitor visitor(symbol);
-					traverseMemoryPoolVisitorPattern(visitor);
-					if(visitor.get_num_memFunc_pointers()==1){ //only one reference to this symbol => safe to delete
-						((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
-						delete symbol;
-						//printf("A SgClassSymbol was deleted\n");
-					}
+                                if(isSgMemberFunctionRefExp(node) !=NULL){
+                                        SgMemberFunctionSymbol* symbol = ((SgMemberFunctionRefExp*)node)->get_symbol_i();
+                                        ClassicVisitor visitor(symbol);
+                                        traverseMemoryPoolVisitorPattern(visitor);
+                                        if(visitor.get_num_memFunc_pointers()==1){ //only one reference to this symbol => safe to delete
+                                                ((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
+                                                delete symbol;
+                                                //printf("A SgClassSymbol was deleted\n");
+                                        }
 
-				}
+                                }
 
-				if(isSgFunctionType(node) !=NULL){
-					SgSymbol* symbol = ((SgFunctionType*)node)->get_symbol_from_symbol_table();
-					if(isSgFunctionTypeSymbol(symbol)){
-						((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
-						delete symbol;
-						//printf("A SgFunctionTypeSymbol was deleted\n");
-					}
-				}
+                                if(isSgFunctionType(node) !=NULL){
+                                        SgSymbol* symbol = ((SgFunctionType*)node)->get_symbol_from_symbol_table();
+                                        if(isSgFunctionTypeSymbol(symbol)){
+                                                ((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
+                                                delete symbol;
+                                                //printf("A SgFunctionTypeSymbol was deleted\n");
+                                        }
+                                }
 #endif
 
                                 /*////////////////////////////////////////////////
                                 /remove SgInterfaceSymbol and SgModuleSymbol
                                 /////////////////////////////////////////////////*/
 
-				if(isSgInterfaceStatement(node) !=NULL){
-					if(((SgDeclarationStatement*)node)->get_scope()!=NULL){
-						if(((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
-							SgSymbol* symbol = ((SgDeclarationStatement*)node)->get_symbol_from_symbol_table();
-							if(isSgInterfaceSymbol(symbol)){
-								((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
-								delete symbol;
-								//printf("A SgInterfaceSymbol was deleted\n");
-							}
-						}
-					}
+                                if(isSgInterfaceStatement(node) !=NULL){
+                                        if(((SgDeclarationStatement*)node)->get_scope()!=NULL){
+                                                if(((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
+                                                        SgSymbol* symbol = ((SgDeclarationStatement*)node)->get_symbol_from_symbol_table();
+                                                        if(isSgInterfaceSymbol(symbol)){
+                                                                ((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                                delete symbol;
+                                                                //printf("A SgInterfaceSymbol was deleted\n");
+                                                        }
+                                                }
+                                        }
 
-				}
+                                }
 
 
-				if(isSgModuleStatement(node) !=NULL){
-					if(((SgClassDeclaration*)node)->get_scope()!=NULL){
-						if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
-							SgSymbol* symbol = ((SgClassDeclaration*)node)->get_symbol_from_symbol_table();
-							if(isSgModuleSymbol(symbol)){
-								((SgClassDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
-								delete symbol;
-								//printf("A SgModuleSymbol was deleted\n");
-							}
-						}
-					}
+                                if(isSgModuleStatement(node) !=NULL){
+                                        if(((SgClassDeclaration*)node)->get_scope()!=NULL){
+                                                if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                                        SgSymbol* symbol = ((SgClassDeclaration*)node)->get_symbol_from_symbol_table();
+                                                        if(isSgModuleSymbol(symbol)){
+                                                                ((SgClassDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                                delete symbol;
+                                                                //printf("A SgModuleSymbol was deleted\n");
+                                                        }
+                                                }
+                                        }
 
-				}
+                                }
 
 
 //Tan: I got stuck in deleting the SgTemplateArgument
 #if 0
-				if(isSgTemplateInstantiationMemberFunctionDecl(node) !=NULL){
-				   	if(((SgTemplateInstantiationMemberFunctionDecl*)node)->get_scope()!=NULL){
-						if(((SgTemplateInstantiationMemberFunctionDecl*)node)->get_scope()->get_symbol_table()!=NULL){
-							SgSymbol* symbol = ((SgTemplateInstantiationMemberFunctionDecl*)node)->get_symbol_from_symbol_table();
-							if(isSgMemberFunctionSymbol(symbol)){
-								ClassicVisitor visitor((SgMemberFunctionSymbol*)symbol);
-								traverseMemoryPoolVisitorPattern(visitor);
-								if(visitor.get_num_memFunc_pointers()==1){
-									((SgMemberFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
-									delete symbol;
-									//printf("A SgMemberFunctionSymbol was deleted\n");
-								}
-							}
-						}
-					}
-					ClassicVisitor visitor((SgMemberFunctionDeclaration*) node);
-					traverseMemoryPoolVisitorPattern(visitor);
-				}
+                                if(isSgTemplateInstantiationMemberFunctionDecl(node) !=NULL){
+                                        if(((SgTemplateInstantiationMemberFunctionDecl*)node)->get_scope()!=NULL){
+                                                if(((SgTemplateInstantiationMemberFunctionDecl*)node)->get_scope()->get_symbol_table()!=NULL){
+                                                        SgSymbol* symbol = ((SgTemplateInstantiationMemberFunctionDecl*)node)->get_symbol_from_symbol_table();
+                                                        if(isSgMemberFunctionSymbol(symbol)){
+                                                                ClassicVisitor visitor((SgMemberFunctionSymbol*)symbol);
+                                                                traverseMemoryPoolVisitorPattern(visitor);
+                                                                if(visitor.get_num_memFunc_pointers()==1){
+                                                                        ((SgMemberFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                                        delete symbol;
+                                                                        //printf("A SgMemberFunctionSymbol was deleted\n");
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                        ClassicVisitor visitor((SgMemberFunctionDeclaration*) node);
+                                        traverseMemoryPoolVisitorPattern(visitor);
+                                }
 
-				if(isSgTemplateDeclaration(node) !=NULL){
-					if(((SgTemplateDeclaration*)node)->get_scope()!=NULL){
-						if(((SgTemplateDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
-							SgSymbol* symbol = ((SgTemplateDeclaration*)node)->get_symbol_from_symbol_table();
-							ClassicVisitor visitor((SgTemplateSymbol*)symbol);
-							traverseMemoryPoolVisitorPattern(visitor);
-							if(visitor.get_num_Template_pointers()==1){
-									((SgTemplateDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
-									delete symbol;
-									printf("A SgTemplateSymbol was deleted\n");
-							}
-						}
-					}
- 					//if(isSgTemplateDeclaration(node) == ((SgTemplateDeclaration*)node)->get_firstNondefiningDeclaration()){
- 						ClassicVisitor visitor1((SgTemplateDeclaration*) node );
- 						traverseMemoryPoolVisitorPattern(visitor1);
- 					//}
+                                if(isSgTemplateDeclaration(node) !=NULL){
+                                        if(((SgTemplateDeclaration*)node)->get_scope()!=NULL){
+                                                if(((SgTemplateDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                                        SgSymbol* symbol = ((SgTemplateDeclaration*)node)->get_symbol_from_symbol_table();
+                                                        ClassicVisitor visitor((SgTemplateSymbol*)symbol);
+                                                        traverseMemoryPoolVisitorPattern(visitor);
+                                                        if(visitor.get_num_Template_pointers()==1){
+                                                                        ((SgTemplateDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                                        delete symbol;
+                                                                        printf("A SgTemplateSymbol was deleted\n");
+                                                        }
+                                                }
+                                        }
+                                        //if(isSgTemplateDeclaration(node) == ((SgTemplateDeclaration*)node)->get_firstNondefiningDeclaration()){
+                                                ClassicVisitor visitor1((SgTemplateDeclaration*) node );
+                                                traverseMemoryPoolVisitorPattern(visitor1);
+                                        //}
 
-				}
+                                }
 
-				if(isSgInterfaceStatement(node) !=NULL){
-					if(((SgDeclarationStatement*)node)->get_scope()!=NULL){
-						if(((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
-							SgSymbol* symbol = ((SgDeclarationStatement*)node)->get_symbol_from_symbol_table();
-							if(isSgInterfaceSymbol(symbol)){
-								((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
-								delete symbol;
-								//printf("A SgInterfaceSymbol was deleted\n");
-							}
-						}
-					}
+                                if(isSgInterfaceStatement(node) !=NULL){
+                                        if(((SgDeclarationStatement*)node)->get_scope()!=NULL){
+                                                if(((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()!=NULL){
+                                                        SgSymbol* symbol = ((SgDeclarationStatement*)node)->get_symbol_from_symbol_table();
+                                                        if(isSgInterfaceSymbol(symbol)){
+                                                                ((SgDeclarationStatement*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                                delete symbol;
+                                                                //printf("A SgInterfaceSymbol was deleted\n");
+                                                        }
+                                                }
+                                        }
 
-				}
+                                }
 
 
-				if(isSgModuleStatement(node) !=NULL){
-					if(((SgClassDeclaration*)node)->get_scope()!=NULL){
-						if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
-							SgSymbol* symbol = ((SgClassDeclaration*)node)->get_symbol_from_symbol_table();
-							if(isSgModuleSymbol(symbol)){
-								((SgClassDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
-								delete symbol;
-								//printf("A SgModuleSymbol was deleted\n");
-							}
-						}
-					}
+                                if(isSgModuleStatement(node) !=NULL){
+                                        if(((SgClassDeclaration*)node)->get_scope()!=NULL){
+                                                if(((SgClassDeclaration*)node)->get_scope()->get_symbol_table()!=NULL){
+                                                        SgSymbol* symbol = ((SgClassDeclaration*)node)->get_symbol_from_symbol_table();
+                                                        if(isSgModuleSymbol(symbol)){
+                                                                ((SgClassDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                                delete symbol;
+                                                                //printf("A SgModuleSymbol was deleted\n");
+                                                        }
+                                                }
+                                        }
 
-				}
+                                }
 
-				if(isSgTemplateInstantiationDecl(node) !=NULL){
-					if(((SgTemplateInstantiationDecl*)node)->get_scope()!=NULL){
-						if(((SgTemplateInstantiationDecl*)node)->get_scope()->get_symbol_table()!=NULL){
-							SgSymbol* symbol = ((SgTemplateInstantiationDecl*)node)->get_symbol_from_symbol_table();
-							if(isSgClassSymbol(symbol)){
- 								ClassicVisitor visitor((SgClassSymbol*)symbol);
- 								traverseMemoryPoolVisitorPattern(visitor);
- 								if(visitor.get_num_Class_pointers()==1){
- 									((SgClassDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
- 									delete symbol;
- 								}
-							}
-						}
-					}
-					SgClassType* type= ((SgClassDeclaration*)node)->get_type();
-					if(type !=NULL){
-						delete type;
-						//printf("A SgClassType was deleted\n");
-					}
+                                if(isSgTemplateInstantiationDecl(node) !=NULL){
+                                        if(((SgTemplateInstantiationDecl*)node)->get_scope()!=NULL){
+                                                if(((SgTemplateInstantiationDecl*)node)->get_scope()->get_symbol_table()!=NULL){
+                                                        SgSymbol* symbol = ((SgTemplateInstantiationDecl*)node)->get_symbol_from_symbol_table();
+                                                        if(isSgClassSymbol(symbol)){
+                                                                ClassicVisitor visitor((SgClassSymbol*)symbol);
+                                                                traverseMemoryPoolVisitorPattern(visitor);
+                                                                if(visitor.get_num_Class_pointers()==1){
+                                                                        ((SgClassDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
+                                                                        delete symbol;
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                        SgClassType* type= ((SgClassDeclaration*)node)->get_type();
+                                        if(type !=NULL){
+                                                delete type;
+                                                //printf("A SgClassType was deleted\n");
+                                        }
 
- 					vector<SgTemplateArgument*> tempargs=  ((SgTemplateInstantiationDecl*)node)->get_templateArguments();
- 					foreach (SgTemplateArgument* element, tempargs){
- 						SgTemplateArgument* temparg = isSgTemplateArgument(element);
- 						if(temparg){
-							delete temparg;
-						}
-						printf("SgTemplateArg in normal traversal\n");
- 					}
-					printf("SgTemplateInstantiationDecl in normal traversal\n");
+                                        vector<SgTemplateArgument*> tempargs=  ((SgTemplateInstantiationDecl*)node)->get_templateArguments();
+                                        foreach (SgTemplateArgument* element, tempargs){
+                                                SgTemplateArgument* temparg = isSgTemplateArgument(element);
+                                                if(temparg){
+                                                        delete temparg;
+                                                }
+                                                printf("SgTemplateArg in normal traversal\n");
+                                        }
+                                        printf("SgTemplateInstantiationDecl in normal traversal\n");
 
-					ClassicVisitor visitor((SgTemplateInstantiationDecl*) node);
-					traverseMemoryPoolVisitorPattern(visitor);
-				}
+                                        ClassicVisitor visitor((SgTemplateInstantiationDecl*) node);
+                                        traverseMemoryPoolVisitorPattern(visitor);
+                                }
 
 #endif
 
-			//Normal nodes  will be removed in a post-order way
-			delete node;
-			}
-		};
+                        //Normal nodes  will be removed in a post-order way
+                        delete node;
+                        }
+                };
 
 
-     	  DeleteAST deleteTree;
+          DeleteAST deleteTree;
 
           // Deletion must happen in post-order to avoid traversal of (visiting) deleted IR nodes
           deleteTree.traverse(n,postorder);
@@ -12926,10 +12926,10 @@ SgNode* SageInterface::getSgNodeFromAbstractHandleString(const std::string& inpu
      // DQ (11/28/2009): This is related to the use of covariant return types (I think).
 SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
 #pragma message ("WARNING: covariant return type for get_node() not supported in MSVC.")
-		printf ("ERROR: covariant return type for get_node() not supported in MSVC. \n");
-		ROSE_ASSERT(false);
+                printf ("ERROR: covariant return type for get_node() not supported in MSVC. \n");
+                ROSE_ASSERT(false);
 #else
-		SgNode* result = (SgNode*)(handle->getNode()->getNode());
+                SgNode* result = (SgNode*)(handle->getNode()->getNode());
 #endif
       // deallocate memory, should not do this!!
       // May corrupt the internal std maps used in abstract handle namespace

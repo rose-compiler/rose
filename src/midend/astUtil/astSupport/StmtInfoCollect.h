@@ -69,8 +69,8 @@ class StmtSideEffectCollect
      : modunknown(false), readunknown(false),funcanal(a), modcollect(0), 
        readcollect(0), killcollect(0) {}
   bool get_side_effect(AstInterface& fa, const AstNodePtr& h,
-		       CollectObject<std::pair<AstNodePtr,AstNodePtr> >* collectmod,
-		       CollectObject<std::pair<AstNodePtr,AstNodePtr> >* collectread = 0,
+                       CollectObject<std::pair<AstNodePtr,AstNodePtr> >* collectmod,
+                       CollectObject<std::pair<AstNodePtr,AstNodePtr> >* collectread = 0,
                        CollectObject<std::pair<AstNodePtr,AstNodePtr> >* collectkill = 0)
     { return operator()( fa, h, collectmod, collectread, collectkill); }
   //! Collect mod, read, and kill information for a node h using an interface fa  
@@ -161,7 +161,7 @@ class StmtVarAliasCollect
   void operator()( AstInterface& fa, const AstNodePtr& funcdefinition);
   // Inherited from AliasAnalysisInterface: if r1 and r2 may be alias to each other
   bool may_alias(AstInterface& fa, const AstNodePtr& r1, 
-		 const AstNodePtr& r2);
+                 const AstNodePtr& r2);
 };
 
 //! An interface to collect modified variables for a set of AST nodes chosen by 'Select', such as loop nodes 
@@ -185,7 +185,7 @@ class ModifyVariableMap
      if (ai.IsVarRef(cur.first,0, &varname)) {
          AstNodePtr l = ai.GetParent(cur.first);
          VarModSet& modset = varmodInfo[varname];
-	 // Collect all the parent loops containing the variable reference node into the var mod set
+         // Collect all the parent loops containing the variable reference node into the var mod set
          for ( ; l != AST_NULL; l = ai.GetParent(l)) {
            if (sel(ai,l)) 
               modset.insert(l);
@@ -207,11 +207,11 @@ class ModifyVariableMap
          // Find mode set for the variable 
          typename VarModInfo::const_iterator p = varmodInfo.find(varname);
          if (p != varmodInfo.end()) {
-	    // Return true if the node is NULL. It means this variable is actually modified somewhere.
+            // Return true if the node is NULL. It means this variable is actually modified somewhere.
             if (l == AST_NULL)
                  return true;
             const VarModSet& cur = (*p).second;
-	    // Find node in the mod set
+            // Find node in the mod set
             return cur.find(l) != cur.end();
          }
          else

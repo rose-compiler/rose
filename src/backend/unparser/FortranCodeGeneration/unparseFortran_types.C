@@ -612,48 +612,48 @@ UnparseFortran_type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
 
   if (ninfo.isTypeFirstPart()) {
       if (needParen) {
-	  ninfo.unset_isReferenceToSomething();
-	  ninfo.unset_isPointerToSomething();
-	  unparseType(func_type->get_return_type(), ninfo);
-	  curprint("(");
-	}
+          ninfo.unset_isReferenceToSomething();
+          ninfo.unset_isPointerToSomething();
+          unparseType(func_type->get_return_type(), ninfo);
+          curprint("(");
+        }
       else {
-	  unparseType(func_type->get_return_type(), ninfo);
-	}
+          unparseType(func_type->get_return_type(), ninfo);
+        }
     }
   else {
       if (ninfo.isTypeSecondPart()) {
-	  if (needParen) {
-	      curprint(")");
-	      info.unset_isReferenceToSomething();
-	      info.unset_isPointerToSomething();
-	    }
-	  // print the arguments
-	  SgUnparse_Info ninfo2(info); 
-	  ninfo2.unset_SkipBaseType();
-	  ninfo2.unset_isTypeSecondPart();
-	  ninfo2.unset_isTypeFirstPart();
+          if (needParen) {
+              curprint(")");
+              info.unset_isReferenceToSomething();
+              info.unset_isPointerToSomething();
+            }
+          // print the arguments
+          SgUnparse_Info ninfo2(info); 
+          ninfo2.unset_SkipBaseType();
+          ninfo2.unset_isTypeSecondPart();
+          ninfo2.unset_isTypeFirstPart();
 
-	  curprint("(");
-	  SgTypePtrList::iterator p = func_type->get_arguments().begin();
-	  while(p != func_type->get_arguments().end())
-	    {
-	      // printf ("Output function argument ... \n");
-	      unparseType(*p, ninfo2);
-	      p++;
-	      if (p != func_type->get_arguments().end())
-		{ curprint(", "); }
-	    }
-	  curprint(")");
-	  unparseType(func_type->get_return_type(), info); // catch the 2nd part of the rtype
-	}
+          curprint("(");
+          SgTypePtrList::iterator p = func_type->get_arguments().begin();
+          while(p != func_type->get_arguments().end())
+            {
+              // printf ("Output function argument ... \n");
+              unparseType(*p, ninfo2);
+              p++;
+              if (p != func_type->get_arguments().end())
+                { curprint(", "); }
+            }
+          curprint(")");
+          unparseType(func_type->get_return_type(), info); // catch the 2nd part of the rtype
+        }
       else
-	{
-	  ninfo.set_isTypeFirstPart();
-	  unparseType(func_type, ninfo);
-	  ninfo.set_isTypeSecondPart();
-	  unparseType(func_type, ninfo);
-	}
+        {
+          ninfo.set_isTypeFirstPart();
+          unparseType(func_type, ninfo);
+          ninfo.set_isTypeSecondPart();
+          unparseType(func_type, ninfo);
+        }
     }
 #endif
 

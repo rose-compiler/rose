@@ -113,7 +113,7 @@ computeFunctionIndices(
             else if (myNodesHigh - myNodes < nodeCounts[hi] / 2)
                 break;
 #if DIS_DEBUG_OUTPUT
-	    std::cout << "  hi++" << std::endl;
+            std::cout << "  hi++" << std::endl;
 #endif
             myNodes += nodeCounts[hi];
         }
@@ -184,7 +184,7 @@ sortFunctions(std::vector<SgFunctionDeclaration*>& funcDecls, std::vector<Inheri
     nodeCounts_temp[i]=nodeCounts[weights[i].second];
     funcWeights_temp[i]=funcWeights[weights[i].second];
     if (my_rank==0)
-	if (DIS_DEBUG_OUTPUT)
+        if (DIS_DEBUG_OUTPUT)
       std::cout << "    function : " << funcDecls_temp[i]->get_qualified_name().str()
                 << "  weight_mul : " << (weights[i].first) << "   nodes: " << nodeCounts_temp[i]
                 << "  weight : " << funcWeights_temp[i] << std::endl;
@@ -241,7 +241,7 @@ computeFunctionIndicesPerNode(
     double totalWeight = 0;
     for (itr = nodeCounts.begin(), itr2 = funcWeights.begin(); itr != nodeCounts.end(); ++itr, ++itr2) {
         totalNodes += *itr;
-	double currentWeight = (((double)(*itr)*(*itr2))/(double)funcDecls.size()/100);
+        double currentWeight = (((double)(*itr)*(*itr2))/(double)funcDecls.size()/100);
         totalWeight += currentWeight;
     }
     myNodeCounts = nodeCounts;
@@ -371,7 +371,7 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
         sizeSoFar += serializedResults[i].first;
      // now that we have made a copy of the serialized attribute, we can free the user-allocated memory
 #if DIS_DEBUG_OUTPUT
-	std::cout << " buffer ["<<i<<"]  = " << ((char*)serializedResults[i].second)
+        std::cout << " buffer ["<<i<<"]  = " << ((char*)serializedResults[i].second)
                   << "   myStateSizes["<<i<<"]  = " << myStateSizes[i] << std::endl;
 #endif
 
@@ -450,8 +450,8 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
                    MPI_COMM_WORLD);
 #else
     MPI_Gatherv(myBuffer, myTotalSize, MPI_UNSIGNED_CHAR,
-		recvbuf, totalStateSizes, displacements, MPI_UNSIGNED_CHAR,
-		0, MPI_COMM_WORLD);
+                recvbuf, totalStateSizes, displacements, MPI_UNSIGNED_CHAR,
+                0, MPI_COMM_WORLD);
 #endif
 
 #if DIS_DEBUG_OUTPUT
@@ -484,26 +484,26 @@ performAnalysis(SgNode *root, InheritedAttributeType rootInheritedValue,
           }
 
 #if DIS_DEBUG_OUTPUT
-	std::cout << " >>> >>>>>>>>>>>>> end deserialize\n" << std::endl;
+        std::cout << " >>> >>>>>>>>>>>>> end deserialize\n" << std::endl;
 #endif 
-	
+        
 #if DIS_DEBUG_OUTPUT
-	std::cout << " >>> >>>>>>>>>>>>> start postTraversal" << std::endl;
+        std::cout << " >>> >>>>>>>>>>>>> start postTraversal" << std::endl;
 #endif 
 
-	/* perform the post traversal */
-	DistributedMemoryAnalysisPostTraversal<SynthesizedAttributeType> postT(postTraversal, functionResults);
-	finalResults = postT.traverse(root, false);
+        /* perform the post traversal */
+        DistributedMemoryAnalysisPostTraversal<SynthesizedAttributeType> postT(postTraversal, functionResults);
+        finalResults = postT.traverse(root, false);
 
 #if DIS_DEBUG_OUTPUT
-	std::cout << " >>> >>>>>>>>>>>>> end postTraversal\n" << std::endl;
+        std::cout << " >>> >>>>>>>>>>>>> end postTraversal\n" << std::endl;
 #endif 
-	
-	/* clean up */
-	delete[] stateSizes;
-	delete[] totalStateSizes;
-	delete[] displacements;
-	delete[] recvbuf;
+        
+        /* clean up */
+        delete[] stateSizes;
+        delete[] totalStateSizes;
+        delete[] displacements;
+        delete[] recvbuf;
       }
       delete[] myStateSizes;
       delete[] myBuffer;
@@ -561,7 +561,7 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
       }
     }
     if (stdFunc)
-	return inheritedValue;
+        return inheritedValue;
 #endif
 
 #if RUN_DECLARATION
@@ -572,13 +572,13 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
     {
         inFunc = true;
         nodeCount = 0;
-	weightNullDeref = 1;
-	weightAssignOp = 1;
+        weightNullDeref = 1;
+        weightAssignOp = 1;
         funcDecls.push_back(funcDecl);
         initialInheritedValues.push_back(inheritedValue);
-	std::string funcname = funcDecl->get_name().str();
+        std::string funcname = funcDecl->get_name().str();
 #if DIS_DEBUG_OUTPUT
-	std::cout << " >>>>   found defining function declaration:  " << funcname
+        std::cout << " >>>>   found defining function declaration:  " << funcname
                   << "   inheritedValue: " << inheritedValue << std::endl;
 #endif
     }
@@ -656,15 +656,15 @@ destroyInheritedValue(SgNode *node, InheritedAttributeType inheritedValue)
    // and synthesised attributes are a likely problem.
 
         nodeCounts.push_back(nodeCount);
-	//	double result = (double)weightAssignOp*(double)1/log((double)weightNullDeref+1);
-	//	funcWeights.push_back((int)result);
-	//	funcWeights.push_back(weightAssignOp*weightNullDeref);
-	funcWeights.push_back(weightAssignOp);
-	//	std::cout << " pushing back func : " << funcDecl->get_name().str() << "   weightAssignOp : " << weightAssignOp << "  weightNullDeref : " << weightNullDeref <<
-	//  "  1/log(weightNullDeref) : " << (1/(log(weightNullDeref))) << "   result = " << result << std::endl;
+        //      double result = (double)weightAssignOp*(double)1/log((double)weightNullDeref+1);
+        //      funcWeights.push_back((int)result);
+        //      funcWeights.push_back(weightAssignOp*weightNullDeref);
+        funcWeights.push_back(weightAssignOp);
+        //      std::cout << " pushing back func : " << funcDecl->get_name().str() << "   weightAssignOp : " << weightAssignOp << "  weightNullDeref : " << weightNullDeref <<
+        //  "  1/log(weightNullDeref) : " << (1/(log(weightNullDeref))) << "   result = " << result << std::endl;
         inFunc = false;
 #if DIS_DEBUG_OUTPUT
-	std::cout << " destroying - save nodes  " << nodeCount << std::endl;
+        std::cout << " destroying - save nodes  " << nodeCount << std::endl;
 #endif
     }
 }

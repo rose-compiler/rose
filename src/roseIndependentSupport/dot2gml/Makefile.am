@@ -25,4 +25,4 @@ clean-local:
 
 endif
 
-EXTRA_DIST = CMakeLists.txt parse_header.h parseDot.ll parseDotGrammar.yy README main.C 
+EXTRA_DIST = CMakeLists.txt parse_header.h parseDot.ll parseDotGrammar.yy README main.C PolicyControl.txt

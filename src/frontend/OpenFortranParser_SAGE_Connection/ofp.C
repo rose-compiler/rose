@@ -42,7 +42,7 @@ jofp_get_method(jclass xclass, int static_method, const char* name, const char* 
 {
     jmethodID method = jserver_GetMethodID(static_method, xclass, name, arg);
     if (method == NULL) jserver_handleException();
-	return method;
+        return method;
 }
 
 
@@ -70,7 +70,7 @@ jofp_get_frontEnd_getError_method()
 {
     static  jmethodID getErrorMethod;
     if (getErrorMethod == NULL)
-    	getErrorMethod = jofp_get_method(jofp_get_frontEnd_class(), STATIC_METHOD, "getError", "()Z");
+        getErrorMethod = jofp_get_method(jofp_get_frontEnd_class(), STATIC_METHOD, "getError", "()Z");
     return getErrorMethod;
 }
 

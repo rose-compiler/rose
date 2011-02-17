@@ -119,6 +119,7 @@ noinst_HEADERS=\
 EXTRA_DIST=\
 	CMakeLists.txt \
 	OpenAnalysis \
+	PolicyControl.txt \
 	$(mpaAnnotationLanguageParser_extraDist) \
 	$(mpaCallGraphAnalysis_extraDist) \
 	$(mpaCFG_extraDist) \

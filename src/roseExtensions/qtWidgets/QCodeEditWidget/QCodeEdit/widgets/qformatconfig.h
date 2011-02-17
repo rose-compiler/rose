@@ -19,10 +19,10 @@
 #include "qce-config.h"
 
 /*!
-	\file qformatconfig.h
-	\brief Definition of the QFormatConfig widget
-	
-	\see QFormatConfig
+        \file qformatconfig.h
+        \brief Definition of the QFormatConfig widget
+        
+        \see QFormatConfig
 */
 
 #include <QWidget>
@@ -33,35 +33,35 @@ class QFormatScheme;
 
 class QCE_EXPORT QFormatConfig : public QWidget, private Ui::FormatConfig
 {
-	Q_OBJECT
-	
-	public:
-		QFormatConfig(QWidget *w = 0);
-		
-		bool hasUnsavedChanges() const;
-		
-		QList<QFormatScheme*> schemes() const;
-		
-	public slots:
-		void retranslate();
-		
-		void apply();
-		void cancel();
-		void restore();
-		
-		void addScheme(const QString& name, QFormatScheme *scheme);
-		void removeScheme(QFormatScheme *scheme);
-		
-		void setCurrentScheme(QFormatScheme *scheme);
-		
-	private slots:
-		void on_m_selector_currentIndexChanged(int idx);
-		
-	private:
-		QList<int> modifiedFormats() const;
-		
-		QFormatScheme *m_currentScheme;
-		QList<QFormatScheme*> m_schemes;
+        Q_OBJECT
+        
+        public:
+                QFormatConfig(QWidget *w = 0);
+                
+                bool hasUnsavedChanges() const;
+                
+                QList<QFormatScheme*> schemes() const;
+                
+        public slots:
+                void retranslate();
+                
+                void apply();
+                void cancel();
+                void restore();
+                
+                void addScheme(const QString& name, QFormatScheme *scheme);
+                void removeScheme(QFormatScheme *scheme);
+                
+                void setCurrentScheme(QFormatScheme *scheme);
+                
+        private slots:
+                void on_m_selector_currentIndexChanged(int idx);
+                
+        private:
+                QList<int> modifiedFormats() const;
+                
+                QFormatScheme *m_currentScheme;
+                QList<QFormatScheme*> m_schemes;
 };
 
 #endif // _QFORMAT_CONFIG_H_

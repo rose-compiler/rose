@@ -16,10 +16,10 @@ class CountRefHandle
        { 
          if (count == 0);
          else 
-	   if ((*count) > 1)
-	     (*count)--; 
+           if ((*count) > 1)
+             (*count)--; 
            else //Free the object when the reference count decreases to 0
-	   {
+           {
              delete count;
              delete obj;
              count = 0;
@@ -56,9 +56,9 @@ class CountRefHandle
       { 
         DecreaseUse(); 
         obj = that.obj; 
-	count = that.count;
+        count = that.count;
         IncreaseUse(); 
-	return *this; 
+        return *this; 
       }
    ~CountRefHandle <T> () 
         {  DecreaseUse(); }

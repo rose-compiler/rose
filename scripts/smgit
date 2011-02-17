@@ -1639,7 +1639,7 @@ use overload
 
 package main;
 
-use Cwd;
+use Cwd qw/getcwd abs_path/;
 use File::Temp 'tempfile';
 sub GetOptionsFromArray { goto &Getopt::Long::GetOptionsFromArray }
 #use Getopt::Long 'GetOptionsFromArray';  # included above
@@ -2024,6 +2024,18 @@ sub do_commit {
 		      "u|untracked-files=s"=>\$untracked, "v|verbose"=>\$verbose, "q|quiet"=>\$quiet,
 		      "dry-run"=>\&unsupported) or exit 1;
   die "$arg0: commit: incorrect usage\n" if @_;
+
+  # Convert relative message files to absolute so we can pass the name to submodules.
+  if (defined $msgfile) {
+    if ($msgfile eq '-') {
+      while (<STDIN>) {
+	$message .= $_;
+      }
+      $msgfile = undef;
+    } elsif ($msgfile !~ /^\//) {
+      $msgfile = abs_path($msgfile);
+    }
+  }
 
   my $git_commit = sub {
     my($path,$sha1) = @_;

@@ -99,7 +99,7 @@ class AttachPreprocessingInfoTreeTrav
        //   std::map<std::string,ROSEAttributesList*>* mapOfAttributes; 
 
       //! AS(092107) Optimization variable to avoid n^2 complexity in 
-      //! iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber()	  
+      //! iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber()         
        // int start_index;
           StartingIndexAttributeMapType startIndexMap;
 

@@ -67,9 +67,9 @@ struct IsImportantForSliceCFGFilter
     // modify the is interesting for for,while,do-while and if construct
     // the exit-branch of the cfg needs to be on the controling expression, this if take care of that
     /*    if (isSgWhileStmt(n) && cfgn.getIndex()!=0) return false;
-	  else if (isSgForStatement(n) && cfgn.getIndex()!=1) return false;
-	  else if (isSgDoWhileStmt(n) && cfgn.getIndex()!=1) return false;
-	  else if (isSgIfStmt(n) && cfgn.getIndex()!=2) return false;*/
+          else if (isSgForStatement(n) && cfgn.getIndex()!=1) return false;
+          else if (isSgDoWhileStmt(n) && cfgn.getIndex()!=1) return false;
+          else if (isSgIfStmt(n) && cfgn.getIndex()!=2) return false;*/
     
     //Jim Leek: 2/21/2009: Added to fix problem with dupicate nodes appearing in Dominance Tree.  
     if(isSgExprStatement(n)) {
@@ -79,17 +79,17 @@ struct IsImportantForSliceCFGFilter
 #if 1
     if (isSgForStatement(n) || isSgDoWhileStmt(n) || isSgWhileStmt(n) || isSgIfStmt(n))
       {
-	return false;
-	/*
-	  if (cfgn.getIndex()!=0) 
-	  return false;*/
-	//else continue to the user-defined filter
+        return false;
+        /*
+          if (cfgn.getIndex()!=0) 
+          return false;*/
+        //else continue to the user-defined filter
       }
     // not a loop -> normal isInteresting
     else
       {
-	if (!cfgn.isInteresting()) 
-	  return false;
+        if (!cfgn.isInteresting()) 
+          return false;
       }
     return IsImportantForSliceSgFilter(cfgn.getNode());
 #endif
@@ -296,9 +296,9 @@ class DependenceNode:public SimpleDirectedGraphNode
       case FORMALIN:
       case FORMALOUT:
       case ENTRY:
-	return true;
+        return true;
       default:
-	return false;
+        return false;
       }
   }
 
@@ -309,9 +309,9 @@ class DependenceNode:public SimpleDirectedGraphNode
       {
       case FORMALIN:
       case FORMALOUT:
-	return true;
+        return true;
       default:
-	return false;
+        return false;
       }
   }
 
@@ -322,9 +322,9 @@ class DependenceNode:public SimpleDirectedGraphNode
       {
       case ACTUALIN:
       case ACTUALOUT:
-	return true;
+        return true;
       default:
-	return false;
+        return false;
       }
   }
   bool isFormalReturn()
@@ -343,58 +343,58 @@ class DependenceNode:public SimpleDirectedGraphNode
     switch(depType)
       {
       case SGNODE:            
-	// no output for normal nodes
-	break;
-	//              os << "SGNODE\\n";break;
+        // no output for normal nodes
+        break;
+        //              os << "SGNODE\\n";break;
       case CONTROL:
-	os << "CONTROL\\n";break;
+        os << "CONTROL\\n";break;
       case CALLSITE:
-	os << "CALLSITE\\n";break;
+        os << "CALLSITE\\n";break;
       case ACTUALIN:
-	os << "ACTUALIN\\n";break;
+        os << "ACTUALIN\\n";break;
       case ACTUALOUT:
-	os<<"ACTUALOUT\\n";break;
+        os<<"ACTUALOUT\\n";break;
       case FORMALIN:
-	os<<"FORMALIN\\n";break;
+        os<<"FORMALIN\\n";break;
       case FORMALOUT:
-	os<<"FORMALOUT\\n";break;
+        os<<"FORMALOUT\\n";break;
       case FORMALRETURN:
-	os<<"FORMALRETURN\\n";break;
+        os<<"FORMALRETURN\\n";break;
       case ACTUALRETURN:
-	os<<"ACTUALRETURN\\n";break;
+        os<<"ACTUALRETURN\\n";break;
       case ENTRY:
-	os<<"ENTRY\\n";break;
+        os<<"ENTRY\\n";break;
       default:
-	os<<"NULL!!!!";break;
+        os<<"NULL!!!!";break;
       }
     if (sgNode != NULL) {
 #ifdef DOT_OUT_VERBOSE
       switch(depType)
         {
-	default:
-	  os << sgNode->class_name() << "\\n";
-	  if (isSgExpressionRoot(sgNode))
+        default:
+          os << sgNode->class_name() << "\\n";
+          if (isSgExpressionRoot(sgNode))
             {
-	      os << "[" << escapeString(isSgExpressionRoot(sgNode)->get_operand()->unparseToString()) << "]";
+              os << "[" << escapeString(isSgExpressionRoot(sgNode)->get_operand()->unparseToString()) << "]";
             }
-	  else if (isSgFunctionDeclaration(sgNode))
+          else if (isSgFunctionDeclaration(sgNode))
             {
-	      os << "[" << isSgFunctionDeclaration(sgNode)->get_name().str() << "]";
+              os << "[" << isSgFunctionDeclaration(sgNode)->get_name().str() << "]";
             }
-	  else if (isSgFunctionDefinition(sgNode))
+          else if (isSgFunctionDefinition(sgNode))
             {
-	      os<< "Entry ("+isSgFunctionDefinition(sgNode)->get_declaration()->get_name().getString()+")"; 
-	      //  os << name;
-	      //os << "[" << isSgFunctionDeclaration(sgNode)->get_name().str() << "]";
+              os<< "Entry ("+isSgFunctionDefinition(sgNode)->get_declaration()->get_name().getString()+")"; 
+              //  os << name;
+              //os << "[" << isSgFunctionDeclaration(sgNode)->get_name().str() << "]";
             }
-	  else if (isSgInitializedName(sgNode))
+          else if (isSgInitializedName(sgNode))
             {
               os << "["<<isSgInitializedName(sgNode)->get_qualified_name().getString()<<"]";
             }
-	  else
+          else
             {
-	      //            std::cout <<"node"<<sgNode->class_name()<<std::endl;
-	      os << "[" << escapeString(sgNode->unparseToString()) << "]";
+              //            std::cout <<"node"<<sgNode->class_name()<<std::endl;
+              os << "[" << escapeString(sgNode->unparseToString()) << "]";
             }
           break;
         case FORMALOUT:
@@ -606,10 +606,10 @@ class InterproceduralInfo
 
       Rose_STL_Container<SgInitializedName*> argList=functionDeclaration->get_args();
       for (Rose_STL_Container<SgInitializedName*>::iterator i=argList.begin();i!=argList.end();i++)
-	{
-	  std::cout << "\tadding formal in "<<*i<<"\n";
-	  formal_in.push_back(*i);
-	}
+        {
+          std::cout << "\tadding formal in "<<*i<<"\n";
+          formal_in.push_back(*i);
+        }
       
     }
     
@@ -640,18 +640,18 @@ class InterproceduralInfo
     Params: - SgNode * node: The root of the subtree we want to analyze.
     Return: a list of all SgFunctionCallExp nodes that are in the subtree. */
   /*    static std::list < SgFunctionCallExp * >extractFunctionCalls(SgNode * node)
-	{
+        {
         std::list < SgFunctionCallExp * >retval;
         std::list < SgNode * >calls = NodeQuery::querySubTree(node, V_SgFunctionCallExp);
         for (std::list < SgNode * >::iterator i = calls.begin(); i != calls.end(); i++)
         {
-	SgFunctionCallExp *fce = isSgFunctionCallExp(*i);
-	ROSE_ASSERT(fce != NULL);
-	retval.push_back(fce);
+        SgFunctionCallExp *fce = isSgFunctionCallExp(*i);
+        ROSE_ASSERT(fce != NULL);
+        retval.push_back(fce);
         }
 
         return retval;
-	}*/
+        }*/
   // ! maps function calls to the call site structure that represents them
   //  std::map < SgFunctionCallExp *, CallSiteStructure > callsite_map;
 };
@@ -837,10 +837,10 @@ class DependenceGraph:public SimpleDirectedGraph
   */
   std::set < EdgeType > edgeType(DependenceNode * from, DependenceNode * to);
   /*    std::list <DependenceNode*> getParents(DependenceNode * current)
-	{
-	std::list <DependenceNode*> parentList;
-	return parentList;
-	}*/
+        {
+        std::list <DependenceNode*> parentList;
+        return parentList;
+        }*/
   // ! writes a dot file representing this dependence graph to filename
   virtual void writeDot(char *filename);
 
@@ -941,9 +941,9 @@ class ControlDependenceGraph:public DependenceGraph
 
   // ! calls establishEdge with EdgeType defaulted to CONTROL
   /*    virtual void establishEdge(DependenceNode * from, DependenceNode * to)
-	{
+        {
         DependenceGraph::establishEdge(from, to, CONTROL);
-	}*/
+        }*/
   void computeInterproceduralInformation(InterproceduralInfo * ii);
   void computeAdditionalFunctioncallDepencencies();
  private:
@@ -1038,9 +1038,9 @@ class DataDependenceGraph:public DependenceGraph
 
   // ! calls establishEdge with EdgeType defaulted to DATA
   /*    virtual void establishEdge(DependenceNode * from, DependenceNode * to)
-	{
+        {
         DependenceGraph::establishEdge(from, to, DATA);
-	}*/
+        }*/
   void computeInterproceduralInformation(InterproceduralInfo * ii);
  private:
 #ifdef NEWDU
@@ -1191,7 +1191,7 @@ class FunctionDependenceGraph:public MergedDependenceGraph
 
   */
   FunctionDependenceGraph(ControlDependenceGraph * cdg, DataDependenceGraph * ddg,
-			  InterproceduralInfo * ii = NULL);
+                          InterproceduralInfo * ii = NULL);
 
   /* ! \brief gets a slice with slicing criterion node
 
@@ -1294,8 +1294,8 @@ class SystemDependenceGraph:public MergedDependenceGraph
       std::cerr<<"Warning: Interprocedural Information for this function already available"<<std::endl;
     else
       {
-	interproceduralInformation[info->getFunctionDeclaration()]=info;
-	interproceduralInformationList.push_back(info);
+        interproceduralInformation[info->getFunctionDeclaration()]=info;
+        interproceduralInformationList.push_back(info);
       }
   }
   void doInterproceduralConnections(InterproceduralInfo * ii);

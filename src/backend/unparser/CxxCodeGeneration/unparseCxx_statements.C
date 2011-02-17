@@ -693,8 +693,8 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 //#if USE_UPC_IR_NODES
 //#if UPC_EXTENSIONS_ALLOWED //TODO turn on by default?
 // Liao, 6/13/2008: UPC support
-    case V_SgUpcNotifyStatement:           	  unparseUpcNotifyStatement(stmt, info); break;
-    case V_SgUpcWaitStatement:            	  unparseUpcWaitStatement(stmt, info); break;
+    case V_SgUpcNotifyStatement:                  unparseUpcNotifyStatement(stmt, info); break;
+    case V_SgUpcWaitStatement:                    unparseUpcWaitStatement(stmt, info); break;
     case V_SgUpcBarrierStatement:                 unparseUpcBarrierStatement(stmt, info); break;
     case V_SgUpcFenceStatement:                   unparseUpcFenceStatement(stmt, info); break;
     case V_SgUpcForAllStatement:                  unparseUpcForAllStatement(stmt, info);    break; 
@@ -3757,13 +3757,19 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     ROSE_ASSERT(decl_item != NULL);
                     ROSE_ASSERT(decl_item->get_parent() != NULL);
 
-                 // DQ (5/1/2005): Note clear if we can assert this!
+                 // DQ (5/1/2005): Not clear if we can assert this!
                  // ROSE_ASSERT(decl_item->get_prev_decl_item() != NULL);
                     if (decl_item->get_prev_decl_item() != NULL)
                        {
-                      // printf ("decl_item->get_prev_decl_item() = %p get_name() = %s \n",
-                      //      decl_item->get_prev_decl_item(),decl_item->get_prev_decl_item()->get_name().str());
-                         ROSE_ASSERT(decl_item->get_prev_decl_item()->get_parent() != NULL);
+                      // printf ("decl_item->get_prev_decl_item() = %p get_name() = %s \n",decl_item->get_prev_decl_item(),decl_item->get_prev_decl_item()->get_name().str());
+
+                      // DQ (2/12/2011): Commented out to support generation of graph to debug test2011_08.C, this test codes 
+                      // demonstrates that the SgInitializedName build first might only be to support a symbol and not have a
+                      // proper parent.
+                      // ROSE_ASSERT(decl_item->get_prev_decl_item()->get_parent() != NULL);
+                         SgInitializedName* previousInitializedName = decl_item->get_prev_decl_item();
+                         if (previousInitializedName->get_prev_decl_item() != NULL)
+                              ROSE_ASSERT(previousInitializedName->get_parent() != NULL);
                        }
 
                  // DQ (10/10/2006): Only do name qualification for C++
