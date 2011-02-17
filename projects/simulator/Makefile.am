@@ -326,7 +326,6 @@ SYS_TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/syscall_tests/syscall_tst.38.10.c \
 		   $(srcdir)/syscall_tests/syscall_tst.38.13.c \
 		   $(srcdir)/syscall_tests/syscall_tst.38.14.c \
-		   $(srcdir)/syscall_tests/syscall_tst.54.c \
 		   $(srcdir)/syscall_tests/syscall_tst.24.1.c \
 		   $(srcdir)/syscall_tests/syscall_tst.24.2.c \
 		   $(srcdir)/syscall_tests/syscall_tst.24.3.c \
@@ -365,6 +364,8 @@ SYS_TEST_INPUTS_TS_SRC = \
 # DQ (2/13/2011): This test fails to terminate when run on Hudson 
 # (failed on hudson-rose-07, email with error details sent morning of 2/13/2011 to Robb and Andreas).
 #		   $(srcdir)/syscall_tests/syscall_tst.183.3.c
+# Liao 2/16/2011: I have to comment out this since  ERROR: Cannot create file /tmp/notty		   
+#		   $(srcdir)/syscall_tests/syscall_tst.54.c
 
 
 # These cannot be run reliably (at least not concurrently with other tests.
