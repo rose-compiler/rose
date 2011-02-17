@@ -138,7 +138,7 @@ SgInitializedName::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
      if (initializedName_copy->get_scope() == this->get_scope())
         {
           FixupCopyDataMemberMacro(initializedName_copy,SgScopeStatement,get_scope,set_scope)
-	  // fprintf(stderr, "After: copy's scope is %p, my scope is %p\n", initializedName_copy->get_scope(), this->get_scope());
+          // fprintf(stderr, "After: copy's scope is %p, my scope is %p\n", initializedName_copy->get_scope(), this->get_scope());
 
           SgNode* parent = initializedName_copy->get_parent();
 
@@ -147,7 +147,7 @@ SgInitializedName::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
        // Since the parent might not have been set yet we have to allow for this case. In the case of a 
        // SgInitializedName in a SgVariableDeclaration the SgInitializedName objects have their parents 
        // set after the SgInitializedName is copied and in the copy function for the parent (SgVariableDeclaration).
-	  // fprintf (stderr, "In SgInitializedName::fixupCopy_scopes(): parent = %p = %s \n",parent,parent->class_name().c_str());
+          // fprintf (stderr, "In SgInitializedName::fixupCopy_scopes(): parent = %p = %s \n",parent,parent->class_name().c_str());
           if (parent != NULL)
              {
                ROSE_ASSERT(parent != NULL);
@@ -301,7 +301,7 @@ SgLocatedNode::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
              }
        // ROSE_ASSERT(copyStatement->get_parent()->variantT() == this->get_parent()->variantT());
         }
-	 else if (SgProject::get_verbose() > 0)
+         else if (SgProject::get_verbose() > 0)
         {
           printf ("In SgLocatedNode::fixupCopy_scopes(): parent not set for original AST at %p = %s, thus copy left similarly incomplete \n",this,this->class_name().c_str());
         }
@@ -1726,7 +1726,7 @@ SgForInitStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
           i_copy++;
         }
 
-  // Relavant data member is: SgStatementPtrList 	p_init_stmt
+  // Relavant data member is: SgStatementPtrList        p_init_stmt
    }
 
 void
@@ -1743,7 +1743,7 @@ SgCatchStatementSeq::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 
      printf ("SgCatchStatementSeq::fixupCopy_scopes(): Sorry not implemented \n");
 
-  // The relavant data member here is a SgStatementPtrList 	p_catch_statement_seq
+  // The relavant data member here is a SgStatementPtrList      p_catch_statement_seq
 
   // ROSE_ASSERT(this->get_body() != NULL);
   // this->get_body()->fixupCopy_scopes(catchStatement_copy->get_body(),help);

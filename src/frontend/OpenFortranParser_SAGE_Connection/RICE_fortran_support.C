@@ -21,19 +21,19 @@ std::list<SgInterfaceStatement*> astInterfaceStack;
 
 Token_t *create_token(int line, int col, int type, const char *text)
   {
-	 Token_t *tmp_token = NULL;
+         Token_t *tmp_token = NULL;
 
-	 tmp_token = (Token_t*) malloc(sizeof(Token_t));
-	 tmp_token->line = line;
-	 tmp_token->col = col;
-	 tmp_token->type = type;
+         tmp_token = (Token_t*) malloc(sizeof(Token_t));
+         tmp_token->line = line;
+         tmp_token->col = col;
+         tmp_token->type = type;
  /* Make a copy of our own to make sure it isn't freed on us.  */
     if (text != NULL)
          tmp_token->text = strdup(text);
       else
          tmp_token->text = NULL;
 
-	 return tmp_token;
+         return tmp_token;
   }
 
 
@@ -2065,8 +2065,8 @@ SgVariableSymbol* lookup_variable_symbol_build_if_needed (const SgName & variabl
 
      if ((variableSymbol == NULL) && (!isImplicitNoneScope()))
        {
-	     buildImplicitVariableDeclaration(variableName);
-	     trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName,currentScope,variableSymbol,functionSymbol,classSymbol);
+             buildImplicitVariableDeclaration(variableName);
+             trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName,currentScope,variableSymbol,functionSymbol,classSymbol);
        }
 
      return variableSymbol;
@@ -3906,9 +3906,9 @@ SgType* generateImplicitType( string name )   {
   // Implement the default implicit type rules.
   // These will have to be modified to account for user defined implicit type rules later.
   // The DEFAULT implicit typing is based on the first letter of the name Implicit type
-  // A to H 	REAL
-  // I to N 	INTEGER
-  // O to Z 	REAL
+  // A to H     REAL
+  // I to N     INTEGER
+  // O to Z     REAL
 
      SgType* returnType = NULL;
 #if 1
@@ -3925,10 +3925,10 @@ SgType* generateImplicitType( string name )   {
      ROSE_ASSERT(tolower(name[0]) >= 'a');
      ROSE_ASSERT(tolower(name[0]) <= 'z');
      if (tolower(name[0]) < 'i' || tolower(name[0]) > 'n')  {
-    	 returnType = SgTypeFloat::createType();
+         returnType = SgTypeFloat::createType();
      }
      else  {
-    	 returnType = SgTypeInt::createType();
+         returnType = SgTypeInt::createType();
      }
      ROSE_ASSERT(returnType != NULL);
      return returnType;
@@ -5338,23 +5338,23 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
           int asteriskCount = 0;
           while (astNameStack.empty() == false)
              {
-        	   // DXN (01/07/2011): add case for alternate dummy return argument; the name of each
-        	   // alternate dummy argument is "*" followed by the number representing the time it
-        	   // appears in the subroutine parameter list.
-        	   SgType* argType = NULL;
-        	   string argName(astNameStack.front()->text);
-        	   if (argName == "*")
-        	      {
-            	    argType = SgTypeDefault::createType(); // type of a SgLabelRefExp
-            	    asteriskCount++;
-            	    argName = argName + toString(asteriskCount);
-        	      }
+                   // DXN (01/07/2011): add case for alternate dummy return argument; the name of each
+                   // alternate dummy argument is "*" followed by the number representing the time it
+                   // appears in the subroutine parameter list.
+                   SgType* argType = NULL;
+                   string argName(astNameStack.front()->text);
+                   if (argName == "*")
+                      {
+                    argType = SgTypeDefault::createType(); // type of a SgLabelRefExp
+                    asteriskCount++;
+                    argName = argName + toString(asteriskCount);
+                      }
               else
                  {
-            	    argType = generateImplicitType(argName);
+                    argType = generateImplicitType(argName);
                  }
               SgInitializedName* initializedName = new SgInitializedName(argName, argType, NULL, procedureDeclaration, NULL);
-        	  procedureDeclaration->append_arg(initializedName);
+                  procedureDeclaration->append_arg(initializedName);
 
               initializedName->set_parent(procedureDeclaration->get_parameterList());
               ROSE_ASSERT(initializedName->get_parent() != NULL);
@@ -6479,22 +6479,22 @@ use_statement_fixup()
      SgFunctionDeclaration* pFuncDecl = TransformationSupport::getFunctionDeclaration(astScopeStack.front());
      if (pFuncDecl != NULL)
         {
-    	  SgClassType* pReturnType = isSgClassType(pFuncDecl->get_type()->get_return_type());
-    	  if (pReturnType)
-    	     {
+          SgClassType* pReturnType = isSgClassType(pFuncDecl->get_type()->get_return_type());
+          if (pReturnType)
+             {
                SgClassSymbol* pDerivedTypeSymbol = trace_back_through_parent_scopes_lookup_derived_type_symbol(pReturnType->get_name(), getTopOfScopeStack() );
                //change return type only if the function return type and the derived type symbol return type are not the same:
                if (pDerivedTypeSymbol != NULL && pReturnType != pDerivedTypeSymbol->get_declaration()->get_type())
                   {
-            	    pFuncDecl->get_type()->set_return_type(pDerivedTypeSymbol->get_declaration()->get_type());
-            	    // remove the original function return type symbol from its scope, if it is a forward reference:
-            	    if (pReturnType->get_declaration()->get_definingDeclaration() == NULL)
-            	       {
+                    pFuncDecl->get_type()->set_return_type(pDerivedTypeSymbol->get_declaration()->get_type());
+                    // remove the original function return type symbol from its scope, if it is a forward reference:
+                    if (pReturnType->get_declaration()->get_definingDeclaration() == NULL)
+                       {
                          SgSymbol* pReturnTypeSymbol = pReturnType->get_declaration()->search_for_symbol_from_symbol_table ();
                          pReturnType->get_declaration()->get_scope()->remove_symbol(pReturnTypeSymbol);
                        }
                   }
-    	     }
+             }
         }
 
    }

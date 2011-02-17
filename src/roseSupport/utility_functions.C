@@ -8,7 +8,7 @@
 #include "wholeAST_API.h"
 
 #ifdef _MSC_VER
-#include <direct.h>	// getcwd
+#include <direct.h>     // getcwd
 #endif
 
 // DQ (10/11/2007): This is commented out to avoid use of this mechanism.
@@ -769,7 +769,7 @@ pdfPrintAbstractSyntaxTreeEDG ( SgFile *file )
         {
           PDF_continue_text(pdfFile, buffer[i]);
        // printf ("string = %s \n",buffer[i]);
-	  i++;
+          i++;
         }
 #endif
 
@@ -847,7 +847,7 @@ ROSE::getColumnNumber ( SgLocatedNode* locatedNodePointer )
           ROSE_ASSERT (locatedNodePointer->get_file_info()->get_filename() != NULL);
           Sg_File_Info* fileInfo = locatedNodePointer->get_file_info();
           columnNumber = fileInfo->get_col();
-	}
+        }
 
      return columnNumber;
    }
@@ -1007,7 +1007,7 @@ ROSE::getWorkingDirectory ()
   // CH (4/7/2010): In MSVC, the header file "direct.h" contains function 'getcwd'
 
 
-	 const char* getcwdResult = getcwd(currentDirectory,maxPathNameLength);
+         const char* getcwdResult = getcwd(currentDirectory,maxPathNameLength);
 
      if (!getcwdResult) {
        perror("getcwd: ");
@@ -1062,11 +1062,11 @@ ROSE::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
                parent = parent->get_parent();
              }
 
-	  if (!parent) {
-	    const SgLocatedNode* ln = isSgLocatedNode(astNode);
-	    ROSE_ASSERT (ln);
-	    return ln->get_file_info()->get_filenameString();
-	  }
+          if (!parent) {
+            const SgLocatedNode* ln = isSgLocatedNode(astNode);
+            ROSE_ASSERT (ln);
+            return ln->get_file_info()->get_filenameString();
+          }
           // ROSE_ASSERT (parent != NULL);
           const SgFile* file = isSgFile(parent);
           ROSE_ASSERT (file != NULL);
@@ -1132,41 +1132,41 @@ ROSE::getNextStatement ( SgStatement *currentStatement )
           // case V_SgBasicBlock: // Liao 10/20/2010, We should allow users to get a statement immediately AFTER a block.
           case V_SgClassDefinition:
           case V_SgFunctionDefinition:
-	  case V_SgStatement:
+          case V_SgStatement:
           case V_SgFunctionParameterList:
-					
-							 ROSE_ASSERT(0);
-							 // not specified
-							 break;
+                                        
+                                                         ROSE_ASSERT(0);
+                                                         // not specified
+                                                         break;
           default:
              {
             // We have to handle the cases of a SgStatementPtrList and a 
             // SgDeclarationStatementPtrList separately
-							 if (scope->containsOnlyDeclarations() == true)
-							 {
-								 // Usually a global scope or class declaration scope
-								 SgDeclarationStatementPtrList & declarationList = scope->getDeclarationList();
-								 Rose_STL_Container<SgDeclarationStatement*>::iterator i;
-								 for (i = declarationList.begin();(*i)!=currentStatement;i++) {}
-								 // now i == currentStatement
-								 i++;
-								 if (declarationList.end() == i) nextStatement=NULL;
-								 else nextStatement=*i;
-							 }
-							 else
-							 {
-								 SgStatementPtrList & statementList = scope->getStatementList();
-								 Rose_STL_Container<SgStatement*>::iterator i;
+                                                         if (scope->containsOnlyDeclarations() == true)
+                                                         {
+                                                                 // Usually a global scope or class declaration scope
+                                                                 SgDeclarationStatementPtrList & declarationList = scope->getDeclarationList();
+                                                                 Rose_STL_Container<SgDeclarationStatement*>::iterator i;
+                                                                 for (i = declarationList.begin();(*i)!=currentStatement;i++) {}
+                                                                 // now i == currentStatement
+                                                                 i++;
+                                                                 if (declarationList.end() == i) nextStatement=NULL;
+                                                                 else nextStatement=*i;
+                                                         }
+                                                         else
+                                                         {
+                                                                 SgStatementPtrList & statementList = scope->getStatementList();
+                                                                 Rose_STL_Container<SgStatement*>::iterator i;
                                                                  // Liao, 11/18/2009, Handle the rare case that current statement is not found
                                                                  // in its scope's statement list
-								 //for (i = statementList.begin();(*i)!=currentStatement;i++) 
-								 for (i = statementList.begin();(*i)!=currentStatement && i!= statementList.end();i++) 
+                                                                 //for (i = statementList.begin();(*i)!=currentStatement;i++) 
+                                                                 for (i = statementList.begin();(*i)!=currentStatement && i!= statementList.end();i++) 
                                                                  {
                                                                  //  SgStatement* cur_stmt = *i;
                                                                  //  cout<<"Skipping current statement: "<<cur_stmt->class_name()<<endl;
                                                                  //  cout<<cur_stmt->get_file_info()->displayString()<<endl;
                                                                  }
-								 // currentStatement is not found in the list
+                                                                 // currentStatement is not found in the list
                                                                  if (i ==  statementList.end()) 
                                                                  {
                                                                    cerr<<"fatal error: ROSE::getNextStatement(): current statement is not found within its scope's statement list"<<endl;
@@ -1178,18 +1178,18 @@ ROSE::getNextStatement ( SgStatement *currentStatement )
                                                                   }
                                                                  //  now i == currentStatement
                                                                  ROSE_ASSERT (*i == currentStatement);
-								 i++;
-								 if (statementList.end() == i) nextStatement=NULL;
-								 else nextStatement=*i;
-							 }
+                                                                 i++;
+                                                                 if (statementList.end() == i) nextStatement=NULL;
+                                                                 else nextStatement=*i;
+                                                         }
 
             // If the target statement was the last statement in a scope then 
                if (nextStatement == NULL)
-							 {
-								 // Someone might think of a better answer than NULL
-							 }
+                                                         {
+                                                                 // Someone might think of a better answer than NULL
+                                                         }
              }
-						 break;
+                                                 break;
         }
      //This assertion does not make sense. 
      //Since a trailing statement within a scope can have null next statement, 
@@ -1198,7 +1198,7 @@ ROSE::getNextStatement ( SgStatement *currentStatement )
 
      return nextStatement;
    }
-	 
+         
 SgStatement*
 ROSE::getPreviousStatement ( SgStatement *targetStatement )
    {

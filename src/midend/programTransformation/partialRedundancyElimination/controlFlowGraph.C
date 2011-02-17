@@ -24,7 +24,7 @@ class CfgConfig: public BuildCFGConfig<int> {
   }
 
   virtual void CreateEdge(PRE::Vertex* src, PRE::Vertex* tgt,
-			        CFGConfig::EdgeType condval) {
+                                CFGConfig::EdgeType condval) {
     // cerr << "Creating edge between " << *src << " and " << *tgt << endl;
     /* PRE::Edge edge = */ graph.graph.add_edge(*src, *tgt);
     graph.edge_type.push_back(condval);
@@ -285,33 +285,33 @@ PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
 
 
 void PRE::printCfgAsDot(ostream& dotfile,
-		   const PRE::ControlFlowGraph& controlflow) {
+                   const PRE::ControlFlowGraph& controlflow) {
   dotfile << "digraph cfg {" << endl;
   VertexIter i = controlflow.graph.vertices().begin(), 
-	     end = controlflow.graph.vertices().end();
+             end = controlflow.graph.vertices().end();
   for (; i != end; ++i) {
     std::ostringstream statementdata;
     statementdata << "{";
     statementdata << *i;
     const vector<SgNode*>& stmts = controlflow.node_statements[*i];
     for (vector<SgNode*>::const_iterator j = stmts.begin();  
-	 j != stmts.end(); ++j) {
+         j != stmts.end(); ++j) {
       statementdata << "\\n";
       if (isSgExpression(*j)) {
-	statementdata << " | ";
+        statementdata << " | ";
       }
       statementdata << (*j)->unparseToString();
       SgStatement* expr_parent = 0;
       if (isSgExpression(*j)) {
-	expr_parent = isSgStatement((*j)->get_parent()->get_parent());
+        expr_parent = isSgStatement((*j)->get_parent()->get_parent());
       } else if (isSgExprStatement(*j)) {
-	expr_parent = isSgStatement((*j)->get_parent());
-	if (isSgBasicBlock(expr_parent))
-	  expr_parent = 0;
+        expr_parent = isSgStatement((*j)->get_parent());
+        if (isSgBasicBlock(expr_parent))
+          expr_parent = 0;
       }
       if (expr_parent) {
-	statementdata << string(" in ") + 
-			 expr_parent->sage_class_name();
+        statementdata << string(" in ") + 
+                         expr_parent->sage_class_name();
       }
     }
     statementdata << "}";
@@ -320,22 +320,22 @@ void PRE::printCfgAsDot(ostream& dotfile,
     string statementdata_new;
     for (unsigned int j = 0; j < statementdatastr.size(); ++j) {
       if (statementdatastr[j] == '<' || statementdatastr[j] == '>' || 
-	  statementdatastr[j] == '"')
-	statementdata_new += string("\\") + statementdatastr[j];
+          statementdatastr[j] == '"')
+        statementdata_new += string("\\") + statementdatastr[j];
       else
-	statementdata_new += statementdatastr[j];
+        statementdata_new += statementdatastr[j];
     }
     dotfile << *i << " [label = \"" << statementdata_new << "\", shape=record];" << endl;
   }
 
   EdgeIter j = controlflow.graph.edges().begin(), 
-	   jend = controlflow.graph.edges().end();
+           jend = controlflow.graph.edges().end();
   for (; j != jend; ++j) {
     CFGConfig::EdgeType kind = controlflow.edge_type[*j];
     string color = (kind == CFGConfig::COND_TRUE ? "green" : 
-		    kind == CFGConfig::COND_FALSE ? "red" : 
-		    kind == CFGConfig::ALWAYS ? "black" : 
-		    "blue");
+                    kind == CFGConfig::COND_FALSE ? "red" : 
+                    kind == CFGConfig::ALWAYS ? "black" : 
+                    "blue");
     pair<SgNode*, bool> insert_point = controlflow.edge_insertion_point[*j];
     dotfile << controlflow.graph.source(*j) << " -> " << controlflow.graph.target(*j) << " [color=" << color << ", label = \"" << (insert_point.first ? (string(insert_point.first->sage_class_name()) + " " + (insert_point.second ? "before" : "after")) : "") << "\"];" << endl;
   }

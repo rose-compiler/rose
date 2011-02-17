@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 my $desc = <<EOF;
 All source files should be mentioned in makefiles.  A source file that
-is not mentioned in a makefile is probably not used. As of 2010-10-18 
-there are 1480 violations; we will allow no more! Future work will 
+is not mentioned in a makefile is probably not used. As of 2010-10-18
+there are 1480 violations; we will allow no more! Future work will
 reduce this number to zero or something reasonable. These source files
 are not mentioned in any makefile:
 EOF
@@ -26,7 +26,7 @@ while (my $file = $files->next_file) {
   if (open FILE, "<", $file) {
     while (<FILE>) {
       s/#.*//;
-      s/([a-zA-Z_0-9\.]+)/delete $index{lc $1}/ge;
+      s/([-a-zA-Z_0-9\.]+)/delete $index{lc $1}/ge;
     }
     close FILE;
   }

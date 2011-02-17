@@ -100,7 +100,7 @@ namespace RoseHPCT
 
   protected:
     virtual IRNode* callCreate (const std::string& id,
-				IRNodeCreator_t creator) const;
+                                IRNodeCreator_t creator) const;
 
   private:
     XMLUtil::XMLElem element_; // argument to pass to create routine

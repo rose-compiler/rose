@@ -78,8 +78,8 @@ AstAttribute::additionalNodeInfo()
 AstAttribute*
 AstAttribute::copy()
 {
-	//Implementations need to overload this to make a proper copy.
-	return NULL;
+        //Implementations need to overload this to make a proper copy.
+        return NULL;
 }
 
 bool

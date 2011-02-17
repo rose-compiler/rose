@@ -112,8 +112,8 @@ SgAsmElfSymbol::to_string(ElfSymBinding val)
 #ifndef _MSC_VER
     return stringifySgAsmElfSymbolElfSymBinding(val);
 #else
-	ROSE_ASSERT(false);
-	return "";
+        ROSE_ASSERT(false);
+        return "";
 #endif
 }
 
@@ -123,8 +123,8 @@ SgAsmElfSymbol::to_string(ElfSymType val)
 #ifndef _MSC_VER
     return stringifySgAsmElfSymbolElfSymType(val);
 #else
-	ROSE_ASSERT(false);
-	return "";
+        ROSE_ASSERT(false);
+        return "";
 #endif
 }  
 

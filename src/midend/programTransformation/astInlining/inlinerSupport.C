@@ -101,14 +101,14 @@ class RenameVariablesVisitor: public AstSimpleProcessing
                     if (isSgCtorInitializerList(n2->get_parent())) return;
                     if (n2->get_name().getString() == "") return;
                     SgName name(n2->get_name());
-		    SgSymbolTable* symtab = n2->get_scope()->get_symbol_table();
-		    SgSymbol* sym = symtab->find(n2);
-		    if (sym) {
-		      symtab->remove(sym);
-		    }
+                    SgSymbolTable* symtab = n2->get_scope()->get_symbol_table();
+                    SgSymbol* sym = symtab->find(n2);
+                    if (sym) {
+                      symtab->remove(sym);
+                    }
                     name << "__" << counter++;
 
-		    n2->set_name(name);
+                    n2->set_name(name);
                     SgVariableSymbol* n2symbol = new SgVariableSymbol(n2);
                     n2symbol->set_parent(symtab);
                     symtab->insert(name, n2symbol);
@@ -189,30 +189,30 @@ class RemoveNullStatementsVisitor: public AstSimpleProcessing {
       SgStatementPtrList& stmts = bb->get_statements();
       bool changes = true;
       while (changes) {
-	changes = false;
-	for (SgStatementPtrList::iterator i = stmts.begin();
+        changes = false;
+        for (SgStatementPtrList::iterator i = stmts.begin();
              i != stmts.end(); ++i) {
           if (isSgExprStatement(*i)) {
-	    SgExpression* expr = isSgExprStatement(*i)->get_expression();
-	    if (isSgIntVal(expr) ||
+            SgExpression* expr = isSgExprStatement(*i)->get_expression();
+            if (isSgIntVal(expr) ||
                 isSgNullExpression(expr) ||
                 isSgVarRefExp(expr) ||
                 (isSgNotOp(expr) && isSgVarRefExp(isSgNotOp(expr)->get_operand()))) { // This is what null statements are
-	      SgStatementPtrList::iterator inext = i, iprev = i;
-	      ++inext;
-	      if (iprev != stmts.begin()) --iprev;
-	      if ((inext != stmts.end() && !isSgDeclarationStatement(*inext)) || // A label cannot precede a declaration
-		  !isSgLabelStatement(*iprev)) {
-		// Checking to be sure that this statement isn't ensuring
-		// that a label isn't the last statement in a block (which
-		// would be illegal)
-		SageInterface::myRemoveStatement(*i);
-		changes = true;
-		break; // To avoid iterator invalidation
-	      }
-	    }
-	  }
-	}
+              SgStatementPtrList::iterator inext = i, iprev = i;
+              ++inext;
+              if (iprev != stmts.begin()) --iprev;
+              if ((inext != stmts.end() && !isSgDeclarationStatement(*inext)) || // A label cannot precede a declaration
+                  !isSgLabelStatement(*iprev)) {
+                // Checking to be sure that this statement isn't ensuring
+                // that a label isn't the last statement in a block (which
+                // would be illegal)
+                SageInterface::myRemoveStatement(*i);
+                changes = true;
+                break; // To avoid iterator invalidation
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -231,7 +231,7 @@ class CountVariableReferencesVisitor: public AstSimpleProcessing {
     if (isSgVarRefExp(n)) {
       assert (isSgVarRefExp(n)->get_symbol());
       if (isSgVarRefExp(n)->get_symbol()->get_declaration() == var)
-	++result;
+        ++result;
     } else if (n == var) {
       ++result;
     }
@@ -265,7 +265,7 @@ bool isDeclarationOf(SgVariableDeclaration* decl, SgInitializedName* var) {
 // other.
 bool isPotentiallyModifiedDuringLifeOf(SgBasicBlock* sc, 
                                        SgInitializedName* toCheck, 
-				       SgInitializedName* lifetime) {
+                                       SgInitializedName* lifetime) {
   SgStatementPtrList& stmts = sc->get_statements();
   bool inLiveRange = false;
   for (SgStatementPtrList::reverse_iterator i = stmts.rbegin();
@@ -287,7 +287,7 @@ bool isPotentiallyModifiedDuringLifeOf(SgBasicBlock* sc,
     if (result) return true;
 
     if (isSgVariableDeclaration(*i) &&
-	isDeclarationOf(isSgVariableDeclaration(*i), lifetime))
+        isDeclarationOf(isSgVariableDeclaration(*i), lifetime))
       return false; // This must be last
   }
   return false;
@@ -335,7 +335,7 @@ class FindReferenceVariablesVisitor: public AstSimpleProcessing {
           orig_copy->set_parent(copy_vr->get_parent());
           isSgExpression(copy_vr->get_parent())->
             replace_expression(copy_vr, orig_copy);
-	}
+        }
       }
     }
   }
@@ -353,41 +353,41 @@ class FindCopiesVisitor: public AstSimpleProcessing {
       assert (copy);
       SgInitializer* copyinit = copy->get_initializer(); 
       SgScopeStatement* copyscope =
-	SageInterface::getScope(copy->get_parent()->get_parent());
+        SageInterface::getScope(copy->get_parent()->get_parent());
       if (isSgAssignInitializer(copyinit)) {
-	SgAssignInitializer* init = 
-	  isSgAssignInitializer(copyinit);
-	SgExpression* orig_expr = init->get_operand();
-	// cout << "orig is " << orig_expr->unparseToString() << ", copy is " << copy->get_name().str() << endl;
-	if (!isPotentiallyModified(copy_vr, copyscope) &&
-	    !isSgGlobal(copyscope) &&
-	    !isSgNamespaceDefinitionStatement(copyscope)) {
-	  bool shouldReplace = false;
-	  if (isSgVarRefExp(orig_expr)) {
-	    SgVarRefExp* orig_vr = isSgVarRefExp(orig_expr);
-	    // cout << "Found potential copy from " << orig_vr->get_symbol()->get_name().str() << " to " << copy_vr->get_symbol()->get_name().str() << endl;
-	    SgInitializedName* orig =
-	      orig_vr->get_symbol()->get_declaration();
-	    assert (orig);
-	    SgNode* origscope = orig->get_parent()->get_parent();
-	    assert (origscope);
-	    if (!hasAddressTaken(orig_vr, origscope) &&
-		isSgBasicBlock(copyscope) &&
-		!isPotentiallyModifiedDuringLifeOf(isSgBasicBlock(copyscope), 
+        SgAssignInitializer* init = 
+          isSgAssignInitializer(copyinit);
+        SgExpression* orig_expr = init->get_operand();
+        // cout << "orig is " << orig_expr->unparseToString() << ", copy is " << copy->get_name().str() << endl;
+        if (!isPotentiallyModified(copy_vr, copyscope) &&
+            !isSgGlobal(copyscope) &&
+            !isSgNamespaceDefinitionStatement(copyscope)) {
+          bool shouldReplace = false;
+          if (isSgVarRefExp(orig_expr)) {
+            SgVarRefExp* orig_vr = isSgVarRefExp(orig_expr);
+            // cout << "Found potential copy from " << orig_vr->get_symbol()->get_name().str() << " to " << copy_vr->get_symbol()->get_name().str() << endl;
+            SgInitializedName* orig =
+              orig_vr->get_symbol()->get_declaration();
+            assert (orig);
+            SgNode* origscope = orig->get_parent()->get_parent();
+            assert (origscope);
+            if (!hasAddressTaken(orig_vr, origscope) &&
+                isSgBasicBlock(copyscope) &&
+                !isPotentiallyModifiedDuringLifeOf(isSgBasicBlock(copyscope), 
                                                    orig, copy) &&
                 !isSgGlobal(origscope) &&
-		!isSgNamespaceDefinitionStatement(origscope)) {
-	      shouldReplace = true;
-	    }
-	  } else if (isSgValueExp(orig_expr)) {
-	    shouldReplace = true;
-	  }
-	  // cout << "shouldReplace is " << shouldReplace << endl;
-	  if (shouldReplace) {
-	    assert (orig_expr);
-	    SgExpression* orig_copy = isSgExpression(orig_expr /*->copy(SgTreeCopy()) */);
-	    assert (orig_copy);
-	    orig_copy->set_parent(copy_vr->get_parent());
+                !isSgNamespaceDefinitionStatement(origscope)) {
+              shouldReplace = true;
+            }
+          } else if (isSgValueExp(orig_expr)) {
+            shouldReplace = true;
+          }
+          // cout << "shouldReplace is " << shouldReplace << endl;
+          if (shouldReplace) {
+            assert (orig_expr);
+            SgExpression* orig_copy = isSgExpression(orig_expr /*->copy(SgTreeCopy()) */);
+            assert (orig_copy);
+            orig_copy->set_parent(copy_vr->get_parent());
             orig_copy->set_lvalue(copy_vr->get_lvalue());
 
        ROSE_ASSERT(copy_vr != NULL);
@@ -415,8 +415,8 @@ class FindCopiesVisitor: public AstSimpleProcessing {
                }
           }
 
-	  }
-	}
+          }
+        }
       }
     }
   }
@@ -488,46 +488,46 @@ class RemoveUnusedDeclarationsVisitor: public AstSimpleProcessing {
       SgBasicBlock* bb = isSgBasicBlock(n);
       bool changes1 = true;
       while (changes1) {
-	changes1 = false;
-	for (size_t i = 0; i < bb->get_statements().size(); ++i) {
-	  SgStatement* stmt = bb->get_statements()[i];
-	  if (isSgVariableDeclaration(stmt)) {
-	    SgInitializedNamePtrList& vars = 
-	      isSgVariableDeclaration(stmt)->get_variables();
-	    bool changes = true;
-	    while (changes) {
-	      changes = false;
-	      SgInitializedNamePtrList::iterator j;
-	      for (j = vars.begin(); j != vars.end(); ++j)
-		if (used_decls.find(*j) == used_decls.end()) {
-		  SgInitializer* init = (*j)->get_initializer();
-		  bool shouldErase = false;
-		  if (!init)
-		    shouldErase = true;
-		  else if (isSgAssignInitializer(init)) {
-		    SgAssignInitializer* init2 = isSgAssignInitializer(init);
-		    // Ensure that init does not have side effects
-		    shouldErase = isSimpleInitializer(init2->get_operand());
-		  }
-		  if (shouldErase) {
-		    removeVariableDeclaration(*j);
-		    --i; // Counteract increment
-		    goto iLoopBottom;
-		    // changes = true;
-		    // break;
-		  }
-		}
-	    }
+        changes1 = false;
+        for (size_t i = 0; i < bb->get_statements().size(); ++i) {
+          SgStatement* stmt = bb->get_statements()[i];
+          if (isSgVariableDeclaration(stmt)) {
+            SgInitializedNamePtrList& vars = 
+              isSgVariableDeclaration(stmt)->get_variables();
+            bool changes = true;
+            while (changes) {
+              changes = false;
+              SgInitializedNamePtrList::iterator j;
+              for (j = vars.begin(); j != vars.end(); ++j)
+                if (used_decls.find(*j) == used_decls.end()) {
+                  SgInitializer* init = (*j)->get_initializer();
+                  bool shouldErase = false;
+                  if (!init)
+                    shouldErase = true;
+                  else if (isSgAssignInitializer(init)) {
+                    SgAssignInitializer* init2 = isSgAssignInitializer(init);
+                    // Ensure that init does not have side effects
+                    shouldErase = isSimpleInitializer(init2->get_operand());
+                  }
+                  if (shouldErase) {
+                    removeVariableDeclaration(*j);
+                    --i; // Counteract increment
+                    goto iLoopBottom;
+                    // changes = true;
+                    // break;
+                  }
+                }
+            }
 #if 0
-	    if (vars.empty()) {
-	      bb->get_statements().erase(i);
-	      changes1 = true;
-	      break;
-	    }
+            if (vars.empty()) {
+              bb->get_statements().erase(i);
+              changes1 = true;
+              break;
+            }
 #endif
-	  }
+          }
 iLoopBottom: ;
-	}
+        }
       }
     }
   }
@@ -584,7 +584,7 @@ class MoveDeclarationsToFirstUseVisitor: public AstSimpleProcessing
          if (isSgBasicBlock(n)) {
            SgBasicBlock* bb = isSgBasicBlock(n);
            SgStatementPtrList& stmts = bb->get_statements();
-	   size_t initi;
+           size_t initi;
            for (size_t decli = 0; decli < stmts.size(); ++decli) {
              if (isSgVariableDeclaration(stmts[decli])) {
                SgVariableDeclaration* decl = isSgVariableDeclaration(stmts[decli]);
@@ -608,7 +608,7 @@ class MoveDeclarationsToFirstUseVisitor: public AstSimpleProcessing
                            // printf ("MoveDeclarationsToFirstUseVisitor::visit(): newinit = %p = %s \n",newinit,newinit->class_name().c_str());
                            ROSE_ASSERT(newinit->get_type() != NULL);
                            SgAssignInitializer* i = new SgAssignInitializer(SgNULL_FILE,newinit,newinit->get_type());
-			   i->set_endOfConstruct(SgNULL_FILE);
+                           i->set_endOfConstruct(SgNULL_FILE);
                            // printf ("Built a SgAssignInitializer #1 \n");
                            vars[vari]->set_initializer(i);
                            stmts[initi] = decl;
@@ -625,8 +625,8 @@ class MoveDeclarationsToFirstUseVisitor: public AstSimpleProcessing
                            // Assumes only one var per declaration FIXME
                            ROSE_ASSERT (vars.size() == 1);
                            stmts.erase(stmts.begin() + decli);
-			   --decli; // To counteract ++decli in loop header
-			   break; // To get out of initi loop
+                           --decli; // To counteract ++decli in loop header
+                           break; // To get out of initi loop
                          }
                        }
                      }
@@ -664,9 +664,9 @@ class SubexpressionExpansionVisitor: public AstSimpleProcessing {
 
   public:
   SubexpressionExpansionVisitor(SgInitializedName* initname,
-				SgExpression* initexpr,
-				bool needSimpleContext,
-				bool& changes):
+                                SgExpression* initexpr,
+                                bool needSimpleContext,
+                                bool& changes):
     initname(initname), initexpr(initexpr), 
     needSimpleContext(needSimpleContext), changes(changes) {}
 
@@ -675,11 +675,11 @@ class SubexpressionExpansionVisitor: public AstSimpleProcessing {
       SgVarRefExp* vr = isSgVarRefExp(n);
       assert (vr->get_symbol());
       if (vr->get_symbol()->get_declaration() == initname) {
-	if (inSimpleContext(vr) || !needSimpleContext) {
-	  SgTreeCopy tc;
-	  isSgExpression(n->get_parent())->replace_expression(
-	    vr, isSgExpression(initexpr->copy(tc)));
-	}
+        if (inSimpleContext(vr) || !needSimpleContext) {
+          SgTreeCopy tc;
+          isSgExpression(n->get_parent())->replace_expression(
+            vr, isSgExpression(initexpr->copy(tc)));
+        }
       }
     }
   }
@@ -691,7 +691,7 @@ class SubexpressionExpansionVisitor: public AstSimpleProcessing {
 //   initializer expression
 // Then removes initname
 void doSubexpressionExpansion(SgInitializedName* initname, 
-			      bool needSimpleContext = false) {
+                              bool needSimpleContext = false) {
   SgNode* root = initname->get_parent()->get_parent();
   assert (root);
   SgAssignInitializer* init;
@@ -779,7 +779,7 @@ class ChangeAllMembersToPublicVisitor: public AstSimpleProcessing {
       SgDeclarationModifier& dm = n2->get_declarationModifier();
       SgAccessModifier& am = dm.get_accessModifier();
       if (am.isPrivate() || am.isProtected()) {
-	am.setPublic();
+        am.setPublic();
       }
     }
   }

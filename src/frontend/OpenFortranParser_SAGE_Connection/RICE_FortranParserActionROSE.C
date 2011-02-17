@@ -73,7 +73,7 @@ extern "C" {
 /** R102 list
  * generic_name (xyz-name)
  * generic_name_list (xyz-list R101)
- * 	:	T_IDENT ( T_COMMA T_IDENT )*
+ *      :       T_IDENT ( T_COMMA T_IDENT )*
  * 
  * @param count The number of items in the list.
  * @param ident The name of the item placed in the list.
@@ -196,7 +196,7 @@ void c_action_specification_part(int numUseStmts, int numImportStmts, int numDec
  */
 void c_action_declaration_construct()
    {
-	if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("In c_action_declaration_construct() \n");
 
   // DQ (12/16/2007): This is the end of a declaration, the declaration should have been built already
@@ -248,7 +248,7 @@ void c_action_execution_part_construct()
 
 /** R210
  * internal_subprogram_part
- *	:	T_CONTAINS T_EOS internal_subprogram (internal_subprogram)*
+ *      :       T_CONTAINS T_EOS internal_subprogram (internal_subprogram)*
  *
  * T_CONTAINS inlined for contains_stmt
  *
@@ -365,7 +365,7 @@ void c_action_keyword()
 void c_action_name(Token_t *id)
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_name(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
 
      ROSE_ASSERT(id != NULL);
@@ -378,8 +378,8 @@ void c_action_name(Token_t *id)
 
 /** R305
  * constant
- *	:	literal_constant
- *	|	T_IDENT
+ *      :       literal_constant
+ *      |       T_IDENT
  * 
  * ERR_CHK 305 named_constant replaced by T_IDENT
  * 
@@ -400,8 +400,8 @@ void c_action_literal_constant()
 
 /** R308
  * int_constant
- *	:	int_literal_constant
- *	|	T_IDENT
+ *      :       int_literal_constant
+ *      |       T_IDENT
  * 
  * ERR_CHK 308 named_constant replaced by T_IDENT
  * C302 R308 int_constant shall be of type integer
@@ -414,9 +414,9 @@ void c_action_int_constant(Token_t * id)
 }
 
 /** R309
- * 	char_constant
- *	:	char_literal_constant
- *	|	T_IDENT
+ *      char_constant
+ *      :       char_literal_constant
+ *      |       T_IDENT
  * 
  * ERR_CHK 309 named_constant replaced by T_IDENT
  * C303 R309 char_constant shall be of type character
@@ -441,8 +441,8 @@ void c_action_intrinsic_operator()
 
 /** R311
  * defined_operator
- *	:	T_DEFINED_OP
- *	|	extended_intrinsic_op
+ *      :       T_DEFINED_OP
+ *      |       extended_intrinsic_op
  *
  * @param definedOp The operator (either a defined-unary-op, defined-binary-op, or extended-intrinsic-op).
  * @param isExtended True if the token is an extended-intrinsic-op, otherwise is a defined operator.
@@ -489,14 +489,14 @@ void c_action_extended_intrinsic_op()
 
 
 /** R313
- * label	:	T_DIGIT_STRING
+ * label        :       T_DIGIT_STRING
  *
  * @param lbl The token containing the label
  */
 void c_action_label(Token_t * lbl)
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_label(): lbl = %p = %s \n",lbl,lbl != NULL ? lbl->text : "NULL");
 
      ROSE_ASSERT(lbl != NULL);
@@ -536,9 +536,9 @@ void c_action_label(Token_t * lbl)
    }
 
 /** R313 list
- * label	:	T_DIGIT_STRING
+ * label        :       T_DIGIT_STRING
  * label_list
- *	:	label ( T_COMMA label )*
+ *      :       label ( T_COMMA label )*
  *
  * // ERR_CHK 313 five characters or less
  *
@@ -557,7 +557,7 @@ void c_action_label_list(int count)
 
 /** R402
  * type-param-value
- *	: expr | T_ASTERISK | T_COLON
+ *      : expr | T_ASTERISK | T_COLON
  *
  * @param hasExpr True if an expr is present
  * @param hasAsterisk True if an '*' is present
@@ -565,7 +565,7 @@ void c_action_label_list(int count)
  */
 void c_action_type_param_value(ofp_bool hasExpr, ofp_bool hasAsterisk, ofp_bool hasColon)
    {
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_type_param_value(): hasExpr = %s hasAsterisk = %s hasColon = %s \n",hasExpr ? "true" : "false",hasAsterisk ? "true" : "false",hasColon ? "true" : "false");
 
   // DQ (9/28/2010): This function is no longer called for each type parameter, and is only called for the length parameter.
@@ -621,13 +621,13 @@ void c_action_type_param_value(ofp_bool hasExpr, ofp_bool hasAsterisk, ofp_bool 
 
 /** R403
  * intrinsic_type_spec
- * :	T_INTEGER ( kind_selector )?
- * |	T_REAL ( kind_selector )?
- * |	T_DOUBLE T_PRECISION | T_DOUBLEPRECISION
- * |	T_COMPLEX ( kind_selector )?
- * |	T_DOUBLE T_COMPLEX | T_DOUBLECOMPLEX
- * |	T_CHARACTER ( char_selector )?
- * |	T_LOGICAL ( kind_selector )?
+ * :    T_INTEGER ( kind_selector )?
+ * |    T_REAL ( kind_selector )?
+ * |    T_DOUBLE T_PRECISION | T_DOUBLEPRECISION
+ * |    T_COMPLEX ( kind_selector )?
+ * |    T_DOUBLE T_COMPLEX | T_DOUBLECOMPLEX
+ * |    T_CHARACTER ( char_selector )?
+ * |    T_LOGICAL ( kind_selector )?
  *
  * @param keyword1 The type keyword token.
  * @param keyword2 The optional keyword token (i.e., T_PRECISION)
@@ -637,7 +637,7 @@ void c_action_type_param_value(ofp_bool hasExpr, ofp_bool hasAsterisk, ofp_bool 
 void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int type, ofp_bool hasKindSelector)
    {
 
-	// Save the type on the stack for use later.
+        // Save the type on the stack for use later.
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_intrinsic_type_spec(): keyword1 = %p = %s keyword2 = %p = %s type = %d, hasKindSelector = %s \n",
@@ -839,9 +839,9 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
 
 /** R404
  * kind_selector
- *	:	T_LPAREN (T_KIND T_EQUALS)? expr T_RPAREN
- *	|	T_ASTERISK T_DIGIT_STRING		// Nonstandard extension: source common practice
- *									  // e.g., COMPLEX*16
+ *      :       T_LPAREN (T_KIND T_EQUALS)? expr T_RPAREN
+ *      |       T_ASTERISK T_DIGIT_STRING               // Nonstandard extension: source common practice
+ *                                                                        // e.g., COMPLEX*16
  *
  * @param token1 KIND keyword token (or *, nonstandard usage)
  * @param token2 = token (or size of type, nonstandard usage)
@@ -916,7 +916,7 @@ void c_action_kind_selector(Token_t * token1, Token_t * token2, ofp_bool hasExpr
 
 /** R405
  * signed_int_literal_constant
- *  : 	(T_PLUS|T_MINUS)? int_literal_constant
+ *  :   (T_PLUS|T_MINUS)? int_literal_constant
  *
  * @param sign The sign: positive, negative, or null.
  */
@@ -928,7 +928,7 @@ void c_action_signed_int_literal_constant(Token_t * sign)
 
 /** R406
  * int_literal_constant
- *	:	T_DIGIT_STRING (T_UNDERSCORE kind_param)?
+ *      :       T_DIGIT_STRING (T_UNDERSCORE kind_param)?
  *
  * @param digitString The digit string representing the constant
  * @param kindParam The kind parameter
@@ -994,7 +994,7 @@ void c_action_boz_literal_constant(Token_t * constant)
 
 /** R416
  * signed_real_literal_constant
- *  : 	(T_PLUS|T_MINUS)? real_literal_constant
+ *  :   (T_PLUS|T_MINUS)? real_literal_constant
  *
  * @param sign The sign: positive, negative, or null.
  */
@@ -1063,20 +1063,20 @@ void c_action_signed_real_literal_constant(Token_t * sign)
 
 /** R417
  * real_literal_constant
- *	:   REAL_CONSTANT ( T_UNDERSCORE kind_param )?
- * 	|   DOUBLE_CONSTANT ( T_UNDERSCORE kind_param )?
+ *      :   REAL_CONSTANT ( T_UNDERSCORE kind_param )?
+ *      |   DOUBLE_CONSTANT ( T_UNDERSCORE kind_param )?
  *
  * Replaced by
- *	:	T_DIGIT_STRING T_PERIOD_EXPONENT (T_UNDERSCORE kind_param)?
- *	|	T_DIGIT_STRING T_PERIOD (T_UNDERSCORE kind_param)?
- *	|	T_PERIOD_EXPONENT (T_UNDERSCORE kind_param)?
+ *      :       T_DIGIT_STRING T_PERIOD_EXPONENT (T_UNDERSCORE kind_param)?
+ *      |       T_DIGIT_STRING T_PERIOD (T_UNDERSCORE kind_param)?
+ *      |       T_PERIOD_EXPONENT (T_UNDERSCORE kind_param)?
  *
  * @param digits The integral part
  * @param fractionExp The fractional part and exponent
  * @param kindParam The kind parameter
  */
 void c_action_real_literal_constant(Token_t * realConstant, 
-												Token_t * kindParam)
+                                                                                                Token_t * kindParam)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_real_literal_constant(): realConstant = %p = %s kindParam = %p = %s \n",
@@ -1175,10 +1175,10 @@ void c_action_imag_part(ofp_bool hasIntConstant, ofp_bool hasRealConstant, Token
 
 /** R424
  * char-selector
- *	:	T_ASTERISK char_length (T_COMMA)?
- *	|	T_LPAREN (T_KIND | T_LEN) T_EQUALS type_param_value
- *			 ( T_COMMA (T_KIND | T_LEN) T_EQUALS type_param_value )? T_RPAREN
- *	|	T_LPAREN type_param_value ( T_COMMA (T_KIND T_EQUALS)? expr )? T_RPAREN
+ *      :       T_ASTERISK char_length (T_COMMA)?
+ *      |       T_LPAREN (T_KIND | T_LEN) T_EQUALS type_param_value
+ *                       ( T_COMMA (T_KIND | T_LEN) T_EQUALS type_param_value )? T_RPAREN
+ *      |       T_LPAREN type_param_value ( T_COMMA (T_KIND T_EQUALS)? expr )? T_RPAREN
  *
  * @param kindOrLen1 Specifies whether the first kind or len type-param-value is present
  * @param kindOrLen2 Specifies whether the second kind or len type-param-value is present
@@ -1399,8 +1399,8 @@ void c_action_char_selector(Token_t * type_keyword, Token_t * optional_keyword, 
 
 /** R425
  * length-selector
- *	:	T_LPAREN ( T_LEN T_EQUALS )? type_param_value T_RPAREN
- *	|	T_ASTERISK char_length (T_COMMA)?
+ *      :       T_LPAREN ( T_LEN T_EQUALS )? type_param_value T_RPAREN
+ *      |       T_ASTERISK char_length (T_COMMA)?
  *
  * @param kindOrLen Specifies whether a kind or len type-param-value is present
  * @param hasAsterisk True if a '*' char-selector is specified
@@ -1414,8 +1414,8 @@ void c_action_length_selector(Token_t * len_keyword, int kindOrLen, ofp_bool has
 
 /** R426
  * char_length
- *	:	T_LPAREN type_param_value T_RPAREN
- *	|	scalar_int_literal_constant
+ *      :       T_LPAREN type_param_value T_RPAREN
+ *      |       scalar_int_literal_constant
  *
  * @param hasTypeParamValue True if a type-param-value is specified, otherwise is a scalar-int-literal-constant
  */
@@ -1463,16 +1463,16 @@ void c_action_char_length(ofp_bool hasTypeParamValue)
           SgExpression* stringLength;
           if (hasTypeParamValue)
              { // need to use astTypeParameterStack since in c_action_type_param_value
-        	   // the top of astExpressionStack was popped and pushed onto astTypeParameterStack
-           	   ROSE_ASSERT(!astTypeParameterStack.empty());
+                   // the top of astExpressionStack was popped and pushed onto astTypeParameterStack
+                   ROSE_ASSERT(!astTypeParameterStack.empty());
                stringLength = astTypeParameterStack.front();
                astTypeParameterStack.pop_front();
              }
           else
              {
-           	   ROSE_ASSERT(astExpressionStack.empty() == false);
-           	   stringLength = astExpressionStack.front();
-           	   astExpressionStack.pop_front();
+                   ROSE_ASSERT(astExpressionStack.empty() == false);
+                   stringLength = astExpressionStack.front();
+                   astExpressionStack.pop_front();
              }
 
        // Note: Must call the SgTypeString::createType() to support the global type tables.
@@ -1486,15 +1486,15 @@ void c_action_char_length(ofp_bool hasTypeParamValue)
              }
           else
              {
-           	   SgArrayType* currentType = isSgArrayType(astTypeStack.front());
-           	   if(currentType != NULL)
-           	      {
-           		    currentType->set_base_type(stringType);
-           	      }
-           	   else
-           	      {
-           		   astTypeStack.push_front(stringType);
-           	      }
+                   SgArrayType* currentType = isSgArrayType(astTypeStack.front());
+                   if(currentType != NULL)
+                      {
+                            currentType->set_base_type(stringType);
+                      }
+                   else
+                      {
+                           astTypeStack.push_front(stringType);
+                      }
              }
         }
 
@@ -1515,12 +1515,12 @@ void c_action_scalar_int_literal_constant()
 
 /** R427
  * char_literal_constant
- * 	:	T_DIGIT_STRING T_UNDERSCORE T_CHAR_CONSTANT
- *	   // removed the T_UNDERSCORE because underscores are valid characters 
- *	   // for identifiers, which means the lexer would match the T_IDENT and 
- *	   // T_UNDERSCORE as one token (T_IDENT).
- *	 	|	T_IDENT T_CHAR_CONSTANT
- *	 	|	T_CHAR_CONSTANT
+ *      :       T_DIGIT_STRING T_UNDERSCORE T_CHAR_CONSTANT
+ *         // removed the T_UNDERSCORE because underscores are valid characters 
+ *         // for identifiers, which means the lexer would match the T_IDENT and 
+ *         // T_UNDERSCORE as one token (T_IDENT).
+ *              |       T_IDENT T_CHAR_CONSTANT
+ *              |       T_CHAR_CONSTANT
  * 
  * @param digitString Optional digit-string representing the kind parameter
  * @param id Optional identifier representing the kind parameter variable AND the '_'
@@ -1569,7 +1569,7 @@ void c_action_char_literal_constant(Token_t * digitString, Token_t * id, Token_t
 
 /** R428
  * logical_literal_constant
- *	: T_TRUE | T_FALSE
+ *      : T_TRUE | T_FALSE
  *
  * @param isTrue True if logical constant is true, false otherwise
  * @param kindParam The kind parameter
@@ -1676,46 +1676,46 @@ void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id
      SgDerivedTypeStatement* derivedTypeStatement = NULL;
      SgClassSymbol* derivedTypeSymbol = trace_back_through_parent_scopes_lookup_derived_type_symbol(id->text, currentScope );
      if (derivedTypeSymbol == NULL)
-     	 {
+         {
            derivedTypeStatement = buildDerivedTypeStatementAndDefinition(id->text,currentScope);
-     	 }
+         }
      else
-     	 {
-    	   SgClassDeclaration* nonDefiningClassDecl = derivedTypeSymbol->get_declaration();
-    	   if (nonDefiningClassDecl->get_definingDeclaration() == NULL)
-    	 	   {  // forward reference case: fix up
-    		     SgClassDefinition* classDefinition = new SgClassDefinition();
-    		     classDefinition->setCaseInsensitive(true);
-    		     setSourcePosition(classDefinition);
-    		     derivedTypeStatement = new SgDerivedTypeStatement(id->text,SgClassDeclaration::e_struct,NULL,classDefinition);
-    		     classDefinition->set_declaration(derivedTypeStatement);
-    		     derivedTypeStatement->set_definingDeclaration(derivedTypeStatement);
-    		     derivedTypeStatement->set_firstNondefiningDeclaration(nonDefiningClassDecl);
-    		     derivedTypeStatement->set_scope(currentScope);
-    		     derivedTypeStatement->set_parent(currentScope);
-    		     derivedTypeStatement->set_type(nonDefiningClassDecl->get_type());
-    		     nonDefiningClassDecl->set_definingDeclaration(derivedTypeStatement);
-    		     nonDefiningClassDecl->get_scope()->remove_symbol(derivedTypeSymbol);
-    		     nonDefiningClassDecl->set_scope(currentScope);
-    		     nonDefiningClassDecl->set_parent(currentScope);
-    		     currentScope->insert_symbol(id->text, derivedTypeSymbol);
+         {
+           SgClassDeclaration* nonDefiningClassDecl = derivedTypeSymbol->get_declaration();
+           if (nonDefiningClassDecl->get_definingDeclaration() == NULL)
+                   {  // forward reference case: fix up
+                     SgClassDefinition* classDefinition = new SgClassDefinition();
+                     classDefinition->setCaseInsensitive(true);
+                     setSourcePosition(classDefinition);
+                     derivedTypeStatement = new SgDerivedTypeStatement(id->text,SgClassDeclaration::e_struct,NULL,classDefinition);
+                     classDefinition->set_declaration(derivedTypeStatement);
+                     derivedTypeStatement->set_definingDeclaration(derivedTypeStatement);
+                     derivedTypeStatement->set_firstNondefiningDeclaration(nonDefiningClassDecl);
+                     derivedTypeStatement->set_scope(currentScope);
+                     derivedTypeStatement->set_parent(currentScope);
+                     derivedTypeStatement->set_type(nonDefiningClassDecl->get_type());
+                     nonDefiningClassDecl->set_definingDeclaration(derivedTypeStatement);
+                     nonDefiningClassDecl->get_scope()->remove_symbol(derivedTypeSymbol);
+                     nonDefiningClassDecl->set_scope(currentScope);
+                     nonDefiningClassDecl->set_parent(currentScope);
+                     currentScope->insert_symbol(id->text, derivedTypeSymbol);
 
-    		     while (!astAttributeSpecStack.empty())
-   		       	     {
-   		    	       setDeclarationAttributeSpec(derivedTypeStatement,astAttributeSpecStack.front());
-   		    	       if (astAttributeSpecStack.front() == AttrSpec_PUBLIC || astAttributeSpecStack.front() == AttrSpec_PRIVATE)
-   		    	 	 	   {
-   		    	    	     if (!astNameStack.empty())
-   		    	    	       {
-   		    	    	         string type_attribute_string = astNameStack.front()->text;
-   		    	    	         astNameStack.pop_front();
-   		    	    	       }
-   		    	 	 	   }
-   		    	       astAttributeSpecStack.pop_front();
-   		       	     }
-    	 	   }
-    	   else
-    	 	   {
+                     while (!astAttributeSpecStack.empty())
+                             {
+                               setDeclarationAttributeSpec(derivedTypeStatement,astAttributeSpecStack.front());
+                               if (astAttributeSpecStack.front() == AttrSpec_PUBLIC || astAttributeSpecStack.front() == AttrSpec_PRIVATE)
+                                           {
+                                     if (!astNameStack.empty())
+                                       {
+                                         string type_attribute_string = astNameStack.front()->text;
+                                         astNameStack.pop_front();
+                                       }
+                                           }
+                               astAttributeSpecStack.pop_front();
+                             }
+                   }
+           else
+                   {
                  derivedTypeStatement = buildDerivedTypeStatementAndDefinition(id->text,currentScope);
                  // DXN (01/24/2011):
                  // if this derived type is defined inside a function
@@ -1723,15 +1723,15 @@ void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id
                  SgFunctionDefinition* pFuncDef = isSgFunctionDefinition(currentScope->get_scope());
                  if (pFuncDef != NULL)
                     {
-                	  SgFunctionType* pFuncType = pFuncDef->get_declaration()->get_type();
-                	  SgClassType* pReturnType = isSgClassType(pFuncType->get_return_type());
-                	  if (pReturnType && (derivedTypeStatement->get_name() == pReturnType->get_name()))
-                	     {
-                		   pFuncType->set_return_type(derivedTypeStatement->get_type());
-                	     }
+                          SgFunctionType* pFuncType = pFuncDef->get_declaration()->get_type();
+                          SgClassType* pReturnType = isSgClassType(pFuncType->get_return_type());
+                          if (pReturnType && (derivedTypeStatement->get_name() == pReturnType->get_name()))
+                             {
+                                   pFuncType->set_return_type(derivedTypeStatement->get_type());
+                             }
                     }
-    	 	   }
-     	 }
+                   }
+         }
 
      ROSE_ASSERT(keyword != NULL);
      setSourcePosition(derivedTypeStatement,keyword);
@@ -1763,7 +1763,7 @@ void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id
 void c_action_type_attr_spec(Token_t * keyword, Token_t * id, int specType)
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_type_attr_spec(): keyword = %p = %s id = %p = %s specType = %d \n",keyword,keyword != NULL ? keyword->text : "NULL",id,id != NULL ? id->text : "NULL",specType);
 
   // If this is a access_spec then it will be handled by the R508.
@@ -1791,7 +1791,7 @@ void c_action_type_attr_spec(Token_t * keyword, Token_t * id, int specType)
 /** R431 list
  * type_attr_spec
  * type_attr_spec_list
- * 	:	type_attr_spec ( T_COMMA type_attr_spec )*
+ *      :       type_attr_spec ( T_COMMA type_attr_spec )*
  * 
  * @param count The number of items in the list.
  */
@@ -1833,7 +1833,7 @@ void c_action_private_or_sequence()
 void c_action_end_type_stmt(Token_t *label, Token_t *endKeyword, Token_t *typeKeyword, Token_t *id, Token_t *eos)
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_end_type_stmt() label = %p id = %p \n",label,id);
 
 #if DXN_DEBUG
@@ -1870,7 +1870,7 @@ void c_action_end_type_stmt(Token_t *label, Token_t *endKeyword, Token_t *typeKe
 
 /** R434
  * sequence_stmt
- * :	(label)? T_SEQUENCE T_EOS
+ * :    (label)? T_SEQUENCE T_EOS
  * 
  * @param label The label.
  */
@@ -1894,7 +1894,7 @@ void c_action_sequence_stmt(Token_t *label, Token_t *sequenceKeyword, Token_t *e
 /** R436
  * type_param_decl
  *
-:	T_IDENT ( T_EQUALS expr )?
+:       T_IDENT ( T_EQUALS expr )?
  *
  * @param id Identifier equal to the parameter.
  * @param hasInit True if is initialized.
@@ -1906,7 +1906,7 @@ void c_action_type_param_decl(Token_t * id, ofp_bool hasInit)
 /** R436 list
  * type_param_decl
  * type_param_decl_list
- *	:	type_param_decl ( T_COMMA type_param_decl )*
+ *      :       type_param_decl ( T_COMMA type_param_decl )*
  * 
  * @param count The number of items in the list.
  */
@@ -1937,10 +1937,10 @@ void c_action_component_def_stmt(int type)
    }
 
 /** R440
- *	data_component_def_stmt
- * :	(label)? declaration_type_spec 
- * 		( ( T_COMMA component_attr_spec_list {hasSpecList=true;})?
- *		T_COLON_COLON )? component_decl_list T_EOS
+ *      data_component_def_stmt
+ * :    (label)? declaration_type_spec 
+ *              ( ( T_COMMA component_attr_spec_list {hasSpecList=true;})?
+ *              T_COLON_COLON )? component_decl_list T_EOS
  * 
  * @param label The label.
  * @param hasSpecList Boolean true if has a component_attr_spec(_list).
@@ -2158,7 +2158,7 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
 /** R441 list
  * component_attr_spec
  * component_attr_spec_list
- * 	:	component_attr_spec ( T_COMMA component_attr_spec )*
+ *      :       component_attr_spec ( T_COMMA component_attr_spec )*
  * 
  * @param count The number of items in the list.
  */
@@ -2248,17 +2248,17 @@ void c_action_component_attr_spec_list(int count)
  * @param hasComponentInitialization True if has component initialization.
  */
 void c_action_component_decl(Token_t * id, 
-	ofp_bool hasComponentArraySpec, ofp_bool hasCoArraySpec,
-	ofp_bool hasCharLength, ofp_bool hasComponentInitialization)
+        ofp_bool hasComponentArraySpec, ofp_bool hasCoArraySpec,
+        ofp_bool hasCharLength, ofp_bool hasComponentInitialization)
    {
-	// Build each variable and append it to the current scope!
+        // Build each variable and append it to the current scope!
 // DXN (01/25/2011): process component_decl using most of the code from entity_decl
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         {
           string current_filename = getCurrentFilename();
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
           cout << "component name = " << id->text << " file name = " << current_filename << "hasComponentArraySpec = " << hasComponentArraySpec
-        		  << " hasCoArraySpec = " << hasCoArraySpec << " hasCharLength = " << hasCharLength << " hasComponentInitialization = " << hasComponentInitialization << endl;
+                          << " hasCoArraySpec = " << hasCoArraySpec << " hasCharLength = " << hasCharLength << " hasComponentInitialization = " << hasComponentInitialization << endl;
 #else
           printf ("In R442 c_action_component_decl(): save variableName = %s file = %s \n",id->text,current_filename.c_str());
 #endif
@@ -2337,7 +2337,7 @@ void c_action_component_decl(Token_t * id,
                        {
                          // printf ("This is a SgConstructorInitializer, we need an example of code that generates this case. \n");
                          // DXN (01/26/2011): for example, type (T) :: x = T()
-                    	 // NOTE: do not setSourcePosition(initializer) because it is done in data_ref for SgConstructorInitializer already.
+                         // NOTE: do not setSourcePosition(initializer) because it is done in data_ref for SgConstructorInitializer already.
                          astExpressionStack.clear();
                        }
                       else
@@ -2483,13 +2483,13 @@ void c_action_component_decl(Token_t * id,
 /** R442 list
  * component_decl
  * component_decl_list
- *	:	component_decl ( T_COMMA component_decl )*
+ *      :       component_decl ( T_COMMA component_decl )*
  * 
  * @param count The number of items in the list.
  */
 void c_action_component_decl_list__begin()
    {
-	// No action is required here because the scope for the derived type has been defined in R403
+        // No action is required here because the scope for the derived type has been defined in R403
 
   // Nothing to do here since we keep a stack and handle items pushed on the the stack later.
   // ROSE_ASSERT(astNameListStack.empty() == true);
@@ -2627,7 +2627,7 @@ void c_action_component_array_spec(ofp_bool isExplicit)
 
 /** R443 list
  * deferred_shape_spec_list
- * 		T_COLON {count++;} ( T_COMMA T_COLON {count++;} )*
+ *              T_COLON {count++;} ( T_COMMA T_COLON {count++;} )*
  * 
  * @param count The number of items in the list.
  */
@@ -2666,9 +2666,9 @@ void c_action_deferred_shape_spec_list(int count)
    }
 
 /** R445
- *	proc_component_def_stmt
- * :	(label)? T_PROCEDURE T_LPAREN (proc_interface)? T_RPAREN T_COMMA
- * 		proc_component_attr_spec_list T_COLON_COLON proc_decl_list T_EOS
+ *      proc_component_def_stmt
+ * :    (label)? T_PROCEDURE T_LPAREN (proc_interface)? T_RPAREN T_COMMA
+ *              proc_component_attr_spec_list T_COLON_COLON proc_decl_list T_EOS
  * 
  * @param label The label.
  * @param hasInterface Boolean true if has a nonempty interface.
@@ -2696,7 +2696,7 @@ void c_action_proc_component_attr_spec(Token_t * attrSpecKeyword, Token_t * id, 
 
 /** R446 list
  * proc_component_attr_spec_list
- * 		proc_component_attr_spec ( T_COMMA proc_component_attr_spec )*
+ *              proc_component_attr_spec ( T_COMMA proc_component_attr_spec )*
  * 
  * @param count The number of items in the list.
  */
@@ -2709,7 +2709,7 @@ void c_action_proc_component_attr_spec_list(int count)
 
 /** R447
  * private_components_stmt
- * :	(label)? T_PRIVATE T_EOS
+ * :    (label)? T_PRIVATE T_EOS
  * 
  * @param label The label.
  */
@@ -2734,7 +2734,7 @@ void c_action_private_components_stmt(Token_t *label, Token_t *privateKeyword, T
  * type_bound_procedure_part
  *
  * :  T_CONTAINS  T_EOS ( binding_private_stmt )? proc_binding_stmt 
- * 			( proc_binding_stmt )*
+ *                      ( proc_binding_stmt )*
  *
  * @param count  Number of procedure binding statements.
  * @param hasBindingPrivateStmt True if has a keyword "private".
@@ -2754,7 +2754,7 @@ void c_action_type_bound_procedure_part(int count, ofp_bool hasBindingPrivateStm
 
 /** R449
  * binding_private_stmt
- * :	(label)? T_PRIVATE T_EOS
+ * :    (label)? T_PRIVATE T_EOS
  * 
  * @param label The label.
  */
@@ -2767,9 +2767,9 @@ void c_action_binding_private_stmt(Token_t *label, Token_t *privateKeyword, Toke
 
 /** R450
  * proc_binding_stmt
- * :	(label)? specific_binding T_EOS
- * |	(label)? generic_binding T_EOS
- * |	(label)? final_binding T_EOS
+ * :    (label)? specific_binding T_EOS
+ * |    (label)? generic_binding T_EOS
+ * |    (label)? final_binding T_EOS
  * 
  * @param label The label.
  */
@@ -2784,8 +2784,8 @@ void c_action_proc_binding_stmt(Token_t *label, int type, Token_t *eos)
  * specific_binding
  *
  * : T_PROCEDURE ( T_LPAREN T_IDENT T_RPAREN )?
- *	  ( ( T_COMMA binding_attr_list )? T_COLON_COLON )?
- *	  T_IDENT ( T_EQ_GT T_IDENT )?
+ *        ( ( T_COMMA binding_attr_list )? T_COLON_COLON )?
+ *        T_IDENT ( T_EQ_GT T_IDENT )?
  *
  * @param interfaceName Optional interface name.
  * @param bindingName Required binding name.
@@ -2797,7 +2797,7 @@ void c_action_proc_binding_stmt(Token_t *label, int type, Token_t *eos)
  * generic_binding
  *
  * :  T_GENERIC ( T_COMMA access_spec )? T_COLON_COLON 
- * 		generic_spec T_EQ_GT generic_name_list
+ *              generic_spec T_EQ_GT generic_name_list
  *
  * @param hasAccessSpec True if has public or private access spec.
  */
@@ -2808,11 +2808,11 @@ void c_action_generic_binding(Token_t * genericKeyword, ofp_bool hasAccessSpec)
 
 /** R453
  * binding_attr
- *	: T_PASS ( T_LPAREN T_IDENT T_RPAREN )?
- *	| T_NOPASS
- *	| T_NON_OVERRIDABLE
- *	| T_DEFERRED
- *	| access_spec
+ *      : T_PASS ( T_LPAREN T_IDENT T_RPAREN )?
+ *      | T_NOPASS
+ *      | T_NON_OVERRIDABLE
+ *      | T_DEFERRED
+ *      | access_spec
  *
  * @param attr The binding attribute.
  * @param id Optional identifier in pass attribute.
@@ -2825,7 +2825,7 @@ void c_action_binding_attr(Token_t * bindingAttr, int attr, Token_t * id)
 /** R453 list
  * binding_attr_list
  * 
- * 		binding_attr ( T_COMMA binding_attr )*
+ *              binding_attr ( T_COMMA binding_attr )*
  *
  * @param count The number of items in the list.
  */
@@ -2838,7 +2838,7 @@ void c_action_binding_attr_list(int count)
 
 /** R455
  * derived_type_spec
- *	: T_IDENT ( T_LPAREN type_param_spec_list T_RPAREN )?
+ *      : T_IDENT ( T_LPAREN type_param_spec_list T_RPAREN )?
  *
  * @param typeName The name of the derived type or class.
  * @param hasTypeParamSpecList True if type-param-spec-list is present.
@@ -2862,11 +2862,11 @@ void c_action_derived_type_spec(Token_t * typeName, ofp_bool hasTypeParamSpecLis
     SgType* derivedType = NULL;
     if (derivedTypeSymbol == NULL)
        {
-    	// DXN (01/27/2011):the type specified is a forward reference;
-    	// Get the appropriate scope to build a forward referenced derived type:
-    	// if the parent of the current scope is a SgDerivedTypeStatement then get the outer scope, otherwise stay with the current scope:
-    	SgDerivedTypeStatement* parent = isSgDerivedTypeStatement(getTopOfScopeStack()->get_parent());
-    	SgScopeStatement* scope = (parent != NULL)?	getTopOfScopeStack()->get_scope(): getTopOfScopeStack();
+        // DXN (01/27/2011):the type specified is a forward reference;
+        // Get the appropriate scope to build a forward referenced derived type:
+        // if the parent of the current scope is a SgDerivedTypeStatement then get the outer scope, otherwise stay with the current scope:
+        SgDerivedTypeStatement* parent = isSgDerivedTypeStatement(getTopOfScopeStack()->get_parent());
+        SgScopeStatement* scope = (parent != NULL)?     getTopOfScopeStack()->get_scope(): getTopOfScopeStack();
 
          // build a non-defining class declaration in this scope to represent this forward reference type.
          SgDerivedTypeStatement* nondefiningClassDeclaration = new SgDerivedTypeStatement(typeName->text,SgClassDeclaration::e_struct,NULL,NULL);
@@ -2916,7 +2916,7 @@ void c_action_type_param_spec(Token_t * keyWord)
 
 /** R456 list
  * type_param_spec_list
- * 		type_param_spec ( T_COMMA type_param_spec )*
+ *              type_param_spec ( T_COMMA type_param_spec )*
  *
  * @param count The number of items in the list.
  */
@@ -2929,7 +2929,7 @@ void c_action_type_param_spec_list(int count)
 
 /** R458 list
  * component_spec_list
- * 		component_spec ( T_COMMA component_spec )*
+ *              component_spec ( T_COMMA component_spec )*
  *
  * @param count The number of items in the list.
  */
@@ -2944,7 +2944,7 @@ void c_action_component_spec_list(int count)
  * enum_def
  *
  * :  enum_def_stmt enumerator_def_stmt (enumerator_def_stmt)*
- * 	  end_enum_stmt
+ *        end_enum_stmt
  *
  * @param numEls Number of elements in the enum.
  */
@@ -2954,7 +2954,7 @@ void c_action_enum_def(int numEls)
 
 /** R461
  * enum_def_stmt
- * 	:	(label)? T_ENUM T_COMMA T_BIND T_LPAREN T_IDENT T_RPAREN T_EOS
+ *      :       (label)? T_ENUM T_COMMA T_BIND T_LPAREN T_IDENT T_RPAREN T_EOS
  *
  * @param label The label.
  * @param id The identifier.
@@ -2966,7 +2966,7 @@ void c_action_enum_def_stmt(Token_t *label, Token_t *enumKeyword, Token_t *bindK
 
 /** R462
  * enumerator_def_stmt
-:	(label)? T_ENUMERATOR ( T_COLON_COLON )? enumerator_list T_EOS
+:       (label)? T_ENUMERATOR ( T_COLON_COLON )? enumerator_list T_EOS
  * @param label The label.
  */
 // void c_action_enumerator_def_stmt(Token_t * label)
@@ -2976,7 +2976,7 @@ void c_action_enumerator_def_stmt(Token_t *label, Token_t *enumeratorKeyword, To
 
 /** R463 list
  * enumerator_list
- * 		enumerator ( T_COMMA enumerator )*
+ *              enumerator ( T_COMMA enumerator )*
  *
  * @param count The number of items in the list.
  */
@@ -2989,8 +2989,8 @@ void c_action_enumerator_list(int count)
 
 /** R464
  * end_enum_stmt
- * :	(label)? T_END T_ENUM T_EOS
- * |	(label)? T_ENDENUM T_EOS
+ * :    (label)? T_END T_ENUM T_EOS
+ * |    (label)? T_ENDENUM T_EOS
  *
  * @param label The label.
  */
@@ -3009,8 +3009,8 @@ void c_action_end_enum_stmt(Token_t *label, Token_t *endKeyword, Token_t *enumKe
 
 /** R465
  * array_constructor
- *	:	T_LPAREN T_SLASH ac_spec T_SLASH T_RPAREN
- *	|	T_LBRACKET ac_spec T_RBRACKET
+ *      :       T_LPAREN T_SLASH ac_spec T_SLASH T_RPAREN
+ *      |       T_LBRACKET ac_spec T_RBRACKET
  */
 void c_action_array_constructor()
    {
@@ -3113,7 +3113,7 @@ void c_action_ac_value()
 
 /** R469 list
  * ac_value_list
- * 		ac_value ( T_COMMA ac_value )*
+ *              ac_value ( T_COMMA ac_value )*
  *
  * @param count The number of items in the list.
  */
@@ -3467,7 +3467,7 @@ void c_action_ac_implied_do()
 void c_action_ac_implied_do_control( ofp_bool hasStride )
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_ac_implied_do_control() \n");
 
   // Pull off 2 elements from the astExpressionStack (and a third if hasStride == true)
@@ -3555,15 +3555,15 @@ void c_action_ac_implied_do_control( ofp_bool hasStride )
 void
 c_action_scalar_int_variable()
    {
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_scalar_int_variable() \n");
    }
 
 
 /** R501
  * type_declaration_stmt
- * :	(label)? declaration_type_spec ( (T_COMMA attr_spec)* T_COLON_COLON )?
- *	  entity_decl_list T_EOS
+ * :    (label)? declaration_type_spec ( (T_COMMA attr_spec)* T_COLON_COLON )?
+ *        entity_decl_list T_EOS
  *
  * @param label Optional statement label
  * @param numAttributes The number of attributes present
@@ -3574,7 +3574,7 @@ void
 c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos)
    {
 
-	// This is a variable declaration (build the SgVariableDeclaration and populate it using data saved on the stack).
+        // This is a variable declaration (build the SgVariableDeclaration and populate it using data saved on the stack).
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_type_declaration_stmt: numAttributes = %d \n",numAttributes);
@@ -3645,10 +3645,10 @@ c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos
 
 /** R502
  * declaration_type_spec
- *	:	intrinsic_type_spec
- *	|	T_TYPE T_LPAREN	derived_type_spec T_RPAREN
- *	|	T_CLASS	T_LPAREN derived_type_spec T_RPAREN
- *	|	T_CLASS T_LPAREN T_ASTERISK T_RPAREN
+ *      :       intrinsic_type_spec
+ *      |       T_TYPE T_LPAREN derived_type_spec T_RPAREN
+ *      |       T_CLASS T_LPAREN derived_type_spec T_RPAREN
+ *      |       T_CLASS T_LPAREN T_ASTERISK T_RPAREN
  *
  * @param udtKeyword Token for the T_TYPE or T_CLASS and null for 
  * intrinsic_type_spec.
@@ -3659,7 +3659,7 @@ c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos
 void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
    {
 
-	// The type value makes it clear what the type will be for the variable declaration being defined in the next setof rules.
+        // The type value makes it clear what the type will be for the variable declaration being defined in the next setof rules.
   // We need to save this information so that we can know the type of the variable declaration when it is later built.
 
   // So we need to build the SgType and push it onto the type stack!
@@ -3757,22 +3757,22 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
 
 /** R503
  * attr_spec
- *	:	access_spec
- *	|	T_ALLOCATABLE
- *	|	T_ASYNCHRONOUS
- *	|	T_DIMENSION T_LPAREN array_spec T_RPAREN
- *	|	T_EXTERNAL
- *	|	T_INTENT T_LPAREN intent_spec T_RPAREN
- *	|	T_INTRINSIC
- *	|	language_binding_spec		
- *	|	T_OPTIONAL
- *	|	T_PARAMETER
- *	|	T_POINTER
- *	|	T_PROTECTED
- *	|	T_SAVE
- *	|	T_TARGET
- *	|	T_VALUE
- *	|	T_VOLATILE
+ *      :       access_spec
+ *      |       T_ALLOCATABLE
+ *      |       T_ASYNCHRONOUS
+ *      |       T_DIMENSION T_LPAREN array_spec T_RPAREN
+ *      |       T_EXTERNAL
+ *      |       T_INTENT T_LPAREN intent_spec T_RPAREN
+ *      |       T_INTRINSIC
+ *      |       language_binding_spec           
+ *      |       T_OPTIONAL
+ *      |       T_PARAMETER
+ *      |       T_POINTER
+ *      |       T_PROTECTED
+ *      |       T_SAVE
+ *      |       T_TARGET
+ *      |       T_VALUE
+ *      |       T_VOLATILE
  *
  * @param attrKeyword Token for the keyword of the given attribute.  Will 
  * be null in the cases of access_sepc and language_binding_spec.
@@ -3782,7 +3782,7 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
 void c_action_attr_spec(Token_t * attrKeyword, int attr)
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R503 c_action_attr_spec(): attrKeyword = %p = %s attr = %d \n",attrKeyword,attrKeyword != NULL ? attrKeyword->text : "NULL",attr);
 
 #if 1
@@ -3999,8 +3999,8 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
 /** R504, R503-F2008
  * entity_decl
  *  : T_IDENT ( T_LPAREN array_spec T_RPAREN )?
- *			( T_LBRACKET co_array_spec T_RBRACKET )?
- *			( T_ASTERISK char_length )? ( initialization )? 
+ *                      ( T_LBRACKET co_array_spec T_RBRACKET )?
+ *                      ( T_ASTERISK char_length )? ( initialization )? 
  */
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
 void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec, ofp_bool hasCoarraySpec, ofp_bool hasCharLength, ofp_bool hasInitialization)
@@ -4384,7 +4384,7 @@ void c_action_entity_decl(Token_t * id)
 /** R504 list
  * entity_decl
  * entity_decl_list
- * 	:	entity_decl ( T_COMMA entity_decl )*
+ *      :       entity_decl ( T_COMMA entity_decl )*
  * 
  * @param count The number of items in the list.
  */
@@ -4447,8 +4447,8 @@ void c_action_entity_decl_list(int count)
 
 /** R506
  * initialization
- * 	:	T_EQUALS expr
- *	|	T_EQ_GT null_init
+ *      :       T_EQUALS expr
+ *      |       T_EQ_GT null_init
  *
  * ERR_CHK 506 initialization_expr replaced by expr
  *
@@ -4457,7 +4457,7 @@ void c_action_entity_decl_list(int count)
  */
 void c_action_initialization(ofp_bool hasExpr, ofp_bool hasNullInit)
    {
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_initialization(): hasExpr = %s hasNullInit = %s \n",hasExpr ? "true" : "false",hasNullInit ? "true" : "false");
 
 #if DXN_DEBUG
@@ -4511,7 +4511,7 @@ void c_action_initialization(ofp_bool hasExpr, ofp_bool hasNullInit)
 
 /** R507
  * null_init
- * 	:	T_IDENT //'NULL'// T_LPAREN T_RPAREN
+ *      :       T_IDENT //'NULL'// T_LPAREN T_RPAREN
  *
  * C506 The function-reference shall be a reference to the NULL intrinsic function with no arguments.
  *
@@ -4563,17 +4563,17 @@ void c_action_access_spec(Token_t * keyword, int type)
 
 /** R509
  * language_binding_spec
- *	:	T_BIND T_LPAREN T_IDENT // 'C' // (T_COMMA name T_EQUALS expr)? T_RPAREN
+ *      :       T_BIND T_LPAREN T_IDENT // 'C' // (T_COMMA name T_EQUALS expr)? T_RPAREN
  *
  * @param keyword The BIND keyword token.
  * @param id The identifier representing the language binding, must be 'C' or 'c'.
- * @param hasName True if the language-binding-spec has a name expression.	 
+ * @param hasName True if the language-binding-spec has a name expression.       
  */
 // void c_action_language_binding_spec(Token_t * id, ofp_bool hasName)
 void c_action_language_binding_spec(Token_t * keyword, Token_t * id, ofp_bool hasName)
    {
 
-	 if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+         if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_language_binding_spec(): keyword = %p = %s id = %p = %s hasName = %s \n",keyword,keyword != NULL ? keyword->text : "NULL",id,id != NULL ? id->text : "NULL",hasName ? "true" : "false");
 
      ROSE_ASSERT(id != NULL);
@@ -4587,12 +4587,12 @@ void c_action_language_binding_spec(Token_t * keyword, Token_t * id, ofp_bool ha
 
 /** R510
  * array_spec
- * 	:	array_spec_element (T_COMMA array_spec_element)*
+ *      :       array_spec_element (T_COMMA array_spec_element)*
  * 
  * array_spec_element
- * 	:	expr ( T_COLON (expr | T_ASTERISK)? )?
- *	|   T_ASTERISK
- *	|	T_COLON
+ *      :       expr ( T_COLON (expr | T_ASTERISK)? )?
+ *      |   T_ASTERISK
+ *      |       T_COLON
  *
  * @param count The number of items in the list of array specifications.
  * @param type The type of the array-spec element.
@@ -4783,7 +4783,7 @@ void c_action_array_spec_element(int type)
 
 /** R511
  * explicit_shape_spec
- 	 * expr ( T_COLON expr )?
+         * expr ( T_COLON expr )?
  * 
  * @param hasUpperBound Whether the shape spec is of the form x:y.
  */
@@ -4811,7 +4811,7 @@ void c_action_explicit_shape_spec(ofp_bool hasUpperBound)
 
 /** R511 list
  * explicit_shape_spec_list
- *	:	explicit_shape_spec ( T_COMMA explicit_shape_spec )*
+ *      :       explicit_shape_spec ( T_COMMA explicit_shape_spec )*
  * 
  * @param count The number of items in the list.
  */
@@ -4847,7 +4847,7 @@ void c_action_explicit_shape_spec_list(int count)
 
 /** R517
  * intent_spec
- *	:	T_IN | T_OUT | T_IN T_OUT | T_INOUT
+ *      :       T_IN | T_OUT | T_IN T_OUT | T_INOUT
  *
  * @param intentKeyword1 The first of two possible intent keyword tokens
  * (e.g., T_IN, T_OUT, T_INOUT).
@@ -4868,7 +4868,7 @@ void c_action_intent_spec(Token_t * intentKeyword1, Token_t * intentKeyword2, in
 /** R518
  * access_stmt
  *
- *	:	(label)? access_spec ((T_COLON_COLON)? access_id_list)? T_EOS
+ *      :       (label)? access_spec ((T_COLON_COLON)? access_id_list)? T_EOS
  *
  * @param label The label.
  * @param eos End of statement token.
@@ -4949,7 +4949,7 @@ void deferred_co_shape_spec()
 
 /** R519-08 list
  * deferred_co_shape_spec_list
- *	:	T_COLON ( T_COMMA T_COLON )*
+ *      :       T_COLON ( T_COMMA T_COLON )*
  * 
  * @param count The number of items in the list.
  */
@@ -4988,7 +4988,7 @@ void c_action_access_id()
 
 /** R519 list
  * access_id_list
- * 	:	access_id ( T_COMMA access_id )*
+ *      :       access_id ( T_COMMA access_id )*
  * 
  * @param count The number of items in the list.
  */
@@ -5003,7 +5003,7 @@ void c_action_access_id_list(int count)
  * allocatable_stmt
  *
  * : (label)? T_ALLOCATABLE ( T_COLON_COLON )? allocatable_decl 
- * 		( T_COMMA allocatable_decl )* T_EOS
+ *              ( T_COMMA allocatable_decl )* T_EOS
  *
  * @param label The label.
  * @param keyword The allocatable keyword token.
@@ -5155,7 +5155,7 @@ void c_action_allocatable_decl(Token_t *id, ofp_bool hasArraySpec, ofp_bool hasC
 /** R521
  * asynchronous_stmt
  *
- * :	(label)? T_ASYNCHRONOUS ( T_COLON_COLON )?  generic_name_list T_EOS
+ * :    (label)? T_ASYNCHRONOUS ( T_COLON_COLON )?  generic_name_list T_EOS
  *
  * @param label The label.
  * @param keyword The ASYNCHRONOUS keyword token.
@@ -5168,7 +5168,7 @@ void c_action_asynchronous_stmt(Token_t * label, Token_t * keyword, Token_t * eo
 
 /** R522
  * bind_stmt
- *	:	(label)? language_binding_spec (T_COLON_COLON)? bind_entity_list T_EOS
+ *      :       (label)? language_binding_spec (T_COLON_COLON)? bind_entity_list T_EOS
  *
  * @param label Optional statement label
  * @param eos End of statement token.
@@ -5200,7 +5200,7 @@ void c_action_bind_stmt(Token_t * label, Token_t * eos)
 
 /** R523
  * bind_entity
- *	:	T_IDENT | T_SLASH T_IDENT T_SLASH
+ *      :       T_IDENT | T_SLASH T_IDENT T_SLASH
  *
  * @param entity The thing to bind.
  * @param isCommonBlockName True if the entity is the name of a common block
@@ -5278,7 +5278,7 @@ void c_action_bind_entity(Token_t * entity, ofp_bool isCommonBlockName)
 
 /** R523 list
  * bind_entity_list
- * 	:	bind_entity ( T_COMMA bind_entity )*
+ *      :       bind_entity ( T_COMMA bind_entity )*
  * 
  * @param count The number of items in the list.
  */
@@ -5354,7 +5354,7 @@ void c_action_data_stmt_set()
  */
 void c_action_data_stmt_object()
    {
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_data_stmt_object() \n");
 
 #if 1
@@ -5390,7 +5390,7 @@ void c_action_data_stmt_object()
 
 /** R526 list
  * data_stmt_object_list
- * 	:	data_stmt_object ( T_COMMA data_stmt_object )*
+ *      :       data_stmt_object ( T_COMMA data_stmt_object )*
  * 
  * @param count The number of items in the list.
  */
@@ -5401,7 +5401,7 @@ void c_action_data_stmt_object_list__begin()
    }
 void c_action_data_stmt_object_list(int count)
    {
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_data_stmt_object_list(): count = %d \n",count);
 #if 1
   // Output debugging information about saved state (stack) information.
@@ -5480,7 +5480,7 @@ void c_action_data_stmt_object_list(int count)
  */
 void c_action_data_implied_do(Token_t *id, ofp_bool hasThirdExpr)
    {
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_data_implied_do(): id = %p = %s hasThirdExpr = %s \n",id,id != NULL ? id->text : "NULL",hasThirdExpr ? "true" : "false");
 
 #if 1
@@ -5520,9 +5520,9 @@ void c_action_data_implied_do(Token_t *id, ofp_bool hasThirdExpr)
      SgVariableSymbol* variableSymbol = lookup_variable_symbol_build_if_needed(do_variable_name, astScopeStack.front());
      if (variableSymbol == NULL)
         {
-    	  printf("Implicit None = %s \n", isImplicitNoneScope()? "true": "false");
-    	  printf("No surrounding declaration found for the implied do loop control variable %s \n", do_variable_name.str());
-    	  ROSE_ASSERT(false);
+          printf("Implicit None = %s \n", isImplicitNoneScope()? "true": "false");
+          printf("No surrounding declaration found for the implied do loop control variable %s \n", do_variable_name.str());
+          ROSE_ASSERT(false);
         }
      SgVarRefExp* doLoopVar = SageBuilder::buildVarRefExp(variableSymbol);
      ROSE_ASSERT(doLoopVar != NULL);
@@ -5594,7 +5594,7 @@ void c_action_data_i_do_object()
 
 /** R528 list
  * data_i_do_object_list
- * 	:	data_i_do_object ( T_COMMA data_i_do_object )*
+ *      :       data_i_do_object ( T_COMMA data_i_do_object )*
  * 
  * @param count The number of items in the list.
  */
@@ -5605,7 +5605,7 @@ void c_action_data_i_do_object_list__begin()
    }
 void c_action_data_i_do_object_list(int count)
    {
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_data_i_do_object_list(): count = %d \n",count);
 
 #if 1
@@ -5798,7 +5798,7 @@ void c_action_data_stmt_value(Token_t *asterisk)
 
 /** R530 list
  * data_stmt_value_list
- * 	:	data_stmt_value ( T_COMMA data_stmt_value )*
+ *      :       data_stmt_value ( T_COMMA data_stmt_value )*
  * 
  * @param count The number of items in the list.
  */
@@ -5860,7 +5860,7 @@ void c_action_data_stmt_constant()
  * dimension_stmt
  *
  * (label)? T_DIMENSION ( T_COLON_COLON )? dimension_decl 
- * 			( T_COMMA dimension_decl {count++;})* T_EOS
+ *                      ( T_COMMA dimension_decl {count++;})* T_EOS
  * 
  * @param label The label.
  * @param keyword The DIMENSION keyword token.
@@ -6027,7 +6027,7 @@ void c_action_dimension_spec(Token_t *dimensionKeyword)
  * intent_stmt
  *
  * (label)? T_INTENT T_LPAREN intent_spec T_RPAREN ( T_COLON_COLON )? 
- * 		generic_name_list T_EOS
+ *              generic_name_list T_EOS
  *
  * @param label The label.
  * @param keyword The INTENT keyword token.
@@ -6117,7 +6117,7 @@ void c_action_parameter_stmt(Token_t * label, Token_t * keyword, Token_t * eos)
 
 /** R539 list
  * named_constant_def_list
- * 	:	named_constant_def ( T_COMMA named_constant_def )*
+ *      :       named_constant_def ( T_COMMA named_constant_def )*
  * 
  * @param count The number of items in the list.
  */
@@ -6189,7 +6189,7 @@ void c_action_named_constant_def(Token_t *id)
 
 /** R540
  * pointer_stmt
- *	:	(label)? T_POINTER ( T_COLON_COLON )? pointer_decl_list T_EOS
+ *      :       (label)? T_POINTER ( T_COLON_COLON )? pointer_decl_list T_EOS
  *
  * @param label The label.
  * @param keyword The POINTER keyword token.
@@ -6216,7 +6216,7 @@ void c_action_pointer_stmt(Token_t * label, Token_t * keyword, Token_t * eos)
 
 /** R541 list
  * pointer_decl_list
- * 	:	pointer_decl ( T_COMMA pointer_decl )*
+ *      :       pointer_decl ( T_COMMA pointer_decl )*
  * 
  * @param count The number of items in the list.
  */
@@ -6233,7 +6233,7 @@ void c_action_pointer_decl_list(int count)
 
 /** R541
  * pointer_decl
- *	:  T_IDENT ( T_LPAREN deferred_shape_spec_list T_RPAREN )?
+ *      :  T_IDENT ( T_LPAREN deferred_shape_spec_list T_RPAREN )?
  *
  * @param id Identifier.
  * @param hasSpecList True if has a deferred shape spec list.
@@ -6251,7 +6251,7 @@ void c_action_pointer_decl(Token_t *id, ofp_bool hasSpecList)
 
 /** R542
  * protected_stmt
- *	:	(label)? T_PROTECTED ( T_COLON_COLON )? generic_name_list T_EOS
+ *      :       (label)? T_PROTECTED ( T_COLON_COLON )? generic_name_list T_EOS
  *
  * @param label The label.
  * @param keyword The PROTECTED keyword token.
@@ -6283,7 +6283,7 @@ void c_action_protected_stmt(Token_t * label, Token_t * keyword, Token_t * eos)
 
 /** R543
  * save_stmt
- *	: (label T_SAVE ( ( T_COLON_COLON )? saved_entity_list )? T_EOS
+ *      : (label T_SAVE ( ( T_COLON_COLON )? saved_entity_list )? T_EOS
  *
  * @param label The label.
  * @param keyword The SAVE keyword token.
@@ -6311,7 +6311,7 @@ void c_action_save_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp_b
 
 /** R544 list
  * saved_entity_list
- * 	:	saved_entity ( T_COMMA saved_entity )*
+ *      :       saved_entity ( T_COMMA saved_entity )*
  * 
  * @param count The number of items in the list.
  */
@@ -6344,9 +6344,9 @@ void c_action_saved_entity(Token_t *id, ofp_bool isCommonBlockName)
 
 /** R546
  * target_stmt
- *	
+ *      
  * : (label)? T_TARGET ( T_COLON_COLON )? target_decl 
- * 			( T_COMMA target_decl)* T_EOS
+ *                      ( T_COMMA target_decl)* T_EOS
  * 
  * @param label The label.
  * @param keyword The SAVE keyword token.
@@ -6405,7 +6405,7 @@ void c_action_target_decl(Token_t *id, ofp_bool hasArraySpec, ofp_bool hasCoArra
 /** R547
  * value_stmt
  *
- * 	(label)? T_VALUE ( T_COLON_COLON )? generic_name_list T_EOS
+ *      (label)? T_VALUE ( T_COLON_COLON )? generic_name_list T_EOS
  *
  * @param label The label.
  * @param keyword The VALUE keyword token.
@@ -6433,7 +6433,7 @@ void c_action_value_stmt(Token_t * label, Token_t * keyword, Token_t * eos)
 /** R548
  * volatile_stmt
  *
- *	(label)? T_VOLATILE ( T_COLON_COLON )? generic_name_list T_EOS
+ *      (label)? T_VOLATILE ( T_COLON_COLON )? generic_name_list T_EOS
  *
  * @param label The label.
  * @param keyword The VOLATILE keyword token.
@@ -6461,8 +6461,8 @@ void c_action_volatile_stmt(Token_t * label, Token_t * keyword, Token_t * eos)
 /** R549
  * implicit_stmt
  *
- * :	(label)? T_IMPLICIT implicit_spec_list T_EOS
- * |	(label)? T_IMPLICIT T_NONE T_EOS
+ * :    (label)? T_IMPLICIT implicit_spec_list T_EOS
+ * |    (label)? T_IMPLICIT T_NONE T_EOS
  *
  * @param label The label.
  * @param implicitKeyword Token for the T_IMPLICIT.
@@ -6569,7 +6569,7 @@ void c_action_implicit_spec()
 
 /** R550 list
  * implicit_spec_list
- * 	:	implicit_spec ( T_COMMA implicit_spec )*
+ *      :       implicit_spec ( T_COMMA implicit_spec )*
  * 
  * @param count The number of items in the list.
  */
@@ -6645,7 +6645,7 @@ void c_action_letter_spec(Token_t * id1, Token_t * id2)
 
 /** R551 list
  * letter_spec_list
- * 	:	letter_spec ( T_COMMA letter_spec )*
+ *      :       letter_spec ( T_COMMA letter_spec )*
  * 
  * @param count The number of items in the list.
  */
@@ -6760,7 +6760,7 @@ void c_action_namelist_group_name(Token_t *id)
 
 /** R553
  * namelist_group_object
- * 	:    T_IDENT
+ *      :    T_IDENT
  * 
  * @param id Identifier (variable-name).
  */
@@ -6780,7 +6780,7 @@ void c_action_namelist_group_object(Token_t *id)
 
 /** R553 list
  * namelist_group_object_list
- * 	:	T_IDENT ( T_COMMA T_IDENT )*
+ *      :       T_IDENT ( T_COMMA T_IDENT )*
  * 
  * @param count The number of items in the list.
  */
@@ -6906,7 +6906,7 @@ void c_action_equivalence_set()
 
 /** R555 list
  * equivalence_set_list
- * 	:	equivalence_set ( T_COMMA equivalence_set )*
+ *      :       equivalence_set ( T_COMMA equivalence_set )*
  * 
  * @param count The number of items in the list.
  */
@@ -6958,7 +6958,7 @@ void c_action_equivalence_object()
 
 /** R556 list
  * equivalence_object_list
- * 	:	equivalence_object ( T_COMMA equivalence_object )*
+ *      :       equivalence_object ( T_COMMA equivalence_object )*
  * 
  * @param count The number of items in the list.
  */
@@ -7002,8 +7002,8 @@ void c_action_equivalence_object_list(int count)
  * common_stmt
  *
  * : (label)? T_COMMON ( T_SLASH ( T_IDENT )? T_SLASH )?
- * 		common_block_object_list ( ( T_COMMA )? T_SLASH ( T_IDENT )? 
- * 		T_SLASH common_block_object_list )* T_EOS
+ *              common_block_object_list ( ( T_COMMA )? T_SLASH ( T_IDENT )? 
+ *              T_SLASH common_block_object_list )* T_EOS
  *
  * @param label The label.
  * @param count Number of common block object lists. 
@@ -7103,7 +7103,7 @@ void c_action_common_block_name(Token_t *id)
 
 /** R558 list
  * common_block_object_list
- * 	:	common_block_object ( T_COMMA common_block_object )*
+ *      :       common_block_object ( T_COMMA common_block_object )*
  * 
  * @param count The number of items in the list.
  */
@@ -7234,7 +7234,7 @@ void c_action_common_block_object(Token_t *id, ofp_bool hasShapeSpecList)
 
 /** R601
  * variable
- * :	designator
+ * :    designator
  */
 void c_action_variable()
    {
@@ -7253,17 +7253,17 @@ void c_action_variable()
 
 /** R603
  * designator
- *  :   object-name			 // T_IDENT (data-ref isa T_IDENT)
- *	|	array-element		   // R616 is data-ref
- *	|	array-section		   // R617 is data-ref [ (substring-range) ] 
- *	|	structure-component	 // R614 is data-ref
- *	|	substring
+ *  :   object-name                      // T_IDENT (data-ref isa T_IDENT)
+ *      |       array-element              // R616 is data-ref
+ *      |       array-section              // R617 is data-ref [ (substring-range) ] 
+ *      |       structure-component      // R614 is data-ref
+ *      |       substring
  *
  *@param hasSubstringRange True if substring-range is present.
  */
 void c_action_designator(ofp_bool hasSubstringRange)
    {
-	// This is a part of a variable reference (any likely used many other places as well)
+        // This is a part of a variable reference (any likely used many other places as well)
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_designator() hasSubstringRange = %s \n",hasSubstringRange ? "true" : "false");
@@ -7323,7 +7323,7 @@ void c_action_designator(ofp_bool hasSubstringRange)
  */
 void c_action_designator_or_func_ref()
    {
-	// DQ (5/4/2008): I am unclear what to do with this rule! (called by test2008_22.f90)
+        // DQ (5/4/2008): I am unclear what to do with this rule! (called by test2008_22.f90)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_designator_or_func_ref() \n");
    }
@@ -7335,7 +7335,7 @@ void c_action_designator_or_func_ref()
  */
 void c_action_substring_range_or_arg_list()
    {
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_substring_range_or_arg_list() \n");
    }
 
@@ -7430,8 +7430,8 @@ void c_action_int_variable()
 
 /** R609
  * substring
- *	:	data_ref (T_LPAREN substring_range T_RPAREN)?
- *	|	char_literal_constant T_LPAREN substring_range T_RPAREN
+ *      :       data_ref (T_LPAREN substring_range T_RPAREN)?
+ *      |       char_literal_constant T_LPAREN substring_range T_RPAREN
  *
  * C608 (R610) parent_string shall be of type character
  * fix for ambiguity in data_ref allows it to match T_LPAREN substring_range T_RPAREN,
@@ -7449,7 +7449,7 @@ void c_action_substring(ofp_bool hasSubstringRange)
  
 /** R611
  * substring_range
- *	:	(expr)? T_COLON	(expr)?
+ *      :       (expr)? T_COLON (expr)?
  *
  * ERR_CHK 611 scalar_int_expr replaced by expr
  *
@@ -7493,13 +7493,13 @@ void c_action_substring_range(ofp_bool hasLowerBound, ofp_bool hasUpperBound)
    }
 
 /** R612
- *	data_ref
- *	:	part_ref (T_PERCENT part_ref)*
+ *      data_ref
+ *      :       part_ref (T_PERCENT part_ref)*
  *
  * @param numPartRef The number of optional part_refs
  */
 
-SgCAFCoExpression *rice_dataref_coexpr;		// for 'c_action_rice_spawn_stmt'
+SgCAFCoExpression *rice_dataref_coexpr;         // for 'c_action_rice_spawn_stmt'
 
 void c_action_data_ref(int numPartRef)
    {
@@ -7613,9 +7613,9 @@ void c_action_data_ref(int numPartRef)
        // DQ (12/29/2010): I think I can assert this...(fails for test2010_176.f03)
        // ROSE_ASSERT(numPartRef == 1);
 
-    	 // This is a function call and the 'coExpr' detected above, if any, will be ignored in this routine.
-    	 // Preserve it for future use in 'c_action_rice_spawn_stmt'.
-    	 // TODO: check that coExpr is present here only if in the context of a Rice CAF2 'spawn' statement.
+         // This is a function call and the 'coExpr' detected above, if any, will be ignored in this routine.
+         // Preserve it for future use in 'c_action_rice_spawn_stmt'.
+         // TODO: check that coExpr is present here only if in the context of a Rice CAF2 'spawn' statement.
           rice_dataref_coexpr = (processCoarray ? coExpr : NULL);
 
        // DQ (12/21/2010): For the variable to not have existed, this must be the simple case of a reference with a single part.
@@ -7872,7 +7872,7 @@ void c_action_data_ref(int numPartRef)
                                  }
 
                            // DQ (5/15/2008): test the exclusion of this code!
-	                           if (functionArguments != NULL) 
+                                   if (functionArguments != NULL) 
                                  {
                                    SgFunctionCallExp* functionCallExp  = new SgFunctionCallExp(functionRefExp,functionArguments,NULL);
                                    setSourcePosition(functionCallExp,nameToken);
@@ -8508,9 +8508,9 @@ void c_action_data_ref(int numPartRef)
 
 /** R613, R613-F2008
  * part_ref
- *  :	T_IDENT T_LPAREN section_subscript_list T_RPAREN (image_selector)? 
- *	|	T_IDENT image_selector
- *	|	T_IDENT
+ *  :   T_IDENT T_LPAREN section_subscript_list T_RPAREN (image_selector)? 
+ *      |       T_IDENT image_selector
+ *      |       T_IDENT
  *
  * @param id The identifier (variable name in most cases (all?))
  * @param hasSelectionSubscriptList True if a selection-subscript-list is present
@@ -8697,12 +8697,12 @@ void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_boo
 
 /** R619  (see R1220, actual_arg_spec)
  * section_subscript/actual_arg_spec
- *	:	expr section_subscript_suffix
- *	|	T_COLON (expr)? (T_COLON expr)?
- *	|	T_COLON_COLON expr
- *	|	T_IDENT T_EQUALS (expr | T_ASTERISK label ) // could be an actual-arg-spec, see R1220
- *	|	T_ASTERISK label // could be an actual-arg-spec, see R1220 
- *	|	{ // empty could be an actual-arg, see R1220 // }
+ *      :       expr section_subscript_suffix
+ *      |       T_COLON (expr)? (T_COLON expr)?
+ *      |       T_COLON_COLON expr
+ *      |       T_IDENT T_EQUALS (expr | T_ASTERISK label ) // could be an actual-arg-spec, see R1220
+ *      |       T_ASTERISK label // could be an actual-arg-spec, see R1220 
+ *      |       { // empty could be an actual-arg, see R1220 // }
  *
  * R619, section_subscript has been combined with actual_arg_spec (R1220) 
  * to reduce backtracking.  Only the first alternative is truly ambiguous.
@@ -8714,7 +8714,7 @@ void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_boo
  */
 void c_action_section_subscript(ofp_bool hasLowerBound, ofp_bool hasUpperBound, ofp_bool hasStride, ofp_bool isAmbiguous)
    {
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R619 c_action_section_subscript() hasLowerBound = %s hasUpperBound = %s hasStride = %s isAmbiguous = %s \n",
                hasLowerBound ? "true" : "false", hasUpperBound ? "true" : "false", hasStride ? "true" : "false", isAmbiguous ? "true" : "false");
 
@@ -8767,7 +8767,7 @@ void c_action_section_subscript(ofp_bool hasLowerBound, ofp_bool hasUpperBound, 
 /** R619 list
  * section_subscript
  * section_subscript_list
- * 	:	section_subscript ( T_COMMA section_subscript )*
+ *      :       section_subscript ( T_COMMA section_subscript )*
  * 
  * @param count The number of items in the list.
  */
@@ -8779,7 +8779,7 @@ void c_action_section_subscript_list__begin()
 
 void c_action_section_subscript_list(int count)
    {
-	// This is either a subscript or a function parameter list, or an implicit do loop.  If it is an implicit function then treat
+        // This is either a subscript or a function parameter list, or an implicit do loop.  If it is an implicit function then treat
   // it as a function call directly, later some array references may have be be fixed up to be function 
   // calls but this will be a post processing step.
 
@@ -8804,7 +8804,7 @@ void c_action_section_subscript_list(int count)
         {
 
           SgExprListExp* expressionList = new SgExprListExp();
-	  //rose_check(expressionList != NULL);
+          //rose_check(expressionList != NULL);
           
           ROSE_ASSERT(expressionList != NULL);
 
@@ -8816,7 +8816,7 @@ void c_action_section_subscript_list(int count)
              {
             // printf ("count = %d i = %d \n",count,i);
 
-	       //rose_check(astExpressionStack.empty() == false);
+               //rose_check(astExpressionStack.empty() == false);
                ROSE_ASSERT(astExpressionStack.empty() == false);
                SgExpression* expression = astExpressionStack.front();
 
@@ -8857,10 +8857,10 @@ void c_action_section_subscript_list(int count)
 
 /** R623
  * allocate_stmt
- *	:	(label)? T_ALLOCATE_STMT_1 T_ALLOCATE T_LPAREN type_spec T_COLON_COLON
- *		allocation_list (T_COMMA alloc_opt_list)? T_RPAREN T_EOS
- *	|	(label)? T_ALLOCATE T_LPAREN
- *		allocation_list (T_COMMA alloc_opt_list)? T_RPAREN T_EOS
+ *      :       (label)? T_ALLOCATE_STMT_1 T_ALLOCATE T_LPAREN type_spec T_COLON_COLON
+ *              allocation_list (T_COMMA alloc_opt_list)? T_RPAREN T_EOS
+ *      |       (label)? T_ALLOCATE T_LPAREN
+ *              allocation_list (T_COMMA alloc_opt_list)? T_RPAREN T_EOS
  *
  * @param label Optional statement label
  * @param hasTypeSpec True if type-spec is present
@@ -8870,7 +8870,7 @@ void c_action_section_subscript_list(int count)
 void c_action_allocate_stmt(Token_t *label, Token_t *allocateKeyword, Token_t *eos, ofp_bool hasTypeSpec, ofp_bool hasAllocOptList)
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R623 c_action_allocate_stmt() label = %p = %s allocateKeyword = %p = %s hasTypeSpec = %s hasAllocOptList = %s \n",
                label,label != NULL ? label->text : "NULL",
                allocateKeyword,allocateKeyword != NULL ? allocateKeyword->text : "NULL",
@@ -8949,8 +8949,8 @@ void c_action_allocate_stmt(Token_t *label, Token_t *allocateKeyword, Token_t *e
 
 /** R624
  * alloc_opt
- *	:	T_IDENT			// {'STAT','ERRMSG'} are variables {SOURCE'} is expr
- *		T_EQUALS expr
+ *      :       T_IDENT                 // {'STAT','ERRMSG'} are variables {SOURCE'} is expr
+ *              T_EQUALS expr
  *
  * @param allocOpt Identifier representing {'STAT','ERRMSG','SOURCE'}
  */
@@ -8972,7 +8972,7 @@ void c_action_alloc_opt(Token_t * allocOpt)
 
 /** R624 list
  * alloc_opt_list
- * 	:	alloc_opt ( T_COMMA alloc_opt )*
+ *      :       alloc_opt ( T_COMMA alloc_opt )*
  * 
  * @param count The number of items in the list.
  */
@@ -8989,8 +8989,8 @@ void c_action_alloc_opt_list(int count)
 
 /** R628, R631-F2008
  * allocation
- *		( T_LPAREN allocate_shape_spec_list {hasAllocateShapeSpecList=true;} T_RPAREN )?
- *		( T_LBRACKET allocate_co_array_spec {hasAllocateCoArraySpec=true;} T_RBRACKET )?
+ *              ( T_LPAREN allocate_shape_spec_list {hasAllocateShapeSpecList=true;} T_RPAREN )?
+ *              ( T_LBRACKET allocate_co_array_spec {hasAllocateCoArraySpec=true;} T_RBRACKET )?
  *
  * NOTE: In current parser, hasAllocateShapeSpecList is always false, appears as
  * R619 section-subscript-list.  In a section-subscript, the stride shall not be present
@@ -9009,7 +9009,7 @@ void c_action_allocation(ofp_bool hasAllocateShapeSpecList, ofp_bool hasAllocate
 
 /** R628 list
  * allocation_list
- * 	:	allocation ( T_COMMA allocation )*
+ *      :       allocation ( T_COMMA allocation )*
  * 
  * @param count The number of items in the list.
  */
@@ -9021,7 +9021,7 @@ void c_action_allocation_list__begin()
 void c_action_allocation_list(int count)
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R628 (list) c_action_allocation_list() count = %d \n",count);
 
      SgExprListExp* expressionList = new SgExprListExp();
@@ -9056,7 +9056,7 @@ void c_action_allocate_object()
 
 /** R629 list
  * allocate_object_list
- * 	:	allocate_object ( T_COMMA allocate_object )*
+ *      :       allocate_object ( T_COMMA allocate_object )*
  * 
  * @param count The number of items in the list.
  */
@@ -9095,7 +9095,7 @@ void c_action_allocate_object_list(int count)
 
 /** R630
  * allocate_shape_spec
- *	:	expr (T_COLON expr)?
+ *      :       expr (T_COLON expr)?
  *
  * NOTE: not called by current parser, appears as R619 section-subscript instead
  *
@@ -9112,7 +9112,7 @@ void c_action_allocate_shape_spec(ofp_bool hasLowerBound, ofp_bool hasUpperBound
 
 /** R630 list
  * allocate_shape_spec_list
- * 	:	allocate_shape_spec ( T_COMMA allocate_shape_spec )*
+ *      :       allocate_shape_spec ( T_COMMA allocate_shape_spec )*
  * 
  * @param count The number of items in the list.
  */
@@ -9128,8 +9128,8 @@ void c_action_allocate_shape_spec_list(int count)
    }
 
 /** R633
- *	nullify_stmt
- *	:	(label)? T_NULLIFY T_LPAREN pointer_object_list T_RPAREN T_EOS
+ *      nullify_stmt
+ *      :       (label)? T_NULLIFY T_LPAREN pointer_object_list T_RPAREN T_EOS
  *
  * @param label Optional statement label
  */
@@ -9153,7 +9153,7 @@ SgExpression* exp = NULL;
 
 /** R634 list
  * pointer_object_list
- * 	:	pointer_object ( T_COMMA pointer_object )*
+ *      :       pointer_object ( T_COMMA pointer_object )*
  * 
  * @param count The number of items in the list.
  */
@@ -9172,7 +9172,7 @@ void c_action_pointer_object_list(int count)
  * deallocate_stmt
  *
  * :   (label)? T_DEALLOCATE T_LPAREN allocate_object_list 
- * 		( T_COMMA dealloc_opt_list)? T_RPAREN T_EOS
+ *              ( T_COMMA dealloc_opt_list)? T_RPAREN T_EOS
  *
  * @param label The label.
  * @param hasDeallocOptList True if there is an option list.
@@ -9278,7 +9278,7 @@ void c_action_dealloc_opt(Token_t *id)
 
 /** R636 list
  * dealloc_opt_list
- * 	:	dealloc_opt ( T_COMMA dealloc_opt )*
+ *      :       dealloc_opt ( T_COMMA dealloc_opt )*
  * 
  * @param count The number of items in the list.
  */
@@ -9295,7 +9295,7 @@ void c_action_dealloc_opt_list(int count)
 
 /** R637-F2008 list
  * allocate_co_shape_spec_list
- * 	:	allocate_co_shape_spec ( T_COMMA allocate_co_shape_spec )*
+ *      :       allocate_co_shape_spec ( T_COMMA allocate_co_shape_spec )*
  * 
  * @param count The number of items in the list.
  */
@@ -9312,11 +9312,11 @@ void c_action_allocate_co_shape_spec_list(int count)
 
 /** R701
  * primary
- *	:	designator_or_func_ref
- *	|	literal_constant
- *	|	array_constructor
- *	|	structure_constructor
- *	|	T_LPAREN expr T_RPAREN
+ *      :       designator_or_func_ref
+ *      |       literal_constant
+ *      |       array_constructor
+ *      |       structure_constructor
+ *      |       T_LPAREN expr T_RPAREN
  *
  */
 void c_action_primary()
@@ -9408,7 +9408,7 @@ void c_action_defined_unary_op(Token_t * definedOp)
 
 /** R704: note, inserted as R704 functionality
  * power_operand
- *	: level_1_expr (power_op power_operand)?
+ *      : level_1_expr (power_op power_operand)?
  */
 void c_action_power_operand(ofp_bool hasPowerOperand)
    {
@@ -9946,7 +9946,7 @@ void c_action_rel_op(Token_t * relOp)
 
 /** R714
  * and_operand
- *  :	(not_op)? level_3_expr (and_op level_3_expr)*
+ *  :   (not_op)? level_3_expr (and_op level_3_expr)*
  *
  * @param hasNotOp True if optional not_op is present
  * @param numAndOps The number of optional and_ops
@@ -10071,7 +10071,7 @@ void c_action_and_operand__not_op(ofp_bool hasNotOp)
 
 /** R715: note, moved leading optional to or_operand
  * or_operand
- *	: and_operand (or_op and_operand)*
+ *      : and_operand (or_op and_operand)*
  *
  * @param numOrOps The number of optional or_ops
  */
@@ -10338,7 +10338,7 @@ void c_action_equiv_op(Token_t *equivOp)
  */
 void c_action_expr()
    {
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R722 c_action_expr() \n");
 
   // DQ (12/14/2007): This should have been set by now! See test2007_114.f03
@@ -10364,8 +10364,8 @@ void c_action_defined_binary_op(Token_t *binaryOp)
 
 
 /** R734
- *	assignment_stmt 
- *	:	(label)? T_ASSIGNMENT_STMT variable	T_EQUALS expr T_EOS
+ *      assignment_stmt 
+ *      :       (label)? T_ASSIGNMENT_STMT variable     T_EQUALS expr T_EOS
  *
  * @param label Optional statement label
  */
@@ -10481,9 +10481,9 @@ void c_action_assignment_stmt(Token_t *label, Token_t *eos)
  *
  * : (label)? T_PTR_ASSIGNMENT_STMT data_ref T_EQ_GT expr T_EOS
  * | (label)? T_PTR_ASSIGNMENT_STMT data_ref T_LPAREN bounds_spec_list 
- * 		T_RPAREN T_EQ_GT expr T_EOS
+ *              T_RPAREN T_EQ_GT expr T_EOS
  * | (label)? T_PTR_ASSIGNMENT_STMT data_ref T_LPAREN 
- *		bounds_remapping_list T_RPAREN T_EQ_GT expr T_EOS
+ *              bounds_remapping_list T_RPAREN T_EQ_GT expr T_EOS
  *
  * @param label The label.
  * @param hasBoundsSpecList True if has a bounds spec list.
@@ -10520,7 +10520,7 @@ void c_action_pointer_assignment_stmt(Token_t *label, Token_t *eos, ofp_bool has
 
 /** R737 list
  * bounds_spec_list
- * 	:	bounds_spec ( T_COMMA bounds_spec )*
+ *      :       bounds_spec ( T_COMMA bounds_spec )*
  * 
  * @param count The number of items in the list.
  */
@@ -10533,7 +10533,7 @@ void c_action_bounds_spec_list(int count)
 
 /** R738 list
  * bounds_remapping_list
- * 	:	bounds_remapping ( T_COMMA bounds_remapping )*
+ *      :       bounds_remapping ( T_COMMA bounds_remapping )*
  * 
  * @param count The number of items in the list.
  */
@@ -10547,8 +10547,8 @@ void c_action_bounds_remapping_list(int count)
 /** R743 
  * where_stmt
  *
- *	(label {lbl=$label.tk;})? T_WHERE_STMT T_WHERE
- *		T_LPAREN expr T_RPAREN assignment_stmt
+ *      (label {lbl=$label.tk;})? T_WHERE_STMT T_WHERE
+ *              T_LPAREN expr T_RPAREN assignment_stmt
  *
  * @param label The label
  */
@@ -10697,10 +10697,10 @@ void c_action_where_stmt(Token_t *label, Token_t *whereKeyword)
 /** R744 
  * where_construct
  *
- *	: where_construct_stmt ( where_body_construct )*
- *		( masked_elsewhere_stmt ( where_body_construct )* )*
- *		( elsewhere_stmt ( where_body_construct {numElsewhereConstructs += 1;} )* )?
- *	  end_where_stmt
+ *      : where_construct_stmt ( where_body_construct )*
+ *              ( masked_elsewhere_stmt ( where_body_construct )* )*
+ *              ( elsewhere_stmt ( where_body_construct {numElsewhereConstructs += 1;} )* )?
+ *        end_where_stmt
  *
  * @param numConstructs The number of where-body-constructs.
  * @param hasMaskedElsewhere True if where-construct has a masked-elsewhere-stmt.
@@ -10715,7 +10715,7 @@ void c_action_where_construct(int numConstructs, ofp_bool hasMaskedElsewhere, of
 
   // ROSE_ASSERT(hasElsewhere == false);
   // ROSE_ASSERT(hasMaskedElsewhere == false); 
-	   
+           
 #if 0
      SgExpression* condition = NULL;
      SgBasicBlock* trueBlock = new SgBasicBlock();
@@ -10739,7 +10739,7 @@ void c_action_where_construct(int numConstructs, ofp_bool hasMaskedElsewhere, of
 
 /** R745
  * where_construct_stmt
- *	:	(T_IDENT T_COLON)? T_WHERE_CONSTRUCT_STMT T_WHERE T_LPAREN expr T_RPAREN T_EOS
+ *      :       (T_IDENT T_COLON)? T_WHERE_CONSTRUCT_STMT T_WHERE T_LPAREN expr T_RPAREN T_EOS
  * 
  * @param id Optional name for the loop. If you use this up front, you have to use it in the end, and vice versa.
  */
@@ -10813,7 +10813,7 @@ void c_action_where_body_construct()
  * masked_elsewhere_stmt
  *
  * : T_ELSE T_WHERE T_LPAREN expr T_RPAREN ( T_IDENT )? T_EOS
- * | 	T_ELSEWHERE	T_LPAREN expr T_RPAREN ( T_IDENT )? T_EOS
+ * |    T_ELSEWHERE     T_LPAREN expr T_RPAREN ( T_IDENT )? T_EOS
  *
  * @param id Optional name for the loop. If you use this up front, you have to use it in the end, and vice versa.
  */
@@ -10830,7 +10830,7 @@ void c_action_masked_elsewhere_stmt(Token_t *label, Token_t *elseKeyword, Token_
      SgElseWhereStatement* parentElseWhereStmt = isSgElseWhereStatement(current_where_body->get_parent());
 
      bool parentIsWhereStmt = true;
-	   
+           
      if (parentWhereStmt == NULL) {
        parentIsWhereStmt = false;
        ROSE_ASSERT(parentElseWhereStmt != NULL);
@@ -10888,32 +10888,32 @@ void c_action_masked_elsewhere_stmt(Token_t *label, Token_t *elseKeyword, Token_
 #endif
    }
 
-	
+        
 /** R749 end
  * masked_elsewhere_stmt__end
  *
  * @param numBodyConstructs The number of where-body-constructs in the elsewhere-stmt (called from R744)
  */
-	
+        
 void c_action_masked_elsewhere_stmt__end(int numBodyConstructs)
-	{
-	  if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-			printf ("In R749 c_action_masked_elsewhere_stmt__end() numBodyConstructs = %d \n",numBodyConstructs);
-		
-	  ROSE_ASSERT(astScopeStack.empty() == false);
-	  SgBasicBlock* basicBlock = isSgBasicBlock(astScopeStack.front());
-	  ROSE_ASSERT(basicBlock != NULL);
-		
-	  // the elsewhere needs to attach itself to the elsewhere-stmt
-	  //astScopeStack.pop_front();
-	}
-	
-	
+        {
+          if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+                        printf ("In R749 c_action_masked_elsewhere_stmt__end() numBodyConstructs = %d \n",numBodyConstructs);
+                
+          ROSE_ASSERT(astScopeStack.empty() == false);
+          SgBasicBlock* basicBlock = isSgBasicBlock(astScopeStack.front());
+          ROSE_ASSERT(basicBlock != NULL);
+                
+          // the elsewhere needs to attach itself to the elsewhere-stmt
+          //astScopeStack.pop_front();
+        }
+        
+        
 /** R750 
  * elsewhere_stmt
  *
- * 		(label {lbl=$label.tk;})? T_ELSE T_WHERE (id=T_IDENT)? T_EOS
- * |	(label {lbl=$label.tk;})? T_ELSEWHERE	(id=T_IDENT)? T_EOS 
+ *              (label {lbl=$label.tk;})? T_ELSE T_WHERE (id=T_IDENT)? T_EOS
+ * |    (label {lbl=$label.tk;})? T_ELSEWHERE   (id=T_IDENT)? T_EOS 
  *
  * @param label The label
  * @param id Optional name for the loop. If you use this up front, you have to use it in the end, and vice versa.
@@ -10931,7 +10931,7 @@ void c_action_elsewhere_stmt(Token_t *label, Token_t *elseKeyword, Token_t *wher
      SgElseWhereStatement* parentElseWhereStmt = isSgElseWhereStatement(current_where_body->get_parent());
 
      bool parentIsWhereStmt = true;
-	   
+           
      if (parentWhereStmt == NULL) {
        parentIsWhereStmt = false;
        ROSE_ASSERT(parentElseWhereStmt != NULL);
@@ -11086,7 +11086,7 @@ void c_action_forall_header()
           printf ("In c_action_forall_header() \n");
    }
 
-	
+        
 /** R755
  * forall_triplet_spec
  *
@@ -11137,7 +11137,7 @@ void c_action_forall_triplet_spec(Token_t * id, ofp_bool hasStride)
 
 /** R755 list
  * forall_triplet_spec_list
- * 	:	forall_triplet_spec ( T_COMMA forall_triplet_spec )*
+ *      :       forall_triplet_spec ( T_COMMA forall_triplet_spec )*
  * 
  * @param count The number of items in the list.
  */
@@ -11619,7 +11619,7 @@ void c_action_else_stmt(Token_t *label, Token_t *elseKeyword, Token_t *id, Token
  * end_if_stmt
  *
 : (label)? T_END T_IF ( T_IDENT )? T_EOS
-| (label)? T_ENDIF	( T_IDENT )? T_EOS
+| (label)? T_ENDIF      ( T_IDENT )? T_EOS
  *
  * @param label The label.
  * @param id True if has what you think it has.
@@ -12056,7 +12056,7 @@ void c_action_case_stmt(Token_t *label, Token_t *caseKeyword, Token_t *id, Token
  * end_select_stmt
  *
  * : (label)? T_END T_SELECT (T_IDENT)? T_EOS
- * | (label)? T_ENDSELECT	(T_IDENT)? T_EOS
+ * | (label)? T_ENDSELECT       (T_IDENT)? T_EOS
  *
  * @param label The label.
  * @param id Identifier if present. Otherwise, null.
@@ -12123,7 +12123,7 @@ void c_action_case_value_range()
 
 /** R814 list
  * case_value_range_list
- * 	:	case_value_range ( T_COMMA case_value_range )*
+ *      :       case_value_range ( T_COMMA case_value_range )*
  * 
  * @param count The number of items in the list.
  */
@@ -12175,7 +12175,7 @@ void c_action_associate_construct()
  * associate_stmt
  *
  * : (label)? (T_IDENT T_COLON)? T_ASSOCIATE T_LPAREN association_list 
- * 		T_RPAREN T_EOS
+ *              T_RPAREN T_EOS
  *
  * @param label The label.
  * @param id Identifier if present. Otherwise, null.
@@ -12228,7 +12228,7 @@ void c_action_associate_stmt(Token_t *label, Token_t *id, Token_t *associateKeyw
 
 /** R817 list
  * association_list
- * 	:	association ( T_COMMA association )*
+ *      :       association ( T_COMMA association )*
  * 
  * @param count The number of items in the list.
  */
@@ -12447,7 +12447,7 @@ void c_action_select_type_stmt(Token_t *label, Token_t *selectConstructName, Tok
  *
  * :  (label)? T_TYPE T_IDENT T_LPAREN type_spec T_RPAREN (T_IDENT)? T_EOS
  * |  (label)? T_CLASS T_IDENT T_LPAREN type_spec T_RPAREN (T_IDENT)? T_EOS
- * |  (label)? T_CLASS	T_DEFAULT (T_IDENT)? T_EOS
+ * |  (label)? T_CLASS  T_DEFAULT (T_IDENT)? T_EOS
  *
  * @param label The label.
  * @param selectConstructName Optional identifier immediately before end.
@@ -12460,8 +12460,8 @@ void c_action_type_guard_stmt(Token_t *label, Token_t *typeKeyword, Token_t *isO
 /** R824
  * end_select_type_stmt
  *
- * :	(label )? T_END T_SELECT ( T_IDENT )? T_EOS
- * |	(label )? T_ENDSELECT	( T_IDENT )? T_EOS
+ * :    (label )? T_END T_SELECT ( T_IDENT )? T_EOS
+ * |    (label )? T_ENDSELECT   ( T_IDENT )? T_EOS
  *
  * @param label The label.
  * @param id The identifier, if present. Otherwise null.
@@ -12506,7 +12506,7 @@ void c_action_block_do_construct()
 // void c_action_do_stmt(Token_t * label, Token_t * id, Token_t * digitString, ofp_bool hasLoopControl)
 void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword, Token_t *digitString, Token_t *eos, ofp_bool hasLoopControl)
    {
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         {
           printf ("In c_action_do_stmt(): hasLoopControl = %s \n",hasLoopControl ? "true" : "false");
           printf ("   label       = %p = %s \n",label,(label != NULL) ? label->text : "NULL");
@@ -12777,7 +12777,7 @@ void c_action_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword, Token_t *
  * label_do_stmt
  *
  * :  (label)? ( T_IDENT T_COLON )? 
- *		T_DO T_DIGIT_STRING ( loop_control )? T_EOS
+ *              T_DO T_DIGIT_STRING ( loop_control )? T_EOS
  *
  * @param label The label.
  * @param id Identifier for do construct name, if present. Otherwise, null.
@@ -12909,7 +12909,7 @@ void c_action_end_do()
  * end_do_stmt
  *
  * : (label)? T_END T_DO ( T_IDENT )? T_EOS
- * | (label)? T_ENDDO	( T_IDENT )? T_EOS
+ * | (label)? T_ENDDO   ( T_IDENT )? T_EOS
  *
  * @param label The label.
  * @param id The do construct name, if present. Otherwise, null.
@@ -12974,7 +12974,7 @@ void c_action_end_do_stmt(Token_t *label, Token_t *endKeyword, Token_t *doKeywor
  * token T_LABEL_DO_TERMINAL that is inserted if they end a labeled DO.
  *
  * :  label T_LABEL_DO_TERMINAL 
- *		(action_stmt | ( (T_END T_DO | T_ENDDO) (T_IDENT)? ) T_EOS)
+ *              (action_stmt | ( (T_END T_DO | T_ENDDO) (T_IDENT)? ) T_EOS)
  *
  * @param label The label, which must be present.
  * @param id The identifier, if present. Otherwise, null.
@@ -13052,7 +13052,7 @@ void c_action_do_term_action_stmt(Token_t *label, Token_t *endKeyword, Token_t *
 
 /** R843
  * cycle_stmt
- *	:	(label)? T_CYCLE (T_IDENT)? T_EOS
+ *      :       (label)? T_CYCLE (T_IDENT)? T_EOS
  * 
  * T_IDENT inlined for do_construct_name
  * 
@@ -13079,7 +13079,7 @@ void c_action_cycle_stmt(Token_t *label, Token_t *cycleKeyword, Token_t *id, Tok
 
 /** R844
  * exit_stmt
- *	:	(label)? T_EXIT (T_IDENT)? T_EOS
+ *      :       (label)? T_EXIT (T_IDENT)? T_EOS
  *
  * T_IDENT inlined for do_construct_name
  * 
@@ -13106,7 +13106,7 @@ void c_action_exit_stmt(Token_t *label, Token_t *exitKeyword, Token_t *id, Token
 
 /** R845
  * goto_stmt
- *	:	t_go_to label T_EOS
+ *      :       t_go_to label T_EOS
  *
  * @param label The branch target statement label
  */
@@ -13114,7 +13114,7 @@ void c_action_exit_stmt(Token_t *label, Token_t *exitKeyword, Token_t *id, Token
 void c_action_goto_stmt(Token_t *goKeyword, Token_t *toKeyword, Token_t *label, Token_t *eos)
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_goto_stmt() label = %p = %s goKeyword = %p = %s toKeyword = %p = %s \n",
             // label,label != NULL ? label->text : "NULL",
                goKeyword,goKeyword != NULL ? goKeyword->text : "NULL",
@@ -13157,7 +13157,7 @@ void c_action_goto_stmt(Token_t *goKeyword, Token_t *toKeyword, Token_t *label, 
 
 /** R846
  * computed_goto_stmt
- *	:	(label)? t_go_to T_LPAREN label_list T_RPAREN (T_COMMA)? expr T_EOS
+ *      :       (label)? t_go_to T_LPAREN label_list T_RPAREN (T_COMMA)? expr T_EOS
  *
  * ERR_CHK 846 scalar_int_expr replaced by expr
  * 
@@ -13357,8 +13357,8 @@ void c_action_pause_stmt(Token_t* label, Token_t* pauseKeyword, Token_t* constan
 
 /** R847
  * arithmetic_if_stmt
- *	:	(label)? T_ARITHMETIC_IF_STMT T_IF
- *		T_LPAREN expr T_RPAREN label T_COMMA label T_COMMA label T_EOS
+ *      :       (label)? T_ARITHMETIC_IF_STMT T_IF
+ *              T_LPAREN expr T_RPAREN label T_COMMA label T_COMMA label T_EOS
  *
  * ERR_CHK 847 scalar_numeric_expr replaced by expr
  * 
@@ -13427,7 +13427,7 @@ void c_action_arithmetic_if_stmt(Token_t *label, Token_t *ifKeyword, Token_t *la
 
 /** R848
  * continue_stmt
- *	:	(label)? T_CONTINUE
+ *      :       (label)? T_CONTINUE
  * 
  * @param label  Optional statement label
  */
@@ -13435,7 +13435,7 @@ void c_action_arithmetic_if_stmt(Token_t *label, Token_t *ifKeyword, Token_t *la
 void c_action_continue_stmt(Token_t *label, Token_t *continueKeyword, Token_t *eos)
    {
 
-	// A Fortran "CONTINUE" statement is mapped to a C "label" statement, so we use the existing SgLabelStatement IR node.
+        // A Fortran "CONTINUE" statement is mapped to a C "label" statement, so we use the existing SgLabelStatement IR node.
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_continue_stmt(): label = %p = %s continueKeyword = %p = %s \n",label,label != NULL ? label->text : "NULL",continueKeyword,continueKeyword != NULL ? continueKeyword->text : "NULL");
@@ -13550,7 +13550,7 @@ void c_action_continue_stmt(Token_t *label, Token_t *continueKeyword, Token_t *e
 
 /** R849
  * stop_stmt
- *	:	(label)? T_STOP (stop_code)? T_EOS
+ *      :       (label)? T_STOP (stop_code)? T_EOS
  *
  *@param label Optional statement label
  *@param hasStopCode True if the stop-code is present, false otherwise
@@ -13612,8 +13612,8 @@ void c_action_stop_stmt(Token_t *label, Token_t *stopKeyword, Token_t *eos, ofp_
 
 /** R850
  * stop_code
- *	: scalar_char_constant
- *	| T_DIGIT_STRING
+ *      : scalar_char_constant
+ *      | T_DIGIT_STRING
  * 
  * ERR_CHK 850 T_DIGIT_STRING must be 5 digits or less
  * 
@@ -13637,7 +13637,7 @@ void c_action_stop_code(Token_t * digitString)
 /*
  * R856-F08 allstop-stmt
  *   is ALL STOP [ stop-code ]
- *   :	(label)? T_ALL T_STOP (stop_code)? T_EOS
+ *   :  (label)? T_ALL T_STOP (stop_code)? T_EOS
  *
  * @param label Optional statement label
  * @param allKeyword T_ALL token.
@@ -13656,7 +13656,7 @@ void c_action_allstop_stmt(Token_t * label, Token_t * allKeyword,
 /*
  * R858-F08 sync-all-stmt
  *   is SYNC ALL [([ sync-stat-list ])]
- *   :	(label)? T_SYNC T_ALL (sync_stat_list)? T_EOS
+ *   :  (label)? T_SYNC T_ALL (sync_stat_list)? T_EOS
  *
  * @param label Optional statement label
  * @param syncKeyword T_SYNC token.
@@ -13676,8 +13676,8 @@ void c_action_sync_all_stmt(Token_t * label, Token_t * syncKeyword,
  * R859-F08 sync-stat
  *   is STAT = stat-variable
  *   or ERRMSG = errmsg-variable
- *   :	T_IDENT			// {'STAT','ERRMSG'} are variables}
- *		T_EQUALS expr   // expr is a stat-variable or an errmsg-variable
+ *   :  T_IDENT                 // {'STAT','ERRMSG'} are variables}
+ *              T_EQUALS expr   // expr is a stat-variable or an errmsg-variable
  *
  * @param syncStat Identifier representing {'STAT','ERRMSG'}
  *
@@ -14000,7 +14000,7 @@ void c_action_connect_spec(Token_t *id)
 
 /** R905 list
  * connect_spec_list
- * 	:	connect_spec ( T_COMMA connect_spec )*
+ *      :       connect_spec ( T_COMMA connect_spec )*
  * 
  * @param count The number of items in the list.
  */
@@ -14141,7 +14141,7 @@ void c_action_close_spec(Token_t *closeSpec)
 
 /** R909 list
  * close_spec_list
- * 	:	close_spec ( T_COMMA close_spec )*
+ *      :       close_spec ( T_COMMA close_spec )*
  * 
  * @param count The number of items in the list.
  */
@@ -14160,9 +14160,9 @@ void c_action_close_spec_list(int count)
  * read_stmt
  *
  * :  ((label)? T_READ T_LPAREN) => (label)? T_READ T_LPAREN 
- * 			io_control_spec_list T_RPAREN ( input_item_list )? T_EOS
+ *                      io_control_spec_list T_RPAREN ( input_item_list )? T_EOS
  * |  ((label)? T_READ) => (label)? T_READ format 
- * 			( T_COMMA input_item_list )? T_EOS
+ *                      ( T_COMMA input_item_list )? T_EOS
  *
  * @param label The label.
  * @param hasInputItemList True if has an input item list.
@@ -14204,7 +14204,7 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
           astExpressionStack.pop_front();
         }
 
- 	  readStatement->set_io_stmt_list(exprListExp);
+          readStatement->set_io_stmt_list(exprListExp);
      exprListExp->set_parent(readStatement);
 #else
   // DQ (12/19/2007): This is a more uniform handling of the SgExprListExp (computed in R915)
@@ -14248,7 +14248,7 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
 #endif
 
      ROSE_ASSERT(exprListExp != NULL);
- 	  readStatement->set_io_stmt_list(exprListExp);
+          readStatement->set_io_stmt_list(exprListExp);
      exprListExp->set_parent(readStatement);
 #endif
 #endif
@@ -14536,8 +14536,8 @@ void c_action_read_stmt(Token_t *label, Token_t *readKeyword, Token_t *eos, ofp_
 
 /** R911
  * write_stmt
- *	:	(label)? T_WRITE T_LPAREN io_control_spec_list T_RPAREN 
- * 			(output_item_list)? T_EOS
+ *      :       (label)? T_WRITE T_LPAREN io_control_spec_list T_RPAREN 
+ *                      (output_item_list)? T_EOS
  *
  * @param label The statement label
  * @param hasOutputItemList True if output-item-list is present
@@ -14580,7 +14580,7 @@ void c_action_write_stmt(Token_t *label, Token_t *writeKeyword, Token_t *eos, of
           astExpressionStack.pop_front();
         }
 
- 	  writeStatement->set_io_stmt_list(exprListExp);
+          writeStatement->set_io_stmt_list(exprListExp);
      exprListExp->set_parent(writeStatement);
 #else
   // DQ (12/19/2007): This is a more uniform handling of the SgExprListExp (computed in R915)
@@ -14601,7 +14601,7 @@ void c_action_write_stmt(Token_t *label, Token_t *writeKeyword, Token_t *eos, of
 
      ROSE_ASSERT(exprListExp != NULL);
 
- 	  writeStatement->set_io_stmt_list(exprListExp);
+          writeStatement->set_io_stmt_list(exprListExp);
      exprListExp->set_parent(writeStatement);
 #endif
 
@@ -14735,14 +14735,14 @@ void c_action_write_stmt(Token_t *label, Token_t *writeKeyword, Token_t *eos, of
         }
 
      ROSE_ASSERT(io_control != NULL);
-	  ioStatement->set_io_control (io_control);
+          ioStatement->set_io_control (io_control);
 
      io_control->set_parent(ioStatement);
 #endif
 #if 0
      SgExprListExp* exprListExp = isSgExprListExp(astExpressionStack.front());
      ROSE_ASSERT(exprListExp != NULL);
- 	  writeStatement->set_io_stmt_list(exprListExp);
+          writeStatement->set_io_stmt_list(exprListExp);
 
      astExpressionStack.pop_front();
 #endif
@@ -14846,7 +14846,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         }
 
      ROSE_ASSERT(exprListExp != NULL);
- 	  printStatement->set_io_stmt_list(exprListExp);
+          printStatement->set_io_stmt_list(exprListExp);
 
      exprListExp->set_parent(printStatement);
 
@@ -14969,17 +14969,17 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
 
 /** R913
  * io_control_spec
- *	:	expr
- *	|	T_ASTERISK
- *	|	T_IDENT // {'UNIT','FMT'}
- *			T_EQUALS T_ASTERISK
- *	|	T_IDENT
- *		// {'UNIT','FMT'} are expr 'NML' is T_IDENT}
- *		// {'ADVANCE','ASYNCHRONOUS','BLANK','DECIMAL','DELIM'} are expr
- *		// {'END','EOR','ERR'} are labels
- *		// {'ID','IOMSG',IOSTAT','SIZE'} are variables
- *		// {'PAD','POS','REC','ROUND','SIGN'} are expr
- *		T_EQUALS expr
+ *      :       expr
+ *      |       T_ASTERISK
+ *      |       T_IDENT // {'UNIT','FMT'}
+ *                      T_EQUALS T_ASTERISK
+ *      |       T_IDENT
+ *              // {'UNIT','FMT'} are expr 'NML' is T_IDENT}
+ *              // {'ADVANCE','ASYNCHRONOUS','BLANK','DECIMAL','DELIM'} are expr
+ *              // {'END','EOR','ERR'} are labels
+ *              // {'ID','IOMSG',IOSTAT','SIZE'} are variables
+ *              // {'PAD','POS','REC','ROUND','SIGN'} are expr
+ *              T_EQUALS expr
  *
  * ERR_CHK 913 check expr type with identifier
  * io_unit and format are both (expr|'*') so combined
@@ -15056,7 +15056,7 @@ void c_action_io_control_spec(ofp_bool hasExpression, Token_t * keyword, ofp_boo
 
 /** R913 list
  * io_control_spec_list
- * 	:	io_control_spec ( T_COMMA io_control_spec )*
+ *      :       io_control_spec ( T_COMMA io_control_spec )*
  * 
  * @param count The number of items in the list.
  */
@@ -15220,7 +15220,7 @@ void c_action_input_item()
 
 /** R915 list
  * input_item_list
- * 	:	input_item ( T_COMMA input_item )*
+ *      :       input_item ( T_COMMA input_item )*
  * 
  * @param count The number of items in the list.
  */
@@ -15281,7 +15281,7 @@ void c_action_output_item()
 
 /** R916 list
  * output_item_list
- * 	:	output_item ( T_COMMA output_item )*
+ *      :       output_item ( T_COMMA output_item )*
  * 
  * @param count The number of items in the list.
  */
@@ -15454,7 +15454,7 @@ void c_action_io_implied_do_control()
 #endif
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
           printf ("In c_action_io_implied_do_control() hasStride = %s \n",hasStride ? "true" : "false");
 #else
@@ -15500,9 +15500,9 @@ void c_action_io_implied_do_control()
      SgVariableSymbol* variableSymbol = lookup_variable_symbol_build_if_needed(do_variable_name, astScopeStack.front());
      if (variableSymbol == NULL)
         {
-    	  printf("Implicit None = %s \n", isImplicitNoneScope()? "true": "false");
-    	  printf("No surrounding declaration found for the implied do loop control variable %s \n", do_variable_name.str());
-    	  ROSE_ASSERT(false);
+          printf("Implicit None = %s \n", isImplicitNoneScope()? "true": "false");
+          printf("No surrounding declaration found for the implied do loop control variable %s \n", do_variable_name.str());
+          ROSE_ASSERT(false);
         }
      SgVarRefExp* doLoopVar = SageBuilder::buildVarRefExp(variableSymbol);
      ROSE_ASSERT(doLoopVar != NULL);
@@ -15512,8 +15512,8 @@ void c_action_io_implied_do_control()
      // build the implied-do-control object and push it on the astExpressionStack:
      SgExprListExp* implied_do_control = new SgExprListExp();
      implied_do_control->append_expression(doVariableInitialization);
-   	 implied_do_control->append_expression(upperBound);
-   	 implied_do_control->append_expression(stride);
+         implied_do_control->append_expression(upperBound);
+         implied_do_control->append_expression(stride);
      ROSE_ASSERT(implied_do_control->get_expressions().size() == 3);
      astExpressionStack.push_front(implied_do_control);
 
@@ -15638,7 +15638,7 @@ void c_action_wait_spec(Token_t *id)
 
 /** R922 list
  * wait_spec_list
- * 	:	wait_spec ( T_COMMA wait_spec )*
+ *      :       wait_spec ( T_COMMA wait_spec )*
  * 
  * @param count The number of items in the list.
  */
@@ -15655,7 +15655,7 @@ void c_action_wait_spec_list(int count)
  * backspace_stmt
  *
  * :  ((label)? T_BACKSPACE T_LPAREN) => (label)? T_BACKSPACE T_LPAREN 
-			position_spec_list T_RPAREN T_EOS
+                        position_spec_list T_RPAREN T_EOS
  * |  ((label)? T_BACKSPACE) => (label)? T_BACKSPACE file_unit_number T_EOS
  *
  * @param label The label.
@@ -15739,9 +15739,9 @@ void c_action_backspace_stmt(Token_t *label, Token_t *backspaceKeyword, Token_t 
  * endfile_stmt
  *
  * :  ((label)? T_END T_FILE T_LPAREN) => (label)? T_END T_FILE 
- * 			T_LPAREN position_spec_list T_RPAREN T_EOS
+ *                      T_LPAREN position_spec_list T_RPAREN T_EOS
  * |  ((label)? T_ENDFILE T_LPAREN) => (label)? T_ENDFILE T_LPAREN 
- *			position_spec_list T_RPAREN T_EOS
+ *                      position_spec_list T_RPAREN T_EOS
  * |  ((label)? T_END T_FILE)=> (label)? T_END T_FILE file_unit_number T_EOS
  * |  ((label)? T_ENDFILE) => (label)? T_ENDFILE file_unit_number T_EOS
  *
@@ -15824,7 +15824,7 @@ void c_action_endfile_stmt(Token_t *label, Token_t *endKeyword, Token_t *fileKey
  * rewind_stmt
  *
  * :  ((label)? T_REWIND T_LPAREN) => (label)? T_REWIND T_LPAREN 
-			position_spec_list T_RPAREN T_EOS
+                        position_spec_list T_RPAREN T_EOS
  * |  ((label)? T_REWIND) => (label)? T_REWIND file_unit_number T_EOS
  *
  * @param label The label.
@@ -15944,7 +15944,7 @@ void c_action_position_spec(Token_t *id)
 
 /** R926 list
  * position_spec_list
- * 	:	position_spec ( T_COMMA position_spec )*
+ *      :       position_spec ( T_COMMA position_spec )*
  * 
  * @param count The number of items in the list.
  */
@@ -15959,7 +15959,7 @@ void c_action_position_spec_list(int count)
  * flush_stmt
  *
  * :  ((label)? T_FLUSH T_LPAREN) => (label)? T_FLUSH T_LPAREN \
- *			flush_spec_list T_RPAREN T_EOS
+ *                      flush_spec_list T_RPAREN T_EOS
  * |  ((label)? T_FLUSH) => (label)? T_FLUSH file_unit_number T_EOS
  *
  * @param label The label.
@@ -16066,7 +16066,7 @@ void c_action_flush_spec(Token_t *id)
 
 /** R928 list
  * flush_spec_list
- * 	:	flush_spec ( T_COMMA flush_spec )*
+ *      :       flush_spec ( T_COMMA flush_spec )*
  * 
  * @param count The number of items in the list.
  */
@@ -16080,9 +16080,9 @@ void c_action_flush_spec_list(int count)
 /** R929
  * inquire_stmt
  *
- * :	(label)? T_INQUIRE T_LPAREN inquire_spec_list T_RPAREN T_EOS
- * |	(label)? T_INQUIRE_STMT_2 T_INQUIRE T_LPAREN T_IDENT T_EQUALS 
- * 			scalar_int_variable T_RPAREN output_item_list T_EOS
+ * :    (label)? T_INQUIRE T_LPAREN inquire_spec_list T_RPAREN T_EOS
+ * |    (label)? T_INQUIRE_STMT_2 T_INQUIRE T_LPAREN T_IDENT T_EQUALS 
+ *                      scalar_int_variable T_RPAREN output_item_list T_EOS
  *
  * @param label The label.
  * @param boolean True if this is inquire statement of type 2.
@@ -16304,7 +16304,7 @@ void c_action_inquire_stmt(Token_t *label, Token_t *inquireKeyword, Token_t *id,
 
 /** R930 list
  * inquire_spec_list
- * 	:	inquire_spec ( T_COMMA inquire_spec )*
+ *      :       inquire_spec ( T_COMMA inquire_spec )*
  * 
  * @param count The number of items in the list.
  */
@@ -16557,7 +16557,7 @@ void c_action_format_item(Token_t * descOrDigit, ofp_bool hasFormatItemList)
 
 /** R1003 list
  * format_item_list
- * 	:	format_item ( T_COMMA format_item )*
+ *      :       format_item ( T_COMMA format_item )*
  * 
  * @param count The number of items in the list.
  */
@@ -16617,8 +16617,8 @@ void c_action_format_item_list(int count)
 /** R1010 list
  * v_list_part
  * v_list
- * 	:	(T_PLUS|T_MINUS)? T_DIGIT_STRING 
- *			( T_COMMA (T_PLUS|T_MINUS)? T_DIGIT_STRING )*
+ *      :       (T_PLUS|T_MINUS)? T_DIGIT_STRING 
+ *                      ( T_COMMA (T_PLUS|T_MINUS)? T_DIGIT_STRING )*
  * 
  * @param plus_minus Optional T_PLUSIT_MINUS token.
  * @param digitString The digit string token.
@@ -16669,8 +16669,8 @@ void c_action_v_list(int count)
 
 /** R1101
  * main_program
- *	(program_stmt)?	specification_part (execution_part)? (internal_subprogram_part)?
- *	end_program_stmt
+ *      (program_stmt)? specification_part (execution_part)? (internal_subprogram_part)?
+ *      end_program_stmt
  * 
  * @param hasProgramStmt Optional program-stmt
  * @param hasExecutionPart Optional execution-part
@@ -16769,7 +16769,7 @@ void c_action_ext_function_subprogram(ofp_bool hasPrefix)
 
 /** R1102
  * program_stmt
- * :	(label)? ...
+ * :    (label)? ...
  * 
  * @param label Optional statement label
  * @param id Optional program name
@@ -16930,7 +16930,7 @@ void c_action_program_stmt(Token_t *label, Token_t *programKeyword, Token_t *id,
 
 /** R1103
  * end_program_stmt
- * :	(label)? ...
+ * :    (label)? ...
  * 
  * @param label Optional statement label
  * @param id Optional program name
@@ -16995,7 +16995,7 @@ void c_action_end_program_stmt(Token_t *label, Token_t *endKeyword, Token_t *pro
   // ROSE_ASSERT(functionDeclaration->get_name().getString() == id->get_lexeme_string());
      if (id != NULL)
         {
-		 // printf("%s == %s\n", programDeclaration->get_name().getString().c_str(), id->text);
+                 // printf("%s == %s\n", programDeclaration->get_name().getString().c_str(), id->text);
        // ROSE_ASSERT(programDeclaration->get_name().getString() == string(id->text));
           programDeclaration->set_named_in_end_statement(true);
         }
@@ -17102,7 +17102,7 @@ void c_action_module_stmt(Token_t *label, Token_t *moduleKeyword, Token_t *id, T
  * end_module_stmt
  *
  * :  (label)? T_END T_MODULE (T_IDENT)? end_of_stmt
- * |  (label)? T_ENDMODULE	(T_IDENT)? end_of_stmt
+ * |  (label)? T_ENDMODULE      (T_IDENT)? end_of_stmt
  * |  (label)? T_END end_of_stmt
  *
  * @param label The label.
@@ -17112,7 +17112,7 @@ void c_action_module_stmt(Token_t *label, Token_t *moduleKeyword, Token_t *id, T
 void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *moduleKeyword, Token_t *id, Token_t *eos)
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_end_module_stmt(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
 
 #if 0
@@ -17320,8 +17320,8 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
           SgInterfaceStatement* interfaceStatement = interfaceList[i];
        // printf ("Fixup interface = %s \n",interfaceStatement->get_name().str());
 
-       // SgSymbol * 	lookup_symbol (const SgName &n) const
-       // SgFunctionSymbol * 	lookup_function_symbol (const SgName &n) const
+       // SgSymbol *    lookup_symbol (const SgName &n) const
+       // SgFunctionSymbol *    lookup_function_symbol (const SgName &n) const
           for (size_t j = 0; j < interfaceStatement->get_interface_procedure_names().size(); j++)
              {
                SgName procedureName = interfaceStatement->get_interface_procedure_names()[j];
@@ -17439,9 +17439,9 @@ void c_action_module_subprogram(ofp_bool hasPrefix)
  * use_stmt
  *
  * :  (label)? T_USE ( (T_COMMA module_nature)? T_COLON_COLON )? T_IDENT 
- * 			( T_COMMA rename_list)? T_EOS
- * |	(label)? T_USE ( (T_COMMA module_nature)? T_COLON_COLON )? T_IDENT 
- *			T_COMMA T_ONLY T_COLON (only_list)? T_EOS
+ *                      ( T_COMMA rename_list)? T_EOS
+ * |    (label)? T_USE ( (T_COMMA module_nature)? T_COLON_COLON )? T_IDENT 
+ *                      T_COMMA T_ONLY T_COLON (only_list)? T_EOS
  *
  * @param label The label.
  * @param hasModuleNature True if has a module nature.
@@ -17947,7 +17947,7 @@ void c_action_rename(Token_t *id1, Token_t *id2, Token_t *op1, Token_t *defOp1, 
 
 /** R1111 list
  * rename_list
- * 	:	rename ( T_COMMA rename )*
+ *      :       rename ( T_COMMA rename )*
  * 
  * @param count The number of items in the list.
  */
@@ -17995,7 +17995,7 @@ void c_action_only(ofp_bool hasGenericSpec, ofp_bool hasRename, ofp_bool hasOnly
 
 /** R1112 list
  * only_list
- * 	:	only ( T_COMMA only )*
+ *      :       only ( T_COMMA only )*
  * 
  * @param count The number of items in the list.
  */
@@ -18152,9 +18152,9 @@ void c_action_block_data_stmt(Token_t *label, Token_t *blockKeyword, Token_t *da
  * end_block_data_stmt
  *
  * :  (label)? T_END T_BLOCK T_DATA ( T_IDENT )? end_of_stmt
- * |  (label)? T_ENDBLOCK T_DATA	( T_IDENT )? end_of_stmt
- * |  (label)? T_END T_BLOCKDATA	( T_IDENT )? end_of_stmt
- * |  (label)? T_ENDBLOCKDATA	   ( T_IDENT )? end_of_stmt
+ * |  (label)? T_ENDBLOCK T_DATA        ( T_IDENT )? end_of_stmt
+ * |  (label)? T_END T_BLOCKDATA        ( T_IDENT )? end_of_stmt
+ * |  (label)? T_ENDBLOCKDATA      ( T_IDENT )? end_of_stmt
  * |  (label)? T_END end_of_stmt
  *
  * @param label The label.
@@ -18256,8 +18256,8 @@ void c_action_interface_stmt__begin()
 /** R1203
  * interface_stmt
 *
- * :	(label)? T_INTERFACE ( generic_spec )? T_EOS
- * |	(label)? T_ABSTRACT T_INTERFACE T_EOS
+ * :    (label)? T_INTERFACE ( generic_spec )? T_EOS
+ * |    (label)? T_ABSTRACT T_INTERFACE T_EOS
  *
  * @param label The label.
  * @param abstract The ABSTRACT keyword token (null if the
@@ -18523,10 +18523,10 @@ void c_action_procedure_stmt(Token_t *label, Token_t *module, Token_t *procedure
 
 /** R1207
  * generic_spec
- *	:	T_IDENT
- *	|	T_OPERATOR T_LPAREN defined_operator T_RPAREN
- *	|	T_ASSIGNMENT T_LPAREN T_EQUALS T_RPAREN
- *	|	dtio_generic_spec
+ *      :       T_IDENT
+ *      |       T_OPERATOR T_LPAREN defined_operator T_RPAREN
+ *      |       T_ASSIGNMENT T_LPAREN T_EQUALS T_RPAREN
+ *      |       dtio_generic_spec
  *
  * @param keyword OPERATOR or ASSIGNMENT keyword (null otherwise).
  * @param name The name of the spec (null unless first option T_IDENT).
@@ -18587,10 +18587,10 @@ void c_action_generic_spec(Token_t *keyword, Token_t *name, int type)
 
 /** R1208
  * dtio_generic_spec
- *	:	T_READ T_LPAREN T_FORMATTED T_RPAREN
- *	|	T_READ T_LPAREN T_UNFORMATTED T_RPAREN
- *	|	T_WRITE T_LPAREN T_FORMATTED T_RPAREN
- *	|	T_WRITE T_LPAREN T_UNFORMATTED T_RPAREN
+ *      :       T_READ T_LPAREN T_FORMATTED T_RPAREN
+ *      |       T_READ T_LPAREN T_UNFORMATTED T_RPAREN
+ *      |       T_WRITE T_LPAREN T_FORMATTED T_RPAREN
+ *      |       T_WRITE T_LPAREN T_UNFORMATTED T_RPAREN
  *
  * @param rw Read or write token.
  * @param format Formatted or unformatted token.
@@ -18758,20 +18758,20 @@ void c_action_procedure_declaration_stmt(Token_t *label, Token_t *procedureKeywo
 
 /** R1212
  * proc_interface
- *	:	T_IDENT
- *	|	declaration_type_spec
+ *      :       T_IDENT
+ *      |       declaration_type_spec
  *
  * @param id The interface name.
  */
 
 /** R1213
  * proc_attr_spec
- *	:	access_spec
- *	|	proc_language_binding_spec
- *	|	T_INTENT T_LPAREN intent_spec T_RPAREN
- *	|	T_OPTIONAL
- *	|	T_POINTER
- *	|	T_SAVE
+ *      :       access_spec
+ *      |       proc_language_binding_spec
+ *      |       T_INTENT T_LPAREN intent_spec T_RPAREN
+ *      |       T_OPTIONAL
+ *      |       T_POINTER
+ *      |       T_SAVE
  *
  * @param spec The procedure attribute specification.
  */
@@ -18782,8 +18782,8 @@ void c_action_proc_attr_spec(Token_t * attrKeyword, Token_t * id, int spec)
 
 /** R1214
  * proc_decl
- *	:	T_IDENT ( T_EQ_GT null_init {hasNullInit=true;} )?
- *	
+ *      :       T_IDENT ( T_EQ_GT null_init {hasNullInit=true;} )?
+ *      
  * @param id The name of the procedure.
  * @param hasNullInit True if null-init is present.
  */
@@ -18793,7 +18793,7 @@ void c_action_proc_decl(Token_t * id, ofp_bool hasNullInit)
    
 /** R1214 list
  * proc_decl_list
- * 	:	proc_decl ( T_COMMA proc_decl )*
+ *      :       proc_decl ( T_COMMA proc_decl )*
  * 
  * @param count The number of items in the list.
  */
@@ -18807,7 +18807,7 @@ void c_action_proc_decl_list(int count)
 /** R1216
  * intrinsic_stmt
  *
- * 	(label)? T_INTRINSIC ( T_COLON_COLON )?  generic_name_list T_EOS
+ *      (label)? T_INTRINSIC ( T_COLON_COLON )?  generic_name_list T_EOS
  *
  * @param label The label.
  */
@@ -18826,7 +18826,7 @@ void c_action_intrinsic_stmt(Token_t *label, Token_t *intrinsicToken, Token_t *e
 
 /** R1217
  * function_reference
- * 	:	procedure-designator LPAREN (actual_arg_spec_list)* RPAREN
+ *      :       procedure-designator LPAREN (actual_arg_spec_list)* RPAREN
  * 
  * Called from designator_or_proc_ref to reduce ambiguities.
  * procedure-designator is replaced by data-ref thus function-reference may also
@@ -18842,8 +18842,8 @@ void c_action_function_reference(ofp_bool hasActualArgSpecList)
 
 /** R1218
  * call_stmt
- *	:	(label)? T_CALL procedure_designator
-		( T_LPAREN (actual_arg_spec_list)? T_RPAREN )? T_EOS
+ *      :       (label)? T_CALL procedure_designator
+                ( T_LPAREN (actual_arg_spec_list)? T_RPAREN )? T_EOS
  * 
  * @param label Optional statement label
  * @param hasActionArgSpecList True if an actual-arg-spec-list is present
@@ -18852,7 +18852,7 @@ void c_action_function_reference(ofp_bool hasActualArgSpecList)
 void c_action_call_stmt(Token_t *label, Token_t *callKeyword, Token_t *eos, ofp_bool hasActualArgSpecList)
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_call_stmt(): label = %p = %s callKeyword = %p = %s hasActualArgSpecList = %s \n",
                label,label != NULL ? label->text : "NULL",callKeyword,callKeyword != NULL ? callKeyword->text : "NULL",hasActualArgSpecList ? "true" : "false");
 
@@ -18929,7 +18929,7 @@ void c_action_call_stmt(Token_t *label, Token_t *callKeyword, Token_t *eos, ofp_
 void c_action_procedure_designator()
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_procedure_designator() \n");
 
 #if 1
@@ -18959,7 +18959,7 @@ void c_action_procedure_designator()
 
 /** R1220
  * actual_arg_spec
- *	:	(T_IDENT T_EQUALS)? actual_arg
+ *      :       (T_IDENT T_EQUALS)? actual_arg
  *
  * R619, section_subscript has been combined with actual_arg_spec (R1220) 
  * to reduce backtracking thus R619 is called from R1220.
@@ -18970,25 +18970,25 @@ void c_action_procedure_designator()
 void c_action_actual_arg_spec(Token_t * keyword)
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_actual_arg_spec() keyword = %p = %s \n",keyword,(keyword != NULL) ? keyword->text : "NULL");
 
     // DXN (01/06/2011): keyword may be NULL and
-	// when it not NULL, must create SgActualArgumentExpression here and not later.
+        // when it not NULL, must create SgActualArgumentExpression here and not later.
 #if DXN_DEBUG
      outputState("At TOP of R1220 c_action_actual_arg_spec()");
 #endif
 
-	if (keyword != NULL)
-	   {
-		 ROSE_ASSERT(astExpressionStack.empty() == false);
-		 SgExpression* expression = astExpressionStack.front();
-		 astExpressionStack.pop_front();
-		 SgName name(keyword->text);
-		 expression = new SgActualArgumentExpression(name,expression);
-		 setSourcePosition(expression);
-		 astExpressionStack.push_front(expression);
-	   }
+        if (keyword != NULL)
+           {
+                 ROSE_ASSERT(astExpressionStack.empty() == false);
+                 SgExpression* expression = astExpressionStack.front();
+                 astExpressionStack.pop_front();
+                 SgName name(keyword->text);
+                 expression = new SgActualArgumentExpression(name,expression);
+                 setSourcePosition(expression);
+                 astExpressionStack.push_front(expression);
+           }
 
 #if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
@@ -18998,7 +18998,7 @@ void c_action_actual_arg_spec(Token_t * keyword)
 
 /** R1220 list
  * actual_arg_spec_list
- * 	:	actual_arg_spec ( T_COMMA actual_arg_spec )*
+ *      :       actual_arg_spec ( T_COMMA actual_arg_spec )*
  *
  * List begin may be called incorrectly from substring_range_or_arg_list.  This
  * will be noted by a count of less than zero.
@@ -19009,7 +19009,7 @@ void c_action_actual_arg_spec(Token_t * keyword)
 void c_action_actual_arg_spec_list__begin()
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_actual_arg_spec_list__begin() \n");
 
   // DQ (12/3/2010): This is called by test2010_119.f90.
@@ -19035,8 +19035,8 @@ void c_action_actual_arg_spec_list(int count)
 
 /** R1221
  * actual_arg
- *	:	expr
- *	|	T_ASTERISK label
+ *      :       expr
+ *      |       T_ASTERISK label
  *
  * ERR_CHK 1221 ensure ( expr | designator ending in T_PERCENT T_IDENT)
  * T_IDENT inlined for procedure_name
@@ -19047,35 +19047,35 @@ void c_action_actual_arg_spec_list(int count)
 void c_action_actual_arg(ofp_bool hasExpr, Token_t * label)
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_actual_arg() hasExpr = %s label = %p = %s \n",hasExpr ? "true" : "false",label,(label != NULL) ? label->text : "NULL");
 
-	// DXN (01/06/2011):
-	// concatenate '*' and the label and push it on the astExpressionStack as the actual argument.
+        // DXN (01/06/2011):
+        // concatenate '*' and the label and push it on the astExpressionStack as the actual argument.
 #if DXN_DEBUG
      outputState("At TOP of R1221 c_action_actual_arg()");
 #endif
 
-	if (label != NULL)
-	   {
-		 string asteriskArg = "*" + string(label->text);
-		 SgVarRefExp* p_actualArg = SageBuilder::buildOpaqueVarRefExp(asteriskArg, getTopOfScopeStack());
-		 /**
-		  * TODO: replace SgVarRefExp with SgLabelRefExp;
-		 **/
-		 astExpressionStack.push_front(p_actualArg);
+        if (label != NULL)
+           {
+                 string asteriskArg = "*" + string(label->text);
+                 SgVarRefExp* p_actualArg = SageBuilder::buildOpaqueVarRefExp(asteriskArg, getTopOfScopeStack());
+                 /**
+                  * TODO: replace SgVarRefExp with SgLabelRefExp;
+                 **/
+                 astExpressionStack.push_front(p_actualArg);
 
-		 // don't need the label on top of the astLabelStack any more:
-		 if (!astLabelSymbolStack.empty())
-		    {
-			  astLabelSymbolStack.pop_front();
-		    }
-		 else
-		    {
-			  if ( SgProject::get_verbose() > 0)
-		    	  printf("WARNING: astLabelSymbolStack is empty: c_action_actual_arg: Line %d Col %d\n", label->line, label->col);
-		    }
-	   }
+                 // don't need the label on top of the astLabelStack any more:
+                 if (!astLabelSymbolStack.empty())
+                    {
+                          astLabelSymbolStack.pop_front();
+                    }
+                 else
+                    {
+                          if ( SgProject::get_verbose() > 0)
+                          printf("WARNING: astLabelSymbolStack is empty: c_action_actual_arg: Line %d Col %d\n", label->line, label->col);
+                    }
+           }
 #if DXN_DEBUG
      outputState("At BOTTOM of R1221 c_action_actual_arg()");
 #endif
@@ -19091,7 +19091,7 @@ void c_action_actual_arg(ofp_bool hasExpr, Token_t * label)
  */
 void c_action_function_subprogram(ofp_bool hasExePart, ofp_bool hasIntSubProg)
    {
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_function_subprogram() hasExePart = %s hasIntSubProg = %s \n",hasExePart ? "true" : "false",hasIntSubProg ? "true" : "false");
    }
 
@@ -19099,7 +19099,7 @@ void c_action_function_subprogram(ofp_bool hasExePart, ofp_bool hasIntSubProg)
  * function_stmt
  *
  * : (label)? T_FUNCTION T_IDENT
- 	 * 		T_LPAREN ( generic_name_list )? T_RPAREN ( suffix )? T_EOS
+         *              T_LPAREN ( generic_name_list )? T_RPAREN ( suffix )? T_EOS
  *
  * @param label The label.
  * @param keyword The ENTRY keyword token.
@@ -19117,7 +19117,7 @@ void c_action_function_stmt__begin()
 void c_action_function_stmt(Token_t * label, Token_t * keyword, Token_t * name, Token_t * eos, ofp_bool hasGenericNameList, ofp_bool hasSuffix)
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_function_stmt(): label = %p (function name) name = %s hasGenericNameList = %s hasSuffix = %s \n",
                label,name ? name->text : "NULL",hasGenericNameList ? "true" : "false",hasSuffix ? "true" : "false");
 
@@ -19252,7 +19252,7 @@ void c_action_t_prefix(int specCount)
  */
 void c_action_prefix_spec(ofp_bool isDecTypeSpec)
    {
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_prefix_spec(): isDecTypeSpec = %s \n",isDecTypeSpec ? "true" : "false");
    }
 
@@ -19261,7 +19261,7 @@ void c_action_prefix_spec(ofp_bool isDecTypeSpec)
  *
  * :  T_RECURSIVE
  * |  T_PURE
- * |  T_ELEMENTAL	
+ * |  T_ELEMENTAL       
  *
  * @param spec  The actual token (pure, elemental, or recursive).
  */
@@ -19288,7 +19288,7 @@ void c_action_suffix(Token_t *resultKeyword, ofp_bool hasProcLangBindSpec)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_suffix(): resultKeyword = %p = %s hasProcLangBindSpec = %s \n",resultKeyword,resultKeyword != NULL ? resultKeyword->text : "NULL",hasProcLangBindSpec ? "true" : "false");
    }
-	
+        
 /**
  * Unknown rule.
  * result_name
@@ -19328,7 +19328,7 @@ void c_action_result_name()
  * end_function_stmt
  *
  * : (label)? T_END T_FUNCTION ( T_IDENT )? end_of_stmt
- * | (label)? T_ENDFUNCTION	( T_IDENT )? end_of_stmt
+ * | (label)? T_ENDFUNCTION     ( T_IDENT )? end_of_stmt
  * | (label)? T_END end_of_stmt
  *
  * @param label The label.
@@ -19341,7 +19341,7 @@ void c_action_result_name()
 // void c_action_end_function_stmt(Token_t * label, Token_t * id)
 void c_action_end_function_stmt(Token_t * label, Token_t * keyword1, Token_t * keyword2, Token_t * name, Token_t * eos)
    {
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         {
           printf ("In R1230 c_action_end_function_stmt(): label = %p = %s keyword1 = %p = %s keyword2 = %p = %s name = %p = %s \n",
                label,label != NULL ? label->text : "NULL",
@@ -19452,8 +19452,8 @@ void c_action_subroutine_stmt__begin()
  * subroutine_stmt
  *
  *  (label)? (t_prefix )? T_SUBROUTINE T_IDENT
- * 		( T_LPAREN ( dummy_arg_list )? T_RPAREN 
- * 		( proc_language_binding_spec )? )? T_EOS
+ *              ( T_LPAREN ( dummy_arg_list )? T_RPAREN 
+ *              ( proc_language_binding_spec )? )? T_EOS
  *
  * @param label The label.
  * @param keyword The SUBROUTINE keyword token.
@@ -19468,7 +19468,7 @@ void c_action_subroutine_stmt__begin()
 void c_action_subroutine_stmt(Token_t * label, Token_t * keyword, Token_t * name, Token_t * eos, ofp_bool hasPrefix, ofp_bool hasDummyArgList, ofp_bool hasBindingSpec, ofp_bool hasArgSpecifier)
    {
 
-	// Support for subroutines maps to functions with void return type in the ROSE AST.
+        // Support for subroutines maps to functions with void return type in the ROSE AST.
 
   // printf ("In c_action_subroutine_stmt() \n");
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -19580,13 +19580,13 @@ void c_action_subroutine_stmt(Token_t * label, Token_t * keyword, Token_t * name
 
 /** R1233
  * dummy_arg
- *	:	T_IDENT | T_ASTERISK
+ *      :       T_IDENT | T_ASTERISK
  *
  * @param dummy The dummy argument token.
  */
 void c_action_dummy_arg(Token_t * dummy)
    {
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_dummy_arg(): dummy = %p \n",dummy);
 
      ROSE_ASSERT(dummy != NULL);
@@ -19613,7 +19613,7 @@ void c_action_dummy_arg(Token_t * dummy)
 
 /** R1233 list
  * dummy_arg_list
- * 	:	dummy_arg ( T_COMMA dummy_arg )*
+ *      :       dummy_arg ( T_COMMA dummy_arg )*
  * 
  * @param count The number of items in the list.
  */
@@ -19625,7 +19625,7 @@ void c_action_dummy_arg_list__begin()
 
 void c_action_dummy_arg_list(int count)
    {
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_dummy_arg_list(): count = %d \n",count);
 
 #if 1
@@ -19642,7 +19642,7 @@ void c_action_dummy_arg_list(int count)
  * end_subroutine_stmt
  *
  * : (label)? T_END T_SUBROUTINE ( T_IDENT )? end_of_stmt
- * | (label)? T_ENDSUBROUTINE	( T_IDENT )? end_of_stmt
+ * | (label)? T_ENDSUBROUTINE   ( T_IDENT )? end_of_stmt
  * | (label)? T_END end_of_stmt
  *
  * @param label The label.
@@ -19762,8 +19762,8 @@ void c_action_end_subroutine_stmt(Token_t * label, Token_t * keyword1, Token_t *
 /** R1235
  * entry_stmt
  *
- *	(label)? T_ENTRY T_IDENT
- *	( T_LPAREN ( dummy_arg_list)? T_RPAREN (suffix)? )? T_EOS
+ *      (label)? T_ENTRY T_IDENT
+ *      ( T_LPAREN ( dummy_arg_list)? T_RPAREN (suffix)? )? T_EOS
  *
  * @param label The label.
  * @param keyword The ENTRY keyword token.
@@ -19911,7 +19911,7 @@ void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token
 /** R1236
  * return_stmt
  *
- *	(label)? T_RETURN ( expr )? T_EOS
+ *      (label)? T_RETURN ( expr )? T_EOS
  *
  * @param label The label.
  * @param keyword The RETURN keyword token.
@@ -19922,7 +19922,7 @@ void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token
 void c_action_return_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp_bool hasScalarIntExpr)
    {
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_return_stmt(): label = %s hasScalarIntExpr = %s \n",(label != NULL) ? label->text : "NULL", hasScalarIntExpr ? "true" : "false");
 
      SgExpression* returnValue = NULL;
@@ -19964,7 +19964,7 @@ void c_action_return_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp
 /** R1237
  * contains_stmt
  *
- *	(label)? T_CONTAINS ( expr )? T_EOS
+ *      (label)? T_CONTAINS ( expr )? T_EOS
  *
  * @param label The label.
  * @param keyword The CONTAINS keyword token.
@@ -20002,8 +20002,8 @@ void c_action_contains_stmt(Token_t *label, Token_t *keyword, Token_t *eos)
 /** R1238
  * stmt_function_stmt
  *
- *	(label)? T_STMT_FUNCTION T_IDENT T_LPAREN 
- * 		( generic_name_list )? T_RPAREN T_EQUALS expr T_EOS
+ *      (label)? T_STMT_FUNCTION T_IDENT T_LPAREN 
+ *              ( generic_name_list )? T_RPAREN T_EQUALS expr T_EOS
  *
  * @param label The label.
  * @param functionName The name of the function.
@@ -20013,7 +20013,7 @@ void c_action_contains_stmt(Token_t *label, Token_t *keyword, Token_t *eos)
 // void c_action_stmt_function_stmt(Token_t * label, Token_t * functionName, ofp_bool hasGenericNameList)
 void c_action_stmt_function_stmt(Token_t *label, Token_t *functionName, Token_t *eos, ofp_bool hasGenericNameList)
    {
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_stmt_function_stmt() label = %p functionName = %s hasGenericNameList = %s \n",
                label,functionName ? functionName->text : "empty", hasGenericNameList ? "true" : "false");
    }
@@ -20021,10 +20021,10 @@ void c_action_stmt_function_stmt(Token_t *label, Token_t *functionName, Token_t 
 void c_action_end_of_stmt(Token_t * eos)
    {
 
-	if ( SgProject::get_verbose() > 0)  // DXN
-	    	printf("^^^^^^^^^^^^^^^^^^^^^^^^^^ c_action_end_of_stmt: Line %d Col %d\n", eos->line, eos->col);
+        if ( SgProject::get_verbose() > 0)  // DXN
+                printf("^^^^^^^^^^^^^^^^^^^^^^^^^^ c_action_end_of_stmt: Line %d Col %d\n", eos->line, eos->col);
 
-	if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_end_of_stmt() astNodeStack size = %zu astExpressionStack size = %zu \n",astNodeStack.size(),astExpressionStack.size());
 
   // DQ (1/28/2009): If at this point we have not yet setup the function scope (see
@@ -20462,8 +20462,8 @@ void c_action_rice_allocate_coarray_spec(int type, Token_t *team_id) {
      dataExpr->set_parent(coExpr);
 
      if(team_id == NULL) { //set the  position based on the subexpression's location
-	// laksono 2009.01.06: when there is no team id provided, the resetSourcePosition will fail
-	//	adding setSourcePosition before reset will solve this.
+        // laksono 2009.01.06: when there is no team id provided, the resetSourcePosition will fail
+        //      adding setSourcePosition before reset will solve this.
          setSourcePosition(coExpr);
          resetSourcePosition(coExpr,dataExpr);
      } else { //set the position based on the Token_t
@@ -20555,37 +20555,37 @@ static const char * ENDFINISH_SUBR_NAME = "CAF_END_FINISH";
 void c_action_rice_finish_stmt(Token_t *label, Token_t *teamToken, Token_t *eos)
 {
 #if 1
-	const char * s_label = (label     ? label->text     : "<no label>");
-	const char * s_team  = (teamToken ? teamToken->text : "<no team>" );
-	const char * s_eos   = eos->text;
-	printf("In c_action_rice_finish_stmt(%s, %s, %s)", s_label, s_team, s_eos);
-	outputState("At TOP of c_action_rice_finish_stmt()");
+        const char * s_label = (label     ? label->text     : "<no label>");
+        const char * s_team  = (teamToken ? teamToken->text : "<no team>" );
+        const char * s_eos   = eos->text;
+        printf("In c_action_rice_finish_stmt(%s, %s, %s)", s_label, s_team, s_eos);
+        outputState("At TOP of c_action_rice_finish_stmt()");
 #endif
 
-	finish_stack.push(teamToken);
+        finish_stack.push(teamToken);
 
-	// add translation to current scope
+        // add translation to current scope
     Token * caf_finish = create_token(eos->line, eos->col, 0, FINISH_SUBR_NAME);
-	c_action_section_subscript_list__begin();					// R619
-	if( teamToken != NULL)
-	{
-		c_action_part_ref(teamToken, false, false);				// R613
-		c_action_data_ref(1);									// R612
-		c_action_designator_or_func_ref();						// R1217
-		c_action_primary();										// R701
-	}
-	else
-	{
-		SgExpression * nullExpr = new SgNullExpression();
-		setSourcePosition(nullExpr, eos);
-		astExpressionStack.push_front(nullExpr);
-	}
-	c_action_section_subscript(true, false, false, true);	// R619
-	c_action_section_subscript_list(1);						// R619
-	c_action_part_ref(caf_finish, true, false);				// R613
-	c_action_data_ref(1);									// R612
-	c_action_procedure_designator();						// R1219
-	c_action_call_stmt(NULL, caf_finish, NULL, false);		// R1218
+        c_action_section_subscript_list__begin();                                       // R619
+        if( teamToken != NULL)
+        {
+                c_action_part_ref(teamToken, false, false);                             // R613
+                c_action_data_ref(1);                                                                   // R612
+                c_action_designator_or_func_ref();                                              // R1217
+                c_action_primary();                                                                             // R701
+        }
+        else
+        {
+                SgExpression * nullExpr = new SgNullExpression();
+                setSourcePosition(nullExpr, eos);
+                astExpressionStack.push_front(nullExpr);
+        }
+        c_action_section_subscript(true, false, false, true);   // R619
+        c_action_section_subscript_list(1);                                             // R619
+        c_action_part_ref(caf_finish, true, false);                             // R613
+        c_action_data_ref(1);                                                                   // R612
+        c_action_procedure_designator();                                                // R1219
+        c_action_call_stmt(NULL, caf_finish, NULL, false);              // R1218
 
     // start a new block scope for body of finish construct
     SgScopeStatement * currentScope = getTopOfScopeStack();
@@ -20596,7 +20596,7 @@ void c_action_rice_finish_stmt(Token_t *label, Token_t *teamToken, Token_t *eos)
     astScopeStack.push_front(body);
 
 #if 1
-	outputState("At BOTTOM of c_action_rice_finish_stmt()");
+        outputState("At BOTTOM of c_action_rice_finish_stmt()");
 #endif
 }
 
@@ -20615,34 +20615,34 @@ static const char * SPAWN_SUBR_NAME = "CAF_SPAWN";
 void c_action_rice_end_finish_stmt(Token_t *label, Token_t *eos)
 {
 #if 1
-	const char * s_label    = (label      ? label->text  : "<no label>");
-	const char * s_eos      = (eos        ? eos->text    : "no eos"    );
-	printf("In c_action_rice_end_finish_stmt(%s, %s)", s_label, s_eos);
-	outputState("At TOP of c_action_rice_end_finish_stmt()");
+        const char * s_label    = (label      ? label->text  : "<no label>");
+        const char * s_eos      = (eos        ? eos->text    : "no eos"    );
+        printf("In c_action_rice_end_finish_stmt(%s, %s)", s_label, s_eos);
+        outputState("At TOP of c_action_rice_end_finish_stmt()");
 #endif
 
-	// scope for enclosed statements has already been removed by 'c_action_block'
+        // scope for enclosed statements has already been removed by 'c_action_block'
 
     // pop finish construct off our stack
     if( ! finish_stack.empty() )
-    	finish_stack.pop();
+        finish_stack.pop();
     else
-	{
-		printf("ERROR(CAF): 'end finish' without matching 'finish'\n");
-		ROSE_ASSERT(false);
-	}
+        {
+                printf("ERROR(CAF): 'end finish' without matching 'finish'\n");
+                ROSE_ASSERT(false);
+        }
 
-	// add translation to current scope
-	Token * caf_end_finish = create_token(eos->line, eos->col, 0, ENDFINISH_SUBR_NAME);
-	c_action_section_subscript_list__begin();				// R619
-	c_action_section_subscript_list(0);						// R619
-	c_action_part_ref(caf_end_finish, true, false);			// R613
-	c_action_data_ref(1);									// R612
-	c_action_procedure_designator();						// R1219
-	c_action_call_stmt(NULL, caf_end_finish, NULL, false);	// R1218
+        // add translation to current scope
+        Token * caf_end_finish = create_token(eos->line, eos->col, 0, ENDFINISH_SUBR_NAME);
+        c_action_section_subscript_list__begin();                               // R619
+        c_action_section_subscript_list(0);                                             // R619
+        c_action_part_ref(caf_end_finish, true, false);                 // R613
+        c_action_data_ref(1);                                                                   // R612
+        c_action_procedure_designator();                                                // R1219
+        c_action_call_stmt(NULL, caf_end_finish, NULL, false);  // R1218
 
 #if 1
-	outputState("At BOTTOM of c_action_rice_end_finish_stmt()");
+        outputState("At BOTTOM of c_action_rice_end_finish_stmt()");
 #endif
 }
 
@@ -20659,87 +20659,87 @@ void c_action_rice_end_finish_stmt(Token_t *label, Token_t *eos)
 void c_action_rice_spawn_stmt(Token_t * label, Token_t * spawn, Token_t * eos, ofp_bool hasEvent)
 {
 #if 1
-	outputState("At TOP of c_action_rice_spawn_stmt()");
+        outputState("At TOP of c_action_rice_spawn_stmt()");
 #endif
 
-	// get the function reference and its arg list
+        // get the function reference and its arg list
     ROSE_ASSERT(astExpressionStack.empty() == false);
     SgFunctionCallExp * originalCallExpr = isSgFunctionCallExp(astExpressionStack.front());
-    ROSE_ASSERT(originalCallExpr != NULL);	// TODO: can we get a SgFunctionRefExp instead, if no actual param list given?
+    ROSE_ASSERT(originalCallExpr != NULL);      // TODO: can we get a SgFunctionRefExp instead, if no actual param list given?
     astExpressionStack.pop_front();
 
     SgFunctionRefExp * functionRef = isSgFunctionRefExp(originalCallExpr->get_function());
     ROSE_ASSERT(functionRef != NULL);
     SgExprListExp * argumentList   = originalCallExpr->get_args();
 
-	// get the notification event if any
-	SgExpression * eventExpr;
-	if( hasEvent )
-	{
-	    ROSE_ASSERT(astExpressionStack.empty() == false);
-		eventExpr = astExpressionStack.front();
-		astExpressionStack.pop_front();
-	}
-	else
-		eventExpr = NULL;
+        // get the notification event if any
+        SgExpression * eventExpr;
+        if( hasEvent )
+        {
+            ROSE_ASSERT(astExpressionStack.empty() == false);
+                eventExpr = astExpressionStack.front();
+                astExpressionStack.pop_front();
+        }
+        else
+                eventExpr = NULL;
 
     // get processor # and team id
     ROSE_ASSERT(rice_dataref_coexpr != NULL);
-    SgExpression * pnumExpr	= rice_dataref_coexpr->get_teamRank();
+    SgExpression * pnumExpr     = rice_dataref_coexpr->get_teamRank();
     SgVarRefExp * teamExpr = rice_dataref_coexpr->get_teamId();
     delete rice_dataref_coexpr; rice_dataref_coexpr = NULL;
 
     // argument list
-		c_action_section_subscript_list__begin();					// R619
+                c_action_section_subscript_list__begin();                                       // R619
 
-		// function to be spawned
-		astExpressionStack.push_front(functionRef);
-		c_action_section_subscript(true, false, false, true);		// R619
+                // function to be spawned
+                astExpressionStack.push_front(functionRef);
+                c_action_section_subscript(true, false, false, true);           // R619
 
-		// original function arguments from source
-		SgExpressionPtrList & argPtrs = argumentList->get_expressions();
-		int num = argPtrs.size();
-		for( int k = 0; k < num; k++)
-		{
-			astExpressionStack.push_front(argPtrs[k]);
-			c_action_section_subscript(true, false, false, true);	// R619
-		}
+                // original function arguments from source
+                SgExpressionPtrList & argPtrs = argumentList->get_expressions();
+                int num = argPtrs.size();
+                for( int k = 0; k < num; k++)
+                {
+                        astExpressionStack.push_front(argPtrs[k]);
+                        c_action_section_subscript(true, false, false, true);   // R619
+                }
 
-		// processor number
-		astExpressionStack.push_front(pnumExpr);
-		c_action_section_subscript(true, false, false, true);		// R619
+                // processor number
+                astExpressionStack.push_front(pnumExpr);
+                c_action_section_subscript(true, false, false, true);           // R619
 
-		// team id
-		if( teamExpr != NULL )										// R619
-			astExpressionStack.push_front(teamExpr);
-		else
-		{
-			SgExpression * nullExpr = new SgNullExpression();
-			setSourcePosition(nullExpr, spawn);
-			astExpressionStack.push_front(nullExpr);
-		}
-		c_action_section_subscript(true, false, false, true);
+                // team id
+                if( teamExpr != NULL )                                                                          // R619
+                        astExpressionStack.push_front(teamExpr);
+                else
+                {
+                        SgExpression * nullExpr = new SgNullExpression();
+                        setSourcePosition(nullExpr, spawn);
+                        astExpressionStack.push_front(nullExpr);
+                }
+                c_action_section_subscript(true, false, false, true);
 
-		// notification event
-		if( hasEvent )												// R619
-			astExpressionStack.push_front(eventExpr);
-		else
-		{
-			SgExpression * nullExpr = new SgNullExpression();
-			setSourcePosition(nullExpr, spawn);
-			astExpressionStack.push_front(nullExpr);
-		}
-		c_action_section_subscript(true, false, false, true);
+                // notification event
+                if( hasEvent )                                                                                          // R619
+                        astExpressionStack.push_front(eventExpr);
+                else
+                {
+                        SgExpression * nullExpr = new SgNullExpression();
+                        setSourcePosition(nullExpr, spawn);
+                        astExpressionStack.push_front(nullExpr);
+                }
+                c_action_section_subscript(true, false, false, true);
 
-		// number of args = original number + 4 (f, p, t, e)
-		c_action_section_subscript_list(num + 4);					// R619
+                // number of args = original number + 4 (f, p, t, e)
+                c_action_section_subscript_list(num + 4);                                       // R619
 
-	// function call
-	Token * caf_spawn_subr = create_token(spawn->line, spawn->col, 0, SPAWN_SUBR_NAME);
-	c_action_part_ref(caf_spawn_subr, true, false);					// R613
-	c_action_data_ref(1);											// R612
-	c_action_procedure_designator();								// R1219
-	c_action_call_stmt(NULL, caf_spawn_subr, NULL, false);			// R1218
+        // function call
+        Token * caf_spawn_subr = create_token(spawn->line, spawn->col, 0, SPAWN_SUBR_NAME);
+        c_action_part_ref(caf_spawn_subr, true, false);                                 // R613
+        c_action_data_ref(1);                                                                                   // R612
+        c_action_procedure_designator();                                                                // R1219
+        c_action_call_stmt(NULL, caf_spawn_subr, NULL, false);                  // R1218
 }
 
 

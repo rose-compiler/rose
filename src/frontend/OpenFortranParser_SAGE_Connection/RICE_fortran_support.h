@@ -377,9 +377,9 @@ void specialFixupForLabelOnStackAndNotPassedAsParameter( SgStatement* statement 
 // DXN (01/07/2011): a utility function to convert anything of type T to string
 template <class T>
 inline std::string toString (const T& t) {
-	std::stringstream ss;
-	ss << t;
-	return ss.str();
+        std::stringstream ss;
+        ss << t;
+        return ss.str();
 }
 
 //! Replace SgDefaultType in function return type if appropriate.

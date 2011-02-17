@@ -59,10 +59,10 @@ void foo()
   a = c;
   L9:
   x = (a + b);
-  L10:;
 // DQ (12/16/2006): This appears to be OK now (it was a previous ROSE bug).
 // L10: 0; // ROSE bug: using return; here doesn't work
 // ROSE bug: using return; here doesn't work
+  L10:;
 }
 
 int main(int ,char **)

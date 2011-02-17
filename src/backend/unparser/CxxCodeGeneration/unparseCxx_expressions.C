@@ -109,7 +109,12 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case RSHIFT_OP: { unparseRShiftOp(expr, info); break; }
           case UNARY_MINUS_OP: { unparseUnaryMinusOp(expr, info); break; }
           case UNARY_ADD_OP: { unparseUnaryAddOp(expr, info); break; }
-          case SIZEOF_OP: { unparseSizeOfOp(expr, info); break; }
+
+          case SIZEOF_OP:             { unparseSizeOfOp(expr, info); break; }
+          case UPC_LOCAL_SIZEOF_EXPR: { unparseUpcLocalSizeOfOp(expr, info); break; }
+          case UPC_BLOCK_SIZEOF_EXPR: { unparseUpcBlockSizeOfOp(expr, info); break; }
+          case UPC_ELEM_SIZEOF_EXPR:  { unparseUpcElemSizeOfOp(expr, info); break; }
+
           case TYPEID_OP: { unparseTypeIdOp(expr, info); break; }
           case NOT_OP: { unparseNotOp(expr, info); break; }
           case DEREF_OP: { unparseDerefOp(expr, info); break; }
@@ -472,7 +477,7 @@ void Unparse_ExprStmt::unparseExpression(SgExpression* expr, SgUnparse_Info& inf
           if ( !info.SkipComments() || !info.SkipCPPDirectives() )
              {
                curprint ( "\n /* In unparseExpression paren " + expr->sage_class_name() +
-				  " paren printParen = " + (printParen ? "true" : "false") + " */ \n");
+                                  " paren printParen = " + (printParen ? "true" : "false") + " */ \n");
              }
 #endif
           if (printParen)
@@ -1163,7 +1168,7 @@ Unparse_ExprStmt::unparseBinaryExpr(SgExpression* expr, SgUnparse_Info& info)
 
                  // Two cases must be considered here: prefix unary and postfix unary 
                  // operators. Most of the unary operators are prefix. In this case, we must
-                 // first unparse the rhs and then the lhs.	
+                 // first unparse the rhs and then the lhs.     
                  // if (isUnaryPostfixOperator(binary_op->get_rhs_operand())); // Postfix unary operator.
                     if (unp->u_sage->isUnaryPostfixOperator(binary_op->get_rhs_operand()))  // Postfix unary operator.
                        {
@@ -1823,12 +1828,12 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
    {
-	   // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
+           // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
 
 //#ifndef _MSCx_VER
 //#pragma message ("WARNING: Commented out body of unparseMFuncRef()")
-//	   printf ("Error: Commented out body of unparseMFuncRef() \n");
-//	   ROSE_ASSERT(false);
+//         printf ("Error: Commented out body of unparseMFuncRef() \n");
+//         ROSE_ASSERT(false);
 //#else
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      ROSE_ASSERT(mfunc_ref != NULL);
@@ -1849,7 +1854,7 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
   // DQ (2/16/2004): error in templates (test2004_18.C)
      ROSE_ASSERT (cdef != NULL);
      SgClassDeclaration* decl;
-	 decl = cdef->get_declaration();
+         decl = cdef->get_declaration();
 #if 0
      printf ("Inside of unparseMFuncRef expr = %p (name = %s::%s) \n",expr,cdecl->get_name().str(),mfd->get_name().str());
      curprint ( "\n /* Inside of unparseMFuncRef */ \n");
@@ -3103,6 +3108,90 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
      curprint ( ")");
    }
 
+void
+Unparse_ExprStmt::unparseUpcLocalSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
+   {
+     SgUpcLocalsizeofExpression* sizeof_op = isSgUpcLocalsizeofExpression(expr);
+     ROSE_ASSERT(sizeof_op != NULL);
+
+     curprint ( "upc_localsizeof(");
+     if (sizeof_op->get_expression() != NULL)
+        {
+          ROSE_ASSERT(sizeof_op->get_expression() != NULL);
+          unparseExpression(sizeof_op->get_expression(), info);
+        }
+#if 1
+    // DQ (2/12/2011): Leave this here until I'm sure that we don't need to handle types.
+       else
+        {
+          ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
+          SgUnparse_Info info2(info);
+          info2.unset_SkipBaseType();
+          info2.set_SkipClassDefinition();
+          info2.unset_isTypeFirstPart();
+          info2.unset_isTypeSecondPart();
+          unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
+        }
+#endif
+     curprint ( ")");
+   }
+
+void
+Unparse_ExprStmt::unparseUpcBlockSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
+   {
+     SgUpcBlocksizeofExpression* sizeof_op = isSgUpcBlocksizeofExpression(expr);
+     ROSE_ASSERT(sizeof_op != NULL);
+
+     curprint ( "upc_blocksizeof(");
+     if (sizeof_op->get_expression() != NULL)
+        {
+          ROSE_ASSERT(sizeof_op->get_expression() != NULL);
+          unparseExpression(sizeof_op->get_expression(), info);
+        }
+#if 1
+    // DQ (2/12/2011): Leave this here until I'm sure that we don't need to handle types.
+       else
+        {
+          ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
+          SgUnparse_Info info2(info);
+          info2.unset_SkipBaseType();
+          info2.set_SkipClassDefinition();
+          info2.unset_isTypeFirstPart();
+          info2.unset_isTypeSecondPart();
+          unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
+        }
+#endif
+     curprint ( ")");
+   }
+
+void
+Unparse_ExprStmt::unparseUpcElemSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
+   {
+     SgUpcElemsizeofExpression* sizeof_op = isSgUpcElemsizeofExpression(expr);
+     ROSE_ASSERT(sizeof_op != NULL);
+
+     curprint ( "upc_elemsizeof(");
+     if (sizeof_op->get_expression() != NULL)
+        {
+          ROSE_ASSERT(sizeof_op->get_expression() != NULL);
+          unparseExpression(sizeof_op->get_expression(), info);
+        }
+#if 1
+    // DQ (2/12/2011): Leave this here until I'm sure that we don't need to handle types.
+       else
+        {
+          ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
+          SgUnparse_Info info2(info);
+          info2.unset_SkipBaseType();
+          info2.set_SkipClassDefinition();
+          info2.unset_isTypeFirstPart();
+          info2.unset_isTypeSecondPart();
+          unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
+        }
+#endif
+     curprint ( ")");
+   }
+
 void Unparse_ExprStmt::unparseTypeIdOp(SgExpression* expr, SgUnparse_Info& info) {
   SgTypeIdOp* typeid_op = isSgTypeIdOp(expr);
   ROSE_ASSERT(typeid_op != NULL);
@@ -4015,14 +4104,14 @@ Unparse_ExprStmt::unparseThrowOp(SgExpression* expr, SgUnparse_Info& info)
                        }
                       else
                        {
-			 //Liao, 5/23/2009
-			 // This is not necessarily true.
-			 // A derived class's constructor initializer list acutally 
-			 // can call its base class's constructor, even there is no
-			 // user-defined default constructor for the base class.
-			 // In this case, the parenthesis of the superclass is still needed.
-			 // e.g: baseclass::baselcass( ):superclass() {};
-			 // See bug 351
+                         //Liao, 5/23/2009
+                         // This is not necessarily true.
+                         // A derived class's constructor initializer list acutally 
+                         // can call its base class's constructor, even there is no
+                         // user-defined default constructor for the base class.
+                         // In this case, the parenthesis of the superclass is still needed.
+                         // e.g: baseclass::baselcass( ):superclass() {};
+                         // See bug 351
                       // DQ (8/5/2005): Now we force the get_args() pointer to always be a valid pointer and explicitly store a
                       // bool value to control when we output the "()" after the class name.
                          //ROSE_ASSERT(constructorInitializer->get_need_parenthesis_after_name() == false);

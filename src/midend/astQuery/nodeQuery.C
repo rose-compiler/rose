@@ -341,7 +341,7 @@ NodeQuerySynthesizedAttributeType NodeQuery::queryNodeClassDeclarationsFromTypeN
        cout<< "\n\n The typenames is : " << currentTypeName << "\n\n" << previousTypeName << "\n\n";
 
        }while( previousTypeName != currentTypeName);
-     */	
+     */ 
   }
 
   return returnList;
@@ -484,7 +484,7 @@ NodeQuery::querySolverArguments (SgNode * astNode)
       {
         // DQ (8/20/2005): Added default to avoid compiler warnings about unrepresented cases
       }
-  }				/* End switch-case */
+  }                             /* End switch-case */
 
   return returnNodeList;
 }
@@ -499,7 +499,7 @@ NodeQuery::querySolverFunctionDeclarations (SgNode * astNode)
     returnNodeList.push_back (astNode);
 
   return returnNodeList;
-}				/* End function querySolverFunctionDeclarations() */
+}                               /* End function querySolverFunctionDeclarations() */
 
   NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverMemberFunctionDeclarations (SgNode * astNode)
@@ -511,7 +511,7 @@ NodeQuery::querySolverMemberFunctionDeclarations (SgNode * astNode)
     returnNodeList.push_back (astNode);
 
   return returnNodeList;
-}				/* End function querySolverMemberFunctionDeclarations() */
+}                               /* End function querySolverMemberFunctionDeclarations() */
 
   NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverVariableTypes (SgNode * astNode)
@@ -585,7 +585,7 @@ NodeQuery::querySolverVariableTypes (SgNode * astNode)
           returnNodeList.push_back (typeNode);
         }
         break;
-      }				/* End case V_SgVariableDeclaration */
+      }                         /* End case V_SgVariableDeclaration */
 
     case V_SgFunctionDeclaration:
     case V_SgMemberFunctionDeclaration:
@@ -621,12 +621,12 @@ NodeQuery::querySolverVariableTypes (SgNode * astNode)
       {
         // DQ (8/20/2005): Added default to avoid compiler warnings about unrepresented cases
       }
-  }				/* End switch case astNode */
+  }                             /* End switch case astNode */
 
 
 
   return returnNodeList;
-}				/* End function querySolverType() */
+}                               /* End function querySolverType() */
 
   NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverVariableDeclarations (SgNode * astNode)
@@ -682,10 +682,10 @@ NodeQuery::querySolverVariableDeclarations (SgNode * astNode)
       {
         // DQ (8/20/2005): Added default to avoid compiler warnings about unrepresented cases
       }
-  }				/* End switch-case */
+  }                             /* End switch-case */
 
   return returnNodeList;
-}				/* End function querySolverVariableDeclarations() */
+}                               /* End function querySolverVariableDeclarations() */
 
   NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverClassDeclarations (SgNode * astNode)
@@ -701,7 +701,7 @@ NodeQuery::querySolverClassDeclarations (SgNode * astNode)
 
 
   return returnNodeList;
-}				/* End function querySolverClassDeclarations() */
+}                               /* End function querySolverClassDeclarations() */
 
   NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverStructDeclarations (SgNode * astNode)
@@ -717,7 +717,7 @@ NodeQuery::querySolverStructDeclarations (SgNode * astNode)
 
 
   return returnNodeList;
-}				/* End function querySolverStructDeclarations() */
+}                               /* End function querySolverStructDeclarations() */
 
 
   NodeQuerySynthesizedAttributeType
@@ -734,7 +734,7 @@ NodeQuery::querySolverUnionDeclarations (SgNode * astNode)
 
 
   return returnNodeList;
-}				/* End function querySolverUnionDeclarations() */
+}                               /* End function querySolverUnionDeclarations() */
 
   NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverTypedefDeclarations (SgNode * astNode)
@@ -747,7 +747,7 @@ NodeQuery::querySolverTypedefDeclarations (SgNode * astNode)
 
 
   return returnNodeList;
-}				/* End function querySolverTypedefDeclarations() */
+}                               /* End function querySolverTypedefDeclarations() */
 
   NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverClassFields (SgNode * astNode)
@@ -792,7 +792,7 @@ NodeQuery::querySolverClassFields (SgNode * astNode)
     }
   }
   return returnNodeList;
-}				/* End function querySolverClassFields() */
+}                               /* End function querySolverClassFields() */
 
 
   NodeQuerySynthesizedAttributeType
@@ -833,7 +833,7 @@ NodeQuery::querySolverStructFields (SgNode * astNode)
 
 
   return returnNodeList;
-}				/* End function querySolverClassFields() */
+}                               /* End function querySolverClassFields() */
 
 
 
@@ -877,7 +877,7 @@ NodeQuery::querySolverUnionFields (SgNode * astNode)
 
   return returnNodeList;
 
-}				/* End function querySolverUnionFields() */
+}                               /* End function querySolverUnionFields() */
 
 
 
@@ -902,7 +902,7 @@ NodeQuery::querySolverStructDefinitions (SgNode * astNode)
   }
 
   return returnNodeList;
-}				/* End function querySolverClassFields() */
+}                               /* End function querySolverClassFields() */
 
 
 
@@ -928,7 +928,7 @@ NodeQuery::querySolverFunctionDeclarationFromDefinition (SgNode * astNode,
 
   return returnNodeList;
 
-}				/* End function querySolverUnionFields() */
+}                               /* End function querySolverUnionFields() */
 
 
 

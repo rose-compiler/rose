@@ -21,7 +21,10 @@ distributedScripts =				\
      policies/FileLister.pm                     \
      policies/NoExceedinglyLongLines.pl		\
      policies/NoRoseIncludes.pl			\
+     policies/NoTabCharacters.pl		\
      policies/NoUsingInHeaders.pl		\
+     policies/Policies.pm			\
+     policies/UniqueFortranModules.pl		\
      policies/UniqueHeaderNames.pl		\
      policies/UnixLineTermination.pl		\
      policies/UnusedHeaders.pl                  \

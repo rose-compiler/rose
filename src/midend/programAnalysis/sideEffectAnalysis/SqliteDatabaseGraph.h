@@ -23,11 +23,11 @@
 #include "sqlite3x.h"
 
 //! the different graph types, used for graphdata.graphType field
-#define GTYPE_CALLGRAPH 				1
-#define GTYPE_CLASSHIERARCHY		2
-#define GTYPE_TESTGRAPH					3 		// for database graph example
-#define GTYPE_SIMPLECALLGRAPH		4 		// for simple callgraph example
-#define GTYPE_USERDEFINED				100 	// user defined graphs should start with this id
+#define GTYPE_CALLGRAPH                                 1
+#define GTYPE_CLASSHIERARCHY            2
+#define GTYPE_TESTGRAPH                                 3               // for database graph example
+#define GTYPE_SIMPLECALLGRAPH           4               // for simple callgraph example
+#define GTYPE_USERDEFINED                               100     // user defined graphs should start with this id
 
 
 //--------------------------------------------------------------------
@@ -353,154 +353,154 @@ define_schema(sqlite3x::sqlite3_connection& gDB)
 
 // install boost database graph property map types
 namespace boost {
-	enum vertex_dbg_data_t { vertex_dbg_data };
-	BOOST_INSTALL_PROPERTY( vertex, dbg_data );
+        enum vertex_dbg_data_t { vertex_dbg_data };
+        BOOST_INSTALL_PROPERTY( vertex, dbg_data );
 
-	enum edge_dbg_data_t { edge_dbg_data };
-	BOOST_INSTALL_PROPERTY( edge, dbg_data );
+        enum edge_dbg_data_t { edge_dbg_data };
+        BOOST_INSTALL_PROPERTY( edge, dbg_data );
 
-	enum graph_dbg_data_t { graph_dbg_data };
-	BOOST_INSTALL_PROPERTY( graph, dbg_data );
+        enum graph_dbg_data_t { graph_dbg_data };
+        BOOST_INSTALL_PROPERTY( graph, dbg_data );
 };
 
 //-----------------------------------------------------------------------------
 //! graph database storage class 
 template<class VertexType, class EdgeType, 
-	class BoostVertexList = boost::vecS, class BoostEdgeList = boost::vecS, class BoostDirection = boost::bidirectionalS,
-	class BoostVertexProperty = boost::GraphvizVertexProperty, class BoostEdgeProperty = boost::GraphvizEdgeProperty, class BoostGraphProperty = boost::GraphvizGraphProperty >
+        class BoostVertexList = boost::vecS, class BoostEdgeList = boost::vecS, class BoostDirection = boost::bidirectionalS,
+        class BoostVertexProperty = boost::GraphvizVertexProperty, class BoostEdgeProperty = boost::GraphvizEdgeProperty, class BoostGraphProperty = boost::GraphvizGraphProperty >
 class DatabaseGraph : 
-	public boost::adjacency_list<
-		BoostVertexList, BoostEdgeList, BoostDirection,
-		boost::property< boost::vertex_index1_t, std::size_t,
+        public boost::adjacency_list<
+                BoostVertexList, BoostEdgeList, BoostDirection,
+                boost::property< boost::vertex_index1_t, std::size_t,
             boost::property<boost::vertex_name_t, std::string,
             boost::property<boost::vertex_color_t, boost::default_color_type,
-			boost::property<boost::vertex_dbg_data_t, VertexType,
+                        boost::property<boost::vertex_dbg_data_t, VertexType,
             BoostVertexProperty > > > >,
-		boost::property<boost::edge_dbg_data_t, EdgeType, BoostEdgeProperty>,
-		boost::property<boost::graph_dbg_data_t, int, BoostGraphProperty>
-	>
+                boost::property<boost::edge_dbg_data_t, EdgeType, BoostEdgeProperty>,
+                boost::property<boost::graph_dbg_data_t, int, BoostGraphProperty>
+        >
 {
 
 public:
-	
-	//! boost graph typedefs
+        
+        //! boost graph typedefs
         typedef boost::adjacency_list<
-		//boost::vecS, boost::vecS, bidirectionalS,
-		BoostVertexList, BoostEdgeList, BoostDirection,
-		boost::property< boost::vertex_index1_t, std::size_t,
+                //boost::vecS, boost::vecS, bidirectionalS,
+                BoostVertexList, BoostEdgeList, BoostDirection,
+                boost::property< boost::vertex_index1_t, std::size_t,
         boost::property<boost::vertex_name_t, std::string,
         boost::property<boost::vertex_color_t, boost::default_color_type,
-			boost::property<boost::vertex_dbg_data_t, VertexType,
+                        boost::property<boost::vertex_dbg_data_t, VertexType,
             BoostVertexProperty > > > >,
-		boost::property<boost::edge_dbg_data_t, 	EdgeType,
+                boost::property<boost::edge_dbg_data_t,         EdgeType,
         BoostEdgeProperty>,
-		boost::property<boost::graph_dbg_data_t, 	int, BoostGraphProperty>
-	> dbgType;
-	typedef typename boost::graph_traits< dbgType >::vertex_descriptor dbgVertex;
-	typedef typename boost::graph_traits< dbgType >::vertex_iterator 	dbgVertexIterator;
-	typedef typename boost::graph_traits< dbgType >::edge_descriptor  	dbgEdge;
-	typedef typename boost::graph_traits< dbgType >::edge_iterator  		dbgEdgeIterator;
-	typedef typename std::pair<bool, dbgEdge>										dbgEdgeReturn;
+                boost::property<boost::graph_dbg_data_t,        int, BoostGraphProperty>
+        > dbgType;
+        typedef typename boost::graph_traits< dbgType >::vertex_descriptor dbgVertex;
+        typedef typename boost::graph_traits< dbgType >::vertex_iterator        dbgVertexIterator;
+        typedef typename boost::graph_traits< dbgType >::edge_descriptor        dbgEdge;
+        typedef typename boost::graph_traits< dbgType >::edge_iterator                  dbgEdgeIterator;
+        typedef typename std::pair<bool, dbgEdge>                                                                               dbgEdgeReturn;
 
-	//! constructor
-	DatabaseGraph( long pid, long type, sqlite3x::sqlite3_connection *gdb );
-	
-	//! destructor
-	~DatabaseGraph( );
+        //! constructor
+        DatabaseGraph( long pid, long type, sqlite3x::sqlite3_connection *gdb );
+        
+        //! destructor
+        ~DatabaseGraph( );
 
-	//! add a vertex to the graph, returns the boost vertex descriptor
-	dbgVertex insertVertex(VertexType& e1, std::string name);
-	//! add a vertex with subgraph information - subgraphs are currently not supported!!!
-	dbgVertex insertVertex(VertexType& e, std::string name, int subgraphId, std::string subgraphName);
-	//! insert an edge between e1 and e2
-	dbgEdgeReturn insertEdge(VertexType& e1, VertexType& e2, EdgeType& value);
-	//! insert an edge between e1 and e2, using the empty edge data class
+        //! add a vertex to the graph, returns the boost vertex descriptor
+        dbgVertex insertVertex(VertexType& e1, std::string name);
+        //! add a vertex with subgraph information - subgraphs are currently not supported!!!
+        dbgVertex insertVertex(VertexType& e, std::string name, int subgraphId, std::string subgraphName);
+        //! insert an edge between e1 and e2
+        dbgEdgeReturn insertEdge(VertexType& e1, VertexType& e2, EdgeType& value);
+        //! insert an edge between e1 and e2, using the empty edge data class
         dbgEdgeReturn insertEdge(VertexType& e1, VertexType& e2);
 
         //! search for a specific edge in the graph, using operator= on the id, returns false if not found 
         bool searchEdge(EdgeType &edge, dbgEdge &edesc) const; 
 
-	// helper functions
+        // helper functions
 
-	//! set subgraph initialization information
-	void setSubgraphInit(int refcol, dbRow *rowdata, int namecol);
+        //! set subgraph initialization information
+        void setSubgraphInit(int refcol, dbRow *rowdata, int namecol);
 
-	//! remove all successor pointers from a node
-	int clearSuccessors(VertexType& parent);
+        //! remove all successor pointers from a node
+        int clearSuccessors(VertexType& parent);
 
-	//! remove node from the tree
-	int removeNode( VertexType& node );
+        //! remove node from the tree
+        int removeNode( VertexType& node );
 
-	//! check if there is an edge in the graph pointing to this node
-	int nodeIsUsed(VertexType& node);
+        //! check if there is an edge in the graph pointing to this node
+        int nodeIsUsed(VertexType& node);
 
-	//! get graph id (this function creates an graphdata entry, if the id is not retrieved by another function yet)
-	int getGraphId();
+        //! get graph id (this function creates an graphdata entry, if the id is not retrieved by another function yet)
+        int getGraphId();
 
-	//! set the column number of the VertexType column to take the node names from
-	void setNodeNameColumn( int set ){ mNameColumn = set; }
+        //! set the column number of the VertexType column to take the node names from
+        void setNodeNameColumn( int set ){ mNameColumn = set; }
 
 
-	// file functions
+        // file functions
 
-	//! load graph from datbase
-	int loadFromDatabase( void );
+        //! load graph from datbase
+        int loadFromDatabase( void );
 
-	//! store graph in datbase
-	int writeToDatabase( void );
-		
-	//! write DOT graph to filename
-	void writeToDOTFile(std::string filename);
-	
-	//! write the adjacency matrix to a file (only integer matrix entries, raw file format)
-	void writeAdjacencyMatrixToFileRaw(std::string filename) { };
-		
-	//! write the adjacency matrix to a file (in MCL raw file format for mcxassemble)
-	void writeAdjacencyMatrixToFileMcl(std::string filename) { };
-		
+        //! store graph in datbase
+        int writeToDatabase( void );
+                
+        //! write DOT graph to filename
+        void writeToDOTFile(std::string filename);
+        
+        //! write the adjacency matrix to a file (only integer matrix entries, raw file format)
+        void writeAdjacencyMatrixToFileRaw(std::string filename) { };
+                
+        //! write the adjacency matrix to a file (in MCL raw file format for mcxassemble)
+        void writeAdjacencyMatrixToFileMcl(std::string filename) { };
+                
 
 private:
 
-	//! search for a specific node in the graph, using operator=, returns NULL if not found
-	bool searchVertex(VertexType &node, dbgVertex &vdesc) const;
+        //! search for a specific node in the graph, using operator=, returns NULL if not found
+        bool searchVertex(VertexType &node, dbgVertex &vdesc) const;
 
 
-	// member variables
+        // member variables
 
-	//! project id for this graph
-	long mProjectId;
+        //! project id for this graph
+        long mProjectId;
 
-	//! graph id from the graphdata table
-	long mGraphId;
+        //! graph id from the graphdata table
+        long mGraphId;
 
-	//! graph type
-	long mType;
+        //! graph type
+        long mType;
 
-	//! column index of the column used for the node names
-	short mNameColumn;
+        //! column index of the column used for the node names
+        short mNameColumn;
 
-	//! database connection pointer
-	sqlite3x::sqlite3_connection *mpGDB;
+        //! database connection pointer
+        sqlite3x::sqlite3_connection *mpGDB;
 
-	//! initialize subgraph information from another table?
-	bool mInitSubgraphs;
+        //! initialize subgraph information from another table?
+        bool mInitSubgraphs;
 
-	//! column id for subgraph table id's
-	int mSubgraphReferenceColumn;
+        //! column id for subgraph table id's
+        int mSubgraphReferenceColumn;
 
-	//! table rowdata object for selection of subgraph names
-	dbRow *mpSubgraphNameRowdata;
+        //! table rowdata object for selection of subgraph names
+        dbRow *mpSubgraphNameRowdata;
 
-	//! index of subgraph name table column 
-	int mSubgraphNameColumn;
+        //! index of subgraph name table column 
+        int mSubgraphNameColumn;
 };
 
 
 
 // for shorter function definitions...
 #define DBG_TEMPLATE_DEF template<class VertexType, class EdgeType,\
-	class BoostVertexList, class BoostEdgeList, class BoostDirection,\
-	class BoostVertexProperty, class BoostEdgeProperty, class BoostGraphProperty>
+        class BoostVertexList, class BoostEdgeList, class BoostDirection,\
+        class BoostVertexProperty, class BoostEdgeProperty, class BoostGraphProperty>
 #define DBG_TEMPLATE_CLASSES VertexType, EdgeType, BoostVertexList, BoostEdgeList, BoostDirection, BoostVertexProperty, BoostEdgeProperty, BoostGraphProperty
 
 
@@ -509,53 +509,53 @@ private:
 DBG_TEMPLATE_DEF 
 DatabaseGraph<DBG_TEMPLATE_CLASSES>::DatabaseGraph( long pid, long type, sqlite3x::sqlite3_connection *gdb )
 {
-	mProjectId = pid;
-	mType      = type;
-	mpGDB      = gdb;
-	mNameColumn = -1;
-	mInitSubgraphs = false;
-	mGraphId = -1;
+        mProjectId = pid;
+        mType      = type;
+        mpGDB      = gdb;
+        mNameColumn = -1;
+        mInitSubgraphs = false;
+        mGraphId = -1;
 }
 
 DBG_TEMPLATE_DEF 
 typename DatabaseGraph<DBG_TEMPLATE_CLASSES>::dbgVertex 
 DatabaseGraph<DBG_TEMPLATE_CLASSES>::insertVertex(VertexType& e1, std::string name) 
 { 
-	dbgVertex vdesc;
-	if(searchVertex(e1, vdesc) ) {
-		// already there... , only set name etc.
-	} else {
-		vdesc = add_vertex( *this );
-		put( boost::vertex_dbg_data, *this, vdesc, e1 );
-		put( boost::vertex_index1, *this, vdesc, e1.get_id() );
-	}
-	put( boost::vertex_name, *this, vdesc, name );
-	// WARNING - dont use get( attr, G, vdesc)["label"] !!! , that's not for writing
-	get( boost::vertex_attribute, *this )[vdesc]["label"] = name;
-	//cerr << " added vertex || " << get(vertex_index1, *this, vdesc) << " " << name<< endl; // debug
-	//return e1.get_id();
-	return vdesc;
+        dbgVertex vdesc;
+        if(searchVertex(e1, vdesc) ) {
+                // already there... , only set name etc.
+        } else {
+                vdesc = add_vertex( *this );
+                put( boost::vertex_dbg_data, *this, vdesc, e1 );
+                put( boost::vertex_index1, *this, vdesc, e1.get_id() );
+        }
+        put( boost::vertex_name, *this, vdesc, name );
+        // WARNING - dont use get( attr, G, vdesc)["label"] !!! , that's not for writing
+        get( boost::vertex_attribute, *this )[vdesc]["label"] = name;
+        //cerr << " added vertex || " << get(vertex_index1, *this, vdesc) << " " << name<< endl; // debug
+        //return e1.get_id();
+        return vdesc;
 }
 
 DBG_TEMPLATE_DEF 
 typename DatabaseGraph<DBG_TEMPLATE_CLASSES>::dbgVertex 
 DatabaseGraph<DBG_TEMPLATE_CLASSES>::insertVertex(VertexType& e1, std::string name, int subgraphId, std::string subgraphName) 
 { 
-	// TODO init subgraphs
-	dbgVertex vdesc;
-	if(searchVertex(e1, vdesc) ) {
-		// already there... , only set name etc.
-	} else {
-		vdesc = add_vertex( *this );
-		put( boost::vertex_dbg_data, *this, vdesc, e1 );
-		put( boost::vertex_index1, *this, vdesc, e1.get_id() );
-	}
-	//vdesc = add_vertex( *this );
-	put( boost::vertex_name, *this, vdesc, name );
-	get( boost::vertex_attribute, *this )[vdesc]["label"] = name;
-	//cerr << " added vertex sg || " << get(vertex_index1, *this, vdesc) << " " << name<< endl; // debug
-	//return e1.get_id();
-	return vdesc;
+        // TODO init subgraphs
+        dbgVertex vdesc;
+        if(searchVertex(e1, vdesc) ) {
+                // already there... , only set name etc.
+        } else {
+                vdesc = add_vertex( *this );
+                put( boost::vertex_dbg_data, *this, vdesc, e1 );
+                put( boost::vertex_index1, *this, vdesc, e1.get_id() );
+        }
+        //vdesc = add_vertex( *this );
+        put( boost::vertex_name, *this, vdesc, name );
+        get( boost::vertex_attribute, *this )[vdesc]["label"] = name;
+        //cerr << " added vertex sg || " << get(vertex_index1, *this, vdesc) << " " << name<< endl; // debug
+        //return e1.get_id();
+        return vdesc;
 }
 
 //-----------------------------------------------------------------------------
@@ -564,36 +564,36 @@ DBG_TEMPLATE_DEF
 typename DatabaseGraph<DBG_TEMPLATE_CLASSES>::dbgEdgeReturn 
 DatabaseGraph<DBG_TEMPLATE_CLASSES>::insertEdge(VertexType& e1, VertexType& e2, EdgeType& value) 
 { 
-	dbgEdgeReturn ret;
-	ret.first = false;
-	dbgVertex vi1;
-	if(! searchVertex(e1, vi1) ) return ret;
-	dbgVertex vi2;
-	if(! searchVertex(e2, vi2) ) return ret;
+        dbgEdgeReturn ret;
+        ret.first = false;
+        dbgVertex vi1;
+        if(! searchVertex(e1, vi1) ) return ret;
+        dbgVertex vi2;
+        if(! searchVertex(e2, vi2) ) return ret;
 
-	dbgEdge ei;
+        dbgEdge ei;
   if ( ( !searchEdge(value, ei) ) ) {
     std::pair<dbgEdge, bool> eres = add_edge( vi1, vi2,  *this );
-	  if(!eres.second) {
+          if(!eres.second) {
       std::cerr << " add edge || failed!!! " << std::endl;
-	    return ret;
-	  }
-	  put( boost::edge_dbg_data, *this, eres.first, value );
-	  ei = eres.first;
-	  //cerr << " added edge || " << get(vertex_index1, *this, boost::target(ei,*this))<<","<< get(vertex_index1, *this, boost::source(ei,*this)) << endl; // debug
-	  //cerr << "   for vertex |1 " << get(vertex_index1, *this, boost::target(ei,*this)) << " " << get(vertex_attribute, *this, boost::target(ei,*this))["label"] << endl; // debug
-	  //cerr << "   for vertex |2 " << get(vertex_index1, *this, boost::source(ei,*this)) << " " << get(vertex_attribute, *this, boost::source(ei,*this))["label"] << endl; // debug
-	}
-	ret.first = true;
-	ret.second = ei;
-	return ret;
+            return ret;
+          }
+          put( boost::edge_dbg_data, *this, eres.first, value );
+          ei = eres.first;
+          //cerr << " added edge || " << get(vertex_index1, *this, boost::target(ei,*this))<<","<< get(vertex_index1, *this, boost::source(ei,*this)) << endl; // debug
+          //cerr << "   for vertex |1 " << get(vertex_index1, *this, boost::target(ei,*this)) << " " << get(vertex_attribute, *this, boost::target(ei,*this))["label"] << endl; // debug
+          //cerr << "   for vertex |2 " << get(vertex_index1, *this, boost::source(ei,*this)) << " " << get(vertex_attribute, *this, boost::source(ei,*this))["label"] << endl; // debug
+        }
+        ret.first = true;
+        ret.second = ei;
+        return ret;
 }
 
 //-----------------------------------------------------------------------------
 // destructor
 DBG_TEMPLATE_DEF DatabaseGraph<DBG_TEMPLATE_CLASSES>::~DatabaseGraph( )
 {
-	// FIXME delete all nodes?
+        // FIXME delete all nodes?
 }
 
 
@@ -601,10 +601,10 @@ DBG_TEMPLATE_DEF DatabaseGraph<DBG_TEMPLATE_CLASSES>::~DatabaseGraph( )
 // set subgraph initialization information
 DBG_TEMPLATE_DEF void DatabaseGraph<DBG_TEMPLATE_CLASSES>::setSubgraphInit(int refcol, dbRow *rowdata, int namecol)
 {
-	mInitSubgraphs = true;
-	mSubgraphReferenceColumn = refcol;
-	mpSubgraphNameRowdata = rowdata;
-	mSubgraphNameColumn = namecol;
+        mInitSubgraphs = true;
+        mSubgraphReferenceColumn = refcol;
+        mpSubgraphNameRowdata = rowdata;
+        mSubgraphNameColumn = namecol;
 }
 
 
@@ -614,42 +614,42 @@ DBG_TEMPLATE_DEF void DatabaseGraph<DBG_TEMPLATE_CLASSES>::setSubgraphInit(int r
 // remove all successor pointers from a node
 DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::clearSuccessors(VertexType &node)
 {
-	dbgVertex srcVert;
-	if(!searchVertex( node, srcVert )) return false;	
-	remove_out_edge_if( srcVert, always_true_pred(srcVert, *this), *this );
-	return true;
+        dbgVertex srcVert;
+        if(!searchVertex( node, srcVert )) return false;        
+        remove_out_edge_if( srcVert, always_true_pred(srcVert, *this), *this );
+        return true;
 }
 
 //! helper predicate for clearSuccessors function, always returns true
 template <typename Vertex, typename Graph>
-	struct always_true_predicate {
-		always_true_predicate(Vertex u, const Graph& g) { }
-		template <class Edge>
-			bool operator()(const Edge& e) const {
-				return true;
-			}
-	};
+        struct always_true_predicate {
+                always_true_predicate(Vertex u, const Graph& g) { }
+                template <class Edge>
+                        bool operator()(const Edge& e) const {
+                                return true;
+                        }
+        };
 template <typename Vertex, typename Graph>
 inline always_true_predicate<Vertex, Graph>
 always_true_pred(Vertex u, const Graph& g) {
-	return always_true_predicate<Vertex, Graph>(u, g);
+        return always_true_predicate<Vertex, Graph>(u, g);
 }
-	
+        
 
 
 //-----------------------------------------------------------------------------
 // write DOT graph to filename
 DBG_TEMPLATE_DEF void DatabaseGraph<DBG_TEMPLATE_CLASSES>::writeToDOTFile(std::string filename)
 {
-	std::ofstream fileout( filename.c_str() );
+        std::ofstream fileout( filename.c_str() );
 
-	dbgType *tG = dynamic_cast<dbgType *>( this );
-	write_graphviz( fileout, *this, 
-			make_vertex_attributes_writer(*tG),
-			make_edge_attributes_writer(*tG),
-			make_graph_attributes_writer(*tG) );
-	
-	fileout.close();
+        dbgType *tG = dynamic_cast<dbgType *>( this );
+        write_graphviz( fileout, *this, 
+                        make_vertex_attributes_writer(*tG),
+                        make_edge_attributes_writer(*tG),
+                        make_graph_attributes_writer(*tG) );
+        
+        fileout.close();
 }
 
 
@@ -659,15 +659,15 @@ DBG_TEMPLATE_DEF void DatabaseGraph<DBG_TEMPLATE_CLASSES>::writeToDOTFile(std::s
 //template<class VertexType, class EdgeType>
 DBG_TEMPLATE_DEF bool DatabaseGraph<DBG_TEMPLATE_CLASSES>::searchVertex(VertexType &node, dbgVertex &vdesc) const
 {
-	typename boost::graph_traits< dbgType >::vertex_iterator vi,vend;
-	tie(vi,vend) = vertices( *this );
-	for(; vi!=vend; vi++) {
-		if( get( boost::vertex_dbg_data,  *this , *vi).get_id() == node.get_id() ) {
-			vdesc = *vi;
-			return true;
-		}
-	}
-	return false;
+        typename boost::graph_traits< dbgType >::vertex_iterator vi,vend;
+        tie(vi,vend) = vertices( *this );
+        for(; vi!=vend; vi++) {
+                if( get( boost::vertex_dbg_data,  *this , *vi).get_id() == node.get_id() ) {
+                        vdesc = *vi;
+                        return true;
+                }
+        }
+        return false;
 }
 
 
@@ -677,16 +677,16 @@ DBG_TEMPLATE_DEF bool DatabaseGraph<DBG_TEMPLATE_CLASSES>::searchVertex(VertexTy
 //template<class VertexType, class EdgeType>
 DBG_TEMPLATE_DEF bool DatabaseGraph<DBG_TEMPLATE_CLASSES>::searchEdge(EdgeType &edge, dbgEdge &edesc) const
 {
-	typename boost::graph_traits< dbgType >::edge_iterator ei,eend;
-	tie(ei,eend) = edges( *this );
-	// milki (06/23/2010) edge_iterators use preincrement
-	for(; ei!=eend; ++ei) {
-		if( get( boost::edge_dbg_data,  *this , *ei).get_id() == edge.get_id() ) {
-			edesc = *ei;
-			return true;
-		}
-	}
-	return false;
+        typename boost::graph_traits< dbgType >::edge_iterator ei,eend;
+        tie(ei,eend) = edges( *this );
+        // milki (06/23/2010) edge_iterators use preincrement
+        for(; ei!=eend; ++ei) {
+                if( get( boost::edge_dbg_data,  *this , *ei).get_id() == edge.get_id() ) {
+                        edesc = *ei;
+                        return true;
+                }
+        }
+        return false;
 }
 
 
@@ -696,13 +696,13 @@ DBG_TEMPLATE_DEF bool DatabaseGraph<DBG_TEMPLATE_CLASSES>::searchEdge(EdgeType &
 //template<class VertexType, class EdgeType>
 DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::nodeIsUsed(VertexType &node)
 {
-	dbgVertex vi;
-	if(! searchVertex(node, vi) ) return false;
-	
-	typename boost::graph_traits< dbgType >::in_edge_iterator ii,iend;
-	tie(ii,iend) = in_edges(vi, *this );
-	if( ii == iend ) return false;
-	return true;
+        dbgVertex vi;
+        if(! searchVertex(node, vi) ) return false;
+        
+        typename boost::graph_traits< dbgType >::in_edge_iterator ii,iend;
+        tie(ii,iend) = in_edges(vi, *this );
+        if( ii == iend ) return false;
+        return true;
 }
 
 
@@ -711,48 +711,48 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::nodeIsUsed(VertexType 
 //template<class VertexType, class EdgeType>
 DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::removeNode(VertexType& node)
 {
-	dbgVertex vi;
-	if(! searchVertex(node, vi) ) return false;
+        dbgVertex vi;
+        if(! searchVertex(node, vi) ) return false;
 
-	//remove_edge_if( remove_node_pred(srcVert, *this), *this );
-	clear_vertex( vi, *this );
-	remove_vertex( vi, *this );
-	return true;
+        //remove_edge_if( remove_node_pred(srcVert, *this), *this );
+        clear_vertex( vi, *this );
+        remove_vertex( vi, *this );
+        return true;
 }
 
 //! helper predicate for removeNode function
 /*template <typename Vertex, typename Graph>
-	struct remove_node_predicate {
-		remove_node_predicate(Vertex u, const Graph& g) : srcVert(u), G(g) { }
-		template <class Edge>
-			bool operator()(const Edge& e) const {
-				if( boost::source( e, G ) == srcVert ) return true;
-				if( boost::target( e, G ) == srcVert ) return true;
-			}
-		Vertex srcVert;
-		Graph G;
-	};
+        struct remove_node_predicate {
+                remove_node_predicate(Vertex u, const Graph& g) : srcVert(u), G(g) { }
+                template <class Edge>
+                        bool operator()(const Edge& e) const {
+                                if( boost::source( e, G ) == srcVert ) return true;
+                                if( boost::target( e, G ) == srcVert ) return true;
+                        }
+                Vertex srcVert;
+                Graph G;
+        };
 template <typename Vertex, typename Graph>
 inline always_true_predicate<Vertex, Graph>
 remove_nod_pred(Vertex u, const Graph& g) {
-	return always_true_predicate<Vertex, Graph>(u, g);
+        return always_true_predicate<Vertex, Graph>(u, g);
 }*/
-	
+        
 
 //-----------------------------------------------------------------------------
 // get graph id (this function creates an graphdata entry, if the id is not retrieved by another function yet)
 //template<class VertexType, class EdgeType>
 DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::getGraphId()
 {
-	if(mGraphId>0) return mGraphId;
+        if(mGraphId>0) return mGraphId;
 
   cgData dbg(mProjectId,mType);
   dbg.insert(mpGDB);
 
   int gid = dbg.get_graphid();
-	assert( gid > 0);
-	mGraphId = gid;
-	return mGraphId;
+        assert( gid > 0);
+        mGraphId = gid;
+        return mGraphId;
 }
 
 
@@ -761,23 +761,23 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::getGraphId()
 //template<class VertexType, class EdgeType>
 DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::loadFromDatabase( void )
 {
-	int 										gid;     		// graph id for this graph
-	VertexType 							nodeinst; 	// an instance of the vertex type, this has to be a dbRow object
-  std::map<int,std::string>					nodeNames; 	// get node names from graphnode table
+        int                                                                             gid;                    // graph id for this graph
+        VertexType                                                      nodeinst;       // an instance of the vertex type, this has to be a dbRow object
+  std::map<int,std::string>                                     nodeNames;      // get node names from graphnode table
 
-	// we need a valid project id 
-	if(!mProjectId) return 1; 
+        // we need a valid project id 
+        if(!mProjectId) return 1; 
 
-	// get DB entry
-	gid = getGraphId();
+        // get DB entry
+        gid = getGraphId();
 
-	// get id's of referenced function entries
+        // get id's of referenced function entries
   std::list<int> funcids;
-	bool showUncalledFunctions = true;
+        bool showUncalledFunctions = true;
 
 
-	if(!showUncalledFunctions) {
-		// get only used functions
+        if(!showUncalledFunctions) {
+                // get only used functions
     sqlite3x::sqlite3_command selectcmd(*mpGDB,
         "SELECT DISTINCT sourceID FROM " + std::string(GRAPHEDGETBL) + " WHERE graphId = ? ORDER BY sourceID ASC;");
     selectcmd.bind(1,gid);
@@ -801,14 +801,14 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::loadFromDatabase( void
         std::find( funcids.begin(), funcids.end(), newid );
       funcids.push_back( r.getint(0) );
 
-			if(fiditer == funcids.end() )
-				funcids.push_back( newid );
-		}
-		// FIXME - get names?
-		assert( mNameColumn > 0 );
-	} else {
+                        if(fiditer == funcids.end() )
+                                funcids.push_back( newid );
+                }
+                // FIXME - get names?
+                assert( mNameColumn > 0 );
+        } else {
 
-		// get all nodes in the graph
+                // get all nodes in the graph
     sqlite3x::sqlite3_command selectcmd(*mpGDB,
         "SELECT DISTINCT nodeId,name FROM " + std::string(GRAPHNODETBL) + " WHERE graphId = ? ORDER BY nodeId ASC;");
     selectcmd.bind(1,gid);
@@ -825,22 +825,22 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::loadFromDatabase( void
     }
   }
 
-	// init subgraphs if necessary
+        // init subgraphs if necessary
   std::map<int, std::string> subgraphs;
-	if(mInitSubgraphs) {
-		assert( mpSubgraphNameRowdata );
-		assert( mSubgraphReferenceColumn >= 0 );
-		assert( mSubgraphNameColumn >= 0 );
-		assert( (int)mpSubgraphNameRowdata->getColumnNames().size() > mSubgraphNameColumn );
-		std::string fieldlist;
+        if(mInitSubgraphs) {
+                assert( mpSubgraphNameRowdata );
+                assert( mSubgraphReferenceColumn >= 0 );
+                assert( mSubgraphNameColumn >= 0 );
+                assert( (int)mpSubgraphNameRowdata->getColumnNames().size() > mSubgraphNameColumn );
+                std::string fieldlist;
     std::vector<std::string> fieldsSubgraphTable = mpSubgraphNameRowdata->getColumnNames();
-		std::vector<std::string> fieldsVertexTable = nodeinst.columnNames;
-		for(size_t i=0;i<fieldsSubgraphTable.size();i++) { 
-			fieldlist += fieldsSubgraphTable[i];
-			if(i!=fieldsSubgraphTable.size()-1) fieldlist += ",";
-		}
-		
-		std::string recolname = fieldsVertexTable[ mSubgraphReferenceColumn ];
+                std::vector<std::string> fieldsVertexTable = nodeinst.columnNames;
+                for(size_t i=0;i<fieldsSubgraphTable.size();i++) { 
+                        fieldlist += fieldsSubgraphTable[i];
+                        if(i!=fieldsSubgraphTable.size()-1) fieldlist += ",";
+                }
+                
+                std::string recolname = fieldsVertexTable[ mSubgraphReferenceColumn ];
 
     sqlite3x::sqlite3_command selectcmd3(*mpGDB,
         "SELECT DISTINCT " + recolname + " FROM " + nodeinst.name + ";");
@@ -867,43 +867,43 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::loadFromDatabase( void
           nodeNames[ newid ] = r4.getstring(1);
       }
     }
-	}
-	
-	// retrieve function entries, and add as nodes
-	for(std::list<int>::iterator i=funcids.begin();i!=funcids.end(); i++) {
-		//cout << " FIT " << (*i) << endl;
-		VertexType row;
-		int id = (*i);
+        }
+        
+        // retrieve function entries, and add as nodes
+        for(std::list<int>::iterator i=funcids.begin();i!=funcids.end(); i++) {
+                //cout << " FIT " << (*i) << endl;
+                VertexType row;
+                int id = (*i);
     sqlite3x::sqlite3_command selectcmd5(*mpGDB,
         "SELECT " + row.field_list() + " FROM " + row.table() + " WHERE id=?;");
     selectcmd5.bind(1,id);
 
     sqlite3x::sqlite3_reader r5 = selectcmd5.executereader();
 
-		//assert( res->size() == 1);
+                //assert( res->size() == 1);
     
-		//cout << " X " << sqlrow[0] << " " << sqlrow[1] << " " << sqlrow[2] << endl;
+                //cout << " X " << sqlrow[0] << " " << sqlrow[1] << " " << sqlrow[2] << endl;
     std::string nodename;
-		if(mNameColumn>0) {
-			nodename	= r5.getstring(mNameColumn); // get column with index mNameColumn from first sql row
-		} else {
-			nodename	= nodeNames[ id ];
-		}
+                if(mNameColumn>0) {
+                        nodename        = r5.getstring(mNameColumn); // get column with index mNameColumn from first sql row
+                } else {
+                        nodename        = nodeNames[ id ];
+                }
 
-		// create boost vertex
-		typename boost::graph_traits< dbgType >::vertex_descriptor vdesc;
-		vdesc = add_vertex( *this );
-		put( boost::vertex_name, *this, vdesc, nodename );
+                // create boost vertex
+                typename boost::graph_traits< dbgType >::vertex_descriptor vdesc;
+                vdesc = add_vertex( *this );
+                put( boost::vertex_name, *this, vdesc, nodename );
 
     r5.read();
-		VertexType content(r5);
-		put( boost::vertex_dbg_data, *this, vdesc, content );
-		put( boost::vertex_index1, *this, vdesc, id );
-		get( boost::vertex_attribute, *this )[vdesc]["label"] = nodename;
-		if(mInitSubgraphs) {
-			// TODO
-		}
-	}
+                VertexType content(r5);
+                put( boost::vertex_dbg_data, *this, vdesc, content );
+                put( boost::vertex_index1, *this, vdesc, id );
+                get( boost::vertex_attribute, *this )[vdesc]["label"] = nodename;
+                if(mInitSubgraphs) {
+                        // TODO
+                }
+        }
 
   sqlite3x::sqlite3_command selectcmd6(*mpGDB,
       "SELECT * FROM " + std::string(GRAPHEDGETBL) + " WHERE graphId = ?;");
@@ -914,57 +914,57 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::loadFromDatabase( void
   cgEdge edge;
   while( r6.read() ) {
     edge.load(r6);
-		bool parFound = false, succFound = false;
-		typename boost::graph_traits< dbgType >::vertex_iterator vi,vend;
-		tie(vi,vend) = vertices( *this );
-		typename boost::graph_traits< dbgType >::vertex_descriptor par=*vi, succ=*vi;
+                bool parFound = false, succFound = false;
+                typename boost::graph_traits< dbgType >::vertex_iterator vi,vend;
+                tie(vi,vend) = vertices( *this );
+                typename boost::graph_traits< dbgType >::vertex_descriptor par=*vi, succ=*vi;
 
-		for(; vi!=vend; vi++) {
-			//cout << " SRCH " << mNodes[j].value_list() << endl;
-			//if( C[j].first.get_id() == edges[i].get_sourceId() ) {
-				//gpar = C[j].first;
+                for(; vi!=vend; vi++) {
+                        //cout << " SRCH " << mNodes[j].value_list() << endl;
+                        //if( C[j].first.get_id() == edges[i].get_sourceId() ) {
+                                //gpar = C[j].first;
       //}
-			if( get( boost::vertex_dbg_data,  *this , *vi).get_id() == edge.get_sourceId() ) {
-				par = *vi;
-				parFound = true;
-			}
-			if( get( boost::vertex_dbg_data,  *this , *vi).get_id() == edge.get_targetId() ) {
-				succ = *vi;
-				succFound = true;
-			}
-			//if( C[j].first.get_id() == edges[i].get_targetId() ) {
-				//succFound = true;
-			//}
-		}
-		if((!parFound)||(!succFound))
+                        if( get( boost::vertex_dbg_data,  *this , *vi).get_id() == edge.get_sourceId() ) {
+                                par = *vi;
+                                parFound = true;
+                        }
+                        if( get( boost::vertex_dbg_data,  *this , *vi).get_id() == edge.get_targetId() ) {
+                                succ = *vi;
+                                succFound = true;
+                        }
+                        //if( C[j].first.get_id() == edges[i].get_targetId() ) {
+                                //succFound = true;
+                        //}
+                }
+                if((!parFound)||(!succFound))
     {
       std::cout << " EDGE? from " << edge.get_sourceId() << " to "<< edge.get_targetId() << std::endl;
     } // debug
-		assert( parFound );
-		assert( succFound );
+                assert( parFound );
+                assert( succFound );
 
-		// store...
+                // store...
     std::pair<dbgEdge, bool> eres = add_edge( par, succ,  *this );
-		if(!eres.second) {
+                if(!eres.second) {
       std::cerr << " add edge || failed!!! " << std::endl;
-		}
-		assert(eres.second);
+                }
+                assert(eres.second);
 
-		EdgeType row;
-		int id = edge.get_edgeId();
+                EdgeType row;
+                int id = edge.get_edgeId();
     sqlite3x::sqlite3_command selectcmd7(*mpGDB,
         "SELECT " + row.field_list() + " FROM " + row.table() +
         " WHERE id=?;");
     selectcmd7.bind(1,id);
 
-		//assert( res->size() == 1);
+                //assert( res->size() == 1);
 
     sqlite3x::sqlite3_reader r7 = selectcmd7.executereader();
     r7.read();
 
-		EdgeType content(r7);
-		put( boost::edge_dbg_data, *this, eres.first, content );
-	}
+                EdgeType content(r7);
+                put( boost::edge_dbg_data, *this, eres.first, content );
+        }
   return 0;
 }
 
@@ -973,50 +973,50 @@ DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::loadFromDatabase( void
 //template<class VertexType, class EdgeType>
 DBG_TEMPLATE_DEF int DatabaseGraph<DBG_TEMPLATE_CLASSES>::writeToDatabase( void )
 {
-	int	gid;     // graph id for this graph
+        int     gid;     // graph id for this graph
 
-	// we need a valid project id 
-	if(!mProjectId) return 1; 
+        // we need a valid project id 
+        if(!mProjectId) return 1; 
 
-	// get DB entry
-	gid = getGraphId();
+        // get DB entry
+        gid = getGraphId();
 
-	// clear all previous nodes
+        // clear all previous nodes
   sqlite3x::sqlite3_command deletecmd(*mpGDB,
       "DELETE FROM " + std::string(GRAPHNODETBL) + " WHERE graphId = ?;");
   deletecmd.bind(1,gid);
   deletecmd.executenonquery();
 
-	// save node IDs
-	typename boost::graph_traits< dbgType >::vertex_iterator vi,vend;
-	tie(vi,vend) = vertices( *this );
-	for(; vi!=vend; vi++) {
-		cgNode node( gid, 
-				get( boost::vertex_dbg_data, *this, *vi).get_id(), 
-				get( boost::vertex_name, *this, *vi) );
-		node.insert(mpGDB);
-	}
+        // save node IDs
+        typename boost::graph_traits< dbgType >::vertex_iterator vi,vend;
+        tie(vi,vend) = vertices( *this );
+        for(; vi!=vend; vi++) {
+                cgNode node( gid, 
+                                get( boost::vertex_dbg_data, *this, *vi).get_id(), 
+                                get( boost::vertex_name, *this, *vi) );
+                node.insert(mpGDB);
+        }
 
 
-	// clear all previous edges
+        // clear all previous edges
   sqlite3x::sqlite3_command deletecmd2(*mpGDB,
       "DELETE FROM " + std::string(GRAPHEDGETBL) + " WHERE graphId = ?;");
   deletecmd2.bind(1,gid);
   deletecmd2.executenonquery();
 
-	// save edges
-	typename boost::graph_traits< dbgType >::edge_iterator ei,eend;
-	tie(ei,eend) = edges( *this );
-	// milki (6/23/2010) edge_iterators use preincrement
-	for(; ei!=eend; ++ei) {
+        // save edges
+        typename boost::graph_traits< dbgType >::edge_iterator ei,eend;
+        tie(ei,eend) = edges( *this );
+        // milki (6/23/2010) edge_iterators use preincrement
+        for(; ei!=eend; ++ei) {
     cgEdge edge(gid,
-				get( boost::edge_dbg_data, *this, *ei ).get_id(),
-				get( boost::vertex_dbg_data, *this, boost::source( *ei, *this ) ).get_id(),
-				get( boost::vertex_dbg_data, *this, boost::target( *ei, *this ) ).get_id()
-			);
-		edge.insert(mpGDB);
-	}
-	return 0;
+                                get( boost::edge_dbg_data, *this, *ei ).get_id(),
+                                get( boost::vertex_dbg_data, *this, boost::source( *ei, *this ) ).get_id(),
+                                get( boost::vertex_dbg_data, *this, boost::target( *ei, *this ) ).get_id()
+                        );
+                edge.insert(mpGDB);
+        }
+        return 0;
 }
 
 

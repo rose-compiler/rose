@@ -70,19 +70,19 @@
 // These options are specific to the platforms and the Microsoft Visual C++ compilers supported by the MKS Toolkit.
 
 // _MSC_VER : defines the compiler version for the versions supported by the current version of MKS Toolkit. Possible values include:
-//         Microsoft Visual C++ 7.1	_MSC_VER = 1310
-//         Microsoft Visual C++ 7.0	_MSC_VER = 1300
-//         Microsoft Visual C++ 6.0	_MSC_VER = 1200
-//         Microsoft Visual C++ 5.0	_MSC_VER = 1100
+//         Microsoft Visual C++ 7.1     _MSC_VER = 1310
+//         Microsoft Visual C++ 7.0     _MSC_VER = 1300
+//         Microsoft Visual C++ 6.0     _MSC_VER = 1200
+//         Microsoft Visual C++ 5.0     _MSC_VER = 1100
 // 
 // _WIN32 : is defined for Win32 applications and is always defined as 1.
 // 
 // _M_IX86 : defines the processor. Possible values include:
-//         Blend		_M_IX86 = 500 
-//         Pentium		_M_IX86 = 500
-//         Pentium Pro 	_M_IX86 = 600
-//         80386		_M_IX86 = 300
-//         80486		_M_IX86 = 400
+//         Blend                _M_IX86 = 500 
+//         Pentium              _M_IX86 = 500
+//         Pentium Pro  _M_IX86 = 600
+//         80386                _M_IX86 = 300
+//         80486                _M_IX86 = 400
 #endif
 
 

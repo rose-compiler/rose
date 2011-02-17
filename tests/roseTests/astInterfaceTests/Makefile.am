@@ -188,10 +188,10 @@ rose_inputbuildCpreprocessorDefineDeclaration.C:buildCpreprocessorDefineDeclarat
 rose_inputinstrumentEndOfFunction.C:instrumentEndOfFunction
 	./instrumentEndOfFunction$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputinstrumentEndOfFunction.C
 rose_inputisUpcSharedType.upc:isUpcSharedType
-	./isUpcSharedType$(EXEEXT) $(TEST_CXXFLAGS) -rose:skipfinalCompileStep -c $(srcdir)/inputisUpcSharedType.upc
+	./isUpcSharedType$(EXEEXT) $(TEST_CXXFLAGS) -rose:skipfinalCompileStep -rose:upc_threads 1 -c $(srcdir)/inputisUpcSharedType.upc
 
 rose_inputisUpcPhaseLessSharedType.upc:isUpcPhaseLessSharedType
-	./isUpcPhaseLessSharedType$(EXEEXT) $(TEST_CXXFLAGS) -rose:skipfinalCompileStep -c $(srcdir)/inputisUpcPhaseLessSharedType.upc
+	./isUpcPhaseLessSharedType$(EXEEXT) $(TEST_CXXFLAGS) -rose:skipfinalCompileStep -rose:upc_threads 1-c $(srcdir)/inputisUpcPhaseLessSharedType.upc
 
 rose_inputbuildLabelStatement.C:buildLabelStatement
 	./buildLabelStatement$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildLabelStatement.C
@@ -203,7 +203,7 @@ abiStuffTestDone: abiStuffTest inputAbiStuffTest.c
 	./abiStuffTest$(EXEEXT) $(srcdir)/inputAbiStuffTest.c && touch abiStuffTestDone
 
 rose_inputAbiStuffTestUPC.upc:abiStuffTestUPC
-	./abiStuffTestUPC$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputAbiStuffTestUPC.upc
+	./abiStuffTestUPC$(EXEEXT) $(TEST_CXXFLAGS) -rose:upc_threads 1 -c $(srcdir)/inputAbiStuffTestUPC.upc
 
 rose_inputbuildNullStatement.C:buildNullStatement
 	./buildNullStatement$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildNullStatement.C
@@ -338,5 +338,6 @@ check-local:
 
 clean-local:
 	rm -f *.o test*.C rose_*.c rose_*.C rose_*.f rose_*.cpp *.C.pdf *.c.pdf testfile525.cpp testfile626.cpp rose_*.upc abiStuffTestDone *.dot rose_*
-	   
+
+
 

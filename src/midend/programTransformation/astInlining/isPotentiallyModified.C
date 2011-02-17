@@ -27,7 +27,7 @@ bool containsNonConst(SgNode* n, SgExpression* lhs) {
   if (isSgVarRefExp(lhs) && isSgVarRefExp(n)) {
     // cout << "n@" << hex << (int)(isSgVarRefExp(n)->get_symbol()->get_declaration()) << " = " << isSgVarRefExp(n)->get_symbol()->get_name().str() << ", lhs@" << hex << (int)(isSgVarRefExp(lhs)->get_symbol()->get_declaration()) << " = " << isSgVarRefExp(lhs)->get_symbol()->get_name().str() << endl;
     if (isSgVarRefExp(lhs)->get_symbol()->get_declaration() == 
-	isSgVarRefExp(n)->get_symbol()->get_declaration())
+        isSgVarRefExp(n)->get_symbol()->get_declaration())
       result = true;
   }
   if (isSgDotExp(n) && 
@@ -105,31 +105,31 @@ class IsPotentiallyModifiedVisitor: public AstSimpleProcessing {
 
       case V_SgFunctionCallExp:
       {
-	SgFunctionCallExp* fc = isSgFunctionCallExp(n);
-	SgExprListExp* args1 = fc->get_args();
-	SgFunctionType* ft = isSgFunctionType(fc->get_function()->get_type());
+        SgFunctionCallExp* fc = isSgFunctionCallExp(n);
+        SgExprListExp* args1 = fc->get_args();
+        SgFunctionType* ft = isSgFunctionType(fc->get_function()->get_type());
 
 // DQ (8/13/2004): Working with Jeremiah, we can now assert this 
 // and we don't have to handle the cases where this is false!
         ROSE_ASSERT (ft != NULL);
-	SgTypePtrList& params = ft->get_arguments();
-	SgExpressionPtrList& args = args1->get_expressions();
-	SgTypePtrList::iterator pi = params.begin();
-	SgExpressionPtrList::iterator ai = args.begin();
-	for (; ai != args.end(); ++ai, ++pi) {
-	  if (SageInterface::isNonconstReference(*pi))
-	    result |= containsNonConst(*ai, expr);
-	}
-	break;
+        SgTypePtrList& params = ft->get_arguments();
+        SgExpressionPtrList& args = args1->get_expressions();
+        SgTypePtrList::iterator pi = params.begin();
+        SgExpressionPtrList::iterator ai = args.begin();
+        for (; ai != args.end(); ++ai, ++pi) {
+          if (SageInterface::isNonconstReference(*pi))
+            result |= containsNonConst(*ai, expr);
+        }
+        break;
       }
 
       case V_SgInitializedName:
       {
 #if 0
-	SgVarRefExp* vr = new SgVarRefExp(SgNULL_FILE, 
-			    new SgVariableSymbol(isSgInitializedName(n)));
-	result |= containsNonConst(expr, vr); // Note flipped arguments
-	delete vr;
+        SgVarRefExp* vr = new SgVarRefExp(SgNULL_FILE, 
+                            new SgVariableSymbol(isSgInitializedName(n)));
+        result |= containsNonConst(expr, vr); // Note flipped arguments
+        delete vr;
 #endif
       }
 
