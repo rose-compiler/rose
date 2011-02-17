@@ -1180,6 +1180,9 @@ void deepDelete(SgNode* root);
 //! Replace a statement with another. Move preprocessing information from oldStmt to newStmt if requested.
 void replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessinInfo = false);
 
+//! Replace an anchor node with a specified pattern subtree with optional SgVariantExpression. All SgVariantExpression in the pattern will be replaced with copies of the anchor node.
+SgNode* replaceWithPattern (SgNode * anchor, SgNode* new_pattern);
+
 //! Append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible
 /*! We recommend to build SgFunctionParameterList before building a function declaration
  However, it is still allowed to append new arguments for existing function declarations.
