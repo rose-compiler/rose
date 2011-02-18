@@ -15,7 +15,7 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 	   AssemblerX86Init1.C AssemblerX86Init2.C AssemblerX86Init3.C AssemblerX86Init4.C AssemblerX86Init5.C \
 	   AssemblerX86Init6.C AssemblerX86Init7.C AssemblerX86Init8.C AssemblerX86Init9.C
 else
-   libroseDisassemblers_la_SOURCES = 
+   libroseDisassemblers_la_SOURCES = dummyDisassembler.C
 endif
 
 include_HEADERS = \
@@ -26,4 +26,4 @@ include_HEADERS = \
 
 dist_include_HEADERS =
 
-EXTRA_DIST = CMakeLists.txt
+EXTRA_DIST = CMakeLists.txt dummyDisassembler.C
