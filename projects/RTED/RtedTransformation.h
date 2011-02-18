@@ -36,10 +36,6 @@ bool is_main_func(const SgFunctionDefinition* func);
 // \pp \todo integrate into SageBuilder
 SgUpcBarrierStatement* buildUpcBarrierStatement();
 
-/// \brief adds an AddressDesc for a single ptr/arr indirection
-/// \param the base type (already after the indirection)
-AddressDesc baseAddressDesc(const SgType* t);
-
 //
 // helper functions
 //
@@ -65,6 +61,10 @@ SgType* skip_ArrPtrType(SgType* t);
 /// \return the base type if t is an SgModifierType
 ///         t otherwise
 SgType* skip_ModifierType(SgType* t);
+
+/// \brief  determines the C++ allocation kind for type t
+/// \return akCxxArrayNew if t is an array, akCxxNew otherwise
+AllocKind cxxHeapAllocKind(SgType* t);
 
 /// \brief   returns true, iff name refers to a char-array modifying function (e.g., strcpy, etc.)
 bool isStringModifyingFunctionCall(const std::string& name);
@@ -352,15 +352,12 @@ public:
     /// \brief   creates an address descriptor
     SgAggregateInitializer* mkAddressDesc(AddressDesc desc) const;
 
-    /// \brief   creates an address descriptor based on the type of an expression
-    SgAggregateInitializer* mkAddressDesc(SgExpression* expr) const;
-
     /// \brief   creates a Sage representation of ak
     SgEnumVal* mkAllocKind(AllocKind ak) const;
 
     /// \brief     creates an expression constructing an rted_address
     /// \param exp an expression that will be converted into an address
-    /// \param upcShared indicates whether the address is part of the PGAS
+    /// \param upcShared indicates whether the address is part of the PGAS shared space
     SgFunctionCallExp* mkAddress(SgExpression* exp, bool upcShared) const;
 
     /// \brief returns the canonical pointer to the rted_TypeDesc type
@@ -425,7 +422,6 @@ private:
    // is it a variable?
    void insertCreateObjectCall( RtedClassDefinition* cdef );
    void insertVariableCreateCall(SgInitializedName* initName);
-   void insertVariableCreateCall(SgInitializedName* initName,SgExpression* expr);
    bool isVarInCreatedVariables(SgInitializedName* n);
    void insertInitializeVariable(SgInitializedName*, SgExpression*, AllocKind);
    SgExpression* buildVariableInitCallExpr(SgInitializedName*, SgExpression*, SgStatement*, AllocKind);
@@ -434,7 +430,7 @@ private:
    /**
     * @b{ For Internal Use Only }.  See the overloaded convenience functions.
     */
-   SgFunctionCallExp* buildVariableCreateCallExpr( SgExpression* var_ref, std::string& debug_name, bool init );
+   SgFunctionCallExp* buildVariableCreateCallExpr( SgVarRefExp* var_ref, const std::string& debug_name, bool init );
 
    SgExprStatement* buildVariableCreateCallStmt( SgInitializedName* name, SgStatement* stmt, bool forceinit=false );
    /**
@@ -469,7 +465,7 @@ private:
    /// creates a heap array record for a two argument allocation (e.g., calloc)
    void arrayHeapAlloc2(SgInitializedName*, SgVarRefExp*, SgExpressionPtrList&, AllocKind);
 
-   AllocKind arrayAllocCall(SgInitializedName*, SgVarRefExp*, SgExprListExp*, SgFunctionDeclaration*);
+   AllocKind arrayAllocCall(SgInitializedName*, SgVarRefExp*, SgExprListExp*, SgFunctionDeclaration*, AllocKind);
    AllocKind arrayAllocCall(SgInitializedName*, SgVarRefExp*, SgExprListExp*, SgFunctionRefExp*, AllocKind);
 
    //
@@ -538,6 +534,13 @@ public:
    void appendAddressAndSize(SgExprListExp* arg_list, AppendKind ak, SgScopeStatement* scope, SgExpression* varRef, SgClassDefinition* cd);
    void appendAddressAndSize(SgExprListExp* arg_list, AppendKind ak, SgExpression* exp, SgType* type, SgClassDefinition* isUnionClass);
 
+   /// \brief generates an address for exp; If exp is ++, +=, -- or -=,
+   ///        the address is taken from the pointer after the update
+   SgFunctionCallExp* genAdjustedAddressOf(SgExpression* exp);
+
+   /// \brief appends the address of exp to the arg_list
+   /// \note  see also genAdjustedAddressOf for a description
+   ///        on how the address is generated
    void appendAddress( SgExprListExp* arg_list, SgExpression* exp );
    void appendClassName( SgExprListExp* arg_list, SgType* type );
 

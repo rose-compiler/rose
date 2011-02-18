@@ -41,8 +41,8 @@ void rted_Checkpoint(rted_SourceInfo si);
 /// \pp \todo should this be better called rted_CreateArrayMem?
 void rted_CreateHeapArr( rted_TypeDesc   td,
 												 rted_Address    address,
-												 size_t          elemsize,
 												 size_t          totalsize,
+												 size_t          elemsize,
 												 const size_t*   dimDescr,
 												 const char*     name,
 												 const char*     mangl_name,
@@ -141,7 +141,7 @@ void rted_ExitScope(const char*, rted_SourceInfo si);
 /***************************** SCOPE *************************************/
 
 
-void rted_Close(char* from);
+void rted_Close(const char* from);
 
 // function used to indicate error
 // \pp is this function used / defined?

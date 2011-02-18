@@ -225,45 +225,49 @@ bool upcSharedFlag(const SgModifierType& n)
   return upcModifier.get_isShared();
 }
 
+struct SharedQueryHandler
+{
+  bool          res;
+  const SgType* base;
+
+  SharedQueryHandler()
+  : res(false), base(NULL)
+  {}
+
+  void handle(const SgNode&) { assert(false); }
+  void handle(const SgType&) { }
+
+  void handle(const SgModifierType& n)
+  {
+    res = res || upcSharedFlag(n);
+    base = n.get_base_type();
+  }
+
+  void handle(const SgArrayType& n)
+  {
+    base = n.get_base_type();
+  }
+
+  void handle(const SgTypedefType& n)
+  {
+    base = n.get_base_type();
+  }
+};
+
 static
 bool isUpcShared(const SgType* n)
 {
-  const SgModifierType* t = isSgModifierType(n);
-  bool                  res = false;
+  SharedQueryHandler smh = ez::visitSgNode(SharedQueryHandler(), n);
 
-  // \pp \note can ModifierTypes be stacked?
-  while (t != NULL && !res)
+  while (!smh.res && smh.base)
   {
-    res = upcSharedFlag(*t);
-    t = isSgModifierType(t->get_base_type());
+    smh = ez::visitSgNode(SharedQueryHandler(), smh.base);
   }
 
-  return res;
+  return smh.res;
 }
 
 
-/// \brief adds an AddressDesc for a single ptr/arr indirection
-/// \param the base type (already after the indirection)
-AddressDesc baseAddressDesc(const SgType* t)
-{
-  ROSE_ASSERT( t );
-
-  AddressDesc desc;
-
-  desc.levels = 0;
-  desc.shared_mask = isUpcShared(t);
-
-  return desc;
-}
-
-
-SgAggregateInitializer*
-RtedTransformation::mkAddressDesc(SgExpression* expr) const
-{
-  ROSE_ASSERT( expr );
-
-  return mkAddressDesc( baseAddressDesc(expr->get_type()) );
-}
 
 
 SgExpression*
@@ -759,6 +763,11 @@ SgType* skip_ModifierType(SgType* t)
   return t;
 }
 
+AllocKind cxxHeapAllocKind(SgType* t)
+{
+  return isSgArrayType(skip_ModifierType(t)) ? akCxxArrayNew : akCxxNew;
+}
+
 SgType* skip_ArrPtrType(SgType* t)
 {
   SgPointerType* sgptr = isSgPointerType(t);
@@ -780,18 +789,17 @@ struct IndirectionHandler
     : res(NULL, rted_obj())
     {}
 
-    ~IndirectionHandler()
+    template <class SageNode>
+    void add_indirection(SageNode& n)
     {
-      // the type must be set
-      ROSE_ASSERT(res.first);
-    }
-
-    template <class SgPtr>
-    void add_indirection(SgPtr& n)
-    {
-      std::cerr << "*" << std::endl;
       res.first = n.get_base_type();
       ++res.second.levels;
+    }
+
+    template <class SageNode>
+    void skip(SageNode& n)
+    {
+      res.first = n.get_base_type();
     }
 
     void unexpected(SgNode& n)
@@ -807,7 +815,6 @@ struct IndirectionHandler
     void handle(SgType& n)
     {
       res.first = &n;
-      std::cerr << "!" << std::endl;
     }
 
     /// use base type
@@ -817,14 +824,19 @@ struct IndirectionHandler
     void handle(SgReferenceType& n)
     {
       // references are not counted as indirections
-      res.first = n.get_base_type();
+      skip(n);
+    }
+
+    void handle(SgTypedefType& n)
+    {
+      // the shared info might be in the base_type
+      skip(n);
     }
 
     /// extract UPC shared information
     void handle(SgModifierType& n)
     {
-      std::cerr << "." << std::endl;
-      bool sharedFlag = upcSharedFlag(n);
+      const bool sharedFlag = upcSharedFlag(n);
 
       if (sharedFlag)
       {
@@ -835,9 +847,9 @@ struct IndirectionHandler
       }
 
       // \pp \note \todo
-      // the following conditional should (probably) be removed It is here b/c.
-      // the Nov 2010 RTED code did not skip modified types                   .
-      //   to be: res.first = n.get_base_type();
+      // the following conditional should (probably) be removed. It is here b/c
+      // the Nov 2010 RTED code did not skip modified types.
+      // to be: res.first = n.get_base_type();
       res.first = sharedFlag ? n.get_base_type() : &n;
     }
 
@@ -856,7 +868,6 @@ static
 IndirectionHandler::ResultType
 indirections(SgType* base_type)
 {
-  std::cerr << "$[$" << std::endl;
   IndirectionHandler ih = ez::visitSgNode(IndirectionHandler(), base_type);
 
   while (base_type != &ih.type())
@@ -865,7 +876,6 @@ indirections(SgType* base_type)
     ih = ez::visitSgNode(ih, base_type);
   }
 
-  std::cerr << "$]$" << std::endl;
   return ih.result();
 }
 
@@ -899,8 +909,9 @@ SgAggregateInitializer* RtedTransformation::mkTypeInformation( SgType* type,
 
   IndirectionHandler::ResultType indir_desc = indirections(type);
   SgType*                        base_type = indir_desc.first;
+  SgType*                        unmod_type = skip_ModifierType(type);
   AddressDesc                    addrDesc = indir_desc.second;
-	std::string                    type_string = type->class_name();
+	std::string                    type_string = unmod_type->class_name();
 	std::string                    base_type_string;
 
 	if (addrDesc.levels > 0)
@@ -908,10 +919,10 @@ SgAggregateInitializer* RtedTransformation::mkTypeInformation( SgType* type,
 
 	// convert SgClassType to the mangled_name, if asked
 	if( resolve_class_names ) {
-		if( isSgClassType( type ))
+		if( isSgClassType( unmod_type ))
 			type_string
 				=	isSgClassDeclaration(
-						isSgClassType( type ) -> get_declaration()
+						isSgClassType( unmod_type ) -> get_declaration()
 					) -> get_mangled_name();
 
     if( addrDesc.levels > 0 && isSgClassType( base_type ))
@@ -1143,7 +1154,7 @@ SgExpression* genAddressOf(SgExpression* const exp, bool upcShared)
   SgExpression* const exp_copy = make_lvalue_visitor.visit_subtree( deepCopy(exp) );
   SgType*             char_type = buildCharType();
 
-  // in UPC we must not cast away the shared modifer
+  // in UPC we must not cast away the shared modifier
   // \pp \todo replace the magic -1 with sth more meaningful
   //           also in Cxx_Grammar and SageBuilder
   if (upcShared) char_type = buildUpcSharedType(char_type, -1);
@@ -1180,55 +1191,61 @@ SgFunctionCallExp* RtedTransformation::mkAddress(SgExpression* exp, bool upcShar
 }
 
 
+SgFunctionCallExp*
+RtedTransformation::genAdjustedAddressOf(SgExpression* exp)
+{
+  if (exp == NULL) return mkAddress(SageBuilder::buildIntVal(0), false /* not shared */);
+
+  SgIntVal* offset = NULL;
+
+  if( isSgPlusPlusOp( exp )) {
+      offset = buildIntVal( 1 );
+      exp = isSgUnaryOp( exp ) -> get_operand();
+  } else if( isSgMinusMinusOp( exp )) {
+      offset = buildIntVal( -1 );
+      exp = isSgUnaryOp( exp ) -> get_operand();
+  } else if( isSgPlusAssignOp( exp )) {
+      offset = isSgIntVal( isSgBinaryOp( exp ) ->get_rhs_operand());
+      exp = isSgBinaryOp( exp ) -> get_lhs_operand();
+  } else if( isSgMinusAssignOp( exp )) {
+      offset = buildIntVal(
+          -1 *
+          isSgIntVal( isSgBinaryOp( exp ) ->get_rhs_operand()) -> get_value()
+      );
+      exp = isSgBinaryOp( exp ) -> get_lhs_operand();
+  }
+
+  ROSE_ASSERT( exp != NULL );
+  const bool    upcShared = isUpcShared(exp->get_type());
+  SgExpression* arg = genAddressOf(exp, upcShared);
+
+  // add in offset if exp points to a complex data struture
+  if ( offset != NULL )
+  {
+    Sg_File_Info* fi = exp -> get_file_info();
+    SgMultiplyOp* mul = new SgMultiplyOp( fi, offset, buildSizeOfOp(exp) );
+
+    arg = new SgAddOp( fi, arg, mul );
+  }
+
+  return mkAddress(arg, upcShared);
+}
+
+
 /*
- * Appends the address of exp.  If exp is ++, +=, -- or -=, the address of the
- * pointer after the assignment is appended to arg_list.
+ * Appends the address of exp.
  */
 void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* exp)
 {
-    SgIntVal* offset = NULL;
-    if( isSgPlusPlusOp( exp )) {
-        offset = buildIntVal( 1 );
-        exp = isSgUnaryOp( exp ) -> get_operand();
-    } else if( isSgMinusMinusOp( exp )) {
-        offset = buildIntVal( -1 );
-        exp = isSgUnaryOp( exp ) -> get_operand();
-    } else if( isSgPlusAssignOp( exp )) {
-        offset = isSgIntVal( isSgBinaryOp( exp ) ->get_rhs_operand());
-        exp = isSgBinaryOp( exp ) -> get_lhs_operand();
-    } else if( isSgMinusAssignOp( exp )) {
-        offset = buildIntVal(
-            -1 *
-            isSgIntVal( isSgBinaryOp( exp ) ->get_rhs_operand()) -> get_value()
-        );
-        exp = isSgBinaryOp( exp ) -> get_lhs_operand();
-    }
+    SgExpression* arg = genAdjustedAddressOf(exp);
 
-    // get the address of exp
-    std::cerr << "**** " << typeid(*exp->get_type()).name() << std::endl;
-
-    const bool    upcShared = isUpcShared(exp->get_type());
-    SgExpression* arg = genAddressOf(exp, upcShared);
-
-    // add in offset if exp points to a complex data struture
-    if( offset != NULL )
-    {
-        ROSE_ASSERT( exp != NULL );
-        arg = new SgAddOp( exp -> get_file_info(),
-                           arg,
-                           new SgMultiplyOp( exp -> get_file_info(),
-                                             offset,
-                                             buildSizeOfOp( exp )
-                                           )
-                         );
-    }
-
-    appendExpression( arg_list, mkAddress(arg, upcShared) );
+    appendExpression( arg_list, arg );
 }
 
 
 void RtedTransformation::appendClassName( SgExprListExp* arg_list, SgType* type )
 {
+    // \pp \todo skip SgModifier types (and typedefs)
     SgType* basetype = skip_ArrPtrType(type);
 
     if (basetype != type)

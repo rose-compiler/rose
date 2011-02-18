@@ -35,16 +35,19 @@ enum ReadWriteMask { Read = 1, Write = 2, BoundsCheck = 4 };
 /*********************************************************
  * This function is closed when RTED finishes (Destructor)
  ********************************************************/
-void rted_Close(char* from)
+void rted_Close(const char* from)
 {
   RuntimeSystem * rs = RuntimeSystem::instance();
 
   rs->doProgramExitChecks();
 
-  std::string stdfrom(from);
+  std::stringstream s;
+
+	s << "Failed to discover error in RTED test.\n"
+	  << "   Origin: " << from << " @" << rted_ThisThread() << "\n";
+
   // The runtime system would have exited if it had found an error
-  rs->log( "Failed to discover error in RTED test. Origin : "+stdfrom+"\n" );
-  // exit( 1 );
+  rs->log( s.str() );
 }
 
 
@@ -83,14 +86,14 @@ RsArrayType* rs_getArrayType(TypeSystem& ts, const size_t* dimDesc, size_t size,
   assert( dimDesc != NULL && *dimDesc > 0 );
 
   // collect dimension information
-	const size_t*       first = dimDesc + 1;
-	const size_t*       last = dimDesc + *dimDesc;  // points to the last element (not one past!)
-	                                                //   which is the first element being processed
-  size_t              no_elems = std::accumulate(first, last+1, static_cast<size_t>(1), std::multiplies<size_t>());
-	RsType*             type = ts.getTypeInfo( base_type );
-	size_t              elem_size = (size / no_elems);
-	size_t              last_sz = elem_size * (*last);
-	RsArrayType*        res = ts.getArrayType( type, last_sz );
+	const size_t* first = dimDesc + 1;
+	const size_t* last = dimDesc + *dimDesc;  // points to the last element (not one past!)
+	                                          //   which is the first element being processed
+  size_t        no_elems = std::accumulate(first, last+1, static_cast<size_t>(1), std::multiplies<size_t>());
+	RsType*       type = ts.getTypeInfo( base_type );
+	size_t        elem_size = (size / no_elems);
+	size_t        last_sz = elem_size * (*last);
+	RsArrayType*  res = ts.getArrayType( type, last_sz );
 
 	return std::accumulate( std::reverse_iterator<const size_t*>(last),
 	                        std::reverse_iterator<const size_t*>(first),
@@ -101,12 +104,7 @@ RsArrayType* rs_getArrayType(TypeSystem& ts, const size_t* dimDesc, size_t size,
 
 
 static
-RsType* rs_getType( TypeSystem& ts,
-                    std::string type,
-				            std::string base_type,
-				            std::string class_name,
-				            AddressDesc desc
-									)
+RsType* rs_getType( TypeSystem& ts, std::string type, std::string base_type, std::string class_name, AddressDesc desc )
 {
   if( type == "SgClassType" )
     type = class_name;
@@ -171,15 +169,15 @@ static bool initialize_next_array = false;
  * line      : linenumber
  ********************************************************/
 
-void rted_CreateHeapArr( rted_TypeDesc      td,
-												 rted_Address       address,
-												 size_t             elemsize,    /* \pp always 0 ? */
-												 size_t             totalsize,
-												 const size_t*      dimDescr,
-												 const char*        name,
-												 const char*        mangl_name,
-												 const char*        class_name,
-												 rted_SourceInfo    si
+void rted_CreateHeapArr( rted_TypeDesc   td,
+												 rted_Address    address,
+												 size_t          totalsize,
+												 size_t          elemsize,   /* \pp always 0 ? */
+												 const size_t*   dimDescr,
+												 const char*     name,
+												 const char*     mangl_name,
+												 const char*     class_name,
+												 rted_SourceInfo si
 											 )
 {
 	assert(std::string("SgArrayType") == td.name);
@@ -642,6 +640,11 @@ int rted_CreateVariable( TypeDesc td,
 												 SourceInfo si
 						           )
 {
+  // CreateVariable is called for stack allocations. While UPC can
+	// allocate file scope variables in the shared memory, those
+	// creation do not need to be broadcasted to other UPC threads.
+	// The RTED startup code initializing the RTED runtime system
+	// runs in any UPC thread.
 	rted_ProcessMsg();
 
   RuntimeSystem * rs = RuntimeSystem::instance();

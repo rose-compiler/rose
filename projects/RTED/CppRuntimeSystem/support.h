@@ -21,7 +21,7 @@ assertme(bool value, const std::string& text, const std::string&, const std::str
         rd->startGui();
     }
 #endif
-    std::cerr << "Error::: " << text << std::endl;
+    std::cout << "Error::: " << text << std::endl;
     rs->setCodePosition(curpos);
   }
 }

@@ -50,11 +50,9 @@ void RuntimeSystem::printMessage(std::string message) {
 #ifdef ROSE_WITH_ROSEQT
   if( isQtDebuggerEnabled() ) {
     RtedDebug::instance()->addMessage(message);
-  } else {
-    //cerr << "++++++++++++++++++++++++++ " << message << endl;
   }
 #else
-  cerr << "w/o QT: " << message << endl;
+  std::cout << "w/o QT: " << message << endl;
 #endif
 }
 
@@ -113,8 +111,6 @@ void RuntimeSystem::checkpoint(const SourcePosition& pos)
 {
     curPos = pos;
 
-    std::cerr << "A" << pos << std::endl;
-
 #ifdef ROSE_WITH_ROSEQT
     if(qtDebugger)
         RtedDebug::instance()->startGui();
@@ -151,12 +147,9 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
     vio.setPosition(curPos);
     ViolationPolicy::Type policy = violationTypePolicy[ vio.getType() ];
 
-    switch( policy ) {
-        case ViolationPolicy::Exit:
-        case ViolationPolicy::Warn:
-            (*defaultOutStr) << vio  << endl;
-        default:
-            ;// do nothing
+    if (policy == ViolationPolicy::Exit || policy == ViolationPolicy::Warn)
+    {
+      (*defaultOutStr) << vio  << endl;
     }
 
 
@@ -176,14 +169,11 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
     }
 #endif
 
-    if( ViolationPolicy::Exit == policy ) {
-        if( testingMode )
-            throw vio;
-        else
-            rted_exit( 0 );
-    }
+    if ( policy != ViolationPolicy::Exit ) return;
 
-    return;
+    if ( testingMode ) throw vio;
+
+    rted_exit( 0 );
 }
 
 void RuntimeSystem::doProgramExitChecks()

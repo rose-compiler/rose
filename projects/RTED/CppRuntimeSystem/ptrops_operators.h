@@ -4,6 +4,7 @@
 
 #include <ostream>
 
+#include "ptrops.h"
 #include "rted_typedefs.h"
 
 inline
@@ -84,20 +85,15 @@ std::ostream& operator<<(std::ostream& s, const Address& obj)
 }
 
 inline
+Address nullAddr()
+{
+  return rted_Addr(NULL);
+}
+
+inline
 bool isNullAddr(const Address& obj)
 {
   return obj.local == NULL;
 }
-
-inline
-Address nullAddr()
-{
-  Address obj;
-
-  obj.local = NULL;
-  return obj;
-}
-
-
 
 #endif /* _PTROPS_OPERATORS_H */

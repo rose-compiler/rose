@@ -615,12 +615,13 @@ AllocKind
 RtedTransformation::arrayAllocCall( SgInitializedName* initName,
                                     SgVarRefExp* varRef,
                                     SgExprListExp* args,
-                                    SgFunctionDeclaration* funcd
+                                    SgFunctionDeclaration* funcd,
+                                    AllocKind default_result
                                   )
 {
   ROSE_ASSERT(initName && varRef && args && funcd);
 
-  AllocKind   howAlloced = akUndefined;
+  AllocKind   howAlloced = default_result;
   std::string funcname = funcd->get_name().str();
 
   std::cerr << "... Detecting func call on right hand side : " << funcname << "     and size : "
@@ -659,7 +660,6 @@ RtedTransformation::arrayAllocCall( SgInitializedName* initName,
     arrayHeapAlloc2(initName, varRef, args->get_expressions(), howAlloced);
   }
 
-  ROSE_ASSERT(howAlloced != akUndefined);
   return howAlloced;
 }
 
@@ -675,7 +675,7 @@ AllocKind RtedTransformation::arrayAllocCall(SgInitializedName* initName, SgVarR
   AllocKind res = default_result;
 
   if (funcr) {
-    res = arrayAllocCall(initName, varRef, args, funcr->getAssociatedFunctionDeclaration());
+    res = arrayAllocCall(initName, varRef, args, funcr->getAssociatedFunctionDeclaration(), default_result);
   } else {
      // right hand side of assign should only contain call to malloc somewhere
      cerr << "RtedTransformation: UNHANDLED AND ACCEPTED FOR NOW. Right of Assign : Unknown (Array creation) : "
@@ -921,8 +921,8 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
 
       // find if sizeof present in size operator
       // \pp why do we require that there is exactly one sizeof operand?
-      const SgNodePtrList& results = NodeQuery::querySubTree(size, V_SgSizeOfOp);
-      ROSE_ASSERT_MSG(results.size() == 1, "Expected to find excactly 1 sizeof operand. Abort.");
+      //~ const SgNodePtrList& results = NodeQuery::querySubTree(size, V_SgSizeOfOp);
+      //~ ROSE_ASSERT_MSG(results.size() == 1, "Expected to find excactly 1 sizeof operand. Abort.");
 
       SgExpression*      func = funcc->get_function();
 
@@ -937,16 +937,14 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
    //
    // handle new (implicit C++ malloc)
    const SgNodePtrList& newnodes = NodeQuery::querySubTree( expr_r, V_SgNewExp );
+   ROSE_ASSERT( (newnodes.size() == 0) || varRef );
    BOOST_FOREACH(SgNode* exp, newnodes)
    {
       // FIXME 2: this is a false positive if operator new is overloaded
       SgNewExp* new_op = isSgNewExp(exp);
-
       ROSE_ASSERT( new_op );
-      ROSE_ASSERT( varRef );
 
-      const bool      arraynew = isSgArrayType( skip_ModifierType(new_op->get_type()) );
-      const AllocKind allocKind = (arraynew ? akCxxArrayNew : akCxxNew);
+      const AllocKind allocKind = cxxHeapAllocKind(new_op->get_type());
 
       arrayHeapAlloc(initName, varRef, buildSizeOfOp(new_op -> get_specified_type()), allocKind);
    }

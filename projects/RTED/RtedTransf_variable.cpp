@@ -285,24 +285,6 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName)
         }
 }
 
-void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName, SgExpression* varRefExp)
-{
-        SgStatement* stmt = getSurroundingStatement(initName);
-        ROSE_ASSERT(stmt);
-
-        SgScopeStatement* scope = stmt->get_scope();
-        string            name = initName->get_mangled_name().str();
-
-        ROSE_ASSERT(isNormalScope(scope));
-
-        // insert new stmt (exprStmt) after (old) stmt
-        string             debug_name = initName -> get_name();
-        SgFunctionCallExp* fn_call = buildVariableCreateCallExpr(varRefExp, debug_name, true);
-        SgExprStatement*   exprStmt = buildVariableCreateCallStmt(fn_call);
-
-        ROSE_ASSERT(exprStmt);
-        insertStatementAfter(stmt, exprStmt);
-}
 
 // convenience function
 SgFunctionCallExp*
@@ -334,53 +316,20 @@ RtedTransformation::buildVariableCreateCallExpr(SgInitializedName* initName,
 }
 
 SgFunctionCallExp*
-RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref, string& debug_name, bool initb)
+RtedTransformation::buildVariableCreateCallExpr(SgVarRefExp* var_ref, const string& debug_name, bool initb)
 {
         ROSE_ASSERT( var_ref );
 
-
-        // tps: I am not sure yet if this is needed
-#if 0
-        // if the variable is called "this", then we want to take the
-        // right hand side value
-        if (debug_name=="this") {
-                return NULL;
-#if 0
-                SgArrowExp* arrowOp = isSgArrowExp(var_ref->get_parent());
-                ROSE_ASSERT(arrowOp);
-                SgVarRefExp* newVarRef = isSgVarRefExp(arrowOp->get_rhs_operand());
-                cerr << " ++++++ This FOUND! ++  Changing this : " << var_ref << "  to : " << newVarRef << endl;
-                ROSE_ASSERT(newVarRef);
-                var_ref=newVarRef;
-#endif
-        }
-#endif
-
         // build the function call : runtimeSystem-->createArray(params); ---------------------------
-        SgExprListExp* arg_list = buildExprListExp();
+        SgExprListExp*     arg_list = buildExprListExp();
 
         appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(var_ref -> get_type())) );
 
-        SgVarRefExp*      theVarRef = isSgVarRefExp(var_ref);
-        SgScopeStatement* scope = NULL;
-
-        if (theVarRef)
-        {
-            SgInitializedName* initName = theVarRef -> get_symbol() -> get_declaration();
-            scope = get_scope(initName);
-
-            appendAddressAndSize(arg_list, Whole, scope, theVarRef, NULL);
-        }
-        else
-        {
-            SgStatement* varref_stmt = getSurroundingStatement(var_ref);
-
-            ROSE_ASSERT( varref_stmt );
-            appendAddressAndSize(arg_list, Whole, var_ref, var_ref -> get_type(), NULL);
-            scope = varref_stmt->get_scope();
-        }
-
+        SgInitializedName* initName = var_ref -> get_symbol() -> get_declaration();
+        SgScopeStatement*  scope = get_scope(initName);
         ROSE_ASSERT( scope );
+
+        appendAddressAndSize(arg_list, Whole, scope, var_ref, NULL);
 
         SgExpression*  callName = buildStringVal(debug_name);
         SgExpression*  callNameExp = buildStringVal(debug_name);
@@ -391,7 +340,7 @@ RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref, string& d
         appendExpression(arg_list, callNameExp);
         appendExpression(arg_list, initBool);
 
-        appendClassName(arg_list, var_ref -> get_type());
+        appendClassName(arg_list, var_ref->get_type());
         appendFileInfo(arg_list, scope, var_ref->get_file_info());
 
         ROSE_ASSERT(symbols.roseCreateVariable);
@@ -656,8 +605,8 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
     if (stmt->get_file_info()->isCompilerGenerated())
       return;
 
-    if (isSgVarRefExp(varRefE) && !isInInstrumentedFile(
-                    isSgVarRefExp(varRefE)->get_symbol()->get_declaration()))
+    SgVarRefExp* asVarRef = isSgVarRefExp(varRefE);
+    if (asVarRef && !isInInstrumentedFile(asVarRef->get_symbol()->get_declaration()))
        return;
 
     if (isFileIOVariable(varRefE->get_type()))
@@ -777,9 +726,7 @@ struct AllocInfo
   void handle(SgNewExp& n)
   {
     newtype = n.get_type();
-    allocKind = ( isSgArrayType( skip_ModifierType(newtype) ) ? akCxxArrayNew
-                                                              : akCxxNew
-                );
+    allocKind = cxxHeapAllocKind(newtype);
   }
 
   void handle(SgExpression& n) {}

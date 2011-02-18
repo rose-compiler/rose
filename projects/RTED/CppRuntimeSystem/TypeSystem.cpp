@@ -47,8 +47,8 @@ RsType * TypeSystem::getTypeInfo(const string & name)
     //TODO remove SgPointerType and SgArrayType from BasicTypes
     if(name == "SgPointerType" || name == "SgArrayType" )
     {
-      cerr << endl << "getTypeInfo for " << name << "was called:" << endl;
-      cerr << "SEVERE WARNING: Pointer and Arrays have now be registered differently!" << endl;
+      cout << endl << "getTypeInfo for " << name << "was called:" << endl;
+      cout << "SEVERE WARNING: Pointer and Arrays have now be registered differently!" << endl;
     }
 
     InvalidType comparisonObject(name);
@@ -124,30 +124,6 @@ RsPointerType * TypeSystem::getPointerType(const string & name)
 {
     return getPointerType(getTypeInfo(name));
 }
-
-
-
-
-
-/*
-RsType * TypeSystem::getArrayType(RsType * bt, size_t size)
-{
-    string arrName (RsArrayType::getArrayTypeName(bt,size));
-    InvalidType comparisonObject(arrName);
-
-    TypeSet::iterator i = types.find(&comparisonObject);
-    if(i == types.end())
-    {
-        //Not yet needed -> create it
-        RsArrayType * at = new RsArrayType(bt,size);
-        registerType(at);
-        return at;
-    }
-    else
-        return *i;
-}*/
-
-
 
 
 void TypeSystem::print(ostream & os) const

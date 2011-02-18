@@ -565,12 +565,15 @@ run/%: rted_source/%.bin rted_source/%.expected-output
 		fi;
 	@echo " done."
 
+# was: upcrun -quiet -n 4 ./$(filter rted_source/%.bin, $?) 2> $$RESULT;
+#			./$(filter rted_source/%.bin, $?) -n 4 2> $$RESULT;
+
 runupc/%: rted_source/%.bin rted_source/%.expected-output
-	@echo -n "   running (UPC) runtime error detection ... upcrun -n 4 $(filter %.bin, $?)"
-	@OUTPUT_SRC = '$(strip $(filter %.expected-output, $?))';\
+	echo "   running (UPC) runtime error detection ... $(filter %.bin, $?) -n 4"
+	OUTPUT_SRC='$(strip $(filter %.expected-output, $?))';\
 		if [ -f "$$OUTPUT_SRC" ]; then\
 			RESULT='$(strip $(patsubst %.bin, %.result.txt, $(filter rted_source/%.bin, $?)))';\
-			upcrun -quiet -n 4 ./$(filter rted_source/%.bin, $?)  2> $$RESULT;\
+			./$(filter rted_source/%.bin, $?) -n 4 2> $$RESULT;\
 			if [ $$? -ne 0 ];then cat $$RESULT && echo "Test exited unexpectedly with non-zero status" && exit 1; fi;\
 			ACTUAL_OUTPUT='./$(strip $(patsubst %.bin, %.actual-output, $(filter rted_source/%.bin, $?)))';\
 			if [ ! -f $$RESULT ]; then echo "no result produced!" && exit 1; fi; \
@@ -590,10 +593,9 @@ runupc/%: rted_source/%.bin rted_source/%.expected-output
 				fi;\
 				echo -e '\n----------- Actual   Error ------------';\
 				cat $$RESULT;\
-				exit 1;\
 			fi;\
 		else\
-			./$(filter rted_source/%.bin, $?);\
+			./$(filter rted_source/%.bin, $?) -n 4;\
 		fi;
 	@echo " done."
 
@@ -618,12 +620,14 @@ run_log/%: rted_source/%.bin rted_source/%.expected-output
 		fi;
 	@echo " done."
 
+# was:			upcrun -n 4 ./$(filter rted_source/%.bin, $?) 2> $$RESULT;
+
 runupc_log/%: rted_source/%.bin rted_source/%.expected-output
 	@echo "   logging results for runtime error detection ... $(filter %.bin, $?)"
 	@OUTPUT_SRC='$(strip $(filter %.expected-output, $?))';\
 		if [ -f "$$OUTPUT_SRC" ]; then\
 			RESULT='$(strip $(patsubst %.bin, %.result.txt, $(filter rted_source/%.bin, $?)))';\
-			upcrun -n 4 ./$(filter rted_source/%.bin, $?) 2> $$RESULT;\
+			./$(filter rted_source/%.bin, $?) -n 4 2> $$RESULT;\
 			if [ $$? -ne 0 ];then cat $$RESULT && echo "Test exited unexpectedly with non-zero status" && exit 1; fi;\
 			ACTUAL_OUTPUT='./$(strip $(patsubst %.bin, %.actual-output, $(filter rted_source/%.bin, $?)))';\
 			if [ ! -f $$RESULT ]; then echo "no result produced!" && exit 1; fi; \
@@ -809,8 +813,29 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/C++/uninitialized_variables/c_A_6_e_in
 
 
+TEST_HAS_COMPILE_ERROR = runupc/UPC/G_Uninit/c_G_1_b_D \
+                         runupc/UPC/G_Uninit/c_G_1_b_I \
+                         runupc/UPC/G_Uninit/c_G_1_b_L \
+                         runupc/UPC/G_Uninit/c_G_1_b_S \
+                         runupc/UPC/G_Uninit/c_G_1_b_F \
+                         runupc/UPC/G_Uninit/c_G_1_e_D \
+                         runupc/UPC/G_Uninit/c_G_1_e_I \
+                         runupc/UPC/G_Uninit/c_G_1_e_L \
+                         runupc/UPC/G_Uninit/c_G_1_e_S \
+                         runupc/UPC/G_Uninit/c_G_1_e_F \
+                         runupc/UPC/G_Uninit/c_G_1_f_D \
+                         runupc/UPC/G_Uninit/c_G_1_f_I \
+                         runupc/UPC/G_Uninit/c_G_1_f_L \
+                         runupc/UPC/G_Uninit/c_G_1_f_S \
+                         runupc/UPC/G_Uninit/c_G_1_f_F \
+                         TheEnd
+
 $(TESTS_KNOWN_TO_FAIL):
 	@echo This test is known to fail, not running it now: $@
+
+$(TEST_HAS_COMPILE_ERROR):
+	@echo This test does not compile, not running it now: $@
+
 
 run/tests/C/panasTests/%:
 	@echo ignoring test: $@

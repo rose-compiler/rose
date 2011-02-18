@@ -39,7 +39,7 @@ rted_AddressDesc rted_deref_desc(rted_AddressDesc desc)
   return desc;
 }
 
-rted_AddressDesc rted_upc_address_of(rted_AddressDesc desc, size_t shared_mask)
+rted_AddressDesc rted_upc_address_of(rted_AddressDesc desc, int shared_mask)
 {
   desc.shared_mask <<= 1;
   desc.shared_mask &= shared_mask;
@@ -208,7 +208,13 @@ rted_Address rted_deref(rted_Address addr, rted_AddressDesc desc)
 
 void rted_exit(int exitcode)
 {
+  printf("\nExiting thread %i with code %i\n ", rted_ThisThread(), exitcode);
   upc_global_exit(exitcode);
+}
+
+rted_thread_id rted_ThisThread(void)
+{
+  return MYTHREAD;
 }
 
 #else /* __UPC__ */
@@ -225,8 +231,13 @@ rted_Address rted_deref(rted_Address addr, rted_AddressDesc unused)
 
 void rted_exit(int exitcode)
 {
+  printf("\nExiting with code %i\n ", exitcode);
   exit(exitcode);
 }
 
+rted_thread_id rted_ThisThread(void)
+{
+  return 0;
+}
 
 #endif /* __UPC__ */

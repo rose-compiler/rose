@@ -22,6 +22,12 @@ VariablesType::VariablesType( const std::string & name_,
   // Variables are allocated statically. However, in UPC they can be shared
   //   if allocated on the file scope. Thus, the locality holds only for
   //   non UPC types (e.g., C++ classes).
+  if (class_type != NULL)
+  {
+    class_type->print(std::cout);
+    std::cout << std::endl;
+  }
+
   assert(class_type == NULL || rted_isLocal(address));
 
   RuntimeSystem* rs = RuntimeSystem::instance();
@@ -49,9 +55,8 @@ MemoryType * VariablesType::getAllocation() const
     MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
     MemoryType *    mt = mm->getMemoryType(address);
 
-    assert(mt);
     //assert that in this chunk only this variable is stored
-    assert(mt->getSize() == type->getByteSize());
+    assert(mt && mt->getSize() == type->getByteSize());
 
     return mt;
 }

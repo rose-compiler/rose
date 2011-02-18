@@ -125,7 +125,7 @@ struct MsgQSingleReadMultipleWrite
 {
   shared rted_MsgHeader* head;
   shared rted_MsgHeader* tail;
-  upc_lock_t*            tail_lock;
+  upc_lock_t*            lock;
 };
 
 typedef struct MsgQSingleReadMultipleWrite MsgQSingleReadMultipleWrite;
@@ -140,7 +140,7 @@ void upcAllInitMsgQueue(void)
 {
   msgQueue[MYTHREAD].head = NULL;
   msgQueue[MYTHREAD].tail = NULL;
-  msgQueue[MYTHREAD].tail_lock = upc_global_lock_alloc();
+  msgQueue[MYTHREAD].lock = upc_global_lock_alloc();
 }
 
 static
@@ -153,15 +153,18 @@ int msgQueueEmpty(void)
 static
 void msgEnQueue(int tid, shared rted_MsgHeader* elem)
 {
-  upc_lock(msgQueue[tid].tail_lock);
+  assert(elem->next == NULL);
 
-  elem->next = msgQueue[tid].tail;
-  msgQueue[tid].tail = elem;
+  upc_lock(msgQueue[tid].lock);
+  assert( (msgQueue[tid].head == NULL) == (msgQueue[tid].tail == NULL) );
 
-  if (msgQueue[tid].head == NULL)
+  if (msgQueue[tid].tail)
+    msgQueue[tid].tail->next = elem;
+  else
     msgQueue[tid].head = elem;
 
-  upc_unlock(msgQueue[tid].tail_lock);
+  msgQueue[tid].tail = elem;
+  upc_unlock(msgQueue[tid].lock);
 }
 
 /// \brief dequeues from the local queue
@@ -170,7 +173,7 @@ shared rted_MsgHeader* msgDeQueue()
 {
   shared rted_MsgHeader* elem = NULL;
 
-  upc_lock(msgQueue[MYTHREAD].tail_lock);
+  upc_lock(msgQueue[MYTHREAD].lock);
 
   elem = msgQueue[MYTHREAD].head;
   msgQueue[MYTHREAD].head = elem->next;
@@ -178,7 +181,7 @@ shared rted_MsgHeader* msgDeQueue()
   if (msgQueue[MYTHREAD].tail == elem)
     msgQueue[MYTHREAD].tail = NULL;
 
-  upc_unlock(msgQueue[MYTHREAD].tail_lock);
+  upc_unlock(msgQueue[MYTHREAD].lock);
 
   assert(elem);
   return elem;
@@ -278,14 +281,9 @@ void msgw_TypeDesc(char* buf, rted_TypeDesc td, rted_szTypeDesc sz)
 static
 rted_TypeDesc msgr_TypeDesc(const char* buf)
 {
-  static const char* foo = "foo";
-
   rted_MsgTypeDescHeader head = *((const rted_MsgTypeDescHeader*)buf);
   const char* const      name_loc = buf + sizeof(rted_MsgTypeDescHeader);
   const char* const      base_loc = name_loc + head.name_len;
-
-  printf("%i -name %s\n", MYTHREAD, foo);
-  printf("%i -base %s\n", MYTHREAD, foo);
 
   // \note we do not copy the string, but just set the pointer to the buffer on
   //       the stack.

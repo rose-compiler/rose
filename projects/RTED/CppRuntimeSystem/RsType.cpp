@@ -161,13 +161,13 @@ std::ostream& operator<< (std::ostream &os, const RsType & m)
 // ---------------------------------- RsArrayType ------------------------------------------
 
 
-RsArrayType::RsArrayType(RsType * baseType_, size_t size__)
-    : RsType(getArrayTypeName(baseType_,size__)),
+RsArrayType::RsArrayType(RsType* baseType_, size_t size__)
+    : RsType(getArrayTypeName(baseType_, size__)),
       baseType(baseType_)
 {
-    assert(baseType != NULL);
-
     size_t base_size = baseType -> getByteSize();
+
+    std::cout << "[[" << base_size << "<>" << size__ << "]]" << std::endl;
     assertme( 0 == size__ % base_size," RsArrayType::RsArrayType - 0 == size__ % base_size ",
               "0",ToString(size__ % base_size));
     assert( 0 == size__ % base_size );
@@ -236,8 +236,10 @@ bool  RsArrayType::isValidOffset(size_t offset) const
     return baseType->isValidOffset(inTypeOffset);
 }
 
-std::string RsArrayType::getArrayTypeName(RsType * basetype, size_t size)
+std::string RsArrayType::getArrayTypeName(RsType* basetype, size_t size)
 {
+    assert(basetype);
+
     std::stringstream s;
     s << "__array_" << basetype->getName() << "_" << size;
     return s.str();
@@ -356,7 +358,7 @@ void RsClassType::setUnionType( bool is_union ) {
 
 bool RsClassType::isComplete(bool verbose) const
 {
-    if(verbose)
+    if (verbose)
     {
         std::cout << "Padding info for type " << stringId << std::endl;
         for(unsigned int i=1; i<members.size(); i++)

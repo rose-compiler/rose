@@ -46,7 +46,7 @@ void rted_UpcExitWorkzone(void);
 void rted_UpcBeginExclusive(void);
 
 /// \brief ends an exclusive heap operation (i.e., upc_free)
-///        see also rted_beginUpcHeapExclusive
+///        see also rted_UpcBeginExclusive
 void rted_UpcEndExclusive(void);
 
 #else /* WITH_UPC */

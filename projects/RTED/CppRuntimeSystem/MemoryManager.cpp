@@ -108,7 +108,7 @@ void MemoryType::forceRegisterMemType(size_t offset, RsType* type ) {
 
 bool MemoryType::checkAndMergeMemType(size_t offset, RsType * type)
 {
-  std::cerr << ">> checkAndMergeMemType " << typeInfo.size() << std::endl;
+  // std::cout << ">> checkAndMergeMemType " << typeInfo.size() << std::endl;
 
     if (typeInfo.size() ==0) // no types registered yet
         return false;
@@ -171,14 +171,12 @@ bool MemoryType::checkAndMergeMemType(size_t offset, RsType * type)
                                  << " (" << oldTiStart << "," << oldTiEnd << ")" << std::endl;
 
                 rs->violationHandler(vio);
-                std::cerr << "NOK" << std::endl;
                 return false;
             }
             else
             {
                 // successful, no need to add because the type is already contained in bigger one
                 // effectively type has already been “merged”.
-                std::cerr << "OK" << std::endl;
                 return true;
             }
         }
@@ -221,8 +219,6 @@ bool MemoryType::checkAndMergeMemType(size_t offset, RsType * type)
     // if we have knowledge about the type in memory, we also need to update the
     // information about "dereferentiable" memory regions i.e. pointer
     rs->getPointerManager()->createPointer(startAddress + offset, type);
-
-    std::cerr << "OK" << std::endl;
 
     return true;
 }
@@ -533,16 +529,16 @@ alloc_free_mismatch(MemoryType& m, AllocKind howAlloced, AllocKind howFreed)
 
 void MemoryManager::freeMemory(Location addr, MemoryType::AllocKind freekind)
 {
-    RuntimeSystem * rs = RuntimeSystem::instance();
-    MemoryType*     m = findContainingMem(addr, 1);
+    RuntimeSystem* rs = RuntimeSystem::instance();
+    MemoryType*    m = findContainingMem(addr, 1);
 
     // free on unknown address
     if (m == NULL)
     {
         std::stringstream desc;
         desc << freeDisplayName(freekind);
-        desc << "was called with unknown address " << addr <<std::endl;
-        desc << "Allocated Memory Regions:" << std::endl;
+        desc << " was called with unknown address " << addr <<std::endl;
+        desc << " Allocated Memory Regions:" << std::endl;
         print(desc);
         rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
         return;
@@ -553,8 +549,8 @@ void MemoryManager::freeMemory(Location addr, MemoryType::AllocKind freekind)
     {
         std::stringstream desc;
         desc << freeDisplayName(freekind);
-        desc << "was called with an address inside of an allocated block (Offset:"
-             << "0x" << std::hex << (addr - m->getAddress()) <<")" <<std::endl;
+        desc << " was called with an address inside of an allocated block (Offset:"
+             << " 0x" << std::hex << (addr - m->getAddress()) <<")" <<std::endl;
         desc << "Allocated Block: " << *m <<std::endl;
 
         rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
@@ -595,7 +591,7 @@ MemoryType* MemoryManager::checkAccess(Location addr, size_t size, RsType * t, R
     {
         std::stringstream desc;
         desc << "Trying to access non-allocated MemoryRegion "
-             << "(Address " << "0x" << addr
+             << "(Address " << addr
              << " of size " << std::dec << size << ")"
              << std::endl;
 

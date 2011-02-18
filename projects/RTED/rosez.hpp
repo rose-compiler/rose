@@ -12,2633 +12,2643 @@ namespace ez
 {
   /// \brief portable implementation to avoid compiler warnings due to an
   ///        unused parameter.
-  template <class RoseNode>
-  inline
-  void unused(const RoseNode&) {}
+  template <class T>
+  static inline
+  void unused(const T&) {}
 
-  /// \brief    uncovers the type of SgNode and passes it to an
-  ///           overloaded function handle in RoseVisitor.
-  /// \param rv an instance of a rose visitor; note that the argument is
-  ///           passed by value (similar to STL's for_each).
-  /// \param n  a Sage node
-  /// \return   a copy of the RoseVisitor object
-  template <class RoseVisitor>
+  template <class SageNode>
+  static inline
+  SageNode& assume_sgtype(SgNode& n)
+  {
+    return static_cast<SageNode&>(n);
+  }
+
+  template <class SageNode>
+  static inline
+  const SageNode& assume_sgtype(const SgNode& n)
+  {
+    return static_cast<const SageNode&>(n);
+  }
+
+  /// \brief for internal use (use visitSgNode instead)
+  template <class RoseVisitor, class SageNode>
+  static inline
   RoseVisitor
-  visitSgNode(RoseVisitor rv, SgNode* n)
+  _visitSgNode(RoseVisitor rv, SageNode* n)
   {
     ROSE_ASSERT( n );
 
     switch (n->variantT())
     {
       case V_SgName:
-        rv.handle(static_cast<SgName&>(*n));
+        rv.handle(assume_sgtype<SgName>(*n));
         break;
 
       case V_SgSymbolTable:
-        rv.handle(static_cast<SgSymbolTable&>(*n));
+        rv.handle(assume_sgtype<SgSymbolTable>(*n));
         break;
 
       case V_SgPragma:
-        rv.handle(static_cast<SgPragma&>(*n));
+        rv.handle(assume_sgtype<SgPragma>(*n));
         break;
 
       case V_SgModifierNodes:
-        rv.handle(static_cast<SgModifierNodes&>(*n));
+        rv.handle(assume_sgtype<SgModifierNodes>(*n));
         break;
 
       case V_SgConstVolatileModifier:
-        rv.handle(static_cast<SgConstVolatileModifier&>(*n));
+        rv.handle(assume_sgtype<SgConstVolatileModifier>(*n));
         break;
 
       case V_SgStorageModifier:
-        rv.handle(static_cast<SgStorageModifier&>(*n));
+        rv.handle(assume_sgtype<SgStorageModifier>(*n));
         break;
 
       case V_SgAccessModifier:
-        rv.handle(static_cast<SgAccessModifier&>(*n));
+        rv.handle(assume_sgtype<SgAccessModifier>(*n));
         break;
 
       case V_SgFunctionModifier:
-        rv.handle(static_cast<SgFunctionModifier&>(*n));
+        rv.handle(assume_sgtype<SgFunctionModifier>(*n));
         break;
 
       case V_SgUPC_AccessModifier:
-        rv.handle(static_cast<SgUPC_AccessModifier&>(*n));
+        rv.handle(assume_sgtype<SgUPC_AccessModifier>(*n));
         break;
 
       case V_SgLinkageModifier:
-        rv.handle(static_cast<SgLinkageModifier&>(*n));
+        rv.handle(assume_sgtype<SgLinkageModifier>(*n));
         break;
 
       case V_SgSpecialFunctionModifier:
-        rv.handle(static_cast<SgSpecialFunctionModifier&>(*n));
+        rv.handle(assume_sgtype<SgSpecialFunctionModifier>(*n));
         break;
 
       case V_SgTypeModifier:
-        rv.handle(static_cast<SgTypeModifier&>(*n));
+        rv.handle(assume_sgtype<SgTypeModifier>(*n));
         break;
 
       case V_SgElaboratedTypeModifier:
-        rv.handle(static_cast<SgElaboratedTypeModifier&>(*n));
+        rv.handle(assume_sgtype<SgElaboratedTypeModifier>(*n));
         break;
 
       case V_SgBaseClassModifier:
-        rv.handle(static_cast<SgBaseClassModifier&>(*n));
+        rv.handle(assume_sgtype<SgBaseClassModifier>(*n));
         break;
 
       case V_SgDeclarationModifier:
-        rv.handle(static_cast<SgDeclarationModifier&>(*n));
+        rv.handle(assume_sgtype<SgDeclarationModifier>(*n));
         break;
 
       case V_SgOpenclAccessModeModifier:
-        rv.handle(static_cast<SgOpenclAccessModeModifier&>(*n));
+        rv.handle(assume_sgtype<SgOpenclAccessModeModifier>(*n));
         break;
 
       case V_SgModifier:
-        rv.handle(static_cast<SgModifier&>(*n));
+        rv.handle(assume_sgtype<SgModifier>(*n));
         break;
 
       case V_Sg_File_Info:
-        rv.handle(static_cast<Sg_File_Info&>(*n));
+        rv.handle(assume_sgtype<Sg_File_Info>(*n));
         break;
 
       case V_SgSourceFile:
-        rv.handle(static_cast<SgSourceFile&>(*n));
+        rv.handle(assume_sgtype<SgSourceFile>(*n));
         break;
 
       case V_SgBinaryComposite:
-        rv.handle(static_cast<SgBinaryComposite&>(*n));
+        rv.handle(assume_sgtype<SgBinaryComposite>(*n));
         break;
 
       case V_SgUnknownFile:
-        rv.handle(static_cast<SgUnknownFile&>(*n));
+        rv.handle(assume_sgtype<SgUnknownFile>(*n));
         break;
 
       case V_SgFile:
-        rv.handle(static_cast<SgFile&>(*n));
+        rv.handle(assume_sgtype<SgFile>(*n));
         break;
 
       case V_SgFileList:
-        rv.handle(static_cast<SgFileList&>(*n));
+        rv.handle(assume_sgtype<SgFileList>(*n));
         break;
 
       case V_SgDirectory:
-        rv.handle(static_cast<SgDirectory&>(*n));
+        rv.handle(assume_sgtype<SgDirectory>(*n));
         break;
 
       case V_SgDirectoryList:
-        rv.handle(static_cast<SgDirectoryList&>(*n));
+        rv.handle(assume_sgtype<SgDirectoryList>(*n));
         break;
 
       case V_SgProject:
-        rv.handle(static_cast<SgProject&>(*n));
+        rv.handle(assume_sgtype<SgProject>(*n));
         break;
 
       case V_SgOptions:
-        rv.handle(static_cast<SgOptions&>(*n));
+        rv.handle(assume_sgtype<SgOptions>(*n));
         break;
 
       case V_SgUnparse_Info:
-        rv.handle(static_cast<SgUnparse_Info&>(*n));
+        rv.handle(assume_sgtype<SgUnparse_Info>(*n));
         break;
 
       case V_SgFuncDecl_attr:
-        rv.handle(static_cast<SgFuncDecl_attr&>(*n));
+        rv.handle(assume_sgtype<SgFuncDecl_attr>(*n));
         break;
 
       case V_SgClassDecl_attr:
-        rv.handle(static_cast<SgClassDecl_attr&>(*n));
+        rv.handle(assume_sgtype<SgClassDecl_attr>(*n));
         break;
 
       case V_SgTypedefSeq:
-        rv.handle(static_cast<SgTypedefSeq&>(*n));
+        rv.handle(assume_sgtype<SgTypedefSeq>(*n));
         break;
 
       case V_SgFunctionParameterTypeList:
-        rv.handle(static_cast<SgFunctionParameterTypeList&>(*n));
+        rv.handle(assume_sgtype<SgFunctionParameterTypeList>(*n));
         break;
 
       case V_SgTemplateParameter:
-        rv.handle(static_cast<SgTemplateParameter&>(*n));
+        rv.handle(assume_sgtype<SgTemplateParameter>(*n));
         break;
 
       case V_SgTemplateArgument:
-        rv.handle(static_cast<SgTemplateArgument&>(*n));
+        rv.handle(assume_sgtype<SgTemplateArgument>(*n));
         break;
 
       case V_SgTemplateParameterList:
-        rv.handle(static_cast<SgTemplateParameterList&>(*n));
+        rv.handle(assume_sgtype<SgTemplateParameterList>(*n));
         break;
 
       case V_SgTemplateArgumentList:
-        rv.handle(static_cast<SgTemplateArgumentList&>(*n));
+        rv.handle(assume_sgtype<SgTemplateArgumentList>(*n));
         break;
 
       case V_SgBitAttribute:
-        rv.handle(static_cast<SgBitAttribute&>(*n));
+        rv.handle(assume_sgtype<SgBitAttribute>(*n));
         break;
 
       case V_SgAttribute:
-        rv.handle(static_cast<SgAttribute&>(*n));
+        rv.handle(assume_sgtype<SgAttribute>(*n));
         break;
 
       case V_SgBaseClass:
-        rv.handle(static_cast<SgBaseClass&>(*n));
+        rv.handle(assume_sgtype<SgBaseClass>(*n));
         break;
 
       case V_SgUndirectedGraphEdge:
-        rv.handle(static_cast<SgUndirectedGraphEdge&>(*n));
+        rv.handle(assume_sgtype<SgUndirectedGraphEdge>(*n));
         break;
 
       case V_SgDirectedGraphEdge:
-        rv.handle(static_cast<SgDirectedGraphEdge&>(*n));
+        rv.handle(assume_sgtype<SgDirectedGraphEdge>(*n));
         break;
 
       case V_SgGraphNode:
-        rv.handle(static_cast<SgGraphNode&>(*n));
+        rv.handle(assume_sgtype<SgGraphNode>(*n));
         break;
 
       case V_SgGraphEdge:
-        rv.handle(static_cast<SgGraphEdge&>(*n));
+        rv.handle(assume_sgtype<SgGraphEdge>(*n));
         break;
 
       case V_SgStringKeyedBidirectionalGraph:
-        rv.handle(static_cast<SgStringKeyedBidirectionalGraph&>(*n));
+        rv.handle(assume_sgtype<SgStringKeyedBidirectionalGraph>(*n));
         break;
 
       case V_SgIntKeyedBidirectionalGraph:
-        rv.handle(static_cast<SgIntKeyedBidirectionalGraph&>(*n));
+        rv.handle(assume_sgtype<SgIntKeyedBidirectionalGraph>(*n));
         break;
 
       case V_SgBidirectionalGraph:
-        rv.handle(static_cast<SgBidirectionalGraph&>(*n));
+        rv.handle(assume_sgtype<SgBidirectionalGraph>(*n));
         break;
 
       case V_SgIncidenceDirectedGraph:
-        rv.handle(static_cast<SgIncidenceDirectedGraph&>(*n));
+        rv.handle(assume_sgtype<SgIncidenceDirectedGraph>(*n));
         break;
 
       case V_SgIncidenceUndirectedGraph:
-        rv.handle(static_cast<SgIncidenceUndirectedGraph&>(*n));
+        rv.handle(assume_sgtype<SgIncidenceUndirectedGraph>(*n));
         break;
 
       case V_SgGraph:
-        rv.handle(static_cast<SgGraph&>(*n));
+        rv.handle(assume_sgtype<SgGraph>(*n));
         break;
 
       case V_SgGraphNodeList:
-        rv.handle(static_cast<SgGraphNodeList&>(*n));
+        rv.handle(assume_sgtype<SgGraphNodeList>(*n));
         break;
 
       case V_SgGraphEdgeList:
-        rv.handle(static_cast<SgGraphEdgeList&>(*n));
+        rv.handle(assume_sgtype<SgGraphEdgeList>(*n));
         break;
 
       case V_SgQualifiedName:
-        rv.handle(static_cast<SgQualifiedName&>(*n));
+        rv.handle(assume_sgtype<SgQualifiedName>(*n));
         break;
 
       case V_SgNameGroup:
-        rv.handle(static_cast<SgNameGroup&>(*n));
+        rv.handle(assume_sgtype<SgNameGroup>(*n));
         break;
 
       case V_SgCommonBlockObject:
-        rv.handle(static_cast<SgCommonBlockObject&>(*n));
+        rv.handle(assume_sgtype<SgCommonBlockObject>(*n));
         break;
 
       case V_SgDimensionObject:
-        rv.handle(static_cast<SgDimensionObject&>(*n));
+        rv.handle(assume_sgtype<SgDimensionObject>(*n));
         break;
 
       case V_SgDataStatementGroup:
-        rv.handle(static_cast<SgDataStatementGroup&>(*n));
+        rv.handle(assume_sgtype<SgDataStatementGroup>(*n));
         break;
 
       case V_SgDataStatementObject:
-        rv.handle(static_cast<SgDataStatementObject&>(*n));
+        rv.handle(assume_sgtype<SgDataStatementObject>(*n));
         break;
 
       case V_SgDataStatementValue:
-        rv.handle(static_cast<SgDataStatementValue&>(*n));
+        rv.handle(assume_sgtype<SgDataStatementValue>(*n));
         break;
 
       case V_SgFormatItem:
-        rv.handle(static_cast<SgFormatItem&>(*n));
+        rv.handle(assume_sgtype<SgFormatItem>(*n));
         break;
 
       case V_SgFormatItemList:
-        rv.handle(static_cast<SgFormatItemList&>(*n));
+        rv.handle(assume_sgtype<SgFormatItemList>(*n));
         break;
 
       case V_SgTypeTable:
-        rv.handle(static_cast<SgTypeTable&>(*n));
+        rv.handle(assume_sgtype<SgTypeTable>(*n));
         break;
 
       case V_SgSupport:
-        rv.handle(static_cast<SgSupport&>(*n));
+        rv.handle(assume_sgtype<SgSupport>(*n));
         break;
 
       case V_SgForStatement:
-        rv.handle(static_cast<SgForStatement&>(*n));
+        rv.handle(assume_sgtype<SgForStatement>(*n));
         break;
 
       case V_SgForInitStatement:
-        rv.handle(static_cast<SgForInitStatement&>(*n));
+        rv.handle(assume_sgtype<SgForInitStatement>(*n));
         break;
 
       case V_SgCatchStatementSeq:
-        rv.handle(static_cast<SgCatchStatementSeq&>(*n));
+        rv.handle(assume_sgtype<SgCatchStatementSeq>(*n));
         break;
 
       case V_SgFunctionParameterList:
-        rv.handle(static_cast<SgFunctionParameterList&>(*n));
+        rv.handle(assume_sgtype<SgFunctionParameterList>(*n));
         break;
 
       case V_SgCtorInitializerList:
-        rv.handle(static_cast<SgCtorInitializerList&>(*n));
+        rv.handle(assume_sgtype<SgCtorInitializerList>(*n));
         break;
 
       case V_SgBasicBlock:
-        rv.handle(static_cast<SgBasicBlock&>(*n));
+        rv.handle(assume_sgtype<SgBasicBlock>(*n));
         break;
 
       case V_SgGlobal:
-        rv.handle(static_cast<SgGlobal&>(*n));
+        rv.handle(assume_sgtype<SgGlobal>(*n));
         break;
 
       case V_SgIfStmt:
-        rv.handle(static_cast<SgIfStmt&>(*n));
+        rv.handle(assume_sgtype<SgIfStmt>(*n));
         break;
 
       case V_SgFunctionDefinition:
-        rv.handle(static_cast<SgFunctionDefinition&>(*n));
+        rv.handle(assume_sgtype<SgFunctionDefinition>(*n));
         break;
 
       case V_SgWhileStmt:
-        rv.handle(static_cast<SgWhileStmt&>(*n));
+        rv.handle(assume_sgtype<SgWhileStmt>(*n));
         break;
 
       case V_SgDoWhileStmt:
-        rv.handle(static_cast<SgDoWhileStmt&>(*n));
+        rv.handle(assume_sgtype<SgDoWhileStmt>(*n));
         break;
 
       case V_SgSwitchStatement:
-        rv.handle(static_cast<SgSwitchStatement&>(*n));
+        rv.handle(assume_sgtype<SgSwitchStatement>(*n));
         break;
 
       case V_SgCatchOptionStmt:
-        rv.handle(static_cast<SgCatchOptionStmt&>(*n));
+        rv.handle(assume_sgtype<SgCatchOptionStmt>(*n));
         break;
 
       case V_SgVariableDeclaration:
-        rv.handle(static_cast<SgVariableDeclaration&>(*n));
+        rv.handle(assume_sgtype<SgVariableDeclaration>(*n));
         break;
 
       case V_SgVariableDefinition:
-        rv.handle(static_cast<SgVariableDefinition&>(*n));
+        rv.handle(assume_sgtype<SgVariableDefinition>(*n));
         break;
 
       case V_SgEnumDeclaration:
-        rv.handle(static_cast<SgEnumDeclaration&>(*n));
+        rv.handle(assume_sgtype<SgEnumDeclaration>(*n));
         break;
 
       case V_SgAsmStmt:
-        rv.handle(static_cast<SgAsmStmt&>(*n));
+        rv.handle(assume_sgtype<SgAsmStmt>(*n));
         break;
 
       case V_SgTypedefDeclaration:
-        rv.handle(static_cast<SgTypedefDeclaration&>(*n));
+        rv.handle(assume_sgtype<SgTypedefDeclaration>(*n));
         break;
 
       case V_SgFunctionTypeTable:
-        rv.handle(static_cast<SgFunctionTypeTable&>(*n));
+        rv.handle(assume_sgtype<SgFunctionTypeTable>(*n));
         break;
 
       case V_SgExprStatement:
-        rv.handle(static_cast<SgExprStatement&>(*n));
+        rv.handle(assume_sgtype<SgExprStatement>(*n));
         break;
 
       case V_SgLabelStatement:
-        rv.handle(static_cast<SgLabelStatement&>(*n));
+        rv.handle(assume_sgtype<SgLabelStatement>(*n));
         break;
 
       case V_SgCaseOptionStmt:
-        rv.handle(static_cast<SgCaseOptionStmt&>(*n));
+        rv.handle(assume_sgtype<SgCaseOptionStmt>(*n));
         break;
 
       case V_SgTryStmt:
-        rv.handle(static_cast<SgTryStmt&>(*n));
+        rv.handle(assume_sgtype<SgTryStmt>(*n));
         break;
 
       case V_SgDefaultOptionStmt:
-        rv.handle(static_cast<SgDefaultOptionStmt&>(*n));
+        rv.handle(assume_sgtype<SgDefaultOptionStmt>(*n));
         break;
 
       case V_SgBreakStmt:
-        rv.handle(static_cast<SgBreakStmt&>(*n));
+        rv.handle(assume_sgtype<SgBreakStmt>(*n));
         break;
 
       case V_SgContinueStmt:
-        rv.handle(static_cast<SgContinueStmt&>(*n));
+        rv.handle(assume_sgtype<SgContinueStmt>(*n));
         break;
 
       case V_SgReturnStmt:
-        rv.handle(static_cast<SgReturnStmt&>(*n));
+        rv.handle(assume_sgtype<SgReturnStmt>(*n));
         break;
 
       case V_SgGotoStatement:
-        rv.handle(static_cast<SgGotoStatement&>(*n));
+        rv.handle(assume_sgtype<SgGotoStatement>(*n));
         break;
 
       case V_SgSpawnStmt:
-        rv.handle(static_cast<SgSpawnStmt&>(*n));
+        rv.handle(assume_sgtype<SgSpawnStmt>(*n));
         break;
 
       case V_SgNullStatement:
-        rv.handle(static_cast<SgNullStatement&>(*n));
+        rv.handle(assume_sgtype<SgNullStatement>(*n));
         break;
 
       case V_SgVariantStatement:
-        rv.handle(static_cast<SgVariantStatement&>(*n));
+        rv.handle(assume_sgtype<SgVariantStatement>(*n));
         break;
 
       case V_SgPragmaDeclaration:
-        rv.handle(static_cast<SgPragmaDeclaration&>(*n));
+        rv.handle(assume_sgtype<SgPragmaDeclaration>(*n));
         break;
 
       case V_SgTemplateDeclaration:
-        rv.handle(static_cast<SgTemplateDeclaration&>(*n));
+        rv.handle(assume_sgtype<SgTemplateDeclaration>(*n));
         break;
 
       case V_SgTemplateInstantiationDecl:
-        rv.handle(static_cast<SgTemplateInstantiationDecl&>(*n));
+        rv.handle(assume_sgtype<SgTemplateInstantiationDecl>(*n));
         break;
 
       case V_SgTemplateInstantiationDefn:
-        rv.handle(static_cast<SgTemplateInstantiationDefn&>(*n));
+        rv.handle(assume_sgtype<SgTemplateInstantiationDefn>(*n));
         break;
 
       case V_SgTemplateInstantiationFunctionDecl:
-        rv.handle(static_cast<SgTemplateInstantiationFunctionDecl&>(*n));
+        rv.handle(assume_sgtype<SgTemplateInstantiationFunctionDecl>(*n));
         break;
 
       case V_SgTemplateInstantiationMemberFunctionDecl:
-        rv.handle(static_cast<SgTemplateInstantiationMemberFunctionDecl&>(*n));
+        rv.handle(assume_sgtype<SgTemplateInstantiationMemberFunctionDecl>(*n));
         break;
 
       case V_SgProgramHeaderStatement:
-        rv.handle(static_cast<SgProgramHeaderStatement&>(*n));
+        rv.handle(assume_sgtype<SgProgramHeaderStatement>(*n));
         break;
 
       case V_SgProcedureHeaderStatement:
-        rv.handle(static_cast<SgProcedureHeaderStatement&>(*n));
+        rv.handle(assume_sgtype<SgProcedureHeaderStatement>(*n));
         break;
 
       case V_SgEntryStatement:
-        rv.handle(static_cast<SgEntryStatement&>(*n));
+        rv.handle(assume_sgtype<SgEntryStatement>(*n));
         break;
 
       case V_SgFortranNonblockedDo:
-        rv.handle(static_cast<SgFortranNonblockedDo&>(*n));
+        rv.handle(assume_sgtype<SgFortranNonblockedDo>(*n));
         break;
 
       case V_SgInterfaceStatement:
-        rv.handle(static_cast<SgInterfaceStatement&>(*n));
+        rv.handle(assume_sgtype<SgInterfaceStatement>(*n));
         break;
 
       case V_SgParameterStatement:
-        rv.handle(static_cast<SgParameterStatement&>(*n));
+        rv.handle(assume_sgtype<SgParameterStatement>(*n));
         break;
 
       case V_SgCommonBlock:
-        rv.handle(static_cast<SgCommonBlock&>(*n));
+        rv.handle(assume_sgtype<SgCommonBlock>(*n));
         break;
 
       case V_SgModuleStatement:
-        rv.handle(static_cast<SgModuleStatement&>(*n));
+        rv.handle(assume_sgtype<SgModuleStatement>(*n));
         break;
 
       case V_SgUseStatement:
-        rv.handle(static_cast<SgUseStatement&>(*n));
+        rv.handle(assume_sgtype<SgUseStatement>(*n));
         break;
 
       case V_SgStopOrPauseStatement:
-        rv.handle(static_cast<SgStopOrPauseStatement&>(*n));
+        rv.handle(assume_sgtype<SgStopOrPauseStatement>(*n));
         break;
 
       case V_SgPrintStatement:
-        rv.handle(static_cast<SgPrintStatement&>(*n));
+        rv.handle(assume_sgtype<SgPrintStatement>(*n));
         break;
 
       case V_SgReadStatement:
-        rv.handle(static_cast<SgReadStatement&>(*n));
+        rv.handle(assume_sgtype<SgReadStatement>(*n));
         break;
 
       case V_SgWriteStatement:
-        rv.handle(static_cast<SgWriteStatement&>(*n));
+        rv.handle(assume_sgtype<SgWriteStatement>(*n));
         break;
 
       case V_SgOpenStatement:
-        rv.handle(static_cast<SgOpenStatement&>(*n));
+        rv.handle(assume_sgtype<SgOpenStatement>(*n));
         break;
 
       case V_SgCloseStatement:
-        rv.handle(static_cast<SgCloseStatement&>(*n));
+        rv.handle(assume_sgtype<SgCloseStatement>(*n));
         break;
 
       case V_SgInquireStatement:
-        rv.handle(static_cast<SgInquireStatement&>(*n));
+        rv.handle(assume_sgtype<SgInquireStatement>(*n));
         break;
 
       case V_SgFlushStatement:
-        rv.handle(static_cast<SgFlushStatement&>(*n));
+        rv.handle(assume_sgtype<SgFlushStatement>(*n));
         break;
 
       case V_SgBackspaceStatement:
-        rv.handle(static_cast<SgBackspaceStatement&>(*n));
+        rv.handle(assume_sgtype<SgBackspaceStatement>(*n));
         break;
 
       case V_SgRewindStatement:
-        rv.handle(static_cast<SgRewindStatement&>(*n));
+        rv.handle(assume_sgtype<SgRewindStatement>(*n));
         break;
 
       case V_SgEndfileStatement:
-        rv.handle(static_cast<SgEndfileStatement&>(*n));
+        rv.handle(assume_sgtype<SgEndfileStatement>(*n));
         break;
 
       case V_SgWaitStatement:
-        rv.handle(static_cast<SgWaitStatement&>(*n));
+        rv.handle(assume_sgtype<SgWaitStatement>(*n));
         break;
 
       case V_SgCAFWithTeamStatement:
-        rv.handle(static_cast<SgCAFWithTeamStatement&>(*n));
+        rv.handle(assume_sgtype<SgCAFWithTeamStatement>(*n));
         break;
 
       case V_SgFormatStatement:
-        rv.handle(static_cast<SgFormatStatement&>(*n));
+        rv.handle(assume_sgtype<SgFormatStatement>(*n));
         break;
 
       case V_SgFortranDo:
-        rv.handle(static_cast<SgFortranDo&>(*n));
+        rv.handle(assume_sgtype<SgFortranDo>(*n));
         break;
 
       case V_SgForAllStatement:
-        rv.handle(static_cast<SgForAllStatement&>(*n));
+        rv.handle(assume_sgtype<SgForAllStatement>(*n));
         break;
 
       case V_SgIOStatement:
-        rv.handle(static_cast<SgIOStatement&>(*n));
+        rv.handle(assume_sgtype<SgIOStatement>(*n));
         break;
 
       case V_SgUpcNotifyStatement:
-        rv.handle(static_cast<SgUpcNotifyStatement&>(*n));
+        rv.handle(assume_sgtype<SgUpcNotifyStatement>(*n));
         break;
 
       case V_SgUpcWaitStatement:
-        rv.handle(static_cast<SgUpcWaitStatement&>(*n));
+        rv.handle(assume_sgtype<SgUpcWaitStatement>(*n));
         break;
 
       case V_SgUpcBarrierStatement:
-        rv.handle(static_cast<SgUpcBarrierStatement&>(*n));
+        rv.handle(assume_sgtype<SgUpcBarrierStatement>(*n));
         break;
 
       case V_SgUpcFenceStatement:
-        rv.handle(static_cast<SgUpcFenceStatement&>(*n));
+        rv.handle(assume_sgtype<SgUpcFenceStatement>(*n));
         break;
 
       case V_SgUpcForAllStatement:
-        rv.handle(static_cast<SgUpcForAllStatement&>(*n));
+        rv.handle(assume_sgtype<SgUpcForAllStatement>(*n));
         break;
 
       case V_SgOmpParallelStatement:
-        rv.handle(static_cast<SgOmpParallelStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpParallelStatement>(*n));
         break;
 
       case V_SgOmpSingleStatement:
-        rv.handle(static_cast<SgOmpSingleStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpSingleStatement>(*n));
         break;
 
       case V_SgOmpTaskStatement:
-        rv.handle(static_cast<SgOmpTaskStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpTaskStatement>(*n));
         break;
 
       case V_SgOmpForStatement:
-        rv.handle(static_cast<SgOmpForStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpForStatement>(*n));
         break;
 
       case V_SgOmpDoStatement:
-        rv.handle(static_cast<SgOmpDoStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpDoStatement>(*n));
         break;
 
       case V_SgOmpSectionsStatement:
-        rv.handle(static_cast<SgOmpSectionsStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpSectionsStatement>(*n));
         break;
 
       case V_SgOmpClauseBodyStatement:
-        rv.handle(static_cast<SgOmpClauseBodyStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpClauseBodyStatement>(*n));
         break;
 
       case V_SgOmpAtomicStatement:
-        rv.handle(static_cast<SgOmpAtomicStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpAtomicStatement>(*n));
         break;
 
       case V_SgOmpMasterStatement:
-        rv.handle(static_cast<SgOmpMasterStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpMasterStatement>(*n));
         break;
 
       case V_SgOmpSectionStatement:
-        rv.handle(static_cast<SgOmpSectionStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpSectionStatement>(*n));
         break;
 
       case V_SgOmpOrderedStatement:
-        rv.handle(static_cast<SgOmpOrderedStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpOrderedStatement>(*n));
         break;
 
       case V_SgOmpWorkshareStatement:
-        rv.handle(static_cast<SgOmpWorkshareStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpWorkshareStatement>(*n));
         break;
 
       case V_SgOmpCriticalStatement:
-        rv.handle(static_cast<SgOmpCriticalStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpCriticalStatement>(*n));
         break;
 
       case V_SgOmpBodyStatement:
-        rv.handle(static_cast<SgOmpBodyStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpBodyStatement>(*n));
         break;
 
       case V_SgBlockDataStatement:
-        rv.handle(static_cast<SgBlockDataStatement&>(*n));
+        rv.handle(assume_sgtype<SgBlockDataStatement>(*n));
         break;
 
       case V_SgImplicitStatement:
-        rv.handle(static_cast<SgImplicitStatement&>(*n));
+        rv.handle(assume_sgtype<SgImplicitStatement>(*n));
         break;
 
       case V_SgStatementFunctionStatement:
-        rv.handle(static_cast<SgStatementFunctionStatement&>(*n));
+        rv.handle(assume_sgtype<SgStatementFunctionStatement>(*n));
         break;
 
       case V_SgWhereStatement:
-        rv.handle(static_cast<SgWhereStatement&>(*n));
+        rv.handle(assume_sgtype<SgWhereStatement>(*n));
         break;
 
       case V_SgNullifyStatement:
-        rv.handle(static_cast<SgNullifyStatement&>(*n));
+        rv.handle(assume_sgtype<SgNullifyStatement>(*n));
         break;
 
       case V_SgEquivalenceStatement:
-        rv.handle(static_cast<SgEquivalenceStatement&>(*n));
+        rv.handle(assume_sgtype<SgEquivalenceStatement>(*n));
         break;
 
       case V_SgDerivedTypeStatement:
-        rv.handle(static_cast<SgDerivedTypeStatement&>(*n));
+        rv.handle(assume_sgtype<SgDerivedTypeStatement>(*n));
         break;
 
       case V_SgAttributeSpecificationStatement:
-        rv.handle(static_cast<SgAttributeSpecificationStatement&>(*n));
+        rv.handle(assume_sgtype<SgAttributeSpecificationStatement>(*n));
         break;
 
       case V_SgAllocateStatement:
-        rv.handle(static_cast<SgAllocateStatement&>(*n));
+        rv.handle(assume_sgtype<SgAllocateStatement>(*n));
         break;
 
       case V_SgDeallocateStatement:
-        rv.handle(static_cast<SgDeallocateStatement&>(*n));
+        rv.handle(assume_sgtype<SgDeallocateStatement>(*n));
         break;
 
       case V_SgContainsStatement:
-        rv.handle(static_cast<SgContainsStatement&>(*n));
+        rv.handle(assume_sgtype<SgContainsStatement>(*n));
         break;
 
       case V_SgSequenceStatement:
-        rv.handle(static_cast<SgSequenceStatement&>(*n));
+        rv.handle(assume_sgtype<SgSequenceStatement>(*n));
         break;
 
       case V_SgElseWhereStatement:
-        rv.handle(static_cast<SgElseWhereStatement&>(*n));
+        rv.handle(assume_sgtype<SgElseWhereStatement>(*n));
         break;
 
       case V_SgArithmeticIfStatement:
-        rv.handle(static_cast<SgArithmeticIfStatement&>(*n));
+        rv.handle(assume_sgtype<SgArithmeticIfStatement>(*n));
         break;
 
       case V_SgAssignStatement:
-        rv.handle(static_cast<SgAssignStatement&>(*n));
+        rv.handle(assume_sgtype<SgAssignStatement>(*n));
         break;
 
       case V_SgComputedGotoStatement:
-        rv.handle(static_cast<SgComputedGotoStatement&>(*n));
+        rv.handle(assume_sgtype<SgComputedGotoStatement>(*n));
         break;
 
       case V_SgAssignedGotoStatement:
-        rv.handle(static_cast<SgAssignedGotoStatement&>(*n));
+        rv.handle(assume_sgtype<SgAssignedGotoStatement>(*n));
         break;
 
       case V_SgNamelistStatement:
-        rv.handle(static_cast<SgNamelistStatement&>(*n));
+        rv.handle(assume_sgtype<SgNamelistStatement>(*n));
         break;
 
       case V_SgImportStatement:
-        rv.handle(static_cast<SgImportStatement&>(*n));
+        rv.handle(assume_sgtype<SgImportStatement>(*n));
         break;
 
       case V_SgAssociateStatement:
-        rv.handle(static_cast<SgAssociateStatement&>(*n));
+        rv.handle(assume_sgtype<SgAssociateStatement>(*n));
         break;
 
       case V_SgFortranIncludeLine:
-        rv.handle(static_cast<SgFortranIncludeLine&>(*n));
+        rv.handle(assume_sgtype<SgFortranIncludeLine>(*n));
         break;
 
       case V_SgNamespaceDeclarationStatement:
-        rv.handle(static_cast<SgNamespaceDeclarationStatement&>(*n));
+        rv.handle(assume_sgtype<SgNamespaceDeclarationStatement>(*n));
         break;
 
       case V_SgNamespaceAliasDeclarationStatement:
-        rv.handle(static_cast<SgNamespaceAliasDeclarationStatement&>(*n));
+        rv.handle(assume_sgtype<SgNamespaceAliasDeclarationStatement>(*n));
         break;
 
       case V_SgNamespaceDefinitionStatement:
-        rv.handle(static_cast<SgNamespaceDefinitionStatement&>(*n));
+        rv.handle(assume_sgtype<SgNamespaceDefinitionStatement>(*n));
         break;
 
       case V_SgUsingDeclarationStatement:
-        rv.handle(static_cast<SgUsingDeclarationStatement&>(*n));
+        rv.handle(assume_sgtype<SgUsingDeclarationStatement>(*n));
         break;
 
       case V_SgUsingDirectiveStatement:
-        rv.handle(static_cast<SgUsingDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgUsingDirectiveStatement>(*n));
         break;
 
       case V_SgTemplateInstantiationDirectiveStatement:
-        rv.handle(static_cast<SgTemplateInstantiationDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgTemplateInstantiationDirectiveStatement>(*n));
         break;
 
       case V_SgClassDeclaration:
-        rv.handle(static_cast<SgClassDeclaration&>(*n));
+        rv.handle(assume_sgtype<SgClassDeclaration>(*n));
         break;
 
       case V_SgClassDefinition:
-        rv.handle(static_cast<SgClassDefinition&>(*n));
+        rv.handle(assume_sgtype<SgClassDefinition>(*n));
         break;
 
       case V_SgScopeStatement:
-        rv.handle(static_cast<SgScopeStatement&>(*n));
+        rv.handle(assume_sgtype<SgScopeStatement>(*n));
         break;
 
       case V_SgMemberFunctionDeclaration:
-        rv.handle(static_cast<SgMemberFunctionDeclaration&>(*n));
+        rv.handle(assume_sgtype<SgMemberFunctionDeclaration>(*n));
         break;
 
       case V_SgFunctionDeclaration:
-        rv.handle(static_cast<SgFunctionDeclaration&>(*n));
+        rv.handle(assume_sgtype<SgFunctionDeclaration>(*n));
         break;
 
       case V_SgIncludeDirectiveStatement:
-        rv.handle(static_cast<SgIncludeDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgIncludeDirectiveStatement>(*n));
         break;
 
       case V_SgDefineDirectiveStatement:
-        rv.handle(static_cast<SgDefineDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgDefineDirectiveStatement>(*n));
         break;
 
       case V_SgUndefDirectiveStatement:
-        rv.handle(static_cast<SgUndefDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgUndefDirectiveStatement>(*n));
         break;
 
       case V_SgIfdefDirectiveStatement:
-        rv.handle(static_cast<SgIfdefDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgIfdefDirectiveStatement>(*n));
         break;
 
       case V_SgIfndefDirectiveStatement:
-        rv.handle(static_cast<SgIfndefDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgIfndefDirectiveStatement>(*n));
         break;
 
       case V_SgIfDirectiveStatement:
-        rv.handle(static_cast<SgIfDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgIfDirectiveStatement>(*n));
         break;
 
       case V_SgDeadIfDirectiveStatement:
-        rv.handle(static_cast<SgDeadIfDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgDeadIfDirectiveStatement>(*n));
         break;
 
       case V_SgElseDirectiveStatement:
-        rv.handle(static_cast<SgElseDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgElseDirectiveStatement>(*n));
         break;
 
       case V_SgElseifDirectiveStatement:
-        rv.handle(static_cast<SgElseifDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgElseifDirectiveStatement>(*n));
         break;
 
       case V_SgEndifDirectiveStatement:
-        rv.handle(static_cast<SgEndifDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgEndifDirectiveStatement>(*n));
         break;
 
       case V_SgLineDirectiveStatement:
-        rv.handle(static_cast<SgLineDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgLineDirectiveStatement>(*n));
         break;
 
       case V_SgWarningDirectiveStatement:
-        rv.handle(static_cast<SgWarningDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgWarningDirectiveStatement>(*n));
         break;
 
       case V_SgErrorDirectiveStatement:
-        rv.handle(static_cast<SgErrorDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgErrorDirectiveStatement>(*n));
         break;
 
       case V_SgEmptyDirectiveStatement:
-        rv.handle(static_cast<SgEmptyDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgEmptyDirectiveStatement>(*n));
         break;
 
       case V_SgIncludeNextDirectiveStatement:
-        rv.handle(static_cast<SgIncludeNextDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgIncludeNextDirectiveStatement>(*n));
         break;
 
       case V_SgIdentDirectiveStatement:
-        rv.handle(static_cast<SgIdentDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgIdentDirectiveStatement>(*n));
         break;
 
       case V_SgLinemarkerDirectiveStatement:
-        rv.handle(static_cast<SgLinemarkerDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgLinemarkerDirectiveStatement>(*n));
         break;
 
       case V_SgC_PreprocessorDirectiveStatement:
-        rv.handle(static_cast<SgC_PreprocessorDirectiveStatement&>(*n));
+        rv.handle(assume_sgtype<SgC_PreprocessorDirectiveStatement>(*n));
         break;
 
       case V_SgClinkageStartStatement:
-        rv.handle(static_cast<SgClinkageStartStatement&>(*n));
+        rv.handle(assume_sgtype<SgClinkageStartStatement>(*n));
         break;
 
       case V_SgClinkageEndStatement:
-        rv.handle(static_cast<SgClinkageEndStatement&>(*n));
+        rv.handle(assume_sgtype<SgClinkageEndStatement>(*n));
         break;
 
       case V_SgClinkageDeclarationStatement:
-        rv.handle(static_cast<SgClinkageDeclarationStatement&>(*n));
+        rv.handle(assume_sgtype<SgClinkageDeclarationStatement>(*n));
         break;
 
       case V_SgOmpFlushStatement:
-        rv.handle(static_cast<SgOmpFlushStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpFlushStatement>(*n));
         break;
 
       case V_SgOmpBarrierStatement:
-        rv.handle(static_cast<SgOmpBarrierStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpBarrierStatement>(*n));
         break;
 
       case V_SgOmpTaskwaitStatement:
-        rv.handle(static_cast<SgOmpTaskwaitStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpTaskwaitStatement>(*n));
         break;
 
       case V_SgOmpThreadprivateStatement:
-        rv.handle(static_cast<SgOmpThreadprivateStatement&>(*n));
+        rv.handle(assume_sgtype<SgOmpThreadprivateStatement>(*n));
         break;
 
       case V_SgDeclarationStatement:
-        rv.handle(static_cast<SgDeclarationStatement&>(*n));
+        rv.handle(assume_sgtype<SgDeclarationStatement>(*n));
         break;
 
       case V_SgStatement:
-        rv.handle(static_cast<SgStatement&>(*n));
+        rv.handle(assume_sgtype<SgStatement>(*n));
         break;
 
       case V_SgExprListExp:
-        rv.handle(static_cast<SgExprListExp&>(*n));
+        rv.handle(assume_sgtype<SgExprListExp>(*n));
         break;
 
       case V_SgVarRefExp:
-        rv.handle(static_cast<SgVarRefExp&>(*n));
+        rv.handle(assume_sgtype<SgVarRefExp>(*n));
         break;
 
       case V_SgLabelRefExp:
-        rv.handle(static_cast<SgLabelRefExp&>(*n));
+        rv.handle(assume_sgtype<SgLabelRefExp>(*n));
         break;
 
       case V_SgClassNameRefExp:
-        rv.handle(static_cast<SgClassNameRefExp&>(*n));
+        rv.handle(assume_sgtype<SgClassNameRefExp>(*n));
         break;
 
       case V_SgFunctionRefExp:
-        rv.handle(static_cast<SgFunctionRefExp&>(*n));
+        rv.handle(assume_sgtype<SgFunctionRefExp>(*n));
         break;
 
       case V_SgMemberFunctionRefExp:
-        rv.handle(static_cast<SgMemberFunctionRefExp&>(*n));
+        rv.handle(assume_sgtype<SgMemberFunctionRefExp>(*n));
         break;
 
       case V_SgFunctionCallExp:
-        rv.handle(static_cast<SgFunctionCallExp&>(*n));
+        rv.handle(assume_sgtype<SgFunctionCallExp>(*n));
         break;
 
       case V_SgSizeOfOp:
-        rv.handle(static_cast<SgSizeOfOp&>(*n));
+        rv.handle(assume_sgtype<SgSizeOfOp>(*n));
         break;
 
       case V_SgUpcLocalsizeofExpression:
-        rv.handle(static_cast<SgUpcLocalsizeofExpression&>(*n));
+        rv.handle(assume_sgtype<SgUpcLocalsizeofExpression>(*n));
         break;
 
       case V_SgUpcBlocksizeofExpression:
-        rv.handle(static_cast<SgUpcBlocksizeofExpression&>(*n));
+        rv.handle(assume_sgtype<SgUpcBlocksizeofExpression>(*n));
         break;
 
       case V_SgUpcElemsizeofExpression:
-        rv.handle(static_cast<SgUpcElemsizeofExpression&>(*n));
+        rv.handle(assume_sgtype<SgUpcElemsizeofExpression>(*n));
         break;
 
       case V_SgVarArgStartOp:
-        rv.handle(static_cast<SgVarArgStartOp&>(*n));
+        rv.handle(assume_sgtype<SgVarArgStartOp>(*n));
         break;
 
       case V_SgVarArgStartOneOperandOp:
-        rv.handle(static_cast<SgVarArgStartOneOperandOp&>(*n));
+        rv.handle(assume_sgtype<SgVarArgStartOneOperandOp>(*n));
         break;
 
       case V_SgVarArgOp:
-        rv.handle(static_cast<SgVarArgOp&>(*n));
+        rv.handle(assume_sgtype<SgVarArgOp>(*n));
         break;
 
       case V_SgVarArgEndOp:
-        rv.handle(static_cast<SgVarArgEndOp&>(*n));
+        rv.handle(assume_sgtype<SgVarArgEndOp>(*n));
         break;
 
       case V_SgVarArgCopyOp:
-        rv.handle(static_cast<SgVarArgCopyOp&>(*n));
+        rv.handle(assume_sgtype<SgVarArgCopyOp>(*n));
         break;
 
       case V_SgTypeIdOp:
-        rv.handle(static_cast<SgTypeIdOp&>(*n));
+        rv.handle(assume_sgtype<SgTypeIdOp>(*n));
         break;
 
       case V_SgConditionalExp:
-        rv.handle(static_cast<SgConditionalExp&>(*n));
+        rv.handle(assume_sgtype<SgConditionalExp>(*n));
         break;
 
       case V_SgNewExp:
-        rv.handle(static_cast<SgNewExp&>(*n));
+        rv.handle(assume_sgtype<SgNewExp>(*n));
         break;
 
       case V_SgDeleteExp:
-        rv.handle(static_cast<SgDeleteExp&>(*n));
+        rv.handle(assume_sgtype<SgDeleteExp>(*n));
         break;
 
       case V_SgThisExp:
-        rv.handle(static_cast<SgThisExp&>(*n));
+        rv.handle(assume_sgtype<SgThisExp>(*n));
         break;
 
       case V_SgRefExp:
-        rv.handle(static_cast<SgRefExp&>(*n));
+        rv.handle(assume_sgtype<SgRefExp>(*n));
         break;
 
       case V_SgAggregateInitializer:
-        rv.handle(static_cast<SgAggregateInitializer&>(*n));
+        rv.handle(assume_sgtype<SgAggregateInitializer>(*n));
         break;
 
       case V_SgConstructorInitializer:
-        rv.handle(static_cast<SgConstructorInitializer&>(*n));
+        rv.handle(assume_sgtype<SgConstructorInitializer>(*n));
         break;
 
       case V_SgAssignInitializer:
-        rv.handle(static_cast<SgAssignInitializer&>(*n));
+        rv.handle(assume_sgtype<SgAssignInitializer>(*n));
         break;
 
       case V_SgExpressionRoot:
-        rv.handle(static_cast<SgExpressionRoot&>(*n));
+        rv.handle(assume_sgtype<SgExpressionRoot>(*n));
         break;
 
       case V_SgMinusOp:
-        rv.handle(static_cast<SgMinusOp&>(*n));
+        rv.handle(assume_sgtype<SgMinusOp>(*n));
         break;
 
       case V_SgUnaryAddOp:
-        rv.handle(static_cast<SgUnaryAddOp&>(*n));
+        rv.handle(assume_sgtype<SgUnaryAddOp>(*n));
         break;
 
       case V_SgNotOp:
-        rv.handle(static_cast<SgNotOp&>(*n));
+        rv.handle(assume_sgtype<SgNotOp>(*n));
         break;
 
       case V_SgPointerDerefExp:
-        rv.handle(static_cast<SgPointerDerefExp&>(*n));
+        rv.handle(assume_sgtype<SgPointerDerefExp>(*n));
         break;
 
       case V_SgAddressOfOp:
-        rv.handle(static_cast<SgAddressOfOp&>(*n));
+        rv.handle(assume_sgtype<SgAddressOfOp>(*n));
         break;
 
       case V_SgMinusMinusOp:
-        rv.handle(static_cast<SgMinusMinusOp&>(*n));
+        rv.handle(assume_sgtype<SgMinusMinusOp>(*n));
         break;
 
       case V_SgPlusPlusOp:
-        rv.handle(static_cast<SgPlusPlusOp&>(*n));
+        rv.handle(assume_sgtype<SgPlusPlusOp>(*n));
         break;
 
       case V_SgBitComplementOp:
-        rv.handle(static_cast<SgBitComplementOp&>(*n));
+        rv.handle(assume_sgtype<SgBitComplementOp>(*n));
         break;
 
       case V_SgRealPartOp:
-        rv.handle(static_cast<SgRealPartOp&>(*n));
+        rv.handle(assume_sgtype<SgRealPartOp>(*n));
         break;
 
       case V_SgImagPartOp:
-        rv.handle(static_cast<SgImagPartOp&>(*n));
+        rv.handle(assume_sgtype<SgImagPartOp>(*n));
         break;
 
       case V_SgConjugateOp:
-        rv.handle(static_cast<SgConjugateOp&>(*n));
+        rv.handle(assume_sgtype<SgConjugateOp>(*n));
         break;
 
       case V_SgCastExp:
-        rv.handle(static_cast<SgCastExp&>(*n));
+        rv.handle(assume_sgtype<SgCastExp>(*n));
         break;
 
       case V_SgThrowOp:
-        rv.handle(static_cast<SgThrowOp&>(*n));
+        rv.handle(assume_sgtype<SgThrowOp>(*n));
         break;
 
       case V_SgArrowExp:
-        rv.handle(static_cast<SgArrowExp&>(*n));
+        rv.handle(assume_sgtype<SgArrowExp>(*n));
         break;
 
       case V_SgDotExp:
-        rv.handle(static_cast<SgDotExp&>(*n));
+        rv.handle(assume_sgtype<SgDotExp>(*n));
         break;
 
       case V_SgDotStarOp:
-        rv.handle(static_cast<SgDotStarOp&>(*n));
+        rv.handle(assume_sgtype<SgDotStarOp>(*n));
         break;
 
       case V_SgArrowStarOp:
-        rv.handle(static_cast<SgArrowStarOp&>(*n));
+        rv.handle(assume_sgtype<SgArrowStarOp>(*n));
         break;
 
       case V_SgEqualityOp:
-        rv.handle(static_cast<SgEqualityOp&>(*n));
+        rv.handle(assume_sgtype<SgEqualityOp>(*n));
         break;
 
       case V_SgLessThanOp:
-        rv.handle(static_cast<SgLessThanOp&>(*n));
+        rv.handle(assume_sgtype<SgLessThanOp>(*n));
         break;
 
       case V_SgGreaterThanOp:
-        rv.handle(static_cast<SgGreaterThanOp&>(*n));
+        rv.handle(assume_sgtype<SgGreaterThanOp>(*n));
         break;
 
       case V_SgNotEqualOp:
-        rv.handle(static_cast<SgNotEqualOp&>(*n));
+        rv.handle(assume_sgtype<SgNotEqualOp>(*n));
         break;
 
       case V_SgLessOrEqualOp:
-        rv.handle(static_cast<SgLessOrEqualOp&>(*n));
+        rv.handle(assume_sgtype<SgLessOrEqualOp>(*n));
         break;
 
       case V_SgGreaterOrEqualOp:
-        rv.handle(static_cast<SgGreaterOrEqualOp&>(*n));
+        rv.handle(assume_sgtype<SgGreaterOrEqualOp>(*n));
         break;
 
       case V_SgAddOp:
-        rv.handle(static_cast<SgAddOp&>(*n));
+        rv.handle(assume_sgtype<SgAddOp>(*n));
         break;
 
       case V_SgSubtractOp:
-        rv.handle(static_cast<SgSubtractOp&>(*n));
+        rv.handle(assume_sgtype<SgSubtractOp>(*n));
         break;
 
       case V_SgMultiplyOp:
-        rv.handle(static_cast<SgMultiplyOp&>(*n));
+        rv.handle(assume_sgtype<SgMultiplyOp>(*n));
         break;
 
       case V_SgDivideOp:
-        rv.handle(static_cast<SgDivideOp&>(*n));
+        rv.handle(assume_sgtype<SgDivideOp>(*n));
         break;
 
       case V_SgIntegerDivideOp:
-        rv.handle(static_cast<SgIntegerDivideOp&>(*n));
+        rv.handle(assume_sgtype<SgIntegerDivideOp>(*n));
         break;
 
       case V_SgModOp:
-        rv.handle(static_cast<SgModOp&>(*n));
+        rv.handle(assume_sgtype<SgModOp>(*n));
         break;
 
       case V_SgAndOp:
-        rv.handle(static_cast<SgAndOp&>(*n));
+        rv.handle(assume_sgtype<SgAndOp>(*n));
         break;
 
       case V_SgOrOp:
-        rv.handle(static_cast<SgOrOp&>(*n));
+        rv.handle(assume_sgtype<SgOrOp>(*n));
         break;
 
       case V_SgBitXorOp:
-        rv.handle(static_cast<SgBitXorOp&>(*n));
+        rv.handle(assume_sgtype<SgBitXorOp>(*n));
         break;
 
       case V_SgBitAndOp:
-        rv.handle(static_cast<SgBitAndOp&>(*n));
+        rv.handle(assume_sgtype<SgBitAndOp>(*n));
         break;
 
       case V_SgBitOrOp:
-        rv.handle(static_cast<SgBitOrOp&>(*n));
+        rv.handle(assume_sgtype<SgBitOrOp>(*n));
         break;
 
       case V_SgCommaOpExp:
-        rv.handle(static_cast<SgCommaOpExp&>(*n));
+        rv.handle(assume_sgtype<SgCommaOpExp>(*n));
         break;
 
       case V_SgLshiftOp:
-        rv.handle(static_cast<SgLshiftOp&>(*n));
+        rv.handle(assume_sgtype<SgLshiftOp>(*n));
         break;
 
       case V_SgRshiftOp:
-        rv.handle(static_cast<SgRshiftOp&>(*n));
+        rv.handle(assume_sgtype<SgRshiftOp>(*n));
         break;
 
       case V_SgPntrArrRefExp:
-        rv.handle(static_cast<SgPntrArrRefExp&>(*n));
+        rv.handle(assume_sgtype<SgPntrArrRefExp>(*n));
         break;
 
       case V_SgScopeOp:
-        rv.handle(static_cast<SgScopeOp&>(*n));
+        rv.handle(assume_sgtype<SgScopeOp>(*n));
         break;
 
       case V_SgAssignOp:
-        rv.handle(static_cast<SgAssignOp&>(*n));
+        rv.handle(assume_sgtype<SgAssignOp>(*n));
         break;
 
       case V_SgPlusAssignOp:
-        rv.handle(static_cast<SgPlusAssignOp&>(*n));
+        rv.handle(assume_sgtype<SgPlusAssignOp>(*n));
         break;
 
       case V_SgMinusAssignOp:
-        rv.handle(static_cast<SgMinusAssignOp&>(*n));
+        rv.handle(assume_sgtype<SgMinusAssignOp>(*n));
         break;
 
       case V_SgAndAssignOp:
-        rv.handle(static_cast<SgAndAssignOp&>(*n));
+        rv.handle(assume_sgtype<SgAndAssignOp>(*n));
         break;
 
       case V_SgIorAssignOp:
-        rv.handle(static_cast<SgIorAssignOp&>(*n));
+        rv.handle(assume_sgtype<SgIorAssignOp>(*n));
         break;
 
       case V_SgMultAssignOp:
-        rv.handle(static_cast<SgMultAssignOp&>(*n));
+        rv.handle(assume_sgtype<SgMultAssignOp>(*n));
         break;
 
       case V_SgDivAssignOp:
-        rv.handle(static_cast<SgDivAssignOp&>(*n));
+        rv.handle(assume_sgtype<SgDivAssignOp>(*n));
         break;
 
       case V_SgModAssignOp:
-        rv.handle(static_cast<SgModAssignOp&>(*n));
+        rv.handle(assume_sgtype<SgModAssignOp>(*n));
         break;
 
       case V_SgXorAssignOp:
-        rv.handle(static_cast<SgXorAssignOp&>(*n));
+        rv.handle(assume_sgtype<SgXorAssignOp>(*n));
         break;
 
       case V_SgLshiftAssignOp:
-        rv.handle(static_cast<SgLshiftAssignOp&>(*n));
+        rv.handle(assume_sgtype<SgLshiftAssignOp>(*n));
         break;
 
       case V_SgRshiftAssignOp:
-        rv.handle(static_cast<SgRshiftAssignOp&>(*n));
+        rv.handle(assume_sgtype<SgRshiftAssignOp>(*n));
         break;
 
       case V_SgConcatenationOp:
-        rv.handle(static_cast<SgConcatenationOp&>(*n));
+        rv.handle(assume_sgtype<SgConcatenationOp>(*n));
         break;
 
       case V_SgBoolValExp:
-        rv.handle(static_cast<SgBoolValExp&>(*n));
+        rv.handle(assume_sgtype<SgBoolValExp>(*n));
         break;
 
       case V_SgStringVal:
-        rv.handle(static_cast<SgStringVal&>(*n));
+        rv.handle(assume_sgtype<SgStringVal>(*n));
         break;
 
       case V_SgShortVal:
-        rv.handle(static_cast<SgShortVal&>(*n));
+        rv.handle(assume_sgtype<SgShortVal>(*n));
         break;
 
       case V_SgCharVal:
-        rv.handle(static_cast<SgCharVal&>(*n));
+        rv.handle(assume_sgtype<SgCharVal>(*n));
         break;
 
       case V_SgUnsignedCharVal:
-        rv.handle(static_cast<SgUnsignedCharVal&>(*n));
+        rv.handle(assume_sgtype<SgUnsignedCharVal>(*n));
         break;
 
       case V_SgWcharVal:
-        rv.handle(static_cast<SgWcharVal&>(*n));
+        rv.handle(assume_sgtype<SgWcharVal>(*n));
         break;
 
       case V_SgUnsignedShortVal:
-        rv.handle(static_cast<SgUnsignedShortVal&>(*n));
+        rv.handle(assume_sgtype<SgUnsignedShortVal>(*n));
         break;
 
       case V_SgIntVal:
-        rv.handle(static_cast<SgIntVal&>(*n));
+        rv.handle(assume_sgtype<SgIntVal>(*n));
         break;
 
       case V_SgEnumVal:
-        rv.handle(static_cast<SgEnumVal&>(*n));
+        rv.handle(assume_sgtype<SgEnumVal>(*n));
         break;
 
       case V_SgUnsignedIntVal:
-        rv.handle(static_cast<SgUnsignedIntVal&>(*n));
+        rv.handle(assume_sgtype<SgUnsignedIntVal>(*n));
         break;
 
       case V_SgLongIntVal:
-        rv.handle(static_cast<SgLongIntVal&>(*n));
+        rv.handle(assume_sgtype<SgLongIntVal>(*n));
         break;
 
       case V_SgLongLongIntVal:
-        rv.handle(static_cast<SgLongLongIntVal&>(*n));
+        rv.handle(assume_sgtype<SgLongLongIntVal>(*n));
         break;
 
       case V_SgUnsignedLongLongIntVal:
-        rv.handle(static_cast<SgUnsignedLongLongIntVal&>(*n));
+        rv.handle(assume_sgtype<SgUnsignedLongLongIntVal>(*n));
         break;
 
       case V_SgUnsignedLongVal:
-        rv.handle(static_cast<SgUnsignedLongVal&>(*n));
+        rv.handle(assume_sgtype<SgUnsignedLongVal>(*n));
         break;
 
       case V_SgFloatVal:
-        rv.handle(static_cast<SgFloatVal&>(*n));
+        rv.handle(assume_sgtype<SgFloatVal>(*n));
         break;
 
       case V_SgDoubleVal:
-        rv.handle(static_cast<SgDoubleVal&>(*n));
+        rv.handle(assume_sgtype<SgDoubleVal>(*n));
         break;
 
       case V_SgLongDoubleVal:
-        rv.handle(static_cast<SgLongDoubleVal&>(*n));
+        rv.handle(assume_sgtype<SgLongDoubleVal>(*n));
         break;
 
       case V_SgUpcThreads:
-        rv.handle(static_cast<SgUpcThreads&>(*n));
+        rv.handle(assume_sgtype<SgUpcThreads>(*n));
         break;
 
       case V_SgUpcMythread:
-        rv.handle(static_cast<SgUpcMythread&>(*n));
+        rv.handle(assume_sgtype<SgUpcMythread>(*n));
         break;
 
       case V_SgComplexVal:
-        rv.handle(static_cast<SgComplexVal&>(*n));
+        rv.handle(assume_sgtype<SgComplexVal>(*n));
         break;
 
       case V_SgNullExpression:
-        rv.handle(static_cast<SgNullExpression&>(*n));
+        rv.handle(assume_sgtype<SgNullExpression>(*n));
         break;
 
       case V_SgVariantExpression:
-        rv.handle(static_cast<SgVariantExpression&>(*n));
+        rv.handle(assume_sgtype<SgVariantExpression>(*n));
         break;
 
       case V_SgStatementExpression:
-        rv.handle(static_cast<SgStatementExpression&>(*n));
+        rv.handle(assume_sgtype<SgStatementExpression>(*n));
         break;
 
       case V_SgAsmOp:
-        rv.handle(static_cast<SgAsmOp&>(*n));
+        rv.handle(assume_sgtype<SgAsmOp>(*n));
         break;
 
       case V_SgCudaKernelExecConfig:
-        rv.handle(static_cast<SgCudaKernelExecConfig&>(*n));
+        rv.handle(assume_sgtype<SgCudaKernelExecConfig>(*n));
         break;
 
       case V_SgCudaKernelCallExp:
-        rv.handle(static_cast<SgCudaKernelCallExp&>(*n));
+        rv.handle(assume_sgtype<SgCudaKernelCallExp>(*n));
         break;
 
       case V_SgSubscriptExpression:
-        rv.handle(static_cast<SgSubscriptExpression&>(*n));
+        rv.handle(assume_sgtype<SgSubscriptExpression>(*n));
         break;
 
       case V_SgColonShapeExp:
-        rv.handle(static_cast<SgColonShapeExp&>(*n));
+        rv.handle(assume_sgtype<SgColonShapeExp>(*n));
         break;
 
       case V_SgAsteriskShapeExp:
-        rv.handle(static_cast<SgAsteriskShapeExp&>(*n));
+        rv.handle(assume_sgtype<SgAsteriskShapeExp>(*n));
         break;
 
       case V_SgIOItemExpression:
-        rv.handle(static_cast<SgIOItemExpression&>(*n));
+        rv.handle(assume_sgtype<SgIOItemExpression>(*n));
         break;
 
       case V_SgImpliedDo:
-        rv.handle(static_cast<SgImpliedDo&>(*n));
+        rv.handle(assume_sgtype<SgImpliedDo>(*n));
         break;
 
       case V_SgExponentiationOp:
-        rv.handle(static_cast<SgExponentiationOp&>(*n));
+        rv.handle(assume_sgtype<SgExponentiationOp>(*n));
         break;
 
       case V_SgUnknownArrayOrFunctionReference:
-        rv.handle(static_cast<SgUnknownArrayOrFunctionReference&>(*n));
+        rv.handle(assume_sgtype<SgUnknownArrayOrFunctionReference>(*n));
         break;
 
       case V_SgActualArgumentExpression:
-        rv.handle(static_cast<SgActualArgumentExpression&>(*n));
+        rv.handle(assume_sgtype<SgActualArgumentExpression>(*n));
         break;
 
       case V_SgUserDefinedBinaryOp:
-        rv.handle(static_cast<SgUserDefinedBinaryOp&>(*n));
+        rv.handle(assume_sgtype<SgUserDefinedBinaryOp>(*n));
         break;
 
       case V_SgPointerAssignOp:
-        rv.handle(static_cast<SgPointerAssignOp&>(*n));
+        rv.handle(assume_sgtype<SgPointerAssignOp>(*n));
         break;
 
       case V_SgCAFCoExpression:
-        rv.handle(static_cast<SgCAFCoExpression&>(*n));
+        rv.handle(assume_sgtype<SgCAFCoExpression>(*n));
         break;
 
       case V_SgDesignatedInitializer:
-        rv.handle(static_cast<SgDesignatedInitializer&>(*n));
+        rv.handle(assume_sgtype<SgDesignatedInitializer>(*n));
         break;
 
       case V_SgInitializer:
-        rv.handle(static_cast<SgInitializer&>(*n));
+        rv.handle(assume_sgtype<SgInitializer>(*n));
         break;
 
       case V_SgUserDefinedUnaryOp:
-        rv.handle(static_cast<SgUserDefinedUnaryOp&>(*n));
+        rv.handle(assume_sgtype<SgUserDefinedUnaryOp>(*n));
         break;
 
       case V_SgPseudoDestructorRefExp:
-        rv.handle(static_cast<SgPseudoDestructorRefExp&>(*n));
+        rv.handle(assume_sgtype<SgPseudoDestructorRefExp>(*n));
         break;
 
       case V_SgUnaryOp:
-        rv.handle(static_cast<SgUnaryOp&>(*n));
+        rv.handle(assume_sgtype<SgUnaryOp>(*n));
         break;
 
       case V_SgBinaryOp:
-        rv.handle(static_cast<SgBinaryOp&>(*n));
+        rv.handle(assume_sgtype<SgBinaryOp>(*n));
         break;
 
       case V_SgValueExp:
-        rv.handle(static_cast<SgValueExp&>(*n));
+        rv.handle(assume_sgtype<SgValueExp>(*n));
         break;
 
       case V_SgExpression:
-        rv.handle(static_cast<SgExpression&>(*n));
+        rv.handle(assume_sgtype<SgExpression>(*n));
         break;
 
       case V_SgVariableSymbol:
-        rv.handle(static_cast<SgVariableSymbol&>(*n));
+        rv.handle(assume_sgtype<SgVariableSymbol>(*n));
         break;
 
       case V_SgFunctionTypeSymbol:
-        rv.handle(static_cast<SgFunctionTypeSymbol&>(*n));
+        rv.handle(assume_sgtype<SgFunctionTypeSymbol>(*n));
         break;
 
       case V_SgClassSymbol:
-        rv.handle(static_cast<SgClassSymbol&>(*n));
+        rv.handle(assume_sgtype<SgClassSymbol>(*n));
         break;
 
       case V_SgTemplateSymbol:
-        rv.handle(static_cast<SgTemplateSymbol&>(*n));
+        rv.handle(assume_sgtype<SgTemplateSymbol>(*n));
         break;
 
       case V_SgEnumSymbol:
-        rv.handle(static_cast<SgEnumSymbol&>(*n));
+        rv.handle(assume_sgtype<SgEnumSymbol>(*n));
         break;
 
       case V_SgEnumFieldSymbol:
-        rv.handle(static_cast<SgEnumFieldSymbol&>(*n));
+        rv.handle(assume_sgtype<SgEnumFieldSymbol>(*n));
         break;
 
       case V_SgTypedefSymbol:
-        rv.handle(static_cast<SgTypedefSymbol&>(*n));
+        rv.handle(assume_sgtype<SgTypedefSymbol>(*n));
         break;
 
       case V_SgMemberFunctionSymbol:
-        rv.handle(static_cast<SgMemberFunctionSymbol&>(*n));
+        rv.handle(assume_sgtype<SgMemberFunctionSymbol>(*n));
         break;
 
       case V_SgLabelSymbol:
-        rv.handle(static_cast<SgLabelSymbol&>(*n));
+        rv.handle(assume_sgtype<SgLabelSymbol>(*n));
         break;
 
       case V_SgDefaultSymbol:
-        rv.handle(static_cast<SgDefaultSymbol&>(*n));
+        rv.handle(assume_sgtype<SgDefaultSymbol>(*n));
         break;
 
       case V_SgNamespaceSymbol:
-        rv.handle(static_cast<SgNamespaceSymbol&>(*n));
+        rv.handle(assume_sgtype<SgNamespaceSymbol>(*n));
         break;
 
       case V_SgIntrinsicSymbol:
-        rv.handle(static_cast<SgIntrinsicSymbol&>(*n));
+        rv.handle(assume_sgtype<SgIntrinsicSymbol>(*n));
         break;
 
       case V_SgModuleSymbol:
-        rv.handle(static_cast<SgModuleSymbol&>(*n));
+        rv.handle(assume_sgtype<SgModuleSymbol>(*n));
         break;
 
       case V_SgInterfaceSymbol:
-        rv.handle(static_cast<SgInterfaceSymbol&>(*n));
+        rv.handle(assume_sgtype<SgInterfaceSymbol>(*n));
         break;
 
       case V_SgCommonSymbol:
-        rv.handle(static_cast<SgCommonSymbol&>(*n));
+        rv.handle(assume_sgtype<SgCommonSymbol>(*n));
         break;
 
       case V_SgRenameSymbol:
-        rv.handle(static_cast<SgRenameSymbol&>(*n));
+        rv.handle(assume_sgtype<SgRenameSymbol>(*n));
         break;
 
       case V_SgFunctionSymbol:
-        rv.handle(static_cast<SgFunctionSymbol&>(*n));
+        rv.handle(assume_sgtype<SgFunctionSymbol>(*n));
         break;
 
       case V_SgAsmBinaryAddressSymbol:
-        rv.handle(static_cast<SgAsmBinaryAddressSymbol&>(*n));
+        rv.handle(assume_sgtype<SgAsmBinaryAddressSymbol>(*n));
         break;
 
       case V_SgAsmBinaryDataSymbol:
-        rv.handle(static_cast<SgAsmBinaryDataSymbol&>(*n));
+        rv.handle(assume_sgtype<SgAsmBinaryDataSymbol>(*n));
         break;
 
       case V_SgAliasSymbol:
-        rv.handle(static_cast<SgAliasSymbol&>(*n));
+        rv.handle(assume_sgtype<SgAliasSymbol>(*n));
         break;
 
       case V_SgSymbol:
-        rv.handle(static_cast<SgSymbol&>(*n));
+        rv.handle(assume_sgtype<SgSymbol>(*n));
         break;
 
       case V_SgAsmBlock:
-        rv.handle(static_cast<SgAsmBlock&>(*n));
+        rv.handle(assume_sgtype<SgAsmBlock>(*n));
         break;
 
       case V_SgAsmOperandList:
-        rv.handle(static_cast<SgAsmOperandList&>(*n));
+        rv.handle(assume_sgtype<SgAsmOperandList>(*n));
         break;
 
       case V_SgAsmArmInstruction:
-        rv.handle(static_cast<SgAsmArmInstruction&>(*n));
+        rv.handle(assume_sgtype<SgAsmArmInstruction>(*n));
         break;
 
       case V_SgAsmx86Instruction:
-        rv.handle(static_cast<SgAsmx86Instruction&>(*n));
+        rv.handle(assume_sgtype<SgAsmx86Instruction>(*n));
         break;
 
       case V_SgAsmPowerpcInstruction:
-        rv.handle(static_cast<SgAsmPowerpcInstruction&>(*n));
+        rv.handle(assume_sgtype<SgAsmPowerpcInstruction>(*n));
         break;
 
       case V_SgAsmInstruction:
-        rv.handle(static_cast<SgAsmInstruction&>(*n));
+        rv.handle(assume_sgtype<SgAsmInstruction>(*n));
         break;
 
       case V_SgAsmDataStructureDeclaration:
-        rv.handle(static_cast<SgAsmDataStructureDeclaration&>(*n));
+        rv.handle(assume_sgtype<SgAsmDataStructureDeclaration>(*n));
         break;
 
       case V_SgAsmFunctionDeclaration:
-        rv.handle(static_cast<SgAsmFunctionDeclaration&>(*n));
+        rv.handle(assume_sgtype<SgAsmFunctionDeclaration>(*n));
         break;
 
       case V_SgAsmFieldDeclaration:
-        rv.handle(static_cast<SgAsmFieldDeclaration&>(*n));
+        rv.handle(assume_sgtype<SgAsmFieldDeclaration>(*n));
         break;
 
       case V_SgAsmDeclaration:
-        rv.handle(static_cast<SgAsmDeclaration&>(*n));
+        rv.handle(assume_sgtype<SgAsmDeclaration>(*n));
         break;
 
       case V_SgAsmStatement:
-        rv.handle(static_cast<SgAsmStatement&>(*n));
+        rv.handle(assume_sgtype<SgAsmStatement>(*n));
         break;
 
       case V_SgAsmBinaryAdd:
-        rv.handle(static_cast<SgAsmBinaryAdd&>(*n));
+        rv.handle(assume_sgtype<SgAsmBinaryAdd>(*n));
         break;
 
       case V_SgAsmBinarySubtract:
-        rv.handle(static_cast<SgAsmBinarySubtract&>(*n));
+        rv.handle(assume_sgtype<SgAsmBinarySubtract>(*n));
         break;
 
       case V_SgAsmBinaryMultiply:
-        rv.handle(static_cast<SgAsmBinaryMultiply&>(*n));
+        rv.handle(assume_sgtype<SgAsmBinaryMultiply>(*n));
         break;
 
       case V_SgAsmBinaryDivide:
-        rv.handle(static_cast<SgAsmBinaryDivide&>(*n));
+        rv.handle(assume_sgtype<SgAsmBinaryDivide>(*n));
         break;
 
       case V_SgAsmBinaryMod:
-        rv.handle(static_cast<SgAsmBinaryMod&>(*n));
+        rv.handle(assume_sgtype<SgAsmBinaryMod>(*n));
         break;
 
       case V_SgAsmBinaryAddPreupdate:
-        rv.handle(static_cast<SgAsmBinaryAddPreupdate&>(*n));
+        rv.handle(assume_sgtype<SgAsmBinaryAddPreupdate>(*n));
         break;
 
       case V_SgAsmBinarySubtractPreupdate:
-        rv.handle(static_cast<SgAsmBinarySubtractPreupdate&>(*n));
+        rv.handle(assume_sgtype<SgAsmBinarySubtractPreupdate>(*n));
         break;
 
       case V_SgAsmBinaryAddPostupdate:
-        rv.handle(static_cast<SgAsmBinaryAddPostupdate&>(*n));
+        rv.handle(assume_sgtype<SgAsmBinaryAddPostupdate>(*n));
         break;
 
       case V_SgAsmBinarySubtractPostupdate:
-        rv.handle(static_cast<SgAsmBinarySubtractPostupdate&>(*n));
+        rv.handle(assume_sgtype<SgAsmBinarySubtractPostupdate>(*n));
         break;
 
       case V_SgAsmBinaryLsl:
-        rv.handle(static_cast<SgAsmBinaryLsl&>(*n));
+        rv.handle(assume_sgtype<SgAsmBinaryLsl>(*n));
         break;
 
       case V_SgAsmBinaryLsr:
-        rv.handle(static_cast<SgAsmBinaryLsr&>(*n));
+        rv.handle(assume_sgtype<SgAsmBinaryLsr>(*n));
         break;
 
       case V_SgAsmBinaryAsr:
-        rv.handle(static_cast<SgAsmBinaryAsr&>(*n));
+        rv.handle(assume_sgtype<SgAsmBinaryAsr>(*n));
         break;
 
       case V_SgAsmBinaryRor:
-        rv.handle(static_cast<SgAsmBinaryRor&>(*n));
+        rv.handle(assume_sgtype<SgAsmBinaryRor>(*n));
         break;
 
       case V_SgAsmBinaryExpression:
-        rv.handle(static_cast<SgAsmBinaryExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmBinaryExpression>(*n));
         break;
 
       case V_SgAsmUnaryPlus:
-        rv.handle(static_cast<SgAsmUnaryPlus&>(*n));
+        rv.handle(assume_sgtype<SgAsmUnaryPlus>(*n));
         break;
 
       case V_SgAsmUnaryMinus:
-        rv.handle(static_cast<SgAsmUnaryMinus&>(*n));
+        rv.handle(assume_sgtype<SgAsmUnaryMinus>(*n));
         break;
 
       case V_SgAsmUnaryRrx:
-        rv.handle(static_cast<SgAsmUnaryRrx&>(*n));
+        rv.handle(assume_sgtype<SgAsmUnaryRrx>(*n));
         break;
 
       case V_SgAsmUnaryArmSpecialRegisterList:
-        rv.handle(static_cast<SgAsmUnaryArmSpecialRegisterList&>(*n));
+        rv.handle(assume_sgtype<SgAsmUnaryArmSpecialRegisterList>(*n));
         break;
 
       case V_SgAsmUnaryExpression:
-        rv.handle(static_cast<SgAsmUnaryExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmUnaryExpression>(*n));
         break;
 
       case V_SgAsmMemoryReferenceExpression:
-        rv.handle(static_cast<SgAsmMemoryReferenceExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmMemoryReferenceExpression>(*n));
         break;
 
       case V_SgAsmControlFlagsExpression:
-        rv.handle(static_cast<SgAsmControlFlagsExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmControlFlagsExpression>(*n));
         break;
 
       case V_SgAsmCommonSubExpression:
-        rv.handle(static_cast<SgAsmCommonSubExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmCommonSubExpression>(*n));
         break;
 
       case V_SgAsmx86RegisterReferenceExpression:
-        rv.handle(static_cast<SgAsmx86RegisterReferenceExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmx86RegisterReferenceExpression>(*n));
         break;
 
       case V_SgAsmArmRegisterReferenceExpression:
-        rv.handle(static_cast<SgAsmArmRegisterReferenceExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmArmRegisterReferenceExpression>(*n));
         break;
 
       case V_SgAsmPowerpcRegisterReferenceExpression:
-        rv.handle(static_cast<SgAsmPowerpcRegisterReferenceExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmPowerpcRegisterReferenceExpression>(*n));
         break;
 
       case V_SgAsmRegisterReferenceExpression:
-        rv.handle(static_cast<SgAsmRegisterReferenceExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmRegisterReferenceExpression>(*n));
         break;
 
       case V_SgAsmByteValueExpression:
-        rv.handle(static_cast<SgAsmByteValueExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmByteValueExpression>(*n));
         break;
 
       case V_SgAsmWordValueExpression:
-        rv.handle(static_cast<SgAsmWordValueExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmWordValueExpression>(*n));
         break;
 
       case V_SgAsmDoubleWordValueExpression:
-        rv.handle(static_cast<SgAsmDoubleWordValueExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmDoubleWordValueExpression>(*n));
         break;
 
       case V_SgAsmQuadWordValueExpression:
-        rv.handle(static_cast<SgAsmQuadWordValueExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmQuadWordValueExpression>(*n));
         break;
 
       case V_SgAsmSingleFloatValueExpression:
-        rv.handle(static_cast<SgAsmSingleFloatValueExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmSingleFloatValueExpression>(*n));
         break;
 
       case V_SgAsmDoubleFloatValueExpression:
-        rv.handle(static_cast<SgAsmDoubleFloatValueExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmDoubleFloatValueExpression>(*n));
         break;
 
       case V_SgAsmVectorValueExpression:
-        rv.handle(static_cast<SgAsmVectorValueExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmVectorValueExpression>(*n));
         break;
 
       case V_SgAsmValueExpression:
-        rv.handle(static_cast<SgAsmValueExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmValueExpression>(*n));
         break;
 
       case V_SgAsmExprListExp:
-        rv.handle(static_cast<SgAsmExprListExp&>(*n));
+        rv.handle(assume_sgtype<SgAsmExprListExp>(*n));
         break;
 
       case V_SgAsmExpression:
-        rv.handle(static_cast<SgAsmExpression&>(*n));
+        rv.handle(assume_sgtype<SgAsmExpression>(*n));
         break;
 
       case V_SgAsmTypeByte:
-        rv.handle(static_cast<SgAsmTypeByte&>(*n));
+        rv.handle(assume_sgtype<SgAsmTypeByte>(*n));
         break;
 
       case V_SgAsmTypeWord:
-        rv.handle(static_cast<SgAsmTypeWord&>(*n));
+        rv.handle(assume_sgtype<SgAsmTypeWord>(*n));
         break;
 
       case V_SgAsmTypeDoubleWord:
-        rv.handle(static_cast<SgAsmTypeDoubleWord&>(*n));
+        rv.handle(assume_sgtype<SgAsmTypeDoubleWord>(*n));
         break;
 
       case V_SgAsmTypeQuadWord:
-        rv.handle(static_cast<SgAsmTypeQuadWord&>(*n));
+        rv.handle(assume_sgtype<SgAsmTypeQuadWord>(*n));
         break;
 
       case V_SgAsmTypeDoubleQuadWord:
-        rv.handle(static_cast<SgAsmTypeDoubleQuadWord&>(*n));
+        rv.handle(assume_sgtype<SgAsmTypeDoubleQuadWord>(*n));
         break;
 
       case V_SgAsmTypeSingleFloat:
-        rv.handle(static_cast<SgAsmTypeSingleFloat&>(*n));
+        rv.handle(assume_sgtype<SgAsmTypeSingleFloat>(*n));
         break;
 
       case V_SgAsmTypeDoubleFloat:
-        rv.handle(static_cast<SgAsmTypeDoubleFloat&>(*n));
+        rv.handle(assume_sgtype<SgAsmTypeDoubleFloat>(*n));
         break;
 
       case V_SgAsmType80bitFloat:
-        rv.handle(static_cast<SgAsmType80bitFloat&>(*n));
+        rv.handle(assume_sgtype<SgAsmType80bitFloat>(*n));
         break;
 
       case V_SgAsmType128bitFloat:
-        rv.handle(static_cast<SgAsmType128bitFloat&>(*n));
+        rv.handle(assume_sgtype<SgAsmType128bitFloat>(*n));
         break;
 
       case V_SgAsmTypeVector:
-        rv.handle(static_cast<SgAsmTypeVector&>(*n));
+        rv.handle(assume_sgtype<SgAsmTypeVector>(*n));
         break;
 
       case V_SgAsmType:
-        rv.handle(static_cast<SgAsmType&>(*n));
+        rv.handle(assume_sgtype<SgAsmType>(*n));
         break;
 
       case V_SgAsmGenericDLL:
-        rv.handle(static_cast<SgAsmGenericDLL&>(*n));
+        rv.handle(assume_sgtype<SgAsmGenericDLL>(*n));
         break;
 
       case V_SgAsmPEImportHNTEntryList:
-        rv.handle(static_cast<SgAsmPEImportHNTEntryList&>(*n));
+        rv.handle(assume_sgtype<SgAsmPEImportHNTEntryList>(*n));
         break;
 
       case V_SgAsmPEImportILTEntryList:
-        rv.handle(static_cast<SgAsmPEImportILTEntryList&>(*n));
+        rv.handle(assume_sgtype<SgAsmPEImportILTEntryList>(*n));
         break;
 
       case V_SgAsmPEImportDirectoryList:
-        rv.handle(static_cast<SgAsmPEImportDirectoryList&>(*n));
+        rv.handle(assume_sgtype<SgAsmPEImportDirectoryList>(*n));
         break;
 
       case V_SgAsmGenericFormat:
-        rv.handle(static_cast<SgAsmGenericFormat&>(*n));
+        rv.handle(assume_sgtype<SgAsmGenericFormat>(*n));
         break;
 
       case V_SgAsmGenericFile:
-        rv.handle(static_cast<SgAsmGenericFile&>(*n));
+        rv.handle(assume_sgtype<SgAsmGenericFile>(*n));
         break;
 
       case V_SgAsmElfFileHeader:
-        rv.handle(static_cast<SgAsmElfFileHeader&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfFileHeader>(*n));
         break;
 
       case V_SgAsmPEFileHeader:
-        rv.handle(static_cast<SgAsmPEFileHeader&>(*n));
+        rv.handle(assume_sgtype<SgAsmPEFileHeader>(*n));
         break;
 
       case V_SgAsmNEFileHeader:
-        rv.handle(static_cast<SgAsmNEFileHeader&>(*n));
+        rv.handle(assume_sgtype<SgAsmNEFileHeader>(*n));
         break;
 
       case V_SgAsmLEFileHeader:
-        rv.handle(static_cast<SgAsmLEFileHeader&>(*n));
+        rv.handle(assume_sgtype<SgAsmLEFileHeader>(*n));
         break;
 
       case V_SgAsmDOSFileHeader:
-        rv.handle(static_cast<SgAsmDOSFileHeader&>(*n));
+        rv.handle(assume_sgtype<SgAsmDOSFileHeader>(*n));
         break;
 
       case V_SgAsmGenericHeader:
-        rv.handle(static_cast<SgAsmGenericHeader&>(*n));
+        rv.handle(assume_sgtype<SgAsmGenericHeader>(*n));
         break;
 
       case V_SgAsmElfRelocSection:
-        rv.handle(static_cast<SgAsmElfRelocSection&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfRelocSection>(*n));
         break;
 
       case V_SgAsmElfDynamicSection:
-        rv.handle(static_cast<SgAsmElfDynamicSection&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfDynamicSection>(*n));
         break;
 
       case V_SgAsmElfSymbolSection:
-        rv.handle(static_cast<SgAsmElfSymbolSection&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSymbolSection>(*n));
         break;
 
       case V_SgAsmElfStringSection:
-        rv.handle(static_cast<SgAsmElfStringSection&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfStringSection>(*n));
         break;
 
       case V_SgAsmElfEHFrameSection:
-        rv.handle(static_cast<SgAsmElfEHFrameSection&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfEHFrameSection>(*n));
         break;
 
       case V_SgAsmElfNoteSection:
-        rv.handle(static_cast<SgAsmElfNoteSection&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfNoteSection>(*n));
         break;
 
       case V_SgAsmElfSymverSection:
-        rv.handle(static_cast<SgAsmElfSymverSection&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSymverSection>(*n));
         break;
 
       case V_SgAsmElfSymverDefinedSection:
-        rv.handle(static_cast<SgAsmElfSymverDefinedSection&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSymverDefinedSection>(*n));
         break;
 
       case V_SgAsmElfSymverNeededSection:
-        rv.handle(static_cast<SgAsmElfSymverNeededSection&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSymverNeededSection>(*n));
         break;
 
       case V_SgAsmElfStrtab:
-        rv.handle(static_cast<SgAsmElfStrtab&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfStrtab>(*n));
         break;
 
       case V_SgAsmCoffStrtab:
-        rv.handle(static_cast<SgAsmCoffStrtab&>(*n));
+        rv.handle(assume_sgtype<SgAsmCoffStrtab>(*n));
         break;
 
       case V_SgAsmGenericStrtab:
-        rv.handle(static_cast<SgAsmGenericStrtab&>(*n));
+        rv.handle(assume_sgtype<SgAsmGenericStrtab>(*n));
         break;
 
       case V_SgAsmElfSection:
-        rv.handle(static_cast<SgAsmElfSection&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSection>(*n));
         break;
 
       case V_SgAsmElfSectionTable:
-        rv.handle(static_cast<SgAsmElfSectionTable&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSectionTable>(*n));
         break;
 
       case V_SgAsmElfSegmentTable:
-        rv.handle(static_cast<SgAsmElfSegmentTable&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSegmentTable>(*n));
         break;
 
       case V_SgAsmPEImportSection:
-        rv.handle(static_cast<SgAsmPEImportSection&>(*n));
+        rv.handle(assume_sgtype<SgAsmPEImportSection>(*n));
         break;
 
       case V_SgAsmPEExportSection:
-        rv.handle(static_cast<SgAsmPEExportSection&>(*n));
+        rv.handle(assume_sgtype<SgAsmPEExportSection>(*n));
         break;
 
       case V_SgAsmPEStringSection:
-        rv.handle(static_cast<SgAsmPEStringSection&>(*n));
+        rv.handle(assume_sgtype<SgAsmPEStringSection>(*n));
         break;
 
       case V_SgAsmPESection:
-        rv.handle(static_cast<SgAsmPESection&>(*n));
+        rv.handle(assume_sgtype<SgAsmPESection>(*n));
         break;
 
       case V_SgAsmPESectionTable:
-        rv.handle(static_cast<SgAsmPESectionTable&>(*n));
+        rv.handle(assume_sgtype<SgAsmPESectionTable>(*n));
         break;
 
       case V_SgAsmCoffSymbolTable:
-        rv.handle(static_cast<SgAsmCoffSymbolTable&>(*n));
+        rv.handle(assume_sgtype<SgAsmCoffSymbolTable>(*n));
         break;
 
       case V_SgAsmDOSExtendedHeader:
-        rv.handle(static_cast<SgAsmDOSExtendedHeader&>(*n));
+        rv.handle(assume_sgtype<SgAsmDOSExtendedHeader>(*n));
         break;
 
       case V_SgAsmNESection:
-        rv.handle(static_cast<SgAsmNESection&>(*n));
+        rv.handle(assume_sgtype<SgAsmNESection>(*n));
         break;
 
       case V_SgAsmNESectionTable:
-        rv.handle(static_cast<SgAsmNESectionTable&>(*n));
+        rv.handle(assume_sgtype<SgAsmNESectionTable>(*n));
         break;
 
       case V_SgAsmNENameTable:
-        rv.handle(static_cast<SgAsmNENameTable&>(*n));
+        rv.handle(assume_sgtype<SgAsmNENameTable>(*n));
         break;
 
       case V_SgAsmNEModuleTable:
-        rv.handle(static_cast<SgAsmNEModuleTable&>(*n));
+        rv.handle(assume_sgtype<SgAsmNEModuleTable>(*n));
         break;
 
       case V_SgAsmNEStringTable:
-        rv.handle(static_cast<SgAsmNEStringTable&>(*n));
+        rv.handle(assume_sgtype<SgAsmNEStringTable>(*n));
         break;
 
       case V_SgAsmNEEntryTable:
-        rv.handle(static_cast<SgAsmNEEntryTable&>(*n));
+        rv.handle(assume_sgtype<SgAsmNEEntryTable>(*n));
         break;
 
       case V_SgAsmNERelocTable:
-        rv.handle(static_cast<SgAsmNERelocTable&>(*n));
+        rv.handle(assume_sgtype<SgAsmNERelocTable>(*n));
         break;
 
       case V_SgAsmLESection:
-        rv.handle(static_cast<SgAsmLESection&>(*n));
+        rv.handle(assume_sgtype<SgAsmLESection>(*n));
         break;
 
       case V_SgAsmLESectionTable:
-        rv.handle(static_cast<SgAsmLESectionTable&>(*n));
+        rv.handle(assume_sgtype<SgAsmLESectionTable>(*n));
         break;
 
       case V_SgAsmLENameTable:
-        rv.handle(static_cast<SgAsmLENameTable&>(*n));
+        rv.handle(assume_sgtype<SgAsmLENameTable>(*n));
         break;
 
       case V_SgAsmLEPageTable:
-        rv.handle(static_cast<SgAsmLEPageTable&>(*n));
+        rv.handle(assume_sgtype<SgAsmLEPageTable>(*n));
         break;
 
       case V_SgAsmLEEntryTable:
-        rv.handle(static_cast<SgAsmLEEntryTable&>(*n));
+        rv.handle(assume_sgtype<SgAsmLEEntryTable>(*n));
         break;
 
       case V_SgAsmLERelocTable:
-        rv.handle(static_cast<SgAsmLERelocTable&>(*n));
+        rv.handle(assume_sgtype<SgAsmLERelocTable>(*n));
         break;
 
       case V_SgAsmGenericSection:
-        rv.handle(static_cast<SgAsmGenericSection&>(*n));
+        rv.handle(assume_sgtype<SgAsmGenericSection>(*n));
         break;
 
       case V_SgAsmCoffSymbol:
-        rv.handle(static_cast<SgAsmCoffSymbol&>(*n));
+        rv.handle(assume_sgtype<SgAsmCoffSymbol>(*n));
         break;
 
       case V_SgAsmElfSymbol:
-        rv.handle(static_cast<SgAsmElfSymbol&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSymbol>(*n));
         break;
 
       case V_SgAsmGenericSymbol:
-        rv.handle(static_cast<SgAsmGenericSymbol&>(*n));
+        rv.handle(assume_sgtype<SgAsmGenericSymbol>(*n));
         break;
 
       case V_SgAsmElfSectionTableEntry:
-        rv.handle(static_cast<SgAsmElfSectionTableEntry&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSectionTableEntry>(*n));
         break;
 
       case V_SgAsmElfSegmentTableEntry:
-        rv.handle(static_cast<SgAsmElfSegmentTableEntry&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSegmentTableEntry>(*n));
         break;
 
       case V_SgAsmElfSegmentTableEntryList:
-        rv.handle(static_cast<SgAsmElfSegmentTableEntryList&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSegmentTableEntryList>(*n));
         break;
 
       case V_SgAsmElfRelocEntry:
-        rv.handle(static_cast<SgAsmElfRelocEntry&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfRelocEntry>(*n));
         break;
 
       case V_SgAsmElfRelocEntryList:
-        rv.handle(static_cast<SgAsmElfRelocEntryList&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfRelocEntryList>(*n));
         break;
 
       case V_SgAsmElfDynamicEntry:
-        rv.handle(static_cast<SgAsmElfDynamicEntry&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfDynamicEntry>(*n));
         break;
 
       case V_SgAsmElfDynamicEntryList:
-        rv.handle(static_cast<SgAsmElfDynamicEntryList&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfDynamicEntryList>(*n));
         break;
 
       case V_SgAsmElfEHFrameEntryCI:
-        rv.handle(static_cast<SgAsmElfEHFrameEntryCI&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfEHFrameEntryCI>(*n));
         break;
 
       case V_SgAsmElfEHFrameEntryCIList:
-        rv.handle(static_cast<SgAsmElfEHFrameEntryCIList&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfEHFrameEntryCIList>(*n));
         break;
 
       case V_SgAsmElfEHFrameEntryFD:
-        rv.handle(static_cast<SgAsmElfEHFrameEntryFD&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfEHFrameEntryFD>(*n));
         break;
 
       case V_SgAsmElfEHFrameEntryFDList:
-        rv.handle(static_cast<SgAsmElfEHFrameEntryFDList&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfEHFrameEntryFDList>(*n));
         break;
 
       case V_SgAsmElfNoteEntry:
-        rv.handle(static_cast<SgAsmElfNoteEntry&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfNoteEntry>(*n));
         break;
 
       case V_SgAsmElfNoteEntryList:
-        rv.handle(static_cast<SgAsmElfNoteEntryList&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfNoteEntryList>(*n));
         break;
 
       case V_SgAsmElfSymverEntry:
-        rv.handle(static_cast<SgAsmElfSymverEntry&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSymverEntry>(*n));
         break;
 
       case V_SgAsmElfSymverEntryList:
-        rv.handle(static_cast<SgAsmElfSymverEntryList&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSymverEntryList>(*n));
         break;
 
       case V_SgAsmElfSymverDefinedEntry:
-        rv.handle(static_cast<SgAsmElfSymverDefinedEntry&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSymverDefinedEntry>(*n));
         break;
 
       case V_SgAsmElfSymverDefinedEntryList:
-        rv.handle(static_cast<SgAsmElfSymverDefinedEntryList&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSymverDefinedEntryList>(*n));
         break;
 
       case V_SgAsmElfSymverDefinedAux:
-        rv.handle(static_cast<SgAsmElfSymverDefinedAux&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSymverDefinedAux>(*n));
         break;
 
       case V_SgAsmElfSymverDefinedAuxList:
-        rv.handle(static_cast<SgAsmElfSymverDefinedAuxList&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSymverDefinedAuxList>(*n));
         break;
 
       case V_SgAsmElfSymverNeededEntry:
-        rv.handle(static_cast<SgAsmElfSymverNeededEntry&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSymverNeededEntry>(*n));
         break;
 
       case V_SgAsmElfSymverNeededEntryList:
-        rv.handle(static_cast<SgAsmElfSymverNeededEntryList&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSymverNeededEntryList>(*n));
         break;
 
       case V_SgAsmElfSymverNeededAux:
-        rv.handle(static_cast<SgAsmElfSymverNeededAux&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSymverNeededAux>(*n));
         break;
 
       case V_SgAsmElfSymverNeededAuxList:
-        rv.handle(static_cast<SgAsmElfSymverNeededAuxList&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSymverNeededAuxList>(*n));
         break;
 
       case V_SgAsmPERVASizePair:
-        rv.handle(static_cast<SgAsmPERVASizePair&>(*n));
+        rv.handle(assume_sgtype<SgAsmPERVASizePair>(*n));
         break;
 
       case V_SgAsmPEExportDirectory:
-        rv.handle(static_cast<SgAsmPEExportDirectory&>(*n));
+        rv.handle(assume_sgtype<SgAsmPEExportDirectory>(*n));
         break;
 
       case V_SgAsmPEExportEntry:
-        rv.handle(static_cast<SgAsmPEExportEntry&>(*n));
+        rv.handle(assume_sgtype<SgAsmPEExportEntry>(*n));
         break;
 
       case V_SgAsmPEImportDirectory:
-        rv.handle(static_cast<SgAsmPEImportDirectory&>(*n));
+        rv.handle(assume_sgtype<SgAsmPEImportDirectory>(*n));
         break;
 
       case V_SgAsmPEImportILTEntry:
-        rv.handle(static_cast<SgAsmPEImportILTEntry&>(*n));
+        rv.handle(assume_sgtype<SgAsmPEImportILTEntry>(*n));
         break;
 
       case V_SgAsmPEImportHNTEntry:
-        rv.handle(static_cast<SgAsmPEImportHNTEntry&>(*n));
+        rv.handle(assume_sgtype<SgAsmPEImportHNTEntry>(*n));
         break;
 
       case V_SgAsmPEImportLookupTable:
-        rv.handle(static_cast<SgAsmPEImportLookupTable&>(*n));
+        rv.handle(assume_sgtype<SgAsmPEImportLookupTable>(*n));
         break;
 
       case V_SgAsmPESectionTableEntry:
-        rv.handle(static_cast<SgAsmPESectionTableEntry&>(*n));
+        rv.handle(assume_sgtype<SgAsmPESectionTableEntry>(*n));
         break;
 
       case V_SgAsmNEEntryPoint:
-        rv.handle(static_cast<SgAsmNEEntryPoint&>(*n));
+        rv.handle(assume_sgtype<SgAsmNEEntryPoint>(*n));
         break;
 
       case V_SgAsmNERelocEntry:
-        rv.handle(static_cast<SgAsmNERelocEntry&>(*n));
+        rv.handle(assume_sgtype<SgAsmNERelocEntry>(*n));
         break;
 
       case V_SgAsmNESectionTableEntry:
-        rv.handle(static_cast<SgAsmNESectionTableEntry&>(*n));
+        rv.handle(assume_sgtype<SgAsmNESectionTableEntry>(*n));
         break;
 
       case V_SgAsmLEPageTableEntry:
-        rv.handle(static_cast<SgAsmLEPageTableEntry&>(*n));
+        rv.handle(assume_sgtype<SgAsmLEPageTableEntry>(*n));
         break;
 
       case V_SgAsmLEEntryPoint:
-        rv.handle(static_cast<SgAsmLEEntryPoint&>(*n));
+        rv.handle(assume_sgtype<SgAsmLEEntryPoint>(*n));
         break;
 
       case V_SgAsmLESectionTableEntry:
-        rv.handle(static_cast<SgAsmLESectionTableEntry&>(*n));
+        rv.handle(assume_sgtype<SgAsmLESectionTableEntry>(*n));
         break;
 
       case V_SgAsmGenericSectionList:
-        rv.handle(static_cast<SgAsmGenericSectionList&>(*n));
+        rv.handle(assume_sgtype<SgAsmGenericSectionList>(*n));
         break;
 
       case V_SgAsmGenericHeaderList:
-        rv.handle(static_cast<SgAsmGenericHeaderList&>(*n));
+        rv.handle(assume_sgtype<SgAsmGenericHeaderList>(*n));
         break;
 
       case V_SgAsmGenericSymbolList:
-        rv.handle(static_cast<SgAsmGenericSymbolList&>(*n));
+        rv.handle(assume_sgtype<SgAsmGenericSymbolList>(*n));
         break;
 
       case V_SgAsmElfSymbolList:
-        rv.handle(static_cast<SgAsmElfSymbolList&>(*n));
+        rv.handle(assume_sgtype<SgAsmElfSymbolList>(*n));
         break;
 
       case V_SgAsmCoffSymbolList:
-        rv.handle(static_cast<SgAsmCoffSymbolList&>(*n));
+        rv.handle(assume_sgtype<SgAsmCoffSymbolList>(*n));
         break;
 
       case V_SgAsmGenericDLLList:
-        rv.handle(static_cast<SgAsmGenericDLLList&>(*n));
+        rv.handle(assume_sgtype<SgAsmGenericDLLList>(*n));
         break;
 
       case V_SgAsmPERVASizePairList:
-        rv.handle(static_cast<SgAsmPERVASizePairList&>(*n));
+        rv.handle(assume_sgtype<SgAsmPERVASizePairList>(*n));
         break;
 
       case V_SgAsmPEExportEntryList:
-        rv.handle(static_cast<SgAsmPEExportEntryList&>(*n));
+        rv.handle(assume_sgtype<SgAsmPEExportEntryList>(*n));
         break;
 
       case V_SgAsmBasicString:
-        rv.handle(static_cast<SgAsmBasicString&>(*n));
+        rv.handle(assume_sgtype<SgAsmBasicString>(*n));
         break;
 
       case V_SgAsmStoredString:
-        rv.handle(static_cast<SgAsmStoredString&>(*n));
+        rv.handle(assume_sgtype<SgAsmStoredString>(*n));
         break;
 
       case V_SgAsmGenericString:
-        rv.handle(static_cast<SgAsmGenericString&>(*n));
+        rv.handle(assume_sgtype<SgAsmGenericString>(*n));
         break;
 
       case V_SgAsmStringStorage:
-        rv.handle(static_cast<SgAsmStringStorage&>(*n));
+        rv.handle(assume_sgtype<SgAsmStringStorage>(*n));
         break;
 
       case V_SgAsmDwarfMacro:
-        rv.handle(static_cast<SgAsmDwarfMacro&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfMacro>(*n));
         break;
 
       case V_SgAsmDwarfLine:
-        rv.handle(static_cast<SgAsmDwarfLine&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfLine>(*n));
         break;
 
       case V_SgAsmDwarfMacroList:
-        rv.handle(static_cast<SgAsmDwarfMacroList&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfMacroList>(*n));
         break;
 
       case V_SgAsmDwarfLineList:
-        rv.handle(static_cast<SgAsmDwarfLineList&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfLineList>(*n));
         break;
 
       case V_SgAsmDwarfArrayType:
-        rv.handle(static_cast<SgAsmDwarfArrayType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfArrayType>(*n));
         break;
 
       case V_SgAsmDwarfClassType:
-        rv.handle(static_cast<SgAsmDwarfClassType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfClassType>(*n));
         break;
 
       case V_SgAsmDwarfEntryPoint:
-        rv.handle(static_cast<SgAsmDwarfEntryPoint&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfEntryPoint>(*n));
         break;
 
       case V_SgAsmDwarfEnumerationType:
-        rv.handle(static_cast<SgAsmDwarfEnumerationType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfEnumerationType>(*n));
         break;
 
       case V_SgAsmDwarfFormalParameter:
-        rv.handle(static_cast<SgAsmDwarfFormalParameter&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfFormalParameter>(*n));
         break;
 
       case V_SgAsmDwarfImportedDeclaration:
-        rv.handle(static_cast<SgAsmDwarfImportedDeclaration&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfImportedDeclaration>(*n));
         break;
 
       case V_SgAsmDwarfLabel:
-        rv.handle(static_cast<SgAsmDwarfLabel&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfLabel>(*n));
         break;
 
       case V_SgAsmDwarfLexicalBlock:
-        rv.handle(static_cast<SgAsmDwarfLexicalBlock&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfLexicalBlock>(*n));
         break;
 
       case V_SgAsmDwarfMember:
-        rv.handle(static_cast<SgAsmDwarfMember&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfMember>(*n));
         break;
 
       case V_SgAsmDwarfPointerType:
-        rv.handle(static_cast<SgAsmDwarfPointerType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfPointerType>(*n));
         break;
 
       case V_SgAsmDwarfReferenceType:
-        rv.handle(static_cast<SgAsmDwarfReferenceType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfReferenceType>(*n));
         break;
 
       case V_SgAsmDwarfCompilationUnit:
-        rv.handle(static_cast<SgAsmDwarfCompilationUnit&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfCompilationUnit>(*n));
         break;
 
       case V_SgAsmDwarfStringType:
-        rv.handle(static_cast<SgAsmDwarfStringType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfStringType>(*n));
         break;
 
       case V_SgAsmDwarfStructureType:
-        rv.handle(static_cast<SgAsmDwarfStructureType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfStructureType>(*n));
         break;
 
       case V_SgAsmDwarfSubroutineType:
-        rv.handle(static_cast<SgAsmDwarfSubroutineType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfSubroutineType>(*n));
         break;
 
       case V_SgAsmDwarfTypedef:
-        rv.handle(static_cast<SgAsmDwarfTypedef&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfTypedef>(*n));
         break;
 
       case V_SgAsmDwarfUnionType:
-        rv.handle(static_cast<SgAsmDwarfUnionType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfUnionType>(*n));
         break;
 
       case V_SgAsmDwarfUnspecifiedParameters:
-        rv.handle(static_cast<SgAsmDwarfUnspecifiedParameters&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfUnspecifiedParameters>(*n));
         break;
 
       case V_SgAsmDwarfVariant:
-        rv.handle(static_cast<SgAsmDwarfVariant&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfVariant>(*n));
         break;
 
       case V_SgAsmDwarfCommonBlock:
-        rv.handle(static_cast<SgAsmDwarfCommonBlock&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfCommonBlock>(*n));
         break;
 
       case V_SgAsmDwarfCommonInclusion:
-        rv.handle(static_cast<SgAsmDwarfCommonInclusion&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfCommonInclusion>(*n));
         break;
 
       case V_SgAsmDwarfInheritance:
-        rv.handle(static_cast<SgAsmDwarfInheritance&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfInheritance>(*n));
         break;
 
       case V_SgAsmDwarfInlinedSubroutine:
-        rv.handle(static_cast<SgAsmDwarfInlinedSubroutine&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfInlinedSubroutine>(*n));
         break;
 
       case V_SgAsmDwarfModule:
-        rv.handle(static_cast<SgAsmDwarfModule&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfModule>(*n));
         break;
 
       case V_SgAsmDwarfPtrToMemberType:
-        rv.handle(static_cast<SgAsmDwarfPtrToMemberType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfPtrToMemberType>(*n));
         break;
 
       case V_SgAsmDwarfSetType:
-        rv.handle(static_cast<SgAsmDwarfSetType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfSetType>(*n));
         break;
 
       case V_SgAsmDwarfSubrangeType:
-        rv.handle(static_cast<SgAsmDwarfSubrangeType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfSubrangeType>(*n));
         break;
 
       case V_SgAsmDwarfWithStmt:
-        rv.handle(static_cast<SgAsmDwarfWithStmt&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfWithStmt>(*n));
         break;
 
       case V_SgAsmDwarfAccessDeclaration:
-        rv.handle(static_cast<SgAsmDwarfAccessDeclaration&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfAccessDeclaration>(*n));
         break;
 
       case V_SgAsmDwarfBaseType:
-        rv.handle(static_cast<SgAsmDwarfBaseType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfBaseType>(*n));
         break;
 
       case V_SgAsmDwarfCatchBlock:
-        rv.handle(static_cast<SgAsmDwarfCatchBlock&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfCatchBlock>(*n));
         break;
 
       case V_SgAsmDwarfConstType:
-        rv.handle(static_cast<SgAsmDwarfConstType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfConstType>(*n));
         break;
 
       case V_SgAsmDwarfConstant:
-        rv.handle(static_cast<SgAsmDwarfConstant&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfConstant>(*n));
         break;
 
       case V_SgAsmDwarfEnumerator:
-        rv.handle(static_cast<SgAsmDwarfEnumerator&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfEnumerator>(*n));
         break;
 
       case V_SgAsmDwarfFileType:
-        rv.handle(static_cast<SgAsmDwarfFileType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfFileType>(*n));
         break;
 
       case V_SgAsmDwarfFriend:
-        rv.handle(static_cast<SgAsmDwarfFriend&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfFriend>(*n));
         break;
 
       case V_SgAsmDwarfNamelist:
-        rv.handle(static_cast<SgAsmDwarfNamelist&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfNamelist>(*n));
         break;
 
       case V_SgAsmDwarfNamelistItem:
-        rv.handle(static_cast<SgAsmDwarfNamelistItem&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfNamelistItem>(*n));
         break;
 
       case V_SgAsmDwarfPackedType:
-        rv.handle(static_cast<SgAsmDwarfPackedType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfPackedType>(*n));
         break;
 
       case V_SgAsmDwarfSubprogram:
-        rv.handle(static_cast<SgAsmDwarfSubprogram&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfSubprogram>(*n));
         break;
 
       case V_SgAsmDwarfTemplateTypeParameter:
-        rv.handle(static_cast<SgAsmDwarfTemplateTypeParameter&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfTemplateTypeParameter>(*n));
         break;
 
       case V_SgAsmDwarfTemplateValueParameter:
-        rv.handle(static_cast<SgAsmDwarfTemplateValueParameter&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfTemplateValueParameter>(*n));
         break;
 
       case V_SgAsmDwarfThrownType:
-        rv.handle(static_cast<SgAsmDwarfThrownType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfThrownType>(*n));
         break;
 
       case V_SgAsmDwarfTryBlock:
-        rv.handle(static_cast<SgAsmDwarfTryBlock&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfTryBlock>(*n));
         break;
 
       case V_SgAsmDwarfVariantPart:
-        rv.handle(static_cast<SgAsmDwarfVariantPart&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfVariantPart>(*n));
         break;
 
       case V_SgAsmDwarfVariable:
-        rv.handle(static_cast<SgAsmDwarfVariable&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfVariable>(*n));
         break;
 
       case V_SgAsmDwarfVolatileType:
-        rv.handle(static_cast<SgAsmDwarfVolatileType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfVolatileType>(*n));
         break;
 
       case V_SgAsmDwarfDwarfProcedure:
-        rv.handle(static_cast<SgAsmDwarfDwarfProcedure&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfDwarfProcedure>(*n));
         break;
 
       case V_SgAsmDwarfRestrictType:
-        rv.handle(static_cast<SgAsmDwarfRestrictType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfRestrictType>(*n));
         break;
 
       case V_SgAsmDwarfInterfaceType:
-        rv.handle(static_cast<SgAsmDwarfInterfaceType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfInterfaceType>(*n));
         break;
 
       case V_SgAsmDwarfNamespace:
-        rv.handle(static_cast<SgAsmDwarfNamespace&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfNamespace>(*n));
         break;
 
       case V_SgAsmDwarfImportedModule:
-        rv.handle(static_cast<SgAsmDwarfImportedModule&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfImportedModule>(*n));
         break;
 
       case V_SgAsmDwarfUnspecifiedType:
-        rv.handle(static_cast<SgAsmDwarfUnspecifiedType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfUnspecifiedType>(*n));
         break;
 
       case V_SgAsmDwarfPartialUnit:
-        rv.handle(static_cast<SgAsmDwarfPartialUnit&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfPartialUnit>(*n));
         break;
 
       case V_SgAsmDwarfImportedUnit:
-        rv.handle(static_cast<SgAsmDwarfImportedUnit&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfImportedUnit>(*n));
         break;
 
       case V_SgAsmDwarfMutableType:
-        rv.handle(static_cast<SgAsmDwarfMutableType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfMutableType>(*n));
         break;
 
       case V_SgAsmDwarfCondition:
-        rv.handle(static_cast<SgAsmDwarfCondition&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfCondition>(*n));
         break;
 
       case V_SgAsmDwarfSharedType:
-        rv.handle(static_cast<SgAsmDwarfSharedType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfSharedType>(*n));
         break;
 
       case V_SgAsmDwarfFormatLabel:
-        rv.handle(static_cast<SgAsmDwarfFormatLabel&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfFormatLabel>(*n));
         break;
 
       case V_SgAsmDwarfFunctionTemplate:
-        rv.handle(static_cast<SgAsmDwarfFunctionTemplate&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfFunctionTemplate>(*n));
         break;
 
       case V_SgAsmDwarfClassTemplate:
-        rv.handle(static_cast<SgAsmDwarfClassTemplate&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfClassTemplate>(*n));
         break;
 
       case V_SgAsmDwarfUpcSharedType:
-        rv.handle(static_cast<SgAsmDwarfUpcSharedType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfUpcSharedType>(*n));
         break;
 
       case V_SgAsmDwarfUpcStrictType:
-        rv.handle(static_cast<SgAsmDwarfUpcStrictType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfUpcStrictType>(*n));
         break;
 
       case V_SgAsmDwarfUpcRelaxedType:
-        rv.handle(static_cast<SgAsmDwarfUpcRelaxedType&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfUpcRelaxedType>(*n));
         break;
 
       case V_SgAsmDwarfUnknownConstruct:
-        rv.handle(static_cast<SgAsmDwarfUnknownConstruct&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfUnknownConstruct>(*n));
         break;
 
       case V_SgAsmDwarfConstruct:
-        rv.handle(static_cast<SgAsmDwarfConstruct&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfConstruct>(*n));
         break;
 
       case V_SgAsmDwarfConstructList:
-        rv.handle(static_cast<SgAsmDwarfConstructList&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfConstructList>(*n));
         break;
 
       case V_SgAsmDwarfCompilationUnitList:
-        rv.handle(static_cast<SgAsmDwarfCompilationUnitList&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfCompilationUnitList>(*n));
         break;
 
       case V_SgAsmDwarfInformation:
-        rv.handle(static_cast<SgAsmDwarfInformation&>(*n));
+        rv.handle(assume_sgtype<SgAsmDwarfInformation>(*n));
         break;
 
       case V_SgAsmExecutableFileFormat:
-        rv.handle(static_cast<SgAsmExecutableFileFormat&>(*n));
+        rv.handle(assume_sgtype<SgAsmExecutableFileFormat>(*n));
         break;
 
       case V_SgAsmInterpretation:
-        rv.handle(static_cast<SgAsmInterpretation&>(*n));
+        rv.handle(assume_sgtype<SgAsmInterpretation>(*n));
         break;
 
       case V_SgAsmInterpretationList:
-        rv.handle(static_cast<SgAsmInterpretationList&>(*n));
+        rv.handle(assume_sgtype<SgAsmInterpretationList>(*n));
         break;
 
       case V_SgAsmGenericFileList:
-        rv.handle(static_cast<SgAsmGenericFileList&>(*n));
+        rv.handle(assume_sgtype<SgAsmGenericFileList>(*n));
         break;
 
       case V_SgAsmNode:
-        rv.handle(static_cast<SgAsmNode&>(*n));
+        rv.handle(assume_sgtype<SgAsmNode>(*n));
         break;
 
       case V_SgInitializedName:
-        rv.handle(static_cast<SgInitializedName&>(*n));
+        rv.handle(assume_sgtype<SgInitializedName>(*n));
         break;
 
       case V_SgOmpOrderedClause:
-        rv.handle(static_cast<SgOmpOrderedClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpOrderedClause>(*n));
         break;
 
       case V_SgOmpNowaitClause:
-        rv.handle(static_cast<SgOmpNowaitClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpNowaitClause>(*n));
         break;
 
       case V_SgOmpUntiedClause:
-        rv.handle(static_cast<SgOmpUntiedClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpUntiedClause>(*n));
         break;
 
       case V_SgOmpDefaultClause:
-        rv.handle(static_cast<SgOmpDefaultClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpDefaultClause>(*n));
         break;
 
       case V_SgOmpCollapseClause:
-        rv.handle(static_cast<SgOmpCollapseClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpCollapseClause>(*n));
         break;
 
       case V_SgOmpIfClause:
-        rv.handle(static_cast<SgOmpIfClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpIfClause>(*n));
         break;
 
       case V_SgOmpNumThreadsClause:
-        rv.handle(static_cast<SgOmpNumThreadsClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpNumThreadsClause>(*n));
         break;
 
       case V_SgOmpExpressionClause:
-        rv.handle(static_cast<SgOmpExpressionClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpExpressionClause>(*n));
         break;
 
       case V_SgOmpCopyprivateClause:
-        rv.handle(static_cast<SgOmpCopyprivateClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpCopyprivateClause>(*n));
         break;
 
       case V_SgOmpPrivateClause:
-        rv.handle(static_cast<SgOmpPrivateClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpPrivateClause>(*n));
         break;
 
       case V_SgOmpFirstprivateClause:
-        rv.handle(static_cast<SgOmpFirstprivateClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpFirstprivateClause>(*n));
         break;
 
       case V_SgOmpSharedClause:
-        rv.handle(static_cast<SgOmpSharedClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpSharedClause>(*n));
         break;
 
       case V_SgOmpCopyinClause:
-        rv.handle(static_cast<SgOmpCopyinClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpCopyinClause>(*n));
         break;
 
       case V_SgOmpLastprivateClause:
-        rv.handle(static_cast<SgOmpLastprivateClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpLastprivateClause>(*n));
         break;
 
       case V_SgOmpReductionClause:
-        rv.handle(static_cast<SgOmpReductionClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpReductionClause>(*n));
         break;
 
       case V_SgOmpVariablesClause:
-        rv.handle(static_cast<SgOmpVariablesClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpVariablesClause>(*n));
         break;
 
       case V_SgOmpScheduleClause:
-        rv.handle(static_cast<SgOmpScheduleClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpScheduleClause>(*n));
         break;
 
       case V_SgOmpClause:
-        rv.handle(static_cast<SgOmpClause&>(*n));
+        rv.handle(assume_sgtype<SgOmpClause>(*n));
         break;
 
       case V_SgRenamePair:
-        rv.handle(static_cast<SgRenamePair&>(*n));
+        rv.handle(assume_sgtype<SgRenamePair>(*n));
         break;
 
       case V_SgInterfaceBody:
-        rv.handle(static_cast<SgInterfaceBody&>(*n));
+        rv.handle(assume_sgtype<SgInterfaceBody>(*n));
         break;
 
       case V_SgLocatedNodeSupport:
-        rv.handle(static_cast<SgLocatedNodeSupport&>(*n));
+        rv.handle(assume_sgtype<SgLocatedNodeSupport>(*n));
         break;
 
       case V_SgToken:
-        rv.handle(static_cast<SgToken&>(*n));
+        rv.handle(assume_sgtype<SgToken>(*n));
         break;
 
       case V_SgLocatedNode:
-        rv.handle(static_cast<SgLocatedNode&>(*n));
+        rv.handle(assume_sgtype<SgLocatedNode>(*n));
         break;
 
       case V_SgNode:
-        rv.handle(static_cast<SgNode&>(*n));
+        rv.handle(assume_sgtype<SgNode>(*n));
         break;
 
       //
       // Types
 
       case V_SgTypeUnknown:
-        rv.handle(static_cast<SgTypeUnknown&>(*n));
+        rv.handle(assume_sgtype<SgTypeUnknown>(*n));
         break;
 
       case V_SgTypeChar:
-        rv.handle(static_cast<SgTypeChar&>(*n));
+        rv.handle(assume_sgtype<SgTypeChar>(*n));
         break;
 
       case V_SgTypeSignedChar:
-        rv.handle(static_cast<SgTypeSignedChar&>(*n));
+        rv.handle(assume_sgtype<SgTypeSignedChar>(*n));
         break;
 
       case V_SgTypeUnsignedChar:
-        rv.handle(static_cast<SgTypeUnsignedChar&>(*n));
+        rv.handle(assume_sgtype<SgTypeUnsignedChar>(*n));
         break;
 
       case V_SgTypeShort:
-        rv.handle(static_cast<SgTypeShort&>(*n));
+        rv.handle(assume_sgtype<SgTypeShort>(*n));
         break;
 
       case V_SgTypeSignedShort:
-        rv.handle(static_cast<SgTypeSignedShort&>(*n));
+        rv.handle(assume_sgtype<SgTypeSignedShort>(*n));
         break;
 
       case V_SgTypeUnsignedShort:
-        rv.handle(static_cast<SgTypeUnsignedShort&>(*n));
+        rv.handle(assume_sgtype<SgTypeUnsignedShort>(*n));
         break;
 
       case V_SgTypeInt:
-        rv.handle(static_cast<SgTypeInt&>(*n));
+        rv.handle(assume_sgtype<SgTypeInt>(*n));
         break;
 
       case V_SgTypeSignedInt:
-        rv.handle(static_cast<SgTypeSignedInt&>(*n));
+        rv.handle(assume_sgtype<SgTypeSignedInt>(*n));
         break;
 
       case V_SgTypeUnsignedInt:
-        rv.handle(static_cast<SgTypeUnsignedInt&>(*n));
+        rv.handle(assume_sgtype<SgTypeUnsignedInt>(*n));
         break;
 
       case V_SgTypeLong:
-        rv.handle(static_cast<SgTypeLong&>(*n));
+        rv.handle(assume_sgtype<SgTypeLong>(*n));
         break;
 
       case V_SgTypeSignedLong:
-        rv.handle(static_cast<SgTypeSignedLong&>(*n));
+        rv.handle(assume_sgtype<SgTypeSignedLong>(*n));
         break;
 
       case V_SgTypeUnsignedLong:
-        rv.handle(static_cast<SgTypeUnsignedLong&>(*n));
+        rv.handle(assume_sgtype<SgTypeUnsignedLong>(*n));
         break;
 
       case V_SgTypeVoid:
-        rv.handle(static_cast<SgTypeVoid&>(*n));
+        rv.handle(assume_sgtype<SgTypeVoid>(*n));
         break;
 
       case V_SgTypeGlobalVoid:
-        rv.handle(static_cast<SgTypeGlobalVoid&>(*n));
+        rv.handle(assume_sgtype<SgTypeGlobalVoid>(*n));
         break;
 
       case V_SgTypeWchar:
-        rv.handle(static_cast<SgTypeWchar&>(*n));
+        rv.handle(assume_sgtype<SgTypeWchar>(*n));
         break;
 
       case V_SgTypeFloat:
-        rv.handle(static_cast<SgTypeFloat&>(*n));
+        rv.handle(assume_sgtype<SgTypeFloat>(*n));
         break;
 
       case V_SgTypeDouble:
-        rv.handle(static_cast<SgTypeDouble&>(*n));
+        rv.handle(assume_sgtype<SgTypeDouble>(*n));
         break;
 
       case V_SgTypeLongLong:
-        rv.handle(static_cast<SgTypeLongLong&>(*n));
+        rv.handle(assume_sgtype<SgTypeLongLong>(*n));
         break;
 
       case V_SgTypeSignedLongLong:
-        rv.handle(static_cast<SgTypeSignedLongLong&>(*n));
+        rv.handle(assume_sgtype<SgTypeSignedLongLong>(*n));
         break;
 
       case V_SgTypeUnsignedLongLong:
-        rv.handle(static_cast<SgTypeUnsignedLongLong&>(*n));
+        rv.handle(assume_sgtype<SgTypeUnsignedLongLong>(*n));
         break;
 
       case V_SgTypeLongDouble:
-        rv.handle(static_cast<SgTypeLongDouble&>(*n));
+        rv.handle(assume_sgtype<SgTypeLongDouble>(*n));
         break;
 
       case V_SgTypeString:
-        rv.handle(static_cast<SgTypeString&>(*n));
+        rv.handle(assume_sgtype<SgTypeString>(*n));
         break;
 
       case V_SgTypeBool:
-        rv.handle(static_cast<SgTypeBool&>(*n));
+        rv.handle(assume_sgtype<SgTypeBool>(*n));
         break;
 
       case V_SgTypeComplex:
-        rv.handle(static_cast<SgTypeComplex&>(*n));
+        rv.handle(assume_sgtype<SgTypeComplex>(*n));
         break;
 
       case V_SgTypeImaginary:
-        rv.handle(static_cast<SgTypeImaginary&>(*n));
+        rv.handle(assume_sgtype<SgTypeImaginary>(*n));
         break;
 
       case V_SgTypeDefault:
-        rv.handle(static_cast<SgTypeDefault&>(*n));
+        rv.handle(assume_sgtype<SgTypeDefault>(*n));
         break;
 
       case V_SgPointerMemberType:
-        rv.handle(static_cast<SgPointerMemberType&>(*n));
+        rv.handle(assume_sgtype<SgPointerMemberType>(*n));
         break;
 
       case V_SgReferenceType:
-        rv.handle(static_cast<SgReferenceType&>(*n));
+        rv.handle(assume_sgtype<SgReferenceType>(*n));
         break;
 
       case V_SgTypeCAFTeam:
-        rv.handle(static_cast<SgTypeCAFTeam&>(*n));
+        rv.handle(assume_sgtype<SgTypeCAFTeam>(*n));
         break;
 
       case V_SgClassType:
-        rv.handle(static_cast<SgClassType&>(*n));
+        rv.handle(assume_sgtype<SgClassType>(*n));
         break;
 
       case V_SgTemplateType:
-        rv.handle(static_cast<SgTemplateType&>(*n));
+        rv.handle(assume_sgtype<SgTemplateType>(*n));
         break;
 
       case V_SgEnumType:
-        rv.handle(static_cast<SgEnumType&>(*n));
+        rv.handle(assume_sgtype<SgEnumType>(*n));
         break;
 
       case V_SgTypedefType:
-        rv.handle(static_cast<SgTypedefType&>(*n));
+        rv.handle(assume_sgtype<SgTypedefType>(*n));
         break;
 
       case V_SgModifierType:
-        rv.handle(static_cast<SgModifierType&>(*n));
+        rv.handle(assume_sgtype<SgModifierType>(*n));
         break;
 
       case V_SgPartialFunctionModifierType:
-        rv.handle(static_cast<SgPartialFunctionModifierType&>(*n));
+        rv.handle(assume_sgtype<SgPartialFunctionModifierType>(*n));
         break;
 
       case V_SgArrayType:
-        rv.handle(static_cast<SgArrayType&>(*n));
+        rv.handle(assume_sgtype<SgArrayType>(*n));
         break;
 
       case V_SgTypeEllipse:
-        rv.handle(static_cast<SgTypeEllipse&>(*n));
+        rv.handle(assume_sgtype<SgTypeEllipse>(*n));
         break;
 
       case V_SgTypeCrayPointer:
-        rv.handle(static_cast<SgTypeCrayPointer&>(*n));
+        rv.handle(assume_sgtype<SgTypeCrayPointer>(*n));
         break;
 
       case V_SgPartialFunctionType:
-        rv.handle(static_cast<SgPartialFunctionType&>(*n));
+        rv.handle(assume_sgtype<SgPartialFunctionType>(*n));
         break;
 
       case V_SgMemberFunctionType:
-        rv.handle(static_cast<SgMemberFunctionType&>(*n));
+        rv.handle(assume_sgtype<SgMemberFunctionType>(*n));
         break;
 
       case V_SgFunctionType:
-        rv.handle(static_cast<SgFunctionType&>(*n));
+        rv.handle(assume_sgtype<SgFunctionType>(*n));
         break;
 
       case V_SgPointerType:
-        rv.handle(static_cast<SgPointerType&>(*n));
+        rv.handle(assume_sgtype<SgPointerType>(*n));
         break;
 
       case V_SgNamedType:
-        rv.handle(static_cast<SgNamedType&>(*n));
+        rv.handle(assume_sgtype<SgNamedType>(*n));
         break;
 
       case V_SgQualifiedNameType:
-        rv.handle(static_cast<SgQualifiedNameType&>(*n));
+        rv.handle(assume_sgtype<SgQualifiedNameType>(*n));
         break;
 
       case V_SgNumVariants: /* fall-through */
@@ -2650,6 +2660,31 @@ namespace ez
 
     return rv;
   }
+
+
+  /// \brief    uncovers the type of SgNode and passes it to an
+  ///           overloaded function handle in RoseVisitor.
+  /// \param rv an instance of a rose visitor; note that the argument is
+  ///           passed by value (similar to STL's for_each).
+  /// \param n  a Sage node
+  /// \return   a copy of the RoseVisitor object
+  template <class RoseVisitor>
+  inline
+  RoseVisitor
+  visitSgNode(const RoseVisitor& rv, SgNode* n)
+  {
+    return _visitSgNode(rv, n);
+  }
+
+  ///! \overload
+  template <class RoseVisitor>
+  inline
+  RoseVisitor
+  visitSgNode(const RoseVisitor& rv, const SgNode* n)
+  {
+    return _visitSgNode(rv, n);
+  }
+
 
   /// \brief   helper class for _ancestor
   /// \details implements a type switch over the Rose AST to find an
