@@ -211,7 +211,6 @@ SYS_TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/syscall_tests/syscall_tst.179.1.c \
 		   $(srcdir)/syscall_tests/syscall_tst.183.1.c \
 		   $(srcdir)/syscall_tests/syscall_tst.183.2.c \
-		   $(srcdir)/syscall_tests/syscall_tst.183.3.c \
 		   $(srcdir)/syscall_tests/syscall_tst.186.1.c \
 		   $(srcdir)/syscall_tests/syscall_tst.186.2.c \
 		   $(srcdir)/syscall_tests/syscall_tst_18.c \
@@ -327,7 +326,6 @@ SYS_TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/syscall_tests/syscall_tst.38.10.c \
 		   $(srcdir)/syscall_tests/syscall_tst.38.13.c \
 		   $(srcdir)/syscall_tests/syscall_tst.38.14.c \
-		   $(srcdir)/syscall_tests/syscall_tst.54.c \
 		   $(srcdir)/syscall_tests/syscall_tst.24.1.c \
 		   $(srcdir)/syscall_tests/syscall_tst.24.2.c \
 		   $(srcdir)/syscall_tests/syscall_tst.24.3.c \
@@ -362,6 +360,13 @@ SYS_TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/syscall_tests/syscall_tst.94.2.c \
 		   $(srcdir)/syscall_tests/syscall_tst.99.1.c \
 		   $(srcdir)/syscall_tests/syscall_tst.99.2.c
+
+# DQ (2/13/2011): This test fails to terminate when run on Hudson 
+# (failed on hudson-rose-07, email with error details sent morning of 2/13/2011 to Robb and Andreas).
+#		   $(srcdir)/syscall_tests/syscall_tst.183.3.c
+# Liao 2/16/2011: I have to comment out this since  ERROR: Cannot create file /tmp/notty		   
+#		   $(srcdir)/syscall_tests/syscall_tst.54.c
+
 
 # These cannot be run reliably (at least not concurrently with other tests.
 #		   $(srcdir)/syscall_tests/syscall_tst.117.msgget.03.c
@@ -969,16 +974,15 @@ $(PTHREAD_TEST_INPUTS): %: $(srcdir)/pthread_tests/%.c
 # Target to manually build the test inputs. (Not used internally)
 .PHONY: test_inputs_pthread
 test_inputs_pthread: $(PTHREAD_TEST_INPUTS)
-
+# Liao 2/11/2011, ensure PTHREAD_TEST_TARGETS = warn_no_tests on MAC
+# The assignment of PTHREAD_TEST_TARGETS must be in the same if -statement.
+# Without this, the order of this statement and the following if-ENABLE_I386 may be rearranged on MAC
+if ENABLE_I386
 PTHREAD_TEST_TARGETS = $(addsuffix .passed, $(PTHREAD_TEST_INPUTS))
 MOSTLYCLEANFILES += $(patsubst %.passed, %.failed, $(PTHREAD_TEST_TARGETS)) \
                     $(addsuffix .o, $(PTHREAD_TEST_INPUTS)) \
 	 	    $(addsuffix .o, $(basename $(notdir $(PTHREAD__TEST_SUPPORT_SRC))))
 
-
-
-
-if ENABLE_I386
 $(PTHREAD_TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
 	@$(RTH_RUN) INPUT=./$< $(srcdir)/x86sim.conf $@
 
@@ -988,6 +992,8 @@ else
 PTHREAD_TEST_TARGETS = warn_no_tests
 
 endif
+
+
 
 check-pthread:  $(PTHREAD_TEST_TARGETS)
 	@$(RTH_STATS)
