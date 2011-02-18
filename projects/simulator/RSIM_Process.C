@@ -1384,4 +1384,14 @@ RSIM_Process::post_fork()
     threads[getpid()] = t;
 }
 
-    
+void
+RSIM_Process::exit(int status)
+{
+    RTS_WRITE(rwlock()) {
+        terminated = true;
+        termination_status = status;
+        fprintf(stderr, "ROBB: RSIM_Process::exit() not fully implemented yet.\n");
+    } RTS_WRITE_END;
+}
+
+        

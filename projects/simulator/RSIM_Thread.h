@@ -28,8 +28,12 @@ public:
     }
     
 
-
-
+    /**************************************************************************************************************************
+     *                                  Members dealing with thread control
+     **************************************************************************************************************************/
+public:
+    static void *main(void*);                           /**< Called by pthread_create(). */
+    void main();                                        /**< Main routine for each real thread. */
 
     /**************************************************************************************************************************
      *                                  Methods used by system call simulation
@@ -146,7 +150,7 @@ public:
     /**************************************************************************************************************************
      *                                  Methods that help simulate system calls
      **************************************************************************************************************************/
-public:
+protected:
 
     /* Helper functions for syscall 117, ipc() and related syscalls */
     void sys_semtimedop(uint32_t semid, uint32_t tsops_va, uint32_t nsops, uint32_t timeout_va);

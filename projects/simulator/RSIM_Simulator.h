@@ -44,8 +44,7 @@ public:
     /** Default constructor. Construct a new simulator object, initializing its properties to sane values, but do not create an
      *  initial process. */
     RSIM_Simulator()
-        : trace_flags(0), core_flags(CORE_ELF), dump_at(0), btrace_file(NULL), active(0), process(NULL),
-          entry_va(0), seen_entry_va(false) {
+        : trace_flags(0), core_flags(CORE_ELF), btrace_file(NULL), active(0), process(NULL), entry_va(0) {
         ctor();
     }
 
@@ -104,11 +103,11 @@ public:
     int main_loop();
 
     /** Prints termination status in a human friendly manner. */
-    void describe_termination(FILE*, int status);
+    void describe_termination(FILE*);
 
     /** Terminates the calling process with the same exit status or signal as the specimen. The @p status argument should be
      *  the status returned by waitpid(). */
-    void terminate_self(int status);
+    void terminate_self();
 
 private:
     /** Helper for object construction. */
@@ -128,8 +127,6 @@ private:
     std::string trace_file_name;        /**< Name pattern for debug trace output, or empty to disable. */
     unsigned trace_flags;               /**< What things should be traced for debugging? (See TraceFlags enum) */
     unsigned core_flags;                /**< Kinds of core dumps to produce. (See CoreStyle enum) */
-    rose_addr_t dump_at;                /**< Address at which to produce a core dump, or zero to disable. */
-    std::string dump_name;              /**< Optional name of file for core dump when "dump_at" is hit. */
     std::string interp_name;            /**< Name of command-line specified interpreter for dynamic linking. */
     std::vector<std::string> vdso_paths;/**< Files and/or directories to search for a virtual dynamic shared library. */
     FILE *btrace_file;                  /**< Name for binary trace file, which will log info about process execution. */
@@ -143,7 +140,6 @@ private:
     /* Other */
     RSIM_Process *process;              /**< Main process. */
     rose_addr_t entry_va;               /**< Main entry address. */
-    bool seen_entry_va;                 /**< Set to true when any thread has executed the entry address. */
     static RTS_rwlock_t class_rwlock;   /**< For methods that access class variables. */
     
 };

@@ -3564,80 +3564,88 @@ RSIM_Thread::sys_listen(int fd, int backlog)
 int
 RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, uint32_t child_tid_va, uint32_t pt_regs_va)
 {
-    /* We cannot handle multiple threads yet. */
-    if (newsp || parent_tid_va || child_tid_va || (flags & (CLONE_VM|CLONE_THREAD)))
-        return -EINVAL;
+    pid_t pid = -ENOSYS;
+    if (flags == (CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | SIGCHLD)) {
+        /* This is a fork() */
 
-    /* ROSE simulates signal handling, therefore signal handlers cannot be shared. */
-    if (flags & CLONE_SIGHAND)
-        return -EINVAL;
+        /* Flush some files so buffered content isn't output twice. */
+        fflush(stdout);
+        fflush(stderr);
+        if (tracing(TRACE_ALL))
+            fflush(tracing(TRACE_ALL));
 
-    /* We can only handle SIGCHLD (because there's no way to pass this to the fork() lib call */
-    if ((flags & 0xff) != SIGCHLD)
-        return -EINVAL;
+        /* We cannot use clone() because it's a wrapper around the clone system call and we'd need to provide a function for it to
+         * execute. We want fork-like semantics. */
+        pid = fork();
+        if (-1==pid)
+            return -errno;
 
-    /* Flush some files so buffered content isn't output twice. */
-    fflush(stdout);
-    fflush(stderr);
-    if (tracing(TRACE_ALL))
-        fflush(tracing(TRACE_ALL));
+        if (0==pid) {
+            /* Kludge for now. FIXME [RPM 2011-02-14] */
+            get_process()->post_fork();
 
-    /* We cannot use clone() because it's a wrapper around the clone system call and we'd need to provide a function for it to
-     * execute. We want fork-like semantics. */
-    pid_t pid = fork();
-    if (-1==pid)
-        return -errno;
+            /* Pending signals are only for the parent */
+            signal_pending = 0;
 
-    if (0==pid) {
-        /* Kludge for now. FIXME [RPM 2011-02-14] */
-        get_process()->post_fork();
+            /* Open new log files if necessary */
+            get_process()->open_trace_file();
+            get_process()->btrace_close();
 
-        /* Pending signals are only for the parent */
-        signal_pending = 0;
-
-        /* Open new log files if necessary */
-        get_process()->open_trace_file();
-        get_process()->btrace_close();
-
-        /* Thread-related things. ROSE isn't multi-threaded and the simulator doesn't support multi-threading, but we still
-         * have to initialize a few data structures because the specimen may be using a thread-aware library. */
-        if (0!=(flags & CLONE_CHILD_SETTID)) {
-            set_child_tid = child_tid_va;
-            if (set_child_tid) {
-                uint32_t pid32 = getpid();
-                size_t nwritten = get_process()->mem_write(&pid32, set_child_tid, 4);
-                ROSE_ASSERT(4==nwritten);
+            /* Thread-related things. ROSE isn't multi-threaded and the simulator doesn't support multi-threading, but we still
+             * have to initialize a few data structures because the specimen may be using a thread-aware library. */
+            if (0!=(flags & CLONE_CHILD_SETTID)) {
+                set_child_tid = child_tid_va;
+                if (set_child_tid) {
+                    uint32_t pid32 = getpid();
+                    size_t nwritten = get_process()->mem_write(&pid32, set_child_tid, 4);
+                    ROSE_ASSERT(4==nwritten);
+                }
             }
-        }
-        if (0!=(flags & CLONE_CHILD_CLEARTID)) {
-            clear_child_tid = child_tid_va;
-        }
-
-        /* Return register values in child */
-        pt_regs_32 regs;
-        regs.bx = policy.readGPR(x86_gpr_bx).known_value();
-        regs.cx = policy.readGPR(x86_gpr_cx).known_value();
-        regs.dx = policy.readGPR(x86_gpr_dx).known_value();
-        regs.si = policy.readGPR(x86_gpr_si).known_value();
-        regs.di = policy.readGPR(x86_gpr_di).known_value();
-        regs.bp = policy.readGPR(x86_gpr_bp).known_value();
-        regs.sp = policy.readGPR(x86_gpr_sp).known_value();
-        regs.cs = policy.readSegreg(x86_segreg_cs).known_value();
-        regs.ds = policy.readSegreg(x86_segreg_ds).known_value();
-        regs.es = policy.readSegreg(x86_segreg_es).known_value();
-        regs.fs = policy.readSegreg(x86_segreg_fs).known_value();
-        regs.gs = policy.readSegreg(x86_segreg_gs).known_value();
-        regs.ss = policy.readSegreg(x86_segreg_ss).known_value();
-        uint32_t flags = 0;
-        for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
-            if (policy.readFlag((X86Flag)i).known_value()) {
-                flags |= (1u<<i);
+            if (0!=(flags & CLONE_CHILD_CLEARTID)) {
+                clear_child_tid = child_tid_va;
             }
+
+            /* Return register values in child */
+            pt_regs_32 regs;
+            regs.bx = policy.readGPR(x86_gpr_bx).known_value();
+            regs.cx = policy.readGPR(x86_gpr_cx).known_value();
+            regs.dx = policy.readGPR(x86_gpr_dx).known_value();
+            regs.si = policy.readGPR(x86_gpr_si).known_value();
+            regs.di = policy.readGPR(x86_gpr_di).known_value();
+            regs.bp = policy.readGPR(x86_gpr_bp).known_value();
+            regs.sp = policy.readGPR(x86_gpr_sp).known_value();
+            regs.cs = policy.readSegreg(x86_segreg_cs).known_value();
+            regs.ds = policy.readSegreg(x86_segreg_ds).known_value();
+            regs.es = policy.readSegreg(x86_segreg_es).known_value();
+            regs.fs = policy.readSegreg(x86_segreg_fs).known_value();
+            regs.gs = policy.readSegreg(x86_segreg_gs).known_value();
+            regs.ss = policy.readSegreg(x86_segreg_ss).known_value();
+            uint32_t flags = 0;
+            for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
+                if (policy.readFlag((X86Flag)i).known_value()) {
+                    flags |= (1u<<i);
+                }
+            }
+            if (sizeof(regs)!=get_process()->mem_write(&regs, pt_regs_va, sizeof regs))
+                return -EFAULT;
         }
-        if (sizeof(regs)!=get_process()->mem_write(&regs, pt_regs_va, sizeof regs))
-            return -EFAULT;
+        
+    } else if (flags == (CLONE_VM |
+                         CLONE_FS |
+                         CLONE_FILES |
+                         CLONE_SIGHAND |
+                         CLONE_THREAD |
+                         CLONE_SYSVSEM |
+                         CLONE_SETTLS |
+                         CLONE_PARENT_SETTID |
+                         CLONE_CHILD_CLEARTID)) {
+        /* we are creating a new thread */
+        return -EINVAL; /* not implemented yet */
+        
+    } else {
+        return -EINVAL; /* can't handle this combination of flags */
     }
-
+    
     return pid;
 }
 
@@ -3658,14 +3666,14 @@ main(int argc, char *argv[], char *envp[])
 
     /* Allow executor threads to run and return when the simulated process terminates. The return value is the termination
      * status of the simulated program. */
-    int status = sim.main_loop();
+    sim.main_loop();
 
     /* Not really necessary since we're not doing anything else. */
     sim.deactivate();
 
     /* Describe termination status, and then exit ourselves with that same status. */
-    sim.describe_termination(stderr, status);
-    sim.terminate_self(status); // probably doesn't return
+    sim.describe_termination(stderr);
+    sim.terminate_self(); // probably doesn't return
     return 0;
 }
 

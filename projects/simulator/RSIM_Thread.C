@@ -138,7 +138,7 @@ RSIM_Thread::syscall_leave(const char *format, ...)
 
         /* Additionally, output any other buffer values that were filled in by a successful system call. */
         int result = (int)(uint32_t)(syscall_arg(-1));
-        if (format[0]!='d' || -1!=result || -EINTR==result) {
+        if (format[0]!='d' || (result<-1024 || result>=0) || -EINTR==result) {
             for (size_t i=1; format[i]; i++) {
                 if ('-'!=format[i]) {
                     syscall_arginfo(format[i], syscall_arg(i-1), &info, &ap);
@@ -420,3 +420,62 @@ RSIM_Thread::syscall_return(int retval)
     policy.writeGPR(x86_gpr_ax, policy.number<32>(retval));
 }
 
+/* class method for each created thread */
+void *
+RSIM_Thread::main(void *_thread)
+{
+    RSIM_Thread *thread = (RSIM_Thread*)_thread;
+    thread->main();
+    return NULL;
+}
+
+/* Executed by a real thread to simulate a specimen's thread.  The real thread exits when this method returns. */
+void
+RSIM_Thread::main()
+{
+    RSIM_Process *process = get_process();
+
+    while (true) {
+        report_progress_maybe();
+        try {
+            if (policy.readIP().known_value()==SIGHANDLER_RETURN) {
+                signal_return();
+                continue;
+            }
+
+            SgAsmx86Instruction *insn = current_insn();
+            process->binary_trace_add(this, insn);
+            semantics.processInstruction(insn);
+            if (tracing(TRACE_STATE))
+                policy.dump_registers(tracing(TRACE_STATE));
+
+            signal_deliver_any();
+        } catch (const RSIM_Semantics::Exception &e) {
+            /* Thrown for instructions whose semantics are not implemented yet. */
+            std::cerr <<e <<"\n\n";
+#ifdef X86SIM_STRICT_EMULATION
+            process->dump_core(SIGILL);
+            abort();
+#else
+            std::cerr <<"Ignored. Continuing with a corrupt state...\n";
+#endif
+        } catch (const RSIM_SEMANTIC_POLICY::Exception &e) {
+            std::cerr <<e <<"\n\n";
+            process->dump_core(SIGILL);
+            abort();
+        } catch (const RSIM_Thread::Exit &e) {
+            /* specimen has exited */
+            if (robust_list_head_va)
+                fprintf(stderr, "warning: robust_list not cleaned up\n"); /* FIXME: see set_robust_list() syscall */
+            process->exit(e.status);
+            return;
+        } catch (const RSIM_SemanticPolicy::Signal &e) {
+            signal_generate(e.signo);
+        } catch (...) {
+            process->dump_core(SIGILL);
+            fprintf(stderr, "fatal: simulator thread received an unhandled exception\n");
+            abort();
+        }
+    }
+}
+    

@@ -24,7 +24,7 @@ public:
     /** Creates an empty process containing no threads. */
     RSIM_Process()
         : map(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), disassembler(NULL),
-          trace_file(NULL), trace_flags(0), btrace_file(NULL),
+          trace_file(NULL), trace_flags(0), core_flags(0), terminated(false), termination_status(0), btrace_file(NULL),
           vdso_mapped_va(0), vdso_entry_va(0),
           core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000) {
         RTS_rwlock_init(&instance_rwlock, NULL);
@@ -270,6 +270,22 @@ public:
      *  simulator.   Users generally don't need to call this. */
     void initialize_stack(SgAsmGenericHeader*, int argc, char *argv[]);
 
+    /** Exit entire process. Saves the exit status (like that returned from waitpid), then joins all threads except the main
+     *  thread.
+     *
+     *  Thread safety: This method can be called by any thread or multiple threads. This function returns only when called by
+     *  the main thread. */
+    void exit(int status);
+
+    /** Returns true if simulated process has terminated. */
+    bool has_terminated() {
+        return terminated;
+    }
+
+    /** Returns the process exit status. If the process has not exited, then zero is returned. */
+    bool get_termination_status() {
+        return termination_status;
+    }
 
 private:
     std::map<pid_t, RSIM_Thread*> threads;      /**< All threads associated with this process. */
@@ -281,6 +297,8 @@ private:
     FILE *trace_file;                           /**< Stream to which debugging output is sent (or NULL to suppress it) */
     unsigned trace_flags;                       /**< Bit vector of what to trace. See TraceFlags. */
     unsigned core_flags;                        /**< Bit vector describing how to produce core dumps. */
+    bool terminated;                            /**< True when the process has finished running. */
+    int termination_status;                     /**< As would be returned by the parent's waitpid() call. */
 
     SegmentInfo segreg_shadow[6];               /* Shadow values of segment registers from GDT */
 

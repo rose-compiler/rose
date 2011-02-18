@@ -89,18 +89,6 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
             }
             argno++;
 
-        } else if (!strncmp(argv[argno], "--dump=", 7)) {
-            char *rest;
-            errno = 0;
-            dump_at = strtoul(argv[argno]+7, &rest, 0);
-            if (rest==argv[argno]+7 || errno!=0) {
-                fprintf(stderr, "%s: --dump=N requires an address, N\n", argv[0]);
-                exit(1);
-            }
-            if (','==rest[0] && rest[1])
-                dump_name = rest+1;
-            argno++;
-
         } else if (!strncmp(argv[argno], "--interp=", 9)) {
             interp_name = argv[argno++]+9;
 
@@ -332,85 +320,45 @@ RSIM_Simulator::main_loop()
     RSIM_Thread *thread = process->get_thread(getpid());
     assert(thread!=NULL);
 
-    while (true) {
-        thread->report_progress_maybe();
-        try {
-            if (thread->policy.readIP().known_value()==thread->SIGHANDLER_RETURN) {
-                thread->signal_return();
-                if (dump_at!=0 && dump_at==thread->SIGHANDLER_RETURN) {
-                    fprintf(stderr, "Reached dump point.\n");
-                    process->dump_core(SIGABRT, dump_name);
-                    dump_at = 0;
-                }
-                continue;
-            }
+    /* The simulator's main thread is executed by the calling thread because the simulator's main thread must be a thread group
+     * leader. */
+    thread->main();
+    return process->get_termination_status();
+}
 
-            if (dump_at!=0 && dump_at == thread->policy.readIP().known_value()) {
-                fprintf(stderr, "Reached dump point.\n");
-                process->dump_core(SIGABRT, dump_name);
-                dump_at = 0;
-            }
-
-            SgAsmx86Instruction *insn = thread->current_insn();
-            if (!seen_entry_va && insn->get_address()==entry_va) {
-                seen_entry_va = true;
-                if (thread->tracing(TRACE_MMAP)) {
-                    fprintf(thread->tracing(TRACE_MMAP), "memory map at program entry:\n");
-                    process->get_memory()->dump(thread->tracing(TRACE_MMAP), "  ");
-                }
-            }
-            process->binary_trace_add(thread, insn);
-            thread->semantics.processInstruction(insn);
-            if (thread->tracing(TRACE_STATE))
-                thread->policy.dump_registers(thread->tracing(TRACE_STATE));
-
-            thread->signal_deliver_any();
-        } catch (const RSIM_Semantics::Exception &e) {
-            /* Thrown for instructions whose semantics are not implemented yet. */
-            std::cerr <<e <<"\n\n";
-#ifdef X86SIM_STRICT_EMULATION
-            process->dump_core(SIGILL);
-            abort();
-#else
-            std::cerr <<"Ignored. Continuing with a corrupt state...\n";
-#endif
-        } catch (const RSIM_SEMANTIC_POLICY::Exception &e) {
-            std::cerr <<e <<"\n\n";
-            process->dump_core(SIGILL);
-            abort();
-        } catch (const RSIM_Thread::Exit &e) {
-            /* specimen has exited */
-            if (thread->robust_list_head_va)
-                fprintf(stderr, "warning: robust_list not cleaned up\n"); /* FIXME: see set_robust_list() syscall */
-            return e.status;
-        } catch (const RSIM_SemanticPolicy::Signal &e) {
-            thread->signal_generate(e.signo);
+void
+RSIM_Simulator::describe_termination(FILE *f)
+{
+    RSIM_Process *process = get_process();
+    if (process->has_terminated()) {
+        int status = process->get_termination_status();
+        if (WIFEXITED(status)) {
+            fprintf(f, "specimen exited with status %d\n", WEXITSTATUS(status));
+        } else if (WIFSIGNALED(status)) {
+            fprintf(f, "specimen exited due to signal ");
+            print_enum(f, signal_names, WTERMSIG(status));
+            fprintf(f, " (%s)%s\n", strsignal(WTERMSIG(status)), WCOREDUMP(status)?" core dumped":"");
+        } else if (WIFSTOPPED(status)) {
+            fprintf(f, "specimen is stopped due to signal ");
+            print_enum(f, signal_names, WSTOPSIG(status));
+            fprintf(f, " (%s)\n", strsignal(WSTOPSIG(status)));
+        } else {
+            fprintf(f, "unknown termination status: 0x%08x\n", status);
         }
-    }
-}
-
-void
-RSIM_Simulator::describe_termination(FILE *f, int status)
-{
-    if (WIFEXITED(status)) {
-        fprintf(f, "specimen exited with status %d\n", WEXITSTATUS(status));
-    } else if (WIFSIGNALED(status)) {
-        fprintf(f, "specimen exited due to signal ");
-        print_enum(f, signal_names, WTERMSIG(status));
-        fprintf(f, " (%s)%s\n", strsignal(WTERMSIG(status)), WCOREDUMP(status)?" core dumped":"");
-    } else if (WIFSTOPPED(status)) {
-        fprintf(f, "specimen is stopped due to signal ");
-        print_enum(f, signal_names, WSTOPSIG(status));
-        fprintf(f, " (%s)\n", strsignal(WSTOPSIG(status)));
     } else {
-        fprintf(f, "unknown termination status: 0x%08x\n", status);
+        fprintf(f, "specimen has not exited yet\n");
     }
 }
 
 void
-RSIM_Simulator::terminate_self(int status)
+RSIM_Simulator::terminate_self()
 {
+    RSIM_Process *process = get_process();
+    if (!process->has_terminated())
+        return;
+
     RTS_WRITE(class_rwlock) {
+        int status = process->get_termination_status();
         if (WIFEXITED(status)) {
             exit(WEXITSTATUS(status));
         } else if (WIFSIGNALED(status)) {
