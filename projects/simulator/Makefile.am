@@ -1027,6 +1027,8 @@ check-local:
 #check-local: $(PTHREAD_TEST_TARGETS)  $(SYS_TEST_TARGETS)
 #	@$(RTH_STATS)
 
+run-tests: $(PTHREAD_TEST_TARGETS)  $(SYS_TEST_TARGETS)
+	@$(RTH_STATS)
 
 # "tmp-sim" is the temp directory used to run the tests. See x86sim.conf.
 clean-local:
