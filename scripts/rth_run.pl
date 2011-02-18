@@ -330,6 +330,47 @@ sub load_config {
   return %conf;
 }
 
+# Runs the specified commands one by one until they've all been run, one exits with non-zero status, or a timeout occurs. The
+# command's standard output and error are captured to the specified files (which are created if necessary).  This function
+# returns the exit status, or a negative value on error; zero on success.  We have to do this the hard way in order to send
+# SIGKILL to the child after a timeout (we don't want a Hudson node filling up with timed-out tests that continue to suck up
+# resources).
+sub run_command {
+  my($stdout,$stderr,$timelimit,@commands) = @_;
+  defined (my $pid = fork) or return "fork: $!";
+  if (!$pid) {
+    open STDOUT, ">", $stdout or return 255;
+    open STDERR, ">", $stderr or return 254;
+    setpgrp; # so we can kill the whole group on a timeout
+    my $status = 0;
+    for my $cmd (@commands) {
+      $status = system $cmd;
+      last if $status;
+    }
+    exit $status;
+  }
+
+  my $status = -1;
+  eval {
+    local $SIG{ALRM} = sub {die "alarm\n"};
+    alarm($timelimit);
+    $status = $? if $pid == waitpid $pid, 0;
+    alarm(0);
+  };
+  if ("$@" eq "alarm\n") {
+    kill -1, $pid; sleep 5; # give the test a chance to clean up gracefully
+    kill -9, $pid; # kill the whole process group in case the above exec used the shell.
+    $status = $? if $pid == waitpid $pid, 0;
+    if (open LOG, ">>", $stderr) {
+      print LOG "\nterminated after $timelimit seconds\n";
+      close LOG;
+    }
+  }
+
+  return $status;
+}
+
+
 # Produce a temporary name for files, directories, etc.
 my $tempname = "AAA";
 sub tempname {
@@ -397,20 +438,7 @@ print "  TESTING $target\n";
 # Run the commands, capturing their output into files.
 my($cmd_stdout,$cmd_stderr) = map {"$target.$_"} qw/out err/;
 unlink $cmd_stdout, $cmd_stderr;
-my($status) = 0;
-eval {
-  local $SIG{ALRM} = sub {die "alarm\n"};
-  alarm($config{timeout});
-  for my $cmd (@{$config{cmd}}) {
-    $status = system "($cmd) >>$cmd_stdout 2>>$cmd_stderr";
-    last if $status;
-  }
-  alarm(0);
-};
-if ($@ eq "alarm\n") {
-  system "echo 'timed out after $config{timeout} seconds' >>$cmd_stderr";
-  $status = 256;
-}
+my($status) = run_command($cmd_stdout, $cmd_stderr, $config{timeout}, @{$config{cmd}});
 
 # Should we compare the test's standard output with a predetermined answer?
 if (!$status && $config{answer} ne 'no') {
