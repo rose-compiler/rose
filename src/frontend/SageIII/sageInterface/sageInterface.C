@@ -13018,7 +13018,7 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
         SgExpression* exp = isSgExpression(n);
         if (exp)
         {
-          string u_name = generateUniqueName(exp,false);
+          string u_name = generateUniqueName(exp,false)+"-"+exp->class_name();
           AstAttribute * name_attribute = new UniqueNameAttribute(u_name); 
           ROSE_ASSERT (name_attribute != NULL);
           exp->addNewAttribute("UniqueNameAttribute",name_attribute);
