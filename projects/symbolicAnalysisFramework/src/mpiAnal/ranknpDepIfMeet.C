@@ -95,6 +95,7 @@ bool IfMeetLat::meetUpdate(Lattice* that)
 			while(dynamic_cast<IfMeetLat*>(that)->ifHist.size() < ifHist.size())
 				ifHist.erase(ifHist.end());
 			//printf("after length cut ifHist.size()=%d (that)->ifHist.size()=%d\n", ifHist.size(), dynamic_cast<IfMeetLat*>(that)->ifHist.size());
+			return true;
 		}	
 		else
 		{
@@ -168,7 +169,7 @@ bool IfMeetDetector::transfer(const Function& func, const DataflowNode& n, NodeS
 	/*printf("-----------------------------------\n");
 	printf("IfMeetDetector::transfer() function %s() node=<%s | %s>\n", func.get_name().str(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());*/
 	
-	bool modified = false;
+	//bool modified = false;
 	IfMeetLat* ifml = dynamic_cast<IfMeetLat*>(dfInfo.front());
 	
 	// if this node is a descendant of an if statement
@@ -214,7 +215,7 @@ void printIfMeetDetectorStates(IfMeetDetector* ifmd, string indent)
 	vector<int> factNames;
 	vector<int> latticeNames;
 	latticeNames.push_back(0);
-	printAnalysisStates pas(ifmd, factNames, latticeNames, indent);
+	printAnalysisStates pas(ifmd, factNames, latticeNames, printAnalysisStates::below, indent);
 	UnstructuredPassInterAnalysis upia_pas(pas);
 	upia_pas.runAnalysis();
 }
@@ -338,6 +339,7 @@ bool RankDepIfMeetLat::meetUpdate(Lattice* that)
 			while(dynamic_cast<RankDepIfMeetLat*>(that)->ifHist.size() < ifHist.size())
 				ifHist.erase(ifHist.end());
 			//printf("after length cut ifHist.size()=%d (that)->ifHist.size()=%d\n", ifHist.size(), dynamic_cast<RankDepIfMeetLat*>(that)->ifHist.size());
+			return true;
 		}	
 		else
 		{
@@ -459,7 +461,7 @@ void printRankDepIfMeetDetectorStates(RankDepIfMeetDetector* ifmd, string indent
 	vector<int> factNames;
 	vector<int> latticeNames;
 	latticeNames.push_back(0);
-	printAnalysisStates pas(ifmd, factNames, latticeNames, indent);
+	printAnalysisStates pas(ifmd, factNames, latticeNames, printAnalysisStates::below, indent);
 	UnstructuredPassInterAnalysis upia_pas(pas);
 	upia_pas.runAnalysis();
 }

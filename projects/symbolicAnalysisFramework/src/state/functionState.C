@@ -1,6 +1,6 @@
 #include "functionState.h"
 #include "cfgUtils.h"
-#include "CallGraphTraverse.C"
+#include "CallGraphTraverse.C" 
 
 /*********************
  *** FunctionState ***
@@ -32,14 +32,16 @@ set<FunctionState*>& FunctionState::getAllDefinedFuncs()
 // returns a set of all the functions whose declarations are in the project
 set<FunctionState*>& FunctionState::getAllFuncs()
 {
-	if(allFuncsComputed)
+	/*if(allFuncsComputed)
 		return allFuncs;
-	else
+	else*/
+	if(!allFuncsComputed)
 	{
 		CollectFunctions collect(getCallGraph());
 		collect.traverse();
 		allFuncsComputed=true;
 	}
+	return allFuncs;
 }
 
 // returns the FunctionState associated with the given function
@@ -73,6 +75,7 @@ void FunctionState::setArgParamMap(SgFunctionCallExp* call, map<varID, varID>& a
 	SgInitializedNamePtrList params = func.get_params();
 	ROSE_ASSERT(args.size() == params.size());
 	
+	//cout << "setArgParamMap() #args="<<args.size()<<" #params="<<params.size()<<"\n";
 	// the state of the callee's variables at the call site
 	SgExpressionPtrList::iterator itA;
 	SgInitializedNamePtrList::iterator itP;
@@ -80,13 +83,16 @@ void FunctionState::setArgParamMap(SgFunctionCallExp* call, map<varID, varID>& a
 	    itA!=args.end() && itP!=params.end(); 
 	    itA++, itP++)
 	{
-		// if this argument is a simple variable reference
-		if(varID::isValidVarExp(*itA))
+		//cout << "    itA="<<(*itA)->unparseToString()<<" itP="<<(*itP)->unparseToString()<<" isValid="<<varID::isValidVarExp(*itA)<<"\n";
+		/*if(varID::isValidVarExp(*itA))
 		{
 			varID arg(*itA);
 			varID param(*itP);
 			argParamMap[arg] = param;
-		}
+		}*/
+		varID arg = SgExpr2Var(*itA);
+		varID param(*itP);
+		argParamMap[arg] = param;
 	}
 }
 	
@@ -101,6 +107,7 @@ void FunctionState::setParamArgByRefMap(SgFunctionCallExp* call, map<varID, varI
 	
 	SgExpressionPtrList::iterator itArgs;
 	SgInitializedNamePtrList::iterator itParams;
+	//cout << "            #params="<<params.size()<<" #args="<<args.size()<<"\n";
 	for(itParams = params.begin(), itArgs = args.begin(); 
 	    itParams!=params.end() && itArgs!=args.end(); 
 	    itParams++, itArgs++)
@@ -108,12 +115,12 @@ void FunctionState::setParamArgByRefMap(SgFunctionCallExp* call, map<varID, varI
 		SgType* typeParam = (*itParams)->get_type();
 		SgType* typeArg = cfgUtils::unwrapCasts((*itArgs))->get_type();
 			
-		/*printf("FunctionState::setParamArgByRefMap() *itArgs=<%s | %s>\n", (*itArgs)->unparseToString().c_str(), (*itArgs)->class_name().c_str());
+		/*printf("FunctionState::setParamArgByRefMap() *itArgs=<%s | %s> isValidVar=%d\n", (*itArgs)->unparseToString().c_str(), (*itArgs)->class_name().c_str(), varID::isValidVarExp(*itArgs));
 		printf("                                     typeArg=<%s | %s>\n", typeArg->unparseToString().c_str(), typeArg->class_name().c_str());
 		printf("                                     itParams=<%s | %s>\n", (*itParams)->unparseToString().c_str(), (*itParams)->class_name().c_str());
-		printf("                                     typeParam=<%s | %s>\n", typeParam->unparseToString().c_str(), typeParam->class_name().c_str());*/
+		printf("                                     typeParam=<%s | %s> isReference=%d\n", typeParam->unparseToString().c_str(), typeParam->class_name().c_str(), isSgReferenceType(typeParam));*/
 		
-			// if the argument is a named variable AND
+		/*	// if the argument is a named variable AND
 		if(varID::isValidVarExp(*itArgs) && 
 			 // if the argument has an array type, it's contents will be passed by reference OR 
 			((isSgArrayType(typeArg) || isSgPointerType(typeArg)) ||
@@ -126,7 +133,13 @@ void FunctionState::setParamArgByRefMap(SgFunctionCallExp* call, map<varID, varI
 			
 			// add this mapping
 			paramArgByRefMap[paramVar] = argVar;
-		}
+		}*/
+		varID argVar = SgExpr2Var(*itArgs);
+		varID paramVar(*itParams);
+		
+		// add this mapping
+		paramArgByRefMap[paramVar] = argVar;
+		
 		/*
 		// if the argument is a non-array variable being passed via a pointer
 		else if(isSgAddressOfOp(*itArgs) && SgPointerType(typeArg) && 
@@ -139,7 +152,8 @@ void FunctionState::setParamArgByRefMap(SgFunctionCallExp* call, map<varID, varI
  *** CollectFunctions ***
  ************************/
 
-int CollectFunctions::visit(const CGFunction* cgFunc, list<int> fromCallees)
+//int CollectFunctions::visit(const CGFunction* cgFunc, list<int> fromCallees)
+void CollectFunctions::visit(const CGFunction* cgFunc)
 {
 	Function func(cgFunc);
 	FunctionState* fs = new FunctionState(func);
@@ -150,5 +164,5 @@ int CollectFunctions::visit(const CGFunction* cgFunc, list<int> fromCallees)
 	if(func.get_definition())
 		FunctionState::allDefinedFuncs.insert(fs);
 	FunctionState::allFuncs.insert(fs);
-	return 0;
+	//return 0;
 }

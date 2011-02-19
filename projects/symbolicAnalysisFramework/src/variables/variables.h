@@ -29,6 +29,7 @@ void initVariables(SgProject* project);*/
 // virtual base class for other variable expressions
 class variable
 {
+	public:
 	//const char* str();
 	virtual string str() const = 0;
 	
@@ -43,6 +44,8 @@ class variable
 	
 	// returns true if this variable is global and false otherwise
 	virtual bool isGlobal() const=0;
+	
+	virtual ~variable() {}
 };
 
 // type of variable ids, their sets and maps of sets
@@ -107,7 +110,7 @@ class varID : public variable
 	// initializes this object from the given SgInitializedName (assumed that isValidVarExp(name) is true)
 	bool init(SgInitializedName* name);
 	
-	bool operator = (const variable &that);
+	void operator = (const variable &that);
 	
 	// recursive function that pulls the SgInitializedNames of all the SgVarRefExps inside this SgDotExp
 	// returns true on success, false on failure
@@ -240,6 +243,8 @@ public:
 	long getID() const;
 };
 
+ostream &operator<<(ostream &stream, varID v);
+
 //bool operator == ( const varID &one, const varID &two);
 
 // Variables are ordered in lexicographic order, with element-wise comparisons 
@@ -273,6 +278,12 @@ typedef map<quad, setQuad *> m_quad2setPtr;
 /* #################################
    ###### FUNCTION PROTOTYPES ######
    ################################# */
+
+// Returns the varID that corresponds to the given SgExpression
+varID SgExpr2Var(SgExpression* expr);
+
+// Returns true if the given expression can be interepreted as a concrete variable
+bool isVarExpr(SgExpression* expr);
 
 // convert from variable id to variable name
 std::string getVariableName( varID var );

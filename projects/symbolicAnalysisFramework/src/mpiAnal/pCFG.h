@@ -29,27 +29,27 @@ class pCFGNode
 	// Initializes the given pCFG node with the given vector of DataflowNodes
 	void init(const vector<DataflowNode>& pSetDFNodes);
 	
-	bool operator = (const pCFGNode& that);
+	void operator = (const pCFGNode& that);
 	bool operator == (const pCFGNode& that) const;
 	bool operator != (const pCFGNode& that) const;
 	bool operator < (const pCFGNode& that) const;
 	
 	// Advances the given process set to the given DataflowNode
-	void advance(int pSet, const DataflowNode& n);
+	void advance(unsigned int pSet, const DataflowNode& n);
 	
 	// Advances the given process set to the only outgoing descendant of its current dataflow node
-	void advanceOut(int pSet);
+	void advanceOut(unsigned int pSet);
 		
 	// Advances the given process set to the only incoming descendant of its current dataflow node
-	void advanceIn(int pSet);
+	void advanceIn(unsigned int pSet);
 	
 	// Returns the given process set's current DataflowNode
-	const DataflowNode& getCurNode(int pSet) const;
+	const DataflowNode& getCurNode(unsigned int pSet) const;
 		
 	const vector<DataflowNode>& getPSetDFNodes() const;
 	
 	// Removes the given process set from this pCFGNode
-	bool removePSet(int pSet);
+	void removePSet(unsigned int pSet);
 	
 	// Adds a new process set to the given DFNode. This process set will start out at the given DataflowNode.
 	// Returns the numeric id of the new process set

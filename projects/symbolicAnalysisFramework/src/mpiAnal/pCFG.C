@@ -43,7 +43,7 @@ void pCFGNode::init(const vector<DataflowNode>& pSetDFNodes)
 	sort(this->pSetDFNodes.begin() this->pSetDFNodes.end());*/
 }
 
-bool pCFGNode::operator = (const pCFGNode& that)
+void pCFGNode::operator = (const pCFGNode& that)
 {
 	pSetDFNodes = that.pSetDFNodes;
 }
@@ -78,14 +78,14 @@ bool pCFGNode::operator < (const pCFGNode& that) const
 }
 
 // Advances the given process set to the given DataflowNode
-void pCFGNode::advance(int pSet, const DataflowNode& n)
+void pCFGNode::advance(unsigned int pSet, const DataflowNode& n)
 {
 	ROSE_ASSERT(0<=pSet && pSet<pSetDFNodes.size());
 	pSetDFNodes[pSet] = n;
 }
 
 // Advances the given process set to the only outgoing descendant of its current dataflow node
-void pCFGNode::advanceOut(int pSet)
+void pCFGNode::advanceOut(unsigned int pSet)
 {
 	ROSE_ASSERT(0<=pSet && pSet<pSetDFNodes.size());
 	vector<DataflowEdge> edges = pSetDFNodes[pSet].outEdges();
@@ -94,7 +94,7 @@ void pCFGNode::advanceOut(int pSet)
 }
 
 // Advances the given process set to the only incoming descendant of its current dataflow node
-void pCFGNode::advanceIn(int pSet)
+void pCFGNode::advanceIn(unsigned int pSet)
 {
 	ROSE_ASSERT(0<=pSet && pSet<pSetDFNodes.size());
 	vector<DataflowEdge> edges = pSetDFNodes[pSet].inEdges();
@@ -103,7 +103,7 @@ void pCFGNode::advanceIn(int pSet)
 }
 
 // Returns the given process set's current DataflowNode
-const DataflowNode& pCFGNode::getCurNode(int pSet) const
+const DataflowNode& pCFGNode::getCurNode(unsigned int pSet) const
 {
 	ROSE_ASSERT(0<=pSet && pSet<pSetDFNodes.size());
 	return pSetDFNodes[pSet];
@@ -115,7 +115,7 @@ const vector<DataflowNode>& pCFGNode::getPSetDFNodes() const
 }
 
 // Removes the given process set from this pCFGNode
-bool pCFGNode::removePSet(int pSet)
+void pCFGNode::removePSet(unsigned int pSet)
 {
 	ROSE_ASSERT(pSet>=0 && pSet<pSetDFNodes.size());
 	pSetDFNodes.erase(pSetDFNodes.begin()+pSet);	
@@ -683,7 +683,7 @@ if(analysisDebugLevel>=1)
 				pCFGNode descN(n);
 				// Set to true if we want to propagate the state at the bottom
 				// of this pCFGNode to its descendant, false otherwise
-				bool propagateToDesc=true;
+				//bool propagateToDesc=true;
 				
 				// ---------------------------------------------------------------------------------------
 				
@@ -705,6 +705,8 @@ if(analysisDebugLevel>=1) cout << "merged="<<merged<<"\n";
 					
 					// Set dfInfoBelow to the the state ABOVE this node so that it can be propagated
 					// to the merged descN
+					// !!! What happens to the original Lattices of dfInfoBelow? Are they leaked?
+					// !!! Are there now references of the lattices in dfInfoAbove? If so, does it mean they're changed during this function?
 					dfInfoBelow = dfInfoAbove;	
 				}
 				// Else, if we didn't merge and the current process set was resumed from blocked 
@@ -865,7 +867,7 @@ if(analysisDebugLevel>=1) cout << "merged="<<merged<<"\n";
 					else
 						descN.advanceOut(curPSet);
 					// >>>>>>>>>>>>>>>>>>> TRANSFER FUNCTION >>>>>>>>>>>>>>>>>>>
-				} // else - if(releasedPSets.erase(curPSet) > 0)
+				}
 				
 				// Print out the post-transfer lattices
 				if(analysisDebugLevel>=1)
@@ -924,11 +926,11 @@ if(analysisDebugLevel>=1)
 }
 		} // while(activePSets.size()>0)
 
+		// All process sets are now blocked, so we should match sends to receives, if possible
 		ROSE_ASSERT(activePSets.size() == 0);
 		ROSE_ASSERT(blockedPSets.size() == n.getPSetDFNodes().size());
 		ROSE_ASSERT(releasedPSets.size() == 0);
 		
-		// All process sets are now blocked, so we should match sends to receives, if possible
 		int splitPSet;
 		vector<ConstrGraph*> splitConditions;
 		vector<DataflowNode> splitPSetNodes;
@@ -1029,7 +1031,7 @@ if(analysisDebugLevel>=1)
 		// Deallocates aboveCopy since we've now performed the split and if needed, propagated 
 		// these lattices to the next pCFGNode
 		deleteLattices(aboveCopy);
-		          
+		
 		// If we must split this analysis into multiple partitions, request this split from the parent partitioned analysis
 		/*if(splitChkpts.size()>0)
 		{
@@ -1212,7 +1214,7 @@ void pCFG_FWDataflow::deleteLattices(vector<Lattice*>& lats)
 //    process sets, advances descN to the new pCFGNode and sets splitPSet to true. It is assumed that
 //    at the start of the function n == descN.
 // If the transfer function wants to split across multiple descendant pCFGNodes, partitionTranfer() 
-//    generatesthe resulting checkpoints, performs the split and sets splitPNodes to true.
+//    generates the resulting checkpoints, performs the split and sets splitPNodes to true.
 // Otherwise, sets neither to true.
 bool pCFG_FWDataflow::partitionTranfer(
                            const pCFGNode& n, pCFGNode& descN, int curPSet, const Function& func, NodeState* fState, 
@@ -1244,9 +1246,10 @@ bool pCFG_FWDataflow::partitionTranfer(
 		return modified;
 	}
 	
+	// Either all three flags are =false or only one is =true
 	ROSE_ASSERT((!splitPSet && !splitPNode && !blockPSet) ||
 	            XOR(XOR(splitPSet, splitPNode), blockPSet));
-		
+	
 	// If we're not going to block on this node, update the state below it.
 	// (if we are going to block, we'll just dump the current dfInfoNewBelow 
 	//  and move on to the next process set)
@@ -1255,6 +1258,8 @@ bool pCFG_FWDataflow::partitionTranfer(
 		// the information below the node. Also, DEALLOCATE the lattices in dfInfoNewBelow since they have now served their purpose
 		// of ferrying data from dfInfoAbove, through the transfer function, to dfInfoBelow
 		modified = updateLattices(dfInfoBelow, dfInfoNewBelow, true) || modified;
+		// !!! What happens to the lattices in dfInfoNewBelow? Are they ever deallocated?
+		
 		// !!! Note: this assumes that if the transfer function blocks a process set, it is ok to drop all of the
 		// !!! changes that it may have made to the dataflow state.
 	
@@ -1412,6 +1417,7 @@ void pCFG_FWDataflow::performPSetSplit(const pCFGNode& n, pCFGNode& descN, int p
 	
 	if(analysisDebugLevel>=1) 
 		cout << "performPSetSplit(pSet="<<pSet<<") splitPSetNodes.size()="<<splitPSetNodes.size()<<"\n";
+	
 	// Update descN to correspond to the new pCFGNode that results from the creation
 	// of the new process sets.
 	vector<int> newPSets; // The newly-generated process sets
@@ -1446,12 +1452,12 @@ void pCFG_FWDataflow::performPSetSplit(const pCFGNode& n, pCFGNode& descN, int p
 	
 	// Copy the state from pSet to all the newly-generated process sets
 	// and activate these process sets
-	vector<ConstrGraph*>::iterator splitCondIt = splitConditions.begin(); splitCondIt++;
-	vector<bool>::iterator activeIt            = splitPSetActive.begin(); activeIt++;
-	if(analysisDebugLevel>=1) 
+	if(analysisDebugLevel>=1)
 		cout << "newPSets.size()="<<newPSets.size()<<"\n";
 	//cout << "newPSets.size()="<<newPSets.size()<<" splitConditions.size()="<<splitConditions.size()<<" splitPSetActive.size()="<<splitPSetActive.size()<<"\n";
 	ROSE_ASSERT(((newPSets.size()+1) == splitConditions.size()) && (splitConditions.size() == splitPSetActive.size()));
+	vector<ConstrGraph*>::iterator splitCondIt = splitConditions.begin(); splitCondIt++;
+	vector<bool>::iterator activeIt            = splitPSetActive.begin(); activeIt++;
 	for(vector<int>::iterator it=newPSets.begin(); 
 	    it!=newPSets.end() && splitCondIt!=splitConditions.end() && activeIt!=splitPSetActive.end(); 
 	    it++, splitCondIt++, activeIt++)
@@ -1508,7 +1514,7 @@ void pCFG_FWDataflow::performPSetSplit(const pCFGNode& n, pCFGNode& descN, int p
 }
 
 // Propagates the dataflow info from the current node's NodeState (curNodeLattices) to the next node's 
-//     NodeState (nextNodeLattices).
+//     NodeState (nextNodeLattices), incorporating the partition condition (if any) into the propagated dataflow state.
 // Returns true if the next node's meet state is modified and false otherwise.
 /*bool */ void pCFG_FWDataflow::propagateFWStateToNextNode(const Function& func, 
                       const vector<Lattice*>& curNodeLattices, const pCFGNode& curNode, const NodeState& curNodeState, 

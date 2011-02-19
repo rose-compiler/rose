@@ -49,6 +49,8 @@ class mesgExpr
 	
 	// Returns a string representation of this set
 	virtual string str(string indent="") const=0;
+
+	virtual ~mesgExpr();
 };
 
 class nullMesgExpr : virtual public mesgExpr
@@ -151,7 +153,7 @@ public:
 	
 	// Creates a message expression from the given SgExpression, annotating the message expression
 	// bounds with the given process set.
-	OneDmesgExpr(SgExpression* expr, ConstrGraph* cg, int pSet);
+	OneDmesgExpr(SgExpression* expr, ConstrGraph* cg, unsigned int pSet);
 	
 	//~OneDmesgExpr();
 	

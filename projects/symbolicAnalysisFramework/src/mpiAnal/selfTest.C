@@ -128,6 +128,7 @@ void mesgExprTest()
 		bool matchSucc = mb.match(sRank, rRank, recvC,
 	                             &senders, &nonSenders, &nonSendMesgs,
 	                             &receivers, &nonReceivers);
+           cout << "matchSucc = "<<matchSucc<<"\n";
 	   cout << "sRank = "<<sRank.str()<<"\n";
 	   cout << "rRank = "<<rRank.str()<<"\n";
 	   cout << "recvC = "<<recvC.str()<<"\n";

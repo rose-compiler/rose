@@ -83,7 +83,7 @@ class affineInequality: public printable // : public LogicalCond
 	// and sets this constraint to it
 	affineInequality(const affineInequality& xz, const affineInequality& zy/*, bool xZero, bool yZero, DivLattice* divX, DivLattice* divY, varID z*/);
 	
-	bool operator=(const affineInequality& that);
+	void operator=(const affineInequality& that);
 	
 	bool operator==(const affineInequality& that) const;
 	
@@ -92,11 +92,26 @@ class affineInequality: public printable // : public LogicalCond
 	// lexicographic ordering (total order)
 	bool operator<(const affineInequality& that) const;
 	
-	// semantic affineInequality ordering (partial order)
-	// returns true if this affineInequality represents less or more information (less information is 
+	// Semantic affineInequality ordering (partial order)
+	// Returns true if this affineInequality represents less or more information (less information is 
 	// top, more information is bottom) than that for all values of x and y and false otherwise
 	//bool operator<<(const affineInequality& that) const;
+	// !!! NOTE: WE MAY WANT A SEMANTIC LESS-THAN-OR-EQ SINCE THAT CAN BE COMPUTED MORE PRECISELY BASED IN <= INFORMATION
 	bool semLessThan(const affineInequality& that, bool xEqZero, bool yEqZero) const;
+	bool semLessThan(const affineInequality& that, 
+                    const affineInequality* xZero, const affineInequality* zeroX,
+                    const affineInequality* yZero, const affineInequality* zeroY, string indent="") const;
+	bool semLessThanEq(const affineInequality& that, 
+                    bool xIsZeroVar, 
+                    const affineInequality* xZero, const affineInequality* zeroX,
+                    bool yIsZeroVar,
+                    const affineInequality* yZero, const affineInequality* zeroY, string indent="") const;
+	
+	// Semantic affineInequality ordering (partial order), focused on negated inequalities
+	// Returns true if the negation of this affineInequality represents more information (less information is 
+	// top, more information is bottom) than the nagation of that for all values of x and y and false otherwise
+	//bool affineInequality::semLessThanNeg(const affineInequality& that) const
+	bool semLessThanNeg(const affineInequality& that, bool xEqZero, bool yEqZero) const;
 	
 	bool set(const affineInequality& that);
 	
@@ -176,6 +191,8 @@ class affineInequality: public printable // : public LogicalCond
 	string str(string indent="") const;
 	
 	string str(varID x, varID y, string indent="") const;
+	// Prints out the negation of the constraint ax <= by+c
+	string strNeg(varID x, varID y, string indent) const;
 	
 	public:
 	// the basic logical operations that must be supported by any implementation of 

@@ -7,6 +7,7 @@
 
 using namespace std;
 using namespace arrIndexLabeler;
+using namespace SageInterface;
 
 map<SgFunctionDefinition*, set<varID> > allVars;
 map<SgFunctionDefinition*, set<varID> > activeVars;
@@ -35,6 +36,8 @@ bool varID::init(const varID& that)
 /*	cout << "that.name = "<<that.name<<"\n";
 	cout << "name = "<<name<<"\n";*/
 	name = that.name;
+	
+	return true;
 }
 
 // initializes this object from the given expression (assumed that isValidVarExp(n) is true)
@@ -43,9 +46,10 @@ bool varID::init(SgNode *n)
 {
 	ROSE_ASSERT(isValidVarExp(n));
 	if(isSgExpression(n))
-		init(isSgExpression(n));
+		return init(isSgExpression(n));
 	else if(isSgInitializedName(n))
-		init(isSgInitializedName(n));
+		return init(isSgInitializedName(n));
+	return false;
 }
  
 // initializes this object from the given expression (assumed that isValidVarExp(exp) is true)
@@ -89,7 +93,7 @@ bool varID::init(SgInitializedName* name)
 	return true;
 }
 
-bool varID::operator = (const variable &that_arg)
+void varID::operator = (const variable &that_arg)
 {
 	const varID& that = (const varID&)that_arg;
 	components  = that.components;
@@ -539,6 +543,12 @@ string varID::str() const
 	return outs.str();
 }
 
+ostream &operator<<(ostream &stream, varID v)
+{
+	stream << v.str();
+	return stream;
+}
+
 // string representation of the variable reference, with variable/field names augmented with 
 // the line numbers where they were defined. File names are omitted for brevity	
 /*const char* varID::str_linenum()
@@ -701,6 +711,24 @@ getVarReference( SgInitializedName *iN )
 	ROSE_ASSERT ( iN );
 	return (varID)iN;
 }*/
+
+// Returns the varID that corresponds to the given SgExpression
+varID SgExpr2Var(SgExpression* expr) {
+	// If this expression is a use of a variable that can be represented by a varID
+	if(varID::isValidVarExp(expr)) {
+		varID var(expr);
+		return var;
+	} else  {
+		AstAttribute* attr = expr->getAttribute("UniqueNameAttribute"); ROSE_ASSERT (attr != NULL);
+		UniqueNameAttribute* uAttr = dynamic_cast<UniqueNameAttribute* > (attr); ROSE_ASSERT (uAttr != NULL);
+		varID var(uAttr->get_name());
+		return var;
+	}
+}
+
+// Returns true if the given expression can be interepreted as a concrete variable
+bool isVarExpr(SgExpression* expr)
+{ return varID::isValidVarExp(expr); }
 
 varID zeroVar("ZERO");
 varID oneVar("ONE");

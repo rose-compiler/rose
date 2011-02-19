@@ -49,13 +49,23 @@ int main( int argc, char * argv[] )
 	UnstructuredPassInterAnalysis upia_sda(sda);
 	upia_sda.runAnalysis();
 	
+	analysisDebugLevel = 0;
+	printf("*************************************************************\n");
+	printf("*****************   Live/Dead Variable Analysis   *****************\n");
+	printf("*************************************************************\n");
+	LiveDeadVarsAnalysis ldva(project);
+	CallGraphBuilder cgb(project);
+	cgb.buildCallGraph();
+	//SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
+	//ContextInsensitiveInterProceduralDataflow ciipd_da(&da, graph);
+	UnstructuredPassInterDataflow ciipd_ldva(&ldva);
+	ciipd_ldva.runAnalysis();
+	
 	//analysisDebugLevel = 2;
 	printf("*************************************************************\n");
 	printf("*****************   Divisibility Analysis   *****************\n");
 	printf("*************************************************************\n");
-	DivAnalysis da;
-	CallGraphBuilder cgb(project);
-	cgb.buildCallGraph();
+	DivAnalysis da(&ldva);
 	//SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
 	//ContextInsensitiveInterProceduralDataflow ciipd_da(&da, graph);
 	UnstructuredPassInterDataflow ciipd_da(&da);

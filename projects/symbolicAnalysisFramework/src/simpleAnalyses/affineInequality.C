@@ -302,7 +302,7 @@ string affineInequalityFact::str(string indent)
 {
 	stringstream outs;
 	
-	outs << indent << "affineInequalityFact:";
+	outs << "affineInequalityFact:";
 	if(ineqs.size()>0); outs << "\n";
 		
 	for(set<varAffineInequality>::const_iterator it = ineqs.begin(); it!=ineqs.end(); )
@@ -319,7 +319,7 @@ string affineInequalityFact::str(string indent) const
 {
 	stringstream outs;
 	
-	outs << indent << "affineInequalityFact:";
+	outs << "affineInequalityFact:";
 	if(ineqs.size()>0); outs << "\n";
 		
 	for(set<varAffineInequality>::const_iterator it = ineqs.begin(); it!=ineqs.end(); )
@@ -478,7 +478,7 @@ void printAffineInequalities(affineInequalitiesPlacer* aip, string indent)
 	vector<int> factNames;
 	vector<int> latticeNames;
 	factNames.push_back(0);
-	printAnalysisStates pas(aip, factNames, latticeNames, indent);
+	printAnalysisStates pas(aip, factNames, latticeNames, printAnalysisStates::below, indent);
 	UnstructuredPassInterAnalysis upia_pas(pas);
 	upia_pas.runAnalysis();
 }
@@ -851,7 +851,7 @@ affineInequality::affineInequality(const affineInequality& xz, const affineInequ
 	}
 }
 
-bool affineInequality::operator=(const affineInequality& that)
+void affineInequality::operator=(const affineInequality& that)
 {
 	//this->y=that.y;
 	this->a=that.a;
@@ -888,7 +888,7 @@ bool affineInequality::operator<(const affineInequality& that) const
 	       (/*y==that.y && */a==that.a && b==that.b && c==that.c && level<that.level);
 }
 
-// semantic affineInequality ordering (partial order)
+// Semantic affineInequality ordering (partial order)
 // returns true if this affineInequality represents more information (less information is 
 // top, more information is bottom) than that for all values of x and y and false otherwise
 //bool affineInequality::operator<<(const affineInequality& that) const
@@ -936,7 +936,7 @@ bool affineInequality::semLessThan(const affineInequality& that, bool xEqZero, b
 		return true;		
 	}*/
 	
-	// if neither x nor y are constants
+	// If neither x nor y are constants
 	if(!xZero && !yZero/* && xSign!=eqZero && ySign!=eqZero*/)
 	{
 		//      this                that
@@ -988,7 +988,436 @@ bool affineInequality::semLessThan(const affineInequality& that, bool xEqZero, b
 			return c<that.c;
 	}
 	
-	// if the slopes are not the same, these two affineInequalities are not strictly ordered for all values of x and y
+	// If the slopes are not the same, these two affineInequalities are not strictly ordered for all values of x and y
+	return false;
+}
+
+bool affineInequality::semLessThan(const affineInequality& that, 
+                                   const affineInequality* xZero, const affineInequality* zeroX,
+                                   const affineInequality* yZero, const affineInequality* zeroY, string indent) const
+{
+	/*ROSE_ASSERT(xIsZeroVar || (xZero && zeroX));
+	ROSE_ASSERT(yIsZeroVar || (yZero && zeroY));*/
+	
+//printf("affineInequality::operator<< this=%p that=%p\n", this, &that);
+
+	// Case 1: different levels
+	if(level < that.level)
+		return true;
+/*		// top corresponds to an unrepresentable constraint, so we can't make judgements about how that relates to this
+		if(that.level == top) return false;
+		else return true;*/
+	
+	if(level > that.level) 
+		return false;
+		
+	// Case 2: level == that.level but the level is not constrKnown 
+	// (i.e. a, b and c are not used, meaning that this == that)
+	if(level == bottom || level == top/* || level == falseConstr*/) return false;
+	
+	// Case 3: level == that.level == constrKnown, so we worry about a, b and c
+	
+	// If the two constraints are equal, then one is not strictly less than the other
+	if(*this == that) return false;
+	
+	bool xConst = (xZero && xZero->getA()==1 && xZero->getB()==1 && 
+	               zeroX && zeroX->getA()==1 && zeroX->getB()==1 && xZero->getC() == (0-zeroX->getC()));
+	bool yConst = (yZero && yZero->getA()==1 && yZero->getB()==1 && 
+	               zeroY && zeroY->getA()==1 && zeroY->getB()==1 && yZero->getC() == (0-zeroY->getC()));
+
+	// If x is a constant, the constraint with the tighter lower bound on y is semantically smaller
+	if(xConst)
+	{
+		cout << indent << "x is constant, This bound: "<<((xZero->getC()*a-c)/b)<<" <= y, That bound: "<<((xZero->getC()*that.a-that.c)/that.b)<<" <= y\n";
+		// xConst*a <= y*b + c AND xConst*a' <= y*b' + c'
+		// xConst*a-c <= y*b       xConst*a'-c' <= y*b'
+		// (xConst*a-c) / b <= y*b (xConst*a'-c') / b' <= y
+		// The constraint with the larger lhs is tighter since it admits fewer values of y
+		return (xZero->getC()*a-c)*that.b > (xZero->getC()*that.a-that.c)*b;
+		/* // if xConst*a-c == xConst*a'-c', then the constraint with the larger b has more info, since this inequality 
+		// admits fewer valid values of x
+		if(xZero->getC()*a-c == xZero->getC()*that.a-that.c)
+			return b<that.b;
+		// -c <= y*b AND -c' <= y*b'
+		// The smaller constant (larger -c/-c') represents the tighter constraint
+		else if(b == that.b)
+			return c<that.c;
+		return false;*/
+	}
+	// Else, if y is a constant
+	else if(yZero && yZero->getA()==1 && yZero->getB()==1 && 
+	        zeroY && zeroY->getA()==1 && zeroY->getB()==1 && yZero->getC() == (0-zeroY->getC()))
+	{
+		//printf("yZero, c == that.c=%d, a<that.a=%d, a==1 && that.a==1=%d, c<that.c=%d\n", c == that.c, a<that.a, a==1 && that.a==1, c<that.c);
+		cout << indent << "x is constant, This bound: x <= "<<((yZero->getC()*b+c)/a)<<", That bound: x <= "<<((yZero->getC()*that.b+that.c)/that.a)<<"\n";
+		// x*a <= yConst*b + c    AND x*a' <= yConst*b + c'
+		// x <= (yConst*b + c)/a      x <= (yConst*b + c')/a'
+		// The constraint with the smaller rhs is tighter since it admits fewer values of x
+		return (yZero->getC()*b+c)*that.a < (yZero->getC()*that.b+that.c)*a;
+		/* // if c == c', then the constraint with the smaller a has more info, since the inequality 
+		// admits fewer valid values of x
+		if(c == that.c)
+			return a<that.a;
+		// x <= c AND x <= c'
+		// The smaller constant represents the tighter constraint
+		else if(a == that.a)
+			return c<that.c;
+		return false;*/
+	}
+	else
+	{
+		//      this                       that
+		// x*a <= y*b + c          AND x*a' <= y*b' + c'
+		// x*a*a' <= y*b*a' + c*a' AND x*a'*a <= y*b'*a + c'*a	
+		
+		// If the two lines have the same slope (equivalent to b/a == that.b/that.a)
+		if(b*that.a == a*that.b)
+		{
+	//printf("affineInequality::operator<<  c=%d, that.c=%d\n", c, that.c);
+			cout << indent << "neither constant, slopes equal, c*that.a="<<c*that.a<<" that.c*a="<<that.c*a<<"\n";
+			// this has more information than that if its' y-intercept is lower, since it leaves x 
+			// with fewer valid points relative to y
+			return c*that.a < that.c*a;
+		}
+		else {
+			cout << indent << "sem< slopes!= this="<<str("")<<" that="<<that.str("")<<"\n";
+			// Identify the y-coordinate of the intersection of This line and THAT line
+			//      this                                        that
+			// x*a = y*b + c          AND x*a' = y*b' + c'
+			// x = y*(b/a) + c/a      AND x = y*(b'/a') + c'/a'
+			// yIntersect*(b/a) + c/a = yIntersect*(b'/a') + c'/a'
+			// yIntersect*(b/a - b'/a') = c'/a' - c/a
+			// yIntersect = (c'/a' - c/a)/(b/a - b'/a')
+			// yIntersect = (c'*a - c*a')/(b*a' - b'*a)
+			// y*zyA <= ZERO + zyA     AND ZERO <= y*zyB' + zyC'
+			double yIntersect = (that.c*a - c*that.a)/(b*that.a - that.b*a);
+			cout << indent << "    yIntersect="<<yIntersect<<" this slope="<<(b/a)<<" that slope="<<(that.b/that.a)<<"\n";
+			if(zeroY && yZero) cout << indent << "    zeroY="<<zeroY->str("")<<" yZero="<<yZero->str("")<<"\n";
+			
+			// If the slope of This line is higher than the slope of That line (equivalent to b/a > that.b/that.a)
+			if(b*that.a > a*that.b) {
+				// If the only valid points are above the y-intersection, This is tighter than That
+				if(zeroY && zeroY->level==constrKnown && zeroY->c>(0-yIntersect*zeroY->b)) {
+					cout << indent << "    " << "only valid points are above the y-intersection, This is tighter than That\n";
+					return true;
+				// If the only valid points are below the y-intersection, That is tighter than This
+				} else if(yZero && yZero->level==constrKnown && yZero->c<yIntersect*yZero->a) {
+					cout << indent << "    " << "only valid points are below the y-intersection, That is tighter than This\n";
+					return false;
+				}
+			}
+			// Else, If the slope of This line is lower than the slope of That line (equivalent to b/a > that.b/that.a)
+			else if(b*that.a > a*that.b) {
+				// If the only valid points are above the y-intersection, That is tighter than This
+				if(zeroY && zeroY->level==constrKnown && zeroY->c>(0-yIntersect*zeroY->b)) {
+					cout << indent << "    " << "only valid points are above the y-intersection, That is tighter than This\n";
+					return false;
+				// If the only valid points are below the y-intersection, This is tighter than That
+				} else if(yZero && yZero->level==constrKnown && yZero->c<yIntersect*yZero->a) {
+					cout << indent << "    " << "only valid points are below the y-intersection, This is tighter than That\n";
+					return true;
+				}
+			}
+			
+			// If we don't have enough information about y to conclude anything about its relationship with the 
+			// y-coordinate of the intersection of the lines, try the same with the x-coordinate
+			
+			// Identify the x-coordinate of the intersection of This line and THAT line
+			//      this                                        that
+			// x*a = y*b + c          AND x*a' = y*b' + c'
+			// x*a - c = y*b          AND x*a'-c' = y*b'
+			// x*(a/b) - c/b = y      AND x*(a'/b')-c'/b' = y
+			// xIntersect*(a/b) - c/b = xIntersect*(a'/b')-c'/b'
+			// xIntersect*(a/b - a'/b') = c/b - c'/b'
+			// xIntersect*(a/b - a'/b') = (c/b - c'/b')/(a/b - a'/b')
+			// xIntersect = (c/b - c'/b')/(a/b - a'/b')
+			// xIntersect = (c*b' - c'*b)/(a*b'- a'*b)
+			// x*zxA <= ZERO + zxC     AND ZERO <= x*zxB' + zxC'
+			double xIntersect = (that.c*b - c*that.b)/(b*that.a - that.b*a);
+			cout << indent << "    xIntersect="<<xIntersect<<" this slope="<<(b/a)<<" that slope="<<(that.b/that.a)<<"\n";
+			if(zeroX && xZero) cout << indent << "    zeroX="<<zeroX->str("")<<" xZero="<<xZero->str("")<<"\n";
+			
+			// If the slope of This line is higher than the slope of That line (equivalent to b/a > that.b/that.a)
+			if(b*that.a > a*that.b) {
+				// If the only valid points are above the x-intersection, This is tighter than That
+				if(zeroX && zeroX->level==constrKnown && zeroX->c>(0-xIntersect*zeroX->b)) {
+					cout << indent << "    " << "only valid points are above the x-intersection, This is tighter than That\n";
+					return true;
+				// If the only valid points are below left the c-intersection, That is tighter than This
+				} else if(xZero && xZero->level==constrKnown && xZero->c<xIntersect*xZero->a) {
+					cout << indent << "    " << "only valid points are below left the c-intersection, That is tighter than This\n";
+					return false;
+				}
+			}
+			// Else, If the slope of This line is lower than the slope of That line (equivalent to b/a > that.b/that.a)
+			else if(b*that.a > a*that.b) {
+				// If the only valid points are above the x-intersection, That is tighter than This
+				if(zeroX && zeroX->level==constrKnown && zeroX->c>(0-yIntersect*zeroX->b)) {
+					cout << indent << "    " << "only valid points are above the x-intersection, That is tighter than This\n";
+					return false;
+				// If the only valid points are below the x-intersection, This is tighter than That
+				} else if(xZero && xZero->level==constrKnown && xZero->c<yIntersect*xZero->a) {
+					cout << indent << "    " << "only valid points are below the x-intersection, This is tighter than That\n";
+					return true;
+				}
+			}
+		}
+		
+		// If the slopes are not the same and we don't have enough information about how x and y are 
+		// related to the intersection of the lines
+		return false;
+	}
+}
+
+bool affineInequality::semLessThanEq(const affineInequality& that, 
+                                   bool xIsZeroVar, 
+                                   const affineInequality* xZero, const affineInequality* zeroX,
+                                   bool yIsZeroVar,
+                                   const affineInequality* yZero, const affineInequality* zeroY, string indent) const
+{
+	/*ROSE_ASSERT(xIsZeroVar || (xZero && zeroX));
+	ROSE_ASSERT(yIsZeroVar || (yZero && zeroY));*/
+	
+//printf("affineInequality::operator<< this=%p that=%p\n", this, &that);
+
+	// Case 1: different levels
+	if(level < that.level)
+		return true;
+/*		// top corresponds to an unrepresentable constraint, so we can't make judgements about how that relates to this
+		if(that.level == top) return false;
+		else return true;*/
+	
+	if(level > that.level) 
+		return false;
+		
+	// Case 2: level == that.level but the level is not constrKnown 
+	// (i.e. a, b and c are not used, meaning that this == that)
+	if(level == bottom || level == top/* || level == falseConstr*/) return true;
+	
+	// Case 3: level == that.level == constrKnown, so we worry about a, b and c
+	
+	// If the two constraints are equal, then one is not strictly less than the other
+	if(*this == that) return true;
+	
+		// If neither x nor y are constants
+	if(!xIsZeroVar && !yIsZeroVar)
+	{
+		//      this                       that
+		// x*a <= y*b + c          AND x*a' <= y*b' + c'
+		// x*a*a' <= y*b*a' + c*a' AND x*a'*a <= y*b'*a + c'*a	
+		
+		// If the two lines have the same slope (equivalent to b/a == that.b/that.a)
+		if(b*that.a == a*that.b)
+		{
+	//printf("affineInequality::operator<<  c=%d, that.c=%d\n", c, that.c);
+			// this has more information than that if its' y-intercept is lower, since it leaves x 
+			// with fewer valid points relative to y
+			return c*that.a <= that.c*a;
+		}
+		else {
+			cout << indent << "sem< slopes!= this="<<str("")<<" that="<<that.str("")<<"\n";
+			// Identify the y-coordinate of the intersection of This line and THAT line
+			//      this                                        that
+			// x*a = y*b + c          AND x*a' = y*b' + c'
+			// x = y*(b/a) + c/a      AND x = y*(b'/a') + c'/a'
+			// yIntersect*(b/a) + c/a = yIntersect*(b'/a') + c'/a'
+			// yIntersect*(b/a - b'/a') = c'/a' - c/a
+			// yIntersect = (c'/a' - c/a)/(b/a - b'/a')
+			// yIntersect = (c'*a - c*a')/(b*a' - b'*a)
+			// y*zyA <= ZERO + zyA     AND ZERO <= y*zyB' + zyC'
+			double yIntersect = (that.c*a - c*that.a)/(b*that.a - that.b*a);
+			cout << indent << "    yIntersect="<<yIntersect<<" this slope="<<(b/a)<<" that slope="<<(that.b/that.a)<<"\n";
+			if(zeroY) cout << indent << "    zeroY="<<zeroY->str("")<<" yZero="<<yZero->str("")<<"\n";
+			
+			// If the slope of This line is higher than the slope of That line (equivalent to b/a > that.b/that.a)
+			if(b*that.a > a*that.b) {
+				// If the only valid points are above the y-intersection, This is tighter than That
+				if(zeroY && zeroY->level==constrKnown && zeroY->c>=(0-yIntersect*zeroY->b)) {
+					cout << indent << "    " << "only valid points are above the y-intersection, This is tighter than That\n";
+					return true;
+				// If the only valid points are below the y-intersection, That is tighter than This
+				} else if(yZero && yZero->level==constrKnown && yZero->c<=yIntersect*yZero->a) {
+					cout << indent << "    " << "only valid points are below the y-intersection, That is tighter than This\n";
+					return false;
+				}
+			}
+			// Else, If the slope of This line is lower than the slope of That line (equivalent to b/a > that.b/that.a)
+			else if(b*that.a > a*that.b) {
+				// If the only valid points are above the y-intersection, That is tighter than This
+				if(zeroY && zeroY->level==constrKnown && zeroY->c>=(0-yIntersect*zeroY->b)) {
+					cout << indent << "    " << "only valid points are above the y-intersection, That is tighter than This\n";
+					return false;
+				// If the only valid points are below the y-intersection, This is tighter than That
+				} else if(yZero && yZero->level==constrKnown && yZero->c<=yIntersect*yZero->a) {
+					cout << indent << "    " << "only valid points are below the y-intersection, This is tighter than That\n";
+					return true;
+				}
+			}
+			
+			// If we don't have enough information about y to conclude anything about its relationship with the 
+			// y-coordinate of the intersection of the lines, try the same with the x-coordinate
+			
+			// Identify the x-coordinate of the intersection of This line and THAT line
+			//      this                                        that
+			// x*a = y*b + c          AND x*a' = y*b' + c'
+			// x*a - c = y*b          AND x*a'-c' = y*b'
+			// x*(a/b) - c/b = y      AND x*(a'/b')-c'/b' = y
+			// xIntersect*(a/b) - c/b = xIntersect*(a'/b')-c'/b'
+			// xIntersect*(a/b - a'/b') = c/b - c'/b'
+			// xIntersect*(a/b - a'/b') = (c/b - c'/b')/(a/b - a'/b')
+			// xIntersect = (c/b - c'/b')/(a/b - a'/b')
+			// xIntersect = (c*b' - c'*b)/(a*b'- a'*b)
+			// x*zxA <= ZERO + zxC     AND ZERO <= x*zxB' + zxC'
+			double xIntersect = (that.c*b - c*that.b)/(b*that.a - that.b*a);
+			cout << indent << "    xIntersect="<<xIntersect<<" this slope="<<(b/a)<<" that slope="<<(that.b/that.a)<<"\n";
+			if(zeroX) cout << indent << "    zeroX="<<zeroX->str("")<<" xZero="<<xZero->str("")<<"\n";
+			
+			// If the slope of This line is higher than the slope of That line (equivalent to b/a > that.b/that.a)
+			if(b*that.a > a*that.b) {
+				// If the only valid points are above the x-intersection, This is tighter than That
+				if(zeroX && zeroX->level==constrKnown && zeroX->c>=(0-xIntersect*zeroX->b)) {
+					cout << indent << "    " << "only valid points are above the x-intersection, This is tighter than That\n";
+					return true;
+				// If the only valid points are below left the c-intersection, That is tighter than This
+				} else if(xZero && xZero->level==constrKnown && xZero->c<=xIntersect*xZero->a) {
+					cout << indent << "    " << "only valid points are below left the c-intersection, That is tighter than This\n";
+					return false;
+				}
+			}
+			// Else, If the slope of This line is lower than the slope of That line (equivalent to b/a > that.b/that.a)
+			else if(b*that.a > a*that.b) {
+				// If the only valid points are above the x-intersection, That is tighter than This
+				if(zeroX && zeroX->level==constrKnown && zeroX->c>=(0-yIntersect*zeroX->b)) {
+					cout << indent << "    " << "only valid points are above the x-intersection, That is tighter than This\n";
+					return false;
+				// If the only valid points are below the x-intersection, This is tighter than That
+				} else if(xZero && xZero->level==constrKnown && xZero->c<=yIntersect*xZero->a) {
+					cout << indent << "    " << "only valid points are below the x-intersection, This is tighter than That\n";
+					return true;
+				}
+			}
+		}
+		
+		// If the slopes are not the same and we don't have enough information about how x and y are 
+		// related to the intersection of the lines
+		return false;
+	}
+	else if(xIsZeroVar)
+	{
+		// 0 <= y*b + c AND 0 <= y*b' + c'
+		// -c <= y*b        -c' <= y*b'
+		// if c == c', then the constraint with the smaller b has more info, since this inequality 
+		// admits fewer valid values of x
+		if(c == that.c)
+			return b<=that.b;
+		// -c <= y*b AND -c' <= y*b'
+		// The smaller constant (larger -c/-c') represents the tighter constraint
+		else if(b == that.b)
+			return c<=that.c;
+		return false;
+	}
+	else if(yIsZeroVar)
+	{
+		//printf("yZero, c == that.c=%d, a<that.a=%d, a==1 && that.a==1=%d, c<that.c=%d\n", c == that.c, a<that.a, a==1 && that.a==1, c<that.c);
+		// x*a <= c AND x*a' <= c'
+		// if c == c', then the constraint with the smaller a has more info, since the inequality 
+		// admits fewer valid values of x
+		if(c == that.c)
+			return a<=that.a;
+		// x <= c AND x <= c'
+		// The smaller constant represents the tighter constraint
+		else if(a == that.a)
+			return c<=that.c;
+		return false;
+	}
+	// Both x and y are zeroVar
+	else
+		return false;
+}
+
+// Semantic affineInequality ordering (partial order), focused on negated inequalities
+// Returns true if the negation of this affineInequality represents more information (less information is 
+// top, more information is bottom) than the nagation of that for all values of x and y and false otherwise
+//bool affineInequality::semLessThanNeg(const affineInequality& that) const
+bool affineInequality::semLessThanNeg(const affineInequality& that, bool xEqZero, bool yEqZero) const
+{
+	ROSE_ASSERT(xZero==that.xZero && yZero==that.yZero);
+	//printf("affineInequality::semLessThanNeg this=%p that=%p\n", this, &that);
+
+	// An inequality's level doesn't change due to negation since
+	//         !Bottom = Bottom : no constraint in both cases
+	//         !Top = Top : unrepresentable constraints in both cases
+
+	// Case 1: different levels. 
+	if(level < that.level)
+		return true;
+	if(level > that.level) 
+		return false;
+		
+	// Case 2: level == that.level but the level is not constrKnown 
+	// 	(i.e. a, b and c are not used, meaning that this == that)
+	// All bottom inequalities are equal since they correspond to no constraints
+	// All top inequalities are incomparable since we their constraints are too complex to be represented and thus unknown
+	if(level == bottom || level == top/* || level == falseConstr*/) return false;
+	
+	// Case 3: level == that.level == constrKnown, so we worry about a, b and c
+	
+	// if the two constraints are equal, then one is not strictly less than the other
+	if(*this == that) return false;
+	
+	// If neither x nor y are constants
+	if(!xZero && !yZero/* && xSign!=eqZero && ySign!=eqZero*/)
+	{
+		//      this                that
+		// x*a <= y*b + c AND x*a' <= y*b' + c'
+		// x*a*a' <= y*b*a' + c*a' AND x*a'*a <= y*b'*a + c'*a
+		
+		// if the two lines have the same slope
+		if(b*that.a == a*that.b)
+		{
+	//printf("affineInequality::operator<<  c=%d, that.c=%d\n", c, that.c);
+			// Neg(This) has more information than neg(that) if its' y-intercept is higher, since it leaves x 
+			// with fewer valid points relative to y
+			return c*that.a > that.c*a;
+		}
+
+		/*// if x*a*a' >= 0
+		if((xSign==posZero && a*that.a>0) || 
+			(xSign==negZero && a*that.a<0))
+		{
+			// If both lines have the same y-intercept, the line with the higher slope is more constrained, 
+			// since it leaves x with fewer valid points relative to y in the negated inequality
+			return b*that.a > that.b*a;
+		}*/			
+	}
+	else if(xZero/* || xSign==eqZero*/)
+	{
+		// 0 <= y*b + c AND 0 <= y*b' + c'
+		// -c <= y*b        -c' <= y*b'
+		// If c == c', then the constraint with the larger b has more info, since this negated inequality 
+		// admits fewer valid values of x
+		if(c == that.c)
+			return b>that.b;
+		// -c <= y*b AND -c' <= y*b'
+		// The larger constant (smaller -c/-c') represents the tighter constraint in the negated inequality
+		else if(b == that.b)
+			return c>that.c;
+	}
+	else if(yZero/* || ySign==eqZero*/)
+	{
+		//printf("yZero, c == that.c=%d, a<that.a=%d, a==1 && that.a==1=%d, c<that.c=%d\n", c == that.c, a<that.a, a==1 && that.a==1, c<that.c);
+		// x*a <= c AND x*a' <= c'
+		// If c == c', then the constraint with the larger a has more info, since the negated inequality 
+		// admits fewer valid values of x
+		if(c == that.c)
+			return a > that.a;
+		// x <= c AND x <= c'
+		// The larger constant represents the tighter constraint in the negated inequality
+		else if(a == that.a)
+			return c > that.c;
+	}
+	
+	// If the slopes are not the same, these two affineInequalities are not strictly ordered for all values of x and y
 	return false;
 }
 	
@@ -1249,6 +1678,7 @@ bool affineInequality::normalize()
 	}
 	//printf("(%d, %d, %d)\n", a, b, c);
 	*/
+	return modified;
 }
 
 // INTERSECT this with that, saving the result in this
@@ -1352,10 +1782,10 @@ bool affineInequality::unionUpd(const affineInequality& that)
 	// falseConstr -> falseConstr or higher
 	// bottom -> bottom or higher
 	
-	// if either operand is top, the result is top
+	// If either operand is top, the result is top
 	if(level == top || that.level == top)
 		modified = setToTop() || modified;
-	// if one is = bottom or == falseConstr, the result is the other one
+	// If one is = bottom or == falseConstr, the result is the other one
 	else if((level == bottom      && that.level != bottom)/* ||
 		     (level == falseConstr && that.level != falseConstr)*/)
 	{
@@ -1370,16 +1800,17 @@ bool affineInequality::unionUpd(const affineInequality& that)
 	}
 	else if(that.level == bottom/* || that.level == falseConstr*/)
 	{ }
-	// if both levels are constrKnown
+	// If both levels are constrKnown
 	else
 	{	
 		//      this                that
 		// x*a <= y*b + c OR x*a' <= y*b' + c'
 		// x*a*a' <= y*b*a' + c*a' OR x*a'*a <= y*b'*a + c'*a
-		
-		// the only way to upper-bound both lines is if they have the same slope
+		//cout << "                Both inequalities are constrKnown. b("<<b<<")*that.a("<<that.a<<")="<<(b*that.a)<<" a("<<a<<")*that.b("<<that.b<<")="<<(a*that.b)<<"\n";
+		// The only way to upper-bound both lines is if they have the same slope
 		if(b*that.a == a*that.b)
 		{
+			//cout << "                Normalizing\n";
 			modified = modified || a!=a*that.a;
 			a = a*that.a;
 			modified = modified || b!=b*that.a;
@@ -1388,10 +1819,11 @@ bool affineInequality::unionUpd(const affineInequality& that)
 			c = max(c*that.a, a*that.c);
 			modified = normalize() || modified;
 		}
-		// otherwise, the upper-bound cannot be represented as a line
+		// Otherwise, the upper-bound cannot be represented as a line
 		else
 		{
-			// set the constraint to x<=y+infinity, since this is a conservative
+			//cout << "                Setting to Top\n";
+			// Set the constraint to x<=y+infinity, since this is a conservative
 			// approximation (doesn't contain more information that is defninitely true)
 			modified = setToTop() || modified;
 		}
@@ -1475,13 +1907,16 @@ string affineInequality::str(string indent)// const
 	
 	if(level==bottom)
 		//outs << "<constraint: ["<<y.str()<<"] bottom>";
-		outs << indent << "<aI: bottom>";
+		outs << "<aI: bottom>";
 	else if(level==constrKnown)
 		//outs << "<affineInequality: x*"<<a<<" <= "<<y.str<<"*"<<b<<" + "<<c<<">";
-		outs << indent << "<aI: x*"<<a<<" <= y*"<<b<<" + "<<c<<"|"<<signToString(xSign)<<"|"<<signToString(ySign)<<">";
+		if(xSign==unknownSgn && ySign==unknownSgn)
+			outs << "<aI: x*"<<a<<" <= y*"<<b<<" + "<<c<<">";
+		else
+			outs << "<aI: x*"<<a<<" <= y*"<<b<<" + "<<c<<">";//|"<<signToString(xSign)<<"|"<<signToString(ySign)<<">";
 	else if(level==top)
 		//outs << "<affineInequality: ["<<y.str()<<"] top>";
-		outs << indent << "<aI: top>";
+		outs << "<aI: top>";
 	
 	return outs.str();
 }
@@ -1492,13 +1927,13 @@ string affineInequality::str(string indent) const
 	
 	if(level==bottom)
 		//outs << "<constraint: ["<<y.str()<<"] bottom>";
-		outs << indent << "<aI: bottom>";
+		outs << "<aI: bottom>";
 	else if(level==constrKnown)
 		//outs << "<affineInequality: x*"<<a<<" <= "<<y.str<<"*"<<b<<" + "<<c<<">";
-		outs << indent << "<aI: x*"<<a<<" <= y*"<<b<<" + "<<c<<"|"<<signToString(xSign)<<"|"<<signToString(ySign)<<">";
+		outs << "<aI: x*"<<a<<" <= y*"<<b<<" + "<<c<<"";//|"<<signToString(xSign)<<"|"<<signToString(ySign)<<">";
 	else if(level==top)
 		//outs << "<affineInequality: ["<<y.str()<<"] top>";
-		outs << indent << "<aI: top>";
+		outs << "<aI: top>";
 	
 	return outs.str();
 }
@@ -1508,13 +1943,30 @@ string affineInequality::str(varID x, varID y, string indent) const
 	ostringstream outs;
 	
 	if(level==bottom)
-		outs << indent << "<aI: ["<<x.str()<<"->"<<y.str()<<"] bottom>";
+		outs << "<aI: ["<<x.str()<<"->"<<y.str()<<"] bottom>";
 	/*else if(level==falseConstr)
-		outs << indent << "<aI: ["<<x.str()<<"->"<<y.str()<<"] falseConstr>";*/
+		outs << "<aI: ["<<x.str()<<"->"<<y.str()<<"] falseConstr>";*/
 	else if(level==constrKnown)
-		outs << indent << "<aI: "<<x.str()<<"*"<<a<<" <= "<<y.str()<<"*"<<b<<" + "<<c<<"|"<<signToString(xSign)<<"|"<<signToString(ySign)<<">";
+		outs << "<aI: "<<x.str()<<"*"<<a<<" <= "<<y.str()<<"*"<<b<<" + "<<c<<"";//|"<<signToString(xSign)<<"|"<<signToString(ySign)<<">";
 	else if(level==top)
-		outs << indent << "<aI: ["<<x.str()<<"->"<<y.str()<<"] top>";
+		outs << "<aI: ["<<x.str()<<"->"<<y.str()<<"] top>";
+	
+	return outs.str();
+}
+
+// Prints out the negation of the constraint ax <= by+c
+string affineInequality::strNeg(varID x, varID y, string indent) const
+{
+	ostringstream outs;
+	
+	if(level==bottom)
+		outs << "<aI: ["<<x.str()<<"->"<<y.str()<<"] bottom>";
+	/*else if(level==falseConstr)
+		outs << "<aI: ["<<x.str()<<"->"<<y.str()<<"] falseConstr>";*/
+	else if(level==constrKnown)
+		outs << "<aI: "<<x.str()<<"*"<<a<<" > "<<y.str()<<"*"<<b<<" + "<<c<<"";//|"<<signToString(xSign)<<"|"<<signToString(ySign)<<">";
+	else if(level==top)
+		outs << "<aI: ["<<x.str()<<"->"<<y.str()<<"] top>";
 	
 	return outs.str();
 }

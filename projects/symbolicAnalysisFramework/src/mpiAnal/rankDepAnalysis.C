@@ -348,7 +348,7 @@ void runMPIRankDepAnalysis()
 		vector<int> latticeNames;
 		latticeNames.push_back(0);
 		IntraProceduralAnalysis* rankDepAnal2 = (IntraProceduralAnalysis*)rankDepAnal;
-		printAnalysisStates pas(rankDepAnal2, factNames, latticeNames, ":");
+		printAnalysisStates pas(rankDepAnal2, factNames, latticeNames, printAnalysisStates::below, ":");
 		UnstructuredPassInterAnalysis upia_pas(pas);
 		upia_pas.runAnalysis();
 	}

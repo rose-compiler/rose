@@ -1,217 +1,105 @@
 // #################################################
 // ############## CONSTRAINT GRAPHS ################
 // #################################################
-//#define DEBUG_FLAG_TC
+#define DEBUG_FLAG_TC
 #include "ConstrGraph.h"
 #include <sys/time.h>
+#include <algorithm>
 
 using namespace cfgUtils;
 
 static int debugLevel=0;
-static int profileLevel=1;
+static int profileLevel=0;
 
 /**** Constructors & Destructors ****/
-ConstrGraph::ConstrGraph(bool initialized) : 
-	arrays(*(new varIDSet())), scalars(*(new varIDSet())), func()
+/*ConstrGraph::ConstrGraph(bool initialized, string indent="")
 {
+	// Start this constraint graph as Uninitialized or Bottom, as requested
+	if(initialized) level = bottom;
+	else            level = uninitialized;
+	
 	constrChanged=false;
-	
-	// by default a new constraint graph is set to uninitialized or initialized but not =bottom
-	bottom = false;
-		
-	this->initialized = initialized;
-	
 	inTransaction=false;
+}*/
+
+ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state, bool initialized, string indent) :
+	func(func), n(n), state(state)
+{
+	// Start this constraint graph as Uninitialized or Bottom, as requested
+	if(initialized) level = bottom;
+	else            level = uninitialized;
 	
-	/*this->divL = NULL;
-	this->sgnL = NULL;*/
+	constrChanged=false;
+	inTransaction=false;
 }
 
-ConstrGraph::ConstrGraph(Function func, FiniteVariablesProductLattice* divL, FiniteVariablesProductLattice* sgnL, bool initialized) : 
-	      arrays(getVisibleArrays(func)), scalars(getVisibleScalars(func)), func(func)
+ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state, 
+	      LiveDeadVarsAnalysis* ldva, FiniteVarsExprsProductLattice* divL, FiniteVarsExprsProductLattice* sgnL, 
+	      bool initialized, string indent) : func(func), n(n), state(state)
 {
-//		std::cout << "ConstrGraph arrays.size()="<<arrays.size()<<"\n";
-	constrChanged=false;
-	
-	// by default a new constraint graph is set to uninitialized or initialized but not =bottom
-	bottom = false;
-	
-	for(varIDSet::iterator curArray = this->arrays.begin(); 
-		 curArray != this->arrays.end(); curArray++)
-		emptyRange[*curArray] = false;
-
-	// Initially, all variables are "modified"
-	for(varIDSet::iterator curArray = this->arrays.begin(); 
-		 curArray != this->arrays.end(); curArray++)
-	{
-		newConstrVars.insert(*curArray);
-		modifiedVars.insert(*curArray);
-	}
-	for(varIDSet::iterator curScalar = this->scalars.begin(); 
-		 curScalar != this->scalars.end(); curScalar++)
-	{
-		newConstrVars.insert(*curScalar);
-		modifiedVars.insert(*curScalar);
-	}
-		
-	// add the default constraints: 0 = 1 - 1
-	/*setVal(zeroVar, oneVar, 1, 1, -1);
-	setVal(oneVar, zeroVar, 1, 1, 1);*/
-	
-	this->initialized = initialized;
-	
-	inTransaction=false;
-	
-	/*this->divL = divL;
-	this->sgnL = sgnL;*/
+	this->ldva = ldva;
+	// Initialize the map of divisibility and sign lattices, associating divL and sgnL with the 
+	// wildcard annotation that matches all variables	
 	pair<string, void*> noAnnot("", NULL);
 	this->divL[noAnnot] = divL;
 	this->sgnL[noAnnot] = sgnL;
+
+	initCG(func, n, state, false, indent);
 }
 
-ConstrGraph::ConstrGraph(Function func, const map<pair<string, void*>, FiniteVariablesProductLattice*>& divL, 
-	                      const map<pair<string, void*>, FiniteVariablesProductLattice*>& sgnL, bool initialized) : 
-	      arrays(getVisibleArrays(func)), scalars(getVisibleScalars(func)), func(func)
+ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state, 
+	                      LiveDeadVarsAnalysis* ldva, 
+	                      const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
+	                      bool initialized, string indent) : func(func), n(n), state(state)
 {
-//		std::cout << "ConstrGraph arrays.size()="<<arrays.size()<<"\n";
-	constrChanged=false;
-	
-	// by default a new constraint graph is set to uninitialized or initialized but not =bottom
-	bottom = false;
-	
-	for(varIDSet::iterator curArray = this->arrays.begin(); 
-		 curArray != this->arrays.end(); curArray++)
-		emptyRange[*curArray] = false;
-
-	// Initially, all variables are "modified"
-	for(varIDSet::iterator curArray = this->arrays.begin(); 
-		 curArray != this->arrays.end(); curArray++)
-	{
-		newConstrVars.insert(*curArray);
-		modifiedVars.insert(*curArray);
-	}
-	for(varIDSet::iterator curScalar = this->scalars.begin(); 
-		 curScalar != this->scalars.end(); curScalar++)
-	{
-		newConstrVars.insert(*curScalar);
-		modifiedVars.insert(*curScalar);
-	}
-		
-	// add the default constraints: 0 = 1 - 1
-	/*setVal(zeroVar, oneVar, 1, 1, -1);
-	setVal(oneVar, zeroVar, 1, 1, 1);*/
-	
-	this->initialized = initialized;
-	
-	inTransaction=false;
-	
+	this->ldva = ldva;
+	// Initialize the map of divisibility and sign lattices
 	this->divL = divL;
 	this->sgnL = sgnL;	
+
+	initCG(func, n, state, false, indent);
 }
 
-ConstrGraph::ConstrGraph(const varIDSet& scalars, const varIDSet& arrays, bool initialized) : 
-	arrays(*(new varIDSet(arrays))), scalars(*(new varIDSet(scalars))), func()
+ConstrGraph::ConstrGraph(ConstrGraph &that, bool initialized, string indent) : func(that.func), n(that.n), state(that.state)
 {
-	constrChanged=false;
-	
-	// by default a new constraint graph is set to uninitialized or initialized but not =bottom
-	bottom = false;
-	
-	for(varIDSet::iterator curArray = this->arrays.begin(); 
-		 curArray != this->arrays.end(); curArray++)
-		emptyRange[*curArray] = false;
-
-	// Initially, all variables are "modified"
-	for(varIDSet::iterator curArray = this->arrays.begin(); 
-		 curArray != this->arrays.end(); curArray++)
-	{
-		newConstrVars.insert(*curArray);
-		modifiedVars.insert(*curArray);
-	}
-	for(varIDSet::iterator curScalar = this->scalars.begin(); 
-		 curScalar != this->scalars.end(); curScalar++)
-	{
-		newConstrVars.insert(*curScalar);
-		modifiedVars.insert(*curScalar);
-	}
-		
-	this->initialized = initialized;
-	
-	inTransaction=false;
-	
-	/*this->divL = NULL;
-	this->sgnL = NULL;*/
-}
-
-/*ConstrGraph::ConstrGraph(varIDSet& arrays, varIDSet& scalars, FiniteVariablesProductLattice* divL, bool initialized) : 
-	      arrays(arrays), scalars(scalars)
-{
-//		std::cout << "ConstrGraph arrays.size()="<<arrays.size()<<"\n";
-	constrChanged=false;
-	
-	// by default a new constraint graph is set to uninitialized or initialized but not =bottom
-	bottom = false;
-	
-	for(varIDSet::iterator curArray = this->arrays.begin(); 
-		 curArray != this->arrays.end(); curArray++)
-		emptyRange[*curArray] = false;
-		
-	// add the default constraints: 0 = 1 - 1
-	setVal(zeroVar, oneVar, 1, 1, -1);
-	setVal(oneVar, zeroVar, 1, 1, 1);
-	
-	this->initialized = initialized;
-	
-	inTransaction=false;
-	
-	this->divL = divL;
-}*/
-
-ConstrGraph::ConstrGraph(ConstrGraph &that, bool initialized) :
-         arrays(that.arrays), scalars(that.scalars), func(that.func)
-{
-	constrChanged=false;
-	copyFrom(that);
-	this->initialized = that.initialized;
-	inTransaction=false;
+	vars = that.vars;
+	divVars = that.divVars;
+	copyFrom(that, indent+"    ");
+	ldva = that.ldva;
 	divL = that.divL;
 	sgnL = that.sgnL;
 }
 
-ConstrGraph::ConstrGraph(const ConstrGraph* that, bool initialized) :
-         arrays(that->arrays), scalars(that->scalars), func(that->func)
+ConstrGraph::ConstrGraph(const ConstrGraph* that, bool initialized, string indent) : func(that->func), n(that->n), state(that->state)
 {
-	constrChanged=false;
-	copyFrom(*((ConstrGraph*)that));
-	this->initialized = that->initialized;
-	inTransaction=false;
-	
-	this->divL = that->divL;
-	this->sgnL = that->sgnL;
+	vars = that->vars;
+	divVars = that->divVars;
+	copyFrom(*((ConstrGraph*)that), indent+"    ");
+	ldva = that->ldva;
+	divL = that->divL;
+	sgnL = that->sgnL;
 }
 
 // Creates a constraint graph that contains the given set of inequalities, 
-//// which are assumed to correspond to just scalars
-ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs, Function func, 
-                         FiniteVariablesProductLattice* divL, FiniteVariablesProductLattice* sgnL) : 
-                         arrays(getVisibleArrays(func)), scalars(getVisibleScalars(func)), func(func)
+//// which are assumed to correspond to just vars
+ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs, 
+                         const Function& func, const DataflowNode& n, const NodeState& state,
+                         LiveDeadVarsAnalysis* ldva, 
+                         FiniteVarsExprsProductLattice* divL, FiniteVarsExprsProductLattice* sgnL, string indent) : 
+                         	func(func), n(n), state(state)
 {
-	constrChanged=false;
-	initialized=true;
-	/*this->divL = divL;
-	this->sgnL = sgnL;*/
+	this->ldva = ldva;
+	// Initialize the map of divisibility and sign lattices, associating divL and sgnL with the 
+	// wildcard annotation that matches all variables	
 	pair<string, void*> noAnnot("", NULL);
 	this->divL[noAnnot] = divL;
 	this->sgnL[noAnnot] = sgnL;
-	inTransaction=false;
-	bottom = false;
+
+	initCG(func, n, state, false, indent);
 	
 	for(set<varAffineInequality>::const_iterator it = ineqs.begin();
 	    it!=ineqs.end(); it++)
-	{
-		/*scalars.insert((*it).getX());
-		scalars.insert((*it).getY());*/
-		
+	{	
 		assertCond(*it);
 		
 		newConstrVars.insert(it->getX());
@@ -219,28 +107,31 @@ ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs, Function func,
 		newConstrVars.insert(it->getY());
 		modifiedVars.insert(it->getY());
 	}
+	// Record that we know the constraints represented by this graph and it 
+	// is currently a conjunction of constraints
+	level = constrKnown;
+	constrType = conj;
 
 	transitiveClosure();
 }
 
-ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs, Function func,
-	            const map<pair<string, void*>, FiniteVariablesProductLattice*>& divL, 
-	            const map<pair<string, void*>, FiniteVariablesProductLattice*>& sgnL) : 
-                         arrays(getVisibleArrays(func)), scalars(getVisibleScalars(func)), func(func)
+ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs, 
+                         const Function& func, const DataflowNode& n, const NodeState& state,
+                         LiveDeadVarsAnalysis* ldva,
+                         const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
+                         const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, string indent) : 
+                                  func(func), n(n), state(state)
 {
-	constrChanged=false;
-	initialized=true;
+	this->ldva = ldva;
+	// Initialize the map of divisibility and sign lattices
 	this->divL = divL;
 	this->sgnL = sgnL;
-	inTransaction=false;
-	bottom = false;
+
+	initCG(func, n, state, false, indent);
 	
 	for(set<varAffineInequality>::const_iterator it = ineqs.begin();
 	    it!=ineqs.end(); it++)
 	{
-		/*scalars.insert((*it).getX());
-		scalars.insert((*it).getY());*/
-		
 		assertCond(*it);
 		
 		newConstrVars.insert(it->getX());
@@ -248,118 +139,95 @@ ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs, Function func,
 		newConstrVars.insert(it->getY());
 		modifiedVars.insert(it->getY());
 	}
+	// Record that we know the constraints represented by this graph and it 
+	// is currently a conjunction of constraints
+	level = constrKnown;
+	constrType = conj;
 	
 	transitiveClosure();
+}
+
+// Initialization code that is common to multiple constructors
+void ConstrGraph::initCG(const Function& func, const DataflowNode& n, const NodeState& state, 
+                         bool initialized, string indent)
+{
+	// Start this constraint graph as Uninitialized or Bottom, as requested
+	if(initialized) level = bottom;
+	else            level = uninitialized;
+	constrType = unknown;
+	
+	// Initialize vars to hold all the variables that are live at DataflowNode n
+	getAllLiveVarsAt(ldva, n, state, vars, indent+"    ");
+	
+	// Add the zeroVar constant to the set of variables
+	vars.insert(zeroVar);
+	
+	// Initially, all variables are "modified"
+	constrChanged=true;
+	for(varIDSet::iterator var = this->vars.begin(); var != this->vars.end(); var++)
+	{
+		newConstrVars.insert(*var);
+		modifiedVars.insert(*var);
+	}
+	
+	// Look over all variable and if there exists divisibility information for a given variable, 
+	// add its divisibility variable
+	for(varIDSet::iterator var = this->vars.begin(); var != this->vars.end(); var++) {
+		FiniteVarsExprsProductLattice* divLattice = getDivLattice(*var, indent+"    ");
+		if(divLattice) {
+			DivLattice* varDivL = dynamic_cast<DivLattice*>(divLattice->getVarLattice(*var));
+			if(varDivL && (/*varDivL->getLevel() == DivLattice::valKnown || */varDivL->getLevel() == DivLattice::divKnown))
+				divVars.insert(getDivVar(*var));
+		}
+	}
+	
+	// Initially we're not inside of a transaction
+	inTransaction=false;	
 }
 
 ConstrGraph::~ConstrGraph ()
 {
-	arrays.clear();
-	emptyRange.clear();
-	eraseConstraints(true);
+	vars.clear();
+	divVars.clear();
+	eraseConstraints(true, "");
 	
 	if(debugLevel>=1) cout << "Deleting ConstrGraph "<<this<<"\n";
 }
 
-// initializes this Lattice to its default state, if it is not already initialized
-void ConstrGraph::initialize()
+// Initializes this Lattice to its default state, if it is not already initialized
+void ConstrGraph::initialize(string indent)
 {
-	/*if(!initialized)
-		setToBottom();*/
-	setToTop(true);
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+	if(l.first == uninitialized)
+		setToBottom(indent+"    ");
 }
 
-/***** The sets of arrays and scalars visible in the given function *****/
-
-map<Function, varIDSet> ConstrGraph::funcVisibleArrays;
-map<Function, varIDSet> ConstrGraph::funcVisibleScalars;
-
-// returns the set of arrays visible in this function
-varIDSet& ConstrGraph::getVisibleArrays(Function func)
+// For a given variable returns the corresponding divisibility variable
+varID ConstrGraph::getDivVar(const varID& scalar)
 {
-	// if we haven't yet computed the visible arrays for this function
-	if(funcVisibleArrays.find(func) == funcVisibleArrays.end())
-	{
-		varIDSet& locals = varSets::getLocalArrays(func);
-		varIDSet& globals = varSets::getGlobalArrays(getProject());
-		
-		varIDSet lgUnion;
-		for(varIDSet::iterator it = locals.begin(); it!=locals.end(); it++)
-			funcVisibleArrays[func].insert(*it);
-		
-		for(varIDSet::iterator it = globals.begin(); it!=globals.end(); it++)
-			funcVisibleArrays[func].insert(*it);
-			
-		// insert the control variables
-		//funcVisibleScalars[func].insert(allArrays);
-	}
-	
-	return funcVisibleArrays[func];
-}
-
-// returns the set of scalars visible in this function
-varIDSet& ConstrGraph::getVisibleScalars(Function func)
-{
-	// if we haven't yet computed the visible arrays for this function
-	if(funcVisibleScalars.find(func) == funcVisibleScalars.end())
-	{
-		varIDSet& locals = varSets::getLocalScalars(func);
-		varIDSet& globals = varSets::getGlobalScalars(getProject());
-		
-		varIDSet lgUnion;
-		for(varIDSet::iterator it = locals.begin(); it!=locals.end(); it++)
-		{
-			// insert the scalar and its divisibility variable
-			funcVisibleScalars[func].insert(*it);
-			funcVisibleScalars[func].insert(getDivScalar(*it));
-		}
-		
-		for(varIDSet::iterator it = globals.begin(); it!=globals.end(); it++)
-		{
-			// insert the scalar and its divisibility variable
-			funcVisibleScalars[func].insert(*it);
-			funcVisibleScalars[func].insert(getDivScalar(*it));
-		}
-		
-		// insert the control variables
-		funcVisibleScalars[func].insert(zeroVar);
-		//funcVisibleScalars[func].insert(oneVar);
-	}
-	
-	/*printf("scalars for %s()\n", func.get_name().str());
-	for(varIDSet::iterator it = funcVisibleScalars[func].begin(); it!=funcVisibleScalars[func].end(); it++)
-	{
-		cout << "    "<<(*it).str()<<"\n";
-	}*/
-	
-	return funcVisibleScalars[func];
-}
-
-
-// for a given scalar returns the corresponding divisibility scalar
-varID ConstrGraph::getDivScalar(const varID& scalar)
-{
-	varID divScalar("divscalar_"+scalar.str());
+	varID divScalar("DV_"+scalar.str());
 	return divScalar;
 }
 
-// returns true if the given variable is a divisibility scalar and false otherwise
-bool ConstrGraph::isDivScalar(const varID& scalar)
+// Returns true if the given variable is a divisibility variable and false otherwise
+bool ConstrGraph::isDivVar(const varID& var)
 {
-	// its a divisibility scalar if its name begins with "divscalar_"
-	return scalar.str().find("divscalar_", 0)==0;
+	// its a divisibility var if its name begins with "DV_"
+	return var.str().find("DV_", 0)==0;
 }
 
 // Returns a divisibility product lattice that matches the given variable
-FiniteVariablesProductLattice* ConstrGraph::getDivLattice(const varID& var)
+FiniteVarsExprsProductLattice* ConstrGraph::getDivLattice(const varID& var, string indent)
 {
-	for(map<pair<string, void*>, FiniteVariablesProductLattice*>::iterator itDiv=divL.begin();
+	for(map<pair<string, void*>, FiniteVarsExprsProductLattice*>::iterator itDiv=divL.begin();
 		    itDiv!=divL.end(); itDiv++)
 	{
 		// If the current annotation matches all annotations
 		if(itDiv->first.first=="" && itDiv->first.second==NULL)
 			return itDiv->second;
 		
+		// Else, if we have different divisibility lattices for different variable annotations, 
+		// find the lattice with the correct annotation
 		for(map<string, void*>::const_iterator itVar=var.getAnnotations().begin();
 		    itVar!=var.getAnnotations().end(); itVar++)
 		{
@@ -371,16 +239,36 @@ FiniteVariablesProductLattice* ConstrGraph::getDivLattice(const varID& var)
 	return NULL;
 }
 
-// Returns a sign product lattice that matches the given variable
-FiniteVariablesProductLattice* ConstrGraph::getSgnLattice(const varID& var)
+string ConstrGraph::DivLattices2Str(string indent)
 {
-	for(map<pair<string, void*>, FiniteVariablesProductLattice*>::iterator itSgn=sgnL.begin();
+	ostringstream oss;
+	
+	bool firstLine=true;
+	cout << "    divL="<<divL.size()<<"\n";
+	for(map<pair<string, void*>, FiniteVarsExprsProductLattice*>::iterator itDiv=divL.begin();
+		    itDiv!=divL.end(); itDiv++)
+	{
+		if(!firstLine) { cout << indent; }
+		oss << "Annotation \""<<itDiv->first.first<<"\"->"<<itDiv->first.second<<"\n";
+		oss << indent << "    "<<itDiv->second->str(indent+"    ")<<"\n";
+		firstLine = false;
+	}
+	
+	return oss.str();
+}
+
+// Returns a sign product lattice that matches the given variable
+FiniteVarsExprsProductLattice* ConstrGraph::getSgnLattice(const varID& var, string indent)
+{
+	for(map<pair<string, void*>, FiniteVarsExprsProductLattice*>::iterator itSgn=sgnL.begin();
 		 itSgn!=sgnL.end(); itSgn++)
 	{
 		// If the current annotation matches all annotations
 		if(itSgn->first.first=="" && itSgn->first.second==NULL)
 			return itSgn->second;
 		
+		// Else, if we have different divisibility lattices for different variable annotations, 
+		// find the lattice with the correct annotation
 		for(map<string, void*>::const_iterator itVar=var.getAnnotations().begin();
 		    itVar!=var.getAnnotations().end(); itVar++)
 		{
@@ -392,283 +280,159 @@ FiniteVariablesProductLattice* ConstrGraph::getSgnLattice(const varID& var)
 	return NULL;
 }
 
-// returns whether the given variable is known in this constraint graph to be an array
-bool ConstrGraph::isArray(const varID& array) const
-{
-	// return whether the given variable can be found in this constraint graph's set of arrays
-	return arrays.find(array) != arrays.end();
-}
-
-// Adds the given variable to the scalars list, returning true if this causes
+// Adds the given variable to the variables list, returning true if this causes
 // the constraint graph to change and false otherwise.
-bool ConstrGraph::addScalar(const varID& scalar)
+bool ConstrGraph::addVar(const varID& var, string indent)
 {
-	pair<varIDSet::iterator,bool> loc = scalars.insert(scalar);
+	pair<varIDSet::iterator,bool> loc = vars.insert(var);
 	return loc.second;
 }
 
-// Removes the given variable and its divisibility scalar (if one exists) from the scalars list
+// Removes the given variable and its divisibility variables (if one exists) from the variables list
 // and removes any constraints that involve them. 
 // Returning true if this causes the constraint graph to change and false otherwise.
-bool ConstrGraph::removeScalar(const varID& scalar)
+bool ConstrGraph::removeVar(const varID& var, string indent)
 {
 	bool modified=false;
 	
-	varID divScalar = getDivScalar(scalar);
+	varID divVar = getDivVar(var);
 	
 	// Remove the constraints
-	modified = eraseVarConstr(divScalar) || modified;
-	modified = eraseVarConstr(scalar) || modified;
+	modified = eraseVarConstr(divVar, true, indent+"    ") || modified;
+	modified = eraseVarConstr(var, true, indent+"    ") || modified;
 	
-	// Remove the variables from divVariables and scalars
-	modified = (divVariables.erase(divScalar) > 0) || modified;
-	modified = (scalars.erase(scalar) > 0) || modified;
-	
-	return modified;
-}
-
-// Returns a reference to the constraint graph's set of scalars
-const varIDSet& ConstrGraph::getScalars() const
-{
-	return scalars;
-}
-
-// Returns a modifiable reference to the constraint graph's set of scalars
-varIDSet& ConstrGraph::getScalarsMod()
-{
-	return scalars;
-}
-
-// For each scalar variable not in noExternal create another variable that is identical except that it has a special
-//    annotation that identifies it as the external view onto the value of this variable. The newly 
-//    generated external variables will be set to be equal to their original counterparts
-//    and will default to have no relations with any other variables, even through transitive closures. 
-//    These variables are used to transfer information about variable state from one constraint graph
-//    to another. Specially annotated cersions of the external variables will exist in multiple constraint 
-//    graphs and will periodically be updated in other graphs from this graph based on how the relationships 
-//    between the external variables and their regular counterparts change in this graph.
-// If the external variables already exist, their relationships relative to their original counterparts are reset.
-// Returns true if this causes the constraint graph to change, false otherwise.
-bool ConstrGraph::addScalarExternals(varIDSet noExternal)
-{
-	bool modified = false;
-	
-	// Iterate through all the scalars
-	for(varIDSet::iterator it=scalars.begin(); it!=scalars.end(); it++)
-	{
-		varID origVar = *it;
-		if(noExternal.find(origVar) != noExternal.end()) continue;
-
-		varID extVar = *it;
-		// Annotate the external variable
-		extVar.addAnnotation("cg_ext", 0);
-		
-		// The new variable is equal to the original variable
-		modified = assertEq(extVar, origVar) || modified;
-		
-		// WE DO NOT ADD var TO scalars TO ENSURE THAT transitiveClosure DOES NOT APPLY
-		// ANY INFERENCES TO var. THIS WAY THE ONLY CONSTRAINTS THAT WE'LL MAINTAIN ON var
-		// WILL BE TO ITS ORIGINAL VARIABLE. THIS REDUCES THE COST OF KEEPING THESE VARIABLES.
-		
-		externalVars.insert(extVar);
-	}
+	// Remove the variables from divVars and vars
+	modified = (divVars.erase(divVar) > 0) || modified;
+	modified = (vars.erase(var) > 0) || modified;
 	
 	return modified;
 }
 
-// Looks over all the external versions of all scalars in this constraint graph and looks for all the same variables
-//    in the tgtCFG constraint graph that also have the given annotation. Then, updates the variables in that 
-//    from the current relationships in this between the original scalars and their external versions. 
-//    Thus, if blah <= var' in that and var' = var + 5 in this (var' is the annotated copy of var) then we'll update 
-//    to blah <= var' - 5 so that now blah is related to var's current value in this constraint graph. 
-// Returns true if this causes the tgtCG constraint graph to change, false otherwise.
-bool ConstrGraph::updateFromScalarExternals(ConstrGraph* tgtCG, string annotName, void* annot)
+// Returns a reference to the constraint graph's set of variables
+const varIDSet& ConstrGraph::getVars() const
 {
-	bool modified=false;
-	
-	// Iterate through all the scalars
-	for(varIDSet::iterator it=scalars.begin(); it!=scalars.end(); it++)
-	{
-		varID origVar = *it;
-		varID extVarThis = *it;
-		varID extVarTgt = *it;
-		// Annotate the external variable
-		extVarThis.addAnnotation("cg_ext", 0);
-		extVarTgt.addAnnotation(annotName, annot);
-		
-		// If the current scalar does have an associated external 
-		affineInequality* ineqThis;
-		if((ineqThis = getVal(extVarThis, origVar)))
-		{
-			// Iterate through constraints in tgtCG and update extVar's constraints in tgtCG
-			for(map<varID, map<varID, affineInequality> >::iterator itX = tgtCG->vars2Value.begin();
-			    itX!=tgtCG->vars2Value.end(); itX++)
-			{
-				//cout << "    copyVar itX->first="<<itX->first.str()<<"\n";
-				// extVar <= constraints
-				if(itX->first == extVarTgt)
-				{
-					// Update all the extVar <= y constraints in tgtCG
-					for(map<varID, affineInequality>::iterator itY = itX->second.begin();
-					    itY != itX->second.end(); itY++)
-					{
-						affineInequality& ineqTgt = itY->second;
-						
-						//      ineqThis                                ineqTgt
-						// extVar*a = origVar*b + c          && extVar*a' <= y*b' + c'
-						// extVar*a*a' = origVar*b*a' + c*a' && extVar*a'*a <= y*b'*a + c'*a
-						//                origVar*b*a' + c*a' <= y*b'*a + c'*a
-						//                origVar*b*a' <= y*b'*a + c'*a - c*a'
-						// ==> in ineqTgt: extVar*b*a' <= y*b'*a + c'*a - c*a'
-						modified = ineqTgt.set(ineqThis->getB()*ineqTgt.getA(), ineqTgt.getB()*ineqThis->getA(),
-						                       ineqTgt.getC()*ineqThis->getA() - ineqThis->getC()*ineqTgt.getA(), 
-						                       ineqThis->isXZero(), ineqTgt.isYZero(), ineqThis->getXSign(), ineqTgt.getYSign()) || modified;
-					
-						modifiedVars.insert(itY->first);
-						newConstrVars.insert(itY->first);
-					}
-					modifiedVars.insert(itX->first);
-					newConstrVars.insert(itX->first);
-				}
-				// x <= extVar constraints
-				else
-				{
-					// Update all the x <= extVar constraints in tgtCG
-					for(map<varID, affineInequality>::iterator itY = itX->second.begin();
-					    itY!=itX->second.end(); itY++)
-					{
-						affineInequality& ineqTgt = itY->second;
-						if(itY->first == extVarTgt)
-						{
-							//      ineqThis                                ineqTgt
-							// extVar*a = origVar*b + c          && y*a' <= extVar*b' + c'
-							// extVar*a*b' = origVar*b*b' + c*b' && y*a'*a <= extVar*b'*a + c'*a
-							//                y*a'*a <= origVar*b*b' + c*b' + c'*a
-							// ==> in ineqTgt: y*a'*a <= extVar*b*b' + c*b' + c'*a
-							modified = ineqTgt.set(ineqThis->getA()*ineqTgt.getA(), ineqTgt.getB()*ineqThis->getB(),
-							                       ineqTgt.getB()*ineqThis->getC() - ineqThis->getA()*ineqTgt.getC(), 
-							                       ineqTgt.isXZero(), ineqThis->isYZero(), ineqTgt.getXSign(), ineqThis->getYSign()) || modified;
-							modifiedVars.insert(itY->first);
-							newConstrVars.insert(itY->first);
-						}
-						modifiedVars.insert(itX->first);
-						newConstrVars.insert(itX->first);
-					}
-				}
-			}
-		}
-	}
-  return modified;
+	return vars;
 }
 
-// Returns a reference to the constraint graph's set of scalars
-const varIDSet& ConstrGraph::getExternals() const
+// Returns a modifiable reference to the constraint graph's set of variables
+varIDSet& ConstrGraph::getVarsMod()
 {
-	return externalVars;
+	return vars;
 }
 
 /***** Copying *****/
 
-// overwrites the state of this Lattice with that of that Lattice
+// Overwrites the state of this Lattice with that of that Lattice
 void ConstrGraph::copy(Lattice* that)
 {
-	copyFrom(*(dynamic_cast<ConstrGraph*>(that)));
+	copyFrom(*(dynamic_cast<ConstrGraph*>(that)), "");
 }
 
-// returns a copy of this lattice
+// Returns a copy of this lattice
 Lattice* ConstrGraph::copy() const
 {
 	return new ConstrGraph(this);
 }
 
-// returns a copy of this LogicalCond object
-LogicalCond* ConstrGraph::copy()
+// Returns a copy of this LogicalCond object
+/*LogicalCond* ConstrGraph::copy()
 {
 	return new ConstrGraph(this);
-}
+}*/
 
-// copies the state of cg to this constraint graph
-// returns true if this causes this constraint graph's state to change
-bool ConstrGraph::copyFrom(ConstrGraph &that)
+// Copies the state of that to this constraint graph
+// Returns true if this causes this constraint graph's state to change
+bool ConstrGraph::copyFrom(ConstrGraph &that, string indent)
 {
-	bool modified = (bottom != that.bottom);
-	bottom = that.bottom;
+	bool modified = (level != that.level);
+	level = that.level;
+	
+	modified = (constrType != that.constrType) || modified;
+	constrType = that.constrType;
 
-if(debugLevel>=1)
-{	
-	if(that.arrays != arrays)
+	/*if(debugLevel>=1)
 	{
-		cout << "!!!!!ConstrGraph::copyFrom() Different arrays:\n";
-		cout << "    arrays=";
-		for(set<varID>::iterator it=arrays.begin(); it!=arrays.end(); it++)
-		{ cout << (*it).str() << " "; }
-		cout << "\n";
-		
-		cout << "    that.arrays=";
-		for(set<varID>::iterator it=that.arrays.begin(); it!=that.arrays.end(); it++)
-		{ cout << (*it).str() << " "; }
-		cout << "\n";
-	}
+		if(that.vars != vars)
+		{
+			cout << indent << "!!!!!ConstrGraph::copyFrom() Different vars:\n";
+			cout << indent << "    vars=";
+			for(set<varID>::iterator it=vars.begin(); it!=vars.end(); it++)
+			{ cout << (*it).str() << " "; }
+			cout << "\n";
+			
+			cout << indent << "    that.vars=";
+			for(set<varID>::iterator it=that.vars.begin(); it!=that.vars.end(); it++)
+			{ cout << (*it).str() << " "; }
+			cout << "\n";
+		}
+		cout.flush();
+	}*/
 	
-	if(that.scalars!= scalars)
-	{
-		cout << "!!!!!ConstrGraph::copyFrom() Different scalars:\n";
-		cout << "    scalars=";
-		for(set<varID>::iterator it=scalars.begin(); it!=scalars.end(); it++)
-		{ cout << (*it).str() << " "; }
-		cout << "\n";
-		
-		cout << "    that.scalars=";
-		for(set<varID>::iterator it=that.scalars.begin(); it!=that.scalars.end(); it++)
-		{ cout << (*it).str() << " "; }
-		cout << "\n";
-	}
-	fflush(stdout);
-}
+	// Ensure that both constraint graphs map the same set of variables
+	//ROSE_ASSERT(vars == that.vars);
+	//ROSE_ASSERT(divVars == that.divVars);
+	
+	// Copy the constraint information from cg to this		
+	modified = copyConstraints(that, indent+"    ") || modified;
 
+	// Copy over lattice information from that	
+	// No, we must keep state information that belongs to this ConstraintGraph's original DataflowNode
+	//ldva = that.ldva;
+	//divL = that.divL;
+	//sgnL = that.sgnL;
 	
-	// copy the array information from cg to this
-	modified = copyArrays(that) || modified;
-	
-	// copy the constraint information from cg to this		
-	modified = copyConstraints(that) || modified;
-	
-	modifiedVars = that.modifiedVars;
-	newConstrVars = that.newConstrVars;
-	
-/*	modified = (scalars != that.scalars) || modified;
-	scalars == that.scalars;
-	
-	modified = (divVariables != that.divVariables) || modified;
-	scalars == that.divVariables;
-	
-	modified = (arrays != that.arrays) || modified;
-	arrays == that.arrays;*/
-
-	// copy the constrChanged from cg since the state of this ConstrGraph
-	// object is a direct copy of cg, including the upto-date-ness of the 
-	// bottom flag
-	constrChanged=that.constrChanged;
+	// Copy over transaction status from that.
+	inTransaction = that.inTransaction;
 	
 	return  modified;
 }
 
-// Update the state of this constraint graph from that constraint graph, leaving 
-//    this graph's original contents alone and only modifying the pairs that are in that.
-// Returns true if this causes this constraint graph's state to change
-bool ConstrGraph::updateFrom(ConstrGraph &that)
+// Copies the state of That into This constraint graph, but mapping constraints of varFrom to varTo, even
+//    if varFrom is not mapped by This and is only mapped by That. varTo must be mapped by This.
+// Returns true if this causes this constraint graph's state to change.
+bool ConstrGraph::copyFromReplace(ConstrGraph &that, varID varTo, varID varFrom, string indent)
 {
+	bool modified = (level != that.level);
+	level = that.level;
 	
+	modified = (constrType != that.constrType) || modified;
+	constrType = that.constrType;
+
+	// Copy the constraint information from cg to this		
+	modified = copyConstraintsReplace(that, varFrom, varTo, indent+"    ") || modified;
+
+	// Copy over transaction status from that.
+	inTransaction = that.inTransaction;
+	
+	return  modified;
 }
 
 // Copies the given var and its associated constrants from that to this.
 // Returns true if this causes this constraint graph's state to change; false otherwise.
-bool ConstrGraph::copyVar(const ConstrGraph& that, const varID& var)
+/*bool ConstrGraph::copyVar(const ConstrGraph& that, const varID& var)
 {
+	bool modified = false;
+
+	// If we're already top or inconsistent, do nothing
+	if((level == top) ||
+	   (level == constrKnown && constrType == inconsistent))
+		return false;
+
+	
+	
+	// If we were uninitialized, upgrade to being initialized, with known constraints
+	if(level == uninitialized) { level = constrKnown; modified = true; }
+	
 	//printf("ConstrGraph::copyVar(var=%s)\n", var.str().c_str());
-	// Add var to scalars if it isn't already there.
-	if(scalars.find(var) == scalars.end())
-		scalars.insert(var);
+	// Add var to vars if it isn't already there.
+	if(vars.find(var) == var.end()) {
+		modified = true;
+		vars.insert(var);
+	}
+	
+	// True if either both constraint graphs are negated or not negated (if a graph is negated, all of 
+	// its inequalities are flipped from ax<=by+x to by<ax-c)
+	bool sameNeg = (level==constrKnown && 
 	
 	// Iterate over all the var<=x and	x<=var pairs.
 	for(map<varID, map<varID, affineInequality> >::const_iterator itX = that.vars2Value.begin();
@@ -701,183 +465,130 @@ bool ConstrGraph::copyVar(const ConstrGraph& that, const varID& var)
 			}
 		}
 	}
-}
 
-/*// returns true if this and cg map the same sets of arrays and false otherwise
-	bool mapsSameArrays(ConstrGraph *cg)
-	{
-		return containsArraySet(this, cg) && containsArraySet(cg, this);
-	}
-
-	// determines whether cg1->arrays contains cg2->arrays
-	static bool containsArraySet(ConstrGraph *cg1, ConstrGraph *cg2)
-	{
-		// iterate over cg2->arrays to ensure that all entries in arrays appear in cg1->arrays
-		for(varIDSet::iterator curArray = cg2->arrays.begin(); 
-			 curArray != cg2->arrays.end(); curArray++)
-		{
-			// if the current array does not appear in cg1->arrays, 
-			// then cg1->arrays does not contain all of cg2->arrays
-			if(!cg1->isArray(*curArray))
-				return true;
-		}
-		return false;
-	}*/
-	
-	// determines whether cg->arrays and cg->emptyRange are different 
-	// from arrays and emptyRange
-	/*bool diffArrays(ConstrGraph *cg)
-	{
-		// iterate over arrays to ensure that all entries in arrays appear in cg->arrays
-		// and they have the same mappings in emptyRange and cg->emptyRange
-		for(varIDSet::iterator curArray = arrays.begin(); 
-			 curArray != arrays.end(); curArray++)
-		{
-			// if the current array does not appear in cg->arrays or cg->emptyRange, 
-			// then the array information of cg and this is different
-			if(!cg->isArray(*curArray) ||
-				cg->emptyRange.find(*curArray) == cg->emptyRange.end())
-				return true;
-			
-			// if emptyRange and cg->emptyRange map *curArray to different values,
-			// then the array information of cg and this is different
-			if(cg->emptyRange[*curArray] != emptyRange[*curArray])
-				return true;
-		}
-		
-		// now iterate over cg->arrays to ensure that all entries in cg->arrays appear in arrays
-		//    we don't need to check the mappings of emptyRange since if arrays and cg->arrays
-		//    do turn out to be equal, the mappings of emptyRange must have been checked in the above loop
-		for(varIDSet::iterator curArray = cg->arrays.begin(); 
-			 curArray != cg->arrays.end(); curArray++)
-		{
-			// if the current array does not appear in arrays, 
-			// then the array information of cg and this is different
-			if(!isArray(*curArray))
-				return true;
-		}
-		
-		// if we haven't found any differences, both constraint graphs must have 
-		//    the same arrays that are mapped to the same values in their respective
-		//    emptyRange maps
-		return false;
-	}*/
-	
-// copies the data of cg->emptyRange to emptyRange and 
-// returns whether this caused emptyRange to change
-bool ConstrGraph::copyArrays(const ConstrGraph &that)
-{
-	bool modified = false;
-	// we don't do copies from ConstrGraph from different functions
-	//ROSE_ASSERT(that.arrays == arrays);
-	
-	// perform the copy
-	for(varIDSet::iterator curArray = that.arrays.begin(); 
-		 curArray != that.arrays.end(); curArray++)
-	{
-		modified = (emptyRange[*curArray] != that.emptyRange.find(*curArray)->second) || modified;
-		emptyRange[*curArray] = that.emptyRange.find(*curArray)->second;
-	}
-
-	// the array information of this has changed
 	return modified;
-}
+}*/
 
-// updates the data of cg->emptyRange to emptyRange, leaving 
-//    this graph's original emptyRange alone and only modifying the entries that are in that.
-// returns whether this caused emptyRange to change
-bool ConstrGraph::updateArrays(const ConstrGraph &that)
-{
-	bool modified = false;
-	// we don't do copies from ConstrGraph from different functions
-	//ROSE_ASSERT(that.arrays == arrays);
-	
-	// perform the update
-	for(varIDSet::iterator curArray = that.arrays.begin(); 
-		 curArray != that.arrays.end(); curArray++)
-	{
-		modified = arrays.find(*curArray)==arrays.end() || 
-		           (emptyRange[*curArray] != that.emptyRange.find(*curArray)->second) || 
-		           modified;
-		emptyRange[*curArray] = that.emptyRange.find(*curArray)->second;
-	}
-
-	// the array information of this has changed
-	return modified;
-}
-
-// determines whether constraints in cg are different from
+// Determines whether constraints in that are different from
 // the constraints in this
-bool ConstrGraph::diffConstraints(ConstrGraph &that)
+bool ConstrGraph::diffConstraints(ConstrGraph &that, string indent)
 {
-//Check to see if map::operator== is sufficient for this
+	//Check to see if map::operator== is sufficient for this
 	// if these two constraint graphs differ on their bottom-ness
-	if(isBottom()!=that.isBottom())
-		return true;
+	if(getLevel() != that.getLevel()) return true;
 	
-	// if these two constraint graphs have different numbers of constraints or 
+	// If these two constraint graphs have different constraints or 
 	// map different sets of variables
 	if(vars2Value != that.vars2Value ||
-		arrays != that.arrays ||
-		scalars != that.scalars)
+		vars       != that.vars ||
+		divVars    != that.divVars)
 		return true;
+	// !!! NOTE: this has a bug in that a bottom constraint may be represented by either not having a constraint/
+	// !!! or a constraint that has lattice level bottom
 	
 	return false;
-/*		map<varID, map<varID, constraint> >::const_iterator itThis, itThat;
-	// iterate over all mapped variables in this
-	for(itThis = vars2Value.begin(); itThis != vars2Value.end(); itThis++)
-	{
-		map<varID, constraint>::const_iterator itThisThis, itThisThat;
-		// if the current mapping in this doesn't exist in that, the constraints are not equal
-		if((itThisThat = that.vars2Value.find(itThis->first)) == that.vars2Value.end())
-			return true;
-		// both this and that have a mapping for itThis->first
-		else
-		{
-			map<varID, constraint>
-		}
-	}
-
-	// iterate over all pairs of variables in that
-	for(itThat = that.vars2Value.begin(); itThat != that.vars2Value.end(); itThat++)
-	{
-		// if the current mapping in this doesn't exist in that, the constraints are not equal
-		if(vars2Value.find(itThat->first) == vars2Value.end()
-			return true;
-	}
-	
-	// there are no differences in the constraints of these two graphs
-	return false;*/
 }
 
-// copies the constraints of cg into this constraint graph
-// returns true if this causes this constraint graph's state to change
-bool ConstrGraph::copyConstraints(ConstrGraph &that)
+// Copies the constraints of cg into this constraint graph.
+// Returns true if this causes this constraint graph's state to change.
+bool ConstrGraph::copyConstraints(ConstrGraph &that, string indent)
 {
 	bool modified;
-	// we don't do copies from ConstrGraph from different functions
-	//ROSE_ASSERT(that.arrays == arrays);
-	//ROSE_ASSERT(that.scalars == scalars);
 	
 	// this constraint graph will be modified if it is currently uninitialized
-	modified = !initialized;
+	modified = (level == uninitialized);
 	
+	// !!! THIS IS NOT QUITE RIGHT SINCE WE'RE NOT COPYING ALL CONSTRAINTS FROM THAT
 	modified = modified || diffConstraints(that);
 	
-	//vars2Value = that.vars2Value;
-	// erase vars2Value
+	/*cout << indent << "copyConstraints()\n";
+	cout << indent << "    vars=\n";
+	for(set<varID>::iterator v=vars.begin(); v!=vars.end(); v++)
+		cout << indent << "        "<<*v<<"\n";
+	cout << indent << "    divVars=\n";
+	for(set<varID>::iterator v=divVars.begin(); v!=divVars.end(); v++)
+		cout << indent << "        "<<*v<<"\n";
+	cout << indent << "    that.vars=\n";
+	for(set<varID>::iterator v=that.vars.begin(); v!=that.vars.end(); v++)
+		cout << indent << "        "<<*v<<"\n";
+		cout << indent << "That="<<that.str(indent+"    ")<<"\n";*/
+	
+	// Erase the current state of vars2Value
 	map<varID, map<varID, affineInequality> >::iterator itX;
 	for(itX = vars2Value.begin(); itX!=vars2Value.end(); itX++)
 		itX->second.clear();
 	vars2Value.clear();
 	
-	// copy vars2Value from that
-	vars2Value = that.vars2Value;
+	// Copy the portions of that.vars2Value that mention variables in vars and divVars or the 
+//!!!	// divisibility variables of the variables in vars that are not in divVars 
+	for(map<varID, map<varID, affineInequality> >::iterator iterX=that.vars2Value.begin(); iterX!=that.vars2Value.end(); iterX++) {
+		//pair<varID, bool> v = divVar2Var(iterX->first, indent+"    ");
+		if(vars.find(iterX->first)==vars.end() && divVars.find(iterX->first)==divVars.end()) { /*cout << indent << "    skipping x="<<iterX->first<<"\n"; */continue; }
+		
+		for(map<varID, affineInequality>::iterator iterY=iterX->second.begin(); iterY!=iterX->second.end(); iterY++) {
+			if(vars.find(iterY->first)==vars.end() && divVars.find(iterY->first)==divVars.end()) { /*cout << indent << "    skipping x="<<iterX->first<<" y="<<iterY->first<<"\n"; */continue; }
+			//cout << indent << "    copying x="<<iterX->first<<" y="<<iterY->first<<" constraint="<<that.vars2Value[iterX->first][iterY->first].str()<<"\n";
+			vars2Value[iterX->first][iterY->first] = that.vars2Value[iterX->first][iterY->first];
+		}
+	}
 	
-	modifiedVars = that.modifiedVars;
+	//cout << indent << "Final state="<<str(indent+"    ")<<"\n";
+	
+	// Copy the modification information from that since the state of this ConstrGraph
+	// object is a direct copy of that
+	modifiedVars  = that.modifiedVars;
 	newConstrVars = that.newConstrVars;
+	constrChanged = that.constrChanged;
 	
-	initialized = true; // this constraint graph is now definitely initialized
+	return modified;
+}
+
+// Copies the constraints of That into This constraint graph, but mapping constraints of varFrom to varTo, even
+//    if varFrom is not mapped by This and is only mapped by That. varTo must be mapped by This.
+// Returns true if this causes this constraint graph's state to change.
+bool ConstrGraph::copyConstraintsReplace(ConstrGraph &that, varID varTo, varID varFrom, string indent)
+{
+	bool modified;
+	
+	cout << indent << "copyConstraintsReplace(varFrom="<<varFrom<<", varTo="<<varTo<<"\n";
+	ROSE_ASSERT(vars.find(varTo)!=vars.end() || divVars.find(varTo)!=divVars.end());
+	
+	// This constraint graph will be modified if it is currently uninitialized
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+	modified = (l.first==uninitialized);
+	// This constraint graph will now definitely be initialized
+	if(l.first==uninitialized) return setToBottom(indent+"    ");
+	
+	// !!! THIS IS NOT QUITE RIGHT SINCE WE'RE NOT COPYING ALL CONSTRAINTS FROM THAT
+	modified = modified || diffConstraints(that);
+	
+	// Erase the current state of vars2Value
+	map<varID, map<varID, affineInequality> >::iterator itX;
+	for(itX = vars2Value.begin(); itX!=vars2Value.end(); itX++)
+		itX->second.clear();
+	vars2Value.clear();
+	
+	// Copy the portions of that.vars2Value that mention variables in vars and divVars
+	for(map<varID, map<varID, affineInequality> >::iterator iterX=that.vars2Value.begin(); iterX!=that.vars2Value.end(); iterX++) {
+		if(iterX->first!=varFrom && vars.find(iterX->first)==vars.end() && divVars.find(iterX->first)==divVars.end()) { cout << indent << "    skipping x="<<iterX->first<<"\n"; continue; }
+		
+		for(map<varID, affineInequality>::iterator iterY=iterX->second.begin(); iterY!=iterX->second.end(); iterY++) {
+			if(iterX->first!=varTo && vars.find(iterY->first)==vars.end() && divVars.find(iterY->first)==divVars.end()) { cout << indent << "    skipping y="<<iterY->first<<"\n"; continue; }
+			cout << indent << "    copying x="<<iterX->first<<" y="<<iterY->first<<" constraint="<<that.vars2Value[iterX->first][iterY->first].str()<<"\n";
+			if(iterX->first==varFrom)
+				vars2Value[varTo][iterY->first] = that.vars2Value[varFrom][iterY->first];
+			else if(iterY->first==varFrom)
+				vars2Value[iterX->first][varTo] = that.vars2Value[iterX->first][varFrom];
+			else
+				vars2Value[iterX->first][iterY->first] = that.vars2Value[iterX->first][iterY->first];
+		}
+	}
+	
+	// Copy the modification information from that since the state of this ConstrGraph
+	// object is a direct copy of that
+	modifiedVars  = that.modifiedVars;
+	newConstrVars = that.newConstrVars;
+	constrChanged = that.constrChanged;
 	
 	return modified;
 }
@@ -890,7 +601,7 @@ bool ConstrGraph::copyConstraints(ConstrGraph &that)
 	bool modified;
 	// we don't do copies from ConstrGraph from different functions
 	ROSE_ASSERT(that.arrays == arrays);
-	ROSE_ASSERT(that.scalars == scalars);
+	ROSE_ASSERT(that.vars == vars);
 	
 	// this constraint graph will be modified if it is currently uninitialized
 	modified = !initialized;
@@ -912,42 +623,15 @@ bool ConstrGraph::copyConstraints(ConstrGraph &that)
 	return modified;
 }*/
 
-/***** Array Range Management *****/
-// sets the ranges of all arrays in this constraint graph to not be empty
-void ConstrGraph::unEmptyArrayRanges()
-{
-	for(varIDSet::iterator curArray = arrays.begin(); 
-		 curArray != arrays.end(); curArray++)
-	{
-		emptyRange[*curArray] = false;
-	}
-	constrChanged=true;
-}
-
-// sets the ranges of all arrays in this constraint graph to empty
-// noBottomCheck - flag indicating whether this function should do nothing if this isBottom() returns 
-//              true (=false) or to not bother checking with isBottom (=true)
-void ConstrGraph::emptyArrayRanges(bool noBottomCheck)
-{
-	for(varIDSet::iterator curArray = arrays.begin(); 
-		 curArray != arrays.end(); curArray++)
-	{
-		emptyRange[*curArray] = true;
-		eraseVarConstrNoDiv(*curArray, noBottomCheck);
-	}
-	constrChanged=true;
-}
-
 /**** Erasing ****/
 // erases all constraints from this constraint graph
-// noBottomCheck - flag indicating whether this function should do nothing if this isBottom() returns 
-//              true (=false) or to not bother checking with isBottom (=true)
-void ConstrGraph::eraseConstraints(bool noBottomCheck)
+// noConsistencyCheck - flag indicating whether this function should explicitly check the self-consisteny of this graph (=false)
+// 							or to not bother checking self-consistency and just return the last-known value (=true)
+void ConstrGraph::eraseConstraints(bool noConsistencyCheck, string indent)
 {
-//		std::cout << "eraseConstraints() dead="<<dead<<" bottom="<<bottom<<"\n";
-//		std::cout << "eraseConstraints() isDead()="<<isDead()<<" isBottom()="<<isBottom()<<" dead="<<dead<<" bottom="<<bottom<<"\n";
-	// if we're checking and this constraint graph is already bottom, don't bother
-	if(noBottomCheck || !isBottom())
+//		std::cout << indent << "eraseConstraints() checkSelfConsistency()="<<checkSelfConsistency()<<"\n";
+	// If this graph has constraints to be considered
+	if(hasConsistentConstraints(noConsistencyCheck, indent))
 	{
 		for(map<varID, map<varID, affineInequality> >::iterator it = vars2Value.begin(); it!=vars2Value.end(); it++)
 			it->second.clear();
@@ -959,28 +643,28 @@ void ConstrGraph::eraseConstraints(bool noBottomCheck)
 	}
 }
 
-// erases all constraints that relate to variable eraseVar and its corresponding divisibility variable 
+// Erases all constraints that relate to variable eraseVar and its corresponding divisibility variable 
 // from this constraint graph
-// returns true if this causes the constraint graph to change and false otherwise
-// noBottomCheck - flag indicating whether this function should do nothing if this isBottom() returns 
-//              true (=false) or to not bother checking with isBottom (=true)
-bool ConstrGraph::eraseVarConstr(const varID& eraseVar, bool noBottomCheck)
+// Returns true if this causes the constraint graph to change and false otherwise
+// noConsistencyCheck - flag indicating whether this function should explicitly check the self-consisteny of this graph (=false)
+// 							or to not bother checking self-consistency and just return the last-known value (=true)
+bool ConstrGraph::eraseVarConstr(const varID& eraseVar, bool noConsistencyCheck, string indent)
 {
 	bool modified = false;
-	varID eraseDivVar = getDivScalar(eraseVar);
+	varID eraseDivVar = getDivVar(eraseVar);
 	
-	// if we're checking and this constraint graph is already bottom, don't bother
-	if(noBottomCheck || !isBottom())
+	// If this graph has constraints to be considered
+	if(hasConsistentConstraints(noConsistencyCheck, indent))
 	{
 		modified = modified || vars2Value[eraseVar].size()>0 || vars2Value[eraseDivVar].size()>0;
 		
-		// first erase all mappings from eraseVar to other variables
+		// First erase all mappings from eraseVar to other variables
 		vars2Value[eraseVar].clear();
 		vars2Value[eraseDivVar].clear();
 		modifiedVars.insert(eraseVar);
 		modifiedVars.insert(eraseDivVar);
 						
-		// iterate over all variable mappings, erasing links from other variables to eraseVar
+		// Iterate over all variable mappings, erasing links from other variables to eraseVar
 		for(map<varID, map<varID, affineInequality> >::iterator curVar = vars2Value.begin(); 
 		    curVar != vars2Value.end(); curVar++ )
 		{
@@ -998,26 +682,26 @@ bool ConstrGraph::eraseVarConstr(const varID& eraseVar, bool noBottomCheck)
 	return modified;
 }
 
-// erases all constraints that relate to variable eraseVar but not its divisibility variable from 
-// this constraint graph
-// returns true if this causes the constraint graph to change and false otherwise
-// noBottomCheck - flag indicating whether this function should do nothing if this isBottom() returns 
-//              true (=false) or to not bother checking with isBottom (=true)
-bool ConstrGraph::eraseVarConstrNoDiv(const varID& eraseVar, bool noBottomCheck)
+// Erases all constraints that relate to variable eraseVar but not its divisibility variable from 
+//    this constraint graph
+// Returns true if this causes the constraint graph to change and false otherwise
+// noConsistencyCheck - flag indicating whether this function should explicitly check the self-consisteny of this graph (=false)
+// 							or to not bother checking self-consistency and just return the last-known value (=true)
+bool ConstrGraph::eraseVarConstrNoDiv(const varID& eraseVar, bool noConsistencyCheck, string indent)
 {
 	//printf("eraseVarConstrNoDiv eraseVar=%s\n", eraseVar.str().c_str());
 	bool modified = false;
 	
-	// if we're checking and this constraint graph is already bottom, don't bother
-	if(noBottomCheck || !isBottom())
+	// If this graph has constraints to be considered
+	if(hasConsistentConstraints(noConsistencyCheck, indent))
 	{
 		modified = modified || vars2Value[eraseVar].size()>0;
 		
-		// first erase all mappings from eraseVar to other variables
+		// First erase all mappings from eraseVar to other variables
 		vars2Value[eraseVar].clear();
 		modifiedVars.insert(eraseVar);
 						
-		// iterate over all variable mappings, erasing links from other variables to eraseVar
+		// Iterate over all variable mappings, erasing links from other variables to eraseVar
 		for(map<varID, map<varID, affineInequality> >::iterator curVar = vars2Value.begin(); 
 		    curVar != vars2Value.end(); curVar++ )
 		{
@@ -1032,33 +716,33 @@ bool ConstrGraph::eraseVarConstrNoDiv(const varID& eraseVar, bool noBottomCheck)
 	return modified;
 }
 
-// erases all constraints between eraseVar and scalars in this constraint graph but leave the constraints 
-// that relate to its divisibility variable alone
-// returns true if this causes the constraint graph to change and false otherwise
-// noBottomCheck - flag indicating whether this function should do nothing if this isBottom() returns 
-//              true (=false) or to not bother checking with isBottom (=true)
-bool ConstrGraph::eraseVarConstrNoDivScalars(const varID& eraseVar, bool noBottomCheck)
+// Erases all constraints between eraseVar and vars in this constraint graph but leave the constraints 
+//    that relate to its divisibility variable alone
+// Returns true if this causes the constraint graph to change and false otherwise
+// noConsistencyCheck - flag indicating whether this function should explicitly check the self-consisteny of this graph (=false)
+// 							or to not bother checking self-consistency and just return the last-known value (=true)
+bool ConstrGraph::eraseVarConstrNoDivVars(const varID& eraseVar, bool noConsistencyCheck, string indent)
 {
 	bool modified = false;
 	
-	// if we're checking and this constraint graph is already bottom, don't bother
-	if(noBottomCheck || !isBottom())
+	// If this graph has constraints to be considered
+	if(hasConsistentConstraints(noConsistencyCheck, indent))
 	{
 		modified = modified || vars2Value[eraseVar].size()>0;
 		
 		// remove all the eraseVar->scalar connections
-		for(varIDSet::iterator it=scalars.begin(); it!=scalars.end(); it++)
+		for(varIDSet::iterator it=vars.begin(); it!=vars.end(); it++)
 		{
 			modified = vars2Value[eraseVar].erase(*it) > 0 || modified;
 		}
 		modifiedVars.insert(eraseVar);
 						
-		// iterate over all variable mappings, erasing links from scalars to eraseVar
+		// iterate over all variable mappings, erasing links from vars to eraseVar
 		for(map<varID, map<varID, affineInequality> >::iterator curVar = vars2Value.begin(); 
-		    curVar != vars2Value.end(); curVar++ )
+		    curVar != vars2Value.end(); curVar++)
 		{
 			// if this is a scalar
-			if(scalars.find(curVar->first) != scalars.end())
+			if(vars.find(curVar->first) != vars.end())
 			{
 				modified = (curVar->second).erase(eraseVar) > 0 || modified;
 				modifiedVars.insert(curVar->first);
@@ -1071,21 +755,9 @@ bool ConstrGraph::eraseVarConstrNoDivScalars(const varID& eraseVar, bool noBotto
 	return modified;
 }
 
-// erases the ranges of all array variables
-void ConstrGraph::eraseAllArrayRanges()
-{
-	for(varIDSet::iterator curArray = arrays.begin(); 
-		 curArray != arrays.end(); curArray++ )
-		// erase the range of each array without the cost of re-checking feasibility
-		eraseVarConstrNoDiv(*curArray, true);
-	
-	// perform the fasibility check, updating the graph's feasibility information
-	isFeasible();
-}
-
 // Removes any constraints between the given pair of variables
-// returns true if this causes the constraint graph to change and false otherwise
-bool ConstrGraph::disconnectVars(const varID& x, const varID& y)
+// Returns true if this causes the constraint graph to change and false otherwise
+/*bool ConstrGraph::disconnectVars(const varID& x, const varID& y)
 {
 	bool modified = false;
 	// if this constraint graph is already bottom, don't bother
@@ -1102,43 +774,42 @@ bool ConstrGraph::disconnectVars(const varID& x, const varID& y)
 	constrChanged = constrChanged || modified;
 	
 	return modified;	
-}
+}*/
 
 // Replaces all instances of origVar with newVar. Both are assumed to be scalars.
-// returns true if this causes the constraint graph to change and false otherwise
-// noBottomCheck - flag indicating whether this function should do nothing if this isBottom() returns 
-//              true (=false) or to not bother checking with isBottom (=true)
-bool ConstrGraph::replaceVar(const varID& origVar, const varID& newVar, bool noBottomCheck)
+// Returns true if this causes the constraint graph to change and false otherwise
+// noConsistencyCheck - flag indicating whether this function should explicitly check the self-consisteny of this graph (=false)
+// 							or to not bother checking self-consistency and just return the last-known value (=true)
+bool ConstrGraph::replaceVar(const varID& origVar, const varID& newVar, bool noConsistencyCheck, string indent)
 {
 	bool modified = false;
-	varID origDivVar = getDivScalar(origVar);
-	varID newDivVar = getDivScalar(newVar);
+	varID origDivVar = getDivVar(origVar);
+	varID newDivVar = getDivVar(newVar);
 	
-	// If we're checking and this constraint graph is already bottom, don't bother
-	if(noBottomCheck || !isBottom())
+	// If this graph has constraints to be considered
+	if(hasConsistentConstraints(noConsistencyCheck, indent))
 	{
 		//cout << "replaceVar("<<origVar.str()<<", "<<newVar.str()<<");\n";
-		
-		modified = modified || scalars.find(origVar)!=scalars.end();//vars2Value[origVar].size()>0 || vars2Value[origDivVar].size()>0;
+		modified = modified || vars.find(origVar)!=vars.end();//vars2Value[origVar].size()>0 || vars2Value[origDivVar].size()>0;
 
 		// First erase the origVar and then re-add it as a scalar with no constraints
-		modified = eraseVarConstr(newVar) || modified;
-		modified = addScalar(newVar) || modified;
+		modified = eraseVarConstr(newVar, noConsistencyCheck, "") || modified;
+		modified = addVar(newVar, "") || modified;
 
 /*		cout << "variables vars2Value ===\n";
 		for(map<varID, map<varID, affineInequality> >::iterator it=vars2Value.begin(); it!=vars2Value.end(); it++)
 		{ cout << "replaceVar: "<<it->first.str()<<", ==origVar = "<<(it->first == origVar)<<", vars2Value[var].size()="<<vars2Value[it->first].size()<<", vars2Value[origVar].size()="<<vars2Value[origVar].size()<<"==newVar = "<<(it->first == newVar)<<"\n"; }
 		
-		cout << "variables scalars ===\n";
-		for(varIDSet::iterator it=scalars.begin(); it!=scalars.end(); it++)
-		{ cout << "replaceVar: "<<(*it).str()<<", ==origVar = "<<((*it) == origVar)<<", vars2Value[var].size()="<<vars2Value[(*it)].size()<<", vars2Value[origVar].size()="<<vars2Value[origVar].size()<<"==newVar = "<<((*it) == newVar)<<"\n"; }
-		
+		cout << "variables vars ===\n";
+		for(varIDSet::iterator it=vars.begin(); it!=vars.end(); it++)
+		{ cout << "replaceVar: "<<(*it).str()<<", ==origVar = "<<((*it) == origVar)<<", vars2Value[var].size()="<<vars2Value[(*it)].size()<<", vars2Value[origVar].size()="<<vars2Value[origVar].size()<<"==newVar = "<<((*it) == newVar)<<"\n"; }		
 		
 		cout << "replaceVar: origVar ==== vars2Value["<<origVar.str()<<"].size()="<<vars2Value[origVar].size()<<"\n";
 		for(map<varID, affineInequality>::iterator it=vars2Value[origVar].begin(); it!=vars2Value[origVar].end(); it++)
 		{ cout << "replaceVar: "<<origVar.str()<<" -> "<<it->first.str()<<" = "<<it->second.str()<<"\n"; }
 		*/
-		// Next erase all mappings from origVar to other variables
+		
+		// Copy over all the mappings origVar <= ... to be newVar <= ... and delete the origVar <= ... mappings
 		vars2Value[newVar]=vars2Value[origVar];
 		/*cout << "replaceVar: Before ====\n";
 		for(map<varID, affineInequality>::iterator it=vars2Value[newVar].begin(); it!=vars2Value[newVar].end(); it++)
@@ -1151,7 +822,8 @@ bool ConstrGraph::replaceVar(const varID& origVar, const varID& newVar, bool noB
 		for(map<varID, affineInequality>::iterator it=vars2Value[newVar].begin(); it!=vars2Value[newVar].end(); it++)
 		{ cout << "replaceVar: "<<newVar.str()<<" -> "<<it->first.str()<<" = "<<it->second.str()<<"\n"; }*/
 		
-		// Iterate over all variable mappings, copying links from other variables to origVar
+		// Copy over all the mappings ... <= origVar to be ... <= newVar and delete the ... <= origVar mappings
+		// by iterating over all variable mappings, copying links from other variables to origVar
 		// to make them into links to newVar
 		for(map<varID, map<varID, affineInequality> >::iterator curVar = vars2Value.begin(); 
 		    curVar != vars2Value.end(); curVar++ )
@@ -1179,19 +851,18 @@ bool ConstrGraph::replaceVar(const varID& origVar, const varID& newVar, bool noB
 	
 	return modified;
 }
-
-
+\
 // Used by copyAnnotVars() and mergeAnnotVars() to identify variables that are interesting
 // from their perspective.
 bool ConstrGraph::annotInterestingVar(const varID& var, const set<pair<string, void*> >& noCopyAnnots, const set<varID>& noCopyVars,
-                                      const string& annotName, void* annotVal)
+                                      const string& annotName, void* annotVal, string indent)
 {
 	return !varHasAnnot(var, noCopyAnnots) && noCopyVars.find(var)==noCopyVars.end() && 
 		    varHasAnnot(var, annotName, annotVal);
 }
 
 
-// Copies the constrains on all the variables that have the given annotation (srcAnnotName -> srcAnnotVal).
+// Copies the constraints on all the variables that have the given annotation (srcAnnotName -> srcAnnotVal).
 // For each such variable we create a copy variable that is identical except that the
 //    (srcAnnotName -> srcAnnotVal) annotation is replaced with the (tgtAnnotName -> tgtAnnotVal) annotation.
 // If two variables match the (srcAnnotName -> srcAnnotVal) annotation and the constraint graph has a relation
@@ -1205,8 +876,9 @@ bool ConstrGraph::annotInterestingVar(const varID& var, const set<pair<string, v
 bool ConstrGraph::copyAnnotVars(string srcAnnotName, void* srcAnnotVal, 
                                 string tgtAnnotName, void* tgtAnnotVal,
                                 const set<pair<string, void*> >& noCopyAnnots,
-	                             const set<varID>& noCopyVars)
+	                             const set<varID>& noCopyVars, string indent)
 {
+	bool modified = false;
 	map<varID, map<varID, affineInequality> > xCopyAdditions;
 	
 	for(map<varID, map<varID, affineInequality> >::iterator itX=vars2Value.begin();
@@ -1304,13 +976,15 @@ bool ConstrGraph::copyAnnotVars(string srcAnnotName, void* srcAnnotVal,
 	
 	// Insert the newly-copied constraints back into vars2Value
 	for(map<varID, map<varID, affineInequality> >::iterator it=xCopyAdditions.begin();
-	    it!=xCopyAdditions.end(); it++)
+	    it!=xCopyAdditions.end(); it++) {
+		if(vars2Value[it->first] != it->second) modified = true;
 		vars2Value[it->first] = it->second;
+	}
 	
 	// ------------------------------------
-	// Add copy scalar variables to scalars
-	varIDSet copyScalars;
-	for(varIDSet::iterator it=scalars.begin(); it!=scalars.end(); it++)
+	// Add copy scalar variables to vars
+	varIDSet copyVars;
+	for(varIDSet::iterator it=vars.begin(); it!=vars.end(); it++)
 	{
 		const varID& var = *it;
 		
@@ -1326,17 +1000,19 @@ bool ConstrGraph::copyAnnotVars(string srcAnnotName, void* srcAnnotVal,
 			//cout << "      varCopy = "<<varCopy.str()<<"\n";
 			
 			// Record the copy
-			copyScalars.insert(varCopy);
+			copyVars.insert(varCopy);
 		}
 	}
 	
-	for(varIDSet::iterator it=copyScalars.begin(); it!=copyScalars.end(); it++)
-		scalars.insert(*it);
+	for(varIDSet::iterator it=copyVars.begin(); it!=copyVars.end(); it++) {
+		if(vars.find(*it) == vars.end()) modified = true;
+		vars.insert(*it);
+	}
 	
 	// ----------------------------------
-	// Add copy array variables to arrays
-	varIDSet copyArrays;
-	for(varIDSet::iterator it=arrays.begin(); it!=arrays.end(); it++)
+	// Add copy divVars variables to divVars
+	varIDSet copydivVars;
+	for(varIDSet::iterator it=divVars.begin(); it!=divVars.end(); it++)
 	{
 		const varID& var = *it;
 		
@@ -1350,36 +1026,16 @@ bool ConstrGraph::copyAnnotVars(string srcAnnotName, void* srcAnnotVal,
 			varCopy.addAnnotation(tgtAnnotName, tgtAnnotVal);
 			
 			// Record the copy
-			copyArrays.insert(varCopy);
+			copydivVars.insert(varCopy);
 		}
 	}
 	
-	for(varIDSet::iterator it=copyArrays.begin(); it!=copyArrays.end(); it++)
-		arrays.insert(*it);
-		
-	// ----------------------------------
-	// Add copy divVariables variables to divVariables
-	varIDSet copydivVariables;
-	for(varIDSet::iterator it=divVariables.begin(); it!=divVariables.end(); it++)
-	{
-		const varID& var = *it;
-		
-		if(!varHasAnnot(var, noCopyAnnots) && noCopyVars.find(var)==noCopyVars.end() && 
-		   ((srcAnnotName=="" && var.numAnnotations()==0) || 
-		   (var.hasAnnotation(srcAnnotName) && var.getAnnotation(srcAnnotName)==srcAnnotVal)))
-		{
-			// Create the copy variable, which is identical to var, except with replaced annotations
-			varID varCopy(var);
-			varCopy.remAnnotation(srcAnnotName);
-			varCopy.addAnnotation(tgtAnnotName, tgtAnnotVal);
-			
-			// Record the copy
-			copydivVariables.insert(varCopy);
-		}
+	for(varIDSet::iterator it=copydivVars.begin(); it!=copydivVars.end(); it++) {
+		if(divVars.find(*it) == divVars.end()) return modified;
+		divVars.insert(*it);
 	}
-	
-	for(varIDSet::iterator it=copydivVariables.begin(); it!=copydivVariables.end(); it++)
-		divVariables.insert(*it);
+
+	return modified;
 }
 		   
 // Merges the state of the variables in the constraint graph with the [finalAnnotName -> finalAnnotVal] annotation
@@ -1396,7 +1052,7 @@ bool ConstrGraph::copyAnnotVars(string srcAnnotName, void* srcAnnotVal,
 bool ConstrGraph::mergeAnnotVars(const string& finalAnnotName, void* finalAnnotVal, 
                                  const string& remAnnotName,   void* remAnnotVal,
                                  const set<pair<string, void*> >& noCopyAnnots,
-                                 const set<varID>& noCopyVars)
+                                 const set<varID>& noCopyVars, string indent)
 {
 	bool modified=false;
 	
@@ -1442,7 +1098,7 @@ bool ConstrGraph::mergeAnnotVars(const string& finalAnnotName, void* finalAnnotV
 						if(varHasAnnot(yRem, finalAnnotName, finalAnnotVal))
 						{
 							// Union the x <= yFinal inequality with the x <= yRem inequality
-							unionXYsubMap(itX->second, yRem, itYRem->second);
+							unionXYsubMap(itX->second, yRem, itYRem->second, indent+"    ");
 						}
 						// xRem <= yRem
 						else if(varHasAnnot(yRem, remAnnotName, remAnnotVal))
@@ -1451,17 +1107,17 @@ bool ConstrGraph::mergeAnnotVars(const string& finalAnnotName, void* finalAnnotV
 							ROSE_ASSERT( yFinal.swapAnnotations(remAnnotName, remAnnotVal, finalAnnotName, finalAnnotVal) );
 							
 							// Update the x->yFinal inequality with this one
-							unionXYsubMap(itX->second, yFinal, itYRem->second);
+							unionXYsubMap(itX->second, yFinal, itYRem->second, indent+"    ");
 						}
 						// xRem <= y (no rem or final annotation)
 						else
 							// Update the x->y inequality with this one
-							unionXYsubMap(itX->second, yRem, itYRem->second);
+							unionXYsubMap(itX->second, yRem, itYRem->second, indent+"    ");
 					}
 		   		// xRem <= y (no rem or final annotation)
 		   		else
 		   			// Update the x->y inequality with this one
-						unionXYsubMap(itX->second, yRem, itYRem->second);
+						unionXYsubMap(itX->second, yRem, itYRem->second, indent+"    ");
 				}
 				
 				modified = modified || (itXrem->second.size()>0);
@@ -1516,14 +1172,14 @@ bool ConstrGraph::mergeAnnotVars(const string& finalAnnotName, void* finalAnnotV
 		vars2Value.erase(*it);
 		
 	// -------------------------------------------
-	// Now update scalars, arrays and divVariables
+	// Now update vars, arrays and divVars
 	
 	return modified;
 }
 
 // Union the current inequality for y in the given subMap of vars2Value with the given affine inequality
 // Returns true if this causes a change in the subMap, false otherwise.
-bool ConstrGraph::unionXYsubMap(map<varID, affineInequality>& subMap, const varID& y, const affineInequality& ineq)
+bool ConstrGraph::unionXYsubMap(map<varID, affineInequality>& subMap, const varID& y, const affineInequality& ineq, string indent)
 {
 	bool modified = false;
 	
@@ -1557,7 +1213,7 @@ bool ConstrGraph::mergeAnnotVarsSubMap(map<varID, affineInequality>& subMap,
                                        string finalAnnotName, void* finalAnnotVal, 
                                        string remAnnotName,   void* remAnnotVal,
                                        const set<pair<string, void*> >& noCopyAnnots,
-                                       const set<varID>& noCopyVars)
+                                       const set<varID>& noCopyVars, string indent)
 {
 	bool modified = false;
 	
@@ -1574,7 +1230,7 @@ bool ConstrGraph::mergeAnnotVarsSubMap(map<varID, affineInequality>& subMap,
 		//cout << "    mergeAnnotVarsSubMap y="<<y.str()<<"\n";
 		
 		// If the current y matches the rem annotation
-		if(annotInterestingVar(y, noCopyAnnots, noCopyVars, remAnnotName, remAnnotVal))
+		if(annotInterestingVar(y, noCopyAnnots, noCopyVars, remAnnotName, remAnnotVal, indent+"    "))
 		{
 			// Generate the version of y that has the final annotation
 			varID yFinal(y);
@@ -1611,17 +1267,14 @@ bool ConstrGraph::mergeAnnotVarsSubMap(map<varID, affineInequality>& subMap,
 	for(set<varID>::iterator it=toDeleteY.begin(); it!=toDeleteY.end(); it++)
 		subMap.erase(*it);
 	
-	// Filter scalars, arrays and divVariables to remove any rem variables. When variables
+	// Filter vars, arrays and divVars to remove any rem variables. When variables
 	// have a rem version but not a final version, we replace the rem version with the final version.
-	modified = mergeAnnotVarsSet(scalars, 
+	modified = mergeAnnotVarsSet(vars, 
 	                             finalAnnotName, finalAnnotVal, remAnnotName, remAnnotVal,
-	                             noCopyAnnots, noCopyVars) || modified;
-	modified = mergeAnnotVarsSet(scalars, 
+	                             noCopyAnnots, noCopyVars, indent+"    ") || modified;
+	modified = mergeAnnotVarsSet(divVars, 
 	                             finalAnnotName, finalAnnotVal, remAnnotName, remAnnotVal,
-	                             noCopyAnnots, noCopyVars) || modified;
-	modified = mergeAnnotVarsSet(divVariables, 
-	                             finalAnnotName, finalAnnotVal, remAnnotName, remAnnotVal,
-	                             noCopyAnnots, noCopyVars) || modified;
+	                             noCopyAnnots, noCopyVars, indent+"    ") || modified;
 	
 	return modified;	
 }
@@ -1633,7 +1286,7 @@ bool ConstrGraph::mergeAnnotVarsSet(set<varID> varsSet,
                                     string finalAnnotName, void* finalAnnotVal, 
                                     string remAnnotName,   void* remAnnotVal,
                                     const set<pair<string, void*> >& noCopyAnnots,
-                                    const set<varID>& noCopyVars)
+                                    const set<varID>& noCopyVars, string indent)
 {
 	bool modified = false;
 	
@@ -1645,7 +1298,7 @@ bool ConstrGraph::mergeAnnotVarsSet(set<varID> varsSet,
 		const varID& var = *it;
 		
 		// If this is a rem variable
-		if(annotInterestingVar(var, noCopyAnnots, noCopyVars, remAnnotName, remAnnotVal))
+		if(annotInterestingVar(var, noCopyAnnots, noCopyVars, remAnnotName, remAnnotVal, indent+"    "))
 		{
 			// Create a version of var with the rem annotations replaced with the final annotations
 			varID varFinal(var);
@@ -1660,7 +1313,6 @@ bool ConstrGraph::mergeAnnotVarsSet(set<varID> varsSet,
 				varID varFinal(var);
 				// Change var's annotation to convert it from rem to final
 				ROSE_ASSERT( varFinal.swapAnnotations(remAnnotName, remAnnotVal, finalAnnotName, finalAnnotVal) );
-				
 				
 				// Record that we're going to remove var and insert varFinal
 				varsToDelete.insert(var);
@@ -1683,11 +1335,11 @@ bool ConstrGraph::mergeAnnotVarsSet(set<varID> varsSet,
 // Returns true if the given variable has an annotation in the given set and false otherwise.
 // The variable matches an annotation if its name and value directly match or if the variable
 // has no annotations and the annotation's name is "".
-bool ConstrGraph::varHasAnnot(const varID& var, const set<pair<string, void*> >& annots)
+bool ConstrGraph::varHasAnnot(const varID& var, const set<pair<string, void*> >& annots, string indent)
 {
 	for(set<pair<string, void*> >::const_iterator it=annots.begin(); it!=annots.end(); it++)
 	{
-		if(varHasAnnot(var, (*it).first, (*it).second))
+		if(varHasAnnot(var, (*it).first, (*it).second, indent))
 			return true;
 	}
 	return false;
@@ -1696,7 +1348,7 @@ bool ConstrGraph::varHasAnnot(const varID& var, const set<pair<string, void*> >&
 // Returns true if the given variable has an annotation in the given set and false otherwise.
 // The variable matches an annotation if its name and value directly match or if the variable
 // has no annotations and the annotName=="".
-bool ConstrGraph::varHasAnnot(const varID& var, string annotName, void* annotVal)
+bool ConstrGraph::varHasAnnot(const varID& var, string annotName, void* annotVal, string indent)
 {
 	// If the annotation matches variables with no annotation and this variable has no annotations
 	if(annotName=="" && var.numAnnotations()==0)
@@ -1712,27 +1364,27 @@ bool ConstrGraph::varHasAnnot(const varID& var, string annotName, void* annotVal
 // Returns a constraint graph that only includes the constrains in this constraint graph that involve the
 // variables in focusVars and their respective divisibility variables, if any. 
 // It is assumed that focusVars only contains scalars and not array ranges.
-ConstrGraph* ConstrGraph::getProjection(const varIDSet& focusVars)
+ConstrGraph* ConstrGraph::getProjection(const varIDSet& focusVars, string indent)
 {
-	ConstrGraph* pCG = new ConstrGraph(func, divL, sgnL);
+	ConstrGraph* pCG = new ConstrGraph(func, n, state, ldva, divL, sgnL, getLevel(true).first!=uninitialized, indent+"    ");
 	
-	// focusVars that are inside this->scalars and their respective divisibility variables, if any
+	// focusVars that are inside this->vars and their respective divisibility variables, if any
 	// We record these variables in allFocusVars and only worry about them when extracting
 	//    the projection constraints. 
-	// // Furthermore, we add these variables to the list of scalars
+	// // Furthermore, we add these variables to the list of vars
 	// //    and divisibility variables of pCG.
 	varIDSet allFocusVars;
 	for(varIDSet::iterator it=focusVars.begin(); it!=focusVars.end(); it++)
 	{
 		const varID& var = *it;
-		if(scalars.find(var) != scalars.end())
+		if(vars.find(var) != vars.end())
 		{
-			addScalar(var);
+			addVar(var, "");
 			allFocusVars.insert(var);
-//			pCG->addScalar(var);
+//			pCG->addVar(var, "");
 			
-			varID divVar = getDivScalar(var);
-			if(divVariables.find(divVar) != divVariables.end())
+			varID divVar = getDivVar(var);
+			if(divVars.find(divVar) != divVars.end())
 			{
 				allFocusVars.insert(divVar);
 //				pCG->addDivVar(var);
@@ -1740,16 +1392,14 @@ ConstrGraph* ConstrGraph::getProjection(const varIDSet& focusVars)
 		}
 	}
 	
-	// We simply copy the sets of scalars and divisibility variables from this to pCG
+	// We simply copy the sets of vars and divisibility variables from this to pCG
 	// We may not need all of them but its simpler this way
-	pCG->scalars = scalars;
-	pCG->divVariables = divVariables;
+	pCG->vars = vars;
+	pCG->divVars = divVars;
 	
 	// Copy all constraints in vars2Value that pertain to variables in allFocusVars to pCG
 	for(map<varID, map<varID, affineInequality> >::iterator itX=vars2Value.begin(); itX!=vars2Value.end(); itX++)
 	{
-		
-
 		// If itX->first appears in allFocusVars
 		if(allFocusVars.find(itX->first) != allFocusVars.end())
 		{
@@ -1791,23 +1441,32 @@ ConstrGraph* ConstrGraph::getProjection(const varIDSet& focusVars)
 // The variables in cg1 and cg2 that are not in the noAnnot set, are annotated with cg1Annot and cg2Annot, respectively,
 // under the name annotName.
 // cg1 and cg2 are assumed to have identical constraints between variables in the noAnnotset.
-ConstrGraph* ConstrGraph::joinCG(ConstrGraph* cg1, void* cg1Annot, ConstrGraph* cg2, void* cg2Annot, string annotName, const varIDSet& noAnnot)
+ConstrGraph* ConstrGraph::joinCG(ConstrGraph* cg1, void* cg1Annot, ConstrGraph* cg2, void* cg2Annot, 
+                                 string annotName, const varIDSet& noAnnot, string indent)
 {
+	// Both constraint graphs correspond to the same function, dataflow node and state
+	ROSE_ASSERT(cg1->func     == cg2->func);
+	ROSE_ASSERT(cg1->n        == cg2->n);
+	ROSE_ASSERT(&(cg1->state) == &(cg2->state));
+	
+	// The annotations that will be associated with the two constraint graphs are different 
+	// (otherwise there'd be collistions)
 	ROSE_ASSERT(cg1Annot != cg2Annot);
-	ConstrGraph* combo = new ConstrGraph();
+	
+	ConstrGraph* combo = new ConstrGraph(cg1->func, cg1->n, cg1->state, true, indent+"    ");
 	if(debugLevel>=1)
 	{
-		cout << "joinCG("<<cg1<<", "<<cg1Annot<<", "<<cg2<<", "<<cg2Annot<<", "<<annotName<<", noAnnot: [";
+		cout << indent << "joinCG("<<cg1<<", "<<cg1Annot<<", "<<cg2<<", "<<cg2Annot<<", "<<annotName<<", noAnnot: [";
 		for(varIDSet::const_iterator it = noAnnot.begin(); it!=noAnnot.end(); )
 		{ cout << (*it).str(); it++; if(it!=noAnnot.end()) cout << ", "; }
 		cout << "]\n";
-		cout << "=== joinCG_copyState1 === \n";
+		cout << indent << "=== joinCG_copyState1 === \n";
 	}
-	joinCG_copyState(combo, cg1, cg1Annot, annotName, noAnnot);
-	if(debugLevel>=1) cout << "=== joinCG_copyState2 === \n";
-	joinCG_copyState(combo, cg2, cg2Annot, annotName, noAnnot);
-	if(debugLevel>=1) cout << "=== transitiveClosure === \n";
-	combo->transitiveClosure();
+	joinCG_copyState(combo, cg1, cg1Annot, annotName, noAnnot, indent+"    ");
+	if(debugLevel>=1) cout << indent << "=== joinCG_copyState2 === \n";
+	joinCG_copyState(combo, cg2, cg2Annot, annotName, noAnnot, indent+"    ");
+	if(debugLevel>=1) cout << indent << "=== transitiveClosure === \n";
+	combo->transitiveClosure(indent+"    ");
 	
 	return combo;
 }
@@ -1815,14 +1474,15 @@ ConstrGraph* ConstrGraph::joinCG(ConstrGraph* cg1, void* cg1Annot, ConstrGraph* 
 // Copies the per-variable contents of srcCG to tgtCG, while ensuring that in tgtCG all variables that are not
 // in noAnnot are annotated with the annotName->annot label. For variables in noAnnot, the function ensures
 // that tgtCG does not have inconsistent mappings between such variables.
-void ConstrGraph::joinCG_copyState(ConstrGraph* tgtCG, ConstrGraph* srcCG, void* annot, string annotName, const varIDSet& noAnnot)
+void ConstrGraph::joinCG_copyState(ConstrGraph* tgtCG, ConstrGraph* srcCG, void* annot, 
+                                   string annotName, const varIDSet& noAnnot, string indent)
 {
 	// === vars2Value ===
 	for(map<varID, map<varID, affineInequality> >::iterator itX=srcCG->vars2Value.begin();
 	    itX!=srcCG->vars2Value.end(); itX++)
 	{
-		// Only worry about scalars
-		if(srcCG->scalars.find(itX->first) == srcCG->scalars.end()) continue;
+		// Only worry about vars
+		if(srcCG->vars.find(itX->first) == srcCG->vars.end()) continue;
 		
 		varID x = itX->first;
 				
@@ -1838,7 +1498,7 @@ void ConstrGraph::joinCG_copyState(ConstrGraph* tgtCG, ConstrGraph* srcCG, void*
 			tgtCG->vars2Value[x] = empty;
 			
 			// Add the annotated variable as a scalar to tgtCG to ensure that transitiveClosure operates on it
-			tgtCG->addScalar(x);
+			tgtCG->addVar(x, "");
 		}
 		else if(tgtCG->vars2Value.find(x) == tgtCG->vars2Value.end())
 		{
@@ -1852,8 +1512,8 @@ void ConstrGraph::joinCG_copyState(ConstrGraph* tgtCG, ConstrGraph* srcCG, void*
 		for(map<varID, affineInequality>::iterator itY=itX->second.begin();
 		    itY!=itX->second.end(); itY++)
 		{
-			// Only worry about scalars
-			if(srcCG->scalars.find(itY->first) == srcCG->scalars.end()) continue;
+			// Only worry about vars
+			if(srcCG->vars.find(itY->first) == srcCG->vars.end()) continue;
 			
 			varID y = itY->first;
 			// Annotate y if necessary and add a fresh x->y mapping, if necessary
@@ -1867,10 +1527,10 @@ void ConstrGraph::joinCG_copyState(ConstrGraph* tgtCG, ConstrGraph* srcCG, void*
 				xToTgt[y] = itY->second;
 				
 				// Add the annotated variable as a scalar to tgtCG to ensure that transitiveClosure operates on it
-				tgtCG->addScalar(y);
+				tgtCG->addVar(y, "");
 				
 				if(debugLevel>=1) 
-					cout << "joinCG_copyState: addingA "<<x.str()<<"->"<<y.str()<<": "<<xToTgt[y].str()<<"\n";
+					cout << indent << "joinCG_copyState: addingA "<<x.str()<<"->"<<y.str()<<": "<<xToTgt[y].str()<<"\n";
 			}
 			// // We do not allow disagreements about the value of the x->y mapping 
 			// If there are disagreements about the value of the x->y mapping (can only happen if both
@@ -1887,44 +1547,44 @@ void ConstrGraph::joinCG_copyState(ConstrGraph* tgtCG, ConstrGraph* srcCG, void*
 				}*/
 				xToTgt[y] += itY->second;
 				if(debugLevel>=1) 
-					cout << "joinCG_copyState: unioning "<<x.str()<<"->"<<y.str()<<" from "<<itY->second.str()<<" to "<<xToTgt[y].str()<<"\n";
+					cout << indent << "joinCG_copyState: unioning "<<x.str()<<"->"<<y.str()<<" from "<<itY->second.str()<<" to "<<xToTgt[y].str()<<"\n";
 			}
 			else
 			{
 				xToTgt[y] = itY->second;
 				if(debugLevel>=1) 
-					cout << "joinCG_copyState: addingB "<<x.str()<<"->"<<y.str()<<": "<<xToTgt[y].str()<<"\n";
+					cout << indent << "joinCG_copyState: addingB "<<x.str()<<"->"<<y.str()<<": "<<xToTgt[y].str()<<"\n";
 			}
 			tgtCG->modifiedVars.insert(y);
 			tgtCG->newConstrVars.insert(y);
 		}
 	}
-
-	// === arrays ===
-	for(varIDSet::iterator it=srcCG->arrays.begin(); it!=srcCG->arrays.end(); it++)
-	{
-		varID var = *it;
-		if(noAnnot.find(var) == noAnnot.end())
-			var.addAnnotation(annotName, annot);
-		tgtCG->arrays.insert(var);
-	}
 	
-	// === scalars ===
-	for(varIDSet::iterator it=srcCG->scalars.begin(); it!=srcCG->scalars.end(); it++)
+	// === vars ===
+	for(varIDSet::iterator it=srcCG->vars.begin(); it!=srcCG->vars.end(); it++)
 	{
 		varID var = *it;
 		if(noAnnot.find(*it) == noAnnot.end())
 			var.addAnnotation(annotName, annot);
-		tgtCG->scalars.insert(var);
+		tgtCG->vars.insert(var);
 	}
 	
-	/*for(varIDSet::iterator it = tgtCG->scalars.begin(); it!=tgtCG->scalars.end(); it++)
+	// === divVars ===
+	for(varIDSet::iterator it=srcCG->divVars.begin(); it!=srcCG->divVars.end(); it++)
+	{
+		varID var = *it;
+		if(noAnnot.find(*it) == noAnnot.end())
+			var.addAnnotation(annotName, annot);
+		tgtCG->divVars.insert(var);
+	}
+	
+	/*for(varIDSet::iterator it = tgtCG->vars.begin(); it!=tgtCG->vars.end(); it++)
 		cout << "    var: "<< (*it).str()<<"\n";*/
 }
 
 // Replaces all references to variables with the given annotName->annot annotation to references to variables without the annotation
 // Returns true if this causes the constraint graph to change and false otherwise
-bool ConstrGraph::removeVarAnnot(string annotName, void* annot)
+bool ConstrGraph::removeVarAnnot(string annotName, void* annot, string indent)
 {
 	bool modified=false;
 	
@@ -1978,39 +1638,28 @@ bool ConstrGraph::removeVarAnnot(string annotName, void* annot)
 		vars2Value[x] = vars2Value[*it];
 		vars2Value.erase(*it);
 	}
-
-	// === arrays ===
-	varIDSet newArrays;
-	for(varIDSet::iterator it=arrays.begin(); it!=arrays.end(); it++)
-	{
-		varID var = *it;
-		if(var.getAnnotation(annotName) == annot)
-			modified = var.remAnnotation(annotName) || modified;
-		newArrays.insert(var);
-	}
-	arrays = newArrays;
 	
-	// === scalars ===
-	varIDSet newScalars;
-	for(varIDSet::iterator it=scalars.begin(); it!=scalars.end(); it++)
+	// === vars ===
+	varIDSet newVars;
+	for(varIDSet::iterator it=vars.begin(); it!=vars.end(); it++)
 	{
 		varID var = *it;
 		if(var.getAnnotation(annotName) == annot)
 			modified = var.remAnnotation(annotName) || modified;
-		newScalars.insert(var);
+		newVars.insert(var);
 	}
-	scalars = newScalars;
+	vars = newVars;
 	
-	// === divVariables ===
-	varIDSet newDivVariables;
-	for(varIDSet::iterator it=divVariables.begin(); it!=divVariables.end(); it++)
+	// === divVars ===
+	varIDSet newdivVars;
+	for(varIDSet::iterator it=divVars.begin(); it!=divVars.end(); it++)
 	{
 		varID var = *it;
 		if(var.getAnnotation(annotName) == annot)
 			modified = var.remAnnotation(annotName) || modified;
-		newDivVariables.insert(var);
+		newdivVars.insert(var);
 	}
-	divVariables = newDivVariables;	
+	divVars = newdivVars;	
 	
 	return modified;
 }
@@ -2019,7 +1668,7 @@ bool ConstrGraph::removeVarAnnot(string annotName, void* annot)
 // references to variables without the annotation
 // Returns true if this causes the constraint graph to change and false otherwise
 bool ConstrGraph::replaceVarAnnot(string oldAnnotName, void* oldAnnot,
-                                  string newAnnotName, void* newAnnot)
+                                  string newAnnotName, void* newAnnot, string indent)
 {
 	bool modified=false;
 	
@@ -2075,38 +1724,27 @@ bool ConstrGraph::replaceVarAnnot(string oldAnnotName, void* oldAnnot,
 		vars2Value.erase(*it);
 	}
 
-	// === arrays ===
-	varIDSet newArrays;
-	for(varIDSet::iterator it=arrays.begin(); it!=arrays.end(); it++)
+	// === vars ===
+	varIDSet newVars;
+	for(varIDSet::iterator it=vars.begin(); it!=vars.end(); it++)
 	{
 		varID var = *it;
 		if(var.getAnnotation(oldAnnotName) == oldAnnot)
 			modified = var.swapAnnotations(oldAnnotName, oldAnnot, newAnnotName, newAnnot) || modified;
-		newArrays.insert(var);
+		newVars.insert(var);
 	}
-	arrays = newArrays;
+	vars = newVars;
 	
-	// === scalars ===
-	varIDSet newScalars;
-	for(varIDSet::iterator it=scalars.begin(); it!=scalars.end(); it++)
+	// === divVars ===
+	varIDSet newdivVars;
+	for(varIDSet::iterator it=divVars.begin(); it!=divVars.end(); it++)
 	{
 		varID var = *it;
 		if(var.getAnnotation(oldAnnotName) == oldAnnot)
 			modified = var.swapAnnotations(oldAnnotName, oldAnnot, newAnnotName, newAnnot) || modified;
-		newScalars.insert(var);
+		newdivVars.insert(var);
 	}
-	scalars = newScalars;
-	
-	// === divVariables ===
-	varIDSet newDivVariables;
-	for(varIDSet::iterator it=divVariables.begin(); it!=divVariables.end(); it++)
-	{
-		varID var = *it;
-		if(var.getAnnotation(oldAnnotName) == oldAnnot)
-			modified = var.swapAnnotations(oldAnnotName, oldAnnot, newAnnotName, newAnnot) || modified;
-		newDivVariables.insert(var);
-	}
-	divVariables = newDivVariables;	
+	divVars = newdivVars;	
 	
 	return modified;
 }
@@ -2115,7 +1753,7 @@ bool ConstrGraph::replaceVarAnnot(string oldAnnotName, void* oldAnnot,
 //    (or if tgtAnnotName=="" and the variable has no annotations), add the annotation
 //    (newAnnotName -> newAnnotVal).
 // Returns true if this causes the constraint graph to change and false otherwise
-bool ConstrGraph::addVarAnnot(string tgtAnnotName, void* tgtAnnotVal, string newAnnotName, void* newAnnotVal)
+bool ConstrGraph::addVarAnnot(string tgtAnnotName, void* tgtAnnotVal, string newAnnotName, void* newAnnotVal, string indent)
 {
 	bool modified=false;
 	// === vars2Value ===
@@ -2170,39 +1808,28 @@ bool ConstrGraph::addVarAnnot(string tgtAnnotName, void* tgtAnnotVal, string new
 		vars2Value[x] = vars2Value[*it];
 		vars2Value.erase(*it);
 	}
-
-	// === arrays ===
-	varIDSet newArrays;
-	for(varIDSet::iterator it=arrays.begin(); it!=arrays.end(); it++)
-	{
-		varID var = *it;
-		if((tgtAnnotName=="" && var.numAnnotations()==0) || var.getAnnotation(tgtAnnotName)==tgtAnnotVal)
-			modified = var.addAnnotation(newAnnotName, newAnnotVal) || modified;
-		newArrays.insert(var);
-	}
-	arrays = newArrays;
 	
-	// === scalars ===
-	varIDSet newScalars;
-	for(varIDSet::iterator it=scalars.begin(); it!=scalars.end(); it++)
+	// === vars ===
+	varIDSet newVars;
+	for(varIDSet::iterator it=vars.begin(); it!=vars.end(); it++)
 	{
 		varID var = *it;
 		if((tgtAnnotName=="" && var.numAnnotations()==0) || var.getAnnotation(tgtAnnotName)==tgtAnnotVal)
 			modified = var.addAnnotation(newAnnotName, newAnnotVal) || modified;
-		newScalars.insert(var);
+		newVars.insert(var);
 	}
-	scalars = newScalars;
+	vars = newVars;
 	
-	// === divVariables ===
-	varIDSet newDivVariables;
-	for(varIDSet::iterator it=divVariables.begin(); it!=divVariables.end(); it++)
+	// === divVars ===
+	varIDSet newdivVars;
+	for(varIDSet::iterator it=divVars.begin(); it!=divVars.end(); it++)
 	{
 		varID var = *it;
 		if((tgtAnnotName=="" && var.numAnnotations()==0) || var.getAnnotation(tgtAnnotName)==tgtAnnotVal)
 			modified = var.addAnnotation(newAnnotName, newAnnotVal) || modified;
-		newDivVariables.insert(var);
+		newdivVars.insert(var);
 	}
-	divVariables = newDivVariables;
+	divVars = newdivVars;
 	
 	return modified;
 }
@@ -2216,133 +1843,142 @@ bool ConstrGraph::addVarAnnot(string tgtAnnotName, void* tgtAnnotVal, string new
 
 /**** Transfer Function-Related Updates ****/
 
+// Negates the constraint graph.
+// Returns true if this causes the constraint graph to change and false otherwise
+bool ConstrGraph::negate(string indent)
+{
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+	
+	// If the negation of this constraint graph is equal to itself
+	if(l.first==uninitialized || l.first==bottom || l.first==top ||
+	   (l.first==constrKnown && l.second==inconsistent))
+	{ return false; }
+	
+	if(l.second==conj) constrType = negConj;
+	else               constrType = conj;
+	
+	return true;
+}
+
 // updates the constraint graph with the information that x*a = y*b+c
 // returns true if this causes the constraint graph to change and false otherwise
-bool ConstrGraph::assign(const varAffineInequality& cond)
+bool ConstrGraph::assign(const varAffineInequality& cond, string indent)
 {
-	return assign(cond.getX(), cond.getY(), cond.getA(), cond.getB(), cond.getC());
+	return assign(cond.getX(), cond.getY(), cond.getA(), cond.getB(), cond.getC(), indent+"    ");
 }
 
-bool ConstrGraph::assign(varID x, varID y, const affineInequality& ineq)
+bool ConstrGraph::assign(varID x, varID y, const affineInequality& ineq, string indent)
 {
-	return assign(x, y, ineq.getA(), ineq.getB(), ineq.getC());
+	return assign(x, y, ineq.getA(), ineq.getB(), ineq.getC(), indent+"    ");
 }
 
-bool ConstrGraph::assign(varID x, varID y, int a, int b, int c)
+bool ConstrGraph::assign(varID x, varID y, int a, int b, int c, string indent)
 {
-	//printf("ConstrGraph::assign, x=%s, y=%s, a=%d, b=%d c=%d\n", x.str().c_str(), y.str().c_str(), a, b, c);
+	printf("%sConstrGraph::assign, x=%s, y=%s, a=%d, b=%d c=%d\n", indent.c_str(), x.str().c_str(), y.str().c_str(), a, b, c);
 	
 	bool modified = false;
 	map<varID, map<varID, affineInequality> >::iterator mapIter;
 		
-	// if the graph is already bottom, do nothing more
-	if(isBottom())
-		return modified;
-	
-	// we do not support constraints between contents of different arrays
-	if(isArray(x) && isArray(y))
-		return modified;
-
-	// if x is an array with an empty range, this range cannot be further changed
-	if(isArray(x) && emptyRange[x])
-		return modified;
+	// This constraint graph will now definitely be initialized
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+	if(l.first==uninitialized || l.first==bottom) { setToConstrKnown(conj, false, indent+"    "); }
 		
-	// if y is an array with an empty range, this range cannot be further changed
-	if(isArray(y) && emptyRange[y])
-		return modified;
-	
+	// If the graph is maximal, there is no need to bother adding anything
+	if(isMaximalState(true, indent+"    ")) return modified;
+
 	modifiedVars.insert(x);
 	newConstrVars.insert(x);
 	
 	// x = x*b + c
 	if(x == y && a==1)
 	{
-		//varID divX = getDivScalar(x);
+		varID divX = getDivVar(x);
 		
-		// remove x's divisibility variable from the constraint graph and add the divisibility constraints
-		addDivVar(x, true);
+		// Remove x's divisibility variable from the constraint graph and add the divisibility constraints
+//!!!		addDivVar(x, true, indent+"    ");
 		
-		// iterate over all other variables i and update all the i -> x constraints
+		// Iterate over all other variables i and update all the i -> x constraints
 		for(map<varID, map<varID, affineInequality> >::iterator iterI = vars2Value.begin(); 
 		    iterI != vars2Value.end(); iterI++)
 		{
 			//const varID& i = iterI->first;
-			/* // don't update the connection between x and its divisibility variable
-			if(i == divX) continue;*/
+			// Don't update the connection between x and its divisibility variable and x and itself
+			if(iterI->first == divX || iterI->first == x) continue;
 				
-			// update all i->x pairs
+			// Update all i->x pairs
 			for(map<varID, affineInequality>::iterator iterJ = iterI->second.begin();
 			    iterJ != iterI->second.end(); iterJ++)
 			{
 				const varID& j = iterJ->first;
+				if(j != x) continue;
 				
-				if(j == x)
+				// If x and z have a known constraint relationship
+				if(iterJ->second.getLevel() == affineInequality::constrKnown)
 				{
-					// if x and z have a known constraint relationship
-					if(iterJ->second.getLevel() == affineInequality::constrKnown)
-					{
-						affineInequality& constrIX = iterJ->second;
-						// original constraint:
-						// i*a <= x*b + c AND x' ==> x*b'+c'
-						// i*a - c <= x*b
-						// new constraint:
-						// x'*b = (x*b'+c')*b = x*b'*b + c'*b
-						// x'*b >= (i*a-c)*b' + c'*b
-						// x'*b >= i*a*b' - c*b' + c'*b
-						// i*a*b' <= x'*b + c*b' - c'*b
-						
-						//cout << "    assign() new constraint: "<<i.str()<<"*"<<(constrIX.getA()*b)<<" <= "<<x.str()<<"*"<<(constrIX.getB())<<" + "<<(constrIX.getC()*b - c*constrIX.getB())<<"\n";
-						// update the constraints
-						modified = constrIX.set(constrIX.getA()*b, constrIX.getB(), constrIX.getC()*b - c*constrIX.getB()) || modified;
-						
-						modifiedVars.insert(iterI->first);
-						newConstrVars.insert(iterI->first);
-					}
+					affineInequality& constrIX = iterJ->second;
+					// original constraint:
+					// i*a <= x*b + c AND x' ==> x*b'+c'
+					// i*a - c <= x*b
+					// new constraint:
+					// x'*b = (x*b'+c')*b = x*b'*b + c'*b
+					// x'*b >= (i*a-c)*b' + c'*b
+					// x'*b >= i*a*b' - c*b' + c'*b
+					// i*a*b' <= x'*b + c*b' - c'*b
+					
+					cout << indent << "    assign() new constraint: "<<x<<"*"<<(constrIX.getA()*b)<<" <= "<<x.str()<<"*"<<(constrIX.getB())<<" + "<<(constrIX.getC()*b - c*constrIX.getB())<<"\n";
+					// update the constraints
+					modified = constrIX.set(constrIX.getA()*b, constrIX.getB(), constrIX.getC()*b - c*constrIX.getB()) || modified;
+					
+					modifiedVars.insert(iterI->first);
+					newConstrVars.insert(iterI->first);
 				}
 			}
 		}
 		
-		// iterate over all of x->z constraints
-		map<varID, affineInequality>& xMap = vars2Value[x];
-		for(map<varID, affineInequality>::iterator iterZ = xMap.begin(); iterZ != xMap.end(); iterZ++)
-		{
-			//const varID& z = iterZ->first;
-			/* // don't update the connection between x and its divisibility variable
-			if(z == divX) continue;*/
-				
-			affineInequality& constrXZ = iterZ->second;
-			
-			// if x and z have a known constraint relationship
-			if(constrXZ.getLevel() == affineInequality::constrKnown)
+		// Iterate over all of x->z constraints
+		if(vars2Value.find(x) != vars2Value.end()) {
+			for(map<varID, affineInequality>::iterator iterZ = vars2Value[x].begin(); iterZ != vars2Value[x].end(); iterZ++)
 			{
-				// original constraint:
-				// x*a <= z*b + c AND x' = x*b'+c'
-				// new constraint:
-				// x'*a = (x*b'+c')*a = x*b'*a + c'*a
-				// x'*a = x*a*b' + c'*a <= (z*b + c)*b' + c'*a
-				// x'*a <= z*b*b' + c*b' + c'*a
+				//const varID& z = iterZ->first;
+				// Don't update the connection between x and its divisibility variable
+				if(iterZ->first == divX) continue;
+					
+				affineInequality& constrXZ = iterZ->second;
 				
-				//cout << "    assign() new constraint: "<<x.str()<<"*"<<(b*constrXZ.getA())<<" <= "<<z.str()<<"*"<<(constrXZ.getB()*b)<<" + "<<(constrXZ.getC()*b + c*constrXZ.getA())<<"\n";
-				// update the constraints
-				modified = constrXZ.set(constrXZ.getA(), constrXZ.getB()*b, constrXZ.getC()*b + c*constrXZ.getA()) || modified;
-				
-				modifiedVars.insert(iterZ->first);
-				newConstrVars.insert(iterZ->first);
+				// If x and z have a known constraint relationship
+				if(constrXZ.getLevel() == affineInequality::constrKnown)
+				{
+					// original constraint:
+					// x*a <= z*b + c AND x' = x*b'+c'
+					// new constraint:
+					// x'*a = (x*b'+c')*a = x*b'*a + c'*a
+					// x'*a = x*a*b' + c'*a <= (z*b + c)*b' + c'*a
+					// x'*a <= z*b*b' + c*b' + c'*a
+					
+					cout << indent << "    assign() new constraint: "<<x<<"*"<<(b*constrXZ.getA())<<" <= "<<iterZ->first<<"*"<<(constrXZ.getB()*b)<<" + "<<(constrXZ.getC()*b + c*constrXZ.getA())<<"\n";
+					// update the constraints
+					modified = constrXZ.set(constrXZ.getA(), constrXZ.getB()*b, constrXZ.getC()*b + c*constrXZ.getA()) || modified;
+					
+					modifiedVars.insert(iterZ->first);
+					newConstrVars.insert(iterZ->first);
+				}
 			}
 		}
 	}
 	// case x*a = y*b + c
 	else if(x!=y)
 	{
-		// disconnect all variables from x
-		eraseVarConstr(x);
+		// Disconnect all variables from x
+		eraseVarConstr(x, true, indent+"    ");
 		
-		//cout << "    assign() new constraint: "<<x.str()<<"*"<<a<<" <= "<<y.str()<<"*"<<b<<" + "<<c<<"\n";
+		// Remove x's divisibility variable from the constraint graph and add the divisibility constraints
+//!!!		addDivVar(x, true, indent+"    ");
+		cout << indent << "    assign() new constraint: "<<x.str()<<"*"<<a<<" <= "<<y.str()<<"*"<<b<<" + "<<c<<"\n";
 		
 		// x*a <= y*b + c
-		setVal(x, y, a, b, c);
+		setVal(x, y, a, b, c, indent+"    ");
 		// y*b <= x*a - c
-		setVal(y, x, b, a, 0-c);
+		setVal(y, x, b, a, 0-c, indent+"    ");
 		
 		modifiedVars.insert(y);
 		newConstrVars.insert(y);
@@ -2358,9 +1994,83 @@ bool ConstrGraph::assign(varID x, varID y, int a, int b, int c)
 		// x*a = x*b + c
 		ROSE_ASSERT(0);
 	
-	initialized = true; // this constraint graph is now definitely initialized
-	
 	constrChanged = constrChanged || modified;
+	
+	return modified;
+}
+
+// Updates the constraint graph to record that there are no constraints in the given variable.
+// Returns true if this causes the constraint graph to change and false otherwise
+bool ConstrGraph::assignBot(varID var, string indent)
+{
+	bool modified = false;
+	map<varID, map<varID, affineInequality> >::iterator mapIter;
+		
+	// This constraint graph will now definitely be initialized
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+	if(l.first==uninitialized || l.first==bottom) { setToConstrKnown(conj, false, indent+"    "); }
+		
+	// If the graph is maximal, there is no need to bother adding anything
+	if(isMaximalState(true, indent+"    ")) return modified;
+
+	modifiedVars.insert(var);
+	newConstrVars.insert(var);
+	
+	// If there are constraints a*var <= b*y + c
+	if(vars2Value.find(var) != vars2Value.end()) {
+		// Remove these constraints
+		modified = (vars2Value[var].size()>0) || modified;
+		vars2Value.erase(var);
+	}
+	
+	// Look for constraints ... a*x <= b*var + c
+	for(map<varID, map<varID, affineInequality> >::iterator iterX = vars2Value.begin(); 
+		    iterX != vars2Value.end(); iterX++)
+	{
+		// If such a constraint exists, remove it
+		if(iterX->second.find(var) != iterX->second.end()) {
+			modified = true;
+			iterX->second.erase(var);
+		}
+	}
+	
+	return modified;
+}
+
+// Updates the constraint graph to record that the constraints between the given variable and
+//    other variables are Top.
+// Returns true if this causes the constraint graph to change and false otherwise
+bool ConstrGraph::assignTop(varID var, string indent)
+{
+	bool modified = false;
+	map<varID, map<varID, affineInequality> >::iterator mapIter;
+		
+	// This constraint graph will now definitely be initialized
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+	if(l.first==uninitialized || l.first==bottom) { setToConstrKnown(conj, false, indent+"    "); }
+		
+	// If the graph is maximal, there is no need to bother adding anything
+	if(isMaximalState(true, indent+"    ")) return modified;
+
+	modifiedVars.insert(var);
+	newConstrVars.insert(var);
+	
+	// If there are constraints a*var <= b*y + c
+	if(vars2Value.find(var) != vars2Value.end()) {
+		for(map<varID, affineInequality>::iterator iterY = vars2Value[var].begin(); 
+		    iterY != vars2Value[var].end(); iterY++)
+			modified = iterY->second.setToTop() || modified;
+	}
+	
+	// Look for constraints ... a*x <= b*var + c
+	for(map<varID, map<varID, affineInequality> >::iterator iterX = vars2Value.begin(); 
+		    iterX != vars2Value.end(); iterX++)
+	{
+		// If such a constraint exists, set it to Top
+		if(iterX->second.find(var) != iterX->second.end()) {
+			modified = iterX->second[var].setToTop() || modified;
+		}
+	}
 	
 	return modified;
 }
@@ -2437,33 +2147,30 @@ ConstrGraph::killVariable( quad x )
 
 // add the condition (x*a <= y*b + c) to this constraint graph
 // returns true if this causes the constraint graph to change and false otherwise
-bool ConstrGraph::assertCond(const varAffineInequality& cond)
+bool ConstrGraph::assertCond(const varAffineInequality& cond, string indent)
 {
 	/*cout << "assertCond cond.getX()="<<cond.getX().str()<<"\n";
 	cout << "assertCond cond.getY()="<<cond.getY().str()<<"\n";*/
-	return assertCond(cond.getX(), cond.getY(), cond.getIneq());
+	return assertCond(cond.getX(), cond.getY(), cond.getIneq(), indent);
 }
 
 // add the condition (x*a <= y*b + c) to this constraint graph
 // returns true if this causes the constraint graph to change and false otherwise
-bool ConstrGraph::assertCond(const varID& x, const varID& y, const affineInequality& ineq)
+bool ConstrGraph::assertCond(const varID& x, const varID& y, const affineInequality& ineq, string indent)
 {
 	bool modified = false;
 	
 	// Note: assertCond doesn't check whether x and y are arrays 
 	//   with empty ranges only because setVal() does this already
-	affineInequality* constr = getVal(x, y);
+	affineInequality* constr = getVal(x, y, indent+"    ");
 	//printf("    assertCond(%s, %s) constr=%p\n", x.str().c_str(), y.str().c_str(), constr);
 	// if there is already a constraint between x and y, update it
 	if(constr)
-	{
-		(*constr) *= ineq;
-		modified = true;
-	}
+		modified = constr->intersectUpd(ineq) || modified;
 	// else, create a new constraint
 	else
 	{
-		modified = setVal(x, y, ineq) || modified;
+		modified = setVal(x, y, ineq, indent+"    ") || modified;
 		
 		//affineInequality* constrV1V2 = getVal(x, y);
 		//printf("x=%s, y=%s, constrXY=%p\n", x.str().c_str(), y.str().c_str(), constrV1V2);
@@ -2476,25 +2183,25 @@ bool ConstrGraph::assertCond(const varID& x, const varID& y, const affineInequal
 // Add the condition (x*a <= y*b + c) to this constraint graph. The addition is done via a conjunction operator, 
 // meaning that the resulting graph will be left with either (x*a <= y*b + c) or the original condition, whichever is stronger.
 // returns true if this causes the constraint graph to change and false otherwise
-bool ConstrGraph::assertCond(const varID& x, const varID& y, int a, int b, int c)
+bool ConstrGraph::assertCond(const varID& x, const varID& y, int a, int b, int c, string indent)
 {
 	bool modified = false;
 	
 	// Note: assertCond doesn't check whether x and y are arrays 
 	//   with empty ranges only because setVal() does this already
-	affineInequality* constr = getVal(x, y);
+	affineInequality* constr = getVal(x, y, indent+"    ");
 //printf("    assertCond(%s, %s, %d, %d, %d) constr=%p\n", x.str().c_str(), y.str().c_str(), a, b, c, constr);
 	// if there is already a constraint between x and y, update it
 	if(constr)
 	{
-		affineInequality newConstr(a, b, c, x==zeroVar, y==zeroVar, getVarSign(x), getVarSign(y));
+		affineInequality newConstr(a, b, c, x==zeroVar, y==zeroVar, getVarSign(x, indent+"    "), getVarSign(y, indent+"    "));
 		(*constr) *= newConstr;
 		modified = true;
 	}
 	// else, create a new constraint
 	else
 	{
-		modified = setVal(x, y, a, b, c) || modified;
+		modified = setVal(x, y, a, b, c, indent+"    ") || modified;
 		
 		//affineInequality* constrV1V2 = getVal(x, y);
 		//printf("x=%s, y=%s, constrXY=%p\n", x.str().c_str(), y.str().c_str(), constrV1V2);
@@ -2506,73 +2213,31 @@ bool ConstrGraph::assertCond(const varID& x, const varID& y, int a, int b, int c
 
 // add the condition (x*a = y*b + c) to this constraint graph
 // returns true if this causes the constraint graph to change and false otherwise
-bool ConstrGraph::assertEq(const varAffineInequality& cond)
+bool ConstrGraph::assertEq(const varAffineInequality& cond, string indent)
 {
-	return assertEq(cond.getX(), cond.getY(), cond.getA(), cond.getB(), cond.getC());
+	return assertEq(cond.getX(), cond.getY(), cond.getA(), cond.getB(), cond.getC(), indent);
 }
 
-bool ConstrGraph::assertEq(varID x, varID y, const affineInequality& ineq)
+bool ConstrGraph::assertEq(varID x, varID y, const affineInequality& ineq, string indent)
 {
-	return assertEq(x, y, ineq.getA(), ineq.getB(), ineq.getC());	
+	return assertEq(x, y, ineq.getA(), ineq.getB(), ineq.getC(), indent);
 }
 
-bool ConstrGraph::assertEq(const varID& x, const varID& y, int a, int b, int c)
+bool ConstrGraph::assertEq(const varID& x, const varID& y, int a, int b, int c, string indent)
 {
 	bool modified = false;
 	// x*a <= y*b + c
-	modified = assertCond(x, y, a, b, c) || modified;
+	modified = assertCond(x, y, a, b, c, indent) || modified;
 	// y*b <= x*a - c
-	modified = assertCond(y, x, b, a, 0-c) || modified;
-	
-	return modified;
-}
-
-// Cuts i*b+c from the given array's range if i*b+c is either at the very bottom
-//    or very bottom of its range. In other words, if (i*b+c)'s range overlaps the  
-//    array's range on one of its edges, the array's range is reduced by 1 on 
-//    that edge
-// returns true if this causes the constraint graph to change and false otherwise
-bool ConstrGraph::shortenArrayRange(varID array, varID i, int b, int c)
-{
-	bool modified = false;
-	
-	//cout << "shortenArrayRange("<<array.str()<<", "<<i.str()<<", "<<c<<")\n";
-	
-	affineInequality *Ai = getVal(array, i);
-	affineInequality *iA = getVal(i, array);
-	ROSE_ASSERT(Ai || iA);
-	
-	modifiedVars.insert(array);
-	newConstrVars.insert(array);
-	modifiedVars.insert(i);
-	newConstrVars.insert(i);
-	
-	if(Ai)
-	{
-		// if $A <= i*b + c (i.e. i*b+c is actually at the bottom of array's range)
-		if(Ai->getA()==1 && Ai->getB()==b && Ai->getC()==c)
-			modified = Ai->setC(c-1) || modified;
-	}
-	
-	if(iA)
-	{
-		// if i*b <= $A - c (i.e. i*b+c is actually at the bottom of array's range)
-		if(iA->getA()==b && iA->getB()==1 && iA->getC()==(0-c))
-			modified = iA->setC((0-c) - 1) || modified;
-	}
-		
-	initialized = true; // this constraint graph is now definitely initialized
-	
-	constrChanged = constrChanged || modified;
+	modified = assertCond(y, x, b, a, 0-c, indent) || modified;
 	
 	return modified;
 }
 
 /**** Dataflow Functions ****/
 
-
 // returns the sign of the given variable
-affineInequality::signs ConstrGraph::getVarSign(const varID& var)
+affineInequality::signs ConstrGraph::getVarSign(const varID& var, string indent)
 {
 /*	affineInequality* constrZeroVar = getVal(zeroVar, var);
 	affineInequality* constrVarZero = getVal(var, zeroVar);
@@ -2587,10 +2252,10 @@ affineInequality::signs ConstrGraph::getVarSign(const varID& var)
 	else if(constrVarZero && constrVarZero->getC()<=0)
 		varSign = affineInequality::negZero;*/
 	
-	FiniteVariablesProductLattice* sgnLattice = getSgnLattice(var);
+	FiniteVarsExprsProductLattice* sgnLattice = getSgnLattice(var, indent+"    ");
 	if(sgnLattice)
 	{
-		SgnLattice* sign = dynamic_cast<SgnLattice*>(sgnLattice->getVarLattice(func, var));
+		SgnLattice* sign = dynamic_cast<SgnLattice*>(sgnLattice->getVarLattice(var));
 		if(sign)
 		{
 			//cout << "    getVarSign() "<<var.str()<<" : "<<sign->str("")<<"\n";
@@ -2609,20 +2274,20 @@ affineInequality::signs ConstrGraph::getVarSign(const varID& var)
 	return affineInequality::unknownSgn;
 }
 
-bool ConstrGraph::isEqZero(const varID& var)
+bool ConstrGraph::isEqZero(const varID& var, string indent)
 {
 /*	if(var==zeroVar) return true;
 	// a divisibility scalar is =0 if its original variable is =0 and the remainder ==0
 	if(isDivScalar(var))
 	{
 		varID origVar = divVar2OrigVar[var];
-		DivLattice* d = dynamic_cast<DivLattice*>(divL->getVarLattice(func, origVar));
+		DivLattice* d = dynamic_cast<DivLattice*>(divL->getVarLattice(origVar));
 		if(d->getLevel() == DivLattice::divKnown)
 			return d->getValue()==0;
 	}
 	else
 	{	
-		DivLattice* d = dynamic_cast<DivLattice*>(divL->getVarLattice(func, var));
+		DivLattice* d = dynamic_cast<DivLattice*>(divL->getVarLattice(var));
 		
 		if(d->getLevel() == DivLattice::valKnown)
 			return d->getValue()==0;
@@ -2638,19 +2303,21 @@ bool ConstrGraph::isEqZero(const varID& var)
 
 	return false;*/
 	
-	return eqVars(zeroVar, var);
+	return eqVars(zeroVar, var, indent);
 }
 
 // Returns true if v1*a = v2*b + c and false otherwise
-bool ConstrGraph::eqVars(const varID& v1, const varID& v2, int a, int b, int c)
+bool ConstrGraph::eqVars(const varID& v1, const varID& v2, int a, int b, int c, string indent)
 {
-	return v1==v2 || (lteVars(v1, v2, a, b, c) && lteVars(v2, v1, b, a, 0-c));
+	return v1==v2 || (lteVars(v1, v2, a, b, c, indent) && lteVars(v2, v1, b, a, 0-c, indent));
 }
 
 // If v1*a = v2*b + c, sets a, b and c appropriately and returns true. 
 // Otherwise, returns false.
-bool ConstrGraph::isEqVars(const varID& v1, const varID& v2, int& a, int& b, int& c)
+bool ConstrGraph::isEqVars(const varID& v1, const varID& v2, int& a, int& b, int& c, string indent)
 {
+	if(v1 == v2) return true;
+		
 	// If v1*constrV1V2.getA() <= v2*constrV1V2.getB() + constrV1V2.getC() AND
 	//    v1*constrV1V2.getA() >= v2*constrV1V2.getB() + constrV1V2.getC()
 	affineInequality* constrV1V2 = getVal(v1, v2);
@@ -2667,7 +2334,7 @@ bool ConstrGraph::isEqVars(const varID& v1, const varID& v2, int& a, int& b, int
 
 // Returns a list of variables that are equal to var in this constraint graph as a list of pairs
 // <x, ineq>, where var*ineq.getA() = x*ineq.getB() + ineq.getC()
-map<varID, affineInequality> ConstrGraph::getEqVars(varID var)
+map<varID, affineInequality> ConstrGraph::getEqVars(varID var, string indent)
 {
 	map<varID, affineInequality> res;
 	for(map<varID, affineInequality>::iterator it=vars2Value[var].begin();
@@ -2676,7 +2343,7 @@ map<varID, affineInequality> ConstrGraph::getEqVars(varID var)
 		// var*a <= x*b + c
 		affineInequality& constrVarX = it->second;
 		// x*b <= var*a - c
-		affineInequality* constrXVar = getVal(it->first, var);
+		affineInequality* constrXVar = getVal(it->first, var, indent+"    ");
 		if(constrXVar)
 			if(constrVarX.getA() == constrXVar->getB() &&
 			   constrVarX.getB() == constrXVar->getA() &&
@@ -2689,11 +2356,11 @@ map<varID, affineInequality> ConstrGraph::getEqVars(varID var)
 }
 
 // Returns true if v1*a <= v2*b + c and false otherwise
-bool ConstrGraph::lteVars(const varID& v1, const varID& v2, int a, int b, int c)
+bool ConstrGraph::lteVars(const varID& v1, const varID& v2, int a, int b, int c, string indent)
 {
 	if(v1==v2) return true;
 	
-	affineInequality* constrV1V2 = getVal(v1, v2);
+	affineInequality* constrV1V2 = getVal(v1, v2, indent+"    ");
 	/*if(constrV1V2)
 		cout << "lteVars("<<v1.str()<<", "<<v2.str()<<", "<<a<<", "<<b<<", "<<c<<"), constrV1V2="<<constrV1V2->str()<<"\n";
 	else
@@ -2708,9 +2375,9 @@ bool ConstrGraph::lteVars(const varID& v1, const varID& v2, int a, int b, int c)
 }
 
 // Returns true if v1*a < v2*b + c and false otherwise
-bool ConstrGraph::ltVars(const varID& v1, const varID& v2, int a, int b, int c)
+bool ConstrGraph::ltVars(const varID& v1, const varID& v2, int a, int b, int c, string indent)
 {
-	return lteVars(v1, v2, a, b, c-1);
+	return lteVars(v1, v2, a, b, c-1, indent);
 }
 
 /*********************************
@@ -2817,8 +2484,9 @@ ConstrGraph::geIterator::geIterator(const ConstrGraph* parent, const varID& y): 
 
 ConstrGraph::geIterator::geIterator(const ConstrGraph* parent, const varID& y,
            const map<varID, map<varID, affineInequality> >::iterator& curX,
-           const map<varID, affineInequality>::iterator& curY): parent(parent), curX(curX), curY(curY), y(y)
+           const map<varID, affineInequality>::iterator& curY): curX(curX), curY(curY), y(y)
 {
+	this->parent = parent;
 	isEnd = false;
 }
 
@@ -2959,65 +2627,79 @@ ConstrGraph::geIterator ConstrGraph::geEnd()
 	geIterator gei;
 	return gei;
 }
-	
-	
-// widens this from that and saves the result in this
+
+
+// Widens this from that and saves the result in this
 // returns true if this causes this to change and false otherwise
-bool ConstrGraph::widenUpdate(InfiniteLattice* that_arg)
+bool ConstrGraph::widenUpdate(InfiniteLattice* that_arg, string indent)
 {
-	ConstrGraph* that = dynamic_cast<ConstrGraph*>(that_arg);
-	
-	// if this constraint graph is Bottom or Uninitialized, the widening is that
-	if(isBottom() || !initialized)
-	{
-/*		bool initOld = initialized;
-		initialized = true; // this constraint graph will now definitely be initialized
-		
-		// this constraint graph has changed if it wasn't initialized until now
-		return !initOld;*/
-		return copyFrom(*that);
-	}
-	// if that is Bottom or Uninitialized then we don't need to change this
-	else if(that->isBottom() || !that->initialized)
-	{
-		//return copyFrom( cg );
-		//setToBottom();
-		//return true;
-		return false;
-	}
-	// if both this and that are not bottom
-	else
-		return meetwidenUpdate(that, false, false);
+	return widenUpdate_ex(that_arg, false, indent);
 }
 
 // Widens this from that and saves the result in this, while ensuring that if a given constraint
 // doesn't exist in that, its counterpart in this is not modified
 // returns true if this causes this to change and false otherwise
-bool ConstrGraph::widenUpdateLimitToThat(InfiniteLattice* that_arg)
+bool ConstrGraph::widenUpdateLimitToThat(InfiniteLattice* that_arg, string indent)
+{
+	return widenUpdate_ex(that_arg, true, indent);
+}
+
+// Common code for widenUpdate() and widenUpdateLimitToThat()
+bool ConstrGraph::widenUpdate_ex(InfiniteLattice* that_arg, bool limitToThat, string indent)
 {
 	ConstrGraph* that = dynamic_cast<ConstrGraph*>(that_arg);
+	bool modified = false;
 	
-	// if this constraint graph is Bottom or Uninitialized, the widening is that
-	if(isBottom() || !initialized)
-	{
-/*		bool initOld = initialized;
-		initialized = true; // this constraint graph will now definitely be initialized
+	// If this constraint graph is Bottom or Uninitialized, the widening is that
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+	if(l.first == uninitialized || l.first==bottom) {
+		modified = copyFrom(*that, indent+"    ") || modified;
 		
-		// this constraint graph has changed if it wasn't initialized until now
-		return !initOld;*/
-		return copyFrom(*that);
+		// Transitively close divisibility information in the context of the divisibility info
+		// known at the current DataflowNode
+		cout << indent << "Before Transitive Closure:\n"<<str(indent+"    ")<<"\n";
+		modified = transitiveClosure() || modified;
+		return modified;
 	}
-	// if that is Bottom or Uninitialized then we don't need to change this
-	else if(that->isBottom() || !that->initialized)
-	{
-		//return copyFrom( cg );
-		//setToBottom();
-		//return true;
+	
+	// If that is Bottom or Uninitialized then we don't need to change this
+	pair <levels, constrTypes> tl = that->getLevel(true, indent+"    ");
+	if(tl.first == uninitialized || tl.first==bottom)
 		return false;
+	
+	// If this is top, then we don't need to change it
+	if(tl.first == top)
+		return false;
+	
+	// If that is top 
+	if(tl.first==top) {
+		// If both graphs are top, there is nothing to be done
+		if(l.first==top)
+			return false;
+		// If this is not top but that is top, make this top
+		else
+			return setToTop(false, indent+"    ");
 	}
-	// if both this and that are not bottom
-	else
-		return meetwidenUpdate(that, false, true);
+	
+	// This and That must be constrKnown
+	
+	// If that is inconsistent, this will become inconsistent
+	if(tl.first==constrKnown && tl.second==inconsistent)
+		return setToInconsistent(indent+"    ");
+	// If that is not inconsistent but this is, it will not change
+	else if(l.first==constrKnown && l.second==inconsistent) {
+		//return false;
+		// Transitively close divisibility information in the context of the divisibility info
+		// known at the current DataflowNode
+		cout << indent << "Before Transitive Closure:\n"<<str(indent+"    ")<<"\n";
+		modified = transitiveClosure() || modified;
+		return modified;
+	}
+	
+	// This and That must be constrKnown/(conj / negConj)
+	
+	// If both this and that are not bottom
+	return OrAndWidenUpdate(that, false, true, limitToThat, indent+"    ");
 }
 
 // Computes the union of this constraint graph with cg, returning this union
@@ -3028,328 +2710,349 @@ bool ConstrGraph::widenUpdateLimitToThat(InfiniteLattice* that_arg)
 //    has a constraint in one graph but not the other, the resulting graph has this constraint.
 //    If the pair has constraints in both graphs, their constraint in the resulting graph will be 
 //    the union of these constraints.
-bool ConstrGraph::meetUpdate(Lattice* that_arg)
+bool ConstrGraph::meetUpdate(Lattice* that_arg, string indent)
 {
-	ConstrGraph* that = dynamic_cast<ConstrGraph*>(that_arg);
-
-	// if this constraint graph is uninitialized, the meet is that
-	if(!initialized)
-	{
-if(debugLevel>=1) cout << "(!initialized)\n";
-		return copyFrom(*that);
-	}
-	// if one graph is strictly looser than the other, the union = the looser graph
-	else if(*that <<= *this)
-	{
-if(debugLevel>=1) cout << "(*that <<= *this)\n";
-		// this is already the union
-		return false;
-	}
-	else if(*this <<= *that)
-	{
-if(debugLevel>=1) cout << "(*this <<= *that)\n";
-		return copyFrom(*that);
-	}
-	// else, iterate over all constraints in both constraint graphs and union them individually
-	else
-	{
-if(debugLevel>=1) cout << "calling meetwidenUpdate\n";
-		return meetwidenUpdate(that, true, false);
-	}
+	return meetUpdate_ex(that_arg, false, indent);
 }
 
 // Meet this and that and saves the result in this, while ensuring that if a given constraint
 // doesn't exist in that, its counterpart in this is not modified
 // returns true if this causes this to change and false otherwise
-bool ConstrGraph::meetUpdateLimitToThat(InfiniteLattice* that_arg)
+bool ConstrGraph::meetUpdateLimitToThat(InfiniteLattice* that_arg, string indent)
 {
-	ConstrGraph* that = dynamic_cast<ConstrGraph*>(that_arg);
-	
-	// if one graph is strictly looser than the other, the union = the looser graph
-	if(*that <<= *this)
-	{
-		// this is already the union
-		return false;
-	}
-	else if(*this <<= *that)
-	{
-		return copyFrom(*that);
-	}
-	// if both this and that are not bottom
-	else
-		return meetwidenUpdate(that, true, true);
+	return meetUpdate_ex(that_arg, true, indent);
 }
 
-// Unified function for meet and widening
-// if meet == true, this function computes the meet and if =false, computes the widening
-// if limitToThat == true, if a given constraint does not exist in that, this has no effect on the meet/widening
-bool ConstrGraph::meetwidenUpdate(ConstrGraph* that, bool meet, bool limitToThat)
+// Common code for meetUpdate() and meetUpdateLimitToThat()
+bool ConstrGraph::meetUpdate_ex(Lattice* that_arg, bool limitToThat, string indent)
 {
+	ConstrGraph* that = dynamic_cast<ConstrGraph*>(that_arg);
 	bool modified = false;
-	affineInequality topIneq;
-	topIneq.setToTop();
-/*if(meet)
-	printf("meetUpdate()\n");	
-else
-	printf("widenUpdate()\n");	
-cout << "   this: "<<str("")<<"\n";
-cout << "   that: "<<that->str("")<<"\n";*/
 	
-/*	// if one graph is strictly looser than the other, the result = the looser graph
+	// If this constraint graph is Uninitialized or Bottom, the meet is that
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+	pair <levels, constrTypes> tl = that->getLevel(true, indent+"    ");
+	
+	// If one graph is strictly looser than the other, the union = the looser graph
 	if(*that <<= *this)
 	{
-		cout << "    this is looser than that, keeping this\n";
-		// this is already the union/widening
+		/*if(debugLevel>=1) */cout << indent << "(*that <<= *this)\n";
+		// this is already the union
+		//return false;
+		
+		// Transitively close divisibility information in the context of the divisibility info
+		// known at the current DataflowNode
+		cout << indent << "Before Transitive Closure:\n"<<str(indent+"    ")<<"\n";
+		modified = transitiveClosure() || modified;
+		return modified;
 	}
 	else if(*this <<= *that)
 	{
-		modified = copyFrom(*that) || modified;
+		/*if(debugLevel>=1) */cout << indent << "(*this <<= *that)\n";
+		cout << indent << "    that="<<that->str(indent + "        ")<<"\n";
+		modified = copyFrom(*that, indent+"    ") || modified;
+		
+		// Transitively close divisibility information in the context of the divisibility info
+		// known at the current DataflowNode
+		cout << indent << "Before Transitive Closure:\n"<<str(indent+"    ")<<"\n";
+		modified = transitiveClosure() || modified;
+		return modified;
 	}
-	// if both this and that are not bottom
-	else
-	{*/
-		// This constraint graph will be modified if it is currently uninitialized
-		modified = !initialized;
-		
-		initialized = true; // this constraint graph will now definitely be initialized
-		
-		// Iterate over all constraints in both constraint graphs and union/widen them individually
-		//printf("vars2Value.size()=%d, that->vars2Value.size()=%d\n", vars2Value.size(), that->vars2Value.size());
-		map<varID, map<varID, affineInequality> >::iterator itThisX, itThatX;
-		for(itThisX = vars2Value.begin(), itThatX = that->vars2Value.begin(); 
-		    itThisX!=vars2Value.end() && itThatX!=that->vars2Value.end(); )
-		{
-			//cout << "itThisX = "<<itThisX->first.str()<< "  itThatX = "<<itThatX->first.str()<<"\n";
-			
-			// If itThisX->first exists in this, but not in that
-			if(itThisX->first < itThatX->first)
-			{
-				//cout << "    thisX="<<itThisX->first.str()<<" No thatX, limitToThat="<<limitToThat<<"\n";
-				/*// do nothing, since all <itThisX->first -> ???> constraints in that are assumed to be top*/
-				
-				// Only bother with this case if we've been asked to
-				if(!limitToThat)
-				{
-					// Change all the <x -> ???> constraints in this to top, since the corresponding constraints in that are =top
-					itThisX->second.clear();
-					modifiedVars.insert(itThisX->first);
-				}
-				itThisX++;
-			}
-			// If itThatX->first exists in that, but not in this
-			else if(itThisX->first > itThatX->first)
-			{
-				//cout << "    No thisX, itThatX="<<itThatX->first.str()<<"\n";
-				/*// we know that all <itThatX->first -> ???> constraints in this are bottom (unknown)
-				// as such, we need to raise them up to their level in that
-				vars2Value[itThatX->first] = itThatX->second;
-				modified = true;*/
-				
-				// All the <x -> ???> constraints in this are =top, so we don't need to change them, since (top union/widen ???) => top
-				itThatX++;
-			}
-			// If, itThisX->first exists in both this and that
-			else
-			{
-				//cout << "    thisX="<<itThisX->first.str()<<" itThatX="<<itThatX->first.str()<<"\n";
-				
-				//varIDSet to_delete;
-				varID x = itThisX->first;
-				/*affineInequality::signs xSign = getVarSign(x);
-				ROSE_ASSERT(xSign == that->getVarSign(x));*/
-				
-				// union/widen each <x->???> constraint
-				map<varID, affineInequality>::iterator itThisY, itThatY;
-				for(itThisY = itThisX->second.begin(), itThatY = itThatX->second.begin();
-				    itThisY!=itThisX->second.end() && itThatY!=itThatX->second.end(); )
-				{
-					varID y = itThisY->first;
-					//cout << "        itThisY = "<<itThisY->first.str()<< "  itThatY = "<<itThatY->first.str()<<"\n";
-					
-					// if itThisY->first exists in this, but not in that
-					if(itThisY->first < itThatY->first)
-					{
-						/*// do nothing, since all <itThisX->first -> itThisY->first> constraints in that are assumed to be bottom*/
-						// Only bother with this case if we've been asked to
-						if(!limitToThat)
-						{
-							// change the <x -> y> constraint in this to top, since the corresponding constraint in that is =top
-							modified = itThisY->second.setToTop() || modified;
-							modifiedVars.insert(itThisY->first);
-							modifiedVars.insert(itThisX->first);
-// !!! above should be a removal
-						}
-						
-						itThisY++;
-					}
-					// if itThatY->first exists in that, but not in this
-					else if(itThisY->first > itThatY->first)
-					{
-						/*// we know that the <itThatX->first -> itThatY->first> constraint in this is bottom
-						// as such, we need to raise it to its counterpart in that
-						itThisX->second[itThatY->first] = itThatY->second;
-						modified = true;*/
-						
-						// The <x -> y> constraint in this is =top, so we don't need to change it, since (top union/widen ???) => top
-						itThatY++;
-					}
-					// else, <itThisX->first -> itThisY->first> exists in both this and that
-					else
-					{
-						// Union
-						if(meet)
-						{
-							//cout << "meetwidenUpdate "<<itThisX->first.str()<<"=>"<<itThisY->first.str()<<" : "<<itThisY->second.str()<<" && "<<itThatY->second.str()<<" => ";
-							// union this constraint in this with the corresponding constraint in that
-							modified = itThisY->second.unionUpd(itThatY->second) || modified;
-							modifiedVars.insert(itThisX->first);
-							modifiedVars.insert(itThisY->first);
-							newConstrVars.insert(itThisX->first);
-							newConstrVars.insert(itThisY->first);
-							//cout << itThisY->second.str()<<"\n";
-						}
-						// Widening
-						else
-						{
-							// widen this constraint in this with the corresponding constraint in that
-							if(itThisY->second != itThatY->second)
-							{
-								//cout <<itThisX->first.str() << " -> "<<itThisY->first.str()<<"\n";
-								//cout <<"itThisY->second = "<<itThisY->second.str()<<"\n";
-								//cout <<"itThatY->second = "<<itThatY->second.str()<<"\n";
-								//itThisY->second ^= itThatY->second;
-								if(itThisY->second.semLessThan(itThatY->second, isEqZero(x), isEqZero(y)))
-								{
-									/* // Before we remove this constraint, first check if the constraint between x and y's 
-									// divisibility variables has changed. If one exists and it hasn't changed, simply
-									// copy over the x-y constraint from that to this, since the divisibility variables
-									// represent the same information as the regular variables
-									varID divX = ConstrGraph::getDivScalar(x);
-									varID divY = ConstrGraph::getDivScalar(y);
-									affineInequality* thisDivXY = getVal(divX, divY);
-									affineInequality* thatDivXY = that->getVal(divX, divY);
-									
-									if(thisDivXY && thatDivXY && 
-									   thisDivXY->getLevel()!=affineInequality::top && 
-									   thatDivXY->getLevel()!=affineInequality::top &&
-									   thisDivXY == thatDivXY)
-									{
-										itThisY->second = itThatY->second;
-									}
-									else*/
-									itThisY->second.setToTop();
-									modifiedVars.insert(itThisX->first);
-									modifiedVars.insert(itThisY->first);
-								}
-	// !!! above may result in a removal if itThisY->second becomes top
-								//cout <<"itThisY->second ^ itThatY->second = "<<itThisY->second.str()<<"\n";
-								modified = true;
-							}
-						}
-						
-						itThisY++;
-						itThatY++;
-					}
-				}
-				
-				/*// if there exist any constraint for x in that that is not in this
-				if(itThatY!=itThatX->second.end())
-				{
-					// copy them over to this
-					for(; itThatY!=itThatX->second.end(); itThatY++)
-						itThisX->second[itThatY->first] = itThatY->second;
-				}*/
-				// if there exist any constraint for x in that that is not in this, leave this
-				// alone because the corresponding constraints in this are top and (top widen ???) => top
-				
-				// if there exist any constraint for x in this that is not in that, set them to top
-				for(; itThisY!=itThisX->second.end(); itThisY++)
-				{
-					//cout << "meetwidenUpdate "<<itThisX->first.str()<<"=>"<<itThisY->first.str()<<" doesn't exist in that\n";
-					// Only bother with this case if we've been asked to
-					if(!limitToThat)
-					{
-						itThisY->second.setToTop();
-						modifiedVars.insert(itThisX->first);
-						modifiedVars.insert(itThisY->first);
-					}
-				}
-				
-				//cout << "pre-increment, itThisX==vars2Value.end()="<<(itThisX==vars2Value.end())<<" && itThatX==that->vars2Value.end()="<<(itThatX==that->vars2Value.end())<<"\n";
-				itThisX++;
-				itThatX++;
-			}
-			//cout << "bottom, itThisX==vars2Value.end()="<<(itThisX==vars2Value.end())<<" && itThatX==that->vars2Value.end()="<<(itThatX==that->vars2Value.end())<<"\n";
-		}
-		
-//cout << "   this loop end: "<<str("")<<"\n";
-//cout << "   modified = "<<modified<<"\n";
-		
-		/*// if there exist any variables s.t. they have constraints in that but not in this
-		if(itThatX!=that->vars2Value.end())
-		{
-			// copy them over to this
-			for(; itThatX!=that->vars2Value.end(); itThatX++)
-				vars2Value[itThatX->first] = itThatX->second;
-		}*/
-		// if there exist any variables s.t. they have constraints in that but not in this, leave them
-		// alone because the corresponding constraints in this are top and (top widen ???) => top
-		
-		// if there exist any variables s.t. they have constraints in this but not in that, set them to top
-		if(itThisX!=vars2Value.end() && !limitToThat)
-		{
-			map<varID, affineInequality>::iterator itThisY;
-			for(itThisY = itThisX->second.begin(); itThisY!=itThisX->second.end(); itThisY++)
-			{
-				// Only bother with this case if we've been asked to
-				if(!limitToThat)
-				{
-					itThisY->second.setToTop();
-					modifiedVars.insert(itThisX->first);
-					modifiedVars.insert(itThisY->first);
-				}
-			}
-		}
-		
-		if(meet)
-			// iterate over all the arrays in this constraint graph
-			for(varIDSet::iterator curArray = arrays.begin(); curArray != arrays.end(); curArray++)
-			{
-				bool origEmptyRange = emptyRange[*curArray];
-				emptyRange[*curArray] = emptyRange[*curArray] && that->emptyRange[*curArray];
-				modified = modified || (origEmptyRange != emptyRange[*curArray]);
-				// if the array has an empty range in the union, it should have no connections
-				// to any other variables in the union (this should have been true before the union, so we're just asserting this)
-				if(emptyRange[*curArray])
-				{
-					// verify this fact
-					bool old_constrChanged = constrChanged;
-					constrChanged = false;
-					eraseVarConstrNoDiv(*curArray);
-					// eraseVarConstr should have been a noop
-					ROSE_ASSERT(!constrChanged);
-					constrChanged = old_constrChanged;
-				}
-			}
-		
-		// close if the widening will cause this graph to change
-		if (modified)
-		{
-			constrChanged = true;
-			transitiveClosure();
-		}
-//	}	
 	
-/*	// Merge the scalars, arrays and divVariables sets of the two objects
-	for(varIDSet::const_iterator it=that->scalars.begin(); it!=that->scalars.end(); it++)
-		scalars.insert(*it);
+	// If the two graphs are not strictly related to each other but their levels are such
+	// 	that they have no stored constraints: levels uninitialized, bottom, constrKnown/inconsistent or top.
+	// Note that if only one graph is at this level then the two must be equal to each other
+	//    or one is strictly tighter or looser than the other.
+	if(l.first==uninitialized || l.first==bottom || (l.first==constrKnown && l.second==inconsistent) || l.first==top)
+	{
+		ROSE_ASSERT(l == tl);
+		return false;
+	}
+	
+	// The two graphs must be constrKnown/(conj or negConj) and are not strictly ordered in information content
+	if(debugLevel>=1) cout << indent << "calling OrAndWidenUpdate\n";
+	return OrAndWidenUpdate(that, true, true, limitToThat, indent+"    ");
+}
+
+// <from LogicalCond>
+bool ConstrGraph::orUpd(LogicalCond& that_arg, string indent)
+{
+	ConstrGraph* that = dynamic_cast<ConstrGraph*>(&that_arg);
+
+	return meetUpdate((Lattice*)that, indent+"    ");
+}
+
+// <from LogicalCond>
+bool ConstrGraph::andUpd(LogicalCond& that_arg, string indent)
+{
+	ConstrGraph* that = dynamic_cast<ConstrGraph*>(&that_arg);
+	return andUpd(that, indent+"    ");
+}
+
+bool ConstrGraph::andUpd(ConstrGraph* that, string indent)
+{
+	bool modified = false;
+	
+	// If this constraint graph is Uninitialized or Bottom, the meet is that
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+	pair <levels, constrTypes> tl = that->getLevel(true, indent+"    ");
+	
+	// If one graph is strictly looser than the other, the intersection = the tighter graph
+	if(*that <<= *this)
+	{
+		if(debugLevel>=1) cout << indent << "(*this <<= *that)\n";
+		modified = copyFrom(*that, indent+"    ") || modified;
+		
+		// Transitively close divisibility information in the context of the divisibility info
+		// known at the current DataflowNode
+		cout << indent << "Before Transitive Closure:\n"<<str(indent+"    ")<<"\n";
+		modified = transitiveClosure() || modified;
+		return modified;
+	}
+	else if(*this <<= *that)
+	{
+		if(debugLevel>=1) cout << indent << "(*that <<= *this)\n";
+		// This is already the intersection
+		
+		// Transitively close divisibility information in the context of the divisibility info
+		// known at the current DataflowNode
+		cout << indent << "Before Transitive Closure:\n"<<str(indent+"    ")<<"\n";
+		modified = transitiveClosure() || modified;
+		return modified;
+	}
+	
+	// If the two graphs are not strictly related to each other but their levels are such
+	// 	that they have no stored constraints: levels uninitialized, bottom, constrKnown/inconsistent or top.
+	// Note that if only one graph is at this level then the two must be equal to each other
+	//    or one is strictly tighter or looser than the other.
+	if(l.first==uninitialized || l.first==bottom || (l.first==constrKnown && l.second==inconsistent) || l.first==top)
+	{
+		ROSE_ASSERT(l == tl);
+		return false;
+	}
+	
+	// The two graphs must be constrKnown/(conj or negConj) and are not strictly ordered in information content
+	if(debugLevel>=1) cout << indent << "calling OrAndWidenUpdate\n";
+	return OrAndWidenUpdate(that, true, false, false, indent+"    ");
+	
+/*	// Merge the vars, arrays and divVars sets of the two objects
+	for(varIDSet::const_iterator it=that->vars.begin(); it!=that->vars.end(); it++)
+		vars.insert(*it);
 	for(varIDSet::const_iterator it=that->arrays.begin(); it!=that->arrays.end(); it++)
 		arrays.insert(*it);
-	for(varIDSet::const_iterator it=that->divVariables.begin(); it!=that->divVariables.end(); it++)
-		divVariables.insert(*it);*/
+	for(varIDSet::const_iterator it=that->divVars.begin(); it!=that->divVars.end(); it++)
+		divVars.insert(*it);*/
 	
-	/*cout << "meetwidenUpdate scalars = ";
-	for(varIDSet::iterator it=scalars.begin(); it!=scalars.end(); it++)
+	return modified;
+}
+
+// Unified function for Or(meet), And and Widening
+// If meet == true, this function computes the meet and if =false, computes the widening.
+// If OR == true, the function computes the OR of each pair of inequalities and otherwise, computes the AND.
+// if limitToThat == true, if a given constraint does not exist in that, this has no effect on the meet/widening
+bool ConstrGraph::OrAndWidenUpdate(ConstrGraph* that, bool meet, bool OR, bool limitToThat, string indent)
+{
+	bool modified = false;
+	if(meet)
+		cout << indent << "meetUpdate() OR="<<OR<<"\n";
+	else
+		cout << indent << "widenUpdate() OR="<<OR<<"\n";
+	/*cout << indent << "   this: "<<str(indent+"    ")<<"\n";
+	cout << indent << "   that: "<<that->str(indent+"    ")<<"\n";*/
+	
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+	pair <levels, constrTypes> tl = that->getLevel(true, indent+"    ");
+
+	// The calling functions must ensure that both graphs have known constraints that are consistent
+	ROSE_ASSERT(l.first==constrKnown && l.first==tl.first && 
+	            (l.second==conj  || l.second==negConj) &&
+	            (tl.second==conj || tl.second==negConj));
+	
+	// If the negation status of these graphs is not the same, quit because the meet/widening is too hard
+	ROSE_ASSERT(l.second == tl.second);
+
+	/* // If we're computing a weaker approximation of the union of two conjunctions of inequalities:
+	// (xy AND yz AND ... ) OR (xy' AND yz' AND ...) => ((xy OR xy') AND (yz OR yz') AND ...) */
+	
+	map<varID, map<varID, affineInequality> > additionsToThisX;
+	
+	/*cout << indent<<"vars2Value[x]=\n";
+	for(map<varID, map<varID, affineInequality> >::iterator x=vars2Value.begin(); x!=vars2Value.end(); x++)
+		cout << indent << "    "<<x->first<<"\n";
+	cout << indent<<"that.vars2Value[x]=\n";
+	for(map<varID, map<varID, affineInequality> >::iterator x=that->vars2Value.begin(); x!=that->vars2Value.end(); x++)
+		cout << indent << "    "<<x->first<<"\n";*/
+	
+	// Iterate over all constraints in both constraint graphs and union/widen them individually
+	//printf("vars2Value.size()=%d, that->vars2Value.size()=%d\n", vars2Value.size(), that->vars2Value.size());
+	map<varID, map<varID, affineInequality> >::iterator itThisX, itThatX;
+	for(itThisX = vars2Value.begin(), itThatX = that->vars2Value.begin(); 
+	    itThisX!=vars2Value.end() && itThatX!=that->vars2Value.end(); )
+	{
+		//cout << indent << "itThisX = "<<itThisX->first.str()<< "  itThatX = "<<itThatX->first.str()<<" (itThisX->first < itThatX->first)="<<(itThisX->first < itThatX->first)<<"\n";
+		
+		// If itThisX->first exists in this, but not in that
+		if(itThisX->first < itThatX->first)
+			OrAndWidenUpdate_XinThisNotThat(OR, limitToThat, itThisX, modified, indent+"    ");
+		// If itThatX->first exists in that, but not in this
+		else if(itThisX->first > itThatX->first)
+			OrAndWidenUpdate_XinThatNotThis(OR, limitToThat, that, itThatX, additionsToThisX, modified, indent+"    ");
+		// If, itThisX->first exists in both this and that
+		else
+		{
+			cout << indent << "    thisX="<<itThisX->first.str()<<" itThatX="<<itThatX->first.str()<<"\n";
+			varID x = itThisX->first;
+			/*affineInequality::signs xSign = getVarSign(x, indent+"    ");
+			ROSE_ASSERT(xSign == that->getVarSign(x, indent+"    "));*/
+			map<varID, affineInequality> additionsToThisY;
+			
+			// Union/Widen each <x->???> constraint
+			map<varID, affineInequality>::iterator itThisY, itThatY;
+			for(itThisY = itThisX->second.begin(), itThatY = itThatX->second.begin();
+			    itThisY!=itThisX->second.end() && itThatY!=itThatX->second.end(); )
+			{
+				varID y = itThisY->first;
+				//cout << indent << "        itThisY = "<<itThisY->first.str()<< "  itThatY = "<<itThatY->first.str()<<"\n";
+								
+				// If itThisY->first exists in this, but not in that
+				if(itThisY->first < itThatY->first)
+					OrAndWidenUpdate_YinThisNotThat(OR, limitToThat, itThisX, itThisY, 
+	                                           modified, indent+"    ");
+				// If itThatY->first exists in that, but not in this
+				else if(itThisY->first > itThatY->first)
+					OrAndWidenUpdate_YinThatNotThis(OR, limitToThat, itThisY, itThatX, itThatY, 
+		                                         additionsToThisY,
+		                                         modified, indent+"    ");
+				// else, <itThisX->first -> itThisY->first> exists in both this and that
+				else
+				{
+					// Union
+					if(meet)
+					{
+						cout << indent << "        OrAndWidenUpdate "<<itThisY->second.str(itThisX->first, itThisY->first)<<" && "<<itThatY->second.str(itThisX->first, itThisY->first)<<" =>\n";
+						//if(l.second == conj)
+						if(OR)
+							// OR this constraint in this with the corresponding constraint in that
+							// ax <= by+c OR a'x <= b'y+c'
+							modified = itThisY->second.unionUpd(itThatY->second) || modified;
+						else
+							// AND this constraint in this with the corresponding constraint in that
+							modified = itThisY->second.intersectUpd(itThatY->second) || modified;
+						cout << indent << "            "<<itThisY->second.str(itThisX->first, itThisY->first)<<"\n";
+							
+						modifiedVars.insert(itThisX->first);  
+						modifiedVars.insert(itThisY->first);
+						newConstrVars.insert(itThisX->first);
+						newConstrVars.insert(itThisY->first);
+					}
+					// Widening
+					else
+					{
+						// widen this constraint in this with the corresponding constraint in that
+						if(itThisY->second != itThatY->second)
+						{
+							//cout <<itThisX->first.str() << " -> "<<itThisY->first.str()<<"\n";
+							//cout <<"itThisY->second = "<<itThisY->second.str()<<"\n";
+							//cout <<"itThatY->second = "<<itThatY->second.str()<<"\n";
+							// If the new constraint is more relaxed than the old constraint, we immediately
+							//    jump the constraint to top (the most relaxed constraint) because the lattice is 
+							//    infinite and if we consistently choose to widen to the constraint to a looser one,
+							//    we may end up doing this infinitely many times.
+							if((/*l.second==conj*/OR    && /*itThisY->second.semLessThan(itThatY->second, isEqZero(x), isEqZero(y))*/
+								                              itThisY->second!=itThatY->second && itThisY->second.semLessThan(itThatY->second, 
+								                                                          x==zeroVar?NULL:getVal(x, zeroVar), x==zeroVar?NULL:getVal(zeroVar, x), 
+								                                                          y==zeroVar?NULL:getVal(y, zeroVar), y==zeroVar?NULL:getVal(zeroVar, y), indent+"    ")) ||
+							   (/*l.second==conjNg*/!OR && itThisY->second.semLessThanNeg(itThatY->second, isEqZero(x), isEqZero(y))))
+							{
+								/* // Before we remove this constraint, first check if the constraint between x and y's 
+								// divisibility variables has changed. If one exists and it hasn't changed, simply
+								// copy over the x-y constraint from that to this, since the divisibility variables
+								// represent the same information as the regular variables
+								varID divX = ConstrGraph::getDivVar(x);
+								varID divY = ConstrGraph::getDivVar(y);
+								affineInequality* thisDivXY = getVal(divX, divY);
+								affineInequality* thatDivXY = that->getVal(divX, divY);
+								
+								if(thisDivXY && thatDivXY && 
+								   thisDivXY->getLevel()!=affineInequality::top && 
+								   thatDivXY->getLevel()!=affineInequality::top &&
+								   thisDivXY == thatDivXY)
+								{
+									itThisY->second = itThatY->second;
+								}
+								else*/
+								modified = itThisY->second.setToTop() || modified;
+								modifiedVars.insert(itThisX->first);
+								modifiedVars.insert(itThisY->first);
+							}
+							//cout <<"itThisY->second ^ itThatY->second = "<<itThisY->second.str()<<"\n";
+						}
+					}
+					
+					itThisY++;
+					itThatY++;
+				}
+			}
+			
+			// For all x->y constraints in This that is not in That
+			while(itThisY!=itThisX->second.end())
+				OrAndWidenUpdate_YinThisNotThat(OR, limitToThat, itThisX, itThisY, 
+		                                     modified, indent+"    ");
+			
+			// For all x->y constraints in That that is not in This
+			while(itThatY!=itThatX->second.end())
+				OrAndWidenUpdate_YinThatNotThis(OR, limitToThat, itThisY, itThatX, itThatY, 
+		                                      additionsToThisY,
+		                                      modified, indent+"    ");
+		  	
+		  	// Add all the new mappings in additionsToThisY to This. We're guaranteed that if a variable
+			// is mapped by additionsToThisY, it is not mapped by vars2Value[iterX->first]
+			for(map<varID, affineInequality>::iterator iterY=additionsToThisY.begin(); iterY!=additionsToThisY.end(); iterY++) {
+				ROSE_ASSERT(itThisX->second.find(iterY->first) == itThisX->second.end());
+				itThisX->second.insert(*iterY);
+			}
+		  			
+			//cout << "pre-increment, itThisX==vars2Value.end()="<<(itThisX==vars2Value.end())<<" && itThatX==that->vars2Value.end()="<<(itThatX==that->vars2Value.end())<<"\n";
+			itThisX++;
+			itThatX++;
+		}
+		//cout << "bottom, itThisX==vars2Value.end()="<<(itThisX==vars2Value.end())<<" && itThatX==that->vars2Value.end()="<<(itThatX==that->vars2Value.end())<<"\n";
+	}
+	
+//cout << indent << "   this loop end: "<<str(indent+"    ")<<"\n";
+//cout << indent << "   modified = "<<modified<<"\n";
+	
+	// For all x constraints in This that is not in That
+	while(itThisX!=vars2Value.end())
+		OrAndWidenUpdate_XinThisNotThat(OR, limitToThat, itThisX, modified, indent+"    ");
+
+	// For all x constraints in That that is not in This
+	while(itThatX!=that->vars2Value.end())
+		OrAndWidenUpdate_XinThatNotThis(OR, limitToThat, that, itThatX, additionsToThisX, modified, indent+"    ");
+	
+	// Add all the new mappings in additionsToThisX to This. We're guaranteed that if a variable
+	// is mapped at the first level by additionsToThisX, it is not mapped at the first level by vars2Value
+	for(map<varID, map<varID, affineInequality> >::iterator iterX=additionsToThisX.begin(); iterX!=additionsToThisX.end(); iterX++) {
+		ROSE_ASSERT(vars2Value.find(iterX->first) == vars2Value.end());
+		vars2Value.insert(*iterX);
+	}
+	
+	// Close if the widening will cause this graph to change
+	if (modified)
+	{
+		constrChanged = true;
+		cout << indent << "Before Transitive Closure:\n"<<str(indent+"    ")<<"\n";
+		transitiveClosure();
+	}
+	
+/*	// Merge the vars, arrays and divVars sets of the two objects
+	for(varIDSet::const_iterator it=that->vars.begin(); it!=that->vars.end(); it++)
+		vars.insert(*it);
+	for(varIDSet::const_iterator it=that->divVars.begin(); it!=that->divVars.end(); it++)
+		divVars.insert(*it);*/
+	
+	/*cout << "OrAndWidenUpdate vars = ";
+	for(varIDSet::iterator it=vars.begin(); it!=vars.end(); it++)
 	{ cout << (*it).str() << ", "; }
 	cout << "\n";*/
 	
@@ -3358,65 +3061,155 @@ cout << "   that: "<<that->str("")<<"\n";*/
 	return modified;
 }
 
-// <from LogicalCond>
-bool ConstrGraph::andUpd(LogicalCond& that_arg)
+// Portion of OrAndWidenUpdate that deals with x variables for which there exist x->y mapping 
+// in This but not in That. Increments itThisX and updates modified and modifiedVars in case this 
+// function modifies the constraint graph.
+void ConstrGraph::OrAndWidenUpdate_XinThisNotThat(
+	                            bool OR, bool limitToThat, 
+	                            map<varID, map<varID, affineInequality> >::iterator& itThisX, bool& modified,
+	                            string indent)
 {
-	ConstrGraph* that = dynamic_cast<ConstrGraph*>(&that_arg);
-	return andUpd(that);
+	if(!limitToThat)
+	{
+		// Do we need separate Union and Widening cases? This should not happen in a loop situation
+		//if(ct == conj) {
+		if(OR) {
+			// new: old_constraint OR bottom = bottom and bottom can be represented as an unmapped x->y pair
+			itThisX->second.clear();
+			modifiedVars.insert(itThisX->first);
+			modified = true;
+		} else {
+			// new: old_constraint AND bottom = constraint, so no need to change this
+		}
+	}
+	itThisX++;	
 }
 
-bool ConstrGraph::andUpd(ConstrGraph* that)
+// Portion of OrAndWidenUpdate that deals with x variables for which there exist x->y mapping 
+// in That but not in This. Increments itThisX and updates modified and modifiedVars in case this 
+// function modifies the constraint graph.
+// additionsToThis - Records the new additions to vars2Value that need to be made after we are done iterating 
+//      over it. It guaranteed that the keys mapped by the first level of additionsToThis are not mapped
+//      at the first level by vals2Value.
+void ConstrGraph::OrAndWidenUpdate_XinThatNotThis(
+	                            bool OR, bool limitToThat, 
+	                            ConstrGraph* that,
+	                            map<varID, map<varID, affineInequality> >::iterator& itThatX, 
+	                            map<varID, map<varID, affineInequality> >& additionsToThis, 
+	                            bool& modified, string indent)
 {
-	bool modified = false;
+	//cout << indent << "OrAndWidenUpdate_XinThatNotThis(itThatX="<<itThatX->first<<"\n";
+
+	// Ignore variables that are not mapped in This because they're not live at the DataflowNode of this constraint graph
+	if(vars.find(itThatX->first)==vars.end() && divVars.find(itThatX->first)==divVars.end()) { itThatX++; return; }
 	
-	// add all the constraints in that to this, one by one
-	for(map<varID, map<varID, affineInequality> >::iterator itX = that->vars2Value.begin(); 
-	    itX != that->vars2Value.end(); itX++)
+	//if(ct == conj) {
+	if(OR) {
+		// new: Bottom OR that.constraint = Bottom, so leave x->* constraint in This as Bottom
+		// NOT CERTAIN THAT THIS IS VALID
+		// If X is a divisibility variable for a variable that does exist in This, copy its constraints over, 
+		// since the only reason why we don't already have constraints for x is because they would have been too tight.
+		if(isDivVar(itThatX->first)) {
+			pair<varID, bool> p = divVar2Var(itThatX->first);
+			if(p.second) {
+				for(map<varID, affineInequality>::iterator itThatY=itThatX->second.begin(); itThatY!=itThatX->second.end(); itThatY++) {
+					// Ignore variables that are not mapped in This because they're not live at the DataflowNode of this constraint graph
+					if(vars.find(itThatY->first)==vars.end() && divVars.find(itThatY->first)==divVars.end()) continue;
+					additionsToThis[itThatX->first].insert(*itThatY);
+				}
+				modifiedVars.insert(itThatX->first);
+				modified = true;
+			}
+		}
+	} else {
+		// new: Bottom AND that.constraint = constraint, so copy constraint from That to This
+		//vars2Value[itThatX->first] = that->vars2Value[itThatX->first];
+		// Copy all the x <= y constraints from That where y is a variable mapped in This
+		for(map<varID, affineInequality>::iterator itThatY=itThatX->second.begin(); itThatY!=itThatX->second.end(); itThatY++) {
+			// Ignore variables that are not mapped in This because they're not live at the DataflowNode of this constraint graph
+			if(vars.find(itThatY->first)==vars.end() && divVars.find(itThatY->first)==divVars.end()) continue;
+			additionsToThis[itThatX->first].insert(*itThatY);
+		}
+		modifiedVars.insert(itThatX->first);
+		modified = true;
+	}
+	itThatX++;
+}
+
+// Portion of OrAndWidenUpdate that deals with x->y pairs for which there exist x->y mapping 
+// in This but not in That. Increments itThisX and updates modified and modifiedVars in case this 
+// function modifies the constraint graph.
+void ConstrGraph::OrAndWidenUpdate_YinThisNotThat(
+	                            bool OR, bool limitToThat, 
+	                            map<varID, map<varID, affineInequality> >::iterator& itThisX,
+	                            map<varID, affineInequality>::iterator& itThisY, 
+	                            bool& modified, string indent)
+{
+	/*// do nothing, since all <itThisX->first -> itThisY->first> constraints in that are assumed to be bottom*/
+	// Only bother with this case if we've been asked to
+	if(!limitToThat)
 	{
-		for(map<varID, affineInequality>::iterator itY = itX->second.begin();
-		    itY!=itX->second.end(); itY++)
-		{
-			modified = assertCond(itX->first, itY->first, 
-			                      itY->second.getA(), itY->second.getB(), itY->second.getC()) || modified;
+		// Do we need separate Union and Widening cases? This should not happen in a loop situation
+		//if(ct == conj) {
+		if(OR) {
+			// new: old_constraint OR Bottom = Bottom, and bottom can be represented as an unmapped x->y pair or 
+			//      by just setting the constraint to Bottom
+			modified = itThisY->second.setToBottom() || modified;
+			modifiedVars.insert(itThisY->first);
+			modifiedVars.insert(itThisX->first);
+			// !!! above should be a removal
+			modified = true;
+		} else {
+			// new: old_constraint AND bottom = constraint, so no need to change this
 		}
 	}
 	
-/*	// Merge the scalars, arrays and divVariables sets of the two objects
-	for(varIDSet::const_iterator it=that->scalars.begin(); it!=that->scalars.end(); it++)
-		scalars.insert(*it);
-	for(varIDSet::const_iterator it=that->arrays.begin(); it!=that->arrays.end(); it++)
-		arrays.insert(*it);
-	for(varIDSet::const_iterator it=that->divVariables.begin(); it!=that->divVariables.end(); it++)
-		divVariables.insert(*it);*/
-	
-	return modified;
+	itThisY++;
 }
 
-// <from LogicalCond>
-bool ConstrGraph::orUpd(LogicalCond& that_arg)
+// Portion of OrAndWidenUpdate that deals with x->y pairs for which there exist x->y mapping 
+// in That but not in This. Increments itThisX and updates modified and modifiedVars in case this 
+// function modifies the constraint graph.
+void ConstrGraph::OrAndWidenUpdate_YinThatNotThis(
+	                            bool OR, bool limitToThat, 
+	                            map<varID, affineInequality>::iterator& itThisY, 
+	                            map<varID, map<varID, affineInequality> >::iterator& itThatX,
+	                            map<varID, affineInequality>::iterator& itThatY, 
+                               map<varID, affineInequality>& additionsToThis, 
+	                            bool& modified, string indent)
 {
-	ConstrGraph* that = dynamic_cast<ConstrGraph*>(&that_arg);
-
-	// if one graph is strictly looser than the other, the union = the looser graph
-	if(*that <<= *this)
-	{
-		// this is already the union
-		return false;
+	// Ignore variables that are not mapped in this because they're not live at the DataflowNode of this constraint graph
+	if(vars.find(itThatY->first)==vars.end() && divVars.find(itThatY->first)==divVars.end()) { itThatY++; return; }
+	
+	//if(ct == conj) {
+	if(OR) {
+		// new: Bottom OR that.constraint = Bottom, so leave x->y constraint in This as Bottom
+		
+		// NOT CERTAIN THAT THIS IS VALID
+		// If Y is a divisibility variable for a variable that does exist in This, copy its constraints over, 
+		// since the only reason why we don't already have constraints for y is because they would have been too tight.
+		if(isDivVar(itThatY->first)) {
+			pair<varID, bool> p = divVar2Var(itThatY->first);
+			if(p.second) {
+				additionsToThis.insert(*itThatY);
+				modifiedVars.insert(itThatX->first);
+				modified = true;
+			}
+		}
+			
+	} else {
+		// new: Bottom AND that.constraint = constraint, so copy constraint from That to This
+		//itThisY->second = itThatY->second;
+		additionsToThis.insert(*itThatY);
+		modifiedVars.insert(itThatX->first);
+		modified = true;
 	}
-	else if(*this <<= *that)
-	{
-		return copyFrom(*that);
-	}
-	// else, iterate over all constraints in both constraint graphs and union them individually
-	else
-	{
-		return meetwidenUpdate(that, true, false);
-	}
+	itThatY++;
 }
 
-// computes the transitive closure of the given constraint graph,
-// and updates the graph to be that transitive closure
-void ConstrGraph::transitiveClosure()
+// Computes the transitive closure of the given constraint graph, and updates the graph to be that transitive closure. 
+// Returns true if this causes the graph to change and false otherwise.
+bool ConstrGraph::transitiveClosure(string indent)
 {
 	int numSteps=0, numInfers=0, numFeasibleChecks=0, numLocalClosures=0;
 	struct timeval startTime, endTime;
@@ -3426,127 +3219,72 @@ void ConstrGraph::transitiveClosure()
 		gettimeofday(&startTime, NULL);
 	}
 	// don't take transitive closures in the middle of a transaction
-	if(inTransaction) return;
+	if(inTransaction) return false;
 	
-	initialized = true; // this constraint graph will now definitely be initialized
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+	// This constraint graph will now definitely be initialized
+	if(l.first==uninitialized) return setToBottom(indent+"    ");
+		
+	// Don't do anything if this lattice has no explicit constraints
+	if(l.first==uninitialized || l.first==bottom || l.first==top ||
+		(l.first==constrKnown && l.second==inconsistent))
+		return false;
 	
 #ifdef DEBUG_FLAG_TC
-cout << "Beginning transitive closure\n";
-cout << "    Pre-closure: \n" << str("    ") << "\n";
+cout << indent << "Beginning transitive closure\n";
+cout << indent << "    Pre-closure: \n" << str("    ") << "\n";
 #endif
-	//m_quad2str::iterator mIter1, mIter2, mIter3;
-	bool modified = true;
+	bool modified = false;
+	bool iterModified = true;
 	
-	// First, compute the transitive closure of all non-array range variables. This determines
-	// all the constraints on the current program state.
+	modified = transitiveClosureDiv(indent+"    ");
 	
-	// iterate until a fixed point is reached
-	while (modified)
+	// First, compute the transitive closure of all variables. This determines
+	// all the constraints on the current program state. 
+	// If this is a normal conjunction of inequalities, we'll be performing inferences 
+	//    through inequalities of the form ax <= by+c.	
+	// If this is a negated conjunction, we will not perform any inferences since a negated
+	//    conjunction is just a disjunction of negated inequalities and you can't infer
+	//    anything from ax > by+x OR dy > ez+f since they may not both hold at the same time.
+	
+	if(l.first==constrKnown && l.second==negConj)
+		return false;
+	
+	// Iterate until a fixed point is reached
+	while (iterModified)
 	{
-		modified = false;
-		// iterate through every triple of variables
+		iterModified = false;
+		// Iterate through every triple of variables x, y, z, where x is a variable that constraints
+		//    of which have changed and y and z are any variables.
+		// Infer from ax <= by+c and dy <= ez+f something about gx <= hz+i
 		//for ( mIter1 = vars2Name.begin(); mIter1 != vars2Name.end(); mIter1++ )
 		for(varIDSet::iterator itX = newConstrVars.begin(); itX!=newConstrVars.end(); itX++)
 		{
 //cout << "itX = "<<itX->str()<<"\n";
 			varID x = *itX;
-			varID divX = getDivScalar(x);
+			varID divX = getDivVar(x);
 			
-			for(varIDSet::iterator itY = scalars.begin(); itY!=scalars.end(); itY++)
-			{
-				varID y = *itY;
-				varID divY = getDivScalar(y);
-							
-				// if x and y are different variables and they're not both constants
-				//    (we don't want to do inference on constants since we can't learn anything more 
-				//     about them and we might lose information because we're being conservative)
-/*				// and one is not the other's divisibility variable*/
-				if(x != y && ((x!=zeroVar && x!=oneVar) || (y!=zeroVar && y!=oneVar))
-				   /*&& x!=divY && y!=divX*/)
-				{
-//cout << "itY = "<<itY->str()<<"\n";
-					//quad xy = getVal(x, y);
-					affineInequality* constrXY = NULL;
-					// skip the rest if there is no x->y constraint
-					//if(constrXY)
-					{
-						//for ( mIter3 = vars2Name.begin(); mIter3 != vars2Name.end(); mIter3++ )
-						for(varIDSet::iterator itZ = scalars.begin(); itZ!=scalars.end(); itZ++)
-						{
-							numSteps++;
-//cout << "itZ = "<<itZ->str()<<"\n";
-							/*// Skip all array ranges
-							if(isArray(mIter2->first))
-								continue;
-	
-							quad z = mIter3->first;*/
-							varID z = *itZ;
-							// x, y and z are three different variables
-							if(z!=x && z!=y)
-							{
-								if(!constrXY)
-									constrXY = getVal(x, y);
-									
-								//quad xz = getVal(x, z), zy = getVal(z, y);
-								affineInequality* constrXZ = getVal(x, z);
-								affineInequality* constrZY = getVal(z, y);
-								/*if(constrXZ) cout << "                  "<<x.str()<<"->"<<z.str()<<" = " << constrXZ->str(x, z, "") << "\n";
-								if(constrZY) cout << "                  "<<z.str()<<"->"<<y.str()<<" = " << constrZY->str(z, y, "") << "\n";*/
-								// if the x->z->y path results in a tighter constraint than the
-								// x->y path, update the latter to the former
-								//if ( xz != INF && zy != INF )
-								if(constrXZ && constrXZ->getLevel()==affineInequality::constrKnown && 
-									constrZY && constrZY->getLevel()==affineInequality::constrKnown)
-								{
-									numInfers++;
-									affineInequality inferredXY(*constrXZ, *constrZY/*, x==zeroVar, y==zeroVar, 
-									                            dynamic_cast<DivLattice*>(divL->getVarLattice(func, x)), 
-									                            dynamic_cast<DivLattice*>(divL->getVarLattice(func, y)), z*/);
-									//affineInequality *constrXY = getVal(x, y);
-									
-//printf("transitiveClosure() constrXY=%p\n", &inferredXY, constrXY);
-
-									// if there doesn't exist an x-y constraint in the graph, add it
-									if(!constrXY)
-									{
-#ifdef DEBUG_FLAG_TC
-										cout << "    " << x.str() << "->" << y.str() << "\n";
-										cout << "        Current = None\n";
-										cout << "        Inferred("<<x.str()<<"->"<<z.str()<<"->"<<y.str()<<") = " << inferredXY.str(x, y, "") << "\n";
-#endif
-
-										setVal(x, y, inferredXY);
-										constrXY = getVal(x, y);
-										modified = true;
-									}
-									// else, if the inferred x-y constraint it strictly tighter than the current x-y constraint
-									else if(inferredXY.semLessThan(*constrXY, isEqZero(x), isEqZero(y)))
-									{
-#ifdef DEBUG_FLAG_TC
-										cout << "    " << x.str() << "->" << y.str() << "\n";
-										cout << "        Current = " << constrXY->str(x, y, "") << "\n";
-										cout << "        Inferred ("<<x.str()<<"->"<<z.str()<<"->"<<y.str()<<") = " << inferredXY.str(x, y, "") << "\n";
-#endif
-										// replace the current x-y constraint with the inferred one
-										constrXY->set(inferredXY);
-										modified = true;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+			for(varIDSet::iterator itY = vars.begin(); itY!=vars.end(); itY++)
+				ConstrGraph::transitiveClosureY(x, *itY, modified, numSteps, numInfers, iterModified, indent);
+			for(varIDSet::iterator itY = divVars.begin(); itY!=divVars.end(); itY++)
+				ConstrGraph::transitiveClosureY(x, *itY, modified, numSteps, numInfers, iterModified, indent);
+			ConstrGraph::transitiveClosureY(x, zeroVar, modified, numSteps, numInfers, iterModified, indent);
 		}
 
 		//numFeasibleChecks++;
 		//// look for cycles
-		//quad r = isFeasible();
+		//quad r = checkSelfConsistency();
 		//if(r!=1) break;
+		modified = iterModified || modified;
+		#ifdef DEBUG_FLAG_TC
+		cout << indent << "~~~~~~~~~~~~~~~~~~~~~~~~~ modified="<<modified<<" iterModified="<<iterModified<<"\n";
+		cout << indent << str(indent) <<"\n";
+		cout << indent << "~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+		#endif
 	}
-	numFeasibleChecks++;
+	//numFeasibleChecks++;
 	// look for cycles
-	//quad r = isFeasible();
+	//quad r = checkSelfConsistency();
 	
 	// Reset the variable modification state
 	modifiedVars.clear();
@@ -3554,45 +3292,16 @@ cout << "    Pre-closure: \n" << str("    ") << "\n";
 
 #ifdef DEBUG_FLAG_TC
 	// check for cycles
-	cout << "    transitiveClosure() feasibility r="<<isFeasible()<<"\n\n";
-	cout << "    Constraints at the end of base transitiveClosure\n";
-	cout << str("    ") << "\n";
-#endif
+	cout << indent << "    transitiveClosure() feasibility r="<<checkSelfConsistency()<<"\n\n";
+	cout << indent << "    Constraints at the end of base transitiveClosure\n";
+	cout << indent << str("    ") << "\n";
 
-	
-	// Now compute the local transitive closures of all array ranges. The critical bit
-	//    here is to only modify the constraints of each range relative to other constraint 
-	//    variables without modifying the constraints of other variables to each other.
-	//    the reason is that if this closure process creates a negative cycle in a 
-	//    given array's constraints (i.e. makes its range empty), this cycle should 
-	//    not transitively propagate to other variables and make this constraint graph top.
-	//    The negative cycle applies to the array range and must be limited to this array range.
-	
-	// iterate over all arrays
-	// !!! Need to incorporate arrays into the newConstrVars logic of variable modification
-//	for(varIDSet::iterator curArray = arrays.begin(); 
-//		 curArray != arrays.end(); curArray++)
-//	{
-//		numLocalClosures++;
-//		localTransClosure(*curArray);
-//	}
-
-#ifdef DEBUG_FLAG_TC
 	// check for cycles
-	cout << "    transitiveClosure() feasibility ="<<isFeasible()<<"\n\n";
-	cout << "    Constraints at the end of full transitiveClosure\n";
-	cout << str("    ") << "\n";
+	cout << indent << "    transitiveClosure() feasibility ="<<checkSelfConsistency()<<"\n\n";
+	cout << indent << "    Constraints at the end of full transitiveClosure\n";
+	cout << indent << str("    ") << "\n";
 #endif
 /*
-	// return appropriate flags for -1=Dead and 0=Bottom
-	if (r == 0)
-	{
-		delete (d);
-		d = NULL;
-	}
-	if (r == -1)
-		d->dead = true;
-
 #ifdef DEBUG_FLAG
 	cout << "    Ending transitive closure\n";
 #endif
@@ -3600,107 +3309,280 @@ cout << "    Pre-closure: \n" << str("    ") << "\n";
 	if(profileLevel>=1) 
 	{
 		gettimeofday(&endTime, NULL);
-		cout << "transitiveClosure() >>> numSteps="<<numSteps<<", numInfers="<<numInfers<<", numFeasibleChecks="<<numFeasibleChecks<<", numLocalClosures="<<numLocalClosures<<", numVars="<<scalars.size()<<", time="<<((double)((endTime.tv_sec*1000000+endTime.tv_usec)-(startTime.tv_sec*1000000+startTime.tv_usec)))/1000000.0<<"\n";
+		cout << indent << "transitiveClosure() >>> numSteps="<<numSteps<<", numInfers="<<numInfers<<", numFeasibleChecks="<<numFeasibleChecks<<", numLocalClosures="<<numLocalClosures<<", numVars="<<vars.size()<<", time="<<((double)((endTime.tv_sec*1000000+endTime.tv_usec)-(startTime.tv_sec*1000000+startTime.tv_usec)))/1000000.0<<"\n";
+	}
+	
+	return modified;
+}
+
+bool ConstrGraph::transitiveClosureDiv(string indent)
+{
+	bool modified=false;
+	
+	for(set<varID>::iterator x=vars.begin(); x!=vars.end(); x++)
+		for(set<varID>::iterator y=vars.begin(); y!=vars.end(); y++)
+		{
+			// If both x and y are currently constants but their divisibility level is divKnown, this means that 
+			// the inferred constraint will correspond to their difference as constants, whereas by the time we 
+			// reach a fixed point we'll realize that these variables are not constants. In fact, odds are that
+			// both variables are iterators, since the most common way to be stably divisible by a constant is to
+			// be continually incremented by this constant in iterations of some loop nest. The divisibility analysis
+			// has already figured this out since it has already reached its fixed point. We'll now use it in this
+			// analysis to set the x->y constraint to reflect this information. In particular, we'll assume that
+			// the most appropriate relationship between x=d_x * i + r_x and y=d_y * j + r_y is that in a given 
+			// iteration both are incremented by d_x and d_y respectively. Other relationships are possible and are 
+			// consistent with their divisibility information and their current values. However, this is the one
+			// that is most common and most useful for our current purposes.
+			int aX, bX, cX, aY, bY, cY;
+			DivLattice* divLX = dynamic_cast<DivLattice*>(getDivLattice(*x, indent+"    ")->getVarLattice(*x));
+			DivLattice* divLY = dynamic_cast<DivLattice*>(getDivLattice(*y, indent+"    ")->getVarLattice(*y));
+			if(divLX && divLY &&  
+				divLX->getLevel()==DivLattice::divKnown && divLY->getLevel()==DivLattice::divKnown &&
+				isEqVars(*x, zeroVar, aX, bX, cX, indent+"    ") && isEqVars(*y, zeroVar, aY, bY, cY, indent+"    "))
+			{
+				ROSE_ASSERT(aX==1 && bX==1 && aY==1 && bY==1);
+				affineInequality inferredXY;
+				// this: x = cX
+				// this: x = cY
+				// divLX: x=d_x * i + r_x
+				// divLX: y=d_y * j + r_y
+				// inferredXY => d_y * x = d_x * y + q
+				//      d_y * cX - d_x * cY = q
+				inferredXY.set(divLY->getDiv(), divLX->getDiv(), divLY->getDiv() * cX - divLX->getDiv() * cY);
+				if(getVal(*x, *y)) cout << indent << "transitiveClosureDiv() Current="<<getVal(*x, *y)->str(*x, *y, indent+"    ")<<" inferredXY="<<inferredXY.str(*x, *y, indent+"    ")<<"\n";
+				else               cout << indent << "transitiveClosureDiv() Current=NONE inferredXY="<<inferredXY.str(*x, *y, indent+"    ")<<"\n";
+				
+				if(getVal(*x, *y)==NULL) cout << indent << "    No Original Constraint. Setting.\n";
+				else cout << indent << "    semLessThan ="<<getVal(*x, *y)->semLessThan(inferredXY, getVal(*x, zeroVar), getVal(zeroVar, *x), 
+				                                           getVal(*y, zeroVar), getVal(zeroVar, *y), indent+"            ")<<"\n";
+				// If either no x->y constraint is currently recorded or 
+				//   there is one but the inferred constraint is not looser than the previous one, 
+				//   replace the original with the inferred
+				if(getVal(*x, *y)==NULL || 
+				   !getVal(*x, *y)->semLessThan(inferredXY, getVal(*x, zeroVar), getVal(zeroVar, *x), 
+				                                            getVal(*y, zeroVar), getVal(zeroVar, *y), indent+"            ")) {
+					modified = setVal(*x, *y, inferredXY) || modified;
+				}
+			}
+		}
+	return modified;
+}
+
+void ConstrGraph::transitiveClosureY(const varID& x, const varID& y, bool& modified, int& numSteps, int& numInfers, bool& iterModified, string indent)
+{
+	varID divY = getDivVar(y);
+	
+	// if x and y are different variables and they're not both constants
+	//    (we don't want to do inference on constants since we can't learn anything more 
+	//     about them and we might lose information because we're being conservative)
+/*				// and one is not the other's divisibility variable*/
+	if(x != y && ((x!=zeroVar && x!=oneVar) || (y!=zeroVar && y!=oneVar))
+	   /*&& x!=divY && y!=divX*/)
+	{
+//cout << "itY = "<<itY->str()<<"\n";
+		//quad xy = getVal(x, y);
+		//affineInequality* constrXY = NULL;
+		// skip the rest if there is no x->y constraint
+		//if(constrXY)
+		{
+			//for ( mIter3 = vars2Name.begin(); mIter3 != vars2Name.end(); mIter3++ )
+			for(varIDSet::iterator itZ = vars.begin(); itZ!=vars.end(); itZ++)
+				ConstrGraph::transitiveClosureZ(x, y, *itZ, modified, numSteps, numInfers, iterModified, indent);
+			for(varIDSet::iterator itZ = divVars.begin(); itZ!=divVars.end(); itZ++)
+				ConstrGraph::transitiveClosureZ(x, y, *itZ, modified, numSteps, numInfers, iterModified, indent);
+			ConstrGraph::transitiveClosureZ(x, y, zeroVar, modified, numSteps, numInfers, iterModified, indent);
+		}
+	}	
+}
+
+void ConstrGraph::transitiveClosureZ(const varID& x, const varID& y, const varID& z, bool& modified, int& numSteps, int& numInfers, bool& iterModified, string indent)
+{
+	numSteps++;
+
+	affineInequality* constrXY = NULL;
+//cout << "itZ = "<<itZ->str()<<"\n";
+	// x, y and z are three different variables and x and y are not each other divisibility variables (we don't want to find new constraints for these)
+	varID divX = getDivVar(x);
+	varID divY = getDivVar(y);
+	if(z!=x && z!=y & x!=divY && y!=divX)
+	{
+		if(!constrXY) constrXY = getVal(x, y);
+			
+		affineInequality* constrXZ = getVal(x, z);
+		affineInequality* constrZY = getVal(z, y);
+		/*if(constrXZ) cout << "                  "<<x.str()<<"->"<<z.str()<<" = " << constrXZ->str(x, z, "") << "\n";
+		if(constrZY) cout << "                  "<<z.str()<<"->"<<y.str()<<" = " << constrZY->str(z, y, "") << "\n";*/
+		// if the x->z->y path results in a tighter constraint than the
+		// x->y path, update the latter to the former
+		//if ( xz != INF && zy != INF )
+		if(constrXZ && constrXZ->getLevel()==affineInequality::constrKnown && 
+			constrZY && constrZY->getLevel()==affineInequality::constrKnown)
+		{
+			numInfers++;
+			affineInequality inferredXY(*constrXZ, *constrZY/*, x==zeroVar, y==zeroVar, 
+			                            dynamic_cast<DivLattice*>(divL->getVarLattice(x)), 
+			                            dynamic_cast<DivLattice*>(divL->getVarLattice(y)), z*/);
+			//affineInequality *constrXY = getVal(x, y);
+			
+//printf("transitiveClosure() constrXY=%p\n", &inferredXY, constrXY);
+			cout << indent << "    " << x.str() << "->" << z.str() << " ->" << y.str() << "\n";
+			cout << indent << "        Inferred = " << inferredXY.str(x, y, "") << " from "<<constrXZ->str(x, z, "")<<" and "<<constrZY->str(z, y, "")<<"\n";
+
+			// If there doesn't exist an x-y constraint in the graph, add it
+			if(!constrXY)
+			{
+#ifdef DEBUG_FLAG_TC
+				//cout << "    " << x.str() << "->" << z.str() << " ->" << y.str() << "\n";
+				cout << indent << "        Current = None\n";
+				//cout << "        Inferred = " << inferredXY.str(x, y, "") << "\n";
+#endif
+
+				setVal(x, y, inferredXY);
+				constrXY = getVal(x, y);
+				iterModified = true;
+			}
+			// else, if the inferred x-y constraint it strictly tighter than the current x-y constraint
+			//else if(inferredXY.semLessThan(*constrXY, isEqZero(x), isEqZero(y)))
+			else if(inferredXY!=*constrXY)
+			{
+				//int a, b, c;
+				//cout << indent << "    isEqVars(x, zeroVar)="<<isEqVars(x, zeroVar, a, b, c, indent+"    ")<<" isEqVars(y, zeroVar)="<<isEqVars(y, zeroVar, a, b, c, indent+"    ")<<"\n";
+				// True if x and y are constants and false otherwise
+				//bool xyConst = isEqVars(x, zeroVar, a, b, c, indent+"    ") && isEqVars(y, zeroVar, a, b, c, indent+"    ");
+				// If both x and y are constants, use semantic <=
+				if(/*(xyConst && 
+					 inferredXY.semLessThanEq(*constrXY, x==zeroVar, x==zeroVar?NULL:getVal(x, zeroVar), x==zeroVar?NULL:getVal(zeroVar, x), 
+				 				                 y==zeroVar, y==zeroVar?NULL:getVal(y, zeroVar), y==zeroVar?NULL:getVal(zeroVar, y), indent+"            ")) ||
+				   // Otherwise, use semantic <
+				   (!xyConst && 
+					*/ inferredXY.semLessThan(*constrXY, x==zeroVar?NULL:getVal(x, zeroVar), x==zeroVar?NULL:getVal(zeroVar, x), 
+				 	                                     y==zeroVar?NULL:getVal(y, zeroVar), y==zeroVar?NULL:getVal(zeroVar, y), indent+"            ")/*)*/) {
+#ifdef DEBUG_FLAG_TC
+					//cout << indent << "    " << x.str() << "->" << z.str() << " ->" << y.str() << "\n";
+					cout << indent << "        Setting " << constrXY->str(x, y, "") << " => "<<inferredXY.str(x, y, "")<<"\n";
+					//cout << indent << "        Inferred = " << inferredXY.str(x, y, "") << "\n";
+#endif
+					// Replace the current x-y constraint with the inferred one
+					constrXY->set(inferredXY);
+					iterModified = true;
+				}
+			}
+		}
+/*#ifdef DEBUG_FLAG_TC
+cout << indent << "    iterModified="<<iterModified<<"\n";
+#endif*/
 	}
 }
 
-
-// computes the transitive closure of the given constraint graph,
-// focusing on the constraints of scalars that have divisibility variables
-// we only bother propagating constraints to each such variable through its divisibility variable
-void ConstrGraph::divVarsClosure()
+// Computes the transitive closure of the given constraint graph, focusing on the constraints 
+//    of vars that have divisibility variables. We only bother propagating constraints to each such 
+//    variable through its divisibility variable.
+// Returns true if this causes the graph to change and false otherwise.
+bool ConstrGraph::divVarsClosure(string indent)
 {
 	int numVarClosures=0, numFeasibleChecks=0;
 	struct timeval startTime, endTime;
 	if(profileLevel>=1)
 	{
-		cout << "divVarsClosure() <<<\n";
+		cout << indent << "divVarsClosure() <<<\n";
 		gettimeofday(&startTime, NULL);
 	}
 	
 	// don't take transitive closures in the middle of a transaction
-	if(inTransaction) return;
+	if(inTransaction) return false;
 	
-	initialized = true; // this constraint graph will now definitely be initialized
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+
+	// This constraint graph will now definitely be initialized
+	if(l.first==uninitialized) return setToBottom(indent+"    ");
 	
 #ifdef DEBUG_FLAG_TC
-cout << "Beginning divVarsClosure\n";
-cout << "    Pre-closure: \n" << str("    ") << "\n";
+cout << indent << "Beginning divVarsClosure\n";
+cout << indent << "    Pre-closure: \n" << str("    ") << "\n";
 #endif
-	bool modified = true;
-	
-	// First, compute the transitive closure of all non-array range variables. This determines
-	// all the constraints on the current program state.
-	
-	// iterate until a fixed point is reached
-	while (modified)
+	bool modified = false;
+	bool iterModified=true;
+		
+	// Iterate until a fixed point is reached or the constraint graph is discovered to be inconsistent
+	while(iterModified && !(l.first==constrKnown && l.second==inconsistent))
 	{
-		modified = false;
-		// iterate through every triple of variables
-		for(varIDSet::iterator itX = divVariables.begin(); itX!=divVariables.end(); itX++)
+		iterModified = false;
+		// Iterate through every triple of variables
+		for(varIDSet::iterator itX = vars.begin(); itX!=vars.end(); itX++)
 		{
 			varID x = *itX;
-			varID divX = getDivScalar(x);
+			varID divX = getDivVar(x);
 			affineInequality* constrXDivX = getVal(x, divX);
 			affineInequality* constrDivXX = getVal(divX, x);
 			
-			//affineInequality::signs xSign = getVarSign(x);
+			//affineInequality::signs xSign = getVarSign(x, indent+"    ");
 			
-			for(varIDSet::iterator itY = scalars.begin(); itY!=scalars.end(); itY++)
+			for(varIDSet::iterator itY = vars.begin(); itY!=vars.end(); itY++)
 			{
 				varID y = *itY;
-				//affineInequality::signs ySign = getVarSign(y);
+				ROSE_ASSERT(divX != y);
+				//affineInequality::signs ySign = getVarSign(y, indent+"    ");
 				numVarClosures++;
-				modified = divVarsClosure_perY(x, divX, y, constrXDivX, constrDivXX/*, xSign, ySign*/) || modified;
+				iterModified = divVarsClosure_perY(x, divX, y, constrXDivX, constrDivXX/*, xSign, ySign*/, indent+"    ") || iterModified;
 			}
 			
 			/*for(varIDSet::iterator itY = arrays.begin(); itY!=arrays.end(); itY++)
 			{
 				varID y = *itY;
-				modified = divVarsClosure_perY(x, divX, y, constrXDivX, constrDivXX) || modified;
+				iterModified = divVarsClosure_perY(x, divX, y, constrXDivX, constrDivXX, indent+"    ") || iterModified;
 			}*/
 		}
 
 		numFeasibleChecks++;
 		// look for cycles
-		quad r = isFeasible();
-		if(r!=1) break;
+		iterModified = checkSelfConsistency() || iterModified;
+		modified = iterModified || modified;
+		l = getLevel(true, indent+"    ");
 	}
 	if(profileLevel>=1) 
 	{
 		gettimeofday(&endTime, NULL);
-		cout << "divVarsClosure() >>> numVarClosures="<<numVarClosures<<", numFeasibleChecks="<<numFeasibleChecks<<", numVars="<<scalars.size()<<", time="<<((double)((endTime.tv_sec*1000000+endTime.tv_usec)-(startTime.tv_sec*1000000+startTime.tv_usec)))/1000000.0<<"\n";
+		cout << indent << "divVarsClosure() >>> numVarClosures="<<numVarClosures<<", numFeasibleChecks="<<numFeasibleChecks<<", numVars="<<vars.size()<<", time="<<((double)((endTime.tv_sec*1000000+endTime.tv_usec)-(startTime.tv_sec*1000000+startTime.tv_usec)))/1000000.0<<"\n";
 	}
+	
+	return modified;
 }
 
 // The portion of divVarsClosure that is called for every y variable. Thus, given x and x' (x's divisibility variable)
 // divVarsClosure_perY() is called for every scalar or array y to infer the x->y connection thru x->x'->y and
-// infer the y->x connection thru x->x'->x
+// infer the y->x connection thru y->x'->x
 bool ConstrGraph::divVarsClosure_perY(const varID& x, const varID& divX, const varID& y, 
                                       affineInequality* constrXDivX, affineInequality* constrDivXX/*,
-                                      affineInequality::signs xSign, affineInequality::signs ySign*/)
+                                      affineInequality::signs xSign, affineInequality::signs ySign*/, string indent)
 {
+	#ifdef DEBUG_FLAG_TC
+	cout << indent << "divVarsClosure_perY(x="<<x<<", divX="<<divX<<", y="<<y<<", constrXDivX="<<constrXDivX<<", constrDivXX="<<constrDivXX<<")\n";
+	#endif
 	int numInfers=0;
 	struct timeval startTime, endTime;
 	if(profileLevel>=1)
 	{
-		cout << "divVarsClosure_perY("<<x.str()<<", "<<divX.str()<<", "<<y.str()<<") <<<\n";
+		cout << indent << "divVarsClosure_perY("<<x.str()<<", "<<divX.str()<<", "<<y.str()<<") <<<\n";
 		gettimeofday(&startTime, NULL);
 	}
 	bool modified = false;
 	
-	// if x, divX and y are different variables
-	if(x != y && divX != y)
+	// if x and y are different variables
+	if(x != y)
 	{
+		// Infer an x <= y constraint through x <= divX <= y
 		{
 			affineInequality* constrDivXY = getVal(divX, y);
 			affineInequality* constrXY = getVal(x, y);
 			
 			// if the x->divX->y path results in a tighter constraint than the
 			// x->y path, update the latter to the former
+			/*if(!constrDivXY) cout << indent << "    constrDivXY="<<constrDivXY<<"\n";
+			else             cout << indent << "    constrDivXY="<<constrDivXY->str(indent+"    ")<<"\n";*/
+			
 			if(constrDivXY && constrDivXY->getLevel()==affineInequality::constrKnown)
 			{
-				affineInequality inferredXY(*constrXDivX, *constrDivXY/*, x==zeroVar, y==zeroVar, getVarSign(x), getVarSign(y)*/);
+				affineInequality inferredXY(*constrXDivX, *constrDivXY/*, x==zeroVar, y==zeroVar, getVarSign(x, indent+"    "), getVarSign(y, indent+"    ")*/);
 				
 				numInfers++;
 			
@@ -3708,58 +3590,65 @@ bool ConstrGraph::divVarsClosure_perY(const varID& x, const varID& divX, const v
 				if(!constrXY)
 				{
 #ifdef DEBUG_FLAG_TC
-					cout << "    dvc(x->x'->y): " << x.str() << "->" << y.str() << "\n";
-					cout << "    dvc(x->x'->y):     Current = None\n";
-					cout << "    dvc(x->x'->y):     Inferred("<<x.str()<<"->"<<divX.str()<<"->"<<y.str()<<") = " << inferredXY.str(x, y, "") << "\n";
+					cout << indent << "    dvc(x->x'->y): " << x.str() << "->" << y.str() << "\n";
+					cout << indent << "    dvc(x->x'->y):     Current = None\n";
+					cout << indent << "    dvc(x->x'->y):     Inferred("<<x.str()<<"->"<<divX.str()<<"->"<<y.str()<<") = " << inferredXY.str(x, y, "") << "\n";
 #endif
 					setVal(x, y, inferredXY);
 					modified = true;
 				}
-				// else, if the inferred x-y constraint it strictly tighter than the current x-y constraint
-				else if(inferredXY.semLessThan(*constrXY, isEqZero(x), isEqZero(y)))
+				// Else, if the inferred x-y constraint it strictly tighter than the current x-y constraint
+				//else if(inferredXY.semLessThan(*constrXY, isEqZero(x), isEqZero(y)))
+				else if(inferredXY!=*constrXY && inferredXY.semLessThan(*constrXY, x==zeroVar?NULL:getVal(x, zeroVar), x==zeroVar?NULL:getVal(zeroVar, x), 
+								                              y==zeroVar?NULL:getVal(y, zeroVar), y==zeroVar?NULL:getVal(zeroVar, y), indent+"    "))
 				{
 #ifdef DEBUG_FLAG_TC
-					cout << "    dvc(x->x'->y): " << x.str() << "->" << y.str() << "\n";
-					cout << "    dvc(x->x'->y):     Current = " << constrXY->str(x, y, "") << "\n";
-					cout << "    dvc(x->x'->y):     Inferred ("<<x.str()<<"->"<<divX.str()<<"->"<<y.str()<<") = " << inferredXY.str(x, y, "") << "\n";
+					cout << indent << "    dvc(x->x'->y): " << x.str() << "->" << y.str() << "\n";
+					cout << indent << "    dvc(x->x'->y):     Current = " << constrXY->str(x, y, "") << "\n";
+					cout << indent << "    dvc(x->x'->y):     Inferred ("<<x.str()<<"->"<<divX.str()<<"->"<<y.str()<<") = " << inferredXY.str(x, y, "") << "\n";
 #endif								
-					// replace the current x-y constraint with the inferred one
+					// Replace the current x-y constraint with the inferred one
 					constrXY->set(inferredXY);
 					modified = true;
 				}
 			}
 		}
 		
+		// Infer an y <= x constraint through y <= divX <= x
 		{
 			affineInequality* constrYDivX = getVal(y, divX);
 			affineInequality* constrYX = getVal(y, x);
 			
 			numInfers++;
 			
-			// if the y->divX->x path results in a tighter constraint than the
+			// If the y->divX->x path results in a tighter constraint than the
 			// y->x path, update the latter to the former
+			/*if(!constrYDivX) cout << indent << "    constrYDivX="<<constrYDivX<<"\n";
+			else             cout << indent << "    constrYDivX="<<constrYDivX->str(indent+"    ")<<"\n";*/
 			if(constrYDivX && constrYDivX->getLevel()==affineInequality::constrKnown)
 			{
-				affineInequality inferredYX(*constrYDivX, *constrDivXX/*, y==zeroVar, x==zeroVar, getVarSign(y), getVarSign(x)*/);
+				affineInequality inferredYX(*constrYDivX, *constrDivXX/*, y==zeroVar, x==zeroVar, getVarSign(y, indent+"    "), getVarSign(x, indent+"    ")*/);
 			
-				// if there doesn't exist an y-x constraint in the graph, add it
+				// If there doesn't exist an y-x constraint in the graph, add it
 				if(!constrYX)
 				{
 #ifdef DEBUG_FLAG_TC
-					cout << "    dvc(y->x'->x): " << y.str() << "->" << x.str() << "\n";
-					cout << "    dvc(y->x'->x):     Current = None\n";
-					cout << "    dvc(y->x'->x):     Inferred("<<y.str()<<"->"<<divX.str()<<"->"<<x.str()<<") = " << inferredYX.str(y, x, "") << "\n";
+					cout << indent << "    dvc(y->x'->x): " << y.str() << "->" << x.str() << "\n";
+					cout << indent << "    dvc(y->x'->x):     Current = None\n";
+					cout << indent << "    dvc(y->x'->x):     Inferred("<<y.str()<<"->"<<divX.str()<<"->"<<x.str()<<") = " << inferredYX.str(y, x, "") << "\n";
 #endif
 					setVal(y, x, inferredYX);
 					modified = true;
 				}
-				// else, if the inferred y-x constraint it strictly tighter than the current y-x constraint
-				else if(inferredYX.semLessThan(*constrYX, isEqZero(y), isEqZero(x)))
+				// Else, if the inferred y-x constraint it strictly tighter than the current y-x constraint
+				//else if(inferredYX.semLessThan(*constrYX, isEqZero(y), isEqZero(x)))
+				else if(inferredYX!=*constrYX && inferredYX.semLessThan(*constrYX, x==zeroVar?NULL:getVal(x, zeroVar), x==zeroVar?NULL:getVal(zeroVar, x), 
+								                              y==zeroVar?NULL:getVal(y, zeroVar), y==zeroVar?NULL:getVal(zeroVar, y), indent+"    "))
 				{
 #ifdef DEBUG_FLAG_TC
-					cout << "    dvc(y->x'->x): " << y.str() << "->" << x.str() << "\n";
-					cout << "    dvc(y->x'->x):     Current = " << constrYX->str(x, y, "") << "\n";
-					cout << "    dvc(y->x'->x):     Inferred ("<<y.str()<<"->"<<divX.str()<<"->"<<x.str()<<") = " << inferredYX.str(y, x, "") << "\n";
+					cout << indent << "    dvc(y->x'->x): " << y.str() << "->" << x.str() << "\n";
+					cout << indent << "    dvc(y->x'->x):     Current = " << constrYX->str(x, y, "") << "\n";
+					cout << indent << "    dvc(y->x'->x):     Inferred ("<<y.str()<<"->"<<divX.str()<<"->"<<x.str()<<") = " << inferredYX.str(y, x, "") << "\n";
 #endif								
 					// replace the current y-x constraint with the inferred one
 					constrYX->set(inferredYX);
@@ -3771,55 +3660,59 @@ bool ConstrGraph::divVarsClosure_perY(const varID& x, const varID& divX, const v
 	if(profileLevel>=1)
 	{
 		gettimeofday(&endTime, NULL);
-		cout << "divVarsClosure_perY("<<x.str()<<", "<<divX.str()<<", "<<y.str()<<") >>> numInfers="<<numInfers<<", numVars="<<scalars.size()<<", time="<<((double)((endTime.tv_sec*1000000+endTime.tv_usec)-(startTime.tv_sec*1000000+startTime.tv_usec)))/1000000.0<<"\n";
+		cout << indent << "divVarsClosure_perY("<<x.str()<<", "<<divX.str()<<", "<<y.str()<<") >>> numInfers="<<numInfers<<", numVars="<<vars.size()<<", time="<<((double)((endTime.tv_sec*1000000+endTime.tv_usec)-(startTime.tv_sec*1000000+startTime.tv_usec)))/1000000.0<<"\n";
 	}
 	
 	return modified;
 }
 
-// computes the transitive closure of this constraint graph while modifying 
+// Computes the transitive closure of this constraint graph while modifying 
 // only the constraints that involve the given variable
-void ConstrGraph::localTransClosure(const varID& tgtVar)                         
+// Returns true if this causes the graph to change and false otherwise.
+bool ConstrGraph::localTransClosure(const varID& tgtVar, string indent)
 {
 	// don't take transitive closures in the middle of a transaction
-	if(inTransaction) return;
+	if(inTransaction) return false;
 	
 	int numSteps=0, numInfers=0, numFeasibleChecks=0;
 	struct timeval startTime, endTime;
 	if(profileLevel>=1)
 	{
-		cout << "localTransClosure("<<tgtVar.str()<<") <<<\n";
+		cout << indent << "localTransClosure("<<tgtVar.str()<<") <<<\n";
 		gettimeofday(&startTime, NULL);
 	}
 	
-	initialized = true; // this constraint graph will now definitely be initialized
-	//affineInequality::signs tgtVarSign = getVarSign(tgtVar);
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+
+	// This constraint graph will now definitely be initialized
+	if(l.first==uninitialized) return setToBottom(indent+"    ");
 	
 #ifdef DEBUG_FLAG_TC
-cout << "    Beginning local closure("<<tgtVar.str()<<")\n";
-cout << str("    ") << "\n";
+cout << indent << "    Beginning local closure("<<tgtVar.str()<<")\n";
+cout << indent << str("    ") << "\n";
 #endif
-	//m_quad2str::iterator mIter1, mIter2, mIter3;
-	bool modified = true;
+	bool modified = false;
+	bool iterModified=true;
+	
 	// iterate until a fixed point is reached
-	while (modified)
+	while (iterModified)
 	{
-		modified = false;
+		iterModified = false;
 		// iterate through every pair of variables
 		//for ( mIter1 = vars2Name.begin(); mIter1 != vars2Name.end(); mIter1++ )
-		//for(varIDSet::iterator itX = scalars.begin(); itX!=scalars.end(); itX++)
+		//for(varIDSet::iterator itX = vars.begin(); itX!=vars.end(); itX++)
 		for(varIDSet::iterator itX = newConstrVars.begin(); itX!=newConstrVars.end(); itX++)
 		{
 			//quad x = mIter1->first;
 			varID x = *itX;
-			//affineInequality::signs xSign = getVarSign(x);
+			//affineInequality::signs xSign = getVarSign(x, indent+"    ");
 			
 			//for ( mIter2 = vars2Name.begin(); mIter2 != vars2Name.end(); mIter2++ )
-			for(varIDSet::iterator itY = scalars.begin(); itY!=scalars.end(); itY++)
+			for(varIDSet::iterator itY = vars.begin(); itY!=vars.end(); itY++)
 			{
 				//quad y = mIter2->first;
 				varID y = *itY;
-				//affineInequality::signs ySign = getVarSign(y);
+				//affineInequality::signs ySign = getVarSign(y, indent+"    ");
 				
 				// if tgtVar, x and y are three different variables
 				if(x!=y && tgtVar!=x && tgtVar!=y)
@@ -3827,8 +3720,8 @@ cout << str("    ") << "\n";
 					//quad xy = getVal(x, y);
 					affineInequality* constrXY = getVal(x, y);
 #ifdef DEBUG_FLAG_TC
-					if(constrXY) cout << "                  "<<x.str()<<"->"<<y.str()<<" = " << constrXY->str(x, y, "") << "\n";
-					else cout << "                  "<<x.str()<<"->"<<y.str()<<" = None\n";
+					if(constrXY) cout << indent << "                  "<<x.str()<<"->"<<y.str()<<" = " << constrXY->str(x, y, "") << "\n";
+					else cout << indent << "                  "<<x.str()<<"->"<<y.str()<<" = None\n";
 #endif
 					
 					if(constrXY && constrXY->getLevel()==affineInequality::constrKnown)
@@ -3837,16 +3730,16 @@ cout << str("    ") << "\n";
 						{
 							affineInequality* constrTgtX = getVal(tgtVar, x);
 #ifdef DEBUG_FLAG_TC
-							if(constrTgtX) cout << "                      "<<tgtVar.str()<<"->"<<x.str()<<" = " << constrTgtX->str(tgtVar, x, "") << "\n";
-							else cout << "                       "<<tgtVar.str()<<"->"<<x.str()<<" = None\n";
+							if(constrTgtX) cout << indent << "                      "<<tgtVar.str()<<"->"<<x.str()<<" = " << constrTgtX->str(tgtVar, x, "") << "\n";
+							else cout << indent << "                       "<<tgtVar.str()<<"->"<<x.str()<<" = None\n";
 #endif
 							numSteps++;
 							
 							if(constrTgtX && constrTgtX->getLevel()==affineInequality::constrKnown)
 							{
-								affineInequality inferredTgtY(*constrTgtX, *constrXY/*, tgtVar==zeroVar, y==zeroVar, affineInequality::posZero, getVarSign(y),
-								                              dynamic_cast<DivLattice*>(divL->getVarLattice(func, tgtVar)), 
-									                           dynamic_cast<DivLattice*>(divL->getVarLattice(func, y)), x*/);
+								affineInequality inferredTgtY(*constrTgtX, *constrXY/*, tgtVar==zeroVar, y==zeroVar, affineInequality::posZero, getVarSign(y, indent+"    "),
+								                              dynamic_cast<DivLattice*>(divL->getVarLattice(tgtVar)), 
+									                           dynamic_cast<DivLattice*>(divL->getVarLattice(y)), x*/);
 								affineInequality* constrTgtY = getVal(tgtVar, y);
 								
 								numInfers++;
@@ -3855,25 +3748,26 @@ cout << str("    ") << "\n";
 								if(!constrTgtY)
 								{
 									setVal(tgtVar, y, inferredTgtY);
-									modified = true;
+									iterModified = true;
 									
 #ifdef DEBUG_FLAG_TC
-									cout << "    " << tgtVar.str() << "->" << y.str() << "\n";
-									cout << "        Current = None\n";
-									cout << "        Inferred ("<<tgtVar.str()<<"->"<<x.str()<<"->"<<y.str()<<") = " << inferredTgtY.str(tgtVar, y, "") << "\n";
+									cout << indent << "    " << tgtVar.str() << "->" << y.str() << "\n";
+									cout << indent << "        Current = None\n";
+									cout << indent << "        Inferred ("<<tgtVar.str()<<"->"<<x.str()<<"->"<<y.str()<<") = " << inferredTgtY.str(tgtVar, y, "") << "\n";
 #endif
 								}
 								// if the inferred tgtVar-y constraint is strictly tighter than the current tgtVar-y constraint
-								else if(inferredTgtY.semLessThan(*constrTgtY, false, isEqZero(y)))
+								else if(inferredTgtY!=*constrTgtY && inferredTgtY.semLessThan(*constrTgtY, tgtVar==zeroVar?NULL:getVal(tgtVar, zeroVar), tgtVar==zeroVar?NULL:getVal(zeroVar, tgtVar), 
+                                                                      y==zeroVar?NULL:getVal(y, zeroVar),           y==zeroVar?NULL:getVal(zeroVar, y), indent+"    "))
 								{
 #ifdef DEBUG_FLAG_TC
-									cout << "    " << tgtVar.str() << "->" << y.str()<< "\n";
-									cout << "        Current = " << constrTgtY->str(tgtVar, y, "") << "\n";
-									cout << "        Inferred ("<<tgtVar.str()<<"->"<<x.str()<<"->"<<y.str()<<")= " << inferredTgtY.str(tgtVar, y, "") << "\n";
+									cout << indent << "    " << tgtVar.str() << "->" << y.str()<< "\n";
+									cout << indent << "        Current = " << constrTgtY->str(tgtVar, y, "") << "\n";
+									cout << indent << "        Inferred ("<<tgtVar.str()<<"->"<<x.str()<<"->"<<y.str()<<")= " << inferredTgtY.str(tgtVar, y, "") << "\n";
 #endif
 									// replace the current constraint with the inferred one
 									constrTgtY->set(inferredTgtY);
-									modified = true;			
+									iterModified = true;			
 								}
 							}
 	
@@ -3890,22 +3784,22 @@ cout << str("    ") << "\n";
 	#endif
 										setVal(tgtVar, y, tgtX + xy);
 										// remember that the fixed point has not been reached yet
-										modified = true;
+										iterModified = true;
 							}*/
 						}
 						// examine the constraint chain x->y->tgtVar
 						{
 							affineInequality* constrYTgt = getVal(y, tgtVar);
 #ifdef DEBUG_FLAG_TC
-							if(constrYTgt) cout << "                      "<<y.str()<<"->"<<tgtVar.str()<<" = " << constrYTgt->str(y, tgtVar, "") << "\n";
-							else cout << "                       "<<y.str()<<"->"<<tgtVar.str()<<" = None\n";
+							if(constrYTgt) cout << indent << "                      "<<y.str()<<"->"<<tgtVar.str()<<" = " << constrYTgt->str(y, tgtVar, "") << "\n";
+							else cout << indent << "                       "<<y.str()<<"->"<<tgtVar.str()<<" = None\n";
 #endif
 	
 							if(constrYTgt && constrYTgt->getLevel()==affineInequality::constrKnown)
 							{
-								affineInequality inferredXTgt(*constrXY, *constrYTgt/*, x==zeroVar, tgtVar==zeroVar, getVarSign(x), affineInequality::posZero,
-								                              dynamic_cast<DivLattice*>(divL->getVarLattice(func, x)), 
-									                           dynamic_cast<DivLattice*>(divL->getVarLattice(func, tgtVar)), y*/);
+								affineInequality inferredXTgt(*constrXY, *constrYTgt/*, x==zeroVar, tgtVar==zeroVar, getVarSign(x, indent+"    "), affineInequality::posZero,
+								                              dynamic_cast<DivLattice*>(divL->getVarLattice(x)), 
+									                           dynamic_cast<DivLattice*>(divL->getVarLattice(tgtVar)), y*/);
 								affineInequality* constrXTgt = getVal(x, tgtVar);
 								numInfers++;
 								                                                    
@@ -3913,25 +3807,27 @@ cout << str("    ") << "\n";
 								if(!constrXTgt)
 								{
 									setVal(x, tgtVar, inferredXTgt);
-									modified = true;
+									iterModified = true;
 									
 #ifdef DEBUG_FLAG_TC
-									cout << "    " << x.str() << "->" << tgtVar.str() << "\n";
-									cout << "        Current = None\n";
-									cout << "        Inferred ("<<x.str()<<"->"<<y.str()<<"->"<<tgtVar.str()<<") = " << inferredXTgt.str(x, tgtVar, "") << "\n";
+									cout << indent << "    " << x.str() << "->" << tgtVar.str() << "\n";
+									cout << indent << "        Current = None\n";
+									cout << indent << "        Inferred ("<<x.str()<<"->"<<y.str()<<"->"<<tgtVar.str()<<") = " << inferredXTgt.str(x, tgtVar, "") << "\n";
 #endif
 								}
 								// if the inferred x-tgtVar constraint is strictly tighter than the current x-tgtVar constraint
-								else if(inferredXTgt.semLessThan(*constrXTgt, isEqZero(x), false))
+								//else if(inferredXTgt.semLessThan(*constrXTgt, isEqZero(x), false))
+								else if(inferredXTgt!=*constrXTgt && inferredXTgt.semLessThan(*constrXTgt, y==zeroVar?NULL:getVal(x, zeroVar),           y==zeroVar?NULL:getVal(zeroVar, x), 
+                                                                      tgtVar==zeroVar?NULL:getVal(tgtVar, zeroVar), tgtVar==zeroVar?NULL:getVal(zeroVar, tgtVar), indent+"    "))
 								{
 #ifdef DEBUG_FLAG_TC
-									cout << "    " << x.str() << "->" << tgtVar.str()<< "\n";
-									cout << "        Current = " << constrXTgt->str(x, tgtVar, "") << "\n";
-									cout << "        Inferred ("<<x.str()<<"->"<<y.str()<<"->"<<tgtVar.str()<<") = " << inferredXTgt.str(x, tgtVar, "") << "\n";
+									cout << indent << "    " << x.str() << "->" << tgtVar.str()<< "\n";
+									cout << indent << "        Current = " << constrXTgt->str(x, tgtVar, "") << "\n";
+									cout << indent << "        Inferred ("<<x.str()<<"->"<<y.str()<<"->"<<tgtVar.str()<<") = " << inferredXTgt.str(x, tgtVar, "") << "\n";
 #endif
 									// replace the current constraint with the inferred one
 									constrXTgt->set(inferredXTgt);
-									modified = true;					
+									iterModified = true;					
 								}
 							}
 							
@@ -3948,13 +3844,13 @@ cout << str("    ") << "\n";
 	#endif
 										setVal(x, tgtVar, xy+yTgt);
 										// remember that the fixed point has not been reached yet
-										modified = true;
+										iterModified = true;
 							}*/
 						}
 						
 						// update tgtVarSign if either x or y are zeroVar (this can be made more precide to cut down on the number of calls to getVarSign
 						/*if(x==zeroVar || y==zeroVar)
-							tgtVarSign = getVarSign(tgtVar);*/
+							tgtVarSign = getVarSign(tgtVar, indent+"    ");*/
 					}
 				}
 			}				
@@ -3962,193 +3858,152 @@ cout << str("    ") << "\n";
 		
 		//numFeasibleChecks++;
 		//// look for any cycles that go through arrays
-		//quad r = isFeasible();
+		//quad r = checkSelfConsistency();
 		//if(r!=1) break;
+		
+		modified = iterModified || modified;
 	}
 	numFeasibleChecks++;
 	
 	// look for any cycles that go through arrays
-	//quad r = isFeasible();
+	//quad r = checkSelfConsistency();
 	//if(r!=1) break;
 		
 	if(profileLevel>=1)
 	{
 		gettimeofday(&endTime, NULL);
-		cout << "localTransClosure("<<tgtVar.str()<<") >>> numSteps="<<numSteps<<", numInfers="<<numInfers<<", numFeasibleChecks="<<numFeasibleChecks<<", numVars="<<scalars.size()<<", time="<<((double)((endTime.tv_sec*1000000+endTime.tv_usec)-(startTime.tv_sec*1000000+startTime.tv_usec)))/1000000.0<<"\n";
+		cout << indent << "localTransClosure("<<tgtVar.str()<<") >>> numSteps="<<numSteps<<", numInfers="<<numInfers<<", numFeasibleChecks="<<numFeasibleChecks<<", numVars="<<vars.size()<<", time="<<((double)((endTime.tv_sec*1000000+endTime.tv_usec)-(startTime.tv_sec*1000000+startTime.tv_usec)))/1000000.0<<"\n";
 	}
+	
+	return modified;
 }
 
-// searches this constraint graph for cycles. 
-// If it finds a negative cycle that does not go through an array variable, it records this 
-//    fact and returns 0 (Bottom).
-// Otherwise, it returns 1.
-// If isFeasible() finds any negative cycles, it updates the state of this constraint graph
-//    accordingly, either setting it to top or recording that the range of an array is empty.
-int ConstrGraph::isFeasible()
+// Searches this constraint graph for negative cycles, which indicates that the constraints represented
+//    by the graph are not self-consistent (the code region where the graph holds is unreachable). Modifies
+//    the level of this graph as needed.
+// Returns true if this call caused a modification in the graph and false otherwise.
+bool ConstrGraph::checkSelfConsistency(string indent)
 {
 	int numConsistenChecks=0, numInconsistentSteps=0;
 	struct timeval startTime, endTime;
-	// don't do feasibility checks in the middle of a transaction
-	if(inTransaction) return 1;
 	
-	//m_quad2str::iterator mapIter1, mapIter2;
+	// This constraint graph will now definitely be initialized
+	if(level==uninitialized) { return setToBottom(indent+"    "); }
+	
+	// Only bother checking consistency if we know the constraints and they corresponds to 
+	// a conjunction. If the graph corresponds to a disjunction (negation of a conjunction), 
+	// we won't get an inconsistency.
+	if(!(level==constrKnown && constrType==negConj)) return false;
+		
+	// Don't do self-consistency checks in the middle of a transaction
+	if(inTransaction) return false;
 	
 	if(profileLevel>=1)
 	{
-		cout << "isFeasible() <<<\n";
+		cout << "checkSelfConsistency() <<<\n";
 		gettimeofday(&startTime, NULL);
 	}
 	
-	initialized = true; // this constraint graph will now definitely be initialized
+//printf("checkSelfConsistency()\n");
+//cout << "checkSelfConsistency() constrChanged="<<constrChanged<<"\n";
 
-//printf("isFeasible()\n");
-//cout << "isFeasible() constrChanged="<<constrChanged<<"\n";
-
-	// loop through all the pairs of variables
-	//for ( mapIter1 = vars2Name.begin(); mapIter1 != vars2Name.end(); mapIter1++ )
-		//for ( mapIter2 = mapIter1, ++mapIter2; mapIter2 != vars2Name.end(); mapIter2++ )
-	for(varIDSet::iterator itX = scalars.begin(); itX!=scalars.end(); itX++)
-		for(varIDSet::iterator itY = scalars.begin(); itY!=scalars.end(); itY++)
+	// Loop through all the pairs of variables
+	for(varIDSet::iterator itX = vars.begin(); itX!=vars.end(); itX++)
+		for(varIDSet::iterator itY = vars.begin(); itY!=vars.end(); itY++)
 		{
-			//quad x = mapIter1->first, y = mapIter2->first;
 			varID x = *itX;
 			varID y = *itY;
-			// for each pair
-			if(x != y)
+			// Only focus on pairs of distinct variables
+			if(x == y) continue;
+			
+			affineInequality* constrXY = getVal(x, y);
+			affineInequality* constrYX = getVal(y, x);
+			
+			if(constrXY && constrXY->getLevel()==affineInequality::constrKnown && 
+				constrYX && constrYX->getLevel()==affineInequality::constrKnown)
 			{
-				//quad xy = getVal(x, y), yx = getVal(y, x);
-				affineInequality* constrXY = getVal(x, y);
-				affineInequality* constrYX = getVal(y, x);
-				
-				//if(xy != INF && yx != INF)
-				if(constrXY && constrXY->getLevel()==affineInequality::constrKnown && 
-					constrYX && constrYX->getLevel()==affineInequality::constrKnown)
+				numConsistenChecks++;
+				// If there is a negative cycle that goes through x and y
+				if(!affineInequality::mayConsistent(*constrXY, *constrYX))
 				{
-					numConsistenChecks++;
-					// if there is a negative cycle that goes through x and y
-					//if(xy < -yx)
-					if(!affineInequality::mayConsistent(*constrXY, *constrYX))
-					{
-						numInconsistentSteps++;
-						// if neither x nor y is an array variable
-						if(arrays.find(x) == arrays.end() && arrays.find(y) == arrays.end())
-						{
-							if(debugLevel>=1)
-							{
-								cout << "Bottom: X:"<< x.str() << " -> Y:" << y.str() <<" = !!!NOT CONSISTENT!!!\n";
-								cout << "    "<<x.str()<<"=>"<<y.str()<<" = "<<constrXY->str("")<<"\n";
-								cout << "    "<<y.str()<<"=>"<<x.str()<<" = "<<constrYX->str("")<<"\n";
-								cout << "CG = "<<str("", false)<<"\n";
-							}
-							// since there is a negative cycle through non-array variables, 
-							// the constraint graph is top
-							setToBottom(true);
-							
-							// reset constrChanged since the state of the constraint graph now 
-							// reflects its feasibility status
-							constrChanged = false;
-							
-							if(profileLevel>=1)
-							{
-								gettimeofday(&endTime, NULL);
-								cout << "isFeasible() >>> numConsistenChecks="<<numConsistenChecks<<", numInconsistentSteps="<<numInconsistentSteps<<", numVars="<<scalars.size()<<", time="<<((double)((endTime.tv_sec*1000000+endTime.tv_usec)-(startTime.tv_sec*1000000+startTime.tv_usec)))/1000000.0<<"\n";
-							}
-							
-							return 0;
-						}
-						// if either x or y are array variables
-						else
-						{
-							if(debugLevel>=1) 
-								cout << "    Empty Range: "<< x.str() << "->" << y.str() <<" = "<<constrXY->str("")<< "  <- = "<<constrYX->str("")<<"\n";
-							
-							// if both x and y are arrays, then we have a problem
-							if(arrays.find(x) != arrays.end() &&
-								arrays.find(y) != arrays.end())
-							{
-								cerr << "Error! Negative cycle through a pair of array variables. Arrays should NEVER be related via constraints!\n";
-								ROSE_ASSERT(0);
-							}
-							
-							// if x is an array
-							if(arrays.find(x) != arrays.end())
-							{
-								// set its range to empty
-								emptyRange[x] = true;
-								//remove all constraints that relate to x
-								eraseVarConstrNoDiv(x);
-							}
-							// else, if y is an array
-							else if(arrays.find(y) != arrays.end())
-							{
-								// set its range to empty
-								emptyRange[y] = true;
-								//remove all constraints that relate to y
-								eraseVarConstrNoDiv(y);
-							}
-						}
+					numInconsistentSteps++;
+					if(debugLevel>=1) {
+						cout << indent << "Bottom: X:"<< x.str() << " -> Y:" << y.str() <<" = !!!NOT CONSISTENT!!!\n";
+						cout << indent << "    "<<x.str()<<"=>"<<y.str()<<" = "<<constrXY->str("")<<"\n";
+						cout << indent << "    "<<y.str()<<"=>"<<x.str()<<" = "<<constrYX->str("")<<"\n";
+						cout << indent << "CG = "<<str("", false)<<"\n";
 					}
+					
+					// Since there is a negative cycle through non-array variables, 
+					// the constraint graph is top
+					setToInconsistent(indent+"    ");
+					
+					// Reset constrChanged since the state of the constraint graph now 
+					// reflects its consistency status
+					constrChanged = false;
+					
+					if(profileLevel>=1)
+					{
+						gettimeofday(&endTime, NULL);
+						cout << "checkSelfConsistency() >>> numConsistenChecks="<<numConsistenChecks<<", numInconsistentSteps="<<numInconsistentSteps<<", numVars="<<vars.size()<<", time="<<((double)((endTime.tv_sec*1000000+endTime.tv_usec)-(startTime.tv_sec*1000000+startTime.tv_usec)))/1000000.0<<"\n";
+					}
+					
+					return true;
 				}
 			}
 		}
 
-	// reset constrChanged since the state of the constraint graph now 
-	// reflects its feasibility status
-	constrChanged = false;
-	
 	if(profileLevel>=1)
 	{
 		gettimeofday(&endTime, NULL);
-		cout << "isFeasible() >>> numConsistenChecks="<<numConsistenChecks<<", numInconsistentSteps="<<numInconsistentSteps<<", numVars="<<scalars.size()<<", time="<<((double)((endTime.tv_sec*1000000+endTime.tv_usec)-(startTime.tv_sec*1000000+startTime.tv_usec)))/1000000.0<<"\n";
+		cout << indent << "checkSelfConsistency() >>> numConsistenChecks="<<numConsistenChecks<<", numInconsistentSteps="<<numInconsistentSteps<<", numVars="<<vars.size()<<", time="<<((double)((endTime.tv_sec*1000000+endTime.tv_usec)-(startTime.tv_sec*1000000+startTime.tv_usec)))/1000000.0<<"\n";
 	}
 								
 	// this constraint graph is not bottom
-	return 1;
+	return false;
 }
 
-// creates a divisibility variable for the given variable and adds it to the constraint graph
+// Creates a divisibility variable for the given variable and adds it to the constraint graph
 // If var = r (mod d), then the relationship between x and x' (the divisibility variable)
 // will be x = x'*d + r
 // returns true if this causes the constraint graph to be modified (it may not if this 
 //    information is already in the graph) and false otherwise
-bool ConstrGraph::addDivVar(varID var/*, int div, int rem*/, bool killDivVar)
+bool ConstrGraph::addDivVar(varID var/*, int div, int rem*/, bool killDivVar, string indent)
 {
 	bool modified = false;
 	
-	FiniteVariablesProductLattice* divLattice = getDivLattice(var);
+	FiniteVarsExprsProductLattice* divLattice = getDivLattice(var, indent+"    ");
+	//cout << indent << "addDivVar() divLattice="<<divLattice<<", killDivVar="<<killDivVar<<"\n";
 	if(divLattice)
 	{
-		varID divVar = getDivScalar(var);
+		varID divVar = getDivVar(var);
+		// Add the important constraints (other constraints will be recomputed during transitive closure)
+		DivLattice* varDivL = dynamic_cast<DivLattice*>(divLattice->getVarLattice(var));
 		
-		// record that this constraint graph contains divisibility information for var
-		divVariables.insert(var);
-		//divVar2OrigVar[divVar] = var;
-	
-		// first, disconnect the divisibility variable from all other variables
-		if(killDivVar)
-			modified = eraseVarConstrNoDiv(divVar) || modified;
-		
-		// add the important constraints (other constraints will be recomputed during transitive closure)
-		DivLattice* varDivL = dynamic_cast<DivLattice*>(divLattice->getVarLattice(func, var));
-		
-		// Only bother if we have divisibility information for this variable
-		if(varDivL)
+		// Only bother if we have usable divisibility information for this variable
+		if(varDivL && (varDivL->getLevel() == DivLattice::divKnown || varDivL->getLevel() == DivLattice::valKnown))
 		{
-			// incorporate this variable's divisibility information (if any)
+			// Record that this constraint graph contains divisibility information for var
+			//divVars.insert(divVar);
+			//divVar2OrigVar[divVar] = var;
+		
+			// First, disconnect the divisibility variable from all other variables
+			if(killDivVar)
+				modified = eraseVarConstrNoDiv(divVar, true, indent+"    ") || modified;
+			
+			// Incorporate this variable's divisibility information (if any)
 			if(varDivL->getLevel() == DivLattice::divKnown)
 			{
-				//modified = addDivVar(var, varDivL->getDiv(), varDivL->getRem()) || modified;
-				modified = setVal(var, divVar, 1, varDivL->getDiv(), varDivL->getRem(), getVarSign(var), getVarSign(var)) || modified;
-				modified = setVal(divVar, var, varDivL->getDiv(), 1, 0-varDivL->getRem(), getVarSign(var), getVarSign(var)) || modified;
+				modified = setVal(var, divVar, 1, varDivL->getDiv(), varDivL->getRem(), getVarSign(var, indent+"    "), getVarSign(var, indent+"    "), indent+"    ") || modified;
+				modified = setVal(divVar, var, varDivL->getDiv(), 1, 0-varDivL->getRem(), getVarSign(var, indent+"    "), getVarSign(var, indent+"    "), indent+"    ") || modified;
 			}
-			else if(varDivL->getLevel() != DivLattice::bottom)
+			/*else if(varDivL->getLevel() != DivLattice::bottom)
 			{
-				//modified = addDivVar(var, 1, 0) || modified;
-				modified = setVal(var, divVar, 1, 1, 0, getVarSign(var), getVarSign(var)) || modified;
-				modified = setVal(divVar, var, 1, 1, 0, getVarSign(var), getVarSign(var)) || modified;
-			}
-				
-			scalars.insert(divVar);
+				modified = setVal(var, divVar, 1, 1, 0, getVarSign(var, indent+"    "), getVarSign(var, indent+"    "), indent+"    ") || modified;
+				modified = setVal(divVar, var, 1, 1, 0, getVarSign(var, indent+"    "), getVarSign(var, indent+"    "), indent+"    ") || modified;
+			}*/
+			
+			divVars.insert(divVar);
 		}
 		/*else
 			printf("WARNING: No divisibility info for variable %s in function %s!\n", var.str().c_str(), func.get_name().str());*/
@@ -4161,51 +4016,71 @@ bool ConstrGraph::addDivVar(varID var/*, int div, int rem*/, bool killDivVar)
 // in order to compute the original variable's relationships while taking its divisibility information 
 // into account.
 // Returns true if this causes the constraint graph to be modified and false otherwise
-bool ConstrGraph::disconnectDivOrigVar(varID var/*, int div, int rem*/)
+bool ConstrGraph::disconnectDivOrigVar(varID var/*, int div, int rem*/, string indent)
 {
 	bool modified = false;
-	FiniteVariablesProductLattice* divLattice = getDivLattice(var);
+	//cout << indent << "#divL="<<divL.size()<<"\n";
+	FiniteVarsExprsProductLattice* divLattice = getDivLattice(var, "");
+	//cout << indent << "disconnectDivOrigVar("<<var<<") divLattice="<<divLattice<<"\n";
 	if(divLattice)
 	{
-		varID divVar = getDivScalar(var);
-	
-		// record that this constraint graph constains divisibility information for var
-		//divVariables.insert(var);
-	
-		// first, disconnect var from all scalars
-		modified = eraseVarConstrNoDivScalars(var) || modified;
+		varID divVar = getDivVar(var);
+		DivLattice* varDivL = dynamic_cast<DivLattice*>(divLattice->getVarLattice(var));
 		
-		// Add the important constraints (other constraints will be recomputed during transitive closure).
-		// We don't update modified since we're assuming that these constraints were in the constraint
-		// graph before the eraseVarConstr() call, since they should have been added by the preceding 
-		// addDivVar() call.
-		DivLattice* varDivL = dynamic_cast<DivLattice*>(divLattice->getVarLattice(func, var));
+		// Only bother if we have usable divisibility information for this variable
+		if(varDivL && (varDivL->getLevel() == DivLattice::divKnown || varDivL->getLevel() == DivLattice::valKnown))
+		{
+			// record that this constraint graph constains divisibility information for var
+			//divVars.insert(divVar);
 			
-		// incorporate this variable's divisibility information (if any)
-		if(varDivL->getLevel() == DivLattice::divKnown)
-		{
-			//modified = addDivVar(var, varDivL->getDiv(), varDivL->getRem()) || modified;
-			modified = setVal(var, divVar, 1, varDivL->getDiv(), varDivL->getRem(), getVarSign(var), getVarSign(var)) || modified;
-			modified = setVal(divVar, var, varDivL->getDiv(), 1, 0-varDivL->getRem(), getVarSign(var), getVarSign(var)) || modified;
-		}
-		else if(varDivL->getLevel() != DivLattice::bottom)
-		{
-			//modified = addDivVar(var, 1, 0) || modified;
-			modified = setVal(var, divVar, 1, 1, 0, getVarSign(var), getVarSign(var)) || modified;
-			modified = setVal(divVar, var, 1, 1, 0, getVarSign(var), getVarSign(var)) || modified;
+			// First, disconnect var from all vars but only if var is conntected to its divisibility variable
+			ROSE_ASSERT(!(getVal(var, divVar)!=NULL ^ getVal(divVar, var)!=NULL));
+			if(getVal(var, divVar) && getVal(divVar, var))
+				modified = eraseVarConstrNoDivVars(var, true, indent+"    ") || modified;
+				
+			// Add the important constraints (other constraints will be recomputed during transitive closure).
+			// We don't update modified since we're assuming that these constraints were in the constraint
+			// graph before the eraseVarConstr() call, since they should have been added by the preceding 
+			// addDivVar() call.
+	
+			//cout << indent << "disconnectDivOrigVar() var="<<var<<" divVar="<<divVar<<" varDivL="<<varDivL<<"\n";
+			//cout << indent << "DivL="<<divLattice->str(indent+"    ")<<"\n";
+			
+			// incorporate this variable's divisibility information (if any)
+			if(varDivL->getLevel() == DivLattice::divKnown)
+			{
+				modified = setVal(var, divVar, 1, varDivL->getDiv(), varDivL->getRem(), getVarSign(var, indent+"    "), getVarSign(var, indent+"    "), indent+"    ") || modified;
+				modified = setVal(divVar, var, varDivL->getDiv(), 1, 0-varDivL->getRem(), getVarSign(var, indent+"    "), getVarSign(var, indent+"    "), indent+"    ") || modified;
+			}
+			/*else if(varDivL->getLevel() != DivLattice::bottom)
+			{
+				modified = setVal(var, divVar, 1, 1, 0, getVarSign(var, indent+"    "), getVarSign(var, indent+"    "), indent+"    ") || modified;
+				modified = setVal(divVar, var, 1, 1, 0, getVarSign(var, indent+"    "), getVarSign(var, indent+"    "), indent+"    ") || modified;
+			}*/
 		}
 	}
 	
 	return modified;
 }
 
+// Finds the variable within this constraint graph that corresponds to the given divisibility variable.
+//    If such a variable exists, returns the pair <variable, true>.
+//    Otherwise, returns <???, false>.
+pair<varID, bool> ConstrGraph::divVar2Var(const varID& divVar, string indent)
+{
+	for(set<varID>::iterator var=vars.begin(); var!=vars.end(); var++)
+		if(getDivVar(*var) == divVar)
+			return make_pair(*var, true);
+	return make_pair(zeroVar, false);
+}
+
 // Adds a new divisibility lattice, with the associated anotation
 // Returns true if this causes the constraint graph to be modified and false otherwise
-bool ConstrGraph::addDivL(FiniteVariablesProductLattice* divLattice, string annotName, void* annot)
+bool ConstrGraph::addDivL(FiniteVarsExprsProductLattice* divLattice, string annotName, void* annot, string indent)
 {
 	bool modified = false;
 	pair<string, void*> divLAnnot(annotName, annot);
-	map<pair<string, void*>, FiniteVariablesProductLattice*>::iterator loc = divL.find(divLAnnot);
+	map<pair<string, void*>, FiniteVarsExprsProductLattice*>::iterator loc = divL.find(divLAnnot);
 	// If we already have a divisibility lattice associated with the given annotation
 	if(loc != divL.end())
 	{
@@ -4225,11 +4100,11 @@ bool ConstrGraph::addDivL(FiniteVariablesProductLattice* divLattice, string anno
 
 // Adds a new sign lattice, with the associated anotation
 // Returns true if this causes the constraint graph to be modified and false otherwise
-bool ConstrGraph::addSgnL(FiniteVariablesProductLattice* sgnLattice, string annotName, void* annot)
+bool ConstrGraph::addSgnL(FiniteVarsExprsProductLattice* sgnLattice, string annotName, void* annot, string indent)
 {
 	bool modified = false;
 	pair<string, void*> sgnLAnnot(annotName, annot);
-	map<pair<string, void*>, FiniteVariablesProductLattice*>::iterator loc = sgnL.find(sgnLAnnot);
+	map<pair<string, void*>, FiniteVarsExprsProductLattice*>::iterator loc = sgnL.find(sgnLAnnot);
 	// If we already have a divisibility lattice associated with the given annotation
 	if(loc != sgnL.end())
 	{
@@ -4251,7 +4126,7 @@ bool ConstrGraph::addSgnL(FiniteVariablesProductLattice* sgnLattice, string anno
 
 // Returns true if this constraint graph includes constraints for the given variable
 // and false otherwise
-bool ConstrGraph::containsVar(const varID& var)
+bool ConstrGraph::containsVar(const varID& var, string indent)
 {
 	// First check if there are any var <= x constraints
 	if(vars2Value.find(var) != vars2Value.end())
@@ -4265,17 +4140,12 @@ bool ConstrGraph::containsVar(const varID& var)
 			if(itX->second.find(var) != itX->second.end())
 				return true;
 		}
-		
-		// Finally, check if var is an array with an empty range (i.e. we have known
-		// constraints that are not recorded in vars2Value)
-		if(emptyRange.find(var) != emptyRange.end())
-			return emptyRange[var] == true;
 	}
 	return false;
 }
 
 // returns the x->y constraint in this constraint graph
-affineInequality* ConstrGraph::getVal(varID x, varID y)
+affineInequality* ConstrGraph::getVal(varID x, varID y, string indent)
 {
 	if(x == y)
 		return NULL;
@@ -4289,77 +4159,58 @@ affineInequality* ConstrGraph::getVal(varID x, varID y)
 	if(yIt == xIt->second.end()) return NULL;
 		
 	return &(yIt->second);
-/*
-	for(map<varID, constraint>::iterator it = xConstr->second.begin(); it!=xConstr->second.end(); it++)
-	{
-		// if we've found the right constraint
-		if(y == (*it)->getY())
-			return &(*it);
-	}
-	
-	initialized = true; // this constraint graph is now definitely initialized
-	
-	// we don't have an x-y constraint
-	return NULL;*/
 }
 
 // set the x->y connection in this constraint graph to: x*a <= y*b + c
 // return true if this results this constraint graph being changed
 // xSign, ySign: the default signs for x and y. If they're set to unknown, setVal computes them on its own using getVarSign.
 //     otherwise, it uses the given signs 
-bool ConstrGraph::setVal(varID x, varID y, int a, int b, int c, affineInequality::signs xSign, affineInequality::signs ySign)
+bool ConstrGraph::setVal(varID x, varID y, int a, int b, int c, affineInequality::signs xSign, affineInequality::signs ySign, string indent)
 {
-	//cout << "setVal(): "<<x.str()<<"*"<<a<<" <= "<<y.str()<<"*"<<b<<" + "<<c<<"\n";
-	// if x or y are arrays with an empty range, their range cannot be further changed
-	if((isArray(x) && emptyRange[x]) ||
-		(isArray(y) && emptyRange[y]))
-		return false;
+	//cout << indent << "setVal(): "<<x<<"*"<<a<<" <= "<<y<<"*"<<b<<" + "<<c<<"\n";
+	// This constraint graph will now definitely be initialized
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+	if(l.first==uninitialized || l.first==bottom) { setToConstrKnown(conj, false, indent+"    "); }
+	
+	// If the graph is maximal, there is no need to bother adding anything
+	if(isMaximalState(true, indent+"    ")) return false;
 
-	initialized = true; // this constraint graph is now definitely initialized
-
-	// only bother adding constrants to this graph if it is not already bottom
-	if(!isBottom())
+	map<varID, map<varID, affineInequality> >::iterator xIt = vars2Value.find(x);
+	xSign = (xSign==affineInequality::unknownSgn? getVarSign(x, indent+"    "): xSign);
+	ySign = (ySign==affineInequality::unknownSgn? getVarSign(y, indent+"    "): ySign);
+	affineInequality newConstr(a, b, c, x==zeroVar, y==zeroVar, xSign, ySign);
+	
+	modifiedVars.insert(x);
+	modifiedVars.insert(y);
+	newConstrVars.insert(x);
+	newConstrVars.insert(y);
+						
+	// we don't have constraints from x
+	if(xIt == vars2Value.end())
 	{
-		map<varID, map<varID, affineInequality> >::iterator xIt = vars2Value.find(x);
-		xSign = (xSign==affineInequality::unknownSgn? getVarSign(x): xSign);
-		ySign = (ySign==affineInequality::unknownSgn? getVarSign(y): ySign);
-		affineInequality newConstr(a, b, c, x==zeroVar, y==zeroVar, xSign, ySign);
-		
-		modifiedVars.insert(x);
-		modifiedVars.insert(y);
-		newConstrVars.insert(x);
-		newConstrVars.insert(y);
-							
-		// we don't have constraints from x
-		if(xIt == vars2Value.end())
-		{
-			constrChanged = true;
-			vars2Value[x][y] = newConstr;
-			//cout << "vars2Value[x][y] = " << vars2Value[x][y].str("") << "\n";
-			//cout << "newConstr = " << newConstr.str("") << "\n";
-			return true;
-		}
-		
-		map<varID, affineInequality>::iterator yIt = xIt->second.find(y);
-		// we don't have an x->y constraint
-		if(yIt == xIt->second.end())
-		{
-			vars2Value[x][y] = newConstr;
-			constrChanged = true;
-			return true;
-		}
-		
-		affineInequality& constrXY = yIt->second;
-		constrChanged = constrChanged || (constrXY != newConstr);
-		bool modified = constrXY.set(newConstr);
-		return modified;
+		constrChanged = true;
+		vars2Value[x][y] = newConstr;
+		//cout << "vars2Value[x][y] = " << vars2Value[x][y].str("") << "\n";
+		//cout << "newConstr = " << newConstr.str("") << "\n";
+		return true;
 	}
-	else
-		// we haven't modified the constraint graph
-		return false;
+	
+	map<varID, affineInequality>::iterator yIt = xIt->second.find(y);
+	// we don't have an x->y constraint
+	if(yIt == xIt->second.end())
+	{
+		vars2Value[x][y] = newConstr;
+		constrChanged = true;
+		return true;
+	}
+	
+	affineInequality& constrXY = yIt->second;
+	constrChanged = constrChanged || (constrXY != newConstr);
+	bool modified = constrXY.set(newConstr);
+	return modified;
 }
 
-bool ConstrGraph::setVal(varID x, varID y, const affineInequality& ineq)
+bool ConstrGraph::setVal(varID x, varID y, const affineInequality& ineq, string indent)
 {
 	return setVal(x, y, ineq.getA(), ineq.getB(), ineq.getC(), ineq.getXSign(), ineq.getYSign());
 }
@@ -4367,127 +4218,170 @@ bool ConstrGraph::setVal(varID x, varID y, const affineInequality& ineq)
 // Sets the state of this constraint graph to Uninitialized, without modifying its contents. Thus, 
 //    the graph will register as uninitalized but when it is next used, its state will already be set up.
 // Returns true if this causes the constraint graph to be modified and false otherwise.
-bool ConstrGraph::setToUninitialized()
+bool ConstrGraph::setToUninitialized_KeepState(string indent)
 {
-	bool modified = (initialized == true);
-	initialized = false;
+	bool modified = (level != uninitialized);
+	
+	// This graph is now uninitialized
+	level = uninitialized;
+	constrType = unknown;
+	
 	return modified;
 }
 
-// sets the state of this constraint graph to Bottom
-// noBottomCheck - flag indicating whether this function should do nothing if this isBottom() returns 
-//              true (=false) or to not bother checking with isBottom (=true)
-void ConstrGraph::setToBottom(bool noBottomCheck)
+// Sets the state of this constraint graph to Bottom
+// Returns true if this causes the constraint graph to be modified and false otherwise.
+bool ConstrGraph::setToBottom(string indent)
 {
-	// this constraint graph will now definitely be initialized 
-	// (we must record this now for the sake of isBottom() and isDead())
-	initialized = true; 
+	bool modified = (level != bottom);
 	
-	// erase all the data in this constraint graph
-	eraseConstraints(noBottomCheck);
-	
-	// make all the ranges of arrays empty
-	emptyArrayRanges(noBottomCheck);
+	// This graph now contains no constraints
+	level = bottom;
+	constrType = unknown;
+
+	// Erase all the data in this constraint graph
+	eraseConstraints(true, "");
 	
 	// Erase the modification state
 	modifiedVars.clear();
 	newConstrVars.clear();
 	
-	// remember that this constraint graph is Bottom
-	bottom = true;
-	
-	// reset constrChanged because bottom is now correctly set relative
-	// to the state of the constraint graph
+	// Reset constrChanged because the state of the graph is now correct with 
+	// respect to its constraints.
 	constrChanged = false;
-} 
+	
+	return modified;
+}
 
-// Sets the state of this constraint graph to top 
-// If onlyIfNotInit=true, this is only done if the graph is currently uninitialized
-void ConstrGraph::setToTop(bool onlyIfNotInit)
+// Sets the state of this constraint graph to constrKnown, with the given constraintType
+// eraseCurConstr - if true, erases the current set of constraints and if false, leaves them alone
+// Returns true if this causes the constraint graph to be modified and false otherwise.
+bool ConstrGraph::setToConstrKnown(constrTypes ct, bool eraseCurConstr, string indent)
 {
-	if(!onlyIfNotInit || !initialized)
+	bool modified = (level != constrKnown);
+	
+	// This graph now contains no constraints
+	level = constrKnown;
+	constrType = ct;
+
+	// Only erase constraints if requested
+	if(eraseCurConstr) {
+		// Erase all the data in this constraint graph
+		eraseConstraints(true, "");
+		
+		// Erase the modification state
+		modifiedVars.clear();
+		newConstrVars.clear();
+	}
+	// Reset constrChanged because the state of the graph is now correct with 
+	// respect to its constraints.
+	constrChanged = false;
+	
+	return modified;
+}
+
+// Sets the state of this constraint graph to Inconsistent
+// noConsistencyCheck - flag indicating whether this function should do nothing if this noConsistencyCheck() returns 
+//              true (=false) or to not bother checking with isBottom (=true)
+// Returns true if this causes the constraint graph to be modified and false otherwise.
+bool ConstrGraph::setToInconsistent(string indent)
+{
+	bool modified = !(level == constrKnown && constrType == inconsistent);
+	
+	level = constrKnown;
+	constrType = inconsistent;
+	
+	// Erase all the data in this constraint graph
+	eraseConstraints(true, indent+"    ");
+	
+	// Erase the modification state
+	modifiedVars.clear();
+	newConstrVars.clear();
+	
+	// Reset constrChanged because the state of the graph is now correct with 
+	// respect to its constraints and will not change from now on.
+	constrChanged = false;
+	
+	return modified;
+}
+
+
+// Sets the state of this constraint graph to Top 
+// If onlyIfNotInit=true, this is only done if the graph is currently uninitialized
+// Returns true if this causes the constraint graph to be modified and false otherwise.
+bool ConstrGraph::setToTop(bool onlyIfNotInit, string indent)
+{
+	bool modified = false;
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+	if(!onlyIfNotInit || l.first==uninitialized)
 	{
-		// this constraint graph will now definitely be initialized 
-		// (we must record this now for the sake of isBottom() and isDead())
-		initialized = true; 
+		modified = (level != top) || modified;
+		level = top;
+		constrType = unknown;
 		
-		// erase all the data in this constraint graph
-		eraseConstraints(true);
-		
-		// make all the ranges of arrays empty
-		emptyArrayRanges(true);
+		// Erase all the data in this constraint graph
+		eraseConstraints(true, indent+"    ");
 		
 		// Erase the modification state
 		modifiedVars.clear();
 		newConstrVars.clear();
 		
-		// reset constrChanged because bottom is now correctly set relative
-		// to the state of the constraint graph
+		// Reset constrChanged because the state of the graph is now correct with 
+		// respect to its constraints and will not change from now on.
 		constrChanged = false;
 	}
+	return modified;
 }
 
-// returns whether the range of the given array is empty
-bool ConstrGraph::isEmptyRange(varID array)
-{ 
-	// if this constraint graph is not initialized, no arrays are known to have an empty range
-	if(!initialized)
-		return false;
-		
-	// the range of this array is empty if this fact is recorded inside emptyRange
-	// or if it is known that this constraint graph = bottom
-	return emptyRange.find(array)->second || isBottom();
-}
-
-// returns whether this constraint graph is Bottom
-bool ConstrGraph::isBottom()
+// Returns the level and constraint type of this constraint graph
+// noConsistencyCheck - flag indicating whether this function should explicitly check the self-consisteny of this graph (=false)
+// 							or to not bother checking self-consistency and just return the last-known value (=true)
+pair<ConstrGraph::levels,ConstrGraph::constrTypes> ConstrGraph::getLevel(bool noConsistencyCheck, string indent)
 {
-	// if this constraint graph is not initialized, it cannot be bottom or anything in particular
-	if(!initialized)
-		return false;
-		
-	// if the constraints have changed since the last time this constraint graph 
-	// was checked for dead-ness, update this graph's feasibility state
-	if(constrChanged)
-	{
-		// if we already know that this constraint graph is bottom 
-		// then it should not have changed since we learned this fact
-		if(bottom)
-		{
-			if(debugLevel>=1) 
-				std::cout << "ERROR: constrChanged=true and bottom=true inside isBottom()!\n";
-			ROSE_ASSERT(0);
+	// If we need to check for self-inconsistency
+	if(!noConsistencyCheck) {
+		// If the graph's constraints are known and can cause an inconsistency
+		if(level == constrKnown && constrType==conj) {
+			// If the constraints have changed since the last time this constraint graph 
+			// was checked for self-consistency, update this graph's feasibility state
+			if(constrChanged) {
+				// Check for self-consistency and update the state of this constraint graph 
+				// to reflect its feasibility status
+				checkSelfConsistency(indent+"    ");
+			}
 		}
-		
-		// check it again and update the state of this constraint graph 
-		// to reflect its feasibility status
-		isFeasible();
 	}
-
-	// return whether this constraint graph is known to be bottom
-	return bottom;
+	return make_pair(level, constrType);
 }
 
-// sets the state of this constraint graph to Bottom
-	// noBottomCheck - flag indicating whether this function should do nothing if this isBottom() returns 
-	//              true (=false) or to not bother checking with isBottom (=true)
-	/*void setToBottom(bool noBottomCheck=false)
-	{
-//		std::cout <<"setToBottom() dead="<<dead<<" bottom="<<bottom<<"\n";
-		// make sure that this graph is neither Dead or Bottom
-		// this will enable eraseConstants to do its work 
-		bottom=false;
+// Returns true if this graph is self-consistent and false otherwise
+// noConsistencyCheck - flag indicating whether this function should explicitly check the self-consisteny of this graph (=false)
+// 							or to not bother checking self-consistency and just return the last-known value (=true)
+bool ConstrGraph::isSelfConsistent(bool noConsistencyCheck, string indent)
+{
+	pair<levels, constrTypes> p = getLevel(noConsistencyCheck, indent);
+	return !(p.first==constrKnown && p.second==inconsistent);
+}
 
-		// erase all the data in this constraint graph
-		eraseConstraints(noBottomCheck);
-		
-		// record that the ranges of all arrays are not empty in this constraint graph
-		unEmptyArrayRanges();
-		
-		initialized = true; // this constraint graph  is now definitely initialized
-		
-//		std::cout <<"setToBottom() dead="<<dead<<" bottom="<<bottom<<"\n";
-	}*/
+// Returns true if this graph has valid constraints and is self-consistent
+// noConsistencyCheck - flag indicating whether this function should explicitly check the self-consisteny of this graph (=false)
+// 							or to not bother checking self-consistency and just return the last-known value (=true)
+bool ConstrGraph::hasConsistentConstraints(bool noConsistencyCheck, string indent)
+{
+	pair<levels, constrTypes> p = getLevel(noConsistencyCheck, indent);
+	return p.first==constrKnown && p.second!=inconsistent;
+}
+
+// Returns true if this constraint graph is maximal in that it can never reach a higher lattice state: it is
+//    either top or inconsistent). Returns false if it not maximal.
+// noConsistencyCheck - flag indicating whether this function should explicitly check the self-consisteny of this graph (=false)
+// 							or to not bother checking self-consistency and just return the last-known value (=true)
+bool ConstrGraph::isMaximalState(bool noConsistencyCheck, string indent)
+{
+	pair<levels, constrTypes> p = getLevel(noConsistencyCheck, indent);
+	return (p.first==constrKnown && p.second==inconsistent) ||
+	       p.first==top;
+}
 
 /**** String Output *****/
 
@@ -4512,18 +4406,89 @@ string ConstrGraph::str(string indent, bool useIsBottom)
 {
 	ostringstream outs;
 	
-	if(!initialized)
-		outs << /*indent << */"ConstrGraph : uninitialized";
-	else if( (useIsBottom && isBottom()) || (!useIsBottom && bottom))
-		outs << /*indent << */"ConstrGraph : bottom";
-/*	else if(vars2Value.size() == 0)
-		outs << indent << "ConstrGraph : bottom";*/
-	else
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+	
+	if(l.first==uninitialized)
+		outs << "ConstrGraph : uninitialized";
+	else if(l.first==bottom)
+		outs << "ConstrGraph : bottom";
+	else if(l.first==top)
+		outs << "ConstrGraph : top";
+	else if(l.first==constrKnown)
 	{
-		bool needEndl=false; // =true if the previous line was printed and needs a \n before the next line can begin
-		if(debugLevel>=1) 
-			outs << /*indent << */"ConstrGraph : \n";
-//		cout << "vars2Value.size()="<<vars2Value.size()<<"\n";
+		if(l.second==unknown) outs << "ConstrGraph : constrKnown - Unknown";
+		else if(l.second==inconsistent) outs << "ConstrGraph : constrKnown - Inconsistent";
+		else {
+			bool needEndl=false; // =true if the previous line was printed and needs a \n before the next line can begin
+			outs << "ConstrGraph : \n";
+	//		cout << "vars2Value.size()="<<vars2Value.size()<<"\n";
+			/*for(map<varID, map<varID, affineInequality> >::iterator itX = vars2Value.begin();
+			    itX!=vars2Value.end(); itX++)
+			{
+	//outs << indent << "\nvars2Value["<<itX->first.str()<<"].size()="<<vars2Value[itX->first].size()<<"\n";
+				for(map<varID, affineInequality>::iterator itY = itX->second.begin();
+				    itY!=itX->second.end(); itY++)
+				{
+					const affineInequality& constr = itY->second;
+					if(needEndl) { outs << "\n"; }
+					if(l.second==conj)
+						outs << indent << "        " << constr.str(itX->first, itY->first, indent+"    ");
+					else if(l.second==negConj)
+						outs << indent << "        " << constr.strNeg(itX->first, itY->first, indent+"    ");
+					needEndl = true;
+				}
+			}*/
+			
+			outs << indent << "  vars: \n";
+			varSetStatusToStream(vars, outs, needEndl, indent+"    ");
+			if(needEndl) outs << "\n";
+			outs << indent << "  divVars: \n";
+			varSetStatusToStream(divVars, outs, needEndl, indent+"    ");
+		}
+	}
+	
+	return outs.str();
+}
+
+void ConstrGraph::varSetStatusToStream(const set<varID>& vars, ostringstream& outs, bool &needEndl, string indent)
+{
+	
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+	
+	for(set<varID>::const_iterator v=vars.begin(); v!=vars.end(); v++)
+	{
+		bool printedVarName=false;
+		
+		// Print all inequalities x <= ...
+		if(vars2Value.find(*v) != vars2Value.end()) {
+			if(needEndl) { outs << "\n"; needEndl=false; }
+			if(!printedVarName) { outs << indent <<(*v)<<":\n"; printedVarName=true; }
+					
+			for(map<varID, affineInequality>::iterator itY = vars2Value[*v].begin();
+			    itY!=vars2Value[*v].end(); itY++)
+			{
+				const affineInequality& constr = itY->second;
+				if(needEndl) { outs << "\n"; needEndl=false; }
+				if(l.second==conj)
+					outs << indent << "    " << constr.str(*v, itY->first, indent+"    ");
+				else if(l.second==negConj)
+					outs << indent << "    " << constr.strNeg(*v, itY->first, indent+"    ");
+				
+				// If there exist both constraints x <= y and y <= x, print both on the same line
+				if(vars2Value.find(itY->first) != vars2Value.end() && 
+				   vars2Value[itY->first].find(*v) != vars2Value[itY->first].end()) {
+				   const affineInequality& constr = vars2Value[itY->first][*v];
+				   outs << "\n";
+					if(l.second==conj)
+						outs << indent << "    " << constr.str(itY->first, *v, indent+"    ");
+					else if(l.second==negConj)
+						outs << indent << "    " << constr.strNeg(itY->first, *v, indent+"    ");
+				}
+				needEndl = true;
+			}
+		}
+		
+		// Print all inequalities ... <= x
 		for(map<varID, map<varID, affineInequality> >::iterator itX = vars2Value.begin();
 		    itX!=vars2Value.end(); itX++)
 		{
@@ -4531,34 +4496,24 @@ string ConstrGraph::str(string indent, bool useIsBottom)
 			for(map<varID, affineInequality>::iterator itY = itX->second.begin();
 			    itY!=itX->second.end(); itY++)
 			{
+				if(itY->first != *v) continue;
+					
+				// If there exist both constraints x <= y and y <= x, then we've already printed this constraint
+				if(vars2Value.find(*v) != vars2Value.end() && 
+				   vars2Value[*v].find(itX->first) != vars2Value[*v].end())
+					continue;
+				
 				const affineInequality& constr = itY->second;
-				if(needEndl) { outs << "\n"; }
-				outs << indent << "  " << constr.str(itX->first, itY->first, indent+"    ");
+				if(needEndl) { outs << "\n"; needEndl=false; }
+				if(!printedVarName) { outs << indent <<(*v)<<":\n"; printedVarName=true; }
+				if(l.second==conj)
+					outs << indent << "    " << constr.str(itX->first, itY->first, indent+"    ");
+				else if(l.second==negConj)
+					outs << indent << "        " << constr.strNeg(itX->first, itY->first, indent+"    ");
 				needEndl = true;
 			}
 		}
-		
-		// print out all arrays with empty ranges
-/*		for(varIDSet::iterator curArray = arrays.begin();
-		    curArray != arrays.end(); curArray++)
-		{
-			if(emptyRange.find(*curArray)->second)
-			{
-				if(needEndl) { outs << "\n"; }
-				outs << indent << "  Array \""<<(*curArray).str()<<"\" has empty range.";
-				needEndl = true;
-			}
-		}
-		outs << "\n";
-		
-		// print out all scalars
-		outs << indent << "      scalars = ";
-		for(varIDSet::iterator it=scalars.begin(); it!=scalars.end(); it++)
-		{ outs << (*it).str() << ", "; }
-		//outs << "\n";*/
 	}
-	
-	return outs.str();
 }
 
 /**** Comparison Functions ****/
@@ -4569,10 +4524,11 @@ string ConstrGraph::str(string indent, bool useIsBottom)
 bool ConstrGraph::operator != (ConstrGraph &that)
 {
 	// if either constraint graph is uninitialized, it isn't equal to any other graph
-	if(!initialized || !that.initialized)
-		return true;
+	if(getLevel(true, "    ").first==uninitialized ||
+	   that.getLevel(true, "    ").first==uninitialized)
+	   return true;
 	
-	return diffConstraints(that);// || diffArrays(&that);
+	return diffConstraints(that, "    ");// || diffArrays(&that);
 }
 
 // two graphs are equal if they're not unequal
@@ -4592,28 +4548,54 @@ bool ConstrGraph::operator==(Lattice* that)
 bool ConstrGraph::operator <<= (ConstrGraph &that)
 {
 	//printf("ConstrGraph::operator <=, initialized=%d, that.initialized=%d\n", initialized, that.initialized);
+	pair <levels, constrTypes> l = getLevel(true, "    ");
+	pair <levels, constrTypes> tl = that.getLevel(true, "    ");
 	
-	// if this constraint graph is uninitialized, it is smaller than any other graph
-	if(!initialized)
-		return true;
-	// else, if that is uninitialized, it must be smaller
-	else if(!that.initialized)
+	// If this constraint graph is Uninitialized, it is <= than any other graph
+	if(l.first == uninitialized) return true;
+	// Else, if that is Uninitialized, it must be smaller
+	else if(tl.first == uninitialized) return false;
+	
+	// Both this and that must be initialized
+	
+	// If this constraint graph is Bottom, it is <= than any other initialized graph
+	if(l.first == bottom) return true;
+	// Else, if that is Bottom, it must be smaller
+	else if(tl.first == bottom) return false;
+	
+	// Both this and that must be initialized and not bottom
+	
+	// If that constraint graph is Top, it is >= than any other initialized graph
+	if(tl.first == top) return true;
+	// Else, if this is top, it must be larger than that
+	else if(l.first == top) return false;
+	
+	// Both this and that must be constrKnown
+	
+	// If that constraint graph is inconsistent, it is >= any other constrKnown
+	if(tl.second == inconsistent) return true;
+	// Else, if this is top, it must be larger than that
+	else if(l.second == inconsistent) return false;
+		
+	// If the two graphs have different negation states (one is a conjunction and the other is a negated conjunction)
+	if(l.second != tl.second)
+		// They're not comparable
 		return false;
 	
-	if(isBottom())
-		return true;
-	else if(that.isBottom())
-		return false;
+	// Flags that indicate whether this/that map has extra terms which do not exist in that/this
+	bool thisHasExtra=false, thatHasExtra=false; 
+	// True if in all the terms that appear in both this and that, the one in this is always tighter than the one in that
+	bool thisAlwaysTighter=true;
 	
 	map<varID, map<varID, affineInequality> >::const_iterator itThisX, itThatX;
 	for(itThisX = vars2Value.begin(), itThatX = that.vars2Value.begin();
 	    itThisX!=vars2Value.end() && itThatX!=that.vars2Value.end(); )
 	{
-		// if both constraint graphs have constraints for itThisX->first
+		// If both constraint graphs have constraints for itThisX->first
 		if(itThisX->first == itThatX->first)
 		{
-			/*affineInequality::signs xSign = getVarSign(itThisX->first);
-			ROSE_ASSERT(xSign == that.getVarSign(itThisX->first));*/
+			/*affineInequality::signs xSign = getVarSign(itThisX->first, indent+"    ");
+			ROSE_ASSERT(xSign == that.getVarSign(itThisX->first, indent+"    "));*/
 			varID x = itThisX->first;
 			
 			map<varID, affineInequality>::const_iterator itThisY, itThatY;
@@ -4625,37 +4607,58 @@ bool ConstrGraph::operator <<= (ConstrGraph &that)
 				{
 					varID y = itThisY->first;
 					
-					// if the corresponding <x->y> constraints in that have more information than in this
-					if(itThatY->second.semLessThan(itThisY->second, isEqZero(x), isEqZero(y)))
-						return false;
+					// Compare the information content in this inequality in both graphs and
+					// 	record if the <x->y> constraint in that has more information than the one in this
+					if((l.second == conj && /*itThatY->second.semLessThan(itThisY->second, isEqZero(x), isEqZero(y))*/
+						                     itThatY->second!=itThisY->second && itThatY->second.semLessThan(itThisY->second, 
+						                                                 x==zeroVar?NULL:getVal(x, zeroVar), x==zeroVar?NULL:getVal(zeroVar, x), 
+                                                                   y==zeroVar?NULL:getVal(y, zeroVar), y==zeroVar?NULL:getVal(zeroVar, y), "    ")) ||
+					   (l.second == negConj && itThatY->second.semLessThanNeg(itThisY->second, isEqZero(x), isEqZero(y))))
+						thisAlwaysTighter = false;
 					
-					// advance both iterators
+					// Advance both Y iterators
 					itThisY++;
 					itThatY++;
 				}
-				// else, if only that has constraints for <itThisX->first, itThisY->first>
+				// Else, if this and that don't agree on the list of inequalities of the form ax <= ...
 				else
-					// advance only itThisY since we have to see if the next variable in itThisX->second 
-					// matches itThatY->first
-					// (we've assumed this has the same or more pairs than that and we're trying to find a counter-example)
-					itThisY++;
+					// If this has an extra ax <= ... mapping that doesn't exist in that
+					if(itThisY->first < itThatY->first) {
+						thisHasExtra = true;
+						// Advance the Y iterator in this to the next mapping
+						itThisY++;
+					// If that has an extra ax <= ... mapping that doesn't exist in this
+					} else {
+						thatHasExtra = true;
+						// Advance the Y iterator in that to the next mapping
+						itThatY++;
+					}
 			}
 			
-			// if there are variables that have constraints in itThatX->second but not in itThisX->second
-			if(itThisY!=itThisX->second.end())
-				// that has some constraints that this does not and is therefore either tighter or non-comparable
-				return false;
+			// Record if there are variables that have constraints in itThatX->second but not in itThisX->second
+			if(itThisY!=itThisX->second.end()) thisHasExtra = true;
 			
-			// advance both iterators
+			// Record if there are variables that have constraints in itThatX->second but not in itThisX->second
+			if(itThatY!=itThatX->second.end()) thatHasExtra = true;
+			
+			// Advance both X iterators
 			itThisX++;
 			itThatX++;
 		}
-		// else, if only that has constraints for var->first
+		// Else, if this and that don't agree on the list of variables for which inequalities exist
 		else
 		{
-			// advance only itThisX since we have to see if the next variable in that matches itThatX->first
-			// (we've assumed this has the same or more pairs than that and we're trying to find a counter-example)
-			itThisX++;
+			// If this has an extra set of mapping for some variable that do not exist in that
+			if(itThisX->first < itThatX->first) {
+				thisHasExtra = true;
+				// Advance the X iterator in this to the next mapping
+				itThisX++;
+			// If that has an extra set of mapping for some variable that do not exist in this
+			} else {
+				thatHasExtra = true;
+				// Advance the X iterator in that to the next mapping
+				itThatX++;
+			}
 		}
 	}
 	
@@ -4664,27 +4667,26 @@ bool ConstrGraph::operator <<= (ConstrGraph &that)
 		// that has some constraints that this does not and is therefore either tighter or non-comparable
 		return false;
 	
-	// this <<= cg only if for all arrays, if an array's range is empty in cg, then 
-	// it must be empty in this
-	for(varIDSet::iterator curArray = arrays.begin(); 
-		 curArray != arrays.end(); curArray++)
-	{
-		if(that.emptyRange.find(*curArray)->second==true &&
-		   emptyRange.find(*curArray)->second==false)
-			return false;
-	}
+	// Record if there are variables that have constraints in this but not in that
+	if(itThisX!=vars2Value.end()) thisHasExtra = true;
 	
-	// there has been no pair for which that's constraints are tighter than this'
-	return true;
+	// Record if there are variables that have constraints in that but not in this
+	if(itThatX!=vars2Value.end()) thatHasExtra = true;
+	
+	// This <<= That if for all constraints mapped by both This and That, the ones mapped by This are always tigher AND
+	// If this graph is a conjunction, This has the same or more constraints than That and
+	// If this graph is a disjunction, This has the same or fewer constraints as That
+	return thisAlwaysTighter && 
+	       ((l.second == conj && !thatHasExtra) || (l.second == negConj && !thisHasExtra));
 }
 	
 // Returns true if x*b+c MUST be outside the range of y and false otherwise. 
 // If two variables are unrelated, it is assumed that there is no information 
 // about their relationship and mustOutsideRange() thus proceeds conservatively (returns true).
-bool ConstrGraph::mustOutsideRange(varID x, int b, int c, varID y)
+bool ConstrGraph::mustOutsideRange(varID x, int b, int c, varID y, string indent)
 {
-	// do a transitive closure in case one is overdue
-	if(constrChanged) transitiveClosure();
+	// Do a transitive closure in case one is overdue
+	if(constrChanged) transitiveClosure(indent+"    ");
 	
 	affineInequality* constrXY = getVal(x, y);
 	affineInequality* constrYX = getVal(y, x);
@@ -4693,10 +4695,10 @@ bool ConstrGraph::mustOutsideRange(varID x, int b, int c, varID y)
 	{
 		if(debugLevel>=1) 
 		{
-			cout << "mustOutsideRange("<<x.str()<<"*"<<b<<"+"<<c<<", "<<y.str()<<")\n";
-			printf("    constrXY=%p constrYX=%p\n", constrXY, constrYX);
-			if(constrXY) cout << "mustOutsideRange() "<<x.str()<<"->"<<y.str()<<"="<<constrXY->str(x, y, "")<<" b="<<b<<" c="<<c<<"\n";
-			if(constrYX) cout << "mustOutsideRange() "<<y.str()<<"->"<<x.str()<<"="<<constrYX->str(y, x, "")<<" b="<<b<<" c="<<c<<"\n";
+			cout << indent << "mustOutsideRange("<<x.str()<<"*"<<b<<"+"<<c<<", "<<y.str()<<")\n";
+			cout << indent << "    constrXY="<<constrXY<<" constrYX="<<constrYX<<"\n";
+			if(constrXY) cout << indent << "mustOutsideRange() "<<x.str()<<"->"<<y.str()<<"="<<constrXY->str(x, y, "")<<" b="<<b<<" c="<<c<<"\n";
+			if(constrYX) cout << indent << "mustOutsideRange() "<<y.str()<<"->"<<x.str()<<"="<<constrYX->str(y, x, "")<<" b="<<b<<" c="<<c<<"\n";
 		}
 	}
 	//cout << str("    ") <<"\n";
@@ -4742,27 +4744,27 @@ bool ConstrGraph::mustInsideRange(varID x, int b, int c, varID y)
 
 // returns true if this logical condition must be true and false otherwise
 // <from LogicalCond>
-bool ConstrGraph::mayTrue()
+bool ConstrGraph::mayTrue(string indent)
 {
-	if(constrChanged) transitiveClosure();
-	return !isBottom();
+	if(constrChanged) transitiveClosure(indent+"    ");
+	pair <levels, constrTypes> l = getLevel(true, indent+"    ");
+	return !(l.first==constrKnown && l.second==inconsistent);
 }
 
-
 /* Transactions */
-void ConstrGraph::beginTransaction()
+void ConstrGraph::beginTransaction(string indent)
 {
 	inTransaction = true;
 }
 
-void ConstrGraph::endTransaction()
+void ConstrGraph::endTransaction(string indent)
 {
 	ROSE_ASSERT(inTransaction);
 	inTransaction = false;
 	transitiveClosure();
 	
-	/*cout << "scalars = ";
-	for(varIDSet::iterator it=scalars.begin(); it!=scalars.end(); it++)
+	/*cout << "vars = ";
+	for(varIDSet::iterator it=vars.begin(); it!=vars.end(); it++)
 	{ cout << (*it).str() << " "; }
 	cout << "\n";*/
 }

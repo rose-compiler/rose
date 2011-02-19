@@ -55,6 +55,7 @@ class printable
 {
 	public:
 	virtual string str(string indent="")=0;
+	virtual ~printable() {}
 };
 
 /* #####################################

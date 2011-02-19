@@ -4,6 +4,13 @@ class mesgExpr;
 class OneDmesgExpr;
 #include "contProcMatchAnalysis.h"
 
+
+/************
+ * mesgExpr *
+ ************/
+
+mesgExpr::~mesgExpr() {}
+
 /****************
  * OneDmesgExpr *
  ****************/
@@ -54,7 +61,7 @@ OneDmesgExpr::OneDmesgExpr(SgExpression* expr, ConstrGraph* cg)
 
 // Creates a message expression from the given SgExpression, annotating the message expression
 // bounds with the given process set.
-OneDmesgExpr::OneDmesgExpr(SgExpression* expr, ConstrGraph* cg, int pSet)
+OneDmesgExpr::OneDmesgExpr(SgExpression* expr, ConstrGraph* cg, unsigned int pSet)
 {
 	// If the source/destination process expression is parseable as i op j op c
 	varID i, j;

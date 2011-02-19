@@ -63,7 +63,9 @@ namespace VirtualCFG {
       if (((*i).*otherSide)().isInteresting())
 	edges.push_back(DataflowEdge(*i));
     }
-    // cerr << "makeClosure done: " << edges.size() << endl;
+    //cout << "makeClosure done: #edges=" << edges.size() << endl;
+    //for(vector<DataflowEdge>::iterator e=edges.begin(); e!=edges.end(); e++)
+    //    printf("Current Node %p<%s | %s>\n", e.target().getNode(), e.target().getNode()->unparseToString().c_str(), e.target().getNode()->class_name().c_str());
     return edges;
   }
 	

@@ -174,7 +174,7 @@ if(MPIAnalysisDebugLevel>0)
 
 // Removes all known bounds on pSet's process set in dfInfo and replaces them with the default
 // constraints on process set bounds.
-void pCFG_contProcMatchAnalysis::resetPSet(int pSet, vector<Lattice*>& lattices)
+void pCFG_contProcMatchAnalysis::resetPSet(unsigned int pSet, vector<Lattice*>& lattices)
 {
 	ConstrGraph* cg = dynamic_cast<ConstrGraph*>(*(lattices.begin()));
 	
@@ -186,7 +186,7 @@ void pCFG_contProcMatchAnalysis::resetPSet(int pSet, vector<Lattice*>& lattices)
 }
 
 // Helper method for resetPSet that makes it easier to call it from inside pCFG_contProcMatchAnalysis.
-void pCFG_contProcMatchAnalysis::resetPSet(int pSet, ConstrGraph* cg, 
+void pCFG_contProcMatchAnalysis::resetPSet(unsigned int pSet, ConstrGraph* cg, 
                                            const varID& /*nprocsVarAllPSets*/nprocsVarPSet, 
                                            const varID& zeroVarAllPSets)
 {
@@ -265,7 +265,7 @@ void pCFG_contProcMatchAnalysis::annotateCommonVars(/*pCFGNode n, */const varID&
 }
 
 // Returns the name of the variable annotation to be used when talking about process set pSet
-string pCFG_contProcMatchAnalysis::getVarAnn(int pSet)
+string pCFG_contProcMatchAnalysis::getVarAnn(unsigned int pSet)
 {
 	ostringstream outs;
 	outs << "pCFG_"<<pSet;
@@ -300,8 +300,10 @@ bool pCFG_contProcMatchAnalysis::assertProcSetInvariants(
 	return modified;
 }
 
-// Update varIneq's variables with the annotations that connect them to pSet
-void pCFG_contProcMatchAnalysis::connectVAItoPSet(int pSet, varAffineInequality& varIneq)
+// Update varIneq's variables with the annotations that connect them to pSet.
+// Annotate zeroVar, nprocsVar used in the inequalities with pCFG_common and
+// Annotate all other variables with pSet, but only if it is not already annotated.
+void pCFG_contProcMatchAnalysis::connectVAItoPSet(unsigned int pSet, varAffineInequality& varIneq)
 {
 	// Annotations that identify this process set or the variables common to all process sets
 	set<string> tgtAnnotNames;
@@ -317,7 +319,7 @@ void pCFG_contProcMatchAnalysis::connectVAItoPSet(int pSet, varAffineInequality&
 		
 		if(varIneq.getX()==zeroVar)        varIneq.setX(zeroVarAllPSets);
 		else if(varIneq.getX()==nprocsVar) varIneq.setX(/*nprocsVarAllPSets*/nprocsVarPSet);
-		// If varIneq.x is neither zeroVar, not nprocsVar and does not have our target annotation, add it
+		// If varIneq.x is neither zeroVar, nor nprocsVar and does not have our target annotation, add it
 		else if(!varIneq.getX().hasAnyAnnotation(tgtAnnotNames))
 		{
 			varID x = varIneq.getX(); x.addAnnotation(getVarAnn(pSet), (void*)1);
@@ -373,7 +375,7 @@ void pCFG_contProcMatchAnalysis::connectVAItoPSet(int pSet, varAffineInequality&
 //             perform send-receive matching.
 // Returns true if any of the input lattices changed as a result of the transfer function and
 //    false otherwise.
-bool pCFG_contProcMatchAnalysis::transfer(const pCFGNode& n, int pSet, const Function& func, 
+bool pCFG_contProcMatchAnalysis::transfer(const pCFGNode& n, unsigned int pSet, const Function& func, 
                                           NodeState& state, const vector<Lattice*>&  dfInfo, 
                                           bool& deadPSet, bool& splitPSet, vector<DataflowNode>& splitPSetNodes,
                                           bool& splitPNode, vector<ConstrGraph*>& splitConditions, bool& blockPSet)
@@ -814,7 +816,7 @@ bool pCFG_contProcMatchAnalysis::connectIneqToVar(ConstrGraph* cg, ConstrGraph* 
 
 // Called when a partition is created to allow a specific analysis to initialize
 // its dataflow information from the partition condition
-/*void pCFG_contProcMatchAnalysis::initDFfromPartCond(const Function& func, const pCFGNode& n, int pSet, NodeState& state, 
+/*void pCFG_contProcMatchAnalysis::initDFfromPartCond(const Function& func, const pCFGNode& n, unsigned int pSet, NodeState& state, 
 	                                                 const vector<Lattice*>& dfInfo, const vector<NodeFact*>& facts,
 	                                                 ConstrGraph* partitionCond)
 {
@@ -867,7 +869,7 @@ bool pCFG_contProcMatchAnalysis::connectIneqToVar(ConstrGraph* cg, ConstrGraph* 
 // dataflow state for that process set with the set's specific condition.
 // Returns true if this causes the dataflow state to change and false otherwise
 bool pCFG_contProcMatchAnalysis::initPSetDFfromPartCond(
-	                            const Function& func, const pCFGNode& n, int pSet, 
+	                            const Function& func, const pCFGNode& n, unsigned int pSet, 
 	                            const vector<Lattice*>& dfInfo, const vector<NodeFact*>& facts,
 	                            ConstrGraph* partitionCond)
 {
@@ -885,7 +887,7 @@ bool pCFG_contProcMatchAnalysis::initPSetDFfromPartCond(
 
 // Version of initPSetDFfromPartCond that doesn't perform a transitive closure at the end
 bool pCFG_contProcMatchAnalysis::initPSetDFfromPartCond_ex(
-	                            const Function& func, const pCFGNode& n, int pSet, 
+	                            const Function& func, const pCFGNode& n, unsigned int pSet, 
 	                            const vector<Lattice*>& dfInfo, const vector<NodeFact*>& facts,
 	                            ConstrGraph* partitionCond)
 {
@@ -968,8 +970,8 @@ void pCFG_contProcMatchAnalysis::mergePCFGStates(
 	// Compress any holes that result from the merging
 	it=pSetsToMerge.begin();
 	it++;
-	int freePSet=*it;
-	int usedPSet=freePSet;
+	unsigned int freePSet=*it;
+	unsigned int usedPSet=freePSet;
 	while(freePSet<(n.getPSetDFNodes().size() - (pSetsToMerge.size()-1)))
 	{	
 		if(MPIAnalysisDebugLevel>0)
@@ -1017,7 +1019,7 @@ void pCFG_contProcMatchAnalysis::mergePCFGStates(
 // Infers the best possible constraints on the upper and lower bounds of the process set from 
 // the constraints on rankVar
 // Returns true if this causes the dataflow state to change and false otherwise
-bool pCFG_contProcMatchAnalysis::inferBoundConstraints(const Function& func, const pCFGNode& n, int pSet, ConstrGraph* cg)
+bool pCFG_contProcMatchAnalysis::inferBoundConstraints(const Function& func, const pCFGNode& n, unsigned int pSet, ConstrGraph* cg)
 {
 	bool modified = false;
 	
@@ -1140,14 +1142,14 @@ bool pCFG_contProcMatchAnalysis::inferBoundConstraints(const Function& func, con
 
 // Transfer constraints from other process set's nprocsVar to this process set's nprocsVar
 // Returns true if this causes the dataflow state to change and false otherwise
-bool pCFG_contProcMatchAnalysis::forceNProcsUnity(const Function& func, const pCFGNode& n, int pSet, ConstrGraph* cg)
+bool pCFG_contProcMatchAnalysis::forceNProcsUnity(const Function& func, const pCFGNode& n, unsigned int pSet, ConstrGraph* cg)
 {
 	bool modified = false;
 	varID nprocsVarPSet = nprocsVar; nprocsVarPSet.addAnnotation(getVarAnn(pSet), (void*)1);
 	
 	// Look at the constraints on the nprocsVars of other sets. For any constraint
 	// nprocsVarOtherSet <= var, intersect this constraint with the nprocsVarPSet <= var constraint (if any)
-	int otherPSet=0;
+	unsigned int otherPSet=0;
 	for(vector<DataflowNode>::const_iterator it=n.getPSetDFNodes().begin(); it!=n.getPSetDFNodes().end(); it++, otherPSet++)
 	{
 		if(otherPSet != pSet)
@@ -1279,7 +1281,7 @@ void pCFG_contProcMatchAnalysis::addVarVarIneqMap(map<varID, map<varID, affineIn
 // Incorporates the current node's inequality information from conditionals (ifs, fors, etc.) into the current node's 
 // constraint graph.
 // returns true if this causes the constraint graph to change and false otherwise
-bool pCFG_contProcMatchAnalysis::incorporateConditionalsInfo(const pCFGNode& n, int pSet, const Function& func, const DataflowNode& dfNode, 
+bool pCFG_contProcMatchAnalysis::incorporateConditionalsInfo(const pCFGNode& n, unsigned int pSet, const Function& func, const DataflowNode& dfNode, 
                                                              NodeState& state, const vector<Lattice*>& dfInfo)
 {
 	bool modified = false;
@@ -1738,7 +1740,7 @@ void pCFG_contProcMatchAnalysis::matchSendsRecvs(
 }
 
 // Release the given process set by moving it from from blockedPSets to activePSets and releasedPSets
-void pCFG_contProcMatchAnalysis::releasePSet(int pSet, set<int>& activePSets, set<int>& blockedPSets, set<int>& releasedPSets)
+void pCFG_contProcMatchAnalysis::releasePSet(unsigned int pSet, set<int>& activePSets, set<int>& blockedPSets, set<int>& releasedPSets)
 {
 	pCFG_FWDataflow::movePSet(pSet, activePSets, blockedPSets);
 	releasedPSets.insert(pSet);

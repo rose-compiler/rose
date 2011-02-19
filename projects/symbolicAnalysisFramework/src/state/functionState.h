@@ -14,6 +14,8 @@ class FunctionState
 	public:
 	Function func;
 	NodeState state;
+	// The lattices that describe the value of the function's return variables
+	NodeState retState;
 
 	private:
 	static set<FunctionState*> allDefinedFuncs;	
@@ -51,13 +53,16 @@ class FunctionState
 	static void setParamArgByRefMap(SgFunctionCallExp* call, map<varID, varID>& paramArgByRefMap);
 };
 
-class CollectFunctions : public TraverseCallGraphBottomUp<int>
+class CollectFunctions : public TraverseCallGraphUnordered/*TraverseCallGraphBottomUp<int>*/
 {
 	public:
-	CollectFunctions(SgIncidenceDirectedGraph* graph) : TraverseCallGraphBottomUp<int>(graph)
+	CollectFunctions(SgIncidenceDirectedGraph* graph) : TraverseCallGraphUnordered/*TraverseCallGraphBottomUp<int>*/(graph)
 	{}
 	
-	int visit(const CGFunction* func, list<int> fromCallees);
+	//int visit(const CGFunction* func, list<int> fromCallees);
+	void visit(const CGFunction* func);
+	
+	virtual ~CollectFunctions() {}
 };
 
 #endif

@@ -143,20 +143,24 @@ bool contRangeProcSet::setUB(const varID& ub)
 // lb*a = newLB*b + c
 bool contRangeProcSet::assignLB(const varID& newLB, int a, int b, int c)
 {
+	bool modified=false;
 	//cout << "assignLB("<<lb.str()<<" => "<<newLB.str()<<")\n";
 	cg->eraseVarConstr(lb);
-	cg->assertCond(lb, newLB, a, b, c);
-	cg->assertCond(newLB, lb, a, b, 0-c);
+	modified = modified || cg->assertCond(lb, newLB, a, b, c);
+	modified = modified || cg->assertCond(newLB, lb, a, b, 0-c);
+	return modified;
 }
 
 // Do not modify the upper bound but add the constraint that it is equal ub:
 // ub*a = newUB*b + c
 bool contRangeProcSet::assignUB(const varID& newUB, int a, int b, int c)
 {
+	bool modified=false;
 	//cout << "assignUB("<<ub.str()<<" => "<<newUB.str()<<")\n";
 	cg->eraseVarConstr(ub);
-	cg->assertCond(ub, newUB, a, b, c);
-	cg->assertCond(newUB, ub, a, b, 0-c);
+	modified = modified || cg->assertCond(ub, newUB, a, b, c);
+	modified = modified || cg->assertCond(newUB, ub, a, b, 0-c);
+	return modified;
 }
 
 // Sets cg, returning true if this causes this process set to change

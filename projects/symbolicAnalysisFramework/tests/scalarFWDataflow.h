@@ -17,6 +17,7 @@
 #include "analysis.h"
 #include "dataflow.h"
 #include "latticeFull.h"
+#include "liveDeadVarAnalysis.h"
 #include "divAnalysis.h"
 #include "sgnAnalysis.h"
 #include "affineInequality.h"
@@ -31,15 +32,20 @@ class ScalarFWDataflow : public IntraFWDataflow
 	static map<varID, Lattice*> constVars;
 	DivAnalysis* divAnalysis;
 	SgnAnalysis* sgnAnalysis;
-	affineInequalitiesPlacer* affIneqPlacer;
+	//affineInequalitiesPlacer* affIneqPlacer;
+	
+	// The LiveDeadVarsAnalysis that identifies the live/dead state of all application variables.
+	// Needed to create a FiniteVarsExprsProductLattice.
+	LiveDeadVarsAnalysis* ldva; 
 	
 	public:
-	ScalarFWDataflow(DivAnalysis* divAnalysis, SgnAnalysis* sgnAnalysis, affineInequalitiesPlacer* affIneqPlacer): IntraFWDataflow()
+	ScalarFWDataflow(LiveDeadVarsAnalysis* ldva, DivAnalysis* divAnalysis, SgnAnalysis* sgnAnalysis/*, affineInequalitiesPlacer* affIneqPlacer*/): IntraFWDataflow()
 	{
 		this->divAnalysis = divAnalysis;
 		this->sgnAnalysis = sgnAnalysis;
-		this->affIneqPlacer = affIneqPlacer;
-		rwAccessLabeler::addRWAnnotations(cfgUtils::getProject());
+		this->ldva = ldva;
+		//this->affIneqPlacer = affIneqPlacer;
+		//rwAccessLabeler::addRWAnnotations(cfgUtils::getProject());
 	}
 	
 	// generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
@@ -50,7 +56,7 @@ class ScalarFWDataflow : public IntraFWDataflow
 	// Returns a map of special constant variables (such as zeroVar) and the lattices that correspond to them
 	// These lattices are assumed to be constants: it is assumed that they are never modified and it is legal to 
 	//    maintain only one copy of each lattice may for the duration of the analysis.
-	map<varID, Lattice*>& genConstVarLattices() const;
+	//map<varID, Lattice*>& genConstVarLattices() const;
 	
 	bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo);
 	
@@ -62,12 +68,15 @@ class ScalarFWDataflow : public IntraFWDataflow
 	
 	// incorporates the current node's divisibility information into the current node's constraint graph
 	// returns true if this causes the constraint graph to change and false otherwise
-	bool incorporateDivInfo(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo);
+	bool incorporateDivInfo(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo, string indent="");
 	
 	// For any variable for which we have divisibility info, remove its constraints to other variables (other than its
 	// divisibility variable)
-	bool removeConstrDivVars(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo);
+	bool removeConstrDivVars(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo, string indent="");
 };
+
+// Prints the Lattices set by the given ScalarFWDataflow
+void printScalarFWDataflowStates(ScalarFWDataflow* sfwd, string indent="");
 
 #endif
 

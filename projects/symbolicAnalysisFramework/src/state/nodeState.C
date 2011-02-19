@@ -67,7 +67,7 @@ void NodeState::setLattices(const Analysis* analysis, vector<Lattice*>& lattices
 			dfInfoBelow[(Analysis*)analysis] = tmp;
 	#endif
 	
-	// Set dfInfoAbove and  dfInfoBelow to lattices
+	// Set dfInfoAbove and dfInfoBelow to lattices
 	#ifdef THREADED
 		// set dfInfoAbove to lattices
 		wA->second = lattices;
@@ -210,7 +210,7 @@ static vector<Lattice*> emptyLatVec;
 // returns the given lattice from above the node, which owned by the given analysis
 Lattice* NodeState::getLatticeAbove(const Analysis* analysis, int latticeName) const
 {
-	getLattice_ex(dfInfoAbove, analysis, latticeName);
+	return getLattice_ex(dfInfoAbove, analysis, latticeName);
 }
 
 // returns the map containing all the lattices from above the node that are owned by the given analysis
@@ -224,6 +224,8 @@ const vector<Lattice*>& NodeState::getLatticeAbove(const Analysis* analysis) con
 			return r->second;
 	#else
 		// if this analysis has registered some lattices at this node, return their vector
+		/*cout << "#dfInfoAbove="<<dfInfoAbove.size()<<"\n";
+		cout << "Analysis "<<analysis<<" found="<<(dfInfoAbove.find((Analysis*)analysis)!=dfInfoAbove.end())<<"\n";*/
 		if(dfInfoAbove.find((Analysis*)analysis)!=dfInfoAbove.end())
 			return dfInfoAbove.find((Analysis*)analysis)->second;
 	#endif
@@ -254,7 +256,7 @@ vector<Lattice*>& NodeState::getLatticeAboveMod(const Analysis* analysis)
 // returns the given lattice from below the node, which owned by the given analysis
 Lattice* NodeState::getLatticeBelow(const Analysis* analysis, int latticeName) const
 {
-	getLattice_ex(dfInfoBelow, analysis, latticeName);
+	return getLattice_ex(dfInfoBelow, analysis, latticeName);
 }
 
 // returns the map containing all the lattices from below the node that are owned by the given analysis
@@ -337,7 +339,7 @@ void NodeState::deleteLatticeBelow(const Analysis* analysis)
 bool NodeState::eqLattices(const vector<Lattice*>& latticesA,
                            const vector<Lattice*>& latticesB)
 {
-//	printf("    latticesA.size()=%d latticesB.size()=%d\n", latticesA.size(), latticesB.size());
+	//printf("    latticesA.size()=%d latticesB.size()=%d\n", latticesA.size(), latticesB.size());
 	if(latticesA.size() != latticesB.size())
 		return false;
 	
@@ -346,11 +348,18 @@ bool NodeState::eqLattices(const vector<Lattice*>& latticesA,
 	    itA != latticesA.end(), itB != latticesB.end();
 	    itA++, itB++)
 	{
-		//Lattice *lA = *itA;
-		//Lattice *lB = *itB;
-/*		cout << "lA = "<<lA->str("    ")<<"\n";
-		cout << "lB = "<<lB->str("    ")<<"\n";*/
-		if(*itA != *itB) return false;
+		Lattice *lA = *itA;
+		Lattice *lB = *itB;
+		/*cout << "        lA = "<<lA->str("    ")<<"\n";
+		cout << "        lB = "<<lB->str("    ")<<"\n";
+		cout << "        lA==lB = "<<(lA==lB)<<"\n";
+		cout << "        *lA==lB = "<<(*lA==lB)<<"\n";*/
+		/*cout << "        *lA==*lB = "<<(*lA==*lB)<<"\n";
+		
+		cout << "        lA!=lB = "<<(lA!=lB)<<"\n";
+		cout << "        *lA!=lB = "<<(*lA!=lB)<<"\n";
+		cout << "        *lA!=*lB = "<<(*lA!=*lB)<<"\n";*/
+		if(*lA != *lB) return false;
 	}
 	
 	return true;
@@ -502,7 +511,7 @@ Lattice* NodeState::getLattice_ex(const LatticeMap& dfMap,
 		if((dfLattices = dfMap.find((Analysis*)analysis)) != dfMap.end())
 		{
 			//printf("dfLattices->first=%p, dfLattices->second.size()=%d\n", dfLattices->first, dfLattices->second.size());
-			if(dfLattices->second.size()>latticeName)
+			if(dfLattices->second.size()>(unsigned int)latticeName)
 				return dfLattices->second.at(latticeName);
 			else
 				return NULL;
@@ -546,7 +555,7 @@ void NodeState::addFact(const Analysis* analysis, int factName, NodeFact* f)
 	{
 		// delete the old fact (if any) and set it to the new fact
 		//if(factsIt->second.find(factName) != factsIt->second.end())
-		if(factName < factsIt->second.size())
+		if((unsigned int)factName < factsIt->second.size())
 		{
 			delete factsIt->second[factName];
 			factsIt->second[factName] = f;
@@ -630,7 +639,7 @@ NodeFact* NodeState::getFact(const Analysis* analysis, int factName) const
 		vector<NodeFact*>::const_iterator it;
 		//printf("NodeState::getFact() factName=%d factsIt->second.size()=%d\n", factName, factsIt->second.size());
 		//if((it = factsIt->second.find(factName)) != factsIt->second.end())
-		if(factName < factsIt->second.size())
+		if((unsigned int)factName < factsIt->second.size())
 		{
 			//return it->second;
 			//return *it;

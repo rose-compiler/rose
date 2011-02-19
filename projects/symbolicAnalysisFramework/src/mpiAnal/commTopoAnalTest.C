@@ -52,12 +52,21 @@ int main( int argc, char * argv[] )
 	cgb.buildCallGraph();
 	SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
 	*/
+	analysisDebugLevel = 0;
+	printf("*************************************************************\n");
+	printf("*****************   Live/Dead Variable Analysis   *****************\n");
+	printf("*************************************************************\n");
+	LiveDeadVarsAnalysis ldva(project);
+	//SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
+	//ContextInsensitiveInterProceduralDataflow ciipd_da(&da, graph);
+	UnstructuredPassInterDataflow ciipd_ldva(&ldva);
+	ciipd_ldva.runAnalysis();
 	
 	analysisDebugLevel = 0;
 	printf("*************************************************************\n");
 	printf("*****************   Divisibility Analysis   *****************\n");
 	printf("*************************************************************\n");
-	DivAnalysis da;
+	DivAnalysis da(&ldva);
 	//ContextInsensitiveInterProceduralDataflow ciipd_da(&da, graph);
 	UnstructuredPassInterDataflow ciipd_da(&da);
 	ciipd_da.runAnalysis();
@@ -121,6 +130,7 @@ int main( int argc, char * argv[] )
 	/*commTopoPartitionedAnalysis sfwpa(&da, &sa);
 	UnstructuredPassInterAnalysis upia_sfwpa(sfwpa);
 	upia_sfwpa.runAnalysis();*/
+/* !!!! THIS MUST BE UNCOMMENTED AND FIXED !!!! 
 	pCFG_contProcMatchAnalysis sfwpa(&da, &sa);
 	UnstructuredPassInterAnalysis upia_sfwpa(sfwpa);
 	upia_sfwpa.runAnalysis();
@@ -133,11 +143,11 @@ int main( int argc, char * argv[] )
 	vector<int> latticeNames;
 	latticeNames.push_back(0);
 	//printf("Master Analysis = %p\n", sfwpa.getMasterDFAnalysis());
-	//printAnalysisStates pas(sfwpa.getMasterDFAnalysis(), factNames, latticeNames, ":");
-	printAnalysisStates pas(&sfwpa, factNames, latticeNames, ":");
+	//printAnalysisStates pas(sfwpa.getMasterDFAnalysis(), factNames, latticeNames, printAnalysisStates::below, ":");
+	printAnalysisStates pas(&sfwpa, factNames, latticeNames, printAnalysisStates::below, ":");
 	UnstructuredPassInterAnalysis upia_pas(pas);
 	upia_pas.runAnalysis();
-
+*/
 	if(numFails==0)
 		printf("PASS\n");
 	else
