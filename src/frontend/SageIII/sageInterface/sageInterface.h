@@ -945,7 +945,7 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
   std::vector<SgGotoStatement*> findGotoStmts(SgStatement* scope, SgLabelStatement* l);
   std::vector<SgStatement*> getSwitchCases(SgSwitchStatement* sw);
 
-  //! Find a declaration given its name, scope, and defining or nondefining flag.
+  //! Find a declaration given its name, scope (optional, can be NULL), and defining or nondefining flag.
   template <typename T>
   T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
   {
@@ -953,9 +953,17 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
     T* decl = dynamic_cast<T*>(root);
     if (decl!=NULL)
     {
-     if ((decl->get_scope() == scope)&&
-       (decl->search_for_symbol_from_symbol_table()->get_name()==name))
-     return decl;
+      if (scope)
+      {
+        if ((decl->get_scope() == scope)&&
+            (decl->search_for_symbol_from_symbol_table()->get_name()==name))
+          return decl;
+      }
+      else // Liao 2/9/2010. We should allow NULL scope
+      {
+        if(decl->search_for_symbol_from_symbol_table()->get_name()==name)
+          return decl;
+      }
     }
 
     std::vector<SgNode*> children = root->get_traversalSuccessorContainer();
@@ -1178,6 +1186,9 @@ void deepDelete(SgNode* root);
 
 //! Replace a statement with another. Move preprocessing information from oldStmt to newStmt if requested.
 void replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessinInfo = false);
+
+//! Replace an anchor node with a specified pattern subtree with optional SgVariantExpression. All SgVariantExpression in the pattern will be replaced with copies of the anchor node.
+SgNode* replaceWithPattern (SgNode * anchor, SgNode* new_pattern);
 
 //! Append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible
 /*! We recommend to build SgFunctionParameterList before building a function declaration

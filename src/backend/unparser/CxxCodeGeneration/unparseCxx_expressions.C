@@ -109,7 +109,12 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case RSHIFT_OP: { unparseRShiftOp(expr, info); break; }
           case UNARY_MINUS_OP: { unparseUnaryMinusOp(expr, info); break; }
           case UNARY_ADD_OP: { unparseUnaryAddOp(expr, info); break; }
-          case SIZEOF_OP: { unparseSizeOfOp(expr, info); break; }
+
+          case SIZEOF_OP:             { unparseSizeOfOp(expr, info); break; }
+          case UPC_LOCAL_SIZEOF_EXPR: { unparseUpcLocalSizeOfOp(expr, info); break; }
+          case UPC_BLOCK_SIZEOF_EXPR: { unparseUpcBlockSizeOfOp(expr, info); break; }
+          case UPC_ELEM_SIZEOF_EXPR:  { unparseUpcElemSizeOfOp(expr, info); break; }
+
           case TYPEID_OP: { unparseTypeIdOp(expr, info); break; }
           case NOT_OP: { unparseNotOp(expr, info); break; }
           case DEREF_OP: { unparseDerefOp(expr, info); break; }
@@ -3100,6 +3105,90 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
           info2.unset_isTypeSecondPart();
           unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
         }
+     curprint ( ")");
+   }
+
+void
+Unparse_ExprStmt::unparseUpcLocalSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
+   {
+     SgUpcLocalsizeofExpression* sizeof_op = isSgUpcLocalsizeofExpression(expr);
+     ROSE_ASSERT(sizeof_op != NULL);
+
+     curprint ( "upc_localsizeof(");
+     if (sizeof_op->get_expression() != NULL)
+        {
+          ROSE_ASSERT(sizeof_op->get_expression() != NULL);
+          unparseExpression(sizeof_op->get_expression(), info);
+        }
+#if 1
+    // DQ (2/12/2011): Leave this here until I'm sure that we don't need to handle types.
+       else
+        {
+          ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
+          SgUnparse_Info info2(info);
+          info2.unset_SkipBaseType();
+          info2.set_SkipClassDefinition();
+          info2.unset_isTypeFirstPart();
+          info2.unset_isTypeSecondPart();
+          unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
+        }
+#endif
+     curprint ( ")");
+   }
+
+void
+Unparse_ExprStmt::unparseUpcBlockSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
+   {
+     SgUpcBlocksizeofExpression* sizeof_op = isSgUpcBlocksizeofExpression(expr);
+     ROSE_ASSERT(sizeof_op != NULL);
+
+     curprint ( "upc_blocksizeof(");
+     if (sizeof_op->get_expression() != NULL)
+        {
+          ROSE_ASSERT(sizeof_op->get_expression() != NULL);
+          unparseExpression(sizeof_op->get_expression(), info);
+        }
+#if 1
+    // DQ (2/12/2011): Leave this here until I'm sure that we don't need to handle types.
+       else
+        {
+          ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
+          SgUnparse_Info info2(info);
+          info2.unset_SkipBaseType();
+          info2.set_SkipClassDefinition();
+          info2.unset_isTypeFirstPart();
+          info2.unset_isTypeSecondPart();
+          unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
+        }
+#endif
+     curprint ( ")");
+   }
+
+void
+Unparse_ExprStmt::unparseUpcElemSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
+   {
+     SgUpcElemsizeofExpression* sizeof_op = isSgUpcElemsizeofExpression(expr);
+     ROSE_ASSERT(sizeof_op != NULL);
+
+     curprint ( "upc_elemsizeof(");
+     if (sizeof_op->get_expression() != NULL)
+        {
+          ROSE_ASSERT(sizeof_op->get_expression() != NULL);
+          unparseExpression(sizeof_op->get_expression(), info);
+        }
+#if 1
+    // DQ (2/12/2011): Leave this here until I'm sure that we don't need to handle types.
+       else
+        {
+          ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
+          SgUnparse_Info info2(info);
+          info2.unset_SkipBaseType();
+          info2.set_SkipClassDefinition();
+          info2.unset_isTypeFirstPart();
+          info2.unset_isTypeSecondPart();
+          unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
+        }
+#endif
      curprint ( ")");
    }
 

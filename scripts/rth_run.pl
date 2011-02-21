@@ -153,6 +153,14 @@ when they pass, and if absent prevents their promotion.
 Note: The file, when present, should be empty.  We reserve the possibility of adding additional instructions to the file itself
 in order to control promotability in more detail.
 
+=item timeout = never | LIMIT
+
+If a test runs longer than the specified time limit then it will be aborted and assume to have failed.  The limit applies
+collectively across all the individually specified commands. The LIMIT is an integer number followed by an optional unit of
+measure: s (the default), sec, second, or seconds; m, min, minute, or minutes; h, hr, hour, or hours.  The default timeout is
+15 minutes.
+
+
 =back
 
 =head1 VARIABLES
@@ -275,8 +283,13 @@ sub help {
   local $_ = `(pod2man $0 |nroff -man) 2>/dev/null` ||
 	     `pod2text $0 2>/dev/null` ||
 	     `sed -ne '/^=pod/,/^=cut/p' $0 2>/dev/null`;
-  print $_;
   die "$0: see source file for documentation" unless $_;
+  if (open LESS, "|less") {
+    print LESS $_;
+    close LESS;
+  } else {
+    print $_;
+  }
 };
 
 
@@ -285,7 +298,7 @@ sub help {
 sub load_config {
   my($file,%vars) = @_;
   my(%conf) = (answer=>'no', cmd=>[], diff=>'diff -u', disabled=>'no', filter=>'no', lockdir=>undef,
-	       may_fail=>'no', promote=>'yes');
+	       may_fail=>'no', promote=>'yes', timeout=>15*60);
   open CONFIG, "<", $file or die "$0: $file: $!\n";
   while (<CONFIG>) {
     s/\s*#.*//;
@@ -298,12 +311,65 @@ sub load_config {
 	$conf{$var} = $val;
       }
     } elsif (/\S/) {
-      die "$0: unknown config directive: $_";
+      die "$file: unknown config directive: $_";
     }
   }
   close CONFIG;
+
+  # Convert the timeout value to seconds (zero implies infinity)
+  if ($conf{timeout} !~ /^\d+$/) {
+    if ($conf{timeout} =~ /^(\d+)\s*(s|sec|seconds?|m|min|minutes?|hr?|hours?)$/) {
+      $conf{timeout} = $1 * {s=>1, m=>60, h=>3600}->{substr $2,0,1};
+    } elsif ($conf{timeout} eq 'never') {
+      $conf{timeout} = 0;
+    } else {
+      die "$0: invalid timeout specification: $conf{timeout}\n";
+    }
+  }
+
   return %conf;
 }
+
+# Runs the specified commands one by one until they've all been run, one exits with non-zero status, or a timeout occurs. The
+# command's standard output and error are captured to the specified files (which are created if necessary).  This function
+# returns the exit status, or a negative value on error; zero on success.  We have to do this the hard way in order to send
+# SIGKILL to the child after a timeout (we don't want a Hudson node filling up with timed-out tests that continue to suck up
+# resources).
+sub run_command {
+  my($stdout,$stderr,$timelimit,@commands) = @_;
+  defined (my $pid = fork) or return "fork: $!";
+  if (!$pid) {
+    open STDOUT, ">", $stdout or return 255;
+    open STDERR, ">", $stderr or return 254;
+    setpgrp; # so we can kill the whole group on a timeout
+    my $status = 0;
+    for my $cmd (@commands) {
+      $status = system $cmd;
+      last if $status;
+    }
+    exit $status;
+  }
+
+  my $status = -1;
+  eval {
+    local $SIG{ALRM} = sub {die "alarm\n"};
+    alarm($timelimit);
+    $status = $? if $pid == waitpid $pid, 0;
+    alarm(0);
+  };
+  if ("$@" eq "alarm\n") {
+    kill -1, $pid; sleep 5; # give the test a chance to clean up gracefully
+    kill -9, $pid; # kill the whole process group in case the above exec used the shell.
+    $status = $? if $pid == waitpid $pid, 0;
+    if (open LOG, ">>", $stderr) {
+      print LOG "\nterminated after $timelimit seconds\n";
+      close LOG;
+    }
+  }
+
+  return $status;
+}
+
 
 # Produce a temporary name for files, directories, etc.
 my $tempname = "AAA";
@@ -372,11 +438,7 @@ print "  TESTING $target\n";
 # Run the commands, capturing their output into files.
 my($cmd_stdout,$cmd_stderr) = map {"$target.$_"} qw/out err/;
 unlink $cmd_stdout, $cmd_stderr;
-my($status) = 0;
-for my $cmd (@{$config{cmd}}) {
-  $status = system "($cmd) >>$cmd_stdout 2>>$cmd_stderr";
-  last if $status;
-}
+my($status) = run_command($cmd_stdout, $cmd_stderr, $config{timeout}, @{$config{cmd}});
 
 # Should we compare the test's standard output with a predetermined answer?
 if (!$status && $config{answer} ne 'no') {
