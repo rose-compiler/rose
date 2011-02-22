@@ -95,8 +95,9 @@ RSIM_Thread::syscall_enterv(uint32_t *values, const char *name, const char *form
         gettimeofday(&this_call, NULL);
         if (0==first_call.tv_sec)
             first_call = this_call;
+        pid_t tid = syscall(SYS_gettid);
         double elapsed = (this_call.tv_sec - first_call.tv_sec) + (this_call.tv_usec - first_call.tv_usec)/1e6;
-        fprintf(tracing(TRACE_SYSCALL), "[pid %d] 0x%08"PRIx64" %8.4f: ", getpid(), policy.readIP().known_value(), elapsed);
+        fprintf(tracing(TRACE_SYSCALL), "[tid %d] 0x%08"PRIx64" %8.4f: ", tid, policy.readIP().known_value(), elapsed);
         ArgInfo args[6];
         for (size_t i=0; format[i]; i++)
             syscall_arginfo(format[i], values?values[i]:syscall_arg(i), args+i, app);
