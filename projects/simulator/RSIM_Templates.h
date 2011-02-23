@@ -80,15 +80,14 @@ RSIM_SemanticPolicy::readMemory(X86SegmentRegister sr, const VirtualMachineSeman
                                 const VirtualMachineSemantics::ValueType<1> cond) {
     ROSE_ASSERT(0==Len % 8 && Len<=64);
     RSIM_Process *process = thread->get_process();
-    RSIM_Process::SegmentInfo segment = process->get_segment(sr);
     uint32_t offset = addr.known_value();
-    ROSE_ASSERT(offset <= segment.limit);
-    ROSE_ASSERT(offset + (Len/8) - 1 <= segment.limit);
+    ROSE_ASSERT(offset <= sr_shadow[sr].limit);
+    ROSE_ASSERT(offset + (Len/8) - 1 <= sr_shadow[sr].limit);
 
     ROSE_ASSERT(cond.is_known());
     if (cond.known_value()) {
         uint8_t buf[Len/8];
-        size_t nread = process->mem_read(buf, segment.base+offset, Len/8);
+        size_t nread = process->mem_read(buf, sr_shadow[sr].base+offset, Len/8);
         if (nread!=Len/8)
             throw Signal(SIGSEGV);
         uint64_t result = 0;
@@ -96,7 +95,7 @@ RSIM_SemanticPolicy::readMemory(X86SegmentRegister sr, const VirtualMachineSeman
             result |= buf[j] << i;
         if (tracing(TRACE_MEM)) {
             fprintf(tracing(TRACE_MEM), "  readMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32") -> 0x%08"PRIx64"\n",
-                    Len, segment.base, offset, segment.base+offset,
+                    Len, sr_shadow[sr].base, offset, sr_shadow[sr].base+offset,
                     VirtualMachineSemantics::ValueType<Len>(result).known_value());
         }
         return result;
@@ -111,24 +110,23 @@ RSIM_SemanticPolicy::writeMemory(X86SegmentRegister sr, const VirtualMachineSema
                                  const VirtualMachineSemantics::ValueType<Len> &data,  VirtualMachineSemantics::ValueType<1> cond) {
     ROSE_ASSERT(0==Len % 8 && Len<=64);
     RSIM_Process *process = thread->get_process();
-    RSIM_Process::SegmentInfo segment = process->get_segment(sr);
     uint32_t offset = addr.known_value();
-    ROSE_ASSERT(offset <= segment.limit);
-    ROSE_ASSERT(offset + (Len/8) - 1 <= segment.limit);
+    ROSE_ASSERT(offset <= sr_shadow[sr].limit);
+    ROSE_ASSERT(offset + (Len/8) - 1 <= sr_shadow[sr].limit);
     ROSE_ASSERT(data.is_known());
     ROSE_ASSERT(cond.is_known());
 
     if (cond.known_value()) {
         if (tracing(TRACE_MEM)) {
             fprintf(tracing(TRACE_MEM), "  writeMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32", 0x%08"PRIx64")\n",
-                    Len, segment.base, offset, segment.base+offset, data.known_value());
+                    Len, sr_shadow[sr].base, offset, sr_shadow[sr].base+offset, data.known_value());
         }
             
         uint8_t buf[Len/8];
         for (size_t i=0, j=0; i<Len; i+=8, j++)
             buf[j] = (data.known_value() >> i) & 0xff;
 
-        size_t nwritten = process->mem_write(buf, segment.base+offset, Len/8);
+        size_t nwritten = process->mem_write(buf, sr_shadow[sr].base+offset, Len/8);
         if (nwritten!=Len/8) {
 #if 0   /* First attempt, according to Section 24.2.1 "Program Error Signals" of glibc documentation */
             /* Writing to mem that's not mapped results in SIGBUS; writing to mem that's mapped without write permission

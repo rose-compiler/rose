@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <sys/mman.h>
 #include <sys/user.h>
+#include <sys/types.h>
 
 void
 RSIM_Process::ctor()
@@ -48,12 +49,16 @@ RSIM_Process::set_tracing(FILE *f, unsigned what)
 }
 
 RSIM_Thread *
-RSIM_Process::create_thread(pid_t tid)
+RSIM_Process::create_thread()
 {
-    ROSE_ASSERT(threads.find(tid)==threads.end());
-
-    RSIM_Thread *thread = new RSIM_Thread(this);
-    threads.insert(std::make_pair(tid, thread));
+    RSIM_Thread *thread = NULL;
+    pid_t tid = syscall(SYS_gettid);
+    ROSE_ASSERT(tid>=0);
+    RTS_WRITE(rwlock()) {
+        ROSE_ASSERT(threads.find(tid)==threads.end());
+        thread = new RSIM_Thread(this);
+        threads.insert(std::make_pair(tid, thread));
+    } RTS_WRITE_END;
     return thread;
 }
 
@@ -62,16 +67,6 @@ RSIM_Process::get_thread(pid_t tid) const
 {
     std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.find(tid);
     return ti==threads.end() ? NULL : ti->second;
-}
-
-RSIM_Process::SegmentInfo
-RSIM_Process::get_segment(X86SegmentRegister sr) const
-{
-    SegmentInfo retval;
-    RTS_READ(rwlock()) {
-        retval = segreg_shadow[sr];
-    } RTS_READ_END;
-    return retval;
 }
 
 size_t
@@ -271,7 +266,7 @@ RSIM_Process::load(const char *name)
     SgProject *project = frontend(3, frontend_args);
 
     /* Create the main thread */
-    RSIM_Thread *thread = create_thread(getpid());
+    RSIM_Thread *thread = create_thread();
 
     /* Find the best interpretation and file header.  Windows PE programs have two where the first is DOS and the second is PE
      * (we'll use the PE interpretation). */
@@ -802,16 +797,6 @@ RSIM_Process::binary_trace_add(RSIM_Thread *thread, const SgAsmInstruction *insn
     assert(1==n);
 }
 
-void
-RSIM_Process::load_segment(X86SegmentRegister sr, unsigned gdt_num)
-{
-    ROSE_ASSERT(gdt_num<(sizeof(gdt)/sizeof(gdt[0])));
-    RTS_WRITE(rwlock()) {
-        segreg_shadow[sr] = gdt[gdt_num];
-        ROSE_ASSERT(segreg_shadow[sr].present);
-    } RTS_WRITE_END;
-}
-    
 SgAsmInstruction *
 RSIM_Process::get_instruction(rose_addr_t va)
 {
@@ -1127,20 +1112,26 @@ RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsig
 }
 
 void
-RSIM_Process::set_gdt(user_desc_32 *ud)
+RSIM_Process::set_gdt(const user_desc_32 *ud)
 {
     RTS_WRITE(rwlock()) {
-        if (ud->entry_number==(unsigned)-1) {
-            for (ud->entry_number=0x33>>3; ud->entry_number<n_gdt; ud->entry_number++) {
-                if (!gdt[ud->entry_number].useable) break;
-            }
-            ROSE_ASSERT(ud->entry_number<8192);
-            if (tracing(TRACE_SYSCALL))
-                fprintf(tracing(TRACE_SYSCALL), "[entry #%d] ", (int)ud->entry_number);
-        }
-        gdt[ud->entry_number] = *ud;
+        *(gdt_entry(ud->entry_number)) = *ud;
     } RTS_WRITE_END;
 }
+
+user_desc_32 *
+RSIM_Process::gdt_entry(int idx)
+{
+    user_desc_32 *retval;
+    RTS_READ(rwlock()) {
+        ROSE_ASSERT(idx>0 && idx<GDT_ENTRIES);
+        ROSE_ASSERT(idx<GDT_ENTRY_TLS_MIN || idx>GDT_ENTRY_TLS_MAX); /* call only from RSIM_Thread::set_gdt */
+        retval = gdt + idx;
+    } RTS_READ_END;
+    return retval;
+}
+
+
 
 /* Initialize the stack of the main thread. */
 void
@@ -1382,6 +1373,82 @@ RSIM_Process::post_fork()
     RSIM_Thread *t = threads.begin()->second;
     threads.clear();
     threads[getpid()] = t;
+}
+
+pid_t
+RSIM_Process::clone_thread(unsigned flags, uint32_t parent_tid_va, uint32_t child_tid_va, const pt_regs_32 &regs)
+{
+    int retval = 0;
+    Clone clone_info(this, flags, parent_tid_va, child_tid_va, regs);
+    RTS_MUTEX(clone_info.mutex) {
+        pthread_t t;
+        retval = -pthread_create(&t, NULL, RSIM_Process::clone_thread_helper, &clone_info);
+        if (0==retval) {
+            pthread_cond_wait(&clone_info.cond, &clone_info.mutex); /* wait for child to initialize */
+            retval = clone_info.newtid; /* filled in by clone_thread_helper; negative on error */
+        }
+    } RTS_MUTEX_END;
+    return retval;
+}
+
+void *
+RSIM_Process::clone_thread_helper(void *_clone_info)
+{
+    /* clone_info points to the creating thread's stack (inside clone_thread). Since the creator's clone_thread doesn't return
+     * until after we've signaled clone_info.cond and released clone_info.mutex, its safe to access it here in this thread. */
+    Clone *clone_info = (Clone*)_clone_info;
+    ROSE_ASSERT(clone_info!=NULL);
+    RSIM_Process *process = clone_info->process;
+    ROSE_ASSERT(process!=NULL);
+    RSIM_Thread *thread = process->create_thread();
+
+
+    pid_t tid;
+    RTS_MUTEX(clone_info->mutex) {
+        /* Make our TID available to our parent. */
+        tid = clone_info->newtid = syscall(SYS_gettid);
+        ROSE_ASSERT(clone_info->newtid>=0);
+
+        /* Set up thread local storage */
+        if (clone_info->flags & CLONE_SETTLS) {
+            user_desc_32 ud;
+            if (sizeof(ud)!=process->mem_read(&ud, clone_info->child_tid_va, sizeof ud)) {
+                tid = -EFAULT;
+                goto release_mutex;
+            }
+            int status = thread->set_thread_area(&ud, false);
+            if (status<0) {
+                tid = status;
+                goto release_mutex;
+            }
+        }
+        
+        /* Initialize our registers.  Has to be after we initialize TLS segments in the GDT */
+        thread->init_regs(clone_info->regs);
+
+        /* Write child TID into process memory if requested */
+        if ((clone_info->flags & CLONE_PARENT_SETTID) &&
+            4!=process->mem_write(&tid, clone_info->parent_tid_va, 4)) {
+            tid = -EFAULT;
+            goto release_mutex;
+        }
+        if ((clone_info->flags & CLONE_CHILD_SETTID) &&
+            4!=process->mem_write(&tid, clone_info->child_tid_va, 4)) {
+            tid = -EFAULT;
+            goto release_mutex;
+        }
+
+
+    release_mutex:
+        clone_info->newtid = tid;
+        pthread_cond_signal(&clone_info->cond);       /* tell parent we're done initializing */
+        clone_info = NULL; /* won't be valid after we release mutex */
+    } RTS_MUTEX_END;
+    if (tid<0)
+        pthread_exit(NULL);
+
+    /* Allow the real thread to simulate the specimen thred. */
+    return thread->main();
 }
 
 void

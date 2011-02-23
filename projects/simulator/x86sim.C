@@ -1524,19 +1524,36 @@ RSIM_Thread::emulate_syscall()
             /* From linux arch/x86/kernel/process.c:
              *    long sys_clone(unsigned long clone_flags, unsigned long newsp,
              *                   void __user *parent_tid, void __user *child_tid, struct pt_regs *regs)
+             *
+             * The fourth argument, child_tid, varies depending on clone_flags. Linux doesn't appear to require that
+             * these are mutually exclusive.  It appears as though the CLONE_SETTLS happens before CLONE_CHILD_SETTID.
+             *   CLONE_CHILD_SETTID:  it is an address where the child's TID is written when the child is created
+             *   CLONE_SETTLS:        it is an address of a user_desc_32 which will be loaded into the GDT.
              */
-            syscall_enter("clone", "fpppP", clone_flags, sizeof(pt_regs_32), print_pt_regs_32);
             unsigned flags = syscall_arg(0);
             uint32_t newsp = syscall_arg(1);
             uint32_t parent_tid_va = syscall_arg(2);
             uint32_t child_tid_va = syscall_arg(3);
             uint32_t regs_va = syscall_arg(4);
+
+            if (flags & CLONE_SETTLS) {
+                syscall_enter("clone", "fppPP",
+                              clone_flags,
+                              sizeof(user_desc_32), print_user_desc_32,
+                              sizeof(pt_regs_32), print_pt_regs_32);
+            } else {
+                syscall_enter("clone", "fpppP",
+                              clone_flags,
+                              sizeof(pt_regs_32), print_pt_regs_32);
+            }
+
             syscall_return(sys_clone(flags, newsp, parent_tid_va, child_tid_va, regs_va));
+
             if (syscall_arg(-1)) {
                 /* Parent */
                 syscall_leave("d");
             } else {
-                /* Child */
+                /* Child returns here for fork, but not for thread-clone */
                 syscall_enter("child's clone", "fpppP", clone_flags, sizeof(pt_regs_32), print_pt_regs_32);
                 syscall_leave("d----P", sizeof(pt_regs_32), print_pt_regs_32);
             }
@@ -2347,7 +2364,8 @@ RSIM_Thread::emulate_syscall()
         case 224: { /*0xe0, gettid*/
             // We have no concept of threads
             syscall_enter("gettid", "");
-            syscall_return(getpid());
+            pid_t tid = syscall(SYS_gettid);
+            syscall_return(-1==tid?-errno:tid);
             syscall_leave("d");
             break;
        }
@@ -2432,23 +2450,21 @@ RSIM_Thread::emulate_syscall()
             syscall_enter("set_thread_area", "P", sizeof(user_desc_32), print_user_desc_32);
             do {
                 user_desc_32 ud;
-                size_t nread = get_process()->mem_read(&ud, syscall_arg(0), sizeof ud);
-                if (nread!=sizeof ud) {
+                if (sizeof(ud)!=get_process()->mem_read(&ud, syscall_arg(0), sizeof ud)) {
                     syscall_return(-EFAULT);
                     break;
                 }
-                get_process()->set_gdt(&ud);
-
-                /* Write ud back to specimen because set_gdt might have changed it. */
-                size_t nwritten = get_process()->mem_write(&ud, syscall_arg(0), sizeof ud);
-                if (nwritten!=sizeof ud) {
+                int old_idx = ud.entry_number;
+                int new_idx = set_thread_area(&ud, true);
+                if (new_idx<0) {
+                    syscall_return(new_idx);
+                    break;
+                }
+                if (old_idx!=new_idx &&
+                    sizeof(ud)!=get_process()->mem_write(&ud, syscall_arg(0), sizeof ud)) {
                     syscall_return(-EFAULT);
                     break;
                 }
-
-                /* Reload all the segreg shadow values from the (modified) descriptor table */
-                for (size_t i=0; i<6; i++)
-                    policy.writeSegreg((X86SegmentRegister)i, policy.readSegreg((X86SegmentRegister)i));
                 syscall_return(0);
             } while (0);
             syscall_leave("d");
@@ -2456,6 +2472,7 @@ RSIM_Thread::emulate_syscall()
         }
 
         case 1: /*exit*/
+            // FIXME [RPM 2011-02-23]: exit() terminates a single thread; exit_group() terminates a process.
             syscall_enter("exit", "d");
             if (tracing(TRACE_SYSCALL))
                 fprintf(tracing(TRACE_SYSCALL), "falls through to exit_group...\n");
@@ -3564,7 +3581,6 @@ RSIM_Thread::sys_listen(int fd, int backlog)
 int
 RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, uint32_t child_tid_va, uint32_t pt_regs_va)
 {
-    pid_t pid = -ENOSYS;
     if (flags == (CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | SIGCHLD)) {
         /* This is a fork() */
 
@@ -3576,7 +3592,7 @@ RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, u
 
         /* We cannot use clone() because it's a wrapper around the clone system call and we'd need to provide a function for it to
          * execute. We want fork-like semantics. */
-        pid = fork();
+        pid_t pid = fork();
         if (-1==pid)
             return -errno;
 
@@ -3591,8 +3607,8 @@ RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, u
             get_process()->open_trace_file();
             get_process()->btrace_close();
 
-            /* Thread-related things. ROSE isn't multi-threaded and the simulator doesn't support multi-threading, but we still
-             * have to initialize a few data structures because the specimen may be using a thread-aware library. */
+            /* Thread-related things. We have to initialize a few data structures because the specimen may be using a
+             * thread-aware library. */
             if (0!=(flags & CLONE_CHILD_SETTID)) {
                 set_child_tid = child_tid_va;
                 if (set_child_tid) {
@@ -3629,6 +3645,8 @@ RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, u
             if (sizeof(regs)!=get_process()->mem_write(&regs, pt_regs_va, sizeof regs))
                 return -EFAULT;
         }
+
+        return pid;
         
     } else if (flags == (CLONE_VM |
                          CLONE_FS |
@@ -3640,13 +3658,15 @@ RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, u
                          CLONE_PARENT_SETTID |
                          CLONE_CHILD_CLEARTID)) {
         /* we are creating a new thread */
-        return -EINVAL; /* not implemented yet */
-        
+        pt_regs_32 regs = get_regs();
+        regs.sp = newsp;
+        regs.ax = 0;
+
+        pid_t tid = get_process()->clone_thread(flags, parent_tid_va, child_tid_va, regs);
+        return tid;
     } else {
         return -EINVAL; /* can't handle this combination of flags */
     }
-    
-    return pid;
 }
 
 int

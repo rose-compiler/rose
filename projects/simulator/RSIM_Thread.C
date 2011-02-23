@@ -13,6 +13,7 @@ RSIM_Thread::ctor()
 {
     memset(&last_report, 0, sizeof last_report);
     memset(signal_action, 0, sizeof signal_action);
+    memset(tls_array, 0, sizeof tls_array);
     signal_stack.ss_sp = 0;
     signal_stack.ss_size = 0;
     signal_stack.ss_flags = SS_DISABLE;
@@ -402,8 +403,9 @@ RSIM_Thread::report_progress_maybe()
         double delta = (now.tv_sec - last_report.tv_sec) + 1e-1 * (now.tv_usec - last_report.tv_usec);
         if (delta > report_interval) {
             double insn_rate = delta>0 ? get_ninsns() / delta : 0;
+            pid_t tid = syscall(SYS_gettid);
             fprintf(tracing(TRACE_PROGRESS), "RSIM_Thread: thread %d: processed %zu insns in %d sec (%d insns/sec)\n",
-                    getpid(), get_ninsns(), (int)(delta+0.5), (int)(insn_rate+0.5));
+                    tid, get_ninsns(), (int)(delta+0.5), (int)(insn_rate+0.5));
         }
         last_report = now;
     }
@@ -421,17 +423,8 @@ RSIM_Thread::syscall_return(int retval)
     policy.writeGPR(x86_gpr_ax, policy.number<32>(retval));
 }
 
-/* class method for each created thread */
+/* Executed by a real thread to simulate a specimen's thread. */
 void *
-RSIM_Thread::main(void *_thread)
-{
-    RSIM_Thread *thread = (RSIM_Thread*)_thread;
-    thread->main();
-    return NULL;
-}
-
-/* Executed by a real thread to simulate a specimen's thread.  The real thread exits when this method returns. */
-void
 RSIM_Thread::main()
 {
     RSIM_Process *process = get_process();
@@ -447,8 +440,10 @@ RSIM_Thread::main()
             SgAsmx86Instruction *insn = current_insn();
             process->binary_trace_add(this, insn);
             semantics.processInstruction(insn);
-            if (tracing(TRACE_STATE))
+            if (tracing(TRACE_STATE)) {
+                fprintf(tracing(TRACE_STATE), "Machine state after instruction:\n");
                 policy.dump_registers(tracing(TRACE_STATE));
+            }
 
             signal_deliver_any();
         } catch (const RSIM_Semantics::Exception &e) {
@@ -469,7 +464,7 @@ RSIM_Thread::main()
             if (robust_list_head_va)
                 fprintf(stderr, "warning: robust_list not cleaned up\n"); /* FIXME: see set_robust_list() syscall */
             process->exit(e.status);
-            return;
+            return NULL;
         } catch (const RSIM_SemanticPolicy::Signal &e) {
             signal_generate(e.signo);
         } catch (...) {
@@ -479,4 +474,111 @@ RSIM_Thread::main()
         }
     }
 }
-    
+
+pt_regs_32
+RSIM_Thread::get_regs() const
+{
+    pt_regs_32 regs;
+    memset(&regs, 0, sizeof regs);
+    regs.ip = policy.readIP().known_value();
+    regs.ax = policy.readGPR(x86_gpr_ax).known_value();
+    regs.bx = policy.readGPR(x86_gpr_bx).known_value();
+    regs.cx = policy.readGPR(x86_gpr_cx).known_value();
+    regs.dx = policy.readGPR(x86_gpr_dx).known_value();
+    regs.si = policy.readGPR(x86_gpr_si).known_value();
+    regs.di = policy.readGPR(x86_gpr_di).known_value();
+    regs.bp = policy.readGPR(x86_gpr_bp).known_value();
+    regs.sp = policy.readGPR(x86_gpr_sp).known_value();
+    regs.cs = policy.readSegreg(x86_segreg_cs).known_value();
+    regs.ds = policy.readSegreg(x86_segreg_ds).known_value();
+    regs.es = policy.readSegreg(x86_segreg_es).known_value();
+    regs.fs = policy.readSegreg(x86_segreg_fs).known_value();
+    regs.gs = policy.readSegreg(x86_segreg_gs).known_value();
+    regs.ss = policy.readSegreg(x86_segreg_ss).known_value();
+    regs.flags = 0;
+    for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
+        if (policy.readFlag((X86Flag)i).known_value()) {
+            regs.flags |= (1u<<i);
+        }
+    }
+    return regs;
+}
+
+void
+RSIM_Thread::init_regs(const pt_regs_32 &regs)
+{
+    policy.writeIP(regs.ip);
+    policy.writeGPR(x86_gpr_ax, regs.ax);
+    policy.writeGPR(x86_gpr_bx, regs.bx);
+    policy.writeGPR(x86_gpr_cx, regs.cx);
+    policy.writeGPR(x86_gpr_dx, regs.dx);
+    policy.writeGPR(x86_gpr_si, regs.si);
+    policy.writeGPR(x86_gpr_di, regs.di);
+    policy.writeGPR(x86_gpr_bp, regs.bp);
+    policy.writeGPR(x86_gpr_sp, regs.sp);
+    policy.writeSegreg(x86_segreg_cs, regs.cs);
+    policy.writeSegreg(x86_segreg_ds, regs.ds);
+    policy.writeSegreg(x86_segreg_es, regs.es);
+    policy.writeSegreg(x86_segreg_fs, regs.fs);
+    policy.writeSegreg(x86_segreg_gs, regs.gs);
+    policy.writeSegreg(x86_segreg_ss, regs.ss);
+    for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++) {
+        policy.writeFlag((X86Flag)i, regs.flags & ((uint32_t)1<<i) ? policy.true_() : policy.false_());
+    }
+}
+
+int
+RSIM_Thread::set_gdt(const user_desc_32 *ud)
+{
+    user_desc_32 *entry = gdt_entry(ud->entry_number);
+    *entry = *ud;
+
+    /* Make sure all affected shadow registers are reloaded. */
+    for (size_t i=0; i<6; i++)
+        policy.writeSegreg((X86SegmentRegister)i, policy.readSegreg((X86SegmentRegister)i));
+
+    return ud->entry_number;
+}
+
+user_desc_32 *
+RSIM_Thread::gdt_entry(int idx)
+{
+    if (idx >= RSIM_Process::GDT_ENTRY_TLS_MIN &&
+        idx <= RSIM_Process::GDT_ENTRY_TLS_MAX) {
+        return tls_array + idx - RSIM_Process::GDT_ENTRY_TLS_MIN;
+    }
+    return get_process()->gdt_entry(idx);
+}
+
+int
+RSIM_Thread::get_free_tls() const
+{
+    static user_desc_32 zero;
+    for (int idx=0; idx<RSIM_Process::GDT_ENTRY_TLS_ENTRIES; idx++) {
+        if (0==memcmp(tls_array+idx, &zero, sizeof zero))
+            return idx + RSIM_Process::GDT_ENTRY_TLS_MIN;
+    }
+    return -ESRCH;
+}
+
+int
+RSIM_Thread::set_thread_area(user_desc_32 *info, bool can_allocate)
+{
+    int idx = info->entry_number;
+
+    if (-1==idx && can_allocate) {
+        idx = get_free_tls();
+        assert(idx<0x7fffffffLL);
+        if (idx < 0)
+            return idx;
+        info->entry_number = idx;
+        if (tracing(TRACE_SYSCALL))
+            fprintf(tracing(TRACE_SYSCALL), "[entry #%d] ", idx);
+    }
+
+    if (idx<(int)RSIM_Process::GDT_ENTRY_TLS_MIN || idx>(int)RSIM_Process::GDT_ENTRY_TLS_MAX)
+        return -EINVAL;
+
+    set_gdt(info);
+    return idx;
+}

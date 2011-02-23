@@ -10,17 +10,6 @@ class RSIM_Thread;
  *  thread, many of the RSIM_Process methods must be thread safe. */
 class RSIM_Process {
 public:
-    struct SegmentInfo {
-        uint32_t base, limit;
-        bool present;
-        SegmentInfo(): base(0), limit(0), present(false) {}
-        SegmentInfo(const user_desc_32 &ud) {
-            base = ud.base_addr;
-            limit = ud.limit_in_pages ? (ud.limit << 12) | 0xfff : ud.limit;
-            present = !ud.seg_not_present && ud.useable;
-        }
-    };
-
     /** Creates an empty process containing no threads. */
     RSIM_Process()
         : map(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), disassembler(NULL),
@@ -45,11 +34,10 @@ public:
     //@{
     /** Returns the read-write lock for this object.
      *
-     *  Although most RSIM_Process methods are already thread safe, it is sometimes necessary to protect access to data
-     *  members, such as the SegmentInfo array or global descriptor table.  This method returns a per-object read-write lock
-     *  that can be used with the usual ROSE Thread Support macros, RTS_READ and RTS_WRITE.  The returned lock is the same lock
-     *  as the inherently thread-safe methods of this class already use.  See RTS_rwlock_rdlock() and RTS_rwlock_wrlock() for a
-     *  description of the semantics.
+     *  Although most RSIM_Process methods are already thread safe, it is sometimes necessary to protect access to data members
+     *  This method returns a per-object read-write lock that can be used with the usual ROSE Thread Support macros, RTS_READ
+     *  and RTS_WRITE.  The returned lock is the same lock as the inherently thread-safe methods of this class already use.
+     *  See RTS_rwlock_rdlock() and RTS_rwlock_wrlock() for a description of the semantics.
      *
      *  These locks should be held for as little time as possible, and certainly not over a system call that might block. */
     RTS_rwlock_t &rwlock() {
@@ -160,21 +148,27 @@ public:
      *                                  Methods dealing with x86 segment registers
      **************************************************************************************************************************/
 public:
-    /** Returns shadow information for a segment register.
+    /** Set a global descriptor table entry.  This should only be called via RSIM_Thread::set_gdt(). In Linux, three of the GDT
+     *  entries (GDT_ENTRY_TLS_MIN through GDT_ENTRY_TLS_MAX) are updated from the thread_struct every time a thread is
+     *  scheduled.  The simulator works a bit differently since all threads are effectively always running. The simulator keeps
+     *  a single GDT in the RSIM_Process but threads always access it through an RSIM_Thread object. This allows each
+     *  RSIM_Thread to override the TLS-related entries.
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    SegmentInfo get_segment(X86SegmentRegister sr) const;
+    void set_gdt(const user_desc_32 *ud);
+
+    /** Returns a pointer to the segment descriptor in the GDT. */
+    user_desc_32 *gdt_entry(int idx);
+
+    static const int GDT_ENTRIES = 8192;                     /**< Number of GDT entries. */
+    static const int GDT_ENTRY_TLS_MIN = 6;                  /**< First TLS entry */
+    static const int GDT_ENTRY_TLS_ENTRIES = 3;              /**< Number of TLS entries */
+    static const int GDT_ENTRY_TLS_MAX = GDT_ENTRY_TLS_MIN + GDT_ENTRY_TLS_ENTRIES - 1; /**< Last TLS entry */
+
+private:
+    /**< Global descriptor table. Entries GDT_ENTRY_TLS_MIN through GDT_ENTRY_TLS_MAX are unused. */
+    user_desc_32 gdt[GDT_ENTRIES];
     
-    /** Loads segment shadow information from global descriptor table.
-     *
-     *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    void load_segment(X86SegmentRegister sr, unsigned gtd_num);
-
-    /** Set a global descriptor table entry and reload shadow registers.
-     *
-     *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    void set_gdt(user_desc_32 *ud);
-
     /**************************************************************************************************************************
      *                                  Data members dealing with instructions
      **************************************************************************************************************************/
@@ -189,10 +183,45 @@ public:
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
     SgAsmInstruction *get_instruction(rose_addr_t va);
 
+    /***************************************************************************************************************************
+     *                                  Data members dealing with thread creation/join
+     ***************************************************************************************************************************/
+private:
+    /**< Contains various things that are needed while we clone a new thread to handle a simulated clone call. */
+    struct Clone {
+        Clone(RSIM_Process *process, unsigned flags, uint32_t parent_tid_va, uint32_t child_tid_va, const pt_regs_32 &regs)
+            : process(process), flags(flags), newtid(-1), parent_tid_va(parent_tid_va), child_tid_va(child_tid_va), regs(regs) {
+            pthread_mutex_init(&mutex, NULL);
+            pthread_cond_init(&cond, NULL);
+        }
+        pthread_mutex_t mutex;                  /**< Protects entire structure. */
+        pthread_cond_t  cond;                   /**< For coordinating between creating thread and created thread. */
+        RSIM_Process    *process;               /**< Process creating the new thread. */
+        unsigned        flags;                  /**< Various CLONE_* flags passed to the clone system call. */
+        pid_t           newtid;                 /**< Created thread's TID filled in by clone_thread_helper(); negative on error */
+        uint32_t        parent_tid_va;          /**< Optional address at which to write created thread's TID; clone() argument */
+        uint32_t        child_tid_va;           /**< Address of user_desc_32 to load into GDT; clone() argument */
+        pt_regs_32      regs;                   /**< Initial registers for child thread. */
+    };
+    static Clone clone_info;
+    
+    /** Helper to create a new simulated thread and corresponding real thread. Do not call this directly; call clone_thread()
+     *  instead.  Thread creation is implemented in two parts: clone_thread() is the main entry point and is called by the
+     *  thread that wishes to create a new thread, and clone_thread_helper() is the part run by the new thread.
+     *
+     *  We need to do a little dancing to return the ID of the new thread to the creating thread.  This is where the
+     *  clone_mutex, clone_cond, and clone_newtid class data members are used.  The creating thread blocks on the clone_cond
+     *  condition variable while the new thread fills in clone_newtid with its own ID and then signals the condition
+     *  variable. The clone_mutex is only used to protect the clone_newtid. */
+    static void *clone_thread_helper(void *process);
 
-
-
-
+public:
+    /** Creates a new simulated thread and corresponding real thread.  Returns the ID of the new thread, or a negative errno.
+     *  The @p parent_tid_va and @p child_tid_va are optional addresses at which to write the new thread's TID.  We gaurantee
+     *  that the TID is written to both before the simulated child starts executing.
+     *
+     *  Thread safety: This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
+    pid_t clone_thread(unsigned flags, uint32_t parent_tid_va, uint32_t child_tid_va, const pt_regs_32 &regs);
 
 
 
@@ -246,8 +275,11 @@ public:
     /** Loads a new executable image into an existing process. */
     SgAsmGenericHeader *load(const char *name);
 
-    /** Create the main thread. */
-    RSIM_Thread *create_thread(pid_t tid);
+    /** Create a new thread.  This should be called only by the real thread which will be simulating the specimen's
+     * thread. Each real thread should simulate a single specimen thread.
+     *
+     *  Thread safety: This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
+    RSIM_Thread *create_thread();
 
     /** Generate an ELF Core Dump on behalf of the specimen.  This is a real core dump that can be used with GDB and contains
      *  the same information as if the specimen had been running natively and dumped its own core. In other words, the core
@@ -300,14 +332,10 @@ private:
     bool terminated;                            /**< True when the process has finished running. */
     int termination_status;                     /**< As would be returned by the parent's waitpid() call. */
 
-    SegmentInfo segreg_shadow[6];               /* Shadow values of segment registers from GDT */
-
 public: /* FIXME */
     FILE *btrace_file;                          /**< Stream for binary trace. See projects/traceAnalysis/trace.C for details */
     std::vector<std::string> exeargs;           /**< Specimen argv with PATH-resolved argv[0] */
 
-    static const size_t n_gdt=8192;             /* Number of global descriptor table entries */
-    user_desc_32 gdt[n_gdt];                    /* Global descriptor table */
     std::vector<uint32_t> auxv;                 /* Auxv vector pushed onto initial stack; also used when dumping core */
     static const uint32_t brk_base=0x08000000;  /* Lowest possible brk() value */
     std::string vdso_name;                      /* Optional base name of virtual dynamic shared object from kernel */

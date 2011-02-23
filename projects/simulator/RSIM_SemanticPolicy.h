@@ -31,6 +31,23 @@ public:
 
     void ctor();
 
+    struct SegmentInfo {
+        uint32_t base, limit;
+        bool present;
+        SegmentInfo(): base(0), limit(0), present(false) {}
+        SegmentInfo(const user_desc_32 &ud) {
+            base = ud.base_addr;
+            limit = ud.limit_in_pages ? (ud.limit << 12) | 0xfff : ud.limit;
+            present = !ud.seg_not_present && ud.useable;
+        }
+    };
+
+    /** Segment shadow registers, one per segment register. */
+    SegmentInfo sr_shadow[6];
+
+    /** Loads shadow register with an entry from the GDT. */
+    void load_sr_shadow(X86SegmentRegister, unsigned gdt_idx);
+
     /* Delegates to thread. */
     FILE *tracing(unsigned what) const;
 

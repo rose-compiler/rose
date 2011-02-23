@@ -31,7 +31,6 @@ RSIM_SemanticPolicy::sysenter()
 void
 RSIM_SemanticPolicy::dump_registers(FILE *f) const
 {
-    fprintf(f, "  Machine state:\n");
     fprintf(f, "    eax=0x%08"PRIx64" ebx=0x%08"PRIx64" ecx=0x%08"PRIx64" edx=0x%08"PRIx64"\n",
             readGPR(x86_gpr_ax).known_value(), readGPR(x86_gpr_bx).known_value(),
             readGPR(x86_gpr_cx).known_value(), readGPR(x86_gpr_dx).known_value());
@@ -41,9 +40,9 @@ RSIM_SemanticPolicy::dump_registers(FILE *f) const
             get_ip().known_value());
     for (int i=0; i<6; i++) {
         X86SegmentRegister sr = (X86SegmentRegister)i;
-        RSIM_Process::SegmentInfo segment = thread->get_process()->get_segment(sr);
         fprintf(f, "    %s=0x%04"PRIx64" base=0x%08"PRIx32" limit=0x%08"PRIx32" present=%s\n",
-                segregToString(sr), readSegreg(sr).known_value(), segment.base, segment.limit, segment.present?"yes":"no");
+                segregToString(sr), readSegreg(sr).known_value(),
+                sr_shadow[sr].base, sr_shadow[sr].limit, sr_shadow[sr].present?"yes":"no");
     }
 
     uint32_t eflags = get_eflags();
@@ -92,7 +91,7 @@ RSIM_SemanticPolicy::writeSegreg(X86SegmentRegister sr, const VirtualMachineSema
 {
     ROSE_ASSERT(3 == (val.known_value() & 7)); /*GDT and privilege level 3*/
     VirtualMachineSemantics::Policy::writeSegreg(sr, val);
-    thread->get_process()->load_segment(sr, val.known_value()>>3);
+    load_sr_shadow(sr, val.known_value()>>3);
 }
 
 void
@@ -109,3 +108,12 @@ RSIM_SemanticPolicy::startInstruction(SgAsmInstruction* insn)
     }
     VirtualMachineSemantics::Policy::startInstruction(insn);
 }
+
+void
+RSIM_SemanticPolicy::load_sr_shadow(X86SegmentRegister sr, unsigned gdt_num)
+{
+    user_desc_32 *info = thread->gdt_entry(gdt_num);
+    sr_shadow[sr] = *info;
+    ROSE_ASSERT(sr_shadow[sr].present);
+}
+
