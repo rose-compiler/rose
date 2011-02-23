@@ -78,7 +78,7 @@ int openJavaParser_main(int argc, char **argv)
        {
          printf ("Call the function that will start a JVM and call the ECJ \n\n");
 
-      // DQ (10/12/2010): Added debugging support.
+      // DQ (10/12/2010): Added debugging support...
          string JVM_command_line = CommandlineProcessing::generateStringFromArgList(CommandlineProcessing::generateArgListFromArgcArgv(argc, argv));
          printf ("Java JVM commandline = %s \n",JVM_command_line.c_str());
          printf ("ROSE modified %s = %s \n",ROSE_SHLIBPATH_VAR,new_value.c_str());
@@ -107,16 +107,6 @@ int openJavaParser_main(int argc, char **argv)
 
 	 return status;
   }
-
-#if 0
-// DQ (10/11/2010): This function is defined in the OFP support (exact same definition).
-string getenvString(const string& key, const string& def = "")
-   {
-     const char* val = getenv(key.c_str());
-     if (!val) return def;
-     return val;
-   }
-#endif
 
 #include "jserver.h"
 #include "ecj.h"

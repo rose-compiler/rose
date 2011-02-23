@@ -69,6 +69,8 @@ class JavaParserSupport
 
      public static void buildImplicitClassSupport( String className)
         {
+       // DQ (12/15/2010): Implicit class support seems to be unavailable via Java reflection...(working on solution to this).
+
        // There is a lot of information that we need about any implicitly included class.
        // Information about the introspection support is at: http://download.oracle.com/javase/1.4.2/docs/api/java/lang/Class.html
        // Additional information required should include:
