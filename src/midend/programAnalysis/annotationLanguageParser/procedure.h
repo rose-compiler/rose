@@ -492,7 +492,7 @@ public:
 
   void add_global_structures(Annotations * annotations,
                              annVariable * parent_var,
-			     structureTreeAnn * parent_node);
+                             structureTreeAnn * parent_node);
 
   /** @brief Add an analysis annotation
    *
@@ -564,9 +564,9 @@ public:
 private:
 
   void add_structures(bool is_on_entry,
-		      structure_list & the_list,
-		      annVariable * parent_var,
-		      structureTreeAnn * parent_node);
+                      structure_list & the_list,
+                      annVariable * parent_var,
+                      structureTreeAnn * parent_node);
 
   /** @brief Temporary variable lists
    *

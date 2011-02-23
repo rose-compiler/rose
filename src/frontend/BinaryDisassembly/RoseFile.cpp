@@ -10,7 +10,7 @@
 
 #ifdef _MSC_VER
 #include <time.h>
-#include <windows.h>	// GetSystemTimeAsFileTime()
+#include <windows.h>    // GetSystemTimeAsFileTime()
 #else
 // This header file is not available in MSVC.
 #include <sys/time.h>
@@ -131,15 +131,15 @@ inline double getTime() {
 
 #ifdef _MSC_VER
     // CH (4/16/2010): Use WinAPI to get the value wanted
-	FILETIME ft;
-	GetSystemTimeAsFileTime(&ft);
-	__int64 tmpres = 0;
-	tmpres |= ft.dwHighDateTime;
-	tmpres <<= 32;
-	tmpres |= ft.dwLowDateTime;
-	tmpres -= 11644473600000000Ui64;
-	tmpres /= 10;
-	return double(tmpres) / 1000000;
+        FILETIME ft;
+        GetSystemTimeAsFileTime(&ft);
+        __int64 tmpres = 0;
+        tmpres |= ft.dwHighDateTime;
+        tmpres <<= 32;
+        tmpres |= ft.dwLowDateTime;
+        tmpres -= 11644473600000000Ui64;
+        tmpres /= 10;
+        return double(tmpres) / 1000000;
 //#pragma message ("WARNING: Linux gettimeofday() not available in MSVC.")
 //  printf ("WARNING: Linux gettimeofday() not available in MSVC. \n");
 //  tv.tv_sec  = 0;
@@ -361,8 +361,8 @@ void RoseFile::visit(SgNode* node) {
   if (asmNode)
     if (asmNode->get_parent()==NULL) {
       if (!isSgAsmBlock(asmNode)) {
-	cerr << " PARENT == NULL :: " << asmNode->class_name() << endl;
-	ROSE_ASSERT(asmNode->get_parent());
+        cerr << " PARENT == NULL :: " << asmNode->class_name() << endl;
+        ROSE_ASSERT(asmNode->get_parent());
       }
     }
 }

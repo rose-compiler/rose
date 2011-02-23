@@ -1,0 +1,55 @@
+
+mpt_lpComputation_includes=\
+	-I$(mpt_lpComputationPath)/../driver \
+	-I$(mpt_lpComputationPath)/../depGraph \
+	-I$(mpt_lpComputationPath)/../depInfo \
+	-I$(top_srcdir)/src/util/support \
+	-I$(top_srcdir)/src/util/graphs \
+	-I$(top_srcdir)/src/midend/astUtil/astSupport \
+	-I$(top_srcdir)/src/midend/astUtil/astInterface \
+	-I$(top_srcdir)/src/midend/astUtil/symbolicVal
+
+
+# TODO: include in top-level ?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+mpt_lpComputation_la_sources=\
+	$(mpt_lpComputationPath)/LoopTree.C \
+	$(mpt_lpComputationPath)/LoopTreeDummyNode.C \
+	$(mpt_lpComputationPath)/LoopTreeShadow.C \
+	$(mpt_lpComputationPath)/LoopTreeLocality.C\
+	$(mpt_lpComputationPath)/LoopTreeDepComp.C \
+	$(mpt_lpComputationPath)/DepCompTransform.C \
+	$(mpt_lpComputationPath)/LoopTreeTransform.C
+
+
+mpt_lpComputation_includeHeaders=\
+	$(mpt_lpComputationPath)/LoopTreeDummyNode.h \
+	$(mpt_lpComputationPath)/LoopTreeShadow.h \
+	$(mpt_lpComputationPath)/LoopTreeLocality.h \
+	$(mpt_lpComputationPath)/LoopTreeBuild.h \
+	$(mpt_lpComputationPath)/LoopTree.h \
+	$(mpt_lpComputationPath)/LoopTreeObserver.h \
+	$(mpt_lpComputationPath)/LoopTreeTransform.h \
+	$(mpt_lpComputationPath)/LoopTreeDepComp.h \
+	$(mpt_lpComputationPath)/LoopTreeHoldNode.h \
+	$(mpt_lpComputationPath)/DepCompTransform.h
+
+
+mpt_lpComputation_extraDist=\
+	$(mpt_lpComputationPath)/CMakeLists.txt
+
+
+mpt_lpComputation_cleanLocal=\
+	rm -rf \
+		$(mpt_lpComputationPath)/Templates.DB \
+		$(mpt_lpComputationPath)/ii_files \
+		$(mpt_lpComputationPath)/ti_files \
+		$(mpt_lpComputationPath)/cxx_templates
+
+
+mpt_lpComputation_distCleanLocal=\
+	rm -rf \
+		$(mpt_lpComputationPath)/Templates.DB

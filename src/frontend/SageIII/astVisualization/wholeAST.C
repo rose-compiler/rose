@@ -1077,7 +1077,7 @@ CustomMemoryPoolDOTGeneration::frontendCompatibilityFilter(SgNode* node)
      SgFunctionParameterList* functionParateterList = isSgFunctionParameterList(node);
      if (functionParateterList != NULL)
         {
-          SgInitializedNamePtrList::iterator i = 	functionParateterList->get_args().begin();
+          SgInitializedNamePtrList::iterator i =        functionParateterList->get_args().begin();
           while (i != functionParateterList->get_args().end())
              {
                SgInitializedName* declaration = *i;
@@ -1349,6 +1349,13 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                labelWithSourceCode += string("\\n value = ") + valueExp->get_constant_folded_value_as_string() + "  ";
              }
 
+       // DQ (2/2/2011): Added support for fortran...
+          SgActualArgumentExpression* actualArgumentExpression = isSgActualArgumentExpression(node);
+          if (actualArgumentExpression != NULL)
+             {
+               labelWithSourceCode += string("\\n name = ") + actualArgumentExpression->get_argument_name() + "  ";
+             }
+
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
@@ -1367,8 +1374,15 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
             // labelWithSourceCode = string("\\n  ") + node->unparseToString() + "  ";
              }
 
+          SgTypeDefault* defaultType = isSgTypeDefault(node);
+          if (defaultType != NULL)
+             {
+            // printf ("Graph this node (%s) \n",node->class_name().c_str());
+               labelWithSourceCode += string("\\n  name = ") + defaultType->get_name().str() + "  ";
+             }
+
        // labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
-          labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
+          labelWithSourceCode += string("\\n  ") + StringUtility::numberToString(node) + "  ";
 
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
@@ -2322,7 +2336,7 @@ generateWholeGraphOfAST_filteredFrontendSpecificNodes( string filename, CustomMe
    {
 #ifdef _MSC_VER
   // DQ (11/27/2009): This appears to be required for MSVC (I think it is correct for GNU as well).
-	 extern set<SgNode*> getSetOfFrontendSpecificNodes();
+         extern set<SgNode*> getSetOfFrontendSpecificNodes();
 #endif
 
 #if 1

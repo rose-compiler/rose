@@ -938,7 +938,7 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
        // This define is copied from OFP actionEnum.h This needs to be better handled later (using a proper enum type).
 #define IntentSpecBase 600
 #ifndef _MSC_VER
-			// tps (02/02/2010) : error C2513: 'const int' : no variable declared before '='
+                        // tps (02/02/2010) : error C2513: 'const int' : no variable declared before '='
           const int IN    = IntentSpecBase+0;
           const int OUT   = IntentSpecBase+1;
           const int INOUT = IntentSpecBase+2;
@@ -1946,7 +1946,7 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
         {
           inClass = true;
           inCname = cdefn->get_declaration()->get_name();
-          if (cdefn->get_declaration()->get_class_type()	== SgClassDeclaration::e_class)
+          if (cdefn->get_declaration()->get_class_type()        == SgClassDeclaration::e_class)
                ninfo.set_CheckAccess();
         }
 
@@ -2165,6 +2165,7 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
 
           SgInitializedNamePtrList::iterator p = vardecl->get_variables().begin();
 
+#if 1
 #if 0
        // DQ (12/1/2007): Use stripType() with bit_array == STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE
        // Specifically avoid using STRIP_ARRAY_TYPE and STRIP_TYPEDEF_TYPE, since they would recursively go too far...
@@ -2180,7 +2181,11 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
        // printf ("baseType = %p = %s \n",baseType,baseType->class_name().c_str());
 
           unp->u_fortran_type->unparseType(baseType,info);
-
+#else
+       // DQ (1/17/2011): Unparse the correct type directly...(or compute the intersection type of the types from the list of variables)...
+          printf ("In unparseVarDeclStmt(): (*p)->get_type() = %p = %s \n",(*p)->get_type(),(*p)->get_type()->class_name().c_str());
+          unp->u_fortran_type->unparseType((*p)->get_type(),info);
+#endif
           curprint(" :: ");
           ninfo.set_SkipBaseType();
           while (p != vardecl->get_variables().end())
@@ -3116,7 +3121,7 @@ FortranCodeGeneration_locatedNode::unparseReturnStmt(SgStatement* stmt, SgUnpars
   // if (altret != NULL)
      if (isSgNullExpression(altret) == NULL)
         {
-          ROSE_ASSERT(isSgValueExp(altret));
+       // ROSE_ASSERT(isSgValueExp(altret));
           curprint(" ");
           unparseExpression(altret, info);
         }
@@ -3857,25 +3862,25 @@ FortranCodeGeneration_locatedNode::unparseAttachedPreprocessingInfo(SgStatement*
     ROSE_ASSERT ((*i) != NULL);
     ROSE_ASSERT ((*i)->getTypeOfDirective()  != PreprocessingInfo::CpreprocessorUnknownDeclaration);
     ROSE_ASSERT ((*i)->getRelativePosition() == PreprocessingInfo::before || 
-		 (*i)->getRelativePosition() == PreprocessingInfo::after);
+                 (*i)->getRelativePosition() == PreprocessingInfo::after);
     
     // Check and see if the statement should be printed.
     if ((*i)->getRelativePosition() == whereToUnparse) {
       unp->cur.format(stmt, info, FORMAT_BEFORE_DIRECTIVE);
       
       switch ((*i)->getTypeOfDirective()) {
-	// Comments don't have to be further commented
+        // Comments don't have to be further commented
       case PreprocessingInfo::C_StyleComment:
       case PreprocessingInfo::CplusplusStyleComment:
-	if ( !info.SkipComments() ) {
-	  curprint("! ");
+        if ( !info.SkipComments() ) {
+          curprint("! ");
      curprint((*i)->getString());
-	}
-	break;
-	
+        }
+        break;
+        
       default:
-	printf ("Error: FortranCodeGeneration_locatedNode::unparseAttachedPreprocessingInfo(): default switch reached\n");
-	ROSE_ABORT();
+        printf ("Error: FortranCodeGeneration_locatedNode::unparseAttachedPreprocessingInfo(): default switch reached\n");
+        ROSE_ABORT();
       }
       unp->cur.format(stmt, info, FORMAT_AFTER_DIRECTIVE);      
     }
@@ -3903,14 +3908,14 @@ FortranCodeGeneration_locatedNode::genPUAutomaticStmts(SgStatement* stmt, SgUnpa
 
 void
 FortranCodeGeneration_locatedNode::unparseFuncArgs(SgInitializedNamePtrList* args, 
-			      SgUnparse_Info& info)
+                              SgUnparse_Info& info)
 {
   unparseInitNamePtrList(args, info);
 }
 
 void
 FortranCodeGeneration_locatedNode::unparseInitNamePtrList(SgInitializedNamePtrList* args, 
-				     SgUnparse_Info& info)
+                                     SgUnparse_Info& info)
 {
   SgInitializedNamePtrList::iterator it = args->begin();
   while (it != args->end()) {
@@ -3952,6 +3957,7 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
         {
        // printf ("In unparseVarDecl(): calling unparseType on type = %p = %s \n",type,type->class_name().c_str());
 
+#if 0
        // DQ (3/23/2008): If this is a SgPointerType then just output the 
        // base type (since the declaration will use the "POINTER" attribute).
        // unp->u_fortran_type->unparseType(type, info);
@@ -3962,11 +3968,13 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                ROSE_ASSERT(baseType != NULL);
                unp->u_fortran_type->unparseType(baseType, info);
              }
-          else
+            else
              {
                unp->u_fortran_type->unparseType(type, info);
              }
-
+#else
+          unp->u_fortran_type->unparseType(type, info);
+#endif
        // DQ (11/18/2007): Added support for ALLOCATABLE declaration attribute
           SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
           ROSE_ASSERT(variableDeclaration != NULL);
@@ -4026,7 +4034,8 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
             // PARAMETER in Fortran implies const in C/C++
                curprint(", PARAMETER");
              }
-
+#if 0
+       // DQ (1/17/2011): Pointers and arrays are not correctly handled in the unparsing of the type directly.
        // DQ (5/14/2008): Note that POINTER is only relevant if the variable is NOT declared as ALLOCATABLE.
        //                 If it is ALLOCATABLE then POINTER is not used.
        // DQ (11/23/2007): A better implementation of this might require that we strip off some modifiers
@@ -4036,7 +4045,7 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
              {
                curprint(", POINTER");
              }
-
+#endif
        // printf ("variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() = %s \n",variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() ? "true" : "false");
           if (variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() == true)
              {
@@ -4274,20 +4283,20 @@ FortranCodeGeneration_locatedNode::printAccessModifier(SgDeclarationStatement * 
     bool flag = false;
     if (info.isPrivateAccess()) {
       if (!decl_stmt->get_declarationModifier().get_accessModifier().isPrivate())
-	flag = true;
+        flag = true;
     }
     else {
       if (info.isProtectedAccess()) {
-	if (!decl_stmt->get_declarationModifier().get_accessModifier().isProtected())
-	  flag = true;
+        if (!decl_stmt->get_declarationModifier().get_accessModifier().isProtected())
+          flag = true;
       }
       else {
-	if (info.isPublicAccess()) {
-	  if (!decl_stmt->get_declarationModifier().get_accessModifier().isPublic())
-	    flag = true;
-	}
-	else
-	  flag = true;
+        if (info.isPublicAccess()) {
+          if (!decl_stmt->get_declarationModifier().get_accessModifier().isPublic())
+            flag = true;
+        }
+        else
+          flag = true;
       }
     }
     
@@ -4296,23 +4305,23 @@ FortranCodeGeneration_locatedNode::printAccessModifier(SgDeclarationStatement * 
     if (decl_stmt->get_declarationModifier().get_accessModifier().isPrivate()) {
       info.set_isPrivateAccess();
       if (flag) {
-	curprint("private: ");
+        curprint("private: ");
       }
     }
     else {
       if (decl_stmt->get_declarationModifier().get_accessModifier().isProtected()) {
-	info.set_isProtectedAccess();
-	if (flag) {
-	  curprint("protected: ");
-	}
+        info.set_isProtectedAccess();
+        if (flag) {
+          curprint("protected: ");
+        }
       }
       else {
-	/* default, always print Public */
-	ROSE_ASSERT (decl_stmt->get_declarationModifier().get_accessModifier().isPublic() == true);
-	info.set_isPublicAccess();
-	if (flag) {
-	  curprint("public: ");
-	}
+        /* default, always print Public */
+        ROSE_ASSERT (decl_stmt->get_declarationModifier().get_accessModifier().isPublic() == true);
+        info.set_isPublicAccess();
+        if (flag) {
+          curprint("public: ");
+        }
       }
     }
   }

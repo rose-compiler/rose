@@ -63,7 +63,7 @@ inline std::string CFGConfig::EdgeType2String( EdgeType e)
   case COND_FALSE: return "false";
   case ALWAYS: return "always";
   default:
-	  { assert(false); /* Avoid MSVC warning */ return "error"; }
+          { assert(false); /* Avoid MSVC warning */ return "error"; }
   }
 }
 
@@ -431,7 +431,7 @@ class BuildCFGTraverse : public ProcessAstTree
         assert (lastNode != 0);
         AddStmt(fa, lastNode, s); 
          // If it is a goto jumping to the position after the destination
-	 // return; break;
+         // return; break;
         if (fa.IsGotoAfter(s)) {
             Node* destNode = MapStmt(fa, dest, EXIT);
             AddBranch( lastNode, destNode, CFGConfig::ALWAYS);

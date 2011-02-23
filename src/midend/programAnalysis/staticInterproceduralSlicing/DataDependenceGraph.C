@@ -71,9 +71,9 @@ DataDependenceGraph::DataDependenceGraph(SgNode * head,
         // if the variable is a global, special treatmen
         
         // for each SgVarRef
-	
+        
         //varRefIsDef=false;
-	
+        
         SgVarRefExp * varRef=isSgVarRefExp(*i);
         SgNode * varDef;
         SgNode * interestingUseParent,
@@ -91,7 +91,7 @@ DataDependenceGraph::DataDependenceGraph(SgNode * head,
         // this is the interesting parent of the interesting parent
         if (isSgFunctionCallExp(getNextParentInterstingNode(interestingUseParent->get_parent()))) {
           // SgVarRefExp->getNextParentInterstingNode->getNextParentInterstingNode
-          useDepNode=getNode(DependenceNode::ACTUALIN,interestingUseParent);			
+          useDepNode=getNode(DependenceNode::ACTUALIN,interestingUseParent);                    
         } else if (isSgFunctionDefinition(interestingUseParent)) {
           continue;
         } else {
@@ -106,11 +106,11 @@ DataDependenceGraph::DataDependenceGraph(SgNode * head,
         
         // handle global variable defenitions
         if (defuse->isNodeGlobalVariable(initName)) {
-          //			initName->get_declaration (); 
+          //                    initName->get_declaration (); 
           // the variable is a global variable, now connect the statement with the global def
           if (DUVariableAnalysisExt::isIDef(varRef) || DUVariableAnalysisExt::isDef(varRef)) {
             // create a ade from the ref to the globalInitialisation
-            establishEdge(useDepNode,getNode(initName->get_declaration()),GLOBALVAR_HELPER);				
+            establishEdge(useDepNode,getNode(initName->get_declaration()),GLOBALVAR_HELPER);                            
           }
           if (DUVariableAnalysisExt::isIUse(varRef) || DUVariableAnalysisExt::isUse(varRef)) {
             // create a ade from the ref to the globalInitialisation
@@ -118,7 +118,7 @@ DataDependenceGraph::DataDependenceGraph(SgNode * head,
           }
         }
         
-        //	if the current use of the variable is a use
+        //      if the current use of the variable is a use
         if (DUVariableAnalysisExt::isUse(varRef) || DUVariableAnalysisExt::isIUse(varRef))
         {
           //Jim: Debug lines, just uncommented
@@ -145,7 +145,7 @@ DataDependenceGraph::DataDependenceGraph(SgNode * head,
             // if the next interesting node is a function call, this definition comes from a ACTUAL_OUT
             if (isSgFunctionCallExp(getNextParentInterstingNode(interestingDefParent->get_parent()))) {
               defDepNode=getNode(DependenceNode::ACTUALOUT,interestingDefParent);
-              establishEdge(defDepNode,useDepNode,DATA);							
+              establishEdge(defDepNode,useDepNode,DATA);                                                        
             } else if (isSgFunctionDeclaration(getNextParentInterstingNode(interestingDefParent->get_parent())))
               //)||                 isSgFunctionDefinition(interestingDefParent))
             {
@@ -155,13 +155,13 @@ DataDependenceGraph::DataDependenceGraph(SgNode * head,
                else if (isSgFunctionParameterList(interestingDefParent) || isSgFunctionParameterList(interestingDefParent) ||
                isSgFunctionParameterList(defPlaces[j]->get_parent()) && isSgFunctionDeclaration(defPlaces[j]->get_parent()->get_parent()))         
                {
-               //					cout <<"\t*isIntersting is FunctionParameterList"<<endl;
+               //                                       cout <<"\t*isIntersting is FunctionParameterList"<<endl;
                //          checkForParameterChange=false;
                defDepNode=getNode(DependenceNode::FORMALIN,defPlaces[j]);
                establishEdge(defDepNode,useDepNode,DATA);
                }*/
             else {
-              //					cout <<"\t*isIntersting is other use"<<endl;
+              //                                        cout <<"\t*isIntersting is other use"<<endl;
               defDepNode=getNode(interestingDefParent);
               establishEdge(defDepNode,useDepNode,DATA);
             }
@@ -174,7 +174,7 @@ DataDependenceGraph::DataDependenceGraph(SgNode * head,
         // we already marked def for iuse, now we have to mark idefs for iuse
         if (DUVariableAnalysisExt::isIUse(varRef))
         {
-          //			cout <<"\tIUSE"<<endl;*/
+          //                    cout <<"\tIUSE"<<endl;*/
           usePlaces=defuse->getUseFor(varRef,initName);
           // this is a iUse find all uses before nad determnine if they are iDefs ...
           for (unsigned int j=0;j<usePlaces.size();j++) {
@@ -184,39 +184,39 @@ DataDependenceGraph::DataDependenceGraph(SgNode * head,
             interestingDefParent=getNextParentInterstingNode(use);
             
             
-            //				cout<<"\tdef "<<j<<": "<<defPlaces[j]->unparseToString()<<endl;				
-            //				cout<<"\tclass:"<<defPlaces[j]->class_name()<<endl;
+            //                          cout<<"\tdef "<<j<<": "<<defPlaces[j]->unparseToString()<<endl;                         
+            //                          cout<<"\tclass:"<<defPlaces[j]->class_name()<<endl;
             if (varRef==use) {
-              //					cout <<"use and def in same node, skipping"<<endl;
+              //                                        cout <<"use and def in same node, skipping"<<endl;
               continue;
             } else if (DUVariableAnalysisExt::isIDef(use)) {
               // this is an idef, if the interesting paren is a function call get the
               interestingDefParent=getNextParentInterstingNode(use);
-              //					cout <<"\tnextInteresting: "<<interestingDefParent->unparseToString()<<endl;
+              //                                        cout <<"\tnextInteresting: "<<interestingDefParent->unparseToString()<<endl;
               
               if (isSgFunctionCallExp(getNextParentInterstingNode(interestingDefParent->get_parent()))) {
-                //						cout <<"\t*isIntersting is FunctionCallExp"<<endl;
+                //                                              cout <<"\t*isIntersting is FunctionCallExp"<<endl;
                 // since the use is the sgVarRefexp traverse upwards to find the correct parameter in the functioncall
                 defDepNode=getNode(DependenceNode::ACTUALOUT,interestingDefParent);
-                establishEdge(defDepNode,useDepNode,DATA);							
+                establishEdge(defDepNode,useDepNode,DATA);                                                      
               } else {
                 // iDefs can only be uses as functionparameters or direct iDefs
                 defDepNode=getNode(interestingDefParent);
                 establishEdge(defDepNode,useDepNode,DATA);
               }
-            }				
+            }                           
             
           }
         }
 
         
         if (DUVariableAnalysisExt::isIDef(varRef)) {
-          //			cout <<"\tIUSE"<<endl;
-          //			cout <<"\tIDEF"<<endl;
+          //                    cout <<"\tIUSE"<<endl;
+          //                    cout <<"\tIDEF"<<endl;
           defPlaces=defuse->getDefFor(varRef,initName);
           for (int j=0;j<defPlaces.size();j++) {
-            //				cout<<"\tdef "<<j<<": "<<defPlaces[j]->unparseToString()<<endl;
-            //				cout<<"\tclass:"<<defPlaces[j]->class_name()<<endl;
+            //                          cout<<"\tdef "<<j<<": "<<defPlaces[j]->unparseToString()<<endl;
+            //                          cout<<"\tclass:"<<defPlaces[j]->class_name()<<endl;
             interestingDefParent=getNextParentInterstingNode(defPlaces[j]);
             if (isSgFunctionParameterList(interestingDefParent) || isSgFunctionParameterList(interestingDefParent) ||
                 isSgFunctionParameterList(defPlaces[j]->get_parent()) && isSgFunctionDeclaration(defPlaces[j]->get_parent()->get_parent()))
@@ -258,12 +258,12 @@ DataDependenceGraph::DataDependenceGraph(SgNode * head,
             callDepNode=getNode(callTmp);
           }
           assert(returnNode!=NULL);
-          assert(callDepNode!=NULL);	
+          assert(callDepNode!=NULL);    
           establishEdge(returnNode,callDepNode,DATA);
         }
-	
+        
         // now process all functioncalls and their retunr-values
-	
+        
         
         //before ending, create return->formal-out edges
         Rose_STL_Container< SgNode * >returnStmts = NodeQuery::querySubTree(_head,V_SgReturnStmt);
@@ -337,11 +337,11 @@ DataDependenceGraph::DataDependenceGraph(SgNode * head,
               //        if (DUVariableAnalysisExt::isIDef())
             }
           }
-          //		establishEdge(getNode(*returnS),getNode(DependenceNode::FORMALOUT,_head->get_declaration()),DATA);
+          //            establishEdge(getNode(*returnS),getNode(DependenceNode::FORMALOUT,_head->get_declaration()),DATA);
         }
         // since not all functionparameters may be requried for this function, but the stack has to be valid, force a data depenancy form the fucntion enrty to the formal in
         for (std::set<SgInitializedName*>::iterator param=functionParameterSet.begin();param!=functionParameterSet.end();param++) {
-          //		cout <<"adding backedge for slicing purpose"<<endl;
+          //            cout <<"adding backedge for slicing purpose"<<endl;
           establishEdge(
                         getNode(DependenceNode::FORMALIN,*param),
                         getNode(DependenceNode::ENTRY,functionDef),

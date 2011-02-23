@@ -162,7 +162,7 @@ LinearizeAST::evaluateInheritedAttribute (
 //     if( (isSgLocatedNode(astNode)!=NULL) && ((isSgExprStatement(astNode) != NULL ) || (isSgScopeStatement(astNode)!=NULL)||(isSgValueExp(astNode)!=NULL)||(isSgVarRefExp(astNode)!=NULL)|| isSgVariableDeclaration(astNode)!=NULL || (isSgLocatedNode(astNode)->get_file_info()->isCompilerGenerated() == false)) ){
 
 
-//	 if( isSgInitializer(astNode) == NULL && (isSgExpression(astNode) != NULL | isSgExprStatement(astNode) != NULL )) 
+//       if( isSgInitializer(astNode) == NULL && (isSgExpression(astNode) != NULL | isSgExprStatement(astNode) != NULL )) 
        if( isSgBinaryOp(astNode) != NULL  || isSgConditionalExp(astNode) != NULL || isSgExprListExp(astNode) != NULL )
        {
                  //This is needed when the root node that is given the traversal is part of an expression
@@ -191,9 +191,9 @@ LinearizeAST::evaluateInheritedAttribute (
 void LinearizeAST::printVector(std::vector<SgNode*>& vec){
  
      for(std::vector<SgNode*>::iterator it_beg = vec.begin();
-		     it_beg != vec.end(); ++it_beg){
-	   std::cout << (*it_beg)->class_name() << std::endl;
-     };	  
+                     it_beg != vec.end(); ++it_beg){
+           std::cout << (*it_beg)->class_name() << std::endl;
+     };   
 };
 
 std::vector<SgNode*>

@@ -67,7 +67,7 @@ class RoseBin_FILE  {
   template <class T>
     bool from_string(T& t, 
                      const std::string& s, 
-		     std::ios_base& (*f)(std::ios_base&))
+                     std::ios_base& (*f)(std::ios_base&))
     {
       std::istringstream iss(s);
       return !(iss >> f >> t).fail();
@@ -78,8 +78,8 @@ class RoseBin_FILE  {
    * for each block, check what the next block is
    ****************************************************/
   //  void getControlFlow_Of_BasicBlocks(int block_id, 
-  //				     int *nextBlockTrue_address, 
-  //				     int *nextBlockFalse_address);
+  //                                 int *nextBlockTrue_address, 
+  //                                 int *nextBlockFalse_address);
 
 
 
@@ -166,14 +166,14 @@ class RoseBin_FILE  {
    ****************************************************/
   void process_functions_query(
                                SgAsmBlock* globalBlock,
-			       std::list<std::string> functionName);
+                               std::list<std::string> functionName);
 
   /****************************************************
    * process all basic blocks in the DB
    * add the blocks to the functions
    ****************************************************
   void process_basicblock_query( ,
-				SgAsmBlock* globalBlock);
+                                SgAsmBlock* globalBlock);
   */
 
   /****************************************************

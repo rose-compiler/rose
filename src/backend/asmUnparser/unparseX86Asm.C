@@ -51,7 +51,7 @@ static std::string x86TypeToPtrName(SgAsmType* ty) {
     default:
        {
          std::cerr << "x86TypeToPtrName: Bad class " << ty->class_name() << std::endl;
-		 ROSE_ASSERT(false);
+                 ROSE_ASSERT(false);
       // DQ (11/29/2009): Avoid MSVC warning.
          return "error in x86TypeToPtrName()";
        }

@@ -42,7 +42,7 @@ for script in "$policies_dir"/*; do
     [ "$script" != "${script%.disabled}" ] && continue  # script is disabled
     [ -x "$script" ] || continue
     name="$(demangle $script)"
-    echo "  Checking $name policy ($script)"
+    echo "  POLICY  Checking $name policy ($script)" # "POLICY" causes line to be emited by scripts/rosegit/bin/rosegit-make
     $script 2>&1 |sed 's/^/    /'
     status=${PIPESTATUS[0]}
     if [[ $status = 0 ]]; then

@@ -15,7 +15,7 @@ class MemoryMap {
 public:
     /** Mapping permissions. */
     enum Protection 
-	{
+        {
         MM_PROT_READ    = 0x1,          /**< Pages can be read. */
         MM_PROT_WRITE   = 0x2,          /**< Pages can be written. */
         MM_PROT_EXEC    = 0x4,          /**< Pages can be executed. */
@@ -143,7 +143,7 @@ public:
         /** Attempts to merge the @p other element with this one.  Returns true if the elements can be merged; false if they
          *  cannot. If the two elements overlap but are inconsistent then a MemoryMap::Inconsistent exception is thrown. */
         bool merge(const MapElement &other);
-		
+                
         /** Give the map entry a name. This can be used for debugging, but don't rely too heavily on it because a MemoryMap
          *  may sometimes combine two adjacent elements that have different names. Returns a reference to @p this object so
          *  that it is convenient to use this method in the argument expression for MemoryMap::insert(). */

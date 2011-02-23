@@ -31,50 +31,50 @@ void InsertPragma:: visit(SgNode* astNode){
       
       int global_index=0;
       if(astNode->attribute.exists("global_index")){
-	AstAttribute* attri = astNode->attribute["global_index"];
-	global_index = (int) attri;
-	//	cout << "Global index: " << global_index <<endl;
+        AstAttribute* attri = astNode->attribute["global_index"];
+        global_index = (int) attri;
+        //      cout << "Global index: " << global_index <<endl;
       } 
       // if global index is equal to the statement number which is to be "wrapped" in pragmas
       if(global_index==no_statement){
-	
-	// build the two pragma declaration
-	SgPragma* start = new SgPragma("start_slicing_criterion", astNode->get_file_info());
-	SgPragmaDeclaration* start_pdecl = new SgPragmaDeclaration();
-	start_pdecl->set_pragma(start);
-	start_pdecl->set_parent(astNode->get_parent());
+        
+        // build the two pragma declaration
+        SgPragma* start = new SgPragma("start_slicing_criterion", astNode->get_file_info());
+        SgPragmaDeclaration* start_pdecl = new SgPragmaDeclaration();
+        start_pdecl->set_pragma(start);
+        start_pdecl->set_parent(astNode->get_parent());
 
-	SgPragma* end = new SgPragma("end_slicing_criterion", astNode->get_file_info());
-	SgPragmaDeclaration* end_pdecl = new SgPragmaDeclaration();
-	end_pdecl->set_pragma(end);
-	end_pdecl->set_parent(astNode->get_parent()); 
+        SgPragma* end = new SgPragma("end_slicing_criterion", astNode->get_file_info());
+        SgPragmaDeclaration* end_pdecl = new SgPragmaDeclaration();
+        end_pdecl->set_pragma(end);
+        end_pdecl->set_parent(astNode->get_parent()); 
 
-	SgBasicBlock* bb = isSgBasicBlock(astNode->get_parent());
-	SgStatementPtrList *stmt_list = &bb->get_statements();
-	SgStatementPtrList::iterator it = stmt_list->begin();
+        SgBasicBlock* bb = isSgBasicBlock(astNode->get_parent());
+        SgStatementPtrList *stmt_list = &bb->get_statements();
+        SgStatementPtrList::iterator it = stmt_list->begin();
 
-	// Increment the statement pointer iterator, so we can place the pragmas correct
-	for(int j=1; j<local_index;j++){it++;}
-	//ROSE_ASSERT(bb);
-	bb->prepend_statement(it,start_pdecl);
-	//	bb->append_statement(it,end_pdecl);
+        // Increment the statement pointer iterator, so we can place the pragmas correct
+        for(int j=1; j<local_index;j++){it++;}
+        //ROSE_ASSERT(bb);
+        bb->prepend_statement(it,start_pdecl);
+        //      bb->append_statement(it,end_pdecl);
 
-	// get the variables which occur in it!
-	list<SgNode*> var_list = NodeQuery::querySubTree(isSgNode(*it), V_SgVarRefExp);
-	
-	SgGlobal* global =  TransformationSupport::getGlobalScope(astNode);
-	SgFunctionDeclaration* printf_func;
-	SgFunctionDeclaration *fopen_func, *fclose_func;
-       	createFunctionDeclaration(global, var_list, printf_func, fopen_func, fclose_func);
-	// build an output statement outputting the variables within the statements between the pragmas.
-	SgExprStatement* func_expr;
+        // get the variables which occur in it!
+        list<SgNode*> var_list = NodeQuery::querySubTree(isSgNode(*it), V_SgVarRefExp);
+        
+        SgGlobal* global =  TransformationSupport::getGlobalScope(astNode);
+        SgFunctionDeclaration* printf_func;
+        SgFunctionDeclaration *fopen_func, *fclose_func;
+        createFunctionDeclaration(global, var_list, printf_func, fopen_func, fclose_func);
+        // build an output statement outputting the variables within the statements between the pragmas.
+        SgExprStatement* func_expr;
 
-	createFunctionCallprintf(global, printf_func, var_list, func_expr);
-	bb->append_statement(it, func_expr);
-	it++; // increment statement-list pointer
+        createFunctionCallprintf(global, printf_func, var_list, func_expr);
+        bb->append_statement(it, func_expr);
+        it++; // increment statement-list pointer
 
-	// append end pragma declaration
-	bb->append_statement(it,end_pdecl);
+        // append end pragma declaration
+        bb->append_statement(it,end_pdecl);
 
       }
     }
@@ -84,8 +84,8 @@ void InsertPragma:: visit(SgNode* astNode){
 // move this function and do this after we know how many arguements we will need.
 void InsertPragma::createFunctionDeclaration(SgGlobal* global,
                                              list<SgNode*> var_list, SgFunctionDeclaration*& printf_func,
-					     SgFunctionDeclaration*& fopen_func,
-					     SgFunctionDeclaration*& fclose_func){
+                                             SgFunctionDeclaration*& fopen_func,
+                                             SgFunctionDeclaration*& fclose_func){
   // create SgfunctionDeclaration 
   SgName func_name = "printf";
   SgType* func_return_type = new SgTypeVoid();
@@ -186,7 +186,7 @@ void InsertPragma::createFunctionCallprintf(SgGlobal*& root,SgFunctionDeclaratio
   SgFunctionRefExp* func_ref_exp = new SgFunctionRefExp(SgNULL_FILE, func_symbol, func_type);
   SgExprListExp* exp_list_exp = new SgExprListExp(SgNULL_FILE);
   SgFunctionCallExp *  func_call_expr=new SgFunctionCallExp(SgNULL_FILE,func_ref_exp,
-							    exp_list_exp,func_type);
+                                                            exp_list_exp,func_type);
   SgFunctionCallExp* func_call = new SgFunctionCallExp(SgNULL_FILE,func_ref_exp,
                                                        exp_list_exp, func_type);
   SgExpressionRoot* expr_root_func_call = new SgExpressionRoot();
@@ -219,8 +219,8 @@ void InsertPragma::createFunctionCallprintf(SgGlobal*& root,SgFunctionDeclaratio
     case V_SgPointerType:{
       //cout <<" V_SgPointerType" << endl;
       if(isSgVarRefExp(*it)->get_symbol()->get_type()->findBaseType()->variantT()==V_SgTypeChar){
-	//cout << "V_SgTypeChar" << endl;
-	sprintf(s, "%s %s", s, "%s");
+        //cout << "V_SgTypeChar" << endl;
+        sprintf(s, "%s %s", s, "%s");
       }
       // add for more base type of pointers...
       break;

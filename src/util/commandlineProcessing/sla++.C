@@ -40,13 +40,13 @@ Arguments:
   argc(io), argv(io): Count and string variable, usually arguments of main.
   flind(i): String of flag indicator character, usually "-".
   assop(i): String of assignment characters, usually "=".
-	This string sits between the parameter name and its value.
-	Set assop to "$" to specify no value.
-	Set assop to " " to specify detatched value.
-	Any other assop (such as "=") specifies attached value.
-	Set assop to "" to specify attached value without delimiter
-	(this may create ambiguities for which the user must accept
-	responsibility).
+        This string sits between the parameter name and its value.
+        Set assop to "$" to specify no value.
+        Set assop to " " to specify detatched value.
+        Any other assop (such as "=") specifies attached value.
+        Set assop to "" to specify attached value without delimiter
+        (this may create ambiguities for which the user must accept
+        responsibility).
   pname(i): Parameter name.  Precede with '*' if it is to be a list
   value(io): Value(s) to assign to the parameter.
     Points to an array of strings.
@@ -275,9 +275,9 @@ SLA_FCN_BEGIN( sla_str, std::string ) {
      argd == 0 -> chose automatically.
      argd  < 0 -> don't delete.
   */
-  if ( argd == 0 ) {	/* Determine automatically. */
-    if ( assop == "$" ) argd = 1;	/* Delete any found. */
-    else argd = value != NULL ? 1 : -1;	/* Delete as assigned to value. */
+  if ( argd == 0 ) {    /* Determine automatically. */
+    if ( assop == "$" ) argd = 1;       /* Delete any found. */
+    else argd = value != NULL ? 1 : -1; /* Delete as assigned to value. */
   }
 #ifdef SLA_DEBUG
 #ifdef __cplusplus
@@ -373,11 +373,11 @@ SLA_FCN_BEGIN( sla_str, std::string ) {
 #ifdef SLA_DEBUG
 #ifdef __cplusplus
     if ( debug >= 4 ) {
-      if ( !assop_ends_str ) {	/* attached or no value */
-	std::cout << "using ATtached value '" << attachedargbegin << "'" << std::endl;
+      if ( !assop_ends_str ) {  /* attached or no value */
+        std::cout << "using ATtached value '" << attachedargbegin << "'" << std::endl;
       }
-      else {	/* detached value */
-	std::cout << "using absent or DEtached value '" << argv[i+1] << "'" << std::endl;
+      else {    /* detached value */
+        std::cout << "using absent or DEtached value '" << argv[i+1] << "'" << std::endl;
       }
     }
 #endif
@@ -390,68 +390,68 @@ SLA_FCN_BEGIN( sla_str, std::string ) {
 
     /*** Assignment actions. ***/
     if ( value ) {
-      if ( assop_ends_str ) {	/* either detached value or no value */
-	if ( assopmatchlength	/* assop$ case */
-	  || prefer_detached_over_absent	/* special case */
-	  ) {			/* detached value */
+      if ( assop_ends_str ) {   /* either detached value or no value */
+        if ( assopmatchlength   /* assop$ case */
+          || prefer_detached_over_absent        /* special case */
+          ) {                   /* detached value */
       assert (i + 1 < argv.size());
       value[(!pname.empty() && pname[0] == '*') ? nvalue : 0] = argv[i+1];
-	}
+        }
       }
-      else {	/* attached value (even if assop is "") */
-	value[(!pname.empty() && pname[0] == '*') ? nvalue : 0] = attachedargbegin;
+      else {    /* attached value (even if assop is "") */
+        value[(!pname.empty() && pname[0] == '*') ? nvalue : 0] = attachedargbegin;
       }
     }
 
     /*** Delete actions ***/
-    if ( assop_ends_str ) {	/* either detached value or no value */
-      if ( assopmatchlength	/* assop$ case */
-	|| prefer_detached_over_absent	/* special case */
-	) {			/* detached value */
-	if ( ( argd > 0 ) || ( ( argd == 0 ) && value ) ) {
-	  /* Delete argv[i] and argv[i+1] from list. */
+    if ( assop_ends_str ) {     /* either detached value or no value */
+      if ( assopmatchlength     /* assop$ case */
+        || prefer_detached_over_absent  /* special case */
+        ) {                     /* detached value */
+        if ( ( argd > 0 ) || ( ( argd == 0 ) && value ) ) {
+          /* Delete argv[i] and argv[i+1] from list. */
 #ifdef SLA_DEBUG
 #ifdef __cplusplus
-	  if ( debug >= 4 )
-	    std::cout << "Deleting " << i << ':' << argv[i]
+          if ( debug >= 4 )
+            std::cout << "Deleting " << i << ':' << argv[i]
                       << " and " << i+1 << ':' << argv[i+1] << " from argv" << std::endl;
 #endif
 #endif
-	  argv.erase(argv.begin() + i, argv.begin() + i + 2);
-	  i -= 2;	/* Cause the new argv[i] to be processed. */
-	}
-	else i++;	/* skip next argv because it is an value. */
+          argv.erase(argv.begin() + i, argv.begin() + i + 2);
+          i -= 2;       /* Cause the new argv[i] to be processed. */
+        }
+        else i++;       /* skip next argv because it is an value. */
       }
-      else {	/* no value */
-	if ( argd >= 0 ) {
-	  /* Delete argv[i] from list. */
+      else {    /* no value */
+        if ( argd >= 0 ) {
+          /* Delete argv[i] from list. */
 #ifdef SLA_DEBUG
 #ifdef __cplusplus
-	  if ( debug >= 4 )
-	    std::cout << "Deleting " << i << ':' << argv[i] << " from argv" << std::endl;
+          if ( debug >= 4 )
+            std::cout << "Deleting " << i << ':' << argv[i] << " from argv" << std::endl;
 #endif
 #endif
-	  argv.erase(argv.begin() + i);
-	  i--;	/* Cause the new argv[i] to be processed. */
-	}
+          argv.erase(argv.begin() + i);
+          i--;  /* Cause the new argv[i] to be processed. */
+        }
       }
     }
-    else {	/* attached value */
+    else {      /* attached value */
       if ( value && argd >= 0 ) {
-	/* Delete argv[i] from list. */
+        /* Delete argv[i] from list. */
 #ifdef SLA_DEBUG
 #ifdef __cplusplus
-	if ( debug >= 4 )
-	  std::cout << "Deleting " << i << ':' << argv[i] << " from argv" << std::endl;
+        if ( debug >= 4 )
+          std::cout << "Deleting " << i << ':' << argv[i] << " from argv" << std::endl;
 #endif
 #endif
-	argv.erase(argv.begin() + i);
-	i--;	/* Cause the new argv[i] to be processed. */
+        argv.erase(argv.begin() + i);
+        i--;    /* Cause the new argv[i] to be processed. */
       }
     }
 
 
-    nvalue++;	/* Count number of value found. */
+    nvalue++;   /* Count number of value found. */
 
 #ifdef SLA_DEBUG
 #ifdef __cplusplus
@@ -495,15 +495,15 @@ int sla_none( std::vector<std::string>& argv, const std::string& flind, const st
   > pgrep 's/^(int sla\s*\([^\{]*).*$/$1;/' sla.i -s
  */
 #include <stdlib.h>
-SLA_FCN_BEGIN( sla_float, float )		{ SLA_CNV((float)atof) }
-SLA_FCN_BEGIN( sla_double, double )		{ SLA_CNV(atof) }
-SLA_FCN_BEGIN( sla_int, int )			{ SLA_CNV(atoi) }
-SLA_FCN_BEGIN( sla_short, short )		{ SLA_CNV((short)atoi) }
-SLA_FCN_BEGIN( sla_long, long )		{ SLA_CNV((long)atoi) }
-SLA_FCN_BEGIN( sla_uint, unsigned int )	{ SLA_CNV((unsigned int)atoi) }
-SLA_FCN_BEGIN( sla_ushort, unsigned short )	{ SLA_CNV((unsigned short)atoi) }
-SLA_FCN_BEGIN( sla_ulong, unsigned long )	{ SLA_CNV((unsigned long)atoi) }
-SLA_FCN_BEGIN( sla_char, char )		{ SLA_CNV(*) }
+SLA_FCN_BEGIN( sla_float, float )               { SLA_CNV((float)atof) }
+SLA_FCN_BEGIN( sla_double, double )             { SLA_CNV(atof) }
+SLA_FCN_BEGIN( sla_int, int )                   { SLA_CNV(atoi) }
+SLA_FCN_BEGIN( sla_short, short )               { SLA_CNV((short)atoi) }
+SLA_FCN_BEGIN( sla_long, long )         { SLA_CNV((long)atoi) }
+SLA_FCN_BEGIN( sla_uint, unsigned int ) { SLA_CNV((unsigned int)atoi) }
+SLA_FCN_BEGIN( sla_ushort, unsigned short )     { SLA_CNV((unsigned short)atoi) }
+SLA_FCN_BEGIN( sla_ulong, unsigned long )       { SLA_CNV((unsigned long)atoi) }
+SLA_FCN_BEGIN( sla_char, char )         { SLA_CNV(*) }
 
 
 #undef NEW_MEMORY

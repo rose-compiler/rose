@@ -59,7 +59,7 @@ class RoseBin_Graph : public SB_DirectedGraph {
   void setGrouping(bool val) {grouping = val;}
 
   virtual void printEdges( VirtualBinCFG::AuxiliaryInformation* info,
-			  bool forward_analysis, std::ofstream& myfile, bool mergedEdges) =0;
+                          bool forward_analysis, std::ofstream& myfile, bool mergedEdges) =0;
   virtual void printNodes( bool dfg, RoseBin_FlowAnalysis* flow, bool forward_analysis,
                            std::ofstream &myfile, std::string& recursiveFunctionName) =0;
 

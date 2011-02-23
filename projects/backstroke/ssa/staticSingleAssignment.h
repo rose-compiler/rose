@@ -123,7 +123,9 @@ private:
 	/** Map from each node to the variables used at that node and their reaching definitions. */
 	UseTable useTable;
 
-	/** Local definitions (actual definitions, not phi definitions). */
+	/** Local definitions (actual definitions, not phi definitions).
+	 * This table does not get populated until AFTER interprocedural propagation; hence
+	 * the values here cannot be used during interprocedural analysis.  */
 	boost::unordered_map<SgNode*, NodeReachingDefTable> ssaLocalDefTable;
 
 public:
@@ -195,8 +197,6 @@ private:
 	/** Insert defs for functions that are declared outside the function scope. */
 	void insertDefsForExternalVariables(SgFunctionDeclaration* function);
 
-
-
 	/** Find where phi functions need to be inserted and insert empty phi functions at those nodes.
 	 * This updates the IN part of the reaching def table with Phi functions.
 	 * @returns the control dependencies. */
@@ -221,6 +221,7 @@ private:
 	 * use information to match uses to their reaching defs. */
 	void buildUseTable(SgFunctionDefinition* func);
 
+	/** TODO: Remove this function. It is part of Gated single assignment calculation. */
 	void annotatePhiNodeWithConditions(SgFunctionDefinition* function,
 			const std::multimap< FilteredCfgNode, std::pair<FilteredCfgNode, FilteredCfgEdge> > & controlDependencies);
 
@@ -229,10 +230,16 @@ private:
 
 	//------------ INTERPROCEDURAL ANALYSIS FUNCTIONS ------------ //
 
+	/** Insert definitions at function call sites for all variables defined interprocedurally. Iterates on the
+	 * call graph until the definitions converge (hence it works with recursion).
+	 * @param interestinFunctions all functions that should be analyzed. */
+	void interproceduralDefPropagation(const boost::unordered_set<SgFunctionDefinition*>& interestingFunctions);
+
 	/** This function returns the order in which functions should be processed so that callees are processed before
 	 * callers whenever possible (this is sometimes not possible due to recursion). Internally, it builds a call graph
 	 * and constructs a depth-first ordering of it. */
-	std::vector<SgFunctionDefinition*> calculateInterproceduralProcessingOrder();
+	std::vector<SgFunctionDefinition*> calculateInterproceduralProcessingOrder(
+					const boost::unordered_set<SgFunctionDefinition*>& interestingFunctions);
 
 	/** Add all the callees of the function to the processing list, then add the function itself. Does nothing
 	  * if the function is already in the list. */
@@ -243,9 +250,10 @@ private:
 	/** Add definitions at function call expressions for variables that are modified interprocedurally.
 	 * The definitions are inserted in the original def table.
 	 * @param funcDef function whose body should be queries for function calls
-	 * @param processed all the functions completely processed by SSA so far. If a callee is one of these functions,
-	 *			we can use exact information. */
-	void insertInterproceduralDefs(SgFunctionDefinition* funcDef, const boost::unordered_set<SgFunctionDefinition*>& processed,
+	 * @param processed all the functions completely processed by SSA. If a callee is one of these functions,
+	 *			we can use exact information.
+	 * @return true if new defs were inserted, false otherwise. */
+	bool insertInterproceduralDefs(SgFunctionDefinition* funcDef, const boost::unordered_set<SgFunctionDefinition*>& processed,
 		ClassHierarchyWrapper* classHierarchy);
 
 	/** Insert the interprocedural defs at a particular call site for a particular callee. This function may be called
@@ -254,6 +262,10 @@ private:
 	 * @param processed functions already processed by SSA */
 	void processOneCallSite(SgExpression* callSite, SgFunctionDeclaration* callee,
 				const boost::unordered_set<SgFunctionDefinition*>& processed, ClassHierarchyWrapper* classHierarchy);
+
+	/** Given a variable that is in a callee's scope, returns true if the caller can access the same variable, false otherwise.
+	 * @param callSite either a SgFunctionCallExp or SgConstructorInitializer. */
+	static bool isVarAccessibleFromCaller(const VarName& var, SgExpression* callSite, SgFunctionDeclaration* callee);
 
 	/** Returns true if the variable is a nonstatic class variable, so it hass to be accessed by the
 	 * "this" pointer. */
@@ -266,6 +278,18 @@ private:
 	 * This function is conservative; it will return false if it cannot statically determine that the
 	 * expression is equivalent to the 'This' pointe. */
 	static bool isThisPointer(SgExpression* expression);
+
+	//! True if the type is a const pointer pointing to a const object.
+	//! Expanded recursively
+	static bool isDeepConstPointer(SgType* type);
+
+	//! True if the type is a pointer pointing to a const object.
+	//! Expanded recursively.
+	static bool isPointerToDeepConst(SgType* type);
+
+	/** Returns true if the given formal parameter is a reference or a nonconst pointer, so that it
+	 * its value is aliased between function calls. */
+	static bool isArgumentNonConstReferenceOrPointer(SgInitializedName* formalArgument);
 
 	//------------ GRAPH OUTPUT FUNCTIONS ------------ //
 
@@ -334,6 +358,14 @@ public:
 	 * in the subtree. */
 	std::set<VarName> getVarsDefinedInSubtree(SgNode* root) const;
 
+	/** Given a node, traverses all its children in the AST and collects all the variable names that have original definitions
+	 * in the subtree. Expanded definitions are not included - for example if p.x is defined, p is not included. */
+	std::set<VarName> getOriginalVarsDefinedInSubtree(SgNode* root) const;
+
+	/** Returns the last encountered definition of every variable. Variables go out of scope, so
+	 * quering for reaching definitions at the end of a function doesn't return the last versions of all variables. */
+	NodeReachingDefTable getLastVersions(SgFunctionDeclaration* func) const;
+
 	//------------ STATIC UTILITY FUNCTIONS FUNCTIONS ------------ //
 
 
@@ -362,6 +394,11 @@ public:
 	 * @return The name, or empty name.
 	 */
 	static const VarName& getVarName(SgNode* node);
+
+	/** If an expression evaluates to a reference of a variable, returns that variable.
+	 * Handles casts, comma ops, address of ops, etc. For example,
+	 * Given the expression (...., &a), this method would return the VarName for a. */
+	static const VarName& getVarForExpression(SgNode* node);
 
 	/** Get an AST fragment containing the appropriate varRefs and Dot/Arrow ops to access the given variable.
 	 *

@@ -57,7 +57,7 @@ private:
 
 #ifdef __PROCLOCATION 
   void test(procLocation * where,
-	    propertyAnalyzer * property_analyzer);
+            propertyAnalyzer * property_analyzer);
 #endif
 
   /** @brief Return the result of the test */
@@ -81,15 +81,15 @@ private:
 
 #ifdef __PROCLOCATION 
   void apply_next(procLocation * where,
-		  propertyAnalyzer * property_analyzer,
-		  memoryblock_set & changes);
+                  propertyAnalyzer * property_analyzer,
+                  memoryblock_set & changes);
 #endif
 
   /** @brief Look up */
 
   void lookup(propertyAnn * default_property,
-	      procedureAnn * procedure,
-	      Annotations * annotations);
+              procedureAnn * procedure,
+              Annotations * annotations);
 
 };
 

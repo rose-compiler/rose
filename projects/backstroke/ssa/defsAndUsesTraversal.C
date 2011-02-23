@@ -201,6 +201,12 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 				}
 			}
 		}
+		//Some other ops also preserve the current var. We don't really distinguish between the pointer variable
+		//and the value to which it points
+		else if (isSgCastExp(unaryOp) || isSgPointerDerefExp(unaryOp) || isSgAddressOfOp(unaryOp))
+		{
+			currentVar = attrs[0].getCurrentVar();
+		}
 
 		//Set all the uses as being used here.
 		addUsesToNode(unaryOp, uses);
@@ -229,14 +235,8 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 		//Set all the uses as being used here.
 		addUsesToNode(node, uses);
 
-		//The right-most variable is the one whose l-value propagates up the tree
-		SgVarRefExp* currentVar = NULL;
-		if (!attrs.empty())
-		{
-			currentVar = attrs.back().getCurrentVar();
-		}
-
-		return ChildUses(uses, currentVar);
+		//In the default case, we don't propagate the variable up the tree
+		return ChildUses(uses, NULL);
 	}
 }
 

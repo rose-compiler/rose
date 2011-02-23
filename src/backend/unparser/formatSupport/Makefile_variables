@@ -1,0 +1,21 @@
+
+unparseFormatSupport_la_sources=\
+	$(unparseFormat_includeHeaders:.h=.C)
+
+
+unparseFormat_includeHeaders=\
+	$(formatSupportPath)/unparse_format.h \
+	$(formatSupportPath)/unparseFormatHelp.h
+
+
+unparseFormatSupport_extraDist=\
+	$(formatSupportPath)/CMakeLists.txt
+
+
+unparseFormatSupport_cleanLocal=\
+	rm -rf \
+		$(formatSupportPath)/Templates.DB \
+		$(formatSupportPath)/ii_files \
+		$(formatSupportPath)/ti_files \
+		$(formatSupportPath)/core
+

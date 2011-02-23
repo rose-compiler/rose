@@ -73,7 +73,7 @@ SB_DirectedGraph::getDirectedEdge(SgGraphNode* src, SgGraphNode* trg) {
   set<SgDirectedGraphEdge*> medges;
   rose_graph_node_edge_hash_multimap::iterator it1, it2;
   pair <rose_graph_node_edge_hash_multimap::iterator, rose_graph_node_edge_hash_multimap::iterator> iter =
-	  edges.equal_range(src);
+          edges.equal_range(src);
   it1 = iter.first;
   it2 = iter.second;
   for (;it1!=it2; ++it1) {
@@ -129,7 +129,7 @@ SB_DirectedGraph::getSuccessors(SgGraphNode* node, std::vector <SgGraphNode*>& v
   rose_graph_node_edge_hash_multimap edges = get_edges()->get_edges();
   rose_graph_node_edge_hash_multimap::iterator it1, it2;
   pair <rose_graph_node_edge_hash_multimap::iterator, rose_graph_node_edge_hash_multimap::iterator> iter =
-	  edges.equal_range(node);
+          edges.equal_range(node);
   it1 = iter.first;
   it2 = iter.second;
   for (;it1!=it2; ++it1) {
@@ -137,9 +137,9 @@ SB_DirectedGraph::getSuccessors(SgGraphNode* node, std::vector <SgGraphNode*>& v
     if (edge) {
       SgGraphNode* target = isSgGraphNode(edge->get_to());
       if (target) {
-	string type_n = getProperty(SgGraph::type, edge);
-	if (type_n==RoseBin_support::ToString(SgGraph::cfg))
-	  vec.push_back(target);
+        string type_n = getProperty(SgGraph::type, edge);
+        if (type_n==RoseBin_support::ToString(SgGraph::cfg))
+          vec.push_back(target);
       }
     }
   }
@@ -149,7 +149,7 @@ void
 SB_DirectedGraph::getPredecessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec ) {
   rose_graph_node_edge_hash_multimap::iterator it1, it2;
   pair <rose_graph_node_edge_hash_multimap::iterator, rose_graph_node_edge_hash_multimap::iterator> iter =
-	  get_reverse_edges()->get_edges().equal_range(node);
+          get_reverse_edges()->get_edges().equal_range(node);
   it1 = iter.first;
   it2 = iter.second;
   for (;it1!=it2; ++it1) {
@@ -157,9 +157,9 @@ SB_DirectedGraph::getPredecessors(SgGraphNode* node, std::vector <SgGraphNode*>&
     if (edge) {
       SgGraphNode* source = isSgGraphNode(edge->get_from());
       if (source) {
-	string type_n = getProperty(SgGraph::type, edge);
-	if (type_n==RoseBin_support::ToString(SgGraph::cfg))
-	  vec.push_back(source);
+        string type_n = getProperty(SgGraph::type, edge);
+        if (type_n==RoseBin_support::ToString(SgGraph::cfg))
+          vec.push_back(source);
       }
     }
   }
@@ -184,7 +184,7 @@ SB_DirectedGraph::createNode(string& name, string& type, int address, int graph_
   string addr_str = addrhex.str();
   SgGraphNode* n_source = NULL;
   if (isFunction) {
-	  addr_str+="_f";
+          addr_str+="_f";
       createSBNode(addr_str, type, graph_id, int_node);
   } else
       createSBNode(addr_str, type, graph_id, int_node);
@@ -204,8 +204,8 @@ SB_DirectedGraph::createNode(string& name, string& type, int address, int graph_
 
 SgDirectedGraphEdge*
 SB_DirectedGraph::createSBEdge(string& type, int graph_id,
-				  SgGraphNode* from,
-				  SgGraphNode* to) {
+                                  SgGraphNode* from,
+                                  SgGraphNode* to) {
   string key = "";//getEdgeKeyName(from, from_addr, to, to_addr);
   SgDirectedGraphEdge* edge =
     new SgDirectedGraphEdge(from, to,type);
@@ -218,10 +218,10 @@ SB_DirectedGraph::createSBEdge(string& type, int graph_id,
 
 SgDirectedGraphEdge*
 SB_DirectedGraph::createEdge(string& type, int graph_id,
-				  SgGraphNode* from, int from_addr,
-				  SgGraphNode* to, int to_addr) {
-	  SgDirectedGraphEdge* edge =
-	createSBEdge(type, graph_id, from, to);
+                                  SgGraphNode* from, int from_addr,
+                                  SgGraphNode* to, int to_addr) {
+          SgDirectedGraphEdge* edge =
+        createSBEdge(type, graph_id, from, to);
   return edge;
 }
 #endif
@@ -244,7 +244,7 @@ SgGraphNode*
 SB_DirectedGraph::getDefinitionForUsage(SgGraphNode* node) {
   rose_graph_node_edge_hash_multimap::iterator it1, it2;
   pair <rose_graph_node_edge_hash_multimap::iterator, rose_graph_node_edge_hash_multimap::iterator> iter =
-	  get_reverse_edges()->get_edges().equal_range(node);
+          get_reverse_edges()->get_edges().equal_range(node);
   it1 = iter.first;
   it2 = iter.second;
   for (;it1!=it2; ++it1) {
@@ -252,11 +252,11 @@ SB_DirectedGraph::getDefinitionForUsage(SgGraphNode* node) {
     if (edge) {
       SgGraphNode* source = isSgGraphNode(edge->get_from());
       if (source) {
-	string type_n = getProperty(SgGraph::type, edge);
-	//if (RoseBin_support::DEBUG_MODE())
-	//cout << " found a predecessor with type : " << type_n << endl;
-	if (type_n==RoseBin_support::ToString(SgGraph::usage))
-	  return source;
+        string type_n = getProperty(SgGraph::type, edge);
+        //if (RoseBin_support::DEBUG_MODE())
+        //cout << " found a predecessor with type : " << type_n << endl;
+        if (type_n==RoseBin_support::ToString(SgGraph::usage))
+          return source;
       }
     }
   }
@@ -277,10 +277,10 @@ SB_DirectedGraph::getDirectCFGSuccessors(SgGraphNode* node, std::vector <SgGraph
     if (edge) {
       SgGraphNode* target = isSgGraphNode(edge->get_to());
       if (target) {
-	string type_n = getProperty(SgGraph::type, edge);
-	if (type_n==RoseBin_support::ToString(SgGraph::cfg))
-	  if (isDirectCFGEdge(target, node))
-	    vec.push_back(target);
+        string type_n = getProperty(SgGraph::type, edge);
+        if (type_n==RoseBin_support::ToString(SgGraph::cfg))
+          if (isDirectCFGEdge(target, node))
+            vec.push_back(target);
       }
     }
   }
@@ -292,7 +292,7 @@ void
 SB_DirectedGraph::getDirectCFGPredecessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec ) {
   rose_graph_node_edge_hash_multimap::iterator it1, it2;
   pair <rose_graph_node_edge_hash_multimap::iterator, rose_graph_node_edge_hash_multimap::iterator> iter =
-	  get_reverse_edges()->get_edges().equal_range(node);
+          get_reverse_edges()->get_edges().equal_range(node);
   it1 = iter.first;
   it2 = iter.second;
   for (;it1!=it2; ++it1) {
@@ -300,10 +300,10 @@ SB_DirectedGraph::getDirectCFGPredecessors(SgGraphNode* node, std::vector <SgGra
     if (edge) {
       SgGraphNode* source = isSgGraphNode(edge->get_from());
       if (source) {
-	string type_n = getProperty(SgGraph::type, edge);
-	if (type_n==RoseBin_support::ToString(SgGraph::cfg))
-	  if (isDirectCFGEdge(node, source))
-	    vec.push_back(source);
+        string type_n = getProperty(SgGraph::type, edge);
+        if (type_n==RoseBin_support::ToString(SgGraph::cfg))
+          if (isDirectCFGEdge(node, source))
+            vec.push_back(source);
       }
     }
   }
@@ -365,15 +365,15 @@ SB_DirectedGraph::isValidCFGEdge(SgGraphNode* sgNode,
       SgAsmInstruction* nodeBeforeInSet = NULL;
       int byte = 1;
       while (nodeBeforeInSet==NULL && byte<8) {
-	nodeBeforeInSet = info->getInstructionAtAddress(instSgNode->get_address() - byte);
-	byte++;
+        nodeBeforeInSet = info->getInstructionAtAddress(instSgNode->get_address() - byte);
+        byte++;
       }
       if (RoseBin_support::DEBUG_MODE())
       cout << " *** nodeBeforeInSet = " << nodeBeforeInSet << "  instSgNodeBefore : " << instSgNodeBefore << "   byte : " << byte << endl;
       if (nodeBeforeInSet == instSgNodeBefore) {
-	//if (!isAsmUnconditionalBranch(nodeBeforeInSet))
-	if (RoseBin_support::DEBUG_MODE())
-	cout << " isDirectedControlFlowEdge = true  --  isAsmUnconditionalBranch(nodeBeforeInSet) : " << isAsmUnconditionalBranch(nodeBeforeInSet) << endl;
+        //if (!isAsmUnconditionalBranch(nodeBeforeInSet))
+        if (RoseBin_support::DEBUG_MODE())
+        cout << " isDirectedControlFlowEdge = true  --  isAsmUnconditionalBranch(nodeBeforeInSet) : " << isAsmUnconditionalBranch(nodeBeforeInSet) << endl;
         isDirectedControlFlowEdge = true;
       }
       if (RoseBin_support::DEBUG_MODE()) {
@@ -381,7 +381,7 @@ SB_DirectedGraph::isValidCFGEdge(SgGraphNode* sgNode,
       cout << " inst->get_kind() == x86_call : " << (inst->get_kind() == x86_call) << "     inst->get_kind() == x86_ret : " << (inst->get_kind() == x86_ret) << endl;
       }
       if ((inst->get_kind() == x86_call || inst->get_kind() == x86_ret) && isDirectedControlFlowEdge)
-	valid=false;
+        valid=false;
     }
   }
   /*

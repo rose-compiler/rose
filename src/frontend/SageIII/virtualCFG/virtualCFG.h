@@ -39,10 +39,10 @@ namespace VirtualCFG {
   enum EdgeConditionKind 
   {
     eckUnconditional, //! Normal, unconditional edge
-    eckTrue,	      //! True case of a two-way branch
-    eckFalse,	      //! False case of a two-way branch
+    eckTrue,          //! True case of a two-way branch
+    eckFalse,         //! False case of a two-way branch
     eckCaseLabel,     //! Case label (constant is given by caseLabel())
-    eckDefault,	      //! Default label
+    eckDefault,       //! Default label
     eckDoConditionPassed, //! Enter Fortran do loop body
     eckDoConditionFailed, //! Fortran do loop finished
     eckForallIndicesInRange, //! Start testing forall mask
@@ -168,8 +168,8 @@ namespace VirtualCFG {
     //Return the first non-unconditional edge's condition
     EdgeConditionKind condition() const {
       for (unsigned int i = 0; i < edges.size(); ++i) {
-	EdgeConditionKind kind = edges[i].condition();
-	if (kind != eckUnconditional) return kind;
+        EdgeConditionKind kind = edges[i].condition();
+        if (kind != eckUnconditional) return kind;
       }
       return eckUnconditional;
     }
@@ -191,16 +191,16 @@ namespace VirtualCFG {
     std::vector<SgInitializedName*> scopesBeingExited() const {
       std::vector<SgInitializedName*> result;
       for (unsigned int i = 0; i < edges.size(); ++i) {
-	std::vector<SgInitializedName*> s_i = edges[i].scopesBeingExited();
-	result.insert(result.end(), s_i.begin(), s_i.end());
+        std::vector<SgInitializedName*> s_i = edges[i].scopesBeingExited();
+        result.insert(result.end(), s_i.begin(), s_i.end());
       }
       return result;
     }
     std::vector<SgInitializedName*> scopesBeingEntered() const {
       std::vector<SgInitializedName*> result;
       for (unsigned int i = 0; i < edges.size(); ++i) {
-	std::vector<SgInitializedName*> s_i = edges[i].scopesBeingEntered();
-	result.insert(result.end(), s_i.begin(), s_i.end());
+        std::vector<SgInitializedName*> s_i = edges[i].scopesBeingEntered();
+        result.insert(result.end(), s_i.begin(), s_i.end());
       }
       return result;
     }
@@ -210,12 +210,12 @@ namespace VirtualCFG {
     //! An arbitrary order, so we can use this in std::set and std::map
     bool operator<(const CFGPath& o) const {
       if (edges.size() != o.edges.size()) {
-	return edges.size() < o.edges.size();
+        return edges.size() < o.edges.size();
       }
       for (unsigned int i = 0; i < edges.size(); ++i) {
-	if (edges[i] != o.edges[i]) {
-	  return edges[i] < o.edges[i];
-	}
+        if (edges[i] != o.edges[i]) {
+          return edges[i] < o.edges[i];
+        }
       }
       return false;
     }

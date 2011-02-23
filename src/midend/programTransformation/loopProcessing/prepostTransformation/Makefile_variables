@@ -1,0 +1,46 @@
+
+mpt_lpPrepostTransofmration_includes=\
+	-I$(mpt_lpPrepostTransformationPath)/../driver \
+	-I$(mpt_lpPrepostTransformationPath)/../depInfo \
+	-I$(top_srcdir)/src/util/support \
+	-I$(top_srcdir)/src/midend/astUtil/astSupport \
+	-I$(top_srcdir)/src/midend/astUtil/symbolicVal \
+	-I$(top_srcdir)/src/midend/astUtil/astInterface \
+	-I$(top_srcdir)/src/midend/programAnalysis/dataflowAnalysis \
+	-I$(top_srcdir)/src/midend/programAnalysis/CFG \
+	-I$(top_srcdir)/src/util/graphs
+
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+mpt_lpPrepostTransformation_la_sources=\
+	$(mpt_lpPrepostTransformationPath)/BreakupStmt.C \
+	$(mpt_lpPrepostTransformationPath)/LoopUnroll.C \
+	$(mpt_lpPrepostTransformationPath)/PrivatizeScalar.C
+
+
+mpt_lpPrepostTransformation_includeHeaders=\
+	$(mpt_lpPrepostTransformationPath)/BreakupStmt.h \
+	$(mpt_lpPrepostTransformationPath)/LoopUnroll.h \
+	$(mpt_lpPrepostTransformationPath)/PrePostTransformation.h \
+	$(mpt_lpPrepostTransformationPath)/PrivatizeScalar.h
+
+
+mpt_lpPrepostTransformation_extraDist=\
+	$(mpt_lpPrepostTransformationPath)/CMakeLists.txt
+
+
+mpt_lpPrepostTransformation_cleanLocal=\
+	rm -rf \
+		$(mpt_lpPrepostTransformationPath)/Templates.DB \
+		$(mpt_lpPrepostTransformationPath)/ii_files \
+		$(mpt_lpPrepostTransformationPath)/ti_files \
+		$(mpt_lpPrepostTransformationPath)/cxx_templates
+
+
+mpt_lpPrepostTransformation_distCleanLocal=\
+	rm -rf \
+		$(mpt_lpPrepostTransformationPath)/Templates.DB

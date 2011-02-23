@@ -94,9 +94,9 @@ using namespace std; // For compatibility with non-std C headers
 #include "TarjanIntervals.h"
 
 
-#define ROOT_DFNUM	0
-#define INVALID_DFNUM	-1
-#define dfnum(v)		(nodeid_to_dfnum_map[v])
+#define ROOT_DFNUM      0
+#define INVALID_DFNUM   -1
+#define dfnum(v)                (nodeid_to_dfnum_map[v])
 
 
 // There will be an array of TarjWorks, one for each node.  These
@@ -107,15 +107,15 @@ public:
   TarjWork();
   ~TarjWork();
 
-  int wk_vertex;	// map from DFS# of vertex to RIFGNodeId
-  int wk_last;		// DFS # of vertex's last descendant
-  int wk_header;	// header of the vertex's interval -- HIGHPT
-  int wk_nextP;		// next member of P set == reachunder
-  int wk_nextQ;		// next member of Q set == worklist
-  bool wk_inP;		// test for membership in P == reachunder
-  bool wk_isCyclic;	// has backedges -- to id singles
-  bool wk_reducible;	// true if cyclic scr is reducible
-  std::list<int> backPreds;	// List of preds that are backedges.
+  int wk_vertex;        // map from DFS# of vertex to RIFGNodeId
+  int wk_last;          // DFS # of vertex's last descendant
+  int wk_header;        // header of the vertex's interval -- HIGHPT
+  int wk_nextP;         // next member of P set == reachunder
+  int wk_nextQ;         // next member of Q set == worklist
+  bool wk_inP;          // test for membership in P == reachunder
+  bool wk_isCyclic;     // has backedges -- to id singles
+  bool wk_reducible;    // true if cyclic scr is reducible
+  std::list<int> backPreds;     // List of preds that are backedges.
   std::list<int> nonBackPreds;  // List of preds that are non-backedges.
 };
 
@@ -132,48 +132,48 @@ public:
 class TarjTreeNode {
 public:
   TarjTreeNode();
-  RIFGNodeId nodeid;	// Associated RIFGNodeId.
-  short level;		// nesting depth -- outermost loop is 1 
-  RITarjType type;	// acyclic, interval or irreducible 
-  int outer;		// DFS number of header of containing interval
-  int inners;		// DFS number of header of first nested interval
-  int next;		// DFS number of next nested header
-  int prenum;		// preorder number
-  int last;		// number of last descendent
-  RIFGNodeId last_id;	// id of last descendent
-  short loopIndex;	// unique id for intervals
+  RIFGNodeId nodeid;    // Associated RIFGNodeId.
+  short level;          // nesting depth -- outermost loop is 1 
+  RITarjType type;      // acyclic, interval or irreducible 
+  int outer;            // DFS number of header of containing interval
+  int inners;           // DFS number of header of first nested interval
+  int next;             // DFS number of next nested header
+  int prenum;           // preorder number
+  int last;             // number of last descendent
+  RIFGNodeId last_id;   // id of last descendent
+  short loopIndex;      // unique id for intervals
 };
 
-#define TARJ_nodeid(name)	(tarj[name].nodeid)
-#define TARJ_outer(name)	(tarj[name].outer)
-#define TARJ_inners(name)	(tarj[name].inners)
-#define TARJ_next(name)		(tarj[name].next)
-#define TARJ_level(name)	(tarj[name].level)
-#define TARJ_type(name)		(tarj[name].type)
-#define TARJ_last(name)		(tarj[name].last)
-#define TARJ_last_id(name)	(tarj[name].last_id)
-#define TARJ_loopIndex(name)	(tarj[name].loopIndex)
-#define TARJ_contains(a,b)	\
+#define TARJ_nodeid(name)       (tarj[name].nodeid)
+#define TARJ_outer(name)        (tarj[name].outer)
+#define TARJ_inners(name)       (tarj[name].inners)
+#define TARJ_next(name)         (tarj[name].next)
+#define TARJ_level(name)        (tarj[name].level)
+#define TARJ_type(name)         (tarj[name].type)
+#define TARJ_last(name)         (tarj[name].last)
+#define TARJ_last_id(name)      (tarj[name].last_id)
+#define TARJ_loopIndex(name)    (tarj[name].loopIndex)
+#define TARJ_contains(a,b)      \
     ( ( tarj[a].prenum <= tarj[b].prenum ) && \
       ( tarj[b].prenum <= tarj[tarj[a].last].prenum ) \
     )
 
 
 
-#define vertex(x)	(wk[x].wk_vertex)
-#define TLast(x)	(wk[x].wk_last)
-#define header(x)	(wk[x].wk_header)
-#define nextP(x)	(wk[x].wk_nextP)
-#define nextQ(x)	(wk[x].wk_nextQ)
-#define inP(x)		(wk[x].wk_inP)
-#define isCyclic(x)	(wk[x].wk_isCyclic)
-#define reducible(x)	(wk[x].wk_reducible)
-#define backPreds(x)	(wk[x].backPreds)
-#define nonBackPreds(x)	(wk[x].nonBackPreds)
+#define vertex(x)       (wk[x].wk_vertex)
+#define TLast(x)        (wk[x].wk_last)
+#define header(x)       (wk[x].wk_header)
+#define nextP(x)        (wk[x].wk_nextP)
+#define nextQ(x)        (wk[x].wk_nextQ)
+#define inP(x)          (wk[x].wk_inP)
+#define isCyclic(x)     (wk[x].wk_isCyclic)
+#define reducible(x)    (wk[x].wk_reducible)
+#define backPreds(x)    (wk[x].backPreds)
+#define nonBackPreds(x) (wk[x].nonBackPreds)
 
 
-static int n;		// next DFS preorder number
-static int last_id;	// RIFGNodeId whose DFS preorder number is n
+static int n;           // next DFS preorder number
+static int last_id;     // RIFGNodeId whose DFS preorder number is n
 
 
 //
@@ -236,7 +236,7 @@ void TarjanIntervals::Create()
 void TarjanIntervals::Sort()
 {
   RIFGNodeId gId;
-  int parent;		// Tarj parent (loop header)
+  int parent;           // Tarj parent (loop header)
 
   // Now disconnect all "next" fields for all tarj nodes
 
@@ -281,13 +281,13 @@ TarjTreeNode *TarjanIntervals::GetTarjanTree()
 TarjTreeNode::TarjTreeNode()
 {
   nodeid = RIFG_NIL;
-  level = 0;		
-  type = RI_TARJ_ACYCLIC;		
-  outer = INVALID_DFNUM;	
+  level = 0;            
+  type = RI_TARJ_ACYCLIC;               
+  outer = INVALID_DFNUM;        
   inners = INVALID_DFNUM;
   next = INVALID_DFNUM;
   prenum = -1;
-  last = INVALID_DFNUM;	
+  last = INVALID_DFNUM; 
   last_id= RIFG_NIL;
   loopIndex = RIFG_NIL;
 }
@@ -295,14 +295,14 @@ TarjTreeNode::TarjTreeNode()
 
 TarjWork::TarjWork() 
 {
-  wk_vertex = RIFG_NIL;	
-  wk_last = INVALID_DFNUM;	
-  wk_header = ROOT_DFNUM; // should be ROOT_DFNUM, not RIFG_NIL;		
-  wk_nextP = INVALID_DFNUM;		
+  wk_vertex = RIFG_NIL; 
+  wk_last = INVALID_DFNUM;      
+  wk_header = ROOT_DFNUM; // should be ROOT_DFNUM, not RIFG_NIL;                
+  wk_nextP = INVALID_DFNUM;             
   wk_nextQ = INVALID_DFNUM;
   wk_inP = false;
   wk_isCyclic = false;
-  wk_reducible = true;	
+  wk_reducible = true;  
 }
 
 
@@ -397,8 +397,8 @@ void TarjanIntervals::FillPredLists()
 //
 void TarjanIntervals::GetTarjans()
 {
-  int w;		// DFS number of current vertex
-  int firstP, firstQ;	// set and worklist
+  int w;                // DFS number of current vertex
+  int firstP, firstQ;   // set and worklist
 
   //
   // Following loop should skip root (prenumbered as 0)
@@ -415,7 +415,7 @@ void TarjanIntervals::GetTarjans()
       std::list<int>::iterator prednum; 
       for (prednum = backPreds(w).begin(); prednum != backPreds(w).end();
            prednum++) { // loop d
-        int u,v;			// vertex names
+        int u,v;                        // vertex names
         v = *prednum;
         // ignore predecessors not reachable
         if (v != INVALID_DFNUM)
@@ -446,10 +446,10 @@ void TarjanIntervals::GetTarjans()
         isCyclic(w) = true;
 
       while (firstQ != INVALID_DFNUM) {
-        int x, y, yy;		// DFS nums of vertices
+        int x, y, yy;           // DFS nums of vertices
 
         x = firstQ;
-        firstQ = nextQ(x);	// remove x from worklist
+        firstQ = nextQ(x);      // remove x from worklist
 
         //
         // Now look at non-cycle arcs
@@ -521,8 +521,8 @@ void TarjanIntervals::GetTarjans()
 //
 void TarjanIntervals::Build()
 {
-  int w;		// DFS number of current vertex
-  int outer;		// DFS number header of surrounding loop
+  int w;                // DFS number of current vertex
+  int outer;            // DFS number header of surrounding loop
 
   TARJ_nodeid(ROOT_DFNUM) = g.GetRootNode();
   //
@@ -554,7 +554,7 @@ void TarjanIntervals::Build()
         }
       } else {
         //
-        // tarj[w].type  = RI_TARJ_ACYCLIC;	% done in InitArrays
+        // tarj[w].type  = RI_TARJ_ACYCLIC;     % done in InitArrays
         //
         TARJ_level(w) = TARJ_level(outer);
       }
@@ -578,7 +578,7 @@ void TarjanIntervals::Prenumber(int v)
     Prenumber(inner);
   }
 
-  /* tarj[v].last = n;	// 3/18/93 RvH: switch to RIFGNodeId last_id */
+  /* tarj[v].last = n;  // 3/18/93 RvH: switch to RIFGNodeId last_id */
   tarj[v].last_id = last_id;
   tarj[v].last = dfnum(last_id);
 }
@@ -631,7 +631,7 @@ void TarjanIntervals::ComputeIntervalIndex()
 void TarjanIntervals::DumpSubTree(int node, int indent)
 {
   static const char *IntervalType[] = {"NOTHING", "Acyclic",
-				  "Interval", "Irreducible"};
+                                  "Interval", "Irreducible"};
   //
   // Indent by three
   //

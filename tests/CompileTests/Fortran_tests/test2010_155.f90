@@ -6,7 +6,7 @@
 ! (1) the subprogram variable gets a copy of the module variable's
 !     initializer, if any.
 
-module m
+module m155
    real  :: x = 0.0  ! type of this 'x' becomes 'character'
 contains
   subroutine g

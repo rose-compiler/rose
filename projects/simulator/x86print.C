@@ -29,10 +29,19 @@ print_flags(FILE *f, const Translate *tlist, uint32_t value)
     /* Look for a flag(s) corresponding to a zero value if we haven't printed anything yet */
     if (!nelmts && !value) {
         for (const Translate *t=tlist; t->str; t++) {
-            if ((value & t->mask)==t->val) {
+            if (0!=t->mask && (value & t->mask)==t->val) {
                 retval += fprintf(f, "%s%s", nelmts++?"|":"", t->str);
                 value &= ~(t->val);
             }
+        }
+    }
+
+    /* Print stuff with TF_FMT elements (t->mask is zero; t->val is the mask; t->str is the format) */
+    for (const Translate *t=tlist; t->str; t++) {
+        if (0==t->mask && 0!=t->val) {
+            retval += fprintf(f, "%s", nelmts++?"|":"");
+            retval += fprintf(f, t->str, value & t->val);
+            value &= ~(t->val);
         }
     }
 
@@ -121,6 +130,35 @@ print_string(FILE *f, const std::string &value, bool str_fault, bool str_trunc)
 }
 
 int
+print_buffer(FILE *f, uint32_t va, const uint8_t *buf, size_t actual_sz, size_t print_sz)
+{
+    int retval = fprintf(f, "0x%08"PRIx32" [", va);
+    for (size_t i=0; i<actual_sz && (size_t)retval<print_sz; i++) {
+        switch (buf[i]) {
+            case '"': retval += fprintf(f, "\\\""); break;
+            case '\a': retval += fprintf(f, "\\a"); break;
+            case '\b': retval += fprintf(f, "\\b"); break;
+            case '\f': retval += fprintf(f, "\\f"); break;
+            case '\n': retval += fprintf(f, "\\n"); break;
+            case '\r': retval += fprintf(f, "\\r"); break;
+            case '\t': retval += fprintf(f, "\\t"); break;
+            case '\v': retval += fprintf(f, "\\v"); break;
+            default:
+                if (isprint(buf[i])) {
+                    retval += fprintf(f, "%c", buf[i]);
+                } else {
+                    retval += fprintf(f, "\\%03o", (unsigned)buf[i]);
+                }
+                break;
+        }
+    }
+    retval += fprintf(f, "]");
+    if (print_sz<actual_sz)
+        retval += fprintf(f, "...");
+    return retval;
+}
+
+int
 print_time(FILE *f, uint32_t value)
 {
     time_t ts = value;
@@ -138,6 +176,9 @@ print_single(FILE *f, char fmt, const ArgInfo *info)
     switch (fmt) {
         case '-':
             retval += fprintf(f, "<unused>");
+            break;
+        case 'b':
+            retval += print_buffer(f, info->val, info->struct_buf, info->struct_nread, info->struct_size);
             break;
         case 'd':
             retval += print_signed(f, info->val);
@@ -169,9 +210,12 @@ print_single(FILE *f, char fmt, const ArgInfo *info)
 }
 
 int
-print_enter(FILE *f, const char *name, const char *format, const ArgInfo *info)
+print_enter(FILE *f, const char *name, int syscallnum, const char *format, const ArgInfo *info)
 {
-    int retval = fprintf(f, "%s(", name);
+    int retval = fprintf(f, "%s", name);
+    if (syscallnum>0)
+        retval += fprintf(f, "[%d]", syscallnum);
+    retval += fprintf(f, "(");
     for (size_t i=0; format && format[i]; i++) {
         if (i>0)
             retval += fprintf(f, ", ");

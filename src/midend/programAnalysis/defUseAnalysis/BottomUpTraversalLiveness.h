@@ -17,11 +17,11 @@ class BottomUpTraversalLivenessIN: public AstBottomUpProcessing<std::vector<SgIn
 
  protected:
   virtual std::vector<SgInitializedName*> *evaluateSynthesizedAttribute(SgNode *node, 
-						      SynthesizedAttributesList synAttributes)  {
+                                                      SynthesizedAttributesList synAttributes)  {
     std::vector<SgInitializedName*> current_in = (live->getIn(node));
 
 //    std::cout << ">>> visiting node : " << node->class_name() << "  elements IN[]: " << current_in.size() 
-//	      <<"  merging with nodes: " << synAttributes.size() << std::endl;
+//            <<"  merging with nodes: " << synAttributes.size() << std::endl;
     std::vector<SgInitializedName*>* newVec = defaultSynthesizedAttribute();
 
     std::vector<  std::vector<SgInitializedName*>* >::const_iterator s;
@@ -30,7 +30,7 @@ class BottomUpTraversalLivenessIN: public AstBottomUpProcessing<std::vector<SgIn
       // merge vec and in
      // std::cout << "    >>> Merging *vec and newVec    --- *vec size :" << (*vec).size() << std::endl;
       if ((*vec).size()>0) {
-	*newVec = live->merge_no_dups(*vec,*newVec);
+        *newVec = live->merge_no_dups(*vec,*newVec);
       }
       delete *s;
     }
@@ -60,11 +60,11 @@ class BottomUpTraversalLivenessOUT: public AstBottomUpProcessing<std::vector<SgI
 
  protected:
   virtual std::vector<SgInitializedName*> *evaluateSynthesizedAttribute(SgNode *node, 
-						      SynthesizedAttributesList synAttributes)  {
+                                                      SynthesizedAttributesList synAttributes)  {
     std::vector<SgInitializedName*> current_out = (live->getOut(node));
 
 //    std::cout << ">>> visiting node : " << node->class_name() << "  elements OUT[]: " << current_out.size() 
-//	      <<"  merging with nodes: " << synAttributes.size() << std::endl;
+//            <<"  merging with nodes: " << synAttributes.size() << std::endl;
     std::vector<SgInitializedName*>* newVec = defaultSynthesizedAttribute();
 
     std::vector<  std::vector<SgInitializedName*>* >::const_iterator s;
@@ -73,7 +73,7 @@ class BottomUpTraversalLivenessOUT: public AstBottomUpProcessing<std::vector<SgI
       // merge vec and out
       //std::cout << "    >>> Merging *vec and newVec    --- *vec size :" << (*vec).size() << std::endl;
       if ((*vec).size()>0) {
-	*newVec = live->merge_no_dups(*vec,*newVec);
+        *newVec = live->merge_no_dups(*vec,*newVec);
       }
       delete *s;
     }

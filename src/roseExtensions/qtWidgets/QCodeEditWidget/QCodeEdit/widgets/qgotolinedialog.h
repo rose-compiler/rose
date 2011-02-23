@@ -19,10 +19,10 @@
 #include "qce-config.h"
 
 /*!
-	\file qgotodialog.h
-	\brief Definition of the QGotoLineDialog class
-	
-	\see QGotoLineDialog
+        \file qgotodialog.h
+        \brief Definition of the QGotoLineDialog class
+        
+        \see QGotoLineDialog
 */
 
 #include "ui_gotoline.h"
@@ -33,13 +33,13 @@ class QEditor;
 
 class QCE_EXPORT QGotoLineDialog : public QDialog, private Ui::GotoDialog
 {
-	Q_OBJECT
-	
-	public:
-		QGotoLineDialog(QWidget *w = 0);
-		
-	public slots:
-		void exec(QEditor *e);
+        Q_OBJECT
+        
+        public:
+                QGotoLineDialog(QWidget *w = 0);
+                
+        public slots:
+                void exec(QEditor *e);
 };
 
 #endif // _QGOTO_LINE__DIALOG_H_

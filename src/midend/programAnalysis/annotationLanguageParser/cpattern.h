@@ -47,7 +47,7 @@ public:
   /** @brief Lookup annotation variable */
 
   void lookup(procedureAnn * procedure,
-	      Annotations * annotations);
+              Annotations * annotations);
 
   /** @brief Constant folding (No-op) */
 
@@ -120,7 +120,7 @@ public:
   /** @brief Lookup annotation variable */
 
   void lookup(procedureAnn * procedure,
-	      Annotations * annotations);
+              Annotations * annotations);
 
   /** @name AST Traversal
    *
@@ -187,12 +187,12 @@ public:
   /** @brief Lookup annotation variable */
 
   void lookup(procedureAnn * procedure,
-	      Annotations * annotations);
+              Annotations * annotations);
 
   /** @brief Type equality (No-op) */
 
   bool qualified_equal_to(typeNode * node2,
-			  bool strict_toplevel, bool strict_recursive)
+                          bool strict_toplevel, bool strict_recursive)
   { return false; }
 
   /** @name AST Traversal
@@ -248,8 +248,8 @@ private:
 public:
 
   patternExpander(callsiteEntry * callsite,
-		  propertyAnalyzer * analyzer,
-		  Annotations * annotations);
+                  propertyAnalyzer * analyzer,
+                  Annotations * annotations);
 
   virtual Node * at_expr(exprNode * the_expr, Order ord);
   virtual Node * at_stmt(stmtNode * the_stmt, Order ord);

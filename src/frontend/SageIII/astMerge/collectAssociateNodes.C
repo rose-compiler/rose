@@ -231,6 +231,9 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
                break;
              }
 
+       // DQ (2/2/2011): Unclear if there is anything to do here for this type (any associated IR nodes would have been visited already).
+          case V_SgTypeLabel:
+
        // DQ (1/6/2009): Added support for SgTypeSignedLongLong (only an error on 32 bit systems, not 64 bit systems).
           case V_SgTypeSignedLongLong:
 
@@ -705,9 +708,15 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
 
                if (symbol != NULL)
                   {
-                    SgVariableSymbol* variableSymbol = isSgVariableSymbol(symbol);
+                    SgVariableSymbol*  variableSymbol = isSgVariableSymbol(symbol);
                     SgEnumFieldSymbol* enumFieldSymbol = isSgEnumFieldSymbol(symbol);
-                    if (variableSymbol == NULL && enumFieldSymbol == NULL)
+
+                 // DQ (2/2/2011): Added support for SgLabelSymbol which can also have a SgInitializedName 
+                 // IR node as a child (and thus be the symbol associated with a SgInitializedName).
+                    SgLabelSymbol*     labelSymbol     = isSgLabelSymbol(symbol);
+
+                 // if (variableSymbol == NULL && enumFieldSymbol == NULL)
+                    if (variableSymbol == NULL && enumFieldSymbol == NULL && labelSymbol == NULL)
                        {
                          printf ("symbol = %p = %s \n",symbol,symbol->class_name().c_str());
                          initializedName->get_startOfConstruct()->display("Error: initializedName located at");
@@ -715,7 +724,8 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                          SageInterface::outputLocalSymbolTables(initializedName->get_scope());
                          printf ("************************ OUTPUT SYMBOL TABLE *********************\n");
                        }
-                    ROSE_ASSERT(variableSymbol != NULL || enumFieldSymbol != NULL);
+                 // ROSE_ASSERT(variableSymbol != NULL || enumFieldSymbol != NULL);
+                    ROSE_ASSERT(variableSymbol != NULL || enumFieldSymbol != NULL || labelSymbol != NULL);
 
                     nodeList.insert(symbol);
                     ROSE_ASSERT(finalDeleteSet.find(symbol) == finalDeleteSet.end());

@@ -109,11 +109,11 @@ bool RoseBin_support::filterName(std::string name) {
  * resolve value 
  ****************************************************/
 std::string RoseBin_support::resolveValue(SgAsmValueExpression* expr, 
-					  bool is_mnemonic_call,
-					  uint8_t &byte_val,
-					  uint16_t &word_val,
-					  uint32_t &double_word_val,
-					  uint64_t &quad_word_val,
+                                          bool is_mnemonic_call,
+                                          uint8_t &byte_val,
+                                          uint16_t &word_val,
+                                          uint32_t &double_word_val,
+                                          uint64_t &quad_word_val,
                                           bool unparseSignedConstants) {
   string res="...";
   ostringstream os; 
@@ -139,54 +139,54 @@ std::string RoseBin_support::resolveValue(SgAsmValueExpression* expr,
     } else
 
       if (isSgAsmDoubleWordValueExpression(expr)) {
-	SgAsmDoubleWordValueExpression* valExp = isSgAsmDoubleWordValueExpression(expr);
-	double_word_val = valExp->get_value(); 
-	// int int_val = static_cast<int> (val);
-	// res = "(dword)" + RoseBin_support::ToString(int_val);
-	if (is_mnemonic_call)
-	  os << hex << double_word_val; 
-	else if (unparseSignedConstants)
+        SgAsmDoubleWordValueExpression* valExp = isSgAsmDoubleWordValueExpression(expr);
+        double_word_val = valExp->get_value(); 
+        // int int_val = static_cast<int> (val);
+        // res = "(dword)" + RoseBin_support::ToString(int_val);
+        if (is_mnemonic_call)
+          os << hex << double_word_val; 
+        else if (unparseSignedConstants)
           os << dec << (int32_t)double_word_val;
         else
-	  os << "0x" << hex << double_word_val; 
-	res = os.str();
+          os << "0x" << hex << double_word_val; 
+        res = os.str();
       } else
 
-	if (isSgAsmSingleFloatValueExpression(expr)) {
-	  SgAsmSingleFloatValueExpression* valExp = isSgAsmSingleFloatValueExpression(expr);
-	  float val = valExp->get_value(); 
-	  os << "0x" << hex << val;
-	  res = os.str();
-	  //res = "(float)" + RoseBin_support::ToString(val);
-	} else
+        if (isSgAsmSingleFloatValueExpression(expr)) {
+          SgAsmSingleFloatValueExpression* valExp = isSgAsmSingleFloatValueExpression(expr);
+          float val = valExp->get_value(); 
+          os << "0x" << hex << val;
+          res = os.str();
+          //res = "(float)" + RoseBin_support::ToString(val);
+        } else
 
-	  if (isSgAsmQuadWordValueExpression(expr)) {
-	    SgAsmQuadWordValueExpression* valExp = isSgAsmQuadWordValueExpression(expr);
-	    quad_word_val = valExp->get_value(); 
+          if (isSgAsmQuadWordValueExpression(expr)) {
+            SgAsmQuadWordValueExpression* valExp = isSgAsmQuadWordValueExpression(expr);
+            quad_word_val = valExp->get_value(); 
             if (unparseSignedConstants)
               os << dec << (int64_t)quad_word_val;
             else
               os << "0x" << hex << quad_word_val;
-	    res = os.str();
-	    //res = "(qword)" + RoseBin_support::ToString(val);
-	  } else
+            res = os.str();
+            //res = "(qword)" + RoseBin_support::ToString(val);
+          } else
 
-	    if (isSgAsmVectorValueExpression(expr)) {
-	      //SgAsmVectorValueExpression* valExp = isSgAsmVectorValueExpression(expr);
+            if (isSgAsmVectorValueExpression(expr)) {
+              //SgAsmVectorValueExpression* valExp = isSgAsmVectorValueExpression(expr);
     
-	      res = "(vector)";
-	    } else
+              res = "(vector)";
+            } else
 
-	      if (isSgAsmWordValueExpression(expr)) {
-		SgAsmWordValueExpression* valExp = isSgAsmWordValueExpression(expr);
-		word_val = valExp->get_value(); 
+              if (isSgAsmWordValueExpression(expr)) {
+                SgAsmWordValueExpression* valExp = isSgAsmWordValueExpression(expr);
+                word_val = valExp->get_value(); 
                 if (unparseSignedConstants)
                   os << dec << (int16_t)word_val;
                 else
                   os << "0x" << hex << word_val;
-		res = os.str();
-		//		res = "(word)" + RoseBin_support::ToString(val);
-	      } 
+                res = os.str();
+                //              res = "(word)" + RoseBin_support::ToString(val);
+              } 
 
   return res;
 }
@@ -195,7 +195,7 @@ bool isAsmUnconditionalBranch(SgAsmInstruction* insn) {
   switch (insn->variantT()) {
     case V_SgAsmx86Instruction: return x86InstructionIsUnconditionalBranch(isSgAsmx86Instruction(insn));
     // case V_SgAsmArmInstruction: return armInstructionIsUnconditionalBranch(isSgAsmArmInstruction(insn));
-	default: { ROSE_ASSERT (!"Bad instruction type"); /* Avoid MSVC warning. */ return false; }
+        default: { ROSE_ASSERT (!"Bad instruction type"); /* Avoid MSVC warning. */ return false; }
   }
 }
 
@@ -203,7 +203,7 @@ bool isAsmBranch(SgAsmInstruction* insn) {
   switch (insn->variantT()) {
     case V_SgAsmx86Instruction: return x86InstructionIsControlTransfer(isSgAsmx86Instruction(insn));
     // case V_SgAsmArmInstruction: return armInstructionIsBranch(isSgAsmArmInstruction(insn));
-	default: { ROSE_ASSERT (!"Bad instruction type"); /* Avoid MSVC warning. */ return false; }
+        default: { ROSE_ASSERT (!"Bad instruction type"); /* Avoid MSVC warning. */ return false; }
   }
 }
 
@@ -211,6 +211,6 @@ bool getAsmKnownBranchTarget(SgAsmInstruction* insn, uint64_t& addr) {
   switch (insn->variantT()) {
     case V_SgAsmx86Instruction: return x86GetKnownBranchTarget(isSgAsmx86Instruction(insn), addr);
     // case V_SgAsmArmInstruction: return armGetKnownBranchTarget(isSgAsmArmInstruction(insn), addr);
-	default: { ROSE_ASSERT (!"Bad instruction type"); /* Avoid MSVC warning. */ return false; }
+        default: { ROSE_ASSERT (!"Bad instruction type"); /* Avoid MSVC warning. */ return false; }
   }
 }

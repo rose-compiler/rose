@@ -24,7 +24,7 @@ noinst_PROGRAMS = \
     buildAbstractHandle getDependentDecls buildStructDeclaration2 buildTypedefDeclaration \
     deepDelete insertStatementBeforeFunction removeStatementCommentRelocation \
     generateUniqueName annotateExpressionsWithUniqueNames buildExternalStatement \
-    buildCommonBlock doLoopNormalization buildLabelStatement2
+    buildCommonBlock doLoopNormalization buildLabelStatement2 replaceWithPattern
 
 # list of test SAGE AST builders 
 annotateExpressionsWithUniqueNames_SOURCES = annotateExpressionsWithUniqueNames.C
@@ -75,6 +75,7 @@ buildExternalStatement_SOURCES           = buildExternalStatement.C
 buildCommonBlock_SOURCES                 = buildCommonBlock.C
 doLoopNormalization_SOURCES              = doLoopNormalization.C
 buildLabelStatement2_SOURCES	         = buildLabelStatement2.C
+replaceWithPattern_SOURCES               = replaceWithPattern.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -130,7 +131,8 @@ generatedCodeExamples = \
   rose_inputinsertStatementBeforeFunction.C \
   rose_inputRemoveStatementCommentRelocation.C \
   rose_inputgenerateUniqueName.C \
-  rose_inputannotateExpressionsWithUniqueNames.C
+  rose_inputannotateExpressionsWithUniqueNames.C \
+  rose_inputreplaceWithPattern.C
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -188,10 +190,10 @@ rose_inputbuildCpreprocessorDefineDeclaration.C:buildCpreprocessorDefineDeclarat
 rose_inputinstrumentEndOfFunction.C:instrumentEndOfFunction
 	./instrumentEndOfFunction$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputinstrumentEndOfFunction.C
 rose_inputisUpcSharedType.upc:isUpcSharedType
-	./isUpcSharedType$(EXEEXT) $(TEST_CXXFLAGS) -rose:skipfinalCompileStep -c $(srcdir)/inputisUpcSharedType.upc
+	./isUpcSharedType$(EXEEXT) $(TEST_CXXFLAGS) -rose:skipfinalCompileStep -rose:upc_threads 1 -c $(srcdir)/inputisUpcSharedType.upc
 
 rose_inputisUpcPhaseLessSharedType.upc:isUpcPhaseLessSharedType
-	./isUpcPhaseLessSharedType$(EXEEXT) $(TEST_CXXFLAGS) -rose:skipfinalCompileStep -c $(srcdir)/inputisUpcPhaseLessSharedType.upc
+	./isUpcPhaseLessSharedType$(EXEEXT) $(TEST_CXXFLAGS) -rose:skipfinalCompileStep -rose:upc_threads 1-c $(srcdir)/inputisUpcPhaseLessSharedType.upc
 
 rose_inputbuildLabelStatement.C:buildLabelStatement
 	./buildLabelStatement$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildLabelStatement.C
@@ -203,7 +205,7 @@ abiStuffTestDone: abiStuffTest inputAbiStuffTest.c
 	./abiStuffTest$(EXEEXT) $(srcdir)/inputAbiStuffTest.c && touch abiStuffTestDone
 
 rose_inputAbiStuffTestUPC.upc:abiStuffTestUPC
-	./abiStuffTestUPC$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputAbiStuffTestUPC.upc
+	./abiStuffTestUPC$(EXEEXT) $(TEST_CXXFLAGS) -rose:upc_threads 1 -c $(srcdir)/inputAbiStuffTestUPC.upc
 
 rose_inputbuildNullStatement.C:buildNullStatement
 	./buildNullStatement$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildNullStatement.C
@@ -258,6 +260,9 @@ rose_inputbuildTypedefDeclaration.C:buildTypedefDeclaration
 	./buildTypedefDeclaration$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildTypedefDeclaration.C
 rose_inputgetDependentDecls.C:getDependentDecls
 	./getDependentDecls$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputgetDependentDecls.C
+
+rose_inputreplaceWithPattern.C:replaceWithPattern
+	./replaceWithPattern$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputreplaceWithPattern.C 
 
 if ROSE_USE_INDENT
 rose_inputloopUnrolling.C:loopUnrolling
@@ -326,7 +331,7 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C \
        inputgenerateUniqueName.C inputannotateExpressionsWithUniqueNames.C \
        inputbuildExternalStatement.f inputbuildCommonBlock.f inputdoLoopNormalization.f \
-       inputbuildLabelStatement2.f
+       inputbuildLabelStatement2.f inputreplaceWithPattern.C
 
 
 check-local:
@@ -338,5 +343,6 @@ check-local:
 
 clean-local:
 	rm -f *.o test*.C rose_*.c rose_*.C rose_*.f rose_*.cpp *.C.pdf *.c.pdf testfile525.cpp testfile626.cpp rose_*.upc abiStuffTestDone *.dot rose_*
-	   
+
+
 

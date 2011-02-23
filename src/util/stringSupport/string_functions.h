@@ -52,45 +52,45 @@ namespace StringUtility
      typedef std::vector<StringUtility::StringWithLineNumber> FileWithLineNumbers;
 #endif
 
-	 inline std::ostream& operator<<(std::ostream& os, const StringWithLineNumber& s) {
-	   os << s.toString();
-	   return os;
-	 }
+         inline std::ostream& operator<<(std::ostream& os, const StringWithLineNumber& s) {
+           os << s.toString();
+           return os;
+         }
 
-	 std::string toString(const FileWithLineNumbers& strings, const std::string& filename = "<unknown>", int line = 1);
+         std::string toString(const FileWithLineNumbers& strings, const std::string& filename = "<unknown>", int line = 1);
 
-	 inline FileWithLineNumbers& operator+=(FileWithLineNumbers& a, const FileWithLineNumbers& b) {
-	   a.insert(a.end(), b.begin(), b.end());
-	   return a;
-	 }
+         inline FileWithLineNumbers& operator+=(FileWithLineNumbers& a, const FileWithLineNumbers& b) {
+           a.insert(a.end(), b.begin(), b.end());
+           return a;
+         }
 
-	 inline FileWithLineNumbers operator+(const FileWithLineNumbers& a, const FileWithLineNumbers& b) {
-	   FileWithLineNumbers f = a;
-	   f += b;
-	   return f;
-	 }
+         inline FileWithLineNumbers operator+(const FileWithLineNumbers& a, const FileWithLineNumbers& b) {
+           FileWithLineNumbers f = a;
+           f += b;
+           return f;
+         }
 
 #if 0
-	 inline std::ostream& operator<<(std::ostream& os, const FileWithLineNumbers& f) {
-	   os << StringUtility::toString(f);
-	   return os;
-	 }
+         inline std::ostream& operator<<(std::ostream& os, const FileWithLineNumbers& f) {
+           os << StringUtility::toString(f);
+           return os;
+         }
 #endif
 
-	 inline FileWithLineNumbers& operator<<(FileWithLineNumbers& f, const std::string& str) {
-	   // Add loose text to the output file
-	   if (!f.empty() && f.back().filename == "") {
-	     f.back().str += str;
-	   } else {
-	     f.push_back(StringWithLineNumber(str, "", 1));
-	   }
-	   return f;
-	 }
+         inline FileWithLineNumbers& operator<<(FileWithLineNumbers& f, const std::string& str) {
+           // Add loose text to the output file
+           if (!f.empty() && f.back().filename == "") {
+             f.back().str += str;
+           } else {
+             f.push_back(StringWithLineNumber(str, "", 1));
+           }
+           return f;
+         }
 
-	 inline FileWithLineNumbers& operator<<(FileWithLineNumbers& f, const char* str) {
-	   f << std::string(str);
-	   return f;
-	 }
+         inline FileWithLineNumbers& operator<<(FileWithLineNumbers& f, const char* str) {
+           f << std::string(str);
+           return f;
+         }
 
 #if 0
          // enum VariantT;
@@ -140,7 +140,7 @@ namespace StringUtility
            std::string addrToString( uint64_t x );
 
        //! Formatting support for generated code strings
-	   std::string indentMultilineString ( const std::string& inputString, int statementColumnNumber );
+           std::string indentMultilineString ( const std::string& inputString, int statementColumnNumber );
 
       //! Generate a string from a list of ints
            std::string listToString ( const std::list<int> & X, bool separateStrings = false );
@@ -176,8 +176,8 @@ namespace StringUtility
           FileWithLineNumbers copyEdit ( const FileWithLineNumbers& inputString, const std::string& oldToken, const FileWithLineNumbers& newToken );
        //  bool isContainedIn ( const char* longString, const char* shortString );
            inline bool isContainedIn ( const std::string & longString, const std::string & shortString ) {
-	     return longString.find(shortString) != std::string::npos;
-	   }
+             return longString.find(shortString) != std::string::npos;
+           }
 
 
        //! A smarter string concatination function (corrects for space in the target automatically)
@@ -239,12 +239,12 @@ namespace StringUtility
 
            // RSS 7/1/2008 New functionality to support filename processing
            enum OSType 
-		   { 
-			             OS_TYPE_UNKNOWN,
+                   { 
+                                     OS_TYPE_UNKNOWN,
                          OS_TYPE_LINUX,
                          OS_TYPE_OSX,
                          OS_TYPE_WINDOWS,
-						 OS_TPYE_WINDOWSXP};
+                                                 OS_TPYE_WINDOWSXP};
 
            // Return OSType based on uname kernel name results
            OSType getOSType();
@@ -257,8 +257,8 @@ namespace StringUtility
             * user (application) file It is a system library This file
             * does not exist */
            enum FileNameLocation 
-		               { 
-						           FILENAME_LOCATION_UNKNOWN, 
+                               { 
+                                                           FILENAME_LOCATION_UNKNOWN, 
                                    FILENAME_LOCATION_USER,    
                                    FILENAME_LOCATION_LIBRARY,
                                    FILENAME_LOCATION_NOT_EXIST };
@@ -268,30 +268,30 @@ namespace StringUtility
             * the user application, or any of the libraries that the
             * enum values imply, this list will likely be added to
             * over time */
-	   /* 
+           /* 
            enum FileNameLibrary { FILENAME_LIBRARY_UNKNOWN,
                                   FILENAME_LIBRARY_USER,
                                   FILENAME_LIBRARY_C,
                                   FILENAME_LIBRARY_STDCXX,
-				  FILENAME_LIBRARY_STL,
+                                  FILENAME_LIBRARY_STL,
                                   FILENAME_LIBRARY_LINUX,
                                   FILENAME_LIBRARY_GCC,
                                   FILENAME_LIBRARY_BOOST,
                                   FILENAME_LIBRARY_ROSE };
-				  */
+                                  */
 
-	   static const std::string FILENAME_LIBRARY_UNKNOWN = "Unknown";
-	   static const std::string FILENAME_LIBRARY_USER = "User";
-	   static const std::string FILENAME_LIBRARY_C = "C";
-	   static const std::string FILENAME_LIBRARY_STDCXX = "C++";
-	   static const std::string FILENAME_LIBRARY_STL = "STL";
-	   static const std::string FILENAME_LIBRARY_LINUX = "Linux";
-	   static const std::string FILENAME_LIBRARY_GCC = "GCC";
-	   static const std::string FILENAME_LIBRARY_BOOST = "Boost";
-	   static const std::string FILENAME_LIBRARY_ROSE = "Rose";
+           static const std::string FILENAME_LIBRARY_UNKNOWN = "Unknown";
+           static const std::string FILENAME_LIBRARY_USER = "User";
+           static const std::string FILENAME_LIBRARY_C = "C";
+           static const std::string FILENAME_LIBRARY_STDCXX = "C++";
+           static const std::string FILENAME_LIBRARY_STL = "STL";
+           static const std::string FILENAME_LIBRARY_LINUX = "Linux";
+           static const std::string FILENAME_LIBRARY_GCC = "GCC";
+           static const std::string FILENAME_LIBRARY_BOOST = "Boost";
+           static const std::string FILENAME_LIBRARY_ROSE = "Rose";
 
-	   // CH (2/16/2010): Use this typedef to avoid following changes
-	   typedef std::string FileNameLibrary;
+           // CH (2/16/2010): Use this typedef to avoid following changes
+           typedef std::string FileNameLibrary;
 
            /* This is the return type of classifyFileName, which
             * provides all the details it infers */
@@ -300,9 +300,9 @@ namespace StringUtility
            private:
                FileNameLocation location;
 
-	       // CH (2/12/2010): Change 'library' type from enum to string to let user set it
+               // CH (2/12/2010): Change 'library' type from enum to string to let user set it
                FileNameLibrary library;
-	       
+               
                int distance;
 
            public:
@@ -356,44 +356,44 @@ namespace StringUtility
                /* Return a string name for the library indicated by
                 * getLibrary() */
                std::string getLibraryName() const
-		   { return library; }
+                   { return library; }
            };
 
            /* Given a fileName and an appPath that is a path to some
-       	    * application's source code directory, return a
-       	    * FileNameClassification indicating whether the fileName
-       	    * is part of the source code or some system library and
-       	    * automatically determine the operating system from the
-       	    * host uname */
+            * application's source code directory, return a
+            * FileNameClassification indicating whether the fileName
+            * is part of the source code or some system library and
+            * automatically determine the operating system from the
+            * host uname */
            FileNameClassification classifyFileName(const std::string& fileName,
                                                    const std::string& appPath);
 
            /* Given a fileName and an appPath that is a path to some
-       	    * application's source code directory, return a
-       	    * FileNameClassification indicating whether the fileName
-       	    * is part of the source code or some system library */
+            * application's source code directory, return a
+            * FileNameClassification indicating whether the fileName
+            * is part of the source code or some system library */
            FileNameClassification classifyFileName(const std::string& fileName,
                                                    const std::string& appPath,
-						   OSType os);
+                                                   OSType os);
 
            /* Given a fileName and an appPath that is a path to some
-       	    * application's source code directory, and a collection 
-	    * of library paths, return a FileNameClassification
-	    * indicating whether the fileName is part of the source 
-	    * code or some system library and automatically determine 
-	    * the operating system from the host uname */
+            * application's source code directory, and a collection 
+            * of library paths, return a FileNameClassification
+            * indicating whether the fileName is part of the source 
+            * code or some system library and automatically determine 
+            * the operating system from the host uname */
            FileNameClassification classifyFileName(const std::string& fileName,
                                                    const std::string& appPath,
-						   const std::map<std::string, std::string>& libPathCollection);
+                                                   const std::map<std::string, std::string>& libPathCollection);
 
            /* Given a fileName and an appPath that is a path to some
-       	    * application's source code directory, and a collection 
-	    * of library paths, return a FileNameClassification
-	    * indicating whether the fileName is part of the source 
-	    * code or some system library */ 
+            * application's source code directory, and a collection 
+            * of library paths, return a FileNameClassification
+            * indicating whether the fileName is part of the source 
+            * code or some system library */ 
            FileNameClassification classifyFileName(const std::string& fileName,
                                                    const std::string& appPath,
-						   const std::map<std::string, std::string>& libPathCollection,
+                                                   const std::map<std::string, std::string>& libPathCollection,
                                                    OSType os);
 
            /* Remove leading dots plus a space from a header file name
@@ -417,8 +417,8 @@ namespace StringUtility
                                   const std::string& right);
 
 
-	    /* Added htmlEscape necessary for QROSE work to this utility library - tps (9Oct2008) */
-	    std::string htmlEscape(const std::string& s);
+            /* Added htmlEscape necessary for QROSE work to this utility library - tps (9Oct2008) */
+            std::string htmlEscape(const std::string& s);
 
     // DQ (2/3/2009): Moved this function from attach_all_info.C
        std::vector<std::string> readWordsInFile( std::string filename);

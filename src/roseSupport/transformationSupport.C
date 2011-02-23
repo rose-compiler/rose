@@ -145,7 +145,7 @@ TransformationSupport::stringifyOperator (string name)
                                    operatorString = "<=";
                                  }
                               break;
-		       case '>':  // distinguish between >= and >>=
+                       case '>':  // distinguish between >= and >>=
                               if (thirdLastCharacter == '>')
                                    operatorString = ">>=";
                                 else
@@ -481,10 +481,10 @@ TransformationSupport::buildOperatorString ( SgNode* astNode )
 #endif
 
           case V_SgMemberFunctionSymbol:
-	    {
-	      // AS (9/24/03) Was not implemented before.
+            {
+              // AS (9/24/03) Was not implemented before.
 
-	       SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(astNode);
+               SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(astNode);
                ROSE_ASSERT (memberFunctionSymbol != NULL);
 
                SgName name = memberFunctionSymbol->get_name();
@@ -512,7 +512,7 @@ TransformationSupport::buildOperatorString ( SgNode* astNode )
                   }
                break;
 
-	    }
+            }
           case V_SgFunctionSymbol:
              {
                SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(astNode);
@@ -607,46 +607,46 @@ TransformationSupport::getFunctionName ( SgFunctionCallExp* functionCallExp )
 
        // returnNameString = ROSE::stringDuplicate(memberFunctionSymbol->get_name().str());
           returnNameString = memberFunctionSymbol->get_name().str();
-	  ROSE_ASSERT (returnNameString.length() > 0);
+          ROSE_ASSERT (returnNameString.length() > 0);
         }
 
      SgFunctionRefExp* functionReferenceExp = isSgFunctionRefExp(expression);
      if (functionReferenceExp != NULL)
        {
-	 SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(functionReferenceExp->get_symbol());
-	 ROSE_ASSERT (functionSymbol != NULL);
-	 
-	 // returnNameString = ROSE::stringDuplicate(functionSymbol->get_name().str());
-	 returnNameString = functionSymbol->get_name().str();
-	 
-	 // ROSE_ASSERT (returnNameString != NULL);
-	 // printf ("SgFunctionRefExp case: returnNameString = %s \n",returnNameString);
-	 
-	 // printf ("Not implemented case in getFunctionName \n");
-	 // ROSE_ABORT();
-	 ROSE_ASSERT (returnNameString.length() > 0);
+         SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(functionReferenceExp->get_symbol());
+         ROSE_ASSERT (functionSymbol != NULL);
+         
+         // returnNameString = ROSE::stringDuplicate(functionSymbol->get_name().str());
+         returnNameString = functionSymbol->get_name().str();
+         
+         // ROSE_ASSERT (returnNameString != NULL);
+         // printf ("SgFunctionRefExp case: returnNameString = %s \n",returnNameString);
+         
+         // printf ("Not implemented case in getFunctionName \n");
+         // ROSE_ABORT();
+         ROSE_ASSERT (returnNameString.length() > 0);
        }
 
      SgArrowExp* arrowExp = isSgArrowExp(expression);
      if ( arrowExp != NULL)
        {
-	 ROSE_ASSERT (arrowExp != NULL);
-	 
-	 SgExpression* rhsOperand = arrowExp->get_rhs_operand();
-	 ROSE_ASSERT (rhsOperand != NULL);
-	 
-	 SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(rhsOperand);
-	 ROSE_ASSERT (memberFunctionRefExp != NULL);
-	 
-	 SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(memberFunctionRefExp->get_symbol());
-	 ROSE_ASSERT (memberFunctionSymbol != NULL);
-	 
-	 // There will be a lot of different possible overloaded operators called
-	 // and "operator()" is just one of them (that we are debugging presently)
-	 
-	 // returnNameString = ROSE::stringDuplicate(memberFunctionSymbol->get_name().str());
-	 returnNameString = memberFunctionSymbol->get_name().str();
-	 ROSE_ASSERT (returnNameString.length() > 0);
+         ROSE_ASSERT (arrowExp != NULL);
+         
+         SgExpression* rhsOperand = arrowExp->get_rhs_operand();
+         ROSE_ASSERT (rhsOperand != NULL);
+         
+         SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(rhsOperand);
+         ROSE_ASSERT (memberFunctionRefExp != NULL);
+         
+         SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(memberFunctionRefExp->get_symbol());
+         ROSE_ASSERT (memberFunctionSymbol != NULL);
+         
+         // There will be a lot of different possible overloaded operators called
+         // and "operator()" is just one of them (that we are debugging presently)
+         
+         // returnNameString = ROSE::stringDuplicate(memberFunctionSymbol->get_name().str());
+         returnNameString = memberFunctionSymbol->get_name().str();
+         ROSE_ASSERT (returnNameString.length() > 0);
        }
      
      ROSE_ASSERT (returnNameString.length() > 0);
@@ -1674,7 +1674,7 @@ TransformationSupport::getTransformationOptionsFromVariableDeclarationConstructo
                     SgExpressionPtrList::iterator i = expressionPtrList.begin();
 
                     int counter = 0;
-	            while (i != expressionPtrList.end()) 
+                    while (i != expressionPtrList.end()) 
                        {
                       // printf ("Expression List Element #%d of %zu (total) \n",counter,expressionPtrList.size());
 
@@ -1754,7 +1754,7 @@ TransformationSupport::getTransformationOptionsFromVariableDeclarationConstructo
                     SgExpressionPtrList::iterator i = expressionPtrList.begin();
 
                     int counter = 0;
-	            while (i != expressionPtrList.end()) 
+                    while (i != expressionPtrList.end()) 
                        {
                       // printf ("Expression List Element #%d of %zu (total) \n",counter,expressionPtrList.size());
 
@@ -1838,7 +1838,7 @@ TransformationSupport::getTransformationOptionsFromVariableDeclarationConstructo
 
 #if 0
                     int counter = 0;
-	            while (i != expressionPtrList.end()) 
+                    while (i != expressionPtrList.end()) 
                        {
                          printf ("Expression List Element #%d of %zu (total) \n",counter,expressionPtrList.size());
 
@@ -1930,10 +1930,10 @@ $VARIABLE_DECLARATIONS\n\n\
         {
        // printf ("Type = %s \n",(*typeListStringElementIterator).c_str());
 
-	  
+          
        // Find a list of names of variable of type (*listStringElementIterator)
-	  NameQuery::TypeOfQueryTypeTwoParameters sageTwoParametersEnumType = NameQuery::VariableNamesWithTypeName;
-	  list<string> operandNameStringList =
+          NameQuery::TypeOfQueryTypeTwoParameters sageTwoParametersEnumType = NameQuery::VariableNamesWithTypeName;
+          list<string> operandNameStringList =
                NameQuery::querySubTree(astNode, *typeListStringElementIterator, sageTwoParametersEnumType );
 
        // Loop over all the types and get list of variable of each type
@@ -2026,27 +2026,27 @@ TransformationSupport::getProject( const SgNode* astNode )
              }
         }
 #if 0
-	if (isSgProject(parentNode) == NULL &&
-			dynamic_cast<const SgType*> (parentNode) == NULL &&
-			dynamic_cast<const SgSymbol*> (parentNode) == NULL)
-	{
-		if (SgProject::get_verbose() > 0)
-		{
-			if (astNode == NULL)
-				printf("Warning: could not trace back to SgProject node. \n");
-			else
-				printf("Warning: could not trace back to SgProject node from %s \n",
-					astNode->class_name().c_str());
-		}
-	}
-	else
-	{
-		if (dynamic_cast<const SgType*> (parentNode) != NULL || dynamic_cast<const SgSymbol*> (parentNode) != NULL)
-		{
-			printf("Error: can't locate an associated SgProject from astNode = %p = %s parentNode = %p = %s \n", astNode, astNode->class_name().c_str(), parentNode, parentNode->class_name().c_str());
-			return NULL;
-		}
-	}
+        if (isSgProject(parentNode) == NULL &&
+                        dynamic_cast<const SgType*> (parentNode) == NULL &&
+                        dynamic_cast<const SgSymbol*> (parentNode) == NULL)
+        {
+                if (SgProject::get_verbose() > 0)
+                {
+                        if (astNode == NULL)
+                                printf("Warning: could not trace back to SgProject node. \n");
+                        else
+                                printf("Warning: could not trace back to SgProject node from %s \n",
+                                        astNode->class_name().c_str());
+                }
+        }
+        else
+        {
+                if (dynamic_cast<const SgType*> (parentNode) != NULL || dynamic_cast<const SgSymbol*> (parentNode) != NULL)
+                {
+                        printf("Error: can't locate an associated SgProject from astNode = %p = %s parentNode = %p = %s \n", astNode, astNode->class_name().c_str(), parentNode, parentNode->class_name().c_str());
+                        return NULL;
+                }
+        }
 #endif
 
   // Make sure we have a SgProject node
@@ -2276,29 +2276,29 @@ TransformationSupport::getGlobalScope( const SgNode* astNode )
              }
         }
 #if 0
-	if (isSgGlobal(parentNode) == NULL &&
-			dynamic_cast<const SgType*> (parentNode) == NULL &&
-			dynamic_cast<const SgSymbol*> (parentNode) == NULL)
-	{
-		//It is possible to find no SgGlobal during transformation, changed to warning.
-		if (SgProject::get_verbose() > 0)
-		{
-			if (astNode != NULL)
-				printf("Warning: could not trace back to SgGlobal node from %s \n",
-					astNode->class_name().c_str());
-			else
-				printf("Warning: could not trace back to SgGlobal node\n ");
-		}
-		return NULL;
-	}
-	else
-	{
-		if (dynamic_cast<const SgType*> (parentNode) != NULL || dynamic_cast<const SgSymbol*> (parentNode) != NULL)
-		{
-			// printf ("Error: can't locate an associated SgGlobal from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
-			return NULL;
-		}
-	}
+        if (isSgGlobal(parentNode) == NULL &&
+                        dynamic_cast<const SgType*> (parentNode) == NULL &&
+                        dynamic_cast<const SgSymbol*> (parentNode) == NULL)
+        {
+                //It is possible to find no SgGlobal during transformation, changed to warning.
+                if (SgProject::get_verbose() > 0)
+                {
+                        if (astNode != NULL)
+                                printf("Warning: could not trace back to SgGlobal node from %s \n",
+                                        astNode->class_name().c_str());
+                        else
+                                printf("Warning: could not trace back to SgGlobal node\n ");
+                }
+                return NULL;
+        }
+        else
+        {
+                if (dynamic_cast<const SgType*> (parentNode) != NULL || dynamic_cast<const SgSymbol*> (parentNode) != NULL)
+                {
+                        // printf ("Error: can't locate an associated SgGlobal from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
+                        return NULL;
+                }
+        }
 #endif
 
   // Make sure we have a SgGlobal node
@@ -2356,17 +2356,17 @@ TransformationSupport::getStatement( const SgNode* astNode )
         }
 #if 0
           dynamic_cast<const SgSymbol*>(parentNode) == NULL)
-	{
-		if (SgProject::get_verbose() > 0)
-		{
-			if (astNode == NULL)
-				printf("Error: could not trace back to SgStatement node \n");
-			else
-				printf("Warning: could not trace back to SgStatement node from %s \n", astNode->class_name().c_str());
-		}
+        {
+                if (SgProject::get_verbose() > 0)
+                {
+                        if (astNode == NULL)
+                                printf("Error: could not trace back to SgStatement node \n");
+                        else
+                                printf("Warning: could not trace back to SgStatement node from %s \n", astNode->class_name().c_str());
+                }
 
-		return NULL;
-	}
+                return NULL;
+        }
 #endif
        else
         {
@@ -2540,13 +2540,13 @@ TransformationSupport::getModuleStatement( const SgNode* astNode)
      if ( isSgModuleStatement(parentNode) == NULL &&
           dynamic_cast<const SgType*>(parentNode) == NULL &&
           dynamic_cast<const SgSymbol*>(parentNode) == NULL)
-	{
-		if (SgProject::get_verbose() > 0)
-		{
-			printf("Warning: could not trace back to SgModuleStatement node \n");
-		}
-		return NULL;
-	}
+        {
+                if (SgProject::get_verbose() > 0)
+                {
+                        printf("Warning: could not trace back to SgModuleStatement node \n");
+                }
+                return NULL;
+        }
        else
         {
           if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )

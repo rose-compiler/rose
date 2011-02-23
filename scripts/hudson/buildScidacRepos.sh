@@ -102,7 +102,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # minimum configuration options to build binaries
-if test -e ROSE-build ; then chmod -R u+w ROSE-build ; fi
+if test -e ROSE-build ; then chmod -R u+wx ROSE-build ; fi
 rm -rf ROSE-build
 mkdir ROSE-build
 

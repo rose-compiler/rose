@@ -1,0 +1,46 @@
+# Non-recursive Makefile
+
+mpaDataflowAnalysis_includes=\
+	-I$(mpaDataflowAnalysisPath)/.. \
+	-I$(mpaDataflowAnalysisPath)/../CFG \
+	-I$(top_srcdir)/src/util \
+	-I$(top_srcdir)/src/util/support \
+	-I$(top_srcdir)/src/util/graphs \
+	-I$(top_srcdir)/src/midend/astUtil \
+	-I$(top_srcdir)/src/midend/astUtil/astSupport \
+	-I$(top_srcdir)/src/midend/astUtil/astInterface \
+	-I$(top_srcdir)/src/util/support 
+
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+mpaDataflowAnalysis_la_sources=\
+	$(mpaDataflowAnalysisPath)/DataFlowAnalysis.C \
+	$(mpaDataflowAnalysisPath)/DefUseChain.C \
+	$(mpaDataflowAnalysisPath)/ReachingDefinition.C
+
+
+mpaDataflowAnalysis_includeHeaders=\
+	$(mpaDataflowAnalysisPath)/DataFlowAnalysis.h \
+	$(mpaDataflowAnalysisPath)/DefUseChain.h \
+	$(mpaDataflowAnalysisPath)/ReachingDefinition.h
+
+
+mpaDataflowAnalysis_extraDist=\
+	$(mpaDataflowAnalysisPath)/CMakeLists.txt
+
+
+mpaDataflowAnalysis_cleanLocal=\
+	rm -rf \
+		$(mpaDataflowAnalysisPath)/Templates.DB \
+		$(mpaDataflowAnalysisPath)/ii_files \
+		$(mpaDataflowAnalysisPath)/ti_files \
+		$(mpaDataflowAnalysisPath)/cxx_templates
+
+
+mpaDataflowAnalysis_distCleanLocal=\
+	rm -rf \
+		$(mpaDataflowAnalysisPath)/Templates.DB

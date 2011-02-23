@@ -2,42 +2,53 @@
 #define reverse_rctypes_h
 
 #include <stdlib.h>
-#include <stack>
+#include <deque>
 #include <queue>
 #include <boost/any.hpp>
 
-using boost::any;
-
 template <class T>
-T push(std::stack<T>& data_stack, T val)
+T push(std::deque<T>& data_stack, T val)
 {
-    data_stack.push(val);
+    data_stack.push_back(val);
     return val;
 }
 
 template <class T>
-T pop(std::stack<T>& data_stack)
+T pop(std::deque<T>& data_stack)
 {
-    T val = data_stack.top();
-    data_stack.pop();
+    T val = data_stack.back();
+    data_stack.pop_back();
+    return val;
+}
+
+//!Pop from the front of a stack. Used in fossil collection
+template <class T>
+void pop_front(std::deque<T>& data_stack)
+{
+    data_stack.pop_front();
+}
+
+template <class T>
+T push(std::deque<boost::any>& data_stack, T val)
+{
+    data_stack.push_back(boost::any(val));
     return val;
 }
 
 template <class T>
-T push(std::stack<boost::any>& data_stack, T val)
+T pop(std::deque<boost::any>& data_stack)
 {
-    data_stack.push(boost::any(val));
+    T val = boost::any_cast<T>(data_stack.back());
+    data_stack.pop_back();
     return val;
 }
 
+//!Pop from the front of a stack. Used in fossil collection
 template <class T>
-T pop(std::stack<boost::any>& data_stack)
+void pop_front(std::deque<boost::any>& data_stack)
 {
-    T val = boost::any_cast<T>(data_stack.top());
-    data_stack.pop();
-    return val;
+    data_stack.pop_front();
 }
-
 
 /**********************************************************************************
  * The following random number generator functions are to make sure the event and forward event

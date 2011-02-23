@@ -871,7 +871,7 @@ SgForInitStatement::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
           i_copy++;
         }
 
-  // Relavant data member is: SgStatementPtrList 	p_init_stmt
+  // Relavant data member is: SgStatementPtrList        p_init_stmt
    }
 
 void
@@ -888,7 +888,7 @@ SgCatchStatementSeq::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
 
      printf ("SgCatchStatementSeq::fixupCopy_symbols(): Sorry not implemented \n");
 
-  // The relavant data member here is a SgStatementPtrList 	p_catch_statement_seq
+  // The relavant data member here is a SgStatementPtrList      p_catch_statement_seq
 
   // ROSE_ASSERT(this->get_body() != NULL);
   // this->get_body()->fixupCopy_symbols(catchStatement_copy->get_body(),help);

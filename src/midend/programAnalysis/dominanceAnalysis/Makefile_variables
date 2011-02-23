@@ -1,0 +1,24 @@
+# Non-recursive Makefile
+
+mpaDominanceAnalysis_includeHeaders=\
+	$(mpaDominanceAnalysisPath)/DominatorTree.h \
+	$(mpaDominanceAnalysisPath)/filteredCFG.h \
+	$(mpaDominanceAnalysisPath)/DominanceFrontier.h \
+	$(mpaDominanceAnalysisPath)/DominatorTreeImpl.h
+
+
+mpaDominanceAnalysis_extraDist=\
+	$(mpaDominanceAnalysisPath)/CMakeLists.txt
+
+
+mpaDominanceAnalysis_cleanLocal=\
+	rm -rf \
+		$(mpaDominanceAnalysisPath)/Templates.DB \
+		$(mpaDominanceAnalysisPath)/ii_files \
+		$(mpaDominanceAnalysisPath)/ti_files \
+		$(mpaDominanceAnalysisPath)/cxx_templates
+
+
+mpaDominanceAnalysis_distCleanLocal=\
+	rm -rf \
+		$(mpaDominanceAnalysisPath)/Templates.DB

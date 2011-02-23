@@ -15,7 +15,7 @@ int main(int argc, char **argv)
 {
 
     SgProject *project = frontend(argc, argv);
-		string outputFileName=(*(*project->get_fileList()).begin())->get_sourceFileNameWithoutPath ();
+                string outputFileName=(*(*project->get_fileList()).begin())->get_sourceFileNameWithoutPath ();
 
     list < SgNode * >fd = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
     // in the test example there is only one function, therefore we don't need 
@@ -25,23 +25,23 @@ int main(int argc, char **argv)
     {
         SgFunctionDefinition *fDef = isSgFunctionDefinition(*i);
 
-				CFGNode cfg=CFGNode(fDef->cfgForBeginning());
+                                CFGNode cfg=CFGNode(fDef->cfgForBeginning());
 
 
-				string filename;
-				
-				filename =outputFileName+"."+(fDef->get_declaration()->get_name().getString())+".FullCFG.dot";
-				
+                                string filename;
+                                
+                                filename =outputFileName+"."+(fDef->get_declaration()->get_name().getString())+".FullCFG.dot";
+                                
         std::ofstream of(filename.c_str());
         cfgToDot(of, string("FullCFG"), cfg);
         of.close();
-				/*
+                                /*
         TemplatedDominatorTree < IsStatementFilter > dt(*i,
                                                         (argc >
                                                          2) ? POST_DOMINATOR : PRE_DOMINATOR);
-        TemplatedDominanceFrontier < IsStatementFilter > df(dt);				
+        TemplatedDominanceFrontier < IsStatementFilter > df(dt);                                
         dt.writeDot("dt.dot");
-				df.printFrontiers();*/
+                                df.printFrontiers();*/
     }
     return 0;
 }

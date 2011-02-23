@@ -26,8 +26,8 @@ Grammar::outputClassesAndFields ( Terminal & node )
   // Call this function recursively on the children of this node in the tree
      vector<Terminal *>::iterator treeNodeIterator;
      for( treeNodeIterator = node.subclasses.begin();
-	  treeNodeIterator != node.subclasses.end();
-	  treeNodeIterator++ )
+          treeNodeIterator != node.subclasses.end();
+          treeNodeIterator++ )
         {
           ROSE_ASSERT ((*treeNodeIterator) != NULL);
           ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);

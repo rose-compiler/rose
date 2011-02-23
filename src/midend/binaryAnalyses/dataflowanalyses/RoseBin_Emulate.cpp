@@ -262,19 +262,19 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
     //string result = unparser->resolveOperand(expr,&type);
     if (counter==0) {
       // left hand side *************************************************************
-      refExpr =	isSgAsmx86RegisterReferenceExpression(expr);
+      refExpr = isSgAsmx86RegisterReferenceExpression(expr);
 
       // check what it could be
       // ******** 1. its a RegisterReferenceExpression on the left side
       if (refExpr) {
         code = std::make_pair((X86RegisterClass)refExpr->get_descriptor().get_major(), refExpr->get_descriptor().get_minor());
-	pos = get_position_in_register(refExpr->get_descriptor());
-	operands = "\\nleft :: refExpr ";
-	//SgAsmExpression* expression = refExpr->get_offset();
-	//memRef = isSgAsmMemoryReferenceExpression(expression);
-	//if (memRef)
-	//  operands += " :: memoryRefExp ";
-	operands += "\\n";
+        pos = get_position_in_register(refExpr->get_descriptor());
+        operands = "\\nleft :: refExpr ";
+        //SgAsmExpression* expression = refExpr->get_offset();
+        //memRef = isSgAsmMemoryReferenceExpression(expression);
+        //if (memRef)
+        //  operands += " :: memoryRefExp ";
+        operands += "\\n";
       }
 
       // ******** 2. Its a BitAndByteInstruction
@@ -313,111 +313,111 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
       // check what it could be
       // ****** 1. valueExpression
       if (valExp) {
-	// value expr
-	operands += "right :: valExp ";
-	RoseBin_support::resolveValue(valExp, false,
-				      b_val,
-				      w_val,
-				      dw_val,
-				      qw_val);
-	uint64_t val = 0xFFFFFFFF;
-	if (b_val!=0xF)
-	  val = uint64_t(b_val);
-	else if (w_val!=0xFF)
-	  val = uint64_t(w_val);
-	else if (dw_val!=0xFFFF)
-	  val = uint64_t(dw_val);
-	else if (qw_val!=0xFFFFFFFF)
-	  val = uint64_t(qw_val);
+        // value expr
+        operands += "right :: valExp ";
+        RoseBin_support::resolveValue(valExp, false,
+                                      b_val,
+                                      w_val,
+                                      dw_val,
+                                      qw_val);
+        uint64_t val = 0xFFFFFFFF;
+        if (b_val!=0xF)
+          val = uint64_t(b_val);
+        else if (w_val!=0xFF)
+          val = uint64_t(w_val);
+        else if (dw_val!=0xFFFF)
+          val = uint64_t(dw_val);
+        else if (qw_val!=0xFFFFFFFF)
+          val = uint64_t(qw_val);
 
-	if (refExpr) {
+        if (refExpr) {
           switch (binInst->get_kind()) {
-	    // mov instruction
+            // mov instruction
             case x86_mov: {
-	      operands += " :: DataTrans :: Mov ";
-	      assignRegister(code, pos, b_val,
+              operands += " :: DataTrans :: Mov ";
+              assignRegister(code, pos, b_val,
                              w_val, dw_val,
-			     qw_val);
+                             qw_val);
               uint64_t addr_value=0;
-	      getRegister_val(code, RoseBin_support::x86_regpos_qword, addr_value);
-	      //string str="";
-	      //string var = createVariable(addr_value, str, type, description, length);
-	      //string varHex = RoseBin_support::HexToString(addr_value) ;
-	      //operands += "\\nVariable : " + var + "("+varHex+")";
+              getRegister_val(code, RoseBin_support::x86_regpos_qword, addr_value);
+              //string str="";
+              //string var = createVariable(addr_value, str, type, description, length);
+              //string varHex = RoseBin_support::HexToString(addr_value) ;
+              //operands += "\\nVariable : " + var + "("+varHex+")";
               break;
-	    }
+            }
 
             case x86_and: {
-	      operands += " :: Logical :: And";
-	      uint64_t reg = getRegister(code);
-	      operands+=printRegister("reg",reg);
-	      operands+=printRegister("val",val);
-	      reg &= val;
-	      assignRegister(code, reg);
-	      if (reg==0)
-		ZF = true;
-	      else ZF=false;
+              operands += " :: Logical :: And";
+              uint64_t reg = getRegister(code);
+              operands+=printRegister("reg",reg);
+              operands+=printRegister("val",val);
+              reg &= val;
+              assignRegister(code, reg);
+              if (reg==0)
+                ZF = true;
+              else ZF=false;
               break;
-	    }
+            }
 
             case x86_add: {
-	      operands += " :: Arithm :: Add";
-	      uint64_t left = getRegister(code);
-	      uint64_t sum = left+val;
-	      assignRegister(code, sum);
+              operands += " :: Arithm :: Add";
+              uint64_t left = getRegister(code);
+              uint64_t sum = left+val;
+              assignRegister(code, sum);
               break;
-	    }
+            }
 
             default:
               success = false;
-	  }
+          }
 
-	} // refExp
-	else { success = false;}
+        } // refExp
+        else { success = false;}
       } // valExp
       else if (refExprR) {
         // ****** 2. referenceExpression
-	// the right hand side is also a register or memory location
-	std::pair<X86RegisterClass, int>  codeR ;
+        // the right hand side is also a register or memory location
+        std::pair<X86RegisterClass, int>  codeR ;
         RoseBin_support::X86PositionInRegister posR ;
-	codeR = std::make_pair((X86RegisterClass)refExprR->get_descriptor().get_major(), refExprR->get_descriptor().get_minor());
-	posR = get_position_in_register(refExprR->get_descriptor());
+        codeR = std::make_pair((X86RegisterClass)refExprR->get_descriptor().get_major(), refExprR->get_descriptor().get_minor());
+        posR = get_position_in_register(refExprR->get_descriptor());
 
-	operands += "right ::  refExpr ";
+        operands += "right ::  refExpr ";
 
         switch (binInst->get_kind()) {
           case x86_mov: {
-	    operands += " :: DataTrans :: Mov";
-	    if (memRef) {
-	      operands += " :: MemRef ";
-	      SgAsmExpression* mem_loc = memRef->get_address();
-	      string res = unparseExpression(mem_loc);
-	      uint64_t pos = 0;
-	      RoseBin_support::from_string<uint64_t>(pos, res, std::hex);
-	      uint64_t value = getRegister(codeR);
-	      assignMemory(pos, value);
-	      operands += "["+res+"] "+" ("+RoseBin_support::HexToString(pos)+":"+RoseBin_support::HexToString(value)+")";
-	    } else {
-	      operands += " :: RegRef ";
-	      // copy value in right register to left register
-	      getRegister_val(codeR, posR, b_val,
-			      w_val, dw_val,
-			      qw_val);
-	      assignRegister(code, pos, b_val,
+            operands += " :: DataTrans :: Mov";
+            if (memRef) {
+              operands += " :: MemRef ";
+              SgAsmExpression* mem_loc = memRef->get_address();
+              string res = unparseExpression(mem_loc);
+              uint64_t pos = 0;
+              RoseBin_support::from_string<uint64_t>(pos, res, std::hex);
+              uint64_t value = getRegister(codeR);
+              assignMemory(pos, value);
+              operands += "["+res+"] "+" ("+RoseBin_support::HexToString(pos)+":"+RoseBin_support::HexToString(value)+")";
+            } else {
+              operands += " :: RegRef ";
+              // copy value in right register to left register
+              getRegister_val(codeR, posR, b_val,
+                              w_val, dw_val,
+                              qw_val);
+              assignRegister(code, pos, b_val,
                              w_val, dw_val,
-			     qw_val);
+                             qw_val);
             }
             break;
-	  } //mov instruction
+          } //mov instruction
 
           case x86_cmp: {
-	    operands += " :: Arith :: Cmp";
-	    uint64_t left = getRegister(code);
-	    uint64_t right = getRegister(codeR);
-	    if (left==right)
-	      ZF=true;
+            operands += " :: Arith :: Cmp";
+            uint64_t left = getRegister(code);
+            uint64_t right = getRegister(codeR);
+            if (left==right)
+              ZF=true;
             break;
-	  }
+          }
 
           default: {
             success =false;
@@ -747,33 +747,33 @@ std::string RoseBin_Emulate::evaluateRegisters() {
     string space = "      ";
 
       if (!isCode64bit) {
-	regs += "eax: " + RoseBin_support::HexToString(uint32_t(rax)) + space;
-	regs += "edi: " + RoseBin_support::HexToString(uint32_t(rdi)) + "\\n";
+        regs += "eax: " + RoseBin_support::HexToString(uint32_t(rax)) + space;
+        regs += "edi: " + RoseBin_support::HexToString(uint32_t(rdi)) + "\\n";
 
-	regs += "ebx: " + RoseBin_support::HexToString(uint32_t(rbx)) + space;
-	regs += "esi: " + RoseBin_support::HexToString(uint32_t(rsi)) + "\\n";
+        regs += "ebx: " + RoseBin_support::HexToString(uint32_t(rbx)) + space;
+        regs += "esi: " + RoseBin_support::HexToString(uint32_t(rsi)) + "\\n";
 
-	regs += "ecx: " + RoseBin_support::HexToString(uint32_t(rcx)) + space;
-	regs += "esp: " + RoseBin_support::HexToString(uint32_t(rsp)) + "\\n";
+        regs += "ecx: " + RoseBin_support::HexToString(uint32_t(rcx)) + space;
+        regs += "esp: " + RoseBin_support::HexToString(uint32_t(rsp)) + "\\n";
 
-	regs += "edx: " + RoseBin_support::HexToString(uint32_t(rdx)) + space;
-	regs += "ebp: " + RoseBin_support::HexToString(uint32_t(rbp)) + "\\n";
+        regs += "edx: " + RoseBin_support::HexToString(uint32_t(rdx)) + space;
+        regs += "ebp: " + RoseBin_support::HexToString(uint32_t(rbp)) + "\\n";
 
-	regs += "ZF: " + RoseBin_support::resBool(ZF) + "\\n";
+        regs += "ZF: " + RoseBin_support::resBool(ZF) + "\\n";
       } else {
-	regs += "rax: " + RoseBin_support::HexToString(rax) + space;
-	regs += "rdi: " + RoseBin_support::HexToString(rdi) + "\\n";
+        regs += "rax: " + RoseBin_support::HexToString(rax) + space;
+        regs += "rdi: " + RoseBin_support::HexToString(rdi) + "\\n";
 
-	regs += "rbx: " + RoseBin_support::HexToString(rbx) + space;
-	regs += "rsi: " + RoseBin_support::HexToString(rsi) + "\\n";
+        regs += "rbx: " + RoseBin_support::HexToString(rbx) + space;
+        regs += "rsi: " + RoseBin_support::HexToString(rsi) + "\\n";
 
-	regs += "rcx: " + RoseBin_support::HexToString(rcx) + space;
-	regs += "rsp: " + RoseBin_support::HexToString(rsp) + "\\n";
+        regs += "rcx: " + RoseBin_support::HexToString(rcx) + space;
+        regs += "rsp: " + RoseBin_support::HexToString(rsp) + "\\n";
 
-	regs += "rdx: " + RoseBin_support::HexToString(rdx) + space;
-	regs += "rbp: " + RoseBin_support::HexToString(rbp) + "\\n";
+        regs += "rdx: " + RoseBin_support::HexToString(rdx) + space;
+        regs += "rbp: " + RoseBin_support::HexToString(rbp) + "\\n";
 
-	regs += "ZF: " + RoseBin_support::resBool(ZF) + "\\n";
+        regs += "ZF: " + RoseBin_support::resBool(ZF) + "\\n";
       }
       //      regs += eval;
       return regs;

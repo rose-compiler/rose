@@ -98,8 +98,8 @@
 #endif
 
 #define INLINE_ELAPSED(INL) static INL double elapsed(ticks t1, ticks t0) \
-{									  \
-     return (double)(t1 - t0);						  \
+{                                                                         \
+     return (double)(t1 - t0);                                            \
 }
 
 /*----------------------------------------------------------------*/
@@ -148,9 +148,9 @@ static __inline__ ticks getticks(void)
      unsigned int tbl, tbu0, tbu1;
 
      do {
-	  __asm__ __volatile__ ("mftbu %0" : "=r"(tbu0));
-	  __asm__ __volatile__ ("mftb %0" : "=r"(tbl));
-	  __asm__ __volatile__ ("mftbu %0" : "=r"(tbu1));
+          __asm__ __volatile__ ("mftbu %0" : "=r"(tbu0));
+          __asm__ __volatile__ ("mftb %0" : "=r"(tbl));
+          __asm__ __volatile__ ("mftbu %0" : "=r"(tbu1));
      } while (tbu0 != tbu1);
 
      return (((unsigned long long)tbu0) << 32) | tbl;
@@ -204,9 +204,9 @@ static __inline ticks getticks(void)
      ticks retval;
 
      __asm {
-	  RDTSC
-	  mov retval.HighPart, edx
-	  mov retval.LowPart, eax
+          RDTSC
+          mov retval.HighPart, edx
+          mov retval.LowPart, eax
      }
      return retval;
 }
@@ -452,7 +452,7 @@ static inline ticks getticks(void)
 static inline double elapsed(ticks t1, ticks t0)
 {
      return (double)(t1.tv_sec - t0.tv_sec) * 1.0E9 +
-	  (double)(t1.tv_nsec - t0.tv_nsec);
+          (double)(t1.tv_nsec - t0.tv_nsec);
 }
 #define HAVE_TICK_COUNTER
 #endif

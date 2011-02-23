@@ -265,7 +265,7 @@ SgAsmNEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%sNEFileHeader.", prefix);
     }
 
-	int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericHeader::dump(f, p, -1);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_linker_major",         p_e_linker_major);
@@ -429,7 +429,7 @@ SgAsmNESection::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%sNESection.", prefix);
     }
 
-	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
     SgAsmNEFileHeader *fhdr = dynamic_cast<SgAsmNEFileHeader*>(get_header());
@@ -714,7 +714,7 @@ SgAsmNEModuleTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%sNEModuleTable.", prefix);
     }
 
-	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
 
@@ -810,7 +810,7 @@ SgAsmNEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%sNEEntryPoint.", prefix);
     }
 
-	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     if (0 == p_section_idx) {
         fprintf(f, "%s%-*s = %s\n", p, w, "type", "unused");
@@ -1189,7 +1189,7 @@ SgAsmNERelocEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%sRelocEntry.", prefix);
     }
 
-	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     const char *s;
     switch (p_src_type) {

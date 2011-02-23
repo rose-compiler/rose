@@ -1,0 +1,46 @@
+# Non-recursive Makefile
+
+mauSymbolicVal_includes=\
+	-I$(mauSymbolicValPath)/../astInterface \
+	-I$(top_srcdir)/src/util \
+	-I$(top_srcdir)/src/util/support
+
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+mauSymbolicVal_la_sources=\
+	$(mauSymbolicValPath)/SymbolicBound.C \
+	$(mauSymbolicValPath)/SymbolicExpr.C \
+	$(mauSymbolicValPath)/SymbolicFind.C \
+	$(mauSymbolicValPath)/SymbolicOperator.C \
+	$(mauSymbolicValPath)/SymbolicUnwrapCond.C \
+	$(mauSymbolicValPath)/SymbolicVal.C 
+
+
+mauSymbolicVal_includeHeaders=\
+	$(mauSymbolicValPath)/SymbolicMultiply.h \
+	$(mauSymbolicValPath)/SymbolicPlus.h \
+	$(mauSymbolicValPath)/SymbolicVal.h \
+	$(mauSymbolicValPath)/SymbolicExpr.h \
+	$(mauSymbolicValPath)/SymbolicSelect.h \
+	$(mauSymbolicValPath)/SymbolicBound.h
+
+
+mauSymbolicVal_extraDist=\
+	$(mauSymbolicValPath)/CMakeLists.txt
+
+
+mauSymbolicVal_cleanLocal=\
+	rm -rf \
+		$(mauSymbolicValPath)/Templates.DB \
+		$(mauSymbolicValPath)/ii_files \
+		$(mauSymbolicValPath)/ti_files \
+		$(mauSymbolicValPath)/cxx_templates
+
+
+mauSymbolicVal_distCleanLocal=\
+	rm -rf \
+		$(mauSymbolicValPath)/Templates.DB
