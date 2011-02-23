@@ -388,9 +388,9 @@ namespace NodeQuery
   template<typename NodeFunctional>
   NodeQuerySynthesizedAttributeType
   queryMemoryPool(NodeFunctional nodeFunc , VariantVector* targetVariantVector = NULL)
-		{
+                {
         return AstQueryNamespace::queryMemoryPool(nodeFunc,targetVariantVector);
-		};
+                };
 
 
   /********************************************************************************
@@ -461,7 +461,7 @@ namespace NodeQuery
  * will return every node in the AST with a corresponding variant in the VariantVector.
  ********************************************************************************/
    DefaultNodeFunctional::result_type 
-	     queryMemoryPool(VariantVector& targetVariantVector);
+             queryMemoryPool(VariantVector& targetVariantVector);
 
 
 // END NAMESPACE NodeQuery2

@@ -10,10 +10,10 @@
 using namespace std;
 
 void testOneFunction( std::string funcParamName, 
-		      int argc, char * argv[], 
-		      bool debug, int nrOfNodes, 
-		      multimap <string, int> results,
-		      multimap <string, int> useresults) {
+                      int argc, char * argv[], 
+                      bool debug, int nrOfNodes, 
+                      multimap <string, int> results,
+                      multimap <string, int> useresults) {
   if (debug)
     cout << " \n\n------------------------------------------\nrunning ... " << argv[1] << endl;
   // Build the AST used by ROSE
@@ -58,35 +58,35 @@ void testOneFunction( std::string funcParamName,
       std::multimap <SgInitializedName*, SgNode*>::const_iterator j = map.begin();
       int hit=0;
       for (;j!=map.end();++j) {
-	SgInitializedName* in_node = j->first;
-	SgNode* node = j->second;
-	string name= in_node->get_qualified_name().str();
-	if (debug)
-	  cout << " ... checking :  " << name << endl;
-	multimap <string, int>::const_iterator k =results.begin();
-	for (;k!=results.end();++k) {
-	  string resName = k->first;
-	  int resNr = k->second;
-	  int tableNr = defuse->getIntForSgNode(node);
-	  if (name==resName) 
-	    if (debug)
-	      cout << " ... defNr: " << resNr << "  inTable: " << tableNr <<  endl; 
-	  if (name==resName && tableNr==resNr) {
-	    hit++;
-	    if (debug)
-	      cout << " Hit " << hit << "/" << results.size() << " - (" << name << "," << resNr << ")" << endl;
-	  }
-	}
+        SgInitializedName* in_node = j->first;
+        SgNode* node = j->second;
+        string name= in_node->get_qualified_name().str();
+        if (debug)
+          cout << " ... checking :  " << name << endl;
+        multimap <string, int>::const_iterator k =results.begin();
+        for (;k!=results.end();++k) {
+          string resName = k->first;
+          int resNr = k->second;
+          int tableNr = defuse->getIntForSgNode(node);
+          if (name==resName) 
+            if (debug)
+              cout << " ... defNr: " << resNr << "  inTable: " << tableNr <<  endl; 
+          if (name==resName && tableNr==resNr) {
+            hit++;
+            if (debug)
+              cout << " Hit " << hit << "/" << results.size() << " - (" << name << "," << resNr << ")" << endl;
+          }
+        }
 
       }
       if (hit!=(int)results.size()) {
-	cout << " Error: No hit! ... DFA values of node " << nrOfNodes << " are not correct! " << endl;
-	exit(0);
+        cout << " Error: No hit! ... DFA values of node " << nrOfNodes << " are not correct! " << endl;
+        exit(0);
       }
     } else {
       if (results.size()!=0) {
-	cout << " Error: Test node " << defuse->getIntForSgNode(func) << " should have a multimap. " << endl;
-	exit(0);
+        cout << " Error: Test node " << defuse->getIntForSgNode(func) << " should have a multimap. " << endl;
+        exit(0);
       }
     }
   
@@ -98,30 +98,30 @@ void testOneFunction( std::string funcParamName,
       std::multimap <SgInitializedName*, SgNode*>::const_iterator j = map.begin();
       int hit=0;
       for (;j!=map.end();++j) {
-	SgInitializedName* in_node = j->first;
-	SgNode* node = j->second;
-	string name= in_node->get_qualified_name().str();
-	if (debug)
-	  cout << " ... checking :  " << name << endl;
-	multimap <string, int>::const_iterator k =useresults.begin();
-	for (;k!=useresults.end();++k) {
-	  string resName = k->first;
-	  int resNr = k->second;
-	  int tableNr = defuse->getIntForSgNode(node);
-	  if (name==resName)
-	    if (debug)
-	      cout << " ... defNr: " << resNr << "  inTable: " << tableNr <<  endl; 
-	  if (name==resName && tableNr==resNr) {
-	    hit++;
-	    if (debug)
-	      cout << " Hit " << hit << "/" << useresults.size() << " - (" << name << "," << resNr << ")" << endl;
-	  }
-	}
+        SgInitializedName* in_node = j->first;
+        SgNode* node = j->second;
+        string name= in_node->get_qualified_name().str();
+        if (debug)
+          cout << " ... checking :  " << name << endl;
+        multimap <string, int>::const_iterator k =useresults.begin();
+        for (;k!=useresults.end();++k) {
+          string resName = k->first;
+          int resNr = k->second;
+          int tableNr = defuse->getIntForSgNode(node);
+          if (name==resName)
+            if (debug)
+              cout << " ... defNr: " << resNr << "  inTable: " << tableNr <<  endl; 
+          if (name==resName && tableNr==resNr) {
+            hit++;
+            if (debug)
+              cout << " Hit " << hit << "/" << useresults.size() << " - (" << name << "," << resNr << ")" << endl;
+          }
+        }
 
       }
       if (hit!=(int)useresults.size()) {
-	cout << " Error: No hit! ... DFA values of node " << nrOfNodes << " are not correct! " << endl;
-	exit(0);
+        cout << " Error: No hit! ... DFA values of node " << nrOfNodes << " are not correct! " << endl;
+        exit(0);
       }
     } // if
   }
@@ -161,8 +161,8 @@ void runCurrentFile(int argc, char * argv[]) {
     vector<SgNode* > vec = defuse->getDefFor(initName, initName);
     if (vec.size()>0)
       if (debug)
-	std::cout << "  DEF>> Vector entries for " << name <<  " ( " << 
-	  initName << " ) : " << vec.size() << std::endl;
+        std::cout << "  DEF>> Vector entries for " << name <<  " ( " << 
+          initName << " ) : " << vec.size() << std::endl;
 
   }
 
@@ -183,9 +183,9 @@ void runCurrentFile(int argc, char * argv[]) {
       
       vector<SgNode* > vec = defuse->getUseFor(ret, initName);
       if (vec.size()>0)
-	if (debug)
-	  std::cout << "  USE>> Vector entries for " << name <<  " ( " << 
-	    ret << " ) : " << vec.size() << std::endl;
+        if (debug)
+          std::cout << "  USE>> Vector entries for " << name <<  " ( " << 
+            ret << " ) : " << vec.size() << std::endl;
 
     }
   }

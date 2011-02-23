@@ -485,10 +485,10 @@ AstTests::runAllTests(SgProject* sageProject)
           TestLValueExpressions lvalueTest;
           lvalueTest.traverse(sageProject,preorder);
 
-			// King84 (7/29/2010): Uncomment this to enable checking of the corrected LValues
+                        // King84 (7/29/2010): Uncomment this to enable checking of the corrected LValues
 #if 0
-			TestLValues lvaluesTest;
-			lvaluesTest.traverse(sageProject,preorder);
+                        TestLValues lvaluesTest;
+                        lvaluesTest.traverse(sageProject,preorder);
 #endif
         }
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
@@ -1809,10 +1809,10 @@ TestAstForUniqueStatementsInScopes::visit ( SgNode* node )
                if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL || true )
                   {
                     cout << "Problematic Node: " << node->sage_class_name() << " found. (a statement appears more than once in this scope)" << endl;
-	      
+              
                     printf ("Error: number of [non-shared] statements = %d  number of unique statements = %d \n",
                     totalStatements - numberOfShared, numberOfUniques);
-	      
+              
                  // verify that there are duplicates
                     ROSE_ASSERT(numberOfDuplicates > 0);
 
@@ -2591,7 +2591,15 @@ TestAstSymbolTables::visit ( SgNode* node )
                       // ROSE_ASSERT(labelSymbol->get_declaration() != NULL);
                          if (labelSymbol->get_declaration() == NULL)
                             {
+#if 0
                               ROSE_ASSERT(labelSymbol->get_fortran_statement() != NULL);
+#else
+                           // DQ (2/2/2011): Added support in SgLabelSymbol for Fortran alternative return parameters (see test2010_164.f90).
+                              if (labelSymbol->get_fortran_statement() == NULL)
+                                 {
+                                   ROSE_ASSERT(labelSymbol->get_fortran_alternate_return_parameter() != NULL);
+                                 }
+#endif
                             }
                          break;
                        }
@@ -2894,7 +2902,15 @@ TestAstAccessToDeclarations::test ( SgNode* node )
             // ROSE_ASSERT(tmp->get_declaration() != NULL);
                if (tmp->get_declaration() == NULL)
                   {
+#if 0
                     ROSE_ASSERT(tmp->get_fortran_statement() != NULL);
+#else
+                 // DQ (2/2/2011): Added support in SgLabelSymbol for Fortran alternative return parameters (see test2010_164.f90).
+                    if (tmp->get_fortran_statement() == NULL)
+                       {
+                         ROSE_ASSERT(tmp->get_fortran_alternate_return_parameter() != NULL);
+                       }
+#endif
                   }
                break;
              }
@@ -3192,350 +3208,350 @@ TestExpressionTypes::visit ( SgNode* node )
 void
 TestLValues::visit ( SgNode* node )
 {
-	SgExpression* expression = isSgExpression(node);
-	if (expression != NULL)
-	{
-		return;
-	}
+        SgExpression* expression = isSgExpression(node);
+        if (expression != NULL)
+        {
+                return;
+        }
 
-	//
-	// Test isLValue()
-	//
-	if (expression != NULL)
-	{
-		bool verifiedLValue = false;
-		bool verifiedDefinable = false;
-		switch (node->variantT())
-		{
-			case V_SgScopeOp:          
-			{
-				SgScopeOp* scopeOp = isSgScopeOp(node);
-				ROSE_ASSERT(scopeOp);
-				verifiedLValue = scopeOp->get_rhs_operand()->isLValue();
-				break;
-			}
-			case V_SgPntrArrRefExp:  
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgPointerDerefExp: 
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgAddressOfOp:    
-			{
-				/*! std:5.2.6 par:1 */
-				// TODO: king84: false?  char x[4];  x is lvalue; (x + 1) is rvalue; *(x+1) is lvalue; *(x+1) = x[1]
-				if (!isSgAddressOfOp(expression)->get_operand()->isLValue()) // must also be mutable
-				{
-					ROSE_ASSERT(!"Child operand of an address-of operator must be an lvalue in isLValue on SgAddressOfOp");
-				}
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgArrowExp:       
-			{
-				// TODO: king84: is this true?
-				if (!isSgArrowExp(expression)->get_rhs_operand()->isLValue())
-				{
-					ROSE_ASSERT(!"Right-hand-side must be an lvalue as a data member or member function in isLValue for SgArrowExp");
-				}
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgDotExp:           
-			{
-				// TODO: king84: is this true?
-				if (!isSgDotExp(expression)->get_rhs_operand()->isLValue())
-				{
-					ROSE_ASSERT(!"Right-hand-side must be an lvalue as a data member or member function in isLValue for SgDotExp");
-				}
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgDotStarOp:       
-			{
-				// TODO: king84: is this true?
-				if (!isSgDotStarOp(expression)->get_lhs_operand()->isLValue())
-				{
-					ROSE_ASSERT(!"Left-hand-side must be an lvalue in isLValue for SgDotStarOp");
-				}
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgArrowStarOp:      
-			{
-				// TODO: king84: is this true? consider 'this': class A {int A::*pf();} this->*pf();
-				if (!isSgArrowStarOp(expression)->get_lhs_operand()->isLValue())
-				{
-					ROSE_ASSERT(!"Left-hand-side must be an lvalue in isLValue for SgArrowStarOp");
-				}
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgMinusMinusOp:       
-			{
-				SgMinusMinusOp* mmo = isSgMinusMinusOp(node);
-				if (mmo->get_mode() == SgUnaryOp::postfix)
-					verifiedLValue = false;
-				else
-				{
-					/*! std:5.3.2 par:2 */
-					if (!mmo->get_operand()->isLValue()) // must also be mutable
-					{
-						ROSE_ASSERT(!"Child operand of a prefix-increment must be an lvalue in isLValue on SgMinusMinusOp");
-					}
-					verifiedLValue = true;
-				}
-				break;
-			}
-			case V_SgPlusPlusOp: 
-			{
-				SgPlusPlusOp* ppo = isSgPlusPlusOp(node);
-				if (ppo->get_mode() == SgUnaryOp::postfix)
-					verifiedLValue = false;
-				else
-				{
-					/*! std:5.3.2 par:1 */
-					if (!ppo->get_operand()->isLValue()) // must also be mutable
-					{
-						ROSE_ASSERT(!"Child operand of a prefix-increment must be an lvalue in isLValue on SgPlusPlusOp");
-					}
-					verifiedLValue = true;
-				}
-				break;
-			}
-			case V_SgCastExp:
-			{
-				SgCastExp* castExp = isSgCastExp(node);
-				ROSE_ASSERT(castExp);
-				switch (castExp->cast_type())
-				{
-					case SgCastExp::e_C_style_cast:
-					case SgCastExp::e_const_cast:
-					case SgCastExp::e_static_cast:
-					case SgCastExp::e_dynamic_cast:
-					case SgCastExp::e_reinterpret_cast:
-						verifiedLValue = SageInterface::isReferenceType(castExp->get_type());
-						break;
-					case SgCastExp::e_unknown:
-					case SgCastExp::e_default:
-					default:
-						verifiedLValue = false;
-						break;
-				}
-				break;
-			}
-			case V_SgCommaOpExp:       
-			{
-				SgCommaOpExp* comma = isSgCommaOpExp(node);
-				ROSE_ASSERT(comma);
-				verifiedLValue = comma->get_rhs_operand()->isLValue();
-				break;
-			}
-			case V_SgAssignOp:        
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgPlusAssignOp:     
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgMinusAssignOp: 
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgAndAssignOp:    
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgIorAssignOp:    
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgMultAssignOp:     
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgDivAssignOp:     
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgModAssignOp:      
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgXorAssignOp:   
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgLshiftAssignOp: 
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgRshiftAssignOp: 
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgPointerAssignOp:  
-			{
-				verifiedDefinable = true;
-				break;
-			}
-			case V_SgStringVal:        
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgVarRefExp:           
-			{
-				verifiedLValue = true;
-				SgVarRefExp* var = isSgVarRefExp(node);
-				verifiedDefinable = !SageInterface::isConstType(var->get_type());
-				break;
-			}
-			case V_SgFunctionRefExp:      
-			{
-				break;
-			}
-			case V_SgMemberFunctionRefExp:    
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgFunctionCallExp:     
-			{
-				SgFunctionCallExp* funOp = isSgFunctionCallExp(node);
-				ROSE_ASSERT(funOp);
-				SgType* type = funOp->get_function()->get_type();
-				while (SgTypedefType* type2 = isSgTypedefType(type))
-					type = type2->get_base_type();
-				SgFunctionType* ftype = isSgFunctionType(type);
-				verifiedLValue = SageInterface::isReferenceType(ftype->get_return_type());
-				break;
-			}
-			case V_SgTypeIdOp:            
-			{
-				verifiedLValue = true;
-				break;
-			}
-			case V_SgConditionalExp:          
-			{
-				SgConditionalExp* cond = isSgConditionalExp(node);
-				verifiedLValue = (cond->get_true_exp()->isLValue() && cond->get_false_exp()->isLValue()) && (cond->get_true_exp()->get_type() == cond->get_false_exp()->get_type());
-				break;
-			}
-			case V_SgShortVal:               
-			case V_SgCharVal:         
-			case V_SgUnsignedCharVal: 
-			case V_SgWcharVal:       
-			case V_SgUnsignedShortVal: 
-			case V_SgIntVal:                 
-			case V_SgEnumVal:         
-			case V_SgUnsignedIntVal:  
-			case V_SgLongIntVal:     
-			case V_SgLongLongIntVal:   
-			case V_SgUnsignedLongLongIntVal: 
-			case V_SgUnsignedLongVal: 
-			case V_SgFloatVal:        
-			case V_SgDoubleVal:      
-			case V_SgLongDoubleVal:    
-			case V_SgComplexVal:             
-			case V_SgUpcThreads:     
-			case V_SgUpcMythread: 
-			case V_SgUnaryOp:             
-			case V_SgBinaryOp:                
-			case V_SgExprListExp:         
-			case V_SgUserDefinedBinaryOp: 
-			case V_SgBoolValExp:     
-			case V_SgExponentiationOp: 
-			case V_SgConcatenationOp: 
-			case V_SgLshiftOp:      
-			case V_SgRshiftOp:       
-			case V_SgEqualityOp:    
-			case V_SgLessThanOp:     
-			case V_SgGreaterThanOp:  
-			case V_SgNotEqualOp:       
-			case V_SgLessOrEqualOp:   
-			case V_SgGreaterOrEqualOp: 
-			case V_SgAddOp:         
-			case V_SgSubtractOp:     
-			case V_SgMultiplyOp:     
-			case V_SgDivideOp:         
-			case V_SgIntegerDivideOp: 
-			case V_SgModOp:            
-			case V_SgAndOp:         
-			case V_SgOrOp:           
-			case V_SgBitXorOp:       
-			case V_SgBitAndOp:         
-			case V_SgBitOrOp:         
-			case V_SgThrowOp:        
-			case V_SgRealPartOp:         
-			case V_SgImagPartOp: 
-			case V_SgConjugateOp:     
-			case V_SgUserDefinedUnaryOp: 
-			case V_SgExpressionRoot: 
-			case V_SgMinusOp:            
-			case V_SgUnaryAddOp: 
-			case V_SgNotOp:           
-			case V_SgBitComplementOp: 
-			case V_SgClassNameRefExp:          
-			case V_SgValueExp:            
-			case V_SgSizeOfOp:                 
-			case V_SgUpcLocalsizeofExpression:
-			case V_SgUpcBlocksizeofExpression:
-			case V_SgUpcElemsizeofExpression:
-			case V_SgNewExp:              
-			case V_SgDeleteExp:           
-			case V_SgThisExp:                  
-			case V_SgRefExp:              
-			case V_SgInitializer:             
-			case V_SgVarArgStartOp:       
-			case V_SgVarArgOp:            
-			case V_SgVarArgEndOp:              
-			case V_SgVarArgCopyOp:        
-			case V_SgVarArgStartOneOperandOp: 
-			case V_SgNullExpression:      
-			case V_SgVariantExpression:   
-			case V_SgSubscriptExpression:      
-			case V_SgColonShapeExp:       
-			case V_SgAsteriskShapeExp:        
-			case V_SgImpliedDo:         
-			case V_SgIOItemExpression:         
-			case V_SgStatementExpression:  
-			case V_SgAsmOp:               
-			case V_SgLabelRefExp:         
-			case V_SgActualArgumentExpression: 
-			case V_SgUnknownArrayOrFunctionReference:               
-			case V_SgPseudoDestructorRefExp:                    
-			case V_SgCudaKernelCallExp:   
-			case V_SgCudaKernelExecConfig: 
-				break;
-			/*UseRenameExpression*/
-			/*UseOnlyExpression*/ 
-			default:
-				break;
-		}
-		if (expression->isLValue() != verifiedLValue)
-			std::cout << "Node at " << node << " is sgtype " << node->variantT() << " : " << node->class_name() << std::endl;
-		ROSE_ASSERT (expression->isLValue() == verifiedLValue);
-		if (expression->isDefinable() != verifiedDefinable)
-			std::cout << "Node at " << node << " is sgtype " << node->variantT() << " : " << node->class_name() << std::endl;
-		ROSE_ASSERT (expression->isDefinable() == verifiedDefinable);
-	}
+        //
+        // Test isLValue()
+        //
+        if (expression != NULL)
+        {
+                bool verifiedLValue = false;
+                bool verifiedDefinable = false;
+                switch (node->variantT())
+                {
+                        case V_SgScopeOp:          
+                        {
+                                SgScopeOp* scopeOp = isSgScopeOp(node);
+                                ROSE_ASSERT(scopeOp);
+                                verifiedLValue = scopeOp->get_rhs_operand()->isLValue();
+                                break;
+                        }
+                        case V_SgPntrArrRefExp:  
+                        {
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgPointerDerefExp: 
+                        {
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgAddressOfOp:    
+                        {
+                                /*! std:5.2.6 par:1 */
+                                // TODO: king84: false?  char x[4];  x is lvalue; (x + 1) is rvalue; *(x+1) is lvalue; *(x+1) = x[1]
+                                if (!isSgAddressOfOp(expression)->get_operand()->isLValue()) // must also be mutable
+                                {
+                                        ROSE_ASSERT(!"Child operand of an address-of operator must be an lvalue in isLValue on SgAddressOfOp");
+                                }
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgArrowExp:       
+                        {
+                                // TODO: king84: is this true?
+                                if (!isSgArrowExp(expression)->get_rhs_operand()->isLValue())
+                                {
+                                        ROSE_ASSERT(!"Right-hand-side must be an lvalue as a data member or member function in isLValue for SgArrowExp");
+                                }
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgDotExp:           
+                        {
+                                // TODO: king84: is this true?
+                                if (!isSgDotExp(expression)->get_rhs_operand()->isLValue())
+                                {
+                                        ROSE_ASSERT(!"Right-hand-side must be an lvalue as a data member or member function in isLValue for SgDotExp");
+                                }
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgDotStarOp:       
+                        {
+                                // TODO: king84: is this true?
+                                if (!isSgDotStarOp(expression)->get_lhs_operand()->isLValue())
+                                {
+                                        ROSE_ASSERT(!"Left-hand-side must be an lvalue in isLValue for SgDotStarOp");
+                                }
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgArrowStarOp:      
+                        {
+                                // TODO: king84: is this true? consider 'this': class A {int A::*pf();} this->*pf();
+                                if (!isSgArrowStarOp(expression)->get_lhs_operand()->isLValue())
+                                {
+                                        ROSE_ASSERT(!"Left-hand-side must be an lvalue in isLValue for SgArrowStarOp");
+                                }
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgMinusMinusOp:       
+                        {
+                                SgMinusMinusOp* mmo = isSgMinusMinusOp(node);
+                                if (mmo->get_mode() == SgUnaryOp::postfix)
+                                        verifiedLValue = false;
+                                else
+                                {
+                                        /*! std:5.3.2 par:2 */
+                                        if (!mmo->get_operand()->isLValue()) // must also be mutable
+                                        {
+                                                ROSE_ASSERT(!"Child operand of a prefix-increment must be an lvalue in isLValue on SgMinusMinusOp");
+                                        }
+                                        verifiedLValue = true;
+                                }
+                                break;
+                        }
+                        case V_SgPlusPlusOp: 
+                        {
+                                SgPlusPlusOp* ppo = isSgPlusPlusOp(node);
+                                if (ppo->get_mode() == SgUnaryOp::postfix)
+                                        verifiedLValue = false;
+                                else
+                                {
+                                        /*! std:5.3.2 par:1 */
+                                        if (!ppo->get_operand()->isLValue()) // must also be mutable
+                                        {
+                                                ROSE_ASSERT(!"Child operand of a prefix-increment must be an lvalue in isLValue on SgPlusPlusOp");
+                                        }
+                                        verifiedLValue = true;
+                                }
+                                break;
+                        }
+                        case V_SgCastExp:
+                        {
+                                SgCastExp* castExp = isSgCastExp(node);
+                                ROSE_ASSERT(castExp);
+                                switch (castExp->cast_type())
+                                {
+                                        case SgCastExp::e_C_style_cast:
+                                        case SgCastExp::e_const_cast:
+                                        case SgCastExp::e_static_cast:
+                                        case SgCastExp::e_dynamic_cast:
+                                        case SgCastExp::e_reinterpret_cast:
+                                                verifiedLValue = SageInterface::isReferenceType(castExp->get_type());
+                                                break;
+                                        case SgCastExp::e_unknown:
+                                        case SgCastExp::e_default:
+                                        default:
+                                                verifiedLValue = false;
+                                                break;
+                                }
+                                break;
+                        }
+                        case V_SgCommaOpExp:       
+                        {
+                                SgCommaOpExp* comma = isSgCommaOpExp(node);
+                                ROSE_ASSERT(comma);
+                                verifiedLValue = comma->get_rhs_operand()->isLValue();
+                                break;
+                        }
+                        case V_SgAssignOp:        
+                        {
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgPlusAssignOp:     
+                        {
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgMinusAssignOp: 
+                        {
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgAndAssignOp:    
+                        {
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgIorAssignOp:    
+                        {
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgMultAssignOp:     
+                        {
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgDivAssignOp:     
+                        {
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgModAssignOp:      
+                        {
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgXorAssignOp:   
+                        {
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgLshiftAssignOp: 
+                        {
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgRshiftAssignOp: 
+                        {
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgPointerAssignOp:  
+                        {
+                                verifiedDefinable = true;
+                                break;
+                        }
+                        case V_SgStringVal:        
+                        {
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgVarRefExp:           
+                        {
+                                verifiedLValue = true;
+                                SgVarRefExp* var = isSgVarRefExp(node);
+                                verifiedDefinable = !SageInterface::isConstType(var->get_type());
+                                break;
+                        }
+                        case V_SgFunctionRefExp:      
+                        {
+                                break;
+                        }
+                        case V_SgMemberFunctionRefExp:    
+                        {
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgFunctionCallExp:     
+                        {
+                                SgFunctionCallExp* funOp = isSgFunctionCallExp(node);
+                                ROSE_ASSERT(funOp);
+                                SgType* type = funOp->get_function()->get_type();
+                                while (SgTypedefType* type2 = isSgTypedefType(type))
+                                        type = type2->get_base_type();
+                                SgFunctionType* ftype = isSgFunctionType(type);
+                                verifiedLValue = SageInterface::isReferenceType(ftype->get_return_type());
+                                break;
+                        }
+                        case V_SgTypeIdOp:            
+                        {
+                                verifiedLValue = true;
+                                break;
+                        }
+                        case V_SgConditionalExp:          
+                        {
+                                SgConditionalExp* cond = isSgConditionalExp(node);
+                                verifiedLValue = (cond->get_true_exp()->isLValue() && cond->get_false_exp()->isLValue()) && (cond->get_true_exp()->get_type() == cond->get_false_exp()->get_type());
+                                break;
+                        }
+                        case V_SgShortVal:               
+                        case V_SgCharVal:         
+                        case V_SgUnsignedCharVal: 
+                        case V_SgWcharVal:       
+                        case V_SgUnsignedShortVal: 
+                        case V_SgIntVal:                 
+                        case V_SgEnumVal:         
+                        case V_SgUnsignedIntVal:  
+                        case V_SgLongIntVal:     
+                        case V_SgLongLongIntVal:   
+                        case V_SgUnsignedLongLongIntVal: 
+                        case V_SgUnsignedLongVal: 
+                        case V_SgFloatVal:        
+                        case V_SgDoubleVal:      
+                        case V_SgLongDoubleVal:    
+                        case V_SgComplexVal:             
+                        case V_SgUpcThreads:     
+                        case V_SgUpcMythread: 
+                        case V_SgUnaryOp:             
+                        case V_SgBinaryOp:                
+                        case V_SgExprListExp:         
+                        case V_SgUserDefinedBinaryOp: 
+                        case V_SgBoolValExp:     
+                        case V_SgExponentiationOp: 
+                        case V_SgConcatenationOp: 
+                        case V_SgLshiftOp:      
+                        case V_SgRshiftOp:       
+                        case V_SgEqualityOp:    
+                        case V_SgLessThanOp:     
+                        case V_SgGreaterThanOp:  
+                        case V_SgNotEqualOp:       
+                        case V_SgLessOrEqualOp:   
+                        case V_SgGreaterOrEqualOp: 
+                        case V_SgAddOp:         
+                        case V_SgSubtractOp:     
+                        case V_SgMultiplyOp:     
+                        case V_SgDivideOp:         
+                        case V_SgIntegerDivideOp: 
+                        case V_SgModOp:            
+                        case V_SgAndOp:         
+                        case V_SgOrOp:           
+                        case V_SgBitXorOp:       
+                        case V_SgBitAndOp:         
+                        case V_SgBitOrOp:         
+                        case V_SgThrowOp:        
+                        case V_SgRealPartOp:         
+                        case V_SgImagPartOp: 
+                        case V_SgConjugateOp:     
+                        case V_SgUserDefinedUnaryOp: 
+                        case V_SgExpressionRoot: 
+                        case V_SgMinusOp:            
+                        case V_SgUnaryAddOp: 
+                        case V_SgNotOp:           
+                        case V_SgBitComplementOp: 
+                        case V_SgClassNameRefExp:          
+                        case V_SgValueExp:            
+                        case V_SgSizeOfOp:                 
+                        case V_SgUpcLocalsizeofExpression:
+                        case V_SgUpcBlocksizeofExpression:
+                        case V_SgUpcElemsizeofExpression:
+                        case V_SgNewExp:              
+                        case V_SgDeleteExp:           
+                        case V_SgThisExp:                  
+                        case V_SgRefExp:              
+                        case V_SgInitializer:             
+                        case V_SgVarArgStartOp:       
+                        case V_SgVarArgOp:            
+                        case V_SgVarArgEndOp:              
+                        case V_SgVarArgCopyOp:        
+                        case V_SgVarArgStartOneOperandOp: 
+                        case V_SgNullExpression:      
+                        case V_SgVariantExpression:   
+                        case V_SgSubscriptExpression:      
+                        case V_SgColonShapeExp:       
+                        case V_SgAsteriskShapeExp:        
+                        case V_SgImpliedDo:         
+                        case V_SgIOItemExpression:         
+                        case V_SgStatementExpression:  
+                        case V_SgAsmOp:               
+                        case V_SgLabelRefExp:         
+                        case V_SgActualArgumentExpression: 
+                        case V_SgUnknownArrayOrFunctionReference:               
+                        case V_SgPseudoDestructorRefExp:                    
+                        case V_SgCudaKernelCallExp:   
+                        case V_SgCudaKernelExecConfig: 
+                                break;
+                        /*UseRenameExpression*/
+                        /*UseOnlyExpression*/ 
+                        default:
+                                break;
+                }
+                if (expression->isLValue() != verifiedLValue)
+                        std::cout << "Node at " << node << " is sgtype " << node->variantT() << " : " << node->class_name() << std::endl;
+                ROSE_ASSERT (expression->isLValue() == verifiedLValue);
+                if (expression->isDefinable() != verifiedDefinable)
+                        std::cout << "Node at " << node << " is sgtype " << node->variantT() << " : " << node->class_name() << std::endl;
+                ROSE_ASSERT (expression->isDefinable() == verifiedDefinable);
+        }
 }
 
 

@@ -27,8 +27,8 @@ string
   if (printType == Container)
     {
       returnString =
-	" \"" + pointerName (classPointer) + "\" [shape=record, label=\" <" +
-	pointerName (classPointer) + "> Array " + arrayName + "|{";
+        " \"" + pointerName (classPointer) + "\" [shape=record, label=\" <" +
+        pointerName (classPointer) + "> Array " + arrayName + "|{";
     }
   else
     returnString =
@@ -66,8 +66,8 @@ string
   if (printType == Container)
     {
       returnString =
-	" \"" + pointerName (classPointer) + "\" [shape=Mrecord, label=\" <" +
-	pointerName (classPointer) + "> Class " + className + "|{";
+        " \"" + pointerName (classPointer) + "\" [shape=Mrecord, label=\" <" +
+        pointerName (classPointer) + "> Class " + className + "|{";
     }
   else
     returnString =
@@ -81,7 +81,7 @@ string
 
 string
   GenRepresentation::beginStruct (void *structPointer, string structName,
-				  TypeOfPrint printType)
+                                  TypeOfPrint printType)
 {
   string returnString;
   if (checkIfMapKeyExist (structPointer) != true)
@@ -90,8 +90,8 @@ string
   if (printType == Container)
     {
       returnString =
-	" \"" + pointerName (structPointer) + "\" [shape=record, label=\"<" +
-	pointerName (structPointer) + "> Struct " + structName + "|{";
+        " \"" + pointerName (structPointer) + "\" [shape=record, label=\"<" +
+        pointerName (structPointer) + "> Struct " + structName + "|{";
     }
   else
     returnString =
@@ -115,8 +115,8 @@ string
   if (printType == Container)
     {
       returnString =
-	" \"" + pointerName (unionPointer) + "\" [shape=record, label=\"<" +
-	pointerName (unionPointer) + "> Union " + unionName + "|{";
+        " \"" + pointerName (unionPointer) + "\" [shape=record, label=\"<" +
+        pointerName (unionPointer) + "> Union " + unionName + "|{";
     }
   else
     returnString =
@@ -233,31 +233,31 @@ string GenRepresentation::addVariable(string variableType, string variableName, 
 */
 string
   GenRepresentation::addVariable (string variableType, string variableName,
-				  string variable,
-				  string variableReferenceName,
-				  bool separator)
+                                  string variable,
+                                  string variableReferenceName,
+                                  bool separator)
 {
   string returnString;
 
   if (separator == false)
     {
       if (variableReferenceName.length () > 0)
-	returnString =
-	  "<" + variableReferenceName + ">  " + variableType + " " +
-	  variableName;
+        returnString =
+          "<" + variableReferenceName + ">  " + variableType + " " +
+          variableName;
       else
-	returnString = " " + variableType + " " + variableName;
+        returnString = " " + variableType + " " + variableName;
 
       (*dotout) << returnString;
     }
   else
     {
       if (variableReferenceName.length () > 0)
-	returnString =
-	  " |  <" + variableReferenceName + ">  " + variableType + " " +
-	  variableName;
+        returnString =
+          " |  <" + variableReferenceName + ">  " + variableType + " " +
+          variableName;
       else
-	returnString = " |" + variableType + " " + variableName;
+        returnString = " |" + variableType + " " + variableName;
       (*dotout) << returnString;
     }
   if (variable.length() > 0)
@@ -268,180 +268,180 @@ string
 
 string
   GenRepresentation::addVariable (string variableType, string variableName,
-				  void *variablePointer,
-				  string variableComment, bool separator)
+                                  void *variablePointer,
+                                  string variableComment, bool separator)
 {
   return addVariable ("int", variableName, variableComment,
-		      getNextMapKeyName (variablePointer), separator);
+                      getNextMapKeyName (variablePointer), separator);
 }
 
 string
   GenRepresentation::addVariable (string variableType, string variableName,
-				  int variable, string variableReferenceName,
-				  bool separator)
+                                  int variable, string variableReferenceName,
+                                  bool separator)
 {
   ostringstream *variableValue = new ostringstream ();
   (*variableValue) << variable;
   return addVariable ("int", variableName, (*variableValue).str (),
-		      variableReferenceName, separator);
+                      variableReferenceName, separator);
 }
 
 string
   GenRepresentation::addVariable (string variableType, string variableName,
-				  bool variable, string variableReferenceName,
-				  bool separator)
+                                  bool variable, string variableReferenceName,
+                                  bool separator)
 {
   ostringstream *variableValue = new ostringstream ();
   (*variableValue) << variable;
 /*  cout << "There is a bool here" << endl;
   cout << variableType << ":" << variableName << endl;*/
   return addVariable (variableType, variableName, (*variableValue).str (),
-		      variableReferenceName, separator);
+                      variableReferenceName, separator);
 }
 
 string
   GenRepresentation::addVariable (string variableType, string variableName,
-				  double variable,
-				  string variableReferenceName,
-				  bool separator)
+                                  double variable,
+                                  string variableReferenceName,
+                                  bool separator)
 {
   ostringstream *variableValue = new ostringstream ();
   (*variableValue) << variable;
   return addVariable ("double", variableName, (*variableValue).str (),
-		      variableReferenceName, separator);
+                      variableReferenceName, separator);
 }
 
 string
   GenRepresentation::addVariable (string variableType, string variableName,
-				  long variable, string variableReferenceName,
-				  bool separator)
+                                  long variable, string variableReferenceName,
+                                  bool separator)
 {
   ostringstream *variableValue = new ostringstream ();
   (*variableValue) << variable;
   return addVariable ("long", variableName, (*variableValue).str (),
-		      variableReferenceName, separator);
+                      variableReferenceName, separator);
 }
 
 string
   GenRepresentation::addVariable (string variableType, string variableName,
-				  float variable,
-				  string variableReferenceName,
-				  bool separator)
+                                  float variable,
+                                  string variableReferenceName,
+                                  bool separator)
 {
   ostringstream *variableValue = new ostringstream ();
   (*variableValue) << variable;
   return addVariable ("float", variableName, (*variableValue).str (),
-		      variableReferenceName, separator);
+                      variableReferenceName, separator);
 }
 
 string
   GenRepresentation::addVariable (string variableType, string variableName,
-				  char variable, string variableReferenceName,
-				  bool separator)
+                                  char variable, string variableReferenceName,
+                                  bool separator)
 {
   ostringstream *variableValue = new ostringstream ();
   (*variableValue) << variable;
   return addVariable ("char", variableName, (*variableValue).str (),
-		      variableReferenceName, separator);
+                      variableReferenceName, separator);
 }
 
 string
   GenRepresentation::addVariable (string variableType, string variableName,
-				  unsigned char variable,
-				  string variableReferenceName,
-				  bool separator)
+                                  unsigned char variable,
+                                  string variableReferenceName,
+                                  bool separator)
 {
   ostringstream *variableValue = new ostringstream ();
   (*variableValue) << variable;
   return addVariable ("unsigned char", variableName, (*variableValue).str (),
-		      variableReferenceName, separator);
+                      variableReferenceName, separator);
 }
 
 
 
 string
   GenRepresentation::addVariable (string variableType, string variableName,
-				  long long variable,
-				  string variableReferenceName,
-				  bool separator)
+                                  long long variable,
+                                  string variableReferenceName,
+                                  bool separator)
 {
   ostringstream *variableValue = new ostringstream ();
   (*variableValue) << variable;
   return addVariable ("long long", variableName, (*variableValue).str (),
-		      variableReferenceName, separator);
+                      variableReferenceName, separator);
 }
 
 string
   GenRepresentation::addVariable (string variableType, string variableName,
-				  long double variable,
-				  string variableReferenceName,
-				  bool separator)
+                                  long double variable,
+                                  string variableReferenceName,
+                                  bool separator)
 {
   ostringstream *variableValue = new ostringstream ();
   (*variableValue) << variable;
   return addVariable ("long double", variableName, (*variableValue).str (),
-		      variableReferenceName, separator);
+                      variableReferenceName, separator);
 }
 
 string
   GenRepresentation::addVariable (string variableType, string variableName,
-				  short variable,
-				  string variableReferenceName,
-				  bool separator)
+                                  short variable,
+                                  string variableReferenceName,
+                                  bool separator)
 {
   ostringstream *variableValue = new ostringstream ();
   (*variableValue) << variable;
   return addVariable ("short", variableName, (*variableValue).str (),
-		      variableReferenceName, separator);
+                      variableReferenceName, separator);
 }
 
 string
   GenRepresentation::addVariable (string variableType, string variableName,
-				  unsigned int variable,
-				  string variableReferenceName,
-				  bool separator)
+                                  unsigned int variable,
+                                  string variableReferenceName,
+                                  bool separator)
 {
   ostringstream *variableValue = new ostringstream ();
   (*variableValue) << variable;
   return addVariable ("unsigned int", variableName, (*variableValue).str (),
-		      variableReferenceName, separator);
+                      variableReferenceName, separator);
 }
 
 string
   GenRepresentation::addVariable (string variableType, string variableName,
-				  unsigned long variable,
-				  string variableReferenceName,
-				  bool separator)
+                                  unsigned long variable,
+                                  string variableReferenceName,
+                                  bool separator)
 {
   ostringstream *variableValue = new ostringstream ();
   (*variableValue) << variable;
   return addVariable ("unsigned long", variableName, (*variableValue).str (),
-		      variableReferenceName, separator);
+                      variableReferenceName, separator);
 }
 
 string
   GenRepresentation::addVariable (string variableType, string variableName,
-				  unsigned long long variable,
-				  string variableReferenceName,
-				  bool separator)
+                                  unsigned long long variable,
+                                  string variableReferenceName,
+                                  bool separator)
 {
   ostringstream *variableValue = new ostringstream ();
   (*variableValue) << variable;
   return addVariable ("unsigned long long", variableName,
-		      (*variableValue).str (), variableReferenceName,
-		      separator);
+                      (*variableValue).str (), variableReferenceName,
+                      separator);
 }
 
 string
   GenRepresentation::addVariable (string variableType, string variableName,
-				  unsigned short variable,
-				  string variableReferenceName,
-				  bool separator)
+                                  unsigned short variable,
+                                  string variableReferenceName,
+                                  bool separator)
 {
   ostringstream *variableValue = new ostringstream ();
   (*variableValue) << variable;
   return addVariable ("unsigned short", variableName, (*variableValue).str (),
-		      variableReferenceName, separator);
+                      variableReferenceName, separator);
 }
 
 void
@@ -453,7 +453,7 @@ GenRepresentation::clear ()
 
 void
 GenRepresentation::addEdge (void *node1, void *node2, void *node2parent,
-			    string edgeLabel, string option)
+                            string edgeLabel, string option)
 {
   //AS (01/13/04) increaseMapKeyNumber(node2);    
   if(node2 != node2parent)
@@ -481,7 +481,7 @@ GenRepresentation::setMapKey (void *key)
   if (checkIfMapKeyExist (key) == true)
     {
       cerr << "The key does exist. Do not make sence to set it. Terminating"
-	<< endl;
+        << endl;
       exit (1);
     }
   pointerNumberMap[key];

@@ -43,6 +43,9 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( ReferenceType       , "ReferenceType",        "T_REFERENCE" );
      NEW_TERMINAL_MACRO ( TypeCAFTeam         , "TypeCAFTeam",          "T_CAFTEAM" );
 
+  // DQ (2/1/2011): Added label type to support Fortran alternative return arguments in function declarations.
+     NEW_TERMINAL_MACRO ( TypeLabel           , "TypeLabel",            "T_LABLE" );
+
   // DQ (5/7/2004): Made this a terminal, was previously a nonterminal 
   // with a TemplateInstantiationType derived from it.
      NEW_TERMINAL_MACRO ( ClassType           , "ClassType",            "T_CLASS" );
@@ -135,7 +138,7 @@ Grammar::setUpTypes ()
           ReferenceType    | NamedType         | ModifierType      | FunctionType         |
           ArrayType        | TypeEllipse       | TemplateType      | QualifiedNameType    |
           TypeComplex      | TypeImaginary     | TypeDefault       | TypeCAFTeam          |
-          TypeCrayPointer , "Type","TypeTag", false);
+          TypeCrayPointer  | TypeLabel , "Type","TypeTag", false);
 
 #if 1
   // ***********************************************************************
@@ -160,7 +163,7 @@ Grammar::setUpTypes ()
 
   // FMZ (2/9/2009): Added a flag for CoArray
      Type.setDataPrototype("bool","isCoArray","= 0",
-			   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (3/7/2004): This functionality was added to EDG 1.4 (and has not yet been added to EDG_3.3)
   // The purpose it to allow types to be marked internally as being associated with a template 
@@ -171,25 +174,25 @@ Grammar::setUpTypes ()
   // support is brought on line.
   // [DT] 8/14/2000 -- substitutedForTemplateParam
      Type.setDataPrototype("int","substitutedForTemplateParam","= 0",
-			   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // MK: Type.excludeDataPrototype ("int","substitutedForTemplateParam","= 0");
 
   // Reference to reference type
      Type.setDataPrototype("SgReferenceType*","ref_to","= NULL",
-			   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
   // Reference to pointer type
      Type.setDataPrototype("SgPointerType*","ptr_to","= NULL",
-			   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
   // Reference to modifier nodes (I forget the purpose of this)
      Type.setDataPrototype("SgModifierNodes*","modifiers","= NULL",
-			   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
   // Reference to typedef type \attention{(need to check that these are fully resolved within mapping from EDG)}
 #if 1
      Type.setDataPrototype("SgTypedefSeq*","typedefs","= NULL",
-			   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, DEF_DELETE);
   // #else
   //     Type.setDataPrototype("SgTypePtrList","typedefs","",
-  //		   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+  //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
 #endif
 
 #if 1
@@ -219,10 +222,10 @@ Grammar::setUpTypes ()
 
   // Reference to X version of type (special target type for associated grammar)
      Type.setDataPrototype("SgX_ReferenceType*","X_ref_to","= NULL",
-			   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
   // Pointer to X version of type (special target type for associated grammar)
      Type.setDataPrototype("SgX_PointerType*","X_ptr_to","= NULL",
-			   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE);
 #endif
 
 #ifdef HL_GRAMMARS
@@ -371,6 +374,9 @@ Grammar::setUpTypes ()
   // PartialFunctionType.setDataPrototype         ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      PartialFunctionModifierType.setDataPrototype ("static SgPartialFunctionModifierType*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+  // DQ (2/1/2011): Added label type to support Fortran alternative return arguments in function declarations.
+     TypeLabel.setDataPrototype            ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
   // DQ (8/25/2006): We can't specify an initializer if this is a static pointer type 
   // (since this triggers the output of the initialization code in the constructor).
   // DQ (8/10/2006): Added support for different kinds of complex types (float,double, and long double)
@@ -448,15 +454,15 @@ Grammar::setUpTypes ()
 
   // These classes have data fields
      TypeInt.setDataPrototype           ("int","field_size","= 0",
-					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      PointerType.setDataPrototype       ("SgType*","base_type","= NULL",
-					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ReferenceType.setDataPrototype     ("SgType*","base_type","= NULL",
-					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      PointerMemberType.setFunctionPrototype  ("HEADER_POINTER_MEMBER_TYPE", "../Grammar/Type.code" );
      PointerMemberType.setDataPrototype ("SgType*","class_type","= NULL",
-					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      NamedType.setFunctionPrototype ("HEADER_VIRTUAL_GET_NAME", "../Grammar/Type.code" );
      NamedType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
@@ -472,7 +478,7 @@ Grammar::setUpTypes ()
   // class A { int i; };    // An "autonomous" decl
   // class B { int i; } b;  // Not "autonomous"
      NamedType.setDataPrototype     ("bool", "autonomous_declaration","= true",
-				     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // NamedType.setDataPrototype ( "static SgQualifiedNamePtrList", "defaultQualifiedNamePtrList", "",
   //           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // NamedType.setDataPrototype ( "SgQualifiedNamePtrList", "qualifiedNameList", "= p_defaultQualifiedNamePtrList",
@@ -510,7 +516,7 @@ Grammar::setUpTypes ()
      ModifierType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      ModifierType.setFunctionPrototype ("HEADER_MODIFIER_TYPE", "../Grammar/Type.code" );
      ModifierType.setDataPrototype     ("SgType*","base_type","= NULL",
-					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (4/22/2004): Old way of handling modifiers
   // ModifierType.setDataPrototype     ("unsigned int","bitfield","= 0",
   //           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -523,16 +529,16 @@ Grammar::setUpTypes ()
                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0
      ModifierType.setDataPrototype     ("SgStorageModifier","storageModifier","= SgStorageModifier::e_unknown",
-					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ModifierType.setDataPrototype     ("SgAccessModifier","accessModifier","= SgAccessModifier::e_unknown",
-					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ModifierType.setDataPrototype     ("SgFunctionModifier","functionModifier","= SgFunctionModifier::e_unknown",
-					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // OR we could use a SgDeclarationModifier!
      ModifierType.setDataPrototype     ("SgDeclarationModifier","declarationModifier","",
-					NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ModifierType.setDataPrototype     ("SgSpecialFunctionModifier","specialFunctionModifier","",
-					NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 #if 0
@@ -566,17 +572,17 @@ Grammar::setUpTypes ()
 
      FunctionType.setFunctionPrototype ("HEADER_FUNCTION_TYPE_ARGUMENTS", "../Grammar/Type.code" );
      FunctionType.setDataPrototype     ("SgType*", "return_type","= NULL",
-					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, TYPE_TRAVERSAL, NO_DELETE);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, TYPE_TRAVERSAL, NO_DELETE);
      FunctionType.setDataPrototype     ("bool", "has_ellipses","= true",
-					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FunctionType.setDataPrototype     ("SgType*", "orig_return_type","= NULL",
-					NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, TYPE_TRAVERSAL, NO_DELETE);
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, TYPE_TRAVERSAL, NO_DELETE);
 #if 1
   // DQ (7/20/2004): Modified to NOT traverse this object (later: likely OK to traverse)
   // FunctionType.setDataPrototype("SgFunctionParameterTypeList*", "arguments", "= NULL",
   //           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, TYPE_TRAVERSAL);
      FunctionType.setDataPrototype("SgFunctionParameterTypeList*", "argument_list", "= NULL",
-				   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 #else
      FunctionType.setDataPrototype("SgTypePtrList", "arguments", "",
                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, TYPE_TRAVERSAL, NO_DELETE);
@@ -598,36 +604,36 @@ Grammar::setUpTypes ()
 
      MemberFunctionType.setFunctionPrototype ("HEADER_MEMBER_FUNCTION_TYPE", "../Grammar/Type.code" );        
      MemberFunctionType.setDataPrototype     ("SgType*", "class_type","= NULL",
-					      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      MemberFunctionType.setDataPrototype     ("unsigned int", "mfunc_specifier","= 0",
-					      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      PartialFunctionType.setFunctionPrototype ("HEADER_PARTIAL_FUNCTION_TYPE", "../Grammar/Type.code" );
 
      ArrayType.setDataPrototype ("SgType*"      , "base_type", "= NULL",
-				 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (2/7/2007): I think that the delete operator should call delete for the index expression.
   // ArrayType.setDataPrototype ("SgExpression*", "index"    , "= NULL",
   //         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ArrayType.setDataPrototype ("SgExpression*", "index"    , "= NULL",
-				 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
 
   // DQ (8/15/2007): This could replace the "index" above, we need the list to handle Fortran, even 
   // though we only need a single expression for C and C++.
      ArrayType.setDataPrototype ("SgExprListExp*", "dim_info" , "= NULL",
-				 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
      ArrayType.setDataPrototype ("int", "rank" , "= 0",
-				 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      TypeComplex.setFunctionPrototype ("HEADER_TYPE_COMPLEX_TYPE", "../Grammar/Type.code" );
      TypeComplex.setDataPrototype ("SgType*", "base_type", "= NULL",
-				 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/27/2006): Use the code from the complex class to define the imaginary class!
      TypeImaginary.setFunctionPrototype ("HEADER_TYPE_COMPLEX_TYPE", "../Grammar/Type.code" );
      TypeImaginary.setDataPrototype ("SgType*", "base_type", "= NULL",
-				 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/17/2010): Added support for string types for Fortran (in C/C++ they are just arrays of char).
      TypeString.setFunctionPrototype ("HEADER_TYPE_STRING_TYPE", "../Grammar/Type.code" );
@@ -635,7 +641,11 @@ Grammar::setUpTypes ()
   // DQ (12/26/2010): Added mechanism to store names of types that can't be identified in initial parsing (applicable only to Fortran).
      TypeDefault.setFunctionPrototype ("HEADER_TYPE_DEFAULT_TYPE", "../Grammar/Type.code" );
      TypeDefault.setDataPrototype ("SgName", "name" , "= \"\"",
-				 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/1/2011): Added label type to support Fortran alternative return arguments in function declarations.
+     TypeLabel.setFunctionPrototype ("HEADER_TYPE_LABEL_TYPE", "../Grammar/Type.code" );
+     TypeLabel.setDataPrototype ("SgName", "name" , "= \"\"", NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // ***********************************************************************
@@ -753,6 +763,11 @@ Grammar::setUpTypes ()
      TypeDefault.excludeFunctionSource     ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      TypeDefault.setFunctionSource         ( "SOURCE_TYPE_DEFAULT_TYPE", "../Grammar/Type.code");
   // TypeDefault.setFunctionSource         ( "SOURCE_GET_MANGLED_STRING_TYPE", "../Grammar/Type.code");
+
+  // DQ (2/1/2011): Added label type to support Fortran alternative return arguments in function declarations.
+     TypeLabel.excludeFunctionSource     ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     TypeLabel.setFunctionSource         ( "SOURCE_TYPE_LABEL_TYPE", "../Grammar/Type.code");
+
 #endif
    }
 

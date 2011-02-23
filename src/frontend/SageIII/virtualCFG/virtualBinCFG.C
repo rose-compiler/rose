@@ -49,7 +49,7 @@ namespace VirtualBinCFG {
                     s << "false";
                     break;
                 case eckCaseLabel:
-	            // s << caseLabel()->unparseToString();
+                    // s << caseLabel()->unparseToString();
                     break;
                 case eckDefault:
                     s << "default";

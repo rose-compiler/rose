@@ -396,39 +396,39 @@ class ReplaceExtendibleParam : public SymbolicVisitor
   {
     string buf = u.GetOp();
     if (buf == "$" && u.first_arg().toString() == basename) {
-	assert(u.NumOfArgs() == 2);
+        assert(u.NumOfArgs() == 2);
         string curext = u.last_arg().toString();
         if ( curext == extname) {
-	    for (int i = 0; i <= extub-extlb; ++i) {
-	      result.push_back(parList[parstart + i]);
-	    } 
-	}
-	else if (u.last_arg().GetValType() == VAL_CONST && 
+            for (int i = 0; i <= extub-extlb; ++i) {
+              result.push_back(parList[parstart + i]);
+            } 
+        }
+        else if (u.last_arg().GetValType() == VAL_CONST && 
                  u.last_arg().GetTypeName() == "int") {
             int index = atoi(curext.c_str());
-	    assert( index >= extlb && index <= extub);
-	    result.push_back( parList[parstart + index - extlb] );
-	}
-	else {
+            assert( index >= extlb && index <= extub);
+            result.push_back( parList[parstart + index - extlb] );
+        }
+        else {
             cerr << "Error: expecting integer const instead of ";
             u.last_arg().Dump();
             cerr << endl;
-	    assert(false);
+            assert(false);
         }
     }
    else if (buf == "repeat") {
         assert(u.NumOfArgs() == 4);
         SymbolicFunction::const_iterator i = u.args_begin();
-	buf = (*i).toString();
-	int lb = 0, ub = 0;
+        buf = (*i).toString();
+        int lb = 0, ub = 0;
         lb = atoi( (*(++i)).toString().c_str());
         ub = atoi( (*(++i)).toString().c_str());
         SymbolicVal cur = *(++i);
-	for (int j = lb; j <= ub; ++j) {
-	  SymbolicVal tmp= ReplaceVal( cur, SymbolicVar(buf, AST_NULL), SymbolicConst(j));
+        for (int j = lb; j <= ub; ++j) {
+          SymbolicVal tmp= ReplaceVal( cur, SymbolicVar(buf, AST_NULL), SymbolicConst(j));
           orig = tmp;
-	  orig.Visit(this);
-	}
+          orig.Visit(this);
+        }
    }
    else {
         int cur = result.size();
@@ -436,13 +436,13 @@ class ReplaceExtendibleParam : public SymbolicVisitor
               i != u.args_end(); ++i) {
           SymbolicVal tmp= *i;
           orig = tmp;
-	  orig.Visit(this);
-	}
+          orig.Visit(this);
+        }
         SymbolicFunction::Arguments args;
         for (size_t i = cur; i < result.size(); ++i) {
           args.push_back(result[i]);
         }
-	SymbolicVal val = u.cloneFunction( args);
+        SymbolicVal val = u.cloneFunction( args);
         result.resize(cur);
         result.push_back(val);
     }
@@ -498,15 +498,15 @@ get_val(const std::vector<SymbolicVal>& parList, SymbolicVal& r) const
     SymbolicValType curtype = cur1.get_val().GetValType();
     if (curtype != VAL_VAR) {
       if ( parList[j] != cur1)
-	return false;
+        return false;
       ++j;
     }
     else { // variable parameter may have range information
       string basename = cur1.get_val().toString(); // parameter name
       string extname = cur.get_extend_var();    // extension name
       if (extname == "") {
-	r = ReplaceVal(r, SymbolicVar(basename, AST_NULL), parList[j]);
-	++j;
+        r = ReplaceVal(r, SymbolicVar(basename, AST_NULL), parList[j]);
+        ++j;
       }
       else {
         int lb = 0, ub = 0;

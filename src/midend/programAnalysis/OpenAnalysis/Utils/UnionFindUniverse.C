@@ -76,7 +76,7 @@ void UnionFindElement::Init(int i)
   parent = UF_NIL;
   count = 1;
 }
-	
+        
 
 //***********************************************************************************************
 // class UnionFindUniverse interface operations

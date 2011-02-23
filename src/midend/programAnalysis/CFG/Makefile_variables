@@ -1,0 +1,43 @@
+# Non-recursive Makefile
+
+mpaCFG_includes=\
+	-I$(mpaCFGPath)/.. \
+	-I$(mpaCFGPath)/../OAWrap \
+	-I$(top_srcdir)/src/util/support \
+	-I$(top_srcdir)/src/util/graphs \
+	-I$(top_srcdir)/src/midend/astUtil/astSupport \
+	-I$(top_srcdir)/src/midend/astUtil/astInterface
+
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+# DQ (2/11/2010): ROSE currently fails to generate code for this CFG_OA.C file (it does however compile for analysis only).
+# Also it does not appear that ROSE requires this CFG_OA.C file, so I have removed it.
+# libCFGSources =  CFG_ROSE.C CFG_OA.C 
+mpaCFG_la_sources=\
+	$(mpaCFGPath)/CFG_ROSE.C
+
+
+mpaCFG_includeHeaders=\
+	$(mpaCFGPath)/CFG.h \
+	$(mpaCFGPath)/CFGImpl.h
+
+
+mpaCFG_extraDist=\
+	$(mpaCFGPath)/CMakeLists.txt
+
+
+mpaCFG_cleanLocal=\
+	rm -rf \
+		$(mpaCFGPath)/Templates.DB \
+		$(mpaCFGPath)/ii_files \
+		$(mpaCFGPath)/ti_files \
+		$(mpaCFGPath)/cxx_templates
+
+
+mpaCFG_distCleanLocal=\
+	rm -rf \
+		$(mpaCFGPath)/Templates.DB

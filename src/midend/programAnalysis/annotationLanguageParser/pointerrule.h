@@ -78,7 +78,7 @@ private:
 
 #ifdef __PROCLOCATION
   void test(procLocation * where,
-	    propertyAnalyzer * property_analyzer);
+            propertyAnalyzer * property_analyzer);
 #endif
   /** @brief Return the result of the test */
 
@@ -87,7 +87,7 @@ private:
   /** @brief Look up */
 
   void lookup(procedureAnn * procedure,
-	      Annotations * annotations);
+              Annotations * annotations);
 
 };
 

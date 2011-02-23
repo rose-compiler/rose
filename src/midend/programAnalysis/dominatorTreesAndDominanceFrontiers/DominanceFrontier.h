@@ -27,8 +27,8 @@ class DominanceFrontier {
 public:
 
   DominanceFrontier(DominatorTree * dt) : _dt(dt),
-					  _size(_dt->getSize()),
-					  _domFrontier(new std::set<int>[_size])
+                                          _size(_dt->getSize()),
+                                          _domFrontier(new std::set<int>[_size])
   {_buildFrontier();}
 
   /*! get the dominance frontier for a given node (these need to be

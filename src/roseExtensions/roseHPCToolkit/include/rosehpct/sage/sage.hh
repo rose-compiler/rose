@@ -170,12 +170,12 @@ namespace RoseHPCT
   //! Propagate a list of metrics by name
   void propagateMetrics (SgProject* node,
                          const MetricNameList_t& metrics,
-			 const std::string& prefix = std::string(""));
+                         const std::string& prefix = std::string(""));
 
   //! Propagate a list of metrics by name
   void propagateMetrics (SgProject* node,
                          const MetricNameList_t& metrics,
-			 const char* prefix);
+                         const char* prefix);
 
   /*! \brief Attribute storing the depth of a tree node (path length
    *  from the root).

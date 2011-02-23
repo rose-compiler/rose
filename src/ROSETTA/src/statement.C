@@ -211,8 +211,8 @@ Grammar::setUpStatements ()
     // We treat OmpSectionsStatement separatedly by move the body to a list of SgOmpSectionStatement
     // sensitive to 
     NEW_NONTERMINAL_MACRO (OmpClauseBodyStatement,  OmpParallelStatement | OmpSingleStatement |
-	      OmpTaskStatement| OmpForStatement| OmpDoStatement	| OmpSectionsStatement ,
-	"OmpClauseBodyStatement",   "OMP_CLAUSEBODY_STMT", false );
+              OmpTaskStatement| OmpForStatement| OmpDoStatement | OmpSectionsStatement ,
+        "OmpClauseBodyStatement",   "OMP_CLAUSEBODY_STMT", false );
 
     // + a statement / block 
     NEW_TERMINAL_MACRO (OmpAtomicStatement,    "OmpAtomicStatement",    "OMP_ATOMIC_STMT" );
@@ -225,8 +225,8 @@ Grammar::setUpStatements ()
 
     // A base class for all directives with a body/statement
     NEW_NONTERMINAL_MACRO (OmpBodyStatement,  OmpAtomicStatement   | OmpMasterStatement  | OmpOrderedStatement   
-	| OmpCriticalStatement   |  OmpSectionStatement | OmpWorkshareStatement  | OmpClauseBodyStatement , 
-	"OmpBodyStatement",      "OMP_BODY_STMT", false );
+        | OmpCriticalStatement   |  OmpSectionStatement | OmpWorkshareStatement  | OmpClauseBodyStatement , 
+        "OmpBodyStatement",      "OMP_BODY_STMT", false );
 
 
 #endif
@@ -403,9 +403,9 @@ Grammar::setUpStatements ()
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
      NEW_NONTERMINAL_MACRO (Statement,
-			    ScopeStatement       | FunctionTypeTable      | DeclarationStatement            | ExprStatement         |
-			    LabelStatement       | CaseOptionStmt         | TryStmt                         | DefaultOptionStmt     |
-			    BreakStmt            | ContinueStmt           | ReturnStmt                      | GotoStatement         |
+                            ScopeStatement       | FunctionTypeTable      | DeclarationStatement            | ExprStatement         |
+                            LabelStatement       | CaseOptionStmt         | TryStmt                         | DefaultOptionStmt     |
+                            BreakStmt            | ContinueStmt           | ReturnStmt                      | GotoStatement         |
              SpawnStmt            | NullStatement          | VariantStatement                | ForInitStatement      | 
              CatchStatementSeq    | StopOrPauseStatement   | IOStatement                     | 
              WhereStatement       | ElseWhereStatement     | NullifyStatement                | ArithmeticIfStatement |
@@ -414,7 +414,7 @@ Grammar::setUpStatements ()
              UpcWaitStatement     | UpcBarrierStatement    | UpcFenceStatement               | 
              OmpBarrierStatement    |  OmpTaskwaitStatement |  OmpFlushStatement             | OmpBodyStatement      |
              SequenceStatement,
-			    "Statement","StatementTag", false);
+                            "Statement","StatementTag", false);
 
           // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
           // InterfaceStatement   | ModuleStatement        | UseStatement                    | ContainsStatement     |
@@ -497,7 +497,7 @@ Grammar::setUpStatements ()
 
      FunctionTypeTable.setFunctionPrototype( "HEADER_FUNCTION_TYPE_TABLE", "../Grammar/Statement.code" );
      FunctionTypeTable.setDataPrototype    ( "SgSymbolTable*","function_type_table","= NULL",
-					     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
      FunctionTypeTable.setAutomaticGenerationOfConstructor(false);
 
      Global.setFunctionPrototype( "HEADER_GLOBAL", "../Grammar/Statement.code" );
@@ -509,7 +509,7 @@ Grammar::setUpStatements ()
      Global.editSubstitute      ( "LIST_FUNCTION_NAME", "declaration" );
      Global.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "SgDeclarationStatement*" );
      Global.setDataPrototype    ( "SgDeclarationStatementPtrList", "declarations", "",
-				  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // We need a custom destructor until we have automated support for deletion of list elements.
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // Global.setAutomaticGenerationOfDestructor(false);
@@ -525,7 +525,7 @@ Grammar::setUpStatements ()
 
   // DQ (4/22/2004): Remove these later when the new modifiers are working
      DeclarationStatement.setDataPrototype    ( "unsigned int","decl_attributes","= 0",
-						NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DeclarationStatement.setDataPrototype    ( "char*","linkage","= NULL",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
@@ -533,17 +533,17 @@ Grammar::setUpStatements ()
   // DQ (11/16/2007): Added "" as initializer for linkage string. Because we have this
   // string explicit, we are not using the SgLinkageModifier (which might be a better idea).
      DeclarationStatement.setDataPrototype    ( "std::string","linkage","= \"\"",
-						NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (4/22/2004): Adding new modifier support (might not need/want to use the 
   //                 SgDeclarationModifier node???  When might this not be enough???)
 #if 0
      DeclarationStatement.setDataPrototype("SgAccessModifier", "accessModifier", "",
-				    NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                    NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DeclarationStatement.setDataPrototype("SgStorageModifier", "storageModifier", "",
-				    NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                    NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DeclarationStatement.setDataPrototype("SgLinkageModifier", "linkageModifier", "",
-				    NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                    NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #else
      DeclarationStatement.setDataPrototype ("SgDeclarationModifier", "declarationModifier", "",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -586,12 +586,12 @@ Grammar::setUpStatements ()
   // Having a concept of a "defining declaration" allows us to simplify the unparser and more accurately know when to output
   // a definition.  The idea is not specific to class declarations and perhaps should be in the SgDeclaration object.
      DeclarationStatement.setDataPrototype ("SgDeclarationStatement*", "definingDeclaration", "= NULL",
-					 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (9/23/2004): Keep track of the first non-defining declaration (so it can be reused to avoid redundant 
   // declarations (explicitly or implicitly forward declarations).
      DeclarationStatement.setDataPrototype ("SgDeclarationStatement*", "firstNondefiningDeclaration", "= NULL",
-					 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (10/10/2006): Not all declarations make sense with qualified names, but enough do that I have placed 
   // this here for now! I have removed these lists from the SgNamedType IR nodes since SgTypes are shared and 
@@ -610,7 +610,7 @@ Grammar::setUpStatements ()
   // DeclarationStatement.setDataPrototype ("std::string", "bind_language", "=\"\"",
   //           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DeclarationStatement.setDataPrototype ("std::string", "binding_label", "=\"\"",
-					NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      BasicBlock.setFunctionPrototype ( "HEADER_BASIC_BLOCK", "../Grammar/Statement.code" );
@@ -628,7 +628,7 @@ Grammar::setUpStatements ()
      BasicBlock.editSubstitute       ( "LIST_FUNCTION_NAME", "statement" );
      BasicBlock.editSubstitute       ( "LIST_ELEMENT_DATA_TYPE", "SgStatement*" );
      BasicBlock.setDataPrototype    ( "SgStatementPtrList", "statements", "",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // BasicBlock.setAutomaticGenerationOfDestructor(false);
@@ -637,15 +637,15 @@ Grammar::setUpStatements ()
   // handling embedded code. When used the SgBasicBlock can only appear in a SgFunctionDefinition
   // and can contain any string (only meaningful if they are assembly instructions).
      BasicBlock.setDataPrototype ( "std::string", "asm_function_body", "= \"\"",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      IfStmt.setFunctionPrototype ( "HEADER_IF_STATEMENT", "../Grammar/Statement.code" );
      IfStmt.setDataPrototype ( "SgStatement*",  "conditional", "= NULL",
-			       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      IfStmt.setDataPrototype ( "SgStatement*", "true_body",   "= NULL",
-			       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      IfStmt.setDataPrototype ( "SgStatement*", "false_body",  "= NULL",
-			       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // IfStmt.setAutomaticGenerationOfDestructor(false);
 
@@ -656,7 +656,7 @@ Grammar::setUpStatements ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (11/16/2007): Added support for string labels (for Fortran).
      IfStmt.setDataPrototype ( "std::string", "string_label", "= \"\"",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (8/24/2007): Added to support Fortran specific use of WhileStmt
   //  IfStmt.setDataPrototype ( "int", "end_numeric_label", "= -1",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -687,7 +687,7 @@ Grammar::setUpStatements ()
   // ForStatement.setDataPrototype ( "SgForInitStatement*", "for_init_stmt", "= NULL",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ForStatement.setDataPrototype ( "SgForInitStatement*", "for_init_stmt", "= NULL",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
 
   // DQ (11/23/2005): This replaces the SgExpressionRoot with a SgStatement 
@@ -703,10 +703,10 @@ Grammar::setUpStatements ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
      ForStatement.setDataPrototype ( "SgStatement*", "loop_body",        "= NULL",
-				     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (11/16/2007): Added support for string labels (for Fortran).
      ForStatement.setDataPrototype ( "std::string", "string_label", "= \"\"",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // DQ (12/4/2004): Now we automate the generation of the destructors
@@ -720,7 +720,7 @@ Grammar::setUpStatements ()
      ForInitStatement.editSubstitute      ( "LIST_FUNCTION_NAME", "init_stmt" );
      ForInitStatement.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "SgStatement*" );
      ForInitStatement.setDataPrototype ( "SgStatementPtrList", "init_stmt", "",
-  				         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // ForInitStatement.setAutomaticGenerationOfDestructor(false);
 
@@ -734,7 +734,7 @@ Grammar::setUpStatements ()
      UpcForAllStatement.editSubstitute      ( "LIST_FUNCTION_NAME", "init_stmt" );
      UpcForAllStatement.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "SgStatement*" );
      UpcForAllStatement.setDataPrototype ( "SgForInitStatement*", "for_init_stmt", "= NULL",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
      UpcForAllStatement.setDataPrototype ( "SgStatement*", "test", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UpcForAllStatement.setDataPrototype ( "SgExpression*", "increment", "= NULL",
@@ -742,7 +742,7 @@ Grammar::setUpStatements ()
      UpcForAllStatement.setDataPrototype ( "SgExpression*", "affinity", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
      UpcForAllStatement.setDataPrototype ( "SgStatement*", "loop_body",        "= NULL",
-				     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
      FunctionDeclaration.setFunctionPrototype ( "HEADER_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
@@ -770,7 +770,7 @@ Grammar::setUpStatements ()
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #else
      FunctionDeclaration.setDataPrototype ( "SgName", "name", "= \"\"",
-					    CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
   // DQ (3/4/2007): We want to force the copy mechanism to skip building a new SgFunctionParameterList
@@ -783,22 +783,22 @@ Grammar::setUpStatements ()
   // FunctionDeclaration.setDataPrototype ( "SgFunctionParameterList*", "parameterList", "= NULL",
   //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      FunctionDeclaration.setDataPrototype ( "SgFunctionParameterList*", "parameterList", "= NULL",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
   // DQ (4/25/2004): Add modifier FunctionModifier and SpecialFunctionModifier
      FunctionDeclaration.setDataPrototype ( "SgFunctionModifier", "functionModifier", "",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FunctionDeclaration.setDataPrototype ( "SgSpecialFunctionModifier", "specialFunctionModifier", "",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (6/27/2006): Support for function declaration exception specifications
      FunctionDeclaration.setDataPrototype ( "SgTypePtrList", "exceptionSpecification", "",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 1
   // DQ (9/3/2007): In Fortran, the function name has been used in the end statement.
      FunctionDeclaration.setDataPrototype ( "bool", "named_in_end_statement", "= false",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
   // DQ (1/25/2009): Added support for asm names for functions (see test2009_10.C)
@@ -807,9 +807,9 @@ Grammar::setUpStatements ()
 #if 0
   // DQ (11/21/2007): In Fortran, we now support the bind attribute.
      FunctionDeclaration.setDataPrototype ( "std::string", "bind_language", "=\"\"",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FunctionDeclaration.setDataPrototype ( "std::string", "binding_label", "=\"\"",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
      FunctionParameterList.setFunctionPrototype ( "HEADER_FUNCTION_PARAMETER_LIST", "../Grammar/Statement.code" );
@@ -824,7 +824,7 @@ Grammar::setUpStatements ()
   // FunctionParameterList.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "const SgInitializedName &" );
      FunctionParameterList.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "SgInitializedName*" );
      FunctionParameterList.setDataPrototype ( "SgInitializedNamePtrList", "args", "",
-  				            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // FunctionParameterList.setAutomaticGenerationOfDestructor(false);
 
@@ -842,19 +842,19 @@ Grammar::setUpStatements ()
 
   // In this case we want the Xness of the data member to match that of the outer terminal
      FunctionDeclaration.setDataPrototype ( "SgFunctionType*", "type", "= NULL",
-					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
   // DQ (4/18/2005): Removed this data member since it is redundent with the firstNondefiningDeclaration in the base class (SgDeclarationStatement)
   // QY: need forward definition so that we can set definition pointer as NULL for forward decls 
   // FunctionDeclaration.setDataPrototype ( "SgFunctionDefinition*", "forwardDefinition", "= NULL",
   //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FunctionDeclaration.setDataPrototype ( "SgFunctionDefinition*", "definition", "= NULL",
-					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (4/18/2005): Removed this data member since it is redundent with the definingDeclaration->get_definition() 
   // referenced from the base class (SgDeclarationStatement).
   // FunctionDeclaration.setDataPrototype ( "SgFunctionDefinition*", "definition_ref", "= NULL",
-  //				    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  //                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // QY:11/2/04 isn't p_mangled_name always obtained from p_type? should go through p_type then
   // We can't use the generated versions of the data access functions here!
@@ -865,7 +865,7 @@ Grammar::setUpStatements ()
   // FunctionDeclaration.setDataPrototype ( "SgType*", "orig_return_type", "= NULL",
   //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL | DEF2TYPE_TRAVERSAL, NO_DELETE);
      FunctionDeclaration.setDataPrototype ( "int", "from_template", "= 0",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
   // DQ (2/15/2004): Add support for old-style C function definitions (K&R style)
@@ -918,10 +918,10 @@ Grammar::setUpStatements ()
 #endif
 //QY: remove p_declaration pointer because it is always the same with the parent pointer
 //     FunctionDefinition.setDataPrototype ("SgFunctionDeclaration*", "declaration", "= 0",
-//					  CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+//                                        CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      FunctionDefinition.setDataPrototype ( "SgBasicBlock*", "body", "= NULL",
-				CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (10/4/2006): Support for SgBasicBlock numbering in function bodies (SgFunctionDefinition IR nodes).
   // FunctionDefinition.setDataPrototype ( "SgBasicBlockPtrListPtr", "block_number_map", "= NULL",
@@ -998,7 +998,7 @@ Grammar::setUpStatements ()
   // CtorInitializerList.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "const SgInitializedName &" );
      CtorInitializerList.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "SgInitializedName*" );
      CtorInitializerList.setDataPrototype ( "SgInitializedNamePtrList", "ctors", "",
-  				            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // CtorInitializerList.setAutomaticGenerationOfDestructor(false);
 
@@ -1038,13 +1038,13 @@ Grammar::setUpStatements ()
                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      VariableDeclaration.setDataPrototype("SgInitializedNamePtrList", "variables", "",
-					  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // VariableDeclaration.setAutomaticGenerationOfDestructor(false);
 
   // DQ (9/4/2004): Added support for qualification of type names in variable declarations
   // VariableDeclaration.setDataPrototype("bool", "need_name_qualifier", "= false",
-  //				  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  //                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (10/5/2004): This was decided against, qualified names are now generated on the fly as required, which 
   // results in a more robust mechanism.
@@ -1057,7 +1057,7 @@ Grammar::setUpStatements ()
   // VariableDeclaration.setDataPrototype("string", "name_qualifier", "",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // VariableDeclaration.setDataPrototype("SgSymbolPtrList", "name_qualifier_list", "",
-  //				  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  //                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (10/5/2004): Eplicitly record if the base type of this variable declaration is to be output.  
   // This is part of the support for defining vs. non-defining declarations but all types are shared 
@@ -1116,9 +1116,9 @@ Grammar::setUpStatements ()
 #if 0
   // DQ (11/23/2007): In Fortran, we now support the bind attribute.
      VariableDeclaration.setDataPrototype ( "std::string", "bind_language", "=\"\"",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      VariableDeclaration.setDataPrototype ( "std::string", "binding_label", "=\"\"",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
   // DQ (12/4/2007): Support for GNU attribute mechanism.
@@ -1141,13 +1141,13 @@ Grammar::setUpStatements ()
 
   // backward pointer!
      VariableDefinition.setDataPrototype ( "SgInitializedName*" , "vardefn" , "= NULL",
-					   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // It is hard to believe that the "SgUnsignedLongVal" should not be an "int" instead!
      VariableDefinition.setDataPrototype ( "SgUnsignedLongVal*", "bitfield", "= NULL",
-					   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 //     VariableDefinition.setDataPrototype("SgExpressionRoot*", "initializer_expr_root", "= NULL",
-//					  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL,
+//                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL,
 //                                          NO_COPY_DATA);
 
      ClassDeclaration.setFunctionPrototype ( "HEADER_CLASS_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
@@ -1161,7 +1161,7 @@ Grammar::setUpStatements ()
   // ClassDeclaration.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "const SgInitializedName &" );
 
      ClassDeclaration.setDataPrototype ( "SgName", "name", "= \"\"",
-					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (3/10/2007): Moved to appear at the end of the class and changed to be a boolean type
   // ClassDeclaration.setDataPrototype ( "int", "class_type", "= 0",
@@ -1177,7 +1177,7 @@ Grammar::setUpStatements ()
                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
      ClassDeclaration.setDataPrototype ( "SgClassDefinition*", "definition", "= NULL",
-					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (3/10/2007): Moved to appear at the end of the class and changed to be a boolean type
   // ClassDeclaration.setDataPrototype ( "int", "from_template", "= 0",
@@ -1205,7 +1205,7 @@ Grammar::setUpStatements ()
   //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (3/10/2007): Moved to appear at the end of the class and changed to be a boolean type
      ClassDeclaration.setDataPrototype ( "bool", "from_template", "= false",
-					 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (3/10/2007): Moved to appear at the end of the class
   // DQ (12/14/2005): Where a class is referenced before it is build (common in name qualified types using 
@@ -1228,14 +1228,14 @@ Grammar::setUpStatements ()
 #if 0
   // DQ (11/23/2007): In Fortran, we now support the bind attribute (not used yet, but I think we will need this shortly).
      ClassDeclaration.setDataPrototype ( "std::string", "bind_language", "=\"\"",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ClassDeclaration.setDataPrototype ( "std::string", "binding_label", "=\"\"",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
   // DQ (7/30/2008): Added support suggested by Ryan for PHP interface specification.
      ClassDeclaration.setDataPrototype ( "bool", "explicit_interface", "= false",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // This class contains two lists (we don't know if this edit/substitution mechanism for work for two lists)
      ClassDefinition.setFunctionPrototype ( "HEADER_CLASS_DEFINITION_STATEMENT", "../Grammar/Statement.code" );      
@@ -1246,7 +1246,7 @@ Grammar::setUpStatements ()
      ClassDefinition.editSubstitute      ( "LIST_FUNCTION_NAME", "member" );
      ClassDefinition.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "SgDeclarationStatement*" );
      ClassDefinition.setDataPrototype("SgDeclarationStatementPtrList", "members", "",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      ClassDefinition.editSubstitute       ( "HEADER_LIST_DECLARATIONS_2", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
      ClassDefinition.editSubstitute      ( "LIST_DATA_TYPE", "SgBaseClassPtrList" );
@@ -1296,11 +1296,11 @@ Grammar::setUpStatements ()
      //
      // TemplateDeclaration.setDataPrototype ( "SgClassType*", "type", "= NULL");
      TemplateDeclaration.setDataPrototype ( "SgName", "name", "= \"\"",
-					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
-					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateDeclaration.setDataPrototype ( "SgTemplateDeclaration::template_type_enum" , "template_kind", "= SgTemplateDeclaration::e_template_none",
-					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1327,14 +1327,14 @@ Grammar::setUpStatements ()
   // (e.g. templateHeader + "class" + templateName + templateParameters = "template <class T> ABC"
   // or "class" + templateName + templateParameters = "class ABC<int>")
      TemplateInstantiationDecl.setDataPrototype ( "SgName", "templateName", "= \"\"",
-						  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (2/29/2004): Added to support templates
      TemplateInstantiationDecl.setDataPrototype ( "SgName", "templateHeader", "= \"\"",
-						  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0
      TemplateInstantiationDecl.setDataPrototype ( "SgTemplateInstantiationDecl::template_type_enum",
-						  "template_kind", "= e_template_none",
-						  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                  "template_kind", "= e_template_none",
+                                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
   // DQ (11/6/2007): The templateDeclaration data member should not be copied, is should be shared 
@@ -1359,13 +1359,13 @@ Grammar::setUpStatements ()
      TemplateInstantiationDecl.setDataPrototype ( "SgTemplateArgumentPtrList", "templateArguments",  "= SgTemplateArgumentPtrList()",
                     CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
    // TemplateInstantiationDecl.setDataPrototype ( "SgTemplateArgumentPtrList", "templateArguments",  "= NULL",
-	//               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+        //               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (10/11/2004): instantiated template names must be reset once the template parameters are known
   // We want to use names like "ABC<int>" instead of the mangled equivalent names.  This variable records
   // if the name has been reset or not to avoid using mangled names in the unparsed (generated) code.
      TemplateInstantiationDecl.setDataPrototype ( "bool", "nameResetFromMangledForm", "= false",
-						  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      TemplateInstantiationDefn.setFunctionPrototype ( "HEADER_TEMPLATE_INSTANTIATION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
 
@@ -1374,13 +1374,13 @@ Grammar::setUpStatements ()
                    "HEADER_TEMPLATE_FUNCTION_INSTANTIATION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
   // DQ (2/15/2005): Added to hold original function name without template arguments
      TemplateInstantiationFunctionDecl.setDataPrototype ( "SgName", "templateName", "= \"\"",
-						  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0
      TemplateInstantiationFunctionDecl.setDataPrototype ( "SgName", "templateHeader", "= \"\"",
-						  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateInstantiationFunctionDecl.setDataPrototype ( "SgTemplateInstantiationFunctionDecl::template_type_enum",
-						  "template_kind", "= e_template_none",
-						  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                  "template_kind", "= e_template_none",
+                                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
   // DQ (11/6/2007): The templateDeclaration data member should not be copied, is should be shared 
@@ -1391,13 +1391,13 @@ Grammar::setUpStatements ()
      TemplateInstantiationFunctionDecl.setDataPrototype ( "SgTemplateDeclaration*", "templateDeclaration", "= NULL",
                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateInstantiationFunctionDecl.setDataPrototype ( "SgTemplateArgumentPtrList", "templateArguments",  "= SgTemplateArgumentPtrList()",
-						  CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                  CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (2/15/2005): instantiated function template names must be reset once the template parameters are known
   // We want to use names like "ABC<int>" instead of the mangled equivalent names.  This variable records
   // if the name has been reset or not to avoid using mangled names in the unparsed (generated) code.
      TemplateInstantiationFunctionDecl.setDataPrototype ( "bool", "nameResetFromMangledForm", "= false",
-						  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (3/22/2004): Support for template member functions
      TemplateInstantiationMemberFunctionDecl.setFunctionPrototype ( 
@@ -1405,13 +1405,13 @@ Grammar::setUpStatements ()
 
   // DQ (2/15/2005): Added to hold original function name without template arguments
      TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "SgName", "templateName", "= \"\"",
-						  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0
      TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "SgName", "templateHeader", "= \"\"",
-						  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "SgTemplateInstantiationMemberFunctionDecl::template_type_enum",
-						  "template_kind", "= e_template_none",
-						  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                  "template_kind", "= e_template_none",
+                                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
   // DQ (11/6/2007): The templateDeclaration data member should not be copied, is should be shared 
@@ -1422,13 +1422,13 @@ Grammar::setUpStatements ()
      TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "SgTemplateDeclaration*", "templateDeclaration", "= NULL",
                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "SgTemplateArgumentPtrList", "templateArguments",  "= SgTemplateArgumentPtrList()",
-						  CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                  CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (2/15/2005): instantiated member function template names must be reset once the template parameters are known
   // We want to use names like "ABC<int>" instead of the mangled equivalent names.  This variable records
   // if the name has been reset or not to avoid using mangled names in the unparsed (generated) code.
      TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "bool", "nameResetFromMangledForm", "= false",
-						  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 #if 0
@@ -1447,7 +1447,7 @@ Grammar::setUpStatements ()
      TemplateInstantiationDefn.editSubstitute      ( "LIST_FUNCTION_NAME", "inheritance" );
      TemplateInstantiationDefn.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "const SgBaseClass &" );
      TemplateInstantiationDefn.setDataPrototype ( "SgTemplateInstantiationDecl*",
-						  "declaration", "= NULL");
+                                                  "declaration", "= NULL");
 #endif
 
      EnumDeclaration.setFunctionPrototype ( "HEADER_ENUM_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
@@ -1462,23 +1462,23 @@ Grammar::setUpStatements ()
 
   // We do not traverse the following data member for the moment!
      EnumDeclaration.setDataPrototype ( "SgName"     , "name", "= \"\"",
-					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      EnumDeclaration.setDataPrototype ( "bool", "embedded", "=false",
-				       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (10/18/2007): Modified to force AST copy mechanim to copy the type (using CLONE_PTR option).
      EnumDeclaration.setDataPrototype ( "SgEnumType*", "type", "= NULL",
-					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
 #if 0
      EnumDeclaration.setDataPrototype ( "SgInitializedNamePtrList", "enumerators", "= NULL",
-					NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #else
   // DQ (5/31/2006): I think that we should be traversing the SgInitializedName objects in the enumerator list
   // EnumDeclaration.setDataPrototype ( "SgInitializedNamePtrList", "enumerators", "",
   //           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      EnumDeclaration.setDataPrototype ( "SgInitializedNamePtrList", "enumerators", "",
-					NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
   // DQ (6/23/2005): Enum declarations can require name qualification to support the identification of functions 
@@ -1518,7 +1518,7 @@ Grammar::setUpStatements ()
 
   // QY 11/9/04  set expr as the indirect member "operand" wrapped inside expr_root. 
      ExprStatement.setDataPrototype ( "SgExpression*", "the_expr", " = NULL",
-				      INDIRECT_CONSTRUCTOR_PARAMETER, 
+                                      INDIRECT_CONSTRUCTOR_PARAMETER, 
                                       BUILD_INDIRECT_ACCESS_FUNCTIONS, 
                                       NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // QY 11/9/04 expr_root needs to follow expr immediately
@@ -1535,7 +1535,7 @@ Grammar::setUpStatements ()
 
      LabelStatement.setFunctionPrototype ( "HEADER_LABEL_STATEMENT", "../Grammar/Statement.code" );
      LabelStatement.setDataPrototype     ( "SgName", "label", "= \"\"",
-					   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      LabelStatement.setDataPrototype     ( "SgScopeStatement*", "scope", "= NULL",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1558,9 +1558,9 @@ Grammar::setUpStatements ()
   // than the C/C++ "do {} while();")
      WhileStmt.setFunctionPrototype ( "HEADER_WHILE_STATEMENT", "../Grammar/Statement.code" );
      WhileStmt.setDataPrototype     ( "SgStatement*", "condition", "= NULL",
-				      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      WhileStmt.setDataPrototype     ( "SgStatement*", "body", "= NULL",
-				      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (8/24/2007): Added to support Fortran specific use of do ... while construct.
   // WhileStmt.setDataPrototype ( "int", "end_numeric_label", "= -1",
@@ -1569,7 +1569,7 @@ Grammar::setUpStatements ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (11/17/2007): Added support for string labels (for Fortran).
      WhileStmt.setDataPrototype ( "std::string", "string_label", "= \"\"",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (12/26/2007): Fortran specific, has associated enddo statement
      WhileStmt.setDataPrototype ( "bool", "has_end_statement", "= false",
@@ -1578,9 +1578,9 @@ Grammar::setUpStatements ()
      DoWhileStmt.setFunctionPrototype ( "HEADER_DO_WHILE_STATEMENT", "../Grammar/Statement.code" );
   // DQ (11/17/2005): Swapped order to force order of traversal to reflect structure.
      DoWhileStmt.setDataPrototype     ( "SgStatement*", "body", "= NULL",
-					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      DoWhileStmt.setDataPrototype     ( "SgStatement*", "condition", "= NULL",
-					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      SwitchStatement.setFunctionPrototype ( "HEADER_SWITCH_STATEMENT", "../Grammar/Statement.code" );
 
@@ -1599,7 +1599,7 @@ Grammar::setUpStatements ()
                                       NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // QY 11/9/04 expr_root needs to follow expr immediately
      SwitchStatement.setDataPrototype ( "SgExpressionRoot*", "item_selector_root", 
-					"operand", WRAP_CONSTRUCTOR_PARAMETER, 
+                                        "operand", WRAP_CONSTRUCTOR_PARAMETER, 
                                         BUILD_WRAP_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE,
                                          CLONE_TREE);
 #else
@@ -1616,7 +1616,7 @@ Grammar::setUpStatements ()
 
   // JJW (12/9/2008): The body does not need to be a block
      SwitchStatement.setDataPrototype ( "SgStatement*", "body", "= NULL",
-					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (8/24/2007): Added to support Fortran specific use of WhileStmt
   // SwitchStatement.setDataPrototype ( "int", "end_numeric_label", "= -1",
@@ -1625,7 +1625,7 @@ Grammar::setUpStatements ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (11/16/2007): Added support for string labels (for Fortran).
      SwitchStatement.setDataPrototype ( "std::string", "string_label", "= \"\"",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // ***** Warning ****** Warning ****** Warning ****** Warning ****** Warning ******
 
@@ -1645,12 +1645,12 @@ Grammar::setUpStatements ()
 
   // QY 11/9/04  set expr as the indirect member "operand" wrapped inside expr_root. 
      CaseOptionStmt.setDataPrototype ( "SgExpression*", "key", " = NULL",
-				     INDIRECT_CONSTRUCTOR_PARAMETER, 
+                                     INDIRECT_CONSTRUCTOR_PARAMETER, 
                                      BUILD_INDIRECT_ACCESS_FUNCTIONS, 
                                      NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // QY 11/9/04 key_root needs to follow key immediately
      CaseOptionStmt.setDataPrototype("SgExpressionRoot*", "key_root", "operand",
-				    WRAP_CONSTRUCTOR_PARAMETER, BUILD_WRAP_ACCESS_FUNCTIONS, 
+                                    WRAP_CONSTRUCTOR_PARAMETER, BUILD_WRAP_ACCESS_FUNCTIONS, 
                                     DEF_TRAVERSAL, NO_DELETE, CLONE_TREE);
   // ***** Warning ****** Warning ****** Warning ****** Warning ****** Warning ******
 #else
@@ -1660,7 +1660,7 @@ Grammar::setUpStatements ()
 #endif
 
      CaseOptionStmt.setDataPrototype ( "SgStatement*", "body", "= NULL",
-				       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (1/6/2006): Added support for GNU case label ranges (e.g. "case 2 ... 5:" in switch statements; see test2005_202.C)
      CaseOptionStmt.setDataPrototype ( "SgExpression*", "key_range_end", " = NULL",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1678,9 +1678,9 @@ Grammar::setUpStatements ()
      TryStmt.editSubstitute       ( "LIST_ELEMENT_DATA_TYPE", "SgStatement*" );
 
      TryStmt.setDataPrototype     ( "SgStatement*", "body", "= NULL",
-				    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      TryStmt.setDataPrototype ( "SgCatchStatementSeq*", "catch_statement_seq_root", "= NULL",
-				NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      CatchStatementSeq.setFunctionPrototype ( "HEADER_CATCH_STATEMENT_SEQ", "../Grammar/Statement.code" );
      CatchStatementSeq.editSubstitute   ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
@@ -1690,22 +1690,22 @@ Grammar::setUpStatements ()
      CatchStatementSeq.editSubstitute   ( "LIST_FUNCTION_NAME", "catch_statement" );
      CatchStatementSeq.editSubstitute   ( "LIST_ELEMENT_DATA_TYPE", "SgStatement*" );
      CatchStatementSeq.setDataPrototype ( "SgStatementPtrList", "catch_statement_seq", "",
-				  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // CatchStatementSeq.setAutomaticGenerationOfDestructor(false);
 
      CatchOptionStmt.setFunctionPrototype ( "HEADER_CATCH_OPTION_STATEMENT", "../Grammar/Statement.code" );
 
      CatchOptionStmt.setDataPrototype ( "SgVariableDeclaration*", "condition", "= NULL",
-					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      CatchOptionStmt.setDataPrototype ( "SgStatement*"         , "body"     , "= NULL",
-					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      CatchOptionStmt.setDataPrototype ( "SgTryStmt*"            , "trystmt"  , "= NULL",
-					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      DefaultOptionStmt.setFunctionPrototype ( "HEADER_DEFAULT_OPTION_STATEMENT", "../Grammar/Statement.code" );
      DefaultOptionStmt.setDataPrototype ( "SgStatement*", "body"   , "= NULL",
-					  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (1/31/2009): Added support for named default case construct.
      DefaultOptionStmt.setDataPrototype ( "std::string", "default_construct_name", " = \"\"",
@@ -1715,13 +1715,13 @@ Grammar::setUpStatements ()
 
   // DQ (11/17/2007): Fortran support requires string label target ("break" in C == "exit" in Fortran)
      BreakStmt.setDataPrototype     ( "std::string", "do_string_label", "= \"\"",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ContinueStmt.setFunctionPrototype ( "HEADER_CONTINUE_STATEMENT", "../Grammar/Statement.code" );
 
   // DQ (11/17/2007): Fortran support requires string label target ("continue" in C == "cycle" in Fortran)
      ContinueStmt.setDataPrototype     ( "std::string", "do_string_label", "= \"\"",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ReturnStmt.setFunctionPrototype ( "HEADER_RETURN_STATEMENT", "../Grammar/Statement.code" );
 
@@ -1734,12 +1734,12 @@ Grammar::setUpStatements ()
 
   // QY 11/9/04  set return_expr as the indirect member "operand" wrapped inside expr_root. 
      ReturnStmt.setDataPrototype      ( "SgExpression*", "return_expr", " = NULL",
-				     INDIRECT_CONSTRUCTOR_PARAMETER, 
+                                     INDIRECT_CONSTRUCTOR_PARAMETER, 
                                      BUILD_INDIRECT_ACCESS_FUNCTIONS, 
                                      NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // QY 11/9/04 expression_root needs to follow expr immediately
      ReturnStmt.setDataPrototype("SgExpressionRoot*", "expression_root", 
-				 "operand", WRAP_CONSTRUCTOR_PARAMETER, 
+                                 "operand", WRAP_CONSTRUCTOR_PARAMETER, 
                                  BUILD_WRAP_ACCESS_FUNCTIONS, 
                                  DEF_TRAVERSAL, NO_DELETE, CLONE_TREE);
   // ***** Warning ****** Warning ****** Warning ****** Warning ****** Warning ******
@@ -1751,7 +1751,7 @@ Grammar::setUpStatements ()
 
      GotoStatement.setFunctionPrototype ( "HEADER_GOTO_STATEMENT", "../Grammar/Statement.code" );
      GotoStatement.setDataPrototype     ( "SgLabelStatement*", "label", "= NULL",
-					  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (12/16/2007): Added to support new way to handle labels and goto (as implemented in Fortran support)
      GotoStatement.setDataPrototype     ( "SgLabelRefExp*", "label_expression", "= NULL",
@@ -1768,12 +1768,12 @@ Grammar::setUpStatements ()
 
   // QY 11/9/04  set expr as the indirect member "operand" wrapped inside expr_root. 
      AsmStmt.setDataPrototype      ( "SgExpression*", "expr", " = NULL",
-				     INDIRECT_CONSTRUCTOR_PARAMETER, 
+                                     INDIRECT_CONSTRUCTOR_PARAMETER, 
                                      BUILD_INDIRECT_ACCESS_FUNCTIONS, 
                                      NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // QY 11/9/04 expr_root needs to follow expr immediately
      AsmStmt.setDataPrototype("SgExpressionRoot*", "expr_root", "operand",
-			      WRAP_CONSTRUCTOR_PARAMETER, BUILD_WRAP_ACCESS_FUNCTIONS, 
+                              WRAP_CONSTRUCTOR_PARAMETER, BUILD_WRAP_ACCESS_FUNCTIONS, 
                               DEF_TRAVERSAL, NO_DELETE, CLONE_TREE);
   // ***** Warning ****** Warning ****** Warning ****** Warning ****** Warning ******
 #else
@@ -1812,7 +1812,7 @@ Grammar::setUpStatements ()
                                        NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // QY 11/9/04 expr_root needs to follow the_func immediately
      SpawnStmt.setDataPrototype("SgExpressionRoot*", "the_func_root", "operand",
-				WRAP_CONSTRUCTOR_PARAMETER, BUILD_WRAP_ACCESS_FUNCTIONS, 
+                                WRAP_CONSTRUCTOR_PARAMETER, BUILD_WRAP_ACCESS_FUNCTIONS, 
                                 DEF_TRAVERSAL, NO_DELETE, CLONE_TREE);
   // ***** Warning ****** Warning ****** Warning ****** Warning ****** Warning ******
 #else
@@ -1830,14 +1830,14 @@ Grammar::setUpStatements ()
 
      TypedefDeclaration.setFunctionPrototype  ( "HEADER_TYPEDEF_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      TypedefDeclaration.setDataPrototype ( "SgName", "name", "= \"\"",
-					   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TypedefDeclaration.setDataPrototype ( "SgType*", "base_type", "= NULL",
-					   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // TypedefDeclaration.setDataPrototype ( "SgTypedefType*", "type", "= NULL",
   //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
      TypedefDeclaration.setDataPrototype ( "SgTypedefType*", "type", "= NULL",
-					   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
   // DQ (7/22/2004): Where this has been changed to be a valid pointer in the AST 
   // (fix to EDG/Sage connetion), its traversal now causes a cycle in the example 
@@ -1852,7 +1852,7 @@ Grammar::setUpStatements ()
   //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      TypedefDeclaration.setDataPrototype ( "SgSymbol*", "parent_scope", "= NULL",
-					   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (10/5/2004): Support for defining declarations hidden within typedefs (e.g. "typedef struct A { int x; } Atype;")
   // Such base types are considered unnamed and they get their name from the typedef directly. Because the types
@@ -1862,7 +1862,7 @@ Grammar::setUpStatements ()
   // since we assume that anything handed to ROSE had to first be compiled by EDG (front-end) and so it represents valid 
   // C++ code with the declarations in the precise order required to compile correctly.
      TypedefDeclaration.setDataPrototype ( "bool", "typedefBaseTypeContainsDefiningDeclaration", "= false",
-					   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (11/22/2004): This is likely redundant with the parent_scope except that it appears that parent_scope is likely set wrong!
   // DQ (11/22/2004): class declarations for nested classes can appear outside the scope of the class to which 
@@ -1898,11 +1898,11 @@ Grammar::setUpStatements ()
 #if 0
   // DQ (6/13/2006): Added to support more detail in pragmas
      PragmaDeclaration.setDataPrototype     ( "bool"   , "isIdentPragma", "= false",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      PragmaDeclaration.setDataPrototype     ( "bool"   , "isPackPragma", "= false",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      PragmaDeclaration.setDataPrototype     ( "unsigned int"   , "packPragmaValue", "= 0",
-					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
   // Support for extern "C" and extern "C++"
@@ -1931,7 +1931,7 @@ Grammar::setUpStatements ()
 #endif
 
   // NamespaceDeclarationStatement.setDataPrototype ("SgDeclarationStatementPtrList", "declarationList", "",
-  //		      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  //                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      NamespaceAliasDeclarationStatement.setFunctionPrototype (
           "HEADER_NAMESPACE_ALIAS_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
@@ -1951,9 +1951,9 @@ Grammar::setUpStatements ()
      NamespaceDefinitionStatement.editSubstitute   ( "LIST_FUNCTION_NAME", "declaration" );
      NamespaceDefinitionStatement.editSubstitute   ( "LIST_ELEMENT_DATA_TYPE", "SgDeclarationStatement*" );
      NamespaceDefinitionStatement.setDataPrototype ( "SgDeclarationStatementPtrList", "declarations", "",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      NamespaceDefinitionStatement.setDataPrototype ( "SgNamespaceDeclarationStatement*", "namespaceDeclaration", "= NULL",
-					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      UsingDeclarationStatement.setFunctionPrototype ( "HEADER_USING_DECLARATION_STATEMENT",
                                                           "../Grammar/Statement.code" );
@@ -2068,26 +2068,26 @@ Grammar::setUpStatements ()
   // InterfaceStatement.setDataPrototype ( "SgFunctionDeclaration*", "function", "= NULL",
   //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      InterfaceStatement.setDataPrototype ( "SgDeclarationStatementPtrList", "interface_procedure_declarations", "",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (10/2/2008): When we build the SgInterfaceStatement IR node we only have limited information about the functions.
   // Later when we see the functions following the "contains statement" we can access the function declarations.
   // This information is saved and the names are connected to the function declaration in the final processing of
   // the module (I hope that earlier than that will not be required).
      InterfaceStatement.setDataPrototype ( "SgStringList", "interface_procedure_names", "",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
      InterfaceStatement.setDataPrototype ( "SgInterfaceBodyPtrList", "interface_body_list", "",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 #if 0
      InterfaceStatement.setDataPrototype ( "SgBasicBlock*", "body"   , "= NULL",
-					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (3/20/2007): This should be a SgScopeStatement (Gina has it as a SgStatement, so we might have a problem later)
   // InterfaceStatement.setDataPrototype ( "SgScopeStatement*",  "scope", "= NULL",
   //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      InterfaceStatement.setDataPrototype ( "SgScopeStatement*",  "scope", "= NULL",
-			       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // InterfaceStatement.setDataPrototype ( "int", "end_numeric_label", "= -1",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
@@ -2171,19 +2171,19 @@ Grammar::setUpStatements ()
   // This is the concept of "labeled or non-labeled do" and "block do"
      FortranDo.setFunctionPrototype ( "HEADER_FORTRAN_DO", "../Grammar/Statement.code" );
      FortranDo.setDataPrototype     ( "SgExpression*", "initialization", "= NULL",
-				      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      FortranDo.setDataPrototype     ( "SgExpression*", "bound", "= NULL",
-				      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      FortranDo.setDataPrototype     ( "SgExpression*", "increment", "= NULL",
-				      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      FortranDo.setDataPrototype     ( "SgBasicBlock*", "body", "= NULL",
-				      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // FortranDo.setDataPrototype     ( "int", "end_numeric_label", "= -1",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FortranDo.setDataPrototype     ( "SgLabelRefExp*", "end_numeric_label", "= NULL",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FortranDo.setDataPrototype     ( "std::string", "string_label", "= \"\"",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (12/21/2007): This controls use of old style vs. new style DO loops. 
   // --- New style uses a "do i=0,n ... end do" statement
   // --- Old style uses a "do xxx i=0,n ... xxx continue" statement
@@ -2222,7 +2222,7 @@ Grammar::setUpStatements ()
      ForAllStatement.setDataPrototype ( "bool", "has_end_statement", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ForAllStatement.setDataPrototype ( "std::string", "string_label", "= \"\"",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ForAllStatement.setDataPrototype ( "SgLabelRefExp*", "end_numeric_label", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -2474,7 +2474,7 @@ Grammar::setUpStatements ()
      ImplicitStatement.setDataPrototype    ( "bool", "implicit_none", "= false",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ImplicitStatement.setDataPrototype("SgInitializedNamePtrList", "variables", "",
-					   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      StatementFunctionStatement.setDataPrototype    ( "SgFunctionDeclaration*", "function", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -2497,7 +2497,7 @@ Grammar::setUpStatements ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (11/16/2007): Added support for string labels (for Fortran).
      WhereStatement.setDataPrototype ( "std::string", "string_label", "= \"\"",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      WhereStatement.setDataPrototype     ( "bool", "has_end_statement", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -2797,7 +2797,7 @@ Grammar::setUpStatements ()
        // Use the specialized unparse function for this terminal
           FunctionDefinition.excludeFunctionSource ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro" );
           FunctionDefinition.setFunctionSource     ( "SOURCE_FUNCTION_DEFINTION_STATEMENT_PARSER", "../Grammar/Statement.code" );
-	}
+        }
 
      MemberFunctionDeclaration.setFunctionSource ( "SOURCE_MEMBER_FUNCTION_DECLARATION_STATEMENT",
                                                         "../Grammar/Statement.code" );
@@ -3064,24 +3064,24 @@ Grammar::setUpStatements ()
    // sections {section, section} // `containerSuccessors >1 is not allowed in ROSETTA's traversal
    // We hack the code to handle this special case
 //    OmpSectionsStatement.setDataPrototype("SgOmpSectionStatementPtrList", "sections", "",
-//    	                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+//                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 //    OmpSectionsStatement.setDataPrototype("SgOmpClausePtrList", "clauses", "",
 //         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     // directives with variable lists
-	    // omp flush [(var-list)]   
+            // omp flush [(var-list)]   
     // Liao 9/27/2010, per user's report, modeling the variable reference use SgVarRefExp
     //OmpFlushStatement.setDataPrototype( "SgInitializedNamePtrList", "variables", "",
     OmpFlushStatement.setDataPrototype( "SgVarRefExpPtrList", "variables", "",
                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-	    // omp threadprivate [(var-list)]   
+            // omp threadprivate [(var-list)]   
     //OmpThreadprivateStatement.setDataPrototype( "SgInitializedNamePtrList", "variables", "",
     OmpThreadprivateStatement.setDataPrototype( "SgVarRefExpPtrList", "variables", "",
                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
    // Directives with a statement/ structured body
     OmpBodyStatement.setDataPrototype ( "SgStatement*", "body",        "= NULL",
-	                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     // Directive with a body + a name: 
-   	// omp critical [name]  \n structured_block
+        // omp critical [name]  \n structured_block
     OmpCriticalStatement.setDataPrototype ( "SgName", "name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

@@ -26,14 +26,14 @@ AstSuccessorsSelectors::selectDefaultSuccessors(SgNode* node, SuccessorsContaine
      if(SgClassDeclaration* n=dynamic_cast<SgClassDeclaration*>(node)) {
        // if the number of successors changes this code here probably needs to be adapted
        if (succContainer.size() != 1) {
-	 printf ("Error: succContainer.size() = %d node->sage_class_name() = %s \n",
-		 succContainer.size(),node->sage_class_name());
+         printf ("Error: succContainer.size() = %d node->sage_class_name() = %s \n",
+                 succContainer.size(),node->sage_class_name());
        }
        ROSE_ASSERT(succContainer.size() == 1); 
 
        if(n->isForward()) {
-	 // nullify definiton to not be a traversal successor of a forward class/struct/union declaration
-	 succContainer[SgClassDeclaration_definition]=0;
+         // nullify definiton to not be a traversal successor of a forward class/struct/union declaration
+         succContainer[SgClassDeclaration_definition]=0;
        }
      }
 #endif

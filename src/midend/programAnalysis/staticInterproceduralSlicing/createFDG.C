@@ -23,16 +23,16 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	std::string filename;
+        std::string filename;
 
     SgProject *project = frontend(argc, argv);
     EDefUse *edu=new EDefUse(project);
     if (edu->run(false)==1)
         {
               std::cerr<<"createFDG:: DFAnalysis failed!   -- edu->run(false)==0"<<endl;
-	      exit(0);
-	}
-		std::vector<InterproceduralInfo*> ip;
+              exit(0);
+        }
+                std::vector<InterproceduralInfo*> ip;
 
     list < SgNode * >functionDeclarations = NodeQuery::querySubTree(project, V_SgFunctionDeclaration);
 
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
         else
         {
             // get the control depenence for this function
-						ipi=new InterproceduralInfo(fD);
+                                                ipi=new InterproceduralInfo(fD);
 
             ROSE_ASSERT(ipi != NULL);
             
@@ -68,12 +68,12 @@ int main(int argc, char *argv[])
             // get control dependence for this function defintion
             cdg = new ControlDependenceGraph(fD->get_definition(), ipi);
             cdg->computeAdditionalFunctioncallDepencencies();
-						cdg->computeInterproceduralInformation(ipi);
-//						cdg->debugCoutNodeList();
+                                                cdg->computeInterproceduralInformation(ipi);
+//                                              cdg->debugCoutNodeList();
             FunctionDependenceGraph *fdg=new FunctionDependenceGraph(cdg,ddg,ipi);
 
             filename =
-								(fD->get_definition()->get_file_info()->get_filenameString ())
+                                                                (fD->get_definition()->get_file_info()->get_filenameString ())
                  + "." +
                 (fD->get_name().getString()) + ".fdg.dot";
             fdg->writeDot((char *)filename.c_str());

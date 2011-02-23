@@ -157,7 +157,7 @@ SgAsmPEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%sPEImportDirectory.", prefix);
     }
 
-	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     fprintf(f, "%s%-*s = %s",          p, w, "dll_name_rva", p_dll_name_rva.to_string().c_str());
     if (p_dll_name)

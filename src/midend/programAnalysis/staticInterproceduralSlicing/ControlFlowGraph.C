@@ -65,7 +65,7 @@ void ControlFlowGraph::_buildCFG() {
     //    printf("\nNODE!\n\n");
     CFGNodeImpl * node = *nodes;
     if (_cfg->GetPredecessors(node).ReachEnd() &&
-	_cfg->GetSuccessors(node).ReachEnd()) {
+        _cfg->GetSuccessors(node).ReachEnd()) {
       //      printf("Skipping broken node\n");
       continue;
     }
@@ -110,11 +110,11 @@ void ControlFlowGraph::_buildCFG() {
       list<AstNodePtr>::iterator next = stmts.begin();
       next++;
       while (next != stmts.end()) {
-	SgNode * from = AstNodePtrImpl(*curr).get_ptr();
-	SgNode * to = AstNodePtrImpl(*next).get_ptr();
-	addLink(_sgnodemap[from], _sgnodemap[to]);
-	curr++;
-	next++;
+        SgNode * from = AstNodePtrImpl(*curr).get_ptr();
+        SgNode * to = AstNodePtrImpl(*next).get_ptr();
+        addLink(_sgnodemap[from], _sgnodemap[to]);
+        curr++;
+        next++;
       }
       SgNode * last = AstNodePtrImpl(*curr).get_ptr();
       _buildBranches(_sgnodemap[last], *nodes);
