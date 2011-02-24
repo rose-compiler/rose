@@ -785,7 +785,6 @@ generatedCodeExamples = \
    debuggingSourceCodePositionInformation.out \
    commandlineProcessing.out \
    charmSupport.out \
-   codeCoverage.out \
    callGraph.pdf \
    liveness.pdf \
    classHierarchyGraph.pdf \
@@ -819,6 +818,12 @@ generatedCodeExamples = \
    rose_inputCode_VolatileTypeModifier.C \
    inputCode_dwarfAnalysis.pdf \
    inputCode_dwarfAnalysis.out
+
+# TOO (2/17/11): Errors with Tensilica's Xtensa compilers. 
+if !USING_XTENSA_BACKEND_COMPILER
+generatedCodeExamples += \
+   codeCoverage.out
+endif
 
 # #####################################
 # Output file generation rules

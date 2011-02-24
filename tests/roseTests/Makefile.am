@@ -28,15 +28,18 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # are enabled in ROSE (including binary analysis).
 SUBDIRS =
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-   SUBDIRS += astInterfaceTests astMergeTests astOutliningTests astPerformanceTests \
+   SUBDIRS += astMergeTests astPerformanceTests \
               astProcessingTests astQueryTests astRewriteTests astSymbolTableTests astTokenStreamTests \
-              loopProcessingTests programTransformationTests \
-              roseHPCToolkitTests utilTests fileLocation_tests graph_tests mergeTraversal_tests \
+              programTransformationTests \
+              roseHPCToolkitTests utilTests graph_tests mergeTraversal_tests \
 	       	  astLValueTests
 # TOO (2/16/2011): Errors with Thrifty (GCC 3.4.4) backend compiler. We can gradually
 # enable these tests at a later stage if necessary.
 if !USING_GCC_3_4_4_BACKEND_COMPILER
-   SUBDIRS += astFileIOTests astInliningTests ompLoweringTests programAnalysisTests 
+# TOO (2/17/11): Errors with Tensilica's Xtensa compilers. 
+if !USING_XTENSA_BACKEND_COMPILER
+   SUBDIRS += astInterfaceTests astInliningTests ompLoweringTests astFileIOTests programAnalysisTests astOutliningTests loopProcessingTests fileLocation_tests
+endif 
 endif
 endif
 

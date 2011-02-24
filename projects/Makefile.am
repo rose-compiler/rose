@@ -26,11 +26,9 @@ SUBDIRS = \
      assemblyToSourceAst \
      autoParallelization \
      autoTuning\
-     backstroke \
      binaryVisualization \
      bugSeeding \
      checkPointExample \
-     dataStructureGraphing \
      haskellport \
      highLevelGrammars \
      javaport \
@@ -39,6 +37,12 @@ SUBDIRS = \
      symbolicAnalysisFramework \
      taintcheck \
      PowerAwareCompiler
+
+# TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
+# gradually enable these tests at a later stage if necessary.
+if !USING_XTENSA_BACKEND_COMPILER
+   SUBDIRS += backstroke dataStructureGraphing
+endif
 
 # DQ (10/15/2010): Adding initial trace analysis support.
 if ROSE_USE_TRACE_ANALYSIS
