@@ -115,6 +115,20 @@ if test "$OS" = "Darwin" ; then
    fi
   fi
 fi
+# Liao 2/15/2011
+# check flex and yacc
+# the assumption is that ./build should only run from a developer version, which requires flex and yacc
+# check them in ./configure is inappropriate since the distribution package should already pack generated parsers/scanners.
+if [[ -z "$(type flex)" ]]; then
+   echo "Cannot find flex in your path! Please install GNU flex."
+   exit 1;
+fi
+
+if [[ -z "$(type yacc)" ]]; then
+   echo "Cannot find yacc in your path! Please install GNU bison."
+   exit 1;
+fi
+
 # Look for libtoolize, glibtoolize in various places.
 libtoolize_name=
 #if [[ -x /Users/dquinlan/local/libtool-install/bin/libtoolize ]]; then
