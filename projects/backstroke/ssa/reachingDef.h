@@ -61,6 +61,13 @@ public:
 	 * and numbers increase monotonically with program flow. */
 	int getRenamingNumber() const;
 
+	/** Returns true if this is an original definition (i.e. if p.x is defined, p.x is an original defintion
+	 * and p is an expanded definition) */
+	bool isOriginalDef() const
+	{
+		return defType == ORIGINAL_DEF;
+	}
+
 	bool operator==(const ReachingDef& other) const;
 
 	//---------MODIFIERS---------

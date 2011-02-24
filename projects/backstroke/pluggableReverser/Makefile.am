@@ -21,6 +21,8 @@ libBackstrokePluggableReverser_a_include_HEADERS = expressionHandler.h statement
 					extractFromUseValueRestorer.h whileStatementHandler.h stateSavingStatementHandler.h \
 					expAndStmtHandlers.h
 
+libBackstrokePluggableReverser_a_LIBADD = ../ssa/libSSA.a
+
 EXTRA_DIST = 
 
 CLEANFILES = 

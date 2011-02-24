@@ -4,6 +4,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/any.hpp>
 #include "variableVersionTable.h"
+#include "ssa/staticSingleAssignment.h"
 #include "costModel.h"
 
 //Forward declarations
@@ -11,8 +12,8 @@ class ExpressionReversalHandler;
 class StatementReversalHandler;
 class ReversalHandlerBase;
 class EventProcessor;
+class IVariableFilter;
 
-//TODO: Just use std::pair here
 struct ExpressionReversal
 {
 	ExpressionReversal(SgExpression* fwd, SgExpression * rvs)
@@ -22,7 +23,6 @@ struct ExpressionReversal
 	SgExpression* rvs_exp;
 };
 
-//TODO: Just use std::pair here
 struct StatementReversal
 {
 	StatementReversal(SgStatement* fwd, SgStatement * rvs)
@@ -70,6 +70,9 @@ public:
 
 	/** Generate the reverse AST for the statement whose reversal result this class holds. */
 	StatementReversal generateReverseStatement() const;
+
+	/** Generate the commit method portion of the AST. */
+	SgStatement* generateCommitStatement() const;
 
 	ExpressionReversalHandler* getExpressionHandler() const;
 
@@ -146,13 +149,25 @@ protected:
 	SgExpression* pushVal(SgExpression* exp, SgType* type);
 	SgExpression* pushVal(SgExpression* exp)
 	{ return pushVal(exp, exp->get_type()); }
+
+	//! Generates an expression which pops a value from the back of a stack and evaluates to it
 	SgExpression* popVal(SgType* type);
 
-	//! Return if the given variable is a state variable (currently, it should be the parameter of event function).
+	//!Generates an expression which pops a value from the front of a stack and discards the value.
+	//! This is used for fossil collection (commit methods)
+	SgExpression* popVal_front(SgType* type);
+
+	//! Return if the given variable is a state variable
 	bool isStateVariable(SgExpression* exp);
 
+	//! Returns an object with def-use analysis. To be replaced by SSA analysis in the future
 	VariableRenaming* getVariableRenaming();
 
+	//! Returns an object with interprocedural SSA analysis
+	const StaticSingleAssignment* getSsa() const;
+
+	//! Returns an object that determines whether the value of a given variable nees to be reversed.
+	const IVariableFilter* getVariableFilter() const;
 
 public:
 
@@ -190,6 +205,11 @@ public:
 
 	virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult) = 0;
 	virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table) = 0;
+
+	/** Generate the commit code. This code should release any state saved by the forward code, output any cached
+	 * output, etc.
+	 * TODO: Make this pure virtual. Right now, the default implementation does nothing. */
+	virtual SgStatement* generateCommitAST(const EvaluationResult& evaluationResult);
 };
 
 /** These types of reverse handlers recalculate a specific value of a variable at a different point
