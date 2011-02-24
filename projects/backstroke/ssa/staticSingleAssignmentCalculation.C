@@ -45,17 +45,17 @@ bool StaticSingleAssignment::isBuiltinVar(const VarName& var)
 
 bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 {
-	SgScopeStatement* scope = SageInterface::getScope(astNode);
-	ROSE_ASSERT(var.size() > 0 && scope != NULL);
+	SgScopeStatement* accessingScope = SageInterface::getScope(astNode);
+	ROSE_ASSERT(var.size() > 0 && accessingScope != NULL);
 	SgScopeStatement* varScope = SageInterface::getScope(var[0]);
 
 	//Work around a ROSE bug that sets incorrect scopes for built-in variables.
 	if (isBuiltinVar(var))
 	{
-		return SageInterface::isAncestor(scope, var[0]);
+		return SageInterface::isAncestor(accessingScope, var[0]);
 	}
 
-	if (varScope == scope || SageInterface::isAncestor(varScope, scope))
+	if (varScope == accessingScope || SageInterface::isAncestor(varScope, accessingScope))
 	{
 		//FIXME: In a basic block, the definition of the variable might come AFTER the node in question
 		//We should return false in this case.
@@ -101,18 +101,35 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 			}
 		}
 
-		//If the variable is a class member, see if the scope is a member function
-		SgNode* curr = scope;
-		while (curr != NULL && !isSgMemberFunctionDeclaration(curr))
+		//If the variable is accessed by a friend function, then it is available. Check if the function
+		//looking to access the var is a friend
+		SgFunctionDeclaration* accessingFunction = SageInterface::getEnclosingFunctionDeclaration(accessingScope, true);
+		SgName accessingFunctionName = accessingFunction->get_mangled_name();
+
+		//We'll look at all functions declared inside the variables class and see if any of them is the accessing function
+		//and is declared a friend
+		vector<SgFunctionDeclaration*> nestedFunctions =
+				SageInterface::querySubTree<SgFunctionDeclaration>(varClassScope, V_SgFunctionDeclaration);
+		foreach (SgFunctionDeclaration* nestedFunction, nestedFunctions)
 		{
-			curr = curr->get_parent();
+			if (SageInterface::getEnclosingClassDefinition(nestedFunction) != varClassScope)
+				continue;
+
+			if (!nestedFunction->get_declarationModifier().isFriend())
+				continue;
+
+			if (nestedFunction->get_mangled_name() != accessingFunctionName)
+				continue;
+
+			//The accessing function is a friend, so the variable is in scope
+			return true;
 		}
 
-		if (curr == NULL)
+		//The variable is a class member; see if the accessing function is a member function of the same class
+		SgMemberFunctionDeclaration* memFunction = isSgMemberFunctionDeclaration(accessingFunction);
+		if (memFunction == NULL)
 			return false;
 
-		SgMemberFunctionDeclaration* memFunction = isSgMemberFunctionDeclaration(curr);
-		ROSE_ASSERT(memFunction != NULL);
 		SgClassDefinition* funcClassScope = memFunction->get_class_scope();
 		ROSE_ASSERT(funcClassScope != NULL);
 
@@ -173,6 +190,7 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 	return false;
 }
 
+
 void StaticSingleAssignment::run(bool interprocedural)
 {
 	originalDefTable.clear();
@@ -184,41 +202,25 @@ void StaticSingleAssignment::run(bool interprocedural)
 	UniqueNameTraversal uniqueTrav(SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName));
 	DefsAndUsesTraversal defUseTrav(this);
 
-	//If interprocedural analysis is turned on, determine in which order we should process functions in order to
-	//process callees before calles whenever possible
-	vector<SgFunctionDefinition*> functionsToProcess;
-	auto_ptr<ClassHierarchyWrapper> classHierarchy;
-	if (interprocedural)
+	//Get a list of all the functions that we'll process
+	unordered_set<SgFunctionDefinition*> interestingFunctions;
+	vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition> (project, V_SgFunctionDefinition);
+	FunctionFilter functionFilter;
+	foreach (SgFunctionDefinition* f, funcs)
 	{
-		classHierarchy.reset(new ClassHierarchyWrapper(project));
-		functionsToProcess = calculateInterproceduralProcessingOrder();
-	}
-	else
-	{
-		vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition> (project, V_SgFunctionDefinition);
-			FunctionFilter functionFilter;
-		foreach (SgFunctionDefinition* f, funcs)
-		{
-			if (functionFilter(f->get_declaration()))
-				functionsToProcess.push_back(f);
-		}
+		if (functionFilter(f->get_declaration()))
+			interestingFunctions.insert(f);
 	}
 
-
-	//Annotate all functions of interest with variable names
-	//This is so we can get a loose bound of what variables are modified in a function even if it hasn't been processed yet
-	foreach (SgFunctionDefinition* func, functionsToProcess)
+	//Generate all local information before doing interprocedural analysis. This is so we know
+	//what variables are directly modified in each function body before we do interprocedural propagation
+	foreach (SgFunctionDefinition* func, interestingFunctions)
 	{
 		if (getDebug())
 			cout << "Running UniqueNameTraversal on function:" << SageInterface::get_name(func) << func << endl;
 
 		uniqueTrav.traverse(func->get_declaration());
-	}
 
-	//Process all functions of interest
-	unordered_set<SgFunctionDefinition*> functionsProcessed;
-	foreach (SgFunctionDefinition* func, functionsToProcess)
-	{
 		if (getDebug())
 			cout << "Finished UniqueNameTraversal..." << endl;
 
@@ -230,14 +232,6 @@ void StaticSingleAssignment::run(bool interprocedural)
 		if (getDebug())
 			cout << "Finished DefsAndUsesTraversal..." << endl;
 
-		if (interprocedural)
-		{
-			insertInterproceduralDefs(func, functionsProcessed, classHierarchy.get());
-		}
-
-		//Insert definitions at the SgFunctionDefinition for external variables whose values flow inside the function
-		insertDefsForExternalVariables(func->get_declaration());
-
 		//Expand any member variable definition to also define its parents at the same node
 		expandParentMemberDefinitions(func->get_declaration());
 
@@ -245,6 +239,19 @@ void StaticSingleAssignment::run(bool interprocedural)
 		expandParentMemberUses(func->get_declaration());
 
 		insertDefsForChildMemberUses(func->get_declaration());
+	}
+
+	//Interprocedural iterations. We iterate on the call graph until all interprocedural defs are propagated
+	if (interprocedural)
+	{
+		interproceduralDefPropagation(interestingFunctions);
+	}
+
+	//Now we have all local information, including interprocedural defs. Propagate the defs along control-flow
+	foreach (SgFunctionDefinition* func, interestingFunctions)
+	{
+		//Insert definitions at the SgFunctionDefinition for external variables whose values flow inside the function
+		insertDefsForExternalVariables(func->get_declaration());
 
 		//Create all ReachingDef objects:
 		//Create ReachingDef objects for all original definitions
@@ -264,8 +271,6 @@ void StaticSingleAssignment::run(bool interprocedural)
 
 		//Annotate phi functions with dependencies
 		//annotatePhiNodeWithConditions(func, controlDependencies);
-
-		functionsProcessed.insert(func);
 	}
 }
 
@@ -403,7 +408,7 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 
 	while (!worklist.empty())
 	{
-		if (getDebug())
+		if (getDebugExtra())
 			cout << "-------------------------------------------------------------------------" << endl;
 		//Get the node to work on
 		current = *worklist.begin();
@@ -414,7 +419,7 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 		//If we do this, then incorrect information will be propogated to the beginning of the function
 		if (current == FilteredCfgNode(func->cfgForEnd()))
 		{
-			if (getDebug())
+			if (getDebugExtra())
 				cout << "Skipped defUse on End of function definition." << endl;
 			continue;
 		}
@@ -432,7 +437,7 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 			{
 				//Add the node to the worklist
 				bool insertedNew = worklist.insert(nextNode).second;
-				if (insertedNew && getDebug())
+				if (insertedNew && getDebugExtra())
 				{
 					if (changed)
 						cout << "Defs Changed: Added " << nextNode.getNode()->class_name() << nextNode.getNode() << " to the worklist." << endl;

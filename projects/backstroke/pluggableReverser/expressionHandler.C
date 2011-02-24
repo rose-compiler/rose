@@ -104,6 +104,15 @@ vector<EvaluationResult> StoreAndRestoreExpressionHandler::evaluate(SgExpression
 
 	if (VariableRenaming::getVarName(var_to_save) != VariableRenaming::emptyName)
 	{
+		SgType* varType = VariableRenaming::getVarName(var_to_save).back()->get_type();
+		if (SageInterface::isPointerType(varType))
+		{
+			fprintf(stderr, "ERROR: Correctly saving pointer types not yet implemented (it's not hard)\n");
+			fprintf(stderr, "The pointer is saved an restored, rather than the value it points to!\n");
+			fprintf(stderr, "Variable %s\n", var_to_save->unparseToString().c_str());
+			ROSE_ASSERT(false);
+		}
+
 		// Update the variable version table.
 		VariableVersionTable new_var_table = var_table;
 		new_var_table.reverseVersion(var_to_save);

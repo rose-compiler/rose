@@ -661,6 +661,13 @@ bool isReferenceType(SgType* t);
 //! Is this type a pointer type? (Handles typedefs correctly)
 bool isPointerType(SgType* t);
 
+//! Is this a pointer to a non-const type? Note that this function will return true for const pointers pointing to
+//! non-const types. For example, (int* const y) points to a modifiable int, so this function returns true. Meanwhile,
+//! it returns false for (int const * x) and (int const * const x) because these types point to a const int.
+//! Also, only the outer layer of nested pointers is unwrapped. So the function returns true for (const int ** y), but returns
+//! false for const (int * const * x)
+bool isPointerToNonConstType(SgType* type);
+
 //! Is this a const type?
 /* const char* p = "aa"; is not treated as having a const type. It is a pointer to const char.
  * Similarly, neither for const int b[10]; or const int & c =10;
@@ -1179,6 +1186,9 @@ void deepDelete(SgNode* root);
 
 //! Replace a statement with another. Move preprocessing information from oldStmt to newStmt if requested.
 void replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessinInfo = false);
+
+//! Replace an anchor node with a specified pattern subtree with optional SgVariantExpression. All SgVariantExpression in the pattern will be replaced with copies of the anchor node.
+SgNode* replaceWithPattern (SgNode * anchor, SgNode* new_pattern);
 
 //! Append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible
 /*! We recommend to build SgFunctionParameterList before building a function declaration

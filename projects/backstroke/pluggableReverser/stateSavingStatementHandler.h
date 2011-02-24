@@ -22,6 +22,8 @@ public:
 
     virtual StatementReversal generateReverseAST(SgStatement* stmt, const EvaluationResult&);
     virtual std::vector<EvaluationResult> evaluate(SgStatement* stmt, const VariableVersionTable& var_table);
+
+	virtual SgStatement* generateCommitAST(const EvaluationResult&);
 };
 
 #endif	/* STATESAVINGSTATEMENTHANDLER_H */

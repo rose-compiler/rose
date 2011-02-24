@@ -20,7 +20,8 @@ libBackstroke_a_LIBADD = utilities/libBackstrokeUtilities.a \
 			reverseComputation/libBackstrokeReverser.a \
 			restrictedLanguage/libBackstrokeRestrictedLanguage.a \
 			pluggableReverser/libBackstrokePluggableReverser.a \
-			testCodeGeneration/libBackstrokeTestCodeBuilder.a
+			testCodeGeneration/libBackstrokeTestCodeBuilder.a \
+			ssa/libSSA.a
 
 EXTRA_DIST = 
 
