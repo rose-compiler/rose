@@ -107,6 +107,7 @@ BACKEND_CXX_COMPILER_NAME="`basename $BACKEND_CXX_COMPILER`"
 BACKEND_C_COMPILER_NAME="`basename $BACKEND_C_COMPILER`"
 if test "x$BACKEND_CXX_COMPILER_NAME" == "xxt-xc++" -o "x$BACKEND_C_COMPILER_NAME" == "xxt-xcc"; then
   AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, true)
+  AC_DEFINE_UNQUOTED([USING_XTENSA_BACKEND_COMPILER],true,[Tensilica's Xtensa compiler.])
   echo "The backend C/C++ compilers have been identified as Tensilica Xtensa compilers" 
 else
   AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, false)
