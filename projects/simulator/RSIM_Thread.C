@@ -11,6 +11,9 @@
 void
 RSIM_Thread::ctor()
 {
+    my_tid = syscall(SYS_gettid);
+    assert(my_tid>0);
+
     memset(&last_report, 0, sizeof last_report);
     memset(signal_action, 0, sizeof signal_action);
     memset(tls_array, 0, sizeof tls_array);
@@ -245,9 +248,9 @@ RSIM_Thread::signal_deliver(int signo)
             case SIGABRT:
             case SIGTRAP:
             case SIGSYS:
-                /* Exit with core dump */
+                /* Exit process with core dump */
                 get_process()->dump_core(signo);
-                throw Exit((signo & 0x7f) | __WCOREFLAG);
+                throw Exit((signo & 0x7f) | __WCOREFLAG, true);
             case SIGTERM:
             case SIGINT:
             case SIGQUIT:
@@ -262,7 +265,7 @@ RSIM_Thread::signal_deliver(int signo)
             case SIGUSR1:
             case SIGUSR2:
                 /* Exit without core dump */
-                throw Exit(signo & 0x7f);
+                throw Exit(signo & 0x7f, true);
             case SIGIO:
             case SIGURG:
             case SIGCHLD:
@@ -275,7 +278,7 @@ RSIM_Thread::signal_deliver(int signo)
                 return;
             default:
                 /* Exit without a core dump */
-                throw Exit(signo & 0x7f);
+                throw Exit(signo & 0x7f, true);
         }
 
     } else if (signal_mask & ((uint64_t)1 << signo)) {
@@ -460,10 +463,7 @@ RSIM_Thread::main()
             process->dump_core(SIGILL);
             abort();
         } catch (const RSIM_Thread::Exit &e) {
-            /* specimen has exited */
-            if (robust_list_head_va)
-                fprintf(stderr, "warning: robust_list not cleaned up\n"); /* FIXME: see set_robust_list() syscall */
-            process->exit(e.status);
+            sys_exit(e);
             return NULL;
         } catch (const RSIM_SemanticPolicy::Signal &e) {
             signal_generate(e.signo);
@@ -582,3 +582,52 @@ RSIM_Thread::set_thread_area(user_desc_32 *info, bool can_allocate)
     set_gdt(info);
     return idx;
 }
+
+int
+RSIM_Thread::futex_wake(uint32_t va)
+{
+    /* We need the process-wide read lock so no other thread unmaps the memory while we're signaling the futex. */
+    int retval;
+    assert(4==sizeof(int));
+    RTS_READ(get_process()->rwlock()) {
+        int *addr = (int*)get_process()->my_addr(va, sizeof(int));
+        if (!addr) {
+            retval = -EFAULT;
+        } else if (-1 == (retval = syscall(SYS_futex, addr, 1/*FUTEX_WAKE*/))) {
+            retval = -errno;
+        }
+    } RTS_READ_END;
+    return retval;
+}
+
+int
+RSIM_Thread::sys_exit(const Exit &e)
+{
+    RSIM_Process *process = get_process(); /* while we still have a chance */
+
+    if (robust_list_head_va)
+        fprintf(stderr, "warning: robust_list not cleaned up\n"); /* FIXME: see set_robust_list() syscall */
+
+    /* Clear and signal child TID if necessary (CLONE_CHILD_CLEARTID) */
+    if (clear_child_tid) {
+        uint32_t zero = 0;
+        size_t n = process->mem_write(&zero, clear_child_tid, sizeof zero);
+        ROSE_ASSERT(n==sizeof zero);
+        if (tracing(TRACE_SYSCALL))
+            fprintf(tracing(TRACE_SYSCALL), "[futex wake 0x%08"PRIx32"] ", clear_child_tid);
+        int nwoke = futex_wake(clear_child_tid);
+        ROSE_ASSERT(nwoke>=0);
+    }
+
+    /* Remove the child from the process. */
+    process->remove_thread(this);
+    this->process = NULL;
+
+    /* Cause the entire process to exit if necesary. */
+    if (e.exit_process)
+        process->exit(e.status);
+
+    return e.status;
+}
+
+    

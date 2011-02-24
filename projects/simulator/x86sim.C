@@ -71,7 +71,27 @@ RSIM_Thread::emulate_syscall()
 
 
     switch (callno) {
-        //case 1: /* exit: see syscall 252, exit_group */
+        case 1: /*exit*/
+            /* This terminates a single thread (#252, exit_group, terminates a whole process). */
+            syscall_enter("exit", "d");
+            if (clear_child_tid) {
+                uint32_t zero = 0;
+                size_t n = get_process()->mem_write(&zero, clear_child_tid, sizeof zero);
+                ROSE_ASSERT(n==sizeof zero);
+                if (tracing(TRACE_SYSCALL))
+                    fprintf(tracing(TRACE_SYSCALL), "[futex wake 0x%08"PRIx32"] ", clear_child_tid);
+                int nwoke = futex_wake(clear_child_tid);
+                ROSE_ASSERT(nwoke>=0);
+            }
+
+            /* Throwing an Exit will cause the thread main loop to terminate (and perhaps the real thread terminates as
+             * well). The simulated thread is effectively dead at this point. */
+            if (tracing(TRACE_SYSCALL))
+                fputs("(throwing Exit...)\n", tracing(TRACE_SYSCALL));
+            throw Exit(__W_EXITCODE(syscall_arg(0), 0), false); /* false=>exit only this thread */
+
+            break;
+
 
         case 3: { /*read*/
             syscall_enter("read", "dpd");
@@ -1525,7 +1545,7 @@ RSIM_Thread::emulate_syscall()
              *    long sys_clone(unsigned long clone_flags, unsigned long newsp,
              *                   void __user *parent_tid, void __user *child_tid, struct pt_regs *regs)
              *
-             * The fourth argument, child_tid, varies depending on clone_flags. Linux doesn't appear to require that
+             * The fourth argument, child_tls_va, varies depending on clone_flags. Linux doesn't appear to require that
              * these are mutually exclusive.  It appears as though the CLONE_SETTLS happens before CLONE_CHILD_SETTID.
              *   CLONE_CHILD_SETTID:  it is an address where the child's TID is written when the child is created
              *   CLONE_SETTLS:        it is an address of a user_desc_32 which will be loaded into the GDT.
@@ -1533,7 +1553,7 @@ RSIM_Thread::emulate_syscall()
             unsigned flags = syscall_arg(0);
             uint32_t newsp = syscall_arg(1);
             uint32_t parent_tid_va = syscall_arg(2);
-            uint32_t child_tid_va = syscall_arg(3);
+            uint32_t child_tls_va = syscall_arg(3);
             uint32_t regs_va = syscall_arg(4);
 
             if (flags & CLONE_SETTLS) {
@@ -1547,7 +1567,7 @@ RSIM_Thread::emulate_syscall()
                               sizeof(pt_regs_32), print_pt_regs_32);
             }
 
-            syscall_return(sys_clone(flags, newsp, parent_tid_va, child_tid_va, regs_va));
+            syscall_return(sys_clone(flags, newsp, parent_tid_va, child_tls_va, regs_va));
 
             if (syscall_arg(-1)) {
                 /* Parent */
@@ -2471,13 +2491,6 @@ RSIM_Thread::emulate_syscall()
             break;
         }
 
-        case 1: /*exit*/
-            // FIXME [RPM 2011-02-23]: exit() terminates a single thread; exit_group() terminates a process.
-            syscall_enter("exit", "d");
-            if (tracing(TRACE_SYSCALL))
-                fprintf(tracing(TRACE_SYSCALL), "falls through to exit_group...\n");
-            /* fall through */
-
         case 252: { /*0xfc, exit_group*/
             syscall_enter("exit_group", "d");
             if (clear_child_tid) {
@@ -2485,14 +2498,18 @@ RSIM_Thread::emulate_syscall()
                  *      When clear_child_tid is set, and the process exits, and the process was sharing memory with other
                  *      processes or threads, then 0 is written at this address, and a futex(child_tidptr, FUTEX_WAKE, 1, NULL,
                  *      NULL, 0) call is done. (That is, wake a single process waiting on this futex.) Errors are ignored. */
+                uint32_t zero = 0;
+                size_t n = get_process()->mem_write(&zero, clear_child_tid, sizeof zero);
+                ROSE_ASSERT(n==sizeof zero);
                 if (tracing(TRACE_SYSCALL))
-                    fprintf(tracing(TRACE_SYSCALL), "[FIXME: skiping clear_child_tid]");
-                //FIXME [RPM 2010-11-13]
+                    fprintf(tracing(TRACE_SYSCALL), "[futex wake 0x%08"PRIx32"] ", clear_child_tid);
+                int nwoke = futex_wake(clear_child_tid);
+                ROSE_ASSERT(nwoke>=0);
             }
 
-            if (tracing(TRACE_SYSCALL)) fputs("(throwing...)\n", tracing(TRACE_SYSCALL));
-            int status=syscall_arg(0);
-            throw Exit(__W_EXITCODE(status, 0));
+            if (tracing(TRACE_SYSCALL))
+                fputs("(throwing Exit...)\n", tracing(TRACE_SYSCALL));
+            throw Exit(__W_EXITCODE(syscall_arg(0), 0), true); /* true=>exit entire process */
         }
 
         case 258: { /*0x102, set_tid_address*/
@@ -3579,7 +3596,7 @@ RSIM_Thread::sys_listen(int fd, int backlog)
 }
 
 int
-RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, uint32_t child_tid_va, uint32_t pt_regs_va)
+RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, uint32_t child_tls_va, uint32_t pt_regs_va)
 {
     if (flags == (CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | SIGCHLD)) {
         /* This is a fork() */
@@ -3609,17 +3626,13 @@ RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, u
 
             /* Thread-related things. We have to initialize a few data structures because the specimen may be using a
              * thread-aware library. */
-            if (0!=(flags & CLONE_CHILD_SETTID)) {
-                set_child_tid = child_tid_va;
-                if (set_child_tid) {
-                    uint32_t pid32 = getpid();
-                    size_t nwritten = get_process()->mem_write(&pid32, set_child_tid, 4);
-                    ROSE_ASSERT(4==nwritten);
-                }
+            if (0!=(flags & CLONE_CHILD_SETTID) && child_tls_va) {
+                uint32_t pid32 = getpid();
+                size_t nwritten = get_process()->mem_write(&pid32, child_tls_va, 4);
+                ROSE_ASSERT(4==nwritten);
             }
-            if (0!=(flags & CLONE_CHILD_CLEARTID)) {
-                clear_child_tid = child_tid_va;
-            }
+            if (0!=(flags & CLONE_CHILD_CLEARTID))
+                clear_child_tid = parent_tid_va;
 
             /* Return register values in child */
             pt_regs_32 regs;
@@ -3662,7 +3675,7 @@ RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, u
         regs.sp = newsp;
         regs.ax = 0;
 
-        pid_t tid = get_process()->clone_thread(flags, parent_tid_va, child_tid_va, regs);
+        pid_t tid = get_process()->clone_thread(flags, parent_tid_va, child_tls_va, regs);
         return tid;
     } else {
         return -EINVAL; /* can't handle this combination of flags */

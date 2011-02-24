@@ -11,18 +11,20 @@
 
 class RSIM_Thread {
 public:
-    /* Thrown by exit system calls. */
+    /** Thrown by exit system calls. */
     struct Exit {
-        explicit Exit(int status): status(status) {}
-        int status;                             /* same value as returned by waitpid() */
+        Exit(int status, bool exit_process): status(status), exit_process(exit_process) {}
+        int status;                             /**< Same value as returned by waitpid(). */
+        bool exit_process;                      /**< If true, then exit the entire process. */
     };
 
 public:
 
-    /** Constructs a new thread which belongs to the specified process. */
+    /** Constructs a new thread which belongs to the specified process.  RSIM_Thread objects should only be constructed by the
+     *  thread that will be simulating the speciment's thread described by this object. */
     RSIM_Thread(RSIM_Process *process)
-        : process_TMP(process), policy(this), semantics(policy), report_interval(10.0),
-          robust_list_head_va(0), set_child_tid(0), clear_child_tid(0),
+        : process(process), my_tid(-1), policy(this), semantics(policy), report_interval(10.0),
+          robust_list_head_va(0), clear_child_tid(0),
           signal_pending(0), signal_mask(0), signal_reprocess(false) {
         ctor();
     }
@@ -30,7 +32,19 @@ public:
     /***************************************************************************************************************************
      *                                  Members used for thread synchronization
      ***************************************************************************************************************************/
+private:
+    /** Process to which this thread belongs. An RSIM_Thread object can be in an orphaned state after it exits, in which case
+     *  the process will be a null pointer. */
+    RSIM_Process *process;
+
 public:
+    /** Obtain a pointer to the process of which this thread is a part. The caller can expect that the owner process of a thread
+     *  does not change during the lifetime of the thread, except it may become null after the thread exits. */
+    RSIM_Process *get_process() const {
+        assert(process!=NULL);
+        return process;
+    }
+
     /** Main loop. This loop simulates a single specimen thread and returns when the simulated thread exits. */
     void *main();
 
@@ -39,6 +53,9 @@ public:
      *                                  Members used by thread simulation
      **************************************************************************************************************************/
 private:
+    /** The TID of the real thread that is simulating the specimen thread described by this RSIM_Thread object. */
+    pid_t my_tid;
+
     /** Load the specified TLS descriptor into the GDT.  The @p idx is the index of the TLS descriptor within this thread
      * (unlike the linux kernel's set_tls_desc() whose idx is with respect to the GDT). */
     void tls_set_desc(int idx, const user_desc_32 *info);
@@ -53,6 +70,13 @@ private:
     user_desc_32 tls_array[RSIM_Process::GDT_ENTRY_TLS_ENTRIES];
 
 public:
+    /** Return the thread ID. Since each simulated thread is mapped to a unique real thread, the ID of the real thread also
+     *  serves as the ID of the simulated thread.
+     *
+     *  Thread safety: This can be called by any thread and will always return the TID of the real thread simulating this
+     *  RSIM_Thread. */
+    int get_tid() { return my_tid; }
+    
     /** Assigns a value to one of the thread TLS array elements (part of the GDT). Returns the index number on success,
      *  negative on failure.  If info's entry_number is -1 then this method chooses an empty TLS slot and updates
      *  entry_number. */
@@ -66,6 +90,12 @@ public:
     /** Return a pointer to an entry of the GDT.  The returned pointer might be pointing into the RSIM_Process gdt table or
      *  into the RSIM_Threads tls_array, depending on the value of @p idx. */
     user_desc_32 *gdt_entry(int idx);
+
+    /** Wake (signal) a futex. Returns the number of processes woken up on success, negative error number on failure. */
+    int futex_wake(uint32_t va);
+
+    /** Simulate thread exit. Return values is that which would be returned as the status for waitpid. */
+    int sys_exit(const Exit &e);
 
 
     /**************************************************************************************************************************
@@ -203,7 +233,7 @@ protected:
     void sys_bind(int fd, uint32_t addr_va, uint32_t addrlen);
     void sys_listen(int fd, int backlog);
 
-    int sys_clone(unsigned clone_flags, uint32_t newsp, uint32_t parent_tid_va, uint32_t child_tid_va, uint32_t pt_regs_va);
+    int sys_clone(unsigned clone_flags, uint32_t newsp, uint32_t parent_tid_va, uint32_t child_tls_va, uint32_t pt_regs_va);
 
     /**************************************************************************************************************************
      *                                  Methods dealing with instruction disassembly
@@ -226,23 +256,9 @@ public:
      **************************************************************************************************************************/
 public:
 
-    /** Obtain a pointer to the process of which this thread is a part. The caller can expect that the owner process of a thread
-     *  does not change during the lifetime of the thread. */
-    RSIM_Process *get_process() const {
-        assert(process_TMP!=NULL);
-        return process_TMP;
-    }
-
     /** Return the file descriptor used for a debugging facility.  If the facility is disabled then a null pointer is returned. */
     FILE *tracing(unsigned what) const;
 
-    /** Return the thread ID. Since each simulated thread is mapped to a unique real thread, the ID of the real thread also
-     *  serves as the ID of the simulated thread. Linux uses one process per thread, so a thread ID is the same as a process
-     *  ID. */
-    int get_tid() {
-        return getpid();
-    }
-    
     /** Print a progress report if progress reporting is enabled and enough time has elapsed since the previous report. */
     void report_progress_maybe();
 
@@ -285,7 +301,6 @@ protected:
      *                                  Data members
      **************************************************************************************************************************/
 protected:
-    RSIM_Process *process_TMP;                      /**< Process to which this thread belongs */
 
 
 
@@ -309,7 +324,6 @@ public: //FIXME
 
     /* Stuff related to threads */
     uint32_t robust_list_head_va;               /* Address of robust futex list head. See set_robust_list() syscall */
-    uint32_t set_child_tid;                     /* See set_tid_address(2) man page and clone() emulation */
     uint32_t clear_child_tid;                   /* See set_tid_address(2) man page and clone() emulation */
 
     /* Stuff related to signal handling. */

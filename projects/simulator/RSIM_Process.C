@@ -62,6 +62,16 @@ RSIM_Process::create_thread()
     return thread;
 }
 
+void
+RSIM_Process::remove_thread(RSIM_Thread *thread)
+{
+    RTS_WRITE(rwlock()) {
+        std::map<pid_t, RSIM_Thread*>::iterator ti = threads.find(thread->get_tid());
+        assert(ti!=threads.end());
+        threads.erase(ti);
+    } RTS_WRITE_END;
+}
+
 RSIM_Thread *
 RSIM_Process::get_thread(pid_t tid) const
 {
@@ -1376,10 +1386,10 @@ RSIM_Process::post_fork()
 }
 
 pid_t
-RSIM_Process::clone_thread(unsigned flags, uint32_t parent_tid_va, uint32_t child_tid_va, const pt_regs_32 &regs)
+RSIM_Process::clone_thread(unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va, const pt_regs_32 &regs)
 {
     int retval = 0;
-    Clone clone_info(this, flags, parent_tid_va, child_tid_va, regs);
+    Clone clone_info(this, flags, parent_tid_va, child_tls_va, regs);
     RTS_MUTEX(clone_info.mutex) {
         pthread_t t;
         retval = -pthread_create(&t, NULL, RSIM_Process::clone_thread_helper, &clone_info);
@@ -1412,7 +1422,7 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
         /* Set up thread local storage */
         if (clone_info->flags & CLONE_SETTLS) {
             user_desc_32 ud;
-            if (sizeof(ud)!=process->mem_read(&ud, clone_info->child_tid_va, sizeof ud)) {
+            if (sizeof(ud)!=process->mem_read(&ud, clone_info->child_tls_va, sizeof ud)) {
                 tid = -EFAULT;
                 goto release_mutex;
             }
@@ -1433,10 +1443,14 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
             goto release_mutex;
         }
         if ((clone_info->flags & CLONE_CHILD_SETTID) &&
-            4!=process->mem_write(&tid, clone_info->child_tid_va, 4)) {
+            4!=process->mem_write(&tid, clone_info->child_tls_va, 4)) {
             tid = -EFAULT;
             goto release_mutex;
         }
+
+        /* Should a memory location be cleared (and futex signaled) when the thread dies? */
+        if (clone_info->flags & CLONE_CHILD_CLEARTID)
+            thread->clear_child_tid = clone_info->parent_tid_va;
 
 
     release_mutex:
@@ -1457,7 +1471,8 @@ RSIM_Process::exit(int status)
     RTS_WRITE(rwlock()) {
         terminated = true;
         termination_status = status;
-        fprintf(stderr, "ROBB: RSIM_Process::exit() not fully implemented yet.\n");
+        if (!threads.empty())
+            fprintf(stderr, "ROBB: RSIM_Process::exit() not fully implemented yet.\n");
     } RTS_WRITE_END;
 }
 

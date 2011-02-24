@@ -125,7 +125,8 @@ public:
      *  permission, the this method will read as much as possible up to the first invalid address.  The return value is the
      *  number of bytes copied.
      *
-     *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
+     *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads
+     *  concurrently. However, the address that is returned might be unmapped before the caller can do anything with it. */
     size_t mem_read(void *buf, rose_addr_t va, size_t size);
 
     /** Reads a NUL-terminated string from specimen memory. The NUL is not included in the string.  If a limit is specified
@@ -189,8 +190,8 @@ public:
 private:
     /**< Contains various things that are needed while we clone a new thread to handle a simulated clone call. */
     struct Clone {
-        Clone(RSIM_Process *process, unsigned flags, uint32_t parent_tid_va, uint32_t child_tid_va, const pt_regs_32 &regs)
-            : process(process), flags(flags), newtid(-1), parent_tid_va(parent_tid_va), child_tid_va(child_tid_va), regs(regs) {
+        Clone(RSIM_Process *process, unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va, const pt_regs_32 &regs)
+            : process(process), flags(flags), newtid(-1), parent_tid_va(parent_tid_va), child_tls_va(child_tls_va), regs(regs) {
             pthread_mutex_init(&mutex, NULL);
             pthread_cond_init(&cond, NULL);
         }
@@ -200,7 +201,7 @@ private:
         unsigned        flags;                  /**< Various CLONE_* flags passed to the clone system call. */
         pid_t           newtid;                 /**< Created thread's TID filled in by clone_thread_helper(); negative on error */
         uint32_t        parent_tid_va;          /**< Optional address at which to write created thread's TID; clone() argument */
-        uint32_t        child_tid_va;           /**< Address of user_desc_32 to load into GDT; clone() argument */
+        uint32_t        child_tls_va;           /**< Address of TLS user_desc_32 to load into GDT; clone() argument */
         pt_regs_32      regs;                   /**< Initial registers for child thread. */
     };
     static Clone clone_info;
@@ -215,13 +216,27 @@ private:
      *  variable. The clone_mutex is only used to protect the clone_newtid. */
     static void *clone_thread_helper(void *process);
 
-public:
-    /** Creates a new simulated thread and corresponding real thread.  Returns the ID of the new thread, or a negative errno.
-     *  The @p parent_tid_va and @p child_tid_va are optional addresses at which to write the new thread's TID.  We gaurantee
-     *  that the TID is written to both before the simulated child starts executing.
+    /** Create a new thread.  This should be called only by the real thread which will be simulating the specimen's
+     * thread. Each real thread should simulate a single specimen thread. This is normally invoked by clone_thread_helper().
      *
      *  Thread safety: This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    pid_t clone_thread(unsigned flags, uint32_t parent_tid_va, uint32_t child_tid_va, const pt_regs_32 &regs);
+    RSIM_Thread *create_thread();
+
+public:
+    /** Creates a new simulated thread and corresponding real thread.  Returns the ID of the new thread, or a negative errno.
+     *  The @p parent_tid_va and @p child_tid_va are optional addresses at which to write the new thread's TID if the @flags
+     *  contain the CLONE_PARENT_TID and/or CLONE_CHILD_TID bits.  We gaurantee that the TID is written to both before the
+     *  simulated child starts executing.  The @child_tls_va also points to a segment descriptor if the CLONE_SETTLS bit is
+     *  set.  The @p regs are the values with which to initialize the new threads registers.
+     *
+     *  Thread safety: This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
+    pid_t clone_thread(unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va, const pt_regs_32 &regs);
+
+    /** Remove a thread from this process.  This is normally called by the specified thread when that thread exits.  Calling
+     *  this method twice for the same thread will result in a failed assertion.
+     *
+     *  Thread safety: This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
+    void remove_thread(RSIM_Thread*);
 
 
 
@@ -274,12 +289,6 @@ public:
 
     /** Loads a new executable image into an existing process. */
     SgAsmGenericHeader *load(const char *name);
-
-    /** Create a new thread.  This should be called only by the real thread which will be simulating the specimen's
-     * thread. Each real thread should simulate a single specimen thread.
-     *
-     *  Thread safety: This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    RSIM_Thread *create_thread();
 
     /** Generate an ELF Core Dump on behalf of the specimen.  This is a real core dump that can be used with GDB and contains
      *  the same information as if the specimen had been running natively and dumped its own core. In other words, the core
