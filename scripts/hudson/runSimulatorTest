@@ -1,0 +1,282 @@
+#!/bin/sh -ex
+# TOO (2/18/2011): stripped down copy of ROSE/scripts/hudson/runTest for testing
+# projects/simulator as a standalone hudson job.
+
+
+export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
+
+echo "*******************************************************************"
+echo "         Output variables required by Hudson runTest script."
+echo "*******************************************************************"
+echo "LD_LIBRARY_PATH                   = $LD_LIBRARY_PATH"
+echo "ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT = ${ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT}"
+echo "ROSE_TEST_BUILD_STYLE             = ${ROSE_TEST_BUILD_STYLE}"
+echo "ROSE_TEST_BOOST_PATH              = ${ROSE_TEST_BOOST_PATH}"
+echo "ROSE_TEST_JAVA_PATH               = ${ROSE_TEST_JAVA_PATH}"
+
+echo "Environment variables required for ROSE_TEST_BUILD_STYLE = full"
+echo "ROSE_TEST_QT_PATH                 = ${ROSE_TEST_QT_PATH}"
+echo "ROSE_TEST_SQLITE_PATH             = ${ROSE_TEST_SQLITE_PATH}"
+echo "ROSE_TEST_RTED_PATH               = ${ROSE_TEST_RTED_PATH}"
+echo "ROSE_TEST_OPENGL_PATH             = ${ROSE_TEST_OPENGL_PATH}"
+echo "*******************************************************************"
+
+
+# Output the name of the machine where the build is being run (helpful for debugging).
+machine_name=`uname -n`
+start_time=`date`
+start_time_seconds="$(date +%s)"
+
+
+echo ""
+echo "*****************************************************************************"
+echo "Executing runSimulatorTest for ROSE Project on: $machine_name start_time = $start_time"
+echo "*****************************************************************************"
+
+
+if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
+	GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
+	if test -e $GCCROOT/setup.sh ; then
+		set +ex
+		. $GCCROOT/setup.sh
+		set -ex
+	else
+    # This is the case for g++ 3.4.6 (since there is no uniform existence of a setup.sh file).
+      echo "Handling case of no $GCCROOT/setup.sh file."
+		export PATH="$GCCROOT/bin:$PATH"
+
+    # DQ (2/15/2010): For 64-bit this has to be setup to use lib64 explicitly
+    # export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+      if test "$MACHINE" = "i686" ; then
+         export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+      else
+         export LD_LIBRARY_PATH="$GCCROOT/lib64:$GCCROOT/lib:$LD_LIBRARY_PATH"
+      fi
+	fi
+fi
+
+ROSE_EXIT_TO_TEST_HUDSON=no
+if test "x$ROSE_EXIT_TO_TEST_HUDSON" = "xyes" ; then
+# ************************************************************************
+# Force specific failures as part of testing a restricted subset of tests.
+# ************************************************************************
+if test $ROSE_TEST_BUILD_STYLE = edg ; then
+ # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
+   echo "This test is forced to exit with an error as part of debugging Hudson tests."
+   # tps : call this line before any exit. It resets the Windows test
+   echo 3 > $win_file
+   exit 1
+fi
+
+if test \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \) ; then
+ # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
+   echo "This test is forced to exit with an error as part of debugging Hudson tests."
+   # tps : call this line before any exit. It resets the Windows test
+   echo 3 > $win_file
+   exit 1
+fi
+
+if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
+
+ # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
+   echo "This test is forced to exit with an error as part of debugging Hudson tests."
+   # tps : call this line before any exit. It resets the Windows test
+   echo 3 > $win_file
+   exit 1
+fi
+# ************************************************************************
+fi
+####################################################################################
+#
+# CREATE CONFIGURE LINE 
+#
+####################################################################################
+# Note that Boost 1.39 and greater require using "--with-boost-libdir"
+CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+
+# The "--enable-i386" configure switch was added in commit f5389299 on 2011-02-06. If this switch is present, then configure will
+# try to determine how to generate 32-bit x86 executables with the C compiler and will fail if such a capability is not
+# possible.  This is the same behavior as previously, except previously the failure didn't occur until we hit a makefile that
+# actually tried to generate an i386 executable.  If "--disable-i386" switch were specified then tests that require i386 input
+# files will not run (and will not cause a make failure).  If neither --enable-i386 nor --disable-i386 are specified then
+# configure will try to determine whether generating i386 is possible and act as if either --enable-i386 or --disable-i386
+# was specified.
+#
+# Since we want the a00-ROSE-from-scratch Hudson tests to fail if configure can't figure out how to generate i386, we explicitly
+# request that i386 support be present by invoking configure with "--enable-i386".   [RPM 2011-02-06]
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-i386"
+
+# Setup the prefix directory so that an install tree can be generated 
+# for use with secondary testing of other projects using ROSE.
+# We want the install tree for all the different versions of ROSE in the 
+# Hudson home directory so that any secondary tests will have it avaiable
+# for testing any platform.
+# Note that running make install is very quick so not a problem for a 
+# remotely mounted directory.
+# CONFIGURE_PREFIX_DIR="${PWD}/ROSE-install"
+MACHINE=`uname -m`
+if test "$MACHINE" = "i686" ; then
+  OS_MACHINE_LABEL=i686-linux
+else
+  OS_MACHINE_LABEL=amd64-linux
+fi
+
+# Define the platform specific install directory for ROSE (using same names as in rest of Hudson tests).
+# This directory will be built into the Hudson home directory.
+CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
+echo "ROSE install tree will be: $CONFIGURE_PREFIX_DIR"
+
+# Liao 1/6/2010
+# Remove the stale installation tree since the stale headers will be included before updated ones are used.
+rm -rf $CONFIGURE_PREFIX_DIR/*
+
+if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
+CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-qt=${ROSE_TEST_QT_PATH} --with-roseQt --with-sqlite3=${ROSE_TEST_SQLITE_PATH}"
+# tps (10/19/10) : opengl has not been tested for a year and the binary tests in place are failing because the infrastructure has changed.
+#       for now I have disabled openGL testing but the way to turn it on is to specify --enable-openGL
+#	if test "x$ROSE_TEST_GCC_VERSION" = "x4.1.2" ; then
+NODE_NAME=`uname -n`
+# tps : 11/12/10 : Admins are installing openGL on hudson machines. Enabled openGL thereafter. Should pass.
+# tps : It seems opengl is not properly installed on the hudson-rose node. Skip the test on this node for now.
+if test \! \( "$MACHINE" = "i686" -o "$NODE_NAME" = "hudson-rose.llnl.gov"  -o "$NODE_NAME" = "hudson-rose-07.llnl.gov" -o "$NODE_NAME" = "hudson-rose-08.llnl.gov"  -o "$NODE_NAME" = "hudson-rose-13.llnl.gov" -o "$NODE_NAME" = "hudson-rose-14.llnl.gov" -o "$NODE_NAME" = "hudson-rose-15.llnl.gov" -o "$NODE_NAME" = "hudson-rose-16.llnl.gov"\) ; then
+	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
+fi
+# tps : 11/12/10 - OpenGL is not installed on all nodes yet. 
+	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  "
+# tps : 11/15/10 - RTED does not work for gcc 4.3.2 and 4.4.1 . This is not a problem of our implementation but rather a problem with the test suite.
+#                  For instance we get the following error: C_G_4_3_a_d.cpp:48: error: 'cout' was not declared in this scope
+if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \) ; then
+	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
+fi
+fi
+
+####################################################################################
+#
+#  DUMP ENVIRONMENT BEFORE BUILD 
+#
+####################################################################################
+echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
+# DQ (1/14/2010): Support for dumping the enviroment so that it 
+# can be easily sourced to permit Hudson tests to be reproduced.
+ROSE_DUMP_HUDSON_ENV=yes
+if test "x$ROSE_DUMP_HUDSON_ENV" = "xyes" ; then
+   echo "Dumping the Hudson environment...."
+   echo "# Required environment variables for reproducing Hudson tests" > HudsonEnvironment
+   echo "export PATH=$PATH" >> HudsonEnvironment
+   echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_JAVA_PATH=$ROSE_TEST_JAVA_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_BOOST_PATH=$ROSE_TEST_BOOST_PATH" >> HudsonEnvironment
+   echo "export ROSE_CONFIGURE_FLAGS=\"$CONFIGURE_FLAGS\"" >> HudsonEnvironment
+   echo "export ROSE_TEST_SQLITE_PATH=$ROSE_TEST_SQLITE_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_RTED_PATH=$ROSE_TEST_RTED_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_QT_PATH=$ROSE_TEST_QT_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_OPENGL_PATH=$ROSE_TEST_OPENGL_PATH" >> HudsonEnvironment
+
+   echo "Finished dumping the Hudson environment into: $PWD/HudsonEnvironment"
+   cat $PWD/HudsonEnvironment
+fi
+
+git submodule status
+####################################################################################
+# (0)
+#   PRE-BUILD CLEANING 
+#
+####################################################################################
+if test -e ROSE-install ; then chmod -R u+xw ROSE-install ; fi
+    rm -rf ROSE-install
+
+if test -e ROSE-build ; then chmod -R u+wx ROSE-build ; fi
+    rm -rf ROSE-build
+    mkdir ROSE-build
+    cd ROSE-build
+####################################################################################
+# (1)
+#    CONFIGURE STEP
+#
+####################################################################################
+if test "x$ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT" = "xyes" ; then
+   echo "Skipping build at part of testing from makefile rule."
+else
+   echo "Hudson tests on a new branch must run the ROSE build script."
+   ./build
+fi
+
+echo "Starting configure step"
+# ../configure ${CONFIGURE_FLAGS}
+../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
+echo "Done with configure step"
+####################################################################################
+# (2)
+#    COMPILE STEP
+#
+#    1) make -C src
+#    2) make -C projects/simulator
+#    3) make -C projects/simulator run-tests
+#
+####################################################################################
+echo "Starting compile step"
+start_time_make_seconds="$(date +%s)"
+echo "Test compile step: src"
+
+   make -j${NUM_PROCESS} -C src
+   if [ $? -ne 0 ]  ; then
+        echo "fatal error during 'make src'  , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
+        exit 3
+   fi
+
+
+echo "Test compile step: projects/simulator"
+   make -j${NUM_PROCESS} -C projects/simulator
+   if [ $? -ne 0 ]  ; then
+        echo "fatal error during 'make projects/simulator'  , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
+        exit 3
+   fi
+
+
+echo "Test make check step: projects/simulator"
+   make -j${NUM_PROCESS} -C projects/simulator run-tests
+   if [ $? -ne 0 ]  ; then
+        echo "fatal error during 'make check'  , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
+        exit 3
+   fi
+echo "Done with compile step"
+####################################################################################
+####################################################################################
+
+
+
+end_time_make_seconds="$(date +%s)"
+elapsed_make_time_seconds="$(expr $end_time_make_seconds - $start_time_make_seconds)"
+echo "***********************************************************************************************************"
+# echo "Elapsed time for make test: $elapsed_make_time_minutes min $elapsed_make_time_modulo_seconds sec"
+echo "Elapsed time for make test: $elapsed_make_time_seconds sec"
+echo "***********************************************************************************************************"
+
+
+end_time_seconds="$(date +%s)"
+elapsed_hudson_time_seconds="$(expr $end_time_seconds - $start_time_seconds)"
+
+# Note that this is always over 60 seconds so I think we should keep this.
+elapsed_hudson_time_minutes="$(expr $elapsed_hudson_time_seconds / 60)"
+
+# DQ (1/17/2010): This is evaluated as an error if when the result is 0 (when $elapsed_hudson_time_seconds is an even multiple of 60).
+#elapsed_hudson_time_modulo_seconds="$(expr $elapsed_hudson_time_seconds % 60)"
+echo "***********************************************************************************************"
+echo "Elapsed time for Hudson test (total minutes): $elapsed_hudson_time_minutes"
+echo "Elapsed time for Hudson test (total seconds): $elapsed_hudson_time_seconds"
+# echo "Elapsed time for Hudson test: $elapsed_hudson_time_minutes min $elapsed_hudson_time_modulo_seconds sec"
+echo "***********************************************************************************************"
+
+
+# Output the date and time of day at the end of the test (helpful for debugging).
+end_date=`date`
+echo ""
+echo "********************************************************************"
+echo "Executed runSimulatorTest for ROSE Project on: $machine_name date = $end_date"
+echo "********************************************************************"

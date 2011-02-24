@@ -1835,6 +1835,13 @@ SgConditionalExp* SageBuilder::buildConditionalExp_nfi(SgExpression* test, SgExp
   setOneSourcePositionNull(result);
   return result;
 }
+SgVariantExpression * SageBuilder::buildVariantExpression()
+{
+  SgVariantExpression * result =  new SgVariantExpression();
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result; 
+}
 
 SgNullExpression* SageBuilder::buildNullExpression_nfi()
 {
