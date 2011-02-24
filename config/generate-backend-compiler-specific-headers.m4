@@ -95,11 +95,11 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
      EO="-n"
    fi
 
-if test `expr index "$BACKEND_CXX_COMPILER" /` = "1"; then
-	BACKEND_CXX_COMPILER_INSTALL_PATH=${BACKEND_CXX_COMPILER:1}
-else
-	BACKEND_CXX_COMPILER_INSTALL_PATH=${BACKEND_CXX_COMPILER}
-fi
+# TOO (2/10/11): support for CC/CXX environment variables
+# Create path of built headers as though in ${builddir}/include-staging/
+# e.g. /usr/apps/gcc/4.4.1 should be usr/apps/gcc/4.4.1
+BACKEND_CXX_COMPILER_INSTALL_PATH=`echo "${BACKEND_CXX_COMPILER}" | sed 's%^[[~./]]*%%'`
+echo "Backend Cxx Compiler install path: ${BACKEND_CXX_COMPILER_INSTALL_PATH}"
 
  # Include the directory with the subdirectories of header files
    if test "x$enable_new_edg_interface" = "xyes"; then
@@ -192,11 +192,11 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
      EO="-n"
    fi
 
-if test `expr index "$BACKEND_C_COMPILER" /` = "1"; then
-  BACKEND_C_COMPILER_INSTALL_PATH=${BACKEND_C_COMPILER:1}
-else
-  BACKEND_C_COMPILER_INSTALL_PATH=${BACKEND_C_COMPILER}
-fi
+# TOO (2/10/11): support for CC/CXX environment variables
+# Create path of built headers as though in ${builddir}/include-staging/
+# e.g. /usr/apps/gcc/4.4.1 should be usr/apps/gcc/4.4.1
+BACKEND_C_COMPILER_INSTALL_PATH=`echo "${BACKEND_C_COMPILER}" | sed 's%^[[~./]]*%%'` 
+echo "Backend C Compiler install path: ${BACKEND_C_COMPILER_INSTALL_PATH}"
 
  # Include the directory with the subdirectories of header files
    if test "x$enable_new_edg_interface" = "xyes"; then
