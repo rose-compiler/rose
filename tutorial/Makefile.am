@@ -1187,10 +1187,16 @@ codeCoverage.out: codeCoverage $(srcdir)/inputCode_ExampleCodeCoverage.C
 	@echo "Generate executable from compilation of input code (codeCoverage) ..."
 #	While in development just run without building codeCoverage.out (and touch codeCoverage.out to allow makefile to work)
 	./codeCoverage $(ROSE_FLAGS) -c $(srcdir)/inputCode_ExampleCodeCoverage.C
+# TOO (2/18/2011): error with Tensilica's Xtensa compilers:
+# "/usr/bin/ld: inputCode_ExampleCodeCoverage.o: Relocations in generic ELF (EM: 8)"
+if !ALTERNATE_BACKEND_C_CROSS_COMPILER
 #	link the input file with the coverageCodeFromShmuel.o file (written by Shmuel, tool specific)
 	$(CXX) -o ExampleCodeCoverage_GeneratedBinary inputCode_ExampleCodeCoverage.o coverageCodeFromShmuel.o
 #	Run the input code (collect any output in codeCoverage.out)
 	./ExampleCodeCoverage_GeneratedBinary > codeCoverage.out
+else
+    @echo "Warning: skipping linking and execution of cross-compiled inputCode_ExampleCodeCoverage.o"
+endif
 	split -80 $(srcdir)/codeCoverage.C codeCoverage.
 
 callGraph.pdf: buildCallGraph

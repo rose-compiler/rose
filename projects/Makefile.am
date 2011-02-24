@@ -26,7 +26,6 @@ SUBDIRS = \
      assemblyToSourceAst \
      autoParallelization \
      autoTuning\
-     backstroke \
      binaryVisualization \
      bugSeeding \
      checkPointExample \
@@ -39,6 +38,11 @@ SUBDIRS = \
      symbolicAnalysisFramework \
      taintcheck \
      PowerAwareCompiler
+
+# TOO (2/16/2011): Disabled for Thrifty compiler (gcc 3.4.4) due to errors during make check
+if !USING_GCC_3_4_4_BACKEND_COMPILER
+   SUBDIRS += backstroke
+endif
 
 # DQ (10/15/2010): Adding initial trace analysis support.
 if ROSE_USE_TRACE_ANALYSIS
