@@ -103,7 +103,8 @@ clean-local:
 
 # DQ (9/8/2006): Modified to remove backend specific header files
 uninstall-local:
-	rm -rf $(DESTDIR)$(includedir)/*_HEADERS
+#	rm -rf $(DESTDIR)$(includedir)/*_HEADERS
+	rm -rf `find $(DESTDIR)$(includedir)/ -iname "*_HEADERS"`
 
 distclean-local:
 	-rm -rf $(top_builddir)/include-staging/
@@ -131,8 +132,7 @@ install-exec-local:
 	@echo '***** make install-exec rule complete (terminated normally) *****'
 	@echo '*****************************************************************'
 
-install-data-local:
-	-rm -rf $(DESTDIR)$(includedir)/*_HEADERS
+install-data-local: uninstall-local
 	-mkdir $(DESTDIR)$(includedir)
 	cp -R $(top_builddir)/include-staging/* $(DESTDIR)$(includedir)/
 	@echo '*****************************************************************'
