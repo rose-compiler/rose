@@ -90,7 +90,30 @@ echo "=> cross-compiling... $IS_ALTERNATE_BACKEND_C_CROSS_COMPILER"
 AM_CONDITIONAL(ALTERNATE_BACKEND_C_CROSS_COMPILER, ["$IS_ALTERNATE_BACKEND_C_CROSS_COMPILER"])
 
 
-  BACKEND_CXX_COMPILER_VERSION=`echo|$BACKEND_CXX_COMPILER -dumpversion`
+
+# TOO (2/14/2011): Enforce backend C/C++ compilers to be the same version
+BACKEND_CXX_COMPILER_VERSION=`echo|$BACKEND_CXX_COMPILER -dumpversion`
+BACKEND_C_COMPILER_VERSION=`echo|$BACKEND_C_COMPILER -dumpversion`
+if test "x$BACKEND_CXX_COMPILER_VERSION" != "x$BACKEND_C_COMPILER_VERSION"; then
+  echo "Error: the backend C++ and C compilers must be the same!"
+  exit 1;
+fi
+
+# TOO (2/16/2011): Detect Thrifty (GCC 3.4.4) compiler
+AM_CONDITIONAL(USING_GCC_3_4_4_BACKEND_COMPILER, [test "x$BACKEND_C_COMPILER_VERSION" == "x3.4.4"])
+
+# TOO (2/17/2011): Detect Tensilica Xtensa C/C++ compiler
+BACKEND_CXX_COMPILER_NAME="`basename $BACKEND_CXX_COMPILER`"
+BACKEND_C_COMPILER_NAME="`basename $BACKEND_C_COMPILER`"
+if test "x$BACKEND_CXX_COMPILER_NAME" == "xxt-xc++" -o "x$BACKEND_C_COMPILER_NAME" == "xxt-xcc"; then
+  AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, true)
+  AC_DEFINE_UNQUOTED([USING_XTENSA_BACKEND_COMPILER],true,[Tensilica's Xtensa compiler.])
+  echo "The backend C/C++ compilers have been identified as Tensilica Xtensa compilers" 
+else
+  AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, false)
+fi
+
+
 # DQ (8/29/2005): Added support for version numbering of backend C++ compiler
   BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
   BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
@@ -98,33 +121,6 @@ AM_CONDITIONAL(ALTERNATE_BACKEND_C_CROSS_COMPILER, ["$IS_ALTERNATE_BACKEND_C_CRO
 # echo "back-end compiler for generated translators to use will be: $BACKEND_CXX_COMPILER"
   echo "     C++ back-end compiler major version number = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
   echo "     C++ back-end compiler minor version number = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
-
-
-
-# TOO (2/14/2011): Added support for version numbering of backend C compiler, which assumes
-# a version format of: \d.\d.\d or __GNUC__.__GNUC_MINOR__.__GNUC_PATCHLEVEL__
-# The GNUC_* naming is to be consistent with the pre-defined GNU C macros.
-  BACKEND_C_COMPILER_VERSION=`echo|$BACKEND_C_COMPILER -dumpversion`
-#  BACKEND__GNUC__=`echo|$BACKEND_C_COMPILER -dumpversion | cut -d\. -f1`
-#  BACKEND__GNUC_MINOR__=`echo|$BACKEND_C_COMPILER -dumpversion | cut -d\. -f2`
-#  BACKEND__GNUC_PATCHLEVEL__=`echo|$BACKEND_C_COMPILER -dumpversion | cut -d\. -f3`
-
-#  echo "     C back-end compiler __GNUC__ = $BACKEND__GNUC__"
-#  echo "     C back-end compiler __GNUC_MINOR__ = $BACKEND__GNUC_MINOR__"
-#  echo "     C back-end compiler __GNUC_PATCHLEVEL__ = $BACKEND__GNUC_PATCHLEVEL__"
-
-#  AC_SUBST(BACKEND__GNUC__)
-#  AC_SUBST(BACKEND__GNUC_MINOR__)
-#  AC_SUBST(BACKEND__GNUC_PATCHLEVEL__)
-
-  AM_CONDITIONAL(USING_GCC_3_4_4_BACKEND_COMPILER, [test "x$BACKEND_C_COMPILER_VERSION" == "x3.4.4"])
-
-# TOO (2/14/2011): enforce backend compilers to be the same version
-if test "x$BACKEND_CXX_COMPILER_VERSION" != "x$BACKEND_C_COMPILER_VERSION"; then
-  echo "Error: the backend C++ and C compilers must be the same!"
-  exit 1;
-fi
-
 
 # Use this to get the major and minor version numbers for gfortran (which maps --version to -dumpversion, unlike gcc and g++)
 # gfortran --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f2
