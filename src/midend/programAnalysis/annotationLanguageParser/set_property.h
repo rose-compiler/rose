@@ -108,8 +108,8 @@ public:
 
   setPropertyAnn(const parserID * name,
                  Direction direction,
-		 SetPropertyKind kind,
-		 MeetFunction meet);
+                 SetPropertyKind kind,
+                 MeetFunction meet);
 
   /** @brief Clear the analysis information
    *
@@ -182,7 +182,7 @@ public:
    * Meet the src value with the dest value and store the result in dest. */
 
   void meet(memoryblock_bitset & dest,
-	    memoryblock_bitset & src);
+            memoryblock_bitset & src);
 
   /** @brief Lookup set value
    *
@@ -190,7 +190,7 @@ public:
    * bitset reference. If none is found, provide top. */
 
   void lookup_set_value(memoryAccess * def_or_use,
-			memoryblock_bitset & bits);
+                        memoryblock_bitset & bits);
 
   /** @brief Update set value
    *
@@ -199,7 +199,7 @@ public:
    * with the existing value, otherwise just overwrite it. */
 
   bool update_set_value(memoryAccess * def_or_use,
-			memoryblock_bitset & new_set);
+                        memoryblock_bitset & new_set);
 
   /** @brief Current set value
    *
@@ -278,7 +278,7 @@ public:
    * Meet the src value with the dest value and store the result in dest. */
 
   void meet(memoryblock_bitset_list & dest,
-	    const memoryblock_bitset_list & src);
+            const memoryblock_bitset_list & src);
 
   /** @brief Lookup equivalence classes
    *
@@ -286,7 +286,7 @@ public:
    * into the input bitset_set reference. If none is found, provide top. */
 
   void lookup_equivalence_classes(memoryAccess * def_or_use,
-				  memoryblock_bitset_list & bits);
+                                  memoryblock_bitset_list & bits);
 
   /** @brief Update equivalence classes
    *
@@ -295,7 +295,7 @@ public:
    * with the existing value, otherwise just overwrite it. */
 
   bool update_equivalence_classes(memoryAccess * def_or_use,
-				  memoryblock_bitset_list & classes);
+                                  memoryblock_bitset_list & classes);
   
   /** @brief Current equivalence classes
    *
@@ -387,7 +387,7 @@ private:
 
 #ifdef __FOO
   void build_memoryblock_bitset(pointerValue & variables,
-				memoryblock_bitset & bits);
+                                memoryblock_bitset & bits);
 
   /** @brief Add an equivalence class
    *
@@ -407,13 +407,13 @@ private:
   /** @brief Print out a set or class */
 
   void print_memoryblock_bitset(const std::string & label,
-				memoryblock_bitset & bits,
-				std::ostream & out);
+                                memoryblock_bitset & bits,
+                                std::ostream & out);
   /** @brief Print out equivalence classes */
 
   void print_memoryblock_bitset_list(const std::string & label,
                                      memoryblock_bitset_list & bits,
-				     std::ostream & out);
+                                     std::ostream & out);
 #endif /* __FOO */
 };
 

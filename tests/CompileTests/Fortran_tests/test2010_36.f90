@@ -1,6 +1,6 @@
 ! Test code extracted from POP code module file.
 ! This tests specification use of a type that has not be declarted yet.
-module io_types
+module io_typestest2010_36
 
 ! !USES:
 
@@ -27,4 +27,4 @@ module io_types
 
  contains
 
-end module io_types
+end module io_typestest2010_36

@@ -12,6 +12,7 @@ program p
 
   type(t) :: q(100)
 
+! Note that this is unparsed as "q(1)%c = 0", but I think that is equivalent.
   q(1) % c = (/ 0 /)  ! data reference becomes 'q % c(1)'
   q(1) % d = 0        ! ok
   

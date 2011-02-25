@@ -1,0 +1,47 @@
+# Non-recursive Makefile
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+mpaGraphAnalysis_la_sources=\
+	$(mpaGraphAnalysisPath)/CallGraphAnalysis.C \
+	$(mpaGraphAnalysisPath)/SB_Graph.C \
+	$(mpaGraphAnalysisPath)/RoseSrc_CallGraphAnalysis.C 
+
+
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+mpaGraphAnalysis_la_sources+=\
+	$(mpaGraphAnalysisPath)/RoseBin_DotGraph.cpp \
+	$(mpaGraphAnalysisPath)/RoseBin_Graph.cpp \
+	$(mpaGraphAnalysisPath)/RoseBin_GmlGraph.cpp
+endif
+
+
+mpaGraphAnalysis_includeHeaders=\
+	$(mpaGraphAnalysisPath)/CallGraphAnalysis.h \
+	$(mpaGraphAnalysisPath)/RoseBin_DotGraph.h \
+	$(mpaGraphAnalysisPath)/RoseBin_Graph.h \
+	$(mpaGraphAnalysisPath)/RoseBin_GmlGraph.h \
+	$(mpaGraphAnalysisPath)/SB_Graph.h \
+	$(mpaGraphAnalysisPath)/RoseSrc_CallGraphAnalysis.h
+
+
+mpaGraphAnalysis_extraDist=\
+	$(mpaGraphAnalysisPath)/CMakeLists.txt
+
+
+mpaGraphAnalysis_cleanLocal=\
+	rm -rf \
+		$(mpaGraphAnalysisPath)/Templates.DB \
+		$(mpaGraphAnalysisPath)/ii_files \
+		$(mpaGraphAnalysisPath)/ti_files \
+		$(mpaGraphAnalysisPath)/cxx_templates \
+		$(mpaGraphAnalysisPath)/*.la \
+		$(mpaGraphAnalysisPath)/*.lo
+
+
+mpaGraphAnalysis_distCleanLocal=\
+	rm -rf \
+		$(mpaGraphAnalysisPath)/Templates.DB

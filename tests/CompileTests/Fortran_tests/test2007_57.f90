@@ -43,7 +43,7 @@ subroutine where_example
     
   ! temperature4 = global_eoshift(donor_variability, SHIFT=1, BOUNDARY=zero, DIM=id)
     temperature4 = eoshift(donor_variability, SHIFT=1, BOUNDARY=zero, DIM=id)
-    
+
   ! where statement not implemented in ROSE
   ! where(should_set_cell) result(:,:,:,l) = temperature2*(result(:,:,:,l)*temperature1 + (donor_variability - temperature4))
 

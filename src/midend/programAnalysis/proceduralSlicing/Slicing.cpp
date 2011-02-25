@@ -188,7 +188,7 @@ void Slicing::sliceOnlyStmts(SgProject* sgproject, set<SgNode*>& stmt_in_slice){
 
 }
 void Slicing::onlyStmts(set<SgStatement*> slicing_criterion, SgFunctionDefinition* func_defn,
-			set<SgNode*>& stmt_in_slice){
+                        set<SgNode*>& stmt_in_slice){
   
   // set<SgNode*> stmt_in_slice will contain the statements relevant for the program slice. However, without control statements which do not directly include any reference to the slicing statement.
   //set<SgNode*> stmt_in_slice; 
@@ -248,8 +248,8 @@ bool Slicing::isInList(SgNode* node, list<SgFunctionDeclaration*> funclist){
     SgFunctionDeclaration* funcdecl = isSgFunctionDeclaration(node);
     for(list<SgFunctionDeclaration*>::const_iterator it=funclist.begin(); it!=funclist.end(); ++it){
       if(funcdecl->get_name() == (*it)->get_name())
-	//if(funcdecl == *it)  // doesn't include function prototypes
-	isThere = true;
+        //if(funcdecl == *it)  // doesn't include function prototypes
+        isThere = true;
     }
   }
   return isThere;

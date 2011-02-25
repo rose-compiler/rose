@@ -14,16 +14,18 @@
 
 namespace Backstroke
 {
-	
+
+using namespace std;
+using namespace boost;
+
 /**
 * Normalize all expressions in each event in the given project.
 *
 * @param is_event A function or functor telling this function whether a function is an event.
 * @param project A SgProject object which contains events.
+ *@return all event functions found
 */
-FuncDeclPairs normalizeEvents(
-	boost::function<bool(SgFunctionDeclaration*)> is_event,
-	SgProject* project);
+vector<SgFunctionDeclaration*> normalizeEvents(function<bool(SgFunctionDeclaration*)> is_event, SgProject* project);
 
 /**
 * Reverse all events in the given project. The generated forward and reverse functions are
@@ -34,9 +36,7 @@ FuncDeclPairs normalizeEvents(
 * @param project A SgProject object which contains events.
 * @return A map from event to its generated forward and reverse events pairs.
 */
-std::vector<ProcessedEvent>
-reverseEvents(EventProcessor* event_processor,
-		boost::function<bool(SgFunctionDeclaration*)> is_event,
+vector<ProcessedEvent> reverseEvents(EventProcessor* event_processor, function<bool(SgFunctionDeclaration*)> is_event,
 		SgProject* project);
 }
 

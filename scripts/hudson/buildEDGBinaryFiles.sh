@@ -56,11 +56,11 @@ fi
 # tps (02/04/2010) : Checking the EDG submodule version
 git submodule status
 
-if test -e ROSE-install ; then chmod -R u+w ROSE-install ; fi
+if test -e ROSE-install ; then chmod -R u+wx ROSE-install ; fi
 rm -rf ROSE-install
 
 
-if test -e ROSE-build ; then chmod -R u+w ROSE-build ; fi
+if test -e ROSE-build ; then chmod -R u+wx ROSE-build ; fi
 rm -rf ROSE-build
 mkdir ROSE-build
 cd ROSE-build

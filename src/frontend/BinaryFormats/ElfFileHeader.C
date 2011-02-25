@@ -174,7 +174,7 @@ SgAsmElfFileHeader::parse()
     if (1 == disk32.e_ident_file_class) {
         p_exec_format->set_word_size(4);
 
-	p_e_ident_padding.clear();
+        p_e_ident_padding.clear();
         for (size_t i=0; i<sizeof(disk32.e_ident_padding); i++)
              p_e_ident_padding.push_back(disk32.e_ident_padding[i]);
 
@@ -182,7 +182,7 @@ SgAsmElfFileHeader::parse()
         p_e_ident_file_version  = disk_to_host(sex, disk32.e_ident_file_version);
         p_e_type                = disk_to_host(sex, disk32.e_type);
         p_e_machine             = disk_to_host(sex, disk32.e_machine);
-	p_exec_format->set_version(disk_to_host(sex, disk32.e_version));
+        p_exec_format->set_version(disk_to_host(sex, disk32.e_version));
         entry_rva               = disk_to_host(sex, disk32.e_entry);
         segtab_rva              = disk_to_host(sex, disk32.e_phoff);
         sectab_rva              = disk_to_host(sex, disk32.e_shoff);
@@ -216,7 +216,7 @@ SgAsmElfFileHeader::parse()
             extend(sizeof(disk64)-get_size());
         read_content_local(0, &disk64, sizeof disk64, false); /*zero pad at EOF*/
 
-	p_e_ident_padding.clear();
+        p_e_ident_padding.clear();
         for (size_t i=0; i<sizeof(disk64.e_ident_padding); i++)
              p_e_ident_padding.push_back(disk64.e_ident_padding[i]);
 
@@ -224,7 +224,7 @@ SgAsmElfFileHeader::parse()
         p_e_ident_file_version  = disk_to_host(sex, disk64.e_ident_file_version);
         p_e_type                = disk_to_host(sex, disk64.e_type);
         p_e_machine             = disk_to_host(sex, disk64.e_machine);
-	p_exec_format->set_version(disk_to_host(sex, disk64.e_version));
+        p_exec_format->set_version(disk_to_host(sex, disk64.e_version));
         entry_rva               = disk_to_host(sex, disk64.e_entry);
         segtab_rva              = disk_to_host(sex, disk64.e_phoff);
         sectab_rva              = disk_to_host(sex, disk64.e_shoff);

@@ -19,33 +19,33 @@
 #include "qce-config.h"
 
 /*!
-	\file qcalltip.h
-	\brief Definition of the QCallTip class
+        \file qcalltip.h
+        \brief Definition of the QCallTip class
 */
 
 #include <QWidget>
 
 class QCE_EXPORT QCallTip : public QWidget
 {
-	public:
-		QCallTip(QWidget *p = 0);
-		virtual ~QCallTip();
-		
-		QStringList tips() const;
-		void setTips(const QStringList& l);
-		
-	protected:
-		virtual void paintEvent(QPaintEvent *e);
-		virtual void keyPressEvent(QKeyEvent *e);
-		virtual void focusInEvent(QFocusEvent *e);
-		virtual void focusOutEvent(QFocusEvent *e);
-		virtual void mousePressEvent(QMouseEvent *e);
-		virtual void mouseReleaseEvent(QMouseEvent *e);
-		
-	private:
-		int m_index;
-		QStringList m_tips;
-		QRect m_up, m_down;
+        public:
+                QCallTip(QWidget *p = 0);
+                virtual ~QCallTip();
+                
+                QStringList tips() const;
+                void setTips(const QStringList& l);
+                
+        protected:
+                virtual void paintEvent(QPaintEvent *e);
+                virtual void keyPressEvent(QKeyEvent *e);
+                virtual void focusInEvent(QFocusEvent *e);
+                virtual void focusOutEvent(QFocusEvent *e);
+                virtual void mousePressEvent(QMouseEvent *e);
+                virtual void mouseReleaseEvent(QMouseEvent *e);
+                
+        private:
+                int m_index;
+                QStringList m_tips;
+                QRect m_up, m_down;
 };
 
 #endif

@@ -49,7 +49,9 @@ Switches are:
 * "--debug" by itself is the same as "--debug=syscall,insn"
 
 * "--log=FILE" sends diagnostics to the specified file rather than
-  standard error.
+  standard error.  May include a printf-like integer format which
+  will be replaced by the PID, which is useful when the specimen
+  forks.
 
 * "--core=STYLE" where STYLE is a comma-separated list of core dump
   types. Currently supported are "elf", which produces a standard ELF
@@ -76,6 +78,10 @@ Switches are:
 * "--showauxv" causes the simulator to print its own ELF auxiliary
   vector.  (The auxiliary vector for the specimen is printed by
   "--debug=loader".)
+
+* "--trace=FILENAME" generates a binary trace that can be read
+  with the traceAnalysis project.  That project reads a trace file
+  and produces ELF and PE binary executables.
 
 Positional arguments:
 

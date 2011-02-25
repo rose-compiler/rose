@@ -68,7 +68,7 @@ FunctionCallNormalization::visit( SgNode *astNode )
        // list of Declaration structures, one structure per function call
           DeclarationPtrList declarations;
           bool variablesDefined = false;
-	     
+             
        // list of function calls, in correnspondence with the inForTest list below
           list<SgNode*> functionCallExpList;
           list<bool> inForTest;
@@ -110,320 +110,320 @@ FunctionCallNormalization::visit( SgNode *astNode )
                   }
              }
 
-	 // all function calls get replaced: this is because they can occur in expressions (e.g. for-loops)
-	 // which makes it difficult to build control flow graphs
-	 if ( functionCallExpList.size() > 0 )
-	   {
-	     cout << "--------------------------------------\nStatement ";
-	     cout << stm->unparseToString() << "\n";;
-	     
-	     // traverse the list of function calls in the current statement, generate a structure  Declaration for each call
-	     // put these structures in a list to be inserted in the code later
-	     for ( list<SgNode *>::iterator i = functionCallExpList.begin(); i != functionCallExpList.end(); i++ )
-	       {
-		 variablesDefined = true;
+         // all function calls get replaced: this is because they can occur in expressions (e.g. for-loops)
+         // which makes it difficult to build control flow graphs
+         if ( functionCallExpList.size() > 0 )
+           {
+             cout << "--------------------------------------\nStatement ";
+             cout << stm->unparseToString() << "\n";;
+             
+             // traverse the list of function calls in the current statement, generate a structure  Declaration for each call
+             // put these structures in a list to be inserted in the code later
+             for ( list<SgNode *>::iterator i = functionCallExpList.begin(); i != functionCallExpList.end(); i++ )
+               {
+                 variablesDefined = true;
 
-		 // get function call exp
-		 SgFunctionCallExp *exp = isSgFunctionCallExp( *i );
-		 ROSE_ASSERT ( exp );
-		 
-		 // get type of expression, generate unique variable name
-		 SgType *expType = exp->get_type();
-		 ROSE_ASSERT ( expType );
-		 Sg_File_Info *location = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
-		 ROSE_ASSERT ( location );
-		 ostringstream os;
-		 os << "__tempVar__" << location;
-		 SgName name = os.str().c_str();
+                 // get function call exp
+                 SgFunctionCallExp *exp = isSgFunctionCallExp( *i );
+                 ROSE_ASSERT ( exp );
+                 
+                 // get type of expression, generate unique variable name
+                 SgType *expType = exp->get_type();
+                 ROSE_ASSERT ( expType );
+                 Sg_File_Info *location = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+                 ROSE_ASSERT ( location );
+                 ostringstream os;
+                 os << "__tempVar__" << location;
+                 SgName name = os.str().c_str();
 
-		 // replace previous variable bindings in the AST
-		 SgExprListExp *paramsList = exp->get_args();
-		 SgExpression *function = exp->get_function();
-		 ROSE_ASSERT ( paramsList && function );
-		 replaceFunctionCallsInExpression( paramsList, fct2Var );
-		 replaceFunctionCallsInExpression( function, fct2Var );
+                 // replace previous variable bindings in the AST
+                 SgExprListExp *paramsList = exp->get_args();
+                 SgExpression *function = exp->get_function();
+                 ROSE_ASSERT ( paramsList && function );
+                 replaceFunctionCallsInExpression( paramsList, fct2Var );
+                 replaceFunctionCallsInExpression( function, fct2Var );
 
-		 // duplicate function call expression, for the initialization declaration and the assignment
-		 SgTreeCopy treeCopy;
-		 SgFunctionCallExp *newExpInit = isSgFunctionCallExp( exp->copy( treeCopy ) );
-		 ROSE_ASSERT ( newExpInit );
-		 SgFunctionCallExp *newExpAssign = isSgFunctionCallExp( exp->copy( treeCopy ) );
-		 ROSE_ASSERT ( newExpAssign );
+                 // duplicate function call expression, for the initialization declaration and the assignment
+                 SgTreeCopy treeCopy;
+                 SgFunctionCallExp *newExpInit = isSgFunctionCallExp( exp->copy( treeCopy ) );
+                 ROSE_ASSERT ( newExpInit );
+                 SgFunctionCallExp *newExpAssign = isSgFunctionCallExp( exp->copy( treeCopy ) );
+                 ROSE_ASSERT ( newExpAssign );
 
-		 // variables
-		 Sg_File_Info *initLoc = Sg_File_Info::generateDefaultFileInfoForTransformationNode(),
-		   *nonInitLoc = Sg_File_Info::generateDefaultFileInfoForTransformationNode(),
-		   *assignLoc = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
-		 Declaration *newDecl = new Declaration();
-		 SgStatement *nonInitVarDeclaration, *initVarDeclaration, *assignStmt;
-		 SgExpression *varRefExp;
-		 SgVariableSymbol *varSymbol;
-		 SgAssignOp *assignOp;
-		 SgInitializedName *initName;
+                 // variables
+                 Sg_File_Info *initLoc = Sg_File_Info::generateDefaultFileInfoForTransformationNode(),
+                   *nonInitLoc = Sg_File_Info::generateDefaultFileInfoForTransformationNode(),
+                   *assignLoc = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+                 Declaration *newDecl = new Declaration();
+                 SgStatement *nonInitVarDeclaration, *initVarDeclaration, *assignStmt;
+                 SgExpression *varRefExp;
+                 SgVariableSymbol *varSymbol;
+                 SgAssignOp *assignOp;
+                 SgInitializedName *initName;
 
-		 bool pointerTypeNeeded = false;
+                 bool pointerTypeNeeded = false;
 
-		 // mark whether to replace inside or outside of ForStatement due to the
-		 // function call being inside the test or the increment for a for-loop statement
-		 // the 'inForTest' list is in 1:1  ordered correpondence with the 'declarations' list
-		 if ( forStm )
-		   {
+                 // mark whether to replace inside or outside of ForStatement due to the
+                 // function call being inside the test or the increment for a for-loop statement
+                 // the 'inForTest' list is in 1:1  ordered correpondence with the 'declarations' list
+                 if ( forStm )
+                   {
         // SgExpressionRoot
-		  //   *testExp = isSgForStatement( astNode )->get_test_expr_root(),
-		  //   *incrExp = isSgForStatement( astNode )->get_increment_expr_root();
-		     SgExpression
-		       *testExp = isSgForStatement( astNode )->get_test_expr(),
-		       *incrExp = isSgForStatement( astNode )->get_increment();
-		     SgNode *up = exp;
-		     while ( up && up != testExp && up != incrExp )
-		       up = up->get_parent();
-		     ROSE_ASSERT ( up );
+                  //   *testExp = isSgForStatement( astNode )->get_test_expr_root(),
+                  //   *incrExp = isSgForStatement( astNode )->get_increment_expr_root();
+                     SgExpression
+                       *testExp = isSgForStatement( astNode )->get_test_expr(),
+                       *incrExp = isSgForStatement( astNode )->get_increment();
+                     SgNode *up = exp;
+                     while ( up && up != testExp && up != incrExp )
+                       up = up->get_parent();
+                     ROSE_ASSERT ( up );
 
-		     // function call is in the condition of the for-loop
-		     if ( up == testExp )
-		       inForTest.push_back( true );
-		     // function call is in the increment expression
-		     else
-		       {
-			 inForTest.push_back( false );
+                     // function call is in the condition of the for-loop
+                     if ( up == testExp )
+                       inForTest.push_back( true );
+                     // function call is in the increment expression
+                     else
+                       {
+                         inForTest.push_back( false );
 
-			 // for increment expressions we need to be able to reassign the return value
-			 // of the function; if the ret value is a reference, we need to generate a
-			 // pointer of that type (to be able to reassign it later)
-			 if ( isSgReferenceType( expType ) )
-			   pointerTypeNeeded = true;
-		       }
-		   }
+                         // for increment expressions we need to be able to reassign the return value
+                         // of the function; if the ret value is a reference, we need to generate a
+                         // pointer of that type (to be able to reassign it later)
+                         if ( isSgReferenceType( expType ) )
+                           pointerTypeNeeded = true;
+                       }
+                   }
 
-		 // for do-while statements:  we need to generate declaration of type pointer to be able to have
-		 // non-assigned references when looping and assign them at the end of the body of the loop
-		 if ( isSgDoWhileStmt( stm->get_parent() ) && isSgReferenceType( expType ) )
-		   pointerTypeNeeded = true;
+                 // for do-while statements:  we need to generate declaration of type pointer to be able to have
+                 // non-assigned references when looping and assign them at the end of the body of the loop
+                 if ( isSgDoWhileStmt( stm->get_parent() ) && isSgReferenceType( expType ) )
+                   pointerTypeNeeded = true;
 
-		 // we have a function call returning a reference and we can't initialize the variable
-		 // at the point of declaration; we need to define the variable as a pointer
-		 if ( pointerTypeNeeded )
-		   {
-		     // create 'address of' term for function expression, so we can assign it to the pointer
-		     SgAddressOfOp *addressOp = new SgAddressOfOp( assignLoc, newExpAssign, expType );
+                 // we have a function call returning a reference and we can't initialize the variable
+                 // at the point of declaration; we need to define the variable as a pointer
+                 if ( pointerTypeNeeded )
+                   {
+                     // create 'address of' term for function expression, so we can assign it to the pointer
+                     SgAddressOfOp *addressOp = new SgAddressOfOp( assignLoc, newExpAssign, expType );
 
-		     // create noninitialized declaration
-		     SgType *base = isSgReferenceType( expType )->get_base_type();
-		     ROSE_ASSERT( base );
-		     SgPointerType *ptrType = SgPointerType::createType( isSgReferenceType( expType )->get_base_type() );
-		     ROSE_ASSERT ( ptrType );
-		     nonInitVarDeclaration = new SgVariableDeclaration ( nonInitLoc, name, ptrType );
+                     // create noninitialized declaration
+                     SgType *base = isSgReferenceType( expType )->get_base_type();
+                     ROSE_ASSERT( base );
+                     SgPointerType *ptrType = SgPointerType::createType( isSgReferenceType( expType )->get_base_type() );
+                     ROSE_ASSERT ( ptrType );
+                     nonInitVarDeclaration = new SgVariableDeclaration ( nonInitLoc, name, ptrType );
 
-		     // create assignment (symbol, varRefExp, assignment)
-		     initName = isSgVariableDeclaration( nonInitVarDeclaration )->get_decl_item( name );
-		     ROSE_ASSERT ( initName );
+                     // create assignment (symbol, varRefExp, assignment)
+                     initName = isSgVariableDeclaration( nonInitVarDeclaration )->get_decl_item( name );
+                     ROSE_ASSERT ( initName );
 
-		     varSymbol = new SgVariableSymbol( initName );
-		     ROSE_ASSERT ( varSymbol );
-		     varRefExp = new SgVarRefExp( assignLoc, varSymbol );
+                     varSymbol = new SgVariableSymbol( initName );
+                     ROSE_ASSERT ( varSymbol );
+                     varRefExp = new SgVarRefExp( assignLoc, varSymbol );
 
-		     SgPointerDerefExp *ptrDeref= new SgPointerDerefExp( assignLoc, varRefExp, expType );
-		     ROSE_ASSERT ( isSgExpression( varRefExp ) && ptrDeref );
-		     assignOp = new SgAssignOp( assignLoc, varRefExp, addressOp, ptrType );
-		     assignStmt = new SgExprStatement( assignLoc, assignOp );
-		     ROSE_ASSERT ( assignStmt &&  nonInitVarDeclaration );
+                     SgPointerDerefExp *ptrDeref= new SgPointerDerefExp( assignLoc, varRefExp, expType );
+                     ROSE_ASSERT ( isSgExpression( varRefExp ) && ptrDeref );
+                     assignOp = new SgAssignOp( assignLoc, varRefExp, addressOp, ptrType );
+                     assignStmt = new SgExprStatement( assignLoc, assignOp );
+                     ROSE_ASSERT ( assignStmt &&  nonInitVarDeclaration );
            
-		     // we don't need initialized declarations in this case
-		     initVarDeclaration = NULL;
+                     // we don't need initialized declarations in this case
+                     initVarDeclaration = NULL;
 
-		     // save new mapping
-		     fct2Var.insert( Fct2Var( exp, ptrDeref ) );
-		   }
-		 else
-		   {
-		     // create (non- &)initialized declarations, initialized name & symbol
-		     SgAssignInitializer *declInit = new SgAssignInitializer( initLoc, newExpInit, expType );
-		     ROSE_ASSERT ( declInit );
-		     initVarDeclaration = new SgVariableDeclaration ( initLoc, name, expType, declInit );
-		     nonInitVarDeclaration = new SgVariableDeclaration ( nonInitLoc, name, expType );
-		     ROSE_ASSERT ( initVarDeclaration && nonInitVarDeclaration );
+                     // save new mapping
+                     fct2Var.insert( Fct2Var( exp, ptrDeref ) );
+                   }
+                 else
+                   {
+                     // create (non- &)initialized declarations, initialized name & symbol
+                     SgAssignInitializer *declInit = new SgAssignInitializer( initLoc, newExpInit, expType );
+                     ROSE_ASSERT ( declInit );
+                     initVarDeclaration = new SgVariableDeclaration ( initLoc, name, expType, declInit );
+                     nonInitVarDeclaration = new SgVariableDeclaration ( nonInitLoc, name, expType );
+                     ROSE_ASSERT ( initVarDeclaration && nonInitVarDeclaration );
 
-		     initName = isSgVariableDeclaration( nonInitVarDeclaration )->get_decl_item( name );
-		     ROSE_ASSERT ( initName );
-		     newExpInit->set_parent( initName );
-		     varSymbol = new SgVariableSymbol( initName );
-		     ROSE_ASSERT ( varSymbol );
+                     initName = isSgVariableDeclaration( nonInitVarDeclaration )->get_decl_item( name );
+                     ROSE_ASSERT ( initName );
+                     newExpInit->set_parent( initName );
+                     varSymbol = new SgVariableSymbol( initName );
+                     ROSE_ASSERT ( varSymbol );
 
-		     // create variable ref exp
-		     varRefExp = new SgVarRefExp( assignLoc, varSymbol );
-		     ROSE_ASSERT ( isSgVarRefExp( varRefExp ) );
+                     // create variable ref exp
+                     varRefExp = new SgVarRefExp( assignLoc, varSymbol );
+                     ROSE_ASSERT ( isSgVarRefExp( varRefExp ) );
 
-		     // create the assignment
-		     assignOp = new SgAssignOp( assignLoc, varRefExp, newExpAssign, expType );
-		     assignStmt = new SgExprStatement( assignLoc, assignOp );
-		     ROSE_ASSERT ( assignStmt );
+                     // create the assignment
+                     assignOp = new SgAssignOp( assignLoc, varRefExp, newExpAssign, expType );
+                     assignStmt = new SgExprStatement( assignLoc, assignOp );
+                     ROSE_ASSERT ( assignStmt );
 
-		     initVarDeclaration->set_parent( stm->get_parent() );
-		     isSgVariableDeclaration( initVarDeclaration )->set_definingDeclaration( isSgDeclarationStatement( initVarDeclaration ) );
+                     initVarDeclaration->set_parent( stm->get_parent() );
+                     isSgVariableDeclaration( initVarDeclaration )->set_definingDeclaration( isSgDeclarationStatement( initVarDeclaration ) );
 
-		     // save new mapping
-		     fct2Var.insert( Fct2Var( exp, varRefExp ) );
-		   }
+                     // save new mapping
+                     fct2Var.insert( Fct2Var( exp, varRefExp ) );
+                   }
 
-		 // save the 'declaration' structure, with all 3 statements and the variable name
-		 newDecl->nonInitVarDeclaration = nonInitVarDeclaration;
-		 newDecl->initVarDeclaration = initVarDeclaration;
-		 newDecl->assignment = assignStmt;
-		 newDecl->name = name;
-		 nonInitVarDeclaration->set_parent( stm->get_parent() );
-		 isSgVariableDeclaration( nonInitVarDeclaration )->set_definingDeclaration( isSgVariableDeclaration( nonInitVarDeclaration ) );
-		 assignStmt->set_parent( stm->get_parent() );
-		 declarations.push_back( newDecl );
-	       } // end for
-	   } // end if  fct calls in crt stmt > 1
+                 // save the 'declaration' structure, with all 3 statements and the variable name
+                 newDecl->nonInitVarDeclaration = nonInitVarDeclaration;
+                 newDecl->initVarDeclaration = initVarDeclaration;
+                 newDecl->assignment = assignStmt;
+                 newDecl->name = name;
+                 nonInitVarDeclaration->set_parent( stm->get_parent() );
+                 isSgVariableDeclaration( nonInitVarDeclaration )->set_definingDeclaration( isSgVariableDeclaration( nonInitVarDeclaration ) );
+                 assignStmt->set_parent( stm->get_parent() );
+                 declarations.push_back( newDecl );
+               } // end for
+           } // end if  fct calls in crt stmt > 1
 
-	 SgScopeStatement *scope = stm->get_scope();
-	 ROSE_ASSERT ( scope );
-	 
-	 // insert function bindings to variables; each 'declaration' structure in the list
-	 // corresponds to one function call
-	 for ( DeclarationPtrList::iterator i = declarations.begin(); i != declarations.end(); i++ )
-	   {
-	     Declaration *d = *i;
-	     ROSE_ASSERT ( d && d->assignment && d->nonInitVarDeclaration );
+         SgScopeStatement *scope = stm->get_scope();
+         ROSE_ASSERT ( scope );
+         
+         // insert function bindings to variables; each 'declaration' structure in the list
+         // corresponds to one function call
+         for ( DeclarationPtrList::iterator i = declarations.begin(); i != declarations.end(); i++ )
+           {
+             Declaration *d = *i;
+             ROSE_ASSERT ( d && d->assignment && d->nonInitVarDeclaration );
 
-	     // if the current statement is a for-loop, we insert Declarations before & in the loop body, depending on the case
-	     if ( forStm )
-	       {
-		 SgStatement *parentScope = isSgStatement( stm->get_scope() );
-		 SgBasicBlock *body = SageInterface::ensureBasicBlockAsBodyOfFor(forStm);
-		 ROSE_ASSERT ( !inForTest.empty() && body && parentScope );
-		 // SgStatementPtrList &list = body->get_statements();
+             // if the current statement is a for-loop, we insert Declarations before & in the loop body, depending on the case
+             if ( forStm )
+               {
+                 SgStatement *parentScope = isSgStatement( stm->get_scope() );
+                 SgBasicBlock *body = SageInterface::ensureBasicBlockAsBodyOfFor(forStm);
+                 ROSE_ASSERT ( !inForTest.empty() && body && parentScope );
+                 // SgStatementPtrList &list = body->get_statements();
 
-		 // if function call is in loop condition, we add initialized variable before the loop and at its end
-		 // hoist initialized variable declarations outside the loop
-		 if ( inForTest.front() )
-		   {
-		     ROSE_ASSERT ( d->initVarDeclaration );
-		     parentScope->insert_statement( stm, d->initVarDeclaration );
+                 // if function call is in loop condition, we add initialized variable before the loop and at its end
+                 // hoist initialized variable declarations outside the loop
+                 if ( inForTest.front() )
+                   {
+                     ROSE_ASSERT ( d->initVarDeclaration );
+                     parentScope->insert_statement( stm, d->initVarDeclaration );
 
-		     // set the scope of the initializedName
-		     SgInitializedName *initName = isSgVariableDeclaration( d->initVarDeclaration )->get_decl_item( d->name );
-		     ROSE_ASSERT ( initName );
-		     initName->set_scope( isSgScopeStatement( parentScope ) );
-		     ROSE_ASSERT ( initName->get_scope() );
-		   }
-		 // function call is in loop post increment so add noninitialized variable decls above the loop
-		 else
-		   {
-		     parentScope->insert_statement( stm, d->nonInitVarDeclaration );
+                     // set the scope of the initializedName
+                     SgInitializedName *initName = isSgVariableDeclaration( d->initVarDeclaration )->get_decl_item( d->name );
+                     ROSE_ASSERT ( initName );
+                     initName->set_scope( isSgScopeStatement( parentScope ) );
+                     ROSE_ASSERT ( initName->get_scope() );
+                   }
+                 // function call is in loop post increment so add noninitialized variable decls above the loop
+                 else
+                   {
+                     parentScope->insert_statement( stm, d->nonInitVarDeclaration );
 
-		     // set the scope of the initializedName
-		     SgInitializedName *initName = isSgVariableDeclaration( d->nonInitVarDeclaration )->get_decl_item( d->name );
-		     ROSE_ASSERT ( initName );
-		     initName->set_scope( isSgScopeStatement( parentScope ) );
-		     ROSE_ASSERT ( initName->get_scope() );
-		   }
+                     // set the scope of the initializedName
+                     SgInitializedName *initName = isSgVariableDeclaration( d->nonInitVarDeclaration )->get_decl_item( d->name );
+                     ROSE_ASSERT ( initName );
+                     initName->set_scope( isSgScopeStatement( parentScope ) );
+                     ROSE_ASSERT ( initName->get_scope() );
+                   }
 
-		 // in a for-loop, always insert assignments at the end of the loop
-		 body->get_statements().push_back( d->assignment );
-		 d->assignment->set_parent( body );
+                 // in a for-loop, always insert assignments at the end of the loop
+                 body->get_statements().push_back( d->assignment );
+                 d->assignment->set_parent( body );
 
-		 // remove marker
-		 inForTest.pop_front();
-	       }
-	     else
-	       {
-		 // look at the type of the enclosing scope
-		 switch ( scope->variantT() )
-		   {
+                 // remove marker
+                 inForTest.pop_front();
+               }
+             else
+               {
+                 // look at the type of the enclosing scope
+                 switch ( scope->variantT() )
+                   {
 
-		     // while stmts have to repeat the function calls at the end of the loop;
-		     // note there is no "break" statement, since we want to also add initialized
-		     // declarations before the while-loop
-		   case V_SgWhileStmt:
-		     {
-		       // assignments need to be inserted at the end of each while loop
-		       SgBasicBlock *body = SageInterface::ensureBasicBlockAsBodyOfWhile(isSgWhileStmt( scope ) );
-		       ROSE_ASSERT ( body );
-		       d->assignment->set_parent( body );
-		       body->get_statements().push_back( d->assignment );
-		     }
+                     // while stmts have to repeat the function calls at the end of the loop;
+                     // note there is no "break" statement, since we want to also add initialized
+                     // declarations before the while-loop
+                   case V_SgWhileStmt:
+                     {
+                       // assignments need to be inserted at the end of each while loop
+                       SgBasicBlock *body = SageInterface::ensureBasicBlockAsBodyOfWhile(isSgWhileStmt( scope ) );
+                       ROSE_ASSERT ( body );
+                       d->assignment->set_parent( body );
+                       body->get_statements().push_back( d->assignment );
+                     }
 
-		     // SgForInitStatement has scope SgForStatement, move declarations before the for loop;
-		     // same thing if the enclosing scope is an If, or Switch statement
-		   case V_SgForStatement:
-		   case V_SgIfStmt:
-		   case V_SgSwitchStatement:
-		     {
-		       // adding bindings (initialized variable declarations only, not assignments)
-		       // outside the statement, in the parent scope
-		       SgStatement *parentScope = isSgStatement( scope->get_parent() );
-		       ROSE_ASSERT ( parentScope );
-		       parentScope->insert_statement( scope, d->initVarDeclaration, true );\
+                     // SgForInitStatement has scope SgForStatement, move declarations before the for loop;
+                     // same thing if the enclosing scope is an If, or Switch statement
+                   case V_SgForStatement:
+                   case V_SgIfStmt:
+                   case V_SgSwitchStatement:
+                     {
+                       // adding bindings (initialized variable declarations only, not assignments)
+                       // outside the statement, in the parent scope
+                       SgStatement *parentScope = isSgStatement( scope->get_parent() );
+                       ROSE_ASSERT ( parentScope );
+                       parentScope->insert_statement( scope, d->initVarDeclaration, true );\
 
-		       // setting the scope of the initializedName
-		       SgInitializedName *initName = isSgVariableDeclaration( d->initVarDeclaration )->get_decl_item( d->name );
-		       ROSE_ASSERT ( initName );
-		       initName->set_scope( scope->get_scope() );
-		       ROSE_ASSERT ( initName->get_scope() );
-		     }
-		     break;
+                       // setting the scope of the initializedName
+                       SgInitializedName *initName = isSgVariableDeclaration( d->initVarDeclaration )->get_decl_item( d->name );
+                       ROSE_ASSERT ( initName );
+                       initName->set_scope( scope->get_scope() );
+                       ROSE_ASSERT ( initName->get_scope() );
+                     }
+                     break;
 
-		     // do-while needs noninitialized declarations before the loop, with assignments inside the loop
-		   case V_SgDoWhileStmt:
-		     {
-		       // adding noninitialized variable declarations before the body of the loop
-		       SgStatement *parentScope = isSgStatement( scope->get_parent() );
-		       ROSE_ASSERT ( parentScope );
-		       parentScope->insert_statement( scope, d->nonInitVarDeclaration, true );
+                     // do-while needs noninitialized declarations before the loop, with assignments inside the loop
+                   case V_SgDoWhileStmt:
+                     {
+                       // adding noninitialized variable declarations before the body of the loop
+                       SgStatement *parentScope = isSgStatement( scope->get_parent() );
+                       ROSE_ASSERT ( parentScope );
+                       parentScope->insert_statement( scope, d->nonInitVarDeclaration, true );
 
-		       // initialized name scope setting
-		       SgInitializedName *initName = isSgVariableDeclaration( d->nonInitVarDeclaration )->get_decl_item( d->name );
-		       ROSE_ASSERT ( initName );
-		       initName->set_scope( scope->get_scope() );
-		       ROSE_ASSERT ( initName->get_scope() );
+                       // initialized name scope setting
+                       SgInitializedName *initName = isSgVariableDeclaration( d->nonInitVarDeclaration )->get_decl_item( d->name );
+                       ROSE_ASSERT ( initName );
+                       initName->set_scope( scope->get_scope() );
+                       ROSE_ASSERT ( initName->get_scope() );
 
-		       // adding assignemts at the end of the do-while loop
-		       SgBasicBlock *body = SageInterface::ensureBasicBlockAsBodyOfDoWhile( isSgDoWhileStmt(scope) );
-		       ROSE_ASSERT ( body );
-		       body->get_statements().push_back( d->assignment );
+                       // adding assignemts at the end of the do-while loop
+                       SgBasicBlock *body = SageInterface::ensureBasicBlockAsBodyOfDoWhile( isSgDoWhileStmt(scope) );
+                       ROSE_ASSERT ( body );
+                       body->get_statements().push_back( d->assignment );
                        d->assignment->set_parent(body);
-		     }
-		     break;
+                     }
+                     break;
 
-		     // for all other scopes, add bindings ( initialized declarations ) before the statement, in the same scope
-		   default:
-		     scope->insert_statement( stm, d->initVarDeclaration, true );
+                     // for all other scopes, add bindings ( initialized declarations ) before the statement, in the same scope
+                   default:
+                     scope->insert_statement( stm, d->initVarDeclaration, true );
 
-		     // initialized name scope setting
-		     SgInitializedName *initName = isSgVariableDeclaration( d->initVarDeclaration )->get_decl_item( d->name );
-		     ROSE_ASSERT ( initName );
-		     initName->set_scope( scope->get_scope() );
-		     ROSE_ASSERT ( initName->get_scope() );
-		   }
-	       }
-	   }
-	 
-	 // once we have inserted all variable declarations, we need to replace top-level calls in the original statement
-	 if ( variablesDefined )
-	   {
-	     cout << "\tReplacing in the expression " << stm->unparseToString() << "\n";
+                     // initialized name scope setting
+                     SgInitializedName *initName = isSgVariableDeclaration( d->initVarDeclaration )->get_decl_item( d->name );
+                     ROSE_ASSERT ( initName );
+                     initName->set_scope( scope->get_scope() );
+                     ROSE_ASSERT ( initName->get_scope() );
+                   }
+               }
+           }
+         
+         // once we have inserted all variable declarations, we need to replace top-level calls in the original statement
+         if ( variablesDefined )
+           {
+             cout << "\tReplacing in the expression " << stm->unparseToString() << "\n";
 
-	     // for ForStatements, replace expressions in condition and increment expressions,
-	     // not in the body, since those get replace later
-	     if ( forStm )
-	       {
+             // for ForStatements, replace expressions in condition and increment expressions,
+             // not in the body, since those get replace later
+             if ( forStm )
+               {
          // SgExpressionRoot *testExp = forStm->get_test_expr_root(), *incrExp = forStm->get_increment_expr_root();
             SgExpression *testExp = forStm->get_test_expr(), *incrExp = forStm->get_increment();
             replaceFunctionCallsInExpression( incrExp, fct2Var );
             replaceFunctionCallsInExpression( testExp, fct2Var );
-	       }
-	     else
-	       if ( swStm )
+               }
+             else
+               if ( swStm )
              {
             // DQ (11/23/2005): Fixed SgSwitch to permit use of declaration for conditional
             // replaceFunctionCallsInExpression( swStm->get_item_selector_root(), fct2Var );
                replaceFunctionCallsInExpression( swStm->get_item_selector(), fct2Var );
              }
- 	       else
+               else
              replaceFunctionCallsInExpression( stm, fct2Var );
-	   }
+           }
        } // end if isSgStatement block
    }
 
@@ -454,60 +454,60 @@ but calling the same function on 'fc2' will generate
 */
 void
 FunctionCallNormalization::replaceFunctionCallsInExpression( SgNode *root,
-							     map<SgFunctionCallExp *, SgExpression *> fct2Var )
+                                                             map<SgFunctionCallExp *, SgExpression *> fct2Var )
    {
      if ( !root )
        return;
 
      if ( NodeQuery::querySubTree( root, V_SgFunctionCallExp ).size() > 0 )
        {
-	 list<SgNode *> toVisit;
-	 toVisit.push_back( root );
+         list<SgNode *> toVisit;
+         toVisit.push_back( root );
 
-	 while ( !toVisit.empty() )
-	   {
-	     SgNode *crt = toVisit.front();
+         while ( !toVisit.empty() )
+           {
+             SgNode *crt = toVisit.front();
 
-	     // will visit every node above an function call exp, but not below
-	     // also, we will replace function call expressions found
-	     if ( !isSgFunctionCallExp( crt ) )
-	       {
-		 vector<SgNode *> succ = ( crt )->get_traversalSuccessorContainer();
-		 for ( vector<SgNode *>::iterator succIt = succ.begin(); succIt != succ.end(); succIt++ )
-		   if ( isSgNode ( *succIt ) )
-		     toVisit.push_back( *succIt );
-	       }
-	     else
-	       {
-		 SgFunctionCallExp *call = isSgFunctionCallExp( crt );
-		 ROSE_ASSERT ( call );
-		 
-		 map<SgFunctionCallExp *, SgExpression *>::iterator mapIter;
-		 mapIter = fct2Var.find( call );
-		 if ( mapIter == fct2Var.end() )
-		   cout << "NOT FOUND " << call->unparseToString() << "\t" << call << "\n";
+             // will visit every node above an function call exp, but not below
+             // also, we will replace function call expressions found
+             if ( !isSgFunctionCallExp( crt ) )
+               {
+                 vector<SgNode *> succ = ( crt )->get_traversalSuccessorContainer();
+                 for ( vector<SgNode *>::iterator succIt = succ.begin(); succIt != succ.end(); succIt++ )
+                   if ( isSgNode ( *succIt ) )
+                     toVisit.push_back( *succIt );
+               }
+             else
+               {
+                 SgFunctionCallExp *call = isSgFunctionCallExp( crt );
+                 ROSE_ASSERT ( call );
+                 
+                 map<SgFunctionCallExp *, SgExpression *>::iterator mapIter;
+                 mapIter = fct2Var.find( call );
+                 if ( mapIter == fct2Var.end() )
+                   cout << "NOT FOUND " << call->unparseToString() << "\t" << call << "\n";
 
-		 // a mapping for function call exps in the subtree must already exist ( postorder traversal )
-		 ROSE_ASSERT ( mapIter != fct2Var.end() && mapIter->second );
+                 // a mapping for function call exps in the subtree must already exist ( postorder traversal )
+                 ROSE_ASSERT ( mapIter != fct2Var.end() && mapIter->second );
 
-		 // duplicate the variable
-		 SgTreeCopy treeCopy;
-		 SgExpression *scnd = mapIter->second;
-		 ROSE_ASSERT ( isSgExpression( scnd ) );
-		 SgExpression *newVar = isSgExpression( scnd->copy( treeCopy ) );
-		 ROSE_ASSERT ( newVar );
+                 // duplicate the variable
+                 SgTreeCopy treeCopy;
+                 SgExpression *scnd = mapIter->second;
+                 ROSE_ASSERT ( isSgExpression( scnd ) );
+                 SgExpression *newVar = isSgExpression( scnd->copy( treeCopy ) );
+                 ROSE_ASSERT ( newVar );
 
-		 SgExpression *parent = isSgExpression( call->get_parent() );
-		 ROSE_ASSERT ( parent );
+                 SgExpression *parent = isSgExpression( call->get_parent() );
+                 ROSE_ASSERT ( parent );
 
-		 // replace the node in the AST
-		 newVar->set_parent( parent );
-		 int k = parent->replace_expression( call, newVar );
-		 ROSE_ASSERT ( k == 1 );
-		 delete call;
-	       }
-	     toVisit.pop_front();
-	   }
+                 // replace the node in the AST
+                 newVar->set_parent( parent );
+                 int k = parent->replace_expression( call, newVar );
+                 ROSE_ASSERT ( k == 1 );
+                 delete call;
+               }
+             toVisit.pop_front();
+           }
        }
    }
 
@@ -524,12 +524,12 @@ FunctionCallNormalization::BFSQueryForNodes( SgNode *root, VariantT type )
     {
       SgNode *crt = toVisit.front();
       if ( crt->variantT() == type )
-	retList.push_back( crt );
+        retList.push_back( crt );
       
       vector<SgNode *> succ = ( crt )->get_traversalSuccessorContainer();
       for ( vector<SgNode *>::iterator succIt = succ.begin(); succIt != succ.end(); succIt++ )
-	if ( isSgNode ( *succIt ) )
-	  toVisit.push_back( *succIt );
+        if ( isSgNode ( *succIt ) )
+          toVisit.push_back( *succIt );
       
       toVisit.pop_front();
     }
@@ -547,10 +547,10 @@ FunctionCallNormalization::FEOQueryForNodes( SgNode *root, VariantT type )
 
      for ( list<SgNode *>::iterator succIt = toVisit.begin(); succIt != toVisit.end(); succIt++ )
        if ( isSgNode( *succIt ) && isSgNode( *succIt )->variantT() == type )
-	 {
-	   retList.push_back( *succIt );
-	   cout << "Function " << isSgNode( *succIt )->unparseToString() << "\t" << *succIt << "\n";
-	 }
+         {
+           retList.push_back( *succIt );
+           cout << "Function " << isSgNode( *succIt )->unparseToString() << "\t" << *succIt << "\n";
+         }
 
      return retList;
    }
@@ -568,23 +568,23 @@ FunctionCallNormalization::createTraversalList( SgNode *root )
 
      if ( isSgFunctionCallExp( root ) )
        {
-	 list<SgNode *> temp1 = createTraversalList( isSgFunctionCallExp( root )->get_function() );
-	 list<SgNode *> temp2 = createTraversalList( isSgFunctionCallExp( root )->get_args() );
-	 retList = temp1;
-	 retList.splice( retList.end(), temp2 );
-	 retList.push_back( root );
+         list<SgNode *> temp1 = createTraversalList( isSgFunctionCallExp( root )->get_function() );
+         list<SgNode *> temp2 = createTraversalList( isSgFunctionCallExp( root )->get_args() );
+         retList = temp1;
+         retList.splice( retList.end(), temp2 );
+         retList.push_back( root );
        }
      else
        if ( isSgNode( root ) )
-	 {
-	   vector<SgNode *> succ = root->get_traversalSuccessorContainer();
-	   for ( vector<SgNode *>::iterator succIt = succ.begin(); succIt != succ.end(); succIt++ )
-	     if ( isSgNode ( *succIt ) )
-	       {
-		 list<SgNode *> temp1 = createTraversalList( *succIt );
-		 retList.splice( retList.end(), temp1 );
-	       }
-	   retList.push_back( root );
-	 }
+         {
+           vector<SgNode *> succ = root->get_traversalSuccessorContainer();
+           for ( vector<SgNode *>::iterator succIt = succ.begin(); succIt != succ.end(); succIt++ )
+             if ( isSgNode ( *succIt ) )
+               {
+                 list<SgNode *> temp1 = createTraversalList( *succIt );
+                 retList.splice( retList.end(), temp1 );
+               }
+           retList.push_back( root );
+         }
      return retList;       
    }

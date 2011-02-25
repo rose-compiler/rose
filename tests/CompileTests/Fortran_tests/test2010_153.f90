@@ -18,7 +18,8 @@
 program p
 
    type :: t1
-      integer :: c                   
+      integer :: c
+    ! This is a forward reference to a type that needs to be resolved before processing "v%f(1)%c"
       type (t2), pointer, dimension(:)  :: f
    end type
 
@@ -29,8 +30,8 @@ program p
  
    type (t1) :: v   
 
-   v % f(1) % c = 0    
-   v % f(1) % d = 0 ! data reference becomes 'v % f % (d(1))'
+!   v % f(1) % c = 0    
+!   v % f(1) % d = 0 ! data reference becomes 'v % f % (d(1))'
 
 end program
 

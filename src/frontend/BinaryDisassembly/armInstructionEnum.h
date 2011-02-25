@@ -6,7 +6,7 @@
 enum ArmRegisterClass 
 {
     arm_regclass_gpr,           /* general purpose registers */
-    arm_regclass_psr		/* program status registers */
+    arm_regclass_psr            /* program status registers */
 };
 
 enum ArmProgramStatusRegister 

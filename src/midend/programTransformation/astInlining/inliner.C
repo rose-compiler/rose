@@ -60,22 +60,22 @@ class ChangeReturnsToGotosVisitor: public AstSimpleProcessing
 
      virtual void visit(SgNode* n)
         {
-	  SgReturnStmt* rs = isSgReturnStmt(n);
+          SgReturnStmt* rs = isSgReturnStmt(n);
           if (rs)
              {
-	       // std::cout << "Converting return statement " << rs->unparseToString();
-	       // std::cout << " into possible assignment to " << where_to_write_answer->unparseToString();
-	       // std::cout << " and jump to " << label->get_name().getString() << std::endl;
+               // std::cout << "Converting return statement " << rs->unparseToString();
+               // std::cout << " into possible assignment to " << where_to_write_answer->unparseToString();
+               // std::cout << " and jump to " << label->get_name().getString() << std::endl;
                SgExpression* return_expr = rs->get_expression();
                SgBasicBlock* block = SageBuilder::buildBasicBlock();
             // printf ("Building IR node #1: new SgBasicBlock = %p \n",block);
                if (return_expr)
                   {
                     SgExpression* assignment = generateAssignmentMaybe(where_to_write_answer,return_expr);
-		    if (where_to_write_answer)
-		      where_to_write_answer->set_parent(assignment);
-		    if (return_expr != assignment)
-		      return_expr->set_parent(assignment);
+                    if (where_to_write_answer)
+                      where_to_write_answer->set_parent(assignment);
+                    if (return_expr != assignment)
+                      return_expr->set_parent(assignment);
                     SgStatement* assign_stmt = SageBuilder::buildExprStatement(assignment);
                     SageInterface::appendStatement(assign_stmt, block);
                   }
@@ -87,7 +87,7 @@ class ChangeReturnsToGotosVisitor: public AstSimpleProcessing
             // printf ("Building gotoStatement #2 = %p  n->get_parent() = %p = %s \n",gotoStatement,n->get_parent(),n->get_parent()->class_name().c_str());
                SageInterface::appendStatement(gotoStatement, block);
                isSgStatement(n->get_parent())->replace_statement(rs, block);
-	       block->set_parent(n->get_parent());
+               block->set_parent(n->get_parent());
                ROSE_ASSERT(gotoStatement->get_parent() != NULL);
              }
         }
@@ -191,26 +191,26 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
         {
           funname2 = isSgBinaryOp(funname)->get_rhs_operand();
           if (dotexp) {
-	    SgExpression* lhs = dotexp->get_lhs_operand();
+            SgExpression* lhs = dotexp->get_lhs_operand();
 
-	    // FIXME -- patch this into p_lvalue
-	    bool is_lvalue = lhs->get_lvalue();
-	    if (isSgInitializer(lhs)) is_lvalue = false;
+            // FIXME -- patch this into p_lvalue
+            bool is_lvalue = lhs->get_lvalue();
+            if (isSgInitializer(lhs)) is_lvalue = false;
 
-	    if (!is_lvalue) {
-	      SgAssignInitializer* ai = SageInterface::splitExpression(lhs);
-	      ROSE_ASSERT (isSgInitializer(ai->get_operand()));
-	      SgInitializedName* in = isSgInitializedName(ai->get_parent());
-	      ROSE_ASSERT (in);
-	      removeRedundantCopyInConstruction(in);
-	      lhs = dotexp->get_lhs_operand(); // Should be a var ref now
-	    }
-	    thisptr = new SgAddressOfOp(SgNULL_FILE, lhs);
-	  } else if (arrowexp) {
-	    thisptr = arrowexp->get_lhs_operand();
-	  } else {
-	    assert (false);
-	  }
+            if (!is_lvalue) {
+              SgAssignInitializer* ai = SageInterface::splitExpression(lhs);
+              ROSE_ASSERT (isSgInitializer(ai->get_operand()));
+              SgInitializedName* in = isSgInitializedName(ai->get_parent());
+              ROSE_ASSERT (in);
+              removeRedundantCopyInConstruction(in);
+              lhs = dotexp->get_lhs_operand(); // Should be a var ref now
+            }
+            thisptr = new SgAddressOfOp(SgNULL_FILE, lhs);
+          } else if (arrowexp) {
+            thisptr = arrowexp->get_lhs_operand();
+          } else {
+            assert (false);
+          }
         }
 
      if (!funname2)
@@ -268,16 +268,16 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      if (isSgMemberFunctionSymbol(funsym) && !fundecl->get_declarationModifier().get_storageModifier().isStatic())
         {
           SgType* thisptrtype = thisptr->get_type();
-	  const SgSpecialFunctionModifier& specialMod = 
-	    funsym->get_declaration()->get_specialFunctionModifier();
-	  if (specialMod.isConstructor()) {
-	    SgFunctionType* ft = funsym->get_declaration()->get_type();
-	    ROSE_ASSERT (ft);
-	    SgMemberFunctionType* mft = isSgMemberFunctionType(ft);
-	    ROSE_ASSERT (mft);
-	    SgType* ct = mft->get_class_type();
-	    thisptrtype = new SgPointerType(ct);
-	  }
+          const SgSpecialFunctionModifier& specialMod = 
+            funsym->get_declaration()->get_specialFunctionModifier();
+          if (specialMod.isConstructor()) {
+            SgFunctionType* ft = funsym->get_declaration()->get_type();
+            ROSE_ASSERT (ft);
+            SgMemberFunctionType* mft = isSgMemberFunctionType(ft);
+            ROSE_ASSERT (mft);
+            SgType* ct = mft->get_class_type();
+            thisptrtype = new SgPointerType(ct);
+          }
           SgConstVolatileModifier& thiscv = fundecl->get_declarationModifier().get_typeModifier().get_constVolatileModifier();
        // if (thiscv.isConst() || thiscv.isVolatile()) { FIXME
           thisptrtype = new SgModifierType(thisptrtype);
@@ -289,13 +289,13 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
        // thisdecl = new SgVariableDeclaration(SgNULL_FILE, thisname, thisptrtype, new SgAssignInitializer(SgNULL_FILE, thisptr));
           thisdecl = new SgVariableDeclaration(SgNULL_FILE, thisname, thisptrtype, assignInitializer);
           thisdecl->set_endOfConstruct(SgNULL_FILE);
-	  thisdecl->get_definition()->set_endOfConstruct(SgNULL_FILE);
-	  thisdecl->set_definingDeclaration(thisdecl);
+          thisdecl->get_definition()->set_endOfConstruct(SgNULL_FILE);
+          thisdecl->set_definingDeclaration(thisdecl);
 
           thisinitname = (thisdecl->get_variables()).back();
           //thisinitname = lastElementOfContainer(thisdecl->get_variables());
           // thisinitname->set_endOfConstruct(SgNULL_FILE);
-	  assignInitializer->set_parent(thisinitname);
+          assignInitializer->set_parent(thisinitname);
 
        // printf ("Built new SgVariableDeclaration #1 = %p \n",thisdecl);
 
@@ -349,9 +349,9 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
           SgName shadow_name((*i)->get_name());
           shadow_name << "__" << ++gensym_counter;
           SgVariableDeclaration* vardecl = new SgVariableDeclaration(SgNULL_FILE,shadow_name,(*i)->get_type(),ai);
-	  vardecl->set_definingDeclaration(vardecl);
-	  vardecl->set_endOfConstruct(SgNULL_FILE);
-	  vardecl->get_definition()->set_endOfConstruct(SgNULL_FILE);
+          vardecl->set_definingDeclaration(vardecl);
+          vardecl->set_endOfConstruct(SgNULL_FILE);
+          vardecl->get_definition()->set_endOfConstruct(SgNULL_FILE);
 
           printf ("Built new SgVariableDeclaration #2 = %p = %s initializer = %p \n",vardecl,shadow_name.str(),(*(vardecl->get_variables().begin()))->get_initializer());
 
@@ -359,11 +359,11 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
           SgInitializedName* init = (vardecl->get_variables()).back();
           // init->set_endOfConstruct(SgNULL_FILE);
           inits.push_back(init);
-	  ai->set_parent(init);
-	  init->set_scope(funbody_copy);
+          ai->set_parent(init);
+          init->set_scope(funbody_copy);
           funbody_copy->get_statements().insert(funbody_copy->get_statements().begin() + (i - params.begin()), vardecl);
-	  SgVariableSymbol* sym = new SgVariableSymbol(init);
-	  paramMap[*i] = sym;
+          SgVariableSymbol* sym = new SgVariableSymbol(init);
+          paramMap[*i] = sym;
           funbody_copy->insert_symbol(shadow_name, sym);
           sym->set_parent(funbody_copy->get_symbol_table());
         }
@@ -371,7 +371,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      if (thisdecl)
         {
           thisdecl->set_parent(funbody_copy);
-	  thisinitname->set_scope(funbody_copy);
+          thisinitname->set_scope(funbody_copy);
           funbody_copy->get_statements().insert(funbody_copy->get_statements().begin(), thisdecl);
           SgVariableSymbol* thisSym = new SgVariableSymbol(thisinitname);
           funbody_copy->insert_symbol(thisname, thisSym);

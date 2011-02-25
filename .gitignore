@@ -25,6 +25,7 @@ Makefile.in
 /config/compile
 /config/ltmain.sh
 /config/ylwrap
+/config/ROSE_SOURCES
 
 # /projects/DatalogAnalysis/
 /projects/DatalogAnalysis/*.pyc

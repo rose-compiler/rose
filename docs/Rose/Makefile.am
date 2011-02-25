@@ -310,7 +310,12 @@ generated_ompLowering_files_for_manual = \
        $(top_builddir)/tests/roseTests/ompLoweringTests/rose_ompfor4.c \
        $(top_builddir)/tests/roseTests/ompLoweringTests/rose_threadprivate.c \
        $(top_builddir)/tests/roseTests/ompLoweringTests/rose_task_untied3.c \
-       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_task_wait.c
+       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_task_wait.c \
+       $(top_builddir)/tests/roseTests/ompLoweringTests/fortran/rose_helloworld.f \
+       $(top_builddir)/tests/roseTests/ompLoweringTests/fortran/rose_shared.f \
+       $(top_builddir)/tests/roseTests/ompLoweringTests/fortran/rose_ompdo-default.f \
+       $(top_builddir)/tests/roseTests/ompLoweringTests/fortran/rose_ompdo-multiple.f \
+       $(top_builddir)/tests/roseTests/ompLoweringTests/fortran/rose_task_largenumber.f
 
 generated_autoPar_files_for_manual = \
        $(top_builddir)/projects/autoParallelization/tests/rose_doall_2.c \

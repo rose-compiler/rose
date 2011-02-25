@@ -138,16 +138,16 @@ CommandlineProcessing::generateStringFromArgList ( Rose_STL_Container<string> ar
      string returnString;
 
      for (Rose_STL_Container<string>::iterator i = argList.begin();
-	  i != argList.end(); ++i) {
+          i != argList.end(); ++i) {
        if (skipInitialEntry && i == argList.begin()) continue;
        if (skipSourceFiles == true) {
                string arg    = *i;
                string suffix = "";
-	 if (arg.length() > 2) suffix = arg.substr(arg.size() - 2);
-	 if (suffix == ".C" || arg.find("--edg:definition_list_file") == 0) {
+         if (arg.length() > 2) suffix = arg.substr(arg.size() - 2);
+         if (suffix == ".C" || arg.find("--edg:definition_list_file") == 0) {
                  // DQ (5/13/2004): It was not a great idea to put this filter into this function 
                  // remove it and handle the filtering of definition_list_file better ...  later!
-	   continue;
+           continue;
              }
              }
        // returnString += *i;
@@ -216,8 +216,8 @@ CommandlineProcessing::removeArgs ( vector<string> & argv, string prefix )
             // printf ("Found an option to remove (removeArgs): %s \n",argString.c_str());
 
             // keep track of elements so that they can be deleted later (after exit from loop over the eleents)
-	       argv.erase(argv.begin() + i);
-	       --i; // To counteract the i++ in the loop header
+               argv.erase(argv.begin() + i);
+               --i; // To counteract the i++ in the loop header
              }
         }
 
@@ -249,8 +249,8 @@ CommandlineProcessing::removeArgsWithParameters ( vector<string> & argv, string 
 
             // printf ("Argv[%d] = %s %s \n",i,argv[i],argv[i+1]);
 
-	       argv.erase(argv.begin() + i, argv.begin() + i + 2);
-	       --i; // To counteract the i++ in the loop header
+               argv.erase(argv.begin() + i, argv.begin() + i + 2);
+               --i; // To counteract the i++ in the loop header
              }
         }
 

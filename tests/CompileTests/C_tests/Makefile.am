@@ -80,6 +80,8 @@ TESTCODE_CURRENTLY_FAILING = \
      test2010_03.c \
      test2010_05.c \
      test2010_16.c \
+     test2011_03.c \
+     test2011_04.c \
      Yarden_client.c
 
 

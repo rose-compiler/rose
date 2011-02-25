@@ -89,7 +89,7 @@ public:
     qreal m_angleConical;
 
     enum Handle 
-	{
+        {
         NoHandle,
         StartLinearHandle,
         EndLinearHandle,

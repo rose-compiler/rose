@@ -96,21 +96,21 @@ void RoseBin_FILE::process_functions_query(SgAsmBlock* globalBlock,
       int status;
       size_t length;
       newName = abi::__cxa_demangle(name.c_str(), 0, 
-				    &length,&status);
+                                    &length,&status);
 
       //      cerr << "converting name : " << name <<  "   status: " << status <<endl;
 
       if (status==0) {
-	name = "";
-	bool found_bracket=false;
-	for (unsigned int j=0; j<length;j++) {
-	  if (newName[j]=='(')
-	    found_bracket=true;
-	  if (found_bracket==false)
-	    name += newName[j];
-	}
-	if (RoseBin_support::DEBUG_MODE())
-	  cout << " demangling name to " << name << endl;
+        name = "";
+        bool found_bracket=false;
+        for (unsigned int j=0; j<length;j++) {
+          if (newName[j]=='(')
+            found_bracket=true;
+          if (found_bracket==false)
+            name += newName[j];
+        }
+        if (RoseBin_support::DEBUG_MODE())
+          cout << " demangling name to " << name << endl;
       }
       name = getName(name);
 #endif
@@ -125,13 +125,13 @@ void RoseBin_FILE::process_functions_query(SgAsmBlock* globalBlock,
       // list<string>::iterator filterMe = functionFilter.begin();
       // bool skip=true;
       if (!functionFilter.empty() && std::find(functionFilter.begin(), functionFilter.end(), name) == functionFilter.end()) {
-	continue;
+        continue;
       }
       // --------------------------------------------------------------------------
       if (RoseBin_support::DEBUG_MODE()) {
-	ostringstream addrhex;
-	addrhex << hex << setw(8) << address ;
-	cout << ">> creating function : " << address << " " << addrhex.str() << " - " << name << " - " << type << endl;
+        ostringstream addrhex;
+        addrhex << hex << setw(8) << address ;
+        cout << ">> creating function : " << address << " " << addrhex.str() << " - " << name << " - " << type << endl;
       }
       SgAsmFunctionDeclaration* fd = new SgAsmFunctionDeclaration();
       fd->set_address(address);
@@ -162,7 +162,7 @@ void RoseBin_FILE::process_comments_query( ) {
 
       RoseBin_support::checkText(comment);
       if (RoseBin_support::DEBUG_MODE())
-	cout << ">> creating comments : " << address << " - " << comment << endl;
+        cout << ">> creating comments : " << address << " - " << comment << endl;
       rememberComments[address]= comment ;
 
     } // while
@@ -174,7 +174,7 @@ void RoseBin_FILE::process_comments_query( ) {
  * resolve for each instruction which type it has
  ****************************************************/
 SgAsmInstruction* RoseBin_FILE::createInstruction(int address, SgAsmFunctionDeclaration* bb, 
-						  string mnemonic) {
+                                                  string mnemonic) {
   SgAsmInstruction* instruction=NULL;
 
   // *************************************************************
@@ -289,7 +289,7 @@ void RoseBin_FILE::process_instruction_query( ) {
       
       SgAsmInstruction* instruction = NULL;
       instruction = createInstruction(address, func, mnemonic);
-   //	instruction = new SgAsmInstruction(address,bb,mnemonic,"");
+   //   instruction = new SgAsmInstruction(address,bb,mnemonic,"");
 
    // DQ (8/30/2008): The IR should use an SgUnsignedCharList instead of a string.
    // instruction->set_raw_bytes(data);
@@ -316,35 +316,35 @@ void RoseBin_FILE::process_instruction_query( ) {
       ostringstream hexaddr;
       hexaddr << hex << setw(8) << address ;
       if (RoseBin_support::DEBUG_MODE())
-	cout << " .rememberInstruction " << instruction->class_name() 
+        cout << " .rememberInstruction " << instruction->class_name() 
              << "  at : " << address << " hex: " << hexaddr.str() << endl;
       rememberInstructions[address]= instruction ;
 
 
       if (func) {
-	// get the block in the func and append to it to conform to jeremiah
-	func->append_statement(instruction);
-	instruction->set_parent(func);
-	//vector <SgNode*> blockVec =func->get_traversalSuccessorContainer();
-	//SgAsmBlock* block = isSgAsmBlock(blockVec[0]);
-	//ROSE_ASSERT(block);
-	//block->append_statement(instruction);
-	//instruction->set_parent(block);
+        // get the block in the func and append to it to conform to jeremiah
+        func->append_statement(instruction);
+        instruction->set_parent(func);
+        //vector <SgNode*> blockVec =func->get_traversalSuccessorContainer();
+        //SgAsmBlock* block = isSgAsmBlock(blockVec[0]);
+        //ROSE_ASSERT(block);
+        //block->append_statement(instruction);
+        //instruction->set_parent(block);
 
-	ROSE_ASSERT(instruction->get_parent());
+        ROSE_ASSERT(instruction->get_parent());
 
-	//SgAsmNode* nInst = (SgAsmNode*) instruction;
-	//nInst->set_parent(func);
+        //SgAsmNode* nInst = (SgAsmNode*) instruction;
+        //nInst->set_parent(func);
 
-	ostringstream addrhex;
-	addrhex << hex << setw(8) << i_func ;
-	if (RoseBin_support::DEBUG_MODE())
-	  cout << ">> appended instruction to function: " << func->get_name() << " addr " << addrhex.str() << " " << address << endl;
+        ostringstream addrhex;
+        addrhex << hex << setw(8) << i_func ;
+        if (RoseBin_support::DEBUG_MODE())
+          cout << ">> appended instruction to function: " << func->get_name() << " addr " << addrhex.str() << " " << address << endl;
       } else {
-	if (i_func!=-1) {
-	  cerr << " ERROR :: could not append instruction to function : " << endl;
-	  //abort();
-	}
+        if (i_func!=-1) {
+          cerr << " ERROR :: could not append instruction to function : " << endl;
+          //abort();
+        }
       }
       
     } // while
@@ -371,7 +371,7 @@ void RoseBin_FILE::process_operand_strings_query( ) {
 
       RoseBin_support::checkText(str);
       if (RoseBin_support::DEBUG_MODE())
-	cout << ">> creating operand_strings : " << id << " - " << str << endl;
+        cout << ">> creating operand_strings : " << id << " - " << str << endl;
       if (id >= (int)rememberOperandStrings.size()) rememberOperandStrings.resize(id + 1);
       rememberOperandStrings[id] = str;      
     } // while
@@ -423,9 +423,9 @@ void RoseBin_FILE::process_operand_root_query( ) {
       expr_id = atoi(it->second.expr_id.c_str());//atoi(vec_operand_expressions_1[i].expr_id.c_str());
 
       if (RoseBin_support::DEBUG_MODE())
-	cout << ">> creating operand_roots : " << operand_id << " - " << expr_id << endl;
+        cout << ">> creating operand_roots : " << operand_id << " - " << expr_id << endl;
       if (operand_id >= (int) rememberExpressionTree_ROOT.size())
-	rememberExpressionTree_ROOT.resize(operand_id + 1);
+        rememberExpressionTree_ROOT.resize(operand_id + 1);
       rememberExpressionTree_ROOT[operand_id] = expr_id;      
     } // while
 }
@@ -450,23 +450,23 @@ void RoseBin_FILE::process_expression_tree_query( ) {
       errno = 0;
       exprTree.immediate = strtol(vec_expression_tree_1[i].immediate.c_str(), NULL, 10);
       if (errno != 0) {
-	errno = 0;
-	exprTree.immediate = strtoul(vec_expression_tree_1[i].immediate.c_str(), NULL, 10);
-	ROSE_ASSERT (errno == 0);
+        errno = 0;
+        exprTree.immediate = strtoul(vec_expression_tree_1[i].immediate.c_str(), NULL, 10);
+        ROSE_ASSERT (errno == 0);
       }
       if (RoseBin_support::DEBUG_MODE())
-	cout << "immediate = (char*)" << exprTree.immediate << endl;
+        cout << "immediate = (char*)" << exprTree.immediate << endl;
 
     exprTree.position = atoi(vec_expression_tree_1[i].position.c_str());
     exprTree.parent_id = atoi(vec_expression_tree_1[i].parent_id.c_str());
     
       if (RoseBin_support::DEBUG_MODE())
-	cout << ">> creating exprTree : " << exprTree.id << " - " << exprTree.expr_type << " - " 
+        cout << ">> creating exprTree : " << exprTree.id << " - " << exprTree.expr_type << " - " 
              << exprTree.symbol << " - " << exprTree.immediate << " - " << exprTree.position 
-	     << " - " << exprTree.parent_id << endl;
+             << " - " << exprTree.parent_id << endl;
 
       if (exprTree.id >= (int)rememberExpressionTree.size())
-	rememberExpressionTree.resize(exprTree.id + 1);
+        rememberExpressionTree.resize(exprTree.id + 1);
       rememberExpressionTree[exprTree.id] = exprTree;
 
 
@@ -505,10 +505,10 @@ void RoseBin_FILE::process_operand_expressions_query( ) {
     expr_id = atoi(vec_operand_expressions_1[i].expr_id.c_str());
 
       if (RoseBin_support::DEBUG_MODE())
-	cout << ">> creating operand_expressions : " << operand_id << " - " << expr_id << endl;
+        cout << ">> creating operand_expressions : " << operand_id << " - " << expr_id << endl;
 #if 0
       if (operand_id >= rememberOperandExpressions.size())
-	rememberOperandExpressions.resize(operand_id + 1);
+        rememberOperandExpressions.resize(operand_id + 1);
       rememberOperandExpressions[operand_id].push_back(expr_id);
       // rememberOperandExpressions.insert(make_pair(operand_id, expr_id));      
 #endif
@@ -517,10 +517,10 @@ void RoseBin_FILE::process_operand_expressions_query( ) {
       ROSE_ASSERT (expr_id < (int)rememberExpressionTree.size());
       exprTreeType exprTree = rememberExpressionTree[expr_id];
       if (operand_id >= (int)rememberExpressionTree_ParentChild.size())
-	rememberExpressionTree_ParentChild.resize(operand_id + 1);
+        rememberExpressionTree_ParentChild.resize(operand_id + 1);
       rememberExpressionTree_ParentChild[operand_id][exprTree.parent_id].insert(rememberExpressionTree_ParentChild[operand_id][exprTree.parent_id].begin(), exprTree.id);
       if (RoseBin_support::DEBUG_MODE())
-	cout << " building operand expression_tree -- (operand_id, (parent_id, id))  :  (" << operand_id << ",(" << exprTree.parent_id << "," << exprTree.id << "))" << endl; 
+        cout << " building operand expression_tree -- (operand_id, (parent_id, id))  :  (" << operand_id << ",(" << exprTree.parent_id << "," << exprTree.id << "))" << endl; 
       
     } // while
 }
@@ -546,7 +546,7 @@ void RoseBin_FILE::process_substitutions_query( ) {
 
       RoseBin_support::checkText(subst.replacement);
       if (RoseBin_support::DEBUG_MODE())
-	cout << ">> creating substitutions : " << subst.address << " - " << subst.operand_id << " - " 
+        cout << ">> creating substitutions : " << subst.address << " - " << subst.operand_id << " - " 
              << subst.expr_id << " - " << subst.replacement << endl;
       rememberSubstitution[subst.address] = subst;
     } // while
@@ -565,18 +565,18 @@ string RoseBin_FILE::resolveType(exprTreeType* expt) {
       return "DWORD";
     } else  
       if (expt->symbol=="b4") {
-	return "DWORD";
+        return "DWORD";
       } else  
-	if (expt->symbol=="b2") {
-	  return "WORD";
-	} else
-	  if (expt->symbol=="b1") {
-	    return "BYTE";
-	  } else {
-	    //    exprTreeType parentExp = rememberExpressionTree_Root[expt.parent_id];
-	    //type = resolveType(parentExp);
-	    cerr << " resolveType: unknown type:: " << expt->symbol << endl;
-	  }
+        if (expt->symbol=="b2") {
+          return "WORD";
+        } else
+          if (expt->symbol=="b1") {
+            return "BYTE";
+          } else {
+            //    exprTreeType parentExp = rememberExpressionTree_Root[expt.parent_id];
+            //type = resolveType(parentExp);
+            cerr << " resolveType: unknown type:: " << expt->symbol << endl;
+          }
   return type;
 }
 
@@ -624,10 +624,10 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
 
       //cout<< "\n\n----------------------------------------------------------------" << endl;
       if (operand_id % 5000 == 0) {
-	ostringstream addrhex;
-	addrhex << hex << setw(8) << address ;
-	cout << ">> creating operand_tuple : address: " << addrhex.str() << " " << address << 
-	  " -  operand_id: " << operand_id << " -  position:" << position << endl;
+        ostringstream addrhex;
+        addrhex << hex << setw(8) << address ;
+        cout << ">> creating operand_tuple : address: " << addrhex.str() << " " << address << 
+          " -  operand_id: " << operand_id << " -  position:" << position << endl;
       }
       //}
 
@@ -635,39 +635,39 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
       SgAsmExpression* binExp=NULL;
       //string operand_str=(char*)"";
       if (operand_id>=0) {
-	// operand_str = rememberOperandStrings.find(operand_id) != rememberOperandStrings.end() ? rememberOperandStrings[operand_id] : "";
-	//if (RoseBin_support::DEBUG_MODE())
-	//cout << ">>>> operand_str: " << operand_id <<  " ROOT size : " << rememberExpressionTree_ROOT.size() << endl;
-	ROSE_ASSERT (operand_id < (int)rememberExpressionTree_ROOT.size());
-	int expr_id_root = rememberExpressionTree_ROOT[operand_id];
-	ROSE_ASSERT (operand_id < (int)rememberExpressionTree_ParentChild.size());
-	const map <int, vector<int> >&  subTree = rememberExpressionTree_ParentChild[operand_id];
+        // operand_str = rememberOperandStrings.find(operand_id) != rememberOperandStrings.end() ? rememberOperandStrings[operand_id] : "";
+        //if (RoseBin_support::DEBUG_MODE())
+        //cout << ">>>> operand_str: " << operand_id <<  " ROOT size : " << rememberExpressionTree_ROOT.size() << endl;
+        ROSE_ASSERT (operand_id < (int)rememberExpressionTree_ROOT.size());
+        int expr_id_root = rememberExpressionTree_ROOT[operand_id];
+        ROSE_ASSERT (operand_id < (int)rememberExpressionTree_ParentChild.size());
+        const map <int, vector<int> >&  subTree = rememberExpressionTree_ParentChild[operand_id];
 
-	rememberExpressionTree_ROOT.resize(operand_id + 1);
-	rememberExpressionTree_ParentChild.resize(operand_id + 1);
+        rememberExpressionTree_ROOT.resize(operand_id + 1);
+        rememberExpressionTree_ParentChild.resize(operand_id + 1);
 
-	ROSE_ASSERT (expr_id_root < (int)rememberExpressionTree.size());
-	exprTreeType exprTree = rememberExpressionTree[expr_id_root];
-	string typeOfOperand = resolveType(&exprTree);
+        ROSE_ASSERT (expr_id_root < (int)rememberExpressionTree.size());
+        exprTreeType exprTree = rememberExpressionTree[expr_id_root];
+        string typeOfOperand = resolveType(&exprTree);
 
 #if 0
-	// print multimapsolveRe
-	if (RoseBin_support::DEBUG_MODE()) {
-	  map<int, vector<int> >::iterator it = subTree.begin();
-	  for (; it!=subTree.end();++it) {
-	    int f=it->first;
-	    int s=it->second;
-	    cout << " mm : " << f << "," << s << endl;
-	  }
-	}
+        // print multimapsolveRe
+        if (RoseBin_support::DEBUG_MODE()) {
+          map<int, vector<int> >::iterator it = subTree.begin();
+          for (; it!=subTree.end();++it) {
+            int f=it->first;
+            int s=it->second;
+            cout << " mm : " << f << "," << s << endl;
+          }
+        }
 #endif
-	// cerr << "resolveRecursivelyExpression " << address << " " << expr_id_root << " " << typeOfOperand << " " << operand_id << endl;
-	binExp = buildROSE->resolveRecursivelyExpression(address,expr_id_root, 
+        // cerr << "resolveRecursivelyExpression " << address << " " << expr_id_root << " " << typeOfOperand << " " << operand_id << endl;
+        binExp = buildROSE->resolveRecursivelyExpression(address,expr_id_root, 
                                                          subTree, 
-							 typeOfOperand,
-							 &rememberExpressionTree,
-							 operand_id,
-							 &rememberSubstitution,
+                                                         typeOfOperand,
+                                                         &rememberExpressionTree,
+                                                         operand_id,
+                                                         &rememberSubstitution,
                                                          &rememberComments);
         //      cerr << " >>>>>>>>>>>>> Found binExp : " << binExp << " " << binExp->get_comment() << "  " << binExp->get_replacement() << endl;
       } // if operand
@@ -685,19 +685,19 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
       map <int, map <int, SgAsmExpression*> >::iterator tmpIt = tmp_instruction_map.find(address);
       bool found=false;
       if (tmpIt!=tmp_instruction_map.end())
-	found=true;
+        found=true;
       if (found) {
-	//cerr << " found   position: " << position << endl;
-	// I do not want to add an address into tmp if not in (side effect!)
-	map <int, SgAsmExpression*> tmp_map = tmp_instruction_map[address];
-	tmp_map[position] = binExp;
-	tmp_instruction_map[address] = tmp_map;
+        //cerr << " found   position: " << position << endl;
+        // I do not want to add an address into tmp if not in (side effect!)
+        map <int, SgAsmExpression*> tmp_map = tmp_instruction_map[address];
+        tmp_map[position] = binExp;
+        tmp_instruction_map[address] = tmp_map;
       } else {
-	// first time visit
-	//cerr << " notfound   position: " << position << endl;
-	map <int, SgAsmExpression*> tmp_map;
-	tmp_map[position] = binExp;
-	tmp_instruction_map[address] = tmp_map;
+        // first time visit
+        //cerr << " notfound   position: " << position << endl;
+        map <int, SgAsmExpression*> tmp_map;
+        tmp_map[position] = binExp;
+        tmp_instruction_map[address] = tmp_map;
       }
 #endif
 
@@ -713,31 +713,31 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
     for (blockIt=rememberInstructions.begin();blockIt!=rememberInstructions.end();++blockIt) {
       ++count;
       if (RoseBin_support::DEBUG_MODE())
-	if (count % 1000 == 0) cout << "Adding operands to instruction " << count << endl;
+        if (count % 1000 == 0) cout << "Adding operands to instruction " << count << endl;
       int inst_address = blockIt->first;
       SgAsmInstruction* remInstr = blockIt->second;
       map<int, vector< SgAsmExpression*> >::iterator it = tmp_instruction_map.find(inst_address);
       if (it != tmp_instruction_map.end()) { // Skip for instructions without operands
-	vector < SgAsmExpression*>& exprList_forInst = it->second;
-	int sizeList = exprList_forInst.size();
-	// find each element separately
-	string comment="";
-	for (int i=0; i<sizeList; i++) {
-	  SgAsmExpression* binExp = exprList_forInst[i];
-	  comment+=""+binExp->get_comment();
-	  
-	  remInstr->get_operandList()->append_operand(binExp);
-	  binExp->set_parent(remInstr->get_operandList());
-	  //cerr << " Setting comment : " << binExp << "  comment: " << comment << endl;
-	  if (RoseBin_support::DEBUG_MODE()) {
-	    exprTreeType exprTree = buildROSE->getDebugHelp(binExp);
-	    cout << ">> append operand (to instruction): binExp: " <<binExp  
+        vector < SgAsmExpression*>& exprList_forInst = it->second;
+        int sizeList = exprList_forInst.size();
+        // find each element separately
+        string comment="";
+        for (int i=0; i<sizeList; i++) {
+          SgAsmExpression* binExp = exprList_forInst[i];
+          comment+=""+binExp->get_comment();
+          
+          remInstr->get_operandList()->append_operand(binExp);
+          binExp->set_parent(remInstr->get_operandList());
+          //cerr << " Setting comment : " << binExp << "  comment: " << comment << endl;
+          if (RoseBin_support::DEBUG_MODE()) {
+            exprTreeType exprTree = buildROSE->getDebugHelp(binExp);
+            cout << ">> append operand (to instruction): binExp: " <<binExp  
                  << " - sym: " <<exprTree.symbol << " - immedi: " << exprTree.immediate << endl;
           }
-	}
-	if (comment!="")
-	remInstr->set_comment(comment);
-	// tmp_instruction_map.erase(it);
+        }
+        if (comment!="")
+        remInstr->set_comment(comment);
+        // tmp_instruction_map.erase(it);
       }
     }
 

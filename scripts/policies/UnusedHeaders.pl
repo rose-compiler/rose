@@ -13,6 +13,7 @@ EOF
 BEGIN {push @INC, $1 if $0 =~ /(.*)\//}
 use strict;
 use FileLister;
+use Policies;
 my $warning = " (warning)";	# non-empty means issue warnings rather than errors, but see below
 
 # Create an index of all header files.

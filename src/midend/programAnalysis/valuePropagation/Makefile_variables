@@ -1,0 +1,46 @@
+# Non-recursive Makefile
+
+mpaValuePropagation_includes=\
+	-I$(mpaValuePropagationPath)/.. \
+	-I$(mpaValuePropagationPath)/../dataflowAnalysis \
+	-I$(mpaValuePropagationPath)/../CFG \
+	-I$(top_srcdir)/src/midend/loopProcessing \
+	-I$(top_srcdir)/src/midend/astUtil \
+	-I$(top_srcdir)/src/midend/astUtil/astInterface \
+	-I$(top_srcdir)/src/midend/astUtil/annotation \
+	-I$(top_srcdir)/src/midend/astUtil/symbolicVal \
+	-I$(top_srcdir)/src/midend/astUtil/astSupport \
+	-I$(top_srcdir)/src/util/support \
+	-I$(top_srcdir)/src/util/graphs
+
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+mpaValuePropagation_la_sources=\
+	$(mpaValuePropagationPath)/ValueAnnot.C \
+	$(mpaValuePropagationPath)/ValuePropagate.C
+
+
+mpaValuePropagation_includeHeaders=\
+	$(mpaValuePropagationPath)/ValueAnnot.h \
+	$(mpaValuePropagationPath)/ValuePropagate.h
+
+
+mpaValuepropagation_extraDist=\
+	$(mpaValuePropagationPath)/CMakeLists.txt
+
+
+mpaValuePropagation_cleanLocal=\
+	rm -rf \
+		$(mpaValuePropagationPath)/Templates.DB \
+		$(mpaValuePropagationPath)/ii_files \
+		$(mpaValuePropagationPath)/ti_files \
+		$(mpaValuePropagationPath)/cxx_templates
+
+
+mpaValuePropagation_distCleanLocal=\
+	rm -rf \
+		$(mpaValuePropagationPath)/Templates.DB

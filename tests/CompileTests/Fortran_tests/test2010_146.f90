@@ -1,4 +1,4 @@
-module rngdef
+module rngdef146
   implicit none
   integer, parameter :: double=selected_real_kind(12)
   integer, parameter :: rng_k=100, rng_s=8, rng_c=34
@@ -9,19 +9,20 @@ module rngdef
      real(kind=double), dimension(0:rng_k-1) :: array
 
   end type rng_state
-end module rngdef
+end module rngdef146
 
 
 
 subroutine rng_number_d0(state,x)
-  use rngdef
+  use rngdef146
 
   implicit none
 
   real(kind=double), intent(out) :: x
   type(rng_state), intent(inout) :: state
 
-  x=state%array(state%index)
+! Unparsed as: "x = state%(array(state%index))"
+  x = state%array(state%index)
 
   return
 end subroutine rng_number_d0

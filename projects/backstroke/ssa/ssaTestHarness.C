@@ -5,6 +5,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/operators.hpp>
 #include <new>
+#include "CallGraph.h"
 
 #define foreach BOOST_FOREACH
 using namespace std;
@@ -128,9 +129,11 @@ public:
 	}
 };
 
+
 int main(int argc, char** argv)
 {
 	SgProject* project = frontend(argc, argv);
+	AstTests::runAllTests(project);
 
 	if (project->get_frontendErrorCode() > 3)
 	{
@@ -138,26 +141,42 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
+	//Write out basic graphs
+	if (SgProject::get_verbose() > 0)
+	{
+		generateDOT(*project);
+		generateWholeGraphOfAST("wholeAST");
+		
+		//Call graph
+		CallGraphBuilder CGBuilder(project);
+		CGBuilder.buildCallGraph(ssa_private::FunctionFilter());
+
+		// Output to a dot file
+		AstDOTGeneration dotgen;
+		SgFilePtrList file_list = project->get_fileList();
+		std::string firstFileName = StringUtility::stripPathFromFileName(file_list[0]->getFileName());
+		dotgen.writeIncidenceGraphToDOTFile(CGBuilder.getGraph(), firstFileName + "_callGraph.dot");
+	}
+
 	//Run the variable renaming on the project
 	VariableRenaming varRenaming(project);
 	varRenaming.run();
+
+	//Write out CFG graphs
+	if (SgProject::get_verbose() > 0)
+	{
+		varRenaming.toFilteredDOT("varRenaming_filtered.dot");
+		varRenaming.toDOT("varRenaming_uniltered.dot");
+	}
 
 	if (SgProject::get_verbose() > 0)
 	{
 		printf("\n\n ***** VariableRenaming Complete ***** \n\n");
 	}
 
-	if (SgProject::get_verbose() > 0)
-	{
-		generateDOT(*project);
-		generateWholeGraphOfAST("wholeAST");
-		varRenaming.toFilteredDOT("varRenaming_filtered.dot");
-		varRenaming.toDOT("varRenaming_uniltered.dot");
-	}
-
-	//Run the SSA analysis
+	//Run the SSA analysis intraprocedurally
 	StaticSingleAssignment ssa(project);
-	ssa.run();
+	ssa.run(false);
 
 	if (SgProject::get_verbose() > 0)
 	{
@@ -170,7 +189,17 @@ int main(int argc, char** argv)
 	t.varRenaming = &varRenaming;
 	t.ssa = &ssa;
 	t.traverse(project, preorder);
-	
+
+	//Also test the interprocedural analysis
+	StaticSingleAssignment ssaInterprocedural(project);
+	ssaInterprocedural.run(true);
+
+	if (SgProject::get_verbose() > 0)
+	{
+		ssaInterprocedural.toFilteredDOT("interprocedural.dot");
+	}
+
+	AstTests::runAllTests(project);
 	return 0;
 }
 

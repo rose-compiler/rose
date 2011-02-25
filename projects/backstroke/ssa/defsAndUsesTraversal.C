@@ -15,17 +15,23 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 	}
 
 	//We want to propagate the def/use information up from the varRefs to the higher expressions.
-	if (isSgInitializedName(node))
+	if (SgInitializedName* initName = isSgInitializedName(node))
 	{
 		VarUniqueName * uName = StaticSingleAssignment::getUniqueName(node);
-		ROSE_ASSERT(node);
+		ROSE_ASSERT(uName);
 
-		//Add this as a def
-		ssa->getOriginalDefTable()[node].insert(uName->getKey());
-
-		if (StaticSingleAssignment::getDebug())
+		//Add this as a def, unless this initialized name is a preinitialization of a parent class. For example,
+		//in the base of B : A(3) { ... } where A is a superclass of B, an initialized name for A appears.
+		//Clearly, the initialized name for the parent class is not a real variable
+		if (initName->get_preinitialization() != SgInitializedName::e_virtual_base_class
+				&& initName->get_preinitialization() != SgInitializedName::e_nonvirtual_base_class)
 		{
-			cout << "Defined " << uName->getNameString() << endl;
+			ssa->getOriginalDefTable()[node].insert(uName->getKey());
+
+			if (StaticSingleAssignment::getDebug())
+			{
+				cout << "Defined " << uName->getNameString() << endl;
+			}
 		}
 
 		return ChildUses();
@@ -195,6 +201,12 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 				}
 			}
 		}
+		//Some other ops also preserve the current var. We don't really distinguish between the pointer variable
+		//and the value to which it points
+		else if (isSgCastExp(unaryOp) || isSgPointerDerefExp(unaryOp) || isSgAddressOfOp(unaryOp))
+		{
+			currentVar = attrs[0].getCurrentVar();
+		}
 
 		//Set all the uses as being used here.
 		addUsesToNode(unaryOp, uses);
@@ -223,14 +235,8 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 		//Set all the uses as being used here.
 		addUsesToNode(node, uses);
 
-		//The right-most variable is the one whose l-value propagates up the tree
-		SgVarRefExp* currentVar = NULL;
-		if (!attrs.empty())
-		{
-			currentVar = attrs.back().getCurrentVar();
-		}
-
-		return ChildUses(uses, currentVar);
+		//In the default case, we don't propagate the variable up the tree
+		return ChildUses(uses, NULL);
 	}
 }
 

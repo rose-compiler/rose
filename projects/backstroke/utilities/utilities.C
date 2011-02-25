@@ -55,6 +55,10 @@ bool isVariableReference(SgExpression* expression)
 	{
 		return true;
 	}
+	else if (isSgThisExp(expression))
+	{
+		return true;
+	}
 	else if (isSgDotExp(expression))
 	{
 		SgDotExp* dotExpression = isSgDotExp(expression);

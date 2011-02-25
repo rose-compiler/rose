@@ -5,7 +5,7 @@ INCLUDES = $(ROSE_INCLUDES)
 
 # an better alternative to identityTranslator
 # Liao 1/29/2009
-bin_PROGRAMS = roseCompiler testDataMemberOfConst testFortranParameter testFortranProtected
+bin_PROGRAMS = roseCompiler testDataMemberOfConst testFortranParameter testFortranProtected label_stmt_file_info_translator
 
 roseCompiler_SOURCES = roseCompiler.C
 
@@ -16,11 +16,13 @@ LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # The bug numbers come from ROSE's SciDAC bug trackers
 noinst_PROGRAMS = \
-       bug125 \
-       qualifiedName \
-       testTranslator2010_01 \
-       testTranslator2010_02 \
-       ompVariableCollecting
+   bug125 \
+   qualifiedName \
+   testTranslator2010_01 \
+   testTranslator2010_02 \
+   testTranslator2010_03 \
+   ompVariableCollecting \
+   label_stmt_file_info_translator
 
 # Example translators used in regression tests
 bug125_SOURCES = bug125.C
@@ -31,7 +33,10 @@ testFortranProtected_SOURCES = testFortranProtected.C
 
 testTranslator2010_01_SOURCES = testTranslator2010_01.C
 testTranslator2010_02_SOURCES = testTranslator2010_02.C
+testTranslator2010_03_SOURCES = testTranslator2010_03.C
 ompVariableCollecting_SOURCES = ompVariableCollecting.C
+
+label_stmt_file_info_translator_SOURCES = label_stmt_file_info_translator.C
 
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
@@ -67,7 +72,15 @@ TESTS = $(check_PROGRAMS) #test_testDataMemberOfConst test_testFortranParameter
 testTranslator2010_02_test: testTranslator2010_02 
 	./testTranslator2010_02 -rose:verbose 0 $(srcdir)/input_testTranslator2010_2.C
 
-EXTRA_DIST = CMakeLists.txt inputbug125.C input_testTranslator2010_2.C input_ompVariableCollecting.C
+testTranslator2010_03_test: testTranslator2010_03 
+	./testTranslator2010_03 -rose:verbose 0 $(srcdir)/input_testTranslator2010_3.C
+
+# DQ (2/4/2011): Added test code to evaluate line numbers of SgLabelStatement that
+# were previously marked as transforamtions and thus has line numbers == zero.
+test_label_stmt_file_info_translator: label_stmt_file_info_translator
+	./label_stmt_file_info_translator -rose:verbose 0 -c $(srcdir)/input_label_stmt_file_info_translator.C
+
+EXTRA_DIST = CMakeLists.txt inputbug125.C input_testTranslator2010_2.C input_testTranslator2010_3.C input_ompVariableCollecting.C input_label_stmt_file_info_translator.C
 
 check-local:
 #	@$(MAKE) testbug125 testqualifiedName testTranslator2010_01_test

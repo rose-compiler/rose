@@ -4,6 +4,7 @@
 #include "backstrokeCDG.h"
 #include "backstrokeDDG.h"
 #include <vector>
+#include <boost/shared_ptr.hpp>
 
 namespace Backstroke
 {

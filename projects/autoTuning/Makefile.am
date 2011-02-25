@@ -34,6 +34,11 @@ autoTuning_LDFLAGS = $(ROSEHPCT_LIBS)
 
 #noinst_HEADERS = autoTuningSupport.h
 
+check-local: 
+	@echo "**************************************************************************************"
+	@echo "****** ROSE/projects/autoTuning: make check rule complete (terminated normally) ******"
+	@echo "**************************************************************************************"
+
 clean-local:
 	rm -rf autoTuning
 clean-local:

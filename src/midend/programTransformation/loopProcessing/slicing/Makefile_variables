@@ -1,0 +1,51 @@
+
+mpt_lpSlicing_includes=\
+	-I$(mpt_lpSlicingPath)/../driver \
+	-I$(mpt_lpSlicingPath)/../computation \
+	-I$(mpt_lpSlicingPath)/../depGraph \
+	-I$(mpt_lpSlicingPath)/../depInfo \
+	-I$(top_srcdir)/src/util/support \
+	-I$(top_srcdir)/src/util/graphs \
+	-I$(top_srcdir)/src/midend/astUtil/astSupport \
+	-I$(top_srcdir)/src/midend/astUtil/symbolicVal \
+	-I$(top_srcdir)/src/midend/astUtil/astInterface
+
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+mpt_lpSlicing_la_sources=\
+	$(mpt_lpSlicingPath)/CompSlice.C \
+	$(mpt_lpSlicingPath)/DynamicCompSlice.C \
+	$(mpt_lpSlicingPath)/CompSliceDepGraph.C \
+	$(mpt_lpSlicingPath)/CompSliceLocality.C \
+	$(mpt_lpSlicingPath)/DependenceHoisting.C
+
+
+mpt_lpSlicing_includeHeaders=\
+	$(mpt_lpSlicingPath)/CompSliceDepGraph.h \
+	$(mpt_lpSlicingPath)/CompSliceImpl.h \
+	$(mpt_lpSlicingPath)/DynamicCompSlice.h \
+	$(mpt_lpSlicingPath)/CompSliceObserver.h \
+	$(mpt_lpSlicingPath)/CompSlice.h \
+	$(mpt_lpSlicingPath)/CompSliceLocality.h \
+	$(mpt_lpSlicingPath)/CompSliceRegistry.h
+
+
+mpt_lpSlicing_extraDist=\
+	$(mpt_lpSlicingPath)/CMakeLists.txt
+
+
+mpt_lpSlicing_cleanLocal=\
+	rm -rf \
+		$(mpt_lpSlicingPath)/Templates.DB \
+		$(mpt_lpSlicingPath)/ii_files \
+		$(mpt_lpSlicingPath)/ti_files \
+		$(mpt_lpSlicingPath)/cxx_templates
+
+
+mpt_lpSlicing_distCleanLocal=\
+	rm -rf \
+		$(mpt_lpSlicingPath)/Templates.DB

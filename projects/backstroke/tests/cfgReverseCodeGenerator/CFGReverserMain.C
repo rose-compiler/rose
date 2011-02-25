@@ -9,11 +9,6 @@ using namespace std;
 
 struct IsEvent
 {
-	SgScopeStatement* globalScope;
-
-	IsEvent(SgScopeStatement* scope)
-	: globalScope(scope) {}
-
 	bool operator() (SgFunctionDeclaration* decl)
 	{
 		if (SgMemberFunctionDeclaration* memFunc = isSgMemberFunctionDeclaration(decl))
@@ -39,12 +34,45 @@ struct IsEvent
 	}
 };
 
+SgType* getPointerBaseType(SgType* type)
+{
+	if (isSgPointerType(type))
+		return isSgPointerType(type)->get_base_type();
+	else if (isSgModifierType(type))
+		return getPointerBaseType(isSgModifierType(type)->get_base_type());
+	else if (isSgTypedefType(type))
+		return getPointerBaseType(isSgTypedefType(type)->get_base_type());
+	else
+		ROSE_ASSERT(false);
+}
+
+struct VariableReversalFilter : public IVariableFilter
+{
+	virtual bool isVariableInteresting(const VariableRenaming::VarName& var) const
+	{
+		SgType* type = var[0]->get_type();
+
+		if (SageInterface::isPointerType(type))
+			type = getPointerBaseType(type);
+
+		string typeName = SageInterface::get_name(type);
+
+		return (typeName != "DESEngine");
+	}
+};
+
 int main(int argc, char** argv)
 {
-	SgProject* project = frontend(argc, argv);
+	//Add the preinclude option
+	vector<string> commandArguments(argv, argv + argc);
+	commandArguments.push_back("-include");
+	commandArguments.push_back("rctypes.h");
+
+	SgProject* project = frontend(commandArguments);
 	AstTests::runAllTests(project);
 
-	EventProcessor event_processor;
+	VariableReversalFilter varFilter;
+	EventProcessor event_processor(&varFilter);
 
 #ifdef REVERSE_CODE_GENERATION
 	//Add the handlers in order of priority. The lower ones will be used only if higher ones do not produce results
@@ -66,8 +94,7 @@ int main(int argc, char** argv)
 	event_processor.addStatementHandler(new StateSavingStatementHandler);
 #endif
 
-	SgScopeStatement* globalScope = isSgScopeStatement(SageInterface::getFirstGlobalScope(project));
-	Backstroke::reverseEvents(&event_processor, IsEvent(globalScope), project);
+	Backstroke::reverseEvents(&event_processor, IsEvent(), project);
 
 	AstTests::runAllTests(project);
 	return backend(project);

@@ -1,0 +1,18 @@
+
+unparsePHPCodeGeneration_la_sources=\
+	$(phpCodeGenerationPath)/unparsePHP.C
+
+
+unparsePHPCodeGeneration_includeHeaders=\
+	$(phpCodeGenerationPath)/unparsePHP.h
+
+
+unparsePHPCodeGeneration_extraDist=\
+	$(phpCodeGenerationPath)/CMakeLists.txt
+
+
+unparsePHPCodeGeneration_cleanLocal=\
+	rm -rf \
+		$(phpCodeGenerationPath)/ii_files \
+		$(phpCodeGenerationPath)/ti_files \
+		$(phpCodeGenerationPath)/core

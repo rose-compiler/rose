@@ -69,14 +69,14 @@ class Slicing{
     same statements as the definition use associations gives.
   */
   static void onlyStmts(set<SgStatement*> slicing_criterion, SgFunctionDefinition* func_defn,
-			set<SgNode*>& stmt_in_slice);
+                        set<SgNode*>& stmt_in_slice);
  
   /*!
 \brief
     This function, called after a call to "onlyStmts", adds the control structure around the statements from the call on "onlyStmts".
   */
  static void addControlStmts(SgProject* sgproject, MarkingNodes& v, SgFunctionDefinition* func_defn, 
-			     set<SgNode*>& stmt_in_slice);
+                             set<SgNode*>& stmt_in_slice);
   
 
  /*!
@@ -97,7 +97,7 @@ This function finds all needed functions and "unmarks" (that is remove the keep 
   /*! ...
    */
   //static void SliceWithControlStatements(SgProject* sgproject,
-  //					 set<SgNode*> slice, SgFunctionDefinition* defn);
+  //                                     set<SgNode*> slice, SgFunctionDefinition* defn);
 
 
   /*!

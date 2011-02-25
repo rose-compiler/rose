@@ -43,26 +43,26 @@ class ArrayInterface
   // and symbolic functions for length of each dimension
   bool is_array_exp( CPPAstInterface& fa, const AstNodePtr& array, 
                      int *dimp = 0, SymbolicFunctionDeclarationGroup *len = 0, 
-		     bool *changeshape = 0);
-  //! Set the dimension of an array		     
+                     bool *changeshape = 0);
+  //! Set the dimension of an array                  
   void set_array_dimension( const AstNodePtr& arrayexp, int dim);
   
   bool is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, 
                         AstNodePtr* modArray = 0, int *dimp = 0, 
-			SymbolicFunctionDeclarationGroup *len = 0, SymbolicFunctionDeclarationGroup* elem = 0, 
-			bool *reshape = 0);
+                        SymbolicFunctionDeclarationGroup *len = 0, SymbolicFunctionDeclarationGroup* elem = 0, 
+                        bool *reshape = 0);
   bool is_array_construct_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, 
                               AstInterface::AstNodeList* alias = 0,
-			      int *dimp = 0, SymbolicFunctionDeclarationGroup *len = 0, SymbolicFunctionDeclarationGroup* elem = 0);
+                              int *dimp = 0, SymbolicFunctionDeclarationGroup *len = 0, SymbolicFunctionDeclarationGroup* elem = 0);
  
   AstNodePtr impl_array_opt_init( CPPAstInterface& fa, const AstNodePtr& array, 
-				  bool insertinit = false);
+                                  bool insertinit = false);
   AstNodePtr impl_access_array_length(  CPPAstInterface& fa, const AstNodePtr& array, int dim,
-					int plus = 0);
+                                        int plus = 0);
   AstNodePtr impl_access_array_elem(  CPPAstInterface& fa, const AstNodePtr& array, 
-				      AstInterface::AstNodeList& args );
+                                      AstInterface::AstNodeList& args );
   AstNodePtr impl_reshape_array(  CPPAstInterface& fa, const AstNodePtr& array, 
-				  AstInterface::AstNodeList& args );
+                                  AstInterface::AstNodeList& args );
 };
 
 #endif

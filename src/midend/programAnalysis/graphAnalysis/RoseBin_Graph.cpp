@@ -27,21 +27,21 @@ RoseBin_Graph::createUniqueEdges() {
 
       rose_graph_integer_edge_hash_multimap::iterator it = unique_edges.find(from->get_index());
       if (it==unique_edges.end())
-	unique_edges.insert(pair<int,SgDirectedGraphEdge*>( from->get_index(), edgeIt)) ;
+        unique_edges.insert(pair<int,SgDirectedGraphEdge*>( from->get_index(), edgeIt)) ;
       else {
-	bool found=false;
-	while (it!=unique_edges.end()) {
-	  SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it->second);
-	  SgGraphNode* source = isSgGraphNode(edge->get_from());
-	  SgGraphNode* target = isSgGraphNode(edge->get_to());
-	  if (target==to && source==from)
-	    found=true;
-	  it++;
-	  if (source!=from)
-	    break;
-	}
-	if (!found)
-	  unique_edges.insert(pair<int,SgDirectedGraphEdge*>( from->get_index(), edgeIt)) ;
+        bool found=false;
+        while (it!=unique_edges.end()) {
+          SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it->second);
+          SgGraphNode* source = isSgGraphNode(edge->get_from());
+          SgGraphNode* target = isSgGraphNode(edge->get_to());
+          if (target==to && source==from)
+            found=true;
+          it++;
+          if (source!=from)
+            break;
+        }
+        if (!found)
+          unique_edges.insert(pair<int,SgDirectedGraphEdge*>( from->get_index(), edgeIt)) ;
       } // else
     } // for
   } // if

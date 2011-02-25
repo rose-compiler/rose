@@ -16,8 +16,8 @@ static bool debug=false;
 
 void
 RoseBin_ControlFlowAnalysis::getCFGNodesForFunction(std::set<SgGraphNode*>& visited_f,
-						    std::set<std::string>& visited_names,
-						    SgGraphNode* next_n, std::string nodeName){
+                                                    std::set<std::string>& visited_names,
+                                                    SgGraphNode* next_n, std::string nodeName){
   // traverse the graph from next to node
   std::vector<SgGraphNode*> successors_f;
   //  std::set<SgGraphNode*> visited_f;
@@ -36,22 +36,22 @@ RoseBin_ControlFlowAnalysis::getCFGNodesForFunction(std::set<SgGraphNode*>& visi
     for (;succ!=successors_f.end();++succ) {
       SgGraphNode* next = *succ;
 
-	std::set<SgGraphNode*>::iterator
-	  it =visited_f.find(next);
-	if (sameParents(current,next))
-	if (it==visited_f.end()) {
-	  //	  if (sameParents(current,next))
-	    worklist.push_back(next);
-	  visited_f.insert(next);
-	  SgNode* internal = next->get_SgNode();
-	  SgAsmInstruction* inst = isSgAsmInstruction(internal);
-	  if (inst) {
-	    string name = RoseBin_support::HexToString(inst->get_address());
-	    if (debug)
-	    cerr << " adding node to function : ."<<name<<"."<<endl;
-	    visited_names.insert(name);
-	  }
-	}
+        std::set<SgGraphNode*>::iterator
+          it =visited_f.find(next);
+        if (sameParents(current,next))
+        if (it==visited_f.end()) {
+          //      if (sameParents(current,next))
+            worklist.push_back(next);
+          visited_f.insert(next);
+          SgNode* internal = next->get_SgNode();
+          SgAsmInstruction* inst = isSgAsmInstruction(internal);
+          if (inst) {
+            string name = RoseBin_support::HexToString(inst->get_address());
+            if (debug)
+            cerr << " adding node to function : ."<<name<<"."<<endl;
+            visited_names.insert(name);
+          }
+        }
 
     } // for
   } // while
@@ -84,22 +84,22 @@ void RoseBin_ControlFlowAnalysis::printGraph(std::string fileName, std::set<std:
       std::cerr << "ControlFlowAnalysis:: found function: ." << hex_address << "." <<endl;
       std::set<std::string>::const_iterator it = filter.find(hex_address);
       if (it!=filter.end()) {
-	//std::cerr << " ******************* match ********************* " << std::endl;
-	set<SgGraphNode*> gns;
-	set<std::string> names;
-	getCFGNodesForFunction(gns,names,node,hex_address);
-	if (debug)
-	cerr << " nodes in function: " << gns.size() << " " << names.size() <<endl;
-	ROSE_ASSERT(gns.size()==names.size());
-	set<SgGraphNode*>::const_iterator it2 = gns.begin();
-	set<std::string>::const_iterator it3 = names.begin();
-	for (;it2!=gns.end();++it2, ++it3) {
-	  std::string name = *it3;
-	  SgGraphNode* n = *it2;
-	  if (debug)
-	  cerr << " adding to result ."<<name<<"."<<endl;
-	  result.insert(make_pair(itn2->first,n));
-	}
+        //std::cerr << " ******************* match ********************* " << std::endl;
+        set<SgGraphNode*> gns;
+        set<std::string> names;
+        getCFGNodesForFunction(gns,names,node,hex_address);
+        if (debug)
+        cerr << " nodes in function: " << gns.size() << " " << names.size() <<endl;
+        ROSE_ASSERT(gns.size()==names.size());
+        set<SgGraphNode*>::const_iterator it2 = gns.begin();
+        set<std::string>::const_iterator it3 = names.begin();
+        for (;it2!=gns.end();++it2, ++it3) {
+          std::string name = *it3;
+          SgGraphNode* n = *it2;
+          if (debug)
+          cerr << " adding to result ."<<name<<"."<<endl;
+          result.insert(make_pair(itn2->first,n));
+        }
 
       }
     }

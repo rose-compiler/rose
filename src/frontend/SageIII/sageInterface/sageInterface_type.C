@@ -204,6 +204,30 @@ namespace SageInterface
     return false;
   }
 
+  // Is this type a pointer type?
+  bool isPointerType(SgType* t) {
+    if (isSgPointerType(t))
+      return true;
+    if (isSgTypedefType(t))
+      return isPointerType(isSgTypedefType(t)->get_base_type());
+    if (isSgModifierType(t)) {
+      return isPointerType(isSgModifierType(t)->get_base_type());
+    }
+    return false;
+  }
+
+bool isPointerToNonConstType(SgType* type)
+{
+        if (SgTypedefType* typeDef = isSgTypedefType(type))
+                return isPointerToNonConstType(typeDef->get_base_type());
+        else if (SgPointerType* pointerType = isSgPointerType(type))
+                return !SageInterface::isConstType(pointerType->get_base_type());
+        else if (SgModifierType* modifierType = isSgModifierType(type))
+                return isPointerToNonConstType(modifierType->get_base_type());
+        else
+                return false;
+}
+
   //! Check if an expression is an array access. If so, return its name and subscripts if requested. Based on AstInterface::IsArrayAccess()
   bool isArrayReference(SgExpression* ref, SgExpression** arrayName/*=NULL*/, vector<SgExpression*>** subscripts/*=NULL*/)
   {
@@ -279,9 +303,9 @@ namespace SageInterface
       SgIntVal * valExpInt = isSgIntVal(indexExp);
       ROSE_ASSERT(valExp || valExpInt); // TODO: return -1 is better ?
       if (valExp)
-	result = valExp->get_value(); 
+        result = valExp->get_value(); 
       else 
-	result = valExpInt->get_value(); 
+        result = valExpInt->get_value(); 
     }
 
     // consider multi dimensional case 
@@ -1047,7 +1071,7 @@ namespace SageInterface
            De # IEEE 754r decimal floating point (128 bits)
            Df # IEEE 754r decimal floating point (32 bits)
            Dh # IEEE 754r half-precision floating point (16 bits)
-           u <source-name>	# vendor extended type
+           u <source-name>      # vendor extended type
            */
       case V_SgTypeComplex:
         result += "C";
@@ -1065,7 +1089,7 @@ namespace SageInterface
 
     return result;
   }
-  //! <CV-qualifiers> ::= [r] [V] [K] 	# restrict (C99), volatile, const
+  //! <CV-qualifiers> ::= [r] [V] [K]   # restrict (C99), volatile, const
   // the order of handling const, volatile, and restric matters
   // Quote of the specification:
   // "In cases where multiple order-insensitive qualifiers are present, 

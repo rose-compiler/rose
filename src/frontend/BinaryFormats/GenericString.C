@@ -298,7 +298,7 @@ SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
 
     /* Remove the empty string from the free list */
     if (p_dont_free)
-	get_freelist().erase(p_dont_free->get_offset(), p_dont_free->get_string().size()+1);
+        get_freelist().erase(p_dont_free->get_offset(), p_dont_free->get_string().size()+1);
 }
 
 /** Allocates storage for strings that have been modified but not allocated. We first try to fit unallocated strings into free

@@ -243,10 +243,10 @@ class ArrayAnnotation
   //Implementing FunctionAliasInterface::allow_alias()
   virtual bool allow_alias(AstInterface& fa, const AstNodePtr& fc, 
                          CollectObject< std::pair<AstNodePtr, int> >& collectalias);
-  //Implementing  FunctionSideEffectInterface::get_modify()			 
+  //Implementing  FunctionSideEffectInterface::get_modify()                      
   virtual bool get_modify(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0);
-  //Implementing  FunctionSideEffectInterface::get_read()			       
+  //Implementing  FunctionSideEffectInterface::get_read()                              
   virtual bool get_read(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0);
   ArrayAnnotation() {}
@@ -281,14 +281,14 @@ class ArrayAnnotation
   SymbolicVal create_access_array_length( const AstNodePtr& array, const SymbolicVal& dim);
   AstNodePtr create_access_array_elem( CPPAstInterface& fa, 
                                         const AstNodePtr& array,
-				  const CPPAstInterface::AstNodeList& args);
+                                  const CPPAstInterface::AstNodeList& args);
   AstNodePtr create_access_array_length( CPPAstInterface& fa, const AstNodePtr& array, 
                                          int dim);
 
   bool is_reshape_array( CPPAstInterface& fa, const AstNodePtr& orig,
-			AstNodePtr* array=0, CPPAstInterface::AstNodeList* args=0);
+                        AstNodePtr* array=0, CPPAstInterface::AstNodeList* args=0);
   AstNodePtr create_reshape_array( CPPAstInterface& fa, const AstNodePtr& array,
-				  const CPPAstInterface::AstNodeList& args);
+                                  const CPPAstInterface::AstNodeList& args);
 };
 
 #endif

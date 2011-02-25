@@ -3,6 +3,9 @@
 ! '* (xxx)' causes the front end to fail an assertion.
 
 program p
-  character c (3)  ! this works correctly
-  character c*(3)  ! assertion failure: expression stack empty
+ ! This builds an array of character.
+ ! character a (3)  ! this works correctly
+
+ ! This builds a string of length 3.
+   character c*(3)  ! assertion failure: expression stack empty
 end program

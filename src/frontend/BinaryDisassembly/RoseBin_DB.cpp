@@ -50,7 +50,7 @@ void RoseBin_DB::process_result_set(MYSQL *conn, MYSQL_RES *res_set) {
   while ((row = mysql_fetch_row(res_set))!=NULL) {
     for (i=0; i<mysql_num_fields(res_set);i++) {
       if (i>0)
-	cout << "\t" ;
+        cout << "\t" ;
       cout << (row[i] !=NULL ? row[i] : "NULL") ;
     }
     cout << endl;
@@ -89,13 +89,13 @@ MYSQL* RoseBin_DB::connect_DB(const char* socket) {
   //const char* socket = "/home/panas2/mysql/mysql.sock";
   if (mysql_real_connect(
                          conn,
-			 def_host_name,
-			 def_user_name,
-			 def_password,
-			 def_db_name,
-			 0,
-			 socket, // NULL,
-			 0) == NULL) {
+                         def_host_name,
+                         def_user_name,
+                         def_password,
+                         def_db_name,
+                         0,
+                         socket, // NULL,
+                         0) == NULL) {
     cerr << "mysql_real_connet() failed\nError: " << mysql_error(conn) << endl;
     exit(1);
   } else {

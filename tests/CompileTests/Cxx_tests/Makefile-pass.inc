@@ -694,6 +694,11 @@ test2010_05.C \
 test2010_06.C \
 test2010_18.C \
 test2010_19.C \
+test2011_01.C \
+test2011_02.C \
+test2011_05.C \
+test2011_06.C \
+test2011_07.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -714,6 +719,9 @@ test2006_158.C \
 test2007_15.C \
 test2010_24.C \
 test2010_25.C
+
+# DQ (2/12/2011): This test fails for the astFileIO tests in tests/roseTests/astFileIOTests.
+# test2011_08.C 
 
 # DQ (6/25/2010): Removed as part of testing!
 # test2003_01.C 

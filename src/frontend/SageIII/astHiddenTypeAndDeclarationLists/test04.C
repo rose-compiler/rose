@@ -11,35 +11,35 @@ class B { public: int b; private: int a;};
 
 class A : B {
 
-	public:
+        public:
 
-		int a;
+                int a;
 
-		int foo() {
-			int x = a;
-			int y;
-			return x;
-		}
+                int foo() {
+                        int x = a;
+                        int y;
+                        return x;
+                }
 
-		int y;
+                int y;
 
-		int goo();
+                int goo();
 
-	private:
+        private:
 
-		int b;
+                int b;
 
 };
 
 int A::goo() {
 
-	int a, b;
+        int a, b;
 
-	b = 1;
+        b = 1;
 
-	int wwwwwwwwwwwwww;
+        int wwwwwwwwwwwwww;
 
-	return 0;
+        return 0;
 
 }
 
@@ -47,17 +47,17 @@ using namespace Y;
 
 int main() {
 
-	using Z::x;
+        using Z::x;
 
-	{
+        {
 
-		int x, y;
-		float moo;
-		double MyInt;
+                int x, y;
+                float moo;
+                double MyInt;
 
-	}
+        }
 
-	return 0;
+        return 0;
 
 }
 

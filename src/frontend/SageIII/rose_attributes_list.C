@@ -293,7 +293,7 @@ PreprocessingInfo::PreprocessingInfo(rose_macro_call* mcall, RelativePositionTyp
      relativePosition = relPos;
 
      tokenStream = new token_container();
-	  
+          
      whatSortOfDirective = PreprocessingInfo::CMacroCall;
      ROSE_ASSERT(mcall != NULL);
      ROSE_ASSERT(mcall->macro_def != NULL);
@@ -420,7 +420,7 @@ PreprocessingInfo::PreprocessingInfo(rose_macro_definition* mdef, RelativePositi
      internalString = string("#define\t")+string(boost::wave::util::impl::as_string(*tokenStream).c_str());
 
 
-	 if(SgProject::get_verbose() >= 1)
+         if(SgProject::get_verbose() >= 1)
          std::cout << "Internal string is: " << internalString << std::endl;
   //     internalString = boost::wave::util::impl::as_string(tokenStream) ;
    }
@@ -494,7 +494,7 @@ PreprocessingInfo::PreprocessingInfo(rose_include_directive* inclDir, RelativePo
      internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str()) +"\n";
 
 
-	 if(SgProject::get_verbose() >= 1)
+         if(SgProject::get_verbose() >= 1)
         std::cout << "INTERNAL IF STRING: " << internalString << std::endl;
 
    }
@@ -872,8 +872,8 @@ PreprocessingInfo::relativePositionName (const RelativePositionType & position)
 #ifndef _MSC_VER
     return stringifyPreprocessingInfoRelativePositionType(position);
 #else
-	ROSE_ASSERT(false);
-	return "";
+        ROSE_ASSERT(false);
+        return "";
 #endif
 }
 

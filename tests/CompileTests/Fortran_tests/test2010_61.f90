@@ -12,9 +12,9 @@ program MAIN
 
 end program main
 
-module mod
-end module MOD
+module mod61
+end module MOD61
 
-module MOD1
-end module mod1
+module MOD161
+end module mod161
 

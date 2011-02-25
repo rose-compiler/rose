@@ -1,0 +1,7 @@
+! Any coarray reference causes the front end to fail an assertion as follows:
+! FortranParserActionROSE.C:8008: ... Assertion `false' failed.
+
+program p
+  integer :: a(10) [*]
+  print *, a(1)[2]
+end program

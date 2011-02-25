@@ -79,8 +79,8 @@ class ShadowBaseInfoGraph : public TransInfoGraph<T>
       }
   void SetTransInfo( GraphAccessInterface::Node *src, GraphAccessInterface::Node *snk, T e) 
      { 
-		 const DAGBaseNodeImpl* b1 = static_cast<const DAGBaseNodeImpl*>(src),
-		 * b2 = static_cast<const DAGBaseNodeImpl*>(snk);
+                 const DAGBaseNodeImpl* b1 = static_cast<const DAGBaseNodeImpl*>(src),
+                 * b2 = static_cast<const DAGBaseNodeImpl*>(snk);
        if (! cloneCreate->IsShadowBaseNode(b1) && 
            ! cloneCreate->IsShadowBaseNode(b2)) {
           recOp->SetTransInfo( cloneCreate->GetOrigNode(b1),
@@ -99,15 +99,15 @@ class ShadowBaseOP : public TransInfoOP<T>
      : cloneCreate(g), analOp(op) {}
    T  GetBottomInfo( const GraphAccessInterface::Node *n1, const GraphAccessInterface::Node *n2)
       { 
-		  const DAGBaseNodeImpl* b1 = static_cast<const DAGBaseNodeImpl*>(n1),
-		  * b2 = static_cast<const DAGBaseNodeImpl*>(n2);
+                  const DAGBaseNodeImpl* b1 = static_cast<const DAGBaseNodeImpl*>(n1),
+                  * b2 = static_cast<const DAGBaseNodeImpl*>(n2);
         return analOp->GetBottomInfo( cloneCreate->GetOrigNode(b1),
                                       cloneCreate->GetOrigNode(b2)); }
    bool IsTop(T t) { return analOp->IsTop(t); }
    T  GetTopInfo(const GraphAccessInterface::Node *n1, const GraphAccessInterface::Node *n2)
       { 
           const DAGBaseNodeImpl* b1 = static_cast<const DAGBaseNodeImpl*>(n1),
-	  * b2 = static_cast<const DAGBaseNodeImpl*>(n2);
+          * b2 = static_cast<const DAGBaseNodeImpl*>(n2);
         return analOp->GetTopInfo( cloneCreate->GetOrigNode(b1),
                                    cloneCreate->GetOrigNode(b2)); }
    T  GetIDTransInfo( const GraphAccessInterface::Node *n) 
@@ -161,15 +161,15 @@ class TransInfoCreate : public ShadowGraphCreate, public TransInfoGraph<T>
         AddNode(n1); 
      if (!ContainNode(n2))
         AddNode(n2);
-	 GraphCrossEdgeIterator<TransInfoCreate<T> >  crossIter(this,n1,n2);
-	 EdgeImpl *e;
-	 if (crossIter.ReachEnd()) {
+         GraphCrossEdgeIterator<TransInfoCreate<T> >  crossIter(this,n1,n2);
+         EdgeImpl *e;
+         if (crossIter.ReachEnd()) {
          e = new EdgeImpl(this, info);
          AddEdge( n1, n2, e);
      }
-	 else {
-		 e= static_cast<EdgeImpl*>(crossIter.Current());
-		 e->Info() = info;}
+         else {
+                 e= static_cast<EdgeImpl*>(crossIter.Current());
+                 e->Info() = info;}
    }
 };
 
@@ -498,16 +498,16 @@ ComputeTransInfo( GraphAccessInterface::Node *n1, GraphAccessInterface::Node *n2
            static_cast<DAGBaseNodeImpl*>(GetBaseNode(sccNode2));
         if (base1->TopoOrderIndex() > base2->TopoOrderIndex())
           return false;
-		NodeIterator iter ;
-		for ( iter = GetNodeIterator(); 
-					!iter.ReachEnd(); ++iter) {
-			TransAnalSCCGraphNode<T> *scc = static_cast<TransAnalSCCGraphNode<T>*>(iter.Current());
-			if (scc == sccNode2) break;
-		}
+                NodeIterator iter ;
+                for ( iter = GetNodeIterator(); 
+                                        !iter.ReachEnd(); ++iter) {
+                        TransAnalSCCGraphNode<T> *scc = static_cast<TransAnalSCCGraphNode<T>*>(iter.Current());
+                        if (scc == sccNode2) break;
+                }
         for ( ; !iter.ReachEnd(); ++iter) {
            TransAnalSCCGraphNode<T> *scc = static_cast<TransAnalSCCGraphNode<T>*>(iter.Current());
            if (scc->ComputeTransInfo(n2, GraphAccess::EdgeOut, analOp, orig, limit, recOp))
-			   succ=true;
+                           succ=true;
            if (scc == sccNode1)
               break;
         }

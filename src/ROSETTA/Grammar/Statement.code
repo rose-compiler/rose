@@ -2024,7 +2024,6 @@ HEADER_GOTO_STATEMENT_END
 HEADER_ASM_STATEMENT_START
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
@@ -13193,7 +13192,46 @@ SgDerivedTypeStatement::post_construction_initialization()
 SgName
 SgDerivedTypeStatement::get_mangled_name() const
    {
-     return SgClassDeclaration::get_mangled_name();
+  // DQ (12/27/2010): This causes endless recursion when the type is defined locally to the 
+  // function and the function uses the type as a return type (which seems like a language 
+  // design mistake). Testcode test2010_179.f90 demonstrates this and it is actually a part
+  // of the gfortran test suite, so I gather it is legal code.
+  // To address this complexity I will make the fix in this IR node (which is fortran specific)
+  // to use only the name plus the function and qualified name of the function's scope instead
+  // of the generated function definition's mangled name which causes the endless recursion.
+  // This will be done only for the case were we detect that the type is used as the return type of
+  // the function.  I don't think that modules can be defined in functions, so I think this is OK.
+  // return SgClassDeclaration::get_mangled_name();
+     SgName mangleName;
+     ROSE_ASSERT(this->get_parent() != NULL);
+     SgFunctionDeclaration* functionDeclaration = TransformationSupport::getFunctionDeclaration(this->get_parent());
+
+     bool defineShorterName = false;
+     if (functionDeclaration != NULL)
+        {
+          SgFunctionType* functionType = isSgFunctionType(functionDeclaration->get_type());
+          ROSE_ASSERT(functionType != NULL);
+       // printf ("functionType = %p = %s \n",functionType,functionType->class_name().c_str());
+
+          SgType* returnType = functionType->get_return_type();
+          ROSE_ASSERT(returnType != NULL);
+          if (returnType == this->get_type())
+             {
+               defineShorterName = true;
+             }
+        }
+
+     if (defineShorterName == true)
+        {
+       // This defines a short (none endlessly recursive name) for the derived type mangled name.
+          mangleName = "__NESTED_TYPE_USED_IN_FUNCTION_RETURN_TYPE_" + functionDeclaration->get_name() + "__" + this->get_name() + "__";
+        }
+       else
+        {
+          mangleName = SgClassDeclaration::get_mangled_name();
+        }
+
+     return mangleName;
    }
 SOURCE_DERIVED_TYPE_STATEMENT_END
 
