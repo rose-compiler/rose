@@ -19,8 +19,6 @@ RsType *  RsType::getSubtypeRecursive(size_t offset, size_t size, bool stopAtArr
     if(navString)
         *navString = getName();
 
-    //cout << "Refining " << getName() << " at offset " << offset <<  " search of size " << size << std::endl;
-
     while(result->getByteSize() >= size)
     {
         if(stopAtArray)
@@ -57,11 +55,6 @@ RsType *  RsType::getSubtypeRecursive(size_t offset, size_t size, bool stopAtArr
 
     if (result->getByteSize() != size || offset != 0)
         return NULL;
-
-    //if(navString)
-    //    cout << "NavString" << *navString << std::endl;
-
-    //cout << "Refinement successful " << result->getName() << " Offset" << offset<< std::endl;
 
     return result;
 }
@@ -167,7 +160,6 @@ RsArrayType::RsArrayType(RsType* baseType_, size_t size__)
 {
     size_t base_size = baseType -> getByteSize();
 
-    std::cout << "[[" << base_size << "<>" << size__ << "]]" << std::endl;
     assertme( 0 == size__ % base_size," RsArrayType::RsArrayType - 0 == size__ % base_size ",
               "0",ToString(size__ % base_size));
     assert( 0 == size__ % base_size );
@@ -360,20 +352,23 @@ bool RsClassType::isComplete(bool verbose) const
 {
     if (verbose)
     {
-        std::cout << "Padding info for type " << stringId << std::endl;
+        std::stringstream stream;
+
+        stream << "Padding info for type " << stringId << std::endl;
         for(unsigned int i=1; i<members.size(); i++)
         {
-
             int diff = members[i].offset;
             diff -= members[i-1].offset + members[i-1].type->getByteSize();
             if(diff > 0)
             {
-                std::cout << "Padding between "
+              stream << "Padding between "
                      << members[i-1].name  <<  " (" << members[i-1].type->getName() << ")  and "
                      << members[i]  .name  <<  " (" << members[i].  type->getName() << ") "
                      << diff << " Bytes" << std::endl;
             }
          }
+
+         std::cout << stream.str() << std::flush;
     }
 
     if(members.size()==0)

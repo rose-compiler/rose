@@ -48,7 +48,6 @@ bool is_main_func(const SgFunctionDefinition* fndef)
          );
 }
 
-
 SgUpcBarrierStatement* buildUpcBarrierStatement()
 {
   SgExpression*          exp = NULL;
@@ -56,6 +55,21 @@ SgUpcBarrierStatement* buildUpcBarrierStatement()
 
   setOneSourcePositionForTransformation(barrier_stmt);
   return barrier_stmt;
+}
+
+typedef SgUpcLocalsizeofExpression SgUpcLocalsizeofOp;
+
+static
+SgUpcLocalsizeofOp* buildUpcLocalsizeofOp(SgExpression* exp)
+{
+  ROSE_ASSERT(exp);
+
+  SgUpcLocalsizeofOp* lsizeof = new SgUpcLocalsizeofOp(exp);
+
+  exp->set_parent(lsizeof);
+  setOneSourcePositionForTransformation(lsizeof);
+
+  return lsizeof;
 }
 
 SgStatement* getSurroundingStatement(SgExpression* n)
@@ -656,52 +670,6 @@ SgFunctionDeclaration* RtedTransformation::getDefiningDeclaration( SgFunctionCal
     return rv;
 }
 
-SgVarRefExp*
-RtedTransformation::resolveToVarRefRight(SgExpression* expr) {
-  SgVarRefExp* result = NULL;
-  SgExpression* newexpr = NULL;
-  ROSE_ASSERT(expr);
-  if (	isSgDotExp( expr )
-		|| isSgArrowExp( expr )) {
-
-    newexpr= isSgBinaryOp(expr)->get_rhs_operand();
-    result = isSgVarRefExp(newexpr);
-  } else if( isSgPointerDerefExp( expr )) {
-	  newexpr = isSgUnaryOp( expr ) -> get_operand();
-	  result = isSgVarRefExp( newexpr );
-  } else {
-    cerr <<" >> resolveToVarRefRight : unknown expression " << expr->class_name() <<endl;
-    ROSE_ASSERT( false );
-  }
-  if (!result) {
-      cerr <<"  >> resolveToVarRefRight : right : " << newexpr->class_name() << endl;
-      ROSE_ASSERT( false );
-  }
-
-  return result;
-}
-
-SgVarRefExp*
-RtedTransformation::resolveToVarRefLeft(SgExpression* expr) {
-  SgVarRefExp* result = NULL;
-  SgExpression* newexpr = NULL;
-  ROSE_ASSERT(expr);
-  if (isSgDotExp(expr)) {
-    newexpr= isSgDotExp(expr)->get_lhs_operand();
-    result = isSgVarRefExp(newexpr);
-    if (!result) {
-      cerr <<"  >> resolveToVarRefRight : right : " << newexpr->class_name() << endl;
-      ROSE_ASSERT( false );
-    }
-  } else {
-    cerr <<" >> resolveToVarRefRight : unknown expression " << expr->class_name() <<endl;
-    ROSE_ASSERT( false );
-  }
-
-  return result;
-}
-
-
 bool isGlobalExternVariable(SgStatement* stmt)
 {
   bool                     res = false;
@@ -1082,7 +1050,11 @@ void RtedTransformation::appendAddressAndSize(
 #endif
     else if (szop)
     {
-        szexp = buildSizeOfOp(deepCopy(szop));
+        SgExpression* clone = deepCopy(szop);
+
+        szexp = isUpcShared(szop->get_type()) ? static_cast<SgExpression*>(buildUpcLocalsizeofOp(clone))
+                                              : buildSizeOfOp(clone)
+                                              ;
     }
     else
     {
@@ -1142,6 +1114,34 @@ public:
 };
 
 
+struct AddressOfExprBuilder
+{
+  SgExpression* res;
+
+  AddressOfExprBuilder()
+  : res(NULL)
+  {}
+
+  void handle(SgNode& n) { ROSE_ASSERT(false); }
+
+  void handle(SgExpression& n) { res = buildAddressOfOp(&n); }
+
+  void handle(SgPointerDerefExp& n) { res = n.get_operand(); }
+
+  operator SgExpression*()
+  {
+    ROSE_ASSERT(res);
+    return res;
+  }
+};
+
+static
+SgExpression* addressOfExpr(SgExpression* n)
+{
+  return ez::visitSgNode(AddressOfExprBuilder(), n);
+}
+
+
 static
 SgExpression* genAddressOf(SgExpression* const exp, bool upcShared)
 {
@@ -1160,9 +1160,10 @@ SgExpression* genAddressOf(SgExpression* const exp, bool upcShared)
   if (upcShared) char_type = buildUpcSharedType(char_type, -1);
 
   SgType*             char_ptr = buildPointerType(char_type);
+  SgExpression*       address_exp = addressOfExpr(exp_copy);
 
   // we return the address as [shared] char*
-  return buildCastExp(buildAddressOfOp(exp_copy), char_ptr);
+  return buildCastExp(address_exp, char_ptr);
 }
 
 SgFunctionCallExp* RtedTransformation::mkAddress(SgExpression* exp, bool upcShared) const

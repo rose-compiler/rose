@@ -7,18 +7,16 @@
 
 // -----------------------    MemoryType  --------------------------------------
 
-MemoryType::MemoryType(Location _addr, size_t _size, AllocKind wherehow, const SourcePosition & _pos)
-: startAddress(_addr), size(_size), initialized(_size, false), origin(wherehow), allocPos(_pos)
+MemoryType::MemoryType(Location _addr, size_t _size, AllocKind ak, const SourcePosition& _pos)
+: startAddress(_addr), size(_size), initialized(_size, false), origin(ak), allocPos(_pos)
 {
-  // not memory has been initialized by default
-  // \why pp?
-	RuntimeSystem * rs = RuntimeSystem::instance();
-
+	RuntimeSystem *   rs = RuntimeSystem::instance();
   std::stringstream msg;
 
-  msg << "	***** Allocate Memory ::: " << _addr
-      << "  size:" << _size
-      << "  pos1:" + _pos.getLineInOrigFile();
+  msg << "	***** Allocate Memory :: " << _addr
+      << "  size: " << _size
+      << "  @ (" << _pos.getLineInOrigFile()
+      << ", " << _pos.getLineInTransformedFile() << ")";
 
   rs->printMessage(msg.str());
 }
@@ -591,15 +589,14 @@ MemoryType* MemoryManager::checkAccess(Location addr, size_t size, RsType * t, R
     {
         std::stringstream desc;
         desc << "Trying to access non-allocated MemoryRegion "
-             << "(Address " << addr
-             << " of size " << std::dec << size << ")"
+             << "(Address " << addr << " of size " << std::dec << size << ")"
              << std::endl;
 
         const MemoryType * possMatch = findPossibleMemMatch(addr);
-        if(possMatch)
+        if (possMatch)
             desc << "Did you try to access this region:" <<std::endl << *possMatch <<std::endl;
 
-        rs->violationHandler(vioType,desc.str());
+        rs->violationHandler(vioType, desc.str());
     }
 
     if (t)

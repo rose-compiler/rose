@@ -119,14 +119,9 @@ void RtedTransformation::executeTransformations() {
   }
 
   if (RTEDDEBUG()) std::cerr << "\n # Elements in variable_access_pointer  : " << variable_access_pointerderef.size() << std::endl;
-  std::map<SgExpression*, SgVarRefExp*>::const_iterator itAccess2 = variable_access_pointerderef.begin();
+  std::map<SgPointerDerefExp*,SgVarRefExp*>::const_iterator itAccess2 = variable_access_pointerderef.begin();
   for (; itAccess2 != variable_access_pointerderef.end(); itAccess2++) {
-    // can be SgVarRefExp or SgPointerDerefExp
-    SgExpression* pd = isSgExpression(itAccess2->first);
-    if (pd) {
-      SgVarRefExp* in = isSgVarRefExp(itAccess2->second);
-      insertAccessVariable(in, pd);
-    }
+    insertAccessVariable(itAccess2->second, itAccess2->first);
   }
 
   if (RTEDDEBUG()) std::cerr << "\n # Elements in variable_access_arrowexp  : " << variable_access_arrowexp.size() << std::endl;

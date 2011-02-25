@@ -69,10 +69,13 @@ RuntimeViolation::RuntimeViolation(const RuntimeViolation & other)
 
 std::ostream& operator<< (std::ostream &os, const RuntimeViolation & m)
 {
-	os << "Violation: ";
-    os << m.getShortDesc() << " at " << m.getPos() << std::endl;
-    os << m.descStream().str() << std::endl;
-    return os;
+  std::stringstream stream;
+
+  stream << "Violation: " << m.getShortDesc() << " at " << m.getPos() << " "
+         << m.descStream().str();
+
+  os << stream.str() << std::flush;
+  return os;
 }
 
 

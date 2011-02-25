@@ -41,27 +41,15 @@ namespace rted
   /// \brief   tests whether astNode directly or indirectly is on the right hand
   ///          side of an expressions.
   /// \details indirectly means that if astNode is a child of a non-binary
-  ///          expression or a dot-expression, the isRightOfBinaryOp is invoked
+  ///          expression or a dot-expression, isRightOfBinaryOp is invoked
   ///          'recursively' (with the parent node) as the new astNode.
   static
-  bool isRightOfBinaryOp(const SgNode* astNode) {
-     const SgNode* temp = astNode;
+  bool isRightOfBinaryOp(const SgExpression* expr)
+  {
+    const SgBinaryOp* binop = ez::ancestor<SgBinaryOp>(expr);
 
-     // \pp \todo the while loop can probably stop when we reach a non expression
-     while (!isSgProject(temp))
-     {
-       const SgNode*     parent = temp->get_parent();
-       const SgBinaryOp* binop = isSgBinaryOp(parent);
-
-       if (binop && !isSgDotExp(binop))
-       {
-         return (binop->get_rhs_operand() == temp);
-       }
-
-       temp = parent;
-     }
-
-     return false;
+    if (isSgDotExp(binop)) return isRightOfBinaryOp(binop);
+    return binop != NULL;
   }
 
   static
@@ -95,7 +83,7 @@ namespace rted
 
     void handle(SgFunctionDefinition& n)
     {
-        vt.transf->visit_checkIsMain(&n);
+        vt.transf->transformIfMain(&n);
         vt.transf->function_definitions.push_back(&n);
 
         ia.function = true;
@@ -137,8 +125,6 @@ namespace rted
 
     void handle(SgAssignInitializer& n)
     {
-        std::cerr << n.unparseToString() << std::endl;
-
         vt.transf->visit_isAssignInitializer(&n);
         ia.isAssignInitializer = true;
     }
@@ -151,7 +137,11 @@ namespace rted
     }
 
     void handle(SgUpcBarrierStatement& n) { storeUpcBlockingOp(n); }
-    void handle(SgUpcWaitStatement& n)    { storeUpcBlockingOp(n); }
+
+    void handle(SgUpcWaitStatement& n)
+    {
+      storeUpcBlockingOp(n);
+    }
 
     void handle(SgScopeStatement& n)
     {
@@ -359,14 +349,15 @@ namespace rted
   static
   bool test_binary_op(const VariableTraversal::BinaryOpStack& binary_ops, const SgVarRefExp& varref)
   {
+    // not in binary context
     if (binary_ops.empty()) return false;
 
     const SgBinaryOp*   binop = binary_ops.back();
     const SgExpression* rhs = binop->get_rhs_operand();
 
-    // \note while astNode is on the right hand side of some expression
-    //       this does not mean that astNode == rhs. astNode could also be
-    //       an (indirect) child of rhs.
+    // \note isRightOfBinaryOp(&varref)
+    //       does not mean that varref == rhs. varref could also be
+    //       an (indirect) child of binop.
     return (  !isRightOfBinaryOp(&varref)
            || isSgArrayType(rhs->get_type())
            || isSgNewExp(rhs)
@@ -463,18 +454,22 @@ namespace rted
   {
     if (varref == NULL) return;
 
-    SgInitializedName *name = varref -> get_symbol() -> get_declaration();
+    SgInitializedName *name = varref->get_symbol()->get_declaration();
 
-    const bool elide_access_guard = (  inheritedAttribute.isArrowExp
-                                    || inheritedAttribute.isAddressOfOp
-                                    || in_instrumented_file(transf, name)
-                                    || test_binary_op(binary_ops, *varref)
-                                    || test_for_loops(for_loops, *varref, *name)
-                                    || test_assign_initializer(inheritedAttribute, *varref)
-                                    || test_call_argument(transf, *varref)
-                                    );
+    bool elide_access_guard = (  inheritedAttribute.isArrowExp );
+                             elide_access_guard = elide_access_guard || inheritedAttribute.isAddressOfOp ;
+                             elide_access_guard = elide_access_guard || in_instrumented_file(transf, name) ;
+                             elide_access_guard = elide_access_guard || test_binary_op(binary_ops, *varref) ;
+                             elide_access_guard = elide_access_guard || test_for_loops(for_loops, *varref, *name) ;
+                             elide_access_guard = elide_access_guard || test_assign_initializer(inheritedAttribute, *varref) ;
+                             elide_access_guard = elide_access_guard || test_call_argument(transf, *varref) ;
+                              // );
 
-    if (elide_access_guard) return;
+    if (elide_access_guard)
+    {
+      std::cerr << "### ELIDE" << std::endl;
+      return;
+    }
 
     // its a plain variable access
     transf->variable_access_varref.push_back(varref);

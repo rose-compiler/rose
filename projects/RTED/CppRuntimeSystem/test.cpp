@@ -1535,8 +1535,8 @@ void testTypeConsistencyChecking() {
 
 extern "C"
 {
-  int upc_main(int, char**, char**)
-  //~ int main(int, char**, char**)
+  // int upc_main(int, char**, char**)
+  int main(int, char**, char**)
   {
 
       try

@@ -403,8 +403,8 @@ class RuntimeSystem
         void setOutputFile(const std::string & file);
 
 
-        void log(const std::string & msg)  { (*defaultOutStr) << msg; }
-        std::ostream & log()               { return (*defaultOutStr); }
+        void log(const std::string & msg)  { log() << msg; }
+        std::ostream & log()               { return std::cout; }
 
         // Printing of RuntimeSystem status
         void printOpenFiles(std::ostream & os) const  { fileManager.print(os);    }
@@ -426,7 +426,7 @@ class RuntimeSystem
         VariableIter variablesBegin(int scopeId) const;
         VariableIter variablesEnd(int scopeId)   const;
 
-        void printMessage(std::string message);
+        void printMessage(const std::string& message);
 
     private:
 

@@ -44,7 +44,7 @@ void rted_Close(const char* from)
   std::stringstream s;
 
 	s << "Failed to discover error in RTED test.\n"
-	  << "   Origin: " << from << " @" << rted_ThisThread() << "\n";
+	  << "   Origin: " << from << " Thread#" << rted_ThisThread() << "\n";
 
   // The runtime system would have exited if it had found an error
   rs->log( s.str() );

@@ -34,11 +34,18 @@ RtedTransformation::insertMainCloseCall()
 
   std::string comment = "RS : Insert Finalizing Call to Runtime System to check if error was detected (needed for automation)";
   attachComment(exprStmt, comment, PreprocessingInfo::before);
+
+  if (RUNON_UPC)
+  {
+    SgUpcBarrierStatement& xtraBarrier = *buildUpcBarrierStatement();
+    /* SgExprStatement&    xtraBarrierStmt = */
+    SageInterface::insertStatementAfter(globalsInitLoc, &xtraBarrier);
+  }
 }
 
 
 
-void RtedTransformation::visit_checkIsMain(SgFunctionDefinition* const mainFunc)
+void RtedTransformation::transformIfMain(SgFunctionDefinition* const mainFunc)
 {
     ROSE_ASSERT(mainFunc);
 
@@ -110,7 +117,9 @@ void RtedTransformation::renameMain(SgFunctionDeclaration* sg_func)
                                                     body
                                                   );
   appendStatement(st, body);
-  insertCheck(ilBefore, st, symbols.roseUpcAllInitialize, buildExprListExp());
+
+  ROSE_ASSERT(globalsInitLoc == NULL);
+  globalsInitLoc = insertCheck(ilBefore, st, symbols.roseUpcAllInitialize, buildExprListExp());
 
   SgExprListExp*     arg_list2 = buildExprListExp();
   appendExpression(arg_list2, buildStringVal("RuntimeSystem.cpp:main"));

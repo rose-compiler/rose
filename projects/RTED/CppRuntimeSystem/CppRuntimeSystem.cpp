@@ -24,14 +24,14 @@ RuntimeSystem* RuntimeSystem::instance()
     if (!single)
     {
         single = new RuntimeSystem();
-        single->registerOutputStream( &std::cerr);
+        single->registerOutputStream(&std::cerr);
     }
 
     return single;
 }
 
 RuntimeSystem::RuntimeSystem()
-    : testingMode( false ), qtDebugger(false), defaultOutStr(&cout)
+: testingMode( false ), qtDebugger(false), defaultOutStr(&cout)
 {
 
     // by default abort on all violations except INVALID_PTR_ASSIGN
@@ -46,13 +46,18 @@ RuntimeSystem::RuntimeSystem()
     readConfigFile();
 }
 
-void RuntimeSystem::printMessage(std::string message) {
+void RuntimeSystem::printMessage(const std::string& message) {
 #ifdef ROSE_WITH_ROSEQT
   if( isQtDebuggerEnabled() ) {
     RtedDebug::instance()->addMessage(message);
   }
 #else
-  std::cout << "w/o QT: " << message << endl;
+  std::stringstream msg;
+
+  msg << "trace (#" << rted_ThisThread() << "): "
+      << message << '\n';
+
+  this->log() << msg.str() << std::flush;
 #endif
 }
 
@@ -146,10 +151,13 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
 
     vio.setPosition(curPos);
     ViolationPolicy::Type policy = violationTypePolicy[ vio.getType() ];
+    std::stringstream     errmsg;
+
+    errmsg << vio << " Thread# " << rted_ThisThread() << '\n';
 
     if (policy == ViolationPolicy::Exit || policy == ViolationPolicy::Warn)
     {
-      (*defaultOutStr) << vio  << endl;
+      (*defaultOutStr) << errmsg.str() << std::flush;
     }
 
 
@@ -157,13 +165,11 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
     if(qtDebugger)
     {
         //Display the Debugger after violation occured
-        stringstream s;
-        s << vio;
 
-        if( ViolationPolicy::Exit == policy )
-            RtedDebug::instance()->addMessage(s.str().c_str(),RtedDebug::ERROR);
+        if ( ViolationPolicy::Exit == policy )
+            RtedDebug::instance()->addMessage(errmsg.str().c_str(), RtedDebug::ERROR);
         else
-            RtedDebug::instance()->addMessage(s.str().c_str(),RtedDebug::WARNING);
+            RtedDebug::instance()->addMessage(errmsg.str().c_str(), RtedDebug::WARNING);
 
         RtedDebug::instance()->startGui(qtDebugger);
     }

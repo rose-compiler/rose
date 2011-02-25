@@ -10,7 +10,6 @@
 //
 // \email peter.pirkelbauer@llnl.gov
 
-#include <upc.h>
 #include <assert.h>
 #include <stdio.h>
 
@@ -121,11 +120,16 @@ rted_Address rted_AddrSh(shared const char* ptr)
   union rted_SharedPtrCast ptrcast;
 
   ptrcast.shptr = ptr;
+
+  // was: upc_threadof((shared void*) ptr)
+  //      but upc_threadof can raise an error in case ptr
+  //      was not (properly) initialized.
+  const int threadno = GUPCR_PTS_THREAD(ptrcast.shmem);
+
+  // make ptrcast.shptr point to the corresponding local thread location
   GUPCR_PTS_SET_THREAD(ptrcast.shmem, rted_ThisThread());
 
-  return (rted_Address) { upc_threadof((shared void*) ptr),
-                          (char*) ptrcast.shptr
-                        };
+  return (rted_Address) { threadno, (char*) ptrcast.shptr };
 }
 
 #else /* __UPC__ */

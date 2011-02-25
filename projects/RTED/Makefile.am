@@ -810,7 +810,9 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/C++/uninitialized_variables/c_A_6_b_in \
 					  run/C++/uninitialized_variables/c_A_6_c_in \
 					  run/C++/uninitialized_variables/c_A_6_d_in \
-					  run/C++/uninitialized_variables/c_A_6_e_in
+					  run/C++/uninitialized_variables/c_A_6_e_in \
+					  runupc/UPC/G_Uninit/c_G_4_a \
+					  TheEnd_KNOWN_TO_FAIL
 
 
 TEST_HAS_COMPILE_ERROR = runupc/UPC/G_Uninit/c_G_1_b_D \
@@ -828,7 +830,37 @@ TEST_HAS_COMPILE_ERROR = runupc/UPC/G_Uninit/c_G_1_b_D \
                          runupc/UPC/G_Uninit/c_G_1_f_L \
                          runupc/UPC/G_Uninit/c_G_1_f_S \
                          runupc/UPC/G_Uninit/c_G_1_f_F \
-                         TheEnd
+                         runupc/UPC/G_Uninit/c_G_3_a_D \
+                         runupc/UPC/G_Uninit/c_G_3_a_I \
+                         runupc/UPC/G_Uninit/c_G_3_a_L \
+                         runupc/UPC/G_Uninit/c_G_3_a_S \
+                         runupc/UPC/G_Uninit/c_G_3_a_F \
+                         runupc/UPC/G_Uninit/c_G_3_b_D \
+                         runupc/UPC/G_Uninit/c_G_3_b_I \
+                         runupc/UPC/G_Uninit/c_G_3_b_L \
+                         runupc/UPC/G_Uninit/c_G_3_b_S \
+                         runupc/UPC/G_Uninit/c_G_3_b_F \
+                         runupc/UPC/G_Uninit/c_G_3_c_D \
+                         runupc/UPC/G_Uninit/c_G_3_c_I \
+                         runupc/UPC/G_Uninit/c_G_3_c_L \
+                         runupc/UPC/G_Uninit/c_G_3_c_S \
+                         runupc/UPC/G_Uninit/c_G_3_c_F \
+                         runupc/UPC/G_Uninit/c_G_3_d_D \
+                         runupc/UPC/G_Uninit/c_G_3_d_I \
+                         runupc/UPC/G_Uninit/c_G_3_d_L \
+                         runupc/UPC/G_Uninit/c_G_3_d_S \
+                         runupc/UPC/G_Uninit/c_G_3_d_F \
+                         runupc/UPC/G_Uninit/c_G_3_e_D \
+                         runupc/UPC/G_Uninit/c_G_3_e_I \
+                         runupc/UPC/G_Uninit/c_G_3_e_L \
+                         runupc/UPC/G_Uninit/c_G_3_e_S \
+                         runupc/UPC/G_Uninit/c_G_3_e_F \
+                         runupc/UPC/G_Uninit/c_G_3_f_D \
+                         runupc/UPC/G_Uninit/c_G_3_f_I \
+                         runupc/UPC/G_Uninit/c_G_3_f_L \
+                         runupc/UPC/G_Uninit/c_G_3_f_S \
+                         runupc/UPC/G_Uninit/c_G_3_f_F \
+                         TheEnd_COMPILE_ERROR
 
 $(TESTS_KNOWN_TO_FAIL):
 	@echo This test is known to fail, not running it now: $@

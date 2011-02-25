@@ -2685,6 +2685,11 @@ namespace ez
     return _visitSgNode(rv, n);
   }
 
+  template <class SageNode>
+  struct DefaultHandler
+  {
+    void handle(SageNode&) {}
+  };
 
   /// \brief   helper class for _ancestor
   /// \details implements a type switch over the Rose AST to find an
@@ -2694,21 +2699,23 @@ namespace ez
   /// \tparam  QualSgNode either 'const SgNode*' or 'SgNode*' depending
   ///          if the search is over constant nodes or not.
   template <class AncestorNode, class QualSgNode>
-  struct AncestorTypeFinder
+  struct AncestorTypeFinder : DefaultHandler<const SgProject>
   {
+    typedef DefaultHandler<const SgProject>       Base;
     typedef std::pair<AncestorNode*, QualSgNode*> Pair;
 
     Pair res;
 
     AncestorTypeFinder()
-    : res(NULL, NULL)
+    : Base(), res(NULL, NULL)
     {}
+
+    // handling of const SgProject is outsourced to DefaultHandler
+    // thus, AncestorNode = const SgProject does not cause conflicts
+    using Base::handle;
 
     void handle(QualSgNode& n) { res.second = n.get_parent(); }
     void handle(AncestorNode& n) { res.first = &n; }
-
-    // \pp \todo should be disabled when QualSgNode is also 'const SgProject'
-    void handle(const SgProject&) {}
 
     operator Pair() const { return res; }
   };

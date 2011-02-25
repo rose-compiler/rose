@@ -13,6 +13,12 @@
 #include "CppRuntimeSystem/rted_iface_structs.h"
 #include "CppRuntimeSystem/rted_typedefs.h"
 
+#if WITH_UPC
+#define RUNON_UPC 1
+#else  /* WITH_UPC */
+#define RUNON_UPC 0
+#endif /* WITH_UPC */
+
 //
 // convenience and debug functions
 //
@@ -215,7 +221,7 @@ public:
 private:
    /// map of expr ϵ { SgPointerDerefExp, SgArrowExp }, SgVarRefExp pairs
    /// the deref expression must be an ancestor of the varref
-   std::map<SgExpression*,SgVarRefExp*>     variable_access_pointerderef;
+   std::map<SgPointerDerefExp*,SgVarRefExp*> variable_access_pointerderef;
 
    /// The second SgExpression can contain either SgVarRefExp,
    /// or a SgThisExp
@@ -256,6 +262,7 @@ public:
    SgClassSymbol*                                    runtimeClassSymbol;
    SgScopeStatement*                                 rememberTopNode;
    SgStatement*                                      mainFirst;
+   SgStatement*                                      globalsInitLoc;
    SgBasicBlock*                                     mainBody;
    SourceFileRoseNMType                              sourceFileRoseNamespaceMap;
 
@@ -400,9 +407,6 @@ public:
    std::pair<SgInitializedName*,SgVarRefExp*> getMinusMinusOp(SgMinusMinusOp* minus ,std::string str, SgVarRefExp* varRef);
    std::pair<SgInitializedName*,SgVarRefExp*> getRightOfPointerDeref(SgPointerDerefExp* dot, std::string str, SgVarRefExp* varRef);
 
-   SgVarRefExp* resolveToVarRefRight(SgExpression* expr);
-   SgVarRefExp* resolveToVarRefLeft(SgExpression* expr);
-
    bool isVarRefInCreateArray(SgInitializedName* search);
    void insertFuncCall(RtedArguments& args);
    void insertIOFuncCall(RtedArguments& args);
@@ -506,6 +510,7 @@ public:
      globalFunction(NULL),
      globalConstructorVariable(NULL),
      mainFirst(NULL),
+     globalsInitLoc(NULL),
      mainBody(NULL),
      sourceFileRoseNamespaceMap(),
      classesInRTEDNamespace(),
@@ -572,7 +577,7 @@ public:
    void insertNamespaceIntoSourceFile(  SgProject* project, std::vector<SgClassDeclaration*> &traverseClasses);
 
    void populateDimensions( RtedArray* array, SgInitializedName* init, SgArrayType* type );
-   void visit_checkIsMain(SgFunctionDefinition* const);
+   void transformIfMain(SgFunctionDefinition* const);
 
    //
    // dependencies on AstSimpleProcessing

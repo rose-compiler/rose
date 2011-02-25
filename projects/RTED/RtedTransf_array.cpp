@@ -229,7 +229,7 @@ void RtedTransformation::insertArrayCreateCall( SgStatement* stmt,
    // \pp \todo Maybe we should check that there really is one...
    if (isGlobalExternVariable(stmt)) return;
 
-   bool                 global_stmt = false;
+   SgStatement*         insloc = stmt;
    SgScopeStatement*    scope = stmt->get_scope();
    ROSE_ASSERT(scope);
 
@@ -244,15 +244,17 @@ void RtedTransformation::insertArrayCreateCall( SgStatement* stmt,
          ROSE_ASSERT( false );
        }
        scope = scope->get_scope();
+       insloc = stmt;
        // We want to insert the stmt before this classdefinition, if its still in a valid block
        cerr << " ....... Found ClassDefinition Scope. New Scope is : " << scope->class_name() << "  stmt:"
-             << stmt->class_name() << endl;
+            << stmt->class_name() << endl;
    }
-   // what is there is an array creation in a global scope
+   // what if there is an array creation in a global scope
    else if (isSgGlobal(scope)) {
        scope = mainBody;
-       global_stmt = true;
+       insloc = globalsInitLoc;
    }
+   // \pp \todo handle variables defined in namespace
 
    if (isSgIfStmt(scope)) {
        SgStatement* exprStmt = buildArrayCreateCall(initName, varRef, array, stmt);
@@ -300,21 +302,15 @@ void RtedTransformation::insertArrayCreateCall( SgStatement* stmt,
    } else if (isSgBasicBlock(scope)) {
        SgStatement* exprStmt = buildArrayCreateCall(initName, varRef, array, stmt);
 
-      if (global_stmt && initName->get_scope() != mainFirst->get_scope()) {
-         mainBody -> prepend_statement(exprStmt);
-         cerr << "+++++++ insert Before... " << endl;
-      } else {
-         // insert new stmt (exprStmt) after (old) stmt
-         insertStatementAfter(stmt, exprStmt);
-         cerr << "+++++++ insert After... " << endl;
-      }
+       insertStatementAfter(insloc, exprStmt);
 
-      string empty_comment = "";
-      attachComment(exprStmt, empty_comment, PreprocessingInfo::before);
-      string
-            comment =
-                  "RS : Create Array Variable, paramaters : (name, manglname, typr, basetype, address, sizeof(type), array size, fromMalloc, filename, linenr, linenrTransformed, dimension info ...)";
-      attachComment(exprStmt, comment, PreprocessingInfo::before);
+       // insert in sequence
+       if (insloc == globalsInitLoc) globalsInitLoc = exprStmt;
+
+       string empty_comment = "";
+       attachComment(exprStmt, empty_comment, PreprocessingInfo::before);
+       string comment = "RS : Create Array Variable, paramaters : (name, manglname, typr, basetype, address, sizeof(type), array size, fromMalloc, filename, linenr, linenrTransformed, dimension info ...)";
+       attachComment(exprStmt, comment, PreprocessingInfo::before);
   } else {
       const std::string    name = initName->get_mangled_name().str();
 
@@ -472,6 +468,8 @@ void RtedTransformation::visit_isSgPointerDerefExp(SgPointerDerefExp* const n)
 
    SgExpression*                 right = n->get_operand();
    // right hand side should contain some VarRefExp
+   // \pp \note \todo I am not sure why we consider all VarRefExp that
+   //                 are underneath the deref.
    const SgNodePtrList&          vars = NodeQuery::querySubTree(right, V_SgVarRefExp);
    SgNodePtrList::const_iterator it = vars.begin();
 
@@ -1022,73 +1020,111 @@ void RtedTransformation::addPaddingToAllocatedMemory(SgStatement* stmt, RtedArra
    }
 }
 
+static
+SgVarRefExp* resolveToVarRefRight(SgExpression* expr)
+{
+  ROSE_ASSERT(expr);
+
+  SgVarRefExp* result = NULL;
+
+  if (	isSgDotExp(expr) || isSgArrowExp( expr ) )
+  {
+    result = isSgVarRefExp(isSgBinaryOp(expr)->get_rhs_operand());
+  }
+  else if( isSgPointerDerefExp( expr ))
+  {
+	  result = isSgVarRefExp( isSgUnaryOp( expr ) -> get_operand() );
+  }
+
+  ROSE_ASSERT(result);
+  return result;
+}
+
+
+struct ArrayInfoFinder
+{
+  SgVarRefExp* varref;
+
+  ArrayInfoFinder()
+  : varref(NULL)
+  {}
+
+  void set_varref(SgVarRefExp* n)
+  {
+    ROSE_ASSERT(n);
+    varref = n;
+  }
+
+  void handle_member_selection(SgBinaryOp& n)
+  {
+    set_varref(isSgVarRefExp(n.get_rhs_operand()));
+  }
+
+  void handle(SgNode&) { ROSE_ASSERT(false); }
+
+  void handle(SgVarRefExp& n)
+  {
+    set_varref(&n);
+  }
+
+  void handle(SgArrowExp& n)
+  {
+    handle_member_selection(n);
+  }
+
+  void handle(SgDotExp& n)
+  {
+    handle_member_selection(n);
+  }
+
+  void handle(SgPointerDerefExp& n)
+  {
+    set_varref(isSgVarRefExp(n.get_operand()));
+  }
+
+  void handle(SgPntrArrRefExp& n)
+  {
+    varref = isSgVarRefExp(n.get_lhs_operand());
+    if (varref != NULL) return;
+
+    set_varref(resolveToVarRefRight(n.get_rhs_operand()));
+  }
+
+  operator SgVarRefExp*() const
+  {
+    ROSE_ASSERT(varref);
+    return varref;
+  }
+};
+
 void RtedTransformation::visit_isArrayPntrArrRefExp(SgPntrArrRefExp* const arrRefExp)
 {
-   ROSE_ASSERT(arrRefExp);
+    ROSE_ASSERT(arrRefExp);
 
-   // make sure the parent is not another pntr array (pntr->pntr), we only want the top one
-   // also, ensure we don't count arr[ix].member as an array access, e.g. in the
-   // following:
-   //    arr[ix].member = 2;
-   // we need only checkwrite &( arr[ix].member ), which is handled by init var.
-   if (!isSgPntrArrRefExp(arrRefExp->get_parent())) {
+    // make sure the parent is not another pntr array (pntr->pntr), we only want the top one
+    // also, ensure we don't count arr[ix].member as an array access, e.g. in the
+    // following:
+    //    arr[ix].member = 2;
+    // we need only checkwrite &( arr[ix].member ), which is handled by init var.
+    if (isSgPntrArrRefExp(arrRefExp->get_parent())) return;
 
-      int dimension = 1;
-      SgExpression* left = arrRefExp->get_lhs_operand();
-      // right hand side can be any expression!
-      SgExpression* right1 = arrRefExp->get_rhs_operand();
-      SgExpression* right2 = NULL;
-      ROSE_ASSERT(right1);
-      SgVarRefExp* varRef = isSgVarRefExp(left);
-      if (varRef == NULL) {
-         SgArrowExp* arrow = isSgArrowExp(left);
-         SgDotExp* dot = isSgDotExp(left);
-         SgPointerDerefExp* pointerDeref = isSgPointerDerefExp(left);
-         SgPntrArrRefExp* arrRefExp2 = isSgPntrArrRefExp(left);
-         if (arrow) {
-            varRef = isSgVarRefExp(arrow->get_rhs_operand());
-            ROSE_ASSERT(varRef);
-         } else if (dot) {
-            varRef = isSgVarRefExp(dot->get_rhs_operand());
-            ROSE_ASSERT(varRef);
-         } else if (pointerDeref) {
-            varRef = isSgVarRefExp(pointerDeref->get_operand());
-            ROSE_ASSERT(varRef);
-         } else if (arrRefExp2) {
-            dimension = 2;
-            SgExpression* expr2 = arrRefExp2->get_lhs_operand();
-            right2 = arrRefExp2->get_rhs_operand();
-            varRef = isSgVarRefExp(expr2);
+    // right hand side can be any expression!
+    SgExpression*                             left = arrRefExp->get_lhs_operand();
+    SgVarRefExp*                              varref = ez::visitSgNode(ArrayInfoFinder(), left);
+    std::vector<SgVarRefExp*>::const_iterator aa = variablesUsedForArray.begin();
+    std::vector<SgVarRefExp*>::const_iterator zz = variablesUsedForArray.end();
+    const bool                                create_access_call = (std::find(aa, zz, varref) == zz);
 
-            if (!varRef) {
-               varRef = resolveToVarRefRight(expr2);
-            }
+    if (create_access_call)
+    {
+       SgInitializedName* initName = varref->get_symbol()->get_declaration();
+       ROSE_ASSERT(initName);
 
-            ROSE_ASSERT(varRef);
-         } else {
-            cerr << ">> RtedTransformation::ACCESS::SgPntrArrRefExp:: unknown left of SgArrowExp: " << left->class_name()
-                  << " --" << arrRefExp->unparseToString() << "-- " << endl;
-            ROSE_ASSERT(false);
-         }
-      }
-      ROSE_ASSERT(varRef);
-      bool create_access_call = true;
-      vector<SgVarRefExp*>::const_iterator cv = variablesUsedForArray.begin();
-      for (; cv != variablesUsedForArray.end(); ++cv) {
-         SgVarRefExp* stored = *cv;
-         if (stored == varRef)
-            create_access_call = false;
-      }
-      if (create_access_call) {
-         SgInitializedName* initName = varRef->get_symbol()->get_declaration();
-         ROSE_ASSERT(initName);
-         RtedArray* array = new RtedArray(initName, getSurroundingStatement(arrRefExp), akStack);
-         cerr << "!! CALL : " << varRef << " - " << varRef->unparseToString() << "    size : " << create_array_access_call.size()
-               << "  -- " << array->unparseToString() << " : " << arrRefExp->unparseToString() << endl;
-         create_array_access_call[arrRefExp] = array;
-      }
-   }
-
+       RtedArray*         array = new RtedArray(initName, getSurroundingStatement(arrRefExp), akStack);
+       std::cerr << "!! CALL : " << varref << " - " << varref->unparseToString() << "    size : " << create_array_access_call.size()
+                 << "  -- " << array->unparseToString() << " : " << arrRefExp->unparseToString() << endl;
+       create_array_access_call[arrRefExp] = array;
+    }
 }
 
 

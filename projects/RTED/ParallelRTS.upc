@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <upc.h>
 #include <string.h>
-#include <stdio.h>
+// #include <stdio.h>
 
 #include "ParallelRTS.h"
 #include "workzone.h"
@@ -377,7 +377,7 @@ const char* msgr_String(const char* buf)
 static
 size_t msglen_String(const char* buf)
 {
-  return sizeof(size_t) + *((const size_t*)buf);
+  return *((const size_t*)buf);
 }
 
 //
@@ -524,7 +524,6 @@ void rcv_InitVariable( const rted_MsgHeader* msg )
                       msgr_SourceInfo (buf + si_ofs)
                     );
 }
-
 
 void snd_InitVariable( rted_TypeDesc    td,
                        rted_Address     address,
@@ -701,6 +700,9 @@ void msgBroadcast(const char* msg, const size_t len)
     // next thread
     ++tgtblock;
   }
+
+  fprintf(stderr, "w: %i : %i\n", MYTHREAD, ((rted_MsgHeader*) msg)->kind);
+  fflush(stderr);
 }
 
 
@@ -709,6 +711,9 @@ void msgReceive()
 {
   shared rted_MsgHeader* m = msgDeQueue();
   rted_MsgHeader*        msg = (rted_MsgHeader*)m;
+
+  fprintf(stderr, "r: %i : %i\n", MYTHREAD, msg->kind);
+  fflush(stderr);
 
   switch (msg->kind)
   {
