@@ -15,7 +15,7 @@ TEST_TARGETS =
 #  DOCUMENTATION, CONFIGURATION, ETC
 ###############################################################################################################################
 
-EXTRA_DIST += README x86sim.conf test_status.txt
+EXTRA_DIST += README test_status.txt syscall_tests.conf pthread_tests.conf
 
 ###############################################################################################################################
 #  PROGRAMS
@@ -563,8 +563,8 @@ MOSTLYCLEANFILES += libipc.a
 # Test targets must be 32-bit x86; if we don't have that capability then the tests are not run.
 if ENABLE_I386
 SYS_TEST_TARGETS = $(addsuffix .passed, $(SYS_TEST_INPUTS))
-$(SYS_TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
-	@$(RTH_RUN) INPUT=./$< $(srcdir)/x86sim.conf $@
+$(SYS_TEST_TARGETS): %.passed: % $(srcdir)/syscall_tests.conf x86sim
+	@$(RTH_RUN) INPUT=./$< $(srcdir)/syscall_tests.conf $@
 else
 SYS_TEST_TARGETS = warn_no_tests
 warn_no_tests:
@@ -1047,8 +1047,8 @@ pthread_test_inputs: $(PTHREAD_TEST_INPUTS)
 # Without this, the order of this statement and the following if-ENABLE_I386 may be rearranged on MAC
 if ENABLE_I386
 PTHREAD_TEST_TARGETS = $(addsuffix .passed, $(PTHREAD_TEST_INPUTS))
-$(PTHREAD_TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
-	@$(RTH_RUN) INPUT=./$< $(srcdir)/x86sim.conf $@
+$(PTHREAD_TEST_TARGETS): %.passed: % $(srcdir)/pthread_tests.conf x86sim
+	@$(RTH_RUN) INPUT=./$< $(srcdir)/pthread_tests.conf $@
 else
 # warn_no_tests was already defined in the "SYSTEM CALL TESTS" section of this makefile
 PTHREAD_TEST_TARGETS = warn_no_tests
@@ -1067,7 +1067,7 @@ check-pthread:  $(PTHREAD_TEST_TARGETS)
 check-local: check-syscalls check-pthread
 	@$(RTH_STATS)
 
-# "tmp-sim" is the temp directory used to run the tests. See x86sim.conf.
+# "tmp-sim" is the temp directory used to run the tests. See syscall_tests.conf and pthread_tests.conf
 clean-local:
 	if [ -d tmp-sim ]; then chmod -f a+rwx -R tmp-sim; fi
 	rm -rf tmp-sim x-core.rose test-file-fchown32
