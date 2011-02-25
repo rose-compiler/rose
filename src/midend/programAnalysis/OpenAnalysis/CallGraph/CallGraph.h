@@ -168,7 +168,7 @@ private:
 
   void build_graph(IRProcIterator* funcIter);
   void build_graph_from_block(CallGraph::Node* currProcNode, 
-			      IRStmtIterator* stmtIter);
+                              IRStmtIterator* stmtIter);
 
   CallGraph::Node* FindOrAddNode(SymHandle sym);
 

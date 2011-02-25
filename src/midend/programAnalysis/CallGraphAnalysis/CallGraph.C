@@ -10,6 +10,7 @@
 //#include <boost/lexical_cast.hpp>
 #include "CallGraph.h"
 
+#include <err.h>
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
@@ -422,14 +423,15 @@ CallTargetSet::solveMemberFunctionPointerCall ( SgExpression *functionExp, Class
   left  = binaryExp->get_lhs_operand();
   right = binaryExp->get_rhs_operand();
 
-  printf ("binaryExp = %p = %s \n",binaryExp,binaryExp->class_name().c_str());
+  /*printf ("binaryExp = %p = %s \n",binaryExp,binaryExp->class_name().c_str());
   printf ("left  = %p = %s \n",left,left->class_name().c_str());
   printf ("right = %p = %s \n",right,right->class_name().c_str());
+  */
 
   // left side of the expression should have class type
   classType = isSgClassType( left->get_type()->findBaseType() );
   ROSE_ASSERT ( classType != NULL );
-  printf ("classType->get_declaration() = %p = %s \n",classType->get_declaration(),classType->get_declaration()->class_name().c_str());
+  //printf ("classType->get_declaration() = %p = %s \n",classType->get_declaration(),classType->get_declaration()->class_name().c_str());
 
   // DQ (2/23/2006): bug fix
   // classDefinition = isSgClassDeclaration( classType->get_declaration() )->get_definition();
@@ -480,7 +482,7 @@ CallTargetSet::solveMemberFunctionPointerCall ( SgExpression *functionExp, Class
             memberFunctionDeclaration->get_functionModifier().isPureVirtual() ) && !isSgThisExp( left ) )
       {
         SgClassDefinitionPtrList subclasses = classHierarchy->getSubclasses( classDefinition );
-        cout << "Virtual function " << memberFunctionDeclaration->get_mangled_name().str() << "\n";
+        //cout << "Virtual function " << memberFunctionDeclaration->get_mangled_name().str() << "\n";
         for ( SgClassDefinitionPtrList::iterator it_cls = subclasses.begin(); it_cls != subclasses.end(); it_cls++ )
         {
           SgClassDefinition *cls = isSgClassDefinition( *it_cls );
@@ -521,7 +523,7 @@ CallTargetSet::solveMemberFunctionPointerCall ( SgExpression *functionExp, Class
     }
   }
 
-  cout << "Function list size: " << functionList.size() << "\n";
+  //cout << "Function list size: " << functionList.size() << "\n";
   return functionList;
 }
 
@@ -663,7 +665,7 @@ CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWra
         functionDeclarationInClass = memberFunctionDeclaration;
 
       ROSE_ASSERT ( functionDeclarationInClass );
-      //      			   cout << "Pushing non-virtual function declaration for function "
+      //                           cout << "Pushing non-virtual function declaration for function "
       //<< functionDeclarationInClass->get_name().str() << "   " << functionDeclarationInClass << "\n";
       Properties* fctProps = createEmptyProperty(functionDeclarationInClass,
           functionDeclarationInClass->get_type() );
@@ -705,13 +707,20 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
 std::vector<Properties*>
 CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit) { 
   std::vector<Properties*> props;
-  SgMemberFunctionDeclaration* decl = sgCtorInit->get_declaration();
-  if (decl != NULL) {
-    SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
-    if (defDecl != NULL) {
-      props.push_back(new Properties(defDecl));
-    }
+  SgMemberFunctionDeclaration* memFunDecl = sgCtorInit->get_declaration();
+
+  //It's possibe to have a null constructor declaration, in case of compiler-generated
+  //default constructors.
+  if (memFunDecl == NULL)
+  {
+        return props;
   }
+
+  SgFunctionDeclaration* decl = isSgFunctionDeclaration(memFunDecl->get_firstNondefiningDeclaration());
+  if (decl == NULL)
+      decl = isSgFunctionDeclaration(memFunDecl->get_definingDeclaration());
+  ROSE_ASSERT(decl != NULL);
+  props.push_back(new Properties(decl));
   return props;
 }
 
@@ -749,7 +758,7 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
           CallTargetSet::solveMemberFunctionPointerCall( functionExp, classHierarchy );
         for (std::vector<Properties*>::iterator it = fD.begin(); it != fD.end(); it++ )
         {
-          //			 ROSE_ASSERT ( isSgFunctionDeclaration( *it ) );
+          //                     ROSE_ASSERT ( isSgFunctionDeclaration( *it ) );
           ROSE_ASSERT((*it)->functionType ); functionList.push_back( *it );
           //                         if( (*it)-> )
           //                        std::cout << "Found member function Pointer Call " << (*it)->unparseToString() << std::endl;
@@ -947,6 +956,21 @@ CallTargetSet::getPropertiesForExpression(SgExpression* sgexp,
   }
 }
 
+void CallTargetSet::getDeclarationsForExpression(SgExpression* exp,
+                ClassHierarchyWrapper* classHierarchy,
+                Rose_STL_Container<SgFunctionDeclaration*>& defList)
+{
+        Rose_STL_Container<Properties*> props;
+        CallTargetSet::getPropertiesForExpression(exp, classHierarchy, props);
+
+        foreach(Properties* prop, props)
+        {
+                SgFunctionDeclaration* candidateDecl = prop->functionDeclaration;
+                ROSE_ASSERT(candidateDecl);
+                defList.push_back(candidateDecl);
+        }
+}
+
 void 
 CallTargetSet::getDefinitionsForExpression(SgExpression* sgexp, 
                          ClassHierarchyWrapper* classHierarchy,
@@ -1011,14 +1035,10 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
      inputFunctionDeclaration : isSgFunctionDeclaration( properties->functionDeclaration->get_definingDeclaration() )
     );
 
-  if( inputFunctionDeclaration == defDecl )
-    std::cout << " **** If you see this error message. Report to the ROSE team that a function declaration ****\n"
-      << " **** has the defining declaration erroneously attached to the nondef decl               ****\n";
-
   if(defDecl != NULL  && defDecl->get_definition() == NULL)
   {
     defDecl = NULL;
-    std::cout << " **** If you see this error message. Report to the ROSE team that a function declaration ****\n"
+    std::cerr << " **** If you see this error message. Report to the ROSE team that a function declaration ****\n"
       << " **** has a defining declaration but no definition                                       ****\n";
 
   }
@@ -1028,15 +1048,12 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
   //     cout << "Input declaration: " << inputFunctionDeclaration << " as opposed to " << functionDeclaration << "\n"; 
 
   // Test for a forward declaration (declaration without a definition)
-  if ( defDecl )
+  if ( defDecl != NULL )
   {
-    SgFunctionDefinition* functionDefinition = defDecl->get_definition();
-    ROSE_ASSERT ( defDecl );
-    ROSE_ASSERT ( functionDefinition != NULL );
     hasDefinition = true;
 
     Rose_STL_Container<SgNode*> functionCallExpList = 
-      NodeQuery::querySubTree(functionDefinition, V_SgFunctionCallExp);
+      NodeQuery::querySubTree(defDecl, V_SgFunctionCallExp);
     foreach (SgNode* functionCallExp, functionCallExpList) {
       CallTargetSet::getPropertiesForExpression(isSgFunctionCallExp(functionCallExp), 
                                                 classHierarchy, 
@@ -1044,7 +1061,7 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
     }
 
     Rose_STL_Container<SgNode*> ctorInitList = 
-      NodeQuery::querySubTree(functionDefinition, V_SgConstructorInitializer);
+      NodeQuery::querySubTree(defDecl, V_SgConstructorInitializer);
     foreach (SgNode* ctorInit, ctorInitList) {
       CallTargetSet::getPropertiesForExpression(isSgConstructorInitializer(ctorInit), 
                                                 classHierarchy, 

@@ -68,7 +68,7 @@ void SCCAnalHelp( const GraphAccessInterface *dg, GraphAccessInterface::Node *v,
     } 
     else {
       if ( state.DFNUMBER(w) < state.LOWLINK(v) &&  state.IsOnStack(w) ) {
-     	state.LOWLINK(v) = state.DFNUMBER(w);
+        state.LOWLINK(v) = state.DFNUMBER(w);
       }
     }
   }

@@ -240,9 +240,27 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
      printf ("Initial start_index = %d \n",start_index);
 #endif
 
+   // Liao 2/1/2010: SgBasicBlock in Fortran should be ignored for attaching a preprocessing info with a 'before' position.
+   // The reason is that there is no  { ..} in Fortran and the preprocessing information should really be associated with 
+   // a statement showing up in the source code. 
+   // However, we allow a preprocessing info. to be attached to be inside of a SgBasicBlock to get the following special case right:
+   // end do does not exist in AST. The comment has to be attached inside the do-loop's body to be unparsed right before 'end do'
+   //  do i 1, 10
+   //
+   // ! comment here
+   //  end do
+   //
+   bool isFortranBlockAndBeforePoisition = false; // should we skip a Fortran basic block when the position is before?
+   if (SageInterface::is_Fortran_language() )
+   {
+     if (isSgBasicBlock (locatedNode) && (location == PreprocessingInfo::before || location == PreprocessingInfo::after))
+       isFortranBlockAndBeforePoisition = true; 
+   }
+
   // DQ (12/23/2008): Note: I think that this should be turned into a while loop (starting at start_index, 
   // to lineNumber when location == PreprocessingInfo::before, and to the sizeOfCurrentListOfAttributes 
   // when location == PreprocessingInfo::after).
+   if (!isFortranBlockAndBeforePoisition) 
      for ( int i = start_index; i < sizeOfCurrentListOfAttributes; i++ )
 #if 0
   // DQ (12/23/2008): This is tighter control over the number of iterations required.

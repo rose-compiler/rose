@@ -577,6 +577,7 @@ SgTypeBool
 SgTypeChar
 SgTypeComplex
 SgTypeDefault
+SgTypeLabel
 SgTypeDouble
 SgTypeEllipse
 SgTypeFloat

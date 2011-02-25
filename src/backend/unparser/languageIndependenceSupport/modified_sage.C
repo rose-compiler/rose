@@ -450,7 +450,7 @@ bool Unparse_MOD_SAGE::isUnaryPostfixOperator(SgExpression* expr)
                     if (func_name.getString() == "operator++" || func_name.getString() == "operator--")
                        {
                          SgInitializedNamePtrList argList = mfunc_decl->get_args();
-	                   // postfix operators have one argument (0), prefix operators have none ()
+                           // postfix operators have one argument (0), prefix operators have none ()
                          if (argList.size() == 1)
                             return true;
                        }
@@ -579,7 +579,7 @@ int GetOperatorVariant(SgExpression* expr) {
     else if (func_name == "operator->") return V_SgArrowExp;
     else if (func_name == "operator.") return V_SgDotExp;
     else if (func_name.find("operator") == string::npos ||
-	     func_name == "operator()") return V_SgFunctionCallExp;
+             func_name == "operator()") return V_SgFunctionCallExp;
     else if (func_name.find("operator") != string::npos) return V_SgCastExp;
     else
      {

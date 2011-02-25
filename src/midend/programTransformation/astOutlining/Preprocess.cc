@@ -63,7 +63,13 @@ Outliner::Preprocess::preprocessOutlineTarget (SgStatement* s)
   s_post = transformThisExprs (s_post);
 
   // Transform non-local control flow.
-  s_post = transformNonLocalControlFlow (s_post);
+  // We skip this during OpenMP lowering for two reasons:
+  //  1. non-local jump within a parallel region is illegal
+  //  2. The support for Fortran is lacking. 
+  // TODO better solution is to add Fortran support and report illegal non-local jumps 
+  // Liao, 1/10/2011
+  if (! SageInterface::getEnclosingFileNode(s)->get_openmp_lowering()) 
+    s_post = transformNonLocalControlFlow (s_post);
 
   // Make sure we duplicate any locally declared function prototypes.
   gatherNonLocalDecls (s_post);

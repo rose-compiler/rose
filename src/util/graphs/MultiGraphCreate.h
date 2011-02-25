@@ -22,7 +22,7 @@ class MultiGraphElem
             count--;
          else // (gc==c) Unlink the original 'owner' graph
             gc = 0;
-	 // Delete this elment if it is not used in any graph   
+         // Delete this elment if it is not used in any graph   
          if (gc == 0 && count == 0) {
              delete this;
             return true;

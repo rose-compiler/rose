@@ -279,7 +279,7 @@ namespace Trees
      */
     typedef typename Types::Select<isConst,
                                    const TreeType*,
-				   TreeType*>::Result
+                                   TreeType*>::Result
     TreeParamPtr_t;
 
     /*!
@@ -295,7 +295,7 @@ namespace Trees
      */
     typedef typename Types::Select<isConst,
                                    typename TreeType::const_iterator,
-				   typename TreeType::iterator>::Result
+                                   typename TreeType::iterator>::Result
     ChildIter_t;
 
     /*!

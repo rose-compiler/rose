@@ -27,7 +27,7 @@ class ItemTreeNode
         /// @param column the column where this QVariant is displayed
         virtual QVariant data(int role, int column=0) const;
 
-        virtual ItemTreeNode * getParent() const 	   { return parent; }
+        virtual ItemTreeNode * getParent() const           { return parent; }
 
         virtual Qt::ItemFlags flags (int column) const;
 

@@ -14,6 +14,7 @@ BEGIN {push @INC, $1 if $0 =~ /(.*)\//}
 
 use strict;
 use FileLister;
+use Policies;
 use Text::Tabs;
 
 my $warning = " (warning)";	# if non-empty and policy violated, exit with a warning only
@@ -38,7 +39,7 @@ while (my $filename = $files->next_file) {
   next unless $filename =~ /\.(h|hh|hpp|c|C|cpp)$/;  # look only at C/C++ source code for now (we can add more later)
 
 
-  if (-T $filename && open FILE, "<", $filename) {
+  if (-T $filename && !is_disabled($filename) && open FILE, "<", $filename) {
     my($nlong,$nlines);
     while (<FILE>) {
       if (0==$nlines++) {

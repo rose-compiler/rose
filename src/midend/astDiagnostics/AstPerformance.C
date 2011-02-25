@@ -13,12 +13,12 @@
 #ifndef _MSC_VER
 #include <sys/resource.h>
 #else
-#include <windows.h> 		// getpagesize()
+#include <windows.h>            // getpagesize()
 #endif
 #endif
 
 
-#include <boost/thread.hpp>	// sleep()
+#include <boost/thread.hpp>     // sleep()
 
 // DQ (12/8/2006): Linux memory usage mechanism (no longer used, implemented internally (below)).
 // #include<memoryUsage.h>
@@ -35,9 +35,9 @@ bool ROSE_MemoryUsage::getStatmInfo() {
     return false;
   }
   int numEntries = fscanf(file, "%d %d %d %d %d %d %d",
-			  &memory_pages, &resident_pages, &shared_pages,
-			  &code_pages, &stack_pages, &library_pages,
-			  &dirty_pages);
+                          &memory_pages, &resident_pages, &shared_pages,
+                          &code_pages, &stack_pages, &library_pages,
+                          &dirty_pages);
   if (numEntries != 7) return false;
   fclose(file);
   return true;
@@ -540,27 +540,27 @@ struct rusage
           printf ("memoryUsageData.ru_nivcsw   = %ld \n",memoryUsageData.ru_nivcsw);
 #endif
 
-	  ROSE_MemoryUsage currentUsage;
-	  if (currentUsage.informationValid()) {
-	    printf ("General System Data: \n");
-	    printf ("     timer resolution (sec)   = %f \n",(*i)->get_resolution());
-	    printf ("     page size (bytes)        = %7d (megabytes) = %8.3f \n",currentUsage.getPageSizeBytes(),currentUsage.getPageSizeMegabytes());
-	    printf ("     available memory (pages) = %7d (megabytes) = %8.3f \n",currentUsage.getAvailableMemoryPages(),currentUsage.getAvailableMemoryMegabytes());
-	    printf ("     resident memory (pages)  = %7d (megabytes) = %8.3f \n",currentUsage.getNumberOfResidentPages(),currentUsage.getNumberOfResidentMegabytes());
-	    printf ("     shared pages             = %7d (megabytes) = %8.3f \n",currentUsage.getNumberOfSharedPages(),currentUsage.getNumberOfSharedMegabytes());
-	    printf ("     code size (pages)        = %7d (megabytes) = %8.3f \n",currentUsage.getNumberOfCodePages(),currentUsage.getNumberOfCodeMegabytes());
-	    printf ("     stack size (pages)       = %7d (megabytes) = %8.3f \n",currentUsage.getNumberOfStackPages(),currentUsage.getNumberOfStackMegabytes());
-	    printf ("     library size (pages)     = %7d (megabytes) = %8.3f \n",currentUsage.getNumberOfLibraryPages(),currentUsage.getNumberOfLibraryMegabytes());
-	    printf ("     dirty pages              = %7d (megabytes) = %8.3f \n",currentUsage.getNumberOfDirtyPages(),currentUsage.getNumberOfDirtyMegabytes());
-	    printf ("     executable code pages    = %7d (megabytes) = %8.3f \n",currentUsage.getNumberOfCodePlusLibraryPages(),currentUsage.getNumberOfCodePlusLibraryMegabytes());
+          ROSE_MemoryUsage currentUsage;
+          if (currentUsage.informationValid()) {
+            printf ("General System Data: \n");
+            printf ("     timer resolution (sec)   = %f \n",(*i)->get_resolution());
+            printf ("     page size (bytes)        = %7d (megabytes) = %8.3f \n",currentUsage.getPageSizeBytes(),currentUsage.getPageSizeMegabytes());
+            printf ("     available memory (pages) = %7d (megabytes) = %8.3f \n",currentUsage.getAvailableMemoryPages(),currentUsage.getAvailableMemoryMegabytes());
+            printf ("     resident memory (pages)  = %7d (megabytes) = %8.3f \n",currentUsage.getNumberOfResidentPages(),currentUsage.getNumberOfResidentMegabytes());
+            printf ("     shared pages             = %7d (megabytes) = %8.3f \n",currentUsage.getNumberOfSharedPages(),currentUsage.getNumberOfSharedMegabytes());
+            printf ("     code size (pages)        = %7d (megabytes) = %8.3f \n",currentUsage.getNumberOfCodePages(),currentUsage.getNumberOfCodeMegabytes());
+            printf ("     stack size (pages)       = %7d (megabytes) = %8.3f \n",currentUsage.getNumberOfStackPages(),currentUsage.getNumberOfStackMegabytes());
+            printf ("     library size (pages)     = %7d (megabytes) = %8.3f \n",currentUsage.getNumberOfLibraryPages(),currentUsage.getNumberOfLibraryMegabytes());
+            printf ("     dirty pages              = %7d (megabytes) = %8.3f \n",currentUsage.getNumberOfDirtyPages(),currentUsage.getNumberOfDirtyMegabytes());
+            printf ("     executable code pages    = %7d (megabytes) = %8.3f \n",currentUsage.getNumberOfCodePlusLibraryPages(),currentUsage.getNumberOfCodePlusLibraryMegabytes());
 
        // printf ("Performance Report (resolution = %f, number of IR nodes = %d, memory used (calculated for AST) = %d Kilobytes, memory used (actual) = %ld Kilobytes ): \n",
        //      (*i)->get_resolution(),numberOf_IR_Nodes,numberOfKiloBytesUsed,memoryComputedFromSystem);
             printf ("Performance Report (timer resolution = %f, number of IR nodes = %zu, memory used (calculated from AST memory pool) = %zu Kilobytes, memory used (actual) = %8.3f Megabytes ): \n",
                  (*i)->get_resolution(),numberOf_IR_Nodes,numberOfKiloBytesUsed,memoryComputedFromSystem);
-	  } else {
-	    printf("Memory usage information from system is not available.\n");
-	  }
+          } else {
+            printf("Memory usage information from system is not available.\n");
+          }
         }
      
      while (i != data.end())

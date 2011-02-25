@@ -23,8 +23,8 @@ int main (int argc, char **argv)
   else
     if (argc == 2)
       {
-	std::ostringstream os;
-	os << basename(argv[1]) << ".gml";
+        std::ostringstream os;
+        os << basename(argv[1]) << ".gml";
         GML.open(os.str().c_str());
       }
     else

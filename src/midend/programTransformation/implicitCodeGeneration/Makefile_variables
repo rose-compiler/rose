@@ -1,0 +1,18 @@
+
+mptImplicitCodeGeneration_la_sources=\
+	$(mptImplicitCodeGenerationPath)/analysisUtils.C \
+	$(mptImplicitCodeGenerationPath)/defaultFunctionGenerator.C \
+	$(mptImplicitCodeGenerationPath)/destructorCallAnnotator.C \
+	$(mptImplicitCodeGenerationPath)/shortCircuitingTransformation.C
+
+
+mptImplicitCodeGeneration_includeHeaders=\
+	$(mptImplicitCodeGenerationPath)/analysisUtils.h \
+	$(mptImplicitCodeGenerationPath)/defaultFunctionGenerator.h \
+	$(mptImplicitCodeGenerationPath)/destructorCallAnnotator.h \
+	$(mptImplicitCodeGenerationPath)/shortCircuitingTransformation.h
+
+
+mptImplicitCodeGeneration_extraDist=\
+$(mptImplicitCodeGenerationPath)/CMakeLists.txt \
+$(mptImplicitCodeGenerationPath)/README

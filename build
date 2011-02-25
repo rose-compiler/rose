@@ -9,9 +9,13 @@
 #   --The Rose Project Management.                                            #
 ###############################################################################
 
-# Directory containing this script, absolute name
+# Directory containing this script, which must be the top of the source tree.
 srcdir="${0%/*}"
 srcdir="$(cd $srcdir && pwd)"
+
+# Name of a file that would exist in a ROSE source tree but not other projects
+# that might be using this same build script.
+SOME_ROSE_FILE="scripts/autoconf-filter.pl"
 
 # This is the default location for build to use as a reference
 # to its macro definitions used by Autoconf and Automake.
@@ -50,7 +54,7 @@ done
 
 # If there's no autoconf-filter.pl script in this source tree, then we're building in some project external to ROSE, and
 # the "--srcpath" must be specified (or obtained from a config file).
-if [ ! -x $srcdir/scripts/autoconf-filter.pl -a "$ROSE_DISTRIBUTION" = "." ]; then
+if [ ! -e "$srcdir/$SOME_ROSE_FILE" -a "$ROSE_DISTRIBUTION" = "." ]; then
     [ -r $srcdir/config/ROSE_SOURCES ] && ROSE_DISTRIBUTION="$(head -n1 $srcdir/config/ROSE_SOURCES)"
 fi
 if [ ! -x "$ROSE_DISTRIBUTION/scripts/autoconf-filter.pl" ]; then
@@ -96,13 +100,42 @@ rm -rf autom4te.cache
 # Test libtool version and run libtoolize.  Warn if the libtool version is too old, but run it anyway.  Show the command that
 # is run by preceding it with a "+ " on stderr as is the usual debugging style for shell scripts.
 ###############################################################################################################################
+# Liao 2/9/2011. Ensure the libtool on Mac is the gnu one
+OS=`uname -s`
+if test "$OS" = "Darwin" ; then 
+  if [[ -n "$(type libtool)" ]]; then
+     echo "Check libtool on Mac OS X ..."
+    libtool --version  
+   if [ $? -ne 0 ]; then
+     echo "Error. The libtool found is not gnu libtool." 
+     echo "Please install gnu libtool (e.g. version 2.2.4) and export its path before the default libtool's path!" 
+     exit 1;
+   else
+     echo "Found a gnu libtool."
+   fi
+  fi
+fi
+# Liao 2/15/2011
+# check flex and yacc
+# the assumption is that ./build should only run from a developer version, which requires flex and yacc
+# check them in ./configure is inappropriate since the distribution package should already pack generated parsers/scanners.
+if [[ -z "$(type flex)" ]]; then
+   echo "Cannot find flex in your path! Please install GNU flex."
+   exit 1;
+fi
+
+if [[ -z "$(type yacc)" ]]; then
+   echo "Cannot find yacc in your path! Please install GNU bison."
+   exit 1;
+fi
 
 # Look for libtoolize, glibtoolize in various places.
 libtoolize_name=
-if [[ -x /Users/dquinlan/local/libtool-install/bin/libtoolize ]]; then
-    # See README.OSX
-    libtoolize_name=/Users/dquinlan/local/libtool-install/bin/libtoolize
-elif [[ -n "$(type libtoolize)" ]]; then
+#if [[ -x /Users/dquinlan/local/libtool-install/bin/libtoolize ]]; then
+#    # See README.OSX
+#    libtoolize_name=/Users/dquinlan/local/libtool-install/bin/libtoolize
+# Liao 2/9/2011. We have better handling now
+if [[ -n "$(type libtoolize)" ]]; then
     libtoolize_name=$(which libtoolize)
 elif [[ -n "$(type glibtoolize)" ]]; then
     libtoolize_name=$(which glibtoolize)
@@ -225,5 +258,9 @@ if [[ -n "$do_quiet" ]]; then
     (set -ex; $ROSE_DISTRIBUTION/scripts/quiet-mode) || true;
 fi
 
-# Save "--srcpath" value so rosegit-env can pick it up.
-echo $ROSE_DISTRIBUTION >$srcdir/config/ROSE_SOURCES 2>/dev/null
+# Save "--srcpath" value so rosegit-env can pick it up.  No need to do this for ROSE itself, just projects using the
+# ROSE build script.
+if [ ! -e "$srcdir/$SOME_ROSE_FILE" ]; then
+    echo $ROSE_DISTRIBUTION >$srcdir/config/ROSE_SOURCES 2>/dev/null
+fi
+

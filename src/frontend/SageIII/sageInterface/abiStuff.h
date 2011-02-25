@@ -124,8 +124,8 @@ class ChainableTypeLayoutGenerator {
 #else
       : next(NULL), beginning(this), custom_sizes(sizes)
       {
-		this->setNext(nx);
-	  }
+                this->setNext(nx);
+          }
 #endif
 
   protected:

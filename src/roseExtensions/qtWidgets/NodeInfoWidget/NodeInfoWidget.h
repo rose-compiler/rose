@@ -23,19 +23,19 @@ class SgSpecialFunctionModifier;
  */
 class NodeInfoWidget : public PropertyTreeWidget
 {
-	Q_OBJECT
+        Q_OBJECT
 
-	public:
-		NodeInfoWidget(QWidget * parent=0);
-		virtual ~NodeInfoWidget();
+        public:
+                NodeInfoWidget(QWidget * parent=0);
+                virtual ~NodeInfoWidget();
 
-	public slots:
-		void setNode(SgNode * node);
+        public slots:
+                void setNode(SgNode * node);
                 void gotoNode( SgNode *node )
                 { setNode( node ); }
 
-	protected:
-	    SgNode * curNode;
+        protected:
+            SgNode * curNode;
 
         virtual void dragEnterEvent(QDragEnterEvent * ev);
         virtual void dragMoveEvent(QDragMoveEvent * ev);
@@ -46,17 +46,17 @@ class NodeInfoWidget : public PropertyTreeWidget
         QPoint dragStartPosition;  ///< position of mouseclick, used for d&d functions
 
 
-		void printDeclModifier(const QModelIndex & par,
-							  const SgDeclarationModifier & declMod);
+                void printDeclModifier(const QModelIndex & par,
+                                                          const SgDeclarationModifier & declMod);
 
-		void printFuncModifier(const QModelIndex & par,
-							   const SgFunctionModifier & funcMod);
+                void printFuncModifier(const QModelIndex & par,
+                                                           const SgFunctionModifier & funcMod);
 
-		void printSpecialFuncModifier(const QModelIndex & par,
-									  const SgSpecialFunctionModifier& funcMod);
+                void printSpecialFuncModifier(const QModelIndex & par,
+                                                                          const SgSpecialFunctionModifier& funcMod);
 
 
-		QString getTraversalName(SgNode * node);
+                QString getTraversalName(SgNode * node);
 };
 
 #endif
