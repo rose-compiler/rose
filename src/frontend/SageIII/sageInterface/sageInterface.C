@@ -4195,7 +4195,7 @@ SgFunctionSymbol *SageInterface::lookupFunctionSymbolInParentScopes (const SgNam
 {
     SgFunctionSymbol* functionSymbol = NULL;
     if (currentScope == NULL)
-        currentScope = SageBuilder::topScopeStack();   
+        currentScope = SageBuilder::topScopeStack();
     ROSE_ASSERT(currentScope != NULL);
     SgScopeStatement* tempScope = currentScope;
     while (functionSymbol == NULL && tempScope != NULL)
@@ -4217,7 +4217,7 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name,
 {
     SgSymbol* symbol = NULL;
     if (cscope == NULL)
-        cscope = SageBuilder::topScopeStack(); 
+        cscope = SageBuilder::topScopeStack();
     ROSE_ASSERT(cscope);
 
     while ((cscope!=NULL)&&(symbol==NULL))
@@ -4227,7 +4227,7 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name,
         // cscope->print_symboltable("debug sageInterface.C L3749...");
         if (cscope->get_parent()!=NULL) // avoid calling get_scope when parent is not set
             cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
-        else 
+        else
             cscope = NULL;
     }
 
@@ -4235,7 +4235,7 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name,
     {
         //    printf ("Warning: could not locate the specified name %s in any outer symbol table \n"e,
         //	name.str());
-        //  ROSE_ASSERT(false); 
+        //  ROSE_ASSERT(false);
     }
     return symbol;
 }
@@ -7738,8 +7738,20 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                                  }
                        }
                       else
-                         isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
+                        if (isSgUpcForAllStatement(parent))
+                        {
+                          SgUpcForAllStatement* p = isSgUpcForAllStatement(parent);
 
+                          const bool ins = (  p->get_loop_body() == targetStmt
+                                           || p->get_test() == targetStmt
+                                           );
+
+                          // \pp \todo not sure what to do when !ins
+                          ROSE_ASSERT(ins);
+                          insertStatement(p, newStmt, insertBefore);
+                        }
+                        else
+                           isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
   // update the links after insertion!
      if (isSgFunctionDeclaration(newStmt))
           updateDefiningNondefiningLinks(isSgFunctionDeclaration(newStmt),scope);

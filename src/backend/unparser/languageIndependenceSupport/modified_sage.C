@@ -1,6 +1,6 @@
 /* modified_sage.C
  *
- * This C file includes functions that test for operator overloaded functions and 
+ * This C file includes functions that test for operator overloaded functions and
  * helper unparse functions such as unparse_helper and printSpecifier.
  */
 
@@ -22,7 +22,7 @@ using namespace std;
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isOperator
-//  
+//
 //  General function to test if this expression is an unary or binary operator
 //  overloading function
 //-----------------------------------------------------------------------------------
@@ -57,15 +57,15 @@ void Unparse_MOD_SAGE::cur_set_linewrap (int nr) {
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isBinaryEqualsOperator
-//  
-//  Auxiliary function to test if this expression is a binary operator= overloading 
+//
+//  Auxiliary function to test if this expression is a binary operator= overloading
 //  function
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryEqualsOperator(SgExpression* expr)
    {
   SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
   SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
-  
+
   if (!func_ref && !mfunc_ref) return false;
 
   string func_name;
@@ -73,16 +73,16 @@ bool Unparse_MOD_SAGE::isBinaryEqualsOperator(SgExpression* expr)
        func_name = func_ref->get_symbol()->get_name().str();
     else
        func_name = mfunc_ref->get_symbol()->get_name().str();
-  
-  if (func_name == "operator=") 
+
+  if (func_name == "operator=")
     return true;
   return false;
 }
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isBinaryEqualityOperator
-//  
-//  Auxiliary function to test if this expression is a binary operator== 
+//
+//  Auxiliary function to test if this expression is a binary operator==
 //  overloading function
 //-----------------------------------------------------------------------------------
 bool
@@ -99,7 +99,7 @@ Unparse_MOD_SAGE::isBinaryEqualityOperator(SgExpression* expr)
        else
           func_name = mfunc_ref->get_symbol()->get_name().str();
 
-     if (func_name == "operator==") 
+     if (func_name == "operator==")
           return true;
 
      return false;
@@ -107,15 +107,15 @@ Unparse_MOD_SAGE::isBinaryEqualityOperator(SgExpression* expr)
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isBinaryInequalityOperator
-//  
-//  Auxiliary function to test if this expression is a binary operator== 
+//
+//  Auxiliary function to test if this expression is a binary operator==
 //  overloading function
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryInequalityOperator(SgExpression* expr)
    {
   SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
   SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
-  
+
   if (!func_ref && !mfunc_ref) return false;
 
   string func_name;
@@ -123,12 +123,12 @@ bool Unparse_MOD_SAGE::isBinaryInequalityOperator(SgExpression* expr)
     func_name = func_ref->get_symbol()->get_name().str();
   else
     func_name = mfunc_ref->get_symbol()->get_name().str();
-  
+
   if( func_name == "operator<=" ||
-      func_name == "operator>=" || 
-      func_name == "operator<" || 
+      func_name == "operator>=" ||
+      func_name == "operator<" ||
       func_name == "operator>" ||
-      func_name == "operator!="  ) 
+      func_name == "operator!="  )
     return true;
 
   return false;
@@ -137,15 +137,15 @@ bool Unparse_MOD_SAGE::isBinaryInequalityOperator(SgExpression* expr)
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isBinaryArithmeticOperator
-//  
-//  Auxiliary function to test if this expression is a binary operator== 
+//
+//  Auxiliary function to test if this expression is a binary operator==
 //  overloading function
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryArithmeticOperator(SgExpression* expr)
    {
   SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
   SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
-  
+
   if (!func_ref && !mfunc_ref) return false;
 
   string func_name;
@@ -153,15 +153,15 @@ bool Unparse_MOD_SAGE::isBinaryArithmeticOperator(SgExpression* expr)
     func_name = func_ref->get_symbol()->get_name().str();
   else
     func_name = mfunc_ref->get_symbol()->get_name().str();
-  
+
   if( func_name == "operator+"  ||
-      func_name == "operator-"  || 
-      func_name == "operator*" || 
-      func_name == "operator/" || 
+      func_name == "operator-"  ||
+      func_name == "operator*" ||
+      func_name == "operator/" ||
       func_name == "operator+=" ||
-      func_name == "operator-=" || 
-      func_name == "operator*="|| 
-      func_name == "operator/="  ) 
+      func_name == "operator-=" ||
+      func_name == "operator*="||
+      func_name == "operator/="  )
     return true;
 
   return false;
@@ -170,15 +170,15 @@ bool Unparse_MOD_SAGE::isBinaryArithmeticOperator(SgExpression* expr)
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isBinaryParenOperator
-//  
-//  Auxiliary function to test if this expression is a binary operator() overloading 
+//
+//  Auxiliary function to test if this expression is a binary operator() overloading
 //  function
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryParenOperator(SgExpression* expr)
    {
   SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
   SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
-  
+
   if (!func_ref && !mfunc_ref) return false;
 
   string func_name;
@@ -187,22 +187,22 @@ bool Unparse_MOD_SAGE::isBinaryParenOperator(SgExpression* expr)
     else
        func_name = mfunc_ref->get_symbol()->get_name().str();
 
-  if (func_name == "operator()") 
+  if (func_name == "operator()")
     return true;
   return false;
 }
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isBinaryBracketOperator
-//  
-//  Auxiliary function to test if this expression is a binary operator[] overloading 
+//
+//  Auxiliary function to test if this expression is a binary operator[] overloading
 //  function
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryBracketOperator(SgExpression* expr)
    {
   SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
   SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
-  
+
   if (!func_ref && !mfunc_ref) return false;
 
   string func_name;
@@ -211,7 +211,7 @@ bool Unparse_MOD_SAGE::isBinaryBracketOperator(SgExpression* expr)
     else
        func_name = mfunc_ref->get_symbol()->get_name().str();
 
-  if (func_name == "operator[]") 
+  if (func_name == "operator[]")
     return true;
   return false;
 
@@ -220,7 +220,7 @@ bool Unparse_MOD_SAGE::isBinaryBracketOperator(SgExpression* expr)
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isBinaryOperator
-//  
+//
 //  Function to test if this expression is a binary operator overloading function
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isBinaryOperator(SgExpression* expr)
@@ -229,7 +229,7 @@ bool Unparse_MOD_SAGE::isBinaryOperator(SgExpression* expr)
 
      SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
-  
+
      if (!func_ref && !mfunc_ref)
           return false;
 
@@ -295,7 +295,7 @@ bool Unparse_MOD_SAGE::isBinaryOperator(SgExpression* expr)
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isUnaryIncrementOperator
-//  
+//
 //  Auxiliary function to test if this expression is an unary prefix/postfix operator++ overloading function
 //-----------------------------------------------------------------------------------
 bool
@@ -330,7 +330,7 @@ Unparse_MOD_SAGE::isUnaryIncrementOperator(SgExpression* expr)
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isUnaryDecrementOperator
-//  
+//
 //  Auxiliary function to test if this expression is an unary prefix/postfix operator-- overloading function
 //-----------------------------------------------------------------------------------
 bool
@@ -365,7 +365,7 @@ Unparse_MOD_SAGE::isUnaryDecrementOperator(SgExpression* expr)
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isUnaryOperator
-//  
+//
 //  Function to test if this expression is an unary operator overloading function
 //-----------------------------------------------------------------------------------
 bool
@@ -386,7 +386,7 @@ Unparse_MOD_SAGE::isUnaryOperator(SgExpression* expr)
      SgFunctionRefExp* func_ref        = isSgFunctionRefExp(expr);
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
 
-  // Ignore things that are not functions  
+  // Ignore things that are not functions
   // if (!func_ref && !mfunc_ref)
      if (func_ref == NULL && mfunc_ref == NULL)
         {
@@ -403,7 +403,7 @@ Unparse_MOD_SAGE::isUnaryOperator(SgExpression* expr)
 
   // DQ (2/14/2005): Need special test for operator*(), and other unary operators,
   // similar to operator+() and operator-().
-  // Error need to check number of parameters in arg list of operator* to verify it 
+  // Error need to check number of parameters in arg list of operator* to verify it
   // is a unary operators else it could be a binary multiplication operator
   // Maybe also for the binary operator&() (what about operator~()?)
   // Added support for isUnaryDereferenceOperator(), isUnaryAddressOperator(),
@@ -428,8 +428,8 @@ Unparse_MOD_SAGE::isUnaryOperator(SgExpression* expr)
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isUnaryPostfixOperator
-//  
-//  Auxiliary function to test if this expression is an unary postfix operator 
+//
+//  Auxiliary function to test if this expression is an unary postfix operator
 //  overloading function
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::isUnaryPostfixOperator(SgExpression* expr)
@@ -462,14 +462,14 @@ bool Unparse_MOD_SAGE::isUnaryPostfixOperator(SgExpression* expr)
    }
 
 #if 0
-// DQ (2/20/2005): The need for this has been eliminated with the more uniform 
+// DQ (2/20/2005): The need for this has been eliminated with the more uniform
 // handling of binary operator unparsing.
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::RemoveArgs
-//  
-//  This function determines whether to remove the argument list of overloaded 
+//
+//  This function determines whether to remove the argument list of overloaded
 //  operators. It returns true if the function is an unary operator. Otherwise, it
-//  returns false for all other functions. 
+//  returns false for all other functions.
 //-----------------------------------------------------------------------------------
 bool
 Unparse_MOD_SAGE::RemoveArgs(SgExpression* expr)
@@ -482,7 +482,7 @@ Unparse_MOD_SAGE::RemoveArgs(SgExpression* expr)
           return false;
         }
 #if 0
-  // all overloaded unary operators must be the rhs of a binary expression. 
+  // all overloaded unary operators must be the rhs of a binary expression.
      if ( binary_op->get_rhs_operand() != NULL &&
          ( isUnaryOperator( binary_op->get_rhs_operand() ) ||
            isOverloadedArrowOperator( binary_op->get_rhs_operand() )))
@@ -506,7 +506,7 @@ Unparse_MOD_SAGE::RemoveArgs(SgExpression* expr)
 //QY 6/23/04: added code for precedence of expressions
 //-----------------------------------------------------------------------------------
 //  void GetOperatorVariant
-//  
+//
 //  Function that returns the expression variant of overloaded operators
 //-----------------------------------------------------------------------------------
 
@@ -515,7 +515,7 @@ int GetOperatorVariant(SgExpression* expr) {
   if (func_call == NULL) {
       return expr->variantT();
   }
- 
+
   SgName name;
   SgExpression *func = func_call->get_function();
   switch (func->variantT()) {
@@ -525,14 +525,14 @@ int GetOperatorVariant(SgExpression* expr) {
   case V_SgDotExp:
   case V_SgArrowExp:
    {
-       SgExpression *mfunc = isSgBinaryOp(func)->get_rhs_operand(); 
+       SgExpression *mfunc = isSgBinaryOp(func)->get_rhs_operand();
        if (mfunc->variantT() == V_SgPseudoDestructorRefExp)
             return V_SgFunctionCallExp;
        SgMemberFunctionRefExp* mfunc_ref =
              isSgMemberFunctionRefExp(mfunc);
        assert (mfunc_ref != 0);
        name = mfunc_ref->get_symbol()->get_name();
-       break;   
+       break;
    }
    default:
        return V_SgFunctionCallExp;
@@ -592,7 +592,7 @@ int GetOperatorVariant(SgExpression* expr) {
 
 SgExpression* GetFirstOperand(SgExpression* expr) {
   SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
-  if (func_call != NULL) 
+  if (func_call != NULL)
      return func_call->get_function();
   else {
     SgUnaryOp *op1 = isSgUnaryOp(expr);
@@ -610,9 +610,9 @@ SgExpression* GetFirstOperand(SgExpression* expr) {
 
 //-----------------------------------------------------------------------------------
 //  int GetPrecedence
-//  
-//  returns the precedence (1-17) of the expression variants, 
-//  such that 17 has the highest precedence and 1 has the lowest precedence. 
+//
+//  returns the precedence (1-17) of the expression variants,
+//  such that 17 has the highest precedence and 1 has the lowest precedence.
 //-----------------------------------------------------------------------------------
 int GetPrecedence(int variant)
    {
@@ -623,46 +623,46 @@ int GetPrecedence(int variant)
 
      switch (variant)
         {
-          case V_SgExprListExp: 
+          case V_SgExprListExp:
           case V_SgCommaOpExp:       return 1;
           case V_SgAssignOp:         return 2;
        // DQ (2/1/2009): Added precedence for SgPointerAssignOp (Fortran 90)
           case V_SgPointerAssignOp:  return 2;
           case V_SgPlusAssignOp:     return 2;
-          case V_SgMinusAssignOp:    return 2; 
-          case V_SgAndAssignOp:      return 2; 
+          case V_SgMinusAssignOp:    return 2;
+          case V_SgAndAssignOp:      return 2;
           case V_SgIorAssignOp:      return 2;
           case V_SgMultAssignOp:     return 2;
-          case V_SgDivAssignOp:      return 2; 
+          case V_SgDivAssignOp:      return 2;
           case V_SgModAssignOp:      return 2;
           case V_SgXorAssignOp:      return 2;
           case V_SgLshiftAssignOp:   return 2;
           case V_SgRshiftAssignOp:   return 2;
           case V_SgConditionalExp:   return 3;
-          case V_SgOrOp:             return 4; 
-          case V_SgAndOp:            return 5; 
+          case V_SgOrOp:             return 4;
+          case V_SgAndOp:            return 5;
           case V_SgBitOrOp:          return 6;
-          case V_SgBitXorOp:         return 7; 
-          case V_SgBitAndOp:         return 8; 
-          case V_SgEqualityOp:       return 9;  
+          case V_SgBitXorOp:         return 7;
+          case V_SgBitAndOp:         return 8;
+          case V_SgEqualityOp:       return 9;
           case V_SgNotEqualOp:       return 9;
           case V_SgLessThanOp:       return 10;
           case V_SgGreaterThanOp:    return 10;
-          case V_SgLessOrEqualOp:    return 10; 
-          case V_SgGreaterOrEqualOp: return 10; 
+          case V_SgLessOrEqualOp:    return 10;
+          case V_SgGreaterOrEqualOp: return 10;
           case V_SgLshiftOp:         return 11;
           case V_SgRshiftOp:         return 11;
-          case V_SgAddOp:            return 12; 
+          case V_SgAddOp:            return 12;
 
        // DQ (2/1/2009): Added operator (which should have been here before)
           case V_SgMinusOp:          return 15;
           case V_SgUnaryAddOp:       return 15;
 
-          case V_SgSubtractOp:       return 12; 
-          case V_SgMultiplyOp:       return 13; 
+          case V_SgSubtractOp:       return 12;
+          case V_SgMultiplyOp:       return 13;
           case V_SgIntegerDivideOp:
-          case V_SgDivideOp:         return 13; 
-          case V_SgModOp:            return 13; 
+          case V_SgDivideOp:         return 13;
+          case V_SgModOp:            return 13;
           case V_SgDotStarOp:        return 14;
           case V_SgArrowStarOp:      return 14;
           case V_SgPlusPlusOp:       return 15;
@@ -671,6 +671,7 @@ int GetPrecedence(int variant)
           case V_SgNotOp:            return 15;
           case V_SgPointerDerefExp:
           case V_SgAddressOfOp:
+          case V_SgUpcLocalsizeofExpression:
           case V_SgSizeOfOp:         return 15;
           case V_SgFunctionCallExp:  return 16;
           case V_SgPntrArrRefExp:    return 16;
@@ -711,7 +712,7 @@ int GetPrecedence(int variant)
           case V_SgComplexVal:       return 0;
           case V_SgCAFCoExpression:  return 16;
 
-     // Liao, 7/15/2009, UPC nodes     
+     // Liao, 7/15/2009, UPC nodes
           case V_SgUpcThreads:       return 0;
           case V_SgUpcMythread:       return 0;
           case V_SgNullExpression:    return 0;
@@ -816,10 +817,10 @@ int GetAssociativity(int variant)
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::PrintStartParen
-//  
+//
 //  Auxiliary function that determines whether "(" should been printed for a binary
 //  expression. This function is needed whenever the rhs of the binary expression
-//  is an operator= overloaded function. 
+//  is an operator= overloaded function.
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
    {
@@ -858,8 +859,8 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
 
   // DQ (8/22/2005): Curprintrently "myVector b = a / (a.norm() + 1);" unparse to "myVector b = a / a.norm() + 1;"
   // So use the information that we store from EDG to know when to return parens for subexpressions.  The problem
-  // with this solution is that in general it adds too many parentheses.  The problem with the code below is that 
-  // it does not correctly account for the presedence of subexpressions that mix overloaded operators (which appear as 
+  // with this solution is that in general it adds too many parentheses.  The problem with the code below is that
+  // it does not correctly account for the presedence of subexpressions that mix overloaded operators (which appear as
   // functions) with operators for primiative types (which have a fixed precedence).  We need a pass over the AST to
   // interpret the presedence of the overloaded operators.
      if ( (isSgBinaryOp(expr) != NULL) && (expr->get_need_paren() == true) )
@@ -895,11 +896,11 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
 
 #if 1
     // Liao, 8/27/2008, bug 229
-    // A nasty workaround since set_need_paren() has no definite effect 
-    //SgExprListExp-> SgAssignInitializer -> SgFunctionCallExp:  
+    // A nasty workaround since set_need_paren() has no definite effect
+    //SgExprListExp-> SgAssignInitializer -> SgFunctionCallExp:
     // no () is needed for SgAssignInitializer
     // e.g:  int array[] = {func1()}; // int func1();
-     SgAssignInitializer* assign_init = isSgAssignInitializer(expr); 
+     SgAssignInitializer* assign_init = isSgAssignInitializer(expr);
      if ((assign_init!=NULL) &&(isSgExprListExp(parentExpr)))
      {
        SgExpression* operand = assign_init->get_operand();
@@ -910,13 +911,13 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
      // Liao 11/5/2010,another tricky case: the current expression is the original expression tree of its parent
      // we should not introduce additional ( ) when switching from current SgCastExp to its original SgCastExp
      // This is true at least for SgCastExp
-     if (SgCastExp * cast_p = isSgCastExp(parentExpr)) 
-       if (cast_p->get_originalExpressionTree() == expr ) 
+     if (SgCastExp * cast_p = isSgCastExp(parentExpr))
+       if (cast_p->get_originalExpressionTree() == expr )
          return false;
 #if 0
   // DQ (8/8/2006): Changed as a temporary test!
-  // This will need to be fixed for test2006_115.C (when run with the inliner) and needs 
-  // to be fixed in a next release.  The problem with this fix is that it introduced 
+  // This will need to be fixed for test2006_115.C (when run with the inliner) and needs
+  // to be fixed in a next release.  The problem with this fix is that it introduced
   // too many parentheses into the generated code.  To avoid these special cases
   // we should handle precedence more generally within overloaded operators as well
   // as the defined operators for primative types which are curprintrently handled.
@@ -933,9 +934,9 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
         }
 #else
   // DQ (8/6/2005): Never output "()" where the parent is a SgAssignInitializer
-  // DQ (8/2/2005): It would be great if we could avoid parenthesis here, 
-  // only output it if this is part of a constructor initialization list! 
-  // I fixed up the case of constructor initializers so that "()" is always 
+  // DQ (8/2/2005): It would be great if we could avoid parenthesis here,
+  // only output it if this is part of a constructor initialization list!
+  // I fixed up the case of constructor initializers so that "()" is always
   // output there instead of here.
   // printf ("skip output of parenthesis for rhs of all SgAssignInitializer objects \n");
      if (parentExpr != NULL && parentExpr->variantT() == V_SgAssignInitializer)
@@ -948,7 +949,7 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
 #endif
 
 #if 0
-  // DQ (8/22/2005): This fails to handle the case where the expression list is used for 
+  // DQ (8/22/2005): This fails to handle the case where the expression list is used for
   // function parameters of overloaded operators.
   // Return false for any parameter of an expression list (which will be comma separated).
      if (parentExpr != NULL && parentExpr->variantT() == V_SgExprListExp)
@@ -1047,7 +1048,7 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
                  // curprint( "\n /* In PrintStartParen(): return false */ \n");
                     return false;
                   }
-                 else 
+                 else
                   {
                     if (exprPrecedence == parentPrecedence)
                        {
@@ -1057,7 +1058,7 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
                               printf ("     exprPrecedence == parentPrecedence return true \n");
 #endif
                            // curprint( "\n /* In PrintStartParen(): exprPrecedence == parentPrecedence return true */ \n");
-                              return true; 
+                              return true;
                             }
                          int assoc =  GetAssociativity(parentVariant);
                          if (assoc > 0 && first != expr)
@@ -1087,16 +1088,16 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
 #endif
                       // DQ (12/3/2004): This is the case of special handling to account for how the unparser skips
                       // over the "x->" and implements "(*x)."  The better fix for this is to fixup the AST directly,
-                      // we will implement that next.  The best fix would be the prevent the EDG normalization 
-                      // of such expressions.  The mechanism within the unparser is only done when 
+                      // we will implement that next.  The best fix would be the prevent the EDG normalization
+                      // of such expressions.  The mechanism within the unparser is only done when
                       // unp->opt.get_overload_opt() if false (the default setting).
                          if (!unp->opt.get_overload_opt())
                             {
                               SgPointerDerefExp* pointerDeref = isSgPointerDerefExp(expr);
 #if 1
-                           // DQ (12/11/2004): Use this subtree recognition function because the operator->() member 
+                           // DQ (12/11/2004): Use this subtree recognition function because the operator->() member
                            // function can be accessed either as "x.operator->();" or "x->operator->();"
-                           // and we want to avoid parenthesis so that we don't generate either 
+                           // and we want to avoid parenthesis so that we don't generate either
                            // "(x.)operator->();" or "(x->)operator->();" (as I recall).
                               if ( isUnaryOperatorArrowSubtree(pointerDeref) == true )
                                  {
@@ -1168,7 +1169,7 @@ bool Unparse_MOD_SAGE::RemovePareninExprList(SgExprListExp* expr_list) {
 	if (binary_op != NULL) {
 	  //check if there is only one expression in the list and this expression
 	  //contains the member operator() overloaded function
-	  if (i == expr_list->get_expressions().end() && 
+	  if (i == expr_list->get_expressions().end() &&
 	      isBinaryParenOperator(binary_op->get_rhs_operand()))
 	    return true;
 	}
@@ -1225,10 +1226,10 @@ Unparse_MOD_SAGE::isOneElementList(SgConstructorInitializer* con_init)
 //-----------------------------------------------------------------------------------
 //  bool Unparse_MOD_SAGE::printConstructorName
 //
-//  This function determines whether to print the name of the constructor or not. 
-//  The constructor name is printed if the operator overloaded function in the 
-//  constructor returns a reference or pointer to the object. If a value is 
-//  returned, then the printing of the constructor is suppressed. 
+//  This function determines whether to print the name of the constructor or not.
+//  The constructor name is printed if the operator overloaded function in the
+//  constructor returns a reference or pointer to the object. If a value is
+//  returned, then the printing of the constructor is suppressed.
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::printConstructorName(SgExpression* expr)
    {
@@ -1239,10 +1240,10 @@ bool Unparse_MOD_SAGE::printConstructorName(SgExpression* expr)
        // DQ (11/13/2004): Added support to ignore non-explicit constructor initializers
        // curprint( "\n /* In printConstructorName: con_init != NULL */ \n");
 #if 0
-       // DQ (12/8/2004): This is overly restrictive for the return statement 
+       // DQ (12/8/2004): This is overly restrictive for the return statement
        // within compilation of polygonaldiffusionsolverswig within Kull.
-       // I suspect that there are many places where the EDG's meaning of explicit cast 
-       // is more conservative than the one which I want.  However, I can imagine that 
+       // I suspect that there are many places where the EDG's meaning of explicit cast
+       // is more conservative than the one which I want.  However, I can imagine that
        // this is a relatively complex issue.
           if (con_init->get_is_explicit_cast() == true)
              {
@@ -1252,10 +1253,10 @@ bool Unparse_MOD_SAGE::printConstructorName(SgExpression* expr)
             // if (expr_list != NULL)
                if (con_init->get_need_parenthesis_after_name() == false)
                   {
-                 // DQ (12/8/2004): If there is more than one argument then we have to return "true" since 
-                 // "return A(1,2);" can be be replace with "return (1,2);" where as "return A(1);" can be 
-                 // replaced by "return 1;" if all other rules are satisfied. Wrong!  If the argument list is 
-                 // from a function call then there could be an arbitrary number of arguments which could 
+                 // DQ (12/8/2004): If there is more than one argument then we have to return "true" since
+                 // "return A(1,2);" can be be replace with "return (1,2);" where as "return A(1);" can be
+                 // replaced by "return 1;" if all other rules are satisfied. Wrong!  If the argument list is
+                 // from a function call then there could be an arbitrary number of arguments which could
                  // have default values.  E.g. "return A(foo(1,2));" could be replaces with "return foo(1);"
                  // if the function foo was defined "A foo(int i, int j = 2);"
                     SgExpressionPtrList::iterator i = expr_list->get_expressions().begin();
@@ -1288,7 +1289,7 @@ bool Unparse_MOD_SAGE::printConstructorName(SgExpression* expr)
                                           // return type not defined, so default to printing the constructor name
                                                else
                                                   return true;
-                                     // if the return type is a reference or pointer type, then we print the 
+                                     // if the return type is a reference or pointer type, then we print the
                                      // constructor name. Otherwise, the return type is by value and we suppress
                                      // the printing of the constructor name.
                                         if (return_type->variant() == T_REFERENCE || return_type->variant() == T_POINTER)
@@ -1297,7 +1298,7 @@ bool Unparse_MOD_SAGE::printConstructorName(SgExpression* expr)
                                       }
                                  }
 
-                           // continue iterating if we didn't find a constructor initializer 
+                           // continue iterating if we didn't find a constructor initializer
                            // or function call
                               i++;
                               if (i != expr_list->get_expressions().end());
@@ -1322,7 +1323,7 @@ bool Unparse_MOD_SAGE::printConstructorName(SgExpression* expr)
 
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isOverloadedArrowOperator
-//  
+//
 //  Auxiliary function to test if this expression is a binary operator-> or
 //  operator->* overloading function
 //-----------------------------------------------------------------------------------
@@ -1346,20 +1347,20 @@ Unparse_MOD_SAGE::isOverloadedArrowOperator(SgExpression* expr)
        //
        //    func_name = strdup(mfunc_ref->get_symbol()->get_name().str());
        //
-       // (4/4,cont'd) Substituting the following code, because the call to 
+       // (4/4,cont'd) Substituting the following code, because the call to
        // strdup() gives rise to a core dump sometimes.  I don't know why.
        //
-       // Unfortunately, this doesn't solve the problem anyway.  
+       // Unfortunately, this doesn't solve the problem anyway.
        //
-       // strcmp(mfunc_ref->get_symbol()->get_name().str(), "operator->"); 
-       // strcmp(mfunc_ref->get_symbol()->get_name().str(), "operator->");  
-          if ( ( mfunc_ref->get_symbol()->get_name().getString() == "operator->" || 
+       // strcmp(mfunc_ref->get_symbol()->get_name().str(), "operator->");
+       // strcmp(mfunc_ref->get_symbol()->get_name().str(), "operator->");
+          if ( ( mfunc_ref->get_symbol()->get_name().getString() == "operator->" ||
                 mfunc_ref->get_symbol()->get_name().getString() == "operator->*"   ) )
                return true;
             else
                return false;
         }
-  
+
   // [DT] 4/4/2000 -- Added check for func_name!=NULL.
      if ( func_name == "operator->" || func_name == "operator->*" )
           return true;
@@ -1406,7 +1407,7 @@ Unparse_MOD_SAGE::isUnaryOperatorArrowSubtree(SgExpression* expr)
 //-----------------------------------------------------------------------------------
 //  bool Unparse_MOD_SAGE::NoDereference
 //
-//  Auxiliary function used by unparseUnaryExpr and unparseBinaryExpr to 
+//  Auxiliary function used by unparseUnaryExpr and unparseBinaryExpr to
 //  determine whether the dereference operand contains an overloaded arrow operator.
 //-----------------------------------------------------------------------------------
 bool
@@ -1414,7 +1415,7 @@ Unparse_MOD_SAGE::NoDereference(SgExpression* expr)
    {
      bool arrow = false;
 
-  // now we first check of this is an dereference operator. If so, we need to 
+  // now we first check of this is an dereference operator. If so, we need to
   // determine if the operand contains an overloaded arrow operator. If this
   // is true, set arrow = true so the dereference operator will be suppressed.
      SgPointerDerefExp* deref_exp = isSgPointerDerefExp(expr);
@@ -1444,17 +1445,17 @@ bool Unparse_MOD_SAGE::isIOStreamOperator(SgExpression* expr) {
   SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
   if (!func_ref && !mfunc_ref) return false;
 
-// This results in a FMR in purify since the casting operator for 
-// SgName (operator char*) causes a SgName object to be built and 
-// then the char* pointer is taken from that temporary char* object 
-// (and then the temporary is deleted (goes out of scope) leaving 
+// This results in a FMR in purify since the casting operator for
+// SgName (operator char*) causes a SgName object to be built and
+// then the char* pointer is taken from that temporary char* object
+// (and then the temporary is deleted (goes out of scope) leaving
 // the char* pointing to the string in the deleted object).
   string func_name;
   if (func_ref)
        func_name = func_ref->get_symbol()->get_name().str();
-    else 
+    else
        func_name = mfunc_ref->get_symbol()->get_name().str();
-  
+
   //check if the function name is "operator<<" or "operator>>"
   if (func_name == "operator<<" || func_name == "operator>>")
     return true;
@@ -1483,7 +1484,7 @@ bool Unparse_MOD_SAGE::isCast_ConstCharStar(SgType* type)
 
      return false;
    }
- 
+
 //-----------------------------------------------------------------------------------
 //  bool Unparse_MOD_SAGE::noQualifiedName
 //
@@ -1505,11 +1506,11 @@ bool Unparse_MOD_SAGE::noQualifiedName(SgExpression* expr)
         }
      return true;
    }
-  
+
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::output
-//  
-//  prints out the line number and file information of the node  
+//
+//  prints out the line number and file information of the node
 //-----------------------------------------------------------------------------------
 /*
 void Unparse_MOD_SAGE::output(SgLocatedNode* node) {
@@ -1519,7 +1520,7 @@ void Unparse_MOD_SAGE::output(SgLocatedNode* node) {
   char* p_filename = node_file->get_filename();
   int   p_line = node_file->get_line();
   int   p_col = node_file->get_col();
-  
+
   int newFile = !curprint_file || !p_filename || (::strcmp(p_filename, curprint_file) != 0);
   int newLine = p_line != curprint_line;
 
@@ -1533,14 +1534,14 @@ void Unparse_MOD_SAGE::output(SgLocatedNode* node) {
       curprint_file = p_filename;
     }
   }
-  
+
 }
 */
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::directives
-//  
+//
 //  checks the linefile option to determine whether to print line and file info
-//  prints out pragmas  
+//  prints out pragmas
 //-----------------------------------------------------------------------------------
 void
 Unparse_MOD_SAGE::directives(SgLocatedNode* lnode)
@@ -1549,7 +1550,7 @@ Unparse_MOD_SAGE::directives(SgLocatedNode* lnode)
      if (unp->opt.get_linefile_opt())
         {
 /*
-          if (lnode->get_file_info()) 
+          if (lnode->get_file_info())
              {
                output(lnode);
              }
@@ -1565,19 +1566,19 @@ Unparse_MOD_SAGE::directives(SgLocatedNode* lnode)
 
 
 //-----------------------------------------------------------------------------------
-//  void Unparse_MOD_SAGE::printSpecifier1   
+//  void Unparse_MOD_SAGE::printSpecifier1
 //  void Unparse_MOD_SAGE::printSpecifier2
 //  void Unparse_MOD_SAGE::printSpecifier
-//  
-//  The following 2 functions: printSpecifier1 and printSpecifier2, are just the 
-//  two halves from printSpecifier. These two functions are used in the unparse 
-//  functions for SgMemberFunctionDeclarations and SgVariableDeclaration. 
-//  printSpecifier1 is first called before the format function. If "private", 
+//
+//  The following 2 functions: printSpecifier1 and printSpecifier2, are just the
+//  two halves from printSpecifier. These two functions are used in the unparse
+//  functions for SgMemberFunctionDeclarations and SgVariableDeclaration.
+//  printSpecifier1 is first called before the format function. If "private",
 //  "protected", or "public" is to be printed out, it does so here. Then I format
-//  which will put me in position to unparse the declaration. Then I call 
-//  printSpecifer2, which will print out any keywords if the option is turned on. 
-//  Then the declaration is printed in the same line. If I didnt do this, the 
-//  printing of keywords would be done before formatting, and would put the 
+//  which will put me in position to unparse the declaration. Then I call
+//  printSpecifer2, which will print out any keywords if the option is turned on.
+//  Then the declaration is printed in the same line. If I didnt do this, the
+//  printing of keywords would be done before formatting, and would put the
 //  declaration on another line (and would look terribly formatted).
 //-----------------------------------------------------------------------------------
 void
@@ -1625,8 +1626,8 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
                        }
                       else
                        {
-                      // Initially for the first data member of a class, the info values for isPrivateAccess, 
-                      // isProtectedAccess, and isPublicAccess, are not set.  In this case the flag is set 
+                      // Initially for the first data member of a class, the info values for isPrivateAccess,
+                      // isProtectedAccess, and isPublicAccess, are not set.  In this case the flag is set
                       // to true (here).  This forces the first access keyword to be output.
                          flag = true;
                        }
@@ -1690,7 +1691,7 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
    {
   // DQ (5/10/2007): Fixed linkage to be a std::string instead of char*
   // if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage())
-     if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage().empty() == false) 
+     if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage().empty() == false)
         {
           curprint( "extern \"" + decl_stmt->get_linkage() + "\" ");
           if (decl_stmt->isExternBrace())
@@ -1717,7 +1718,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
         {
           if ( isSgTemplateInstantiationDirectiveStatement(decl_stmt->get_parent()) != NULL)
              {
-            // Template intanatiation directives use "template" instaed of "template<>" 
+            // Template intanatiation directives use "template" instaed of "template<>"
                curprint( "template ");
              }
             else
@@ -1731,7 +1732,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
 
 
 void
-Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info) 
+Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info)
    {
 
   // DQ (8/29/2005): These specifiers have to be output in a different order for g++ 3.3.x and 3.4.x
@@ -1744,7 +1745,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
    #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 3) || ( (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 3) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 4) )
 
 // DQ (9/12/2009): If this is a g++ version 4.3 or later compiler then skip the extern linkage specifier,
-// but only if this is for a template declaration (does it only apply to a function). See tests: 
+// but only if this is for a template declaration (does it only apply to a function). See tests:
 // test2004_30.C, test2004_121.C, test2004_142.C, and test2004_143.C.
    #if ( (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 3) )
      if (isSgTemplateInstantiationFunctionDecl(decl_stmt) == NULL && isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) == NULL)
@@ -1783,7 +1784,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // DQ (2/4/2006): Template specialization declarations (forward declaration) can't have some modified output
           bool isDeclarationOfTemplateSpecialization = false;
           SgDeclarationStatement::template_specialization_enum specializationEnumValue = functionDeclaration->get_specialization();
-          isDeclarationOfTemplateSpecialization = 
+          isDeclarationOfTemplateSpecialization =
                (specializationEnumValue == SgDeclarationStatement::e_specialization) ||
                (specializationEnumValue == SgDeclarationStatement::e_partial_specialization);
 
@@ -1813,13 +1814,13 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 
        // DQ (2/2/2006): friend can't be output for a Template specialization declaration
        // if ((!info.SkipFunctionDefinition()) && functionDeclaration->get_functionModifier().isExplicit())
-          if ( (info.SkipFunctionDefinition() == false) && 
-               (functionDeclaration->get_functionModifier().isExplicit() == true) && 
+          if ( (info.SkipFunctionDefinition() == false) &&
+               (functionDeclaration->get_functionModifier().isExplicit() == true) &&
                (isDeclarationOfTemplateSpecialization == false) )
              {
                curprint( "explicit ");
              }
-             
+
        // TV (04/26/2010): CUDA function modifiers
           if (functionDeclaration->get_functionModifier().isCudaKernel())
              {
@@ -1833,7 +1834,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
              {
                curprint( "__host__ ");
              }
-             
+
        // TV (05/06/2010): OpenCL function modifiers
           if (functionDeclaration->get_functionModifier().isOpenclKernel())
              {
@@ -1864,7 +1865,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
   // if (decl_stmt->isAtomic() && !info.SkipAtomic() ) { curprint( "atomic "); }
   // if (decl_stmt->isGlobalClass() && !info.SkipGlobal() ) { curprint( "global "); }
 
-  // DQ (7/202/2006): The isStatic() function in the SgStorageModifier held by the SgInitializedName object 
+  // DQ (7/202/2006): The isStatic() function in the SgStorageModifier held by the SgInitializedName object
   // should always be false, and this one held by the SgDeclaration is what is used.
   // printf ("In decl_stmt = %p = %s test the return value of storage.isStatic() = %d = %d (should be boolean value) \n",
   //      decl_stmt,decl_stmt->class_name().c_str(),decl_stmt->get_declarationModifier().get_storageModifier().isStatic(),
@@ -1888,8 +1889,8 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 
   // DQ (12/1/2007): Added support for gnu extension "__thread" (will be available in EDG version > 3.3)
   // But added to support use by Gouchun Shi (UIUC).  Code generation support also added in unparser.
-  // This only works on gnu backends and those compatable with gnu (which is a lot of compilers so skip 
-  // special code to be conditional on the backend).  According to documentation, "__thread" should 
+  // This only works on gnu backends and those compatable with gnu (which is a lot of compilers so skip
+  // special code to be conditional on the backend).  According to documentation, "__thread" should
   // appear immediately after "extern" or "static" and can not be combined with other storage modifiers.
      if (decl_stmt->get_declarationModifier().get_storageModifier().get_thread_local_storage() == true)
         {
@@ -1913,7 +1914,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
         {
           curprint( "mutable ");
         }
-        
+
   // TV (05/06/2010): CUDA storage modifiers
 
      if (decl_stmt->get_declarationModifier().get_storageModifier().isCudaGlobal())
@@ -1935,7 +1936,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
         {
           curprint( "extern __device__ __shared__ ");
         }
-        
+
   // TV (05/06/2010): OpenCL storage modifiers
 
      if (decl_stmt->get_declarationModifier().get_storageModifier().isOpenclGlobal())
@@ -1973,7 +1974,7 @@ Unparse_MOD_SAGE::printSpecifier ( SgDeclarationStatement* decl_stmt, SgUnparse_
 #if 0
 // DQ (2/4/2006): Removed (not used)
 void
-Unparse_MOD_SAGE::printFunctionFormalArgumentSpecifier ( SgType* type, SgUnparse_Info& info ) 
+Unparse_MOD_SAGE::printFunctionFormalArgumentSpecifier ( SgType* type, SgUnparse_Info& info )
    {
   // if ( decl_stmt->isSpecialization() && do_unparse )
   //    {
@@ -1990,7 +1991,7 @@ Unparse_MOD_SAGE::printFunctionFormalArgumentSpecifier ( SgType* type, SgUnparse
 
 
 void
-Unparse_MOD_SAGE::setupColorCodes ( vector< pair<bool,std::string> > & stateVector ) 
+Unparse_MOD_SAGE::setupColorCodes ( vector< pair<bool,std::string> > & stateVector )
    {
   // std::pair<bool,std::string> p1(false,string("red"));
   // stateVector.push_back(p1);
@@ -2003,7 +2004,7 @@ Unparse_MOD_SAGE::setupColorCodes ( vector< pair<bool,std::string> > & stateVect
 
 #if 0
 void
-Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<bool,std::string> > & stateVector ) 
+Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<bool,std::string> > & stateVector )
    {
   // This function is part of test to embed color codes (or other information) into the unparsed output.
 
@@ -2027,7 +2028,7 @@ Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<b
           curprint( "\n/* At top: staticStateVector[" << i << "] = " << ((staticStateVector[i] == true) ? "true" : "false") << " */ ");
         }
 #endif
-  // There are a few IR nodes for which we want to skip any colorization because 
+  // There are a few IR nodes for which we want to skip any colorization because
   // it would color the whole file or parts too large to be meaningful.
      if (isSgGlobal(node) != NULL)
         {
@@ -2052,7 +2053,7 @@ Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<b
                     staticStateVector[0] = true;
                   }
              }
-          
+
           if (startOfConstruct != NULL)
              {
                if ( startOfConstruct->ok() == false )
@@ -2064,7 +2065,7 @@ Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<b
                        }
                   }
              }
-          
+
           if (endOfConstruct == NULL)
              {
                if (staticStateVector[0] == false)
@@ -2073,7 +2074,7 @@ Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<b
                     staticStateVector[0] = true;
                   }
              }
-          
+
           if (endOfConstruct != NULL)
              {
                if (staticStateVector[1] == false)
@@ -2085,7 +2086,7 @@ Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<b
                        }
                   }
              }
-          
+
           if (startOfConstruct != NULL && endOfConstruct != NULL)
              {
             // Tests for consistancy of compiler generated IR nodes
@@ -2127,7 +2128,7 @@ Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<b
                  // If there is already a high priority color output previously then don't output anything.
                     colorOutput = true;
                   }
-               
+
             // If the local state has be set then we can output the embedded color code.
                if (stateVector[i].first == true && colorOutput == false)
                   {
@@ -2197,7 +2198,7 @@ Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<b
 
 
 void
-Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<bool,std::string> > & stateVector ) 
+Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<bool,std::string> > & stateVector )
    {
   // This function is part of test to embed color codes (or other information) into the unparsed output.
 
@@ -2221,7 +2222,7 @@ Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<b
           curprint( "\n/* At top: staticStateVector[" << i << "] = " << ((staticStateVector[i] == true) ? "true" : "false") << " */ ");
         }
 #endif
-  // There are a few IR nodes for which we want to skip any colorization because 
+  // There are a few IR nodes for which we want to skip any colorization because
   // it would color the whole file or parts too large to be meaningful.
      if (isSgGlobal(node) != NULL)
         {
@@ -2246,7 +2247,7 @@ Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<b
                     staticStateVector[0] = true;
                   }
              }
-          
+
           if (startOfConstruct != NULL)
              {
                if ( startOfConstruct->ok() == false )
@@ -2258,7 +2259,7 @@ Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<b
                        }
                   }
              }
-          
+
           if (endOfConstruct == NULL)
              {
                if (staticStateVector[0] == false)
@@ -2267,7 +2268,7 @@ Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<b
                     staticStateVector[0] = true;
                   }
              }
-          
+
           if (endOfConstruct != NULL)
              {
                if (staticStateVector[1] == false)
@@ -2279,7 +2280,7 @@ Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<b
                        }
                   }
              }
-          
+
           if (startOfConstruct != NULL && endOfConstruct != NULL)
              {
             // Tests for consistancy of compiler generated IR nodes
