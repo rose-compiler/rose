@@ -3615,7 +3615,7 @@ RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, u
 
         if (0==pid) {
             /* Kludge for now. FIXME [RPM 2011-02-14] */
-            get_process()->post_fork();
+            post_fork();
 
             /* Pending signals are only for the parent */
             signal_pending = 0;

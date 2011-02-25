@@ -1382,7 +1382,7 @@ RSIM_Process::post_fork()
     assert(1==threads.size());
     RSIM_Thread *t = threads.begin()->second;
     threads.clear();
-    threads[getpid()] = t;
+    threads[t->get_tid()] = t;
 }
 
 pid_t

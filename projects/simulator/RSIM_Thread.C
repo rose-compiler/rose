@@ -630,4 +630,10 @@ RSIM_Thread::sys_exit(const Exit &e)
     return e.status;
 }
 
-    
+void
+RSIM_Thread::post_fork()
+{
+    my_tid = syscall(SYS_gettid);
+    assert(my_tid==getpid());
+    process->post_fork();
+}
