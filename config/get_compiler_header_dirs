@@ -9,10 +9,8 @@ compilerName="`basename $1`"
 
  case "$compilerName" in
   # Support for compiling ROSE with GNU g++ compiler
-  # g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++)
-  # TOO (2/16/2011): added support for tensilica compilers
-    g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++|xt-xcc|xt-xc++)
-         if [ "$compilerName" = "gcc" -o "$compilerName" = "icc" -o "$compilerName" = "mpicc"  -o "$compilerName" = "xt-xcc" ]
+    g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++)
+         if [ "$compilerName" = "gcc" -o "$compilerName" = "icc" -o "$compilerName" = "mpicc" ]
          then
             language="c"
          else

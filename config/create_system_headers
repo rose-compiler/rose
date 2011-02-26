@@ -197,10 +197,8 @@ fi
  case "$compilerName" in
   # Support for compiling ROSE with GNU g++ compiler
   # g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|roseTranslator)
-  # g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++)
-  # TOO (2/16/2011): added support for tensilica compilers
-    g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++|xt-xcc|xt-xc++)
-         if [ "$compilerName" = "gcc" -o "$compilerName" = "icc" -o "$compilerName" = "mpicc" -o "$compilerName" = "xt-xcc"]
+    g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++)
+         if [ "$compilerName" = "gcc" -o "$compilerName" = "icc" -o "$compilerName" = "mpicc" ]
          then
             is_C_compiler="yes"
             language="c"
@@ -234,7 +232,7 @@ fi
 # echo "Building separate header directories"
 
 iDir=0
-sh "$roseHome/config/get_compiler_header_dirs" "$1" | while read dirName
+sh "$roseHome/config/get_compiler_header_dirs" "$compilerName" | while read dirName
    do
          iDir=`expr "$iDir" + 1 `
         echo "processing header file directory $dirName to be mapped to $mainTargetDir/hdrs${iDir}"
