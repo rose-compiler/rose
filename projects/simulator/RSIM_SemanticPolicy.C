@@ -1,7 +1,7 @@
 #include "rose.h"
 #include "RSIM_Simulator.h"
 
-FILE *
+RTS_Message *
 RSIM_SemanticPolicy::tracing(unsigned what) const
 {
     return thread->tracing(what);
@@ -31,6 +31,9 @@ RSIM_SemanticPolicy::sysenter()
 void
 RSIM_SemanticPolicy::dump_registers(FILE *f) const
 {
+    if (!f)
+        return;
+
     fprintf(f, "    eax=0x%08"PRIx64" ebx=0x%08"PRIx64" ecx=0x%08"PRIx64" edx=0x%08"PRIx64"\n",
             readGPR(x86_gpr_ax).known_value(), readGPR(x86_gpr_bx).known_value(),
             readGPR(x86_gpr_cx).known_value(), readGPR(x86_gpr_dx).known_value());
@@ -97,13 +100,13 @@ RSIM_SemanticPolicy::writeSegreg(X86SegmentRegister sr, const VirtualMachineSema
 void
 RSIM_SemanticPolicy::startInstruction(SgAsmInstruction* insn)
 {
-    if (tracing(TRACE_INSN)) {
-        if (isatty(fileno(tracing(TRACE_INSN)))) {
-            fprintf(tracing(TRACE_INSN), "\033[K\n[%07zu] %s\033[K\r\033[1A",
+    RTS_Message *mesg = tracing(TRACE_INSN);
+    if (mesg->get_file()) {
+        if (isatty(fileno(mesg->get_file()))) {
+            fprintf(mesg->get_file(), "\033[K\n[%07zu] %s\033[K\r\033[1A",
                     get_ninsns(), unparseInstructionWithAddress(insn).c_str());
         } else {
-            fprintf(tracing(TRACE_INSN),
-                    "[%07zu] 0x%08"PRIx64": %s\n", get_ninsns(), insn->get_address(), unparseInstruction(insn).c_str());
+            mesg->mesg("[%07zu] 0x%08"PRIx64": %s\n", get_ninsns(), insn->get_address(), unparseInstruction(insn).c_str());
         }
     }
     VirtualMachineSemantics::Policy::startInstruction(insn);

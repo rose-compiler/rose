@@ -84,6 +84,8 @@ RSIM_SemanticPolicy::readMemory(X86SegmentRegister sr, const VirtualMachineSeman
     ROSE_ASSERT(offset <= sr_shadow[sr].limit);
     ROSE_ASSERT(offset + (Len/8) - 1 <= sr_shadow[sr].limit);
 
+    RTS_Message *mesg = tracing(TRACE_MEM);
+
     ROSE_ASSERT(cond.is_known());
     if (cond.known_value()) {
         uint8_t buf[Len/8];
@@ -93,11 +95,11 @@ RSIM_SemanticPolicy::readMemory(X86SegmentRegister sr, const VirtualMachineSeman
         uint64_t result = 0;
         for (size_t i=0, j=0; i<Len; i+=8, j++)
             result |= buf[j] << i;
-        if (tracing(TRACE_MEM)) {
-            fprintf(tracing(TRACE_MEM), "  readMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32") -> 0x%08"PRIx64"\n",
-                    Len, sr_shadow[sr].base, offset, sr_shadow[sr].base+offset,
-                    VirtualMachineSemantics::ValueType<Len>(result).known_value());
-        }
+
+        mesg->mesg("  readMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32") -> 0x%08"PRIx64"\n",
+                   Len, sr_shadow[sr].base, offset, sr_shadow[sr].base+offset,
+                   VirtualMachineSemantics::ValueType<Len>(result).known_value());
+
         return result;
     } else {
         return 0;
@@ -116,11 +118,11 @@ RSIM_SemanticPolicy::writeMemory(X86SegmentRegister sr, const VirtualMachineSema
     ROSE_ASSERT(data.is_known());
     ROSE_ASSERT(cond.is_known());
 
+    RTS_Message *mesg = tracing(TRACE_MEM);
+
     if (cond.known_value()) {
-        if (tracing(TRACE_MEM)) {
-            fprintf(tracing(TRACE_MEM), "  writeMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32", 0x%08"PRIx64")\n",
-                    Len, sr_shadow[sr].base, offset, sr_shadow[sr].base+offset, data.known_value());
-        }
+        mesg->mesg("  writeMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32", 0x%08"PRIx64")\n",
+                   Len, sr_shadow[sr].base, offset, sr_shadow[sr].base+offset, data.known_value());
             
         uint8_t buf[Len/8];
         for (size_t i=0, j=0; i<Len; i+=8, j++)

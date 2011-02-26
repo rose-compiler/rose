@@ -23,11 +23,15 @@ public:
     /** Constructs a new thread which belongs to the specified process.  RSIM_Thread objects should only be constructed by the
      *  thread that will be simulating the speciment's thread described by this object. */
     RSIM_Thread(RSIM_Process *process)
-        : process(process), my_tid(-1), policy(this), semantics(policy), report_interval(10.0),
-          robust_list_head_va(0), clear_child_tid(0),
+        : process(process), my_tid(-1),
+          mesg_prefix(this), mesg_on(stderr, &mesg_prefix), mesg_off(NULL, NULL), trace_flags(process->tracing()),
+          policy(this), semantics(policy),
+          report_interval(10.0), robust_list_head_va(0), clear_child_tid(0),
           signal_pending(0), signal_mask(0), signal_reprocess(false) {
         ctor();
     }
+
+
 
     /***************************************************************************************************************************
      *                                  Members used for thread synchronization
@@ -49,12 +53,18 @@ public:
     void *main();
 
 
+
     /**************************************************************************************************************************
      *                                  Members used by thread simulation
      **************************************************************************************************************************/
 private:
     /** The TID of the real thread that is simulating the specimen thread described by this RSIM_Thread object. */
     pid_t my_tid;
+
+    /** Like a TID, but a small sequence number instead. This is more readable in error messages, and is what the id() method
+     * returns. */
+    static size_t next_sequence_number;
+    size_t my_seq;
 
     /** Load the specified TLS descriptor into the GDT.  The @p idx is the index of the TLS descriptor within this thread
      * (unlike the linux kernel's set_tls_desc() whose idx is with respect to the GDT). */
@@ -96,6 +106,37 @@ public:
 
     /** Simulate thread exit. Return values is that which would be returned as the status for waitpid. */
     int sys_exit(const Exit &e);
+
+
+
+    /**************************************************************************************************************************
+     *                                  Members for debugging and tracing output
+     **************************************************************************************************************************/
+public:
+    class Prefix: public RTS_Message::Prefix {
+        RSIM_Thread *thread;
+    public:
+        Prefix(RSIM_Thread *thread)
+            : thread(thread) {}
+        virtual void operator()(FILE *f) {
+            fputs(thread->id().c_str(), f);
+        }
+    };
+    Prefix mesg_prefix;
+    RTS_Message mesg_on;                                /**< Messages will be sent to the trace file. */
+    RTS_Message mesg_off;                               /**< Messages sent to the bit bucket. */
+    unsigned trace_flags;                               /**< Flags describing what we're tracing. */
+
+    /** Return a string identifying the thread and time called. */
+    std::string id();
+
+    /** Return the object used for a debugging facility.  The return value is either mesg_on or mesg_off depending on whether
+     * the specified facility is being trace. */
+    RTS_Message *tracing(unsigned what);
+
+    /** Print a progress report if progress reporting is enabled and enough time has elapsed since the previous report. */
+    void report_progress_maybe();
+
 
 
     /**************************************************************************************************************************
@@ -255,12 +296,6 @@ public:
      *                                  Miscellaneous methods
      **************************************************************************************************************************/
 public:
-
-    /** Return the file descriptor used for a debugging facility.  If the facility is disabled then a null pointer is returned. */
-    FILE *tracing(unsigned what) const;
-
-    /** Print a progress report if progress reporting is enabled and enough time has elapsed since the previous report. */
-    void report_progress_maybe();
 
     /** Recursively load an executable and its libraries libraries into memory, creating the MemoryMap object that describes
      *  the mapping from the specimen's address space to the simulator's address space.

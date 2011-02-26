@@ -44,7 +44,7 @@ public:
     /** Default constructor. Construct a new simulator object, initializing its properties to sane values, but do not create an
      *  initial process. */
     RSIM_Simulator()
-        : trace_flags(0), core_flags(CORE_ELF), btrace_file(NULL), active(0), process(NULL), entry_va(0) {
+        : trace_flags(TRACE_DEFAULT), core_flags(CORE_ELF), btrace_file(NULL), active(0), process(NULL), entry_va(0) {
         ctor();
     }
 

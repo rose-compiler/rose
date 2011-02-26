@@ -202,8 +202,8 @@ RSIM_Simulator::exec(int argc, char **argv)
         process->get_memory()->dump(process->tracing(TRACE_MMAP), "  ");
     }
     if (main_thread->tracing(TRACE_STATE)) {
-        fprintf(main_thread->tracing(TRACE_STATE), "Initial state:\n");
-        main_thread->policy.dump_registers(main_thread->tracing(TRACE_STATE));
+        main_thread->tracing(TRACE_STATE)->mesg("Initial state:\n");
+        main_thread->policy.dump_registers(main_thread->tracing(TRACE_STATE)->get_file());
     }
 
     return 0;

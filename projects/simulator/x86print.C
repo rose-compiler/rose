@@ -210,24 +210,6 @@ print_single(FILE *f, char fmt, const ArgInfo *info)
 }
 
 int
-print_enter(FILE *f, const char *name, int syscallnum, const char *format, const ArgInfo *info)
-{
-    int retval = fprintf(f, "%s", name);
-    if (syscallnum>0)
-        retval += fprintf(f, "[%d]", syscallnum);
-    retval += fprintf(f, "(");
-    for (size_t i=0; format && format[i]; i++) {
-        if (i>0)
-            retval += fprintf(f, ", ");
-        retval += print_single(f, format[i], info+i);
-    }
-    retval += fprintf(f, ")");
-    int width = std::max(0, 42-retval);
-    retval += fprintf(f, "%*s", width, " = ");
-    return retval;
-}
-
-int
 print_leave(FILE *f, char fmt, const ArgInfo *info)
 {
     int retval = 0;

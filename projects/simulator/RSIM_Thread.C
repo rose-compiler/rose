@@ -7,12 +7,15 @@
 
 #include <sys/user.h>
 
+size_t RSIM_Thread::next_sequence_number = 0;
+
 /* Constructor */
 void
 RSIM_Thread::ctor()
 {
     my_tid = syscall(SYS_gettid);
     assert(my_tid>0);
+    my_seq = next_sequence_number++;
 
     memset(&last_report, 0, sizeof last_report);
     memset(signal_action, 0, sizeof signal_action);
@@ -41,10 +44,31 @@ RSIM_SemanticPolicy::ctor()
     writeSegreg(x86_segreg_gs, 0x2b);
 }
 
-FILE *
-RSIM_Thread::tracing(unsigned what) const
+std::string
+RSIM_Thread::id()
 {
-    return get_process()->tracing(what);
+    static struct timeval start;
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    if (0==start.tv_sec)
+        start = now;
+    double elapsed = (now.tv_sec - start.tv_sec) + 1e-6 * ((double)now.tv_usec - start.tv_usec);
+    char buf1[32];
+    sprintf(buf1, "%1.3f", elapsed);
+
+    char buf2[32];
+    sprintf(buf2, "0x%08"PRIx64, policy.readIP().known_value());
+
+    return (StringUtility::numberToString(getpid()) + ":" + StringUtility::numberToString(my_seq) +
+            " " + buf2 +
+            " " + buf1 +
+            ": ");
+}
+
+RTS_Message *
+RSIM_Thread::tracing(unsigned what)
+{
+    return (trace_flags & what) ? &mesg_on : &mesg_off;
 }
 
 SgAsmx86Instruction *
@@ -92,20 +116,21 @@ RSIM_Thread::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list *
 void
 RSIM_Thread::syscall_enterv(uint32_t *values, const char *name, const char *format, va_list *app)
 {
-    static timeval first_call;
-
-    if (tracing(TRACE_SYSCALL)) {
-        timeval this_call;
-        gettimeofday(&this_call, NULL);
-        if (0==first_call.tv_sec)
-            first_call = this_call;
-        pid_t tid = syscall(SYS_gettid);
-        double elapsed = (this_call.tv_sec - first_call.tv_sec) + (this_call.tv_usec - first_call.tv_usec)/1e6;
-        fprintf(tracing(TRACE_SYSCALL), "[tid %d] 0x%08"PRIx64" %8.4f: ", tid, policy.readIP().known_value(), elapsed);
+    RTS_Message *mesg = tracing(TRACE_SYSCALL);
+    FILE *f = mesg->get_file();
+    if (f) {
         ArgInfo args[6];
         for (size_t i=0; format[i]; i++)
             syscall_arginfo(format[i], values?values[i]:syscall_arg(i), args+i, app);
-        print_enter(tracing(TRACE_SYSCALL), name, syscall_arg(-1), format, args);
+
+        RTS_MESSAGE(*mesg) {
+            mesg->multipart(name, "%s[%d](", name, syscall_arg(-1));
+            for (size_t i=0; format && format[i]; i++) {
+                if (i>0) fputs(", ", f);
+                print_single(f, format[i], args+i);
+            }
+            fputc(')', f);
+        } RTS_MESSAGE_END(false);
     }
 }
 
@@ -134,28 +159,35 @@ RSIM_Thread::syscall_leave(const char *format, ...)
     va_start(ap, format);
 
     ROSE_ASSERT(strlen(format)>=1);
-    if (tracing(TRACE_SYSCALL)) {
+    RTS_Message *mesg = tracing(TRACE_SYSCALL);
+    if (mesg->get_file()) {
         /* System calls return an integer (negative error numbers, non-negative success) */
         ArgInfo info;
         uint32_t value = policy.readGPR(x86_gpr_ax).known_value();
         syscall_arginfo(format[0], value, &info, &ap);
-        print_leave(tracing(TRACE_SYSCALL), format[0], &info);
 
-        /* Additionally, output any other buffer values that were filled in by a successful system call. */
-        int result = (int)(uint32_t)(syscall_arg(-1));
-        if (format[0]!='d' || (result<-1024 || result>=0) || -EINTR==result) {
-            for (size_t i=1; format[i]; i++) {
-                if ('-'!=format[i]) {
-                    syscall_arginfo(format[i], syscall_arg(i-1), &info, &ap);
-                    if ('P'!=format[i] || 0!=syscall_arg(i-1)) { /* no need to show null pointers */
-                        fprintf(tracing(TRACE_SYSCALL), "    arg%zu = ", i-1);
-                        print_single(tracing(TRACE_SYSCALL), format[i], &info);
-                        fprintf(tracing(TRACE_SYSCALL), "\n");
+        RTS_MESSAGE(*mesg) {
+            mesg->more(" = ");
+            print_leave(mesg->get_file(), format[0], &info);
+
+            /* Additionally, output any other buffer values that were filled in by a successful system call. */
+            int result = (int)(uint32_t)(syscall_arg(-1));
+            if (format[0]!='d' || (result<-1024 || result>=0) || -EINTR==result) {
+                for (size_t i=1; format[i]; i++) {
+                    if ('-'!=format[i]) {
+                        syscall_arginfo(format[i], syscall_arg(i-1), &info, &ap);
+                        if ('P'!=format[i] || 0!=syscall_arg(i-1)) { /* no need to show null pointers */
+                            fprintf(mesg->get_file(), "    arg%zu = ", i-1);
+                            print_single(mesg->get_file(), format[i], &info);
+                            fprintf(mesg->get_file(), "\n");
+                        }
                     }
                 }
             }
-        }
+        } RTS_MESSAGE_END(true);
     }
+
+    va_end(ap);
 }
 
 uint32_t
@@ -182,25 +214,24 @@ RSIM_Thread::signal_generate(int signo)
     ROSE_ASSERT(signo>0 && signo<_NSIG);
     uint64_t sigbit = (uint64_t)1 << (signo-1);
     bool is_masked = (0 != (signal_mask & sigbit));
+    const char *disposition = NULL;
 
-    if (tracing(TRACE_SIGNAL)) {
-        fprintf(tracing(TRACE_SIGNAL), " [generated ");
-        print_enum(tracing(TRACE_SIGNAL), signal_names, signo);
-        fprintf(tracing(TRACE_SIGNAL), "(%d)", signo);
-    }
-    
     if (signal_action[signo-1].handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
-        if (tracing(TRACE_SIGNAL))
-            fputs(" ignored]", tracing(TRACE_SIGNAL));
+        disposition = " ignored";
     } else if (is_masked) {
-        if (tracing(TRACE_SIGNAL))
-            fputs(" masked]", tracing(TRACE_SIGNAL));
+        disposition = " masked";
         signal_pending |= sigbit;
     } else {
-        if (tracing(TRACE_SIGNAL))
-            fputs("]", tracing(TRACE_SIGNAL));
+        disposition = "";
         signal_pending |= sigbit;
         signal_reprocess = true;
+    }
+
+    RTS_Message *mesg = tracing(TRACE_SIGNAL);
+    if (mesg->get_file()) {
+        mesg->brief_begin("generated ");
+        print_enum(mesg->get_file(), signal_names, signo);
+        mesg->brief_end("(%d)%s", signo, disposition);
     }
 }
 
@@ -227,19 +258,21 @@ RSIM_Thread::signal_deliver(int signo)
 {
     ROSE_ASSERT(signo>0 && signo<=64);
 
-    if (tracing(TRACE_SIGNAL)) {
-        fprintf(tracing(TRACE_SIGNAL), "0x%08"PRIx64": delivering ", policy.readIP().known_value());
-        print_enum(tracing(TRACE_SIGNAL), signal_names, signo);
-        fprintf(tracing(TRACE_SIGNAL), "(%d)", signo);
-    }
+    RTS_Message *mesg = tracing(TRACE_SIGNAL);
 
     if (signal_action[signo-1].handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
         /* The signal action may have changed since the signal was generated, so we need to check this again. */
-        if (tracing(TRACE_SIGNAL))
-            fprintf(tracing(TRACE_SIGNAL), " ignored\n");
+        if (mesg->get_file()) {
+            mesg->brief_begin("delivering ");
+            print_enum(mesg->get_file(), signal_names, signo);
+            mesg->brief_end("(%d) ignored", signo);
+        }
     } else if (signal_action[signo-1].handler_va==(uint32_t)(uint64_t)SIG_DFL) {
-        if (tracing(TRACE_SIGNAL))
-            fprintf(tracing(TRACE_SIGNAL), " default\n");
+        if (mesg->get_file()) {
+            mesg->brief_begin("delivering ");
+            print_enum(mesg->get_file(), signal_names, signo);
+            mesg->brief_end("(%d) default", signo);
+        }
         switch (signo) {
             case SIGFPE:
             case SIGILL:
@@ -283,11 +316,17 @@ RSIM_Thread::signal_deliver(int signo)
 
     } else if (signal_mask & ((uint64_t)1 << signo)) {
         /* Masked, but do not adjust signal_pending vector. */
-        if (tracing(TRACE_SIGNAL))
-            fprintf(tracing(TRACE_SIGNAL), " masked (discarded)\n");
+        if (mesg->get_file()) {
+            mesg->brief_begin("delivering ");
+            print_enum(mesg->get_file(), signal_names, signo);
+            mesg->brief_end("(%d) masked", signo);
+        }
     } else {
-        if (tracing(TRACE_SIGNAL))
-            fprintf(tracing(TRACE_SIGNAL), " to 0x%08"PRIx32"\n", signal_action[signo-1].handler_va);
+        if (mesg->get_file()) {
+            mesg->brief_begin("delivering ");
+            print_enum(mesg->get_file(), signal_names, signo);
+            mesg->brief_end("(%d) to 0x%08"PRIx32, signo, signal_action[signo-1].handler_va);
+        }
 
         uint32_t signal_return = policy.readIP().known_value();
         policy.push(signal_return);
@@ -336,10 +375,11 @@ RSIM_Thread::signal_return()
     int signo = policy.pop().known_value(); /* signal number */
     policy.pop(); /* signal address */
 
-    if (tracing(TRACE_SIGNAL)) {
-        fprintf(tracing(TRACE_SIGNAL), "[returning from ");
-        print_enum(tracing(TRACE_SIGNAL), signal_names, signo);
-        fprintf(tracing(TRACE_SIGNAL), " handler]\n");
+    RTS_Message *mesg = tracing(TRACE_SIGNAL);
+    if (mesg->get_file()) {
+        mesg->brief_begin("returning from ");
+        print_enum(mesg->get_file(), signal_names, signo);
+        mesg->brief_end(" handler");
     }
 
     /* Restore caller-saved registers */
@@ -400,15 +440,14 @@ RSIM_Thread::signal_pause()
 void
 RSIM_Thread::report_progress_maybe()
 {
-    if (tracing(TRACE_PROGRESS)) {
+    RTS_Message *mesg = tracing(TRACE_PROGRESS);
+    if (mesg->get_file()) {
         struct timeval now;
         gettimeofday(&now, NULL);
         double delta = (now.tv_sec - last_report.tv_sec) + 1e-1 * (now.tv_usec - last_report.tv_usec);
         if (delta > report_interval) {
             double insn_rate = delta>0 ? get_ninsns() / delta : 0;
-            pid_t tid = syscall(SYS_gettid);
-            fprintf(tracing(TRACE_PROGRESS), "RSIM_Thread: thread %d: processed %zu insns in %d sec (%d insns/sec)\n",
-                    tid, get_ninsns(), (int)(delta+0.5), (int)(insn_rate+0.5));
+            mesg->mesg("processed %zu insns in %d sec (%d insns/sec)\n", get_ninsns(), (int)(delta+0.5), (int)(insn_rate+0.5));
         }
         last_report = now;
     }
@@ -443,21 +482,30 @@ RSIM_Thread::main()
             SgAsmx86Instruction *insn = current_insn();
             process->binary_trace_add(this, insn);
             semantics.processInstruction(insn);
-            if (tracing(TRACE_STATE)) {
-                fprintf(tracing(TRACE_STATE), "Machine state after instruction:\n");
-                policy.dump_registers(tracing(TRACE_STATE));
+            RTS_Message *mesg = tracing(TRACE_STATE);
+            if (mesg->get_file()) {
+                RTS_MESSAGE(*mesg) {
+                    mesg->mesg("Machine state after instruction:\n");
+                    policy.dump_registers(mesg->get_file());
+                } RTS_MESSAGE_END(true);
             }
 
             signal_deliver_any();
         } catch (const RSIM_Semantics::Exception &e) {
             /* Thrown for instructions whose semantics are not implemented yet. */
-            std::cerr <<e <<"\n\n";
+            RTS_Message *mesg = tracing(TRACE_WARNING);
+            if (mesg->get_file()) {
+                RTS_MESSAGE(*mesg) {
+                    mesg->mesg("caught exception: ");
+                    std::cerr <<e <<"\n";
 #ifdef X86SIM_STRICT_EMULATION
-            process->dump_core(SIGILL);
-            abort();
+                    process->dump_core(SIGILL);
+                    abort();
 #else
-            std::cerr <<"Ignored. Continuing with a corrupt state...\n";
+                    mesg->mesg("exception ignored; continuing with a corrupst state...\n");
 #endif
+                } RTS_MESSAGE_END(true);
+            }
         } catch (const RSIM_SEMANTIC_POLICY::Exception &e) {
             std::cerr <<e <<"\n\n";
             process->dump_core(SIGILL);
@@ -469,7 +517,7 @@ RSIM_Thread::main()
             signal_generate(e.signo);
         } catch (...) {
             process->dump_core(SIGILL);
-            fprintf(stderr, "fatal: simulator thread received an unhandled exception\n");
+            tracing(TRACE_FATAL)->mesg("fatal: simulator thread received an unhandled exception\n");
             abort();
         }
     }
@@ -572,8 +620,7 @@ RSIM_Thread::set_thread_area(user_desc_32 *info, bool can_allocate)
         if (idx < 0)
             return idx;
         info->entry_number = idx;
-        if (tracing(TRACE_SYSCALL))
-            fprintf(tracing(TRACE_SYSCALL), "[entry #%d] ", idx);
+        tracing(TRACE_SYSCALL)->brief("entry #%d", idx);
     }
 
     if (idx<(int)RSIM_Process::GDT_ENTRY_TLS_MIN || idx>(int)RSIM_Process::GDT_ENTRY_TLS_MAX)
@@ -606,15 +653,14 @@ RSIM_Thread::sys_exit(const Exit &e)
     RSIM_Process *process = get_process(); /* while we still have a chance */
 
     if (robust_list_head_va)
-        fprintf(stderr, "warning: robust_list not cleaned up\n"); /* FIXME: see set_robust_list() syscall */
+        tracing(TRACE_WARNING)->mesg("warning: robust_list not cleaned up\n"); /* FIXME: see set_robust_list() syscall */
 
     /* Clear and signal child TID if necessary (CLONE_CHILD_CLEARTID) */
     if (clear_child_tid) {
+        tracing(TRACE_SYSCALL)->brief("waking futex 0x%08"PRIx32, clear_child_tid);
         uint32_t zero = 0;
         size_t n = process->mem_write(&zero, clear_child_tid, sizeof zero);
         ROSE_ASSERT(n==sizeof zero);
-        if (tracing(TRACE_SYSCALL))
-            fprintf(tracing(TRACE_SYSCALL), "[futex wake 0x%08"PRIx32"] ", clear_child_tid);
         int nwoke = futex_wake(clear_child_tid);
         ROSE_ASSERT(nwoke>=0);
     }

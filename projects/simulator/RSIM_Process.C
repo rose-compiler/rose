@@ -41,6 +41,12 @@ RSIM_Process::tracing(unsigned what) const
     return (trace_flags & what) ? trace_file : NULL;
 }
 
+unsigned
+RSIM_Process::tracing() const
+{
+    return trace_flags;
+}
+
 void
 RSIM_Process::set_tracing(FILE *f, unsigned what)
 {
@@ -1471,8 +1477,8 @@ RSIM_Process::exit(int status)
     RTS_WRITE(rwlock()) {
         terminated = true;
         termination_status = status;
-        if (!threads.empty())
-            fprintf(stderr, "ROBB: RSIM_Process::exit() not fully implemented yet.\n");
+        if (!threads.empty() && tracing(TRACE_WARNING))
+            fprintf(tracing(TRACE_WARNING), "ROBB: RSIM_Process::exit() not fully implemented yet.\n");
     } RTS_WRITE_END;
 }
 

@@ -65,8 +65,10 @@ RSIM_Thread::emulate_syscall()
 {
     /* Warning: use hard-coded values here rather than the __NR_* constants from <sys/unistd.h> because the latter varies
      *          according to whether ROSE is compiled for 32- or 64-bit.  We always want the 32-bit syscall numbers. */
-    unsigned callno = policy.readGPR(x86_gpr_ax).known_value();
 
+    RTS_Message *strace = tracing(TRACE_SYSCALL);
+    RTS_Message *mtrace = tracing(TRACE_MMAP);
+    unsigned callno = policy.readGPR(x86_gpr_ax).known_value();
 
 
 
@@ -78,16 +80,13 @@ RSIM_Thread::emulate_syscall()
                 uint32_t zero = 0;
                 size_t n = get_process()->mem_write(&zero, clear_child_tid, sizeof zero);
                 ROSE_ASSERT(n==sizeof zero);
-                if (tracing(TRACE_SYSCALL))
-                    fprintf(tracing(TRACE_SYSCALL), "[futex wake 0x%08"PRIx32"] ", clear_child_tid);
                 int nwoke = futex_wake(clear_child_tid);
                 ROSE_ASSERT(nwoke>=0);
             }
 
             /* Throwing an Exit will cause the thread main loop to terminate (and perhaps the real thread terminates as
              * well). The simulated thread is effectively dead at this point. */
-            if (tracing(TRACE_SYSCALL))
-                fputs("(throwing Exit...)\n", tracing(TRACE_SYSCALL));
+            strace->more(" = <throwing Exit>\n");
             throw Exit(__W_EXITCODE(syscall_arg(0), 0), false); /* false=>exit only this thread */
 
             break;
@@ -276,14 +275,14 @@ RSIM_Thread::emulate_syscall()
 
                 /* Argument vector */
                 std::vector<std::string> argv = get_process()->read_string_vector(syscall_arg(1), &error);
-                if (tracing(TRACE_SYSCALL)) {
-                    if (!argv.empty())
-                        fputs("continued below...\n", tracing(TRACE_SYSCALL));
-                    for (size_t i=0; i<argv.size(); i++) {
-                        fprintf(tracing(TRACE_SYSCALL), "    argv[%zu] = ", i);
-                        print_string(tracing(TRACE_SYSCALL), argv[i], false, false);
-                        fputc('\n', tracing(TRACE_SYSCALL));
-                    }
+                if (!argv.empty() && strace->get_file()) {
+                    RTS_MESSAGE(*strace) {
+                        for (size_t i=0; i<argv.size(); i++) {
+                            strace->mesg("    argv[%zu] = ", i);
+                            print_string(strace->get_file(), argv[i], false, false);
+                            fputc('\n', strace->get_file());
+                        }
+                    } RTS_MESSAGE_END(true);
                 }
                 if (error) {
                     syscall_return(-EFAULT);
@@ -296,14 +295,14 @@ RSIM_Thread::emulate_syscall()
 
                 /* Environment vector */
                 std::vector<std::string> envp = get_process()->read_string_vector(syscall_arg(2), &error);
-                if (tracing(TRACE_SYSCALL)) {
-                    if (argv.empty() && !envp.empty())
-                        fputs("continued below...\n", tracing(TRACE_SYSCALL));
-                    for (size_t i=0; i<envp.size(); i++) {
-                        fprintf(tracing(TRACE_SYSCALL), "    envp[%zu] = ", i);
-                        print_string(tracing(TRACE_SYSCALL), envp[i], false, false);
-                        fputc('\n', tracing(TRACE_SYSCALL));
-                    }
+                if (!envp.empty() && strace->get_file()) {
+                    RTS_MESSAGE(*strace) {
+                        for (size_t i=0; i<envp.size(); i++) {
+                            strace->mesg("    envp[%zu] = ", i);
+                            print_string(strace->get_file(), envp[i], false, false);
+                            fputc('\n', strace->get_file());
+                        }
+                    } RTS_MESSAGE_END(true);
                 }
                 if (error) {
                     syscall_return(-EFAULT);
@@ -318,8 +317,6 @@ RSIM_Thread::emulate_syscall()
                 int result = execve(&filename[0], &sys_argv[0], &sys_envp[0]);
                 ROSE_ASSERT(-1==result);
                 syscall_return(-errno);
-                if (tracing(TRACE_SYSCALL) && (!argv.empty() || !envp.empty()))
-                    fputs("execve failed with ", tracing(TRACE_SYSCALL));
             } while (0);
             syscall_leave("d");
             break;
@@ -919,8 +916,7 @@ RSIM_Thread::emulate_syscall()
 
         case 191:
             syscall_enter("ugetrlimit", "fp", rlimit_resources);
-            if (tracing(TRACE_SYSCALL))
-                fputs("delegated to getrlimit (syscall 76); see next line\n", tracing(TRACE_SYSCALL));
+            strace->more(" <delegated to getrlimit; see next line>\n");
             /* fall through to 76; note that syscall trace will still show syscall 191 */
             
         case 76: {  /*0x4c, getrlimit*/
@@ -1470,14 +1466,14 @@ RSIM_Thread::emulate_syscall()
                         syscall_enter("ipc", "fdfpp", ipc_commands, ipc_flags);
                         sys_shmat(first, second, third, ptr);
                         syscall_leave("p");
-                        get_process()->mem_showmap(tracing(TRACE_MMAP), "  memory map after shmat:\n");
+                        get_process()->mem_showmap(mtrace->get_file(), "  memory map after shmat:\n");
                     }
                     break;
                 case 22: /* SHMDT */
                     syscall_enter("ipc", "f---p", ipc_commands);
                     sys_shmdt(ptr);
                     syscall_leave("d");
-                    get_process()->mem_showmap(tracing(TRACE_MMAP), "  memory map after shmdt:\n");
+                    get_process()->mem_showmap(mtrace->get_file(), "  memory map after shmdt:\n");
                     break;
                 case 23: /* SHMGET */
                     syscall_enter("ipc", "fpdf", ipc_commands, ipc_flags); /* arg1 "p" for consistency with strace and ipcs */
@@ -1630,7 +1626,7 @@ RSIM_Thread::emulate_syscall()
             }
 
             syscall_leave("d");
-            get_process()->mem_showmap(tracing(TRACE_MMAP), "  memory map after mprotect syscall:\n");
+            get_process()->mem_showmap(mtrace->get_file(), "  memory map after mprotect syscall:\n");
             break;
         }
 
@@ -1767,14 +1763,15 @@ RSIM_Thread::emulate_syscall()
             if (niov<0 || niov>1024) {
                 retval = -EINVAL;
             } else {
+                if (niov>0)
+                    strace->more("\n");
                 for (idx=0; idx<niov; idx++) {
                     /* Obtain buffer address and size */
                     uint32_t buf_va;
                     if (4 != get_process()->mem_read(&buf_va, iov_va+idx*8+0, 4)) {
                         if (0==idx)
                             retval = -EFAULT;
-                        if (tracing(TRACE_SYSCALL))
-                            fprintf(tracing(TRACE_SYSCALL), "    #%d: segmentation fault reading address\n", idx);
+                        strace->more("    #%d: segmentation fault reading address\n", idx);
                         break;
                     }
 
@@ -1782,22 +1779,17 @@ RSIM_Thread::emulate_syscall()
                     if (4 != get_process()->mem_read(&buf_sz, iov_va+idx*8+4, 4)) {
                         if (0==idx)
                             retval = -EFAULT;
-                        if (tracing(TRACE_SYSCALL))
-                            fprintf(tracing(TRACE_SYSCALL), "    #%d: segmentation fault reading size\n", idx);
+                        strace->more("    #%d: segmentation fault reading size\n", idx);
                         break;
                     }
 
-                    if (tracing(TRACE_SYSCALL)) {
-                        if (0==idx) fprintf(tracing(TRACE_SYSCALL), "<see below>\n"); /* return value is delayed */
-                        fprintf(tracing(TRACE_SYSCALL), "    #%d: va=0x%08"PRIx32", size=0x%08"PRIx32, idx, buf_va, buf_sz);
-                    }
+                    strace->more("    #%d: va=0x%08"PRIx32", size=0x%08"PRIx32, idx, buf_va, buf_sz);
 
                     /* Make sure total size doesn't overflow a ssize_t */
                     if ((buf_sz & 0x80000000) || ((uint32_t)retval+buf_sz) & 0x80000000) {
                         if (0==idx)
                             retval = -EINVAL;
-                        if (tracing(TRACE_SYSCALL))
-                            fprintf(tracing(TRACE_SYSCALL), " size overflow\n");
+                        strace->more(" size overflow\n");
                         break;
                     }
 
@@ -1807,8 +1799,7 @@ RSIM_Thread::emulate_syscall()
                     if (buf_sz != get_process()->mem_read(buf, buf_va, buf_sz)) {
                         if (0==idx)
                             retval = -EFAULT;
-                        if (tracing(TRACE_SYSCALL))
-                            fprintf(tracing(TRACE_SYSCALL), " segmentation fault\n");
+                        strace->more(" segmentation fault\n");
                         break;
                     }
 
@@ -1817,23 +1808,20 @@ RSIM_Thread::emulate_syscall()
                     if (-1==nwritten) {
                         if (0==idx)
                             retval = -errno;
-                        if (tracing(TRACE_SYSCALL))
-                            fprintf(tracing(TRACE_SYSCALL), " write failed (%s)\n", strerror(errno));
+                        strace->more(" write failed (%s)\n", strerror(errno));
                         break;
                     }
                     retval += nwritten;
                     if ((uint32_t)nwritten<buf_sz) {
-                        if (tracing(TRACE_SYSCALL))
-                            fprintf(tracing(TRACE_SYSCALL), " short write (%zd bytes)\n", nwritten);
+                        strace->more(" short write (%zd bytes)\n", nwritten);
                         break;
                     }
-                    if (tracing(TRACE_SYSCALL))
-                        fputc('\n', tracing(TRACE_SYSCALL));
+                    strace->more("\n");
                 }
             }
             syscall_return(retval);
-            if (tracing(TRACE_SYSCALL) && niov>0 && niov<=1024)
-                fprintf(tracing(TRACE_SYSCALL), "%*s = ", 51, ""); /* align for return value */
+            if (niov>0 && niov<=1024)
+                strace->more("writev return");
             syscall_leave("d");
             break;
         }
@@ -2064,7 +2052,7 @@ RSIM_Thread::emulate_syscall()
             uint32_t result = get_process()->mem_map(start, size, prot, flags, offset, fd);
             syscall_return(result);
             syscall_leave("p");
-            get_process()->mem_showmap(tracing(TRACE_MMAP), "  memory map after mmap2 syscall:\n");
+            get_process()->mem_showmap(mtrace->get_file(), "  memory map after mmap2 syscall:\n");
             break;
         }
 
@@ -2135,8 +2123,7 @@ RSIM_Thread::emulate_syscall()
                 /* On amd64 we need to translate the 64-bit struct that we got back from the host kernel to the 32-bit struct
                  * that the specimen should get back from the guest kernel. */           
                 if (sizeof(kernel_stat_64)==kernel_stat_size) {
-                    if (tracing(TRACE_SYSCALL))
-                        fprintf(tracing(TRACE_SYSCALL), "[64-to-32] ");
+                    strace->brief("64-to-32");
                     kernel_stat_64 *in = (kernel_stat_64*)kernel_stat;
                     kernel_stat_32 out;
                     out.dev = in->dev;
@@ -2501,14 +2488,11 @@ RSIM_Thread::emulate_syscall()
                 uint32_t zero = 0;
                 size_t n = get_process()->mem_write(&zero, clear_child_tid, sizeof zero);
                 ROSE_ASSERT(n==sizeof zero);
-                if (tracing(TRACE_SYSCALL))
-                    fprintf(tracing(TRACE_SYSCALL), "[futex wake 0x%08"PRIx32"] ", clear_child_tid);
                 int nwoke = futex_wake(clear_child_tid);
                 ROSE_ASSERT(nwoke>=0);
             }
 
-            if (tracing(TRACE_SYSCALL))
-                fputs("(throwing Exit...)\n", tracing(TRACE_SYSCALL));
+            strace->more(" = <throwing Exit>\n");
             throw Exit(__W_EXITCODE(syscall_arg(0), 0), true); /* true=>exit entire process */
         }
 
@@ -2773,6 +2757,8 @@ RSIM_Thread::emulate_syscall()
 void
 RSIM_Thread::sys_semtimedop(uint32_t semid, uint32_t sops_va, uint32_t nsops, uint32_t timeout_va)
 {
+    RTS_Message *strace = tracing(TRACE_SYSCALL);
+
     static const Translate sem_flags[] = {
         TF(IPC_NOWAIT), TF(SEM_UNDO), T_END
     };
@@ -2788,15 +2774,15 @@ RSIM_Thread::sys_semtimedop(uint32_t semid, uint32_t sops_va, uint32_t nsops, ui
         syscall_return(-EFAULT);
         return;
     }
-    if (tracing(TRACE_SYSCALL)) {
-        fprintf(tracing(TRACE_SYSCALL), " <continued...>\n");
-        for (uint32_t i=0; i<nsops; i++) {
-            fprintf(tracing(TRACE_SYSCALL), "    sops[%"PRIu32"] = { num=%"PRIu16", op=%"PRId16", flg=",
-                    i, sops[i].sem_num, sops[i].sem_op);
-            print_flags(tracing(TRACE_SYSCALL), sem_flags, sops[i].sem_flg);
-            fprintf(tracing(TRACE_SYSCALL), " }\n");
-        }
-        fprintf(tracing(TRACE_SYSCALL), "%32s", "= ");
+    if (strace->get_file()) {
+        RTS_MESSAGE(*strace) {
+            for (uint32_t i=0; i<nsops; i++) {
+                strace->mesg("    sops[%"PRIu32"] = { num=%"PRIu16", op=%"PRId16", flg=",
+                             i, sops[i].sem_num, sops[i].sem_op);
+                print_flags(strace->get_file(), sem_flags, sops[i].sem_flg);
+                fprintf(strace->get_file(), " }\n");
+            }
+        } RTS_MESSAGE_END(true);
     }
 
     timespec host_timeout;
@@ -2828,6 +2814,8 @@ RSIM_Thread::sys_semget(uint32_t key, uint32_t nsems, uint32_t semflg)
 void
 RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t semun_va)
 {
+    RTS_Message *strace = tracing(TRACE_SYSCALL);
+
     int version = cmd & 0x0100/*IPC_64*/;
     cmd &= ~0x0100;
 
@@ -3002,12 +2990,10 @@ RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t 
                 syscall_return(-EFAULT);
                 return;
             }
-            if (tracing(TRACE_SYSCALL)) {
-                fprintf(tracing(TRACE_SYSCALL), "<continued...>\n");
+            if (host_ds.sem_nsems>0) {
                 for (size_t i=0; i<host_ds.sem_nsems; i++) {
-                    fprintf(tracing(TRACE_SYSCALL), "    value[%zu] = %"PRId16"\n", i, sem_values[i]);
+                    strace->mesg("    value[%zu] = %"PRId16"\n", i, sem_values[i]);
                 }
-                fprintf(tracing(TRACE_SYSCALL), "%32s", "= ");
             }
             delete[] sem_values;
             syscall_return(result);
@@ -3032,12 +3018,10 @@ RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t 
                 syscall_return(-EFAULT);
                 return;
             }
-            if (tracing(TRACE_SYSCALL)) {
-                fprintf(tracing(TRACE_SYSCALL), "<continued...>\n");
+            if (strace->get_file()) {
                 for (size_t i=0; i<host_ds.sem_nsems; i++) {
-                    fprintf(tracing(TRACE_SYSCALL), "    value[%zu] = %"PRId16"\n", i, sem_values[i]);
+                    strace->mesg("    value[%zu] = %"PRId16"\n", i, sem_values[i]);
                 }
-                fprintf(tracing(TRACE_SYSCALL), "%32s", "= ");
             }
 #ifdef SYS_ipc  /* i686 */
             semun_native semun;
@@ -3604,8 +3588,9 @@ RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, u
         /* Flush some files so buffered content isn't output twice. */
         fflush(stdout);
         fflush(stderr);
-        if (tracing(TRACE_ALL))
-            fflush(tracing(TRACE_ALL));
+        RTS_Message *mesg = tracing(TRACE_ALL);
+        if (mesg->get_file())
+            fflush(mesg->get_file());
 
         /* We cannot use clone() because it's a wrapper around the clone system call and we'd need to provide a function for it to
          * execute. We want fork-like semantics. */

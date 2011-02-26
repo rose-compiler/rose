@@ -13,7 +13,7 @@ public:
     /** Creates an empty process containing no threads. */
     RSIM_Process()
         : map(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), disassembler(NULL),
-          trace_file(NULL), trace_flags(0), core_flags(0), terminated(false), termination_status(0), btrace_file(NULL),
+          trace_file(NULL), trace_flags(TRACE_DEFAULT), core_flags(0), terminated(false), termination_status(0), btrace_file(NULL),
           vdso_mapped_va(0), vdso_entry_va(0),
           core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000) {
         RTS_rwlock_init(&instance_rwlock, NULL);
@@ -278,6 +278,9 @@ public:
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
     FILE *tracing(unsigned what) const;
+
+    /** Returns a bit mask describing what is being traced. */
+    unsigned tracing() const;
 
     /** Sets tracing file and facilities. */
     void set_tracing(FILE*, unsigned what);

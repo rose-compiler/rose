@@ -51,6 +51,12 @@ enum TraceFlags {
     TRACE_PROGRESS      = 0x0040,               /**< Show a progress report now and then. */
     TRACE_SIGNAL        = 0x0080,               /**< Show reception and delivery of signals. */
 
+    TRACE_DEBUG         = 0x1000,               /**< Show temporary debugging messages. */
+    TRACE_WARNING       = 0x2000,               /**< Show arning messages. */
+    TRACE_ERROR         = 0x4000,               /**< Show error messages. */
+    TRACE_FATAL         = 0x8000,               /**< Show fatal error messages. */
+
+    TRACE_DEFAULT       = 0xf000,               /**< Default tracing bits. */
     TRACE_ALL           = 0xffff                /**< Turn on all tracing bits. */
 };
 
