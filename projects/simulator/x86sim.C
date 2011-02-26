@@ -275,14 +275,12 @@ RSIM_Thread::emulate_syscall()
 
                 /* Argument vector */
                 std::vector<std::string> argv = get_process()->read_string_vector(syscall_arg(1), &error);
-                if (!argv.empty() && strace->get_file()) {
-                    RTS_MESSAGE(*strace) {
-                        for (size_t i=0; i<argv.size(); i++) {
-                            strace->mesg("    argv[%zu] = ", i);
-                            print_string(strace->get_file(), argv[i], false, false);
-                            fputc('\n', strace->get_file());
-                        }
-                    } RTS_MESSAGE_END(true);
+                if (!argv.empty()) {
+                    for (size_t i=0; i<argv.size(); i++) {
+                        strace->more("    argv[%zu] = ", i);
+                        print_string(strace, argv[i], false, false);
+                        strace->more("\n");
+                    }
                 }
                 if (error) {
                     syscall_return(-EFAULT);
@@ -295,14 +293,12 @@ RSIM_Thread::emulate_syscall()
 
                 /* Environment vector */
                 std::vector<std::string> envp = get_process()->read_string_vector(syscall_arg(2), &error);
-                if (!envp.empty() && strace->get_file()) {
-                    RTS_MESSAGE(*strace) {
-                        for (size_t i=0; i<envp.size(); i++) {
-                            strace->mesg("    envp[%zu] = ", i);
-                            print_string(strace->get_file(), envp[i], false, false);
-                            fputc('\n', strace->get_file());
-                        }
-                    } RTS_MESSAGE_END(true);
+                if (!envp.empty()) {
+                    for (size_t i=0; i<envp.size(); i++) {
+                        strace->more("    envp[%zu] = ", i);
+                        print_string(strace, envp[i], false, false);
+                        strace->more("\n");
+                    }
                 }
                 if (error) {
                     syscall_return(-EFAULT);
@@ -638,7 +634,7 @@ RSIM_Thread::emulate_syscall()
         case 45: { /*0x2d, brk*/
             syscall_enter("brk", "x");
             uint32_t newbrk = syscall_arg(0);
-            syscall_return(get_process()->mem_setbrk(newbrk));
+            syscall_return(get_process()->mem_setbrk(newbrk, tracing(TRACE_MMAP)));
             syscall_leave("p");
             break;
         }
@@ -1027,7 +1023,7 @@ RSIM_Thread::emulate_syscall()
                     break;
                 }
 
-                int status = get_process()->mem_unmap(aligned_va, aligned_sz);
+                int status = get_process()->mem_unmap(aligned_va, aligned_sz, tracing(TRACE_MMAP));
                 syscall_return(status);
             } while (0);
             syscall_leave("d");
@@ -1466,14 +1462,14 @@ RSIM_Thread::emulate_syscall()
                         syscall_enter("ipc", "fdfpp", ipc_commands, ipc_flags);
                         sys_shmat(first, second, third, ptr);
                         syscall_leave("p");
-                        get_process()->mem_showmap(mtrace->get_file(), "  memory map after shmat:\n");
+                        get_process()->mem_showmap(mtrace, "  memory map after shmat:\n");
                     }
                     break;
                 case 22: /* SHMDT */
                     syscall_enter("ipc", "f---p", ipc_commands);
                     sys_shmdt(ptr);
                     syscall_leave("d");
-                    get_process()->mem_showmap(mtrace->get_file(), "  memory map after shmdt:\n");
+                    get_process()->mem_showmap(mtrace, "  memory map after shmdt:\n");
                     break;
                 case 23: /* SHMGET */
                     syscall_enter("ipc", "fpdf", ipc_commands, ipc_flags); /* arg1 "p" for consistency with strace and ipcs */
@@ -1626,7 +1622,7 @@ RSIM_Thread::emulate_syscall()
             }
 
             syscall_leave("d");
-            get_process()->mem_showmap(mtrace->get_file(), "  memory map after mprotect syscall:\n");
+            get_process()->mem_showmap(mtrace, "  memory map after mprotect syscall:\n");
             break;
         }
 
@@ -2052,7 +2048,7 @@ RSIM_Thread::emulate_syscall()
             uint32_t result = get_process()->mem_map(start, size, prot, flags, offset, fd);
             syscall_return(result);
             syscall_leave("p");
-            get_process()->mem_showmap(mtrace->get_file(), "  memory map after mmap2 syscall:\n");
+            get_process()->mem_showmap(mtrace, "  memory map after mmap2 syscall:\n");
             break;
         }
 
@@ -2774,15 +2770,11 @@ RSIM_Thread::sys_semtimedop(uint32_t semid, uint32_t sops_va, uint32_t nsops, ui
         syscall_return(-EFAULT);
         return;
     }
-    if (strace->get_file()) {
-        RTS_MESSAGE(*strace) {
-            for (uint32_t i=0; i<nsops; i++) {
-                strace->mesg("    sops[%"PRIu32"] = { num=%"PRIu16", op=%"PRId16", flg=",
-                             i, sops[i].sem_num, sops[i].sem_op);
-                print_flags(strace->get_file(), sem_flags, sops[i].sem_flg);
-                fprintf(strace->get_file(), " }\n");
-            }
-        } RTS_MESSAGE_END(true);
+    for (uint32_t i=0; i<nsops; i++) {
+        strace->more("    sops[%"PRIu32"] = { num=%"PRIu16", op=%"PRId16", flg=",
+                     i, sops[i].sem_num, sops[i].sem_op);
+        print_flags(strace, sem_flags, sops[i].sem_flg);
+        strace->more(" }\n");
     }
 
     timespec host_timeout;
@@ -3018,10 +3010,8 @@ RSIM_Thread::sys_semctl(uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t 
                 syscall_return(-EFAULT);
                 return;
             }
-            if (strace->get_file()) {
-                for (size_t i=0; i<host_ds.sem_nsems; i++) {
-                    strace->mesg("    value[%zu] = %"PRId16"\n", i, sem_values[i]);
-                }
+            for (size_t i=0; i<host_ds.sem_nsems; i++) {
+                strace->more("    value[%zu] = %"PRId16"\n", i, sem_values[i]);
             }
 #ifdef SYS_ipc  /* i686 */
             semun_native semun;
@@ -3284,7 +3274,7 @@ RSIM_Thread::sys_shmdt(uint32_t shmaddr_va)
             break;
         }
 
-        get_process()->mem_unmap(me->get_va(), me->get_size());
+        get_process()->mem_unmap(me->get_va(), me->get_size(), tracing(TRACE_MMAP));
         result = 0;
     } RTS_WRITE_END;
     syscall_return(result);

@@ -24,7 +24,8 @@ public:
      *  thread that will be simulating the speciment's thread described by this object. */
     RSIM_Thread(RSIM_Process *process)
         : process(process), my_tid(-1),
-          mesg_prefix(this), mesg_on(stderr, &mesg_prefix), mesg_off(NULL, NULL), trace_flags(process->tracing()),
+          mesg_prefix(this), mesg_on(process->tracing(TRACE_ALL), &mesg_prefix), mesg_off(NULL, NULL),
+          trace_flags(process->tracing()),
           policy(this), semantics(policy),
           report_interval(10.0), robust_list_head_va(0), clear_child_tid(0),
           signal_pending(0), signal_mask(0), signal_reprocess(false) {
@@ -112,7 +113,7 @@ public:
     /**************************************************************************************************************************
      *                                  Members for debugging and tracing output
      **************************************************************************************************************************/
-public:
+private:
     class Prefix: public RTS_Message::Prefix {
         RSIM_Thread *thread;
     public:
@@ -130,6 +131,7 @@ public:
     /** Return a string identifying the thread and time called. */
     std::string id();
 
+public:
     /** Return the object used for a debugging facility.  The return value is either mesg_on or mesg_off depending on whether
      * the specified facility is being trace. */
     RTS_Message *tracing(unsigned what);

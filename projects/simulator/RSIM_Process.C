@@ -949,7 +949,7 @@ RSIM_Process::read_string_vector(uint32_t va, bool *_error/*=NULL*/)
 }
 
 int
-RSIM_Process::mem_setbrk(rose_addr_t newbrk)
+RSIM_Process::mem_setbrk(rose_addr_t newbrk, RTS_Message *mesg)
 {
     int retval = -ENOSYS;
 
@@ -968,9 +968,11 @@ RSIM_Process::mem_setbrk(rose_addr_t newbrk)
         }
         retval= brk_va;
 
-        if (newbrk!=0 && tracing(TRACE_MMAP)) {
-            fprintf(tracing(TRACE_MMAP), "  memory map after brk syscall:\n");
-            map->dump(tracing(TRACE_MMAP), "    ");
+        if (mesg && mesg->get_file()) {
+            RTS_MESSAGE(*mesg) {
+                mesg->mesg("memory map after brk syscall:\n");
+                map->dump(mesg->get_file(), "    ");
+            } RTS_MESSAGE_END(true);
         }
     } RTS_WRITE_END;
 
@@ -978,7 +980,7 @@ RSIM_Process::mem_setbrk(rose_addr_t newbrk)
 }
 
 int
-RSIM_Process::mem_unmap(rose_addr_t va, size_t sz)
+RSIM_Process::mem_unmap(rose_addr_t va, size_t sz, RTS_Message *mesg)
 {
     int retval = -ENOSYS;
     RTS_WRITE(rwlock()) {
@@ -1007,27 +1009,31 @@ RSIM_Process::mem_unmap(rose_addr_t va, size_t sz)
         map->erase(MemoryMap::MapElement(va, sz));
 
         /* Tracing */
-        if (tracing(TRACE_MMAP)) {
-            fprintf(tracing(TRACE_MMAP), " memory map after munmap syscall:\n");
-            map->dump(tracing(TRACE_MMAP), "    ");
+        if (mesg && mesg->get_file()) {
+            RTS_MESSAGE(*mesg) {
+                mesg->mesg("memory map after munmap syscall:\n");
+                map->dump(mesg->get_file(), "    ");
+            } RTS_MESSAGE_END(true);
         }
-        
+
         retval = 0;
     } RTS_WRITE_END;
     return retval;
 }
 
 void
-RSIM_Process::mem_showmap(FILE *f, const char *mesg, const char *prefix)
+RSIM_Process::mem_showmap(RTS_Message *mesg, const char *intro, const char *prefix)
 {
-    if (!mesg)   mesg   = "";
+    if (!intro || !*intro) intro = "memory map\n";
     if (!prefix) prefix = "    ";
-    
-    if (f) {
-        fputs(mesg, f);
-        RTS_READ(rwlock()) {
-            map->dump(tracing(TRACE_MMAP), prefix);
-        } RTS_READ_END;
+
+    if (mesg && mesg->get_file()) {
+        RTS_MESSAGE(*mesg) {
+            mesg->mesg(intro);
+            RTS_READ(rwlock()) {
+                map->dump(mesg->get_file(), prefix);
+            } RTS_READ_END;
+        } RTS_MESSAGE_END(true);
     }
 }
 
@@ -1472,13 +1478,13 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
 }
 
 void
-RSIM_Process::exit(int status)
+RSIM_Process::sys_exit(int status)
 {
     RTS_WRITE(rwlock()) {
         terminated = true;
         termination_status = status;
-        if (!threads.empty() && tracing(TRACE_WARNING))
-            fprintf(tracing(TRACE_WARNING), "ROBB: RSIM_Process::exit() not fully implemented yet.\n");
+        if (!threads.empty())
+            fprintf(stderr, "ROBB: RSIM_Process::exit() not fully implemented yet.\n");
     } RTS_WRITE_END;
 }
 

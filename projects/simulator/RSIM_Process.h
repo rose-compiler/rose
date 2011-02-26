@@ -67,17 +67,19 @@ public:
     rose_addr_t mem_map(rose_addr_t va, size_t size, unsigned rose_perms, unsigned flags, size_t offset, int fd);
 
     /** Set the process brk value and adjust the specimen's memory map accordingly.  The return value is either a negative
-     *  error number (such as -ENOMEM) or the new brk value.
+     *  error number (such as -ENOMEM) or the new brk value.  The optional @p mesg pointer will be used to show the memory map
+     *  after it is adjusted.
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    int mem_setbrk(rose_addr_t newbrk);
+    int mem_setbrk(rose_addr_t newbrk, RTS_Message *mesg=NULL);
 
     /** Unmap some specimen memory.  The starting virtual address, @p va, and number of bytes, @p sz, need not be page
      *  aligned, but if they are then the real munmap() is also called, substituting the real address for @p va.  The return
-     *  value is a negative error number on failure, or zero on success.
+     *  value is a negative error number on failure, or zero on success.  The optional @p mesg pointer will be used to show the
+     *  memory map after it is adjusted.
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    int mem_unmap(rose_addr_t va, size_t sz);
+    int mem_unmap(rose_addr_t va, size_t sz, RTS_Message *mesg=NULL);
 
     /** Change protection bits on part of the specimen virtual memory.  The @p rose_perms specify the desired permission bits
      *  to set in the specimen's memory map (in terms of MemoryMap::Protection bits) while the @p real_perms are the desired
@@ -88,12 +90,12 @@ public:
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
     int mem_protect(rose_addr_t va, size_t sz, unsigned rose_perms, unsigned real_perms);
     
-    /** Dump a memory map description to the specified file.  If the file is a null pointer then this method does nothing.  The
-     *  @p mesg is an optional message to be printed before the map (it should include a newline character), and @p prefix is
-     *  an optional string to print before each line of the map (defaulting to four spaces).
+    /** Dump a memory map description to the specified message object.  If @p mesg is a null pointer then this method does
+     *  nothing.  The @p intro is an optional message to be printed before the map (it should include a newline character), and
+     *  @p prefix is an optional string to print before each line of the map (defaulting to four spaces).
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    void mem_showmap(FILE *f, const char *mesg=NULL, const char *prefix=NULL);
+    void mem_showmap(RTS_Message *mesg, const char *intro=NULL, const char *prefix=NULL);
 
     /** Returns true if the specified specimen virtual address is mapped; false otherwise.
      *
@@ -319,7 +321,7 @@ public:
      *
      *  Thread safety: This method can be called by any thread or multiple threads. This function returns only when called by
      *  the main thread. */
-    void exit(int status);
+    void sys_exit(int status);
 
     /** Returns true if simulated process has terminated. */
     bool has_terminated() {

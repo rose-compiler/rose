@@ -116,20 +116,20 @@ RSIM_Thread::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list *
 void
 RSIM_Thread::syscall_enterv(uint32_t *values, const char *name, const char *format, va_list *app)
 {
-    RTS_Message *mesg = tracing(TRACE_SYSCALL);
-    FILE *f = mesg->get_file();
-    if (f) {
+    RTS_Message *m = tracing(TRACE_SYSCALL);
+
+    if (m->get_file()) {
         ArgInfo args[6];
         for (size_t i=0; format[i]; i++)
             syscall_arginfo(format[i], values?values[i]:syscall_arg(i), args+i, app);
 
-        RTS_MESSAGE(*mesg) {
-            mesg->multipart(name, "%s[%d](", name, syscall_arg(-1));
+        RTS_MESSAGE(*m) {
+            m->multipart(name, "%s[%d](", name, syscall_arg(-1));
             for (size_t i=0; format && format[i]; i++) {
-                if (i>0) fputs(", ", f);
-                print_single(f, format[i], args+i);
+                if (i>0) m->more(", ");
+                print_single(m, format[i], args+i);
             }
-            fputc(')', f);
+            m->more(")");
         } RTS_MESSAGE_END(false);
     }
 }
@@ -168,7 +168,7 @@ RSIM_Thread::syscall_leave(const char *format, ...)
 
         RTS_MESSAGE(*mesg) {
             mesg->more(" = ");
-            print_leave(mesg->get_file(), format[0], &info);
+            print_leave(mesg, format[0], &info);
 
             /* Additionally, output any other buffer values that were filled in by a successful system call. */
             int result = (int)(uint32_t)(syscall_arg(-1));
@@ -177,9 +177,9 @@ RSIM_Thread::syscall_leave(const char *format, ...)
                     if ('-'!=format[i]) {
                         syscall_arginfo(format[i], syscall_arg(i-1), &info, &ap);
                         if ('P'!=format[i] || 0!=syscall_arg(i-1)) { /* no need to show null pointers */
-                            fprintf(mesg->get_file(), "    arg%zu = ", i-1);
-                            print_single(mesg->get_file(), format[i], &info);
-                            fprintf(mesg->get_file(), "\n");
+                            mesg->more("    result arg%zu = ", i-1);
+                            print_single(mesg, format[i], &info);
+                            mesg->more("\n");
                         }
                     }
                 }
@@ -230,7 +230,7 @@ RSIM_Thread::signal_generate(int signo)
     RTS_Message *mesg = tracing(TRACE_SIGNAL);
     if (mesg->get_file()) {
         mesg->brief_begin("generated ");
-        print_enum(mesg->get_file(), signal_names, signo);
+        print_enum(mesg, signal_names, signo);
         mesg->brief_end("(%d)%s", signo, disposition);
     }
 }
@@ -262,17 +262,9 @@ RSIM_Thread::signal_deliver(int signo)
 
     if (signal_action[signo-1].handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
         /* The signal action may have changed since the signal was generated, so we need to check this again. */
-        if (mesg->get_file()) {
-            mesg->brief_begin("delivering ");
-            print_enum(mesg->get_file(), signal_names, signo);
-            mesg->brief_end("(%d) ignored", signo);
-        }
+        mesg->brief("delivering %s(%d) ignored", flags_to_str(signal_names, signo).c_str(), signo);
     } else if (signal_action[signo-1].handler_va==(uint32_t)(uint64_t)SIG_DFL) {
-        if (mesg->get_file()) {
-            mesg->brief_begin("delivering ");
-            print_enum(mesg->get_file(), signal_names, signo);
-            mesg->brief_end("(%d) default", signo);
-        }
+        mesg->brief("delivering %s(%d) default", flags_to_str(signal_names, signo).c_str(), signo);
         switch (signo) {
             case SIGFPE:
             case SIGILL:
@@ -316,17 +308,10 @@ RSIM_Thread::signal_deliver(int signo)
 
     } else if (signal_mask & ((uint64_t)1 << signo)) {
         /* Masked, but do not adjust signal_pending vector. */
-        if (mesg->get_file()) {
-            mesg->brief_begin("delivering ");
-            print_enum(mesg->get_file(), signal_names, signo);
-            mesg->brief_end("(%d) masked", signo);
-        }
+        mesg->brief("delivering %s(%d) masked", flags_to_str(signal_names, signo).c_str(), signo);
     } else {
-        if (mesg->get_file()) {
-            mesg->brief_begin("delivering ");
-            print_enum(mesg->get_file(), signal_names, signo);
-            mesg->brief_end("(%d) to 0x%08"PRIx32, signo, signal_action[signo-1].handler_va);
-        }
+        mesg->brief("delivering %s(%d) to 0x%08"PRIx32,
+                    flags_to_str(signal_names, signo).c_str(), signo, signal_action[signo-1].handler_va);
 
         uint32_t signal_return = policy.readIP().known_value();
         policy.push(signal_return);
@@ -378,7 +363,7 @@ RSIM_Thread::signal_return()
     RTS_Message *mesg = tracing(TRACE_SIGNAL);
     if (mesg->get_file()) {
         mesg->brief_begin("returning from ");
-        print_enum(mesg->get_file(), signal_names, signo);
+        print_enum(mesg, signal_names, signo);
         mesg->brief_end(" handler");
     }
 
@@ -671,7 +656,7 @@ RSIM_Thread::sys_exit(const Exit &e)
 
     /* Cause the entire process to exit if necesary. */
     if (e.exit_process)
-        process->exit(e.status);
+        process->sys_exit(e.status);
 
     return e.status;
 }
