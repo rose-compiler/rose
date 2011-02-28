@@ -428,8 +428,8 @@ bool InfiniteProductLattice::widenUpdate(InfiniteLattice* that)
 	for(it = lattices.begin(), itThat = (dynamic_cast<InfiniteProductLattice*>(that))->lattices.begin(); 
 	    it!=lattices.end() && itThat!=(dynamic_cast<InfiniteProductLattice*>(that))->lattices.end(); 
 	    it++, itThat++) {
-		Lattice* thisLat = *it;
-		Lattice* thatLat = *itThat;
+		/*Lattice* thisLat = *it;
+		Lattice* thatLat = *itThat;*/
 		modified = (dynamic_cast<InfiniteLattice*>(*it))->widenUpdate(dynamic_cast<InfiniteLattice*>(*itThat)) || modified;
 	}
        return modified;

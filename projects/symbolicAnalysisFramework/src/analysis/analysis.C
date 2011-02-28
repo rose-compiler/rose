@@ -241,7 +241,7 @@ bool IntraUniDirectionalDataflow::propagateStateToNextNode(
 		printf("\n        Propagating to Next Node: %p[%s]<%s>\n", nextNode.getNode(), nextNode.getNode()->class_name().c_str(), nextNode.getNode()->unparseToString().c_str());
 		int j;
 		for(j=0, itC = curNodeState.begin(); itC != curNodeState.end(); itC++, j++)
-			cout << "        Cur node: Lattice "<<j<<": \n"<<(*itC)->str("            ")<<"\n";
+			cout << "        Cur node: Lattice "<<j<<": \n            "<<(*itC)->str("            ")<<"\n";
 		for(j=0, itN = nextNodeState.begin(); itN != nextNodeState.end(); itN++, j++)
 			cout << "        Next node: Lattice "<<j<<": \n            "<<(*itN)->str("            ")<<"\n";
 	}
@@ -320,7 +320,7 @@ bool IntraFWDataflow::runAnalysis(const Function& func, NodeState* fState, bool 
 	// Initialize the lattices used by this analysis, if this is the first time the analysis visits this function
 	if(visited.find(func) == visited.end())
 	{
-		cout << "Initializing Dataflow State\n"; cout.flush();
+		//cout << "Initializing Dataflow State\n"; cout.flush();
 		InitDataflowState ids(this/*, initState*/);
 		ids.runAnalysis(func, fState);
 
@@ -377,7 +377,7 @@ bool IntraFWDataflow::runAnalysis(const Function& func, NodeState* fState, bool 
 		SgNode* sgn = n.getNode();
 		if(analysisDebugLevel>=1){
 			printf("====================================================================\n");
-			printf("Current Node %p<%s | %s>\n", sgn, sgn->unparseToString().c_str(), sgn->class_name().c_str());
+			printf("Current Node %p<%s | %s | %d>\n", sgn, sgn->unparseToString().c_str(), sgn->class_name().c_str(), n.getIndex());
 		}
 		bool modified = false;
 		
@@ -602,7 +602,7 @@ bool IntraBWDataflow::runAnalysis(const Function& func, NodeState* fState, bool 
 	// Initialize the lattices used by this analysis, if this is the first time the analysis visits this function
 	if(visited.find(func) == visited.end())
 	{
-		cout << "Initializing Dataflow State\n"; cout.flush();
+		//cout << "Initializing Dataflow State\n"; cout.flush();
 		InitDataflowState ids(this/*, initState*/);
 		ids.runAnalysis(func, fState);
 
@@ -614,8 +614,8 @@ bool IntraBWDataflow::runAnalysis(const Function& func, NodeState* fState, bool 
 	DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition());
 	DataflowNode funcCFGEnd   = cfgUtils::getFuncEndCFG(func.get_definition());
 		
-	printf("funcCFGStart <%s | %s>\n", funcCFGStart.getNode()->unparseToString().c_str(), funcCFGStart.getNode()->class_name().c_str());
-	printf("funcCFGEnd <%s | %s>\n", funcCFGEnd.getNode()->unparseToString().c_str(), funcCFGEnd.getNode()->class_name().c_str());
+	//printf("funcCFGStart <%s | %s>\n", funcCFGStart.getNode()->unparseToString().c_str(), funcCFGStart.getNode()->class_name().c_str());
+	//printf("funcCFGEnd <%s | %s>\n", funcCFGEnd.getNode()->unparseToString().c_str(), funcCFGEnd.getNode()->class_name().c_str());
 	
 	// Initialize the function's entry NodeState 
 	NodeState* entryState = *(NodeState::getNodeStates(funcCFGEnd).rbegin());
@@ -631,7 +631,7 @@ bool IntraBWDataflow::runAnalysis(const Function& func, NodeState* fState, bool 
 		SgNode* sgn = n.getNode();
 		if(analysisDebugLevel>=1){
 			printf("====================================================================\n");
-			printf("Current Node %p<%s | %s>\n", sgn, sgn->unparseToString().c_str(), sgn->class_name().c_str());
+			printf("Current Node %p<%s | %s | %d>\n", sgn, sgn->unparseToString().c_str(), sgn->class_name().c_str(), n.getIndex());
 		}
 		bool modified = false;
 		
@@ -694,7 +694,8 @@ bool IntraBWDataflow::runAnalysis(const Function& func, NodeState* fState, bool 
 			}
 			// Otherwise, call the user's transfer function
 			//else
-				/*modified = */transfer(func, n, *state, dfInfoAbove);
+				/*modified = */
+			transfer(func, n, *state, dfInfoAbove);
 			
 			// =================== TRANSFER FUNCTION ===================
 			if(analysisDebugLevel>=1)

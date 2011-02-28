@@ -549,6 +549,18 @@ ostream &operator<<(ostream &stream, varID v)
 	return stream;
 }
 
+ostream &operator<<(ostream &stream, const set<varID>::iterator& v)
+{
+	stream << v->str();
+	return stream;
+}
+
+/*ostream &operator<<(ostream &stream, const set<varID>::const_iterator& v)
+{
+	stream << v->str();
+	return stream;
+}*/
+
 // string representation of the variable reference, with variable/field names augmented with 
 // the line numbers where they were defined. File names are omitted for brevity	
 /*const char* varID::str_linenum()

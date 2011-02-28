@@ -487,7 +487,8 @@ void DivAnalysis::genInitState(const Function& func, const DataflowNode& n, cons
 {
 	//vector<Lattice*> initLattices;
 	map<varID, Lattice*> emptyM;
-	FiniteVarsExprsProductLattice* l = new FiniteVarsExprsProductLattice(true, false, true, (Lattice*)new DivLattice(), emptyM/*genConstVarLattices()*/, (Lattice*)NULL, ldva, /*func, */n, state);
+	FiniteVarsExprsProductLattice* l = new FiniteVarsExprsProductLattice((Lattice*)new DivLattice(), emptyM/*genConstVarLattices()*/, 
+	                                                                     (Lattice*)NULL, ldva, /*func, */n, state);
 	//printf("DivAnalysis::genInitState, returning %p\n", l);
 	initLattices.push_back(l);
 	

@@ -390,7 +390,7 @@ void SgnAnalysis::genInitState(const Function& func, const DataflowNode& n, cons
 	//map<varID, Lattice*> constVars;
 	//FiniteVariablesProductLattice* l = new FiniteVariablesProductLattice(true, false, new SgnLattice(), constVars, NULL, func, n, state);
 	map<varID, Lattice*> emptyM;
-	FiniteVarsExprsProductLattice* l = new FiniteVarsExprsProductLattice(true, false, true, (Lattice*)new SgnLattice(), emptyM, (Lattice*)NULL, ldva, n, state);
+	FiniteVarsExprsProductLattice* l = new FiniteVarsExprsProductLattice((Lattice*)new SgnLattice(), emptyM, (Lattice*)NULL, ldva, n, state);
 	initLattices.push_back(l);
 	/*cout << "    #initLattices="<<initLattices.size()<<":\n";
 	for(vector<Lattice*>::const_iterator it=initLattices.begin(); it!=initLattices.end(); it++) {

@@ -1045,8 +1045,7 @@ bool affineInequality::semLessThan(const affineInequality& that,
 		return false;*/
 	}
 	// Else, if y is a constant
-	else if(yZero && yZero->getA()==1 && yZero->getB()==1 && 
-	        zeroY && zeroY->getA()==1 && zeroY->getB()==1 && yZero->getC() == (0-zeroY->getC()))
+	else if(yConst)
 	{
 		//printf("yZero, c == that.c=%d, a<that.a=%d, a==1 && that.a==1=%d, c<that.c=%d\n", c == that.c, a<that.a, a==1 && that.a==1, c<that.c);
 		cout << indent << "x is constant, This bound: x <= "<<((yZero->getC()*b+c)/a)<<", That bound: x <= "<<((yZero->getC()*that.b+that.c)/that.a)<<"\n";

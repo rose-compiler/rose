@@ -244,6 +244,8 @@ public:
 };
 
 ostream &operator<<(ostream &stream, varID v);
+ostream &operator<<(ostream &stream, const set<varID>::iterator& v);
+//ostream &operator<<(ostream &stream, const set<varID>::const_iterator& v);
 
 //bool operator == ( const varID &one, const varID &two);
 

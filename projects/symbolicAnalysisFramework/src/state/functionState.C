@@ -112,8 +112,8 @@ void FunctionState::setParamArgByRefMap(SgFunctionCallExp* call, map<varID, varI
 	    itParams!=params.end() && itArgs!=args.end(); 
 	    itParams++, itArgs++)
 	{
-		SgType* typeParam = (*itParams)->get_type();
-		SgType* typeArg = cfgUtils::unwrapCasts((*itArgs))->get_type();
+		/*SgType* typeParam = (*itParams)->get_type();
+		SgType* typeArg = cfgUtils::unwrapCasts((*itArgs))->get_type();*/
 			
 		/*printf("FunctionState::setParamArgByRefMap() *itArgs=<%s | %s> isValidVar=%d\n", (*itArgs)->unparseToString().c_str(), (*itArgs)->class_name().c_str(), varID::isValidVarExp(*itArgs));
 		printf("                                     typeArg=<%s | %s>\n", typeArg->unparseToString().c_str(), typeArg->class_name().c_str());

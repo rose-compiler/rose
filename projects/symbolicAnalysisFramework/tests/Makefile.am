@@ -2,11 +2,12 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/symbolicAnalysisFramework/common.for.dep.libs
 # ----------test program -------------------
 #SAF_BUILD_ROOT = $(top_builddir)/projects/symbolicAnalysisFramework
-noinst_PROGRAMS = factPlacer latticePlacer scalarFWDataflow pathSensitive genInterestingCFG genCFG
+noinst_PROGRAMS = factPlacer latticePlacer scalarFWDataflow liveDeadVarAnalysisSelfTest pathSensitive genInterestingCFG genCFG
 # runtimeBoundAnalysis.C  scalarFWDataflow_example.C
 factPlacer_SOURCES = factPlacer.C
 latticePlacer_SOURCES = latticePlacer.C
 scalarFWDataflow_SOURCES = scalarFWDataflow.C scalarFWDataflow.h
+liveDeadVarAnalysisSelfTest_SOURCES = liveDeadVarAnalysisSelfTest.C
 pathSensitive_SOURCES = pathSensitive.C pathSensitive.h
 genInterestingCFG_SOURCES = genInterestingCFG.C
 genCFG_SOURCES = genCFG.C
