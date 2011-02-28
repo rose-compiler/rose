@@ -362,6 +362,10 @@ public:
 	 * in the subtree. Expanded definitions are not included - for example if p.x is defined, p is not included. */
 	std::set<VarName> getOriginalVarsDefinedInSubtree(SgNode* root) const;
 
+	/** Returns the last encountered definition of every variable. Variables go out of scope, so
+	 * quering for reaching definitions at the end of a function doesn't return the last versions of all variables. */
+	NodeReachingDefTable getLastVersions(SgFunctionDeclaration* func) const;
+
 	//------------ STATIC UTILITY FUNCTIONS FUNCTIONS ------------ //
 
 

@@ -29,7 +29,7 @@ inline static Rose_STL_Container<SgStatement*> make_unit_list(SgStatement* x) {
 //!              from is not in the test of a loop or if statement
 //!              not currently traversing from
 void replaceAssignmentStmtWithStatement(SgExprStatement* from,
-					SageInterface::StatementGenerator* to);
+                                        SageInterface::StatementGenerator* to);
 
 // DQ (12/14/2006): Modified this function to find the root node of an expression, which 
 // is not always a SgExpressionRoot, now that we have removed these from the AST.
@@ -52,8 +52,8 @@ void pushTestIntoBody(SgScopeStatement* loopStmt);
 //! Needs to be merged
 void myStatementInsert(SgStatement* target, 
                        SgStatement* newstmt,
-		       bool before,
-		       bool allowForInit = false);
+                       bool before,
+                       bool allowForInit = false);
 
 //! Replace the expression "from" with another expression "to", wherever it
 //! appears in the AST.  The expression "from" is not deleted, and may be

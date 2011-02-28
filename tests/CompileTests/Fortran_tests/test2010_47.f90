@@ -1,4 +1,4 @@
-module test2007_176_mod1
+module test2010_47_mod1
    ! The keyword "protected" is specific to F2003.
    ! integer, protected :: val
      integer :: val
@@ -19,7 +19,7 @@ module test2007_176_mod1
 end module
 
 program dt_init01
-     use test2007_176_mod1
+     use test2010_47_mod1
      implicit none
      integer :: value, his_age
      call set_val(88)

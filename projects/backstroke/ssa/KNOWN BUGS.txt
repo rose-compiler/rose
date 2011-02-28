@@ -9,6 +9,8 @@ BUGS
 
 -Bodies of catch statements are not analyzed. This is a shortcoming of the ROSE virtual CFG (to be fixed by Michael)
 
+-Variables used to define the dimensions inside an array declaration are not detected as uses
+
 -Dead code is not handled correctly. Uses of a variable inside dead code result in an assertion that there is a use
    with no reaching definitions.
 

@@ -91,7 +91,7 @@ jofp_invoke(int argc, char **argv)
      retval = (*env).CallBooleanMethod(cls, errorMethod);
      if (retval != 0)  {
          fprintf(stderr, "C++ side : Error detected ---------------------------------.\n");
-	 abort();
+         abort();
      }      
 #endif
 
@@ -122,7 +122,7 @@ jofp_get_method(int static_method, const char* name, const char* arg)
     result = jserver_GetMethodID(static_method, jofp_get_class(), name, arg);
 
     if (result == NULL) jserver_handleException();
-	return result;
+        return result;
 }
 
 

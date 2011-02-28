@@ -13,7 +13,7 @@
 #include "merge.h"
 
 #ifdef _MSC_VER
-#include <direct.h>	// chdir
+#include <direct.h>     // chdir
 #endif
 
 // This implements the support for merging ASTs. It should merge perfectly
@@ -83,7 +83,7 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
 
 
 
-	 // Note that skipFrontendSpecificIRnodes alows the generated graphs to skip the 
+         // Note that skipFrontendSpecificIRnodes alows the generated graphs to skip the 
   // representation or IR nodes that are marked to be frontend specific.
 
      if (SgProject::get_verbose() > 0)
@@ -290,7 +290,7 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
 #if 0
   // DQ (11/27/2009): MSVC does not appear to support optional specification of size of hash table.
 #pragma message ("WARNING: MSVC does not appear to support optional specification of size of hash table.")
-	 printf ("WARNING: MSVC does not appear to support optional specification of size of hash table.");
+         printf ("WARNING: MSVC does not appear to support optional specification of size of hash table.");
      ReplacementMapTraversal::ReplacementMapType replacementMap; // (replacementHashTableSize);
 #else
      ReplacementMapTraversal::ReplacementMapType replacementMap(replacementHashTableSize);
@@ -854,10 +854,10 @@ int AstMergeSupport ( SgProject* project )
                     int nextErrorCode = 0;
 #if 1
                  // int fileIndex = 0;
-		                        
-		    // CH (4/7/2010): The header file "direct.h" in MSVC supports 'chdir' function.
+                                        
+                    // CH (4/7/2010): The header file "direct.h" in MSVC supports 'chdir' function.
 
-					int chdirError = chdir(workingDirectory.c_str());
+                                        int chdirError = chdir(workingDirectory.c_str());
 
                     ROSE_ASSERT (chdirError == 0);
 

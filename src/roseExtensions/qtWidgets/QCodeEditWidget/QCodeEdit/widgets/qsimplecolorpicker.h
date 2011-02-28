@@ -19,38 +19,38 @@
 #include "qce-config.h"
 
 /*!
-	\file qsimplecolorpicker.h
-	\brief Definition of the QSimpleColorPicker class
+        \file qsimplecolorpicker.h
+        \brief Definition of the QSimpleColorPicker class
 */
 
 #include <QToolButton>
 
 class QCE_EXPORT QSimpleColorPicker : public QToolButton
 {
-	Q_OBJECT
-	
-	Q_PROPERTY(QColor color READ color WRITE setColor)
-	
-	public:
-		QSimpleColorPicker(QWidget *w = 0);
-		QSimpleColorPicker(const QColor& c, QWidget *w = 0);
-		
-		const QColor& color() const;
-		
-	protected:
-		void resizeEvent(QResizeEvent *e);
-		void contextMenuEvent(QContextMenuEvent *e);
-		
-	public slots:
-		void setColor(const QColor& c);
-		
-		void updateIcon(const QSize& sz);
-		
-	private slots:
-		void clicked();
-		
-	private:
-		QColor m_color;
+        Q_OBJECT
+        
+        Q_PROPERTY(QColor color READ color WRITE setColor)
+        
+        public:
+                QSimpleColorPicker(QWidget *w = 0);
+                QSimpleColorPicker(const QColor& c, QWidget *w = 0);
+                
+                const QColor& color() const;
+                
+        protected:
+                void resizeEvent(QResizeEvent *e);
+                void contextMenuEvent(QContextMenuEvent *e);
+                
+        public slots:
+                void setColor(const QColor& c);
+                
+                void updateIcon(const QSize& sz);
+                
+        private slots:
+                void clicked();
+                
+        private:
+                QColor m_color;
 };
 
 #endif

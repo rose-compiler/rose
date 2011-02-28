@@ -1,0 +1,24 @@
+
+mptAstInlining_la_sources=\
+	$(mptAstInliningPath)/inliner.C \
+	$(mptAstInliningPath)/inlinerSupport.C \
+	$(mptAstInliningPath)/isPotentiallyModified.C \
+	$(mptAstInliningPath)/replaceExpressionWithStatement.C 
+
+
+mptAstInlining_includeHeaders=\
+	$(mptAstInliningPath)/replaceExpressionWithStatement.h \
+	$(mptAstInliningPath)/inlinerSupport.h \
+	$(mptAstInliningPath)/inliner.h
+
+
+mptAstInlining_extraDist=\
+	$(mptAstInliningPath)/CMakeLists.txt
+
+
+mptAstInlining_cleanLocal=\
+	rm -rf \
+		$(mptAstInliningPath)/Templates.DB \
+		$(mptAstInliningPath)/ii_files \
+		$(mptAstInliningPath)/ti_files \
+		$(mptAstInliningPath)/core

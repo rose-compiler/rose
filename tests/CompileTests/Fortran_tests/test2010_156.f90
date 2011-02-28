@@ -7,7 +7,7 @@
 ! the one in which ROSE fails a assertion when it sees an empty string constant.
 ! If anyone fixes that bug, then this test file will no longer fail.
 
-module m
+module m156
 contains
   subroutine g
     character :: c = ""  ! ROSE fails here and leaves a bad rmod file

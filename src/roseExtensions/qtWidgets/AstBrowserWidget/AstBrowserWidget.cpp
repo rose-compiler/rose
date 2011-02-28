@@ -7,34 +7,34 @@
 #include <QDebug>
 
 AstBrowserWidget::AstBrowserWidget(QWidget*par)
-	: RoseTreeView(par)
+        : RoseTreeView(par)
 {
-	model=new QtAstModel(NULL);
-	setModel(model);
+        model=new QtAstModel(NULL);
+        setModel(model);
 
-	connect(this,SIGNAL(nodeDropped(SgNode *, const QPoint &)),
+        connect(this,SIGNAL(nodeDropped(SgNode *, const QPoint &)),
                      SLOT(setNode( SgNode *)));
 }
 
 
 AstBrowserWidget::AstBrowserWidget(SgNode * node, QWidget * par)
-	: RoseTreeView(par)
+        : RoseTreeView(par)
 {
-	model=new QtAstModel(node);
-	setModel(model);
-	connect(this,SIGNAL(nodeActivated(const QModelIndex &)),SLOT(viewClicked(const QModelIndex &)));
-	connect(this,SIGNAL(nodeActivatedAlt(const QModelIndex &)),SLOT(viewDoubleClicked(const QModelIndex &)));
+        model=new QtAstModel(node);
+        setModel(model);
+        connect(this,SIGNAL(nodeActivated(const QModelIndex &)),SLOT(viewClicked(const QModelIndex &)));
+        connect(this,SIGNAL(nodeActivatedAlt(const QModelIndex &)),SLOT(viewDoubleClicked(const QModelIndex &)));
 }
 
 AstBrowserWidget::~AstBrowserWidget()
 {
-	delete model;
+        delete model;
 }
 
 
 void AstBrowserWidget::setNode(SgNode * node)
 {
-	model->setNode(node);
+        model->setNode(node);
 }
 
 void AstBrowserWidget::setFilter(AstFilterInterface * newFilter)

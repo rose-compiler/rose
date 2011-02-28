@@ -1,4 +1,4 @@
-module rose_define_kind
+module rose_define_kind_10_06
 
 integer, parameter :: REAL8 = SELECTED_REAL_KIND(12)
 

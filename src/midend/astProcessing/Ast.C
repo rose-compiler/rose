@@ -76,9 +76,9 @@ Ast::rightSiblings(SgNode* astNode) {
     bool found=false;
     for(NodeList::iterator i=l.begin(); i!=l.end(); i++) {
       if(found)
-	rightSiblings.push_back(*i);
+        rightSiblings.push_back(*i);
       if(astNode==*i)
-	found=true;
+        found=true;
     }
   }
   return rightSiblings;

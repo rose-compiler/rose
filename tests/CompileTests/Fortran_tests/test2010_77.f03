@@ -1,5 +1,5 @@
-module X
+module X77
 
    integer, protected :: Y
 
-end module X
+end module X77

@@ -7,35 +7,35 @@
 using namespace ticl;
 
 // DQ (12/1/2009): Fixed Use of "// std::out ..." in define (below) with "\" line continuation (reported by MSVC).
-#define FILL_IN_STRUCT(STRUCT_NAME,FORMAT, FILENAME)			\
-  string line;								\
-  directory+="/";							\
-  std::string filename;							\
-  filename =directory+string( FILENAME );				\
-  ifstream myfile;							\
+#define FILL_IN_STRUCT(STRUCT_NAME,FORMAT, FILENAME)                    \
+  string line;                                                          \
+  directory+="/";                                                       \
+  std::string filename;                                                 \
+  filename =directory+string( FILENAME );                               \
+  ifstream myfile;                                                      \
   /*vector<STRUCT_NAME> vec_##STRUCT_NAME;*/ /*= new vector<STRUCT_NAME>();*/ \
-  /* std::cout << "Opening file:" << filename << std::endl;	*/	\
-  myfile.open(filename.c_str());					\
-									\
-  if (myfile.is_open())							\
-    {									\
-      /*vec_##STRUCT_NAME = new vector<STRUCT_NAME>();*/		\
-      while (! myfile.eof() )						\
-	{								\
-	  getline (myfile,line);					\
-									\
-	  if(line != "")						\
-	    {								\
-	      vec_STRUCT.push_back( STRUCT_NAME () );			\
-	      STRUCT_NAME* elem_##STRUCT_NAME = &vec_STRUCT.back();	\
-	      /* STRUCT_NAME* elem_##STRUCT_NAME = new STRUCT_NAME();*/ \
-	      /*std::cout << "line:" << line << std::endl; */		\
-	      read_file(line, FORMAT, ARGS_##STRUCT_NAME);		\
-	    }								\
-	}								\
-									\
-      myfile.close();							\
-    } else cout << "Unable to open file " + filename;			\
+  /* std::cout << "Opening file:" << filename << std::endl;     */      \
+  myfile.open(filename.c_str());                                        \
+                                                                        \
+  if (myfile.is_open())                                                 \
+    {                                                                   \
+      /*vec_##STRUCT_NAME = new vector<STRUCT_NAME>();*/                \
+      while (! myfile.eof() )                                           \
+        {                                                               \
+          getline (myfile,line);                                        \
+                                                                        \
+          if(line != "")                                                \
+            {                                                           \
+              vec_STRUCT.push_back( STRUCT_NAME () );                   \
+              STRUCT_NAME* elem_##STRUCT_NAME = &vec_STRUCT.back();     \
+              /* STRUCT_NAME* elem_##STRUCT_NAME = new STRUCT_NAME();*/ \
+              /*std::cout << "line:" << line << std::endl; */           \
+              read_file(line, FORMAT, ARGS_##STRUCT_NAME);              \
+            }                                                           \
+        }                                                               \
+                                                                        \
+      myfile.close();                                                   \
+    } else cout << "Unable to open file " + filename;                   \
   /*return vec_STRUCT*/
 
 
@@ -52,22 +52,22 @@ void read_file (std::string line, const char *format, ...) {
 
   char* s;
   string str;
-  const char* delimiters =	"\t\n";
-  //const char* quote_delimiters =	"\"";
+  const char* delimiters =      "\t\n";
+  //const char* quote_delimiters =      "\"";
 
   s = strtok((char*)line.c_str(), delimiters);
 
-  //	" \t;()\"<>:{}[]+-=&*#.,/\\~";
+  //    " \t;()\"<>:{}[]+-=&*#.,/\\~";
   while (*p) {
     //Get next word in line
 
 #if 0
     if( s== NULL)
       {
-	std::cerr << "Format error on line: " << line << std::endl;
-	std::cerr << "Exprected:" << format << std::endl;
+        std::cerr << "Format error on line: " << line << std::endl;
+        std::cerr << "Exprected:" << format << std::endl;
 
-	assert(s!=NULL);
+        assert(s!=NULL);
       }
 #endif
     if(s != NULL)
@@ -79,11 +79,11 @@ void read_file (std::string line, const char *format, ...) {
     switch(*p) {
     case 's':
       {
-	temp_string = va_arg(ap, string*);
-	(*temp_string) = str;
-	//	std::cout << "temp_string: " << *temp_string << std::endl;
-	++p;
-	break;
+        temp_string = va_arg(ap, string*);
+        (*temp_string) = str;
+        //      std::cout << "temp_string: " << *temp_string << std::endl;
+        ++p;
+        break;
       }
     default:
       ++p;
@@ -128,7 +128,7 @@ void ticl::get_instructions_1(std::string directory, vector<instructions_1>& vec
 
 void ticl::get_callgraph_1(std::string directory, vector<callgraph_1>& vec_STRUCT)
 {
-#define ARGS_callgraph_1  &elem_callgraph_1->id, &elem_callgraph_1->src, &elem_callgraph_1->src_basic_block_id,	\
+#define ARGS_callgraph_1  &elem_callgraph_1->id, &elem_callgraph_1->src, &elem_callgraph_1->src_basic_block_id, \
     &elem_callgraph_1->src_address, &elem_callgraph_1->dst
   FILL_IN_STRUCT(callgraph_1, "sssss","callgraph_1.tsv");
 };
@@ -136,7 +136,7 @@ void ticl::get_callgraph_1(std::string directory, vector<callgraph_1>& vec_STRUC
 void ticl::get_control_flow_graph_1(std::string directory, vector<control_flow_graph_1>& vec_STRUCT)
 {
 #define ARGS_control_flow_graph_1  &elem_control_flow_graph_1->id, &elem_control_flow_graph_1->parent_function, \
-    &elem_control_flow_graph_1->src, &elem_control_flow_graph_1->dst,	\
+    &elem_control_flow_graph_1->src, &elem_control_flow_graph_1->dst,   \
     &elem_control_flow_graph_1->kind
   FILL_IN_STRUCT(control_flow_graph_1, "sssss", "control_flow_graph_1.tsv");
 };

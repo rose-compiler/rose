@@ -846,7 +846,10 @@ int main( int argc, char * argv[] )
       string out12[] = {"i","p","x"};
       vector<string> out12v(out12,out12+3);
       outputResults.insert(pair<int,  vector<string> >( make_pair(20, out12v )));
-      testOneFunction("::main", argvList, debug, 36, results,outputResults);
+
+   // DQ (1/16/2011): More types added when doing AST query.
+   // testOneFunction("::main", argvList, debug, 36, results,outputResults);
+      testOneFunction("::main", argvList, debug, 37, results,outputResults);
     }
 
     if (startNrInt==9 || testAll) {
@@ -864,7 +867,9 @@ int main( int argc, char * argv[] )
       vector<string> out12v(out12,out12+1);
       outputResults.insert(pair<int,  vector<string> >( make_pair(12, out12v )));
 
-      testOneFunction("::main", argvList, debug, 33, results,outputResults);
+   // DQ (1/16/2011): More types added when doing AST query.
+   // testOneFunction("::main", argvList, debug, 33, results,outputResults);
+      testOneFunction("::main", argvList, debug, 34, results,outputResults);
     }
 
     if (startNrInt==10 || testAll) {
@@ -906,7 +911,10 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 18 -----------------------------------------
       argvList[1]=srcdir+"tests/test18.C";
       results.clear();  outputResults.clear();
-      testOneFunction("::main", argvList, debug, 56, results,outputResults);
+
+   // DQ (1/16/2011): More types added when doing AST query.
+   // testOneFunction("::main", argvList, debug, 56, results,outputResults);
+      testOneFunction("::main", argvList, debug, 57, results,outputResults);
     }
 
     if (startNrInt==19 || testAll) {
@@ -949,7 +957,10 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 24 -----------------------------------------
       argvList[1]=srcdir+"tests/inputlivenessAnalysis.C";
       results.clear();  outputResults.clear();
-      testOneFunction("::main", argvList, debug, 71, results,outputResults);
+
+   // DQ (1/16/2011): More types added when doing AST query.
+   // testOneFunction("::main", argvList, debug, 71, results,outputResults);
+      testOneFunction("::main", argvList, debug, 73, results,outputResults);
     }
 
     if (startNrInt==25 || testAll) {

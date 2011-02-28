@@ -1,0 +1,52 @@
+# Non-recursive Makefile
+
+mpaPointerAnal_includes=\
+	-I$(mpaPointerAnalPath)/../CFG \
+	-I$(top_srcdir)/src/util/support \
+	-I$(top_srcdir)/src/util/graphs \
+	-I$(top_srcdir)/src/midend/astUtil \
+	-I$(top_srcdir)/src/midend/astUtil/astSupport \
+	-I$(top_srcdir)/src/midend/astUtil/astInterface 
+
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+mpaPointerAnal_la_sources=\
+	$(mpaPointerAnalPath)/PtrAnal.C \
+	$(mpaPointerAnalPath)/PtrAnalCFG.C
+
+
+mpaPointerAnal_includeHeaders=\
+	$(mpaPointerAnalPath)/steensgaard.h \
+	$(mpaPointerAnalPath)/PtrAnal.h
+
+
+mpaPointerAnal_extraDist=\
+	$(mpaPointerAnalPath)/CMakeLists.txt \
+	$(mpaPointerAnalPath)/steensgaard.h \
+	$(mpaPointerAnalPath)/PtrAnal.h \
+	$(mpaPointerAnalPath)/SteensgaardPtrAnal.h
+
+
+mpaPointerAnal_cleanLocal=\
+	rm -rf \
+		$(mpaPointerAnalPath)/Templates.DB \
+		$(mpaPointerAnalPath)/ii_files \
+		$(mpaPointerAnalPath)/ti_files \
+		$(mpaPointerAnalPath)/cxx_templates
+
+
+mpaPointerAnal_distCleanLocal=\
+	rm -rf \
+		$(mpaPointerAnalPath)/Templates.DB
+
+
+
+
+
+
+
+

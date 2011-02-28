@@ -19,7 +19,7 @@ class HasValueDescriptor
     {
       return ReadContainer<HasValueDescriptor, 
                            CollectPair<StringDescriptor, SymbolicValDescriptor, '='>,
-	                   ';', '{','}'>::read(*this, in);   
+                           ';', '{','}'>::read(*this, in);   
     }
   bool merge (const HasValueDescriptor& that); 
   std::string toString() const;
@@ -90,9 +90,9 @@ class ValueAnnotation
                     MapObject<SymbolicVal, SymbolicVal>* valMap = 0,
                     Map2Object<AstInterface*, AstNodePtr, AstNodePtr> *codegen = 0);
   bool is_access_value( CPPAstInterface& fa, const AstNodePtr& exp,
-			AstNodePtr* obj=0, std::string* name = 0,
-			AstInterface::AstNodeList* args=0,
-			HasValueDescriptor* desc = 0);
+                        AstNodePtr* obj=0, std::string* name = 0,
+                        AstInterface::AstNodeList* args=0,
+                        HasValueDescriptor* desc = 0);
 };
 
 #endif

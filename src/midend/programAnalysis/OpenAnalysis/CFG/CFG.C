@@ -209,7 +209,7 @@ CFG::build_block (CFG::Node* prev_node, IRStmtIterator *si_ptr, CFG::NodeLabelLi
 */
 IRStmtType
 CFG::build_stmt (CFG::Node* prev_node, StmtHandle stmt, CFG::NodeLabelList& exit_nodes, CFG::NodeLabelList* break_nodes,
-		CFG::NodeLabelList* return_nodes, CFG::NodeLabelList* continue_nodes)
+                CFG::NodeLabelList* return_nodes, CFG::NodeLabelList* continue_nodes)
   throw (CFG::Unexpected_Break, CFG::Unexpected_Return, CFG::Unexpected_Continue)
 {
     // handle different types of nodes. 
@@ -223,29 +223,29 @@ CFG::build_stmt (CFG::Node* prev_node, StmtHandle stmt, CFG::NodeLabelList& exit
     case BREAK:
       prev_node->add(stmt);
       if (break_nodes == 0)
-	throw CFG::Unexpected_Break();
+        throw CFG::Unexpected_Break();
       else
-	break_nodes->push_back(NodeLabel(prev_node, BREAK_EDGE));
+        break_nodes->push_back(NodeLabel(prev_node, BREAK_EDGE));
       return BREAK;
     case RETURN:
       prev_node->add(stmt);
       if (return_nodes == 0)
-	throw CFG::Unexpected_Return();
+        throw CFG::Unexpected_Return();
       else
-	return_nodes->push_back(NodeLabel(prev_node, RETURN_EDGE));
+        return_nodes->push_back(NodeLabel(prev_node, RETURN_EDGE));
       return RETURN;
     case LOOP:
       return build_CFG_loop (prev_node, stmt, exit_nodes, return_nodes);
     case STRUCT_TWOWAY_CONDITIONAL:
       return build_CFG_twoway_branch (prev_node, stmt, exit_nodes, break_nodes,
-				      return_nodes, continue_nodes);
+                                      return_nodes, continue_nodes);
     case STRUCT_MULTIWAY_CONDITIONAL:
       if (ir.IsBreakImplied(stmt))
         return build_CFG_multiway_branch (prev_node, stmt, exit_nodes, break_nodes,
-					  return_nodes, continue_nodes);
+                                          return_nodes, continue_nodes);
       else
         return build_CFG_multiway_branch_with_fallthrough (prev_node, stmt, exit_nodes,
-					  return_nodes, continue_nodes);
+                                          return_nodes, continue_nodes);
     case END_TESTED_LOOP:
       return build_CFG_end_tested_loop (prev_node, stmt, exit_nodes, return_nodes);
     case LOOP_CONTINUE:
@@ -438,7 +438,7 @@ CFG::build_CFG_loop (CFG::Node* prev_node, StmtHandle th, CFG::NodeLabelList& ex
 */
 IRStmtType
 CFG::build_CFG_end_tested_loop (CFG::Node* prev_node, StmtHandle th, CFG::NodeLabelList& exit_nodes,
-		              CFG::NodeLabelList* return_nodes)
+                              CFG::NodeLabelList* return_nodes)
 {
   // FIXME: New construct, partially tested.
   // New CFG nodes must be allocated for both the body and loop condition (we can re-use
@@ -510,7 +510,7 @@ CFG::build_CFG_end_tested_loop (CFG::Node* prev_node, StmtHandle th, CFG::NodeLa
 */
 IRStmtType
 CFG::build_CFG_twoway_branch (CFG::Node* prev_node, StmtHandle th, CFG::NodeLabelList& exit_nodes,
-			      CFG::NodeLabelList* break_nodes, CFG::NodeLabelList* return_nodes,
+                              CFG::NodeLabelList* break_nodes, CFG::NodeLabelList* return_nodes,
                               CFG::NodeLabelList* continue_nodes)
 {
   // add the if statement itself to the previous block. it represents 
@@ -574,7 +574,7 @@ CFG::build_CFG_twoway_branch (CFG::Node* prev_node, StmtHandle th, CFG::NodeLabe
 */
 IRStmtType
 CFG::build_CFG_multiway_branch (CFG::Node* prev_node, StmtHandle th, CFG::NodeLabelList& exit_nodes,
-				CFG::NodeLabelList* break_nodes, CFG::NodeLabelList* return_nodes,
+                                CFG::NodeLabelList* break_nodes, CFG::NodeLabelList* return_nodes,
                                 CFG::NodeLabelList* continue_nodes)
 {
   // add the switch statement to the previous block. the switch statement
@@ -631,7 +631,7 @@ CFG::build_CFG_multiway_branch (CFG::Node* prev_node, StmtHandle th, CFG::NodeLa
 */
 IRStmtType
 CFG::build_CFG_multiway_branch_with_fallthrough (CFG::Node* prev_node, StmtHandle th, CFG::NodeLabelList& exit_nodes,
-				CFG::NodeLabelList* return_nodes, CFG::NodeLabelList* continue_nodes)
+                                CFG::NodeLabelList* return_nodes, CFG::NodeLabelList* continue_nodes)
 {
   // add the switch statement to the previous block. the switch statement
   // represents the multi-way conditional branch terminating the block.
@@ -924,22 +924,22 @@ CFG::compute_uses_sets ()
     while ((bool)s_iter) {
       IRUseDefIterator *u_iterptr = ir.GetUses((StmtHandle)s_iter);
       while (u_iterptr->IsValid()) {
-	LeafHandle s = u_iterptr->Current();
-	if (kill_set.find(ir.GetSymHandle(s)) == kill_set.end()) // the variable does not exist in the kill set
-	  if (non_locals.find(s) == non_locals.end())
-	    // insert only if not already in the set, otherwise, it can get duplicated
-	    non_locals.insert(s);
-	++(*u_iterptr);
+        LeafHandle s = u_iterptr->Current();
+        if (kill_set.find(ir.GetSymHandle(s)) == kill_set.end()) // the variable does not exist in the kill set
+          if (non_locals.find(s) == non_locals.end())
+            // insert only if not already in the set, otherwise, it can get duplicated
+            non_locals.insert(s);
+        ++(*u_iterptr);
       }
 
       IRUseDefIterator *d_iterptr = ir.GetDefs((StmtHandle)s_iter);
       while (d_iterptr->IsValid()) {
-	LeafHandle s = d_iterptr->Current();
+        LeafHandle s = d_iterptr->Current();
         SymHandle s_name = ir.GetSymHandle(s);
-	kill_set.insert(s_name);
-	if (def_blocks_set[s_name].find(n) == def_blocks_set[s_name].end())
-	  def_blocks_set[s_name].insert(n);
-	++(*d_iterptr);
+        kill_set.insert(s_name);
+        if (def_blocks_set[s_name].find(n) == def_blocks_set[s_name].end())
+          def_blocks_set[s_name].insert(n);
+        ++(*d_iterptr);
       }
       ++s_iter;
     }
@@ -1030,10 +1030,10 @@ CFG::dump (ostream& os)
       os << n->label;
       ++nodes_iter;
       while (nodes_iter != (*def_blks_iter).second.end()) {
-	os << ", ";
-	n = *nodes_iter;
-	os << n->label;
-	++nodes_iter;
+        os << ", ";
+        n = *nodes_iter;
+        os << n->label;
+        ++nodes_iter;
       }
     }
     os << "}" << endl;
@@ -1083,23 +1083,23 @@ CFG::Node::longdump (CFG *currcfg, ostream& os)
     IRUseDefIterator *defs_iterptr = rir.GetDefs(s);
     if (defs_iterptr->IsValid()) {
         rir.PrintLeaf(defs_iterptr->Current(), os);
-	++(*defs_iterptr);
-	while (defs_iterptr->IsValid()) {
-	  os << ", ";
+        ++(*defs_iterptr);
+        while (defs_iterptr->IsValid()) {
+          os << ", ";
           rir.PrintLeaf(defs_iterptr->Current(), os);
-	  ++(*defs_iterptr);
-	}
+          ++(*defs_iterptr);
+        }
     }
     os << "}, Uses: {";
     IRUseDefIterator *uses_iterptr = rir.GetUses(s);
     if (uses_iterptr->IsValid()) {
         rir.PrintLeaf(uses_iterptr->Current(), os);
-	++(*uses_iterptr);
-	while (uses_iterptr->IsValid()) {
-	  os << ", ";
+        ++(*uses_iterptr);
+        while (uses_iterptr->IsValid()) {
+          os << ", ";
           rir.PrintLeaf(uses_iterptr->Current(), os);
-	  ++(*uses_iterptr);
-	}
+          ++(*uses_iterptr);
+        }
     }
     os << "}" << endl;
     ++s_iter;
@@ -1189,7 +1189,7 @@ struct compareBranchCounters {
 
   bool operator() (const Branch_Counter* b1, const Branch_Counter* b2) const {
     return ((b1->branchInstruction != b2->branchInstruction) && 
-	    (b1->count == b2->count));
+            (b1->count == b2->count));
   }
 };
 
@@ -1493,7 +1493,7 @@ CFG::createBasicCFG()
         //
         ++si;
         if (1 /* (bool)si == true */) {
-	  StmtHandle val = ((bool)si) ? (StmtHandle)si : 0;
+          StmtHandle val = ((bool)si) ? (StmtHandle)si : 0;
           Node *newnode = splitBlock (node, val);
           block_list.insert(newnode);
           IRStmtType ty = ir.GetStmtType(stmt);
@@ -1503,8 +1503,8 @@ CFG::createBasicCFG()
                     ty == USTRUCT_TWOWAY_CONDITIONAL_T ? TRUE_EDGE : FALSE_EDGE);
             connect(node, newnode, FALLTHROUGH_EDGE);
           } else if (ty == UNCONDITIONAL_JUMP) {
-	    StmtLabel label = ir.GetTargetLabel(stmt, 0);
-	    Node* nodeTmp = getLabelBlock(label);
+            StmtLabel label = ir.GetTargetLabel(stmt, 0);
+            Node* nodeTmp = getLabelBlock(label);
             connect(node, nodeTmp, FALLTHROUGH_EDGE);
           } else {
             assert(0);
@@ -1605,9 +1605,9 @@ CFG::processBlock (CFG::Node* block)
       if ((ir.GetStmtType((StmtHandle)statementsIter) == USTRUCT_TWOWAY_CONDITIONAL_T
            || ir.GetStmtType((StmtHandle)statementsIter) == USTRUCT_TWOWAY_CONDITIONAL_F)
           && isInternalBranch((StmtHandle)statementsIter)) {
-	
-	the_worklist->addCounterToWorklist(block, (StmtHandle)statementsIter, 
-					  ir.NumberOfDelaySlots((StmtHandle)statementsIter) );
+        
+        the_worklist->addCounterToWorklist(block, (StmtHandle)statementsIter, 
+                                          ir.NumberOfDelaySlots((StmtHandle)statementsIter) );
       }
 
 
@@ -1622,15 +1622,15 @@ CFG::processBlock (CFG::Node* block)
     /* 
      * Don't decrement if end of block is reached and first instruction 
      * in the next block is in parallel 
-     */	
+     */ 
     
     // Get the first statement in the fallthrough node
     StmtHandle firstInstructionInNextBlock = 0 /* NULL */;
     for (CFG::NodeStatementsIterator nextBlockIter(fallThrough[block]);
          (bool)nextBlockIter;
-	 ++nextBlockIter) {
+         ++nextBlockIter) {
       firstInstructionInNextBlock = (StmtHandle)nextBlockIter;
-    }			
+    }                   
 
     if (! (!(bool)statementsIter && 
            ir.ParallelWithSuccessor(firstInstructionInNextBlock))) {
@@ -1642,7 +1642,7 @@ CFG::processBlock (CFG::Node* block)
     // If the first counter reaches zero, exit the loop
     //
     if (blockCounterlist->size() != 0 && 
-	blockCounterlist->getLeastCounter() == 0) {
+        blockCounterlist->getLeastCounter() == 0) {
       break;
     }
 
@@ -1698,7 +1698,7 @@ CFG::processBlock (CFG::Node* block)
 
     if (isInternalBranch(currentStatement)) {
       CFG::Node* targetBlock = 
-	getLabelBlock(ir.GetTargetLabel(currentStatement, 0));
+        getLabelBlock(ir.GetTargetLabel(currentStatement, 0));
       
       connect(block, targetBlock, TRUE_EDGE );
       // Add the target block to the worklist

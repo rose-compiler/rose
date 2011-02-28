@@ -27,8 +27,8 @@ public:
                    procedureAnn * libproc_anns);
 
   virtual void at_threeAddr(stmtLocation * stmt,
-			    threeAddrNode * threeaddr,
-			    pointerValue & result);
+                            threeAddrNode * threeaddr,
+                            pointerValue & result);
 };
 
 #endif /* BDWY_LIVENESS_H */

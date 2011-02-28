@@ -17,7 +17,7 @@ ROSE_FLAGS = -rose:verbose 0
 TEST_TRANSLATOR = ./runTest all $(ROSE_FLAGS)
 TESTCODE_INCLUDES =
 
-CLEANFILES = rose_*.C rose_*.c output
+CLEANFILES = rose_*.C rose_*.c output rose_*.cu
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
 check-local: runTest 
@@ -27,7 +27,7 @@ check-local: runTest
 	@echo "*********************************************************************************************************************"
 
 clean-local:
-	rm -rf test* rose_*.C rose_*.c
+	rm -rf test* rose_*.C rose_*.c rose_*.cu
 
 distclean-local:
-	rm -rf rose_*.C rose_*.c
+	rm -rf rose_*.C rose_*.c rose_*.cu

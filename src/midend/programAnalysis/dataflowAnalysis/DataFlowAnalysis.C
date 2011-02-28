@@ -27,17 +27,17 @@ operator()( AstInterface& fa, const AstNodePtr& head)
       Data in = inOrig;
       //In[s] = Union of Out[p], where p is a predecessor of s.
       for (NodeIterator pp = GetPredecessors(cur); !pp.ReachEnd(); ++pp) {
-	Node* pred = *pp;
-	Data predout = pred->get_exit_data();
-	in = meet_data(in, predout);
+        Node* pred = *pp;
+        Data predout = pred->get_exit_data();
+        in = meet_data(in, predout);
       }
       //Out[s]=Gen[s] Union (In[s]-Kill[s]), s is current node
       if (in != inOrig) {
-	cur->set_entry_data(in);
-	Data outOrig = cur->get_exit_data();
-	cur->apply_transfer_function();
-	if (outOrig != cur->get_exit_data())
-	  change = true;
+        cur->set_entry_data(in);
+        Data outOrig = cur->get_exit_data();
+        cur->apply_transfer_function();
+        if (outOrig != cur->get_exit_data())
+          change = true;
       }
     }  
   }

@@ -37,45 +37,45 @@ class ConvertMethodMod : public Method_mod, public virtual SgNode
 class AST_to_ROSE : public AST::Fold
 <
  SgExpression*,                 // Actual_parameter*
- SgExpression*,					// Array*
+ SgExpression*,                                 // Array*
  SgNode*,                       // Array_elem*
- SgExpression*,					// Assignment*
+ SgExpression*,                                 // Assignment*
  SgNode*,                       // Attr_mod*
  SgStatement*,                  // Attribute*
- SgBoolValExp*,					// BOOL*
- SgExpression*,					// Bin_op*
- SgBreakStmt*,					// Break*
+ SgBoolValExp*,                                 // BOOL*
+ SgExpression*,                                 // Bin_op*
+ SgBreakStmt*,                                  // Break*
  SgName*,                       // CAST*
  SgName*,                       // CLASS_NAME*
  SgName*,                       // CONSTANT_NAME*
- SgExpression*,					// Cast*
+ SgExpression*,                                 // Cast*
  SgStatement*,                  // Catch*
  SgClassDefinition*,            // Class_def*
  SgNode*,                       // Class_mod*
  SgName*,                       // Class_name*
  SgStatement*,                  // Commented_node*
- SgExpression*,					// Conditional_expr*
+ SgExpression*,                                 // Conditional_expr*
  SgExpression*,                 // Constant*
- SgContinueStmt*,				// Continue*
+ SgContinueStmt*,                               // Continue*
  SgName*,                       // DIRECTIVE_NAME*
  SgStatement*,                  // Declare*  TODO part of directive, probably not needed
  SgNode*,                       // Directive*  TODO probably not needed
- SgDoWhileStmt*,				// Do*
- SgExprStatement*,				// Eval_expr*
- SgExpression*,					// Expr*
- SgForStatement*,				// For*
- SgForStatement*,				// Foreach*  TODO See if mappable to Fortran foreach
+ SgDoWhileStmt*,                                // Do*
+ SgExprStatement*,                              // Eval_expr*
+ SgExpression*,                                 // Expr*
+ SgForStatement*,                               // For*
+ SgForStatement*,                               // Foreach*  TODO See if mappable to Fortran foreach
  SgExpression*,                 // Foreign*   TODO Not sure what to do with this to allow PHC's template for the superclass to compile cleanly
  SgInitializedName*,            // Formal_parameter*
- SgStatement*,					// Global*
- SgIntVal*,						// INT*
+ SgStatement*,                                  // Global*
+ SgIntVal*,                                             // INT*
  SgName*,                       // INTERFACE_NAME*
  SgName*,                       // Identifier*
- SgIfStmt*,						// If*
- SgExpression*,					// Ignore_errors*
+ SgIfStmt*,                                             // If*
+ SgExpression*,                                 // Ignore_errors*
  SgExpression*,                 // Instanceof*
  SgClassDefinition*,            // Interface_def*
- SgExpression*,					// List_assignment*
+ SgExpression*,                                 // List_assignment*
  SgNode*,                       // List_element*
  SgNode*,                       // Literal*
  SgName*,                       // METHOD_NAME*
@@ -87,18 +87,18 @@ class AST_to_ROSE : public AST::Fold
  SgNullExpression*,             // NIL*
  SgName*,                       // Name_with_default*
  SgNode*,                       // Nested_list_elements*
- SgExpression*,					// New*
+ SgExpression*,                                 // New*
  SgNode*,                       // Node*
  SgStatement*,                  // Nop*
- SgName*,						// OP*
- SgExpression*,					// Op_assignment*
+ SgName*,                                               // OP*
+ SgExpression*,                                 // Op_assignment*
  SgFile*,                       // PHP_script*
- SgExpression*,					// Post_op*
- SgExpression*,					// Pre_op*
- SgDoubleVal*,					// REAL*
+ SgExpression*,                                 // Post_op*
+ SgExpression*,                                 // Pre_op*
+ SgDoubleVal*,                                  // REAL*
  SgName*,                       // Reflection*
- SgReturnStmt*,					// Return*
- SgStringVal*,					// STRING*
+ SgReturnStmt*,                                 // Return*
+ SgStringVal*,                                  // STRING*
  SgFunctionParameterList*,      // Signature*
  SgNode*,                       // Source_rep*
  SgStatement*,                  // Statement*
@@ -106,7 +106,7 @@ class AST_to_ROSE : public AST::Fold
  SgSwitchStatement*,            // Switch*
  SgBasicBlock*,                 // Switch_case*
  SgNode*,                       // Target* - HIR::Targets have VARIABLE_NAME expr, so we cant fold to them directly
- SgStatement*,					// Throw*
+ SgStatement*,                                  // Throw*
  SgStatement*,                  // Try*
  SgType*,                       // Type*
  SgExpression*,                 // Unary_op*
@@ -139,7 +139,7 @@ public:
     // TODO Despite being able to override this to fix the "foreign"
     // issue, we still have to fix the base class because the template
     // instantiation still violates the return types
-	/*
+        /*
     virtual SgExpression* fold_expr(Expr* in)
     {
         ROSE_ASSERT(0);
@@ -153,19 +153,19 @@ public:
         return NULL;
     }
 
-	virtual SgFile* fold_php_script(PHP_script* in)
-	{
+        virtual SgFile* fold_php_script(PHP_script* in)
+        {
         ROSE_ASSERT(file);
         pushScopeStack(file->get_globalScope());
 
-		list<SgStatement*>* statements = 0;
-		{
-			statements = new list<SgStatement*>;
-			list<Statement*>::const_iterator i;
-			for(i = in->statements->begin(); i != in->statements->end(); i++)
-				if(*i) statements->push_back(fold_statement(*i));
-				else statements->push_back(0);
-		}
+                list<SgStatement*>* statements = 0;
+                {
+                        statements = new list<SgStatement*>;
+                        list<Statement*>::const_iterator i;
+                        for(i = in->statements->begin(); i != in->statements->end(); i++)
+                                if(*i) statements->push_back(fold_statement(*i));
+                                else statements->push_back(0);
+                }
 
         list<SgStatement*>::const_iterator i;
         for(i = statements->begin(); i != statements->end(); i++)
@@ -180,8 +180,8 @@ public:
         }
         
         popScopeStack();
-		return file;
-	}
+                return file;
+        }
 
     virtual ConvertMethodMod* fold_impl_method_mod(Method_mod* orig,
                                                    bool is_public,
@@ -200,7 +200,7 @@ public:
         return m;
     }
 
-	virtual SgName* fold_method_name(METHOD_NAME* orig)
+        virtual SgName* fold_method_name(METHOD_NAME* orig)
     {
         // NOTICE: Any method accepts a SgName that has been folded
         // needs to delete it.  It would be ideal to return the SgName
@@ -209,7 +209,7 @@ public:
         return new SgName(*orig->value);
     }
 
-	virtual SgName* fold_variable_name(AST::VARIABLE_NAME* orig)
+        virtual SgName* fold_variable_name(AST::VARIABLE_NAME* orig)
     {
         // NOTICE: Any method accepts a SgName that has been folded
         // needs to delete it.  It would be ideal to return the SgName
@@ -221,7 +221,7 @@ public:
         return new SgName(*orig->value);
     }
 
-	virtual SgVarRefExp* fold_impl_variable(Variable* orig,
+        virtual SgVarRefExp* fold_impl_variable(Variable* orig,
                                             SgNode* target,
                                             SgName* variable_name,
                                             list<SgExpression*>* array_indices)
@@ -250,12 +250,12 @@ public:
         return var;
     }
 
-	virtual SgIntVal* fold_int(INT* orig)
+        virtual SgIntVal* fold_int(INT* orig)
     {
         return buildIntVal(orig->value);
     }
 
-	virtual SgExpression* fold_impl_assignment(Assignment* orig,
+        virtual SgExpression* fold_impl_assignment(Assignment* orig,
                                                SgVarRefExp* variable,
                                                bool is_ref,
                                                SgExpression* expr)
@@ -266,23 +266,23 @@ public:
         return s->get_expression();
     }
 
-	virtual SgExprStatement* fold_impl_eval_expr(Eval_expr* orig,
+        virtual SgExprStatement* fold_impl_eval_expr(Eval_expr* orig,
                                                  SgExpression* expr)
     {
         return buildExprStatement(expr);
     }
 
-	virtual SgReturnStmt* fold_impl_return(Return* orig,
+        virtual SgReturnStmt* fold_impl_return(Return* orig,
                                            SgExpression* expr)
     {
         return buildReturnStmt(expr);
     }
 
     // This fold is overridden *just* to wrap with scope
-	virtual SgFunctionDeclaration* fold_method(Method* in)
-	{
-		SgFunctionParameterList* signature = 0;
-		if(in->signature) signature = fold_signature(in->signature);
+        virtual SgFunctionDeclaration* fold_method(Method* in)
+        {
+                SgFunctionParameterList* signature = 0;
+                if(in->signature) signature = fold_signature(in->signature);
 
         SgFunctionDeclaration* decl =
             buildDefiningFunctionDeclaration(
@@ -292,15 +292,15 @@ public:
                                          topScopeStack());
         pushScopeStack(decl->get_definition()->get_body());
 
-		list<SgStatement*>* statements = 0;
+                list<SgStatement*>* statements = 0;
         if (in->statements)
-		{
-			statements = new list<SgStatement*>;
-			list<Statement*>::const_iterator i;
-			for(i = in->statements->begin(); i != in->statements->end(); i++)
-				if(*i) statements->push_back(fold_statement(*i));
-				else statements->push_back(0);
-		}
+                {
+                        statements = new list<SgStatement*>;
+                        list<Statement*>::const_iterator i;
+                        for(i = in->statements->begin(); i != in->statements->end(); i++)
+                                if(*i) statements->push_back(fold_statement(*i));
+                                else statements->push_back(0);
+                }
 
         for (list<SgStatement*>::iterator i = statements->begin();
              i != statements->end(); i++)
@@ -312,9 +312,9 @@ public:
 
         popScopeStack();
         return decl;
-	}
+        }
 
-	virtual SgFunctionParameterList*
+        virtual SgFunctionParameterList*
     fold_impl_signature(Signature* orig,
                         ConvertMethodMod* method_mod,
                         bool is_ref,
@@ -331,12 +331,12 @@ public:
         return pl;
     }
 
-	virtual SgStatement* fold_impl_nop(Nop* orig)
+        virtual SgStatement* fold_impl_nop(Nop* orig)
     {
         return 0;
     }
 
-	virtual SgFunctionCallExp*
+        virtual SgFunctionCallExp*
     fold_impl_method_invocation(Method_invocation* orig,
                                 SgNode* target,
                                 SgName* method_name,
@@ -355,12 +355,12 @@ public:
         return fc;
     }
 
-	virtual SgName* fold_op(OP* orig)
+        virtual SgName* fold_op(OP* orig)
     {
         return new SgName(*orig->value);
     }
 
-	virtual SgExpression* fold_impl_op_assignment(Op_assignment* orig,
+        virtual SgExpression* fold_impl_op_assignment(Op_assignment* orig,
                                                   SgVarRefExp* variable,
                                                   SgName* op,
                                                   SgExpression* expr)
@@ -392,7 +392,7 @@ public:
         return e;
     }
 
-	virtual SgExpression* fold_impl_bin_op(Bin_op* orig,
+        virtual SgExpression* fold_impl_bin_op(Bin_op* orig,
                                            SgExpression* left,
                                            SgName* op,
                                            SgExpression* right)
@@ -445,17 +445,17 @@ public:
         return e;
     }
 
-	virtual SgName* fold_interface_name(INTERFACE_NAME* orig)
+        virtual SgName* fold_interface_name(INTERFACE_NAME* orig)
     {
         return new SgName(*orig->value);
     }
 
-	virtual SgStringVal* fold_string(STRING* orig)
+        virtual SgStringVal* fold_string(STRING* orig)
     {
         return buildStringVal(*orig->value);
     }
 
-	virtual SgExpression* fold_impl_actual_parameter(Actual_parameter* orig,
+        virtual SgExpression* fold_impl_actual_parameter(Actual_parameter* orig,
                                                      bool is_ref,
                                                      SgExpression* expr)
     {
@@ -463,7 +463,7 @@ public:
         return expr;
     }
 
-	virtual SgType* fold_impl_type(Type* orig,
+        virtual SgType* fold_impl_type(Type* orig,
                                    SgName* class_name)
     {
         SgType *t = 0;
@@ -483,7 +483,7 @@ public:
         return t;
     }
 
-	virtual SgName* fold_impl_name_with_default(Name_with_default* orig,
+        virtual SgName* fold_impl_name_with_default(Name_with_default* orig,
                                                 SgName* variable_name,
                                                 SgExpression* expr)
     {
@@ -491,7 +491,7 @@ public:
         return variable_name;
     }
 
-	virtual SgInitializedName*
+        virtual SgInitializedName*
     fold_impl_formal_parameter(Formal_parameter* orig,
                                SgType* type,
                                bool is_ref,
@@ -500,7 +500,7 @@ public:
        return buildInitializedName(*var, type);
     }
 
-	virtual SgIfStmt* fold_impl_if(If* orig,
+        virtual SgIfStmt* fold_impl_if(If* orig,
                                    SgExpression* expr,
                                    list<SgStatement*>* iftrue,
                                    list<SgStatement*>* iffalse)
@@ -511,7 +511,7 @@ public:
         return buildIfStmt(exprStmt, trueBranch, falseBranch);
     }
 
-	virtual SgExpression* fold_impl_post_op(Post_op* orig,
+        virtual SgExpression* fold_impl_post_op(Post_op* orig,
                                             SgVarRefExp* variable,
                                             SgName* op)
     {
@@ -532,7 +532,7 @@ public:
         return e;
     }
 
-	virtual SgExpression* fold_impl_pre_op(Pre_op* orig,
+        virtual SgExpression* fold_impl_pre_op(Pre_op* orig,
                                            SgVarRefExp* variable,
                                            SgName* op)
     {
@@ -553,7 +553,7 @@ public:
         return e;
     }
 
-	virtual SgForStatement* fold_impl_for(For* orig,
+        virtual SgForStatement* fold_impl_for(For* orig,
                                           SgExpression* init,
                                           SgExpression* cond,
                                           SgExpression* incr,
@@ -565,7 +565,7 @@ public:
         return 0;
     }
 
-	virtual SgWhileStmt* fold_impl_while(While* orig,
+        virtual SgWhileStmt* fold_impl_while(While* orig,
                                          SgExpression* expr,
                                          list<SgStatement*>* statements)
     {

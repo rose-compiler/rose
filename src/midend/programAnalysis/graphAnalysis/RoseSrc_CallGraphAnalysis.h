@@ -6,10 +6,10 @@
 
 class RoseSrc_CallGraphAnalysis {
  private:
-	 SB_DirectedGraph* graph;
+         SB_DirectedGraph* graph;
  public:
-	 RoseSrc_CallGraphAnalysis() {
-		 graph = new SB_DirectedGraph();
+         RoseSrc_CallGraphAnalysis() {
+                 graph = new SB_DirectedGraph();
   }
   virtual ~RoseSrc_CallGraphAnalysis() {}
   SB_DirectedGraph* getGraph() {return graph;}

@@ -100,9 +100,9 @@ class PtrSetWrap
   void operator -= (const PtrSetWrap<T>& that)
     {
 #ifdef _MSC_VER
-	  for (VoidPtrSet::const_iterator p = that.impl.begin(); p !=  that.impl.end(); ++p) 
+          for (VoidPtrSet::const_iterator p = that.impl.begin(); p !=  that.impl.end(); ++p) 
 #else
-	  for (VoidPtrSet::iterator p = that.impl.begin(); p !=  that.impl.end(); ++p) 
+          for (VoidPtrSet::iterator p = that.impl.begin(); p !=  that.impl.end(); ++p) 
 #endif
              {
            VoidPtrSet::iterator p1 = impl.find(*p);

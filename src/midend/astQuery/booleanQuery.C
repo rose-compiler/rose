@@ -143,7 +143,7 @@ BooleanQuery::evaluateSynthesizedAttribute (
                          returnValue = true;
                        }
                   }
-	     
+             
                break;
              }
 

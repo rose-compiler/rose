@@ -125,7 +125,7 @@ class grammarFile
                filename = inputFilename;
              }
 
-	  std::string getFilename() const
+          std::string getFilename() const
              {
                return filename;
              }
@@ -135,7 +135,7 @@ class grammarFile
                buffer = inputBuffer;
              }
 
-	  const StringUtility::FileWithLineNumbers& getBuffer() const
+          const StringUtility::FileWithLineNumbers& getBuffer() const
              {
                return buffer;
              }
@@ -190,19 +190,19 @@ class Grammar
 
        // List processing mechanisms
           void generateStringListsFromSubtreeLists ( Terminal & node,
-						     std::vector<GrammarString *> & ,
-						     std::vector<GrammarString *> & excludeList,
-						     FunctionPointerType listFunction );
+                                                     std::vector<GrammarString *> & ,
+                                                     std::vector<GrammarString *> & excludeList,
+                                                     FunctionPointerType listFunction );
 
           void generateStringListsFromLocalLists ( Terminal & node,
-						   std::vector<GrammarString *> & ,
-						   std::vector<GrammarString *> & excludeList,
-						   FunctionPointerType listFunction );
+                                                   std::vector<GrammarString *> & ,
+                                                   std::vector<GrammarString *> & excludeList,
+                                                   FunctionPointerType listFunction );
 
           void generateStringListsFromAllLists ( Terminal & node,
-						 std::vector<GrammarString *> & includeList,
-						 std::vector<GrammarString *> & excludeList,
-						 FunctionPointerType listFunction );
+                                                 std::vector<GrammarString *> & includeList,
+                                                 std::vector<GrammarString *> & excludeList,
+                                                 FunctionPointerType listFunction );
 
           static void editStringList ( std::vector<GrammarString *>& origList, 
                                        const std::vector<GrammarString *> & excludeList );
@@ -230,7 +230,7 @@ class Grammar
        // builds the header files and source code
           void buildCode ();
 
-	  std::string getFilenameForGlobalDeclarations ();
+          std::string getFilenameForGlobalDeclarations ();
           void  setFilenameForGlobalDeclarations ( const std::string& filename );
 
           StringUtility::FileWithLineNumbers buildMiscSupportDeclarations ();
@@ -242,9 +242,9 @@ class Grammar
                     const Grammar* parentGrammar = NULL,
                     const std::string& t_directory = "");
 
-	  std::string grammarName;
-	  std::string grammarPrefixName;
-	  std::string grammarNameBaseClass;
+          std::string grammarName;
+          std::string grammarPrefixName;
+          std::string grammarNameBaseClass;
 
        // Return the name of the grammar (two cases are handled since the
        // names are different for the "$GRAMMAR_PREFIX_" and the "$GRAMMAR_TAG_PREFIX_")
@@ -309,17 +309,17 @@ class Grammar
                             const std::string& className, const std::string& fileExtension );
 
           std::string generateTraverseSuccessorForLoopSource(std::string typeString, 
-							std::string memberVariableName, 
-							std::string successorContainerName,
-							std::string successorContainerAccessOperator);
+                                                        std::string memberVariableName, 
+                                                        std::string successorContainerName,
+                                                        std::string successorContainerAccessOperator);
       // GB (8/1/2007)
           std::string generateNumberOfSuccessorsComputation(std::vector<GrammarString*>& traverseDataMemberList,
                                std::string successorContainerName);
           std::string generateTraverseSuccessor(GrammarString* gs, std::string successorContainerName);
           std::string generateTraverseSuccessorNamesForLoopSource(std::string typeString, 
-						       std::string memberVariableName, 
-						       std::string successorContainerName,
-							     std::string successorContainerAccessOperator);
+                                                       std::string memberVariableName, 
+                                                       std::string successorContainerName,
+                                                             std::string successorContainerAccessOperator);
           std::string generateTraverseSuccessorNames(GrammarString* gs, std::string successorContainerName);
 
           std::string generateRTICode(GrammarString* gs, std::string successorContainerName, std::string className, size_t index);
@@ -480,23 +480,23 @@ class Grammar
                     std::string problematicnodes;
              };
 
-	  typedef std::string (Grammar::*evaluateStringAttributeFunctionType)(Terminal&, std::string);
-	  std::string naiveTraverseGrammar(Terminal&, evaluateStringAttributeFunctionType);
-	  typedef GrammarSynthesizedAttribute (Grammar::*evaluateGAttributeFunctionType)(Terminal*, 
-											 std::vector<GrammarSynthesizedAttribute>);
-	  // MS: type hierarchy traversal
-	  GrammarSynthesizedAttribute BottomUpProcessing(Terminal* node, evaluateGAttributeFunctionType evaluateGAttributeFunction);
-	  // MS: build a Latex output that shows the abstract Cpp grammar
-	  GrammarSynthesizedAttribute CreateGrammarDotString(Terminal* grammarnode,
-							       std::vector<GrammarSynthesizedAttribute> v);
-	  GrammarSynthesizedAttribute CreateGrammarLatexString(Terminal* grammarnode,
-							       std::vector<GrammarSynthesizedAttribute> v);
-	  void buildGrammarDotFile(Terminal* rootNode, std::ostream& GrammarDotFile);
-	  void buildGrammarLatexFile(Terminal* rootNode, std::ostream& GrammarLatexFile);
+          typedef std::string (Grammar::*evaluateStringAttributeFunctionType)(Terminal&, std::string);
+          std::string naiveTraverseGrammar(Terminal&, evaluateStringAttributeFunctionType);
+          typedef GrammarSynthesizedAttribute (Grammar::*evaluateGAttributeFunctionType)(Terminal*, 
+                                                                                         std::vector<GrammarSynthesizedAttribute>);
+          // MS: type hierarchy traversal
+          GrammarSynthesizedAttribute BottomUpProcessing(Terminal* node, evaluateGAttributeFunctionType evaluateGAttributeFunction);
+          // MS: build a Latex output that shows the abstract Cpp grammar
+          GrammarSynthesizedAttribute CreateGrammarDotString(Terminal* grammarnode,
+                                                               std::vector<GrammarSynthesizedAttribute> v);
+          GrammarSynthesizedAttribute CreateGrammarLatexString(Terminal* grammarnode,
+                                                               std::vector<GrammarSynthesizedAttribute> v);
+          void buildGrammarDotFile(Terminal* rootNode, std::ostream& GrammarDotFile);
+          void buildGrammarLatexFile(Terminal* rootNode, std::ostream& GrammarLatexFile);
 
-	  // MS: generate source for implementation of the RTI interface
-	  GrammarSynthesizedAttribute generateRTIImplementation(Terminal* grammarnode,
-								 std::vector<GrammarSynthesizedAttribute> v);
+          // MS: generate source for implementation of the RTI interface
+          GrammarSynthesizedAttribute generateRTIImplementation(Terminal* grammarnode,
+                                                                 std::vector<GrammarSynthesizedAttribute> v);
 
           // JJW (10/16/2008): Factor this code into a separate header file
           void buildStringForMemoryPoolSupport(Terminal* rootNode, StringUtility::FileWithLineNumbers& file);
@@ -504,19 +504,19 @@ class Grammar
           GrammarSynthesizedAttribute generateMemoryPoolSupportImplementation(Terminal* grammarnode, std::vector<GrammarSynthesizedAttribute> v);
           GrammarSynthesizedAttribute generateMemoryPoolSupportImplementationSource(Terminal* grammarnode, std::vector<GrammarSynthesizedAttribute> v);
 
-	  // MS: auxiliary function
-	  std::string typeStringOfGrammarString(GrammarString* gs);
+          // MS: auxiliary function
+          std::string typeStringOfGrammarString(GrammarString* gs);
 
-	  // temporary: used as return type by getGrammarNodeInfo
-	  class GrammarNodeInfo {
-	  public:
-	    GrammarNodeInfo():numContainerMembers(0), numSingleDataMembers(0) {}
-	    unsigned int numContainerMembers;
-	    unsigned int numSingleDataMembers;
-	  };
+          // temporary: used as return type by getGrammarNodeInfo
+          class GrammarNodeInfo {
+          public:
+            GrammarNodeInfo():numContainerMembers(0), numSingleDataMembers(0) {}
+            unsigned int numContainerMembers;
+            unsigned int numSingleDataMembers;
+          };
 
-	  // MS: auxiliary function to make tests on GrammarNodes more compact. (should be made a set of member
-	  //     functions of GrammarNode at some point (requires many other functions to be moved as well)
+          // MS: auxiliary function to make tests on GrammarNodes more compact. (should be made a set of member
+          //     functions of GrammarNode at some point (requires many other functions to be moved as well)
      GrammarNodeInfo getGrammarNodeInfo(Terminal* grammarnode);
 
      // MS: generates the code to implement the creation of the treeTraversalSuccessorContainer in Sage
@@ -532,10 +532,10 @@ class Grammar
      // PC: build ReferenceToPointerHandler and related classes
      std::string buildReferenceToPointerHandlerCode();
 
-	 //AS: build the function to get the class hierarchy subtree 
+         //AS: build the function to get the class hierarchy subtree 
      std::string buildClassHierarchySubTreeFunction();
 
-	 //AS: build the funtion to automatically generate the memory pool based traversal on VariantVectors
+         //AS: build the funtion to automatically generate the memory pool based traversal on VariantVectors
      std::string buildMemoryPoolBasedVariantVectorTraversalSupport();
 
      // MS: build VariantEnumnames 

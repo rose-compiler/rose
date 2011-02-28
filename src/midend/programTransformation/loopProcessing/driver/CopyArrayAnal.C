@@ -160,7 +160,7 @@ ModifyCopyArrayCollect(LoopTransformInterface& li,
                       DepCompCopyArrayCollect& collect, DepCompAstRefGraphCreate& refDep)
 {
 // tps (12/09/09) : FIX : Changed the name "interface" to interfaces , as interface is a keyword in MSVC.
-	LoopTreeInterface interfaces;
+        LoopTreeInterface interfaces;
    if (DebugCopyRoot()) 
       std::cerr << "copydim = " << copydim << std::endl;
    for (DepCompCopyArrayCollect::iterator arrays = collect.begin();

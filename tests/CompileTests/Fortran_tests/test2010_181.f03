@@ -1,26 +1,26 @@
-module m1
+module m1test2010_181
   integer :: hh
   type t
     real :: r
   end type t
-end module m1
+end module m1test2010_181
 
-module m2
+module m2test2010_181
   type t
     integer :: k
   end type t
-end module m2
+end module m2test2010_181
 
-module m3
+module m3test2010_181
 contains
   type(t) function func()
-    use m2
+    use m2test2010_181
     func%k = 77
   end function func
-end module m3
+end module m3test2010_181
 
 type(t) function a()
-  use m1, only: hh
+  use m1test2010_181, only: hh
   type t2
     integer :: j
   end type t2
@@ -33,9 +33,9 @@ type(t) function a()
 end function a
 
 type(t) function b()
-  use m1, only: hh
-  use m2
-  use m3
+  use m1test2010_181, only: hh
+  use m2test2010_181
+  use m3test2010_181
 
 ! DQ commented out as test
   b = func ()

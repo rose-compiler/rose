@@ -1,0 +1,52 @@
+# Non-recursive Makefile
+
+mauAnnotation_includes=\
+	-I$(mauAnnotationPath)/../astInterface \
+	-I$(mauAnnotationPath)/../symbolicVal \
+	-I$(mauAnnotationPath)/../astSupport \
+	-I$(top_srcdir)/src/util \
+	-I$(top_srcdir)/src/util/support
+
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+mauAnnotation_la_sources=\
+	$(mauAnnotationPath)/AnnotCollect.C \
+	$(mauAnnotationPath)/AnnotExpr.C \
+	$(mauAnnotationPath)/OperatorAnnotation.C \
+	$(mauAnnotationPath)/TypeAnnotation.C \
+	$(mauAnnotationPath)/AnnotDescriptors.C \
+	$(mauAnnotationPath)/AnnotIO.C \
+	$(mauAnnotationPath)/OperatorDescriptors.C
+
+
+mauAnnotation_includeHeaders=\
+	$(mauAnnotationPath)/AnnotCollect.h \
+	$(mauAnnotationPath)/AnnotExpr.h \
+	$(mauAnnotationPath)/AnnotStmt.h \
+	$(mauAnnotationPath)/OperatorDescriptors.h \
+	$(mauAnnotationPath)/AnnotDescriptors.h \
+	$(mauAnnotationPath)/AnnotIO.h \
+	$(mauAnnotationPath)/OperatorAnnotation.h \
+	$(mauAnnotationPath)/TypeAnnotation.h \
+	$(mauAnnotationPath)/CPPAnnotation.h
+
+
+mauAnnotation_extraDist=\
+	$(mauAnnotationPath)/CMakeLists.txt
+
+
+mauAnnotation_cleanLocal=\
+	rm -rf \
+		$(mauAnnotationPath)/Templates.DB \
+		$(mauAnnotationPath)/ii_files \
+		$(mauAnnotationPath)/ti_files \
+		$(mauAnnotationPath)/cxx_templates
+
+
+mauAnnotation_distCleanLocal=\
+	rm -rf \
+		$(mauAnnotationPath)/Templates.DB

@@ -728,7 +728,7 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
 
             // Note cast to void*
                std::string name = i->first;
-               std::string label = name + " : " + StringUtility::numberToString((void*)(attribute));
+               std::string label = name + " : " + attribute->toString();
                ss << label << "\\n";
              }
           ss << "\\n";

@@ -13,8 +13,8 @@ class GraphDotOutput
 
     void writeToDOTFile(const std::string& filename, const std::string& graphname)
      {
-	bool debug = false;
-	if(debug) std::cerr << " dot output to " << filename << std::endl; 
+        bool debug = false;
+        if(debug) std::cerr << " dot output to " << filename << std::endl; 
         std::ofstream dotfile(filename.c_str());
 
        //Liao, add "" to enclose the graphname,otherwise syntax error for .dot file. 2/22/2008
@@ -22,7 +22,7 @@ class GraphDotOutput
         for(typename Graph::NodeIterator p=g.GetNodeIterator(); !p.ReachEnd(); ++p) {
             typename Graph::Node* node = *p;
             dotfile << ((long)node) << "[label=\"" << getVertexName(node) << "\" ];" << std::endl;
-	}
+        }
 
         if(debug) std::cerr << " finished add node" << std::endl; // debug
 
@@ -34,7 +34,7 @@ class GraphDotOutput
               typename Graph::Edge* e = *edges;
               typename Graph::Node* node2 = g.GetEdgeEndPoint(e, GraphAccess::EdgeIn);
               dotfile << ((long)node1) << " -> " << ((long)node2)
-	              << "[label=\"" << getEdgeLabel(e) << "\"];" << std::endl;
+                      << "[label=\"" << getEdgeLabel(e) << "\"];" << std::endl;
            }
         }
         if(debug) std::cerr << " writing content to " << filename << std::endl; // debug

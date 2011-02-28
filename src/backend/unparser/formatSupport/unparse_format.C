@@ -175,7 +175,7 @@ UnparseFormat& UnparseFormat::operator << ( string out)
      // insert_newline() has a semantic to skip the second and after new line for a sequence of 
      // '\n'. It is very useful to remove excessive newlines in the unparased file.
      //
-     // BUT:	  
+     // BUT:      
      // two consecutive '\n' might be essential for the correctness of a program
      // e.g. 
      //       # define BZ_ITER(nn) 
@@ -186,7 +186,7 @@ UnparseFormat& UnparseFormat::operator << ( string out)
      // Otherwise, the following statement will be treated as a continuation line of "int nn;\"
      // 
      // So the code below is changed to lookback two characters to decide if the line continuation
-     // case is encountered and call a special version of insert_newline() to always insert a line. 	  
+     // case is encountered and call a special version of insert_newline() to always insert a line.       
           if ( *p == '\n') 
              {
                bool mustInsert=false;
@@ -652,28 +652,28 @@ UnparseOrigFormat::get_type_len(SgType* type)
      switch(type->variant())
         {
           case T_UNKNOWN: return 0;
-          case T_CHAR: return 4;	
-          case T_SIGNED_CHAR: return 11;	
-          case T_UNSIGNED_CHAR: return 13;	
-          case T_SHORT: return 5;	
-          case T_SIGNED_SHORT: return 12; 	
-          case T_UNSIGNED_SHORT: return 14;	
-          case T_INT: return 3;	
-          case T_SIGNED_INT: return 10;	
-          case T_UNSIGNED_INT: return 12;	
-          case T_LONG: return 4;	
-          case T_SIGNED_LONG: return 11;	
-          case T_UNSIGNED_LONG: return 13;	
-          case T_VOID: return 4;	
-          case T_GLOBAL_VOID: return 11;	
-          case T_WCHAR: return 5;	
-          case T_FLOAT: return 5;	
-          case T_DOUBLE: return 6;	
+          case T_CHAR: return 4;        
+          case T_SIGNED_CHAR: return 11;        
+          case T_UNSIGNED_CHAR: return 13;      
+          case T_SHORT: return 5;       
+          case T_SIGNED_SHORT: return 12;       
+          case T_UNSIGNED_SHORT: return 14;     
+          case T_INT: return 3; 
+          case T_SIGNED_INT: return 10; 
+          case T_UNSIGNED_INT: return 12;       
+          case T_LONG: return 4;        
+          case T_SIGNED_LONG: return 11;        
+          case T_UNSIGNED_LONG: return 13;      
+          case T_VOID: return 4;        
+          case T_GLOBAL_VOID: return 11;        
+          case T_WCHAR: return 5;       
+          case T_FLOAT: return 5;       
+          case T_DOUBLE: return 6;      
           case T_LONG_LONG: return 9;
-          case T_UNSIGNED_LONG_LONG: return 18;	
-          case T_LONG_DOUBLE: return 11;	
+          case T_UNSIGNED_LONG_LONG: return 18; 
+          case T_LONG_DOUBLE: return 11;        
           case T_STRING: return 6;
-          case T_BOOL: return 4;	
+          case T_BOOL: return 4;        
           case T_COMPLEX: return 7;
 
           case T_DEFAULT:
@@ -710,7 +710,7 @@ UnparseOrigFormat::get_type_len(SgType* type)
   case T_NAME: {
     cerr << "T_NAME not implemented" << endl;
     break;
-  }	
+  }     
   
   case T_CLASS: {
     int length = 0;
@@ -790,7 +790,7 @@ UnparseOrigFormat::get_type_len(SgType* type)
     cerr <<  "T_PARTIAL_FUNCTION not implemented" << endl;
     break;
   }
-  case T_ARRAY:	{
+  case T_ARRAY: {
     SgArrayType* array_type = isSgArrayType(type);
     assert(array_type != NULL);
     

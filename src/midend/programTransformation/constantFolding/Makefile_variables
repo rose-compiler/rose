@@ -1,0 +1,19 @@
+
+mptConstantFolding_la_sources=\
+	$(mptConstantFoldingPath)/constantFolding.C
+
+
+mptConstantFolding_includeHeaders=\
+	$(mptConstantFoldingPath)/constantFolding.h
+
+
+mptConstantFolding_extraDist=\
+	$(mptConstantFoldingPath)/CMakeLists.txt
+
+
+mptConstantFolding_cleanLocal=\
+	rm -rf \
+		$(mptConstantFoldingPath)/Templates.DB \
+		$(mptConstantFoldingPath)/ii_files \
+		$(mptConstantFoldingPath)/ti_files \
+		$(mptConstantFoldingPath)/core

@@ -1,0 +1,56 @@
+
+mpt_lpDriver_includes=\
+	-I$(mpt_lpDriverPath)/../prepostTransformation \
+	-I$(mpt_lpDriverPath)/../slicing \
+	-I$(mpt_lpDriverPath)/../computation \
+	-I$(mpt_lpDriverPath)/../depGraph \
+	-I$(mpt_lpDriverPath)/../depInfo \
+	-I$(top_srcdir)/src/util/support \
+	-I$(top_srcdir)/src/util/graphs \
+	-I$(top_srcdir)/src/midend/astUtil/astSupport \
+	-I$(top_srcdir)/src/midend/astUtil/symbolicVal \
+	-I$(top_srcdir)/src/midend/astUtil/astInterface
+
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+
+mpt_lpDriver_la_sources=\
+	$(mpt_lpDriverPath)/BlockingAnal.C \
+	$(mpt_lpDriverPath)/FusionAnal.C \
+	$(mpt_lpDriverPath)/CopyArrayAnal.C \
+	$(mpt_lpDriverPath)/LoopTransformOptions.C \
+	$(mpt_lpDriverPath)/TransformComputation.C \
+	$(mpt_lpDriverPath)/InterchangeAnal.C \
+	$(mpt_lpDriverPath)/TypedFusionImpl.C \
+	$(mpt_lpDriverPath)/LoopTransformInterface.C \
+	$(mpt_lpDriverPath)/NormalizeCPP.C
+
+
+mpt_lpDriver_includeHeaders=\
+	$(mpt_lpDriverPath)/BlockingAnal.h \
+	$(mpt_lpDriverPath)/InterchangeAnal.h \
+	$(mpt_lpDriverPath)/CopyArrayAnal.h  \
+	$(mpt_lpDriverPath)/LoopTransformOptions.h \
+	$(mpt_lpDriverPath)/LoopTransformInterface.h\
+	$(mpt_lpDriverPath)/FusionAnal.h
+
+
+mpt_lpDriver_extraDist=\
+	$(mpt_lpDriverPath)/CMakeLists.txt
+
+
+
+mpt_lpDriver_cleanLocal=\
+	rm -rf \
+		$(mpt_lpDriverPath)/Templates.DB \
+		$(mpt_lpDriverPath)/ii_files \
+		$(mpt_lpDriverPath)/ti_files \
+		$(mpt_lpDriverPath)/cxx_templates
+
+
+mpt_lpDriver_distCleanLocal=\
+	rm -rf \
+		$(mpt_lpDriverPath)/Templates.DB

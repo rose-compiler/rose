@@ -595,3 +595,39 @@ const StaticSingleAssignment::VarName& StaticSingleAssignment::getVarForExpressi
 			return emptyName;
 	}
 }
+
+
+StaticSingleAssignment::NodeReachingDefTable StaticSingleAssignment::getLastVersions(SgFunctionDeclaration* func) const
+{
+	ROSE_ASSERT(func != NULL && func->get_definingDeclaration() != NULL);
+
+	class VersionsTraversal : public AstSimpleProcessing
+	{
+	public:
+		const StaticSingleAssignment* ssa;
+
+		//Map from each variable to its last definition
+		NodeReachingDefTable lastVersions;
+
+		void visit(SgNode* node)
+		{
+			const NodeReachingDefTable& reachingDefsHere = ssa->getReachingDefsAtNode(node);
+
+			foreach(const NodeReachingDefTable::value_type& varDefPair, reachingDefsHere)
+			{
+				const VarName& var = varDefPair.first;
+				if (lastVersions.count(var) == 0 ||
+						lastVersions[var]->getRenamingNumber() < varDefPair.second->getRenamingNumber())
+				{
+					lastVersions[var] = varDefPair.second;
+				}
+			}
+		}
+	};
+
+	VersionsTraversal defsTrav;
+	defsTrav.ssa = this;
+	defsTrav.traverse(func->get_definingDeclaration(), preorder);
+
+	return defsTrav.lastVersions;
+}

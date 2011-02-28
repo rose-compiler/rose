@@ -4,15 +4,15 @@
 !
 ! Contributed by Tobias Burnus <burnus@gcc.gnu.org>
 !
-module m1
+module m1test2010_178
   integer :: hh
   type t
     real :: r
   end type t
-end module m1
+end module m1test2010_178
 
 type(t) function a()
-  use m1, only: hh
+  use m1test2010_178, only: hh
   type t
     logical :: b
   end type t

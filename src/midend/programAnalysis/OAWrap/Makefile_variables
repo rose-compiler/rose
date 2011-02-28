@@ -1,0 +1,42 @@
+# Non-recursive Makefile
+
+mpaOAWrap_includes=\
+	-I$(top_srcdir)/src/midend/programAnalysis/OAWrap \
+	-I$(top_srcdir)/src/midend/programAnalysis
+
+
+# TODO: include in top-level?
+## The grammar generator (ROSETTA) should use its own template repository
+#CXX_TEMPLATE_REPOSITORY_PATH = .
+
+# DQ (2/10/2010): ROSE currently fails to generate code for this file (it does however compile for analysis only).
+mpaOAWrap_la_sources=\
+	$(mpaOAWrapPath)/OAWrap.C \
+	$(mpaOAWrapPath)/SAGE2OA.C
+#libOAWrapSources = SAGE2OA.C 
+#if !ROSE_USING_ROSE_CODE_GENERATION
+#   libOAWrapSources += OAWrap.C
+#endif
+
+
+mpaOAWrap_includeHeaders=\
+	$(mpaOAWrapPath)/OAWrap.h \
+	$(mpaOAWrapPath)/SAGE2OA.h \
+	$(mpaOAWrapPath)/OAConfig.h
+
+
+mpaOAWrap_extraDist=\
+	$(mpaOAWrapPath)/CMakeLists.txt
+
+
+mpaOAWrap_cleanLocal=\
+	rm -rf \
+		$(mpaOAWrapPath)/Templates.DB \
+		$(mpaOAWrapPath)/ii_files \
+		$(mpaOAWrapPath)/ti_files \
+		$(mpaOAWrapPath)/cxx_templates
+
+
+mpaOAWrap_distCleanLocal=\
+	rm -rf \
+		$(mpaOAWrapPath)/Templates.DB

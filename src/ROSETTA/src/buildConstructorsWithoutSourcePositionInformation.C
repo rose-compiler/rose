@@ -55,8 +55,8 @@ Grammar::markNodeForConstructorWithoutSourcePositionInformationSupport( Terminal
   // Call this function recursively on the children of this node in the tree
      vector<Terminal *>::const_iterator treeNodeIterator;
      for( treeNodeIterator = node.subclasses.begin();
-	  treeNodeIterator != node.subclasses.end();
-	  treeNodeIterator++ )
+          treeNodeIterator != node.subclasses.end();
+          treeNodeIterator++ )
         {
           ROSE_ASSERT ((*treeNodeIterator) != NULL);
           ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
@@ -158,7 +158,7 @@ Grammar::buildConstructorWithoutSourcePositionInformation ( Terminal & node )
      if (parentNode != NULL && node.generateConstructor() == true)
         {
           string constructorTemplateFileName = "../Grammar/grammarConstructorDefinitionMacros.macro";
-	  StringUtility::FileWithLineNumbers constructorSourceCodeTemplate = Grammar::readFileWithPos (constructorTemplateFileName);
+          StringUtility::FileWithLineNumbers constructorSourceCodeTemplate = Grammar::readFileWithPos (constructorTemplateFileName);
 
           bool complete  = false;
           ConstructParamEnum config = CONSTRUCTOR_PARAMETER;
@@ -167,7 +167,7 @@ Grammar::buildConstructorWithoutSourcePositionInformation ( Terminal & node )
                config = NO_CONSTRUCTOR_PARAMETER;
              }
 
-	  StringUtility::FileWithLineNumbers constructorSource = constructorSourceCodeTemplate;
+          StringUtility::FileWithLineNumbers constructorSource = constructorSourceCodeTemplate;
           if (node.getBaseClass() != NULL)
              {
                string parentClassName = node.getBaseClass()->getName();
@@ -232,8 +232,8 @@ Grammar::buildConstructorWithoutSourcePositionInformationSupport( Terminal & nod
   // Call this function recursively on the children of this node in the tree
      vector<Terminal *>::const_iterator treeNodeIterator;
      for( treeNodeIterator = node.subclasses.begin();
-	  treeNodeIterator != node.subclasses.end();
-	  treeNodeIterator++ )
+          treeNodeIterator != node.subclasses.end();
+          treeNodeIterator++ )
         {
           ROSE_ASSERT ((*treeNodeIterator) != NULL);
           ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);

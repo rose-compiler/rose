@@ -17,36 +17,36 @@
 #define _QLINE_NUMBER_PANEL_H_
 
 /*!
-	\file qlinenumberpanel.h
-	\brief Definition of the QLineNumberPanel class
-	
-	\see QLineNumberPanel
+        \file qlinenumberpanel.h
+        \brief Definition of the QLineNumberPanel class
+        
+        \see QLineNumberPanel
 */
 
 #include "qpanel.h"
 
 class QCE_EXPORT QLineNumberPanel : public QPanel
 {
-	Q_OBJECT
-	
-	public:
-		Q_PANEL(QLineNumberPanel, "Line Number Panel")
-		
-		QLineNumberPanel(QWidget *p = 0);
-		virtual ~QLineNumberPanel();
-		
-		bool isVerboseMode() const;
-		
-		virtual QString type() const;
-		
-	public slots:
-		void setVerboseMode(bool y);
-		
-	protected:
-		virtual void editorChange(QEditor *e);
-		virtual void paint(QPainter *p, QEditor *e);
-		
-		bool m_verbose;
+        Q_OBJECT
+        
+        public:
+                Q_PANEL(QLineNumberPanel, "Line Number Panel")
+                
+                QLineNumberPanel(QWidget *p = 0);
+                virtual ~QLineNumberPanel();
+                
+                bool isVerboseMode() const;
+                
+                virtual QString type() const;
+                
+        public slots:
+                void setVerboseMode(bool y);
+                
+        protected:
+                virtual void editorChange(QEditor *e);
+                virtual void paint(QPainter *p, QEditor *e);
+                
+                bool m_verbose;
 };
 
 #endif // _QLINE_NUMBER_PANEL_H_

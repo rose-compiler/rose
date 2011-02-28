@@ -1018,7 +1018,7 @@ HEADER_GENERIC_FILE_START
    // DQ (10/20/2010): This section does not have a source code block for ROSETTA to put the function definition.
 		SgAsmGenericFile()
 			: p_unreferenced_cache(NULL), p_data_converter(NULL),p_fd(-1), p_headers(NULL), p_holes(NULL),
-			  p_truncate_zeros(false), p_tracking_references(true)
+			  p_truncate_zeros(false), p_tracking_references(true), p_neuter(false)
 			{ctor();}
 
 		virtual ~SgAsmGenericFile();				/* Destructor deletes children and unmaps/closes file */

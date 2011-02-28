@@ -19,10 +19,10 @@
 #include "qpanel.h"
 
 /*!
-	\file qstatuspanel.h
-	\brief Definition of the QStatusPanel class.
-	
-	\see QStatusPanel
+        \file qstatuspanel.h
+        \brief Definition of the QStatusPanel class.
+        
+        \see QStatusPanel
 */
 
 class QLabel;
@@ -31,25 +31,25 @@ class QDocumentLine;
 
 class QCE_EXPORT QStatusPanel : public QPanel
 {
-	Q_OBJECT
-	
-	public:
-		Q_PANEL(QStatusPanel, "Status Panel")
-		
-		QStatusPanel(QWidget *p = 0);
-		virtual ~QStatusPanel();
-		
-		virtual QString type() const;
-		
-	protected:
-		virtual void editorChange(QEditor *e);
-		virtual void paint(QPainter *p, QEditor *e);
-		
-		virtual void mousePressEvent(QMouseEvent *e);
-		virtual void mouseReleaseEvent(QMouseEvent *e);
-		
-	private:
-		int m_conflictSpot;
+        Q_OBJECT
+        
+        public:
+                Q_PANEL(QStatusPanel, "Status Panel")
+                
+                QStatusPanel(QWidget *p = 0);
+                virtual ~QStatusPanel();
+                
+                virtual QString type() const;
+                
+        protected:
+                virtual void editorChange(QEditor *e);
+                virtual void paint(QPainter *p, QEditor *e);
+                
+                virtual void mousePressEvent(QMouseEvent *e);
+                virtual void mouseReleaseEvent(QMouseEvent *e);
+                
+        private:
+                int m_conflictSpot;
 };
 
 #endif // _QSTATUS_PANEL_H_

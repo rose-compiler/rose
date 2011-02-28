@@ -74,7 +74,7 @@ getVarSymFromName_const (const SgInitializedName* name)
             v_sym = decl_scope->lookup_var_symbol (name->get_name ());
 
           if (!v_sym)
-            cerr << "Warning: getVarSymFromName_const (): Can't seem to find a symbol for '"
+            cerr << "Warning: astOutlining, getVarSymFromName_const (): Can't seem to find a symbol for '"
                  << name->get_name ().str ()
                  << "' " << endl;
         }
@@ -94,6 +94,11 @@ SgVariableSymbol *
 getVarSymFromName (SgInitializedName* name)
 {
   const SgVariableSymbol* v_sym = getVarSymFromName_const (name);
+  if (v_sym == NULL)
+  {
+    //cerr<<"Warning: VarSym.cc getVarSymFromName() fails to find a symbol for:"<<name->get_name().getString()<<endl;
+    //ROSE_ASSERT (v_sym != NULL);
+  }
   return const_cast<SgVariableSymbol *> (v_sym);
 }
 
@@ -175,9 +180,26 @@ getVarSyms (SgNode* n, ASTtools::VarSymSet_t* p_syms)
         SgVariableDeclaration* v_decl = isSgVariableDeclaration (n);
         ROSE_ASSERT (v_decl);
         SgInitializedNamePtrList& names = v_decl->get_variables ();
-        transform (names.begin (), names.end (),
-                   inserter (syms, syms.begin ()),
-                   getVarSymFromName);
+//        transform (names.begin (), names.end (),
+//                   inserter (syms, syms.begin ()),
+//                   getVarSymFromName);
+       for (SgInitializedNamePtrList::iterator iter = names.begin (); iter != names.end (); iter++)
+       {
+         SgVariableSymbol* v_sym = getVarSymFromName(*iter);  
+         // We relax for Fortran since the external function_name is not well implemented right now
+         // Liao 1/21/2010
+         // TODO
+         if (v_sym == NULL)
+         {
+           //if (SageInterface::is_Fortran_language() )
+             cerr<<"Warning: getVarSyms() cannot find a symbol for "<< (*iter)->get_name().getString()<<endl;
+           //else
+             //ROSE_ASSERT (v_sym != NULL);
+         }
+
+         if (v_sym)
+           syms.insert (v_sym);
+       }
       }
       break;
     case V_SgInitializedName:
@@ -209,21 +231,24 @@ getFirstVarSym_const (const SgVariableDeclaration* decl)
     return 0;
 }
 
-
 SgVariableSymbol *
 ASTtools::getFirstVarSym (SgVariableDeclaration* decl)
 {
   const SgVariableSymbol* sym = getFirstVarSym_const (decl);
   return const_cast<SgVariableSymbol *> (sym);
 }
+
 #endif
+
 void
 ASTtools::collectRefdVarSyms (const SgStatement* s, VarSymSet_t& syms)
 {
   // First, collect all variable reference expressions, {e}
   typedef Rose_STL_Container<SgNode *> NodeList_t;
   NodeList_t var_refs = NodeQuery::querySubTree (const_cast<SgStatement *> (s), V_SgVarRefExp);
-
+//  NodeList_t type_list = NodeQuery::querySubTree (const_cast<SgStatement *> (s), V_SgType,AstQueryNamespace::ExtractTypes);
+  
+  SageInterface::addVarRefExpFromArrayDimInfo(const_cast<SgStatement *> (s), var_refs);
   // Next, insert the variable symbol for each e into syms.
   transform (var_refs.begin (),
              var_refs.end (),
