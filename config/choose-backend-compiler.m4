@@ -120,6 +120,29 @@ dnl build using ROSE)
   fi
   AM_CONDITIONAL(ROSE_USING_GFORTRAN_VERSION_4_1, [test "x$gfortran_version_4_1" = "xyes"])
 
+# DQ (2/13/2011): GNU gfortran 4.2 is a gnu configuration where I want to have test2010_161.f90 be tested.
+# It has previously demonstrated a statistical failure on 4.1.2 and 4.3.2 (running it on 4.2 machines
+# is an incremental step to getting it into more uniform testing, since I can't get it to fail locally).
+# It also passes valgrind just fine, so this is a bit of a mystery at present.
+  gfortran_version_4_2=no
+  if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x2; then
+        echo "Note: we have identified version 4.2 of gfortran!"
+        gfortran_version_4_2=yes
+     fi
+  fi
+  AM_CONDITIONAL(ROSE_USING_GFORTRAN_VERSION_4_2, [test "x$gfortran_version_4_2" = "xyes"])
+
+# DQ (2/1/2011): GNU gfortran 4.4 has special problems so we avoid some tests where it fails.
+  gfortran_version_4_4=no
+  if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x4; then
+        echo "Note: we have identified version 4.4 of gfortran!"
+        gfortran_version_4_4=yes
+     fi
+  fi
+  AM_CONDITIONAL(ROSE_USING_GFORTRAN_VERSION_4_4, [test "x$gfortran_version_4_4" = "xyes"])
+
 # echo "Exiting after test of backend version number support ..."
 # exit 1
 

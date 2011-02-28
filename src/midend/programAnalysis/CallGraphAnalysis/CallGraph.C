@@ -665,7 +665,7 @@ CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWra
         functionDeclarationInClass = memberFunctionDeclaration;
 
       ROSE_ASSERT ( functionDeclarationInClass );
-      //      			   cout << "Pushing non-virtual function declaration for function "
+      //                           cout << "Pushing non-virtual function declaration for function "
       //<< functionDeclarationInClass->get_name().str() << "   " << functionDeclarationInClass << "\n";
       Properties* fctProps = createEmptyProperty(functionDeclarationInClass,
           functionDeclarationInClass->get_type() );
@@ -713,7 +713,7 @@ CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit)
   //default constructors.
   if (memFunDecl == NULL)
   {
-  	return props;
+        return props;
   }
 
   SgFunctionDeclaration* decl = isSgFunctionDeclaration(memFunDecl->get_firstNondefiningDeclaration());
@@ -758,7 +758,7 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
           CallTargetSet::solveMemberFunctionPointerCall( functionExp, classHierarchy );
         for (std::vector<Properties*>::iterator it = fD.begin(); it != fD.end(); it++ )
         {
-          //			 ROSE_ASSERT ( isSgFunctionDeclaration( *it ) );
+          //                     ROSE_ASSERT ( isSgFunctionDeclaration( *it ) );
           ROSE_ASSERT((*it)->functionType ); functionList.push_back( *it );
           //                         if( (*it)-> )
           //                        std::cout << "Found member function Pointer Call " << (*it)->unparseToString() << std::endl;
@@ -957,18 +957,18 @@ CallTargetSet::getPropertiesForExpression(SgExpression* sgexp,
 }
 
 void CallTargetSet::getDeclarationsForExpression(SgExpression* exp,
-		ClassHierarchyWrapper* classHierarchy,
-		Rose_STL_Container<SgFunctionDeclaration*>& defList)
+                ClassHierarchyWrapper* classHierarchy,
+                Rose_STL_Container<SgFunctionDeclaration*>& defList)
 {
-	Rose_STL_Container<Properties*> props;
-	CallTargetSet::getPropertiesForExpression(exp, classHierarchy, props);
+        Rose_STL_Container<Properties*> props;
+        CallTargetSet::getPropertiesForExpression(exp, classHierarchy, props);
 
-	foreach(Properties* prop, props)
-	{
-		SgFunctionDeclaration* candidateDecl = prop->functionDeclaration;
-		ROSE_ASSERT(candidateDecl);
-		defList.push_back(candidateDecl);
-	}
+        foreach(Properties* prop, props)
+        {
+                SgFunctionDeclaration* candidateDecl = prop->functionDeclaration;
+                ROSE_ASSERT(candidateDecl);
+                defList.push_back(candidateDecl);
+        }
 }
 
 void 
@@ -1048,15 +1048,12 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
   //     cout << "Input declaration: " << inputFunctionDeclaration << " as opposed to " << functionDeclaration << "\n"; 
 
   // Test for a forward declaration (declaration without a definition)
-  if ( defDecl )
+  if ( defDecl != NULL )
   {
-    SgFunctionDefinition* functionDefinition = defDecl->get_definition();
-    ROSE_ASSERT ( defDecl );
-    ROSE_ASSERT ( functionDefinition != NULL );
     hasDefinition = true;
 
     Rose_STL_Container<SgNode*> functionCallExpList = 
-      NodeQuery::querySubTree(functionDefinition, V_SgFunctionCallExp);
+      NodeQuery::querySubTree(defDecl, V_SgFunctionCallExp);
     foreach (SgNode* functionCallExp, functionCallExpList) {
       CallTargetSet::getPropertiesForExpression(isSgFunctionCallExp(functionCallExp), 
                                                 classHierarchy, 
@@ -1064,7 +1061,7 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
     }
 
     Rose_STL_Container<SgNode*> ctorInitList = 
-      NodeQuery::querySubTree(functionDefinition, V_SgConstructorInitializer);
+      NodeQuery::querySubTree(defDecl, V_SgConstructorInitializer);
     foreach (SgNode* ctorInit, ctorInitList) {
       CallTargetSet::getPropertiesForExpression(isSgConstructorInitializer(ctorInit), 
                                                 classHierarchy, 

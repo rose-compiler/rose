@@ -16,10 +16,10 @@
 #include "qgotolinedialog.h"
 
 /*!
-	\file qgotolinedialog.cpp
-	\brief Implementation of the QGotoDialog class.
-	
-	\see QGotoDialog
+        \file qgotolinedialog.cpp
+        \brief Implementation of the QGotoDialog class.
+        
+        \see QGotoDialog
 */
 
 #include "qeditor.h"
@@ -29,47 +29,47 @@
 #include "qdocumentcursor.h"
 
 /*!
-	\ingroup dialogs
-	@{
-	
-	\class QGotoLineDialog
-	\brief A Kate-like generic goto line dialog.
-	
+        \ingroup dialogs
+        @{
+        
+        \class QGotoLineDialog
+        \brief A Kate-like generic goto line dialog.
+        
 */
 
 QGotoLineDialog::QGotoLineDialog(QWidget *w)
  : QDialog(w)
 {
-	setupUi(this);
+        setupUi(this);
 }
 
 void QGotoLineDialog::exec(QEditor *e)
 {
-	if ( !e )
-		return;
-	
-	int ln = e->cursor().lineNumber() + 1,
-		max = e->document()->lines();
-	
-	spinLine->setValue(ln);
-	spinLine->setMaximum(max);
-	
-	slideLine->setValue(ln);
-	slideLine->setMaximum(max);
-	
-	spinLine->selectAll();
-	
-	if ( QDialog::exec() != QDialog::Accepted )
-		return;
-	
-	QDocumentCursor c(e->document(), spinLine->value() - 1);
-	
-	if ( c.isNull() )
-		return;
-	
-	//qDebug("going to line : %i [%i]", c.lineNumber(), spinLine->value());
-	
-	e->setCursor(c);
+        if ( !e )
+                return;
+        
+        int ln = e->cursor().lineNumber() + 1,
+                max = e->document()->lines();
+        
+        spinLine->setValue(ln);
+        spinLine->setMaximum(max);
+        
+        slideLine->setValue(ln);
+        slideLine->setMaximum(max);
+        
+        spinLine->selectAll();
+        
+        if ( QDialog::exec() != QDialog::Accepted )
+                return;
+        
+        QDocumentCursor c(e->document(), spinLine->value() - 1);
+        
+        if ( c.isNull() )
+                return;
+        
+        //qDebug("going to line : %i [%i]", c.lineNumber(), spinLine->value());
+        
+        e->setCursor(c);
 }
 
 /*! @} */

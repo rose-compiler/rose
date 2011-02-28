@@ -62,7 +62,7 @@ vector<SgInitializedName*> GlobalVarAnalysis::run() {
     for (std::vector<SgInitializedName*>::const_iterator c = globalVars.begin(); c!=globalVars.end(); ++c) {
       SgInitializedName* iName = isSgInitializedName(*c); 
       cout << (++nr) << " : " << iName->get_qualified_name().str() << 
-	" ( " << iName << " ) " << endl;  
+        " ( " << iName << " ) " << endl;  
     }
     cout << " Amount of global variables : " << globalVars.size() << endl;
     cout << " -----------------------------------------------------------------*\n\n" << endl;

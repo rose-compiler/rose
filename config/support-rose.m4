@@ -1220,6 +1220,17 @@ else
    echo "ROSE might use wget to automatically download EDG binaries as required during the build ...";
    echo "***** wget WAS found *****";
 fi
+# Check for availability of ps2pdf, part of ghostscript (used for generating pdf files).
+AC_CHECK_TOOL(ROSE_PS2PDF_PATH, [ps2pdf], [no])
+AM_CONDITIONAL(ROSE_USE_PS2PDF, [test "$ROSE_PS2PDF_PATH" != "no"])
+if test "$ROSE_PS2PDF_PATH" = "no"; then
+   echo "Error: ps2pdf was NOT found "
+   echo "ROSE requires ps2pdf (part of ghostscript) to generate pdf files.";
+   exit 1;
+else
+   echo "***** ps2pdf WAS found *****";
+fi
+
 
 # Liao 12/18/2009, we switch to wget instead of curl
 # curl directs error messages to the output file,which is a very bad behavior.
@@ -1304,6 +1315,9 @@ AM_CONDITIONAL(ROSE_USE_TRACE_ANALYSIS, [test "x$trace_support" = xyes])
 
 # Call supporting macro to Yices Satisfiability Modulo Theories (SMT) Solver
 ROSE_SUPPORT_YICES
+
+# Call supporting macro to check for "--enable-i386" switch
+ROSE_SUPPORT_I386
 
 # Call supporting macro to internal Satisfiability (SAT) Solver
 ROSE_SUPPORT_SAT
@@ -2493,35 +2507,17 @@ src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
 src/midend/Makefile
 src/midend/abstractHandle/Makefile
-src/midend/programTransformation/astInlining/Makefile
-src/midend/programTransformation/astOutlining/Makefile
 src/midend/astUtil/Makefile
-src/midend/astUtil/astInterface/Makefile
-src/midend/astUtil/astSupport/Makefile  
-src/midend/astUtil/symbolicVal/Makefile  
-src/midend/astUtil/annotation/Makefile
 src/midend/astQuery/Makefile
 src/midend/astProcessing/Makefile
 src/midend/astRewriteMechanism/Makefile
 src/midend/astDiagnostics/Makefile
 src/midend/binaryAnalyses/Makefile
-src/midend/programTransformation/ompLowering/Makefile
 src/midend/programAnalysis/Makefile
-src/midend/programAnalysis/CallGraphAnalysis/Makefile
-src/midend/programAnalysis/OAWrap/Makefile
-src/midend/programAnalysis/CFG/Makefile
-src/midend/programAnalysis/dataflowAnalysis/Makefile
-src/midend/programAnalysis/pointerAnal/Makefile
-src/midend/programAnalysis/valuePropagation/Makefile
-src/midend/programAnalysis/variableRenaming/Makefile
-src/midend/programAnalysis/defUseAnalysis/Makefile
-src/midend/programAnalysis/dominanceAnalysis/Makefile
-src/midend/programAnalysis/staticInterproceduralSlicing/Makefile
-src/midend/programAnalysis/annotationLanguageParser/Makefile
-src/midend/programAnalysis/sideEffectAnalysis/Makefile
-src/midend/programAnalysis/distributedMemoryAnalysis/Makefile
-src/midend/programAnalysis/graphAnalysis/Makefile
 src/midend/programTransformation/Makefile
+src/midend/programTransformation/astInlining/Makefile
+src/midend/programTransformation/astOutlining/Makefile
+src/midend/programTransformation/ompLowering/Makefile
 src/midend/programTransformation/partialRedundancyElimination/Makefile
 src/midend/programTransformation/finiteDifferencing/Makefile
 src/midend/programTransformation/functionCallNormalization/Makefile
@@ -2536,13 +2532,6 @@ src/midend/programTransformation/loopProcessing/slicing/Makefile
 src/midend/programTransformation/loopProcessing/outsideInterface/Makefile
 src/midend/programTransformation/loopProcessing/driver/Makefile
 src/backend/Makefile
-src/backend/unparser/Makefile
-src/backend/unparser/formatSupport/Makefile
-src/backend/unparser/languageIndependenceSupport/Makefile
-src/backend/unparser/CxxCodeGeneration/Makefile
-src/backend/unparser/FortranCodeGeneration/Makefile
-src/backend/unparser/PHPCodeGeneration/Makefile
-src/backend/asmUnparser/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
 src/roseExtensions/sqlite3x/Makefile

@@ -259,9 +259,9 @@ SgAsmPESectionTable::add_section(SgAsmPESection *section)
         for (size_t i=0; i<seclist->get_sections().size(); i++) {
             SgAsmGenericSection *s = seclist->get_sections()[i];
 
-			max_id = std::max(max_id, s->get_id());
+                        max_id = std::max(max_id, s->get_id());
 
-		}
+                }
         section->set_id(max_id+1);
     }
     
@@ -286,7 +286,7 @@ SgAsmPESectionTable::reallocate()
 
         max_id = std::max(max_id, sections[i]->get_id());
 
-	}
+        }
     
     size_t nsections = max_id; /*PE section IDs are 1-origin*/
     size_t need = nsections * sizeof(SgAsmPESectionTableEntry::PESectionTableEntry_disk);

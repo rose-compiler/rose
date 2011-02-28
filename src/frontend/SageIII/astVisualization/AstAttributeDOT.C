@@ -65,7 +65,7 @@ AstAttributeDOT::set_style (DOTStyles a_style)
       style = a_style;
       break;
     default:
-      ROSE_ASSERT (false);	//Default case exiting
+      ROSE_ASSERT (false);      //Default case exiting
       break;
 
     }
@@ -91,7 +91,7 @@ std::string AstAttributeDOT::get_style_string ()
           returnString = "not_filled";
           break;
     default:
-      ROSE_ASSERT (false);	//Default case exiting
+      ROSE_ASSERT (false);      //Default case exiting
       break;
 
     }
@@ -288,7 +288,7 @@ std::string DOTGraphEdge::get_arrow_type_string ()
       returnString = "vee";
       break;
     default:
-      ROSE_ASSERT (false);	//Default case exiting
+      ROSE_ASSERT (false);      //Default case exiting
       break;
 
     }
@@ -377,7 +377,7 @@ DOTGraphNode::set_shape (DOTShapeTypes a_shape)
       shape = a_shape;
       break;
     default:
-      ROSE_ASSERT (false);	//Default case exiting
+      ROSE_ASSERT (false);      //Default case exiting
       break;
 
     }
@@ -407,7 +407,7 @@ std::string DOTGraphNode::get_shape_string ()
       returnString = "mrecord";
       break;
     default:
-      ROSE_ASSERT (false);	//Default case exiting
+      ROSE_ASSERT (false);      //Default case exiting
       break;
 
     }

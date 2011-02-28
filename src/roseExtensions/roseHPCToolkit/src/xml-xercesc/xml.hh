@@ -146,11 +146,11 @@ namespace XMLUtil
 
   //! Output an element value.
   std::ostream& operator<< (std::ostream& o,
-			    const XMLElem& e);
+                            const XMLElem& e);
 
   //! Output an element tree node.
   std::ostream& operator<< (std::ostream& o,
-			    const XMLHandler::node_t* n);
+                            const XMLHandler::node_t* n);
 
   /*!
    *  \brief XML parsing class.

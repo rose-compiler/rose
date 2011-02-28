@@ -317,45 +317,45 @@ jstring
 jserver_getJavaString(const char *inString)
 {
 #if 0
-	 /* Based on example from:
-	  * http://java.sun.com/docs/books/jni/html/fldmeth.html#11202  */
-	 jclass stringClass;
-	 jmethodID consID;
-	 jstring javaString;
-	 jcharArray elemArray;
+         /* Based on example from:
+          * http://java.sun.com/docs/books/jni/html/fldmeth.html#11202  */
+         jclass stringClass;
+         jmethodID consID;
+         jstring javaString;
+         jcharArray elemArray;
          JNIEnv*  env = get_env();
 
-	 /* Get the java.lang.String class.  */
-	 stringClass = jserver_getJavaStringClass();
-	 if(stringClass == NULL)
-		return NULL;
+         /* Get the java.lang.String class.  */
+         stringClass = jserver_getJavaStringClass();
+         if(stringClass == NULL)
+                return NULL;
 
-	 /* Get the String(char[]) constructor.  */
-	 consID = env->GetMethodID(stringClass, "<init>", "([C)V");
+         /* Get the String(char[]) constructor.  */
+         consID = env->GetMethodID(stringClass, "<init>", "([C)V");
 
-	 if(consID == NULL)
-		return NULL;
+         if(consID == NULL)
+                return NULL;
 
-	 /* Create the char[] that holds the chars in 'string'.  */
-	 elemArray = env->NewCharArray(strlen(string));
+         /* Create the char[] that holds the chars in 'string'.  */
+         elemArray = env->NewCharArray(strlen(string));
 
-	 if(elemArray == NULL)
-		return NULL;
+         if(elemArray == NULL)
+                return NULL;
 
-	 (*env)->SetCharArrayRegion(elemArray, 0, strlen(string),
-	                                            convertToJChar(string));
+         (*env)->SetCharArrayRegion(elemArray, 0, strlen(string),
+                                                    convertToJChar(string));
 
-	 /* Create the java.lang.String object by invoking the given constructor:
-	  * String(char[]).  
-	  */
-	 javaString = env->NewObject(stringClass, consID, elemArray);
+         /* Create the java.lang.String object by invoking the given constructor:
+          * String(char[]).  
+          */
+         javaString = env->NewObject(stringClass, consID, elemArray);
 
-	 /* Free local references.  */
-	 env->DeleteLocalRef(elemArray);
+         /* Free local references.  */
+         env->DeleteLocalRef(elemArray);
 
-	 env->DeleteLocalRef(stringClass);
+         env->DeleteLocalRef(stringClass);
 
-	 return javaString;
+         return javaString;
 #endif
          JNIEnv*  env = get_env();
          return env->NewStringUTF(inString);
@@ -365,32 +365,32 @@ jserver_getJavaString(const char *inString)
 jobjectArray 
 jserver_getJavaStringArray(int argc, char **argv)
 {
-	 jobjectArray argsStringArray = NULL;
-	 jclass stringClass;
-	 int i;
+         jobjectArray argsStringArray = NULL;
+         jclass stringClass;
+         int i;
          JNIEnv * env = get_env();
 
-	 /* We need the String class because that is the underlying type of
-		 the array.  */
-	 stringClass = jserver_getJavaStringClass();
-	 if(stringClass == NULL)
-		return NULL;
+         /* We need the String class because that is the underlying type of
+                 the array.  */
+         stringClass = jserver_getJavaStringClass();
+         if(stringClass == NULL)
+                return NULL;
 
-	 /* Build a new object array.  Params are: env, length, class type of the 
-		 array, initial object(?).  */
-	 argsStringArray = env->NewObjectArray((argc-1), stringClass, NULL);
+         /* Build a new object array.  Params are: env, length, class type of the 
+                 array, initial object(?).  */
+         argsStringArray = env->NewObjectArray((argc-1), stringClass, NULL);
 
-	 if(argsStringArray == NULL)
-		return NULL;
+         if(argsStringArray == NULL)
+                return NULL;
 
-	 /* Put all args from argv, after the first (which is this program's
-		 name) into the array of Strings for FortranMain.  The args array
-		 for Java does not include the program name.  */
-	 for(i = 1; i < argc; i++)
- 	   env->SetObjectArrayElement(argsStringArray, (jsize)i-1,
-						jserver_getJavaString(argv[i]));
+         /* Put all args from argv, after the first (which is this program's
+                 name) into the array of Strings for FortranMain.  The args array
+                 for Java does not include the program name.  */
+         for(i = 1; i < argc; i++)
+           env->SetObjectArrayElement(argsStringArray, (jsize)i-1,
+                                                jserver_getJavaString(argv[i]));
 
-	 return argsStringArray;
+         return argsStringArray;
 }
 
 
@@ -398,17 +398,17 @@ jserver_getJavaStringArray(int argc, char **argv)
 static jchar *
 convertToJChar(const char *c_string)
 {
-	 int i;
-	 int len;
-	 jchar *jchar_string;
+         int i;
+         int len;
+         jchar *jchar_string;
 
-	 len = strlen(c_string);
-	 jchar_string = malloc(sizeof(jchar)*len);
+         len = strlen(c_string);
+         jchar_string = malloc(sizeof(jchar)*len);
 
-	 for(i = 0; i < len; i++)
-		jchar_string[i] = (jchar)(*(c_string+i));
+         for(i = 0; i < len; i++)
+                jchar_string[i] = (jchar)(*(c_string+i));
 
-	 return jchar_string;
+         return jchar_string;
 }
 
 #endif

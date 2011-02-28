@@ -23,7 +23,7 @@
 class ControlStructureContainer
 {
 public:
-  ControlStructureContainer ()	//(string tempComment, SgNode* tempStatement)
+  ControlStructureContainer ()  //(string tempComment, SgNode* tempStatement)
   {
     /*
        comment = tempComment;
@@ -47,11 +47,11 @@ extern  string leftTrim (string str);
 extern  string rightTrim (string str);
 extern  string trim (string str);
 extern  string checkPragmaRHSUnionControl (const list < SgNode * >unionFields,
-			    const list < SgNode * >classFields,
-			    const string pragmaRHS);
+                            const list < SgNode * >classFields,
+                            const string pragmaRHS);
 extern  string parsePragmaStringRHS (string pragmaString, string prefix, string name);
 extern  string parsePragmaStringLHS (string pragmaString, string prefix, string terminator);
 extern  list <ControlStructureContainer * > queryFindCommentsInScope (const string stringPrefixToMatch,
-			  const string stringToMatch, 
-			  SgScopeStatement * sageScopeStatement);
+                          const string stringToMatch, 
+                          SgScopeStatement * sageScopeStatement);
 #endif

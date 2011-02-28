@@ -47,16 +47,16 @@ public:
   /** Multiple targets constructor */
 
   structureTreeAnn( const parserID * name,
-		    structuretree_list * targets,
-		    Operator op,
-		    bool target_is_new);
+                    structuretree_list * targets,
+                    Operator op,
+                    bool target_is_new);
 
   /** Single target constructor */
 
   structureTreeAnn( const parserID * name,
-		    structureTreeAnn * target,
-		    Operator op,
-		    bool target_is_new);
+                    structureTreeAnn * target,
+                    Operator op,
+                    bool target_is_new);
 
   /** Destructor
    *
@@ -119,7 +119,7 @@ public:
 
   structureAnn(annVariable * source, annVariable * target,
                const std::string * field_name,
-	       const int line);
+               const int line);
 
   // --- Fields
 

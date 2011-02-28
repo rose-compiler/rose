@@ -15,13 +15,13 @@ class  AnnotCollectionBase {
  public:
   //! Check if annotName matches the current annotation type name (TargetInfo)
   // The name is one of the following:
-  //	array(is-array?), construct_array(new-array), modify_array, array_optimize,
-  // 	has_value, alias/allow_alias,
-  // 	inline, modify, read, restrict_value, ??(inheritable)
+  //    array(is-array?), construct_array(new-array), modify_array, array_optimize,
+  //    has_value, alias/allow_alias,
+  //    inline, modify, read, restrict_value, ??(inheritable)
   virtual bool read_annot_name( const std::string& annotName) const = 0;
   virtual void read_descriptor( const TargetInfo& target,
-				const std::string& annotName, 
-				std::istream& in) = 0;
+                                const std::string& annotName, 
+                                std::istream& in) = 0;
   virtual ~AnnotCollectionBase() {}
 };
 
@@ -65,11 +65,11 @@ class TypeCollection
       : public std::map<std::string,Descriptor>::const_iterator 
       {
       public:
-	const_iterator( const typename std::map< std::string,Descriptor>::const_iterator& that) 
-	  : std::map<std::string, Descriptor>::const_iterator(that) {}
-	TypeDescriptor get_type() const 
+        const_iterator( const typename std::map< std::string,Descriptor>::const_iterator& that) 
+          : std::map<std::string, Descriptor>::const_iterator(that) {}
+        TypeDescriptor get_type() const 
             { return std::map<std::string,Descriptor>::const_iterator::operator*().first; }
-	const Descriptor& get_desc() const 
+        const Descriptor& get_desc() const 
             { return  std::map<std::string,Descriptor>::const_iterator::operator*().second; }
      };
 
@@ -91,7 +91,7 @@ class TypeAnnotCollection
   public TypeCollection<Descriptor>
 {  // Derived from TypeCollectionBase
   virtual void read_descriptor( const TypeDescriptor& targetname, 
-				const std::string& annot, std::istream& in);
+                                const std::string& annot, std::istream& in);
  protected:
   TypeCollection<Descriptor>::typemap;
  public:

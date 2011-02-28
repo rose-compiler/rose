@@ -24,6 +24,7 @@ extern "C" {
 
 //Runtime library initialization routine
 extern void XOMP_init (int argc, char ** argv);
+extern void xomp_init (void);
 
 // Runtime library termination routine
 extern void XOMP_terminate (int exitcode);
@@ -38,12 +39,19 @@ extern void XOMP_taskwait (void);
 // scheduler functions, union of runtime library functions
 // empty body if not used by one
 // scheduler initialization, only meaningful used for OMNI
+
+// Default loop scheduling, worksharing without any schedule clause, upper bounds are inclusive
+// Kick in before all runtime libraries. We use the default loop scheduling from XOMP regardless the runtime chosen.
+extern void XOMP_loop_default(int lower, int upper, int stride, long* n_lower, long* n_upper);
+
+//! Optional init functions, mostly used for working with omni RTL
+// Non-op for gomp
 extern void XOMP_loop_static_init(int lower, int upper, int stride, int chunk_size);
 extern void XOMP_loop_dynamic_init(int lower, int upper, int stride, int chunk_size);
 extern void XOMP_loop_guided_init(int lower, int upper, int stride, int chunk_size);
 extern void XOMP_loop_runtime_init(int lower, int upper, int stride);
 
-//ordered case
+//  ordered case
 extern void XOMP_loop_ordered_static_init(int lower, int upper, int stride, int chunk_size);
 extern void XOMP_loop_ordered_dynamic_init(int lower, int upper, int stride, int chunk_size);
 extern void XOMP_loop_ordered_guided_init(int lower, int upper, int stride, int chunk_size);
@@ -52,6 +60,9 @@ extern void XOMP_loop_ordered_runtime_init(int lower, int upper, int stride);
 
 // if (start), 
 // mostly used because of gomp, omni will just call  XOMP_loop_xxx_next();
+// (long start, long end, long incr, long chunk_size,long *istart, long *iend)
+//  upper bounds are non-inclusive, 
+//  bounds for inclusive loop control will need +/-1 , depending on incremental/decremental cases
 extern bool XOMP_loop_static_start (long, long, long, long, long *, long *);
 extern bool XOMP_loop_dynamic_start (long, long, long, long, long *, long *);
 extern bool XOMP_loop_guided_start (long, long, long, long, long *, long *);
