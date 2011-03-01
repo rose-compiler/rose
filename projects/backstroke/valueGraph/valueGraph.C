@@ -81,24 +81,14 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 				// We don't know if this var is a use or def now.
 				VariableWithVersion var = getVariableWithVersion(expr);
 
+				cout << "Phi node:" << var << endl;
+
 				if (var.isPseudoDef)
 				{
 					// If there is no node of var in the VG.
 					if (varVertexMap_.find(var) == varVertexMap_.end())
 					{
-						// Add the phi node.
-						Vertex v = addVertex(new PhiNode(var));
-						varVertexMap_[var] = v;
-
-						// Connect the pseudo def to real defs.
-						foreach (const PhiNodeDependence& def, var.phiVersions)
-						{
-							VariableWithVersion varInPhi(var.name, def.version);
-							ROSE_ASSERT(varVertexMap_.find(varInPhi) != varVertexMap_.end());
-							
-							Edge e = add_edge(v, varVertexMap_[varInPhi], *this).first;
-							(*this)[e] = new ValueGraphEdge;
-						}
+						addPhiNode(var);
 					}
 
 					ROSE_ASSERT(varVertexMap_.find(var) != varVertexMap_.end());
@@ -108,11 +98,12 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 				}
 				else
 				{
-					cout << var.version << var.isPseudoDef << endl;
-					// If the reaching def of this variable is not a phi node, its node should already be added
-					// into the value graph. Find it and update the node->vertex table.
-					ROSE_ASSERT(varVertexMap_.count(var) > 0);
-					nodeVertexMap_[expr] = varVertexMap_[var];
+					cout << var.version << " " << var.isPseudoDef << endl;
+
+					// If the variable is a use, it should already exist in the var->vertex table.
+					// Find it and update the node->vertex table.
+					if (varVertexMap_.count(var) > 0)
+						nodeVertexMap_[expr] = varVertexMap_[var];
 				}
 
 				//VariableWithVersion var(varName, defTable[varName]->getRenamingNumber());
@@ -124,7 +115,7 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 
 			else if (SgValueExp* valueExp = isSgValueExp(expr))
 			{
-				addVertex(new ValueNode(valueExp), expr);
+				addNode(new ValueNode(valueExp), expr);
 			}
 
 			else if (SgBinaryOp* binOp = isSgBinaryOp(expr))
@@ -162,7 +153,23 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 
 					case V_SgAddOp:
 					{
-						Vertex v = addVertex(new OperaterNode(OperaterNode::otAdd), expr);
+						Vertex v = addNode(new OperaterNode(OperaterNode::otAdd), expr);
+
+						ROSE_ASSERT(nodeVertexMap_.count(lhs) > 0);
+						ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
+
+						Edge e1 = add_edge(v, nodeVertexMap_[lhs], *this).first;
+						Edge e2 = add_edge(v, nodeVertexMap_[rhs], *this).first;
+
+						(*this)[e1] = new ValueGraphEdge;
+						(*this)[e2] = new ValueGraphEdge;
+
+						break;
+					}
+
+					case V_SgGreaterThanOp:
+					{
+						Vertex v = addNode(new OperaterNode(OperaterNode::otGreaterThan), expr);
 
 						ROSE_ASSERT(nodeVertexMap_.count(lhs) > 0);
 						ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
@@ -178,7 +185,7 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 
 					case V_SgPlusAssignOp:
 					{
-						Vertex v = addVertex(new OperaterNode(OperaterNode::otAdd), expr);
+						Vertex v = addNode(new OperaterNode(OperaterNode::otAdd), expr);
 
 						VariableWithVersion use = getVariableWithVersion(lhs);
 
@@ -197,6 +204,7 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 						break;
 					}
 
+
 					default:
 						break;
 				}
@@ -205,10 +213,64 @@ void ValueGraph::build(SgFunctionDefinition* funcDef)
 	}
 }
 
+ValueGraph::Vertex ValueGraph::addPhiNode(VariableWithVersion& var)
+{
+	// Add the phi node.
+	Vertex v = addNode(new PhiNode(var));
+	varVertexMap_[var] = v;
+
+	ROSE_ASSERT(varReachingDefMap_.count(var) > 0);
+	SSA::ReachingDefPtr reachingDef = varReachingDefMap_[var];
+	
+	foreach (SSA::ReachingDefPtr def, reachingDef->getJoinedDefs())
+	{
+		int v = def->getRenamingNumber();
+		// If this def is also a phi node, add a varWithVersin entry
+		// to the varReachingDefMap_ table.
+		if (def->isPhiFunction())
+		{
+			VariableWithVersion phiVar(var.name, v, true);
+			varReachingDefMap_[phiVar] = def;
+		}
+		// If this def is not in the value graph, add it.
+
+		var.phiVersions.push_back(PhiNodeDependence(v));
+	}
+
+	// Connect the pseudo def to real defs.
+	foreach (const PhiNodeDependence& def, var.phiVersions)
+	{
+		// We cannot build a var like this since it may be another phi node.
+		VariableWithVersion varInPhi(var.name, def.version);
+
+		cout << "Phi node dependence:" << varInPhi << endl;
+
+		// If there the node which defines this phi node is not in the table, it should be another phi node.
+		if (varVertexMap_.find(varInPhi) == varVertexMap_.end())
+		{
+			if (varReachingDefMap_.count(varInPhi) > 0)
+			{
+				varInPhi.isPseudoDef = true;
+				addPhiNode(varInPhi);
+			}
+			else
+				ROSE_ASSERT(false);
+			ROSE_ASSERT(varVertexMap_.find(varInPhi) != varVertexMap_.end());
+		}
+
+		Edge e = add_edge(v, varVertexMap_[varInPhi], *this).first;
+		(*this)[e] = new ValueGraphEdge;
+	}
+
+	return v;
+}
+
 void ValueGraph::setNewDefNode(SgNode* defNode, Vertex useVertex)
 {
 	// Get the var name and version for lhs.
 	VariableWithVersion var = getVariableWithVersion(defNode, false);
+
+	cout << "New var added:" << var << endl;
 
 	//// Find the node of rhs in the VG which should exist now.
 	//ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
@@ -231,7 +293,7 @@ void ValueGraph::setNewDefNode(SgNode* defNode, Vertex useVertex)
 		}
 		else
 		{
-			Vertex newVertex = addVertex(new ValueGraphNode(var), defNode);
+			Vertex newVertex = addNode(new ValueGraphNode(var), defNode);
 
 			// Update the var to vertex map.
 			varVertexMap_[var] = newVertex;
@@ -243,22 +305,24 @@ void ValueGraph::setNewDefNode(SgNode* defNode, Vertex useVertex)
 	else
 	{
 		// A variable is declared but not defined.
-		Vertex newVertex = addVertex(new ValueGraphNode(var), defNode);
+		Vertex newVertex = addNode(new ValueGraphNode(var), defNode);
 
 		// Update the var to vertex map.
 		varVertexMap_[var] = newVertex;
 	}
 }
 
-VariableWithVersion ValueGraph::getVariableWithVersion(SgNode* node, bool isUse) const
+VariableWithVersion ValueGraph::getVariableWithVersion(SgNode* node, bool isUse)
 {
 	VarName varName = SSA::getVarName(node);
 	int version;
 
-	if (isUse)
+	// First, check if there is any use at the given node. If not, it should be a def.
+	const SSA::NodeReachingDefTable& defTable = ssa_.getUsesAtNode(node);
+	SSA::NodeReachingDefTable::const_iterator iter = defTable.find(varName);
+	if (iter != defTable.end())
 	{
-		const SSA::NodeReachingDefTable& defTable = ssa_.getUsesAtNode(node);
-		ROSE_ASSERT(defTable.count(varName) > 0);
+		//ROSE_ASSERT(defTable.count(varName) > 0);
 		SSA::ReachingDefPtr reachingDef = defTable.find(varName)->second;
 		version = reachingDef->getRenamingNumber();
 
@@ -266,19 +330,23 @@ VariableWithVersion ValueGraph::getVariableWithVersion(SgNode* node, bool isUse)
 		if (reachingDef->isPhiFunction())
 		{
 			VariableWithVersion var(varName, version, true);
-			foreach (SSA::ReachingDefPtr def, reachingDef->getJoinedDefs())
-			{
-				var.phiVersions.push_back(PhiNodeDependence(def->getRenamingNumber()));
-			}
+			varReachingDefMap_[var] = reachingDef;
 			return var;
 		}
 	}
 	else
 	{
 		const SSA::NodeReachingDefTable& defTable = ssa_.getReachingDefsAtNode(node->get_parent());
-		ROSE_ASSERT(defTable.count(varName) > 0);
-		SSA::ReachingDefPtr reachingDef = defTable.find(varName)->second;
-		version = reachingDef->getRenamingNumber();
+		iter = defTable.find(varName);
+		if (iter != defTable.end())
+		{
+			SSA::ReachingDefPtr reachingDef = defTable.find(varName)->second;
+			version = reachingDef->getRenamingNumber();
+		}
+		else
+		{
+			ROSE_ASSERT(!"Cannot find the given node in the def table.");
+		}
 	}
 	
 	return VariableWithVersion(varName, version);

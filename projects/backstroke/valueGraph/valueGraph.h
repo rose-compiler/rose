@@ -158,6 +158,8 @@ struct OperaterNode : ValueGraphNode
 		otDevide,
 		otMod,
 		otAssign,
+		otGreaterThan,
+		otLessThan
 	};
 
 	OperaterNode(OperaterType t) : ValueGraphNode(), type(t) {}
@@ -173,6 +175,12 @@ struct OperaterNode : ValueGraphNode
 				break;
 			case otMultiply:
 				label = "Mul";
+				break;
+			case otGreaterThan:
+				label = ">";
+				break;
+			case otLessThan:
+				label = "<";
 				break;
 			default:
 				break;
@@ -244,6 +252,10 @@ private:
 	//! A map from variable with version to vertex of Value Graph.
 	std::map<VariableWithVersion, Vertex> varVertexMap_;
 
+	//! A map from variable with version to its reaching def object.
+	//! This map is only for pseudo defs.
+	std::map<VariableWithVersion, SSA::ReachingDefPtr> varReachingDefMap_;
+
 //	typedef CFG<VirtualCFG::InterestingNode,
 //			VirtualCFG::InterestingEdge> CFG;
 //	typedef CDG<CFG> CDG;
@@ -260,9 +272,14 @@ public:
 	void toDot(const std::string& filename) const;
 
 private:
-	//! This function set or add a def node to the value graph. If the variable defined is assigned by a
-	//! node with a temporary variable, just set the name and version to the temporary one.
-	//! Or else, build a new graph node and add an edge from this new node to the target node.
+
+	/** This function set or add a def node to the value graph. If the variable defined is assigned by a
+	 *  node with a temporary variable, just set the name and version to the temporary one.
+	 *  Or else, build a new graph node and add an edge from this new node to the target node.
+	 *
+	 *  @param defNode The AST node which is defined.
+	 *  @param useVertex The value graph vertex which defineds the new node.
+	 */
 	void setNewDefNode(SgNode* defNode, Vertex useVertex);
 
 	void writeGraphNode(std::ostream& out, const Vertex& node) const
@@ -279,9 +296,9 @@ private:
 	 *
 	 *  @param newNode A value graph node which will be added.
 	 *  @param sgNode The AST node which maps to the added value graph node.
-	 *  @return The new added vertex.
+	 *  @returns The new added vertex.
 	 */
-	Vertex addVertex(ValueGraphNode* newNode, SgNode* sgNode = NULL)
+	Vertex addNode(ValueGraphNode* newNode, SgNode* sgNode = NULL)
 	{
 		Vertex v = add_vertex(*this);
 		(*this)[v] = newNode;
@@ -290,13 +307,16 @@ private:
 		return v;
 	}
 
+	//! Add a phi node to the value graph.
+	Vertex addPhiNode(VariableWithVersion& var);
+
 
 	/** Given a SgNode, return its variable name and version.
 	 * 
-	 *  @param node A SgNode which is the variable.
-	 *  @param isUse Inidicate if the variable is a use or a def.
+	 *  @param node A SgNode which should be a variable (either a var ref or a declaration).
+	 *  //@param isUse Inidicate if the variable is a use or a def.
 	 */
-	VariableWithVersion getVariableWithVersion(SgNode* node, bool isUse = true) const;
+	VariableWithVersion getVariableWithVersion(SgNode* node, bool isUse = true);
 
 	static Vertex nullVertex()
 	{ return boost::graph_traits<ValueGraph>::null_vertex(); }
