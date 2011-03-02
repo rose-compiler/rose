@@ -1,4 +1,12 @@
 #!/usr/bin/perl
+
+###########################################################################################
+# SKW (3/2/11): DISABLED TEMPORARILY PER DAN QUINLAN
+print "!!!!!!! POLICY DISABLED TEMPORARILY -- BY ORDER OF DAN QUINLAN           !!!!!!!\n";
+print "!!!!!!! (this policy is currently violated by several files in 'master') !!!!!!!\n";
+exit(0);
+########################################################################333################
+
 my $desc = <<EOF;
 All source files should be mentioned in makefiles.  A source file that
 is not mentioned in a makefile is probably not used. As of 2010-10-18

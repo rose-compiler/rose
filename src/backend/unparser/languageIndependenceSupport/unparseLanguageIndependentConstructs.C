@@ -28,29 +28,46 @@ UnparseLanguageIndependentConstructs::tostring(T t) const
      return myStream.str(); //returns the string form of the stringstream object
    }
 
-// DQ (8/13/2007): This function was implemented by Thomas
+// TODO: This code is identical to 'FortranCodeGeneration_locatedNode::curprint'. Factor this!
 void
 UnparseLanguageIndependentConstructs::curprint (const std::string & str) const
-   {
+{
+    if( unp->currentFile != NULL && unp->currentFile->get_Fortran_only() )
+    {
+        /// determine line wrapping parameters
+        bool is_fixed_format = unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format;
+        bool is_free_format  = unp->currentFile->get_outputFormat() == SgFile::e_free_form_output_format;
+        int max_pos = ( is_fixed_format ? MAX_F90_LINE_LEN_FIXED
+                      : is_free_format  ? MAX_F90_LINE_LEN_FREE
+                      : unp->cur.get_linewrap() );
 
-     // FMZ (3/22/2010) added fortran continue line support
-     bool is_fortran90 =  (unp->currentFile != NULL ) &&
-                              (unp->currentFile->get_F90_only() ||
-                                  unp->currentFile->get_CoArrayFortran_only());
+        // check whether line wrapping is needed
+        int cur_pos = unp->cur.current_col();
+        int new_pos = cur_pos + str.size();
+        if( new_pos >= max_pos )
+        {
+            if( is_fixed_format )
+                printf("Warning: line too long for Fortran fixed format (fixed format wrapping not implemented)\n");
+            else if( is_free_format )
+            {
+                // warn if successful wrapping is impossible in the current state
+                if( cur_pos + 1 > max_pos )
+                    printf("Warning: can't wrap long line in Fortran free format (no room for '&')\n");
+                else if( str.size() > (unsigned int) max_pos-1 )
+                    printf("Warning: can't wrap long line in Fortran free format (incoming string too long for a line)\n");
 
-     int str_len       = str.size();
-     int curr_line_len = unp->cur.current_col();
-
-     if (is_fortran90 && 
-              curr_line_len!=0 && 
-               (str_len + curr_line_len)> MAX_F90_LINE_LEN) {
-          unp->u_sage->curprint("&");
-          unp->cur.insert_newline(1);
-     } 
+                // emit free-format line continuation even if result will still be too long
+                unp->u_sage->curprint("&");
+                unp->cur.insert_newline(1);
+                unp->u_sage->curprint("&");
+            }
+            else
+                printf("Warning: long line not wrapped (unknown output format)\n");
+        }
+    }
 
      unp->u_sage->curprint(str);
-
-   }
+}
 
 // DQ (8/13/2007): This has been moved to the base class (language independent code)
 void

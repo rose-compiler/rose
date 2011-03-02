@@ -1,4 +1,12 @@
 #!/usr/bin/perl
+
+########################################################################################
+# SKW (3/2/11): DISABLED TEMPORARILY PER DAN QUINLAN
+print "!!!!!!! POLICY DISABLED TEMPORARILY -- BY ORDER OF DAN QUINLAN        !!!!!!!\n";
+print "!!!!!!! (this policy is currently violated by many files in 'master') !!!!!!!\n";
+exit(0);
+########################################################################################
+
 my $desc = <<EOF;
 ROSE developers predominantly use Unix-like systems for development. These
 systems use the ASCII LF (line feed, '\\n') character for line termination.
