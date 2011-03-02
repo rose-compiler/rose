@@ -339,9 +339,9 @@
       hwide(k) =  dz(k)
 
 ! DQ (9/12/2010): Commented out uses of "km" because this is an error in ROSE.
-!      bckgrnd_vdc(k) = bckgrnd_vdc1 + bckgrnd_vdc2* &
-!                       atan(bckgrnd_vdc_linv*       &
-!                            (zw(k)-bckgrnd_vdc_dpth))
+      bckgrnd_vdc(k) = bckgrnd_vdc1 + bckgrnd_vdc2* &
+                       atan(bckgrnd_vdc_linv*       &
+                            (zw(k)-bckgrnd_vdc_dpth))
       bckgrnd_vvc(k) = Prandtl*bckgrnd_vdc(k)
 
       if (bckgrnd_vdc2 /= c0 .and. my_task == master_task) then
@@ -350,7 +350,7 @@
    end do
 
 ! DQ (9/12/2010): Commented out uses of "km" because this is an error in ROSE.
-!  zgrid(km+1) = -zw(km)
+  zgrid(km+1) = -zw(km)
    hwide(km+1) = eps
 
 !-----------------------------------------------------------------------

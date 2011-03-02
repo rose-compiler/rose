@@ -171,7 +171,7 @@ FortranModuleInfo::getModule(string modName)
 
        // Insert the extracted module into the moduleNameAstMap (this is the only location where the moduleNameAstMap is modified).
        // moduleNameAstMap.insert(std::pair<string,SgModuleStatement*>(modName,modStmt));
-          moduleNameAstMap.insert(ModuleMapType::value_type(modName,modStmt));
+              moduleNameAstMap.insert(ModuleMapType::value_type(modName,modStmt));
 
 #ifdef USE_STMT_DEBUG
           printf ("In FortranModuleInfo::getModule(%s) modStmt = %p: display the moduleNameAstMap \n",modName.c_str(),modStmt);

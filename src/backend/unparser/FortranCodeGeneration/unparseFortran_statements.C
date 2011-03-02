@@ -6,6 +6,7 @@
 
 #include "sage3basic.h"
 #include "unparser.h"
+#include <limits>
 
 // DQ (10/14/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
@@ -2377,7 +2378,10 @@ getElseIfStatement ( SgIfStmt* parentIfStatement )
                if (childIfStatement != NULL)
                   {
                  // A properly formed elseif has only a single statement in the false block AND was marked as NOT having an associated "END IF"
-                    ifStatementInFalseBody = (falseBlock->get_statements().size() == 1) && (childIfStatement->get_has_end_statement() == false);
+                 // DXN (02/13/2011): and marked as using the THEN keyword
+                    ifStatementInFalseBody = (falseBlock->get_statements().size() == 1)
+                                && (childIfStatement->get_has_end_statement() == false)
+                                && childIfStatement->get_use_then_keyword();
 
                     if (ifStatementInFalseBody == false)
                          childIfStatement = NULL;
@@ -5628,26 +5632,45 @@ FortranCodeGeneration_locatedNode::unparseWithTeamStatement(SgStatement* stmt, S
 
 
 
-//FMZ (3/22/2010) added for continue line
+// TODO: This code is identical to 'UnparseLanguageIndependentConstructs::curprint'. Factor this!
 void
 FortranCodeGeneration_locatedNode::curprint(const std::string & str) const
 {
-  bool is_fortran90 = (unp->currentFile !=NULL) && (unp->currentFile->get_F90_only()||
-                                                    unp->currentFile->get_CoArrayFortran_only());
+    if( unp->currentFile != NULL && unp->currentFile->get_Fortran_only() )
+    {
+        /// determine line wrapping parameters
+        bool is_fixed_format = unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format;
+        bool is_free_format  = unp->currentFile->get_outputFormat() == SgFile::e_free_form_output_format;
+        int max_pos = ( is_fixed_format ? MAX_F90_LINE_LEN_FIXED
+                      : is_free_format  ? MAX_F90_LINE_LEN_FREE
+                      : unp->cur.get_linewrap() );
 
-  int cur_str_len = str.size();
-  int len_in_line = unp->cur.current_col();
+        // check whether line wrapping is needed
+        int cur_pos = unp->cur.current_col();
+        int new_pos = cur_pos + str.size();
+        if( new_pos >= max_pos )
+        {
+            if( is_fixed_format )
+                printf("Warning: line too long for Fortran fixed format (fixed format wrapping not implemented)\n");
+            else if( is_free_format )
+            {
+                // warn if successful wrapping is impossible in the current state
+                if( cur_pos + 1 > max_pos )
+                    printf("Warning: can't wrap long line in Fortran free format (no room for '&')\n");
+                else if( str.size() > (unsigned int) max_pos-1 )
+                    printf("Warning: can't wrap long line in Fortran free format (incoming string too long for a line)\n");
 
-  if (is_fortran90 && 
-         len_in_line  != 0  &&
-         (len_in_line + cur_str_len) > MAX_F90_LINE_LEN) {
-
-          unp->u_sage->curprint("&");
-          unp->cur.insert_newline(1);
-  }
+                // emit free-format line continuation even if result will still be too long
+                unp->u_sage->curprint("&");
+                unp->cur.insert_newline(1);
+                unp->u_sage->curprint("&");
+            }
+            else
+                printf("Warning: long line not wrapped (unknown output format)\n");
+        }
+    }
 
    unp->u_sage->curprint(str);
-
 }
 
 void FortranCodeGeneration_locatedNode::unparseOmpPrefix     (SgUnparse_Info& info)
