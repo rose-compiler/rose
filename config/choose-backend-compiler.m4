@@ -15,7 +15,7 @@ dnl build using ROSE)
     [
     # Use a different compiler for the backend than for the compilation of ROSE source code
       BACKEND_CXX_COMPILER=$with_alternate_backend_Cxx_compiler
-
+      AC_SUBST(BACKEND_CXX_COMPILER)
       echo "alternative back-end C++ compiler specified for generated translators to use: $BACKEND_CXX_COMPILER"
     ] ,
     [ 
@@ -30,6 +30,7 @@ dnl build using ROSE)
     [
     # Use a different compiler for the backend than for the compilation of ROSE source code
       BACKEND_C_COMPILER=$with_alternate_backend_C_compiler
+      AC_SUBST(BACKEND_C_COMPILER)
       echo "alternative back-end C compiler specified for generated translators to use: $BACKEND_C_COMPILER"
     ] ,
     [ 
@@ -45,6 +46,7 @@ dnl build using ROSE)
     [
     # Use a different compiler for the backend than for the compilation of ROSE source code
       BACKEND_FORTRAN_COMPILER=$with_alternate_backend_fortran_compiler
+      AC_SUBST(BACKEND_FORTRAN_COMPILER)
       echo "alternative back-end fortran compiler specified for generated translators to use: $BACKEND_FORTRAN_COMPILER"
     ] ,
     [ 
