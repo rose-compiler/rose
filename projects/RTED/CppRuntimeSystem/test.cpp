@@ -9,6 +9,8 @@ using namespace std;
 
 ostream& out = cout;
 
+static const bool nondistributed = false;
+
 static
 void freeMemory(RuntimeSystem* rs, Address addr, MemoryType::AllocKind kind = akCxxNew)
 {
@@ -18,13 +20,13 @@ void freeMemory(RuntimeSystem* rs, Address addr, MemoryType::AllocKind kind = ak
 static
 void createMemory(RuntimeSystem* rs, Address addr, size_t sz, MemoryType::AllocKind kind = akCxxNew, RsType* t = NULL)
 {
-  rs->createMemory(addr, sz, kind, t);
+  rs->createMemory(addr, sz, kind, t, nondistributed);
 }
 
 static
 void createArray(RuntimeSystem* rs, Address addr, const char* a, const char* b, RsArrayType* arr)
 {
-  rs->createArray(addr, rted_obj(), a, b, arr);
+  rs->createArray(addr, a, b, arr, nondistributed);
 }
 
 
@@ -110,8 +112,34 @@ const T* point_to(const Address& addr)
 }
 
 
+/// \note operator+= is only safe in non distributed environments
+inline
+Address& operator+=(Address& lhs, long offset)
+{
+  lhs.local += offset;
+  return lhs;
+}
+
+/// \note operator+ is only safe in non distributed environments
+inline
+Address operator+(const Address& lhs, long offset)
+{
+  Address tmp(lhs);
+
+  tmp.local += offset;
+  return tmp;
+}
+
+/// \note operator- is only safe in non distributed environments
+inline
+Address operator-(const Address& lhs, long offset)
+{
+  return lhs + (-offset);
+}
+
+
 #define TEST_INIT( MSG)                               \
-    out << "-- " << (MSG) << endl ;		      \
+    out << "-- " << (MSG) << endl ;         \
     bool errorFound=false;                            \
     RuntimeSystem * rs = RuntimeSystem::instance();   \
     rs->checkpoint(srcPosition( (MSG), __LINE__, __LINE__ ));              \
@@ -568,7 +596,8 @@ void testScopeFreesStack()
         asAddr(4),
         "my_var",
         "mangled_my_var",
-        "SgTypeInt"
+        "SgTypeInt",
+        nondistributed
     );
     rs->endScope();
 
@@ -587,7 +616,8 @@ void testImplicitScope()
         asAddr(4),
         "my_var",
         "mangled_my_var",
-        "SgTypeInt"
+        "SgTypeInt",
+        nondistributed
     );
 
     CLEANUP
@@ -609,15 +639,15 @@ void testImplicitScope()
     int           ptrSize = sizeof(void*);
 
     rs->beginScope("Scope1");
-        rs->createVariable(addr+=ptrSize,"p1_to_10","mangled_p1_to_10",ts->getPointerType("SgTypeInt"));
+        rs->createVariable(addr+=ptrSize,"p1_to_10","mangled_p1_to_10",ts->getPointerType("SgTypeInt"), nondistributed);
         registerPointerChange(rs, "mangled_p1_to_10", asAddr(10));
 
-        rs->createVariable(addr+=ptrSize,"p1_to_18","mangled_p1_to_18",ts->getPointerType("SgTypeInt"));
+        rs->createVariable(addr+=ptrSize,"p1_to_18","mangled_p1_to_18",ts->getPointerType("SgTypeInt"), nondistributed);
         registerPointerChange(rs, "mangled_p1_to_18", asAddr(18));
 
 
         rs->beginScope("Scope2");
-            rs->createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10",ts->getPointerType("SgTypeInt"));
+            rs->createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10",ts->getPointerType("SgTypeInt"), nondistributed);
             registerPointerChange(rs, "mangled_p2_to_10", asAddr(10));
         rs->endScope();
 
@@ -660,7 +690,7 @@ void testLostMemRegionFromDoublePointer()
     createMemory(rs,  heap_addr_inner, 2 * sizeof( int ));
 
     // int** ptr;
-    rs -> createVariable( var_addr, "int**", "mangled_int**", int_ptr_ptr );
+    rs -> createVariable( var_addr, "int**", "mangled_int**", int_ptr_ptr, nondistributed );
     // ptr = (int**) malloc( 2 * sizeof( int* ));
     registerPointerChange( rs, var_addr, heap_addr_outer, false );
 
@@ -694,13 +724,13 @@ void testPointerChanged()
     int ptrSize = sizeof(void*);
     rs->beginScope("Scope1");
 
-        rs->createVariable(addr+=ptrSize,"p1_to_10","mangled_p1_to_10", ts->getPointerType("SgTypeInt"));
+        rs->createVariable(addr+=ptrSize,"p1_to_10","mangled_p1_to_10", ts->getPointerType("SgTypeInt"), nondistributed);
         registerPointerChange(rs, "mangled_p1_to_10", asAddr(10));
 
-        rs->createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10",ts->getPointerType("SgTypeInt"));
+        rs->createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10",ts->getPointerType("SgTypeInt"), nondistributed);
         registerPointerChange(rs, "mangled_p2_to_10", asAddr(10));
 
-        rs->createVariable(addr+=ptrSize,"p1_to_18","mangled_p1_to_18",ts->getPointerType("SgTypeInt"));
+        rs->createVariable(addr+=ptrSize,"p1_to_18","mangled_p1_to_18",ts->getPointerType("SgTypeInt"), nondistributed);
         registerPointerChange(rs, "mangled_p1_to_18", asAddr(18));
 
         try{ registerPointerChange(rs, "mangled_p1_to_10", asAddr(18), true); }
@@ -724,9 +754,9 @@ void testPointerChanged()
         ts->registerType(typeA);
 
         // Create an instance of A on stack
-        rs->createVariable(asAddr(0x42),"instanceOfA","mangled","A");
+        rs->createVariable(asAddr(0x42),"instanceOfA","mangled","A", nondistributed);
 
-        rs->createVariable(asAddr(0x100),"intPtr","mangled_intPtr",ts->getPointerType("SgTypeInt"));
+        rs->createVariable(asAddr(0x100),"intPtr","mangled_intPtr",ts->getPointerType("SgTypeInt"), nondistributed);
         registerPointerChange(rs, "mangled_intPtr",asAddr(0x42));
 
         try{ registerPointerChange(rs, "mangled_intPtr", asAddr(0x42) + 10*sizeof(int),true); }
@@ -740,7 +770,7 @@ void testPointerChanged()
 
         CHECKPOINT
         int *ptr = (int*) (&ptr);
-        rs->createVariable( memAddr(&ptr),"s3_ptr","mangled_s3_ptr",ts->getPointerType("SgTypeInt"));
+        rs->createVariable( memAddr(&ptr),"s3_ptr","mangled_s3_ptr",ts->getPointerType("SgTypeInt"), nondistributed);
 
         CHECKPOINT
         // default policy is to invalidate pointers
@@ -765,8 +795,8 @@ void testInvalidPointerAssign()
 
     rs->beginScope("Scope2");
         // Create an instance of A on stack
-        rs->createVariable(asAddr(0x42), "instanceOfA","mangled","SgTypeDouble");
-        rs->createVariable(asAddr(0x100), "intPtr","mangled_intPtr",ts->getPointerType("SgTypeInt"));
+        rs->createVariable(asAddr(0x42), "instanceOfA","mangled","SgTypeDouble", nondistributed);
+        rs->createVariable(asAddr(0x100), "intPtr","mangled_intPtr",ts->getPointerType("SgTypeInt"), nondistributed);
         // Try to access double with an int ptr
         try { registerPointerChange(rs, "mangled_intPtr", asAddr(0x42)); }
         TEST_CATCH ( RuntimeViolation::INVALID_TYPE_ACCESS )
@@ -789,9 +819,9 @@ void testPointerTracking()
     ts->registerType(type);
 
     rs->beginScope("TestScope");
-    rs->createVariable(asAddr(42), "instanceOfA","mangled","A");
+    rs->createVariable(asAddr(42), "instanceOfA","mangled","A", nondistributed);
 
-    rs->createVariable(asAddr(100), "pointer","mangledPointer",ts->getPointerType("A"));
+    rs->createVariable(asAddr(100), "pointer","mangledPointer",ts->getPointerType("A"), nondistributed);
 
     //rs->setQtDebuggerEnabled(true);
     //rs->checkpoint(SourcePosition());
@@ -861,7 +891,7 @@ void testArrayAccess()
     rs->beginScope("Scope");
 
     Address pointerAddr = asAddr(0x100);
-    rs->createVariable(asAddr(0x100),"intPointer","mangled_intPointer",ts->getPointerType("SgTypeInt"));
+    rs->createVariable(asAddr(0x100),"intPointer","mangled_intPointer",ts->getPointerType("SgTypeInt"), nondistributed);
     CHECKPOINT
     registerPointerChange(rs, pointerAddr,heapAddr,false);
 
@@ -907,7 +937,7 @@ void testDoubleArrayHeapAccess()
     createMemory(rs,  heap_addr_inner, 2 * sizeof( int ));
 
     // int** ptr;
-    rs -> createVariable( var_addr, "int**", "mangled_int**", int_ptr_ptr );
+    rs -> createVariable( var_addr, "int**", "mangled_int**", int_ptr_ptr, nondistributed );
     // ptr = (int**) malloc( 2 * sizeof( int* ));
     registerPointerChange( rs, var_addr, heap_addr_outer, false );
 

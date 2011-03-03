@@ -1,3 +1,11 @@
+///
+/// Abstracts concepts from UPC and provides
+///   implementations that work both for C and UPC
+/// Note, any UPC dependent implementation (that requires
+/// compilation with a UPC compiler cannot be put in this header file
+/// b/c in mixed source code projects, compilation of non-UPC code
+/// would get non-UPC aware implementation.
+
 
 #ifndef _PTROPS_H
 
@@ -75,6 +83,9 @@ void rted_exit(int exitcode);
 
 /// /brief returns the current thread number; 0 for single-threaded code
 rted_thread_id rted_ThisThread(void);
+
+/// /brief returns the current thread number; 0 for single-threaded code
+rted_thread_id rted_Threads(void);
 
 /// /brief converts a regular pointer into an rted_Address
 static inline

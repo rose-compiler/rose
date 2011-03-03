@@ -30,17 +30,15 @@ RtedTransformation::insertVariableCreateInitForParams( SgFunctionDefinition* fnd
             // allocation fault
             continue;
 
-        body->prepend_statement(
-            buildVariableCreateCallStmt(
-                param, getSurroundingStatement( param), true ));
+        body->prepend_statement( buildVariableCreateCallStmt(param, true) );
     }
 }
 
 void
 RtedTransformation::appendSignature( SgExprListExp* arg_list, SgType* return_type, const SgTypePtrList& param_types)
 {
-	// number of type descriptors (arguments + return type)
-	appendExpression( arg_list, buildIntVal( param_types.size() + 1));
+  // number of type descriptors (arguments + return type)
+  appendExpression( arg_list, buildIntVal( param_types.size() + 1));
 
   // generate a list of typedesc aggregate initializers representing the
   //   function signature.
@@ -53,35 +51,35 @@ RtedTransformation::appendSignature( SgExprListExp* arg_list, SgType* return_typ
   }
 
   // \pp \note probably roseTypeDesc below should really be an array of roseTypeDescs
-	appendExpression( arg_list, ctorTypeDescList(genAggregateInitializer(type_list, roseTypeDesc())) );
+  appendExpression( arg_list, ctorTypeDescList(genAggregateInitializer(type_list, roseTypeDesc())) );
 }
 
 void
 RtedTransformation::insertConfirmFunctionSignature( SgFunctionDefinition* fndef )
 {
-	SgFunctionDeclaration* fndecl = fndef->get_declaration();
+  SgFunctionDeclaration* fndecl = fndef->get_declaration();
 
   if (isSgMemberFunctionDeclaration(fndecl))
-		return;
+    return;
 
-	SgExprListExp*         arg_list = buildExprListExp();
+  SgExprListExp*         arg_list = buildExprListExp();
 
   // first arg is the name
-	// \todo
-	// FIXME 2: This probably needs to be something closer to the mangled_name,
-	// or perhaps we can simply skip the check entirely for C++
-	appendExpression( arg_list, buildStringVal(fndecl -> get_name()) );
+  // \todo
+  // FIXME 2: This probably needs to be something closer to the mangled_name,
+  // or perhaps we can simply skip the check entirely for C++
+  appendExpression( arg_list, buildStringVal(fndecl -> get_name()) );
 
-	SgFunctionType*        fntype = fndecl->get_type();
-	SgType*                fnreturn = fntype->get_return_type();
-	SgTypePtrList&         fnparams = fntype->get_arguments();
+  SgFunctionType*        fntype = fndecl->get_type();
+  SgType*                fnreturn = fntype->get_return_type();
+  SgTypePtrList&         fnparams = fntype->get_arguments();
 
-	appendSignature( arg_list, fnreturn, fnparams );
+  appendSignature( arg_list, fnreturn, fnparams );
 
   SgFunctionRefExp*      callee = buildFunctionRefExp( symbols.roseConfirmFunctionSignature );
   SgStatement*           stmt = buildFunctionCallStmt( callee, arg_list );
 
-	fndef->get_body()->prepend_statement(stmt);
+  fndef->get_body()->prepend_statement(stmt);
 }
 
 #endif

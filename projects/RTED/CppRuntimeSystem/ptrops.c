@@ -221,6 +221,12 @@ rted_thread_id rted_ThisThread(void)
   return MYTHREAD;
 }
 
+rted_thread_id rted_Threads(void)
+{
+  return THREADS;
+}
+
+
 #else /* __UPC__ */
 
 rted_Address rted_deref(rted_Address addr, rted_AddressDesc unused)
@@ -242,6 +248,11 @@ void rted_exit(int exitcode)
 rted_thread_id rted_ThisThread(void)
 {
   return 0;
+}
+
+rted_thread_id rted_Threads(void)
+{
+  return 1;
 }
 
 #endif /* __UPC__ */

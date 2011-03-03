@@ -157,36 +157,43 @@ class RuntimeSystem
          *                      debugger and/or output, not to detect violations.
          * @param typeString    A valid RsType string.
          */
-        void createVariable(Address address,
-                            const std::string & name,
-                            const std::string & mangledName,
-                            const std::string & typeString);
+        void createVariable( Address address,
+                             const std::string& name,
+                             const std::string& mangledName,
+                             const std::string& typeString,
+                             bool distributed
+                           );
 
-        void createVariable(Address address,
-                            const std::string & name,
-                            const std::string & mangledName,
-                            RsType *  type);
+        void createVariable( Address address,
+                             const std::string& name,
+                             const std::string& mangledName,
+                             RsType *  type,
+                             bool distributed
+                           );
 
 
         void createArray(   Address address,
-                            AddressDesc desc,
                             const std::string & name,
                             const std::string & mangledName,
                             const std::string & baseType,
-                            size_t size);
+                            size_t size,
+                            bool distributed
+                        );
 
         void createArray(   Address address,
-                            AddressDesc desc,
                             const std::string & name,
                             const std::string & mangledName,
                             RsType * baseType,
-                            size_t size);
+                            size_t size,
+                            bool distributed
+                        );
 
         void createArray(   Address address,
-                            AddressDesc desc,
                             const std::string & name,
                             const std::string & mangledName,
-                            RsArrayType * type);
+                            RsArrayType * type,
+                            bool distributed
+                        );
 
         /** Notifies the RTS that a C++ object has been created.  This will
          * typically be called in the constructor, so that the RTS is aware of
@@ -200,32 +207,26 @@ class RuntimeSystem
          * same (and not an offset in an existing @c MemoryType) and the type is
          * a subtype, then the type of the memory layout is updated.
          */
-        void createObject(  Address address,
-                            RsClassType* type );
+        void createObject(  Address address, RsClassType* type );
 
 
 
         /** Notify the runtime system that memory has been allocated, usually
          * via @c malloc or @c new.
          *
-         * @param addr          The base address of the newly allocated memory.
-         * @param size          The size of the newly allocated memory.
-         * @param onStack       Whether the memory is on the stack or not.  @ref
-         *                      createMemory should be called for stack
-         *                      variables, in which case @c onStack should be @c
-         *                      true.  The runtime system will detect invalid
-         *                      frees to stack memory.
-         * @param fromMalloc    Whether the memory was created via a C-style
-         *                      allocation such as @c malloc, as opposed to a
-         *                      C++ style allocation such as @c new.  Ignored if
-         *                      onstack is true.
-         * @param type          What type information is known about the memory,
-         *                      if any.  If and when memory becomes typed, calls
-         *                      to @ref checkMemRead and @ref checkMemWrite can
-         *                      verify that memory is used in a type-consistent
-         *                      way.
+         * @param addr         The base address of the newly allocated memory.
+         * @param size         The size of the newly allocated memory.
+         * @param kind         Describes where and how the memory was allocated
+         *                     e.g., stack, new, malloc, upc_alloc, ...
+         * @param distributed  true, if the memory is distributed across threads
+         *                     as in global shared arrays in UPC
+         * @param type         What type information is known about the memory,
+         *                     if any.  If and when memory becomes typed, calls
+         *                     to @ref checkMemRead and @ref checkMemWrite can
+         *                     verify that memory is used in a type-consistent
+         *                     way.
          */
-        void createMemory(Address addr, size_t size, MemoryType::AllocKind kind, RsType * type=NULL);
+        void createMemory(Address addr, size_t size, MemoryType::AllocKind kind, bool distributed, RsType * type);
 
         /// this version creates stackmemory, of given type
         void createStackMemory(Address addr, size_t size,const std::string & type);

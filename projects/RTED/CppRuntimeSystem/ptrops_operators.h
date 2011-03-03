@@ -2,6 +2,7 @@
 #ifndef _PTROPS_OPERATORS_H
 #define _PTROPS_OPERATORS_H
 
+#include <cmath>
 #include <ostream>
 
 #include "ptrops.h"
@@ -40,32 +41,75 @@ bool operator!=(const Address& lhs, const Address& rhs)
   return !(lhs == rhs);
 }
 
-inline
-Address& operator+=(Address& lhs, long offset)
+
+/// \brief   implements Knuth's floor division
+/// \details a better match for the two dimensional pointer arithmetic
+///          i.e, sub can be implemented in terms of add
+template <class FPT = double>
+struct FloorDiv
 {
-  lhs.local += offset;
-  return lhs;
+  template <class T>
+  static inline
+  std::pair<T, T>
+  div(const T& dividend, const T& divisor)
+  {
+    using std::floor;
+
+    T q = T(floor( FPT(dividend) / FPT(divisor) ));
+    T r = dividend - q * divisor;
+
+    return std::pair<T, T>(q, r);
+  }
+};
+
+/// \brief   adds ofs bytes to an address
+/// \details takes into account whether the memory is distributed. the argument
+///          distributed needs to be false for local memory and shared
+///          memory allocated with upc_alloc. true for other shared memory
+///          (i.e., allocated on the stack, or heap with upc_global_alloc,
+///          upc_all_alloc)
+/// \todo    Also, we likely need to take the blocking factor into account.
+static inline
+Address add(Address l, long ofs, bool distributed)
+{
+  typedef FloorDiv<> floordiv;
+
+  if (distributed)
+  {
+    const long                  threadcount = rted_Threads();
+    const long                  adjofs = l.thread_id + ofs;
+    const std::pair<long, long> divres = floordiv::div(adjofs, threadcount);
+
+    l.thread_id = divres.second;
+    ofs = divres.first;
+  }
+
+  l.local += ofs;
+  return l;
 }
 
-inline
-Address operator+(const Address& lhs, long offset)
+/// \brief   subtracts ofs bytes from the address
+/// \details see comments on add
+static inline
+Address sub(Address l, long ofs, bool distributed)
 {
-  Address tmp(lhs);
-
-  tmp.local += offset;
-  return tmp;
+  return add(l, -ofs, distributed);
 }
 
-inline
-long operator-(const Address& lhs, const Address& rhs)
+/// \brief   calculates the number of bytes between lhs and rhs
+/// \details see comments on add
+static inline
+long diff(Address lhs, Address rhs, bool distributed)
 {
-  return lhs.local - rhs.local;
-}
+  long ofs = lhs.local - rhs.local;
 
-inline
-Address operator-(const Address& lhs, long offset)
-{
-  return lhs + (-offset);
+  if (distributed)
+  {
+    ofs *= rted_Threads();
+    ofs += lhs.thread_id - rhs.thread_id;
+  }
+
+  return ofs;
 }
 
 inline

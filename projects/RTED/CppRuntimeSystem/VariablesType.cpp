@@ -8,12 +8,13 @@
 
 using namespace std;
 
-VariablesType::VariablesType( const std::string & name_,
+VariablesType::VariablesType( Address address_,
+                              const std::string & name_,
                               const std::string & mangledName_,
                               RsType * type_,
-                              Address address_
+                              bool distributed
                             )
-: name(name_), mangledName(mangledName_), type(type_), address(address_)
+: address(address_), name(name_), mangledName(mangledName_), type(type_)
 {
   assert(type != NULL);
 
@@ -22,12 +23,6 @@ VariablesType::VariablesType( const std::string & name_,
   // Variables are allocated statically. However, in UPC they can be shared
   //   if allocated on the file scope. Thus, the locality holds only for
   //   non UPC types (e.g., C++ classes).
-  if (class_type != NULL)
-  {
-    class_type->print(std::cout);
-    std::cout << std::endl;
-  }
-
   assert(class_type == NULL || rted_isLocal(address));
 
   RuntimeSystem* rs = RuntimeSystem::instance();
@@ -40,7 +35,7 @@ VariablesType::VariablesType( const std::string & name_,
   // existing memory
   if (!isCtorCall)
   {
-    rs->createMemory(address_, type->getByteSize(), akStack, type);
+    rs->createMemory(address_, type->getByteSize(), akStack, distributed, type);
   }
 }
 

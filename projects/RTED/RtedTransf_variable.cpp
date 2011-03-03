@@ -201,7 +201,7 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName)
                 // we have to handle for statements separately, because of parsing
                 // issues introduced by variable declarations in the for loop's
                 // init statement
-                SgFunctionCallExp* buildVar = buildVariableCreateCallExpr(initName, stmt);
+                SgFunctionCallExp* buildVar = buildVariableCreateCallExpr(initName);
                 ROSE_ASSERT(buildVar != NULL);
 
                 SgStatement* const for_loop = GeneralizdFor::is( stmt -> get_parent() -> get_parent() );
@@ -209,7 +209,7 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName)
 
                 prependPseudoForInitializerExpression(buildVar, for_loop);
         } else if (isSgIfStmt(scope)) {
-                SgExprStatement* exprStmt = buildVariableCreateCallStmt(initName, stmt);
+                SgExprStatement* exprStmt = buildVariableCreateCallStmt(initName);
 
                 if (exprStmt) {
                         SgStatement* trueb = isSgIfStmt(scope)->get_true_body();
@@ -252,8 +252,7 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName)
 //              } else if (isNormalScope(scope) || !isSgIfStmt(scope)) {
         } else if (isNormalScope(scope)) {
                 // insert new stmt (exprStmt) after (old) stmt
-                SgExprStatement* exprStmt = buildVariableCreateCallStmt(initName,
-                                stmt);
+                SgExprStatement* exprStmt = buildVariableCreateCallStmt(initName);
 
                 ROSE_ASSERT(exprStmt);
                 //~ cerr << "++++++++++++ stmt :" << stmt << " mainFirst:"
@@ -288,8 +287,7 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName)
 
 // convenience function
 SgFunctionCallExp*
-RtedTransformation::buildVariableCreateCallExpr(SgInitializedName* initName,
-                SgStatement* /*stmt*/, bool forceinit) {
+RtedTransformation::buildVariableCreateCallExpr(SgInitializedName* initName, bool forceinit) {
 
         SgInitializer* initializer = initName->get_initializer();
 
@@ -351,26 +349,18 @@ RtedTransformation::buildVariableCreateCallExpr(SgVarRefExp* var_ref, const stri
 
 // convenience function
 SgExprStatement*
-RtedTransformation::buildVariableCreateCallStmt(SgInitializedName* initName,
-                SgStatement* stmt, bool forceinit) {
-
-        SgFunctionCallExp* fn_call = buildVariableCreateCallExpr(initName, stmt,
-                        forceinit);
-        if (fn_call == NULL)
-                return NULL;
-        return buildVariableCreateCallStmt(fn_call);
-}
-
-SgExprStatement*
-RtedTransformation::buildVariableCreateCallStmt(SgFunctionCallExp* funcCallExp)
+RtedTransformation::buildVariableCreateCallStmt(SgInitializedName* initName, bool isParam)
 {
-  SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-  string           comment = "RS : Create Variable, paramaters : (name, mangl_name, type, basetype, address, sizeof, initialized, fileOpen, classname, filename, linenr, linenrTransformed)";
+        SgFunctionCallExp* fn_call = buildVariableCreateCallExpr(initName, isParam);
+        if (fn_call == NULL) return NULL;
 
-  attachComment(exprStmt, "", PreprocessingInfo::before);
-  attachComment(exprStmt, comment, PreprocessingInfo::before);
+        SgExprStatement* exprStmt = buildExprStatement(fn_call);
+        string           comment = "RS : Create Variable, paramaters : (name, mangl_name, type, basetype, address, sizeof, initialized, fileOpen, classname, filename, linenr, linenrTransformed)";
 
-  return exprStmt;
+        attachComment(exprStmt, "", PreprocessingInfo::before);
+        attachComment(exprStmt, comment, PreprocessingInfo::before);
+
+        return exprStmt;
 }
 
 

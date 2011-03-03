@@ -23,10 +23,11 @@ class VariablesType
   typedef Address Location;
 
     public:
-        VariablesType( const std::string & name,
+        VariablesType( Address address,
+                       const std::string & name,
                        const std::string & mangledName,
                        RsType * type,
-                       Address address
+                       bool distributed
                      );
 
         ~VariablesType();
@@ -46,6 +47,9 @@ class VariablesType
         PointerInfo * getPointerInfo() const ;
 
     private:
+        /// address of this variable in memory
+        Location address;
+
         /// stack variable name
         std::string name;
 
@@ -54,9 +58,6 @@ class VariablesType
 
         /// string with class name of rose-type
         RsType * type;
-
-        /// address of this variable in memory
-        Location address;
 };
 
 

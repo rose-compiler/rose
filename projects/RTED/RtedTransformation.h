@@ -163,8 +163,10 @@ class RtedTransformation : public AstSimpleProcessing
 {
    typedef std::map<SgVarRefExp*,std::pair< SgInitializedName*, AllocKind> > InitializedVarMap;
 
+public:
    enum ReadWriteMask { Read = 1, Write = 2, BoundsCheck = 4 };
 
+private:
    // \pp added an enum to give names to what were integer values before.
    //     Normal     ... affected size is the whole object
    //     Elem       ... affected size is an array element
@@ -187,19 +189,19 @@ private:
    // VARIABLES ------------------------------------------------------------
    // ------------------------ array ------------------------------------
    /// The array of callArray calls that need to be inserted
-   std::map<SgVarRefExp*, RtedArray*>  create_array_define_varRef_multiArray;
-   std::map<SgExpression*, RtedArray*> create_array_access_call;
+   std::map<SgVarRefExp*, RtedArray*>       create_array_define_varRef_multiArray;
+   std::map<SgPntrArrRefExp*, RtedArray*>   create_array_access_call;
 
    /// remember variables that were used to create an array. These cant be reused for array usage calls
-   std::vector<SgVarRefExp*>           variablesUsedForArray;
+   std::vector<SgVarRefExp*>                variablesUsedForArray;
 
    /// this vector is used to check which variables have been marked as initialized (through assignment)
-   InitializedVarMap variableIsInitialized;
+   InitializedVarMap                        variableIsInitialized;
 
    /// when traversing variables, we find some that are initialized names
    /// instead of varrefexp, and so we create new varrefexps but we do
    /// add them later and not during the same traversal.
-   std::map<SgStatement*,SgStatement*> insertThisStatementLater;
+   std::map<SgStatement*,SgStatement*>      insertThisStatementLater;
 
 public:
    /// the following stores all variables that are created (and used e.g. in functions)
@@ -225,7 +227,7 @@ private:
 
    /// The second SgExpression can contain either SgVarRefExp,
    /// or a SgThisExp
-   std::map<SgExpression*, SgVarRefExp*>    variable_access_arrowexp;
+   std::map<SgArrowExp*,   SgVarRefExp*>    variable_access_arrowexp;
    std::map<SgExpression*, SgThisExp*>      variable_access_arrowthisexp;
 
    // ------------------------ string -----------------------------------
@@ -396,8 +398,8 @@ public:
    void insertArrayCreateCall(SgStatement* stmt,SgInitializedName* initName,  SgVarRefExp* varRef, RtedArray* value);
    SgStatement* buildArrayCreateCall(SgInitializedName* initName, SgVarRefExp* varRef, RtedArray* array,SgStatement* stmt);
 
-   void insertArrayAccessCall(SgExpression* arrayExp, RtedArray* value);
-   void insertArrayAccessCall(SgStatement* stmt, SgExpression* arrayExp, RtedArray* array);
+   void insertArrayAccessCall(SgPntrArrRefExp* arrayExp, RtedArray* value);
+   void insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefExp* arrayExp, RtedArray* array);
 
    std::pair<SgInitializedName*,SgVarRefExp*> getRightOfDot(SgDotExp* dot , std::string str, SgVarRefExp* varRef);
    std::pair<SgInitializedName*,SgVarRefExp*> getRightOfDotStar(SgDotStarOp* dot , std::string str, SgVarRefExp* varRef);
@@ -429,18 +431,14 @@ private:
    bool isVarInCreatedVariables(SgInitializedName* n);
    void insertInitializeVariable(SgInitializedName*, SgExpression*, AllocKind);
    SgExpression* buildVariableInitCallExpr(SgInitializedName*, SgExpression*, SgStatement*, AllocKind);
-   SgFunctionCallExp* buildVariableCreateCallExpr(SgInitializedName* name, SgStatement* stmt, bool forceinit=false);
+   SgFunctionCallExp* buildVariableCreateCallExpr(SgInitializedName* name, bool forceinit=false);
    // TODO 2 djh: test docs
    /**
     * @b{ For Internal Use Only }.  See the overloaded convenience functions.
     */
    SgFunctionCallExp* buildVariableCreateCallExpr( SgVarRefExp* var_ref, const std::string& debug_name, bool init );
 
-   SgExprStatement* buildVariableCreateCallStmt( SgInitializedName* name, SgStatement* stmt, bool forceinit=false );
-   /**
-    * @b{ For Internal Use Only }.  See the overloaded convenience functions.
-    */
-   SgExprStatement* buildVariableCreateCallStmt( SgFunctionCallExp* create_var_fn_call );
+   SgExprStatement* buildVariableCreateCallStmt( SgInitializedName* name, bool isparam=false );
 
    void insertVariableCreateInitForParams( SgFunctionDefinition* n);
    void insertAccessVariable(SgVarRefExp* varRefE,SgExpression* derefExp);
@@ -554,19 +552,19 @@ public:
     * contain variable declarations.  The basic approach is to instead add the
     * function calls to the test, and ensuring that:
     *
-    * 		-	The original test's truth value is used as the truth value of the
-    * 			new expression.
-    * 		-	The instrumented function calls are invoked only once.
+    *     - The original test's truth value is used as the truth value of the
+    *       new expression.
+    *     - The instrumented function calls are invoked only once.
     *
-    * 	Note that this will only work for function calls that return a value
-    * 	suitable for bitwise operations.
+    *   Note that this will only work for function calls that return a value
+    *   suitable for bitwise operations.
     *
-    * 	@param	exp				An expression, which must be a legal operand to a
-    * 										bitwise operator.  It will be added to the for loop's
-    * 										test in a way to make it as semantically equivalent as
-    * 										possible as adding it to the initializer statement.
+    *   @param  exp       An expression, which must be a legal operand to a
+    *                     bitwise operator.  It will be added to the for loop's
+    *                     test in a way to make it as semantically equivalent as
+    *                     possible as adding it to the initializer statement.
     *
-    * 	@param	for_stmt	The for statement to add @c exp to.
+    *   @param  for_stmt  The for statement to add @c exp to.
     */
    void prependPseudoForInitializerExpression( SgExpression* exp, SgStatement* for_stmt );
 

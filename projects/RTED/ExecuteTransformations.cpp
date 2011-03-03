@@ -125,29 +125,24 @@ void RtedTransformation::executeTransformations() {
   }
 
   if (RTEDDEBUG()) std::cerr << "\n # Elements in variable_access_arrowexp  : " << variable_access_arrowexp.size() << std::endl;
-  std::map<SgExpression*, SgVarRefExp*>::const_iterator itAccessArr = variable_access_arrowexp.begin();
+  std::map<SgArrowExp*, SgVarRefExp*>::const_iterator itAccessArr = variable_access_arrowexp.begin();
   for (; itAccessArr != variable_access_arrowexp.end(); itAccessArr++) {
-    SgExpression* pd = isSgExpression(itAccessArr->first);
-    if (pd) {
-      SgVarRefExp* in = isSgVarRefExp(itAccessArr->second);
-      insertAccessVariable(in, pd);
-    }
+    insertAccessVariable(itAccessArr->second, itAccessArr->first);
   }
 
   if (RTEDDEBUG()) std::cerr << "\n # Elements in variable_access_arrowthisexp  : " << variable_access_arrowthisexp.size() << std::endl;
   std::map<SgExpression*, SgThisExp*>::const_iterator itAccessArr2 =  variable_access_arrowthisexp.begin();
   for (; itAccessArr2 != variable_access_arrowthisexp.end(); itAccessArr2++) {
-    SgExpression* pd = isSgExpression(itAccessArr2->first);
-    if (pd) {
-      SgThisExp* in = isSgThisExp(itAccessArr2->second);
-      insertCheckIfThisNull(in);
-      insertAccessVariable(in, pd);
-    }
+    SgExpression* pd = itAccessArr2->first;
+    SgThisExp*    in = itAccessArr2->second;
+
+    insertCheckIfThisNull(in);
+    insertAccessVariable(in, pd);
   }
 
   if (RTEDDEBUG()) std::cerr << "\n # Elements in create_array_define_varRef_multiArray_stack  : "  << create_array_define_varRef_multiArray_stack.size() << std::endl;
   std::map<SgInitializedName*, RtedArray*>::const_iterator itv = create_array_define_varRef_multiArray_stack.begin();
-  for (; itv != create_array_define_varRef_multiArray_stack.end(); itv++) {
+  for (; itv != create_array_define_varRef_multiArray_stack.end(); ++itv) {
     SgInitializedName* array_node = itv->first;
     RtedArray* array_size = itv->second;
     insertArrayCreateCall(array_node, array_size);
@@ -169,20 +164,16 @@ void RtedTransformation::executeTransformations() {
   }
 
   if (RTEDDEBUG()) std::cerr << "\n # Elements in create_array_access_call  : " << create_array_access_call.size() << std::endl;
-  std::map<SgExpression*, RtedArray*>::const_iterator ita = create_array_access_call.begin();
-  for (; ita != create_array_access_call.end(); ita++) {
-    SgExpression* array_node = ita->first;
-    RtedArray* array_size = ita->second;
-    insertArrayAccessCall(array_node, array_size);
+  std::map<SgPntrArrRefExp*, RtedArray*>::const_iterator ita = create_array_access_call.begin();
+  for (; ita != create_array_access_call.end(); ++ita) {
+    insertArrayAccessCall(ita->first, ita->second);
   }
 
-  if (RTEDDEBUG()) std::cerr << "\n # Elements in function_call_missing_def  : "
-          << function_call_missing_def.size() << std::endl;
+  if (RTEDDEBUG()) std::cerr << "\n # Elements in function_call_missing_def  : " << function_call_missing_def.size() << std::endl;
   BOOST_FOREACH( SgFunctionCallExp* fncall, function_call_missing_def )
     insertAssertFunctionSignature( fncall );
 
-  if (RTEDDEBUG()) std::cerr << "\n # Elements in function_definitions  : "
-          << function_definitions.size() << std::endl;
+  if (RTEDDEBUG()) std::cerr << "\n # Elements in function_definitions  : " << function_definitions.size() << std::endl;
   BOOST_FOREACH( SgFunctionDefinition* fndef, function_definitions) {
     insertVariableCreateInitForParams( fndef );
     insertConfirmFunctionSignature( fndef );

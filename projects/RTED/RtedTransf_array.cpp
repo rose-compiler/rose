@@ -154,17 +154,12 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefEx
    ROSE_ASSERT(isCreateHeapArr || src_type->class_name() == "SgPointerType");
 
    // if we have an array, then it has to be on the stack
-   // \pp \todo handle C++ new[]
+   // \pp \todo check handling of C++ new[]
    ROSE_ASSERT(!isCreateHeapArr || array->allocKind == akStack);
 
    appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(NULL, src_type)));
 
    SgScopeStatement*  scope = get_scope(initName);
-#if 0
-   // \pp ???
-   SgClassDefinition* unionclass = isSgClassDefinition(scope);
-   bool               isUnionClass = (unionclass && unionclass->get_declaration()->get_class_type() == SgClassDeclaration::e_union);
-#endif
 
    appendAddressAndSize(arg_list, Whole, scope, src_exp, NULL /* unionclass */);
 
@@ -186,7 +181,10 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefEx
    // target specific parameters
    if (isCreateHeapArr)
    {
+     // Dimension info
      appendDimensions(arg_list, array);
+
+     // Is this a distributed array?
 
      // source name
      appendExpression(arg_list, buildStringVal(initName->get_name()));
@@ -329,7 +327,7 @@ void RtedTransformation::insertArrayCreateCall( SgStatement* stmt,
 /* -----------------------------------------------------------
  * Perform Transformation: insertArrayCreateAccessCall
  * -----------------------------------------------------------*/
-void RtedTransformation::insertArrayAccessCall(SgExpression* arrayExp, RtedArray* value)
+void RtedTransformation::insertArrayAccessCall(SgPntrArrRefExp* arrayExp, RtedArray* value)
 {
    ROSE_ASSERT( arrayExp && value );
 
@@ -339,74 +337,115 @@ void RtedTransformation::insertArrayAccessCall(SgExpression* arrayExp, RtedArray
    insertArrayAccessCall(stmt, arrayExp, value);
 }
 
-void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgExpression* arrayExp, RtedArray* array)
+
+struct ReadWriteContextFinder
+{
+  typedef std::pair<int, const SgNode*> Result;
+
+  Result              res;
+  const SgNode* const child;
+
+  explicit
+  ReadWriteContextFinder(const SgNode* node)
+  : res(RtedTransformation::BoundsCheck, NULL), child(node)
+  {}
+
+  void Read()  { res.first |= RtedTransformation::Read; }
+  void Write() { res.first |= RtedTransformation::Write; }
+
+  void handle(const SgNode&) { assert(false); }
+
+  // if not a write in statement context, its a read
+  void handle(const SgStatement&) { Read(); }
+
+  // continue looking
+  void handle(const SgExpression& n) { res.second = n.get_parent(); }
+
+  void handle(const SgAssignOp& n)
+  {
+    if (n.get_lhs_operand() == child)
+      Write();
+    else
+      Read();
+  }
+
+  void handle_short_cut_operators(const SgBinaryOp& n)
+  {
+    Read();
+
+    if (n.get_lhs_operand() == child)
+      Write();
+  }
+
+  void handle(const SgAndAssignOp& n)     { handle_short_cut_operators(n); }
+  void handle(const SgDivAssignOp& n)     { handle_short_cut_operators(n); }
+  void handle(const SgIorAssignOp& n)     { handle_short_cut_operators(n); }
+  void handle(const SgLshiftAssignOp& n)  { handle_short_cut_operators(n); }
+
+  void handle(const SgMinusAssignOp& n)   { handle_short_cut_operators(n); }
+  void handle(const SgModAssignOp& n)     { handle_short_cut_operators(n); }
+  void handle(const SgMultAssignOp& n)    { handle_short_cut_operators(n); }
+  void handle(const SgPlusAssignOp& n)    { handle_short_cut_operators(n); }
+
+  void handle(const SgPointerAssignOp& n) { handle_short_cut_operators(n); }
+  void handle(const SgRshiftAssignOp& n)  { handle_short_cut_operators(n); }
+  void handle(const SgXorAssignOp& n)     { handle_short_cut_operators(n); }
+
+  void handle(const SgPntrArrRefExp& n) { /* \pp why empty? */ }
+
+  void handle(const SgDotExp& n)
+  {
+    if (n.get_lhs_operand() != child)
+    {
+      // recurse
+      res.second = n.get_parent();
+    }
+    else
+    {
+      // \pp why empty?
+    }
+  }
+
+  operator Result() const { return res; }
+};
+
+
+static
+int read_write_context(const SgExpression* node)
+{
+  ReadWriteContextFinder::Result res(0, node);
+
+  while (res.second)
+  {
+    res = ez::visitSgNode(ReadWriteContextFinder(res.second), res.second->get_parent());
+  }
+
+  return res.first;
+}
+
+void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefExp* arrRefExp, RtedArray* array)
 {
   SgScopeStatement* scope = stmt->get_scope();
-  SgPntrArrRefExp*  arrRefExp = isSgPntrArrRefExp(arrayExp);
-
   ROSE_ASSERT(scope);
-  ROSE_ASSERT(arrRefExp);
 
   // Recursively check each dimension of a multidimensional array access.
   // This doesn't matter for stack arrays, since they're contiguous and can
   // therefore be conceptually flattened, but it does matter for double
   // pointer array access.
-  if (isSgPntrArrRefExp(arrRefExp -> get_lhs_operand())) {
+  if (SgPntrArrRefExp* lhs_arrexp = isSgPntrArrRefExp(arrRefExp -> get_lhs_operand())) {
      //      a[ i ][ j ] = x;
      //      x = a[ i ][ j ];
      // in either case, a[ i ] is read, and read before a[ i ][ j ].
-     insertArrayAccessCall(stmt, arrRefExp -> get_lhs_operand(), array);
+     insertArrayAccessCall(stmt, lhs_arrexp, array);
   }
 
-  int read_write_mask = 0;
   // determine whether this array access is a read or write
-  SgNode* iter = arrayExp;
-  do {
-     SgNode* child = iter;
-     iter = iter->get_parent();
-     SgBinaryOp* binop = isSgBinaryOp(iter);
-
-     if (isSgAssignOp(iter)) {
-        ROSE_ASSERT( binop );
-
-        // lhs write only, rhs read only
-        if (binop->get_lhs_operand() == child)
-           read_write_mask |= Write;
-        else
-           read_write_mask |= Read;
-        // regardless of which side arrayExp was on, we can stop now
-        break;
-     } else if (isSgAndAssignOp(iter) || isSgDivAssignOp(iter) || isSgIorAssignOp(iter) || isSgLshiftAssignOp(iter)
-           || isSgMinusAssignOp(iter) || isSgModAssignOp(iter) || isSgMultAssignOp(iter) || isSgPlusAssignOp(iter)
-           || isSgPointerAssignOp(iter) || isSgRshiftAssignOp(iter) || isSgXorAssignOp(iter)) {
-
-        ROSE_ASSERT( binop );
-        // lhs read & write, rhs read only
-        read_write_mask |= Read;
-        if (binop->get_lhs_operand() == child)
-           read_write_mask |= Write;
-        // regardless of which side arrayExp was on, we can stop now
-        break;
-     } else if (isSgPntrArrRefExp(iter)) {
-        // outer[ inner[ ix ]] = val;
-        //  inner[ ix ]  is only a read
-        break;
-     } else if (isSgDotExp(iter)) {
-        ROSE_ASSERT( binop );
-        if (child == binop -> get_lhs_operand()) {
-           // arr[ ix ].member is neither a read nor write of the array
-           // itself.
-           break;
-        } // else foo.arr[ ix ] depends on parent context, so keep going
-     }
-  } while (iter);
-  // always do a bounds check
-  read_write_mask |= BoundsCheck;
+  const int         read_write_mask = read_write_context(arrRefExp);
 
   // for contiguous array, base is at &array[0] whether on heap or on stack
   SgPntrArrRefExp*  array_base = deepCopy(arrRefExp);
 
-  array_base -> set_rhs_operand(buildIntVal(0));
+  array_base -> set_rhs_operand(buildIntVal(0));  // \pp \todo leaks memory
 
   SgExprListExp*    arg_list = buildExprListExp();
 
@@ -678,7 +717,7 @@ AllocKind RtedTransformation::arrayAllocCall(SgInitializedName* initName, SgVarR
      // right hand side of assign should only contain call to malloc somewhere
      cerr << "RtedTransformation: UNHANDLED AND ACCEPTED FOR NOW. Right of Assign : Unknown (Array creation) : "
           << "  line:" << varRef->unparseToString() << endl;
-     //	    ROSE_ASSERT(false);
+     //     ROSE_ASSERT(false);
   }
 
   return res;
@@ -1027,13 +1066,13 @@ SgVarRefExp* resolveToVarRefRight(SgExpression* expr)
 
   SgVarRefExp* result = NULL;
 
-  if (	isSgDotExp(expr) || isSgArrowExp( expr ) )
+  if (  isSgDotExp(expr) || isSgArrowExp( expr ) )
   {
     result = isSgVarRefExp(isSgBinaryOp(expr)->get_rhs_operand());
   }
   else if( isSgPointerDerefExp( expr ))
   {
-	  result = isSgVarRefExp( isSgUnaryOp( expr ) -> get_operand() );
+    result = isSgVarRefExp( isSgUnaryOp( expr ) -> get_operand() );
   }
 
   ROSE_ASSERT(result);

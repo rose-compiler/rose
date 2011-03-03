@@ -64,7 +64,7 @@ SgUpcLocalsizeofOp* buildUpcLocalsizeofOp(SgExpression* exp)
 {
   ROSE_ASSERT(exp);
 
-  SgUpcLocalsizeofOp* lsizeof = new SgUpcLocalsizeofOp(exp);
+  SgUpcLocalsizeofOp* lsizeof = new SgUpcLocalsizeofOp(exp, NULL, NULL);
 
   exp->set_parent(lsizeof);
   setOneSourcePositionForTransformation(lsizeof);
@@ -332,7 +332,7 @@ RtedTransformation::isthereAnotherDerefOpBetweenCurrentAndAssign(SgExpression* e
                 || isSgXorAssignOp( parent)
             )) {
       if (isSgPointerDerefExp(parent))
-    	return true;
+      return true;
 
         exp = parent;
         parent = isSgExpression( parent->get_parent() );
@@ -402,7 +402,7 @@ void RtedTransformation::appendConstructors(SgClassDefinition* cdef, SgDeclarati
 }
 
 bool isNormalScope( SgScopeStatement* n ) {
-	return	(  isSgBasicBlock( n )
+  return  (  isSgBasicBlock( n )
           || isSgIfStmt( n )
           || isSgWhileStmt( n )
           || isSgDoWhileStmt( n )
@@ -413,8 +413,8 @@ bool isNormalScope( SgScopeStatement* n ) {
 
 bool
 RtedTransformation::isInInstrumentedFile( SgNode* n ) {
-	ROSE_ASSERT( n );
-	std::string file_name = n -> get_file_info() -> get_filename();
+  ROSE_ASSERT( n );
+  std::string file_name = n -> get_file_info() -> get_filename();
 
   return rtedfiles -> find( file_name ) != rtedfiles -> end();
 }
@@ -446,7 +446,7 @@ SgVarRefExp* genVarRef( SgInitializedName* initName )
  ****************************************/
 std::pair<SgInitializedName*,SgVarRefExp*>
 RtedTransformation::getRightOfDot(SgDotExp* dot, std::string str,
-				  SgVarRefExp* varRef) {
+          SgVarRefExp* varRef) {
   varRef=NULL;
   SgInitializedName* initName = NULL;
   SgExpression* rightDot = dot->get_rhs_operand();
@@ -456,7 +456,7 @@ RtedTransformation::getRightOfDot(SgDotExp* dot, std::string str,
     initName = (varRef)->get_symbol()->get_declaration();
   } else {
     cerr << "RtedTransformation : " << str << " - Unknown : "
-	 << rightDot->class_name() << endl;
+   << rightDot->class_name() << endl;
     ROSE_ASSERT(false);
   }
   return make_pair(initName,varRef);
@@ -464,7 +464,7 @@ RtedTransformation::getRightOfDot(SgDotExp* dot, std::string str,
 
 std::pair<SgInitializedName*,SgVarRefExp*>
 RtedTransformation::getRightOfDotStar(SgDotStarOp* dot, std::string str,
-				      SgVarRefExp* varRef) {
+              SgVarRefExp* varRef) {
   varRef=NULL;
   SgInitializedName* initName = NULL;
   SgExpression* rightDot = dot->get_rhs_operand();
@@ -474,7 +474,7 @@ RtedTransformation::getRightOfDotStar(SgDotStarOp* dot, std::string str,
     initName = (varRef)->get_symbol()->get_declaration();
   } else {
     cerr << "RtedTransformation : " << str << " - Unknown : "
-	 << rightDot->class_name() << endl;
+   << rightDot->class_name() << endl;
     ROSE_ASSERT(false);
   }
   return make_pair(initName,varRef);
@@ -486,7 +486,7 @@ RtedTransformation::getRightOfDotStar(SgDotStarOp* dot, std::string str,
  ****************************************/
 std::pair<SgInitializedName*,SgVarRefExp*>
 RtedTransformation::getRightOfPointerDeref(SgPointerDerefExp* dot, std::string str,
-					   SgVarRefExp* varRef) {
+             SgVarRefExp* varRef) {
   varRef=NULL;
   SgInitializedName* initName = NULL;
   SgExpression* rightDot = dot->get_operand();
@@ -496,7 +496,7 @@ RtedTransformation::getRightOfPointerDeref(SgPointerDerefExp* dot, std::string s
     initName = (varRef)->get_symbol()->get_declaration();
   } else {
     cerr << "RtedTransformation : " << str << " - Unknown : "
-	 << rightDot->class_name() << endl;
+   << rightDot->class_name() << endl;
     ROSE_ASSERT(false);
   }
   return make_pair(initName,varRef);
@@ -508,7 +508,7 @@ RtedTransformation::getRightOfPointerDeref(SgPointerDerefExp* dot, std::string s
  ****************************************/
 std::pair<SgInitializedName*,SgVarRefExp*>
 RtedTransformation::getRightOfArrow(SgArrowExp* arrow, std::string str,
-				    SgVarRefExp* varRef) {
+            SgVarRefExp* varRef) {
   varRef=NULL;
   SgInitializedName* initName = NULL;
   SgExpression* rightArrow = arrow->get_rhs_operand();
@@ -518,7 +518,7 @@ RtedTransformation::getRightOfArrow(SgArrowExp* arrow, std::string str,
     initName = varRef->get_symbol()->get_declaration();
   } else {
     cerr << "RtedTransformation : " << str << " - Unknown : "
-	 << rightArrow->class_name() << endl;
+   << rightArrow->class_name() << endl;
     ROSE_ASSERT(false);
   }
   return make_pair(initName,varRef);
@@ -526,7 +526,7 @@ RtedTransformation::getRightOfArrow(SgArrowExp* arrow, std::string str,
 
 std::pair<SgInitializedName*,SgVarRefExp*>
 RtedTransformation::getRightOfArrowStar(SgArrowStarOp* arrowstar, std::string str,
-					SgVarRefExp* varRef) {
+          SgVarRefExp* varRef) {
   varRef=NULL;
   SgInitializedName* initName = NULL;
   SgExpression* rightArrow = arrowstar->get_rhs_operand();
@@ -536,7 +536,7 @@ RtedTransformation::getRightOfArrowStar(SgArrowStarOp* arrowstar, std::string st
     initName = varRef->get_symbol()->get_declaration();
   } else {
     cerr << "RtedTransformation : " << str << " - Unknown : "
-	 << rightArrow->class_name() << endl;
+   << rightArrow->class_name() << endl;
     ROSE_ASSERT(false);
   }
   return make_pair(initName,varRef);
@@ -548,7 +548,7 @@ RtedTransformation::getRightOfArrowStar(SgArrowStarOp* arrowstar, std::string st
  ****************************************/
 std::pair<SgInitializedName*,SgVarRefExp*>
 RtedTransformation::getPlusPlusOp(SgPlusPlusOp* plus, std::string str,
-				  SgVarRefExp* varRef) {
+          SgVarRefExp* varRef) {
   varRef=NULL;
   SgInitializedName* initName = NULL;
   SgExpression* expPl = plus->get_operand();
@@ -558,7 +558,7 @@ RtedTransformation::getPlusPlusOp(SgPlusPlusOp* plus, std::string str,
     initName = varRef->get_symbol()->get_declaration();
   } else {
     cerr << "RtedTransformation : " << str << " - Unknown : "
-	 << expPl->class_name() << endl;
+   << expPl->class_name() << endl;
     ROSE_ASSERT(false);
   }
   return make_pair(initName,varRef);
@@ -570,7 +570,7 @@ RtedTransformation::getPlusPlusOp(SgPlusPlusOp* plus, std::string str,
  ****************************************/
 std::pair<SgInitializedName*,SgVarRefExp*>
 RtedTransformation::getMinusMinusOp(SgMinusMinusOp* minus, std::string str
-				    , SgVarRefExp* varRef) {
+            , SgVarRefExp* varRef) {
   varRef=NULL;
   SgInitializedName* initName = NULL;
   SgExpression* expPl = minus->get_operand();
@@ -580,7 +580,7 @@ RtedTransformation::getMinusMinusOp(SgMinusMinusOp* minus, std::string str
     initName = varRef->get_symbol()->get_declaration();
   } else {
     cerr << "RtedTransformation : " << str << " - Unknown : "
-	 << expPl->class_name() << endl;
+   << expPl->class_name() << endl;
     ROSE_ASSERT(false);
   }
   return make_pair(initName,varRef);
@@ -595,9 +595,9 @@ RtedTransformation::getMinusMinusOp(SgMinusMinusOp* minus, std::string str
 static
 SgExpression* getUppermostLvalue( SgExpression* exp )
 {
-	if (exp) cerr << "Checking if exp has parent: " << exp->unparseToString() << "  :" << endl;
+  if (exp) cerr << "Checking if exp has parent: " << exp->unparseToString() << "  :" << endl;
 
-	if (exp==NULL || exp->get_parent()==NULL) return exp;
+  if (exp==NULL || exp->get_parent()==NULL) return exp;
 
   SgType* const orig_type = exp->get_type();
   SgDotExp*     parent = isSgDotExp( exp->get_parent() );
@@ -860,12 +860,12 @@ SgAggregateInitializer* RtedTransformation::mkTypeInformation(SgInitializedName*
 {
   // arrays in parameters decay to pointers, so we shouldn't
   // treat them as stack arrays
-	bool array_decay = (  initName
+  bool array_decay = (  initName
                      && isSgFunctionParameterList( getSurroundingStatement( initName ))
                      && type->class_name() == "SgArrayType"
                      );
 
-	return mkTypeInformation( type, false, array_decay );
+  return mkTypeInformation( type, false, array_decay );
 }
 
 SgAggregateInitializer* RtedTransformation::mkTypeInformation( SgType* type,
@@ -879,28 +879,28 @@ SgAggregateInitializer* RtedTransformation::mkTypeInformation( SgType* type,
   SgType*                        base_type = indir_desc.first;
   SgType*                        unmod_type = skip_ModifierType(type);
   AddressDesc                    addrDesc = indir_desc.second;
-	std::string                    type_string = unmod_type->class_name();
-	std::string                    base_type_string;
+  std::string                    type_string = unmod_type->class_name();
+  std::string                    base_type_string;
 
-	if (addrDesc.levels > 0)
-		base_type_string = base_type -> class_name();
+  if (addrDesc.levels > 0)
+    base_type_string = base_type -> class_name();
 
-	// convert SgClassType to the mangled_name, if asked
-	if( resolve_class_names ) {
-		if( isSgClassType( unmod_type ))
-			type_string
-				=	isSgClassDeclaration(
-						isSgClassType( unmod_type ) -> get_declaration()
-					) -> get_mangled_name();
+  // convert SgClassType to the mangled_name, if asked
+  if( resolve_class_names ) {
+    if( isSgClassType( unmod_type ))
+      type_string
+        = isSgClassDeclaration(
+            isSgClassType( unmod_type ) -> get_declaration()
+          ) -> get_mangled_name();
 
     if( addrDesc.levels > 0 && isSgClassType( base_type ))
-			base_type_string
-				=	isSgClassDeclaration(
-						isSgClassType( base_type ) -> get_declaration()
-					) -> get_mangled_name();
-	}
+      base_type_string
+        = isSgClassDeclaration(
+            isSgClassType( base_type ) -> get_declaration()
+          ) -> get_mangled_name();
+  }
 
-	// convert array types to pointer types, if asked
+  // convert array types to pointer types, if asked
   if (array_to_pointer && type_string == "SgArrayType")
     type_string = "SgPointerType";
 
@@ -930,10 +930,10 @@ RtedTransformation::appendDimensions(SgExprListExp* arg_list, RtedArray* arr)
       ROSE_ASSERT(arg_list && arr);
 
       SgExprListExp* dimargs = buildExprListExp();
-		  SgExpression*  noDims = SageBuilder::buildIntVal( arr->getDimension() );
+      SgExpression*  noDims = SageBuilder::buildIntVal( arr->getDimension() );
 
-			SageInterface::appendExpression(dimargs, noDims);
-			BOOST_FOREACH( SgExpression* expr, arr->getIndices() ) {
+      SageInterface::appendExpression(dimargs, noDims);
+      BOOST_FOREACH( SgExpression* expr, arr->getIndices() ) {
           if ( expr == NULL )
           {
               // \pp ???
@@ -998,7 +998,7 @@ void RtedTransformation::appendAddressAndSize(
                             AppendKind am,
                             SgExpression* exp,
                             SgType* type,
-					                  SgClassDefinition* /*unionclass*/)
+                            SgClassDefinition* /*unionclass*/)
 {
     SgExpression* szop = exp;    // only needed to get an expression where we can take the size
     SgExpression* szexp = NULL;  // sizeof expression
@@ -1040,21 +1040,19 @@ void RtedTransformation::appendAddressAndSize(
     }
 #if 0
       else if (unionclass) {
-	cerr <<"isUnionClass" << endl;
-	SgType* classtype = unionclass ->get_declaration()->get_type();
-	cerr <<" unionclass : " << unionclass->unparseToString()<<"  type: " << classtype->class_name() << endl;
+  cerr <<"isUnionClass" << endl;
+  SgType* classtype = unionclass ->get_declaration()->get_type();
+  cerr <<" unionclass : " << unionclass->unparseToString()<<"  type: " << classtype->class_name() << endl;
 
          szexp = buildSizeOfOp( isSgType(classtype-> copy( copy )));
-			   //			   buildSizeOfOp( buildIntVal(8))
+         //        buildSizeOfOp( buildIntVal(8))
       }
 #endif
     else if (szop)
     {
         SgExpression* clone = deepCopy(szop);
 
-        szexp = isUpcShared(szop->get_type()) ? static_cast<SgExpression*>(buildUpcLocalsizeofOp(clone))
-                                              : buildSizeOfOp(clone)
-                                              ;
+        szexp = buildSizeOfOp(clone);
     }
     else
     {
@@ -1095,7 +1093,7 @@ public:
   /// dont strip : *((cast)*val) because that leaves only *val
   void visit( SgNode* _n ) {
     SgCastExp* n = isSgCastExp( _n );
-    //		cerr << " $$$$$ Traversing nodes : " << _n->class_name() << endl;
+    //    cerr << " $$$$$ Traversing nodes : " << _n->class_name() << endl;
     if( n==NULL && first_node ) {
       first_node = false;
       rv = n;
@@ -1270,30 +1268,30 @@ RtedTransformation::prependPseudoForInitializerExpression(SgExpression* exp, SgS
 {
   ROSE_ASSERT (for_stmt!=NULL);
 
-	RtedForStmtProcessed *for_stmt_processed = NULL;
+  RtedForStmtProcessed *for_stmt_processed = NULL;
 
-	if( for_stmt -> attributeExists( RtedForStmtProcessed::Key ))
-		for_stmt_processed
-			= static_cast< RtedForStmtProcessed* >(
-				for_stmt -> getAttribute( RtedForStmtProcessed::Key ));
+  if( for_stmt -> attributeExists( RtedForStmtProcessed::Key ))
+    for_stmt_processed
+      = static_cast< RtedForStmtProcessed* >(
+        for_stmt -> getAttribute( RtedForStmtProcessed::Key ));
 
-	if( !for_stmt_processed ) {
+  if( !for_stmt_processed ) {
 
-		// { int RuntimeSystem_eval_once = 1; for( ... ) }
-		SgBasicBlock *new_scope = buildBasicBlock();
-		SgVariableDeclaration* eval_once_var
-			= buildVariableDeclaration(
-				"RuntimeSystem_eval_once",
-				buildIntType(),
-				buildAssignInitializer( buildIntVal( 1 )),
-				new_scope );
-		new_scope -> prepend_statement( eval_once_var );
+    // { int RuntimeSystem_eval_once = 1; for( ... ) }
+    SgBasicBlock *new_scope = buildBasicBlock();
+    SgVariableDeclaration* eval_once_var
+      = buildVariableDeclaration(
+        "RuntimeSystem_eval_once",
+        buildIntType(),
+        buildAssignInitializer( buildIntVal( 1 )),
+        new_scope );
+    new_scope -> prepend_statement( eval_once_var );
 
-		// eval_once = 0
-		SgAssignOp* initial_expression
-			= buildBinaryExpression< SgAssignOp >(
-				buildVarRefExp( "RuntimeSystem_eval_once", new_scope ),
-				buildIntVal( 0 ));
+    // eval_once = 0
+    SgAssignOp* initial_expression
+      = buildBinaryExpression< SgAssignOp >(
+        buildVarRefExp( "RuntimeSystem_eval_once", new_scope ),
+        buildIntVal( 0 ));
 
     // for( ... ; test; ... )
     // -> for( ... ; test | (eval_once && ((eval_once = 0) | exp1 | exp2 ... )); ... )
@@ -1314,26 +1312,26 @@ RtedTransformation::prependPseudoForInitializerExpression(SgExpression* exp, SgS
         true);
     isSgBinaryOp( test -> get_expression() ) -> set_lhs_operand( old_test );
 
-		replaceStatement( for_stmt, new_scope );
-		new_scope -> append_statement( for_stmt );
+    replaceStatement( for_stmt, new_scope );
+    new_scope -> append_statement( for_stmt );
 
-		for_stmt_processed = new RtedForStmtProcessed( initial_expression );
-		for_stmt
-			-> addNewAttribute( RtedForStmtProcessed::Key, for_stmt_processed  );
-	}
+    for_stmt_processed = new RtedForStmtProcessed( initial_expression );
+    for_stmt
+      -> addNewAttribute( RtedForStmtProcessed::Key, for_stmt_processed  );
+  }
 
-	ROSE_ASSERT( for_stmt_processed );
+  ROSE_ASSERT( for_stmt_processed );
 
-	// old_exp -> old_exp | new_exp
-	SgBinaryOp* new_exp
-		= buildBinaryExpression< SgBitOrOp >(
-				exp,
-				// This is just a throw-away expression to avoid NULL issues
-				buildIntVal( 0 ));
+  // old_exp -> old_exp | new_exp
+  SgBinaryOp* new_exp
+    = buildBinaryExpression< SgBitOrOp >(
+        exp,
+        // This is just a throw-away expression to avoid NULL issues
+        buildIntVal( 0 ));
 
-	replaceExpression( for_stmt_processed -> get_exp(), new_exp, true );
-	new_exp -> set_rhs_operand( for_stmt_processed -> get_exp() );
-	for_stmt_processed -> set_exp( new_exp );
+  replaceExpression( for_stmt_processed -> get_exp(), new_exp, true );
+  new_exp -> set_rhs_operand( for_stmt_processed -> get_exp() );
+  for_stmt_processed -> set_exp( new_exp );
 }
 
 
@@ -1342,9 +1340,9 @@ RtedTransformation::buildGlobalConstructor(SgScopeStatement* scope, std::string 
   //SgStatement* global=NULL;
   // build the classdeclaration and definition for RtedGlobal
   SgClassDeclaration* decl = buildClassDeclaration_nfi(
-						       "RtedGlobal_"+name,
-						       SgClassDeclaration::e_class,
-						       scope, NULL);
+                   "RtedGlobal_"+name,
+                   SgClassDeclaration::e_class,
+                   scope, NULL);
   ROSE_ASSERT(decl);
   globConstructor = decl;
   SgClassDefinition* def = buildClassDefinition(decl);
@@ -1418,7 +1416,7 @@ RtedTransformation::appendToGlobalConstructor(SgScopeStatement* scope, std::stri
 
 void
 RtedTransformation::appendGlobalConstructor(SgScopeStatement* /*scope*/,
-					    SgStatement* stmt) {
+              SgStatement* stmt) {
   // add the global constructor to the top of the file
   //ROSE_ASSERT(globalConstructorVariable);
   ROSE_ASSERT(globConstructor);
@@ -1432,7 +1430,7 @@ RtedTransformation::appendGlobalConstructor(SgScopeStatement* /*scope*/,
 
 void
 RtedTransformation::appendGlobalConstructorVariable(SgScopeStatement* /*scope*/,
-					    SgStatement* stmt) {
+              SgStatement* stmt) {
   // add the global constructor to the top of the file
   ROSE_ASSERT(globalConstructorVariable);
   ROSE_ASSERT(stmt);
@@ -1442,7 +1440,7 @@ RtedTransformation::appendGlobalConstructorVariable(SgScopeStatement* /*scope*/,
 
 SgVariableDeclaration*
 RtedTransformation::getGlobalVariableForClass(SgGlobal* gl,
-					      SgClassDeclaration* classStmt) {
+                SgClassDeclaration* classStmt) {
   SgVariableDeclaration* var = NULL;
   string classDeclName = classStmt->get_name().str();
 
@@ -1457,13 +1455,13 @@ RtedTransformation::getGlobalVariableForClass(SgGlobal* gl,
       ROSE_ASSERT(initName);
       SgClassType* varT = isSgClassType(initName->get_type());
       if (varT) {
-	string classname = varT->get_name().str() ;
-	//cerr<< "Found global var with type : " << varT->class_name() << "  " <<
-	//  initName->unparseToString() << "  class name : " <<
-	//  classname<< "         comparing to == " << classDeclName << "   compGen: " <<
-	//	  classStmt->get_file_info()->isCompilerGenerated() << endl;
-	if (classname==classDeclName)
-	  var=vard;
+  string classname = varT->get_name().str() ;
+  //cerr<< "Found global var with type : " << varT->class_name() << "  " <<
+  //  initName->unparseToString() << "  class name : " <<
+  //  classname<< "         comparing to == " << classDeclName << "   compGen: " <<
+  //    classStmt->get_file_info()->isCompilerGenerated() << endl;
+  if (classname==classDeclName)
+    var=vard;
       }
     }
   }

@@ -212,7 +212,7 @@ void RuntimeSystem::clearStatus()
 // --------------------- Mem Checking ---------------------------------
 
 
-void RuntimeSystem::createMemory(Address addr, size_t size, MemoryType::AllocKind kind, RsType * type)
+void RuntimeSystem::createMemory(Address addr, size_t size, MemoryType::AllocKind kind, bool distributed, RsType * type)
 {
   // \pp it seems that we only get the type for stack allocations
   //     should the type initialization then be moved to createStackMemory?
@@ -220,7 +220,7 @@ void RuntimeSystem::createMemory(Address addr, size_t size, MemoryType::AllocKin
   //     is alloca handled?
 
   // \pp \todo move the registerMemType call into allocateMemory
-  MemoryType*             nb = memManager.allocateMemory(addr, size, kind, curPos);
+  MemoryType* nb = memManager.allocateMemory(addr, size, kind, distributed, curPos);
 
   if (kind == akStack && nb != NULL)
   {
@@ -235,9 +235,11 @@ void RuntimeSystem::createMemory(Address addr, size_t size, MemoryType::AllocKin
 
 void RuntimeSystem::createStackMemory(Address addr, size_t size, const std::string& strType)
 {
-    RsType * type = typeSystem.getTypeInfo(strType);
+    // \note only called once (by test.cpp)
+    RsType*    type = typeSystem.getTypeInfo(strType);
+    const bool nondistributed = false;
 
-    createMemory(addr, size, akStack, type);
+    createMemory(addr, size, akStack, nondistributed, type);
 }
 
 
@@ -262,10 +264,12 @@ void RuntimeSystem::checkMemWrite(Address addr, size_t size, RsType * t)
 // --------------------- Stack Variables ---------------------------------
 
 
-void RuntimeSystem::createVariable(Address address,
-                                   const string & name,
-                                   const string & mangledName,
-                                   const string & typeString)
+void RuntimeSystem::createVariable( Address address,
+                                    const std::string& name,
+                                    const std::string& mangledName,
+                                    const std::string& typeString,
+                                    bool distributed
+                                  )
 {
     //TODO deprecated, because with typeString no pointer and arrays can be registered
     TypeSystem* ts = getTypeSystem();
@@ -286,60 +290,64 @@ void RuntimeSystem::createVariable(Address address,
     }
 
     assert(type != NULL);
-    createVariable(address, name, mangledName, type);
+    createVariable(address, name, mangledName, type, distributed);
 }
 
 void RuntimeSystem::createVariable( Address address,
-                                    const string & name,
-                                    const string & mangledName,
-                                    RsType *  type)
+                                    const std::string& name,
+                                    const std::string& mangledName,
+                                    RsType *  type,
+                                    bool distributed
+                                  )
 {
   assert(type);
-  stackManager.addVariable(new VariablesType(name,mangledName,type,address));
+  stackManager.addVariable(new VariablesType(address, name, mangledName, type, distributed));
 }
 
 
 
 
 void RuntimeSystem::createArray( Address address,
-                                 AddressDesc desc,
                                  const std::string & name,
                                  const std::string & mangledName,
                                  const std::string & baseType,
-                                 size_t size)
+                                 size_t size,
+                                 bool distributed
+                               )
 {
   RsType * t = typeSystem.getTypeInfo(baseType);
-	assert( t );
-  createArray(address, desc, name, mangledName, t, size);
+  assert( t );
+  createArray(address, name, mangledName, t, size, distributed);
 }
 
 
 void RuntimeSystem::createArray( Address address,
-                                 AddressDesc desc,
                                  const std::string & name,
                                  const std::string & mangledName,
                                  RsType * baseType,
-                                 size_t size)
+                                 size_t size,
+                                 bool distributed
+                               )
 {
-  RsArrayType * arrType = typeSystem.getArrayType(baseType,size);
+  RsArrayType * arrType = typeSystem.getArrayType(baseType, size);
 
-	createArray( address, desc, name, mangledName, arrType);
+  createArray( address, name, mangledName, arrType, distributed);
 }
 
 
 void RuntimeSystem::createArray( Address address,
-                                 AddressDesc, // \pp \todo remove
                                  const std::string& name,
                                  const std::string& mangledName,
-                                 RsArrayType * type
+                                 RsArrayType * type,
+                                 bool distributed
                                )
 {
   assert(type);
 
-  // \pp why is the stackmanager invoked?
-  stackManager.addVariable( new VariablesType( name, mangledName, type, address ));
+  // creates array on the stack
+  stackManager.addVariable( new VariablesType( address, name, mangledName, type, distributed ));
 
-  pointerManager.createPointer( address, type -> getBaseType() );
+  pointerManager.createPointer( address, type->getBaseType(), true /* \pp \todo \distmem */ );
 
   // View an array as a pointer, which is stored at the address and which points at the address
   pointerManager.registerPointerChange( address, address, false, false);
@@ -357,7 +365,7 @@ void RuntimeSystem::createObject(Address address, RsClassType* type)
     MemoryType*          mt = memManager.findContainingMem(address, 1);
 
     if (mt) {
-        const bool base_ctor = szObj > mt->getSize() && address == mt->getAddress();
+        const bool base_ctor = szObj > mt->getSize() && address == mt->beginAddress();
 
         if (base_ctor) {
             // Same address, larger size.  We assume that a base type was
@@ -372,7 +380,8 @@ void RuntimeSystem::createObject(Address address, RsClassType* type)
     }
 
     // create a new entry
-    MemoryType* nb = memManager.allocateMemory(address, szObj, akCxxNew, curPos);
+    const bool  nondistributed = false; // C++ only operates on non-distribited space
+    MemoryType* nb = memManager.allocateMemory(address, szObj, akCxxNew, nondistributed, curPos);
 
     // after the new block is allocated (and if the allocation succeeded)
     //   register the proper memory layout
@@ -431,7 +440,7 @@ void RuntimeSystem::checkPointerDereference(Address src, AddressDesc, Address de
 
 void RuntimeSystem::checkIfThisisNULL(void* thisExp) {
 
-	pointerManager.checkIfPointerNULL(thisExp);
+  pointerManager.checkIfPointerNULL(thisExp);
 }
 
 

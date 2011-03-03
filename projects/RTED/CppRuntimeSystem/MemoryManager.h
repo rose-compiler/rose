@@ -39,24 +39,30 @@ class MemoryType
 
         typedef rted_AllocKind            AllocKind;
 
-        MemoryType(Location addr, size_t size, AllocKind kind, const SourcePosition& pos);
+        MemoryType(Location addr, size_t size, AllocKind kind, bool distr, const SourcePosition& pos);
 
         /// Checks if an address lies in this memory chunk
-        bool containsAddress(Location addr);
+        bool containsAddress(Location addr) const;
         /// Checks if a memory area is part of this allocation
-        bool containsMemArea(Location addr, size_t size);
+        bool containsMemArea(Location addr, size_t size) const;
         /// Checks if this MemoryType overlaps another area
-        bool overlapsMemArea(Location queryAddr, size_t querySize);
+        bool overlapsMemArea(Location queryAddr, size_t querySize) const;
 
 
         /// Less operator uses startAdress
         bool operator< (const MemoryType & other) const;
 
 
-        Location               getAddress() const { return startAddress; }
-        size_t                 getSize()    const { return size; }
-        const SourcePosition & getPos()     const { return allocPos; }
-        AllocKind              howCreated() const { return origin; }
+        Location               beginAddress() const { return startAddress; }
+        size_t                 getSize()      const { return size; }
+        const SourcePosition & getPos()       const { return allocPos; }
+        AllocKind              howCreated()   const { return origin; }
+
+        /// Returns one past the last writeable address
+        Location               endAddress() const;
+
+        /// Returns the last writeable address
+        Location               lastValidAddress() const;
 
         void                   resize( size_t size );
 
@@ -77,12 +83,14 @@ class MemoryType
         void print() const;
 
         template<typename T>
-        const T* readMemory(size_t offset)
+        const T* readMemory(size_t offset) const
         {
+            // \pp \todo make fir for upc shared memory reads
+
             assert(offset<0 && offset+sizeof(T) >= size);
             assert(isInitialized(offset,offset+sizeof(T)));
 
-            Location charAddress = startAddress + offset;
+            Location charAddress = startAddress; // + offset;
 
             return static_cast<const T*>(charAddress);
         }
@@ -118,6 +126,8 @@ class MemoryType
 
         const TypeInfoMap & getTypeInfoMap() const { return typeInfo; }
 
+        bool isDistributed() const { return distributed; }
+
 
     private:
         typedef std::pair<TiIter,TiIter> TiIterPair;
@@ -130,7 +140,7 @@ class MemoryType
         std::vector<bool>   initialized;  ///< stores for every byte if it was initialized
         AllocKind           origin;       ///< Where the memory is located and how the location was created
         SourcePosition      allocPos;     ///< Position in source file where malloc/new was called
-
+        bool                distributed;  ///< Indicates whether the memory is distributed across threads
 
         /// Determines all typeinfos which intersect the defined offset-range [from,to)
         /// "to" is exclusive i.e. typeInfos with startOffset==to are not included
@@ -179,7 +189,7 @@ class MemoryManager
 
         /// \brief  Create a new allocation based on the parameters
         /// \return a pointer to the actual stored object (NULL in case something went wrong)
-        MemoryType* allocateMemory(Location addr, size_t size, MemoryType::AllocKind kind, const SourcePosition& pos);
+        MemoryType* allocateMemory(Location addr, size_t size, MemoryType::AllocKind kind, bool distr, const SourcePosition& pos);
 
         /// Frees allocated memory, throws error when no allocation is managed at this addr
         void freeMemory(Location addr, MemoryType::AllocKind);

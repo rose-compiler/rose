@@ -304,7 +304,7 @@ static
 size_t msgsz_SourceInfo(rted_SourceInfo si)
 {
   // rted_MsgSourceInfoHeader + file + '\0'
-  return sizeof(rted_MsgSourceInfoHeader) +  strlen(si.file) + 1;
+  return sizeof(rted_MsgSourceInfoHeader) + strlen(si.file) + 1;
 }
 
 static
@@ -687,6 +687,9 @@ void msgBroadcast(const char* msg, const size_t len)
   mb->unread_threads = THREADS - 1;
   mb->msg_lock = upc_global_lock_alloc();
 
+  fprintf(stderr, "w: %i : %i\n", MYTHREAD, ((rted_MsgHeader*) msg)->kind);
+  fflush(stderr);
+
   for (int i = 0; i < THREADS; ++i)
   {
     if (i != MYTHREAD)
@@ -700,9 +703,6 @@ void msgBroadcast(const char* msg, const size_t len)
     // next thread
     ++tgtblock;
   }
-
-  fprintf(stderr, "w: %i : %i\n", MYTHREAD, ((rted_MsgHeader*) msg)->kind);
-  fflush(stderr);
 }
 
 
@@ -712,7 +712,7 @@ void msgReceive()
   shared rted_MsgHeader* m = msgDeQueue();
   rted_MsgHeader*        msg = (rted_MsgHeader*)m;
 
-  fprintf(stderr, "r: %i : %i\n", MYTHREAD, msg->kind);
+  fprintf(stderr, "r: %i : %i (%i)\n", MYTHREAD, msg->kind, msg->threadno);
   fflush(stderr);
 
   switch (msg->kind)

@@ -12,8 +12,15 @@ static inline
 const char* localAddr(Address addr)
 {
   assert(rted_isLocal(addr));
-
   return addr.local;
+}
+
+static inline
+const char* localAddr(const MemoryType* mt)
+{
+  assert(mt && !mt->isDistributed());
+
+  return localAddr(mt->beginAddress());
 }
 
 static inline
@@ -84,13 +91,8 @@ CStdLibManager::check_overlap(const char* ptr1, size_t size1, const char* ptr2, 
       std::swap(size1, size2);
     }
 
-    Address addr1 = rted_Addr(ptr1);
-    Address addr2 = rted_Addr(ptr2);
-
-    assert(addr1 < addr2);
-
-    Address range1_high = addr1 + size1;
-    Address range2_low = addr2;
+    const char* range1_high = ptr1 + size1;
+    const char* range2_low = ptr2;
 
     // range1 is the range that starts in the smaller region of memory.  The
     // only way for the high value (the end) of range1 to be greater than the
@@ -121,15 +123,15 @@ size_t CStdLibManager::check_string( const char* str) {
     // str points somewhere within allocated memory.
     // Now we make sure that there's a null terminator within that memory
     // chunk
-    const char* const end = localAddr(memory->getAddress()) + memory->getSize();
+    const char* const end = localAddr(memory) + memory->getSize();
     const char* const zero = std::find(str, end, '\0');
 
     if (zero == end)
     {
         std::stringstream desc;
         desc    << "Trying to read from std::string at " << rted_Addr(str)
-                << " In memory chunk 0x" << memory->getAddress() << " .. "
-                << (memory->getAddress() + memory->getSize())
+                << " In memory chunk " << memory->beginAddress()
+                << " .. " << memory->endAddress()
                 << " But there is no null terminator from the pointer to the"
                 << " end of the chunk.";
         rts->violationHandler( RuntimeViolation::INVALID_READ, desc.str());

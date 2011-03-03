@@ -11,6 +11,7 @@ class RsType;
 class VariablesType;
 
 class PointerManager;
+class MemoryType;
 
 /**
  * Stores infos for a dereferentiable memory region (mostly but not always a pointer)
@@ -81,14 +82,14 @@ class PointerManager
         /// they get registered as dereferentiable mem-regions
         /// @param classBaseAddr  the address where the class was instantiated
         /// @param type class type
-        void createPointer(Location classBaseAddr, RsType * type);
+        void createPointer(Location classBaseAddr, RsType * type, bool distributed);
 
         /// Delete a registered pointer
         void deletePointer(Location sourceAddress, bool checks);
 
-        /// Deletes all pointer with startaddress>=from and startaddress < to
+        /// Deletes all pointer within the region defined by mt
         /// @param checks   if true, also test for memory leaks
-        void deletePointerInRegion( Location from, Location to, bool checks);
+        void deletePointerInRegion( MemoryType& mt );
 
         /// Registers that targetAddress is stored at sourceAddress, and the type of targetAddress
         /// sourceAddress has to be registered first with createPointer
@@ -106,11 +107,8 @@ class PointerManager
         void checkIfPointerNULL( void* pointer);
 
         /// Invalidates all "Pointer" i.e. dereferentiable memory regions
-        /// point in given memory chunk
-        /// @param remove if true the pointer is only set to null
-        ///               if false they are deleted
-        void invalidatePointerToRegion(Location from, Location to, bool remove=false);
-
+        /// point in memory chunk defined by mt
+        void invalidatePointerToRegion( MemoryType& mt );
 
         typedef std::set<PointerInfo*, PointerCompare> PointerSet;
         typedef PointerSet::const_iterator PointerSetIter;

@@ -15,7 +15,8 @@ void StackManager::addVariable(VariablesType * var)
     assert(scope.size() > 0);
     // if the variable is (or contains) pointer register it to pointer manager
 
-    RuntimeSystem::instance()->getPointerManager()->createPointer(var->getAddress(), var->getType());
+    // \pp \todo \distmem we cannot assume false for global variables
+    RuntimeSystem::instance()->getPointerManager()->createPointer(var->getAddress(), var->getType(), false);
 
     addrToVarMap.insert(AddrToVarMap::value_type(var->getAddress(),var));
     stack.push_back(var);

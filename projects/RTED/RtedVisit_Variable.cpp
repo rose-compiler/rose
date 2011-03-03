@@ -358,10 +358,10 @@ namespace rted
     // \note isRightOfBinaryOp(&varref)
     //       does not mean that varref == rhs. varref could also be
     //       an (indirect) child of binop.
-    return (  !isRightOfBinaryOp(&varref)
-           || isSgArrayType(rhs->get_type())
-           || isSgNewExp(rhs)
-           || isSgReferenceType(binop->get_lhs_operand()->get_type())
+    return (  isRightOfBinaryOp(&varref)
+           && !isSgArrayType(rhs->get_type())
+           && !isSgNewExp(rhs)
+           && !isSgReferenceType(binop->get_lhs_operand()->get_type())
            );
   }
 
