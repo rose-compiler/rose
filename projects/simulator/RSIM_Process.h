@@ -329,7 +329,7 @@ public:
     }
 
     /** Returns the process exit status. If the process has not exited, then zero is returned. */
-    bool get_termination_status() {
+    int get_termination_status() {
         return termination_status;
     }
 
