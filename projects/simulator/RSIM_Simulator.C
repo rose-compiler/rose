@@ -336,11 +336,11 @@ RSIM_Simulator::describe_termination(FILE *f)
         if (WIFEXITED(status)) {
             m.mesg("specimen %d exited with status %d\n", getpid(), WEXITSTATUS(status));
         } else if (WIFSIGNALED(status)) {
-            m.multipart(NULL, "specimen %d exited due to signal ", getpid());
+            m.multipart("", "specimen %d exited due to signal ", getpid());
             print_enum(&m, signal_names, WTERMSIG(status));
             m.more(" (%s)%s\n", strsignal(WTERMSIG(status)), WCOREDUMP(status)?" core dumped":"");
         } else if (WIFSTOPPED(status)) {
-            m.multipart(NULL, "specimen %d is stopped due to signal ", getpid());
+            m.multipart("", "specimen %d is stopped due to signal ", getpid());
             print_enum(&m, signal_names, WSTOPSIG(status));
             m.more(" (%s)\n", strsignal(WSTOPSIG(status)));
         } else {
