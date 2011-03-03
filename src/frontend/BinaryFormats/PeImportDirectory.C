@@ -64,8 +64,8 @@ SgAsmPEImportDirectory::parse(rose_addr_t va)
                                               "    Contains unmapped va 0x%08"PRIx64"\n",
                                               va, p_dll_name_rva.to_string().c_str(), e.va) &&
             e.map) {
-            fprintf(stderr, "Memory map in effect at time of error is:\n");
-            e.map->dump(stderr, "    ");
+            fprintf(stderr, "    Memory map in effect at time of error is:\n");
+            e.map->dump(stderr, "        ");
         }
     }
     p_dll_name->set_string(dll_name);
