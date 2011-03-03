@@ -1165,14 +1165,14 @@ bool Unparse_MOD_SAGE::RemovePareninExprList(SgExprListExp* expr_list) {
     if (func_call != NULL) {
       SgDotExp* dot_exp = isSgDotExp(func_call->get_function());
       if (dot_exp != NULL) {
-	SgBinaryOp* binary_op = isSgBinaryOp(dot_exp);
-	if (binary_op != NULL) {
-	  //check if there is only one expression in the list and this expression
-	  //contains the member operator() overloaded function
-	  if (i == expr_list->get_expressions().end() &&
-	      isBinaryParenOperator(binary_op->get_rhs_operand()))
-	    return true;
-	}
+  SgBinaryOp* binary_op = isSgBinaryOp(dot_exp);
+  if (binary_op != NULL) {
+    //check if there is only one expression in the list and this expression
+    //contains the member operator() overloaded function
+    if (i == expr_list->get_expressions().end() &&
+        isBinaryParenOperator(binary_op->get_rhs_operand()))
+      return true;
+  }
       }
     }
   }
