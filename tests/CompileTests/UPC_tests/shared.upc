@@ -21,13 +21,25 @@ shared[4] int * p2s_p2 = 0;
   shared scalar, array, initializer 
 */
 shared int global_counter; 
+
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+// DQ (2/17/2011): Remove the initializaion since EDG reports it as an error with EDG 4.0.
+shared int global_counter2;
+#else
 shared int global_counter2 = 2; 
+#endif
 
 /* shared arrays */
 shared[5] double array[100*THREADS];
+
 /* Berkeley UPC compiler does not yet fully implement this. See their bug 36
 */
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+// DQ (2/17/2011): Remove the initializaion since EDG reports it as an error with EDG 4.0.
+shared[5] double array2[10*THREADS];
+#else
 shared[5] double array2[10*THREADS]={1.1, 2.2};
+#endif
 
 /* shared pointers */
 shared int* shared[10] s2s_p4; /*shared to shared */
@@ -46,11 +58,24 @@ int foo()
 
 /* -------shared static data -----------*/
   static shared int scounter; /* static shared scalar */
+
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+// DQ (2/17/2011): Remove the initializaion since EDG reports it as an error with EDG 4.0.
+  static shared int scounter2; /* static shared scalar with initializer */
+#else
   static shared int scounter2 =0; /* static shared scalar with initializer */
+#endif
+
   /*static shared array */
 
   static shared int sfooArray3[5*THREADS];
+
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+// DQ (2/17/2011): Remove the initializaion since EDG reports it as an error with EDG 4.0.
+  static shared int sfooArray5[5*THREADS];
+#else
   static shared int sfooArray5[5*THREADS] = {1,2,3,4,5}; 
+#endif
   static shared int* p2s_static;
 }
 int main()

@@ -15,7 +15,7 @@ Required software to build ROSE: Please install them first.
   We need ps2pdf, which is shipped as part of it.
 
 Environment settings:
-edit your .profile and 
+edit your .profile for PATH and DYLD_LIBRARY_PATH
 
 On rose-hudson-osx-2 (use this to get access to wget):
    export PATH=$PATH:/export/tmp.hudson-rose/opt/wget-1.11.4-inst/bin/

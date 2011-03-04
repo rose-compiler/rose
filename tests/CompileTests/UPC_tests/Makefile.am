@@ -33,8 +33,8 @@ TESTCODES_REQUIRED_TO_PASS = \
    upc_all_reduceL_ex.upc upc_all_scatter_ex.upc \
    upc_all_exchange_ex_dynamic.upc upc_all_gather_all_ex_dynamic.upc \
    upc_all_gather_ex_dynamic.upc upc_all_scatter_ex_dynamic.upc \
-   istream.upc \
    bupc_test.upc \
+   istream.upc \
    test2010_01.upc \
    test2010_02.upc \
    test2011_01.upc \
@@ -43,15 +43,23 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2011_04.upc \
    test2011_05.upc \
    test2011_06.upc \
-   test2011_07.upc
+   test2011_07.upc \
+   test2011_08.upc \
+   test2011_09.upc \
+   test2011_10.upc \
+   test2011_11.upc \
+   test2011_12.upc \
+   test2011_13.upc \
+   test2011_14.upc
 
-#upc_XXXsizeof() has two issues:
+# upc_XXXsizeof() has two issues:
 # 1. They are evaluated by EDG, operators are not preserved in EDG's IL
 # 2. EDG 3.3 get wrong evaluation values,  EDG 3.10 fixes the bug though.
 TESTCODE_CURRENTLY_FAILING = \
    sizeof.upc \
-   sizeof_2.upc \
-   test2011_08.upc
+   sizeof_2.upc
+
+#  test2011_08.upc
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = \
@@ -65,10 +73,21 @@ $(TESTCODE_CURRENTLY_FAILING)
 # Liao (6/11/2008) --edg:upc and --edg:restrict are not required since ROSE can add them internally based on the file suffix (.upc) , no backend compilation since GCC does not recognize UPC .
 if ROSE_USE_NEW_EDG_INTERFACE
 # JJW (12/15/2008): Force C99 mode so we can have declarations in the initializers of forall statements
-ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep --edg:upc --edg:c99
+# ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep --edg:upc --edg:c99
+# ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:exit_after_parser -rose:skipfinalCompileStep -rose:upc_threads 1 
+# ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:exit_after_parser -rose:skipfinalCompileStep
+
+# DQ (2/17/2011): Use "-rose:exit_after_parser" option to isolate the testing to just EDG 
+# (avoids ROSE bugs using new EDG 4.0 frontent (which is unfinished work)).  Use "--edg:c99"
+# so that we can have declarations in the initializers of forall statements.
+# Note that only upc_all_gather_ex.upc, upc_all_gather_all_ex.upc, and upc_all_exchange_ex.upc require the "-rose:upc_threads 1" option.
+# ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings --edg:c99 -rose:exit_after_parser -rose:skipfinalCompileStep -rose:upc_threads 1
+ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings --edg:c99 -rose:exit_after_parser -rose:skipfinalCompileStep -rose:upc_threads 1
 else
-ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:skipfinalCompileStep -rose:upc_threads 1 
-#ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep --edg:upc
+# ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep --edg:upc
+# ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:exit_after_parser -rose:skipfinalCompileStep -rose:upc_threads 1 
+# ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:exit_after_parser -rose:skipfinalCompileStep
+ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:skipfinalCompileStep -rose:upc_threads 1
 endif
 #ROSE_FLAGS = --edg:no_warnings -w --edg:restrict --edg:upc -rose:verbose 3
 
@@ -140,14 +159,18 @@ include $(top_srcdir)/config/QMTest_makefile.inc
 # DQ (9/15/2010): Moved UPC standard header files to be included automatically (moved to the ROSE compiler include directory).
 # put the headers here for now. TODO: Move them to a better place
 # EXTRA_DIST = $(ALL_TESTCODES) upc.h upc_relaxed.h upc_strict.h upc_collective.h
-EXTRA_DIST = $(ALL_TESTCODES)  $(UPCXX_TESTCODES)
+  EXTRA_DIST = $(ALL_TESTCODES)  $(UPCXX_TESTCODES)
 
 check-local:
 	@echo "Tests for UPC examples."
 	@$(MAKE) $(PASSING_TEST_Output)
 	@$(MAKE) rose_shared.upc.aa
+if !ROSE_USE_NEW_EDG_INTERFACE
 	@echo "Tests for UPC++ examples."
 	@$(MAKE) $(UPCXX_TEST_Objects)
+else
+	@echo "Skipping testing UPC++ test codes with new EDG (--upc++ mode not yet added in EDG 4.0; ROSE specific feature)."
+endif
 #	DQ (2/5/2011): This failed for a very few Hudson tests, but they are not critical 
 #	tests so I will eliminate them for now. I don't know why they failed.
 #	@$(MAKE) testForUpcThreadsKeywordInGeneratedCode

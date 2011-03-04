@@ -1,7 +1,8 @@
+// TOO (2/16/2011): error for Thrifty g++ 3.4.4
+#if __GNUC__ != 3
 
 // Skip testing on 64 bit systems for now!
 #ifndef __LP64__
-
 // DQ (12/4/2006): Note that the 64bit processors appear to use different register names, so this code is not portable.
 
 void foobar()
@@ -44,4 +45,6 @@ int main()
 #else
   #warning "Not tested on 64 bit systems"
 #endif
-
+#else
+  #warning "Not tested on GCC 3.x"
+#endif

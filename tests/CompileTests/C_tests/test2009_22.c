@@ -10,5 +10,5 @@ typedef struct {
   unsigned page           : 8;
   unsigned segment     : 6;
   unsigned unused       : 1;
-  unsigned supervisor  : 1;
+  unsigned supervisor  : 1+3;
 } VirtualAddress;

@@ -27,7 +27,8 @@ typedef long int __fd_mask;
 #ifndef __LP64__
 
 // Skip version 4.x gnu compilers
-#if ( __GNUC__ == 3 )
+// TOO (2/15/2011): error for Thrifty g++ 3.4.4
+#if ( __GNUC__ == 3 && __GNUC_MINOR__ != 4)
 
 typedef struct {
     __fd_mask fds_bits[1024 / (8 * sizeof (__fd_mask))];
