@@ -50,13 +50,13 @@ SgAsmPEImportLookupTable::parse(rose_rva_t rva, size_t idir_idx)
         } else {
             rose_addr_t start_rva = isec->get_mapped_actual_va() - isec->get_base_va();
             if (SgAsmPEImportSection::import_mesg("SgAsmPEImportLookupTable::parse: warning: %s rva is outside PE Import Table\n"
-                                                  "        Import Directory Entry #%zu\n"
-                                                  "        %s rva is %s\n"
-                                                  "        PE Import Table mapped from 0x%08"PRIx64" to 0x%08"PRIx64"\n", 
+                                                  "    Import Directory Entry #%zu\n"
+                                                  "    %s rva is %s\n"
+                                                  "    PE Import Table mapped from 0x%08"PRIx64" to 0x%08"PRIx64"\n", 
                                                   tname.c_str(), idir_idx, tname.c_str(), rva.to_string().c_str(),
                                                   start_rva, start_rva+isec->get_mapped_size())) {
-                fprintf(stderr, "Memory map in effect at time of error:\n");
-                fhdr->get_loader_map()->dump(stderr, "    ");
+                fprintf(stderr, "    Memory map in effect at time of error:\n");
+                fhdr->get_loader_map()->dump(stderr, "        ");
             }
         }
     }
@@ -74,8 +74,8 @@ SgAsmPEImportLookupTable::parse(rose_rva_t rva, size_t idir_idx)
                                                   " contains unmapped virtual address 0x%08"PRIx64"\n",
                                                   idir_idx, tname.c_str(), i, rva.get_rva(), e.va) &&
                 e.map) {
-                fprintf(stderr, "Memory map in effect at time of error:\n");
-                e.map->dump(stderr, "    ");
+                fprintf(stderr, "    Memory map in effect at time of error:\n");
+                e.map->dump(stderr, "        ");
             }
             memset(buf, 0, sizeof buf);
         }
