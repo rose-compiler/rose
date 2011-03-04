@@ -3757,13 +3757,19 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     ROSE_ASSERT(decl_item != NULL);
                     ROSE_ASSERT(decl_item->get_parent() != NULL);
 
-                 // DQ (5/1/2005): Note clear if we can assert this!
+                 // DQ (5/1/2005): Not clear if we can assert this!
                  // ROSE_ASSERT(decl_item->get_prev_decl_item() != NULL);
                     if (decl_item->get_prev_decl_item() != NULL)
                        {
-                      // printf ("decl_item->get_prev_decl_item() = %p get_name() = %s \n",
-                      //      decl_item->get_prev_decl_item(),decl_item->get_prev_decl_item()->get_name().str());
-                         ROSE_ASSERT(decl_item->get_prev_decl_item()->get_parent() != NULL);
+                      // printf ("decl_item->get_prev_decl_item() = %p get_name() = %s \n",decl_item->get_prev_decl_item(),decl_item->get_prev_decl_item()->get_name().str());
+
+                      // DQ (2/12/2011): Commented out to support generation of graph to debug test2011_08.C, this test codes 
+                      // demonstrates that the SgInitializedName build first might only be to support a symbol and not have a
+                      // proper parent.
+                      // ROSE_ASSERT(decl_item->get_prev_decl_item()->get_parent() != NULL);
+                         SgInitializedName* previousInitializedName = decl_item->get_prev_decl_item();
+                         if (previousInitializedName->get_prev_decl_item() != NULL)
+                              ROSE_ASSERT(previousInitializedName->get_parent() != NULL);
                        }
 
                  // DQ (10/10/2006): Only do name qualification for C++
@@ -4524,7 +4530,10 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      //TODO wrap into a function and to be called by all
           SgInitializedNamePtrList::iterator p = enum_stmt->get_enumerators().begin();
           SgInitializedNamePtrList::iterator p_last = enum_stmt->get_enumerators().end();
-          p_last --;
+          
+                  //Guard against decrementing an invalid iterator
+                  if (p != p_last)
+                        p_last--;
           for (; p!=enum_stmt->get_enumerators().end(); p++)
           {
             // Liao, 5/14/2009

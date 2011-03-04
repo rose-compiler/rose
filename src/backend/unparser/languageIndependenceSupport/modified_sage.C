@@ -671,6 +671,7 @@ int GetPrecedence(int variant)
           case V_SgNotOp:            return 15;
           case V_SgPointerDerefExp:
           case V_SgAddressOfOp:
+          case V_SgUpcLocalsizeofExpression:   // \pp 03/03/11
           case V_SgSizeOfOp:         return 15;
           case V_SgFunctionCallExp:  return 16;
           case V_SgPntrArrRefExp:    return 16;
