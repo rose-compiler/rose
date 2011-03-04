@@ -689,9 +689,13 @@ test2006_47.C
 
 TEST_Objects = ${TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
+TEST_INCLUDES = \
+	-I$(top_srcdir)/tests/CompileTests/A++Code \
+	-I$(top_srcdir)/tests/CompileTests/Cxx_tests 
+
 $(TEST_Objects): ssaTestHarness
 	@cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
+	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $(@:.o=.C)
 
 check-local:
 	@$(MAKE) $(TEST_Objects)

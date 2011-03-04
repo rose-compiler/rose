@@ -413,9 +413,15 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             ROSE_ASSERT(va_offset<mem_size);
             if (file_size>mem_size) file_size = mem_size;
             ROSE_ASSERT(va + va_offset >= header->get_base_va());
+            if (debug) {
+                fprintf(debug, "    Current memory map (before we map this section)\n");
+                map->dump(debug, "        ");
+            }
 
             /* Erase part of the mapping? */
             if (CONTRIBUTE_SUB==contrib) {
+                if (debug)
+                    fprintf(debug, "    Subtracting contribution\n");
                 map->erase(MemoryMap::MapElement(va, mem_size));
                 continue;
             }
@@ -433,6 +439,8 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                     case RESOLVE_THROW:
                         throw;
                     case RESOLVE_OVERMAP:
+                        if (debug)
+                            fprintf(debug, "    Conflict: resolved by making a hole\n");
                         map->erase(MemoryMap::MapElement(va, mem_size));
                         break;
                     case RESOLVE_REMAP:
@@ -468,13 +476,27 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             std::string::size_type file_basename_pos = file->get_name().find_last_of("/");
             file_basename_pos = file_basename_pos==file->get_name().npos ? 0 : file_basename_pos+1;
             std::string melmt_name = file->get_name().substr(file_basename_pos) + "(" + section->get_name()->get_string() + ")";
+            if (debug)
+                fprintf(debug, "    Map element name: %s\n", melmt_name.c_str());
 
             /* Anonymously map the part of memory beyond the physical end of the file */
             SgAsmGenericFile *file = section->get_file();
             rose_addr_t total = file->get_data().size(); /*total size of file*/
             if (offset+mem_size > total) {
-                rose_addr_t n = (offset + mem_size) - total;
-                rose_addr_t a = va + total - offset;
+                rose_addr_t n, a;
+                if (offset >= total) {
+                    /* starts beyond EOF */
+                    n = mem_size;
+                    a = va;
+                } else {
+                    /* overlaps EOF */
+                    n = (offset + mem_size) - total;
+                    a = va + total - offset;
+                }
+                if (debug) {
+                    fprintf(debug, "    %-41s va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
+                            "Mapping part beyond EOF:", a, n, a+n);
+                }
                 MemoryMap::MapElement me(a, n, mapperms);
                 me.set_name(melmt_name);
                 map->insert(me);
@@ -486,6 +508,10 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             if (anon_hi && mem_size>file_size) {
                 rose_addr_t n = mem_size - file_size;
                 rose_addr_t a = va + file_size;
+                if (debug) {
+                    fprintf(debug, "    %-41s va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
+                            "Mapping part beyond end of section:", a, n, a+n);
+                }
                 MemoryMap::MapElement me(a, n, mapperms);
                 me.set_name(melmt_name);
                 map->insert(me);
@@ -493,9 +519,13 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             }
 
             /* Anonymously map the part of memory before the section */
-            if (anon_lo && va_offset>0) {
+            if (anon_lo && va_offset>0 && mem_size>0) {
                 rose_addr_t n = va_offset - va;
                 rose_addr_t a = va;
+                if (debug) {
+                    fprintf(debug, "    %-41s va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
+                            "Mapping part before beginning of section:", a, n, a+n);
+                }
                 MemoryMap::MapElement me(a, n, mapperms);
                 me.set_name(melmt_name);
                 map->insert(me);
@@ -509,6 +539,10 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
              * the file left and right of the actual section. */
             if (mem_size>0) {
                 MemoryMap::MapElement me(va, mem_size, &(file->get_data()[0]), offset, mapperms);
+                if (debug) {
+                    fprintf(debug, "    %-41s va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
+                            "Mapping section:", va, mem_size, va+mem_size);
+                }
                 me.set_name(melmt_name);
                 map->insert(me);
             }

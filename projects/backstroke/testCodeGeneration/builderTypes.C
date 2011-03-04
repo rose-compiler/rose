@@ -405,12 +405,13 @@ SgFunctionDeclaration* TestCodeAssembler::buildMainFunction()
 	* Test Normalized Event.
 	*********************************************************************************************************/
 
-	foreach (const ProcessedEvent& event_results, processed_events_)
+	//TODO
+	/**foreach (const ProcessedEvent& event_results, processed_events_)
 	{
 		SgBasicBlock* test_block = buildTestBlock(
 				var1, var2, event_results.event, var1, event_results.normalized_event, var2);
 		appendStatement(test_block);
-	}
+	}*/
 
 	/********************************************************************************************************
 	* Test Forward Event.
@@ -420,10 +421,9 @@ SgFunctionDeclaration* TestCodeAssembler::buildMainFunction()
 	foreach (const ProcessedEvent& event_results, processed_events_)
 	{
 		// Foreach pair of the result of the event.
-		foreach (const FuncDeclPair& func_pair, event_results.fwd_rvs_events)
+		foreach (const EventReversalResult& func_pair, event_results.fwd_rvs_events)
 		{
-			SgBasicBlock* test_block = buildTestBlock(
-					var1, var2, event_results.event, var1, func_pair.first, var2);
+			SgBasicBlock* test_block = buildTestBlock(var1, var2, event_results.event, var1, func_pair.forwardEvent, var2);
 			appendStatement(test_block);
 		}
 	}
@@ -436,10 +436,9 @@ SgFunctionDeclaration* TestCodeAssembler::buildMainFunction()
 	foreach (const ProcessedEvent& event_results, processed_events_)
 	{
 		// Foreach pair of the result of the event.
-		foreach (const FuncDeclPair& func_pair, event_results.fwd_rvs_events)
+		foreach (const EventReversalResult& func_pair, event_results.fwd_rvs_events)
 		{
-			SgBasicBlock* test_block = buildTestBlock(
-					var1, var2, func_pair.first, var1, func_pair.second, var1);
+			SgBasicBlock* test_block = buildTestBlock(var1, var2, func_pair.forwardEvent, var1, func_pair.reverseEvent, var1);
 			appendStatement(test_block);
 		}
 	}

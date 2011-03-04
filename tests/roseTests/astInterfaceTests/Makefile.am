@@ -24,7 +24,7 @@ noinst_PROGRAMS = \
     buildAbstractHandle getDependentDecls buildStructDeclaration2 buildTypedefDeclaration \
     deepDelete insertStatementBeforeFunction removeStatementCommentRelocation \
     generateUniqueName annotateExpressionsWithUniqueNames buildExternalStatement \
-    buildCommonBlock doLoopNormalization buildLabelStatement2
+    buildCommonBlock doLoopNormalization buildLabelStatement2 replaceWithPattern
 
 # list of test SAGE AST builders 
 annotateExpressionsWithUniqueNames_SOURCES = annotateExpressionsWithUniqueNames.C
@@ -75,6 +75,7 @@ buildExternalStatement_SOURCES           = buildExternalStatement.C
 buildCommonBlock_SOURCES                 = buildCommonBlock.C
 doLoopNormalization_SOURCES              = doLoopNormalization.C
 buildLabelStatement2_SOURCES	         = buildLabelStatement2.C
+replaceWithPattern_SOURCES               = replaceWithPattern.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -130,7 +131,8 @@ generatedCodeExamples = \
   rose_inputinsertStatementBeforeFunction.C \
   rose_inputRemoveStatementCommentRelocation.C \
   rose_inputgenerateUniqueName.C \
-  rose_inputannotateExpressionsWithUniqueNames.C
+  rose_inputannotateExpressionsWithUniqueNames.C \
+  rose_inputreplaceWithPattern.C
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -259,6 +261,9 @@ rose_inputbuildTypedefDeclaration.C:buildTypedefDeclaration
 rose_inputgetDependentDecls.C:getDependentDecls
 	./getDependentDecls$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputgetDependentDecls.C
 
+rose_inputreplaceWithPattern.C:replaceWithPattern
+	./replaceWithPattern$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputreplaceWithPattern.C 
+
 if ROSE_USE_INDENT
 rose_inputloopUnrolling.C:loopUnrolling
 	./loopUnrolling$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopUnrolling.C -rose:loopunroll:abstract_handle "Statement<position,5>" -rose:loopunroll:factor 3 && indent rose_inputloopUnrolling.C
@@ -326,7 +331,7 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C \
        inputgenerateUniqueName.C inputannotateExpressionsWithUniqueNames.C \
        inputbuildExternalStatement.f inputbuildCommonBlock.f inputdoLoopNormalization.f \
-       inputbuildLabelStatement2.f
+       inputbuildLabelStatement2.f inputreplaceWithPattern.C
 
 
 check-local:

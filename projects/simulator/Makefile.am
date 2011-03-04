@@ -333,7 +333,6 @@ SYS_TEST_INPUTS_TS_SRC = \
 		   $(srcdir)/syscall_tests/syscall_tst.38.10.c \
 		   $(srcdir)/syscall_tests/syscall_tst.38.13.c \
 		   $(srcdir)/syscall_tests/syscall_tst.38.14.c \
-		   $(srcdir)/syscall_tests/syscall_tst.54.c \
 		   $(srcdir)/syscall_tests/syscall_tst.24.1.c \
 		   $(srcdir)/syscall_tests/syscall_tst.24.2.c \
 		   $(srcdir)/syscall_tests/syscall_tst.24.3.c \
@@ -372,6 +371,8 @@ SYS_TEST_INPUTS_TS_SRC = \
 # DQ (2/13/2011): This test fails to terminate when run on Hudson 
 # (failed on hudson-rose-07, email with error details sent morning of 2/13/2011 to Robb and Andreas).
 #		   $(srcdir)/syscall_tests/syscall_tst.183.3.c
+# Liao 2/16/2011: I have to comment out this since  ERROR: Cannot create file /tmp/notty		   
+#		   $(srcdir)/syscall_tests/syscall_tst.54.c
 
 
 # These cannot be run reliably (at least not concurrently with other tests.
@@ -1064,11 +1065,14 @@ check-pthread:  $(PTHREAD_TEST_TARGETS)
 ###############################################################################################################################
 
 
-check-local: check-syscalls check-pthread
+run-tests: check-syscalls check-pthread
 	@$(RTH_STATS)
 
-# "tmp-sim" is the temp directory used to run the tests. See syscall_tests.conf and pthread_tests.conf
+check-local:  #run-tests
+	@echo "The simulator project is excluded from make check for now due to random hanging problems."
+	@echo "Run 'make run-tests' in $(pwd) instead."
+
+# "tmp-sim" is the temp directory used to run the tests. See x86sim.conf.
 clean-local:
-	if [ -d tmp-sim ]; then chmod -f a+rwx -R tmp-sim; fi
+	-chmod -f -R a+rwx tmp-sim
 	rm -rf tmp-sim x-core.rose test-file-fchown32
-	rm -f $(PTHREAD_TEST_INPUTS) $(PTHREAD_TEST_TARGETS) 

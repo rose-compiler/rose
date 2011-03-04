@@ -15,8 +15,36 @@ using namespace std;
 using namespace ssa_private;
 using namespace boost;
 
+void StaticSingleAssignment::interproceduralDefPropagation(const unordered_set<SgFunctionDefinition*>& interestingFunctions)
+{
+	ClassHierarchyWrapper* classHierarchy = new ClassHierarchyWrapper(project);
+	vector<SgFunctionDefinition*> topologicalFunctionOrder = calculateInterproceduralProcessingOrder(interestingFunctions);
 
-vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralProcessingOrder()
+	//If there is no recursion, this should only requires one iteration. However, we have to always do an extra
+	//iteration in which nothing changes
+	int iteration = 0;
+	while (true)
+	{
+		iteration++;
+		bool changedDefs = false;
+		foreach (SgFunctionDefinition* func, topologicalFunctionOrder)
+		{
+			bool newDefsForFunc = insertInterproceduralDefs(func, interestingFunctions, classHierarchy);
+			changedDefs = changedDefs || newDefsForFunc;
+		}
+
+		if (!changedDefs)
+			break;
+	}
+	if (getDebug())
+		printf("%d interprocedural iterations on the call graph!\n", iteration);
+
+	delete classHierarchy;
+}
+
+
+vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralProcessingOrder(
+									const unordered_set<SgFunctionDefinition*>& interestingFunctions)
 {
 	//First, let's build a call graph. Our goal is to find an order in which to process the functions
 	//So that callees are processed before callers. This way we would have exact information at each call site
@@ -41,15 +69,11 @@ vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralPr
 		graphNodeToFunction[funcDef] = graphNode;
 	}
 
-	//Find functions of interest
-	vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition> (project, V_SgFunctionDefinition);
-
 	//Order the functions of interest such that callees are processed before callers whenever possible
 	vector<SgFunctionDefinition*> processingOrder;
-	foreach (SgFunctionDefinition* interestingFunction, funcs)
+	foreach (SgFunctionDefinition* interestingFunction, interestingFunctions)
 	{
-		if (functionFilter(interestingFunction->get_declaration()))
-			processCalleesThenFunction(interestingFunction, callGraph, graphNodeToFunction, processingOrder);
+		processCalleesThenFunction(interestingFunction, callGraph, graphNodeToFunction, processingOrder);
 	}
 
 	return processingOrder;
@@ -94,7 +118,7 @@ void StaticSingleAssignment::processCalleesThenFunction(SgFunctionDefinition* ta
 }
 
 
-void StaticSingleAssignment::insertInterproceduralDefs(SgFunctionDefinition* funcDef,
+bool StaticSingleAssignment::insertInterproceduralDefs(SgFunctionDefinition* funcDef,
 									const boost::unordered_set<SgFunctionDefinition*>& processed,
 									ClassHierarchyWrapper* classHierarchy)
 {
@@ -102,17 +126,30 @@ void StaticSingleAssignment::insertInterproceduralDefs(SgFunctionDefinition* fun
 	vector<SgExpression*> constructorCalls = SageInterface::querySubTree<SgExpression>(funcDef, V_SgConstructorInitializer);
 	functionCalls.insert(functionCalls.end(), constructorCalls.begin(), constructorCalls.end());
 
+	bool changedDefs = false;
+
 	foreach(SgExpression* callSite, functionCalls)
 	{
 		//First, see which functions this call site leads too
 		vector<SgFunctionDeclaration*> callees;
 		CallTargetSet::getDeclarationsForExpression(callSite, classHierarchy, callees);
 
+		LocalDefUseTable::mapped_type oldDefs = originalDefTable[callSite];
+
+		//process each callee
 		foreach(SgFunctionDeclaration* callee, callees)
 		{
 			processOneCallSite(callSite, callee, processed, classHierarchy);
 		}
+
+		const LocalDefUseTable::mapped_type& newDefs = originalDefTable[callSite];
+		if (oldDefs != newDefs)
+		{
+			changedDefs = true;
+		}
 	}
+
+	return changedDefs;
 }
 
 
@@ -136,7 +173,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 	if (calleeDef != NULL && processed.count(calleeDef) > 0)
 	{
 		//Yes, use exact info!
-		varsDefinedinCallee = getVarsDefinedInSubtree(calleeDef);
+		varsDefinedinCallee = getOriginalVarsDefinedInSubtree(calleeDef);
 	}
 	else
 	{
@@ -146,20 +183,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 	//Filter the variables that are not accessible from the caller and insert the rest as definitions
 	foreach (const VarName& definedVar, varsDefinedinCallee)
 	{
-		//If the variable modified in the callee is a member variable, see if it's on the same object instance
-		if (varRequiresThisPointer(definedVar))
-		{
-			ROSE_ASSERT(isSgMemberFunctionDeclaration(callee));
-
-			//Constructor initializers always have a new object instance
-			if (isSgConstructorInitializer(callSite))
-				continue;
-
-			if (!isThisPointerSameInCallee(isSgFunctionCallExp(callSite), isSgMemberFunctionDeclaration(callee)))
-				continue;
-		}
-
-		if (isVarInScope(definedVar, callSite))
+		if (isVarAccessibleFromCaller(definedVar, callSite, callee))
 			originalDefTable[callSite].insert(definedVar);
 	}
 
@@ -172,7 +196,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 		//Get the LHS variable (e.g. x in the call site x.foo())
 		SgBinaryOp* functionRefExpression = isSgBinaryOp(isSgFunctionCallExp(callSite)->get_function());
 		ROSE_ASSERT(functionRefExpression != NULL);
-		VarName lhsVar = getVarName(functionRefExpression->get_lhs_operand());
+		VarName lhsVar = getVarForExpression(functionRefExpression->get_lhs_operand());
 
 		//It's possible that the member function is not operating on a variable; e.g. the function bar in foo().bar()
 		if (lhsVar != emptyName)
@@ -191,6 +215,10 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 			//If the callee has a definition and we have already processed it we can use exact info to check if 'this' is modified
 			else
 			{
+				//TODO: We can be more precise here! Instead of defining the lhsVar, we can find exactly which
+				//elements of the lhs var were defined and only define those.
+				//For example, obj.setX(3) should only have a def for obj.x rather than for all of obj.
+
 				//Get the scope of variables in this class
 				SgClassDefinition* calleeClassScope = calleeMemFunDecl->get_class_scope();
 				ROSE_ASSERT(calleeClassScope != NULL);
@@ -223,7 +251,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 	}
 
 	//
-	//Handle aliasing of paramters (e.g. parameters passed by reference)
+	//Handle aliasing of parameters (e.g. parameters passed by reference)
 	//
 
 	//Get the actual arguments
@@ -249,19 +277,18 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 	for (size_t i = 0; i < actualArgList.size() && i < formalArgList.size(); i++)
 	{
 		//Check that the actual argument was a variable name
-		const VarName& callerArgVarName = getVarName(actualArgList[i]);
+		const VarName& callerArgVarName = getVarForExpression(actualArgList[i]);
 		if (callerArgVarName == emptyName)
 			continue;
 
 		//Check that the argument is passed by nonconst reference or is of a pointer type
 		//Note: here we are also filtering varArg types (SgTypeEllipse)
-		//FIXME: Here we should also filter const pointer types. Needs a new SageInterface function
-		SgType* formalArgType = formalArgList[i]->get_type();
-		if (!SageInterface::isNonconstReference(formalArgType) && !SageInterface::isPointerType(formalArgType))
+		if (!isArgumentNonConstReferenceOrPointer(formalArgList[i]))
 			continue;
 		
 		//See if we can use exact info here to determine if the callee modifies the argument
-		bool argModified = false;
+		//If not, we just take the safe assumption that the argument is modified
+		bool argModified = true;
 		if (calleeDef != NULL && processed.count(calleeDef) > 0)
 		{
 			//Get the variable name in the callee associated with the argument (since we've processed this function)
@@ -269,11 +296,6 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 
 			ROSE_ASSERT(calleeArgVarName != emptyName);
 			argModified = (varsDefinedinCallee.count(calleeArgVarName) > 0);
-		}
-		else
-		{
-			//Nope, use an approximate bound. We just assume that if the variable is passed by reference, it's modified
-			argModified = true;
 		}
 
 		//Define the actual parameter in the caller if the callee modifies it
@@ -284,10 +306,66 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 	}
 
 	//Now, handle the implicit arguments. We can have an implicit argument such as (int& x = globalVar)
+	//If there are more formal arguments than actual arguments there are two cases
+	//case 1: The callee is a varArg function can no varargs are passed at the call site
+	//case 2: The callee has default argument values passed in
+	//We conly handle case 2. i.e. foo(int& x = globalVar)
 	for (size_t i = actualArgList.size(); i < formalArgList.size(); i++)
 	{
-		
+		SgInitializedName* formalArg = formalArgList[i];
+
+		//Again, filter out parameters passed by value and const references
+		if (!isArgumentNonConstReferenceOrPointer(formalArg))
+			continue;
+
+		//Default arguments always have an assign initializer
+		if (formalArg->get_initializer() == NULL)
+			continue;
+
+		ROSE_ASSERT(isSgAssignInitializer(formalArg->get_initializer()));
+		SgExpression* defaultArgValue = isSgAssignInitializer(formalArg->get_initializer())->get_operand();
+
+		//See if the default value is a variable and that variable is in the caller's scope
+		const VarName& defaultArgVar = getVarForExpression(defaultArgValue);
+		if (defaultArgVar == emptyName || !isVarAccessibleFromCaller(defaultArgVar, callSite, callee))
+			continue;
+
+		//See if we can use exact info here to determine if the callee modifies the argument
+		//If not, we just take the safe assumption that the argument is modified
+		bool argModified = true;
+		if (calleeDef != NULL && processed.count(calleeDef) > 0)
+		{
+			//Get the variable name in the callee associated with the argument (since we've processed this function)
+			const VarName& calleeArgVarName = getVarName(formalArgList[i]);
+
+			ROSE_ASSERT(calleeArgVarName != emptyName);
+			argModified = (varsDefinedinCallee.count(calleeArgVarName) > 0);
+		}
+
+		//Define the default argument value in the caller if the callee modifies it
+		if (argModified)
+		{
+			originalDefTable[callSite].insert(defaultArgVar);
+		}
 	}
+}
+
+bool StaticSingleAssignment::isVarAccessibleFromCaller(const VarName& var, SgExpression* callSite, SgFunctionDeclaration* callee)
+{
+	//If the variable modified in the callee is a member variable, see if it's on the same object instance
+	if (varRequiresThisPointer(var))
+	{
+		ROSE_ASSERT(isSgMemberFunctionDeclaration(callee));
+
+		//Constructor initializers always have a new object instance
+		if (isSgConstructorInitializer(callSite))
+			return false;
+
+		if (!isThisPointerSameInCallee(isSgFunctionCallExp(callSite), isSgMemberFunctionDeclaration(callee)))
+			return false;
+	}
+
+	return isVarInScope(var, callSite);
 }
 
 
@@ -343,4 +421,77 @@ bool StaticSingleAssignment::isThisPointer(SgExpression* expression)
 		default:
 			return false;
 	}
+}
+
+//! True if the type is a pointer pointing to a const object.
+//! expanded recursively.
+bool StaticSingleAssignment::isPointerToDeepConst(SgType* type)
+{
+	if (SgTypedefType* typeDef = isSgTypedefType(type))
+	{
+		return isPointerToDeepConst(typeDef->get_base_type());
+	}
+	else if (SgPointerType* pointerType = isSgPointerType(type))
+	{
+		SgType* baseType = pointerType->get_base_type();
+		if (SageInterface::isPointerType(baseType))
+		{
+			return isDeepConstPointer(baseType);
+		}
+		else
+		{
+			return SageInterface::isConstType(pointerType->get_base_type());
+		}
+	}
+	else if (SgModifierType* modifierType = isSgModifierType(type))
+	{
+		//We don't care about qualifiers of the top-level type. Only the object it points to must be
+		//const
+		return isPointerToDeepConst(modifierType->get_base_type());
+	}
+	else
+	{
+		return false;
+	}
+}
+
+//! True if the type is a const pointer pointing to a const object.
+//! Expanded recursively
+bool StaticSingleAssignment::isDeepConstPointer(SgType* type)
+{
+	if (SgTypedefType* typeDef = isSgTypedefType(type))
+	{
+		return isDeepConstPointer(typeDef->get_base_type());
+	}
+	else if (SgModifierType* modifierType = isSgModifierType(type))
+	{
+		bool isConst = modifierType->get_typeModifier().get_constVolatileModifier().isConst();
+
+		if (isConst)
+		{
+			//If this pointer is const, we still have to make sure it points to a const value
+			return isPointerToDeepConst(modifierType->get_base_type());
+		}
+		else
+		{
+			//This was not a const-qualifier, so it changes nothing
+			return isDeepConstPointer(modifierType->get_base_type());
+		}
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool StaticSingleAssignment::isArgumentNonConstReferenceOrPointer(SgInitializedName* formalArgument)
+{
+	SgType* formalArgType = formalArgument->get_type();
+	if (SageInterface::isNonconstReference(formalArgType))
+		return true;
+
+	if (SageInterface::isPointerType(formalArgType))
+		return !isPointerToDeepConst(formalArgType);
+
+	return false;
 }

@@ -5745,6 +5745,33 @@ void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt,
     moveUpPreprocessingInfo(newStmt, oldStmt);
 }
 
+//! Replace an anchor node with a specified pattern subtree with optional SgVariantExpression. 
+// All SgVariantExpression in the pattern will be replaced with copies of the anchor node.
+SgNode* SageInterface::replaceWithPattern (SgNode * anchor, SgNode* new_pattern)
+{
+  SgExpression * anchor_exp = isSgExpression(anchor);
+  SgExpression * pattern_exp = isSgExpression(new_pattern);
+  ROSE_ASSERT (anchor_exp != NULL);
+  ROSE_ASSERT (pattern_exp != NULL);
+
+   // we replace all SgExpression within the pattern with copies of anchor 
+   Rose_STL_Container<SgNode*> opaque_exp_list = NodeQuery::querySubTree(pattern_exp,V_SgExpression); 
+   for (size_t i = 0; i<opaque_exp_list.size(); i++)
+   {
+     SgExpression* opaque_exp = isSgExpression(opaque_exp_list[i]);
+     ROSE_ASSERT (opaque_exp != NULL);
+     if (opaque_exp->variantT() == V_SgVariantExpression)
+     {
+       SgExpression * anchor_exp_copy = deepCopy(anchor_exp);
+       replaceExpression(opaque_exp, anchor_exp_copy);
+     }
+   }  
+
+   // finally we replace anchor_exp with the pattern_exp
+   replaceExpression(anchor_exp, pattern_exp, false); 
+  return new_pattern;
+}
+
 // This code is based on OpenMP translator's ASTtools::replaceVarRefExp() and astInling's replaceExpressionWithExpression()
 // Motivation: It involves the parent node to replace a VarRefExp with a new node
 // Used to replace shared variables with the dereference expression of their addresses
@@ -8068,18 +8095,16 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
             // Because of iterator invalidation we must reset the iterators after each call to erase (I think).
                for (size_t n = 0; n < captureList.size(); n++)
                   {
-                    bool modifiedList = false;
                     AttachedPreprocessingInfoType::iterator k = comments->begin();
-                    while (k != comments->end() && modifiedList == false)
+                    while (k != comments->end())
                        {
                       // Only modify the list once per iteration over the captureList
-                      // if ((*comments)[*k] == NULL)
                          if (*k == NULL)
                             {
                               comments->erase(k);
-                              modifiedList = true;
+                                                          break;
                             }
-                         k++;
+                             k++;
                        }
                   }
              }
@@ -8150,6 +8175,17 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                                    insertStatement(isSgStatement(parent),newStmt,insertBefore);
                                  }
                        }
+                      else // \pp (2/24/2011) added support for UpcForAll
+                        if (SgUpcForAllStatement* p = isSgUpcForAllStatement(parent))
+                        {
+                          const bool stmt_present = (  p->get_loop_body() == targetStmt
+                                                    || p->get_test() == targetStmt
+                                                    );
+
+                          // \pp \todo what if !stmt_present
+                          ROSE_ASSERT(stmt_present);
+                          insertStatement(p, newStmt, insertBefore);
+                        }
                       else
                          isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
 

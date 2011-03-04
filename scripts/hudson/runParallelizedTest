@@ -1,0 +1,464 @@
+#!/bin/sh -ex
+
+# We need to be using compiler specific versions of Boost.
+# Set the path to the compiler specific version of Boost.
+# export ROSE_TEST_BOOST_PATH=${ROSE_TEST_BOOST_PATH}-gnu_${ROSE_TEST_GCC_VERSION}/lib
+
+# tps : 04/26/2010 - Added support for OpenGL for 64bit
+export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
+
+echo "*******************************************************************"
+echo "         Output variables required by Hudson runTest script."
+echo "*******************************************************************"
+echo "LD_LIBRARY_PATH                   = $LD_LIBRARY_PATH"
+echo "ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT = ${ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT}"
+echo "ROSE_TEST_BUILD_STYLE             = ${ROSE_TEST_BUILD_STYLE}"
+echo "ROSE_TEST_BOOST_PATH              = ${ROSE_TEST_BOOST_PATH}"
+echo "ROSE_TEST_JAVA_PATH               = ${ROSE_TEST_JAVA_PATH}"
+
+echo "Environment variables required for ROSE_TEST_BUILD_STYLE = make/check/install/full"
+echo "ROSE_TEST_QT_PATH                 = ${ROSE_TEST_QT_PATH}"
+echo "ROSE_TEST_SQLITE_PATH             = ${ROSE_TEST_SQLITE_PATH}"
+echo "ROSE_TEST_RTED_PATH               = ${ROSE_TEST_RTED_PATH}"
+echo "ROSE_TEST_OPENGL_PATH             = ${ROSE_TEST_OPENGL_PATH}"
+echo "*******************************************************************"
+
+
+# Output the name of the machine where the build is being run (helpful for debugging).
+machine_name=`uname -n`
+start_time=`date`
+hudson_start_time_seconds="$(date +%s)"
+
+
+# DQ (10/19/2010): This is not used (removed) because the syntax where it was used was overly complex.
+# def_num_procs=16
+
+echo ""
+echo "*****************************************************************************"
+echo "Executing runTest for ROSE Project on: $machine_name start_time = $start_time"
+# echo "Build Disk Usage Report:"
+# df . || pwd
+echo "*****************************************************************************"
+
+# Provide a disk usage report to support debugging when Hudson has a problem.
+# echo "Disk usage report #1 (to support debugging when Hudson has a problem):"
+# df /export
+
+# tps : 11/17/2010 Hudson support for UPC - order matters!
+#export PATH=${PATH}:/nfs/apps/upc/4.5.1.2/bin
+#if test "$MACHINE" = "i686" ; then
+#    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/nfs/apps/upc/4.5.1.2/lib
+#else
+#    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/nfs/apps/upc/4.5.1.2/lib64
+#fi
+
+#tps : 11/16/2010 : Lets add support for UPC
+#tps : 11/22/2010 : The setup.sh has been updated by admin
+UPC_TEST_MACHINE=`uname -m`
+if test "$UPC_TEST_MACHINE" = "i686" ; then
+  echo "UPC not tested on 32bit machines for now."
+else
+# Turn off bash error checking to run source with file that uses "grep" (will return error code if target is not found).
+  set +e
+  # This causes "symbol lookup error: /usr/libexec/gcc/x86_64-redhat-linux/4.1.2/f951: undefined symbol: __gmpn_sqr_n"
+  # on all 4.1.2 compilers (only effects 64 bit tests since we only use this script on 64 bit machines).
+  # This UPC support must be thought out more carefully.
+  if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
+    source /nfs/apps/upc/4.5.1.2/setup.sh
+  else
+    echo "UPC not tested 64-bit machines using gnu 4.1.2 for now."
+  fi
+  set -e
+fi
+
+
+if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
+	GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
+	if test -e $GCCROOT/setup.sh ; then
+		set +ex
+		. $GCCROOT/setup.sh
+		set -ex
+	else
+    # This is the case for g++ 3.4.6 (since there is no uniform existence of a setup.sh file).
+      echo "Handling case of no $GCCROOT/setup.sh file."
+		export PATH="$GCCROOT/bin:$PATH"
+
+    # DQ (2/15/2010): For 64-bit this has to be setup to use lib64 explicitly
+    # export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+      if test "$MACHINE" = "i686" ; then
+         export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+      else
+         export LD_LIBRARY_PATH="$GCCROOT/lib64:$GCCROOT/lib:$LD_LIBRARY_PATH"
+      fi
+	fi
+fi
+
+
+# if test false; then
+ROSE_EXIT_TO_TEST_HUDSON=no
+if test "x$ROSE_EXIT_TO_TEST_HUDSON" = "xyes" ; then
+# ************************************************************************
+# Force specific failures as part of testing a restricted subset of tests.
+# ************************************************************************
+if test $ROSE_TEST_BUILD_STYLE = edg ; then
+ # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
+   echo "This test is forced to exit with an error as part of debugging Hudson tests."
+   # tps : call this line before any exit. It resets the Windows test
+   echo 3 > $win_file
+   exit 1
+fi
+
+if test \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \) ; then
+ # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
+   echo "This test is forced to exit with an error as part of debugging Hudson tests."
+   # tps : call this line before any exit. It resets the Windows test
+   echo 3 > $win_file
+   exit 1
+fi
+
+if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
+
+ # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
+   echo "This test is forced to exit with an error as part of debugging Hudson tests."
+   # tps : call this line before any exit. It resets the Windows test
+   echo 3 > $win_file
+   exit 1
+fi
+# ************************************************************************
+fi
+
+
+
+if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
+	rm -rf ROSE-build-cmake
+	mkdir ROSE-build-cmake
+	cd ROSE-build-cmake
+
+ # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+ # cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && make -j${NUM_PROCESS:-$def_num_procs}
+   cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && make -j${NUM_PROCESS}
+
+   if [ $? -ne 0 ]  ; then
+      echo "fatal error in cmake build , aborting..."
+    # DQ (11/23/2010): Removed as suggested by Thomas.
+    # tps : call this line before any exit. It resets the Windows test
+    # echo 3 > $win_file
+      exit 3
+   fi
+
+ # Provide a disk usage report to support debugging when Hudson has a problem.
+ # echo "Disk usage report #2 (to support debugging when Hudson has a problem):"
+ # df /export
+
+	exit 0
+fi
+
+# Note that Boost 1.39 and greater require using "--with-boost-libdir"
+# CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes --enable-dq-developer-tests"
+# CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes"
+CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+
+# Setup the prefix directory so that an install tree can be generated 
+# for use with secondary testing of other projects using ROSE.
+# We want the install tree for all the different versions of ROSE in the 
+# Hudson home directory so that any secondary tests will have it avaiable
+# for testing any platform.
+# Note that running make install is very quick so not a problem for a 
+# remotely mounted directory.
+# CONFIGURE_PREFIX_DIR="${PWD}/ROSE-install"
+MACHINE=`uname -m`
+if test "$MACHINE" = "i686" ; then
+  OS_MACHINE_LABEL=i686-linux
+else
+  OS_MACHINE_LABEL=amd64-linux
+fi
+
+# TOO (2/22/2011): TODO: remove old CONFIGURE_PREFIX_DIR
+# Define the platform specific install directory for ROSE (using same names as in rest of Hudson tests).
+# This directory will be built into the Hudson home directory.
+CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
+#CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
+echo "ROSE install tree will be: $CONFIGURE_PREFIX_DIR"
+
+# Liao 1/6/2010
+# Remove the stale installation tree since the stale headers will be included before updated ones are used.
+rm -rf $CONFIGURE_PREFIX_DIR/*
+
+if test "x$ROSE_TEST_BUILD_STYLE" = "xmake/check/install-full" ; then
+ # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
+ # echo "This test is forced to exit with an error as part of debugging a subset of the Hudson tests."
+ # exit 1
+
+	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-qt=${ROSE_TEST_QT_PATH} --with-roseQt --with-sqlite3=${ROSE_TEST_SQLITE_PATH}"
+# tps (10/19/10) : opengl has not been tested for a year and the binary tests in place are failing because the infrastructure has changed.
+#       for now I have disabled openGL testing but the way to turn it on is to specify --enable-openGL
+#	if test "x$ROSE_TEST_GCC_VERSION" = "x4.1.2" ; then
+NODE_NAME=`uname -n`
+# tps : 11/12/10 : Admins are installing openGL on hudson machines. Enabled openGL thereafter. Should pass.
+# tps : It seems opengl is not properly installed on the hudson-rose node. Skip the test on this node for now.
+if test \! \( "$MACHINE" = "i686" -o "$NODE_NAME" = "hudson-rose.llnl.gov"  -o "$NODE_NAME" = "hudson-rose-07.llnl.gov" -o "$NODE_NAME" = "hudson-rose-08.llnl.gov"  -o "$NODE_NAME" = "hudson-rose-13.llnl.gov" -o "$NODE_NAME" = "hudson-rose-14.llnl.gov" -o "$NODE_NAME" = "hudson-rose-15.llnl.gov" -o "$NODE_NAME" = "hudson-rose-16.llnl.gov"\) ; then
+	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
+fi
+# tps : 11/12/10 - OpenGL is not installed on all nodes yet. 
+	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  "
+# tps : 11/15/10 - RTED does not work for gcc 4.3.2 and 4.4.1 . This is not a problem of our implementation but rather a problem with the test suite.
+#                  For instance we get the following error: C_G_4_3_a_d.cpp:48: error: 'cout' was not declared in this scope
+if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \) ; then
+	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
+fi
+fi
+
+
+echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
+
+# DQ (1/14/2010): Support for dumping the enviroment so that it 
+# can be easily sourced to permit Hudson tests to be reproduced.
+ROSE_DUMP_HUDSON_ENV=yes
+if test "x$ROSE_DUMP_HUDSON_ENV" = "xyes" ; then
+   echo "Dumping the Hudson environment...."
+#   rm -f HudsonEnvironment
+   echo "# Required environment variables for reproducing Hudson tests" > HudsonEnvironment
+   echo "export PATH=$PATH" >> HudsonEnvironment
+   echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_JAVA_PATH=$ROSE_TEST_JAVA_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_BOOST_PATH=$ROSE_TEST_BOOST_PATH" >> HudsonEnvironment
+   echo "export ROSE_CONFIGURE_FLAGS=\"$CONFIGURE_FLAGS\"" >> HudsonEnvironment
+   echo "export ROSE_TEST_SQLITE_PATH=$ROSE_TEST_SQLITE_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_RTED_PATH=$ROSE_TEST_RTED_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_QT_PATH=$ROSE_TEST_QT_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_OPENGL_PATH=$ROSE_TEST_OPENGL_PATH" >> HudsonEnvironment
+
+   echo "Finished dumping the Hudson environment into: $PWD/HudsonEnvironment"
+   cat $PWD/HudsonEnvironment
+
+ # echo "Exiting after dumping the environment..."
+ # exit 1
+fi
+
+# Skip this for now but uncomment before checkin!
+if test "x$ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT" = "xyes" ; then
+   echo "Skipping build at part of testing from makefile rule."
+else
+   echo "Hudson tests on a new branch must run the ROSE build script."
+   ./build
+fi
+
+# tps (02/04/2010) : Checking the EDG submodule version
+git submodule status
+
+if test -e ROSE-install ; then chmod -R u+xw ROSE-install ; fi
+rm -rf ROSE-install
+
+
+if test -e ROSE-build ; then chmod -R u+wx ROSE-build ; fi
+rm -rf ROSE-build
+mkdir ROSE-build
+cd ROSE-build
+echo "Starting configure step"
+# ../configure ${CONFIGURE_FLAGS}
+../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
+echo "Done with configure step"
+
+if test $ROSE_TEST_BUILD_STYLE = edg ; then
+ # DQ (10/19/2010): This is confusing syntax, NUM_PROCESS is a shell variable set in Hudson where this script is called.
+ # make -j${NUM_PROCESS:-$def_num_procs} upload_edg_binary && make -Csrc/frontend/CxxFrontend deploy_tarballs
+   make -j${NUM_PROCESS} upload_edg_binary && make -Csrc/frontend/CxxFrontend deploy_tarballs
+      if [ $? -ne 0 ]  ; then
+        echo "fatal error when build edg binaries , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
+        exit 3
+      fi
+
+	exit 0
+fi
+
+####################################################################################
+# runBuildStep make|make-check|make-distcheck|make-docs [runSpewAnalysis-outputFile]
+function runBuildStep {
+####################################################################################
+# FUNCTION CALL VALIDATION AND INITIALIZATIOn 
+####################################################################################
+	if [ $# -lt 1 -o $# -gt 2 -o \
+		!\( $1 == "make" -o $1 == "make-install" -o $1 == "make-installcheck" -o \
+            $1 == "make-check" -o $1 == "make-distcheck" -o $1 == "make-docs"\) ]; then
+		echo "Usage: runBuildStep make|make-check|make-distcheck|make-docs [spewAnalysis-outputFile]" 
+		exit 1;
+	elif [ $# -eq 2 ]; then
+		outputFile=$2
+	fi
+	buildStep=`echo $1 | sed 's/-/ /'`
+####################################################################################
+# EXECUTE BUILD STEP 
+####################################################################################
+	# Andreas suggests that the use of "tee" is not passing error through to Hudson.
+	# DQ has confirmed that Andreas's point is true for bash but false for tcsh 
+	# (where it was originally tested).
+	echo "Starting $buildStep step"
+
+	start_time_seconds="$(date +%s)"
+	if [ $# -eq 2 ]; then
+		${buildStep} -j${NUM_PROCESS} 2>&1 | tee $outputFile
+	else
+		${buildStep} -j${NUM_PROCESS}
+	fi
+####################################################################################
+# ERROR CHECKING 
+####################################################################################
+	# the pipestatus variable is an array that holds the exit status of your last foreground pipeline commands.
+	# we check to see if make failes through this command
+	if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
+		echo "fatal error during '${buildStep}'  , aborting..."
+		# tps : call this line before any exit. It resets the Windows test
+		echo 3 > $win_file
+		exit 3
+	fi
+####################################################################################
+# SPEW ANALYSIS 
+####################################################################################
+	if [ $# -eq 2 ]; then
+		runSpewAnalysis $outputFile
+	fi
+####################################################################################
+# SUMMARY 
+####################################################################################
+	echo "Done with $buildStep step"
+	end_time_seconds="$(date +%s)"
+	elapsed_time_seconds="$(expr $end_time_seconds - $start_time_seconds)"
+	echo "***********************************************************************************************************"
+	echo "Elapsed time for '${buildStep}' test: $elapsed_time_seconds sec"
+	echo "***********************************************************************************************************"
+}
+
+function runSpewAnalysis {
+	if [ $# -ne 1 ]; then
+		echo "Usage: runSpewAnalysis <filename-to-process>"
+		exit 1;
+	fi
+
+	inputFile="$1"
+
+	# Now process to count the number of lines of spew.
+	echo "Computing compile time spew"
+#    echo $inputFile | grep -q "check"   
+    if [ $inputFile == "make_check_output.txt" ]; then
+	  grep -n "Making check in " $inputFile | ../scripts/checkMakeSpew.pl | tee makeSpewLineCount.txt
+    else
+      filteredFile="filtered_$inputFile"
+
+      # Filter out the legitimate lines specific to compilation and linking (filter compile, links, and Qt specific tools).
+      echo "Building the $filteredFile file"
+      grep -v "Entering directory" $inputFile | grep -v "Leaving directory" | grep -v "COMPILE" | grep -v "LINK" | grep -v "Qt-MOC" | grep -v "Qt-RCC" | grep -v "Qt-UIC" > $filteredFile 
+      echo "Built $filteredFile"
+      grep -n "Making all in " $filteredFile | ../scripts/checkMakeSpew.pl | tee makeSpewLineCount.txt
+      # DQ (10/2/2010): Added test for parallelism of build system.
+      echo "Measure Build System Parallelism"
+      ../scripts/checkMakeParallelism.sh ${inputFile} 
+    fi
+    echo "Done with compile time spew"
+}
+
+# TOO (2/24/2011): Requires librose.la
+function printRoseTranslatorVersion {
+    # DQ (2/12/2010): Added the ROSE version number to the base of the output
+    echo "Version numbers of ROSE and the different parts of ROSE."
+    make PrintRoseTranslatorVersion
+}
+
+####################################################################################
+ROSE_SPEW_ANALYSIS=yes
+
+case "$ROSE_TEST_BUILD_STYLE" in
+"make/check/install-minimal"|"make/check/install-full")
+
+    if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
+        makeOutputFile="make_output.txt"
+        makeCheckOutputFile="make_check_output.txt"
+    fi
+    ################################################################################
+    # MAKE
+    #
+    runBuildStep make $makeOutputFile
+    ################################################################################
+    # MAKE CHECK
+    #
+    runBuildStep make-check $makeCheckOutputFile
+    ################################################################################
+    # MAKE INSTALL & INSTALLCHECK
+    # TODO: merge a10-ROSE-install-test here
+    runBuildStep make-install
+    runBuildStep make-installcheck
+
+    printRoseTranslatorVersion
+ ;;
+
+make-distcheck)
+
+    ################################################################################
+    # MAKE DISTCHECK
+    #
+    # Build pre-requisites: stringify.C
+    echo "Building prerequisites for make-distcheck..."
+    make -j${NUM_PROCESS} -C src/util/stringSupport/ libRoseStringSupport.la
+    make -j${NUM_PROCESS} -C src/util/commandlineProcessing/ libRoseCommandlineUtil.la
+    make -j${NUM_PROCESS} -C src/util/ libroseutil.la
+    make -j${NUM_PROCESS} -C src/ROSETTA/src/
+    make -j${NUM_PROCESS} -C src/roseSupport/ stringify.h
+    
+    runBuildStep make-distcheck
+
+    # TOO (2/24/2011): Can't printRoseTranslatorVersion: requires librose.la and tests/testAnalysis
+    #make -j${NUM_PROCESS} -C src/ 
+    #make -j${NUM_PROCESS} -C tests/ testAnalysis
+    #printRoseTranslatorVersion
+ ;;
+
+make-docs)
+    
+    ################################################################################
+    # MAKE DOCS 
+    #
+    # Running with parallelism here does not tend to be very helpful since 
+    # doxygen is what has to run and it does not run in parallel.
+    # TODO: prereq build steps?
+    echo "Building prerequisites for make-docs..."
+    make -j${NUM_PROCESS} -C src/
+    make -j${NUM_PROCESS} -C tutorial/
+    make -j${NUM_PROCESS} -C projects/UpcTranslation/
+    make -j24 -C tests/ testAnalysis
+
+    runBuildStep make-docs
+
+    printRoseTranslatorVersion
+ ;;
+
+*)
+   echo "ERROR: unrecognized build step = $ROSE_TEST_BUILD_STEP"
+   exit 1;
+ ;;
+esac
+
+
+####################################################################################
+# SUMMARY 
+#
+hudson_end_time_seconds="$(date +%s)"
+elapsed_hudson_time_seconds="$(expr $hudson_end_time_seconds - $hudson_start_time_seconds)"
+
+# Note that this is always over 60 seconds so I think we should keep this.
+elapsed_hudson_time_minutes="$(expr $elapsed_hudson_time_seconds / 60)"
+
+# DQ (1/17/2010): This is evaluated as an error if when the result is 0 (when $elapsed_hudson_time_seconds is an even multiple of 60).
+#elapsed_hudson_time_modulo_seconds="$(expr $elapsed_hudson_time_seconds % 60)"
+echo "***********************************************************************************************"
+echo "Elapsed time for Hudson test (total minutes): $elapsed_hudson_time_minutes"
+echo "Elapsed time for Hudson test (total seconds): $elapsed_hudson_time_seconds"
+# echo "Elapsed time for Hudson test: $elapsed_hudson_time_minutes min $elapsed_hudson_time_modulo_seconds sec"
+echo "***********************************************************************************************"
+
+# Output the date and time of day at the end of the test (helpful for debugging).
+end_date=`date`
+echo ""
+echo "********************************************************************"
+echo "Executed runParallelizedTest (" ${ROSE_TEST_BUILD_STYLE} ")  for ROSE Project on: $machine_name date = $end_date"
+echo "********************************************************************"
