@@ -236,12 +236,35 @@ dnl build using ROSE)
     fi
 echo "=> cross-compiling... $IS_ALTERNATE_BACKEND_C_CROSS_COMPILER"
 AM_CONDITIONAL(ALTERNATE_BACKEND_C_CROSS_COMPILER, ["$IS_ALTERNATE_BACKEND_C_CROSS_COMPILER"])
-
 AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_CXX_COMPILER, [test "x$with_alternate_backend_Cxx_compiler" != "x"])
 AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_C_COMPILER, [test "x$with_alternate_backend_C_compiler" != "x"])
 
-AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, false)
-AM_CONDITIONAL(USING_GCC_3_4_4_BACKEND_COMPILER, false)
+
+# TOO (2/14/2011): Enforce backend C/C++ compilers to be the same version
+BACKEND_CXX_COMPILER_VERSION="`echo|$BACKEND_CXX_COMPILER -dumpversion`"
+BACKEND_C_COMPILER_VERSION="`echo|$BACKEND_C_COMPILER -dumpversion`"
+BACKEND_C_COMPILER_NAME="`basename $BACKEND_C_COMPILER`"
+if test "x$BACKEND_CXX_COMPILER_VERSION" != "x$BACKEND_C_COMPILER_VERSION"; then
+  echo "Error: the backend C++ and C compilers must be the same!"
+  exit 1;
+fi
+# TOO (2/16/2011): Detect Thrifty (GCC 3.4.4) compiler
+AM_CONDITIONAL(USING_GCC_3_4_4_BACKEND_COMPILER, [test "x$BACKEND_C_COMPILER_VERSION" == "x3.4.4"])
+
+# TOO (2/17/2011): Detect Tensilica Xtensa C/C++ compiler
+if test "x$BACKEND_C_COMPILER_NAME" == "xxt-xcc"; then
+  AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, true)
+#  AC_DEFINE_UNQUOTED([USING_XTENSA_BACKEND_COMPILER],true,[Tensilica's Xtensa compiler.])
+  echo "The backend C/C++ compilers have been identified as Tensilica Xtensa compilers"
+else
+  AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, false)
+fi
+
+
+
+##################################################################
+#AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, false)
+#AM_CONDITIONAL(USING_GCC_3_4_4_BACKEND_COMPILER, false)
 #AM_CONDITIONAL(ALTERNATE_BACKEND_C_CROSS_COMPILER, false)
 #AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_C_COMPILER, false)
 ###################################################################################################
