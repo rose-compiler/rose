@@ -26,11 +26,9 @@ SUBDIRS = \
      assemblyToSourceAst \
      autoParallelization \
      autoTuning\
-     backstroke \
      binaryVisualization \
      bugSeeding \
      checkPointExample \
-     dataStructureGraphing \
      haskellport \
      highLevelGrammars \
      javaport \
@@ -39,6 +37,16 @@ SUBDIRS = \
      symbolicAnalysisFramework \
      taintcheck \
      PowerAwareCompiler
+
+# TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
+# gradually enable these tests at a later stage if necessary.
+if !USING_XTENSA_BACKEND_COMPILER
+   SUBDIRS += dataStructureGraphing
+# TOO (2/16/2011): Disabled for Thrifty compiler (gcc 3.4.4) due to errors during make check
+if !USING_GCC_3_4_4_BACKEND_COMPILER
+   SUBDIRS += backstroke
+endif
+endif
 
 # DQ (10/15/2010): Adding initial trace analysis support.
 if ROSE_USE_TRACE_ANALYSIS

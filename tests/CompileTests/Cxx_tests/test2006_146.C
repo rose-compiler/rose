@@ -1,3 +1,6 @@
+// Tensilica's Xtensa compiler has a confliction function prototype declaration
+#ifdef USING_XTENSA_BACKEND_COMPILER
+
 #include <stdio.h>
 
 // This will cause C compilation to fail, but I think it should fail.
@@ -20,4 +23,6 @@ int dprintf(int, const char *restrict, ...);
 // DQ (3/29/2010):There is a bug report that this function does not exist on: Ubuntu 9.1 gcc version 4.4.1 (Ubuntu 4.4.1-4ubuntu9)
 void dprintf(int line, long level, char *prefix, ...);
 #endif
+#endif
+
 #endif

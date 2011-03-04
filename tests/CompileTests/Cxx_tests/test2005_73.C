@@ -26,7 +26,12 @@ class A
 
 // Template instantiation directive (for a class)
 #if (__GNUC__ == 3)
+#if (__GNUC_MINOR__ == 4)
+// TOO (2/15/2011): template A<int>; is error for Thrifty (gcc 3.4.4)
+template class A<int>;
+#else
 template A<int>;
+#endif
 #else
 // DQ (2/20/2010): this is a error for g++ 4.x compilers (at least g++ 4.2).
 // template<> A<int>;

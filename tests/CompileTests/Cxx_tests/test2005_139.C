@@ -50,7 +50,8 @@ class X<int>
 #endif
 
 // DQ (2/20/2010): This is a error for g++ 4.x compilers (at least g++ 4.2).
-#if (__GNUC__ == 3)
+// TOO (2/15/2011): error for Thrifty g++ 3.4.4
+#if (__GNUC__ == 3 && __GNUC_MINOR__ != 4)
 // Template Instantiation Directive
 // This works because "A" has a member function "increment"
 template X<A>;

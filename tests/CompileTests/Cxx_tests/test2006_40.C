@@ -21,8 +21,11 @@ main(int argc, char *argv[])
         {
 // Skip testing on 64 bit systems for now!
 #ifndef __LP64__
+// TOO (2/15/2011): error for Thrifty g++ 3.4.4
+#if __GNUC__ >= 4
        // ":" in string does not work in ROSE, this is the bug
           asm("bsr %1, %0" : "=r" (position) : "r" (number));
+#endif
 #else
   #warning "Not tested on 64 bit systems"
 #endif

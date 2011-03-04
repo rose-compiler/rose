@@ -49,8 +49,11 @@ template<class T> void f(T* p)
 --- end example]
 */
 
+// TOO (2/15/2011): Thrifty (gcc 3.4.4):
+// error: `template' (as a disambiguator) is only allowed within templates
+#if ( __GNUC_MINOR__ > 4 )
      objectInt.template foo2<float>();
-
+#endif
      return 0;
    }
 
