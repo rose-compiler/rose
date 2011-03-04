@@ -148,12 +148,6 @@ dnl build using ROSE)
 # echo "Exiting after test of backend version number support ..."
 # exit 1
 
-AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, false)
-AM_CONDITIONAL(USING_GCC_3_4_4_BACKEND_COMPILER, false)
-AM_CONDITIONAL(ALTERNATE_BACKEND_C_CROSS_COMPILER, false)
-AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_C_COMPILER, false)
-
-
 # We use the name of the backend C++ compiler to generate a compiler name that will be used
 # elsewhere (CXX_ID might be a better name to use, instead we use basename to strip the path).
 # compilerName=`basename $BACKEND_CXX_COMPILER`
@@ -216,5 +210,12 @@ AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_C_COMPILER, false)
   AC_DEFINE_UNQUOTED([BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER],$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER,[Major version number of backend Fortran compiler.])
   export BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER
   AC_DEFINE_UNQUOTED([BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER],$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER,[Minor version number of backend Fortran compiler.])
+
+###################################################################################################
+AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, false)
+AM_CONDITIONAL(USING_GCC_3_4_4_BACKEND_COMPILER, false)
+AM_CONDITIONAL(ALTERNATE_BACKEND_C_CROSS_COMPILER, false)
+AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_C_COMPILER, false)
+###################################################################################################
 ])
 
