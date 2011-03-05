@@ -518,7 +518,7 @@ private:
     void terminate();                                   /**< Terminate line if necessary. */
     void prefix();                                      /**< Print line prefix regardless of "sol" state. */
     void output_lines(const char *s);                   /**< Output one or more lines, prefix as necessary. */
-    void format(const char *fmt, va_list);              /**< Formats a message into the "buffer" data member. */
+    void format(const char *fmt, va_list, va_list);    /**< Formats a message into the "buffer" data member. */
 
     static RTS_rwlock_t rwlock;                         /**< Class-wide rwlock used as a recursive mutex. */
     static RTS_Message *in_multi;                       /**< Non-null when we inside a multi-line mesg (not between lines). */

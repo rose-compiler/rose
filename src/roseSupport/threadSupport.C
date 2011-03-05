@@ -172,19 +172,20 @@ RTS_Message::output_lines(const char *s)
         in_multi = false;
 }
 
+/* We need to identical va_list args because some systems do not allow it to be reused after calling vsnprintf() */
 void
-RTS_Message::format(const char *fmt, va_list ap)
+RTS_Message::format(const char *fmt, va_list ap1, va_list ap2)
 {
     if (!buffer) {
         bufsz = 128;
         buffer = new char[bufsz];
     }
-    size_t nchars = vsnprintf(buffer, bufsz, fmt, ap);
+    size_t nchars = vsnprintf(buffer, bufsz, fmt, ap1);
     if (nchars >= bufsz) {
         bufsz = std::max(2*bufsz, nchars+1);
         delete[] buffer;
         buffer = new char[bufsz];
-        nchars = vsnprintf(buffer, bufsz, fmt, ap);
+        nchars = vsnprintf(buffer, bufsz, fmt, ap2);
         assert(nchars < bufsz);
     }
 }
@@ -195,10 +196,13 @@ RTS_Message::multipart(const std::string &name, const char *fmt, ...)
     if (!f)
         return *this;
 
-    va_list ap;
-    va_start(ap, fmt);
-    format(fmt, ap);
-    va_end(ap);
+    va_list ap1, ap2;
+    va_start(ap1, fmt);
+    va_start(ap2, fmt);
+    format(fmt, ap1, ap2);
+    va_end(ap1);
+    va_end(ap2);
+
     if (0==bufsz || !buffer[0])
         return *this;
 
@@ -218,10 +222,13 @@ RTS_Message::more(const char *fmt, ...)
     if (!f)
         return *this;
 
-    va_list ap;
-    va_start(ap, fmt);
-    format(fmt, ap);
-    va_end(ap);
+    va_list ap1, ap2;
+    va_start(ap1, fmt);
+    va_start(ap2, fmt);
+    format(fmt, ap1, ap2);
+    va_end(ap1);
+    va_end(ap2);
+
     if (0==bufsz || !buffer[0])
         return *this;
 
@@ -235,6 +242,7 @@ RTS_Message::more(const char *fmt, ...)
         }
         output_lines(buffer);
         in_multi = sol ? NULL : this;
+        interrupted = false;
     } RTS_WRITE_END;
     return *this;
 }
@@ -245,10 +253,13 @@ RTS_Message::mesg(const char *fmt, ...)
     if (!f)
         return *this;
 
-    va_list ap;
-    va_start(ap, fmt);
-    format(fmt, ap);
-    va_end(ap);
+    va_list ap1, ap2;
+    va_start(ap1, fmt);
+    va_start(ap2, fmt);
+    format(fmt, ap1, ap2);
+    va_end(ap1);
+    va_end(ap2);
+
     if (0==bufsz || !buffer[0])
         return *this;
 
@@ -266,10 +277,12 @@ RTS_Message::brief_begin(const char *fmt, ...)
     if (!f)
         return;
 
-    va_list ap;
-    va_start(ap, fmt);
-    format(fmt, ap);
-    va_end(ap);
+    va_list ap1, ap2;
+    va_start(ap1, fmt);
+    va_start(ap2, fmt);
+    format(fmt, ap1, ap2);
+    va_end(ap1);
+    va_end(ap2);
 
     char *eol = buffer ? strchr(buffer, '\n') : NULL;
     if (eol)
@@ -293,10 +306,12 @@ RTS_Message::brief_end(const char *fmt, ...)
     if (!f)
         return;
     
-    va_list ap;
-    va_start(ap, fmt);
-    format(fmt, ap);
-    va_end(ap);
+    va_list ap1, ap2;
+    va_start(ap1, fmt);
+    va_start(ap2, fmt);
+    format(fmt, ap1, ap2);
+    va_end(ap1);
+    va_end(ap2);
 
     char *eol = buffer ? strchr(buffer, '\n') : NULL;
     if (eol)
@@ -318,10 +333,13 @@ RTS_Message::brief(const char *fmt, ...)
     if (!f)
         return *this;
 
-    va_list ap;
-    va_start(ap, fmt);
-    format(fmt, ap);
-    va_end(ap);
+    va_list ap1, ap2;
+    va_start(ap1, fmt);
+    va_start(ap2, fmt);
+    format(fmt, ap1, ap2);
+    va_end(ap1);
+    va_end(ap2);
+
     if (0==bufsz || !buffer[0])
         return *this;
 
