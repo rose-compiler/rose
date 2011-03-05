@@ -3650,7 +3650,7 @@ RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, u
         regs.sp = newsp;
         regs.ax = 0;
 
-        pid_t tid = get_process()->clone_thread(flags, parent_tid_va, child_tls_va, regs);
+        pid_t tid = get_process()->clone_thread(this, flags, parent_tid_va, child_tls_va, regs);
         return tid;
     } else {
         return -EINVAL; /* can't handle this combination of flags */

@@ -637,6 +637,8 @@ RSIM_Thread::sys_exit(const Exit &e)
 {
     RSIM_Process *process = get_process(); /* while we still have a chance */
 
+    tracing(TRACE_THREAD)->mesg("this thread is terminating");
+
     if (robust_list_head_va)
         tracing(TRACE_WARNING)->mesg("warning: robust_list not cleaned up\n"); /* FIXME: see set_robust_list() syscall */
 

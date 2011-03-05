@@ -50,6 +50,7 @@ enum TraceFlags {
     TRACE_LOADER        = 0x0020,               /**< Show diagnostics for the program loading. */
     TRACE_PROGRESS      = 0x0040,               /**< Show a progress report now and then. */
     TRACE_SIGNAL        = 0x0080,               /**< Show reception and delivery of signals. */
+    TRACE_THREAD        = 0x0100,               /**< Show thread creation/destruction, etc. */
 
     TRACE_DEBUG         = 0x1000,               /**< Show temporary debugging messages. */
     TRACE_WARNING       = 0x2000,               /**< Show arning messages. */

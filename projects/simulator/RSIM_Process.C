@@ -356,6 +356,10 @@ RSIM_Process::load(const char *name)
     brk_va = ALIGN_UP(free_area, PAGE_SIZE);
 
     delete loader;
+
+    pid_t tid = syscall(SYS_gettid);
+    thread->tracing(TRACE_THREAD)->mesg("new thread with tid %d", tid);
+
     return fhdr;
 }
 
@@ -1397,20 +1401,19 @@ RSIM_Process::post_fork()
     threads[t->get_tid()] = t;
 }
 
+/* The "thread" arg must be the calling thread */
 pid_t
-RSIM_Process::clone_thread(unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va, const pt_regs_32 &regs)
+RSIM_Process::clone_thread(RSIM_Thread *thread, unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va,
+                           const pt_regs_32 &regs)
 {
-    int retval = 0;
     Clone clone_info(this, flags, parent_tid_va, child_tls_va, regs);
     RTS_MUTEX(clone_info.mutex) {
         pthread_t t;
-        retval = -pthread_create(&t, NULL, RSIM_Process::clone_thread_helper, &clone_info);
-        if (0==retval) {
+        int err = -pthread_create(&t, NULL, RSIM_Process::clone_thread_helper, &clone_info);
+        if (0==err)
             pthread_cond_wait(&clone_info.cond, &clone_info.mutex); /* wait for child to initialize */
-            retval = clone_info.newtid; /* filled in by clone_thread_helper; negative on error */
-        }
     } RTS_MUTEX_END;
-    return retval;
+    return clone_info.newtid; /* filled in by clone_thread_helper; negative on error */
 }
 
 void *
@@ -1425,11 +1428,14 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
     RSIM_Thread *thread = process->create_thread();
 
 
-    pid_t tid;
+    pid_t tid = syscall(SYS_gettid);
+    ROSE_ASSERT(tid>=0);
+    thread->tracing(TRACE_THREAD)->mesg("new thread with tid %d", tid);
+
     RTS_MUTEX(clone_info->mutex) {
         /* Make our TID available to our parent. */
-        tid = clone_info->newtid = syscall(SYS_gettid);
-        ROSE_ASSERT(clone_info->newtid>=0);
+        clone_info->newtid = tid;
+        clone_info->seq = thread->get_seq();
 
         /* Set up thread local storage */
         if (clone_info->flags & CLONE_SETTLS) {

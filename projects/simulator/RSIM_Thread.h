@@ -81,6 +81,11 @@ private:
     user_desc_32 tls_array[RSIM_Process::GDT_ENTRY_TLS_ENTRIES];
 
 public:
+    /** Return a thread sequence number.  Thread IDs are assigned by the Linux kernel and are akin to process IDs, and are not
+     * sequential within a process. On the other hand, thread sequence numbers are small, zero-origin identifiers that we can
+     * use for debug and trace messages. Sequence numbers are unique within a process. */
+    int get_seq() { return my_seq; }
+
     /** Return the thread ID. Since each simulated thread is mapped to a unique real thread, the ID of the real thread also
      *  serves as the ID of the simulated thread.
      *

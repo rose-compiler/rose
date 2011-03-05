@@ -60,9 +60,11 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
                     trace_flags |= TRACE_LOADER;
                 } else if (word=="progress") {
                     trace_flags |= TRACE_PROGRESS;
+                } else if (word=="thread") {
+                    trace_flags |= TRACE_THREAD;
                 } else {
                     fprintf(stderr, "%s: debug words must be from the set: "
-                            "all, insn, state, mem, mmap, syscall, signal, loader, progress\n",
+                            "all, insn, state, mem, mmap, syscall, signal, loader, progress, thread\n",
                             argv[0]);
                     exit(1);
                 }
