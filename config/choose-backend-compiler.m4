@@ -259,14 +259,6 @@ if test "x$BACKEND_C_COMPILER_NAME" == "xxt-xcc"; then
 else
   AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, false)
 fi
-
-
-
-##################################################################
-#AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, false)
-#AM_CONDITIONAL(USING_GCC_3_4_4_BACKEND_COMPILER, false)
-#AM_CONDITIONAL(ALTERNATE_BACKEND_C_CROSS_COMPILER, false)
-#AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_C_COMPILER, false)
 ###################################################################################################
 ])
 
