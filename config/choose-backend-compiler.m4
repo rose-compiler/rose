@@ -15,7 +15,7 @@ dnl build using ROSE)
     [
     # Use a different compiler for the backend than for the compilation of ROSE source code
       BACKEND_CXX_COMPILER=$with_alternate_backend_Cxx_compiler
-
+      AC_SUBST(BACKEND_CXX_COMPILER)
       echo "alternative back-end C++ compiler specified for generated translators to use: $BACKEND_CXX_COMPILER"
     ] ,
     [ 
@@ -30,6 +30,7 @@ dnl build using ROSE)
     [
     # Use a different compiler for the backend than for the compilation of ROSE source code
       BACKEND_C_COMPILER=$with_alternate_backend_C_compiler
+      AC_SUBST(BACKEND_C_COMPILER)
       echo "alternative back-end C compiler specified for generated translators to use: $BACKEND_C_COMPILER"
     ] ,
     [ 
@@ -45,6 +46,7 @@ dnl build using ROSE)
     [
     # Use a different compiler for the backend than for the compilation of ROSE source code
       BACKEND_FORTRAN_COMPILER=$with_alternate_backend_fortran_compiler
+      AC_SUBST(BACKEND_FORTRAN_COMPILER)
       echo "alternative back-end fortran compiler specified for generated translators to use: $BACKEND_FORTRAN_COMPILER"
     ] ,
     [ 
@@ -146,12 +148,6 @@ dnl build using ROSE)
 # echo "Exiting after test of backend version number support ..."
 # exit 1
 
-AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, false)
-AM_CONDITIONAL(USING_GCC_3_4_4_BACKEND_COMPILER, false)
-AM_CONDITIONAL(ALTERNATE_BACKEND_C_CROSS_COMPILER, false)
-AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_C_COMPILER, false)
-
-
 # We use the name of the backend C++ compiler to generate a compiler name that will be used
 # elsewhere (CXX_ID might be a better name to use, instead we use basename to strip the path).
 # compilerName=`basename $BACKEND_CXX_COMPILER`
@@ -214,5 +210,55 @@ AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_C_COMPILER, false)
   AC_DEFINE_UNQUOTED([BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER],$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER,[Major version number of backend Fortran compiler.])
   export BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER
   AC_DEFINE_UNQUOTED([BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER],$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER,[Minor version number of backend Fortran compiler.])
+
+###################################################################################################
+# TOO (2/15/2011): TODO: create separate macro call to check cross-compilation
+    IS_ALTERNATE_BACKEND_C_CROSS_COMPILER=false
+    if test "x$with_alternate_backend_C_compiler" != x; then
+      AC_LANG_PUSH([C])
+      save_cc=$CC
+      CC="$with_alternate_backend_C_compiler"
+      echo "Checking if the backend C compiler $CC is cross-compiling..."
+      echo "Running a simple program with the backend C compiler: $CC..."
+      AC_RUN_IFELSE([
+        AC_LANG_SOURCE([[
+          int main (int argc, char* argv[]) {
+            return 0;
+          }
+        ]])
+       ],
+       [echo "Successfully ran a simple program with the backend C compiler: $CC"],
+       [echo "FAILED to run a simple program with the backend C compiler"
+        IS_ALTERNATE_BACKEND_C_CROSS_COMPILER=true
+       ], [])
+      CC=$save_cc
+      AC_LANG_POP([C])
+    fi
+echo "=> cross-compiling... $IS_ALTERNATE_BACKEND_C_CROSS_COMPILER"
+AM_CONDITIONAL(ALTERNATE_BACKEND_C_CROSS_COMPILER, ["$IS_ALTERNATE_BACKEND_C_CROSS_COMPILER"])
+AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_CXX_COMPILER, [test "x$with_alternate_backend_Cxx_compiler" != "x"])
+AM_CONDITIONAL(ROSE_USING_ALTERNATE_BACKEND_C_COMPILER, [test "x$with_alternate_backend_C_compiler" != "x"])
+
+
+# TOO (2/14/2011): Enforce backend C/C++ compilers to be the same version
+BACKEND_CXX_COMPILER_VERSION="`echo|$BACKEND_CXX_COMPILER -dumpversion`"
+BACKEND_C_COMPILER_VERSION="`echo|$BACKEND_C_COMPILER -dumpversion`"
+BACKEND_C_COMPILER_NAME="`basename $BACKEND_C_COMPILER`"
+if test "x$BACKEND_CXX_COMPILER_VERSION" != "x$BACKEND_C_COMPILER_VERSION"; then
+  echo "Error: the backend C++ and C compilers must be the same!"
+  exit 1;
+fi
+# TOO (2/16/2011): Detect Thrifty (GCC 3.4.4) compiler
+AM_CONDITIONAL(USING_GCC_3_4_4_BACKEND_COMPILER, [test "x$BACKEND_C_COMPILER_VERSION" == "x3.4.4"])
+
+# TOO (2/17/2011): Detect Tensilica Xtensa C/C++ compiler
+if test "x$BACKEND_C_COMPILER_NAME" == "xxt-xcc"; then
+  AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, true)
+#  AC_DEFINE_UNQUOTED([USING_XTENSA_BACKEND_COMPILER],true,[Tensilica's Xtensa compiler.])
+  echo "The backend C/C++ compilers have been identified as Tensilica Xtensa compilers"
+else
+  AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, false)
+fi
+###################################################################################################
 ])
 
