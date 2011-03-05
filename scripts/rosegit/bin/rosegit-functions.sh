@@ -85,8 +85,7 @@ rosegit_find_directories () {
     # Sanity checks
     [ -d "$ROSEGIT_BLD" ] || rosegit_die "built tree is not a directory: $ROSEGIT_BLD"
     [ -d "$ROSEGIT_BLD/.git" ] && rosegit_die "build tree appears to be a repository: $ROSEGIT_BLD"
-    [ -d "$ROSEGIT_SRC" ] || rosegit_die "no such directory: ROSEGIT_SRC"
-    [ -d "$ROSEGIT_SRC/.git" ] || rosegit_die "not a Git repository: $ROSEGIT_SRC"
+    [ -d "$ROSEGIT_SRC" ] || rosegit_die "no such directory: $ROSEGIT_SRC"
     [ "$ROSEGIT_SRC" = "$ROSEGIT_BLD" ] && rosegit_die "build directory and source directory should not be the same: $ROSEGIT_SRC"
 
     # Make sure directory names are absolute and exported
@@ -100,7 +99,7 @@ rosegit_find_directories () {
     export ROSE_SRC
 }
 
-# Finds a local Git repository containing source code by looking first in the specified directory (or current working directory),
+# Finds the top of the ROSE source tree by looking first in the specified directory (or current working directory),
 # and then in ancestor directories and subdirectories of the ancestors. The subdirectories must be named "sources/$cwdbase", where
 # $cwdbase is the base name of the current working directory.
 rosegit_find_sources () {
@@ -112,13 +111,13 @@ rosegit_find_sources () {
 
     while [ "$dir1" != "/" ]; do
 	for required in configure.in configure.ac; do
-	    if [ -d $dir1/.git -a -e "$dir1/$required" ]; then
+	    if [ -e "$dir1/$required" ]; then
 		echo $dir1
 		return 0
 	    fi
 
 	    dir2=$dir1/sources/$cwdbase
-	    if [ -d $dir2/.git -a -e "$dir2/$required" ]; then
+	    if [ -e "$dir2/$required" ]; then
 		echo $dir2
 		return 0
 	    fi
@@ -132,7 +131,7 @@ rosegit_find_sources () {
 rosegit_load_config () {
     local repo="$1";   [ -d "$repo" ]      || rosegit_die "not a repository: $repo"
     local ns="$2";     [ -n "$ns" ]        || ns=$(rosegit_namespace)
-    local branch="$3"; [ -n "$branch" ]    || rosegit_die "no branch name supplied"
+    local branch="$3"; [ -n "$branch" ]    || branch="none";
     local config="$4";                     # optional file or directory
 
     local confdir=$repo/scripts/rosegit/config
@@ -213,7 +212,7 @@ rosegit_preamble () {
     local config="$1";      # optional configuration file or directory
     if [ ! -n "$ROSEGIT_LOADED" ]; then
 	rosegit_find_directories
-	local branch=$(cd $ROSEGIT_SRC && git branch |sed -n '/^\*/s/^\* //p')
+	local branch=$(cd $ROSEGIT_SRC && git branch 2>/dev/null |sed -n '/^\*/s/^\* //p')
 	rosegit_load_config $ROSE_SRC $(rosegit_namespace) $branch $config
 	rosegit_environment
     fi
@@ -234,7 +233,8 @@ rosegit_show_environment () {
     echo "Source tree:       $ROSEGIT_SRC"
     echo "Build tree:        $ROSEGIT_BLD"
     [ "$ROSEGIT_SRC" != "$ROSE_SRC" ] && echo "ROSE source tree:  $ROSE_SRC"
-    echo "Current HEAD:      $(cd $ROSEGIT_SRC && git rev-parse HEAD)"
+    local commit=$(git rev-parse HEAD 2>/dev/null); [ -n "$commit" ] || commit="not a Git repository"
+    echo "Current HEAD:      $commit"
     echo "Software:"
     echo "    $(make --version |head -n1)"
     echo "    $(gcc --version |head -n1)"
@@ -245,7 +245,7 @@ rosegit_show_environment () {
     echo "    libtool $((libtool --version || libtool -V) 2>/dev/null |head -n1)"
     echo "    $((tex --version || echo tex NOT INSTALLED) 2>/dev/null |head -n1)"
     echo "    $((latex --version || echo latex NOT INSTALLED) 2>/dev/null |head -n1)"
-    echo "    $(((swig -version |grep -i version) ||echo swig NOT INSTALLED) 2>/dev/null)"
+    echo "    $(swig -version |grep -i version)"
     if [ -f /usr/include/boost/version.hpp ]; then
 	echo "    boost (in /usr/include)" \
 	    $(sed -n '/#define BOOST_LIB_VERSION/s/.*"\(.*\)"/\1/p' </usr/include/boost/version.hpp | tr _ .)
