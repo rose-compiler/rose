@@ -29,10 +29,12 @@ VALGRIND =
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
+absolute_srcdir=`cd $(srcdir) && pwd`
+
 # DQ (1/13/2009): The GNU option is "-include" not "--include"
 $(TEST_Objects): $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C)
 	@echo "Calling Copy AST mechanism using TEST_Objects rule: "
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -include $(srcdir)/test_preinclude_1.h -c $(srcdir)/$(@:.o=.C)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -include $(absolute_srcdir)/test_preinclude_1.h -c $(srcdir)/$(@:.o=.C)
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
