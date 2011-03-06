@@ -1,6 +1,7 @@
 #ifndef BACKSTROKE_VALUE_GRAPH
 #define BACKSTROKE_VALUE_GRAPH
 
+#include "valueGraphNode.h"
 #include <ssa/staticSingleAssignment.h>
 
 #include <boost/graph/adjacency_list.hpp>
@@ -9,235 +10,37 @@
 namespace Backstroke
 {
 
-typedef std::vector<SgInitializedName*> VarName;
-
-
-struct PhiNodeDependence
-{
-	enum ControlDependenceType
-	{
-		cdTrue,
-		cdFalse,
-		cdCase,
-		cdDefault
-	};
-
-	PhiNodeDependence(int v)
-	: version(v) {}
-	
-	//! One version member of the phi function.
-	int version;
-
-	//!  The SgNode on which the phi function has a control dependence for the version.
-	SgNode* cdNode;
-
-	//! The control dependence type.
-	ControlDependenceType cdType;
-	
-	//! If the control dependence is cdCase, this is the case value.
-	int caseValue;
-};
-
-struct VariableWithVersion
-{
-	VariableWithVersion() {}
-	VariableWithVersion(const VarName& varName, int ver, bool pseudoDef = false)
-	: name(varName), version(ver), isPseudoDef(pseudoDef) {}
-
-	//! The unique name of this variable.
-	VarName name;
-
-	//! The version of this variable in the SSA form.
-	int version;
-	
-	//! Indicated if this variable is defined by a phi function.
-	bool isPseudoDef;
-
-	//! All version it dependes if this variable is a pseudo def.
-	std::vector<PhiNodeDependence> phiVersions;
-};
-
-inline bool operator == (const VariableWithVersion& var1, const VariableWithVersion& var2)
-{
-	return var1.name == var2.name && var1.version == var2.version;
-}
-
-inline bool operator < (const VariableWithVersion& var1, const VariableWithVersion& var2)
-{
-	return var1.name < var2.name ||
-		(var1.name == var2.name && var1.version < var2.version);
-}
-
-inline std::ostream& operator << (std::ostream& os, const VariableWithVersion& var)
-{
-	return os << StaticSingleAssignment::varnameToString(var.name) << ' ' << var.version;
-}
-
-
-struct ValueGraphNode
-{
-	ValueGraphNode() : isTemp(true) {}
-	ValueGraphNode(const VarName& name, int ver)
-	: isTemp(false), var(name, ver) {}
-	ValueGraphNode(const VariableWithVersion& v)
-	: isTemp(false), var(v) {}
-
-	void setVariable(const VarName& name, int ver)
-	{
-		var.name = name;
-		var.version = ver;
-		isTemp = false;
-	}
-
-	void setVariable(const VariableWithVersion& v)
-	{
-		var = v;
-		isTemp = false;
-	}
-
-	virtual void writeDotString(std::ostream& out) const
-	{
-		if (isTemp)
-			out << "[label=\"" << "TEMP" << "\"]";
-		else
-			out << "[label=\"" << toString() << "\"]";
-	}
-
-	std::string toString() const
-	{
-		if (isTemp)
-			return "TEMP";
-		else
-		{
-			std::ostringstream os;
-			os << var;
-			return os.str();
-		}
-	}
-	
-	//! Indicate if this node is a temporary variable node.
-	bool isTemp;
-
-	//! The variable name with a version attached to this node.
-	VariableWithVersion var;
-
-};
-
-struct PhiNode : ValueGraphNode
-{
-	PhiNode(const VariableWithVersion& v) : ValueGraphNode(v) {}
-	
-	std::vector<ValueGraphNode*> nodes;
-
-	virtual void writeDotString(std::ostream& out) const
-	{
-		out << "[label=\""  << "phi\\n" << toString() << "\"]";
-	}
-
-};
-
-struct ValueNode : ValueGraphNode
-{
-	ValueNode(SgValueExp* exp) : ValueGraphNode(), valueExp(exp) {}
-
-	virtual void writeDotString(std::ostream& out) const
-	{
-		out << "[label=\""  << valueExp->unparseToString() << "\\n" << toString() << "\"]";
-	}
-
-	SgValueExp* valueExp;
-};
-
-struct OperaterNode : ValueGraphNode
-{
-	enum OperaterType
-	{
-		otAdd,
-		otMinus,
-		otMultiply,
-		otDevide,
-		otMod,
-		otAssign,
-		otGreaterThan,
-		otLessThan
-	};
-
-	OperaterNode(OperaterType t) : ValueGraphNode(), type(t) {}
-	OperaterType type;
-
-	virtual void writeDotString(std::ostream& out) const
-	{
-		std::string label;
-		switch (type)
-		{
-			case otAdd:
-				label = "+";
-				break;
-			case otMultiply:
-				label = "Mul";
-				break;
-			case otGreaterThan:
-				label = ">";
-				break;
-			case otLessThan:
-				label = "<";
-				break;
-			default:
-				break;
-		}
-
-		out << "[label=\""  << label << "\\n" << toString() << "\"]";
-	}
-};
-
-#if 0
-struct UnaryOperaterNode : OperaterNode
-{
-	enum OperationType
-	{
-		otPlus,
-		otMinus
-	} type;
-
-	ValueGraphNode* operand;
-};
-
-
-struct BinaryOperaterNode : OperaterNode
-{
-	enum OperaterType
-	{
-		otAdd,
-		otMinus,
-		otMultiply,
-		otDevide,
-		otMod,
-		otAssign,
-	} type;
-
-	BinaryOperaterNode(OperaterType t) : type(t) {}
-	ValueGraphNode* lhsOperand;
-	ValueGraphNode* rhsOperand;
-};
-#endif
-
-struct FunctionCallNode : ValueGraphNode
-{
-	
-};
-
 
 struct ValueGraphEdge
 {
-	//virtual void writeDotString(std::ostream& out) const = 0;
+	ValueGraphEdge() : cost(0) {}
+	ValueGraphEdge(int c) : cost(c) {}
+	
+	virtual void writeDotString(std::ostream& out) const
+	{
+		out << "[label=\"" << cost << "\"]";
+	}
+
+	int cost;
 };
 
-class ValueGraph : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-		ValueGraphNode*, ValueGraphEdge*>
+struct OrderedEdge : ValueGraphEdge
+{
+	OrderedEdge(int idx) : index(idx) {}
+	
+	int index;
+};
+
+//class ValueGraph : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
+//		ValueGraphNode*, ValueGraphEdge*>
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
+		ValueGraphNode*, ValueGraphEdge*> ValueGraph;
+
+class EventReverser
 {
 public:
-	typedef boost::graph_traits<ValueGraph>::vertex_descriptor Vertex;
-	typedef boost::graph_traits<ValueGraph>::edge_descriptor Edge;
+	typedef boost::graph_traits<ValueGraph>::vertex_descriptor VGVertex;
+	typedef boost::graph_traits<ValueGraph>::edge_descriptor VGEdge;
 
 	typedef StaticSingleAssignment SSA;
 	typedef SSA::VarName VarName;
@@ -245,32 +48,54 @@ public:
 private:
 	//! The SSA form of the function definition.
 	SSA ssa_;
+
+	//! The value graph object.
+	ValueGraph valueGraph_;
 	
 	//! A map from SgNode to vertex of Value Graph.
-	std::map<SgNode*, Vertex> nodeVertexMap_;
+	std::map<SgNode*, VGVertex> nodeVertexMap_;
 
 	//! A map from variable with version to vertex of Value Graph.
-	std::map<VariableWithVersion, Vertex> varVertexMap_;
+	std::map<VersionedVariable, VGVertex> varVertexMap_;
 
 	//! A map from variable with version to its reaching def object.
 	//! This map is only for pseudo defs.
-	std::map<VariableWithVersion, SSA::ReachingDefPtr> varReachingDefMap_;
+	std::map<VersionedVariable, SSA::ReachingDefPtr> varReachingDefMap_;
+
+	//! All values which need to be restored (state variables).
+	std::vector<VGVertex> valuesToRestore_;
+
+	//! All available values, including constant and state variables (last version).
+	std::set<VGVertex> availableValues_;
+
+	//! All state variables.
+	std::set<VarName> stateVariables_;
+
+	////! All available nodes (the last version of state variables).
+	//std::set<Vertex> availableNodes_;
+
+	//! The start point of the search.
+	VGVertex root_;
 
 //	typedef CFG<VirtualCFG::InterestingNode,
 //			VirtualCFG::InterestingEdge> CFG;
 //	typedef CDG<CFG> CDG;
 public:
 	
-	ValueGraph() 
+	EventReverser()
 	: ssa_(SageInterface::getProject())
 	{
 		ssa_.run(false);
 	}
 
-	void build(SgFunctionDefinition* funcDef);
+	//! Build the value graph for the given function.
+	void buildValueGraph(SgFunctionDefinition* funcDef);
 
-	void toDot(const std::string& filename) const;
+	//! Generate a dot file describing the value graph.
+	void valueGraphToDot(const std::string& filename) const;
 
+	void searchValueGraph();
+	
 private:
 
 	/** This function set or add a def node to the value graph. If the variable defined is assigned by a
@@ -280,16 +105,16 @@ private:
 	 *  @param defNode The AST node which is defined.
 	 *  @param useVertex The value graph vertex which defineds the new node.
 	 */
-	void setNewDefNode(SgNode* defNode, Vertex useVertex);
+	void setNewDefNode(SgNode* defNode, VGVertex useVertex);
 
-	void writeGraphNode(std::ostream& out, const Vertex& node) const
+	void writeValueGraphNode(std::ostream& out, const VGVertex& node) const
 	{
-		(*this)[node]->writeDotString(out);
+		valueGraph_[node]->writeDotString(out);
 	}
 
-	void writeGraphEdge(std::ostream& out, const Edge& edge) const
+	void writeValueGraphEdge(std::ostream& out, const VGEdge& edge) const
 	{
-		//(*this)[edge]->writeDotString();
+		valueGraph_[edge]->writeDotString(out);
 	}
 
 	/** Add a new vertex to the value graph.
@@ -298,29 +123,51 @@ private:
 	 *  @param sgNode The AST node which maps to the added value graph node.
 	 *  @returns The new added vertex.
 	 */
-	Vertex addNode(ValueGraphNode* newNode, SgNode* sgNode = NULL)
-	{
-		Vertex v = add_vertex(*this);
-		(*this)[v] = newNode;
-		if (sgNode)
-			nodeVertexMap_[sgNode] = v;
-		return v;
-	}
+	VGVertex addValueGraphNode(ValueGraphNode* newNode, SgNode* sgNode = NULL);
+
+	/** Add a new edge to the value graph.
+	 *
+	 *  @param src The source vertex.
+	 *  @param tar The target vertex.
+	 *  @param cost The weight of the edge.
+	 *  @returns The new added edge.
+	 */
+	VGEdge addValueGraphEdge(VGVertex src, VGVertex tar, int cost = 0);
+
+	/** Add a new ordered edge to the value graph.
+	 *
+	 *  @param src The source vertex.
+	 *  @param tar The target vertex.
+	 *  @param index The index of the edge (for example, for a binary operator,
+	 * 0 means lhs operand, and 1 means rhs operand).
+	 *  @returns The new added edge.
+	 */
+	VGEdge addValueGraphOrderedEdge(VGVertex src, VGVertex tar, int index);
 
 	//! Add a phi node to the value graph.
-	Vertex addPhiNode(VariableWithVersion& var);
+	VGVertex addValueGraphPhiNode(VersionedVariable& var);
 
+	//! Connect each variable node to the root with cost.
+	void addStateSavingEdges();
+	
+	//! Given a type, return the cost of saving it.
+	static int getCost(SgType* t);
+
+	bool isStateVariable(const VarName& name)
+	{
+		return stateVariables_.count(name) > 0;
+	}
 
 	/** Given a SgNode, return its variable name and version.
 	 * 
 	 *  @param node A SgNode which should be a variable (either a var ref or a declaration).
 	 *  //@param isUse Inidicate if the variable is a use or a def.
 	 */
-	VariableWithVersion getVariableWithVersion(SgNode* node, bool isUse = true);
+	VersionedVariable getVersionedVariable(SgNode* node, bool isUse = true);
 
-	static Vertex nullVertex()
+
+	static VGVertex nullVertex()
 	{ return boost::graph_traits<ValueGraph>::null_vertex(); }
-	
 };
 
 } // End of namespace Backstroke

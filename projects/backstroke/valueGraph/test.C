@@ -15,6 +15,8 @@ using namespace boost;
 #define foreach BOOST_FOREACH
 
 
+#if 0
+
 class MyGraph : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, 
 		bool, property<edge_weight_t, int> >
 {
@@ -380,7 +382,7 @@ int main()
 }
 
 
-#if 0
+#else
 
 int main(int argc, char *argv[])
 {
@@ -398,9 +400,15 @@ int main(int argc, char *argv[])
 	if (!funcDef->get_file_info()->isSameFile(sourceFile))
 		continue;
 
-	Backstroke::ValueGraph vg;
-	vg.build(funcDef);
-	vg.toDot("VG.dot");
+	Backstroke::EventReverser reverser;
+	reverser.buildValueGraph(funcDef);
+	reverser.searchValueGraph();
+//
+//	Backstroke::ValueGraph reverseVg;
+//	// The following function makes a reverse CFG copy.
+//	boost::transpose_graph(vg, reverseVg);
+
+	reverser.valueGraphToDot("VG.dot");
 
 	typedef Backstroke::FilteredCFG CFG;
 	CFG cfg(funcDef);
