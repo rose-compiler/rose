@@ -18,7 +18,7 @@ echo "**************************************************************************
 echo "Executing runTensilicaXtensaTest for ROSE Project on: $machine_name start_time = $start_time"
 echo "*****************************************************************************"
 
-CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-alternate_backend_C_compiler=${XTENSA_TOOLS_HOME}/xt-xcc --with-alternate_backend_Cxx_compiler=${XTENSA_TOOLS_HOME}/xt-xc++"
+CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-alternate_backend_C_compiler=${XTENSA_TOOLS_HOME}/bin/xt-xcc --with-alternate_backend_Cxx_compiler=${XTENSA_TOOLS_HOME}/bin/xt-xc++"
 
 echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
 
