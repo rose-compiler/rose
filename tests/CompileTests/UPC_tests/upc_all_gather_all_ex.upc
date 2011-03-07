@@ -9,9 +9,12 @@ function as described in Section 7.3.1.4 in the UPC Spec v1.2.
 #define NELEMS 10
 shared [NELEMS] int A[NELEMS*THREADS];
 
-// This statement requires the use of the option "-rose:upc_threads n" 
-// where "n" is an integer value to compile with ROSE.
+/* 
+Note: EDG reports that the keyword THREADS is not allowed in "shared [NELEMS*THREADS]".
 shared [NELEMS*THREADS] int B[THREADS][NELEMS*THREADS];
+So this test codes has been modified.  We need some expert advice on this subject.
+*/
+shared [NELEMS] int B[THREADS][NELEMS*THREADS];
 
 int main()
 {
