@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# DO NOT DISABLE without first checking with a ROSE core developer
 my $desc = <<EOF;
 ROSE has adopted a policy of using only ASCII SPACE ('\\040') characters for
 source code indentation. The use of ASCII HT (a.k.a., TAB, '\\011') characters

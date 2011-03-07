@@ -62,7 +62,8 @@ remove_sage3basic_h_pch:
 #    2. header files should not include certain ROSE headers like "rose.h"
 #    3. file names must be unique on a case-insensitive file system
 #    4. header files must not have names that conflict with headers in other directories
-# etc.
+#    5. etc.
+# DO NOT DISABLE without first checking with a ROSE core developer
 export prefix	# for use by policy scripts
 enforce_policies:
 	(cd $(top_srcdir) && ./scripts/policies-checker.sh)
