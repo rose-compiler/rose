@@ -260,6 +260,7 @@ if test "x$BACKEND_C_COMPILER_NAME" == "xxt-xcc"; then
 else
   AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, false)
 fi
+
 ###################################################################################################
 ])
 
