@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# DO NOT DISABLE without first checking with a ROSE core developer
 my $desc = <<EOF;
 Header files should not have a "using namespace" directive in an outer scope
 since this causes unexpected behavior for code that uses those headers. The
