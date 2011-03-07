@@ -1,3 +1,4 @@
+
 # Setting up Java:
 
 setenv JAVA_PATH /usr/apps/java/latest
