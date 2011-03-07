@@ -52,7 +52,7 @@ rm -rf ROSE-build
 mkdir ROSE-build
 cd ROSE-build
 
-../configure --prefix=${ROSE_TEST_INSTALL_PREFIX} ${CONFIGURE_FLAGS}
+../configure --prefix=`pwd`/${ROSE_TEST_INSTALL_PREFIX} ${CONFIGURE_FLAGS}
 
 
 # TODO: build and run tests
