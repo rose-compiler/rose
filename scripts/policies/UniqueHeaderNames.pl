@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# DO NOT DISABLE without first checking with a ROSE core developer
 my $desc = <<EOF;
 C/C++ header files should have names that are unique across the entire ROSE
 source tree.  The uniqueness ensures that an #include directive will always
