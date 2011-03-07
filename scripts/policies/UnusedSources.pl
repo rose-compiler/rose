@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# DO NOT DISABLE without first checking with a ROSE core developer
 my $desc = <<EOF;
 All source files should be mentioned in makefiles.  A source file that
 is not mentioned in a makefile is probably not used. As of 2010-10-18
