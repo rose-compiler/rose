@@ -94,8 +94,6 @@ bool CFGNodeFilterForSlicing::operator()(const VirtualCFG::CFGNode& cfgNode) con
 		//case V_SgCommaOpExp:
 		case V_SgExprStatement:
 		case V_SgForInitStatement:
-		case V_SgBreakStmt:
-		case V_SgContinueStmt:
 			return false;
 		default:
 			break;

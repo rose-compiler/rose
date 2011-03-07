@@ -3,7 +3,6 @@
 
 #include "valueGraphNode.h"
 #include <ssa/staticSingleAssignment.h>
-
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/bind.hpp>
 

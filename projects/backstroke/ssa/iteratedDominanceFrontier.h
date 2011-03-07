@@ -59,9 +59,7 @@ namespace ssa_private
 	map<CfgNodeT, set<CfgNodeT> > calculateDominanceFrontiers(SgFunctionDefinition* func, map<CfgNodeT, CfgNodeT>* iDominatorMap,
 		map<CfgNodeT, CfgNodeT>* iPostDominatorMap)
 	{
-		//typedef CFG<CfgNodeT, CfgEdgeT> ControlFlowGraph;
-		typedef CFG<ssa_private::DataflowCfgFilter> ControlFlowGraph;
-		
+		typedef CFG<CfgNodeT, CfgEdgeT> ControlFlowGraph;
 		//Build a CFG first
 		ControlFlowGraph functionCfg(func);
 

@@ -17,7 +17,8 @@ struct CFGNodeFilterForSlicing
 	bool operator()(const VirtualCFG::CFGNode& cfgNode) const;
 };
 
-typedef CFG<CFGNodeFilterForSlicing> CFGForSlicing;
+typedef CFG<VirtualCFG::FilteredCFGNode<CFGNodeFilterForSlicing>,
+			VirtualCFG::FilteredCFGEdge<CFGNodeFilterForSlicing> > CFGForSlicing;
 
 class Slicer
 {
