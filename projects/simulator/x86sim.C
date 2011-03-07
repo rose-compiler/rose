@@ -1866,18 +1866,28 @@ RSIM_Thread::emulate_syscall()
                 }
 
 
-                sigaction_32 tmp;
-                if (action_va && sizeof(tmp) != get_process()->mem_read(&tmp, action_va, sizeof tmp)) {
+                sigaction_32 new_action, old_action;
+                sigaction_32 *new_action_p=NULL, *old_action_p=NULL;
+                if (action_va) {
+                    if (sizeof(new_action) != get_process()->mem_read(&new_action, action_va, sizeof new_action)) {
+                        syscall_return(-EFAULT);
+                        break;
+                    }
+                    new_action_p = &new_action;
+                }
+                if (oldact_va) {
+                    old_action_p = &old_action;
+                }
+                
+                int status = get_process()->sys_sigaction(signum, new_action_p, old_action_p);
+
+                if (status>=0 && oldact_va &&
+                    sizeof(old_action) != get_process()->mem_write(&old_action, oldact_va, sizeof old_action)) {
                     syscall_return(-EFAULT);
                     break;
                 }
-                if (oldact_va && sizeof(tmp) != get_process()->mem_write(signal_action+signum-1, oldact_va, sizeof tmp)) {
-                    syscall_return(-EFAULT);
-                    break;
-                }
-                if (action_va)
-                    signal_action[signum-1] = tmp;
-                syscall_return(0);
+
+                syscall_return(status);
             } while (0);
             syscall_leave("d--P", sizeof(sigaction_32), print_sigaction_32);
             break;

@@ -23,6 +23,7 @@ public:
 private:
     void ctor();
 
+
     /**************************************************************************************************************************
      *                                  Thread synchronization
      **************************************************************************************************************************/
@@ -49,8 +50,9 @@ public:
     //@}
 
 
+
     /**************************************************************************************************************************
-     *                                  Data members dealing with process memory
+     *                                  Process memory
      **************************************************************************************************************************/
 private:
     MemoryMap *map;                             /**< Describes how specimen's memory is mapped to simulator memory */
@@ -147,8 +149,9 @@ public:
     std::vector<std::string> read_string_vector(uint32_t va, bool *error=NULL);
 
 
+
     /**************************************************************************************************************************
-     *                                  Methods dealing with x86 segment registers
+     *                                  Segment registers
      **************************************************************************************************************************/
 public:
     /** Set a global descriptor table entry.  This should only be called via RSIM_Thread::set_gdt(). In Linux, three of the GDT
@@ -171,9 +174,11 @@ public:
 private:
     /**< Global descriptor table. Entries GDT_ENTRY_TLS_MIN through GDT_ENTRY_TLS_MAX are unused. */
     user_desc_32 gdt[GDT_ENTRIES];
+
+
     
     /**************************************************************************************************************************
-     *                                  Data members dealing with instructions
+     *                                  Instructions and disassembly
      **************************************************************************************************************************/
 private:
     Disassembler *disassembler;                 /**< Disassembler to use for obtaining instructions */
@@ -186,8 +191,23 @@ public:
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
     SgAsmInstruction *get_instruction(rose_addr_t va);
 
+
+
+    /**************************************************************************************************************************
+     *                                  Signal handling
+     **************************************************************************************************************************/
+private:
+    /** Simulated actions for signal handling. Array element N is signal N+1. All threads of a process share signal
+     *  dispositions (see CLONE_SIGHAND bit). */
+    sigaction_32 signal_action[_NSIG];
+
+public:
+    /** Simulates a sigaction() system call.  Returns zero on success; negative errno on failure. */
+    int sys_sigaction(int signo, const sigaction_32 *new_action, sigaction_32 *old_action);
+
+
     /***************************************************************************************************************************
-     *                                  Data members dealing with thread creation/join
+     *                                  Thread creation/join simulation
      ***************************************************************************************************************************/
 private:
     /**< Contains various things that are needed while we clone a new thread to handle a simulated clone call. */

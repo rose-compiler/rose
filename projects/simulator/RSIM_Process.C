@@ -33,6 +33,8 @@ RSIM_Process::ctor()
     gdt[0x2b>>3].seg_32bit = 1;
     gdt[0x2b>>3].limit_in_pages = 1;
     gdt[0x2b>>3].useable = 1;
+
+    memset(signal_action, 0, sizeof signal_action);
 }
 
 FILE *
@@ -1490,8 +1492,25 @@ RSIM_Process::sys_exit(int status)
         terminated = true;
         termination_status = status;
         if (!threads.empty())
-            fprintf(stderr, "ROBB: RSIM_Process::exit() not fully implemented yet.\n");
+            RTS_Message(stderr, NULL).mesg("ROBB: RSIM_Process::exit() not fully implemented yet.\n");
     } RTS_WRITE_END;
 }
 
+int
+RSIM_Process::sys_sigaction(int signo, const sigaction_32 *new_action, sigaction_32 *old_action) 
+{
+    if (signo<1 || signo>_NSIG)
+        return -EINVAL;
+
+    RTS_WRITE(rwlock()) {
+        if (old_action)
+            *old_action = signal_action[signo-1];
+        if (new_action)
+            signal_action[signo-1] = *new_action;
+    } RTS_WRITE_END;
+
+    return 0;
+}
+
+    
         

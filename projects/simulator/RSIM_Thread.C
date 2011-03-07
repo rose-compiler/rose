@@ -18,7 +18,6 @@ RSIM_Thread::ctor()
     my_seq = next_sequence_number++;
 
     memset(&last_report, 0, sizeof last_report);
-    memset(signal_action, 0, sizeof signal_action);
     memset(tls_array, 0, sizeof tls_array);
     signal_stack.ss_sp = 0;
     signal_stack.ss_size = 0;
@@ -216,7 +215,11 @@ RSIM_Thread::signal_generate(int signo)
     bool is_masked = (0 != (signal_mask & sigbit));
     const char *disposition = NULL;
 
-    if (signal_action[signo-1].handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
+    sigaction_32 sa;
+    int status = get_process()->sys_sigaction(signo, NULL, &sa);
+    assert(status>=0);
+
+    if (sa.handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
         disposition = " ignored";
     } else if (is_masked) {
         disposition = " masked";
@@ -259,11 +262,14 @@ RSIM_Thread::signal_deliver(int signo)
     ROSE_ASSERT(signo>0 && signo<=64);
 
     RTS_Message *mesg = tracing(TRACE_SIGNAL);
+    sigaction_32 sa;
+    int status = get_process()->sys_sigaction(signo, NULL, &sa);
+    assert(status>=0);
 
-    if (signal_action[signo-1].handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
+    if (sa.handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
         /* The signal action may have changed since the signal was generated, so we need to check this again. */
         mesg->brief("delivering %s(%d) ignored", flags_to_str(signal_names, signo).c_str(), signo);
-    } else if (signal_action[signo-1].handler_va==(uint32_t)(uint64_t)SIG_DFL) {
+    } else if (sa.handler_va==(uint32_t)(uint64_t)SIG_DFL) {
         mesg->brief("delivering %s(%d) default", flags_to_str(signal_names, signo).c_str(), signo);
         switch (signo) {
             case SIGFPE:
@@ -311,14 +317,14 @@ RSIM_Thread::signal_deliver(int signo)
         mesg->brief("delivering %s(%d) masked", flags_to_str(signal_names, signo).c_str(), signo);
     } else {
         mesg->brief("delivering %s(%d) to 0x%08"PRIx32,
-                    flags_to_str(signal_names, signo).c_str(), signo, signal_action[signo-1].handler_va);
+                    flags_to_str(signal_names, signo).c_str(), signo, sa.handler_va);
 
         uint32_t signal_return = policy.readIP().known_value();
         policy.push(signal_return);
 
         /* Switch to the alternate stack? */
         uint32_t signal_oldstack = policy.readGPR(x86_gpr_sp).known_value();
-        if (0==(signal_stack.ss_flags & SS_ONSTACK) && 0!=(signal_action[signo-1].flags & SA_ONSTACK))
+        if (0==(signal_stack.ss_flags & SS_ONSTACK) && 0!=(sa.flags & SA_ONSTACK))
             policy.writeGPR(x86_gpr_sp, policy.number<32>(signal_stack.ss_sp + signal_stack.ss_size));
 
         /* Push stuff that will be needed by the simulated sigreturn() syscall */
@@ -336,7 +342,7 @@ RSIM_Thread::signal_deliver(int signo)
         policy.push(policy.readGPR(x86_gpr_bp));
 
         /* New signal mask */
-        signal_mask |= signal_action[signo-1].mask;
+        signal_mask |= sa.mask;
         signal_mask |= (uint64_t)1 << (signo-1);
         // signal_reprocess = true;  -- Not necessary because we're not clearing any */
 
@@ -346,7 +352,7 @@ RSIM_Thread::signal_deliver(int signo)
 
         /* Invoke signal handler */
         policy.push(policy.number<32>(SIGHANDLER_RETURN)); /* fake return address to trigger signal_cleanup() call */
-        policy.writeIP(policy.number<32>(signal_action[signo-1].handler_va));
+        policy.writeIP(policy.number<32>(sa.handler_va));
     }
 }
 
@@ -406,11 +412,15 @@ RSIM_Thread::signal_pause()
 
     /* What signals would unpause this syscall? */
     uint64_t unpause = 0;
-    for (uint64_t i=0; i<64; i++) {
-        uint64_t sigbit = (uint64_t)1 << i;
-        if (signal_action[i].handler_va==(uint64_t)SIG_DFL && 0!=(sigbit & terminating)) {
+    for (uint64_t signo=1; signo<=64; signo++) {
+        uint64_t sigbit = (uint64_t)1 << (signo-1);
+        sigaction_32 sa;
+        int status = get_process()->sys_sigaction(signo, NULL, &sa);
+        assert(status>=0);
+
+        if (sa.handler_va==(uint64_t)SIG_DFL && 0!=(sigbit & terminating)) {
             unpause |= sigbit;
-        } else if (signal_action[i].handler_va!=0) {
+        } else if (sa.handler_va!=0) {
             unpause |= sigbit;
         }
     }

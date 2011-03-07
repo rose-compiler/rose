@@ -236,7 +236,7 @@ public:
 
 
     /**************************************************************************************************************************
-     *                                  Methods dealing with signal handling
+     *                                  Members dealing with signal handling
      **************************************************************************************************************************/
 public:
 
@@ -371,7 +371,6 @@ public: //FIXME
     uint32_t clear_child_tid;                   /* See set_tid_address(2) man page and clone() emulation */
 
     /* Stuff related to signal handling. */
-    sigaction_32 signal_action[_NSIG];          /* Simulated actions for signal handling; elmt N is signal N+1 */
     uint64_t signal_pending;                    /* Bit N is set if signal N+1 is pending */
     uint64_t signal_mask;                       /* Masked signals; Bit N is set if signal N+1 is masked */
     stack_32 signal_stack;                      /* Possible alternative stack to using during signal handling */
