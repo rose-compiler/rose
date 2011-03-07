@@ -2,16 +2,17 @@
 #include <utilities/utilities.h>
 #include <boost/foreach.hpp>
 #include <boost/graph/graphviz.hpp>
-#include <boost/graph/johnson_all_pairs_shortest.hpp>
+#include <boost/timer.hpp>
+#include "steinerTree.h"
+
+namespace Backstroke
+{
 
 using namespace std;
 using namespace boost;
 
 #define foreach BOOST_FOREACH
 
-
-namespace Backstroke
-{
 
 void EventReverser::buildValueGraph(SgFunctionDefinition* funcDef)
 {
@@ -360,14 +361,16 @@ EventReverser::VGVertex EventReverser::addValueGraphNode(ValueGraphNode* newNode
 
 EventReverser::VGEdge EventReverser::addValueGraphEdge(EventReverser::VGVertex src, EventReverser::VGVertex tar, int cost)
 {
-	VGEdge e = add_edge(src, tar, valueGraph_).first;
+	//VGEdge e = add_edge(src, tar, valueGraph_).first;
+	VGEdge e = add_edge(tar, src, valueGraph_).first;
 	valueGraph_[e] = new ValueGraphEdge(cost);
 	return e;
 }
 
 EventReverser::VGEdge EventReverser::addValueGraphOrderedEdge(EventReverser::VGVertex src, EventReverser::VGVertex tar, int index)
 {
-	VGEdge e = add_edge(src, tar, valueGraph_).first;
+	//VGEdge e = add_edge(src, tar, valueGraph_).first;
+	VGEdge e = add_edge(tar, src, valueGraph_).first;
 	valueGraph_[e] = new OrderedEdge(index);
 	return e;
 }
@@ -543,177 +546,20 @@ void EventReverser::valueGraphToDot(const std::string& filename) const
 
 
 #if 1
-// Generates all n combinations from m.
-vector<vector<int> > GenerateCombination(int m, int n)
-{
-	ROSE_ASSERT(m >= n && m > 0 && n >= 0);
-	vector<vector<int> > result;
-
-	if (n == 0)
-	{
-		result.resize(1);
-		return result;
-	}
-
-	if (n == 1)
-	{
-		for (int i = 0; i < m; ++i)
-		{
-			vector<int> r(1, i);
-			result.push_back(r);
-		}
-		return result;
-	}
-
-	if (m == n)
-	{
-		vector<int> r;
-		for (int i = 0; i < m; ++i)
-			r.push_back(i);
-		result.push_back(r);
-		return result;
-	}
-
-	for (int i = m - 1; i >= n - 1; --i)
-	{
-		vector<vector<int> > r = GenerateCombination(i, n - 1);
-		foreach (vector<int>& comb, r)
-		{
-			comb.push_back(i);
-			result.push_back(comb);
-		}
-	}
-
-	return result;
-}
-
-template <class Graph, class Vertex, class Map>
-int SteinerTree(const ValueGraph& g, Vertex r, const set<Vertex>& terms, const Map& weightMap)
-{
-	const int INTMAX = INT_MAX / 3;
-
-	// Get all-pair shortest path.
-	int num = num_vertices(g);
-	vector<Vertex> terminals(terms.begin(), terms.end());
-
-	vector<vector<int> > distMatrix(num);
-	foreach (vector<int>& vec, distMatrix)
-		vec.resize(num);
-	johnson_all_pairs_shortest_paths(g, distMatrix, weight_map(weightMap));
-
-	foreach (vector<int>& vec, distMatrix)
-	{
-		foreach (int& d, vec)
-		{
-			if (d == INT_MAX)
-				d = INTMAX;
-		}
-	}
-
-	vector<Vertex> allVertices;
-	typename boost::graph_traits<Graph>::vertex_iterator v, w;
-	for (tie(v, w) = boost::vertices(g); v != w; ++v)
-	{
-		if (distMatrix[*v][r] < INTMAX)
-			allVertices.push_back(*v);
-	}
-
-	cout << "allVertices:" << allVertices.size() << endl;
-
-	map<pair<Vertex, vector<Vertex> >, int> S;
-	foreach (Vertex t, terminals)
-	{
-		foreach (Vertex j, allVertices)
-		{
-			vector<Vertex> s(1, t);
-			S[make_pair(j, s)] = distMatrix[t][j];
-		}
-	}
-
-	for (size_t m = 2; m < terminals.size(); ++m)
-	{
-		vector<vector<int> > indices = GenerateCombination(terminals.size(), m);
-		foreach (const vector<int>& idx, indices)
-		{
-			vector<Vertex> D;
-			foreach (int i, idx)
-				D.push_back(terminals[i]);
-
-			foreach (Vertex v, allVertices)
-			{
-				S[make_pair(v, D)] = INTMAX;
-
-				int u = INTMAX;
-
-				// Produce all Es
-				vector<vector<Vertex> > Es;
-				for (size_t i = 0; i < m - 1; ++i)
-				{
-					vector<vector<int> > indices = GenerateCombination(m - 1, i);
-					foreach (const vector<int> idx, indices)
-					{
-						vector<Vertex> vers(1, D[0]);
-						foreach (int j, idx)
-							vers.push_back(D[j + 1]);
-						Es.push_back(vers);
-					}
-				}
-
-				foreach (const vector<Vertex>& E, Es)
-				{
-					vector<Vertex> diff(D.size() - E.size());
-					set_difference(D.begin(), D.end(), E.begin(), E.end(), diff.begin());
-					u = min(u, S[make_pair(v, E)] + S[make_pair(v, diff)]);
-				}
-
-				foreach (Vertex w, allVertices)
-				{
-					S[make_pair(w, D)] = min(S[make_pair(w, D)], distMatrix[w][v] + u);
-				}
-
-			}
-		}
-	}
-
-//	typedef pair<pair<Vertex, vector<Vertex> >, int> P;
-//	foreach (const P& p, S)
-//		cout << "* " << p.second << endl;
-
-	int result = INTMAX;
-	foreach (Vertex v, allVertices)
-	{
-		int u = INTMAX;
-
-		// Produce all Es
-		vector<vector<Vertex> > Es;
-		for (size_t i = 0; i < terminals.size() - 1; ++i)
-		{
-			vector<vector<int> > indices = GenerateCombination(terminals.size() - 1, i);
-			foreach (const vector<int> idx, indices)
-			{
-				vector<Vertex> vers(1, terminals[0]);
-				foreach (int j, idx)
-					vers.push_back(terminals[j + 1]);
-				Es.push_back(vers);
-			}
-		}
-
-		foreach (const vector<Vertex>& E, Es)
-		{
-			vector<Vertex> diff(terminals.size() - E.size());
-			set_difference(terminals.begin(), terminals.end(), E.begin(), E.end(), diff.begin());
-			u = min(u, S[make_pair(v, E)] + S[make_pair(v, diff)]);
-		}
-
-		result = min(result, distMatrix[v][r] + u);
-	}
-
-	return result;
-}
-
 
 void EventReverser::searchValueGraph()
 {
+	timer t;
+
+	set<VGVertex> terminals;
+	foreach (VGVertex v, valuesToRestore_)
+		terminals.insert(v);
+	SteinerTreeBuilder builder;
+	builder.buildSteinerTree(valueGraph_, root_, terminals);
+
+
+#if 0
+	
 	// First, collect all operator nodes.
 	vector<VGVertex> opNodes;
 	map<VGVertex, pair<VGVertex, set<VGVertex> > > dependencesMap;
@@ -725,17 +571,17 @@ void EventReverser::searchValueGraph()
 			opNodes.push_back(*v);
 
 			// Find the dependence.
-			dependencesMap[*v].first = source(*(in_edges(*v, valueGraph_).first), valueGraph_);
-			boost::graph_traits<ValueGraph>::out_edge_iterator e, f;
-			for (tie(e, f) = out_edges(*v, valueGraph_); e != f; ++e)
-				dependencesMap[*v].second.insert(target(*e, valueGraph_));
+			dependencesMap[*v].first = target(*(out_edges(*v, valueGraph_).first), valueGraph_);
+			boost::graph_traits<ValueGraph>::in_edge_iterator e, f;
+			for (tie(e, f) = in_edges(*v, valueGraph_); e != f; ++e)
+				dependencesMap[*v].second.insert(source(*e, valueGraph_));
 		}
 	}
 
-	for (size_t i = opNodes.size(); i >= 0 ; --i)
+	for (int i = opNodes.size(); i >= 0 ; --i)
 	//for (size_t i = 0; i <= opNodes.size(); ++i)
 	{
-		vector<vector<int> > combs = GenerateCombination(opNodes.size(), i);
+		vector<vector<int> > combs = generateCombination(opNodes.size(), i);
 
 		// for each combination
 		foreach (vector<int>& comb, combs)
@@ -779,20 +625,19 @@ NEXT:
 				terminals.insert(v);
 			foreach (int k, comb)
 			{
-				boost::graph_traits<ValueGraph>::out_edge_iterator e, f;
-				for (tie(e, f) = out_edges(opNodes[k], vg); e != f; ++e)
-					terminals.insert(target(*e, vg));
+				boost::graph_traits<ValueGraph>::in_edge_iterator e, f;
+				for (tie(e, f) = in_edges(opNodes[k], vg); e != f; ++e)
+					terminals.insert(source(*e, vg));
 			}
 
 			for (size_t j = 0; j < opNodes.size(); ++j)
 			{
 				if (find(comb.begin(), comb.end(), j) != comb.end())
 				{
-					VGEdge e = *(in_edges(opNodes[j], vg).first);
-					vg[add_edge(source(e, vg), root_, vg).first] = vg[e];
+					VGEdge e = *(out_edges(opNodes[j], vg).first);
+					vg[add_edge(root_, target(e, vg), vg).first] = vg[e];
 				}
 				clear_vertex(opNodes[j], vg);
-				//remove_vertex(opNodes[j], vg);
 			}
 
 #if 0
@@ -825,13 +670,28 @@ NEXT:
 			for (tie(e, f) = boost::edges(vg); e != f; ++e)
 				weightMap[*e] = vg[*e]->cost;
 
-			int res = SteinerTree<ValueGraph, VGVertex, associative_property_map<map<VGEdge, int> > >
-				(vg, root_, terminals, associative_property_map<map<VGEdge, int> >(weightMap));
+#if 1
+//			int res = SteinerTree<ValueGraph, VGVertex, associative_property_map<map<VGEdge, int> > >
+//				(vg, root_, terminals, associative_property_map<map<VGEdge, int> >(weightMap));
+			SteinerTreeBuilder builder;
+			builder.buildSteinerTree(valueGraph_, root_, terminals);
 
-			cout << i << ' ' << comb.size() << ' ' << res << endl;
+			//cout << i << ' ' << comb.size() << ' ' << dist << endl;
+#else
+			typedef SteinerTreeFinder<ValueGraph, associative_property_map<map<VGEdge, int> > > STFinder;
+			STFinder finder(vg, root_, terminals, (int)(log((float)terminals.size()) / log(2.f) + 0.5f), weightMap);
+			STFinder::SteinerTreeType steinerTree;
+			int dist;
+			tie(steinerTree, dist) = finder.GetSteinerTree();
+			cout << i << ' ' << comb.size() << ' ' << dist << endl;
+#endif
 			//getchar();
 		}
 	}
+
+#endif
+
+	cout << "Time used: " << t.elapsed() << endl;
 }
 
 #endif
