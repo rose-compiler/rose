@@ -12,7 +12,7 @@ function runBuildStep {
 ####################################################################################
     if [ $# -lt 1 -o $# -gt 2 -o \
         !\( $1 == "make" -o $1 == "make-install" -o $1 == "make-installcheck" -o \
-            $1 == "make-check" -o $1 == "make-distcheck" -o $1 == "make-docs"\) ]; then
+            $1 == "make-check" -o $1 == "make-distcheck" -o $1 == "make-docs" \) ]; then
         echo "Usage: runBuildStep make|make-check|make-distcheck|make-docs [spewAnalysis-outputFile]" 
         exit 1;
     elif [ $# -eq 2 ]; then
