@@ -59,7 +59,7 @@ cd ROSE-build
 
 # TODO: build and run tests
 
-case "{$ROSE_TEST_XTENSA_CORE}" in
+case "${$ROSE_TEST_XTENSA_CORE}" in
 "DC_D_233L"|"DC_D_108mini"|"DC_D_570T"|"DC_D_330HiFi"|\
 "DC_D_106micro"|"XRC_D2SA"|"XRC_D2MR"|"DC_D_212GP"|"DC_D_545CK")
 
