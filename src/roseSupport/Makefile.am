@@ -13,7 +13,8 @@ libroseSupportSources = \
      roseTranslators.C \
      utility_functions.C \
      memoryUsage.C \
-     stringify.C
+     stringify.C \
+     threadSupport.C
 
 # The stringify.h and stringify.C files contain functions for converting an enum constant into a string.
 # This should probably also depend on all the source files that contain enum definitions.
