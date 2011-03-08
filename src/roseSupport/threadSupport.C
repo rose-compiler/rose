@@ -158,7 +158,7 @@ RTS_Message::output_lines(const char *s)
     while (s && *s) {
         if (sol)
             prefix();
-        char *t = strchr(s, '\n');
+        const char *t = strchr(s, '\n');
         if (t) {
             fwrite(s, (t+1)-s, 1, f);
             sol = true;
