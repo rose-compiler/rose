@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# DO NOT DISABLE without first checking with a ROSE core developer
 my $desc = <<EOF;
 Some developers find it annoying when source files contain exceedingly
 long lines because either the lines wrap around and make indentation less

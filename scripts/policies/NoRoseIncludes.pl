@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# DO NOT DISABLE without first checking with a ROSE core developer
 my $desc = <<EOF;
 Header files which are part of ROSE should not include "rose.h", "sage3.h", or
 "sage3basic.h".  If you need functionality from these three headers then
