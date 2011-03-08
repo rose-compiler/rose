@@ -444,7 +444,7 @@ make-docs)
     make -j${NUM_PROCESS} -C src/
     make -j${NUM_PROCESS} -C tutorial/
     make -j${NUM_PROCESS} -C projects/UpcTranslation/
-    make -j24 -C tests/ testAnalysis
+    make -j${NUM_PROCESS} -C tests/ testAnalysis
 
     runBuildStep make-docs
 
