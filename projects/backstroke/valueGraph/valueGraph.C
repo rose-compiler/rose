@@ -52,7 +52,7 @@ void EventReverser::buildValueGraph(SgFunctionDefinition* funcDef)
 	vector<SgNode*> nodes = BackstrokeUtility::querySubTree<SgNode>(funcDef);
 	foreach (SgNode* node, nodes)
 	{
-		cout << "Build value graph node for: " << node->class_name() << endl;
+		cout << node->class_name() << endl;
 		
 		// Statement case: variable declaration.
 		if (SgStatement* stmt = isSgStatement(node))
@@ -63,7 +63,6 @@ void EventReverser::buildValueGraph(SgFunctionDefinition* funcDef)
 				{
 					SgInitializer* initalizer = initName->get_initializer();
 
-					// If the variable is not initialized.
 					if (initalizer == NULL)
 					{
 						setNewDefNode(initName, nullVertex());
@@ -72,7 +71,6 @@ void EventReverser::buildValueGraph(SgFunctionDefinition* funcDef)
 					{
 						SgExpression* operand = assignInit->get_operand();
 
-						// Find the correct vertex which defines the variable.
 						ROSE_ASSERT(nodeVertexMap_.count(operand) > 0);
 						VGVertex rhsVertex = nodeVertexMap_.find(operand)->second;
 						
@@ -80,7 +78,7 @@ void EventReverser::buildValueGraph(SgFunctionDefinition* funcDef)
 					}
 					else
 					{
-						cout << "The initializer: " << initalizer->class_name() << endl;
+						cout << initalizer->class_name() << endl;
 						ROSE_ASSERT(!"Can only deal with assign initializer now!");
 					}
 				}
@@ -420,7 +418,8 @@ void EventReverser::setNewDefNode(SgNode* defNode, VGVertex useVertex)
 			VGVertex newVertex = addValueGraphNode(new VariableNode(var), defNode);
 			addValueGraphEdge(newVertex, useVertex);
 
-			// Update the var to vertex map.
+			// Update tables.
+			nodeVertexMap_[defNode] = newVertex;
 			varVertexMap_[var] = newVertex;
 		}
 	}
@@ -429,7 +428,8 @@ void EventReverser::setNewDefNode(SgNode* defNode, VGVertex useVertex)
 		// A variable is declared but not defined.
 		VGVertex newVertex = addValueGraphNode(new VariableNode(var), defNode);
 
-		// Update the var to vertex map.
+		// Update tables.
+		nodeVertexMap_[defNode] = newVertex;
 		varVertexMap_[var] = newVertex;
 	}
 }

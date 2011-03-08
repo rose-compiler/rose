@@ -47,6 +47,7 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2011_08.upc \
    test2011_09.upc
 
+
 #upc_XXXsizeof() has two issues:
 # 1. They are evaluated by EDG, operators are not preserved in EDG's IL
 # 2. EDG 3.3 get wrong evaluation values,  EDG 3.10 fixes the bug though.
@@ -69,7 +70,7 @@ if ROSE_USE_NEW_EDG_INTERFACE
 # JJW (12/15/2008): Force C99 mode so we can have declarations in the initializers of forall statements
 ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep --edg:upc --edg:c99
 else
-ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep -rose:UPC -rose:verbose 0
+ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:skipfinalCompileStep -rose:upc_threads 1 
 #ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep --edg:upc
 endif
 #ROSE_FLAGS = --edg:no_warnings -w --edg:restrict --edg:upc -rose:verbose 3
@@ -78,7 +79,7 @@ PASSING_TEST_Output = $(addprefix rose_,${TESTCODES})
 TEST_Output = $(addprefix rose_,${ALL_TESTCODES})
 
 $(TEST_Output): ../../testTranslator $(srcdir)/$(@:rose_%=%)
-	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/$(@:rose_%=%)
+	../../testTranslator -rose:UPC $(ROSE_FLAGS) -c $(srcdir)/$(@:rose_%=%)
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
@@ -142,7 +143,7 @@ include $(top_srcdir)/config/QMTest_makefile.inc
 # DQ (9/15/2010): Moved UPC standard header files to be included automatically (moved to the ROSE compiler include directory).
 # put the headers here for now. TODO: Move them to a better place
 # EXTRA_DIST = $(ALL_TESTCODES) upc.h upc_relaxed.h upc_strict.h upc_collective.h
-EXTRA_DIST = $(ALL_TESTCODES) 
+EXTRA_DIST = $(ALL_TESTCODES)  $(UPCXX_TESTCODES)
 
 check-local:
 	@echo "Tests for UPC examples."
