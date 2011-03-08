@@ -55,6 +55,7 @@ vector<vector<int> > generateCombination(int m, int n)
 	return result;
 }
 
+const int SteinerTreeBuilder::INTMAX = INT_MAX / 3;
 
 int SteinerTreeBuilder::buildSteinerTree(
 	const ValueGraph& valueGraph,

@@ -35,7 +35,7 @@ struct SteinerTreeBuilder
 	//Graph valueGraph;
 	//std::set<Vertex> terminals;
 
-	static const int INTMAX = INT_MAX / 3;
+	static const int INTMAX;// = INT_MAX / 3;
 
 	int& get(Table& t, Vertex v, const std::vector<Vertex>& vertices)
 	{
