@@ -1,4 +1,4 @@
-# Makefile for an x86 simulator called "sandbox". At this time the simulator is highly Linux-specific.  On platforms other
+# Makefile for an x86 simulator called "x86sim". At this time the simulator is highly Linux-specific.  On platforms other
 # than Linux, this simulator is simply a main() that prints an error message and exits.
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
@@ -15,29 +15,36 @@ TEST_TARGETS =
 #  DOCUMENTATION, CONFIGURATION, ETC
 ###############################################################################################################################
 
-EXTRA_DIST += README x86sim.conf test_status.txt
+EXTRA_DIST += README test_status.txt syscall_tests.conf pthread_tests.conf
 
 ###############################################################################################################################
 #  PROGRAMS
 ###############################################################################################################################
 
-# The old simulator, which uses ROSE's disassembler, but not ROSE's ability to parse ELF containers. This is built but
-# not tested.  It is being replaced by the new simulator, x86sim.
-noinst_PROGRAMS += sandbox
-include_HEADERS += mymemory.h simulate.h
-sandbox_SOURCES = emulator.C simulate.C linuxcalls.C elfload.C
-sandbox_CPPFLAGS = $(ROSE_INCLUDES) -UDEBUG
-sandbox_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-
 # The new simulator, which uses ROSE interfaces where possible.  The rest of this makefile deals only with this new simulator.
 noinst_PROGRAMS += x86sim
-include_HEADERS += x86print.h
-x86sim_SOURCES = x86sim.C x86print.C
+include_HEADERS +=				\
+	x86sim.h				\
+	x86print.h				\
+	RSIM_Common.h				\
+	RSIM_Process.h				\
+	RSIM_SemanticPolicy.h			\
+	RSIM_Simulator.h			\
+	RSIM_Templates.h			\
+	RSIM_Thread.h
+x86sim_SOURCES =				\
+	x86sim.C				\
+	x86print.C				\
+	RSIM_Common.C				\
+	RSIM_Process.C				\
+	RSIM_SemanticPolicy.C			\
+	RSIM_Simulator.C			\
+	RSIM_Thread.C
 x86sim_CPPFLAGS = $(ROSE_INCLUDES) -DX86_VDSO_PATH_1='"$(srcdir)"' -DX86_VDSO_PATH_2='"$(include_dir)"'
 x86sim_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
 ###############################################################################################################################
-#  TEST INPUTS
+#  SYSTEM CALL TESTS
 ###############################################################################################################################
 
 # Source and executables for test inputs. The inputs are 32-bit executables. They come in three flavors depending
@@ -369,6 +376,48 @@ SYS_TEST_INPUTS_TS_SRC = \
 
 
 # These cannot be run reliably (at least not concurrently with other tests.
+# This variable is unused, but the scripts/policies/UnusedSources policy picks up these names to make these
+# otherwise unused fails as used.
+TEST_INPUTS_FAILING = \
+		   $(srcdir)/tests/syscall_tst.117.msgget.03.c \
+		   $(srcdir)/tests/syscall_tst.117.shmget.03.c \
+		   $(srcdir)/tests/syscall_tst.78.2.c          \
+		   $(srcdir)/tests/syscall_tst.95.c 	       \
+		   $(srcdir)/tests/syscall_tst.117.msgctl.06.c \
+		   $(srcdir)/tests/syscall_tst.117.msgctl.07.c \
+		   $(srcdir)/tests/syscall_tst.117.msgget.03.c \
+		   $(srcdir)/tests/syscall_tst.117.msgget.04.c \
+		   $(srcdir)/tests/syscall_tst.117.msgrcv.02.c \
+		   $(srcdir)/tests/syscall_tst.117.msgsnd.02.c \
+		   $(srcdir)/tests/syscall_tst.117.semctl.02.c \
+		   $(srcdir)/tests/syscall_tst.117.semctl.03.c \
+		   $(srcdir)/tests/syscall_tst.117.semctl.04.c \
+		   $(srcdir)/tests/syscall_tst.117.semget.02.c \
+		   $(srcdir)/tests/syscall_tst.117.semop.02.c  \
+		   $(srcdir)/tests/syscall_tst.117.shmat.02.c  \
+		   $(srcdir)/tests/syscall_tst.117.shmat.03.c  \
+		   $(srcdir)/tests/syscall_tst.117.shmctl.02.c \
+		   $(srcdir)/tests/syscall_tst.117.shmctl.03.c \
+		   $(srcdir)/tests/syscall_tst.117.shmget.03.c \
+		   $(srcdir)/tests/syscall_tst.117.shmget.04.c \
+		   $(srcdir)/tests/syscall_tst.117.shmget.05.c \
+		   $(srcdir)/tests/syscall_tst.195.1.c	       \
+		   $(srcdir)/tests/syscall_tst.195.2.c	       \
+		   $(srcdir)/tests/syscall_tst.195.3.c	       \
+		   $(srcdir)/tests/syscall_tst.196.2.c	       \
+		   $(srcdir)/tests/syscall_tst.196.3.c	       \
+		   $(srcdir)/tests/syscall_tst.221.18.c	       \
+		   $(srcdir)/tests/syscall_tst.83.3.c	       \
+		   $(srcdir)/tests/syscall_tst.99.3.c	       \
+		   $(srcdir)/tests/syscall_tst.117.msgctl.09.c \
+		   $(srcdir)/tests/syscall_tst.117.msgctl.10.c \
+		   $(srcdir)/tests/syscall_tst.117.msgctl.11.c \
+		   $(srcdir)/tests/syscall_tst.117.semctl.06.c \
+		   $(srcdir)/tests/syscall_tst.221.14.c	       \
+		   $(srcdir)/tests/syscall_tst.221.15.c	       \
+		   $(srcdir)/tests/syscall_tst.140.1.c
+
+#	Comments about $(TEST_INPUTS_FAILING) and why they're commented out.
 #		   $(srcdir)/syscall_tests/syscall_tst.117.msgget.03.c
 #		   $(srcdir)/syscall_tests/syscall_tst.117.shmget.03.c
 #  			Tries to create message queues or shared memory segments until all resources are exhausted in order
@@ -482,9 +531,9 @@ $(SYS_TEST_INPUTS_NM): %: $(srcdir)/syscall_tests/%.c
 	@echo "  CC32    $@"
 	@$(CC) $(CFLAGS32) -g -I$(srcdir)/syscall_tests -Wall -o $@ $^ 
 
-# Target to manually build the test inputs. (Not used internally)
-.PHONY: test_inputs
-test_inputs: $(SYS_TEST_INPUTS)
+# Target to manually build the syscall test inputs. (Not used internally)
+.PHONY: sys_test_inputs
+sys_test_inputs: $(SYS_TEST_INPUTS)
 
 
 # The test support library. These will not be generated if ENABLE_I386 is not defined.
@@ -510,9 +559,25 @@ $(IPC_SUPPORT_OBJ): %.o: $(srcdir)/syscall_tests/%.c
 	@$(CC) -m32 -g -I$(srcdir)/syscall_tests -Wall -o $@ -c $^
 MOSTLYCLEANFILES += libipc.a
 
+# Test targets are test names suffixed with ".passed" (but when a test fails it produces ".failed" instead).
+# Each target runs "x86sim" on one of the TEST_INPUT files. Exit status determines success or failure.
+# Test targets must be 32-bit x86; if we don't have that capability then the tests are not run.
+if ENABLE_I386
+SYS_TEST_TARGETS = $(addsuffix .passed, $(SYS_TEST_INPUTS))
+$(SYS_TEST_TARGETS): %.passed: % $(srcdir)/syscall_tests.conf x86sim
+	@$(RTH_RUN) INPUT=./$< $(srcdir)/syscall_tests.conf $@
+else
+SYS_TEST_TARGETS = warn_no_tests
+warn_no_tests:
+	@echo "  NOTE    x86sim testing is disabled (no i386 support)"
+endif
+MOSTLYCLEANFILES += $(SYS_TEST_TARGETS) $(patsubst %.passed, %.failed, $(SYS_TEST_TARGETS))
+
+# Main syscall testing target, on which "make check" depends.
+check-syscalls:  $(SYS_TEST_TARGETS)
 
 ###############################################################################################################################
-#  PTHREAD THREADS TESTS
+#  PTHREAD TESTS
 ###############################################################################################################################
 
 PTHREAD_TEST_INPUTS_SRC = \
@@ -581,7 +646,6 @@ PTHREAD_TEST_INPUTS_SRC = \
 		    $(srcdir)/pthread_tests/pthread_barrier_wait.2-1.c \
 		    $(srcdir)/pthread_tests/pthread_barrier_wait.3-1.c \
 		    $(srcdir)/pthread_tests/pthread_barrier_wait.3-2.c \
-		    $(srcdir)/pthread_tests/pthread_barrier_wait.6-1.c \
 		    $(srcdir)/pthread_tests/pthread_cancel.1-1.c \
 		    $(srcdir)/pthread_tests/pthread_cancel.1-2.c \
 		    $(srcdir)/pthread_tests/pthread_cancel.1-3.c \
@@ -617,10 +681,8 @@ PTHREAD_TEST_INPUTS_SRC = \
 		    $(srcdir)/pthread_tests/pthread_condattr_setpshared.1-2.c \
 		    $(srcdir)/pthread_tests/pthread_condattr_setpshared.2-1.c \
 		    $(srcdir)/pthread_tests/pthread_cond_broadcast.1-1.c \
-		    $(srcdir)/pthread_tests/pthread_cond_broadcast.1-2.c \
 		    $(srcdir)/pthread_tests/pthread_cond_broadcast.2-1.c \
 		    $(srcdir)/pthread_tests/pthread_cond_broadcast.2-2.c \
-		    $(srcdir)/pthread_tests/pthread_cond_broadcast.2-3.c \
 		    $(srcdir)/pthread_tests/pthread_cond_broadcast.4-1.c \
 		    $(srcdir)/pthread_tests/pthread_cond_broadcast.4-2.c \
 		    $(srcdir)/pthread_tests/pthread_cond_destroy.1-1.c \
@@ -652,7 +714,6 @@ PTHREAD_TEST_INPUTS_SRC = \
 		    $(srcdir)/pthread_tests/pthread_cond_timedwait.4-3.c \
 		    $(srcdir)/pthread_tests/pthread_cond_wait.1-1.c \
 		    $(srcdir)/pthread_tests/pthread_cond_wait.2-1.c \
-		    $(srcdir)/pthread_tests/pthread_cond_wait.2-2.c \
 		    $(srcdir)/pthread_tests/pthread_cond_wait.2-3.c \
 		    $(srcdir)/pthread_tests/pthread_cond_wait.3-1.c \
 		    $(srcdir)/pthread_tests/pthread_cond_wait.4-1.c \
@@ -710,7 +771,6 @@ PTHREAD_TEST_INPUTS_SRC = \
 		    $(srcdir)/pthread_tests/pthread_join.4-1.c \
 		    $(srcdir)/pthread_tests/pthread_join.5-1.c \
 		    $(srcdir)/pthread_tests/pthread_join.6-2.c \
-		    $(srcdir)/pthread_tests/pthread_join.6-3.c \
 		    $(srcdir)/pthread_tests/pthread_key_create.1-1.c \
 		    $(srcdir)/pthread_tests/pthread_key_create.1-2.c \
 		    $(srcdir)/pthread_tests/pthread_key_create.2-1.c \
@@ -754,7 +814,6 @@ PTHREAD_TEST_INPUTS_SRC = \
 		    $(srcdir)/pthread_tests/pthread_mutexattr_setpshared.3-1.c \
 		    $(srcdir)/pthread_tests/pthread_mutexattr_setpshared.3-2.c \
 		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.1-1.c \
-		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.2-1.c \
 		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.3-1.c \
 		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.3-2.c \
 		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.3-3.c \
@@ -906,6 +965,12 @@ PTHREAD_TEST_INPUTS_SRC = \
 #		    $(srcdir)/pthread_tests/pthread_cond_init.4-1.c \
 #		    $(srcdir)/pthread_tests/pthread_mutex_trylock.1-1.c \
 #		    $(srcdir)/pthread_tests/pthread_mutex_init.5-1.c \
+#		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.2-1.c \
+#		    $(srcdir)/pthread_tests/pthread_barrier_wait.6-1.c \
+#		    $(srcdir)/pthread_tests/pthread_join.6-3.c \
+#		    $(srcdir)/pthread_tests/pthread_cond_wait.2-2.c \
+#		    $(srcdir)/pthread_tests/pthread_cond_broadcast.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_cond_broadcast.2-3.c \
 #
 # no main function: 
 #		    $(srcdir)/pthread_tests/pthread_once.4-1.c \
@@ -967,71 +1032,51 @@ PTHREAD_TEST_INCLUDES= \
 EXTRA_DIST += ${PTHREAD_TEST_INPUTS_SRC} ${PTHREAD_TEST_INCLUDES}
 
 PTHREAD_TEST_INPUTS = $(basename $(notdir $(PTHREAD_TEST_INPUTS_SRC)))
+MOSTLYCLEANFILES += $(PTHREAD_TEST_INPUTS) $(addsufix .o, $(PTHREAD_TEST_INPUTS))
+
+
 $(PTHREAD_TEST_INPUTS): %: $(srcdir)/pthread_tests/%.c
 	@echo "  CC32    $@"
 	@$(CC) -m32 -g -I$(srcdir)/pthread_tests -Wall -o $@ $^ -lpthread -lrt
- 
+
 # Target to manually build the test inputs. (Not used internally)
-.PHONY: test_inputs_pthread
-test_inputs_pthread: $(PTHREAD_TEST_INPUTS)
+.PHONY: pthread_test_inputs
+pthread_test_inputs: $(PTHREAD_TEST_INPUTS)
+
 # Liao 2/11/2011, ensure PTHREAD_TEST_TARGETS = warn_no_tests on MAC
 # The assignment of PTHREAD_TEST_TARGETS must be in the same if -statement.
 # Without this, the order of this statement and the following if-ENABLE_I386 may be rearranged on MAC
 if ENABLE_I386
 PTHREAD_TEST_TARGETS = $(addsuffix .passed, $(PTHREAD_TEST_INPUTS))
-MOSTLYCLEANFILES += $(patsubst %.passed, %.failed, $(PTHREAD_TEST_TARGETS)) \
-                    $(addsuffix .o, $(PTHREAD_TEST_INPUTS)) \
-	 	    $(addsuffix .o, $(basename $(notdir $(PTHREAD__TEST_SUPPORT_SRC))))
-
-$(PTHREAD_TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
-	@$(RTH_RUN) INPUT=./$< $(srcdir)/x86sim.conf $@
-
-
+$(PTHREAD_TEST_TARGETS): %.passed: % $(srcdir)/pthread_tests.conf x86sim
+	@$(RTH_RUN) INPUT=./$< $(srcdir)/pthread_tests.conf $@
 else
-
+# warn_no_tests was already defined in the "SYSTEM CALL TESTS" section of this makefile
 PTHREAD_TEST_TARGETS = warn_no_tests
-
 endif
-
+MOSTLYCLEANFILES += $(PTHREAD_TEST_TARGETS) $(patsubst %.passed, %.failed, $(PTHREAD_TEST_TARGETS))
 
 
 check-pthread:  $(PTHREAD_TEST_TARGETS)
-	@$(RTH_STATS)
-
 
 
 ###############################################################################################################################
-#  TESTS
+# Misc targets
 ###############################################################################################################################
 
-# Test targets are test names suffixed with ".passed" (but when a test fails it produces ".failed" instead).
-# Each target runs "x86sim" on one of the TEST_INPUT files. Exit status determines success or failure.
-# Test targets must be 32-bit x86; if we don't have that capability then the tests are not run.
-if ENABLE_I386
-SYS_TEST_TARGETS = $(addsuffix .passed, $(SYS_TEST_INPUTS))
-$(SYS_TEST_TARGETS): %.passed: % $(srcdir)/x86sim.conf x86sim
-	@$(RTH_RUN) INPUT=./$< $(srcdir)/x86sim.conf $@
-else
-SYS_TEST_TARGETS = warn_no_tests
-warn_no_tests:
-	@echo "  NOTE    x86sim testing is disabled (no i386 support)"
-endif
+# Conveniently build all test inputs in case we want to run some manually
+.PHONY: test-inputs
+test-inputs: $(SYS_TEST_INPUTS) $(PTHREAD_TEST_INPUTS)
 
-check-syscalls:  $(SYS_TEST_TARGETS)
+.PHONY: run-tests
+run-tests: check-syscalls check-pthread
 	@$(RTH_STATS)
 
-MOSTLYCLEANFILES += $(SYS_TEST_TARGETS) $(patsubst %.passed, %.failed, $(SYS_TEST_TARGETS))
-
-check-local:
-	echo "This project is excluded from make check due to random hanging problem"
-#check-local: $(PTHREAD_TEST_TARGETS)  $(SYS_TEST_TARGETS)
-#	@$(RTH_STATS)
-
-run-tests: $(PTHREAD_TEST_TARGETS)  $(SYS_TEST_TARGETS)
-	@$(RTH_STATS)
+check-local:  #run-tests
+	@echo "The simulator project is excluded from make check for now due to random hanging problems."
+	@echo "Run 'make run-tests' in $(pwd) instead."
 
 # "tmp-sim" is the temp directory used to run the tests. See x86sim.conf.
 clean-local:
-	if [ -d tmp-sim ]; then chmod -f a+rwx -R tmp-sim; fi
+	-chmod -f -R a+rwx tmp-sim
 	rm -rf tmp-sim x-core.rose test-file-fchown32
-	rm -f $(PTHREAD_TEST_INPUTS) $(PTHREAD_TEST_TARGETS) 

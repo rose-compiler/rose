@@ -212,6 +212,7 @@ dnl build using ROSE)
   AC_DEFINE_UNQUOTED([BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER],$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER,[Minor version number of backend Fortran compiler.])
 
 ###################################################################################################
+# Backend Compiler Support
 # TOO (2/15/2011): TODO: create separate macro call to check cross-compilation
     IS_ALTERNATE_BACKEND_C_CROSS_COMPILER=false
     if test "x$with_alternate_backend_C_compiler" != x; then
@@ -259,6 +260,7 @@ if test "x$BACKEND_C_COMPILER_NAME" == "xxt-xcc"; then
 else
   AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, false)
 fi
+
 ###################################################################################################
 ])
 
