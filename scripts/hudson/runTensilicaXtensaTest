@@ -1,5 +1,7 @@
 #!/bin/sh -ex
 
+source scripts/hudson/runBuildStep.sh
+
 # Output the name of the machine where the build is being run (helpful for debugging).
 machine_name=`uname -n`
 start_time=`date`
@@ -56,8 +58,6 @@ cd ROSE-build
 
 
 # TODO: build and run tests
-pwd
-source ./runBuildStep.sh
 
 case "{$ROSE_TEST_BUILD_STYLE}" in
 "DC_D_233L"|"DC_D_108mini"|"DC_D_570T"|"DC_D_330HiFi"|\
