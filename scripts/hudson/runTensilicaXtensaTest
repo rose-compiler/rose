@@ -54,9 +54,6 @@ rm -rf ROSE-build
 mkdir ROSE-build
 cd ROSE-build
 
-../configure --prefix=`pwd`/${ROSE_TEST_INSTALL_PREFIX} ${CONFIGURE_FLAGS}
-
-
 # TODO: build and run tests
 
 case "${ROSE_TEST_XTENSA_CORE}" in
@@ -64,7 +61,7 @@ case "${ROSE_TEST_XTENSA_CORE}" in
 "DC_D_106micro"|"XRC_D2SA"|"XRC_D2MR"|"DC_D_212GP"|"DC_D_545CK")
 
     export XTENSA_CORE=${ROSE_TEST_XTENSA_CORE}   
-
+    ../configure --prefix=`pwd`/${ROSE_TEST_INSTALL_PREFIX} ${CONFIGURE_FLAGS}
     runBuildStep make
     runBuildStep make-check
     runBuildStep make-install
