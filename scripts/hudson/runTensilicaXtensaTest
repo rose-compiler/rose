@@ -56,7 +56,7 @@ cd ROSE-build
 
 
 # TODO: build and run tests
-source runBuildStep.sh
+source scripts/hudson/runBuildStep.sh
 
 case "{$ROSE_TEST_BUILD_STYLE}" in
 "DC_D_233L"|"DC_D_108mini"|"DC_D_570T"|"DC_D_330HiFi"|\
