@@ -74,8 +74,7 @@ function runSpewAnalysis {
 
       # Filter out the legitimate lines specific to compilation and linking (filter compile, links, and Qt specific tools).
       echo "Building the $filteredFile file"
-      grep -v "Entering directory" $inputFile | grep -v "Leaving directory" | grep -v "COMPILE" | grep -v "LINK" | grep -v "Qt-MOC" | grep -v "Qt-RCC"
- | grep -v "Qt-UIC" > $filteredFile
+      grep -v "Entering directory" $inputFile | grep -v "Leaving directory" | grep -v "COMPILE" | grep -v "LINK" | grep -v "Qt-MOC" | grep -v "Qt-RCC" | grep -v "Qt-UIC" > $filteredFile
       echo "Built $filteredFile"
       grep -n "Making all in " $filteredFile | ../scripts/checkMakeSpew.pl | tee makeSpewLineCount.txt
       # DQ (10/2/2010): Added test for parallelism of build system.
