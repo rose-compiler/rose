@@ -69,6 +69,7 @@ case "{$ROSE_TEST_BUILD_STYLE}" in
     runBuildStep make-check
     runBuildStep make-install
     runBuildStep make-installcheck
+ ;;
 
 *)
    echo "ERROR: unrecognized Xtensa Core = $ROSE_TEST_XTENSA_CORE"
