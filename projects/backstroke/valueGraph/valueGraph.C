@@ -133,7 +133,7 @@ void EventReverser::buildValueGraph(SgFunctionDefinition* funcDef)
 			// Value expression.
 			else if (SgValueExp* valueExp = isSgValueExp(expr))
 			{
-				creatValueNode(expr);
+				creatValueNode(valueExp);
 				//addValueGraphNode(new ValueNode(valueExp), expr);
 			}
 
@@ -264,7 +264,7 @@ void EventReverser::buildValueGraph(SgFunctionDefinition* funcDef)
 		// If the edge is not connected to an operator node, make a reverse copy.
 		if (isOperatorNode(valueGraph_[src]) == NULL &&
 				isOperatorNode(valueGraph_[tar]) == NULL)
-			addValueGraphEdge(src, tar);
+			addValueGraphEdge(src, tar, 0);
 	}
 
 	// Add all state saving edges.
@@ -318,7 +318,7 @@ EventReverser::VGVertex EventReverser::addValueGraphPhiNode(VersionedVariable& v
 			ROSE_ASSERT(varVertexMap_.find(varInPhi) != varVertexMap_.end());
 		}
 
-		addValueGraphEdge(v, varVertexMap_[varInPhi]);
+		addValueGraphEdge(v, varVertexMap_[varInPhi], 0);
 	}
 
 	return v;
@@ -454,7 +454,7 @@ EventReverser::VGVertex EventReverser::creatOperatorNode(
 
 	VGVertex op = addValueGraphNode(new OperatorNode(t));
 
-	addValueGraphEdge(result, op);
+	addValueGraphEdge(result, op, 0);
 	addValueGraphOrderedEdge(op, lhs, 0);
 	addValueGraphOrderedEdge(op, rhs, 1);
 
@@ -468,19 +468,24 @@ void EventReverser::addStateSavingEdges()
 	{
 		ValueGraphNode* node = valueGraph_[*v];
 
-		if (isValueNode(node))
-		{
-			addValueGraphEdge(*v, root_);
-		}
-		else if (isPhiNode(node))
+		if (isPhiNode(node))
 		{
 		}
 		else if (ValueNode* valNode = isValueNode(node))
 		{
-			if (availableValues_.count(*v) > 0)
-				addValueGraphEdge(*v, root_, 0);
-			else 
-				addValueGraphEdge(*v, root_, getCost(valNode->type));
+			int cost = 0;
+			if (!valNode->isAvailable() && availableValues_.count(*v) == 0)
+            {
+                if (valNode->isTemp())
+                    cost = getCost(valNode->type);
+                else
+                {
+                    cost = INT_MAX;
+                    foreach (const VersionedVariable& var, valNode->vars)
+                        cost = min(cost, getCost(var.name.back()->get_type()));
+                }
+            }
+			addValueGraphEdge(*v, root_, cost);
 		}
 	}
 }

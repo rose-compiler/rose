@@ -1,4 +1,4 @@
-#include "valueGraphNode2.h"
+#include "valueGraphNode.h"
 #include <ssa/staticSingleAssignment.h>
 
 #include <boost/lexical_cast.hpp>

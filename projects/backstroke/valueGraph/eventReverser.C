@@ -25,7 +25,7 @@ void EventReverser::buildForwardAndReverseEvent()
 			// If the target is an available node, skip.
 			if (valueGraph_[e]->cost == 0)
 				continue;
-			cout << "State Saving:" << isVariableNode(valueGraph_[tar])->toString() << endl;
+			cout << "State Saving:" << valueGraph_[tar]->toString() << endl;
 		}
 
 

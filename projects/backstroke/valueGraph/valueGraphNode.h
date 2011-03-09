@@ -113,6 +113,8 @@ struct ValueNode : ValueGraphNode
 
 	bool isTemp() const { return vars.empty(); }
 
+	bool isAvailable() const { return valueExp != NULL; }
+
 	SgValueExp* valueExp;
 	SgType* type;
 	std::vector<VersionedVariable> vars;

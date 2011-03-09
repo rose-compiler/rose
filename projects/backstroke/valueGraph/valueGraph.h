@@ -1,7 +1,7 @@
 #ifndef BACKSTROKE_VALUE_GRAPH
 #define BACKSTROKE_VALUE_GRAPH
 
-#include "valueGraphNode2.h"
+#include "valueGraphNode.h"
 #include <ssa/staticSingleAssignment.h>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/bind.hpp>
@@ -128,7 +128,7 @@ private:
 	 *  @param cost The weight of the edge.
 	 *  @returns The new added edge.
 	 */
-	VGEdge addValueGraphEdge(VGVertex src, VGVertex tar, int cost = 0);
+	VGEdge addValueGraphEdge(VGVertex src, VGVertex tar, int cost);
 
 	/** Add a new ordered edge to the value graph.
 	 *
