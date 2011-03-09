@@ -1,5 +1,7 @@
 #include "rose.h"
-#include "RSIM_Simulator.h"
+#include "RSIM_Private.h"
+
+#ifdef ROSE_ENABLE_SIMULATOR
 
 RTS_Message *
 RSIM_SemanticPolicy::tracing(unsigned what) const
@@ -120,3 +122,4 @@ RSIM_SemanticPolicy::load_sr_shadow(X86SegmentRegister sr, unsigned gdt_num)
     ROSE_ASSERT(sr_shadow[sr].present);
 }
 
+#endif /* ROSE_ENABLE_SIMULATOR */
