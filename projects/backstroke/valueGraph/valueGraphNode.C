@@ -1,13 +1,39 @@
-#include "valueGraphNode.h"
+#include "valueGraphNode2.h"
+#include <ssa/staticSingleAssignment.h>
 
+#include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
+
+
+namespace Backstroke
+{
+	
 using namespace std;
 using namespace boost;
 
 #define foreach BOOST_FOREACH
 
 
-namespace Backstroke
+std::string VersionedVariable::toString() const
 {
+	if (name.empty())
+		return "TEMP";
+	return StaticSingleAssignment::varnameToString(name) +
+			"_" + lexical_cast<string>(version);
+}
+
+std::string ValueNode::toString() const
+{
+	if (isTemp())
+		return "TEMP";
+
+	ostringstream os;
+	if (valueExp)
+		os << valueExp->unparseToString() + "\\n";
+	foreach (const VersionedVariable& var, vars)
+		os << var << " ";
+	return os.str();
+}
 
 OperatorNode::OperatorType OperatorNode::getOperatorType(VariantT t)
 {

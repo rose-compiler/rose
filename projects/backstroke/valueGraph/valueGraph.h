@@ -1,7 +1,7 @@
 #ifndef BACKSTROKE_VALUE_GRAPH
 #define BACKSTROKE_VALUE_GRAPH
 
-#include "valueGraphNode.h"
+#include "valueGraphNode2.h"
 #include <ssa/staticSingleAssignment.h>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/bind.hpp>
@@ -96,7 +96,13 @@ private:
 	 *  @param defNode The AST node which is defined.
 	 *  @param useVertex The value graph vertex which defineds the new node.
 	 */
-	void setNewDefNode(SgNode* defNode, VGVertex useVertex);
+	//void setNewDefNode(SgNode* defNode, VGVertex useVertex);
+
+	VGVertex creatValueNode(SgNode* node);
+	VGVertex creatOperatorNode(VariantT t, VGVertex result, VGVertex lhs, VGVertex rhs);
+
+	//void setValue(VGVertex v, SgValueExp* val);
+	void addVariable(VGVertex v, SgNode* node);
 
 	void writeValueGraphNode(std::ostream& out, const VGVertex& node) const
 	{
@@ -111,10 +117,9 @@ private:
 	/** Add a new vertex to the value graph.
 	 *
 	 *  @param newNode A value graph node which will be added.
-	 *  @param sgNode The AST node which maps to the added value graph node.
 	 *  @returns The new added vertex.
 	 */
-	VGVertex addValueGraphNode(ValueGraphNode* newNode, SgNode* sgNode = NULL);
+	VGVertex addValueGraphNode(ValueGraphNode* newNode);
 
 	/** Add a new edge to the value graph.
 	 *
