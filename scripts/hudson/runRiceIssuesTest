@@ -8,8 +8,9 @@ start_time=`date`
 start_time_seconds="$(date +%s)"
 
 # Rice is using GCC 4.4.1 + Boost 1_41_0
-export PATH="${ROSE_TEST_GCC_PATH}/bin:$PATH"
+#export PATH="${ROSE_TEST_GCC_PATH}/bin:$PATH"
 export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="/nfs/apps/mpfr/2.4.1:$LD_LIBRARY_PATH"
 echo "*******************************************************************"
 echo "         Output variables required by Hudson runTest script."
 echo "*******************************************************************"
@@ -62,13 +63,13 @@ cd ROSE-build
 #                --with-alternate_backend_fortran_compiler=/usr/apps/gcc/4.4.1/bin/gfortran \
 #                --with-gfortran=/usr/apps/gcc/4.4.1/bin/gfortran"
 CONFIGURE_FLAGS="\
+  CC=${ROSE_TEST_GCC_PATH}/bin/gcc 
+  CXX=${ROSE_TEST_GCC_PATH}/bin/g++ 
   FC=${ROSE_TEST_GCC_PATH}/bin/gfortran \
   --with-CXX_DEBUG="-g" \
   --with-boost=${ROSE_TEST_BOOST_PATH} \
   --with-alternate_backend_fortran_compiler=${ROSE_TEST_GCC_PATH}/bin/gfortran \
   --with-gfortran=${ROSE_TEST_GCC_PATH}/bin/gfortran"
-#CC=${ROSE_TEST_GCC_PATH}/bin/gcc 
-#CXX=${ROSE_TEST_GCC_PATH}/bin/g++ 
 #--with-java=${ROSE_TEST_JAVA_PATH}
 #--with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib 
 echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
