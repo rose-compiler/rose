@@ -22,8 +22,8 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
    echo "absolutePath_srcdir = ${absolutePath_srcdir}"
 
  # Use the full path name to generate the header from the correctly specified version of the backend compiler
-   mkdir -p "./include-staging/${BACKEND_CXX_COMPILER}_HEADERS"
-   "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${BACKEND_CXX_COMPILER}_HEADERS" "${absolutePath_srcdir}"
+   mkdir -p "./include-staging/${compilerName}_HEADERS"
+   "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}"
 
    echo "BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
    echo "BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
@@ -47,13 +47,13 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
 
  # DQ (9/19/2010): Copy the upc.h header file from the config directory to our include-staging/${BACKEND_CXX_COMPILER}_HEADERS directory.
  # It might be that these should be put into a UPC specific subdirectory (so that the C compiler can't accedentally find them), but this should be discussed.
-   echo "Copying UPC++ header files into ./include-staging/${BACKEND_CXX_COMPILER}_HEADERS directory ..."
-   cp ${srcdir}/config/upc.h ./include-staging/${BACKEND_CXX_COMPILER}_HEADERS
-   cp ${srcdir}/config/upc_io.h ./include-staging/${BACKEND_CXX_COMPILER}_HEADERS
-   cp ${srcdir}/config/upc_relaxed.h ./include-staging/${BACKEND_CXX_COMPILER}_HEADERS
-   cp ${srcdir}/config/upc_strict.h ./include-staging/${BACKEND_CXX_COMPILER}_HEADERS
-   cp ${srcdir}/config/upc_collective.h ./include-staging/${BACKEND_CXX_COMPILER}_HEADERS
-   cp ${srcdir}/config/bupc_extensions.h ./include-staging/${BACKEND_CXX_COMPILER}_HEADERS
+   echo "Copying UPC++ header files into ./include-staging/${compilerName}_HEADERS directory ..."
+   cp ${srcdir}/config/upc.h ./include-staging/${compilerName}_HEADERS
+   cp ${srcdir}/config/upc_io.h ./include-staging/${compilerName}_HEADERS
+   cp ${srcdir}/config/upc_relaxed.h ./include-staging/${compilerName}_HEADERS
+   cp ${srcdir}/config/upc_strict.h ./include-staging/${compilerName}_HEADERS
+   cp ${srcdir}/config/upc_collective.h ./include-staging/${compilerName}_HEADERS
+   cp ${srcdir}/config/bupc_extensions.h ./include-staging/${compilerName}_HEADERS
 
    error_code=$?
    echo "error_code = $error_code"
@@ -95,17 +95,13 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
      EO="-n"
    fi
 
-# TOO (2/10/11): support for CC/CXX environment variables
-# Create path of built headers as though in ${builddir}/include-staging/
-# e.g. /usr/apps/gcc/4.4.1 should be usr/apps/gcc/4.4.1
-BACKEND_CXX_COMPILER_INSTALL_PATH=`echo "${BACKEND_CXX_COMPILER}" | sed 's%^[[~./]]*%%'`
-echo "Backend Cxx Compiler install path: ${BACKEND_CXX_COMPILER_INSTALL_PATH}"
+compilerNameCxx="`basename ${BACKEND_CXX_COMPILER}`"
 
  # Include the directory with the subdirectories of header files
    if test "x$enable_new_edg_interface" = "xyes"; then
      includeString="{`${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} | while read dir; do echo -n \\\"$dir\\\",\ ; done` \"/usr/include\"}"
    else
-	includeString="{\"${BACKEND_CXX_COMPILER_INSTALL_PATH}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${BACKEND_CXX_COMPILER_INSTALL_PATH}_HEADERS"`, `${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} | while read dir; do echo $EO \\\"$dir\\\",$EC\ ; done` \"/usr/include\"}"
+     includeString="{\"${compilerNameCxx}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameCxx}_HEADERS"`, `${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} | while read dir; do echo $EO \\\"$dir\\\",$EC\ ; done` \"/usr/include\"}"
    fi
 
    echo "includeString = $includeString"
@@ -136,8 +132,8 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
    echo "absolutePath_srcdir = ${absolutePath_srcdir}"
 
  # Use the full path name to generate the header from the correctly specified version of the backend compiler
-   mkdir -p "./include-staging/${BACKEND_C_COMPILER}_HEADERS"
-   "${srcdir}/config/create_system_headers" "${BACKEND_C_COMPILER}" "./include-staging/${BACKEND_C_COMPILER}_HEADERS" "${absolutePath_srcdir}"
+   mkdir -p "./include-staging/${compilerName}_HEADERS"
+   "${srcdir}/config/create_system_headers" "${BACKEND_C_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}"
 
    error_code=$?
    echo "error_code = $error_code"
@@ -146,15 +142,15 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
         exit 1
    fi
 
- # DQ (9/15/2010): Copy the upc.h header file from the config directory to our include-staging/${BACKEND_C_COMPILER}_HEADERS directory.
+ # DQ (9/15/2010): Copy the upc.h header file from the config directory to our include-staging/${compilerName}_HEADERS directory.
  # It might be that these should be put into a UPC specific subdirectory (so that the C compiler can't accedentally find them), but this should be discussed.
-   echo "Copying UPC header files into ./include-staging/${BACKEND_C_COMPILER}_HEADERS directory ..."
-   cp ${srcdir}/config/upc.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
-   cp ${srcdir}/config/upc_io.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
-   cp ${srcdir}/config/upc_relaxed.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
-   cp ${srcdir}/config/upc_strict.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
-   cp ${srcdir}/config/upc_collective.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
-   cp ${srcdir}/config/bupc_extensions.h ./include-staging/${BACKEND_C_COMPILER}_HEADERS
+   echo "Copying UPC header files into ./include-staging/${compilerName}_HEADERS directory ..."
+   cp ${srcdir}/config/upc.h ./include-staging/${compilerName}_HEADERS
+   cp ${srcdir}/config/upc_io.h ./include-staging/${compilerName}_HEADERS
+   cp ${srcdir}/config/upc_relaxed.h ./include-staging/${compilerName}_HEADERS
+   cp ${srcdir}/config/upc_strict.h ./include-staging/${compilerName}_HEADERS
+   cp ${srcdir}/config/upc_collective.h ./include-staging/${compilerName}_HEADERS
+   cp ${srcdir}/config/bupc_extensions.h ./include-staging/${compilerName}_HEADERS
 
    error_code=$?
    echo "error_code = $error_code"
@@ -192,17 +188,13 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
      EO="-n"
    fi
 
-# TOO (2/10/11): support for CC/CXX environment variables
-# Create path of built headers as though in ${builddir}/include-staging/
-# e.g. /usr/apps/gcc/4.4.1 should be usr/apps/gcc/4.4.1
-BACKEND_C_COMPILER_INSTALL_PATH=`echo "${BACKEND_C_COMPILER}" | sed 's%^[[~./]]*%%'` 
-echo "Backend C Compiler install path: ${BACKEND_C_COMPILER_INSTALL_PATH}"
+compilerNameC="`basename $BACKEND_C_COMPILER`"
 
  # Include the directory with the subdirectories of header files
    if test "x$enable_new_edg_interface" = "xyes"; then
      includeString="{`${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} | while read dir; do echo -n \\\"$dir\\\",\ ; done` \"/usr/include\"}"
    else
-     includeString="{\"${BACKEND_C_COMPILER_INSTALL_PATH}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${BACKEND_C_COMPILER_INSTALL_PATH}_HEADERS"`, `${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} | while read dir; do echo $EO \\\"$dir\\\",$EC\ ; done` \"/usr/include\"}"
+     includeString="{\"${compilerNameC}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameC}_HEADERS"`, `${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} | while read dir; do echo $EO \\\"$dir\\\",$EC\ ; done` \"/usr/include\"}"
    fi
 
    echo "includeString = $includeString"

@@ -1,13 +1,12 @@
 // This is the file containing the C++ versions of the JNI functions written to interface with ECJ.
 
-
+// Support for calling the Java <--> C/C++ code.
 #include <jni.h>
+
+// What was this?
 #include "JavaParser.h"
 
-// #include <stdio.h>
-// #include <iostream>
-// #include <fstream> 
-
+// Support for the internal ROSE IR classes.
 #include "sage3basic.h"
 
 // DQ (10/14/2010):  This should only be included by source files that require it.
@@ -18,16 +17,10 @@
 // Support functions so that this file can be restricted to be just parser (AST traversal) rules.
 #include "java_support.h"
 
-// #include "fortran_support.h"
-
-
-// extern SgSourceFile* OpenFortranParser_globalFilePointer;
-
-
 /*
  * Class:     JavaParser
  * Method:    cactionCompilationUnitList
- * Signature: (I[Ljava/lang/String;)V
+ * Signature: (java/lang/String;)
  */
 JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *env, jobject, jint, jobjectArray)
    {
@@ -59,7 +52,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *env, 
 /*
  * Class:     JavaParser
  * Method:    cactionCompilationUnitDeclaration
- * Signature: (Ljava/lang/String;)V
+ * Signature: (java/lang/String;)
  */
 JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration (JNIEnv *env, jobject xxx, jstring java_string)
    {

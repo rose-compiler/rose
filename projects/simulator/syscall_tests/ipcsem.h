@@ -26,7 +26,10 @@
 
 #include <errno.h>
 #include <sys/ipc.h>
-//#include <sys/sem.h>
+
+// <sys/sem.h> is required for semctl(), semget(), etc. and related constants (on Debian) as is advertised in
+// the man page for these functions. [RPM 2011-02-04]
+#include <sys/sem.h>
 
 
 #include "test.h"

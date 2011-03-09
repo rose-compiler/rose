@@ -345,11 +345,23 @@ SgAsmCoffSymbolTable::parse()
         throw FormatError("COFF symbol table string table size is less than four bytes");
     p_strtab->extend(strtab_size - sizeof(uint32_t));
 
+    /* Parse symbols until we've parsed the required number or we run off the end of the section. */
     for (size_t i = 0; i < fhdr->get_e_coff_nsyms(); i++) {
-        SgAsmCoffSymbol *symbol = new SgAsmCoffSymbol(fhdr, this, p_strtab, i);
-        i += symbol->get_st_num_aux_entries();
-        p_symbols->get_symbols().push_back(symbol);
+        try {
+            SgAsmCoffSymbol *symbol = new SgAsmCoffSymbol(fhdr, this, p_strtab, i);
+            i += symbol->get_st_num_aux_entries();
+            p_symbols->get_symbols().push_back(symbol);
+        } catch (const ShortRead &e) {
+            fprintf(stderr, "SgAsmCoffSymbolTable::parse: warning: read past end of section \"%s\" [%d]\n"
+                    "    symbol #%zu at file offset 0x%08"PRIx64"\n"
+                    "    skipping %zu symbols (including this one)\n",
+                    get_name()->c_str(), get_id(),
+                    i, e.offset,
+                    fhdr->get_e_coff_nsyms()-i);
+            break;
+        }
     }
+
     return this;
 }
 

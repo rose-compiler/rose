@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# DO NOT DISABLE without first checking with a ROSE core developer
 my $desc = <<EOF;
 ROSE developers predominantly use Unix-like systems for development. These
 systems use the ASCII LF (line feed, '\\n') character for line termination.

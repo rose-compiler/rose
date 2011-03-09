@@ -16,7 +16,7 @@ echo "ROSE_TEST_BUILD_STYLE             = ${ROSE_TEST_BUILD_STYLE}"
 echo "ROSE_TEST_BOOST_PATH              = ${ROSE_TEST_BOOST_PATH}"
 echo "ROSE_TEST_JAVA_PATH               = ${ROSE_TEST_JAVA_PATH}"
 
-echo "Environment variables required for ROSE_TEST_BUILD_STYLE = make/check/install/full"
+echo "Environment variables required for ROSE_TEST_BUILD_STYLE = full"
 echo "ROSE_TEST_QT_PATH                 = ${ROSE_TEST_QT_PATH}"
 echo "ROSE_TEST_SQLITE_PATH             = ${ROSE_TEST_SQLITE_PATH}"
 echo "ROSE_TEST_RTED_PATH               = ${ROSE_TEST_RTED_PATH}"
@@ -158,6 +158,18 @@ fi
 # CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes"
 CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
 
+# The "--enable-i386" configure switch was added in commit f5389299 on 2011-02-06. If this switch is present, then configure will
+# try to determine how to generate 32-bit x86 executables with the C compiler and will fail if such a capability is not
+# possible.  This is the same behavior as previously, except previously the failure didn't occur until we hit a makefile that
+# actually tried to generate an i386 executable.  If "--disable-i386" switch were specified then tests that require i386 input
+# files will not run (and will not cause a make failure).  If neither --enable-i386 nor --disable-i386 are specified then
+# configure will try to determine whether generating i386 is possible and act as if either --enable-i386 or --disable-i386
+# was specified.
+#
+# Since we want the a00-ROSE-from-scratch Hudson tests to fail if configure can't figure out how to generate i386, we explicitly
+# request that i386 support be present by invoking configure with "--enable-i386".   [RPM 2011-02-06]
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-i386"
+
 # Setup the prefix directory so that an install tree can be generated 
 # for use with secondary testing of other projects using ROSE.
 # We want the install tree for all the different versions of ROSE in the 
@@ -173,18 +185,16 @@ else
   OS_MACHINE_LABEL=amd64-linux
 fi
 
-# TOO (2/22/2011): TODO: remove old CONFIGURE_PREFIX_DIR
 # Define the platform specific install directory for ROSE (using same names as in rest of Hudson tests).
 # This directory will be built into the Hudson home directory.
 CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
-#CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
 echo "ROSE install tree will be: $CONFIGURE_PREFIX_DIR"
 
 # Liao 1/6/2010
 # Remove the stale installation tree since the stale headers will be included before updated ones are used.
 rm -rf $CONFIGURE_PREFIX_DIR/*
 
-if test "x$ROSE_TEST_BUILD_STYLE" = "xmake/check/install-full" ; then
+if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
  # echo "This test is forced to exit with an error as part of debugging a subset of the Hudson tests."
  # exit 1
@@ -273,87 +283,98 @@ if test $ROSE_TEST_BUILD_STYLE = edg ; then
 	exit 0
 fi
 
+# Provide a disk usage report to support debugging when Hudson has a problem.
+# echo "Disk usage report #3 (to support debugging when Hudson has a problem):"
+# df /export
+
+# Andreas suggests that the use of "tee" is not passing error through to Hudson.
+# DQ has confirmed that Andreas's point is true for bash but false for tcsh 
+# (where it was originally tested).
+echo "Starting compile step"
+
+start_time_make_seconds="$(date +%s)"
+
 ####################################################################################
 # runBuildStep make|make-check|make-distcheck|make-docs [runSpewAnalysis-outputFile]
 function runBuildStep {
 ####################################################################################
 # FUNCTION CALL VALIDATION AND INITIALIZATIOn 
 ####################################################################################
-	if [ $# -lt 1 -o $# -gt 2 -o \
-		!\( $1 == "make" -o $1 == "make-install" -o $1 == "make-installcheck" -o \
+    if [ $# -lt 1 -o $# -gt 2 -o \
+        !\( $1 == "make" -o $1 == "make-install" -o $1 == "make-installcheck" -o \
             $1 == "make-check" -o $1 == "make-distcheck" -o $1 == "make-docs"\) ]; then
-		echo "Usage: runBuildStep make|make-check|make-distcheck|make-docs [spewAnalysis-outputFile]" 
-		exit 1;
-	elif [ $# -eq 2 ]; then
-		outputFile=$2
-	fi
-	buildStep=`echo $1 | sed 's/-/ /'`
+        echo "Usage: runBuildStep make|make-check|make-distcheck|make-docs [spewAnalysis-outputFile]" 
+        exit 1;
+    elif [ $# -eq 2 ]; then
+        outputFile=$2
+    fi
+    buildStep=`echo $1 | sed 's/-/ /'`
 ####################################################################################
 # EXECUTE BUILD STEP 
 ####################################################################################
-	# Andreas suggests that the use of "tee" is not passing error through to Hudson.
-	# DQ has confirmed that Andreas's point is true for bash but false for tcsh 
-	# (where it was originally tested).
-	echo "Starting $buildStep step"
+    # Andreas suggests that the use of "tee" is not passing error through to Hudson.
+    # DQ has confirmed that Andreas's point is true for bash but false for tcsh 
+    # (where it was originally tested).
+    echo "Starting $buildStep step"
 
-	start_time_seconds="$(date +%s)"
-	if [ $# -eq 2 ]; then
-		${buildStep} -j${NUM_PROCESS} 2>&1 | tee $outputFile
-	else
-		${buildStep} -j${NUM_PROCESS}
-	fi
+    start_time_seconds="$(date +%s)"
+    if [ $# -eq 2 ]; then
+        ${buildStep} -j${NUM_PROCESS} 2>&1 | tee $outputFile
+    else
+        ${buildStep} -j${NUM_PROCESS}
+    fi
 ####################################################################################
 # ERROR CHECKING 
 ####################################################################################
-	# the pipestatus variable is an array that holds the exit status of your last foreground pipeline commands.
-	# we check to see if make failes through this command
-	if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
-		echo "fatal error during '${buildStep}'  , aborting..."
-		# tps : call this line before any exit. It resets the Windows test
-		echo 3 > $win_file
-		exit 3
-	fi
+    # the pipestatus variable is an array that holds the exit status of your last foreground pipeline commands.
+    # we check to see if make failes through this command
+    if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
+        echo "fatal error during '${buildStep}'  , aborting..."
+        # tps : call this line before any exit. It resets the Windows test
+        echo 3 > $win_file
+        exit 3
+    fi
 ####################################################################################
 # SPEW ANALYSIS 
 ####################################################################################
-	if [ $# -eq 2 ]; then
-		runSpewAnalysis $outputFile
-	fi
+    if [ $# -eq 2 ]; then
+        runSpewAnalysis $outputFile
+    fi
 ####################################################################################
 # SUMMARY 
 ####################################################################################
-	echo "Done with $buildStep step"
-	end_time_seconds="$(date +%s)"
-	elapsed_time_seconds="$(expr $end_time_seconds - $start_time_seconds)"
-	echo "***********************************************************************************************************"
-	echo "Elapsed time for '${buildStep}' test: $elapsed_time_seconds sec"
-	echo "***********************************************************************************************************"
+    echo "Done with $buildStep step"
+    end_time_seconds="$(date +%s)"
+    elapsed_time_seconds="$(expr $end_time_seconds - $start_time_seconds)"
+    echo "***********************************************************************************************************"
+    echo "Elapsed time for '${buildStep}' test: $elapsed_time_seconds sec"
+    echo "***********************************************************************************************************"
 }
 
 function runSpewAnalysis {
-	if [ $# -ne 1 ]; then
-		echo "Usage: runSpewAnalysis <filename-to-process>"
-		exit 1;
-	fi
+    if [ $# -ne 1 ]; then
+        echo "Usage: runSpewAnalysis <filename-to-process>"
+        exit 1;
+    fi
 
-	inputFile="$1"
+    inputFile="$1"
 
-	# Now process to count the number of lines of spew.
-	echo "Computing compile time spew"
+    # Now process to count the number of lines of spew.
+    echo "Computing compile time spew"
 #    echo $inputFile | grep -q "check"   
     if [ $inputFile == "make_check_output.txt" ]; then
-	  grep -n "Making check in " $inputFile | ../scripts/checkMakeSpew.pl | tee makeSpewLineCount.txt
+      grep -n "Making check in " $inputFile | ../scripts/checkMakeSpew.pl | tee makeSpewLineCount.txt
     else
       filteredFile="filtered_$inputFile"
 
       # Filter out the legitimate lines specific to compilation and linking (filter compile, links, and Qt specific tools).
       echo "Building the $filteredFile file"
-      grep -v "Entering directory" $inputFile | grep -v "Leaving directory" | grep -v "COMPILE" | grep -v "LINK" | grep -v "Qt-MOC" | grep -v "Qt-RCC" | grep -v "Qt-UIC" > $filteredFile 
+      grep -v "Entering directory" $inputFile | grep -v "Leaving directory" | grep -v "COMPILE" | grep -v "LINK" | grep -v "Qt-MOC" | grep -v "Qt-RCC" | grep -v "Qt-UIC" > $filteredFile
       echo "Built $filteredFile"
       grep -n "Making all in " $filteredFile | ../scripts/checkMakeSpew.pl | tee makeSpewLineCount.txt
       # DQ (10/2/2010): Added test for parallelism of build system.
       echo "Measure Build System Parallelism"
-      ../scripts/checkMakeParallelism.sh ${inputFile} 
+      ../scripts/checkMakeParallelism.sh ${inputFile}
     fi
     echo "Done with compile time spew"
 }
@@ -366,21 +387,9 @@ function printRoseTranslatorVersion {
 }
 
 ####################################################################################
-# MAKE INSTALL 
-#
- # TOO (2/23/2011): Regardless of which build step this machine has to run, it will need an installation of ROSE. 
- # DQ (1/17/2010): Added install so we can have a frequently updated install tree upon which to base secondary 
- # tests (e.g. internal software developed but not distributed with ROSE because it is not mature enough).
- # This also test the install rull, but it is alos run and tested using "make installcheck" as part of the 
- # make distcheck" rule just run (before this step).  This "make install" rule runs in a few seconds and is
- # not a bottleneck to the Hudson tests.
-#   echo "Starting make install step (so we can save a installed copy for secondary tests)"
- #  runBuildStep make-install
-  # runBuildStep make-installcheck
-   #echo "Done with make install step (so we can save a installed copy for secondary tests)"
-
-####################################################################################
+# if test false; then
 ROSE_SPEW_ANALYSIS=yes
+
 
 case "$ROSE_TEST_BUILD_STYLE" in
 "make/check/install-minimal"|"make/check/install-full")
@@ -399,11 +408,9 @@ case "$ROSE_TEST_BUILD_STYLE" in
     runBuildStep make-check $makeCheckOutputFile
     ################################################################################
     # MAKE INSTALL & INSTALLCHECK
-    # TODO: not all machines will run MAKE ... but we need an installation of ROSE on every machine
+    # TODO: merge a10-ROSE-install-test here
     runBuildStep make-install
     runBuildStep make-installcheck
-
-    printRoseTranslatorVersion
  ;;
 
 make-distcheck)
@@ -418,7 +425,7 @@ make-distcheck)
     make -j${NUM_PROCESS} -C src/util/ libroseutil.la
     make -j${NUM_PROCESS} -C src/ROSETTA/src/
     make -j${NUM_PROCESS} -C src/roseSupport/ stringify.h
-    
+
     runBuildStep make-distcheck
 
     # TOO (2/24/2011): Can't printRoseTranslatorVersion: requires librose.la and tests/testAnalysis
@@ -428,7 +435,7 @@ make-distcheck)
  ;;
 
 make-docs)
-    
+
     ################################################################################
     # MAKE DOCS 
     #
@@ -451,7 +458,6 @@ make-docs)
    exit 1;
  ;;
 esac
-
 
 ####################################################################################
 # SUMMARY 
