@@ -1,7 +1,13 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Add Projects that are associated with capabilities that belong to ROSE here
-SUBDIRS = roseHPCT outliner intelPin binaryAnalysis
+SUBDIRS = outliner intelPin binaryAnalysis
+
+# TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
+# gradually enable these tests at a later stage if necessary.
+if !USING_XTENSA_BACKEND_COMPILER
+SUBDIRS += roseHPCT 
+endif
 
 INCLUDES = $(ROSE_INCLUDES)
 
