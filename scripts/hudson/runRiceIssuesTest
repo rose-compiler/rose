@@ -1,0 +1,101 @@
+#!/bin/sh -ex
+
+source scripts/hudson/runBuildStep.sh
+
+# Output the name of the machine where the build is being run (helpful for debugging).
+machine_name=`uname -n`
+start_time=`date`
+start_time_seconds="$(date +%s)"
+
+# Rice is using GCC 4.4.1 + Boost 1_41_0
+export PATH="${ROSE_TEST_GCC_PATH}/bin:$PATH"
+export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:$LD_LIBRARY_PATH"
+echo "*******************************************************************"
+echo "         Output variables required by Hudson runTest script."
+echo "*******************************************************************"
+echo "LD_LIBRARY_PATH                   = $LD_LIBRARY_PATH"
+#echo "ROSE_TEST_BUILD_STYLE             = ${ROSE_TEST_BUILD_STYLE}"
+echo "ROSE_TEST_BOOST_PATH              = ${ROSE_TEST_BOOST_PATH}"
+echo "ROSE_TEST_GCC_PATH              	= ${ROSE_TEST_GCC_PATH}"
+echo "ROSE_TEST_JAVA_PATH               = ${ROSE_TEST_JAVA_PATH}"
+echo "*****************************************************************************"
+echo "Executing runRiceIssuesTest for ROSE Project on: $machine_name start_time = $start_time"
+echo "*****************************************************************************"
+
+# DQ (1/14/2010): Support for dumping the enviroment so that it 
+# can be easily sourced to permit Hudson tests to be reproduced.
+ROSE_DUMP_HUDSON_ENV=yes
+if test "x$ROSE_DUMP_HUDSON_ENV" = "xyes" ; then
+   echo "Dumping the Hudson environment...."
+   echo "# Required environment variables for reproducing Hudson tests" > HudsonEnvironment
+   echo "export PATH=$PATH" >> HudsonEnvironment
+   echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_JAVA_PATH=$ROSE_TEST_JAVA_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_BOOST_PATH=$ROSE_TEST_BOOST_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_GCC_PATH=$ROSE_TEST_GCC_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_XTENSA_CORE=$ROSE_TEST_XTENSA_CORE" >> HudsonEnvironment
+   echo "export ROSE_CONFIGURE_FLAGS=\"$CONFIGURE_FLAGS\"" >> HudsonEnvironment
+   echo "export ROSE_TEST_INSTALL_PREFIX=\"$ROSE_TEST_INSTALL_PREFIX\"" >> HudsonEnvironment
+   echo "Finished dumping the Hudson environment into: $PWD/HudsonEnvironment"
+   cat $PWD/HudsonEnvironment
+fi
+
+echo "Hudson tests on a new branch must run the ROSE build script."
+./build
+
+git submodule status
+
+if test -e ${ROSE_TEST_INSTALL_PREFIX} ; then chmod -R u+wx ${ROSE_TEST_INSTALL_PREFIX} ; fi
+rm -rf ${ROSE_TEST_INSTALL_PREFIX} 
+
+if test -e ROSE-build ; then chmod -R u+wx ROSE-build ; fi
+rm -rf ROSE-build
+mkdir ROSE-build
+cd ROSE-build
+
+
+# TODO: build and run tests
+#CONFIG_OPTIONS="CC=/usr/apps/gcc/4.4.1/bin/gcc \
+#                CXX=/usr/apps/gcc/4.4.1/bin/g++ \
+#                FC=/usr/apps/gcc/4.4.1/bin/gfortran \
+#                --with-CXX_DEBUG="-g" \
+#                --with-boost=${BOOST_ROOT} \
+#                --with-alternate_backend_fortran_compiler=/usr/apps/gcc/4.4.1/bin/gfortran \
+#                --with-gfortran=/usr/apps/gcc/4.4.1/bin/gfortran"
+CONFIGURE_FLAGS="\
+  CC=${ROSE_TEST_GCC_PATH}/bin/gcc \
+  CXX=${ROSE_TEST_GCC_PATH}/bin/g++ \
+  FC=${ROSE_TEST_GCC_PATH}/bin/gfortran \
+  --with-CXX_DEBUG="-g" \
+  --with-boost=${ROSE_TEST_BOOST_PATH} \
+  --with-alternate_backend_fortran_compiler=${ROSE_TEST_GCC_PATH}/bin/gfortran \
+  --with-gfortran=${ROSE_TEST_GCC_PATH}/bin/gfortran"
+#--with-java=${ROSE_TEST_JAVA_PATH}
+#--with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
+echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
+
+    ../configure --prefix=`pwd`/${ROSE_TEST_INSTALL_PREFIX} ${CONFIGURE_FLAGS}
+    runBuildStep make
+    runBuildStep make-check
+
+
+end_time_seconds="$(date +%s)"
+elapsed_hudson_time_seconds="$(expr $end_time_seconds - $start_time_seconds)"
+
+# Note that this is always over 60 seconds so I think we should keep this.
+elapsed_hudson_time_minutes="$(expr $elapsed_hudson_time_seconds / 60)"
+
+# DQ (1/17/2010): This is evaluated as an error if when the result is 0 (when $elapsed_hudson_time_seconds is an even multiple of 60).
+#elapsed_hudson_time_modulo_seconds="$(expr $elapsed_hudson_time_seconds % 60)"
+echo "***********************************************************************************************"
+echo "Elapsed time for Hudson test (total minutes): $elapsed_hudson_time_minutes"
+echo "Elapsed time for Hudson test (total seconds): $elapsed_hudson_time_seconds"
+# echo "Elapsed time for Hudson test: $elapsed_hudson_time_minutes min $elapsed_hudson_time_modulo_seconds sec"
+echo "***********************************************************************************************"
+
+# Output the date and time of day at the end of the test (helpful for debugging).
+end_date=`date`
+echo ""
+echo "********************************************************************"
+echo "Executed runRiceIssuesTest for ROSE Project on: $machine_name date = $end_date"
+echo "********************************************************************"
