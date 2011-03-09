@@ -35,7 +35,6 @@
 #include <sys/stat.h>
 #include <sys/utsname.h>
 #include <fcntl.h>
-#include <sys/mman.h>
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <linux/unistd.h>
