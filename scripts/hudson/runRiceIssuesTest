@@ -63,8 +63,8 @@ cd ROSE-build
 #                --with-alternate_backend_fortran_compiler=/usr/apps/gcc/4.4.1/bin/gfortran \
 #                --with-gfortran=/usr/apps/gcc/4.4.1/bin/gfortran"
 CONFIGURE_FLAGS="\
-  CC=${ROSE_TEST_GCC_PATH}/bin/gcc 
-  CXX=${ROSE_TEST_GCC_PATH}/bin/g++ 
+  CC=${ROSE_TEST_GCC_PATH}/bin/gcc \
+  CXX=${ROSE_TEST_GCC_PATH}/bin/g++ \
   FC=${ROSE_TEST_GCC_PATH}/bin/gfortran \
   --with-CXX_DEBUG="-g" \
   --with-boost=${ROSE_TEST_BOOST_PATH} \
