@@ -402,7 +402,9 @@ int main(int argc, char *argv[])
 
 	Backstroke::EventReverser reverser;
 	reverser.buildValueGraph(funcDef);
-	reverser.searchValueGraph();
+	//reverser.searchValueGraph();
+	reverser.shortestPath();
+	reverser.buildForwardAndReverseEvent();
 //
 //	Backstroke::ValueGraph reverseVg;
 //	// The following function makes a reverse CFG copy.

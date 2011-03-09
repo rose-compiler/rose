@@ -3,12 +3,12 @@
 
 #include <rose.h>
 #include <ssa/staticSingleAssignment.h>
+#include <boost/lexical_cast.hpp>
 
 namespace Backstroke
 {
 
 typedef std::vector<SgInitializedName*> VarName;
-
 
 struct PhiNodeDependence
 {
@@ -74,54 +74,59 @@ inline std::ostream& operator << (std::ostream& os, const VersionedVariable& var
 }
 
 
+/**********************************************************************************************************/
+// Value Graph Nodes
+
+
 struct ValueGraphNode
 {
 	ValueGraphNode() {}
 
-	virtual void writeDotString(std::ostream& out) const
-	{
-		out << "[label=\"\"]";
-	}
+	virtual std::string toString() const
+	{ return ""; }
 };
 
-struct TempVariableNode : ValueGraphNode
-{
-	TempVariableNode(SgType* t) : type(t) {}
-	
-	virtual void writeDotString(std::ostream& out) const
-	{
-		out << "[label=\"" << "TEMP" << "\"]";
-	}
-
-	SgType* type;
-};
+//struct TempVariableNode : ValueGraphNode
+//{
+//	TempVariableNode(SgType* t) : type(t) {}
+//
+//	virtual std::string toString() const
+//	{ return "TEMP"; }
+//
+//	SgType* type;
+//};
 
 struct VariableNode : ValueGraphNode
 {
-	VariableNode() {}
+	VariableNode() : isTemp(true), type(NULL) {}
 	VariableNode(const VarName& name, int ver)
-	: var(name, ver) {}
+	:	var(name, ver), isTemp(false),
+		type(name.back()->get_type()) {}
 	VariableNode(const VersionedVariable& v)
-	: var(v) {}
+	:	var(v), isTemp(false),
+		type(v.name.back()->get_type()) {}
+	VariableNode(SgType* t) : isTemp(true), type(t) {}
 
 	void setVariable(const VarName& name, int ver)
 	{
 		var.name = name;
 		var.version = ver;
+		isTemp = false;
+		type = name.back()->get_type();
 	}
 
 	void setVariable(const VersionedVariable& v)
 	{
 		var = v;
+		isTemp = false;
+		type = v.name.back()->get_type();
 	}
 
-	virtual void writeDotString(std::ostream& out) const
+	virtual std::string toString() const
 	{
-		out << "[label=\"" << toString() << "\"]";
-	}
+		if (isTemp)
+			return "TEMP";
 
-	std::string toString() const
-	{
 		std::ostringstream os;
 		os << var;
 		return os.str();
@@ -129,6 +134,12 @@ struct VariableNode : ValueGraphNode
 
 	//! The variable name with a version attached to this node.
 	VersionedVariable var;
+
+	//! If the variable is a temporary one.
+	bool isTemp;
+
+	//! The type of the variable.
+	SgType* type;
 };
 
 struct PhiNode : VariableNode
@@ -137,20 +148,19 @@ struct PhiNode : VariableNode
 
 	//std::vector<ValueGraphNode*> nodes;
 
-	virtual void writeDotString(std::ostream& out) const
+	virtual std::string toString() const
 	{
-		out << "[label=\""  << "phi\\n" << toString() << "\"]";
+		return "PHI\\n" + VariableNode::toString();
 	}
-
 };
 
 struct ValueNode : VariableNode
 {
 	ValueNode(SgValueExp* exp) : VariableNode(), valueExp(exp) {}
 
-	virtual void writeDotString(std::ostream& out) const
+	virtual std::string toString() const
 	{
-		out << "[label=\""  << valueExp->unparseToString() << "\\n" << toString() << "\"]";
+		return valueExp->unparseToString() + "\\n" + VariableNode::toString();
 	}
 
 	SgValueExp* valueExp;
@@ -179,7 +189,7 @@ struct OperatorNode : ValueGraphNode
 	OperatorNode(VariantT t) : ValueGraphNode(), type(getOperatorType(t)) {}
 	OperatorType type;
 
-	virtual void writeDotString(std::ostream& out) const;
+	virtual std::string toString() const;
 };
 
 #if 0
@@ -218,15 +228,42 @@ struct FunctionCallNode : ValueGraphNode
 
 };
 
+/**********************************************************************************************************/
+// Value Graph Edges
+
+struct ValueGraphEdge
+{
+	ValueGraphEdge() : cost(0) {}
+	ValueGraphEdge(int c) : cost(c) {}
+
+	virtual std::string toString() const
+	{ return "cost:" + boost::lexical_cast<std::string>(cost); }
+
+	int cost;
+};
+
+struct OrderedEdge : ValueGraphEdge
+{
+	OrderedEdge(int idx) : index(idx) {}
+
+	virtual std::string toString() const
+	{ return "index:" + boost::lexical_cast<std::string>(index); }
+
+	int index;
+};
+
+/**********************************************************************************************************/
+// Utility functions
+
 inline VariableNode* isVariableNode(ValueGraphNode* node)
 {
 	return dynamic_cast<VariableNode*>(node);
 }
 
-inline TempVariableNode* isTempVariableNode(ValueGraphNode* node)
-{
-	return dynamic_cast<TempVariableNode*>(node);
-}
+//inline TempVariableNode* isTempVariableNode(ValueGraphNode* node)
+//{
+//	return dynamic_cast<TempVariableNode*>(node);
+//}
 
 inline PhiNode* isPhiNode(ValueGraphNode* node)
 {
@@ -241,6 +278,11 @@ inline OperatorNode* isOperatorNode(ValueGraphNode* node)
 inline ValueNode* isValueNode(ValueGraphNode* node)
 {
 	return dynamic_cast<ValueNode*>(node);
+}
+
+inline OrderedEdge* isOrderedEdge(ValueGraphEdge* edge)
+{
+	return dynamic_cast<OrderedEdge*>(edge);
 }
 
 }  // End of namespace Backstroke

@@ -38,7 +38,7 @@ OperatorNode::OperatorType OperatorNode::getOperatorType(VariantT t)
 	return otUnknown;
 }
 
-void OperatorNode::writeDotString(std::ostream& out) const
+string OperatorNode::toString() const
 {
 	std::string label;
 	switch (type)
@@ -62,7 +62,7 @@ void OperatorNode::writeDotString(std::ostream& out) const
 			break;
 	}
 
-	out << "[label=\""  << label << "\"]";
+	return label;
 }
 
 

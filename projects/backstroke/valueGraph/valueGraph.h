@@ -10,26 +10,6 @@ namespace Backstroke
 {
 
 
-struct ValueGraphEdge
-{
-	ValueGraphEdge() : cost(0) {}
-	ValueGraphEdge(int c) : cost(c) {}
-	
-	virtual void writeDotString(std::ostream& out) const
-	{
-		out << "[label=\"" << cost << "\"]";
-	}
-
-	int cost;
-};
-
-struct OrderedEdge : ValueGraphEdge
-{
-	OrderedEdge(int idx) : index(idx) {}
-	
-	int index;
-};
-
 //class ValueGraph : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
 //		ValueGraphNode*, ValueGraphEdge*>
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
@@ -40,6 +20,11 @@ class EventReverser
 public:
 	typedef boost::graph_traits<ValueGraph>::vertex_descriptor VGVertex;
 	typedef boost::graph_traits<ValueGraph>::edge_descriptor VGEdge;
+
+	typedef boost::graph_traits<ValueGraph>::vertex_iterator VGVertexIter;
+	typedef boost::graph_traits<ValueGraph>::edge_iterator VGEdgeIter;
+	typedef boost::graph_traits<ValueGraph>::in_edge_iterator VGInEdgeIter;
+	typedef boost::graph_traits<ValueGraph>::out_edge_iterator VGOutEdgeIter;
 
 	typedef StaticSingleAssignment SSA;
 	typedef SSA::VarName VarName;
@@ -70,6 +55,9 @@ private:
 	//! All state variables.
 	std::set<VarName> stateVariables_;
 
+	//! All edges in the VG which are used to reverse values.
+	std::vector<VGEdge> dagEdges_;
+
 	////! All available nodes (the last version of state variables).
 	//std::set<Vertex> availableNodes_;
 
@@ -94,6 +82,10 @@ public:
 	void valueGraphToDot(const std::string& filename) const;
 
 	void searchValueGraph();
+
+	void shortestPath();
+
+	void buildForwardAndReverseEvent();
 	
 private:
 
@@ -108,12 +100,12 @@ private:
 
 	void writeValueGraphNode(std::ostream& out, const VGVertex& node) const
 	{
-		valueGraph_[node]->writeDotString(out);
+		out << "[label=\"" << node << "\\n" << valueGraph_[node]->toString() << "\"]";
 	}
 
 	void writeValueGraphEdge(std::ostream& out, const VGEdge& edge) const
 	{
-		valueGraph_[edge]->writeDotString(out);
+		out << "[label=\"" << valueGraph_[edge]->toString() << "\"]";
 	}
 
 	/** Add a new vertex to the value graph.
