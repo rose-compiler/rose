@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 #if 0
-// Later I would like to provide some similar support for source position inforamtion.
+// DQ (1/14/2011): Later I would like to provide some similar support for source position inforamtion.
 #include "ActionEnums.h"
 #include "token.h"
 #include "JavaParserAction.h"

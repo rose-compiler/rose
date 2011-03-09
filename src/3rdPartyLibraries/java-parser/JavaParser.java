@@ -25,7 +25,7 @@ import org.eclipse.jdt.internal.compiler.util.*;
 import java.util.concurrent.Callable;
 class JavaParser  implements Callable<Boolean>
    {
-  // This is the main class for the connection of the ECJ front-end to ROSE.
+  // DQ (11/17/2010): This is the main class for the connection of the ECJ front-end to ROSE.
   // The design is that we use ECJ mostly unmodified, and use the visitor
   // traversal (ASTVisitor) of the ECJ AST.  Specifically we derive a class 
   // (ecjASTVisitory) from the abstract class (ASTVisitor in ECJ) and define
@@ -75,6 +75,7 @@ class JavaParser  implements Callable<Boolean>
 
      public void startParsingAST(CompilationUnitDeclaration unit)
         {
+       // Debugging support...
           System.out.println("Start parsing");
 
        // Example of how to call the 
@@ -106,10 +107,12 @@ class JavaParser  implements Callable<Boolean>
                return;
              }
 
+       // Debugging support...
           System.out.println("Done parsing");
         }
 
   // DQ (10/12/2010): Implemented abstract baseclass "call()" member function (similar to OFP).
+  // This provides the support to detect errors and communicate them back to ROSE (C++ code).
      public Boolean call() throws Exception
         {
        // boolean error = false;
@@ -129,7 +132,7 @@ class JavaParser  implements Callable<Boolean>
           return new Boolean(error);
         } // end call()
 
-  // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
+  // DQ (10/30/2010): Added boolean value to report error to C++ calling program (similar to OFP).
   /*  public static boolean getError()
         {
           return JavaTraversal.hasErrorOccurred;
