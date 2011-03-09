@@ -8175,6 +8175,17 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                                    insertStatement(isSgStatement(parent),newStmt,insertBefore);
                                  }
                        }
+                      else // \pp (2/24/2011) added support for UpcForAll
+                        if (SgUpcForAllStatement* p = isSgUpcForAllStatement(parent))
+                        {
+                          const bool stmt_present = (  p->get_loop_body() == targetStmt
+                                                    || p->get_test() == targetStmt
+                                                    );
+
+                          // \pp \todo what if !stmt_present
+                          ROSE_ASSERT(stmt_present);
+                          insertStatement(p, newStmt, insertBefore);
+                        }
                       else
                          isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
 

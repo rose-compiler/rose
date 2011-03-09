@@ -1,3 +1,11 @@
+DO NOT DISABLE POLICY CHECKERS
+
+Do not disable policy checkers without first consulting with a member of the ROSE core development
+team. These checkers exist because of actual code quality issues we've encountered in the past.
+
+====================================================================================================
+
+
 This directory contains policy checkers to enforce policies that ROSE places on its developers.
 Each checker is an executable script (usually Perl) that can be executed from any source
 directory and which will check that the policy is adhered to in that directory and below.

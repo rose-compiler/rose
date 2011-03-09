@@ -3666,6 +3666,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         {
           inputCommandLine.push_back("--upc");
           inputCommandLine.push_back("--restrict");
+
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+       // DQ (2/17/2011): Added support for UPC (header are placed into include-staging directory).
+          inputCommandLine.push_back("--sys_include");
+          inputCommandLine.push_back(findRoseSupportPathFromBuild("include-staging", "share"));
+#endif
         }
 
   // DQ (9/19/2010): Added support for UPC++. Previously the UPC used the C++ language internally this had to 
@@ -3678,6 +3684,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
        // of C_dialect to allow C++ with UPC (which defines initial UPC++ work).
           inputCommandLine.push_back("--upc++");
           inputCommandLine.push_back("--restrict");
+
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+       // DQ (2/17/2011): Added support for UPC (header are placed into include-staging directory).
+          inputCommandLine.push_back("--sys_include");
+          inputCommandLine.push_back(findRoseSupportPathFromBuild("include-staging", "share"));
+#endif
         }
 
   // Generate --upc_threads n 
@@ -6508,6 +6520,17 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
 
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
   // This is the function call to the EDG front-end (modified in ROSE to pass a SgFile)
+
+#if 0
+       // If this was selected as an option then we can stop here (rather than call OFP again).
+       // printf ("--- get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
+          if (get_exit_after_parser() == true)
+             {
+               printf ("Exiting after parsing... \n");
+               exit(0);
+             }
+#endif
+
      int edg_main(int, char *[], SgSourceFile & sageFile );
      int frontendErrorLevel = edg_main (edg_argc, edg_argv, *this);
 #else
