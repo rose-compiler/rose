@@ -67,15 +67,15 @@ end_time_seconds="$(date +%s)"
 elapsed_hudson_time_seconds="$(expr $end_time_seconds - $start_time_seconds)"
 
 # Note that this is always over 60 seconds so I think we should keep this.
-elapsed_hudson_time_minutes="$(expr $elapsed_hudson_time_seconds / 60)"
+#elapsed_hudson_time_minutes="$(expr $elapsed_hudson_time_seconds / 60)"
 
 # DQ (1/17/2010): This is evaluated as an error if when the result is 0 (when $elapsed_hudson_time_seconds is an even multiple of 60).
 #elapsed_hudson_time_modulo_seconds="$(expr $elapsed_hudson_time_seconds % 60)"
-echo "***********************************************************************************************"
-echo "Elapsed time for Hudson test (total minutes): $elapsed_hudson_time_minutes"
-echo "Elapsed time for Hudson test (total seconds): $elapsed_hudson_time_seconds"
-# echo "Elapsed time for Hudson test: $elapsed_hudson_time_minutes min $elapsed_hudson_time_modulo_seconds sec"
-echo "***********************************************************************************************"
+#echo "***********************************************************************************************"
+#echo "Elapsed time for Hudson test (total minutes): $elapsed_hudson_time_minutes"
+#echo "Elapsed time for Hudson test (total seconds): $elapsed_hudson_time_seconds"
+## echo "Elapsed time for Hudson test: $elapsed_hudson_time_minutes min $elapsed_hudson_time_modulo_seconds sec"
+#echo "***********************************************************************************************"
 
 # Output the date and time of day at the end of the test (helpful for debugging).
 end_date=`date`
