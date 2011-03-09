@@ -68,6 +68,7 @@ CONFIGURE_FLAGS="\
   FC=${ROSE_TEST_GCC_PATH}/bin/gfortran \
   --with-CXX_DEBUG="-g" \
   --with-boost=${ROSE_TEST_BOOST_PATH} \
+  --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
   --with-alternate_backend_fortran_compiler=${ROSE_TEST_GCC_PATH}/bin/gfortran \
   --with-gfortran=${ROSE_TEST_GCC_PATH}/bin/gfortran"
 #--with-java=${ROSE_TEST_JAVA_PATH}
