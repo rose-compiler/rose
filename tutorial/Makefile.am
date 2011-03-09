@@ -1490,7 +1490,11 @@ docs: $(noinst_PROGRAMS) $(bin_PROGRAMS) $(generatedCodeExamples)
 	@echo ""
 #	DQ (5/20/2007): Added to support Rich's work with outlining and the HPC Toolkit
 	cd outliner; $(MAKE) docs
+# TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
+# gradually enable these tests at a later stage if necessary.
+if !USING_XTENSA_BACKEND_COMPILER
 	cd roseHPCT; $(MAKE) docs
+endif
 	cd intelPin; $(MAKE) docs
 	@echo "******************************************************************"
 	@echo "Generated required documentation for tutorial (make docs rule) ..."
