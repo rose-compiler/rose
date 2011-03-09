@@ -10,7 +10,7 @@ start_time_seconds="$(date +%s)"
 # Rice is using GCC 4.4.1 + Boost 1_41_0
 #export PATH="${ROSE_TEST_GCC_PATH}/bin:$PATH"
 export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:$LD_LIBRARY_PATH"
-export LD_LIBRARY_PATH="/nfs/apps/mpfr/2.4.1:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="/nfs/apps/mpfr/2.4.1/lib:$LD_LIBRARY_PATH"
 echo "*******************************************************************"
 echo "         Output variables required by Hudson runTest script."
 echo "*******************************************************************"
