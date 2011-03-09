@@ -33,7 +33,6 @@ if test "x$ROSE_DUMP_HUDSON_ENV" = "xyes" ; then
    echo "export ROSE_TEST_JAVA_PATH=$ROSE_TEST_JAVA_PATH" >> HudsonEnvironment
    echo "export ROSE_TEST_BOOST_PATH=$ROSE_TEST_BOOST_PATH" >> HudsonEnvironment
    echo "export ROSE_TEST_GCC_PATH=$ROSE_TEST_GCC_PATH" >> HudsonEnvironment
-   echo "export ROSE_TEST_XTENSA_CORE=$ROSE_TEST_XTENSA_CORE" >> HudsonEnvironment
    echo "export ROSE_CONFIGURE_FLAGS=\"$CONFIGURE_FLAGS\"" >> HudsonEnvironment
    echo "export ROSE_TEST_INSTALL_PREFIX=\"$ROSE_TEST_INSTALL_PREFIX\"" >> HudsonEnvironment
    echo "Finished dumping the Hudson environment into: $PWD/HudsonEnvironment"
