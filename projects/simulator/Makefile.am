@@ -22,6 +22,8 @@ EXTRA_DIST += README test_status.txt syscall_tests.conf pthread_tests.conf
 ###############################################################################################################################
 
 # The new simulator, which uses ROSE interfaces where possible.  The rest of this makefile deals only with this new simulator.
+# Do not install RSIM_Private.h -- it is only used during compilation.
+EXTRA_DIST += RSIM_Private.h
 noinst_PROGRAMS += x86sim
 include_HEADERS +=				\
 	x86sim.h				\

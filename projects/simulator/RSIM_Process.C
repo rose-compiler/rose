@@ -1,7 +1,8 @@
 #include "rose.h"
-
 #include "BinaryLoaderElf.h"
-#include "RSIM_Simulator.h"
+#include "RSIM_Private.h"
+
+#ifdef ROSE_ENABLE_SIMULATOR
 
 #include <boost/regex.hpp>
 #include <errno.h>
@@ -1512,5 +1513,4 @@ RSIM_Process::sys_sigaction(int signo, const sigaction_32 *new_action, sigaction
     return 0;
 }
 
-    
-        
+#endif /* ROSE_ENABLE_SIMULATOR */
