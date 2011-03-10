@@ -546,16 +546,16 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                 me.set_name(melmt_name);
                 map->insert(me);
             }
+
+            if (debug) {
+                fprintf(debug, "    After mapping this section:\n");
+                map->dump(debug, "      ");
+            }
         }
         header->set_base_va(old_base_va);
     } catch(...) {
         header->set_base_va(old_base_va);
         throw;
-    }
-
-    if (debug) {
-        fprintf(debug, "Loader: created map:\n");
-        map->dump(debug, "    ");
     }
 }
 
