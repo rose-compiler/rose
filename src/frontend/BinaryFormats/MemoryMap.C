@@ -124,8 +124,12 @@ MemoryMap::MapElement::consistent(const MapElement &other) const
         return false;
     } else if (get_mapperms()!=other.get_mapperms()) {
         return false;
-    } else if (is_anonymous() && other.is_anonymous() && anonymous==other.anonymous) {
-        return true;
+    } else if (is_anonymous() && other.is_anonymous()) {
+        if (anonymous==other.anonymous)
+            return true;
+        if (NULL==get_base(false) && NULL==other.get_base(false))
+            return true;
+        return false;
     } else if (is_anonymous() || other.is_anonymous()) {
         return false;
     } else if (get_base()!=other.get_base()) { /*neither is anonymous*/
