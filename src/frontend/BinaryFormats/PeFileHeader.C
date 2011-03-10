@@ -302,6 +302,15 @@ SgAsmPEFileHeader::parse()
         break;
     }
 
+    /* The NT loader normally maps this file header at the header's base virtual address. */
+    set_mapped_preferred_rva(0);
+    set_mapped_actual_va(0); /* will be assigned by BinaryLoader */
+    set_mapped_size(p_e_header_size);
+    set_mapped_alignment(0);
+    set_mapped_rperm(true);
+    set_mapped_wperm(false);
+    set_mapped_xperm(false);
+
     /* Entry point. We will eventually bind the entry point to a particular section (in SgAsmPEFileHeader::parse) so that if
      * sections are rearranged, extended, etc. the entry point will be updated automatically. */
     add_entry_rva(entry_rva);
