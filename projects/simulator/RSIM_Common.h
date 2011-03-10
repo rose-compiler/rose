@@ -530,7 +530,9 @@ static const Translate clone_flags[] = {
     TF(CLONE_CHILD_CLEARTID),           /* 0x00200000  clear the TID in the child */
     TF(CLONE_UNTRACED),                 /* 0x00800000  set if the tracing process can't force CLONE_PTRACE on this clone */
     TF(CLONE_CHILD_SETTID),             /* 0x01000000  set the TID in the child */
+#ifdef CLONE_STOPPED
     TF(CLONE_STOPPED),                  /* 0x02000000  Start in stopped state */
+#endif
     TF_FMT(0xff, "(signal=0x%02x)"),    /* 0x000000ff  mask for signal to be sent at exit */
     /* stuff not defined by glibc */
     TF3(0x00400000, 0x00400000, CLONE_DETACHED), /* unused */
