@@ -831,7 +831,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_coff_nsyms",        p_e_coff_nsyms);
     if (p_coff_symtab) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n",           p, w, "coff_symtab",
-                p_coff_symtab->get_id(), p_coff_symtab->get_name()->c_str());
+                p_coff_symtab->get_id(), p_coff_symtab->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n",                  p, w, "coff_symtab");
     }
@@ -873,7 +873,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     if (p_section_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table",
-                p_section_table->get_id(), p_section_table->get_name()->c_str());
+                p_section_table->get_id(), p_section_table->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "section_table");
     }

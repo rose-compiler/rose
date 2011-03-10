@@ -19,7 +19,7 @@ MyTraversal::visit(SgNode* astNode)
     SgAsmGenericSection *section = isSgAsmGenericSection(astNode);
     if (section && section->get_name()->get_string()==secname) {
         SgAsmGenericFile *ef = section->get_file();
-        printf("Modifying section [%d] \"%s\"\n", section->get_id(), section->get_name()->c_str());
+        printf("Modifying section [%d] \"%s\"\n", section->get_id(), section->get_name()->get_string(true).c_str());
         printf("   Shifting by  0x%08"PRIx64" (%"PRIu64") bytes.\n", shift_amount, shift_amount);
         printf("   Extending by 0x%08"PRIx64" (%"PRIu64") bytes.\n", extend_amount, extend_amount);
         ef->shift_extend(section, shift_amount, extend_amount);

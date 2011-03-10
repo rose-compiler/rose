@@ -685,7 +685,10 @@ MemoryMap::dump(FILE *f, const char *prefix) const
 
         if (!me.name.empty()) {
             static const size_t limit = 55;
-            fprintf(f, " %s", (me.get_name().size()>limit ? me.get_name().substr(0, limit-3) + "..." : me.get_name()).c_str());
+            std::string name = escapeString(me.get_name());
+            if (name.size()>limit)
+                name = name.substr(0, limit-3) + "...";
+            fprintf(f, " %s", name.c_str());
         }
 
         fputc('\n', f);

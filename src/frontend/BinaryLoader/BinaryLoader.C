@@ -341,7 +341,8 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             section->set_mapped_actual_va(0); /*reset in case previously mapped*/
 
             if (debug) {
-                fprintf(debug, "  mapping section [%d] \"%s\"", section->get_id(), section->get_name()->c_str());
+                fprintf(debug, "  mapping section [%d] \"%s\"",
+                        section->get_id(), section->get_name()->get_string(true).c_str());
                 if (section->get_base_va()!=0)
                     fprintf(debug, " with base va 0x%08"PRIx64, section->get_base_va());
                 fprintf(debug, "\n");
@@ -477,7 +478,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             file_basename_pos = file_basename_pos==file->get_name().npos ? 0 : file_basename_pos+1;
             std::string melmt_name = file->get_name().substr(file_basename_pos) + "(" + section->get_name()->get_string() + ")";
             if (debug)
-                fprintf(debug, "    Map element name: %s\n", melmt_name.c_str());
+                fprintf(debug, "    Map element name: %s\n", escapeString(melmt_name).c_str());
 
             /* Anonymously map the part of memory beyond the physical end of the file */
             SgAsmGenericFile *file = section->get_file();

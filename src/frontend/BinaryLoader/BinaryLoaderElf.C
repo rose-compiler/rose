@@ -244,7 +244,8 @@ BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
             if (0==symbol_idx) continue; /*this must be undefined, so we can skip it*/
 
             SgAsmElfSymbol* symbol = dynsym->get_symbols()->get_symbols()[symbol_idx];
-            if (get_debug()) fprintf(get_debug(), "  symbol [%zu] \"%s\" ", symbol_idx, symbol->get_name()->c_str());
+            if (get_debug())
+                fprintf(get_debug(), "  symbol [%zu] \"%s\" ", symbol_idx, symbol->get_name()->get_string(true).c_str());
 
             VersionedSymbol symver = versionResolver.get_versioned_symbol(symbol);
 // I think we need all symbols in the symbol table for relocations. [RPM 2010-09-16]
@@ -379,9 +380,9 @@ std::string
 BinaryLoaderElf::VersionedSymbol::get_version() const
 {
     if (p_version_def)
-        return p_version_def->get_entries()->get_entries().front()->get_name()->c_str();
+        return p_version_def->get_entries()->get_entries().front()->get_name()->get_string();
     if (p_version_need)
-        return p_version_need->get_name()->c_str();
+        return p_version_need->get_name()->get_string();
     return std::string();
 }
 
@@ -396,19 +397,19 @@ BinaryLoaderElf::VersionedSymbol::get_versioned_name() const
             name += "[BASE]";
 
         SgAsmElfSymverDefinedAuxPtrList& entries=p_version_def->get_entries()->get_entries();
-        name += entries.front()->get_name()->c_str();
+        name += entries.front()->get_name()->get_string();
         if (entries.size() > 1) {
             name += ";";
             for (size_t i=1;i < entries.size(); ++i) {
                 name += " ";
-                name += entries[i]->get_name()->c_str();
+                name += entries[i]->get_name()->get_string();
             }
         }
     }
     if (p_version_need) {
         if (p_version_need->get_flags() & VER_FLG_WEAK)
             name += "[WEAK]";
-        name += p_version_need->get_name()->c_str();
+        name += p_version_need->get_name()->get_string();
     }
     return name;
 }
@@ -425,10 +426,10 @@ BinaryLoaderElf::SymbolMapEntry::get_vsymbol(const VersionedSymbol &version) con
     if (NULL == version.get_version_need())
         return get_base_version();
 
-    std::string neededVersion = version.get_version_need()->get_name()->c_str();
+    std::string neededVersion = version.get_version_need()->get_name()->get_string();
     for (size_t i=0; i<p_versions.size(); ++i) {
         SgAsmElfSymverDefinedEntry *def = p_versions[i].get_version_def();
-        if (def && neededVersion == def->get_entries()->get_entries().front()->get_name()->c_str())
+        if (def && neededVersion == def->get_entries()->get_entries().front()->get_name()->get_string())
             return p_versions[i];
     }
     ROSE_ASSERT(false);/* TODO, handle cases where input uses versioning, but definition does not */
@@ -722,7 +723,8 @@ BinaryLoaderElf::fixup_info_target_va(SgAsmElfRelocEntry *reloc, SgAsmGenericSec
 
     if (get_debug()) {
         fprintf(get_debug(), "    target: file=\"%s\"\n", header->get_file()->get_name().c_str());
-        fprintf(get_debug(), "            section=[%d] \"%s\"\n", section->get_id(), section->get_name()->c_str());
+        fprintf(get_debug(), "            section=[%d] \"%s\"\n",
+                section->get_id(), section->get_name()->get_string(true).c_str());
         fprintf(get_debug(), "            preferred=0x%08"PRIx64", actual=0x%08"PRIx64"\n",
                 section->get_mapped_preferred_va(), section->get_mapped_actual_va());
         fprintf(get_debug(), "            va 0x%08"PRIx64" + adjustment 0x%08"PRIx64" = 0x%08"PRIx64"\n",
@@ -761,7 +763,8 @@ BinaryLoaderElf::fixup_info_symbol_va(SgAsmElfSymbol *symbol, SgAsmGenericSectio
     rose_addr_t symbol_va = symbol->get_value() + symbol_adj;
     if (get_debug()) {
         fprintf(get_debug(), "    symbol: file=\"%s\"\n", header->get_file()->get_name().c_str());
-        fprintf(get_debug(), "            section=[%d] \"%s\"\n", section->get_id(), section->get_name()->c_str());
+        fprintf(get_debug(), "            section=[%d] \"%s\"\n",
+                section->get_id(), section->get_name()->get_string(true).c_str());
         fprintf(get_debug(), "            preferred=0x%08"PRIx64", actual=0x%08"PRIx64"\n",
                 section->get_mapped_preferred_va(), section->get_mapped_actual_va());
         fprintf(get_debug(), "            value 0x%08"PRIx64" + adjustment 0x%08"PRIx64" = 0x%08"PRIx64"\n",
@@ -1049,7 +1052,7 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
     ROSE_ASSERT(NULL != relocSymbol);
     if (get_debug()) {
         fprintf(get_debug(), "  0x%08"PRIx64" %16s for \"%s\"\n",
-                reloc->get_r_offset(), reloc->reloc_name().c_str(), relocSymbol->get_name()->c_str());
+                reloc->get_r_offset(), reloc->reloc_name().c_str(), relocSymbol->get_name()->get_string(true).c_str());
     }
 
     rose_addr_t target_va = 0;

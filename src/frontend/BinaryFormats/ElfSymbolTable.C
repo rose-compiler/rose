@@ -189,7 +189,7 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSecti
     fprintf(f, "%s%-*s = %"PRIu64"\n",  p, w, "st_size", p_st_size);
 
     if (section && section->get_id() == (int)p_st_shndx) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "st_shndx", section->get_id(), section->get_name()->c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "st_shndx", section->get_id(), section->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = %u\n",         p, w, "st_shndx", p_st_shndx);        
     }
