@@ -38,7 +38,7 @@ std::string escapeString(const std::string & s) {
         } else {
           std::ostringstream stream;
           stream << '\\';
-          stream << std::setw(3) << std::setfill('0') << (unsigned int)(s[i]);
+          stream << std::setw(3) << std::setfill('0') <<std::oct << (unsigned)(unsigned char)(s[i]);
           result += stream.str();
         }
         break;
