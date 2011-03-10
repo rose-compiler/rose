@@ -465,48 +465,68 @@ MemoryMap::prune(bool(*predicate)(const MapElement&))
 }
 
 size_t
+MemoryMap::read1(void *dst_buf, rose_addr_t va, size_t desired, unsigned req_perms/*=MM_PROT_READ*/,
+                 const MapElement **mep/*=NULL*/) const
+{
+    const MemoryMap::MapElement *m = find(va);
+    if (mep) *mep = m;
+    if (!m || (m->get_mapperms() & req_perms)!=req_perms)
+        return 0;
+    ROSE_ASSERT(va >= m->get_va());
+    size_t m_offset = va - m->get_va();
+    ROSE_ASSERT(m_offset < m->get_size());
+    size_t n = std::min(desired, m->get_size()-m_offset);
+
+    /* If there have been no writes to an anonymous element and no base has been allocated, then just fill
+     * the return value with zeros */
+    if (m->is_anonymous() && NULL==m->get_base(false)) {
+        memset(dst_buf, 0, n);
+    } else {
+        memcpy(dst_buf, (uint8_t*)m->get_base()+m->get_offset()+m_offset, n);
+    }
+    return n;
+}
+
+size_t
 MemoryMap::read(void *dst_buf, rose_addr_t start_va, size_t desired, unsigned req_perms/*=MM_PROT_READ*/) const
 {
-    size_t ncopied = 0;
-    while (ncopied < desired) {
-        const MemoryMap::MapElement *m = find(start_va);
-        if (!m || (m->get_mapperms() & req_perms)!=req_perms)
-            break;
-        ROSE_ASSERT(start_va >= m->get_va());
-        size_t m_offset = start_va - m->get_va();
-        ROSE_ASSERT(m_offset < m->get_size());
-        size_t n = std::min(desired-ncopied, m->get_size()-m_offset);
-
-        /* If there have been no writes to an anonymous element and no base has been allocated, then just fill
-         * the return value with zeros */
-        if (m->is_anonymous() && NULL==m->get_base(false)) {
-            memset((uint8_t*)dst_buf+ncopied, 0, n);
-        } else {
-            memcpy((uint8_t*)dst_buf+ncopied, (uint8_t*)m->get_base()+m->get_offset()+m_offset, n);
-        }
-        ncopied += n;
+    size_t total_copied=0;
+    while (total_copied < desired) {
+        size_t n = read1((uint8_t*)dst_buf+total_copied, start_va+total_copied, desired-total_copied, req_perms, NULL);
+        if (!n) break;
+        total_copied += n;
     }
 
-    memset((uint8_t*)dst_buf+ncopied, 0, desired-ncopied);
-    return ncopied;
+    memset((uint8_t*)dst_buf+total_copied, 0, desired-total_copied);
+    return total_copied;
+}
+
+size_t
+MemoryMap::write1(const void *src_buf, rose_addr_t va, size_t nbytes, unsigned req_perms/*=MM_PROT_WRITE*/,
+                  const MapElement **mep/*=NULL*/) const
+{
+    const MemoryMap::MapElement *m = find(va);
+    if (mep) *mep = m;
+    if (!m || m->is_read_only() || (m->get_mapperms() & req_perms)!=req_perms)
+        return 0;
+    ROSE_ASSERT(va >= m->get_va());
+    size_t m_offset = va - m->get_va();
+    ROSE_ASSERT(m_offset < m->get_size());
+    size_t n = std::min(nbytes, m->get_size()-m_offset);
+    memcpy((uint8_t*)m->get_base()+m->get_offset()+m_offset, src_buf, n);
+    return n;
 }
 
 size_t
 MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes, unsigned req_perms/*=MM_PROT_WRITE*/) const
 {
-    size_t ncopied = 0;
-    while (ncopied < nbytes) {
-        const MemoryMap::MapElement *m = find(start_va);
-        if (!m || m->is_read_only() || (m->get_mapperms() & req_perms)!=req_perms)
-            break;
-        ROSE_ASSERT(start_va >= m->get_va());
-        size_t m_offset = start_va - m->get_va();
-        ROSE_ASSERT(m_offset < m->get_size());
-        size_t n = std::min(nbytes-ncopied, m->get_size()-m_offset);
-        memcpy((uint8_t*)m->get_base()+m->get_offset()+m_offset, (uint8_t*)src_buf+ncopied, n);
-        ncopied += n;
+    size_t total_copied = 0;
+    while (total_copied < nbytes) {
+        size_t n = write1((uint8_t*)src_buf+total_copied, start_va+total_copied, nbytes-total_copied, req_perms, NULL);
+        if (!n) break;
+        total_copied += n;
     }
-    return ncopied;
+    return total_copied;
 }
 
 void
