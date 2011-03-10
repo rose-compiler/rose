@@ -103,7 +103,7 @@ rose_rva_t::to_string() const
 
     if (get_section()) {
         sprintf(s, " + 0x%08"PRIx64" (%"PRIu64")", get_rel(), get_rel());
-        ss += " <" + get_section()->get_name()->get_string() + s + ">";
+        ss += " <" + get_section()->get_name()->get_string(true) + s + ">";
     }
     return ss;
 }

@@ -752,7 +752,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
         }
         sprintf(p, "SgAsmGenericFile::shift_extend[%zu]: ", ncalls++);
         fprintf(stderr, "%s    -- START --\n", p);
-        fprintf(stderr, "%s    S = [%d] \"%s\"\n", p, s->get_id(), s->get_name()->c_str());
+        fprintf(stderr, "%s    S = [%d] \"%s\"\n", p, s->get_id(), s->get_name()->get_string(true).c_str());
         fprintf(stderr, "%s    %s Sa=0x%08"PRIx64" (%"PRIu64"), Sn=0x%08"PRIx64" (%"PRIu64")\n", p, space_s, sa, sa, sn, sn);
         fprintf(stderr, "%s    elasticity = %s\n", p, (ELASTIC_NONE==elasticity ? "none" :
                                                        ELASTIC_UNREF==elasticity ? "unref" :
@@ -798,7 +798,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
                 ep = all[i]->get_mapped_preferred_extent();
             }
             fprintf(stderr, "%s        0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64" [%d] \"%s\"\n",
-                    p, ep.first, ep.second, ep.first+ep.second, all[i]->get_id(), all[i]->get_name()->c_str());
+                    p, ep.first, ep.second, ep.first+ep.second, all[i]->get_id(), all[i]->get_name()->get_string(true).c_str());
         }
     }
 
@@ -868,7 +868,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
               case 'L':
                 if (debug)
                     fprintf(stderr, "%s        L 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64" [%d] \"%s\"\n", 
-                            p, ap.first, ap.second, ap.first+ap.second, a->get_id(), a->get_name()->c_str());
+                            p, ap.first, ap.second, ap.first+ap.second, a->get_id(), a->get_name()->get_string(true).c_str());
                 break;
               case 'R':
                 if (ap.first==nhs.first+nhs.second && 0==ap.second) {
@@ -906,7 +906,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
                 } else {
                     fputs("                 ", stderr);
                 }
-                fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->c_str());
+                fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->get_string(true).c_str());
             }
             if (villagers.size()>0) fprintf(stderr, "%s    Villagers:\n", p);
             for (size_t i=0; i<villagers.size(); i++) {
@@ -917,7 +917,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
                         p, ExtentMap::category(ap, sp), /*cat should always be R*/
                         0==ap.first % (align?align:1) ? ' ' : '!', ap.first, ap.second, ap.first+ap.second);
                 fputs("                 ", stderr);
-                fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->c_str());
+                fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->get_string(true).c_str());
             }
         }
         
@@ -1056,7 +1056,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
             ExtentPair newap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
             fprintf(stderr, " -> %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
                     0==newap.first%(x?x:1)?' ':'!', newap.first, newap.second, newap.first+newap.second);
-            fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->c_str());
+            fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->get_string(true).c_str());
         }
     }
     if (debug) fprintf(stderr, "%s    -- END --\n", p);
@@ -1124,7 +1124,7 @@ SgAsmGenericFile::dump_all(const std::string &dump_name)
 void
 SgAsmGenericFile::dump(FILE *f) const
 {
-    fprintf(f, "Encoding: %s\n", get_data_converter() ? get_data_converter()->name().c_str() : "none");
+    fprintf(f, "Encoding: %s\n", get_data_converter() ? escapeString(get_data_converter()->name()).c_str() : "none");
 
     SgAsmGenericSectionPtrList sections = get_sections();
     if (sections.size()==0) {
@@ -1215,7 +1215,7 @@ SgAsmGenericFile::dump(FILE *f) const
         } else {
             fputs("    ", f);
         }
-        fprintf(f, " %s\n", section->get_name()->c_str());
+        fprintf(f, " %s\n", section->get_name()->get_string(true).c_str());
     }
 
     char overlap[4] = "   ";
