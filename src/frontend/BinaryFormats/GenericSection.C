@@ -260,6 +260,10 @@ rose_addr_t
 SgAsmGenericSection::get_base_va() const
 {
     ROSE_ASSERT(this != NULL);
+
+    if (isSgAsmGenericHeader(this))
+        return isSgAsmGenericHeader(this)->get_base_va();
+
     SgAsmGenericHeader *hdr = get_header();
     return hdr ? hdr->get_base_va() : 0;
 }
