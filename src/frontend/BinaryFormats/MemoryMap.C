@@ -633,17 +633,20 @@ MemoryMap::dump(FILE *f, const char *prefix) const
         std::string basename;
 
         /* Convert the base address to a unique name like "aaa", "aab", "aac", etc. This makes it easier to compare outputs
-         * from different runs since the base addresses are likely to be different between runs but the names aren't. */   
+         * from different runs since the base addresses are likely to be different between runs but the names aren't. */
         if (me.is_anonymous()) {
-            basename = "anonymous";
-        } else if (NULL==me.get_base()) {
-            basename = "base null";
+            basename = "anon ";
+        } else {
+            basename = "base ";
+        }
+
+        if (NULL==me.get_base(false)) {
+            basename += "null";
         } else {
             std::map<void*,std::string>::iterator found = bases.find(me.get_base());
             if (found==bases.end()) {
                 size_t j = bases.size();
                 ROSE_ASSERT(j<26*26*26);
-                basename = "base ";
                 basename += 'a'+(j/(26*26))%26;
                 basename += 'a'+(j/26)%26;
                 basename += 'a'+(j%26);
