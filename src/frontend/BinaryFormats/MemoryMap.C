@@ -94,13 +94,10 @@ MemoryMap::Syntax::print(std::ostream &o) const
  ************************************************************************************************************************/
 
 
-// DQ (10/21/2010): Moved to source file.  In general we want function definitions 
-// to be in source files to avoid excessive compile times. This also fixes a problem 
-// on the GNU 4.3 and 4.4 compilers for "projects/haskellport".
-void*
-MemoryMap::MapElement::get_base(bool allocate_anonymous) const
+void *
+MemoryMap::MapElement::get_base(bool allocate_anonymous/*=true*/) const
 {
-    if (anonymous) {
+    if (anonymous && allocate_anonymous) {
         if (NULL==anonymous->base) {
             ROSE_ASSERT(NULL==base);
             base = anonymous->base = new uint8_t[get_size()];
