@@ -31,7 +31,7 @@ ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php opencl"
 #########################################################################################
 AC_ARG_ENABLE([languages],
 #########################################################################################
-               AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,c,c++,fortran,java,php,binaries (default=all)]),,
+               AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,binary-analysis,c,c++,cuda,fortran,java,opencl,php (default=all)]),,
                [enableval=all])
 
 	       # Default support for all languages
@@ -69,13 +69,6 @@ AC_ARG_ENABLE([binary-analysis],
                ##########################################################################
                ,)
 
-# Convert support-language-list to a space-separated list, stripping
-# leading and trailing whitespace
-LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed -e 's/,/ /g;s/^[ \t]*//;s/[ \t]*$//'`" 
-#DEBUG#echo "LANGUAGES_TO_SUPPORT='$LANGUAGES_TO_SUPPORT'"
-if test "x$LANGUAGES_TO_SUPPORT" = "x" ; then
-  LANGUAGES_TO_SUPPORT=none
-fi
 
 #########################################################################################
 #
@@ -83,6 +76,14 @@ fi
 #  user specified command-line options 
 #
 #########################################################################################
+# Convert support-language-list to a space-separated list, stripping
+# leading and trailing whitespace
+LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed -e 's/,/ /g;s/^[ \t]*//;s/[ \t]*$//'`" 
+#DEBUG#echo "LANGUAGES_TO_SUPPORT='$LANGUAGES_TO_SUPPORT'"
+
+if test "x$LANGUAGES_TO_SUPPORT" = "x" ; then
+  LANGUAGES_TO_SUPPORT=none
+fi
 for a_language in $LANGUAGES_TO_SUPPORT ; do
 case "$a_language" in 
 
@@ -151,54 +152,31 @@ done
 #  Output whether or not a specific language is supported
 #
 #########################################################################################
-if test "x$support_binaries" = "xyes" ; then
-  echo "  + Binary analysis"
-else
-  echo "  - Binary analysis"
-fi
+function print_isLanguageSupported() {
+  if test ${#} != 2 ; then
+   echo "Usage: print_isLanguageSupported <language> <is_supported>"
+   exit 1
+  else 
+   local language=${1}
+   local is_supported=${2}
+  fi
 
-if test "x$support_c_language" = "xyes" ; then
-  echo "  + C"
-else
-  echo "  - C" 
-fi
-
-if test "x$support_cxx_language" = "xyes" ; then
-  echo "  + C++"
-else
-  echo "  - C++" 
-fi
-
-if test "x$support_cuda_language" = "xyes" ; then
-  echo "  + Cuda"
-else
-  echo "  - Cuda" 
-fi
-
-if test "x$support_fortran_language" = "xyes" ; then
-  echo "  + Fortran"
-else
-  echo "  - Fortran"
-fi
-
-if test "x$support_java_language" = "xyes" ; then
-  echo "  + Java"
-else
-  echo "  - Java" 
-fi
-
-if test "x$support_php_language" = "xyes" ; then
-  echo "  + PHP"
-else
-  echo "  - PHP" 
-fi
-
-if test "x$support_opencl_language" = "xyes" ; then
-  echo "  + OpenCL"
-else
-  echo "  - OpenCL" 
-fi
-
+  if test "x$is_supported" = "xyes" ; then
+    echo "  +  $language"
+  else
+    echo "  -  $language"
+  fi
+}
+print_isLanguageSupported "Binary-analysis" "$support_binaries"
+print_isLanguageSupported "C" "$support_c_language"
+print_isLanguageSupported "C++" "$support_cxx_language"
+print_isLanguageSupported "Cuda" "$support_cuda_language"
+print_isLanguageSupported "Fortran" "$support_fortran_language"
+print_isLanguageSupported "Java" "$support_java_language"
+print_isLanguageSupported "PHP" "$support_php_language"
+print_isLanguageSupported "OpenCL" "$support_opencl_language"
+echo ""
+echo "+: enable    -: disabled"
 #AC_MSG_RESULT($LANGUAGES_TO_SUPPORT)
 echo "------------------------------------------------"
 
