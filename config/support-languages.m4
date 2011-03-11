@@ -4,14 +4,14 @@ AC_DEFUN([ROSE_SUPPORT_LANGUAGES],
 # uppercase: sed 's/./\U&/g'
 # DQ (4/15/2010): Added support to specify selected languages to support in ROSE.
 echo "------------------------------------------------"
-AC_MSG_CHECKING([languages to support])
+AC_MSG_CHECKING([user-specified languages to support])
 echo ""
 
 #########################################################################################
 #
 #  Manage language support command-line options:
 #
-#	--enable-languages
+#	--enable-languages(=args)
 #	--enable-binary-analysis		TODO: make alias: --enable-binaries
 #	--enable-c
 #	--enable-cxx
