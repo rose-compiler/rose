@@ -857,7 +857,7 @@ void c_action_int_literal_constant(Token_t * digitString, Token_t * kindParam)
      ROSE_ASSERT(digitString->text != NULL);
 
   // preserve kind parameter if any
-	 string constant_text  = digitString->text + (kindParam ? string("_") + kindParam->text : "");
+     string constant_text  = digitString->text + (kindParam ? string("_") + kindParam->text : "");
      SgValueExp* pValueExp = new SgIntVal(atol(digitString->text), constant_text);
      setSourcePosition(pValueExp, digitString);
 
@@ -986,7 +986,7 @@ void c_action_real_literal_constant(Token_t * realConstant, Token_t * kindParam)
      ROSE_ASSERT(realConstant->text != NULL);
 
   // preserve kind parameter if any
-	 string constant_text  = realConstant->text + (kindParam ? string("_") + kindParam->text : "");
+     string constant_text  = realConstant->text + (kindParam ? string("_") + kindParam->text : "");
      SgValueExp* pValueExp = new SgFloatVal(atof(realConstant->text), constant_text);
      setSourcePosition(pValueExp, realConstant);
 
