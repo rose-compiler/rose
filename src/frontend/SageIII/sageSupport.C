@@ -6407,6 +6407,8 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::LinemarkerTraversal( co
 void
 SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode )
    {
+     extern SgSourceFile* OpenFortranParser_globalFilePointer;
+
     // DXN (02/21/2011): Consider the case of SgInterfaceBody.
     // TODO: revise SgInterfaceBody::get_numberOfTraversalSuccessor() to return 1 and
     // TODO: revise SgInterfaceBody::get_traversalSuccessorByIndex(int ) to return p_functionDeclaration
