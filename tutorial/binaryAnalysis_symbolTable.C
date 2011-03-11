@@ -17,8 +17,10 @@ Visitor::visit(SgNode* n)
      SgAsmGenericSymbol *symbol = isSgAsmGenericSymbol(n);
      if (symbol != NULL)
         {
-          printf("Found a SgAsmGenericSymbol, Here: offset = %zu, %p = %s = %s \n",(size_t)0,symbol,symbol->class_name().c_str(),symbol->get_name()->c_str());
-          printf ("symbol->get_name()      = %s \n",symbol->get_name()->c_str());
+          printf("Found a SgAsmGenericSymbol, Here: offset = %zu, %p = %s = %s \n",
+                 (size_t)0, symbol, escapeString(symbol->class_name()).c_str(),
+                 symbol->get_name()->get_string(true).c_str());
+          printf ("symbol->get_name()      = %s \n",symbol->get_name()->get_string(true).c_str());
           printf ("symbol->get_bound()     = %p \n",symbol->get_bound());
           printf ("symbol->get_size()      = %"PRIu64" \n",symbol->get_size());
           printf ("symbol->get_value()     = %"PRIu64" \n",symbol->get_value());

@@ -356,7 +356,7 @@ SgAsmElfEHFrameSection::parse()
                         /* Some stuff we don't handle yet. Warn about it and don't read anything. */
                         if (++nwarnings<=WARNING_LIMIT) {
                             fprintf(stderr, "%s:%u: warning: ELF CIE 0x%08"PRIx64" has invalid augmentation string \"%s\"\n", 
-                                    __FILE__, __LINE__, get_offset()+record_offset, astr.c_str());
+                                    __FILE__, __LINE__, get_offset()+record_offset, escapeString(astr).c_str());
                             if (WARNING_LIMIT==nwarnings)
                                 fprintf(stderr, "    (additional frame warnings will be suppressed)\n");
                         }

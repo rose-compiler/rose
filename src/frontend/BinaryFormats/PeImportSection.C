@@ -118,7 +118,7 @@ SgAsmPEImportSection::parse()
             SgAsmPEImportILTEntry *e = ilt->get_entries()->get_vector()[j];
             SgAsmPEImportHNTEntry *hn = e->get_hnt_entry();
             if (hn!=NULL)
-                dll->add_symbol(hn->get_name()->c_str());
+                dll->add_symbol(hn->get_name()->get_string());
         }
         fhdr->add_dll(dll);
     }

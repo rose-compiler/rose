@@ -1201,7 +1201,7 @@ HEADER_BASIC_STRING_START
 			: p_string(s) {ctor();}
 		// virtual ~SgAsmBasicString() {}
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-		virtual std::string get_string() const;
+		virtual std::string get_string(bool escape=false) const;
 		virtual void set_string(const std::string&);
 		virtual void set_string(rose_addr_t);
 	private:
@@ -1216,11 +1216,10 @@ HEADER_GENERIC_STRING_START
 		static const rose_addr_t unallocated = ~(rose_addr_t)0;
 
 		// These aren't the ROSETTA-generated versions because they hook into string table allocation functions
-		virtual std::string get_string() const;
+		virtual std::string get_string(bool escape=false) const;
 		virtual void set_string(const std::string &s);
 		virtual void set_string(rose_addr_t);
 		virtual rose_addr_t get_offset() const {return unallocated;}
-		const char *c_str() const;
 
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 HEADER_GENERIC_STRING_END
@@ -1576,7 +1575,7 @@ HEADER_STORED_STRING_START
 		SgAsmGenericStrtab *get_strtab();					/*table holding the string*/
 
 		// These are not access functions -- they do more than just getting or setting the value!
-		virtual std::string get_string() const;
+		virtual std::string get_string(bool escape=false) const;
 		virtual void set_string(const std::string&);				/*also deallocates previous value*/
 		virtual void set_string(rose_addr_t);					/*rebinds to a new value*/
 		virtual rose_addr_t get_offset() const;					/*also triggers realloc*/
