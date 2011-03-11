@@ -157,7 +157,7 @@ SgAsmCoffStrtab::create_storage(rose_addr_t offset, bool shared)
                 "SgAsmCoffStrtab::create_storage(%"PRIu64"): %zu other string%s (of %zu created) in [%d] \"%s\""
                 " %s been modified and/or reallocated!\n",
                 offset, p_num_freed, 1==p_num_freed?"":"s", p_storage_list.size(),
-                container->get_id(), container->get_name()->c_str(),
+                container->get_id(), container->get_name()->get_string(true).c_str(),
                 1==p_num_freed?"has":"have");
         ROSE_ASSERT(0==p_num_freed);
     }
