@@ -380,7 +380,7 @@ SgAsmNERelocEntry::osfixup_type::osfixup_type() {}
 // rose_addr_t SgAsmElfRelocSection::calculate_sizes(unsigned long*, unsigned long*, unsigned long*, unsigned long*) const { return NULL;}
 rose_addr_t SgAsmElfRelocSection::calculate_sizes(size_t*, size_t*, size_t*, size_t*) const { return 0;}
 
-std::string SgAsmStoredString::get_string(bool escape=false) const { return ""; }
+std::string SgAsmStoredString::get_string(bool escape) const { return ""; }
 rose_addr_t SgAsmStoredString::get_offset() const { return 0;}
 bool SgAsmPESectionTable::reallocate() { return false; }
 std::set<rose_addr_t> SgAsmPowerpcInstruction::get_successors(bool*) { return std::set<rose_addr_t>();}
@@ -410,13 +410,13 @@ void SgAsmStoredString::set_string(const std::string&) {}
 void SgAsmGenericSection::set_mapped_preferred_rva(rose_addr_t) {}
 bool SgAsmElfSection::reallocate() { return false; }
 bool SgAsmx86Instruction::is_function_call(std::vector<SgAsmInstruction*, std::allocator<SgAsmInstruction*> > const&, rose_addr_t*) { return false; }
-std::string SgAsmGenericString::get_string(bool escape=false) const { return ""; }
+std::string SgAsmGenericString::get_string(bool escape) const { return ""; }
 SgAsmNERelocEntry::iref_type::iref_type() {}
 std::vector<std::pair<size_t,size_t> > SgAsmx86Instruction::find_noop_subsequences(std::vector<SgAsmInstruction*, std::allocator<SgAsmInstruction*> > const&, bool, bool) { return std::vector<std::pair<size_t,size_t> >(); }
 bool SgAsmPESection::reallocate() { return false; }
 void SgAsmBasicString::set_string(std::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) {}
 void SgAsmGenericString::set_string(rose_addr_t) {}
-std::string SgAsmBasicString::get_string(bool escape=false) const { return ""; }
+std::string SgAsmBasicString::get_string(bool escape) const { return ""; }
 bool SgAsmElfRelocSection::reallocate() { return false; }
 bool SgAsmx86Instruction::has_effect() { return false; }
 void SgAsmElfSymbolSection::finish_parsing() {}
