@@ -162,12 +162,13 @@ function print_isLanguageSupported() {
   fi
 
   if test "x$is_supported" = "xyes" ; then
-    echo "  +  $language"
+    echo "  + $language"
   else
-    echo "  -  $language"
+    echo "  - $language"
   fi
 }
-print_isLanguageSupported "Binary-analysis" "$support_binaries"
+echo ""
+print_isLanguageSupported "Binary analysis" "$support_binaries"
 print_isLanguageSupported "C" "$support_c_language"
 print_isLanguageSupported "C++" "$support_cxx_language"
 print_isLanguageSupported "Cuda" "$support_cuda_language"
@@ -176,7 +177,7 @@ print_isLanguageSupported "Java" "$support_java_language"
 print_isLanguageSupported "PHP" "$support_php_language"
 print_isLanguageSupported "OpenCL" "$support_opencl_language"
 echo ""
-echo "+: enable    -: disabled"
+echo "(+)enabled (-)disabled"
 #AC_MSG_RESULT($LANGUAGES_TO_SUPPORT)
 echo "------------------------------------------------"
 
