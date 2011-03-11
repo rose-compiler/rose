@@ -856,19 +856,9 @@ void c_action_int_literal_constant(Token_t * digitString, Token_t * kindParam)
      ROSE_ASSERT(digitString != NULL);
      ROSE_ASSERT(digitString->text != NULL);
 
-  // DXN (02/13/2011): support for kind parameter
-     SgValueExp* pValueExp;
-     if (kindParam)
-        {
-          pValueExp = new SgLongIntVal (atol(digitString->text),digitString->text + string("_") + kindParam->text);
-        }
-     else
-        {
-          pValueExp = new SgIntVal(atol(digitString->text), digitString->text);
-        }
-     ROSE_ASSERT(pValueExp != NULL);
-
-  // This set the start and end source position to the beginning of the number's text string.
+  // preserve kind parameter if any
+	 string constant_text  = digitString->text + (kindParam ? string("_") + kindParam->text : "");
+     SgValueExp* pValueExp = new SgIntVal(atol(digitString->text), constant_text);
      setSourcePosition(pValueExp, digitString);
 
      astExpressionStack.push_front(pValueExp);
@@ -995,20 +985,9 @@ void c_action_real_literal_constant(Token_t * realConstant, Token_t * kindParam)
      ROSE_ASSERT(realConstant != NULL);
      ROSE_ASSERT(realConstant->text != NULL);
 
-  // DXN (02/13/2011): support for kind parameter
-     SgValueExp* pValueExp;
-     if (kindParam)
-        {
-          char* endPtr= NULL;
-          pValueExp = new SgLongDoubleVal (strtold(realConstant->text, &endPtr), realConstant->text + string("_") + kindParam->text);
-        }
-     else
-        {
-          pValueExp = new SgFloatVal(atof(realConstant->text), realConstant->text);
-        }
-     ROSE_ASSERT(pValueExp != NULL);
-
-  // This set the start and end source position to the beginning of the number's text string.
+  // preserve kind parameter if any
+	 string constant_text  = realConstant->text + (kindParam ? string("_") + kindParam->text : "");
+     SgValueExp* pValueExp = new SgFloatVal(atof(realConstant->text), constant_text);
      setSourcePosition(pValueExp, realConstant);
 
      astExpressionStack.push_front(pValueExp);
