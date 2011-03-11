@@ -827,7 +827,8 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(expr != NULL);
 
   // DQ (9/29/2007): Fortran subscript expressions should not be parenthesized, I think.
-     if (isSgSubscriptExpression(expr) != NULL)
+  // DXN (02/11/2011): or dot expressions, co-array expressions, or SgPntrArrRefExp
+     if (isSgSubscriptExpression(expr) != NULL || isSgDotExp(expr) || isSgCAFCoExpression(expr) || isSgPntrArrRefExp(expr) )
         {
           return false;
         }
