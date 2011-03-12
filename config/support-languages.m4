@@ -205,6 +205,32 @@ AC_ARG_ENABLE([java],
                 esac
                ##########################################################################
                ,)
+#########################################################################################
+AC_ARG_ENABLE([php],
+#########################################################################################
+               AS_HELP_STRING([--enable-php],[Enable PHP language support in ROSE (default=yes)]),
+               ##########################################################################
+                echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "php"
+                if test $? = 0 ; then 
+                  list_has_php=yes
+                fi
+                case "$enableval" in
+                  [yes)]
+                  	if test "x$list_has_php" != "xyes" ; then
+                          # --enable-languages does not include PHP, but --enable-php=yes
+                  	  LANGUAGES_TO_SUPPORT+=" php"
+                        fi
+                  	;;
+                  [no)]
+                        # remove 'PHP' from support languages list
+                  	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/php//g'`"
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-php='$enableval' is unsupported. Use 'yes' or 'no'])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
 
 #########################################################################################
 #
