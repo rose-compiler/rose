@@ -153,6 +153,32 @@ AC_ARG_ENABLE([cuda],
                 esac
                ##########################################################################
                ,)
+#########################################################################################
+AC_ARG_ENABLE([fortran],
+#########################################################################################
+               AS_HELP_STRING([--enable-fortran],[Enable Fortran language support in ROSE (default=yes)]),
+               ##########################################################################
+                echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "fortran"
+                if test $? = 0 ; then 
+                  list_has_fortran=yes
+                fi
+                case "$enableval" in
+                  [yes)]
+                  	if test "x$list_has_fortran" != "xyes" ; then
+                          # --enable-languages does not include Fortran, but --enable-fortran=yes
+                  	  LANGUAGES_TO_SUPPORT+=" fortran"
+                        fi
+                  	;;
+                  [no)]
+                        # remove 'Fortran' from support languages list
+                  	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/fortran//g'`"
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-fortran='$enableval' is unsupported. Use 'yes' or 'no'])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
 
 #########################################################################################
 #
