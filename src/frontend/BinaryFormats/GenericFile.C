@@ -172,7 +172,7 @@ SgAsmGenericFile::read_content(rose_addr_t offset, void *dst_buf, rose_addr_t si
  *  not mapped we stop reading and do one of two things: if @p strict is set then a MemoryMap::NotMapped exception is thrown;
  *  otherwise the rest of the @p dst_buf is zero filled and the number of bytes read (not filled) is returned. */
 size_t
-SgAsmGenericFile::read_content(const MemoryMap *map, rose_addr_t va, void *dst_buf, rose_addr_t size, bool strict)
+SgAsmGenericFile::read_content(const MemoryMap *map, rose_addr_t start_va, void *dst_buf, rose_addr_t size, bool strict)
 {
     ROSE_ASSERT(map!=NULL);
 
@@ -180,27 +180,25 @@ SgAsmGenericFile::read_content(const MemoryMap *map, rose_addr_t va, void *dst_b
      *       to track the file byte references. */
     size_t ncopied = 0;
     while (ncopied < size) {
-        const MemoryMap::MapElement *m = map->find(va);
-        if (!m) break;                                                  /*we reached a non-mapped virtual address*/
-        size_t m_offset = va - m->get_va();                             /*offset relative to start of map element*/
-        ROSE_ASSERT(m_offset < m->get_size());                          /*or else map->findRVA() malfunctioned*/
-        size_t nread = std::min(size-ncopied, (rose_addr_t)m->get_size()-m_offset); /*bytes to read in this pass*/
-        if (m->is_anonymous()) {
-            memset((char*)dst_buf+ncopied, 0, nread);
-        } else {
-            size_t file_offset = m->get_offset() + m_offset;
-            ROSE_ASSERT(file_offset<get_data().size());
-            ROSE_ASSERT(file_offset+nread<=get_data().size());
-            memcpy((char*)dst_buf+ncopied, &(get_data()[file_offset]), nread);
-            if (get_tracking_references())
-                mark_referenced_extent(file_offset, nread);
+        rose_addr_t va = start_va + ncopied;
+        const MemoryMap::MapElement *me = NULL;
+        size_t nread = map->read1((uint8_t*)dst_buf+ncopied, va, size-ncopied, MemoryMap::MM_PROT_NONE, &me);
+        if (!nread) break;
+        assert(me!=NULL);
+
+        if (get_tracking_references() && &(get_data()[0])==me->get_base()) {
+            /* We are tracking file reads and this map element does, indeed, point into the file. */
+            size_t me_offset = va - me->get_va();                       /* virtual offset within this map element */
+            size_t file_offset = me->get_offset() + me_offset;          /* offset from beginning of the file */
+            mark_referenced_extent(file_offset, nread);
         }
+
         ncopied += nread;
     }
 
     if (ncopied<size) {
         if (strict)
-            throw MemoryMap::NotMapped(map, va);
+            throw MemoryMap::NotMapped(map, start_va+ncopied);
         memset((char*)dst_buf+ncopied, 0, size-ncopied);                /*zero pad result if necessary*/
     }
     return ncopied;
@@ -754,7 +752,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
         }
         sprintf(p, "SgAsmGenericFile::shift_extend[%zu]: ", ncalls++);
         fprintf(stderr, "%s    -- START --\n", p);
-        fprintf(stderr, "%s    S = [%d] \"%s\"\n", p, s->get_id(), s->get_name()->c_str());
+        fprintf(stderr, "%s    S = [%d] \"%s\"\n", p, s->get_id(), s->get_name()->get_string(true).c_str());
         fprintf(stderr, "%s    %s Sa=0x%08"PRIx64" (%"PRIu64"), Sn=0x%08"PRIx64" (%"PRIu64")\n", p, space_s, sa, sa, sn, sn);
         fprintf(stderr, "%s    elasticity = %s\n", p, (ELASTIC_NONE==elasticity ? "none" :
                                                        ELASTIC_UNREF==elasticity ? "unref" :
@@ -800,7 +798,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
                 ep = all[i]->get_mapped_preferred_extent();
             }
             fprintf(stderr, "%s        0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64" [%d] \"%s\"\n",
-                    p, ep.first, ep.second, ep.first+ep.second, all[i]->get_id(), all[i]->get_name()->c_str());
+                    p, ep.first, ep.second, ep.first+ep.second, all[i]->get_id(), all[i]->get_name()->get_string(true).c_str());
         }
     }
 
@@ -870,7 +868,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
               case 'L':
                 if (debug)
                     fprintf(stderr, "%s        L 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64" [%d] \"%s\"\n", 
-                            p, ap.first, ap.second, ap.first+ap.second, a->get_id(), a->get_name()->c_str());
+                            p, ap.first, ap.second, ap.first+ap.second, a->get_id(), a->get_name()->get_string(true).c_str());
                 break;
               case 'R':
                 if (ap.first==nhs.first+nhs.second && 0==ap.second) {
@@ -908,7 +906,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
                 } else {
                     fputs("                 ", stderr);
                 }
-                fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->c_str());
+                fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->get_string(true).c_str());
             }
             if (villagers.size()>0) fprintf(stderr, "%s    Villagers:\n", p);
             for (size_t i=0; i<villagers.size(); i++) {
@@ -919,7 +917,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
                         p, ExtentMap::category(ap, sp), /*cat should always be R*/
                         0==ap.first % (align?align:1) ? ' ' : '!', ap.first, ap.second, ap.first+ap.second);
                 fputs("                 ", stderr);
-                fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->c_str());
+                fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->get_string(true).c_str());
             }
         }
         
@@ -1058,7 +1056,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
             ExtentPair newap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
             fprintf(stderr, " -> %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
                     0==newap.first%(x?x:1)?' ':'!', newap.first, newap.second, newap.first+newap.second);
-            fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->c_str());
+            fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->get_string(true).c_str());
         }
     }
     if (debug) fprintf(stderr, "%s    -- END --\n", p);
@@ -1126,7 +1124,7 @@ SgAsmGenericFile::dump_all(const std::string &dump_name)
 void
 SgAsmGenericFile::dump(FILE *f) const
 {
-    fprintf(f, "Encoding: %s\n", get_data_converter() ? get_data_converter()->name().c_str() : "none");
+    fprintf(f, "Encoding: %s\n", get_data_converter() ? escapeString(get_data_converter()->name()).c_str() : "none");
 
     SgAsmGenericSectionPtrList sections = get_sections();
     if (sections.size()==0) {
@@ -1217,7 +1215,7 @@ SgAsmGenericFile::dump(FILE *f) const
         } else {
             fputs("    ", f);
         }
-        fprintf(f, " %s\n", section->get_name()->c_str());
+        fprintf(f, " %s\n", section->get_name()->get_string(true).c_str());
     }
 
     char overlap[4] = "   ";

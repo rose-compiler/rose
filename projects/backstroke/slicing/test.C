@@ -35,9 +35,18 @@ int main(int argc, char *argv[])
 
 	//Backstroke::FullCFG cfg(proc);
 	typedef Backstroke::CFGForSlicing CFG;
+	typedef Backstroke::FullCFG FullCFG;
+	typedef Backstroke::FilteredCFG FilteredCFG;
 	//typedef Backstroke::CFGForSSA CFG;
 	CFG cfg(proc);
 	cfg.toDot("CFG.dot");
+
+	FullCFG fullCfg(proc);
+	fullCfg.toDot("fullCFG.dot");
+
+	FilteredCFG filteredCfg(proc);
+	filteredCfg.toDot("filteredCFG.dot");
+
 	cout << num_vertices(cfg) << endl;
 	//Backstroke::FilteredCFG rvsCfg = cfg;//.makeReverseCopy();
 	//rvsCfg.toDot("CFG.dot");

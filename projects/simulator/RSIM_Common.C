@@ -1,5 +1,8 @@
 #include "rose.h"
-#include "RSIM_Simulator.h"
+#include "RSIM_Private.h"
+
+#ifdef ROSE_ENABLE_SIMULATOR
+
 #include <sys/wait.h>
 
 void
@@ -454,3 +457,6 @@ convert(statfs64_32 *g, const statfs_native *h)
     g->f_spare[2] = h->f_spare[2];
     g->f_spare[3] = h->f_spare[3];
 }
+
+#endif /* ROSE_ENABLE_SIMULATOR */
+

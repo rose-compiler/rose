@@ -1,6 +1,7 @@
 #include "rose.h"
+#include "RSIM_Private.h"
 
-#include "RSIM_Simulator.h"
+#ifdef ROSE_ENABLE_SIMULATOR
 
 #include <sys/wait.h>
 
@@ -406,3 +407,4 @@ RSIM_Simulator::terminate_self()
     } RTS_WRITE_END;
 }
 
+#endif /* ROSE_ENABLE_SIMULATOR */
