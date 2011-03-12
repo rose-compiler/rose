@@ -179,6 +179,32 @@ AC_ARG_ENABLE([fortran],
                 esac
                ##########################################################################
                ,)
+#########################################################################################
+AC_ARG_ENABLE([java],
+#########################################################################################
+               AS_HELP_STRING([--enable-java],[Enable Java language support in ROSE (default=yes)]),
+               ##########################################################################
+                echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "java"
+                if test $? = 0 ; then 
+                  list_has_java=yes
+                fi
+                case "$enableval" in
+                  [yes)]
+                  	if test "x$list_has_java" != "xyes" ; then
+                          # --enable-languages does not include Java, but --enable-java=yes
+                  	  LANGUAGES_TO_SUPPORT+=" java"
+                        fi
+                  	;;
+                  [no)]
+                        # remove 'Java' from support languages list
+                  	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/java//g'`"
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-java='$enableval' is unsupported. Use 'yes' or 'no'])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
 
 #########################################################################################
 #

@@ -80,7 +80,8 @@ function test_configure {
 #source ${SCRIPT_DIR}/test_configure_c_support.unit
 #source ${SCRIPT_DIR}/test_configure_cxx_support.unit
 #source ${SCRIPT_DIR}/test_configure_cuda_support.unit
-source ${SCRIPT_DIR}/test_configure_fortran_support.unit
+#source ${SCRIPT_DIR}/test_configure_fortran_support.unit
+source ${SCRIPT_DIR}/test_configure_java_support.unit
 
 
 
