@@ -22,6 +22,8 @@ EXTRA_DIST += README test_status.txt syscall_tests.conf pthread_tests.conf
 ###############################################################################################################################
 
 # The new simulator, which uses ROSE interfaces where possible.  The rest of this makefile deals only with this new simulator.
+# Do not install RSIM_Private.h -- it is only used during compilation.
+EXTRA_DIST += RSIM_Private.h
 noinst_PROGRAMS += x86sim
 include_HEADERS +=				\
 	x86sim.h				\
@@ -571,7 +573,11 @@ SYS_TEST_TARGETS = warn_no_tests
 warn_no_tests:
 	@echo "  NOTE    x86sim testing is disabled (no i386 support)"
 endif
-MOSTLYCLEANFILES += $(SYS_TEST_TARGETS) $(patsubst %.passed, %.failed, $(SYS_TEST_TARGETS))
+MOSTLYCLEANFILES +=					    \
+	$(SYS_TEST_TARGETS)				    \
+	$(patsubst %.passed, %.failed, $(SYS_TEST_TARGETS)) \
+	$(patsubst %.passed, %.err,    $(SYS_TEST_TARGETS)) \
+	$(patsubst %.passed, %.out,    $(SYS_TEST_TARGETS))
 
 # Main syscall testing target, on which "make check" depends.
 check-syscalls:  $(SYS_TEST_TARGETS)
@@ -1054,7 +1060,11 @@ else
 # warn_no_tests was already defined in the "SYSTEM CALL TESTS" section of this makefile
 PTHREAD_TEST_TARGETS = warn_no_tests
 endif
-MOSTLYCLEANFILES += $(PTHREAD_TEST_TARGETS) $(patsubst %.passed, %.failed, $(PTHREAD_TEST_TARGETS))
+MOSTLYCLEANFILES +=						  \
+	$(PTHREAD_TEST_TARGETS)					  \
+	$(patsubst %.passed, %.failed, $(PTHREAD_TEST_TARGETS))	  \
+	$(patsubst %.passed, %.err,    $(PTHREAD_TEST_TARGETS))	  \
+	$(patsubst %.passed, %.out,    $(PTHREAD_TEST_TARGETS))
 
 
 check-pthread:  $(PTHREAD_TEST_TARGETS)

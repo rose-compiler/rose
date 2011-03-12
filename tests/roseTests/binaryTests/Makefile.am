@@ -313,6 +313,15 @@ EXTRA_DIST += testRegisters.conf
 testRegisters.passed: testRegisters.conf testRegisters
 	@$(RTH_RUN) $< $@
 
+# Tests reading past the end-of-file
+noinst_PROGRAMS += testReadPastEOF
+testReadPastEOF_SOURCES = testReadPastEOF.C
+testReadPastEOF_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testReadPastEOF.passed
+EXTRA_DIST += testReadPastEOF.conf testReadPastEOF.ans
+testReadPastEOF.passed: testReadPastEOF.conf testReadPastEOF
+	@$(RTH_RUN) $< $@
+
 # Not sure what this does.
 if ROSE_USE_SQLITE_DATABASE
 noinst_PROGRAMS += testLibraryDb
@@ -427,6 +436,9 @@ demo_testAstNeuter: testAstNeuter
 	: no demo yet for $<
 
 demo_testRegisters: testRegisters
+	: no demo yet for $<
+
+demo_testReadPastEOF: testReadPastEOF
 	: no demo yet for $<
 
 

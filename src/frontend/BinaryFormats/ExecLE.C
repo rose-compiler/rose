@@ -350,43 +350,43 @@ SgAsmLEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     if (p_dos2_header) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "dos2_header",
-                p_dos2_header->get_id(), p_dos2_header->get_name()->c_str());
+                p_dos2_header->get_id(), p_dos2_header->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "dos2_header");
     }
     if (p_section_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table",
-                p_section_table->get_id(), p_section_table->get_name()->c_str());
+                p_section_table->get_id(), p_section_table->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "section_table");
     }
     if (p_page_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "page_table",
-                p_page_table->get_id(), p_page_table->get_name()->c_str());
+                p_page_table->get_id(), p_page_table->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "page_table");
     }
     if (p_resname_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "resname_table",
-                p_resname_table->get_id(), p_resname_table->get_name()->c_str());
+                p_resname_table->get_id(), p_resname_table->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "resname_table");
     }
     if (p_nonresname_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "nonresname_table",
-                p_nonresname_table->get_id(), p_nonresname_table->get_name()->c_str());
+                p_nonresname_table->get_id(), p_nonresname_table->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "nonresname_table");
     }
     if (p_entry_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "entry_table",
-                p_entry_table->get_id(), p_entry_table->get_name()->c_str());
+                p_entry_table->get_id(), p_entry_table->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "entry_table");
     }
     if (p_reloc_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "reloc_table",
-                p_reloc_table->get_id(), p_reloc_table->get_name()->c_str());
+                p_reloc_table->get_id(), p_reloc_table->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "reloc_table");
     }
@@ -796,7 +796,7 @@ SgAsmLENameTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     SgAsmGenericSection::dump(f, p, -1);
     ROSE_ASSERT(p_names.size() == p_ordinals.size());
     for (size_t i = 0; i < p_names.size(); i++) {
-        fprintf(f, "%s%-*s = [%zd] \"%s\"\n", p, w, "names",    i, p_names[i].c_str());
+        fprintf(f, "%s%-*s = [%zd] \"%s\"\n", p, w, "names",    i, escapeString(p_names[i]).c_str());
         fprintf(f, "%s%-*s = [%zd] %u\n",     p, w, "ordinals", i, p_ordinals[i]);
     }
 }

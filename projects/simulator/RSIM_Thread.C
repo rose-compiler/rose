@@ -1,5 +1,7 @@
 #include "rose.h"
-#include "RSIM_Simulator.h"
+#include "RSIM_Private.h"
+
+#ifdef ROSE_ENABLE_SIMULATOR
 
 #include <errno.h>
 #include <stdarg.h>
@@ -680,3 +682,5 @@ RSIM_Thread::post_fork()
     assert(my_tid==getpid());
     process->post_fork();
 }
+
+#endif /* ROSE_ENABLE_SIMULATOR */

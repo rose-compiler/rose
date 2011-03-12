@@ -104,7 +104,7 @@ static void show_section(FILE *f, const char *prefix, SgAsmElfSection *section) 
     } else {
         fputs("    ", f);
     }
-    fprintf(f, " %s\n", section->get_name()->c_str());
+    fprintf(f, " %s\n", section->get_name()->get_string(true).c_str());
 }
     
 /* Finds the ELF header of the core file and the mapped sections/segments of the non-core files. */
