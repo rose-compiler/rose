@@ -4,7 +4,7 @@ AC_DEFUN([ROSE_SUPPORT_LANGUAGES],
 # uppercase: sed 's/./\U&/g'
 # DQ (4/15/2010): Added support to specify selected languages to support in ROSE.
 echo "------------------------------------------------"
-AC_MSG_CHECKING([user-specified languages to support])
+AC_MSG_CHECKING([for user-specified languages to support])
 echo ""
 
 #########################################################################################
@@ -43,12 +43,18 @@ AC_ARG_ENABLE([languages],
                  	LANGUAGES_TO_SUPPORT="$enableval"
                  	;;
 	       esac
+
+# Convert support-language-list to a space-separated list, stripping
+# leading and trailing whitespace
+LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed -e 's/,/ /g;s/^[ \t]*//;s/[ \t]*$//'`" 
+#DEBUG#echo "LANGUAGES_TO_SUPPORT='$LANGUAGES_TO_SUPPORT'"
 #########################################################################################
 AC_ARG_ENABLE([binary-analysis],
 #########################################################################################
                AS_HELP_STRING([--enable-binary-analysis],[Enable binary analysis support in ROSE (default=yes)]),
                ##########################################################################
-                if [[[[ "$LANGUAGES_TO_SUPPORT" =~ "binaries" ]]]] ; then
+                echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "binaries"
+                if test $? = 0 ; then 
                   list_has_binaries=yes
                 fi
                 case "$enableval" in
@@ -63,12 +69,64 @@ AC_ARG_ENABLE([binary-analysis],
                   	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/binaries//g'`"
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-binary-analysis='$enableval' is unsupported, use yes/no])]
+                  	[AC_MSG_FAILURE([--enable-binary-analysis='$enableval' is unsupported. Use 'yes' or 'no'])]
                  	;;
                 esac
                ##########################################################################
                ,)
-
+#########################################################################################
+AC_ARG_ENABLE([c],
+#########################################################################################
+               AS_HELP_STRING([--enable-c],[Enable C language support in ROSE (default=yes)]),
+               ##########################################################################
+                echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "\bc\b"
+                if test $? = 0 ; then 
+                  list_has_c=yes
+                fi
+                case "$enableval" in
+                  [yes)]
+                  	if test "x$list_has_c" != "xyes" ; then
+                          # --enable-languages does not include C, but --enable-c=yes
+                  	  LANGUAGES_TO_SUPPORT+=" c"
+                        fi
+                  	;;
+                  [no)]
+                        # remove 'C' from support languages list
+                        # TOO (3/11/2011): couldn't find a nice way to handle with sed, cases: "c", "c c++", ...
+                  	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | [awk '{for (i=1; i<=NF; i++) { if ($i != "c") { printf "%s ",$i; } } }']`" 
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-c='$enableval' is unsupported. Use 'yes' or 'no'])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
+#########################################################################################
+AC_ARG_ENABLE([cxx],
+#########################################################################################
+               AS_HELP_STRING([--enable-cxx],[Enable C++ language support in ROSE (default=yes)]),
+               ##########################################################################
+                echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "c++"
+                if test $? = 0 ; then 
+                  list_has_cxx=yes
+                fi
+                case "$enableval" in
+                  [yes)]
+                  	if test "x$list_has_cxx" != "xyes" ; then
+                          # --enable-languages does not include C++, but --enable-cxx=yes
+                  	  LANGUAGES_TO_SUPPORT+=" c++"
+                        fi
+                  	;;
+                  [no)]
+                        # remove 'C++' from support languages list
+                  	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/c++//g'`"
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-cxx='$enableval' is unsupported. Use 'yes' or 'no'])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
 
 #########################################################################################
 #
@@ -76,11 +134,6 @@ AC_ARG_ENABLE([binary-analysis],
 #  user specified command-line options 
 #
 #########################################################################################
-# Convert support-language-list to a space-separated list, stripping
-# leading and trailing whitespace
-LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed -e 's/,/ /g;s/^[ \t]*//;s/[ \t]*$//'`" 
-#DEBUG#echo "LANGUAGES_TO_SUPPORT='$LANGUAGES_TO_SUPPORT'"
-
 if test "x$LANGUAGES_TO_SUPPORT" = "x" ; then
   LANGUAGES_TO_SUPPORT=none
 fi
