@@ -231,6 +231,32 @@ AC_ARG_ENABLE([php],
                 esac
                ##########################################################################
                ,)
+#########################################################################################
+AC_ARG_ENABLE([opencl],
+#########################################################################################
+               AS_HELP_STRING([--enable-opencl],[Enable OpenCL language support in ROSE (default=yes)]),
+               ##########################################################################
+                echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "opencl"
+                if test $? = 0 ; then 
+                  list_has_opencl=yes
+                fi
+                case "$enableval" in
+                  [yes)]
+                  	if test "x$list_has_opencl" != "xyes" ; then
+                          # --enable-languages does not include OpenCL, but --enable-opencl=yes
+                  	  LANGUAGES_TO_SUPPORT+=" opencl"
+                        fi
+                  	;;
+                  [no)]
+                        # remove 'OpenCL' from support languages list
+                  	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/opencl//g'`"
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-opencl='$enableval' is unsupported. Use 'yes' or 'no'])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
 
 #########################################################################################
 #
