@@ -1,6 +1,6 @@
 #!/bin/bash
 #########################################################################################
-run_configure --enable-languages=binaries,c,binaries --disable-binary-analysis 
+run_configure --enable-languages=fortran,c,fortran --disable-fortran 
 #########################################################################################
 test_configure "\
   - Binary analysis \
@@ -12,7 +12,7 @@ test_configure "\
   - PHP \
   - OpenCL"
 #########################################################################################
-run_configure --enable-binary-analysis
+run_configure --enable-fortran
 #########################################################################################
 test_configure "\
   + Binary analysis \
@@ -24,7 +24,7 @@ test_configure "\
   + PHP \
   + OpenCL"
 #########################################################################################
-run_configure --enable-binary-analysis=yes
+run_configure --enable-fortran=yes
 #########################################################################################
 test_configure "\
   + Binary analysis \
@@ -36,55 +36,55 @@ test_configure "\
   + PHP \
   + OpenCL"
 #########################################################################################
-run_configure --enable-binary-analysis=no
-#########################################################################################
-test_configure "\
-  - Binary analysis \
-  + C \
-  + C++ \
-  + Cuda \
-  + Fortran \
-  + Java \
-  + PHP \
-  + OpenCL"
-#########################################################################################
-run_configure --disable-binary-analysis
-#########################################################################################
-test_configure "\
-  - Binary analysis \
-  + C \
-  + C++ \
-  + Cuda \
-  + Fortran \
-  + Java \
-  + PHP \
-  + OpenCL"
-#########################################################################################
-run_configure --enable-languages=c --enable-binary-analysis
+run_configure --enable-fortran=no
 #########################################################################################
 test_configure "\
   + Binary analysis \
   + C \
-  - C++ \
-  - Cuda \
+  + C++ \
+  + Cuda \
   - Fortran \
-  - Java \
-  - PHP \
-  - OpenCL"
+  + Java \
+  + PHP \
+  + OpenCL"
 #########################################################################################
-run_configure --enable-languages=c --enable-binary-analysis=yes
+run_configure --disable-fortran
 #########################################################################################
 test_configure "\
   + Binary analysis \
   + C \
+  + C++ \
+  + Cuda \
+  - Fortran \
+  + Java \
+  + PHP \
+  + OpenCL"
+#########################################################################################
+run_configure --enable-languages=c --enable-fortran
+#########################################################################################
+test_configure "\
+  - Binary analysis \
+  + C \
   - C++ \
   - Cuda \
-  - Fortran \
+  + Fortran \
   - Java \
   - PHP \
   - OpenCL"
 #########################################################################################
-run_configure --enable-languages=c --enable-binary-analysis=no
+run_configure --enable-languages=c --enable-fortran=yes
+#########################################################################################
+test_configure "\
+  - Binary analysis \
+  + C \
+  - C++ \
+  - Cuda \
+  + Fortran \
+  - Java \
+  - PHP \
+  - OpenCL"
+#########################################################################################
+run_configure --enable-languages=c --enable-fortran=no
 #########################################################################################
 test_configure "\
   - Binary analysis \
@@ -96,7 +96,7 @@ test_configure "\
   - PHP \
   - OpenCL"
 #########################################################################################
-run_configure --enable-languages=c --disable-binary-analysis
+run_configure --enable-languages=c --disable-fortran
 #########################################################################################
 test_configure "\
   - Binary analysis \
@@ -108,7 +108,7 @@ test_configure "\
   - PHP \
   - OpenCL"
 #########################################################################################
-run_configure --enable-languages=c,binaries --disable-binary-analysis
+run_configure --enable-languages=c,fortran --disable-fortran
 #########################################################################################
 test_configure "\
   - Binary analysis \
@@ -120,7 +120,7 @@ test_configure "\
   - PHP \
   - OpenCL"
 #########################################################################################
-run_configure --enable-languages=binaries --disable-binary-analysis
+run_configure --enable-languages=fortran --disable-fortran
 #########################################################################################
 test_configure "\
   - Binary analysis \
@@ -132,7 +132,7 @@ test_configure "\
   - PHP \
   - OpenCL"
 #########################################################################################
-run_configure --enable-languages=c,binaries,php --disable-binary-analysis
+run_configure --enable-languages=c,fortran,php --disable-fortran
 #########################################################################################
 test_configure "\
   - Binary analysis \
@@ -145,6 +145,6 @@ test_configure "\
   - OpenCL"
 #########################################################################################
 echo "*********************************************"
-echo " SUCCESS: Binary analysis language support configuration is working!"
+echo " SUCCESS: Fortran language support configuration is working!"
 echo "*********************************************"
 echo ""
