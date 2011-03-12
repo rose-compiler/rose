@@ -238,14 +238,37 @@ RSIM_Simulator::activate()
              * reference this without using a mutex lock.  On the other hand, increment the "active" counter at the end of the
              * function, which allows the signal handler to determine when the sigaction vector is not fully initialized. */
             active_sim = this;
+            memset(signal_installed, 0, sizeof signal_installed); /* no handler installed yet */
+            memset(signal_restore, 0, sizeof signal_restore); /* cleaned up only for debugging */
 
+            /* Register the inter-process signal reception handler for signals that are typically sent from one process to
+             * another.  This signal handler simply places the signal onto a process-wide queue. */
             struct sigaction sa;
-            sa.sa_handler = signal_handler;
-            sigemptyset(&sa.sa_mask);
+            sa.sa_handler = signal_receiver;
+            sigfillset(&sa.sa_mask);
             sa.sa_flags = SA_RESTART;
+            for (int signo=1; signo<__SIGRTMIN; signo++) {
+                switch (signo) {
+                    case SIGFPE:
+                    case SIGILL:
+                    case SIGSEGV:
+                    case SIGBUS:
+                    case SIGABRT:
+                    case SIGTRAP:
+                    case SIGSYS:
+                        break;
+                    default:
+                        signal_installed[signo] = -1 == sigaction(signo, &sa, signal_restore+signo) ? -errno : 1;
+                        break;
+                }
+            }
 
-            for (int i=1; i<=_NSIG; i++)
-                signal_installed[i] = -1==sigaction(i, &sa, signal_restore+i) ? -errno : 0;
+            /* Register the wakeup signal handler. This handler's only purpose is to interrupt blocked system calls. */
+            sa.sa_handler = signal_wakeup;
+            sigemptyset(&sa.sa_mask);
+            sa.sa_flags = 0;
+            int signo = RSIM_SignalHandling::SIG_WAKEUP;
+            signal_installed[signo] = -1 == sigaction(signo, &sa, signal_restore+signo) ? -errno : 1;
         } else {
             ROSE_ASSERT(active_sim==this);
         }
@@ -263,7 +286,7 @@ RSIM_Simulator::deactivate()
         ROSE_ASSERT(active>0);
         if (0==--active) {
             for (int i=1; i<=_NSIG; i++) {
-                if (signal_installed[i]>=0) {
+                if (signal_installed[i]>0) {
                     int status = sigaction(i, signal_restore+i, NULL);
                     ROSE_ASSERT(status>=0);
                 }
@@ -294,25 +317,26 @@ RSIM_Simulator::which_active()
     return retval;
 }
 
-/* Class method. This is a signal handler -- do not use thread synchronization. */
+/* Class method. This is a signal handler -- do not use thread synchronization or functions that are not async signal safe. */
 void
-RSIM_Simulator::signal_handler(int signo)
+RSIM_Simulator::signal_receiver(int signo)
 {
     /* In order for this signal handler to be installed, there must be an active simulator. This is because the activate()
      * method installs the signal handler and the deactivate() removes it.  The active_sim is set before the signal handler is
      * installed and reset after it is removed. */
     RSIM_Simulator *simulator = active_sim;
     assert(simulator!=NULL);
-    assert(simulator->get_process());
-    assert(simulator->get_process()->get_thread(getpid()));
+    RSIM_Process *process = simulator->get_process();
+    assert(process!=NULL);
 
-#if 0   /* not async signal safe */
-    if (0==simulator->active)
-        fprintf(stderr, "RSIM_Simulator::signal_handler: warning: called during activation/deactivation\n");
-#endif
+    process->signal_enqueue(signo);
+}
 
-    //FIXME: this sends all signals to the main thread; not async signal safe
-    simulator->get_process()->get_thread(getpid())->signal_generate(signo);
+/* Class method. This is a signal handler -- do not use thread synchronization or functions that are not async signal safe. */
+void
+RSIM_Simulator::signal_wakeup(int signo)
+{
+    /* void; side effect is to interrupt blocked system calls. */
 }
 
 int

@@ -129,11 +129,8 @@ RTS_Message::terminate()
     /* Internal functions assume that lock is already acquired. */
     if (f && !sol) {
         if (in_multi!=NULL) {
-            if (!in_multi->name.empty()) {
+            if (!in_multi->name.empty())
                 fprintf(f, " <%s continued below>\n", in_multi->name.c_str());
-            } else {
-                fputs(" <continued below>\n", f);
-            }
             in_multi->interrupted = true;
         } else {
             fputc('\n', f);
@@ -233,11 +230,12 @@ RTS_Message::more(const char *fmt, ...)
         return *this;
 
     RTS_WRITE(rwlock) {
-        if (in_multi!=this)
+        if (in_multi && in_multi!=this)
             terminate();
         if (interrupted) {
             prefix();
-            fprintf(f, "<%s%sresumed> ", name.c_str(), name.empty()?"":" ");
+            if (!name.empty())
+                fprintf(f, "<%s resumed> ", name.c_str());
             sol = false;
         }
         output_lines(buffer);
@@ -245,6 +243,20 @@ RTS_Message::more(const char *fmt, ...)
         interrupted = false;
     } RTS_WRITE_END;
     return *this;
+}
+
+void
+RTS_Message::multipart_end()
+{
+    RTS_WRITE(rwlock) {
+        name = "";
+        if (in_multi==this) {
+            if (f && !sol)
+                fputc('\n', f);
+            in_multi = NULL;
+            sol = true;
+        }
+    } RTS_WRITE_END;
 }
 
 RTS_Message &

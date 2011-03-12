@@ -829,7 +829,7 @@ void print_dentries_helper(RTS_Message *f, const uint8_t *_sa, size_t sz, size_t
 void print_dentries_32(RTS_Message *f, const uint8_t *sa, size_t sz);
 void print_dentries_64(RTS_Message *f, const uint8_t *sa, size_t sz);
 void print_bitvec(RTS_Message *f, const uint8_t *vec, size_t sz);
-void print_sigmask(RTS_Message *f, const uint8_t *vec, size_t sz);
+void print_sigmask_32(RTS_Message *f, const uint8_t *vec, size_t sz);
 void print_stack_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_flock_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_flock64_32(RTS_Message *f, const uint8_t *_v, size_t sz);

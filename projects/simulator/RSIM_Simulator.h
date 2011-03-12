@@ -7,6 +7,7 @@
 #include "threadSupport.h"
 
 #include "RSIM_Common.h"
+#include "RSIM_SignalHandling.h"
 #include "RSIM_Process.h"
 #include "RSIM_SemanticPolicy.h"
 #include "RSIM_Thread.h"
@@ -118,9 +119,14 @@ private:
      *  shares certain state (such as PID) with the real process running the simulator. */
     RSIM_Process *create_process();
 
-    /** Signal handler installed by activate(). */
-    static void signal_handler(int signo);
-    
+    /** Signal handler called when some other process sends the simulated process a signal.  This handler simply places the
+     *  signal on the process's signal queue.  Ths RSIM_Simulator::activate() registers this signal handler. */
+    static void signal_receiver(int signo);
+
+    /** Signal handler that does nothing, but whose side effect is to interrupt blocked system calls.  This handler is
+     * registered by RSIM_Simulator::activate(). */
+    static void signal_wakeup(int signo);
+
 
 private:
     /* Configuration variables */
@@ -134,7 +140,7 @@ private:
     /* Simulator activation/deactivation */
     unsigned active;                    /**< Levels of activation. See activate(). */
     static RSIM_Simulator *active_sim;  /**< Points to the currently active simulator (there can be at most one). */
-    int signal_installed[_NSIG];        /**< Status (N>=0 implies installed; N<0 implies error where N==-errno). */
+    int signal_installed[_NSIG];        /**< (N>0 implies installed; N==0 implies not; N<0 implies error where N==-errno). */
     struct sigaction signal_restore[_NSIG];/**< When active and installed, this is the signal action to restore to deactivate. */
 
     /* Other */

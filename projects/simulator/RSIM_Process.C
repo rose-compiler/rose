@@ -1502,15 +1502,99 @@ RSIM_Process::sys_sigaction(int signo, const sigaction_32 *new_action, sigaction
     if (signo<1 || signo>_NSIG)
         return -EINVAL;
 
+    int retval = 0;
     RTS_WRITE(rwlock()) {
         if (old_action)
             *old_action = signal_action[signo-1];
-        if (new_action)
-            signal_action[signo-1] = *new_action;
-    } RTS_WRITE_END;
 
-    return 0;
+        if (new_action) {
+            if (SIGKILL==signo || SIGSTOP==signo) {
+                retval = -EINVAL;
+            } else {
+                signal_action[signo-1] = *new_action;
+            }
+        }
+    } RTS_WRITE_END;
+    return retval;
 }
 
-    
-        
+int
+RSIM_Process::sys_kill(pid_t pid, int signo)
+{
+    int retval = 0;
+
+    if (pid<0)
+        return -EINVAL;
+    if (signo<=0 && (size_t)signo>8*sizeof(RSIM_SignalHandling::sigset_32))
+        return -EINVAL;
+
+
+    RTS_WRITE(rwlock()) {
+        if (pid!=getpid()) {
+            retval = kill(pid, signo);
+        } else {
+            /* Send the signal to any one of our threads where it is not masked. */
+            for (std::map<pid_t, RSIM_Thread*>::iterator ti=threads.begin(); signo>0 && ti!=threads.end(); ti++) {
+                RSIM_Thread *thread = ti->second;
+                int status = thread->signal_accept(signo);
+                if (status>=0) {
+                    thread->tracing(TRACE_SIGNAL)->brief("process signal %d directed to thread %d", signo, thread->get_seq());
+                    status = syscall(SYS_tgkill, getpid(), thread->get_tid(), RSIM_SignalHandling::SIG_WAKEUP);
+                    assert(status>=0);
+                    signo = 0;
+                }
+            }
+
+            /* If signal could not be delivered to any thread... */
+            if (signo>0)
+                sighand.generate(signo, this, NULL);
+        }
+    } RTS_WRITE_END;
+
+    return retval;
+}
+
+/* Must be async signal safe */
+void
+RSIM_Process::signal_enqueue(int signo)
+{
+    /* Push the signal number onto the tail of the process-wide queue.  It is safe to do this without thread synchronization
+     * because:
+     *   1. This signal handler is the only place where the queue tail is adjusted
+     *   2. All signals are blocked during this signal handler
+     *   3. The queue head is not modified.
+     *   4. The RSIM_Process object is guaranteed to be valid for the duration of this call.
+     */
+    if ((sq.tail+1) % sq.size == sq.head) {
+        static const char *s = "[***PROCESS SIGNAL QUEUE IS FULL***]";
+        write(2, s, strlen(s));
+    } else {
+        sq.signals[sq.tail] = signo;
+        sq.tail = (sq.tail + 1) % sq.size;
+    }
+}
+
+int
+RSIM_Process::signal_dequeue()
+{
+    int retval = 0;
+    RTS_WRITE(rwlock()) {
+        if (sq.head!=sq.tail) {
+            retval = sq.signals[sq.head];
+            sq.head = (sq.head + 1) % sq.size;
+        }
+    } RTS_WRITE_END;
+    return retval;
+}
+
+/* Dispatch process-received signals to threads */
+void
+RSIM_Process::signal_dispatch()
+{
+    /* write lock not required for thread safety here since called functions are already thread safe */
+    for (int signo=signal_dequeue(); signo>0; signo=signal_dequeue()) {
+        int status = sys_kill(getpid(), signo);
+        assert(status>=0);
+    }
+}
+

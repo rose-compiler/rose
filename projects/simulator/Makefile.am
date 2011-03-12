@@ -29,6 +29,7 @@ include_HEADERS +=				\
 	RSIM_Common.h				\
 	RSIM_Process.h				\
 	RSIM_SemanticPolicy.h			\
+	RSIM_SignalHandling.h			\
 	RSIM_Simulator.h			\
 	RSIM_Templates.h			\
 	RSIM_Thread.h
@@ -38,6 +39,7 @@ x86sim_SOURCES =				\
 	RSIM_Common.C				\
 	RSIM_Process.C				\
 	RSIM_SemanticPolicy.C			\
+	RSIM_SignalHandling.C			\
 	RSIM_Simulator.C			\
 	RSIM_Thread.C
 x86sim_CPPFLAGS = $(ROSE_INCLUDES) -DX86_VDSO_PATH_1='"$(srcdir)"' -DX86_VDSO_PATH_2='"$(include_dir)"'

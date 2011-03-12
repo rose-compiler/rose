@@ -19,9 +19,6 @@ RSIM_Thread::ctor()
 
     memset(&last_report, 0, sizeof last_report);
     memset(tls_array, 0, sizeof tls_array);
-    signal_stack.ss_sp = 0;
-    signal_stack.ss_size = 0;
-    signal_stack.ss_flags = SS_DISABLE;
 }
 
 void
@@ -183,6 +180,7 @@ RSIM_Thread::syscall_leave(const char *format, ...)
                     }
                 }
             }
+            mesg->multipart_end();
         } RTS_MESSAGE_END(true);
     }
 
@@ -204,57 +202,6 @@ RSIM_Thread::syscall_arg(int idx)
     }
 }
 
-/* Called asynchronously to make a signal pending. The signal will be dropped if it's action is to ignore. Otherwise it will be
- * made pending by setting the appropriate bit in the RSIM_Thread's signal_pending vector.  And yes, we know that this
- * function is not async signal safe when signal tracing is enabled. */
-void
-RSIM_Thread::signal_generate(int signo)
-{
-    ROSE_ASSERT(signo>0 && signo<_NSIG);
-    uint64_t sigbit = (uint64_t)1 << (signo-1);
-    bool is_masked = (0 != (signal_mask & sigbit));
-    const char *disposition = NULL;
-
-    sigaction_32 sa;
-    int status = get_process()->sys_sigaction(signo, NULL, &sa);
-    assert(status>=0);
-
-    if (sa.handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
-        disposition = " ignored";
-    } else if (is_masked) {
-        disposition = " masked";
-        signal_pending |= sigbit;
-    } else {
-        disposition = "";
-        signal_pending |= sigbit;
-        signal_reprocess = true;
-    }
-
-    RTS_Message *mesg = tracing(TRACE_SIGNAL);
-    if (mesg->get_file()) {
-        mesg->brief_begin("generated ");
-        print_enum(mesg, signal_names, signo);
-        mesg->brief_end("(%d)%s", signo, disposition);
-    }
-}
-
-/* Deliver a pending, unmasked signal.  Posix doesn't specify an order, so we'll deliver the one with the lowest number. */
-void
-RSIM_Thread::signal_deliver_any()
-{
-    if (signal_reprocess) {
-        signal_reprocess = false;
-        for (size_t i=0; i<64; i++) {
-            uint64_t sigbit = (uint64_t)1 << i;
-            if ((signal_pending & sigbit) && 0==(signal_mask & sigbit)) {
-                signal_pending &= ~sigbit;
-                signal_deliver(i+1); /* bit N is signal N+1 */
-                return;
-            }
-        }
-    }
-}
-
 /* Deliver the specified signal. The signal is not removed from the signal_pending vector, nor is it added if it's masked. */
 void
 RSIM_Thread::signal_deliver(int signo)
@@ -268,9 +215,9 @@ RSIM_Thread::signal_deliver(int signo)
 
     if (sa.handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
         /* The signal action may have changed since the signal was generated, so we need to check this again. */
-        mesg->brief("delivering %s(%d) ignored", flags_to_str(signal_names, signo).c_str(), signo);
+        mesg->mesg("delivering %s(%d) ignored", flags_to_str(signal_names, signo).c_str(), signo);
     } else if (sa.handler_va==(uint32_t)(uint64_t)SIG_DFL) {
-        mesg->brief("delivering %s(%d) default", flags_to_str(signal_names, signo).c_str(), signo);
+        mesg->mesg("delivering %s(%d) default", flags_to_str(signal_names, signo).c_str(), signo);
         switch (signo) {
             case SIGFPE:
             case SIGILL:
@@ -312,23 +259,27 @@ RSIM_Thread::signal_deliver(int signo)
                 throw Exit(signo & 0x7f, true);
         }
 
-    } else if (signal_mask & ((uint64_t)1 << signo)) {
-        /* Masked, but do not adjust signal_pending vector. */
-        mesg->brief("delivering %s(%d) masked", flags_to_str(signal_names, signo).c_str(), signo);
     } else {
-        mesg->brief("delivering %s(%d) to 0x%08"PRIx32,
+        mesg->mesg("delivering %s(%d) to 0x%08"PRIx32,
                     flags_to_str(signal_names, signo).c_str(), signo, sa.handler_va);
 
         uint32_t signal_return = policy.readIP().known_value();
         policy.push(signal_return);
 
         /* Switch to the alternate stack? */
-        uint32_t signal_oldstack = policy.readGPR(x86_gpr_sp).known_value();
-        if (0==(signal_stack.ss_flags & SS_ONSTACK) && 0!=(sa.flags & SA_ONSTACK))
-            policy.writeGPR(x86_gpr_sp, policy.number<32>(signal_stack.ss_sp + signal_stack.ss_size));
+        uint32_t old_sp = policy.readGPR(x86_gpr_sp).known_value();
+        stack_32 new_stack;
+        int status = sighand.sigaltstack(NULL, &new_stack, old_sp);
+        assert(status>=0);
+        if (0==(new_stack.ss_flags & SS_ONSTACK) && 0!=(sa.flags & SA_ONSTACK))
+            policy.writeGPR(x86_gpr_sp, policy.number<32>(new_stack.ss_sp + new_stack.ss_size));
 
         /* Push stuff that will be needed by the simulated sigreturn() syscall */
-        policy.push(signal_oldstack);
+        policy.push(old_sp);
+        RSIM_SignalHandling::sigset_32 signal_mask;
+        status = sighand.sigprocmask(0, NULL, &signal_mask);
+        assert(status>=0);
+
         policy.push(signal_mask >> 32);
         policy.push(signal_mask & 0xffffffff);
 
@@ -344,7 +295,7 @@ RSIM_Thread::signal_deliver(int signo)
         /* New signal mask */
         signal_mask |= sa.mask;
         signal_mask |= (uint64_t)1 << (signo-1);
-        // signal_reprocess = true;  -- Not necessary because we're not clearing any */
+        sighand.sigprocmask(SIG_SETMASK, &signal_mask, NULL);
 
         /* Signal handler arguments */
         policy.push(policy.readIP());
@@ -368,9 +319,10 @@ RSIM_Thread::signal_return()
 
     RTS_Message *mesg = tracing(TRACE_SIGNAL);
     if (mesg->get_file()) {
-        mesg->brief_begin("returning from ");
+        mesg->multipart("", "returning from ");
         print_enum(mesg, signal_names, signo);
-        mesg->brief_end(" handler");
+        mesg->more(" handler");
+        mesg->multipart_end();
     }
 
     /* Restore caller-saved registers */
@@ -383,53 +335,41 @@ RSIM_Thread::signal_return()
     syscall_return(policy.pop());
 
     /* Simulate the sigreturn system call (#119), the stack frame of which was set up by signal_deliver() */
-    uint64_t old_sigmask = policy.pop().known_value(); /* low bits */
-    old_sigmask |= (uint64_t)policy.pop().known_value() << 32; /* hi bits */
-    if (old_sigmask!=signal_mask)
-        signal_reprocess = true;
-    signal_mask = old_sigmask;
+    RSIM_SignalHandling::sigset_32 old_sigmask = policy.pop().known_value(); /* low bits */
+    old_sigmask |= (RSIM_SignalHandling::sigset_32)policy.pop().known_value() << 32; /* hi bits */
+    int status = sighand.sigprocmask(SIG_SETMASK, &old_sigmask, NULL);
+    assert(status>=0);
 
     /* Simulate return from sigreturn */
     policy.writeGPR(x86_gpr_sp, policy.pop());        /* restore stack pointer */
     policy.writeIP(policy.pop());                     /* RET instruction */
 }
 
-/* Suspend execution until a signal arrives. The signal must not be masked, and must either terminate the process or have a
- * signal handler. */
-void
-RSIM_Thread::signal_pause()
+int
+RSIM_Thread::signal_accept(int signo)
 {
-    /* Signals that terminate a process by default */
-    uint64_t terminating = (uint64_t)(-1);
-    terminating &= ~((uint64_t)1 << (SIGIO-1));
-    terminating &= ~((uint64_t)1 << (SIGURG-1));
-    terminating &= ~((uint64_t)1 << (SIGCHLD-1));
-    terminating &= ~((uint64_t)1 << (SIGCONT-1));
-    terminating &= ~((uint64_t)1 << (SIGSTOP-1));
-    terminating &= ~((uint64_t)1 << (SIGTTIN-1));
-    terminating &= ~((uint64_t)1 << (SIGTTOU-1));
-    terminating &= ~((uint64_t)1 << (SIGWINCH-1));
+    RSIM_SignalHandling::sigset_32 mask;
+    int status = sighand.sigprocmask(0, NULL, &mask);
+    if (status<0)
+        return status;
 
-    /* What signals would unpause this syscall? */
-    uint64_t unpause = 0;
-    for (uint64_t signo=1; signo<=64; signo++) {
-        uint64_t sigbit = (uint64_t)1 << (signo-1);
-        sigaction_32 sa;
-        int status = get_process()->sys_sigaction(signo, NULL, &sa);
+    if ((sighand.mask_of(signo) & mask))
+        return -EAGAIN;
+
+    return sighand.generate(signo, get_process(), tracing(TRACE_SIGNAL));
+}
+
+int
+RSIM_Thread::signal_dequeue()
+{
+    int signo = sighand.dequeue();
+    if (0==signo) {
+        RSIM_SignalHandling::sigset_32 mask;
+        int status = sighand.sigprocmask(0, NULL, &mask);
         assert(status>=0);
-
-        if (sa.handler_va==(uint64_t)SIG_DFL && 0!=(sigbit & terminating)) {
-            unpause |= sigbit;
-        } else if (sa.handler_va!=0) {
-            unpause |= sigbit;
-        }
+        signo = get_process()->sighand.dequeue(&mask);
     }
-
-    /* Pause until the simulator receives a signal that should be delivered to the specimen.  We violate the
-     * semantics a tiny bit here: the pause() syscall returns before the signal handler is invoked.  I don't
-     * think this matters much since the handler will be invoked before the instruction that follows the "INT 80". */
-    while (0==(signal_pending & unpause & ~signal_mask))
-        pause();
+    return signo;
 }
 
 void
@@ -469,11 +409,13 @@ RSIM_Thread::main()
     while (true) {
         report_progress_maybe();
         try {
+            /* Returned from signal handler? */
             if (policy.readIP().known_value()==SIGHANDLER_RETURN) {
                 signal_return();
                 continue;
             }
 
+            /* Simulate an instruction */
             SgAsmx86Instruction *insn = current_insn();
             process->binary_trace_add(this, insn);
             semantics.processInstruction(insn);
@@ -485,7 +427,12 @@ RSIM_Thread::main()
                 } RTS_MESSAGE_END(true);
             }
 
-            signal_deliver_any();
+            /* Handle a signal if we have any pending that aren't masked */
+            process->signal_dispatch(); /* assign process signals to threads */
+            int signo = signal_dequeue();
+            if (signo>0)
+                signal_deliver(signo);
+
         } catch (const RSIM_Semantics::Exception &e) {
             /* Thrown for instructions whose semantics are not implemented yet. */
             RTS_Message *mesg = tracing(TRACE_WARNING);
@@ -509,7 +456,7 @@ RSIM_Thread::main()
             sys_exit(e);
             return NULL;
         } catch (const RSIM_SemanticPolicy::Signal &e) {
-            signal_generate(e.signo);
+            sighand.generate(e.signo, process, tracing(TRACE_SIGNAL));
         } catch (...) {
             process->dump_core(SIGILL);
             tracing(TRACE_FATAL)->mesg("fatal: simulator thread received an unhandled exception\n");
@@ -671,6 +618,56 @@ RSIM_Thread::sys_exit(const Exit &e)
         process->sys_exit(e.status);
 
     return e.status;
+}
+
+int
+RSIM_Thread::sys_tgkill(pid_t pid, pid_t tid, int signo)
+{
+    int retval = 0;
+    RSIM_Process *process = get_process();
+    assert(process!=NULL);
+    
+    if (pid<0) {
+        retval = -EINVAL;
+    } else if (pid==getpid() && tid>=0) {
+        RSIM_Thread *thread = process->get_thread(tid);
+        if (!thread) {
+            retval = -ESRCH;
+        } else if (thread==this) {
+            retval = sighand.generate(signo, process, tracing(TRACE_SIGNAL));
+        } else {
+            thread->sighand.generate(signo, process, tracing(TRACE_SIGNAL));
+            retval = syscall(SYS_tgkill, pid, tid, RSIM_SignalHandling::SIG_WAKEUP);
+        }
+    } else {
+        retval = sys_kill(pid, signo);
+    }
+    return retval;
+}
+
+int
+RSIM_Thread::sys_kill(pid_t pid, int signo)
+{
+    RSIM_Process *process = get_process();
+    assert(process!=NULL);
+    return process->sys_kill(pid, signo);
+}
+
+int
+RSIM_Thread::sys_sigpending(RSIM_SignalHandling::sigset_32 *result)
+{
+    RSIM_SignalHandling::sigset_32 p1, p2;
+    int status = sighand.sigpending(&p1);
+    if (status<0)
+        return status;
+
+    status = get_process()->sighand.sigpending(&p2);
+    if (status<0)
+        return status;
+
+    if (result)
+        *result = p1 | p2;
+    return 0;
 }
 
 void

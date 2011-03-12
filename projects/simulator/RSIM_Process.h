@@ -201,9 +201,49 @@ private:
      *  dispositions (see CLONE_SIGHAND bit). */
     sigaction_32 signal_action[_NSIG];
 
+    /** The asynchronous signal reception queue.  Signals are pushed onto the tail of this queue asynchronously by
+     *  signal_enqueue(), and removed synchronously from the head by signal_dequeue(). */
+    struct AsyncSignalQueue {
+        AsyncSignalQueue()
+            : head(0), tail(0) {
+            memset(signals, 0, sizeof signals); /* only for debugging */
+        }
+        static const size_t size = 128; /**< Up to 127 signals can be on the queue, plus one guard entry */
+        int signals[size];
+        size_t head;                    /**< Index of oldest signal */
+        size_t tail;                    /**< One beyond index of youngest signal (incremented asynchronously) */
+    } sq;
+
 public:
-    /** Simulates a sigaction() system call.  Returns zero on success; negative errno on failure. */
+    /** Signals that have arrived for the process-as-a-whole which cannot be delivered to any thread because all threads have
+     *  these signals masked. Signals are placed onto this queue by sys_kill() (when necessary) and removed from it by each
+     *  thread using RSIM_Thread::signal_dequeue(). */
+    RSIM_SignalHandling sighand;
+
+    /** Simulates a sigaction() system call.  Returns zero on success; negative errno on failure.
+     *
+     *  Thread safety: This method is thread safe. */
     int sys_sigaction(int signo, const sigaction_32 *new_action, sigaction_32 *old_action);
+
+    /** Simulates a kill() system call. Returns zero on success; negative errno on failure.
+     *
+     *  Thread safety: This method is thread safe. */
+    int sys_kill(pid_t pid, int signo);
+
+    /** Signal queue used for asynchronous reception of signals from other processes. Signal numbers are pushed onto the tail
+     *  of this queue by signal_enqueue(), called from the RSIM_Simulator::signal_receiver() signal handler.  Therefore, this
+     *  function must be async signal safe. */
+    void signal_enqueue(int signo);
+
+    /** Removes one signal from the queue.  Returns the oldest signal on the queue, or zero if the queue is empty.
+     *
+     *  Thread safety: This method is thread safe. */
+    int signal_dequeue();
+
+    /** Assigns process-wide signals to threads.
+     *
+     *  Thread safety: This method is thread safe. */
+    void signal_dispatch();
 
 
     /***************************************************************************************************************************

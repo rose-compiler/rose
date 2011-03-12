@@ -425,9 +425,15 @@ RSIM_Thread::emulate_syscall()
 
         case 29: { /* 0x1d, pause */
             syscall_enter("pause", "");
-            signal_pause();
+            int signo = sighand.sigsuspend(NULL, this);
             syscall_return(-EINTR);
             syscall_leave("d");
+            if (signo>0) {
+                tracing(TRACE_SYSCALL)->multipart("", "    retured due to ");
+                print_enum(tracing(TRACE_SYSCALL), signal_names, signo);
+                tracing(TRACE_SYSCALL)->more("(%d)", signo);
+                tracing(TRACE_SYSCALL)->multipart_end();
+            }
             break;
         }
             
@@ -521,8 +527,7 @@ RSIM_Thread::emulate_syscall()
             syscall_enter("kill", "df", signal_names);
             pid_t pid=syscall_arg(0);
             int sig=syscall_arg(1);
-            int result = kill(pid, sig);
-            if (result == -1) result = -errno;
+            int result = sys_kill(pid, sig);
             syscall_return(result);
             syscall_leave("d");
             break;
@@ -1893,76 +1898,77 @@ RSIM_Thread::emulate_syscall()
             break;
         }
 
-        case 175: { /*0xaf, rt_sigprocmask*/
+        case 175: { /*0xaf, rt_sigprocmask; get/set signal mask for calling thread */
             static const Translate flags[] = { TF(SIG_BLOCK), TF(SIG_UNBLOCK), TF(SIG_SETMASK), T_END };
-            syscall_enter("rt_sigprocmask", "fPp", flags, (size_t)8, print_sigmask);
+            syscall_enter("rt_sigprocmask", "fPp", flags, sizeof(RSIM_SignalHandling::sigset_32), print_sigmask_32);
+            do {
+                int how=syscall_arg(0);
+                uint32_t in_va=syscall_arg(1), out_va=syscall_arg(2);
+                size_t sigsetsize=syscall_arg(3);
+                assert(sigsetsize==sizeof(RSIM_SignalHandling::sigset_32));
 
-            int how=syscall_arg(0);
-            uint32_t set_va=syscall_arg(1), get_va=syscall_arg(2);
-            //size_t sigsetsize=syscall_arg(3);
+                RSIM_SignalHandling::sigset_32 in_set, out_set;
+                RSIM_SignalHandling::sigset_32 *in_set_p  = in_va ? &in_set  : NULL;
+                RSIM_SignalHandling::sigset_32 *out_set_p = out_va? &out_set : NULL;
 
-            uint64_t saved=signal_mask, sigset=0;
-            if ( set_va != 0 ) {
-
-                size_t nread = get_process()->mem_read(&sigset, set_va, sizeof sigset);
-                ROSE_ASSERT(nread==sizeof sigset);
-
-                if (0==how) {
-                    /* SIG_BLOCK */
-                    signal_mask |= sigset;
-                } else if (1==how) {
-                    /* SIG_UNBLOCK */
-                    signal_mask &= ~sigset;
-                } else if (2==how) {
-                    /* SIG_SETMASK */
-                    signal_mask = sigset;
-                } else {
-                    syscall_return(-EINVAL);
+                if (in_set_p && sizeof(in_set)!=get_process()->mem_read(in_set_p, in_va, sizeof in_set)) {
+                    syscall_return(-EFAULT);
                     break;
                 }
-                if (signal_mask!=saved)
-                    signal_reprocess = true;
-            }
 
-            if (get_va) {
-                size_t nwritten = get_process()->mem_write(&saved, get_va, sizeof saved);
-                ROSE_ASSERT(nwritten==sizeof saved);
-            }
-            syscall_return(0);
-            syscall_leave("d--P", (size_t)8, print_sigmask);
+                int result = sighand.sigprocmask(how, in_set_p, out_set_p);
+                syscall_return(result);
+                if (result<0)
+                    break;
+
+                if (out_set_p && sizeof(out_set)!=get_process()->mem_write(out_set_p, out_va, sizeof out_set)) {
+                    syscall_return(-EFAULT);
+                    break;
+                }
+            } while (0);                
+            syscall_leave("d--P", sizeof(RSIM_SignalHandling::sigset_32), print_sigmask_32);
             break;
         }
 
         case 176: { /* 0xb0, rt_sigpending */
             syscall_enter("rt_sigpending", "p");
-            uint32_t sigset_va=syscall_arg(0);
-            ROSE_ASSERT(8==sizeof(signal_pending));
-            if (8!=get_process()->mem_write(&signal_pending, sigset_va, 8)) {
-                syscall_return(-EFAULT);
-            } else {
-                syscall_return(0);
-            }
-            syscall_leave("dP", sizeof(uint64_t), print_sigmask);
+            do {
+                uint32_t sigset_va=syscall_arg(0);
+                RSIM_SignalHandling::sigset_32 pending;
+                int result = sys_sigpending(&pending);
+                syscall_return(result);
+                if (result<0)
+                    break;
+
+                if (sizeof(pending)!=get_process()->mem_write(&pending, sigset_va, sizeof pending)) {
+                    syscall_return(-EFAULT);
+                    break;
+                }
+            } while (0);
+            syscall_leave("dP", sizeof(RSIM_SignalHandling::sigset_32), print_sigmask_32);
             break;
         }
 
         case 179: { /* 0xb3, rt_sigsuspend */
-            syscall_enter("rt_sigsuspend", "Pd", (size_t)8, print_sigmask);
+            syscall_enter("rt_sigsuspend", "Pd", sizeof(RSIM_SignalHandling::sigset_32), print_sigmask_32);
+            assert(sizeof(RSIM_SignalHandling::sigset_32)==syscall_arg(1));
+            int signo;
             do {
-                ROSE_ASSERT(8==syscall_arg(1));
-                ROSE_ASSERT(8==sizeof(signal_pending));
-                uint64_t new_signal_mask;
-                if (8!=get_process()->mem_read(&new_signal_mask, syscall_arg(0), 8)) {
+                RSIM_SignalHandling::sigset_32 new_mask;
+                if (sizeof(new_mask)!=get_process()->mem_read(&new_mask, syscall_arg(0), sizeof new_mask)) {
                     syscall_return(-EFAULT);
                     break;
                 }
-                uint64_t old_signal_mask = signal_mask;
-                signal_mask = new_signal_mask;
-                signal_pause();
-                signal_mask = old_signal_mask;
+                signo = sighand.sigsuspend(&new_mask, this);
                 syscall_return(-EINTR);
             } while (0);
             syscall_leave("d");
+            if (signo>0) {
+                tracing(TRACE_SYSCALL)->multipart("", "    retured due to ");
+                print_enum(tracing(TRACE_SYSCALL), signal_names, signo);
+                tracing(TRACE_SYSCALL)->more("(%d)", signo);
+                tracing(TRACE_SYSCALL)->multipart_end();
+            }
             break;
         }
 
@@ -1996,49 +2002,31 @@ RSIM_Thread::emulate_syscall()
         case 186: { /* 0xba, sigaltstack*/
             syscall_enter("sigaltstack", "Pp", sizeof(stack_32), print_stack_32);
             do {
-                uint32_t new_stack_va=syscall_arg(0), old_stack_va=syscall_arg(1);
+                uint32_t in_va=syscall_arg(0), out_va=syscall_arg(1);
 
-                /* Are we currently executing on the alternate stack? */
-                uint32_t sp = policy.readGPR(x86_gpr_sp).known_value();
-                bool on_stack = (0==(signal_stack.ss_flags & SS_DISABLE) &&
-                                 sp >= signal_stack.ss_sp &&
-                                 sp < signal_stack.ss_sp + signal_stack.ss_size);
+                stack_32 in_stack, out_stack;
+                stack_32 *in_stack_p  = in_va  ? &in_stack  : NULL;
+                stack_32 *out_stack_p = out_va ? &out_stack : NULL;
 
-                if (old_stack_va) {
-                    stack_32 tmp = signal_stack;
-                    tmp.ss_flags &= ~SS_ONSTACK;
-                    if (on_stack) tmp.ss_flags |= SS_ONSTACK;
-                    if (sizeof(tmp)!=get_process()->mem_write(&tmp, old_stack_va, sizeof tmp)) {
-                        syscall_return(-EFAULT);
-                        break;
-                    }
+                if (in_stack_p && sizeof(in_stack)!=get_process()->mem_read(in_stack_p, in_va, sizeof in_stack)) {
+                    syscall_return(-EFAULT);
+                    break;
                 }
 
-                if (new_stack_va) {
-                    stack_32 tmp;
-                    tmp.ss_flags &= ~SS_ONSTACK;
-                    if (sizeof(tmp)!=get_process()->mem_read(&tmp, new_stack_va, sizeof tmp)) {
-                        syscall_return(-EFAULT);
-                        break;
-                    }
-                    if (on_stack) {
-                        syscall_return(-EINVAL);  /* can't set alt stack while we're using it */
-                        break;
-                    } else if ((tmp.ss_flags & ~(SS_DISABLE|SS_ONSTACK))) {
-                        syscall_return(-EINVAL);  /* invalid flags */
-                        break;
-                    } else if (0==(tmp.ss_flags & SS_DISABLE) && tmp.ss_size < 4096) {
-                        syscall_return(-ENOMEM);  /* stack must be at least one page large */
-                        break;
-                    }
-                    signal_stack = tmp;
-                }
+                int result = sighand.sigaltstack(in_stack_p, out_stack_p, policy.readGPR(x86_gpr_sp).known_value());
+                syscall_return(result);
+                if (result<0)
+                    break;
 
-                syscall_return(0);
+                if (out_stack_p && sizeof(out_stack)!=get_process()->mem_write(out_stack_p, out_va, sizeof out_stack)) {
+                    syscall_return(-EFAULT);
+                    break;
+                }
             } while (0);
             syscall_leave("d-P", sizeof(stack_32), print_stack_32);
             break;
         }
+            
 
         // case 191 (0xbf, ugetrlimit). See case 76. I think they're the same. [RPM 2010-11-12]
 
@@ -2427,34 +2415,40 @@ RSIM_Thread::emulate_syscall()
                     break;
             }
 
-            uint32_t futex1_va=syscall_arg(0), op=syscall_arg(1), val1=syscall_arg(2), timeout_va=syscall_arg(3), futex2_va=syscall_arg(4), val3=syscall_arg(5);
-            uint32_t *futex1 = (uint32_t*)get_process()->my_addr(futex1_va, 4);
-            uint32_t *futex2 = (uint32_t*)get_process()->my_addr(futex2_va, 4);
+            do {
+                uint32_t futex1_va=syscall_arg(0);
+                uint32_t *futex1 = (uint32_t*)get_process()->my_addr(futex1_va, 4);
+                uint32_t op=syscall_arg(1), val1=syscall_arg(2), timeout_va=syscall_arg(3);
+                uint32_t futex2_va=syscall_arg(4);
+                uint32_t *futex2 = (uint32_t*)get_process()->my_addr(futex2_va, 4);
+                uint32_t val3=syscall_arg(5);
 
-            struct timespec timespec_buf, *timespec=NULL;
-            if (timeout_va) {
-                timespec_32 ts;
-                size_t nread = get_process()->mem_read(&ts, timeout_va, sizeof ts);
-                ROSE_ASSERT(nread==sizeof ts);
-                timespec_buf.tv_sec = ts.tv_sec;
-                timespec_buf.tv_nsec = ts.tv_nsec;
-                timespec = &timespec_buf;
-            }
+                struct timespec timespec_buf, *timespec=NULL;
+                if (timeout_va) {
+                    timespec_32 ts;
+                    if (sizeof(ts) != get_process()->mem_read(&ts, timeout_va, sizeof ts)) {
+                        syscall_return(-EFAULT);
+                        break;
+                    }
+                    timespec_buf.tv_sec = ts.tv_sec;
+                    timespec_buf.tv_nsec = ts.tv_nsec;
+                    timespec = &timespec_buf;
+                }
 
 #if 0 /* DEBUGGING [RPM 2011-01-13] */
-            if (process->debug) {
-                fprintf(process->debug,
-                        "\nROBB: futex1=%p, op=%"PRIu32", val1=%"PRIu32", timeout_va=0x%"PRIx32", futex2=%p, val3=%"PRIu32"\n",
-                        futex1, op, val1, timeout_va, futex2, val3);
-                if (futex1)
-                    fprintf(process->debug, "      *futex1 = %"PRIu32"\n", *futex1);
-                if (futex2)
-                    fprintf(process->debug, "      *futex2 = %"PRIu32"\n", *futex2);
-            }
+                if (process->debug) {
+                    fprintf(process->debug,
+                            "\nROBB: futex1=%p, op=%"PRIu32", val1=%"PRIu32", timeout_va=0x%"PRIx32", futex2=%p, val3=%"PRIu32"\n",
+                            futex1, op, val1, timeout_va, futex2, val3);
+                    if (futex1)
+                        fprintf(process->debug, "      *futex1 = %"PRIu32"\n", *futex1);
+                    if (futex2)
+                        fprintf(process->debug, "      *futex2 = %"PRIu32"\n", *futex2);
+                }
 #endif
-            int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val3);
-            if (-1==result) result = -errno;
-            syscall_return(result);
+                int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val3);
+                syscall_return(-1==result ? -errno : result);
+            } while (0);
             syscall_leave("d");
             break;
         }
@@ -2619,8 +2613,8 @@ RSIM_Thread::emulate_syscall()
         case 270: { /*0x10e tgkill*/
             syscall_enter("tgkill", "ddf", signal_names);
             int tgid=syscall_arg(0), tid=syscall_arg(1), sig=syscall_arg(2);
-            int result = syscall(SYS_tgkill, tgid, tid, sig);
-            syscall_return(-1==result?-errno:result);
+            int result = sys_tgkill(tgid, tid, sig);
+            syscall_return(result);
             syscall_leave("d");
             break;
         }
@@ -3603,7 +3597,7 @@ RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, u
             post_fork();
 
             /* Pending signals are only for the parent */
-            signal_pending = 0;
+            sighand.clear_all_pending();
 
             /* Open new log files if necessary */
             get_process()->open_trace_file();

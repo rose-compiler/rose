@@ -149,7 +149,7 @@ print_bitvec(RTS_Message *m, const uint8_t *vec, size_t sz)
 }
 
 void
-print_sigmask(RTS_Message *m, const uint8_t *vec, size_t sz)
+print_sigmask_32(RTS_Message *m, const uint8_t *vec, size_t sz)
 {
     int nsigs=0;
     for (size_t i=0; i<sz; i++) {
