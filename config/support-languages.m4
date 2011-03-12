@@ -127,6 +127,32 @@ AC_ARG_ENABLE([cxx],
                 esac
                ##########################################################################
                ,)
+#########################################################################################
+AC_ARG_ENABLE([cuda],
+#########################################################################################
+               AS_HELP_STRING([--enable-cuda],[Enable Cuda language support in ROSE (default=yes)]),
+               ##########################################################################
+                echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "cuda"
+                if test $? = 0 ; then 
+                  list_has_cuda=yes
+                fi
+                case "$enableval" in
+                  [yes)]
+                  	if test "x$list_has_cuda" != "xyes" ; then
+                          # --enable-languages does not include Cuda, but --enable-cuda=yes
+                  	  LANGUAGES_TO_SUPPORT+=" cuda"
+                        fi
+                  	;;
+                  [no)]
+                        # remove 'Cuda' from support languages list
+                  	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/cuda//g'`"
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-cuda='$enableval' is unsupported. Use 'yes' or 'no'])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
 
 #########################################################################################
 #
