@@ -148,7 +148,7 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
         fprintf(f, " %10s <out of range>", "");
     } else {
         SgAsmGenericSymbol *sym = symtab->get_symbols()->get_symbols()[p_sym];
-        fprintf(f, " 0x%08"PRIx64" %s", sym->get_value(), sym->get_name()->c_str());
+        fprintf(f, " 0x%08"PRIx64" %s", sym->get_value(), sym->get_name()->get_string(true).c_str());
     }
 
     /* Addend in decimal */
@@ -330,7 +330,7 @@ SgAsmElfRelocSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     if (p_target_section) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "target_section",
-                p_target_section->get_id(), p_target_section->get_name()->c_str());
+                p_target_section->get_id(), p_target_section->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = NULL\n", p, w, "target_section");
     }

@@ -584,13 +584,13 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_shstrndx",             p_e_shstrndx);
     if (p_section_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n",                p, w, "section_table",
-                p_section_table->get_id(), p_section_table->get_name()->c_str());
+                p_section_table->get_id(), p_section_table->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n",                       p, w, "section_table");
     }
     if (p_segment_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n",                p, w, "segment_table",
-                p_segment_table->get_id(), p_segment_table->get_name()->c_str());
+                p_segment_table->get_id(), p_segment_table->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n",                       p, w, "segment_table");
     }
