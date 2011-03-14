@@ -2378,11 +2378,16 @@ RSIM_Thread::emulate_syscall()
             };
 
             /* Variable arguments */
-            unsigned arg1 = syscall_arg(1);
-            arg1 &= 0x7f;
-            switch (arg1) {
+            uint32_t futex1_va = syscall_arg(0);
+            uint32_t op = syscall_arg(1);
+            uint32_t val1 = syscall_arg(2);
+            uint32_t timeout_va = 0;                    /* arg 3 when present */
+            uint32_t futex2_va = 0;                     /* arg 4 when present */
+            uint32_t val3 = 0;                          /* arg 5 when present */
+            switch (op & 0x7f) {
                 case 0: /*FUTEX_WAIT*/
                     syscall_enter("futex", "PfdP", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
+                    timeout_va = syscall_arg(3);
                     break;
                 case 1: /*FUTEX_WAKE*/
                     syscall_enter("futex", "Pfd", 4, print_int_32, opflags);
@@ -2392,24 +2397,26 @@ RSIM_Thread::emulate_syscall()
                     break;
                 case 3: /*FUTEX_REQUEUE*/
                     syscall_enter("futex", "Pfd-P", 4, print_int_32, opflags, 4, print_int_32);
+                    futex2_va = syscall_arg(4);
                     break;
                 case 4: /*FUTEX_CMP_REQUEUE*/
                     syscall_enter("futex", "Pfd-Pd", 4, print_int_32, opflags, 4, print_int_32);
+                    futex2_va = syscall_arg(4);
+                    val3 = syscall_arg(5);
                     break;
                 default:
                     syscall_enter("futex", "PfdPPd", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32, 
                                   4, print_int_32);
+                    timeout_va =syscall_arg(3);
+                    futex2_va = syscall_arg(4);
+                    val3 = syscall_arg(5);
                     break;
             }
 
             do {
-                uint32_t futex1_va=syscall_arg(0);
-                uint32_t *futex1 = (uint32_t*)get_process()->my_addr(futex1_va, 4);
-                uint32_t op=syscall_arg(1), val1=syscall_arg(2), timeout_va=syscall_arg(3);
-                uint32_t futex2_va=syscall_arg(4);
-                uint32_t *futex2 = (uint32_t*)get_process()->my_addr(futex2_va, 4);
-                uint32_t val3=syscall_arg(5);
-
+                assert(sizeof(int)==sizeof(uint32_t));
+                int *futex1 = futex1_va ? (int*)get_process()->my_addr(futex1_va, 4) : NULL;
+                int *futex2 = futex2_va ? (int*)get_process()->my_addr(futex2_va, 4) : NULL;
                 struct timespec timespec_buf, *timespec=NULL;
                 if (timeout_va) {
                     timespec_32 ts;
@@ -2422,17 +2429,6 @@ RSIM_Thread::emulate_syscall()
                     timespec = &timespec_buf;
                 }
 
-#if 0 /* DEBUGGING [RPM 2011-01-13] */
-                if (process->debug) {
-                    fprintf(process->debug,
-                            "\nROBB: futex1=%p, op=%"PRIu32", val1=%"PRIu32", timeout_va=0x%"PRIx32", futex2=%p, val3=%"PRIu32"\n",
-                            futex1, op, val1, timeout_va, futex2, val3);
-                    if (futex1)
-                        fprintf(process->debug, "      *futex1 = %"PRIu32"\n", *futex1);
-                    if (futex2)
-                        fprintf(process->debug, "      *futex2 = %"PRIu32"\n", *futex2);
-                }
-#endif
                 int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val3);
                 syscall_return(-1==result ? -errno : result);
             } while (0);

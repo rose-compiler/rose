@@ -7,7 +7,7 @@
  *  <ul>
  *    <li>Sending a signal from a simulated thread to any thread within the same thread group (process).  This is accomplished
  *        by simply adding the signal to the target thread's queue of pending signals and then sending a SIG_WAKEUP signal to
- *        the target thread (if its different than the sending thread) to cause it to resume from any potential blocking system
+ *        the target thread (if it's different than the sending thread) to cause it to resume from any potential blocking system
  *        call.  The RSIM_Thread::sys_tgkill() method can be used for this.</li>
  *    <li>Sending a signal from a simulated thread to the simulated process-as-a-whole.  The simulator chooses a thread to
  *        serve as the target based on the set of signal masks across all threads of the process. The signal is added to the
@@ -156,8 +156,7 @@ public:
      *  Returns zero on success, negative on failure.  The only recoverable failure that's supported is the generation of a
      *  real-time signal which causes the signal queue to be overflowed, returning -ENOBUFS.
      *
-     *  Thread safety: This method is thread safe.  When a signal is added, the "reprocess" member is set to true and the
-     *  condition variable is signaled. */
+     *  Thread safety: This method is thread safe. */
     int generate(int signo, RSIM_Process*, RTS_Message*);
 
     /** Removes one unmasked signal from the set of pending signals.  Returns a signal number, or negative on failure.  If no

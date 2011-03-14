@@ -1539,7 +1539,6 @@ RSIM_Process::sys_kill(pid_t pid, int signo)
                 RSIM_Thread *thread = ti->second;
                 int status = thread->signal_accept(signo);
                 if (status>=0) {
-                    thread->tracing(TRACE_SIGNAL)->brief("process signal %d directed to thread %d", signo, thread->get_seq());
                     status = syscall(SYS_tgkill, getpid(), thread->get_tid(), RSIM_SignalHandling::SIG_WAKEUP);
                     assert(status>=0);
                     signo = 0;
