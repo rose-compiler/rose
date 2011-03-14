@@ -4952,18 +4952,6 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
          if (isSgClassDefinition(currentScopeOfFunctionDeclaration) != NULL) {
                    nondefiningDeclaration->set_scope(currentScopeOfFunctionDeclaration);
           }
-
-         // DXN (02/12/2011): remove the function symbol from its previous scope:
-         nondefiningDeclaration->get_scope()->remove_symbol(functionSymbol);
-         // add the function symbol to the current scope:
-         nondefiningDeclaration->set_scope(currentScopeOfFunctionDeclaration);
-         nondefiningDeclaration->set_parent(currentScopeOfFunctionDeclaration);
-         procedureDeclaration->set_scope(currentScopeOfFunctionDeclaration);
-         procedureDeclaration->set_parent(currentScopeOfFunctionDeclaration);
-         functionSymbol->set_declaration(procedureDeclaration);
-         currentScopeOfFunctionDeclaration->insert_symbol(procedureDeclaration->get_name(), functionSymbol);
-
-
         }
        else
         {
