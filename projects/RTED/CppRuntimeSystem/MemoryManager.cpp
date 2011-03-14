@@ -1,5 +1,6 @@
 #include <sstream>
 #include <iostream>
+#include <memory>
 
 #include "MemoryManager.h"
 
