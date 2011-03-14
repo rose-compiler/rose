@@ -16,10 +16,9 @@
     defined(HAVE_SYS_WAIT_H) && defined(HAVE_SYS_UTSNAME_H) && defined(HAVE_SYS_IOCTL_H) && defined(HAVE_SYS_SYSINFO_H) &&     \
     defined(HAVE_SYS_SOCKET_H) && defined(HAVE_TERMIOS_H) && defined(HAVE_GRP_H) && defined(HAVE_SYSCALL_H)
 #  define ROSE_ENABLE_SIMULATOR
+#  include "RSIM_Simulator.h"
 #else
 #  undef ROSE_ENABLE_SIMULATOR
 #endif
-
-#include "RSIM_Simulator.h"
 
 #endif

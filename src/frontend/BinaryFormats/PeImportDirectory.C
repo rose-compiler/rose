@@ -161,7 +161,7 @@ SgAsmPEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     fprintf(f, "%s%-*s = %s",          p, w, "dll_name_rva", p_dll_name_rva.to_string().c_str());
     if (p_dll_name)
-        fprintf(f, " \"%s\"", p_dll_name->c_str());
+        fprintf(f, " \"%s\"", p_dll_name->get_string(true).c_str());
     fputc('\n', f);
 
     fprintf(f, "%s%-*s = %s\n",          p, w, "ilt_rva", p_ilt_rva.to_string().c_str());

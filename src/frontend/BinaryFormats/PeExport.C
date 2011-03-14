@@ -68,7 +68,7 @@ SgAsmPEExportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
-    fprintf(f, "%s%-*s = \"%s\"\n",                    p, w, "name", p_name->c_str());
+    fprintf(f, "%s%-*s = \"%s\"\n",                    p, w, "name", p_name->get_string(true).c_str());
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "res1", p_res1, p_res1);
     fprintf(f, "%s%-*s = %lu %s",                      p, w, "timestamp", (unsigned long)p_timestamp, ctime(&p_timestamp));
     fprintf(f, "%s%-*s = %u\n",                        p, w, "vmajor", p_vmajor);
@@ -104,9 +104,10 @@ SgAsmPEExportEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = [ord %u] rva=%s \"%s\"", p, w, "info", p_ordinal, p_export_rva.to_string().c_str(), p_name->c_str());
+    fprintf(f, "%s%-*s = [ord %u] rva=%s \"%s\"", p, w, "info",
+            p_ordinal, p_export_rva.to_string().c_str(), p_name->get_string(true).c_str());
     if (p_forwarder)
-        fprintf(f, " -> \"%s\"", p_forwarder->c_str());
+        fprintf(f, " -> \"%s\"", p_forwarder->get_string(true).c_str());
     fputc('\n', f);
 }
 
