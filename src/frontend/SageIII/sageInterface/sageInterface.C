@@ -11178,6 +11178,24 @@ declarationContainsDependentDeclarations( SgDeclarationStatement* decl, vector<S
 
      return returnValue;
    }
+//! Insert an expression (new_exp )before another expression (anchor_exp) using the comma operator. The result becomes (new_exp, anchor_exp).
+SgCommaOpExp * SageInterface::insertBeforeUsingCommaOp (SgExpression* new_exp, SgExpression* anchor_exp)
+{
+  ROSE_ASSERT (new_exp != NULL);
+  ROSE_ASSERT (anchor_exp != NULL);
+  ROSE_ASSERT (new_exp != anchor_exp);
+
+  SgNode* parent = anchor_exp->get_parent();
+  ROSE_ASSERT (parent != NULL);
+
+  SgCommaOpExp * result = buildCommaOpExp(new_exp, NULL);
+  ROSE_ASSERT (result != NULL);
+  replaceExpression (anchor_exp, result, true);
+
+  result->set_rhs_operand(anchor_exp);
+  anchor_exp->set_parent(result);
+  return result ;
+}
 
 void
 SageInterface::addMessageStatement( SgStatement* stmt, string message )
