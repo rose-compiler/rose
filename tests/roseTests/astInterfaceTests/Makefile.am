@@ -24,7 +24,8 @@ noinst_PROGRAMS = \
     buildAbstractHandle getDependentDecls buildStructDeclaration2 buildTypedefDeclaration \
     deepDelete insertStatementBeforeFunction removeStatementCommentRelocation \
     generateUniqueName annotateExpressionsWithUniqueNames buildExternalStatement \
-    buildCommonBlock doLoopNormalization buildLabelStatement2 replaceWithPattern
+    buildCommonBlock doLoopNormalization buildLabelStatement2 replaceWithPattern \
+    insertBeforeUsingCommaOp
 
 # list of test SAGE AST builders 
 annotateExpressionsWithUniqueNames_SOURCES = annotateExpressionsWithUniqueNames.C
@@ -76,6 +77,7 @@ buildCommonBlock_SOURCES                 = buildCommonBlock.C
 doLoopNormalization_SOURCES              = doLoopNormalization.C
 buildLabelStatement2_SOURCES	         = buildLabelStatement2.C
 replaceWithPattern_SOURCES               = replaceWithPattern.C
+insertBeforeUsingCommaOp_SOURCES         = insertBeforeUsingCommaOp.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -132,7 +134,8 @@ generatedCodeExamples = \
   rose_inputRemoveStatementCommentRelocation.C \
   rose_inputgenerateUniqueName.C \
   rose_inputannotateExpressionsWithUniqueNames.C \
-  rose_inputreplaceWithPattern.C
+  rose_inputreplaceWithPattern.C \
+  rose_inputinsertBeforeUsingCommaOp.C
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -233,6 +236,8 @@ rose_inputgenerateUniqueName.C:generateUniqueName
 rose_inputannotateExpressionsWithUniqueNames.C:annotateExpressionsWithUniqueNames
 	./annotateExpressionsWithUniqueNames$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputannotateExpressionsWithUniqueNames.C 1>rose_inputannotateExpressionsWithUniqueNames.out
 
+rose_inputinsertBeforeUsingCommaOp.C:insertBeforeUsingCommaOp
+	./insertBeforeUsingCommaOp$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputinsertBeforeUsingCommaOp.C
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
@@ -331,7 +336,7 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C \
        inputgenerateUniqueName.C inputannotateExpressionsWithUniqueNames.C \
        inputbuildExternalStatement.f inputbuildCommonBlock.f inputdoLoopNormalization.f \
-       inputbuildLabelStatement2.f inputreplaceWithPattern.C
+       inputbuildLabelStatement2.f inputreplaceWithPattern.C inputinsertBeforeUsingCommaOp.C
 
 
 check-local:

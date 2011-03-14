@@ -1405,6 +1405,10 @@ unsigned long long getIntegerConstantValue(SgValueExp* expr);
 //! Get a statement's dependent declarations which declares the types used in the statement. The returned vector of declaration statements are sorted according to their appearance order in the original AST. Any reference to a class or template class from a namespace will treated as a reference to the enclosing namespace.
 std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt );
 
+
+//! Insert an expression (new_exp )before another expression (anchor_exp) using the comma operator. The result becomes (new_exp, anchor_exp).
+SgCommaOpExp *insertBeforeUsingCommaOp (SgExpression* new_exp, SgExpression* anchor_exp);
+
 //@}
 
 
