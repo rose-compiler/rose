@@ -278,6 +278,8 @@ RTS_Message::mesg(const char *fmt, ...)
     RTS_WRITE(rwlock) {
         terminate();
         output_lines(buffer);
+        if (!sol)
+            output_lines("\n");
         in_multi = false;
     } RTS_WRITE_END;
     return *this;

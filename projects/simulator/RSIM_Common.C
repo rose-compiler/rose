@@ -5,6 +5,12 @@
 
 #include <sys/wait.h>
 
+unsigned
+tracingFacilityBit(TracingFacility tf)
+{
+    return (unsigned)1 << (unsigned)tf;
+}
+
 void
 print_user_desc_32(RTS_Message *m, const uint8_t *_ud, size_t sz)
 {

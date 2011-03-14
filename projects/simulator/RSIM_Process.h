@@ -12,8 +12,9 @@ class RSIM_Process {
 public:
     /** Creates an empty process containing no threads. */
     RSIM_Process()
-        : map(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), disassembler(NULL),
-          trace_file(NULL), trace_flags(TRACE_DEFAULT), core_flags(0), terminated(false), termination_status(0), btrace_file(NULL),
+        : tracing_file(NULL), tracing_flags(0),
+          map(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), disassembler(NULL),
+          core_flags(0), terminated(false), termination_status(0), btrace_file(NULL),
           vdso_mapped_va(0), vdso_entry_va(0),
           core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000) {
         RTS_rwlock_init(&instance_rwlock, NULL);
@@ -48,6 +49,45 @@ public:
         return instance_rwlock;
     }
     //@}
+
+
+
+    /**************************************************************************************************************************
+     *                                  Tracing and debugging
+     **************************************************************************************************************************/
+private:
+    std::string tracing_file_name;      /**< Pattern for trace file names. May include %d for thread ID. */
+    FILE *tracing_file;                 /**< Stream to which debugging output is sent (or NULL to suppress it) */
+    unsigned tracing_flags;             /**< Bit vector of what to trace. See TraceFlags. */
+
+public:
+
+    /** Sets the pattern to use to generate a file name for trace output.  The name should be a printf-style format string with
+     *  an optional %d conversion which is replaced by the process ID. */
+    void set_tracing_name(const std::string &s) {
+        tracing_file_name = s;
+    }
+
+    /** Returns the pattern used to generate trace file names. */
+    std::string get_tracing_name(void) const {
+        return tracing_file_name;
+    }
+
+    /** Initialize tracing by (re)opening the trace file with the name pattern that was specified with set_trace_name().  The
+     *  pattern should be a printf-style format with an optional integer specifier for the thread ID. */
+    void open_tracing_file();
+
+    /** Returns a file for tracing, or NULL if tracing is disabled. All trace facilities use the same file.
+     *
+     *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
+    FILE *get_tracing_file() const;
+
+    /** Sets tracing file and facilities. */
+    void set_tracing(FILE*, unsigned flags);
+    
+    /** Returns a bit mask describing what should be traced by new threads created for this process. The return value is the
+     * bitwise OR of the facilityBitMask() for each enabled facility. */
+    unsigned get_tracing_flags() const;
 
 
 
@@ -246,6 +286,7 @@ public:
     void signal_dispatch();
 
 
+
     /***************************************************************************************************************************
      *                                  Thread creation/join simulation
      ***************************************************************************************************************************/
@@ -326,30 +367,6 @@ public:
     MemoryMap *get_memory() const {             /**< Returns the memory map for the simulated process. */
         return map;
     }
-    void set_trace_name(const std::string &s) {
-        trace_file_name = s;
-    }
-    std::string get_trace_name(void) const {
-        return trace_file_name;
-    }
-
-    /** Initialize tracing by (re)opening the trace file with the name pattern that was specified with set_trace_name().  The
-     *  pattern should be a printf-style format with an optional integer specifier for the thread ID. */
-    void open_trace_file();
-
-    /** Returns a file for tracing, or NULL if tracing is disabled.  The WHAT argument should be a bit vector describing the
-     *  tracing facilities in which we're interested (all facilities use the same file).  If tracing is enabled for any of the
-     *  specified facilities, then a file pointer is returned; otherwise a null pointer is returned.
-     *
-     *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    FILE *tracing(unsigned what) const;
-
-    /** Returns a bit mask describing what is being traced. */
-    unsigned tracing() const;
-
-    /** Sets tracing file and facilities. */
-    void set_tracing(FILE*, unsigned what);
-
     /** Sets the core dump styles. */
     void set_core_styles(unsigned bitmask) {
         core_flags = bitmask;
@@ -402,9 +419,6 @@ private:
 private:
     std::string exename;                        /**< Name of executable without any path components */
     std::string interpname;                     /**< Name of interpreter from ".interp" section or "--interp=" switch */
-    std::string trace_file_name;                /**< Pattern for trace file names. May include %d for thread ID. */
-    FILE *trace_file;                           /**< Stream to which debugging output is sent (or NULL to suppress it) */
-    unsigned trace_flags;                       /**< Bit vector of what to trace. See TraceFlags. */
     unsigned core_flags;                        /**< Bit vector describing how to produce core dumps. */
     bool terminated;                            /**< True when the process has finished running. */
     int termination_status;                     /**< As would be returned by the parent's waitpid() call. */

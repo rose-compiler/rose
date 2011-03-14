@@ -40,26 +40,24 @@ enum CoreStyle {
     CORE_ROSE=0x0002
 };
 
-/* Bit flags that control what to trace */
-enum TraceFlags {
-    TRACE_INSN          = 0x0001,               /**< Show each instruction that's executed. */
-    TRACE_STATE         = 0x0002,               /**< Show machine state after each instruction. */
-    TRACE_MEM           = 0x0004,               /**< Show memory read/write operations. */
-    TRACE_MMAP          = 0x0008,               /**< Show changes in the memory map. */
-    TRACE_SYSCALL       = 0x0010,               /**< Show each system call enter and exit. */
-    TRACE_LOADER        = 0x0020,               /**< Show diagnostics for the program loading. */
-    TRACE_PROGRESS      = 0x0040,               /**< Show a progress report now and then. */
-    TRACE_SIGNAL        = 0x0080,               /**< Show reception and delivery of signals. */
-    TRACE_THREAD        = 0x0100,               /**< Show thread creation/destruction, etc. */
+/** Trace facilities. */
+enum TracingFacility {
+    TRACE_MISC          = 0,    /**< Show miscellaneous output that doesn't fit into the categories below. */
+    TRACE_INSN          = 1,    /**< Show each instruction that's executed. */
+    TRACE_STATE         = 2,    /**< Show machine state after each instruction. */
+    TRACE_MEM           = 3,    /**< Show memory read/write operations. */
+    TRACE_MMAP          = 4,    /**< Show changes in the memory map. */
+    TRACE_SYSCALL       = 5,    /**< Show each system call enter and exit. */
+    TRACE_LOADER        = 6,    /**< Show diagnostics for the program loading. */
+    TRACE_PROGRESS      = 7,    /**< Show a progress report now and then. */
+    TRACE_SIGNAL        = 8,    /**< Show reception and delivery of signals. */
+    TRACE_THREAD        = 9,    /**< Show thread creation/destruction, etc. */
 
-    TRACE_DEBUG         = 0x1000,               /**< Show temporary debugging messages. */
-    TRACE_WARNING       = 0x2000,               /**< Show arning messages. */
-    TRACE_ERROR         = 0x4000,               /**< Show error messages. */
-    TRACE_FATAL         = 0x8000,               /**< Show fatal error messages. */
-
-    TRACE_DEFAULT       = 0xf000,               /**< Default tracing bits. */
-    TRACE_ALL           = 0xffff                /**< Turn on all tracing bits. */
+    TRACE_NFACILITIES   = 10     /**< Number of facilities */
 };
+
+/** Returns a bit mask for a trace facility. Returns zero if the specified trace facility is invalid. */
+unsigned tracingFacilityBit(TracingFacility);
 
 /* From linux/arch/x86/include/asm/ldt.h */
 struct user_desc_32 {

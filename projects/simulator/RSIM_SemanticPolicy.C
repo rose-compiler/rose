@@ -3,8 +3,28 @@
 
 #ifdef ROSE_ENABLE_SIMULATOR
 
+void
+RSIM_SemanticPolicy::ctor()
+{
+    for (size_t i=0; i<VirtualMachineSemantics::State::n_gprs; i++)
+        writeGPR((X86GeneralPurposeRegister)i, 0);
+    for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++)
+        writeFlag((X86Flag)i, 0);
+    writeIP(0);
+    writeFlag((X86Flag)1, true_());
+    writeGPR(x86_gpr_sp, 0xbffff000ul);     /* high end of stack, exclusive */
+
+    writeSegreg(x86_segreg_cs, 0x23);
+    writeSegreg(x86_segreg_ds, 0x2b);
+    writeSegreg(x86_segreg_es, 0x2b);
+    writeSegreg(x86_segreg_ss, 0x2b);
+    writeSegreg(x86_segreg_fs, 0x2b);
+    writeSegreg(x86_segreg_gs, 0x2b);
+
+}
+
 RTS_Message *
-RSIM_SemanticPolicy::tracing(unsigned what) const
+RSIM_SemanticPolicy::tracing(TracingFacility what) const
 {
     return thread->tracing(what);
 }

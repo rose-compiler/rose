@@ -49,7 +49,7 @@ public:
     void load_sr_shadow(X86SegmentRegister, unsigned gdt_idx);
 
     /* Delegates to thread. */
-    RTS_Message *tracing(unsigned what) const;
+    RTS_Message *tracing(TracingFacility what) const;
 
     uint32_t get_eflags() const;
 

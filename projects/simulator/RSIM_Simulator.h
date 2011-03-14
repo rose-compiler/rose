@@ -45,7 +45,7 @@ public:
     /** Default constructor. Construct a new simulator object, initializing its properties to sane values, but do not create an
      *  initial process. */
     RSIM_Simulator()
-        : trace_flags(TRACE_DEFAULT), core_flags(CORE_ELF), btrace_file(NULL), active(0), process(NULL), entry_va(0) {
+        : tracing_flags(0), core_flags(CORE_ELF), btrace_file(NULL), active(0), process(NULL), entry_va(0) {
         ctor();
     }
 
@@ -130,8 +130,8 @@ private:
 
 private:
     /* Configuration variables */
-    std::string trace_file_name;        /**< Name pattern for debug trace output, or empty to disable. */
-    unsigned trace_flags;               /**< What things should be traced for debugging? (See TraceFlags enum) */
+    std::string tracing_file_name;      /**< Name pattern for debug trace output, or empty to disable. */
+    unsigned tracing_flags;             /**< What things should be traced for debugging? (See TraceFlags enum) */
     unsigned core_flags;                /**< Kinds of core dumps to produce. (See CoreStyle enum) */
     std::string interp_name;            /**< Name of command-line specified interpreter for dynamic linking. */
     std::vector<std::string> vdso_paths;/**< Files and/or directories to search for a virtual dynamic shared library. */

@@ -24,8 +24,7 @@ public:
      *  thread that will be simulating the speciment's thread described by this object. */
     RSIM_Thread(RSIM_Process *process)
         : process(process), my_tid(-1),
-          mesg_prefix(this), mesg_on(process->tracing(TRACE_ALL), &mesg_prefix), mesg_off(NULL, NULL),
-          trace_flags(process->tracing()), report_interval(10.0),
+          mesg_prefix(this), report_interval(10.0),
           policy(this), semantics(policy),
           robust_list_head_va(0), clear_child_tid(0) {
         ctor();
@@ -127,20 +126,26 @@ private:
             fputs(thread->id().c_str(), f);
         }
     };
+
     Prefix mesg_prefix;
-    RTS_Message mesg_on;                                /**< Messages will be sent to the trace file. */
-    RTS_Message mesg_off;                               /**< Messages sent to the bit bucket. */
-    unsigned trace_flags;                               /**< Flags describing what we're tracing. */
-    struct timeval last_report;                         /**< Time of last progress report. */
-    double report_interval;                             /**< Minimum seconds between progress reports. */
+    RTS_Message *trace_mesg[TRACE_NFACILITIES];         /**< Array indexed by TraceFacility */
+    struct timeval last_report;                         /**< Time of last progress report for TRACE_PROGRESS */
+    double report_interval;                             /**< Minimum seconds between progress reports for TRACE_PROGRESS */
 
     /** Return a string identifying the thread and time called. */
     std::string id();
 
 public:
-    /** Return the object used for a debugging facility.  The return value is either mesg_on or mesg_off depending on whether
-     * the specified facility is being trace. */
-    RTS_Message *tracing(unsigned what);
+    /** Return the object used for a debugging facility.  The return value is always non-null, although the returned message
+     *  object may have a null output file if the facility is disabled.  This permits the return value to be dereferenced
+     *  regardless of whether the facility is enable. For example:
+     *
+     *  @code
+     *  tracing(TRACE_SIGNAL)->mesg("signal generated");
+     *  @endcode
+     *
+     *  Each facility has its own message object so that multipart output can be mixed. */
+    RTS_Message *tracing(TracingFacility);
 
     /** Print a progress report if progress reporting is enabled and enough time has elapsed since the previous report. */
     void report_progress_maybe();

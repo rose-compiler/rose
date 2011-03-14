@@ -2726,10 +2726,15 @@ RSIM_Thread::emulate_syscall()
             break;
 
         default: {
-            fprintf(stderr, "syscall_%u(", callno);
+            char name[32];
+            sprintf(name, "syscall_%u", callno);
+            tracing(TRACE_MISC)->multipart(name, "syscall_%u(");
             for (int i=0; i<6; i++)
-                fprintf(stderr, "%s0x%08"PRIx32, i?", ":"", syscall_arg(i));
-            fprintf(stderr, ") is not implemented yet\n\n");
+                tracing(TRACE_MISC)->more("%s0x%08"PRIx32, i?", ":"", syscall_arg(i));
+            tracing(TRACE_MISC)->more(") is not implemented yet");
+            tracing(TRACE_MISC)->multipart_end();
+
+            tracing(TRACE_MISC)->mesg("dumping core\n");
             get_process()->dump_core(SIGSYS);
             abort();
         }
@@ -3565,9 +3570,8 @@ RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, u
         /* Flush some files so buffered content isn't output twice. */
         fflush(stdout);
         fflush(stderr);
-        RTS_Message *mesg = tracing(TRACE_ALL);
-        if (mesg->get_file())
-            fflush(mesg->get_file());
+        if (process->get_tracing_file())
+            fflush(process->get_tracing_file());
 
         /* We cannot use clone() because it's a wrapper around the clone system call and we'd need to provide a function for it to
          * execute. We want fork-like semantics. */
@@ -3583,7 +3587,7 @@ RSIM_Thread::sys_clone(unsigned flags, uint32_t newsp, uint32_t parent_tid_va, u
             sighand.clear_all_pending();
 
             /* Open new log files if necessary */
-            get_process()->open_trace_file();
+            get_process()->open_tracing_file();
             get_process()->btrace_close();
 
             /* Thread-related things. We have to initialize a few data structures because the specimen may be using a

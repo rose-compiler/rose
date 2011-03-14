@@ -21,25 +21,14 @@ RSIM_Thread::ctor()
 
     memset(&last_report, 0, sizeof last_report);
     memset(tls_array, 0, sizeof tls_array);
-}
 
-void
-RSIM_SemanticPolicy::ctor()
-{
-    for (size_t i=0; i<VirtualMachineSemantics::State::n_gprs; i++)
-        writeGPR((X86GeneralPurposeRegister)i, 0);
-    for (size_t i=0; i<VirtualMachineSemantics::State::n_flags; i++)
-        writeFlag((X86Flag)i, 0);
-    writeIP(0);
-    writeFlag((X86Flag)1, true_());
-    writeGPR(x86_gpr_sp, 0xbffff000ul);     /* high end of stack, exclusive */
-
-    writeSegreg(x86_segreg_cs, 0x23);
-    writeSegreg(x86_segreg_ds, 0x2b);
-    writeSegreg(x86_segreg_es, 0x2b);
-    writeSegreg(x86_segreg_ss, 0x2b);
-    writeSegreg(x86_segreg_fs, 0x2b);
-    writeSegreg(x86_segreg_gs, 0x2b);
+    for (int tf=0; tf<TRACE_NFACILITIES; tf++) {
+        if ((process->get_tracing_flags() & tracingFacilityBit((TracingFacility)tf))) {
+            trace_mesg[tf] = new RTS_Message(process->get_tracing_file(), &mesg_prefix);
+        } else {
+            trace_mesg[tf] = new RTS_Message(NULL, NULL);
+        }
+    }
 }
 
 std::string
@@ -64,9 +53,11 @@ RSIM_Thread::id()
 }
 
 RTS_Message *
-RSIM_Thread::tracing(unsigned what)
+RSIM_Thread::tracing(TracingFacility tf)
 {
-    return (trace_flags & what) ? &mesg_on : &mesg_off;
+    assert(tf>=0 && tf<TRACE_NFACILITIES);
+    assert(trace_mesg[tf]!=NULL);
+    return trace_mesg[tf];
 }
 
 SgAsmx86Instruction *
@@ -229,6 +220,7 @@ RSIM_Thread::signal_deliver(int signo)
             case SIGTRAP:
             case SIGSYS:
                 /* Exit process with core dump */
+                tracing(TRACE_MISC)->mesg("dumping core\n");
                 get_process()->dump_core(signo);
                 throw Exit((signo & 0x7f) | __WCOREFLAG, true);
             case SIGTERM:
@@ -435,23 +427,30 @@ RSIM_Thread::main()
             if (signo>0)
                 signal_deliver(signo);
 
+        } catch (const Disassembler::Exception &e) {
+            std::ostringstream s;
+            s <<e;
+            tracing(TRACE_MISC)->mesg("caught Disassembler::Exception: %s\n", s.str().c_str());
+            tracing(TRACE_MISC)->mesg("dumping core\n");
+            process->dump_core(SIGSEGV);
+            abort();
         } catch (const RSIM_Semantics::Exception &e) {
             /* Thrown for instructions whose semantics are not implemented yet. */
-            RTS_Message *mesg = tracing(TRACE_WARNING);
-            if (mesg->get_file()) {
-                RTS_MESSAGE(*mesg) {
-                    mesg->mesg("caught exception: ");
-                    std::cerr <<e <<"\n";
+            std::ostringstream s;
+            s <<e;
+            tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::Exception: %s\n", s.str().c_str());
 #ifdef X86SIM_STRICT_EMULATION
-                    process->dump_core(SIGILL);
-                    abort();
+            tracing(TRACE_MISC)->mesg("dumping core\n");
+            process->dump_core(SIGILL);
+            abort();
 #else
-                    mesg->mesg("exception ignored; continuing with a corrupst state...\n");
+            tracing(TRACE_MISC)->mesg("exception ignored; continuing with a corrupt state...\n");
 #endif
-                } RTS_MESSAGE_END(true);
-            }
         } catch (const RSIM_SEMANTIC_POLICY::Exception &e) {
-            std::cerr <<e <<"\n\n";
+            std::ostringstream s;
+            s <<e;
+            tracing(TRACE_MISC)->mesg("caught semantic policy exception: %s\n", s.str().c_str());
+            tracing(TRACE_MISC)->mesg("dumping core\n");
             process->dump_core(SIGILL);
             abort();
         } catch (const RSIM_Thread::Exit &e) {
@@ -460,8 +459,9 @@ RSIM_Thread::main()
         } catch (const RSIM_SemanticPolicy::Signal &e) {
             sighand.generate(e.signo, process, tracing(TRACE_SIGNAL));
         } catch (...) {
+            tracing(TRACE_MISC)->mesg("caught an unhandled exception\n");
+            tracing(TRACE_MISC)->mesg("dumping core\n");
             process->dump_core(SIGILL);
-            tracing(TRACE_FATAL)->mesg("fatal: simulator thread received an unhandled exception\n");
             abort();
         }
     }
@@ -599,7 +599,7 @@ RSIM_Thread::sys_exit(const Exit &e)
     tracing(TRACE_THREAD)->mesg("this thread is terminating");
 
     if (robust_list_head_va)
-        tracing(TRACE_WARNING)->mesg("warning: robust_list not cleaned up\n"); /* FIXME: see set_robust_list() syscall */
+        tracing(TRACE_MISC)->mesg("warning: robust_list not cleaned up\n"); /* FIXME: see set_robust_list() syscall */
 
     /* Clear and signal child TID if necessary (CLONE_CHILD_CLEARTID) */
     if (clear_child_tid) {
