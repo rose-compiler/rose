@@ -261,9 +261,18 @@ AC_ARG_ENABLE([opencl],
 #
 # C and C++ are currently required to be supported simultaneously 
 #
+echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "c"
+if test $? = 0 ; then 
+  list_has_c=yes
+fi
 if test "x$list_has_c" = "xyes" && test "x$list_has_cxx" != "xyes"; then
  LANGUAGES_TO_SUPPORT+=" c++"
   echo "[[C language support:warning]] turning on C++ support (currently required)"
+fi
+
+echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "c++"
+if test $? = 0 ; then 
+  list_has_cxx=yes
 fi
 if test "x$list_has_cxx" = "xyes" && test "x$list_has_c" != "xyes"; then
   LANGUAGES_TO_SUPPORT+=" c"
