@@ -258,10 +258,23 @@ AC_ARG_ENABLE([opencl],
                ##########################################################################
                ,)
 
+#
+# C and C++ are currently required to be supported simultaneously 
+#
+if test "x$list_has_c" = "xyes" && test "x$list_has_cxx" != "xyes"; then
+ LANGUAGES_TO_SUPPORT+=" c++"
+  echo "[[C language support:warning]] turning on C++ support (currently required)"
+fi
+if test "x$list_has_cxx" = "xyes" && test "x$list_has_c" != "xyes"; then
+  LANGUAGES_TO_SUPPORT+=" c"
+  echo "[[C++-only support:warning]] turning on C support (currently required)"
+fi
+
 #########################################################################################
 #
 #  Set flags to indicate which languages to support according to the
-#  user specified command-line options 
+#  user specified command-line options; including macros that will be
+#  contained in BUILD_TREE/rose_config.h 
 #
 #########################################################################################
 if test "x$LANGUAGES_TO_SUPPORT" = "x" ; then
@@ -286,15 +299,19 @@ none|no)
 	;;
 binaries)
 	support_binaries=yes
+	AC_DEFINE([ROSE_BUILD_BINARY_ANALYSIS_SUPPORT], [], [Build ROSE to support the Binary Analysis])
 	;;
 c)
 	support_c_language=yes
+	AC_DEFINE([ROSE_BUILD_C_LANGUAGE_SUPPORT], [], [Build ROSE to support the C langauge])
 	;;
 c++)
 	support_cxx_language=yes
+	AC_DEFINE([ROSE_BUILD_CXX_LANGUAGE_SUPPORT], [], [Build ROSE to support the C++ langauge])
 	;;
 cuda)
 	support_cuda_language=yes
+	AC_DEFINE([ROSE_BUILD_CUDA_LANGUAGE_SUPPORT], [], [Build ROSE to support the CUDA langauge])
 	;;
 fortran)
 	if test "x$USE_JAVA" = x1; then
@@ -303,6 +320,7 @@ fortran)
                            Do you need to explicitly specify gfortran using the "--with-gfortran=path/to/gfortran" configure-option? (See ./configure --help)])
           else
      	    support_fortran_language=yes
+	    AC_DEFINE([ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT], [], [Build ROSE to support the Fortran langauge])
           fi
 	else
 	  AC_MSG_FAILURE([[[Fortran support]] Java Virtual Machine (JVM) not found: required by the Open Fortran Parser (OFP).
@@ -312,6 +330,7 @@ fortran)
 java)
         if test "x$USE_JAVA" = x1; then
 	  support_java_language=yes
+	  AC_DEFINE([ROSE_BUILD_JAVA_LANGUAGE_SUPPORT], [], [Build ROSE to support the Java langauge])
         else
           AC_MSG_FAILURE([[[Java support]] Java dependencies not found: required for parser support in ROSE -- uses the  Eclipse Compiler for Java (ECJ).
                          Do you need to explicitly specify Java (javac, JDk,...) using the "--with-java" configure-option? (See ./configure --help)])
@@ -319,9 +338,11 @@ java)
 	;;
 php)
 	support_php_language=yes
+	AC_DEFINE([ROSE_BUILD_PHP_LANGUAGE_SUPPORT], [], [Build ROSE to support the PHP langauge])
 	;;
 opencl)
 	support_opencl_language=yes
+	AC_DEFINE([ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT], [], [Build ROSE to support the OpenCL langauge])
 	;;
 *)
 	AC_MSG_FAILURE([unrecognized language '$a_language'])
@@ -332,7 +353,7 @@ done
 
 #########################################################################################
 #
-#  Output whether or not a specific language is supported
+#  Output language support 
 #
 #########################################################################################
 function print_isLanguageSupported() {
@@ -366,7 +387,7 @@ echo "------------------------------------------------"
 
 #########################################################################################
 #
-#  Enabled only one language  
+#  Enabled only one language: set specific configurations for minimal build of ROSE 
 #
 #########################################################################################
 if test $count_of_languages_to_support = 1 ; then
@@ -375,29 +396,7 @@ if test $count_of_languages_to_support = 1 ; then
   echo ""
 
   #
-  # Only C
-  #
-  if test "x$support_c_language" = "xyes" ; then
-    if test "x$support_cxx_language" = "xno" ; then
-      support_cxx_language=yes
-      LANGUAGES_TO_SUPPORT+=" c++"
-      echo "[[C-only support:warning]] turning on C++ support (currently required)"
-    fi
-  fi
-
-  #
-  # Only C++
-  #
-  if test "x$support_cxx_language" = "xyes" ; then
-    if test "x$support_c_language" = "xno" ; then
-      support_c_language=yes
-      LANGUAGES_TO_SUPPORT+=" c"
-      echo "[[C++-only support:warning]] turning on C support (currently required)"
-    fi
-  fi
-
-  #
-  # Options for a minimal C/C++ configuration
+  # Only C/C++ (currently required to be supported simultaneously) 
   #
   if test "x$support_c_language" = "xyes" ; then
     with_haskell=no
@@ -547,37 +546,36 @@ if test $count_of_languages_to_support = 1 ; then
   fi
 #end-if $count_of_languages==1 (enable-only-language)
 fi
-
 #########################################################################################
 #
-# Language specific options 
+# TOO (3/14/2011): not used anymore?
 #
 #########################################################################################
-AC_MSG_CHECKING([for language specific options to generate a minimal configuration of ROSE])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#AC_ARG_ENABLE([language-only-restriction-test],AS_HELP_STRING([--enable-language-only-restriction-test],[Support language only restriction test]),[],[])
+#if test "x$enableval" = "xyes"; then
+#   echo "Setting: language-only-restriction-test option IS yes"
+#else
+#   echo "Setting: language-only-restriction-test option is NOT yes"
+#fi
+#if test "x$enable_language_only_restriction_test" = "xyes"; then
+#   echo "Value of: language-only-restriction-test option macro IS yes"
+#else
+#   echo "Value of: language-only-restriction-test option macro is NOT yes"
+#fi
+#echo "enable_languages = $enable_languages"
+#########################################################################################
+#
+# Set the automake conditional macros that will be used in Makefiles.
+#
+#########################################################################################
+AM_CONDITIONAL(ROSE_BUILD_C_LANGUAGE_SUPPORT, [test "x$support_c_language" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_CXX_LANGUAGE_SUPPORT, [test "x$support_cxx_language" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT, [test "x$support_fortran_language" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT, [test "x$support_java_language" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_PHP_LANGUAGE_SUPPORT, [test "x$support_php_language" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT, [test "x$support_binaries" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT, [test "x$support_cuda_language" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT, [test "x$support_opencl_language" = xyes])
 
 
 
