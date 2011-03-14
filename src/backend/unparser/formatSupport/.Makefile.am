@@ -1,0 +1,21 @@
+# TOO (3/14/2011): temporarily keeping this Makefile.am until
+# the transition to flattened Makefiles is complete;
+# Use Makefile_variables in place of this Makefile
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+INCLUDES = $(ROSE_INCLUDES)
+
+unparseFormat_headers = unparse_format.h unparseFormatHelp.h
+unparseFormat_sources = $(unparseFormat_headers:.h=.C)
+
+include_HEADERS = $(unparseFormat_headers)
+
+noinst_LTLIBRARIES = libunparseFormatSupport.la
+
+libunparseFormatSupport_la_SOURCES = $(unparseFormat_sources)
+
+clean-local:
+	rm -rf Templates.DB ii_files ti_files core
+
+
+EXTRA_DIST = CMakeLists.txt
