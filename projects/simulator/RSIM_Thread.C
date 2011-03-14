@@ -9,7 +9,7 @@
 
 #include <sys/user.h>
 
-size_t RSIM_Thread::next_sequence_number = 0;
+size_t RSIM_Thread::next_sequence_number = 1;
 
 /* Constructor */
 void
