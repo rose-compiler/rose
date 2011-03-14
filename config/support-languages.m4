@@ -267,7 +267,10 @@ AC_ARG_ENABLE([opencl],
 if test "x$LANGUAGES_TO_SUPPORT" = "x" ; then
   LANGUAGES_TO_SUPPORT=none
 fi
+count_of_languages_to_support=0
 for a_language in $LANGUAGES_TO_SUPPORT ; do
+
+count_of_languages_to_support=`expr $count_of_languages_to_support + 1`
 case "$a_language" in 
 
 none|no)
@@ -294,28 +297,25 @@ cuda)
 	support_cuda_language=yes
 	;;
 fortran)
-           if test "x$USE_JAVA" = x1; then
-              if test "x$GFORTRAN_PATH" != "x"; then
-                 echo "Build separate: found a valid gfortran, java is available, OK to support Fortran"
-                 support_fortran_language=yes
-              else
-                 echo "Build separate: gfortran not found and required for syntax checking and semantic analysis, fortran disabled"
-              fi
-           else
-            # echo "Specified to build all, but internal java support is unavalable so we can't support Fortran or Java languages in ROSE."
-              AC_MSG_RESULT(Specified to build fortran, but internal java support is unavalable so we can't support Fortran or Java languages in ROSE.)
-              disable_languages=yes
-              support_fortran_language=no
-           fi
+	if test "x$USE_JAVA" = x1; then
+	  if test "x$GFORTRAN_PATH" = "x"; then
+            AC_MSG_FAILURE([[[Fortran support]] gfortran not found: required for syntax checking and semantic analysis.
+                           Do you need to explicitly specify gfortran using the "--with-gfortran=path/to/gfortran" configure-option? (See ./configure --help)])
+          else
+     	    support_fortran_language=yes
+          fi
+	else
+	  AC_MSG_FAILURE([[[Fortran support]] Java Virtual Machine (JVM) not found: required by the Open Fortran Parser (OFP).
+                         Do you need to explicitly specify Java (javac, JDk,...) using the "--with-java" configure-option? (See ./configure --help)])
+	fi
 	;;
 java)
-           if test "x$USE_JAVA" = x1; then
-              support_java_language=yes
-           else
-              AC_MSG_RESULT(Specified to build java, but internal java support is unavalable so we can't support Fortran or Java languages in ROSE.)
-              disable_languages=yes
-              support_java_language=no
-           fi
+        if test "x$USE_JAVA" = x1; then
+	  support_java_language=yes
+        else
+          AC_MSG_FAILURE([[[Java support]] Java dependencies not found: required for parser support in ROSE -- uses the  Eclipse Compiler for Java (ECJ).
+                         Do you need to explicitly specify Java (javac, JDk,...) using the "--with-java" configure-option? (See ./configure --help)])
+        fi
 	;;
 php)
 	support_php_language=yes
@@ -363,6 +363,223 @@ echo ""
 echo "(+)enabled (-)disabled"
 #AC_MSG_RESULT($LANGUAGES_TO_SUPPORT)
 echo "------------------------------------------------"
+
+#########################################################################################
+#
+#  Enabled only one language  
+#
+#########################################################################################
+if test $count_of_languages_to_support = 1 ; then
+  support_only_one_language=yes
+  AC_MSG_CHECKING([$LANGUAGES_TO_SUPPORT-only specific configurations])
+  echo ""
+
+  #
+  # Only C
+  #
+  if test "x$support_c_language" = "xyes" ; then
+    if test "x$support_cxx_language" = "xno" ; then
+      support_cxx_language=yes
+      LANGUAGES_TO_SUPPORT+=" c++"
+      echo "[[C-only support:warning]] turning on C++ support (currently required)"
+    fi
+  fi
+
+  #
+  # Only C++
+  #
+  if test "x$support_cxx_language" = "xyes" ; then
+    if test "x$support_c_language" = "xno" ; then
+      support_c_language=yes
+      LANGUAGES_TO_SUPPORT+=" c"
+      echo "[[C++-only support:warning]] turning on C support (currently required)"
+    fi
+  fi
+
+  #
+  # Options for a minimal C/C++ configuration
+  #
+  if test "x$support_c_language" = "xyes" ; then
+    with_haskell=no
+    enable_binary_analysis_tests=no
+    enable_projects_directory=no
+    enable_tutorial_directory=no
+  fi
+
+  #
+  # Only Java 
+  #
+  if test "x$support_java_language" = "xyes" ; then
+    # When using fortran only assume that we are not interested in java language support in ROSE.
+    # However, currently the --with-java option controls the use of java support for both Fortran
+    # and Java language support. Now that we have added Java language support to ROSE this is
+    # unintentionally confusing. So we can't turn this off since the Fortran support requires
+    # internal java (JVM) support.
+    # with_java=no
+
+    with_haskell=no
+    with_php=no
+    enable_binary_analysis_tests=no
+
+    # Allow tests directory to be run so that we can run the Fortran tests.
+    # enable_tests_directory=no
+
+    enable_projects_directory=no
+    enable_tutorial_directory=no
+  fi
+
+  #
+  # Only Fortran
+  # requested by Rice University and LANL 
+  #
+  if test "x$support_fortran_language" = "xyes" ; then
+    # Scott appears to require CPPFLAGS to be set...
+    #debug#echo "Before setting CPPFLAGS: CPPFLAGS = $CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $JAVA_JVM_INCLUDE"
+    echo "[[Fortran-only support]] added JAVA_JVM_INCLUDE ($JAVA_JVM_INCLUDE) to CPPFLAGS = $CPPFLAGS"
+
+    # DQ: I think that we have to express this option in terms of the "with_"
+    # version of the macro instead of the "without_" version of the macro.
+    # without_haskell=yes
+    with_haskell=no
+
+    # When using fortran only assume that we are not interested in java language support in ROSE.
+    # However, currently the --with-java option controls the use of java support for both Fortran
+    # and Java language support. Now that we have added Java language support to ROSE this is
+    # unintentionally confusing. So we can't turn this off since the Fortran support requires
+    # internal java (JVM) support.
+    # with_java=no
+
+    # So these should be expressed in terms of the "with" and "enable" versions of each option's macro.
+    # without_php=yes
+    with_php=no
+
+    # disable_binary_analysis_tests=yes
+    enable_binary_analysis_tests=no
+
+    # Allow tests directory to be run so that we can run the Fortran tests.
+    # enable_tests_directory=no
+
+    enable_projects_directory=no
+    enable_tutorial_directory=no
+
+    # Test disabling a configure test that is on by default
+    # I can't verify that the disable version of the variable effects the option.
+    # Where as the enable version of the macro WILL control the setting of the option.
+    # disable_language_only_restriction_test=yes
+    # disable_language_only_restriction_test=no
+    # enable_language_only_restriction_test=yes
+    # enable_language_only_restriction_test=no
+
+    # This allows testing this mechanism to set configure options from within the configure script...
+    # enable_edg_version=4.5
+  fi
+
+  #
+  # Only PHP 
+  #
+  if test "x$support_php_language" = "xyes" ; then
+    with_haskell=no
+    enable_binary_analysis_tests=no
+    enable_projects_directory=no
+    enable_tutorial_directory=no
+  fi
+
+  #
+  # Only binary analysis 
+  #
+  if test "x$support_binaries" = "xyes" ; then
+    with_haskell=no
+    enable_binary_analysis_tests=yes
+    enable_projects_directory=no
+    enable_tutorial_directory=no
+  fi
+
+
+###
+  # Output language-only configuration
+  #
+  #
+
+  #
+  # Haskell
+  #
+  if test "x$with_haskell" = "xyes" ; then
+    echo "[[$LANGUAGES_TO_SUPPORT-only support]] with haskell"
+  else
+    echo "[[$LANGUAGES_TO_SUPPORT-only support]] without haskell"
+  fi
+
+  #
+  # PHP
+  #
+  if test "x$with_php" = "xyes" ; then
+    echo "[[$LANGUAGES_TO_SUPPORT-only support]] with PHP"
+  else
+    echo "[[$LANGUAGES_TO_SUPPORT-only support]] without PHP"
+  fi
+
+  #
+  # Binary analysis tests
+  #
+  if test "x$enable_binary_analysis_tests" = "xyes" ; then
+    echo "[[$LANGUAGES_TO_SUPPORT-only support]] enabling binary analysis tests"
+  else
+    echo "[[$LANGUAGES_TO_SUPPORT-only support]] disabling binary analysis tests"
+  fi
+
+  #
+  # Projects/ directory 
+  #
+  if test "x$enable_projects_directory" = "xyes" ; then
+    echo "[[$LANGUAGES_TO_SUPPORT-only support]] enabling ROSE/projects directory"
+  else
+    echo "[[$LANGUAGES_TO_SUPPORT-only support]] disabling ROSE/projects directory"
+  fi
+
+  #
+  # Tutorial/ directory 
+  #
+  if test "x$enable_tutorial_directory" = "xyes" ; then
+    echo "[[$LANGUAGES_TO_SUPPORT-only support]] enabling ROSE/tutorial directory"
+  else
+    echo "[[$LANGUAGES_TO_SUPPORT-only support]] disabling ROSE/tutorial directory"
+  fi
+#end-if $count_of_languages==1 (enable-only-language)
+fi
+
+#########################################################################################
+#
+# Language specific options 
+#
+#########################################################################################
+AC_MSG_CHECKING([for language specific options to generate a minimal configuration of ROSE])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # End macro ROSE_SUPPORT_LANGUAGES.
 ])
