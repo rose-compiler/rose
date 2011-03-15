@@ -145,7 +145,7 @@ fi
 # Handle these options before the --enable-languages=LIST option.
 # ***************************************************************
 ROSE_SUPPORT_LANGUAGES
-exit 1;
+exit 0;
 
 # DQ (4/16/2010): Added to support to only handle Fortran (support for Rice and LANL users)
 AC_ARG_ENABLE([only-fortran],AS_HELP_STRING([--enable-only-fortran],[Only support Fortran using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])

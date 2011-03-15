@@ -85,7 +85,7 @@ AC_ARG_ENABLE([binary-analysis],
 #########################################################################################
 AC_ARG_ENABLE([c],
 #########################################################################################
-               AS_HELP_STRING([--enable-c],[Enable C language support in ROSE (default=yes)]),
+               AS_HELP_STRING([--enable-c],[Enable C language support in ROSE (default=yes). Note:  C++ support must currently be simultaneously enabled/disabled]),
                ##########################################################################
                 echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "\bc\b"
                 if test $? = 0 ; then 
@@ -99,9 +99,14 @@ AC_ARG_ENABLE([c],
                         fi
                   	;;
                   [no)]
-                        # remove 'C' from support languages list
-                        # TOO (3/11/2011): couldn't find a nice way to handle with sed, cases: "c", "c c++", ...
-                  	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | [awk '{for (i=1; i<=NF; i++) { if ($i != "c") { printf "%s ",$i; } } }']`" 
+                        list_has_cxx="`echo $LANGUAGES_TO_SUPPORT | [awk '{for (i=1; i<=NF; i++) { if ($i == "c++") { printf "yes"; } } }']`"
+                        if test "x$list_has_cxx" = "xyes" && test "x$enable_cxx" != "xno" ; then
+                  	  [AC_MSG_FAILURE([Can't disable 'C' language support because 'C++' language support is enabled -- currently both are required to be supported together. If you really don't want 'C' language support, please also disable 'C++' language support (see ./configure --help)])]
+                        else
+                          # remove 'C' from support languages list
+                          # TOO (3/11/2011): couldn't find a nice way to handle with sed, cases: "c", "c c++", ...
+                  	  LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | [awk '{for (i=1; i<=NF; i++) { if ($i != "c") { printf "%s ",$i; } } }']`" 
+                        fi
                   	;;
                   [*)]
                   	[AC_MSG_FAILURE([--enable-c='$enableval' is unsupported. Use 'yes' or 'no'])]
@@ -112,12 +117,8 @@ AC_ARG_ENABLE([c],
 #########################################################################################
 AC_ARG_ENABLE([cxx],
 #########################################################################################
-               AS_HELP_STRING([--enable-cxx],[Enable C++ language support in ROSE (default=yes)]),
+               AS_HELP_STRING([--enable-cxx],[Enable C++ language support in ROSE (default=yes). Note: C support must currently be simultaneously enabled/disabled]),
                ##########################################################################
-                echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "c++"
-                if test $? = 0 ; then 
-                  list_has_cxx=yes
-                fi
                 case "$enableval" in
                   [yes)]
                   	if test "x$list_has_cxx" != "xyes" ; then
@@ -126,8 +127,13 @@ AC_ARG_ENABLE([cxx],
                         fi
                   	;;
                   [no)]
-                        # remove 'C++' from support languages list
-                  	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/c++//g'`"
+                        list_has_c="`echo $LANGUAGES_TO_SUPPORT | [awk '{for (i=1; i<=NF; i++) { if ($i == "c") { printf "yes"; } } }']`"
+                        if test "x$list_has_c" = "xyes" && test "x$enable_c" != "xno" ; then
+                  	  [AC_MSG_FAILURE([Can't disable 'C++' language support because 'C' language support is enabled -- currently both are required to be supported together. If you really don't want 'C++' language support, please also disable 'C' language support (see ./configure --help)])]
+                        else
+                          # remove 'C++' from support languages list
+                  	  LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/c++//g'`"
+                        fi
                   	;;
                   [*)]
                   	[AC_MSG_FAILURE([--enable-cxx='$enableval' is unsupported. Use 'yes' or 'no'])]
@@ -504,7 +510,7 @@ elif test $count_of_languages_to_support = 1 ; then
     enable_tutorial_directory=no
   fi
 
-AC_MSG_RESULT([done])
+#AC_MSG_RESULT([done])
 #end-if $count_of_languages==1 (enable-only-language)
 
 ###
