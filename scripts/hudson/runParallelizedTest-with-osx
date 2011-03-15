@@ -25,6 +25,9 @@ fi
 env_dump_file="/tmp/env_dump_file_$hudson_start_time_seconds.$machine_name.hudson"
 rm -rf $env_dump_file
 
+echo ""                                                                          >> $env_dump_file
+echo ""                                                                          >> $env_dump_file
+echo ""                                                                          >> $env_dump_file
 echo "*******************************************************************"       >> $env_dump_file
 echo "                        Test Environment"                                  >> $env_dump_file
 echo "*******************************************************************"       >> $env_dump_file
@@ -74,7 +77,7 @@ echo "PATH ="                                                                   
 echo ""                                                                          >> $env_dump_file
 echo "$PATH"                                                                     >> $env_dump_file
 echo "*******************************************************************"       >> $env_dump_file
-echo "                    ^  Test Environment  ^"                                >> $env_dump_file
+echo "                      ^  Test Environment  ^"                              >> $env_dump_file
 echo "*******************************************************************"       >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
