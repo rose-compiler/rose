@@ -50,8 +50,10 @@ fi
 #
 #########################################################################################
 UPC_TEST_MACHINE=`uname -m`
-if test "$UPC_TEST_MACHINE" = "i686" ; then
-  echo "UPC not tested on 32bit machines for now."
+if test "x$UPC_TEST_MACHINE" = "xi686" ; then
+  echo "UPC is not currently tested on 32-bit machines."
+elif test "xlabel" = "x64bit-macos-10.6" ; then
+  echo "UPC is not currently tested on 64-bit Mac OS X 10.6"
 else
 # Turn off bash error checking to run source with file that uses "grep" (will return error code if target is not found).
   set +e
