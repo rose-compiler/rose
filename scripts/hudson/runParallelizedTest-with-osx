@@ -188,7 +188,7 @@ fi
 #   can be easily sourced to permit Hudson tests to be reproduced.
 #
 #########################################################################################
-env_dump_file="$PWD/HudsonEnvironment"
+env_dump_file="$PWD/HudsonEnvironment.log"
 #env_dump_file="/tmp/env_dump_file_$hudson_start_time_seconds.$machine_name.hudson"
 rm -rf $env_dump_file
 
@@ -197,7 +197,7 @@ echo ""                                                                         
 echo ""                                                                          >> $env_dump_file
 echo "*******************************************************************"       >> $env_dump_file
 echo "                        Test-environment"                                  >> $env_dump_file
-echo "*******************************************************************"       >> $env_dump_file
+echo "-------------------------------------------------------------------"       >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 echo "This output is dumped in:"                                                 >> $env_dump_file   
 echo ""                                                                          >> $env_dump_file
