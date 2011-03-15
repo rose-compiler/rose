@@ -1406,8 +1406,12 @@ unsigned long long getIntegerConstantValue(SgValueExp* expr);
 std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt );
 
 
-//! Insert an expression (new_exp )before another expression (anchor_exp) using the comma operator. The result becomes (new_exp, anchor_exp).
+//! Insert an expression (new_exp )before another expression (anchor_exp) has possible side effects, without changing the original semantics. This is achieved by using a comma operator: (new_exp, anchor_exp). The comma operator is returned. 
 SgCommaOpExp *insertBeforeUsingCommaOp (SgExpression* new_exp, SgExpression* anchor_exp);
+
+//! Insert an expression (new_exp ) after another expression (anchor_exp) has possible side effects, without changing the original semantics. This is done by using two comma operators:  type T1; ... ((T1 = anchor_exp, new_exp),T1) )... , where T1 is a temp variable saving the possible side effect of anchor_exp. The top level comma op exp is returned. The reference to T1 in T1 = anchor_exp is saved in temp_ref.  
+SgCommaOpExp *insertAfterUsingCommaOp (SgExpression* new_exp, SgExpression* anchor_exp, SgStatement** temp_decl = NULL, SgVarRefExp** temp_ref = NULL);
+
 
 //@}
 
