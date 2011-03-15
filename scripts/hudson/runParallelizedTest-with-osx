@@ -199,7 +199,9 @@ echo "*******************************************************************"      
 echo "                        Test-environment"                                  >> $env_dump_file
 echo "*******************************************************************"       >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
-echo "Dump file: $env_dump_file"                                                 >> $env_dump_file   
+echo "Environment-dump file"                                                     >> $env_dump_file   
+echo ""                                                                          >> $env_dump_file
+echo "$env_dump_file"                                                            >> $env_dump_file   
 echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 echo "-------------------------------------------------------------------"       >> $env_dump_file
