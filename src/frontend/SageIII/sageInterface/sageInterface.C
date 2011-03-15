@@ -11178,6 +11178,61 @@ declarationContainsDependentDeclarations( SgDeclarationStatement* decl, vector<S
 
      return returnValue;
    }
+//! Insert an expression (new_exp )before another expression (anchor_exp) has possible side effects, with minimum changes to the original semantics. This is achieved by using a comma operator: (new_exp, anchor_exp). The comma operator is returned.
+SgCommaOpExp * SageInterface::insertBeforeUsingCommaOp (SgExpression* new_exp, SgExpression* anchor_exp)
+{
+  ROSE_ASSERT (new_exp != NULL);
+  ROSE_ASSERT (anchor_exp != NULL);
+  ROSE_ASSERT (new_exp != anchor_exp);
+
+  SgNode* parent = anchor_exp->get_parent();
+  ROSE_ASSERT (parent != NULL);
+
+  //TODO use deep copy may be a better way, avoid reusing the original anchor_exp
+  SgCommaOpExp * result = buildCommaOpExp(new_exp, NULL);
+  ROSE_ASSERT (result != NULL);
+  replaceExpression (anchor_exp, result, true);
+
+  result->set_rhs_operand(anchor_exp);
+  anchor_exp->set_parent(result);
+  return result ;
+}
+
+
+//! Insert an expression (new_exp ) after another expression (anchor_exp) has possible side effects, with minimum changes to the original semantics. This is done by using two comma operators:  type T1; ... ((T1 = anchor_exp, new_exp),T1) )... , where T1 is a temp variable saving the possible side effect of anchor_exp. The top level comma op exp is returned. The reference to T1 in T1 = anchor_exp is saved in temp_ref.  
+SgCommaOpExp * SageInterface::insertAfterUsingCommaOp (SgExpression* new_exp, SgExpression* anchor_exp, SgStatement** temp_decl /* = NULL */, SgVarRefExp** temp_ref /* = NULL */)
+{
+  ROSE_ASSERT (new_exp != NULL);
+  ROSE_ASSERT (anchor_exp != NULL);
+  ROSE_ASSERT (new_exp != anchor_exp);
+
+  SgNode* parent = anchor_exp->get_parent();
+  ROSE_ASSERT (parent != NULL);
+
+  // insert TYPE T1; right before the enclosing statement of anchor_exp
+  SgType * t = anchor_exp ->get_type();
+  ROSE_ASSERT (t != NULL);
+  SgStatement * enclosing_stmt = getEnclosingStatement(anchor_exp);
+  ROSE_ASSERT (enclosing_stmt != NULL);
+
+  gensym_counter ++;
+  string temp_name = "_t_"+ StringUtility::numberToString(gensym_counter); 
+  SgVariableDeclaration* t_decl = buildVariableDeclaration(temp_name, t, NULL, enclosing_stmt->get_scope());
+  insertStatementBefore (enclosing_stmt, t_decl);
+  SgVariableSymbol * temp_sym = getFirstVarSym (t_decl);
+  ROSE_ASSERT (temp_sym != NULL);
+  if (temp_decl)
+    *temp_decl = t_decl;
+  
+  // build ((T1 = anchor_exp, new_exp),T1) )
+  SgVarRefExp * first_ref = buildVarRefExp(temp_sym); 
+  if (temp_ref) 
+    * temp_ref = first_ref;
+  SgCommaOpExp * result = buildCommaOpExp ( buildCommaOpExp (buildAssignOp ( first_ref, deepCopy(anchor_exp)), new_exp) , buildVarRefExp(temp_sym));
+  replaceExpression (anchor_exp, result, false);
+
+  return result;
+}
 
 void
 SageInterface::addMessageStatement( SgStatement* stmt, string message )
