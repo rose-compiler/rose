@@ -27,6 +27,7 @@ public:
           mesg_prefix(this), report_interval(10.0),
           policy(this), semantics(policy),
           robust_list_head_va(0), clear_child_tid(0) {
+        real_thread = pthread_self();
         ctor();
     }
 
@@ -57,7 +58,11 @@ public:
      *                                  Thread simulation (specimen threads)
      **************************************************************************************************************************/
 private:
-    /** The TID of the real thread that is simulating the specimen thread described by this RSIM_Thread object. */
+    /** The real thread that is simulating this specimen thread.  Valid until the "process" data member is null. */
+    pthread_t real_thread;
+    
+    /** The TID of the real thread that is simulating the specimen thread described by this RSIM_Thread object.  Valid until
+     * the "process" data member is null. */
     pid_t my_tid;
 
     /** Like a TID, but a small sequence number instead. This is more readable in error messages, and is what the id() method

@@ -217,7 +217,7 @@ RSIM_SignalHandling::generate(int signo, RSIM_Process *process, RTS_Message *mes
     } RTS_MUTEX_END;
 
     if (mesg) {
-        mesg->multipart("signal", "generated ");
+        mesg->multipart("signal", "arrival of ");
         print_enum(mesg, signal_names, signo);
         mesg->more("(%d)%s", signo, s);
         mesg->multipart_end();
