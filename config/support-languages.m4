@@ -1,6 +1,14 @@
 AC_DEFUN([ROSE_SUPPORT_LANGUAGES],
 [
 # TOO (3/10/2011):
+#
+#	1. Manage language support command-line options
+#	2. Set flags to indicate which languages to support 
+#	3. Output language support (debugging)
+#	4. Enabled only one language
+#	5. Set the automake conditional macros that will be used in Makefiles
+#
+#
 # uppercase: sed 's/./\U&/g'
 # DQ (4/15/2010): Added support to specify selected languages to support in ROSE.
 echo "------------------------------------------------"
@@ -261,19 +269,14 @@ AC_ARG_ENABLE([opencl],
 #
 # C and C++ are currently required to be supported simultaneously 
 #
-echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "c"
-if test $? = 0 ; then 
-  list_has_c=yes
-fi
+list_has_c="`echo $LANGUAGES_TO_SUPPORT | [awk '{for (i=1; i<=NF; i++) { if ($i == "c") { printf "yes"; } } }']`"
+list_has_cxx="`echo $LANGUAGES_TO_SUPPORT | [awk '{for (i=1; i<=NF; i++) { if ($i == "c++") { printf "yes"; } } }']`"
+
 if test "x$list_has_c" = "xyes" && test "x$list_has_cxx" != "xyes"; then
- LANGUAGES_TO_SUPPORT+=" c++"
+  LANGUAGES_TO_SUPPORT+=" c++"
   echo "[[C language support:warning]] turning on C++ support (currently required)"
 fi
 
-echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "c++"
-if test $? = 0 ; then 
-  list_has_cxx=yes
-fi
 if test "x$list_has_cxx" = "xyes" && test "x$list_has_c" != "xyes"; then
   LANGUAGES_TO_SUPPORT+=" c"
   echo "[[C++-only support:warning]] turning on C support (currently required)"
@@ -399,20 +402,19 @@ echo "------------------------------------------------"
 #  Enabled only one language: set specific configurations for minimal build of ROSE 
 #
 #########################################################################################
-if test $count_of_languages_to_support = 1 ; then
-  support_only_one_language=yes
-  AC_MSG_CHECKING([$LANGUAGES_TO_SUPPORT-only specific configurations])
-  echo ""
-
+if test $count_of_languages_to_support = 2 ; then
   #
   # Only C/C++ (currently required to be supported simultaneously) 
   #
-  if test "x$support_c_language" = "xyes" ; then
+  if test "x$support_c_language" = "xyes" && test "x$support_cxx_language" = "xyes" ; then
     with_haskell=no
     enable_binary_analysis_tests=no
     enable_projects_directory=no
     enable_tutorial_directory=no
   fi
+elif test $count_of_languages_to_support = 1 ; then
+  support_only_one_language=yes
+  AC_MSG_CHECKING([$LANGUAGES_TO_SUPPORT-only specific configurations])
 
   #
   # Only Java 
@@ -444,7 +446,7 @@ if test $count_of_languages_to_support = 1 ; then
     # Scott appears to require CPPFLAGS to be set...
     #debug#echo "Before setting CPPFLAGS: CPPFLAGS = $CPPFLAGS"
     CPPFLAGS="$CPPFLAGS $JAVA_JVM_INCLUDE"
-    echo "[[Fortran-only support]] added JAVA_JVM_INCLUDE ($JAVA_JVM_INCLUDE) to CPPFLAGS = $CPPFLAGS"
+    echo "[[Fortran-only support]] added JAVA_JVM_INCLUDE ($JAVA_JVM_INCLUDE) to CPPFLAGS ($CPPFLAGS)"
 
     # DQ: I think that we have to express this option in terms of the "with_"
     # version of the macro instead of the "without_" version of the macro.
@@ -498,11 +500,12 @@ if test $count_of_languages_to_support = 1 ; then
   #
   if test "x$support_binaries" = "xyes" ; then
     with_haskell=no
-    enable_binary_analysis_tests=yes
     enable_projects_directory=no
     enable_tutorial_directory=no
   fi
 
+AC_MSG_RESULT([done])
+#end-if $count_of_languages==1 (enable-only-language)
 
 ###
   # Output language-only configuration
@@ -514,7 +517,7 @@ if test $count_of_languages_to_support = 1 ; then
   #
   if test "x$with_haskell" = "xyes" ; then
     echo "[[$LANGUAGES_TO_SUPPORT-only support]] with haskell"
-  else
+  elif test "x$with_haskell" = "xno" ; then
     echo "[[$LANGUAGES_TO_SUPPORT-only support]] without haskell"
   fi
 
@@ -523,7 +526,7 @@ if test $count_of_languages_to_support = 1 ; then
   #
   if test "x$with_php" = "xyes" ; then
     echo "[[$LANGUAGES_TO_SUPPORT-only support]] with PHP"
-  else
+  elif test "x$with_php" = "xno" ; then
     echo "[[$LANGUAGES_TO_SUPPORT-only support]] without PHP"
   fi
 
@@ -532,7 +535,7 @@ if test $count_of_languages_to_support = 1 ; then
   #
   if test "x$enable_binary_analysis_tests" = "xyes" ; then
     echo "[[$LANGUAGES_TO_SUPPORT-only support]] enabling binary analysis tests"
-  else
+  elif test "x$enable_binary_analysis_tests" = "xno" ; then
     echo "[[$LANGUAGES_TO_SUPPORT-only support]] disabling binary analysis tests"
   fi
 
@@ -541,7 +544,7 @@ if test $count_of_languages_to_support = 1 ; then
   #
   if test "x$enable_projects_directory" = "xyes" ; then
     echo "[[$LANGUAGES_TO_SUPPORT-only support]] enabling ROSE/projects directory"
-  else
+  elif test "x$enable_projects_directory" = "xno" ; then
     echo "[[$LANGUAGES_TO_SUPPORT-only support]] disabling ROSE/projects directory"
   fi
 
@@ -550,10 +553,9 @@ if test $count_of_languages_to_support = 1 ; then
   #
   if test "x$enable_tutorial_directory" = "xyes" ; then
     echo "[[$LANGUAGES_TO_SUPPORT-only support]] enabling ROSE/tutorial directory"
-  else
+  elif test "x$enable_tutorial_directory" = "xno" ; then
     echo "[[$LANGUAGES_TO_SUPPORT-only support]] disabling ROSE/tutorial directory"
   fi
-#end-if $count_of_languages==1 (enable-only-language)
 fi
 #########################################################################################
 #
@@ -577,6 +579,7 @@ fi
 # Set the automake conditional macros that will be used in Makefiles.
 #
 #########################################################################################
+echo -n "Creating Automake conditional flags for language support in Makefiles... "
 AM_CONDITIONAL(ROSE_BUILD_C_LANGUAGE_SUPPORT, [test "x$support_c_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_CXX_LANGUAGE_SUPPORT, [test "x$support_cxx_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT, [test "x$support_fortran_language" = xyes])
@@ -585,8 +588,8 @@ AM_CONDITIONAL(ROSE_BUILD_PHP_LANGUAGE_SUPPORT, [test "x$support_php_language" =
 AM_CONDITIONAL(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT, [test "x$support_binaries" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT, [test "x$support_cuda_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT, [test "x$support_opencl_language" = xyes])
+echo "done"
 
-
-
+echo "Finished configuring user-specified languages to support"
 # End macro ROSE_SUPPORT_LANGUAGES.
 ])
