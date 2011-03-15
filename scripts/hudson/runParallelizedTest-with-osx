@@ -49,19 +49,22 @@ fi
 
 echo "-------------------------------------------------------------------"       >> $env_dump_file
 if test "x$label" = "x64bit-macos-10.6" ; then
- DYLD_LIBRARY_PATH_STRING="`echo $DYLD_LIBRARY_PATH | sed 's/:/\n  /g'`"
  echo "DYLD_LIBRARY_PATH ="                                                      >> $env_dump_file
- echo -e "$DYLD_LIBRARY_PATH_STRING"                                             >> $env_dump_file
+ for a_path in `echo $DYLD_LIBRARY_PATH | sed 's/:/ /g'` ; do
+   echo "$a_path"                                                                >> $env_dump_file
+ done
 else
- LD_LIBRARY_PATH_STRING="`echo $LD_LIBRARY_PATH | sed 's/:/\n  /g'`"
  echo "LD_LIBRARY_PATH ="                                                        >> $env_dump_file
- echo -e "$LD_LIBRARY_PATH_STRING"                                               >> $env_dump_file
+ for a_path in `echo $LD_LIBRARY_PATH | sed 's/:/ /g'` ; do
+   echo "$a_path"                                                                >> $env_dump_file
+ done
 fi
 
 echo ""
-PATH_STRING="`echo $PATH | sed 's/:/\n  /g'`"
 echo "PATH ="                                                                    >> $env_dump_file
-echo -e "$PATH_STRING"                                                           >> $env_dump_file
+ for a_path in `echo $PATH | sed 's/:/ /g'` ; do
+   echo "$a_path"                                                                >> $env_dump_file
+ done
 echo "*******************************************************************"       >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
