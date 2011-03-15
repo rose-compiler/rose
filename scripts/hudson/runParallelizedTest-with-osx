@@ -48,7 +48,10 @@ if test "x$label" = "x64bit-macos-10.6" ; then
 else
  echo "LD_LIBRARY_PATH                   = $LD_LIBRARY_PATH"                     >> $env_dump_file
 fi
+echo "PATH                               = $PATH"                                >> $env_dump_file
 echo "*******************************************************************"       >> $env_dump_file
+echo ""                                                                          >> $env_dump_file
+echo ""                                                                          >> $env_dump_file
 
 cat $env_dump_file
 exit 0;
