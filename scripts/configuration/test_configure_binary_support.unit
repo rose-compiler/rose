@@ -20,7 +20,7 @@ run_configure --enable-languages=binaries,c,binaries --disable-binary-analysis
 test_configure "\
   - Binary analysis \
   + C \
-  - C++ \
+  + C++ \
   - Cuda \
   - Fortran \
   - Java \
@@ -80,7 +80,7 @@ run_configure --enable-languages=c --enable-binary-analysis
 test_configure "\
   + Binary analysis \
   + C \
-  - C++ \
+  + C++ \
   - Cuda \
   - Fortran \
   - Java \
@@ -92,7 +92,7 @@ run_configure --enable-languages=c --enable-binary-analysis=yes
 test_configure "\
   + Binary analysis \
   + C \
-  - C++ \
+  + C++ \
   - Cuda \
   - Fortran \
   - Java \
@@ -104,7 +104,7 @@ run_configure --enable-languages=c --enable-binary-analysis=no
 test_configure "\
   - Binary analysis \
   + C \
-  - C++ \
+  + C++ \
   - Cuda \
   - Fortran \
   - Java \
@@ -116,7 +116,7 @@ run_configure --enable-languages=c --disable-binary-analysis
 test_configure "\
   - Binary analysis \
   + C \
-  - C++ \
+  + C++ \
   - Cuda \
   - Fortran \
   - Java \
@@ -128,7 +128,7 @@ run_configure --enable-languages=c,binaries --disable-binary-analysis
 test_configure "\
   - Binary analysis \
   + C \
-  - C++ \
+  + C++ \
   - Cuda \
   - Fortran \
   - Java \
@@ -152,7 +152,7 @@ run_configure --enable-languages=c,binaries,php --disable-binary-analysis
 test_configure "\
   - Binary analysis \
   + C \
-  - C++ \
+  + C++ \
   - Cuda \
   - Fortran \
   - Java \

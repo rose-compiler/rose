@@ -7,7 +7,7 @@ run_configure --enable-languages=c++
 #########################################################################################
 test_configure "\
   - Binary analysis \
-  - C \
+  + C \
   + C++ \
   - Cuda \
   - Fortran \
@@ -20,7 +20,7 @@ run_configure --enable-languages=c++,c,c++ --disable-cxx
 test_configure "\
   - Binary analysis \
   + C \
-  - C++ \
+  + C++ \
   - Cuda \
   - Fortran \
   - Java \

@@ -8,24 +8,25 @@ run_configure --enable-languages=c
 test_configure "\
   - Binary analysis \
   + C \
-  - C++ \
-  - Cuda \
-  - Fortran \
-  - Java \
-  - PHP \
-  - OpenCL"
-#########################################################################################
-run_configure --enable-languages=c,c++,c --disable-c
-#########################################################################################
-test_configure "\
-  - Binary analysis \
-  - C \
   + C++ \
   - Cuda \
   - Fortran \
   - Java \
   - PHP \
   - OpenCL"
+#########################################################################################
+run_xfail_configure --enable-languages=c,c++,c --disable-c
+#########################################################################################
+# Currently, C/C++ are simultaneously required
+#test_configure "\
+#  - Binary analysis \
+#  - C \
+#  + C++ \
+#  - Cuda \
+#  - Fortran \
+#  - Java \
+#  - PHP \
+#  - OpenCL"
 #########################################################################################
 run_configure --enable-c
 #########################################################################################
@@ -51,36 +52,38 @@ test_configure "\
   + PHP \
   + OpenCL"
 #########################################################################################
-run_configure --enable-c=no
+run_xfail_configure --enable-c=no
 #########################################################################################
-test_configure "\
-  + Binary analysis \
-  - C \
-  + C++ \
-  + Cuda \
-  + Fortran \
-  + Java \
-  + PHP \
-  + OpenCL"
+# Currently, C/C++ are simultaneously required
+#test_configure "\
+#  + Binary analysis \
+#  - C \
+#  + C++ \
+#  + Cuda \
+#  + Fortran \
+#  + Java \
+#  + PHP \
+#  + OpenCL"
 #########################################################################################
-run_configure --disable-c
+run_xfail_configure --disable-c
 #########################################################################################
-test_configure "\
-  + Binary analysis \
-  - C \
-  + C++ \
-  + Cuda \
-  + Fortran \
-  + Java \
-  + PHP \
-  + OpenCL"
+# Currently, C/C++ are simultaneously required
+#test_configure "\
+#  + Binary analysis \
+#  - C \
+#  + C++ \
+#  + Cuda \
+#  + Fortran \
+#  + Java \
+#  + PHP \
+#  + OpenCL"
 #########################################################################################
 run_configure --enable-languages=binaries --enable-c
 #########################################################################################
 test_configure "\
   + Binary analysis \
   + C \
-  - C++ \
+  + C++ \
   - Cuda \
   - Fortran \
   - Java \
@@ -92,7 +95,7 @@ run_configure --enable-languages=php --enable-c=yes
 test_configure "\
   - Binary analysis \
   + C \
-  - C++ \
+  + C++ \
   - Cuda \
   - Fortran \
   - Java \

@@ -57,16 +57,38 @@ function run_configure {
  cmd="${CONFIGURE} $*"
  echo "Executing ${cmd}"
  $cmd 2>/dev/null > $LOG
+ if test $? != 0 ; then
+  echo "   Configure-line failed...($cmd)" 
+  exit $?
+ else
+  echo "   PASSED"
+  echo ""
+ fi
+}
+
+function run_xfail_configure {
+ rm -rf $LOG
+ cmd="${CONFIGURE} $*"
+ echo "Executing ${cmd}"
+ $cmd 2>/dev/null > $LOG
+ if test $? = 0 ; then
+  echo "   Configure-line was expected to fail...($cmd)" 
+  exit 1
+ else
+  echo "   PASSED (expected failure)"
+  echo ""
+ fi
 }
 
 function test_configure {
  rm -rf $LOG_OUT $CORRECT_OUT
 #replaces newline: sed '{:q;N;s/\n/ /g;t q}'  
- sed -n '/checking for user-specified languages to support/,/disabled/p' $LOG | sed -n 's/.*\([-+] .*\)/\1/p' | sed '{:q;N;s/\n/ /g;t q}' > $LOG_OUT
- echo "actual: " `cat $LOG_OUT`
- echo "-------------------------"
+ sed -n '/checking for user-specified languages to support/,/disabled/p' $LOG | sed -n 's/.*\( [-+] .*\)/\1/p' | sed '{:q;N;s/\n/ /g;t q}' | sed 's/^[ \t]*//;s/[ \t]*$//' > $LOG_OUT
+# sed -n '/checking for user-specified languages to support/,/disabled/p' $LOG | sed -n 's/.*\([-+] .*\)/\1/p' | sed '{:q;N;s/\n/ /g;t q}' > $LOG_OUT
+ echo "   actual:   " `cat $LOG_OUT`
+# echo "   -------------------------"
  echo -e $1 > $CORRECT_OUT
- echo "expect: " `cat $CORRECT_OUT`
+ echo "   expected: " `cat $CORRECT_OUT`
  diff -w $LOG_OUT $CORRECT_OUT
  if test $? != 0 ; then
   echo "ERROR: language support configuration is broken"
@@ -76,7 +98,7 @@ function test_configure {
 }
 
 
-source ${SCRIPT_DIR}/test_configure_binary_support.unit
+#source ${SCRIPT_DIR}/test_configure_binary_support.unit
 source ${SCRIPT_DIR}/test_configure_c_support.unit
 source ${SCRIPT_DIR}/test_configure_cxx_support.unit
 source ${SCRIPT_DIR}/test_configure_cuda_support.unit
