@@ -38,7 +38,6 @@ echo "ROSE_TEST_JAVA_PATH               = ${ROSE_TEST_JAVA_PATH}"               
 
 set +e
 echo "$ROSE_TEST_BUILD_STYLE" | grep --quiet "make.*full"
-set -e
 if test $? = 0 ; then
  echo "Environment variables required for ROSE_TEST_BUILD_STYLE = full"           >> $env_dump_file
  echo "ROSE_TEST_QT_PATH                 = ${ROSE_TEST_QT_PATH}"                  >> $env_dump_file
@@ -46,6 +45,7 @@ if test $? = 0 ; then
  echo "ROSE_TEST_RTED_PATH               = ${ROSE_TEST_RTED_PATH}"                >> $env_dump_file
  echo "ROSE_TEST_OPENGL_PATH             = ${ROSE_TEST_OPENGL_PATH}"              >> $env_dump_file
 fi
+set -e
 
 echo "-------------------------------------------------------------------"       >> $env_dump_file
 if test "x$label" = "x64bit-macos-10.6" ; then
