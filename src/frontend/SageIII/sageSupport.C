@@ -2671,9 +2671,12 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                        ||
                           //if the command line includes "-D" options
                           ! getProject()->get_macroSpecifierList().empty()
+#if 0
+// SKW: disabled because the "*_postprocessed" dregs cause "ompLoweringTests/fortran" to fail 'distcleancheck'
                        ||
                           //if the command line includes "-I" options
                           ! getProject()->get_includeDirectorySpecifierList().empty()
+#endif
                       );
 
                file->set_requires_C_preprocessor(requires_C_preprocessor);
@@ -6407,6 +6410,7 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::LinemarkerTraversal( co
 void
 SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode )
    {
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
      extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
     // DXN (02/21/2011): Consider the case of SgInterfaceBody.
@@ -6503,6 +6507,11 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
                ROSE_ASSERT(statement->get_file_info()->get_filenameString().empty() == false);
              }
         }
+#else  // ! ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+     // SKW: not called except from Fortran
+     printf(">>> SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit is not implemented for languages other than Fortran\n");
+     ROSE_ASSERT(false);
+#endif //   ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    }
 
 
