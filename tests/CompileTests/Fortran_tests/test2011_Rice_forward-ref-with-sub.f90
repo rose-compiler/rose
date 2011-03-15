@@ -1,3 +1,4 @@
+! THIS PROGRAM IS CORRECT BUT FAILS ON GFORTRANS OLDER THAN 4.4.1
 ! Rice test
 
 program forward_ref_with_sub

@@ -237,6 +237,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_A-cant-assert-keyword-nonnull.f90 \
      test2011_Rice_B-cant-assert-keyword-nonnull.f90 \
      test2011_Rice_C-cant-assert-keyword-nonnull.f90 \
+     test2011_Rice_allocate-derived-type-scope.f90 \
      test2011_Rice_alt-return-call.f90 \
      test2011_Rice_alternate-return-argument.f90 \
      test2011_Rice_asterisk-length.f90 \
@@ -250,12 +251,15 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_empty-string-constant.f90 \
      test2011_Rice_forward-ref-derived-type.f90 \
      test2011_Rice_forward-ref-with-sub-2.f90 \
-     test2011_Rice_forward-ref-with-sub.f90 \
+     test2011_Rice_funcdecl-1.f90 \
+     test2011_Rice_funcdecl-4.f90 \
      test2011_Rice_function-where-var-expected.f90 \
+     test2011_Rice_forward-decl-func-type.f90 \
      test2011_Rice_interface.f90 \
      test2011_Rice_io-implied-do-with-stride.f90 \
      test2011_Rice_keyword-arg-extra-paren-2.f90 \
      test2011_Rice_keyword-arg-extra-paren.f90 \
+     test2011_Rice_lost-func-return-type.f90
      test2011_Rice_lost-kindtype-1.f90 \
      test2011_Rice_lost-kindtype-2.f90 \
      test2011_Rice_singleton-array-constructor.f90 \
@@ -263,7 +267,13 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_vector-constructor-2.f90 \
      test2011_Rice_vector-constructor-3.f90 \
      test2011_Rice_vector-constructor-4.f90 \
+     test2011_Rice_wrong-func-type.f90 \
      canonicalExample.f90
+
+# SKW 3/15/2011: tests which are correct and pass in ROSE, but fail when
+# compiled with gfortrans older than 4.4.1 (and so fail in Hudson)
+#     test2011_Rice_false-forward-decl-func-type.f90
+#     test2011_Rice_forward-ref-with-sub.f90
 
 #Liao 2/11/2010, 'include' issue on gfortran 4.2.0 of Mac OS X
 # 4.2.1 can handle them properly
@@ -356,11 +366,7 @@ if ROSE_USING_GFORTRAN_VERSION_4_2
      test2010_161.f90
 endif
 
-F90_TESTCODES_REQUIRING_PREPROCESSOR_REQUIRED_TO_PASS = \
-     test2011_Rice_allocate-derived-type-scope.F90 \
-     test2011_Rice_funcdecl-1.F90 \
-     test2011_Rice_funcdecl-4.F90 \
-     test2011_Rice_wrong-func-type.F90
+F90_TESTCODES_REQUIRING_PREPROCESSOR_REQUIRED_TO_PASS =
 
 
 F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
@@ -497,10 +503,7 @@ F03_TESTCODES_REQUIRED_TO_PASS = \
      test2011_32.f03 \
      test2011_33.f03 \
      test2011_34.f03 \
-     test2011_35.f03 \
-     test2011_Rice_false-fwd-decl-func-type.f03 \
-     test2011_Rice_fwd-decl-func-type.f03 \
-     test2011_Rice_lost-func-return-type.f03
+     test2011_35.f03
      
 
 # DQ (1/18/2011): Failing tests.

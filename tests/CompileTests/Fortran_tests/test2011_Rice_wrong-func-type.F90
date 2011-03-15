@@ -13,4 +13,4 @@ contains
     func%b = .true.
   end function
   
-end program 
+end program

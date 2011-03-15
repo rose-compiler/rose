@@ -104,4 +104,4 @@ else
   write(*, '(A)') "Test passed"
 endif
 
-end program test
+end program test_module_bits

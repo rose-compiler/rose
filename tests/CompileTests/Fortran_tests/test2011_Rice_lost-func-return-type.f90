@@ -11,7 +11,7 @@ module lost_func_return_type
 contains
 
 type(t) function b()  ! =>  FUNCTION B()
- b%k = 5
+  b%k = 5
 end function b
 
 integer function c()
