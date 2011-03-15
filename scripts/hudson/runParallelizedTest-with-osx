@@ -36,7 +36,9 @@ echo "ROSE_TEST_BUILD_STYLE             = ${ROSE_TEST_BUILD_STYLE}"             
 echo "ROSE_TEST_BOOST_PATH              = ${ROSE_TEST_BOOST_PATH}"               >> $env_dump_file
 echo "ROSE_TEST_JAVA_PATH               = ${ROSE_TEST_JAVA_PATH}"                >> $env_dump_file
 
+set +e
 echo "$ROSE_TEST_BUILD_STYLE" | grep --quiet "make.*full"
+set -e
 if test $? = 0 ; then
  echo "Environment variables required for ROSE_TEST_BUILD_STYLE = full"           >> $env_dump_file
  echo "ROSE_TEST_QT_PATH                 = ${ROSE_TEST_QT_PATH}"                  >> $env_dump_file
