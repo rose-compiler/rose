@@ -104,7 +104,7 @@ if test $ROSE_TEST_BUILD_STYLE = edg ; then
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
    echo "This test is forced to exit with an error as part of debugging Hudson tests."
    # tps : call this line before any exit. It resets the Windows test
-   echo 3 > $win_file
+   #echo 3 > $win_file
    exit 1
 fi
 
@@ -112,7 +112,7 @@ if test \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \) ; then
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
    echo "This test is forced to exit with an error as part of debugging Hudson tests."
    # tps : call this line before any exit. It resets the Windows test
-   echo 3 > $win_file
+   #echo 3 > $win_file
    exit 1
 fi
 
@@ -121,7 +121,7 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
    echo "This test is forced to exit with an error as part of debugging Hudson tests."
    # tps : call this line before any exit. It resets the Windows test
-   echo 3 > $win_file
+   #echo 3 > $win_file
    exit 1
 fi
 # ************************************************************************
@@ -276,7 +276,7 @@ if test $ROSE_TEST_BUILD_STYLE = edg ; then
       if [ $? -ne 0 ]  ; then
         echo "fatal error when build edg binaries , aborting..."
         # tps : call this line before any exit. It resets the Windows test
-        echo 3 > $win_file
+        #echo 3 > $win_file
         exit 3
       fi
 
@@ -331,7 +331,7 @@ function runBuildStep {
     if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
         echo "fatal error during '${buildStep}'  , aborting..."
         # tps : call this line before any exit. It resets the Windows test
-        echo 3 > $win_file
+        #echo 3 > $win_file
         exit 3
     fi
 ####################################################################################
