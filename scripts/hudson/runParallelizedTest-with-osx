@@ -74,6 +74,10 @@ echo "PATH ="                                                                   
 echo ""                                                                          >> $env_dump_file
 echo "$PATH"                                                                     >> $env_dump_file
 echo "*******************************************************************"       >> $env_dump_file
+echo "                    ^  Test Environment  ^"                                >> $env_dump_file
+echo "*******************************************************************"       >> $env_dump_file
+echo ""                                                                          >> $env_dump_file
+echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 
