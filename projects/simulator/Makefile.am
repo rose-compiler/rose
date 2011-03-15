@@ -575,11 +575,15 @@ SYS_TEST_TARGETS = warn_no_tests
 warn_no_tests:
 	@echo "  NOTE    x86sim testing is disabled (no i386 support)"
 endif
-MOSTLYCLEANFILES +=					    \
-	$(SYS_TEST_TARGETS)				    \
-	$(patsubst %.passed, %.failed, $(SYS_TEST_TARGETS)) \
-	$(patsubst %.passed, %.err,    $(SYS_TEST_TARGETS)) \
-	$(patsubst %.passed, %.out,    $(SYS_TEST_TARGETS))
+
+# Cleanup targets. We can't put all the generated files in MOSTLYCLEANFILES because the list gets too long to pass
+# as arguments to "rm" (deficiency in automake).  Therefore we'll create a *.clean target for each test and have
+# clean-local depend on it.
+SYS_TEST_CLEANUPS = $(addsuffix .clean, $(SYS_TEST_INPUTS))
+.PHONY: $(SYS_TEST_CLEANUPS)
+$(SYS_TEST_CLEANUPS):
+	rm -f $(foreach ext, passed failed err out, $(patsubst %.clean, %, $@).$(ext))
+
 
 # Main syscall testing target, on which "make check" depends.
 check-syscalls:  $(SYS_TEST_TARGETS)
@@ -1062,13 +1066,16 @@ else
 # warn_no_tests was already defined in the "SYSTEM CALL TESTS" section of this makefile
 PTHREAD_TEST_TARGETS = warn_no_tests
 endif
-MOSTLYCLEANFILES +=						  \
-	$(PTHREAD_TEST_TARGETS)					  \
-	$(patsubst %.passed, %.failed, $(PTHREAD_TEST_TARGETS))	  \
-	$(patsubst %.passed, %.err,    $(PTHREAD_TEST_TARGETS))	  \
-	$(patsubst %.passed, %.out,    $(PTHREAD_TEST_TARGETS))
 
+# Cleanup targets. We can't put all the generated files in MOSTLYCLEANFILES because the list gets too long to pass
+# as arguments to "rm" (deficiency in automake).  Therefore we'll create a *.clean target for each test and have
+# clean-local depend on it.
+PTHREAD_TEST_CLEANUPS = $(addsuffix .clean, $(PTHREAD_TEST_INPUTS))
+.PHONY: $(SYS_TEST_CLEANUPS)
+$(PTHREAD_TEST_CLEANUPS):
+	rm -f $(foreach ext, passed failed err out, $(patsubst %.clean, %, $@).$(ext))
 
+# Main pthread testing target, on which "make check" depends.
 check-pthread:  $(PTHREAD_TEST_TARGETS)
 
 
@@ -1086,9 +1093,12 @@ run-tests: check-syscalls check-pthread
 
 check-local:  #run-tests
 	@echo "The simulator project is excluded from make check for now due to random hanging problems."
-	@echo "Run 'make run-tests' in $(pwd) instead."
+	@echo "Run 'make run-tests' in $$(pwd) instead."
 
 # "tmp-sim" is the temp directory used to run the tests. See x86sim.conf.
-clean-local:
+# Rather than stuffing *everything* in MOSTLYCLEANFILES, we use cleanup targets. This is to avoid argument lists that
+# are too long due.  In general, we don't want to use wild cards because some users might have some similarly named files
+# that they wouldn't expect a "make clean" to delete.
+clean-local: $(SYS_TEST_CLEANUPS) $(PTHREAD_TEST_CLEANUPS)
 	-chmod -f -R a+rwx tmp-sim
 	rm -rf tmp-sim x-core.rose test-file-fchown32
