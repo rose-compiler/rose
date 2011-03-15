@@ -56,14 +56,14 @@ if test "x$label" = "x64bit-macos-10.6" ; then
    echo "    $a_path"                                                            >> $env_dump_file
  done
 echo ""                                                                          >> $env_dump_file
- echo "($DYLD_LIBRARY_PATH)"                                                     >> $env_dump_file
+ echo "$DYLD_LIBRARY_PATH"                                                       >> $env_dump_file
 else
  echo "LD_LIBRARY_PATH ="                                                        >> $env_dump_file
  for a_path in `echo $LD_LIBRARY_PATH | sed 's/:/ /g'` ; do
    echo "    $a_path"                                                            >> $env_dump_file
  done
 echo ""                                                                          >> $env_dump_file
-echo "($LD_LIBRARY_PATH)"                                                        >> $env_dump_file
+echo "$LD_LIBRARY_PATH"                                                          >> $env_dump_file
 fi
 
 echo "-------------------------------------------------------------------"       >> $env_dump_file
@@ -72,7 +72,7 @@ echo "PATH ="                                                                   
    echo "    $a_path"                                                            >> $env_dump_file
  done
 echo ""                                                                          >> $env_dump_file
-echo "($PATH)"                                                                   >> $env_dump_file
+echo "$PATH"                                                                     >> $env_dump_file
 echo "*******************************************************************"       >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
