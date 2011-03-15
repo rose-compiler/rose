@@ -620,19 +620,19 @@ createType(int typeCode)
           case IntrinsicTypeSpec_EVENT:
           case IntrinsicTypeSpec_LOCK: 
           case IntrinsicTypeSpec_LOCKSET:  
-               {
-                   // TEMPORARY: need to add additional type nodes to IR
-                   SgIntVal * kind = new SgIntVal(8, "8");
-                   setSourcePosition(kind);
-                   result = SgTypeComplex::createType(SgTypeDouble::createType(kind));
-                   break;
-               }
+          {
+              // TEMPORARY: need to add additional Rice type nodes to IR
+              SgIntVal * kind = new SgIntVal(8, "8");
+              setSourcePosition(kind);
+              result = SgTypeComplex::createType(SgTypeDouble::createType(kind));
+              break;
+          }
 
           default:
-             {
+          {   
                printf ("Default reached in createType: typeCode = %d \n",typeCode);
                ROSE_ASSERT(false);
-             }
+          }
        }
 
      ROSE_ASSERT(result != NULL);
