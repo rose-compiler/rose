@@ -64,6 +64,7 @@ function runBuildStep {
     echo "***********************************************************************************************************"
 }
 
+
 function runSpewAnalysis {
     if [ $# -ne 1 ]; then
         echo "Usage: runSpewAnalysis <filename-to-process>"
