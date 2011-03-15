@@ -36,9 +36,16 @@ class Unparser_Nameq;
 // typedef and anonymous declaration bugs.
 #define ANONYMOUS_TYPEDEF_FIX false
 
+// Whether to use Rice's code to wrap long lines in Fortran.
+#define USE_RICE_FORTRAN_WRAPPING  0  // 1 if you're Rice, 0 if you want to get through Hudson
+
 // Maximum line lengths for Fortran fixed source form and free source form, per the F90 specification.
-#define MAX_F90_LINE_LEN_FIXED  72
-#define MAX_F90_LINE_LEN_FREE  132
+#if USE_RICE_FORTRAN_WRAPPING
+  #define MAX_F90_LINE_LEN_FIXED  72
+  #define MAX_F90_LINE_LEN_FREE  132
+#else
+  #define MAX_F90_LINE_LEN      1024
+#endif
 
 // DQ (2/6/03):
 // The unparser should not write to (modify) the AST.  This fix skips and locations

@@ -5636,6 +5636,8 @@ FortranCodeGeneration_locatedNode::unparseWithTeamStatement(SgStatement* stmt, S
 void
 FortranCodeGeneration_locatedNode::curprint(const std::string & str) const
 {
+#if USE_RICE_FORTRAN_WRAPPING
+
     if( unp->currentFile != NULL && unp->currentFile->get_Fortran_only() )
     {
         /// determine line wrapping parameters
@@ -5671,6 +5673,27 @@ FortranCodeGeneration_locatedNode::curprint(const std::string & str) const
     }
 
    unp->u_sage->curprint(str);
+     
+#else  // ! USE_RICE_FORTRAN_WRAPPING
+
+     // FMZ (3/22/2010) added fortran continue line support
+     bool is_fortran90 =  (unp->currentFile != NULL ) &&
+                              (unp->currentFile->get_F90_only() ||
+                                  unp->currentFile->get_CoArrayFortran_only());
+
+     int str_len       = str.size();
+     int curr_line_len = unp->cur.current_col();
+
+     if (is_fortran90 && 
+              curr_line_len!=0 && 
+               (str_len + curr_line_len)> MAX_F90_LINE_LEN) {
+          unp->u_sage->curprint("&");
+          unp->cur.insert_newline(1);
+     } 
+
+     unp->u_sage->curprint(str);
+     
+#endif  // USE_RICE_FORTRAN_WRAPPING
 }
 
 void FortranCodeGeneration_locatedNode::unparseOmpPrefix     (SgUnparse_Info& info)
