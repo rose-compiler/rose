@@ -199,12 +199,13 @@ echo "*******************************************************************"      
 echo "                        Test-environment"                                  >> $env_dump_file
 echo "*******************************************************************"       >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
+echo "Dump file: $env_dump_file"                                                 >> $env_dump_file   
+echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 echo "-------------------------------------------------------------------"       >> $env_dump_file
 echo "                                                          [General]"       >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
-echo "Test-environment dump file        = $env_dump_file"                        >> $env_dump_file   
 echo "machine                           = $machine"                              >> $env_dump_file
 echo "machine_name                      = $machine_name"                         >> $env_dump_file
 echo "start_time                        = $start_time"                           >> $env_dump_file
