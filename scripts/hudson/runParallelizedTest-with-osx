@@ -214,6 +214,7 @@ echo "start_time                        = $start_time"                          
 echo "hudson_start_time_seconds         = $hudson_start_time_seconds"            >> $env_dump_file
 
 echo ""                                                                          >> $env_dump_file
+echo ""                                                                          >> $env_dump_file
 echo "-------------------------------------------------------------------"       >> $env_dump_file
 echo "                                                           [Hudson]"       >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
@@ -234,6 +235,7 @@ fi
 set -e
 
 echo ""                                                                          >> $env_dump_file
+echo ""                                                                          >> $env_dump_file
 echo "-------------------------------------------------------------------"       >> $env_dump_file
 echo "                                                              [Git]"       >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
@@ -242,6 +244,7 @@ echo ""                                                                         
 echo "git submodule status (EDG version) ="                                      >> $env_dump_file
 echo "  `git submodule status`"                                                  >> $env_dump_file
 
+echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 echo "-------------------------------------------------------------------"       >> $env_dump_file
 echo "                                                     [Library Path]"       >> $env_dump_file
@@ -264,6 +267,7 @@ echo "Copy me: $LD_LIBRARY_PATH"                                                
 fi
 
 echo ""                                                                          >> $env_dump_file
+echo ""                                                                          >> $env_dump_file
 echo "-------------------------------------------------------------------"       >> $env_dump_file
 echo "                                                  [Executable Path]"       >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
@@ -276,6 +280,7 @@ echo ""                                                                         
 echo "Copy me: $PATH"                                                            >> $env_dump_file
 
 echo ""                                                                          >> $env_dump_file
+echo ""                                                                          >> $env_dump_file
 echo "-------------------------------------------------------------------"       >> $env_dump_file
 echo "                                                   [Configure line]"       >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
@@ -287,6 +292,7 @@ echo "./configure"                                                              
 echo ""                                                                          >> $env_dump_file
 echo "Copy me: ./configure ${CONFIGURE_FLAGS}"                                   >> $env_dump_file
 
+echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 echo "-------------------------------------------------------------------"       >> $env_dump_file
 echo "                                                     [Install tree]"       >> $env_dump_file
