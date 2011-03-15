@@ -160,79 +160,49 @@ AC_ARG_ENABLE([only-java],AS_HELP_STRING([--enable-only-java],[Only support Java
 
 AC_ARG_ENABLE([only-binary-analysis],AS_HELP_STRING([--enable-only-binary-analysis],[Only support Binary Analysis using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
 
-
 # *******************************************************
-# Option to compilation and testing of projects directory
+# ROSE/projects directory compilation & testing
 # *******************************************************
-
-AC_MSG_CHECKING([if we should build the ROSE projects directory])
-AC_ARG_ENABLE([projects-directory],AS_HELP_STRING([--disable-projects-directory],[Exclude compilation and tests on ROSE projects directory]),[],[enableval=yes])
+AC_MSG_CHECKING([if we should build & test the ROSE/projects directory])
+AC_ARG_ENABLE([projects-directory],AS_HELP_STRING([--disable-projects-directory],[Disable compilation and testing of the ROSE/projects directory]),[],[enableval=yes])
 support_projects_directory=yes
-# echo "BEFORE Setting: enableval = $enableval support_projects_directory = $support_projects_directory"
 if test "x$enableval" = "xyes"; then
    support_projects_directory=yes
-#  echo "Setting: support_projects_directory = $support_projects_directory"
-else
-   support_projects_directory=no
-fi
-
-if test "x$support_projects_directory" = "xyes"; then
    AC_MSG_RESULT(enabled)
-#  echo "Support for building the projects directory is enabled..."
    AC_DEFINE([ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT], [], [Build ROSE projects directory])
 else
+   support_projects_directory=no
    AC_MSG_RESULT(disabled)
-#  echo "Support for building the projects directory is disabled..."
 fi
 AM_CONDITIONAL(ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT, [test "x$support_projects_directory" = xyes])
-
 # ****************************************************
-# Option to compilation and testing of tests directory
+# ROSE/tests directory compilation & testing 
 # ****************************************************
-
-AC_MSG_CHECKING([if we should build the ROSE tests directory])
-AC_ARG_ENABLE([tests-directory],AS_HELP_STRING([--disable-tests-directory],[Exclude compilation and tests on ROSE tests directory]),[],[enableval=yes])
+AC_MSG_CHECKING([if we should build & test the ROSE/tests directory])
+AC_ARG_ENABLE([tests-directory],AS_HELP_STRING([--disable-tests-directory],[Disable compilation and testing of the ROSE/tests directory]),[],[enableval=yes])
 support_tests_directory=yes
-# echo "BEFORE Setting: enableval = $enableval support_tests_directory = $support_tests_directory"
 if test "x$enableval" = "xyes"; then
    support_tests_directory=yes
-#  echo "Setting: support_tests_directory = $support_tests_directory"
-else
-   support_tests_directory=no
-fi
-
-if test "x$support_tests_directory" = "xyes"; then
    AC_MSG_RESULT(enabled)
-#  echo "Support for building the tests directory is enabled..."
    AC_DEFINE([ROSE_BUILD_TESTS_DIRECTORY_SUPPORT], [], [Build ROSE tests directory])
 else
+   support_tests_directory=no
    AC_MSG_RESULT(disabled)
-#  echo "Support for building the tests directory is disabled..."
 fi
 AM_CONDITIONAL(ROSE_BUILD_TESTS_DIRECTORY_SUPPORT, [test "x$support_tests_directory" = xyes])
-
 # *******************************************************
-# Option to compilation and testing of tutorial directory
+# ROSE/tutorial directory compilation & testing
 # *******************************************************
-
-AC_MSG_CHECKING([if we should build the ROSE tutorial directory])
-AC_ARG_ENABLE([tutorial-directory],AS_HELP_STRING([--disable-tutorial-directory],[Exclude compilation and tests on ROSE tutorial directory]),[],[enableval=yes])
+AC_MSG_CHECKING([if we should build & test the ROSE/tutorial directory])
+AC_ARG_ENABLE([tutorial-directory],AS_HELP_STRING([--disable-tutorial-directory],[Disable compilation and testing of the ROSE/tutorial directory]),[],[enableval=yes])
 support_tutorial_directory=yes
-# echo "BEFORE Setting: enableval = $enableval support_tutorial_directory = $support_tutorial_directory"
 if test "x$enableval" = "xyes"; then
    support_tutorial_directory=yes
-#  echo "Setting: support_tutorial_directory = $support_tutorial_directory"
-else
-   support_tutorial_directory=no
-fi
-
-if test "x$support_tutorial_directory" = "xyes"; then
    AC_MSG_RESULT(enabled)
-#  echo "Support for building the tutorial directory is enabled..."
    AC_DEFINE([ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT], [], [Build ROSE tutorial directory])
 else
+   support_tutorial_directory=no
    AC_MSG_RESULT(disabled)
-#  echo "Support for building the tutorial directory is disabled..."
 fi
 AM_CONDITIONAL(ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT, [test "x$support_tutorial_directory" = xyes])
 
