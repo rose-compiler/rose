@@ -63,7 +63,7 @@ fi
 echo ""                                                                          >> $env_dump_file
 echo "PATH ="                                                                    >> $env_dump_file
  for a_path in `echo $PATH | sed 's/:/ /g'` ; do
-   echo "    <b>$a_path</b>"                                                            >> $env_dump_file
+   echo "    $a_path"                                                            >> $env_dump_file
  done
 echo "*******************************************************************"       >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
