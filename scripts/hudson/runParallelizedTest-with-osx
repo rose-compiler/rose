@@ -1,5 +1,9 @@
 #!/bin/sh -ex
 #
+# TODO: add more summary info
+#	- List of durations for each step in the job
+#
+#
 source scripts/hudson/runBuildStep.sh
 source scripts/hudson/debuggingPrinters.sh
 #########################################################################################

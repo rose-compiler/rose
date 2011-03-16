@@ -27,6 +27,7 @@ function printBannerWithDate() {
 }
 
 function printBannerWithElapsedTime() {
+set +e
 if test $# = 3 ; then
   if test $2 -gt $3 ; then
     elapsed_time_in_seconds="`expr $2 - $3`"
@@ -34,18 +35,17 @@ if test $# = 3 ; then
     elapsed_time_in_seconds="`expr $3 - $2`"
   fi
  
-  set +e
   elapsed_hours="`expr $elapsed_time_in_seconds / 3600`"
   elapsed_time_in_seconds="`expr $elapsed_time_in_seconds % 3600`"
   elapsed_minutes="`expr $elapsed_time_in_seconds / 60`"
   elapsed_seconds="`expr $elapsed_time_in_seconds % 60`"
-  set -e
 
   printBanner "$1" "Duration:  ${elapsed_hours}h ${elapsed_minutes}m ${elapsed_seconds}s"
 else
   echo "[Error] Usage: printBannerWithElapsedTime <with-message> <start-time-seconds> <end-time-seconds>"
   exit 1
 fi
+set -e
 }
 
 function printBannerToStartStep() {
