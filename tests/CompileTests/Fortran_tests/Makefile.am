@@ -676,10 +676,10 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      X-pointerAttr.f90 \
      X-return-with-expr.f90 \
      X-lost-func-return-type.f90 \
-     X-constructor-inititalizer.f90
+     X-constructor-initializer.f90
 
 # DQ(1/30/2011): Rice bugs are test2010_150.* - test2010_168.*
-# DQ (1/31/2010): X-lost-func-return-type.f03 and X-constructor-inititalizer.f03 are new test codes from Rice.
+# DQ (1/31/2010): X-lost-func-return-type.f03 and X-constructor-initializer.f03 are new test codes from Rice.
 
 # JJW -- this can't be in the f90 file list because it does not have the .f90 extension
 #    test2008_02.f
