@@ -1014,7 +1014,7 @@ ROSE::getWorkingDirectory ()
        ROSE_ABORT();
      }
      string returnString = getcwdResult;
-     delete currentDirectory;
+     delete [] currentDirectory;
      currentDirectory = NULL;
      return returnString;
    }
