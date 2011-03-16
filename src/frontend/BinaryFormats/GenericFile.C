@@ -54,7 +54,10 @@ SgAsmGenericFile::parse(std::string fileName)
         throw FormatError("Could not allocate memory for binary file");
     ssize_t nread = read(p_fd, mapped, nbytes);
     if (nread<0 || (size_t)nread!=nbytes)
-        throw FormatError("Could not read entire binary file");
+    {
+      delete [] mapped;
+      throw FormatError("Could not read entire binary file");
+    }
 
     /* Decode the memory if necessary */
     DataConverter *dc = get_data_converter();

@@ -229,7 +229,7 @@ void AstSharedMemoryParallelSimpleProcessing::traverseInParallel(SgNode *basenod
     void *resultDummy;
     for (i = 0; i < numberOfThreads; i++)
         pthread_join(threads[i], &resultDummy);
-    delete threads;
+    delete [] threads;
     // Done!
 }
 
@@ -364,6 +364,6 @@ void AstSharedMemoryParallelPrePostProcessing::traverseInParallel(SgNode *baseno
     void *resultDummy;
     for (i = 0; i < numberOfThreads; i++)
         pthread_join(threads[i], &resultDummy);
-    delete threads;
+    delete [] threads;
     // Done!
 }
