@@ -259,7 +259,6 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_io-implied-do-with-stride.f90 \
      test2011_Rice_keyword-arg-extra-paren-2.f90 \
      test2011_Rice_keyword-arg-extra-paren.f90 \
-     test2011_Rice_lost-func-return-type.f90
      test2011_Rice_lost-kindtype-1.f90 \
      test2011_Rice_lost-kindtype-2.f90 \
      test2011_Rice_singleton-array-constructor.f90 \
@@ -274,6 +273,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
 # compiled with gfortrans older than 4.4.1 (and so fail in Hudson)
 #     test2011_Rice_false-forward-decl-func-type.f90
 #     test2011_Rice_forward-ref-with-sub.f90
+#     test2011_Rice_lost-func-return-type.f90
 
 #Liao 2/11/2010, 'include' issue on gfortran 4.2.0 of Mac OS X
 # 4.2.1 can handle them properly
