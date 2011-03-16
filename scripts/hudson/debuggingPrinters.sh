@@ -31,11 +31,13 @@ if test $# = 3 ; then
   else
     elapsed_time_in_seconds="`expr $3 - $2`"
   fi
-
+ 
+  set +x
   elapsed_hours="`expr $elapsed_time_in_seconds / 3600`"
   elapsed_time_in_seconds="`expr $elapsed_time_in_seconds % 3600`"
   elapsed_minutes="`expr $elapsed_time_in_seconds / 60`"
   elapsed_seconds="`expr $elapsed_time_in_seconds % 60`"
+  set -x
 
   printBanner "$1" "Duration:  ${elapsed_hours}h ${elapsed_minutes}m ${elapsed_seconds}s"
 else
