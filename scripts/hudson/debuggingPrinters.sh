@@ -85,6 +85,7 @@ fi
 #########################################################################################
 function dumpHudsonEnvironment() {
 #########################################################################################
+set +x
 env_dump_file="$PWD/HudsonEnvironment.log"
 rm -rf $env_dump_file
 #env_dump_file="/tmp/env_dump_file_$hudson_start_time_seconds.$machine_name.hudson"
@@ -211,6 +212,7 @@ echo ""                                                                         
 echo ""                                                                          >> $env_dump_file
 
 cat $env_dump_file
+set -x
 }
 function printHudsonEnvironment {
   dumpHudsonEnvironment
