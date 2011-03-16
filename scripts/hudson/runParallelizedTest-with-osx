@@ -14,6 +14,7 @@ printBannerToStartStep \
 	"[${ROSE_TEST_BUILD_STYLE}] in ROSE/scripts/hudson/runParallelizedTest-with-osx"
 
 machine=`uname -m`
+machine_os=`uname -s`
 machine_name=`uname -n`
 start_time=`date`
 hudson_start_time_seconds="$(date +%s)"
@@ -27,7 +28,9 @@ LOG_LOCATION="$PWD"
 #  This directory will be built into the Hudson home directory.
 #
 #########################################################################################
-if test "$machine" = "i686" ; then
+if test "x$machine_os" = "xDarwin" ; then
+  OS_MACHINE_LABEL=x86_64-Darwin
+elif test "x$machine" = "xi686" ; then
   OS_MACHINE_LABEL=i686-linux
 else
   OS_MACHINE_LABEL=amd64-linux

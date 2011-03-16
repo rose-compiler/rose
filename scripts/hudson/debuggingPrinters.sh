@@ -112,6 +112,7 @@ echo "                                                          [General]"      
 echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 echo "machine                           = $machine"                              >> $env_dump_file
+echo "machine_os                        = $machine_os"                           >> $env_dump_file
 echo "machine_name                      = $machine_name"                         >> $env_dump_file
 echo "start_time                        = $start_time"                           >> $env_dump_file
 echo "hudson_start_time_seconds         = $hudson_start_time_seconds"            >> $env_dump_file
