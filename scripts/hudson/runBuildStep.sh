@@ -62,6 +62,10 @@ function runSpewAnalysis {
         exit 1;
     fi
 
+    printBannerToStartStep "Compile time spew"
+    start_time_seconds="$(date +%s)"
+
+
     inputFile="$1"
 
     # Now process to count the number of lines of spew.
@@ -79,5 +83,6 @@ function runSpewAnalysis {
       echo "Measure Build System Parallelism"
       ../scripts/checkMakeParallelism.sh ${inputFile}
     fi
-    echo "Done with compile time spew"
+
+    printBannerToEndStep "Compile time spew" $start_time_seconds 
 }
