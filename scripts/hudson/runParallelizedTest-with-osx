@@ -383,11 +383,11 @@ esac
 set +x
    dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-after-tests.log"
 
+   printBannerWithDate
+
    printBannerToEndStep \
 	"[${ROSE_TEST_BUILD_STYLE}] in ROSE/scripts/hudson/runParallelizedTest-with-osx" \
 	$hudson_start_time_seconds
-
-   printBannerWithDate
 set -x
 ##
 #
