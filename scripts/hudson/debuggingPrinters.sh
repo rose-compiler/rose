@@ -46,6 +46,27 @@ else
 fi
 }
 
+function printBannerToStartStep() {
+if test $# = 1 ; then
+  printBanner "Starting '${1}' step..."
+else
+  echo "[Error] Usage: printBannerStartStep <step-name>" 
+  exit 1
+fi
+}
+
+function printBannerToEndStep() {
+if test $# = 1 ; then
+  printBannerWithElapsedTime \
+        "Done with '${1}' step!" \
+        $start_time_seconds \
+        $(date +%s)
+else
+  echo "[Error] Usage: printBannerEndStep <step-name>" 
+  exit 1
+fi
+}
+
 
 #########################################################################################
 #

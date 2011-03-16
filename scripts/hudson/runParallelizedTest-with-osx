@@ -3,12 +3,16 @@
 source scripts/hudson/runBuildStep.sh
 source scripts/hudson/debuggingPrinters.sh
 #########################################################################################
+# Uniform banners allows for easy parsing of the hudson console output
+# Starting 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step...
+# Done with 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step!
+printBannerToStartStep \
+	"'${ROSE_TEST_BUILD_STYLE}' in runParallelizedTest-with-osx"
 
 machine=`uname -m`
 machine_name=`uname -n`
 start_time=`date`
 hudson_start_time_seconds="$(date +%s)"
-
 
 #########################################################################################
 #
@@ -248,15 +252,12 @@ fi
 if test "x$ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT" = "xyes" ; then
    echo "Skipping build at part of testing from makefile rule."
 else
-   printBanner "Hudson tests on a new branch must run the ROSE/build script."
+   printBannerToStartStep "build"
    build_start_time="$(date +%s)"
 
    ./build
 
-   printBannerWithElapsedTime \
-	"Done executing 'ROSE/build'" \
-	$build_start_time \
-	$(date +%s)
+   printBannerToEndStep "build" $build_start_time
 fi
 
 
@@ -279,15 +280,12 @@ cd ROSE-build
 #  ROSE/configure
 #
 #########################################################################################
-printBanner "Starting configure step..."
+printBannerToStartStep "configure"
 configure_start_time="$(date +%s)"
 
 ../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
 
-printBannerWithElapsedTime \
-	"Done with configure step..." \
-	$configure_start_time \
-	$(date +%s)
+printBannerToEndStep "configure" $configure_start_time
 
 
 #########################################################################################
@@ -380,10 +378,9 @@ esac
 ##
    dumpHudsonEnvironment
 
-   printBannerWithElapsedTime \
-	"Done executing '${ROSE_TEST_BUILD_STYLE}' in runParallelizedTest-with-osx" \
-	$hudson_start_time_seconds \
-	$(date +%s)
+   printBannerToEndStep \
+	"'${ROSE_TEST_BUILD_STYLE}' in runParallelizedTest-with-osx" \
+	$hudson_start_time_seconds
 
    printBannerWithDate
 ##
