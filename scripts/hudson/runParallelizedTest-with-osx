@@ -376,6 +376,7 @@ esac
 #########################################################################################
 #
 ##
+set +x
    dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-after-tests.log"
 
    printBannerToEndStep \
@@ -383,6 +384,7 @@ esac
 	$hudson_start_time_seconds
 
    printBannerWithDate
+set -x
 ##
 #
 #########################################################################################
