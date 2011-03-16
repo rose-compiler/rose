@@ -3,6 +3,7 @@
 #
 #
 #########################################################################################
+source scripts/hudson/runBuildStep.sh
 
 machine=`uname -m`
 machine_name=`uname -n`
