@@ -7,7 +7,7 @@ source scripts/hudson/debuggingPrinters.sh
 # Starting 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step...
 # Done with 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step!
 printBannerToStartStep \
-	"'${ROSE_TEST_BUILD_STYLE}' in runParallelizedTest-with-osx"
+	"[${ROSE_TEST_BUILD_STYLE}] in ROSE/scripts/hudson/runParallelizedTest-with-osx"
 
 machine=`uname -m`
 machine_name=`uname -n`
@@ -380,7 +380,7 @@ set +x
    dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-after-tests.log"
 
    printBannerToEndStep \
-	"[${ROSE_TEST_BUILD_STYLE}] in runParallelizedTest-with-osx" \
+	"[${ROSE_TEST_BUILD_STYLE}] in ROSE/scripts/hudson/runParallelizedTest-with-osx" \
 	$hudson_start_time_seconds
 
    printBannerWithDate
