@@ -1880,12 +1880,12 @@ sub save_commit_message {
 }
 
 # Returns true if a commit would have an effect. First arg is true for "commit -a", false otherwise.
-# If the only change is in a submodule then "git diff" won't report any changes, but "git status" will.
 sub commit_has_effect {
   my($allflag) = @_;
-  my $cmd = "git diff --quiet" . ($allflag ? "" : " --cached");
-  `$cmd`; return 1 if $?;
-  `git status`; return !$?;
+  if ($allflag) {
+    `git diff --quiet`; return 1 if $?;  # changes not staged yet?
+  }
+  `git diff --quiet --cached`; return $?; # changes which are staged already?
 }
 
 ###############################################################################################################################

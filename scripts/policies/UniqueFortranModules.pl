@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# DO NOT DISABLE without first checking with a ROSE core developer
 
 # NOTE: Unlike most other policy checkers, this one is not recursive by
 #       default. If you want recursive behavior then invoke it with the
