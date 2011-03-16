@@ -1,6 +1,7 @@
 #!/bin/sh -e
 
 function printBanner {
+set +x
 if test $# = 1 -o $# = 2 ; then
   TMPFILE=/tmp/hudson_${hudson_start_time_seconds}
   echo "*******************************************************************"       >> $TMPFILE
@@ -18,6 +19,7 @@ else
   echo "[Error] Usage: printBanner <with-message>"
   exit 1
 fi
+set -x
 }
 
 function printBannerWithDate() {
