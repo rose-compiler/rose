@@ -6495,7 +6495,7 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
 
    SgScopeStatement* scope = target_loop->get_scope();
    ROSE_ASSERT(scope != NULL);
-   string fringe_name = "_lu_fringe";
+   string fringe_name = "_lu_fringe_"+ StringUtility::numberToString(++gensym_counter);
    SgVariableDeclaration* fringe_decl = buildVariableDeclaration(fringe_name, buildIntType(),buildAssignInitializer(initor), scope);
    insertStatementBefore(target_loop, fringe_decl);
    attachComment(fringe_decl, "iter_count = (ub-lb+1)%step ==0?(ub-lb+1)/step: (ub-lb+1)/step+1;");
