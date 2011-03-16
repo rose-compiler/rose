@@ -20,6 +20,7 @@ import org.eclipse.jdt.internal.compiler.util.*;
 
 // DQ (10/12/2010): Make more like the OFP implementation (using Callable<Boolean> abstract base class). 
 // class JavaTraversal {
+
 import java.util.concurrent.Callable;
 class JavaTraversal  implements Callable<Boolean> {
     static Main main;
@@ -37,7 +38,7 @@ class JavaTraversal  implements Callable<Boolean> {
     public static boolean hasErrorOccurred = false;
 
     static {
-	System.loadLibrary("JavaTraversal");
+         System.loadLibrary("JavaTraversal");
     }
 
     // -------------------------------------------------------------------------------------------

@@ -103,7 +103,7 @@ SgAsmPEImportHNTEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = %u\t\"%s\"", p, w, "hint/name", p_hint, p_name->c_str());
+    fprintf(f, "%s%-*s = %u\t\"%s\"", p, w, "hint/name", p_hint, p_name->get_string(true).c_str());
     if ((p_name->get_string().size()+1)%2)
         fprintf(f, " + '\\%03o'", p_padding);
     fputc('\n', f);

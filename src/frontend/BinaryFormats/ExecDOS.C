@@ -301,12 +301,14 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u\n",                    p, w, "e_overlay",            p_e_overlay);
     fprintf(f, "%s%-*s = 0x%08u (%u)\n",           p, w, "e_res1",               p_e_res1, p_e_res1);
     if (p_relocs) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "relocs", p_relocs->get_id(), p_relocs->get_name()->c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "relocs",
+                p_relocs->get_id(), p_relocs->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n",        p, w, "relocs");
     }
     if (p_rm_section) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "rm_section", p_rm_section->get_id(), p_rm_section->get_name()->c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "rm_section",
+                p_rm_section->get_id(), p_rm_section->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n",        p, w, "rm_section");
     }
