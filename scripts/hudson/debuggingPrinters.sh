@@ -61,7 +61,7 @@ function printBannerToEndStep() {
 if test $# = 2 ; then
   printBannerWithElapsedTime \
         "Done with '${1}' step!" \
-        $start_time_seconds \
+        ${2} \
         $(date +%s)
 else
   echo "[Error] Usage: printBannerEndStep <step-name> <start-time-in-seconds>" 
