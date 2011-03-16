@@ -37,7 +37,7 @@ if test $# = 3 ; then
   elapsed_minutes="`expr $elapsed_time_in_seconds / 60`"
   elapsed_seconds="`expr $elapsed_time_in_seconds % 60`"
 
-  printBanner "$1" "Took ${elapsed_hours}h${elapsed_minutes}m${elapsed_seconds}s"
+  printBanner "$1" "Duration:  ${elapsed_hours}h ${elapsed_minutes}m ${elapsed_seconds}s"
 else
   echo "[Error] Usage: printBannerWithElapsedTime <with-message> <start-time-seconds> <end-time-seconds>"
   exit 1
@@ -186,4 +186,7 @@ echo ""                                                                         
 echo ""                                                                          >> $env_dump_file
 
 cat $env_dump_file
+}
+function printHudsonEnvironment {
+  dumpHudsonEnvironment
 }

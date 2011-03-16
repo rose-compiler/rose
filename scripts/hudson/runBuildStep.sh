@@ -26,7 +26,7 @@ function runBuildStep {
 # EXECUTE BUILD STEP (with optional spew analysis)
 ####################################################################################
     
-    printBanner "Starting '$buildStep' step..."
+    printBanner "Starting '$buildStep' build step..."
     start_time_seconds="$(date +%s)"
 
 
@@ -47,8 +47,10 @@ function runBuildStep {
     fi
 
 
-    end_time_seconds="$(date +%s)"
-    printBannerWithElapsedTime "Done with '${buildStep}' test." $start_time_seconds $end_time_seconds 
+    printBannerWithElapsedTime \
+	"Done with '${buildStep}' build step..." \
+	$start_time_seconds \
+	$(date +%s)
 }
 
 

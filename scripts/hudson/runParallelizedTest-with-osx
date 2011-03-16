@@ -24,7 +24,8 @@ else
   OS_MACHINE_LABEL=amd64-linux
 fi
 
-CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
+CONFIGURE_PREFIX_DIR="/tmp/ROSE_TEST/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
+#CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
 # Liao 1/6/2010
 # Remove the stale installation tree since the stale headers will be included before updated ones are used.
 rm -rf $CONFIGURE_PREFIX_DIR/*
@@ -247,8 +248,15 @@ fi
 if test "x$ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT" = "xyes" ; then
    echo "Skipping build at part of testing from makefile rule."
 else
-   echo "Hudson tests on a new branch must run the ROSE/build script."
+   printBanner "Hudson tests on a new branch must run the ROSE/build script."
+   build_start_time="$(date +%s)"
+
    ./build
+
+   printBannerWithElapsedTime \
+	"Done executing 'ROSE/build'" \
+	$build_start_time \
+	$(date +%s)
 fi
 
 
@@ -272,10 +280,14 @@ cd ROSE-build
 #
 #########################################################################################
 printBanner "Starting configure step..."
+configure_start_time="$(date +%s)"
 
 ../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
 
-printBanner "Done with configure step..."
+printBannerWithElapsedTime \
+	"Done with configure step..." \
+	$configure_start_time \
+	$(date +%s)
 
 
 #########################################################################################
@@ -371,7 +383,7 @@ esac
    printBannerWithElapsedTime \
 	"Done executing '${ROSE_TEST_BUILD_STYLE}' in runParallelizedTest-with-osx" \
 	$hudson_start_time_seconds \
-	$(date +%s) 
+	$(date +%s)
 
    printBannerWithDate
 ##
