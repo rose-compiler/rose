@@ -150,13 +150,18 @@ namespace OmpSupport
     // This is not safe since it cannot be prepended to an implicit none statement in fortran
     //prependStatement(expStmt,currentscope);
     //prependStatement(varDecl1,currentscope);
+   if (SageInterface::is_Fortran_language())
+   {
     SgStatement *l_stmt = findLastDeclarationStatement(currentscope);
     if (l_stmt != NULL)
-    insertStatementAfter (l_stmt, varDecl1);
+      insertStatementAfter (l_stmt, varDecl1);
     else
       prependStatement(varDecl1,currentscope);
-    insertStatementAfter (varDecl1, expStmt);
+   }
+   else // C/C++, we can always prepend it.
+    prependStatement(varDecl1,currentscope);
 
+    insertStatementAfter (varDecl1, expStmt);
     //---------------------- termination part
 
     //  cout<<"debug:"<<mainDef->unparseToString()<<endl;
