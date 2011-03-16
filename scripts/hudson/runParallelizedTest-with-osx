@@ -380,7 +380,7 @@ set +x
    dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-after-tests.log"
 
    printBannerToEndStep \
-	"'${ROSE_TEST_BUILD_STYLE}' in runParallelizedTest-with-osx" \
+	"[${ROSE_TEST_BUILD_STYLE}] in runParallelizedTest-with-osx" \
 	$hudson_start_time_seconds
 
    printBannerWithDate
