@@ -13,6 +13,7 @@ machine=`uname -m`
 machine_name=`uname -n`
 start_time=`date`
 hudson_start_time_seconds="$(date +%s)"
+LOG_LOCATION="$PWD"
 
 #########################################################################################
 #
@@ -213,11 +214,10 @@ if test "x$label" = "x64bit-macos-10.6" ; then
   esac
 fi
 
-
 #########################################################################################
 #
 ##
-   dumpHudsonEnvironment
+   dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-before-tests.log"
 ##
 #
 #########################################################################################
@@ -376,7 +376,7 @@ esac
 #########################################################################################
 #
 ##
-   dumpHudsonEnvironment
+   dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-after-tests.log"
 
    printBannerToEndStep \
 	"'${ROSE_TEST_BUILD_STYLE}' in runParallelizedTest-with-osx" \

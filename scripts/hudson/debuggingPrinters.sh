@@ -85,8 +85,12 @@ fi
 #########################################################################################
 function dumpHudsonEnvironment() {
 #########################################################################################
+if test $# != 1 ; then
+  echo "[Error] Usage: dumpHudsonEnvironment <output-file-name>"
+  exit 1
+else
 set +x
-env_dump_file="$PWD/HudsonEnvironment.log"
+env_dump_file="${1}"
 rm -rf $env_dump_file
 #env_dump_file="/tmp/env_dump_file_$hudson_start_time_seconds.$machine_name.hudson"
 
