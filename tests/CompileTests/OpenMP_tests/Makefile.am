@@ -79,6 +79,9 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	ordered.c \
 	orphaned-directives.c \
 	parallel.c \
+	parallel-if.c \
+	parallel-if-numthreads.c \
+	parallel-numthreads.c \
 	parallel-reduction.c \
 	parallel-reduction2.c \
 	parallelfor.c \
