@@ -247,9 +247,10 @@ RSIM_Simulator::activate()
             /* Register the inter-process signal reception handler for signals that are typically sent from one process to
              * another.  This signal handler simply places the signal onto a process-wide queue. */
             struct sigaction sa;
-            sa.sa_handler = signal_receiver;
+            sa.sa_flags = SA_RESTART | SA_SIGINFO;
+            sa.sa_handler = NULL;
+            sa.sa_sigaction = signal_receiver;
             sigfillset(&sa.sa_mask);
-            sa.sa_flags = SA_RESTART;
             for (int signo=1; signo<__SIGRTMIN; signo++) {
                 switch (signo) {
                     case SIGFPE:
@@ -322,7 +323,7 @@ RSIM_Simulator::which_active()
 
 /* Class method. This is a signal handler -- do not use thread synchronization or functions that are not async signal safe. */
 void
-RSIM_Simulator::signal_receiver(int signo)
+RSIM_Simulator::signal_receiver(int signo, siginfo_t *info, void*)
 {
     /* In order for this signal handler to be installed, there must be an active simulator. This is because the activate()
      * method installs the signal handler and the deactivate() removes it.  The active_sim is set before the signal handler is
@@ -332,7 +333,39 @@ RSIM_Simulator::signal_receiver(int signo)
     RSIM_Process *process = simulator->get_process();
     assert(process!=NULL);
 
-    process->signal_enqueue(signo);
+#if 1 /* WARNING: this is not async signal safe, but useful for debugging */
+    char buf[1024];
+    sprintf(buf, "PID %d received signal %d with info=%p\n", getpid(), signo, info);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_signo = %d\n", info->si_signo);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_errno = %d\n", info->si_errno);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_code  = %d\n", info->si_code);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_pid   = %d\n", info->si_pid);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_uid   = %u\n", info->si_uid);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_int   = %u\n", info->si_int);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_ptr   = %p\n", info->si_ptr);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_status = %u\n", info->si_status);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_utime = %ld\n", info->si_utime);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_stime = %ld\n", info->si_stime);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_addr  = %p\n", info->si_addr);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_band  = %ld\n", info->si_band);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_fd    = %d\n", info->si_fd);
+    write(2, buf, strlen(buf));
+#endif
+
+    process->signal_enqueue(RSIM_SignalHandling::mk(info));
 }
 
 /* Class method. This is a signal handler -- do not use thread synchronization or functions that are not async signal safe. */

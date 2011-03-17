@@ -197,9 +197,10 @@ RSIM_Thread::syscall_arg(int idx)
 
 /* Deliver the specified signal. The signal is not removed from the signal_pending vector, nor is it added if it's masked. */
 int
-RSIM_Thread::signal_deliver(int signo)
+RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &info)
 {
-    ROSE_ASSERT(signo>0 && signo<=64);
+    int signo = info.si_signo;
+    assert(signo>0 && signo<=64);
 
     RTS_Message *mesg = tracing(TRACE_SIGNAL);
     sigaction_32 sa;
@@ -208,9 +209,15 @@ RSIM_Thread::signal_deliver(int signo)
 
     if (sa.handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
         /* The signal action may have changed since the signal was generated, so we need to check this again. */
-        mesg->mesg("delivering %s(%d) ignored", flags_to_str(signal_names, signo).c_str(), signo);
+        mesg->multipart("delivery", "signal delivery ignored: ");
+        print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
+        mesg->multipart_end();
+
     } else if (sa.handler_va==(uint32_t)(uint64_t)SIG_DFL) {
-        mesg->mesg("delivering %s(%d) default", flags_to_str(signal_names, signo).c_str(), signo);
+        mesg->multipart("delivery", "signal delivery via default: ");
+        print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
+        mesg->multipart_end();
+
         switch (signo) {
             case SIGFPE:
             case SIGILL:
@@ -255,8 +262,9 @@ RSIM_Thread::signal_deliver(int signo)
 
     } else {
         /* Most of the code here is based on __setup_frame() in Linux arch/x86/kernel/signal.c */
-        mesg->mesg("delivering %s(%d) to 0x%08"PRIx32,
-                    flags_to_str(signal_names, signo).c_str(), signo, sa.handler_va);
+        mesg->multipart("delivery", "signal delivery to 0x%08"PRIx32": ", sa.handler_va);
+        print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
+        mesg->multipart_end();
 
         pt_regs_32 regs = get_regs();
         RSIM_SignalHandling::sigset_32 signal_mask;
@@ -277,17 +285,14 @@ RSIM_Thread::signal_deliver(int signo)
             frame.pinfo = frame_va + OFFSET_OF_MEMBER(frame, info);
             frame.puc = frame_va + OFFSET_OF_MEMBER(frame, uc);
 
-            /* FIXME: copy siginfo_t into frame.info */
-            assert(0);
+            frame.info = info;
 
             frame.uc.uc_flags = 0; /* zero unless cpu_has_xsave; see Linux ia32_setup_rt_frame() */
             frame.uc.uc_link_va = 0;
             frame.uc.uc_stack.ss_sp = stack.ss_sp;
             frame.uc.uc_stack.ss_flags = sighand.on_signal_stack(frame_va) ? SS_ONSTACK : SS_DISABLE;
             frame.uc.uc_stack.ss_size = stack.ss_size;
-
-            sighand.setup_sigcontext(&frame.uc.uc_mcontext, &regs, signal_mask);
-
+            sighand.setup_sigcontext(&frame.uc.uc_mcontext, regs, signal_mask);
             frame.uc.uc_sigmask = signal_mask;
 
             /* Restorer. If sa_flags 0x04000000 is set, then stack frame "pretcode" is set to the sa_restorer address passed to
@@ -296,7 +301,7 @@ RSIM_Thread::signal_deliver(int signo)
             if (sa.flags & 0x04000000/*SA_RESTORER, deprecated*/) {
                 frame.pretcode = sa.restorer_va;
             } else {
-                frame.pretcode = SIGHANDLER_RETURN; /* or could point to frame.retcode */
+                frame.pretcode = SIGHANDLER_RT_RETURN; /* or could point to frame.retcode */
                 //frame.preturn = frame_va + OFFSET_OF_MEMBER(frame, retcode);
                 //frame.preturn = VDSO32_SYMBOL(vdso, rt_sigreturn); /* NOT IMPLEMENTED YET */
             }
@@ -306,11 +311,11 @@ RSIM_Thread::signal_deliver(int signo)
              * to recognize that it's at a signal stack frame. Instead, pretcode is the address of sigreturn in the VDSO.  For
              * now, we hard code it to a value that will be recognized by RSIM_Thread::main() as a
              * return-from-signal-handler. */
-            frame.retcode[0] = 0xb8;    /* b8 00 00 00 77 | mov eax, 119 */
-            frame.retcode[1] = 0x00;
+            frame.retcode[0] = 0xb8;    /* b8 ad 00 00 00 | mov eax, 119 */
+            frame.retcode[1] = 0xad;
             frame.retcode[2] = 0x00;
             frame.retcode[3] = 0x00;
-            frame.retcode[4] = 0x77;
+            frame.retcode[4] = 0x00;
             frame.retcode[5] = 0xcd;    /* cd 80          | int 80 */
             frame.retcode[6] = 0x80;
             frame.retcode[7] = 0x00;    /* 00             | padding; not reached */
@@ -323,8 +328,9 @@ RSIM_Thread::signal_deliver(int signo)
             RSIM_SignalHandling::sigframe_32 frame;
             memset(&frame, 0, sizeof frame);
             frame_va = sighand.get_sigframe(&sa, sizeof frame, regs.sp);
-
-            sighand.setup_sigcontext(&frame.sc, &regs, signal_mask);
+            
+            frame.signo = signo;
+            sighand.setup_sigcontext(&frame.sc, regs, signal_mask);
             frame.extramask = signal_mask >> 32;
             if (sa.flags & 0x04000000/*SA_RESTORER, deprecated*/) {
                 frame.pretcode = sa.restorer_va;
@@ -335,11 +341,11 @@ RSIM_Thread::signal_deliver(int signo)
             }
 
             frame.retcode[0] = 0x58;    /* 58             | pop eax */
-            frame.retcode[1] = 0xb8;    /* b8 00 00 00 77 | mov eax, 119 */
-            frame.retcode[2] = 0x00;
+            frame.retcode[1] = 0xb8;    /* b8 77 00 00 00 | mov eax, 119 */
+            frame.retcode[2] = 0x77;
             frame.retcode[3] = 0x00;
             frame.retcode[4] = 0x00;
-            frame.retcode[5] = 0x77;
+            frame.retcode[5] = 0x00;
             frame.retcode[6] = 0xcd;    /* cd 80          | int 80 */
             frame.retcode[7] = 0x80;
 
@@ -372,16 +378,56 @@ RSIM_Thread::signal_deliver(int signo)
     return 0;
 }
 
+int
+RSIM_Thread::sys_rt_sigreturn()
+{
+    RTS_Message *mesg = tracing(TRACE_SIGNAL);
+
+    /* Sighandler frame address is four less than the current SP because the return from sighandler popped the frame's
+     * pretcode. Unlike the sigframe_32 stack frame, the rt_sigframe_32 stack frame's retcode does not pop the signal number
+     * nor the other handler arguments, and why should it since we're about to restore the hardware context anyway. */
+    uint32_t sp = policy.readGPR(x86_gpr_sp).known_value();
+    uint32_t frame_va = sp - 4;
+
+    RSIM_SignalHandling::rt_sigframe_32 frame;
+    if (sizeof(frame)!=process->mem_read(&frame, frame_va, sizeof frame)) {
+        mesg->mesg("bad frame 0x%08"PRIu32" in sigreturn (sp=0x%08"PRIu32")", frame_va, sp);
+        return -EFAULT;
+    }
+
+    if (mesg->get_file()) {
+        RTS_MESSAGE(*mesg) {
+            mesg->multipart("sigreturn", "returning from ");
+            print_enum(mesg, signal_names, frame.signo);
+            mesg->more(" handler");
+            mesg->multipart_end();
+        } RTS_MESSAGE_END(true);
+    }
+
+    /* Restore previous signal mask */
+    int status = sighand.sigprocmask(SIG_SETMASK, &frame.uc.uc_sigmask, NULL);
+    if (status<0)
+        return -EFAULT;
+
+    /* Restore hardware context */
+    pt_regs_32 regs;
+    sighand.restore_sigcontext(frame.uc.uc_mcontext, policy.get_eflags(), &regs);
+    init_regs(regs);
+    return 0;
+}
+
 /* Note: if the specimen's signal handler never returns then this function is never invoked.  The specimen may do a longjmp()
  * or siglongjmp(), in which case the original stack, etc are restored anyway. Additionally, siglongjmp() may do a system call
  * to set the signal mask back to the value saved by sigsetjmp(), if any. */
 int
-RSIM_Thread::signal_return()
+RSIM_Thread::sys_sigreturn()
 {
     RTS_Message *mesg = tracing(TRACE_SIGNAL);
 
+    /* Sighandler frame address is eight less than the current SP because the return from sighandler popped the frame's
+     * pretcode, and the retcode popped the signo. */
     uint32_t sp = policy.readGPR(x86_gpr_sp).known_value();
-    uint32_t frame_va = sp - 4; /* because sig handler's RET popped frame's pretcode */
+    uint32_t frame_va = sp - 8; 
 
     RSIM_SignalHandling::sigframe_32 frame;
     if (sizeof(frame)!=process->mem_read(&frame, frame_va, sizeof frame)) {
@@ -405,63 +451,36 @@ RSIM_Thread::signal_return()
     if (status<0)
         return -EFAULT;
 
-    /* Restore hardware context */
-    policy.writeSegreg(x86_segreg_gs, policy.number<16>(frame.sc.gs));
-    policy.writeSegreg(x86_segreg_fs, policy.number<16>(frame.sc.fs));
-    policy.writeSegreg(x86_segreg_es, policy.number<16>(frame.sc.es));
-    policy.writeSegreg(x86_segreg_ds, policy.number<16>(frame.sc.ds));
-    policy.writeGPR(x86_gpr_di, policy.number<32>(frame.sc.di));
-    policy.writeGPR(x86_gpr_si, policy.number<32>(frame.sc.si));
-    policy.writeGPR(x86_gpr_bp, policy.number<32>(frame.sc.bp));
-    policy.writeGPR(x86_gpr_sp, policy.number<32>(frame.sc.sp));
-    policy.writeGPR(x86_gpr_bx, policy.number<32>(frame.sc.bx));
-    policy.writeGPR(x86_gpr_dx, policy.number<32>(frame.sc.dx));
-    policy.writeGPR(x86_gpr_cx, policy.number<32>(frame.sc.cx));
-    policy.writeGPR(x86_gpr_ax, policy.number<32>(frame.sc.ax));
-    policy.writeIP(policy.number<32>(frame.sc.ip));
-    policy.writeSegreg(x86_segreg_cs, policy.number<16>(frame.sc.cs));
-    policy.writeSegreg(x86_segreg_ss, policy.number<16>(frame.sc.ss));
-
-    /* Restore saved flags:  ac, of, df, tf, sf, zf, af, pf, cf, rf */
-    uint32_t flag_mask = (1ul<<x86_flag_ac) |
-                         (1ul<<x86_flag_of) |
-                         (1ul<<x86_flag_df) |
-                         (1ul<<x86_flag_tf) |
-                         (1ul<<x86_flag_sf) |
-                         (1ul<<x86_flag_zf) |
-                         (1ul<<x86_flag_af) |
-                         (1ul<<x86_flag_pf) |
-                         (1ul<<x86_flag_cf) |
-                         (1ul<<x86_flag_rf);
-    uint32_t flags = (policy.get_eflags() & ~flag_mask) | (frame.sc.flags & flag_mask);
-    policy.set_eflags(flags);
-
+    /* Restore hardware context.  Restore only certain flags. */
+    pt_regs_32 regs;
+    sighand.restore_sigcontext(frame.sc, policy.get_eflags(), &regs);
+    init_regs(regs);
     return 0;
 }
 
 int
-RSIM_Thread::signal_accept(int signo)
+RSIM_Thread::signal_accept(const RSIM_SignalHandling::siginfo_32 &info)
 {
     RSIM_SignalHandling::sigset_32 mask;
     int status = sighand.sigprocmask(0, NULL, &mask);
     if (status<0)
         return status;
 
-    if ((sighand.mask_of(signo) & mask))
+    if ((sighand.mask_of(info.si_signo) & mask))
         return -EAGAIN;
 
-    return sighand.generate(signo, get_process(), tracing(TRACE_SIGNAL));
+    return sighand.generate(info, get_process(), tracing(TRACE_SIGNAL));
 }
 
 int
-RSIM_Thread::signal_dequeue()
+RSIM_Thread::signal_dequeue(RSIM_SignalHandling::siginfo_32 *info/*out*/)
 {
-    int signo = sighand.dequeue();
+    int signo = sighand.dequeue(info);
     if (0==signo) {
         RSIM_SignalHandling::sigset_32 mask;
         int status = sighand.sigprocmask(0, NULL, &mask);
         assert(status>=0);
-        signo = get_process()->sighand.dequeue(&mask);
+        signo = get_process()->sighand.dequeue(info, &mask);
     }
     return signo;
 }
@@ -507,30 +526,31 @@ RSIM_Thread::main()
         pthread_testcancel();
         report_progress_maybe();
         try {
-            /* Returned from signal handler? */
+            /* Returned from signal handler? This code simulates the sigframe_32 or rt_sigframe_32 "retcode" */
             if (policy.readIP().known_value()==SIGHANDLER_RETURN) {
-                signal_return();
+                policy.pop();
+                policy.writeGPR(x86_gpr_ax, 119);
+                sys_sigreturn();
+                continue;
+            } else if (policy.readIP().known_value()==SIGHANDLER_RT_RETURN) {
+                policy.writeGPR(x86_gpr_ax, 173);
+                sys_rt_sigreturn();
                 continue;
             }
+
+            /* Handle a signal if we have any pending that aren't masked */
+            RSIM_SignalHandling::siginfo_32 info;
+            process->signal_dispatch(); /* assign process signals to threads */
+            if (signal_dequeue(&info)>0)
+                signal_deliver(info);
 
             /* Simulate an instruction */
             SgAsmx86Instruction *insn = current_insn();
             process->binary_trace_add(this, insn);
             semantics.processInstruction(insn);
             RTS_Message *mesg = tracing(TRACE_STATE);
-            if (mesg->get_file()) {
-                RTS_MESSAGE(*mesg) {
-                    mesg->mesg("Machine state after instruction:\n");
-                    policy.dump_registers(mesg);
-                } RTS_MESSAGE_END(true);
-            }
-
-            /* Handle a signal if we have any pending that aren't masked */
-            process->signal_dispatch(); /* assign process signals to threads */
-            int signo = signal_dequeue();
-            if (signo>0)
-                signal_deliver(signo);
-
+            if (mesg->get_file())
+                policy.dump_registers(mesg);
         } catch (const Disassembler::Exception &e) {
             std::ostringstream s;
             s <<e;
@@ -560,13 +580,9 @@ RSIM_Thread::main()
         } catch (const RSIM_Thread::Exit &e) {
             sys_exit(e);
             return NULL;
-        } catch (const RSIM_SemanticPolicy::Signal &e) {
-            sighand.generate(e.signo, process, tracing(TRACE_SIGNAL));
-        } catch (...) {
-            tracing(TRACE_MISC)->mesg("caught an unhandled exception\n");
-            tracing(TRACE_MISC)->mesg("dumping core\n");
-            process->dump_core(SIGILL);
-            abort();
+        } catch (const RSIM_SignalHandling::siginfo_32 &e) {
+            if (e.si_signo)
+                sighand.generate(e, process, tracing(TRACE_SIGNAL));
         }
     }
 }
@@ -733,6 +749,8 @@ RSIM_Thread::sys_tgkill(pid_t pid, pid_t tid, int signo)
     RSIM_Process *process = get_process();
     assert(process!=NULL);
     
+    RSIM_SignalHandling::siginfo_32 info = RSIM_SignalHandling::mk_rt(signo, SI_TKILL);
+
     if (pid<0) {
         retval = -EINVAL;
     } else if (pid==getpid() && tid>=0) {
@@ -740,23 +758,23 @@ RSIM_Thread::sys_tgkill(pid_t pid, pid_t tid, int signo)
         if (!thread) {
             retval = -ESRCH;
         } else if (thread==this) {
-            retval = sighand.generate(signo, process, tracing(TRACE_SIGNAL));
+            retval = sighand.generate(info, process, tracing(TRACE_SIGNAL));
         } else {
-            thread->sighand.generate(signo, process, thread->tracing(TRACE_SIGNAL));
+            thread->sighand.generate(info, process, thread->tracing(TRACE_SIGNAL));
             retval = syscall(SYS_tgkill, pid, tid, RSIM_SignalHandling::SIG_WAKEUP);
         }
     } else {
-        retval = sys_kill(pid, signo);
+        retval = sys_kill(pid, info);
     }
     return retval;
 }
 
 int
-RSIM_Thread::sys_kill(pid_t pid, int signo)
+RSIM_Thread::sys_kill(pid_t pid, const RSIM_SignalHandling::siginfo_32 &info)
 {
     RSIM_Process *process = get_process();
     assert(process!=NULL);
-    return process->sys_kill(pid, signo);
+    return process->sys_kill(pid, info);
 }
 
 int

@@ -274,30 +274,36 @@ protected:
      **************************************************************************************************************************/
 private:
     RSIM_SignalHandling sighand;
-    static const uint32_t SIGHANDLER_RETURN = 0xdeceaced;
+    static const uint32_t SIGHANDLER_RETURN = 0xdeceaced;               /* arbitrary magic number */
+    static const uint32_t SIGHANDLER_RT_RETURN = 0xdecea5ed;            /* arbitrary magic number */
 
 public:
     /** Removes a non-masked signal from the thread's signal queue. If the thread's queue is empty then the process' queue is
-     * considered. Returns a signal number if one is removed, zero if no signal is available, negative on error. */
-    int signal_dequeue();
+     *  considered. Returns a signal number if one is removed, zero if no signal is available, negative on error.  If a
+     *  positive signal number is returned then the supplied siginfo_32 struct is filled in with information about that
+     *  signal. */
+    int signal_dequeue(RSIM_SignalHandling::siginfo_32 *info/*out*/);
 
     /** Cause a signal to be delivered. The signal is not removed from the pending set or signal queue, nor do we check whether
      *  the signal is masked.  Returns zero on success, negative errno on failure.  However, if the signal is a terminating
      *  signal whose default action is performed, this method will throw an Exit, which will cause all simulated threads to
      *  shut down and the simulator returns to user control. */
-    int signal_deliver(int signo);
+    int signal_deliver(const RSIM_SignalHandling::siginfo_32&);
 
+    //@{
     /** Handles return from a signal handler. Returns zero on success, negative errno on failure. The only failure that is
      *  detected at this time is -EFAULT when reading the signal handler stack frame, in which case a message is printed to
      *  TRACE_SIGNAL and no registers or memory are modified. */
-    int signal_return();
+    int sys_sigreturn();
+    int sys_rt_sigreturn();
+    //@}
 
     /** Accepts a signal from the process manager for later delivery.  This function is called by RSIM_Process::sys_kill() to
      *  decide to which thread a signal should be delivered.  If the thread can accept the specified signal, then it does so,
      *  adding the signal to its queue.  A signal can be accepted by this thread if the signal is not blocked.
      *
      *  Returns zero if the signal was accepted; negative if the signal was not accepted. */
-    int signal_accept(int signo);
+    int signal_accept(const RSIM_SignalHandling::siginfo_32&);
 
     /** Returns, through an argument, the set of signals that are pending.  Returns zero on success, negative errno on
      * failure. */
@@ -322,7 +328,7 @@ public:
      *  returns non-negative on success; negative error number on failure.
      *
      *  Thread safety: This function is thread safe. */
-    int sys_kill(pid_t pid, int signo);
+    int sys_kill(pid_t pid, const RSIM_SignalHandling::siginfo_32&);
 
 
 

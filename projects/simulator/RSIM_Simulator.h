@@ -121,7 +121,7 @@ private:
 
     /** Signal handler called when some other process sends the simulated process a signal.  This handler simply places the
      *  signal on the process's signal queue.  Ths RSIM_Simulator::activate() registers this signal handler. */
-    static void signal_receiver(int signo);
+    static void signal_receiver(int signo, siginfo_t*, void*);
 
     /** Signal handler that does nothing, but whose side effect is to interrupt blocked system calls.  This handler is
      * registered by RSIM_Simulator::activate(). */

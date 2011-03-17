@@ -5,6 +5,79 @@
 
 const int RSIM_SignalHandling::SIG_WAKEUP = 49; /* arbitrarily SIGRT_17 */
 
+RSIM_SignalHandling::siginfo_32
+RSIM_SignalHandling::mk_kill(int signo, int code)
+{
+    siginfo_32 info;
+    memset(&info, 0, sizeof info);
+    info.si_signo = signo;
+    info.si_code  = code;
+    info.kill.pid = getpid();
+    info.kill.uid = getuid();
+    return info;
+}
+
+RSIM_SignalHandling::siginfo_32
+RSIM_SignalHandling::mk_sigfault(int signo, int code, uint32_t addr)
+{
+    siginfo_32 info;
+    memset(&info, 0, sizeof info);
+    info.si_signo = signo;
+    info.si_code = code;
+    info.sigfault.addr = addr;
+    info.sigfault.addr_lsb = addr;
+    return info;
+}
+
+RSIM_SignalHandling::siginfo_32
+RSIM_SignalHandling::mk_rt(int signo, int code)
+{
+    return mk_kill(signo, code);
+}
+
+RSIM_SignalHandling::siginfo_32
+RSIM_SignalHandling::mk(const siginfo_t *host)
+{
+    siginfo_32 info;
+    memset(&info, 0, sizeof info);
+    info.si_signo = host->si_signo;
+    info.si_errno = host->si_errno;
+    info.si_code  = host->si_code;
+
+    switch (info.si_signo) {
+        case SIGCHLD:
+            info.sigchld.pid    = host->si_pid;
+            info.sigchld.uid    = host->si_uid;
+            info.sigchld.status = host->si_status;
+            info.sigchld.utime  = host->si_utime;
+            info.sigchld.stime  = host->si_stime;
+            break;
+        case SIGILL:
+        case SIGFPE:
+        case SIGSEGV:
+        case SIGBUS:
+            info.sigfault.addr  = (uint32_t)(uint64_t)host->si_addr;
+            break;
+        case SIGPOLL:
+            info.sigpoll.band   = host->si_band;
+            info.sigpoll.fd     = host->si_fd;
+            break;
+        default:
+            /* FIXME: what about POSIX.1b timers? */
+            if (info.si_signo < FIRST_RT) {
+                info.kill.pid   = host->si_pid;
+                info.kill.uid   = host->si_uid;
+            } else {
+                info.rt.pid     = host->si_pid;
+                info.rt.uid     = host->si_uid;
+                info.rt.sigval  = host->si_int; /* FIXME: what about si_ptr? */
+            }
+            break;
+    }
+
+    return info;
+}
+
 RSIM_SignalHandling::sigset_32
 RSIM_SignalHandling::mask_of(int signo)
 {
@@ -15,8 +88,9 @@ RSIM_SignalHandling::mask_of(int signo)
 uint32_t
 RSIM_SignalHandling::get_sigframe(const sigaction_32 *sa, size_t frame_size, uint32_t sp)
 {
+    bool on_alt_stack = on_signal_stack(sp);
     RTS_MUTEX(mutex) {
-        if ((sa->flags & SA_ONSTACK) && !on_signal_stack(sp) &&
+        if ((sa->flags & SA_ONSTACK) && !on_alt_stack &&
             0==(stack.ss_flags & SS_ONSTACK) && 0!=(sa->flags & SA_ONSTACK) && stack.ss_size>0)
             sp = stack.ss_sp + stack.ss_size;
     } RTS_MUTEX_END;
@@ -27,30 +101,65 @@ RSIM_SignalHandling::get_sigframe(const sigaction_32 *sa, size_t frame_size, uin
 }
 
 void
-RSIM_SignalHandling::setup_sigcontext(sigcontext_32 *sc, const pt_regs_32 *regs, sigset_32 mask)
+RSIM_SignalHandling::setup_sigcontext(sigcontext_32 *sc, const pt_regs_32 &regs, sigset_32 mask)
 {
-    sc->gs = regs->gs;
-    sc->fs = regs->fs;
-    sc->es = regs->es;
-    sc->ds = regs->ds;
-    sc->di = regs->di;
-    sc->si = regs->si;
-    sc->bp = regs->bp;
-    sc->sp = regs->sp;
-    sc->bx = regs->bx;
-    sc->dx = regs->dx;
-    sc->cx = regs->cx;
-    sc->ax = regs->ax;
+    sc->gs = regs.gs;
+    sc->fs = regs.fs;
+    sc->es = regs.es;
+    sc->ds = regs.ds;
+    sc->di = regs.di;
+    sc->si = regs.si;
+    sc->bp = regs.bp;
+    sc->sp = regs.sp;
+    sc->bx = regs.bx;
+    sc->dx = regs.dx;
+    sc->cx = regs.cx;
+    sc->ax = regs.ax;
     sc->trapno = 0;    /* FIXME: check this */
     sc->err = 0;       /* FIXME: check this */
-    sc->ip = regs->ip;
-    sc->cs = regs->cs;
-    sc->flags = regs->flags;
-    sc->sp_at_signal = regs->sp;
-    sc->ss = regs->ss;
+    sc->ip = regs.ip;
+    sc->cs = regs.cs;
+    sc->flags = regs.flags;
+    sc->sp_at_signal = regs.sp;
+    sc->ss = regs.ss;
     sc->fpstate_ptr = 0; /* no floating point state in simulator */
     sc->oldmask = mask & 0xffffffff; /* mask for classic signals */
     sc->cr2 = 0; /* not used by simulator */
+}
+
+void
+RSIM_SignalHandling::restore_sigcontext(const sigcontext_32 &sc, uint32_t cur_flags, pt_regs_32 *regs)
+{
+    memset(regs, 0, sizeof(*regs));
+    regs->gs = sc.gs;
+    regs->fs = sc.fs;
+    regs->es = sc.es;
+    regs->ds = sc.ds;
+    regs->di = sc.di;
+    regs->si = sc.si;
+    regs->bp = sc.bp;
+    regs->sp = sc.sp;
+    regs->bx = sc.bx;
+    regs->dx = sc.dx;
+    regs->cx = sc.cx;
+    regs->ax = sc.ax;
+    regs->ip = sc.ip;
+    regs->cs = sc.cs;
+    regs->flags = sc.flags;
+    regs->ss = sc.ss;
+
+    /* Restore flags mentioned in flag_mask, but not the others. */
+    uint32_t flag_mask = (1ul<<x86_flag_ac) |
+                         (1ul<<x86_flag_of) |
+                         (1ul<<x86_flag_df) |
+                         (1ul<<x86_flag_tf) |
+                         (1ul<<x86_flag_sf) |
+                         (1ul<<x86_flag_zf) |
+                         (1ul<<x86_flag_af) |
+                         (1ul<<x86_flag_pf) |
+                         (1ul<<x86_flag_cf) |
+                         (1ul<<x86_flag_rf);
+    regs->flags = (cur_flags & ~flag_mask) | (regs->flags & flag_mask);
 }
 
 int
@@ -104,7 +213,7 @@ RSIM_SignalHandling::sigpending(sigset_32 *result) const
         RTS_MUTEX(mutex) {
             *result = pending;
             for (size_t i=queue_head; i!=queue_tail; i=(i+1)%QUEUE_SIZE)
-                *result |= mask_of(queue[i]);
+                *result |= mask_of(queue[i].si_signo);
         } RTS_MUTEX_END;
     }
     return 0;
@@ -151,7 +260,7 @@ RSIM_SignalHandling::sigsuspend(const sigset_32 *new_mask_p, RSIM_Thread *thread
             if (!retval) {
                 sigset_32 p = pending;
                 for (size_t i=queue_head; i!=queue_tail; i=(i+1) % QUEUE_SIZE)
-                    p |= mask_of(queue[i]);
+                    p |= mask_of(queue[i].si_signo);
 
                 /* Are there any unmasked signals to deliver?  Choose one, preferably a real-time signal. */
                 if (p & ~cur_mask) {
@@ -230,11 +339,12 @@ RSIM_SignalHandling::clear_all_pending()
 }
 
 int
-RSIM_SignalHandling::generate(int signo, RSIM_Process *process, RTS_Message *mesg)
+RSIM_SignalHandling::generate(const siginfo_32 &info, RSIM_Process *process, RTS_Message *mesg)
 {
     int result = 0;
     const char *s = "";
 
+    int signo = info.si_signo;
     assert(signo>=1 && (size_t)signo<=8*sizeof(sigset_32));
 
     sigaction_32 sa;
@@ -246,11 +356,12 @@ RSIM_SignalHandling::generate(int signo, RSIM_Process *process, RTS_Message *mes
             s = " ignored";
         } else if (signo < FIRST_RT) {
             pending |= mask_of(signo);
+            pending_info[signo] = info;
         } else if ((queue_tail+1) % QUEUE_SIZE == queue_head) {
             s = " ENOBUFS";
             result = -ENOMEM;
         } else {
-            queue[queue_tail] = signo;
+            queue[queue_tail] = info;
             queue_tail = (queue_tail+1) % QUEUE_SIZE;
         }
 
@@ -262,6 +373,17 @@ RSIM_SignalHandling::generate(int signo, RSIM_Process *process, RTS_Message *mes
             mesg->multipart("signal", "arrival of ");
             print_enum(mesg, signal_names, signo);
             mesg->more("(%d)%s", signo, s);
+            mesg->more(" {errno=%d, code=%d", info.si_errno, info.si_code);
+            if (signo>=FIRST_RT) {
+                mesg->more(", pid=%d, uid=%d, sigval=%d", info.rt.pid, info.rt.uid, info.rt.sigval);
+            } else if (signo==SIGILL || signo==SIGFPE || signo==SIGSEGV || signo==SIGBUS) {
+                mesg->more(", addr=0x%08"PRIx32, info.sigfault.addr);
+            } else if (signo==SIGCHLD) {
+                mesg->more(", pid=%d, uid=%d, status=%u", info.sigchld.pid, info.sigchld.uid, info.sigchld.status);
+            } else {
+                mesg->more(", pid=%d, uid=%d", info.kill.pid, info.kill.uid);
+            }
+            mesg->more("}\n");
             mesg->multipart_end();
         }
     } RTS_MUTEX_END;
@@ -270,7 +392,7 @@ RSIM_SignalHandling::generate(int signo, RSIM_Process *process, RTS_Message *mes
 }
 
 int
-RSIM_SignalHandling::dequeue(const sigset_32 *alt_mask/*=NULL*/)
+RSIM_SignalHandling::dequeue(siginfo_32 *info/*out*/, const sigset_32 *alt_mask/*=NULL*/)
 {
     int result = 0;
 
@@ -280,8 +402,10 @@ RSIM_SignalHandling::dequeue(const sigset_32 *alt_mask/*=NULL*/)
         if (reprocess || alt_mask) {
             /* Queued real-time signals */
             for (size_t i=queue_head; i!=queue_tail; i=(i+1) % QUEUE_SIZE) {
-                if (0==(mask & mask_of(queue[i]))) {
-                    result = queue[i];
+                if (0==(mask & mask_of(queue[i].si_signo))) {
+                    if (info)
+                        *info = queue[i];
+                    result = queue[i].si_signo;
 
                     /* Remove item from queue */
                     if (i==queue_head) {
@@ -300,6 +424,8 @@ RSIM_SignalHandling::dequeue(const sigset_32 *alt_mask/*=NULL*/)
             if (pending & ~mask) {
                 for (size_t signo=1; signo<=8*sizeof(pending); signo++) {
                     if ((pending & ~mask) & mask_of(signo)) {
+                        if (info)
+                            *info = pending_info[signo];
                         result = signo;
                         pending &= ~mask_of(signo);
                     }

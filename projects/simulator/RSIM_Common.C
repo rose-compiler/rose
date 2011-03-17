@@ -377,6 +377,69 @@ print_exit_status_32(RTS_Message *m, const uint8_t *_v, size_t sz)
 }
 
 void
+print_siginfo_32(RTS_Message *m, const uint8_t *_v, size_t sz)
+{
+    assert(sizeof(RSIM_SignalHandling::siginfo_32)==sz);
+    const RSIM_SignalHandling::siginfo_32 *info = (const RSIM_SignalHandling::siginfo_32*)_v;
+
+    m->more("signo=");
+    print_enum(m, signal_names, info->si_signo);
+    m->more(", errno=%d", info->si_errno);
+    switch (info->si_signo) {
+        case SIGSEGV:
+            m->more(", code=");
+            print_enum(m, siginfo_sigsegv_codes, info->si_code);
+            m->more(", addr=0x%08"PRIx32, info->sigfault.addr);
+            break;
+        case SIGBUS:
+            m->more(", code=");
+            print_enum(m, siginfo_sigbus_codes, info->si_code);
+            m->more(", addr=0x%08"PRIx32, info->sigfault.addr);
+            break;
+        case SIGILL:
+            m->more(", code=");
+            print_enum(m, siginfo_sigill_codes, info->si_code);
+            m->more(", addr=0x%08"PRIx32, info->sigfault.addr);
+            break;
+        case SIGFPE:
+            m->more(", code=");
+            print_enum(m, siginfo_sigfpe_codes, info->si_code);
+            m->more(", addr=0x%08"PRIx32, info->sigfault.addr);
+            break;
+        case SIGTRAP:
+            m->more(", code=");
+            print_enum(m, siginfo_sigtrap_codes, info->si_code);
+            break;
+        case SIGCHLD:
+            m->more(", code=");
+            print_enum(m, siginfo_sigchld_codes, info->si_code);
+            m->more(", pid=%d, uid=%u, status=0x%02x, utime=%d, stime=%d",
+                    info->sigchld.pid, info->sigchld.uid, info->sigchld.status, info->sigchld.utime, info->sigchld.stime);
+            break;
+        case SIGPOLL:
+            m->more(", code=");
+            print_enum(m, siginfo_sigpoll_codes, info->si_code);
+            m->more(", band=%d, fd=%d", info->sigpoll.band, info->sigpoll.fd);
+            break;
+        default:
+            m->more(", code=");
+            print_enum(m, siginfo_generic_codes, info->si_code);
+            switch (info->si_code) {
+                case SI_TKILL:
+                    m->more(", pid=%d, uid=%d, sigval=%d", info->rt.pid, info->rt.uid, info->rt.sigval);
+                    break;
+                case SI_USER:
+                    m->more(", pid=%d, uid=%d", info->kill.pid, info->kill.uid);
+                    break;
+                default:
+                    // no other info?
+                    break;
+            }
+            break;
+    }
+}
+
+void
 convert(statfs_32 *g, const statfs64_native *h)
 {
     memset(g, 0, sizeof(*g));

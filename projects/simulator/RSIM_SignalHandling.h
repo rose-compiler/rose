@@ -83,6 +83,7 @@ public:
         pthread_mutex_init(&mutex, NULL);
         memset(queue, 0, sizeof queue);
         memset(&stack, 0, sizeof stack);
+        memset(&pending_info, 0, sizeof pending_info);
         stack.ss_sp = 0;
         stack.ss_size = 0;
         stack.ss_flags = SS_DISABLE;
@@ -137,12 +138,12 @@ public:
             struct {                    /* POSIX.1b signals */
                 int32_t pid;            /* sender's pid */
                 uint32_t uid;           /* sender's uid */
-                sigval_t sigval;
+                uint32_t sigval;        /* integer or address of ? */
             } rt;
             struct {                    /* SIGCHLD */
                 int32_t pid;            /* which child */
                 uint32_t uid;           /* sender's uid */
-                int status;             /* exit code */
+                uint32_t status;        /* exit code */
                 int32_t utime;
                 int32_t stime;
             } sigchld;
@@ -154,7 +155,7 @@ public:
                 int32_t band;           /* POLL_IN, POLL_OUT, POLL_MSG */
                 int32_t fd;
             } sigpoll;
-        } sifields;
+        };
     } __attribute__((packed));
 
     /** Kernel struct ucontext from linux/include/asm-generic/ucontext.h */
@@ -191,6 +192,15 @@ public:
     /** Signal to use when notifying a thread that a signal has been added to its queue. */
     static const int SIG_WAKEUP;
 
+    //@{
+    /** Class methods to create signal information objects.  The names (after the "mk_" prefix) correspond to the union member
+     *  names in the siginfo_32 struct. */
+    static siginfo_32 mk_kill(int signo, int code);
+    static siginfo_32 mk_sigfault(int signo, int code, uint32_t addr);
+    static siginfo_32 mk_rt(int signo, int code);
+    static siginfo_32 mk(const siginfo_t*);
+    //@}
+
     /** Returns a signal set having only the specified signal. Note: this cannot be named "sigmask" since that's a macro in
      *  some versions of "signal.h".
      *
@@ -205,7 +215,13 @@ public:
     /** Fill in a sigcontext_32 struct.
      *
      *  Thread safety: This method is thread safe. */
-    static void setup_sigcontext(sigcontext_32 *sc, const pt_regs_32 *regs, sigset_32 mask);
+    static void setup_sigcontext(sigcontext_32 *sc, const pt_regs_32 &regs, sigset_32 mask);
+
+    /** Initialize registers from signal context.  Not all FLAG bits are restored to their original value, which is why the set
+     *  of current flags must be passed as an argument.
+     *
+     *  Thread safety: This method is thread safe. */
+    static void restore_sigcontext(const sigcontext_32&, uint32_t cur_flags, pt_regs_32*);
 
     /** Adjust the signal mask.  If @p in is non-null, then adjust the signal mask according to @p how: 0 means add signals
      *  from @p in into the mask; 1 means remove signals in @p in from the mask; 2 means set the mask so it's equal to @p
@@ -255,23 +271,25 @@ public:
     void clear_all_pending();
 
     /** Generates a signal. If the signal is a real-time signal, it will be appended to the queue of real-time signals,
-     *  otherwise classic signals simply set a bit in the "pending" set.  If a signal's action is SIG_IGN, then the signal is
-     *  not added to the queue or the pending set (it's just discarded).  The specified process is used to determine if the
-     *  signal is to be ignored.  Tracing is output to the specified RTS_Message, which is normally the signalling thread's
-     *  TRACE_SIGNAL facility.
+     *  otherwise classic signals simply set a bit in the "pending" set.  The supplied signal information (@p siginfo) will be
+     *  saved and provided on the eventual signal handlers stack frame if that handler's SA_SIGINFO flag is set.
+     *
+     *  If a signal's action is SIG_IGN, then the signal is not added to the queue or the pending set (it's just discarded).
+     *  The specified process is used to determine if the signal is to be ignored.  Tracing is output to the specified
+     *  RTS_Message, which is normally the signalling thread's TRACE_SIGNAL facility.
      *
      *  Returns zero on success, negative on failure.  The only recoverable failure that's supported is the generation of a
      *  real-time signal which causes the signal queue to be overflowed, returning -ENOBUFS.
      *
      *  Thread safety: This method is thread safe. */
-    int generate(int signo, RSIM_Process*, RTS_Message*);
+    int generate(const siginfo_32 &siginfo, RSIM_Process*, RTS_Message*);
 
     /** Removes one unmasked signal from the set of pending signals.  Returns a signal number, or negative on failure.  If no
      *  signals are pending which are not masked, then returns zero.  If a mask is specified as an argument, then that mask is
      *  used instead of the current signal mask.
      *
      *  Thread safety: This method is thread safe. */
-    int dequeue(const sigset_32 *mask=NULL);
+    int dequeue(siginfo_32 *info/*out*/, const sigset_32 *mask=NULL);
 
 private:
     static const size_t QUEUE_SIZE = 20;
@@ -280,10 +298,11 @@ private:
     mutable pthread_mutex_t mutex;      /**< Protects all members of this struct. */
     sigset_32 mask;                     /**< Masked signals. Bit N is set if signal N+1 is masked. */
     stack_32 stack;                     /**< Possible alternative stack to using during signal handling. */
-    int queue[QUEUE_SIZE];              /**< Queue of pending real-time signals. */
+    siginfo_32 queue[QUEUE_SIZE];       /**< Queue of pending real-time signals. */
     size_t queue_head;                  /**< Head of circular "queue"; points to oldest item in queue. */
     size_t queue_tail;                  /**< Tail of circular "queue"; points one past youngest item; head==tail implies empty. */
     sigset_32 pending;                  /**< Bit N is set if signal N+1 is pending; excludes real-time signals. */
+    siginfo_32 pending_info[FIRST_RT+1];/**< Info for pending classic signals; rt info is in "queue". Indexed by signo. */
     bool reprocess;                     /**< Set to true if we might need to deliver signals (e.g., signal_mask changed). */
 };
 

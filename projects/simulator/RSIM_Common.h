@@ -183,6 +183,41 @@ static const Translate signal_flags[] = {
     TF3(0x04000000, 0x04000000, SA_RESTORER), /* obsolete */
     TF(SA_SIGINFO), T_END};
 
+static const Translate siginfo_generic_codes[] = {
+    TE(SI_ASYNCNL), TE(SI_TKILL), TE(SI_SIGIO), TE(SI_ASYNCIO), TE(SI_MESGQ), TE(SI_TIMER), TE(SI_QUEUE),
+    TE(SI_USER), TE(SI_KERNEL),
+    T_END};
+
+static const Translate siginfo_sigill_codes[] = {
+    TE(ILL_ILLOPC), TE(ILL_ILLOPN), TE(ILL_ILLADR), TE(ILL_ILLTRP), TE(ILL_PRVOPC), TE(ILL_PRVREG),
+    TE(ILL_COPROC), TE(ILL_BADSTK),
+    T_END};
+
+static const Translate siginfo_sigfpe_codes[] = {
+    TE(FPE_INTDIV), TE(FPE_INTOVF), TE(FPE_FLTDIV), TE(FPE_FLTOVF), TE(FPE_FLTUND), TE(FPE_FLTRES),
+    TE(FPE_FLTINV), TE(FPE_FLTSUB),
+    T_END};
+
+static const Translate siginfo_sigsegv_codes[] = {
+    TE(SEGV_MAPERR), TE(SEGV_ACCERR),
+    T_END};
+
+static const Translate siginfo_sigbus_codes[] = {
+    TE(BUS_ADRALN), TE(BUS_ADRERR), TE(BUS_OBJERR),
+    T_END};
+
+static const Translate siginfo_sigtrap_codes[] = {
+    TE(TRAP_BRKPT), TE(TRAP_TRACE),
+    T_END};
+
+static const Translate siginfo_sigchld_codes[] = {
+    TE(CLD_EXITED), TE(CLD_KILLED), TE(CLD_DUMPED), TE(CLD_TRAPPED), TE(CLD_STOPPED), TE(CLD_CONTINUED),
+    T_END};
+
+static const Translate siginfo_sigpoll_codes[] = {
+    TE(POLL_IN), TE(POLL_OUT), TE(POLL_MSG), TE(POLL_ERR), TE(POLL_PRI), TE(POLL_HUP),
+    T_END};
+
 struct sigaction_32 {
     uint32_t handler_va;
     uint32_t flags;
@@ -849,5 +884,6 @@ void print_pt_regs_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_termios_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_winsize_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_exit_status_32(RTS_Message *f, const uint8_t *_v, size_t sz);
+void print_siginfo_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 
 #endif /* ROSE_RSIM_Common_H */

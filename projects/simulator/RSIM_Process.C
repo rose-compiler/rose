@@ -1523,15 +1523,15 @@ RSIM_Process::sys_sigaction(int signo, const sigaction_32 *new_action, sigaction
 }
 
 int
-RSIM_Process::sys_kill(pid_t pid, int signo)
+RSIM_Process::sys_kill(pid_t pid, const RSIM_SignalHandling::siginfo_32 &info)
 {
+    int signo = info.si_signo;
     int retval = 0;
 
     if (pid<0)
         return -EINVAL;
     if (signo<=0 && (size_t)signo>8*sizeof(RSIM_SignalHandling::sigset_32))
         return -EINVAL;
-
 
     RTS_WRITE(rwlock()) {
         if (pid!=getpid()) {
@@ -1540,17 +1540,19 @@ RSIM_Process::sys_kill(pid_t pid, int signo)
             /* Send the signal to any one of our threads where it is not masked. */
             for (std::map<pid_t, RSIM_Thread*>::iterator ti=threads.begin(); signo>0 && ti!=threads.end(); ti++) {
                 RSIM_Thread *thread = ti->second;
-                int status = thread->signal_accept(signo);
+                int status = thread->signal_accept(info);
                 if (status>=0) {
-                    status = pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP);
-                    assert(0==status);
+                    if (!pthread_equal(pthread_self(), thread->get_real_thread())) {
+                        status = pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP);
+                        assert(0==status);
+                    }
                     signo = 0;
                 }
             }
 
             /* If signal could not be delivered to any thread... */
             if (signo>0)
-                sighand.generate(signo, this, NULL);
+                sighand.generate(info, this, NULL);
         }
     } RTS_WRITE_END;
 
@@ -1559,7 +1561,7 @@ RSIM_Process::sys_kill(pid_t pid, int signo)
 
 /* Must be async signal safe */
 void
-RSIM_Process::signal_enqueue(int signo)
+RSIM_Process::signal_enqueue(const RSIM_SignalHandling::siginfo_32 &info)
 {
     /* Push the signal number onto the tail of the process-wide queue.  It is safe to do this without thread synchronization
      * because:
@@ -1572,18 +1574,20 @@ RSIM_Process::signal_enqueue(int signo)
         static const char *s = "[***PROCESS SIGNAL QUEUE IS FULL***]";
         write(2, s, strlen(s));
     } else {
-        sq.signals[sq.tail] = signo;
+        sq.info[sq.tail] = info;
         sq.tail = (sq.tail + 1) % sq.size;
     }
 }
 
 int
-RSIM_Process::signal_dequeue()
+RSIM_Process::signal_dequeue(RSIM_SignalHandling::siginfo_32 *info/*out*/)
 {
+    assert(info!=NULL);
     int retval = 0;
     RTS_WRITE(rwlock()) {
         if (sq.head!=sq.tail) {
-            retval = sq.signals[sq.head];
+            *info = sq.info[sq.head];
+            retval = info->si_signo;
             sq.head = (sq.head + 1) % sq.size;
         }
     } RTS_WRITE_END;
@@ -1595,8 +1599,9 @@ void
 RSIM_Process::signal_dispatch()
 {
     /* write lock not required for thread safety here since called functions are already thread safe */
-    for (int signo=signal_dequeue(); signo>0; signo=signal_dequeue()) {
-        int status = sys_kill(getpid(), signo);
+    RSIM_SignalHandling::siginfo_32 info;
+    for (int signo=signal_dequeue(&info); signo>0; signo=signal_dequeue(&info)) {
+        int status = sys_kill(getpid(), info);
         assert(status>=0);
     }
 }

@@ -16,13 +16,6 @@
  * since we're only operating on known addresses and values, and thus override all superclass methods dealing with memory. */
 class RSIM_SemanticPolicy: public RSIM_SEMANTIC_POLICY {
 public:
-    /* Thrown for signals. */
-    struct Signal {
-        explicit Signal(int signo): signo(signo) {}
-        int signo;
-    };
-
-public:
     RSIM_Thread *thread;                        /* Thread to which this policy belongs */
     RSIM_SemanticPolicy(RSIM_Thread *thread)
         : thread(thread) {

@@ -513,8 +513,8 @@ RSIM_Thread::emulate_syscall()
 	case 37: { /* 0x25, kill */
             syscall_enter("kill", "df", signal_names);
             pid_t pid=syscall_arg(0);
-            int sig=syscall_arg(1);
-            int result = sys_kill(pid, sig);
+            int signo=syscall_arg(1);
+            int result = sys_kill(pid, RSIM_SignalHandling::mk_kill(signo, SI_USER));
             syscall_return(result);
             syscall_leave("d");
             break;
@@ -1524,6 +1524,17 @@ RSIM_Thread::emulate_syscall()
             break;
         }
 
+        case 119: { /* 0x77, sigreturn */
+            syscall_enter("sigreturn", "");
+            int status = sys_sigreturn();
+            if (status>=0) {
+                tracing(TRACE_SYSCALL)->more(" = <does not return>\n");
+                throw RSIM_SignalHandling::mk_kill(0, 0);
+            }
+            syscall_return(status); /* ERROR; specimen will likely segfault shortly! */
+            break;
+        }
+
         case 120: { /* 0x78, clone */
             /* From linux arch/x86/kernel/process.c:
              *    long sys_clone(unsigned long clone_flags, unsigned long newsp,
@@ -1845,7 +1856,18 @@ RSIM_Thread::emulate_syscall()
             break;
         }
 
-        case 174: { /*0xae, rt_sigaction*/
+        case 173: { /* 0xad, rt_sigreturn */
+            syscall_enter("rt_sigreturn", "");
+            int status = sys_rt_sigreturn();
+            if (status>=0) {
+                tracing(TRACE_SYSCALL)->more(" = <does not return>\n");
+                throw RSIM_SignalHandling::mk_kill(0, 0);
+            }
+            syscall_return(status); /* ERROR; specimen will likely segfault shortly! */
+            break;
+        }
+
+        case 174: { /* 0xae, rt_sigaction */
             syscall_enter("rt_sigaction", "fPpd", signal_names, sizeof(sigaction_32), print_sigaction_32);
             do {
                 int signum=syscall_arg(0);
@@ -2748,7 +2770,7 @@ RSIM_Thread::emulate_syscall()
         default: {
             char name[32];
             sprintf(name, "syscall_%u", callno);
-            tracing(TRACE_MISC)->multipart(name, "syscall_%u(");
+            tracing(TRACE_MISC)->multipart(name, "syscall_%u(", callno);
             for (int i=0; i<6; i++)
                 tracing(TRACE_MISC)->more("%s0x%08"PRIx32, i?", ":"", syscall_arg(i));
             tracing(TRACE_MISC)->more(") is not implemented yet");
