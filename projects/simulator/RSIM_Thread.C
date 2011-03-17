@@ -196,7 +196,7 @@ RSIM_Thread::syscall_arg(int idx)
 }
 
 /* Deliver the specified signal. The signal is not removed from the signal_pending vector, nor is it added if it's masked. */
-void
+int
 RSIM_Thread::signal_deliver(int signo)
 {
     ROSE_ASSERT(signo>0 && signo<=64);
@@ -247,96 +247,196 @@ RSIM_Thread::signal_deliver(int signo)
             case SIGTTOU:
             case SIGWINCH:
                 /* Signal is ignored by default */
-                return;
+                return 0;
             default:
                 /* Exit without a core dump */
                 throw Exit(signo & 0x7f, true);
         }
 
     } else {
+        /* Most of the code here is based on __setup_frame() in Linux arch/x86/kernel/signal.c */
         mesg->mesg("delivering %s(%d) to 0x%08"PRIx32,
                     flags_to_str(signal_names, signo).c_str(), signo, sa.handler_va);
 
-        uint32_t signal_return = policy.readIP().known_value();
-        policy.push(signal_return);
-
-        /* Switch to the alternate stack? */
-        uint32_t old_sp = policy.readGPR(x86_gpr_sp).known_value();
-        stack_32 new_stack;
-        int status = sighand.sigaltstack(NULL, &new_stack, old_sp);
-        assert(status>=0);
-        if (0==(new_stack.ss_flags & SS_ONSTACK) && 0!=(sa.flags & SA_ONSTACK))
-            policy.writeGPR(x86_gpr_sp, policy.number<32>(new_stack.ss_sp + new_stack.ss_size));
-
-        /* Push stuff that will be needed by the simulated sigreturn() syscall */
-        policy.push(old_sp);
+        pt_regs_32 regs = get_regs();
         RSIM_SignalHandling::sigset_32 signal_mask;
         status = sighand.sigprocmask(0, NULL, &signal_mask);
         assert(status>=0);
+        uint32_t frame_va = 0;
 
-        policy.push(signal_mask >> 32);
-        policy.push(signal_mask & 0xffffffff);
+        if (sa.flags & SA_SIGINFO) {
+            /* Use the extended signal handler frame */
+            RSIM_SignalHandling::rt_sigframe_32 frame;
+            memset(&frame, 0, sizeof frame);
+            stack_32 stack; /* signal alternate stack */
+            int status = sighand.sigaltstack(NULL, &stack, regs.sp);
+            assert(status>=0);
+            frame_va = sighand.get_sigframe(&sa, sizeof frame, regs.sp);
 
-        /* Caller-saved registers */
-        policy.push(policy.readGPR(x86_gpr_ax));
-        policy.push(policy.readGPR(x86_gpr_bx));
-        policy.push(policy.readGPR(x86_gpr_cx));
-        policy.push(policy.readGPR(x86_gpr_dx));
-        policy.push(policy.readGPR(x86_gpr_si));
-        policy.push(policy.readGPR(x86_gpr_di));
-        policy.push(policy.readGPR(x86_gpr_bp));
+            frame.signo = signo;
+            frame.pinfo = frame_va + OFFSET_OF_MEMBER(frame, info);
+            frame.puc = frame_va + OFFSET_OF_MEMBER(frame, uc);
+
+            /* FIXME: copy siginfo_t into frame.info */
+            assert(0);
+
+            frame.uc.uc_flags = 0; /* zero unless cpu_has_xsave; see Linux ia32_setup_rt_frame() */
+            frame.uc.uc_link_va = 0;
+            frame.uc.uc_stack.ss_sp = stack.ss_sp;
+            frame.uc.uc_stack.ss_flags = sighand.on_signal_stack(frame_va) ? SS_ONSTACK : SS_DISABLE;
+            frame.uc.uc_stack.ss_size = stack.ss_size;
+
+            sighand.setup_sigcontext(&frame.uc.uc_mcontext, &regs, signal_mask);
+
+            frame.uc.uc_sigmask = signal_mask;
+
+            /* Restorer. If sa_flags 0x04000000 is set, then stack frame "pretcode" is set to the sa_restorer address passed to
+             * sigaction. Otherwise pretcode points either to the "retcode" member of the stack frame (eight bytes of x86 code
+             * that invoke syscall 119) or to the rt_sigreturn address in the VDSO. */
+            if (sa.flags & 0x04000000/*SA_RESTORER, deprecated*/) {
+                frame.pretcode = sa.restorer_va;
+            } else {
+                frame.pretcode = SIGHANDLER_RETURN; /* or could point to frame.retcode */
+                //frame.preturn = frame_va + OFFSET_OF_MEMBER(frame, retcode);
+                //frame.preturn = VDSO32_SYMBOL(vdso, rt_sigreturn); /* NOT IMPLEMENTED YET */
+            }
+        
+            /* Signal handler return code. For pre-2.6 kernels, this was an eight-byte chunk of x86 code that calls
+             * sys_sigreturn().  Newer kernels still push these bytes but never execute them. GDB uses them as a magic number
+             * to recognize that it's at a signal stack frame. Instead, pretcode is the address of sigreturn in the VDSO.  For
+             * now, we hard code it to a value that will be recognized by RSIM_Thread::main() as a
+             * return-from-signal-handler. */
+            frame.retcode[0] = 0xb8;    /* b8 00 00 00 77 | mov eax, 119 */
+            frame.retcode[1] = 0x00;
+            frame.retcode[2] = 0x00;
+            frame.retcode[3] = 0x00;
+            frame.retcode[4] = 0x77;
+            frame.retcode[5] = 0xcd;    /* cd 80          | int 80 */
+            frame.retcode[6] = 0x80;
+            frame.retcode[7] = 0x00;    /* 00             | padding; not reached */
+
+            /* Write frame to stack */
+            if (sizeof(frame)!=process->mem_write(&frame, frame_va, sizeof frame))
+                return -EFAULT;
+        } else {
+            /* Use the plain signal handler frame */
+            RSIM_SignalHandling::sigframe_32 frame;
+            memset(&frame, 0, sizeof frame);
+            frame_va = sighand.get_sigframe(&sa, sizeof frame, regs.sp);
+
+            sighand.setup_sigcontext(&frame.sc, &regs, signal_mask);
+            frame.extramask = signal_mask >> 32;
+            if (sa.flags & 0x04000000/*SA_RESTORER, deprecated*/) {
+                frame.pretcode = sa.restorer_va;
+            } else {
+                frame.pretcode = SIGHANDLER_RETURN; /* or could point to frame.retcode */
+                //frame.preturn = frame_va + OFFSET_OF_MEMBER(frame, retcode);
+                //frame.preturn = VDSO32_SYMBOL(vdso, rt_sigreturn); /* NOT IMPLEMENTED YET */
+            }
+
+            frame.retcode[0] = 0x58;    /* 58             | pop eax */
+            frame.retcode[1] = 0xb8;    /* b8 00 00 00 77 | mov eax, 119 */
+            frame.retcode[2] = 0x00;
+            frame.retcode[3] = 0x00;
+            frame.retcode[4] = 0x00;
+            frame.retcode[5] = 0x77;
+            frame.retcode[6] = 0xcd;    /* cd 80          | int 80 */
+            frame.retcode[7] = 0x80;
+
+            /* Write the frame to the stack */
+            if (sizeof(frame)!=process->mem_write(&frame, frame_va, sizeof frame))
+                return -EFAULT;
+        }
 
         /* New signal mask */
         signal_mask |= sa.mask;
         signal_mask |= (uint64_t)1 << (signo-1);
         sighand.sigprocmask(SIG_SETMASK, &signal_mask, NULL);
 
-        /* Signal handler arguments */
-        policy.push(policy.readIP());
-        policy.push(policy.number<32>(signo));
+        /* Clear flags per ABI for function entry. */
+        policy.writeFlag(x86_flag_df, policy.false_());
+        policy.writeFlag(x86_flag_tf, policy.false_());
 
-        /* Invoke signal handler */
-        policy.push(policy.number<32>(SIGHANDLER_RETURN)); /* fake return address to trigger signal_cleanup() call */
-        policy.writeIP(policy.number<32>(sa.handler_va));
+        /* Set up registers for signal handler */
+        policy.writeGPR(x86_gpr_ax, policy.number<32>(signo));
+        policy.writeGPR(x86_gpr_dx, policy.number<32>(0));
+        policy.writeGPR(x86_gpr_cx, policy.number<32>(0));
+        policy.writeSegreg(x86_segreg_ds, 0x2b);        /* see RSIM_SemanticPolicy::ctor() */
+        policy.writeSegreg(x86_segreg_es, 0x2b);        /* see RSIM_SemanticPolicy::ctor() */
+        policy.writeSegreg(x86_segreg_ss, 0x2b);        /* see RSIM_SemanticPolicy::ctor() */
+        policy.writeSegreg(x86_segreg_cs, 0x23);        /* see RSIM_SemanticPolicy::ctor() */
+        policy.writeGPR(x86_gpr_sp, policy.number<32>(frame_va));
+        policy.writeIP(policy.number<32>(sa.handler_va)); /* we're now executing in the signal handler... */
     }
+
+    return 0;
 }
 
 /* Note: if the specimen's signal handler never returns then this function is never invoked.  The specimen may do a longjmp()
  * or siglongjmp(), in which case the original stack, etc are restored anyway. Additionally, siglongjmp() may do a system call
  * to set the signal mask back to the value saved by sigsetjmp(), if any. */
-void
+int
 RSIM_Thread::signal_return()
 {
-    /* Discard handler arguments */
-    int signo = policy.pop().known_value(); /* signal number */
-    policy.pop(); /* signal address */
-
     RTS_Message *mesg = tracing(TRACE_SIGNAL);
-    if (mesg->get_file()) {
-        mesg->multipart("", "returning from ");
-        print_enum(mesg, signal_names, signo);
-        mesg->more(" handler");
-        mesg->multipart_end();
+
+    uint32_t sp = policy.readGPR(x86_gpr_sp).known_value();
+    uint32_t frame_va = sp - 4; /* because sig handler's RET popped frame's pretcode */
+
+    RSIM_SignalHandling::sigframe_32 frame;
+    if (sizeof(frame)!=process->mem_read(&frame, frame_va, sizeof frame)) {
+        mesg->mesg("bad frame 0x%08"PRIu32" in sigreturn (sp=0x%08"PRIu32")", frame_va, sp);
+        return -EFAULT;
     }
 
-    /* Restore caller-saved registers */
-    policy.writeGPR(x86_gpr_bp, policy.pop());
-    policy.writeGPR(x86_gpr_di, policy.pop());
-    policy.writeGPR(x86_gpr_si, policy.pop());
-    policy.writeGPR(x86_gpr_dx, policy.pop());
-    policy.writeGPR(x86_gpr_cx, policy.pop());
-    policy.writeGPR(x86_gpr_bx, policy.pop());
-    syscall_return(policy.pop());
+    if (mesg->get_file()) {
+        RTS_MESSAGE(*mesg) {
+            mesg->multipart("sigreturn", "returning from ");
+            print_enum(mesg, signal_names, frame.signo);
+            mesg->more(" handler");
+            mesg->multipart_end();
+        } RTS_MESSAGE_END(true);
+    }
 
-    /* Simulate the sigreturn system call (#119), the stack frame of which was set up by signal_deliver() */
-    RSIM_SignalHandling::sigset_32 old_sigmask = policy.pop().known_value(); /* low bits */
-    old_sigmask |= (RSIM_SignalHandling::sigset_32)policy.pop().known_value() << 32; /* hi bits */
+    /* Restore previous signal mask */
+    RSIM_SignalHandling::sigset_32 old_sigmask = frame.extramask;
+    old_sigmask = (old_sigmask << 32) | frame.sc.oldmask;
     int status = sighand.sigprocmask(SIG_SETMASK, &old_sigmask, NULL);
-    assert(status>=0);
+    if (status<0)
+        return -EFAULT;
 
-    /* Simulate return from sigreturn */
-    policy.writeGPR(x86_gpr_sp, policy.pop());        /* restore stack pointer */
-    policy.writeIP(policy.pop());                     /* RET instruction */
+    /* Restore hardware context */
+    policy.writeSegreg(x86_segreg_gs, policy.number<16>(frame.sc.gs));
+    policy.writeSegreg(x86_segreg_fs, policy.number<16>(frame.sc.fs));
+    policy.writeSegreg(x86_segreg_es, policy.number<16>(frame.sc.es));
+    policy.writeSegreg(x86_segreg_ds, policy.number<16>(frame.sc.ds));
+    policy.writeGPR(x86_gpr_di, policy.number<32>(frame.sc.di));
+    policy.writeGPR(x86_gpr_si, policy.number<32>(frame.sc.si));
+    policy.writeGPR(x86_gpr_bp, policy.number<32>(frame.sc.bp));
+    policy.writeGPR(x86_gpr_sp, policy.number<32>(frame.sc.sp));
+    policy.writeGPR(x86_gpr_bx, policy.number<32>(frame.sc.bx));
+    policy.writeGPR(x86_gpr_dx, policy.number<32>(frame.sc.dx));
+    policy.writeGPR(x86_gpr_cx, policy.number<32>(frame.sc.cx));
+    policy.writeGPR(x86_gpr_ax, policy.number<32>(frame.sc.ax));
+    policy.writeIP(policy.number<32>(frame.sc.ip));
+    policy.writeSegreg(x86_segreg_cs, policy.number<16>(frame.sc.cs));
+    policy.writeSegreg(x86_segreg_ss, policy.number<16>(frame.sc.ss));
+
+    /* Restore saved flags:  ac, of, df, tf, sf, zf, af, pf, cf, rf */
+    uint32_t flag_mask = (1ul<<x86_flag_ac) |
+                         (1ul<<x86_flag_of) |
+                         (1ul<<x86_flag_df) |
+                         (1ul<<x86_flag_tf) |
+                         (1ul<<x86_flag_sf) |
+                         (1ul<<x86_flag_zf) |
+                         (1ul<<x86_flag_af) |
+                         (1ul<<x86_flag_pf) |
+                         (1ul<<x86_flag_cf) |
+                         (1ul<<x86_flag_rf);
+    uint32_t flags = (policy.get_eflags() & ~flag_mask) | (frame.sc.flags & flag_mask);
+    policy.set_eflags(flags);
+
+    return 0;
 }
 
 int

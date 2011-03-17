@@ -30,6 +30,8 @@
 /* Define this if you want binary trace files to be unbuffered. This is often desirable when debugging */
 #define X86SIM_BINARY_TRACE_UNBUFFERED
 
+#define OFFSET_OF_MEMBER(STRUCT, MEMBER) ((char*)&(STRUCT.MEMBER) - (char*)&(STRUCT))
+
 class RSIM_Process;
 class RSIM_Thread;
 

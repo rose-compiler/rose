@@ -12,6 +12,47 @@ RSIM_SignalHandling::mask_of(int signo)
     return (sigset_32)1 << (signo-1);
 }
 
+uint32_t
+RSIM_SignalHandling::get_sigframe(const sigaction_32 *sa, size_t frame_size, uint32_t sp)
+{
+    RTS_MUTEX(mutex) {
+        if ((sa->flags & SA_ONSTACK) && !on_signal_stack(sp) &&
+            0==(stack.ss_flags & SS_ONSTACK) && 0!=(sa->flags & SA_ONSTACK) && stack.ss_size>0)
+            sp = stack.ss_sp + stack.ss_size;
+    } RTS_MUTEX_END;
+
+    uint32_t frame_va = sp - frame_size;
+    frame_va = ((frame_va+4) & -16ul) - 4; /* Align for i386 ABI: so on function entry ((sp+4) & 0xf == 0 */
+    return frame_va;
+}
+
+void
+RSIM_SignalHandling::setup_sigcontext(sigcontext_32 *sc, const pt_regs_32 *regs, sigset_32 mask)
+{
+    sc->gs = regs->gs;
+    sc->fs = regs->fs;
+    sc->es = regs->es;
+    sc->ds = regs->ds;
+    sc->di = regs->di;
+    sc->si = regs->si;
+    sc->bp = regs->bp;
+    sc->sp = regs->sp;
+    sc->bx = regs->bx;
+    sc->dx = regs->dx;
+    sc->cx = regs->cx;
+    sc->ax = regs->ax;
+    sc->trapno = 0;    /* FIXME: check this */
+    sc->err = 0;       /* FIXME: check this */
+    sc->ip = regs->ip;
+    sc->cs = regs->cs;
+    sc->flags = regs->flags;
+    sc->sp_at_signal = regs->sp;
+    sc->ss = regs->ss;
+    sc->fpstate_ptr = 0; /* no floating point state in simulator */
+    sc->oldmask = mask & 0xffffffff; /* mask for classic signals */
+    sc->cr2 = 0; /* not used by simulator */
+}
+
 int
 RSIM_SignalHandling::sigprocmask(int how, const sigset_32 *in, sigset_32 *out)
 {

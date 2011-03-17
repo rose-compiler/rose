@@ -91,6 +91,103 @@ public:
     /** Data type for holding signal sets in a 32-bit specimen. */
     typedef uint64_t sigset_32;
 
+    /** Kernel sigcontext pushed onto signal handler stack. */
+    struct sigcontext_32 {
+        uint16_t gs, __gsh;
+        uint16_t fs, __fsh;
+        uint16_t es, __esh;
+        uint16_t ds, __dsh;
+        uint32_t di;
+        uint32_t si;
+        uint32_t bp;
+        uint32_t sp;
+        uint32_t bx;
+        uint32_t dx;
+        uint32_t cx;
+        uint32_t ax;
+        uint32_t trapno;
+        uint32_t err;
+        uint32_t ip;
+        uint16_t cs, __csh;
+        uint32_t flags;
+        uint32_t sp_at_signal;
+        uint32_t ss, __ssh;
+        uint32_t fpstate_ptr;           /* zero when no FPU/extended context */
+        uint32_t oldmask;
+        uint32_t cr2;
+    } __attribute__((packed));
+
+    struct siginfo_32 {
+        int32_t si_signo;
+        int32_t si_errno;
+        int32_t si_code;
+        union {
+            int32_t pad[28];
+            struct {                    /* kill() */
+                int32_t pid;            /* sender's pid */
+                uint32_t uid;           /* sender's uid */
+            } kill;
+            struct {                    /* POSIX.1b timers */
+                int32_t tid;            /* timer ID */
+                int32_t overrun;        /* overrun count */
+                //int8_t pad[0];
+                sigval_t sigval;        /* same as below */
+                int32_t sys_private;    /* not to be passed to user */
+            } timer;
+            struct {                    /* POSIX.1b signals */
+                int32_t pid;            /* sender's pid */
+                uint32_t uid;           /* sender's uid */
+                sigval_t sigval;
+            } rt;
+            struct {                    /* SIGCHLD */
+                int32_t pid;            /* which child */
+                uint32_t uid;           /* sender's uid */
+                int status;             /* exit code */
+                int32_t utime;
+                int32_t stime;
+            } sigchld;
+            struct {                    /* SIGILL, SIGFPE, SIGSEGV, SIGBUS */
+                uint32_t addr;          /* faulting insn/memory ref */
+                uint16_t addr_lsb;      /* LSB of the reported address */
+            } sigfault;
+            struct {                    /* SIGPOLL */
+                int32_t band;           /* POLL_IN, POLL_OUT, POLL_MSG */
+                int32_t fd;
+            } sigpoll;
+        } sifields;
+    } __attribute__((packed));
+
+    /** Kernel struct ucontext from linux/include/asm-generic/ucontext.h */
+    struct ucontext_32 {
+        uint32_t uc_flags;              /* 0 unless cpu_has_xsave (see Linux ia32_setup_rt_frame()) */
+        uint32_t uc_link_va;            /* ptr to another ucontext_32 */
+        stack_32 uc_stack;
+        sigcontext_32 uc_mcontext;
+        sigset_32 uc_sigmask;
+    } __attribute((packed));
+
+    /** Signal handling stack frame */
+    struct sigframe_32 {
+        uint32_t pretcode;              /* signal handler's return address */
+        int32_t signo;                  /* signal number */
+        sigcontext_32 sc;               /* signal hardware context */
+        //fpstate_32 fpstate_unused;      /* no longer used by kernel, but still allocated on stack */
+        uint32_t extramask;             /* blocked real-time signals */
+        uint8_t retcode[8];             /* x86 code to call sigreturn; unused, but GDB magic number */
+        /* fpstate follows here */
+    } __attribute__((packed));
+
+    /** Signal handling extended stack frame; used if sigaction.sa_flags has SA_SIGINFO bit set */
+    struct rt_sigframe_32 {
+        uint32_t pretcode;              /* signal handler's return address */
+        int32_t signo;                  /* signal number */
+        uint32_t pinfo;                 /* address of "info" member on stack */
+        uint32_t puc;                   /* address of "uc" member on stack */
+        siginfo_32 info;                /* detailed info about the signal */
+        ucontext_32 uc;                 /* user context struct */
+        uint8_t retcode[8];             /* x86 code to call sigreturn; unused, but GDB magic number */
+    } __attribute__((packed));
+
     /** Signal to use when notifying a thread that a signal has been added to its queue. */
     static const int SIG_WAKEUP;
 
@@ -99,6 +196,16 @@ public:
      *
      *  Thread safety: This method is thread safe. */
     static sigset_32 mask_of(int signo);
+
+    /** Obtain the stack pointer for a signal handler stack frame.
+     *
+     *  Thread safety: This method is thread safe. */
+    uint32_t get_sigframe(const sigaction_32 *sa, size_t frame_size, uint32_t sp);
+
+    /** Fill in a sigcontext_32 struct.
+     *
+     *  Thread safety: This method is thread safe. */
+    static void setup_sigcontext(sigcontext_32 *sc, const pt_regs_32 *regs, sigset_32 mask);
 
     /** Adjust the signal mask.  If @p in is non-null, then adjust the signal mask according to @p how: 0 means add signals
      *  from @p in into the mask; 1 means remove signals in @p in from the mask; 2 means set the mask so it's equal to @p

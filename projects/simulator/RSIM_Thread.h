@@ -282,11 +282,15 @@ public:
     int signal_dequeue();
 
     /** Cause a signal to be delivered. The signal is not removed from the pending set or signal queue, nor do we check whether
-     *  the signal is masked. */
-    void signal_deliver(int signo);
+     *  the signal is masked.  Returns zero on success, negative errno on failure.  However, if the signal is a terminating
+     *  signal whose default action is performed, this method will throw an Exit, which will cause all simulated threads to
+     *  shut down and the simulator returns to user control. */
+    int signal_deliver(int signo);
 
-    /** Handles return from a signal handler. */
-    void signal_return();
+    /** Handles return from a signal handler. Returns zero on success, negative errno on failure. The only failure that is
+     *  detected at this time is -EFAULT when reading the signal handler stack frame, in which case a message is printed to
+     *  TRACE_SIGNAL and no registers or memory are modified. */
+    int signal_return();
 
     /** Accepts a signal from the process manager for later delivery.  This function is called by RSIM_Process::sys_kill() to
      *  decide to which thread a signal should be delivered.  If the thread can accept the specified signal, then it does so,
