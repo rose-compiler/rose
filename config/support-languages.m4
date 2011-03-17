@@ -421,6 +421,7 @@ if test $count_of_languages_to_support = 2 ; then
 elif test $count_of_languages_to_support = 1 ; then
   support_only_one_language=yes
   AC_MSG_CHECKING([$LANGUAGES_TO_SUPPORT-only specific configurations])
+  echo ""
 
   #
   # Only Java 
