@@ -178,6 +178,7 @@ static const Translate signal_names[] = {
 
 static const Translate signal_flags[] = {
     TF(SA_NOCLDSTOP), TF(SA_NOCLDWAIT), TF(SA_NODEFER), TF(SA_ONSTACK), TF(SA_RESETHAND), TF(SA_RESTART),
+    TF3(0x04000000, 0x04000000, SA_RESTORER), /* obsolete */
     TF(SA_SIGINFO), T_END};
 
 struct sigaction_32 {

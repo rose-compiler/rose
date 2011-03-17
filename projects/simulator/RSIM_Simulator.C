@@ -209,7 +209,7 @@ RSIM_Simulator::exec(int argc, char **argv)
     }
 
     main_thread->tracing(TRACE_STATE)->mesg("Initial state:\n");
-    main_thread->policy.dump_registers(main_thread->tracing(TRACE_STATE)->get_file());
+    main_thread->policy.dump_registers(main_thread->tracing(TRACE_STATE));
 
     return 0;
 }

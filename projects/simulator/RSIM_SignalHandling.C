@@ -214,14 +214,16 @@ RSIM_SignalHandling::generate(int signo, RSIM_Process *process, RTS_Message *mes
         }
 
         reprocess = true;
-    } RTS_MUTEX_END;
 
-    if (mesg) {
-        mesg->multipart("signal", "arrival of ");
-        print_enum(mesg, signal_names, signo);
-        mesg->more("(%d)%s", signo, s);
-        mesg->multipart_end();
-    }
+        /* Print messsage before we release the RSIM_SignalHandling mutex, otherwise the tracing output might have this signal
+         * arrival message after the target thread's signal delivery message. */
+        if (mesg) {
+            mesg->multipart("signal", "arrival of ");
+            print_enum(mesg, signal_names, signo);
+            mesg->more("(%d)%s", signo, s);
+            mesg->multipart_end();
+        }
+    } RTS_MUTEX_END;
 
     return result;
 }

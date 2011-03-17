@@ -52,9 +52,10 @@ public:
     RTS_Message *tracing(TracingFacility what) const;
 
     uint32_t get_eflags() const;
+    void set_eflags(uint32_t);
 
     /* Print machine register state for debugging */
-    void dump_registers(FILE *f) const;
+    void dump_registers(RTS_Message*) const;
 
     /* Same as the x86_push instruction */
     void push(VirtualMachineSemantics::ValueType<32> n);

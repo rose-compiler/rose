@@ -1886,8 +1886,8 @@ RSIM_Thread::emulate_syscall()
         }
 
         case 175: { /*0xaf, rt_sigprocmask; get/set signal mask for calling thread */
-            static const Translate flags[] = { TF(SIG_BLOCK), TF(SIG_UNBLOCK), TF(SIG_SETMASK), T_END };
-            syscall_enter("rt_sigprocmask", "fPp", flags, sizeof(RSIM_SignalHandling::sigset_32), print_sigmask_32);
+            static const Translate flags[] = { TE(SIG_BLOCK), TE(SIG_UNBLOCK), TE(SIG_SETMASK), T_END };
+            syscall_enter("rt_sigprocmask", "ePp", flags, sizeof(RSIM_SignalHandling::sigset_32), print_sigmask_32);
             do {
                 int how=syscall_arg(0);
                 uint32_t in_va=syscall_arg(1), out_va=syscall_arg(2);

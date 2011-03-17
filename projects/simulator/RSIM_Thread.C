@@ -421,7 +421,7 @@ RSIM_Thread::main()
             if (mesg->get_file()) {
                 RTS_MESSAGE(*mesg) {
                     mesg->mesg("Machine state after instruction:\n");
-                    policy.dump_registers(mesg->get_file());
+                    policy.dump_registers(mesg);
                 } RTS_MESSAGE_END(true);
             }
 
