@@ -7,6 +7,7 @@
 source scripts/hudson/runBuildStep.sh
 source scripts/hudson/debuggingPrinters.sh
 #########################################################################################
+set +x
 # Uniform banners allows for easy parsing of the hudson console output
 # Starting 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step...
 # Done with 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step!
