@@ -218,6 +218,7 @@ echo ""                                                                         
 
 cat $env_dump_file
 set -x
+fi
 }
 function printHudsonEnvironment {
   dumpHudsonEnvironment
