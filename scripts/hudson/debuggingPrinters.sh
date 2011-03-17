@@ -160,14 +160,14 @@ if test "x$label" = "x64bit-macos-10.6" ; then
    echo "    $a_path"                                                            >> $env_dump_file
  done
 echo ""                                                                          >> $env_dump_file
- echo "Copy me: $DYLD_LIBRARY_PATH"                                              >> $env_dump_file
+ echo "Copy me: export DYLD_LIBRARY_PATH=\"$DYLD_LIBRARY_PATH:\$DYLD_LIBRARY_PATH\""  >> $env_dump_file
 else
  echo "LD_LIBRARY_PATH ="                                                        >> $env_dump_file
  for a_path in `echo $LD_LIBRARY_PATH | sed 's/:/ /g'` ; do
    echo "    $a_path"                                                            >> $env_dump_file
  done
 echo ""                                                                          >> $env_dump_file
-echo "Copy me: $LD_LIBRARY_PATH"                                                 >> $env_dump_file
+echo "Copy me: export LD_LIBRARY_PATH=\"$LD_LIBRARY_PATH:\$LD_LIBRARY_PATH\""    >> $env_dump_file
 fi
 
 echo ""                                                                          >> $env_dump_file
@@ -181,7 +181,7 @@ echo "PATH ="                                                                   
    echo "    $a_path"                                                            >> $env_dump_file
  done
 echo ""                                                                          >> $env_dump_file
-echo "Copy me: $PATH"                                                            >> $env_dump_file
+echo "Copy me: export PATH=\"$PATH:\$PATH\""                                     >> $env_dump_file
 
 echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
