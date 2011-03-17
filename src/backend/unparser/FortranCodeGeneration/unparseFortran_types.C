@@ -35,8 +35,6 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
 
      switch (type->variantT())
         {
-       // case V_SgTypeUnknown:          curprint(type->sage_class_name()); break;
-       // case V_SgTypeDefault:          curprint(type->sage_class_name()); break;
           case V_SgTypeUnknown:
              {
                printf ("Error: SgTypeUnknown should not be found in AST \n");
@@ -64,19 +62,11 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
                   {
                     printf ("Warning: SgTypeDefault should not be found in AST \n");
                   }
-            // ROSE_ASSERT(false);
                break;
              }
 
-       // case V_SgTypeVoid:             curprint(type->sage_class_name()); break;
-       // case V_SgTypeVoid:             curprint("void"); break;
-
        // DQ (10/5/2010): Comment added: SgTypeVoid might be required for function handling, but for Fortran we don't unparse anything here.
-       // FMZ 6/17/2009 
           case V_SgTypeVoid:              break;
-
-       // DQ (8/16/2007): I don't think that SgGlobalVoid is used!
-       // case V_SgTypeGlobalVoid:       curprint(type->sage_class_name()); break;
 
        // DQ (10/5/2010): I don't think that SgTypeWchar is used!
        // case V_SgTypeWchar:            curprint(type->sage_class_name()); break;
@@ -87,28 +77,13 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
 
        // scalar integral types
           case V_SgTypeChar:             unparseBaseType(type,"CHARACTER",info); break;
-       // case V_SgTypeSignedChar:       unparseBaseType(type,"CHARACTER",info); break;
-       // case V_SgTypeUnsignedChar:     unparseBaseType(type,"CHARACTER",info); break;
-
-       // case V_SgTypeShort:            unparseBaseType(type,"INTEGER",info); break;
-       // case V_SgTypeSignedShort:      unparseBaseType(type,"INTEGER",info); break;
-       // case V_SgTypeUnsignedShort:    unparseBaseType(type,"INTEGER",info); break;
-
           case V_SgTypeInt:              unparseBaseType(type,"INTEGER",info); break;
           case V_SgTypeSignedInt:        unparseBaseType(type,"INTEGER",info); break;
           case V_SgTypeUnsignedInt:      unparseBaseType(type,"INTEGER",info); break;
 
-       // case V_SgTypeLong:             unparseBaseType(type,"INTEGER",info); break;
-       // case V_SgTypeSignedLong:       unparseBaseType(type,"INTEGER",info); break;
-       // case V_SgTypeUnsignedLong:     unparseBaseType(type,"INTEGER",info); break;
-
-       // case V_SgTypeLongLong:         unparseBaseType(type,"INTEGER",info); break;
-       // case V_SgTypeUnsignedLongLong: unparseBaseType(type,"INTEGER",info); break;
-
        // scalar floating point types
           case V_SgTypeFloat:            unparseBaseType(type,"REAL",info); break;
           case V_SgTypeDouble:           unparseBaseType(type,"DOUBLE PRECISION",info); break;
-       // case V_SgTypeLongDouble:       unparseBaseType(type,"QUAD PRECISION",info); break;
 
        // scalar boolean type
           case V_SgTypeBool:             unparseBaseType(type,"LOGICAL",info); break;
@@ -138,13 +113,6 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
        // DQ (1/24/2011): Added to support procedure pointers (see test2011_28.f90).
           case V_SgFunctionType:         unparseFunctionType(type, info); break;
 
-#if 0
-       // DQ (8/15/2007): I don't think these apply to Fortran.
-          case V_SgNamedType:            unparseNameType(type, info); break;
-       // case V_SgEnumType:             unparseEnumType(type, info); break;
-          case V_SgTypedefType:          unparseTypedefType(type, info); break;
-          case V_SgMemberFunctionType:   unparseMemberFunctionType(type, info); break;
-#endif
           default: 
              {
                printf("UnparserFort::unparseType: Error: No handler for %s (variant: %d)\n",type->sage_class_name(), type->variantT());
@@ -152,19 +120,6 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
                break;
              }
         }
-
-#if 0
-  // DQ (12/1/2007): This has been moved to the SgModifierType
-     SgExpression* kindExpression = type->get_type_kind();
-  // printf ("In UnparseFortran_type::unparseType(): type->get_type_kind() = %p \n",type->get_type_kind());
-     if (kindExpression != NULL)
-        {
-          curprint("(");
-          curprint("kind=");
-          unp->u_fortran_locatedNode->unparseExpression(kindExpression,info);
-          curprint(")");
-        }
-#endif
 
 #if 0
      printf ("End unparseType: %s\n",type->class_name().c_str());

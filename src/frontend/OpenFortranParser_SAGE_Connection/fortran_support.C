@@ -605,42 +605,34 @@ createType(int typeCode)
      SgType* result = NULL;
      switch(typeCode)
         {
-          case IntrinsicTypeSpec_INTEGER:         result = SgTypeInt::createType();     break;
-          case IntrinsicTypeSpec_REAL:            result = SgTypeFloat::createType();   break;
-          case IntrinsicTypeSpec_DOUBLEPRECISION: result = SgTypeDouble::createType();  break;
+          case IntrinsicTypeSpec_INTEGER:         result = SgTypeInt::createType();         break;
+          case IntrinsicTypeSpec_REAL:            result = SgTypeFloat::createType();       break;
+          case IntrinsicTypeSpec_DOUBLEPRECISION: result = SgTypeDouble::createType();      break;
           case IntrinsicTypeSpec_DOUBLECOMPLEX:   result = SgTypeComplex::createType(SgTypeDouble::createType()); break;
           case IntrinsicTypeSpec_COMPLEX:         result = SgTypeComplex::createType(SgTypeFloat::createType());  break;
-          case IntrinsicTypeSpec_CHARACTER:       result = SgTypeChar::createType();    break;
-          case IntrinsicTypeSpec_LOGICAL:         result = SgTypeBool::createType();    break;
+          case IntrinsicTypeSpec_CHARACTER:       result = SgTypeChar::createType();        break;
+          case IntrinsicTypeSpec_LOGICAL:         result = SgTypeBool::createType();        break;
  
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
-          // FMZ (2/2/2009): generate SgCAFTeamType for the image_type
-          case IntrinsicTypeSpec_TEAM:       result = SgTypeCAFTeam::createType();    break;
-          case IntrinsicTypeSpec_CRAYPOINTER:     result = SgTypeCrayPointer::createType();    break;
-          // Laksono 2009.10.19: add a new intrinsic type: Topology
-          case IntrinsicTypeSpec_TOPOLOGY:       result = SgTypeInt::createType();    break;
-          // Laksono 2009.10.20: add a new intrinsic type: Event 
-          // FMZ:: currently set event/lock/lockset with type complex(8)
+          // Rice CAF types
+          case IntrinsicTypeSpec_TEAM:            result = SgTypeCAFTeam::createType();     break;
+          case IntrinsicTypeSpec_CRAYPOINTER:     result = SgTypeCrayPointer::createType(); break;
+          case IntrinsicTypeSpec_TOPOLOGY:        result = SgTypeInt::createType();         break;
           case IntrinsicTypeSpec_EVENT:
           case IntrinsicTypeSpec_LOCK: 
           case IntrinsicTypeSpec_LOCKSET:  
-#endif
-               {
-                   SgType * tmpType = SgTypeComplex::createType(SgTypeDouble::createType());
-                   SgModifierType* tmpM = new SgModifierType(tmpType);
-                   ROSE_ASSERT(tmpM!=NULL);
-                   SgIntVal* int8 = new SgIntVal(8,"8");
-                   setSourcePosition(int8);
-                   tmpM->set_type_kind(int8);
-                   result = tmpM;
-                   break;
-               }
+          {
+              // TEMPORARY: need to add additional Rice type nodes to IR
+              SgIntVal * kind = new SgIntVal(8, "8");
+              setSourcePosition(kind);
+              result = SgTypeComplex::createType(SgTypeDouble::createType(kind));
+              break;
+          }
 
           default:
-             {
-               printf ("Default reached in creatType: typeCode = %d \n",typeCode);
+          {   
+               printf ("Default reached in createType: typeCode = %d \n",typeCode);
                ROSE_ASSERT(false);
-             }
+          }
        }
 
      ROSE_ASSERT(result != NULL);
@@ -2953,11 +2945,6 @@ isImplicitNoneScope()
 SgVariableDeclaration* 
 buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
    {
-#if 0
-  // Output debugging information about saved state (stack) information.
-     outputState("At TOP of buildVariableDeclaration()");
-#endif
-
   // DQ (5/17/2008): If we are building a variable using implicit type rules, 
   // then make sure this is not in a scope (or in a nested scope) that has 
   // been marked as "implicit none".
@@ -3179,11 +3166,6 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
      ROSE_ASSERT(lastInitializedNameForSourcePosition->get_startOfConstruct() != NULL);
      *(variableDeclaration->get_startOfConstruct()) = *(firstInitializedNameForSourcePosition->get_startOfConstruct());
      *(variableDeclaration->get_endOfConstruct())   = *(lastInitializedNameForSourcePosition->get_startOfConstruct());
-
-#if 0
-  // Output debugging information about saved state (stack) information.
-     outputState("At BOTTOM of buildVariableDeclaration()");
-#endif
 
   // DQ (12/1/2007): It is better to not clear the stack here and instead clear it in R501
 

@@ -1,4 +1,3 @@
-
 #include "sage3basic.h"
 #include "fortran_support.h"
 #include "FortranParserState.h"
@@ -178,6 +177,7 @@ void c_action_specification_part(int numUseStmts, int numImportStmts, int numDec
  */
 void c_action_declaration_construct()
    {
+
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("In c_action_declaration_construct() \n");
 
@@ -445,7 +445,6 @@ void c_action_extended_intrinsic_op()
 void c_action_label(Token_t * lbl)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_label(): lbl = %p = %s \n",lbl,lbl != NULL ? lbl->text : "NULL");
 
      ROSE_ASSERT(lbl != NULL);
   // astNameStack.push_front(lbl);
@@ -782,11 +781,8 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
  * @param token2 = token (or size of type, nonstandard usage)
  * @param hasExpression True if an expr is present (standard-confirming option)
  */
-// void c_action_kind_selector(ofp_bool hasExpression, Token_t * typeSize)
 void c_action_kind_selector(Token_t * token1, Token_t * token2, ofp_bool hasExpression)
    {
-  // printf ("In c_action_kind_selector(): hasExpression = %s typeSize = %s \n",hasExpression ? "true" : "false", typeSize ? typeSize->text : "NULL");
-
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_kind_selector(): token1 = %p = %s token2 = %p = %s hasExpression = %s \n",token1,token1 != NULL ? token1->text : "NULL",token2,token2 != NULL ? token2->text : "NULL",hasExpression ? "true" : "false");
 
@@ -798,12 +794,7 @@ void c_action_kind_selector(Token_t * token1, Token_t * token2, ofp_bool hasExpr
   // ROSE_ASSERT(hasExpression == false);
 
   // For the case of "real*8" this is the only rule called before seeing the base type ("real")
-#if 0
-  // FMZ (07/06/2010): work around, wait for a "real fix" from OFP 
-     if (token2 != NULL)
-#else
      if (token2 != NULL && atoi(token2->text) != atoi("="))
-#endif
         {
        // Note that token1 == "*" if token2 is valid, I think.
        // This is the case of <type>*n (e.g. "real*8").  Should we convert this to an expression?
@@ -818,13 +809,7 @@ void c_action_kind_selector(Token_t * token1, Token_t * token2, ofp_bool hasExpr
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                printf ("In c_action_kind_selector(): token2 = %s integerValue = %d \n",token2->text,integerValue->get_value());
 
-#if 0
-       // FMZ (07/06/2010): fix the bug cause "kind" value lost for decl like: integer*8 etc.
-       // Push the integer value onto the expression stack
-          astExpressionStack.push_front(integerValue);
-#else
           astTypeKindStack.push_front(integerValue);
-#endif
         }
        else
         {
@@ -860,7 +845,8 @@ void c_action_signed_int_literal_constant(Token_t * sign)
  */
 void c_action_int_literal_constant(Token_t * digitString, Token_t * kindParam)
    {
-  // Build a SgValue object
+  // Build a SgLongIntVal for integer with kind param and SgIntVal for others.
+  // As of 02/14/2011, SgLongLongIntVal is not supported.
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_int_literal_constant(): digitString = %p = %d kindParam = %p \n",digitString, (digitString != NULL) ? atoi(digitString->text) : -1, kindParam); 
@@ -870,26 +856,12 @@ void c_action_int_literal_constant(Token_t * digitString, Token_t * kindParam)
      ROSE_ASSERT(digitString != NULL);
      ROSE_ASSERT(digitString->text != NULL);
 
-  // FMZ added  10/27/2009
-     if ( kindParam!=NULL &&  atoi(kindParam->text)==8) {
-            long  value = atol(digitString->text);
+  // preserve kind parameter if any
+     string constant_text  = digitString->text + (kindParam ? string("_") + kindParam->text : "");
+     SgValueExp* pValueExp = new SgIntVal(atol(digitString->text), constant_text);
+     setSourcePosition(pValueExp, digitString);
 
-            string tmp = digitString->text;
-            tmp = tmp + "_8";
-
-            //SgLongIntVal* integerValue = new SgLongIntVal (value,digitString->text);
-            SgLongIntVal* integerValue = new SgLongIntVal (value,tmp);
-            ROSE_ASSERT(integerValue != NULL);
-            setSourcePosition(integerValue,digitString);
-            astExpressionStack.push_front(integerValue);
-     } else  {
-            int value = atoi(digitString->text);
-            SgIntVal* integerValue = new SgIntVal (value,digitString->text);
-            ROSE_ASSERT(integerValue != NULL);
-            setSourcePosition(integerValue,digitString);
-            astExpressionStack.push_front(integerValue);
-     }
-
+     astExpressionStack.push_front(pValueExp);
 #endif
 
   // printf ("Leaving c_action_int_literal_constant(): astExpressionStack.size() = %ld \n",astExpressionStack.size()); 
@@ -998,10 +970,12 @@ void c_action_signed_real_literal_constant(Token_t * sign)
  * @param fractionExp The fractional part and exponent
  * @param kindParam The kind parameter
  */
-void c_action_real_literal_constant(Token_t * realConstant, 
-                                                                                                Token_t * kindParam)
+void c_action_real_literal_constant(Token_t * realConstant, Token_t * kindParam)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+  // Build a SgLongDoubleVal for real with kind param and SgFloatVal for others.
+  // As of 02/14/2011, SgLongLongDoubleVal is not supported.
+
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_real_literal_constant(): realConstant = %p = %s kindParam = %p = %s \n",
                realConstant,realConstant != NULL ? realConstant->text : "NULL",
                kindParam,kindParam != NULL ? kindParam->text : "NULL");
@@ -1011,25 +985,12 @@ void c_action_real_literal_constant(Token_t * realConstant,
      ROSE_ASSERT(realConstant != NULL);
      ROSE_ASSERT(realConstant->text != NULL);
 
-     if (kindParam != NULL)
-        {
-       // If we do have a kind parameter then we use it to build different sizes of integer values
-          if ( SgProject::get_verbose() > 0 )
-               printf ("In c_action_real_literal_constant(): kind parameter support not implemented, kindParam = %s \n",kindParam->text);
-        }
+  // preserve kind parameter if any
+     string constant_text  = realConstant->text + (kindParam ? string("_") + kindParam->text : "");
+     SgValueExp* pValueExp = new SgFloatVal(atof(realConstant->text), constant_text);
+     setSourcePosition(pValueExp, realConstant);
 
-  // Handle ethe case of a regular int (the kind parameter will allow for short, and long sizes)
-     double value = atof(realConstant->text);
-     SgFloatVal* floatValue = new SgFloatVal (value,realConstant->text);
-     ROSE_ASSERT(floatValue != NULL);
-
-  // This set the start and end source position to the beginning of the number's text string)
-     setSourcePosition(floatValue,realConstant);
-
-  // printf ("digitString = %s value = %d \n",digitString->text,value);
-
-  // Push the integer value onto the expression stack
-     astExpressionStack.push_front(floatValue);
+     astExpressionStack.push_front(pValueExp);
 #endif
 
 #if 0
@@ -1501,7 +1462,8 @@ void c_action_char_literal_constant(Token_t * digitString, Token_t * id, Token_t
 // void c_action_logical_literal_constant(ofp_bool isTrue, Token_t * kindParam)
 void c_action_logical_literal_constant(Token_t * logicalValue_keyword, ofp_bool isTrue, Token_t * kindParam)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+// TODO: kind param
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_logical_literal_constant(): isTrue = %s kindParam = %s \n",isTrue ? "true" : "false",kindParam ? kindParam->text : "NULL");
 
      SgBoolValExp* logicalValue = NULL;
@@ -1574,7 +1536,7 @@ void c_action_type_param_or_comp_def_stmt_list()
 // void c_action_derived_type_stmt(Token_t * label, Token_t * id)
 void c_action_derived_type_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token_t * eos, ofp_bool hasTypeAttrSpecList, ofp_bool hasGenericNameList)
    {
-  // Build a SgClassDeclaration to hold the Fortran Type (maybe it should be a SgFortranType derived from a SgClassDeclaration?)
+        // Build a SgClassDeclaration to hold the Fortran Type (maybe it should be a SgFortranType derived from a SgClassDeclaration?)
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_derived_type_stmt() label = %p id = %p \n",label,id);
@@ -1678,7 +1640,7 @@ void c_action_private_or_sequence()
 // void c_action_end_type_stmt(Token_t * label, Token_t * id)
 void c_action_end_type_stmt(Token_t *label, Token_t *endKeyword, Token_t *typeKeyword, Token_t *id, Token_t *eos)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_end_type_stmt() label = %p id = %p \n",label,id);
 
 #if 1
@@ -1778,7 +1740,7 @@ void c_action_component_def_stmt(int type)
 // void c_action_data_component_def_stmt(Token_t * label, ofp_bool hasSpec)
 void c_action_data_component_def_stmt(Token_t *label, Token_t *eos, ofp_bool hasSpec)
    {
-  // This is where we build the declaration using whatever was pushed onto the stack (nameStack)
+        // This is where we build the declaration using whatever was pushed onto the stack (nameStack)
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_data_component_def_stmt(): label = %p hasSpec = %s \n",label,hasSpec ? "true" : "false");
@@ -2024,7 +1986,7 @@ void c_action_component_decl(Token_t * id,
         ofp_bool hasComponentArraySpec, ofp_bool hasCoArraySpec, 
         ofp_bool hasCharLength, ofp_bool hasComponentInitialization)
    {
-  // Build each variable and append it to the current scope!
+        // Build each variable and append it to the current scope!
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_component_decl() id = %p hasComponentArraySpec = %s hasCoArraySpec = %s hasCharLength = %s hasComponentInitialization = %s \n",
@@ -2068,7 +2030,7 @@ void c_action_component_decl_list__begin()
 
 void c_action_component_decl_list(int count)
    {
-  // This function R442 R438-F2008 is similar to R504 R503-F2008
+        // This function R442 R438-F2008 is similar to R504 R503-F2008
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         printf ("R442 R438-F2008 c_action_component_decl_list(): count = %d \n",count);
@@ -2127,7 +2089,8 @@ void c_action_component_array_spec(ofp_bool isExplicit)
 
   // DQ (1/23/2011): This might be better put into R443 c_action_deferred_shape_spec_list(int count), so that count would be available.
   // DQ (1/18/2011): Called by R510 and R443.
-     int count = 1;
+  //   int count = 1;
+     int count = astExpressionStack.size();  // DXN (02/10/2011): the number of SgColonShapeExp, i.e. the dimension of the array.
      processMultidimensionalSubscriptsIntoExpressionList(count);
 
   // DQ (1/17/2011): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type).
@@ -2362,6 +2325,12 @@ void c_action_binding_attr_list(int count)
  */
 void c_action_derived_type_spec(Token_t * typeName, ofp_bool hasTypeParamSpecList)
    {
+
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R455 c_action_derived_type_spec()");
+#endif
+
   // If a type is being specified and it is a derived type, the name is seen here.
   // The type should have already been constructed within the AST, if it has been 
   // declared, ans so we only have to find it in the declaration which we can find 
@@ -2412,6 +2381,11 @@ void c_action_derived_type_spec(Token_t * typeName, ofp_bool hasTypeParamSpecLis
 
   // Save the type on the type stack!  We will use it in the construction of the variable declaration.
      astTypeStack.push_front(derivedType);
+#endif
+
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R455 c_action_derived_type_spec()");
 #endif
    }
 
@@ -2632,7 +2606,7 @@ void c_action_ac_value()
  */
 void c_action_ac_value_list__begin()
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_ac_value_list__begin() \n");
 
 #if 1
@@ -2713,7 +2687,7 @@ void c_action_ac_value_list(int count)
 
   // Build a SgExprListExp and put the elements on the astInitializerStack into the stack and then put the SgExprListExp on the stack.
   // DQ (5/4/2008): switching back from using astInitializerStack to using astExpressionStack.
-     if (count > 1)
+     if (count >= 1)  // DXN (02/10/2011): create an SgExprListExp when there is at least one ac value.
         {
           SgExprListExp* expressionList = new SgExprListExp();
           setSourcePosition(expressionList);
@@ -2993,7 +2967,7 @@ c_action_scalar_int_variable()
 void
 c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos)
    {
-  // This function is similar to R441 component-attr-spec-list 
+    // This function is similar to R441 component-attr-spec-list
 
   // This is a variable declaration (build the SgVariableDeclaration and populate it using data saved on the stack).
 
@@ -3394,7 +3368,7 @@ void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec, ofp_bool hasCoarr
 void c_action_entity_decl(Token_t * id)
 #endif
    {
-  // This function R504 R503-F2008 is similar to R442 R438-F2008
+    // This function R504 R503-F2008 is similar to R442 R438-F2008
 
   // Push the entities onto the list at the top of the stack
      ROSE_ASSERT(id != NULL);
@@ -3551,13 +3525,16 @@ void c_action_entity_decl(Token_t * id)
                        {
                       // If this is a SgConstructorInitializer then ???
                          printf ("This is a SgConstructorInitializer, we need an example of code that generates this case. \n");
-                         ROSE_ASSERT(false);
+                         // DXN (02/11/2011): for example, type (T) :: x = T()
+                         // NOTE: do not setSourcePosition(initializer) because it is done in data_ref for SgConstructorInitializer already.
+                         astExpressionStack.clear();
                        }
                       else
                        {
                       // This is the case of a name in the bind expression.
                       // printf ("This is the case of a name in the bind expression (leave it on the stack and process it later). \n");
-                      // ROSE_ASSERT(false);
+                          // DXN (02/11/2011): for example, type(T), bind (C, name = "abc") :: x
+                          // see fortran_support.C - processBindingAttribute
                        }
                   }
              }
@@ -3593,11 +3570,13 @@ void c_action_entity_decl(Token_t * id)
      ROSE_ASSERT(currentScope != NULL);
      trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(name,currentScope,variableSymbol,functionSymbol,classSymbol);
 
-  // ROSE_ASSERT(variableSymbol == NULL);
-
   // printf ("In R504 R503-F2008: variableSymbol = %p functionSymbol = %p classSymbol = %p \n",variableSymbol,functionSymbol,classSymbol);
 
-     if (functionSymbol != NULL)
+  // DXN (02/12/2011): this entity decl may be part of a type declaration that defines the return type of a function,
+  // in which case, fix up the return type of the function in question; however if this entity decl is a compoent decl
+  // then it has nothing to do with the functions in enclosing scopes and so do not fix up the return type of any function.
+     SgClassDefinition* classDef = isSgClassDefinition(currentScope);
+     if (functionSymbol != NULL && !classDef)
         {
 #if 0
        // printf ("Warning: found functionSymbol != NULL (avoid resetting the type): name = %s \n",name.str());
@@ -3714,8 +3693,7 @@ void c_action_entity_decl(Token_t * id)
         }
        else
         {
-       // initializedName = new SgInitializedName(name,type,initializer,NULL,NULL);
-          if (functionSymbol != NULL)
+          if (functionSymbol != NULL && !classDef)  // DXN (02/12/2011): only applies to non component entities.
              {
             // This is the case of where an external function has been declared and it's type is being specified.  It should not generate a variable declaration.
             // printf ("This is the case of where an external function has been declared and it's type is being specified. \n");
@@ -3875,7 +3853,7 @@ void c_action_entity_decl_list__begin()
 
 void c_action_entity_decl_list(int count)
    {
-  // This function R504 R503-F2008 is similar to R441 but is used for declarations in NON-types.
+    // This function R504 R503-F2008 is similar to R441 but is used for declarations in NON-types.
 
   // Since we already have the elements in the list we don't have to do anything here.
   // In general it is a tradeoff as to if we should build the list in the <rule>_list__begin()
@@ -4947,6 +4925,7 @@ void c_action_data_implied_do(Token_t *id, ofp_bool hasThirdExpr)
      objectList->set_parent(impliedDo);
      upperBound->set_parent(impliedDo);
      lowerBound->set_parent(impliedDo);
+     increment->set_parent(impliedDo); // DXN (02/28/2011)
 
      astExpressionStack.push_front(impliedDo);
 
@@ -5642,6 +5621,65 @@ void c_action_pointer_decl(Token_t *id, ofp_bool hasSpecList)
      ROSE_ASSERT(id != NULL);
      astNameStack.push_front(id);
    }
+
+/**
+ * @param labelTok  label token
+ * @param pointerTok  POINTER keyword token
+ * @param eosTok end of statement token
+ */
+void c_action_cray_pointer_stmt(Token_t *labelTok, Token_t *pointerTok, Token_t *eosTok)
+   {
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of c_action_cray_pointer_stmt()");
+#endif
+   }
+
+void c_action_cray_pointer_assoc_list__begin()
+   {
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of c_action_cray_pointer_assoc_list_begin()");
+#endif
+   }
+
+/**
+ * @param count the number of cray pointer asscociation pairs.
+ */
+void c_action_cray_pointer_assoc_list(int count)
+   {
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of c_action_cray_pointer_assoc_list()");
+#endif
+   }
+
+/**
+ * @param crayPtrId
+ * @param targetId
+ */
+void c_action_cray_pointer_assoc(Token_t *crayPtrId, Token_t *targetId)
+   {
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of c_action_cray_pointer_assoc()");
+#endif
+     ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock || getTopOfScopeStack()->variantT() == V_SgClassDefinition);
+     SgVariableSymbol* pTargetVarSymbol = SageInterface::lookupVariableSymbolInParentScopes(targetId->text, getTopOfScopeStack()) ;
+     ROSE_ASSERT(pTargetVarSymbol != NULL);
+     SgInitializedName* pTargetInitializedName = pTargetVarSymbol->get_declaration();
+     ROSE_ASSERT(pTargetInitializedName != NULL);
+
+     SgVariableDeclaration*  pCrayVarDecl = SageBuilder::buildVariableDeclaration(crayPtrId->text, SgTypeCrayPointer::createType(), NULL, getTopOfScopeStack());
+     pCrayVarDecl->get_declarationModifier().get_accessModifier().setUndefined();
+     pCrayVarDecl->get_variables().front()->set_prev_decl_item(pTargetInitializedName);
+     SageInterface::appendStatement(pCrayVarDecl, getTopOfScopeStack());
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of c_action_cray_pointer_assoc()");
+#endif
+   }
+
 
 /** R542
  * protected_stmt
@@ -6836,7 +6874,7 @@ SgCAFCoExpression *rice_dataref_coexpr;         // for 'c_action_rice_spawn_stmt
 
 void c_action_data_ref(int numPartRef)
    {
-  // DQ (12/29/2010): See notes on how R612 and R613 operate together.
+    // DQ (12/29/2010): See notes on how R612 and R613 operate together.
 
   // This is a part of a variable reference (and likely used many other places as well)
   // I am not sure what to do with this rule (unless the point is to build a variable here, instead of in R601)
@@ -6852,30 +6890,6 @@ void c_action_data_ref(int numPartRef)
   // This should at least be non-negative.
      ROSE_ASSERT(numPartRef >= 0);
 
-  // FMZ (2/11/2009): Here we could have SgCAFCoExpression in the astExpressionStack
-  // We need to pop out the SgNode to complete whatever need to be done regularly
-  // (without co-array image selector)
-     bool processCoarray = false;
-     SgCAFCoExpression* coExpr = NULL;
-     if (numPartRef == 1)
-        {
-          if (astExpressionStack.empty() == false)
-             {
-               processCoarray = (astExpressionStack.front()->variantT() == V_SgCAFCoExpression);
-             }
-
-          if (processCoarray)
-             {
-            // need to pop out the CoExpresion first
-               coExpr = isSgCAFCoExpression(astExpressionStack.front());
-               ROSE_ASSERT(coExpr != NULL);
-               if (coExpr->get_referData()) //already processed
-                    processCoarray = false;
-                 else
-                    astExpressionStack.pop_front();
-             }
-        }
-
   // DQ (12/29/2010): Form the full name as a vector of strcutures specific to suporting R612 and R613.
      std::vector<MultipartReferenceType> qualifiedNameList(numPartRef);
   // Iterate backwards from the front of the list for the first numPartRef entries.
@@ -6884,8 +6898,7 @@ void c_action_data_ref(int numPartRef)
      for (int i = 0; i < numPartRef; i++)
         {
        // Assemble the entries into the qualifiedNameList from back to front.
-          qualifiedNameList[(numPartRef-1)-i].name                      = (*j).name;
-          qualifiedNameList[(numPartRef-1)-i].hasSelectionSubscriptList = (*j).hasSelectionSubscriptList;
+          qualifiedNameList[(numPartRef-1)-i] = *j;
 
           ROSE_ASSERT (j != astMultipartReferenceStack.end());
           j++;
@@ -6948,7 +6961,12 @@ void c_action_data_ref(int numPartRef)
          // This is a function call and the 'coExpr' detected above, if any, will be ignored in this routine.
          // Preserve it for future use in 'c_action_rice_spawn_stmt'.
          // TODO: check that coExpr is present here only if in the context of a Rice CAF2 'spawn' statement.
-          rice_dataref_coexpr = (processCoarray ? coExpr : NULL);
+         if (qualifiedNameList[0].hasImageSelector)
+         {
+             rice_dataref_coexpr = isSgCAFCoExpression(astExpressionStack.front());
+             astExpressionStack.pop_front();
+             qualifiedNameList[0].hasImageSelector = false; // avoid processing the image selector twice
+         }
 
        // DQ (12/21/2010): For the variable to not have existed, this must be the simple case of a reference with a single part.
        // (see test2010_176.f90 for an example that fails this test; return value initialization for derived type).
@@ -7446,6 +7464,15 @@ void c_action_data_ref(int numPartRef)
           ROSE_ASSERT(tempSymbol != NULL);
        // printf ("hasSelectionSubscriptList = %s tempSymbol = %p = %s \n",hasSelectionSubscriptList ? "true" : "false",tempSymbol,tempSymbol->class_name().c_str());
 
+
+          bool hasImageSelector = qualifiedNameList[lastElement - i].hasImageSelector;
+          SgCAFCoExpression* coExpr;
+          if (hasImageSelector)
+          {
+              coExpr = isSgCAFCoExpression(astExpressionStack.front());
+              astExpressionStack.pop_front();
+          }
+
        // DQ (12/27/2010): Handle case of function return value initialization for derived type (see test2010_176.f90).
        // ROSE_ASSERT(variableSymbol != NULL);
           if (isSgVariableSymbol(tempSymbol) != NULL)
@@ -7705,26 +7732,18 @@ void c_action_data_ref(int numPartRef)
                printf ("Pushing variable = %p = %s onto the expression stack \n",variable,variable->class_name().c_str());
 
        // Save the expression on the stack
-       //   astExpressionStack.push_front(variable);
-
-       // FMZ (2/10/2009): Need to check if it is a CoArrayExpression
-          if (processCoarray)
+          if (hasImageSelector)
              {
-               coExpr->set_referData(variable);
-               setSourcePosition(coExpr,nameToken);
-            // astExpressionStack.push_front(coExpr);
-            // intermediateExpresionList.push_front(variable);
+                 ROSE_ASSERT(!coExpr->get_referData());
+                 coExpr->set_referData(variable);
+                 setSourcePosition(coExpr,nameToken);
+                 intermediateExpresionList.push_front(coExpr);
              }
-            else
+             else
              {
-            // astExpressionStack.push_front(variable);
-            // intermediateExpresionList.push_front(variable);
+                 if (variable != NULL)
+                      intermediateExpresionList.push_front(variable);
              }
-
-       // DQ (12/28/2010): Fixing test2007_57.f90...
-       // intermediateExpresionList.push_front(variable);
-          if (variable != NULL)
-               intermediateExpresionList.push_front(variable);
         }
 
 #if 0
@@ -7819,7 +7838,7 @@ void c_action_data_ref(int numPartRef)
           astExpressionStack.push_front(recordReference);
         }
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R612 c_action_data_ref()");
 #endif
@@ -7838,7 +7857,7 @@ void c_action_data_ref(int numPartRef)
  */
 void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_bool hasImageSelector)
    {
-  // This is a part of a variable reference (any likely used many other places as well)
+    // This is a part of a variable reference (any likely used many other places as well)
 
   // DQ (12/29/2010): Notes on how R612 and R613 operate together.
   // This rule works with R612 to support references to names that have multiple parts (e.g. struct%field, etc.)
@@ -7997,17 +8016,6 @@ void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_boo
                printf ("case of hasSelectionSubscriptList == false, but test2007_164.f demonstrates that this can still be a function reference in stead of a scalar variable \n");
         }
 
-     if (hasImageSelector == true)
-        {
-       // DQ (12/29/2010): I have never seen this to be true in any Fortran code (but it is likely a F03 or F08 detail).
-
-          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-               printf ("Sorry, case of hasImageSelector == true not implemented (I forget what this even means, likely some self-esteem issue for Fortran) \n");
-
-          printf ("Detect when hasImageSelector == true within R613 (we need an example of this sort of code before it can be supported in ROSE) \n");
-          ROSE_ASSERT(false);
-        }
-
   // DQ (12/29/2010): These should be kept in sync (or at least there shuld be one astNameStack 
   // entry for each astHasSelectionSubscriptStack entry.  But maybe not the other way around.
      astNameStack.push_front(id);
@@ -8018,7 +8026,7 @@ void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_boo
 
   // DQ (12/29/2010): Stand up redundant stack to replace use of astNameStack and astHasSelectionSubscriptStack in R612 and R613 handling.
      SgName id_name = id->text;
-     astMultipartReferenceStack.push_front(MultipartReferenceType(id_name,hasSelectionSubscriptList));
+     astMultipartReferenceStack.push_front(MultipartReferenceType(id_name,hasSelectionSubscriptList,hasImageSelector));
 #endif
 
 #if 0
@@ -9783,7 +9791,7 @@ void c_action_defined_binary_op(Token_t *binaryOp)
 // void c_action_assignment_stmt(Token_t * label)
 void c_action_assignment_stmt(Token_t *label, Token_t *eos)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_assignment_stmt(): label = %p = %s \n",label,label ? label->text : "NULL");
 
 #if 0
@@ -10597,10 +10605,10 @@ void c_action_forall_stmt(Token_t *label, Token_t *forallKeyword)
  */
 void c_action_block()
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_block() (popping the current scope from a case statement) \n");
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R801 c_action_block()");
 #endif
@@ -10673,7 +10681,7 @@ void c_action_if_construct()
 // void c_action_if_then_stmt(Token_t * label, Token_t * id)
 void c_action_if_then_stmt( Token_t *label, Token_t *id, Token_t *ifKeyword, Token_t *thenKeyword, Token_t *eos)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_if_then_stmt(): label = %p id = %p = %s \n",label,id,id != NULL ? id->text : "NULL");
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
@@ -16096,7 +16104,7 @@ void c_action_module_subprogram(ofp_bool hasPrefix)
 // void c_action_use_stmt(Token_t * label, ofp_bool hasModuleNature, ofp_bool hasRenameList, ofp_bool hasOnly)
 void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t *onlyKeyword, Token_t *eos, ofp_bool hasModuleNature, ofp_bool hasRenameList, ofp_bool hasOnly)
    {
-  // DQ (9/14/2010): I want to track the calling of use statements for debugging
+    // DQ (9/14/2010): I want to track the calling of use statements for debugging
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         {
           printf ("In c_action_use_stmt(): label = %p = %s useKeyword = %p = %s id = %p = %s onlyKeyword = %p = %s hasModuleNature = %s hasRenameList = %s hasOnly = %s \n",
@@ -16886,7 +16894,7 @@ void c_action_interface_stmt__begin()
  */
 void c_action_interface_stmt(Token_t *label, Token_t *abstractToken, Token_t *keyword, Token_t *eos, ofp_bool hasGenericSpec)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_interface_stmt(): kw1 = %p = %s kw2 = %p = %s hasPrefix = %s \n",
                abstractToken,abstractToken != NULL ? abstractToken->text : "NULL",
                keyword,keyword != NULL ? keyword->text : "NULL",hasGenericSpec ? "true" : "false");
@@ -16998,11 +17006,16 @@ void c_action_interface_stmt(Token_t *label, Token_t *abstractToken, Token_t *ke
  */
 void c_action_end_interface_stmt(Token_t *label, Token_t *kw1, Token_t *kw2, Token_t *eos, ofp_bool hasGenericSpec)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_end_interface_stmt(): kw1 = %p = %s kw2 = %p = %s hasPrefix = %s \n",
                kw1,kw1 != NULL ? kw1->text : "NULL",kw2,kw2 != NULL ? kw2->text : "NULL",hasGenericSpec ? "true" : "false");
 
-  // astScopeStack.pop_front();
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R1204 c_action_end_interface_stmt()");
+#endif
+
+     // astScopeStack.pop_front();
 
   // DQ (10/1/2008): Fixup astNameStack to clear any remaining entries (see test2008_42.f90)
      if (astNameStack.empty() == false)
@@ -17697,7 +17710,7 @@ void c_action_procedure_designator()
  */
 void c_action_actual_arg_spec(Token_t * keyword)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_actual_arg_spec() keyword = %p = %s \n",keyword,(keyword != NULL) ? keyword->text : "NULL");
 
   // This handles the case of "DIM" in "sum(array,DIM=1)"
@@ -17873,7 +17886,7 @@ void c_action_function_stmt__begin() {};
 // void c_action_function_stmt(Token_t * label, Token_t * functionName, ofp_bool hasGenericNameList, ofp_bool hasSuffix)
 void c_action_function_stmt(Token_t * label, Token_t * keyword, Token_t * name, Token_t * eos, ofp_bool hasGenericNameList, ofp_bool hasSuffix)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_function_stmt(): label = %p (function name) name = %s hasGenericNameList = %s hasSuffix = %s \n",
                label,name ? name->text : "NULL",hasGenericNameList ? "true" : "false",hasSuffix ? "true" : "false");
 
@@ -17943,11 +17956,6 @@ void c_action_function_stmt(Token_t * label, Token_t * keyword, Token_t * name, 
      buildProcedureSupport(functionDeclaration,hasDummyArgList);
 #endif
 
-#if 0
-  // Output debugging information about saved state (stack) information.
-     outputState("At BOTTOM of R1224 c_action_function_stmt()");
-#endif
-
   // DQ (11/30/2007): This should be true here. We have just build a function and so all the working stacks should be empty (except astScopeStack)!
      if (astTypeStack.empty() == false)
         {
@@ -17955,6 +17963,12 @@ void c_action_function_stmt(Token_t * label, Token_t * keyword, Token_t * name, 
           astTypeStack.clear();
         }
      ROSE_ASSERT(astTypeStack.empty() == true);
+
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R1224 c_action_function_stmt()");
+#endif
+
    }
 
 
@@ -18095,7 +18109,7 @@ void c_action_result_name()
 // void c_action_end_function_stmt(Token_t * label, Token_t * id)
 void c_action_end_function_stmt(Token_t * label, Token_t * keyword1, Token_t * keyword2, Token_t * name, Token_t * eos)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         {
           printf ("In R1230 c_action_end_function_stmt(): label = %p = %s keyword1 = %p = %s keyword2 = %p = %s name = %p = %s \n",
                label,label != NULL ? label->text : "NULL",
@@ -18103,6 +18117,11 @@ void c_action_end_function_stmt(Token_t * label, Token_t * keyword1, Token_t * k
                keyword2,keyword2 != NULL ? keyword2->text : "NULL",
                name,name != NULL ? name->text : "NULL");
         }
+
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R1230 c_action_end_function_stmt()");
+#endif
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
   // *** Note that functions and subroutine code is the same ***
@@ -18176,6 +18195,11 @@ void c_action_end_function_stmt(Token_t * label, Token_t * keyword1, Token_t * k
 
           functionDeclaration->set_named_in_end_statement(true);
         }
+#endif
+
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R1230 c_action_end_function_stmt()");
 #endif
    }
 
@@ -18768,7 +18792,10 @@ void c_action_stmt_function_stmt(Token_t *label, Token_t *functionName, Token_t 
 
 void c_action_end_of_stmt(Token_t * eos)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        if ( SgProject::get_verbose() > 0)
+          printf("^^^^^^^^^^^^^^^^^^^^^^^^^^ c_action_end_of_stmt: line %d col %d\n", eos->line, eos->col);
+
+        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_end_of_stmt() astNodeStack size = %zu astExpressionStack size = %zu \n",astNodeStack.size(),astExpressionStack.size());
 
   // DQ (1/28/2009): If at this point we have not yet setup the function scope (see
@@ -18801,9 +18828,14 @@ void c_action_end_of_stmt(Token_t * eos)
  */
 void c_action_start_of_file(const char *filename)
    {
-  // New function to support Fortran include mechanism
+    // New function to support Fortran include mechanism
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_start_of_file(%s) \n",filename);
+
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of c_action_start_of_file()");
+#endif
 
   // DQ: This is the earliest location to setup the global scope (I think).
      initialize_global_scope_if_required();
@@ -18851,10 +18883,8 @@ void c_action_start_of_file(const char *filename)
           includeLine->set_endOfConstruct(ending_fileInfo);
 
           ROSE_ASSERT(includeLine->get_endOfConstruct() != NULL);
-#if 0
-          includeLine->get_file_info()->display("c_action_start_of_file()");
-#endif
-       // DQ (1/27/2009): Make sure that the filenames match (make sure this is a STL string equality test!).
+
+          // DQ (1/27/2009): Make sure that the filenames match (make sure this is a STL string equality test!).
        // This is a test for a recursive file inclusion.
        // This fails for: module_A_file.f90 or module_B_file.f90.  Also for these
        // files the call to c_action_start_of_file() is triggered by a symantic
@@ -18872,6 +18902,10 @@ void c_action_start_of_file(const char *filename)
         }
 
      astIncludeStack.push_back(filename);
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of c_action_start_of_file()");
+#endif
    }
 
 /*
@@ -18883,13 +18917,18 @@ void c_action_start_of_file(const char *filename)
  */
 void c_action_end_of_file(const char * filename)
    {
-  // New function to support Fortran include mechanism
+    // New function to support Fortran include mechanism
 
      ROSE_ASSERT(astIncludeStack.empty() == false);
      string filenameString = astIncludeStack.back();
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_end_of_file(): filenameString = %s \n",filenameString.c_str());
+
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of c_action_end_of_file()");
+#endif
 
 #if 0
      printf ("In c_action_end_of_file(): filenameString = %s astIncludeStack.size() = %zu \n",filenameString.c_str(),astIncludeStack.size());
@@ -19052,7 +19091,6 @@ void c_action_rice_image_selector(Token_t *team_id)
      SgExpression* dataExpr = NULL;
 
      SgCAFCoExpression* coExpr = new SgCAFCoExpression(teamIdReference,rankExpr,dataExpr);
-
      astExpressionStack.push_front(coExpr);
    }
   
@@ -19093,12 +19131,10 @@ void c_action_rice_allocate_coarray_spec(int type, Token_t *team_id) {
 
 
      SgExpression* dataExpr = astExpressionStack.front();
-
      astExpressionStack.pop_front();
 
      //SgCAFCoExpression* coExpr = new SgCAFCoExpression(team_id->text,NULL,dataExpr);
      SgCAFCoExpression* coExpr = new SgCAFCoExpression(teamIdReference,NULL,dataExpr);
-
      coExpr->set_parent(dataExpr->get_parent());
 
      dataExpr->set_parent(coExpr);
@@ -19178,7 +19214,7 @@ void c_action_rice_co_with_team_stmt(Token_t *label, Token_t *team_id) {
 void c_action_rice_end_with_team_stmt(Token_t *label, Token_t *team_id, Token_t *eos) {
 
      ROSE_ASSERT(astScopeStack.empty() == false);
-    setSourceEndPosition(getTopOfScopeStack(), eos);
+     setSourceEndPosition(getTopOfScopeStack(), eos);
      astScopeStack.pop_front();
 
 }
@@ -19232,12 +19268,14 @@ void c_action_rice_finish_stmt(Token_t *label, Token_t *teamToken, Token_t *eos)
     // start a new block scope for body of finish construct
     SgScopeStatement * currentScope = getTopOfScopeStack();
     SgBasicBlock * body = new SgBasicBlock(Sg_File_Info::generateDefaultFileInfo());
+    body->setCaseInsensitive(true);
     setSourcePosition(body, eos);
     body->set_parent(currentScope);
+
     currentScope->append_statement(body);
     astScopeStack.push_front(body);
 
-#if 1
+#if 0
         outputState("At BOTTOM of c_action_rice_finish_stmt()");
 #endif
 }
@@ -19250,9 +19288,6 @@ void c_action_rice_finish_stmt(Token_t *label, Token_t *teamToken, Token_t *eos)
  */
 
 static const char * SPAWN_SUBR_NAME = "CAF_SPAWN";
-
-// DQ (12/2/2010): This is not used and so causes a warning.
-// static const char * TEAM_DEFAULT_NAME = "TEAM_DEFAULT";
 
 void c_action_rice_end_finish_stmt(Token_t *label, Token_t *eos)
 {
@@ -19283,7 +19318,7 @@ void c_action_rice_end_finish_stmt(Token_t *label, Token_t *eos)
         c_action_procedure_designator();                                                // R1219
         c_action_call_stmt(NULL, caf_end_finish, NULL, false);  // R1218
 
-#if 1
+#if 0
         outputState("At BOTTOM of c_action_rice_end_finish_stmt()");
 #endif
 }
@@ -19300,7 +19335,7 @@ void c_action_rice_end_finish_stmt(Token_t *label, Token_t *eos)
  */
 void c_action_rice_spawn_stmt(Token_t * label, Token_t * spawn, Token_t * eos, ofp_bool hasEvent)
 {
-#if 1
+#if 0
         outputState("At TOP of c_action_rice_spawn_stmt()");
 #endif
 
@@ -19382,6 +19417,10 @@ void c_action_rice_spawn_stmt(Token_t * label, Token_t * spawn, Token_t * eos, o
         c_action_data_ref(1);                                                                                   // R612
         c_action_procedure_designator();                                                                // R1219
         c_action_call_stmt(NULL, caf_spawn_subr, NULL, false);                  // R1218
+
+#if 0
+    outputState("At BOTTOM of c_action_rice_spawn_stmt()");
+#endif
 }
 
 
@@ -19456,9 +19495,8 @@ void c_action_next_token(Token_t *token)
      currentFile->get_token_list().push_back(roseToken);
    }
 
-// FMZ (5/4/2010)
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
-void c_action_cosubscript_list__begin() {
+void c_action_cosubscript_list__begin()
+{
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_cosubscript_list__begin. \n");
 
@@ -19472,18 +19510,6 @@ void c_action_cosubscript_list(int carg_0,Token_t* team_id) {
       ROSE_ASSERT(carg_0 ==1);
       c_action_rice_image_selector(team_id);
 }
-
-#endif
-
-#if 0 //FMZ(5/5/2010) : using the implementation from Rice branch
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
-// DQ (4/5/2010): Added new functions for OFP 0.8.0
-void c_action_rice_image_selector(Token_t *carg_0) {};
-void c_action_rice_allocate_coarray_spec(int carg_0, Token_t *carg_1){};
-void c_action_rice_co_with_team_stmt(Token_t *carg_0, Token_t *carg_1){};
-void c_action_rice_end_with_team_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2){};
-#endif
-#endif
 
 
 #ifdef __cplusplus
