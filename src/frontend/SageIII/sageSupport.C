@@ -2660,24 +2660,26 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
             // interface to be built to use case insensitive symbol table handling.
                SageBuilder::symbol_table_case_insensitive_semantics = true;
 
-            // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true).
-            // DQ (12/23/2008): Actually this is not redundant since the SgFile::initialization sets it to "false".
-            // Note: This is a little bit inconsistnat with the default set in ROSETTA.
-               file->set_requires_C_preprocessor(CommandlineProcessing::isFortranFileNameSuffixRequiringCPP(filenameExtension));
+               // determine whether to run this file through the C preprocessor
+               bool requires_C_preprocessor =
+                          // DXN (02/20/2011): rmod file should never require it
+                     (filenameExtension != "rmod")
+                      &&
+                     (
+                          // if the file extension implies it
+                          CommandlineProcessing::isFortranFileNameSuffixRequiringCPP(filenameExtension)
+                       ||
+                          //if the command line includes "-D" options
+                          ! getProject()->get_macroSpecifierList().empty()
+#if 0
+// SKW: disabled because the "*_postprocessed" dregs cause "ompLoweringTests/fortran" to fail 'distcleancheck'
+                       ||
+                          //if the command line includes "-I" options
+                          ! getProject()->get_includeDirectorySpecifierList().empty()
+#endif
+                      );
 
-            // DQ (10/18/2010): Test if the command line includes "-D" options. This is tested using the 
-            // "make testCPP_Defines" rule in the Fortran_tests directory.
-               if (getProject()->get_macroSpecifierList().empty() == false)
-                  {
-                 // Check if there are "-D" options on the command line and issue an error if the file suffix is wrong.
-                    if (file->get_requires_C_preprocessor() == false)
-                       {
-                         printf ("Error: \"-D\" options on the command line are processed within the Fortran support only for files with suffix: F, F90, F95, F03, F08. (matching gfortran behavior) \n");
-                         ROSE_ASSERT(false);
-                       }
-                  }
-
-            // printf ("Called set_requires_C_preprocessor(%s) \n",file->get_requires_C_preprocessor() ? "true" : "false");
+               file->set_requires_C_preprocessor(requires_C_preprocessor);
 
             // DQ (12/23/2008): This needs to be called after the set_requires_C_preprocessor() function is called.
             // If CPP processing is required then the global scope should have a source position using the intermediate
@@ -5436,25 +5438,24 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                fortran_C_preprocessor_commandLine.push_back(includeList[i]);
              }
 
+       // add option to specify preprocessing only
           fortran_C_preprocessor_commandLine.push_back("-E");
 
-#if 0
-// DQ (9/16/2009): I don't think we need to pass this to gfortran if we are just using gfortran to call CPP
+       // add source file name
+          string sourceFilename = get_sourceFileNameWithPath();
+          string preprocessFilename;
 
-// We need this #if since if gfortran is unavailable the macros for the major and minor version numbers will be empty strings (blank).
-#if USE_GFORTRAN_IN_ROSE
-       // DQ (9/16/2009): This option is not available in gfortran version 4.0.x (wonderful).
-       // DQ (5/20/2008): Need to select between fixed and free format
-       // fortran_C_preprocessor_commandLine.push_back("-ffree-line-length-none");
-          if ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER >= 1) )
-             {
-               fortran_C_preprocessor_commandLine.push_back("-ffree-line-length-none");
-             }
-#endif
-#endif
-          string sourceFilename              = get_sourceFileNameWithPath();
-          fortran_C_preprocessor_commandLine.push_back(sourceFilename);
+       // always create pseudonym for source file in case original extension does not permit preprocessing
+          string dir  = StringUtility::getPathFromFileName(sourceFilename);
+          string file = StringUtility::stripPathFromFileName(sourceFilename);
+          string base = StringUtility::stripFileSuffixFromFileName(file);
+          char * temp = tempnam(dir.c_str(), (base + "-").c_str());
+          preprocessFilename = string(temp) + ".F90"; free(temp);
+          int errorCode = link(sourceFilename.c_str(), preprocessFilename.c_str());
+          ROSE_ASSERT(!errorCode);
+          fortran_C_preprocessor_commandLine.push_back(preprocessFilename);
 
+          // add option to specify output file name
           fortran_C_preprocessor_commandLine.push_back("-o");
           string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
           fortran_C_preprocessor_commandLine.push_back(sourceFileNameOutputFromCpp);
@@ -5462,11 +5463,11 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           if ( SgProject::get_verbose() > 0 )
                printf ("cpp command line = %s \n",CommandlineProcessing::generateStringFromArgList(fortran_C_preprocessor_commandLine,false,false).c_str());
 
-          int errorCode = 0;
 #if USE_GFORTRAN_IN_ROSE
        // Some security checking here could be helpful!!!
           errorCode = systemFromVector (fortran_C_preprocessor_commandLine);
 #endif
+
        // DQ (10/1/2008): Added error checking on return value from CPP.
           if (errorCode != 0)
              {
@@ -5474,10 +5475,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                ROSE_ASSERT(false);
              }
 
-#if 0
-          printf ("Exiting as a test ... (after calling C preprocessor)\n");
-          ROSE_ASSERT(false);
-#endif
+       // clean up after alias processing
+          errorCode = unlink(preprocessFilename.c_str());
+          ROSE_ASSERT(!errorCode);
+
         }
 
 
@@ -6409,10 +6410,22 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::LinemarkerTraversal( co
 void
 SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode )
    {
-     SgStatement* statement = isSgStatement(astNode);
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+     extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
+    // DXN (02/21/2011): Consider the case of SgInterfaceBody.
+    // TODO: revise SgInterfaceBody::get_numberOfTraversalSuccessor() to return 1 and
+    // TODO: revise SgInterfaceBody::get_traversalSuccessorByIndex(int ) to return p_functionDeclaration
+    // Such changes will require some re-write of the code to build SgInterfaceBody.
+    // With such changes, the patch below to treat the case of SgInterfaceBody will no longer be necessary.
+    SgInterfaceBody* interfaceBody = isSgInterfaceBody(astNode);
+    if (interfaceBody)
+       {
+        AstSimpleProcessing::traverse(interfaceBody->get_functionDeclaration(), preorder);
+       }
+
+    SgStatement* statement = isSgStatement(astNode);
   // printf ("LinemarkerTraversal::visit(): statement = %p = %s \n",statement,(statement != NULL) ? statement->class_name().c_str() : "NULL");
-
      if (statement != NULL)
         {
           if ( SgProject::get_verbose() > 1 )
@@ -6469,7 +6482,14 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
                if ( SgProject::get_verbose() > 1 )
                     printf ("Setting the source position of statement = %p = %s to line = %d fileId = %d \n",statement,statement->class_name().c_str(),line,fileId);
 
-               statement->get_file_info()->set_file_id(fileId);
+          // DXN (02/18/2011): only reset the file id for the node whose file id corresponds to the "_postprocessed" file.
+               string sourceFilename              = Sg_File_Info::getFilenameFromID(fileId) ;
+               string sourceFileNameOutputFromCpp = OpenFortranParser_globalFilePointer->generate_C_preprocessor_intermediate_filename(sourceFilename);
+               int cppFileId = Sg_File_Info::getIDFromFilename(sourceFileNameOutputFromCpp);
+               if (statement->get_file_info()->get_file_id() == cppFileId)
+                  {
+                   statement->get_file_info()->set_file_id(fileId);
+                  }
             // statement->get_file_info()->set_line(line);
 
                if ( SgProject::get_verbose() > 1 )
@@ -6487,6 +6507,11 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
                ROSE_ASSERT(statement->get_file_info()->get_filenameString().empty() == false);
              }
         }
+#else  // ! ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+     // SKW: not called except from Fortran
+     printf(">>> SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit is not implemented for languages other than Fortran\n");
+     ROSE_ASSERT(false);
+#endif //   ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    }
 
 
