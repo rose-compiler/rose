@@ -1,4 +1,7 @@
 #!/bin/bash
+if test "x$1" = "xstandalone-test" ; then
+ source test_configure_language_support.sh
+fi
 echo "*********************************************"
 echo " Testing C++ configuration support..."
 echo "*********************************************"
@@ -15,17 +18,18 @@ test_configure "\
   - PHP \
   - OpenCL"
 #########################################################################################
-run_configure --enable-languages=c++,c,c++ --disable-cxx 
+run_xfail_configure --enable-languages=c++,c,c++ --disable-cxx 
 #########################################################################################
-test_configure "\
-  - Binary analysis \
-  + C \
-  + C++ \
-  - Cuda \
-  - Fortran \
-  - Java \
-  - PHP \
-  - OpenCL"
+# Currently, C/C++ are simultaneously required
+#test_configure "\
+#  - Binary analysis \
+#  + C \
+#  + C++ \
+#  - Cuda \
+#  - Fortran \
+#  - Java \
+#  - PHP \
+#  - OpenCL"
 #########################################################################################
 run_configure --enable-cxx
 #########################################################################################
@@ -51,29 +55,31 @@ test_configure "\
   + PHP \
   + OpenCL"
 #########################################################################################
-run_configure --enable-cxx=no
+run_xfail_configure --enable-cxx=no
 #########################################################################################
-test_configure "\
-  + Binary analysis \
-  + C \
-  - C++ \
-  + Cuda \
-  + Fortran \
-  + Java \
-  + PHP \
-  + OpenCL"
+# Currently, C/C++ are simultaneously required
+#test_configure "\
+#  + Binary analysis \
+#  + C \
+#  - C++ \
+#  + Cuda \
+#  + Fortran \
+#  + Java \
+#  + PHP \
+#  + OpenCL"
 #########################################################################################
-run_configure --disable-cxx
+run_xfail_configure --disable-cxx
 #########################################################################################
-test_configure "\
-  + Binary analysis \
-  + C \
-  - C++ \
-  + Cuda \
-  + Fortran \
-  + Java \
-  + PHP \
-  + OpenCL"
+# Currently, C/C++ are simultaneously required
+#test_configure "\
+#  + Binary analysis \
+#  + C \
+#  - C++ \
+#  + Cuda \
+#  + Fortran \
+#  + Java \
+#  + PHP \
+#  + OpenCL"
 #########################################################################################
 run_configure --enable-languages=c --enable-cxx
 #########################################################################################
@@ -99,40 +105,66 @@ test_configure "\
   - PHP \
   - OpenCL"
 #########################################################################################
-run_configure --enable-languages=c --enable-cxx=no
+run_xfail_configure --enable-languages=c --enable-cxx=no
+#########################################################################################
+#test_configure "\
+#  - Binary analysis \
+#  + C \
+#  - C++ \
+#  - Cuda \
+#  - Fortran \
+#  - Java \
+#  - PHP \
+#  - OpenCL"
+#########################################################################################
+run_xfail_configure --enable-languages=c --disable-cxx
+#########################################################################################
+# Currently, C/C++ are simultaneously required
+#test_configure "\
+#  - Binary analysis \
+#  + C \
+#  - C++ \
+#  - Cuda \
+#  - Fortran \
+#  - Java \
+#  - PHP \
+#  - OpenCL"
+#########################################################################################
+run_xfail_configure --enable-languages=c,c++ --disable-cxx
+#########################################################################################
+# Currently, C/C++ are simultaneously required
+#test_configure "\
+#  - Binary analysis \
+#  + C \
+#  - C++ \
+#  - Cuda \
+#  - Fortran \
+#  - Java \
+#  - PHP \
+#  - OpenCL"
+#########################################################################################
+run_configure --enable-languages=php,c++ --enable-cxx=no
 #########################################################################################
 test_configure "\
   - Binary analysis \
-  + C \
+  - C \
   - C++ \
   - Cuda \
   - Fortran \
   - Java \
-  - PHP \
+  + PHP \
   - OpenCL"
 #########################################################################################
-run_configure --enable-languages=c --disable-cxx
+run_configure --enable-languages=php,c++ --disable-cxx
 #########################################################################################
 test_configure "\
   - Binary analysis \
-  + C \
+  - C \
   - C++ \
   - Cuda \
   - Fortran \
   - Java \
-  - PHP \
-  - OpenCL"
-#########################################################################################
-run_configure --enable-languages=c,c++ --disable-cxx
-#########################################################################################
-test_configure "\
-  - Binary analysis \
-  + C \
-  - C++ \
-  - Cuda \
-  - Fortran \
-  - Java \
-  - PHP \
+  + PHP \
   - OpenCL"
 #########################################################################################
 run_configure --enable-languages=c++ --disable-cxx
@@ -147,17 +179,30 @@ test_configure "\
   - PHP \
   - OpenCL"
 #########################################################################################
-run_configure --enable-languages=c,c++,php --disable-cxx
+run_xfail_configure --enable-languages=c,c++,php --disable-cxx
+#########################################################################################
+# Currently, C/C++ are simultaneously required
+#test_configure "\
+#  - Binary analysis \
+#  + C \
+#  - C++ \
+#  - Cuda \
+#  - Fortran \
+#  - Java \
+#  + PHP \
+#  - OpenCL"
+#########################################################################################
+run_configure --enable-languages=opencl,c++,php --disable-cxx
 #########################################################################################
 test_configure "\
   - Binary analysis \
-  + C \
+  - C \
   - C++ \
   - Cuda \
   - Fortran \
   - Java \
   + PHP \
-  - OpenCL"
+  + OpenCL"
 #########################################################################################
 echo "*********************************************"
 echo " SUCCESS: C++ language support configuration is working!"

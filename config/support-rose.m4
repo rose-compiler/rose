@@ -140,11 +140,13 @@ if test "x$GFORTRAN_PATH" != "x"; then
    AC_DEFINE([USE_GFORTRAN_IN_ROSE], [1], [Mark that GFORTRAN is available])
 fi
 
-# ***************************************************************
-# Options to enable selection of only a single language
-# Handle these options before the --enable-languages=LIST option.
-# ***************************************************************
-ROSE_SUPPORT_LANGUAGES
+#########################################################################################
+##
+
+  ROSE_SUPPORT_LANGUAGES
+
+##
+#########################################################################################
 exit 0;
 
 # DQ (4/16/2010): Added to support to only handle Fortran (support for Rice and LANL users)

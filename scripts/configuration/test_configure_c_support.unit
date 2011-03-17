@@ -1,4 +1,7 @@
 #!/bin/bash
+if test "x$1" = "xstandalone-test" ; then
+ source test_configure_language_support.sh
+fi
 echo "*********************************************"
 echo " Testing C configuration support..."
 echo "*********************************************"
@@ -27,6 +30,18 @@ run_xfail_configure --enable-languages=c,c++,c --disable-c
 #  - Java \
 #  - PHP \
 #  - OpenCL"
+#########################################################################################
+run_configure --enable-c --enable-cxx
+#########################################################################################
+test_configure "\
+  + Binary analysis \
+  + C \
+  + C++ \
+  + Cuda \
+  + Fortran \
+  + Java \
+  + PHP \
+  + OpenCL"
 #########################################################################################
 run_configure --enable-c
 #########################################################################################

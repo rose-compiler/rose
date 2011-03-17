@@ -1,4 +1,7 @@
 #!/bin/bash
+if test "x$1" = "xstandalone-test" ; then
+ source test_configure_language_support.sh
+fi
 echo "*********************************************"
 echo " Testing binary analysis configuration support..."
 echo "*********************************************"

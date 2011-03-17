@@ -1,4 +1,7 @@
 #!/bin/bash
+if test "x$1" = "xstandalone-test" ; then
+ source test_configure_language_support.sh
+fi
 echo "*********************************************"
 echo " Testing Fortran configuration support..."
 echo "*********************************************"
@@ -20,7 +23,7 @@ run_configure --enable-languages=fortran,c,fortran --disable-fortran
 test_configure "\
   - Binary analysis \
   + C \
-  - C++ \
+  + C++ \
   - Cuda \
   - Fortran \
   - Java \
@@ -80,7 +83,7 @@ run_configure --enable-languages=c --enable-fortran
 test_configure "\
   - Binary analysis \
   + C \
-  - C++ \
+  + C++ \
   - Cuda \
   + Fortran \
   - Java \
@@ -92,7 +95,7 @@ run_configure --enable-languages=c --enable-fortran=yes
 test_configure "\
   - Binary analysis \
   + C \
-  - C++ \
+  + C++ \
   - Cuda \
   + Fortran \
   - Java \
@@ -104,7 +107,7 @@ run_configure --enable-languages=c --enable-fortran=no
 test_configure "\
   - Binary analysis \
   + C \
-  - C++ \
+  + C++ \
   - Cuda \
   - Fortran \
   - Java \
@@ -116,7 +119,7 @@ run_configure --enable-languages=c --disable-fortran
 test_configure "\
   - Binary analysis \
   + C \
-  - C++ \
+  + C++ \
   - Cuda \
   - Fortran \
   - Java \
@@ -128,7 +131,7 @@ run_configure --enable-languages=c,fortran --disable-fortran
 test_configure "\
   - Binary analysis \
   + C \
-  - C++ \
+  + C++ \
   - Cuda \
   - Fortran \
   - Java \
@@ -152,24 +155,12 @@ run_configure --enable-languages=c,fortran,php --disable-fortran
 test_configure "\
   - Binary analysis \
   + C \
-  - C++ \
+  + C++ \
   - Cuda \
   - Fortran \
   - Java \
   + PHP \
   - OpenCL"
-
-
-
-
-
-
-
-
-
-
-
-
 #########################################################################################
 echo "*********************************************"
 echo " SUCCESS: Fortran language support configuration is working!"

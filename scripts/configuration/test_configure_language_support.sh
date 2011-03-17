@@ -98,7 +98,8 @@ function test_configure {
 }
 
 
-#source ${SCRIPT_DIR}/test_configure_binary_support.unit
+if test "x$1" = "xtest" ; then
+source ${SCRIPT_DIR}/test_configure_binary_support.unit
 source ${SCRIPT_DIR}/test_configure_c_support.unit
 source ${SCRIPT_DIR}/test_configure_cxx_support.unit
 source ${SCRIPT_DIR}/test_configure_cuda_support.unit
@@ -107,13 +108,12 @@ source ${SCRIPT_DIR}/test_configure_java_support.unit
 source ${SCRIPT_DIR}/test_configure_php_support.unit
 source ${SCRIPT_DIR}/test_configure_opencl_support.unit
 
-
+echo "*********************************************"
+echo " SUCCESS: language support configuration is working!"
+echo "*********************************************"
+fi
 
 #########################################################################################
 # Remove the test sandbox for testing configure lines
 #rm -rf ${TESTDIR}
 #########################################################################################
-echo "*********************************************"
-echo " SUCCESS: language support configuration is working!"
-echo "*********************************************"
-
