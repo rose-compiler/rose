@@ -25,6 +25,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 	endif3.c \
 	firstPrivateArray.c \
 	full_verify.c \
+	init.c \
 	lastprivateOrphaned.c \
 	linebreak.c \
         master.c \
