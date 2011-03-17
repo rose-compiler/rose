@@ -2720,10 +2720,30 @@ RSIM_Thread::emulate_syscall()
 
 
         case 1000000:
-            syscall_enter("SIM_is_present", "");
+            /* Returns 0 if simulator is present, -ENOSYS if simulator is not present */
+            syscall_enter("RSIM_is_present", "");
             syscall_return(0);
             syscall_leave("d");
             break;
+
+        case 1000001:
+            /* Does nothing and always returns zero (or -ENOSYS if no simulator). This can be used to print a message into the
+             * TRACE_SYSCALL debugging stream. */
+            syscall_enter("RSIM_message", "s");
+            syscall_return(0);
+            syscall_leave("d");
+            break;
+
+        case 1000002: {
+            /* Pause the specimen the specified number of seconds without sending any signals to the specimen.  Returns zero on
+             * success, -ENOSYS if not running under the simulator, or the number of remaining seconds if interrupted. */
+            syscall_enter("RSIM_delay", "d");
+            unsigned nsec = syscall_arg(0);
+            unsigned result = sleep(nsec);
+            syscall_return(result);
+            syscall_leave("d");
+            break;
+        }
 
         default: {
             char name[32];
