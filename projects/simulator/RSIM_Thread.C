@@ -400,7 +400,11 @@ RSIM_Thread::main()
 {
     RSIM_Process *process = get_process();
 
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
+
     while (true) {
+        pthread_testcancel();
         report_progress_maybe();
         try {
             /* Returned from signal handler? */
@@ -596,7 +600,7 @@ RSIM_Thread::sys_exit(const Exit &e)
 {
     RSIM_Process *process = get_process(); /* while we still have a chance */
 
-    tracing(TRACE_THREAD)->mesg("this thread is terminating");
+    tracing(TRACE_THREAD)->mesg("this thread is terminating%s", e.exit_process?" (for entire process)":"");
 
     if (robust_list_head_va)
         tracing(TRACE_MISC)->mesg("warning: robust_list not cleaned up\n"); /* FIXME: see set_robust_list() syscall */
@@ -612,8 +616,8 @@ RSIM_Thread::sys_exit(const Exit &e)
     }
 
     /* Remove the child from the process. */
-    process->remove_thread(this);
-    this->process = NULL;
+    process->remove_thread(this); /* thread safe */
+    this->process = NULL;         /* must occur after remove_thread() */
 
     /* Cause the entire process to exit if necesary. */
     if (e.exit_process)
@@ -638,7 +642,7 @@ RSIM_Thread::sys_tgkill(pid_t pid, pid_t tid, int signo)
         } else if (thread==this) {
             retval = sighand.generate(signo, process, tracing(TRACE_SIGNAL));
         } else {
-            thread->sighand.generate(signo, process, tracing(TRACE_SIGNAL));
+            thread->sighand.generate(signo, process, thread->tracing(TRACE_SIGNAL));
             retval = syscall(SYS_tgkill, pid, tid, RSIM_SignalHandling::SIG_WAKEUP);
         }
     } else {

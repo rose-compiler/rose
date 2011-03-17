@@ -95,6 +95,9 @@ public:
      *  Thread safety: This can be called by any thread and will always return the TID of the real thread simulating this
      *  RSIM_Thread. */
     int get_tid() { return my_tid; }
+
+    /** Returns the POSIX thread object describing the real thread that's simulating this specimen thread. */
+    pthread_t get_real_thread() const { assert(process!=NULL); return real_thread; }
     
     /** Assigns a value to one of the thread TLS array elements (part of the GDT). Returns the index number on success,
      *  negative on failure.  If info's entry_number is -1 then this method chooses an empty TLS slot and updates

@@ -1427,7 +1427,6 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
     ROSE_ASSERT(process!=NULL);
     RSIM_Thread *thread = process->create_thread();
 
-
     pid_t tid = syscall(SYS_gettid);
     ROSE_ASSERT(tid>=0);
     thread->tracing(TRACE_THREAD)->mesg("new thread with tid %d", tid);
@@ -1489,8 +1488,15 @@ RSIM_Process::sys_exit(int status)
     RTS_WRITE(rwlock()) {
         terminated = true;
         termination_status = status;
-        if (!threads.empty())
-            RTS_Message(stderr, NULL).mesg("ROBB: RSIM_Process::exit() not fully implemented yet.\n");
+
+        /* Tell all threads to exit. We do this by making sure they return from any blocking system call (by sending a
+         * signal). Every thread checks its cancelation state before every instruction, and will therefore exit. */
+        for (std::map<pid_t, RSIM_Thread*>::iterator ti=threads.begin(); ti!=threads.end(); ti++) {
+            RSIM_Thread *thread = ti->second;
+            thread->tracing(TRACE_THREAD)->mesg("process is canceling this thread");
+            pthread_cancel(thread->get_real_thread());
+            pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP); /* in case it's blocked */
+        }
     } RTS_WRITE_END;
 }
 
@@ -1536,8 +1542,8 @@ RSIM_Process::sys_kill(pid_t pid, int signo)
                 RSIM_Thread *thread = ti->second;
                 int status = thread->signal_accept(signo);
                 if (status>=0) {
-                    status = syscall(SYS_tgkill, getpid(), thread->get_tid(), RSIM_SignalHandling::SIG_WAKEUP);
-                    assert(status>=0);
+                    status = pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP);
+                    assert(0==status);
                     signo = 0;
                 }
             }
