@@ -137,14 +137,13 @@ class MultipartReferenceType
      public:
           SgName name;
           bool hasSelectionSubscriptList;
+          bool hasImageSelector;
 
-       // Skipping support for hasImageSelector for initial work.
-       // bool hasImageSelector;
-
-          MultipartReferenceType ( const SgName & input_name, const bool & input_hasSelectionSubscriptList )
+          MultipartReferenceType ( const SgName & input_name, const bool & input_hasSelectionSubscriptList, const bool & input_hasImageSelector )
              {
                name                      = input_name;
                hasSelectionSubscriptList = input_hasSelectionSubscriptList;
+               hasImageSelector          = input_hasImageSelector;
              }
 
       //  We need a default constructor to support use of this class in STL.
@@ -152,6 +151,7 @@ class MultipartReferenceType
              {
             // name                      = input_name;
                hasSelectionSubscriptList = false;
+               hasImageSelector          = false;
              }
 
        // We need a copy constructor and the operator== to support use of this class in STL.
@@ -159,13 +159,14 @@ class MultipartReferenceType
              {
                name                      = X.name;
                hasSelectionSubscriptList = X.hasSelectionSubscriptList;
+               hasImageSelector          = X.hasImageSelector;
              }
 
        // We need a copy constructor and the operator== to support use of this class in STL.
           bool operator== ( const MultipartReferenceType & X )
              {
                bool returnValue = false;
-               if (name == X.name && hasSelectionSubscriptList == X.hasSelectionSubscriptList)
+               if (name == X.name && hasSelectionSubscriptList == X.hasSelectionSubscriptList && hasImageSelector == X.hasImageSelector)
                     returnValue = true;
                return returnValue;
              }

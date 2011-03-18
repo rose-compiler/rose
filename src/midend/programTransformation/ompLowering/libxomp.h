@@ -29,7 +29,11 @@ extern void xomp_init (void);
 // Runtime library termination routine
 extern void XOMP_terminate (int exitcode);
 
-extern void XOMP_parallel_start (void (*func) (void *), void *data, unsigned numThread);
+// func: pointer to a function which will be run in parallel
+// data: pointer to a data segment which will be used as the arguments of func
+// ifClauseValue: set to if-clause-expression if if-clause exists, or default is 1. 
+// numThreadsSpecified: set to the expression of num_threads clause if the clause exists, or default is 0
+extern void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseValue, unsigned numThreadsSpecified);
 extern void XOMP_parallel_end (void);
 
 extern void XOMP_task (void (*) (void *), void *, void (*) (void *, void *),

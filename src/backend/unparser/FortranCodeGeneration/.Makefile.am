@@ -1,3 +1,6 @@
+# TOO (3/14/2011): temporarily keeping this Makefile.am until
+# the transition to flattened Makefiles is complete;
+# Use Makefile_variables in place of this Makefile
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)

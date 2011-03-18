@@ -25,12 +25,15 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 	endif3.c \
 	firstPrivateArray.c \
 	full_verify.c \
+	init.c \
 	lastprivateOrphaned.c \
 	linebreak.c \
         master.c \
+	md_open_mp.c \
         nowait.c \
         ompfor5.c \
         ompfor6.c \
+	private-duplicate.c \
 	single2.c \
 	sizeof.c \
         staticChunk.c \
@@ -81,6 +84,9 @@ C_TESTCODES_REQUIRED_TO_RUN = \
 	ompGetNumThreads.c \
         orphaned-directives.c \
         parallel.c \
+	parallel-if.c \
+	parallel-if-numthreads.c \
+	parallel-numthreads.c \
         parallel-reduction.c \
         parallel-reduction2.c \
         parallelfor.c \
