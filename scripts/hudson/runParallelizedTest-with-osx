@@ -19,6 +19,7 @@ machine_os=`uname -s`
 machine_name=`uname -n`
 start_time=`date`
 hudson_start_time_seconds="$(date +%s)"
+TOP_LEVEL_ROSE_DIRECTORY="$PWD"
 LOG_LOCATION="$PWD"
 
 #########################################################################################
@@ -386,6 +387,8 @@ esac
 #
 ##
 set +x
+   cd $TOP_LEVEL_ROSE_DIRECTORY
+
    dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-after-tests.log"
 
    printBannerWithDate
