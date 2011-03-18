@@ -62,6 +62,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	master.c \
 	masterSingle.c \
 	matrix_vector.c \
+	md_open_mp.c \
 	nestedpar1.c \
 	nestedpar.c \
 	omp1.c \
@@ -90,6 +91,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	preprocessingInfo.c \
 	private.c \
 	privatej.c \
+	private-duplicate.c \
 	recursive.c \
 	reduction2.c \
 	reduction.c \

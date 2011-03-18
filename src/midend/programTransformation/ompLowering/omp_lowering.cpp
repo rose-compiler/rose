@@ -2771,8 +2771,15 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
         // Only loop index variables declared in higher  or the same scopes matter
         if (isAncestor(var_scope, directive_scope) || var_scope==directive_scope)
         {
-          // add it into the private variable list
-          if (!isInClauseVariableList(index_var, isSgOmpClauseBodyStatement(omp_loop), V_SgOmpPrivateClause)) 
+          // Grab possible enclosing parallel region
+          bool isPrivateInRegion = false; 
+          SgOmpParallelStatement * omp_stmt = isSgOmpParallelStatement(getEnclosingNode<SgOmpParallelStatement>(omp_loop)); 
+          if (omp_stmt)
+          {
+            isPrivateInRegion = isInClauseVariableList(index_var, isSgOmpClauseBodyStatement(omp_stmt), V_SgOmpPrivateClause);
+          }
+          // add it into the private variable list only if it is not specified as private in both the loop and region levels. 
+          if (! isPrivateInRegion && !isInClauseVariableList(index_var, isSgOmpClauseBodyStatement(omp_loop), V_SgOmpPrivateClause)) 
           {
             result ++;
             addClauseVariable(index_var,isSgOmpClauseBodyStatement(omp_loop), V_SgOmpPrivateClause);
