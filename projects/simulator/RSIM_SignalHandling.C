@@ -1,5 +1,7 @@
 #include "rose.h"
-#include "RSIM_Simulator.h"
+#include "RSIM_Private.h"
+
+#ifdef ROSE_ENABLE_SIMULATOR
 
 #include <cassert>
 
@@ -440,8 +442,4 @@ RSIM_SignalHandling::dequeue(siginfo_32 *info/*out*/, const sigset_32 *alt_mask/
     return result;
 }
 
-                
-                
-                        
-                        
-                    
+#endif /* ROSE_ENABLE_SIMULATOR */
