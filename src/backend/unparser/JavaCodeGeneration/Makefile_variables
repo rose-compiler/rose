@@ -1,0 +1,19 @@
+
+unparseJavaCodeGeneration_la_sources=\
+	$(javaCodeGenerationPath)/unparseJava_expressions.C \
+	$(javaCodeGenerationPath)/unparseJava_statements.C \
+	$(javaCodeGenerationPath)/unparseJava_types.C
+
+
+unparseJavaCodeGeneration_includeHeaders=\
+	$(javaCodeGenerationPath)/unparseJava.h \
+	$(javaCodeGenerationPath)/unparseJava_types.h
+
+
+unparseJavaCodeGeneration_extraDist=\
+	$(javaCodeGenerationPath)/CMakeLists.txt
+
+
+unparseJavaCodeGeneration_cleanLocal=\
+	rm -rf $(javaCodeGenerationPath)/core
+

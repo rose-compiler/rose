@@ -18,11 +18,17 @@ import org.eclipse.jdt.internal.compiler.util.*;
 
 // DQ (10/30/2010): Added support for reflection to get methods in implicitly included objects.
 import java.lang.reflect.*;
-// import java.lang.Class.*;
 
 // DQ (11/1/2010): This improved design separates out the parsing support, from the ECJ AST traversal, and the parser.
 class JavaParserSupport
    {
+  // This class is intended to contain functions to support the JNI specific in src/frontend/ECJ_ROSE_Connection/JavaParserActionROSE.C.
+  // Note that the functions in JavaParserActionROSE.C are JNI functions that are called by the Java
+  // code in src/3rdPartyLibraries/java-parser/ecjASTVisitor.java, this layout of code is similar to the handling of the Fortran support 
+  // in ROSE (except that OFP calls functions representing parser actions while this Java support calls functions representing the
+  // translation of the ECJ AST to build the ROSE AST (so the Java support has less to do with parsing than AST translation)).
+  // The AST translation is similar to the translation from the EDG AST translation to build the ROSE AST (supporting C and C++).
+
   // This is used to compute source code positions.
      private static CompilationResult rose_compilationResult;
 
@@ -51,20 +57,20 @@ class JavaParserSupport
 
           int startingSourcePosition = node.sourceStart();
           int endingSourcePosition   = node.sourceEnd();
-          System.out.println("In visit(MessageSend): start = " + startingSourcePosition + " end = " + endingSourcePosition);
+          System.out.println("In JavaParserSupport::sourcePosition(ASTNode): start = " + startingSourcePosition + " end = " + endingSourcePosition);
 
        // Example of how to compute the starting line number and column position of any AST node.
           int problemStartPosition = startingSourcePosition;
           int[] lineEnds;
           int lineNumber   = problemStartPosition >= 0 ? Util.getLineNumber(problemStartPosition, lineEnds = rose_compilationResult.getLineSeparatorPositions(), 0, lineEnds.length-1) : 0;
           int columnNumber = problemStartPosition >= 0 ? Util.searchColumnNumber(rose_compilationResult.getLineSeparatorPositions(), lineNumber, problemStartPosition) : 0;
-          System.out.println("In visit(MessageSend): lineNumber = " + lineNumber + " columnNumber = " + columnNumber);
+          System.out.println("In JavaParserSupport::sourcePosition(ASTNode): lineNumber = " + lineNumber + " columnNumber = " + columnNumber);
 
        // Example of how to compute the ending line number and column position of any AST node.
           int problemEndPosition = endingSourcePosition;
           int lineNumber_end   = problemEndPosition >= 0 ? Util.getLineNumber(problemEndPosition, lineEnds = rose_compilationResult.getLineSeparatorPositions(), 0, lineEnds.length-1) : 0;
           int columnNumber_end = problemEndPosition >= 0 ? Util.searchColumnNumber(rose_compilationResult.getLineSeparatorPositions(), lineNumber, problemEndPosition) : 0;
-          System.out.println("In visit(MessageSend): lineNumber_end = " + lineNumber_end + " columnNumber_end = " + columnNumber_end);
+          System.out.println("In JavaParserSupport::sourcePosition(ASTNode): lineNumber_end = " + lineNumber_end + " columnNumber_end = " + columnNumber_end);
          }
 
      public static void buildImplicitClassSupport( String className)
@@ -164,6 +170,8 @@ class JavaParserSupport
                Method methlist[] = cls.getDeclaredMethods();
 
                JavaParser.cactionBuildImplicitClassSupportStart(className);
+
+               System.out.println("After call to cactionBuildImplicitClassSupportStart");
 
                Field fieldlist[] = cls.getDeclaredFields();
                for (int i = 0; i < fieldlist.length; i++)

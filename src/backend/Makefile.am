@@ -17,6 +17,7 @@ include $(srcdir)/unparser/FortranCodeGeneration/Makefile_variables
 include $(srcdir)/unparser/languageIndependenceSupport/Makefile_variables
 include $(srcdir)/unparser/PHPCodeGeneration/Makefile_variables
 include $(srcdir)/asmUnparser/Makefile_variables
+include $(srcdir)/unparser/JavaCodeGeneration/Makefile_variables
 
 
 unparserPath=$(srcdir)/unparser#
@@ -26,6 +27,7 @@ fortranCodeGenerationPath=$(srcdir)/unparser/FortranCodeGeneration#
 languageIndependenceSupportPath=$(srcdir)/unparser/languageIndependenceSupport#
 phpCodeGenerationPath=$(srcdir)/unparser/PHPCodeGeneration#
 asmUnparserPath=$(srcdir)/asmUnparser#
+javaCodeGenerationPath=$(srcdir)/unparser/JavaCodeGeneration#
 
 
 ###############################################################################
