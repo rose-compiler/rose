@@ -8440,9 +8440,9 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
     SgClassDeclaration* nondefdecl = isSgClassDeclaration(structDecl->get_firstNondefiningDeclaration());
     ROSE_ASSERT(nondefdecl != NULL);
 
-    ROSE_ASSERT(structDecl->get_definingDeclaration() != NULL);
+    //ROSE_ASSERT(structDecl->get_definingDeclaration() != NULL);
     SgClassDeclaration* defdecl = isSgClassDeclaration(structDecl->get_definingDeclaration());
-    ROSE_ASSERT(defdecl != NULL);
+    //ROSE_ASSERT(defdecl != NULL);
 
     // Liao, 9/2/2009
     // fixup missing scope when bottomup AST building is used
@@ -8470,11 +8470,11 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
       ROSE_ASSERT(mysymbol);
       scope->insert_symbol(name, mysymbol);
 
-      ROSE_ASSERT(defdecl != NULL);
-      defdecl->set_scope(scope);
+      //ROSE_ASSERT(defdecl != NULL);
+      if (defdecl) defdecl->set_scope(scope);
       nondefdecl->set_scope(scope);
 
-      defdecl->set_parent(scope);
+      if (defdecl) defdecl->set_parent(scope);
       nondefdecl->set_parent(scope);
     }
     //fixup SgClassType, which is associated with the first non-defining declaration only
@@ -8485,15 +8485,18 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
     }
     ROSE_ASSERT (nondefdecl->get_type() != NULL);
 
-    ROSE_ASSERT(defdecl != NULL);
-    if (defdecl->get_type()!= nondefdecl->get_type())
+    //ROSE_ASSERT(defdecl != NULL);
+    if (defdecl)
     {
-      if (defdecl->get_type())
-        delete defdecl->get_type();
-      defdecl->set_type(nondefdecl->get_type());
+      if (defdecl->get_type()!= nondefdecl->get_type())
+      {
+        if (defdecl->get_type())
+          delete defdecl->get_type();
+        defdecl->set_type(nondefdecl->get_type());
+      }
+      ROSE_ASSERT (defdecl->get_type() != NULL);
+      ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
     }
-    ROSE_ASSERT (defdecl->get_type() != NULL);
-    ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
   }
 
   void SageInterface::fixClassDeclaration(SgClassDeclaration* classDecl, SgScopeStatement* scope)
