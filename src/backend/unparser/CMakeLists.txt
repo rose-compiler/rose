@@ -3,12 +3,14 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 add_subdirectory(CxxCodeGeneration)
 if (WIN32)
-  message ("WARNING : Fortran and Php not supported yet")
+  message ("WARNING : Fortran, Java, and PHP not supported yet on Windows")
 else (WIN32)
 # tps (11/23/2009) commented out fortran and php for windows for now
 add_subdirectory(FortranCodeGeneration)
+add_subdirectory(JavaCodeGeneration)
 add_subdirectory(PHPCodeGeneration)
 endif (WIN32)
+
 add_subdirectory(languageIndependenceSupport)
 add_subdirectory(formatSupport)
 

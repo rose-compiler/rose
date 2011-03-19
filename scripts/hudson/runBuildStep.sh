@@ -1,15 +1,13 @@
 #!/bin/bash
-#
-#
-# runBuildStep make|make-check|make-distcheck|make-docs [runSpewAnalysis-outputFile]
-#
-#
-####################################################################################
+source scripts/hudson/debuggingPrinters.sh
 
+
+####################################################################################
+#
+#  runBuildStep make|make-check|make-distcheck|make-docs [runSpewAnalysis-outputFile]
+#
+####################################################################################
 function runBuildStep {
-####################################################################################
-# FUNCTION CALL VALIDATION AND INITIALIZATIOn 
-####################################################################################
     if [ $# -lt 1 -o $# -gt 2 -o \
     ! \( $1 == "make" -o \
          $1 == "make-install" -o \
@@ -17,58 +15,56 @@ function runBuildStep {
          $1 == "make-check" -o \
          $1 == "make-distcheck" -o \
          $1 == "make-docs" \) ] ; then 
-#        !\( $1 == "make" -o $1 == "make-install" -o $1 == "make-installcheck" -o \
-#            $1 == "make-check" -o $1 == "make-distcheck" -o $1 == "make-docs" \) ]; then
         echo "Usage: runBuildStep make|make-install|make-installcheck|make-check|make-distcheck|make-docs [spewAnalysis-outputFile]" 
         exit 1;
     elif [ $# -eq 2 ]; then
         outputFile=$2
     fi
     buildStep=`echo $1 | sed 's/-/ /'`
-####################################################################################
-# EXECUTE BUILD STEP 
-####################################################################################
-    echo "Starting $buildStep step"
 
+####################################################################################
+# EXECUTE BUILD STEP (with optional spew analysis)
+####################################################################################
+    
+    printBannerToStartStep "$buildStep"
     start_time_seconds="$(date +%s)"
+
+
     if [ $# -eq 2 ]; then
         ${buildStep} -j${NUM_PROCESS} 2>&1 | tee $outputFile
     else
         ${buildStep} -j${NUM_PROCESS}
     fi
-####################################################################################
-# ERROR CHECKING 
-####################################################################################
-    # the pipestatus variable is an array that holds the exit status of your last foreground pipeline commands.
-    # we check to see if make failes through this command
+    # The pipestatus variable is an array that holds the exit status of your last
+    # foreground pipeline commands. we check to see if make failes through this command
     if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
-        echo "fatal error during '${buildStep}'  , aborting..."
-        # tps : call this line before any exit. It resets the Windows test
-#        echo 3 > $win_file
+        printBanner "Fatal error during '${buildStep}'. Aborting..."
        exit 3
     fi
-####################################################################################
-# SPEW ANALYSIS 
-####################################################################################
+
     if [ $# -eq 2 ]; then
         runSpewAnalysis $outputFile
     fi
-####################################################################################
-# SUMMARY 
-####################################################################################
-    echo "Done with $buildStep step"
-    end_time_seconds="$(date +%s)"
-    elapsed_time_seconds="$(expr $end_time_seconds - $start_time_seconds)"
-    echo "***********************************************************************************************************"
-    echo "Elapsed time for '${buildStep}' test: $elapsed_time_seconds sec"
-    echo "***********************************************************************************************************"
+
+
+    printBannerToEndStep "$buildStep" $start_time_seconds 
 }
 
+
+####################################################################################
+#
+#  runSpewAnalysis <filename-to-process> 
+#
+####################################################################################
 function runSpewAnalysis {
     if [ $# -ne 1 ]; then
         echo "Usage: runSpewAnalysis <filename-to-process>"
         exit 1;
     fi
+
+    printBannerToStartStep "Compile time spew"
+    start_time_seconds="$(date +%s)"
+
 
     inputFile="$1"
 
@@ -87,5 +83,6 @@ function runSpewAnalysis {
       echo "Measure Build System Parallelism"
       ../scripts/checkMakeParallelism.sh ${inputFile}
     fi
-    echo "Done with compile time spew"
+
+    printBannerToEndStep "Compile time spew" $start_time_seconds 
 }

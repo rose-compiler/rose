@@ -16,13 +16,6 @@
  * since we're only operating on known addresses and values, and thus override all superclass methods dealing with memory. */
 class RSIM_SemanticPolicy: public RSIM_SEMANTIC_POLICY {
 public:
-    /* Thrown for signals. */
-    struct Signal {
-        explicit Signal(int signo): signo(signo) {}
-        int signo;
-    };
-
-public:
     RSIM_Thread *thread;                        /* Thread to which this policy belongs */
     RSIM_SemanticPolicy(RSIM_Thread *thread)
         : thread(thread) {
@@ -49,12 +42,13 @@ public:
     void load_sr_shadow(X86SegmentRegister, unsigned gdt_idx);
 
     /* Delegates to thread. */
-    RTS_Message *tracing(unsigned what) const;
+    RTS_Message *tracing(TracingFacility what) const;
 
     uint32_t get_eflags() const;
+    void set_eflags(uint32_t);
 
     /* Print machine register state for debugging */
-    void dump_registers(FILE *f) const;
+    void dump_registers(RTS_Message*) const;
 
     /* Same as the x86_push instruction */
     void push(VirtualMachineSemantics::ValueType<32> n);

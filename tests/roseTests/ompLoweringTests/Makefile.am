@@ -29,9 +29,11 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 	lastprivateOrphaned.c \
 	linebreak.c \
         master.c \
+	md_open_mp.c \
         nowait.c \
         ompfor5.c \
         ompfor6.c \
+	private-duplicate.c \
 	single2.c \
 	sizeof.c \
         staticChunk.c \
