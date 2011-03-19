@@ -230,6 +230,9 @@ set (unparser_SRC
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/FortranCodeGeneration/unparseFortran_modfile.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/FortranCodeGeneration/unparseFortran_statements.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/FortranCodeGeneration/unparseFortran_types.C
+      ${CMAKE_SOURCE_DIR}/src/backend/unparser/JavaCodeGeneration/unparseJava_expressions.C
+      ${CMAKE_SOURCE_DIR}/src/backend/unparser/JavaCodeGeneration/unparseJava_statements.C
+      ${CMAKE_SOURCE_DIR}/src/backend/unparser/JavaCodeGeneration/unparseJava_types.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/CxxCodeGeneration/unparseCxx_types.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/CxxCodeGeneration/unparseCxx_expressions.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/CxxCodeGeneration/unparseCxx_statements.C
