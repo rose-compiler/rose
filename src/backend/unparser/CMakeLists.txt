@@ -7,6 +7,7 @@ if (WIN32)
 else (WIN32)
 # tps (11/23/2009) commented out fortran and php for windows for now
 add_subdirectory(FortranCodeGeneration)
+add_subdirectory(JavaCodeGeneration)
 add_subdirectory(PHPCodeGeneration)
 endif (WIN32)
 add_subdirectory(languageIndependenceSupport)
