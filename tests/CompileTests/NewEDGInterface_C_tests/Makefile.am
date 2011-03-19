@@ -134,7 +134,40 @@ test2006_151.C \
 test2006_154.C \
 test2006_181.C \
 test2008_04.C \
-X.C
+X.C \
+test2001_26.C \
+test2003_15.C \
+test2003_19.C \
+test2003_23.C \
+test2003_24.C \
+test2003_25.C \
+test2004_14.C \
+test2004_72.C \
+test2004_96.C \
+test2004_102.C \
+test2004_163.C \
+test2005_16.C \
+test2005_56.C \
+test2005_116.C \
+test2006_40.C \
+test2006_53.C \
+test2006_76.C \
+test2006_91.C \
+test2006_104.C \
+test2006_105.C \
+test2006_107.C \
+test2006_108.C \
+test2006_109.C \
+test2006_111.C \
+test2006_116.C \
+test2006_146.C \
+test_int_lexemes.C \
+test_int_lexemes_donot_pass.C \
+test_simple_int.C \
+test_wchars.C \
+test2006_152.C \
+test2006_153.C \
+test2006_94.C
 
 # DQ (2/2/2010): Removed becuae this test now fails with the new build functions. These are all the same problem:
 # src/frontend/SageIII/sageInterface/sageInterface.C:7246: void SageInterface::fixStructDeclaration(SgClassDeclaration*, SgScopeStatement*): Assertion structDecl->get_definingDeclaration() != __null failed.
