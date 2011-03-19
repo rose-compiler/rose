@@ -62,6 +62,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	master.c \
 	masterSingle.c \
 	matrix_vector.c \
+	md_open_mp.c \
 	nestedpar1.c \
 	nestedpar.c \
 	omp1.c \
@@ -79,6 +80,9 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	ordered.c \
 	orphaned-directives.c \
 	parallel.c \
+	parallel-if.c \
+	parallel-if-numthreads.c \
+	parallel-numthreads.c \
 	parallel-reduction.c \
 	parallel-reduction2.c \
 	parallelfor.c \
@@ -87,6 +91,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	preprocessingInfo.c \
 	private.c \
 	privatej.c \
+	private-duplicate.c \
 	recursive.c \
 	reduction2.c \
 	reduction.c \

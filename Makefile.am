@@ -438,3 +438,4 @@ release_binary_compatibility_signature=$(shell ${top_srcdir}/scripts/bincompat-s
 
 PrintBinaryCompatibilitySignature:
 	@echo "release_binary_compatibility_signature = ${release_binary_compatibility_signature}"
+

@@ -24,18 +24,17 @@ public:
      *  thread that will be simulating the speciment's thread described by this object. */
     RSIM_Thread(RSIM_Process *process)
         : process(process), my_tid(-1),
-          mesg_prefix(this), mesg_on(process->tracing(TRACE_ALL), &mesg_prefix), mesg_off(NULL, NULL),
-          trace_flags(process->tracing()),
+          mesg_prefix(this), report_interval(10.0),
           policy(this), semantics(policy),
-          report_interval(10.0), robust_list_head_va(0), clear_child_tid(0),
-          signal_pending(0), signal_mask(0), signal_reprocess(false) {
+          robust_list_head_va(0), clear_child_tid(0) {
+        real_thread = pthread_self();
         ctor();
     }
 
 
 
     /***************************************************************************************************************************
-     *                                  Members used for thread synchronization
+     *                                  Thread synchronization (simulator threads)
      ***************************************************************************************************************************/
 private:
     /** Process to which this thread belongs. An RSIM_Thread object can be in an orphaned state after it exits, in which case
@@ -56,10 +55,14 @@ public:
 
 
     /**************************************************************************************************************************
-     *                                  Members used by thread simulation
+     *                                  Thread simulation (specimen threads)
      **************************************************************************************************************************/
 private:
-    /** The TID of the real thread that is simulating the specimen thread described by this RSIM_Thread object. */
+    /** The real thread that is simulating this specimen thread.  Valid until the "process" data member is null. */
+    pthread_t real_thread;
+    
+    /** The TID of the real thread that is simulating the specimen thread described by this RSIM_Thread object.  Valid until
+     * the "process" data member is null. */
     pid_t my_tid;
 
     /** Like a TID, but a small sequence number instead. This is more readable in error messages, and is what the id() method
@@ -92,6 +95,9 @@ public:
      *  Thread safety: This can be called by any thread and will always return the TID of the real thread simulating this
      *  RSIM_Thread. */
     int get_tid() { return my_tid; }
+
+    /** Returns the POSIX thread object describing the real thread that's simulating this specimen thread. */
+    pthread_t get_real_thread() const { assert(process!=NULL); return real_thread; }
     
     /** Assigns a value to one of the thread TLS array elements (part of the GDT). Returns the index number on success,
      *  negative on failure.  If info's entry_number is -1 then this method chooses an empty TLS slot and updates
@@ -116,7 +122,7 @@ public:
 
 
     /**************************************************************************************************************************
-     *                                  Members for debugging and tracing output
+     *                                  Debugging and tracing
      **************************************************************************************************************************/
 private:
     class Prefix: public RTS_Message::Prefix {
@@ -128,18 +134,26 @@ private:
             fputs(thread->id().c_str(), f);
         }
     };
+
     Prefix mesg_prefix;
-    RTS_Message mesg_on;                                /**< Messages will be sent to the trace file. */
-    RTS_Message mesg_off;                               /**< Messages sent to the bit bucket. */
-    unsigned trace_flags;                               /**< Flags describing what we're tracing. */
+    RTS_Message *trace_mesg[TRACE_NFACILITIES];         /**< Array indexed by TraceFacility */
+    struct timeval last_report;                         /**< Time of last progress report for TRACE_PROGRESS */
+    double report_interval;                             /**< Minimum seconds between progress reports for TRACE_PROGRESS */
 
     /** Return a string identifying the thread and time called. */
     std::string id();
 
 public:
-    /** Return the object used for a debugging facility.  The return value is either mesg_on or mesg_off depending on whether
-     * the specified facility is being trace. */
-    RTS_Message *tracing(unsigned what);
+    /** Return the object used for a debugging facility.  The return value is always non-null, although the returned message
+     *  object may have a null output file if the facility is disabled.  This permits the return value to be dereferenced
+     *  regardless of whether the facility is enable. For example:
+     *
+     *  @code
+     *  tracing(TRACE_SIGNAL)->mesg("signal generated");
+     *  @endcode
+     *
+     *  Each facility has its own message object so that multipart output can be mixed. */
+    RTS_Message *tracing(TracingFacility);
 
     /** Print a progress report if progress reporting is enabled and enough time has elapsed since the previous report. */
     void report_progress_maybe();
@@ -147,7 +161,7 @@ public:
 
 
     /**************************************************************************************************************************
-     *                                  Methods used by system call simulation
+     *                                  System call simulation
      **************************************************************************************************************************/
 public:
     /** Emulates a Linux system call from either an "INT 0x80" or "SYSENTER" instruction.  It needs no arguments since all
@@ -232,37 +246,7 @@ public:
      *  This method produces no output unless system call tracing (TRACE_SYSCALL) is enabled. */
     void syscall_leave(const char *format, ...);
 
-
-
-
-    /**************************************************************************************************************************
-     *                                  Members dealing with signal handling
-     **************************************************************************************************************************/
-public:
-
-    /* Simulates the generation of a signal for the specimen.  The signal is made pending (unless it's ignored) and delivered
-     * synchronously. */
-    void signal_generate(int signo);
-
-    /* Deliver one (of possibly many) unmasked, pending signals. This must be called between simulated instructions. */
-    void signal_deliver_any();
-
-    /* Dispatch a signal. That is, emulate the specimen's signal handler or default action. This must be called between
-     * simulated instructions. */
-    void signal_deliver(int signo);
-
-    /* Handles return from a signal handler. */
-    void signal_return();
-
-    /* Pause until a useful signal arrives. */
-    void signal_pause();
-
-
-    /**************************************************************************************************************************
-     *                                  Methods that help simulate system calls
-     **************************************************************************************************************************/
 protected:
-
     /* Helper functions for syscall 117, ipc() and related syscalls */
     void sys_semtimedop(uint32_t semid, uint32_t tsops_va, uint32_t nsops, uint32_t timeout_va);
     void sys_semget(uint32_t key, uint32_t nsems, uint32_t semflg);
@@ -283,8 +267,74 @@ protected:
 
     int sys_clone(unsigned clone_flags, uint32_t newsp, uint32_t parent_tid_va, uint32_t child_tls_va, uint32_t pt_regs_va);
 
+
+
     /**************************************************************************************************************************
-     *                                  Methods dealing with instruction disassembly
+     *                                  Signal handling
+     **************************************************************************************************************************/
+private:
+    RSIM_SignalHandling sighand;
+    static const uint32_t SIGHANDLER_RETURN = 0xdeceaced;               /* arbitrary magic number */
+    static const uint32_t SIGHANDLER_RT_RETURN = 0xdecea5ed;            /* arbitrary magic number */
+
+public:
+    /** Removes a non-masked signal from the thread's signal queue. If the thread's queue is empty then the process' queue is
+     *  considered. Returns a signal number if one is removed, zero if no signal is available, negative on error.  If a
+     *  positive signal number is returned then the supplied siginfo_32 struct is filled in with information about that
+     *  signal. */
+    int signal_dequeue(RSIM_SignalHandling::siginfo_32 *info/*out*/);
+
+    /** Cause a signal to be delivered. The signal is not removed from the pending set or signal queue, nor do we check whether
+     *  the signal is masked.  Returns zero on success, negative errno on failure.  However, if the signal is a terminating
+     *  signal whose default action is performed, this method will throw an Exit, which will cause all simulated threads to
+     *  shut down and the simulator returns to user control. */
+    int signal_deliver(const RSIM_SignalHandling::siginfo_32&);
+
+    //@{
+    /** Handles return from a signal handler. Returns zero on success, negative errno on failure. The only failure that is
+     *  detected at this time is -EFAULT when reading the signal handler stack frame, in which case a message is printed to
+     *  TRACE_SIGNAL and no registers or memory are modified. */
+    int sys_sigreturn();
+    int sys_rt_sigreturn();
+    //@}
+
+    /** Accepts a signal from the process manager for later delivery.  This function is called by RSIM_Process::sys_kill() to
+     *  decide to which thread a signal should be delivered.  If the thread can accept the specified signal, then it does so,
+     *  adding the signal to its queue.  A signal can be accepted by this thread if the signal is not blocked.
+     *
+     *  Returns zero if the signal was accepted; negative if the signal was not accepted. */
+    int signal_accept(const RSIM_SignalHandling::siginfo_32&);
+
+    /** Returns, through an argument, the set of signals that are pending.  Returns zero on success, negative errno on
+     * failure. */
+    int sys_sigpending(RSIM_SignalHandling::sigset_32 *result);
+
+    /** Sends a signal to a thread or process.  If @p tid is negative, then the signal is send to the specified process, which
+     *  then delivers it to one of its threads.  Otherwise the signal is sent to the specified thread of the specified
+     *  process.
+     *
+     *  Signals that are destined for the calling thread are simply placed on the calling thread's queue and will be handled at
+     *  the next opportunity.  Signals destined for another thread of the calling process are placed on that thread's queue and
+     *  that thread is sent the RSIM_SignalHandling::SIT_WAKEUP signal to any blocking system call in that thread
+     *  returns. Signals destined for an entire process are handled by RSIM_Process::sys_kill().
+     *
+     *  Returns non-negative on success; negative error number on failure.
+     *
+     *  Thread safety: This function can be called by multiple threads concurrently if they all use different RSIM_Thread
+     *  objects. This function is not async-signal safe. */
+    int sys_tgkill(pid_t pid, pid_t tid, int signo);
+
+    /** Sends a signal to an entire process.  This is really just a convenience function for RSIM_Process::sys_kill(). It
+     *  returns non-negative on success; negative error number on failure.
+     *
+     *  Thread safety: This function is thread safe. */
+    int sys_kill(pid_t pid, const RSIM_SignalHandling::siginfo_32&);
+
+
+
+
+    /**************************************************************************************************************************
+     *                                  Instruction disassembly
      **************************************************************************************************************************/
 public:
 
@@ -344,14 +394,6 @@ protected:
     /**************************************************************************************************************************
      *                                  Data members
      **************************************************************************************************************************/
-protected:
-
-
-
-
-
-
-    
 
 public: //FIXME
     template<class guest_dirent_t> int getdents_syscall(int fd, uint32_t dirent_va, size_t sz);
@@ -360,21 +402,10 @@ public: //FIXME
     RSIM_Semantics semantics;
 
 
-    /* Debugging, tracing, etc. */
-    struct timeval last_report;                 /* Time of last progress report. */
-    double report_interval;                     /* Minimum seconds between progress reports. */
-
-    static const uint32_t SIGHANDLER_RETURN = 0xdeceaced;
-
     /* Stuff related to threads */
     uint32_t robust_list_head_va;               /* Address of robust futex list head. See set_robust_list() syscall */
     uint32_t clear_child_tid;                   /* See set_tid_address(2) man page and clone() emulation */
 
-    /* Stuff related to signal handling. */
-    uint64_t signal_pending;                    /* Bit N is set if signal N+1 is pending */
-    uint64_t signal_mask;                       /* Masked signals; Bit N is set if signal N+1 is masked */
-    stack_32 signal_stack;                      /* Possible alternative stack to using during signal handling */
-    bool signal_reprocess;                      /* Set to true if we might need to deliver signals (e.g., signal_mask changed) */
 
 };
 

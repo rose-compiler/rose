@@ -1,4 +1,6 @@
 // This is the file containing the C++ versions of the JNI functions written to interface with ECJ.
+// These functions are called from the JAVA code (within the Java based traversal over the ECJ AST) 
+// and construct the ROSE AST.
 
 // Support for calling the Java <--> C/C++ code.
 #include <jni.h>
@@ -35,9 +37,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *env, 
 
      printf ("sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
 
+  // We don't use the SgProject but since it should have already been built, we can verify that it is present.
      SgProject* project = sourceFile->get_project();
      ROSE_ASSERT(project != NULL);
 
+  // Get the pointer to the global scope and push it onto the astJavaScopeStack.
      SgGlobal* globalScope = sourceFile->get_globalScope();
      ROSE_ASSERT(globalScope != NULL);
 
@@ -45,6 +49,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *env, 
      ROSE_ASSERT(astJavaScopeStack.empty() == true);
      astJavaScopeStack.push_front(globalScope);
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
+
+  // Verify that the parent is set, these AST nodes are already setup by ROSE before calling this function.
      ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
    }
 
@@ -54,13 +60,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *env, 
  * Method:    cactionCompilationUnitDeclaration
  * Signature: (java/lang/String;)
  */
-JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration (JNIEnv *env, jobject xxx, jstring java_string)
+JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration (JNIEnv *env, jobject xxx, jstring compilationUnitFilename)
    {
-  // Example of how to get the string...
-     const char* str = env->GetStringUTFChars(java_string, NULL);
-     ROSE_ASSERT(str != NULL);
-     printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclaration s = %s \n",str);
-     env->ReleaseStringUTFChars(java_string, str);
+  // Example of how to get the string...but we don't really use the absolutePathFilename in this function.
+     const char* absolutePathFilename = env->GetStringUTFChars(compilationUnitFilename, NULL);
+     ROSE_ASSERT(absolutePathFilename != NULL);
+     printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclaration absolutePathFilename = %s \n",absolutePathFilename);
+     env->ReleaseStringUTFChars(compilationUnitFilename, absolutePathFilename);
 
   // This is already setup by ROSE as part of basic file initialization before calling ECJ.
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
@@ -108,6 +114,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
      SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction("super");
      ROSE_ASSERT(functionDeclaration != NULL);
 #endif
+
+     printf ("Leaving Java_JavaParser_cactionTypeDeclaration() \n");
    }
 
 
@@ -116,6 +124,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
 JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *env, jobject xxx, jstring java_string)
    {
      printf ("Build a SgMemberFunctionDeclaration (constructor) \n");
+
+#if 1
+  // Comment out to test simpler useage.
 
   // SgMemberFunctionDeclaration* buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL);
      SgName name = "abc";
@@ -155,6 +166,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *en
      ROSE_ASSERT(functionDefinition->get_body() != NULL);
      astJavaScopeStack.push_front(functionDefinition->get_body());
      ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
+#endif
    }
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd (JNIEnv *env, jobject xxx)
@@ -294,6 +306,525 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport (JNIEnv*
      SgName name = convertJavaStringToCxxString(env,java_string);
      SgVariableDeclaration* variableDeclaration = buildSimpleVariableDeclaration(name);
      ROSE_ASSERT(variableDeclaration != NULL);
+   }
+
+
+JNIEXPORT void cactionAllocationExpression(JNIEnv *env, jobject xxx)
+   {
+   }
+
+JNIEXPORT void cactionAND_AND_Expression(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionAnnotationMethodDeclaration(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionArgumentClassScope(JNIEnv *, jobject, jstring)
+   {
+   }
+
+
+JNIEXPORT void cactionArrayAllocationExpression(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionArrayInitializer(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionArrayQualifiedTypeReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionArrayQualifiedTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionArrayReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionArrayTypeReferenceClassScope(JNIEnv *, jobject, jstring)
+   {
+   }
+
+
+JNIEXPORT void cactionAssertStatement(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionAssignment(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionBinaryExpression(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionBlock(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionBreakStatement(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionCaseStatement(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionCastExpression(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionCharLiteral(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionClassLiteralAccess(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionClinit(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionConditionalExpression(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionContinueStatement(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionCompoundAssignment(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionDoStatement(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionDoubleLiteral(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionEmptyStatement(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionEqualExpression(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionExtendedStringLiteral(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionFalseLiteral(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionFieldDeclaration(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionFieldReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionFieldReferenceClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionFloatLiteral(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionForeachStatement(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionForStatement(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionIfStatement(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionImportReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionInitializer(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionInstanceOfExpression(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionIntLiteral(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadoc(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocAllocationExpression(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocAllocationExpressionClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocArgumentExpression(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocArgumentExpressionClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocArrayQualifiedTypeReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocArrayQualifiedTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocArraySingleTypeReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocArraySingleTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocFieldReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocFieldReferenceClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocImplicitTypeReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocImplicitTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocMessageSend(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocMessageSendClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocQualifiedTypeReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocQualifiedTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocReturnStatement(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocReturnStatementClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocSingleNameReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocSingleNameReferenceClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocSingleTypeReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionJavadocSingleTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionLabeledStatement(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionLocalDeclaration(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionLongLiteral(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionMarkerAnnotation(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionMemberValuePair(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionStringLiteralConcatenation(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionNormalAnnotation(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionNullLiteral(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionOR_OR_Expression(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionParameterizedQualifiedTypeReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionParameterizedQualifiedTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionParameterizedSingleTypeReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionParameterizedSingleTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionPostfixExpression(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionPrefixExpression(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionQualifiedAllocationExpression(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionQualifiedSuperReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionQualifiedSuperReferenceClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionQualifiedThisReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionQualifiedThisReferenceClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionQualifiedTypeReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionQualifiedTypeReferenceClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionReturnStatement(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionSingleMemberAnnotation(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionSingleNameReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionSingleNameReferenceClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionSuperReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionSwitchStatement(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionSynchronizedStatement(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionThisReference(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionThisReferenceClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionThrowStatement(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionTrueLiteral(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionTryStatement(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionTypeParameter(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionTypeParameterClassScope(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionUnaryExpression(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionWhileStatement(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionWildcard(JNIEnv *env, jobject xxx)
+   {
+   }
+
+
+JNIEXPORT void cactionWildcardClassScope(JNIEnv *env, jobject xxx)
+   {
    }
 
 

@@ -90,8 +90,10 @@ RSIM_SemanticPolicy::readMemory(X86SegmentRegister sr, const VirtualMachineSeman
     if (cond.known_value()) {
         uint8_t buf[Len/8];
         size_t nread = process->mem_read(buf, sr_shadow[sr].base+offset, Len/8);
-        if (nread!=Len/8)
-            throw Signal(SIGSEGV);
+        if (nread!=Len/8) {
+            bool ismapped = process->mem_is_mapped(sr_shadow[sr].base+offset+nread);
+            throw RSIM_SignalHandling::mk_sigfault(SIGSEGV, ismapped?SEGV_ACCERR:SEGV_MAPERR, sr_shadow[sr].base+offset+nread);
+        }
         uint64_t result = 0;
         for (size_t i=0, j=0; i<Len; i+=8, j++)
             result |= buf[j] << i;
@@ -130,18 +132,21 @@ RSIM_SemanticPolicy::writeMemory(X86SegmentRegister sr, const VirtualMachineSema
 
         size_t nwritten = process->mem_write(buf, sr_shadow[sr].base+offset, Len/8);
         if (nwritten!=Len/8) {
+            bool ismapped = process->mem_is_mapped(sr_shadow[sr].base+offset+nwritten);
 #if 0   /* First attempt, according to Section 24.2.1 "Program Error Signals" of glibc documentation */
             /* Writing to mem that's not mapped results in SIGBUS; writing to mem that's mapped without write permission
              * results in SIGSEGV. */
-            if (process->mem_is_mapped(base+offset)) {
-                throw Signal(SIGSEGV);
+            if (ismapped) {
+                throw RSIM_SignalHandling::mk_sigfault(SIGSEGV, SEGV_ACCERR, sr_shadow[sr].base+offset+nwritten);
             } else {
-                throw Signal(SIGBUS);
+                throw RSIM_SignalHandling::mk_sigfault(SIGBUS, SEGV_MAPERR, sr_shadow[sr].base+offset+nwritten);
             }
 #else   /* Second attempt, according to actual experience */
             /* The syscall_tst.117.shmdt.01 shows that mapping a shared memory segment, then unmapping it, then trying to
              * write to it will result in a SIGSEGV, not a SIGBUS. */
-            throw Signal(SIGSEGV);
+            throw RSIM_SignalHandling::mk_sigfault(SIGSEGV,
+                                                   ismapped ? SEGV_ACCERR : SEGV_MAPERR,
+                                                   sr_shadow[sr].base+offset+nwritten);
 #endif
         }
     }

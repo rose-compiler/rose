@@ -310,7 +310,9 @@ MemoryMap::insert(MapElement add)
         /* Insert the new element */
         assert(NULL==find(add.va));
         elements.push_back(add);
-        sorted = false;
+
+        /* Keep elements sorted */
+        std::sort(elements.begin(), elements.end());
     } catch (Exception &e) {
         e.map = this;
         throw e;
@@ -365,11 +367,6 @@ MemoryMap::erase(MapElement me)
 const MemoryMap::MapElement *
 MemoryMap::find(rose_addr_t va) const
 {
-    if (!sorted) {
-        std::sort(elements.begin(), elements.end());
-        sorted = true;
-    }
-
     size_t lo=0, hi=elements.size();
     while (lo<hi) {
         size_t mid=(lo+hi)/2;
@@ -388,11 +385,6 @@ MemoryMap::find(rose_addr_t va) const
 rose_addr_t
 MemoryMap::find_free(rose_addr_t start_va, size_t size, rose_addr_t alignment) const
 {
-    if (!sorted) {
-        std::sort(elements.begin(), elements.end());
-        sorted = true;
-    }
-
     start_va = ALIGN_UP(start_va, alignment);
     for (size_t i=0; i<elements.size(); i++) {
         const MapElement &me = elements[i];
@@ -415,11 +407,6 @@ MemoryMap::find_free(rose_addr_t start_va, size_t size, rose_addr_t alignment) c
 rose_addr_t
 MemoryMap::find_last_free(rose_addr_t max) const
 {
-    if (!sorted) {
-        std::sort(elements.begin(), elements.end());
-        sorted = true;
-    }
-
     bool found = false;
     rose_addr_t retval = 0;
 
@@ -446,10 +433,6 @@ MemoryMap::find_last_free(rose_addr_t max) const
 
 const std::vector<MemoryMap::MapElement> &
 MemoryMap::get_elements() const {
-    if (!sorted) {
-        std::sort(elements.begin(), elements.end());
-        sorted = true;
-    }
     return elements;
 }
 
@@ -622,7 +605,8 @@ MemoryMap::mprotect(const MapElement &region, bool relax/*=false*/)
     }
 
     elements.insert(elements.end(), created.begin(), created.end());
-    sorted = false;
+    if (!created.empty())
+        std::sort(elements.begin(), elements.end());
 }
 
 ExtentMap
@@ -639,11 +623,6 @@ MemoryMap::va_extents() const
 void
 MemoryMap::dump(FILE *f, const char *prefix) const
 {
-    if (!sorted) {
-        std::sort(elements.begin(), elements.end());
-        sorted = true;
-    }
-
     if (0==elements.size())
         fprintf(f, "%sempty\n", prefix);
 
@@ -703,7 +682,6 @@ MemoryMap::dump(const std::string &basename) const
     dump(f);
     fclose(f);
 
-    ROSE_ASSERT(sorted);
     for (size_t i=0; i<elements.size(); i++) {
         const MapElement &me = elements[i];
 
