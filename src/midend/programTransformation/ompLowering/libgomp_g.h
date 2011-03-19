@@ -115,7 +115,13 @@ extern bool GOMP_loop_ull_ordered_dynamic_next (unsigned long long *,
 
 extern void GOMP_ordered_start (void);
 extern void GOMP_ordered_end (void);
-
+/* void GOMP_parallel_start (void (*func) (void *), void *data, unsigned num_threads_specified); 
+ *  func: pointer to the function to be run in parallel
+ *  data: a pointer to a structure used to communicate data in and out of the subfunction
+ *  num_threads_specified: is a combination of the NUM_THREADS clause and the IF clause
+ *    is 1 if an IF clause is present and false, or the value of the NUM_THREADS clause, if present, or 0  by default
+ *  GOMP has an internal function (gomp_resolve_num_threads()) to determine the actual number of threads to be used.
+ *  */
 extern void GOMP_parallel_start (void (*) (void *), void *, unsigned);
 extern void GOMP_parallel_end (void);
 

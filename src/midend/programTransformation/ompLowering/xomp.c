@@ -121,7 +121,7 @@ void run_me(void* data)
 #endif
 #include "run_me_defs.inc"
 
-void xomp_parallel_start (void (*func) (void *), unsigned* numThread, int * argcount, ...);
+void xomp_parallel_start (void (*func) (void *), unsigned* ifClauseValue, unsigned* numThread, int * argcount, ...);
 //Wrapper functions to support linking with Fortran programs
 //
 // OFP does not support extensions like %VAL, so we use XOMP to compensate the difference
@@ -133,7 +133,7 @@ void xomp_parallel_start (void (*func) (void *), unsigned* numThread, int * argc
 // We expect the outlined function from a Fortran task will have multiple parameters passed by references
 // This wrapper function will pack those parameters into a single one to be compatible with gomp's parallel_start function
 // A glue part from Fortran's multiple parameters --> XOMP's single parameter
-void xomp_parallel_start (void (*func) (void *), unsigned* numThread, int * argcount, ...)
+void xomp_parallel_start (void (*func) (void *), unsigned* ifClauseValue, unsigned* numThread, int * argcount, ...)
 {
   int x;
   va_list v1;
@@ -143,7 +143,7 @@ void xomp_parallel_start (void (*func) (void *), unsigned* numThread, int * argc
   if (*argcount == 0)
   {
 
-    XOMP_parallel_start (func, 0, *numThread);
+    XOMP_parallel_start (func, 0, *ifClauseValue, *numThread);
     return;
   }
   
@@ -178,10 +178,20 @@ void xomp_parallel_start (void (*func) (void *), unsigned* numThread, int * argc
   }
 }
 
-void XOMP_parallel_start (void (*func) (void *), void *data, unsigned numThread)
+void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseValue, unsigned numThreadsSpecified)
 {
 
-#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY 
+  // XOMP  to GOMP
+  unsigned numThread = 0;
+  //numThread is 1 if an IF clause is present and false, 
+  //          or the value of the NUM_THREADS clause, if present, or 0. 
+  // It is only used to indicate a combination of the NUM_THREADS clause and the IF clause. 
+  // GOMP has an internal function (gomp_resolve_num_threads()) to determine the actual number of threads to be used later on. 
+  if (!ifClauseValue)
+    numThread = 1;
+  else
+    numThread = numThreadsSpecified;
   GOMP_parallel_start (func, data, numThread);
   func(data);
 #else   
