@@ -27,7 +27,7 @@ function runBuildStep {
 ####################################################################################
     
     printBannerToStartStep "$buildStep"
-    start_time_seconds="$(date +%s)"
+    local start_time_seconds="$(date +%s)"
 
 
     if [ $# -eq 2 ]; then
@@ -63,7 +63,7 @@ function runSpewAnalysis {
     fi
 
     printBannerToStartStep "Compile time spew"
-    start_time_seconds="$(date +%s)"
+    local start_time_seconds="$(date +%s)"
 
 
     inputFile="$1"
