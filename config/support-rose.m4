@@ -143,24 +143,12 @@ fi
 #########################################################################################
 ##
 
-  ROSE_SUPPORT_LANGUAGES
+  ROSE_SUPPORT_LANGUAGE_CONFIG_OPTIONS
 
 ##
 #########################################################################################
 exit 0;
 
-# DQ (4/16/2010): Added to support to only handle Fortran (support for Rice and LANL users)
-AC_ARG_ENABLE([only-fortran],AS_HELP_STRING([--enable-only-fortran],[Only support Fortran using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
-
-AC_ARG_ENABLE([only-c],AS_HELP_STRING([--enable-only-c],[Only support C using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
-
-AC_ARG_ENABLE([only-cxx],AS_HELP_STRING([--enable-only-cxx],[Only support C++ using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
-
-AC_ARG_ENABLE([only-php],AS_HELP_STRING([--enable-only-php],[Only support PHP using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
-
-AC_ARG_ENABLE([only-java],AS_HELP_STRING([--enable-only-java],[Only support Java using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
-
-AC_ARG_ENABLE([only-binary-analysis],AS_HELP_STRING([--enable-only-binary-analysis],[Only support Binary Analysis using ROSE (turns off all other support)]),[enableval=yes],[enableval=no])
 
 # *******************************************************
 # ROSE/projects directory compilation & testing
