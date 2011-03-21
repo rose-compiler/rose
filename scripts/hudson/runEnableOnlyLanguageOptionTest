@@ -50,6 +50,12 @@ else
   export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
 fi
 
+# TOO (3/21/2011): Currently, C and C++ must be simultaneously enabled/disabled so we don't
+# need to have separate tests for C and C++.
+if test "x$LANGUAGE_OPTION" = "xc-and-cxx" ; then
+  LANGUAGE_OPTION="c"
+fi
+
 #########################################################################################
 #
 #  Configure Flags 
