@@ -1825,9 +1825,14 @@ TestAstForUniqueStatementsInScopes::visit ( SgNode* node )
                     for (list<SgStatement *>::iterator j = duplicateStatements.begin(); j != duplicateStatements.end(); j++)
                        {
                          SgStatement * currDuplicate = *j;
+                         ROSE_ASSERT(currDuplicate != NULL);
                          Sg_File_Info * location = currDuplicate->get_file_info();
                          ROSE_ASSERT(location != NULL);
                          printf ("Error: node (%d/%d) = %p = %s at: \n",counter,numberOfDuplicates,currDuplicate,currDuplicate->sage_class_name());
+
+                      // DQ (3/21/2011): Added more detail to debug duplicate entries...
+                         printf ("currDuplicate name = %s \n",SageInterface::get_name(currDuplicate).c_str());
+
                          if (location != NULL)
                             {
                               location->display("redundant IR node");
@@ -1846,113 +1851,6 @@ TestAstForUniqueStatementsInScopes::visit ( SgNode* node )
         }
    }
 
-#if 0
-// Older version of function (before being replaced by Milind's version)
-void
-TestAstForUniqueStatementsInScopes::visit ( SgNode* node )
-   {
-  // DQ (3/31/2004): Added to locate scopes that have redundent statements.
-  // This could happen either because of a bug in the EDG/SAGE connection,
-  // or as a result of using the rewrite mechanism inappropriately.
-
-  // printf ("node = %s \n",node->sage_class_name());
-
-  // DQ (4/1/2004): Added code to detect redundent statements in a scope!
-     SgScopeStatement* scope = isSgScopeStatement(node);
-     if (scope != NULL)
-        {
-       // Generate a list of statements in the scope (even if they are really declaration statements)
-          SgStatementPtrList statementList;
-          switch ( scope->variantT() )
-             {
-               case V_SgIfStmt:
-                  {
-                    SgIfStmt* ifStatement = isSgIfStmt(scope);
-                    ROSE_ASSERT (ifStatement != NULL);
-                    statementList = ifStatement->get_true_body()->generateStatementList();
-                    SgStatementPtrList falseStatementList = ifStatement->get_false_body()->generateStatementList();
-                    statementList.merge(falseStatementList);
-                    break;
-                  }
-               default:
-                    statementList = scope->generateStatementList();
-             }
-
-       // Checking the size before and after generating unique pointer values is one simple way 
-       // to make sure there are no redundent entries. But we have to sort the entries first.
-          int sizeBefore = statementList.size();
-          statementList.sort();
-
-       // Save statement list before calling unique (so that we can interogate any errors)
-          SgStatementPtrList oldStatementList = statementList;
-
-          statementList.unique();
-          int sizeAfter = statementList.size();
-
-       // check the sizes before and after to make sure they are the same
-          if (sizeBefore != sizeAfter)
-             {
-               if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
-                  {
-                    cout << "Problematic Node: " << node->sage_class_name() << " found. (a statement appears more than once in this scope)" << endl;
-
-                    printf ("Error: sizeBefore = %d  sizeAfter = %d \n",sizeBefore,sizeAfter);
-
-                 // The new list is shorter than the old list (verify)
-                    ROSE_ASSERT(sizeAfter < sizeBefore);
-                    SgStatementPtrList::iterator i = statementList.begin();
-                    int eraseCounter = 0;
-                 // int numberOfNodes = statementList.size();
-                    while (i != statementList.end())
-                       {
-                      // oldStatementList.remove(*i);
-                      // printf ("Looking for *i = %p \n",*i);
-                         SgStatementPtrList::iterator position = find(oldStatementList.begin(),oldStatementList.end(),*i);
-                      // if (position != oldStatementList.end())
-                         if (position != oldStatementList.end())
-                            {
-                           // printf ("Found a redundent node = %p = %p (oldStatementList.size() = %zu) \n",*i,*position,oldStatementList.size());
-                              int index = 0;
-                              SgStatementPtrList::iterator indexPosition = oldStatementList.begin();
-                              while ( indexPosition != position )
-                                 {
-                                   index++;
-                                   indexPosition++;
-                                 }
-                           // printf ("Erasing node %d of %d (index = %d of %zu)\n",eraseCounter,numberOfNodes,index,oldStatementList.size());
-                              oldStatementList.erase(position);
-                            }
-                         i++;
-                         eraseCounter++;
-                       }
-
-                    SgStatementPtrList::iterator j = oldStatementList.begin();
-                    int counter = 0;
-                    int numberOfRedundentNodes = oldStatementList.size();
-                    printf ("numberOfRedundentNodes = %d \n",numberOfRedundentNodes);
-#if 0
-                    printf ("Exiting as a test ... \n");
-                    ROSE_ASSERT(false);
-#endif
-                    while (j != oldStatementList.end())
-                       {
-                         Sg_File_Info* location = (*j)->get_file_info();
-                         ROSE_ASSERT(location != NULL);
-                         printf ("Error: node (%d/%d) = %p = %s at: \n",counter,numberOfRedundentNodes,*j,(*j)->sage_class_name());
-                         if (location != NULL)
-                            {
-                              location->display("redundant IR node");
-                            }
-                         counter++;
-                         j++;
-                       }
-                  }
-             }
-
-          ROSE_ASSERT (sizeBefore == sizeAfter);
-        }
-   }
-#endif
 
 /*! \page AstProperties AST Properties (Consistency Tests)
 

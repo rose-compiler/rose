@@ -87,35 +87,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
 
      outputJavaState("At TOP of cactionTypeDeclaration");
 
-#if 1
+  // This builds the associated class in the curren scope as defined by the astJavaScopeStack.
      buildClass(name);
-#else
-     ROSE_ASSERT(astJavaScopeStack.empty() == false);
-     SgClassDeclaration* declaration = SageBuilder::buildDefiningClassDeclaration ( name, astJavaScopeStack.front() );
-
-     ROSE_ASSERT(declaration->get_type() != NULL);
-
-  // Set the source code position...
-  // setSourcePosition(declaration);
-  // setSourcePositionCompilerGenerated(declaration);
-
-  // void setSourcePosition  ( SgLocatedNode* locatedNode );
-  // void setSourcePositionCompilerGenerated( SgLocatedNode* locatedNode );
-
-     ROSE_ASSERT(astJavaScopeStack.empty() == false);
-     SgClassDefinition* definition = SageBuilder::buildClassDefinition(declaration);
-
-  // Set the source code position...
-  // setSourcePosition(definition);
-  // setSourcePositionCompilerGenerated(definition);
-
-     astJavaScopeStack.push_front(definition);
-     ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
-
-  // Add "super()" member function.
-     SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction("super");
-     ROSE_ASSERT(functionDeclaration != NULL);
-#endif
 
      ROSE_ASSERT(astJavaScopeStack.front() != NULL);
      astJavaScopeStack.front()->get_file_info()->display("source position in Java_JavaParser_cactionTypeDeclaration(): debug");
@@ -138,31 +111,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *en
   // SgMemberFunctionDeclaration* buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL);
      SgName name = "abc";
 
-#if 1
-     SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction(name);
-#else
      SgClassDefinition* classDefinition = isSgClassDefinition(astJavaScopeStack.front());
      ROSE_ASSERT(classDefinition != NULL);
-
-     SgFunctionParameterTypeList* typeList = SageBuilder::buildFunctionParameterTypeList();
-     ROSE_ASSERT(typeList != NULL);
-
-  // Specify if this is const, volatile, or restrict (0 implies normal member function).
-     unsigned int mfunc_specifier = 0;
-     SgMemberFunctionType* return_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), typeList, classDefinition, mfunc_specifier);
-     ROSE_ASSERT(return_type != NULL);
-
-     SgFunctionParameterList* parameterlist = SageBuilder::buildFunctionParameterList(typeList);
-     ROSE_ASSERT(parameterlist != NULL);
-
-     SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (name, return_type, parameterlist, astJavaScopeStack.front() );
-     ROSE_ASSERT(functionDeclaration != NULL);
-
-     ROSE_ASSERT(functionDeclaration->get_definingDeclaration() != NULL);
-
-  // non-defining declaration not built yet.
-     ROSE_ASSERT(functionDeclaration->get_firstNondefiningDeclaration() == NULL);
-#endif
+     SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction(name,classDefinition);
 
      SgFunctionDefinition* functionDefinition = functionDeclaration->get_definition();
      ROSE_ASSERT(functionDefinition != NULL);
@@ -218,9 +169,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jo
      printf ("Build a SgMemberFunctionDeclaration \n");
 
      SgName name = convertJavaStringToCxxString(env,java_string);
-     SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction(name);
 
-     astJavaScopeStack.front()->append_statement(functionDeclaration);
+     SgClassDefinition* classDefinition = isSgClassDefinition(astJavaScopeStack.front());
+     ROSE_ASSERT(classDefinition != NULL);
+
+     SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction(name,classDefinition);
+
+  // This is handled in the buildSimpleMemberFunction() function (though perhaps that is not the smenatics we want).
+  // astJavaScopeStack.front()->append_statement(functionDeclaration);
 
   // Push the declaration onto the declaration stack.
    }
@@ -274,7 +230,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart (JN
 
 #if 1
      SgName name = convertJavaStringToCxxString(env,java_string);
-     buildClass(name);
+
+  // This builds a class to represent the implicit classes that are available by default within Java.
+  // Each is built on an as needed basis (driven by references to the class).
+     buildImplicitClass(name);
 #endif
 
      outputJavaState("At BOTTOM of cactionBuildImplicitClassSupportStart");
@@ -287,6 +246,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
    {
      printf ("Build support for implicit class (end) \n");
 
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
      outputJavaState("cactionBuildImplicitClassSupportEnd");
 
   // Experiment with ERROR on C++ side...communicated to Java...and back to C++ side where the JVM is called by ROSE...
@@ -295,6 +255,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
   // Pop the class definition off the scope stack...
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      astJavaScopeStack.pop_front();
+
+  // At this point we shuld still at least have the global scope on the stack.
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
    }
 
 
@@ -302,11 +265,22 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
 // declared "public static native" instead of "public native" in the Java side of the JNI interface.
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport (JNIEnv* env, jclass xxx, jstring java_string)
    {
-  // printf ("Build support for implicit class member function (method) \n");
+     printf ("Build support for implicit class member function (method) \n");
+
+     outputJavaState("At TOP of cactionBuildImplicitMethodSupport");
 
      SgName name = convertJavaStringToCxxString(env,java_string);
-     SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction(name);
+
+     printf ("Build support for implicit class member function (method) = %s \n",name.str());
+
+  // Note sure if we want anything specific to implicit class handling to touch the astJavaScopeStack!
+     SgClassDefinition* classDefinition = isSgClassDefinition(astJavaScopeStack.front());
+     ROSE_ASSERT(classDefinition != NULL);
+
+     SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction(name, classDefinition);
      ROSE_ASSERT(functionDeclaration != NULL);
+
+     outputJavaState("At BOTTOM of cactionBuildImplicitMethodSupport");
    }
 
 

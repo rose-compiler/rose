@@ -235,14 +235,13 @@ convertJavaStringToCxxString(JNIEnv *env, const jstring & java_string)
 
 
 SgMemberFunctionDeclaration*
-buildSimpleMemberFunction(const SgName & name)
+buildSimpleMemberFunction(const SgName & name, SgClassDefinition* classDefinition)
    {
   // This is abstracted so that we can build member functions as require to define Java specific default functions (e.g. super()).
 
-     printf ("Inside of buildSimpleMemberFunction(): name = %s \n",name.str());
-
-     SgClassDefinition* classDefinition = isSgClassDefinition(astJavaScopeStack.front());
      ROSE_ASSERT(classDefinition != NULL);
+     ROSE_ASSERT(classDefinition->get_declaration() != NULL);
+     printf ("Inside of buildSimpleMemberFunction(): name = %s in scope = %p = %s = %s \n",name.str(),classDefinition,classDefinition->class_name().c_str(),classDefinition->get_declaration()->get_name().str());
 
      SgFunctionParameterTypeList* typeList = SageBuilder::buildFunctionParameterTypeList();
      ROSE_ASSERT(typeList != NULL);
@@ -255,24 +254,120 @@ buildSimpleMemberFunction(const SgName & name)
      SgFunctionParameterList* parameterlist = SageBuilder::buildFunctionParameterList(typeList);
      ROSE_ASSERT(parameterlist != NULL);
 
-     SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (name, return_type, parameterlist, astJavaScopeStack.front() );
+  // SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (name, return_type, parameterlist, astJavaScopeStack.front() );
+     SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (name, return_type, parameterlist, classDefinition );
      ROSE_ASSERT(functionDeclaration != NULL);
 
      ROSE_ASSERT(functionDeclaration->get_definingDeclaration() != NULL);
 
+     if (functionDeclaration->get_firstNondefiningDeclaration() != NULL)
+        {
   // non-defining declaration not built yet.
      ROSE_ASSERT(functionDeclaration->get_firstNondefiningDeclaration() == NULL);
 
+  // Now build the non-defining declaration.
+     SgMemberFunctionDeclaration* nonDefiningFunctionDeclaration = SageBuilder::buildNondefiningMemberFunctionDeclaration (functionDeclaration,classDefinition);
+
+     ROSE_ASSERT(functionDeclaration->get_firstNondefiningDeclaration() == NULL);
+     functionDeclaration->set_firstNondefiningDeclaration(nonDefiningFunctionDeclaration);
+     ROSE_ASSERT(functionDeclaration->get_firstNondefiningDeclaration() != NULL);
+
+     ROSE_ASSERT(nonDefiningFunctionDeclaration->get_definingDeclaration() != NULL);
+        }
+       else
+        {
+          printf ("WARNING: functionDeclaration->get_firstNondefiningDeclaration() == NULL sometimes (for overloaded function of those matching existing declarations) \n");
+        }
+
      SgFunctionDefinition* functionDefinition = functionDeclaration->get_definition();
      ROSE_ASSERT(functionDefinition != NULL);
+
+  // Add the member function to the class scope.
+     classDefinition->append_statement(functionDeclaration);
+
+     size_t declarationListSize = classDefinition->generateStatementList().size();
+
+     printf ("declarationListSize = %zu \n",declarationListSize);
+     ROSE_ASSERT(declarationListSize > 0);
+
+     printf ("Test to make sure the SgFunctionSymbol is in the symbol table. \n");
+     SgFunctionSymbol* memberFunctionSymbol = classDefinition->lookup_function_symbol(name);
+     ROSE_ASSERT(memberFunctionSymbol != NULL);
 
      return functionDeclaration;
    }
 
 
+SgClassDeclaration*
+buildJavaClass (const SgName & className, SgScopeStatement* scope )
+   {
+  // This is a low level function to build the class specific to Java requirements 
+  // (not very different from C++, but with a "super" function).
+
+     ROSE_ASSERT(scope != NULL);
+
+     SgClassDeclaration* declaration = SageBuilder::buildDefiningClassDeclaration ( className, scope );
+     ROSE_ASSERT(declaration != NULL);
+
+     ROSE_ASSERT(declaration->get_type() != NULL);
+
+     ROSE_ASSERT(declaration->get_firstNondefiningDeclaration() != NULL);
+
+  // Make sure that the new class has been added to the correct synbol table.
+     ROSE_ASSERT (scope->lookup_class_symbol(declaration->get_name()) != NULL);
+
+  // Set the source code position...
+  // setSourcePosition(declaration);
+  // setSourcePositionCompilerGenerated(declaration);
+
+  // void setSourcePosition  ( SgLocatedNode* locatedNode );
+  // void setSourcePositionCompilerGenerated( SgLocatedNode* locatedNode );
+
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     SgClassDefinition* classDefinition = SageBuilder::buildClassDefinition(declaration);
+     ROSE_ASSERT(classDefinition != NULL);
+
+  // Set the source code position...
+  // setSourcePosition(definition);
+  // setSourcePositionCompilerGenerated(definition);
+
+  // This lowest level function should not touch the astJavaScopeStack!
+  // astJavaScopeStack.push_front(definition);
+  // ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
+
+#if 1
+  // Ignore this requirement while we are debugging...
+
+  // Add "super()" member function.
+     SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction("super",classDefinition);
+     ROSE_ASSERT(functionDeclaration != NULL);
+
+     size_t declarationListSize = classDefinition->generateStatementList().size();
+
+     printf ("declarationListSize = %zu \n",declarationListSize);
+     ROSE_ASSERT(declarationListSize > 0);
+#endif
+
+     return declaration;
+   }
+
 void
 buildClassSupport (const SgName & className, bool implicitClass)
    {
+  // This is mid level support for building a Java class. It is used by both the 
+  // buildClass() and buildImplicitClass() functions.  This function calls the 
+  // low level buildJavaClass() function to handle Java specific details and to
+  // factor out the details similar to both normal java classes and implicit classes.
+
+  // Note that if an implicit class is built, then all of the required classes to
+  // support it being in the correct class hierarchy of classes (e.g. java.lang.xxx.yyy).
+  // We may at some point use namespaces to supprt this, but this design point is not 
+  // clear presently (namespaces are not really a part of Java).  I expect that we will
+  // define something similar to a implicit use statement to support the java implicit
+  // classes to be present in the global name space (using the alias symbol support in 
+  // ROSE).  Though it is not clear if implicit Java function can appear without their
+  // name qualification, so we will see.
+
 #if 1
      SgScopeStatement* outerScope = NULL;
 
@@ -333,32 +428,7 @@ buildClassSupport (const SgName & className, bool implicitClass)
 
   // ROSE_ASSERT(outerScope != NULL);
 
-     SgClassDeclaration* declaration = SageBuilder::buildDefiningClassDeclaration ( name, astJavaScopeStack.front() );
-
-     ROSE_ASSERT(declaration->get_type() != NULL);
-
-     ROSE_ASSERT(declaration->get_firstNondefiningDeclaration() != NULL);
-
-  // Set the source code position...
-  // setSourcePosition(declaration);
-  // setSourcePositionCompilerGenerated(declaration);
-
-  // void setSourcePosition  ( SgLocatedNode* locatedNode );
-  // void setSourcePositionCompilerGenerated( SgLocatedNode* locatedNode );
-
-     ROSE_ASSERT(astJavaScopeStack.empty() == false);
-     SgClassDefinition* definition = SageBuilder::buildClassDefinition(declaration);
-
-  // Set the source code position...
-  // setSourcePosition(definition);
-  // setSourcePositionCompilerGenerated(definition);
-
-     astJavaScopeStack.push_front(definition);
-     ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
-
-  // Add "super()" member function.
-     SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction("super");
-     ROSE_ASSERT(functionDeclaration != NULL);
+  // SgClassDeclaration* declaration = buildJavaClass(name, astJavaScopeStack.front() );
 
      if (implicitClass == true)
         {
@@ -382,10 +452,33 @@ buildClassSupport (const SgName & className, bool implicitClass)
 
             // Build the "java" and the "lang" classes if they don't already exist.
                SgClassSymbol * classSymbol = outerScope->lookup_class_symbol(parentClassName);
+
+               printf ("parentClassName = %s classSymbol = %p \n",parentClassName.c_str(),classSymbol);
                if (classSymbol == NULL)
                   {
                  // This parent class does not exist so add it (must be added to the correct scope).
-                    buildImplicitClass(parentClassName);
+                 // buildImplicitClass(parentClassName);
+                    printf ("Building parent class = %s for implicit class = %s \n",parentClassName.c_str(),name.str());
+                    SgClassDeclaration* implicitDeclaration = buildJavaClass(parentClassName, outerScope );
+                    ROSE_ASSERT(implicitDeclaration != NULL);
+                    ROSE_ASSERT(implicitDeclaration->get_definition() != NULL);
+
+                    printf ("In buildClass(%s : parent of implicit class) after building the SgClassDeclaration: outerScope = %p = %s \n",parentClassName.c_str(),outerScope,outerScope->class_name().c_str());
+                    SgClassDefinition* outerScopeClassDefinition = isSgClassDefinition(outerScope);
+                    printf ("outerScopeClassDefinition = %p = %s \n",outerScopeClassDefinition,outerScopeClassDefinition == NULL ? "NULL" : outerScopeClassDefinition->get_declaration()->get_name().str());
+                    outerScope->prepend_statement(implicitDeclaration);
+                    ROSE_ASSERT(outerScope->generateStatementList().size() > 0);
+
+                    ROSE_ASSERT(implicitDeclaration->get_parent() != NULL);
+                 // declaration->set_parent(outerScope);
+
+                    printf ("Build a new SgClassSymbol for parentClassName = %s and implicitDeclaration = %p = %s \n",parentClassName.c_str(),implicitDeclaration,implicitDeclaration->class_name().c_str());
+                    classSymbol = new SgClassSymbol(implicitDeclaration);
+
+                    printf ("Insert the new SgClassSymbol = %p into scope = %p = %s \n",classSymbol,outerScope,outerScope->class_name().c_str());
+                    outerScope->insert_symbol(parentClassName,classSymbol);
+
+                    printf ("Test to make sure the SgClassSymbol is in the symbol table. \n");
                     classSymbol = outerScope->lookup_class_symbol(parentClassName);
                     ROSE_ASSERT(classSymbol != NULL);
                   }
@@ -394,32 +487,78 @@ buildClassSupport (const SgName & className, bool implicitClass)
                  // Nothing to do here!
                   }
 
-               outerScope = classSymbol->get_declaration()->get_definition();
+               ROSE_ASSERT(classSymbol != NULL);
+               ROSE_ASSERT(classSymbol->get_declaration() != NULL);
+               ROSE_ASSERT(classSymbol->get_declaration()->get_definingDeclaration() != NULL);
+               ROSE_ASSERT(isSgClassDeclaration(classSymbol->get_declaration()->get_definingDeclaration()) != NULL);
+               ROSE_ASSERT(isSgClassDeclaration(classSymbol->get_declaration()->get_definingDeclaration())->get_definition() != NULL);
+
+               outerScope = isSgClassDeclaration(classSymbol->get_declaration()->get_definingDeclaration())->get_definition();
                ROSE_ASSERT(outerScope != NULL);
              }
+#if 1
+       // Here we build the class and associate it with the correct code (determined differently based on if this is an implicit or non-implicit class.
+          SgClassDeclaration* declaration = buildJavaClass(name, outerScope );
 
-          printf ("In buildClass(%s) after building the SgClassDeclaration: astJavaScopeStack.front() = %p = %s \n",name.str(),outerScope,outerScope->class_name().c_str());
+          printf ("In buildClass(%s : implicit class) after building the SgClassDeclaration: outerscope = %p = %s \n",name.str(),outerScope,outerScope->class_name().c_str());
+          SgClassDefinition* outerScopeClassDefinition = isSgClassDefinition(outerScope);
+          printf ("outerScopeClassDefinition = %p = %s \n",outerScopeClassDefinition,outerScopeClassDefinition == NULL ? "NULL" : outerScopeClassDefinition->get_declaration()->get_name().str());
           outerScope->prepend_statement(declaration);
           ROSE_ASSERT(outerScope->generateStatementList().size() > 0);
 
-#if 1
+          printf ("Build a new SgClassSymbol for parentClassName = %s and declaration = %p = %s \n",name.str(),declaration,declaration->class_name().c_str());
+          SgClassSymbol* classSymbol = new SgClassSymbol(declaration);
+
+          printf ("Insert the new SgClassSymbol = %p into scope = %p = %s \n",classSymbol,outerScope,outerScope->class_name().c_str());
+          outerScope->insert_symbol(name,classSymbol);
+
+          printf ("Test to make sure the SgClassSymbol is in the symbol table. \n");
+          classSymbol = outerScope->lookup_class_symbol(name);
+          ROSE_ASSERT(classSymbol != NULL);
+
+       // At this point we shuld still at least have the global scope on the stack.
+          ROSE_ASSERT(astJavaScopeStack.empty() == false);
+
+       // Note that this pushed only the new implicit class definition onto the stack 
+       // and none of the parent class scopes. Is this going to be OK?
+          ROSE_ASSERT(declaration->get_definition() != NULL);
+          astJavaScopeStack.push_front(declaration->get_definition());
+          ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
+#endif
+
+          ROSE_ASSERT(declaration->get_parent() != NULL);
+#if 0
           printf ("Exiting as a test of implicitClass handling \n");
           ROSE_ASSERT(false);
 #endif
         }
        else
         {
+       // Here we build the class and associate it with the correct code (determined differently based on if this is an implicit or non-implicit class.
+          SgClassDeclaration* declaration = buildJavaClass(name, outerScope );
+
        // Add the class declaration to the current scope.  This might not be appropriate for implicit classes, but it helps in debugging the AST for now.
           ROSE_ASSERT(outerScope != NULL);
-          printf ("In buildClass(%s) after building the SgClassDeclaration: astJavaScopeStack.front() = %p = %s \n",name.str(),outerScope,outerScope->class_name().c_str());
+          printf ("In buildClass(%s : non-implicit class) after building the SgClassDeclaration: astJavaScopeStack.front() = %p = %s \n",name.str(),outerScope,outerScope->class_name().c_str());
+          SgClassDefinition* outerScopeClassDefinition = isSgClassDefinition(outerScope);
+          printf ("outerScopeClassDefinition = %p = %s \n",outerScopeClassDefinition,outerScopeClassDefinition == NULL ? "NULL" : outerScopeClassDefinition->get_declaration()->get_name().str());
           outerScope->append_statement(declaration);
           ROSE_ASSERT(outerScope->generateStatementList().size() > 0);
 
+          ROSE_ASSERT(declaration->get_parent() != NULL);
+       // declaration->set_parent(outerScope);
+
        // Make sure that the new class has been added to the correct synbol table.
           ROSE_ASSERT (outerScope->lookup_class_symbol(declaration->get_name()) != NULL);
+
+       // If this is NOT an implicit class then use the class definition as the new current scope.
+          ROSE_ASSERT(declaration->get_definition() != NULL);
+          astJavaScopeStack.push_front(declaration->get_definition());
+          ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
+
+          ROSE_ASSERT(declaration->get_parent() != NULL);
         }
 
-     ROSE_ASSERT(declaration->get_parent() != NULL);
    }
 
 
@@ -442,6 +581,8 @@ SgVariableDeclaration*
 buildSimpleVariableDeclaration(const SgName & name)
    {
      SgVariableDeclaration* variable = NULL;
+
+     printf ("Building a variable (%s) within scope = %p = %s \n",name.str(),astJavaScopeStack.front(),astJavaScopeStack.front()->class_name().c_str());
 
      variable = SageBuilder::buildVariableDeclaration (name, SgTypeInt::createType(), NULL, astJavaScopeStack.front() );
      ROSE_ASSERT(variable != NULL);

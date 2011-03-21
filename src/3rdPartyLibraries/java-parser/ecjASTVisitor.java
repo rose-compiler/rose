@@ -306,6 +306,9 @@ class ecjASTVisitor extends ASTVisitor
         {
           System.out.println("Inside of visit (ConstructorDeclaration,ClassScope)");
 
+       // char [] name = node.selector;
+          System.out.println("Inside of visit (ConstructorDeclaration,ClassScope) method name = " + node.selector);
+
           java_parser.cactionConstructorDeclaration("ConstructorDeclaration_abc");
 
           System.out.println("Leaving visit (ConstructorDeclaration,ClassScope)");
@@ -921,6 +924,9 @@ class ecjASTVisitor extends ASTVisitor
      public boolean visit(MethodDeclaration  node, ClassScope scope)
         {
           System.out.println("Inside of visit (MethodDeclaration,ClassScope)");
+
+          char [] name = node.selector;
+          System.out.println("Inside of visit (MethodDeclaration,ClassScope) method name = " + name);
 
           java_parser.cactionMethodDeclaration("MethodDeclaration_abc");
        // java_parser.cactionMethodDeclaration();

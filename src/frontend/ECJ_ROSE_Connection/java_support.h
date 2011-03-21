@@ -54,7 +54,9 @@ void outputJavaState( const std::string label );
 
 std::string convertJavaStringToCxxString(JNIEnv *env, const jstring & java_string);
 
-SgMemberFunctionDeclaration* buildSimpleMemberFunction(const SgName & name);
+// Specify the SgClassDefinition explicitly so that implicit classes are simpler to build.
+// SgMemberFunctionDeclaration* buildSimpleMemberFunction(const SgName & name);
+SgMemberFunctionDeclaration* buildSimpleMemberFunction(const SgName & name, SgClassDefinition* classDefinition);
 
 // Build a simple class in the current scope and set the scope to be the class definition.
 void buildClass (const SgName & className);
