@@ -37,7 +37,8 @@ void NodeState::addLattice(const Analysis* analysis, int latticeName, Lattice* l
 	addLattice_ex(dfInfoBelow, analysis, latticeName, l->copy());
 }*/
 
-// sets this node's lattices for this analysis
+// Sets this node's lattices for this analysis, making copies of the provided lattices.
+// This call takes the actual provided lattices and does not make a copy of them.
 void NodeState::setLattices(const Analysis* analysis, vector<Lattice*>& lattices)
 {
 	vector<Lattice*> tmp;
@@ -898,6 +899,7 @@ void NodeState::copyLattices_aEQa(Analysis* analysis, NodeState& to, const NodeS
 	LatticeMap::const_accessor rFrom; from.dfInfoAbove.find(rFrom, analysis);
 	copyLattices(wTo->second, rFrom->second);
 	#else
+	ROSE_ASSERT(to.dfInfoAbove.find(analysis)!= to.dfInfoAbove.end());
 	copyLattices(to.dfInfoAbove.find(analysis)->second, from.dfInfoAbove.find(analysis)->second);
 	#endif
 }
@@ -905,11 +907,30 @@ void NodeState::copyLattices_aEQa(Analysis* analysis, NodeState& to, const NodeS
 // copies from's above lattices for analysisA to to's above lattices for analysisB
 void NodeState::copyLattices_aEQa(Analysis* analysisA, NodeState& to, Analysis* analysisB, const NodeState& from)
 {
+	cout << "        to = "<<to.str(analysisA, "    ")<<"\n";
+	
 	#ifdef THREADED
 	LatticeMap::accessor       wTo;   to.dfInfoAbove.find(wTo, analysisA);
 	LatticeMap::const_accessor rFrom; from.dfInfoAbove.find(rFrom, analysisB);
 	copyLattices(wTo->second, rFrom->second);
 	#else
+	ROSE_ASSERT(to.dfInfoAbove.find(analysisA) != to.dfInfoAbove.end());
+	ROSE_ASSERT(to.dfInfoAbove.find(analysisB) != to.dfInfoAbove.end());
+	
+	cout << "    copyLattices_aEQa() #to.above="<<to.dfInfoAbove.find(analysisA)->second.size()<<" #from.above="<<from.dfInfoAbove.find(analysisB)->second.size()<<" analysisA="<<analysisA<<" analysisB="<<analysisB<<"\n";
+	
+	vector<Lattice*>::const_iterator itX, itY;
+	for(itX = to.dfInfoAbove.find(analysisA)->second.begin(), itY = from.dfInfoAbove.find(analysisB)->second.begin(); 
+	   itX!=to.dfInfoAbove.find(analysisA)->second.end() && itY!=from.dfInfoAbove.find(analysisB)->second.end(); 
+	   itX++, itY++)
+	{
+		cout << "        itX = "<<*itX<<" = "<<(*itX)->str("            ")<<"\n"; cout.flush();
+		cout << "        itY = "<<*itY<<" = "<<(*itY)->str("            ")<<"\n"; cout.flush();
+		cout << "        ---------------------------\n"; cout.flush();
+		(*itX)->copy(*itY);
+		//dfInfoX.push_back((*itY)->copy());
+	}
+
 	copyLattices(to.dfInfoAbove.find(analysisA)->second, from.dfInfoAbove.find(analysisB)->second);
 	#endif
 }
@@ -922,6 +943,8 @@ void NodeState::copyLattices_bEQa(Analysis* analysis, NodeState& to, const NodeS
 	LatticeMap::const_accessor rFrom; from.dfInfoAbove.find(rFrom, analysis);
 	copyLattices(wTo->second, rFrom->second);
 	#else
+	ROSE_ASSERT(to.dfInfoBelow.find(analysis)!= to.dfInfoBelow.end());
+	ROSE_ASSERT(to.dfInfoAbove.find(analysis)!= to.dfInfoAbove.end());
 	copyLattices(to.dfInfoBelow.find(analysis)->second, from.dfInfoAbove.find(analysis)->second);
 	#endif
 }
@@ -934,6 +957,8 @@ void NodeState::copyLattices_bEQa(Analysis* analysisA, NodeState& to, Analysis* 
 	LatticeMap::const_accessor rFrom; from.dfInfoAbove.find(rFrom, analysisB);
 	copyLattices(wTo->second, rFrom->second);
 	#else
+	ROSE_ASSERT(to.dfInfoBelow.find(analysisA)!= to.dfInfoBelow.end());
+	ROSE_ASSERT(to.dfInfoAbove.find(analysisB)!= to.dfInfoAbove.end());
 	copyLattices(to.dfInfoBelow.find(analysisA)->second, from.dfInfoAbove.find(analysisB)->second);
 	#endif
 }
@@ -946,6 +971,7 @@ void NodeState::copyLattices_bEQb(Analysis* analysis, NodeState& to, const NodeS
 	LatticeMap::const_accessor rFrom; from.dfInfoBelow.find(rFrom, analysis);
 	copyLattices(wTo->second, rFrom->second);
 	#else
+	ROSE_ASSERT(to.dfInfoBelow.find(analysis)!= to.dfInfoBelow.end());
 	copyLattices(to.dfInfoBelow.find(analysis)->second, from.dfInfoBelow.find(analysis)->second);
 	#endif
 }
@@ -958,6 +984,8 @@ void NodeState::copyLattices_aEQb(Analysis* analysis, NodeState& to, const NodeS
 	LatticeMap::const_accessor rFrom; from.dfInfoBelow.find(rFrom, analysis);
 	copyLattices(wTo->second, rFrom->second);
 	#else
+	ROSE_ASSERT(to.dfInfoAbove.find(analysis)!= to.dfInfoAbove.end());
+	ROSE_ASSERT(to.dfInfoBelow.find(analysis)!= to.dfInfoBelow.end());
 	copyLattices(to.dfInfoAbove.find(analysis)->second, from.dfInfoBelow.find(analysis)->second);
 	#endif
 }
@@ -973,14 +1001,20 @@ void NodeState::copyLattices(vector<Lattice*>& dfInfoX, const vector<Lattice*>& 
 		delete *itX;
 	}
 	dfInfoX.clear();*/
+	ROSE_ASSERT(dfInfoX.size() == dfInfoY.size());
 	
 	// copy lattices
+	cout << "    copyLattices()\n";
 	vector<Lattice*>::const_iterator itX, itY;
 	for(itX = dfInfoX.begin(), itY = dfInfoY.begin(); 
 	   itX!=dfInfoX.end() && itY!=dfInfoY.end(); 
 	   itX++, itY++)
+	{
+		cout << "        itX = "<<*itX<<" = "<<(*itX)->str("            ")<<"\n";
+		cout << "        itY = "<<*itY<<" = "<<(*itY)->str("            ")<<"\n";
 		(*itX)->copy(*itY);
 		//dfInfoX.push_back((*itY)->copy());
+	}
 }
 
 /*void NodeState::operator=(NodeState& that)
@@ -991,3 +1025,38 @@ void NodeState::copyLattices(vector<Lattice*>& dfInfoX, const vector<Lattice*>& 
 	copyLatticesAbove(&that);
 	copyLatticesBelow(&that);
 }*/
+
+string NodeState::str(Analysis* analysis, string indent) const
+{
+	ostringstream oss;
+	
+	// If the analysis has not yet been initialized, say so
+	if(initializedAnalyses.find(analysis) == initializedAnalyses.end()) {
+		oss << "<NodeState: NONE for Analysis>\n";
+	// If it has been initialized, stringify it
+	} else {
+		oss << "<NodeState: \n";
+		ROSE_ASSERT(dfInfoAbove.size() == dfInfoBelow.size());
+		ROSE_ASSERT(dfInfoAbove.find(analysis) != dfInfoAbove.end());
+		ROSE_ASSERT(dfInfoBelow.find(analysis) != dfInfoBelow.end());
+		int i=0;
+		const vector<Lattice*>& latticesAbove = dfInfoAbove.find(analysis)->second;
+		const vector<Lattice*>& latticesBelow = dfInfoBelow.find(analysis)->second;
+		ROSE_ASSERT(latticesAbove.size() == latticesBelow.size());
+		
+		vector<Lattice*>::const_iterator lAbv, lBel;
+		for(lAbv=latticesAbove.begin(), lBel=latticesBelow.begin(); lAbv!=latticesAbove.end(); lAbv++, lBel++, i++) {
+			oss << indent << "    Lattice "<<i<<" Above: "<<*lAbv<<" = "<<(*lAbv)->str(indent+"        ")<<"\n";
+			oss << indent << "    Lattice "<<i<<" Below: "<<*lBel<<" = "<<(*lBel)->str(indent+"        ")<<"\n";
+		}
+		
+		ROSE_ASSERT(facts.find(analysis) != facts.end());
+		i=0;
+		const vector<NodeFact*>& aFacts = facts.find(analysis)->second;
+		for(vector<NodeFact*>::const_iterator fact=aFacts.begin(); fact!=aFacts.end(); fact++, i++)
+			oss << indent << "    Fact "<<i<<": "<<(*fact)->str(indent+"        ")<<"\n";
+		oss << indent << ">";
+	}
+	
+	return oss.str();
+}

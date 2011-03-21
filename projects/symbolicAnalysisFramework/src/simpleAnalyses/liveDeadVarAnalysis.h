@@ -10,7 +10,6 @@
 #include "analysis.h"
 #include "dataflow.h"
 #include "latticeFull.h"
-#include "liveDeadVarAnalysis.h"
 #include "printAnalysisStates.h"
 
 extern int liveDeadAnalysisDebugLevel;
@@ -141,7 +140,7 @@ class VarsExprsProductLattice: public virtual ProductLattice
 	LiveDeadVarsAnalysis* ldva;
 	
 	// Dataflow node that this lattice is associated with and its corresponding node state.
-	const DataflowNode& n;
+	DataflowNode n;
 	const NodeState& state;
 	
 	public:
@@ -211,10 +210,9 @@ class VarsExprsProductLattice: public virtual ProductLattice
 	// Functions used to inform this lattice that a given variable is now in use (e.g. a variable has entered 
 	//    scope or an expression is being analyzed) or is no longer in use (e.g. a variable has exited scope or
 	//    an expression or variable is dead).
-	// It is assumed that a newly-added variable has not been added before and that a variable that is being
-	//    removed was previously added
-	/*void addVar(varID var);
-	void remVar(varID var);*/
+	// Returns true if this causes this Lattice to change and false otherwise.
+	bool addVar(const varID& var);
+	bool remVar(const varID& var);
 	
 	// The string that represents this object
 	// If indent!="", every line of this string must be prefixed by indent
@@ -245,12 +243,14 @@ class FiniteVarsExprsProductLattice : public virtual VarsExprsProductLattice, pu
 	    VarsExprsProductLattice(perVarLattice, constVarLattices, allVarLattice, ldva, n, state), 
 	    FiniteProductLattice()
 	{
+		cout << "FiniteVarsExprsProductLattice n="<<n.getNode()<<" = <"<<n.getNode()->unparseToString()<<" | "<<n.getNode()->class_name()<<" | "<<n.getIndex()<<">\n";
 		verifyFinite();
 	}
 	
 	FiniteVarsExprsProductLattice(const FiniteVarsExprsProductLattice& that) : 
 		VarsExprsProductLattice(that), FiniteProductLattice()
 	{
+		cout << "FiniteVarsExprsProductLattice::copy n="<<n.getNode()<<" = <"<<n.getNode()->unparseToString()<<" | "<<n.getNode()->class_name()<<" | "<<n.getIndex()<<">\n";
 		verifyFinite();
 	}
 	

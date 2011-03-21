@@ -4,8 +4,8 @@ include $(top_srcdir)/projects/symbolicAnalysisFramework/common.for.dep.libs
 # Saf is the short for symbolic analysis framework.
 # it is used to avoid possible name collision 
 noinst_LTLIBRARIES = libSaflattice.la
-libSaflattice_la_SOURCES = ConstrGraph.C  intArithLogical.C  lattice.C
-include_HEADERS = ConstrGraph.h  intArithLogical.h  latticeFull.h  lattice.h
+libSaflattice_la_SOURCES = ConstrGraph.C  intArithLogical.C  lattice.C affineInequality.C
+include_HEADERS = ConstrGraph.h  intArithLogical.h  latticeFull.h  lattice.h affineInequality.h
 # ----------test program -------------------
 #.NOTPARALLEL:selfTest
 

@@ -4,11 +4,11 @@ include $(top_srcdir)/projects/symbolicAnalysisFramework/common.for.dep.libs
 # Saf is the short for symbolic analysis framework.
 # it is used to avoid possible name collision 
 noinst_LTLIBRARIES = libSafsimpleAnalyses.la
-libSafsimpleAnalyses_la_SOURCES = affineInequality.C  divAnalysis.C liveDeadVarAnalysis.C nodeConstAnalysis.C \
+libSafsimpleAnalyses_la_SOURCES = divAnalysis.C liveDeadVarAnalysis.C nodeConstAnalysis.C \
                           placeUIDs.C  printAnalysisStates.C  saveDotAnalysis.C \
-			  sgnAnalysis.C
-include_HEADERS = affineInequality.h  divAnalysis.h liveDeadVarAnalysis.h nodeConstAnalysis.h  placeUIDs.h  \
-                  printAnalysisStates.h  saveDotAnalysis.h  sgnAnalysis.h
+			  sgnAnalysis.C sequenceStructAnalysis.C dominatorAnalysis.C ConstrGraphAnalysis.C
+include_HEADERS = divAnalysis.h liveDeadVarAnalysis.h nodeConstAnalysis.h  placeUIDs.h  \
+                  printAnalysisStates.h  saveDotAnalysis.h  sgnAnalysis.h sequenceStructAnalysis.h dominatorAnalysis.h ConstrGraphAnalysis.h
 
 # ----------test program -------------------
 #noinst_PROGRAMS = selfTest

@@ -13,13 +13,13 @@ class selfTestAnalysis : virtual public UnstructuredPassIntraAnalysis
 {
 	public:
 	DivAnalysis* div;
-	SgnAnalysis* sgn;
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence) SgnAnalysis* sgn;
 	LiveDeadVarsAnalysis* ldva;
 	
-	selfTestAnalysis(DivAnalysis* div, SgnAnalysis* sgn, LiveDeadVarsAnalysis* ldva)
+	selfTestAnalysis(DivAnalysis* div, /* GB : 2011-03-05 (Removing Sign Lattice Dependence) SgnAnalysis* sgn,*/ LiveDeadVarsAnalysis* ldva)
 	{
 		this->div  = div;
-		this->sgn  = sgn;
+		// GB : 2011-03-05 (Removing Sign Lattice Dependence) this->sgn  = sgn;
 		this->ldva = ldva;
 	}
 	
@@ -82,6 +82,7 @@ int main(int argc, char** argv)
 	//printDivAnalysisStates(&da, "[");
 	
 	
+	/* GB : 2011-03-05 (Removing Sign Lattice Dependence) 
 	analysisDebugLevel = 0;
 	printf("*************************************************************\n");
 	printf("*****************   Sign Analysis   *****************\n");
@@ -92,9 +93,10 @@ int main(int argc, char** argv)
 	ciipd_sa.runAnalysis();
 	
 	//printSgnAnalysisStates(&sa, "|");
-	
+	*/
+
 	analysisDebugLevel = 1;
-	selfTestAnalysis sta(&da, &sa, &ldva);
+	selfTestAnalysis sta(&da, /* GB : 2011-03-05 (Removing Sign Lattice Dependence) &sa, */&ldva);
 	UnstructuredPassInterAnalysis upia_sta(sta);
 	upia_sta.runAnalysis();
 	
@@ -188,11 +190,11 @@ void selfTestAnalysis::ConstrGraphTest(const Function& func, const DataflowNode&
 		
 		const vector<Lattice*>& divDF = state.getLatticeAbove(div);
 		FiniteVarsExprsProductLattice* divL = dynamic_cast<FiniteVarsExprsProductLattice*>(*(divDF.begin()));
-		const vector<Lattice*>& sgnDF = state.getLatticeAbove(sgn);
-		FiniteVarsExprsProductLattice* sgnL = dynamic_cast<FiniteVarsExprsProductLattice*>(*(sgnDF.begin()));
+		// GB : 2011-03-05 (Removing Sign Lattice Dependence) const vector<Lattice*>& sgnDF = state.getLatticeAbove(sgn);
+		// GB : 2011-03-05 (Removing Sign Lattice Dependence) FiniteVarsExprsProductLattice* sgnL = dynamic_cast<FiniteVarsExprsProductLattice*>(*(sgnDF.begin()));
 		
 		// Create a constraint graph with zeroVar and the above variables
-		ConstrGraph cg(func, n, state, ldva, divL, sgnL, true, indent+"    ");
+		ConstrGraph cg(func, n, state, ldva, divL, /* GB : 2011-03-05 (Removing Sign Lattice Dependence) sgnL, */ true, indent+"    ");
 		cg.setToConstrKnown(ConstrGraph::conj, false, indent+"    ");
 		cg.addVar(zeroVar, indent+"    ");
 		for(vector<varID>::iterator it=vars.begin(); it!=vars.end(); it++)
@@ -295,10 +297,10 @@ void selfTestAnalysis::mergeAnnotVarsTest(const Function& func, const DataflowNo
 		
 		const vector<Lattice*>& divDF = state.getLatticeAbove(div);
 		FiniteVarsExprsProductLattice* divL = dynamic_cast<FiniteVarsExprsProductLattice*>(*(divDF.begin()));
-		const vector<Lattice*>& sgnDF = state.getLatticeAbove(sgn);
-		FiniteVarsExprsProductLattice* sgnL = dynamic_cast<FiniteVarsExprsProductLattice*>(*(sgnDF.begin()));
+		// GB : 2011-03-05 (Removing Sign Lattice Dependence) const vector<Lattice*>& sgnDF = state.getLatticeAbove(sgn);
+		// GB : 2011-03-05 (Removing Sign Lattice Dependence) FiniteVarsExprsProductLattice* sgnL = dynamic_cast<FiniteVarsExprsProductLattice*>(*(sgnDF.begin()));
 	
-		ConstrGraph cg(func, n, state, ldva, divL, sgnL, true, string("    "));
+		ConstrGraph cg(func, n, state, ldva, divL, /* GB : 2011-03-05 (Removing Sign Lattice Dependence) sgnL, */ true, string("    "));
 		
 		cg.setToConstrKnown(ConstrGraph::conj, false, indent+"    ");
 		cg.addVar(zeroVar, indent+"    ");

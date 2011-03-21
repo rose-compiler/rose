@@ -12,20 +12,22 @@
 #include "latticeFull.h"
 #include "printAnalysisStates.h"
 
-extern int dominatorDebugLevel;
+extern int dominatorAnalysisDebugLevel;
 
 // Lattice that stores the DataflowNodes that are dominated by or post-dominated by a given DataflowNode
 class DominatorLattice : public FiniteLattice
 {
-	typedef enum { uninitialized=0, initialized } domLevel;
 	public:
+	typedef enum { uninitialized=0, initialized } domLevel;
 	domLevel level;
 	set<DataflowNode> domNodes;
+	DataflowNode n;
 	
 	public:
-	DominatorLattice();
+	//DominatorLattice();
 	DominatorLattice(const DataflowNode& n);
-	DominatorLattice(const set<DataflowNode>& nodes);
+	DominatorLattice(const DataflowNode& n, const DataflowNode& nodes);
+	DominatorLattice(const DataflowNode& n, const set<DataflowNode>& nodes);
 	DominatorLattice(const DominatorLattice& that);
 		
 	// Initializes this Lattice to its default state, if it is not already initialized
@@ -36,6 +38,10 @@ class DominatorLattice : public FiniteLattice
 	
 	// Overwrites the state of this Lattice with that of that Lattice
 	void copy(Lattice* that);
+	
+	// Overwrites the state of this Lattice with that of that Lattice.
+	// Returns true if this causes this Lattice to chance and false otherwise.
+	bool copyFrom(DominatorLattice* domLat, string indent="");
 	
 	// Called by analyses to create a copy of this lattice. However, if this lattice maintains any 
 	//    information on a per-variable basis, these per-variable mappings must be converted from 
@@ -100,11 +106,10 @@ class DominatorLattice : public FiniteLattice
 class DominatorAnalysis : public IntraFWDataflow
 {
 	protected:
-	const DataflowNode& tgtNode;
 	const set<DataflowNode>& allNodes;
 	
 	public:
-	DominatorAnalysis(const DataflowNode& tgtNode, const set<DataflowNode>& allNodes);
+	DominatorAnalysis(const set<DataflowNode>& allNodes, string indent="");
 	
 	// Generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
 	void genInitState(const Function& func, const DataflowNode& n, const NodeState& state,
@@ -113,8 +118,24 @@ class DominatorAnalysis : public IntraFWDataflow
 	bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo);
 };
 
+/* Computes the set of all DataflowNodes within a given function */
+class FindAllNodesAnalysis: public UnstructuredPassIntraAnalysis
+{
+	public:
+	const Function& func;
+	set<DataflowNode> allNodes;
+	
+	FindAllNodesAnalysis(const Function& func, string indent="");
+	void visit(const Function& func, const DataflowNode& n, NodeState& state);
+};
+
+// Returns the set of DataflowNodes that dominate the given node
+const set<DataflowNode>& getDominators(SgProject* project, const Function& func, const DataflowNode& n, string indent="");
+
+// Returns true if node a dominates node b and false otherwise
+bool dominates(const DataflowNode& a, const DataflowNode& b, string indent="");
 
 // prints the Lattices set by the given LiveDeadVarsAnalysis 
-void printDominatorAnalysisStates(LiveDeadVarsAnalysis* da, string indent="");
+void printDominatorAnalysisStates(DominatorAnalysis* da, string indent="");
 
 #endif

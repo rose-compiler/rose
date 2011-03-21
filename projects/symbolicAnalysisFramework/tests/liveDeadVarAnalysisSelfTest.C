@@ -32,8 +32,8 @@ class evaluateAnalysisStates : public UnstructuredPassIntraAnalysis
 		if(isSgFunctionCallExp(n.getNode()) && isSgFunctionCallExp(n.getNode())->getAssociatedFunctionSymbol()) {
 			string funcName = isSgFunctionCallExp(n.getNode())->getAssociatedFunctionSymbol()->get_name().getString();
 			if(funcName.find("testFunc")!=string::npos) {
+				set<varID> liveVars = getAllLiveVarsAt(ldva, n, state, "    ");
 				if(liveDeadAnalysisDebugLevel>=1) {
-					set<varID> liveVars = getAllLiveVarsAt(ldva, n, state, "    ");
 					cout << funcName<<"(): liveVars=";
 					for(set<varID>::iterator v=liveVars.begin(); v!=liveVars.end(); v++)
 						cout << *v <<", ";

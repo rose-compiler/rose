@@ -12,7 +12,7 @@ printAnalysisStates::printAnalysisStates(Analysis* creator, vector<int>& factNam
 
 void printAnalysisStates::visit(const Function& func, const DataflowNode& n, NodeState& state)
 {
-	printf("%sfunction %s() node=<%s | %s | %d> state=%p n=%p creator=%p\n", indent.c_str(), func.get_name().str(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str(), n.getIndex(), &state, &n, creator);
+	printf("%sfunction %s() node=<%s | %s | %d> state=%p n=%p sgn=%p creator=%p\n", indent.c_str(), func.get_name().str(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str(), n.getIndex(), &state, &n, n.getNode(), creator);
 	//const vector<Lattice*>* masterLat;
 	//if(latSide==above) masterLat = &(state.getLatticeAbove(creator));
 	//else               masterLat = &(state.getLatticeBelow(creator));

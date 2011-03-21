@@ -2,13 +2,15 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/symbolicAnalysisFramework/common.for.dep.libs
 # ----------test program -------------------
 #SAF_BUILD_ROOT = $(top_builddir)/projects/symbolicAnalysisFramework
-noinst_PROGRAMS = factPlacer latticePlacer scalarFWDataflow liveDeadVarAnalysisSelfTest pathSensitive genInterestingCFG genCFG
+noinst_PROGRAMS = factPlacer latticePlacer scalarFWDataflow liveDeadVarAnalysisSelfTest dominatorAnalysisSelfTest sequenceStructAnalysisSelfTest genInterestingCFG genCFG #pathSensitive
 # runtimeBoundAnalysis.C  scalarFWDataflow_example.C
 factPlacer_SOURCES = factPlacer.C
 latticePlacer_SOURCES = latticePlacer.C
-scalarFWDataflow_SOURCES = scalarFWDataflow.C scalarFWDataflow.h
+scalarFWDataflow_SOURCES = scalarFWDataflow.C
 liveDeadVarAnalysisSelfTest_SOURCES = liveDeadVarAnalysisSelfTest.C
-pathSensitive_SOURCES = pathSensitive.C pathSensitive.h
+dominatorAnalysisSelfTest_SOURCES = dominatorAnalysisSelfTest.C
+sequenceStructAnalysisSelfTest_SOURCES = sequenceStructAnalysisSelfTest.C
+#pathSensitive_SOURCES = pathSensitive.C pathSensitive.h
 genInterestingCFG_SOURCES = genInterestingCFG.C
 genCFG_SOURCES = genCFG.C
 
@@ -40,6 +42,9 @@ check-local:factPlacer latticePlacer scalarFWDataflow pathSensitive
 #	./scalarFWDataflow $(srcdir)/test_examples/scalarFWDataflow_example.c > scalarFWDataflow_out
 # assertion failure	
 #	./pathSensitive $(srcdir)/test_examples/pathSensitive_example.cpp > pathSensitive_out
+	./dominatorAnalysisSelfTest $(srcdir)/test_examples/dominator_example.cpp > dominatorAnalysis_out
+	./liveDeadVarAnalysisSelfTest $(srcdir)/test_examples/liveDead_example.cpp > liveDeadAnalysis_out
+	./sequenceStructAnalysisSelfTest $(srcdir)/test_examples/SendRecvMD.cpp > sequenceStructAnalysis_out
 
 EXTRA_DIST =  test_examples 
 clean-local:

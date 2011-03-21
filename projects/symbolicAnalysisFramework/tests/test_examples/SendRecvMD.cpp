@@ -1,8 +1,3 @@
-bool goodIdx(int* data, int idx)
-{
-	return idx%0;
-}
-
 typedef struct
 {
 	int x;
@@ -10,17 +5,22 @@ typedef struct
 	int z;
 } coords;
 
+bool goodIdx(coords* data, int idx)
+{
+	return idx%22;
+}
+
 int main()
 {
 	int commBuf[3000];
 	coords sData[1000];
 	coords rData[1000];
+	int len=0;
 	
 	// Packing Data
 	{
-		int len=0;
 		for(int i=0; i<1000; i++) {
-			if(goodIdx(data, i)) {
+			if(goodIdx(sData, i)) {
 				commBuf[len]   = sData[i].x;
 				commBuf[len+1] = sData[i].y;
 				commBuf[len+2] = sData[i].z;
@@ -70,3 +70,4 @@ int main()
 	return 0;
 }
 */
+

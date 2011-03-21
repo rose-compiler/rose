@@ -18,7 +18,7 @@
 #include "latticeFull.h"
 #include "affineInequality.h"
 #include "divAnalysis.h"
-#include "sgnAnalysis.h"
+// GB : 2011-03-05 (Removing Sign Lattice Dependence)#include "sgnAnalysis.h"
 #include "liveDeadVarAnalysis.h"
 
 // top - relations between each pair of variables are unknown or too complex to be representable as affine inequalities (minimal information)
@@ -97,7 +97,7 @@ protected:
 	//   reason about variables that have the same annotation. When a variable has multiple annotations
 	//   only one matching product lattice will be used.
 	// The annotation ""->NULL matches all variables
-	map<pair<string, void*>, FiniteVarsExprsProductLattice*> sgnL;
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence) map<pair<string, void*>, FiniteVarsExprsProductLattice*> sgnL;
 	
 	// Set of live variables that this constraint graph applies to
 	set<varID> vars;
@@ -122,12 +122,12 @@ protected:
 	
 public:	
 	ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state, 
-	            LiveDeadVarsAnalysis* ldva, FiniteVarsExprsProductLattice* divL, FiniteVarsExprsProductLattice* sgnL, 
+	            LiveDeadVarsAnalysis* ldva, FiniteVarsExprsProductLattice* divL, // GB : 2011-03-05 (Removing Sign Lattice Dependence) FiniteVarsExprsProductLattice* sgnL, 
 	            bool initialized=true, string indent="");
 	ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state, 
 	            LiveDeadVarsAnalysis* ldva, 
 	            const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
-	            const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
+	            // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
 	            bool initialized=true, string indent="");
 	
 	//ConstrGraph(const varIDSet& scalars, const varIDSet& arrays, bool initialized=true);
@@ -141,11 +141,13 @@ public:
 	// Creates a constraint graph that contains the given set of inequalities, 
 	//// which are assumed to correspond to just scalars
 	ConstrGraph(const set<varAffineInequality>& ineqs, const Function& func, const DataflowNode& n, const NodeState& state,
-	            LiveDeadVarsAnalysis* ldva, FiniteVarsExprsProductLattice* divL, FiniteVarsExprsProductLattice* sgnL, string indent="");
+	            LiveDeadVarsAnalysis* ldva, FiniteVarsExprsProductLattice* divL, 
+	            // GB : 2011-03-05 (Removing Sign Lattice Dependence)FiniteVarsExprsProductLattice* sgnL, 
+	            string indent="");
 	ConstrGraph(const set<varAffineInequality>& ineqs, const Function& func, const DataflowNode& n, const NodeState& state,
 	            LiveDeadVarsAnalysis* ldva, 
 	            const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
-	            const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
+	            // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
 	            string indent="");
 	
 	// Initialization code that is common to multiple constructors
@@ -171,7 +173,8 @@ public:
 	string DivLattices2Str(string indent="");
 	
 	// Returns a sign product lattice that matches the given variable
-	FiniteVarsExprsProductLattice* getSgnLattice(const varID& var, string indent="");
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence)
+	// FiniteVarsExprsProductLattice* getSgnLattice(const varID& var, string indent="");
 
 	// Adds the given variable to the variables list, returning true if this causes
 	// the constraint graph to change and false otherwise.
@@ -689,7 +692,8 @@ public:
 	
 	// Adds a new sign lattice, with the associated anotation
 	// Returns true if this causes the constraint graph to be modified and false otherwise
-	bool addSgnL(FiniteVarsExprsProductLattice* sgnLattice, string annotName, void* annot, string indent="");
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence)
+	// bool addSgnL(FiniteVarsExprsProductLattice* sgnLattice, string annotName, void* annot, string indent="");
 	
 	/**** State Accessor Functions *****/
 	// Returns true if this constraint graph includes constraints for the given variable
@@ -703,12 +707,15 @@ public:
 	// return true if this results this ConstrGraph being changed, false otherwise
 	// xSign, ySign: the default signs for x and y. If they're set to unknown, setVal computes them on its own using getVarSign.
 	//     otherwise, it uses the given signs 
-	bool setVal(varID x, varID y, int a, int b, int c, 
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence)
+	/*bool setVal(varID x, varID y, int a, int b, int c, 
 	            affineInequality::signs xSign=affineInequality::unknownSgn, affineInequality::signs ySign=affineInequality::unknownSgn, 
-	            string indent="");
+	            string indent="");*/
 	bool setVal(varID x, varID y, int a, int b, int c, 
-	            string indent="")
-	{ return setVal(x, y, a, b, c, affineInequality::unknownSgn, affineInequality::unknownSgn, indent); }
+	            string indent="");
+	/*{ return setVal(x, y, a, b, c, 
+	                // GB : 2011-03-05 (Removing Sign Lattice Dependence)affineInequality::unknownSgn, affineInequality::unknownSgn, 
+	                indent); }*/
 	
 	bool setVal(varID x, varID y, const affineInequality& ineq, string indent="");
 	

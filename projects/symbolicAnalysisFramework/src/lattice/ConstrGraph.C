@@ -34,7 +34,8 @@ ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const Node
 }
 
 ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state, 
-	      LiveDeadVarsAnalysis* ldva, FiniteVarsExprsProductLattice* divL, FiniteVarsExprsProductLattice* sgnL, 
+	      LiveDeadVarsAnalysis* ldva, FiniteVarsExprsProductLattice* divL, 
+	      // GB : 2011-03-05 (Removing Sign Lattice Dependence)FiniteVarsExprsProductLattice* sgnL, 
 	      bool initialized, string indent) : func(func), n(n), state(state)
 {
 	this->ldva = ldva;
@@ -42,20 +43,21 @@ ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const Node
 	// wildcard annotation that matches all variables	
 	pair<string, void*> noAnnot("", NULL);
 	this->divL[noAnnot] = divL;
-	this->sgnL[noAnnot] = sgnL;
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence) this->sgnL[noAnnot] = sgnL;
 
 	initCG(func, n, state, false, indent);
 }
 
 ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state, 
 	                      LiveDeadVarsAnalysis* ldva, 
-	                      const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
+	                      const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
+	                      // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
 	                      bool initialized, string indent) : func(func), n(n), state(state)
 {
 	this->ldva = ldva;
 	// Initialize the map of divisibility and sign lattices
 	this->divL = divL;
-	this->sgnL = sgnL;	
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence)this->sgnL = sgnL;	
 
 	initCG(func, n, state, false, indent);
 }
@@ -67,7 +69,7 @@ ConstrGraph::ConstrGraph(ConstrGraph &that, bool initialized, string indent) : f
 	copyFrom(that, indent+"    ");
 	ldva = that.ldva;
 	divL = that.divL;
-	sgnL = that.sgnL;
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence)sgnL = that.sgnL;
 }
 
 ConstrGraph::ConstrGraph(const ConstrGraph* that, bool initialized, string indent) : func(that->func), n(that->n), state(that->state)
@@ -77,7 +79,7 @@ ConstrGraph::ConstrGraph(const ConstrGraph* that, bool initialized, string inden
 	copyFrom(*((ConstrGraph*)that), indent+"    ");
 	ldva = that->ldva;
 	divL = that->divL;
-	sgnL = that->sgnL;
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence)sgnL = that->sgnL;
 }
 
 // Creates a constraint graph that contains the given set of inequalities, 
@@ -85,7 +87,9 @@ ConstrGraph::ConstrGraph(const ConstrGraph* that, bool initialized, string inden
 ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs, 
                          const Function& func, const DataflowNode& n, const NodeState& state,
                          LiveDeadVarsAnalysis* ldva, 
-                         FiniteVarsExprsProductLattice* divL, FiniteVarsExprsProductLattice* sgnL, string indent) : 
+                         FiniteVarsExprsProductLattice* divL, 
+                         // GB : 2011-03-05 (Removing Sign Lattice Dependence)FiniteVarsExprsProductLattice* sgnL, 
+                         string indent) : 
                          	func(func), n(n), state(state)
 {
 	this->ldva = ldva;
@@ -93,7 +97,7 @@ ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs,
 	// wildcard annotation that matches all variables	
 	pair<string, void*> noAnnot("", NULL);
 	this->divL[noAnnot] = divL;
-	this->sgnL[noAnnot] = sgnL;
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence)this->sgnL[noAnnot] = sgnL;
 
 	initCG(func, n, state, false, indent);
 	
@@ -119,13 +123,14 @@ ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs,
                          const Function& func, const DataflowNode& n, const NodeState& state,
                          LiveDeadVarsAnalysis* ldva,
                          const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
-                         const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, string indent) : 
+                         // GB : 2011-03-05 (Removing Sign Lattice Dependence) const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
+                         string indent) : 
                                   func(func), n(n), state(state)
 {
 	this->ldva = ldva;
 	// Initialize the map of divisibility and sign lattices
 	this->divL = divL;
-	this->sgnL = sgnL;
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence) this->sgnL = sgnL;
 
 	initCG(func, n, state, false, indent);
 	
@@ -258,7 +263,8 @@ string ConstrGraph::DivLattices2Str(string indent)
 }
 
 // Returns a sign product lattice that matches the given variable
-FiniteVarsExprsProductLattice* ConstrGraph::getSgnLattice(const varID& var, string indent)
+// GB : 2011-03-05 (Removing Sign Lattice Dependence) 
+/*FiniteVarsExprsProductLattice* ConstrGraph::getSgnLattice(const varID& var, string indent)
 {
 	for(map<pair<string, void*>, FiniteVarsExprsProductLattice*>::iterator itSgn=sgnL.begin();
 		 itSgn!=sgnL.end(); itSgn++)
@@ -278,7 +284,7 @@ FiniteVarsExprsProductLattice* ConstrGraph::getSgnLattice(const varID& var, stri
 		}
 	}
 	return NULL;
-}
+}*/
 
 // Adds the given variable to the variables list, returning true if this causes
 // the constraint graph to change and false otherwise.
@@ -1366,7 +1372,8 @@ bool ConstrGraph::varHasAnnot(const varID& var, string annotName, void* annotVal
 // It is assumed that focusVars only contains scalars and not array ranges.
 ConstrGraph* ConstrGraph::getProjection(const varIDSet& focusVars, string indent)
 {
-	ConstrGraph* pCG = new ConstrGraph(func, n, state, ldva, divL, sgnL, getLevel(true).first!=uninitialized, indent+"    ");
+	ConstrGraph* pCG = new ConstrGraph(func, n, state, ldva, divL, // GB : 2011-03-05 (Removing Sign Lattice Dependence) sgnL, 
+	                                   getLevel(true).first!=uninitialized, indent+"    ");
 	
 	// focusVars that are inside this->vars and their respective divisibility variables, if any
 	// We record these variables in allFocusVars and only worry about them when extracting
@@ -2194,7 +2201,8 @@ bool ConstrGraph::assertCond(const varID& x, const varID& y, int a, int b, int c
 	// if there is already a constraint between x and y, update it
 	if(constr)
 	{
-		affineInequality newConstr(a, b, c, x==zeroVar, y==zeroVar, getVarSign(x, indent+"    "), getVarSign(y, indent+"    "));
+		affineInequality newConstr(a, b, c, x==zeroVar, y==zeroVar, //GB : 2011-03-05 (Removing Sign Lattice Dependence) getVarSign(x, indent+"    "), getVarSign(y, , indent+"    ")
+		                           affineInequality::unknownSgn, affineInequality::unknownSgn);
 		(*constr) *= newConstr;
 		modified = true;
 	}
@@ -2237,9 +2245,10 @@ bool ConstrGraph::assertEq(const varID& x, const varID& y, int a, int b, int c, 
 /**** Dataflow Functions ****/
 
 // returns the sign of the given variable
-affineInequality::signs ConstrGraph::getVarSign(const varID& var, string indent)
+// GB : 2011-03-05 (Removing Sign Lattice Dependence) 
+/*affineInequality::signs ConstrGraph::getVarSign(const varID& var, string indent)
 {
-/*	affineInequality* constrZeroVar = getVal(zeroVar, var);
+/ *	affineInequality* constrZeroVar = getVal(zeroVar, var);
 	affineInequality* constrVarZero = getVal(var, zeroVar);
 	
 	affineInequality::signs varSign = affineInequality::unknownSgn;
@@ -2250,7 +2259,7 @@ affineInequality::signs ConstrGraph::getVarSign(const varID& var, string indent)
 	else if(constrZeroVar && constrZeroVar->getC()<=0)
 		varSign = affineInequality::posZero;
 	else if(constrVarZero && constrVarZero->getC()<=0)
-		varSign = affineInequality::negZero;*/
+		varSign = affineInequality::negZero;* /
 	
 	FiniteVarsExprsProductLattice* sgnLattice = getSgnLattice(var, indent+"    ");
 	if(sgnLattice)
@@ -2267,12 +2276,12 @@ affineInequality::signs ConstrGraph::getVarSign(const varID& var, string indent)
 				if(sign->getSgnState() == SgnLattice::negZero)	
 					return affineInequality::negZero;
 		}
-		/*else
-			cout << "    getVarSign() "<<var.str()<<" : NULL\n";*/
+		/ *else
+			cout << "    getVarSign() "<<var.str()<<" : NULL\n";* /
 	}
 	
 	return affineInequality::unknownSgn;
-}
+}*/
 
 bool ConstrGraph::isEqZero(const varID& var, string indent)
 {
@@ -3994,8 +4003,10 @@ bool ConstrGraph::addDivVar(varID var/*, int div, int rem*/, bool killDivVar, st
 			// Incorporate this variable's divisibility information (if any)
 			if(varDivL->getLevel() == DivLattice::divKnown)
 			{
-				modified = setVal(var, divVar, 1, varDivL->getDiv(), varDivL->getRem(), getVarSign(var, indent+"    "), getVarSign(var, indent+"    "), indent+"    ") || modified;
-				modified = setVal(divVar, var, varDivL->getDiv(), 1, 0-varDivL->getRem(), getVarSign(var, indent+"    "), getVarSign(var, indent+"    "), indent+"    ") || modified;
+				modified = setVal(var, divVar, 1, varDivL->getDiv(), varDivL->getRem(), // GB : 2011-03-05 (Removing Sign Lattice Dependence) getVarSign(var, indent+"    "), getVarSign(var, indent+"    "), 
+				                  indent+"    ") || modified;
+				modified = setVal(divVar, var, varDivL->getDiv(), 1, 0-varDivL->getRem(), //GB : 2011-03-05 (Removing Sign Lattice Dependence) getVarSign(var, indent+"    "), getVarSign(var, indent+"    "), 
+				                  indent+"    ") || modified;
 			}
 			/*else if(varDivL->getLevel() != DivLattice::bottom)
 			{
@@ -4049,8 +4060,10 @@ bool ConstrGraph::disconnectDivOrigVar(varID var/*, int div, int rem*/, string i
 			// incorporate this variable's divisibility information (if any)
 			if(varDivL->getLevel() == DivLattice::divKnown)
 			{
-				modified = setVal(var, divVar, 1, varDivL->getDiv(), varDivL->getRem(), getVarSign(var, indent+"    "), getVarSign(var, indent+"    "), indent+"    ") || modified;
-				modified = setVal(divVar, var, varDivL->getDiv(), 1, 0-varDivL->getRem(), getVarSign(var, indent+"    "), getVarSign(var, indent+"    "), indent+"    ") || modified;
+				modified = setVal(var, divVar, 1, varDivL->getDiv(), varDivL->getRem(), //GB : 2011-03-05 (Removing Sign Lattice Dependence)  getVarSign(var, indent+"    "), getVarSign(var, indent+"    "), 
+				                  indent+"    ") || modified;
+				modified = setVal(divVar, var, varDivL->getDiv(), 1, 0-varDivL->getRem(), //GB : 2011-03-05 (Removing Sign Lattice Dependence) getVarSign(var, indent+"    "), getVarSign(var, indent+"    "), 
+				                  indent+"    ") || modified;
 			}
 			/*else if(varDivL->getLevel() != DivLattice::bottom)
 			{
@@ -4100,7 +4113,8 @@ bool ConstrGraph::addDivL(FiniteVarsExprsProductLattice* divLattice, string anno
 
 // Adds a new sign lattice, with the associated anotation
 // Returns true if this causes the constraint graph to be modified and false otherwise
-bool ConstrGraph::addSgnL(FiniteVarsExprsProductLattice* sgnLattice, string annotName, void* annot, string indent)
+// GB : 2011-03-05 (Removing Sign Lattice Dependence) 
+/*bool ConstrGraph::addSgnL(FiniteVarsExprsProductLattice* sgnLattice, string annotName, void* annot, string indent)
 {
 	bool modified = false;
 	pair<string, void*> sgnLAnnot(annotName, annot);
@@ -4120,7 +4134,7 @@ bool ConstrGraph::addSgnL(FiniteVarsExprsProductLattice* sgnLattice, string anno
 	}
 	
 	return modified;
-}
+}*/
 
 /**** State Accessor Functions *****/
 
@@ -4165,7 +4179,9 @@ affineInequality* ConstrGraph::getVal(varID x, varID y, string indent)
 // return true if this results this constraint graph being changed
 // xSign, ySign: the default signs for x and y. If they're set to unknown, setVal computes them on its own using getVarSign.
 //     otherwise, it uses the given signs 
-bool ConstrGraph::setVal(varID x, varID y, int a, int b, int c, affineInequality::signs xSign, affineInequality::signs ySign, string indent)
+bool ConstrGraph::setVal(varID x, varID y, int a, int b, int c, 
+                         // GB : 2011-03-05 (Removing Sign Lattice Dependence) affineInequality::signs xSign, affineInequality::signs ySign, 
+                         string indent)
 {
 	//cout << indent << "setVal(): "<<x<<"*"<<a<<" <= "<<y<<"*"<<b<<" + "<<c<<"\n";
 	// This constraint graph will now definitely be initialized
@@ -4176,9 +4192,10 @@ bool ConstrGraph::setVal(varID x, varID y, int a, int b, int c, affineInequality
 	if(isMaximalState(true, indent+"    ")) return false;
 
 	map<varID, map<varID, affineInequality> >::iterator xIt = vars2Value.find(x);
-	xSign = (xSign==affineInequality::unknownSgn? getVarSign(x, indent+"    "): xSign);
-	ySign = (ySign==affineInequality::unknownSgn? getVarSign(y, indent+"    "): ySign);
-	affineInequality newConstr(a, b, c, x==zeroVar, y==zeroVar, xSign, ySign);
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence) xSign = (xSign==affineInequality::unknownSgn? getVarSign(x, indent+"    "): xSign);
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence) ySign = (ySign==affineInequality::unknownSgn? getVarSign(y, indent+"    "): ySign);
+	affineInequality newConstr(a, b, c, x==zeroVar, y==zeroVar, // GB : 2011-03-05 (Removing Sign Lattice Dependence) , xSign, ySign
+	                           affineInequality::unknownSgn, affineInequality::unknownSgn);
 	
 	modifiedVars.insert(x);
 	modifiedVars.insert(y);
@@ -4210,9 +4227,11 @@ bool ConstrGraph::setVal(varID x, varID y, int a, int b, int c, affineInequality
 	return modified;
 }
 
+// GB : 2011-03-05 (Removing Sign Lattice Dependence)
 bool ConstrGraph::setVal(varID x, varID y, const affineInequality& ineq, string indent)
 {
-	return setVal(x, y, ineq.getA(), ineq.getB(), ineq.getC(), ineq.getXSign(), ineq.getYSign());
+	return setVal(x, y, ineq.getA(), ineq.getB(), ineq.getC()// GB : 2011-03-05 (Removing Sign Lattice Dependence), ineq.getXSign(), ineq.getYSign()
+	             );
 }
 
 // Sets the state of this constraint graph to Uninitialized, without modifying its contents. Thus, 

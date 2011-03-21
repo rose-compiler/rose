@@ -344,6 +344,8 @@ class NodeState
 		
 	/*public:
 	void operator=(NodeState& that);*/
+	public:
+	string str(Analysis* analysis, string indent="") const;
 };
 
 #endif

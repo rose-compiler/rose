@@ -1,27 +1,33 @@
 #include "dominatorAnalysis.h"
 #include <algorithm>
 
+int dominatorAnalysisDebugLevel=0;
+
 // ############################
 // ##### DominatorLattice #####
 // ############################
 
-DominatorLattice::DominatorLattice()
-{ level = uninitialized; }
-DominatorLattice::DominatorLattice(const DataflowNode& n)
+//DominatorLattice::DominatorLattice()
+//{ level = uninitialized; }
+DominatorLattice::DominatorLattice(const DataflowNode& n) : n(n)
 { 
-	domNodes.insert(n);
+	level = uninitialized;
+}
+DominatorLattice::DominatorLattice(const DataflowNode& n, const DataflowNode& nodes) : n(n)
+{
+	domNodes.insert(nodes);
 	level = initialized;
 }
-DominatorLattice::DominatorLattice(const set<DataflowNode>& nodes);
+DominatorLattice::DominatorLattice(const DataflowNode& n, const set<DataflowNode>& nodes) : n(n)
 {
 	domNodes = nodes;
 	level = initialized;
 }
-DominatorLattice::DominatorLattice(const DominatorLattice& that);
+DominatorLattice::DominatorLattice(const DominatorLattice& that) : n(that.n)
 {
-	level = that->level;
+	level = that.level;
 	if(level == initialized)
-		domNodes = nodes;
+		domNodes = that.domNodes;
 }
 
 // Initializes this Lattice to its default state, if it is not already initialized
@@ -37,11 +43,32 @@ Lattice* DominatorLattice::copy() const
 }
 
 // Overwrites the state of this Lattice with that of that Lattice
-void DominatorLattice::copy(Lattice* that)
+void DominatorLattice::copy(Lattice* that_arg)
 {
+	DominatorLattice* that = dynamic_cast<DominatorLattice*>(that_arg);
 	level = that->level;
+	n = that->n;
 	if(level == initialized)
-		domNodes = nodes;
+		domNodes = that->domNodes;
+}
+
+// Overwrites the state of this Lattice with that of that Lattice.
+// Returns true if this causes this Lattice to chance and false otherwise.
+bool DominatorLattice::copyFrom(DominatorLattice* that, string indent)
+{
+	bool modified=false;
+	
+	modified = (level != that->level);
+	level = that->level;
+	
+	modified = (n != that->n);
+	n = that->n;
+	
+	if(level == initialized) {
+		modified = modified || (domNodes != that->domNodes);
+		domNodes = that->domNodes;
+	}
+	return modified;
 }
 
 // Called by analyses to create a copy of this lattice. However, if this lattice maintains any 
@@ -66,6 +93,8 @@ void DominatorLattice::remapVars(const map<varID, varID>& varNameMap, const Func
 void DominatorLattice::incorporateVars(Lattice* that_arg)
 {
 	// Nothing to do. This analysis doesn't maintain per-variable information
+	DominatorLattice* that = dynamic_cast<DominatorLattice*>(that_arg);
+	copyFrom(that, "    ");
 }
 
 // Returns a Lattice that describes the information known within this lattice
@@ -79,6 +108,7 @@ void DominatorLattice::incorporateVars(Lattice* that_arg)
 Lattice* DominatorLattice::project(SgExpression* expr)
 {
 	// Nothing to do. This analysis doesn't maintain per-variable information
+	return new DominatorLattice(n); //copy();
 }
 
 // The inverse of project(). The call is provided with an expression and a Lattice that describes
@@ -88,7 +118,10 @@ Lattice* DominatorLattice::project(SgExpression* expr)
 // Returns true if this causes this to change and false otherwise.
 bool DominatorLattice::unProject(SgExpression* expr, Lattice* exprState)
 {
-	// Nothing to do. This analysis doesn't maintain per-variable information
+	// This analysis doesn't maintain per-variable information, so the information true of exprState is true for all variables.
+	/*DominatorLattice* that = dynamic_cast<DominatorLattice*>(exprState);
+	return copyFrom(that, "    ");*/
+	return false;
 }
 
 // computes the meet of this and that and saves the result in this
@@ -96,17 +129,53 @@ bool DominatorLattice::unProject(SgExpression* expr, Lattice* exprState)
 bool DominatorLattice::meetUpdate(Lattice* that_arg)
 {
 	DominatorLattice* that = dynamic_cast<DominatorLattice*>(that_arg);
-	// The meet is an intersection
-	set<DataflowNode> intersection;
-	set<DataflowNode>::iterator it=set_intersection (domNodes.begin(), domNodes.end(), this->domNodes.begin(), this->domNodes.end(), intersection.begin());
-	bool modified = (domNodes == intersection);
-	domNodes = intersection;
+
+	//cout << "        DominatorLattice::meetUpdate()\n";	
+	set<DataflowNode> toDelete;
+	set<DataflowNode>::iterator itThis = domNodes.begin();
+	set<DataflowNode>::iterator itThat = that->domNodes.begin();
+	while(itThis!=domNodes.end() && itThat!=that->domNodes.end())
+	{
+		// cout << "        itThis: "<<itThis->getNode()->unparseToString() << " | " << itThis->getNode()->class_name()<<"\n";
+		// cout << "        itThat: "<<itThat->getNode()->unparseToString() << " | " << itThat->getNode()->class_name()<<"\n";
+		// If there is a node in this->domNodes but not in that->domNodes, remove it
+		if(*itThis < *itThat) {
+			toDelete.insert(*itThis);
+			itThis++;
+		// If there is a node in that->domNodes but not in this->domNodes, skip it
+		} else if(*itThat < *itThis)
+			itThat++;
+		else {
+			itThis++;
+			itThat++;
+		}
+	}
+	// Record that any nodes in this->domNodes that have not been touched should be 
+	// deleted since these nodes don't exist in that->domNodes
+	while(itThis!=domNodes.end()) {
+		toDelete.insert(*itThis);
+		itThis++;
+	}
+
+	bool modified = false;	
+	// Delete all nodes in toDelete from domNodes
+	//cout << "            #toDelete="<<toDelete.size()<<"\n";
+	for(set<DataflowNode>::iterator it=toDelete.begin(); it!=toDelete.end(); it++) {
+		if(*it != n) {
+			modified = true;
+			//cout << "            Deleting "<<it->getNode()->unparseToString() << " | " << it->getNode()->class_name()<<"\n";
+			domNodes.erase(*it);
+		}
+	}
+	
+	return modified;
 }
 
-bool DominatorLattice::operator==(Lattice* that)
+bool DominatorLattice::operator==(Lattice* that_arg)
 {
 	DominatorLattice* that = dynamic_cast<DominatorLattice*>(that_arg);
 	return (this->level == that->level) &&
+	       (this->n == that->n) &&
 	       (this->domNodes == that->domNodes);
 }
 
@@ -142,12 +211,12 @@ string DominatorLattice::str(string indent)
 {
 	ostringstream outs;
 	
-	outs << "<DominatorLattice: domNodes=";
+	outs << "<DominatorLattice: n="<<n.getNode()->unparseToString() << " | " << n.getNode()->class_name()<<" domNodes=\n";
 	for(set<DataflowNode>::iterator it=domNodes.begin(); it!=domNodes.end(); ) {
-		outs << *it;
+		outs << indent << "    " << it->getNode()->unparseToString() << " | " << it->getNode()->class_name();
 		it++;
 		if(it!=domNodes.end())
-			outs << ", ";
+			outs << "\n";
 	}
 	outs << ">";
 	return outs.str();
@@ -157,8 +226,8 @@ string DominatorLattice::str(string indent)
 // ##### DominatorAnalysis #####
 // #############################
 
-DominatorAnalysis::DominatorAnalysis(const DataflowNode& tgtNode, const set<DataflowNode>& allNodes, string indent): 
-			tgtNode(tgtNode), allNodes(allNodes)
+DominatorAnalysis::DominatorAnalysis( const set<DataflowNode>& allNodes, string indent): 
+			allNodes(allNodes)
 {
 	
 }
@@ -168,19 +237,25 @@ void DominatorAnalysis::genInitState(const Function& func, const DataflowNode& n
                   vector<Lattice*>& initLattices, vector<NodeFact*>& initFacts)
 {
 	DominatorLattice* dLat;
-	if(tgtNode == n)
-		dLat = new DominatorLattice(tgtNode);
-	else
-		dLat = new DominatorLattice(allNodes);
+	
+	//cout << "    genInitState: "<<n.getNode()->unparseToString() << " | " << n.getNode()->class_name() << "\n";;
+	// If n is the application's starting node
+	if(func.get_name().getString() == "main" && n == func.get_definition()->cfgForBeginning()/*cfgUtils::getFuncStartCFG(func.get_definition())*/) {
+		//cout << "        STARTING NODE\n";
+		dLat = new DominatorLattice(n, n);
+	} else {
+		dLat = new DominatorLattice(n, allNodes);
+	}
+	//cout << "    "<<dLat->str("        ")<<"\n";
 	initLattices.push_back(dLat);	
 }
 
 bool DominatorAnalysis::transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
 {
-	DominatorLattice* dLat = dynamic_cast<DominatorLattice*>(*(dfInfo.begin()));
+	//DominatorLattice* dLat = dynamic_cast<DominatorLattice*>(*(dfInfo.begin()));
 	bool modified = false;
 	
-	modified = dLat->addNode(tgtNode) || modified;
+	//modified = dLat->addNode(tgtNode) || modified;
 	
 	return modified;
 }
@@ -190,7 +265,7 @@ bool DominatorAnalysis::transfer(const Function& func, const DataflowNode& n, No
 // ##### FindAllNodesAnalysis #####
 // ################################
 
-FindAllNodesAnalysis(const Function& func, string indent) : func(func)
+FindAllNodesAnalysis::FindAllNodesAnalysis(const Function& func, string indent) : func(func)
 {}
 
 void FindAllNodesAnalysis::visit(const Function& func, const DataflowNode& n, NodeState& state)
@@ -202,18 +277,15 @@ void FindAllNodesAnalysis::visit(const Function& func, const DataflowNode& n, No
 // ##### Module Interface Routines #####
 // #####################################
 
-// Map each DataflowNode to its set of dominators and post-dominators, respectively
-map <DataflowNode, set<DataflowNode> > dominators;
-map <DataflowNode, set<DataflowNode> > postDominators;
+bool dominatorsComputed=false;
+DominatorAnalysis* da=NULL;
 // Set of all DataflowNodes within each function
 map <Function, set<DataflowNode> > allFuncNodes;
 
 // Returns the set of DataflowNodes that dominate the given node
-const set<DataflowNode>& getDominators(const Function& func, const DataflowNode& n, string indent)
+const set<DataflowNode>& getDominators(SgProject* project, const Function& func, const DataflowNode& n, string indent)
 {
-	// If we have not yet computed the dominators of the given node
-	if(dominators.find(n) == dominators.end())
-	{
+	if(da==NULL) {
 		// If we have not yet computed the set of all DataflowNodes within this function
 		if(allFuncNodes.find(func) == allFuncNodes.end())
 		{
@@ -224,16 +296,41 @@ const set<DataflowNode>& getDominators(const Function& func, const DataflowNode&
 			allFuncNodes[func] = fana.allNodes;
 		}
 		
-		// NOTE: THIS CODE ONLY WORKS FOR SINGLE-FUNCTION APPLICATIONS
-		DominatorAnalysis da(n, allfuncNodes[func], indent+"    ");
-		UnstructuredPassInterAnalysis upia_da(fana);
-		upia_da.runAnalysis();
+		//cout << indent << "allFuncNodes[func]=\n";
+		//for(set<DataflowNode>::iterator it=allFuncNodes[func].begin(); it!=allFuncNodes[func].end(); it++)
+		//	cout << indent << "    " << it->getNode()->unparseToString() << " | " << it->getNode()->class_name() << "\n";;
 		
+		da = new DominatorAnalysis(allFuncNodes[func], indent+"    ");
+		/*UnstructuredPassInterDataflow upid_da(da);
+		upid_da.runAnalysis();*/
+		CallGraphBuilder cgb(project);
+		cgb.buildCallGraph();
+		SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
+		ContextInsensitiveInterProceduralDataflow ciipd_da(da, graph);
+		ciipd_da.runAnalysis();
 		
-		const vector<NodeState*> nodeStates = NodeState::getNodeStates(n);
-		dominators[n].
+		if(dominatorAnalysisDebugLevel>=1) printDominatorAnalysisStates(da, "[");
 	}
-	return dominators[n];
+	const vector<NodeState*> nodeStates = NodeState::getNodeStates(n);
+	//NodeState* state = nodeStates[n.getIndex()];
+	NodeState* state = *(nodeStates.begin());
+	//cout << indent << "da="<<da<<" state="<<state<<" #nodeStates="<<nodeStates.size()<<" n.getIndex()="<<n.getIndex()<<" #nodeStates="<<nodeStates.size()<<"\n";
+	//cout << indent << "state="<<state->str(da, indent+"    ")<<"\n";
+	DominatorLattice* dLat = dynamic_cast<DominatorLattice*>(state->getLatticeAbove(da, 0));
+	
+	/*cout << indent << "dLat="<<dLat<<" dLat->domNodes:\n";	
+	for(set<DataflowNode>::const_iterator dom=dLat->domNodes.begin(); dom!=dLat->domNodes.end(); dom++)
+		cout << indent << "    " << dom->getNode()->unparseToString() << " | " << dom->getNode()->class_name() << "\n";*/
+	
+	return dLat->domNodes;	
+}
+
+// Returns true if node a dominates node b and false otherwise
+bool dominates(const DataflowNode& a, const DataflowNode& b, string indent)
+{
+	/*const set<DataflowNode>& dominators = getDominators(const Function& func, b, indent+"    ");
+	return (dominators.find(a) != dominators.end());*/
+	return true;
 }
 
 // prints the Lattices set by the given LiveDeadVarsAnalysis 

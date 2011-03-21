@@ -1,6 +1,6 @@
 #include "sequenceStructAnalysis.h"
 
-int seqStructAnalysisDebugLevel=0;
+int sequenceStructAnalysisDebugLevel=0;
 
 // ############################
 // ##### SeqStructLattice #####
@@ -16,43 +16,37 @@ SeqStructLattice::SeqStructLattice(ConstrGraph* cg, const DataflowNode& n, strin
 }
 
 // Initializes the lattice to level=startKnown and this->vInit=this->vFin=vInit
-SeqStructLattice::SeqStructLattice(ConstrGraph* cg, const DataflowNode& n, const varID& vInit, string indent) : cg(cg), n(n)
+SeqStructLattice::SeqStructLattice(ConstrGraph* cg, const DataflowNode& n, const varID& vInit, int startOffset, string indent) : cg(cg), n(n)
 {
 	ROSE_ASSERT(cg);
 	init(indent);
-	cg->assign(this->vInit, vInit, 1, 1, 0);
-	cg->assign(this->vFin,  this->vInit, 1, 1, init);
-	s=0;
-	level = startKnown;
+	setToStartKnown(vInit, startOffset);
 }
 // Initializes the lattice to level=startKnown and this->vInit=this->vFin=init
-SeqStructLattice::SeqStructLattice(ConstrGraph* cg, const DataflowNode& n, int init, string indent) : cg(cg), n(n)
+SeqStructLattice::SeqStructLattice(ConstrGraph* cg, const DataflowNode& n, int initVal, string indent) : cg(cg), n(n)
 {
 	ROSE_ASSERT(cg);
 	init(indent);
-	cg->assign(vInit, zeroVar, 1, 1, init);
-	cg->assign(this->vFin,  this->vInit, 1, 1, init);
-	s=0;
-	level = startKnown;
+	setToStartKnown(initVal);
 }
 
-// Initializes the lattice to level=seqKnown and this->vInit=vInit this->vFin=vInit, this->s=s
-SeqStructLattice::SeqStructLattice(ConstrGraph* cg, const DataflowNode& n, const varID& init, const varID& fin, int s, string indent) : cg(cg), n(n)
+// Initializes the lattice to level=seqKnown and this->vInit=initV this->vFin=finV, this->s=s
+SeqStructLattice::SeqStructLattice(ConstrGraph* cg, const DataflowNode& n, const varID& initV, const varID& finV, int s, string indent) : cg(cg), n(n)
 {
 	ROSE_ASSERT(cg);
 	init(indent);
-	cg->assign(vInit, init, 1, 1, 0);
-	cg->assign(vFin,  fin,  1, 1, 0);
+	cg->assign(vInit, initV, 1, 1, 0);
+	cg->assign(vFin,  finV,  1, 1, 0);
 	this->s = s;
 	level = seqKnown;
 }
-// Initializes the lattice to level=seqKnown and this->vInit=init this->vFin=fin, this->s=s
-SeqStructLattice::SeqStructLattice(ConstrGraph* cg, const DataflowNode& n, int init, int fin, int s, string indent) : cg(cg), n(n)
+// Initializes the lattice to level=seqKnown and this->vInit=initV this->vFin=finV, this->s=s
+SeqStructLattice::SeqStructLattice(ConstrGraph* cg, const DataflowNode& n, int initV, int finV, int s, string indent) : cg(cg), n(n)
 {
 	ROSE_ASSERT(cg);
 	init(indent);
-	cg->assign(vInit, zeroVar, 1, 1, init);
-	cg->assign(vFin,  zeroVar, 1, 1, fin);
+	cg->assign(vInit, zeroVar, 1, 1, initV);
+	cg->assign(vFin,  zeroVar, 1, 1, finV);
 	this->s = s;
 	level = seqKnown;
 }
@@ -70,7 +64,7 @@ void SeqStructLattice::init(string indent)
 }
 
 // Copy constructor
-SeqStructLattice::SeqStructLattice(SeqStructLattice& that, string indent)
+SeqStructLattice::SeqStructLattice(const SeqStructLattice& that, string indent) : n(that.n)
 {
 	copyFrom(that, indent);
 }
@@ -142,8 +136,8 @@ void SeqStructLattice::incorporateVars(Lattice* that_arg)
 {
 	SeqStructLattice* that = dynamic_cast<SeqStructLattice*>(that_arg);
 	ROSE_ASSERT(cg == that->cg);
-	cg->assign(vInit, that->vInit);
-	cg->assign(vFin,  that->vFin);
+	cg->assign(vInit, that->vInit, 1, 1, 0);
+	cg->assign(vFin,  that->vFin , 1, 1, 0);
 	s = that->s;
 }
 
@@ -171,11 +165,11 @@ bool SeqStructLattice::unProject(SgExpression* expr, Lattice* exprState)
 	bool modified = false;
 	SeqStructLattice* that = dynamic_cast<SeqStructLattice*>(exprState);
 	ROSE_ASSERT(cg == that->cg);
-	modified = cg->assign(vInit, that->vInit) || modified;
-	modified = cg->assign(vFin,  that->vFin) || modified;
+	modified = cg->assign(vInit, that->vInit, 1, 1, 0) || modified;
+	modified = cg->assign(vFin,  that->vFin , 1, 1, 0) || modified;
 	modified = (s!=that->s) || modified;
 	s = that->s;
-	return modfied;
+	return modified;
 }
 
 // computes the meet of this and that and saves the result in this
@@ -190,7 +184,7 @@ bool SeqStructLattice::meetUpdate(Lattice* that_arg)
 	
 	if(level <= bottom) {
 		if(that->level > level)
-			modified = copyFrom(that) || modified;
+			modified = copyFrom(*that) || modified;
 	} else if(that->level <= bottom) {
 		
 	} else if(that->level == top) {
@@ -222,9 +216,12 @@ bool SeqStructLattice::meetUpdate(Lattice* that_arg)
 				modified = setToTop() || modified;
 		}
 	}
+	
+	return modified;
 }
 
-// Set the level of this object to Bottom
+// Set the level of this object to Bottom.
+// Return true if this causes ths Lattice to change and false otherwise.
 bool SeqStructLattice::setToBottom()
 {
 	bool modified = false;
@@ -241,7 +238,8 @@ bool SeqStructLattice::setToBottom()
 	return modified;
 }
 
-// Set the level of this object to Top
+// Set the level of this object to Top.
+// Return true if this causes ths Lattice to change and false otherwise.
 bool SeqStructLattice::setToTop()
 {
 	bool modified = false;
@@ -258,9 +256,205 @@ bool SeqStructLattice::setToTop()
 	return modified;	
 }
 
-bool SeqStructLattice::operator==(Lattice* that);
+// Set the level of this object to startKnown, with the given variable starting point (vInit + startOffset).
+// Return true if this causes ths Lattice to change and false otherwise.
+bool SeqStructLattice::setToStartKnown(varID vInit, int initOffset)
+{
+	bool modified = false;
+
+	modified = cg->assign(this->vInit, vInit, 1, 1, initOffset) || modified;
+	modified = cg->assign(this->vFin,  this->vInit, 1, 1, 0)     || modified;
+	
+	modified = (s!=0 || modified);
+	s=0;
+	
+	modified = (level!=startKnown || modified);
+	level = startKnown;
+	
+	return modified;
+}
+
+// Set the level of this object to startKnown, with the given constant starting point.
+// Return true if this causes ths Lattice to change and false otherwise.
+bool SeqStructLattice::setToStartKnown(int initVal)
+{
+	bool modified = false;
+	
+	modified = cg->assign(this->vInit, zeroVar, 1, 1, initVal) || modified;
+	modified = cg->assign(this->vFin, this->vInit, 1, 1, 0)    || modified;
+	
+	modified = (s!=0 || modified);
+	s=0;
+	
+	modified = (level!=startKnown || modified);
+	level = startKnown;
+	
+	return modified;
+}
+
+// Set the level of this object to seqKnown, with the given final point and stride
+// Return true if this causes ths Lattice to change and false otherwise.
+bool SeqStructLattice::setToSeqKnown(varID vFin, int finOffset, int stride)
+{
+	bool modified = false;
+
+	modified = cg->assign(this->vFin, vFin, 1, 1, finOffset) || modified;
+	
+	modified = (s!=stride || modified);
+	s=stride;
+	
+	modified = (level!=seqKnown || modified);
+	level = seqKnown;
+	
+	return modified;
+}
+	
+
+// Return this lattice's level
+SeqStructLattice::seqLevel SeqStructLattice::getLevel() const
+{
+	return level;
+}
+
+bool SeqStructLattice::operator==(Lattice* that_arg)
+{
+	SeqStructLattice* that = dynamic_cast<SeqStructLattice*>(that_arg);
+	return (level == that->level) && 
+	       (cg    == that->cg) && 
+	       (dom   == that->dom) && 
+	       (n     == that->n) &&
+	       cg->eqVars(this->vInit, that->vInit, "    ") && 
+	       cg->eqVars(this->vFin,  that->vFin,  "    ") && 
+	       (s     == that->s);
+}
 		
 // The string that represents this object
 // If indent!="", every line of this string must be prefixed by indent
 // The last character of the returned string should not be '\n', even if it is a multi-line string.
-string SeqStructLattice::str(string indent);
+string SeqStructLattice::str(string indent)
+{
+	ostringstream oss;
+	
+	if(level == uninitialized)   oss << "SeqStructLattice: uninitialized>";
+	else if(level == bottom)     oss << "SeqStructLattice: bottom>";
+	else if(level == startKnown) oss << "SeqStructLattice: startKnown: vInit="<<vInit<<", vFin="<<vFin<<">";
+	else if(level == seqKnown)   oss << "SeqStructLattice: seqKnown: vInit="<<vInit<<", vFin="<<vFin<<", s="<<s<<">";
+	else if(level == top)        oss << "SeqStructLattice: top>";
+
+	return oss.str();
+}
+
+/***********************
+ ***** DivAnalysis *****
+ ***********************/
+
+// Generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
+//vector<Lattice*> DivAnalysis::genInitState(const Function& func, const DataflowNode& n, const NodeState& state)
+void SeqStructAnalysis::genInitState(const Function& func, const DataflowNode& n, const NodeState& state,
+                                     vector<Lattice*>& initLattices, vector<NodeFact*>& initFacts)
+{
+	// Get the initial state from the ConstrGraphAnalysis, which will create a constraint graph in initLattices and nothing in initFacts
+	cgAnalysis->genInitState(func, n, state, initLattices, initFacts);
+	ROSE_ASSERT(initLattices.size()==0 && dynamic_cast<ConstrGraph*>(initLattices[0]) && initFacts.size()==0);
+	ConstrGraph* cg = dynamic_cast<ConstrGraph*>(initLattices[0]);
+	
+	// Create a SeqStructLattice for every live variable in the application
+	map<varID, Lattice*> emptyM;
+	FiniteVarsExprsProductLattice* l = new FiniteVarsExprsProductLattice((Lattice*)new SeqStructLattice(cg, n), emptyM/*genConstVarLattices()*/, 
+	                                                                     (Lattice*)NULL, ldva, /*func, */n, state);
+	
+	// Get all the array reference expressions in the application and add a SeqStructLattice for each one
+	ROSE_ASSERT(func.get_definition());
+	Rose_STL_Container<SgNode*> arrayRefs = NodeQuery::querySubTree(func.get_definition()->get_body(), V_SgPntrArrRefExp);
+	for(Rose_STL_Container<SgNode*>::iterator aref=arrayRefs.begin(); aref!=arrayRefs.end(); aref++) {
+		ROSE_ASSERT(isSgExpression(*aref));
+		l->addVar(SgExpr2Var(isSgExpression(*aref)));
+	}
+	
+	//printf("DivAnalysis::genInitState, returning %p\n", l);
+	initLattices.push_back(l);
+	
+	/*printf("SeqStructAnalysis::genInitState() initLattices:\n");
+	for(vector<Lattice*>::iterator it = initLattices.begin(); 
+	    it!=initLattices.end(); it++)
+	{	
+		cout << *it << ": " << (*it)->str("    ") << "\n";
+	}*/
+}
+
+bool SeqStructAnalysis::transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
+{
+	bool modified=false;
+	
+	ConstrGraph* cg = dynamic_cast<ConstrGraph*>(state.getLatticeAbove(cgAnalysis, 0));
+	
+	ROSE_ASSERT(dfInfo.size() == 1);
+	FiniteVarsExprsProductLattice* prodLat = dynamic_cast<FiniteVarsExprsProductLattice*>(*(dfInfo.begin()));
+	
+	// Make sure that all the lattices are initialized
+	const vector<Lattice*>& lattices = prodLat->getLattices();
+	for(vector<Lattice*>::const_iterator it = lattices.begin(); it!=lattices.end(); it++)
+		(dynamic_cast<DivLattice*>(*it))->initialize();
+	
+	
+	if(isSgPntrArrRefExp(n.getNode()) || isSgAssignOp(n.getNode())) {
+		// Variable that corresponds to the value referenced by the array index or the new value of the assigned variable
+		varID refVar;
+		// The SeqStructLattice associated with refVar
+		SeqStructLattice* ssL;
+		
+		if(isSgPntrArrRefExp(n.getNode())) {
+			ssL = dynamic_cast<SeqStructLattice*>(prodLat->getVarLattice(SgExpr2Var(isSgPntrArrRefExp(n.getNode()))));
+			ROSE_ASSERT(ssL);
+			refVar = SgExpr2Var(isSgPntrArrRefExp(n.getNode())->get_rhs_operand());
+		} else if(isSgAssignOp(n.getNode())) {
+			ssL = dynamic_cast<SeqStructLattice*>(prodLat->getVarLattice(SgExpr2Var(isSgAssignOp(n.getNode())->get_lhs_operand())));
+			// If the lhs of this assignment is live
+			if(ssL) refVar = SgExpr2Var(isSgPntrArrRefExp(n.getNode())->get_rhs_operand());
+			// Otherwise, we're done
+			else    goto DONE;
+		}
+		
+		if(ssL->getLevel() == SeqStructLattice::bottom) {
+			modified = ssL->setToStartKnown(refVar, 0) || modified;
+		} else if(ssL->getLevel() == SeqStructLattice::top) {
+			// Do nothing, we can't represent this sequence
+		} else if(ssL->getLevel() == SeqStructLattice::startKnown) {
+			// If the last-known access was a fixed stride away from this access
+			int a, b, c;
+			if(cg->isEqVars(refVar, ssL->vInit, a, b, c) && a==1 && b==1) {
+				modified = ssL->setToSeqKnown(refVar, 0, c) || modified;
+			// Otherwise, this sequence is too complex to be represented
+			} else
+				modified = ssL->setToTop() || modified;
+		// If we've identified a sequence after analyzing multiple instances of this array access
+		} else if(ssL->getLevel() == SeqStructLattice::seqKnown) {
+			// If the stride of this access is equal to what was previously computed
+			int a, b, c;
+			if(cg->isEqVars(refVar, ssL->vInit, a, b, c) && a==1 && b==1 && c==ssL->s) {
+				modified = ssL->setToSeqKnown(refVar, 0, ssL->s) || modified;
+			// If the stride is different from what we've identified, this sequence is too complex to be represented
+			} else 
+				modified = ssL->setToTop() || modified;
+		}
+	}
+	
+	DONE:
+	
+	// Finally, call the transfer function of the ConstrGraph to make sure that the current statement's effects are incorporated
+	modified = cgAnalysis->transfer(func, n, state, dfInfo) || modified;
+	
+	return modified;
+}
+
+// Prints the Lattices set by the given SeqStructAnalysis 
+void printSeqStructAnalysisStates(SeqStructAnalysis* ssa, string indent)
+{
+	vector<int> factNames;
+	vector<int> latticeNames;
+	latticeNames.push_back(0);
+	latticeNames.push_back(1);
+	printAnalysisStates pas(ssa, factNames, latticeNames, printAnalysisStates::below, indent);
+	UnstructuredPassInterAnalysis upia_pas(pas);
+	upia_pas.runAnalysis();
+}

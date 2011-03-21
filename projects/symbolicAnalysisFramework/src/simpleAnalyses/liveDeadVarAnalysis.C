@@ -443,6 +443,8 @@ set<varID> getAllLiveVarsAt(LiveDeadVarsAnalysis* ldva, const DataflowNode& n, c
 
 VarsExprsProductLattice::VarsExprsProductLattice(const VarsExprsProductLattice& that) : n(that.n), state(that.state)
 {
+	allVarLattice = NULL;
+	perVarLattice = NULL;
 	copy(&that);
 }
 
@@ -472,13 +474,34 @@ void VarsExprsProductLattice::copy(Lattice* that_arg)
 // Overwrites the state of this Lattice with that of that Lattice
 void VarsExprsProductLattice::copy(const VarsExprsProductLattice* that)
 {
-	ROSE_ASSERT((&n == &that->n) && (&state == &that->state));
+	//if(&n != &that->n) {
+		cout << "VarsExprsProductLattice::copy() this="<<this<<" that="<<that<<"\n";
+		cout << "    n="<<n.getNode()<<" that->n="<<that->n.getNode()<<"\n";
+		cout << "    this->n="<<n.getNode()->unparseToString() << " | " << n.getNode()->class_name()<<" | "<<n.getIndex()<<"\n";
+		cout << "    that->n="<<that->n.getNode()->unparseToString() << " | " << that->n.getNode()->class_name()<<" | "<<that->n.getIndex()<<"\n";
+	//}
+	//ROSE_ASSERT(n.getNode() == that->n.getNode() && n.getIndex() == that->n.getIndex());// && (&state == &that->state));
 
-	if(allVarLattice) allVarLattice->copy(that->allVarLattice);
-	else              allVarLattice = that->allVarLattice->copy();
-		
-	if(perVarLattice) perVarLattice->copy(that->perVarLattice);
-	else              perVarLattice = that->perVarLattice->copy();
+	//cout << "VarsExprsProductLattice::copy() allVarLattice="<<allVarLattice<<" that->allVarLattice="<<that->allVarLattice<<" perVarLattice="<<perVarLattice<<" that->perVarLattice="<<perVarLattice<<"\n";
+	if(that->allVarLattice) {
+		if(allVarLattice) allVarLattice->copy(that->allVarLattice);
+		else              allVarLattice = that->allVarLattice->copy();
+	} else {
+		if(allVarLattice) {
+			delete allVarLattice;
+			allVarLattice = NULL;
+		}
+	}
+	
+	if(that->perVarLattice) {
+		if(perVarLattice) perVarLattice->copy(that->perVarLattice);
+		else              perVarLattice = that->perVarLattice->copy();
+	} else {
+		if(perVarLattice) {
+			delete perVarLattice;
+			perVarLattice = NULL;
+		}
+	}
 	
 	// Remove all lattices in constVarLattices that don't appear in that->constVarLattices
 	set<varID> varsToDelete;
@@ -600,6 +623,36 @@ void VarsExprsProductLattice::incorporateVars(Lattice* that_arg)
 	}
 }
 
+// Functions used to inform this lattice that a given variable is now in use (e.g. a variable has entered
+//    scope or an expression is being analyzed) or is no longer in use (e.g. a variable has exited scope or
+//    an expression or variable is dead).
+// Returns true if this causes this Lattice to change and false otherwise.
+bool VarsExprsProductLattice::addVar(const varID& var)
+{
+	if(varLatticeIndex.find(var) == varLatticeIndex.end())
+	{
+		varLatticeIndex.insert(make_pair(var, lattices.size()));
+		lattices.push_back(perVarLattice->copy());
+		return true;
+	} else
+		return false;
+}
+bool VarsExprsProductLattice::remVar(const varID& var)
+{
+	map<varID, int>::iterator it;
+	if((it = varLatticeIndex.find(var)) == varLatticeIndex.end())
+		return false;
+	else {
+		delete lattices[it->second];
+		lattices[it->second]=NULL;
+		// !!! NOTE: THIS INTRODUCES A MINOR DATA LEAK SINCE THE LATTICES VECTOR MAY END UP WITH A LOT OF 
+		// !!!       EMPTY REGIONS. WE MAY NEED TO COME UP WITH A SCHEME TO COMPRESS IT.
+		varLatticeIndex.erase(var);
+		return true;
+	}
+}
+
+
 // The string that represents this object
 // If indent!="", every line of this string must be prefixed by indent
 // The last character of the returned string should not be '\n', even if it is a multi-line string.
@@ -608,7 +661,8 @@ string VarsExprsProductLattice::str(string indent)
 	//printf("VarsExprsProductLattice::str() this->allVarLattice=%p\n", this->allVarLattice);
 	
 	ostringstream outs;
-	outs << "[VarsExprsProductLattice: level="<<(getLevel()==uninitialized ? "uninitialized" : "initialized")<<"\n";
+	//outs << "[VarsExprsProductLattice: n="<<n.getNode()<<" = <"<<n.getNode()->unparseToString()<<" | "<<n.getNode()->class_name()<<" | "<<n.getIndex()<<"> level="<<(getLevel()==uninitialized ? "uninitialized" : "initialized")<<"\n";
+	outs << "[VarsExprsProductLattice: n="<<n.getNode()<<" level="<<(getLevel()==uninitialized ? "uninitialized" : "initialized")<<"\n";
 	varIDSet refVars;// = getVisibleVars(func);
 	for(varIDSet::iterator it = refVars.begin(); it!=refVars.end(); it++)
 	{

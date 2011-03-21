@@ -16,135 +16,28 @@ using namespace std;
 #include "dataflow.h"
 #include "liveDeadVarAnalysis.h"
 #include "divAnalysis.h"
-#include "sgnAnalysis.h"
+// GB : 2011-03-05 (Removing Sign Lattice Dependence) #include "sgnAnalysis.h"
 #include "nodeConstAnalysis.h"
 #include "affineInequality.h"
-#include "scalarFWDataflow.h"
+#include "ConstrGraphAnalysis.h"
 #include "saveDotAnalysis.h"
-
-int numFails=0;
-
-int main( int argc, char * argv[] ) 
-{
-	printf("========== S T A R T ==========\n");
-	
-	// Build the AST used by ROSE
-	SgProject* project = frontend(argc,argv);
-	
-	//cfgUtils::initCFGUtils(project);
-
-	initAnalysis(project);
-	
-	analysisDebugLevel = 0;
-	
-	SaveDotAnalysis sda;
-	UnstructuredPassInterAnalysis upia_sda(sda);
-	upia_sda.runAnalysis();
-	
-	/*analysisDebugLevel = 1;
-	printf("***********************************************************\n");
-	printf("*****************   Node Const Analysis   *****************\n");
-	printf("***********************************************************\n");
-	nodeConstAnalysis* nca = runNodeConstAnalysis();
-	printNodeConstAnalysisStates(nca, "<");*/
-	
-	analysisDebugLevel = 1;
-	printf("*************************************************************\n");
-	printf("*****************   Live/Dead Variable Analysis   *****************\n");
-	printf("*************************************************************\n");
-	LiveDeadVarsAnalysis ldva(project);
-	//CallGraphBuilder cgb(project);
-	//cgb.buildCallGraph();
-	//SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
-	//ContextInsensitiveInterProceduralDataflow ciipd_da(&ldva, graph);
-	UnstructuredPassInterDataflow ciipd_ldva(&ldva);
-	ciipd_ldva.runAnalysis();
-	
-	printLiveDeadVarsAnalysisStates(&ldva, "[");
-	
-	//analysisDebugLevel = 0;
-	//printf("*************************************************************\n");
-	//printf("*****************   Divisibility Analysis   *****************\n");
-	//printf("*************************************************************\n");
-	//DivAnalysis da(&ldva);
-	//CallGraphBuilder cgb(project);
-	//cgb.buildCallGraph();
-	//SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
-	//ContextInsensitiveInterProceduralDataflow ciipd_da(&da, graph);
-	////UnstructuredPassInterDataflow ciipd_da(&da);
-	//ciipd_da.runAnalysis();
-	//
-	////printDivAnalysisStates(&da, "[");
-	//
-	//analysisDebugLevel = 0;
-	//
-	//printf("*************************************************************\n");
-	//printf("*****************   Sign Analysis   *****************\n");
-	//printf("*************************************************************\n");
-	//SgnAnalysis sa(&ldva);
-	//ContextInsensitiveInterProceduralDataflow ciipd_sa(&sa, graph);
-	////UnstructuredPassInterDataflow ciipd_sa(&sa);
-	//ciipd_sa.runAnalysis();
-	//
-	////printSgnAnalysisStates(&sa, "|");
-	//
-	////analysisDebugLevel = 0;
-	////
-	////printf("*************************************************************\n");
-	////printf("******************   Affine Inequalities   ******************\n");
-	////printf("*************************************************************\n");
-	//////initAffineIneqs(project);
-	///*affineInequalitiesPlacer aip;
-	//UnstructuredPassInterAnalysis upia_aip(aip);
-	//upia_aip.runAnalysis();
-	//
-	//printAffineInequalities(&aip, "(");*/
-	//
-	//analysisDebugLevel = 1;
-	////printf("***************************************************************\n");
-	////printf("***************** Scalar FW Dataflow Analysis *****************\n");
-	////printf("***************************************************************\n");
-	//ScalarFWDataflow sfwd(&ldva, &da, &sa);
-	//ContextInsensitiveInterProceduralDataflow ciipd_sfwd(&sfwd, graph);
-	////UnstructuredPassInterDataflow ciipd_sfwd(&sfwd);
-	//ciipd_sfwd.runAnalysis();
-	//
-	//printScalarFWDataflowStates(&sfwd, "<");
-   //
-	//
-	///*printf("*************************************************************\n");
-	//printf("*********** Checkpoint Range Verification Analysis **********\n");
-	//printf("*************************************************************\n");
-	//ChkptRangeVerifAnalysis crva(&cra);
-	//UnstructuredPassInterAnalysis upia_crva(crva);
-	//upia_crva.runAnalysis();*/
-
-	if(numFails==0)
-		printf("PASS\n");
-	else
-		printf("FAIL!\n");
-	
-	printf("==========  E  N  D  ==========\n");
-	
-	// Unparse and compile the project (so this can be used for testing)
-	return backend(project);
-}
+#include "ConstrGraph.h"
 
 /*******************************************************************************************
  *******************************************************************************************
  *******************************************************************************************/
 
-map<varID, Lattice*> ScalarFWDataflow::constVars;
+map<varID, Lattice*> ConstrGraphAnalysis::constVars;
 
-// generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
-//vector<Lattice*> ScalarFWDataflow::genInitState(const Function& func, const DataflowNode& n, const NodeState& state)
-void ScalarFWDataflow::genInitState(const Function& func, const DataflowNode& n, const NodeState& state,
-                                  vector<Lattice*>& initLattices, vector<NodeFact*>& initFacts)
+// Generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
+//vector<Lattice*> ConstrGraphAnalysis::genInitState(const Function& func, const DataflowNode& n, const NodeState& state)
+void ConstrGraphAnalysis::genInitState(const Function& func, const DataflowNode& n, const NodeState& state,
+                                       vector<Lattice*>& initLattices, vector<NodeFact*>& initFacts)
 {
 	//vector<Lattice*> initLattices;
 //if(isSgIntVal(n.getNode())) {
-//	printf("ScalarFWDataflow::genInitState() n=%p<%s | %s>\n", n.getNode(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());
-/*	printf("ScalarFWDataflow::genInitState() state=%p\n", &state);
+//	printf("ConstrGraphAnalysis::genInitState() n=%p<%s | %s>\n", n.getNode(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());
+/*	printf("ConstrGraphAnalysis::genInitState() state=%p\n", &state);
 }*/
 	
 	// Create a constraint graph from the divisiblity and sign information at this CFG node
@@ -175,16 +68,16 @@ void ScalarFWDataflow::genInitState(const Function& func, const DataflowNode& n,
 // Returns a map of special constant variables (such as zeroVar) and the lattices that correspond to them
 // These lattices are assumed to be constants: it is assumed that they are never modified and it is legal to 
 //    maintain only one copy of each lattice may for the duration of the analysis.
-/*map<varID, Lattice*>& ScalarFWDataflow::genConstVarLattices() const
+/*map<varID, Lattice*>& ConstrGraphAnalysis::genConstVarLattices() const
 {
 	return constVars;
 }*/
 
-bool ScalarFWDataflow::transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
+bool ConstrGraphAnalysis::transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
 {
 	string indent="            ";
 	printf("%s-----------------------------------\n", indent.c_str());
-	printf("%sScalarFWDataflow::transfer() function %s() node=<%s | %s>\n", indent.c_str(), func.get_name().str(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());
+	printf("%sConstrGraphAnalysis::transfer() function %s() node=<%s | %s>\n", indent.c_str(), func.get_name().str(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());
 	
 	bool modified = false;
 	ConstrGraph* cg = dynamic_cast<ConstrGraph*>(dfInfo[0]);
@@ -713,7 +606,7 @@ cout << indent << cg->str(indent+"    ") << "\n";*/
 /* // Incorporates the current node's inequality information from conditionals (ifs, fors, etc.) into the current node's 
 // constraint graph.
 // returns true if this causes the constraint graph to change and false otherwise
-bool ScalarFWDataflow::incorporateConditionalsInfo(const Function& func, const DataflowNode& n, 
+bool ConstrGraphAnalysis::incorporateConditionalsInfo(const Function& func, const DataflowNode& n, 
                                                    NodeState& state, const vector<Lattice*>& dfInfo)
 {
 	bool modified = false;
@@ -737,7 +630,7 @@ bool ScalarFWDataflow::incorporateConditionalsInfo(const Function& func, const D
 
 // Incorporates the current node's divisibility information into the current node's constraint graph
 // returns true if this causes the constraint graph to change and false otherwise
-bool ScalarFWDataflow::incorporateDivInfo(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo, string indent)
+bool ConstrGraphAnalysis::incorporateDivInfo(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo, string indent)
 {
 	bool modified = false;
 	ConstrGraph* cg = dynamic_cast<ConstrGraph*>(dfInfo.front());
@@ -776,7 +669,7 @@ bool ScalarFWDataflow::incorporateDivInfo(const Function& func, const DataflowNo
 
 // For any variable for which we have divisibility info, remove its constraints to other variables (other than its
 // divisibility variable)
-bool ScalarFWDataflow::removeConstrDivVars(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo, string indent)
+bool ConstrGraphAnalysis::removeConstrDivVars(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo, string indent)
 {
 	bool modified = false;
 	ConstrGraph* cg = dynamic_cast<ConstrGraph*>(dfInfo.front());
@@ -807,14 +700,14 @@ bool ScalarFWDataflow::removeConstrDivVars(const Function& func, const DataflowN
 	return modified;
 }
 
-// Prints the Lattices set by the given ScalarFWDataflow
-void printScalarFWDataflowStates(ScalarFWDataflow* sfwd, string indent)
+// Prints the Lattices set by the given ConstrGraphAnalysis
+void printConstrGraphAnalysisStates(ConstrGraphAnalysis* cga, string indent)
 {
 	vector<int> factNames;
 	vector<int> latticeNames;
 	latticeNames.push_back(0);
 	latticeNames.push_back(1);
-	printAnalysisStates pas(sfwd, factNames, latticeNames, printAnalysisStates::below, indent);
+	printAnalysisStates pas(cga, factNames, latticeNames, printAnalysisStates::below, indent);
 	UnstructuredPassInterAnalysis upia_pas(pas);
 	upia_pas.runAnalysis();
 }

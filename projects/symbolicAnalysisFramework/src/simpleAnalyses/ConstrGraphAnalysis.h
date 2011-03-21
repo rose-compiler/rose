@@ -24,9 +24,7 @@
 
 #include "ConstrGraph.h"
 
-class ScalarFWDataflow;
-
-class ScalarFWDataflow : public IntraFWDataflow
+class ConstrGraphAnalysis : public IntraFWDataflow
 {
 	protected:
 	static map<varID, Lattice*> constVars;
@@ -39,7 +37,7 @@ class ScalarFWDataflow : public IntraFWDataflow
 	LiveDeadVarsAnalysis* ldva; 
 	
 	public:
-	ScalarFWDataflow(LiveDeadVarsAnalysis* ldva, DivAnalysis* divAnalysis/* GB : 2011-03-05 (Removing Sign Lattice Dependence) , SgnAnalysis* sgnAnalysis*/ /*, affineInequalitiesPlacer* affIneqPlacer*/): IntraFWDataflow()
+	ConstrGraphAnalysis(LiveDeadVarsAnalysis* ldva, DivAnalysis* divAnalysis/* GB : 2011-03-05 (Removing Sign Lattice Dependence) , SgnAnalysis* sgnAnalysis*/ /*, affineInequalitiesPlacer* affIneqPlacer*/): IntraFWDataflow()
 	{
 		this->divAnalysis = divAnalysis;
 		// GB : 2011-03-05 (Removing Sign Lattice Dependence) this->sgnAnalysis = sgnAnalysis;
@@ -75,8 +73,8 @@ class ScalarFWDataflow : public IntraFWDataflow
 	bool removeConstrDivVars(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo, string indent="");
 };
 
-// Prints the Lattices set by the given ScalarFWDataflow
-void printScalarFWDataflowStates(ScalarFWDataflow* sfwd, string indent="");
+// Prints the Lattices set by the given ConstrGraphAnalysis
+void printConstrGraphAnalysisStates(ConstrGraphAnalysis* cga, string indent="");
 
 #endif
 
