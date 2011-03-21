@@ -123,7 +123,9 @@ echo "-------------------------------------------------------------------"      
 echo "                                                           [Hudson]"       >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
+set +e
 export | sed 's/declare -x //g' | grep "^ROSE_"                                  >> $env_dump_file
+set -e
 #echo "ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT = ${ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT}"  >> $env_dump_file
 #echo "ROSE_TEST_BUILD_STYLE             = ${ROSE_TEST_BUILD_STYLE}"              >> $env_dump_file
 #echo "ROSE_TEST_BOOST_PATH              = ${ROSE_TEST_BOOST_PATH}"               >> $env_dump_file
