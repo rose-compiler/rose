@@ -42,7 +42,7 @@ fi
 # Extra work to find libjvm.so on different platforms
 # (excluding Mac OS X)
 PROCESSOR_TYPE=`uname -p`
-if [ "$PROCESSOR_TYPE" == "i686" ] ; then
+if [ "$PROCESSOR_TYPE" == "i686" -o "$PROCESSOR_TYPE" == "i386" ] ; then
   JAVA_PLATFORM_STRING="i386"
 elif  [ "$PROCESSOR_TYPE" == "x86_64" ] ; then
   JAVA_PLATFORM_STRING="amd64"
