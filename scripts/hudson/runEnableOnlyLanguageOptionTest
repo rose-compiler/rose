@@ -12,7 +12,7 @@ set +x
 # Starting 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step...
 # Done with 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step!
 printBannerToStartStep \
-	"[${ROSE_TEST_BUILD_STYLE}] in ROSE/scripts/hudson/runEnableOnlyLanguageOptionTest"
+	"[Enable only ${ROSE_TEST_LANGUAGE_OPTION}] in ROSE/scripts/hudson/runEnableOnlyLanguageOptionTest"
 
 machine=`uname -m`
 machine_os=`uname -s`
@@ -66,8 +66,8 @@ fi
 
 # TOO (3/21/2011): Currently, C and C++ must be simultaneously enabled/disabled so we don't
 # need to have separate tests for C and C++.
-if test "x$LANGUAGE_OPTION" = "xc-and-cxx" ; then
-  LANGUAGE_OPTION="c"
+if test "x$ROSE_TEST_LANGUAGE_OPTION" = "xc-and-cxx" ; then
+  ROSE_TEST_LANGUAGE_OPTION="c"
 fi
 
 #########################################################################################
@@ -80,7 +80,7 @@ fi
 CONFIGURE_FLAGS="\
     --with-boost=${ROSE_TEST_BOOST_PATH} \
     --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
-    --enable-only-${LANGUAGE_OPTION} \
+    --enable-only-${ROSE_TEST_LANGUAGE_OPTION} \
     --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
 
 #########################################################################################
@@ -165,7 +165,7 @@ set +x
    printBannerWithDate
 
    printBannerToEndStep \
-	"[${ROSE_TEST_BUILD_STYLE}] in ROSE/scripts/hudson/runParallelizedTest-with-osx" \
+	"[Enable only ${ROSE_TEST_LANGUAGE_OPTION}] in ROSE/scripts/hudson/runEnableOnlyLanguageOptionTest"
 	$hudson_start_time_seconds
 set -x
 ##
