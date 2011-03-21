@@ -1580,8 +1580,8 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
        // This is Rich's test (much shorter)
           if (isValidMangledName(mangledName) != true)
              {
-               printf ("Error: failed isValidMangledName() test classDeclaration = %p = %s --- mangledName = %s \n",
-                    classDeclaration,classDeclaration->class_name().c_str(),mangledName.c_str());
+               printf ("Error: failed isValidMangledName() test classDeclaration = %p = %s = %s --- mangledName = %s \n",
+                    classDeclaration,classDeclaration->get_name().str(),classDeclaration->class_name().c_str(),mangledName.c_str());
                classDeclaration->get_file_info()->display("Error: failed isValidMangledName() test");
              }
           ROSE_ASSERT(isValidMangledName(mangledName) == true);
