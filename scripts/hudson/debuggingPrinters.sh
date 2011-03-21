@@ -124,24 +124,20 @@ echo "                                                           [Hudson]"      
 echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 set +e
-for a_var in `export | sed 's/declare -x //g' | grep "^ROSE_"`
-do
- echo $a_var                                                                     >> $env_dump_file
-done
-#echo "ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT = ${ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT}"  >> $env_dump_file
-#echo "ROSE_TEST_BUILD_STYLE             = ${ROSE_TEST_BUILD_STYLE}"              >> $env_dump_file
-#echo "ROSE_TEST_BOOST_PATH              = ${ROSE_TEST_BOOST_PATH}"               >> $env_dump_file
-#echo "ROSE_TEST_JAVA_PATH               = ${ROSE_TEST_JAVA_PATH}"                >> $env_dump_file
-#set +e
-#echo "$ROSE_TEST_BUILD_STYLE" | grep --quiet "make.*full"
-#if test $? = 0 ; then
-# echo "Environment variables required for ROSE_TEST_BUILD_STYLE = full"           >> $env_dump_file
-# echo "ROSE_TEST_QT_PATH                 = ${ROSE_TEST_QT_PATH}"                  >> $env_dump_file
-# echo "ROSE_TEST_SQLITE_PATH             = ${ROSE_TEST_SQLITE_PATH}"              >> $env_dump_file
-# echo "ROSE_TEST_RTED_PATH               = ${ROSE_TEST_RTED_PATH}"                >> $env_dump_file
-# echo "ROSE_TEST_OPENGL_PATH             = ${ROSE_TEST_OPENGL_PATH}"              >> $env_dump_file
-#fi
-#set -e
+echo "ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT = ${ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT}"  >> $env_dump_file
+echo "ROSE_TEST_BUILD_STYLE             = ${ROSE_TEST_BUILD_STYLE}"              >> $env_dump_file
+echo "ROSE_TEST_BOOST_PATH              = ${ROSE_TEST_BOOST_PATH}"               >> $env_dump_file
+echo "ROSE_TEST_JAVA_PATH               = ${ROSE_TEST_JAVA_PATH}"                >> $env_dump_file
+set +e
+echo "$ROSE_TEST_BUILD_STYLE" | grep --quiet "make.*full"
+if test $? = 0 ; then
+ echo "Environment variables required for ROSE_TEST_BUILD_STYLE = full"           >> $env_dump_file
+ echo "ROSE_TEST_QT_PATH                 = ${ROSE_TEST_QT_PATH}"                  >> $env_dump_file
+ echo "ROSE_TEST_SQLITE_PATH             = ${ROSE_TEST_SQLITE_PATH}"              >> $env_dump_file
+ echo "ROSE_TEST_RTED_PATH               = ${ROSE_TEST_RTED_PATH}"                >> $env_dump_file
+ echo "ROSE_TEST_OPENGL_PATH             = ${ROSE_TEST_OPENGL_PATH}"              >> $env_dump_file
+fi
+set -e
 
 echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
