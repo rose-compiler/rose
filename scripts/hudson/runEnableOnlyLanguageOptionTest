@@ -165,7 +165,7 @@ set +x
    printBannerWithDate
 
    printBannerToEndStep \
-	"[Enable only ${ROSE_TEST_LANGUAGE_OPTION}] in ROSE/scripts/hudson/runEnableOnlyLanguageOptionTest"
+	"[Enable only ${ROSE_TEST_LANGUAGE_OPTION}] in ROSE/scripts/hudson/runEnableOnlyLanguageOptionTest" \
 	$hudson_start_time_seconds
 set -x
 ##
