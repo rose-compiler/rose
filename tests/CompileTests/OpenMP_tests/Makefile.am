@@ -98,6 +98,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	reduction-classic.c \
 	rice1.c \
 	section.c \
+	section1.c \
 	set_num_threads.c \
 	shared.c \
 	single.c \
