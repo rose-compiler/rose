@@ -39,6 +39,19 @@ else
   OS_MACHINE_LABEL=amd64-linux
 fi
 
+# Extra work to find libjvm.so on different platforms
+# (excluding Mac OS X)
+PROCESSOR_TYPE=`uname -p`
+if [ "$PROCESSOR_TYPE" == "i686" ] ; then
+  JAVA_PLATFORM_STRING="i386"
+elif  [ "$PROCESSOR_TYPE" == "x86_64" ] ; then
+  JAVA_PLATFORM_STRING="amd64"
+else
+  echo "unrecognized processor type: $PROCESSOR_TYPE"
+  exit 1
+fi
+export LD_LIBRARY_PATH="${ROSE_TEST_JAVA_PATH}/lib:${ROSE_TEST_JAVA_PATH}/jre/lib/$JAVA_PLATFORM_STRING/server:$LD_LIBRARY_PATH"
+
 #########################################################################################
 #
 #  BOOST C++ 
