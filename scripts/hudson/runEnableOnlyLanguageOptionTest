@@ -20,6 +20,7 @@ machine_name=`uname -n`
 start_time=`date`
 hudson_start_time_seconds="$(date +%s)"
 TOP_LEVEL_ROSE_DIRECTORY="$PWD"
+CONFIGURE_PREFIX_DIR="$PWD/ROSE-install"
 LOG_LOCATION="$PWD"
 
 #########################################################################################
@@ -95,7 +96,6 @@ else
    printBannerToEndStep "build" $build_start_time
 fi
 
-CONFIGURE_PREFIX_DIR="ROSE-install"
 if test -e ROSE-install ; then 
   chmod -R u+xw ROSE-install
 fi
