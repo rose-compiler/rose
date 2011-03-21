@@ -73,7 +73,7 @@ class ecjASTVisitor extends ASTVisitor
         {
           System.out.println("Inside of visit (Argument,BlockScope)");
 
-          java_parser.cactionArgument("abc");
+          java_parser.cactionArgument("Argument_block_abc");
 
           System.out.println("Leaving visit (Argument,BlockScope)");
 
@@ -84,7 +84,7 @@ class ecjASTVisitor extends ASTVisitor
         {
           System.out.println("Inside of visit (Argument,ClassScope)");
 
-          java_parser.cactionArgumentClassScope("abc");
+          java_parser.cactionArgumentClassScope("Argument_class_abc");
 
           System.out.println("Leaving visit (Argument,ClassScope)");
 
@@ -147,13 +147,13 @@ class ecjASTVisitor extends ASTVisitor
 
      public boolean visit(ArrayTypeReference  node, BlockScope scope)
         {
-          java_parser.cactionArrayTypeReference("abc");
+          java_parser.cactionArrayTypeReference("ArrayTypeReference_block_abc");
           return true; // do nothing by  node, keep traversing
         }
 
      public boolean visit(ArrayTypeReference  node, ClassScope scope)
         {
-          java_parser.cactionArrayTypeReferenceClassScope("abc");
+          java_parser.cactionArrayTypeReferenceClassScope("ArrayTypeReference_class_abc");
           return true; // do nothing by  node, keep traversing
         }
 
@@ -306,7 +306,10 @@ class ecjASTVisitor extends ASTVisitor
         {
           System.out.println("Inside of visit (ConstructorDeclaration,ClassScope)");
 
-          java_parser.cactionConstructorDeclaration("abc");
+       // char [] name = node.selector;
+          System.out.println("Inside of visit (ConstructorDeclaration,ClassScope) method name = " + node.selector);
+
+          java_parser.cactionConstructorDeclaration("ConstructorDeclaration_abc");
 
           System.out.println("Leaving visit (ConstructorDeclaration,ClassScope)");
 
@@ -368,55 +371,55 @@ class ecjASTVisitor extends ASTVisitor
           return true; // do nothing by  node, keep traversing
         }
 
-          public boolean visit(ExplicitConstructorCall node, BlockScope scope)
+     public boolean visit(ExplicitConstructorCall node, BlockScope scope)
+        {
+       // java_parser.cactionExplicitConstructorCall("abc");
+          if (node.qualification != null)
              {
-            // java_parser.cactionExplicitConstructorCall("abc");
-               if (node.qualification != null)
-                  {
-                 // Name qualification not implemented.
-                 // this.qualification.printExpression(0, output).append('.');
-                    System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: Name qualification");
-                  }
-
-               if (node.typeArguments != null)
-                  {
-                 // output.append('<');
-                    System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: typeArguments");
-                    int max = node.typeArguments.length - 1;
-                    for (int j = 0; j < max; j++)
-                       {
-                      // node.typeArguments[j].print(0, output);
-                      // output.append(", ");//$NON-NLS-1$
-                       }
-                 // node.typeArguments[max].print(0, output);
-                 // output.append('>');
-                  }
-
-               if (node.accessMode == ExplicitConstructorCall.This)
-                  {
-                 // output.append("this("); //$NON-NLS-1$
-                    System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: this");
-                  }
-                 else
-                  {
-                 // output.append("super("); //$NON-NLS-1$
-                 // System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: super()");
-                    java_parser.cactionExplicitConstructorCall("super");
-                  }
-
-               if (node.arguments != null)
-                  {
-                    System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: arguments");
-                    for (int i = 0; i < node.arguments.length; i++)
-                       {
-                      // if (i > 0)
-                      //      output.append(", "); //$NON-NLS-1$
-                      // node.arguments[i].printExpression(0, output);
-                       }
-                  }
-
-               return true; // do nothing by  node, keep traversing
+            // Name qualification not implemented.
+            // this.qualification.printExpression(0, output).append('.');
+               System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: Name qualification");
              }
+
+          if (node.typeArguments != null)
+             {
+            // output.append('<');
+               System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: typeArguments");
+               int max = node.typeArguments.length - 1;
+               for (int j = 0; j < max; j++)
+                  {
+                 // node.typeArguments[j].print(0, output);
+                 // output.append(", ");//$NON-NLS-1$
+                  }
+            // node.typeArguments[max].print(0, output);
+            // output.append('>');
+             }
+
+          if (node.accessMode == ExplicitConstructorCall.This)
+             {
+            // output.append("this("); //$NON-NLS-1$
+               System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: this");
+             }
+            else
+             {
+            // output.append("super("); //$NON-NLS-1$
+            // System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: super()");
+               java_parser.cactionExplicitConstructorCall("super");
+             }
+
+          if (node.arguments != null)
+             {
+               System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: arguments");
+               for (int i = 0; i < node.arguments.length; i++)
+                  {
+                 // if (i > 0)
+                 //      output.append(", "); //$NON-NLS-1$
+                 // node.arguments[i].printExpression(0, output);
+                  }
+             }
+
+          return true; // do nothing by  node, keep traversing
+        }
 
      public boolean visit(ExtendedStringLiteral node, BlockScope scope)
         {
@@ -922,7 +925,10 @@ class ecjASTVisitor extends ASTVisitor
         {
           System.out.println("Inside of visit (MethodDeclaration,ClassScope)");
 
-          java_parser.cactionMethodDeclaration("abc");
+          char [] name = node.selector;
+          System.out.println("Inside of visit (MethodDeclaration,ClassScope) method name = " + name);
+
+          java_parser.cactionMethodDeclaration("MethodDeclaration_abc");
        // java_parser.cactionMethodDeclaration();
 
           System.out.println("Leaving visit (MethodDeclaration,ClassScope)");
@@ -1046,7 +1052,7 @@ class ecjASTVisitor extends ASTVisitor
           public boolean visit(QualifiedNameReference node, BlockScope scope)
              {
             // Note that if we want to traverse this object in more detail then the QualifiedNameReference::traverse() functions can/should be modified.
-               java_parser.cactionQualifiedNameReference("abc");
+               java_parser.cactionQualifiedNameReference("QualifiedNameReference_block_abc");
 
             // This is a reference to a variable (non data member)...? Is this correct?
                System.out.println("Sorry, not implemented in support for QualifiedNameReference(BlockScope): variable");
@@ -1149,7 +1155,7 @@ class ecjASTVisitor extends ASTVisitor
             // This is a reference to a data member.
                System.out.println("Sorry, not implemented in support for QualifiedNameReference(ClassScope): data member");
 
-               java_parser.cactionQualifiedNameReference("abc");
+               java_parser.cactionQualifiedNameReference("QualifiedNameReference_class_abc");
 
 /*
 	if (runtimeTimeType == null || compileTimeType == null)
@@ -1284,7 +1290,7 @@ class ecjASTVisitor extends ASTVisitor
 
                if (node.resolvedType != null)
                   {
-                    java_parser.cactionSingleTypeReference("abc");
+                    java_parser.cactionSingleTypeReference("SingleTypeReference_block_abc");
                  // char[][] char_string = node.getTypeName();
                  // System.out.println(char_string);
                  // String typename = new String(node.getTypeName().toString());
@@ -1302,7 +1308,7 @@ class ecjASTVisitor extends ASTVisitor
 
           public boolean visit(SingleTypeReference node, ClassScope scope)
              {
-               java_parser.cactionSingleTypeReference("abc");
+               java_parser.cactionSingleTypeReference("SingleTypeReference_class_abc");
                return true; // do nothing by  node, keep traversing
              }
 
@@ -1310,7 +1316,7 @@ class ecjASTVisitor extends ASTVisitor
         {
           System.out.println("Inside of visit (StringLiteral,BlockScope)");
 
-          java_parser.cactionStringLiteral("abc");
+          java_parser.cactionStringLiteral("StringLiteral_abc");
 
           System.out.println("Leaving visit (StringLiteral,BlockScope)");
 
