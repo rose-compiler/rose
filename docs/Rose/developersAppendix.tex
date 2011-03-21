@@ -5086,3 +5086,510 @@ developer recommends compiling the plugin against Hudson 1.345. A plugin
 compiled against Hudson 1.345 will work with the latest version of Hudson, compiled
 separately. The current \texttt{./build} script automatically builds the
 Git Plugin against a customized version of Hudson 1.345. 
+
+
+
+
+%---------------------------------------------------------------------
+%
+%--
+
+    \section{Managing Non-recursive Autotools}
+
+%--
+%
+%---------------------------------------------------------------------
+The codebase of ROSE spans many directories. This provides the proper level of
+granularity as a good software development practice. The GNU Autotools has therefore
+been well-suited for the hierarchical structure of ROSE with its out-of-the-box
+recursive approach.
+\newline\newline
+However, this default recursive process limits the amount of parallelism during the
+building and testing of ROSE, especially on our Continuous Integration (CI) server,
+Hudson. The result is that everyone is slowed down. As we get new machines with more
+processing cores this will increasingly be a problem (until we saturate the disk or memory
+bandwidth).
+
+\begin{itemize}
+  \item{
+        \htmladdnormallink
+        {Recursive Make Considered Harmful by Peter Miller (http://miller.emu.id.au/pmiller/books/rmch/)}
+        {http://miller.emu.id.au/pmiller/books/rmch/}}
+  \item{
+        \htmladdnormallink
+        {Non-recursive Automake (http://www.flameeyes.eu/autotools-mythbuster/automake/nonrecursive.html)}
+        {http://www.flameeyes.eu/autotools-mythbuster/automake/nonrecursive.html}}
+\end{itemize}
+
+%---------------------------------------------------------------------
+%
+%--
+
+    \section{A Quick Look at Recursive Automake}
+
+%--
+%
+%---------------------------------------------------------------------
+A traditional \texttt{Automake Makefile.am} would contain the \texttt{SUBDIRS} keyword, as in:
+\newline\newline
+\begin{indent}
+    \texttt{SUBDIRS = subdir1 subdir2 ... subdirN}
+\end{indent}
+\newline\newline
+This is the mechanism that provides \texttt{Automake} with its recursive ability. The generated
+\texttt{Makefile} may resemble the following:
+    \begin{verbatim}
+---------------------------------------------------------------------
+    $(RECURSIVE_TARGETS):
+        # Note: this is an ordered-sequential loop
+             list='$(SUBDIRS)'; for subdir in $$list; do \
+               echo "Making $$target in $$subdir"; \
+               if test "$$subdir" = "."; then \
+                 dot_seen=yes; \
+                 local_target="$$target-am"; \
+               else \
+                 local_target="$$target"; \
+               fi; \
+               (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+               || eval $$failcom; \
+             done; \
+             if test "$$dot_seen" = "no"; then \
+               $(MAKE) $(AM_MAKEFLAGS) "$$target-am" || exit 1; \
+             fi; test -z "$$fail"
+---------------------------------------------------------------------
+    \end{verbatim}
+
+Don't worry about the gory details of this \texttt{Makefile} target, just understand that \texttt{Automake}
+converts the \texttt{SUBDIRS} keyword into an ordered-sequential loop. That is, when \texttt{make} is
+executed in this directory, \texttt{Make} will recursively invoke \texttt{make} on its subdirectories,
+in the order that they were listed. What this means is that each of the \texttt{Make} processes in the
+different directories are independent of each other. Therefore, the amount of work that \texttt{Make}
+can do in a given directory is limited to the amount of work specified in that directory's \texttt{
+Makefile}. This is a clean and intuitive approach, but it runs into problems when parallel \texttt{make}
+is used. Parallel make can be achieved by executing \texttt{make} as follows:
+    \newline\newline
+    \begin{indent}
+    \texttt{\$ make -j\textsl{$<$\# of processes$>$}}
+    \end{indent}
+    \newline\newline
+
+The problem is that if we execute \texttt{make -j16}, for example:
+
+    \begin{itemize}
+    \item{We are under-utilizing resources if there are less than 16 tasks to be completed}
+    \item{\texttt{Make} will stay in the current directory until everything is complete in it}
+    \end{itemize}
+
+Our goal then is to show \texttt{Make} that there is plenty more work to be done. Well, the only way to do
+this is to hand \texttt{Make} the work. The solution: "flattened" \texttt{Makefile}s. 
+
+%---------------------------------------------------------------------
+%
+%--
+
+    \section{Manually "Flattening" Recursive Automake Makefiles}
+
+%--
+%
+%---------------------------------------------------------------------
+For sake of example, let's look at flattening directories within the ROSE/src directory.
+Ultimately, we are concerned with generating the Libtool library \texttt{librose.la}. In
+our example, we will be flattening a hypothetical ROSE/src/Parent directory.
+%---------------------------------------------------------------------
+\subsection{Relevant files}
+%---------------------------------------------------------------------
+	\begin{itemize}
+	\item{ROSE/config/support-rose.m4}
+	\item{ROSE/src/Makefile.am}
+	\item{\textsl{path/to/directory/for/flattening/Makefile.am}}
+	\end{itemize}
+%---------------------------------------------------------------------
+\subsubsection{ROSE/config/support-rose.m4}
+%---------------------------------------------------------------------
+    \begin{verbatim}
+---------------------------------------------------------------------
+    AC_CONFIG_FILES([
+    ...
+    src/Makefile
+    src/Parent/Makefile
+    src/Parent/subdir1/Makefile
+    src/Parent/subdir2/Makefile
+    ...
+    )]
+---------------------------------------------------------------------
+\end{verbatim}
+\texttt{Makefiles} listed in \texttt{AC\_CONFIG\_FILES} are processed by Autoconf, converted
+into \texttt{Makefile.in}s and ultimately converted into GNU Makefiles.
+\newline\newline
+Let's flatten the \texttt{src/Parent} directory. In order to do so, we'll want to propagate
+the information contained in its subdirectory \texttt{Makefile.am}'s into
+its own \texttt{Makefile.am}. And because of this propagation upward, we will no longer
+need to generate the \texttt{Makefile}'s in \texttt{subdir1} and \texttt{subdir2}.
+\subsubsection{Modified support-rose.m4}
+    \begin{verbatim}
+---------------------------------------------------------------------
+    AC_CONFIG_FILES([
+    ...
+    src/Makefile
+    src/Parent/Makefile
+    ...
+    )]
+---------------------------------------------------------------------
+\end{verbatim}
+%---------------------------------------------------------------------
+Be careful to note the disadvantage of this approach: with no \texttt{Makefile}s in both
+\texttt{subdir1} and \texttt{subdir2}, a developer would not be able to invoke \texttt{make}
+in either of those directories.
+\newline\newline
+The next step is to propagate the subdirectory \texttt{Makefile.am} information. To achieve
+this goal, we will make use of Automake's \texttt{include} directive. But first, let's take
+a look at the \texttt{Makefile.am} in the \texttt{src/} directory:
+
+
+\subsubsection{ROSE/src/Makefile.am}
+%---------------------------------------------------------------------
+    \begin{verbatim}
+---------------------------------------------------------------------
+    ...
+  
+    lib_LTLIBRARIES = librose.la
+
+    ...
+  
+    librose_la_LIBADD = $(libroseLibraries)
+
+    ...
+
+    libroseLibraries = \
+      ...
+      $(top_builddir)/src/Parent/libparent.la \
+      $(top_builddir)/src/Parent/subdir1/libsubdir1.la \
+      $(top_builddir)/src/Parent/subdir2/libsubdir2.la \
+      ...
+---------------------------------------------------------------------
+    \end{verbatim}
+Here we are creating a \texttt{Libtool} library for our \texttt{src/} tree, naming it 
+\texttt{librose.la}. The individual libraries listed in \texttt{libroseLibraries} are
+\texttt{Libtool} convenience libraries that we are creating per-directory. They are deemed
+"convenience libraries" because the end-goal is not to link a user program against one
+of them, but rather the convenience libraries serve as intermediate products during
+Automake's recursive build. After these convenience libraries have been built, \texttt{Libtool}
+will link all of them together into our \texttt{librose.la}.
+\newline\newline
+Since we'll be propagating our subdirectories' builds
+to src/Parent, we will no longer need the intermediate convenience libraries. Rather, all of
+the compilation products from \texttt{src/Parent}, \texttt{Parent/subdir1}, and \texttt{Parent/subdir2}
+will be directly linked into \texttt{libparent.la} at the same time, so to speak.
+
+    \begin{verbatim}
+---------------------------------------------------------------------
+    ...
+  
+    libroseLibraries = \
+      ...
+      $(top_builddir)/src/Parent/libparent.la
+      ...
+---------------------------------------------------------------------
+    \end{verbatim}
+After these modifications, nothing will be built in either subdirectory of \texttt{Parent}. So our
+next step is to propagate the subdirectory \texttt{Makefiles} into \texttt{Parent's Makefile}.
+
+
+%---------------------------------------------------------------------
+%
+%--
+
+    \subsection{Translating a Makefile.am to a Makefile\_variables}
+
+%--
+%
+%---------------------------------------------------------------------
+Here is a simple, but not lacking, example of what an actual \texttt{Makefile.am} looks like.
+\subsubsection{ROSE/src/Parent/subdir1/Makefile.am}
+    \begin{verbatim}
+---------------------------------------------------------------------
+    noinst_LTLIBRARIES = libsubdir1.la
+
+    libsubdir1_la_SOURCES = \
+        subdir1_1.C
+        subdir1_2.C
+        subdir1_3.C 
+
+    include_HEADERS = \
+        subdir1_1.h \
+        subdir1_2.h \
+        subdir1_3.h
+
+    EXTRA_DIST = CMakeLists.txt
+
+    clean-local:
+        echo "Just demonstrating a clean-local rule"
+        rm -rf a_test_file
+        echo "Done with clean-local"
+
+    subdir1_example_target:
+        touch a_test_file
+
+---------------------------------------------------------------------
+    \end{verbatim}
+In this \texttt{Makefile.am}, we are creating a libtool library that links three C source files. We
+also list headers that should be installed, as well as a \texttt{CMake} file that should be
+included in a distribution of ROSE. Additionally, we have a common \texttt{Makefile} target
+(\texttt{clean-local}) that typically does some extra housekeeping. Finally, we have a non-standard
+user-defined target (\texttt{subdir1\_example\_target}) that creates an empty file named
+\texttt{a\_test\_file} (by non-standard I mean that it has no formal significance to either the
+\texttt{GNU Autotools} or \texttt{GNU Make}).
+\newline\newline
+As its name implies, a \texttt{Makefile\_variables} file will contain \texttt{Makefile variables}.
+What we need to do is convert \texttt{Automake} variables like \texttt{*\_la\_sources} into user
+variables that can be appended to another variable. We have to be careful to use unique names
+since there could be name conflicts when you flatten any number of directories. We will also
+convert our \texttt{Makefile} targets into variables that specify a list of commands to execute:
+
+\subsubsection{ROSE/src/Parent/subdir1/Makefile.am}
+    \begin{verbatim}
+---------------------------------------------------------------------
+    parentSubdir1_noinst_LTLIBRARIES = libsubdir1.la
+
+    parentSubdir1_la_sources = \
+        subdir1_1.C
+        subdir1_2.C
+        subdir1_3.C 
+
+    parentSubdir1_includeHeaders = \
+        subdir1_1.h \
+        subdir1_2.h \
+        subdir1_3.h
+
+    parentSubdir1_extraDist = \
+        CMakeLists.txt
+
+    parentSubdir1_cleanLocal = \
+        echo "Just demonstrating a clean-local rule"; \
+        rm -rf a_test_file; \
+        echo "Done with clean-local"
+
+    subdir1_example_target:
+        touch a_test_file
+---------------------------------------------------------------------
+    \end{verbatim}
+As you can see, I've prefixed the variables with \texttt{parentSubdir1} with hopes of avoiding
+naming conflicts in the future. Other than that, the variable names (aside from case) are the
+same. However, these variables do not have any special meaning to \texttt{Automake} -- they are
+just plain-old \texttt{Makefile} variables.
+\newline\newline\
+Pay special attention to how the \texttt{clean-local Makefile} target was converted. It is
+a variable that lists the commands to be executed for \texttt{clean-local}, in a form that
+resembles how you would execute multiple commands on a single commandline line:
+
+    \begin{verbatim}
+
+    $ echo "Two commands at the same time can be separated by a semi-colon"; echo "like so"
+    \end{verbatim}
+However, note how I've left our \texttt{subdir1\_example\_target} unchanged. This is because
+this target is not a recursive one that needs to be propagated up to an identical target in
+\texttt{Parent/Makefile.am} (which doesn't exist and if it did, that would probably be an
+error because of the naming conflict: one target would override the other). Therefore, choosing
+to leave \texttt{subdir1\_example\_target} in \texttt{subdir1/Makefile.am} becomes a compromise:
+keeping this target local to \texttt{subdir1/Makefile\_variables} keeps
+\texttt{subdir\_example\_target} in its logical place, which is arguably more maintainable. If
+we were to rather move this target to \texttt{Parent/Makefile.am}, then we could avoid naming
+conflicts which becomes an increasingly large problem when flattening many directories and
+combining many \texttt{Makefile.am}s. Therefore, unique strings should be prefixed to local
+targets and this change should be updated wherever applicable. I will leave our target as-is
+since it is relatively unique already, but here is an example of how you may want to alter it:
+\subsubsection{ROSE/src/Parent/subdir1/Makefile.am}
+    \begin{verbatim}
+---------------------------------------------------------------------
+    ...
+
+    parentSubdir1_subdir1_example_target:
+        touch a_test_file
+---------------------------------------------------------------------
+    \end{verbatim}
+(The \texttt{Makefile\_variables} for \texttt{Parent/subdir2} will be similar, therefore
+it won't be necessary for us to look at it)
+\newline\newline
+Now that we have our \texttt{Makefile\_variables} in a "transportable" form, we can
+propagate this information up to \texttt{Parent's Makefile.am}. This is how it currently
+looks:
+
+\subsubsection{ROSE/src/Parent/Makefile.am}
+    \begin{verbatim}
+---------------------------------------------------------------------
+    SUBDIRS = subdir1 subdir2
+
+    noinst_LTLIBRARIES = libparent.la
+
+    libparent_la_SOURCES = parent.C
+
+    include_HEADERS = parent.h
+
+    EXTRA_DIST = CMakeLists.txt
+
+    clean-local:
+        echo "Just demonstrating a clean-local rule"
+        echo "Done with clean-local"
+
+---------------------------------------------------------------------
+    \end{verbatim}
+It should be obvious to you by now how the pieces of the puzzle fit together. Here is how
+we'll propagate the variables in \texttt{subdir1}'s and \texttt{subdir2}'s
+\texttt{Makefile\_variables}:
+
+\subsubsection{ROSE/src/Parent/Makefile.am}
+    \begin{verbatim}
+---------------------------------------------------------------------
+
+    noinst_LTLIBRARIES = \
+        libparent.la \
+        $(parentSubdir1_noinst_LTLIBRARIES) \
+        $(parentSubdir2_noinst_LTLIBRARIES)
+
+    libparent_la_SOURCES = \
+        parent.C \
+        $(parentSubdir1_la_sources) \ 
+        $(parentSubdir2_la_sources)
+
+    include_HEADERS = \
+        parent.h \
+        $(parentSubdir1_includeHeaders) \ 
+        $(parentSubdir2_includeHeaders) 
+
+    EXTRA_DIST = \
+        CMakeLists.txt \
+        $(parentSubdir1_extraDist) \
+        $(parentSubdir2_extraDist)
+
+    clean-local:
+        echo "Just demonstrating a clean-local rule"
+        echo "Done with clean-local"
+        $(parentSubdir1_cleanLocal)
+        $(parentSubdir2_cleanLocal)
+
+---------------------------------------------------------------------
+    \end{verbatim}
+Not bad, right? However, there are two subleties:
+\newline\newline
+1) If we list files in \texttt{Parent/Makefile.am},
+Automake will by default search in the current directory, \texttt{Parent/}, for the files.
+Our solution won't work then because \texttt{subdir1's} and \texttt{subdir2's} files are in
+their respective directories: \texttt{Parent/subdir1} and \texttt{Parent/subdir2}. Not a
+problem you say, let's just cut-and-paste all those files and dump them in the \texttt{Parent/}
+directory. Okay fair enough, but we want to avoid this solution. Imagine if you
+flattened more directories and moved hundreds of files into one location. This is a maintenance
+nightmare and is bad practice. We want to maintain the logical hierarchical structure of our
+codebase.
+\newline\newline
+The simple solution is to prefix subdirectory filenames with a path that is relative to
+the parent directory. We can take advantage of the variable that \texttt{Automake} provides us
+with: \texttt{\$(srcdir)}. In the \texttt{Parent/} directory, \texttt{\$(srcdir)} will expand
+to something like \texttt{/home/justintoo/ROSE/src/Parent}, like what you would get if you did:
+    \begin{verbatim}
+
+    $ cd "/home/justintoo/ROSE/src/Parent" && pwd 
+    \end{verbatim}
+Let's add source-path variables to the top of \texttt{Parent/Makefile.am}: 
+    \begin{verbatim}
+
+        parentSubdir1SrcPath=$(srcdir)/subdir1#
+        parentSubdir2SrcPath=$(srcdir)/subdir2#
+    \end{verbatim}
+A sublety within a sublety: \texttt{clean*} targets like \texttt{clean-local} will want to
+clean up BUILD products, which are NOT in the source tree, but are in the build tree. Therefore,
+\texttt{\$(srcdir)} will not work. Instead, \texttt{Automake} provides us with another handy
+predefined variable, \texttt{\$(builddir)}. Don't you love the symmetry?
+Let's add build-path variables to the top of \texttt{Parent/Makefile.am}: 
+    \begin{verbatim}
+
+        parentSubdir1BuildPath=$(builddir)/subdir1#
+        parentSubdir2BuildPath=$(builddir)/subdir2#
+    \end{verbatim}
+Note how I've added hashmarks (\texttt{\#}) to the end of my path variables. This is to ensure
+that there are no trailing spaces. I do this because some developers may not have their
+text editors configured to highlight extraneous whitespace. The reason we don't want to
+have any trailing spaces after our path variables is most apparent in a clean rule:
+    \begin{verbatim}
+
+    clean-local:
+        echo "Just demonstrating a clean-local rule"
+        rm $(parentSubdir1BuildPath)/a_test_file
+        echo "Done with clean-local"
+    \end{verbatim}
+If there were a trailing space in \texttt{parentSubdir1BuildPath}, we would have:
+    \begin{verbatim}
+
+    clean-local:
+        echo "Just demonstrating a clean-local rule"
+        rm /home/justintoo/ROSE/src/Parent/subdir1 /a_test_file
+        echo "Done with clean-local"
+    \end{verbatim}
+This has the adverse effect of removing the whole \texttt{subdir1/} directory which is not
+what we want to do. Just be careful! Although implementing a non-recursive \texttt{Autotools}
+project is seemingly trivial, you must be careful to not overlook the many subleties that
+exist. Especially in larger, more complex projects, overlooking the subleties of the build
+system can lead to obscure and unpleasant bugs in the future. Moreover, you want to create
+a non-recursive build system that is equivalent to its recursive counterpart. 
+\newline\newline
+2) The variables that we've added to \texttt{Parent/Makefile.am} aren't
+defined in \texttt{Parent/Makefile.am}'s scope. We defined the variables in the subidrectory
+\texttt{Makefile\_variables}. This is where the \texttt{Makefile include} directive
+comes in handy. As explained earlier, \texttt{include} works by essentially inserting
+the contents of the included file into the current \texttt{Makefile}. Let's add our
+\texttt{include} directives to the top of \texttt{Parent/Makefile.am}:
+    \begin{verbatim}
+
+        include $(srcdir)/subdir1/Makefile_variables
+        include $(srcdir)/subdir2/Makefile_variables
+    \end{verbatim}
+TODO: might want to keep \texttt{clean-local} targets as
+targets, rather than appending them as commands to be executed to the toplevel \texttt{clean-local}
+target. Of course, unique prefixes would have to be given to each subdirectory clean rule (e.g.
+\texttt{parentSubdir1\_clean-local}. This way, a user would have the option of cleaning only
+a specific subdirectory, rather than cleaning everything because then everything would have to
+be rebuilt when \texttt{make} was run again. However, currently all build products are being
+generated in the toplevel directory. \texttt{AM\_INIT\_AUTOMAKE([subdir-objects])} will have to be
+utilized in the future.
+\newline\newline
+This is what our final \texttt{src/Parent/Makefile.am} looks like:
+\subsubsection{ROSE/src/Parent/Makefile.am}
+    \begin{verbatim}
+---------------------------------------------------------------------
+    include $(srcdir)/subdir1/Makefile_variables
+    include $(srcdir)/subdir2/Makefile_variables
+
+    # Source paths
+    parentSubdir1Path=$(srcdir)/subdir1#
+    parentSubdir2Path=$(srcdir)/subdir2#
+
+    # Build paths
+    parentSubdir1BuildPath=$(builddir)/subdir1#
+    parentSubdir2BuildPath=$(builddir)/subdir2#
+
+    ###########################################################   
+
+    parentSubdir1_noinst_LTLIBRARIES = libsubdir1.la
+
+    parentSubdir1_la_sources = \
+        $(parentSubdir1Path)/subdir1_1.C
+        $(parentSubdir1Path)/subdir1_2.C
+        $(parentSubdir1Path)/subdir1_3.C 
+
+    parentSubdir1_includeHeaders = \
+        $(parentSubdir1Path)/subdir1_1.h \
+        $(parentSubdir1Path)/subdir1_2.h \
+        $(parentSubdir1Path)/subdir1_3.h
+
+    parentSubdir1_extraDist = \
+        $(parentSubdir1Path)/CMakeLists.txt
+
+    parentSubdir1_cleanLocal = \
+        echo "Just demonstrating a clean-local rule"; \
+        echo "Done with clean-local"
+
+    subdir1_example_target:
+        touch a_test_file
+---------------------------------------------------------------------
+    \end{verbatim}
+From the \texttt{src/Parent} directory, run \texttt{\$ make} and watch the non-recursive
+\texttt{Automake} magic unfold.
