@@ -85,6 +85,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
 
      printf ("Build class type: name = %s \n",name.str());
 
+     outputJavaState("At TOP of cactionTypeDeclaration");
+
 #if 1
      buildClass(name);
 #else
@@ -114,6 +116,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
      SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction("super");
      ROSE_ASSERT(functionDeclaration != NULL);
 #endif
+
+     ROSE_ASSERT(astJavaScopeStack.front() != NULL);
+     astJavaScopeStack.front()->get_file_info()->display("source position in Java_JavaParser_cactionTypeDeclaration(): debug");
+
+     outputJavaState("At BOTTOM of cactionTypeDeclaration");
 
      printf ("Leaving Java_JavaParser_cactionTypeDeclaration() \n");
    }
@@ -263,10 +270,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart (JN
    {
      printf ("Build support for implicit class (start) \n");
 
+     outputJavaState("At TOP of cactionBuildImplicitClassSupportStart");
+
 #if 1
      SgName name = convertJavaStringToCxxString(env,java_string);
      buildClass(name);
 #endif
+
+     outputJavaState("At BOTTOM of cactionBuildImplicitClassSupportStart");
    }
 
 
@@ -275,6 +286,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart (JN
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIEnv* env, jclass xxx, jstring java_string)
    {
      printf ("Build support for implicit class (end) \n");
+
+     outputJavaState("cactionBuildImplicitClassSupportEnd");
 
   // Experiment with ERROR on C++ side...communicated to Java...and back to C++ side where the JVM is called by ROSE...
   // ROSE_ASSERT(false);
@@ -306,6 +319,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport (JNIEnv*
      SgName name = convertJavaStringToCxxString(env,java_string);
      SgVariableDeclaration* variableDeclaration = buildSimpleVariableDeclaration(name);
      ROSE_ASSERT(variableDeclaration != NULL);
+
+     variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionBuildImplicitFieldSupport(): debug");
    }
 
 

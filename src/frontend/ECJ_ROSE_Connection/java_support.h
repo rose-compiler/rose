@@ -44,11 +44,13 @@ extern std::list<SgNode*> astJavaNodeStack;
 
 
 
+SgGlobal* getGlobalScope();
 
 
 // Function used by SgType::getCurrentScope()
 bool emptyJavaStateStack();
 
+void outputJavaState( const std::string label );
 
 std::string convertJavaStringToCxxString(JNIEnv *env, const jstring & java_string);
 
@@ -56,6 +58,8 @@ SgMemberFunctionDeclaration* buildSimpleMemberFunction(const SgName & name);
 
 // Build a simple class in the current scope and set the scope to be the class definition.
 void buildClass (const SgName & className);
+void buildImplicitClass (const SgName & className);
+void buildClassSupport (const SgName & className, bool implicitClass);
 
 SgVariableDeclaration* buildSimpleVariableDeclaration(const SgName & name);
 
