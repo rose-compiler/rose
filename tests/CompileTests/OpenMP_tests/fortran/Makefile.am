@@ -76,6 +76,8 @@ F90_TESTCODES_TO_PASS = \
 # ompdo-decremental-2.f  wrong location for !$omp parallel do 
 # task_largenumber2.f : bug 495 https://outreach.scidac.gov/tracker/?func=detail&atid=185&aid=495&group_id=24
 TESTCODES_CURRENTLY_FAILING = \
+    parallel-if.f \
+    parallel-if-numthreads.f \
     barrier.f \
     exampleA11f.f \
     exampleA211f.f \

@@ -312,7 +312,7 @@ public:
         int colnum;                             /**< Optional column number (0-origin; negative if unknown). */
     };
 
-    MemoryMap() : sorted(false) {}
+    MemoryMap() {}
 
     /** Clear the entire memory map by erasing all addresses that are defined. Erasing an address range frees reference
      *  counted anonymous mappings but not user-provided buffers. */
@@ -414,9 +414,7 @@ public:
     bool load(const std::string &basename);
 
 private:
-    /* Mutable because some constant methods might sort the elements. */
-    mutable bool sorted;                        /**< True if the 'elements' are sorted by virtual address. */
-    mutable std::vector<MapElement> elements;   /**< Map elements are only lazily sorted; see 'sorted' data member. */
+    mutable std::vector<MapElement> elements;   /**< Map elements, sorted by virtual address. */
 };
 
 /** Map elements are sorted by virtual address. */

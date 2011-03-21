@@ -1300,14 +1300,38 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
 
     // Generate the parameter list for the call to the XOMP runtime function
     SgExprListExp* parameters  = NULL;
+    // pass ifClauseValue: set to the expression of if-clause, otherwise set to 1
+    SgExpression* ifClauseValue = NULL; 
+    if (hasClause(target, V_SgOmpIfClause))
+    {
+      Rose_STL_Container<SgOmpClause*> clauses = getClause(target, V_SgOmpIfClause);
+      ROSE_ASSERT (clauses.size() ==1); // should only have one if ()
+      SgOmpIfClause * if_clause = isSgOmpIfClause (clauses[0]);
+      ROSE_ASSERT (if_clause->get_expression() != NULL);
+      ifClauseValue = copyExpression(if_clause->get_expression());
+    }
+    else
+      ifClauseValue = buildIntVal(1);  
+    // pass num_threads_specified: 0 if not, otherwise set to the expression of num_threads clause  
+    SgExpression* numThreadsSpecified = NULL;
+    if (hasClause(target, V_SgOmpNumThreadsClause))
+    {
+      Rose_STL_Container<SgOmpClause*> clauses = getClause(target, V_SgOmpNumThreadsClause);
+      ROSE_ASSERT (clauses.size() ==1); // should only have one if ()
+      SgOmpNumThreadsClause * numThreads_clause = isSgOmpNumThreadsClause (clauses[0]);
+      ROSE_ASSERT (numThreads_clause->get_expression() != NULL);
+      numThreadsSpecified = copyExpression(numThreads_clause->get_expression());
+    }
+    else
+      numThreadsSpecified = buildIntVal(0);  
+
     if (SageInterface::is_Fortran_language())
     { // The parameter list for Fortran is little bit different from C/C++'s XOMP interface 
       // since we are forced to pass variables one by one in the parameter list to support Fortran 77
-       // void xomp_parallel_start (void (*func) (void *), unsigned* numThread, int * argcount, ...)
+       // void xomp_parallel_start (void (*func) (void *), unsigned * ifClauseValue, unsigned* numThread, int * argcount, ...)
       //e.g. xomp_parallel_start(OUT__1__1527__,0,2,S,K)
-      SgExpression * parameter2= buildIntVal(0); // TODO numThread not 0 
-      SgExpression * parameter3 = buildIntVal (pdSyms3.size()); //TODO double check if pdSyms3 is the right set of variables to be passed
-      parameters = buildExprListExp(buildFunctionRefExp(outlined_func), parameter2, parameter3);
+      SgExpression * parameter4 = buildIntVal (pdSyms3.size()); //TODO double check if pdSyms3 is the right set of variables to be passed
+      parameters = buildExprListExp(buildFunctionRefExp(outlined_func), ifClauseValue, numThreadsSpecified, parameter4);
 
       ASTtools::VarSymSet_t::iterator iter = pdSyms3.begin();
       for (; iter!=pdSyms3.end(); iter++)
@@ -1321,22 +1345,29 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
       // C/C++ case: 
       //add GOMP_parallel_start (OUT_func_xxx, &__out_argv1__5876__, 0);
       // or GOMP_parallel_start (OUT_func_xxx, 0, 0); // if no variables need to be passed
-    SgExpression * parameter2 = NULL;
-    if (syms.size()==0)
-      parameter2 = buildIntVal(0);
-    else
-      parameter2 =  buildAddressOfOp(buildVarRefExp(wrapper_name, p_scope));
-      parameters = buildExprListExp(buildFunctionRefExp(outlined_func), parameter2, buildIntVal(0)); 
+      SgExpression * parameter2 = NULL;
+      if (syms.size()==0)
+        parameter2 = buildIntVal(0);
+      else
+        parameter2 =  buildAddressOfOp(buildVarRefExp(wrapper_name, p_scope));
+     parameters = buildExprListExp(buildFunctionRefExp(outlined_func), parameter2, ifClauseValue, numThreadsSpecified); 
     }
 
     ROSE_ASSERT (parameters != NULL);
 
 #ifdef ENABLE_XOMP
+  // extern void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseValue, unsigned numThreadsSpecified);
+  // * func: pointer to a function which will be run in parallel
+  // * data: pointer to a data segment which will be used as the arguments of func
+  // * ifClauseValue: set to if-clause-expression if if-clause exists, or default is 1.
+  // * numThreadsSpecified: set to the expression of num_threads clause if the clause exists, or default is 0
+
     SgExprStatement * s1 = buildFunctionCallStmt("XOMP_parallel_start", buildVoidType(), parameters, p_scope); 
     SageInterface::replaceStatement(target, s1 , true);
 #else
-    SgExprStatement * s1 = buildFunctionCallStmt("GOMP_parallel_start", buildVoidType(), parameters, p_scope); 
-    SageInterface::insertStatementBefore(func_call, s1); 
+   ROSE_ASSERT (false); //This portion of code should never be used anymore. Kept for reference only.
+//    SgExprStatement * s1 = buildFunctionCallStmt("GOMP_parallel_start", buildVoidType(), parameters, p_scope); 
+//    SageInterface::insertStatementBefore(func_call, s1); 
 #endif
     // Keep preprocessing information
     // I have to use cut-paste instead of direct move since 
@@ -2740,8 +2771,15 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
         // Only loop index variables declared in higher  or the same scopes matter
         if (isAncestor(var_scope, directive_scope) || var_scope==directive_scope)
         {
-          // add it into the private variable list
-          if (!isInClauseVariableList(index_var, isSgOmpClauseBodyStatement(omp_loop), V_SgOmpPrivateClause)) 
+          // Grab possible enclosing parallel region
+          bool isPrivateInRegion = false; 
+          SgOmpParallelStatement * omp_stmt = isSgOmpParallelStatement(getEnclosingNode<SgOmpParallelStatement>(omp_loop)); 
+          if (omp_stmt)
+          {
+            isPrivateInRegion = isInClauseVariableList(index_var, isSgOmpClauseBodyStatement(omp_stmt), V_SgOmpPrivateClause);
+          }
+          // add it into the private variable list only if it is not specified as private in both the loop and region levels. 
+          if (! isPrivateInRegion && !isInClauseVariableList(index_var, isSgOmpClauseBodyStatement(omp_loop), V_SgOmpPrivateClause)) 
           {
             result ++;
             addClauseVariable(index_var,isSgOmpClauseBodyStatement(omp_loop), V_SgOmpPrivateClause);

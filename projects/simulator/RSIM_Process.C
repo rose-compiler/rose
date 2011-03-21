@@ -39,22 +39,22 @@ RSIM_Process::ctor()
 }
 
 FILE *
-RSIM_Process::tracing(unsigned what) const
+RSIM_Process::get_tracing_file() const
 {
-    return (trace_flags & what) ? trace_file : NULL;
+    return tracing_file;
 }
 
 unsigned
-RSIM_Process::tracing() const
+RSIM_Process::get_tracing_flags() const
 {
-    return trace_flags;
+    return tracing_flags;
 }
 
 void
-RSIM_Process::set_tracing(FILE *f, unsigned what)
+RSIM_Process::set_tracing(FILE *file, unsigned flags)
 {
-    trace_file = f;
-    trace_flags = what;
+    tracing_file = file;
+    tracing_flags = flags;
 }
 
 RSIM_Thread *
@@ -241,6 +241,8 @@ public:
 SgAsmGenericHeader*
 RSIM_Process::load(const char *name)
 {
+    FILE *trace = (tracing_flags & tracingFacilityBit(TRACE_LOADER)) ? tracing_file : NULL;
+
     /* Find the executable by searching the PATH environment variable. The executable name and full path name are both saved
      * in the class (exename and exeargs[0]). */ 
     ROSE_ASSERT(exename.empty() && exeargs.empty());
@@ -275,8 +277,8 @@ RSIM_Process::load(const char *name)
     }
 
     /* Link the main binary into the AST without further linking, mapping, or relocating. */
-    if (tracing(TRACE_LOADER))
-        fprintf(tracing(TRACE_LOADER), "loading %s...\n", exeargs[0].c_str());
+    if (trace)
+        fprintf(trace, "loading %s...\n", exeargs[0].c_str());
     char *frontend_args[4];
     frontend_args[0] = strdup("-");
     frontend_args[1] = strdup("-rose:read_executable_file_format_only"); /*delay disassembly until later*/
@@ -294,7 +296,7 @@ RSIM_Process::load(const char *name)
     thread->policy.writeIP(fhdr->get_entry_rva() + fhdr->get_base_va());
 
     /* Link the interpreter into the AST */
-    SimLoader *loader = new SimLoader(interpretation, tracing(TRACE_LOADER), interpname);
+    SimLoader *loader = new SimLoader(interpretation, trace, interpname);
 
     /* If we found an interpreter then use its entry address as the start of simulation.  When running the specimen directly
      * in Linux with "setarch i386 -LRB3", the ld-linux.so.2 gets mapped to 0x40000000 if it has no preferred address.  We can
@@ -323,27 +325,27 @@ RSIM_Process::load(const char *name)
 
     /* Load and map the virtual dynamic shared library. */
     if (!loader->interpreter) {
-        if (tracing(TRACE_LOADER))
-            fprintf(stderr, "warning: static executable; no vdso necessary\n");
+        if (trace)
+            fprintf(trace, "warning: static executable; no vdso necessary\n");
     } else {
         bool vdso_loaded = false;
         for (size_t i=0; i<vdso_paths.size() && !vdso_loaded; i++) {
             for (int j=0; j<2 && !vdso_loaded; j++) {
                 std::string vdso_name = vdso_paths[i] + (j ? "" : "/" + this->vdso_name);
-                if (tracing(TRACE_LOADER))
-                    fprintf(tracing(TRACE_LOADER), "looking for vdso: %s\n", vdso_name.c_str());
+                if (trace)
+                    fprintf(trace, "looking for vdso: %s\n", vdso_name.c_str());
                 if ((vdso_loaded = loader->map_vdso(vdso_name, interpretation, map))) {
                     vdso_mapped_va = loader->vdso_mapped_va;
                     vdso_entry_va = loader->vdso_entry_va;
-                    if (tracing(TRACE_LOADER)) {
-                        fprintf(tracing(TRACE_LOADER), "mapped %s at 0x%08"PRIx64" with entry va 0x%08"PRIx64"\n",
+                    if (trace) {
+                        fprintf(trace, "mapped %s at 0x%08"PRIx64" with entry va 0x%08"PRIx64"\n",
                                 vdso_name.c_str(), vdso_mapped_va, vdso_entry_va);
                     }
                 }
             }
         }
-        if (!vdso_loaded && tracing(TRACE_LOADER))
-            fprintf(stderr, "warning: cannot find a virtual dynamic shared object\n");
+        if (!vdso_loaded && trace)
+            fprintf(trace, "warning: cannot find a virtual dynamic shared object\n");
     }
 
     /* Find a disassembler. */
@@ -372,7 +374,6 @@ RSIM_Process::dump_core(int signo, std::string base_name)
     if (base_name.empty())
         base_name = core_base_name;
 
-    fprintf(stderr, "dumping specimen core...\n");
     fprintf(stderr, "memory map at time of core dump:\n");
     map->dump(stderr, "  ");
 
@@ -670,33 +671,33 @@ RSIM_Process::dump_core(int signo, std::string base_name)
 }
 
 void
-RSIM_Process::open_trace_file()
+RSIM_Process::open_tracing_file()
 {
     char name[4096];
 
-    if (!trace_file_name.empty()) {
-        size_t nprinted = snprintf(name, sizeof name, trace_file_name.c_str(), getpid());
+    if (!tracing_file_name.empty()) {
+        size_t nprinted = snprintf(name, sizeof name, tracing_file_name.c_str(), getpid());
         if (nprinted > sizeof name) {
-            fprintf(stderr, "name pattern overflow: %s\n", trace_file_name.c_str());
-            trace_file = stderr;
+            fprintf(stderr, "name pattern overflow: %s\n", tracing_file_name.c_str());
+            tracing_file = stderr;
             return;
         }
     } else {
         name[0] = '\0';
     }
 
-    if (trace_file && trace_file!=stderr && trace_file!=stdout) {
-        fclose(trace_file);
-        trace_file = NULL;
+    if (tracing_file && tracing_file!=stderr && tracing_file!=stdout) {
+        fclose(tracing_file);
+        tracing_file = NULL;
     }
 
     if (name[0]) {
-        if (NULL==(trace_file = fopen(name, "w"))) {
+        if (NULL==(tracing_file = fopen(name, "w"))) {
             fprintf(stderr, "%s: %s\n", strerror(errno), name);
             return;
         }
 #ifdef X86SIM_LOG_UNBUFFERED
-        setbuf(trace_file, NULL);
+        setbuf(tracing_file, NULL);
 #endif
     }
 }
@@ -841,16 +842,10 @@ RSIM_Process::get_instruction(rose_addr_t va)
     }
 
     /* Disassemble (and cache) a new instruction. At this time it is not safe to be multi-threaded inside a single Disassemble
-     * object, so we'll protect the whole call with a write lock.  We need one anyway in order to update the icache. [RPM
-     * 2011-02-09] */
+     * object, so we'll protect the whole call with a write lock.  We need one anyway in order to update the icache.
+     * [RPM 2011-02-09] */
     RTS_WRITE(rwlock()) {
-        try {
-            insn = isSgAsmx86Instruction(disassembler->disassembleOne(map, va));
-        } catch (Disassembler::Exception &e) {
-            std::cerr <<e <<"\n";
-            dump_core(SIGSEGV);
-            throw;
-        }
+        insn = isSgAsmx86Instruction(disassembler->disassembleOne(map, va)); /* might throw Disassembler::Exception */
         ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
         icache[va] = insn;
     } RTS_WRITE_END;
@@ -1166,6 +1161,8 @@ RSIM_Process::gdt_entry(int idx)
 void
 RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[])
 {
+    FILE *trace = (tracing_flags & tracingFacilityBit(TRACE_LOADER)) ? tracing_file : NULL;
+
     RTS_WRITE(rwlock()) {
         RSIM_Thread *main_thread = get_thread(getpid());
         ROSE_ASSERT(main_thread!=NULL);
@@ -1198,8 +1195,8 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
             sp -= len;
             mem_write(arg.c_str(), sp, len);
             pointers.push_back(sp);
-            if (tracing(TRACE_LOADER))
-                fprintf(tracing(TRACE_LOADER), "argv[%d] %zu bytes at 0x%08zu = \"%s\"\n", i, len, sp, arg.c_str());
+            if (trace)
+                fprintf(trace, "argv[%d] %zu bytes at 0x%08zu = \"%s\"\n", i, len, sp, arg.c_str());
         }
         pointers.push_back(0); /*the argv NULL terminator*/
 
@@ -1241,8 +1238,8 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
             sp -= env.size() + 1;
             mem_write(env.c_str(), sp, env.size()+1);
             pointers.push_back(sp);
-            if (tracing(TRACE_LOADER))
-                fprintf(tracing(TRACE_LOADER), "environ[%d] %zu bytes at 0x%08zu = \"%s\"\n", j++, env.size(), sp, env.c_str());
+            if (trace)
+                fprintf(trace, "environ[%d] %zu bytes at 0x%08zu = \"%s\"\n", j++, env.size(), sp, env.c_str());
         }
         pointers.push_back(0); /*environment NULL terminator*/
 
@@ -1267,14 +1264,14 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
                 /* AT_SYSINFO */
                 auxv.push_back(32);
                 auxv.push_back(vdso_entry_va);
-                if (tracing(TRACE_LOADER))
-                    fprintf(tracing(TRACE_LOADER), "AT_SYSINFO:       0x%08"PRIx32"\n", auxv.back());
+                if (trace)
+                    fprintf(trace, "AT_SYSINFO:       0x%08"PRIx32"\n", auxv.back());
 
                 /* AT_SYSINFO_PHDR */
                 auxv.push_back(33);
                 auxv.push_back(vdso_mapped_va);
-                if (tracing(TRACE_LOADER))
-                    fprintf(tracing(TRACE_LOADER), "AT_SYSINFO_PHDR:  0x%08"PRIx32"\n", auxv.back());
+                if (trace)
+                    fprintf(trace, "AT_SYSINFO_PHDR:  0x%08"PRIx32"\n", auxv.back());
             }
 
             /* AT_HWCAP (see linux <include/asm/cpufeature.h>). */
@@ -1282,86 +1279,86 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
             uint32_t hwcap = 0xbfebfbfful; /* value used by hudson-rose-07 */
             auxv.push_back(hwcap);
 
-            if (tracing(TRACE_LOADER))
-                fprintf(tracing(TRACE_LOADER), "AT_HWCAP:         0x%08"PRIx32"\n", auxv.back());
+            if (trace)
+                fprintf(trace, "AT_HWCAP:         0x%08"PRIx32"\n", auxv.back());
 
             /* AT_PAGESZ */
             auxv.push_back(6);
             auxv.push_back(PAGE_SIZE);
-            if (tracing(TRACE_LOADER))
-                fprintf(tracing(TRACE_LOADER), "AT_PAGESZ:        %"PRId32"\n", auxv.back());
+            if (trace)
+                fprintf(trace, "AT_PAGESZ:        %"PRId32"\n", auxv.back());
 
             /* AT_CLKTCK */
             auxv.push_back(17);
             auxv.push_back(100);
-            if (tracing(TRACE_LOADER))
-                fprintf(tracing(TRACE_LOADER), "AT_CLKTCK:        %"PRId32"\n", auxv.back());
+            if (trace)
+                fprintf(trace, "AT_CLKTCK:        %"PRId32"\n", auxv.back());
 
             /* AT_PHDR */
             auxv.push_back(3); /*AT_PHDR*/
             auxv.push_back(t1.phdr_rva + fhdr->get_base_va());
-            if (tracing(TRACE_LOADER))
-                fprintf(tracing(TRACE_LOADER), "AT_PHDR:          0x%08"PRIx32"\n", auxv.back());
+            if (trace)
+                fprintf(trace, "AT_PHDR:          0x%08"PRIx32"\n", auxv.back());
 
             /*AT_PHENT*/
             auxv.push_back(4);
             auxv.push_back(fhdr->get_phextrasz() + sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
-            if (tracing(TRACE_LOADER))
-                fprintf(tracing(TRACE_LOADER), "AT_PHENT:         %"PRId32"\n", auxv.back());
+            if (trace)
+                fprintf(trace, "AT_PHENT:         %"PRId32"\n", auxv.back());
 
             /* AT_PHNUM */
             auxv.push_back(5);
             auxv.push_back(fhdr->get_e_phnum());
-            if (tracing(TRACE_LOADER))
-                fprintf(tracing(TRACE_LOADER), "AT_PHNUM:         %"PRId32"\n", auxv.back());
+            if (trace)
+                fprintf(trace, "AT_PHNUM:         %"PRId32"\n", auxv.back());
 
             /* AT_BASE */
             auxv.push_back(7);
             auxv.push_back(ld_linux_base_va);
-            if (tracing(TRACE_LOADER))
-                fprintf(tracing(TRACE_LOADER), "AT_BASE:          0x%08"PRIx32"\n", auxv.back());
+            if (trace)
+                fprintf(trace, "AT_BASE:          0x%08"PRIx32"\n", auxv.back());
 
             /* AT_FLAGS */
             auxv.push_back(8);
             auxv.push_back(0);
-            if (tracing(TRACE_LOADER))
-                fprintf(tracing(TRACE_LOADER), "AT_FLAGS:         0x%08"PRIx32"\n", auxv.back());
+            if (trace)
+                fprintf(trace, "AT_FLAGS:         0x%08"PRIx32"\n", auxv.back());
 
             /* AT_ENTRY */
             auxv.push_back(9);
             auxv.push_back(fhdr->get_entry_rva() + fhdr->get_base_va());
-            if (tracing(TRACE_LOADER))
-                fprintf(tracing(TRACE_LOADER), "AT_ENTRY:         0x%08"PRIx32"\n", auxv.back());
+            if (trace)
+                fprintf(trace, "AT_ENTRY:         0x%08"PRIx32"\n", auxv.back());
 
             /* AT_UID */
             auxv.push_back(11);
             auxv.push_back(getuid());
-            if (tracing(TRACE_LOADER))
-                fprintf(tracing(TRACE_LOADER), "AT_UID:           %"PRId32"\n", auxv.back());
+            if (trace)
+                fprintf(trace, "AT_UID:           %"PRId32"\n", auxv.back());
 
             /* AT_EUID */
             auxv.push_back(12);
             auxv.push_back(geteuid());
-            if (tracing(TRACE_LOADER))
-                fprintf(tracing(TRACE_LOADER), "AT_EUID:          %"PRId32"\n", auxv.back());
+            if (trace)
+                fprintf(trace, "AT_EUID:          %"PRId32"\n", auxv.back());
 
             /* AT_GID */
             auxv.push_back(13);
             auxv.push_back(getgid());
-            if (tracing(TRACE_LOADER))
-                fprintf(tracing(TRACE_LOADER), "AT_GID:           %"PRId32"\n", auxv.back());
+            if (trace)
+                fprintf(trace, "AT_GID:           %"PRId32"\n", auxv.back());
 
             /* AT_EGID */
             auxv.push_back(14);
             auxv.push_back(getegid());
-            if (tracing(TRACE_LOADER))
-                fprintf(tracing(TRACE_LOADER), "AT_EGID:          %"PRId32"\n", auxv.back());
+            if (trace)
+                fprintf(trace, "AT_EGID:          %"PRId32"\n", auxv.back());
 
             /* AT_SECURE */
             auxv.push_back(23);
             auxv.push_back(false);
-            if (tracing(TRACE_LOADER))
-                fprintf(tracing(TRACE_LOADER), "AT_SECURE:        %"PRId32"\n", auxv.back());
+            if (trace)
+                fprintf(trace, "AT_SECURE:        %"PRId32"\n", auxv.back());
 
             /* AT_PLATFORM */
             {
@@ -1371,8 +1368,8 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
                 mem_write(platform, sp, len);
                 auxv.push_back(15);
                 auxv.push_back(sp);
-                if (tracing(TRACE_LOADER))
-                    fprintf(tracing(TRACE_LOADER), "AT_PLATFORM:      0x%08"PRIx32" (%s)\n", auxv.back(), platform);
+                if (trace)
+                    fprintf(trace, "AT_PLATFORM:      0x%08"PRIx32" (%s)\n", auxv.back(), platform);
             }
         }
 
@@ -1429,7 +1426,6 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
     RSIM_Process *process = clone_info->process;
     ROSE_ASSERT(process!=NULL);
     RSIM_Thread *thread = process->create_thread();
-
 
     pid_t tid = syscall(SYS_gettid);
     ROSE_ASSERT(tid>=0);
@@ -1492,8 +1488,15 @@ RSIM_Process::sys_exit(int status)
     RTS_WRITE(rwlock()) {
         terminated = true;
         termination_status = status;
-        if (!threads.empty())
-            RTS_Message(stderr, NULL).mesg("ROBB: RSIM_Process::exit() not fully implemented yet.\n");
+
+        /* Tell all threads to exit. We do this by making sure they return from any blocking system call (by sending a
+         * signal). Every thread checks its cancelation state before every instruction, and will therefore exit. */
+        for (std::map<pid_t, RSIM_Thread*>::iterator ti=threads.begin(); ti!=threads.end(); ti++) {
+            RSIM_Thread *thread = ti->second;
+            thread->tracing(TRACE_THREAD)->mesg("process is canceling this thread");
+            pthread_cancel(thread->get_real_thread());
+            pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP); /* in case it's blocked */
+        }
     } RTS_WRITE_END;
 }
 
@@ -1503,14 +1506,104 @@ RSIM_Process::sys_sigaction(int signo, const sigaction_32 *new_action, sigaction
     if (signo<1 || signo>_NSIG)
         return -EINVAL;
 
+    int retval = 0;
     RTS_WRITE(rwlock()) {
         if (old_action)
             *old_action = signal_action[signo-1];
-        if (new_action)
-            signal_action[signo-1] = *new_action;
+
+        if (new_action) {
+            if (SIGKILL==signo || SIGSTOP==signo) {
+                retval = -EINVAL;
+            } else {
+                signal_action[signo-1] = *new_action;
+            }
+        }
+    } RTS_WRITE_END;
+    return retval;
+}
+
+int
+RSIM_Process::sys_kill(pid_t pid, const RSIM_SignalHandling::siginfo_32 &info)
+{
+    int signo = info.si_signo;
+    int retval = 0;
+
+    if (pid<0)
+        return -EINVAL;
+    if (signo<=0 && (size_t)signo>8*sizeof(RSIM_SignalHandling::sigset_32))
+        return -EINVAL;
+
+    RTS_WRITE(rwlock()) {
+        if (pid!=getpid()) {
+            retval = kill(pid, signo);
+        } else {
+            /* Send the signal to any one of our threads where it is not masked. */
+            for (std::map<pid_t, RSIM_Thread*>::iterator ti=threads.begin(); signo>0 && ti!=threads.end(); ti++) {
+                RSIM_Thread *thread = ti->second;
+                int status = thread->signal_accept(info);
+                if (status>=0) {
+                    if (!pthread_equal(pthread_self(), thread->get_real_thread())) {
+                        status = pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP);
+                        assert(0==status);
+                    }
+                    signo = 0;
+                }
+            }
+
+            /* If signal could not be delivered to any thread... */
+            if (signo>0)
+                sighand.generate(info, this, NULL);
+        }
     } RTS_WRITE_END;
 
-    return 0;
+    return retval;
+}
+
+/* Must be async signal safe */
+void
+RSIM_Process::signal_enqueue(const RSIM_SignalHandling::siginfo_32 &info)
+{
+    /* Push the signal number onto the tail of the process-wide queue.  It is safe to do this without thread synchronization
+     * because:
+     *   1. This signal handler is the only place where the queue tail is adjusted
+     *   2. All signals are blocked during this signal handler
+     *   3. The queue head is not modified.
+     *   4. The RSIM_Process object is guaranteed to be valid for the duration of this call.
+     */
+    if ((sq.tail+1) % sq.size == sq.head) {
+        static const char *s = "[***PROCESS SIGNAL QUEUE IS FULL***]";
+        write(2, s, strlen(s));
+    } else {
+        sq.info[sq.tail] = info;
+        sq.tail = (sq.tail + 1) % sq.size;
+    }
+}
+
+int
+RSIM_Process::signal_dequeue(RSIM_SignalHandling::siginfo_32 *info/*out*/)
+{
+    assert(info!=NULL);
+    int retval = 0;
+    RTS_WRITE(rwlock()) {
+        if (sq.head!=sq.tail) {
+            *info = sq.info[sq.head];
+            retval = info->si_signo;
+            sq.head = (sq.head + 1) % sq.size;
+        }
+    } RTS_WRITE_END;
+    return retval;
+}
+
+/* Dispatch process-received signals to threads */
+void
+RSIM_Process::signal_dispatch()
+{
+    /* write lock not required for thread safety here since called functions are already thread safe */
+    RSIM_SignalHandling::siginfo_32 info;
+    for (int signo=signal_dequeue(&info); signo>0; signo=signal_dequeue(&info)) {
+        int status = sys_kill(getpid(), info);
+        assert(status>=0);
+    }
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */

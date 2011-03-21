@@ -1,6 +1,5 @@
 #!/usr/bin/perl
 # DO NOT DISABLE without first checking with a ROSE core developer
-
 my $desc = <<EOF;
 All header files found in a source tree should be used somewhere in that source
 tree. Unused header files are characteristic of deleted code that should be
