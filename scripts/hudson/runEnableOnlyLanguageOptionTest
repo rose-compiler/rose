@@ -1,0 +1,151 @@
+#!/bin/sh -e
+#
+# TODO: add more summary info
+#	- List of durations for each step in the job
+#
+#
+source scripts/hudson/runBuildStep.sh
+source scripts/hudson/debuggingPrinters.sh
+#########################################################################################
+set +x
+# Uniform banners allows for easy parsing of the hudson console output
+# Starting 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step...
+# Done with 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step!
+printBannerToStartStep \
+	"[${ROSE_TEST_BUILD_STYLE}] in ROSE/scripts/hudson/runEnableOnlyLanguageOptionTest"
+
+machine=`uname -m`
+machine_os=`uname -s`
+machine_name=`uname -n`
+start_time=`date`
+hudson_start_time_seconds="$(date +%s)"
+TOP_LEVEL_ROSE_DIRECTORY="$PWD"
+LOG_LOCATION="$PWD"
+
+#########################################################################################
+#
+#  Install tree 
+#
+#  Define the platform specific install directory for this ROSE build.
+#  This directory will be built into the Hudson home directory.
+#
+#########################################################################################
+if test "x$machine_os" = "xDarwin" ; then
+  OS_MACHINE_LABEL=x86_64-Darwin
+elif test "x$machine" = "xi686" ; then
+  OS_MACHINE_LABEL=i686-linux
+else
+  OS_MACHINE_LABEL=amd64-linux
+fi
+
+#########################################################################################
+#
+#  BOOST C++ 
+#
+#########################################################################################
+if test "x$label" = "x64bit-macos-10.6" ; then
+  export DYLD_LIBRARY_PATH="$ROSE_TEST_BOOST_PATH/lib:$DYLD_LIBRARY_PATH"
+else
+  # tps : 04/26/2010 - Added support for OpenGL for 64bit
+  export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
+fi
+
+#########################################################################################
+#
+#  Configure Flags 
+#
+#  Note that Boost 1.39 and greater require using "--with-boost-libdir"
+#
+#########################################################################################
+CONFIGURE_FLAGS="\
+    --with-boost=${ROSE_TEST_BOOST_PATH} \
+    --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
+    --enable-only-${LANGUAGE_OPTION} \
+    --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+
+#########################################################################################
+#
+##
+   dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-before-tests.log"
+##
+#
+#########################################################################################
+
+set -ex
+
+#########################################################################################
+#
+#  ROSE/build
+#
+#########################################################################################
+if test "x$ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT" = "xyes" ; then
+   echo "Skipping build at part of testing from makefile rule."
+else
+   printBannerToStartStep "build"
+   build_start_time="$(date +%s)"
+
+   ./build
+
+   printBannerToEndStep "build" $build_start_time
+fi
+
+CONFIGURE_PREFIX_DIR="ROSE-install"
+if test -e ROSE-install ; then 
+  chmod -R u+xw ROSE-install
+fi
+rm -rf ROSE-install
+
+if test -e ROSE-build ; then
+  chmod -R u+wx ROSE-build
+fi
+rm -rf ROSE-build
+
+mkdir ROSE-build
+cd ROSE-build
+
+
+#########################################################################################
+#
+#  ROSE/configure
+#
+#########################################################################################
+printBannerToStartStep "configure"
+configure_start_time="$(date +%s)"
+
+../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
+
+printBannerToEndStep "configure" $configure_start_time
+
+
+#########################################################################################
+#
+#  ROSE build
+#
+#########################################################################################
+
+    runBuildStep make
+    runBuildStep make-check
+    runBuildStep make-install
+    runBuildStep make-installcheck
+    runBuildStep make-distcheck
+
+####################################################################################
+# SUMMARY 
+#
+#########################################################################################
+#
+##
+set +x
+   cd $TOP_LEVEL_ROSE_DIRECTORY
+
+   dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-after-tests.log"
+
+   printBannerWithDate
+
+   printBannerToEndStep \
+	"[${ROSE_TEST_BUILD_STYLE}] in ROSE/scripts/hudson/runParallelizedTest-with-osx" \
+	$hudson_start_time_seconds
+set -x
+##
+#
+#########################################################################################
