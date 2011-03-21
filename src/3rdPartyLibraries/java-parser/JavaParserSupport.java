@@ -240,10 +240,12 @@ class JavaParserSupport
                             {
                               if (typeClass.isArray() == true)
                                  {
+                                // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
                                    System.out.println("Skipping case of array of type... = " + nestedClassName);
                                  }
                                 else
                                  {
+                                // This is not an array type and not a primative type (so it should be a class, I think).
                                    System.out.println("Recursive call to buildImplicitClassSupport() to build type = " + nestedClassName);
 
                                 // Add this to the set of classes that we have seen... so that we will not try to process it more than once...
@@ -251,7 +253,7 @@ class JavaParserSupport
 
                                 // Control the level of recursion so that we can debug this...it seems that
                                 // this is typically as high as 47 to process the implicitly included classes.
-                                   if (counter < 100)
+                                   if (counter < 1)
                                       {
                                      // DQ (11/2/2010): comment out this recursive call for now.
                                         buildImplicitClassSupport(nestedClassName);
@@ -302,6 +304,7 @@ class JavaParserSupport
                   }
 
                System.out.println("(skipped method handling) Number of methods = " + methlist.length);
+               int methodCounter = 0;
                for (int i = 0; i < methlist.length; i++)
                   {
                     Method m = methlist[i];
@@ -324,7 +327,10 @@ class JavaParserSupport
 
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
-                 // JavaParser.cactionBuildImplicitMethodSupport(m.getName());
+                    if (methodCounter < 5)
+                         JavaParser.cactionBuildImplicitMethodSupport(m.getName());
+
+                    methodCounter++;
                   }
 
               JavaParser.cactionBuildImplicitClassSupportEnd(className);
