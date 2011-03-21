@@ -1,6 +1,6 @@
-AC_DEFUN([ROSE_SUPPORT_LANGUAGES],
+AC_DEFUN([ROSE_SUPPORT_LANGUAGE_CONFIG_OPTIONS],
 [
-# TOO (3/10/2011):
+#  TOO (3/10/2011):
 #
 #	1. Manage language support command-line options
 #	2. Set flags to indicate which languages to support 
@@ -8,12 +8,12 @@ AC_DEFUN([ROSE_SUPPORT_LANGUAGES],
 #	4. Enabled only one language
 #	5. Set the automake conditional macros that will be used in Makefiles
 #
-#
-# uppercase: sed 's/./\U&/g'
-# DQ (4/15/2010): Added support to specify selected languages to support in ROSE.
+#  DQ (4/15/2010): Added support to specify selected languages to support in ROSE.
+#########################################################################################
 echo "------------------------------------------------"
 AC_MSG_CHECKING([for user-specified languages to support])
 echo ""
+
 
 #########################################################################################
 #
@@ -35,7 +35,29 @@ echo ""
 #
 #########################################################################################
 
-ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php opencl"
+#########################################################################################
+#
+##
+   ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php opencl"
+##
+#
+#########################################################################################
+
+#########################################################################################
+#
+##
+   ROSE_SUPPORT_LANGUAGE_CONFIG_OPTIONS_DEPRECATED
+##
+#
+#########################################################################################
+
+
+
+#  TOO (3/18/2011): For now, the '--enable-only-LANGUAGE' options will take precedence over
+#  all other language options. It might be useful, however, to add additional testing to
+#  issue warnings/errors when the user mistakenly specifies multiple language options,
+#  especially if they are conflicting.
+if test "x$USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION" = "xno" ; then
 #########################################################################################
 AC_ARG_ENABLE([languages],
 #########################################################################################
@@ -56,6 +78,7 @@ AC_ARG_ENABLE([languages],
 # leading and trailing whitespace
 LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed -e 's/,/ /g;s/^[ \t]*//;s/[ \t]*$//'`" 
 #DEBUG#echo "LANGUAGES_TO_SUPPORT='$LANGUAGES_TO_SUPPORT'"
+
 #########################################################################################
 AC_ARG_ENABLE([binary-analysis],
 #########################################################################################
@@ -77,7 +100,7 @@ AC_ARG_ENABLE([binary-analysis],
                   	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/binaries//g'`"
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-binary-analysis='$enableval' is unsupported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-binary-analysis='$enableval' is not supported. Use 'yes' or 'no'])]
                  	;;
                 esac
                ##########################################################################
@@ -109,7 +132,7 @@ AC_ARG_ENABLE([c],
                         fi
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-c='$enableval' is unsupported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-c='$enableval' is not supported. Use 'yes' or 'no'])]
                  	;;
                 esac
                ##########################################################################
@@ -136,7 +159,7 @@ AC_ARG_ENABLE([cxx],
                         fi
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-cxx='$enableval' is unsupported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-cxx='$enableval' is not supported. Use 'yes' or 'no'])]
                  	;;
                 esac
                ##########################################################################
@@ -162,7 +185,7 @@ AC_ARG_ENABLE([cuda],
                   	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/cuda//g'`"
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-cuda='$enableval' is unsupported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-cuda='$enableval' is not supported. Use 'yes' or 'no'])]
                  	;;
                 esac
                ##########################################################################
@@ -188,7 +211,7 @@ AC_ARG_ENABLE([fortran],
                   	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/fortran//g'`"
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-fortran='$enableval' is unsupported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-fortran='$enableval' is not supported. Use 'yes' or 'no'])]
                  	;;
                 esac
                ##########################################################################
@@ -214,7 +237,7 @@ AC_ARG_ENABLE([java],
                   	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/java//g'`"
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-java='$enableval' is unsupported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-java='$enableval' is not supported. Use 'yes' or 'no'])]
                  	;;
                 esac
                ##########################################################################
@@ -240,7 +263,7 @@ AC_ARG_ENABLE([php],
                   	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/php//g'`"
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-php='$enableval' is unsupported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-php='$enableval' is not supported. Use 'yes' or 'no'])]
                  	;;
                 esac
                ##########################################################################
@@ -266,11 +289,15 @@ AC_ARG_ENABLE([opencl],
                   	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/opencl//g'`"
                   	;;
                   [*)]
-                  	[AC_MSG_FAILURE([--enable-opencl='$enableval' is unsupported. Use 'yes' or 'no'])]
+                  	[AC_MSG_FAILURE([--enable-opencl='$enableval' is not supported. Use 'yes' or 'no'])]
                  	;;
                 esac
                ##########################################################################
                ,)
+else
+  echo "[[enable-only-$LANGUAGES_TO_SUPPORT support:warning]] ignoring any other language-support configuration options."
+fi #end-if test "x$USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION" = "xno" ;
+
 
 #
 # C and C++ are currently required to be supported simultaneously 
@@ -599,4 +626,198 @@ echo "done"
 
 echo "Finished configuring user-specified languages to support"
 # End macro ROSE_SUPPORT_LANGUAGES.
+])
+
+
+
+
+
+
+AC_DEFUN([ROSE_SUPPORT_LANGUAGE_CONFIG_OPTIONS_DEPRECATED],
+[
+#########################################################################################
+#
+#  TOO (3/18/2011):
+#
+#  Out variables:
+#  USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION(=yes/no)
+#
+#########################################################################################
+
+echo "------------------------------------------------"
+AC_MSG_CHECKING([for deprecated language configuration options])
+
+
+USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=no
+#########################################################################################
+AC_ARG_ENABLE([only-binary-analysis],
+#########################################################################################
+              AS_HELP_STRING([--enable-only-binary-analysis(=yes)],
+                             [Enable ONLY Java support in ROSE (Warning: '--enable-only-binary-analysis=no' and '--disable-only-binary-analysis' are no longer supported)]),
+               ##########################################################################
+                case "$enableval" in
+                  [yes)]
+                  	LANGUAGES_TO_SUPPORT="binaries"
+                        USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
+                  	;;
+                  [no)]
+                  	[AC_MSG_FAILURE([--enable-only-binary-analysis='$enableval' and --disable-only-binary-analysis are no longer supported. Use '--disable-binary-analysis' (see ./configure --help)])]
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-only-binary-analysis='$enableval' is not supported. Use '--enable-only-binary-analysis(=yes)' (see ./configure --help)])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
+
+#########################################################################################
+AC_ARG_ENABLE([only-c],
+#########################################################################################
+              AS_HELP_STRING([--enable-only-c(=yes)],
+                             [Enable ONLY C support in ROSE (Warning: '--enable-only-c=no' and '--disable-only-c' are no longer supported)]),
+               ##########################################################################
+                case "$enableval" in
+                  [yes)]
+                  	LANGUAGES_TO_SUPPORT="c"
+                        USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
+                  	;;
+                  [no)]
+                  	[AC_MSG_FAILURE([--enable-only-c='$enableval' and --disable-only-c are no longer supported. Use '--disable-c' (see ./configure --help)])]
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-only-c='$enableval' is not supported. Use '--enable-only-c(=yes)' (see ./configure --help)])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
+
+#########################################################################################
+AC_ARG_ENABLE([only-cxx],
+#########################################################################################
+              AS_HELP_STRING([--enable-only-cxx(=yes)],
+                             [Enable ONLY C++ support in ROSE (Warning: '--enable-only-cxx=no' and '--disable-only-cxx' are no longer supported)]),
+               ##########################################################################
+                case "$enableval" in
+                  [yes)]
+                  	LANGUAGES_TO_SUPPORT="c++"
+                        USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
+                  	;;
+                  [no)]
+                  	[AC_MSG_FAILURE([--enable-only-cxx='$enableval' and --disable-only-cxx are no longer supported. Use '--disable-cxx' (see ./configure --help)])]
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-only-cxx='$enableval' is not supported. Use '--enable-only-cxx(=yes)' (see ./configure --help)])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
+
+#########################################################################################
+AC_ARG_ENABLE([only-fortran],
+#########################################################################################
+              AS_HELP_STRING([--enable-only-fortran(=yes)],
+                             [Enable ONLY Fortran support in ROSE (Warning: '--enable-only-fortran=no' and '--disable-only-fortran' are no longer supported)]),
+               ##########################################################################
+                case "$enableval" in
+                  [yes)]
+                  	LANGUAGES_TO_SUPPORT="fortran"
+                        USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
+                  	;;
+                  [no)]
+                  	[AC_MSG_FAILURE([--enable-only-fortran='$enableval' and --disable-only-fortran are no longer supported. Use '--disable-fortran' (see ./configure --help)])]
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-only-fortran='$enableval' is not supported. Use '--enable-only-fortran(=yes)' (see ./configure --help)])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
+
+#########################################################################################
+AC_ARG_ENABLE([only-java],
+#########################################################################################
+              AS_HELP_STRING([--enable-only-java(=yes)],
+                             [Enable ONLY Java support in ROSE (Warning: '--enable-only-java=no' and '--disable-only-java' are no longer supported)]),
+               ##########################################################################
+                case "$enableval" in
+                  [yes)]
+                  	LANGUAGES_TO_SUPPORT="java"
+                        USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
+                  	;;
+                  [no)]
+                  	[AC_MSG_FAILURE([--enable-only-java='$enableval' and --disable-only-java are no longer supported. Use '--disable-java' (see ./configure --help)])]
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-only-java='$enableval' is not supported. Use '--enable-only-java(=yes)' (see ./configure --help)])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
+
+#########################################################################################
+AC_ARG_ENABLE([only-php],
+#########################################################################################
+              AS_HELP_STRING([--enable-only-php(=yes)],
+                             [Enable ONLY PHP support in ROSE (Warning: '--enable-only-php=no' and '--disable-only-php' are no longer supported)]),
+               ##########################################################################
+                case "$enableval" in
+                  [yes)]
+                  	LANGUAGES_TO_SUPPORT="php"
+                        USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
+                  	;;
+                  [no)]
+                  	[AC_MSG_FAILURE([--enable-only-php='$enableval' and --disable-only-php are no longer supported. Use '--disable-php' (see ./configure --help)])]
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-only-php='$enableval' is not supported. Use '--enable-only-php(=yes)' (see ./configure --help)])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
+
+#########################################################################################
+AC_ARG_ENABLE([only-cuda],
+#########################################################################################
+              AS_HELP_STRING([--enable-only-cuda(=yes)],
+                             [Enable ONLY Cuda support in ROSE (Warning: '--enable-only-cuda=no' and '--disable-only-cuda' are no longer supported)]),
+               ##########################################################################
+                case "$enableval" in
+                  [yes)]
+                  	LANGUAGES_TO_SUPPORT="cuda"
+                        USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
+                  	;;
+                  [no)]
+                  	[AC_MSG_FAILURE([--enable-only-cuda='$enableval' and --disable-only-cuda are no longer supported. Use '--disable-cuda' (see ./configure --help)])]
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-only-cuda='$enableval' is not supported. Use '--enable-only-cuda(=yes)' (see ./configure --help)])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
+
+#########################################################################################
+AC_ARG_ENABLE([only-opencl],
+#########################################################################################
+              AS_HELP_STRING([--enable-only-opencl(=yes)],
+                             [Enable ONLY OpenCL support in ROSE (Warning: '--enable-only-opencl=no' and '--disable-only-opencl' are no longer supported)]),
+               ##########################################################################
+                case "$enableval" in
+                  [yes)]
+                  	LANGUAGES_TO_SUPPORT="opencl"
+                        USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
+                  	;;
+                  [no)]
+                  	[AC_MSG_FAILURE([--enable-only-opencl='$enableval' and --disable-only-opencl are no longer supported. Use '--disable-opencl' (see ./configure --help)])]
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-only-opencl='$enableval' is not supported. Use '--enable-only-opencl(=yes)' (see ./configure --help)])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
+
+AC_MSG_RESULT([done])
+#echo "Finished configuring deprecated user-specified language configuration options"
+# End macro ROSE_SUPPORT_LANGUAGE_CONFIG_OPTIONS_DEPRECATED
 ])
