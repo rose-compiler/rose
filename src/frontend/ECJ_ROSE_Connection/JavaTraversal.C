@@ -1,3 +1,8 @@
+// This file contains low level JNI functions to build a DOT file of the 
+// ECJ AST from a C++ program.  It was an early demo of the use of JNI 
+// functions to support the ECJ AST translation to build the ROSE AST.
+// None of these functions are used as part of the ECJ ROSE AST translation.
+
  #include <jni.h>
  #include <stdio.h>
  #include "JavaTraversal.h"

@@ -22,7 +22,11 @@ import org.eclipse.jdt.internal.compiler.util.*;
 // class JavaTraversal {
 
 import java.util.concurrent.Callable;
-class JavaTraversal  implements Callable<Boolean> {
+class JavaTraversal  implements Callable<Boolean> 
+   {
+  // This class generates a DOT file of the ECJ AST.  It is not used for any ROSE specific translation
+  // of the AST.  As a result it should be renamed.
+
      static Main main;
      static BufferedWriter out;
 
