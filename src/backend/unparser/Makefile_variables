@@ -1,0 +1,54 @@
+
+unparser_headers=\
+	$(unparserPath)/unparser.h \
+	$(unparserPath)/unparse_sym.h \
+	$(unparserPath)/astUnparseAttribute.h
+
+
+unparser_sources=\
+	$(unparser_headers:.h=.C)
+
+
+##################################################################
+
+unparser_la_sources=\
+	$(unparser_sources) \
+	$(unparser_headers) \
+	$(unparseCxxCodeGeneration_la_sources) \
+	$(unparseFormatSupport_la_sources) \
+	$(unparseFortran_la_sources) \
+	$(unparseLanguageIndependenceSupport_la_sources) \
+	$(unparsePHPCodeGeneration_la_sources)
+
+
+unparser_includeHeaders=\
+	$(unparser_headers) \
+	$(unparseCxxCodeGeneration_includeHeaders) \
+	$(unparseFormat_includeHeaders) \
+	$(unparseFortran_includeHeaders) \
+	$(unparseLanguageIndependenceSupport_includeHeaders) \
+	$(unparsePHPCodeGeneration_includeHeaders)
+
+
+
+unparser_extraDist=\
+	$(unparserPath)/CMakeLists.txt \
+	$(unparserPath)/unparser.docs \
+	$(unparseCxxCodeGeneration_extraDist) \
+	$(unparseFormatSupport_extraDist) \
+	$(unparseFortran_extraDist) \
+	$(unparseLanguageIndependenceSupport_extraDist) \
+	$(unparsePHPCodeGeneration_extraDist)
+
+
+unparser_cleanLocal=\
+	rm -rf \
+		$(unparserPath)/Templates.DB \
+		$(unparserPath)/ii_files \
+		$(unparserPath)/ti_files \
+		$(unparserPath)/core; \
+	$(unparseCxxCodeGeneration_cleanLocal); \
+	$(unparseFormatSupport_cleanLocal); \
+	$(unparseFortran_cleanLocal); \
+	$(unparseLanguageIndependenceSupport_cleanLocal); \
+	$(unparsePHPCodeGeneration_cleanLocal)

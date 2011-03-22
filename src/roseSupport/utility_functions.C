@@ -471,7 +471,14 @@ backendCompilesUsingOriginalInputFile ( SgProject* project )
                printf ("numberOfFiles() = %d commandLineToGenerateObjectFile = \n     %s \n",project->numberOfFiles(),commandLineToGenerateObjectFile.c_str());
              }
 
-          finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
+       // DQ (12/28/2010): If we specified to NOT compile the input code then don't do so even when it is the 
+       // original code. This is important for Fortran 2003 test codes that will not compile with gfortran and 
+       // for which the tests/testTokenGeneration.C translator uses this function to generate object files.
+       // finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
+          if (project->get_skipfinalCompileStep() == false)
+             {
+               finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
+             }
         }
        else
         {
@@ -648,6 +655,11 @@ generateAstGraph ( const SgProject* project, int maxSize, std::string filenameSu
      if (numberOfASTnodes < maxSize)
         {
           generateWholeGraphOfAST(filename);
+        }
+       else
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("In generateAstGraph(): WHOLE AST greaph too large to generate. \n");
         }
    }
 

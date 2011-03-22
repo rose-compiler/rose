@@ -1436,16 +1436,6 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     break;
                   }
 
-               case V_SgInitializedName:
-                  {
-                    SgInitializedName* initializedName = isSgInitializedName(node);
-                    additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=darkturquoise,fontname=\"7x13bold\",fontcolor=black,style=filled";
-                    labelWithSourceCode = string("\\n  ") + initializedName->get_name().getString() +
-                                          string("\\n  ") + StringUtility::numberToString(initializedName) + "  ";
-                 // printf ("########## initializedName->get_name() = %s \n",initializedName->get_name().str());
-                    break;
-                  }
-
                case V_SgSymbolTable:
                   {
                     SgSymbolTable* symbolTable = isSgSymbolTable(node);
@@ -1487,6 +1477,20 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
+// Liao 11/5/2010, move out of SgSupport
+       if (isSgInitializedName(node) != NULL) 
+//       case V_SgInitializedName:
+          {
+            SgInitializedName* initializedName = isSgInitializedName(node);
+            string additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=darkturquoise,fontname=\"7x13bold\",fontcolor=black,style=filled";
+            string labelWithSourceCode = string("\\n  ") + initializedName->get_name().getString() +
+                                  string("\\n  ") + StringUtility::numberToString(initializedName) + "  ";
+         // printf ("########## initializedName->get_name() = %s \n",initializedName->get_name().str());
+ //           break;
+            NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
+            addNode(graphNode);
+          }
+
 
 #if 1
      if (isSgSymbol(node) != NULL)

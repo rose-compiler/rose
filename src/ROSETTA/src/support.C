@@ -27,7 +27,6 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (Name, "Name", "NameTag" );
      NEW_TERMINAL_MACRO (SymbolTable, "SymbolTable", "SymbolTableTag" );
 
-     NEW_TERMINAL_MACRO (InitializedName, "InitializedName", "InitializedNameTag" );
      NEW_TERMINAL_MACRO (Pragma, "Pragma", "PragmaTag" );
   // Grammar::Terminal  Attribute( "Attribute", sageGrammar, "Attribute" );
   // Grammar::Terminal  BitAttribute( "BitAttribute", sageGrammar, "BitAttribute" );
@@ -185,9 +184,6 @@ Grammar::setUpSupport ()
   // DQ (11/19/2007): Support for the Fortran namelist statement (SgNamelistStatement)
      NEW_TERMINAL_MACRO (NameGroup,     "NameGroup",     "TEMP_Name_Group" );
 
-  // DQ (11/21/2007): This is part of support for the common block statement
-     NEW_TERMINAL_MACRO (CommonBlockObject, "CommonBlockObject",     "TEMP_CommonBlockObject" );
-
   // DQ (12/1/2007): Support for the Fortran dimension statement
      NEW_TERMINAL_MACRO (DimensionObject, "DimensionObject",     "TEMP_DimensionObject" );
 
@@ -237,7 +233,7 @@ Grammar::setUpSupport ()
 // /* (now derived from GraphNode) DirectedGraphNode | */ GraphNodeList | GraphEdgeList |
 // #if OLD_GRAPH_NODES == 1
      NEW_NONTERMINAL_MACRO (Support,
-          Modifier              | Name                      | SymbolTable         | InitializedName      |
+          Modifier              | Name                      | SymbolTable         | 
           Attribute             | File_Info                 | File                | Project              |
           Options               | Unparse_Info              | BaseClass           | TypedefSeq           |
           TemplateParameter     | TemplateArgument          | Directory           | FileList             |
@@ -247,7 +243,7 @@ Grammar::setUpSupport ()
 
           GraphNodeList         | GraphEdgeList             | TypeTable           |
 
-          NameGroup             | CommonBlockObject         | DimensionObject     | FormatItem           |
+          NameGroup             | DimensionObject     | FormatItem           |
           FormatItemList        | DataStatementGroup        | DataStatementObject | 
           DataStatementValue    ,
           "Support", "SupportTag", false);
@@ -274,219 +270,44 @@ Grammar::setUpSupport ()
   // SymbolTable.setDataPrototype("SgSymbolHashBase::iterator","iterator", "= NULL",
   //                      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      SymbolTable.setDataPrototype("hash_iterator","iterator", "",
-                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
   // We do not traverse the following data member for the moment!
   // DQ (11/6/2001): changed option to permit generation of access functions
   // The name is used internally within the find member function to hold the string being sought
   // SymbolTable.setDataPrototype("SgName","name", "= NULL",
      SymbolTable.setDataPrototype("SgName","name", "= \"\"",
-                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (11/6/2001): changed option to permit generation of access functions
   // The no_name is used internally within the find member function to indicate if the name is being used
      SymbolTable.setDataPrototype("bool","no_name", "= false",
-                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // AJ (10/21/2004): Modified Sage III to use STL based hash table implementation.
   // DQ (11/6/2001): changed option to permit generation of access functions
   // SymbolTable.setDataPrototype("SgSymbolHashMultiMap*","table", "= NULL",
   //                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
      SymbolTable.setDataPrototype(" rose_hash_multimap*","table", "= NULL",
-              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
-  // DQ (6/12/2007): Fixed use of std::set<SgNode*> to use SgNodeSet so taht ROSETTA's test for
+  // DQ (6/12/2007): Fixed use of std::set<SgNode*> to use SgNodeSet so that ROSETTA's test for
   // pointer to IR node can just look for "*" in the type.  This is a internal detail of ROSETTA.
   // DQ (3/10/2007): Adding set for symbols so that we can support fast tests for existance.
   // SymbolTable.setDataPrototype("SgNodeSetPtr","symbolSet", "= NULL",
   //          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // SymbolTable.setDataPrototype("std::set<SgNode*>","symbolSet", "",
      SymbolTable.setDataPrototype("SgNodeSet","symbolSet", "",
-              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/27/2010): data member to force case sensitive or case insensitive semantics (default is case sensitive).
+     SymbolTable.setDataPrototype("bool","case_insensitive","= false",
+                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
   // DQ (7/22/2010): Added type table to support stricter uniqueness of types and proper sharing.
      TypeTable.setFunctionPrototype( "HEADER_TYPE_TABLE", "../Grammar/Support.code" );
      TypeTable.setAutomaticGenerationOfConstructor(false);
      TypeTable.setDataPrototype    ( "SgSymbolTable*","type_table","= NULL",
-					     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
-
-  // InitializedName.setFunctionPrototype     ( "HEADER_INITIALIZED_NAME_DATA", "../Grammar/Support.code");
-
-     InitializedName.setFunctionPrototype     ( "HEADER_INITIALIZED_NAME", "../Grammar/Support.code");
-
-  // DQ (1/18/2006): renames this to be consistant and to allow the generated functions to map to
-  // the virtual SgNode::get_file_info(). This then meens that we need to remove the use of
-  // SgInitializedName::get_fileInfo() where it is used.
-  // DQ (8/2/2004): Added fileInfo object to SgInitializedName object (to help with debugging and
-  // to generally provide source position information on those IR nodes which are traversed).
-  // InitializedName.setDataPrototype ( "Sg_File_Info*", "fileInfo", "= NULL",
-  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
-  // InitializedName.setDataPrototype ( "Sg_File_Info*", "file_info", "= NULL",
-  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
-     InitializedName.setDataPrototype ( "Sg_File_Info*", "startOfConstruct", "= NULL",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
-
-  // DQ (12/9/2004): Modified to make the access functions for this data member be automatically
-  // generated.  As part of this change Alin's set_name() member function was moved to
-  // ROSE/src/frontend/SageIII/sageSupport.[hC] since it has very specific semantics that does not
-  // apply to all cases of where the set_name() access function should be called within a SgInitializedName
-  // object (since SgInitializedName objects are used for both VariableDeclaration, preinitialization lists, etc.)
-  // InitializedName.setDataPrototype("SgName","name", "= NULL",
-  //      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#if 1
-  // DQ (10/9/2007): Use the ROSETTA generated version to test failure
-
-     InitializedName.setDataPrototype("SgName","name", "= NULL",
-          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#else
-     InitializedName.setDataPrototype("SgName","name", "= \"\"",
-          NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-  // FMZ (4/7/2009): Added for Cray pointer declaration
-#if 0
-#if USE_FORTRAN_IR_NODES
-     InitializedName.setDataPrototype("bool","isCrayPointer", "= false",
-          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     InitializedName.setDataPrototype("SgInitializedName*","crayPointee", "= NULL",
-          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif 
-#endif
-
-  // DQ (7/20/2004):  think this is the root of the problems in cycles when we traverse types!
-     InitializedName.setDataPrototype("SgType*","typeptr", "= NULL",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
-  // QY:11/2/04 remove itemptr
-  //   InitializedName.setDataPrototype("SgInitializedName*","itemptr", "= NULL",
-  //                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL);
-  // DQ (7/20/2004): The initptr in this SgInitializer object is NULL (set by EDG/SAGE connection)
-  //                 to fix previous cycle in these objects (previously fixed in ASTFixes.C.
-     InitializedName.setDataPrototype("SgInitializer*","initptr", "= NULL",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-  // DQ (7/20/2004): I think this is a hold over from the old implementation of SageII and that
-  // it could be removed at some point.
-     InitializedName.setDataPrototype("SgInitializedName*","prev_decl_item", "= NULL",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     InitializedName.setDataPrototype("bool","is_initializer", "= false",
-                                      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     InitializedName.setDataPrototype("SgDeclarationStatement*","declptr", "= NULL",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (3/4/2007): We want to force the copy mechanism to skip building a new SgStorageModifier
-  // when making a copy (use NO_COPY_DATA to do this).  The p_storageModifier is handled internally
-  // in SageIII.
-  // DQ (4/28/2004): Use new modifier classes instead of older interface
-  // InitializedName.setDataPrototype("int","storage_class_attributes", "= e_unknown_storage_class",
-  //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL);
-  // InitializedName.setDataPrototype("SgStorageModifier*","storageModifier", "= NULL",
-  //              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
-     InitializedName.setDataPrototype("SgStorageModifier*","storageModifier", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
-#ifdef BUILD_X_VERSION_TERMINALS
-     InitializedName.setDataPrototype("SgX_DeclarationStatement*","X_declptr", "= NULL",
-                                      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-  // DQ (11/15/2004): class declarations for nested classes can appear outside the scope of the class to which
-  // they belong, thus the parent information is not sufficent to define the relationship of nested classes
-  // (and typedefs within the classes, as well, which is the current bug in Kull).  So we need an additional
-  // data member to explicitly represent the scope of a class (consistant with the design of the member
-  // function declaration).
-     InitializedName.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (12/11/2004): Extra information when used as an entry within a preinitialization list!
-  // There is perhaps a better design possible (adding an new IR node and deriving it from the InitializedName).
-  // But that is a bit more complex than  think is justified at present while I experiment with this fix.
-  // I need to save information about if an entry in the preinitialization list is associated with the
-  // initialization of a base class or a data member.  This information (if a base class) is used to know
-  // what names in the preinitialization list need to be reset (when they are template names (to replace
-  // names such as "A___L9" with "A<int>").  See testcode2004_160.C.
-     InitializedName.setDataPrototype("SgInitializedName::preinitialization_enum","preinitialization", "= e_unknown_preinitialization",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#if 0
-  // DQ (12/21/2005): Added to support reference to global functions when locally
-  // scopes ones are available (see test2005_179.C).
-  // InitializedName.setDataPrototype ( "bool", "global_qualified_name", "= false",
-  //           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     InitializedName.setDataPrototype ( "SgQualifiedNamePtrList", "qualifiedNameList", "",
-               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-#if 1
-  // DQ (1/3/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
-  // Modified implementation to only be at specific IR nodes.
-     InitializedName.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-
-  // FMZ (2/18/2009)
-     InitializedName.setDataPrototype("bool","isCoArray","= false",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-
-     InitializedName.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
-     InitializedName.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
-#endif
-
-  // DQ (7/25/2006): Support for asm register names (required for asm statement support common in some standard Linux header files).
-     InitializedName.setDataPrototype ( "SgInitializedName::asm_register_name_enum", "register_name_code", "= SgInitializedName::e_invalid_register",
-               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (8/09/2006): Support for asm register names when defined via strings (more general than the EDG mapping to the GNU supported register names)
-  // This requirement comes from an Elsa test case: "int foo asm ("myfoo") = 2;" where the register name is unknown and so held as a string.
-     InitializedName.setDataPrototype ( "std::string", "register_name_string", "= \"\"",
-               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (12/20/2006): Record if global name qualification is required on the type.
-  // See test2003_01.C for an example of where this is required. Note that for a
-  // variable declaration (SgVariableDeclaration) this information is recorded directly
-  // on the SgVariableDeclaration node.  This use on the InitializedName is reserved for
-  // function parameters, and I am not sure if it is useful anyhwere else.
-     InitializedName.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (11/20/2007): FORTRAN SUPPORT -- The shape of this variable (if it is an array) was not specified in the
-  // declaration.  This is typically the result of a subsequent "allocatable statement" after the declaration.
-  // The allocatable statement specifies the shape of an array and that it is appropriate for use with pointers (I think).
-     InitializedName.setDataPrototype("bool", "shapeDeferred", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (11/20/2007): FORTRAN SUPPORT -- The initializer may be defined directly in the variable declaration or
-  // in a separate "data statement".  This flag records if the initializer was defered (e.g. to a data statement).
-     InitializedName.setDataPrototype("bool", "initializationDeferred", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (1/3/2009): Added support for gnu variable attributes.  Note that these can be specified on a per variable
-  // basis and because a variable declaration can contain many variables, the attributs must live with the
-  // SgInitializedName (in the future we might define aSgVariableModifier and refactor this code there).
-  // Note that more than one value can be set, so this implements a bit vector of flags to be used.
-     InitializedName.setDataPrototype("SgBitVector", "gnu_attribute_modifierVector", "",
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (1/3/2009): Added support for GNU constructor priority (added paramter "N" as in "void f __attribute__((constructor (N)));")
-     InitializedName.setDataPrototype("unsigned long int", "gnu_attribute_initialization_priority", "= 0",
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (1/3/2009): Added support for GNU attributes
-     InitializedName.setDataPrototype("std::string", "gnu_attribute_named_weak_reference", "=\"\"",
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (1/3/2009): Added support for GNU attributes
-     InitializedName.setDataPrototype("std::string", "gnu_attribute_named_alias", "=\"\"",
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (1/3/2009): Added support for GNU attributes
-     InitializedName.setDataPrototype("std::string", "gnu_attribute_cleanup_function", "=\"\"",
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (1/3/2009): Added support for GNU attributes
-     InitializedName.setDataPrototype("std::string", "gnu_attribute_section_name", "=\"\"",
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (1/3/2009): Added support for alignment specfication using gnu attributes (zero is used as the default to imply no alignment specification).
-     InitializedName.setDataPrototype("unsigned long int", "gnu_attribute_alignment", "= 0",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (1/3/2009): Added support for GNU attributes (reuse the enum declaration at the SgDeclarationModifier IR node).
-     InitializedName.setDataPrototype("SgDeclarationModifier::gnu_declaration_visability_enum", "gnu_attribute_visability","= SgDeclarationModifier::e_unknown_visibility",
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (9/11/2010): Added support for fortran "protected" marking of variables.
-     InitializedName.setDataPrototype("bool", "protected_declaration", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
+					             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
      Name.setFunctionPrototype                ( "HEADER_NAME", "../Grammar/Support.code");
 
@@ -810,6 +631,11 @@ Grammar::setUpSupport ()
   // not a part of the current translation unit.  A place for the information in
   // the *.mod files to be put.  This is the data member for the list.
      SourceFile.setDataPrototype   ( "SgModuleStatementPtrList", "module_list", "",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/20/2010): Added SgTokenPtrList to support a token list at the SourceFile level.
+  // In the future we may have more than one to support pre and post processing using CPP or Fortran equivalent).
+     SourceFile.setDataPrototype   ( "SgTokenPtrList", "token_list", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 0
@@ -1230,9 +1056,14 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // RPM (6/9/2010): Switch to specify the IPD file for the Partitioner.
+  // DQ (11/20/2010): This should maybe have an initializer of "= \"\"" instead of just "" so that 
+  // it will be properly reset to an empty string in the generated destructor.
      File.setDataPrototype("std::string", "partitionerConfigurationFileName", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/20/2010): Process only tokens.
+     File.setDataPrototype ("bool", "output_tokens", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // ******************************************************************************
@@ -1979,11 +1810,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
      NameGroup.setDataPrototype     ( "SgStringList", "name_list", "",
                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     CommonBlockObject.setFunctionPrototype ( "HEADER_COMMON_BLOCK_OBJECT", "../Grammar/Support.code");
-     CommonBlockObject.setDataPrototype     ( "std::string", "block_name", "=\"\"",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     CommonBlockObject.setDataPrototype     ( "SgExprListExp*", "variable_reference_list", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DimensionObject.setFunctionPrototype ( "HEADER_DIMENSION_OBJECT", "../Grammar/Support.code");
      DimensionObject.setDataPrototype     ( "SgInitializedName*", "array", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2090,7 +1916,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // DQ (7/22/2010): 
      TypeTable.setFunctionSource    ( "SOURCE_TYPE_TABLE", "../Grammar/Support.code" );
 
-     InitializedName.setFunctionSource ( "SOURCE_INITIALIZED_NAME", "../Grammar/Support.code");
      Name.setFunctionSource            ( "SOURCE_NAME", "../Grammar/Support.code");
      Attribute.setFunctionSource       ( "SOURCE_ATTRIBUTE", "../Grammar/Support.code");
      Pragma.setFunctionSource          ( "SOURCE_PRAGMA", "../Grammar/Support.code");
@@ -2190,9 +2015,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // DQ (11/19/2007): Added support for Fortran namelist statement
      NameGroup.setFunctionSource         ( "SOURCE_NAME_GROUP", "../Grammar/Support.code");
 
-  // DQ (11/21/2007): support for common block statements
-     CommonBlockObject.setFunctionSource ( "SOURCE_COMMON_BLOCK_OBJECT", "../Grammar/Support.code");
-
      DimensionObject.setFunctionSource ( "SOURCE_DIMENSION_OBJECT", "../Grammar/Support.code");
 
   // DQ (11/20/2007): Added support for Fortran data statement
@@ -2200,26 +2022,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
      DataStatementObject.setFunctionSource ( "SOURCE_DATA_STATEMENT_OBJECT", "../Grammar/Support.code");
      DataStatementValue.setFunctionSource  ( "SOURCE_DATA_STATEMENT_VALUE",  "../Grammar/Support.code");
 
-
-  // Some functions we want to only be defined for higher level grammars (not the root C++ grammar)
-     ROSE_ASSERT(InitializedName.associatedGrammar != NULL);
-  // ROSE_ASSERT(InitializedName.associatedGrammar->getParentGrammar() != NULL);
-  // ROSE_ASSERT(InitializedName.associatedGrammar->getParentGrammar()->getGrammarName() != NULL);
-     printf ("### InitializedName.associatedGrammar->getParentGrammar()->getGrammarName() = %s \n",
-          (InitializedName.associatedGrammar->getParentGrammar() == NULL) ?
-               "ROOT GRAMMAR" :
-               InitializedName.associatedGrammar->getParentGrammar()->getGrammarName().c_str());
-#if 0
-     if (InitializedName.associatedGrammar->isRootGrammar() == false)
-        {
-          printf ("ADDING SPECIAL X VERSION SOURCE CODE!!! \n");
-          InitializedName.setFunctionSource ( "SOURCE_X_INITIALIZED_NAME", "../Grammar/Support.code");
-        }
-       else
-        {
-          printf ("NOT ADDING SPECIAL X VERSION SOURCE CODE!!! \n");
-        }
-#endif
 
      FormatItem.setFunctionSource ( "SOURCE_FORMAT_ITEM", "../Grammar/Support.code");
      FormatItemList.setFunctionSource ( "SOURCE_FORMAT_ITEM_LIST", "../Grammar/Support.code");

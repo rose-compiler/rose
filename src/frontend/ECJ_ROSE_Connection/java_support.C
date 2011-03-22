@@ -68,7 +68,7 @@ convertJavaStringToCxxString(JNIEnv *env, const jstring & java_string)
 
      string returnString = str;
 
-     printf ("Inside of convertJavaStringToCxxString s = %s \n",str);
+  // printf ("Inside of convertJavaStringToCxxString s = %s \n",str);
 
   // Note that str is not set to NULL.
      env->ReleaseStringUTFChars(java_string, str);
@@ -112,3 +112,49 @@ buildSimpleMemberFunction(const SgName & name)
 
      return functionDeclaration;
    }
+
+
+void
+buildClass (const SgName & className)
+   {
+     SgName name = className;
+
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     SgClassDeclaration* declaration = SageBuilder::buildDefiningClassDeclaration ( name, astJavaScopeStack.front() );
+
+     ROSE_ASSERT(declaration->get_type() != NULL);
+
+  // Set the source code position...
+  // setSourcePosition(declaration);
+  // setSourcePositionCompilerGenerated(declaration);
+
+  // void setSourcePosition  ( SgLocatedNode* locatedNode );
+  // void setSourcePositionCompilerGenerated( SgLocatedNode* locatedNode );
+
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     SgClassDefinition* definition = SageBuilder::buildClassDefinition(declaration);
+
+  // Set the source code position...
+  // setSourcePosition(definition);
+  // setSourcePositionCompilerGenerated(definition);
+
+     astJavaScopeStack.push_front(definition);
+     ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
+
+  // Add "super()" member function.
+     SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction("super");
+     ROSE_ASSERT(functionDeclaration != NULL);
+   }
+
+
+SgVariableDeclaration*
+buildSimpleVariableDeclaration(const SgName & name)
+   {
+     SgVariableDeclaration* variable = NULL;
+
+     variable = SageBuilder::buildVariableDeclaration (name, SgTypeInt::createType(), NULL, astJavaScopeStack.front() );
+     ROSE_ASSERT(variable != NULL);
+
+     return variable;
+   }
+

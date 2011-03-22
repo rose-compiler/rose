@@ -71,6 +71,9 @@ jserver_init()
   return ;
 }
 
+JNIEnv* getEnv() {
+  return get_env();
+}
 
 void 
 jserver_finish()

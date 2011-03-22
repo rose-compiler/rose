@@ -426,6 +426,11 @@ HEADER_SCOPE_STATEMENT_START
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 
+       // DQ (11/28/2010): Added case sensitive/insensitive option to symbol table behavior.
+      //! Query of scope symbol table behavior (is symbol table behavior case sensitive (C/C++) or case insensitive (Fortran).
+          bool isCaseInsensitive() const;
+          void setCaseInsensitive(bool b);
+
      public:
 
 
@@ -530,7 +535,12 @@ HEADER_POST_CONSTRUCTION_INITIALIZATION_END
 
 
 HEADER_FUNCTION_TYPE_TABLE_START
-          $CLASSNAME ();
+
+      //! Constructor
+       // $CLASSNAME ();
+       // SgFunctionTypeTable( bool case_insensitive = false );
+          SgFunctionTypeTable();
+
           void insert_function_type(const SgName&, SgType *);
        // void insert_function_type(const SgFunctionDeclaration *);
 
@@ -2014,7 +2024,6 @@ HEADER_GOTO_STATEMENT_END
 HEADER_ASM_STATEMENT_START
 
           virtual unsigned int cfgIndexForEnd() const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
@@ -3669,9 +3678,9 @@ SgScopeStatement::get_qualified_name() const
 
   // Compute parent scope's qualified name
      SgName par_qual_name;
-     const SgScopeStatement* parent_scope = get_scope ();
+     const SgScopeStatement* parent_scope = get_scope();
      if (parent_scope)
-       par_qual_name = parent_scope->get_qualified_name ();
+          par_qual_name = parent_scope->get_qualified_name();
 
      return SgName::assembleQualifiedName (par_qual_name, local_qual_name);
    }
@@ -5189,6 +5198,31 @@ SgScopeStatement::lastStatement() const
      return last;
    }
 
+bool
+SgScopeStatement::isCaseInsensitive() const
+   {
+  // Case sensitive scopes are for C/C++ and case insensitive scopes are for Fortran.
+  // The case sensitive behavior is property of the symbol table only, but it represented
+  // in the scope API to be consistatn with the symbol table handling API being presented 
+  // at the scope level (SgScopeStatment).
+
+     ROSE_ASSERT(p_symbol_table != NULL);
+     return p_symbol_table->isCaseInsensitive();
+   }
+
+void
+SgScopeStatement::setCaseInsensitive(bool b)
+   {
+  // Case sensitive scopes are for C/C++ and case insensitive scopes are for Fortran.
+  // The case sensitive behavior is property of the symbol table only, but it represented
+  // in the scope API to be consistatn with the symbol table handling API being presented 
+  // at the scope level (SgScopeStatment).
+
+     ROSE_ASSERT(p_symbol_table != NULL);
+     p_symbol_table->setCaseInsensitive(b);
+   }
+
+
 SOURCE_SCOPE_STATEMENT_END
 
 
@@ -5203,13 +5237,16 @@ SOURCE_FUNCTION_TYPE_TABLE_STATEMENT_START
 // DQ (1/31/2006): Modified to build all types in the memory pools
 // SgFunctionTypeTable Sgfunc_type_table;
 
-SgFunctionTypeTable::SgFunctionTypeTable ()
+// SgFunctionTypeTable::SgFunctionTypeTable( bool case_insensitive )
+SgFunctionTypeTable::SgFunctionTypeTable()
   // DQ (8/31/2006): Use an empty name for the fileInfo so that we can support testing for absolute paths for filenames.
    : SgStatement( new Sg_File_Info ("",0,0) )
    {
+  // DQ (11/27/2010): Added support for case sensitive and insensitive matching (for C/C++ and Fortran, respectively).
   // DQ (2/19/2007): Use a much larger size symbol table for the function types (the input value is the hash table size, which should be a prime number)!
   // p_function_type_table = new SgSymbolTable();
-     p_function_type_table = new SgSymbolTable(1001);
+  // p_function_type_table = new SgSymbolTable(1001,case_insensitive);
+     p_function_type_table = new SgSymbolTable();
      ROSE_ASSERT(p_function_type_table != NULL);
 
   // DQ (2/16/2006): Set this parent directly (now tested)
@@ -5225,6 +5262,11 @@ SgFunctionTypeTable::SgFunctionTypeTable ()
   // DQ (11/3/2007): The internal test like to see that both the startOfConstruct and endOfConstruct are set!
      this->set_endOfConstruct( new Sg_File_Info ("",0,0) );
      this->get_endOfConstruct()->set_parent(this);
+
+  // DQ (11/27/2010): In retrospect I think that should should always be false!
+  // Note that the function type table is global and could include translation 
+  // units from both C/C++ and Fortran.
+  // ROSE_ASSERT(case_insensitive == false);
    }
 
 // DQ (2/19/2007): This appears to not be called but is here because 
@@ -13150,7 +13192,46 @@ SgDerivedTypeStatement::post_construction_initialization()
 SgName
 SgDerivedTypeStatement::get_mangled_name() const
    {
-     return SgClassDeclaration::get_mangled_name();
+  // DQ (12/27/2010): This causes endless recursion when the type is defined locally to the 
+  // function and the function uses the type as a return type (which seems like a language 
+  // design mistake). Testcode test2010_179.f90 demonstrates this and it is actually a part
+  // of the gfortran test suite, so I gather it is legal code.
+  // To address this complexity I will make the fix in this IR node (which is fortran specific)
+  // to use only the name plus the function and qualified name of the function's scope instead
+  // of the generated function definition's mangled name which causes the endless recursion.
+  // This will be done only for the case were we detect that the type is used as the return type of
+  // the function.  I don't think that modules can be defined in functions, so I think this is OK.
+  // return SgClassDeclaration::get_mangled_name();
+     SgName mangleName;
+     ROSE_ASSERT(this->get_parent() != NULL);
+     SgFunctionDeclaration* functionDeclaration = TransformationSupport::getFunctionDeclaration(this->get_parent());
+
+     bool defineShorterName = false;
+     if (functionDeclaration != NULL)
+        {
+          SgFunctionType* functionType = isSgFunctionType(functionDeclaration->get_type());
+          ROSE_ASSERT(functionType != NULL);
+       // printf ("functionType = %p = %s \n",functionType,functionType->class_name().c_str());
+
+          SgType* returnType = functionType->get_return_type();
+          ROSE_ASSERT(returnType != NULL);
+          if (returnType == this->get_type())
+             {
+               defineShorterName = true;
+             }
+        }
+
+     if (defineShorterName == true)
+        {
+       // This defines a short (none endlessly recursive name) for the derived type mangled name.
+          mangleName = "__NESTED_TYPE_USED_IN_FUNCTION_RETURN_TYPE_" + functionDeclaration->get_name() + "__" + this->get_name() + "__";
+        }
+       else
+        {
+          mangleName = SgClassDeclaration::get_mangled_name();
+        }
+
+     return mangleName;
    }
 SOURCE_DERIVED_TYPE_STATEMENT_END
 

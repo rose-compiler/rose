@@ -20,6 +20,11 @@ using namespace SageInterface;
 std::list<SgScopeStatement*> SageBuilder::ScopeStack(0);
 
 
+// DQ (11/30/2010): Added support for building Fortran case insensitive symbol table handling.
+//! Support for construction of case sensitive/insensitive symbol table handling in scopes.
+bool SageBuilder::symbol_table_case_insensitive_semantics = false;
+
+
 void SageBuilder::pushScopeStack (SgScopeStatement* stmt)
 {
   ROSE_ASSERT(stmt);
@@ -156,7 +161,55 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
 
   if (scope!=NULL) 
   {
-    fixVariableDeclaration(varDecl,scope);
+    // Liao 12/13/2010
+    // Fortran subroutine/function parameters have corresponding variable declarations in the body
+    // For this declaration, it should use the initialized names of the parameters instead of creating new ones
+    // The symbol of the init name should be under SgFunctionDefinition, instead of the function body block
+    bool isFortranParameter = false; 
+    if (SageInterface::is_Fortran_language())
+    {
+      SgFunctionDefinition * f_def = getEnclosingProcedure (scope);
+      if (f_def != NULL)
+      {
+        SgSymbolTable * st = f_def->get_symbol_table();
+        ROSE_ASSERT (st != NULL);
+        SgVariableSymbol * v_symbol = st->find_variable(name); 
+        if (v_symbol != NULL) // find a function parameter with the same name
+        {
+          // replace the default one with the one from parameter
+          SgInitializedName *default_initName = varDecl->get_decl_item (name);
+          ROSE_ASSERT (default_initName != NULL);
+          SgInitializedName * new_initName = v_symbol->get_declaration();
+          ROSE_ASSERT (new_initName != NULL);
+          ROSE_ASSERT (default_initName != new_initName);
+
+          SgInitializedNamePtrList&  n_list= varDecl->get_variables();
+          std::replace (n_list.begin(), n_list.end(),default_initName, new_initName );
+          ROSE_ASSERT (varDecl->get_decl_item (name)==new_initName); //ensure the new one can be found  
+
+          // change the function argument's old parent to the variable declaration
+          SgNode * old_parent = new_initName->get_parent();
+          ROSE_ASSERT  (old_parent != NULL);
+          ROSE_ASSERT  (isSgFunctionParameterList(old_parent) != NULL);
+          new_initName->set_parent(varDecl); // adjust parent from SgFunctionParameterList to SgVariableDeclaration
+
+       // DQ (1/25/2011): Deleting these causes problems if I use this function in the Fortran support...
+       // delete (default_initName->get_declptr()); // delete the var definition
+          // delete (default_initName->get_declptr()); // relink the var definition
+          SgVariableDefinition * var_def = isSgVariableDefinition(default_initName->get_declptr()) ;
+          ROSE_ASSERT (var_def != NULL);
+          var_def->set_parent(new_initName);
+          var_def->set_vardefn(new_initName);
+          new_initName->set_declptr(var_def); // it was set to SgProcedureHeaderStatement as a function argument
+
+          delete (default_initName); // must delete the old one to pass AST consistency test
+          isFortranParameter = true;
+        }
+      }
+    }
+    if (! isFortranParameter) // No need to add symbol to the function body if it is a Fortran parameter
+                              // The symbol should already exist under function definition for the parameter
+      fixVariableDeclaration(varDecl,scope);
   }
 #if 0
   // SgVariableDefinition should be created internally
@@ -164,8 +217,9 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   initName->set_declptr(variableDefinition);
   variableDefinition->set_parent(initName);
 #endif
+
   SgInitializedName *initName = varDecl->get_decl_item (name);   
-  ROSE_ASSERT(initName); 
+  ROSE_ASSERT(initName != NULL);
   ROSE_ASSERT((initName->get_declptr())!=NULL);
 
 #if 1
@@ -178,6 +232,7 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   ROSE_ASSERT((variableDefinition_original->get_endOfConstruct())!=NULL);
 #endif
   setSourcePositionForTransformation(varDecl);
+  //ROSE_ASSERT (isSgVariableDefinition(initName->get_declptr())->get_startOfConstruct()!=NULL);
   return varDecl;
 }
 
@@ -220,6 +275,7 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
        varDecl->set_definingDeclaration(varDecl);
 #endif
 
+  //ROSE_ASSERT (varDecl->get_declarationModifier().get_accessModifier().isPublic() == false);
   return varDecl;
 }
 
@@ -392,10 +448,20 @@ SageBuilder::buildFunctionParameterTypeList (SgExprListExp * expList)
 }
 
 SgFunctionParameterTypeList * 
-SageBuilder::buildFunctionParameterTypeList()
+SageBuilder::buildFunctionParameterTypeList(SgType* type0, SgType* type1, SgType* type2, SgType* type3,
+                                            SgType* type4, SgType* type5, SgType* type6, SgType* type7)
 {
   SgFunctionParameterTypeList* typePtrList = new SgFunctionParameterTypeList;
   ROSE_ASSERT(typePtrList);
+  SgTypePtrList& types = typePtrList->get_arguments();
+  if (type0) types.push_back(type0);
+  if (type1) types.push_back(type1);
+  if (type2) types.push_back(type2);
+  if (type3) types.push_back(type3);
+  if (type4) types.push_back(type4);
+  if (type5) types.push_back(type5);
+  if (type6) types.push_back(type6);
+  if (type7) types.push_back(type7);
   return typePtrList;
 }
 
@@ -707,6 +773,22 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
 
   // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): generated function func = %p \n",func);
 
+  // Liao 12/2/2010, special handling for Fortran functions and subroutines
+     if (SageInterface::is_Fortran_language() )
+     {
+       SgProcedureHeaderStatement * f_func = isSgProcedureHeaderStatement(func);
+       ROSE_ASSERT (f_func != NULL);
+       if (return_type == buildVoidType())
+         f_func->set_subprogram_kind(SgProcedureHeaderStatement::e_subroutine_subprogram_kind);
+       else
+         f_func->set_subprogram_kind(SgProcedureHeaderStatement::e_function_subprogram_kind);
+       
+       // hide it from the unparser since fortran prototype func declaration is internally used by ROSE AST 
+       f_func->get_startOfConstruct()->unsetOutputInCodeGeneration();
+       f_func->get_endOfConstruct()->unsetOutputInCodeGeneration();
+       ROSE_ASSERT(f_func->get_startOfConstruct()->isOutputInCodeGeneration() == false);
+       ROSE_ASSERT(f_func->get_endOfConstruct()->isOutputInCodeGeneration() == false);
+     }
      return func;  
    }
 
@@ -751,7 +833,13 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* f
 SgFunctionDeclaration*
 SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
 {
-  SgFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ false, scope);
+  SgFunctionDeclaration * result = NULL;
+  if (SageInterface::is_Fortran_language())
+  {
+      result = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement> (name,return_type,paralist, /* isMemberFunction = */ false, scope);
+  }
+  else
+    result = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ false, scope);
   return result;
 }
 
@@ -814,7 +902,17 @@ SgMemberFunctionDeclaration* SageBuilder::buildNondefiningMemberFunctionDeclarat
   return result;
 }
 
-SgMemberFunctionDeclaration* SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
+SgMemberFunctionDeclaration*
+SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope)
+{
+    SgType* return_type = func_type->get_return_type();
+    SgFunctionParameterList* paralist = buildFunctionParameterList(func_type->get_argument_list());
+
+    return SageBuilder::buildDefiningMemberFunctionDeclaration(name, return_type, paralist, scope);
+}
+
+SgMemberFunctionDeclaration*
+SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
 {
   SgMemberFunctionDeclaration * result = buildDefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist,scope);
   // set definingdecl for SgCtorInitializerList
@@ -868,6 +966,10 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
     //reuse function type, function symbol
 
 //    delete func_type;// bug 189
+
+    // Cong (10/25/2010): Make sure in this situation there is no defining declaration for this symbol.
+    //ROSE_ASSERT(func_symbol->get_declaration()->get_definingDeclaration() == NULL);
+
     func_type = func_symbol->get_declaration()->get_type();
     //func = new SgFunctionDeclaration(name,func_type,NULL);
     func = new actualFunction(name,func_type,NULL);
@@ -889,6 +991,14 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
   ROSE_ASSERT(func_body);
   SgFunctionDefinition * func_def = new SgFunctionDefinition(func,func_body);
   ROSE_ASSERT(func_def);
+
+  // DQ (11/28/2010): Added specification of case insensitivity (e.g. Fortran).
+  if (symbol_table_case_insensitive_semantics == true)
+     {
+       func_def->setCaseInsensitive(true);
+       func_body->setCaseInsensitive(true);
+     }
+
   func_def->set_parent(func);
   func_def->set_body(func_body);
   func_body->set_parent(func_def);
@@ -897,7 +1007,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
    //TODO consider the difference between C++ and Fortran
   setParameterList(func,paralist);
          // fixup the scope and symbol of arguments,
-  SgInitializedNamePtrList argList = paralist->get_args();
+  SgInitializedNamePtrList& argList = paralist->get_args();
   Rose_STL_Container<SgInitializedName*>::iterator argi;
   for(argi=argList.begin(); argi!=argList.end(); argi++)
   {
@@ -1971,7 +2081,7 @@ SageBuilder::buildVarRefExp(SgInitializedName* initname, SgScopeStatement* scope
   ROSE_ASSERT(initname);
   if (scope == NULL)
     scope = SageBuilder::topScopeStack();
- // ROSE_ASSERT(scope != NULL); 
+  // ROSE_ASSERT(scope != NULL); // we allow to build a dangling ref without symbol
 
   SgVarRefExp *varRef = NULL;
   // there is assertion for get_scope() != NULL in get_symbol_from_symbol_table()
@@ -2095,6 +2205,17 @@ SageBuilder::buildOpaqueVarRefExp(const std::string& name,SgScopeStatement* scop
   return result;
 } // buildOpaqueVarRefExp()
 
+//! Build a Fortran numeric label ref exp
+SgLabelRefExp * SageBuilder::buildLabelRefExp(SgLabelSymbol * s)
+{
+   SgLabelRefExp * result= NULL;
+   ROSE_ASSERT (s!= NULL);
+   result = new SgLabelRefExp(s);
+   ROSE_ASSERT (result != NULL);
+   setOneSourcePositionForTransformation(result);
+   return result;
+}
+
 SgFunctionParameterList*
 SageBuilder::buildFunctionParameterList(SgFunctionParameterTypeList * paraTypeList)
 {
@@ -2193,8 +2314,23 @@ SageBuilder::buildFunctionRefExp(const SgFunctionDeclaration* func_decl)
 {
   ROSE_ASSERT(func_decl != NULL);
   SgDeclarationStatement* nondef_func = func_decl->get_firstNondefiningDeclaration ();
-  ROSE_ASSERT(nondef_func!= NULL);
-  SgSymbol* symbol = nondef_func->get_symbol_from_symbol_table();
+  SgDeclarationStatement* def_func = func_decl->get_definingDeclaration ();
+  SgSymbol* symbol = NULL; 
+  if (nondef_func != NULL)
+  {
+    ROSE_ASSERT(nondef_func!= NULL);
+    symbol = nondef_func->get_symbol_from_symbol_table();
+  }
+  // Liao 12/1/2010. It is possible that there is no prototype declarations at all
+  else if (def_func != NULL)
+  {
+    symbol = def_func->get_symbol_from_symbol_table();
+  }
+  else
+  {
+    cerr<<"Fatal error: SageBuilder::buildFunctionRefExp():defining and nondefining declarations for a function cannot be both NULL"<<endl;
+    ROSE_ASSERT (false);
+  }
   ROSE_ASSERT( symbol != NULL);
   return buildFunctionRefExp( isSgFunctionSymbol (symbol));
 }
@@ -2453,7 +2589,11 @@ SgLabelStatement * SageBuilder::buildLabelStatement(const SgName& name,  SgState
   label_scope->insert_symbol(lsymbol->get_name(), lsymbol);
  #endif 
 
-  if (scope)
+  // Liao 1/7/2010
+  // SgLabelStatement is used for CONTINUE statement in Fortran
+  // In this case , it has no inherent association with a Label symbol.
+  // It is up to the SageInterface::setNumericalLabel(SgStatement*) to handle label symbol
+  if (!SageInterface::is_Fortran_language() &&scope)
     fixLabelStatement(labelstmt,scope);
   // we don't want to set parent here yet
   // delay it until append_statement() or alike
@@ -2482,6 +2622,11 @@ SgIfStmt * SageBuilder::buildIfStmt(SgStatement* conditional, SgStatement * true
   // ROSE_ASSERT(false_body); -- this is not required anymore
   SgIfStmt *ifstmt = new SgIfStmt(conditional, true_body, false_body);
   ROSE_ASSERT(ifstmt);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       ifstmt->setCaseInsensitive(true);
+
   setOneSourcePositionForTransformation(ifstmt);
   conditional->set_parent(ifstmt);
   true_body->set_parent(ifstmt);
@@ -2493,6 +2638,11 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
 {
   SgIfStmt *ifstmt = new SgIfStmt(conditional, true_body, false_body);
   ROSE_ASSERT(ifstmt);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       ifstmt->setCaseInsensitive(true);
+
   setOneSourcePositionNull(ifstmt);
   if (conditional) conditional->set_parent(ifstmt);
   if (true_body) true_body->set_parent(ifstmt);
@@ -2506,6 +2656,11 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
 {
   SgForStatement * result = new SgForStatement(test,increment, loop_body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionForTransformation(result);
   if (test) 
     test->set_parent(result);
@@ -2551,6 +2706,11 @@ SgForStatement * SageBuilder::buildForStatement_nfi(SgStatement* initialize_stmt
 {
   SgForStatement * result = new SgForStatement(test,increment, loop_body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionNull(result);
   if (test) test->set_parent(result);
   if (loop_body) loop_body->set_parent(result);
@@ -2596,6 +2756,11 @@ SgWhileStmt * SageBuilder::buildWhileStmt(SgStatement *  condition, SgStatement 
   ROSE_ASSERT(body);
   SgWhileStmt * result = new SgWhileStmt(condition,body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionForTransformation(result);
   condition->set_parent(result);
   body->set_parent(result);
@@ -2606,6 +2771,11 @@ SgWhileStmt * SageBuilder::buildWhileStmt_nfi(SgStatement *  condition, SgStatem
 {
   SgWhileStmt * result = new SgWhileStmt(condition,body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionNull(result);
   if (condition) condition->set_parent(result);
   if (body) body->set_parent(result);
@@ -2697,6 +2867,11 @@ SgBasicBlock * SageBuilder::buildBasicBlock(SgStatement * stmt1, SgStatement* st
 {
   SgBasicBlock* result = new SgBasicBlock();
   ROSE_ASSERT(result);
+
+// DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionForTransformation(result);
   if (stmt1) SageInterface::appendStatement(stmt1, result);
   if (stmt2) SageInterface::appendStatement(stmt2, result);
@@ -2715,6 +2890,11 @@ SgBasicBlock * SageBuilder::buildBasicBlock_nfi()
 {
   SgBasicBlock* result = new SgBasicBlock();
   ROSE_ASSERT(result);
+
+// DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionNull(result);
   return result;
 }
@@ -2731,6 +2911,28 @@ SageBuilder::buildGotoStatement(SgLabelStatement *  label)
   SgGotoStatement* result = new SgGotoStatement(label);
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgGotoStatement * 
+SageBuilder::buildGotoStatement(SgLabelSymbol*  symbol)
+{
+  SgGotoStatement* result = NULL;
+  ROSE_ASSERT (symbol != NULL);
+  if (SageInterface::is_Fortran_language())
+  {  // Fortran case
+    result = buildGotoStatement((SgLabelStatement *)NULL);
+    SgLabelRefExp* l_exp = buildLabelRefExp(symbol);
+    l_exp->set_parent(result);
+    result->set_label_expression(l_exp);
+  }  
+  else  // C/C++ case 
+  {
+    SgLabelStatement* l_stmt = isSgLabelStatement(symbol->get_declaration());
+    ROSE_ASSERT (l_stmt != NULL);
+    result = buildGotoStatement(l_stmt);
+  }  
+  ROSE_ASSERT(result);
   return result;
 }
 
@@ -2805,6 +3007,11 @@ SgSwitchStatement* SageBuilder::buildSwitchStatement(SgStatement *item_selector,
 {
   SgSwitchStatement* result = new SgSwitchStatement(item_selector,body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionForTransformation(result);
   if (item_selector) item_selector->set_parent(result);
   if (body) body->set_parent(result);
@@ -2815,6 +3022,11 @@ SgSwitchStatement* SageBuilder::buildSwitchStatement_nfi(SgStatement *item_selec
 {
   SgSwitchStatement* result = new SgSwitchStatement(item_selector,body);
   ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
   setOneSourcePositionNull(result);
   if (item_selector) item_selector->set_parent(result);
   if (body) body->set_parent(result);
@@ -3184,6 +3396,22 @@ SgTypeFloat * SageBuilder::buildFloatType()
 }
 
 // DQ (7/29/2010): Changed return type from SgType to SgModifierType
+//! Build a modifier type.
+SgModifierType* SageBuilder::buildModifierType(SgType* base_type /* = NULL*/)
+   {
+  // DQ (7/28/2010): New (similar) approach using type table support.
+     SgModifierType *result = new SgModifierType(base_type);
+     ROSE_ASSERT(result!=NULL);
+
+  // DQ (7/28/2010): Insert result type into type table and return it, or 
+  // replace the result type, if already available in the type table, with 
+  // the type from type table.
+      SgModifierType *result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+     if (result != result2)
+       delete result;
+     return result2;
+ }
+
   //! Build a constant type.
 SgModifierType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
    {
@@ -3407,6 +3635,7 @@ SgNamespaceDefinitionStatement* SageBuilder::buildNamespaceDefinition(SgNamespac
       result = new SgNamespaceDefinitionStatement(d);
     
     ROSE_ASSERT(result);
+
     setOneSourcePositionForTransformation(result);
     return result;
   }
@@ -3425,6 +3654,11 @@ SgClassDefinition* SageBuilder::buildClassDefinition(SgClassDeclaration *d/*= NU
       result = new SgClassDefinition();
     
     ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+    if (symbol_table_case_insensitive_semantics == true)
+         result->setCaseInsensitive(true);
+
     setOneSourcePositionForTransformation(result);
     return result;
   }
@@ -3441,6 +3675,11 @@ SgClassDefinition* SageBuilder::buildClassDefinition_nfi(SgClassDeclaration *d/*
       result = new SgClassDefinition();
     
     ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+    if (symbol_table_case_insensitive_semantics == true)
+         result->setCaseInsensitive(true);
+
     setOneSourcePositionNull(result);
     return result;
   }
@@ -4046,6 +4285,7 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
        // of source position that would be more precise.  FIXME.
        // setOneSourcePositionNull(nondefdecl);
           setOneSourcePositionForTransformation(nondefdecl);
+          ROSE_ASSERT (nondefdecl->get_startOfConstruct() != __null);
 
           nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
           nondefdecl->set_definingDeclaration(defdecl);
@@ -4073,7 +4313,11 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
 //     printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
   // setOneSourcePositionForTransformation(nondefdecl);
-     setOneSourcePositionNull(nondefdecl);
+  //
+  // Liao 1/18/2011, I changed the semantics of setOneSourcePositionNull to set file_info to null regardless the existence of 
+  // file_info of the input node.
+  // We do want to keep the file_info of nodefdecl if it is set already as compiler generated.
+  //    setOneSourcePositionNull(nondefdecl);
 
   // nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
   // nondefdecl->set_definingDeclaration(defdecl);

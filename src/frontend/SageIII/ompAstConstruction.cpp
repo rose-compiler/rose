@@ -380,7 +380,10 @@ namespace OmpSupport
       SgInitializedName* iname = isSgInitializedName((*iter).second);
       ROSE_ASSERT(iname !=NULL);
       //target->get_variables().push_back(iname);
-      target->get_variables().push_back(buildVarRefExp(iname));
+      // Liao 1/27/2010, fix the empty parent pointer of the SgVarRefExp here
+      SgVarRefExp * var_ref = buildVarRefExp(iname);
+      target->get_variables().push_back(var_ref);
+      var_ref->set_parent(target);
     }
   }
 
@@ -1132,6 +1135,8 @@ This is no perfect solution until we handle preprocessing information as structu
       end_decl = isSgPragmaDeclaration (next_stmt);
       if ((end_decl) && (getOmpConstructEnum(end_decl) == end_omp_type))
         break;
+      else
+        end_decl = NULL; // MUST reset to NULL if not a match
       affected_stmts.push_back(next_stmt);
       next_stmt = getNextStatement (next_stmt);
     }  

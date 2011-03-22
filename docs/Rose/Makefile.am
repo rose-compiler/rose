@@ -220,7 +220,9 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 copyWebPages: make-web-pages
 #       Liao 5/6/2010 migrate to the new web server
 #	Liao, 7/13/2009, must ensure the file permissions here
-	cd ROSE_WebPages; chmod -R a+rx *; rsync -avz * liaoch@portal-auth.nersc.gov:/project/projectdirs/rosecompiler/www.rosecompiler.org
+#	Liao, 12/8/2010, use dedicated data transferring node dtn01 
+	cd ROSE_WebPages; chmod -R a+rx *; rsync -avz * liaoch@dtn01.nersc.gov:/project/projectdirs/rosecompiler/www.rosecompiler.org
+#	cd ROSE_WebPages; chmod -R a+rx *; rsync -avz * liaoch@portal-auth.nersc.gov:/project/projectdirs/rosecompiler/www.rosecompiler.org
 #	cd ROSE_WebPages; chmod -R a+rx *; rsync -avz * liaoch@web-dev.nersc.gov:/www/host/rosecompiler
 #	scp $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz quinlan1@cmg-1.llnl.gov:/green_dev/www/casc/rose
 

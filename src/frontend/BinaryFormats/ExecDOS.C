@@ -116,13 +116,34 @@ SgAsmDOSFileHeader::parse(bool define_rm_section)
     
     /* DOS real-mode text/data/etc. */
     if (define_rm_section)
-        add_rm_section();
+        parse_rm_section();
 
     /* Entry point */
     p_base_va = 0;
     add_entry_rva(le_to_host(disk.e_ip));
 
     return this;
+}
+
+/** Update DOS header with data from real-mode section. The DOS real-mode data+text section is assumed to appear immediately
+ * after the DOS Extended Header, which appears immediately after the DOS File Header, which appears at the beginning of the
+ * file. These assumptions are not checked until SgAsmDOSFileHeader::unparse() is called. See also, parse_rm_section(). */
+void
+SgAsmDOSFileHeader::update_from_rm_section()
+{
+    /* Find the DOS Extended Header */
+    SgAsmDOSFileHeader *dos1 = this;
+    SgAsmDOSExtendedHeader *dos2 = NULL;
+    const SgAsmGenericSectionPtrList &sections = dos1->get_sections()->get_sections();
+    for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); !dos2 && si!=sections.end(); si++)
+        dos2 = isSgAsmDOSExtendedHeader(*si);
+
+    /* Update DOS File Header with info about the real-mode text+data section. */
+    size_t header_size = dos1->get_size() + (dos2 ? dos2->get_size() : 0);
+    size_t total_size =  header_size + (p_rm_section ? p_rm_section->get_size() : 0);
+    p_e_header_paragraphs = (header_size + 15) / 16;            /* rounded up to next paragraph */
+    p_e_total_pages = (total_size + 511) / 512;                 /* rounded up to next page */
+    p_e_last_page_size = total_size % 512;
 }
 
 /* Encode the DOS file header into disk format */
@@ -148,11 +169,13 @@ SgAsmDOSFileHeader::encode(DOSFileHeader_disk *disk) const
     return disk;
 }
 
+/** Allocate file space for header. Also updates various entries in the header based on the location and size of the
+ *  DOS Extended Header and the DOS Real-Mode Text+Data section (if any). */
 bool
 SgAsmDOSFileHeader::reallocate()
 {
     bool reallocated = SgAsmGenericHeader::reallocate();
-    
+
     rose_addr_t need = sizeof(DOSFileHeader_disk);
     if (need < get_size()) {
         if (is_mapped()) {
@@ -168,6 +191,7 @@ SgAsmDOSFileHeader::reallocate()
 
     if (p_relocs)
         p_e_relocs_offset = p_relocs->get_offset();
+    update_from_rm_section();
 
     return reallocated;
 }
@@ -177,21 +201,33 @@ void
 SgAsmDOSFileHeader::unparse(std::ostream &f) const
 {
     /* Unparse each section reachable from the DOS File Header (e.g., the Extended DOS Header) */
-    for (SgAsmGenericSectionPtrList::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i)
+    SgAsmDOSExtendedHeader *dos2 = NULL;
+    for (SgAsmGenericSectionPtrList::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
+        if (!dos2)
+            dos2 = isSgAsmDOSExtendedHeader(*i);
         (*i)->unparse(f);
+    }
+
+    /* Some sanity checks:
+     *  1. DOS File Header must be at the beginning of the file.
+     *  2. DOS Extended Header, if present, must immediately follow DOS File Header
+     *  3. DOS Real-Mode Text/Data section must immediately follow headers */
+    ROSE_ASSERT(0==get_offset());
+    ROSE_ASSERT(!dos2 || dos2->get_offset()==get_size());
+//  ROSE_ASSERT(get_size()+(dos2?dos2->get_size():0) < (size_t)p_e_header_paragraphs*16);
+//  ROSE_ASSERT(!p_rm_section || p_rm_section->get_offset()==(size_t)p_e_header_paragraphs*16);
 
     /* Unparse the header itself */
     DOSFileHeader_disk disk;
     encode(&disk);
     write(f, 0, sizeof(disk), &disk);
-
 }
 
-/** Adds the real-mode section to the DOS file header. If max_offset is non-zero then use that as the maximum offset of the
- *  real-mode section. If the DOS header indicates a zero sized section then return NULL. If the section exists or is zero
- *  size due to the max_offset then return the section. */
+/** Parses the DOS real-mode text+data section and adds it to the AST.  If max_offset is non-zero then use that as the maximum
+ *  offset of the real-mode section. If the DOS header indicates a zero sized section then return NULL. If the section exists
+ *  or is zero size due to the max_offset then return the section. See also, update_from_rm_section(). */
 SgAsmGenericSection *
-SgAsmDOSFileHeader::add_rm_section(rose_addr_t max_offset)
+SgAsmDOSFileHeader::parse_rm_section(rose_addr_t max_offset)
 {
     ROSE_ASSERT(NULL == p_rm_section);
     
@@ -235,7 +271,7 @@ SgAsmDOSFileHeader::add_rm_section(rose_addr_t max_offset)
     p_rm_section->set_mapped_xperm(true);
     return p_rm_section;
 }
-    
+
 /* Print some debugging info */
 void
 SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const

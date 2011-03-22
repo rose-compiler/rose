@@ -16,7 +16,7 @@ my $warning = " (warning)";	# non-empty means issue warnings rather than errors,
 # Each key is the base name of the file;
 # Each value is an array of filenames that map to this key.
 my %index;
-push @{$index{lc((/([^\/]+)$/)[0])}||=[]}, $_ for grep {/\.(h|hh|c|C|cpp)$/} FileLister->new(@ARGV)->all_files;
+push @{$index{lc((/([^\/]+)$/)[0])}||=[]}, $_ for grep {/\.(h|hh|hpp|c|C|cpp)$/} FileLister->new(@ARGV)->all_files;
 
 # Look for file names in makefiles (Makefile.am and CMakeList.txt) and remove those that we find
 # from the %index.

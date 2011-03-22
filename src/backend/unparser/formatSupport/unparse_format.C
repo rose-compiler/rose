@@ -558,7 +558,7 @@ UnparseFormat::format(SgLocatedNode* node, SgUnparse_Info& info, FormatOpt opt)
              {
                case FORMAT_AFTER_STMT:
                     if (v == V_SgFunctionDefinition || v == V_SgClassDefinition)
-                         insert_newline(2);
+                         insert_newline(1); // DXN: changed from 2 to 1
                     break;
                case FORMAT_BEFORE_STMT:
                   {
