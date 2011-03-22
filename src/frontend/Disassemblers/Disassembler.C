@@ -743,7 +743,7 @@ Disassembler::search_function_symbols(AddressSet *worklist, const MemoryMap *map
                     if (map->find(va)) {
                         if (p_debug)
                             fprintf(p_debug, "Disassembler: SEARCH_FUNCSYMS added 0x%08"PRIx64" for \"%s\"\n",
-                                    va, symbol->get_name()->c_str());
+                                    va, symbol->get_name()->get_string(true).c_str());
                         worklist->insert(va);
                     }
                 }

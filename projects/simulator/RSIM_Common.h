@@ -30,6 +30,8 @@
 /* Define this if you want binary trace files to be unbuffered. This is often desirable when debugging */
 #define X86SIM_BINARY_TRACE_UNBUFFERED
 
+#define OFFSET_OF_MEMBER(STRUCT, MEMBER) ((char*)&(STRUCT.MEMBER) - (char*)&(STRUCT))
+
 class RSIM_Process;
 class RSIM_Thread;
 
@@ -40,26 +42,24 @@ enum CoreStyle {
     CORE_ROSE=0x0002
 };
 
-/* Bit flags that control what to trace */
-enum TraceFlags {
-    TRACE_INSN          = 0x0001,               /**< Show each instruction that's executed. */
-    TRACE_STATE         = 0x0002,               /**< Show machine state after each instruction. */
-    TRACE_MEM           = 0x0004,               /**< Show memory read/write operations. */
-    TRACE_MMAP          = 0x0008,               /**< Show changes in the memory map. */
-    TRACE_SYSCALL       = 0x0010,               /**< Show each system call enter and exit. */
-    TRACE_LOADER        = 0x0020,               /**< Show diagnostics for the program loading. */
-    TRACE_PROGRESS      = 0x0040,               /**< Show a progress report now and then. */
-    TRACE_SIGNAL        = 0x0080,               /**< Show reception and delivery of signals. */
-    TRACE_THREAD        = 0x0100,               /**< Show thread creation/destruction, etc. */
+/** Trace facilities. */
+enum TracingFacility {
+    TRACE_MISC          = 0,    /**< Show miscellaneous output that doesn't fit into the categories below. */
+    TRACE_INSN          = 1,    /**< Show each instruction that's executed. */
+    TRACE_STATE         = 2,    /**< Show machine state after each instruction. */
+    TRACE_MEM           = 3,    /**< Show memory read/write operations. */
+    TRACE_MMAP          = 4,    /**< Show changes in the memory map. */
+    TRACE_SYSCALL       = 5,    /**< Show each system call enter and exit. */
+    TRACE_LOADER        = 6,    /**< Show diagnostics for the program loading. */
+    TRACE_PROGRESS      = 7,    /**< Show a progress report now and then. */
+    TRACE_SIGNAL        = 8,    /**< Show reception and delivery of signals. */
+    TRACE_THREAD        = 9,    /**< Show thread creation/destruction, etc. */
 
-    TRACE_DEBUG         = 0x1000,               /**< Show temporary debugging messages. */
-    TRACE_WARNING       = 0x2000,               /**< Show arning messages. */
-    TRACE_ERROR         = 0x4000,               /**< Show error messages. */
-    TRACE_FATAL         = 0x8000,               /**< Show fatal error messages. */
-
-    TRACE_DEFAULT       = 0xf000,               /**< Default tracing bits. */
-    TRACE_ALL           = 0xffff                /**< Turn on all tracing bits. */
+    TRACE_NFACILITIES   = 10     /**< Number of facilities */
 };
+
+/** Returns a bit mask for a trace facility. Returns zero if the specified trace facility is invalid. */
+unsigned tracingFacilityBit(TracingFacility);
 
 /* From linux/arch/x86/include/asm/ldt.h */
 struct user_desc_32 {
@@ -180,7 +180,43 @@ static const Translate signal_names[] = {
 
 static const Translate signal_flags[] = {
     TF(SA_NOCLDSTOP), TF(SA_NOCLDWAIT), TF(SA_NODEFER), TF(SA_ONSTACK), TF(SA_RESETHAND), TF(SA_RESTART),
+    TF3(0x04000000, 0x04000000, SA_RESTORER), /* obsolete */
     TF(SA_SIGINFO), T_END};
+
+static const Translate siginfo_generic_codes[] = {
+    TE(SI_ASYNCNL), TE(SI_TKILL), TE(SI_SIGIO), TE(SI_ASYNCIO), TE(SI_MESGQ), TE(SI_TIMER), TE(SI_QUEUE),
+    TE(SI_USER), TE(SI_KERNEL),
+    T_END};
+
+static const Translate siginfo_sigill_codes[] = {
+    TE(ILL_ILLOPC), TE(ILL_ILLOPN), TE(ILL_ILLADR), TE(ILL_ILLTRP), TE(ILL_PRVOPC), TE(ILL_PRVREG),
+    TE(ILL_COPROC), TE(ILL_BADSTK),
+    T_END};
+
+static const Translate siginfo_sigfpe_codes[] = {
+    TE(FPE_INTDIV), TE(FPE_INTOVF), TE(FPE_FLTDIV), TE(FPE_FLTOVF), TE(FPE_FLTUND), TE(FPE_FLTRES),
+    TE(FPE_FLTINV), TE(FPE_FLTSUB),
+    T_END};
+
+static const Translate siginfo_sigsegv_codes[] = {
+    TE(SEGV_MAPERR), TE(SEGV_ACCERR),
+    T_END};
+
+static const Translate siginfo_sigbus_codes[] = {
+    TE(BUS_ADRALN), TE(BUS_ADRERR), TE(BUS_OBJERR),
+    T_END};
+
+static const Translate siginfo_sigtrap_codes[] = {
+    TE(TRAP_BRKPT), TE(TRAP_TRACE),
+    T_END};
+
+static const Translate siginfo_sigchld_codes[] = {
+    TE(CLD_EXITED), TE(CLD_KILLED), TE(CLD_DUMPED), TE(CLD_TRAPPED), TE(CLD_STOPPED), TE(CLD_CONTINUED),
+    T_END};
+
+static const Translate siginfo_sigpoll_codes[] = {
+    TE(POLL_IN), TE(POLL_OUT), TE(POLL_MSG), TE(POLL_ERR), TE(POLL_PRI), TE(POLL_HUP),
+    T_END};
 
 struct sigaction_32 {
     uint32_t handler_va;
@@ -530,7 +566,9 @@ static const Translate clone_flags[] = {
     TF(CLONE_CHILD_CLEARTID),           /* 0x00200000  clear the TID in the child */
     TF(CLONE_UNTRACED),                 /* 0x00800000  set if the tracing process can't force CLONE_PTRACE on this clone */
     TF(CLONE_CHILD_SETTID),             /* 0x01000000  set the TID in the child */
+#ifdef CLONE_STOPPED
     TF(CLONE_STOPPED),                  /* 0x02000000  Start in stopped state */
+#endif
     TF_FMT(0xff, "(signal=0x%02x)"),    /* 0x000000ff  mask for signal to be sent at exit */
     /* stuff not defined by glibc */
     TF3(0x00400000, 0x00400000, CLONE_DETACHED), /* unused */
@@ -829,7 +867,7 @@ void print_dentries_helper(RTS_Message *f, const uint8_t *_sa, size_t sz, size_t
 void print_dentries_32(RTS_Message *f, const uint8_t *sa, size_t sz);
 void print_dentries_64(RTS_Message *f, const uint8_t *sa, size_t sz);
 void print_bitvec(RTS_Message *f, const uint8_t *vec, size_t sz);
-void print_sigmask(RTS_Message *f, const uint8_t *vec, size_t sz);
+void print_sigmask_32(RTS_Message *f, const uint8_t *vec, size_t sz);
 void print_stack_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_flock_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_flock64_32(RTS_Message *f, const uint8_t *_v, size_t sz);
@@ -846,5 +884,6 @@ void print_pt_regs_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_termios_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_winsize_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_exit_status_32(RTS_Message *f, const uint8_t *_v, size_t sz);
+void print_siginfo_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 
 #endif /* ROSE_RSIM_Common_H */

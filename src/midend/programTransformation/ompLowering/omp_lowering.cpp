@@ -150,13 +150,18 @@ namespace OmpSupport
     // This is not safe since it cannot be prepended to an implicit none statement in fortran
     //prependStatement(expStmt,currentscope);
     //prependStatement(varDecl1,currentscope);
+   if (SageInterface::is_Fortran_language())
+   {
     SgStatement *l_stmt = findLastDeclarationStatement(currentscope);
     if (l_stmt != NULL)
-    insertStatementAfter (l_stmt, varDecl1);
+      insertStatementAfter (l_stmt, varDecl1);
     else
       prependStatement(varDecl1,currentscope);
-    insertStatementAfter (varDecl1, expStmt);
+   }
+   else // C/C++, we can always prepend it.
+    prependStatement(varDecl1,currentscope);
 
+    insertStatementAfter (varDecl1, expStmt);
     //---------------------- termination part
 
     //  cout<<"debug:"<<mainDef->unparseToString()<<endl;
@@ -1295,14 +1300,38 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
 
     // Generate the parameter list for the call to the XOMP runtime function
     SgExprListExp* parameters  = NULL;
+    // pass ifClauseValue: set to the expression of if-clause, otherwise set to 1
+    SgExpression* ifClauseValue = NULL; 
+    if (hasClause(target, V_SgOmpIfClause))
+    {
+      Rose_STL_Container<SgOmpClause*> clauses = getClause(target, V_SgOmpIfClause);
+      ROSE_ASSERT (clauses.size() ==1); // should only have one if ()
+      SgOmpIfClause * if_clause = isSgOmpIfClause (clauses[0]);
+      ROSE_ASSERT (if_clause->get_expression() != NULL);
+      ifClauseValue = copyExpression(if_clause->get_expression());
+    }
+    else
+      ifClauseValue = buildIntVal(1);  
+    // pass num_threads_specified: 0 if not, otherwise set to the expression of num_threads clause  
+    SgExpression* numThreadsSpecified = NULL;
+    if (hasClause(target, V_SgOmpNumThreadsClause))
+    {
+      Rose_STL_Container<SgOmpClause*> clauses = getClause(target, V_SgOmpNumThreadsClause);
+      ROSE_ASSERT (clauses.size() ==1); // should only have one if ()
+      SgOmpNumThreadsClause * numThreads_clause = isSgOmpNumThreadsClause (clauses[0]);
+      ROSE_ASSERT (numThreads_clause->get_expression() != NULL);
+      numThreadsSpecified = copyExpression(numThreads_clause->get_expression());
+    }
+    else
+      numThreadsSpecified = buildIntVal(0);  
+
     if (SageInterface::is_Fortran_language())
     { // The parameter list for Fortran is little bit different from C/C++'s XOMP interface 
       // since we are forced to pass variables one by one in the parameter list to support Fortran 77
-       // void xomp_parallel_start (void (*func) (void *), unsigned* numThread, int * argcount, ...)
+       // void xomp_parallel_start (void (*func) (void *), unsigned * ifClauseValue, unsigned* numThread, int * argcount, ...)
       //e.g. xomp_parallel_start(OUT__1__1527__,0,2,S,K)
-      SgExpression * parameter2= buildIntVal(0); // TODO numThread not 0 
-      SgExpression * parameter3 = buildIntVal (pdSyms3.size()); //TODO double check if pdSyms3 is the right set of variables to be passed
-      parameters = buildExprListExp(buildFunctionRefExp(outlined_func), parameter2, parameter3);
+      SgExpression * parameter4 = buildIntVal (pdSyms3.size()); //TODO double check if pdSyms3 is the right set of variables to be passed
+      parameters = buildExprListExp(buildFunctionRefExp(outlined_func), ifClauseValue, numThreadsSpecified, parameter4);
 
       ASTtools::VarSymSet_t::iterator iter = pdSyms3.begin();
       for (; iter!=pdSyms3.end(); iter++)
@@ -1316,22 +1345,29 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
       // C/C++ case: 
       //add GOMP_parallel_start (OUT_func_xxx, &__out_argv1__5876__, 0);
       // or GOMP_parallel_start (OUT_func_xxx, 0, 0); // if no variables need to be passed
-    SgExpression * parameter2 = NULL;
-    if (syms.size()==0)
-      parameter2 = buildIntVal(0);
-    else
-      parameter2 =  buildAddressOfOp(buildVarRefExp(wrapper_name, p_scope));
-      parameters = buildExprListExp(buildFunctionRefExp(outlined_func), parameter2, buildIntVal(0)); 
+      SgExpression * parameter2 = NULL;
+      if (syms.size()==0)
+        parameter2 = buildIntVal(0);
+      else
+        parameter2 =  buildAddressOfOp(buildVarRefExp(wrapper_name, p_scope));
+     parameters = buildExprListExp(buildFunctionRefExp(outlined_func), parameter2, ifClauseValue, numThreadsSpecified); 
     }
 
     ROSE_ASSERT (parameters != NULL);
 
 #ifdef ENABLE_XOMP
+  // extern void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseValue, unsigned numThreadsSpecified);
+  // * func: pointer to a function which will be run in parallel
+  // * data: pointer to a data segment which will be used as the arguments of func
+  // * ifClauseValue: set to if-clause-expression if if-clause exists, or default is 1.
+  // * numThreadsSpecified: set to the expression of num_threads clause if the clause exists, or default is 0
+
     SgExprStatement * s1 = buildFunctionCallStmt("XOMP_parallel_start", buildVoidType(), parameters, p_scope); 
     SageInterface::replaceStatement(target, s1 , true);
 #else
-    SgExprStatement * s1 = buildFunctionCallStmt("GOMP_parallel_start", buildVoidType(), parameters, p_scope); 
-    SageInterface::insertStatementBefore(func_call, s1); 
+   ROSE_ASSERT (false); //This portion of code should never be used anymore. Kept for reference only.
+//    SgExprStatement * s1 = buildFunctionCallStmt("GOMP_parallel_start", buildVoidType(), parameters, p_scope); 
+//    SageInterface::insertStatementBefore(func_call, s1); 
 #endif
     // Keep preprocessing information
     // I have to use cut-paste instead of direct move since 
@@ -1362,6 +1398,114 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
     // Should not rely on this usually.
     //   SgSourceFile* originalSourceFile = TransformationSupport::getSourceFile(g_scope);
     //   AstPostProcessing(originalSourceFile);
+  }
+
+  /*
+   * Expected AST layout: 
+   *  SgOmpSectionsStatement
+   *    SgBasicBlock
+   *      SgOmpSectionStatement (1 or more section statements here)
+   *        SgBasicBlock
+   *          SgStatement 
+   *
+   * Example translated code: 
+      int _section_1 = XOMP_sections_init_next (3);
+      while (_section_1 >=0) // This while loop is a must
+      {
+        switch (_section_1) {
+          case 0:
+            printf("hello from section 1\n");
+            break;
+          case 1:
+            printf("hello from section 2\n");
+            break;
+          case 2:
+            printf("hello from section 3\n");
+            break;
+          default:
+            printf("fatal error: XOMP_sections_?_next() returns illegal value %d\n", _section_1);
+            abort();
+        }
+        _section_1 = XOMP_sections_next ();  // next round for the current thread: deal with possible number of threads < number of sections
+     }
+    
+      XOMP_sections_end();   // Or  XOMP_sections_end_nowait ();    
+   * */
+  void transOmpSections(SgNode* node)
+  {
+//    cout<<"Entering transOmpSections() ..."<<endl;
+    ROSE_ASSERT(node != NULL );
+    // verify the AST is expected
+    SgOmpSectionsStatement * target = isSgOmpSectionsStatement(node); 
+    ROSE_ASSERT(target != NULL );
+    SgScopeStatement * scope = target->get_scope();
+    ROSE_ASSERT(scope != NULL );
+    SgStatement * body = target->get_body();
+    ROSE_ASSERT(body != NULL);
+   
+    SgBasicBlock * sections_block = isSgBasicBlock(body);
+    ROSE_ASSERT (sections_block != NULL);
+       // verify each statement under sections is SgOmpSectionStatement
+    SgStatementPtrList section_list = sections_block-> get_statements();
+    int section_count = section_list.size();
+    for  (int i =0; i<section_count; i++)
+    {
+      SgStatement* stmt = section_list[i];
+      ROSE_ASSERT (isSgOmpSectionStatement(stmt));
+    }
+   
+    // int _section_1 = XOMP_sections_init_next (3);
+    std::string sec_var_name("_section_");
+    sec_var_name += StringUtility::numberToString(++gensym_counter);
+    
+    SgAssignInitializer* initializer = buildAssignInitializer (
+                         buildFunctionCallExp("XOMP_sections_init_next", buildIntType(),buildExprListExp(buildIntVal(section_count)), scope), 
+                                        buildIntType());
+    SgVariableDeclaration* sec_var_decl = buildVariableDeclaration(sec_var_name, buildIntType(), initializer, scope);
+    insertStatementAfter(target, sec_var_decl);
+    // while (_section_1 >=0) {}
+    SgWhileStmt * while_stmt = buildWhileStmt(buildGreaterOrEqualOp(buildVarRefExp(sec_var_decl), buildIntVal(0)), buildBasicBlock()); 
+    insertStatementAfter(sec_var_decl, while_stmt);
+    // switch () {}
+    SgSwitchStatement* switch_stmt = buildSwitchStatement (buildExprStatement(buildVarRefExp(sec_var_decl)) , buildBasicBlock()); 
+    appendStatement(switch_stmt, isSgBasicBlock(while_stmt->get_body()));
+    // case 0, case 1, ...
+    for (int i= 0; i<section_count; i++)
+    {
+      SgCaseOptionStmt* option_stmt = buildCaseOptionStmt (buildIntVal(i), buildBasicBlock());
+      // Move SgOmpSectionStatement's body to Case OptionStmt's body
+      SgBasicBlock * src_bb = isSgBasicBlock(isSgOmpSectionStatement(section_list[i])->get_body()); 
+      SgBasicBlock * target_bb =  isSgBasicBlock(option_stmt->get_body());
+      moveStatementsBetweenBlocks(src_bb , target_bb);
+      appendStatement (buildBreakStmt(), target_bb);
+
+      // cout<<"source BB address:"<<isSgBasicBlock(isSgOmpSectionStatement(section_list[i])->get_body())<<endl;
+      // Now we have to delete the source BB since its symbol table is moved into the target BB.
+      SgBasicBlock * fake_src_bb = buildBasicBlock(); 
+      isSgOmpSectionStatement(section_list[i])->set_body(fake_src_bb); 
+      fake_src_bb->set_parent(section_list[i]);
+      delete (src_bb);
+
+      appendStatement (option_stmt,  isSgBasicBlock(switch_stmt->get_body()));
+    } // end case 0, 1, ...  
+    // default option: 
+    SgDefaultOptionStmt* default_stmt = buildDefaultOptionStmt(buildBasicBlock(buildFunctionCallStmt("abort", buildVoidType(), NULL, scope))); 
+    appendStatement (default_stmt,  isSgBasicBlock(switch_stmt->get_body()));
+
+    // _section_1 = XOMP_sections_next ();
+    SgStatement* assign_stmt = buildAssignStatement(buildVarRefExp(sec_var_decl), 
+                                 buildFunctionCallExp("XOMP_sections_next", buildIntType(), buildExprListExp(), scope) ); 
+    appendStatement(assign_stmt, isSgBasicBlock(while_stmt->get_body()));
+
+    // XOMP_sections_end() or XOMP_sections_end_nowait ();
+    SgExprStatement* end_call = NULL; 
+    if (hasClause(target, V_SgOmpNowaitClause))
+      end_call = buildFunctionCallStmt("XOMP_sections_end_nowait", buildVoidType(), NULL, scope);
+    else
+      end_call = buildFunctionCallStmt("XOMP_sections_end", buildVoidType(), NULL, scope);
+
+    insertStatementAfter(while_stmt, end_call);
+    removeStatement(target);
   }
 
   // Two ways 
@@ -2735,8 +2879,15 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
         // Only loop index variables declared in higher  or the same scopes matter
         if (isAncestor(var_scope, directive_scope) || var_scope==directive_scope)
         {
-          // add it into the private variable list
-          if (!isInClauseVariableList(index_var, isSgOmpClauseBodyStatement(omp_loop), V_SgOmpPrivateClause)) 
+          // Grab possible enclosing parallel region
+          bool isPrivateInRegion = false; 
+          SgOmpParallelStatement * omp_stmt = isSgOmpParallelStatement(getEnclosingNode<SgOmpParallelStatement>(omp_loop)); 
+          if (omp_stmt)
+          {
+            isPrivateInRegion = isInClauseVariableList(index_var, isSgOmpClauseBodyStatement(omp_stmt), V_SgOmpPrivateClause);
+          }
+          // add it into the private variable list only if it is not specified as private in both the loop and region levels. 
+          if (! isPrivateInRegion && !isInClauseVariableList(index_var, isSgOmpClauseBodyStatement(omp_loop), V_SgOmpPrivateClause)) 
           {
             result ++;
             addClauseVariable(index_var,isSgOmpClauseBodyStatement(omp_loop), V_SgOmpPrivateClause);
@@ -3062,6 +3213,12 @@ void lower_omp(SgSourceFile* file)
           transOmpParallel(node);
           break;
         }
+      case V_SgOmpSectionsStatement:
+        {
+          transOmpSections(node);
+          break;
+        }
+ 
       case V_SgOmpTaskStatement:
         {
           transOmpTask(node);

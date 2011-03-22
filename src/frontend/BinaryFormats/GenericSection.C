@@ -260,6 +260,10 @@ rose_addr_t
 SgAsmGenericSection::get_base_va() const
 {
     ROSE_ASSERT(this != NULL);
+
+    if (isSgAsmGenericHeader(this))
+        return isSgAsmGenericHeader(this)->get_base_va();
+
     SgAsmGenericHeader *hdr = get_header();
     return hdr ? hdr->get_base_va() : 0;
 }
@@ -492,7 +496,7 @@ SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, size_t bufsize, 
             char mesg[1024];
             sprintf(mesg, "non-zero value truncated: buf[0x%zx]=0x%02x", i, ((const unsigned char*)buf)[i]);
             fprintf(stderr, "SgAsmGenericSection::write: error: %s", mesg);
-            fprintf(stderr, " in [%d] \"%s\"\n", get_id(), get_name()->c_str());
+            fprintf(stderr, " in [%d] \"%s\"\n", get_id(), get_name()->get_string(true).c_str());
             fprintf(stderr, "    section is at file offset 0x%08"PRIx64" (%"PRIu64"), size 0x%"PRIx64" (%"PRIu64") bytes\n", 
                     get_offset(), get_offset(), get_size(), get_size());
             fprintf(stderr, "      ");
@@ -696,7 +700,7 @@ SgAsmGenericSection::unparse_holes(std::ostream &f) const
 {
 #if 0 /*DEBUGGING*/
     ExtentMap holes = get_unreferenced_extents();
-    fprintf(stderr, "Section \"%s\", 0x%"PRIx64" bytes\n", get_name()->c_str(), get_size());
+    fprintf(stderr, "Section \"%s\", 0x%"PRIx64" bytes\n", get_name()->get_string(true).c_str(), get_size());
     holes.dump_extents(stderr, "  ", "");
 #endif
 //    unparse(f, get_unreferenced_extents());
@@ -734,7 +738,7 @@ SgAsmGenericSection::dump_containing_sections(FILE *f, const std::string &prefix
         if (s->is_mapped() && rva>=s->get_mapped_preferred_rva() && rva<s->get_mapped_preferred_rva()+s->get_mapped_size()) {
             rose_addr_t offset = rva - s->get_mapped_preferred_rva();
             fprintf(f, "%-*s   is 0x%08"PRIx64" (%"PRIu64") bytes into section [%d] \"%s\"\n",
-                    DUMP_FIELD_WIDTH, prefix.c_str(), offset, offset, s->get_id(), s->get_name()->c_str());
+                    DUMP_FIELD_WIDTH, prefix.c_str(), offset, offset, s->get_id(), s->get_name()->get_string(true).c_str());
         }
     }
 }
@@ -752,7 +756,7 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = \"%s\"\n",                      p, w, "name",        p_name->c_str());
+    fprintf(f, "%s%-*s = \"%s\"\n",                      p, w, "name",        p_name->get_string(true).c_str());
     fprintf(f, "%s%-*s = %d\n",                          p, w, "id",          p_id);
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes into file\n", p, w, "offset", p_offset, p_offset);
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "size", get_size(), get_size());
@@ -765,7 +769,7 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     fprintf(f, "%s%-*s = %s\n",                          p, w, "synthesized", p_synthesized?"yes":"no");
     if (p_header) {
-        fprintf(f, "%s%-*s = \"%s\"\n",                  p, w, "header",      p_header->get_name()->c_str());
+        fprintf(f, "%s%-*s = \"%s\"\n",                  p, w, "header",      p_header->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = not associated\n",          p, w, "header");
     }

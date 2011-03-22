@@ -312,7 +312,7 @@ public:
         int colnum;                             /**< Optional column number (0-origin; negative if unknown). */
     };
 
-    MemoryMap() : sorted(false) {}
+    MemoryMap() {}
 
     /** Clear the entire memory map by erasing all addresses that are defined. Erasing an address range frees reference
      *  counted anonymous mappings but not user-provided buffers. */
@@ -354,11 +354,21 @@ public:
      *  correpond to mapped virtual addresses will be zero filled so that @p desired bytes are always initialized. */
     size_t read(void *dst_buf, rose_addr_t start_va, size_t desired, unsigned req_perms=MM_PROT_READ) const;
 
+    /** Reads from a single memory segment.  Reads up to @p desired bytes beginning at virtual address @p va from the specified
+     *  memory map.  Returns the number of bytes read. */
+    size_t read1(void *dst_buf, rose_addr_t va, size_t desired, unsigned req_perms=MM_PROT_READ,
+                 const MemoryMap::MapElement **mep=NULL) const;
+
     /** Copies data from a supplied buffer into the specified virtual addresses.  If part of the destination address space is
      *  not mapped, then all bytes up to that location are copied and no additional bytes are copied.  The write is also
      *  aborted early if a map element is marked read-only or if its protection lacks the MM_PROT_WRITE bit (or specified
      *  bits).  The return value is the number of bytes copied. */
     size_t write(const void *src_buf, rose_addr_t start_va, size_t size, unsigned req_perms=MM_PROT_WRITE) const;
+
+    /** Writes to a single memory segment. Writes up to @p nbytes bytes beginning at virtual address @p va into the specified
+     *  memory map.  Returns the number of bytes written. */
+    size_t write1(const void *src_buf, rose_addr_t va, size_t size, unsigned req_perms=MM_PROT_WRITE,
+                  const MemoryMap::MapElement **mep=NULL) const;
 
     /** Returns just the virtual address extents for a memory map. */
     ExtentMap va_extents() const;
@@ -404,9 +414,7 @@ public:
     bool load(const std::string &basename);
 
 private:
-    /* Mutable because some constant methods might sort the elements. */
-    mutable bool sorted;                        /**< True if the 'elements' are sorted by virtual address. */
-    mutable std::vector<MapElement> elements;   /**< Map elements are only lazily sorted; see 'sorted' data member. */
+    mutable std::vector<MapElement> elements;   /**< Map elements, sorted by virtual address. */
 };
 
 /** Map elements are sorted by virtual address. */

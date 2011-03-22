@@ -22,7 +22,7 @@ int main()
     for (j = 0; j <= 49; j += 1) {
       c_buf0 = c[i][j];
       for (k = 0; k <= 49; k += 1) {
-        c_buf0 = (c_buf0 + (((a[i])[k]) * ((b[k])[j])));
+        c_buf0 = (c_buf0 + (a[i][k] * b[k][j]));
       }
       c[i][j] = c_buf0;
     }

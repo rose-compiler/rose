@@ -27,42 +27,42 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
         } else if (!strncmp(argv[argno], "--log=", 6)) {
             /* Save log file name pattern, extending it to an absolute name in case the specimen changes directories */
             if (argv[argno][6]=='/') {
-                trace_file_name = argv[argno]+6;
+                tracing_file_name = argv[argno]+6;
             } else {
                 char dirname[4096];
                 char *dirname_p = getcwd(dirname, sizeof dirname);
                 ROSE_ASSERT(dirname_p);
-                trace_file_name = std::string(dirname) + "/" + (argv[argno]+6);
+                tracing_file_name = std::string(dirname) + "/" + (argv[argno]+6);
             }
             argno++;
 
         } else if (!strncmp(argv[argno], "--debug=", 8)) {
-            trace_flags = 0;
+            tracing_flags = tracingFacilityBit(TRACE_MISC);
             char *s = argv[argno]+8;
             while (s && *s) {
                 char *comma = strchr(s, ',');
                 std::string word(s, comma?comma-s:strlen(s));
                 s = comma ? comma+1 : NULL;
                 if (word=="all") {
-                    trace_flags = TRACE_ALL;
+                    tracing_flags = (unsigned)(-1);
                 } else if (word=="insn") {
-                    trace_flags |= TRACE_INSN;
+                    tracing_flags |= tracingFacilityBit(TRACE_INSN);
                 } else if (word=="state") {
-                    trace_flags |= TRACE_STATE;
+                    tracing_flags |= tracingFacilityBit(TRACE_STATE);
                 } else if (word=="mem") {
-                    trace_flags |= TRACE_MEM;
+                    tracing_flags |= tracingFacilityBit(TRACE_MEM);
                 } else if (word=="mmap") {
-                    trace_flags |= TRACE_MMAP;
+                    tracing_flags |= tracingFacilityBit(TRACE_MMAP);
                 } else if (word=="signal") {
-                    trace_flags |= TRACE_SIGNAL;
+                    tracing_flags |= tracingFacilityBit(TRACE_SIGNAL);
                 } else if (word=="syscall") {
-                    trace_flags |= TRACE_SYSCALL;
+                    tracing_flags |= tracingFacilityBit(TRACE_SYSCALL);
                 } else if (word=="loader") {
-                    trace_flags |= TRACE_LOADER;
+                    tracing_flags |= tracingFacilityBit(TRACE_LOADER);
                 } else if (word=="progress") {
-                    trace_flags |= TRACE_PROGRESS;
+                    tracing_flags |= tracingFacilityBit(TRACE_PROGRESS);
                 } else if (word=="thread") {
-                    trace_flags |= TRACE_THREAD;
+                    tracing_flags |= tracingFacilityBit(TRACE_THREAD);
                 } else {
                     fprintf(stderr, "%s: debug words must be from the set: "
                             "all, insn, state, mem, mmap, syscall, signal, loader, progress, thread\n",
@@ -73,7 +73,10 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
             argno++;
 
         } else if (!strcmp(argv[argno], "--debug")) {
-            trace_flags = TRACE_INSN | TRACE_SYSCALL | TRACE_SIGNAL;
+            tracing_flags = tracingFacilityBit(TRACE_MISC)    |
+                            tracingFacilityBit(TRACE_INSN)    |
+                            tracingFacilityBit(TRACE_SYSCALL) |
+                            tracingFacilityBit(TRACE_SIGNAL);
             argno++;
 
         } else if (!strncmp(argv[argno], "--core=", 7)) {
@@ -183,13 +186,13 @@ RSIM_Simulator::exec(int argc, char **argv)
     ROSE_ASSERT(NULL==process); /* "There can be only one!" (main process, that is) */
 
     process = new RSIM_Process;
-    process->set_tracing(stderr, trace_flags);
+    process->set_tracing(stderr, tracing_flags);
     process->set_core_styles(core_flags);
     process->set_interpname(interp_name);
     process->vdso_paths = vdso_paths;
 
-    process->set_trace_name(trace_file_name);
-    process->open_trace_file();
+    process->set_tracing_name(tracing_file_name);
+    process->open_tracing_file();
 
     SgAsmGenericHeader *fhdr = process->load(argv[0]);
     entry_va = fhdr->get_base_va() + fhdr->get_entry_rva();
@@ -200,14 +203,13 @@ RSIM_Simulator::exec(int argc, char **argv)
 
     process->binary_trace_start();
 
-    if (process->tracing(TRACE_MMAP)) {
-        fprintf(process->tracing(TRACE_MMAP), "memory map after program load:\n");
-        process->get_memory()->dump(process->tracing(TRACE_MMAP), "  ");
+    if ((process->get_tracing_flags() & tracingFacilityBit(TRACE_MMAP))) {
+        fprintf(process->get_tracing_file(), "memory map after program load:\n");
+        process->get_memory()->dump(process->get_tracing_file(), "  ");
     }
-    if (main_thread->tracing(TRACE_STATE)) {
-        main_thread->tracing(TRACE_STATE)->mesg("Initial state:\n");
-        main_thread->policy.dump_registers(main_thread->tracing(TRACE_STATE)->get_file());
-    }
+
+    main_thread->tracing(TRACE_STATE)->mesg("Initial state:\n");
+    main_thread->policy.dump_registers(main_thread->tracing(TRACE_STATE));
 
     return 0;
 }
@@ -218,13 +220,13 @@ RSIM_Simulator::create_process()
     ROSE_ASSERT(NULL==process); /* "There can be only one!" (main process, that is) */
 
     process = new RSIM_Process;
-    process->set_tracing(stderr, trace_flags);
+    process->set_tracing(stderr, tracing_flags);
     process->set_core_styles(core_flags);
     process->set_interpname(interp_name);
     process->vdso_paths = vdso_paths;
 
-    process->set_trace_name(trace_file_name);
-    process->open_trace_file();
+    process->set_tracing_name(tracing_file_name);
+    process->open_tracing_file();
     return process;
 }
 
@@ -239,14 +241,38 @@ RSIM_Simulator::activate()
              * reference this without using a mutex lock.  On the other hand, increment the "active" counter at the end of the
              * function, which allows the signal handler to determine when the sigaction vector is not fully initialized. */
             active_sim = this;
+            memset(signal_installed, 0, sizeof signal_installed); /* no handler installed yet */
+            memset(signal_restore, 0, sizeof signal_restore); /* cleaned up only for debugging */
 
+            /* Register the inter-process signal reception handler for signals that are typically sent from one process to
+             * another.  This signal handler simply places the signal onto a process-wide queue. */
             struct sigaction sa;
-            sa.sa_handler = signal_handler;
-            sigemptyset(&sa.sa_mask);
-            sa.sa_flags = SA_RESTART;
+            sa.sa_flags = SA_RESTART | SA_SIGINFO;
+            sa.sa_handler = NULL;
+            sa.sa_sigaction = signal_receiver;
+            sigfillset(&sa.sa_mask);
+            for (int signo=1; signo<__SIGRTMIN; signo++) {
+                switch (signo) {
+                    case SIGFPE:
+                    case SIGILL:
+                    case SIGSEGV:
+                    case SIGBUS:
+                    case SIGABRT:
+                    case SIGTRAP:
+                    case SIGSYS:
+                        break;
+                    default:
+                        signal_installed[signo] = -1 == sigaction(signo, &sa, signal_restore+signo) ? -errno : 1;
+                        break;
+                }
+            }
 
-            for (int i=1; i<=_NSIG; i++)
-                signal_installed[i] = -1==sigaction(i, &sa, signal_restore+i) ? -errno : 0;
+            /* Register the wakeup signal handler. This handler's only purpose is to interrupt blocked system calls. */
+            sa.sa_handler = signal_wakeup;
+            sigemptyset(&sa.sa_mask);
+            sa.sa_flags = 0;
+            int signo = RSIM_SignalHandling::SIG_WAKEUP;
+            signal_installed[signo] = -1 == sigaction(signo, &sa, signal_restore+signo) ? -errno : 1;
         } else {
             ROSE_ASSERT(active_sim==this);
         }
@@ -264,7 +290,7 @@ RSIM_Simulator::deactivate()
         ROSE_ASSERT(active>0);
         if (0==--active) {
             for (int i=1; i<=_NSIG; i++) {
-                if (signal_installed[i]>=0) {
+                if (signal_installed[i]>0) {
                     int status = sigaction(i, signal_restore+i, NULL);
                     ROSE_ASSERT(status>=0);
                 }
@@ -295,25 +321,58 @@ RSIM_Simulator::which_active()
     return retval;
 }
 
-/* Class method. This is a signal handler -- do not use thread synchronization. */
+/* Class method. This is a signal handler -- do not use thread synchronization or functions that are not async signal safe. */
 void
-RSIM_Simulator::signal_handler(int signo)
+RSIM_Simulator::signal_receiver(int signo, siginfo_t *info, void*)
 {
     /* In order for this signal handler to be installed, there must be an active simulator. This is because the activate()
      * method installs the signal handler and the deactivate() removes it.  The active_sim is set before the signal handler is
      * installed and reset after it is removed. */
     RSIM_Simulator *simulator = active_sim;
     assert(simulator!=NULL);
-    assert(simulator->get_process());
-    assert(simulator->get_process()->get_thread(getpid()));
+    RSIM_Process *process = simulator->get_process();
+    assert(process!=NULL);
 
-#if 0   /* not async signal safe */
-    if (0==simulator->active)
-        fprintf(stderr, "RSIM_Simulator::signal_handler: warning: called during activation/deactivation\n");
+#if 1 /* WARNING: this is not async signal safe, but useful for debugging */
+    char buf[1024];
+    sprintf(buf, "PID %d received signal %d with info=%p\n", getpid(), signo, info);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_signo = %d\n", info->si_signo);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_errno = %d\n", info->si_errno);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_code  = %d\n", info->si_code);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_pid   = %d\n", info->si_pid);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_uid   = %u\n", info->si_uid);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_int   = %u\n", info->si_int);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_ptr   = %p\n", info->si_ptr);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_status = %u\n", info->si_status);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_utime = %ld\n", info->si_utime);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_stime = %ld\n", info->si_stime);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_addr  = %p\n", info->si_addr);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_band  = %ld\n", info->si_band);
+    write(2, buf, strlen(buf));
+    sprintf(buf, "    info.si_fd    = %d\n", info->si_fd);
+    write(2, buf, strlen(buf));
 #endif
 
-    //FIXME: this sends all signals to the main thread; not async signal safe
-    simulator->get_process()->get_thread(getpid())->signal_generate(signo);
+    process->signal_enqueue(RSIM_SignalHandling::mk(info));
+}
+
+/* Class method. This is a signal handler -- do not use thread synchronization or functions that are not async signal safe. */
+void
+RSIM_Simulator::signal_wakeup(int signo)
+{
+    /* void; side effect is to interrupt blocked system calls. */
 }
 
 int

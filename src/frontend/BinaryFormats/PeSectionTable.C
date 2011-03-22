@@ -131,8 +131,10 @@ void *
 SgAsmPESectionTableEntry::encode(PESectionTableEntry_disk *disk) const
 {
     /* The file can hold up to eight characters of the name. The name is NUL-padded, not necessarily NUL-terminated. */
-    if (p_name.size()>8)
-        fprintf(stderr, "warning: section name too long to store in PE file: \"%s\" (truncated)\n", p_name.c_str());
+    if (p_name.size()>8) {
+        fprintf(stderr, "warning: section name too long to store in PE file: \"%s\" (truncated)\n",
+                escapeString(p_name).c_str());
+    }
     memset(disk->name, 0, sizeof(disk->name));
 
 #ifdef USE_ROSE

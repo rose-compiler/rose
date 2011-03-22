@@ -341,18 +341,19 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             section->set_mapped_actual_va(0); /*reset in case previously mapped*/
 
             if (debug) {
-                fprintf(debug, "  mapping section [%d] \"%s\"", section->get_id(), section->get_name()->c_str());
-                if (section->get_header()->get_base_va()!=0)
-                    fprintf(debug, " with base va 0x%08"PRIx64, section->get_header()->get_base_va());
+                fprintf(debug, "  mapping section [%d] \"%s\"",
+                        section->get_id(), section->get_name()->get_string(true).c_str());
+                if (section->get_base_va()!=0)
+                    fprintf(debug, " with base va 0x%08"PRIx64, section->get_base_va());
                 fprintf(debug, "\n");
                 fprintf(debug, "    Specified RVA:       0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"\n",
                         section->get_mapped_preferred_rva(), section->get_mapped_size(),
                         section->get_mapped_preferred_rva()+section->get_mapped_size());
-                if (section->get_header()->get_base_va()!=0) {
+                if (section->get_base_va()!=0) {
                     fprintf(debug, "    Specified  VA:       0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"\n",
-                            section->get_header()->get_base_va() + section->get_mapped_preferred_rva(),
+                            section->get_base_va() + section->get_mapped_preferred_rva(),
                             section->get_mapped_size(),
-                            (section->get_header()->get_base_va() + section->get_mapped_preferred_rva() +
+                            (section->get_base_va() + section->get_mapped_preferred_rva() +
                              section->get_mapped_size()));
                 }
                 fprintf(debug, "    Specified offset:    0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"\n",
@@ -383,7 +384,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                             malign_lo, malign_hi, falign_lo, falign_hi);
                     fprintf(debug, "    Aligned VA:          0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64,
                             va, mem_size, va+mem_size);
-                    if (section->get_header()->get_base_va()+section->get_mapped_preferred_rva()==va &&
+                    if (section->get_base_va()+section->get_mapped_preferred_rva()==va &&
                         section->get_mapped_size()==mem_size) {
                         fputs(" (no change)\n", debug);
                     } else {
@@ -477,7 +478,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             file_basename_pos = file_basename_pos==file->get_name().npos ? 0 : file_basename_pos+1;
             std::string melmt_name = file->get_name().substr(file_basename_pos) + "(" + section->get_name()->get_string() + ")";
             if (debug)
-                fprintf(debug, "    Map element name: %s\n", melmt_name.c_str());
+                fprintf(debug, "    Map element name: %s\n", escapeString(melmt_name).c_str());
 
             /* Anonymously map the part of memory beyond the physical end of the file */
             SgAsmGenericFile *file = section->get_file();
@@ -494,8 +495,9 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                     a = va + total - offset;
                 }
                 if (debug) {
-                    fprintf(debug, "    %-41s va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
-                            "Mapping part beyond EOF:", a, n, a+n);
+                    fprintf(debug, "    Mapping part beyond EOF(0x%08"PRIx64"):      "
+                            "va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
+                            total, a, n, a+n);
                 }
                 MemoryMap::MapElement me(a, n, mapperms);
                 me.set_name(melmt_name);
@@ -546,16 +548,16 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                 me.set_name(melmt_name);
                 map->insert(me);
             }
+
+            if (debug) {
+                fprintf(debug, "    After mapping this section:\n");
+                map->dump(debug, "      ");
+            }
         }
         header->set_base_va(old_base_va);
     } catch(...) {
         header->set_base_va(old_base_va);
         throw;
-    }
-
-    if (debug) {
-        fprintf(debug, "Loader: created map:\n");
-        map->dump(debug, "    ");
     }
 }
 
@@ -691,7 +693,8 @@ BinaryLoader::align_values(SgAsmGenericSection *section, MemoryMap *map,
 {
     ROSE_ASSERT(section!=NULL);
     ROSE_ASSERT(section->is_mapped());
-    SgAsmGenericHeader *header = section->get_header();
+    SgAsmGenericHeader *header = isSgAsmGenericHeader(section);
+    if (!header) header = section->get_header();
     ROSE_ASSERT(header!=NULL);
     
     /* Initial guesses */

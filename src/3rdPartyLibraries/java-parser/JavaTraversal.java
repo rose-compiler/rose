@@ -22,143 +22,173 @@ import org.eclipse.jdt.internal.compiler.util.*;
 // class JavaTraversal {
 
 import java.util.concurrent.Callable;
-class JavaTraversal  implements Callable<Boolean> {
-    static Main main;
-    static BufferedWriter out;
+class JavaTraversal  implements Callable<Boolean> 
+   {
+  // This class generates a DOT file of the ECJ AST.  It is not used for any ROSE specific translation
+  // of the AST.  As a result it should be renamed.
+
+     static Main main;
+     static BufferedWriter out;
 
     // -------------------------------------------------------------------------------------------
     /* tps: Invoke C Code , the int nr represents a unique nr for a node which is used for DOT representation*/
-    private native void invokeINIT();
-    private native void invokeEND ();
-    private native void invokeNODE(String className, int nr);
-    private native void invokeEDGE(String className1, int nr,String className2, int nr2);
+     private native void invokeINIT();
+     private native void invokeEND ();
+     private native void invokeNODE(String className, int nr);
+     private native void invokeEDGE(String className1, int nr,String className2, int nr2);
 
- // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
- // private static boolean hasErrorOccurred = false;
-    public static boolean hasErrorOccurred = false;
+  // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
+  // private static boolean hasErrorOccurred = false;
+     public static boolean hasErrorOccurred = false;
 
-    static {
-         System.loadLibrary("JavaTraversal");
-    }
+     static
+        {
+          System.loadLibrary("JavaTraversal");
+        }
 
-    // -------------------------------------------------------------------------------------------
-    /* tps: Creating a hashmap to keep track of nodes that we have already seen. Needed for DOT graph */
-    static HashMap<Integer,Integer> hashm = new HashMap<Integer,Integer>();
-    static int hashcounter=0;
+  // -------------------------------------------------------------------------------------------
+  /* tps: Creating a hashmap to keep track of nodes that we have already seen. Needed for DOT graph */
+     static HashMap<Integer,Integer> hashm = new HashMap<Integer,Integer>();
+     static int hashcounter=0;
 
-    // -------------------------------------------------------------------------------------------
-    /* tps: A class is represented as x.y.z.f.g --> this function returns the last string after the last dot */
-    public String getLast(String s) {
-	int index = s.lastIndexOf(".");
-	if (index==-1) return s;
-	return s.substring(index+1,s.length());
-    } 
+  // -------------------------------------------------------------------------------------------
+  /* tps: A class is represented as x.y.z.f.g --> this function returns the last string after the last dot */
+     public String getLast(String s)
+        {
+          int index = s.lastIndexOf(".");
+          if (index==-1) return s;
+          return s.substring(index+1,s.length());
+        }
 
-    // -------------------------------------------------------------------------------------------
-    /* tps: For any Node we print its String representation. This function returns up to 30 characters of the String for DOT */
-    public String getLine(ASTNode current) {
-	int length=current.toString().length();
-	int pos=current.toString().indexOf("\n");
-	if (pos!=-1) length=pos-1;
-	if (length>30) length=30;
-	String substr = (current.toString()).substring(0,length); 
-	return substr.replace("\"","'");
-    } 
+  // -------------------------------------------------------------------------------------------
+  /* tps: For any Node we print its String representation. This function returns up to 30 characters of the String for DOT */
+     public String getLine(ASTNode current)
+        {
+          int length=current.toString().length();
+          int pos=current.toString().indexOf("\n");
+          if (pos!=-1) length=pos-1;
+          if (length>30) length=30;
+          String substr = (current.toString()).substring(0,length); 
+          return substr.replace("\"","'");
+        } 
 
     // -------------------------------------------------------------------------------------------
     /* tps: Add nodes into a HashMap. We need this to connect edges between Nodes for DOT */
-    public int getHashValue(ASTNode current) {
-	int valc=0;
-	Integer hashc = (Integer)hashm.get(current.hashCode()); 
-	if (hashc!=null) {
-	    valc = (hashc).intValue();
-	} else {
-	    valc=hashcounter;
-	    hashm.put(current.hashCode(),hashcounter++);
-	}
-	return valc;
-    }
+     public int getHashValue(ASTNode current) 
+        {
+          int valc=0;
+          Integer hashc = (Integer)hashm.get(current.hashCode()); 
+          if (hashc!=null)
+             {
+               valc = (hashc).intValue();
+             }
+            else
+             {
+               valc=hashcounter;
+               hashm.put(current.hashCode(),hashcounter++);
+             }
+          return valc;
+        }
 
-    // -------------------------------------------------------------------------------------------
-    /* tps : print to DOT   */
-    public void printToDOT(ASTNode current) {
-	ASTNode before=null;
-	if (!stack.empty())
-	    before = (ASTNode)stack.peek();
-	try {
-	    if (before==null) {
-		//System.out.println("---------------------------------------------");
-		//System.out.println("******** Root Node: "+getLast(current.getClass().toString())+"   Adding node to hashmap: "+hashcounter);
-		int valc = getHashValue(current);
-		out.write(" \""+valc+getLast(current.getClass().toString())+"\" [label=\""+getLast(current.getClass().toString())+"\\n"+getLine(current) +"\"];\n");
-		invokeNODE(getLast(current.getClass().toString()), valc);
-	    } else {
-		//System.out.println("-----------------------");
-		//System.out.println("New Node: "+getLast(current.getClass().toString()));
-		//System.out.println("New Edge: "+getLast(before.getClass().toString())+" -- "+getLast(current.getClass().toString()));
-		Integer valbint = ((Integer)hashm.get(before.hashCode()));
-		if (valbint==null) { 
-		    System.err.println("Error : hashvalue valbint == null for node :"+before.getClass()); 
-		    System.exit(1); 
-		}
-		int valb = valbint.intValue();
-		int valc = getHashValue(current);
-		out.write(" \""+valc+""+getLast(current.getClass().toString())+"\" [label=\""+getLast(current.getClass().toString())+"\\n"+getLine(current) +"\"];\n");
-		out.write("    \""+valb+""+getLast(before.getClass().toString())+"\" -> \""+valc+""+getLast(current.getClass().toString())+"\";\n");
-		invokeEDGE(getLast(before.getClass().toString()),valb,getLast(current.getClass().toString()),valc);
-		invokeNODE(getLast(current.getClass().toString()),valc);
-	    }
+  // -------------------------------------------------------------------------------------------
+  /* tps : print to DOT   */
+     public void printToDOT(ASTNode current)
+        {
+          ASTNode before=null;
+          if (!stack.empty())
+          before = (ASTNode)stack.peek();
+          try {
+               if (before==null)
+                  {
+                 // System.out.println("---------------------------------------------");
+                 // System.out.println("******** Root Node: "+getLast(current.getClass().toString())+"   Adding node to hashmap: "+hashcounter);
+                    int valc = getHashValue(current);
+                    out.write(" \""+valc+getLast(current.getClass().toString())+"\" [label=\""+getLast(current.getClass().toString())+"\\n"+getLine(current) +"\"];\n");
+                    invokeNODE(getLast(current.getClass().toString()), valc);
+                  }
+                 else
+                  {
+                 // System.out.println("-----------------------");
+                 // System.out.println("New Node: "+getLast(current.getClass().toString()));
+                 // System.out.println("New Edge: "+getLast(before.getClass().toString())+" -- "+getLast(current.getClass().toString()));
+                    Integer valbint = ((Integer)hashm.get(before.hashCode()));
+                    if (valbint==null) 
+                       {
+                         System.err.println("Error : hashvalue valbint == null for node :"+before.getClass()); 
+                         System.exit(1); 
+                       }
+                    int valb = valbint.intValue();
+                    int valc = getHashValue(current);
+                    out.write(" \""+valc+""+getLast(current.getClass().toString())+"\" [label=\""+getLast(current.getClass().toString())+"\\n"+getLine(current) +"\"];\n");
+                    out.write("    \""+valb+""+getLast(before.getClass().toString())+"\" -> \""+valc+""+getLast(current.getClass().toString())+"\";\n");
+                    invokeEDGE(getLast(before.getClass().toString()),valb,getLast(current.getClass().toString()),valc);
+                    invokeNODE(getLast(current.getClass().toString()),valc);
+                  }
 
-	} catch (Exception e) { System.err.println("Error: " + e.getMessage()); }
-    }
+             }
+          catch (Exception e) { System.err.println("Error: " + e.getMessage()); }
+        }
 
     // -------------------------------------------------------------------------------------------
     /* tps: Stack that is keeping track of the traversal we perform to connect children with parents in the DOT graph */
-    private Stack<ASTNode> stack = new Stack<ASTNode>();
-    public void pushNode(ASTNode node) {
-	stack.push(node);
-    }
-    public ASTNode popNode() {
-	if (!stack.empty())
-	    stack.pop();
-	else {
-	    System.err.println("!!!!!!!!!!!! ERROR trying to access empty stack");
-	    System.exit(1);
-	}
-	if (!stack.empty())
-	    return (ASTNode)stack.peek();
-	return null;
-    }
+     private Stack<ASTNode> stack = new Stack<ASTNode>();
+
+     public void pushNode(ASTNode node)
+        {
+          stack.push(node);
+        }
+
+     public ASTNode popNode()
+        {
+          if (!stack.empty())
+               stack.pop();
+            else
+             {
+               System.err.println("!!!!!!!!!!!! ERROR trying to access empty stack");
+               System.exit(1);
+             }
+
+          if (!stack.empty())
+               return (ASTNode)stack.peek();
+
+          return null;
+        }
 
 
-    /* tps (10/08/10): AST traversal contains all current nodes of ECJ ---------------------------------------------- */
-    public void traverseAST(CompilationUnitDeclaration unit) {
+  /* tps (10/08/10): AST traversal contains all current nodes of ECJ ---------------------------------------------- */
+     public void traverseAST(CompilationUnitDeclaration unit)
+        {
 
-	final ASTVisitor visitor = new ASTVisitor() {
-		public void endVisit(
-				     AllocationExpression node,
-				     BlockScope scope) {
-		    popNode();		// do nothing by default
-		}
-		public void endVisit(AND_AND_Expression  node, BlockScope scope) {
-		    popNode();		// do nothing by default
-		}
-		public void endVisit(
-				     AnnotationMethodDeclaration node,
-				     ClassScope classScope) {
-		    popNode();			// do nothing by default
-		}
-		public void endVisit(Argument  node, BlockScope scope) {
-		    popNode();		// do nothing by default
-		}
-		public void endVisit(Argument  node,ClassScope scope) {
-		    popNode();		// do nothing by default
-		}
-		public void endVisit(
-				     ArrayAllocationExpression node,
-				     BlockScope scope) {
-		    popNode();		// do nothing by default
-		}
+          final ASTVisitor visitor = new ASTVisitor() {
+          public void endVisit( AllocationExpression node, BlockScope scope)
+             {
+               popNode(); // do nothing by default
+             }
+
+		    public void endVisit(AND_AND_Expression  node, BlockScope scope)
+             {
+               popNode(); // do nothing by default
+             }
+
+          public void endVisit( AnnotationMethodDeclaration node, ClassScope classScope)
+             {
+               popNode(); // do nothing by default
+		       }
+
+          public void endVisit(Argument  node, BlockScope scope)
+             {
+               popNode(); // do nothing by default
+             }
+
+          public void endVisit(Argument  node,ClassScope scope)
+             {
+               popNode(); // do nothing by default
+             }
+
+          public void endVisit(ArrayAllocationExpression node,BlockScope scope)
+             {
+               popNode(); // do nothing by default
+             }
 		public void endVisit(ArrayInitializer  node, BlockScope scope) {
 		    popNode();		// do nothing by default
 		}
@@ -1018,155 +1048,172 @@ class JavaTraversal  implements Callable<Boolean> {
 
 
 
-    public static void main(String args[])    {
-/* tps : set up and configure ---------------------------------------------- */
-	System.out.println("Compiling ...");
-
-// DQ (10/12/2010) Comment this out for now while we debug this.
-   if (true)
-      {
-// This line of code will run, but the first use of "main" fails.
-	main = new Main(new PrintWriter(System.out), new PrintWriter(System.err), true/*systemExit*/,  null/*options*/, null/*progress*/);
-
-// This is the last message printed to the console ...
-	System.out.println("test 1 .... (note call to main.configure(args); fails silently)");
-
-// This line of code will fail when run ...
-  	main.configure(args);
-
-	System.out.println("test 2 ...");
-	FileSystem environment = main.getLibraryAccess();
-	System.out.println("test 3 ...");
-	main.compilerOptions = new CompilerOptions(main.options);
-	main.compilerOptions.performMethodsFullRecovery = false;
-	main.compilerOptions.performStatementsRecovery = false;
-	System.out.println("test 4 ...");
-	main.batchCompiler =  new Compiler(  environment,
-					    main.getHandlingPolicy(),
-					    main.compilerOptions,
-					    main.getBatchRequestor(),
-					    main.getProblemFactory(),
-					    null,
-					    main.progress);
-	System.out.println("test 5 ...");
-
-	/* tps : handle compilation units--------------------------------------------- */
-	ICompilationUnit[] sourceUnits = main.getCompilationUnits();
-	int maxUnits = sourceUnits.length;
-	main.batchCompiler.totalUnits = 0;
-	main.batchCompiler.unitsToProcess = new CompilationUnitDeclaration[maxUnits];
-
-	/* tps : Debug: print Compilation units --------------------------- */
-	/*tps*/System.out.println("We got "+maxUnits+" compilation units");
-	CompilationUnit[] units = main.getCompilationUnits();
-	System.out.println("Nr of Compilation Units : "+units.length);
-	for (CompilationUnit myunit : units) {
-	    System.out.println("File : "+myunit);
-	}
-
-
-	/* tps : start parsing ------------------------------------------------------- */
-	main.batchCompiler.internalBeginToCompile(sourceUnits, maxUnits);
-	//main.batchCompiler.compile(sourceUnits);
-
-
-	CompilationUnitDeclaration unit = null;
-	JavaTraversal jt = new JavaTraversal();
-	jt.invokeINIT();
-	try { // writing to the DOT file
-	    FileWriter fstream = new FileWriter("ast.dot");
-	    out = new BufferedWriter(fstream);
-	    out.write("Digraph G {\n");
-	} catch (Exception e) { System.err.println("Error: " + e.getMessage()); }
-
-
-
-	/* tps : compile the files and produce class files --------------------------- */
-	ProcessTaskManager processingTask = null;
-   System.out.println("test 6 ...");
-
-  // Calling the parser to build the ROSE AST from a traversal of the ECJ AST.
-     try
+     public static void main(String args[])
         {
-          JavaParser java_parser = new JavaParser();
+       /* tps : set up and configure ---------------------------------------------- */
+          System.out.println("Compiling ...");
 
-          System.out.println("test 7 ...");
-          java_parser.cactionCompilationUnitList(main.batchCompiler.totalUnits,args);
-
-          System.out.println("test 8 ...");
-	       for (int i = 0; i < main.batchCompiler.totalUnits; i++)
+       // DQ (10/12/2010) Comment this out for now while we debug this.
+          if (true)
              {
-               unit = main.batchCompiler.unitsToProcess[i];
-               try
-                  {
-                    main.batchCompiler.process(unit, i);
-                    jt.traverseAST(unit); /*tps this is a better place for the traversal */
-                    System.out.println("test 9 ...");
-                    java_parser.startParsingAST(unit);
-                    System.out.println("test 10 ...");
-                  }
-               catch (Exception e)
-                  {
-                    System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e.getMessage());
+            // This line of code will run, but the first use of "main" fails.
+               main = new Main(new PrintWriter(System.out), new PrintWriter(System.err), true/*systemExit*/,  null/*options*/, null/*progress*/);
 
-                 // This should output the call stack.
-                    System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e);
-                  }
-               finally
-                  {
-                // cleanup compilation unit result
-                   unit.cleanUp();
-                  }
-               main.batchCompiler.unitsToProcess[i] = null; // release reference to processed unit declaration
-               main.batchCompiler.stats.lineCount += unit.compilationResult.lineSeparatorPositions.length;
-               main.batchCompiler.requestor.acceptResult(unit.compilationResult.tagAsAccepted());
+            // This is the last message printed to the console ...
+               System.out.println("test 1 .... (note call to main.configure(args); fails silently)");
+
+            // This line of code will fail when run ...
+               main.configure(args);
+
+               System.out.println("test 2 ...");
+               FileSystem environment = main.getLibraryAccess();
+               System.out.println("test 3 ...");
+               main.compilerOptions = new CompilerOptions(main.options);
+               main.compilerOptions.performMethodsFullRecovery = false;
+               main.compilerOptions.performStatementsRecovery = false;
+               System.out.println("test 4 ...");
+               main.batchCompiler =  new Compiler(  environment,
+                   main.getHandlingPolicy(),
+                   main.compilerOptions,
+                   main.getBatchRequestor(),
+                   main.getProblemFactory(),
+                   null,
+                   main.progress);
+               System.out.println("test 5 ...");
+
+       /* tps : handle compilation units--------------------------------------------- */
+          ICompilationUnit[] sourceUnits = main.getCompilationUnits();
+          int maxUnits = sourceUnits.length;
+          main.batchCompiler.totalUnits = 0;
+          main.batchCompiler.unitsToProcess = new CompilationUnitDeclaration[maxUnits];
+
+       /* tps : Debug: print Compilation units --------------------------- */
+          System.out.println("We got "+maxUnits+" compilation units");
+          CompilationUnit[] units = main.getCompilationUnits();
+          System.out.println("Nr of Compilation Units : "+units.length);
+          for (CompilationUnit myunit : units)
+             {
+               System.out.println("File : "+myunit);
              }
-      }
-   catch (Exception e)
-      {
-     // DQ (11/1/2010): Added more aggressive termination of program...
-        System.err.println("Error in JavaTraversal::main(): " + e.getMessage());
-     // System.exit(1);
 
-        hasErrorOccurred = true;
-        return;
-      }
 
-	jt.invokeEND();
-	try { // closing the DOT file
-	    out.write("}\n");
-	    out.close();
-	} catch (Exception e) { System.err.println("Error: " + e.getMessage()); }
+       /* tps : start parsing ------------------------------------------------------- */
+          main.batchCompiler.internalBeginToCompile(sourceUnits, maxUnits);
+       // main.batchCompiler.compile(sourceUnits);
+
+
+          CompilationUnitDeclaration unit = null;
+          JavaTraversal jt = new JavaTraversal();
+          jt.invokeINIT();
+          try { // writing to the DOT file
+               FileWriter fstream = new FileWriter("ast.dot");
+               out = new BufferedWriter(fstream);
+               out.write("Digraph G {\n");
+              }
+          catch (Exception e) { System.err.println("Error: " + e.getMessage()); }
+
+
+
+       /* tps : compile the files and produce class files --------------------------- */
+          ProcessTaskManager processingTask = null;
+          System.out.println("test 6 ...");
+
+       // Calling the parser to build the ROSE AST from a traversal of the ECJ AST.
+          try
+             {
+               JavaParser java_parser = new JavaParser();
+
+               System.out.println("test 7 ...");
+               java_parser.cactionCompilationUnitList(main.batchCompiler.totalUnits,args);
+
+               System.out.println("test 8 ...");
+	            for (int i = 0; i < main.batchCompiler.totalUnits; i++)
+                  {
+                    unit = main.batchCompiler.unitsToProcess[i];
+                    try
+                       {
+                         main.batchCompiler.process(unit, i);
+                         jt.traverseAST(unit); /*tps this is a better place for the traversal */
+                         System.out.println("test 9 ...");
+
+                      // **************************************************
+                      // This is where the traveral of the ECJ AST is done.
+                      // **************************************************
+                         java_parser.startParsingAST(unit);
+
+                         System.out.println("test 10 ...");
+                       }
+
+                    catch (Exception e)
+                       {
+                         System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e.getMessage());
+
+                      // This should output the call stack.
+                         System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e);
+                       }
+
+                    finally
+                       {
+                      // cleanup compilation unit result
+                         unit.cleanUp();
+                       }
+                    main.batchCompiler.unitsToProcess[i] = null; // release reference to processed unit declaration
+                    main.batchCompiler.stats.lineCount += unit.compilationResult.lineSeparatorPositions.length;
+                    main.batchCompiler.requestor.acceptResult(unit.compilationResult.tagAsAccepted());
+                  }
+             }
+
+          catch (Exception e)
+             {
+            // DQ (11/1/2010): Added more aggressive termination of program...
+               System.err.println("Error in JavaTraversal::main(): " + e.getMessage());
+            // System.exit(1);
+
+               hasErrorOccurred = true;
+               return;
+             }
+
+          jt.invokeEND();
+          try { // closing the DOT file
+               out.write("}\n");
+               out.close();
+             } catch (Exception e) { System.err.println("Error: " + e.getMessage()); }
    
-      }
-     else
-      {
-        System.out.println("Skipping major internal parts of ECJ frontend");
-      }
+        }
+       else
+        {
+          System.out.println("Skipping major internal parts of ECJ frontend");
+        }
 
-      System.out.println("Done compiling");
-    }
+          System.out.println("Done compiling");
+        }
 
 
- // DQ (10/12/2010): Implemented abstract baseclass "call()" member function (similar to OFP).
-   public Boolean call() throws Exception {
-   // boolean error = false;
-      boolean error   = true;
-      boolean verbose = true;
+  // DQ (10/12/2010): Implemented abstract baseclass "call()" member function (similar to OFP).
+     public Boolean call() throws Exception
+        {
+       // boolean error = false;
+          boolean error   = true;
+          boolean verbose = true;
 
-      if (error != false) {
-           System.out.println("Parser failed");
-         } else {
-           if (verbose)
-                System.out.println("Parser exiting normally");
-         }// end else(parser exited normally)
+          if (error != false)
+             {
+               System.out.println("Parser failed");
+             }
+            else
+             {
+               if (verbose)
+                    System.out.println("Parser exiting normally");
+             }// end else(parser exited normally)
 
-      return new Boolean(error);
-   }// end call()
+          return new Boolean(error);
+        }// end call()
 
- // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
-   public static boolean getError() {
-      return hasErrorOccurred;
+  // DQ (10/12/2010): Added boolean value to report error to C++ calling program (similar to OFP).
+     public static boolean getError()
+        {
+          return hasErrorOccurred;
+        }
+
+
    }
-
-}

@@ -16,10 +16,10 @@ MyTraversal::visit(SgNode* astNode)
     SgAsmElfSymbolSection *symsec = isSgAsmElfSymbolSection(astNode);
     if (symsec && symsec->get_name()->get_string()==".dynsym") {
         fputs("*** Test uses these sections:\n", stdout);
-        printf("    symsec = [%d] \"%s\"\n", symsec->get_id(), symsec->get_name()->c_str());
+        printf("    symsec = [%d] \"%s\"\n", symsec->get_id(), symsec->get_name()->get_string(true).c_str());
         SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(symsec->get_linked_section());
         ROSE_ASSERT(strsec!=NULL);
-        printf("    strsec = [%d] \"%s\"\n", strsec->get_id(), strsec->get_name()->c_str());
+        printf("    strsec = [%d] \"%s\"\n", strsec->get_id(), strsec->get_name()->get_string(true).c_str());
 
         /* Find a particular symbol in the symbol table */
         const SgAsmElfSymbolPtrList &symbols = symsec->get_symbols()->get_symbols();
