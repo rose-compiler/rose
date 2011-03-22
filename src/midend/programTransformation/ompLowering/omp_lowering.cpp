@@ -1400,6 +1400,114 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
     //   AstPostProcessing(originalSourceFile);
   }
 
+  /*
+   * Expected AST layout: 
+   *  SgOmpSectionsStatement
+   *    SgBasicBlock
+   *      SgOmpSectionStatement (1 or more section statements here)
+   *        SgBasicBlock
+   *          SgStatement 
+   *
+   * Example translated code: 
+      int _section_1 = XOMP_sections_init_next (3);
+      while (_section_1 >=0) // This while loop is a must
+      {
+        switch (_section_1) {
+          case 0:
+            printf("hello from section 1\n");
+            break;
+          case 1:
+            printf("hello from section 2\n");
+            break;
+          case 2:
+            printf("hello from section 3\n");
+            break;
+          default:
+            printf("fatal error: XOMP_sections_?_next() returns illegal value %d\n", _section_1);
+            abort();
+        }
+        _section_1 = XOMP_sections_next ();  // next round for the current thread: deal with possible number of threads < number of sections
+     }
+    
+      XOMP_sections_end();   // Or  XOMP_sections_end_nowait ();    
+   * */
+  void transOmpSections(SgNode* node)
+  {
+//    cout<<"Entering transOmpSections() ..."<<endl;
+    ROSE_ASSERT(node != NULL );
+    // verify the AST is expected
+    SgOmpSectionsStatement * target = isSgOmpSectionsStatement(node); 
+    ROSE_ASSERT(target != NULL );
+    SgScopeStatement * scope = target->get_scope();
+    ROSE_ASSERT(scope != NULL );
+    SgStatement * body = target->get_body();
+    ROSE_ASSERT(body != NULL);
+   
+    SgBasicBlock * sections_block = isSgBasicBlock(body);
+    ROSE_ASSERT (sections_block != NULL);
+       // verify each statement under sections is SgOmpSectionStatement
+    SgStatementPtrList section_list = sections_block-> get_statements();
+    int section_count = section_list.size();
+    for  (int i =0; i<section_count; i++)
+    {
+      SgStatement* stmt = section_list[i];
+      ROSE_ASSERT (isSgOmpSectionStatement(stmt));
+    }
+   
+    // int _section_1 = XOMP_sections_init_next (3);
+    std::string sec_var_name("_section_");
+    sec_var_name += StringUtility::numberToString(++gensym_counter);
+    
+    SgAssignInitializer* initializer = buildAssignInitializer (
+                         buildFunctionCallExp("XOMP_sections_init_next", buildIntType(),buildExprListExp(buildIntVal(section_count)), scope), 
+                                        buildIntType());
+    SgVariableDeclaration* sec_var_decl = buildVariableDeclaration(sec_var_name, buildIntType(), initializer, scope);
+    insertStatementAfter(target, sec_var_decl);
+    // while (_section_1 >=0) {}
+    SgWhileStmt * while_stmt = buildWhileStmt(buildGreaterOrEqualOp(buildVarRefExp(sec_var_decl), buildIntVal(0)), buildBasicBlock()); 
+    insertStatementAfter(sec_var_decl, while_stmt);
+    // switch () {}
+    SgSwitchStatement* switch_stmt = buildSwitchStatement (buildExprStatement(buildVarRefExp(sec_var_decl)) , buildBasicBlock()); 
+    appendStatement(switch_stmt, isSgBasicBlock(while_stmt->get_body()));
+    // case 0, case 1, ...
+    for (int i= 0; i<section_count; i++)
+    {
+      SgCaseOptionStmt* option_stmt = buildCaseOptionStmt (buildIntVal(i), buildBasicBlock());
+      // Move SgOmpSectionStatement's body to Case OptionStmt's body
+      SgBasicBlock * src_bb = isSgBasicBlock(isSgOmpSectionStatement(section_list[i])->get_body()); 
+      SgBasicBlock * target_bb =  isSgBasicBlock(option_stmt->get_body());
+      moveStatementsBetweenBlocks(src_bb , target_bb);
+      appendStatement (buildBreakStmt(), target_bb);
+
+      // cout<<"source BB address:"<<isSgBasicBlock(isSgOmpSectionStatement(section_list[i])->get_body())<<endl;
+      // Now we have to delete the source BB since its symbol table is moved into the target BB.
+      SgBasicBlock * fake_src_bb = buildBasicBlock(); 
+      isSgOmpSectionStatement(section_list[i])->set_body(fake_src_bb); 
+      fake_src_bb->set_parent(section_list[i]);
+      delete (src_bb);
+
+      appendStatement (option_stmt,  isSgBasicBlock(switch_stmt->get_body()));
+    } // end case 0, 1, ...  
+    // default option: 
+    SgDefaultOptionStmt* default_stmt = buildDefaultOptionStmt(buildBasicBlock(buildFunctionCallStmt("abort", buildVoidType(), NULL, scope))); 
+    appendStatement (default_stmt,  isSgBasicBlock(switch_stmt->get_body()));
+
+    // _section_1 = XOMP_sections_next ();
+    SgStatement* assign_stmt = buildAssignStatement(buildVarRefExp(sec_var_decl), 
+                                 buildFunctionCallExp("XOMP_sections_next", buildIntType(), buildExprListExp(), scope) ); 
+    appendStatement(assign_stmt, isSgBasicBlock(while_stmt->get_body()));
+
+    // XOMP_sections_end() or XOMP_sections_end_nowait ();
+    SgExprStatement* end_call = NULL; 
+    if (hasClause(target, V_SgOmpNowaitClause))
+      end_call = buildFunctionCallStmt("XOMP_sections_end_nowait", buildVoidType(), NULL, scope);
+    else
+      end_call = buildFunctionCallStmt("XOMP_sections_end", buildVoidType(), NULL, scope);
+
+    insertStatementAfter(while_stmt, end_call);
+    removeStatement(target);
+  }
+
   // Two ways 
   //1. builtin function TODO
   //    __sync_fetch_and_add_4(&shared, (unsigned int)local);
@@ -3105,6 +3213,12 @@ void lower_omp(SgSourceFile* file)
           transOmpParallel(node);
           break;
         }
+      case V_SgOmpSectionsStatement:
+        {
+          transOmpSections(node);
+          break;
+        }
+ 
       case V_SgOmpTaskStatement:
         {
           transOmpTask(node);
