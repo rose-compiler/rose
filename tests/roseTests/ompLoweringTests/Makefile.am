@@ -97,6 +97,7 @@ C_TESTCODES_REQUIRED_TO_RUN = \
         reduction2.c \
 	reduction-classic.c \
 	rice1.c \
+        section1.c \
         set_num_threads.c \
         single.c \
         subteam.c \
