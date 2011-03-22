@@ -5,9 +5,10 @@ int main()
   int sum=7;
   int known_sum;
   int i;
+  int j; 
 #pragma omp parallel
   {
-#pragma omp sections reduction(+:sum) private(i)
+#pragma omp sections reduction(+:sum) private(i) lastprivate(j)
     {
 #pragma omp section
       {
@@ -22,6 +23,7 @@ int main()
       }
 #pragma omp section
       {
+        j = 888;
         for(i=700;i<1000;i++)
           sum += i;
       }
@@ -30,6 +32,7 @@ int main()
   }                      /* end of parallel */
   known_sum=(999*1000)/2+7;
   assert (known_sum==sum);
+  assert (j == 888);
   return 0;
 }
 
