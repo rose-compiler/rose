@@ -13,6 +13,7 @@ int main (int argc, char *argv[])
 {
   // grab the scope in which AST will be added
   SgProject *project = frontend (argc, argv);
+
   SgGlobal *globalScope = getFirstGlobalScope (project);
   pushScopeStack (isSgScopeStatement (globalScope));
 

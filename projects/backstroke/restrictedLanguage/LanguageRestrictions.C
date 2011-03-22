@@ -12,8 +12,8 @@
 #include <functional>
 #include <numeric>
 #include "LanguageRestrictions.h"
-#include "utilities/CPPDefinesAndNamespaces.h"
-#include "utilities/Utilities.h"
+#include "utilities/cppDefinesAndNamespaces.h"
+#include "utilities/utilities.h"
 
 
 using namespace std;
@@ -228,7 +228,7 @@ bool LanguageRestrictions::variablesOfPointerTypesAreAssigned(SgFunctionDefiniti
 		SgType* writeVarType = writeExpression->get_type();
 		if (isSgPointerType(writeVarType) || isSgArrayType(writeVarType))
 		{
-			backstroke_util::printCompilerError(writeRefNode, "An expression of pointer type is written to.");
+			BackstrokeUtility::printCompilerError(writeRefNode, "An expression of pointer type is written to.");
 			return true;
 		}
 	}
@@ -246,7 +246,7 @@ bool LanguageRestrictions::dynamicMemoryAllocationUsed(SgFunctionDefinition* fun
 
 	foreach (SgNode* newExpr, newExps)
 	{
-		backstroke_util::printCompilerError(newExpr, "Dynamic memory allocation not allowed");
+		BackstrokeUtility::printCompilerError(newExpr, "Dynamic memory allocation not allowed");
 	}
 
 	return newExps.size() > 0;
@@ -263,7 +263,7 @@ bool LanguageRestrictions::hasVariableArguments(SgFunctionDefinition* functionDe
 		SgType* argType = arg->get_type();
 		if (isSgTypeEllipse(argType))
 		{
-			backstroke_util::printCompilerError(declaration, "Ellipses arguments not allowed.");
+			BackstrokeUtility::printCompilerError(declaration, "Ellipses arguments not allowed.");
 			return true;
 		}
 	}
@@ -329,7 +329,7 @@ bool LanguageRestrictions::usesBannedTypes(SgFunctionDefinition* functionDefinit
 			classDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
 			if (classDeclaration == NULL)
 			{
-				backstroke_util::printCompilerError(nodeWhereTypeIsUsed, "Could not find definition for the given type. A full definition is needed"
+				BackstrokeUtility::printCompilerError(nodeWhereTypeIsUsed, "Could not find definition for the given type. A full definition is needed"
 						" in order to check constraints.");
 				return true;
 			}
@@ -349,7 +349,7 @@ bool LanguageRestrictions::usesBannedTypes(SgFunctionDefinition* functionDefinit
 				{
 					if (!SageInterface::isScalarType(memberVariable->get_type()))
 					{
-						backstroke_util::printCompilerError(memberVariableDeclaration, "Classes/Structs used inside the event function can"
+						BackstrokeUtility::printCompilerError(memberVariableDeclaration, "Classes/Structs used inside the event function can"
 								" only contain scalar types");
 						return true;
 					}
@@ -358,7 +358,7 @@ bool LanguageRestrictions::usesBannedTypes(SgFunctionDefinition* functionDefinit
 		}
 		else
 		{
-			backstroke_util::printCompilerError(nodeWhereTypeIsUsed, "Only primitive types and classes/structs containing primitive types are allowed");
+			BackstrokeUtility::printCompilerError(nodeWhereTypeIsUsed, "Only primitive types and classes/structs containing primitive types are allowed");
 			return true;
 		}
 	}
@@ -371,13 +371,13 @@ bool LanguageRestrictions::usesBannedTypes(SgFunctionDefinition* functionDefinit
 bool LanguageRestrictions::usesGnuExtensions(SgFunctionDefinition* functionDefinition)
 {
 	// Forbid use of statement expression.
-	vector<SgExpression*> all_exps = backstroke_util::querySubTree<SgExpression> (functionDefinition->get_body());
+	vector<SgExpression*> all_exps = BackstrokeUtility::querySubTree<SgExpression> (functionDefinition->get_body());
 
 	foreach(SgExpression* exp, all_exps)
 	{
 		if (isSgStatementExpression(exp))
 		{
-			backstroke_util::printCompilerError(exp, "gcc-style statement expressions are not allowed.");
+			BackstrokeUtility::printCompilerError(exp, "gcc-style statement expressions are not allowed.");
 			return true;
 		}
 	}
@@ -398,7 +398,7 @@ bool LanguageRestrictions::returnsBeforeFunctionEnd(SgFunctionDefinition* functi
 	{
 		if (returnStatement != lastStatementInBody)
 		{
-			backstroke_util::printCompilerError(returnStatement, "return statements are only allowed at the end of a function");
+			BackstrokeUtility::printCompilerError(returnStatement, "return statements are only allowed at the end of a function");
 			return true;
 		}
 	}

@@ -63,6 +63,7 @@ remove_sage3basic_h_pch:
 #    3. file names must be unique on a case-insensitive file system
 #    4. header files must not have names that conflict with headers in other directories
 # etc.
+export prefix	# for use by policy scripts
 enforce_policies:
 	@echo "The \"make check\" rule has been run in all subdirectories, now enforcing source code policies."
 	(cd $(top_srcdir) && ./scripts/policies-checker.sh)

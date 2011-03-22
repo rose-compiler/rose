@@ -9,6 +9,7 @@ main( int argc, char * argv[] )
   // Introduces tracking of performance of ROSE at the top most level.
      TimingPerformance timer ("AST translation (main): time (sec) = ",true);
 
+  // Build a vector of strings to represent the command line arguments.
      std::vector<std::string> sourceCommandline = std::vector<std::string>(argv, argv + argc);
      sourceCommandline.push_back("-rose:exit_after_parser");
 

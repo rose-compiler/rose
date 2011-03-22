@@ -26,14 +26,14 @@ TEST_TARGETS += libraryIdentificationTest_1.passed \
 EXTRA_DIST += libraryIdentificationTest.conf libraryIdentificationTest_obj.conf
 
 libraryIdentificationTest_1.passed: libraryIdentificationTest.conf libraryIdentificationTest
-	@$(TH) ARGS= INPUT=$(top_srcdir)/binaries/samples/i386-pivot_root $< $@
+	@$(RTH_RUN) ARGS= INPUT=$(top_srcdir)/binaries/samples/i386-pivot_root $< $@
 libraryIdentificationTest_2.passed: libraryIdentificationTest_obj.conf libraryIdentificationTest
-	@$(TH) ARCHIVE=$(top_builddir)/src/midend/abstractHandle/.libs/libabstractHandle.a $< $@
+	@$(RTH_RUN) ARCHIVE=$(top_builddir)/src/midend/abstractHandle/.libs/libabstractHandle.a $< $@
 libraryIdentificationTest_3.passed: libraryIdentificationTest.conf libraryIdentificationTest
-	@$(TH) ARGS='-rose:verbose 0 -rose:read_executable_file_format_only' \
+	@$(RTH_RUN) ARGS='-rose:verbose 0 -rose:read_executable_file_format_only' \
 		INPUT=$(top_builddir)/src/midend/abstractHandle/.libs/libabstractHandle.a $< $@
 libraryIdentificationTest_4.passed: libraryIdentificationTest.conf libraryIdentificationTest
-	@$(TH) ARGS='-rose:verbose 0' \
+	@$(RTH_RUN) ARGS='-rose:verbose 0' \
 		INPUT=$(top_builddir)/src/midend/abstractHandle/.libs/libabstractHandle.a $< $@
 
 # Conditionally link to SSL support since they disable use of Java (and so Fortran support in ROSE).

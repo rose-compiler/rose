@@ -2,3 +2,4 @@
 asdfsdf
 */
 DEF_PRIMITIVE_TYPE (BT_VOID, void_type_node)
+DEF_PRIMITIVE_TYPE (middleone, type_node)

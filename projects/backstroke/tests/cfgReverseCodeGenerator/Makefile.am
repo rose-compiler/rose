@@ -7,7 +7,8 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 noinst_PROGRAMS = reverserTest
 
 reverserTest_SOURCES =  CFGReverserMain.C
-reverserTest_LDADD = 	$(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.a \
+reverserTest_LDADD =	$(top_builddir)/projects/backstroke/libBackstroke.a \
+		 	$(top_builddir)/projects/backstroke/restrictedLanguage/libBackstrokeRestrictedLanguage.a \
 			$(top_builddir)/projects/backstroke/reverseComputation/libBackstrokeReverser.a \
 			$(top_builddir)/projects/backstroke/pluggableReverser/libBackstrokePluggableReverser.a \
 			$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a \

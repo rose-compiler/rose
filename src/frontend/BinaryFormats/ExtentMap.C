@@ -78,8 +78,24 @@ ExtentMap::subtract_from(rose_addr_t offset, rose_addr_t size) const
 
 /** Adds the specified extent to the map of extents. Coalesce adjacent entries in the map. */
 void
-ExtentMap::insert(rose_addr_t offset, rose_addr_t size)
+ExtentMap::insert(rose_addr_t offset, rose_addr_t size, rose_addr_t align_lo/*=1*/, rose_addr_t align_hi/*=1*/)
 {
+
+    /* Adjust starting and ending offsets to alignment constraints. */
+    if (align_lo>1) {
+        rose_addr_t new_offset = ALIGN_DN(offset, align_lo);
+        if (new_offset != offset) {
+            size += offset - new_offset;
+            offset = new_offset;
+        }
+    }
+    if (align_hi>1) {
+        rose_addr_t new_hi = ALIGN_UP(offset+size, align_hi);
+        if (new_hi != offset+size)
+            size = new_hi - offset;
+    }
+
+    /* Insert into map */
     if (0==size) return;
     ExtentMap to_add = subtract_from(offset, size);
     for (iterator i=to_add.begin(); i!=to_add.end(); ++i) {
@@ -228,6 +244,35 @@ ExtentMap::size() const
     for (const_iterator i=begin(); i!=end(); ++i)
         retval += (*i).second;
     return retval;
+}
+
+/** Precipitates individual extents into larger extents by combining individual extents that are separated by an amount less
+ *  than or equal to some specified @p reagent value.  Individual elements that would have been adjacent have already
+ *  been combined by the other modifying methods (insert, erase, etc). */
+void
+ExtentMap::precipitate(rose_addr_t reagent)
+{
+    ExtentMap result;
+    for (iterator i=begin(); i!=end(); /*void*/) {
+        ExtentPair left = *i++;
+        for (/*void*/; i!=end() && left.first+left.second+reagent >= i->first; i++)
+            left.second = (i->first + i->second) - left.first;
+        result.insert(left);
+    }
+    *this = result;
+}
+
+/** Find the extent pair that contains the specified address. Throw std::bad_alloc() if the address is not found. */
+ExtentPair
+ExtentMap::find_address(rose_addr_t addr) const
+{
+    const_iterator i = upper_bound(addr);
+    if (i==begin())
+        throw std::bad_alloc();
+    --i;
+    if (i->first+i->second <= addr)
+        throw std::bad_alloc();
+    return *i;
 }
 
 /** Print info about an extent map */

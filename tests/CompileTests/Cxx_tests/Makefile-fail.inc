@@ -164,8 +164,10 @@ test2010_15.C \
 test2010_16.C \
 test2010_17.C \
 test2010_22.C \
+test2010_27.C \
 longFile.C \
-certSignalExample.C
+certSignalExample.C \
+test2010_26.C
 
 # test2010_23.C \
 # eof

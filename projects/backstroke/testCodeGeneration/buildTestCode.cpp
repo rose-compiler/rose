@@ -14,6 +14,8 @@ using namespace SageInterface;
 
 vector<SgSymbol*> to_delete;
 
+
+#if 0
 int fixVariableReferences2(SgNode* root)
 {
     ROSE_ASSERT(root);
@@ -46,7 +48,7 @@ int fixVariableReferences2(SgNode* root)
                 if (varRef == arrowExp->get_rhs_operand())
                 {
                     // make sure the lhs operand has been fixed
-                    counter += fixVariableReferences2(arrowExp->get_lhs_operand());
+                    counter += fixVariableReferences(arrowExp->get_lhs_operand());
 
                     SgPointerType* ptrType = isSgPointerType(arrowExp->get_lhs_operand()->get_type());
                     ROSE_ASSERT(ptrType);
@@ -65,7 +67,7 @@ int fixVariableReferences2(SgNode* root)
                 if (varRef == dotExp->get_rhs_operand())
                 {
                     // make sure the lhs operand has been fixed
-                    counter += fixVariableReferences2(dotExp->get_lhs_operand());
+                    counter += fixVariableReferences(dotExp->get_lhs_operand());
 
                     SgClassType* clsType = isSgClassType(dotExp->get_lhs_operand()->get_type());
                     ROSE_ASSERT(clsType);
@@ -102,7 +104,7 @@ int fixVariableReferences2(SgNode* root)
     } // end for
     return counter;
 }
-
+#endif
 
 
 
@@ -238,7 +240,7 @@ class TestCodeBuilder
         //cout << fixStatement(stmt, isSgScopeStatement(decl->get_definition()->get_body())) << endl;
 
         //fixVariableReferences(decl->get_definition());
-        //cout << fixVariableReferences2(decl) << endl;
+        //cout << fixVariableReferences(decl) << endl;
 #else
         // For experiment
         pushScopeStack(isSgScopeStatement(decl->get_definition()->get_body()));
@@ -471,7 +473,7 @@ class TestCodeBuilder
                 appendStatement(event_func);
             }
 
-            cout << fixVariableReferences2(global_scope) << endl;
+            cout << fixVariableReferences(global_scope) << endl;
 
             //scope = SageBuilder::topScopeStack();
 

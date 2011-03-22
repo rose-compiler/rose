@@ -438,7 +438,11 @@ outputLogicalOperator(SgExpression* expr)
           SgType* rhs_type = rhs->get_type();
           if (isSgTypeBool(lhs_type) != NULL)
              {
-               ROSE_ASSERT(isSgTypeBool(rhs_type) != NULL);
+               if (isSgTypeBool(rhs_type) == NULL)
+               {
+                 printf ("Error: outputLogicalOperator(). Found a boolean lhs operand paired with a non-boolean rhs operand for SgExpression:%s\n",expr->class_name().c_str());
+                 ROSE_ASSERT(isSgTypeBool(rhs_type) != NULL);
+               }
                outputLogicalOperator = true;
              }
         }
@@ -978,16 +982,23 @@ FortranCodeGeneration_locatedNode::unparseInitializerList(SgExpression* expr, Sg
 
      info.set_nested_expression();
 
-     bool paren = false;
+  // bool paren = false;
+     bool paren = true;
      if (paren)
         {
-          curprint("(");
+       // DQ (12/9/2010): This is a bug in test2010_136.f90.
+       // curprint("(");
+          curprint("(/");
         }
 
-     curprint("/");
+  // DQ (12/9/2010): This is a bug in test2010_136.f90.
+  // curprint("/");
+
      SgExpressionPtrList::iterator it = expr_list->get_expressions().begin();
      while (it != expr_list->get_expressions().end())
         {
+       // printf ("In unparseInitializerList(): *it = %p = %s \n",*it,(*it)->class_name().c_str());
+
           unparseExpression(*it, info);
           it++;
           if (it != expr_list->get_expressions().end())
@@ -995,11 +1006,15 @@ FortranCodeGeneration_locatedNode::unparseInitializerList(SgExpression* expr, Sg
                curprint(","); 
              }
         }
-     curprint("/");
+
+  // DQ (12/9/2010): This is a bug in test2010_136.f90.
+  // curprint("/");
 
      if (paren)
         {
-          curprint(")");
+       // DQ (12/9/2010): This is a bug in test2010_136.f90.
+       // curprint(")");
+          curprint("/)");
         }
 
      info.unset_nested_expression();
@@ -1035,12 +1050,17 @@ FortranCodeGeneration_locatedNode::unparseAggrInit(SgExpression* expr, SgUnparse
 
      curprint("}");
 #else
-     curprint("(");
+
+  // DQ (12/9/2010): This is a bug in test2010_136.f90.
+  // curprint("(");
+
   // info.set_nested_expression();
   // unparseExpression(aggr_init->get_initializers(), info);
      unparseInitializerList(aggr_init->get_initializers(), info);
   // info.unset_nested_expression();
-     curprint(")");
+
+  // DQ (12/9/2010): This is a bug in test2010_136.f90.
+  // curprint(")");
 #endif
    }
 
@@ -1049,8 +1069,10 @@ FortranCodeGeneration_locatedNode::unparseConInit(SgExpression* expr, SgUnparse_
    {
   // DQ (5/3/2008): This is now used for all initialization of user-defined types.
 
-     printf ("Case SgConstructorInitializer not defined for Fortran code generation! node = %s \n",expr->class_name().c_str());
+  // DQ (1/25/2011): This is not used within Fortran 90 code.
+  // printf ("Case SgConstructorInitializer not defined for Fortran code generation! node = %s \n",expr->class_name().c_str());
   // ROSE_ASSERT(false);
+
      SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(expr);
      ROSE_ASSERT(constructorInitializer != NULL);
 
@@ -1062,9 +1084,11 @@ FortranCodeGeneration_locatedNode::unparseConInit(SgExpression* expr, SgUnparse_
      curprint(className);
 
      curprint("(");
+
      ROSE_ASSERT(constructorInitializer->get_args() != NULL);
   // unparseInitializerList(constructorInitializer->get_args(), info);
      unparseExpression(constructorInitializer->get_args(), info);
+
      curprint(")");
 
    }
@@ -1285,6 +1309,7 @@ FortranCodeGeneration_locatedNode::unparseVarRef(SgExpression* expr, SgUnparse_I
      ROSE_ASSERT(var_ref->get_symbol() != NULL);
   
      SgInitializedName* decl = var_ref->get_symbol()->get_declaration();
+     ROSE_ASSERT (decl != NULL);
      SgVariableDeclaration* vd = isSgVariableDeclaration(decl->get_declaration());
 
      if (false /*vd != NULL*/)

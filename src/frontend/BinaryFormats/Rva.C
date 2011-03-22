@@ -108,6 +108,13 @@ rose_rva_t::to_string() const
     return ss;
 }
 
+/** Increment the address by the specified amount, keeping it attached to the same (if any) section. */
+void
+rose_rva_t::increment(rose_addr_t amount)
+{
+    addr += amount;
+}
+
 std::ostream &
 operator<<(std::ostream &os, const rose_rva_t &rva)
 {

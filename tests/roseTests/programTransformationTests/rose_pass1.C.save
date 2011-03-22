@@ -4,7 +4,6 @@ void bar(int &w)
   ++w;
 }
 
-
 int main(int ,char **)
 {
 // Partial redundancy elimination: cachevar__1 is a cache of (b % 10)
@@ -24,8 +23,8 @@ int main(int ,char **)
       return 0;
     else {
     }
-    if (!(b > 2))
-      break;
+    if (!(b > 2)) 
+      break; 
     else {
     }
   }
@@ -39,4 +38,3 @@ int main(int ,char **)
   b = -999;
   goto LLL;
 }
-

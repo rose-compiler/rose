@@ -2,6 +2,8 @@
 #include "rose.h"
 #include <string>
 
+
+
 typedef bool SynthesizedAttribute;
 
 using namespace std;
@@ -109,24 +111,24 @@ InheritedAttribute visitorTraversal::evaluateInheritedAttribute(SgGraphNode* chi
     
     set<vector<SgGraphNode*> > newPathList;
     
-    cout << "Number Of Inherited Attributes In Set:" << inheritedAttributesSet.size() << endl;
+    //cout << "Number Of Inherited Attributes In Set:" << inheritedAttributesSet.size() << endl;
     if (inheritedAttributesSet.size() != 0) {
          
-        cout << "calculating inheritedAttributes" << endl;
+       // cout << "calculating inheritedAttributes" << endl;
         for (vector<InheritedAttribute>::iterator i = inheritedAttributesSet.begin(); i != inheritedAttributesSet.end(); i++) {
             
             InheritedAttribute inh = *i;
             //if (inh.pathcount != 0) {
-            cout << "adding " << inh.pathcount << " to pathcount" << endl;
+          //  cout << "adding " << inh.pathcount << " to pathcount" << endl;
             tmppathcount += inh.pathcount;
             set<vector<SgGraphNode*> > colpath = inh.collected_paths;
             for (set<vector<SgGraphNode*> >::iterator k = colpath.begin(); k != colpath.end(); k++) {
-                cout << "enumerating subpaths" << endl;
+            //    cout << "enumerating subpaths" << endl;
                 vector<SgGraphNode*> cp1 = *k;
                 for (vector<SgGraphNode*>::iterator kt = cp1.begin(); kt != cp1.end(); kt++) {
-                    cout << (*kt)->get_name() << " ";
+                   // cout << (*kt)->get_name() << " ";
                 }
-                cout << endl;
+             //   cout << endl;
             }
                   
             for (set<vector<SgGraphNode*> >::iterator j = colpath.begin(); j != colpath.end(); j++) {
@@ -136,31 +138,31 @@ InheritedAttribute visitorTraversal::evaluateInheritedAttribute(SgGraphNode* chi
             }
             //}
         }
-        cout << "enumerating paths" << endl;
+        //cout << "enumerating paths" << endl;
         set<string> namearr;
         set<set<string> > namearrs;
         for (set<vector<SgGraphNode*> >::iterator it = newPathList.begin(); it != newPathList.end(); it++) {
             vector<SgGraphNode*> cp = *it;
             for (vector<SgGraphNode*>::iterator jt = cp.begin(); jt != cp.end(); jt++) {
-                cout << (*jt)->get_name() << " ";
+       //         cout << (*jt)->get_name() << " ";
                ROSE_ASSERT(namearr.find((*jt)->get_name()) == namearr.end());
                 namearr.insert((*jt)->get_name());
             }
             ROSE_ASSERT(namearrs.find(namearr) == namearrs.end());
             namearrs.insert(namearr);
             namearr.clear();
-            cout << endl;
+       //     cout << endl;
         }
         set<vector<SgGraphNode*> > cp = collect_paths(child, newPathList);
-        cout << "Number Of Paths:" << newPathList.size() << endl;
-        cout << "This should match:" << tmppathcount << endl;
+     //   cout << "Number Of Paths:" << newPathList.size() << endl;
+   //     cout << "This should match:" << tmppathcount << endl;
         ROSE_ASSERT(tmppathcount == newPathList.size());
         InheritedAttribute inh(tmppathcount, newPathList);
         graphnodeinheritedmap[child] = inh;
         return InheritedAttribute(tmppathcount, newPathList);
     }
     else {
-    cout << "no inherited attributes given" << endl;
+ //   cout << "no inherited attributes given" << endl;
     graphnodeinheritedmap[child] = nullInherit;
     return nullInherit;
     }
@@ -206,53 +208,53 @@ SgGraphNode* node22 = new SgGraphNode("node22");
 SgGraphNode* node23 = new SgGraphNode("node23");
 SgGraphNode* node24 = new SgGraphNode("node24");
 
-SgDirectedGraphEdge* t1s2 = sgDG->addDirectedEdge(node1, node2, "t1s2");
-SgDirectedGraphEdge* t1s3 = sgDG->addDirectedEdge(node1, node3, "t1s3");
-SgDirectedGraphEdge* t2s4 = sgDG->addDirectedEdge(node2, node4, "t2s4");
-SgDirectedGraphEdge* t3s4 = sgDG->addDirectedEdge(node3, node4, "t3s4");
-SgDirectedGraphEdge* t4s5 = sgDG->addDirectedEdge(node4, node5, "t4s5");
+sgDG->addDirectedEdge(node1, node2, "t1s2");
+sgDG->addDirectedEdge(node1, node3, "t1s3");
+sgDG->addDirectedEdge(node2, node4, "t2s4");
+sgDG->addDirectedEdge(node3, node4, "t3s4");
+sgDG->addDirectedEdge(node4, node5, "t4s5");
 
-SgDirectedGraphEdge* t4s6 = sgDG->addDirectedEdge(node4, node6, "t4s6");
+sgDG->addDirectedEdge(node4, node6, "t4s6");
 
-SgDirectedGraphEdge* t4s7 = sgDG->addDirectedEdge(node4, node7, "t4s7");
+sgDG->addDirectedEdge(node4, node7, "t4s7");
 
-SgDirectedGraphEdge* t5s8 = sgDG->addDirectedEdge(node5, node8, "t5s8");
-SgDirectedGraphEdge* t6s8 = sgDG->addDirectedEdge(node6, node8, "t6s8");
-SgDirectedGraphEdge* t7s8 = sgDG->addDirectedEdge(node7, node8, "t7s8");
+sgDG->addDirectedEdge(node5, node8, "t5s8");
+sgDG->addDirectedEdge(node6, node8, "t6s8");
+sgDG->addDirectedEdge(node7, node8, "t7s8");
 
-SgDirectedGraphEdge* t8s9 = sgDG->addDirectedEdge(node8, node9, "t8s9");
-SgDirectedGraphEdge* t8s10 = sgDG->addDirectedEdge(node8, node10, "t8s10");
-SgDirectedGraphEdge* t8s11 = sgDG->addDirectedEdge(node8, node11, "t8s11");
-SgDirectedGraphEdge* t8s12 = sgDG->addDirectedEdge(node8, node12, "t8s12");
+sgDG->addDirectedEdge(node8, node9, "t8s9");
+sgDG->addDirectedEdge(node8, node10, "t8s10");
+sgDG->addDirectedEdge(node8, node11, "t8s11");
+sgDG->addDirectedEdge(node8, node12, "t8s12");
 
-SgDirectedGraphEdge* t9s13 = sgDG->addDirectedEdge(node9, node13, "t9s13");
-SgDirectedGraphEdge* t10s13 = sgDG->addDirectedEdge(node10, node13, "t10s13");
-SgDirectedGraphEdge* t11s13 = sgDG->addDirectedEdge(node11, node13, "t11s13");
-SgDirectedGraphEdge* t12s13 = sgDG->addDirectedEdge(node12, node13, "t12s13");
+sgDG->addDirectedEdge(node9, node13, "t9s13");
+sgDG->addDirectedEdge(node10, node13, "t10s13");
+sgDG->addDirectedEdge(node11, node13, "t11s13");
+sgDG->addDirectedEdge(node12, node13, "t12s13");
 
-SgDirectedGraphEdge* t13s14 = sgDG->addDirectedEdge(node13, node14, "t13s14");
-SgDirectedGraphEdge* t14s14 = sgDG->addDirectedEdge(node14, node14, "t14s14");
-SgDirectedGraphEdge* t14s15 = sgDG->addDirectedEdge(node14, node15, "t14s15");
-SgDirectedGraphEdge* t15s15 = sgDG->addDirectedEdge(node15, node15, "t15s15");
-SgDirectedGraphEdge* t15s16 = sgDG->addDirectedEdge(node15, node16, "t15s16");
-SgDirectedGraphEdge* t16s15 = sgDG->addDirectedEdge(node16, node15, "t16s15");
-SgDirectedGraphEdge* t16s17 = sgDG->addDirectedEdge(node16, node17, "t16s17");
+sgDG->addDirectedEdge(node13, node14, "t13s14");
+sgDG->addDirectedEdge(node14, node14, "t14s14");
+sgDG->addDirectedEdge(node14, node15, "t14s15");
+sgDG->addDirectedEdge(node15, node15, "t15s15");
+sgDG->addDirectedEdge(node15, node16, "t15s16");
+sgDG->addDirectedEdge(node16, node15, "t16s15");
+sgDG->addDirectedEdge(node16, node17, "t16s17");
 
-SgDirectedGraphEdge* t17s18 = sgDG->addDirectedEdge(node17, node18, "t17s18");
-SgDirectedGraphEdge* t17s19 = sgDG->addDirectedEdge(node17, node19, "t17s19");
-SgDirectedGraphEdge* t17s20 = sgDG->addDirectedEdge(node17, node20, "t17s20");
+sgDG->addDirectedEdge(node17, node18, "t17s18");
+sgDG->addDirectedEdge(node17, node19, "t17s19");
+sgDG->addDirectedEdge(node17, node20, "t17s20");
 
-SgDirectedGraphEdge* t18s21 = sgDG->addDirectedEdge(node18, node21, "t18s21");
-SgDirectedGraphEdge* t19s21 = sgDG->addDirectedEdge(node19, node21, "t19s21");
-SgDirectedGraphEdge* t20s21 = sgDG->addDirectedEdge(node20, node21, "t20s21");
+sgDG->addDirectedEdge(node18, node21, "t18s21");
+sgDG->addDirectedEdge(node19, node21, "t19s21");
+sgDG->addDirectedEdge(node20, node21, "t20s21");
 
-SgDirectedGraphEdge* t15s22 = sgDG->addDirectedEdge(node15, node22, "t15s22");
-SgDirectedGraphEdge* t22s15 = sgDG->addDirectedEdge(node22, node15, "t22s15");
-SgDirectedGraphEdge* t15s23 = sgDG->addDirectedEdge(node15, node23, "t15s23");
-SgDirectedGraphEdge* t23s15 = sgDG->addDirectedEdge(node23, node15, "t23s15");
-SgDirectedGraphEdge* t23s24 = sgDG->addDirectedEdge(node23, node24, "t23s24");
-SgDirectedGraphEdge* t24s23 = sgDG->addDirectedEdge(node24, node23, "t24s23");
-SgDirectedGraphEdge* t24s12 = sgDG->addDirectedEdge(node24, node12, "t24s12");
+sgDG->addDirectedEdge(node15, node22, "t15s22");
+sgDG->addDirectedEdge(node22, node15, "t22s15");
+sgDG->addDirectedEdge(node15, node23, "t15s23");
+sgDG->addDirectedEdge(node23, node15, "t23s15");
+sgDG->addDirectedEdge(node23, node24, "t23s24");
+sgDG->addDirectedEdge(node24, node23, "t24s23");
+sgDG->addDirectedEdge(node24, node12, "t24s12");
 
 
 
@@ -271,8 +273,8 @@ SgDirectedGraphEdge* t24s12 = sgDG->addDirectedEdge(node24, node12, "t24s12");
     InheritedAttribute inheritedAttribute(1, begincp);
     vis->traverse(node1, sgDG, gTree, inheritedAttribute, nullInherit, 0, false, node21);
     InheritedAttribute inh = vis->graphnodeinheritedmap[node21];
-    cout << "pathcount = " << inh.pathcount << endl;
+   // cout << "pathcount = " << inh.pathcount << endl;
     ROSE_ASSERT(inh.pathcount == 72);
-    cout << "complete" << endl;
+   // cout << "complete" << endl;
     return 0;
 }

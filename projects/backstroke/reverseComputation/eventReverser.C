@@ -1,5 +1,5 @@
 #include "eventReverser.h"
-#include "utilities/Utilities.h"
+#include "utilities/utilities.h"
 
 #include <stack>
 #include <boost/algorithm/string.hpp>
@@ -156,13 +156,13 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
 
     if (SgBreakStmt* break_stmt = isSgBreakStmt(stmt))
 	{
-		backstroke_util::printCompilerError(break_stmt, "Break statement is not supported");
+		BackstrokeUtility::printCompilerError(break_stmt, "Break statement is not supported");
 		exit(1);
 	}
 
     if (SgContinueStmt* continue_stmt = isSgContinueStmt(stmt))
 	{
-		backstroke_util::printCompilerError(continue_stmt, "Continue statement is not supported");
+		BackstrokeUtility::printCompilerError(continue_stmt, "Continue statement is not supported");
 		exit(1);
 	}
 
@@ -172,7 +172,7 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
         return StmtPair(SageInterface::copyStatement(stmt), NULL);
 
     // The following output should include break, continue and other ones.
-	backstroke_util::printCompilerError(stmt, "Unhandled statement type in the reverse code generator.");
+	BackstrokeUtility::printCompilerError(stmt, "Unhandled statement type in the reverse code generator.");
 	ROSE_ASSERT(false);
 	return NULL_STMT_PAIR;
 }
@@ -183,7 +183,7 @@ StmtPair EventReverser::instrumentAndReverseStatement(SgStatement* stmt)
 SgStatement* EventReverser::assembleLoopCounter(SgStatement* loop_stmt)
 {
     string counter_name = function_name_ + "_loop_counter_" + lexical_cast<string>(counter_++);
-    backstroke_util::validateName(counter_name, loop_stmt);
+    BackstrokeUtility::validateName(counter_name, loop_stmt);
 
     SgStatement* counter_decl = buildVariableDeclaration(
             counter_name, 
@@ -247,7 +247,7 @@ SgStatement* EventReverser::buildForLoop(SgStatement* loop_body)
     // build a simple for loop like: for (int i = N; i > 0; --i)
 
     string counter_name = "i";
-    backstroke_util::validateName(counter_name, loop_body);
+    BackstrokeUtility::validateName(counter_name, loop_body);
 
     SgStatement* init = buildVariableDeclaration(
             counter_name, buildIntType(), buildAssignInitializer(popLoopCounter()));

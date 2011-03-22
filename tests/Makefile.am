@@ -12,7 +12,7 @@ endif
 #  Phase 1) Analysis only, compiles the original code
 #  Phase 2) Analysis and code generation, compiles the original code
 #  Phase 3) analysis, code generation, and compiling the generated code
-bin_PROGRAMS = testParser testAnalysis testCodeGeneration testTranslator testAstFileIO testAstFileRead parallelASTMerge testGraphGeneration
+bin_PROGRAMS = testParser testAnalysis testCodeGeneration testTranslator testAstFileIO testAstFileRead parallelASTMerge testGraphGeneration testTokenGeneration
 
 
 # Phase 0 tests code:
@@ -51,6 +51,10 @@ parallelASTMerge_SOURCES = parallelASTMerge.C
 
 # This tests the ability to generate dot file (AST and WholeGraph) for the input application.
 testGraphGeneration_SOURCES = testGraphGeneration.C
+
+# This tests the token generation capabilities which are an option in ROSE used to support the 
+# generation of patches to define transformations of large scale applications.
+testTokenGeneration_SOURCES = testTokenGeneration.C
 
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES)
@@ -141,9 +145,17 @@ testSimpleLinkFileTranslator: testTranslator
 	./testTranslator inputSimpleLinkFileTranslator.C -lm
 
 
+# *****************************************
+# *******  Token Generation Tests  ********
+# *****************************************
+testObjectFileTokenGeneration: testTokenGeneration
+	./testTokenGeneration $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_TokenGeneration_inputFile.o
+
+test_testTokenGeneration: testObjectFileTokenGeneration 
 
 # Rule to run all the example translator tests
-test: test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator
+# test: test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator
+test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator
 
 
 # Make check rule

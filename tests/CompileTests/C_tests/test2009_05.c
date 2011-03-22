@@ -6,12 +6,30 @@
  *  bug 347 
  *  https://outreach.scidac.gov/tracker/index.php?func=detail&aid=347&group_id=24&atid=185
  * */
-void c_common_nodes_and_builtins()
-{
-  enum builtin_type {
-      firstone,
+#include <assert.h>
+enum builtin_type {
+  firstone,
 #define DEF_PRIMITIVE_TYPE(NAME, VALUE) NAME,
 #include "builtin-types.def"
-//TODO    lastone
-  };
+  lastone
+};
+
+/* Tree code classes.  */
+#define DEFTREECODE(SYM, NAME, TYPE, LENGTH) TYPE,
+static const char c_tree_code_type[] = {
+  'z',
+// test this  
+  'x',
+#include "c-common.def"
+};
+#undef DEFTREECODE
+
+static const char c_tree_code_type2[] = {  'z',  'x'};
+
+int main()
+{
+ enum builtin_type mytype = middleone;
+ assert(c_tree_code_type[2] == 'y');
+  return 0;
+  
 }

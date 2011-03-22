@@ -86,6 +86,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
 
      printf ("Build class type: name = %s \n",name.str());
 
+#if 1
+     buildClass(name);
+#else
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      SgClassDeclaration* declaration = SageBuilder::buildDefiningClassDeclaration ( name, astJavaScopeStack.front() );
 
@@ -111,6 +114,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
   // Add "super()" member function.
      SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction("super");
      ROSE_ASSERT(functionDeclaration != NULL);
+#endif
    }
 
 
@@ -196,6 +200,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCall (JNIEnv *e
      astJavaScopeStack.front()->append_statement(expressionStatement);
    }
 
+
 JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jobject, jstring java_string)
    {
      printf ("Build a SgMemberFunctionDeclaration \n");
@@ -207,6 +212,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jo
 
   // Push the declaration onto the declaration stack.
    }
+
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionSingleTypeReference (JNIEnv *, jobject, jstring)
    {
@@ -246,21 +252,55 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *, jobject, 
 
 
 
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart (JNIEnv *, jobject, jstring)
+// DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
+// declared "public static native" instead of "public native" in the Java side of the JNI interface.
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart (JNIEnv* env, jclass xxx, jstring java_string)
    {
      printf ("Build support for implicit class (start) \n");
+
+#if 1
+     SgName name = convertJavaStringToCxxString(env,java_string);
+     buildClass(name);
+#endif
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIEnv *, jobject, jstring)
+// DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
+// declared "public static native" instead of "public native" in the Java side of the JNI interface.
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIEnv* env, jclass xxx, jstring java_string)
    {
      printf ("Build support for implicit class (end) \n");
+
+  // Experiment with ERROR on C++ side...communicated to Java...and back to C++ side where the JVM is called by ROSE...
+  // ROSE_ASSERT(false);
+
+  // Pop the class definition off the scope stack...
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     astJavaScopeStack.pop_front();
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport (JNIEnv *, jobject, jstring)
+// DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
+// declared "public static native" instead of "public native" in the Java side of the JNI interface.
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport (JNIEnv* env, jclass xxx, jstring java_string)
    {
-     printf ("Build support for implicit method \n");
+  // printf ("Build support for implicit class member function (method) \n");
+
+     SgName name = convertJavaStringToCxxString(env,java_string);
+     SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction(name);
+     ROSE_ASSERT(functionDeclaration != NULL);
    }
+
+
+// DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
+// declared "public static native" instead of "public native" in the Java side of the JNI interface.
+JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport (JNIEnv* env, jclass xxx, jstring java_string)
+   {
+  // printf ("Build support for implicit class data member (field) \n");
+
+     SgName name = convertJavaStringToCxxString(env,java_string);
+     SgVariableDeclaration* variableDeclaration = buildSimpleVariableDeclaration(name);
+     ROSE_ASSERT(variableDeclaration != NULL);
+   }
+
 

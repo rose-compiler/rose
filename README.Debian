@@ -1,0 +1,192 @@
+
+========================================================
+Instructions for installing ROSE locally on Debian Lenny
+========================================================
+
+2011-01-05
+
+
+0. Install Debian Lenny. You can do this in a virtual machine, in
+   which case you can save some time by not installing the entire
+   graphical user interface (X server, window managers, etc).  If you
+   go this route, you may want to install openssh-server so you can
+   get to your virtual machine.
+
+   To omit the X server, window managers, and their multitude of
+   related programs and servers, just uncheck "desktop" when you get
+   to the point in the installation where you need to choose what kind
+   of system to build.  Some of the other ROSE prerequisites may pull
+   in the X windows libraries, but that's OK.
+
+   To start an SSH server, run:
+
+	# aptitude install openssh-server
+
+1. You'll need some additional packages beyond the basic stuff.  So
+   edit /etc/apt/sources.list and add the words "contrib" and
+   "non-free" to the end of each line.  Also add two additional
+   backports lines that will allow you to install more recent
+   libraries, including boost 1.40.  The file should contain lines
+   similar to these:
+
+	deb http://ftp.us.debian.org/debian/ lenny main contrib non-free
+	deb-src http://ftp.us.debian.org/debian/ lenny main contrib non-free
+
+	deb http://security.debian.org/ lenny/updates main contrib non-free
+	deb-src http://security.debian.org/ lenny/updates main contrib non-free
+
+	deb http://volatile.debian.org/debian-volatile lenny/volatile main contrib non-free
+	deb-src http://volatile.debian.org/debian-volatile lenny/volatile main contrib non-free
+
+	deb http://www.backports.org/debian lenny-backports main contrib non-free
+	deb-src http://www.backports.org/debian lenny-backports main contrib non-free
+
+   NOTE: I'm not sure whether "contrib" and "non-free" are actually
+   necessary, but that's what I already had on my main development
+   system. [RPM 2011-01-05]
+
+2. Make sure your system is up to date
+
+	# aptitude update
+	# aptitude safe-upgrade
+	# aptitude install g++  # upgrade to latest version, 4.3 at this time
+
+3. Install prerequisites
+	# aptitude install libtool automake make flex bison doxygen
+	# aptitude install libqt4-dev qt4-dev-tools
+	# aptitude install libsqlite3-dev 
+	# aptitude install libssl-dev libxml2-dev libgcrypt11-dev
+
+
+4. Install libboost1.40-dev and related development libraries. These
+   probably aren't all needed, but we might as well install them all
+   while we're at it.
+
+	# aptitude install libboost1.40-dev
+	# aptitude install libboost-date-time1.40-dev
+	# aptitude install libboost-filesystem1.40-dev
+	# aptitude install libboost-graph-parallel1.40-dev
+	# aptitude install libboost-graph1.40-dev
+	# aptitude install libboost-iostreams1.40-dev
+	# aptitude install libboost-math1.40-dev
+	# aptitude install libboost-mpi1.40-dev
+	# aptitude install libboost-program-options1.40-dev
+	# aptitude install libboost-signals1.40-dev
+	# aptitude install libboost-thread1.40-dev
+	# aptitude install libboost-wave1.40-dev
+
+4. Untar the ROSE sources and "cd" into the top of the directory,
+   which we call $ROSE_SRC
+
+	$ tar xvzf rose-0.9.5a-without-EDG-12993.tar.gz
+	$ cd rose-0.9.5a-12993
+
+5. Run the "build" script to generate all the "Makefile.in" from
+   "Makefile.am" and a few other housekeeping chores.
+
+	$ ./build
+
+6. Create a build directory for object files, libraries, executables,
+   etc.  This also allows you to easily wipe out a failed build and
+   start over by simply removing the build directory and recreating
+   it.  We'll call this directory $ROSE_BLD. The following commands
+   assume that the build directory is located in the top of the source
+   directory (i.e., $ROSE_BLD == $ROSE_SRC/_build), but you could put
+   it anywhere and call it anything.
+
+	$ mkdir _build
+	$ cd _build
+
+7. Configure the build environment. You must run this command with the
+   CWD = $ROSE_BLD since this is what links the build directory to the
+   source directory.
+
+	$ ../configure --prefix=$(pwd)/installed \
+	    --enable-assembly-semantics \
+	    --with-CFLAGS=-fPIC \
+	    --with-CXXFLAGS=-fPIC \
+	    --with-CXX_DEBUG=-g \
+	    --with-CXX_OPTIMIZE=-O0 \
+	    --with-CXX_WARNINGS=-Wall \
+	    --with-C_DEBUG=-g \
+	    --with-C_OPTIMIZE=-O0 \
+	    --with-C_WARNINGS=-Wall \
+	    --with-ROSE_LONG_MAKE_CHECK_RULE=yes \
+	    --with-boost=/usr \
+	    --with-pch \
+	    --with-qt=/usr \
+	    --with-qt-lib \
+	    --with-roseQt \
+	    --with-sqlite3
+
+8. Build everything. You can also add "-j16", or such as your system
+   is capable, to the "make" command in order to speed things up. It
+   also helps to use distcc and ccache if you have them.  Run this
+   from $ROSE_BLD.
+
+	$ rm -rf $ROSE_BLD/installed	(see next step)
+	$ make
+	$ make check			(this is optional)
+
+9. Install everything into the directory you specified with the
+   "--prefix" switch in the "configure" command above.  Run this from
+   $ROSE_BLD.  If you ever rebuild ROSE, be sure to delete the
+   installation directory first. It seems that the build process
+   sometimes grabs old headers and libraries from the installation
+   directory rather than the build directory.
+
+	$ make install
+
+
+==========================================
+Installing Internal Projects that use ROSE
+==========================================
+
+Internal projects are packaged searately from ROSE, they use the same
+basic build process and scripts, and they reference an installed copy
+of ROSE (the ROSE headers and libraries).
+
+1. Untar the internal project. You can do this anywhere in the file
+   system; it does not have to be under the ROSE source tree, although
+   the ROSE source tree must also be present on your system.
+
+	$ tar xvzf rose-internal-projects.tar.gz
+	$ cd rose-internal-projects
+
+2. Run the "build" script to generate "Makefile.in" from "Makefile.am"
+   and a few other housekeeping chores.  We need to tell it where the
+   ROSE source tree is located.
+
+	$ ./build --srcpath=$ROSE_SRC
+
+3. Create a build directory like we did for ROSE.  This is where we'll
+   do all of our compiling.
+
+	$ mkdir _build
+	$ cd _build
+
+4. Configure the build environment.  The installation directory
+   (--prefix switch) must match that which was used for ROSE itself.
+   It's probably a good idea to use all the same switches as for ROSE.
+
+	$ ../configure --prefix=$ROSE_BLD/installed \
+	    --enable-assembly-semantics \
+	    --with-CFLAGS=-fPIC \
+	    --with-CXXFLAGS=-fPIC \
+	    --with-CXX_DEBUG=-g \
+	    --with-CXX_OPTIMIZE=-O0 \
+	    --with-CXX_WARNINGS=-Wall \
+	    --with-C_DEBUG=-g \
+	    --with-C_OPTIMIZE=-O0 \
+	    --with-C_WARNINGS=-Wall \
+	    --with-ROSE_LONG_MAKE_CHECK_RULE=yes \
+	    --with-boost=/usr \
+	    --with-pch \
+	    --with-qt=/usr \
+	    --with-qt-lib \
+	    --with-roseQt \
+	    --with-sqlite3
+
+5. Build everything
+
+	$ make

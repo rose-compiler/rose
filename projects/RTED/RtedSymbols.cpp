@@ -33,6 +33,9 @@ void RtedSymbols::visit(SgNode* n) {
     LOOKUP( roseConfirmFunctionSignature );
     LOOKUP( roseConvertIntToString );
     LOOKUP( roseCreateVariable );
+#if NOT_YET_IMPLEMENTED
+    LOOKUP( roseCreateSharedVariable );
+#endif /* NOT_YET_IMPLEMENTED */
     LOOKUP( roseCreateObject );
     LOOKUP( roseInitVariable );
     LOOKUP( roseMovePointer );
@@ -43,7 +46,7 @@ void RtedSymbols::visit(SgNode* n) {
     LOOKUP( roseRegisterTypeCall );
     LOOKUP( roseFreeMemory );
     LOOKUP( roseReallocateMemory );
-    LOOKUP( roseCheckIfThisNULL);
+    LOOKUP( roseCheckIfThisNULL );
   }
 
   if (isSgTypedefDeclaration(n)) {
@@ -60,4 +63,3 @@ void RtedSymbols::visit(SgNode* n) {
   // ******************** DETECT Member functions in RuntimeSystem.h *************************************************************
 
 }
-

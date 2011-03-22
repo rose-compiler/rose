@@ -9,7 +9,6 @@ int unknown()
   return 0;
 }
 
-
 void foo()
 {
 // Partial redundancy elimination: cachevar__1 is a cache of (a + b)
@@ -43,19 +42,19 @@ void foo()
     }
   }
   else if ((unknown())) {
-      while((unknown())){
-      }
-      if ((unknown())) {
-        cachevar__1 = (a + b);
-        y = cachevar__1;
-      }
-      else {
-        goto L9;
-      }
+    while((unknown())){
+    }
+    if ((unknown())) {
+      cachevar__1 = (a + b);
+      y = cachevar__1;
     }
     else {
-      goto L10;
+      goto L9;
     }
+  }
+  else {
+    goto L10;
+  }
   z = cachevar__1;
   a = c;
   L9:
@@ -66,10 +65,8 @@ void foo()
 // ROSE bug: using return; here doesn't work
 }
 
-
 int main(int ,char **)
 {
   foo();
   return 0;
 }
-

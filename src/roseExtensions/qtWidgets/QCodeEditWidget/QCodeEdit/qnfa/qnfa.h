@@ -64,7 +64,7 @@ enum NFAAssertion
 {
         NoAssertion             = 0,
         
-        One                             = 0,            // default standard
+        One                     = 0,            // default standard  NO_STRINGIFY
         ZeroOrOne               = 1,            // ?
         ZeroOrMore              = 2,            // *
         OneOrMore               = 4,            // +

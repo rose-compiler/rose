@@ -1,9 +1,12 @@
 #include "akgulStyleExpressionHandler.h"
-#include "utilities/CPPDefinesAndNamespaces.h"
-#include "utilities/Utilities.h"
+#include "utilities/cppDefinesAndNamespaces.h"
+#include "utilities/utilities.h"
 
 #include <numeric>
 #include <algorithm>
+
+using namespace std;
+using namespace boost;
 
 vector<EvaluationResult> AkgulStyleExpressionHandler::evaluate(SgExpression* expression, const VariableVersionTable& varTable,
 		bool isReverseValueUsed)

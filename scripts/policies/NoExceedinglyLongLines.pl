@@ -35,7 +35,7 @@ while ($ARGV[0] =~ /^-/) {
 my $nfail=0;
 my $files = FileLister->new(@ARGV);
 while (my $filename = $files->next_file) {
-  next unless $filename =~ /\.(h|hh|c|C|cpp)$/;  # look only at C/C++ source code for now (we can add more later)
+  next unless $filename =~ /\.(h|hh|hpp|c|C|cpp)$/;  # look only at C/C++ source code for now (we can add more later)
 
 
   if (-T $filename && open FILE, "<", $filename) {

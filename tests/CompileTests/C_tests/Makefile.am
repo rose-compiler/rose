@@ -31,7 +31,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2009_02.c \
      test2009_03.c \
      test2009_04.c \
-     test2009_05.c \
      test2009_07.c \
      test2009_08.c \
      test2009_16.c \
@@ -40,6 +39,16 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2010_01.c \
      test2010_04.c \
      test2010_06.c \
+     test2010_07.c \
+     test2010_08.c \
+     test2010_09.c \
+     test2010_10.c \
+     test2010_11.c \
+     test2010_12.c \
+     test2010_13.c \
+     test2010_14.c \
+     test2010_15.c \
+     test2010_17.c \
      math.c \
      complex_01.c \
      constants.c
@@ -55,11 +64,11 @@ endif
 #Liao, 5/16/2009 add a set of self-verifiable test code with main() 
 # and let them run during make check
 TESTCODES_REQUIRED_TO_RUN = \
+     test2009_05.c \
      test2009_17.c \
      test2009_18.c \
      test2009_20.c
 
-# test2009_20.c  (array -1) becomes (array) bug 368
 TESTCODE_CURRENTLY_FAILING = \
      test2004_126.c \
      test2006_14.c  \
@@ -70,9 +79,9 @@ TESTCODE_CURRENTLY_FAILING = \
      test2010_02.c \
      test2010_03.c \
      test2010_05.c \
+     test2010_16.c \
      Yarden_client.c
 
-noinst_headers = test2006_134.h
 
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
@@ -142,7 +151,8 @@ test2008_02.o: $(srcdir)/test2008_02.c
 # Include makefile rules specific to QMTest
 #include $(top_srcdir)/config/QMTest_makefile.inc
 
-EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c
+EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
+             test2006_134.h test2010_08.h predict.def test2010_15.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests

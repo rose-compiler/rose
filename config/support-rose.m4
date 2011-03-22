@@ -1425,6 +1425,9 @@ else
 fi
 
 
+
+
+
 # TP (2-27-2009) -- support for RTED
 ROSE_SUPPORT_RTED
 
@@ -1450,13 +1453,39 @@ if test ! "x$rose_openGL" = xno; then
     AC_MSG_NOTICE( "OpenGL enabled. Found GLUT." );
  else
 #    AC_MSG_NOTICE( "OpenGL GLUT not found Msg" );
-   AC_MSG_ERROR( "OpenGL GLUT not found" );
+   AC_MSG_NOTICE( "OpenGL GLUT not found. Please use --with-glut" );
  fi
 fi
 ], [ rose_openGL=no
   AC_MSG_NOTICE( "OpenGL disabled." );
 ])
-AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$have_glut" = xno -a ! "x$rose_openGL" = xno)
+AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$rose_openGL" = xno)
+
+
+AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, false)
+
+AC_ARG_WITH(glut,
+[  --with-glut=PATH     Configure option to have GLUT enabled.],
+,
+if test ! "$with_glut" ; then
+   with_glut=no
+fi
+)
+
+echo "In ROSE SUPPORT MACRO: with_glut $with_glut"
+
+if test "$with_glut" = no; then
+   # If dwarf is not specified, then don't use it.
+   echo "Skipping use of GLUT support!"
+else
+   AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, true)
+   glut_path=$with_glut
+   echo "Setup GLUT support in ROSE! path = $glut_path"
+   AC_DEFINE([USE_ROSE_GLUT_SUPPORT],1,[Controls use of ROSE support for GLUT library.])
+fi
+
+
+AC_SUBST(glut_path)
 
 
 
@@ -2511,13 +2540,6 @@ src/midend/programTransformation/loopProcessing/slicing/Makefile
 src/midend/programTransformation/loopProcessing/outsideInterface/Makefile
 src/midend/programTransformation/loopProcessing/driver/Makefile
 src/backend/Makefile
-src/backend/unparser/Makefile
-src/backend/unparser/formatSupport/Makefile
-src/backend/unparser/languageIndependenceSupport/Makefile
-src/backend/unparser/CxxCodeGeneration/Makefile
-src/backend/unparser/FortranCodeGeneration/Makefile
-src/backend/unparser/PHPCodeGeneration/Makefile
-src/backend/asmUnparser/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
 src/roseExtensions/sqlite3x/Makefile
@@ -2646,7 +2668,11 @@ projects/backstroke/eventDetection/Makefile
 projects/backstroke/eventDetection/ROSS/Makefile
 projects/backstroke/eventDetection/SPEEDES/Makefile
 projects/backstroke/normalizations/Makefile
+projects/backstroke/slicing/Makefile
+projects/backstroke/ssa/Makefile
+projects/backstroke/valueGraph/Makefile
 projects/backstroke/pluggableReverser/Makefile
+projects/backstroke/testCodeGeneration/Makefile
 projects/backstroke/restrictedLanguage/Makefile
 projects/backstroke/reverseComputation/Makefile
 projects/backstroke/tests/Makefile
@@ -2655,6 +2681,7 @@ projects/backstroke/tests/expNormalizationTest/Makefile
 projects/backstroke/tests/extractFunctionArgumentsTest/Makefile
 projects/backstroke/tests/pluggableReverserTest/Makefile
 projects/backstroke/tests/restrictedLanguageTest/Makefile
+projects/backstroke/tests/testCodeBuilderTest/Makefile
 projects/backstroke/utilities/Makefile
 projects/binCompass/Makefile
 projects/binCompass/analyses/Makefile
@@ -2811,6 +2838,7 @@ tests/roseTests/binaryTests/Pin_tests/Makefile
 tests/roseTests/binaryTests/Dwarf_tests/Makefile
 tests/roseTests/loopProcessingTests/Makefile
 tests/roseTests/ompLoweringTests/Makefile
+tests/roseTests/ompLoweringTests/fortran/Makefile
 tests/roseTests/programAnalysisTests/Makefile
 tests/roseTests/programAnalysisTests/defUseAnalysisTests/Makefile
 tests/roseTests/programAnalysisTests/sideEffectAnalysisTests/Makefile

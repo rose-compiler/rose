@@ -4,7 +4,6 @@ int min2(int a0,int a1)
   return a0 < a1?a0 : a1;
 }
 
-
 int min3(int a0,int a1,int a2)
 {
   int res = a0;
@@ -21,7 +20,6 @@ int min3(int a0,int a1,int a2)
   return res;
 }
 
-
 double abs(double x)
 {
   if (x < (0)) 
@@ -29,7 +27,6 @@ double abs(double x)
   else 
     return x;
 }
-
 #define n 50
 extern void printmatrix(double x[][50UL]);
 extern void initmatrix(double x[][50UL],double s);
@@ -85,4 +82,3 @@ int main(int argc,char *argv[])
   printmatrix(a);
   return 0;
 }
-

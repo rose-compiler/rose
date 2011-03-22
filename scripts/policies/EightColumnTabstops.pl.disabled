@@ -117,7 +117,7 @@ sub lines {
 my $nfail=0;
 my $files = FileLister->new(@ARGV);
 while (my $filename = $files->next_file) {
-  if ($filename =~ /\.(h|hh|c|cpp|C)$/ && open FILE, "<", $filename) {
+  if ($filename =~ /\.(h|hh|hpp|c|cpp|C)$/ && open FILE, "<", $filename) {
     #DEBUG "FILE", $filename;
     my @lines = lines(\*FILE);
     close FILE;

@@ -8,13 +8,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <err.h>
+#include <unistd.h>
 
 char pfilname[40] = "";
 
 int main() {
-	struct stat statbuf;
 	int fd;
-	unsigned short filmode;
 
   sprintf(pfilname, "tfile_%d", getpid());
   fd = open(pfilname, O_RDWR, 01444);

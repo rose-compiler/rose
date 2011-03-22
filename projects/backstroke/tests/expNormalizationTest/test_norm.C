@@ -1,8 +1,17 @@
+class AA
+{
+	//friend void foo(float);
+};
+
+
+
 int& foo(int& a)
 {
     return a = 0;
 }
 
+void foo(float);//{}
+void foo(float){}
 
 int i = 0, j = 0, k = 0;
 int a[100];
@@ -15,18 +24,30 @@ enum Color
     yellow
 };
 
+void test_while()
+{
+    while(++i)
+    {
+        if (++j)
+            continue;
+        else
+            break;
+    }
+}
+
 void test_sizeof_cast()
 {
     sizeof(i++, j++);
     char c = static_cast<char>(i++);
 }
 
+
 void test_if()
 {
     if (int i = 0);
     if (++i > j--);
     if ((i += j) > k);
-    if (foo(i));
+    //if (foo(i));
     if (++i);
     if (i ? j++ : k++);
 }
@@ -52,8 +73,10 @@ void test_and_or()
 {
     i || j;
     i || j++;
+    if (i || j++);
     (i, j) || k;
     i || (j, k);
+    i || (++j, ++k);
     (i ? j : k) || i;
     i || (j ? k : i);
 
@@ -77,6 +100,8 @@ void test_declaration()
     int iii(j++);
     int ii = (j, k);
     int k = j++ ? 1 : 2;
+
+    int a = (i, j), b = (i, j);
 
     if (int i = j++);
     switch(int i = j++);
@@ -220,4 +245,4 @@ void test13()
 }
 
 
-void foo() { int i = 2; int j = i++;}
+//void foo() { int i = 2; int j = i++;}

@@ -564,7 +564,7 @@ Grammar::setUpTypes ()
      QualifiedNameType.setDataPrototype ( "SgQualifiedNamePtrList", "qualifiedNameList", "",
                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     FunctionType.setFunctionPrototype ("HEADER_FUNCTION_TYPE_ARGUMENTS", "../Grammar/Type.code" );        
+     FunctionType.setFunctionPrototype ("HEADER_FUNCTION_TYPE_ARGUMENTS", "../Grammar/Type.code" );
      FunctionType.setDataPrototype     ("SgType*", "return_type","= NULL",
 					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, TYPE_TRAVERSAL, NO_DELETE);
      FunctionType.setDataPrototype     ("bool", "has_ellipses","= true",
@@ -631,6 +631,12 @@ Grammar::setUpTypes ()
 
   // DQ (8/17/2010): Added support for string types for Fortran (in C/C++ they are just arrays of char).
      TypeString.setFunctionPrototype ("HEADER_TYPE_STRING_TYPE", "../Grammar/Type.code" );
+
+  // DQ (12/26/2010): Added mechanism to store names of types that can't be identified in initial parsing (applicable only to Fortran).
+     TypeDefault.setFunctionPrototype ("HEADER_TYPE_DEFAULT_TYPE", "../Grammar/Type.code" );
+     TypeDefault.setDataPrototype ("SgName", "name" , "= \"\"",
+				 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // ***********************************************************************
   // ***********************************************************************
@@ -709,7 +715,7 @@ Grammar::setUpTypes ()
      TypeBool.editSubstitute( "MANGLED_ID_STRING", "b" );
      TypeComplex.editSubstitute( "MANGLED_ID_STRING", "Complex" );
      TypeImaginary.editSubstitute( "MANGLED_ID_STRING", "Imaginary" );
-     TypeDefault.editSubstitute( "MANGLED_ID_STRING", "u" );
+  // TypeDefault.editSubstitute( "MANGLED_ID_STRING", "u" );
      PointerType.editSubstitute( "MANGLED_ID_STRING", "P" );
      ReferenceType.editSubstitute( "MANGLED_ID_STRING", "R" );
 
@@ -734,13 +740,19 @@ Grammar::setUpTypes ()
      ArrayType.setFunctionSource           ( "SOURCE_ARRAY_TYPE", "../Grammar/Type.code");
      ModifierType.setFunctionSource        ( "SOURCE_MODIFIER_TYPE", "../Grammar/Type.code");
      QualifiedNameType.setFunctionSource   ( "SOURCE_QUALIFIED_NAME_TYPE", "../Grammar/Type.code");
-     TypeCrayPointer.editSubstitute        ( "MANGLED_ID_STRING", "s" );
+     TypeCrayPointer.editSubstitute        ( "MANGLED_ID_STRING", "CrayPointer" );
 
   // DQ (8/17/2010): Added support for SgTypeString (used in Fortran).
      TypeString.setFunctionSource         ( "SOURCE_TYPE_STRING_TYPE", "../Grammar/Type.code");
   // DQ (8/17/2010): Added support for SgTypeString name mangling.
      TypeString.excludeFunctionSource     ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      TypeString.setFunctionSource         ( "SOURCE_GET_MANGLED_STRING_TYPE", "../Grammar/Type.code");
+
+  // DQ (12/26/2010): Added support for names in TypeDefault (used to store parser information until
+  // proper type can be constructed, e.g. after using statement is seen for function return types).
+     TypeDefault.excludeFunctionSource     ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     TypeDefault.setFunctionSource         ( "SOURCE_TYPE_DEFAULT_TYPE", "../Grammar/Type.code");
+  // TypeDefault.setFunctionSource         ( "SOURCE_GET_MANGLED_STRING_TYPE", "../Grammar/Type.code");
 #endif
    }
 

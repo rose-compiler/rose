@@ -6,3 +6,5 @@ include "fortran_foo_double_quote.h"
 #include "cpp_foo.h"
 #include <cpp_foobar.h>
 
+end
+

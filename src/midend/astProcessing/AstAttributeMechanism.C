@@ -22,7 +22,7 @@ AstAttribute::~AstAttribute()
 std::string
 AstAttribute::toString()
    {
-     return "";
+     return StringUtility::numberToString((void*)(this));
    }
 
 AstAttribute*

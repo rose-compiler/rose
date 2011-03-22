@@ -2,32 +2,29 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-bin_PROGRAMS = read_etrace HIDDEN_read_etrace
+bin_PROGRAMS = trace
 
-read_etrace_SOURCES = dummy_file.c
-HIDDEN_read_etrace_SOURCES = dummy_file.c
+# Comment out to test withouth committting to ROSE yet.
+trace_SOURCES = trace.C generateExecutable.C
 
-# read_etrace_SOURCES = trace.C
-# HIDDEN_read_etrace_SOURCES = HIDDEN_read_etrace.c
+TRACE_FILES = vmp-hw-part.trace
 
+# DQ (11/2/2010): this automake variable is always fals at the moment.
 if ROSE_USE_TRACE_ANALYSIS
-#  read_etrace_SOURCES += read_etrace.c
-   TRACE_FILES = vmp-hw-part.trace
+#  TRACE_FILES = 
 else
-   TRACE_FILES = 
+#  TRACE_FILES = 
 endif
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-test: read_etrace
-	./read_etrace $(srcdir)/vmp-hw-part.trace
-
-test2: HIDDEN_read_etrace
-	./HIDDEN_read_etrace $(srcdir)/vmp-hw-part.trace
+test: trace
+	./trace $(srcdir)/vmp-hw-part.trace
 
 check-local:
+	$(MAKE) test > trace.out
 
 clean-local:
-	rm -f *.o rose_*.c
+	rm -f *.o rose_*.c trace.out a.out
 
 EXTRA_DIST = $(TRACE_FILES)

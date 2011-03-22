@@ -82,7 +82,7 @@ DONE (see below) * Need a way to display the AST (currently we can print out the
      decremented to record references.  The new and delete operators have not been 
      implemented either (though this is not required for reference counting).  This
      is not a serious problem, except that it takes purify a long time to process the 
-     memory leaks it reports (as a resutl I have turned off this test in purify
+     memory leaks it reports (as a result I have turned off this test in purify
      (using -leaks-at-exit=no -inuse-at-exit=no)).
 
 * It would be good to have some simple and moderately sophisticated tree traversal 
@@ -123,8 +123,8 @@ DONE (see below) * Need a way to display the AST (currently we can print out the
             grammars AST.
                * array statement optimization
 
-* DONE: As an alternative to writting out the AST as an asci file, it might be helpful to
-  write it out as a hypertext format so that scopes/files could be colapsed.
+* DONE: As an alternative to writing out the AST as an asci file, it might be helpful to
+  write it out as a hypertext format so that scopes/files could be collapsed.
   There must be software around that does this.  Currently we output a very large 
   file that uses indentation to should scope, something better would be helpful
   and could be folded into the SvPablo (a AST viewer?).
@@ -140,9 +140,9 @@ DONE (see below) * Need a way to display the AST (currently we can print out the
   a #include<filename> directive is limited to one #include directive per 
   extern "C" {} modifier.  The mechanism is a bit of a hack and not very robust.
   A more details comment is in the ChangeLog about what was done ans its limitations.
-  A better method would build the include tree and search all brances and leaves of 
+  A better method would build the include tree and search all branches and leaves of 
   the include tree to verify that each declaration was really an 'extern "C" with braces' 
-  modifier. This would suppliment the current approach which uses a lex rule to find the
+  modifier. This would supplement the current approach which uses a lex rule to find the
   'extern "C" {' modifier (when directives are extracted) and justs adds the closing 
   brace "}" after the next #include directive (not very safe or smart).  This problem 
   needs to be revisited.

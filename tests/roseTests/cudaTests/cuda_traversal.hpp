@@ -48,6 +48,12 @@ class CudaTraversal : public AstSimpleProcessing {
 						p_kernel_call_site = func_call;
 					break;
 				}
+                                case V_SgSourceFile: // fix the file suffix, Liao 12/29/2010
+                                {
+                                     SgSourceFile * sfile = isSgSourceFile (n);
+                                     ROSE_ASSERT (sfile != NULL);
+                                     sfile->set_Cuda_only(true);
+                                }
 				default:{}
 			}
 		}

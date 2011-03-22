@@ -108,18 +108,18 @@ SgClassDeclaration* Outliner::generateParameterStructureDeclaration(
  */
 Outliner::Result
 Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
-   {
+{
   //---------step 1. Preparations-----------------------------------
-     //new file, cut preprocessing information, collect variables
+  //new file, cut preprocessing information, collect variables
   // Generate a new source file for the outlined function, if requested
-     SgSourceFile* new_file = NULL;
-     if (Outliner::useNewFile)
-          new_file = generateNewSourceFile(s,func_name_str);
+  SgSourceFile* new_file = NULL;
+  if (Outliner::useNewFile)
+    new_file = generateNewSourceFile(s,func_name_str);
 
   // Save some preprocessing information for later restoration. 
-     AttachedPreprocessingInfoType ppi_before, ppi_after;
-     ASTtools::cutPreprocInfo (s, PreprocessingInfo::before, ppi_before);
-     ASTtools::cutPreprocInfo (s, PreprocessingInfo::after, ppi_after);
+  AttachedPreprocessingInfoType ppi_before, ppi_after;
+  ASTtools::cutPreprocInfo (s, PreprocessingInfo::before, ppi_before);
+  ASTtools::cutPreprocInfo (s, PreprocessingInfo::after, ppi_after);
 
   // Determine variables to be passed to outlined routine.
   // Also collect symbols which must use pointer dereferencing if replaced during outlining
@@ -141,16 +141,16 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
     // They must be passed by reference if they need to be passed as parameters
     ASTtools::collectPointerDereferencingVarSyms(s,pdSyms);
   }
-    
+
   // Insert outlined function.
   // grab target scope first
-     SgGlobal* glob_scope = const_cast<SgGlobal *> (TransformationSupport::getGlobalScope (s));
+  SgGlobal* glob_scope = const_cast<SgGlobal *> (TransformationSupport::getGlobalScope (s));
 
-     SgGlobal* src_scope = glob_scope;
-     if (Outliner::useNewFile)  // change scope to the one within the new source file
-        {
-          glob_scope = new_file->get_globalScope();
-        }
+  SgGlobal* src_scope = glob_scope;
+  if (Outliner::useNewFile)  // change scope to the one within the new source file
+  {
+    glob_scope = new_file->get_globalScope();
+  }
 
   //-------Step 2. Generate outlined function------------------------------------
   // Generate a structure declaration if useStructureWrapper is set
@@ -161,7 +161,7 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
     struct_decl = generateParameterStructureDeclaration (s, func_name_str, syms, pdSyms, glob_scope);
     ROSE_ASSERT (struct_decl != NULL);
   }
-  
+
   // generate the function and its prototypes if necessary
   //  printf ("In Outliner::Transform::outlineBlock() function name to build: func_name_str = %s \n",func_name_str.c_str());
   SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms, pdSyms, psyms, struct_decl, glob_scope);
@@ -169,196 +169,196 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
 
   // DQ (2/26/2009): At this point "s" has been reduced to an empty block.
-     ROSE_ASSERT(s->get_statements().empty() == true);
+  ROSE_ASSERT(s->get_statements().empty() == true);
 
   // Retest this...
-     ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+  ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 #if 0
-     printf ("After resetting the parent: func->get_definition() = %p func->get_definition()->get_body()->get_parent() = %p \n",func->get_definition(),func->get_definition()->get_body()->get_parent());
+  printf ("After resetting the parent: func->get_definition() = %p func->get_definition()->get_body()->get_parent() = %p \n",func->get_definition(),func->get_definition()->get_body()->get_parent());
 #endif
 
 #if 0
   // DQ (2/24/2009): I think that at this point we should delete the subtree represented by "s"
   // But it might have made more sense to not do a deep copy on "s" in the first place.
   // Why is there a deep copy on "s"?
-     SageInterface::deleteAST(s);
+  SageInterface::deleteAST(s);
 #endif
-    
-  // Retest this...
-     ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 
-  //-----------Step 3. insert the outlined function -------------
+  // Retest this...
+  ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+
+  //-----------Step 3. Insert the outlined function -------------
   // DQ (2/16/2009): Added (with Liao) the target block which the outlined function will replace.
   // Insert the function and its prototype as necessary  
-     ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
-     insert (func, glob_scope, s); //Outliner::insert() 
-     ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
+  ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
+  insert (func, glob_scope, s); //Outliner::insert() 
+  ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
   //
   // Retest this...
-     ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+  ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 
-    // reproduce the lost OpenMP pragma attached to a outlining target loop 
-    // The assumption is that OmpAttribute is attached to both the pragma and the affected loop
-    // in the frontend already.
-    // Liao, 3/12/2009
-    Rose_STL_Container <SgNode*>  loops = NodeQuery::querySubTree(func,V_SgForStatement);
-    if (loops.size()>0)
-    {
-      Rose_STL_Container <SgNode*>::iterator liter =loops.begin();
-      SgForStatement* firstloop = isSgForStatement(*liter); 
-      OmpSupport::generatePragmaFromOmpAttribute(firstloop);
-    }
+  // reproduce the lost OpenMP pragma attached to a outlining target loop 
+  // The assumption is that OmpAttribute is attached to both the pragma and the affected loop
+  // in the frontend already.
+  // Liao, 3/12/2009
+  Rose_STL_Container <SgNode*>  loops = NodeQuery::querySubTree(func,V_SgForStatement);
+  if (loops.size()>0)
+  {
+    Rose_STL_Container <SgNode*>::iterator liter =loops.begin();
+    SgForStatement* firstloop = isSgForStatement(*liter); 
+    OmpSupport::generatePragmaFromOmpAttribute(firstloop);
+  }
 
   //-----------Step 4. Replace the outlining target with a function call-------------
- 
- // Prepare the parameter of the function call,
- // Generate packing statements, insert them into the beginning of the target s
-    std::string wrapper_name;
+
+  // Prepare the parameter of the function call,
+  // Generate packing statements, insert them into the beginning of the target s
+  std::string wrapper_name;
   // two ways to pack parameters: an array of pointers v.s. A structure
-    if (useParameterWrapper || useStructureWrapper)
-      wrapper_name= generatePackingStatements(s,syms,pdSyms, struct_decl );
+  if (useParameterWrapper || useStructureWrapper)
+    wrapper_name= generatePackingStatements(s,syms,pdSyms, struct_decl );
 
   // Generate a call to the outlined function.
-     SgScopeStatement * p_scope = s->get_scope();
-     ROSE_ASSERT(p_scope);
+  SgScopeStatement * p_scope = s->get_scope();
+  ROSE_ASSERT(p_scope);
 
   // Retest this...
-     ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+  ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 
-     SgStatement *func_call = NULL;
-    if (use_dlopen) 
-   // if dlopen() is used, insert a lib call to find the function pointer from a shared lib file
-   // e.g. OUT__2__8072__p = findFunctionUsingDlopen("OUT__2__8072__", "OUT__2__8072__.so");
-    {
-      // build the return type of the lib call 
-      SgFunctionParameterTypeList * tlist = buildFunctionParameterTypeList();
-      (tlist->get_arguments()).push_back(buildPointerType(buildPointerType(buildVoidType())));
+  SgStatement *func_call = NULL;
+  if (use_dlopen) 
+    // if dlopen() is used, insert a lib call to find the function pointer from a shared lib file
+    // e.g. OUT__2__8072__p = findFunctionUsingDlopen("OUT__2__8072__", "OUT__2__8072__.so");
+  {
+    // build the return type of the lib call 
+    SgFunctionParameterTypeList * tlist = buildFunctionParameterTypeList();
+    (tlist->get_arguments()).push_back(buildPointerType(buildPointerType(buildVoidType())));
 
-      SgFunctionType *ftype_return = buildFunctionType(buildVoidType(), tlist);
-      // build the argument list
-      string lib_name = output_path+"/"+func_name_str+".so"; 
-      SgExprListExp* arg_list = buildExprListExp(buildStringVal(func_name_str), buildStringVal(lib_name)); 
-      SgFunctionCallExp* dlopen_call = buildFunctionCallExp(SgName(FIND_FUNCP_DLOPEN),ftype_return,arg_list, p_scope);
-      SgExprStatement * assign_stmt = buildAssignStatement(buildVarRefExp(func_name_str+"p",p_scope),dlopen_call);
-      SageInterface::insertStatementBefore(s, assign_stmt);
-      // Generate a function call using the func pointer
-      // e.g. (*OUT__2__8888__p)(__out_argv2__1527__);
-        SgExprListExp* exp_list_exp = SageBuilder::buildExprListExp();
-        appendExpression(exp_list_exp, buildVarRefExp(wrapper_name,p_scope));
-      func_call = buildFunctionCallStmt(buildPointerDerefExp(buildVarRefExp(func_name_str+"p",p_scope)), exp_list_exp);   
-    }
-    else  // regular function call for other cases
-     func_call = generateCall (func, syms, readOnlyVars, wrapper_name,p_scope);
+    SgFunctionType *ftype_return = buildFunctionType(buildVoidType(), tlist);
+    // build the argument list
+    string lib_name = output_path+"/"+func_name_str+".so"; 
+    SgExprListExp* arg_list = buildExprListExp(buildStringVal(func_name_str), buildStringVal(lib_name)); 
+    SgFunctionCallExp* dlopen_call = buildFunctionCallExp(SgName(FIND_FUNCP_DLOPEN),ftype_return,arg_list, p_scope);
+    SgExprStatement * assign_stmt = buildAssignStatement(buildVarRefExp(func_name_str+"p",p_scope),dlopen_call);
+    SageInterface::insertStatementBefore(s, assign_stmt);
+    // Generate a function call using the func pointer
+    // e.g. (*OUT__2__8888__p)(__out_argv2__1527__);
+    SgExprListExp* exp_list_exp = SageBuilder::buildExprListExp();
+    appendExpression(exp_list_exp, buildVarRefExp(wrapper_name,p_scope));
+    func_call = buildFunctionCallStmt(buildPointerDerefExp(buildVarRefExp(func_name_str+"p",p_scope)), exp_list_exp);   
+  }
+  else  // regular function call for other cases
+    func_call = generateCall (func, syms, readOnlyVars, wrapper_name,p_scope);
 
-     ROSE_ASSERT (func_call != NULL);
-  
+  ROSE_ASSERT (func_call != NULL);
+
   // Retest this...
-     ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+  ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 
   // What is this doing (what happens to "s")
-//  cout<<"Debug before replacement(s, func_call), s is\n "<< s<<endl; 
-//     SageInterface::insertStatementAfter(s,func_call);
-     SageInterface::replaceStatement(s,func_call);
+  //  cout<<"Debug before replacement(s, func_call), s is\n "<< s<<endl; 
+  //     SageInterface::insertStatementAfter(s,func_call);
+  SageInterface::replaceStatement(s,func_call);
 
-     ROSE_ASSERT(s != NULL);
-     ROSE_ASSERT(s->get_statements().empty() == true);
+  ROSE_ASSERT(s != NULL);
+  ROSE_ASSERT(s->get_statements().empty() == true);
 
   // Retest this...
-     ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+  ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 
   // Restore preprocessing information.
-     ASTtools::moveInsidePreprocInfo (s, func->get_definition ()->get_body ());
-     ASTtools::pastePreprocInfoFront (ppi_before, func_call);
-     ASTtools::pastePreprocInfoBack  (ppi_after, func_call);
+  ASTtools::moveInsidePreprocInfo (s, func->get_definition ()->get_body ());
+  ASTtools::pastePreprocInfoFront (ppi_before, func_call);
+  ASTtools::pastePreprocInfoBack  (ppi_after, func_call);
 
-     SageInterface::fixVariableReferences(p_scope);
+  SageInterface::fixVariableReferences(p_scope);
 
   //-----------handle dependent declarations, headers if new file is generated-------------
-     if (new_file)
-        {
-          SageInterface::fixVariableReferences(new_file);
-       // SgProject * project2= new_file->get_project();
-       // AstTests::runAllTests(project2);// turn it off for now
-       // project2->unparse();
-        }
+  if (new_file)
+  {
+    SageInterface::fixVariableReferences(new_file);
+    // SgProject * project2= new_file->get_project();
+    // AstTests::runAllTests(project2);// turn it off for now
+    // project2->unparse();
+  }
 
   // Retest this...
-     ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+  ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 #if 0
-     printf ("After resetting the parent: func->get_definition() = %p func->get_definition()->get_body()->get_parent() = %p \n",func->get_definition(),func->get_definition()->get_body()->get_parent());
+  printf ("After resetting the parent: func->get_definition() = %p func->get_definition()->get_body()->get_parent() = %p \n",func->get_definition(),func->get_definition()->get_body()->get_parent());
 #endif
 
-     ROSE_ASSERT(s != NULL);
-     ROSE_ASSERT(s->get_statements().empty() == true);
+  ROSE_ASSERT(s != NULL);
+  ROSE_ASSERT(s->get_statements().empty() == true);
 
-     if (useNewFile == true)
-        {
-       // DQ (2/6/2009): I need to write this function to support the
-       // insertion of the function into the specified scope.  If the
-       // file associated with the scope is marked as compiler generated 
-       // (or as a transformation) then the declarations referenced in the 
-       // function must be copied as well (those not in include files)
-       // and the include files must be copies also. If the SgFile
-       // is not compiler generated (or a transformation) then we just
-       // append the function to the scope (trivial case).
+  if (useNewFile == true)
+  {
+    // DQ (2/6/2009): I need to write this function to support the
+    // insertion of the function into the specified scope.  If the
+    // file associated with the scope is marked as compiler generated 
+    // (or as a transformation) then the declarations referenced in the 
+    // function must be copied as well (those not in include files)
+    // and the include files must be copies also. If the SgFile
+    // is not compiler generated (or a transformation) then we just
+    // append the function to the scope (trivial case).
 
-       // I am passing in the target_func so that I can get the location 
-       // in the file from which we want to generate a matching context.
-       // It would be better if this were the location of the new function call
-       // to the outlined function (since dependent declaration in the function
-       // containing the outlined code (loop nest, for example) might contain
-       // relevant typedefs which have to be created in the new file (or the 
-       // outlined function as a special case).
+    // I am passing in the target_func so that I can get the location 
+    // in the file from which we want to generate a matching context.
+    // It would be better if this were the location of the new function call
+    // to the outlined function (since dependent declaration in the function
+    // containing the outlined code (loop nest, for example) might contain
+    // relevant typedefs which have to be created in the new file (or the 
+    // outlined function as a special case).
 
 #if 1
-          ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
-          ROSE_ASSERT(TransformationSupport::getSourceFile(func) == TransformationSupport::getSourceFile(func->get_firstNondefiningDeclaration()));
-          ROSE_ASSERT(TransformationSupport::getSourceFile(func->get_scope()) == TransformationSupport::getSourceFile(func->get_firstNondefiningDeclaration()));
+    ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
+    ROSE_ASSERT(TransformationSupport::getSourceFile(func) == TransformationSupport::getSourceFile(func->get_firstNondefiningDeclaration()));
+    ROSE_ASSERT(TransformationSupport::getSourceFile(func->get_scope()) == TransformationSupport::getSourceFile(func->get_firstNondefiningDeclaration()));
 #if 0
-          printf ("******************************************************************** \n");
-          printf ("Now calling SageInterface::appendStatementWithDependentDeclaration() \n");
-          printf ("******************************************************************** \n");
+    printf ("******************************************************************** \n");
+    printf ("Now calling SageInterface::appendStatementWithDependentDeclaration() \n");
+    printf ("******************************************************************** \n");
 #endif
-       // If the outline function will be placed into it's own file then we need to reconstruct any dependent statements (and #include CPP directives).
-          SgFunctionDeclaration* func_orig = const_cast<SgFunctionDeclaration *> (SageInterface::getEnclosingFunctionDeclaration (s));
-          SageInterface::appendStatementWithDependentDeclaration(func,glob_scope,func_orig,exclude_headers);
-       // printf ("DONE: Now calling SageInterface::appendStatementWithDependentDeclaration() \n");
+    // If the outline function will be placed into it's own file then we need to reconstruct any dependent statements (and #include CPP directives).
+    SgFunctionDeclaration* func_orig = const_cast<SgFunctionDeclaration *> (SageInterface::getEnclosingFunctionDeclaration (s));
+    SageInterface::appendStatementWithDependentDeclaration(func,glob_scope,func_orig,exclude_headers);
+    // printf ("DONE: Now calling SageInterface::appendStatementWithDependentDeclaration() \n");
 #else
-          printf ("Skipping call to SageInterface::appendStatementWithDependentDeclaration() (testing only)\n");
+    printf ("Skipping call to SageInterface::appendStatementWithDependentDeclaration() (testing only)\n");
 #endif
-        }
+  }
 
 #if 1
   // DQ (2/26/2009): Moved (here) to as late as possible so that all transformations are complete before running AstPostProcessing()
 
   // This fails for moreTest3.cpp
   // Run the AST fixup on the AST for the source file.
-     SgSourceFile* originalSourceFile = TransformationSupport::getSourceFile(src_scope);
-//     printf ("##### Calling AstPostProcessing() on SgFile = %s \n",originalSourceFile->getFileName().c_str());
-     AstPostProcessing (originalSourceFile);
-//     printf ("##### DONE: Calling AstPostProcessing() on SgFile = %s \n",originalSourceFile->getFileName().c_str());
+  SgSourceFile* originalSourceFile = TransformationSupport::getSourceFile(src_scope);
+  //     printf ("##### Calling AstPostProcessing() on SgFile = %s \n",originalSourceFile->getFileName().c_str());
+  AstPostProcessing (originalSourceFile);
+  //     printf ("##### DONE: Calling AstPostProcessing() on SgFile = %s \n",originalSourceFile->getFileName().c_str());
 #else
-     printf ("Skipping call to AstPostProcessing (originalSourceFile); \n");
+  printf ("Skipping call to AstPostProcessing (originalSourceFile); \n");
 #endif
 
-     ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+  ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 
-     if (useNewFile == true)
-        {
+  if (useNewFile == true)
+  {
 #if 1
-       // This fails for moreTest3.cpp
-       // Run the AST fixup on the AST for the separate file of outlined code.
-          SgSourceFile* separateOutlinedSourceFile = TransformationSupport::getSourceFile(glob_scope);
-//          printf ("##### Calling AstPostProcessing() on SgFile = %s \n",separateOutlinedSourceFile->getFileName().c_str());
-          AstPostProcessing (separateOutlinedSourceFile);
-//          printf ("##### DONE: Calling AstPostProcessing() on SgFile = %s \n",separateOutlinedSourceFile->getFileName().c_str());
+    // This fails for moreTest3.cpp
+    // Run the AST fixup on the AST for the separate file of outlined code.
+    SgSourceFile* separateOutlinedSourceFile = TransformationSupport::getSourceFile(glob_scope);
+    //          printf ("##### Calling AstPostProcessing() on SgFile = %s \n",separateOutlinedSourceFile->getFileName().c_str());
+    AstPostProcessing (separateOutlinedSourceFile);
+    //          printf ("##### DONE: Calling AstPostProcessing() on SgFile = %s \n",separateOutlinedSourceFile->getFileName().c_str());
 #else
-          printf ("Skipping call to AstPostProcessing (separateOutlinedSourceFile); \n");
+    printf ("Skipping call to AstPostProcessing (separateOutlinedSourceFile); \n");
 #endif
-        }
+  }
 
-     return Result (func, func_call, new_file);
-   }
+  return Result (func, func_call, new_file);
+}
 
 /* For a set of variables to be passed into the outlined function, 
  * generate the following statements before the call of the outlined function

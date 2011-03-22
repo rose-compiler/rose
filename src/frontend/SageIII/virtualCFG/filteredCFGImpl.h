@@ -3,8 +3,7 @@
 #include <sstream>
 #include <iomanip>
 #include <stdint.h>
-
-// using namespace std;
+#include <set>
 
 #define SgNULL_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 

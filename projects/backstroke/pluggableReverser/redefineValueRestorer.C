@@ -1,8 +1,10 @@
 #include "redefineValueRestorer.h"
-#include "eventHandler.h"
-#include "utilities/CPPDefinesAndNamespaces.h"
-#include "utilities/Utilities.h"
+#include "eventProcessor.h"
+#include "utilities/cppDefinesAndNamespaces.h"
+#include "utilities/utilities.h"
 #include <rose.h>
+
+using namespace std;
 
 vector<SgExpression*> RedefineValueRestorer::restoreVariable(VariableRenaming::VarName destroyedVarName, const VariableVersionTable& availableVariables,
 		VariableRenaming::NumNodeRenameEntry definitions)

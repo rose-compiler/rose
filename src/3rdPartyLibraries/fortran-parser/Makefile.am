@@ -61,11 +61,8 @@ endif
 
 # DQ (4/5/2010): And we need a version of this macro withouth the paths.
 OFP_SOURCE_FILES_WITHOUT_PATHS = \
-   FortranParserAction.h \
    c_actions_jni.c \
    token.h \
-   token.c \
-   ActionEnums.h \
    jni_token_funcs.h \
    jni_token_funcs.c 
 
@@ -99,12 +96,12 @@ token.c: OpenFortranParser-${OFP_VERSION}.jar
 	@if test -e OpenFortranParser-${OFP_VERSION}.jar; then \
       echo "Found valid OpenFortranParser-${OFP_VERSION}.jar file."; \
    else \
-      echo "Error: OpenFortranParser-${OFP_VERSION}.jar file is not found."; \
+      echo "Note: OpenFortranParser-${OFP_VERSION}.jar file was not found in the build tree (OK)."; \
       if test -e ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar; then \
          echo "Found valid ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar file."; \
          cp ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar OpenFortranParser-${OFP_VERSION}.jar; \
       else \
-         echo "Error: ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar file is not found."; \
+         echo "Error: ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar file is not found in the source tree or the build tree."; \
          exit 1; \
       fi; \
    fi;

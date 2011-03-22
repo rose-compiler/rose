@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <err.h>
+#include <unistd.h>
 
 char pfilname[40] = "";
 char buf = 'w';
@@ -22,7 +23,7 @@ int main() {
 
   int result = write(fd, &buf, 1);
 
-  if( fd == -1 )
+  if( result == -1 )
     err(1,"write failed");
 
   close(fd);

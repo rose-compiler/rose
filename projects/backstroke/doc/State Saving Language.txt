@@ -49,6 +49,10 @@
 11) No I/O
 	REASON: I/O is irreversible an has to be handled by a commit method.
 
+12) No smart pointers (for now)
+	E.g. boost::shared_ptr, std::auto_ptr.
+	(Explicit support for these can be added later)
+
 
 
 

@@ -1,4 +1,5 @@
 #include <time.h>
+#include <err.h>
 
 int main(int argc, char** argv) {
   time_t t = time(NULL);

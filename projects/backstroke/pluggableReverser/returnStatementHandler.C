@@ -1,7 +1,9 @@
 #include "handlerTypes.h"
-#include "utilities/CPPDefinesAndNamespaces.h"
+#include "utilities/cppDefinesAndNamespaces.h"
 #include "returnStatementHandler.h"
 #include <rose.h>
+
+using namespace std;
 
 vector<EvaluationResult> ReturnStatementHandler::evaluate(SgStatement* statement, const VariableVersionTable& var_table)
 {

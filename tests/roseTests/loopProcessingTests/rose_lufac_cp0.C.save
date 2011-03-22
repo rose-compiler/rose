@@ -6,7 +6,6 @@ double abs(double x)
   else 
     return x;
 }
-
 #define n 50
 extern void printmatrix(double x[][50UL]);
 extern void initmatrix(double x[][50UL],double s);
@@ -54,4 +53,3 @@ int main(int argc,char *argv[])
   printmatrix(a);
   return 0;
 }
-

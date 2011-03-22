@@ -109,12 +109,15 @@
 * 
 *#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#**/
 
+#define _ATFILE_SOURCE
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <linux/fcntl.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
+#include <unistd.h>
+
 #include "test.h"
 #include "usctest.h"
 
@@ -188,7 +191,7 @@ main(int ac, char **av)
         ***************************************************************/
        if ( STD_FUNCTIONAL_TEST ) {
          /* No Verification test, yet... */
-         tst_resm(TPASS, "fchmodat(%s, %#o) returned %d", fname,
+         tst_resm(TPASS, "fchmodat(%s, %#o) returned %ld", fname,
              mode, TEST_RETURN);
        } 
        else

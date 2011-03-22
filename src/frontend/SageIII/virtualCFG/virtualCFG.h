@@ -2,6 +2,7 @@
 #define VIRTUAL_CFG_H
 
 #include <vector>
+#include <assert.h>
 
 
 //! FIXME: The CFG support for Fortran is still buggy -- if Fortran is
@@ -127,10 +128,10 @@ namespace VirtualCFG {
     bool operator==(const CFGEdge& o) const {return src == o.src && tgt == o.tgt;}
     //! Compare disequality of edges
     bool operator!=(const CFGEdge& o) const {return src != o.src || tgt != o.tgt;}
-#if 0
-    //! We ban operator<() because it relies on system-specific comparisons among AST node pointers
+
+    //! operator<() has an arbitrary ordering, but allows these objects to be used with std::set and std::map
     bool operator<(const CFGEdge& o) const {return src < o.src || (src == o.src && tgt < o.tgt);}
-#endif
+
   }; // end CFGEdge
 
   //! \internal A CFG path is a set of connected CFG edges; condition and
@@ -151,6 +152,12 @@ namespace VirtualCFG {
       assert (a.edges.back().target() == b.edges.front().source());
       edges.insert(edges.end(),b.edges.begin(),b.edges.end());
     }
+
+    //George Vulov 12/1/2010: We need a default constructor
+    CFGPath()
+    {
+    }
+
     std::string toString() const;
     std::string toStringForDebugging() const;
     std::string id() const;
@@ -199,9 +206,9 @@ namespace VirtualCFG {
     }
     bool operator==(const CFGPath& o) const {return edges == o.edges;}
     bool operator!=(const CFGPath& o) const {return edges != o.edges;}
-#if 0
+
+    //! An arbitrary order, so we can use this in std::set and std::map
     bool operator<(const CFGPath& o) const {
-      // An arbitrary order
       if (edges.size() != o.edges.size()) {
 	return edges.size() < o.edges.size();
       }
@@ -212,7 +219,7 @@ namespace VirtualCFG {
       }
       return false;
     }
-#endif
+
   }; // end CFGPath
 
   //! \internal Merge two CFG paths
@@ -286,9 +293,7 @@ namespace VirtualCFG {
     std::vector<SgInitializedName*> scopesBeingEntered() const {return p.scopesBeingEntered();}
     bool operator==(const InterestingEdge& o) const {return p == o.p;}
     bool operator!=(const InterestingEdge& o) const {return p != o.p;}
-#if 0
     bool operator<(const InterestingEdge& o) const {return p < o.p;}
-#endif
   };
 
   inline InterestingNode makeInterestingCfg(SgNode* start) {
