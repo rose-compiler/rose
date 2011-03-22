@@ -89,6 +89,7 @@ C_TESTCODES_REQUIRED_TO_RUN = \
 	parallel-numthreads.c \
         parallel-reduction.c \
         parallel-reduction2.c \
+        parallelsections.c \
         parallelfor.c \
         parallelfor2.c \
         private.c \
@@ -165,7 +166,6 @@ TESTCODE_CURRENTLY_FAILING = \
 	endif2.c \
         expressions.c \
         macroCalls.c \
-        parallelsections.c \
         recursive.c \
 	shared.c \
         single_copyprivate.c \
