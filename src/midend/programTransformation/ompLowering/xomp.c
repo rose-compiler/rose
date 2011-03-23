@@ -81,11 +81,11 @@ void XOMP_init (int argc, char ** argv)
 #endif    
 }
 
-void xomp_terminate (int exitcode);
+void xomp_terminate (int* exitcode);
 #pragma weak xomp_terminate_=xomp_terminate
-void xomp_terminate (int exitcode)
+void xomp_terminate (int* exitcode)
 {
-  XOMP_terminate (exitcode);
+  XOMP_terminate (*exitcode);
 }
 // Runtime library termination routine
 void XOMP_terminate (int exitcode)
@@ -217,6 +217,14 @@ void XOMP_parallel_end (void)
 
 
 //---------------------------------------------
+//Glue from Fortran to XOMP
+int xomp_sections_init_next(int * section_count);
+#pragma weak xomp_sections_init_next_=xomp_sections_init_next
+int xomp_sections_init_next(int * section_count)
+{
+  return XOMP_sections_init_next (*section_count);
+}
+// C/C++ support
 /* Initialize sections and return the next section id (starting from 0) to be executed by the current thread */
 int XOMP_sections_init_next(int section_count) 
 {
@@ -233,6 +241,12 @@ int XOMP_sections_init_next(int section_count)
 }
 
 /* Return the next section id (starting from 1) to be executed by the current thread, value 0 means no sections left */
+int xomp_sections_next(void);
+#pragma weak xomp_sections_next_=xomp_sections_next
+int xomp_sections_next(void)
+{
+  return XOMP_sections_next();
+}
 int XOMP_sections_next(void)
 {
   int result = -1;
@@ -245,6 +259,12 @@ int XOMP_sections_next(void)
   return result;
 }
 
+void xomp_sections_end(void);
+#pragma weak xomp_sections_end_=xomp_sections_end
+void xomp_sections_end(void)
+{
+  XOMP_sections_end();
+}
 /* Called after the current thread is told that all sections are executed. It synchronizes all threads also. */
 void XOMP_sections_end(void)
 {
@@ -254,6 +274,12 @@ void XOMP_sections_end(void)
 #endif
 }
 
+void xomp_sections_end_nowait(void);
+#pragma weak xomp_sections_end_nowait_=xomp_sections_end_nowait
+void xomp_sections_end_nowait(void)
+{
+  XOMP_sections_end_nowait();
+}
 /* Called after the current thread is told that all sections are executed. It does not synchronizes all threads. */
 void XOMP_sections_end_nowait(void)
 {
