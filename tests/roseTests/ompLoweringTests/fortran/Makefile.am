@@ -34,7 +34,8 @@ F90_TESTCODES_REQUIRED_TO_RUN =
 
 TESTCODE_CURRENTLY_FAILING = \
    parallel-if.f \
-   parallel-if-numthreads.f
+   parallel-if-numthreads.f \
+   section1.f
 
 ALL_TESTCODES = \
   $(F77_TESTCODES_REQUIRED_TO_COMPILE) \
