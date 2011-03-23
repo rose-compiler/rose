@@ -293,6 +293,20 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           string name = (genericDeclaration->isForward() == true) ? "isForward" : "!isForward";
           ROSE_ASSERT(name.empty() == false);
 
+       // DQ (3/20/2011): Added class names to the generated dot file graphs of the AST.
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(genericDeclaration);
+          if (classDeclaration != NULL)
+             {
+               nodelabel += string("\\n") + classDeclaration->get_name();
+             }
+
+       // DQ (3/20/2011): Added function names to the generated dot file graphs of the AST.
+          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(genericDeclaration);
+          if (functionDeclaration != NULL)
+             {
+               nodelabel += string("\\n") + functionDeclaration->get_name();
+             }
+
           nodelabel += string("\\n") + name;
         }
 

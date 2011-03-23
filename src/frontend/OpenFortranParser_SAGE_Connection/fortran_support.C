@@ -4890,9 +4890,6 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
   // This will be the defining declaration
      ROSE_ASSERT(procedureDeclaration != NULL);
 
-  // FMZTEST
-  // cout <<"NAME::" << procedureDeclaration->get_name().str()<<endl;
-
      procedureDeclaration->set_definingDeclaration(procedureDeclaration);
      procedureDeclaration->set_firstNondefiningDeclaration(NULL);
 
@@ -4938,8 +4935,6 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
 
      if (functionSymbol != NULL)
         {
-       // FMZTEST
-       // cout <<"FMZTEST:Frontend::" << functionSymbol->get_name().str()<<endl;
           SgFunctionDeclaration* nondefiningDeclaration = functionSymbol->get_declaration();
           ROSE_ASSERT(nondefiningDeclaration != NULL);
 
@@ -4948,10 +4943,15 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
        // And set the defining declaration in the non-defining declaration
           nondefiningDeclaration->set_definingDeclaration(procedureDeclaration);
 
-      // if the procedure is defined in same module, it should be visiable for the non-definingDeclaration.
-         if (isSgClassDefinition(currentScopeOfFunctionDeclaration) != NULL) {
-                   nondefiningDeclaration->set_scope(currentScopeOfFunctionDeclaration);
-          }
+       // update scope information
+          if (nondefiningDeclaration->get_scope()->symbol_exists(functionSymbol))
+             {
+                nondefiningDeclaration->get_scope()->remove_symbol(functionSymbol);
+             }
+          nondefiningDeclaration->set_scope(currentScopeOfFunctionDeclaration);
+          nondefiningDeclaration->set_parent(currentScopeOfFunctionDeclaration);
+          currentScopeOfFunctionDeclaration->insert_symbol(nondefiningDeclaration->get_name(), functionSymbol);
+          functionSymbol->set_declaration(procedureDeclaration);  // update the defining declaration
         }
        else
         {
@@ -4970,12 +4970,11 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
 
      ROSE_ASSERT(procedureDeclaration->get_definition() != NULL);
 
-  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  // Specify of case insensitivity for Fortran.
      procedureBody->setCaseInsensitive(true);
      procedureDefinition->setCaseInsensitive(true);
-
-  // Set the scope
      procedureDeclaration->set_scope(currentScopeOfFunctionDeclaration);
+     procedureDeclaration->set_parent(currentScopeOfFunctionDeclaration);
 
   // Now push the function definition onto the astScopeStack (so that the function parameters will be build in the correct scope)
      astScopeStack.push_front(procedureDefinition);

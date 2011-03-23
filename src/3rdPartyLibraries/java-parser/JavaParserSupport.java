@@ -163,13 +163,22 @@ class JavaParserSupport
             // Class cls = Class.forName("java.lang.String");
             // Class cls = Class.forName("java.lang."+node.receiver.toString());
 
+               System.out.println("Generate the class for className = " + className);
+
             // Note that "java.lang" does not appear to be a class (so is that root of all implicitly included classes?).
             // Class cls = Class.forName("java.lang");
             // Class cls = Class.forName("java.io.InputStream");
                Class cls = Class.forName(className);
+
+               System.out.println("Generate the method list for class " + className);
                Method methlist[] = cls.getDeclaredMethods();
 
+               System.out.println("Calling JavaParser.cactionBuildImplicitClassSupportStart() for className = " + className);
+
+            // Replace any names like "java.lang.System" with "java_lang_System".
                JavaParser.cactionBuildImplicitClassSupportStart(className);
+            // String modifiedClassName = className.replace('.','_');
+            // JavaParser.cactionBuildImplicitClassSupportStart(modifiedClassName);
 
                System.out.println("After call to cactionBuildImplicitClassSupportStart");
 
@@ -179,35 +188,86 @@ class JavaParserSupport
                     Field fld = fieldlist[i];
                     System.out.println("data member (field) name = " + fld.getName());
 
-                    System.out.println("decl class = " + fld.getDeclaringClass());
+                    System.out.println("decl class  = " + fld.getDeclaringClass());
                     System.out.println("type = " + fld.getType());
+                    System.out.println("genericType = " + fld.getGenericType());
                     int mod = fld.getModifiers();
-                    System.out.println("modifiers = " + Modifier.toString(mod));
+                    System.out.println("modifiers   = " + Modifier.toString(mod));
+
+                    System.out.println("fld.isEnumConstant() = " + fld.isEnumConstant());
+                    System.out.println("fld.isSynthetic()    = " + fld.isSynthetic());
+
+                    System.out.println("fld.getType().isAnnotation()                 = " + fld.getType().isAnnotation());
+                 // System.out.println("fld.getType().isAnnotationPresent(Class<? extends Annotation> annotationClass) = " + fld.getType().isAnnotationPresent(fld.getType()));
+                    System.out.println("fld.getType().isAnonymousClass()             = " + fld.getType().isAnonymousClass());
+                    System.out.println("fld.getType().isArray()                      = " + fld.getType().isArray());
+                 // Not clear what class to use as a test input for isAssignableFrom(Class<?> cls) function...
+                    System.out.println("fld.getType().isAssignableFrom(Class<?> cls) = " + fld.getType().isAssignableFrom(fld.getType()));
+                    System.out.println("fld.getType().isEnum()                       = " + fld.getType().isEnum());
+                    System.out.println("fld.getType().isInstance(Object obj)         = " + fld.getType().isInstance(fld.getType()));
+                    System.out.println("fld.getType().isInterface()                  = " + fld.getType().isInterface());
+                    System.out.println("fld.getType().isLocalClass()                 = " + fld.getType().isLocalClass());
+                    System.out.println("fld.getType().isMemberClass()                = " + fld.getType().isMemberClass());
+                    System.out.println("fld.getType().isPrimitive()                  = " + fld.getType().isPrimitive());
+                    System.out.println("fld.getType().isSynthetic()                  = " + fld.getType().isSynthetic());
+
                     System.out.println("-----");
 
-                    String nestedClassName = fld.getType().toString();
+                 // Error: This appears to have "class " prepended to the generated string...causing problems below. 
+                 // String nestedClassName = fld.getType().toString();
+                 // System.out.println("nestedClassName = " + nestedClassName);
 
                  // How do I do this in Java???
                  // if (map.find(nestedClassName) == map.end())
 
+                 // Get the class associated with the field (all types in Java are a class, so this is only strange relative to C++).
                     Class typeClass = fld.getType();
+
+                    Type genericType = fld.getGenericType();
+
+                 // Note that if we use "nestedClassName = fld.getType().toString();" nestedClassName has the
+                 // name "class " as a prefix and this causes an error, so use "typeClass.getName()" instead.
+                    String nestedClassName = typeClass.getName();
+
+                 // Replace any names like "java.lang.System" with "java_lang_System".
+                 // nestedClassName = nestedClassName.replace('.','_');
+
                  // Need to test for: isPrimative(), isArray(), isInterface(), isAssignableFrom(), isInstance()
                  // More documentation at: http://download.oracle.com/javase/1.4.2/docs/api/java/lang/Class.html
                     if (typeClass.isPrimitive() == false)
                        {
                          if (setOfClasses.contains(typeClass) == false)
                             {
-                              System.out.println("Recursive call to buildImplicitClassSupport() to build type = " + nestedClassName);
-                              if (counter < 10)
+                              if (typeClass.isArray() == true)
                                  {
-                                // DQ (11/2/2010): comment out this recursive call for now.
-                                // buildImplicitClassSupport(nestedClassName);
+                                // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
+                                   System.out.println("Skipping case of array of type... = " + nestedClassName);
+                                 }
+                                else
+                                 {
+                                // This is not an array type and not a primative type (so it should be a class, I think).
+                                   System.out.println("Recursive call to buildImplicitClassSupport() to build type = " + nestedClassName);
+
+                                // Add this to the set of classes that we have seen... so that we will not try to process it more than once...
+                                   setOfClasses.add(typeClass);
+
+                                // Control the level of recursion so that we can debug this...it seems that
+                                // this is typically as high as 47 to process the implicitly included classes.
+                                   if (counter < 1)
+                                      {
+                                     // DQ (11/2/2010): comment out this recursive call for now.
+                                        buildImplicitClassSupport(nestedClassName);
+                                      }
+                                     else
+                                      {
+                                        System.out.println("WARNING: Exceeded recursion level " + counter + " nestedClassName = " + nestedClassName);
+                                      }
                                  }
                             }
                            else
                             {
                               System.out.println("This class has been seen previously: nestedClassName = " + nestedClassName);
-                              setOfClasses.add(typeClass);
+                           // setOfClasses.add(typeClass);
                             }
                        }
                       else
@@ -216,7 +276,7 @@ class JavaParserSupport
                          System.out.println("This class is a primative type: nestedClass = " + nestedClassName);
                        }
 
-                    System.out.println("Exiting after returning from recursive call...");
+                 // System.out.println("Exiting after returning from recursive call...");
                  // System.exit(1);
 
                     JavaParser.cactionBuildImplicitFieldSupport(fld.getName());
@@ -237,9 +297,14 @@ class JavaParserSupport
                   */
                  // Note that I am ignoring the constructor parameter types at the moment.
                     System.out.println("constructor name = " + ct.getName());
-                    JavaParser.cactionBuildImplicitMethodSupport(ct.getName());
+
+                 // Simplify the generated AST by skipping the construction of all the member functions in each class.
+                 // We might only want to build those member functions that are referenced in the input program (as an option).
+                 // JavaParser.cactionBuildImplicitMethodSupport(ct.getName());
                   }
 
+               System.out.println("(skipped method handling) Number of methods = " + methlist.length);
+               int methodCounter = 0;
                for (int i = 0; i < methlist.length; i++)
                   {
                     Method m = methlist[i];
@@ -259,7 +324,13 @@ class JavaParserSupport
                  // DQ (11/1/2010): Comment out while I handle data member types...
                  // Note that I am ignoring the function type at the moment.
                     System.out.println("method name = " + m.getName());
-                    JavaParser.cactionBuildImplicitMethodSupport(m.getName());
+
+                 // Simplify the generated AST by skipping the construction of all the member functions in each class.
+                 // We might only want to build those member functions that are referenced in the input program (as an option).
+                    if (methodCounter < 5)
+                         JavaParser.cactionBuildImplicitMethodSupport(m.getName());
+
+                    methodCounter++;
                   }
 
               JavaParser.cactionBuildImplicitClassSupportEnd(className);

@@ -38,8 +38,8 @@ else
   OS_MACHINE_LABEL=amd64-linux
 fi
 
-CONFIGURE_PREFIX_DIR="${HOME}/too1.workspace/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
-#CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
+#CONFIGURE_PREFIX_DIR="${HOME}/too1.workspace/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
+CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
 # Liao 1/6/2010
 # Remove the stale installation tree since the stale headers will be included before updated ones are used.
 rm -rf $CONFIGURE_PREFIX_DIR/*
@@ -200,8 +200,21 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
   then
     CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
   fi
+
 fi
 
+#######################################################################################
+# OpenMP GOMP 
+#   Only when on 64-bit Linux and gcc 4.4.1 is used.
+#  Liao : 3/22/11 - Link with GOMP and run OpenMP tests
+#######################################################################################
+if test "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" ; then
+  if test "x$OS_MACHINE_LABEL" = "xamd64-linux" ; then
+    if [ -a /usr/apps/gcc/4.4.1/lib64/libgomp.a ]; then
+      CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-gomp_omp_runtime_library=/usr/apps/gcc/4.4.1/lib64"
+    fi
+  fi
+fi
 
 #########################################################################################
 #
