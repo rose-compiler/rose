@@ -674,6 +674,9 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2011_73.f90 \
      test2011_75.f90 \
      test2011_76.f90 \
+     test2011_Rice_A-cant-assert-keyword-nonnull.f90 \
+     test2011_Rice_B-cant-assert-keyword-nonnull.f90 \
+     test2011_Rice_C-cant-assert-keyword-nonnull.f90 \
      fCaller.f90 \
      triangle.f90 \
      X-caseSensitive.f90 \
