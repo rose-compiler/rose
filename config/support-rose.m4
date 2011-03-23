@@ -405,10 +405,10 @@ case "$enableval" in
         binaries) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD binaries"
            support_binaries=yes
            ;;
-        cuda) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD php"
+        cuda) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD cuda"
            support_cuda_language=yes
            ;;
-        opencl) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD php"
+        opencl) LANGUAGES_TO_BUILD="$LANGUAGES_TO_BUILD opencl"
            support_opencl_language=yes
            ;;
         *) AC_MSG_ERROR([Unrecognized language $a_language]) ;;
@@ -1725,6 +1725,19 @@ fi
 ROSE_USE_CUDA_SUPPORT=7
 AC_SUBST(ROSE_USE_CUDA_SUPPORT)
 
+# *****************************************************
+# Option to control building of CUDA support in EDG 4.0
+# *****************************************************
+
+# TV (03/22/2011): This is part of optional building of CUDA support in EDG 4.0
+AC_MSG_CHECKING([for building of CUDA support in EDG 4.0])
+AC_ARG_ENABLE(edg_cuda, AS_HELP_STRING([--enable-edg-cuda], [Build EDG 4.0 with CUDA support.]), [case "${enableval}" in
+  yes) edg_cuda=true ;;
+  no)  edg_cuda=false ;;
+  *)   edg_cuda=false ;;
+esac])
+AM_CONDITIONAL(ROSE_BUILD_EDG_WITH_CUDA_SUPPORT, [test x$edg_cuda = xtrue])
+
 # *******************************************************************
 # Option to control internal support of OpenCL (GPU langauge support)
 # *******************************************************************
@@ -1739,83 +1752,9 @@ if test "x$enable_opencl" = "xyes"; then
 fi
 AC_SUBST(ROSE_USE_OPENCL_SUPPORT)
 
-# *****************************************************************************
-# Option to control internal support of FadaLib (Fuzzy Array Dataflow Analysis)
-# *****************************************************************************
-
-# TV (05/25/2010): Check for FadaLib
-
-AC_ARG_WITH(
-	[fada],
-	AS_HELP_STRING([--with-fada@<:@=DIR@:>@], [use FadaLib]),
-	[
-	if test "$withval" = "no"; then
-		echo "Error: --with-fada=PATH must be specified to use option --with-fada (a valid FadaLib intallation)"
-		exit 1
-	elif test "$withval" = "yes"; then
-		echo "Error: --with-fada=PATH must be specified to use option --with-fada (a valid FadaLib intallation)"
-		exit 1
-	else
-		has_fada_path="yes"
-		fada_path="$withval"
-	fi
-	],
-	[has_fada_path="no"]
-)
-
-# TV (05/25/2010): Check for PipLib
-
-AC_ARG_WITH(
-	[pip],
-	AS_HELP_STRING([--with-pip@<:@=DIR@:>@], [use PipLib]),
-	[
-	if test "$withval" = "no"; then
-		echo "Error: --with-pip=PATH must be specified to use option --with-pip (a valid PipLib intallation)"
-		exit 1
-	elif test "$withval" = "yes"; then
-		echo "Error: --with-pip=PATH must be specified to use option --with-pip (a valid PipLib intallation)"
-		exit 1
-	else
-		has_pip_path="yes"
-		pip_path="$withval"
-	fi
-	],
-	[has_pip_path="no"]
-)
-
-# TV (05/25/2010): Optional support for FadaLib.
-
-AC_MSG_CHECKING([for enabled FadaLib support])
-AC_ARG_ENABLE(
-	fadalib,
-	AS_HELP_STRING(
-		[--enable-fadalib],
-		[Support for FadaLib (Fuzzy Array Dataflow Analysis)]
-	)
-)
-AM_CONDITIONAL(
-	ROSE_USE_FADALIB,
-	[test "x$enable_fadalib" = "xyes"])
-if test "x$enable_fadalib" = "xyes"; then
-	if test "x$has_fada_path" = "xyes"; then
-#		FADA_LDFLAGS=" $fada_path/lib/libfada.a"
-		FADA_LDFLAGS=" -L$fada_path/lib/ -lfada"
-		FADA_CPPFLAGS="-I$fada_path/include"
-	fi
-	if test "x$has_pip_path" = "xyes"; then
-#		PIP_LDFLAGS=" $pip_path/lib/libpiplib64.a"
-		PIP_LDFLAGS=" -L$pip_path/lib -lpiplib64"
-		PIP_CPPFLAGS="-I$pip_path/include"
-	fi
-	if test "x$has_fada_path" = "xyes" && test "x$has_pip_path" = "xyes"; then
-		AC_DEFINE([ROSE_USE_FADALIB], [], [Whether to use FadaLib (Fuzzy Array Dataflow Analysis) support or not within ROSE])
-	fi
-fi
-AC_SUBST(ROSE_USE_FADALIB)
-AC_SUBST(FADA_LDFLAGS)
-AC_SUBST(FADA_CPPFLAGS)
-AC_SUBST(PIP_LDFLAGS)
-AC_SUBST(PIP_CPPFLAGS)
+# *********************************************************************
+# Option to control internal support of PPL (Parma Polyhedron Librairy)
+# *********************************************************************
 
 # TV (05/25/2010): Check for Parma Polyhedral Library (PPL)
 
@@ -1846,8 +1785,8 @@ AC_ARG_ENABLE(
 )
 AM_CONDITIONAL(
 	ROSE_USE_PPL,
-	[test "x$enable_fadalib" = "xyes"])
-if test "x$enable_fadalib" = "xyes"; then
+	[test "x$enable_ppl" = "xyes"])
+if test "x$enable_ppl" = "xyes"; then
 	if test "x$has_ppl_path" = "xyes"; then
 		PPL_LDFLAGS=" -L$ppl_path/lib -lppl"
 		PPL_CPPFLAGS="-I$ppl_path/include"
@@ -2630,13 +2569,6 @@ projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/SP/Makefile
-projects/PolyhedralDependenceAnalysis/CodeGenerator/Makefile
-projects/PolyhedralDependenceAnalysis/Common/Makefile
-projects/PolyhedralDependenceAnalysis/Makefile
-projects/PolyhedralDependenceAnalysis/PMDAtoMDA/Makefile
-projects/PolyhedralDependenceAnalysis/RoseToFada/Makefile
-projects/PolyhedralDependenceAnalysis/RoseToPPL/Makefile
-projects/PolyhedralDependenceAnalysis/Schedule/Makefile
 projects/QtDesignerPlugins/Makefile
 projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile
 projects/RTED/CppRuntimeSystem/Makefile
