@@ -215,7 +215,55 @@ void XOMP_parallel_end (void)
 #endif    
 }
 
-//----------------
+
+//---------------------------------------------
+/* Initialize sections and return the next section id (starting from 0) to be executed by the current thread */
+int XOMP_sections_init_next(int section_count) 
+{
+  int result = -1;
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  result = GOMP_sections_start (section_count);
+  result --; /*GOMP sections start with 1*/
+#else
+  _ompc_section_init (section_count);
+  result = _ompc_section_id();
+  /* Omni expects sections to start with 0*/
+#endif
+  return result;
+}
+
+/* Return the next section id (starting from 1) to be executed by the current thread, value 0 means no sections left */
+int XOMP_sections_next(void)
+{
+  int result = -1;
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+ result = GOMP_sections_next();
+ result --;  /*GOMP sections start with 1*/
+#else
+  result = _ompc_section_id();
+#endif
+  return result;
+}
+
+/* Called after the current thread is told that all sections are executed. It synchronizes all threads also. */
+void XOMP_sections_end(void)
+{
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  GOMP_sections_end();
+#else
+#endif
+}
+
+/* Called after the current thread is told that all sections are executed. It does not synchronizes all threads. */
+void XOMP_sections_end_nowait(void)
+{
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  GOMP_sections_end_nowait();
+#else
+#endif
+}
+
+//---------------------------------------------
 #include "run_me_task_defs.inc"
 // statically allocated pg_parameter
 #define MAX_XOMP_TASK_NUMBER 99999 // cannot be too large, otherwise exceed static allocation limit

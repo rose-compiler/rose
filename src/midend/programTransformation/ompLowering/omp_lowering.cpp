@@ -1400,6 +1400,137 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
     //   AstPostProcessing(originalSourceFile);
   }
 
+  /*
+   * Expected AST layout: 
+   *  SgOmpSectionsStatement
+   *    SgBasicBlock
+   *      SgOmpSectionStatement (1 or more section statements here)
+   *        SgBasicBlock
+   *          SgStatement 
+   *
+   * Example translated code: 
+      int _section_1 = XOMP_sections_init_next (3);
+      while (_section_1 >=0) // This while loop is a must
+      {
+        switch (_section_1) {
+          case 0:
+            printf("hello from section 1\n");
+            break;
+          case 1:
+            printf("hello from section 2\n");
+            break;
+          case 2:
+            printf("hello from section 3\n");
+            break;
+          default:
+            printf("fatal error: XOMP_sections_?_next() returns illegal value %d\n", _section_1);
+            abort();
+        }
+        _section_1 = XOMP_sections_next ();  // next round for the current thread: deal with possible number of threads < number of sections
+     }
+    
+      XOMP_sections_end();   // Or  XOMP_sections_end_nowait ();    
+   * */
+  void transOmpSections(SgNode* node)
+  {
+//    cout<<"Entering transOmpSections() ..."<<endl;
+    ROSE_ASSERT(node != NULL );
+    // verify the AST is expected
+    SgOmpSectionsStatement * target = isSgOmpSectionsStatement(node); 
+    ROSE_ASSERT(target != NULL );
+    SgScopeStatement * scope = target->get_scope();
+    ROSE_ASSERT(scope != NULL );
+    SgStatement * body = target->get_body();
+    ROSE_ASSERT(body != NULL);
+
+    SgBasicBlock *  bb1 = buildBasicBlock();
+   
+    SgBasicBlock * sections_block = isSgBasicBlock(body);
+    ROSE_ASSERT (sections_block != NULL);
+       // verify each statement under sections is SgOmpSectionStatement
+    SgStatementPtrList section_list = sections_block-> get_statements();
+    int section_count = section_list.size();
+    for  (int i =0; i<section_count; i++)
+    {
+      SgStatement* stmt = section_list[i];
+      ROSE_ASSERT (isSgOmpSectionStatement(stmt));
+    }
+   
+    // int _section_1 = XOMP_sections_init_next (3);
+    std::string sec_var_name("_section_");
+    sec_var_name += StringUtility::numberToString(++gensym_counter);
+    
+    SgAssignInitializer* initializer = buildAssignInitializer (
+                         buildFunctionCallExp("XOMP_sections_init_next", buildIntType(),buildExprListExp(buildIntVal(section_count)), scope), 
+                                        buildIntType());
+    SgVariableDeclaration* sec_var_decl = buildVariableDeclaration(sec_var_name, buildIntType(), initializer, scope);
+//    insertStatementAfter(target, sec_var_decl);
+    replaceStatement(target, bb1, true);
+    //Declare a variable to store the current section id
+    //Only used to support lastprivate
+    SgVariableDeclaration* sec_var_decl_save = NULL;
+    if (hasClause(target, V_SgOmpLastprivateClause))
+    {
+      sec_var_decl_save = buildVariableDeclaration(sec_var_name+"_save", buildIntType(), NULL, scope);
+      appendStatement(sec_var_decl_save, bb1);
+    }
+
+    appendStatement(sec_var_decl, bb1);
+
+    // while (_section_1 >=0) {}
+    SgWhileStmt * while_stmt = buildWhileStmt(buildGreaterOrEqualOp(buildVarRefExp(sec_var_decl), buildIntVal(0)), buildBasicBlock()); 
+    insertStatementAfter(sec_var_decl, while_stmt);
+    // switch () {}
+    SgSwitchStatement* switch_stmt = buildSwitchStatement (buildExprStatement(buildVarRefExp(sec_var_decl)) , buildBasicBlock()); 
+    appendStatement(switch_stmt, isSgBasicBlock(while_stmt->get_body()));
+    // case 0, case 1, ...
+    for (int i= 0; i<section_count; i++)
+    {
+      SgCaseOptionStmt* option_stmt = buildCaseOptionStmt (buildIntVal(i), buildBasicBlock());
+      // Move SgOmpSectionStatement's body to Case OptionStmt's body
+      SgBasicBlock * src_bb = isSgBasicBlock(isSgOmpSectionStatement(section_list[i])->get_body()); 
+      SgBasicBlock * target_bb =  isSgBasicBlock(option_stmt->get_body());
+      moveStatementsBetweenBlocks(src_bb , target_bb);
+      appendStatement (buildBreakStmt(), target_bb);
+
+      // cout<<"source BB address:"<<isSgBasicBlock(isSgOmpSectionStatement(section_list[i])->get_body())<<endl;
+      // Now we have to delete the source BB since its symbol table is moved into the target BB.
+      SgBasicBlock * fake_src_bb = buildBasicBlock(); 
+      isSgOmpSectionStatement(section_list[i])->set_body(fake_src_bb); 
+      fake_src_bb->set_parent(section_list[i]);
+      delete (src_bb);
+
+      appendStatement (option_stmt,  isSgBasicBlock(switch_stmt->get_body()));
+    } // end case 0, 1, ...  
+    // default option: 
+    SgDefaultOptionStmt* default_stmt = buildDefaultOptionStmt(buildBasicBlock(buildFunctionCallStmt("abort", buildVoidType(), NULL, scope))); 
+    appendStatement (default_stmt,  isSgBasicBlock(switch_stmt->get_body()));
+
+    // save the current section id before checking for next available one
+    // This is only useful to support lastprivate clause
+    if (hasClause(target, V_SgOmpLastprivateClause))
+    {
+      SgStatement* save_stmt = buildAssignStatement (buildVarRefExp(sec_var_decl_save), buildVarRefExp(sec_var_decl)); 
+      appendStatement(save_stmt , isSgBasicBlock(while_stmt->get_body()));
+    }
+    // _section_1 = XOMP_sections_next ();
+    SgStatement* assign_stmt = buildAssignStatement(buildVarRefExp(sec_var_decl), 
+                                 buildFunctionCallExp("XOMP_sections_next", buildIntType(), buildExprListExp(), scope) ); 
+    appendStatement(assign_stmt, isSgBasicBlock(while_stmt->get_body()));
+
+    transOmpVariables(target, bb1, buildIntVal(section_count - 1)); // This should happen before the barrier is inserted.
+
+    // XOMP_sections_end() or XOMP_sections_end_nowait ();
+    SgExprStatement* end_call = NULL; 
+    if (hasClause(target, V_SgOmpNowaitClause))
+      end_call = buildFunctionCallStmt("XOMP_sections_end_nowait", buildVoidType(), NULL, scope);
+    else
+      end_call = buildFunctionCallStmt("XOMP_sections_end", buildVoidType(), NULL, scope);
+
+    appendStatement(end_call,bb1);
+//    removeStatement(target);
+  }
+
   // Two ways 
   //1. builtin function TODO
   //    __sync_fetch_and_add_4(&shared, (unsigned int)local);
@@ -1990,9 +2121,8 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
     return isInClauseVariableList(var, clause_stmt, VariantVector(vt));
   }
 
-static void insertOmpLastprivateCopyBackStmts(SgStatement* ompStmt, vector <SgStatement* >& end_stmt_list,  SgBasicBlock* bb1, SgInitializedName* orig_var, SgVariableDeclaration* local_decl, SgExpression* orig_loop_upper)
-{
-  /* if (i is the last iteration)
+ // lastprivate can be used with loop constructs or sections.
+   /* if (i is the last iteration)
    *   *shared_i_p = local_i
    *
    * The judge of last iteration is based on the iteration space increment direction and loop stop conditions
@@ -2009,8 +2139,23 @@ static void insertOmpLastprivateCopyBackStmts(SgStatement* ompStmt, vector <SgSt
    *  Another tricky case is that when some threads don't get any iterations to work on, the initial _p_index may still trigger the lastprivate 's 
    *     if (_p_index>orig_bound) statement
    *  We add a condition to test if the thread really worked on at least on iteration before compare the _p_index and the original boundary
+   *     if (_p_index != p_lower_ && _p_index>orig_bound) 
+   *       statement
+   *
+   *  Parameters:
+   *    ompStmt: the OpenMP statement node with a lastprivate clause
+   *    end_stmt_list: a list of statement which will be append to the end of bb1. The generated if-stmt will be added to the end of this list
+   *    bb1: the basic block affected by the lastprivate clause
+   *    orig_var: the initialized name for the original lastprivate variable. Necessary since transOmpLoop will replace loop index with changed one
+   *    local_decl: the variable declaration for the local copy of the lastprivate variable
+   *    orig_loop_upper: the worksharing construct's upper limit: 
+   *       for-loop: the loop upper value, 
+   *       sections: the section count - 1
+   *
    * */
-  // lastprivate can be used with loop constructs or sections.
+static void insertOmpLastprivateCopyBackStmts(SgStatement* ompStmt, vector <SgStatement* >& end_stmt_list,  SgBasicBlock* bb1, 
+                              SgInitializedName* orig_var, SgVariableDeclaration* local_decl, SgExpression* orig_loop_upper)
+{
   SgStatement* save_stmt = NULL;
   if (isSgOmpForStatement(ompStmt))
   {
@@ -2029,7 +2174,7 @@ static void insertOmpLastprivateCopyBackStmts(SgStatement* ompStmt, vector <SgSt
     ROSE_ASSERT (isCanonical == true);
     SgExpression* if_cond= NULL;
     SgStatement* if_cond_stmt = NULL;
-    //TODO we need the original upper bound!!
+    // we need the original upper bound!!
     if (isIncremental)
     {
       if (isInclusiveBound) // <= --> >
@@ -2055,13 +2200,35 @@ static void insertOmpLastprivateCopyBackStmts(SgStatement* ompStmt, vector <SgSt
     // Add (_p_index != _p_lower) as another condition, making sure the current thread really worked on at least one iteration
     // Otherwise some thread which does not run any iteration may have a big initial _p_index and trigger the if statement's condition
     if_cond_stmt = buildExprStatement(buildAndOp(buildNotEqualOp(buildVarRefExp(loop_index, bb1), copyExpression(loop_lower)), if_cond)) ;
-     
     SgStatement* true_body = buildAssignStatement(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl));
     save_stmt = buildIfStmt(if_cond_stmt, true_body, NULL);
   }
-  else
+  else if (isSgOmpSectionsStatement(ompStmt))
   {
-    cerr<<"Unhandled SgOmpxx for lastprivate variable: \nOmpStatement is:"<< ompStmt->class_name()<<endl;
+    ROSE_ASSERT (orig_loop_upper != NULL);
+    Rose_STL_Container <SgNode*> while_stmts = NodeQuery::querySubTree (bb1, V_SgWhileStmt);
+    ROSE_ASSERT  (while_stmts.size()!=0);
+    SgWhileStmt * top_while_stmt = isSgWhileStmt(while_stmts[0]);
+    ROSE_ASSERT(top_while_stmt != NULL);
+    //Get the section id variable from while-stmt  while(section_id >= 0) {}
+    // SgWhileStmt -> SgExprStatement -> SgGreaterOrEqualOp-> SgVarRefExp
+    SgExprStatement* exp_stmt = isSgExprStatement(top_while_stmt->get_condition());
+    ROSE_ASSERT (exp_stmt != NULL);
+    SgGreaterOrEqualOp* ge_op = isSgGreaterOrEqualOp(exp_stmt->get_expression());
+    ROSE_ASSERT (ge_op != NULL);
+    SgVarRefExp* var_ref = isSgVarRefExp(ge_op->get_lhs_operand()); 
+    ROSE_ASSERT (var_ref != NULL);
+    string switch_index_name = (var_ref->get_symbol()->get_name()).getString();
+    SgExpression* if_cond= NULL;
+    SgStatement* if_cond_stmt = NULL;
+    if_cond= buildEqualityOp(buildVarRefExp((switch_index_name+"_save"), bb1), orig_loop_upper);// no need copy orig_loop_upper here
+    if_cond_stmt = buildExprStatement(if_cond) ;
+    SgStatement* true_body = buildAssignStatement(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl));
+    save_stmt = buildIfStmt(if_cond_stmt, true_body, NULL);
+  }
+  else  
+  {
+    cerr<<"Illegal SgOmpxx for lastprivate variable: \nOmpStatement is:"<< ompStmt->class_name()<<endl;
     cerr<<"lastprivate variable is:"<<orig_var->get_name().getString()<<endl;
     ROSE_ASSERT (false);
   }
@@ -2348,6 +2515,12 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
     //                   variable substitution for the variables:(all)
     //                   save local copy back to its global one:(reduction, lastprivate)
     // Note that a variable could be both firstprivate and lastprivate                  
+    // Parameters:
+    //     ompStmt: the OpenMP statement node with variable clauses
+    //     bb1: the translation-generated basic block to implement ompStmt
+    //     orig_loop_upper: 
+    //       if ompStmt is loop construct, pass the original loop upper bound
+    //       if ompStmt is omp sections, pass the section count - 1
     void transOmpVariables(SgStatement* ompStmt, SgBasicBlock* bb1, SgExpression * orig_loop_upper/*= NULL*/)
     {
       ROSE_ASSERT( ompStmt != NULL);
@@ -3105,6 +3278,12 @@ void lower_omp(SgSourceFile* file)
           transOmpParallel(node);
           break;
         }
+      case V_SgOmpSectionsStatement:
+        {
+          transOmpSections(node);
+          break;
+        }
+ 
       case V_SgOmpTaskStatement:
         {
           transOmpTask(node);
