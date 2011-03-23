@@ -43,6 +43,13 @@
       INTEGER XOMP_loop_ordered_guided_next
       INTEGER XOMP_loop_ordered_runtime_next
 
+! sections
+      INTEGER XOMP_sections_init_next
+      INTEGER XOMP_sections_next
+
+      EXTERNAL XOMP_sections_end
+      EXTERNAL XOMP_sections_end_nowait
+
 ! a few others
       EXTERNAL XOMP_single
       INTEGER XOMP_single

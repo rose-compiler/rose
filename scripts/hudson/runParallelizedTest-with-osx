@@ -200,8 +200,21 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
   then
     CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
   fi
+
 fi
 
+#######################################################################################
+# OpenMP GOMP 
+#   Only when on 64-bit Linux and gcc 4.4.1 is used.
+#  Liao : 3/22/11 - Link with GOMP and run OpenMP tests
+#######################################################################################
+if test "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" ; then
+  if test "x$OS_MACHINE_LABEL" = "xamd64-linux" ; then
+    if [ -a /usr/apps/gcc/4.4.1/lib64/libgomp.a ]; then
+      CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-gomp_omp_runtime_library=/usr/apps/gcc/4.4.1/lib64"
+    fi
+  fi
+fi
 
 #########################################################################################
 #
