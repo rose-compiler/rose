@@ -94,13 +94,10 @@ MemoryMap::Syntax::print(std::ostream &o) const
  ************************************************************************************************************************/
 
 
-// DQ (10/21/2010): Moved to source file.  In general we want function definitions 
-// to be in source files to avoid excessive compile times. This also fixes a problem 
-// on the GNU 4.3 and 4.4 compilers for "projects/haskellport".
-void*
-MemoryMap::MapElement::get_base(bool allocate_anonymous) const
+void *
+MemoryMap::MapElement::get_base(bool allocate_anonymous/*=true*/) const
 {
-    if (anonymous) {
+    if (anonymous && allocate_anonymous) {
         if (NULL==anonymous->base) {
             ROSE_ASSERT(NULL==base);
             base = anonymous->base = new uint8_t[get_size()];
@@ -127,8 +124,12 @@ MemoryMap::MapElement::consistent(const MapElement &other) const
         return false;
     } else if (get_mapperms()!=other.get_mapperms()) {
         return false;
-    } else if (is_anonymous() && other.is_anonymous() && anonymous==other.anonymous) {
-        return true;
+    } else if (is_anonymous() && other.is_anonymous()) {
+        if (anonymous==other.anonymous)
+            return true;
+        if (NULL==get_base(false) && NULL==other.get_base(false))
+            return true;
+        return false;
     } else if (is_anonymous() || other.is_anonymous()) {
         return false;
     } else if (get_base()!=other.get_base()) { /*neither is anonymous*/
@@ -464,48 +465,68 @@ MemoryMap::prune(bool(*predicate)(const MapElement&))
 }
 
 size_t
+MemoryMap::read1(void *dst_buf, rose_addr_t va, size_t desired, unsigned req_perms/*=MM_PROT_READ*/,
+                 const MapElement **mep/*=NULL*/) const
+{
+    const MemoryMap::MapElement *m = find(va);
+    if (mep) *mep = m;
+    if (!m || (m->get_mapperms() & req_perms)!=req_perms)
+        return 0;
+    ROSE_ASSERT(va >= m->get_va());
+    size_t m_offset = va - m->get_va();
+    ROSE_ASSERT(m_offset < m->get_size());
+    size_t n = std::min(desired, m->get_size()-m_offset);
+
+    /* If there have been no writes to an anonymous element and no base has been allocated, then just fill
+     * the return value with zeros */
+    if (m->is_anonymous() && NULL==m->get_base(false)) {
+        memset(dst_buf, 0, n);
+    } else {
+        memcpy(dst_buf, (uint8_t*)m->get_base()+m->get_offset()+m_offset, n);
+    }
+    return n;
+}
+
+size_t
 MemoryMap::read(void *dst_buf, rose_addr_t start_va, size_t desired, unsigned req_perms/*=MM_PROT_READ*/) const
 {
-    size_t ncopied = 0;
-    while (ncopied < desired) {
-        const MemoryMap::MapElement *m = find(start_va);
-        if (!m || (m->get_mapperms() & req_perms)!=req_perms)
-            break;
-        ROSE_ASSERT(start_va >= m->get_va());
-        size_t m_offset = start_va - m->get_va();
-        ROSE_ASSERT(m_offset < m->get_size());
-        size_t n = std::min(desired-ncopied, m->get_size()-m_offset);
-
-        /* If there have been no writes to an anonymous element and no base has been allocated, then just fill
-         * the return value with zeros */
-        if (m->is_anonymous() && NULL==m->get_base(false)) {
-            memset((uint8_t*)dst_buf+ncopied, 0, n);
-        } else {
-            memcpy((uint8_t*)dst_buf+ncopied, (uint8_t*)m->get_base()+m->get_offset()+m_offset, n);
-        }
-        ncopied += n;
+    size_t total_copied=0;
+    while (total_copied < desired) {
+        size_t n = read1((uint8_t*)dst_buf+total_copied, start_va+total_copied, desired-total_copied, req_perms, NULL);
+        if (!n) break;
+        total_copied += n;
     }
 
-    memset((uint8_t*)dst_buf+ncopied, 0, desired-ncopied);
-    return ncopied;
+    memset((uint8_t*)dst_buf+total_copied, 0, desired-total_copied);
+    return total_copied;
+}
+
+size_t
+MemoryMap::write1(const void *src_buf, rose_addr_t va, size_t nbytes, unsigned req_perms/*=MM_PROT_WRITE*/,
+                  const MapElement **mep/*=NULL*/) const
+{
+    const MemoryMap::MapElement *m = find(va);
+    if (mep) *mep = m;
+    if (!m || m->is_read_only() || (m->get_mapperms() & req_perms)!=req_perms)
+        return 0;
+    ROSE_ASSERT(va >= m->get_va());
+    size_t m_offset = va - m->get_va();
+    ROSE_ASSERT(m_offset < m->get_size());
+    size_t n = std::min(nbytes, m->get_size()-m_offset);
+    memcpy((uint8_t*)m->get_base()+m->get_offset()+m_offset, src_buf, n);
+    return n;
 }
 
 size_t
 MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes, unsigned req_perms/*=MM_PROT_WRITE*/) const
 {
-    size_t ncopied = 0;
-    while (ncopied < nbytes) {
-        const MemoryMap::MapElement *m = find(start_va);
-        if (!m || m->is_read_only() || (m->get_mapperms() & req_perms)!=req_perms)
-            break;
-        ROSE_ASSERT(start_va >= m->get_va());
-        size_t m_offset = start_va - m->get_va();
-        ROSE_ASSERT(m_offset < m->get_size());
-        size_t n = std::min(nbytes-ncopied, m->get_size()-m_offset);
-        memcpy((uint8_t*)m->get_base()+m->get_offset()+m_offset, (uint8_t*)src_buf+ncopied, n);
-        ncopied += n;
+    size_t total_copied = 0;
+    while (total_copied < nbytes) {
+        size_t n = write1((uint8_t*)src_buf+total_copied, start_va+total_copied, nbytes-total_copied, req_perms, NULL);
+        if (!n) break;
+        total_copied += n;
     }
-    return ncopied;
+    return total_copied;
 }
 
 void
@@ -632,17 +653,20 @@ MemoryMap::dump(FILE *f, const char *prefix) const
         std::string basename;
 
         /* Convert the base address to a unique name like "aaa", "aab", "aac", etc. This makes it easier to compare outputs
-         * from different runs since the base addresses are likely to be different between runs but the names aren't. */   
+         * from different runs since the base addresses are likely to be different between runs but the names aren't. */
         if (me.is_anonymous()) {
-            basename = "anonymous";
-        } else if (NULL==me.get_base()) {
-            basename = "base null";
+            basename = "anon ";
+        } else {
+            basename = "base ";
+        }
+
+        if (NULL==me.get_base(false)) {
+            basename += "null";
         } else {
             std::map<void*,std::string>::iterator found = bases.find(me.get_base());
             if (found==bases.end()) {
                 size_t j = bases.size();
                 ROSE_ASSERT(j<26*26*26);
-                basename = "base ";
                 basename += 'a'+(j/(26*26))%26;
                 basename += 'a'+(j/26)%26;
                 basename += 'a'+(j%26);
@@ -661,7 +685,10 @@ MemoryMap::dump(FILE *f, const char *prefix) const
 
         if (!me.name.empty()) {
             static const size_t limit = 55;
-            fprintf(f, " %s", (me.get_name().size()>limit ? me.get_name().substr(0, limit-3) + "..." : me.get_name()).c_str());
+            std::string name = escapeString(me.get_name());
+            if (name.size()>limit)
+                name = name.substr(0, limit-3) + "...";
+            fprintf(f, " %s", name.c_str());
         }
 
         fputc('\n', f);

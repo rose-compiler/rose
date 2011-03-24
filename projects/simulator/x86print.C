@@ -1,3 +1,5 @@
+#include "rose.h"
+
 #include "x86print.h"
 
 #define __STDC_FORMAT_MACROS
@@ -8,17 +10,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-int
-print_flags(FILE *f, const Translate *tlist, uint32_t value)
+std::string
+flags_to_str(const Translate *tlist, uint32_t value)
 {
-    int retval=0, nelmts=0;
+    std::string s;
+    int nelmts=0;
 
     /* Print the non-zero flags until we don't find any more. */
     while (1) {
         bool found = 0;
         for (const Translate *t=tlist; t->str; t++) {
             if (0!=t->mask && 0!=t->val && (value & t->mask)==t->val) {
-                retval += fprintf(f, "%s%s", nelmts++?"|":"", t->str);
+                if (nelmts++) s += "|";
+                s += t->str;
                 value &= ~(t->val);
                 found = true;
             }
@@ -30,7 +34,8 @@ print_flags(FILE *f, const Translate *tlist, uint32_t value)
     if (!nelmts && !value) {
         for (const Translate *t=tlist; t->str; t++) {
             if (0!=t->mask && (value & t->mask)==t->val) {
-                retval += fprintf(f, "%s%s", nelmts++?"|":"", t->str);
+                if (nelmts++) s += "|";
+                s += t->str;
                 value &= ~(t->val);
             }
         }
@@ -39,198 +44,201 @@ print_flags(FILE *f, const Translate *tlist, uint32_t value)
     /* Print stuff with TF_FMT elements (t->mask is zero; t->val is the mask; t->str is the format) */
     for (const Translate *t=tlist; t->str; t++) {
         if (0==t->mask && 0!=t->val) {
-            retval += fprintf(f, "%s", nelmts++?"|":"");
-            retval += fprintf(f, t->str, value & t->val);
+            if (nelmts++) s += "|";
+            char buf[256];
+            snprintf(buf, sizeof buf, t->str, value & t->val);
+            s += buf;
             value &= ~(t->val);
         }
     }
 
     /* Generically print what's left */
     if (nelmts==0 || value!=0) {
-        if (nelmts++) retval += fprintf(f, "|");
-        retval += print_hex(f, value);
+        if (nelmts++) s += "|";
+        s += hex_to_str(value);
     }
-
-    return retval;
+    return s;
 }
 
-int
-print_enum(FILE *f, const Translate *tlist, uint32_t value)
+void
+print_flags(RTS_Message *m, const Translate *tlist, uint32_t value)
+{
+    m->more("%s", flags_to_str(tlist, value).c_str());
+}
+
+void
+print_enum(RTS_Message *m, const Translate *tlist, uint32_t value)
 {
     for (const Translate *t=tlist; t->str; t++) {
-        if (value==t->val)
-            return fprintf(f, "%s", t->str);
+        if (value==t->val) {
+            m->more("%s", t->str);
+            return;
+        }
     }
-    return fprintf(f, "%"PRId32, value);
+    m->more("%"PRId32, value);
 }
 
-int
-print_signed(FILE *f, uint32_t value)
+void
+print_signed(RTS_Message *m, uint32_t value)
 {
-    return fprintf(f, "%"PRId32, value);
+    m->more("%"PRId32, value);
 }
 
-int
-print_pointer(FILE *f, uint32_t value)
+void
+print_pointer(RTS_Message *m, uint32_t value)
 {
-    if (0==value)
-        return fprintf(f, "NULL");
-    return fprintf(f, "0x%08"PRIx32, value);
+    if (0==value) {
+        m->more("NULL");
+    } else {
+        m->more("0x%08"PRIx32, value);
+    }
 }
 
-int
-print_struct(FILE *f, uint32_t value, ArgInfo::StructPrinter printer, const uint8_t *buf, size_t need, size_t have)
+void
+print_struct(RTS_Message *m, uint32_t value, ArgInfo::StructPrinter printer, const uint8_t *buf, size_t need, size_t have)
 {
-    if (0==value)
-        return fprintf(f, "NULL");
-    if (have<need)
-        return fprintf(f, "0x%08"PRIx32" {<short read>}", value);
-    return (fprintf(f, "0x%08"PRIx32" {", value) +
-            (printer)(f, buf, have) +
-            fprintf(f, "}"));
+    if (0==value) {
+        m->more("NULL");
+    } else if (have<need) {
+        m->more("0x%08"PRIx32" {<short read>}", value);
+    } else {
+        m->more("0x%08"PRIx32" {", value);
+        (printer)(m, buf, have);
+        m->more("}");
+    }
 }
 
-int
-print_hex(FILE *f, uint32_t value)
+std::string
+hex_to_str(uint32_t value)
 {
-    if (value<10)
-        return fprintf(f, "%"PRIu32, value);
-    return fprintf(f, "0x%08"PRIx32, value);
+    char buf[64];
+    if (value<10) {
+        snprintf(buf, sizeof buf, "%"PRIu32, value);
+    } else {
+        snprintf(buf, sizeof buf, "0x%08"PRIx32, value);
+    }
+    return buf;
 }
 
-int
-print_string(FILE *f, const std::string &value, bool str_fault, bool str_trunc)
+void
+print_hex(RTS_Message *m, uint32_t value)
 {
-    int retval=fprintf(f, "\"");
+    m->more("%s", hex_to_str(value).c_str());
+}
+
+void
+print_string(RTS_Message *m, const std::string &value, bool str_fault, bool str_trunc)
+{
+    m->more("\"");
     for (size_t i=0; i<value.size(); i++) {
         switch (value[i]) {
-            case '"': retval += fprintf(f, "\\\""); break;
-            case '\a': retval += fprintf(f, "\\a"); break;
-            case '\b': retval += fprintf(f, "\\b"); break;
-            case '\f': retval += fprintf(f, "\\f"); break;
-            case '\n': retval += fprintf(f, "\\n"); break;
-            case '\r': retval += fprintf(f, "\\r"); break;
-            case '\t': retval += fprintf(f, "\\t"); break;
-            case '\v': retval += fprintf(f, "\\v"); break;
+            case '"' : m->more("\\\""); break;
+            case '\a': m->more("\\a"); break;
+            case '\b': m->more("\\b"); break;
+            case '\f': m->more("\\f"); break;
+            case '\n': m->more("\\n"); break;
+            case '\r': m->more("\\r"); break;
+            case '\t': m->more("\\t"); break;
+            case '\v': m->more("\\v"); break;
             default:
                 if (isprint(value[i])) {
-                    retval += fprintf(f, "%c", value[i]);
+                    m->more("%c", value[i]);
                 } else {
-                    retval += fprintf(f, "\\%03o", (unsigned)value[i]);
+                    m->more("\\%03o", (unsigned)value[i]);
                 }
                 break;
         }
     }
-    retval += fprintf(f, "\"");
+    m->more("\"");
     if (str_fault || str_trunc)
-        retval += fprintf(f, "...");
+        m->more("...");
     if (str_fault)
-        retval += fprintf(f, "[EFAULT]");
-    return retval;
+        m->more("[EFAULT]");
 }
 
-int
-print_buffer(FILE *f, uint32_t va, const uint8_t *buf, size_t actual_sz, size_t print_sz)
+void
+print_buffer(RTS_Message *m, uint32_t va, const uint8_t *buf, size_t actual_sz, size_t print_sz)
 {
-    int retval = fprintf(f, "0x%08"PRIx32" [", va);
-    for (size_t i=0; i<actual_sz && (size_t)retval<print_sz; i++) {
+    size_t nchars = 0;
+    m->more("0x%08"PRIx32" [", va);
+    for (size_t i=0; i<actual_sz && nchars<print_sz; i++) {
         switch (buf[i]) {
-            case '"': retval += fprintf(f, "\\\""); break;
-            case '\a': retval += fprintf(f, "\\a"); break;
-            case '\b': retval += fprintf(f, "\\b"); break;
-            case '\f': retval += fprintf(f, "\\f"); break;
-            case '\n': retval += fprintf(f, "\\n"); break;
-            case '\r': retval += fprintf(f, "\\r"); break;
-            case '\t': retval += fprintf(f, "\\t"); break;
-            case '\v': retval += fprintf(f, "\\v"); break;
+            case '"' : m->more("\\\""); nchars+=2; break;
+            case '\a': m->more("\\a");  nchars+=2; break;
+            case '\b': m->more("\\b");  nchars+=2; break;
+            case '\f': m->more("\\f");  nchars+=2; break;
+            case '\n': m->more("\\n");  nchars+=2; break;
+            case '\r': m->more("\\r");  nchars+=2; break;
+            case '\t': m->more("\\t");  nchars+=2; break;
+            case '\v': m->more("\\v");  nchars+=2; break;
             default:
                 if (isprint(buf[i])) {
-                    retval += fprintf(f, "%c", buf[i]);
+                    m->more("%c", buf[i]);
+                    nchars++;
                 } else {
-                    retval += fprintf(f, "\\%03o", (unsigned)buf[i]);
+                    m->more("\\%03o", (unsigned)buf[i]);
+                    nchars+=3;
                 }
                 break;
         }
     }
-    retval += fprintf(f, "]");
+    m->more("]");
     if (print_sz<actual_sz)
-        retval += fprintf(f, "...");
-    return retval;
+        m->more("...");
 }
 
-int
-print_time(FILE *f, uint32_t value)
+void
+print_time(RTS_Message *m, uint32_t value)
 {
     time_t ts = value;
     struct tm tm;
     localtime_r(&ts, &tm);
     char buf[256];
     strftime(buf, sizeof buf, "%c", &tm);
-    return fprintf(f, "%s", buf);
+    m->more("%s", buf);
 }
 
-int
-print_single(FILE *f, char fmt, const ArgInfo *info)
+void
+print_single(RTS_Message *m, char fmt, const ArgInfo *info)
 {
-    int retval=0;
     switch (fmt) {
         case '-':
-            retval += fprintf(f, "<unused>");
+            m->more("<unused>");
             break;
         case 'b':
-            retval += print_buffer(f, info->val, info->struct_buf, info->struct_nread, info->struct_size);
+            print_buffer(m, info->val, info->struct_buf, info->struct_nread, info->struct_size);
             break;
         case 'd':
-            retval += print_signed(f, info->val);
+            print_signed(m, info->val);
             break;
         case 'e':
-            retval += print_enum(f, info->xlate, info->val);
+            print_enum(m, info->xlate, info->val);
             break;
         case 'f':
-            retval += print_flags(f, info->xlate, info->val);
+            print_flags(m, info->xlate, info->val);
             break;
         case 'p':
-            retval += print_pointer(f, info->val);
+            print_pointer(m, info->val);
             break;
         case 'P':
-            retval += print_struct(f, info->val, info->struct_printer, info->struct_buf, info->struct_size, info->struct_nread);
+            print_struct(m, info->val, info->struct_printer, info->struct_buf, info->struct_size, info->struct_nread);
             break;
         case 's':
-            retval += print_string(f, info->str, info->str_fault, info->str_trunc);
+            print_string(m, info->str, info->str_fault, info->str_trunc);
             break;
         case 't':
-            retval += print_time(f, info->val);
+            print_time(m, info->val);
             break;
         case 'x':
-            retval += print_hex(f, info->val);
+            print_hex(m, info->val);
             break;
         default: abort();
     }
-    return retval;
 }
 
-int
-print_enter(FILE *f, const char *name, int syscallnum, const char *format, const ArgInfo *info)
+void
+print_leave(RTS_Message *m, char fmt, const ArgInfo *info)
 {
-    int retval = fprintf(f, "%s", name);
-    if (syscallnum>0)
-        retval += fprintf(f, "[%d]", syscallnum);
-    retval += fprintf(f, "(");
-    for (size_t i=0; format && format[i]; i++) {
-        if (i>0)
-            retval += fprintf(f, ", ");
-        retval += print_single(f, format[i], info+i);
-    }
-    retval += fprintf(f, ")");
-    int width = std::max(0, 42-retval);
-    retval += fprintf(f, "%*s", width, " = ");
-    return retval;
-}
-
-int
-print_leave(FILE *f, char fmt, const ArgInfo *info)
-{
-    int retval = 0;
     int en = (int32_t)info->val<0 && (int32_t)info->val>-256 ? -(int32_t)info->val : 0;
     if (en!=0) {
         /*FIXME: are we sure that these host numbers are valid for the target machine also? I hope so, because we use
@@ -564,12 +572,11 @@ print_leave(FILE *f, char fmt, const ArgInfo *info)
                                        TE(ENOPOLICY),
 #endif
                                        T_END };
-        retval += fprintf(f, "%"PRId32" ", info->val);
-        retval += print_enum(f, t, en);
-        retval += fprintf(f, " (%s)\n", strerror(en));
+        m->more("%"PRId32" ", info->val);
+        print_enum(m, t, en);
+        m->more(" (%s)\n", strerror(en));
     } else {
-        retval += print_single(f, fmt, info);
-        retval += fprintf(f, "\n");
+        print_single(m, fmt, info);
+        m->more("\n");
     }
-    return retval;
 }

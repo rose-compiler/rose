@@ -19,9 +19,13 @@ check-local:
 	@echo "****** ROSE/tests/CompilerOptionTests/testGnuOptions: make check rule complete (terminated normally) ******"
 	@echo "*****************************************************************************************************************"
 
+# TOO (2/18/11): Added to support CC/CXX environment variables when selecting compilers for ROSE.
+# Otherwise, $(srcdir)/testOptions.h doesn't expand properly during make distcheck.
+absolute_srcdir=`cd $(srcdir) && pwd`
+
 testUseOfGnuOptions: $(srcdir)/test-includeOption.C $(srcdir)/test-isystemOption.C 
 #	If -include is not handled properly by ROSE this will fail.
-	$(TEST_TRANSLATOR) -rose:verbose 0 -include $(srcdir)/testOptions.h -c $(srcdir)/test-includeOption.C
+	$(TEST_TRANSLATOR) -rose:verbose 0 -include $(absolute_srcdir)/testOptions.h -c $(srcdir)/test-includeOption.C
 #	Since the default is to search the source file directory, this is not a great test
 	$(TEST_TRANSLATOR) -rose:verbose 0 -isystem $(srcdir) -c $(srcdir)/test-isystemOption.C
 #	The default is to search the source file directory, so move the source file to 

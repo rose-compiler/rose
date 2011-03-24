@@ -34,7 +34,7 @@ class MyTraversal : public SgSimpleProcessing {
     void visit(SgNode *astNode) {
         SgAsmElfSymbolSection *symsec = isSgAsmElfSymbolSection(astNode);
         if (symsec) {
-            printf("Scanning symbols in [%d] \"%s\"\n", symsec->get_id(), symsec->get_name()->c_str());
+            printf("Scanning symbols in [%d] \"%s\"\n", symsec->get_id(), symsec->get_name()->get_string(true).c_str());
             const SgAsmElfSymbolPtrList &symbols = symsec->get_symbols()->get_symbols();
             for (SgAsmElfSymbolPtrList::const_iterator i=symbols.begin(); i!=symbols.end(); ++i) {
                 std::string name = (*i)->get_name()->get_string();

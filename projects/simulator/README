@@ -44,6 +44,8 @@ Switches are:
 
 ** "signal" shows information about signal handling.
 
+** "thread" shows thread creation and termination.
+
 ** "all" turns on all possible debugging switches.
 
 * "--debug" by itself is the same as "--debug=syscall,insn"

@@ -8,11 +8,16 @@ BinaryLoaderPe::can_load(SgAsmGenericHeader *hdr) const
     return isSgAsmPEFileHeader(hdr)!=NULL;
 }
 
-/* Returns sections in order of their definition in the PE Section Table */
+/* Returns sections to be mapped */
 SgAsmGenericSectionPtrList
 BinaryLoaderPe::get_remap_sections(SgAsmGenericHeader *header)
 {
     SgAsmGenericSectionPtrList retval;
+
+    /* The NT loader always loads the PE header, so we include that first in the list. */
+    retval.push_back(header);
+
+    /* Add the sections in the order they appear in the section table */
     const SgAsmGenericSectionPtrList &sections = header->get_sections()->get_sections();
     std::map<int, SgAsmGenericSection*> candidates;
     for (size_t i=0; i<sections.size(); i++) {
@@ -27,7 +32,8 @@ BinaryLoaderPe::get_remap_sections(SgAsmGenericHeader *header)
     return retval;
 }
 
-/* This algorithm was implemented based on an e-mail from Cory Cohen at CERT. [RPM 2009-08-17] */
+/* This algorithm was implemented based on an e-mail from Cory Cohen at CERT and inspection of PE::ConvertRvaToFilePosition()
+ * as defined in "PE.cpp 2738 2009-06-05 15:09:11Z murawski_dev". [RPM 2009-08-17] */
 BinaryLoader::MappingContribution
 BinaryLoaderPe::align_values(SgAsmGenericSection *section, MemoryMap *map,
                              rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
@@ -36,7 +42,8 @@ BinaryLoaderPe::align_values(SgAsmGenericSection *section, MemoryMap *map,
                              rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
                              ConflictResolution *resolve_p)
 {
-    SgAsmGenericHeader *header = section->get_header();
+    SgAsmGenericHeader *header = isSgAsmPEFileHeader(section);
+    if (!header) header = section->get_header();
     ROSE_ASSERT(header!=NULL);
 
     if (!section->is_mapped())

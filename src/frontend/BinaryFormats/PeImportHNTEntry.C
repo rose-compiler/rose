@@ -29,8 +29,8 @@ SgAsmPEImportHNTEntry::parse(rose_rva_t rva)
         if (SgAsmPEImportSection::import_mesg("SgAsmPEImportHNTEntry::ctor: warning: hint at RVA 0x%08"PRIx64
                                               " contains unmapped virtual address 0x%08"PRIx64"\n", rva.get_rva(), e.va) &&
             e.map) {
-            fprintf(stderr, "Memory map in effect at time of error:\n");
-            e.map->dump(stderr, "    ");
+            fprintf(stderr, "    Memory map in effect at time of error:\n");
+            e.map->dump(stderr, "        ");
         }
     }
     p_hint = le_to_host(hint_disk);
@@ -43,8 +43,8 @@ SgAsmPEImportHNTEntry::parse(rose_rva_t rva)
         if (SgAsmPEImportSection::import_mesg("SgAsmPEImportHNTEntry::ctor: warning: string at RVA 0x%08"PRIx64
                                               " contains unmapped virtual address 0x%08"PRIx64"\n", rva.get_rva()+2, e.va) &&
             e.map) {
-            fprintf(stderr, "Memory map in effect at time of error:\n");
-            e.map->dump(stderr, "    ");
+            fprintf(stderr, "    Memory map in effect at time of error:\n");
+            e.map->dump(stderr, "        ");
         }
     }
     p_name->set_string(s);
@@ -60,8 +60,8 @@ SgAsmPEImportHNTEntry::parse(rose_rva_t rva)
             if (SgAsmPEImportSection::import_mesg("SgAsmPEImportHNTEntry::ctor: warning: padding at virtual address 0x%08"PRIx64
                                                   " is not mapped\n", e.va) &&
                 e.map) {
-                fprintf(stderr, "Memory map in effect at time of error:\n");
-                e.map->dump(stderr, "    ");
+                fprintf(stderr, "    Memory map in effect at time of error:\n");
+                e.map->dump(stderr, "        ");
             }
         }
     }
@@ -103,7 +103,7 @@ SgAsmPEImportHNTEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = %u\t\"%s\"", p, w, "hint/name", p_hint, p_name->c_str());
+    fprintf(f, "%s%-*s = %u\t\"%s\"", p, w, "hint/name", p_hint, p_name->get_string(true).c_str());
     if ((p_name->get_string().size()+1)%2)
         fprintf(f, " + '\\%03o'", p_padding);
     fputc('\n', f);

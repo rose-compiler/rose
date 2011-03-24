@@ -302,6 +302,15 @@ SgAsmPEFileHeader::parse()
         break;
     }
 
+    /* The NT loader normally maps this file header at the header's base virtual address. */
+    set_mapped_preferred_rva(0);
+    set_mapped_actual_va(0); /* will be assigned by BinaryLoader */
+    set_mapped_size(p_e_header_size);
+    set_mapped_alignment(0);
+    set_mapped_rperm(true);
+    set_mapped_wperm(false);
+    set_mapped_xperm(false);
+
     /* Entry point. We will eventually bind the entry point to a particular section (in SgAsmPEFileHeader::parse) so that if
      * sections are rearranged, extended, etc. the entry point will be updated automatically. */
     add_entry_rva(entry_rva);
@@ -346,8 +355,10 @@ SgAsmPEFileHeader::parse()
 
 SgAsmPEFileHeader::~SgAsmPEFileHeader() 
 {
-    ROSE_ASSERT(p_rvasize_pairs->get_pairs().empty() == true);
     // Delete the pointers to the IR nodes containing the STL lists
+    size_t n = get_rvasize_pairs()->get_pairs().size();
+    for (size_t i=0; i<n; i++)
+        delete get_rvasize_pairs()->get_pairs()[i];
     delete p_rvasize_pairs;
     p_rvasize_pairs = NULL;
 }
@@ -820,7 +831,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_coff_nsyms",        p_e_coff_nsyms);
     if (p_coff_symtab) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n",           p, w, "coff_symtab",
-                p_coff_symtab->get_id(), p_coff_symtab->get_name()->c_str());
+                p_coff_symtab->get_id(), p_coff_symtab->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n",                  p, w, "coff_symtab");
     }
@@ -862,7 +873,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     if (p_section_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table",
-                p_section_table->get_id(), p_section_table->get_name()->c_str());
+                p_section_table->get_id(), p_section_table->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "section_table");
     }

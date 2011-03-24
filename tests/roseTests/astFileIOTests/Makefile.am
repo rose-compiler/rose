@@ -62,7 +62,9 @@ TEST_TRANSLATOR = $(top_builddir)/tests/testAstFileIO $(ROSE_FLAGS)
 READ_TRANSLATOR = $(VALGRIND) $(top_builddir)/tests/testAstFileRead
 # READ_TRANSLATOR = $(top_builddir)/tests/parallelASTMerge
 
-TESTCODE_INCLUDES =
+TESTCODE_INCLUDES = \
+	-I$(top_srcdir)/tests/CompileTests/A++Code \
+	-I$(srcdir)/../../CompileTests/Cxx_tests
 
 ../../testAstFileIO:
 	make -C ../.. testAstFileIO
@@ -75,7 +77,7 @@ $(TEST_Objects): astFileIO astFileRead ../../testAstFileIO
 #	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
 #	$(VALGRIND) $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C) -o $(@:.o=)
 #	$(VALGRIND) $(TEST_TRANSLATOR) -I$(srcdir)/../../CompileTests/Cxx_tests -c $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C) -o $(@:.o=)
-	$(VALGRIND) $(TEST_TRANSLATOR) -I$(srcdir)/../../CompileTests/Cxx_tests -c $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(TESTCODE_INCLUDES) -c $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C)
 #	@echo "Running resulting executable ..."
 #	./$(@:.o=)
 

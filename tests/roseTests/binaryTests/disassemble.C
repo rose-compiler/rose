@@ -70,6 +70,26 @@ Description:\n\
     Convenience switch that is equivalent to --ast-dot and --cfg-dot (or\n\
     --no-ast-dot and --no-cfg-dot).\n\
 \n\
+  --omit-anon=SIZE\n\
+  --no-omit-anon\n\
+    If the memory being disassembled is anonymously mapped (contains all zero\n\
+    bytes), then the disassembler might spend substantial time creating code\n\
+    that's a single, large block of instructions.  This switch can be used to\n\
+    discard regions of memory that are anonymously mapped. Any distinct region\n\
+    larger than the specified size in kilobytes (1024 multiplier) will be\n\
+    unmapped before disassembly starts.  This filter does not remove neighboring\n\
+    regions which are individually smaller than the limit but whose combined size\n\
+    is larger.  The default is to omit anonymous regions larger than 8kB.\n\
+\n\
+  --protection=PROTBITS\n\
+    Normally the disassembler will only consider data in memory that has\n\
+    execute permission.  This switch allows allows the disassembler to use a\n\
+    different set of protection bits, all of which must be set on any memory\n\
+    which is being considered for disassembly.  The PROTBITS argument is one\n\
+    or more of the letters: r (read), w (write), or x (execute), or '-'\n\
+    (ignored). PROTBITS may be the word \"any\", which has the same effect as\n\
+    not supplying any letters after the equal sign.\n\
+\n\
   --quiet\n\
   --no-quiet\n\
     Suppresses (or not) the instruction listing that is normally emitted to the\n\
@@ -614,6 +634,19 @@ dump_CFG_CG(SgNode *ast)
     fprintf(stderr, "\n");
 }
 
+/* Returns true for any anonymous memory region containing more than a certain size. */
+static rose_addr_t large_anonymous_region_limit = 8192;
+static bool
+large_anonymous_region_p(const MemoryMap::MapElement &me)
+{
+    if (me.is_anonymous() && me.get_size()>large_anonymous_region_limit) {
+        fprintf(stderr, "ignoring zero-mapped memory at va 0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
+                me.get_va(), me.get_size(), me.get_va()+me.get_size());
+        return true;
+    }
+    return false;
+}
+
 int
 main(int argc, char *argv[]) 
 {
@@ -630,12 +663,14 @@ main(int argc, char *argv[])
     bool do_rose_help = false;
     bool do_call_disassembler = false;
     bool do_show_hashes = false;
+    bool do_omit_anon = true;                   /* see large_anonymous_region_limit global for actual limit */
 
     Disassembler::AddressSet raw_entries;
     MemoryMap raw_map;
     unsigned disassembler_search = Disassembler::SEARCH_DEFAULT;
     unsigned partitioner_search = SgAsmFunctionDeclaration::FUNC_DEFAULT;
     char *partitioner_config = NULL;
+    unsigned protection = MemoryMap::MM_PROT_EXEC;
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Parse and remove the command-line switches intended for this executable, but leave the switches we don't
@@ -675,6 +710,31 @@ main(int argc, char *argv[])
                    !strcmp(argv[i], "--help")) {
             printf(usage, arg0, arg0, arg0);
             exit(0);
+        } else if (!strncmp(argv[i], "--omit-anon=", 12)) {
+            char *rest;
+            do_omit_anon = true;
+            large_anonymous_region_limit = 1024 * strtoull(argv[i]+12, &rest, 0);
+            if (rest && *rest) {
+                fprintf(stderr, "%s: invalid value for --omit-anon switch: %s\n", arg0, argv[i]+12);
+                exit(1);
+            }
+        } else if (!strcmp(argv[i], "--no-omit-anon")) {
+            do_omit_anon = false;
+        } else if (!strcmp(argv[i], "--protection=any")) {
+            protection = 0;
+        } else if (!strncmp(argv[i], "--protection=", 13)) {
+            protection = 0;
+            for (char *s=argv[i]+13; *s; s++) {
+                switch (*s) {
+                    case 'r': protection |= MemoryMap::MM_PROT_READ;  break;
+                    case 'w': protection |= MemoryMap::MM_PROT_WRITE; break;
+                    case 'x': protection |= MemoryMap::MM_PROT_EXEC;  break;
+                    case '-': break;
+                    default:
+                        fprintf(stderr, "%s: invalid --protection bit: %c\n", arg0, *s);
+                        exit(1);
+                }
+            }
         } else if (!strcmp(argv[i], "--rose-help")) {
             new_argv[new_argc++] = strdup("--help");
             do_rose_help = true;
@@ -913,7 +973,10 @@ main(int argc, char *argv[])
     disassembler->set_alignment(1);      /*alignment for SEARCH_WORDS (default is four)*/
     if (do_debug_disassembler)
         disassembler->set_debug(stderr);
-    
+
+    /* What kind of memory can be disassembled, as specified by the --protection switch. */
+    disassembler->set_protection(protection);
+
     /* Build the instruction partitioner and initialize it based on the -rose:partitioner_search and
      * -rose:partitioner_confg switches.  Similar to the disassembler switches, these are also available via
      * SgFile::get_partitionerSearchHeuristics() and SgFile::get_partitionerConfigurationFileName() if we had called
@@ -970,6 +1033,10 @@ main(int argc, char *argv[])
                 disassembler->search_function_symbols(&worklist, map, *hi);
         }
     }
+
+    /* Should we filter away any anonymous regions? */
+    if (do_omit_anon>0)
+        map->prune(large_anonymous_region_p);
 
     /* If the partitioner needs to execute a success program (defined in an IPD file) then it must be able to provide the
      * program with a window into the specimen's memory.  We do that by supplying the same memory map that was used for
