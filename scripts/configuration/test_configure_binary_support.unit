@@ -1,0 +1,186 @@
+#!/bin/bash
+if test "x$1" = "xstandalone-test" ; then
+ source test_configure_language_support.sh
+fi
+echo "*********************************************"
+echo " Testing binary analysis configuration support..."
+echo "*********************************************"
+#########################################################################################
+run_xfail_configure --enable-only-binary-analysis=no 
+#########################################################################################
+#########################################################################################
+run_xfail_configure --disable-only-binary-analysis 
+#########################################################################################
+#########################################################################################
+run_configure --enable-only-binary-analysis 
+#########################################################################################
+test_configure "\
+  + Binary analysis \
+  - C \
+  - C++ \
+  - Cuda \
+  - Fortran \
+  - Java \
+  - PHP \
+  - OpenCL"
+#########################################################################################
+run_configure --enable-languages=binaries
+#########################################################################################
+test_configure "\
+  + Binary analysis \
+  - C \
+  - C++ \
+  - Cuda \
+  - Fortran \
+  - Java \
+  - PHP \
+  - OpenCL"
+#########################################################################################
+run_configure --enable-languages=binaries,c,binaries --disable-binary-analysis 
+#########################################################################################
+test_configure "\
+  - Binary analysis \
+  + C \
+  + C++ \
+  - Cuda \
+  - Fortran \
+  - Java \
+  - PHP \
+  - OpenCL"
+#########################################################################################
+run_configure --enable-binary-analysis
+#########################################################################################
+test_configure "\
+  + Binary analysis \
+  + C \
+  + C++ \
+  + Cuda \
+  + Fortran \
+  + Java \
+  + PHP \
+  + OpenCL"
+#########################################################################################
+run_configure --enable-binary-analysis=yes
+#########################################################################################
+test_configure "\
+  + Binary analysis \
+  + C \
+  + C++ \
+  + Cuda \
+  + Fortran \
+  + Java \
+  + PHP \
+  + OpenCL"
+#########################################################################################
+run_configure --enable-binary-analysis=no
+#########################################################################################
+test_configure "\
+  - Binary analysis \
+  + C \
+  + C++ \
+  + Cuda \
+  + Fortran \
+  + Java \
+  + PHP \
+  + OpenCL"
+#########################################################################################
+run_configure --disable-binary-analysis
+#########################################################################################
+test_configure "\
+  - Binary analysis \
+  + C \
+  + C++ \
+  + Cuda \
+  + Fortran \
+  + Java \
+  + PHP \
+  + OpenCL"
+#########################################################################################
+run_configure --enable-languages=c --enable-binary-analysis
+#########################################################################################
+test_configure "\
+  + Binary analysis \
+  + C \
+  + C++ \
+  - Cuda \
+  - Fortran \
+  - Java \
+  - PHP \
+  - OpenCL"
+#########################################################################################
+run_configure --enable-languages=c --enable-binary-analysis=yes
+#########################################################################################
+test_configure "\
+  + Binary analysis \
+  + C \
+  + C++ \
+  - Cuda \
+  - Fortran \
+  - Java \
+  - PHP \
+  - OpenCL"
+#########################################################################################
+run_configure --enable-languages=c --enable-binary-analysis=no
+#########################################################################################
+test_configure "\
+  - Binary analysis \
+  + C \
+  + C++ \
+  - Cuda \
+  - Fortran \
+  - Java \
+  - PHP \
+  - OpenCL"
+#########################################################################################
+run_configure --enable-languages=c --disable-binary-analysis
+#########################################################################################
+test_configure "\
+  - Binary analysis \
+  + C \
+  + C++ \
+  - Cuda \
+  - Fortran \
+  - Java \
+  - PHP \
+  - OpenCL"
+#########################################################################################
+run_configure --enable-languages=c,binaries --disable-binary-analysis
+#########################################################################################
+test_configure "\
+  - Binary analysis \
+  + C \
+  + C++ \
+  - Cuda \
+  - Fortran \
+  - Java \
+  - PHP \
+  - OpenCL"
+#########################################################################################
+run_configure --enable-languages=binaries --disable-binary-analysis
+#########################################################################################
+test_configure "\
+  - Binary analysis \
+  - C \
+  - C++ \
+  - Cuda \
+  - Fortran \
+  - Java \
+  - PHP \
+  - OpenCL"
+#########################################################################################
+run_configure --enable-languages=c,binaries,php --disable-binary-analysis
+#########################################################################################
+test_configure "\
+  - Binary analysis \
+  + C \
+  + C++ \
+  - Cuda \
+  - Fortran \
+  - Java \
+  + PHP \
+  - OpenCL"
+#########################################################################################
+echo "*********************************************"
+echo " SUCCESS: Binary analysis language support configuration is working!"
+echo "*********************************************"
+echo ""

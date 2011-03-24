@@ -1457,7 +1457,12 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
     }
    
     // int _section_1 = XOMP_sections_init_next (3);
-    std::string sec_var_name("_section_");
+    std::string sec_var_name;
+    if (SageInterface::is_Fortran_language() )
+      sec_var_name ="_section_";
+    else  
+      sec_var_name ="xomp_section_";
+
     sec_var_name += StringUtility::numberToString(++gensym_counter);
     
     SgAssignInitializer* initializer = buildAssignInitializer (
