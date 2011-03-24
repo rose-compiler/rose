@@ -226,7 +226,7 @@ if test "x$label" = "x64bit-macos-10.6" ; then
   "make/check/install-minimal")
          CONFIGURE_FLAGS="
                 --with-boost=${ROSE_TEST_BOOST_PATH} \
-                --with-boost-lib={$ROSE_TEST_BOOST_PATH}/lib/ \
+                --with-boost-lib=${$ROSE_TEST_BOOST_PATH}/lib/ \
                 --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
     ;;
 
