@@ -5,6 +5,7 @@
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
 
+// Java support for callinging C/C++.
 #include <jni.h>
 
 // Support functions declaration of function defined in this file.

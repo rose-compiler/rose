@@ -62,7 +62,8 @@ remove_sage3basic_h_pch:
 #    2. header files should not include certain ROSE headers like "rose.h"
 #    3. file names must be unique on a case-insensitive file system
 #    4. header files must not have names that conflict with headers in other directories
-# etc.
+#    5. etc.
+# DO NOT DISABLE without first checking with a ROSE core developer
 export prefix	# for use by policy scripts
 enforce_policies:
 	(cd $(top_srcdir) && ./scripts/policies-checker.sh)
@@ -103,7 +104,8 @@ clean-local:
 
 # DQ (9/8/2006): Modified to remove backend specific header files
 uninstall-local:
-	rm -rf $(DESTDIR)$(includedir)/*_HEADERS
+#	rm -rf $(DESTDIR)$(includedir)/*_HEADERS
+	rm -rf `find $(DESTDIR)$(includedir)/ -iname "*_HEADERS"`
 
 distclean-local:
 	-rm -rf $(top_builddir)/include-staging/
@@ -131,8 +133,7 @@ install-exec-local:
 	@echo '***** make install-exec rule complete (terminated normally) *****'
 	@echo '*****************************************************************'
 
-install-data-local:
-	-rm -rf $(DESTDIR)$(includedir)/*_HEADERS
+install-data-local: uninstall-local
 	-mkdir $(DESTDIR)$(includedir)
 	cp -R $(top_builddir)/include-staging/* $(DESTDIR)$(includedir)/
 	@echo '*****************************************************************'
