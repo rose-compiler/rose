@@ -58,6 +58,10 @@ std::string convertJavaStringToCxxString(JNIEnv *env, const jstring & java_strin
 // SgMemberFunctionDeclaration* buildSimpleMemberFunction(const SgName & name);
 SgMemberFunctionDeclaration* buildSimpleMemberFunction(const SgName & name, SgClassDefinition* classDefinition);
 
+// DQ (3/25/2011): These will replace buildSimpleMemberFunction shortly.
+SgMemberFunctionDeclaration* buildNonDefiningMemberFunction(const SgName & inputName, SgClassDefinition* classDefinition);
+SgMemberFunctionDeclaration* buildDefiningMemberFunction   (const SgName & inputName, SgClassDefinition* classDefinition);
+
 // Build a simple class in the current scope and set the scope to be the class definition.
 void buildClass (const SgName & className);
 void buildImplicitClass (const SgName & className);
