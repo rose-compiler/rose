@@ -4146,8 +4146,14 @@ SageBuilder::buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* s
       //    nondefdecl->set_parent(topScopeStack());
           nondefdecl->set_parent(scope);
 
+       // DQ (3/24/2011): This should be NULL before we set it (if the scope is known).
+          ROSE_ASSERT(nondefdecl->get_scope() == NULL);
           if (scope != NULL)
              {
+            // DQ (3/24/2011): Decided with Liao that we should set the scope where possible.  The AST consistancy test will make sure it is consistant with where it is inserted into the AST.
+               nondefdecl->set_scope(scope);
+               ROSE_ASSERT(nondefdecl->get_scope() != NULL);
+
                mysymbol = new SgClassSymbol(nondefdecl);
                scope->insert_symbol(name, mysymbol);
              }
@@ -4156,11 +4162,14 @@ SageBuilder::buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* s
             // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unknown.
             // DQ (1/26/2009): I think this should be an error, but that appears it would
             // break the existing interface. Need to discuss this with Liao.
-            //   printf ("Warning: no scope provided to support symbol table entry! \n");
+            // printf ("Warning: no scope provided to support symbol table entry! \n");
              }
 
-       // DQ (10/30/2010): There shuld be a properly defined type at this point!
+       // DQ (10/30/2010): There should be a properly defined type at this point!
           ROSE_ASSERT(nondefdecl->get_type() != NULL);
+
+       // DQ (3/24/2011): The scope should be set if the scope was available.
+          ROSE_ASSERT(scope == NULL || (scope != NULL && nondefdecl->get_scope() != NULL));
         }
 
      ROSE_ASSERT(nondefdecl != NULL);
@@ -4205,6 +4214,14 @@ SageBuilder::buildDefiningClassDeclaration ( SgName name, SgScopeStatement* scop
      ROSE_ASSERT(nondefiningClassDeclaration->get_firstNondefiningDeclaration() != NULL);
      ROSE_ASSERT(definingClassDeclaration->get_firstNondefiningDeclaration() != NULL);
      ROSE_ASSERT(definingClassDeclaration->get_definition() != NULL);
+
+     ROSE_ASSERT(definingClassDeclaration->get_scope() == NULL);
+     if (scope != NULL)
+        {
+          definingClassDeclaration->set_scope(scope);
+          ROSE_ASSERT(definingClassDeclaration->get_scope() != NULL);
+          ROSE_ASSERT(nondefiningClassDeclaration->get_scope() != NULL);
+        }
 
      ROSE_ASSERT(definingClassDeclaration->get_definition()->get_parent() != NULL);
 
