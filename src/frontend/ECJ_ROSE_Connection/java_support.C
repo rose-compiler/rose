@@ -233,11 +233,220 @@ convertJavaStringToCxxString(JNIEnv *env, const jstring & java_string)
      return returnString;
    }
 
-
-SgMemberFunctionDeclaration*
-buildSimpleMemberFunction(const SgName & inputName, SgClassDefinition* classDefinition)
+void
+memberFunctionSetup (SgName & name, SgClassDefinition* classDefinition, SgFunctionParameterList* & parameterlist, SgMemberFunctionType* & return_type)
    {
   // This is abstracted so that we can build member functions as require to define Java specific default functions (e.g. super()).
+  // SgName name = inputName;
+
+     ROSE_ASSERT(classDefinition != NULL);
+     ROSE_ASSERT(classDefinition->get_declaration() != NULL);
+     printf ("Inside of buildSimpleMemberFunction(): name = %s in scope = %p = %s = %s \n",name.str(),classDefinition,classDefinition->class_name().c_str(),classDefinition->get_declaration()->get_name().str());
+
+     SgFunctionParameterTypeList* typeList = SageBuilder::buildFunctionParameterTypeList();
+     ROSE_ASSERT(typeList != NULL);
+
+  // Specify if this is const, volatile, or restrict (0 implies normal member function).
+     unsigned int mfunc_specifier = 0;
+     return_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), typeList, classDefinition, mfunc_specifier);
+     ROSE_ASSERT(return_type != NULL);
+
+     parameterlist = SageBuilder::buildFunctionParameterList(typeList);
+     ROSE_ASSERT(parameterlist != NULL);
+
+     SgFunctionType* func_type = SageBuilder::buildFunctionType(return_type,parameterlist);
+     ROSE_ASSERT(func_type != NULL);
+
+  // DQ (3/24/2011): Currently we am introducing a mechanism to make sure that overloaded function will have 
+  // a unique name. It is temporary until we can handle correct mangled name support using the argument types.
+     SgFunctionSymbol* func_symbol = NULL;
+     bool func_symbol_found = true;
+     while (func_symbol_found == true)
+        {
+       // DQ (3/24/2011): This function should not already exist (else it should be an error).
+          func_symbol = classDefinition->lookup_function_symbol(name,func_type);
+       // ROSE_ASSERT(func_symbol == NULL);
+
+          if (func_symbol != NULL)
+             {
+               func_symbol_found = true;
+
+            // This is a temporary mean to force overloaded functions to have unique names.
+               name += "_overloaded_";
+               printf ("Using a temporary mean to force overloaded functions to have unique names (name = %s) \n",name.str());
+             }
+            else
+             {
+               func_symbol_found = false;
+             }
+        }
+   }
+
+void
+memberFunctionTest (const SgName & name, SgClassDefinition* classDefinition, SgMemberFunctionDeclaration* functionDeclaration)
+   {
+     ROSE_ASSERT(functionDeclaration != NULL);
+
+  // Test is specific to nondefining/defining.
+  // ROSE_ASSERT(functionDeclaration->get_definingDeclaration() == NULL);
+
+  // SgFunctionDefinition* functionDefinition = functionDeclaration->get_definition();
+  // ROSE_ASSERT(functionDefinition == NULL);
+
+  // Test is specific to nondefining/defining.
+  // ROSE_ASSERT(functionDeclaration->get_definition() == NULL);
+
+     size_t declarationListSize = classDefinition->generateStatementList().size();
+     printf ("declarationListSize = %zu \n",declarationListSize);
+     ROSE_ASSERT(declarationListSize > 0);
+
+     printf ("Test to make sure the SgFunctionSymbol is in the symbol table. \n");
+     SgFunctionSymbol* memberFunctionSymbol = classDefinition->lookup_function_symbol(name);
+     ROSE_ASSERT(memberFunctionSymbol != NULL);
+
+  // DQ (3/24/2011): Added tests.
+  // ROSE_ASSERT(classDefinition->get_symbol_from_symbol_table() != NULL);
+     ROSE_ASSERT(classDefinition->get_declaration() != NULL);
+     ROSE_ASSERT(classDefinition->get_declaration()->get_scope() != NULL);
+
+  // DQ (3/24/2011): Unclear if this should be NULL, I think it should be NULL since only the nondefining declaration should have an associated symbol.
+  // ROSE_ASSERT(classDefinition->get_declaration()->get_symbol_from_symbol_table() != NULL);
+     ROSE_ASSERT(classDefinition->get_declaration()->get_symbol_from_symbol_table() == NULL);
+
+     ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration() != NULL);
+     ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
+     ROSE_ASSERT(functionDeclaration->get_symbol_from_symbol_table() != NULL);
+   }
+
+SgMemberFunctionDeclaration*
+buildNonDefiningMemberFunction(const SgName & inputName, SgClassDefinition* classDefinition)
+   {
+#if 1
+     SgName name = inputName;
+
+     SgFunctionParameterList* parameterlist = NULL;
+     SgMemberFunctionType* return_type = NULL;
+
+  // Refactored code.
+     memberFunctionSetup (name,classDefinition,parameterlist,return_type);
+
+     ROSE_ASSERT(parameterlist != NULL);
+     ROSE_ASSERT(return_type != NULL);
+#else
+  // This is abstracted so that we can build member functions as require to define Java specific default functions (e.g. super()).
+     SgName name = inputName;
+
+     ROSE_ASSERT(classDefinition != NULL);
+     ROSE_ASSERT(classDefinition->get_declaration() != NULL);
+     printf ("Inside of buildSimpleMemberFunction(): name = %s in scope = %p = %s = %s \n",name.str(),classDefinition,classDefinition->class_name().c_str(),classDefinition->get_declaration()->get_name().str());
+
+     SgFunctionParameterTypeList* typeList = SageBuilder::buildFunctionParameterTypeList();
+     ROSE_ASSERT(typeList != NULL);
+
+  // Specify if this is const, volatile, or restrict (0 implies normal member function).
+     unsigned int mfunc_specifier = 0;
+     SgMemberFunctionType* return_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), typeList, classDefinition, mfunc_specifier);
+     ROSE_ASSERT(return_type != NULL);
+
+     SgFunctionParameterList* parameterlist = SageBuilder::buildFunctionParameterList(typeList);
+     ROSE_ASSERT(parameterlist != NULL);
+
+     SgFunctionType* func_type = SageBuilder::buildFunctionType(return_type,parameterlist);
+     ROSE_ASSERT(func_type != NULL);
+
+  // DQ (3/24/2011): Currently we am introducing a mechanism to make sure that overloaded function will have 
+  // a unique name. It is temporary until we can handle correct mangled name support using the argument types.
+     SgFunctionSymbol* func_symbol = NULL;
+     bool func_symbol_found = true;
+     while (func_symbol_found == true)
+        {
+       // DQ (3/24/2011): This function should not already exist (else it should be an error).
+          func_symbol = classDefinition->lookup_function_symbol(name,func_type);
+       // ROSE_ASSERT(func_symbol == NULL);
+
+          if (func_symbol != NULL)
+             {
+               func_symbol_found = true;
+
+            // This is a temporary mean to force overloaded functions to have unique names.
+               name += "_overloaded_";
+               printf ("Using a temporary mean to force overloaded functions to have unique names (name = %s) \n",name.str());
+             }
+            else
+             {
+               func_symbol_found = false;
+             }
+        }
+#endif
+
+  // SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (name, return_type, parameterlist, astJavaScopeStack.front() );
+  // SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (name, return_type, parameterlist, classDefinition );
+     SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildNondefiningMemberFunctionDeclaration (name, return_type, parameterlist, classDefinition );
+
+#if 1
+     ROSE_ASSERT(functionDeclaration != NULL);
+     ROSE_ASSERT(functionDeclaration->get_definingDeclaration() == NULL);
+     ROSE_ASSERT(functionDeclaration->get_definition() == NULL);
+
+  // Add the member function to the class scope (this is a required second step after building the function declaration).
+     classDefinition->append_statement(functionDeclaration);
+
+     memberFunctionTest(name,classDefinition,functionDeclaration);
+#else
+     ROSE_ASSERT(functionDeclaration != NULL);
+
+     ROSE_ASSERT(functionDeclaration->get_definingDeclaration() == NULL);
+
+  // SgFunctionDefinition* functionDefinition = functionDeclaration->get_definition();
+  // ROSE_ASSERT(functionDefinition == NULL);
+     ROSE_ASSERT(functionDeclaration->get_definition() == NULL);
+
+  // Add the member function to the class scope (this is a required second step after building the function declaration).
+     classDefinition->append_statement(functionDeclaration);
+
+     size_t declarationListSize = classDefinition->generateStatementList().size();
+     printf ("declarationListSize = %zu \n",declarationListSize);
+     ROSE_ASSERT(declarationListSize > 0);
+
+     printf ("Test to make sure the SgFunctionSymbol is in the symbol table. \n");
+     SgFunctionSymbol* memberFunctionSymbol = classDefinition->lookup_function_symbol(name);
+     ROSE_ASSERT(memberFunctionSymbol != NULL);
+
+  // DQ (3/24/2011): Added tests.
+  // ROSE_ASSERT(classDefinition->get_symbol_from_symbol_table() != NULL);
+     ROSE_ASSERT(classDefinition->get_declaration() != NULL);
+     ROSE_ASSERT(classDefinition->get_declaration()->get_scope() != NULL);
+
+  // DQ (3/24/2011): Unclear if this should be NULL, I think it should be NULL since only the nondefining declaration should have an associated symbol.
+  // ROSE_ASSERT(classDefinition->get_declaration()->get_symbol_from_symbol_table() != NULL);
+     ROSE_ASSERT(classDefinition->get_declaration()->get_symbol_from_symbol_table() == NULL);
+
+     ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration() != NULL);
+     ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
+     ROSE_ASSERT(functionDeclaration->get_symbol_from_symbol_table() != NULL);
+#endif
+
+     return functionDeclaration;
+   }
+
+// SgMemberFunctionDeclaration* buildSimpleMemberFunction(const SgName & inputName, SgClassDefinition* classDefinition)
+SgMemberFunctionDeclaration*
+buildDefiningMemberFunction(const SgName & inputName, SgClassDefinition* classDefinition)
+   {
+  // This is abstracted so that we can build member functions as require to define Java specific default functions (e.g. super()).
+
+#if 1
+     SgName name = inputName;
+
+     SgFunctionParameterList* parameterlist = NULL;
+     SgMemberFunctionType* return_type = NULL;
+
+  // Refactored code.
+     memberFunctionSetup (name,classDefinition,parameterlist,return_type);
+
+     ROSE_ASSERT(parameterlist != NULL);
+     ROSE_ASSERT(return_type != NULL);
+#else
      SgName name = inputName;
 
      ROSE_ASSERT(classDefinition != NULL);
@@ -280,9 +489,20 @@ buildSimpleMemberFunction(const SgName & inputName, SgClassDefinition* classDefi
                func_symbol_found = false;
              }
         }
+#endif
 
   // SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (name, return_type, parameterlist, astJavaScopeStack.front() );
      SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (name, return_type, parameterlist, classDefinition );
+#if 1
+     ROSE_ASSERT(functionDeclaration != NULL);
+     ROSE_ASSERT(functionDeclaration->get_definingDeclaration() != NULL);
+     ROSE_ASSERT(functionDeclaration->get_definition() != NULL);
+
+  // Add the member function to the class scope (this is a required second step after building the function declaration).
+     classDefinition->append_statement(functionDeclaration);
+
+     memberFunctionTest(name,classDefinition,functionDeclaration);
+#else
      ROSE_ASSERT(functionDeclaration != NULL);
 
      ROSE_ASSERT(functionDeclaration->get_definingDeclaration() != NULL);
@@ -337,8 +557,14 @@ buildSimpleMemberFunction(const SgName & inputName, SgClassDefinition* classDefi
      ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration() != NULL);
      ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
      ROSE_ASSERT(functionDeclaration->get_symbol_from_symbol_table() != NULL);
+#endif
 
      return functionDeclaration;
+   }
+
+SgMemberFunctionDeclaration* buildSimpleMemberFunction(const SgName & inputName, SgClassDefinition* classDefinition)
+   {
+     return buildNonDefiningMemberFunction(inputName,classDefinition);
    }
 
 
@@ -423,9 +649,6 @@ buildClassSupport (const SgName & className, bool implicitClass)
   // ROSE).  Though it is not clear if implicit Java function can appear without their
   // name qualification, so we will see.
 
-#if 1
-     SgScopeStatement* outerScope = NULL;
-
   // Names of implicitly defined classes have names that start with "java." and these have to be translated.
      string original_classNameString = className.str();
      string classNameString = className.str();
@@ -436,20 +659,7 @@ buildClassSupport (const SgName & className, bool implicitClass)
   // Also replace '$' with '_' (not clear on what '$' means yet (something related to inner and outer class nesting).
      replace(classNameString.begin(), classNameString.end(),'$','_');
 
-     if (implicitClass == true)
-        {
-       // Nothing to do here.
-        }
-       else
-        {
-       // This is proper class.
-          outerScope = astJavaScopeStack.front();
-        }
-
      SgName name = classNameString;
-#else
-     SgName name = className;
-#endif
 
   // We should not have a '.' in the class name.  Or it will fail the current ROSE name mangling tests.
      ROSE_ASSERT(classNameString.find('.') == string::npos);
@@ -464,30 +674,11 @@ buildClassSupport (const SgName & className, bool implicitClass)
 
      printf ("original_classNameString = %s \n",original_classNameString.c_str());
 
-#if 0
-  // SgScopeStatement* outerScope = astJavaScopeStack.front();
-     SgScopeStatement* outerScope = NULL;
-     bool implicitClass = false;
-     if (original_classNameString.substr(0,5) == "java.")
-        {
-       // This is an implicit class (default class available in Java) (set to global scope).
-          implicitClass = true;
-       // outerScope = getGlobalScope(); // astJavaScopeStack.front();
-        }
-       else
-        {
-       // This is proper class.
-          outerScope = astJavaScopeStack.front();
-        }
-#endif
-
-  // ROSE_ASSERT(outerScope != NULL);
-
-  // SgClassDeclaration* declaration = buildJavaClass(name, astJavaScopeStack.front() );
-
      if (implicitClass == true)
         {
        // This branch makes a recursive call to this function (and computes the outerScope explicitly not using the astJavaScopeStack.
+       // Note that we prepend the implicit classes since they should be defined before traversing the AST of the input program.
+       // We also might want to mark the classes that are added as part of this implicit class support since it is Java specific.
 
        // Implicit classes are put into the global scope at the top of the scope.
           SgScopeStatement* outerScope = getGlobalScope();
@@ -617,6 +808,9 @@ buildClassSupport (const SgName & className, bool implicitClass)
         }
        else
         {
+       // Not implicit case: build the class and add it to the specified scope (append).
+          SgScopeStatement* outerScope = astJavaScopeStack.front();
+
        // Here we build the class and associate it with the correct code (determined differently based on if this is an implicit or non-implicit class.
           SgClassDeclaration* declaration = buildJavaClass(name, outerScope );
 
