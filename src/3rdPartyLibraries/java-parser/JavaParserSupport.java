@@ -253,7 +253,7 @@ class JavaParserSupport
 
                                 // Control the level of recursion so that we can debug this...it seems that
                                 // this is typically as high as 47 to process the implicitly included classes.
-                                   if (counter < 1)
+                                   if (counter < 100)
                                       {
                                      // DQ (11/2/2010): comment out this recursive call for now.
                                         buildImplicitClassSupport(nestedClassName);
@@ -300,7 +300,7 @@ class JavaParserSupport
 
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
-                 // JavaParser.cactionBuildImplicitMethodSupport(ct.getName());
+                    JavaParser.cactionBuildImplicitMethodSupport(ct.getName());
                   }
 
                System.out.println("(skipped method handling) Number of methods = " + methlist.length);
@@ -327,8 +327,14 @@ class JavaParserSupport
 
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
-                    if (methodCounter < 5)
+                    if (methodCounter < 600)
+                       {
                          JavaParser.cactionBuildImplicitMethodSupport(m.getName());
+                       }
+                      else
+                       {
+                         System.out.println("WARNING: Exceeded method handling iteration count " + methodCounter + " className = " + className);
+                       }
 
                     methodCounter++;
                   }
