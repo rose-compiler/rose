@@ -217,13 +217,9 @@ AC_ARG_ENABLE([fortran],
                ##########################################################################
                ,)
 #########################################################################################
-if test "x$with_java" = "xno" ; then
-  enable_java=no
-fi 
-#########################################################################################
 AC_ARG_ENABLE([java],
 #########################################################################################
-               AS_HELP_STRING([--enable-java],[Enable Java language support in ROSE (default=yes)]),
+               AS_HELP_STRING([--enable-java],[Enable Java language support in ROSE (default=yes). Note: --without-java turns off support for ALL components in ROSE that depend on Java, including Java language support]),
                ##########################################################################
                 echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "java"
                 if test $? = 0 ; then 
@@ -231,7 +227,10 @@ AC_ARG_ENABLE([java],
                 fi
                 case "$enableval" in
                   [yes)]
-                  	if test "x$list_has_java" != "xyes" ; then
+                        if test "x$with_java" = "xno" ; then
+                          [AC_MSG_FAILURE([[[Java Support]] you specified conflicting configure flags: '--enable-java=$enableval' enables Java-language support, but '--with-java=$with_java' disables it])]
+                          
+                  	elif test "x$list_has_java" != "xyes" ; then
                           # --enable-languages does not include Java, but --enable-java=yes
                   	  LANGUAGES_TO_SUPPORT+=" java"
                         fi
@@ -245,7 +244,12 @@ AC_ARG_ENABLE([java],
                  	;;
                 esac
                ##########################################################################
-               ,)
+               ,
+               if test "x$with_java" = "xno" ; then
+                 enable_java=no
+                 # remove 'Java' from support languages list
+                 LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/java//g'`"
+               fi) 
 #########################################################################################
 AC_ARG_ENABLE([php],
 #########################################################################################
