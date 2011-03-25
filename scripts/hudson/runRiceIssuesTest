@@ -10,7 +10,8 @@ start_time_seconds="$(date +%s)"
 # Rice is using GCC 4.4.1 + Boost 1_41_0
 #export PATH="${ROSE_TEST_GCC_PATH}/bin:$PATH"
 export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:$LD_LIBRARY_PATH"
-export LD_LIBRARY_PATH="/nfs/apps/mpfr/2.4.1/lib:$LD_LIBRARY_PATH"
+# required for /usr/apps/gcc/*
+export LD_LIBRARY_PATH="/nfs/apps/gmp/4.3.1/lib:/nfs/apps/mpfr/2.4.1/lib:$LD_LIBRARY_PATH"
 echo "*******************************************************************"
 echo "         Output variables required by Hudson runTest script."
 echo "*******************************************************************"
@@ -71,9 +72,6 @@ CONFIGURE_FLAGS="\
   --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
   --with-alternate_backend_fortran_compiler=${ROSE_TEST_GCC_PATH}/bin/gfortran \
   --with-gfortran=${ROSE_TEST_GCC_PATH}/bin/gfortran"
-CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib"
-#--with-java=${ROSE_TEST_JAVA_PATH}
-#--with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib 
 echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
 
     ../configure --prefix=`pwd`/${ROSE_TEST_INSTALL_PREFIX} ${CONFIGURE_FLAGS}
