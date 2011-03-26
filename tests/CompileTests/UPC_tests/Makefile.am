@@ -7,6 +7,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # affinity &arr[i] is parsed to arr+i, may hurt the later translation
 # sharedArrayInit.upc: Berkeley UPC compiler 1.6 does not support shared arrays with initializer
 TESTCODES_REQUIRED_TO_PASS = \
+   threads_in_expression.upc \
    barrier.upc \
    consistency.upc \
    hello.upc \
@@ -28,8 +29,8 @@ TESTCODES_REQUIRED_TO_PASS = \
    threads.upc \
    threads_2.upc \
    typedef.upc \
-   upc_all_alloc_ex.upc upc_all_broadcast_ex.upc upc_all_exchange_ex.upc upc_all_gather_all_ex.upc \
-   upc_all_gather_ex.upc upc_all_lock_alloc_ex.upc upc_all_permute_ex.upc upc_all_prefix_reduceL_ex.upc \
+   upc_all_alloc_ex.upc upc_all_broadcast_ex.upc \
+   upc_all_lock_alloc_ex.upc upc_all_permute_ex.upc upc_all_prefix_reduceL_ex.upc \
    upc_all_reduceL_ex.upc upc_all_scatter_ex.upc \
    upc_all_exchange_ex_dynamic.upc upc_all_gather_all_ex_dynamic.upc \
    upc_all_gather_ex_dynamic.upc upc_all_scatter_ex_dynamic.upc \
@@ -48,10 +49,17 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2011_09.upc \
    test2011_10.upc \
    test2011_11.upc \
-   test2011_12.upc \
-   test2011_13.upc \
    test2011_14.upc
 
+TEST_CODES_REQUIRED_TO_PASS_WITH_STATIC_THREADS = \
+   upc_all_exchange_ex.upc \
+   upc_all_gather_all_ex.upc \
+   upc_all_gather_ex.upc \
+   test2011_12.upc \
+   test2011_13.upc
+
+TEST_CODES_REQUIRED_TO_PASS_WITH_STATIC_THREADS_PREFIX = \
+   $(addprefix static_,${TEST_CODES_REQUIRED_TO_PASS_WITH_STATIC_THREADS})
 # upc_XXXsizeof() has two issues:
 # 1. They are evaluated by EDG, operators are not preserved in EDG's IL
 # 2. EDG 3.3 get wrong evaluation values,  EDG 3.10 fixes the bug though.
@@ -63,11 +71,12 @@ TESTCODE_CURRENTLY_FAILING = \
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = \
-$(TESTCODES_REQUIRED_TO_PASS)
+	 $(TESTCODES_REQUIRED_TO_PASS) \
+	 $(TEST_CODES_REQUIRED_TO_PASS_WITH_STATIC_THREADS_PREFIX)
 
 # QMTest allows both passing and failing tests.
 ALL_TESTCODES = \
-$(TESTCODES_REQUIRED_TO_PASS) \
+   $(TESTCODES) \
 $(TESTCODE_CURRENTLY_FAILING)
 
 # Liao (6/11/2008) --edg:upc and --edg:restrict are not required since ROSE can add them internally based on the file suffix (.upc) , no backend compilation since GCC does not recognize UPC .
@@ -82,21 +91,27 @@ if ROSE_USE_NEW_EDG_INTERFACE
 # so that we can have declarations in the initializers of forall statements.
 # Note that only upc_all_gather_ex.upc, upc_all_gather_all_ex.upc, and upc_all_exchange_ex.upc require the "-rose:upc_threads 1" option.
 # ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings --edg:c99 -rose:exit_after_parser -rose:skipfinalCompileStep -rose:upc_threads 1
-ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings --edg:c99 -rose:exit_after_parser -rose:skipfinalCompileStep -rose:upc_threads 1
+ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings --edg:c99 -rose:exit_after_parser -rose:skipfinalCompileStep
 else
 # ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep --edg:upc
 # ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:exit_after_parser -rose:skipfinalCompileStep -rose:upc_threads 1 
 # ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:exit_after_parser -rose:skipfinalCompileStep
-ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:skipfinalCompileStep -rose:upc_threads 1
+ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:skipfinalCompileStep
 endif
 #ROSE_FLAGS = --edg:no_warnings -w --edg:restrict --edg:upc -rose:verbose 3
 
 PASSING_TEST_Output = $(addprefix rose_,${TESTCODES})
 TEST_Output = $(addprefix rose_,${ALL_TESTCODES})
 
-$(TEST_Output): ../../testTranslator $(srcdir)/$(@:rose_%=%)
-	../../testTranslator -rose:UPC $(ROSE_FLAGS) -c $(srcdir)/$(@:rose_%=%)
+rose_static_%: $(srcdir)/% ../../testTranslator
+	../../testTranslator -rose:UPC $(ROSE_FLAGS) -rose:upc_threads 1 -c $< -o $@
 
+rose_%: $(srcdir)/% ../../testTranslator
+	../../testTranslator -rose:UPC $(ROSE_FLAGS) -c $< -o $@
+
+
+# $(TEST_Output): ../../testTranslator $(srcdir)/$(@:rose_%=%)
+# ../../testTranslator -rose:UPC $(ROSE_FLAGS) -c $(srcdir)/$(@:rose_%=%)
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
 
@@ -131,7 +146,7 @@ testForUpcThreadsKeywordInGeneratedCode: rose_threads.upc
 	@grep "There are %d threads" rose_threads.upc
 	grep "There are %d threads" rose_threads.upc | grep "THREADS" 
 
-# DQ (2/4/2011): Added test for UPC keyword "THREADS". It is only present when "-rose:upc_threads" option is not used.
+# DQ (2/4/2011): Added test for UPC keyword "MYTHREAD".
 testForUpcMythreadKeywordInGeneratedCode: rose_mythread.upc
 	rm -f rose_mythread.upc
 	../../testTranslator -rose:UPC -rose:verbose 0 --edg:no_warnings -rose:skipfinalCompileStep -c $(srcdir)/mythread.upc
