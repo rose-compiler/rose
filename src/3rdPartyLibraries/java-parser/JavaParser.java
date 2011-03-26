@@ -47,7 +47,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionExplicitConstructorCall(String filename);
      public native void cactionMethodDeclaration(String filename);
      public native void cactionSingleTypeReference(String filename);
-     public native void cactionArgument(String filename);
+     public native void cactionArgument(String argumentName, int modifiers);
      public native void cactionArrayTypeReference(String filename);
      public native void cactionMessageSend(String filename);
      public native void cactionQualifiedNameReference(String filename);
@@ -118,7 +118,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionJavadocSingleTypeReference();
      public native void cactionJavadocSingleTypeReferenceClassScope();
      public native void cactionLabeledStatement();
-     public native void cactionLocalDeclaration();
+     public native void cactionLocalDeclaration(String variableName);
      public native void cactionLongLiteral();
      public native void cactionMarkerAnnotation();
      public native void cactionMemberValuePair();
@@ -165,6 +165,19 @@ class JavaParser  implements Callable<Boolean>
      public static native void cactionBuildImplicitClassSupportEnd(String className);
      public static native void cactionBuildImplicitMethodSupport(String methodName);
      public static native void cactionBuildImplicitFieldSupport(String fieldName);
+
+  // Added new support functions for Argument IR nodes.
+     public native void cactionArgumentName(String name);
+     public native void cactionArgumentModifiers(int modifiers);
+     public native void cactionArgumentEnd();
+
+  // Type support
+     public static native void cactionGenerateType(String typeName);
+
+  // Closing support to finish up statement handling.
+     public static native void cactionStatementEnd(String typeName);
+
+     public static native void cactionMethodDeclarationEnd(String methodName);
 
   // Save the compilationResult as we process the CompilationUnitDeclaration class.
   // public CompilationResult rose_compilationResult;
