@@ -2840,11 +2840,25 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                             {
                               if ( CommandlineProcessing::isCudaFileNameSuffix(filenameExtension) == true )
                                  {
+                                   SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+                                   file = sourceFile;
                                    file->set_Cuda_only(true);
+
+                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                                // Note that file->get_requires_C_preprocessor() should be false.
+                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+                                   sourceFile->initializeGlobalScope();
                                  }
                                 else if ( CommandlineProcessing::isOpenCLFileNameSuffix(filenameExtension) == true )
                                  {
+                                   SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+                                   file = sourceFile;
                                    file->set_OpenCL_only(true);
+
+                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                                // Note that file->get_requires_C_preprocessor() should be false.
+                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+                                   sourceFile->initializeGlobalScope();
                                  }
                                 else if ( CommandlineProcessing::isJavaFileNameSuffix(filenameExtension) == true )
                                  {
