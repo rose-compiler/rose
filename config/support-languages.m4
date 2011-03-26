@@ -201,7 +201,9 @@ AC_ARG_ENABLE([fortran],
                 fi
                 case "$enableval" in
                   [yes)]
-                  	if test "x$list_has_fortran" != "xyes" ; then
+                        if test "x$with_java" = "xno" ; then
+                          [AC_MSG_FAILURE([[[Fortran Support]] you specified conflicting configure flags: '--enable-fortran=$enableval' enables Fortran-language support, which requires Java support, and '--with-java=$with_java' disables Java support])]
+                  	elif test "x$list_has_fortran" != "xyes" ; then
                           # --enable-languages does not include Fortran, but --enable-fortran=yes
                   	  LANGUAGES_TO_SUPPORT+=" fortran"
                         fi
@@ -728,8 +730,12 @@ AC_ARG_ENABLE([only-fortran],
                ##########################################################################
                 case "$enableval" in
                   [yes)]
-                  	LANGUAGES_TO_SUPPORT="fortran"
-                        USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
+                        if test "x$with_java" = "xno" ; then
+                          [AC_MSG_FAILURE([[[Fortran Support]] you specified conflicting configure flags: '--enable-only-fortran=$enableval' enables Fortran-language support, which requires Java support, and '--with-java=$with_java' disables Java support])]
+                        else  
+                  	  LANGUAGES_TO_SUPPORT="fortran"
+                          USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
+                        fi
                   	;;
                   [no)]
                   	[AC_MSG_FAILURE([--enable-only-fortran='$enableval' and --disable-only-fortran are no longer supported. Use '--disable-fortran' (see ./configure --help)])]
@@ -749,8 +755,12 @@ AC_ARG_ENABLE([only-java],
                ##########################################################################
                 case "$enableval" in
                   [yes)]
-                  	LANGUAGES_TO_SUPPORT="java"
-                        USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
+                        if test "x$with_java" = "xno" ; then
+                          [AC_MSG_FAILURE([[[Java Support]] you specified conflicting configure flags: '--enable-only-java=$enableval' enables Java-language support, but '--with-java=$with_java' disables it])]
+                        else  
+                  	  LANGUAGES_TO_SUPPORT="java"
+                          USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
+                        fi
                   	;;
                   [no)]
                   	[AC_MSG_FAILURE([--enable-only-java='$enableval' and --disable-only-java are no longer supported. Use '--disable-java' (see ./configure --help)])]
