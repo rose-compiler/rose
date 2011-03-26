@@ -32,6 +32,12 @@ extern std::list<SgScopeStatement*> astJavaScopeStack;
 // Global stack of expressions 
 extern std::list<SgExpression*> astJavaExpressionStack;
 
+// Global stack of types
+extern std::list<SgType*> astJavaTypeStack;
+
+// Global stack of statements
+extern std::list<SgStatement*> astJavaStatementStack;
+
 // Simplifying type for the setSourcePosition() functions
 // typedef std::vector<Token_t*> TokenListType;
 
@@ -52,11 +58,12 @@ bool emptyJavaStateStack();
 
 void outputJavaState( const std::string label );
 
-std::string convertJavaStringToCxxString(JNIEnv *env, const jstring & java_string);
+std::string convertJavaStringToCxxString  (JNIEnv *env, const jstring & java_string);
+int         convertJavaIntegerToCxxInteger(JNIEnv *env, const jint    & java_integer);
 
 // Specify the SgClassDefinition explicitly so that implicit classes are simpler to build.
 // SgMemberFunctionDeclaration* buildSimpleMemberFunction(const SgName & name);
-SgMemberFunctionDeclaration* buildSimpleMemberFunction(const SgName & name, SgClassDefinition* classDefinition);
+// SgMemberFunctionDeclaration* buildSimpleMemberFunction(const SgName & name, SgClassDefinition* classDefinition);
 
 // DQ (3/25/2011): These will replace buildSimpleMemberFunction shortly.
 SgMemberFunctionDeclaration* buildNonDefiningMemberFunction(const SgName & inputName, SgClassDefinition* classDefinition);
