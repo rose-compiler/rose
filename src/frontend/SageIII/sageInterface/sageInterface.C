@@ -3483,6 +3483,23 @@ SageInterface::is_PHP_language()
      return returnValue;
    }
 
+bool
+SageInterface::is_Cuda_language()
+   {
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_Cuda_only() == true)
+               returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 bool SageInterface::is_mixed_C_and_Cxx_language()
    {
      return is_C_language() && is_Cxx_language();
@@ -5917,7 +5934,7 @@ bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
      result = true;
    else
     {
-      if (is_C_language()||is_C99_language()||is_PHP_language())
+      if (is_C_language()||is_C99_language()||is_PHP_language()||is_Cuda_language())
       {
         if (func1->get_name() == func2->get_name())
           result = true;
