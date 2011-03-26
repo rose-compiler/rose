@@ -49,17 +49,13 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2011_09.upc \
    test2011_10.upc \
    test2011_11.upc \
-   test2011_14.upc
+   test2011_14.upc \
+   static_upc_all_exchange_ex.upc \
+   static_upc_all_gather_all_ex.upc \
+   static_upc_all_gather_ex.upc \
+   static_test2011_12.upc \
+   static_test2011_13.upc
 
-TEST_CODES_REQUIRED_TO_PASS_WITH_STATIC_THREADS = \
-   upc_all_exchange_ex.upc \
-   upc_all_gather_all_ex.upc \
-   upc_all_gather_ex.upc \
-   test2011_12.upc \
-   test2011_13.upc
-
-TEST_CODES_REQUIRED_TO_PASS_WITH_STATIC_THREADS_PREFIX = \
-   $(addprefix static_,${TEST_CODES_REQUIRED_TO_PASS_WITH_STATIC_THREADS})
 # upc_XXXsizeof() has two issues:
 # 1. They are evaluated by EDG, operators are not preserved in EDG's IL
 # 2. EDG 3.3 get wrong evaluation values,  EDG 3.10 fixes the bug though.
@@ -71,8 +67,7 @@ TESTCODE_CURRENTLY_FAILING = \
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = \
-	 $(TESTCODES_REQUIRED_TO_PASS) \
-	 $(TEST_CODES_REQUIRED_TO_PASS_WITH_STATIC_THREADS_PREFIX)
+	 $(TESTCODES_REQUIRED_TO_PASS)
 
 # QMTest allows both passing and failing tests.
 ALL_TESTCODES = \
@@ -83,10 +78,10 @@ $(TESTCODE_CURRENTLY_FAILING)
 if ROSE_USE_NEW_EDG_INTERFACE
 # JJW (12/15/2008): Force C99 mode so we can have declarations in the initializers of forall statements
 # ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep --edg:upc --edg:c99
-# ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:exit_after_parser -rose:skipfinalCompileStep -rose:upc_threads 1 
+# ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:exit_after_parser -rose:skipfinalCompileStep -rose:upc_threads 1
 # ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:exit_after_parser -rose:skipfinalCompileStep
 
-# DQ (2/17/2011): Use "-rose:exit_after_parser" option to isolate the testing to just EDG 
+# DQ (2/17/2011): Use "-rose:exit_after_parser" option to isolate the testing to just EDG
 # (avoids ROSE bugs using new EDG 4.0 frontent (which is unfinished work)).  Use "--edg:c99"
 # so that we can have declarations in the initializers of forall statements.
 # Note that only upc_all_gather_ex.upc, upc_all_gather_all_ex.upc, and upc_all_exchange_ex.upc require the "-rose:upc_threads 1" option.
@@ -94,7 +89,7 @@ if ROSE_USE_NEW_EDG_INTERFACE
 ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings --edg:c99 -rose:exit_after_parser -rose:skipfinalCompileStep
 else
 # ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep --edg:upc
-# ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:exit_after_parser -rose:skipfinalCompileStep -rose:upc_threads 1 
+# ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:exit_after_parser -rose:skipfinalCompileStep -rose:upc_threads 1
 # ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:exit_after_parser -rose:skipfinalCompileStep
 ROSE_FLAGS = -rose:verbose 0 --edg:no_warnings -rose:skipfinalCompileStep
 endif
@@ -103,7 +98,7 @@ endif
 PASSING_TEST_Output = $(addprefix rose_,${TESTCODES})
 TEST_Output = $(addprefix rose_,${ALL_TESTCODES})
 
-rose_static_%: $(srcdir)/% ../../testTranslator
+rose_static_%: $(srcdir)/static_% ../../testTranslator
 	../../testTranslator -rose:UPC $(ROSE_FLAGS) -rose:upc_threads 1 -c $< -o $@
 
 rose_%: $(srcdir)/% ../../testTranslator
@@ -116,7 +111,7 @@ rose_%: $(srcdir)/% ../../testTranslator
 	cd ../..; $(MAKE) testTranslator
 
 # DQ (2/3/2011): Note that all but test2004_22.upc can also be compiled as UPC instead of UPC++ testcodes.
-# DQ (9/19/2010): Separated this UPC++ test out from the UPC tests. This test code simply uses some C++ specific 
+# DQ (9/19/2010): Separated this UPC++ test out from the UPC tests. This test code simply uses some C++ specific
 # constructs and does not represent any special work to build UPC++ work. Basically just UPC that allows C++ code.
 UPCXX_TESTCODES = \
    test2004_22.upc \
@@ -144,7 +139,7 @@ testForUpcThreadsKeywordInGeneratedCode: rose_threads.upc
 	../../testTranslator -rose:UPC -rose:verbose 0 --edg:no_warnings -rose:skipfinalCompileStep -c $(srcdir)/threads.upc
 	@echo "Testing for use of THREADS upc keyword in generated code."
 	@grep "There are %d threads" rose_threads.upc
-	grep "There are %d threads" rose_threads.upc | grep "THREADS" 
+	grep "There are %d threads" rose_threads.upc | grep "THREADS"
 
 # DQ (2/4/2011): Added test for UPC keyword "MYTHREAD".
 testForUpcMythreadKeywordInGeneratedCode: rose_mythread.upc
@@ -186,7 +181,7 @@ if !ROSE_USE_NEW_EDG_INTERFACE
 else
 	@echo "Skipping testing UPC++ test codes with new EDG (--upc++ mode not yet added in EDG 4.0; ROSE specific feature)."
 endif
-#	DQ (2/5/2011): This failed for a very few Hudson tests, but they are not critical 
+#	DQ (2/5/2011): This failed for a very few Hudson tests, but they are not critical
 #	tests so I will eliminate them for now. I don't know why they failed.
 #	@$(MAKE) testForUpcThreadsKeywordInGeneratedCode
 #	@$(MAKE) testForUpcMythreadKeywordInGeneratedCode
@@ -197,4 +192,3 @@ endif
 clean-local:
 	rm -f *.o rose_*.[cC] rose_*.upc rose_* *.dot
 	rm -rf QMTest
-
