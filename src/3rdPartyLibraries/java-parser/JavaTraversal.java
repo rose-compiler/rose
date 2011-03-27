@@ -1081,109 +1081,110 @@ class JavaTraversal  implements Callable<Boolean>
                    main.progress);
                System.out.println("test 5 ...");
 
-       /* tps : handle compilation units--------------------------------------------- */
-          ICompilationUnit[] sourceUnits = main.getCompilationUnits();
-          int maxUnits = sourceUnits.length;
-          main.batchCompiler.totalUnits = 0;
-          main.batchCompiler.unitsToProcess = new CompilationUnitDeclaration[maxUnits];
+            /* tps : handle compilation units--------------------------------------------- */
+               ICompilationUnit[] sourceUnits = main.getCompilationUnits();
+               int maxUnits = sourceUnits.length;
+               main.batchCompiler.totalUnits = 0;
+               main.batchCompiler.unitsToProcess = new CompilationUnitDeclaration[maxUnits];
 
-       /* tps : Debug: print Compilation units --------------------------- */
-          System.out.println("We got "+maxUnits+" compilation units");
-          CompilationUnit[] units = main.getCompilationUnits();
-          System.out.println("Nr of Compilation Units : "+units.length);
-          for (CompilationUnit myunit : units)
-             {
-               System.out.println("File : "+myunit);
-             }
-
-
-       /* tps : start parsing ------------------------------------------------------- */
-          main.batchCompiler.internalBeginToCompile(sourceUnits, maxUnits);
-       // main.batchCompiler.compile(sourceUnits);
-
-
-          CompilationUnitDeclaration unit = null;
-          JavaTraversal jt = new JavaTraversal();
-          jt.invokeINIT();
-          try { // writing to the DOT file
-               FileWriter fstream = new FileWriter("ast.dot");
-               out = new BufferedWriter(fstream);
-               out.write("Digraph G {\n");
-              }
-          catch (Exception e) { System.err.println("Error: " + e.getMessage()); }
-
-
-
-       /* tps : compile the files and produce class files --------------------------- */
-          ProcessTaskManager processingTask = null;
-          System.out.println("test 6 ...");
-
-       // Calling the parser to build the ROSE AST from a traversal of the ECJ AST.
-          try
-             {
-               JavaParser java_parser = new JavaParser();
-
-               System.out.println("test 7 ...");
-               java_parser.cactionCompilationUnitList(main.batchCompiler.totalUnits,args);
-
-               System.out.println("test 8 ...");
-	            for (int i = 0; i < main.batchCompiler.totalUnits; i++)
+            /* tps : Debug: print Compilation units --------------------------- */
+               System.out.println("We got "+maxUnits+" compilation units");
+               CompilationUnit[] units = main.getCompilationUnits();
+               System.out.println("Nr of Compilation Units : "+units.length);
+               for (CompilationUnit myunit : units)
                   {
-                    unit = main.batchCompiler.unitsToProcess[i];
-                    try
+                    System.out.println("File : "+myunit);
+                  }
+
+            /* tps : start parsing ------------------------------------------------------- */
+               main.batchCompiler.internalBeginToCompile(sourceUnits, maxUnits);
+            // main.batchCompiler.compile(sourceUnits);
+
+               CompilationUnitDeclaration unit = null;
+               JavaTraversal jt = new JavaTraversal();
+               jt.invokeINIT();
+               try { // writing to the DOT file
+                    FileWriter fstream = new FileWriter("ast.dot");
+                    out = new BufferedWriter(fstream);
+                    out.write("Digraph G {\n");
+                   }
+               catch (Exception e) { System.err.println("Error: " + e.getMessage()); }
+
+            /* tps : compile the files and produce class files --------------------------- */
+               ProcessTaskManager processingTask = null;
+               System.out.println("test 6 ...");
+
+            // Calling the parser to build the ROSE AST from a traversal of the ECJ AST.
+               try
+                  {
+                    JavaParser java_parser = new JavaParser();
+
+                    System.out.println("test 7 ...");
+                    java_parser.cactionCompilationUnitList(main.batchCompiler.totalUnits,args);
+
+                    System.out.println("test 8 ...");
+	                 for (int i = 0; i < main.batchCompiler.totalUnits; i++)
                        {
-                         main.batchCompiler.process(unit, i);
-                         jt.traverseAST(unit); /*tps this is a better place for the traversal */
-                         System.out.println("test 9 ...");
+                         unit = main.batchCompiler.unitsToProcess[i];
+                         try
+                            {
+                              main.batchCompiler.process(unit, i);
+                              jt.traverseAST(unit); /*tps this is a better place for the traversal */
+                              System.out.println("test 9 ...");
 
-                      // **************************************************
-                      // This is where the traveral of the ECJ AST is done.
-                      // **************************************************
-                         java_parser.startParsingAST(unit);
+                           // **************************************************
+                           // This is where the traveral of the ECJ AST is done.
+                           // **************************************************
+                              java_parser.startParsingAST(unit);
 
-                         System.out.println("test 10 ...");
+                              System.out.println("test 10 ...");
+                            }
+
+                         catch (Exception e)
+                            {
+                              System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e.getMessage());
+
+                           // This should output the call stack.
+                              System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e);
+                            }
+
+                         finally
+                            {
+                           // cleanup compilation unit result
+                              unit.cleanUp();
+                            }
+                         main.batchCompiler.unitsToProcess[i] = null; // release reference to processed unit declaration
+                         main.batchCompiler.stats.lineCount += unit.compilationResult.lineSeparatorPositions.length;
+                         main.batchCompiler.requestor.acceptResult(unit.compilationResult.tagAsAccepted());
                        }
+                  }
 
-                    catch (Exception e)
-                       {
-                         System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e.getMessage());
+               catch (Exception e)
+                  {
+                 // DQ (11/1/2010): Added more aggressive termination of program...
+                    System.err.println("Error in JavaTraversal::main(): " + e.getMessage());
+                 // System.exit(1);
 
-                      // This should output the call stack.
-                         System.err.println("Error in JavaTraversal::main() (nested catch before finally): " + e);
-                       }
+                    hasErrorOccurred = true;
+                    return;
+                  }
 
-                    finally
-                       {
-                      // cleanup compilation unit result
-                         unit.cleanUp();
-                       }
-                    main.batchCompiler.unitsToProcess[i] = null; // release reference to processed unit declaration
-                    main.batchCompiler.stats.lineCount += unit.compilationResult.lineSeparatorPositions.length;
-                    main.batchCompiler.requestor.acceptResult(unit.compilationResult.tagAsAccepted());
+               jt.invokeEND();
+               try 
+                  {
+                 // closing the DOT file
+                    out.write("}\n");
+                    out.close();
+                  } 
+               catch (Exception e) 
+                  {
+                    System.err.println("Error: " + e.getMessage());
                   }
              }
-
-          catch (Exception e)
+            else
              {
-            // DQ (11/1/2010): Added more aggressive termination of program...
-               System.err.println("Error in JavaTraversal::main(): " + e.getMessage());
-            // System.exit(1);
-
-               hasErrorOccurred = true;
-               return;
+               System.out.println("Skipping major internal parts of ECJ frontend");
              }
-
-          jt.invokeEND();
-          try { // closing the DOT file
-               out.write("}\n");
-               out.close();
-             } catch (Exception e) { System.err.println("Error: " + e.getMessage()); }
-   
-        }
-       else
-        {
-          System.out.println("Skipping major internal parts of ECJ frontend");
-        }
 
           System.out.println("Done compiling");
         }
