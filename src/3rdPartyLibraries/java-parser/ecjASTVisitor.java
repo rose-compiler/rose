@@ -73,7 +73,28 @@ class ecjASTVisitor extends ASTVisitor
         {
           System.out.println("Inside of visit (Argument,BlockScope)");
 
-          java_parser.cactionArgument("Argument_block_abc");
+       // Printing out the char[] type directly does not work, convert it to a string first and output the string.
+       // System.out.println(" name      = " + node.name);
+          String nameString = new String(node.name);
+          System.out.println(" name      = " + nameString);
+          System.out.println(" type      = " + node.type);
+          System.out.println(" modifiers = " + node.modifiers);
+
+       // Divide up the work to define an argument, the name and modifiers are simple but the type has to
+       // be constructed via recursive calls that will cause it to be generated on the astJavaTypeStack.
+       // java_parser.cactionArgument("Argument_block_abc");
+       // java_parser.cactionArgumentName(nameString);
+       // JavaParserSupport.generateType(node.type);
+       // java_parser.cactionArgumentModifiers(node.modifiers);
+       // java_parser.cactionArgumentEnd();
+
+          JavaParserSupport.generateType(node.type);
+
+       // This rule assumes that the type will be made available on the stack (astJavaTypeStack).
+       // In general we want to have rules that are specific to IR nodes and pass any constructed
+       // IR nodes via the stack (rules called should have generated the constructed IR nodes on 
+       // the stack within ROSE).
+          java_parser.cactionArgument(nameString,node.modifiers);
 
           System.out.println("Leaving visit (Argument,BlockScope)");
 
@@ -275,6 +296,18 @@ class ecjASTVisitor extends ASTVisitor
           String s = new String(node.getFileName());
           System.out.println("Test A");
           java_parser.cactionCompilationUnitDeclaration(s);
+
+       // Build the default implicit classes that will be required to process Java functions.
+       // The symbol for these classes need to be added to the global scope and the then
+       // we need to add the required name qualification support for data member and member 
+       // function lookup.
+          System.out.println("Calling buildImplicitClassSupport for java.lang.System");
+          JavaParserSupport.buildImplicitClassSupport("java.lang.System");
+          System.out.println("DONE: Calling buildImplicitClassSupport for java.lang.System");
+
+       // System.out.println("Exiting as a test in visit (CompilationUnitDeclaration,CompilationUnitScope)...");
+       // System.exit(1);
+
           System.out.println("Leaving visit (CompilationUnitDeclaration,CompilationUnitScope)");
 
           return true; // do nothing by default, keep traversing
@@ -307,9 +340,20 @@ class ecjASTVisitor extends ASTVisitor
           System.out.println("Inside of visit (ConstructorDeclaration,ClassScope)");
 
        // char [] name = node.selector;
-          System.out.println("Inside of visit (ConstructorDeclaration,ClassScope) method name = " + node.selector);
+       // System.out.println("Inside of visit (ConstructorDeclaration,ClassScope) method name = " + node.selector);
+          String name = new String(node.selector);
+          System.out.println("Inside of visit (ConstructorDeclaration,ClassScope) method name = " + name);
 
-          java_parser.cactionConstructorDeclaration("ConstructorDeclaration_abc");
+       // argument types
+          if (node.typeParameters != null)
+             {
+               for (int i = 0, typeArgumentsLength = node.typeParameters.length; i < typeArgumentsLength; i++)
+                  {
+                    System.out.println("     --- constructor typeParameters = " + node.typeParameters[i]);
+                  }
+             }
+
+          java_parser.cactionConstructorDeclaration(name);
 
           System.out.println("Leaving visit (ConstructorDeclaration,ClassScope)");
 
@@ -373,6 +417,8 @@ class ecjASTVisitor extends ASTVisitor
 
      public boolean visit(ExplicitConstructorCall node, BlockScope scope)
         {
+          System.out.println("Inside of visit (ExplicitConstructorCall,BlockScope)");
+
        // java_parser.cactionExplicitConstructorCall("abc");
           if (node.qualification != null)
              {
@@ -395,6 +441,7 @@ class ecjASTVisitor extends ASTVisitor
             // output.append('>');
              }
 
+          System.out.println("In visit (ExplicitConstructorCall,BlockScope): node.accessMode = " + node.accessMode);
           if (node.accessMode == ExplicitConstructorCall.This)
              {
             // output.append("this("); //$NON-NLS-1$
@@ -402,9 +449,24 @@ class ecjASTVisitor extends ASTVisitor
              }
             else
              {
-            // output.append("super("); //$NON-NLS-1$
-            // System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: super()");
-               java_parser.cactionExplicitConstructorCall("super");
+               if (node.accessMode == ExplicitConstructorCall.ImplicitSuper)
+                  {
+                    System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: implicit super()");
+                 // java_parser.cactionExplicitConstructorCall("ImplicitSuper");
+                  }
+                 else
+                  {
+                    if (node.accessMode == ExplicitConstructorCall.Super)
+                       {
+                         System.out.println("Sorry, not implemented in support for ExplicitConstructorCall: super()");
+                      // java_parser.cactionExplicitConstructorCall("super");
+                       }
+                      else
+                       {
+                         System.out.println("This is neither This, ImplicitSuper, or Super ...");
+                         System.exit(1);
+                       }
+                  }
              }
 
           if (node.arguments != null)
@@ -417,6 +479,8 @@ class ecjASTVisitor extends ASTVisitor
                  // node.arguments[i].printExpression(0, output);
                   }
              }
+
+          System.out.println("Leaving visit (ExplicitConstructorCall,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
         }
@@ -840,9 +904,28 @@ class ecjASTVisitor extends ASTVisitor
 
      public boolean visit(LocalDeclaration  node, BlockScope scope)
         {
+       // LocalDeclarations is derived from AbstractVariableDeclaration
+
           System.out.println("Inside of visit (LocalDeclaration,BlockScope)");
 
-          java_parser.cactionLocalDeclaration();
+          String name = new String(node.name);
+          System.out.println("node.name                     = " + name);
+
+       // String selectorName = new String(node.selector);
+       // System.out.println("node.name = " + selectorName);
+       // System.out.println("node.modfiers = " + node.modfiers);
+
+          System.out.println("node.binding                  = " + node.binding);
+          System.out.println("node.binding.type             = " + node.binding.type);
+          System.out.println("node.binding.type.id          = " + node.binding.type.id);
+          System.out.println("node.binding.type.debugName() = " + node.binding.type.debugName());
+
+       // Construct the type (will be constructed on the astJavaTypeStack.
+          JavaParserSupport.generateType(node.binding.type);
+
+       // Build the variable declaration using the type from the astJavaTypeStack.
+       // Note that this may have to handle an array of names or be even more complex in the future.
+          java_parser.cactionLocalDeclaration(name);
 
           System.out.println("Leaving visit (LocalDeclaration,BlockScope)");
 
@@ -882,54 +965,115 @@ class ecjASTVisitor extends ASTVisitor
           return true;
         }
 
-          public boolean visit(MessageSend  node, BlockScope scope)
+     public boolean visit(MessageSend  node, BlockScope scope)
+        {
+          System.out.println("Inside of visit (MessageSend,BlockScope)");
+
+       // java_parser.cactionMessageSend("abc");
+          JavaParserSupport.sourcePosition(node);
+
+       /* Debugging code.
+          try
              {
-            // java_parser.cactionMessageSend("abc");
-               JavaParserSupport.sourcePosition(node);
-
-            /* Debugging code.
-               try
-                  {
-                  // System.out is a QualifiedNameReference
-                     System.out.println("node.receiver: name of type = " + node.receiver.getClass().toString());
-                  }
-               catch (Throwable e)
-                  {
-                    System.err.println(e);
-                  }
-             */
-
-               if (node.typeArguments != null)
-                  {
-                    System.out.println("Sorry, not implemented in support for MessageSend: typeArguments");
-                    for (int i = 0, typeArgumentsLength = node.typeArguments.length; i < typeArgumentsLength; i++)
-                       {
-                      // node.typeArguments[i].traverse(visitor, blockScope);
-                       }
-                  }
-
-               if (node.arguments != null)
-                  {
-                    System.out.println("Sorry, not implemented in support for MessageSend: arguments");
-                    int argumentsLength = node.arguments.length;
-                    for (int i = 0; i < argumentsLength; i++)
-                       {
-                      // node.arguments[i].traverse(visitor, blockScope);
-                       }
-                  }
-
-               return true; // do nothing by  node, keep traversing
+            // System.out is a QualifiedNameReference
+               System.out.println("node.receiver: name of type = " + node.receiver.getClass().toString());
              }
+          catch (Throwable e)
+             {
+               System.err.println(e);
+             }
+        */
+
+          System.out.println("MessageSend node = " + node);
+
+          String name = new String(node.selector);
+          System.out.println("     --- function call name = " + name);
+       // String associatedClassName = new String(node.receiver);
+          String associatedClassName = node.receiver.toString();
+
+          System.out.println("     --- function call from class name (binding)         = " + node.binding);
+          System.out.println("     --- function call from class name (receiver)        = " + node.receiver);
+          System.out.println("     --- function call from class name (associatedClass) = " + associatedClassName);
+
+          if (node.typeArguments != null)
+             {
+            // System.out.println("Sorry, not implemented in support for MessageSend: typeArguments");
+               for (int i = 0, typeArgumentsLength = node.typeArguments.length; i < typeArgumentsLength; i++)
+                  {
+                 // node.typeArguments[i].traverse(visitor, blockScope);
+                    System.out.println("     --- method send (function call) typeArguments = " + node.typeArguments[i]);
+                  }
+             }
+
+          if (node.arguments != null)
+             {
+            // System.out.println("Sorry, not implemented in support for MessageSend: arguments");
+               int argumentsLength = node.arguments.length;
+               for (int i = 0; i < argumentsLength; i++)
+                  {
+                 // node.arguments[i].traverse(visitor, blockScope);
+                    System.out.println("     --- method arguments (function call arguments) arguments = " + node.arguments[i]);
+                  }
+             }
+
+       // Build this as an implicit class (if it is already built it will be detected adn not rebuilt).
+       // System.out.println("Calling buildImplicitClassSupport for associatedClassName = " + associatedClassName);
+       // buildImplicitClassSupport(associatedClassName);
+
+       // This is an error for test2001_04.java when println is found since it is not located in "java.lang" but is in java.io"
+       // Maybe we need to process ""java.lang.System" and "java.io.String" and a few other classes explicitly.
+       // JavaParserSupport.buildImplicitClassSupport("java.lang." + associatedClassName);
+       // JavaParserSupport.buildImplicitClassSupport("java.io." + associatedClassName);
+       // JavaParserSupport.buildImplicitClassSupport("java.lang.System");
+       // System.out.println("DONE: Calling buildImplicitClassSupport for associatedClassName = " + associatedClassName);
+
+       // java_parser.cactionExplicitConstructorCall("super");
+          java_parser.cactionMessageSend(name,associatedClassName);
+
+          System.out.println("Leaving visit (MessageSend,BlockScope)");
+
+       // System.out.println("Exiting as a test in visit (MessageSend,BlockScope)...");
+       // System.exit(1);
+
+          return true; // do nothing by  node, keep traversing
+        }
 
      public boolean visit(MethodDeclaration  node, ClassScope scope)
         {
           System.out.println("Inside of visit (MethodDeclaration,ClassScope)");
 
-          char [] name = node.selector;
+       // char [] name = node.selector;
+       // System.out.println("Inside of visit (MethodDeclaration,ClassScope) method name = " + name);
+          String name = new String(node.selector);
           System.out.println("Inside of visit (MethodDeclaration,ClassScope) method name = " + name);
 
-          java_parser.cactionMethodDeclaration("MethodDeclaration_abc");
+       // Return type
+          System.out.println("     --- method returnType = " + node.returnType);
+
+       // argument types
+          if (node.typeParameters != null)
+             {
+               for (int i = 0, typeArgumentsLength = node.typeParameters.length; i < typeArgumentsLength; i++)
+                  {
+                    System.out.println("     --- method typeParameters = " + node.typeParameters[i]);
+                  }
+             }
+
+
+          if (node.statements != null)
+             {
+               for (int i = 0, statementListLength = node.statements.length; i < statementListLength; i++)
+                  {
+                    System.out.println("     --- method statements[" + i + "] = " + node.statements[i]);
+                  }
+             }
+
+       // System.out.println("Exiting to test error handling! \n");
+       // System.exit(0);
+
        // java_parser.cactionMethodDeclaration();
+       // java_parser.cactionMethodDeclaration("MethodDeclaration_abc");
+          java_parser.cactionMethodDeclaration(name);
 
           System.out.println("Leaving visit (MethodDeclaration,ClassScope)");
 
@@ -1049,113 +1193,113 @@ class ecjASTVisitor extends ASTVisitor
           return true; // do nothing by  node, keep traversing
         }
 
-          public boolean visit(QualifiedNameReference node, BlockScope scope)
+     public boolean visit(QualifiedNameReference node, BlockScope scope)
+        {
+       // Note that if we want to traverse this object in more detail then the QualifiedNameReference::traverse() functions can/should be modified.
+          java_parser.cactionQualifiedNameReference("QualifiedNameReference_block_abc");
+
+       // This is a reference to a variable (non data member)...? Is this correct?
+          System.out.println("Sorry, not implemented in support for QualifiedNameReference(BlockScope): variable");
+
+       // set the generic cast after the fact, once the type expectation is fully known (no need for strict cast)
+          FieldBinding field = null;
+          int length = node.otherBindings == null ? 0 : node.otherBindings.length;
+          if (length == 0)
              {
-            // Note that if we want to traverse this object in more detail then the QualifiedNameReference::traverse() functions can/should be modified.
-               java_parser.cactionQualifiedNameReference("QualifiedNameReference_block_abc");
-
-            // This is a reference to a variable (non data member)...? Is this correct?
-               System.out.println("Sorry, not implemented in support for QualifiedNameReference(BlockScope): variable");
-
-            // set the generic cast after the fact, once the type expectation is fully known (no need for strict cast)
-               FieldBinding field = null;
-               int length = node.otherBindings == null ? 0 : node.otherBindings.length;
-               if (length == 0)
+               if ((node.bits & Binding.FIELD) != 0 && node.binding != null && node.binding.isValidBinding())
                   {
-                    if ((node.bits & Binding.FIELD) != 0 && node.binding != null && node.binding.isValidBinding())
-                       {
-                         System.out.println("case of length == 0 and (...)");
-                         field = (FieldBinding) node.binding;
-                       }
+                    System.out.println("case of length == 0 and (...)");
+                    field = (FieldBinding) node.binding;
                   }
-                 else
-                  {
-                    System.out.println("case of length != 0");
-                    field  = node.otherBindings[length-1];
-                  }
-
-               if (field != null)
-                  {
-                    System.out.println("Sorry, not implemented in support for QualifiedNameReference(BlockScope): field = " + field.toString());
-
-                    Class cls = field.getClass();
-                    System.out.println("----- field in class = " + cls.toString());
-                    System.out.println("----- field in class = " + cls.toString());
-                  }
-                 else
-                  {
-                 // I don't know what this is, I have not seen an example of this case.
-                    System.out.println("Sorry, not implemented in support for QualifiedNameReference(BlockScope): non-field");
-                  }
-
-            // Output the qualified name using the tokens (awful approach)
-               for (int i = 0; i < node.tokens.length; i++)
-                  {
-                 // Note that the qualified name (parent classes fo the data member) appear to only be 
-                 // available via the tokens (sort of ugly, I think; but this is the best I can figure out so far).
-
-                    String tokenName = new String(node.tokens[i]);
-                    System.out.println("----- tokens for qualification = " + tokenName);
-
-                 // For the set of classes up to (but not including) the last data member reference we need to build support for the classes.
-                    if (i < node.tokens.length-1)
-                       {
-                      // Finding the class has to be done in "try" ... "catch" blocks.
-                         Class cls = null;
-                         try
-                            {
-                           // Fortunately we can get the class from the introspection...is there a better way?
-                              cls = Class.forName("java.lang."+tokenName);
-
-                           // DQ (11/3/2010): This will generate an error which will be caught and force JavaTraversal.hasErrorOccurred 
-                           // to be set and then the C++ side will query the error status and detect the error.  Thanks Thomas!
-                           // cls = Class.forName("java.lang");
-                            }
-                         catch (Throwable e)
-                            {
-                              System.err.println(e);
-
-                           // Make sure we exit on any error so it is caught quickly.
-                           // System.exit(1);
-                              JavaTraversal.hasErrorOccurred = true;
-
-                              return false;
-                            }
-
-                         if (cls != null)
-                            {
-                           // We need to build these inplicitly referenced classes and also all
-                           // of their public interface (member functions and data members).
-                              System.out.println("----- tokens represents a class = " + tokenName);
-
-                           // Build support for class (if we have not seen it before then it was implicitly 
-                           // included (imported?) which is why this handling is father complex.
-                              System.out.println("----- add support for class = " + cls.toString());
-                              String className = tokenName;
-                              JavaParserSupport.buildImplicitClassSupport("java.lang." + className);
-
-                           // Experiment with error on Java side...catch on C++ side...
-                           // System.out.println("Exiting in ecjASTVisitor::visit(QualifiedNameReference,BlockScope)");
-                           // System.exit(1);
-
-                              System.out.println("DONE: ----- add support for class = " + cls.toString() + " className = " + className);
-                            }
-                       }
-                      else
-                       {
-                      // This is the last token standing for the data member reference (the "field" defined above).
-                       }
-                  }
-
-               return true; // do nothing by  node, keep traversing
+             }
+            else
+             {
+               System.out.println("case of length != 0");
+               field  = node.otherBindings[length-1];
              }
 
-          public boolean visit(QualifiedNameReference node, ClassScope scope)
+          if (field != null)
              {
-            // This is a reference to a data member.
-               System.out.println("Sorry, not implemented in support for QualifiedNameReference(ClassScope): data member");
+               System.out.println("Sorry, not implemented in support for QualifiedNameReference(BlockScope): field = " + field.toString());
 
-               java_parser.cactionQualifiedNameReference("QualifiedNameReference_class_abc");
+               Class cls = field.getClass();
+               System.out.println("----- field in class = " + cls.toString());
+               System.out.println("----- field in class = " + cls.toString());
+             }
+            else
+             {
+            // I don't know what this is, I have not seen an example of this case.
+               System.out.println("Sorry, not implemented in support for QualifiedNameReference(BlockScope): non-field");
+             }
+
+       // Output the qualified name using the tokens (awful approach)
+          for (int i = 0; i < node.tokens.length; i++)
+             {
+            // Note that the qualified name (parent classes fo the data member) appear to only be 
+            // available via the tokens (sort of ugly, I think; but this is the best I can figure out so far).
+
+               String tokenName = new String(node.tokens[i]);
+               System.out.println("----- tokens for qualification = " + tokenName);
+
+            // For the set of classes up to (but not including) the last data member reference we need to build support for the classes.
+               if (i < node.tokens.length-1)
+                  {
+                 // Finding the class has to be done in "try" ... "catch" blocks.
+                    Class cls = null;
+                    try
+                       {
+                      // Fortunately we can get the class from the introspection...is there a better way?
+                         cls = Class.forName("java.lang."+tokenName);
+
+                      // DQ (11/3/2010): This will generate an error which will be caught and force JavaTraversal.hasErrorOccurred 
+                      // to be set and then the C++ side will query the error status and detect the error.  Thanks Thomas!
+                      // cls = Class.forName("java.lang");
+                       }
+                    catch (Throwable e)
+                       {
+                         System.err.println(e);
+
+                      // Make sure we exit on any error so it is caught quickly.
+                      // System.exit(1);
+                         JavaTraversal.hasErrorOccurred = true;
+
+                         return false;
+                       }
+
+                    if (cls != null)
+                       {
+                      // We need to build these inplicitly referenced classes and also all
+                      // of their public interface (member functions and data members).
+                         System.out.println("----- tokens represents a class = " + tokenName);
+
+                      // Build support for class (if we have not seen it before then it was implicitly 
+                      // included (imported?) which is why this handling is father complex.
+                         System.out.println("----- add support for class = " + cls.toString());
+                         String className = tokenName;
+                         JavaParserSupport.buildImplicitClassSupport("java.lang." + className);
+
+                      // Experiment with error on Java side...catch on C++ side...
+                      // System.out.println("Exiting in ecjASTVisitor::visit(QualifiedNameReference,BlockScope)");
+                      // System.exit(1);
+
+                         System.out.println("DONE: ----- add support for class = " + cls.toString() + " className = " + className);
+                       }
+                  }
+                 else
+                  {
+                 // This is the last token standing for the data member reference (the "field" defined above).
+                  }
+             }
+
+          return true; // do nothing by  node, keep traversing
+        }
+
+     public boolean visit(QualifiedNameReference node, ClassScope scope)
+        {
+       // This is a reference to a data member.
+          System.out.println("Sorry, not implemented in support for QualifiedNameReference(ClassScope): data member");
+
+          java_parser.cactionQualifiedNameReference("QualifiedNameReference_class_abc");
 
 /*
 	if (runtimeTimeType == null || compileTimeType == null)
@@ -1171,8 +1315,8 @@ class ecjASTVisitor extends ASTVisitor
      field  = this.otherBindings[length-1];
 	}
 */
-               return true; // do nothing by  node, keep traversing
-             }
+          return true; // do nothing by  node, keep traversing
+        }
 
      public boolean visit(QualifiedSuperReference node, BlockScope scope)
         {
@@ -1284,33 +1428,33 @@ class ecjASTVisitor extends ASTVisitor
           return true; // do nothing by  node, keep traversing
         }
 
-          public boolean visit(SingleTypeReference node, BlockScope scope)
+     public boolean visit(SingleTypeReference node, BlockScope scope)
+        {
+       // java_parser.cactionSingleTypeReference("abc");
+
+          if (node.resolvedType != null)
              {
-            // java_parser.cactionSingleTypeReference("abc");
-
-               if (node.resolvedType != null)
-                  {
-                    java_parser.cactionSingleTypeReference("SingleTypeReference_block_abc");
-                 // char[][] char_string = node.getTypeName();
-                 // System.out.println(char_string);
-                 // String typename = new String(node.getTypeName().toString());
-                 // String typename = node.getTypeName().toString();
-                    String typename = node.toString();
-                    System.out.println("Sorry, not implemented SingleTypeReference (node.resolvedType != NULL): typename = " + typename);
-                  }
-                 else
-                  {
-                    System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
-                  }
-
-               return true; // do nothing by  node, keep traversing
+               java_parser.cactionSingleTypeReference("SingleTypeReference_block_abc");
+            // char[][] char_string = node.getTypeName();
+            // System.out.println(char_string);
+            // String typename = new String(node.getTypeName().toString());
+            // String typename = node.getTypeName().toString();
+               String typename = node.toString();
+               System.out.println("Sorry, not implemented SingleTypeReference (node.resolvedType != NULL): typename = " + typename);
+             }
+            else
+             {
+               System.out.println("Sorry, not implemented SingleTypeReference: node.resolvedType == NULL");
              }
 
-          public boolean visit(SingleTypeReference node, ClassScope scope)
-             {
-               java_parser.cactionSingleTypeReference("SingleTypeReference_class_abc");
-               return true; // do nothing by  node, keep traversing
-             }
+          return true; // do nothing by  node, keep traversing
+        }
+
+     public boolean visit(SingleTypeReference node, ClassScope scope)
+        {
+          java_parser.cactionSingleTypeReference("SingleTypeReference_class_abc");
+          return true; // do nothing by  node, keep traversing
+        }
 
      public boolean visit(StringLiteral  node, BlockScope scope)
         {
@@ -1512,6 +1656,7 @@ class ecjASTVisitor extends ASTVisitor
 
 
   // DQ (3/18/2011): Not clear if I need this yet.
+  // DQ (3/25/2011): I think we do need them.
      public void endVisit(AllocationExpression node, BlockScope scope)
         {
         // do nothing by default
@@ -1523,6 +1668,7 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(AnnotationMethodDeclaration node, ClassScope classScope)
         {
        // do nothing by default
+          System.out.println("Leaving endVisit (AnnotationMethodDeclaration,ClassScope)");
         }
      public void endVisit(Argument  node, BlockScope scope)
         {
@@ -1573,6 +1719,7 @@ class ecjASTVisitor extends ASTVisitor
      }
      public void endVisit(Block  node, BlockScope scope) {
        // do nothing by default
+          System.out.println("Inside of endVisit (Block,BlockScope)");
      }
      public void endVisit(BreakStatement  node, BlockScope scope) {
         // do nothing  by default
@@ -1592,14 +1739,18 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(Clinit  node, ClassScope scope) {
         // do nothing  by default
      }
+
      public void endVisit(CompilationUnitDeclaration node, CompilationUnitScope scope)
         {
        // do nothing by default
+          System.out.println("Inside of endVisit (CompilationUnitDeclaration,CompilationUnitScope)");
         }
+
      public void endVisit(CompoundAssignment  node, BlockScope scope)
         {
        // do nothing  by default
         }
+
      public void endVisit(ConditionalExpression node, BlockScope scope)
         {
        // do nothing  by default
@@ -1607,333 +1758,496 @@ class ecjASTVisitor extends ASTVisitor
 
      public void endVisit(ConstructorDeclaration node, ClassScope scope)
         {
+          System.out.println("Inside of endVisit (ConstructorDeclaration,ClassScope)");
           java_parser.cactionConstructorDeclarationEnd();
+
+       // Not clear when we have top provide a parameter.
+          java_parser.cactionStatementEnd("ConstructorDeclaration");
         }
 
      public void endVisit(ContinueStatement  node, BlockScope scope)
         {
        // do nothing  by default
         }
+
      public void endVisit(DoStatement  node, BlockScope scope)
         {
        // do nothing  by default
         }
-     public void endVisit(DoubleLiteral  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(EmptyStatement  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(EqualExpression  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               ExplicitConstructorCall node,
-               BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               ExtendedStringLiteral node,
-               BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(FalseLiteral  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(FieldDeclaration  node, MethodScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(FieldReference  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(FieldReference  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(FloatLiteral  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(ForeachStatement  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(ForStatement  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(IfStatement  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(ImportReference  node, CompilationUnitScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(Initializer  node, MethodScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               InstanceOfExpression node,
-               BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(IntLiteral  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(Javadoc  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(Javadoc  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocAllocationExpression  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocAllocationExpression  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocArgumentExpression  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocArgumentExpression  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocArrayQualifiedTypeReference  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocArrayQualifiedTypeReference  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocArraySingleTypeReference  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocArraySingleTypeReference  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocFieldReference  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocFieldReference  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocImplicitTypeReference  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocImplicitTypeReference  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocMessageSend  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocMessageSend  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocQualifiedTypeReference  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocQualifiedTypeReference  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocReturnStatement  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocReturnStatement  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocSingleNameReference  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocSingleNameReference  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocSingleTypeReference  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(JavadocSingleTypeReference  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(LabeledStatement  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(LocalDeclaration  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(LongLiteral  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(MarkerAnnotation  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(MemberValuePair  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(MessageSend  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(MethodDeclaration  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(StringLiteralConcatenation  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(NormalAnnotation  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(NullLiteral  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(OR_OR_Expression  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(ParameterizedQualifiedTypeReference  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(ParameterizedQualifiedTypeReference  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(ParameterizedSingleTypeReference  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(ParameterizedSingleTypeReference  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(PostfixExpression  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(PrefixExpression  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               QualifiedAllocationExpression node,
-               BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               QualifiedNameReference node,
-               BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               QualifiedNameReference node,
-               ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               QualifiedSuperReference node,
-               BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               QualifiedSuperReference node,
-               ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               QualifiedThisReference node,
-               BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               QualifiedThisReference node,
-               ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               QualifiedTypeReference node,
-               BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               QualifiedTypeReference node,
-               ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(ReturnStatement  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(SingleMemberAnnotation  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               SingleNameReference node,
-               BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               SingleNameReference node,
-               ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               SingleTypeReference node,
-               BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               SingleTypeReference node,
-               ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(StringLiteral  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(SuperReference  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(SwitchStatement  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               SynchronizedStatement node,
-               BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(ThisReference  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(ThisReference  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(ThrowStatement  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(TrueLiteral  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(TryStatement  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               TypeDeclaration node,
-               BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               TypeDeclaration node,
-               ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(
-               TypeDeclaration node,
-               CompilationUnitScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(TypeParameter  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(TypeParameter  node, ClassScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(UnaryExpression  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(WhileStatement  node, BlockScope scope) {
-        // do nothing  by default
-     }
-     public void endVisit(Wildcard  node, BlockScope scope) {
-        // do nothing  by default
-     }
+
+     public void endVisit(DoubleLiteral  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(EmptyStatement  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(EqualExpression  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(ExplicitConstructorCall node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(ExtendedStringLiteral node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(FalseLiteral  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(FieldDeclaration  node, MethodScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(FieldReference  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(FieldReference  node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(FloatLiteral  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(ForeachStatement  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(ForStatement  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(IfStatement  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(ImportReference  node, CompilationUnitScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(Initializer  node, MethodScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(InstanceOfExpression node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(IntLiteral  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(Javadoc  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(Javadoc  node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocAllocationExpression  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocAllocationExpression  node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocArgumentExpression  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocArgumentExpression  node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocArrayQualifiedTypeReference  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocArrayQualifiedTypeReference  node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocArraySingleTypeReference  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocArraySingleTypeReference  node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocFieldReference  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocFieldReference  node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocImplicitTypeReference  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocImplicitTypeReference  node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocMessageSend  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocMessageSend  node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocQualifiedTypeReference  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocQualifiedTypeReference  node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocReturnStatement  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocReturnStatement  node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocSingleNameReference  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocSingleNameReference  node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocSingleTypeReference  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(JavadocSingleTypeReference  node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(LabeledStatement  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(LocalDeclaration  node, BlockScope scope)
+        {
+       // do nothing  by default
+          System.out.println("Leaving endVisit (LocalDeclaration,BlockScope)");
+
+       // Not clear when we have to provide a parameter.
+          java_parser.cactionStatementEnd("LocalDeclaration");
+        }
+
+     public void endVisit(LongLiteral  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(MarkerAnnotation  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(MemberValuePair  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(MessageSend  node, BlockScope scope)
+        {
+       // do nothing  by default
+          System.out.println("Leaving endVisit (MessageSend,BlockScope)");
+        }
+
+     public void endVisit(MethodDeclaration  node, ClassScope scope)
+        {
+       // do nothing  by default
+          System.out.println("Leaving endVisit (MethodDeclaration,ClassScope)");
+
+       // String name = new String("MethodDeclaration");
+       // java_parser.cactionMethodDeclarationEnd(name);
+       // java_parser.cactionMethodDeclarationEnd(name);
+       // java_parser.cactionConstructorDeclarationEnd();
+
+       // This has to be declared as a non-static function!
+       // java_parser.cactionMethodDeclarationEnd("MethodDeclaration");
+          java_parser.cactionMethodDeclarationEnd();
+
+       // Not clear when we have to provide a parameter.
+          java_parser.cactionStatementEnd("MethodDeclaration");
+        }
+
+     public void endVisit(StringLiteralConcatenation  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(NormalAnnotation  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(NullLiteral  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(OR_OR_Expression  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(ParameterizedQualifiedTypeReference  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(ParameterizedQualifiedTypeReference  node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(ParameterizedSingleTypeReference  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(ParameterizedSingleTypeReference  node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(PostfixExpression  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(PrefixExpression  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(QualifiedAllocationExpression node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(QualifiedNameReference node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(QualifiedNameReference node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(QualifiedSuperReference node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(QualifiedSuperReference node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(QualifiedThisReference node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(QualifiedThisReference node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(QualifiedTypeReference node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(QualifiedTypeReference node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(ReturnStatement  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(SingleMemberAnnotation  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(SingleNameReference node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(SingleNameReference node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(SingleTypeReference node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(SingleTypeReference node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(StringLiteral  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(SuperReference  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(SwitchStatement  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(SynchronizedStatement node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(ThisReference  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(ThisReference  node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(ThrowStatement  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(TrueLiteral  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(TryStatement  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(TypeDeclaration node, BlockScope scope)
+        {
+        // do nothing  by default
+        }
+
+     public void endVisit(TypeDeclaration node, ClassScope scope)
+        {
+        // do nothing  by default
+        }
+
+     public void endVisit(TypeDeclaration node, CompilationUnitScope scope)
+        {
+        // do nothing  by default
+        }
+
+     public void endVisit(TypeParameter  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(TypeParameter  node, ClassScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(UnaryExpression  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(WhileStatement  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
+     public void endVisit(Wildcard  node, BlockScope scope)
+        {
+       // do nothing  by default
+        }
+
      public void endVisit(Wildcard  node, ClassScope scope)
         {
        // do nothing  by default
         }
 
-
-
-
    }
+
+

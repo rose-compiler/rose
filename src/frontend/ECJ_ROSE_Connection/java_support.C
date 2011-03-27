@@ -30,6 +30,12 @@ list<SgScopeStatement*> astJavaScopeStack;
 // Global stack of expressions 
 list<SgExpression*> astJavaExpressionStack;
 
+// Global stack of types
+list<SgType*> astJavaTypeStack;
+
+// Global stack of statements
+list<SgStatement*> astJavaStatementStack;
+
 // Simplifying type for the setSourcePosition() functions
 // typedef std::vector<Token_t*> TokenListType;
 
@@ -104,7 +110,9 @@ void outputJavaState( const std::string label )
         }
 
      size_t maxStackSize = astJavaScopeStack.size();
+     maxStackSize = astJavaStatementStack.size()  > maxStackSize ? astJavaStatementStack.size()  : maxStackSize;
      maxStackSize = astJavaExpressionStack.size() > maxStackSize ? astJavaExpressionStack.size() : maxStackSize;
+     maxStackSize = astJavaTypeStack.size()       > maxStackSize ? astJavaTypeStack.size()       : maxStackSize;
      maxStackSize = astJavaNodeStack.size()       > maxStackSize ? astJavaNodeStack.size()       : maxStackSize;
 
      printf ("\n");
@@ -112,14 +120,16 @@ void outputJavaState( const std::string label )
      printf ("In outputState (%s): maxStackSize = %ld \n",label.c_str(),(long)maxStackSize);
 
      std::list<SgScopeStatement*>      ::reverse_iterator astScopeStack_iterator                = astJavaScopeStack.rbegin();
+     std::list<SgStatement*>           ::reverse_iterator astStatementStack_iterator            = astJavaStatementStack.rbegin();
      std::list<SgExpression*>          ::reverse_iterator astExpressionStack_iterator           = astJavaExpressionStack.rbegin();
+     std::list<SgType*>                ::reverse_iterator astTypeStack_iterator                 = astJavaTypeStack.rbegin();
      std::list<SgNode*>                ::reverse_iterator astNodeStack_iterator                 = astJavaNodeStack.rbegin();
 
-     const int NumberOfStacks = 3;
+     const int NumberOfStacks = 5;
      struct
         { std::string name;
           int fieldWidth;
-     } stackNames[NumberOfStacks] = { {"astScopeStack", 40} ,    {"astExpressionStack",30} ,   {"astNodeStack",30} };
+     } stackNames[NumberOfStacks] = { {"astScopeStack", 40},   {"astStatementStack",50} ,    {"astExpressionStack",50} ,    {"astTypeStack",30},   {"astNodeStack",30} };
 
      for (int k=0; k < NumberOfStacks; k++)
         {
@@ -142,12 +152,6 @@ void outputJavaState( const std::string label )
           std::string s;
           if (astScopeStack_iterator != astJavaScopeStack.rend())
              {
-            // printf ("     %p = %s = %s :",*astScopeStack_iterator,(*astScopeStack_iterator)->class_name().c_str(),SageInterface::get_name(*astScopeStack_iterator).c_str());
-            // printf ("     %p ",*astScopeStack_iterator);
-            // printf (" %s ",(*astScopeStack_iterator)->class_name().c_str());
-            // printf ("= %s ",SageInterface::get_name(*astScopeStack_iterator).c_str());
-            // printf (":");
-
                if (isSgBasicBlock(*astScopeStack_iterator) != NULL || isSgAssociateStatement(*astScopeStack_iterator) != NULL)
                   {
                  // If this is the SgBasicBlock or SgAssociateStatement then output the address instead 
@@ -168,13 +172,21 @@ void outputJavaState( const std::string label )
 
           outputJavaStateSupport(s,stackNames[0].fieldWidth);
 
+          if (astStatementStack_iterator != astJavaStatementStack.rend())
+             {
+               s = (*astStatementStack_iterator)->class_name() + " : " + SageInterface::get_name(*astStatementStack_iterator);
+
+               astStatementStack_iterator++;
+             }
+            else
+             {
+               s = " No Statement ";
+             }
+
+          outputJavaStateSupport(s,stackNames[1].fieldWidth);
+
           if (astExpressionStack_iterator != astJavaExpressionStack.rend())
              {
-            // printf ("     %p = %s = %s :",*astExpressionStack_iterator,(*astExpressionStack_iterator)->class_name().c_str(),SageInterface::get_name(*astExpressionStack_iterator).c_str());
-            // printf ("     %p ",*astExpressionStack_iterator);
-            // printf (" %s ",(*astExpressionStack_iterator)->class_name().c_str());
-            // printf ("= %s ",SageInterface::get_name(*astExpressionStack_iterator).c_str());
-            // printf (":");
                s = (*astExpressionStack_iterator)->class_name() + " : " + SageInterface::get_name(*astExpressionStack_iterator);
 
                astExpressionStack_iterator++;
@@ -184,15 +196,23 @@ void outputJavaState( const std::string label )
                s = " No Expression ";
              }
 
-          outputJavaStateSupport(s,stackNames[1].fieldWidth);
+          outputJavaStateSupport(s,stackNames[2].fieldWidth);
+
+          if (astTypeStack_iterator != astJavaTypeStack.rend())
+             {
+               s = (*astTypeStack_iterator)->class_name() + " : " + SageInterface::get_name(*astTypeStack_iterator);
+
+               astTypeStack_iterator++;
+             }
+            else
+             {
+               s = " No Type ";
+             }
+
+          outputJavaStateSupport(s,stackNames[3].fieldWidth);
 
           if (astNodeStack_iterator != astJavaNodeStack.rend())
              {
-            // printf ("     %p = %s = %s :",*astExpressionStack_iterator,(*astExpressionStack_iterator)->class_name().c_str(),SageInterface::get_name(*astExpressionStack_iterator).c_str());
-            // printf ("     %p ",*astNodeStack_iterator);
-            // printf (" %s ",(*astNodeStack_iterator)->class_name().c_str());
-            // printf ("= %s ",SageInterface::get_name(*astNodeStack_iterator).c_str());
-            // printf (":");
                s = (*astNodeStack_iterator)->class_name() + " : " + SageInterface::get_name(*astNodeStack_iterator);
 
                astNodeStack_iterator++;
@@ -202,7 +222,7 @@ void outputJavaState( const std::string label )
                s = " No Node ";
              }
 
-          outputJavaStateSupport(s,stackNames[2].fieldWidth);
+          outputJavaStateSupport(s,stackNames[4].fieldWidth);
 
           printf ("\n");
         }
@@ -233,32 +253,44 @@ convertJavaStringToCxxString(JNIEnv *env, const jstring & java_string)
      return returnString;
    }
 
-
-SgMemberFunctionDeclaration*
-buildSimpleMemberFunction(const SgName & inputName, SgClassDefinition* classDefinition)
+int
+convertJavaIntegerToCxxInteger(JNIEnv *env, const jint & java_integer)
    {
+  // The case of an integer is more trivial than I expected!
+
+  // Note that "env" can't be passed into this function as "const".
+  // const int returnValue = env->CallIntMethod(java_integer,NULL);
+     const int returnValue = java_integer;
+     return returnValue;
+   }
+
+void
+memberFunctionSetup (SgName & name, SgClassDefinition* classDefinition, SgFunctionParameterList* & parameterlist, SgMemberFunctionType* & return_type)
+   {
+  // Refactored code.
+
   // This is abstracted so that we can build member functions as require to define Java specific default functions (e.g. super()).
-     SgName name = inputName;
 
      ROSE_ASSERT(classDefinition != NULL);
      ROSE_ASSERT(classDefinition->get_declaration() != NULL);
-     printf ("Inside of buildSimpleMemberFunction(): name = %s in scope = %p = %s = %s \n",name.str(),classDefinition,classDefinition->class_name().c_str(),classDefinition->get_declaration()->get_name().str());
+     printf ("Inside of memberFunctionSetup(): name = %s in scope = %p = %s = %s \n",name.str(),classDefinition,classDefinition->class_name().c_str(),classDefinition->get_declaration()->get_name().str());
 
      SgFunctionParameterTypeList* typeList = SageBuilder::buildFunctionParameterTypeList();
      ROSE_ASSERT(typeList != NULL);
 
   // Specify if this is const, volatile, or restrict (0 implies normal member function).
      unsigned int mfunc_specifier = 0;
-     SgMemberFunctionType* return_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), typeList, classDefinition, mfunc_specifier);
+     return_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), typeList, classDefinition, mfunc_specifier);
      ROSE_ASSERT(return_type != NULL);
 
-     SgFunctionParameterList* parameterlist = SageBuilder::buildFunctionParameterList(typeList);
+     parameterlist = SageBuilder::buildFunctionParameterList(typeList);
      ROSE_ASSERT(parameterlist != NULL);
 
-     SgFunctionType*   func_type   = SageBuilder::buildFunctionType(return_type,parameterlist);
+     SgFunctionType* func_type = SageBuilder::buildFunctionType(return_type,parameterlist);
+     ROSE_ASSERT(func_type != NULL);
 
-  // Currently I am introducing a mechanism to make sure that overloaded function will have a unique name.
-  // It is temporary until I can handle correct mangled name support using the argument types.
+  // DQ (3/24/2011): Currently we am introducing a mechanism to make sure that overloaded function will have 
+  // a unique name. It is temporary until we can handle correct mangled name support using the argument types.
      SgFunctionSymbol* func_symbol = NULL;
      bool func_symbol_found = true;
      while (func_symbol_found == true)
@@ -280,44 +312,16 @@ buildSimpleMemberFunction(const SgName & inputName, SgClassDefinition* classDefi
                func_symbol_found = false;
              }
         }
+   }
 
-  // SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (name, return_type, parameterlist, astJavaScopeStack.front() );
-     SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (name, return_type, parameterlist, classDefinition );
+void
+memberFunctionTest (const SgName & name, SgClassDefinition* classDefinition, SgMemberFunctionDeclaration* functionDeclaration)
+   {
+  // Refactored code.
+
      ROSE_ASSERT(functionDeclaration != NULL);
 
-     ROSE_ASSERT(functionDeclaration->get_definingDeclaration() != NULL);
-
-  // DQ (3/24/2011): I think this is an error to have this exception and that it is 
-  // required only because we are not resolving overloaded functions to be unique.
-     if (functionDeclaration->get_firstNondefiningDeclaration() != NULL)
-        {
-       // non-defining declaration not built yet.
-          ROSE_ASSERT(functionDeclaration->get_firstNondefiningDeclaration() == NULL);
-
-       // Now build the non-defining declaration.
-          SgMemberFunctionDeclaration* nonDefiningFunctionDeclaration = SageBuilder::buildNondefiningMemberFunctionDeclaration (functionDeclaration,classDefinition);
-
-          ROSE_ASSERT(functionDeclaration->get_firstNondefiningDeclaration() == NULL);
-          functionDeclaration->set_firstNondefiningDeclaration(nonDefiningFunctionDeclaration);
-          ROSE_ASSERT(functionDeclaration->get_firstNondefiningDeclaration() != NULL);
-
-          ROSE_ASSERT(nonDefiningFunctionDeclaration->get_definingDeclaration() != NULL);
-
-          ROSE_ASSERT(nonDefiningFunctionDeclaration->get_symbol_from_symbol_table() != NULL);
-        }
-       else
-        {
-          printf ("WARNING: functionDeclaration->get_firstNondefiningDeclaration() == NULL sometimes (for overloaded function of those matching existing declarations) \n");
-        }
-
-     SgFunctionDefinition* functionDefinition = functionDeclaration->get_definition();
-     ROSE_ASSERT(functionDefinition != NULL);
-
-  // Add the member function to the class scope.
-     classDefinition->append_statement(functionDeclaration);
-
      size_t declarationListSize = classDefinition->generateStatementList().size();
-
      printf ("declarationListSize = %zu \n",declarationListSize);
      ROSE_ASSERT(declarationListSize > 0);
 
@@ -337,6 +341,71 @@ buildSimpleMemberFunction(const SgName & inputName, SgClassDefinition* classDefi
      ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration() != NULL);
      ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
      ROSE_ASSERT(functionDeclaration->get_symbol_from_symbol_table() != NULL);
+   }
+
+SgMemberFunctionDeclaration*
+buildNonDefiningMemberFunction(const SgName & inputName, SgClassDefinition* classDefinition)
+   {
+     SgName name = inputName;
+
+     SgFunctionParameterList* parameterlist = NULL;
+     SgMemberFunctionType* return_type = NULL;
+
+  // Refactored code.
+     memberFunctionSetup (name,classDefinition,parameterlist,return_type);
+
+     ROSE_ASSERT(parameterlist != NULL);
+     ROSE_ASSERT(return_type != NULL);
+
+     SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildNondefiningMemberFunctionDeclaration (name, return_type, parameterlist, classDefinition );
+
+     ROSE_ASSERT(functionDeclaration != NULL);
+     ROSE_ASSERT(functionDeclaration->get_definingDeclaration() == NULL);
+     ROSE_ASSERT(functionDeclaration->get_definition() == NULL);
+
+  // Add the member function to the class scope (this is a required second step after building the function declaration).
+     classDefinition->append_statement(functionDeclaration);
+
+  // Refactored code.
+     memberFunctionTest(name,classDefinition,functionDeclaration);
+
+  // Push this statement onto the stack so that we can add arguments, etc.
+  // astJavaStatementStack.push_front(functionDeclaration);
+
+     return functionDeclaration;
+   }
+
+// SgMemberFunctionDeclaration* buildSimpleMemberFunction(const SgName & inputName, SgClassDefinition* classDefinition)
+SgMemberFunctionDeclaration*
+buildDefiningMemberFunction(const SgName & inputName, SgClassDefinition* classDefinition)
+   {
+  // This is abstracted so that we can build member functions as require to define Java specific default functions (e.g. super()).
+
+     SgName name = inputName;
+
+     SgFunctionParameterList* parameterlist = NULL;
+     SgMemberFunctionType* return_type = NULL;
+
+  // Refactored code.
+     memberFunctionSetup (name,classDefinition,parameterlist,return_type);
+
+     ROSE_ASSERT(parameterlist != NULL);
+     ROSE_ASSERT(return_type != NULL);
+
+     SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (name, return_type, parameterlist, classDefinition );
+
+     ROSE_ASSERT(functionDeclaration != NULL);
+     ROSE_ASSERT(functionDeclaration->get_definingDeclaration() != NULL);
+     ROSE_ASSERT(functionDeclaration->get_definition() != NULL);
+
+  // Add the member function to the class scope (this is a required second step after building the function declaration).
+     classDefinition->append_statement(functionDeclaration);
+
+  // Refactored code.
+     memberFunctionTest(name,classDefinition,functionDeclaration);
+
+  // Push this statement onto the stack so that we can add arguments, etc.
+  // astJavaStatementStack.push_front(functionDeclaration);
 
      return functionDeclaration;
    }
@@ -390,17 +459,21 @@ buildJavaClass (const SgName & className, SgScopeStatement* scope )
      ROSE_ASSERT(classDefinition->get_declaration()->get_symbol_from_symbol_table() == NULL);
      ROSE_ASSERT(classDefinition->get_declaration()->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
 
-#if 1
+#if 0
   // Ignore this requirement while we are debugging...
 
+  // DQ (3/25/2011): Changed this to a non-defining declaration.
   // Add "super()" member function.
-     SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction("super",classDefinition);
+  // SgMemberFunctionDeclaration* functionDeclaration = buildSimpleMemberFunction("super",classDefinition);
+     SgMemberFunctionDeclaration* functionDeclaration = buildNonDefiningMemberFunction("super",classDefinition);
      ROSE_ASSERT(functionDeclaration != NULL);
 
      size_t declarationListSize = classDefinition->generateStatementList().size();
 
      printf ("declarationListSize = %zu \n",declarationListSize);
      ROSE_ASSERT(declarationListSize > 0);
+#else
+     printf ("WARNING: Skipping addition of \"super\" member function for each class.\n");
 #endif
 
      return declaration;
@@ -423,9 +496,6 @@ buildClassSupport (const SgName & className, bool implicitClass)
   // ROSE).  Though it is not clear if implicit Java function can appear without their
   // name qualification, so we will see.
 
-#if 1
-     SgScopeStatement* outerScope = NULL;
-
   // Names of implicitly defined classes have names that start with "java." and these have to be translated.
      string original_classNameString = className.str();
      string classNameString = className.str();
@@ -436,20 +506,7 @@ buildClassSupport (const SgName & className, bool implicitClass)
   // Also replace '$' with '_' (not clear on what '$' means yet (something related to inner and outer class nesting).
      replace(classNameString.begin(), classNameString.end(),'$','_');
 
-     if (implicitClass == true)
-        {
-       // Nothing to do here.
-        }
-       else
-        {
-       // This is proper class.
-          outerScope = astJavaScopeStack.front();
-        }
-
      SgName name = classNameString;
-#else
-     SgName name = className;
-#endif
 
   // We should not have a '.' in the class name.  Or it will fail the current ROSE name mangling tests.
      ROSE_ASSERT(classNameString.find('.') == string::npos);
@@ -464,30 +521,11 @@ buildClassSupport (const SgName & className, bool implicitClass)
 
      printf ("original_classNameString = %s \n",original_classNameString.c_str());
 
-#if 0
-  // SgScopeStatement* outerScope = astJavaScopeStack.front();
-     SgScopeStatement* outerScope = NULL;
-     bool implicitClass = false;
-     if (original_classNameString.substr(0,5) == "java.")
-        {
-       // This is an implicit class (default class available in Java) (set to global scope).
-          implicitClass = true;
-       // outerScope = getGlobalScope(); // astJavaScopeStack.front();
-        }
-       else
-        {
-       // This is proper class.
-          outerScope = astJavaScopeStack.front();
-        }
-#endif
-
-  // ROSE_ASSERT(outerScope != NULL);
-
-  // SgClassDeclaration* declaration = buildJavaClass(name, astJavaScopeStack.front() );
-
      if (implicitClass == true)
         {
        // This branch makes a recursive call to this function (and computes the outerScope explicitly not using the astJavaScopeStack.
+       // Note that we prepend the implicit classes since they should be defined before traversing the AST of the input program.
+       // We also might want to mark the classes that are added as part of this implicit class support since it is Java specific.
 
        // Implicit classes are put into the global scope at the top of the scope.
           SgScopeStatement* outerScope = getGlobalScope();
@@ -563,7 +601,19 @@ buildClassSupport (const SgName & className, bool implicitClass)
                outerScope = isSgClassDeclaration(classSymbol->get_declaration()->get_definingDeclaration())->get_definition();
                ROSE_ASSERT(outerScope != NULL);
              }
-#if 1
+
+          string className = original_classNameString.substr(lastPosition,position-lastPosition);
+          printf ("className for implicit (leaf) class = %s \n",className.c_str());
+
+       // Reset the name for the most inner nested implicit class.  This allows a class such as "java.lang.System" 
+       // to be build as "System" inside of "class "lang" inside of class "java" (without resetting the name we 
+       // would have "java.lang.System" inside of "class "lang" inside of class "java").
+          name = className;
+#if 0
+          printf ("Exiting after computing the className \n");
+          ROSE_ASSERT(false);
+#endif
+
        // Here we build the class and associate it with the correct code (determined differently based on if this is an implicit or non-implicit class.
           SgClassDeclaration* declaration = buildJavaClass(name, outerScope );
 
@@ -607,7 +657,6 @@ buildClassSupport (const SgName & className, bool implicitClass)
           ROSE_ASSERT(declaration->get_definition() != NULL);
           astJavaScopeStack.push_front(declaration->get_definition());
           ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
-#endif
 
           ROSE_ASSERT(declaration->get_parent() != NULL);
 #if 0
@@ -617,6 +666,9 @@ buildClassSupport (const SgName & className, bool implicitClass)
         }
        else
         {
+       // Not implicit case: build the class and add it to the specified scope (append).
+          SgScopeStatement* outerScope = astJavaScopeStack.front();
+
        // Here we build the class and associate it with the correct code (determined differently based on if this is an implicit or non-implicit class.
           SgClassDeclaration* declaration = buildJavaClass(name, outerScope );
 
@@ -663,11 +715,17 @@ buildClass (const SgName & className)
 SgVariableDeclaration*
 buildSimpleVariableDeclaration(const SgName & name)
    {
-     SgVariableDeclaration* variable = NULL;
-
      printf ("Building a variable (%s) within scope = %p = %s \n",name.str(),astJavaScopeStack.front(),astJavaScopeStack.front()->class_name().c_str());
 
-     variable = SageBuilder::buildVariableDeclaration (name, SgTypeInt::createType(), NULL, astJavaScopeStack.front() );
+  // SgType* type = SgTypeInt::createType();
+     ROSE_ASSERT(astJavaTypeStack.empty() == false);
+     SgType* type = astJavaTypeStack.front();
+
+  // Not clear if we should pop this off at this point or in an alternative step.
+     astJavaTypeStack.pop_front();
+
+  // We are not supporting an initialized at this point in the implementation of the Java support.
+     SgVariableDeclaration* variable = SageBuilder::buildVariableDeclaration (name, type, NULL, astJavaScopeStack.front() );
      ROSE_ASSERT(variable != NULL);
 
      return variable;
