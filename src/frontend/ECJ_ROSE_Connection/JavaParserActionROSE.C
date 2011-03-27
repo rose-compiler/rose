@@ -62,6 +62,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *env, 
  */
 JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration (JNIEnv *env, jobject xxx, jstring compilationUnitFilename)
    {
+     printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclaration() \n");
+     outputJavaState("At TOP of cactionTypeDeclaration");
+
   // Example of how to get the string...but we don't really use the absolutePathFilename in this function.
      const char* absolutePathFilename = env->GetStringUTFChars(compilationUnitFilename, NULL);
      ROSE_ASSERT(absolutePathFilename != NULL);
@@ -176,7 +179,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCall (JNIEnv *e
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jobject, jstring java_string)
+JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jobject xxx, jstring java_string)
    {
      printf ("Build a SgMemberFunctionDeclaration \n");
 
@@ -216,9 +219,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jo
      outputJavaState("At BOTTOM of cactionMethodDeclaration");
    }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd (JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd (JNIEnv *env, jobject xxx /* , jstring java_string */ )
    {
      printf ("End of SgMemberFunctionDeclaration (method) \n");
+
+  // SgName name = convertJavaStringToCxxString(env,java_string);
 
   // Pop the constructor body...
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
@@ -228,7 +233,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd (JNIEnv *env,
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      astJavaScopeStack.pop_front();
    }
-
 
 
 
@@ -334,9 +338,39 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference (JNIEnv *, jobj
      printf ("Build a array type \n");
    }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *, jobject, jstring)
+JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject xxx, jstring functionName, jstring associatedClassName)
    {
-     printf ("Build a member function call \n");
+  // This code is the same as that in cactionExplicitConstructorCall
+     printf ("Build a member function call (message send) \n");
+
+  // Should this be a SgBasicBlock or just a SgScopeStatement?
+     SgBasicBlock* basicBlock = isSgBasicBlock(astJavaScopeStack.front());
+     ROSE_ASSERT(basicBlock != NULL);
+     ROSE_ASSERT(basicBlock->get_parent() != NULL);
+
+     SgName name = convertJavaStringToCxxString(env,functionName);
+     SgName className = convertJavaStringToCxxString(env,associatedClassName);
+
+     printf ("building function call: name = %s from class name = %s \n",name.str(),className.str());
+
+     SgClassSymbol* classSymbol = astJavaScopeStack.front()->lookup_class_symbol(className);
+  // ROSE_ASSERT(classSymbol != NULL);
+     if (classSymbol != NULL)
+        {
+          printf ("WARNING: className = %s could not be found in the symbol table \n",className.str());
+        }
+
+  // This is OK for now, but might not be good enough for a non-statement function call expression (not clear yet in ECJ AST).
+     SgExprListExp* parameters = NULL;
+     SgExprStatement* expressionStatement = SageBuilder::buildFunctionCallStmt(name,SgTypeVoid::createType(),parameters,astJavaScopeStack.front());
+
+  // We might want to build the expression directly and put it onto the astJavaExpressionStack..
+  // SgFunctionCallExp* buildFunctionCallExp(SgFunctionSymbol* sym, SgExprListExp* parameters=NULL);
+
+     ROSE_ASSERT(expressionStatement != NULL);
+
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     astJavaScopeStack.front()->append_statement(expressionStatement);
    }
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedNameReference (JNIEnv *, jobject, jstring)

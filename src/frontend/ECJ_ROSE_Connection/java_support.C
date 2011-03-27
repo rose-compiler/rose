@@ -601,7 +601,19 @@ buildClassSupport (const SgName & className, bool implicitClass)
                outerScope = isSgClassDeclaration(classSymbol->get_declaration()->get_definingDeclaration())->get_definition();
                ROSE_ASSERT(outerScope != NULL);
              }
-#if 1
+
+          string className = original_classNameString.substr(lastPosition,position-lastPosition);
+          printf ("className for implicit (leaf) class = %s \n",className.c_str());
+
+       // Reset the name for the most inner nested implicit class.  This allows a class such as "java.lang.System" 
+       // to be build as "System" inside of "class "lang" inside of class "java" (without resetting the name we 
+       // would have "java.lang.System" inside of "class "lang" inside of class "java").
+          name = className;
+#if 0
+          printf ("Exiting after computing the className \n");
+          ROSE_ASSERT(false);
+#endif
+
        // Here we build the class and associate it with the correct code (determined differently based on if this is an implicit or non-implicit class.
           SgClassDeclaration* declaration = buildJavaClass(name, outerScope );
 
@@ -645,7 +657,6 @@ buildClassSupport (const SgName & className, bool implicitClass)
           ROSE_ASSERT(declaration->get_definition() != NULL);
           astJavaScopeStack.push_front(declaration->get_definition());
           ROSE_ASSERT(astJavaScopeStack.front()->get_parent() != NULL);
-#endif
 
           ROSE_ASSERT(declaration->get_parent() != NULL);
 #if 0
