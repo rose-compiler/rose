@@ -38,13 +38,18 @@ class JavaParserSupport
   // Counter for recursive function call...debugging support.
      private static int implicitClassCounter = 0;
 
+     private static int verboseLevel = 0;
+
   // Initialization function, but be called before we can use member functions in this class.
-     public static void initialize(CompilationResult x)
+         public static void initialize(CompilationResult x, int input_verboseLevel)
         {
        // This has to be set first (required to support source position translation).
           rose_compilationResult = x;
           setOfClasses = new HashSet<Class>();
           implicitClassCounter = 0;
+
+       // Set the verbose level (passed in from ROSE's "-rose:verbose n")
+          verboseLevel = input_verboseLevel;
         }
 
      public static void sourcePosition(ASTNode node)
@@ -57,20 +62,26 @@ class JavaParserSupport
 
           int startingSourcePosition = node.sourceStart();
           int endingSourcePosition   = node.sourceEnd();
-          System.out.println("In JavaParserSupport::sourcePosition(ASTNode): start = " + startingSourcePosition + " end = " + endingSourcePosition);
+
+          if (verboseLevel > 2)
+               System.out.println("In JavaParserSupport::sourcePosition(ASTNode): start = " + startingSourcePosition + " end = " + endingSourcePosition);
 
        // Example of how to compute the starting line number and column position of any AST node.
           int problemStartPosition = startingSourcePosition;
           int[] lineEnds;
           int lineNumber   = problemStartPosition >= 0 ? Util.getLineNumber(problemStartPosition, lineEnds = rose_compilationResult.getLineSeparatorPositions(), 0, lineEnds.length-1) : 0;
           int columnNumber = problemStartPosition >= 0 ? Util.searchColumnNumber(rose_compilationResult.getLineSeparatorPositions(), lineNumber, problemStartPosition) : 0;
-          System.out.println("In JavaParserSupport::sourcePosition(ASTNode): lineNumber = " + lineNumber + " columnNumber = " + columnNumber);
+
+          if (verboseLevel > 2)
+               System.out.println("In JavaParserSupport::sourcePosition(ASTNode): lineNumber = " + lineNumber + " columnNumber = " + columnNumber);
 
        // Example of how to compute the ending line number and column position of any AST node.
           int problemEndPosition = endingSourcePosition;
           int lineNumber_end   = problemEndPosition >= 0 ? Util.getLineNumber(problemEndPosition, lineEnds = rose_compilationResult.getLineSeparatorPositions(), 0, lineEnds.length-1) : 0;
           int columnNumber_end = problemEndPosition >= 0 ? Util.searchColumnNumber(rose_compilationResult.getLineSeparatorPositions(), lineNumber, problemEndPosition) : 0;
-          System.out.println("In JavaParserSupport::sourcePosition(ASTNode): lineNumber_end = " + lineNumber_end + " columnNumber_end = " + columnNumber_end);
+
+          if (verboseLevel > 2)
+               System.out.println("In JavaParserSupport::sourcePosition(ASTNode): lineNumber_end = " + lineNumber_end + " columnNumber_end = " + columnNumber_end);
          }
 
      public static void buildImplicitClassSupport( String className)
@@ -155,7 +166,8 @@ class JavaParserSupport
 
           implicitClassCounter++;
 
-          System.out.println("In buildImplicitClassSupport("+className+"): implicitClassCounter = " + implicitClassCounter);
+          if (verboseLevel > 2)
+               System.out.println("In buildImplicitClassSupport("+className+"): implicitClassCounter = " + implicitClassCounter);
 
        // Get the fields, constructors, and methods used in this class.
           try
@@ -163,60 +175,68 @@ class JavaParserSupport
             // Class cls = Class.forName("java.lang.String");
             // Class cls = Class.forName("java.lang."+node.receiver.toString());
 
-               System.out.println("Generate the class for className = " + className);
+               if (verboseLevel > -1)
+                    System.out.println("Generate the class for className = " + className);
 
             // Note that "java.lang" does not appear to be a class (so is that root of all implicitly included classes?).
             // Class cls = Class.forName("java.lang");
             // Class cls = Class.forName("java.io.InputStream");
                Class cls = Class.forName(className);
 
-               System.out.println("Generate the method list for class " + className);
+               if (verboseLevel > 2)
+                    System.out.println("Generate the method list for class " + className);
+
                Method methlist[] = cls.getDeclaredMethods();
 
-               System.out.println("Calling JavaParser.cactionBuildImplicitClassSupportStart() for className = " + className);
+               if (verboseLevel > 2)
+                    System.out.println("Calling JavaParser.cactionBuildImplicitClassSupportStart() for className = " + className);
 
             // Replace any names like "java.lang.System" with "java_lang_System".
                JavaParser.cactionBuildImplicitClassSupportStart(className);
             // String modifiedClassName = className.replace('.','_');
             // JavaParser.cactionBuildImplicitClassSupportStart(modifiedClassName);
 
-               System.out.println("After call to cactionBuildImplicitClassSupportStart");
+               if (verboseLevel > 2)
+                    System.out.println("After call to cactionBuildImplicitClassSupportStart");
 
                Field fieldlist[] = cls.getDeclaredFields();
                for (int i = 0; i < fieldlist.length; i++)
                   {
                     Field fld = fieldlist[i];
 
-                 // This code is part of an interogation of the data in the field and needs to be hidden yet available to support debugging.
-                 // ******************************************************************************
-                    System.out.println("data member (field) name = " + fld.getName());
+                    if (verboseLevel > 4)
+                       {
+                      // This code is part of an interogation of the data in the field and needs to be hidden yet available to support debugging.
+                      // ******************************************************************************
+                         System.out.println("data member (field) name = " + fld.getName());
 
-                    System.out.println("decl class  = " + fld.getDeclaringClass());
-                    System.out.println("type = " + fld.getType());
-                    System.out.println("genericType = " + fld.getGenericType());
-                    int mod = fld.getModifiers();
-                    System.out.println("modifiers   = " + Modifier.toString(mod));
+                         System.out.println("decl class  = " + fld.getDeclaringClass());
+                         System.out.println("type = " + fld.getType());
+                         System.out.println("genericType = " + fld.getGenericType());
+                         int mod = fld.getModifiers();
+                         System.out.println("modifiers   = " + Modifier.toString(mod));
 
-                    System.out.println("fld.isEnumConstant() = " + fld.isEnumConstant());
+                         System.out.println("fld.isEnumConstant() = " + fld.isEnumConstant());
 
-                 // I think that "synthetic" means compler generated.
-                    System.out.println("fld.isSynthetic()    = " + fld.isSynthetic());
+                      // I think that "synthetic" means compler generated.
+                         System.out.println("fld.isSynthetic()    = " + fld.isSynthetic());
 
-                    System.out.println("fld.getType().isAnnotation()                 = " + fld.getType().isAnnotation());
-                 // System.out.println("fld.getType().isAnnotationPresent(Class<? extends Annotation> annotationClass) = " + fld.getType().isAnnotationPresent(fld.getType()));
-                    System.out.println("fld.getType().isAnonymousClass()             = " + fld.getType().isAnonymousClass());
-                    System.out.println("fld.getType().isArray()                      = " + fld.getType().isArray());
-                 // Not clear what class to use as a test input for isAssignableFrom(Class<?> cls) function...
-                    System.out.println("fld.getType().isAssignableFrom(Class<?> cls) = " + fld.getType().isAssignableFrom(fld.getType()));
-                    System.out.println("fld.getType().isEnum()                       = " + fld.getType().isEnum());
-                    System.out.println("fld.getType().isInstance(Object obj)         = " + fld.getType().isInstance(fld.getType()));
-                    System.out.println("fld.getType().isInterface()                  = " + fld.getType().isInterface());
-                    System.out.println("fld.getType().isLocalClass()                 = " + fld.getType().isLocalClass());
-                    System.out.println("fld.getType().isMemberClass()                = " + fld.getType().isMemberClass());
-                    System.out.println("fld.getType().isPrimitive()                  = " + fld.getType().isPrimitive());
-                    System.out.println("fld.getType().isSynthetic()                  = " + fld.getType().isSynthetic());
-                    System.out.println("-----");
-                 // ******************************************************************************
+                         System.out.println("fld.getType().isAnnotation()                 = " + fld.getType().isAnnotation());
+                      // System.out.println("fld.getType().isAnnotationPresent(Class<? extends Annotation> annotationClass) = " + fld.getType().isAnnotationPresent(fld.getType()));
+                         System.out.println("fld.getType().isAnonymousClass()             = " + fld.getType().isAnonymousClass());
+                         System.out.println("fld.getType().isArray()                      = " + fld.getType().isArray());
+                      // Not clear what class to use as a test input for isAssignableFrom(Class<?> cls) function...
+                         System.out.println("fld.getType().isAssignableFrom(Class<?> cls) = " + fld.getType().isAssignableFrom(fld.getType()));
+                         System.out.println("fld.getType().isEnum()                       = " + fld.getType().isEnum());
+                         System.out.println("fld.getType().isInstance(Object obj)         = " + fld.getType().isInstance(fld.getType()));
+                         System.out.println("fld.getType().isInterface()                  = " + fld.getType().isInterface());
+                         System.out.println("fld.getType().isLocalClass()                 = " + fld.getType().isLocalClass());
+                         System.out.println("fld.getType().isMemberClass()                = " + fld.getType().isMemberClass());
+                         System.out.println("fld.getType().isPrimitive()                  = " + fld.getType().isPrimitive());
+                         System.out.println("fld.getType().isSynthetic()                  = " + fld.getType().isSynthetic());
+                         System.out.println("-----");
+                      // ******************************************************************************
+                       }
 
                  // Error: This appears to have "class " prepended to the generated string...causing problems below. 
                  // String nestedClassName = fld.getType().toString();
@@ -255,14 +275,15 @@ class JavaParserSupport
                                 else
                                  {
                                 // This is not an array type and not a primative type (so it should be a class, I think).
-                                   System.out.println("Recursive call to buildImplicitClassSupport() to build type = " + nestedClassName);
+                                   if (verboseLevel > 1)
+                                        System.out.println("Recursive call to buildImplicitClassSupport() to build type = " + nestedClassName);
 
                                 // Add this to the set of classes that we have seen... so that we will not try to process it more than once...
                                    setOfClasses.add(typeClass);
 
                                 // Control the level of recursion so that we can debug this...it seems that
                                 // this is typically as high as 47 to process the implicitly included classes.
-                                   int implicitClassCounterBound = 2;
+                                   int implicitClassCounterBound = 10;
                                    if (implicitClassCounter < implicitClassCounterBound)
                                       {
                                      // DQ (11/2/2010): comment out this recursive call for now.
@@ -276,7 +297,8 @@ class JavaParserSupport
                             }
                            else
                             {
-                              System.out.println("This class has been seen previously: nestedClassName = " + nestedClassName);
+                              if (verboseLevel > 2)
+                                   System.out.println("This class has been seen previously: nestedClassName = " + nestedClassName);
                            // setOfClasses.add(typeClass);
                             }
                        }
@@ -284,18 +306,25 @@ class JavaParserSupport
                        {
                       // We might actually do have to include these since they are classes in Java... 
                       // What member functions are there on primative types?
-                         System.out.println("This class is a primitive type (sorry not implemented): type name = " + nestedClassName);
+                         if (verboseLevel > 2)
+                              System.out.println("This class is a primitive type (sorry not implemented): type name = " + nestedClassName);
                        }
 
                  // System.out.println("Exiting after returning from recursive call...");
                  // System.exit(1);
 
-                    System.out.println("Build the implicit type for the data member (field) of type = " + nestedClassName);
+                    if (verboseLevel > 2)
+                         System.out.println("Build the implicit type for the data member (field) of type = " + nestedClassName);
+
                     JavaParserSupport.generateType(typeClass);
 
-                    System.out.println("Build the data member (field) for name = " + fld.getName());
+                    if (verboseLevel > 2)
+                         System.out.println("Build the data member (field) for name = " + fld.getName());
+
                     JavaParser.cactionBuildImplicitFieldSupport(fld.getName());
-                    System.out.println("DONE: Building the data member (field) for name = " + fld.getName());
+
+                    if (verboseLevel > 2)
+                         System.out.println("DONE: Building the data member (field) for name = " + fld.getName());
                   }
 
             // A traversal over the constructors will have to look at all types of constructor arguments 
@@ -315,7 +344,8 @@ class JavaParserSupport
                     System.out.println("-----");
                   */
                  // Note that I am ignoring the constructor parameter types at the moment.
-                    System.out.println("constructor name = " + ct.getName());
+                    if (verboseLevel > 2)
+                         System.out.println("constructor name = " + ct.getName());
 
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
@@ -328,7 +358,8 @@ class JavaParserSupport
                        }
                       else
                        {
-                         System.out.println("WARNING: Exceeded constructor method handling iteration count " + constructorMethodCounter + " className = " + className);
+                         if (verboseLevel > 2)
+                              System.out.println("WARNING: Exceeded constructor method handling iteration count " + constructorMethodCounter + " className = " + className);
                        }
 
                     constructorMethodCounter++;
@@ -336,7 +367,7 @@ class JavaParserSupport
 
             // A traversal over the methods will have to look at all types of method return types and arguments 
             // and trigger a recursive call to buildImplicitClassSupport() for any new types.
-               System.out.println("(skipped method handling) Number of methods = " + methlist.length);
+            // System.out.println("(skipped method handling) Number of methods = " + methlist.length);
                int methodCounter = 0;
                for (int i = 0; i < methlist.length; i++)
                   {
@@ -356,7 +387,8 @@ class JavaParserSupport
 
                  // DQ (11/1/2010): Comment out while I handle data member types...
                  // Note that I am ignoring the function type at the moment.
-                    System.out.println("method name = " + m.getName());
+                    if (verboseLevel > 2)
+                         System.out.println("method name = " + m.getName());
 
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
@@ -368,7 +400,8 @@ class JavaParserSupport
                        }
                       else
                        {
-                         System.out.println("WARNING: Exceeded method handling iteration count " + methodCounter + " className = " + className);
+                         if (verboseLevel > 2)
+                              System.out.println("WARNING: Exceeded method handling iteration count " + methodCounter + " className = " + className);
                        }
 
                     methodCounter++;
@@ -377,6 +410,7 @@ class JavaParserSupport
               JavaParser.cactionBuildImplicitClassSupportEnd(className);
              }
 
+       // try ... catch is required for using the reflection support in Java.
           catch (Throwable e)
              {
                System.out.println("Caught error in JavaParserSupport (Parser failed)");
@@ -398,7 +432,8 @@ class JavaParserSupport
        // AST and left of the top of the astJavaTypeStack.
        // This is designed as a recursive function.
 
-          System.out.println("Inside of generateType(TypeReference)");
+          if (verboseLevel > 0)
+               System.out.println("Inside of generateType(TypeReference)");
 
           JavaParser.cactionGenerateType("int");
 
@@ -410,7 +445,8 @@ class JavaParserSupport
        // that already exist (have been built) and thus just need be found and a 
        // reference put onto the astJavaTypeStack).
 
-          System.out.println("Inside of generateType(Class) (sorry, not implemented)");
+          if (verboseLevel > 0)
+               System.out.println("Inside of generateType(Class) (sorry, not implemented)");
 
        // For now just build the type to be SgTypeInt.
           JavaParser.cactionGenerateType("int");
@@ -425,61 +461,70 @@ class JavaParserSupport
        // AST and left of the top of the astJavaTypeStack.
        // This is designed as a recursive function.
 
-          System.out.println("Inside of generateType(TypeBinding): node.id = " + node.id);
+          if (verboseLevel > 0)
+               System.out.println("Inside of generateType(TypeBinding): node.id = " + node.id);
 
        // Scope scope = node.scope;
           int id = node.id;
 
-          System.out.println("Inside of generateType(): switch on id = " + id);
+          if (verboseLevel > 0)
+               System.out.println("Inside of generateType(): switch on id = " + id);
 
           switch (id)
              {
                case TypeIds.T_boolean:
                   {
                  // return TypeBinding.BOOLEAN;
-                    System.out.println("switch case of T_boolean");
+                    if (verboseLevel > 2)
+                         System.out.println("switch case of T_boolean");
                     break;
                   }
 
                case TypeIds.T_byte:
                   {
                  // return TypeBinding.BYTE;
-                    System.out.println("switch case of T_byte");
+                    if (verboseLevel > 2)
+                         System.out.println("switch case of T_byte");
                     break;
                   }
 
                case TypeIds.T_char:
                   {
                  // return TypeBinding.CHAR;
-                    System.out.println("switch case of T_char");
+                    if (verboseLevel > 2)
+                         System.out.println("switch case of T_char");
                     break;
                   }
 
                case TypeIds.T_short:
                   {
                  // return TypeBinding.SHORT;
-                    System.out.println("switch case of T_short");
+                    if (verboseLevel > 2)
+                         System.out.println("switch case of T_short");
                     break;
                   }
 
                case TypeIds.T_double:
                   {
                  // return TypeBinding.DOUBLE;
-                    System.out.println("switch case of T_double");
+                    if (verboseLevel > 2)
+                         System.out.println("switch case of T_double");
                     break;
                   }
 
                case TypeIds.T_float:
                   {
                  // return TypeBinding.FLOAT;
-                    System.out.println("switch case of T_float");
+                    if (verboseLevel > 2)
+                         System.out.println("switch case of T_float");
                     break;
                   }
 
                case TypeIds.T_int:
                   {
                  // return TypeBinding.INT;
-                    System.out.println("switch case of T_int");
+                    if (verboseLevel > 2)
+                         System.out.println("switch case of T_int");
 
                  // Later we want to have the "id" be passed directly.
                     JavaParser.cactionGenerateType("int");
@@ -489,21 +534,24 @@ class JavaParserSupport
                case TypeIds.T_long:
                   {
                  // return TypeBinding.LONG;
-                    System.out.println("switch case of T_long");
+                    if (verboseLevel > 2)
+                         System.out.println("switch case of T_long");
                     break;
                   }
 
                case TypeIds.T_JavaLangObject:
                   {
                  // return scope.getJavaLangObject();
-                    System.out.println("switch case of T_JavaLangObject");
+                    if (verboseLevel > 2)
+                         System.out.println("switch case of T_JavaLangObject");
                     break;
                   }
 
                case TypeIds.T_JavaLangString:
                   {
                  // return scope.getJavaLangString();
-                    System.out.println("switch case of T_JavaLangString");
+                    if (verboseLevel > 2)
+                         System.out.println("switch case of T_JavaLangString");
                     break;
                   }
 

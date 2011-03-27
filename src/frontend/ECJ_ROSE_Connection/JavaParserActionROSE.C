@@ -26,16 +26,19 @@
  */
 JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *env, jobject, jint, jobjectArray)
    {
-     printf ("Inside of Java_JavaParser_cactionCompilationUnitList \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionCompilationUnitList \n");
 
   // This is already setup by ROSE as part of basic file initialization before calling ECJ.
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
-     printf ("OpenFortranParser_globalFilePointer = %s \n",OpenFortranParser_globalFilePointer->class_name().c_str());
+     if (SgProject::get_verbose() > 0)
+          printf ("OpenFortranParser_globalFilePointer = %s \n",OpenFortranParser_globalFilePointer->class_name().c_str());
 
      SgSourceFile* sourceFile = isSgSourceFile(OpenFortranParser_globalFilePointer);
      ROSE_ASSERT(sourceFile != NULL);
 
-     printf ("sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
+     if (SgProject::get_verbose() > 0)
+          printf ("sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
 
   // We don't use the SgProject but since it should have already been built, we can verify that it is present.
      SgProject* project = sourceFile->get_project();
@@ -62,13 +65,15 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitList (JNIEnv *env, 
  */
 JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration (JNIEnv *env, jobject xxx, jstring compilationUnitFilename)
    {
-     printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclaration() \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclaration() \n");
+
      outputJavaState("At TOP of cactionTypeDeclaration");
 
   // Example of how to get the string...but we don't really use the absolutePathFilename in this function.
      const char* absolutePathFilename = env->GetStringUTFChars(compilationUnitFilename, NULL);
      ROSE_ASSERT(absolutePathFilename != NULL);
-     printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclaration absolutePathFilename = %s \n",absolutePathFilename);
+  // printf ("Inside of Java_JavaParser_cactionCompilationUnitDeclaration absolutePathFilename = %s \n",absolutePathFilename);
      env->ReleaseStringUTFChars(compilationUnitFilename, absolutePathFilename);
 
   // This is already setup by ROSE as part of basic file initialization before calling ECJ.
@@ -81,12 +86,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclaration (JNIEnv
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobject xxx, jstring java_string)
    {
-     printf ("Build a SgClassDeclaration \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Build a SgClassDeclaration \n");
 
   // We could provide a constructor for "SgName" that takes a "jstring".  This might help support a simpler interface.
      SgName name = convertJavaStringToCxxString(env,java_string);
 
-     printf ("Build class type: name = %s \n",name.str());
+     if (SgProject::get_verbose() > 0)
+          printf ("Build class type: name = %s \n",name.str());
 
      outputJavaState("At TOP of cactionTypeDeclaration");
 
@@ -94,11 +101,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
      buildClass(name);
 
      ROSE_ASSERT(astJavaScopeStack.front() != NULL);
-     astJavaScopeStack.front()->get_file_info()->display("source position in Java_JavaParser_cactionTypeDeclaration(): debug");
+
+     if (SgProject::get_verbose() > 0)
+          astJavaScopeStack.front()->get_file_info()->display("source position in Java_JavaParser_cactionTypeDeclaration(): debug");
 
      outputJavaState("At BOTTOM of cactionTypeDeclaration");
 
-     printf ("Leaving Java_JavaParser_cactionTypeDeclaration() \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Leaving Java_JavaParser_cactionTypeDeclaration() \n");
    }
 
 
@@ -106,7 +116,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionTypeDeclaration (JNIEnv *env, jobj
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *env, jobject xxx, jstring java_string)
    {
-     printf ("Build a SgMemberFunctionDeclaration (constructor) \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Build a SgMemberFunctionDeclaration (constructor) \n");
 
      outputJavaState("At TOP of cactionConstructorDeclaration");
 
@@ -144,7 +155,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclaration (JNIEnv *en
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd (JNIEnv *env, jobject xxx)
    {
-     printf ("End of SgMemberFunctionDeclaration (constructor) \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("End of SgMemberFunctionDeclaration (constructor) \n");
 
   // Pop the constructor body...
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
@@ -159,7 +171,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationEnd (JNIEnv 
 JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCall (JNIEnv *env, jobject xxx, jstring java_string)
    {
   // Build a member function call...
-     printf ("Build a explicit constructor function call \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Build a explicit constructor function call \n");
 
   // Should this be a SgBasicBlock or just a SgScopeStatement?
      SgBasicBlock* basicBlock = isSgBasicBlock(astJavaScopeStack.front());
@@ -168,7 +181,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCall (JNIEnv *e
 
      SgName name = convertJavaStringToCxxString(env,java_string);
 
-     printf ("building function call: name = %s \n",name.str());
+     if (SgProject::get_verbose() > 0)
+          printf ("building function call: name = %s \n",name.str());
 
      SgExprListExp* parameters = NULL;
      SgExprStatement* expressionStatement = SageBuilder::buildFunctionCallStmt(name,SgTypeVoid::createType(),parameters,astJavaScopeStack.front());
@@ -181,7 +195,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCall (JNIEnv *e
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jobject xxx, jstring java_string)
    {
-     printf ("Build a SgMemberFunctionDeclaration \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Build a SgMemberFunctionDeclaration \n");
 
      outputJavaState("At TOP of cactionMethodDeclaration");
 
@@ -221,7 +236,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclaration (JNIEnv *env, jo
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd (JNIEnv *env, jobject xxx /* , jstring java_string */ )
    {
-     printf ("End of SgMemberFunctionDeclaration (method) \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("End of SgMemberFunctionDeclaration (method) \n");
 
   // SgName name = convertJavaStringToCxxString(env,java_string);
 
@@ -238,7 +254,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationEnd (JNIEnv *env,
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionSingleTypeReference (JNIEnv *, jobject, jstring)
    {
-     printf ("Build a type \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Build a type \n");
 
   // Build a type and put it onto the type stack.
   // ...OR...
@@ -247,13 +264,18 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionSingleTypeReference (JNIEnv *, job
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionArgument (JNIEnv *env, jobject xxx, jstring java_argument_name, jint java_modifiers)
    {
-     printf ("Build a function argument \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Build a function argument \n");
 
      SgName argument_name = convertJavaStringToCxxString(env,java_argument_name);
-     printf ("argument argument_name = %s \n",argument_name.str());
+
+     if (SgProject::get_verbose() > 0)
+          printf ("argument argument_name = %s \n",argument_name.str());
 
      int modifiers = convertJavaIntegerToCxxInteger(env,java_modifiers);
-     printf ("modifiers = %d \n",modifiers);
+
+     if (SgProject::get_verbose() > 0)
+          printf ("modifiers = %d \n",modifiers);
 
      ROSE_ASSERT(astJavaTypeStack.empty() == false);
      SgType* type = astJavaTypeStack.front();
@@ -335,13 +357,15 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentEnd(JNIEnv *env, jobject x
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference (JNIEnv *, jobject, jstring)
    {
-     printf ("Build a array type \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Build a array type \n");
    }
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject xxx, jstring functionName, jstring associatedClassName)
    {
   // This code is the same as that in cactionExplicitConstructorCall
-     printf ("Build a member function call (message send) \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Build a member function call (message send) \n");
 
   // Should this be a SgBasicBlock or just a SgScopeStatement?
      SgBasicBlock* basicBlock = isSgBasicBlock(astJavaScopeStack.front());
@@ -351,7 +375,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
      SgName name = convertJavaStringToCxxString(env,functionName);
      SgName className = convertJavaStringToCxxString(env,associatedClassName);
 
-     printf ("building function call: name = %s from class name = %s \n",name.str(),className.str());
+     if (SgProject::get_verbose() > 0)
+          printf ("building function call: name = %s from class name = %s \n",name.str(),className.str());
 
      SgClassSymbol* classSymbol = astJavaScopeStack.front()->lookup_class_symbol(className);
   // ROSE_ASSERT(classSymbol != NULL);
@@ -375,12 +400,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedNameReference (JNIEnv *, jobject, jstring)
    {
-     printf ("Build a qualified name reference \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Build a qualified name reference \n");
    }
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *, jobject, jstring)
    {
-     printf ("Build a SgStringVal \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Build a SgStringVal \n");
    }
 
 
@@ -391,7 +418,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *, jobject, 
 // declared "public static native" instead of "public native" in the Java side of the JNI interface.
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart (JNIEnv* env, jclass xxx, jstring java_string)
    {
-     printf ("Build support for implicit class (start) \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Build support for implicit class (start) \n");
 
      outputJavaState("At TOP of cactionBuildImplicitClassSupportStart");
 
@@ -411,7 +439,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart (JN
 // declared "public static native" instead of "public native" in the Java side of the JNI interface.
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIEnv* env, jclass xxx, jstring java_string)
    {
-     printf ("Build support for implicit class (end) \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Build support for implicit class (end) \n");
 
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      outputJavaState("cactionBuildImplicitClassSupportEnd");
@@ -432,13 +461,15 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
 // declared "public static native" instead of "public native" in the Java side of the JNI interface.
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport (JNIEnv* env, jclass xxx, jstring java_string)
    {
-     printf ("Build support for implicit class member function (method) \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Build support for implicit class member function (method) \n");
 
      outputJavaState("At TOP of cactionBuildImplicitMethodSupport");
 
      SgName name = convertJavaStringToCxxString(env,java_string);
 
-     printf ("Build support for implicit class member function (method) = %s \n",name.str());
+     if (SgProject::get_verbose() > 0)
+          printf ("Build support for implicit class member function (method) = %s \n",name.str());
 
   // Note sure if we want anything specific to implicit class handling to touch the astJavaScopeStack!
      SgClassDefinition* classDefinition = isSgClassDefinition(astJavaScopeStack.front());
@@ -457,7 +488,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport (JNIEnv
 // declared "public static native" instead of "public native" in the Java side of the JNI interface.
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport (JNIEnv* env, jclass xxx, jstring java_string)
    {
-     printf ("Inside of Java_JavaParser_cactionBuildImplicitFieldSupport (variable declaration for field) \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionBuildImplicitFieldSupport (variable declaration for field) \n");
+
      outputJavaState("At TOP of cactionBuildImplicitFieldSupport");
 
      SgName name = convertJavaStringToCxxString(env,java_string);
@@ -465,7 +498,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport (JNIEnv*
      SgVariableDeclaration* variableDeclaration = buildSimpleVariableDeclaration(name);
      ROSE_ASSERT(variableDeclaration != NULL);
 
-     variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionBuildImplicitFieldSupport(): debug");
+     if (SgProject::get_verbose() > 0)
+          variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionBuildImplicitFieldSupport(): debug");
    }
 
 
@@ -476,14 +510,17 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
   // All type information is constructed onto the stack, at the end of any recursion a single type is on
   // the astJavaTypeStack to represent that level of the recursion.
 
-     printf ("Inside of Java_JavaParser_cactionGenerateType() \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionGenerateType() \n");
 
      SgName name = convertJavaStringToCxxString(env,java_string);
 
      if (name == "int")
         {
        // Specification of integer type.
-          printf ("Inside of Java_JavaParser_cactionGenerateType(): building an integer type \n");
+          if (SgProject::get_verbose() > 0)
+               printf ("Inside of Java_JavaParser_cactionGenerateType(): building an integer type \n");
+
           astJavaTypeStack.push_front(SgTypeInt::createType());
         }
        else
@@ -502,7 +539,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionStatementEnd(JNIEnv *env, jclass xxx, jstring java_string /* JNIEnv *env, jobject xxx */ )
    {
-     printf ("Closing actions for statements \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Closing actions for statements \n");
 
      ROSE_ASSERT(astJavaStatementStack.empty() == false);
      astJavaStatementStack.pop_front();
@@ -835,7 +873,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLabeledStatement(JNIEnv *env, jobj
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobject xxx, jstring variableName)
    {
-     printf ("Inside of Java_JavaParser_cactionLocalDeclaration() \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionLocalDeclaration() \n");
+
      outputJavaState("At TOP of cactionLocalDeclaration");
 
      SgName name = convertJavaStringToCxxString(env,variableName);
@@ -849,7 +889,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionLocalDeclaration(JNIEnv *env, jobj
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      astJavaScopeStack.front()->append_statement(variableDeclaration);
 
-     variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionLocalDeclaration(): debug");
+     if (SgProject::get_verbose() > 0)
+          variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionLocalDeclaration(): debug");
    }
 
 
