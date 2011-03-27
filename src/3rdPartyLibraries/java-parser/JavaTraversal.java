@@ -4,6 +4,8 @@ import java.io.*;
 import java.text.*;
 import java.util.*;
 
+import java.util.ArrayList;
+
 import org.eclipse.jdt.core.compiler.*;
 import org.eclipse.jdt.core.compiler.batch.*;
 import org.eclipse.jdt.internal.compiler.*;
@@ -24,11 +26,16 @@ import org.eclipse.jdt.internal.compiler.util.*;
 import java.util.concurrent.Callable;
 class JavaTraversal  implements Callable<Boolean> 
    {
+  // The function JavaTraversal::main() is what is called using the JVM from ROSE.
+
   // This class generates a DOT file of the ECJ AST.  It is not used for any ROSE specific translation
   // of the AST.  As a result it should be renamed.
 
+  // Not clear what this means!
      static Main main;
      static BufferedWriter out;
+
+     static int verboseLevel = 0;
 
     // -------------------------------------------------------------------------------------------
     /* tps: Invoke C Code , the int nr represents a unique nr for a node which is used for DOT representation*/
@@ -1042,36 +1049,134 @@ class JavaTraversal  implements Callable<Boolean>
 		    printToDOT(node); pushNode(node); return true; // do nothing by  node, keep traversing
 		}
 
-	    };
-	unit.traverse(visitor,unit.scope);
-    }
+             };
 
+          unit.traverse(visitor,unit.scope);
+        }
 
+  // Added support for command line processing to set the verbose level (passed directly from ROSE "--rose:verbose n").
+     public static String [] filterCommandline(String args[])
+        {
+          int commandlineErrorLevel = 0;
 
+          if (commandlineErrorLevel > 0)
+               System.out.println("Processing the command line in ECJ/ROSE connection ...");
+
+          String argsForECJ[];
+       // int ROSE_veboseLevel = 0;
+
+       // ArrayList<String> argsList = CreateStringList(args);
+          ArrayList<String> argsList = new ArrayList<String>();
+          Collections.addAll(argsList, args);
+
+       // Output the arguments from the command line.
+       // for (String arg: args)
+          int max = args.length;
+          for (int j = 0; j < max; j++)
+             {
+               if (commandlineErrorLevel > 0)
+                    System.out.println("ROSE Argument found: " + args[j]);
+
+            // String matchingString = "--rose";
+            // Java substring uses index 0 ... 5 (the upper bound "6" is not used.
+            // System.out.println("     substring = " + arg.substring(0,6) + " matchingString = " + matchingString);
+            // if (arg.substring(0,6) == matchingString.substring(0,6))
+               if (args[j].startsWith("--rose:verbose") == true)
+                  {
+                    if (commandlineErrorLevel > 0)
+                         System.out.println("Clear this ROSE specific argument #" + j + ": " + args[j]);
+
+                 // Remove the entry from the list
+                    argsList.remove(j);
+
+                 // String veboseLevelString = args[j+1];
+                    String veboseLevelString = args[j].substring(14,args[j].length());
+
+                    if (commandlineErrorLevel > 0)
+                         System.out.println("Grab the integer values verbose level: " + veboseLevelString);
+                    try
+                       {
+                      // Set the class level JavaTraversal.veboseLevel data member (convert the String to an integer).
+                         verboseLevel = Integer.parseInt(veboseLevelString.trim());
+
+                      // print out the value after the conversion
+                         if (verboseLevel > 0 || commandlineErrorLevel > 0)
+                              System.out.println("integer value = " + verboseLevel);
+                       }
+                    catch (NumberFormatException nfe)
+                       {
+                         System.out.println("NumberFormatException: " + nfe.getMessage());
+
+                      // It might be better to rethrow the exception
+                         System.out.println("Error: --rose:verbose option specified with out an integer value: veboseLevelString = " + veboseLevelString);
+                         System.exit(1);
+                       }
+                  }
+                 else
+                  {
+                    if (commandlineErrorLevel > 0)
+                         System.out.println("Not a matching ROSE option: " + args[j]);
+                  }
+             }
+
+          if (commandlineErrorLevel > 0)
+               System.out.println("Done with output of command line arguments. ");
+
+       // Rebuild the array from the edited list.
+       // args = ConvertToStringArray(argsList);
+          args = (String[])argsList.toArray(new String[0]);
+
+          if (commandlineErrorLevel > 0)
+             {
+               for (String arg: args)
+                  {
+                    System.out.println("ROSE Argument found (after removing ROSE options): " + arg);
+                  }
+               System.out.println("Done with output of command line arguments (after removing ROSE options). ");
+             }
+
+          return args;
+        }
+
+  // This is the "main" function called from the outside (via the JVM from ROSE).
      public static void main(String args[])
         {
        /* tps : set up and configure ---------------------------------------------- */
-          System.out.println("Compiling ...");
+
+       // Filter out ROSE specific options.
+          args = filterCommandline(args);
+
+          if (verboseLevel > 0)
+               System.out.println("Compiling ...");
 
        // DQ (10/12/2010) Comment this out for now while we debug this.
           if (true)
              {
-            // This line of code will run, but the first use of "main" fails.
+            // This line of code will run, but the first use of "main" fails ...working now!
                main = new Main(new PrintWriter(System.out), new PrintWriter(System.err), true/*systemExit*/,  null/*options*/, null/*progress*/);
 
             // This is the last message printed to the console ...
-               System.out.println("test 1 .... (note call to main.configure(args); fails silently)");
+               if (verboseLevel > 2)
+                    System.out.println("test 1 .... (note call to main.configure(args); fails silently)");
 
-            // This line of code will fail when run ...
+            // This line of code will fail when run ...working now!
                main.configure(args);
 
-               System.out.println("test 2 ...");
+               if (verboseLevel > 2)
+                    System.out.println("test 2 ...");
+
                FileSystem environment = main.getLibraryAccess();
-               System.out.println("test 3 ...");
+
+               if (verboseLevel > 2)
+                    System.out.println("test 3 ...");
+
                main.compilerOptions = new CompilerOptions(main.options);
                main.compilerOptions.performMethodsFullRecovery = false;
                main.compilerOptions.performStatementsRecovery = false;
-               System.out.println("test 4 ...");
+
+               if (verboseLevel > 2)
+                    System.out.println("test 4 ...");
+
                main.batchCompiler =  new Compiler(  environment,
                    main.getHandlingPolicy(),
                    main.compilerOptions,
@@ -1079,7 +1184,9 @@ class JavaTraversal  implements Callable<Boolean>
                    main.getProblemFactory(),
                    null,
                    main.progress);
-               System.out.println("test 5 ...");
+
+               if (verboseLevel > 2)
+                    System.out.println("test 5 ...");
 
             /* tps : handle compilation units--------------------------------------------- */
                ICompilationUnit[] sourceUnits = main.getCompilationUnits();
@@ -1088,12 +1195,19 @@ class JavaTraversal  implements Callable<Boolean>
                main.batchCompiler.unitsToProcess = new CompilationUnitDeclaration[maxUnits];
 
             /* tps : Debug: print Compilation units --------------------------- */
-               System.out.println("We got "+maxUnits+" compilation units");
+               if (verboseLevel > 2)
+                    System.out.println("We got "+maxUnits+" compilation units");
+
                CompilationUnit[] units = main.getCompilationUnits();
-               System.out.println("Nr of Compilation Units : "+units.length);
-               for (CompilationUnit myunit : units)
+
+               if (verboseLevel > 2)
                   {
-                    System.out.println("File : "+myunit);
+                    System.out.println("Nr of Compilation Units : "+units.length);
+
+                    for (CompilationUnit myunit : units)
+                       {
+                         System.out.println("File : "+myunit);
+                       }
                   }
 
             /* tps : start parsing ------------------------------------------------------- */
@@ -1112,17 +1226,24 @@ class JavaTraversal  implements Callable<Boolean>
 
             /* tps : compile the files and produce class files --------------------------- */
                ProcessTaskManager processingTask = null;
-               System.out.println("test 6 ...");
+
+               if (verboseLevel > 2)
+                    System.out.println("test 6 ...");
 
             // Calling the parser to build the ROSE AST from a traversal of the ECJ AST.
                try
                   {
-                    JavaParser java_parser = new JavaParser();
+                 // Added support for verbose levels to be set to control debugginf I/O from Java code in ECJ/ROSE translation.
+                    JavaParser java_parser = new JavaParser(verboseLevel);
 
-                    System.out.println("test 7 ...");
+                    if (verboseLevel > 2)
+                         System.out.println("test 7 ...");
+
                     java_parser.cactionCompilationUnitList(main.batchCompiler.totalUnits,args);
 
-                    System.out.println("test 8 ...");
+                    if (verboseLevel > 2)
+                         System.out.println("test 8 ...");
+
 	                 for (int i = 0; i < main.batchCompiler.totalUnits; i++)
                        {
                          unit = main.batchCompiler.unitsToProcess[i];
@@ -1130,14 +1251,17 @@ class JavaTraversal  implements Callable<Boolean>
                             {
                               main.batchCompiler.process(unit, i);
                               jt.traverseAST(unit); /*tps this is a better place for the traversal */
-                              System.out.println("test 9 ...");
+
+                              if (verboseLevel > 2)
+                                   System.out.println("test 9 ...");
 
                            // **************************************************
                            // This is where the traveral of the ECJ AST is done.
                            // **************************************************
                               java_parser.startParsingAST(unit);
 
-                              System.out.println("test 10 ...");
+                              if (verboseLevel > 2)
+                                   System.out.println("test 10 ...");
                             }
 
                          catch (Exception e)
@@ -1186,7 +1310,8 @@ class JavaTraversal  implements Callable<Boolean>
                System.out.println("Skipping major internal parts of ECJ frontend");
              }
 
-          System.out.println("Done compiling");
+          if (verboseLevel > 2)
+               System.out.println("Done compiling");
         }
 
 
