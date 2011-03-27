@@ -49,7 +49,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionSingleTypeReference(String filename);
      public native void cactionArgument(String argumentName, int modifiers);
      public native void cactionArrayTypeReference(String filename);
-     public native void cactionMessageSend(String filename);
+         public native void cactionMessageSend(String functionName, String associatedClassName);
      public native void cactionQualifiedNameReference(String filename);
      public native void cactionStringLiteral(String filename);
 
@@ -177,7 +177,8 @@ class JavaParser  implements Callable<Boolean>
   // Closing support to finish up statement handling.
      public static native void cactionStatementEnd(String typeName);
 
-     public static native void cactionMethodDeclarationEnd(String methodName);
+  // public native void cactionMethodDeclarationEnd(String methodName);
+     public native void cactionMethodDeclarationEnd();
 
   // Save the compilationResult as we process the CompilationUnitDeclaration class.
   // public CompilationResult rose_compilationResult;
@@ -186,7 +187,8 @@ class JavaParser  implements Callable<Boolean>
   // public static boolean hasErrorOccurred = false;
 
   // DQ: This is the name of the C++ *.so file which has the implementations of the JNI functions.
-  // The library with the C++ implementation of these function must be loaded in order to call the functions.
+  // The library with the C++ implementation of these function must be loaded in order to call the 
+  // JNI functions.
      static { System.loadLibrary("JavaTraversal"); }
 
   // -------------------------------------------------------------------------------------------
@@ -219,8 +221,12 @@ class JavaParser  implements Callable<Boolean>
                System.out.println("Caught error in JavaParser (Parser failed)");
                System.err.println(e);
 
+            // Make sure we exit as quickly as possible to simplify debugging.
+               System.exit(1);
+
             // Make sure we exit on any error so it is caught quickly.
             // System.exit(1);
+
             // throw e;
                return;
              }

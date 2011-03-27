@@ -296,6 +296,18 @@ class ecjASTVisitor extends ASTVisitor
           String s = new String(node.getFileName());
           System.out.println("Test A");
           java_parser.cactionCompilationUnitDeclaration(s);
+
+       // Build the default implicit classes that will be required to process Java functions.
+       // The symbol for these classes need to be added to the global scope and the then
+       // we need to add the required name qualification support for data member and member 
+       // function lookup.
+          System.out.println("Calling buildImplicitClassSupport for java.lang.System");
+          JavaParserSupport.buildImplicitClassSupport("java.lang.System");
+          System.out.println("DONE: Calling buildImplicitClassSupport for java.lang.System");
+
+       // System.out.println("Exiting as a test in visit (CompilationUnitDeclaration,CompilationUnitScope)...");
+       // System.exit(1);
+
           System.out.println("Leaving visit (CompilationUnitDeclaration,CompilationUnitScope)");
 
           return true; // do nothing by default, keep traversing
@@ -955,6 +967,8 @@ class ecjASTVisitor extends ASTVisitor
 
      public boolean visit(MessageSend  node, BlockScope scope)
         {
+          System.out.println("Inside of visit (MessageSend,BlockScope)");
+
        // java_parser.cactionMessageSend("abc");
           JavaParserSupport.sourcePosition(node);
 
@@ -970,24 +984,56 @@ class ecjASTVisitor extends ASTVisitor
              }
         */
 
+          System.out.println("MessageSend node = " + node);
+
+          String name = new String(node.selector);
+          System.out.println("     --- function call name = " + name);
+       // String associatedClassName = new String(node.receiver);
+          String associatedClassName = node.receiver.toString();
+
+          System.out.println("     --- function call from class name (binding)         = " + node.binding);
+          System.out.println("     --- function call from class name (receiver)        = " + node.receiver);
+          System.out.println("     --- function call from class name (associatedClass) = " + associatedClassName);
+
           if (node.typeArguments != null)
              {
-               System.out.println("Sorry, not implemented in support for MessageSend: typeArguments");
+            // System.out.println("Sorry, not implemented in support for MessageSend: typeArguments");
                for (int i = 0, typeArgumentsLength = node.typeArguments.length; i < typeArgumentsLength; i++)
                   {
                  // node.typeArguments[i].traverse(visitor, blockScope);
+                    System.out.println("     --- method send (function call) typeArguments = " + node.typeArguments[i]);
                   }
              }
 
           if (node.arguments != null)
              {
-               System.out.println("Sorry, not implemented in support for MessageSend: arguments");
+            // System.out.println("Sorry, not implemented in support for MessageSend: arguments");
                int argumentsLength = node.arguments.length;
                for (int i = 0; i < argumentsLength; i++)
                   {
                  // node.arguments[i].traverse(visitor, blockScope);
+                    System.out.println("     --- method arguments (function call arguments) arguments = " + node.arguments[i]);
                   }
              }
+
+       // Build this as an implicit class (if it is already built it will be detected adn not rebuilt).
+       // System.out.println("Calling buildImplicitClassSupport for associatedClassName = " + associatedClassName);
+       // buildImplicitClassSupport(associatedClassName);
+
+       // This is an error for test2001_04.java when println is found since it is not located in "java.lang" but is in java.io"
+       // Maybe we need to process ""java.lang.System" and "java.io.String" and a few other classes explicitly.
+       // JavaParserSupport.buildImplicitClassSupport("java.lang." + associatedClassName);
+       // JavaParserSupport.buildImplicitClassSupport("java.io." + associatedClassName);
+       // JavaParserSupport.buildImplicitClassSupport("java.lang.System");
+       // System.out.println("DONE: Calling buildImplicitClassSupport for associatedClassName = " + associatedClassName);
+
+       // java_parser.cactionExplicitConstructorCall("super");
+          java_parser.cactionMessageSend(name,associatedClassName);
+
+          System.out.println("Leaving visit (MessageSend,BlockScope)");
+
+       // System.out.println("Exiting as a test in visit (MessageSend,BlockScope)...");
+       // System.exit(1);
 
           return true; // do nothing by  node, keep traversing
         }
@@ -1973,7 +2019,15 @@ class ecjASTVisitor extends ASTVisitor
         {
        // do nothing  by default
           System.out.println("Leaving endVisit (MethodDeclaration,ClassScope)");
-          java_parser.cactionMethodDeclarationEnd("MethodDeclaration");
+
+       // String name = new String("MethodDeclaration");
+       // java_parser.cactionMethodDeclarationEnd(name);
+       // java_parser.cactionMethodDeclarationEnd(name);
+       // java_parser.cactionConstructorDeclarationEnd();
+
+       // This has to be declared as a non-static function!
+       // java_parser.cactionMethodDeclarationEnd("MethodDeclaration");
+          java_parser.cactionMethodDeclarationEnd();
 
        // Not clear when we have to provide a parameter.
           java_parser.cactionStatementEnd("MethodDeclaration");
