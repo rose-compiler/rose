@@ -130,7 +130,7 @@ UPCXX_TEST_Objects = ${UPCXX_TESTCODES:.upc=.o}
 
 # $(UPCXX_TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.c)
 $(UPCXX_TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.c)
-	../../testTranslator -rose:UPCxx $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.upc)
+	../../testTranslator -rose:UPCxx $(ROSE_FLAGS) -rose:upc_threads 1 -c $(srcdir)/$(@:.o=.upc)
 
 
 # DQ (2/4/2011): Added test for UPC keyword "THREADS". It is only present when "-rose:upc_threads" option is not used.
