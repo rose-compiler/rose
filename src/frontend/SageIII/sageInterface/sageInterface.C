@@ -3483,6 +3483,23 @@ SageInterface::is_PHP_language()
      return returnValue;
    }
 
+bool
+SageInterface::is_Cuda_language()
+   {
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_Cuda_only() == true)
+               returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 bool SageInterface::is_mixed_C_and_Cxx_language()
    {
      return is_C_language() && is_Cxx_language();
@@ -5917,7 +5934,7 @@ bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
      result = true;
    else
     {
-      if (is_C_language()||is_C99_language()||is_PHP_language())
+      if (is_C_language()||is_C99_language()||is_PHP_language()||is_Cuda_language())
       {
         if (func1->get_name() == func2->get_name())
           result = true;
@@ -8440,9 +8457,9 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
     SgClassDeclaration* nondefdecl = isSgClassDeclaration(structDecl->get_firstNondefiningDeclaration());
     ROSE_ASSERT(nondefdecl != NULL);
 
-    ROSE_ASSERT(structDecl->get_definingDeclaration() != NULL);
+    //ROSE_ASSERT(structDecl->get_definingDeclaration() != NULL);
     SgClassDeclaration* defdecl = isSgClassDeclaration(structDecl->get_definingDeclaration());
-    ROSE_ASSERT(defdecl != NULL);
+    //ROSE_ASSERT(defdecl != NULL);
 
     // Liao, 9/2/2009
     // fixup missing scope when bottomup AST building is used
@@ -8470,11 +8487,11 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
       ROSE_ASSERT(mysymbol);
       scope->insert_symbol(name, mysymbol);
 
-      ROSE_ASSERT(defdecl != NULL);
-      defdecl->set_scope(scope);
+      //ROSE_ASSERT(defdecl != NULL);
+      if (defdecl) defdecl->set_scope(scope);
       nondefdecl->set_scope(scope);
 
-      defdecl->set_parent(scope);
+      if (defdecl) defdecl->set_parent(scope);
       nondefdecl->set_parent(scope);
     }
     //fixup SgClassType, which is associated with the first non-defining declaration only
@@ -8485,15 +8502,18 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
     }
     ROSE_ASSERT (nondefdecl->get_type() != NULL);
 
-    ROSE_ASSERT(defdecl != NULL);
-    if (defdecl->get_type()!= nondefdecl->get_type())
+    //ROSE_ASSERT(defdecl != NULL);
+    if (defdecl)
     {
-      if (defdecl->get_type())
-        delete defdecl->get_type();
-      defdecl->set_type(nondefdecl->get_type());
+      if (defdecl->get_type()!= nondefdecl->get_type())
+      {
+        if (defdecl->get_type())
+          delete defdecl->get_type();
+        defdecl->set_type(nondefdecl->get_type());
+      }
+      ROSE_ASSERT (defdecl->get_type() != NULL);
+      ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
     }
-    ROSE_ASSERT (defdecl->get_type() != NULL);
-    ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
   }
 
   void SageInterface::fixClassDeclaration(SgClassDeclaration* classDecl, SgScopeStatement* scope)

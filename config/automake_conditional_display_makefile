@@ -259,11 +259,6 @@ if ROSE_USE_ETHER
 else
 	@echo "Automake conditional ROSE_USE_ETHER: NOT defined"
 endif
-if ROSE_USE_FADALIB
-	@echo "Automake conditional ROSE_USE_FADALIB: DEFINED"
-else
-	@echo "Automake conditional ROSE_USE_FADALIB: NOT defined"
-endif
 if ROSE_USE_GCC_OMP
 	@echo "Automake conditional ROSE_USE_GCC_OMP: DEFINED"
 else

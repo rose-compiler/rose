@@ -16,7 +16,6 @@ SUBDIRS = \
      MPICodeMotion \
      MacroRewrapper \
      OpenMP_Analysis \
-     PolyhedralDependenceAnalysis \
      QtDesignerPlugins \
      RoseQt \
      SemanticSignatureVectors \

@@ -161,6 +161,15 @@ else
 # when this is not used has more to do with the Java langauge support.
 # A better reason why this is required might be so that we can run the NMI tests.
   DISTCHECK_CONFIGURE_FLAGS += --without-java
+# TOO (3/24/2011): TODO: the new language-support configuration that I've
+# implemented does not automatically disable fortran, whereas the previous
+# implementation did. Since we now have Java-language support, the
+# --without-java flag is confusing. I thought it meant "without java-language
+# support". Speaking with Dan, we concluded that we need to look at renaming
+# --without-java to something else like --without-jvm or --without-java-components
+# This flag is suppose to turn off all parts of ROSE that use Java: 
+# projects/javaports, java- and fortran-language support, etc.
+  DISTCHECK_CONFIGURE_FLAGS += --disable-fortran
 endif
 
 # DQ (7/25/2008): If ROSE was originallly configured to use the HPC Toolkit
