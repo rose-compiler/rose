@@ -102,7 +102,7 @@ rose_static_%: $(srcdir)/static_% ../../testTranslator
 	../../testTranslator -rose:UPC $(ROSE_FLAGS) -rose:upc_threads 1 -c $< -o $@
 
 rose_%: $(srcdir)/% ../../testTranslator
-	../../testTranslator -rose:UPC $(ROSE_FLAGS) -c $< -o $@
+	../../testTranslator -rose:UPC $(ROSE_FLAGS) -rose:upc_threads 1 -c $< -o $@
 
 
 # $(TEST_Output): ../../testTranslator $(srcdir)/$(@:rose_%=%)
