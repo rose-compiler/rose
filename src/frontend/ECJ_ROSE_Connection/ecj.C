@@ -76,7 +76,7 @@ jofp_invoke(int argc, char **argv)
      if (fileName == NULL || args == NULL || type == NULL) jserver_handleException(); 
 
 #if 0
-          jserver_callMethod(jofp_get_class(), jofp_get_main(), args);
+     jserver_callMethod(jofp_get_class(), jofp_get_main(), args);
 #else
      // tps : this code is more transparent and easier to read
      jclass cls = jserver_FindClass("JavaTraversal");
@@ -86,7 +86,6 @@ jofp_invoke(int argc, char **argv)
 #endif
 
 #if 1
-
      jmethodID errorMethod = jofp_get_method(STATIC_METHOD, "getError", "()Z");
      retval = (*env).CallBooleanMethod(cls, errorMethod);
      if (retval != 0)  {
@@ -103,9 +102,10 @@ jofp_invoke(int argc, char **argv)
   // DQ (10/12/2010): This function is not implemented in the ECJ parser (only in OFP).
      retval = jserver_callBooleanMethod(new_ofp_class, jofp_get_error_method());
 
-     if (retval != 0)  {
-         fprintf(stderr, "Warning: jserver_callBooleanMethod return non-zero result.\n");
-     }      
+     if (retval != 0)
+        {
+          fprintf(stderr, "Warning: jserver_callBooleanMethod return non-zero result.\n");
+        }
 
     return retval;
 }

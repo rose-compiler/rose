@@ -13,6 +13,7 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
+#include <stdlib.h> // for abort()
 
 //enum omp_rtl_enum {
 //  e_gomp,
@@ -29,8 +30,24 @@ extern void xomp_init (void);
 // Runtime library termination routine
 extern void XOMP_terminate (int exitcode);
 
-extern void XOMP_parallel_start (void (*func) (void *), void *data, unsigned numThread);
+// func: pointer to a function which will be run in parallel
+// data: pointer to a data segment which will be used as the arguments of func
+// ifClauseValue: set to if-clause-expression if if-clause exists, or default is 1. 
+// numThreadsSpecified: set to the expression of num_threads clause if the clause exists, or default is 0
+extern void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseValue, unsigned numThreadsSpecified);
 extern void XOMP_parallel_end (void);
+
+/* Initialize sections and return the next section id (starting from 0) to be executed by the current thread */
+extern int XOMP_sections_init_next(int section_count); 
+
+/* Return the next section id (starting from 0) to be executed by the current thread. Return value <0 means no sections left */
+extern int XOMP_sections_next(void); 
+
+/* Called after the current thread is told that all sections are executed. It synchronizes all threads also. */
+extern void XOMP_sections_end(void);
+
+/* Called after the current thread is told that all sections are executed. It does not synchronizes all threads. */
+extern void XOMP_sections_end_nowait(void);
 
 extern void XOMP_task (void (*) (void *), void *, void (*) (void *, void *),
                        long, long, bool, unsigned);

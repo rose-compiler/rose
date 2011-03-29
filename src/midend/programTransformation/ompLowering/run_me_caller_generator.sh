@@ -16,6 +16,6 @@ echo " * To regenerate run_me_callers.inc, type $0 > run_me_callers.inc */"
 for ((c=1; c<=$MAX_PARAMETER_COUNT; c++))
 do
   echo "      case $c:"
-  echo "            XOMP_parallel_start (run_me_$c, (void*) g_parameter, *numThread);"
+  echo "            XOMP_parallel_start (run_me_$c, (void*) g_parameter, *ifClauseValue, *numThread);"
   echo "            break; "
 done  

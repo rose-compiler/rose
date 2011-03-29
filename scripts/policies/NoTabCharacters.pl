@@ -8,9 +8,9 @@ indented in a sane manner when viewed by other developers.  Code editors
 (XEmacs, vim, eclipse, etc) have varying capabilities for what happens when
 a user presses the key labeled \"Tab\":
 
-   XEmacs:  See docs/IDE-Hints/XEmacs
-   vim:     [Somebody who uses vim, please add hints to $0]
-   Eclipse: [Somebody who uses Eclipse, please add hints to $0]
+   XEmacs:  (setq indent-tabs-mode nil)          [see Robb]
+   vim:     [please add hints to $0]
+   Eclipse: In Preferences, select General/Editors/Text Editors and check the 'Insert spaces for tabs' check box.
 
 If your editor is not capable of inserting an appropriate number of SPACE
 characters when you press the \"Tab\" key, then you can convert TAB characters

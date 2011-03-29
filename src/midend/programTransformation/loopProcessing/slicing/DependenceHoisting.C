@@ -173,7 +173,13 @@ Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg,
 
   LoopTreeTraverseSelectStmt stmtIter(root);
   LoopTreeNode *stmt = stmtIter.Current();
-  if (stmt == 0) return;
+  if (stmt == 0) 
+  {
+    delete[] tmpSlices;
+    delete[] buf1;
+    delete[] buf2;
+    return;
+  }
   size = 0;
   int index = stmt->LoopLevel()-1;
   for (LoopTreeNode *loop = GetEnclosingLoop(stmt, interfaces); 

@@ -18,6 +18,7 @@ unparser_la_sources=\
 	$(unparseCxxCodeGeneration_la_sources) \
 	$(unparseFormatSupport_la_sources) \
 	$(unparseFortran_la_sources) \
+	$(unparseJavaCodeGeneration_la_sources) \
 	$(unparseLanguageIndependenceSupport_la_sources) \
 	$(unparsePHPCodeGeneration_la_sources)
 
@@ -27,6 +28,7 @@ unparser_includeHeaders=\
 	$(unparseCxxCodeGeneration_includeHeaders) \
 	$(unparseFormat_includeHeaders) \
 	$(unparseFortran_includeHeaders) \
+	$(unparseJavaCodeGeneration_includeHeaders) \
 	$(unparseLanguageIndependenceSupport_includeHeaders) \
 	$(unparsePHPCodeGeneration_includeHeaders)
 
@@ -36,6 +38,7 @@ unparser_extraDist=\
 	$(unparserPath)/CMakeLists.txt \
 	$(unparserPath)/unparser.docs \
 	$(unparseCxxCodeGeneration_extraDist) \
+	$(unparseJavaCodeGeneration_extraDist) \
 	$(unparseFormatSupport_extraDist) \
 	$(unparseFortran_extraDist) \
 	$(unparseLanguageIndependenceSupport_extraDist) \
@@ -49,6 +52,7 @@ unparser_cleanLocal=\
 		$(unparserPath)/ti_files \
 		$(unparserPath)/core; \
 	$(unparseCxxCodeGeneration_cleanLocal); \
+	$(unparseJavaCodeGeneration_cleanLocal); \
 	$(unparseFormatSupport_cleanLocal); \
 	$(unparseFortran_cleanLocal); \
 	$(unparseLanguageIndependenceSupport_cleanLocal); \

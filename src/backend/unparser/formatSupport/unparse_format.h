@@ -118,9 +118,6 @@ class UnparseFormat
       //! the ultimate formatting functions
           void format(SgLocatedNode*, SgUnparse_Info& info, FormatOpt opt = FORMAT_BEFORE_STMT);
 
-       // void set_linewrap( int w) { linewrap = w; } // no wrapping if linewrap <= 0
-       // int get_linewrap() const { return linewrap; }
-
           void flush() { os->flush(); }
 
           void set_linewrap( int w);// { linewrap = w; } // no wrapping if linewrap <= 0

@@ -500,6 +500,7 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
   bool is_Fortran_language ();
   bool is_CAF_language ();
   bool is_PHP_language();
+  bool is_Cuda_language();
   bool is_binary_executable();
   bool is_mixed_C_and_Cxx_language ();
   bool is_mixed_Fortran_and_C_language ();
@@ -1403,6 +1404,14 @@ unsigned long long getIntegerConstantValue(SgValueExp* expr);
 
 //! Get a statement's dependent declarations which declares the types used in the statement. The returned vector of declaration statements are sorted according to their appearance order in the original AST. Any reference to a class or template class from a namespace will treated as a reference to the enclosing namespace.
 std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt );
+
+
+//! Insert an expression (new_exp )before another expression (anchor_exp) has possible side effects, without changing the original semantics. This is achieved by using a comma operator: (new_exp, anchor_exp). The comma operator is returned. 
+SgCommaOpExp *insertBeforeUsingCommaOp (SgExpression* new_exp, SgExpression* anchor_exp);
+
+//! Insert an expression (new_exp ) after another expression (anchor_exp) has possible side effects, without changing the original semantics. This is done by using two comma operators:  type T1; ... ((T1 = anchor_exp, new_exp),T1) )... , where T1 is a temp variable saving the possible side effect of anchor_exp. The top level comma op exp is returned. The reference to T1 in T1 = anchor_exp is saved in temp_ref.  
+SgCommaOpExp *insertAfterUsingCommaOp (SgExpression* new_exp, SgExpression* anchor_exp, SgStatement** temp_decl = NULL, SgVarRefExp** temp_ref = NULL);
+
 
 //@}
 

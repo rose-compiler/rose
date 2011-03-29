@@ -47,6 +47,10 @@ HEADER_START
        */
           virtual SgName get_mangled (void) const;
 
+       // SKW (3/1/2011): Added these explicit declarations since we no longer build them automatically
+          virtual SgExpression * get_type_kind () const;
+          virtual void set_type_kind ( SgExpression* type_kind );
+
       /*!
           name Numerical Modifiers
           \brief Compute numerical properties of type.
@@ -806,6 +810,9 @@ HEADER_TYPE_COMPLEX_TYPE_START
       //! function returns example of type
        // static $CLASSNAME* createType(SgType* base_type);
           static $CLASSNAME* createType(SgType* base_type, SgExpression* optional_fortran_type_kind = NULL);
+      // SKW (3/1/2011): Added these explicit declarations since we no longer build them automatically
+          virtual SgExpression* get_type_kind () const;
+          virtual void set_type_kind ( SgExpression* type_kind );
 HEADER_TYPE_COMPLEX_TYPE_END
 
 HEADER_POINTER_MEMBER_TYPE_START
@@ -2133,6 +2140,19 @@ SgType::reset_base_type(SgType* baseType)
                   }
              }
         }
+   }
+
+// SKW (3/1/2011): Added these explicit implementations since we no longer build them automatically
+SgExpression *
+SgType::get_type_kind () const
+   {
+     return p_type_kind;
+   }
+
+void
+SgType::set_type_kind ( SgExpression* type_kind )
+   {
+     p_type_kind = type_kind;
    }
 
 SOURCE_MAIN_TYPE_END
@@ -5279,6 +5299,18 @@ $CLASSNAME::createType(SgType* t, SgExpression* optional_fortran_type_kind)
      ROSE_ASSERT(returnType != NULL);
 
      return returnType;
+   }
+
+SgExpression *
+$CLASSNAME::get_type_kind () const
+   {
+     return this->get_base_type()->get_type_kind();
+   }
+
+void
+$CLASSNAME::set_type_kind ( SgExpression* type_kind )
+   {
+     this->get_base_type()->set_type_kind(type_kind);
    }
 
 SOURCE_CREATE_TYPE_FOR_COMPLEX_TYPE_END
