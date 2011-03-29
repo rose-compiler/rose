@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash -e
 #
 # TODO: add more summary info
 #	- List of durations for each step in the job
@@ -301,7 +301,7 @@ fi
       chmod -R u+xw ROSE-install
     fi
     rm -rf ROSE-install
-) 2>&1 |filter "setup install tree"
+) 2>&1 |filter_step "setup install tree"
 #########################################################################################
 #
 #  Setup build tree 
@@ -313,14 +313,14 @@ fi
     rm -rf ROSE-build
     mkdir ROSE-build
     cd ROSE-build
-) 2>&1 |filter "setup build tree"
+) 2>&1 |filter_step "setup build tree"
 #########################################################################################
 #
 #  ROSE/configure
 #
 ( 
     ../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
-) 2>&1 |filter "configure"
+) 2>&1 |filter_step "configure"
 #########################################################################################
 #
 #  ROSE/make
@@ -362,7 +362,7 @@ make-distcheck)
       make -j${NUM_PROCESS} -C src/util/ libroseutil.la
       make -j${NUM_PROCESS} -C src/ROSETTA/src/
       make -j${NUM_PROCESS} -C src/roseSupport/ stringify.h
-    ) 2>&1 |filter "build prerequisites for make-distcheck"
+    ) 2>&1 |filter_step "build prerequisites for make-distcheck"
 
     runBuildStep make-distcheck
 
@@ -384,7 +384,7 @@ make-docs)
       make -j${NUM_PROCESS} -C tutorial/
       make -j${NUM_PROCESS} -C projects/UpcTranslation/
       make -j${NUM_PROCESS} -C tests/ testAnalysis
-    ) 2>&1 |filter "build prerequisites for make-docs"
+    ) 2>&1 |filter_step "build prerequisites for make-docs"
 
     runBuildStep make-docs
 
