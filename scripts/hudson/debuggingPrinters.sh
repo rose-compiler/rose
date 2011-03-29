@@ -31,7 +31,8 @@ function filter_step () {
         done
         printBannerToEndStep "$1" $start_time
     )
-    [ ${PIPESTATUS[0]} -ne 0 ] && [ $? -ne 0 ] && dieDuringStep "$1" $start_time
+    [ $? -ne 0 ] && dieDuringStep "$1" $start_time
+#    [ ${PIPESTATUS[0]} -ne 0 ] && [ $? -ne 0 ] && dieDuringStep "$1" $start_time
 }
 
 function dieDuringStep () {
