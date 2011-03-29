@@ -25,7 +25,6 @@ function runBuildStep {
 ####################################################################################
 # EXECUTE BUILD STEP (with optional spew analysis)
 ####################################################################################
-   pwd 
 (
     if [ $# -eq 2 ]; then
         ${buildStep} -j${NUM_PROCESS} 2>&1 | tee $outputFile

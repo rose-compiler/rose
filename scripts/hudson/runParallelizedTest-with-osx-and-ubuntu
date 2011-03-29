@@ -312,13 +312,15 @@ fi
     fi
     rm -rf ROSE-build
     mkdir ROSE-build
-    cd ROSE-build
 ) 2>&1 |filter_step "setup build tree"
+
+cd ROSE-build
 #########################################################################################
 #
 #  ROSE/configure
 #
 ( 
+pwd
     ../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
 ) 2>&1 |filter_step "configure"
 #########################################################################################
