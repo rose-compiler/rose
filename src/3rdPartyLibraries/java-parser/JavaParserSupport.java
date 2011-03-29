@@ -176,7 +176,7 @@ class JavaParserSupport
             // Class cls = Class.forName("java.lang."+node.receiver.toString());
 
                if (verboseLevel > -1)
-                    System.out.println("Generate the class for className = " + className);
+                    System.out.println("Generate the class for implicit className = " + className);
 
             // Note that "java.lang" does not appear to be a class (so is that root of all implicitly included classes?).
             // Class cls = Class.forName("java.lang");
@@ -270,7 +270,7 @@ class JavaParserSupport
                               if (typeClass.isArray() == true)
                                  {
                                 // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
-                                   System.out.println("Skipping case of array of type for now (sorry not implemented)... = " + nestedClassName);
+                                   System.out.println("Skipping case of array of type for now (sorry not implemented)... data field = " + fld);
                                  }
                                 else
                                  {
