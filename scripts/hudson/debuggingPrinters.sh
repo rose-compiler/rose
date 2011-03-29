@@ -24,7 +24,7 @@ set -x
 
 function filter_step () {
     local start_time="$(date +%s)"
-    printBannerToStartStep $1
+    printBannerToStartStep "$1"
 
     (
         while read; do
@@ -33,11 +33,11 @@ function filter_step () {
     )
     [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ] && dieDuringStep "$1" $start_time
 
-    printBannerToEndStep $1 $start_time
+    printBannerToEndStep "$1" $start_time
 }
 
 function dieDuringStep () {
-    printBannerToFailStep $1 $2
+    printBannerToFailStep "$1" "$2"
     exit 1
 }
 
