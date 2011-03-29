@@ -34,3 +34,12 @@ ALGORITHM:
   When we leave the scope of a node we pop it from the stack and whatever is on the top of the stack is the parent node.
   When we call the print function, we check if a parent is present, if it is null we know it is the root, else we print a node and an edge.
 
+
+Questions aboaut ECJ:
+  1) What are the command line options available to ECJ and which of them are relevant for ROSE?
+
+
+
+Work to do with Craig:
+  1) Review how java error handling is done to support both OFP (Fortran) and ECJ (Java).
+

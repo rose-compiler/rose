@@ -22,6 +22,7 @@ F77_TESTCODES_TO_PASS = \
     private.f \
     reduction.f \
     schedule.f \
+    section1.f \
     shared-array.f \
     shared.f \
     single.f \
@@ -29,23 +30,6 @@ F77_TESTCODES_TO_PASS = \
     task_largenumber2.f \
     task_scalar.f \
     task_simplest.f
-# Liao 2/11/2010. Workaround for include '', not supported by gfortran 4.2.0 on Mac.
-#if !OS_MACOSX
-#  F77_TESTCODES_TO_PASS +=  \
-#    master.f \
-#    ompdo-default.f \
-#    ompdo-decremental.f 
-#    ompdo-multiple.f \
-#    ompdo-orphaned.f \
-#    ompdo-static.f \
-#    private.f \
-#    shared.f \
-#    single.f \
-#    task_largenumber.f \
-#    task_largenumber2.f \
-#    task_scalar.f \
-#    task_simplest.f
-#endif
 
 # DQ (3/4/2010): Added simple test code to debug fortran OFP usage.
 F77_TESTCODES_TO_PASS += testNewOFP.f
@@ -76,6 +60,8 @@ F90_TESTCODES_TO_PASS = \
 # ompdo-decremental-2.f  wrong location for !$omp parallel do 
 # task_largenumber2.f : bug 495 https://outreach.scidac.gov/tracker/?func=detail&atid=185&aid=495&group_id=24
 TESTCODES_CURRENTLY_FAILING = \
+    parallel-if.f \
+    parallel-if-numthreads.f \
     barrier.f \
     exampleA11f.f \
     exampleA211f.f \

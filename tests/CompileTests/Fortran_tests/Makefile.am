@@ -234,7 +234,54 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_36.f90 \
      test2011_39.f90 \
      test2011_40.f90 \
+     test2011_Rice_allocate-derived-type-scope.f90 \
+     test2011_Rice_alt-return-call.f90 \
+     test2011_Rice_alternate-return-argument.f90 \
+     test2011_Rice_asterisk-length.f90 \
+     test2011_Rice_char-array-decl-asterisk.f90 \
+     test2011_Rice_constructor-initializer.f90 \
+     test2011_Rice_data-implied-do.f90 \
+     test2011_Rice_derived-type-2d-component.f90 \
+     test2011_Rice_derived-type-3d-component.f90 \
+     test2011_Rice_derived-type-array.f90 \
+     test2011_Rice_elseif.f90 \
+     test2011_Rice_empty-string-constant.f90 \
+     test2011_Rice_forward-ref-derived-type.f90 \
+     test2011_Rice_forward-ref-with-sub-2.f90 \
+     test2011_Rice_funcdecl-1.f90 \
+     test2011_Rice_funcdecl-4.f90 \
+     test2011_Rice_function-where-var-expected.f90 \
+     test2011_Rice_forward-decl-func-type.f90 \
+     test2011_Rice_interface.f90 \
+     test2011_Rice_io-implied-do-with-stride.f90 \
+     test2011_Rice_keyword-arg-extra-paren-2.f90 \
+     test2011_Rice_keyword-arg-extra-paren.f90 \
+     test2011_Rice_lost-kindtype-1.f90 \
+     test2011_Rice_lost-kindtype-2.f90 \
+     test2011_Rice_pause-no-stop-code.f90 \
+     test2011_Rice_singleton-array-constructor.f90 \
+     test2011_Rice_stop-no-stop-code.f90 \
+     test2011_Rice_vector-constructor-1.f90 \
+     test2011_Rice_vector-constructor-2.f90 \
+     test2011_Rice_vector-constructor-3.f90 \
+     test2011_Rice_vector-constructor-4.f90 \
+     test2011_Rice_write-no-output-item-list.f90 \
+     test2011_Rice_wrong-func-type.f90 \
+     test2011_Rice_wrong-func-type-2.f90 \
+     test2011_Rice_wrong-func-type-3.f90 \
      canonicalExample.f90
+
+# SKW 3/15/2011: tests which are correct and pass in ROSE, but fail when
+# compiled with gfortrans older than 4.4.1 (and so fail in Hudson)
+#     test2011_Rice_false-forward-decl-func-type.f90
+#     test2011_Rice_forward-ref-with-sub.f90
+#     test2011_Rice_lost-func-return-type.f90
+
+# SKW 3/18/2011: tests which are correct and pass in ROSE, but sometimes fail
+# when run in Hudson (nondeterministically, on amd64-linux with gcc 4.1.2)
+#     test2011_Rice_A-cant-assert-keyword-nonnull.f90
+#     test2011_Rice_B-cant-assert-keyword-nonnull.f90
+#     test2011_Rice_C-cant-assert-keyword-nonnull.f90
 
 #Liao 2/11/2010, 'include' issue on gfortran 4.2.0 of Mac OS X
 # 4.2.1 can handle them properly
@@ -327,7 +374,7 @@ if ROSE_USING_GFORTRAN_VERSION_4_2
      test2010_161.f90
 endif
 
-F90_TESTCODES_REQUIRING_PREPROCESSOR_REQUIRED_TO_PASS = 
+F90_TESTCODES_REQUIRING_PREPROCESSOR_REQUIRED_TO_PASS =
 
 
 F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
@@ -409,7 +456,10 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2010_29.f \
      test2010_30.f \
      test2010_68.f \
-     test2010_69.f
+     test2010_69.f \
+     test2011_Rice_continuation-spits-token.f \
+     test2011_Rice_initial-tab.f
+     
 
 # DQ (1/18/2011): Failing tests.
 #     test2007_150.f 
@@ -461,7 +511,8 @@ F03_TESTCODES_REQUIRED_TO_PASS = \
      test2011_32.f03 \
      test2011_33.f03 \
      test2011_34.f03 \
-     test2011_35.f03 
+     test2011_35.f03
+     
 
 # DQ (1/18/2011): Failing tests.
 #     test2007_133.f03 
@@ -626,14 +677,18 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      fCaller.f90 \
      triangle.f90 \
      X-caseSensitive.f90 \
+     X-constructor-initializer.f90 \
      X-derivedTypeArray.f90 \
      X-enddo-plus-label.f90  \
      X-ifConstruct.f90 \
      X-ifStmt.f90 \
+     X-lost-func-return-type.f90 \
      X-pointerAttr.f90 \
+     X-print-no-output-item-list.f90 \
      X-return-with-expr.f90
 
 # DQ(1/30/2011): Rice bugs are test2010_150.* - test2010_168.*
+# DQ (1/31/2010): X-lost-func-return-type.f03 and X-constructor-initializer.f03 are new test codes from Rice.
 
 # JJW -- this can't be in the f90 file list because it does not have the .f90 extension
 #    test2008_02.f
@@ -689,11 +744,7 @@ F03_TESTCODES_CURRENTLY_FAILING = \
      test2010_126.f03 \
      test2010_171.f03 \
      test2011_26.f03 \
-     test2011_74.f03 \
-     X-lost-func-return-type.f03 \
-     X-constructor-inititalizer.f03
-
-# DQ (1/31/2010): X-lost-func-return-type.f03 and X-constructor-inititalizer.f03 are new test codes from Rice.
+     test2011_74.f03
 
 F08_TESTCODES_CURRENTLY_FAILING = \
      test2010_98.f08

@@ -382,7 +382,7 @@ int main(int argc, char *argv[])
    fprintf(makeFile, "-o checktest\n\n") ;
 
    /* system("ln -s ../SegDB.txt SegDB.txt") ; */
-  
+   fclose(makeFile); 
    return 0 ;
 }
 

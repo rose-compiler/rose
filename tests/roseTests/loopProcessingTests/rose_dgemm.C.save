@@ -17,40 +17,40 @@ void dgemm(double *a,double *b,double *c,int n)
         for (k = _var_1; k <= min2(-1 + n,_var_1 + 15); k += 1) {
           for (j = _var_0; j <= -15 + min2(-1 + n,_var_0 + 15); j += 16) {
             int _var_2 = j;
-            c[(j * n) + i] = ((c[(j * n) + i]) + ((a[(k * n) + i]) * (b[(j * n) + k])));
+            c[(j * n) + i] = (c[(j * n) + i] + (a[(k * n) + i] * b[(j * n) + k]));
             _var_2 = 1 + _var_2;
-            c[(_var_2 * n) + i] = ((c[(_var_2 * n) + i]) + ((a[(k * n) + i]) * (b[(_var_2 * n) + k])));
+            c[(_var_2 * n) + i] = (c[(_var_2 * n) + i] + (a[(k * n) + i] * b[(_var_2 * n) + k]));
             _var_2 = 1 + _var_2;
-            c[(_var_2 * n) + i] = ((c[(_var_2 * n) + i]) + ((a[(k * n) + i]) * (b[(_var_2 * n) + k])));
+            c[(_var_2 * n) + i] = (c[(_var_2 * n) + i] + (a[(k * n) + i] * b[(_var_2 * n) + k]));
             _var_2 = 1 + _var_2;
-            c[(_var_2 * n) + i] = ((c[(_var_2 * n) + i]) + ((a[(k * n) + i]) * (b[(_var_2 * n) + k])));
+            c[(_var_2 * n) + i] = (c[(_var_2 * n) + i] + (a[(k * n) + i] * b[(_var_2 * n) + k]));
             _var_2 = 1 + _var_2;
-            c[(_var_2 * n) + i] = ((c[(_var_2 * n) + i]) + ((a[(k * n) + i]) * (b[(_var_2 * n) + k])));
+            c[(_var_2 * n) + i] = (c[(_var_2 * n) + i] + (a[(k * n) + i] * b[(_var_2 * n) + k]));
             _var_2 = 1 + _var_2;
-            c[(_var_2 * n) + i] = ((c[(_var_2 * n) + i]) + ((a[(k * n) + i]) * (b[(_var_2 * n) + k])));
+            c[(_var_2 * n) + i] = (c[(_var_2 * n) + i] + (a[(k * n) + i] * b[(_var_2 * n) + k]));
             _var_2 = 1 + _var_2;
-            c[(_var_2 * n) + i] = ((c[(_var_2 * n) + i]) + ((a[(k * n) + i]) * (b[(_var_2 * n) + k])));
+            c[(_var_2 * n) + i] = (c[(_var_2 * n) + i] + (a[(k * n) + i] * b[(_var_2 * n) + k]));
             _var_2 = 1 + _var_2;
-            c[(_var_2 * n) + i] = ((c[(_var_2 * n) + i]) + ((a[(k * n) + i]) * (b[(_var_2 * n) + k])));
+            c[(_var_2 * n) + i] = (c[(_var_2 * n) + i] + (a[(k * n) + i] * b[(_var_2 * n) + k]));
             _var_2 = 1 + _var_2;
-            c[(_var_2 * n) + i] = ((c[(_var_2 * n) + i]) + ((a[(k * n) + i]) * (b[(_var_2 * n) + k])));
+            c[(_var_2 * n) + i] = (c[(_var_2 * n) + i] + (a[(k * n) + i] * b[(_var_2 * n) + k]));
             _var_2 = 1 + _var_2;
-            c[(_var_2 * n) + i] = ((c[(_var_2 * n) + i]) + ((a[(k * n) + i]) * (b[(_var_2 * n) + k])));
+            c[(_var_2 * n) + i] = (c[(_var_2 * n) + i] + (a[(k * n) + i] * b[(_var_2 * n) + k]));
             _var_2 = 1 + _var_2;
-            c[(_var_2 * n) + i] = ((c[(_var_2 * n) + i]) + ((a[(k * n) + i]) * (b[(_var_2 * n) + k])));
+            c[(_var_2 * n) + i] = (c[(_var_2 * n) + i] + (a[(k * n) + i] * b[(_var_2 * n) + k]));
             _var_2 = 1 + _var_2;
-            c[(_var_2 * n) + i] = ((c[(_var_2 * n) + i]) + ((a[(k * n) + i]) * (b[(_var_2 * n) + k])));
+            c[(_var_2 * n) + i] = (c[(_var_2 * n) + i] + (a[(k * n) + i] * b[(_var_2 * n) + k]));
             _var_2 = 1 + _var_2;
-            c[(_var_2 * n) + i] = ((c[(_var_2 * n) + i]) + ((a[(k * n) + i]) * (b[(_var_2 * n) + k])));
+            c[(_var_2 * n) + i] = (c[(_var_2 * n) + i] + (a[(k * n) + i] * b[(_var_2 * n) + k]));
             _var_2 = 1 + _var_2;
-            c[(_var_2 * n) + i] = ((c[(_var_2 * n) + i]) + ((a[(k * n) + i]) * (b[(_var_2 * n) + k])));
+            c[(_var_2 * n) + i] = (c[(_var_2 * n) + i] + (a[(k * n) + i] * b[(_var_2 * n) + k]));
             _var_2 = 1 + _var_2;
-            c[(_var_2 * n) + i] = ((c[(_var_2 * n) + i]) + ((a[(k * n) + i]) * (b[(_var_2 * n) + k])));
+            c[(_var_2 * n) + i] = (c[(_var_2 * n) + i] + (a[(k * n) + i] * b[(_var_2 * n) + k]));
             _var_2 = 1 + _var_2;
-            c[(_var_2 * n) + i] = ((c[(_var_2 * n) + i]) + ((a[(k * n) + i]) * (b[(_var_2 * n) + k])));
+            c[(_var_2 * n) + i] = (c[(_var_2 * n) + i] + (a[(k * n) + i] * b[(_var_2 * n) + k]));
           }
           for (; j <= min2(-1 + n,_var_0 + 15); j += 1) {
-            c[(j * n) + i] = ((c[(j * n) + i]) + ((a[(k * n) + i]) * (b[(j * n) + k])));
+            c[(j * n) + i] = (c[(j * n) + i] + (a[(k * n) + i] * b[(j * n) + k]));
           }
         }
       }

@@ -1,0 +1,15 @@
+ /*!
+     \defgroup JavaCodeGenerator Backend Java Code Generator
+     \ingroup ROSE_BackEndGroup
+
+     \brief Generates Java Source code from the AST.
+
+     Generates Java source code directly from AST.
+
+     \note There are no user level functions within the backend.  The only three related
+          functions are available from the SgNode interface ( SgNode::unparseToString() ) and
+          SgFile and SgProject interfaces ( SgFile::unparse() and SgProject::unparse(),
+          respectively).
+
+  */
+

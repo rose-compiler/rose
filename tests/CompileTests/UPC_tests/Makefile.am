@@ -49,19 +49,12 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2011_09.upc \
    test2011_10.upc \
    test2011_11.upc \
-   test2011_14.upc
-
-
-
-TEST_CODES_REQUIRED_TO_PASS_WITH_STATIC_THREADS = \
-   upc_all_exchange_ex.upc \
-   upc_all_gather_all_ex.upc \
-   upc_all_gather_ex.upc \
-   test2011_12.upc \
-   test2011_13.upc
-
-TEST_CODES_REQUIRED_TO_PASS_WITH_STATIC_THREADS_PREFIX = \
-   $(addprefix static_,${TEST_CODES_REQUIRED_TO_PASS_WITH_STATIC_THREADS})
+   test2011_14.upc \
+   static_upc_all_exchange_ex.upc \
+   static_upc_all_gather_all_ex.upc \
+   static_upc_all_gather_ex.upc \
+   static_test2011_12.upc \
+   static_test2011_13.upc
 
 # upc_XXXsizeof() has two issues:
 # 1. They are evaluated by EDG, operators are not preserved in EDG's IL
@@ -74,8 +67,7 @@ TESTCODE_CURRENTLY_FAILING = \
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = \
-	 $(TESTCODES_REQUIRED_TO_PASS) \
-	 $(TEST_CODES_REQUIRED_TO_PASS_WITH_STATIC_THREADS_PREFIX)
+	 $(TESTCODES_REQUIRED_TO_PASS)
 
 # QMTest allows both passing and failing tests.
 ALL_TESTCODES = \
@@ -106,16 +98,15 @@ endif
 PASSING_TEST_Output = $(addprefix rose_,${TESTCODES})
 TEST_Output = $(addprefix rose_,${ALL_TESTCODES})
 
-rose_static_%: $(srcdir)/% ../../testTranslator
+rose_static_%: $(srcdir)/static_% ../../testTranslator
 	../../testTranslator -rose:UPC $(ROSE_FLAGS) -rose:upc_threads 1 -c $< -o $@
 
 rose_%: $(srcdir)/% ../../testTranslator
-	../../testTranslator -rose:UPC $(ROSE_FLAGS) -c $< -o $@
+	../../testTranslator -rose:UPC $(ROSE_FLAGS) -rose:upc_threads 1 -c $< -o $@
 
 
 # $(TEST_Output): ../../testTranslator $(srcdir)/$(@:rose_%=%)
 # ../../testTranslator -rose:UPC $(ROSE_FLAGS) -c $(srcdir)/$(@:rose_%=%)
-
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
 
@@ -139,7 +130,7 @@ UPCXX_TEST_Objects = ${UPCXX_TESTCODES:.upc=.o}
 
 # $(UPCXX_TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.c)
 $(UPCXX_TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.c)
-	../../testTranslator -rose:UPCxx $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.upc)
+	../../testTranslator -rose:UPCxx $(ROSE_FLAGS) -rose:upc_threads 1 -c $(srcdir)/$(@:.o=.upc)
 
 
 # DQ (2/4/2011): Added test for UPC keyword "THREADS". It is only present when "-rose:upc_threads" option is not used.

@@ -6212,14 +6212,14 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      if (SgProject::get_verbose() > 0)
         {
           printf ("Debugging option to Java ECJ translation (java code) to build ROSE AST: verboseOptionString = %s \n",verboseOptionString.c_str());
-             }
+        }
      frontEndCommandLine.push_back(verboseOptionString);
 
   // Java does not use include files, so we can enforce this.
      ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
 
   // Add the source file as the last argument on the command line (checked by intermediate testing before calling ECJ).
-          frontEndCommandLine.push_back(get_sourceFileNameWithPath());
+     frontEndCommandLine.push_back(get_sourceFileNameWithPath());
 
 #if 1
      if ( get_verbose() > 0 )
@@ -6333,7 +6333,7 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
         AstSimpleProcessing::traverse(interfaceBody->get_functionDeclaration(), preorder);
        }
 
-     SgStatement* statement = isSgStatement(astNode);
+    SgStatement* statement = isSgStatement(astNode);
   // printf ("LinemarkerTraversal::visit(): statement = %p = %s \n",statement,(statement != NULL) ? statement->class_name().c_str() : "NULL");
      if (statement != NULL)
         {
@@ -6397,7 +6397,7 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
                int cppFileId = Sg_File_Info::getIDFromFilename(sourceFileNameOutputFromCpp);
                if (statement->get_file_info()->get_file_id() == cppFileId)
                   {
-               statement->get_file_info()->set_file_id(fileId);
+                   statement->get_file_info()->set_file_id(fileId);
                   }
             // statement->get_file_info()->set_line(line);
 

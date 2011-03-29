@@ -16,8 +16,6 @@ SUBDIRS = \
      MPICodeMotion \
      MacroRewrapper \
      OpenMP_Analysis \
-     OpenMP_Translator \
-     PolyhedralDependenceAnalysis \
      QtDesignerPlugins \
      RoseQt \
      SemanticSignatureVectors \
@@ -25,11 +23,9 @@ SUBDIRS = \
      arrayOptimization \
      assemblyToSourceAst \
      autoParallelization \
-     autoTuning\
      binaryVisualization \
      bugSeeding \
      checkPointExample \
-     haskellport \
      highLevelGrammars \
      javaport \
      programModeling \
@@ -41,10 +37,10 @@ SUBDIRS = \
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
 # gradually enable these tests at a later stage if necessary.
 if !USING_XTENSA_BACKEND_COMPILER
-   SUBDIRS += dataStructureGraphing
+   SUBDIRS += dataStructureGraphing OpenMP_Translator autoTuning
 # TOO (2/16/2011): Disabled for Thrifty compiler (gcc 3.4.4) due to errors during make check
 if !USING_GCC_3_4_4_BACKEND_COMPILER
-   SUBDIRS += backstroke
+   SUBDIRS += backstroke haskellport 
 endif
 endif
 
