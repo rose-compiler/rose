@@ -134,7 +134,7 @@ AsmTreeInstructionNode::AsmTreeInstructionNode(SgAsmInstruction * inst1, SgAsmIn
     operands=" ";
     for (SgAsmExpressionPtrList::iterator it = opsList.begin(); it!=opsList.end();++it)
     {
-        operands.append(unparseExpression(*it).c_str());
+        operands.append(unparseExpression(*it, NULL).c_str());
         if(it != opsList.end() -1)
             operands.append(", ");
     }
