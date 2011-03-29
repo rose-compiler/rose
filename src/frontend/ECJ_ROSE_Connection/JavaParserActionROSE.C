@@ -19,6 +19,8 @@
 // Support functions so that this file can be restricted to be just parser (AST traversal) rules.
 #include "java_support.h"
 
+using namespace std;
+
 /*
  * Class:     JavaParser
  * Method:    cactionCompilationUnitList
@@ -302,59 +304,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArgument (JNIEnv *env, jobject xxx
 #endif
    }
 
-#if 0
-JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentName(JNIEnv *env, jobject, jstring java_string)
-   {
-     SgName name = convertJavaStringToCxxString(env,java_string);
-     printf ("argument name = %s \n",name.str());
-   }
-
-#error "DEAD CODE!"
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentModifiers(JNIEnv *env, jobject, jint java_modifiers)
-   {
-     int modifiers = convertJavaIntegerToCxxInteger(env,java_modifiers);
-
-  // Now push this integer onto the stack so that we can build the SgInitializedName 
-  // as the argument in Java_JavaParser_cactionArgument_end().
-
-     printf ("Modifiers not pushed onto the AST stack. \n");
-   }
-
-#error "DEAD CODE!"
-
-JNIEXPORT void JNICALL Java_JavaParser_cactionArgumentEnd(JNIEnv *env, jobject xxx)
-   {
-  // Now build the SgInitializedName object to be the argument.
-     printf ("Inside of Java_JavaParser_cactionArgumentEnd() \n");
-
-     ROSE_ASSERT(astJavaTypeStack.empty() == false);
-     SgType* type = astJavaTypeStack.front();
-     astJavaTypeStack.pop_front();
-
-     ROSE_ASSERT(astJavaNameStack.empty() == false);
-     SgName* name = astJavaNameStack.front();
-     astJavaNameStack.pop_front();
-
-     SgInitializedName* initializedName = buildInitializedName(name,type,NULL);
-     ROSE_ASSERT(initializedName != NULL);
-
-     ROSE_ASSERT(astJavaStatementStack.empty() == false);
-     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(astJavaStatementStack.front());
-     ROSE_ASSERT(functionDeclaration != NULL);
-
-  // SgInitializedNamePtrList & arg_list = functionDeclaration->get_args();
-  // arg_list->append(initializedName);
-     functionDeclaration->append_arg(initializedName);
-     ROSE_ASSERT(functionDeclaration->get_args().empty() == false);
-
-#if 1
-     printf ("Inside of Java_JavaParser_cactionArgumentEnd(): exiting ... \n");
-     ROSE_ASSERT(false);
-#endif
-   }
-#endif
-
 JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference (JNIEnv *, jobject, jstring)
    {
      if (SgProject::get_verbose() > 0)
@@ -423,17 +372,106 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart (JN
 
      outputJavaState("At TOP of cactionBuildImplicitClassSupportStart");
 
-#if 1
      SgName name = convertJavaStringToCxxString(env,java_string);
 
   // This builds a class to represent the implicit classes that are available by default within Java.
   // Each is built on an as needed basis (driven by references to the class).
      buildImplicitClass(name);
-#endif
+
+  // Save the list of implicitly build classes so that within cactionBuildImplicitClassSupportEnd() we can
+  // process the list to support the symbol table fixup required to allow implicit named methods and
+  // data members to be properly referenced with name qulaification.
+     astJavaImplicitClassList.push_back(name);
 
      outputJavaState("At BOTTOM of cactionBuildImplicitClassSupportStart");
    }
 
+list<SgName>
+generateQualifierList (const SgName & classNameWithQualification)
+   {
+  // This function can be used to refactor the similar code in:
+  //    void buildClassSupport (const SgName & className, bool implicitClass).
+
+     list<SgName> returnList;
+     SgName classNameWithoutQualification;
+
+     classNameWithoutQualification = classNameWithQualification;
+
+  // Names of implicitly defined classes have names that start with "java." and these have to be translated.
+     string original_classNameString = classNameWithQualification.str();
+     string classNameString = classNameWithQualification.str();
+
+  // Also replace '.' with '_'
+     replace(classNameString.begin(), classNameString.end(),'.','_');
+
+  // Also replace '$' with '_' (not clear on what '$' means yet (something related to inner and outer class nesting).
+     replace(classNameString.begin(), classNameString.end(),'$','_');
+
+     SgName name = classNameString;
+
+  // We should not have a '.' in the class name.  Or it will fail the current ROSE name mangling tests.
+     ROSE_ASSERT(classNameString.find('.') == string::npos);
+
+  // DQ (3/20/2011): Detect use of '$' in class names. Current best reference 
+  // is: http://www.java-forums.org/new-java/27577-specific-syntax-java-util-regex-pattern-node.html
+     ROSE_ASSERT(classNameString.find('$') == string::npos);
+
+  // Parse the original_classNameString to a list of what will be classes.
+     size_t lastPosition = 0;
+     size_t position = original_classNameString.find('.',lastPosition);
+     while (position != string::npos)
+        {
+          string parentClassName = original_classNameString.substr(lastPosition,position-lastPosition);
+          if (SgProject::get_verbose() > 0)
+               printf ("parentClassName = %s \n",parentClassName.c_str());
+
+          returnList.push_back(parentClassName);
+
+          lastPosition = position+1;
+          position = original_classNameString.find('.',lastPosition);
+          if (SgProject::get_verbose() > 0)
+               printf ("lastPosition = %zu position = %zu \n",lastPosition,position);
+
+        }
+
+     string className = original_classNameString.substr(lastPosition,position-lastPosition);
+
+     if (SgProject::get_verbose() > 0)
+          printf ("className for implicit (leaf) class = %s \n",className.c_str());
+
+  // Reset the name for the most inner nested implicit class.  This allows a class such as "java.lang.System" 
+  // to be build as "System" inside of "class "lang" inside of class "java" (without resetting the name we 
+  // would have "java.lang.System" inside of "class "lang" inside of class "java").
+     name = className;
+
+     if (SgProject::get_verbose() > 0)
+          printf ("last name = %s \n",name.str());
+
+  // Push the last name onto the list.
+     returnList.push_back(name);
+
+     if (SgProject::get_verbose() > 0)
+          printf ("returnList.size() = %zu \n",returnList.size());
+
+#if 0
+     printf ("Exiting in stripQualifiers(): after computing the className \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return returnList;
+   }
+
+SgName
+stripQualifiers (const SgName & classNameWithQualification)
+   {
+     list<SgName> l = generateQualifierList(classNameWithQualification);
+     ROSE_ASSERT(l.empty() == false);
+
+     if (SgProject::get_verbose() > 0)
+          printf ("result in stripQualifiers(%s) = %s \n",classNameWithQualification.str(),l.back().str());
+
+     return l.back();
+   }
 
 // DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
 // declared "public static native" instead of "public native" in the Java side of the JNI interface.
@@ -454,6 +492,74 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
 
   // At this point we shuld still at least have the global scope on the stack.
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
+
+  // Output the list of implicit classes seen so far...
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("astJavaImplicitClassList: \n");
+          for (list<SgName>::iterator i = astJavaImplicitClassList.begin(); i != astJavaImplicitClassList.end(); i++)
+             {
+               printf ("   --- implicit class = %s \n",(*i).str());
+             }
+        }
+
+     SgGlobal* globalScope = getGlobalScope();
+     NodeQuerySynthesizedAttributeType nodeList = NodeQuery::querySubTree(globalScope,V_SgClassDeclaration);
+               
+  // Process the classes in the list to support an implicit "use" statment of the parent of the class so that
+  // each of the implicit classes will be represented in the current scope.
+     for (list<SgName>::iterator i = astJavaImplicitClassList.begin(); i != astJavaImplicitClassList.end(); i++)
+        {
+          SgName classNameWithQualification = *i;
+          if (SgProject::get_verbose() > 0)
+               printf ("implicit class = %s \n",classNameWithQualification.str());
+          SgGlobal* globalScope = getGlobalScope();
+          ROSE_ASSERT(globalScope != NULL);
+
+          SgName classNameWithoutQualification = stripQualifiers(classNameWithQualification);
+          SgClassSymbol* classSymbol = globalScope->lookup_class_symbol(classNameWithoutQualification);
+          if (classSymbol != NULL)
+             {
+            // Nothing to do.
+               if (SgProject::get_verbose() > 0)
+                    printf ("NOTHING TO DO: class = %s is already in global scope (qualified name = %s) \n",classNameWithoutQualification.str(),classNameWithQualification.str());
+             }
+            else
+             {
+               if (SgProject::get_verbose() > 0)
+                     printf ("class = %s must be placed into global scope (qualified name = %s) \n",classNameWithoutQualification.str(),classNameWithQualification.str());
+
+               SgClassDeclaration* targetClassDeclaration = NULL;
+               list<SgClassDeclaration*> classDeclarationList;
+               for (NodeQuerySynthesizedAttributeType::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+                  {
+                    SgClassDeclaration* temp_classDeclaration = isSgClassDeclaration(*i);
+                    if (temp_classDeclaration->get_name() == classNameWithoutQualification)
+                       {
+                         targetClassDeclaration = temp_classDeclaration;
+                         classDeclarationList.push_back(targetClassDeclaration);
+                       }
+                  }
+               ROSE_ASSERT(classDeclarationList.empty() == false);
+               ROSE_ASSERT(classDeclarationList.size() == 1);
+
+               classSymbol = isSgClassSymbol(targetClassDeclaration->search_for_symbol_from_symbol_table());
+               if (classSymbol == NULL)
+                    classSymbol = isSgClassSymbol(targetClassDeclaration->get_firstNondefiningDeclaration()->search_for_symbol_from_symbol_table());
+
+               ROSE_ASSERT(classSymbol != NULL);
+
+               ROSE_ASSERT(globalScope->symbol_exists(classNameWithoutQualification) == false);
+               ROSE_ASSERT(globalScope->symbol_exists(classSymbol) == false);
+
+               SgAliasSymbol* aliasSymbol = new SgAliasSymbol(classSymbol,/* isRenamed */ false);
+
+               if ( SgProject::get_verbose() > -1 )
+                    printf ("Adding SgAliasSymbol for classNameWithoutQualification = %s \n",classNameWithoutQualification.str());
+
+               globalScope->insert_symbol(classNameWithoutQualification,aliasSymbol);
+             }
+        }
    }
 
 

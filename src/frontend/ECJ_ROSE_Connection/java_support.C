@@ -45,6 +45,8 @@ list<SgNode*> astJavaNodeStack;
 // Attribute spec for holding attributes
 // std::list<int> astAttributeSpecStack;
 
+// Global list of implicit classes
+list<SgName> astJavaImplicitClassList;
 
 
 
