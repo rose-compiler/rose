@@ -227,7 +227,7 @@ void RuntimeSystem::createMemory(Address addr, size_t size, MemoryType::AllocKin
     // stack memory must have a type
     assert(type != NULL);
 
-    nb->registerMemType(0, type);
+    nb->registerMemType(addr, type);
     assert(type->getByteSize() == size);
   }
 }
@@ -372,7 +372,7 @@ void RuntimeSystem::createObject(Address address, RsClassType* type)
             // registered, and now the derived's constructor has been called
 
             mt -> resize( szObj );
-            mt -> forceRegisterMemType( 0, type );
+            mt -> forceRegisterMemType( address, type );
         }
 
         // \pp \todo what if !base_ctor?
@@ -385,7 +385,7 @@ void RuntimeSystem::createObject(Address address, RsClassType* type)
 
     // after the new block is allocated (and if the allocation succeeded)
     //   register the proper memory layout
-    if (nb) nb->registerMemType(0, type);
+    if (nb) nb->registerMemType(address, type);
 }
 
 
@@ -432,11 +432,13 @@ void RuntimeSystem::registerPointerChange( Address        src,
 }
 
 
+#if OBSOLETE_CODE
 // \pp \todo remove superfluous parameter
 void RuntimeSystem::checkPointerDereference(Address src, AddressDesc, Address derefed_address, AddressDesc)
 {
     pointerManager.checkPointerDereference(src, derefed_address);
 }
+#endif /* OBSOLETE_CODE */
 
 void RuntimeSystem::checkIfThisisNULL(void* thisExp) {
 

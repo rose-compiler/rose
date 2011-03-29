@@ -62,70 +62,71 @@ RsType *  RsType::getSubtypeRecursive(size_t offset, size_t size, bool stopAtArr
 bool  RsType::checkSubtypeRecursive(size_t offset,  RsType* type)
 {
   //  RuntimeSystem * rs = RuntimeSystem::instance();
-    //rs->printMessage("    >>> checkSubtypeRecursive ");
-    RsType * result = this;
-    size_t size = type -> getByteSize();
+  //rs->printMessage("    >>> checkSubtypeRecursive ");
+  RsType * result = this;
+  size_t size = type -> getByteSize();
 
-    bool isunion = false;
-    unsigned int resultsize = result->getByteSize();
-    while(resultsize >= size)
-    {
-      //rs->printMessage("   >> while result->getByteSize() >= size "+
-      //		       ToString(resultsize)+" : " +ToString(size));
-      //rs->printMessage("        >>> checking  result == type :   "+result->getName()+
-      //		       "  "+type->getName());
-        if( result == type )
-            return true;
+  bool isunion = false;
+  unsigned int resultsize = result->getByteSize();
+  while(resultsize >= size) {
+    //rs->printMessage("   >> while result->getByteSize() >= size "+
+    //           ToString(resultsize)+" : " +ToString(size));
+    //rs->printMessage("        >>> checking  result == type :   "+result->getName()+
+    //           "  "+type->getName());
+    if( result == type )
+      return true;
 
-	// tps (09/10/09) Handle union type
-	RsClassType* ct_result = dynamic_cast<RsClassType*>( result);
-	if (ct_result && ct_result->getIsUnionType()) isunion=true;
+    // tps (09/10/09) Handle union type
+    RsClassType* ct_result = dynamic_cast<RsClassType*>( result);
+    if (ct_result && ct_result->getIsUnionType()) isunion=true;
 
-        int subTypeId = -1;
-	std::vector<int> subTypeIdvec;
-	if (isunion==false)
-            subTypeId = result->getSubtypeIdAt(offset);
-	else
-            subTypeIdvec = ct_result->getSubtypeUnionIdAt(offset);
+    int subTypeId = -1;
+    std::vector<int> subTypeIdvec;
+    if (isunion==false)
+      subTypeId = result->getSubtypeIdAt(offset);
+    else
+      subTypeIdvec = ct_result->getSubtypeUnionIdAt(offset);
 
-	//rs->printMessage("   >> subTypeId: "+ToString(subTypeId)+"  isunion:"+
-	//		 ToString(isunion));
-	if (isunion && subTypeIdvec.size()==0 ||
-	    !isunion && subTypeId == -1 ) {
-            // no refinement is possible
-	    //rs->printMessage("    >>> subTypeId == -1 .");
-            return false;
-        }
-	if (isunion) {
-            std::vector<int>::const_iterator it = subTypeIdvec.begin();
-	    // iterate over the members and find the matching one
-            for (;it!=subTypeIdvec.end();++it) {
-                subTypeId = *it;
-  //              addr_type temp_offset = offset- result->getSubtypeOffset(subTypeId);
-                RsType* temp_result =  result->getSubtype(subTypeId);
-                if (temp_result==type)
-                    break;
-            }
-	}
-
-	// continue as before and get the subtype
-	offset -= result->getSubtypeOffset(subTypeId);
-	//rs->printMessage("       >> new offset :  offset -= result->getSubtypeOffset(subTypeId); "+
-	//	       ToString(offset));
-        result  = result->getSubtype(subTypeId);
-	//rs->printMessage("       >> result  = result->getSubtype(subTypeId) : "+
-	//		 result->getName()+"\n");
-	if (isunion==false)
-	resultsize = result->getByteSize();
+    //rs->printMessage("   >> subTypeId: "+ToString(subTypeId)+"  isunion:"+
+    //     ToString(isunion));
+    if (  (isunion && subTypeIdvec.size()==0)
+       || (!isunion && subTypeId == -1)
+       ) {
+      // no refinement is possible
+      //rs->printMessage("    >>> subTypeId == -1 .");
+      return false;
     }
-    //rs->printMessage("    >>> result: bytesize: " + ToString( result -> getByteSize())+
-    //                " !=  size: "+ToString(size));
 
-    assertme(  result == NULL || result -> getByteSize() != size,
-               "RsType::checkSubtypeRecursive - result == NULL || result -> getByteSize() != size",
-	       "",ToString(size));
-    assert( result == NULL || result -> getByteSize() != size );
-    return false;
+    if (isunion) {
+      std::vector<int>::const_iterator it = subTypeIdvec.begin();
+      // iterate over the members and find the matching one
+      for (; it!=subTypeIdvec.end(); ++it) {
+        subTypeId = *it;
+        //              addr_type temp_offset = offset- result->getSubtypeOffset(subTypeId);
+        RsType* temp_result =  result->getSubtype(subTypeId);
+        if (temp_result==type)
+          break;
+      }
+    }
+
+    // continue as before and get the subtype
+    offset -= result->getSubtypeOffset(subTypeId);
+    //rs->printMessage("       >> new offset :  offset -= result->getSubtypeOffset(subTypeId); "+
+    //         ToString(offset));
+    result  = result->getSubtype(subTypeId);
+    //rs->printMessage("       >> result  = result->getSubtype(subTypeId) : "+
+    //     result->getName()+"\n");
+    if (isunion==false)
+      resultsize = result->getByteSize();
+  }
+  //rs->printMessage("    >>> result: bytesize: " + ToString( result -> getByteSize())+
+  //                " !=  size: "+ToString(size));
+
+  assertme(  result == NULL || result -> getByteSize() != size,
+             "RsType::checkSubtypeRecursive - result == NULL || result -> getByteSize() != size",
+             "",ToString(size));
+  assert( result == NULL || result -> getByteSize() != size );
+  return false;
 }
 
 bool RsType::isConsistentWith( const RsType &other ) const {
@@ -217,14 +218,14 @@ bool  RsArrayType::isValidOffset(size_t offset) const
 {
    // RuntimeSystem * rs = RuntimeSystem::instance();
     //rs->printMessage("        ... isValidOffset: offset >= getByteSize()   "+
-    //		     ToString(offset)+ " >= "+ToString(getByteSize()));
+    //         ToString(offset)+ " >= "+ToString(getByteSize()));
     if(offset >= getByteSize())
         return false;
 
     int inTypeOffset = offset % baseType->getByteSize();
 
     //rs->printMessage(" baseType->isValidOffset(inTypeOffset)==false   "+
-    //		     ToString( baseType->isValidOffset(inTypeOffset)));
+    //         ToString( baseType->isValidOffset(inTypeOffset)));
     return baseType->isValidOffset(inTypeOffset);
 }
 
@@ -325,8 +326,8 @@ int RsClassType::addMember(const std::string & name, RsType * type, size_t offse
         if (isunionType==false) {
         assertme(last.offset + last.type->getByteSize() <= offset,
                  "RsClassType::addMember - last.offset + last.type->getByteSize() <= offset",
-		 ToString(last.offset + last.type->getByteSize()),
-		 ToString(offset));
+     ToString(last.offset + last.type->getByteSize()),
+     ToString(offset));
         assert(last.offset + last.type->getByteSize() <= offset);
         }
     }
@@ -336,8 +337,8 @@ int RsClassType::addMember(const std::string & name, RsType * type, size_t offse
     // tps (09/09/2009) This test does not apply when the SgClassType is a union
     assertme(members.back().offset + members.back().type->getByteSize() <= byteSize,
              "RsClassType::addMember - members.back().offset + members.back().type->getByteSize() <= byteSize)",
-	     ToString(members.back().offset + members.back().type->getByteSize() ),
-	     ToString(byteSize));
+       ToString(members.back().offset + members.back().type->getByteSize() ),
+       ToString(byteSize));
     assert(members.back().offset + members.back().type->getByteSize() <= byteSize);
 
     return members.size()-1;
@@ -401,7 +402,7 @@ int RsClassType::getSubtypeIdAt(size_t offset) const
 {
   // RuntimeSystem * rs = RuntimeSystem::instance();
   //rs->printMessage("      ....... isValidOffset(offset >=getByteSize) : "+
-  //		     ToString(offset)+"  >= "+ToString(getByteSize()));
+  //         ToString(offset)+"  >= "+ToString(getByteSize()));
   if( offset >= getByteSize())
     return -1;
 
@@ -421,12 +422,12 @@ std::vector<int> RsClassType::getSubtypeUnionIdAt(size_t offset) const
     std::vector<int> retvalvec;
     // RuntimeSystem * rs = RuntimeSystem::instance();
     // rs->printMessage("      ....... isValidOffset(offset >=getByteSize) : "+
-    //		     ToString(offset)+"  >= "+ToString(getByteSize()));
+    //         ToString(offset)+"  >= "+ToString(getByteSize()));
     if( offset >= getByteSize())
         return retvalvec;
 
     //rs->printMessage("      ....... iterate through members : "+
-    //		     ToString(members.size()));
+    //         ToString(members.size()));
 
     for(int i=members.size()-1 ;  i >= 0; i--)
     {
@@ -434,10 +435,10 @@ std::vector<int> RsClassType::getSubtypeUnionIdAt(size_t offset) const
         {
             // TODO register privates - this check fails if not all members are registered
             // and currently privates are not registered -> so this check fails when trying to access privates
-	    //rs->printMessage("      .... iterate member : "+ToString(i)+
-            //		   "! members[i].type->isValidOffset(offset - members[i].offset)  : "+
-            //		   " members[i].offset: "+ToString(members[i].offset)
-            //		   +" offset - members[i].offset : " + ToString(offset - members[i].offset));
+      //rs->printMessage("      .... iterate member : "+ToString(i)+
+            //       "! members[i].type->isValidOffset(offset - members[i].offset)  : "+
+            //       " members[i].offset: "+ToString(members[i].offset)
+            //       +" offset - members[i].offset : " + ToString(offset - members[i].offset));
             if (! members[i].type->isValidOffset(offset - members[i].offset) ) {
                 //rs->printMessage("     .. didnt work : "+ToString(i));
                 return retvalvec;
@@ -496,6 +497,7 @@ int RsClassType::getKnownSubtypesOverlappingRange(size_t range_start, size_t ran
 
     int span = range_end - range_start;
     if( span > 0 )
+    {
         BOOST_FOREACH( Member m, members ) {
             size_t m_start = m.offset;
             size_t m_end = m.offset + m.type->getByteSize();
@@ -503,6 +505,7 @@ int RsClassType::getKnownSubtypesOverlappingRange(size_t range_start, size_t ran
             if( m_start < range_end && m_end > range_start )
                 ++rv;
         }
+    }
 
     return rv;
 }

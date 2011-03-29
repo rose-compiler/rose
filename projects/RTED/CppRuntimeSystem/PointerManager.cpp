@@ -85,7 +85,7 @@ void PointerInfo::setTargetAddress(Location newAddr, bool doCheck)
     {
       // FIXME 2: This should really only check, and not merge
       assert(newMem->beginAddress() <= newAddr);
-      newMem->checkAndMergeMemType(diff(newAddr, newMem->beginAddress(), newMem->isDistributed()), baseType);
+      newMem->checkAndMergeMemType(newAddr, baseType);
     }
 
     // if old target is valid
@@ -152,13 +152,10 @@ void PointerManager::createPointer(Location baseAddr, RsType * type, bool distri
         createDereferentiableMem(baseAddr, at->getBaseType());
         registerPointerChange( baseAddr, baseAddr, nocheck, check );
     }
-    else
+    else if (RsPointerType * pt = dynamic_cast<RsPointerType*>(type))
     {
-      if (RsPointerType * pt = dynamic_cast<RsPointerType*>(type))
-      {
-          // If type is a pointer register it
-          createDereferentiableMem(baseAddr, pt->getBaseType());
-      }
+        // If type is a pointer register it
+        createDereferentiableMem(baseAddr, pt->getBaseType());
     }
 
     // If compound type, break down to basic types
@@ -322,6 +319,8 @@ bool PointerManager::checkForMemoryLeaks( PointerInfo* pi )
 
 bool PointerManager::checkForMemoryLeaks( Location address, size_t type_size, PointerInfo* pointer_to_blame )
 {
+    typedef TargetToPointerMap::const_iterator ConstIterator;
+
     bool found_leaks = false;
     MemoryManager * mm = RuntimeSystem::instance() -> getMemManager();
     MemoryType * mem = mm->findContainingMem( address, type_size );
@@ -329,11 +328,11 @@ bool PointerManager::checkForMemoryLeaks( Location address, size_t type_size, Po
     if(mem && (mem->howCreated() != akStack)) // no memory leaks on stack
     {
         // find other pointer still pointing to this region
-        TargetToPointerMapIter begin = targetRegionIterBegin( mem -> beginAddress() );
-        TargetToPointerMapIter end   = targetRegionIterBegin( mem -> endAddress() );
+        ConstIterator begin = targetRegionIterBegin( mem -> beginAddress() );
+        ConstIterator end   = targetRegionIterBegin( mem -> endAddress() );
 
         // if nothing found create violation
-        if(begin == end)
+        if (begin == end)
         {
             found_leaks = true;
             RuntimeSystem * rs = RuntimeSystem::instance();
@@ -361,6 +360,7 @@ void PointerManager::checkIfPointerNULL( void* pointer)
   }
 }
 
+#if OBSOLETE_CODE
 void PointerManager::checkPointerDereference( Location src, Location deref_addr)
 {
     MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
@@ -372,30 +372,35 @@ void PointerManager::checkPointerDereference( Location src, Location deref_addr)
 
     mm->checkIfSameChunk(pi->getTargetAddress(),deref_addr,pi->getBaseType());
 }
+#endif /* OBSOLETE_CODE */
 
 void PointerManager::invalidatePointerToRegion(MemoryType& mt)
 {
     typedef TargetToPointerMap::iterator Iter;
 
-    const Iter aa = targetToPointerMap.lower_bound(mt.beginAddress());
-    const Iter zz = targetToPointerMap.upper_bound(mt.lastValidAddress());
-    Location   limit = mt.endAddress();
-    Location   nullLoc = nullAddr();
-    const bool distr = mt.isDistributed();
+    const Address lb = mt.beginAddress();
+    const Address ub = mt.lastValidAddress();
+    const Iter    aa = targetToPointerMap.lower_bound(lb);
+    const Iter    zz = targetToPointerMap.upper_bound(ub);
+    Location      limit = mt.endAddress();
+    Location      nullLoc = nullAddr();
+    const bool    distr = mt.isDistributed();
 
     for(Iter i = aa; i != zz; ++i)
     {
+        if (!distr && aa->first.thread_id != limit.thread_id) continue;
+
         PointerInfo * pi = i->second;
 
         // assert that the object/value pointed does not cross the
         //   memory region boundary.
-        assert(pi->getTargetAddress() <= sub(limit, pi->getBaseType()->getByteSize(), distr));
+        assert(add(pi->getTargetAddress(), pi->getBaseType()->getByteSize(), distr) <= limit);
 
         pi->setTargetAddress( nullLoc );
+        targetToPointerMap.erase(i);
+
         insert(targetToPointerMap, TargetToPointerMap::value_type(nullLoc, pi));
     }
-
-    targetToPointerMap.erase(aa, zz);
 }
 
 
@@ -425,12 +430,14 @@ PointerManager::PointerSetIter PointerManager::sourceRegionIter(Location sourceA
     return pointerInfoSet.lower_bound(&dummy);
 }
 
-PointerManager::TargetToPointerMapIter PointerManager::targetRegionIterBegin(Location targetAddr)
+PointerManager::TargetToPointerMap::const_iterator
+PointerManager::targetRegionIterBegin(Location targetAddr) const
 {
     return targetToPointerMap.lower_bound(targetAddr);
 }
 
-PointerManager::TargetToPointerMapIter PointerManager::targetRegionIterEnd (Location targetAddr)
+PointerManager::TargetToPointerMap::const_iterator
+PointerManager::targetRegionIterEnd(Location targetAddr) const
 {
     return targetToPointerMap.upper_bound(targetAddr);
 }

@@ -5,7 +5,9 @@ RuntimeSystemlib_LTLIBRARIES = libCppRuntimeSystem.la
 
 SUBDIRS = DebuggerQt
 
-INCLUDES = .  $(ROSE_INCLUDES)
+INCLUDES = . ..
+
+# $(ROSE_INCLUDES)
 
 libCppRuntimeSystem_la_SOURCES = CppRuntimeSystem.cpp \
                                  FileManager.cpp \

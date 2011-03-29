@@ -48,7 +48,7 @@ void rted_Checkpoint(rted_SourceInfo si);
 void rted_CreateHeapArr( rted_TypeDesc   td,
                          rted_Address    address,
                          size_t          totalsize,
-                         size_t          elemsize,
+                         int             initialized,
                          int             distributed,
                          const size_t*   dimDescr,
                          const char*     name,
@@ -56,7 +56,6 @@ void rted_CreateHeapArr( rted_TypeDesc   td,
                          const char*     class_name,
                          rted_SourceInfo si
                        );
-
 
 void rted_CreateHeapPtr( rted_TypeDesc   td,
                          rted_Address    address,

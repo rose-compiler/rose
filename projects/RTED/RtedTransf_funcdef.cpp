@@ -16,21 +16,29 @@ using namespace SageBuilder;
 
 void
 RtedTransformation::insertVariableCreateInitForParams( SgFunctionDefinition* fndef) {
-
     SgBasicBlock* body = fndef->get_body();
     ROSE_ASSERT( body);
 
-    SgInitializedNamePtrList names
-      = fndef->get_declaration()->get_parameterList()->get_args();
+    SgInitializedNamePtrList names = fndef->get_declaration()->get_parameterList()->get_args();
 
-    BOOST_FOREACH( SgInitializedName* param, names) {
-        if( isSgReferenceType( param -> get_type() ))
-            // reference variables don't allocate new memory
-            // if we call createVariable the RTS will think it's a double
-            // allocation fault
-            continue;
+    BOOST_FOREACH( SgInitializedName* param, names)
+    {
+      SgType* initType = param->get_type();
 
-        body->prepend_statement( buildVariableCreateCallStmt(param, true) );
+      // nov2010 code:
+      // reference variables don't allocate new memory
+      // if we call createVariable the RTS will think it's a double
+      // allocation fault
+
+      // \pp we skip array types because they will be handled elsewhere
+      // \todo not sure if this is correct here, b/c arrays would decay
+      //       to pointers anyway. However, this decay is not represented
+      //       in the nov2010 code, thus we skip these initializations
+      //       here.
+      if ( isSgReferenceType(initType) || isSgArrayType(skip_ModifierType(initType)) )
+        continue;
+
+      body->prepend_statement( buildVariableCreateCallStmt(param, true) );
     }
 }
 

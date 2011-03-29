@@ -13,7 +13,7 @@
 #include "CppRuntimeSystem/rted_iface_structs.h"
 #include "CppRuntimeSystem/rted_typedefs.h"
 
-#if WITH_UPC
+#ifdef WITH_UPC
 #define RUNON_UPC 1
 #else  /* WITH_UPC */
 #define RUNON_UPC 0
@@ -121,7 +121,14 @@ bool traverseAllChildrenAndFind(SgInitializedName* initName, SgStatement* stmt);
 ///         conversion to a SgBasicBlock node.
 SgBasicBlock& requiresParentIsBasicBlock(SgStatement& stmt);
 
+/// \brief returns true if type is a UPC distributed array type
+bool isUpcDistributedArray(const SgType* t);
 
+/// appends the classname
+void appendClassName( SgExprListExp* arg_list, SgType* type );
+
+/// appends a boolean value
+void appendBool( SgExprListExp* arg_list, bool b );
 
 //
 // helper functions to insert rted checks
@@ -395,8 +402,8 @@ public:
    // Function that inserts call to array : runtimeSystem->callArray
    void insertArrayCreateCall(SgVarRefExp* n, RtedArray* value);
    void insertArrayCreateCall(SgInitializedName* initName,  RtedArray* value);
-   void insertArrayCreateCall(SgStatement* stmt,SgInitializedName* initName,  SgVarRefExp* varRef, RtedArray* value);
-   SgStatement* buildArrayCreateCall(SgInitializedName* initName, SgVarRefExp* varRef, RtedArray* array,SgStatement* stmt);
+   void insertArrayCreateCall(SgStatement* stmt, SgInitializedName* const initName, SgExpression* const srcexp, RtedArray* const value);
+   SgStatement* buildArrayCreateCall(SgInitializedName* initName, SgExpression* src_exp, RtedArray* array, SgStatement* stmt);
 
    void insertArrayAccessCall(SgPntrArrRefExp* arrayExp, RtedArray* value);
    void insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefExp* arrayExp, RtedArray* array);
@@ -429,8 +436,8 @@ private:
    void insertCreateObjectCall( RtedClassDefinition* cdef );
    void insertVariableCreateCall(SgInitializedName* initName);
    bool isVarInCreatedVariables(SgInitializedName* n);
-   void insertInitializeVariable(SgInitializedName*, SgExpression*, AllocKind);
-   SgExpression* buildVariableInitCallExpr(SgInitializedName*, SgExpression*, SgStatement*, AllocKind);
+   void insertInitializeVariable(SgInitializedName*, SgVarRefExp*, AllocKind);
+   SgExpression* buildVariableInitCallExpr(SgInitializedName*, SgVarRefExp*, SgStatement*, AllocKind);
    SgFunctionCallExp* buildVariableCreateCallExpr(SgInitializedName* name, bool forceinit=false);
    // TODO 2 djh: test docs
    /**
@@ -523,9 +530,7 @@ public:
    SgProject* parse(int argc, char** argv);
    void loadFunctionSymbols(SgProject* project);
 
-   SgAggregateInitializer* mkTypeInformation(SgInitializedName* initName);
-   SgAggregateInitializer* mkTypeInformation(SgInitializedName* initName, SgType* type);
-   SgAggregateInitializer* mkTypeInformation(SgType* type, bool resolve_class_names = true, bool array_to_pointer=false);
+   SgAggregateInitializer* mkTypeInformation(SgType* type, bool resolve_class_names, bool array_to_pointer);
 
    /// \brief appends the array dimensions to the argument list
    void appendDimensions(SgExprListExp* arg_list, RtedArray*);
@@ -545,7 +550,6 @@ public:
    /// \note  see also genAdjustedAddressOf for a description
    ///        on how the address is generated
    void appendAddress( SgExprListExp* arg_list, SgExpression* exp );
-   void appendClassName( SgExprListExp* arg_list, SgType* type );
 
    /**
     * Handle instrumenting function calls in for initializer statements, which may

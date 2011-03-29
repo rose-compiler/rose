@@ -42,7 +42,7 @@ struct rted_AddressDesc
 
 struct rted_Address
 {
-#if WITH_UPC
+#ifdef WITH_UPC
   rted_thread_id      thread_id; ///< owning thread
 #endif
 
@@ -117,7 +117,7 @@ rted_AddressDesc rted_address_of(rted_AddressDesc desc)
   return desc;
 }
 
-#if WITH_UPC
+#ifdef WITH_UPC
 
 /// \brief returns true, iff addr is owned by this thread
 static inline

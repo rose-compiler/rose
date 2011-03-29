@@ -70,10 +70,10 @@ void RtedTransformation::renameMain(SgFunctionDeclaration* sg_func)
   // grab symbol before any modifications.
   SgGlobal*                global_scope = isSgGlobal(sg_func->get_scope());
   SgName                   mainName = sg_func->get_name();
-	SgFunctionSymbol*        symbol = global_scope->lookup_function_symbol(mainName, sg_func->get_type());
+  SgFunctionSymbol*        symbol = global_scope->lookup_function_symbol(mainName, sg_func->get_type());
 
   global_scope->remove_symbol(symbol);
-	delete (symbol); // avoid dangling symbol!
+  delete (symbol); // avoid dangling symbol!
 
   // int main( int arc, char** argc)
   SgInitializedName*       arg1 = buildInitializedName("argc", buildIntType());

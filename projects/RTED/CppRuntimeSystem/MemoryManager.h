@@ -22,6 +22,85 @@ class RuntimeSystem;
 class VariablesType;
 class RsType;
 
+struct TypeTracker
+{
+  typedef const char*                   LocalPtr;
+  typedef std::map<LocalPtr, RsType*>   TypeData;
+  typedef std::vector<bool>             InitData;
+  typedef Address                       Location;
+
+  enum InitStatus { none, some, all };
+
+  explicit
+  TypeTracker(size_t sz)
+  : size(sz)
+  {}
+
+  virtual void         resize( size_t newsize ) = 0;
+  virtual TypeData&    typesof(Location) = 0;
+  virtual InitData&    initlistof(Location) = 0;
+  virtual Location     add(Location l, size_t) const = 0;
+  virtual bool         distributed() const = 0;
+  virtual InitStatus   initializationStatus() const = 0;
+  virtual TypeTracker* clone() const = 0;
+
+  size_t getSize() const { return size; }
+
+  protected:
+    size_t size;
+};
+
+struct LocalStorage : TypeTracker
+{
+  TypeData types;
+  InitData initialized;
+
+  explicit
+  LocalStorage(size_t sz)
+  : TypeTracker(sz), types(), initialized(sz, false)
+  {}
+
+  void assert_local(Location loc);
+  TypeData& typesof(Location loc);
+  InitData& initlistof(Location loc);
+  void resize( size_t newsize );
+  bool distributed() const;
+  Location add(Location l, size_t sz) const;
+  InitStatus initializationStatus() const;
+  LocalStorage* clone() const;
+};
+
+struct DistributedStorage : TypeTracker
+{
+  typedef std::vector<InitData> InitDataContainer;
+  typedef std::vector<TypeData> TypeDataContainer;
+
+  const int         nothreads;
+  TypeDataContainer types;
+  InitDataContainer initialized;
+
+  static
+  size_t thread_size(size_t sz, size_t no_threads)
+  {
+    // \pp \todo account for uneven blocksizes
+    return (sz / no_threads) + 1;
+  }
+
+  explicit
+  DistributedStorage(size_t sz)
+  : TypeTracker(sz), nothreads(rted_Threads()), types(nothreads), initialized(nothreads, InitData(thread_size(sz, nothreads), false))
+  {}
+
+  void assert_threadno(Location loc);
+  TypeData& typesof(Location loc);
+  InitData& initlistof(Location loc);
+  void resize( size_t );
+  bool distributed() const;
+  Location add(Location l, size_t sz) const;
+  InitStatus initializationStatus() const;
+  DistributedStorage* clone() const;
+};
+
 
 /**
  * Keeps track of information about memory, such as address, size, and known
@@ -33,13 +112,24 @@ class RsType;
 class MemoryType
 {
     public:
-        typedef Address                   Location;
-        typedef std::map<size_t, RsType*> TypeInfoMap;
-        typedef TypeInfoMap::iterator     TiIter;
+        typedef TypeTracker::Location Location;
+        typedef TypeTracker::LocalPtr LocalPtr;
+        typedef TypeTracker::TypeData TypeData;
+        typedef TypeData::iterator    TiIter;
 
-        typedef rted_AllocKind            AllocKind;
+        typedef rted_AllocKind        AllocKind;
 
         MemoryType(Location addr, size_t size, AllocKind kind, bool distr, const SourcePosition& pos);
+
+        MemoryType(const MemoryType& orig)
+        : startAddress(orig.startAddress), origin(orig.origin),
+          allocPos(orig.allocPos), tracker(orig.tracker->clone())
+        {}
+
+        ~MemoryType()
+        {
+          delete tracker;
+        }
 
         /// Checks if an address lies in this memory chunk
         bool containsAddress(Location addr) const;
@@ -48,13 +138,11 @@ class MemoryType
         /// Checks if this MemoryType overlaps another area
         bool overlapsMemArea(Location queryAddr, size_t querySize) const;
 
-
         /// Less operator uses startAdress
         bool operator< (const MemoryType & other) const;
 
-
         Location               beginAddress() const { return startAddress; }
-        size_t                 getSize()      const { return size; }
+        size_t                 getSize()      const { return tracker->getSize(); }
         const SourcePosition & getPos()       const { return allocPos; }
         AllocKind              howCreated()   const { return origin; }
 
@@ -67,10 +155,10 @@ class MemoryType
         void                   resize( size_t size );
 
         /// Tests if a part of memory is initialized
-        bool  isInitialized(size_t offsetFrom, size_t offsetTo) const;
+        bool  isInitialized(Location addr, size_t len) const;
 
         /// Initialized a part of memory
-        void  initialize   (size_t offsetFrom, size_t offsetTo) ;
+        void  initialize   (Location addr, size_t len) ;
 
         /// Returns "Initialized" "Not initialized" or "Partially initialized"
         /// only for display purposes
@@ -83,16 +171,12 @@ class MemoryType
         void print() const;
 
         template<typename T>
-        const T* readMemory(size_t offset) const
+        const T* readMemory(Location addr) const
         {
             // \pp \todo make fir for upc shared memory reads
+            assert(isInitialized(addr, sizeof(T)));
 
-            assert(offset<0 && offset+sizeof(T) >= size);
-            assert(isInitialized(offset,offset+sizeof(T)));
-
-            Location charAddress = startAddress; // + offset;
-
-            return static_cast<const T*>(charAddress);
+            return static_cast<const T*>(addr);
         }
 
         /// This functions checks and registers typed access to memory
@@ -101,13 +185,13 @@ class MemoryType
         /// and if its later on accessed with a different type, a violation is reported
         /// however it is possible to access the mem-region later with "containing" types
         /// f.e. first access with int-pointer, then with struct pointer, which as as first member an int
-        void registerMemType(size_t offset, RsType * type);
+        void registerMemType(Location addr, RsType * type);
 
         /**
          * As @see registerMemType, except that memory is not checked.  The type
          * at @c offset is forced to be @c type.
          */
-        void forceRegisterMemType(size_t offset, RsType* type );
+        void forceRegisterMemType(Location addr, RsType* type );
 
         /**
          * As @see registerMemType, except that memory is only checked and
@@ -115,18 +199,16 @@ class MemoryType
          *
          * @return  @c true @b iff a merge occurred.
          */
-        bool checkAndMergeMemType(size_t offset, RsType * type);
+        bool checkAndMergeMemType(Location addr, RsType * type);
 
 
         /// Returns the RsType, or the CONTAINING ARRAY type which is associated with that offset
         /// to distinguish between nested types (class with has members of other classes)
         /// an additional size parameter is needed
         /// if no TypeInfo is found, null is returned
-        RsType* getTypeAt(size_t offset, size_t size);
+        RsType* getTypeAt(Location addr, size_t size);
 
-        const TypeInfoMap & getTypeInfoMap() const { return typeInfo; }
-
-        bool isDistributed() const { return distributed; }
+        bool isDistributed() const { return tracker->distributed(); }
 
 
     private:
@@ -135,19 +217,16 @@ class MemoryType
 
         void insertType(Location offset, RsType * type);
 
-        Location            startAddress; ///< address where memory chunk starts
-        size_t              size;         ///< Size of allocation
-        std::vector<bool>   initialized;  ///< stores for every byte if it was initialized
-        AllocKind           origin;       ///< Where the memory is located and how the location was created
-        SourcePosition      allocPos;     ///< Position in source file where malloc/new was called
-        bool                distributed;  ///< Indicates whether the memory is distributed across threads
+        Location        startAddress; ///< address where memory chunk starts
+        // size_t          size;         ///< Size of allocation
+        AllocKind       origin;       ///< Where the memory is located and how the location was created
+        SourcePosition  allocPos;     ///< Position in source file where malloc/new was called
+        TypeTracker*    tracker;      ///< stores for every byte if it was initialized
+                                      ///  keeps track of types used to access memory locations.
 
         /// Determines all typeinfos which intersect the defined offset-range [from,to)
         /// "to" is exclusive i.e. typeInfos with startOffset==to are not included
-        TiIterPair getOverlappingTypeInfos(size_t from, size_t to);
-
-        /// A entry in this map means, that on offset <key> is stored the type <value>
-        TypeInfoMap typeInfo;
+        TiIterPair getOverlappingTypeInfos(TypeData& tmap, LocalPtr lptr, size_t len);
 
         /// \brief   Computes an @c RsCompoundType for offset, size pairs for
         ///          which a type could not be found. The compound type will
@@ -158,11 +237,11 @@ class MemoryType
         /// \return  a pointer to the newly constructed @c RsCompoundType. This
         ///          object will be on the heap and callers are responsible for
         ///          deleting it.
-        RsType* computeCompoundTypeAt(size_t offset, size_t size);
+        RsType* computeCompoundTypeAt(Location addr, size_t size);
 
         /// if the entry at (iter-1) overlaps with from, use (iter-1)
         ///   as the start of the range.
-        TiIter adjustPosOnOverlap(TiIter iter, size_t from);
+        TiIter adjustPosOnOverlap(TiIter first, TiIter iter, LocalPtr from);
 
         friend class MemoryManager;
 };
@@ -258,6 +337,8 @@ class MemoryManager
         template<typename T>
         const T* readMemory(Location address)
         {
+            // \pp \todo read only when address is local, otherwise
+            //           return NULL
             checkRead(address, sizeof(T));
             return reinterpret_cast<const T*>(address.local);
         }
@@ -281,7 +362,7 @@ class MemoryManager
         /// finds the memory region with next lower or equal address
         MemoryType * findPossibleMemMatch(Location addr);
 
-        void failNotSameChunk( RsType*, RsType*, size_t, size_t, MemoryType*, MemoryType*, RuntimeViolation::Type violation);
+        void failNotSameChunk( RsType*, RsType*, Location, Location, MemoryType*, MemoryType*, RuntimeViolation::Type violation);
 
 
         MemoryTypeSet mem;

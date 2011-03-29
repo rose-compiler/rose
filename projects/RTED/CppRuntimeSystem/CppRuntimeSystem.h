@@ -288,12 +288,13 @@ class RuntimeSystem
 
 #if OBSOLETE_CODE
         /// Convenience function which takes mangledName instead of sourceAddress
-        /// void registerPointerChange( const std::string & mangledName, Address targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
-#endif /* OBSOLETE_CODE */
+        void registerPointerChange( const std::string & mangledName, Address targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
 
         /// Checks if two addresses lie in the same "typed chunk"
         /// equivalent to the check which is done on registerPointerChange
         void checkPointerDereference( Address src, AddressDesc src_desc, Address derefed_address, AddressDesc derefed_desc );
+#endif /* OBSOLETE_CODE */
+
         void checkIfThisisNULL(void* thisExp);
 
 

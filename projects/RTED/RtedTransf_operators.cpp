@@ -20,7 +20,7 @@ void RtedTransformation::insert_pointer_change( SgExpression* exp ) {
     SgExpression*  operand = u_op ? u_op -> get_operand() : b_op -> get_lhs_operand();
     SgExprListExp* mp_args = buildExprListExp();
 
-    appendExpression( mp_args, ctorTypeDesc(mkTypeInformation(NULL, operand -> get_type())) );
+    appendExpression( mp_args, ctorTypeDesc(mkTypeInformation(operand -> get_type(), false, false)) );
     appendAddress( mp_args, operand );
     appendClassName( mp_args, operand -> get_type() );
     appendFileInfo( mp_args, stmt->get_scope(), exp -> get_file_info() );

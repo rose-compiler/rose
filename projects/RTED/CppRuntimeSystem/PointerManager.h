@@ -99,11 +99,14 @@ class PointerManager
         /// except when no pointer was found at this address it creates a new one with the given baseType
         void registerPointerChange( Location sourceAddress, Location targetAddress, RsType * baseType, bool checks, bool checkMemLeaks);
 
+#if OBSOLETE_CODE
         /// Behaves like registerPointerChange(sourceAddress,deref_address,true), but after the
         /// function the same targetAddress is registered for the pointer,
         /// Example: *(p++)  call registerPointerChange()
         ///          *(p+1)  call checkPointerDereference()
         void checkPointerDereference( Location sourceAddress, Location derefed_address );
+#endif /* OBSOLETE_CODE */
+
         void checkIfPointerNULL( void* pointer);
 
         /// Invalidates all "Pointer" i.e. dereferentiable memory regions
@@ -120,15 +123,14 @@ class PointerManager
         PointerSetIter sourceRegionIter(Location sourceAddr);
 
 
-        typedef std::multimap<Location,PointerInfo* > TargetToPointerMap;
-        typedef TargetToPointerMap::const_iterator TargetToPointerMapIter;
+        typedef std::multimap<Location, PointerInfo* > TargetToPointerMap;
 
         /// Use this to get pointerInfos which have targetAddr in a specific region
         /// to iterate over region a1 until a2 (where a2 is exclusive!) use
         /// for(TargetToPointerMapIter i = targetRegionIterBegin(a1); i!= targetRegionIterEnd(a2); ++i)
         ///     PointerInfo * info = i->second; (i->first is the targetAddr)
-        TargetToPointerMapIter targetRegionIterBegin(Location targetAddr);
-        TargetToPointerMapIter targetRegionIterEnd (Location targetAddr);
+        TargetToPointerMap::const_iterator targetRegionIterBegin(Location targetAddr) const;
+        TargetToPointerMap::const_iterator targetRegionIterEnd(Location targetAddr) const;
 
 
         const PointerSet & getPointerSet() const { return pointerInfoSet; }

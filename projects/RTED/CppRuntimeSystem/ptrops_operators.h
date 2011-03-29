@@ -88,6 +88,7 @@ Address add(Address l, long ofs, bool distributed)
   return l;
 }
 
+/*
 /// \brief   subtracts ofs bytes from the address
 /// \details see comments on add
 static inline
@@ -111,6 +112,7 @@ long diff(Address lhs, Address rhs, bool distributed)
 
   return ofs;
 }
+*/
 
 inline
 std::ostream& operator<<(std::ostream& s, const Address& obj)
@@ -119,7 +121,7 @@ std::ostream& operator<<(std::ostream& s, const Address& obj)
 
   s << addr;
 
-#if WITH_UPC
+#ifdef WITH_UPC
   s << " @" << obj.thread_id;
 
   if (rted_isLocal(obj)) s << " (local)";

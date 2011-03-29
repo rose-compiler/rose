@@ -535,6 +535,8 @@ void snd_InitVariable( rted_TypeDesc    td,
                        rted_SourceInfo  si
                      )
 {
+  printf(" sndvar from %i @ %lu\n", MYTHREAD, si.src_line);
+
   // other threads can only deref shared addresses;
   //   \todo the current impl might fail for shared pointers that are converted
   //         to local pointers.

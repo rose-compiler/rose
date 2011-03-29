@@ -59,6 +59,8 @@ SgUpcBarrierStatement* buildUpcBarrierStatement()
 
 typedef SgUpcLocalsizeofExpression SgUpcLocalsizeofOp;
 
+#if NOTUSED
+
 static
 SgUpcLocalsizeofOp* buildUpcLocalsizeofOp(SgExpression* exp)
 {
@@ -71,6 +73,8 @@ SgUpcLocalsizeofOp* buildUpcLocalsizeofOp(SgExpression* exp)
 
   return lsizeof;
 }
+
+#endif /* NOTUSED */
 
 SgStatement* getSurroundingStatement(SgExpression* n)
 {
@@ -230,13 +234,28 @@ RtedTransformation::mkAddressDesc(AddressDesc desc) const
   return genAggregateInitializer(initexpr, roseAddressDesc());
 }
 
-static
-bool upcSharedFlag(const SgModifierType& n)
+enum UpcSharedKind
 {
+  usNonshared = 0,
+  usShared = 1,
+  usDistributed = 2
+};
+
+static
+UpcSharedKind upcSharedFlag(const SgModifierType& n)
+{
+  UpcSharedKind               res = usNonshared;
   const SgTypeModifier&       modifier = n.get_typeModifier();
   const SgUPC_AccessModifier& upcModifier = modifier.get_upcModifier();
 
-  return upcModifier.get_isShared();
+  if (upcModifier.get_isShared())
+  {
+    const long layout = upcModifier.get_layout();
+
+    res = (layout >= 0 ? usDistributed : usShared);
+  }
+
+  return res;
 }
 
 struct SharedQueryHandler
@@ -253,7 +272,7 @@ struct SharedQueryHandler
 
   void handle(const SgModifierType& n)
   {
-    res = res || upcSharedFlag(n);
+    res = res || (upcSharedFlag(n) != usNonshared);
     base = n.get_base_type();
   }
 
@@ -748,7 +767,73 @@ SgType* skip_ArrPtrType(SgType* t)
   return t;
 }
 
+struct UpcArrayDistributionHandler
+{
+  typedef std::pair<const SgType*, bool> ResultType;
 
+  UpcArrayDistributionHandler()
+  : res(NULL, false)
+  {}
+
+  /// error case
+  void handle(const SgNode&) { assert(false); }
+
+  /// base case
+  void handle(const SgType& n)
+  {
+    std::cerr << typeid(n).name() << std::endl;
+  }
+
+  void handle(const SgArrayType& n)
+  {
+    res.first = n.get_base_type();
+    std::cerr << typeid(n).name() << std::endl;
+  }
+
+  void handle(const SgTypedefType& n)
+  {
+    res.first = n.get_base_type();
+    std::cerr << typeid(n).name() << std::endl;
+  }
+
+  void handle(const SgModifierType& n)
+  {
+    res.first = n.get_base_type();
+    res.second = (upcSharedFlag(n) == usDistributed);
+    std::cerr << typeid(n).name() << std::endl;
+  }
+
+  operator ResultType() { return res; }
+
+  private:
+    ResultType res;
+};
+
+bool isUpcDistributedArray(const SgType* t)
+{
+  assert( isSgArrayType(t) );
+
+  UpcArrayDistributionHandler::ResultType res(t, false);
+
+  do
+  {
+    res = ez::visitSgNode(UpcArrayDistributionHandler(), res.first);
+  } while (res.first && !res.second);
+
+  return res.second;
+}
+
+
+/// \brief   determines the number of indirections to a concrete type
+///          and the shared qualifiers on the way.
+/// \example int                a      ;  /* indirections, shared_mask: 0, 0 */
+///          int*               b      ;  /* indirections, shared_mask: 1, 0 */
+///          shared int         c      ;  /* indirections, shared_mask: 0, 1 */
+///          shared int*        d      ;  /* indirections, shared_mask: 1, 2 */
+///          shared int* shared e      ;  /* indirections, shared_mask: 1, 3 */
+///          shared int         f   [1];  /* indirections, shared_mask: 1, 3 */
+///          shared int         (*g)[1];  /* indirections, shared_mask: 2, 6 */
+///          shared int         *h  [1];  /* indirections, shared_mask: 2, 4 */
 struct IndirectionHandler
 {
     typedef std::pair<SgType*, AddressDesc> ResultType;
@@ -757,17 +842,31 @@ struct IndirectionHandler
     : res(NULL, rted_obj())
     {}
 
+    // extends the shared bit from the lower level
+    //   e.g., shared int x[1] is stored in shared space
+    //         so the shared bit is extended from the base type (int)
+    //         to the array type.
+    ResultType inherit_shared_bit(ResultType r)
+    {
+      assert((r.second.shared_mask & 1) == 0);
+
+      const size_t shared_mask = (r.second.shared_mask & 2) >> 1;
+
+      r.second.shared_mask |= shared_mask;
+      return r;
+    }
+
     template <class SageNode>
     void add_indirection(SageNode& n)
     {
-      res.first = n.get_base_type();
-      ++res.second.levels;
+      res = ez::visitSgNode(IndirectionHandler(), n.get_base_type());
+      res.second = rted_address_of(res.second);
     }
 
     template <class SageNode>
     void skip(SageNode& n)
     {
-      res.first = n.get_base_type();
+      res = ez::visitSgNode(IndirectionHandler(), n.get_base_type());
     }
 
     void unexpected(SgNode& n)
@@ -780,14 +879,17 @@ struct IndirectionHandler
     void handle(SgNode& n) { unexpected(n); }
 
     /// base case
-    void handle(SgType& n)
-    {
-      res.first = &n;
-    }
+    void handle(SgType& n) { res.first = &n; }
 
     /// use base type
     void handle(SgPointerType& n) { add_indirection(n); }
-    void handle(SgArrayType& n)   { add_indirection(n); }
+
+    void handle(SgArrayType& n)
+    {
+      add_indirection(n);
+
+      res = inherit_shared_bit(res);
+    }
 
     void handle(SgReferenceType& n)
     {
@@ -801,84 +903,58 @@ struct IndirectionHandler
       skip(n);
     }
 
+    // \pp \todo do we need to handle pointer to members?
+
     /// extract UPC shared information
     void handle(SgModifierType& n)
     {
-      const bool sharedFlag = upcSharedFlag(n);
+      const bool sharedFlag = (upcSharedFlag(n) != usNonshared);
+
+      // \pp \note \todo the rted nov10 code does not skip over
+      //                 modifier types. That's likely a bug.
+      if (sharedFlag) skip(n);
 
       if (sharedFlag)
       {
-        const size_t mask_bit = (1 << res.second.levels);
+        ROSE_ASSERT((res.second.shared_mask & 1) == 0);
 
-        ROSE_ASSERT((res.second.shared_mask & mask_bit) == 0);
-        res.second.shared_mask |= mask_bit;
+        res.second.shared_mask |= 1;
       }
-
-      // \pp \note \todo
-      // the following conditional should (probably) be removed. It is here b/c
-      // the Nov 2010 RTED code did not skip modified types.
-      // to be: res.first = n.get_base_type();
-      res.first = sharedFlag ? n.get_base_type() : &n;
     }
 
-    SgType& type() const { return *res.first; }
-    ResultType result() const { return res; }
+    operator ResultType() const
+    {
+      assert(res.first != NULL);
+
+      return res;
+    }
 
   private:
-    std::pair<SgType*, AddressDesc> res;
+    ResultType res;
 };
 
 
 /// \brief  counts the number of indirection layers (i.e., Arrays, Pointers)
 ///         between a type and the first non indirect type.
-/// \return A type and the length of indirections
+/// \return the length of indirections and for UPC a description of shared
+///         storage properties
 static
 IndirectionHandler::ResultType
-indirections(SgType* base_type)
+indirections(SgType* t)
 {
-  IndirectionHandler ih = ez::visitSgNode(IndirectionHandler(), base_type);
-
-  while (base_type != &ih.type())
-  {
-    base_type = &ih.type();
-    ih = ez::visitSgNode(ih, base_type);
-  }
-
-  return ih.result();
+  return ez::visitSgNode(IndirectionHandler(), t);
 }
 
 
-SgAggregateInitializer* RtedTransformation::mkTypeInformation(SgInitializedName* initName)
-{
-    // \pp was: if ( !initName ) return;
-    ROSE_ASSERT(initName != NULL);
-
-    return mkTypeInformation( initName, initName -> get_type() );
-}
-
-SgAggregateInitializer* RtedTransformation::mkTypeInformation(SgInitializedName* initName, SgType* type)
-{
-  // arrays in parameters decay to pointers, so we shouldn't
-  // treat them as stack arrays
-  bool array_decay = (  initName
-                     && isSgFunctionParameterList( getSurroundingStatement( initName ))
-                     && type->class_name() == "SgArrayType"
-                     );
-
-  return mkTypeInformation( type, false, array_decay );
-}
-
-SgAggregateInitializer* RtedTransformation::mkTypeInformation( SgType* type,
-                                                               bool resolve_class_names,
-                                                               bool array_to_pointer
-                                                             )
+SgAggregateInitializer*
+RtedTransformation::mkTypeInformation(SgType* type, bool resolve_class_names, bool array_to_pointer)
 {
   ROSE_ASSERT(type);
 
-  IndirectionHandler::ResultType indir_desc = indirections(type);
-  SgType*                        base_type = indir_desc.first;
-  SgType*                        unmod_type = skip_ModifierType(type);
-  AddressDesc                    addrDesc = indir_desc.second;
+  IndirectionHandler::ResultType indir_desc  = indirections(type);
+  SgType*                        base_type   = indir_desc.first;
+  SgType*                        unmod_type  = skip_ModifierType(type);
+  AddressDesc                    addrDesc    = indir_desc.second;
   std::string                    type_string = unmod_type->class_name();
   std::string                    base_type_string;
 
@@ -906,8 +982,8 @@ SgAggregateInitializer* RtedTransformation::mkTypeInformation( SgType* type,
 
   SgExprListExp*          initexpr = buildExprListExp();
 
-  appendExpression( initexpr, buildStringVal( type_string ));
-  appendExpression( initexpr, buildStringVal( base_type_string ));
+  appendExpression( initexpr, buildStringVal(type_string) );
+  appendExpression( initexpr, buildStringVal(base_type_string) );
   appendExpression( initexpr, mkAddressDesc(addrDesc) );
 
   // \note when the typedesc object is added to an argument list, it requires
@@ -1242,7 +1318,7 @@ void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* ex
 }
 
 
-void RtedTransformation::appendClassName( SgExprListExp* arg_list, SgType* type )
+void appendClassName( SgExprListExp* arg_list, SgType* type )
 {
     // \pp \todo skip SgModifier types (and typedefs)
     SgType* basetype = skip_ArrPtrType(type);
@@ -1262,6 +1338,12 @@ void RtedTransformation::appendClassName( SgExprListExp* arg_list, SgType* type 
       appendExpression( arg_list, buildStringVal( "" ));
     }
 }
+
+void appendBool(SgExprListExp* arglist, bool val)
+{
+  appendExpression(arglist, buildIntVal(val));
+}
+
 
 void
 RtedTransformation::prependPseudoForInitializerExpression(SgExpression* exp, SgStatement* for_stmt)

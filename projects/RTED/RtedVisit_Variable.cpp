@@ -94,13 +94,17 @@ namespace rted
     {
       if (isSgClassDefinition(n.get_parent())) return;
 
-      const SgInitializedNamePtrList& vars = n.get_variables();
+      const SgInitializedNamePtrList&          vars = n.get_variables();
+      SgInitializedNamePtrList::const_iterator zz = vars.end();
 
-      for (SgInitializedNamePtrList::const_iterator it = vars.begin();it!=vars.end();++it)
+      for (SgInitializedNamePtrList::const_iterator it = vars.begin(); it != zz; ++it)
       {
            SgInitializedName* initName = *it;
-           ROSE_ASSERT(initName);
-           if( isSgReferenceType( initName -> get_type() ))
+           SgType*            initType = initName -> get_type();
+
+           // references are skipped by the nov2010 implementation
+           // array types are skipped because they are handled by createHeapArr
+           if ( isSgReferenceType( initType ) || isSgArrayType(skip_ModifierType(initType)) )
              continue;
 
            vt.transf->variable_declarations.push_back(initName);

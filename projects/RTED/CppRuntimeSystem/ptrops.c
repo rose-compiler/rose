@@ -175,7 +175,6 @@ rted_Address rted_deref(rted_Address addr, rted_AddressDesc desc)
   enum { privPriv = 0, privShar = 2, sharShar = 3 };
 
   // either a shared address, or the thread_id belongs to this thread
-  printf(" %i shared = %lu\n", MYTHREAD, desc.shared_mask);
   assert((desc.shared_mask & 1) || rted_isLocal(addr));
 
   switch (desc.shared_mask & sharShar)
@@ -196,8 +195,8 @@ rted_Address rted_deref(rted_Address addr, rted_AddressDesc desc)
     case sharShar:
       {
         // create a shared pointer from the address abstraction
-        //  so that we can dereference it regardless of the address'
-        //  actual location
+        //   so that we can dereference it regardless of the address'
+        //   actual location
         addr = rted_AddrSh(*rted_asSharedDoublePtr(addr));
         break;
       }

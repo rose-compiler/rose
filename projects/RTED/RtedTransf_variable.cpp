@@ -81,7 +81,7 @@ void RtedTransformation::insertCreateObjectCall(RtedClassDefinition* rcdef) {
             // build arguments to roseCreateObject
             SgExprListExp* arg_list = buildExprListExp();
 
-            appendExpression( arg_list, ctorTypeDesc(mkTypeInformation(type)) );
+            appendExpression( arg_list, ctorTypeDesc(mkTypeInformation(type, true, false)) );
 
             appendAddressAndSize( arg_list,
                                   Whole,
@@ -210,46 +210,43 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName)
                 prependPseudoForInitializerExpression(buildVar, for_loop);
         } else if (isSgIfStmt(scope)) {
                 SgExprStatement* exprStmt = buildVariableCreateCallStmt(initName);
+                ROSE_ASSERT(exprStmt);
 
-                if (exprStmt) {
-                        SgStatement* trueb = isSgIfStmt(scope)->get_true_body();
-                        SgStatement* falseb = isSgIfStmt(scope)->get_false_body();
-                        bool partOfTrue = traverseAllChildrenAndFind(initName, trueb);
-                        bool partOfFalse = traverseAllChildrenAndFind(initName, falseb);
-                        bool partOfCondition = (!partOfTrue && !partOfFalse);
+                SgStatement* trueb = isSgIfStmt(scope)->get_true_body();
+                SgStatement* falseb = isSgIfStmt(scope)->get_false_body();
+                bool partOfTrue = traverseAllChildrenAndFind(initName, trueb);
+                bool partOfFalse = traverseAllChildrenAndFind(initName, falseb);
+                bool partOfCondition = (!partOfTrue && !partOfFalse);
 
-                        if (trueb && (partOfTrue || partOfCondition)) {
-                                if (!isSgBasicBlock(trueb)) {
-                                        removeStatement(trueb);
-                                        SgBasicBlock* bb = buildBasicBlock();
-                                        bb->set_parent(isSgIfStmt(scope));
-                                        isSgIfStmt(scope)->set_true_body(bb);
-                                        bb->prepend_statement(trueb);
-                                        trueb = bb;
-                                }
-                                prependStatement(exprStmt, isSgScopeStatement(trueb));
+                if (trueb && (partOfTrue || partOfCondition)) {
+                        if (!isSgBasicBlock(trueb)) {
+                                removeStatement(trueb);
+                                SgBasicBlock* bb = buildBasicBlock();
+                                bb->set_parent(isSgIfStmt(scope));
+                                isSgIfStmt(scope)->set_true_body(bb);
+                                bb->prepend_statement(trueb);
+                                trueb = bb;
                         }
-                        if (falseb && (partOfFalse || partOfCondition)) {
-                                if (!isSgBasicBlock(falseb)) {
-                                        removeStatement(falseb);
-                                        SgBasicBlock* bb = buildBasicBlock();
-                                        bb->set_parent(isSgIfStmt(scope));
-                                        isSgIfStmt(scope)->set_false_body(bb);
-                                        bb->prepend_statement(falseb);
-                                        falseb = bb;
-                                }
-                                prependStatement(exprStmt, isSgScopeStatement(falseb));
-                        } else if (partOfCondition) {
-                                // create false statement, this is sometimes needed
+                        prependStatement(exprStmt, isSgScopeStatement(trueb));
+                }
+                if (falseb && (partOfFalse || partOfCondition)) {
+                        if (!isSgBasicBlock(falseb)) {
+                                removeStatement(falseb);
                                 SgBasicBlock* bb = buildBasicBlock();
                                 bb->set_parent(isSgIfStmt(scope));
                                 isSgIfStmt(scope)->set_false_body(bb);
+                                bb->prepend_statement(falseb);
                                 falseb = bb;
-                                prependStatement(exprStmt, isSgScopeStatement(falseb));
                         }
+                        prependStatement(exprStmt, isSgScopeStatement(falseb));
+                } else if (partOfCondition) {
+                        // create false statement, this is sometimes needed
+                        SgBasicBlock* bb = buildBasicBlock();
+                        bb->set_parent(isSgIfStmt(scope));
+                        isSgIfStmt(scope)->set_false_body(bb);
+                        falseb = bb;
+                        prependStatement(exprStmt, isSgScopeStatement(falseb));
                 }
-
-//              } else if (isNormalScope(scope) || !isSgIfStmt(scope)) {
         } else if (isNormalScope(scope)) {
                 // insert new stmt (exprStmt) after (old) stmt
                 SgExprStatement* exprStmt = buildVariableCreateCallStmt(initName);
@@ -310,6 +307,7 @@ RtedTransformation::buildVariableCreateCallExpr(SgInitializedName* initName, boo
 
         string debug_name = initName -> get_name();
 
+        // \pp \todo genVarRef seems to leek
         return buildVariableCreateCallExpr(genVarRef(initName), debug_name, initb);
 }
 
@@ -318,12 +316,19 @@ RtedTransformation::buildVariableCreateCallExpr(SgVarRefExp* var_ref, const stri
 {
         ROSE_ASSERT( var_ref );
 
+        SgType*            varType = var_ref -> get_type();
+
+        // variables are handled by buildArrayCreateCall
+        ROSE_ASSERT ( "SgArrayType" != skip_ModifierType(varType)->class_name() );
+
+        SgInitializedName* initName = var_ref -> get_symbol() -> get_declaration();
+
         // build the function call : runtimeSystem-->createArray(params); ---------------------------
         SgExprListExp*     arg_list = buildExprListExp();
 
-        appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(var_ref -> get_type())) );
 
-        SgInitializedName* initName = var_ref -> get_symbol() -> get_declaration();
+        appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(varType, true, false)) );
+
         SgScopeStatement*  scope = get_scope(initName);
         ROSE_ASSERT( scope );
 
@@ -331,14 +336,13 @@ RtedTransformation::buildVariableCreateCallExpr(SgVarRefExp* var_ref, const stri
 
         SgExpression*  callName = buildStringVal(debug_name);
         SgExpression*  callNameExp = buildStringVal(debug_name);
-        const bool     var_init = initb && isFileIOVariable(var_ref->get_type());
-        SgExpression*  initBool = buildIntVal(var_init ? 1 : 0);
+        const bool     var_init = initb && isFileIOVariable(varType);
 
         appendExpression(arg_list, callName);
         appendExpression(arg_list, callNameExp);
-        appendExpression(arg_list, initBool);
+        appendBool      (arg_list, var_init);
 
-        appendClassName(arg_list, var_ref->get_type());
+        appendClassName(arg_list, varType);
         appendFileInfo(arg_list, scope, var_ref->get_file_info());
 
         ROSE_ASSERT(symbols.roseCreateVariable);
@@ -352,10 +356,10 @@ SgExprStatement*
 RtedTransformation::buildVariableCreateCallStmt(SgInitializedName* initName, bool isParam)
 {
         SgFunctionCallExp* fn_call = buildVariableCreateCallExpr(initName, isParam);
-        if (fn_call == NULL) return NULL;
+        ROSE_ASSERT(fn_call);
 
-        SgExprStatement* exprStmt = buildExprStatement(fn_call);
-        string           comment = "RS : Create Variable, paramaters : (name, mangl_name, type, basetype, address, sizeof, initialized, fileOpen, classname, filename, linenr, linenrTransformed)";
+        SgExprStatement*   exprStmt = buildExprStatement(fn_call);
+        string             comment = "RS : Create Variable, paramaters : (name, mangl_name, type, basetype, address, sizeof, initialized, fileOpen, classname, filename, linenr, linenrTransformed)";
 
         attachComment(exprStmt, "", PreprocessingInfo::before);
         attachComment(exprStmt, comment, PreprocessingInfo::before);
@@ -366,7 +370,7 @@ RtedTransformation::buildVariableCreateCallStmt(SgInitializedName* initName, boo
 
 SgExpression*
 RtedTransformation::buildVariableInitCallExpr( SgInitializedName* initName,
-                                               SgExpression* varRefE,
+                                               SgVarRefExp* varRefE,
                                                SgStatement* stmt,
                                                AllocKind allockind
                                              )
@@ -397,7 +401,7 @@ RtedTransformation::buildVariableInitCallExpr( SgInitializedName* initName,
                                                     && isSgPointerType(exp->get_type())
                                                     );
 
-        appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(NULL, exp -> get_type())) );
+        appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(exp -> get_type(), false, false)) );
         appendAddressAndSize(arg_list, Whole, scope, exp, NULL);
         appendExpression(arg_list, buildIntVal(is_pointer_change));
         appendExpression(arg_list, mkAllocKind(allockind));
@@ -412,9 +416,10 @@ RtedTransformation::buildVariableInitCallExpr( SgInitializedName* initName,
         return result;
 }
 
-void RtedTransformation::insertInitializeVariable(SgInitializedName* initName, SgExpression* varRefE, AllocKind allocKind)
+void RtedTransformation::insertInitializeVariable(SgInitializedName* initName, SgVarRefExp* varRefE, AllocKind allocKind)
 {
         ROSE_ASSERT(initName && varRefE);
+        ROSE_ASSERT(varRefE->get_parent()); // \pp \todo test if all varrefs are proper AST elements?
 
         SgStatement* stmt = NULL;
         if (varRefE->get_parent()) // we created a verRef for AssignInitializers which do not have a parent
@@ -744,6 +749,7 @@ void RtedTransformation::visit_isAssignInitializer(SgAssignInitializer* const as
         //      SgType* type = initName->get_type();
 
         // dont do this if the variable is global or an enum constant
+        // \pp why not for global variables
         if (isSgGlobal(initName->get_scope()) || isSgEnumDeclaration(initName->get_parent())) {
         } else {
                 SgVarRefExp* const varRef = buildVarRefExp(initName, scope);

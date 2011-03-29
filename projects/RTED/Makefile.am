@@ -593,6 +593,7 @@ runupc/%: rted_source/%.bin rted_source/%.expected-output
 				fi;\
 				echo -e '\n----------- Actual   Error ------------';\
 				cat $$RESULT;\
+				echo "$<" >>failure_list.txt; \
 			fi;\
 		else\
 			./$(filter rted_source/%.bin, $?) -n 4;\
@@ -812,6 +813,26 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/C++/uninitialized_variables/c_A_6_d_in \
 					  run/C++/uninitialized_variables/c_A_6_e_in \
 					  runupc/UPC/G_Uninit/c_G_4_a \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_a_D \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_a_F \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_a_I \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_a_L \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_a_S \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_b_I \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_b_F \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_b_L \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_b_D \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_b_S \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_c_F \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_c_I \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_c_S \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_c_D \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_c_L \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_d_F \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_d_I \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_d_S \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_d_D \
+					  runupc/UPC/C_Outofbnds/c_C_10_1_d_L \
 					  TheEnd_KNOWN_TO_FAIL
 
 
@@ -860,6 +881,16 @@ TEST_HAS_COMPILE_ERROR = runupc/UPC/G_Uninit/c_G_1_b_D \
                          runupc/UPC/G_Uninit/c_G_3_f_L \
                          runupc/UPC/G_Uninit/c_G_3_f_S \
                          runupc/UPC/G_Uninit/c_G_3_f_F \
+                         runupc/UPC/C_Outofbnds/c_C_10_2_c_F \
+                         runupc/UPC/C_Outofbnds/c_C_10_2_c_I \
+                         runupc/UPC/C_Outofbnds/c_C_10_2_c_L \
+                         runupc/UPC/C_Outofbnds/c_C_10_2_c_D \
+                         runupc/UPC/C_Outofbnds/c_C_10_2_c_S \
+                         runupc/UPC/C_Outofbnds/c_C_10_2_d_F \
+                         runupc/UPC/C_Outofbnds/c_C_10_2_d_I \
+                         runupc/UPC/C_Outofbnds/c_C_10_2_d_L \
+                         runupc/UPC/C_Outofbnds/c_C_10_2_d_D \
+                         runupc/UPC/C_Outofbnds/c_C_10_2_d_S \
                          TheEnd_COMPILE_ERROR
 
 $(TESTS_KNOWN_TO_FAIL):

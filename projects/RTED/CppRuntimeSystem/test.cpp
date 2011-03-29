@@ -877,7 +877,6 @@ void testMultidimensionalStackArrayAccess()
     CLEANUP
 }
 
-
 void testArrayAccess()
 {
     TEST_INIT("Testing Heap Array")
@@ -1154,8 +1153,8 @@ void test_memcpy_strict_overlap()
     TEST_INIT(  "Testing that memcpy complains about overlap for allocated "
                 "ranges, not merely for the copied ranges.")
 
-    char* s1;
-    char* s2 = "here is string 2";
+    const char* s1;
+    const char* s2 = "here is string 2";
 
 
     createMemory(rs,  memAddr(s2), 16 * sizeof( char ));
@@ -1271,14 +1270,13 @@ void testTypeSystemDetectNested()
     CHECKPOINT
     // Create Memory with first an A and then a B
     const Address ADDR = asAddr(42);
-    createMemory(rs, ADDR,sizeof(A)+sizeof(B));
+    createMemory(rs, ADDR, sizeof(A)+sizeof(B));
     MemoryType * mt = rs->getMemManager()->getMemoryType(ADDR);
-    mt->registerMemType(0,ts->getTypeInfo("A"));
+    mt->registerMemType(ADDR, ts->getTypeInfo("A"));
     CHECKPOINT
-    mt->registerMemType(sizeof(A),ts->getTypeInfo("B"));
+    mt->registerMemType(ADDR + sizeof(A), ts->getTypeInfo("B"));
     CHECKPOINT
-    mt->registerMemType(sizeof(A)+offsetof(A,a3),
-                          ts->getTypeInfo("SgTypeDouble"));
+    mt->registerMemType(ADDR + sizeof(A) + offsetof(A,a3), ts->getTypeInfo("SgTypeDouble"));
 
 
     //rs->setQtDebuggerEnabled(true);
@@ -1293,20 +1291,20 @@ void testTypeSystemDetectNested()
 
     CHECKPOINT
     //Access to padded area
-    try {mt->registerMemType(offsetof(A,a2)+1,ts->getTypeInfo("SgTypeChar")); }
+    try { mt->registerMemType(ADDR + offsetof(A,a2)+1,ts->getTypeInfo("SgTypeChar")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
     CHECKPOINT
     //Access to padded area
     //Wrong type
-    try {mt->registerMemType(0,ts->getTypeInfo("B")); }
+    try { mt->registerMemType(ADDR, ts->getTypeInfo("B")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
     CHECKPOINT
     //Access to padded area
     //Wrong basic type
-    mt->registerMemType(offsetof(A,a2),ts->getTypeInfo("SgTypeChar"));
-    try {mt->registerMemType(offsetof(A,a2),ts->getTypeInfo("SgTypeInt")); }
+    mt->registerMemType(ADDR + offsetof(A,a2), ts->getTypeInfo("SgTypeChar"));
+    try { mt->registerMemType(ADDR + offsetof(A,a2), ts->getTypeInfo("SgTypeInt")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
     rs->log() << "Type System Status after test" << endl;
@@ -1333,20 +1331,20 @@ void testTypeSystemMerge()
 
     rs -> checkpoint( SourcePosition() );
     const Address ADDR = asAddr(42);
-    createMemory(rs, ADDR,100);
+    createMemory(rs, ADDR, 100);
 
         MemoryType * mt = rs->getMemManager()->getMemoryType(ADDR);
         //first part in mem is a double
-        mt->registerMemType(0,ts->getTypeInfo("SgTypeDouble"));
+        mt->registerMemType(ADDR, ts->getTypeInfo("SgTypeDouble"));
 
         //then two ints are accessed
-        mt->registerMemType(sizeof(double)+offsetof(A,a1),ts->getTypeInfo("SgTypeInt"));
-        mt->registerMemType(sizeof(double)+offsetof(A,a2),ts->getTypeInfo("SgTypeInt") );
+        mt->registerMemType(ADDR + sizeof(double)+offsetof(A,a1),ts->getTypeInfo("SgTypeInt"));
+        mt->registerMemType(ADDR + sizeof(double)+offsetof(A,a2),ts->getTypeInfo("SgTypeInt") );
         //then the same location is accessed with an struct of two int -> has to merge
-        mt->registerMemType(sizeof(double),typeA);
+        mt->registerMemType(ADDR + sizeof(double),typeA);
 
         // because of struct access it is known that after the two ints a float follows -> access with int failes
-        try {mt->registerMemType(sizeof(double)+offsetof(A,a3),ts->getTypeInfo("SgTypeInt")); }
+        try { mt->registerMemType(ADDR + sizeof(double) + offsetof(A,a3), ts->getTypeInfo("SgTypeInt")); }
         TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
 
@@ -1383,8 +1381,8 @@ void testPartialTypeSystemArrayAccess() {
     //  ////[int]////[int]
     //  [  Typ  ]/////////
     MemoryType *mt = mm -> getMemoryType( Addr );
-    mt -> registerMemType( 0, typ );
-    mt -> registerMemType( el2_b_offset, ts -> getTypeInfo( "SgTypeInt" ));
+    mt -> registerMemType( Addr, typ );
+    mt -> registerMemType( Addr + el2_b_offset, ts -> getTypeInfo( "SgTypeInt" ));
 
     // Check array access of larger type.  So far we have no reason to complain:
     // we don't know the full type at 8..16, but the part we do know is
@@ -1425,18 +1423,18 @@ void testTypeSystemSubtypes() {
     rs -> createObject( asAddr(0x42), rs_sub );
     MemoryType* mt = mm -> findContainingMem( asAddr(0x42), 1 );
     assert( mt );
-    assert( rs_sub == mt -> getTypeAt( 0, mt -> getSize() ));
+    assert( rs_sub == mt -> getTypeAt( asAddr(0x42), mt -> getSize() ));
 
-    freeMemory(rs,  asAddr(0x42) );
+    freeMemory(rs, asAddr(0x42) );
 
     // same test, but we call createObject in the reverse order
     rs -> createObject( asAddr(0x42), rs_sub );
     rs -> createObject( asAddr(0x42), rs_base );
     mt = mm -> findContainingMem( asAddr(0x42), 1 );
     assert( mt );
-    assert( rs_sub == mt -> getTypeAt( 0, mt -> getSize() ));
+    assert( rs_sub == mt -> getTypeAt( asAddr(0x42), mt -> getSize() ));
 
-    freeMemory(rs,  asAddr(0x42) );
+    freeMemory(rs, asAddr(0x42) );
 
     CLEANUP
 }
@@ -1468,11 +1466,11 @@ void testTypeSystemNested() {
     rs -> createObject( asAddr(0x42), rs_composite );
     MemoryType* mt = mm -> findContainingMem( asAddr(0x42), 1 );
     assert( mt );
-    assert( rs_composite == mt -> getTypeAt( 0, mt -> getSize() ));
+    assert( rs_composite == mt -> getTypeAt( asAddr(0x42), mt -> getSize() ));
 
     rs -> createObject( asAddr(0x42) + offsetof( Composite, y ), rs_base );
     assert( mt );
-    assert( rs_composite == mt -> getTypeAt( 0, mt -> getSize() ));
+    assert( rs_composite == mt -> getTypeAt( asAddr(0x42), mt -> getSize() ));
 
     freeMemory(rs,  asAddr(0x42) );
 
@@ -1565,9 +1563,9 @@ void testTypeConsistencyChecking() {
 
 extern "C"
 {
-  // int upc_main(int, char**, char**)
-  int main(int, char**, char**)
+  int upc_main(int, char**, char**)
   {
+      std::cout << "Start RTED single thread tests " << std::endl;
 
       try
       {
@@ -1580,8 +1578,7 @@ extern "C"
           testTypeSystemDetectNested();
           testTypeSystemMerge();
           testPartialTypeSystemArrayAccess();
-
-
+//~ //~
           testTypeSystemSubtypes();
           testTypeSystemNested();
   //~ //~
@@ -1615,7 +1612,6 @@ extern "C"
           testDoubleArrayHeapAccess();
           testMultidimensionalStackArrayAccess();
   //~ //~
-  //~ //~
           test_memcpy();
           test_memmove();
           test_strcpy();
@@ -1632,6 +1628,7 @@ extern "C"
           test_meminit_nullterm_included();
           test_range_overlap();
 
+
     rs->doProgramExitChecks();
     printf("All tests passed. \n");
       }
@@ -1643,4 +1640,11 @@ extern "C"
 
       return 0;
   }
+
+#if !defined(WITH_UPC)
+  int main(int noargs, char** args, char** envp)
+  {
+    upc_main(noargs, args, envp);
+  }
+#endif /* !WITH_UPC */
 }

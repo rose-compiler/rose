@@ -7,11 +7,26 @@
 #include "CppRuntimeSystem.h"
 
 
+static inline
+TypeTracker* createTracker(bool distr, size_t size)
+{
+  if (distr) return new DistributedStorage(size);
+
+  return new LocalStorage(size);
+}
+
+static inline
+const void* toString(MemoryType::LocalPtr ptr)
+{
+  return ptr;
+}
+
 
 // -----------------------    MemoryType  --------------------------------------
 
 MemoryType::MemoryType(Location _addr, size_t _size, AllocKind ak, bool distr, const SourcePosition& _pos)
-: startAddress(_addr), size(_size), initialized(_size, false), origin(ak), allocPos(_pos), distributed(distr)
+: startAddress(_addr), origin(ak), allocPos(_pos),
+  tracker( createTracker(distr, _size) )
 {
   RuntimeSystem *   rs = RuntimeSystem::instance();
   std::stringstream msg;
@@ -26,16 +41,12 @@ MemoryType::MemoryType(Location _addr, size_t _size, AllocKind ak, bool distr, c
 
 void MemoryType::resize( size_t new_size )
 {
-    // new size must be larger, and can not be distributed
-    assert( new_size >= size && !distributed);
-    size = new_size;
-
-    initialized.resize(size, false);
+    tracker->resize( new_size );
 }
 
 MemoryType::Location MemoryType::endAddress() const
 {
-  return add(startAddress, size, distributed);
+  return tracker->add(startAddress, getSize());
 }
 
 bool MemoryType::containsAddress(Location queryAddress) const
@@ -47,20 +58,20 @@ bool MemoryType::containsAddress(Location queryAddress) const
 
 MemoryType::Location MemoryType::lastValidAddress() const
 {
-  return add(startAddress, size-1, distributed);
+  return tracker->add(startAddress, getSize()-1);
 }
 
 bool MemoryType::containsMemArea(Location queryAddr, size_t querySize) const
 {
     return (  containsAddress(queryAddr)
-           && containsAddress(add(queryAddr, querySize - 1, distributed))
+           && containsAddress(tracker->add(queryAddr, querySize - 1))
            );
 }
 
 bool MemoryType::overlapsMemArea(Location queryAddr, size_t querySize) const
 {
     return (  containsAddress(queryAddr)
-           || containsAddress(add(queryAddr, querySize - 1, distributed))
+           || containsAddress(tracker->add(queryAddr, querySize - 1))
            );
 }
 
@@ -70,87 +81,99 @@ bool MemoryType::operator< (const MemoryType& other) const
 }
 
 
-bool MemoryType::isInitialized(size_t offsetFrom, size_t offsetTo) const
+bool MemoryType::isInitialized(Location addr, size_t len) const
 {
-    assert(offsetFrom < offsetTo);
-    assert(offsetTo <= size);
+    TypeTracker::InitData& init = tracker->initlistof(addr);
+    const size_t           offset = addr.local - startAddress.local;
+    const size_t           limit = offset + len;
 
-    for (size_t i= offsetFrom; i < offsetTo; i++)
-        if (! initialized[i])
-            return false;
+    for (size_t i = offset; i < limit; ++i)
+    {
+        if (! init[i]) return false;
+    }
 
     return true;
 }
 
-void MemoryType::initialize(size_t offsetFrom, size_t offsetTo)
+void MemoryType::initialize(Location addr, size_t len)
 {
-    assert(offsetFrom < offsetTo);
-    assert(offsetTo <= size);
+    TypeTracker::InitData& init = tracker->initlistof(addr);
+    const size_t           offset = addr.local - startAddress.local;
+    const size_t           limit = offset + len;
 
-    for(size_t i=offsetFrom; i<offsetTo; i++)
-        initialized[i]=true;
+    for (size_t i = offset; i < limit; ++i)
+    {
+        init[i] = true;
+    }
 }
 
 
 
-void MemoryType::registerMemType(size_t offset, RsType * type)
+void MemoryType::registerMemType(Location addr, RsType * type)
 {
-    RuntimeSystem * rs = RuntimeSystem::instance();
-    rs->printMessage("   ++ registerMemType at offset: " + ToString(offset) + "  type: "+type->getName());
+    std::stringstream msg;
+    RuntimeSystem *   rs = RuntimeSystem::instance();
+    bool              types_merged = checkAndMergeMemType(addr, type);
 
-    bool types_merged = checkAndMergeMemType(offset, type );
-    rs->printMessage("   ++ types_merged: " + ToString(types_merged));
+    msg << "   ++ registerMemType at: " << addr << "  type: " << type->getName() << '\n'
+        << "      ++ types_merged: " << types_merged;
+
+    rs->printMessage(msg.str());
 
     if ( !types_merged )
     {
         // type wasn't merged, some previously unknown portion of this
         // MemoryType has been registered with type
-        typeInfo.insert(TypeInfoMap::value_type(offset, type));
+        assert(type);
 
-        // if we have knowledge about the type in memory, we also need to update the
+        tracker->typesof(addr)[addr.local] = type;
+
+        // since we have knowledge about the type in memory, we also need to update the
         // information about "dereferentiable" memory regions i.e. pointer
-        rs->getPointerManager()->createPointer(add(startAddress, offset, distributed), type, distributed);
+        rs->getPointerManager()->createPointer(addr, type, tracker->distributed());
     }
 
     rs->printMessage("   ++ registerMemType done.");
 }
 
-void MemoryType::forceRegisterMemType(size_t offset, RsType* type ) {
-    TiIterPair type_range = getOverlappingTypeInfos(offset, offset + type->getByteSize());
+void MemoryType::forceRegisterMemType(Location addr, RsType* type )
+{
+    TypeData&  tmap = tracker->typesof(addr);
+    TiIterPair type_range = getOverlappingTypeInfos(tmap, addr.local, type->getByteSize());
 
-    typeInfo.erase(type_range.first, type_range.second);
-    typeInfo.insert(TypeInfoMap::value_type(offset, type));
+    tmap.erase(type_range.first, type_range.second);
+    tmap.insert(TypeData::value_type(addr.local, type));
 }
 
-bool MemoryType::checkAndMergeMemType(size_t offset, RsType * type)
+bool MemoryType::checkAndMergeMemType(Location addr, RsType * type)
 {
-  // std::cout << ">> checkAndMergeMemType " << typeInfo.size() << std::endl;
+    TypeData& tmap = tracker->typesof(addr);
 
-    if (typeInfo.size() ==0) // no types registered yet
+    if (tmap.size() == 0) // no types registered yet
         return false;
 
-    RuntimeSystem * rs = RuntimeSystem::instance();
+    RuntimeSystem *   rs = RuntimeSystem::instance();
+    LocalPtr          newTiStart = addr.local;
+    size_t            newLength = type->getByteSize();
+    std::stringstream msg;
 
-    size_t newTiStart = offset;
-    size_t newTiEnd = offset + type->getByteSize();
+    msg << "   ++ checkAndMergeMemType newTiStart: " << toString(newTiStart)
+        << "      length: " << newLength << std::endl;
 
-    rs->printMessage( "   ++ checkAndMergeMemType newTiStart: "
-                    + ToString(newTiStart)
-                    + "  newTiEnd: "
-                    + ToString(newTiEnd)
-                    );
+    rs->printMessage( msg.str() );
 
-    std::stringstream ss;
-    ss << "Tried to access the same memory region with different types" << std::endl;
-    ss << "When trying to access (" << newTiStart << "," << newTiEnd << ") "
-       << "as type " << type->getName() << std::endl;
-    ss << "Memory Region Info: " << std::endl;
-    ss << *this << std::endl;
+    msg.clear();
+    msg << "Tried to access the same memory region with different types" << std::endl;
+    msg << "When trying to access (" << toString(newTiStart) << ","
+        << toString(newTiStart + newLength) << ") "
+        << "as type " << type->getName() << std::endl;
+    msg << "Memory Region Info: " << std::endl;
+    msg << *this << std::endl;
 
-    RuntimeViolation vio(RuntimeViolation::INVALID_TYPE_ACCESS, ss.str());
+    RuntimeViolation vio(RuntimeViolation::INVALID_TYPE_ACCESS, msg.str());
 
     // Get a range of entries which overlap with [newTiStart,newTiEnd)
-    TiIterPair res = getOverlappingTypeInfos(newTiStart, newTiEnd);
+    TiIterPair res = getOverlappingTypeInfos(tmap, newTiStart, newLength);
     TiIter     itLower = res.first;
     TiIter     itUpper = res.second;
 
@@ -167,16 +190,18 @@ bool MemoryType::checkAndMergeMemType(size_t offset, RsType * type)
     {
         rs->printMessage("     ++ incrementedLower == itUpper ");
 
-        size_t   oldTiStart = itLower->first;
-        size_t   oldTiEnd = oldTiStart + itLower->second->getByteSize();
-        RsType*  oldType = itLower->second;
+        RsType*        oldType = itLower->second;
+        LocalPtr       oldTiStart = itLower->first;
+        size_t         oldLength = oldType->getByteSize();
+        std::ptrdiff_t diff = oldTiStart - newTiStart;
 
-        if (oldTiStart <= newTiStart && newTiEnd <= oldTiEnd)
+        // was: if( (oldTiStart <= newTiStart) && (oldTiEnd >= newTiEnd) )
+        if ((diff <= 0) && (newLength <= (diff + oldLength)))
         {
-            rs->printMessage("    oldTiStart <= newTiStart && oldTiEnd >= newTiEnd ");
+            rs->printMessage("    (diff < 0) && (newLength <= (diff + oldLength)) ");
             //Check if new entry is consistent with old one
 
-            bool new_type_ok = oldType -> checkSubtypeRecursive( newTiStart - oldTiStart, type );
+            bool new_type_ok = oldType->checkSubtypeRecursive( newTiStart - oldTiStart, type );
 
             rs->printMessage("      new_type_ok : " + ToString(new_type_ok));
             if( !new_type_ok )
@@ -184,7 +209,8 @@ bool MemoryType::checkAndMergeMemType(size_t offset, RsType * type)
                 vio.descStream() << "Previously registered Type completely overlaps new Type in an inconsistent way:"
                                  << std::endl
                                  << "Containing Type " << oldType->getName()
-                                 << " (" << oldTiStart << "," << oldTiEnd << ")" << std::endl;
+                                 << " (" << toString(oldTiStart) << ","
+                                 << toString(oldTiStart + oldLength) << ")" << std::endl;
 
                 rs->violationHandler(vio);
                 return false;
@@ -199,42 +225,49 @@ bool MemoryType::checkAndMergeMemType(size_t offset, RsType * type)
     }
 
     // Case 2: Iterate over overlapping old types and check consistency
-    for(TypeInfoMap::iterator i = itLower; i != itUpper; ++i )
+    for(TypeData::iterator i = itLower; i != itUpper; ++i )
     {
-        RsType*  curType = i->second;
-        size_t   curStart = i->first;
-        size_t   curEnd = curStart + curType->getByteSize();
+        RsType*        curType = i->second;
+        LocalPtr       curStart = i->first;
+        size_t         curLength = curType->getByteSize();
+        std::ptrdiff_t diff = curStart - newTiStart;
 
-        if ((curStart < newTiStart) || (newTiEnd < curEnd))
+
+        std::cout << "  >> " << diff << " #" << newLength << "  #" << curLength << std::endl;
+
+        // was: if ((curStart < newTiStart) || (newTiEnd < curEnd))
+        if ((diff < 0) || (newLength < (diff + curLength)))
         {
             vio.descStream() << "Previously registered Type overlaps new Type in an inconsistent way:"
                              << std::endl
                              << "Overlapping Type " << curType->getName()
-                             << " (" << curStart << "," << curEnd << ")"
+                             << " (" << toString(curStart) << "," << toString(curStart + curLength) << ")"
                              << std::endl;
             rs->violationHandler(vio);
             return false;
         }
 
-        RsType * sub =  type->getSubtypeRecursive(curStart - newTiStart,curType->getByteSize());
+        RsType * sub =  type->getSubtypeRecursive(diff /*curStart - newTiStart*/, curLength);
+
         if (sub != curType)
         {
             vio.descStream() << "Newly registered Type completely overlaps a previous registered Type in an inconsistent way:"
                              << std::endl
                              << "Overlapping Type " << curType->getName()
-                             << " (" << curStart << "," << curEnd << ")" <<std::endl;
+                             << " (" << toString(curStart) << "," << toString(curStart + curLength) << ")"
+                             << std::endl;
 
             rs->violationHandler(vio);
             return false;
         }
     }
     //All consistent - old typeInfos are replaced by big new typeInfo (merging)
-    typeInfo.erase(itLower, itUpper);
-    typeInfo.insert(TypeInfoMap::value_type(offset, type));
+    tmap.erase(itLower, itUpper);
+    tmap.insert(TypeData::value_type(addr.local, type));
 
     // if we have knowledge about the type in memory, we also need to update the
     // information about "dereferentiable" memory regions i.e. pointer
-    rs->getPointerManager()->createPointer(add(startAddress, offset, distributed), type, distributed);
+    rs->getPointerManager()->createPointer(addr, type, tracker->distributed());
 
     return true;
 }
@@ -242,28 +275,29 @@ bool MemoryType::checkAndMergeMemType(size_t offset, RsType * type)
 
 
 
-RsType* MemoryType::getTypeAt(size_t offset, size_t size)
+RsType* MemoryType::getTypeAt(Location addr, size_t size)
 {
-    TiIterPair type_infos = getOverlappingTypeInfos(offset, offset + size);
-    TiIter     first_addr_type = type_infos.first;
-    TiIter     end = type_infos.second;
+    TypeData&    tmap = tracker->typesof(addr);
+    TiIterPair   type_range = getOverlappingTypeInfos(tmap, addr.local, size);
+    TiIter       first_addr_type = type_range.first;
+    TiIter       end = type_range.second;
 
     if( first_addr_type == end )
         // We know nothing about the types at offset..+size
         return &RsType::UnknownType;
 
-    RsType* res = NULL;
-    TiIter  second_addr_type = first_addr_type;
+    RsType*      res = NULL;
+    TiIter       second_addr_type = first_addr_type;
 
     ++second_addr_type;
     if (  second_addr_type == end
-       && offset >= first_addr_type->first // \pp what to do with negative offsets (see below)?
+       && addr.local >= first_addr_type->first // \pp what to do with negative offsets (see below)?
        )
     {
       // We know only something about one type in this range
       RsType* first_type = first_addr_type->second;
 
-      res = first_type->getSubtypeRecursive( offset - first_addr_type->first,  // \pp negative?
+      res = first_type->getSubtypeRecursive( addr.local - first_addr_type->first,  // \pp negative?
                                              size,
                                              true
                                            );
@@ -272,11 +306,12 @@ RsType* MemoryType::getTypeAt(size_t offset, size_t size)
     return res;
 }
 
-RsType* MemoryType::computeCompoundTypeAt(size_t offset, size_t size)
+RsType* MemoryType::computeCompoundTypeAt(Location addr, size_t size)
 {
-    TiIterPair      type_infos = getOverlappingTypeInfos( offset, offset + size );
-    TiIter          first_addr_type = type_infos.first;
-    TiIter          end = type_infos.second;
+    TypeData&       tmap = tracker->typesof(addr);
+    TiIterPair      type_range = getOverlappingTypeInfos( tmap, addr.local, size );
+    TiIter          first_addr_type = type_range.first;
+    TiIter          end = type_range.second;
 
     // We don't know the complete type of the range, but we do know something.
     // Construct a compound type with the information we have.
@@ -284,9 +319,9 @@ RsType* MemoryType::computeCompoundTypeAt(size_t offset, size_t size)
 
     for( TiIter i = first_addr_type; i != end; ++i)
     {
-        assert(i->first >= offset);
+        assert(i->first >= addr.local);
 
-        size_t  subtype_offset = i->first - offset;
+        size_t  subtype_offset = i->first - addr.local;
         RsType* type = i -> second;
 
         computed_type->addMember( "", type, subtype_offset );
@@ -296,9 +331,9 @@ RsType* MemoryType::computeCompoundTypeAt(size_t offset, size_t size)
 }
 
 
-MemoryType::TiIter MemoryType::adjustPosOnOverlap(TiIter iter, size_t from)
+MemoryType::TiIter MemoryType::adjustPosOnOverlap(TiIter first, TiIter iter, LocalPtr from)
 {
-  if (iter == typeInfo.begin()) return iter;
+  if (iter == first) return iter;
 
   TiIter prev = iter;
 
@@ -306,17 +341,18 @@ MemoryType::TiIter MemoryType::adjustPosOnOverlap(TiIter iter, size_t from)
   return prev->first + prev->second->getByteSize() <= from ? iter : prev;
 }
 
-MemoryType::TiIterPair MemoryType::getOverlappingTypeInfos(size_t from, size_t to)
+MemoryType::TiIterPair MemoryType::getOverlappingTypeInfos(TypeData& tmap, LocalPtr from, size_t len)
 {
     // This function assumes that the typeInfo ranges do not overlap
 
+    // end is the iterator which points to typeInfo with address >= (from + len)
+    // \pp should that not be                      "with address <= (from + len)"?
+    TiIter ub = tmap.lower_bound(from + len);
+
     // the same for the beginning, but there we need the previous map entry
-    TiIter lb = typeInfo.lower_bound(from);
+    TiIter lb = tmap.lower_bound(from);
 
-    // end is the iterator which points to typeInfo with offset >= to
-    TiIter ub = typeInfo.lower_bound(to);
-
-    lb = adjustPosOnOverlap(lb, from);
+    lb = adjustPosOnOverlap(tmap.begin(), lb, from);
 
     return TiIterPair(lb, ub);
 }
@@ -325,22 +361,18 @@ MemoryType::TiIterPair MemoryType::getOverlappingTypeInfos(size_t from, size_t t
 
 std::string MemoryType::getInitString() const
 {
-    std::string init = "Part. initialized";
-    bool allInit  = true;
-    bool noneInit = false;
+    const char* res = NULL;
 
-    for(std::vector<bool>::const_iterator it = initialized.begin(); it != initialized.end(); ++it)
+    switch (tracker->initializationStatus())
     {
-      noneInit = noneInit || *it;
-      allInit = allInit && *it;
+      case TypeTracker::none: res = "Not initialized  "; break;
+      case TypeTracker::some: res = "Part. initialized"; break;
+      case TypeTracker::all:  res = "Initialized      "; break;
+      default: assert(false);
     }
 
-    if(allInit)
-        init = "Initialized      ";
-    else if (noneInit)
-        init = "Not initialized  ";
-
-    return init;
+    assert(res != NULL);
+    return res;
 }
 
 void MemoryType::print() const
@@ -351,15 +383,17 @@ void MemoryType::print() const
 // extra print function because operator<< cannot be member-> no access to privates
 void MemoryType::print(std::ostream & os) const
 {
-    os << "0x" << startAddress;
-    os << " Size " << std::dec << size;
-    os <<  "\t" << getInitString() << "\tAllocated at " << allocPos;
-    os << std::endl;
+    typedef PointerManager::TargetToPointerMap::const_iterator Iter;
+
+    os << startAddress
+       << " Size " << std::dec << getSize()
+       <<  "\t" << getInitString() << "\tAllocated at " << allocPos
+       << std::endl;
 
     PointerManager * pm = RuntimeSystem::instance()->getPointerManager();
-    typedef PointerManager::TargetToPointerMapIter Iter;
-    Iter it =  pm->targetRegionIterBegin(startAddress);
-    Iter end = pm->targetRegionIterEnd(add(startAddress, size, distributed));
+    Iter             it =  pm->targetRegionIterBegin(startAddress);
+    Iter             end = pm->targetRegionIterEnd(add(startAddress, getSize(), tracker->distributed()));
+
     if(it != end)
     {
         os << "\tPointer to this chunk: ";
@@ -374,12 +408,15 @@ void MemoryType::print(std::ostream & os) const
         os <<std::endl;
     }
 
-    if(typeInfo.size() > 0)
+/*
+ *  \pp \todo \fix
+    if (typeInfo.size() > 0)
     {
         os << "\t" << "Type Info" <<std::endl;
-        for(TypeInfoMap::const_iterator i = typeInfo.begin(); i != typeInfo.end(); ++i)
+        for(TypeData::const_iterator i = typeInfo.begin(); i != typeInfo.end(); ++i)
             os << "\t" << i->first << "\t" << i->second->getName() <<std::endl;
     }
+    */
 }
 
 std::ostream& operator<< (std::ostream &os, const MemoryType & m)
@@ -565,8 +602,7 @@ void MemoryManager::freeMemory(Location addr, MemoryType::AllocKind freekind)
     {
         std::stringstream desc;
         desc << freeDisplayName(freekind);
-        desc << " was called with an address inside of an allocated block (Offset:"
-             << " 0x" << std::hex << diff(addr, m->beginAddress(), m->isDistributed()) <<")" <<std::endl;
+        desc << " was called with an address inside of an allocated block (Address:" << addr <<")" <<std::endl;
         desc << "Allocated Block: " << *m <<std::endl;
 
         rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
@@ -608,9 +644,9 @@ MemoryType* MemoryManager::checkAccess(Location addr, size_t size, RsType * t, R
              << "(Address " << addr << " of size " << std::dec << size << ")"
              << std::endl;
 
-        const MemoryType * possMatch = findPossibleMemMatch(addr);
+        const MemoryType* possMatch = findPossibleMemMatch(addr);
         if (possMatch)
-            desc << "Did you try to access this region:" <<std::endl << *possMatch <<std::endl;
+            desc << "Did you try to access this region:" << std::endl << *possMatch <<std::endl;
 
         rs->violationHandler(vioType, desc.str());
     }
@@ -622,7 +658,7 @@ MemoryType* MemoryManager::checkAccess(Location addr, size_t size, RsType * t, R
       msg << "   ++ found memory addr : " << addr << " size:" << ToString(size);
       rs->printMessage(msg.str());
 
-      res->registerMemType(diff(addr, res->beginAddress(), res->isDistributed()), t);
+      res->registerMemType(addr, t);
     }
 
     return res;
@@ -638,9 +674,7 @@ void MemoryManager::checkRead(Location addr, size_t size, RsType * t)
     const MemoryType* mt = checkAccess(addr,size,t,RuntimeViolation::INVALID_READ);
     assert(mt != NULL && mt->beginAddress() <= addr);
 
-    const int         from = diff(addr, mt->beginAddress(), mt->isDistributed());
-
-    if(! mt->isInitialized(from, from +size) )
+    if(! mt->isInitialized(addr, size) )
     {
       RuntimeSystem * rs = RuntimeSystem::instance();
 
@@ -667,20 +701,17 @@ void MemoryManager::checkWrite(Location addr, size_t size, RsType * t)
     MemoryType *      mt = checkAccess(addr, size, t, RuntimeViolation::INVALID_WRITE);
     assert(mt && mt->beginAddress() <= addr);
 
-    const long        from = diff(addr, mt->beginAddress(), mt->isDistributed());
-
     // \pp \todo this implementation does not consider blocking
     //           consider modifing the initialize interface
-    mt->initialize(from, from + size);
+    mt->initialize(addr, size);
     rs->printMessage("   ++ checkWrite done.");
 }
 
 bool MemoryManager::isInitialized(Location addr, size_t size)
 {
     const MemoryType* mt = checkAccess(addr,size,NULL,RuntimeViolation::INVALID_READ);
-    const int         offset = diff(addr, mt->beginAddress(), mt->isDistributed());
 
-    return mt->isInitialized(offset, offset+size);
+    return mt->isInitialized(addr, size);
 }
 
 
@@ -689,14 +720,12 @@ bool MemoryManager::checkIfSameChunk(Location addr1, Location addr2, RsType * ty
   return checkIfSameChunk( addr1, addr2, type->getByteSize() );
 }
 
-bool MemoryManager::checkIfSameChunk( Location addr1,
-                                      Location addr2,
-                                      size_t typeSize,
-                                      RuntimeViolation::Type violation
-                                    )
+bool
+MemoryManager::checkIfSameChunk( Location addr1, Location addr2, size_t typeSize, RuntimeViolation::Type violation )
 {
   RuntimeSystem *        rs = RuntimeSystem::instance();
   RuntimeViolation::Type access_violation = violation;
+
   if (access_violation != RuntimeViolation::NONE) access_violation = RuntimeViolation::INVALID_READ;
 
   MemoryType *           mem1 = checkAccess(addr1, typeSize, NULL, access_violation);
@@ -723,56 +752,67 @@ bool MemoryManager::checkIfSameChunk( Location addr1,
     }
   }
 
-  const Location        memaddr = mem1->beginAddress();
-  const bool            distr = mem1->isDistributed();
-  int                   off1 = diff(addr1, memaddr, distr);
-  int                   off2 = diff(addr2, memaddr, distr);
-  RsType*               type1 = mem1 -> getTypeAt( off1, typeSize );
-  RsType*               type2 = mem1 -> getTypeAt( off2, typeSize );
+  // \pp \todo as far as I understand, getTypeAt returns the innermost type
+  //           that overlaps a certain memory region [addr1, typeSize). This
+  //           seems insufficient to protect against pointer moves
+  //           crossing array boundaries.
+  RsType*               type1 = mem1 -> getTypeAt( addr1, typeSize );
+  RsType*               type2 = mem1 -> getTypeAt( addr2, typeSize );
   std::auto_ptr<RsType> guard1(NULL);
   std::auto_ptr<RsType> guard2(NULL);
 
   if( !type1 ) {
-      type1 = mem1 -> computeCompoundTypeAt( off1, typeSize );
+      type1 = mem1 -> computeCompoundTypeAt( addr1, typeSize );
       guard1.reset(type1);
   }
 
   if( !type2 ) {
-      type2 = mem1 -> computeCompoundTypeAt( off2, typeSize );
+      type2 = mem1 -> computeCompoundTypeAt( addr2, typeSize );
       guard2.reset(type2);
   }
 
-  assert( type1 );
-  assert( type2 );
+  assert( type1 && type2 );
 
-  bool failed = !type1->isConsistentWith( *type2 );
+  bool         accessOK = type1->isConsistentWith( *type2 );
+  RsArrayType* array = (accessOK ? dynamic_cast< RsArrayType* >( type1 ) : 0);
 
-  if (!failed)
+  if (array)
   {
-    RsArrayType* array = dynamic_cast< RsArrayType* >( type1 );
+    // \pp \todo not sure why bounds checking is based on a relative address (addr1)
+    //     and not on absolute boundaries of the chunk where this address is located...
+    //     e.g., addr2 < array(addr).lb || array(addr).ub < (addr2+typeSize)
 
-    if (  array
-       && !(  off1 + array -> getByteSize() >= off2 + typeSize  // the array element might be after the array [ N ]...
-           && off2 >= off1 // ... or before it [ -1 ]
-           )
+    if (  addr2 < addr1 // the array element might be before it [ -1 ]
+       || mem1->tracker->add(addr1, array->getByteSize()) < mem1->tracker->add(addr2, typeSize) // ... or after the array [ N ]...
        )
     {
       // out of bounds error (e.g. int[2][3], ref [0][3])
-      failed = true;
+      accessOK = false;
     }
+
+    /* was:
+    if  !(  addr1 + array -> getByteSize() >= addr2 + typeSize  // the array element might be after the array [ N ]...
+         && addr1 <= addr2 // ... or before it [ -1 ]
+         *   (12)     (8)
+         )
+    {
+      // out of bounds error (e.g. int[2][3], ref [0][3])
+      consistent = false;
+    }
+    */
   }
 
-  if (failed)
-    failNotSameChunk( type1, type2, off1, off2, mem1, mem1, violation );
+  if (!accessOK)
+    failNotSameChunk( type1, type2, addr1, addr2, mem1, mem1, violation );
 
-  return !failed;
+  return accessOK;
 }
 
 void MemoryManager::failNotSameChunk(
         RsType* type1,
         RsType* type2,
-        size_t off1,
-        size_t off2,
+        Location addr1,
+        Location addr2,
         MemoryType* mem1,
         MemoryType* mem2,
     RuntimeViolation::Type violation) {
@@ -780,13 +820,16 @@ void MemoryManager::failNotSameChunk(
     RuntimeSystem * rs = RuntimeSystem::instance();
 
     std::stringstream ss;
-    ss << "A pointer changed the memory area (array or variable) which it points to (may be an error)" << std::endl <<std::endl;
+    ss << "A pointer changed the memory area (array or variable) which it points to (may be an error)"
+       << std::endl << std::endl;
 
-    ss << "Region1:  " <<  *type1 << " at offset " << off1 << " in this Mem-Region:" << std::endl
-                          << *mem1 <<std::endl;
+    ss << "Region1:  " <<  *type1 << " at " << addr1
+       << " in this Mem-Region:" << *mem1
+       << std::endl;
 
-    ss << "Region2: " << *type2 << " at offset " << off2 << " in this Mem-Region:" << std::endl
-                          << *mem2 <<std::endl;
+    ss << "Region2: " << *type2 << " at " << addr2
+       << " in this Mem-Region:" << *mem2
+       << std::endl;
 
     rs->violationHandler( violation ,ss.str() );
 }
@@ -844,3 +887,133 @@ std::ostream& operator<< (std::ostream &os, const MemoryManager& m)
     m.print(os);
     return os;
 }
+
+
+  static
+  TypeTracker::InitStatus initializationStatus(const TypeTracker::InitData& initlist)
+  {
+    assert(initlist.size() > 0);
+
+    bool   allset = true;
+    bool   allunset = true;
+    size_t last = initlist.size();
+    size_t i = 0;
+
+    while (i < last && (allset || allunset))
+    {
+      if (initlist[i]) allunset = false;
+      else allset = false;
+
+      ++i;
+    }
+
+    assert(!(allset && allunset));
+
+    if (allset) return TypeTracker::all;
+    if (allset) return TypeTracker::none;
+    return TypeTracker::some;
+  }
+
+
+
+  inline
+  void DistributedStorage::assert_threadno(Location loc)
+  {
+    assert(loc.thread_id < rted_Threads());
+  }
+
+  DistributedStorage::TypeData& DistributedStorage::typesof(Location loc)
+  {
+    assert_threadno(loc);
+
+    return types[loc.thread_id];
+  }
+
+  DistributedStorage::InitData& DistributedStorage::initlistof(Location loc)
+  {
+    assert_threadno(loc);
+
+    return initialized[loc.thread_id];
+  }
+
+  void DistributedStorage::resize( size_t )
+  {
+    assert(false);
+  }
+
+  bool DistributedStorage::distributed() const { return true; }
+
+  DistributedStorage::Location DistributedStorage::add(Location l, size_t sz) const
+  {
+    return ::add(l, sz, true);
+  }
+
+  DistributedStorage::InitStatus DistributedStorage::initializationStatus() const
+  {
+    assert( initialized.size() );
+
+    InitDataContainer::const_iterator aa = initialized.begin();
+    InitDataContainer::const_iterator zz = initialized.end();
+    InitStatus                        is = ::initializationStatus(*aa);
+
+    ++aa;
+    while (is != some && aa != zz)
+    {
+      InitStatus is2 = ::initializationStatus(*aa);
+
+      ++aa;
+      if (is2 != is) is = TypeTracker::some;
+    }
+
+    return is;
+  }
+
+  DistributedStorage* DistributedStorage::clone() const
+  {
+    return new DistributedStorage(*this);
+  }
+
+
+  inline
+  void LocalStorage::assert_local(Location loc)
+  {
+    assert(loc.thread_id == rted_ThisThread());
+  }
+
+  LocalStorage::TypeData& LocalStorage::typesof(Location loc)
+  {
+    assert_local(loc);
+
+    return types;
+  }
+
+  LocalStorage::InitData& LocalStorage::initlistof(Location loc)
+  {
+    assert_local(loc);
+
+    return initialized;
+  }
+
+  void LocalStorage::resize( size_t newsize )
+  {
+    assert( newsize >= size );
+    size = newsize;
+    initialized.resize(size, false);
+  }
+
+  bool LocalStorage::distributed() const { return false; }
+
+  LocalStorage::Location LocalStorage::add(Location l, size_t sz) const
+  {
+    return ::add(l, sz, false);
+  }
+
+  LocalStorage::InitStatus LocalStorage::initializationStatus() const
+  {
+    return ::initializationStatus(initialized);
+  }
+
+  LocalStorage* LocalStorage::clone() const
+  {
+    return new LocalStorage(*this);
+  }

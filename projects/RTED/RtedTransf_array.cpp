@@ -51,8 +51,6 @@ struct InitNameComp
  * -----------------------------------------------------------*/
 bool RtedTransformation::isVarRefInCreateArray(SgInitializedName* search)
 {
-  using std::find_if;
-
   if (create_array_define_varRef_multiArray_stack.find(search) != create_array_define_varRef_multiArray_stack.end())
     return true;
 
@@ -67,15 +65,17 @@ bool RtedTransformation::isVarRefInCreateArray(SgInitializedName* search)
  * -----------------------------------------------------------*/
 void RtedTransformation::insertArrayCreateCall(SgVarRefExp* n, RtedArray* value)
 {
-   ROSE_ASSERT(n && value);
+   ROSE_ASSERT(n && value && n->get_parent());
 
    SgInitializedName* initName = n->get_symbol()->get_declaration();
    ROSE_ASSERT(initName);
 
-   SgStatement* stmt = value->surroundingStatement;
+   SgStatement*       stmt = value->surroundingStatement;
    ROSE_ASSERT(stmt);
 
-   insertArrayCreateCall(stmt, initName, n, value);
+   SgExpression*      srcexp = getExprBelowAssignment(n);
+
+   insertArrayCreateCall(stmt, initName, srcexp, value);
 }
 
 
@@ -138,15 +138,13 @@ RtedTransformation::mkAllocKind(AllocKind ak) const
 
 
 SgStatement*
-RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefExp* varRef, RtedArray* array, SgStatement* stmt)
+RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgExpression* src_exp, RtedArray* array, SgStatement* stmt)
 {
+   ROSE_ASSERT(initName && src_exp && array && stmt);
+
    // build the function call:  rs.createHeapArr(...);
    //                        or rs.createHeapPtr(...);
    SgExprListExp*     arg_list = buildExprListExp();
-   const bool         parent_exists = (varRef->get_parent() != NULL);
-   SgExpression*      src_exp = parent_exists ? getExprBelowAssignment(varRef)
-                                              : varRef
-                                              ;
    SgType*            src_type = src_exp->get_type();
    const bool         isCreateHeapArr = (src_type->class_name() == "SgArrayType");
 
@@ -154,58 +152,52 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefEx
    ROSE_ASSERT(isCreateHeapArr || src_type->class_name() == "SgPointerType");
 
    // if we have an array, then it has to be on the stack
-   // \pp \todo check handling of C++ new[]
    ROSE_ASSERT(!isCreateHeapArr || array->allocKind == akStack);
-
-   appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(NULL, src_type)));
 
    SgScopeStatement*  scope = get_scope(initName);
 
+   appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(src_type, false, false)));
    appendAddressAndSize(arg_list, Whole, scope, src_exp, NULL /* unionclass */);
 
-   //SgIntVal* ismalloc = buildIntVal( 0 );
-   SgExpression*      size = array -> size;
-
-   if (size)
-   {
-     size = buildCastExp(size, buildUnsignedLongType());
-   }
-   else
-   {
-     ROSE_ASSERT( array -> allocKind == akStack );
-     size = buildIntVal(0);  // \pp this seems always to give 0 when allocKind == akStack ...
-   }
-
-   appendExpression(arg_list, size);
+   SgType*            type = initName->get_type();
+   SgFunctionSymbol*  rted_fun = NULL;
 
    // target specific parameters
    if (isCreateHeapArr)
    {
+     // Is this array initialized?  int x[] = { 1, 2, 3 };
+     appendBool( arg_list, (initName->get_initializer() != NULL) );
+
+     // Is this array distributed across threads?
+     appendBool( arg_list, isUpcDistributedArray(type) );
+
      // Dimension info
      appendDimensions(arg_list, array);
-
-     // Is this a distributed array?
 
      // source name
      appendExpression(arg_list, buildStringVal(initName->get_name()));
 
      // mangeled name
      appendExpression(arg_list, buildStringVal(initName->get_mangled_name().str()));
+
+     rted_fun = symbols.roseCreateHeapArr;
    }
    else
    {
+     ROSE_ASSERT(array->size);
+     SgExpression*      size = buildCastExp(array->size, buildUnsignedLongType());
+
+     appendExpression(arg_list, size);
+
      // track whether heap memory was allocated via malloc or new, to ensure
      // that free/delete matches
      appendExpression(arg_list, mkAllocKind(array->allocKind));
+
+     rted_fun = symbols.roseCreateHeapPtr;
    }
 
-   appendClassName(arg_list, initName->get_type());
+   appendClassName(arg_list, type);
    appendFileInfo(arg_list, stmt);
-
-   // create the call nodes
-   SgFunctionSymbol*  rted_fun = isCreateHeapArr ? symbols.roseCreateHeapArr
-                                                 : symbols.roseCreateHeapPtr
-                                                 ;
 
    ROSE_ASSERT(rted_fun != NULL);
    SgFunctionRefExp*  memRef_r = buildFunctionRefExp(rted_fun);
@@ -215,12 +207,12 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgVarRefEx
 }
 
 void RtedTransformation::insertArrayCreateCall( SgStatement* stmt,
-                                                SgInitializedName* initName,
-                                                SgVarRefExp* varRef,
-                                                RtedArray* array
+                                                SgInitializedName* const initName,
+                                                SgExpression* const srcexp,
+                                                RtedArray* const array
                                               )
 {
-   ROSE_ASSERT(stmt && varRef && initName && array);
+   ROSE_ASSERT(stmt && srcexp && initName && array);
 
    // Skipping extern arrays because they will be handled in the defining
    //   translation unit.
@@ -255,14 +247,14 @@ void RtedTransformation::insertArrayCreateCall( SgStatement* stmt,
    // \pp \todo handle variables defined in namespace
 
    if (isSgIfStmt(scope)) {
-       SgStatement* exprStmt = buildArrayCreateCall(initName, varRef, array, stmt);
+       SgStatement* exprStmt = buildArrayCreateCall(initName, srcexp, array, stmt);
        ROSE_ASSERT(exprStmt);
        // get the two bodies of the ifstmt and prepend to them
        cerr << "If Statment : inserting createHeap" << endl;
        SgStatement* trueb = isSgIfStmt(scope)->get_true_body();
        SgStatement* falseb = isSgIfStmt(scope)->get_false_body();
-       bool partOfTrue = traverseAllChildrenAndFind(varRef, trueb);
-       bool partOfFalse = traverseAllChildrenAndFind(varRef, falseb);
+       bool partOfTrue = traverseAllChildrenAndFind(srcexp, trueb);
+       bool partOfFalse = traverseAllChildrenAndFind(srcexp, falseb);
        bool partOfCondition = (!partOfTrue && !partOfFalse);
 
        if (trueb && (partOfTrue || partOfCondition)) {
@@ -298,7 +290,7 @@ void RtedTransformation::insertArrayCreateCall( SgStatement* stmt,
          prependStatement(exprStmt, isSgScopeStatement(bb));
        }
    } else if (isSgBasicBlock(scope)) {
-       SgStatement* exprStmt = buildArrayCreateCall(initName, varRef, array, stmt);
+       SgStatement* exprStmt = buildArrayCreateCall(initName, srcexp, array, stmt);
 
        insertStatementAfter(insloc, exprStmt);
 

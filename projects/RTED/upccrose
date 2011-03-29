@@ -1,5 +1,10 @@
 #!/bin/bash
 
+ ccacheprefix=`which ccache`
+
+ cxx="$ccacheprefix g++"
+ upc="upc"
+
  runtimesystem=""
  stdlib=""
  rtedlib=""
@@ -44,21 +49,29 @@
 if [ "$runtimesystem" != "" ]; then
   rtedsrcdir=`dirname $runtimesystem`
 
-  echo "g++ $cxxflags -c $runtimesystem"
-  g++ $cxxflags -c $runtimesystem
+  CMD="$cxx $cxxflags -c $runtimesystem"
+  echo "$CMD"
+  $CMD
 
-  echo "upc $upcflags -c $rtedsrcdir/ParallelRTS.upc $rtedsrcdir/workzone.upc"
-  upc $upcflags -c $rtedsrcdir/ParallelRTS.upc $rtedsrcdir/workzone.upc
+  CMD="$upc $upcflags -c $rtedsrcdir/ParallelRTS.upc"
+  echo "$CMD"
+  $CMD
+
+  CMD="$upc $upcflags -c $rtedsrcdir/workzone.upc"
+  echo "$CMD"
+  $CMD
 
   rtedlib="-L./CppRuntimeSystem/.libs/ -lCppRuntimeSystem"
   objfiles="$objfiles ParallelRTS.o workzone.o RuntimeSystem.o"
 fi
 
-echo "upc $upcflags $newOption -c $inpfiles"
-upc $upcflags $newOption -c $inpfiles
+CMD="$upc $upcflags $newOption -c $inpfiles"
+echo "$CMD"
+$CMD
 
-echo "upc++link -dwarf-2-upc $executable $objfiles $rtedlib"
-upc++link -dwarf-2-upc $executable $objfiles $rtedlib
+CMD="upc++link -dwarf-2-upc $executable $objfiles $rtedlib"
+echo "$CMD"
+$CMD
 
 #echo "rm $objfiles"
 #rm $objfiles

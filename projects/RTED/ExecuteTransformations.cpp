@@ -106,7 +106,7 @@ void RtedTransformation::executeTransformations() {
 
   if (RTEDDEBUG()) std::cerr << "\n # Elements in create_array_define_varRef_multiArray  : "  << create_array_define_varRef_multiArray.size() << std::endl;
   std::map<SgVarRefExp*, RtedArray*>::const_iterator itm =  create_array_define_varRef_multiArray.begin();
-  for (; itm != create_array_define_varRef_multiArray.end(); itm++) {
+  for (; itm != create_array_define_varRef_multiArray.end(); ++itm) {
     SgVarRefExp* array_node = itm->first;
     RtedArray* array_size = itm->second;
     insertArrayCreateCall(array_node, array_size);
