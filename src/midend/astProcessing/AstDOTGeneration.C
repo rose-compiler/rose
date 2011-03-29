@@ -337,7 +337,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      if (genericExpression != NULL)
         {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-          string name = unparseExpression(genericExpression);
+          string name = unparseExpression(genericExpression, NULL);
           ROSE_ASSERT(name.empty() == false);
           nodelabel += string("\\n") + name;
 #else
