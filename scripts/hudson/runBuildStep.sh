@@ -25,14 +25,14 @@ function runBuildStep {
 ####################################################################################
 # EXECUTE BUILD STEP (with optional spew analysis)
 ####################################################################################
-    
+   pwd 
 (
     if [ $# -eq 2 ]; then
         ${buildStep} -j${NUM_PROCESS} 2>&1 | tee $outputFile
     else
         ${buildStep} -j${NUM_PROCESS}
     fi
-) 2>&1 |filter "$buildStep"
+) 2>&1 |filter_step "$buildStep"
 
 
     if [ $# -eq 2 ]; then
@@ -71,7 +71,7 @@ function runSpewAnalysis {
       echo "Measure Build System Parallelism"
       ../scripts/checkMakeParallelism.sh ${inputFile}
     fi
-) 2>&1 |filter "compile time spew"
+) 2>&1 |filter_step "compile time spew"
 
     printBannerToEndStep "Compile time spew" $start_time_seconds 
 }
