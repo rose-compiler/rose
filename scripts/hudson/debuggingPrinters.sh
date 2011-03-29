@@ -22,12 +22,31 @@ fi
 set -x
 }
 
+function filter_step () {
+    local start_time="$(date +%s)"
+    printBannerToStartStep $1
+
+    (
+        while read; do
+            echo "${REPLY}"
+        done
+    )
+    [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ] && dieDuringStep "$1" $start_time
+
+    printBannerToEndStep $1 $start_time
+}
+
+function dieDuringStep () {
+    printBannerToFailStep $1 $2
+    exit 1
+}
+
 function printBannerWithDate() {
   printBanner ""
 }
 
 function printBannerWithElapsedTime() {
-set +e
+set +ex
 if test $# = 3 ; then
   if test $2 -gt $3 ; then
     elapsed_time_in_seconds="`expr $2 - $3`"
@@ -45,14 +64,14 @@ else
   echo "[Error] Usage: printBannerWithElapsedTime <with-message> <start-time-seconds> <end-time-seconds>"
   exit 1
 fi
-set -e
+set -ex
 }
 
 function printBannerToStartStep() {
 if test $# = 1 ; then
   printBanner "Starting '${1}' step..."
 else
-  echo "[Error] Usage: printBannerStartStep <step-name>" 
+  echo "[Error] Usage: printBannerToStartStep <step-name>" 
   exit 1
 fi
 }
@@ -64,7 +83,18 @@ if test $# = 2 ; then
         ${2} \
         $(date +%s)
 else
-  echo "[Error] Usage: printBannerEndStep <step-name> <start-time-in-seconds>" 
+  echo "[Error] Usage: printBannerToEndStep <step-name> <start-time-in-seconds>" 
+  exit 1
+fi
+}
+function printBannerToFailStep() {
+if test $# = 2 ; then
+  printBannerWithElapsedTime \
+        "Failed '${1}' step..." \
+        ${2} \
+        $(date +%s)
+else
+  echo "[Error] Usage: printBannerToFailStep <step-name> <start-time-in-seconds>" 
   exit 1
 fi
 }
