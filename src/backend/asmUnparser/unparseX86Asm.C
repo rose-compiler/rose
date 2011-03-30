@@ -1,5 +1,7 @@
 #include "sage3basic.h"
 #include "Registers.h"
+#include "AsmUnparser.h"
+
 #include <iomanip>
 
 #define __STDC_FORMAT_MACROS
@@ -43,55 +45,66 @@ std::string unparseX86Register(const RegisterDescriptor &reg) {
     return name;
 }
 
+static std::string x86ValToLabel(uint64_t val, const AsmUnparser::LabelMap *labels)
+{
+    if (!val || !labels)
+        return "";
+    
+    AsmUnparser::LabelMap::const_iterator li = labels->find(val);
+    if (li==labels->end())
+        return "";
+
+    return li->second;
+}
+
 static std::string x86TypeToPtrName(SgAsmType* ty) {
-  ROSE_ASSERT(ty != NULL);
-  switch (ty->variantT()) {
-    case V_SgAsmTypeByte: return "BYTE";
-    case V_SgAsmTypeWord: return "WORD";
-    case V_SgAsmTypeDoubleWord: return "DWORD";
-    case V_SgAsmTypeQuadWord: return "QWORD";
-    case V_SgAsmTypeDoubleQuadWord: return "DQWORD";
-    case V_SgAsmTypeSingleFloat: return "FLOAT";
-    case V_SgAsmTypeDoubleFloat: return "DOUBLE";
-    case V_SgAsmType80bitFloat: return "LDOUBLE";
-    case V_SgAsmTypeVector: {
-      SgAsmTypeVector* v = isSgAsmTypeVector(ty);
-      return "V" + StringUtility::numberToString(v->get_elementCount()) + x86TypeToPtrName(v->get_elementType());
+    ROSE_ASSERT(ty != NULL);
+    switch (ty->variantT()) {
+        case V_SgAsmTypeByte: return "BYTE";
+        case V_SgAsmTypeWord: return "WORD";
+        case V_SgAsmTypeDoubleWord: return "DWORD";
+        case V_SgAsmTypeQuadWord: return "QWORD";
+        case V_SgAsmTypeDoubleQuadWord: return "DQWORD";
+        case V_SgAsmTypeSingleFloat: return "FLOAT";
+        case V_SgAsmTypeDoubleFloat: return "DOUBLE";
+        case V_SgAsmType80bitFloat: return "LDOUBLE";
+        case V_SgAsmTypeVector: {
+            SgAsmTypeVector* v = isSgAsmTypeVector(ty);
+            return "V" + StringUtility::numberToString(v->get_elementCount()) + x86TypeToPtrName(v->get_elementType());
+        }
+        default: {
+            std::cerr << "x86TypeToPtrName: Bad class " << ty->class_name() << std::endl;
+            ROSE_ASSERT(false);
+            return "error in x86TypeToPtrName()";// DQ (11/29/2009): Avoid MSVC warning.
+        }
     }
-    default:
-       {
-         std::cerr << "x86TypeToPtrName: Bad class " << ty->class_name() << std::endl;
-                 ROSE_ASSERT(false);
-      // DQ (11/29/2009): Avoid MSVC warning.
-         return "error in x86TypeToPtrName()";
-       }
-  }
 }
 
 
-std::string unparseX86Expression(SgAsmExpression *expr, bool leaMode) {
+std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels, bool leaMode) {
     std::string result = "";
     if (expr == NULL) return "BOGUS:NULL";
+
     switch (expr->variantT()) {
         case V_SgAsmBinaryAdd:
-            result = unparseX86Expression(isSgAsmBinaryExpression(expr)->get_lhs(), false) + " + " +
-                     unparseX86Expression(isSgAsmBinaryExpression(expr)->get_rhs(), false);
+            result = unparseX86Expression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, false) + " + " +
+                     unparseX86Expression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, false);
             break;
         case V_SgAsmBinarySubtract:
-            result = unparseX86Expression(isSgAsmBinaryExpression(expr)->get_lhs(), false) + " - " +
-                     unparseX86Expression(isSgAsmBinaryExpression(expr)->get_rhs(), false);
+            result = unparseX86Expression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, false) + " - " +
+                     unparseX86Expression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, false);
             break;
         case V_SgAsmBinaryMultiply:
-            result = unparseX86Expression(isSgAsmBinaryExpression(expr)->get_lhs(), false) + "*" +
-                     unparseX86Expression(isSgAsmBinaryExpression(expr)->get_rhs(), false);
+            result = unparseX86Expression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, false) + "*" +
+                     unparseX86Expression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, false);
             break;
         case V_SgAsmMemoryReferenceExpression: {
             SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(expr);
             if (!leaMode) {
                 result += x86TypeToPtrName(mr->get_type()) + " PTR " +
-                          (mr->get_segment() ? unparseX86Expression(mr->get_segment(), false) + ":" : "");
+                          (mr->get_segment() ? unparseX86Expression(mr->get_segment(), labels, false) + ":" : "");
             }
-            result += "[" + unparseX86Expression(mr->get_address(), false) + "]";
+            result += "[" + unparseX86Expression(mr->get_address(), labels, false) + "]";
             break;
         }
         case V_SgAsmx86RegisterReferenceExpression: {
@@ -103,8 +116,8 @@ std::string unparseX86Expression(SgAsmExpression *expr, bool leaMode) {
             char buf[64];
             uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
             sprintf(buf, "0x%02"PRIx64, v);
-            if (v & 0x80)
-                sprintf(buf+strlen(buf), "(-0x%02"PRIx64")", (~v+1) & 0xff);
+            if ((v & 0x80) && (v & 0x7f))
+                sprintf(buf+strlen(buf), "<-0x%02"PRIx64">", (~v+1) & 0xff);
             result = buf;
             break;
         }
@@ -112,26 +125,34 @@ std::string unparseX86Expression(SgAsmExpression *expr, bool leaMode) {
             char buf[64];
             uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
             sprintf(buf, "0x%04"PRIx64, v);
-            if (v & 0x8000)
-                sprintf(buf+strlen(buf), "(-0x%04"PRIx64")", (~v+1) & 0xffff);
+            if ((v & 0x8000) && (v & 0x7fff))
+                sprintf(buf+strlen(buf), "<-0x%04"PRIx64">", (~v+1) & 0xffff);
             result = buf;
             break;
         }
         case V_SgAsmDoubleWordValueExpression: {
             char buf[64];
             uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
+            std::string label = x86ValToLabel(v, labels);
             sprintf(buf, "0x%08"PRIx64, v);
-            if (v & 0x80000000)
-                sprintf(buf+strlen(buf), "(-0x%08"PRIx64")", (~v+1) & 0xffffffff);
+            if (!label.empty()) {
+                sprintf(buf+strlen(buf), "<%s>", label.c_str());
+            } else if ((v & 0x80000000) && (v & 0x7fffffff)) {
+                sprintf(buf+strlen(buf), "<-0x%08"PRIx64">", (~v+1) & 0xffffffff);
+            }
             result = buf;
             break;
         }
         case V_SgAsmQuadWordValueExpression: {
             char buf[64];
             uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
+            std::string label = x86ValToLabel(v, labels);
             sprintf(buf, "0x%016"PRIx64, v);
-            if (v & ((uint64_t)1<<63))
-                sprintf(buf+strlen(buf), "(-0x%016"PRIx64")", (~v+1));
+            if (!label.empty()) {
+                sprintf(buf+strlen(buf), "<%s>", label.c_str());
+            } else if ((v & ((uint64_t)1<<63)) && (v & (((uint64_t)1<<63)-1))) {
+                sprintf(buf+strlen(buf), "<-0x%016"PRIx64">", (~v+1));
+            }
             result = buf;
             break;
         }
@@ -140,6 +161,7 @@ std::string unparseX86Expression(SgAsmExpression *expr, bool leaMode) {
             ROSE_ASSERT (false);
         }
     }
+
     if (expr->get_replacement() != "") {
         result += " <" + expr->get_replacement() + ">";
     }
@@ -153,40 +175,12 @@ std::string unparseX86Expression(SgAsmExpression *expr, bool leaMode) {
 }
 
 /** Returns a string containing the specified operand. */
-std::string unparseX86Expression(SgAsmExpression *expr) {
+std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels) {
     /* Find the instruction with which this expression is associated. */
     SgAsmx86Instruction *insn = NULL;
     for (SgNode *node=expr; !insn && node; node=node->get_parent()) {
         insn = isSgAsmx86Instruction(node);
     }
     ROSE_ASSERT(insn!=NULL);
-    return unparseX86Expression(expr, insn->get_kind()==x86_lea);
+    return unparseX86Expression(expr, labels, insn->get_kind()==x86_lea);
 }
-
-
-
-
-# if 0 /*use unparseInstruction() instead */
-static string unparseX86Instruction(SgAsmx86Instruction* insn) {
-  if (insn == NULL) return "BOGUS:NULL";
-  string result = unparseX86Mnemonic(insn);
-  result += std::string((result.size() >= 7 ? 1 : 7 - result.size()), ' ');
-  SgAsmOperandList* opList = insn->get_operandList();
-  const SgAsmExpressionPtrList& operands = opList->get_operands();
-  for (size_t i = 0; i < operands.size(); ++i) {
-    if (i != 0) result += ", ";
-    result += unparseX86Expression(insn, operands[i]);
-  }
-  if (insn->get_comment()!="")
-    result+="  <"+insn->get_comment()+">";
-
-  return result;
-}
-#endif
-
-#if 0 /*use unparseInstructionWithAddress() instead */
-string unparseX86InstructionWithAddress(SgAsmx86Instruction* insn) {
-  if (insn == NULL) return "BOGUS:NULL";
-  return StringUtility::intToHex(insn->get_address()) + ':' + unparseX86Instruction(insn);
-}
-#endif

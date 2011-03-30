@@ -1096,6 +1096,7 @@ main(int argc, char *argv[])
 
     if (!do_quiet) {
         MyAsmUnparser unparser(do_show_hashes);
+        unparser.add_function_labels(block);
         unparser.unparse(std::cout, block);
         fputs("\n\n", stdout);
     }

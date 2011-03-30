@@ -62,7 +62,7 @@ static hash_map<SgAsmExpression*, void*> unparseAndInternTable;
 inline void* unparseAndIntern(SgAsmExpression* e) {
   hash_map<SgAsmExpression*, void*>::const_iterator i = unparseAndInternTable.find(e);
   if (i == unparseAndInternTable.end()) {
-    void* sPtr = intern(unparseX86Expression(e));
+    void* sPtr = intern(unparseX86Expression(e, NULL));
     unparseAndInternTable.insert(std::make_pair(e, sPtr));
     return sPtr;
   } else {

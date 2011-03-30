@@ -468,6 +468,22 @@ Additional notes:
 
 \end{enumerate}
 
+\subsection{Using Insure++}
+\label{gettingStarted:insure}
+
+   It is possible to configure ROSE to use insure++ for static and dynamic analysis
+of the ROSE source code as part of development of ROSE or ROSE based tools.  This
+is a feature that is experimental, and currently not working well (because our older
+version of insure++ (version 7.1.6) is failing to compile the Linux header files used in ROSE).
+The configure option to turn on the use of insure++ is: {\em --enable-insure}.
+This is all that is required if {\tt insure} is in your path (at LLNL run: 
+{\tt source /usr/apps/insure++/default/setup.csh} for csh and 
+{\tt source /usr/apps/insure++/default/setup.sh} for bash).  
+{\em Don't use Insure++ until you have some experience with ROSE development, it makes everything more complex.}.
+
+% I don't know if this actually works since I use the setup script.
+% If you need to specify the location of {\tt insure++} then use {\em --with-insure=<path>}.
+
 
 \subsection{Building ROSE From a Distribution (ROSE-\VersionNumber.tar.gz)}
 \label{gettingStarted:UserInstructions}
@@ -1038,11 +1054,16 @@ this flag to the Intel compiler will fix this (the mcpcom process goes above
 
 \subsection{Installing ROSE under Windows}
 % Notes by tps 11/9/2010
-Under Windows ROSE uses cmake. This is a project that is currently under development. As of November 2010 we are able to compile and link the src directory. We are also able to run example programs that link against librose and execute the frontend and backend.
+Under Windows ROSE uses CMake. This is a project that is currently under development. As
+of November 2010 we are able to compile and link the src directory. We are also able to 
+run example programs that link against librose and execute the frontend and backend.
+{\em However, this is an internal capability and not available externally yet since we don't
+distribute the Windows generated EDG binaries that would be required.  Also the
+current support for Windows is still incomplete, ROSE does not yet pass its internal
+tests under Windows.}
 
 \subsubsection{Setup}
-
-Under Windows we use the following tools for compilation and development:
+   Under Windows we use the following tools for compilation and development:
 
 \begin{itemize}
 \item Microsoft Visual Studio (9.0) : We currently use the Debug mode
@@ -1060,7 +1081,11 @@ In order to have Hudson test ROSE under Windows, we have additional tools set up
 \item Hudson client : The client can be started through the web page. All that is required is Java to be installed.
 \end{itemize}
 
-Currently under tux270-0 Flex, cmake, boost and Bison are installed under c:/ROSE. In addition, a ROSE test branch for ROSE-tps is installed in order to test ROSE under Windows locally without Hudson. The directory c:/tools contains pegeant.exe and other useful tools like plink.exe and puttygen.exe. See further notes below. Finally required ssh keys are located in c:/putty\_keys. 
+Currently under tux270-0 Flex, cmake, boost and Bison are installed under c:/ROSE. In
+addition, a ROSE test branch for ROSE-tps is installed in order to test ROSE under
+Windows locally without Hudson. The directory c:/tools contains pegeant.exe and other
+useful tools like plink.exe and puttygen.exe. See further notes below. Finally
+required ssh keys are located in c:/putty\_keys.
 
 \subsubsection{Debugging in VS 8}
 

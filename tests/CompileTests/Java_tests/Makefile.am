@@ -5,12 +5,17 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 ##################################################################################
 
 TESTCODES_REQUIRED_TO_PASS = \
+     test2011_01.java \
+     test2011_02.java \
+     test2011_03.java \
+     test2011_05.java \
      simple.java
 
 # This class does not match the file name.
 #    simple_fortran.java
 
-TESTCODE_CURRENTLY_FAILING = 
+TESTCODE_CURRENTLY_FAILING = \
+     test2011_04.java
 
 noinst_headers = 
 
@@ -90,4 +95,5 @@ EXTRA_DIST = $(ALL_TESTCODES)
 
 clean-local:
 	rm -f *.dot *.class rose_*.java rose_performance_report_lockfile.lock *.out
-
+#	Remove any generated JVM log files that could have been generated (these are rare).
+	rm -f *.log

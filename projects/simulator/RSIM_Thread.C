@@ -43,13 +43,16 @@ RSIM_Thread::id()
     char buf1[32];
     sprintf(buf1, "%1.3f", elapsed);
 
-    char buf2[32];
-    sprintf(buf2, "0x%08"PRIx64, policy.readIP().known_value());
+    char buf2[64];
+    int n = snprintf(buf2, sizeof(buf2), "0x%08"PRIx64"[%zu]: ", policy.readIP().known_value(), policy.get_ninsns());
+    assert(n>=0 && (size_t)n<sizeof(buf2)-1);
+    memset(buf2+n, ' ', sizeof(buf2)-n);
+    buf2[std::max(n, 21)] = '\0';
 
     return (StringUtility::numberToString(getpid()) + ":" + StringUtility::numberToString(my_seq) +
-            " " + buf2 +
             " " + buf1 +
-            ": ");
+            " " + buf2);
+
 }
 
 RTS_Message *

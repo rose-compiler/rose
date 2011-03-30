@@ -6096,13 +6096,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 
   // printf ("######################### Inside of SgSourceFile::build_Java_AST() ############################ \n");
 
-#if 0
-  // DQ (10/26/2010): Java does not support include files (not the Java way of doing things).
-     bool requires_C_preprocessor = get_requires_C_preprocessor();
-     ROSE_ASSERT(requires_C_preprocessor == false);
-#else
      ROSE_ASSERT(get_requires_C_preprocessor() == false);
-#endif
 
   // DQ (10/11/2010): We don't need syntax checking because ECJ will do that.
   // bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
@@ -6114,43 +6108,20 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 
   // This is part of debugging output to call OFP and output the list of parser actions that WOULD be called.
   // printf ("get_output_parser_actions() = %s \n",get_output_parser_actions() ? "true" : "false");
-  // if (get_output_parser_actions() == true)
-     if (false)
+  // if (false)
+     if (get_output_parser_actions() == true)
         {
+          printf("Sorry, not implemented: output_parser_actions option is not supported for Java yet. \n");
+          ROSE_ASSERT(false);
+
        // DQ (1/19/2008): New version of OFP requires different calling syntax.
        // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " --dump " + get_sourceFileNameWithPath();
           vector<string> OFPCommandLine;
           OFPCommandLine.push_back(JAVA_JVM_PATH);
           OFPCommandLine.push_back(classpath);
-       // OFPCommandLine.push_back("fortran.ofp.FrontEnd");
-       // OFPCommandLine.push_back("--dump");
           OFPCommandLine.push_back("JavaTraversal");
+       // OFPCommandLine.push_back("--dump");
 
-       // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
-          const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
-          for (size_t i = 0; i < includeList.size(); i++)
-             {
-               OFPCommandLine.push_back(includeList[i]);
-             }
-
-#if 0
-       // DQ (10/26/2010): Java does not support include files (not the Java way of doing things).
-
-       // DQ (5/19/2008): Support for C preprocessing
-          if (requires_C_preprocessor == true)
-             {
-            // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
-            // Note that OFP has no support for CPP directives and will ignore them all.
-               string sourceFilename              = get_sourceFileNameWithPath();
-               string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
-               OFPCommandLine.push_back(sourceFileNameOutputFromCpp);
-             }
-            else
-             {
-            // Build the command line using the original file (to be used by OFP).
-               OFPCommandLine.push_back(get_sourceFileNameWithPath());
-             }
-#endif
 #if 0
           printf ("output_parser_actions: OFPCommandLine = %s \n",CommandlineProcessing::generateStringFromArgList(OFPCommandLine,false,false).c_str());
 #endif
@@ -6161,17 +6132,11 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 
           if (errorCode != 0)
              {
-               printf ("Running OFP ONLY causes an error (errorCode = %d) \n",errorCode);
-#if 1
-            // DQ (10/4/2008): Need to work with Liao to see why this passes for me but fails for him (and others).
-            // for now we can comment out the error checking on the running of OFP as part of getting the 
-            // output_parser_actions option (used for debugging).
+               printf ("Running ECJ ONLY causes an error (errorCode = %d) \n",errorCode);
                ROSE_ASSERT(false);
-#else
-               printf ("Skipping enforcement of exit after running OFP ONLY as (part of output_parser_actions option) \n");
-#endif
              }
-       // If this was selected as an option then we can stop here (rather than call OFP again).
+
+       // If this was selected as an option then we can stop here (rather than call ECJ again).
        // printf ("--- get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
           if (get_exit_after_parser() == true)
              {
@@ -6186,53 +6151,17 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // printf ("get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
      if (get_exit_after_parser() == true)
         {
+          printf("Sorry, not implemented: exit_after_parser option is not supported for Java yet. \n");
+          ROSE_ASSERT(false);
+
        // DQ (1/19/2008): New version of OFP requires different calling syntax.
        // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " " + get_sourceFileNameWithPath();
           vector<string> OFPCommandLine;
           OFPCommandLine.push_back(JAVA_JVM_PATH);
           OFPCommandLine.push_back(classpath);
-          OFPCommandLine.push_back("fortran.ofp.FrontEnd");
+       // OFPCommandLine.push_back("fortran.ofp.FrontEnd");
+          OFPCommandLine.push_back("JavaTraversal");
 
-          bool foundSourceDirectoryExplicitlyListedInIncludePaths = false;
-
-       // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
-          const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
-          for (size_t i = 0; i < includeList.size(); i++)
-             {
-               OFPCommandLine.push_back(includeList[i]);
-
-            // printf ("includeList[%d] = %s \n",i,includeList[i].c_str());
-
-            // I think we have to permit an optional space between the "-I" and the path
-               if ("-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
-                  {
-                 // The source file path is already included!
-                    foundSourceDirectoryExplicitlyListedInIncludePaths = true;
-                  }
-             }
-
-       // printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
-          if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
-             {
-            // Add the source directory to the include list so that we reproduce the semantics of gfortran
-               OFPCommandLine.push_back("-I" + getSourceDirectory() );
-             }
-
-#if 0
-       // DQ (10/26/2010): Java does not support include files (not the Java way of doing things).
-       // DQ (8/24/2010): Detect the use of CPP on the fortran file and use the correct generated file from CPP, if required.
-       // OFPCommandLine.push_back(get_sourceFileNameWithPath());
-          if (requires_C_preprocessor == true)
-             {
-               string sourceFilename = get_sourceFileNameWithoutPath();
-               string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
-               OFPCommandLine.push_back(sourceFileNameOutputFromCpp);
-             }
-            else
-             {
-               OFPCommandLine.push_back(get_sourceFileNameWithPath());
-             }
-#endif
 #if 0
           printf ("exit_after_parser: OFPCommandLine = %s \n",StringUtility::listToString(OFPCommandLine).c_str());
 #endif
@@ -6246,15 +6175,16 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
                printf ("Using option -rose:exit_after_parser (errorCode = %d) \n",errorCode);
                ROSE_ASSERT(false);
              }
-          printf ("Skipping all processing after parsing fortran (OFP) ... (get_exit_after_parser() == true) errorCode = %d \n",errorCode);
+          printf ("Skipping all processing after parsing java (ECJ) ... (get_exit_after_parser() == true) errorCode = %d \n",errorCode);
        // exit(0);
 
           ROSE_ASSERT(errorCode == 0);
           return errorCode;
        }
 
-  // DQ (1/19/2008): New version of OFP requires different calling syntax; new lib name is: libfortran_ofp_parser_java_FortranParserActionJNI.so old name: libparser_java_FortranParserActionJNI.so
-  // frontEndCommandLineString = std::string(argv[0]) + " --class parser.java.FortranParserActionJNI " + get_sourceFileNameWithPath();
+  // Note that for the ECJ JVM support, the filename must appear last on the command line.
+  // I think it is only an intermediate test before actually calling ECJ that requires 
+  // this so it could be relaxed with a bit of work.
      vector<string> frontEndCommandLine;
 
      frontEndCommandLine.push_back(argv[0]);
@@ -6269,62 +6199,19 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      display("Calling SgFile display");
 #endif
 
-#if 0
-  // DQ (10/26/2010): Java does not support include files (not the Java way of doing things).
-
-     const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
-     bool foundSourceDirectoryExplicitlyListedInIncludePaths = false;
-  // printf ("getSourceDirectory() = %s \n",getSourceDirectory().c_str());
-     for (size_t i = 0; i < includeList.size(); i++)
+  // Added an option to the ECJ command line to support different levels of output from the Java side of the house.
+     string verboseOptionString = "--rose:verbose " + StringUtility::numberToString(SgProject::get_verbose());
+     if (SgProject::get_verbose() > 0)
         {
-          frontEndCommandLine.push_back(includeList[i]);
-
-       // printf ("includeList[%d] = %s \n",i,includeList[i].c_str());
-
-       // I think we have to permit an optional space between the "-I" and the path
-          if (  "-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
-             {
-            // The source file path is already included!
-               foundSourceDirectoryExplicitlyListedInIncludePaths = true;
-             }
+          printf ("Debugging option to Java ECJ translation (java code) to build ROSE AST: verboseOptionString = %s \n",verboseOptionString.c_str());
         }
+     frontEndCommandLine.push_back(verboseOptionString);
 
-  // printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
-     if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
-        {
-       // Add the source directory to the include list so that we reproduce the semantics of gfortran
-          frontEndCommandLine.push_back("-I" + getSourceDirectory() );
-        }
-#else
+  // Java does not use include files, so we can enforce this.
      ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
-#endif
 
-#if 0
-  // DQ (10/26/2010): Java does not support CPP (not the Java way of doing things).
-
-  // DQ (5/19/2008): Support for C preprocessing
-     if (requires_C_preprocessor == true)
-        {
-       // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
-
-       // Note that the filename referenced in the Sg_File_Info objects will use the original file name and not 
-       // the generated file name of the CPP generated file.  This is because it gets the filename from the 
-       // SgSourceFile IR node and not from the filename provided on the internal command line generated for call OFP.
-
-          string sourceFilename              = get_sourceFileNameWithPath();
-          string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
-
-          frontEndCommandLine.push_back(sourceFileNameOutputFromCpp);
-        }
-       else
-        {
-       // If not being preprocessed, the fortran filename is just the original input source file name.
-          frontEndCommandLine.push_back(get_sourceFileNameWithPath());
-        }
-#else
-     ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
+  // Add the source file as the last argument on the command line (checked by intermediate testing before calling ECJ).
      frontEndCommandLine.push_back(get_sourceFileNameWithPath());
-#endif
 
 #if 1
      if ( get_verbose() > 0 )
