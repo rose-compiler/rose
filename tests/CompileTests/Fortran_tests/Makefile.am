@@ -247,7 +247,6 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_elseif.f90 \
      test2011_Rice_empty-string-constant.f90 \
      test2011_Rice_forward-ref-derived-type.f90 \
-     test2011_Rice_forward-ref-with-sub-2.f90 \
      test2011_Rice_funcdecl-1.f90 \
      test2011_Rice_funcdecl-4.f90 \
      test2011_Rice_function-where-var-expected.f90 \
@@ -259,6 +258,8 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_lost-kindtype-1.f90 \
      test2011_Rice_lost-kindtype-2.f90 \
      test2011_Rice_pause-no-stop-code.f90 \
+     test2011_Rice_pointer-after-dimension.f90 \
+     test2011_Rice_pointer-to-forward-ref-derived-type.f90 \
      test2011_Rice_singleton-array-constructor.f90 \
      test2011_Rice_stop-no-stop-code.f90 \
      test2011_Rice_vector-constructor-1.f90 \
@@ -270,12 +271,6 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_wrong-func-type-2.f90 \
      test2011_Rice_wrong-func-type-3.f90 \
      canonicalExample.f90
-
-# SKW 3/15/2011: tests which are correct and pass in ROSE, but fail when
-# compiled with gfortrans older than 4.4.1 (and so fail in Hudson)
-#     test2011_Rice_false-forward-decl-func-type.f90
-#     test2011_Rice_forward-ref-with-sub.f90
-#     test2011_Rice_lost-func-return-type.f90
 
 # SKW 3/18/2011: tests which are correct and pass in ROSE, but sometimes fail
 # when run in Hudson (nondeterministically, on amd64-linux with gcc 4.1.2)
@@ -356,6 +351,15 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
 if !ROSE_USING_GFORTRAN_VERSION_4_0
  # These are tests that fail using the gfrotran version 4.0 compiler (but pass with all other versions of gfortran).
    F90_TESTCODES_REQUIRED_TO_PASS += test2007_263.f90
+endif
+
+# SKW 3/29/2011: These tests fail when compiled with gfortrans older than 4.4.1 (and so fail in Hudson).
+if !ROSE_USING_GFORTRAN_VERSION_4_0
+if !ROSE_USING_GFORTRAN_VERSION_4_1
+   F90_TESTCODES_REQUIRED_TO_PASS += \
+     test2011_Rice_false-forward-decl-func-type.f90 \
+     test2011_Rice_forward-ref-with-sub.f90
+endif
 endif
 
 # DQ (2/1/2011): These test codes will not pass the initial syntax checking with the GNU gfortran version 4.4.x compiler.
@@ -677,6 +681,7 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      test2011_Rice_A-cant-assert-keyword-nonnull.f90 \
      test2011_Rice_B-cant-assert-keyword-nonnull.f90 \
      test2011_Rice_C-cant-assert-keyword-nonnull.f90 \
+     test2011_Rice_lost-func-return-type.f90 \
      fCaller.f90 \
      triangle.f90 \
      X-caseSensitive.f90 \
@@ -685,13 +690,12 @@ F90_TESTCODES_CURRENTLY_FAILING = \
      X-enddo-plus-label.f90  \
      X-ifConstruct.f90 \
      X-ifStmt.f90 \
-     X-lost-func-return-type.f90 \
      X-pointerAttr.f90 \
      X-print-no-output-item-list.f90 \
      X-return-with-expr.f90
 
-# DQ(1/30/2011): Rice bugs are test2010_150.* - test2010_168.*
-# DQ (1/31/2010): X-lost-func-return-type.f03 and X-constructor-initializer.f03 are new test codes from Rice.
+# "X-*" tests are Rice-reported bugs not yet fixed.
+# DQ(1/30/2011): test2010_150.* - test2010_168.* are Rice tests
 
 # JJW -- this can't be in the f90 file list because it does not have the .f90 extension
 #    test2008_02.f

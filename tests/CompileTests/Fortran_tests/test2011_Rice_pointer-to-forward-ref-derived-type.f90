@@ -1,13 +1,16 @@
 ! Rice test
+! When a derived type is correctly used before it is defined in a pointer-to-T,
+! it is unparsed as 'integer'.
 
-program forward_ref_with_sub_2
-
+program pointer_to_forward_ref_derived_type
 contains
+
+  ! probably not important that the forward ref is in an internal function
+  
    subroutine g(a)
-!   	  type(t2) :: a ! Error: Derived type 't2' is being used before it is defined
    	     
    	  type :: t1
-        type(t2), pointer :: c  ! type of 'c' becomes 'integer'
+        type(t2), pointer :: c  ! type of 'c' unparses as 'integer'
       end type
       
       type :: t2
@@ -24,6 +27,5 @@ contains
       a%z = '0'
             
    end subroutine
-
    	  
 end program
