@@ -313,39 +313,186 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionArrayTypeReference (JNIEnv *, jobj
 JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject xxx, jstring functionName, jstring associatedClassName)
    {
   // This code is the same as that in cactionExplicitConstructorCall
-     if (SgProject::get_verbose() > 0)
+     if (SgProject::get_verbose() > -1)
           printf ("Build a member function call (message send) \n");
+
+     outputJavaState("At TOP of cactionMessageSend");
 
   // Should this be a SgBasicBlock or just a SgScopeStatement?
      SgBasicBlock* basicBlock = isSgBasicBlock(astJavaScopeStack.front());
      ROSE_ASSERT(basicBlock != NULL);
      ROSE_ASSERT(basicBlock->get_parent() != NULL);
 
-     SgName name = convertJavaStringToCxxString(env,functionName);
+     SgName name      = convertJavaStringToCxxString(env,functionName);
      SgName className = convertJavaStringToCxxString(env,associatedClassName);
 
-     if (SgProject::get_verbose() > 0)
+     if (SgProject::get_verbose() > -1)
           printf ("building function call: name = %s from class name = %s \n",name.str(),className.str());
 
+     list<SgName> qualifiedClassName = generateQualifierList(className);
+     SgClassSymbol* previousClassSymbol = NULL;
+     SgScopeStatement* previousClassScope = astJavaScopeStack.front();
+     ROSE_ASSERT(previousClassScope != NULL);
+
+  // Traverse all of the classes to get to the class containing the functionName.
+     for (list<SgName>::iterator i = qualifiedClassName.begin(); i != qualifiedClassName.end(); i++)
+        {
+       // Get the class from the current scope of the nearest outer most scope.
+       // SgClassSymbol* classSymbol = astJavaScopeStack.back()->lookupSymbolInParentScopes(*i);
+
+          SgSymbol* tmpSymbol = SageInterface::lookupSymbolInParentScopes(*i,previousClassScope);
+          ROSE_ASSERT(tmpSymbol != NULL);
+          printf ("Found a symbol tmpSymbol = %s = %s \n",tmpSymbol->class_name().c_str(),tmpSymbol->get_name().str());
+
+       // This is either a proper class or an alias to a class where the class is implicit or included via an import statement.
+          SgClassSymbol* classSymbol = isSgClassSymbol(tmpSymbol);
+          SgVariableSymbol* variableSymbol = isSgVariableSymbol(tmpSymbol);
+          SgAliasSymbol* aliasSymbol = isSgAliasSymbol(tmpSymbol);
+
+          if (classSymbol == NULL && aliasSymbol != NULL)
+             {
+               printf ("Trace through the alias to the proper symbol in another scope. \n");
+               classSymbol = isSgClassSymbol(aliasSymbol->get_alias());
+             }
+            else
+             {
+            // This could be a call to "System.out.println();" (see test2011_04.java) in which case
+            // this is a variableSymbol and the type of the variable is the class which has the 
+            // "println();" function.
+               if (classSymbol == NULL && variableSymbol != NULL)
+                  {
+                 // Find the class associated with the type of the variable (this could be any expression so this get's messy!)
+                    SgType* tmpType = variableSymbol->get_type();
+                    ROSE_ASSERT(tmpType != NULL);
+
+                    printf ("variable type = %p = %s \n",tmpType,tmpType->class_name().c_str());
+
+                 // This should be a SgClassType but currently all variables are build with SgTypeInt.
+                 // So this is the next item to fix in the AST.
+                    SgClassType* classType = isSgClassType(tmpType);
+                    ROSE_ASSERT(classType != NULL);
+
+                    ROSE_ASSERT(classType->get_declaration() != NULL);
+                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+                    ROSE_ASSERT(classDeclaration != NULL);
+
+                    SgSymbol* tmpSymbol = classDeclaration->search_for_symbol_from_symbol_table();
+                    ROSE_ASSERT(tmpSymbol != NULL);
+                    classSymbol = isSgClassSymbol(tmpSymbol);
+                    ROSE_ASSERT(classSymbol != NULL);
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(classSymbol != NULL);
+                  }
+               ROSE_ASSERT(aliasSymbol == NULL);
+             }
+
+          ROSE_ASSERT(classSymbol != NULL);
+
+          if (SgProject::get_verbose() > -1)
+               printf ("classSymbol = %p for class name = %s \n",classSymbol,(*i).str());
+
+          previousClassSymbol = classSymbol;
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(classSymbol->get_declaration()->get_definingDeclaration());
+          ROSE_ASSERT(classDeclaration != NULL);
+       // previousClassScope = classSymbol->get_declaration()->get_scope();
+          previousClassScope = classDeclaration->get_definition();
+          ROSE_ASSERT(previousClassScope != NULL);
+        }
+
+  // Use a different name to make the code more clear.
+     SgClassSymbol* targetClassSymbol = previousClassSymbol;
+     ROSE_ASSERT(targetClassSymbol != NULL);
+     SgScopeStatement* targetClassScope = previousClassScope;
+     ROSE_ASSERT(targetClassScope != NULL);
+
+#if 0
      SgClassSymbol* classSymbol = astJavaScopeStack.front()->lookup_class_symbol(className);
-  // ROSE_ASSERT(classSymbol != NULL);
-     if (classSymbol != NULL)
+     if (targetClassSymbol != NULL)
         {
           printf ("WARNING: className = %s could not be found in the symbol table \n",className.str());
         }
+     ROSE_ASSERT(targetClassSymbol != NULL);
+#endif
+
+     printf ("Looking for the function = %s in class parent scope = %p = %s \n",name.str(),targetClassScope,targetClassScope->class_name().c_str());
+     SgFunctionSymbol* functionSymbol = targetClassScope->lookup_function_symbol(name);
+     ROSE_ASSERT(functionSymbol != NULL);
+
+     if (functionSymbol != NULL)
+        {
+          printf ("FOUND function symbol = %p \n",functionSymbol);
 
   // This is OK for now, but might not be good enough for a non-statement function call expression (not clear yet in ECJ AST).
      SgExprListExp* parameters = NULL;
-     SgExprStatement* expressionStatement = SageBuilder::buildFunctionCallStmt(name,SgTypeVoid::createType(),parameters,astJavaScopeStack.front());
+  // SgExprStatement* expressionStatement = SageBuilder::buildFunctionCallStmt(name,SgTypeVoid::createType(),parameters,astJavaScopeStack.front());
+
+  // SgFunctionCallExp* func_call_expr     = SageBuilder::buildFunctionCallExp(name,SgTypeVoid::createType(),parameters,astJavaScopeStack.front());
+     SgFunctionCallExp* func_call_expr     = SageBuilder::buildFunctionCallExp(functionSymbol,parameters);
+     SgExprStatement * expressionStatement = SageBuilder::buildExprStatement(func_call_expr);
 
   // We might want to build the expression directly and put it onto the astJavaExpressionStack..
   // SgFunctionCallExp* buildFunctionCallExp(SgFunctionSymbol* sym, SgExprListExp* parameters=NULL);
 
      ROSE_ASSERT(expressionStatement != NULL);
 
+  // Push the expression onto the stack so that the cactionMessageSendEnd can find it 
+  // and any function arguments and add the arguments to the function call expression.
+     astJavaExpressionStack.push_front(func_call_expr);
+
+  // Not clear yet if a MessageSend is an expression function call or a statement function call!!!
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      astJavaScopeStack.front()->append_statement(expressionStatement);
+        }
+       else
+        {
+          printf ("ERROR: functionSymbol == NULL \n");
+          ROSE_ASSERT(false);
+        }
    }
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobject xxx)
+   {
+  // This code is the same as that in cactionExplicitConstructorCall
+     if (SgProject::get_verbose() > -1)
+          printf ("Inside of Java_JavaParser_cactionMessageSendEnd() \n");
+
+     outputJavaState("At TOP of cactionMessageSendEnd");
+
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+
+  // The astJavaExpressionStack has all of the arguments to the function call.
+     vector<SgExpression*> arguments;
+     while (isSgFunctionCallExp(astJavaExpressionStack.front()) == NULL)
+        {
+          ROSE_ASSERT(astJavaExpressionStack.empty() == false);
+          arguments.push_back(astJavaExpressionStack.front());
+          astJavaExpressionStack.pop_front();
+        }
+
+     SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(astJavaExpressionStack.front());
+     ROSE_ASSERT(functionCallExp != NULL);
+
+     printf ("functionCallExp = %p args = %p \n",functionCallExp,functionCallExp->get_args());
+
+  // Are we traversing this the correct direction to get the argument order correct?
+     printf ("Number of arguments to the function call expression = %zu \n",arguments.size());
+     for (size_t i = 0; i < arguments.size(); i++)
+        {
+          ROSE_ASSERT(arguments[i] != NULL);
+          functionCallExp->append_arg(arguments[i]);
+        }
+
+     outputJavaState("At BOTTOM of cactionMessageSendEnd");
+
+#if 0
+     printf ("Exiting as a test \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedNameReference (JNIEnv *, jobject, jstring)
    {
@@ -384,93 +531,6 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart (JN
      astJavaImplicitClassList.push_back(name);
 
      outputJavaState("At BOTTOM of cactionBuildImplicitClassSupportStart");
-   }
-
-list<SgName>
-generateQualifierList (const SgName & classNameWithQualification)
-   {
-  // This function can be used to refactor the similar code in:
-  //    void buildClassSupport (const SgName & className, bool implicitClass).
-
-     list<SgName> returnList;
-     SgName classNameWithoutQualification;
-
-     classNameWithoutQualification = classNameWithQualification;
-
-  // Names of implicitly defined classes have names that start with "java." and these have to be translated.
-     string original_classNameString = classNameWithQualification.str();
-     string classNameString = classNameWithQualification.str();
-
-  // Also replace '.' with '_'
-     replace(classNameString.begin(), classNameString.end(),'.','_');
-
-  // Also replace '$' with '_' (not clear on what '$' means yet (something related to inner and outer class nesting).
-     replace(classNameString.begin(), classNameString.end(),'$','_');
-
-     SgName name = classNameString;
-
-  // We should not have a '.' in the class name.  Or it will fail the current ROSE name mangling tests.
-     ROSE_ASSERT(classNameString.find('.') == string::npos);
-
-  // DQ (3/20/2011): Detect use of '$' in class names. Current best reference 
-  // is: http://www.java-forums.org/new-java/27577-specific-syntax-java-util-regex-pattern-node.html
-     ROSE_ASSERT(classNameString.find('$') == string::npos);
-
-  // Parse the original_classNameString to a list of what will be classes.
-     size_t lastPosition = 0;
-     size_t position = original_classNameString.find('.',lastPosition);
-     while (position != string::npos)
-        {
-          string parentClassName = original_classNameString.substr(lastPosition,position-lastPosition);
-          if (SgProject::get_verbose() > 0)
-               printf ("parentClassName = %s \n",parentClassName.c_str());
-
-          returnList.push_back(parentClassName);
-
-          lastPosition = position+1;
-          position = original_classNameString.find('.',lastPosition);
-          if (SgProject::get_verbose() > 0)
-               printf ("lastPosition = %zu position = %zu \n",lastPosition,position);
-
-        }
-
-     string className = original_classNameString.substr(lastPosition,position-lastPosition);
-
-     if (SgProject::get_verbose() > 0)
-          printf ("className for implicit (leaf) class = %s \n",className.c_str());
-
-  // Reset the name for the most inner nested implicit class.  This allows a class such as "java.lang.System" 
-  // to be build as "System" inside of "class "lang" inside of class "java" (without resetting the name we 
-  // would have "java.lang.System" inside of "class "lang" inside of class "java").
-     name = className;
-
-     if (SgProject::get_verbose() > 0)
-          printf ("last name = %s \n",name.str());
-
-  // Push the last name onto the list.
-     returnList.push_back(name);
-
-     if (SgProject::get_verbose() > 0)
-          printf ("returnList.size() = %zu \n",returnList.size());
-
-#if 0
-     printf ("Exiting in stripQualifiers(): after computing the className \n");
-     ROSE_ASSERT(false);
-#endif
-
-     return returnList;
-   }
-
-SgName
-stripQualifiers (const SgName & classNameWithQualification)
-   {
-     list<SgName> l = generateQualifierList(classNameWithQualification);
-     ROSE_ASSERT(l.empty() == false);
-
-     if (SgProject::get_verbose() > 0)
-          printf ("result in stripQualifiers(%s) = %s \n",classNameWithQualification.str(),l.back().str());
-
-     return l.back();
    }
 
 // DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
@@ -594,7 +654,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport (JNIEnv
 // declared "public static native" instead of "public native" in the Java side of the JNI interface.
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport (JNIEnv* env, jclass xxx, jstring java_string)
    {
-     if (SgProject::get_verbose() > 0)
+     if (SgProject::get_verbose() > -1)
           printf ("Inside of Java_JavaParser_cactionBuildImplicitFieldSupport (variable declaration for field) \n");
 
      outputJavaState("At TOP of cactionBuildImplicitFieldSupport");
@@ -604,7 +664,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport (JNIEnv*
      SgVariableDeclaration* variableDeclaration = buildSimpleVariableDeclaration(name);
      ROSE_ASSERT(variableDeclaration != NULL);
 
-     if (SgProject::get_verbose() > 0)
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     astJavaScopeStack.front()->append_statement(variableDeclaration);
+
+     if (SgProject::get_verbose() > -1)
           variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionBuildImplicitFieldSupport(): debug");
    }
 
@@ -849,6 +912,25 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInstanceOfExpression(JNIEnv *env, 
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionIntLiteral(JNIEnv *env, jobject xxx)
    {
+     if (SgProject::get_verbose() > 0)
+          printf ("Build support for implicit class (end) \n");
+
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     outputJavaState("cactionIntLiteral");
+
+     int value          = 42;
+     string valueString = "42";
+
+     printf ("Building an integer value expression = %d = %s \n",value,valueString.c_str());
+
+     SgIntVal* integerValue = new SgIntVal(value,valueString);
+     ROSE_ASSERT(integerValue != NULL);
+
+  // Set the source code position (default values for now).
+     setJavaSourcePosition(integerValue);
+
+     astJavaExpressionStack.push_front(integerValue);
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
    }
 
 

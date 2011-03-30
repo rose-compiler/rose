@@ -49,6 +49,30 @@ list<SgNode*> astJavaNodeStack;
 list<SgName> astJavaImplicitClassList;
 
 
+void
+setJavaSourcePosition( SgLocatedNode* locatedNode )
+   {
+  // This function sets the source position to be marked as not available (since we often don't have token information)
+  // These nodes WILL be unparsed in the code generation phase.
+
+  // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
+     ROSE_ASSERT(locatedNode != NULL);
+
+  // Make sure we never try to reset the source position of the global scope (set elsewhere in ROSE).
+     ROSE_ASSERT(isSgGlobal(locatedNode) == NULL);
+
+  // Check the endOfConstruct first since it is most likely NULL (helpful in debugging)
+     if (locatedNode->get_endOfConstruct() != NULL || locatedNode->get_startOfConstruct() != NULL)
+        {
+          printf ("In setSourcePosition(SgLocatedNode* locatedNode): locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+        }
+     ROSE_ASSERT(locatedNode->get_endOfConstruct()   == NULL);
+     ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
+
+  // Call a mechanism defined in the SageInterface support
+     SageInterface::setSourcePosition(locatedNode);
+   }
+
 
 bool
 emptyJavaStateStack()
@@ -767,5 +791,93 @@ buildSimpleVariableDeclaration(const SgName & name)
      ROSE_ASSERT(variable != NULL);
 
      return variable;
+   }
+
+list<SgName>
+generateQualifierList (const SgName & classNameWithQualification)
+   {
+  // This function can be used to refactor the similar code in:
+  //    void buildClassSupport (const SgName & className, bool implicitClass).
+
+     list<SgName> returnList;
+     SgName classNameWithoutQualification;
+
+     classNameWithoutQualification = classNameWithQualification;
+
+  // Names of implicitly defined classes have names that start with "java." and these have to be translated.
+     string original_classNameString = classNameWithQualification.str();
+     string classNameString = classNameWithQualification.str();
+
+  // Also replace '.' with '_'
+     replace(classNameString.begin(), classNameString.end(),'.','_');
+
+  // Also replace '$' with '_' (not clear on what '$' means yet (something related to inner and outer class nesting).
+     replace(classNameString.begin(), classNameString.end(),'$','_');
+
+     SgName name = classNameString;
+
+  // We should not have a '.' in the class name.  Or it will fail the current ROSE name mangling tests.
+     ROSE_ASSERT(classNameString.find('.') == string::npos);
+
+  // DQ (3/20/2011): Detect use of '$' in class names. Current best reference 
+  // is: http://www.java-forums.org/new-java/27577-specific-syntax-java-util-regex-pattern-node.html
+     ROSE_ASSERT(classNameString.find('$') == string::npos);
+
+  // Parse the original_classNameString to a list of what will be classes.
+     size_t lastPosition = 0;
+     size_t position = original_classNameString.find('.',lastPosition);
+     while (position != string::npos)
+        {
+          string parentClassName = original_classNameString.substr(lastPosition,position-lastPosition);
+          if (SgProject::get_verbose() > 0)
+               printf ("parentClassName = %s \n",parentClassName.c_str());
+
+          returnList.push_back(parentClassName);
+
+          lastPosition = position+1;
+          position = original_classNameString.find('.',lastPosition);
+          if (SgProject::get_verbose() > 0)
+               printf ("lastPosition = %zu position = %zu \n",lastPosition,position);
+
+        }
+
+     string className = original_classNameString.substr(lastPosition,position-lastPosition);
+
+     if (SgProject::get_verbose() > 0)
+          printf ("className for implicit (leaf) class = %s \n",className.c_str());
+
+  // Reset the name for the most inner nested implicit class.  This allows a class such as "java.lang.System" 
+  // to be build as "System" inside of "class "lang" inside of class "java" (without resetting the name we 
+  // would have "java.lang.System" inside of "class "lang" inside of class "java").
+     name = className;
+
+     if (SgProject::get_verbose() > 0)
+          printf ("last name = %s \n",name.str());
+
+  // Push the last name onto the list.
+     returnList.push_back(name);
+
+     if (SgProject::get_verbose() > 0)
+          printf ("returnList.size() = %zu \n",returnList.size());
+
+#if 0
+     printf ("Exiting in stripQualifiers(): after computing the className \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return returnList;
+   }
+
+
+SgName
+stripQualifiers (const SgName & classNameWithQualification)
+   {
+     list<SgName> l = generateQualifierList(classNameWithQualification);
+     ROSE_ASSERT(l.empty() == false);
+
+     if (SgProject::get_verbose() > 0)
+          printf ("result in stripQualifiers(%s) = %s \n",classNameWithQualification.str(),l.back().str());
+
+     return l.back();
    }
 
