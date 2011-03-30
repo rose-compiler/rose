@@ -3,7 +3,7 @@
 #include "AsmUnparser_compat.h"
 
 /* FIXME: this should be a SgAsmInstruction class method. */
-std::string unparseInstruction(SgAsmInstruction* insn) {
+std::string unparseInstruction(SgAsmInstruction* insn, const AsmUnparser::LabelMap *labels) {
     /* Mnemonic */
     if (!insn) return "BOGUS:NULL";
     std::string result = unparseMnemonic(insn);
@@ -14,16 +14,16 @@ std::string unparseInstruction(SgAsmInstruction* insn) {
     const SgAsmExpressionPtrList& operands = opList->get_operands();
     for (size_t i = 0; i < operands.size(); ++i) {
         if (i != 0) result += ", ";
-        result += unparseExpression(operands[i]);
+        result += unparseExpression(operands[i], labels);
     }
 
     return result;
 }
 
 /* FIXME: This should be a SgAsmInstruction class method. */
-std::string unparseInstructionWithAddress(SgAsmInstruction* insn) {
+std::string unparseInstructionWithAddress(SgAsmInstruction* insn, const AsmUnparser::LabelMap *labels) {
     if (!insn) return "BOGUS:NULL";
-    return StringUtility::intToHex(insn->get_address()) + ":" + unparseInstruction(insn);
+    return StringUtility::intToHex(insn->get_address()) + ":" + unparseInstruction(insn, labels);
 }
 
 /* FIXME: This should be a SgAsmInstruction class method. */
@@ -45,7 +45,7 @@ std::string unparseMnemonic(SgAsmInstruction *insn) {
 }
 
 /* FIXME: This should be an SgAsmExpression class method */
-std::string unparseExpression(SgAsmExpression *expr) {
+std::string unparseExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels) {
     /* Find the instruction with which this expression is associated. */
     SgAsmInstruction *insn = NULL;
     for (SgNode *node=expr; !insn && node; node=node->get_parent()) {
@@ -54,15 +54,15 @@ std::string unparseExpression(SgAsmExpression *expr) {
 
     /* The expression is possibly not linked into the tree yet. Assume x86 if that happens. */
     if (!insn)
-        return unparseX86Expression(expr, false);
+        return unparseX86Expression(expr, labels, false);
         
     switch (insn->variantT()) {
         case V_SgAsmx86Instruction:
-            return unparseX86Expression(expr);
+            return unparseX86Expression(expr, labels);
         case V_SgAsmArmInstruction:
-            return unparseArmExpression(expr);
+            return unparseArmExpression(expr, labels);
         case V_SgAsmPowerpcInstruction:
-            return unparsePowerpcExpression(expr);
+            return unparsePowerpcExpression(expr, labels);
         default:
             std::cerr <<"Unhandled variant " <<insn->class_name() << std::endl;
             abort();
@@ -103,7 +103,9 @@ std::string
 unparseAsmInterpretation(SgAsmInterpretation* interp)
 {
     std::ostringstream s;
-    AsmUnparser().unparse(s, interp);
+    AsmUnparser unparser;
+    unparser.add_function_labels(interp);
+    unparser.unparse(s, interp);
     return s.str();
 }
 

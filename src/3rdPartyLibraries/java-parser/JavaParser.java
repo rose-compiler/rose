@@ -34,6 +34,18 @@ class JavaParser  implements Callable<Boolean>
   // or borrowed from the existing C and C++ support in ROSE.  We will however
   // add any required IR nodes as needed.
 
+     int verboseLevel = 0;
+
+  // Build a specific constructor to handle the verbose option
+     JavaParser ( int input_verboseLevel )
+        {
+          verboseLevel = input_verboseLevel;
+          if (verboseLevel > 0)
+             {
+               System.out.println("In JavaParser constructor: verboseLevel = " + verboseLevel);
+             }
+        }
+         
   // -------------------------------------------------------------------------------------------
      public native void cactionCompilationUnitList(int argc, String[] argv);
 
@@ -47,9 +59,12 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionExplicitConstructorCall(String filename);
      public native void cactionMethodDeclaration(String filename);
      public native void cactionSingleTypeReference(String filename);
-     public native void cactionArgument(String filename);
+     public native void cactionArgument(String argumentName, int modifiers);
      public native void cactionArrayTypeReference(String filename);
-     public native void cactionMessageSend(String filename);
+     public native void cactionMessageSend(String functionName, String associatedClassName);
+
+     public native void cactionMessageSendEnd();
+
      public native void cactionQualifiedNameReference(String filename);
      public native void cactionStringLiteral(String filename);
 
@@ -118,7 +133,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionJavadocSingleTypeReference();
      public native void cactionJavadocSingleTypeReferenceClassScope();
      public native void cactionLabeledStatement();
-     public native void cactionLocalDeclaration();
+     public native void cactionLocalDeclaration(String variableName);
      public native void cactionLongLiteral();
      public native void cactionMarkerAnnotation();
      public native void cactionMemberValuePair();
@@ -166,6 +181,20 @@ class JavaParser  implements Callable<Boolean>
      public static native void cactionBuildImplicitMethodSupport(String methodName);
      public static native void cactionBuildImplicitFieldSupport(String fieldName);
 
+  // Added new support functions for Argument IR nodes.
+     public native void cactionArgumentName(String name);
+     public native void cactionArgumentModifiers(int modifiers);
+     public native void cactionArgumentEnd();
+
+  // Type support
+     public static native void cactionGenerateType(String typeName);
+
+  // Closing support to finish up statement handling.
+     public static native void cactionStatementEnd(String typeName);
+
+  // public native void cactionMethodDeclarationEnd(String methodName);
+     public native void cactionMethodDeclarationEnd();
+
   // Save the compilationResult as we process the CompilationUnitDeclaration class.
   // public CompilationResult rose_compilationResult;
 
@@ -173,22 +202,27 @@ class JavaParser  implements Callable<Boolean>
   // public static boolean hasErrorOccurred = false;
 
   // DQ: This is the name of the C++ *.so file which has the implementations of the JNI functions.
-  // The library with the C++ implementation of these function must be loaded in order to call the functions.
+  // The library with the C++ implementation of these function must be loaded in order to call the 
+  // JNI functions.
      static { System.loadLibrary("JavaTraversal"); }
 
   // -------------------------------------------------------------------------------------------
 
-     public void startParsingAST(CompilationUnitDeclaration unit)
+         public void startParsingAST(CompilationUnitDeclaration unit /*, int input_veboseLevel */)
         {
+       // Set the verbose level for ROSE specific processing on the Java specific ECJ/ROSE translation.
+       // verboseLevel = input_veboseLevel;
+
        // Debugging support...
-          System.out.println("Start parsing");
+          if (verboseLevel > 0)
+               System.out.println("Start parsing");
 
        // Example of how to call the 
        // traverseAST(unit);
 
        // Make a copy of the compiation unit so that we can compute source code positions.
        // rose_compilationResult = unit.compilationResult;
-          JavaParserSupport.initialize(unit.compilationResult);
+          JavaParserSupport.initialize(unit.compilationResult,verboseLevel);
 
           try
              {
@@ -206,14 +240,19 @@ class JavaParser  implements Callable<Boolean>
                System.out.println("Caught error in JavaParser (Parser failed)");
                System.err.println(e);
 
+            // Make sure we exit as quickly as possible to simplify debugging.
+               System.exit(1);
+
             // Make sure we exit on any error so it is caught quickly.
             // System.exit(1);
+
             // throw e;
                return;
              }
 
        // Debugging support...
-          System.out.println("Done parsing");
+          if (verboseLevel > 0)
+               System.out.println("Done parsing");
         }
 
   // DQ (10/12/2010): Implemented abstract baseclass "call()" member function (similar to OFP).
@@ -222,7 +261,7 @@ class JavaParser  implements Callable<Boolean>
         {
        // boolean error = false;
           boolean error   = true;
-          boolean verbose = true;
+       // boolean verbose = true;
 
           if (error != false)
              {
@@ -230,7 +269,9 @@ class JavaParser  implements Callable<Boolean>
              } 
             else
              {
-               if (verbose)
+            // Use the class's verbose level option to control output.
+            // if (verbose)
+               if (verboseLevel > 0)
                     System.out.println("Parser exiting normally");
              }// end else(parser exited normally)
 

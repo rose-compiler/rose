@@ -102,9 +102,10 @@ jofp_invoke(int argc, char **argv)
   // DQ (10/12/2010): This function is not implemented in the ECJ parser (only in OFP).
      retval = jserver_callBooleanMethod(new_ofp_class, jofp_get_error_method());
 
-     if (retval != 0)  {
-         fprintf(stderr, "Warning: jserver_callBooleanMethod return non-zero result.\n");
-     }      
+     if (retval != 0)
+        {
+          fprintf(stderr, "Warning: jserver_callBooleanMethod return non-zero result.\n");
+        }
 
     return retval;
 }
