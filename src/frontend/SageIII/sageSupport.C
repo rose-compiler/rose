@@ -6909,36 +6909,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      if (get_openmp_lowering())  
      {
        compilerNameString.push_back("-D_OPENMP");
-       // Liao, 9/22/2009, we also specify the search path for libgomp_g.h, which is installed under $ROSE_INS/include
-       // and the path to libgomp.a/libgomp.so, which are located in $GCC_GOMP_OPENMP_LIB_PATH
-
-       // Header should always be available 
-       // the conditional compilation is necessary to pass make distcheck,
-       // where only a minimum configuration options are used and not all macros are defined. 
-#ifdef ROSE_INSTALLATION_PATH 
-       string include_path(ROSE_INSTALLATION_PATH);
-       include_path += "/include"; 
-       compilerNameString.push_back("-I"+include_path); 
-#endif
-#if 0  // moved to the very end       
-#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY       
-       // lib path is available if --with-gomp_omp_runtime_library=XXX is used
-       if (USE_ROSE_GOMP_OPENMP_LIBRARY)
-       {
-         // only linking phase needs this
-         if (!get_compileOnly()) 
-         {
-           string gomp_lib_path(GCC_GOMP_OPENMP_LIB_PATH);
-           ROSE_ASSERT (gomp_lib_path.size() != 0);
- //          compilerNameString.push_back("-L"+gomp_lib_path); 
-           compilerNameString.push_back(gomp_lib_path+"/libgomp.a"); // static linking for simplicity
-           compilerNameString.push_back("-lpthread"); 
-         }
-       }
-#endif       
-#endif       
      }
- 
+
   // DQ (3/31/2004): New cleaned up source file handling
      Rose_STL_Container<string> argcArgvList = argv;
 
@@ -7110,28 +7082,56 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // is in the current directory (likely a generated file itself; e.g. swig or ROSE applied recursively, etc.)).
   // printf ("oldFileNamePathOnly.length() = %d \n",oldFileNamePathOnly.length());
      if (oldFileNamePathOnly.empty() == false)
-        {
-#if 1       
+     {
+       vector<string>::iterator iter;
+       // find the very first -Ixxx option's position
+       for (iter = compilerNameString.begin(); iter != compilerNameString.end(); iter++) 
+       {
+         string cur_string =*iter;
+         string::size_type pos = cur_string.find("-I",0);
+         if (pos==0) 
+           break;
+       }
        // Liao, 5/15/2009
        // the input source file's path has to be the first one to be searched for header!
        // This is required since one of the SPEC CPU 2006 benchmarks: gobmk relies on this to be compiled.
-          vector<string>::iterator iter;
-       // find the very first -Ixxx option's position
-          for (iter = compilerNameString.begin(); iter != compilerNameString.end(); iter++) 
-             {
-               string cur_string =*iter;
-               string::size_type pos = cur_string.find("-I",0);
-               if (pos==0)
-                    break;
-             }
-
        // insert before the position
-          compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
-#else        
-          compilerNameString.push_back(std::string("-I") + oldFileNamePathOnly);
-#endif
-        }
+       compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
+     }
 
+    // Liao 3/30/2011. the search path for the installation path should be the last one, after paths inside
+    // source trees, such as -I../../../../sourcetree/src/frontend/SageIII and 
+    // -I../../../../sourcetree/src/midend/programTransformation/ompLowering
+     if (get_openmp_lowering())  
+     {
+       vector<string>::iterator iter, iter_last_inc=compilerNameString.begin();
+       // find the very last -Ixxx option's position
+       // This for loop cannot be merged with the previous one due to iterator invalidation rules.
+       for (iter = compilerNameString.begin(); iter != compilerNameString.end(); iter++) 
+       {
+         string cur_string =*iter;
+         string::size_type pos = cur_string.find("-I",0);
+         if (pos==0) 
+         {
+           iter_last_inc = iter;
+         }
+       }
+       if (iter_last_inc != compilerNameString.end())
+         iter_last_inc ++; // accommodate the insert-before-an-iterator semantics used in vector::insert() 
+ 
+       // Liao, 9/22/2009, we also specify the search path for libgomp_g.h, which is installed under $ROSE_INS/include
+       // and the path to libgomp.a/libgomp.so, which are located in $GCC_GOMP_OPENMP_LIB_PATH
+
+       // Header should always be available 
+       // the conditional compilation is necessary to pass make distcheck,
+       // where only a minimum configuration options are used and not all macros are defined. 
+#ifdef ROSE_INSTALLATION_PATH 
+       string include_path(ROSE_INSTALLATION_PATH);
+       include_path += "/include"; 
+       compilerNameString.insert(iter_last_inc, "-I"+include_path); 
+#endif
+     }
+ 
   // DQ (4/20/2006): This allows the ROSE translator to be just a wrapper for the backend (vendor) compiler.
   // compilerNameString += get_unparse_output_filename();
      if (get_skip_unparse() == false)
