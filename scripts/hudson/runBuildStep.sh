@@ -25,14 +25,22 @@ function runBuildStep {
 ####################################################################################
 # EXECUTE BUILD STEP (with optional spew analysis)
 ####################################################################################
-(
+    
+    printBannerToStartStep "$buildStep"
+    local start_time_seconds="$(date +%s)"
+
+
     if [ $# -eq 2 ]; then
         ${buildStep} -j${NUM_PROCESS} 2>&1 | tee $outputFile
     else
         ${buildStep} -j${NUM_PROCESS}
     fi
-) 2>&1 |filter_step "$buildStep"
-
+    # The pipestatus variable is an array that holds the exit status of your last
+    # foreground pipeline commands. we check to see if make failes through this command
+    if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
+        printBanner "Fatal error during '${buildStep}'. Aborting..."
+       exit 3
+    fi
 
     if [ $# -eq 2 ]; then
         runSpewAnalysis $outputFile
@@ -54,9 +62,14 @@ function runSpewAnalysis {
         exit 1;
     fi
 
+    printBannerToStartStep "Compile time spew"
+    local start_time_seconds="$(date +%s)"
+
+
     inputFile="$1"
 
-(
+    # Now process to count the number of lines of spew.
+    echo "Computing compile time spew"
     if [ $inputFile == "make_check_output.txt" ]; then
       grep -n "Making check in " $inputFile | ../scripts/checkMakeSpew.pl | tee makeSpewLineCount.txt
     else      filteredFile="filtered_$inputFile"
@@ -70,7 +83,6 @@ function runSpewAnalysis {
       echo "Measure Build System Parallelism"
       ../scripts/checkMakeParallelism.sh ${inputFile}
     fi
-) 2>&1 |filter_step "compile time spew"
 
     printBannerToEndStep "Compile time spew" $start_time_seconds 
 }

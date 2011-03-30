@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/sh -e
 #
 # TODO: add more summary info
 #	- List of durations for each step in the job
@@ -291,42 +291,51 @@ fi
 #
 #  ROSE/build
 #
-( ./build ) 2>&1 |filter_step "build"
 #########################################################################################
-#
-#  Setup install tree 
-#
-(
-    if test -e ROSE-install ; then 
-      chmod -R u+xw ROSE-install
-    fi
-    rm -rf ROSE-install
-) 2>&1 |filter_step "setup install tree"
-#########################################################################################
-#
-#  Setup build tree 
-#
-(
-    if test -e ROSE-build ; then
-      chmod -R u+wx ROSE-build
-    fi
-    rm -rf ROSE-build
-    mkdir ROSE-build
-) 2>&1 |filter_step "setup build tree"
+if test "x$ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT" = "xyes" ; then
+   echo "Skipping build at part of testing from makefile rule."
+else
+   printBannerToStartStep "build"
+   build_start_time="$(date +%s)"
 
+   ./build
+
+   printBannerToEndStep "build" $build_start_time
+fi
+
+
+if test -e ROSE-install ; then 
+  chmod -R u+xw ROSE-install
+fi
+rm -rf ROSE-install
+
+if test -e ROSE-build ; then
+  chmod -R u+wx ROSE-build
+fi
+rm -rf ROSE-build
+
+mkdir ROSE-build
 cd ROSE-build
+
+
 #########################################################################################
 #
 #  ROSE/configure
 #
-( 
-pwd
-    ../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
-) 2>&1 |filter_step "configure"
+#########################################################################################
+printBannerToStartStep "configure"
+configure_start_time="$(date +%s)"
+
+../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
+
+printBannerToEndStep "configure" $configure_start_time
+
+
 #########################################################################################
 #
 #  ROSE/make
 #
+#########################################################################################
 # TOO (2/24/2011): Requires librose.la
 function printRoseTranslatorVersion {
     # DQ (2/12/2010): Added the ROSE version number to the base of the output
@@ -334,17 +343,24 @@ function printRoseTranslatorVersion {
     make PrintRoseTranslatorVersion
 }
 
+start_time_make_seconds="$(date +%s)"
+ROSE_SPEW_ANALYSIS=yes
+
 case "$ROSE_TEST_BUILD_STYLE" in
 "make/check/install-minimal"|"make/check/install-full")
 
+    if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
+        makeOutputFile="make_output.txt"
+        makeCheckOutputFile="make_check_output.txt"
+    fi
     ################################################################################
     # MAKE
     #
-    runBuildStep make "make_output.txt"
+    runBuildStep make $makeOutputFile
     ################################################################################
     # MAKE CHECK
     #
-    runBuildStep make-check "make_check_output.txt"
+    runBuildStep make-check $makeCheckOutputFile
     ################################################################################
     # MAKE INSTALL & INSTALLCHECK
     #
@@ -358,13 +374,12 @@ make-distcheck)
     # MAKE DISTCHECK
     #
     # Build pre-requisites: stringify.C
-    (
-      make -j${NUM_PROCESS} -C src/util/stringSupport/ libRoseStringSupport.la
-      make -j${NUM_PROCESS} -C src/util/commandlineProcessing/ libRoseCommandlineUtil.la
-      make -j${NUM_PROCESS} -C src/util/ libroseutil.la
-      make -j${NUM_PROCESS} -C src/ROSETTA/src/
-      make -j${NUM_PROCESS} -C src/roseSupport/ stringify.h
-    ) 2>&1 |filter_step "build prerequisites for make-distcheck"
+    echo "Building prerequisites for make-distcheck..."
+    make -j${NUM_PROCESS} -C src/util/stringSupport/ libRoseStringSupport.la
+    make -j${NUM_PROCESS} -C src/util/commandlineProcessing/ libRoseCommandlineUtil.la
+    make -j${NUM_PROCESS} -C src/util/ libroseutil.la
+    make -j${NUM_PROCESS} -C src/ROSETTA/src/
+    make -j${NUM_PROCESS} -C src/roseSupport/ stringify.h
 
     runBuildStep make-distcheck
 
@@ -381,12 +396,11 @@ make-docs)
     #
     # Running with parallelism here does not tend to be very helpful since 
     # doxygen is what has to run and it does not run in parallel.
-    (
-      make -j${NUM_PROCESS} -C src/
-      make -j${NUM_PROCESS} -C tutorial/
-      make -j${NUM_PROCESS} -C projects/UpcTranslation/
-      make -j${NUM_PROCESS} -C tests/ testAnalysis
-    ) 2>&1 |filter_step "build prerequisites for make-docs"
+    echo "Building prerequisites for make-docs..."
+    make -j${NUM_PROCESS} -C src/
+    make -j${NUM_PROCESS} -C tutorial/
+    make -j${NUM_PROCESS} -C projects/UpcTranslation/
+    make -j${NUM_PROCESS} -C tests/ testAnalysis
 
     runBuildStep make-docs
 
