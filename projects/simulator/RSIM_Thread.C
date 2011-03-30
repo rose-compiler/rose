@@ -230,8 +230,9 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &info)
             case SIGTRAP:
             case SIGSYS:
                 /* Exit process with core dump */
-                tracing(TRACE_MISC)->mesg("dumping core\n");
+                tracing(TRACE_MISC)->mesg("dumping core...\n");
                 get_process()->dump_core(signo);
+                report_stack_frames(tracing(TRACE_MISC));
                 throw Exit((signo & 0x7f) | __WCOREFLAG, true);
             case SIGTERM:
             case SIGINT:
@@ -505,6 +506,26 @@ RSIM_Thread::report_progress_maybe()
 }
 
 void
+RSIM_Thread::report_stack_frames(RTS_Message *mesg)
+{
+    if (!mesg || !mesg->get_file())
+        return;
+    RTS_MESSAGE(*mesg) {
+        mesg->multipart("stack", "stack frames:\n");
+        uint32_t bp = policy.readGPR(x86_gpr_bp).known_value();
+        uint32_t retaddr, next_bp;
+        for (int i=0; i<32; i++, bp=next_bp) {
+            if (4!=process->mem_read(&retaddr, bp+4, 4))
+                break;
+            if (4!=process->mem_read(&next_bp, bp, 4))
+                break;
+            mesg->more("  #%d: bp=0x%08"PRIx32" ret=0x%08"PRIx32"\n", i, bp, retaddr);
+        }
+        mesg->multipart_end();
+    } RTS_MESSAGE_END(true);
+}
+
+void
 RSIM_Thread::syscall_return(const RSIM_SEMANTIC_VTYPE<32> &retval)
 {
     policy.writeGPR(x86_gpr_ax, retval);
@@ -558,8 +579,9 @@ RSIM_Thread::main()
             std::ostringstream s;
             s <<e;
             tracing(TRACE_MISC)->mesg("caught Disassembler::Exception: %s\n", s.str().c_str());
-            tracing(TRACE_MISC)->mesg("dumping core\n");
+            tracing(TRACE_MISC)->mesg("dumping core...\n");
             process->dump_core(SIGSEGV);
+            report_stack_frames(tracing(TRACE_MISC));
             abort();
         } catch (const RSIM_Semantics::Exception &e) {
             /* Thrown for instructions whose semantics are not implemented yet. */
@@ -567,8 +589,9 @@ RSIM_Thread::main()
             s <<e;
             tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::Exception: %s\n", s.str().c_str());
 #ifdef X86SIM_STRICT_EMULATION
-            tracing(TRACE_MISC)->mesg("dumping core\n");
+            tracing(TRACE_MISC)->mesg("dumping core...\n");
             process->dump_core(SIGILL);
+            report_stack_frames(tracing(TRACE_MISC));
             abort();
 #else
             tracing(TRACE_MISC)->mesg("exception ignored; continuing with a corrupt state...\n");
@@ -577,8 +600,9 @@ RSIM_Thread::main()
             std::ostringstream s;
             s <<e;
             tracing(TRACE_MISC)->mesg("caught semantic policy exception: %s\n", s.str().c_str());
-            tracing(TRACE_MISC)->mesg("dumping core\n");
+            tracing(TRACE_MISC)->mesg("dumping core...\n");
             process->dump_core(SIGILL);
+            report_stack_frames(tracing(TRACE_MISC));
             abort();
         } catch (const RSIM_Thread::Exit &e) {
             sys_exit(e);
@@ -726,7 +750,7 @@ RSIM_Thread::sys_exit(const Exit &e)
 
     /* Clear and signal child TID if necessary (CLONE_CHILD_CLEARTID) */
     if (clear_child_tid) {
-        tracing(TRACE_SYSCALL)->brief("waking futex 0x%08"PRIx32, clear_child_tid);
+        tracing(TRACE_SYSCALL)->mesg("waking futex 0x%08"PRIx32, clear_child_tid);
         uint32_t zero = 0;
         size_t n = process->mem_write(&zero, clear_child_tid, sizeof zero);
         ROSE_ASSERT(n==sizeof zero);

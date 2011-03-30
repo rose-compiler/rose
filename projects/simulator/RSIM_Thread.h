@@ -158,6 +158,9 @@ public:
     /** Print a progress report if progress reporting is enabled and enough time has elapsed since the previous report. */
     void report_progress_maybe();
 
+    /** Prints information about stack frames. */
+    void report_stack_frames(RTS_Message*);
+
 
 
     /**************************************************************************************************************************
