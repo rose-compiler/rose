@@ -249,14 +249,8 @@ class RoseBin_support {
 
 
   static bool bigEndian() {
-    unsigned char SwapTest[2] = { 1, 0 };
-    if( *(short *) SwapTest == 1 ){
-        //little endian
-        return false;
-      } else  {
-        //big endian
-        return true;
-      }
+      static int SwapTest = 1;
+      return 0 == *(char*)&SwapTest;
   }
 
   static bool

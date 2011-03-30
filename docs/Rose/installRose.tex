@@ -468,6 +468,22 @@ Additional notes:
 
 \end{enumerate}
 
+\subsection{Using Insure++}
+\label{gettingStarted:insure}
+
+   It is possible to configure ROSE to use insure++ for static and dynamic analysis
+of the ROSE source code as part of development of ROSE or ROSE based tools.  This
+is a feature that is experimental, and currently not working well (because our older
+version of insure++ (version 7.1.6) is failing to compile the Linux header files used in ROSE).
+The configure option to turn on the use of insure++ is: {\em --enable-insure}.
+This is all that is required if {\tt insure} is in your path (at LLNL run: 
+{\tt source /usr/apps/insure++/default/setup.csh} for csh and 
+{\tt source /usr/apps/insure++/default/setup.sh} for bash).  
+{\em Don't use Insure++ until you have some experience with ROSE development, it makes everything more complex.}.
+
+% I don't know if this actually works since I use the setup script.
+% If you need to specify the location of {\tt insure++} then use {\em --with-insure=<path>}.
+
 
 \subsection{Building ROSE From a Distribution (ROSE-\VersionNumber.tar.gz)}
 \label{gettingStarted:UserInstructions}

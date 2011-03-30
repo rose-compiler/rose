@@ -234,9 +234,9 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_36.f90 \
      test2011_39.f90 \
      test2011_40.f90 \
+     test2011_Rice_alternate-return-argument.f90 \
      test2011_Rice_allocate-derived-type-scope.f90 \
      test2011_Rice_alt-return-call.f90 \
-     test2011_Rice_alternate-return-argument.f90 \
      test2011_Rice_asterisk-length.f90 \
      test2011_Rice_char-array-decl-asterisk.f90 \
      test2011_Rice_constructor-initializer.f90 \
@@ -365,6 +365,13 @@ if !ROSE_USING_GFORTRAN_VERSION_4_4
      test2011_37.f90 
 endif
 
+# DQ (3/29/2011): Added test2011_Rice_alternate-return-argument.f90 to short list of test codes that
+# appear to have a problem on 4.1.x version compilers.  Both of these codes implement the alternate 
+# return but have been a problem on 4.1.x and maybe 4.3.x compilers (though might have less to do 
+# with the gfortran versions than something else either in ROSE or in the JVM on these machines.
+# The goal is to restrict these tests and see if the seamingly statistical failures on the Hudson
+# machines stop, then we can expand the testing with this information.  Organizing the tests this 
+# way will at least make sure that the tests are run, if only for one version of the compiler.
 # DQ (2/13/2011): GNU gfortran 4.2 is a gnu configuration where I want to have test2010_161.f90 be tested.
 # It has previously demonstrated a statistical failure on 4.1.2 and 4.3.2 (running it on 4.2 machines
 # is an incremental step to getting it into more uniform testing, since I can't get it to fail locally).
@@ -373,6 +380,21 @@ if ROSE_USING_GFORTRAN_VERSION_4_2
    F90_TESTCODES_REQUIRED_TO_PASS += \
      test2010_161.f90
 endif
+
+# DQ (3/29/2011): This is now passing the LLVM tests, so I will leave it alone and thus leave it in to run on all platforms.
+# test2011_Rice_alternate-return-argument.f90
+
+# DQ (3/29/2011): Since Rice is using the gfortran 4.4.x compiler we want to also have these tests 
+# run there. This should simplify their testing, while avoiding the 4.1.x and 4.3.x compilers where 
+# this has been a problem.  However, it is still not clear that this problem anything to do with the 
+# gfortran version (even though it appears to corrolate perfectly).
+if ROSE_USING_GFORTRAN_VERSION_4_4
+   F90_TESTCODES_REQUIRED_TO_PASS += \
+     test2010_161.f90 
+endif
+
+# DQ (3/29/2011): This is now passing the LLVM tests, so I will leave it alone and thus leave it in to run on all platforms.
+# test2011_Rice_alternate-return-argument.f90
 
 F90_TESTCODES_REQUIRING_PREPROCESSOR_REQUIRED_TO_PASS =
 
@@ -932,6 +954,11 @@ outputSpew.o:
 current_OFP_error:
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:exit_after_parser -c $(srcdir)/test2010_31.f90
 
+# DQ (3/29/2011): Added special test to support this problem that appears correlated to gfortran 4.1.2
+# though might be unrelated to the gfortran version number.
+problemTests:
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2010_161.f90
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2011_Rice_alternate-return-argument.f90
 
 
 # We will build a larger collection of module tests soon (supported by makefile dependence rules).
