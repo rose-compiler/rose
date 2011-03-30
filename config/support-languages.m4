@@ -201,6 +201,10 @@ AC_ARG_ENABLE([fortran],
                 fi
                 case "$enableval" in
                   [yes)]
+                        if test "x$with_java" = "xno" ; then
+                    	  [AC_MSG_FAILURE([Conflicting configure options: --enable-fortran='$enableval' was specified, but --with-java='$with_java'])] 
+                        fi
+
                   	if test "x$list_has_fortran" != "xyes" ; then
                           # --enable-languages does not include Fortran, but --enable-fortran=yes
                   	  LANGUAGES_TO_SUPPORT+=" fortran"
@@ -215,11 +219,11 @@ AC_ARG_ENABLE([fortran],
                  	;;
                 esac
                ##########################################################################
-               ,)
-#########################################################################################
-if test "x$with_java" = "xno" ; then
-  enable_java=no
-fi 
+               ,
+              if test "x$with_java" = "xno" ; then
+                enable_fortran=no
+                LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/fortran//g'`"
+              fi)
 #########################################################################################
 AC_ARG_ENABLE([java],
 #########################################################################################
@@ -231,6 +235,10 @@ AC_ARG_ENABLE([java],
                 fi
                 case "$enableval" in
                   [yes)]
+                        if test "x$with_java" = "xno" ; then
+                    	  [AC_MSG_FAILURE([Conflicting configure options: --enable-java='$enableval' was specified, but --with-java='$with_java'])] 
+                        fi
+
                   	if test "x$list_has_java" != "xyes" ; then
                           # --enable-languages does not include Java, but --enable-java=yes
                   	  LANGUAGES_TO_SUPPORT+=" java"
@@ -245,7 +253,11 @@ AC_ARG_ENABLE([java],
                  	;;
                 esac
                ##########################################################################
-               ,)
+               ,
+              if test "x$with_java" = "xno" ; then
+                enable_java=no
+                LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/java//g'`"
+              fi)
 #########################################################################################
 AC_ARG_ENABLE([php],
 #########################################################################################
@@ -371,6 +383,8 @@ fortran)
      	    support_fortran_language=yes
 	    AC_DEFINE([ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT], [], [Build ROSE to support the Fortran langauge])
           fi
+        elif test "x$with_java" = "xno" ; then
+	  AC_MSG_FAILURE([[[Fortran support]] can't support the Fortran language because you specified --with-java='$with_java'. You can turn off Fortran support with --disable-fortran (See ./configure --help)]) 
 	else
 	  AC_MSG_FAILURE([[[Fortran support]] Java Virtual Machine (JVM) not found: required by the Open Fortran Parser (OFP).
                          Do you need to explicitly specify Java (javac, JDk,...) using the "--with-java" configure-option? (See ./configure --help)])
