@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash -e
 #
 # TODO: add more summary info
 #	- List of durations for each step in the job
@@ -34,11 +34,8 @@ if test "x$machine_os" = "xDarwin" ; then
   OS_MACHINE_LABEL=x86_64-Darwin
 elif test "x$machine" = "xi686" ; then
   OS_MACHINE_LABEL=i686-linux
-elif test "x$machine" = "x86_64" ; then
-  OS_MACHINE_LABEL=amd64-linux
 else
-  echo "Unknown machine: ${machine}"
-  exit 1
+  OS_MACHINE_LABEL=amd64-linux
 fi
 
 #CONFIGURE_PREFIX_DIR="${HOME}/too1.workspace/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
@@ -221,16 +218,36 @@ fi
 
 #########################################################################################
 #
-#  Mac OS X 10.6 (64-bit)
-#  Ubuntu (64-bit) 
+#  Mac OS X 10.6 (64-bit) 
 #
 #########################################################################################
-if test "x$label" = "x64bit-macos-10.6" -o "x$label" = "amd64-ubuntu" ; then
+if test "x$label" = "x64bit-macos-10.6" ; then
   case "$ROSE_TEST_BUILD_STYLE" in
   "make/check/install-minimal")
          CONFIGURE_FLAGS="
                 --with-boost=${ROSE_TEST_BOOST_PATH} \
-                --with-boost-lib={$ROSE_TEST_BOOST_PATH}/lib/ \
+                --with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
+                --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+    ;;
+
+  *)
+        echo "Error: '$ROSE_TEST_BUILD_STYLE' build-style is not currently supported for '$label'"
+    ;;
+  esac
+fi
+#########################################################################################
+#
+#  Ubuntu 10.4 LTS (64-bit) 
+#
+#########################################################################################
+if test "x$label" = "xamd64-ubuntu" ; then
+  case "$ROSE_TEST_BUILD_STYLE" in
+  "make/check/install-minimal")
+         CONFIGURE_FLAGS="
+                --with-boost=${ROSE_TEST_BOOST_PATH} \
+                --with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
+                --without-java \
+                --disable-fortran \
                 --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
     ;;
 
