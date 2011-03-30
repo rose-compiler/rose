@@ -62,6 +62,9 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionArgument(String argumentName, int modifiers);
      public native void cactionArrayTypeReference(String filename);
      public native void cactionMessageSend(String functionName, String associatedClassName);
+
+     public native void cactionMessageSendEnd();
+
      public native void cactionQualifiedNameReference(String filename);
      public native void cactionStringLiteral(String filename);
 

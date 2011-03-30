@@ -170,13 +170,14 @@ class JavaParserSupport
                System.out.println("In buildImplicitClassSupport("+className+"): implicitClassCounter = " + implicitClassCounter);
 
        // Get the fields, constructors, and methods used in this class.
+       // Note that try ... catch is required for using the reflection support in Java.
           try
              {
             // Class cls = Class.forName("java.lang.String");
             // Class cls = Class.forName("java.lang."+node.receiver.toString());
 
                if (verboseLevel > -1)
-                    System.out.println("Generate the class for className = " + className);
+                    System.out.println("Generate the class for implicit className = " + className);
 
             // Note that "java.lang" does not appear to be a class (so is that root of all implicitly included classes?).
             // Class cls = Class.forName("java.lang");
@@ -200,7 +201,12 @@ class JavaParserSupport
                     System.out.println("After call to cactionBuildImplicitClassSupportStart");
 
                Field fieldlist[] = cls.getDeclaredFields();
-               for (int i = 0; i < fieldlist.length; i++)
+
+            // This is a way to limit the number of fields to be traversed and thus control the complexity of the implicitly defined class structure.
+            // int numberOfFields = 2;
+               int numberOfFields = fieldlist.length;
+
+               for (int i = 0; i < numberOfFields; i++)
                   {
                     Field fld = fieldlist[i];
 
@@ -270,7 +276,7 @@ class JavaParserSupport
                               if (typeClass.isArray() == true)
                                  {
                                 // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
-                                   System.out.println("Skipping case of array of type for now (sorry not implemented)... = " + nestedClassName);
+                                   System.out.println("Skipping case of array of type for now (sorry not implemented)... data field = " + fld);
                                  }
                                 else
                                  {
@@ -350,7 +356,7 @@ class JavaParserSupport
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
                  // JavaParser.cactionBuildImplicitMethodSupport(ct.getName());
-                    int constructorMethodCounterBound = 0;
+                    int constructorMethodCounterBound = 2;
                  // int constructorMethodCounterBound = 1000;
                     if (constructorMethodCounter < constructorMethodCounterBound)
                        {
@@ -392,7 +398,7 @@ class JavaParserSupport
 
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
-                    int methodCounterBound = 2;
+                    int methodCounterBound = 10;
                  // int methodCounterBound = 1000;
                     if (methodCounter < methodCounterBound)
                        {
