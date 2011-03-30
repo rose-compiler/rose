@@ -362,11 +362,8 @@ class ecjASTVisitor extends ASTVisitor
        // This implements the equivalent of the C++ "use" statement on "java.lang".
        // java_parser.cactionFixupGlobalScope("java.lang");
 
-          if (java_parser.verboseLevel > 0)
-             {
-               System.out.println("Exiting as a test in visit (CompilationUnitDeclaration,CompilationUnitScope)...");
-               System.exit(1);
-             }
+       // System.out.println("Exiting as a test in visit (CompilationUnitDeclaration,CompilationUnitScope)...");
+       // System.exit(1);
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (CompilationUnitDeclaration,CompilationUnitScope)");
@@ -725,12 +722,12 @@ class ecjASTVisitor extends ASTVisitor
 
      public boolean visit(IntLiteral  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
+          if (java_parser.verboseLevel > -1)
                System.out.println("Inside of visit (IntLiteral,BlockScope)");
 
           java_parser.cactionIntLiteral();
 
-          if (java_parser.verboseLevel > 0)
+          if (java_parser.verboseLevel > -1)
                System.out.println("Leaving visit (IntLiteral,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
@@ -1133,7 +1130,7 @@ class ecjASTVisitor extends ASTVisitor
 
      public boolean visit(MessageSend  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
+          if (java_parser.verboseLevel > -1)
                System.out.println("Inside of visit (MessageSend,BlockScope)");
 
        // java_parser.cactionMessageSend("abc");
@@ -1154,7 +1151,7 @@ class ecjASTVisitor extends ASTVisitor
           String name                = new String(node.selector);
           String associatedClassName = node.receiver.toString();
 
-          if (java_parser.verboseLevel > 2)
+          if (java_parser.verboseLevel > -1)
              {
                System.out.println("MessageSend node = " + node);
 
@@ -1200,7 +1197,7 @@ class ecjASTVisitor extends ASTVisitor
        // java_parser.cactionExplicitConstructorCall("super");
           java_parser.cactionMessageSend(name,associatedClassName);
 
-          if (java_parser.verboseLevel > 0)
+          if (java_parser.verboseLevel > -1)
                System.out.println("Leaving visit (MessageSend,BlockScope)");
 
        // System.out.println("Exiting as a test in visit (MessageSend,BlockScope)...");
@@ -2267,6 +2264,12 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(MessageSend  node, BlockScope scope)
         {
        // do nothing  by default
+
+          if (java_parser.verboseLevel > -1)
+               System.out.println("Inside of endVisit (MessageSend,BlockScope)");
+
+          java_parser.cactionMessageSendEnd();
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (MessageSend,BlockScope)");
         }

@@ -59,6 +59,8 @@ SgGlobal* getGlobalScope();
 // Function used by SgType::getCurrentScope()
 bool emptyJavaStateStack();
 
+void setJavaSourcePosition  ( SgLocatedNode* locatedNode );
+
 void outputJavaState( const std::string label );
 
 std::string convertJavaStringToCxxString  (JNIEnv *env, const jstring & java_string);
@@ -78,6 +80,9 @@ void buildImplicitClass (const SgName & className);
 void buildClassSupport (const SgName & className, bool implicitClass);
 
 SgVariableDeclaration* buildSimpleVariableDeclaration(const SgName & name);
+
+std::list<SgName> generateQualifierList (const SgName & classNameWithQualification);
+SgName stripQualifiers (const SgName & classNameWithQualification);
 
 
 // endif for ROSE_JAVA_SUPPORT
