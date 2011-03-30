@@ -15,7 +15,7 @@ std::string unparseMnemonic(SgAsmInstruction*);
 
 /** Returns the string representation of an instruction operand (SgAsmExpression), the format of which might depend on the
  *  instruction with which it's associated. */
-std::string unparseExpression(SgAsmExpression*, const AsmUnparser::LabelMap*);
+std::string unparseExpression(SgAsmExpression*, const AsmUnparser::LabelMap *labels=NULL);
 
 std::string unparseAsmStatement(SgAsmStatement*);
 
