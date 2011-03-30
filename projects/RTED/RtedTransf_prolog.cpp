@@ -34,13 +34,6 @@ RtedTransformation::insertMainCloseCall()
 
   std::string comment = "RS : Insert Finalizing Call to Runtime System to check if error was detected (needed for automation)";
   attachComment(exprStmt, comment, PreprocessingInfo::before);
-
-  if (RUNON_UPC)
-  {
-    SgUpcBarrierStatement& xtraBarrier = *buildUpcBarrierStatement();
-    /* SgExprStatement&    xtraBarrierStmt = */
-    SageInterface::insertStatementAfter(globalsInitLoc, &xtraBarrier);
-  }
 }
 
 

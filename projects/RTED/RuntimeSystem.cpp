@@ -52,6 +52,8 @@ void rted_Close(const char*)
 {
   RuntimeSystem * rs = RuntimeSystem::instance();
 
+  rted_UpcExit();
+
   rs->doProgramExitChecks();
   rs->printMessage("Failed to discover error in RTED test.\n");
 }

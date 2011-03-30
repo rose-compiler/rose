@@ -761,3 +761,10 @@ void rted_UpcAllInitialize()
   rted_UpcAllInitWorkzone();
   rted_UpcEnterWorkzone();
 }
+
+void rted_UpcExit()
+{
+  rted_UpcExitWorkzone();
+  upc_barrier;
+  rted_ProcessMsg();
+}

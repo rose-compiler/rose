@@ -59,6 +59,7 @@ void RtedTransformation::loadFunctionSymbols(SgProject* project) {
    ROSE_ASSERT(symbols.roseUpcExitWorkzone);
    ROSE_ASSERT(symbols.roseUpcEnterWorkzone);
    ROSE_ASSERT(symbols.roseUpcAllInitialize);
+   ROSE_ASSERT(symbols.roseUpcExit);
    ROSE_ASSERT(symbols.roseUpcBeginExclusive);
    ROSE_ASSERT(symbols.roseUpcEndExclusive);
 

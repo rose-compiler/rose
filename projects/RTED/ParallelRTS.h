@@ -49,6 +49,10 @@ void rted_UpcBeginExclusive(void);
 ///        see also rted_UpcBeginExclusive
 void rted_UpcEndExclusive(void);
 
+/// \brief waits for other UPC threads to finish their computation and
+///        processes all messages in the queue
+void rted_UpcExit(void);
+
 #else /* WITH_UPC */
 
 // when we do not use UPC, we compile the runtime system with empty
@@ -91,6 +95,10 @@ void rted_UpcBeginExclusive(void)
 
 static inline
 void rted_UpcEndExclusive(void)
+{}
+
+static inline
+void rted_UpcExit(void)
 {}
 
 #endif /* WITH_UPC */

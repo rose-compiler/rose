@@ -13,12 +13,6 @@
 #include "CppRuntimeSystem/rted_iface_structs.h"
 #include "CppRuntimeSystem/rted_typedefs.h"
 
-#ifdef WITH_UPC
-#define RUNON_UPC 1
-#else  /* WITH_UPC */
-#define RUNON_UPC 0
-#endif /* WITH_UPC */
-
 //
 // convenience and debug functions
 //

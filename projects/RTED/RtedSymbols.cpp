@@ -70,6 +70,7 @@ void initialize(SgScopeStatement& n, RtedSymbols& rtedsym)
   lookup(n, "UpcExitWorkzone",          rtedsym.roseUpcExitWorkzone);
   lookup(n, "UpcEnterWorkzone",         rtedsym.roseUpcEnterWorkzone);
   lookup(n, "UpcAllInitialize",         rtedsym.roseUpcAllInitialize);
+  lookup(n, "UpcExit",                  rtedsym.roseUpcExit);
   lookup(n, "UpcBeginExclusive",        rtedsym.roseUpcBeginExclusive);
   lookup(n, "UpcEndExclusive",          rtedsym.roseUpcEndExclusive);
 }
@@ -108,12 +109,12 @@ struct RtedSymbolWrapper
   void handle(SgNode&)
   {}
 
-	void handle(SgGlobal& n)
+  void handle(SgGlobal& n)
   {
     initialize(n, rs);
   }
 
-	void handle(SgTypedefDeclaration& n)
+  void handle(SgTypedefDeclaration& n)
   {
     const std::string& name = n.get_name().str();
 
