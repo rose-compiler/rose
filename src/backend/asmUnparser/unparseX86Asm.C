@@ -116,7 +116,7 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
             char buf[64];
             uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
             sprintf(buf, "0x%02"PRIx64, v);
-            if (v & 0x80)
+            if ((v & 0x80) && (v & 0x7f))
                 sprintf(buf+strlen(buf), "<-0x%02"PRIx64">", (~v+1) & 0xff);
             result = buf;
             break;
@@ -125,7 +125,7 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
             char buf[64];
             uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
             sprintf(buf, "0x%04"PRIx64, v);
-            if (v & 0x8000)
+            if ((v & 0x8000) && (v & 0x7fff))
                 sprintf(buf+strlen(buf), "<-0x%04"PRIx64">", (~v+1) & 0xffff);
             result = buf;
             break;
@@ -137,7 +137,7 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
             sprintf(buf, "0x%08"PRIx64, v);
             if (!label.empty()) {
                 sprintf(buf+strlen(buf), "<%s>", label.c_str());
-            } else if (v & 0x80000000) {
+            } else if ((v & 0x80000000) && (v & 0x7fffffff)) {
                 sprintf(buf+strlen(buf), "<-0x%08"PRIx64">", (~v+1) & 0xffffffff);
             }
             result = buf;
@@ -150,7 +150,7 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
             sprintf(buf, "0x%016"PRIx64, v);
             if (!label.empty()) {
                 sprintf(buf+strlen(buf), "<%s>", label.c_str());
-            } else if (v & ((uint64_t)1<<63)) {
+            } else if ((v & ((uint64_t)1<<63)) && (v & (((uint64_t)1<<63)-1))) {
                 sprintf(buf+strlen(buf), "<-0x%016"PRIx64">", (~v+1));
             }
             result = buf;
