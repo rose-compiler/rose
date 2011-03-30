@@ -1666,7 +1666,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           SgAsmExpression* asmExpression = isSgAsmExpression(node);
           if (asmExpression != NULL)
              {
-               string unparsedExpression = unparseExpression(asmExpression, NULL);
+               string unparsedExpression = unparseExpression(asmExpression);
 
                additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=skyblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
                labelWithSourceCode = "\\n  " + unparsedExpression + 
