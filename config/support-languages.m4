@@ -220,7 +220,7 @@ AC_ARG_ENABLE([fortran],
                 esac
                ##########################################################################
                ,
-              if test "x$with_java" = "xno" -o test "x$USE_JAVA" = "xno" ; then
+              if test "x$with_java" = "xno" -o "x$USE_JAVA" = "xno" ; then
                 enable_fortran=no
                 LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/fortran//g'`"
               fi)
