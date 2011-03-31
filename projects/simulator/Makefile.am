@@ -1091,9 +1091,10 @@ test-inputs: $(SYS_TEST_INPUTS) $(PTHREAD_TEST_INPUTS)
 run-tests: check-syscalls check-pthread
 	@$(RTH_STATS)
 
-check-local:  #run-tests
-	@echo "The simulator project is excluded from make check for now due to random hanging problems."
-	@echo "Run 'make run-tests' in $$(pwd) instead."
+check-local: run-tests
+#check-local:  #run-tests
+#	@echo "The simulator project is excluded from make check for now due to random hanging problems."
+#	@echo "Run 'make run-tests' in $$(pwd) instead."
 
 # "tmp-sim" is the temp directory used to run the tests. See x86sim.conf.
 # Rather than stuffing *everything* in MOSTLYCLEANFILES, we use cleanup targets. This is to avoid argument lists that
