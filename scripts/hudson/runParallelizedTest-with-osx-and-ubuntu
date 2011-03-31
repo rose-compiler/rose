@@ -247,7 +247,6 @@ if test "x$label" = "xamd64-ubuntu" ; then
                 --with-boost=${ROSE_TEST_BOOST_PATH} \
                 --with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
                 --without-java \
-                --disable-fortran \
                 --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
     ;;
 
