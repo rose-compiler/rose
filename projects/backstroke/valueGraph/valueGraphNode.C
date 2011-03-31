@@ -56,6 +56,9 @@ OperatorNode::OperatorType OperatorNode::getOperatorType(VariantT t)
 	case V_SgGreaterThanOp:
 		return otGreaterThan;
 
+	case V_SgLessThanOp:
+		return otLessThan;
+
 	default:
 		ROSE_ASSERT(false);
 	}

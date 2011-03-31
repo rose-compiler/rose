@@ -1,4 +1,5 @@
 #include "valueGraph.h"
+#include "pathNumGenerator.h"
 #include <slicing/backstrokeCFG.h>
 #include <slicing/backstrokeCDG.h>
 #include <slicing/backstrokeDDG.h>
@@ -400,30 +401,35 @@ int main(int argc, char *argv[])
 	if (!funcDef->get_file_info()->isSameFile(sourceFile))
 		continue;
 
-	Backstroke::EventReverser reverser;
-	reverser.buildValueGraph(funcDef);
-	//reverser.searchValueGraph();
-	reverser.shortestPath();
-	reverser.buildForwardAndReverseEvent();
-//
+//	Backstroke::EventReverser reverser;
+//	reverser.buildValueGraph(funcDef);
+//	//reverser.searchValueGraph();
+//	reverser.shortestPath();
+//	reverser.buildForwardAndReverseEvent();
+//	reverser.getPath();
+
 //	Backstroke::ValueGraph reverseVg;
 //	// The following function makes a reverse CFG copy.
 //	boost::transpose_graph(vg, reverseVg);
 
-	reverser.valueGraphToDot("VG.dot");
+	//reverser.valueGraphToDot("VG.dot");
 
-	typedef Backstroke::FilteredCFG CFG;
-	CFG cfg(funcDef);
+    Backstroke::BackstrokeCFG cfg(funcDef);
 	cfg.toDot("CFG.dot");
 
-	Backstroke::CDG<CFG> cdg(cfg);
-	cdg.toDot("CDG.dot");
+    Backstroke::FilteredCFG fullCfg(funcDef);
+	fullCfg.toDot("FullCFG.dot");
 
-	Backstroke::DDG<CFG> ddg(cfg);
-	ddg.toDot("DDG.dot");
+    Backstroke::PathNum pathNum(cfg);
 
-	Backstroke::PDG<CFG> pdg(cfg);
-	pdg.toDot("PDG.dot");
+//	Backstroke::CDG<CFG> cdg(cfg);
+//	cdg.toDot("CDG.dot");
+//
+//	Backstroke::DDG<CFG> ddg(cfg);
+//	ddg.toDot("DDG.dot");
+//
+//	Backstroke::PDG<CFG> pdg(cfg);
+//	pdg.toDot("PDG.dot");
 
 	break;
   }

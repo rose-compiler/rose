@@ -130,7 +130,7 @@ void CDG<CFGType>::buildCDG(const CFGType& cfg)
 	CFGType rvsCfg = cfg.makeReverseCopy();
 
 	// Build the dominator tree of the reverse CFG.
-	std::map<CFGVertexT, CFGVertexT> iDom = rvsCfg.buildDominatorTree();
+	std::map<CFGVertexT, CFGVertexT> iDom = rvsCfg.getDominatorTree();
 
 	// Build the dominance frontiers of the reverse CFG, which represents the CDG
 	// of the original CFG.

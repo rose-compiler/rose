@@ -105,9 +105,9 @@ struct PhiNode : ValueGraphNode
 
 struct ValueNode : ValueGraphNode
 {
-	ValueNode() : valueExp(NULL), type(NULL) {}
-	ValueNode(SgType* t) : valueExp(NULL), type(t) {}
-	ValueNode(SgValueExp* exp) : valueExp(exp), type(NULL) {}
+	ValueNode() : valueExp(NULL), type(NULL), cost(0) {}
+	ValueNode(SgType* t) : valueExp(NULL), type(t), cost(0) {}
+	ValueNode(SgValueExp* exp) : valueExp(exp), type(NULL), cost(0) {}
 
 	virtual std::string toString() const;
 
@@ -118,6 +118,7 @@ struct ValueNode : ValueGraphNode
 	SgValueExp* valueExp;
 	SgType* type;
 	std::vector<VersionedVariable> vars;
+    int cost;
 };
 
 struct OperatorNode : ValueGraphNode

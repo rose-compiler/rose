@@ -86,6 +86,8 @@ public:
 	void shortestPath();
 
 	void buildForwardAndReverseEvent();
+
+    void getPath();
 	
 private:
 
