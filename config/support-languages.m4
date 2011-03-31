@@ -220,7 +220,7 @@ AC_ARG_ENABLE([fortran],
                 esac
                ##########################################################################
                ,
-              if test "x$with_java" = "xno" ; then
+              if test "x$with_java" = "xno" -o test "x$USE_JAVA" = "xno" ; then
                 enable_fortran=no
                 LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/fortran//g'`"
               fi)
@@ -387,7 +387,7 @@ fortran)
 	  AC_MSG_FAILURE([[[Fortran support]] can't support the Fortran language because you specified --with-java='$with_java'. You can turn off Fortran support with --disable-fortran (See ./configure --help)]) 
 	else
 	  AC_MSG_FAILURE([[[Fortran support]] Java Virtual Machine (JVM) not found: required by the Open Fortran Parser (OFP).
-                         Do you need to explicitly specify Java (javac, JDk,...) using the "--with-java" configure-option? (See ./configure --help)])
+                         Do you need to explicitly specify Java using the "--with-java" configure-option? (See ./configure --help)])
 	fi
 	;;
 java)
