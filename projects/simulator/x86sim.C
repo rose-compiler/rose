@@ -2776,8 +2776,9 @@ RSIM_Thread::emulate_syscall()
             tracing(TRACE_MISC)->more(") is not implemented yet");
             tracing(TRACE_MISC)->multipart_end();
 
-            tracing(TRACE_MISC)->mesg("dumping core\n");
+            tracing(TRACE_MISC)->mesg("dumping core...\n");
             get_process()->dump_core(SIGSYS);
+            report_stack_frames(tracing(TRACE_MISC));
             abort();
         }
     }
