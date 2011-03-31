@@ -191,10 +191,18 @@ struct ValueGraphEdge
 	ValueGraphEdge() : cost(0) {}
 	ValueGraphEdge(int c) : cost(c) {}
 
-	virtual std::string toString() const
-	{ return "cost:" + boost::lexical_cast<std::string>(cost); }
+	virtual std::string toString() const;
 
+    //! The cost attached on this edge. The cost may come from state saving,
+    //! or operations.
 	int cost;
+
+    //! A CFG may be seperated into several DAGs, and each DAG have its own path
+    //! numbers. This index represents which DAG the following paths belong to.
+    int dagIndex;
+
+    //! All paths this relationship exists.
+    std::set<int> paths;
 };
 
 struct OrderedEdge : ValueGraphEdge

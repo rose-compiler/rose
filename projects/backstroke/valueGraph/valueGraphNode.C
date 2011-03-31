@@ -41,10 +41,12 @@ OperatorNode::OperatorType OperatorNode::getOperatorType(VariantT t)
 	{
 	case V_SgAddOp:
 	case V_SgPlusAssignOp:
+    case V_SgPlusPlusOp:
 		return otAdd;
 
 	case V_SgSubtractOp:
 	case V_SgMinusAssignOp:
+    case V_SgMinusMinusOp:
 		return otSubtract;
 
 	case V_SgMultiplyOp:
@@ -92,6 +94,15 @@ string OperatorNode::toString() const
 	}
 
 	return label;
+}
+
+std::string ValueGraphEdge::toString() const
+{
+    std::string str = "cost:" + boost::lexical_cast<std::string>(cost) + "\\n";
+    str += boost::lexical_cast<std::string>(dagIndex) + " : ";
+    foreach (int i, paths)
+        str += boost::lexical_cast<std::string>(i) + " ";
+    return str;
 }
 
 

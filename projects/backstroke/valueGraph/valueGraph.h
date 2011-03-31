@@ -2,6 +2,7 @@
 #define BACKSTROKE_VALUE_GRAPH
 
 #include "valueGraphNode.h"
+#include "pathNumGenerator.h"
 #include <ssa/staticSingleAssignment.h>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/bind.hpp>
@@ -12,7 +13,7 @@ namespace Backstroke
 
 //class ValueGraph : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
 //		ValueGraphNode*, ValueGraphEdge*>
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
+typedef boost::adjacency_list<boost::listS, boost::listS, boost::bidirectionalS,
 		ValueGraphNode*, ValueGraphEdge*> ValueGraph;
 
 class EventReverser
@@ -30,11 +31,20 @@ public:
 	typedef SSA::VarName VarName;
 
 private:
+    //! The event function definition.
+    SgFunctionDefinition* funcDef_;
+
+    //! The CFG of the event function.
+    BackstrokeCFG cfg_;
+    
 	//! The SSA form of the function definition.
 	SSA ssa_;
 
 	//! The value graph object.
 	ValueGraph valueGraph_;
+
+    //! This object manages the path information of the function.
+    PathNumManager pathNumManager_;
 	
 	//! A map from SgNode to vertex of Value Graph.
 	std::map<SgNode*, VGVertex> nodeVertexMap_;
@@ -69,14 +79,20 @@ private:
 //	typedef CDG<CFG> CDG;
 public:
 	
-	EventReverser()
-	: ssa_(SageInterface::getProject())
+	EventReverser(SgFunctionDefinition* funcDef)
+	:   funcDef_(funcDef),
+        cfg_(funcDef_),
+        ssa_(SageInterface::getProject()),
+        pathNumManager_(cfg_)
 	{
 		ssa_.run(false);
 	}
 
+    ~EventReverser()
+    {}
+
 	//! Build the value graph for the given function.
-	void buildValueGraph(SgFunctionDefinition* funcDef);
+	void buildValueGraph();
 
 	//! Generate a dot file describing the value graph.
 	void valueGraphToDot(const std::string& filename) const;
@@ -100,15 +116,24 @@ private:
 	 */
 	//void setNewDefNode(SgNode* defNode, VGVertex useVertex);
 
-	VGVertex creatValueNode(SgNode* node);
-	VGVertex creatOperatorNode(VariantT t, VGVertex result, VGVertex lhs, VGVertex rhs);
+    //! Build the main part of the value graph.
+    void buildBasicValueGraph();
 
-	//void setValue(VGVertex v, SgValueExp* val);
-	void addVariable(VGVertex v, SgNode* node);
+    //! Create a value node from the given AST node.
+	VGVertex createValueNode(SgNode* node);
+    
+    //! Create a special value node with value 1 for ++ and -- operators.
+    VGVertex createValueOneNode();
+
+    //! Create an operation node.
+	VGVertex createOperatorNode(VariantT t, VGVertex result, VGVertex lhs, VGVertex rhs);
+
+	//! Add a variable to a vertex in VG.
+	void addVariableToNode(VGVertex v, SgNode* node);
 
 	void writeValueGraphNode(std::ostream& out, const VGVertex& node) const
 	{
-		out << "[label=\"" << node << "\\n" << valueGraph_[node]->toString() << "\"]";
+		out << "[label=\"" << valueGraph_[node]->toString() << "\"]";
 	}
 
 	void writeValueGraphEdge(std::ostream& out, const VGEdge& edge) const
@@ -151,6 +176,7 @@ private:
 	//! Given a type, return the cost of saving it.
 	static int getCost(SgType* t);
 
+    //! Check if a variable is a state variable.
 	bool isStateVariable(const VarName& name)
 	{
 		return stateVariables_.count(name) > 0;

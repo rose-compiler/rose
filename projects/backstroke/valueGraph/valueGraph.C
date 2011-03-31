@@ -1,48 +1,31 @@
 #include "valueGraph.h"
+#include <sageBuilder.h>
 #include <utilities/utilities.h>
 #include <boost/foreach.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/timer.hpp>
-#include "steinerTree.h"
 
 namespace Backstroke
 {
 
 using namespace std;
-using namespace boost;
 
 #define foreach BOOST_FOREACH
 
-
-void EventReverser::buildValueGraph(SgFunctionDefinition* funcDef)
+void EventReverser::buildBasicValueGraph()
 {
-    // First, build a SSA CFG for the given function definition.
-    //CFG cfg(funcDef);
-
-    // Then build a CDG to find all control dependence.
-    //CDG cdg(cfg);
-
     // Build the SSA form of the given function.
-    //SSA ssa(SageInterface::getProject());
-    //ssa_.run();
     //SSA::NodeReachingDefTable defTable = getUsesAtNode(funcDef);
-
-    // Start to build the value graph.
-    //map<ValueGraphNode*, SgNode*> nodeMap;
-
-    //map<SgNode*, Vertex> nodeVertexMap_;
-    //map<VersionedVariable, Vertex> varVertexMap_;
-
 
     // Build a vertex which is the start point of the search.
     //root_ = addValueGraphNode(new ValueGraphNode);
     root_ = addValueGraphNode(new ValueGraphNode);
 
     // First, add all parameters of the event to the value graph.
-    SgInitializedNamePtrList& paraList = funcDef->get_declaration()->get_args();
+    SgInitializedNamePtrList& paraList = funcDef_->get_declaration()->get_args();
     foreach (SgInitializedName* var, paraList)
     {
-        creatValueNode(var);
+        createValueNode(var);
 
         // FIXME State variable may not be parameters.
         // Add the variable into wanted set.
@@ -50,7 +33,7 @@ void EventReverser::buildValueGraph(SgFunctionDefinition* funcDef)
         stateVariables_.insert(VarName(1, var));
     }
 
-    vector<SgNode*> nodes = BackstrokeUtility::querySubTree<SgNode>(funcDef);
+    vector<SgNode*> nodes = BackstrokeUtility::querySubTree<SgNode>(funcDef_);
     foreach (SgNode* node, nodes)
     {
         cout << node->class_name() << endl;
@@ -67,7 +50,7 @@ void EventReverser::buildValueGraph(SgFunctionDefinition* funcDef)
                     // A declaration without definition
                     if (initalizer == NULL)
                     {
-                        creatValueNode(initName);
+                        createValueNode(initName);
                     }
                     else if (SgAssignInitializer* assignInit =
                             isSgAssignInitializer(initalizer))
@@ -77,7 +60,7 @@ void EventReverser::buildValueGraph(SgFunctionDefinition* funcDef)
                         ROSE_ASSERT(nodeVertexMap_.count(operand) > 0);
                         VGVertex rhsVertex = nodeVertexMap_[operand];
 
-                        addVariable(rhsVertex, initName);
+                        addVariableToNode(rhsVertex, initName);
                     }
                     else
                     {
@@ -128,7 +111,7 @@ void EventReverser::buildValueGraph(SgFunctionDefinition* funcDef)
                 }
 
                 //VersionedVariable var(varName, defTable[varName]->getRenamingNumber());
-                //varVertexMap_[var] = add_vertexvalueGraph_;
+                //varVertexMap_[var] = boost::add_vertexvalueGraph_;
                 //valueGraph_[newNode] = new ValueGraphNode(varName, defTable[varName]->getRenamingNumber());
                 //valueGraph_[newNode] = newNode;
                 //varVertexMap_[var] = v;
@@ -137,7 +120,7 @@ void EventReverser::buildValueGraph(SgFunctionDefinition* funcDef)
             // Value expression.
             else if (SgValueExp* valueExp = isSgValueExp(expr))
             {
-                creatValueNode(valueExp);
+                createValueNode(valueExp);
                 //addValueGraphNode(new ValueNode(valueExp), expr);
             }
 
@@ -148,100 +131,125 @@ void EventReverser::buildValueGraph(SgFunctionDefinition* funcDef)
                 nodeVertexMap_[castExp] = nodeVertexMap_[castExp->get_operand()];
             }
 
+            // Unary expressions.
+            else if (SgUnaryOp* unaryOp = isSgUnaryOp(expr))
+            {
+                SgExpression* operand = unaryOp->get_operand();
+
+                VariantT t = node->variantT();
+                switch (t)
+                {
+                case V_SgPlusPlusOp:
+                case V_SgMinusMinusOp:
+                    {
+                        VersionedVariable use = getVersionedVariable(operand);
+                        //VersionedVariable def = getVersionedVariable(operand, false);
+
+                        ROSE_ASSERT(varVertexMap_.count(use) > 0);
+
+                        createOperatorNode(t, createValueNode(operand),
+                                varVertexMap_[use], createValueOneNode());
+                        break;
+                    }
+                
+                default:
+                    break;
+                }
+            }
+
+            // Binary expressions.
             else if (SgBinaryOp* binOp = isSgBinaryOp(expr))
             {
                 SgExpression* lhs = binOp->get_lhs_operand();
                 SgExpression* rhs = binOp->get_rhs_operand();
 
-                //				ValueGraphNode* newNode = NULL;
-
-                //OperaterType opType;
-
-                //				map<VariantT, OperaterType> nodeOpTypeTable;
-                //				nodeOpTypeTable[V_SgAddOp] = otAdd;
-                //				nodeOpTypeTable[V_SgAddOp] = otAdd;
-                //				nodeOpTypeTable[V_SgAddOp] = otAdd;
-
                 VariantT t = node->variantT();
                 switch (t)
                 {
-                    // For assign op, we assign the node which is assigned to with a variable name.
-                    case V_SgAssignOp:
+                // For assign op, we assign the node which is assigned to with a variable name.
+                case V_SgAssignOp:
+                    {
+                        if (BackstrokeUtility::isVariableReference(lhs))
                         {
-                            if (BackstrokeUtility::isVariableReference(lhs))
-                            {
-                                ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
-                                VGVertex rhsVertex = nodeVertexMap_.find(rhs)->second;
-                                addVariable(rhsVertex, lhs);
-                            }
-                            else
-                            {
-                                ROSE_ASSERT(!"Only variable can be assigned now.");
-                            }
-
-                            break;
-                        }
-
-                        // The following three operations are constructive ones, and we create three operation
-                        // nodes for them, since the all three operands can be restored from the other two.
-                    case V_SgAddOp:
-                    case V_SgSubtractOp:
-                        {
-                            // FIXME Check if the variable type is integet type here.
-
-                            ROSE_ASSERT(nodeVertexMap_.count(lhs) > 0);
                             ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
-
-                            VGVertex result = creatValueNode(expr);
-                            VGVertex lhsv = nodeVertexMap_[lhs];
-                            VGVertex rhsv = nodeVertexMap_[rhs];
-
-                            VariantT t2 = (t == V_SgAddOp) ? V_SgSubtractOp : V_SgAddOp;
-                            creatOperatorNode(t, result, lhsv, rhsv);
-                            creatOperatorNode(t2, lhsv, result, rhsv);
-                            creatOperatorNode(V_SgSubtractOp, rhsv, result, lhsv);
-
-                            break;
+                            VGVertex rhsVertex = nodeVertexMap_.find(rhs)->second;
+                            addVariableToNode(rhsVertex, lhs);
                         }
-
-                    case V_SgMultiplyOp:
-                    case V_SgDivideOp:
-                    case V_SgGreaterThanOp:
-                    case V_SgLessThanOp:
+                        else
                         {
-                            ROSE_ASSERT(nodeVertexMap_.count(lhs) > 0);
-                            ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
-
-                            creatOperatorNode(t, creatValueNode(expr),
-                                    nodeVertexMap_[lhs], nodeVertexMap_[rhs]);
-
-                            break;
+                            ROSE_ASSERT(!"Only variable can be assigned now.");
                         }
 
-                    case V_SgPlusAssignOp:
-                        {
-                            VersionedVariable use = getVersionedVariable(lhs);
-
-                            ROSE_ASSERT(varVertexMap_.count(use) > 0);
-                            ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
-
-                            creatOperatorNode(t, creatValueNode(expr),
-                                    varVertexMap_[use], nodeVertexMap_[rhs]);
-                            break;
-                        }
-
-
-                    default:
                         break;
+                    }
+
+                    // The following three operations are constructive ones, and we create three operation
+                    // nodes for them, since the all three operands can be restored from the other two.
+                case V_SgAddOp:
+                case V_SgSubtractOp:
+                    {
+                        // FIXME Check if the variable type is integet type here.
+
+                        ROSE_ASSERT(nodeVertexMap_.count(lhs) > 0);
+                        ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
+
+                        VGVertex result = createValueNode(expr);
+                        VGVertex lhsv = nodeVertexMap_[lhs];
+                        VGVertex rhsv = nodeVertexMap_[rhs];
+
+                        VariantT t2 = (t == V_SgAddOp) ? V_SgSubtractOp : V_SgAddOp;
+                        createOperatorNode(t, result, lhsv, rhsv);
+                        //createOperatorNode(t2, lhsv, result, rhsv);
+                        //createOperatorNode(V_SgSubtractOp, rhsv, result, lhsv);
+
+                        break;
+                    }
+
+                case V_SgMultiplyOp:
+                case V_SgDivideOp:
+                case V_SgGreaterThanOp:
+                case V_SgLessThanOp:
+                    {
+                        ROSE_ASSERT(nodeVertexMap_.count(lhs) > 0);
+                        ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
+
+                        createOperatorNode(t, createValueNode(expr),
+                                nodeVertexMap_[lhs], nodeVertexMap_[rhs]);
+
+                        break;
+                    }
+
+                case V_SgPlusAssignOp:
+                    {
+                        VersionedVariable use = getVersionedVariable(lhs);
+
+                        ROSE_ASSERT(varVertexMap_.count(use) > 0);
+                        ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
+
+                        createOperatorNode(t, createValueNode(expr),
+                                varVertexMap_[use], nodeVertexMap_[rhs]);
+                        break;
+                    }
+
+
+                default:
+                    break;
                 }
             }
         }
     }
+}
 
-    // At the end of the event, find the versions of all variables, and determine which variables
-    // are avaiable during the search of VG.
+
+void EventReverser::buildValueGraph()
+{
+    // First, build the basic part of the value graph.
+    buildBasicValueGraph();
+
+    // At the end of the event, find the versions of all variables, 
+    // and determine which variables are avaiable during the search of VG.
     typedef SSA::NodeReachingDefTable::value_type VarNameDefPair;
-    foreach (const VarNameDefPair& nameDef, ssa_.getLastVersions(funcDef->get_declaration()))
+    foreach (const VarNameDefPair& nameDef, ssa_.getLastVersions(funcDef_->get_declaration()))
     {
         VarName name = nameDef.first;
 
@@ -249,7 +257,7 @@ void EventReverser::buildValueGraph(SgFunctionDefinition* funcDef)
         {
             VersionedVariable var(name, nameDef.second->getRenamingNumber());
 
-            ROSE_ASSERT(varVertexMap_.count(var));
+            ROSE_ASSERT(varVertexMap_.count(var) || (cout << var, 0));
             availableValues_.insert(varVertexMap_[var]);
         }
     }
@@ -257,13 +265,13 @@ void EventReverser::buildValueGraph(SgFunctionDefinition* funcDef)
     // Add a reverse edge for every non-ordered edge.
     vector<VGEdge> edges;
     VGEdgeIter e, f;
-    for (tie(e, f) = boost::edges(valueGraph_); e != f; ++e)
+    for (boost::tie(e, f) = boost::edges(valueGraph_); e != f; ++e)
         edges.push_back(*e);
 
     foreach (VGEdge edge, edges)
     {
-        VGVertex src = source(edge, valueGraph_);
-        VGVertex tar = target(edge, valueGraph_);
+        VGVertex src = boost::source(edge, valueGraph_);
+        VGVertex tar = boost::target(edge, valueGraph_);
 
         // If the edge is not connected to an operator node, make a reverse copy.
         if (isOperatorNode(valueGraph_[src]) == NULL &&
@@ -274,7 +282,7 @@ void EventReverser::buildValueGraph(SgFunctionDefinition* funcDef)
     // Add all state saving edges.
     addStateSavingEdges();
 
-    cout << "Number of nodes: " << num_vertices(valueGraph_) << endl;
+    cout << "Number of nodes: " << boost::num_vertices(valueGraph_) << endl;
 }
 
 EventReverser::VGVertex EventReverser::addValueGraphPhiNode(VersionedVariable& var)
@@ -335,7 +343,7 @@ EventReverser::VGVertex EventReverser::addValueGraphNode(ValueGraphNode* newNode
         cout << "New var added:" << varNode->var << endl;
 #endif
 
-    VGVertex v = add_vertex(valueGraph_);
+    VGVertex v = boost::add_vertex(valueGraph_);
     valueGraph_[v] = newNode;
     //	if (sgNode)
     //		nodeVertexMap_[sgNode] = v;
@@ -345,8 +353,8 @@ EventReverser::VGVertex EventReverser::addValueGraphNode(ValueGraphNode* newNode
 EventReverser::VGEdge EventReverser::addValueGraphEdge(
         EventReverser::VGVertex src, EventReverser::VGVertex tar, int cost)
 {
-    //VGEdge e = add_edge(src, tar, valueGraph_).first;
-    VGEdge e = add_edge(src, tar, valueGraph_).first;
+    //VGEdge e = boost::add_edge(src, tar, valueGraph_).first;
+    VGEdge e = boost::add_edge(src, tar, valueGraph_).first;
     valueGraph_[e] = new ValueGraphEdge(cost);
     return e;
 }
@@ -354,8 +362,8 @@ EventReverser::VGEdge EventReverser::addValueGraphEdge(
 EventReverser::VGEdge EventReverser::addValueGraphOrderedEdge(
         EventReverser::VGVertex src, EventReverser::VGVertex tar, int index)
 {
-    //VGEdge e = add_edge(src, tar, valueGraph_).first;
-    VGEdge e = add_edge(src, tar, valueGraph_).first;
+    //VGEdge e = boost::add_edge(src, tar, valueGraph_).first;
+    VGEdge e = boost::add_edge(src, tar, valueGraph_).first;
     valueGraph_[e] = new OrderedEdge(index);
     return e;
 }
@@ -408,22 +416,36 @@ EventReverser::VGEdge EventReverser::addValueGraphOrderedEdge(
 //	}
 //}
 
-EventReverser::VGVertex EventReverser::creatValueNode(SgNode* node)
+EventReverser::VGVertex EventReverser::createValueOneNode()
 {
-    VGVertex newVertex; // = add_vertex(valueGraph_);
+    SgValueExp* valueOne = SageBuilder::buildIntVal(1);
+    return addValueGraphNode(new ValueNode(valueOne));
+}
 
+
+EventReverser::VGVertex EventReverser::createValueNode(SgNode* node)
+{
+    VGVertex newVertex; // = boost::add_vertex(valueGraph_);
+
+    // If the AST node is a value node, create a new value node with the value.
     if (SgValueExp* valExp = isSgValueExp(node))
     {
         newVertex = addValueGraphNode(new ValueNode(valExp));
     }
+    // If the AST node is not a variable node, create a empty value node.
     else if (isSgVarRefExp(node) == NULL && isSgInitializedName(node) == NULL)
     {
-        newVertex = addValueGraphNode(new ValueNode);
+        SgExpression* expr = isSgExpression(node);
+        ROSE_ASSERT(expr);
+        
+        newVertex = addValueGraphNode(new ValueNode(expr->get_type()));
     }
     else
     {
         // Get the var name and version for lhs.
         VersionedVariable var = getVersionedVariable(node, false);
+
+        cout << "New var detected: " << var << endl;
 
         ValueNode* valNode = new ValueNode;
         valNode->vars.push_back(var);
@@ -438,7 +460,7 @@ EventReverser::VGVertex EventReverser::creatValueNode(SgNode* node)
     return newVertex;
 }
 
-void EventReverser::addVariable(EventReverser::VGVertex v, SgNode* node)
+void EventReverser::addVariableToNode(EventReverser::VGVertex v, SgNode* node)
 {
     ValueNode* valNode = isValueNode(valueGraph_[v]);
     ROSE_ASSERT(valNode);
@@ -449,7 +471,7 @@ void EventReverser::addVariable(EventReverser::VGVertex v, SgNode* node)
     varVertexMap_[var] = nodeVertexMap_[node] = v;
 }
 
-EventReverser::VGVertex EventReverser::creatOperatorNode(
+EventReverser::VGVertex EventReverser::createOperatorNode(
         VariantT t,
         EventReverser::VGVertex result,
         EventReverser::VGVertex lhs,
@@ -468,10 +490,11 @@ EventReverser::VGVertex EventReverser::creatOperatorNode(
 void EventReverser::addStateSavingEdges()
 {
     VGVertexIter v, w;
-    for (tie(v, w) = boost::vertices(valueGraph_); v != w; ++v)
+    for (boost::tie(v, w) = boost::vertices(valueGraph_); v != w; ++v)
     {
         ValueGraphNode* node = valueGraph_[*v];
 
+        // Phi node does not have cost (we don't need it in search process).
         if (isPhiNode(node))
         {
         }
@@ -484,6 +507,7 @@ void EventReverser::addStateSavingEdges()
                     cost = getCost(valNode->type);
                 else
                 {
+                    // The cost is the minimum one in all variables inside.
                     cost = INT_MAX;
                     foreach (const VersionedVariable& var, valNode->vars)
                         cost = min(cost, getCost(var.name.back()->get_type()));
@@ -497,6 +521,8 @@ void EventReverser::addStateSavingEdges()
 
 int EventReverser::getCost(SgType* t)
 {
+    ROSE_ASSERT(t);
+    
     if (SgReferenceType* refType = isSgReferenceType(t))
     {
         t = refType->get_base_type();
@@ -570,162 +596,28 @@ VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
 
 void EventReverser::valueGraphToDot(const std::string& filename) const
 {
+    // Since the vetices are stored in a list, we have to give each vertex
+    // a unique id here.
+    int counter = 0;
+    map<VGVertex, int> vertexIDs;
+    VGVertexIter v, w;
+    for (boost::tie(v, w) = boost::vertices(valueGraph_); v != w; ++v)
+        vertexIDs[*v] = counter++;
+
+    // Turn a std::map into a property map.
+    boost::associative_property_map<map<VGVertex, int> > vertexIDMap(vertexIDs);
+
     ofstream ofile(filename.c_str(), std::ios::out);
-    write_graphviz(ofile, valueGraph_,
-            bind(&EventReverser::writeValueGraphNode, this, ::_1, ::_2),
-            bind(&EventReverser::writeValueGraphEdge, this, ::_1, ::_2));
+    boost::write_graphviz(ofile, valueGraph_,
+            boost::bind(&EventReverser::writeValueGraphNode, this, ::_1, ::_2),
+            boost::bind(&EventReverser::writeValueGraphEdge, this, ::_1, ::_2),
+            boost::default_writer(), vertexIDMap);
 }
 
 
 
-#if 1
-
-void EventReverser::searchValueGraph()
-{
-    timer t;
-
-    set<VGVertex> terminals;
-    foreach (VGVertex v, valuesToRestore_)
-        terminals.insert(v);
-    SteinerTreeBuilder builder;
-    builder.buildSteinerTree(valueGraph_, root_, terminals);
-
-
 #if 0
 
-    // First, collect all operator nodes.
-    vector<VGVertex> opNodes;
-    map<VGVertex, pair<VGVertex, set<VGVertex> > > dependencesMap;
-    boost::graph_traits<ValueGraph>::vertex_iterator v, w;
-    for (tie(v, w) = boost::vertices(valueGraph_); v != w; ++v)
-    {
-        if (isOperatorNode(valueGraph_[*v]))
-        {
-            opNodes.push_back(*v);
-
-            // Find the dependence.
-            dependencesMap[*v].first = target(*(out_edges(*v, valueGraph_).first), valueGraph_);
-            boost::graph_traits<ValueGraph>::in_edge_iterator e, f;
-            for (tie(e, f) = in_edges(*v, valueGraph_); e != f; ++e)
-                dependencesMap[*v].second.insert(source(*e, valueGraph_));
-        }
-    }
-
-    for (int i = opNodes.size(); i >= 0 ; --i)
-        //for (size_t i = 0; i <= opNodes.size(); ++i)
-    {
-        vector<vector<int> > combs = generateCombination(opNodes.size(), i);
-
-        // for each combination
-        foreach (vector<int>& comb, combs)
-        {
-            // First, check if this combination is valid (no cross dependence).
-            map<VGVertex, set<VGVertex> > dependences;
-            bool flag = false;
-            foreach (int j, comb)
-            {
-                pair<VGVertex, set<VGVertex> >& vp = dependencesMap[opNodes[j]];
-
-                // A value can only be restored by one operator.
-                if (dependences.count(vp.first) > 0)
-                {
-                    flag = true;
-                    break;
-                }
-
-                //cout << "::" << vp.first << ':';
-                foreach (VGVertex v, vp.second)
-                {
-                    //cout << v << ' ';
-                    if (dependences[v].count(vp.first) > 0)
-                    {
-                        flag = true;
-                        //cout << "\n\n\n";
-                        goto NEXT;
-                    }
-                }
-                //cout << endl;
-                dependences.insert(vp);
-            }
-NEXT:
-            if (flag)
-                continue;
-
-            ValueGraph vg = valueGraph_;
-
-            set<VGVertex> terminals;
-            foreach (VGVertex v, valuesToRestore_)
-                terminals.insert(v);
-            foreach (int k, comb)
-            {
-                boost::graph_traits<ValueGraph>::in_edge_iterator e, f;
-                for (tie(e, f) = in_edges(opNodes[k], vg); e != f; ++e)
-                    terminals.insert(source(*e, vg));
-            }
-
-            for (size_t j = 0; j < opNodes.size(); ++j)
-            {
-                if (find(comb.begin(), comb.end(), j) != comb.end())
-                {
-                    VGEdge e = *(out_edges(opNodes[j], vg).first);
-                    vg[add_edge(root_, target(e, vg), vg).first] = vg[e];
-                }
-                clear_vertex(opNodes[j], vg);
-            }
-
-#if 0
-            boost::graph_traits<ValueGraph>::vertex_iterator v, w;
-            for (tie(v, w) = boost::vertices(vg); v != w;)
-            {
-                if (isOperatorNode(vg[*v]))
-                {
-                    clear_vertex(*v, vg);
-                    remove_vertex(*v, vg);
-                    tie(v, w) = boost::vertices(vg);
-                }
-                else
-                    ++v;
-            }
-#endif
-
-#if 0
-            cout << "Draw graph ..." << endl;
-            ofstream ofile("VG.dot", std::ios::out);
-            write_graphviz(ofile, vg,
-                    bind(&EventReverser::writeValueGraphNode, this, ::_1, ::_2),
-                    bind(&EventReverser::writeValueGraphEdge, this, ::_1, ::_2));
-#endif
-
-            // Start the search.
-            map<VGEdge, int> weightMap;
-            vector<VGEdge> edges;
-            boost::graph_traits<ValueGraph>::edge_iterator e, f;
-            for (tie(e, f) = boost::edges(vg); e != f; ++e)
-                weightMap[*e] = vg[*e]->cost;
-
-#if 1
-            //			int res = SteinerTree<ValueGraph, VGVertex, associative_property_map<map<VGEdge, int> > >
-            //				(vg, root_, terminals, associative_property_map<map<VGEdge, int> >(weightMap));
-            SteinerTreeBuilder builder;
-            builder.buildSteinerTree(valueGraph_, root_, terminals);
-
-            //cout << i << ' ' << comb.size() << ' ' << dist << endl;
-#else
-            typedef SteinerTreeFinder<ValueGraph, associative_property_map<map<VGEdge, int> > > STFinder;
-            STFinder finder(vg, root_, terminals, (int)(log((float)terminals.size()) / log(2.f) + 0.5f), weightMap);
-            STFinder::SteinerTreeType steinerTree;
-            int dist;
-            tie(steinerTree, dist) = finder.GetSteinerTree();
-            cout << i << ' ' << comb.size() << ' ' << dist << endl;
-#endif
-            //getchar();
-        }
-    }
-
-#endif
-
-    cout << "Time used: " << t.elapsed() << endl;
-}
 
 struct VertexInfo
 {
@@ -751,12 +643,12 @@ struct VertexInfo
 void EventReverser::shortestPath()
 {
     VGVertexIter v, w;
-    vector<VertexInfo> verticesInfos(num_vertices(valueGraph_));
+    vector<VertexInfo> verticesInfos(boost::num_vertices(valueGraph_));
     //priority_queue<VertexInfo> workList;
     typedef pair<int, VGVertex> DistVertexPair;
     priority_queue<DistVertexPair, vector<DistVertexPair>, greater<DistVertexPair> > workList;
 
-    for (tie(v, w) = vertices(valueGraph_); v != w; ++v)
+    for (boost::tie(v, w) = vertices(valueGraph_); v != w; ++v)
     {
         VertexInfo info(*v);
         if (*v == root_)
@@ -777,9 +669,9 @@ void EventReverser::shortestPath()
             continue;
 
         VGOutEdgeIter e, f;
-        for (tie(e, f) = out_edges(r, valueGraph_); e != f; ++e)
+        for (boost::tie(e, f) = boost::out_edges(r, valueGraph_); e != f; ++e)
         {
-            VGVertex v = target(*e, valueGraph_);
+            VGVertex v = boost::target(*e, valueGraph_);
             VertexInfo& info = verticesInfos[v];
             if (info.visited)
                 continue;
@@ -909,18 +801,18 @@ void EventReverser::getPath()
                 p.nodesRestored.insert(v);
 
                 VGOutEdgeIter e, f;
-                for (tie(e, f) = out_edges(v, valueGraph_); e != f; ++e)
+                for (boost::tie(e, f) = boost::out_edges(v, valueGraph_); e != f; ++e)
                 {
-                    VGVertex tar = target(*e, valueGraph_);
+                    VGVertex tar = boost::target(*e, valueGraph_);
                     if (OperatorNode* operNode = isOperatorNode(valueGraph_[tar]))
                     {
                         PathInfo newPath = p;
 
                         VGOutEdgeIter g, h;
                         vector<VGVertex> operands;
-                        for (tie(g, h) = out_edges(tar, valueGraph_); g != h; ++g)
+                        for (boost::tie(g, h) = boost::out_edges(tar, valueGraph_); g != h; ++g)
                         {
-                            VGVertex operand = target(*g, valueGraph_);
+                            VGVertex operand = boost::target(*g, valueGraph_);
                             if (p.nodesRestored.count(operand) > 0)
                                 goto NEXT;
                             operands.push_back(operand);

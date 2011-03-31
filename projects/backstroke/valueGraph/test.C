@@ -401,8 +401,8 @@ int main(int argc, char *argv[])
 	if (!funcDef->get_file_info()->isSameFile(sourceFile))
 		continue;
 
-//	Backstroke::EventReverser reverser;
-//	reverser.buildValueGraph(funcDef);
+	Backstroke::EventReverser reverser(funcDef);
+	reverser.buildValueGraph();
 //	//reverser.searchValueGraph();
 //	reverser.shortestPath();
 //	reverser.buildForwardAndReverseEvent();
@@ -412,15 +412,15 @@ int main(int argc, char *argv[])
 //	// The following function makes a reverse CFG copy.
 //	boost::transpose_graph(vg, reverseVg);
 
-	//reverser.valueGraphToDot("VG.dot");
+	reverser.valueGraphToDot("VG.dot");
 
-    Backstroke::BackstrokeCFG cfg(funcDef);
-	cfg.toDot("CFG.dot");
-
-    Backstroke::FilteredCFG fullCfg(funcDef);
-	fullCfg.toDot("FullCFG.dot");
-
-    Backstroke::PathNum pathNum(cfg);
+//    Backstroke::BackstrokeCFG cfg(funcDef);
+//	cfg.toDot("CFG.dot");
+//
+//    Backstroke::FilteredCFG fullCfg(funcDef);
+//	fullCfg.toDot("FullCFG.dot");
+//
+//    Backstroke::PathNumManager pathNum(cfg);
 
 //	Backstroke::CDG<CFG> cdg(cfg);
 //	cdg.toDot("CDG.dot");

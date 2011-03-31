@@ -12,17 +12,36 @@ typedef CFG<BackstrokeCFGNodeFilter> BackstrokeCFG;
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
 		BackstrokeCFG::Vertex, BackstrokeCFG::Edge> DAG;
 
-class PathNum
+class PathNumGenerator;
+
+class PathNumManager
 {
     typedef boost::graph_traits<DAG> GraphTraits;
-	typedef GraphTraits::vertex_descriptor Vertex;
-	typedef GraphTraits::edge_descriptor Edge;
-    typedef GraphTraits::vertex_iterator VertexIter;
-    typedef GraphTraits::edge_iterator EdgeIter;
-    typedef GraphTraits::out_edge_iterator OutEdgeIter;
+	typedef GraphTraits::vertex_descriptor DAGVertex;
+	typedef GraphTraits::edge_descriptor DAGEdge;
+    typedef GraphTraits::vertex_iterator DAGVertexIter;
+    typedef GraphTraits::edge_iterator DAGEdgeIter;
+    typedef GraphTraits::out_edge_iterator DAGOutEdgeIter;
+
+    BackstrokeCFG cfg_;
+
+    //! The first DAG is about the function, and others are all loops.
+    std::vector<DAG> dags_;
+
+    //! A table from each CFG vertex to the index of the DAG and the DAG vertex.
+    std::map<BackstrokeCFG::Vertex, std::pair<int, DAGVertex> > vertexToDagIndex_;
+
+    std::vector<PathNumGenerator*> pathNumGenerators_;
+    
+    //std::map<SgNode*, std::pair<int, Vertex> > sgNodeToVertexMap_;
+
+    //std::map<SgNode*, std::pair<int, DAGVertex> > sgNodeToVertexMap_;
     
 public:
-    PathNum(const BackstrokeCFG& cfg);
+    PathNumManager(const BackstrokeCFG& cfg);
+    ~PathNumManager();
+
+    std::pair<int, std::set<int> > getPathNumbers(SgNode* node) const;
 };
 
 
@@ -57,7 +76,7 @@ class PathNumGenerator
     //! All paths in this DAG. The i_th path has the path number i.
     std::vector<Path> paths_;
 
-    std::map<Vertex, std::vector<int> > pathsForNode_;
+    std::map<Vertex, std::set<int> > pathsForNode_;
 
 public:
     PathNumGenerator(const DAG& dag, Vertex entry, Vertex exit)
@@ -72,6 +91,11 @@ public:
     //! For each vertex in the DAG, find all paths which contain it.
     void getAllPathNumbersForEachNode();
 
+    std::set<int> getPaths(Vertex v) const
+    {
+        ROSE_ASSERT(pathsForNode_.count(v) > 0);
+        return pathsForNode_.find(v)->second;
+    }
 };
 
 } // end of Backstroke
