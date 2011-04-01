@@ -202,7 +202,10 @@ AC_ARG_ENABLE([fortran],
                 case "$enableval" in
                   [yes)]
                         if test "x$with_java" = "xno" ; then
-                          [AC_MSG_FAILURE([[[Fortran Support]] you specified conflicting configure flags: '--enable-fortran=$enableval' enables Fortran-language support, which requires Java support, and '--with-java=$with_java' disables Java support])]
+                          [AC_MSG_FAILURE([[[Fortran Support]] you specified conflicting configure flags: '--enable-fortran=$enableval' enables Fortran-language support, which requires Java, and '--with-java=$with_java' disables Java])]
+                        fi
+                        if test "x$USE_JAVA" = "x0" ; then
+                          [AC_MSG_FAILURE([[[Fortran Support]] you requested to build Fortran language support with '--enable-fortran=$enableval', which requires Java, but Java was not found. Do you need to explicitly specify your Java using the "--with-java" configure-option? (See ./configure --help)])]
                         fi
 
                   	if test "x$list_has_fortran" != "xyes" ; then
@@ -220,7 +223,7 @@ AC_ARG_ENABLE([fortran],
                 esac
                ##########################################################################
                ,
-              if test "x$with_java" = "xno" -o "x$USE_JAVA" = "xno" ; then
+              if test "x$with_java" = "xno" -o "x$USE_JAVA" = "x0" ; then
                 enable_fortran=no
                 LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/fortran//g'`"
               fi)
@@ -238,6 +241,9 @@ AC_ARG_ENABLE([java],
                         if test "x$with_java" = "xno" ; then
                           [AC_MSG_FAILURE([[[Java Support]] you specified conflicting configure flags: '--enable-java=$enableval' enables Java-language support, but '--with-java=$with_java' disables it])]
                         fi
+                        if test "x$USE_JAVA" = "x0" ; then
+                          [AC_MSG_FAILURE([[[Java Support]] you requested to build Java language support with '--enable-java=$enableval', which requires Java, but Java was not found. Do you need to explicitly specify your Java using the "--with-java" configure-option? (See ./configure --help)])]
+                        fi
 
                   	if test "x$list_has_java" != "xyes" ; then
                           # --enable-languages does not include Java, but --enable-java=yes
@@ -254,7 +260,7 @@ AC_ARG_ENABLE([java],
                 esac
                ##########################################################################
                ,
-              if test "x$with_java" = "xno" ; then
+              if test "x$with_java" = "xno" -o "x$USE_JAVA" = "x0" ; then
                 enable_java=no
                 LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/java//g'`"
               fi)
