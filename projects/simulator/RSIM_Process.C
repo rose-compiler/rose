@@ -84,8 +84,12 @@ RSIM_Process::remove_thread(RSIM_Thread *thread)
 RSIM_Thread *
 RSIM_Process::get_thread(pid_t tid) const
 {
-    std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.find(tid);
-    return ti==threads.end() ? NULL : ti->second;
+    RSIM_Thread *retval = NULL;
+    RTS_READ(rwlock()) {
+        std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.find(tid);
+        retval = ti==threads.end() ? NULL : ti->second;
+    } RTS_READ_END;
+    return retval;
 }
 
 size_t
@@ -125,8 +129,10 @@ size_t
 RSIM_Process::get_ninsns() const
 {
     size_t retval = 0;
-    for (std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.begin(); ti!=threads.end(); ++ti)
-        retval += ti->second->get_ninsns();
+    RTS_READ(rwlock()) {
+        for (std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.begin(); ti!=threads.end(); ++ti)
+            retval += ti->second->get_ninsns();
+    } RTS_READ_END;
     return retval;
 }
 
