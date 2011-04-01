@@ -223,10 +223,11 @@ AC_ARG_ENABLE([fortran],
                 esac
                ##########################################################################
                ,
-              if test "x$with_java" = "xno" -o "x$USE_JAVA" = "x0" ; then
-                enable_fortran=no
-                LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/fortran//g'`"
-              fi)
+                if test "x$with_java" = "xno" ; then
+                  enable_fortran=no
+                  LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/fortran//g'`")
+                  [echo "[[Fortran support]] disabling Fortran language support, which requires Java, because you specified --with-java='$with_java'"] 
+                fi)
 #########################################################################################
 AC_ARG_ENABLE([java],
 #########################################################################################
@@ -260,10 +261,11 @@ AC_ARG_ENABLE([java],
                 esac
                ##########################################################################
                ,
-              if test "x$with_java" = "xno" -o "x$USE_JAVA" = "x0" ; then
-                enable_java=no
-                LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/java//g'`"
-              fi)
+                if test "x$with_java" = "xno" ; then
+                  enable_java=no
+                  LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/java//g'`"
+                  [echo "[[Java support]] disabling Java language support, which requires Java, because you specified --with-java='$with_java'"] 
+                fi)
 #########################################################################################
 AC_ARG_ENABLE([php],
 #########################################################################################
