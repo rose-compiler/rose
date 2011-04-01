@@ -297,9 +297,10 @@ RSIM_Process::load(const char *name)
 
     /* Find the best interpretation and file header.  Windows PE programs have two where the first is DOS and the second is PE
      * (we'll use the PE interpretation). */
-    SgAsmInterpretation *interpretation = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
+    interpretation = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
     SgAsmGenericHeader *fhdr = interpretation->get_headers()->get_headers().front();
-    thread->policy.writeIP(fhdr->get_entry_rva() + fhdr->get_base_va());
+    ep_orig_va = ep_start_va = fhdr->get_entry_rva() + fhdr->get_base_va();
+    thread->policy.writeIP(ep_orig_va);
 
     /* Link the interpreter into the AST */
     SimLoader *loader = new SimLoader(interpretation, trace, interpname);
@@ -311,7 +312,8 @@ RSIM_Process::load(const char *name)
         SgAsmGenericSection *load0 = loader->interpreter->get_section_by_name("LOAD#0");
         if (load0 && load0->is_mapped() && load0->get_mapped_preferred_rva()==0 && load0->get_mapped_size()>0)
             loader->interpreter->set_base_va(ld_linux_base_va);
-        thread->policy.writeIP(loader->interpreter->get_entry_rva() + loader->interpreter->get_base_va());
+        ep_start_va = loader->interpreter->get_entry_rva() + loader->interpreter->get_base_va();
+        thread->policy.writeIP(ep_start_va);
     }
 
     /* Sort the headers so they're in order by entry address. In other words, if the interpreter's entry address is below the
@@ -1613,5 +1615,23 @@ RSIM_Process::signal_dispatch()
         assert(status>=0);
     }
 }
+
+SgAsmBlock *
+RSIM_Process::disassemble()
+{
+    Partitioner partitioner;
+    SgAsmBlock *block = NULL;
+
+    RTS_WRITE(rwlock()) { /* while using the memory map */
+        block = partitioner.partition(interpretation, disassembler, map);
+        const Disassembler::InstructionMap &insns = partitioner.get_instructions();
+        for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+            icache[ii->first] = ii->second;
+        }
+    } RTS_WRITE_END;
+    return block;
+}
+
+    
 
 #endif /* ROSE_ENABLE_SIMULATOR */
