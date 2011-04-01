@@ -225,7 +225,7 @@ AC_ARG_ENABLE([fortran],
                ,
                 if test "x$with_java" = "xno" ; then
                   enable_fortran=no
-                  LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/fortran//g'`")
+                  LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/fortran//g'`"
                   [echo "[[Fortran support]] disabling Fortran language support, which requires Java, because you specified --with-java='$with_java'"] 
                 fi)
 #########################################################################################
