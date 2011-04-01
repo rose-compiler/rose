@@ -54,11 +54,15 @@ testExampleRoseWorkspace:
 	rm -rf $(ExampleRoseWorkspaceTestDirectory)
 	$(srcdir)/buildExampleRoseWorkspaceScript.sh $(absolute_path_srcdir) $(ExampleRoseWorkspaceTestDirectory) || exit 1
 	echo "Exiting after calling script: $(srcdir)/buildExampleRoseWorkspaceScript.sh"
-	cd $(ExampleRoseWorkspaceTestDirectory); \
-	./build --srcpath $(absolute_path_srcdir) --verbose; \
-	echo "Building the compile tree in the source tree for the example ROSE workspace."; \
-	./configure --with-boost=$(ac_boost_path) --prefix=@prefix@; \
-	make;
+	cd $(ExampleRoseWorkspaceTestDirectory)
+	./build --srcpath $(absolute_path_srcdir) --verbose
+	echo "Building the compile tree in the source tree for the example ROSE workspace."
+if ROSE_USE_INTERNAL_JAVA_SUPPORT
+	./configure --with-boost=$(ac_boost_path) --prefix=@prefix@
+else
+	./configure --with-boost=$(ac_boost_path) --prefix=@prefix@ --without-java
+endif
+	make
 
 # This may be the cause of recursion in the make "check rule"
 #	make check
