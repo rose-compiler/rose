@@ -8,14 +8,14 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_01.java \
      test2011_02.java \
      test2011_03.java \
+     test2011_04.java \
      test2011_05.java \
      simple.java
 
 # This class does not match the file name.
 #    simple_fortran.java
 
-TESTCODE_CURRENTLY_FAILING = \
-     test2011_04.java
+TESTCODE_CURRENTLY_FAILING =
 
 noinst_headers = 
 
