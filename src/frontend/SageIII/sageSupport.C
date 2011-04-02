@@ -6207,6 +6207,54 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
         }
      frontEndCommandLine.push_back(verboseOptionString);
 
+  // DQ (4/1/2011): Add "-d" option to prevent java "class" files from being generated into the source tree.
+  // Since we implement a source-to-source compiler, we don't need these to be generated. Note that this
+  // must be inserted as two seperate strings to have it work properly.
+  // frontEndCommandLine.push_back("-d none");
+     frontEndCommandLine.push_back("-d");
+     frontEndCommandLine.push_back("none");
+
+#if 1
+  // DQ (4/1/2011): Added ecj option handling (similar to how EDG option handling is supported).
+  // This allows ECJ specific option to be set on the command line for ROSE translators.
+
+  // *******************************************************************
+  // Handle general ecj options (-xxx)
+  // *******************************************************************
+
+  // Strip out all the -ecj:xxx options and put them into the ecj command line as -xxx
+
+  // Resets modifiedArgc and allocates memory to modifiedArgv
+     Rose_STL_Container<string> ecjOptionList = CommandlineProcessing::generateOptionList (argv,"-ecj:");
+     CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"-",ecjOptionList);
+
+  // *******************************************************************
+  // Handle general ecj options (--xxx)
+  // *******************************************************************
+
+  // Strip out all the -ecj:xxx options and put them into the ecj command line as --xxx
+
+  // Resets modifiedArgc and allocates memory to modifiedArgv
+     ecjOptionList = CommandlineProcessing::generateOptionList (argv,"--ecj:");
+     CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"--",ecjOptionList);
+
+  // *******************************************************************
+  // Handle general ecj options (-xxx abc)
+  // *******************************************************************
+
+  // Handle ecj options taking a parameter (string or integer)
+     ecjOptionList = CommandlineProcessing::generateOptionWithNameParameterList (argv,"-ecj_parameter:");
+     CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"-",ecjOptionList);
+
+  // *******************************************************************
+  // Handle general ecj options (--xxx abc)
+  // *******************************************************************
+
+  // Handle ecj options taking a parameter (string or integer)
+     ecjOptionList = CommandlineProcessing::generateOptionWithNameParameterList (argv,"--ecj_parameter:");
+     CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"--",ecjOptionList);
+#endif
+
   // Java does not use include files, so we can enforce this.
      ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
 
