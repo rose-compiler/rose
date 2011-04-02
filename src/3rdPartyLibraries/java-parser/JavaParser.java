@@ -188,6 +188,7 @@ class JavaParser  implements Callable<Boolean>
 
   // Type support
      public static native void cactionGenerateType(String typeName);
+     public static native void cactionGenerateClassType(String className);
 
   // Closing support to finish up statement handling.
      public static native void cactionStatementEnd(String typeName);
