@@ -152,8 +152,6 @@ void EventReverser::buildBasicValueGraph()
                         createOperatorNode(t, result, lhsv, rhsv);
                         addVariableToNode(result, operand);
 
-                        VariantT t2 = (t == V_SgAddOp) ? V_SgSubtractOp : V_SgAddOp;
-
                         // For postfix ++ and --, we should assign the value node
                         // before modified to this expression.
                         if (unaryOp->get_mode() == SgUnaryOp::postfix)
@@ -208,25 +206,6 @@ void EventReverser::buildBasicValueGraph()
                         VGVertex rhsv = nodeVertexMap_[rhs];
 
                         createOperatorNode(t, result, lhsv, rhsv);
-
-                        // a = b + b cannot be transformed to b = a - b
-                        if (lhsv != rhsv)
-                        {
-                            ValueNode* lhsNode = isValueNode(valueGraph_[lhsv]);
-                            ValueNode* rhsNode = isValueNode(valueGraph_[rhsv]);
-                            ROSE_ASSERT(lhsNode);
-                            ROSE_ASSERT(rhsNode);
-
-                            // If the operand is a constant.
-                            if (!lhsNode->isAvailable())
-                            {
-                                VariantT tRev = (t == V_SgAddOp) ? V_SgSubtractOp : V_SgAddOp;
-                                createOperatorNode(tRev, lhsv, result, rhsv);
-                            }
-                            if (!rhsNode->isAvailable())
-                                createOperatorNode(V_SgSubtractOp, rhsv, result, lhsv);
-                        }
-
                         break;
                     }
 

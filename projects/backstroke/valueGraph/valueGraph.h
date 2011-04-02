@@ -1,6 +1,7 @@
 #ifndef BACKSTROKE_VALUE_GRAPH
 #define BACKSTROKE_VALUE_GRAPH
 
+#include "types.h"
 #include "valueGraphNode.h"
 #include "pathNumGenerator.h"
 #include <ssa/staticSingleAssignment.h>
@@ -23,12 +24,12 @@ public:
 	typedef boost::graph_traits<ValueGraph>::edge_descriptor VGEdge;
 
 private:
-	typedef boost::graph_traits<ValueGraph>::vertex_iterator VGVertexIter;
-	typedef boost::graph_traits<ValueGraph>::edge_iterator VGEdgeIter;
-	typedef boost::graph_traits<ValueGraph>::in_edge_iterator VGInEdgeIter;
-	typedef boost::graph_traits<ValueGraph>::out_edge_iterator VGOutEdgeIter;
+//	typedef boost::graph_traits<ValueGraph>::vertex_iterator VGVertexIter;
+//	typedef boost::graph_traits<ValueGraph>::edge_iterator VGEdgeIter;
+//	typedef boost::graph_traits<ValueGraph>::in_edge_iterator VGInEdgeIter;
+//	typedef boost::graph_traits<ValueGraph>::out_edge_iterator VGOutEdgeIter;
 
-    typedef std::pair<int, std::set<int> > PathSet;
+    typedef std::pair<int, PathSet> PathSetWithIndex;
 	typedef StaticSingleAssignment SSA;
 	typedef SSA::VarName VarName;
 
@@ -128,7 +129,7 @@ private:
     void addPathsToEdges();
 
     //! Add path information to out edges of phi nodes.
-    PathSet addPathsForPhiNodes(VGVertex phiNode, std::set<VGVertex>& processedPhiNodes);
+    PathSetWithIndex addPathsForPhiNodes(VGVertex phiNode, std::set<VGVertex>& processedPhiNodes);
 
     //! Create a value node from the given AST node. The node passed in should be
     //! a varref, or an initialized name, or a value, or an expression.
@@ -137,14 +138,17 @@ private:
     //! Create a special value node with value 1 for ++ and -- operators.
     VGVertex createValueOneNode();
 
-    //! Create an operation node.
-	VGVertex createOperatorNode(VariantT t, VGVertex result, VGVertex lhs, VGVertex rhs);
+    //! Create an operation node, plus three edges. The fifth parameter is given
+    //! if that edge is copied to the new created edge.
+	VGVertex createOperatorNode(VariantT t, VGVertex result, 
+        VGVertex lhs, VGVertex rhs, ValueGraphEdge* edge = NULL);
 
 	//! Add a variable to a vertex in VG.
 	void addVariableToNode(VGVertex v, SgNode* node);
 
-    //! Add a reverse edge for every non-ordered edge.
-    void addReverseEdges();
+    //! Add a reverse edge for every non-ordered edge, and add extra edges for
+    //! + and - operations.
+    void addExtraNodesAndEdges();
 
     //! Handle all final defs at the end of the event. This step is needed because
     //! we cannot get the phi node if it is not used. New phi node is added to VG,
@@ -175,7 +179,7 @@ private:
 	 *  @param cost The weight of the edge.
 	 *  @returns The new added edge.
 	 */
-	VGEdge addValueGraphEdge(VGVertex src, VGVertex tar, int cost);
+	VGEdge addValueGraphEdge(VGVertex src, VGVertex tar, int cost = 0);
 
    	/** Add a new edge to the value graph.
 	 *
@@ -184,7 +188,7 @@ private:
 	 *  @param edge This edge will be copied to the new edge.
 	 *  @returns The new added edge.
 	 */
-    VGEdge addValueGraphEdge(VGVertex src, VGVertex tar, VGEdge edge);
+    VGEdge addValueGraphEdge(VGVertex src, VGVertex tar, ValueGraphEdge* edge);
 
 	/** Add a new ordered edge to the value graph.
 	 *

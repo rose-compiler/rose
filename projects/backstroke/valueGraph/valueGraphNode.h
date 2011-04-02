@@ -1,8 +1,8 @@
 #ifndef BACKSTROKE_VALUEGRAPHNODE2_H
 #define	BACKSTROKE_VALUEGRAPHNODE2_H
 
+#include "types.h"
 #include <rose.h>
-//#include <ssa/staticSingleAssignment.h>
 #include <boost/lexical_cast.hpp>
 
 namespace Backstroke
@@ -221,6 +221,8 @@ struct ValueGraphEdge
 	ValueGraphEdge() : cost(0), dagIndex(0) {}
 	ValueGraphEdge(int c) : cost(c), dagIndex(0) {}
 
+    virtual ~ValueGraphEdge() {}
+
 	virtual std::string toString() const;
 
     //! The cost attached on this edge. The cost may come from state saving,
@@ -232,7 +234,7 @@ struct ValueGraphEdge
     int dagIndex;
 
     //! All paths this relationship exists.
-    std::set<int> paths;
+    PathSet paths;
 };
 
 //! An edge coming from an operator node.

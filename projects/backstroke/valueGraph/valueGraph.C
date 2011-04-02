@@ -15,12 +15,15 @@ void EventReverser::buildValueGraph()
 {
     // First, build the basic part of the value graph.
     buildBasicValueGraph();
-    
+
     // Process all variable of their last versions.
     processLastVersions();
 
-    // Add a reverse edge for every non-ordered edge.
-    addReverseEdges();
+    // Add path information to edges.
+    addPathsToEdges();
+    
+    // Add a reverse edge for every non-ordered edge, and add extra nodes for + and -.
+    addExtraNodesAndEdges();
 
     // Add all state saving edges.
     addStateSavingEdges();
@@ -28,8 +31,6 @@ void EventReverser::buildValueGraph()
     // Remove useless nodes.
     removeUselessNodes();
 
-    // Add path information to edges.
-    addPathsToEdges();
 
     cout << "Number of nodes: " << boost::num_vertices(valueGraph_) << endl;
 }
@@ -38,17 +39,15 @@ void EventReverser::addPathsToEdges()
 {    
     vector<VGVertex> phiNodes;
 
-    VGEdgeIter ei, eiEnd;
-    boost::tie(ei, eiEnd) = boost::edges(valueGraph_);
-    for (; ei != eiEnd; ++ei)
+    foreach (const VGEdge& e, boost::edges(valueGraph_))
     {
-        ValueGraphEdge* edge = valueGraph_[*ei];
+        ValueGraphEdge* edge = valueGraph_[e];
 
         // The ordered edge (edge from operator node) does not have path info.
         if (isOrderedEdge(edge)) continue;
 
-        VGVertex src = boost::source(*ei, valueGraph_);
-        VGVertex tar = boost::target(*ei, valueGraph_);
+        VGVertex src = boost::source(e, valueGraph_);
+        VGVertex tar = boost::target(e, valueGraph_);
         //ValueGraphNode* srcNode = valueGraph_[src];
         //ValueGraphNode* tarNode = valueGraph_[tar];
 
@@ -83,18 +82,16 @@ void EventReverser::addPathsToEdges()
 #endif
 }
 
-EventReverser::PathSet EventReverser::addPathsForPhiNodes(
+EventReverser::PathSetWithIndex EventReverser::addPathsForPhiNodes(
         EventReverser::VGVertex phiNode,
         set<EventReverser::VGVertex>& processedPhiNodes)
 {
     // Suppose all paths are in the same set.
-    map<VGEdge, PathSet> paths;
+    map<VGEdge, PathSetWithIndex> paths;
 
-    VGOutEdgeIter oei, oeiEnd;
-    boost::tie(oei, oeiEnd) = boost::out_edges(phiNode, valueGraph_);
-    for (; oei != oeiEnd; ++oei)
+    foreach (const VGEdge& e, boost::out_edges(phiNode, valueGraph_))
     {
-        VGVertex tar = boost::target(*oei, valueGraph_);
+        VGVertex tar = boost::target(e, valueGraph_);
         if (isPhiNode(valueGraph_[tar]))
         {
             if (processedPhiNodes.count(phiNode) == 0)
@@ -136,26 +133,71 @@ void EventReverser::processLastVersions()
     }
 }
 
-void EventReverser::addReverseEdges()
+void EventReverser::addExtraNodesAndEdges()
 {
+    //! Add reverse edges for phi nodes.
     vector<VGEdge> edges;
-//    VGEdgeIter e, f;
-//    for (boost::tie(e, f) = boost::edges(valueGraph_); e != f; ++e)
-//        edges.push_back(*e);
+    foreach (const VGEdge& edge, boost::edges(valueGraph_))
+        edges.push_back(edge);
 
-    foreach (VGEdge e, boost::edges(valueGraph_))
-    {
-        edges.push_back(e);
-    }
-
-    foreach (VGEdge edge, edges)
+    foreach (const VGEdge& edge, edges)
     {
         VGVertex src = boost::source(edge, valueGraph_);
         VGVertex tar = boost::target(edge, valueGraph_);
 
         // If the edge is not connected to an operator node, make a reverse copy.
         if (!isOperatorNode(valueGraph_[src]) && !isOperatorNode(valueGraph_[tar]))
-            addValueGraphEdge(tar, src, edge);
+            addValueGraphEdge(tar, src, valueGraph_[edge]);
+    }
+
+    //! Add + and - nodes and edges for + and - operations.
+    vector<VGVertex> vertices;
+    foreach (VGVertex v, boost::vertices(valueGraph_))
+        vertices.push_back(v);
+
+    foreach (VGVertex v, vertices)
+    {
+        OperatorNode* opNode = isOperatorNode(valueGraph_[v]);
+        if (opNode == NULL)
+            continue;
+
+        if (opNode->type != OperatorNode::otAdd &&
+                opNode->type != OperatorNode::otSubtract)
+            continue;
+
+        // Get all 3 operands first.
+        VGVertex result, lhs, rhs;
+        result = *(boost::inv_adjacent_vertices(v, valueGraph_).first);
+
+        foreach (const VGEdge& e, boost::out_edges(v, valueGraph_))
+        {
+            if (isOrderedEdge(valueGraph_[e])->index == 0)
+                lhs = boost::target(e, valueGraph_);
+            else
+                rhs = boost::target(e, valueGraph_);
+        }
+
+        // a = b + b cannot be transformed to b = a - b
+        if (lhs == rhs)
+            continue;
+
+        ValueNode* lhsNode = isValueNode(valueGraph_[lhs]);
+        ValueNode* rhsNode = isValueNode(valueGraph_[rhs]);
+        ROSE_ASSERT(lhsNode);
+        ROSE_ASSERT(rhsNode);
+
+        VGEdge e = *(boost::in_edges(v, valueGraph_).first);
+        ValueGraphEdge* edgeToCopy = valueGraph_[e];
+
+        // If the operand is a constant.
+        if (!lhsNode->isAvailable())
+        {
+            VariantT tRev = (opNode->type == OperatorNode::otAdd) ?
+                V_SgSubtractOp : V_SgAddOp;
+            createOperatorNode(tRev, lhs, result, rhs, edgeToCopy);
+        }
+        if (!rhsNode->isAvailable())
+            createOperatorNode(V_SgSubtractOp, rhs, result, lhs, edgeToCopy);
     }
 }
 
@@ -261,10 +303,10 @@ EventReverser::VGEdge EventReverser::addValueGraphEdge(
 EventReverser::VGEdge EventReverser::addValueGraphEdge(
         EventReverser::VGVertex src, 
         EventReverser::VGVertex tar,
-        EventReverser::VGEdge edge)
+        ValueGraphEdge* edge)
 {
     VGEdge e = boost::add_edge(src, tar, valueGraph_).first;
-    valueGraph_[e] = new ValueGraphEdge(*valueGraph_[edge]);
+    valueGraph_[e] = new ValueGraphEdge(*edge);
     return e;
 }
 
@@ -373,33 +415,39 @@ EventReverser::VGVertex EventReverser::createOperatorNode(
         VariantT t,
         EventReverser::VGVertex result,
         EventReverser::VGVertex lhs,
-        EventReverser::VGVertex rhs)
+        EventReverser::VGVertex rhs,
+        ValueGraphEdge* edge)
 {
     // Add an operator node to VG.
     VGVertex op = addValueGraphNode(new OperatorNode(t));
 
-    addValueGraphEdge(result, op, 0);
+    if (edge)
+        addValueGraphEdge(result, op, edge);
+    else
+        addValueGraphEdge(result, op);
+    
     addValueGraphOrderedEdge(op, lhs, 0);
     addValueGraphOrderedEdge(op, rhs, 1);
 
     return op;
 }
 
+
+
 void EventReverser::addStateSavingEdges()
 {
-    VGVertexIter v, w;
-    for (boost::tie(v, w) = boost::vertices(valueGraph_); v != w; ++v)
+    foreach (VGVertex v, boost::vertices(valueGraph_))
     {
-        ValueGraphNode* node = valueGraph_[*v];
+        ValueGraphNode* node = valueGraph_[v];
 
         if (!isPhiNode(node) && !isValueNode(node))
             continue;
 
         int cost = 0;
-        if (availableValues_.count(*v) == 0)
+        if (availableValues_.count(v) == 0)
             cost = node->getCost();
 
-        addValueGraphEdge(*v, root_, cost);
+        addValueGraphEdge(v, root_, cost);
     }
 }
 
@@ -465,10 +513,9 @@ void EventReverser::removeUselessNodes()
         VGVertex n = nodes.top();
         nodes.pop();
 
-        VGOutEdgeIter e, f;
-        for (boost::tie(e, f) = boost::out_edges(n, valueGraph_); e != f; ++e)
+        foreach (const VGEdge& e, boost::out_edges(n, valueGraph_))
         {
-            VGVertex tar = boost::target(*e, valueGraph_);
+            VGVertex tar = boost::target(e, valueGraph_);
             if (usableNodes.count(tar) == 0)
             {
                 usableNodes.insert(tar);
@@ -477,30 +524,34 @@ void EventReverser::removeUselessNodes()
         }
     }
 
+    vector<VGEdge> edgesToRemove;
+
     // Remove edges first.
-    VGEdgeIter ei, eiEnd, eiNext;
-    boost::tie(ei, eiEnd) = boost::edges(valueGraph_);
-    for (eiNext = ei; ei != eiEnd; ei = eiNext)
+    foreach (const VGEdge& e, boost::edges(valueGraph_))
     {
-        ++eiNext;
-        if (usableNodes.count(boost::source(*ei, valueGraph_)) == 0)
-        {
-            delete valueGraph_[*ei];
-            boost::remove_edge(*ei, valueGraph_);
-        }
+        if (usableNodes.count(boost::source(e, valueGraph_)) == 0)
+            edgesToRemove.push_back(e);
     }
 
-    // Then remove nodes.
-    VGVertexIter vi, viEnd, viNext;
-    boost::tie(vi, viEnd) = boost::vertices(valueGraph_);
-    for (viNext = vi; vi != viEnd; vi = viNext)
+    foreach (const VGEdge& edge, edgesToRemove)
     {
-        ++viNext;
-        if (usableNodes.count(*vi) == 0)
-        {
-            delete valueGraph_[*vi];
-            boost::remove_vertex(*vi, valueGraph_);
-        }
+        delete valueGraph_[edge];
+        boost::remove_edge(edge, valueGraph_);
+    }
+
+    vector<VGVertex> verticesToRemove;
+
+    // Then remove nodes.
+    foreach (VGVertex v, boost::vertices(valueGraph_))
+    {
+        if (usableNodes.count(v) == 0)
+            verticesToRemove.push_back(v);
+    }
+
+    foreach (VGVertex v, verticesToRemove)
+    {
+        delete valueGraph_[v];
+        boost::remove_vertex(v, valueGraph_);
     }
 }
 
@@ -510,13 +561,12 @@ void EventReverser::valueGraphToDot(const std::string& filename) const
     // a unique id here.
     int counter = 0;
     map<VGVertex, int> vertexIDs;
-    VGVertexIter v, w;
-    for (boost::tie(v, w) = boost::vertices(valueGraph_); v != w; ++v)
+    foreach (VGVertex v, boost::vertices(valueGraph_))
     {
-        vertexIDs[*v] = counter++;
+        vertexIDs[v] = counter++;
 
 #if 0
-        if (isPhiNode(valueGraph_[*v]))
+        if (isPhiNode(valueGraph_[v]))
         {
             VGOutEdgeIter e, f;
             for (boost::tie(e, f) = boost::out_edges(*v, valueGraph_); e != f; ++e)

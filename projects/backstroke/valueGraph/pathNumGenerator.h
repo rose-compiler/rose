@@ -1,27 +1,67 @@
 #ifndef BACKSTROKE_PATHNUMGENERATOR_H
 #define	BACKSTROKE_PATHNUMGENERATOR_H
 
-#include "CFGFilter.h"
-#include <slicing/backstrokeCFG.h>
+#include "types.h"
 
 namespace Backstroke
 {
 
-typedef CFG<BackstrokeCFGNodeFilter> BackstrokeCFG;
 
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-		BackstrokeCFG::Vertex, BackstrokeCFG::Edge> DAG;
+//! Given a DAG with its entry and exit, this class generates path numbers on its edges and vertices.
+class PathNumGenerator
+{
+	typedef boost::graph_traits<DAG>::vertex_descriptor Vertex;
+	typedef boost::graph_traits<DAG>::edge_descriptor Edge;
 
-class PathNumGenerator;
+    typedef std::vector<Edge> Path;
+
+
+    //! The DAG on which we'll add path numbers.
+    const DAG& dag_;
+
+    //! The entry of the dag. This may be the entry of the CFG, or the header of a loop.
+    Vertex entry_;
+
+    //! The exit of the dag. This may be the exit of the CFG, or the exit of a loop.
+    //! An exit of a loop is not a node in the CFG, but a virtual node representing outside the loop.
+    Vertex exit_;
+
+    //! A table mapping each vertex to the number of paths on it.
+    std::map<Vertex, int> pathNumbers_;
+
+    //! A table mapping each edge to the number attached to it.
+    std::map<Edge, int> edgeValues_;
+
+    //! All paths in this DAG. The i_th path has the path number i.
+    std::vector<Path> paths_;
+
+    std::map<Vertex, PathSet> pathsForNode_;
+    //std::map<Vertex, std::set<int> > pathsForNode_;
+
+public:
+    PathNumGenerator(const DAG& dag, Vertex entry, Vertex exit)
+            : dag_(dag), entry_(entry), exit_(exit) {}
+
+    //! Assign values to edges then each path has a unique number.
+    void getEdgeValues();
+
+    //! Find all paths in this DAG.
+    void getAllPaths();
+
+    //! For each vertex in the DAG, find all paths which contain it.
+    void getAllPathNumbersForEachNode();
+
+    PathSet getPaths(Vertex v) const
+    {
+        ROSE_ASSERT(pathsForNode_.count(v) > 0);
+        return pathsForNode_.find(v)->second;
+    }
+};
 
 class PathNumManager
 {
-    typedef boost::graph_traits<DAG> GraphTraits;
-	typedef GraphTraits::vertex_descriptor DAGVertex;
-	typedef GraphTraits::edge_descriptor DAGEdge;
-    typedef GraphTraits::vertex_iterator DAGVertexIter;
-    typedef GraphTraits::edge_iterator DAGEdgeIter;
-    typedef GraphTraits::out_edge_iterator DAGOutEdgeIter;
+	typedef boost::graph_traits<DAG>::vertex_descriptor DAGVertex;
+	typedef boost::graph_traits<DAG>::edge_descriptor DAGEdge;
 
     const BackstrokeCFG& cfg_;
 
@@ -43,7 +83,7 @@ public:
     PathNumManager(const BackstrokeCFG& cfg);
     ~PathNumManager();
 
-    std::pair<int, std::set<int> > getPathNumbers(SgNode* node) const;
+    std::pair<int, PathSet> getPathNumbers(SgNode* node) const;
 
 private:
     //! Use path number generator to generate path numbers.
@@ -55,57 +95,6 @@ private:
 
 
 
-//! Given a DAG with its entry and exit, this class generates path numbers on its edges and vertices.
-class PathNumGenerator
-{
-    typedef boost::graph_traits<DAG> GraphTraits;
-	typedef GraphTraits::vertex_descriptor Vertex;
-	typedef GraphTraits::edge_descriptor Edge;
-    typedef GraphTraits::out_edge_iterator OutEdgeIter;
-    
-    
-    typedef std::vector<Edge> Path;
-
-    //! The DAG on which we'll add path numbers.
-    const DAG& dag_;
-
-    //! The entry of the dag. This may be the entry of the CFG, or the header of a loop.
-    Vertex entry_;
-
-    //! The exit of the dag. This may be the exit of the CFG, or the exit of a loop.
-    //! An exit of a loop is not a node in the CFG, but a virtual node representing outside the loop.
-    Vertex exit_;
-
-    //! A table mapping each vertex to the number of paths on it.
-    std::map<Vertex, int> pathNumbers_;
-
-    //! A table mapping each edge to the number attached to it.
-    std::map<Edge, int> edgeValues_;
-
-    //! All paths in this DAG. The i_th path has the path number i.
-    std::vector<Path> paths_;
-
-    std::map<Vertex, std::set<int> > pathsForNode_;
-
-public:
-    PathNumGenerator(const DAG& dag, Vertex entry, Vertex exit)
-            : dag_(dag), entry_(entry), exit_(exit) {}
-
-    //! Assign values to edges then each path has a unique number.
-    void getEdgeValues();
-
-    //! Find all paths in this DAG.
-    void getAllPaths();
-
-    //! For each vertex in the DAG, find all paths which contain it.
-    void getAllPathNumbersForEachNode();
-
-    std::set<int> getPaths(Vertex v) const
-    {
-        ROSE_ASSERT(pathsForNode_.count(v) > 0);
-        return pathsForNode_.find(v)->second;
-    }
-};
 
 } // end of Backstroke
 

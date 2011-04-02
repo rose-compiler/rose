@@ -14,7 +14,7 @@ valueGraph_SOURCES = valueGraphNode.C valueGraph.C eventReverser.C pathNumGenera
 valueGraph_LDADD = $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
 		$(top_builddir)/projects/backstroke/ssa/libSSA.a \
 		$(LIBS_WITH_RPATH) $(ROSE_LIBS)
-valueGraph_include_HEADERS = valueGraph.h valueGraphNode.h pathNumGenerator.h CFGFilter.h
+valueGraph_include_HEADERS = valueGraph.h valueGraphNode.h pathNumGenerator.h CFGFilter.h types.h
 valueGraph_includedir = $(includedir)/backstroke
 
 
