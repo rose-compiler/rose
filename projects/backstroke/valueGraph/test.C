@@ -5,9 +5,9 @@
 #include <slicing/backstrokeDDG.h>
 #include <slicing/backstrokePDG.h>
 
-#include <boost/graph/graph_traits.hpp>
-#include <boost/graph/graphviz.hpp>
-#include <boost/graph/johnson_all_pairs_shortest.hpp>
+//#include <boost/graph/graph_traits.hpp>
+//#include <boost/graph/graphviz.hpp>
+//#include <boost/graph/johnson_all_pairs_shortest.hpp>
 
 
 using namespace std;
@@ -401,6 +401,9 @@ int main(int argc, char *argv[])
 	if (!funcDef->get_file_info()->isSameFile(sourceFile))
 		continue;
 
+    Backstroke::BackstrokeCFG cfg(funcDef);
+	cfg.toDot("CFG.dot");
+    
 	Backstroke::EventReverser reverser(funcDef);
 	reverser.buildValueGraph();
 //	//reverser.searchValueGraph();
@@ -414,8 +417,6 @@ int main(int argc, char *argv[])
 
 	reverser.valueGraphToDot("VG.dot");
 
-//    Backstroke::BackstrokeCFG cfg(funcDef);
-//	cfg.toDot("CFG.dot");
 //
 //    Backstroke::FilteredCFG fullCfg(funcDef);
 //	fullCfg.toDot("FullCFG.dot");

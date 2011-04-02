@@ -13,13 +13,13 @@ typedef std::vector<SgInitializedName*> VarName;
 
 struct PhiNodeDependence
 {
-	enum ControlDependenceType
-	{
-		cdTrue,
-		cdFalse,
-		cdCase,
-		cdDefault
-	};
+//	enum ControlDependenceType
+//	{
+//		cdTrue,
+//		cdFalse,
+//		cdCase,
+//		cdDefault
+//	};
 
 	PhiNodeDependence(int v)
 	: version(v) {}
@@ -30,11 +30,11 @@ struct PhiNodeDependence
 	//!  The SgNode on which the phi function has a control dependence for the version.
 	SgNode* cdNode;
 
-	//! The control dependence type.
-	ControlDependenceType cdType;
+	////! The control dependence type.
+	//ControlDependenceType cdType;
 
-	//! If the control dependence is cdCase, this is the case value.
-	int caseValue;
+	////! If the control dependence is cdCase, this is the case value.
+	//int caseValue;
 };
 
 
@@ -55,7 +55,7 @@ struct VersionedVariable
 	//! Indicated if this variable is defined by a phi function.
 	bool isPseudoDef;
 
-	//! All version it dependes if this variable is a pseudo def.
+	//! All versions it dependes if this variable is a pseudo def.
 	std::vector<PhiNodeDependence> phiVersions;
 };
 
@@ -87,11 +87,21 @@ struct ValueGraphNode
 
 	virtual std::string toString() const
 	{ return ""; }
+
+    virtual int getCost() const
+    { return 0; }
 };
 
 struct PhiNode : ValueGraphNode
 {
-	PhiNode(const VersionedVariable& v) : var(v) {}
+    enum GateType
+    {
+        phi,
+        mu,
+        eta
+    };
+
+	PhiNode(const VersionedVariable& v) : var(v), dagIndex(0), type(phi) {}
 
 	//std::vector<ValueGraphNode*> nodes;
 
@@ -100,23 +110,43 @@ struct PhiNode : ValueGraphNode
 		return "PHI\\n" + var.toString();
 	}
 
+    virtual int getCost() const;
+
+    SgType* getType() const
+    { return var.name.back()->get_type(); }
+
+    //! The versioned variable it contains.
 	VersionedVariable var;
+
+    //! The DAG index.
+    int dagIndex;
+
+    //! The type of this gate function
+    GateType type;
 };
 
 struct ValueNode : ValueGraphNode
 {
-	ValueNode() : valueExp(NULL), type(NULL), cost(0) {}
-	ValueNode(SgType* t) : valueExp(NULL), type(t), cost(0) {}
-	ValueNode(SgValueExp* exp) : valueExp(exp), type(NULL), cost(0) {}
+	ValueNode() : astNode(NULL), cost(0) {}
+	ValueNode(SgNode* node) : astNode(node), cost(0) {}
+	//ValueNode(SgValueExp* exp) : valueExp(exp), type(NULL), cost(0) {}
 
 	virtual std::string toString() const;
 
+    virtual int getCost() const;
+
 	bool isTemp() const { return vars.empty(); }
 
-	bool isAvailable() const { return valueExp != NULL; }
+    //! If the AST node is a value expression, it is avaiable.
+	bool isAvailable() const { return isSgValueExp(astNode) != NULL; }
 
-	SgValueExp* valueExp;
-	SgType* type;
+    SgType* getType() const;
+
+    //! The AST node which defines the variables.
+    SgNode* astNode;
+    
+	//SgValueExp* valueExp;
+	//SgType* type;
 	std::vector<VersionedVariable> vars;
     int cost;
 };
@@ -188,8 +218,8 @@ struct FunctionCallNode : ValueGraphNode
 
 struct ValueGraphEdge
 {
-	ValueGraphEdge() : cost(0) {}
-	ValueGraphEdge(int c) : cost(c) {}
+	ValueGraphEdge() : cost(0), dagIndex(0) {}
+	ValueGraphEdge(int c) : cost(c), dagIndex(0) {}
 
 	virtual std::string toString() const;
 
@@ -205,6 +235,7 @@ struct ValueGraphEdge
     std::set<int> paths;
 };
 
+//! An edge coming from an operator node.
 struct OrderedEdge : ValueGraphEdge
 {
 	OrderedEdge(int idx) : index(idx) {}

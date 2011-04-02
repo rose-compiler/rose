@@ -23,7 +23,7 @@ class PathNumManager
     typedef GraphTraits::edge_iterator DAGEdgeIter;
     typedef GraphTraits::out_edge_iterator DAGOutEdgeIter;
 
-    BackstrokeCFG cfg_;
+    const BackstrokeCFG& cfg_;
 
     //! The first DAG is about the function, and others are all loops.
     std::vector<DAG> dags_;
@@ -32,6 +32,8 @@ class PathNumManager
     std::map<BackstrokeCFG::Vertex, std::pair<int, DAGVertex> > vertexToDagIndex_;
 
     std::vector<PathNumGenerator*> pathNumGenerators_;
+
+    std::map<SgNode*, BackstrokeCFG::Vertex> nodeCFGVertexMap_;
     
     //std::map<SgNode*, std::pair<int, Vertex> > sgNodeToVertexMap_;
 
@@ -42,6 +44,13 @@ public:
     ~PathNumManager();
 
     std::pair<int, std::set<int> > getPathNumbers(SgNode* node) const;
+
+private:
+    //! Use path number generator to generate path numbers.
+    void generatePathNumbers();
+
+    //! Build a table from each SgNode to its belonging CFG vertex.
+    void buildNodeCFGVertexMap();
 };
 
 

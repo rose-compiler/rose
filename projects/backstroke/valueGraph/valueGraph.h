@@ -22,11 +22,13 @@ public:
 	typedef boost::graph_traits<ValueGraph>::vertex_descriptor VGVertex;
 	typedef boost::graph_traits<ValueGraph>::edge_descriptor VGEdge;
 
+private:
 	typedef boost::graph_traits<ValueGraph>::vertex_iterator VGVertexIter;
 	typedef boost::graph_traits<ValueGraph>::edge_iterator VGEdgeIter;
 	typedef boost::graph_traits<ValueGraph>::in_edge_iterator VGInEdgeIter;
 	typedef boost::graph_traits<ValueGraph>::out_edge_iterator VGOutEdgeIter;
 
+    typedef std::pair<int, std::set<int> > PathSet;
 	typedef StaticSingleAssignment SSA;
 	typedef SSA::VarName VarName;
 
@@ -54,7 +56,7 @@ private:
 
 	//! A map from variable with version to its reaching def object.
 	//! This map is only for pseudo defs.
-	std::map<VersionedVariable, SSA::ReachingDefPtr> varReachingDefMap_;
+	std::map<VersionedVariable, SSA::ReachingDefPtr> pseudoDefMap_;
 
 	//! All values which need to be restored (state variables).
 	std::vector<VGVertex> valuesToRestore_;
@@ -119,7 +121,17 @@ private:
     //! Build the main part of the value graph.
     void buildBasicValueGraph();
 
-    //! Create a value node from the given AST node.
+    //! After the value graph is built, remove nodes which don't help in the search.
+    void removeUselessNodes();
+
+    //! Add path information to edges.
+    void addPathsToEdges();
+
+    //! Add path information to out edges of phi nodes.
+    PathSet addPathsForPhiNodes(VGVertex phiNode, std::set<VGVertex>& processedPhiNodes);
+
+    //! Create a value node from the given AST node. The node passed in should be
+    //! a varref, or an initialized name, or a value, or an expression.
 	VGVertex createValueNode(SgNode* node);
     
     //! Create a special value node with value 1 for ++ and -- operators.
@@ -130,6 +142,14 @@ private:
 
 	//! Add a variable to a vertex in VG.
 	void addVariableToNode(VGVertex v, SgNode* node);
+
+    //! Add a reverse edge for every non-ordered edge.
+    void addReverseEdges();
+
+    //! Handle all final defs at the end of the event. This step is needed because
+    //! we cannot get the phi node if it is not used. New phi node is added to VG,
+    //! and all available variables are found.
+    void processLastVersions();
 
 	void writeValueGraphNode(std::ostream& out, const VGVertex& node) const
 	{
@@ -157,6 +177,15 @@ private:
 	 */
 	VGEdge addValueGraphEdge(VGVertex src, VGVertex tar, int cost);
 
+   	/** Add a new edge to the value graph.
+	 *
+	 *  @param src The source vertex.
+	 *  @param tar The target vertex.
+	 *  @param edge This edge will be copied to the new edge.
+	 *  @returns The new added edge.
+	 */
+    VGEdge addValueGraphEdge(VGVertex src, VGVertex tar, VGEdge edge);
+
 	/** Add a new ordered edge to the value graph.
 	 *
 	 *  @param src The source vertex.
@@ -172,9 +201,6 @@ private:
 
 	//! Connect each variable node to the root with cost.
 	void addStateSavingEdges();
-	
-	//! Given a type, return the cost of saving it.
-	static int getCost(SgType* t);
 
     //! Check if a variable is a state variable.
 	bool isStateVariable(const VarName& name)
