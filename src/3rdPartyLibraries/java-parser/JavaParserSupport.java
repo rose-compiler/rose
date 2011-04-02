@@ -210,7 +210,7 @@ class JavaParserSupport
                   {
                     Field fld = fieldlist[i];
 
-                    if (verboseLevel > 4)
+                    if (verboseLevel > 0)
                        {
                       // This code is part of an interogation of the data in the field and needs to be hidden yet available to support debugging.
                       // ******************************************************************************
@@ -289,7 +289,7 @@ class JavaParserSupport
 
                                 // Control the level of recursion so that we can debug this...it seems that
                                 // this is typically as high as 47 to process the implicitly included classes.
-                                   int implicitClassCounterBound = 10;
+                                   int implicitClassCounterBound = 1000;
                                    if (implicitClassCounter < implicitClassCounterBound)
                                       {
                                      // DQ (11/2/2010): comment out this recursive call for now.
@@ -322,15 +322,27 @@ class JavaParserSupport
                     if (verboseLevel > 2)
                          System.out.println("Build the implicit type for the data member (field) of type = " + nestedClassName);
 
+                 // System.out.println("#############################################################################################");
+                 // System.out.println("This call to JavaParserSupport.generateType() appears to be a problem: nestedClassName = " + nestedClassName);
                     JavaParserSupport.generateType(typeClass);
+                 // System.out.println("DONE: This call to JavaParserSupport.generateType() appears to be a problem: nestedClassName = " + nestedClassName);
 
                     if (verboseLevel > 2)
                          System.out.println("Build the data member (field) for name = " + fld.getName());
+
+                 // System.out.println("Exiting after call to JavaParserSupport.generateType(typeClass) implicitClassCounter = " + implicitClassCounter);
+                 // System.exit(1);
 
                     JavaParser.cactionBuildImplicitFieldSupport(fld.getName());
 
                     if (verboseLevel > 2)
                          System.out.println("DONE: Building the data member (field) for name = " + fld.getName());
+
+                    if (implicitClassCounter > 5 && false)
+                       {
+                         System.out.println("Exiting as a test implicitClassCounter = " + implicitClassCounter);
+                         System.exit(1);
+                       }
                   }
 
             // A traversal over the constructors will have to look at all types of constructor arguments 
@@ -398,7 +410,7 @@ class JavaParserSupport
 
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
-                    int methodCounterBound = 10;
+                    int methodCounterBound = 1000;
                  // int methodCounterBound = 1000;
                     if (methodCounter < methodCounterBound)
                        {
@@ -452,10 +464,50 @@ class JavaParserSupport
        // reference put onto the astJavaTypeStack).
 
           if (verboseLevel > 0)
-               System.out.println("Inside of generateType(Class) (sorry, not implemented)");
+               System.out.println("Inside of generateType(Class) (sorry, not implemented) class = " + node);
 
-       // For now just build the type to be SgTypeInt.
-          JavaParser.cactionGenerateType("int");
+          if (node.isPrimitive() == false)
+             {
+            // Investigate any new type.
+               if (node.isArray() == true)
+                  {
+                 // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
+                    System.out.println("Skipping case of array of type for now (sorry not implemented)... ");
+
+                 // Build an integer type instead of an array of the proper type (temporary fix so that I can focus on proper class support).
+                    JavaParser.cactionGenerateType("int");
+                  }
+                 else
+                  {
+                 // Note that "toString()" inserts "class" into the generated name of the type (so use "getName()").
+                    String className = node.getName();
+
+                 // If this is a class type (e.g. in the C++ sense) then we want to build a proper SgClassType IR node.
+                 // System.out.println("Build a proper class for this type = " + node);
+                 // System.out.println("Build a proper class for this type = " + className);
+
+                 // We know that this name should be interpreted as a proper class so we need to call a specific JNI function to cause it to be generated on the C++ side.
+                 // JavaParser.cactionGenerateType(className);
+                    JavaParser.cactionGenerateClassType(className);
+
+                 // System.out.println("Exiting as a test in generateType(Class) (case of proper class)");
+                 // System.exit(1);
+                  }
+             }
+            else
+             {
+               if (verboseLevel > 0)
+                    System.out.println("Build a primative type: int ");
+
+            // For now just build the type to be SgTypeInt.
+               JavaParser.cactionGenerateType("int");
+             }
+
+          if (verboseLevel > 0)
+               System.out.println("Leaving generateType(Class) (case of proper class)");
+
+       // System.out.println("Exiting as a test at bottom of generateType(Class) (case of proper class)");
+       // System.exit(1);
         }
 
      public static void generateType(TypeBinding node)
