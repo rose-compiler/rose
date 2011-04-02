@@ -4786,6 +4786,14 @@ HEADER_APPLICATION_FILE_START
       //! function that removes all EDG related options from a command line
           static void stripEdgCommandLineOptions ( std::vector<std::string> & argv );
 
+       // DQ (4/2/2011): Added Fortran specific support to filter command line options from the backend compiler's command line.
+      //! function that removes all OFP related options from a command line
+          static void stripFortranCommandLineOptions ( std::vector<std::string> & argv );
+
+       // DQ (4/2/2011): Added Java specific support to filter command line options from the backend compiler's command line.
+      //! function that removes all ECJ related options from a command line
+          static void stripJavaCommandLineOptions ( std::vector<std::string> & argv );
+
        // BP : 11/13/2001, modified to take compiler name
           void build_EDG_CommandLine ( std::vector<std::string> & inputCommandLine, std::vector<std::string>& argv, int fileNameIndex );
 
@@ -11237,7 +11245,30 @@ SgFile::compileOutput ( int fileNameIndex )
 
   // DQ (2/12/2004): strip out edg specific options that 
   // would cause an error in the backend compiler.
-     stripEdgCommandLineOptions( argv );
+  // stripEdgCommandLineOptions( argv );
+     if (get_Cxx_only() == true || get_C99_only() == true || get_Cxx_only() == true)
+        {
+          stripEdgCommandLineOptions( argv );     
+        }
+       else
+        {
+          if (get_Fortran_only() == true)
+             {
+               stripFortranCommandLineOptions( argv );
+             }
+            else
+             {
+               if (get_Java_only() == true)
+                  {
+                    stripJavaCommandLineOptions( argv );
+                  }
+                 else
+                  {
+                    printf ("Not clear what to do here! In SgFile::compileOutput() but not C,C++,Fortran, or Java \n");
+                    ROSE_ASSERT(false);
+                  }
+             }
+        }
 
   // Call the compile
   // int errorCode = compileOutput ( argv, fileNameIndex, compilerName );
@@ -11465,9 +11496,18 @@ SgFile::generateOutputFileName() const
 
 #endif
 
-  // DQ (8/12/2007): Newer simpler code, made possible because of better internal support.  
-  // This version is also now language independent and so supports the Fortran work.
-     objectFileName = baseFileNameWithoutSuffix + ".o";
+  // DQ (4/2/2011): Added support for Java.
+     if (get_Java_only() == true)
+        {
+       // Java output files are *.class files.
+          objectFileName = baseFileNameWithoutSuffix + ".class";
+        }
+       else
+        {
+       // DQ (8/12/2007): Newer simpler code, made possible because of better internal support.  
+       // This version is also now language independent and so supports the Fortran work.
+          objectFileName = baseFileNameWithoutSuffix + ".o";
+        }
 
   // printf ("At base of SgFile::generateOutputFileName(): objectFileName = %s \n",objectFileName.c_str());
   // display("In SgFile::generateOutputFileName()");
@@ -11553,6 +11593,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_upc_threads                          = %s (value=%d) \n",  (p_upc_threads > 1) ? "true" : "false",p_upc_threads);
      printf ("     p_C99_only()                           = %s \n",(p_C99_only == true) ? "true" : "false");
      printf ("     p_Cxx_only()                           = %s \n",(p_Cxx_only == true) ? "true" : "false");
+     printf ("     p_Java_only()                          = %s \n",(p_Java_only == true) ? "true" : "false");
      printf ("     p_Fortran_only()                       = %s \n",(p_Fortran_only == true) ? "true" : "false");
      printf ("     p_F77_only()                           = %s \n",(p_F77_only == true) ? "true" : "false");
      printf ("     p_F90_only()                           = %s \n",(p_F90_only == true) ? "true" : "false");
