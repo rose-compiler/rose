@@ -11246,7 +11246,7 @@ SgFile::compileOutput ( int fileNameIndex )
   // DQ (2/12/2004): strip out edg specific options that 
   // would cause an error in the backend compiler.
   // stripEdgCommandLineOptions( argv );
-     if (get_Cxx_only() == true || get_C99_only() == true || get_Cxx_only() == true)
+     if (get_C_only() == true || get_C99_only() == true || get_Cxx_only() == true)
         {
           stripEdgCommandLineOptions( argv );     
         }
