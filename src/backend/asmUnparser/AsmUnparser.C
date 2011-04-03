@@ -61,6 +61,22 @@ build_noop_index(const std::vector <std::pair <size_t, size_t> > &noops)
 }
 
 void
+AsmUnparser::add_function_labels(SgNode *node)
+{
+    struct T1: public SgSimpleProcessing {
+        AsmUnparser *unparser;
+        T1(AsmUnparser *unparser)
+            : unparser(unparser) {}
+        void visit(SgNode *node) {
+            SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
+            if (func)
+                unparser->labels[func->get_entry_va()] = func->get_name();
+        }
+    } traversal(this);
+    traversal.traverse(node, preorder);
+};
+
+void
 AsmUnparser::unparse(std::ostream &o, SgAsmInstruction *insn)
 {
     pre(o, insn);
@@ -74,7 +90,7 @@ AsmUnparser::unparse(std::ostream &o, SgAsmInstruction *insn)
     } else {
         o <<StringUtility::addrToString(insn->get_address()) <<":";
     }
-    o <<"   " <<unparseInstruction(insn);
+    o <<"   " <<unparseInstruction(insn, &labels);
     if (!insn->get_comment().empty())
         o << "/* " <<insn->get_comment() << "*/";
     if (insn_linefeed)
