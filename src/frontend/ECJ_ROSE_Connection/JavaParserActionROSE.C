@@ -329,6 +329,15 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
      if (SgProject::get_verbose() > -1)
           printf ("building function call: name = %s from class name = %s \n",name.str(),className.str());
 
+#if 1
+  // Refactored this code to "lookupSymbolFromQualifiedName()" so it could be used to generate class types.
+     SgClassSymbol* targetClassSymbol = lookupSymbolFromQualifiedName(className);
+     ROSE_ASSERT(targetClassSymbol != NULL);
+     SgClassDeclaration* classDeclaration = isSgClassDeclaration(targetClassSymbol->get_declaration()->get_definingDeclaration());
+     ROSE_ASSERT(classDeclaration != NULL);
+     SgScopeStatement* targetClassScope = classDeclaration->get_definition();
+     ROSE_ASSERT(targetClassScope != NULL);
+#else
      list<SgName> qualifiedClassName = generateQualifierList(className);
      SgClassSymbol* previousClassSymbol = NULL;
      SgScopeStatement* previousClassScope = astJavaScopeStack.front();
@@ -406,6 +415,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
      ROSE_ASSERT(targetClassSymbol != NULL);
      SgScopeStatement* targetClassScope = previousClassScope;
      ROSE_ASSERT(targetClassScope != NULL);
+#endif
 
 #if 0
      SgClassSymbol* classSymbol = astJavaScopeStack.front()->lookup_class_symbol(className);
@@ -494,16 +504,33 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobje
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedNameReference (JNIEnv *, jobject, jstring)
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedNameReference (JNIEnv * env, jobject xxx, jstring java_string)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a qualified name reference \n");
    }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *, jobject, jstring)
+JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *env, jobject xxx, jstring java_string)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a SgStringVal \n");
+
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     outputJavaState("cactionStringLiteral");
+
+  // string stringLiteral = "stringLiteral_abc";
+     SgName stringLiteral = convertJavaStringToCxxString(env,java_string);
+
+     printf ("Building an string value expression = %s \n",stringLiteral.str());
+
+     SgStringVal* stringValue = new SgStringVal(stringLiteral);
+     ROSE_ASSERT(stringValue != NULL);
+
+  // Set the source code position (default values for now).
+     setJavaSourcePosition(stringValue);
+
+     astJavaExpressionStack.push_front(stringValue);
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
    }
 
 
@@ -565,7 +592,19 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
 
      SgGlobal* globalScope = getGlobalScope();
      NodeQuerySynthesizedAttributeType nodeList = NodeQuery::querySubTree(globalScope,V_SgClassDeclaration);
-               
+
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("Output the nodeList = \n");
+          for (list<SgName>::iterator i = astJavaImplicitClassList.begin(); i != astJavaImplicitClassList.end(); i++)
+             {
+               SgName classNameWithQualification = *i;
+               if (SgProject::get_verbose() > -1)
+                    printf ("   --- implicit class = %s \n",classNameWithQualification.str());
+             }
+        }
+
+  // printf ("Process the list of classes (nodeList) \n");
   // Process the classes in the list to support an implicit "use" statment of the parent of the class so that
   // each of the implicit classes will be represented in the current scope.
      for (list<SgName>::iterator i = astJavaImplicitClassList.begin(); i != astJavaImplicitClassList.end(); i++)
@@ -614,7 +653,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
 
                SgAliasSymbol* aliasSymbol = new SgAliasSymbol(classSymbol,/* isRenamed */ false);
 
-               if ( SgProject::get_verbose() > -1 )
+               if ( SgProject::get_verbose() > 0 )
                     printf ("Adding SgAliasSymbol for classNameWithoutQualification = %s \n",classNameWithoutQualification.str());
 
                globalScope->insert_symbol(classNameWithoutQualification,aliasSymbol);
@@ -654,7 +693,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport (JNIEnv
 // declared "public static native" instead of "public native" in the Java side of the JNI interface.
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport (JNIEnv* env, jclass xxx, jstring java_string)
    {
-     if (SgProject::get_verbose() > -1)
+     if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionBuildImplicitFieldSupport (variable declaration for field) \n");
 
      outputJavaState("At TOP of cactionBuildImplicitFieldSupport");
@@ -667,7 +706,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport (JNIEnv*
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      astJavaScopeStack.front()->append_statement(variableDeclaration);
 
-     if (SgProject::get_verbose() > -1)
+     if (SgProject::get_verbose() > 0)
           variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionBuildImplicitFieldSupport(): debug");
    }
 
@@ -683,6 +722,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
           printf ("Inside of Java_JavaParser_cactionGenerateType() \n");
 
      SgName name = convertJavaStringToCxxString(env,java_string);
+  // printf ("Java_JavaParser_cactionGenerateType(): name = %s \n",name.str());
 
      if (name == "int")
         {
@@ -694,9 +734,14 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
         }
        else
         {
+       // buildImplicitClass(name);
+#if 1
           printf ("Error: type support not implemented for name = %s \n",name.str());
           ROSE_ASSERT(false);
+#endif
         }
+
+  // printf ("Leaving Java_JavaParser_cactionGenerateType() \n");
 
 #if 0
      printf ("Build support for types (not finished) \n");
@@ -704,7 +749,47 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
 #endif
    }
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateClassType (JNIEnv* env, jclass xxx, jstring java_string)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionGenerateClassType() \n");
 
+     SgName name = convertJavaStringToCxxString(env,java_string);
+
+  // printf ("In Java_JavaParser_cactionGenerateClassType(): Calling lookupSymbolFromQualifiedName(name = %s) \n",name.str());
+
+  // Lookup the name, find the symbol, build a SgClassType, and push it onto the astJavaTypeStack.
+     SgClassSymbol* targetClassSymbol = lookupSymbolFromQualifiedName(name);
+
+  // printf ("DONE: In Java_JavaParser_cactionGenerateClassType(): Calling lookupSymbolFromQualifiedName(name = %s) \n",name.str());
+  // ROSE_ASSERT(targetClassSymbol != NULL);
+     if (targetClassSymbol != NULL)
+        {
+       // printf ("In Java_JavaParser_cactionGenerateClassType(): Get the SgClassDeclaration \n");
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(targetClassSymbol->get_declaration());
+          ROSE_ASSERT(classDeclaration != NULL);
+
+       // printf ("In Java_JavaParser_cactionGenerateClassType(): Get the SgClassType \n");
+          SgClassType* classType = SgClassType::createType(classDeclaration);
+          ROSE_ASSERT(classType != NULL);
+
+          astJavaTypeStack.push_front(classType);
+        }
+       else
+        {
+       // This is OK when we are only processing a small part of the implicit class space (debugging mode) and have not built all the SgClassDeclaration IR nodes. 
+          printf ("WARNING: SgClassSymbol NOT FOUND in lookupSymbolFromQualifiedName(): name = %s (build an integer type and keep going...) \n",name.str());
+
+          astJavaTypeStack.push_front(SgTypeInt::createType());
+        }
+
+     outputJavaState("At Bottom of cactionGenerateClassType");
+
+#if 0
+     printf ("Build support for class types (not finished) \n");
+     ROSE_ASSERT(false);
+#endif
+   }
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionStatementEnd(JNIEnv *env, jclass xxx, jstring java_string /* JNIEnv *env, jobject xxx */ )
    {

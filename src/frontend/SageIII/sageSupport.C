@@ -695,6 +695,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           if ( SgProject::get_verbose() > 0 )
                printf ("In SgProject: Java only mode ON \n");
           set_Java_only(true);
+
+       // DQ (4/2/2011): Java code is only compiled, not linked as is C/C++ and Fortran.
+          set_compileOnly(true);
         }
 
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","wave",false) == true )
@@ -1390,6 +1393,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              {
                printf ("Warning, Non Java source file name specificed with explicit -rose:Java Java language option! \n");
                set_Java_only(false);
+
+            // DQ (4/2/2011): Java code is only compiled, not linked as is C/C++ and Fortran.
+               set_compileOnly(true);
              }
         }
 
@@ -2328,16 +2334,66 @@ SgFile::stripEdgCommandLineOptions ( vector<string> & argv )
      CommandlineProcessing::removeArgsWithParameters (argv,"-edg_parameter:");
      CommandlineProcessing::removeArgsWithParameters (argv,"--edg_parameter:");
 
-  // DQ (2/20/2010): Remove this option when building the command line for the vendore compiler.
+  // DQ (2/20/2010): Remove this option when building the command line for the vendor compiler.
      int optionCount = 0;
      optionCount = sla(argv, "--edg:", "($)", "(no_warnings)",1);
 
 #if 0
      Rose_STL_Container<string> l = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
      printf ("In SgFile::stripEdgCommandLineOptions: argv = \n%s \n",StringUtility::listToString(l).c_str());
+#endif
+   }
 
-     printf ("Exiting in stripEdgCommandLineOptions() \n");
-     ROSE_ASSERT (1 == 2);
+
+void
+SgFile::stripFortranCommandLineOptions ( vector<string> & argv )
+   {
+  // Strip out the OFP specific commandline options the assume all
+  // other arguments are to be passed onto the vendor Fortran compiler
+
+#if 0
+     if ( (ROSE_DEBUG >= 0) || (get_verbose() > 1) )
+        {
+          Rose_STL_Container<string> l = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
+          printf ("In SgFile::stripFortranCommandLineOptions: argv = \n%s \n",StringUtility::listToString(l).c_str());
+        }
+#endif
+
+  // No OFP options that we currently filter out.
+
+#if 0
+     Rose_STL_Container<string> l = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
+     printf ("In SgFile::stripFortranCommandLineOptions: argv = \n%s \n",StringUtility::listToString(l).c_str());
+#endif
+   }
+
+
+void
+SgFile::stripJavaCommandLineOptions ( vector<string> & argv )
+   {
+  // Strip out the ECJ specific commandline options the assume all
+  // other arguments are to be passed onto the vendor Java compiler
+
+#if 0
+     if ( (ROSE_DEBUG >= 0) || (get_verbose() > 1) )
+        {
+          Rose_STL_Container<string> l = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
+          printf ("In SgFile::stripJavaCommandLineOptions: argv = \n%s \n",StringUtility::listToString(l).c_str());
+        }
+#endif
+
+  // Split out the ECJ options (ignore the returned Rose_STL_Container<string> object)
+     CommandlineProcessing::removeArgs (argv,"-ecj:");
+     CommandlineProcessing::removeArgs (argv,"--ecj:");
+     CommandlineProcessing::removeArgsWithParameters (argv,"-ecj_parameter:");
+     CommandlineProcessing::removeArgsWithParameters (argv,"--ecj_parameter:");
+
+  // Remove this if it is specificed, but it should not be used for Java.
+  // CommandlineProcessing::removeArgs (argv,"-c");
+
+#if 0
+     Rose_STL_Container<string> l = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
+     printf ("In SgFile::stripJavaCommandLineOptions: argv = \n%s \n",StringUtility::listToString(l).c_str());
 #endif
    }
 
@@ -2875,10 +2931,15 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                                    file->set_Java_only(true);
 
+                                // DQ (4/2/2011): Java code is only compiled, not linked as is C/C++ and Fortran.
+                                   file->set_compileOnly(true);
+
                                 // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
                                 // Note that file->get_requires_C_preprocessor() should be false.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
+
+                                // file->display("Marked as java file based on file suffix");
                                  }
                                 else
                                  {
@@ -6207,6 +6268,61 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
         }
      frontEndCommandLine.push_back(verboseOptionString);
 
+  // frontEndCommandLine.push_back("-d none");
+#if 1
+  // DQ (4/1/2011): Add "-d" option to prevent java "class" files from being generated into the source tree.
+  // Since we implement a source-to-source compiler, we don't need these to be generated. Note that this
+  // must be inserted as two seperate strings to have it work properly.
+     frontEndCommandLine.push_back("-d");
+     frontEndCommandLine.push_back("none");
+#else
+  // DQ (4/2/2011): Specify the current directory as the location for the generated *.class files.
+  // Upon later consideration this is the option that I think I want to pass the the backend compiler, not the frontend.
+     frontEndCommandLine.push_back("-d");
+     frontEndCommandLine.push_back(".");
+#endif
+
+#if 1
+  // DQ (4/1/2011): Added ecj option handling (similar to how EDG option handling is supported).
+  // This allows ECJ specific option to be set on the command line for ROSE translators.
+
+  // *******************************************************************
+  // Handle general ecj options (-xxx)
+  // *******************************************************************
+
+  // Strip out all the -ecj:xxx options and put them into the ecj command line as -xxx
+
+  // Resets modifiedArgc and allocates memory to modifiedArgv
+     Rose_STL_Container<string> ecjOptionList = CommandlineProcessing::generateOptionList (argv,"-ecj:");
+     CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"-",ecjOptionList);
+
+  // *******************************************************************
+  // Handle general ecj options (--xxx)
+  // *******************************************************************
+
+  // Strip out all the -ecj:xxx options and put them into the ecj command line as --xxx
+
+  // Resets modifiedArgc and allocates memory to modifiedArgv
+     ecjOptionList = CommandlineProcessing::generateOptionList (argv,"--ecj:");
+     CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"--",ecjOptionList);
+
+  // *******************************************************************
+  // Handle general ecj options (-xxx abc)
+  // *******************************************************************
+
+  // Handle ecj options taking a parameter (string or integer)
+     ecjOptionList = CommandlineProcessing::generateOptionWithNameParameterList (argv,"-ecj_parameter:");
+     CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"-",ecjOptionList);
+
+  // *******************************************************************
+  // Handle general ecj options (--xxx abc)
+  // *******************************************************************
+
+  // Handle ecj options taking a parameter (string or integer)
+     ecjOptionList = CommandlineProcessing::generateOptionWithNameParameterList (argv,"--ecj_parameter:");
+     CommandlineProcessing::addListToCommandLine(frontEndCommandLine,"--",ecjOptionList);
+#endif
+
   // Java does not use include files, so we can enforce this.
      ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
 
@@ -6733,7 +6849,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
 vector<string>
 SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameIndex, const string& compilerName )
    {
-  // This function assembles the commandline that will be passed to the backend (vendor) C++/C compiler 
+  // This function assembles the commandline that will be passed to the backend (vendor) C++/C, Fortran, of Java compiler 
   // (using the new generated source code from the ROSE unparser).
 
   // DQ (4/21/2006): I think we can now assert this!
@@ -6760,6 +6876,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("C   compiler              = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
      printf ("C++ compiler              = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
      printf ("Fortran compiler          = %s \n",BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
+     printf ("Java compiler             = %s \n",BACKEND_JAVA_COMPILER_NAME_WITH_PATH);
      printf ("get_C_only()              = %s \n",(get_C_only() == true) ? "true" : "false");
      printf ("get_C99_only()            = %s \n",(get_C99_only() == true) ? "true" : "false");
      printf ("get_Cxx_only()            = %s \n",(get_Cxx_only() == true) ? "true" : "false");
@@ -6769,6 +6886,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("get_F95_only()            = %s \n",(get_F95_only() == true) ? "true" : "false");
      printf ("get_F2003_only()          = %s \n",(get_F2003_only() == true) ? "true" : "false");
      printf ("get_CoArrayFortran_only() = %s \n",(get_CoArrayFortran_only() == true) ? "true" : "false");
+     printf ("get_Java_only()           = %s \n",(get_Java_only() == true) ? "true" : "false");
 #endif
 
   // DQ (9/10/2006): We now explicitly store the C and C++ compiler names with 
@@ -6811,7 +6929,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                       // compilerNameString += "-ffree-form ";
                       // compilerNameString += "-ffree-line-length-<n> "; // -ffree-line-length-<n>
                       // compilerNameString.push_back("-ffree-line-length-none");
-
 #if USE_GFORTRAN_IN_ROSE
                       // DQ (9/16/2009): This option is not available in gfortran version 4.0.x (wonderful).
                          if ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER >= 1) )
@@ -6819,7 +6936,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                               compilerNameString.push_back("-ffree-line-length-none");
                             }
 #endif
-
                        }
                       else
                        {
@@ -6831,6 +6947,26 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
                          compilerNameString.push_back("-ffixed-line-length-none");
                        }
+                  }
+             }
+            else
+             {
+               if (get_Java_only() == true)
+                  {
+                 // compilerNameString = "java ";
+                 // compilerNameString[0] = ROSE_GNU_JAVA_PATH;
+                    compilerNameString[0] = BACKEND_JAVA_COMPILER_NAME_WITH_PATH;
+
+                 // Put *.class files generated from calling that backend compiler (javac) on the ROSE generated code 
+                 // into the current directory.  This makes the semantics for Java similar to all other languages in 
+                 // ROSE but it is different from the default behavior for "javac".  So it is not clear if we really
+                 // want this semantics, but another reason for this desired behavior is that it will avoid having
+                 // the source-to-source generated code from overwriting the input source code.
+                 // compilerNameString.push_back("-d .");
+                    std::string currentDirectory = getWorkingDirectory();
+                    compilerNameString.push_back("-d");
+                 // compilerNameString.push_back(".");
+                    compilerNameString.push_back(currentDirectory);
                   }
              }
         }
@@ -6886,59 +7022,34 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
   // printf ("In buildCompilerCommandLineOptions(): currentDirectory = %s \n",currentDirectory);
 
-  // specify compilation only option (new style command line processing)
-     if ( CommandlineProcessing::isOption(argv,"-","c",false) == true )
+     if (get_Java_only() == false)
         {
-       // printf ("Option -c found (compile only)! \n");
-          set_compileOnly(true);
-        }
-       else
-        {
-       // printf ("Option -c not found (compile AND link) ... \n");
-       // compilerNameString += " -c ";
-        }
+       // specify compilation only option (new style command line processing)
+          if ( CommandlineProcessing::isOption(argv,"-","c",false) == true )
+             {
+            // printf ("Option -c found (compile only)! \n");
+               set_compileOnly(true);
+             }
+            else
+             {
+            // printf ("Option -c not found (compile AND link) ... \n");
+            // compilerNameString += " -c ";
+             }
 
-  // Liao, 2/13/2009. I think we should pass this macro to the backend compiler also
-  // User programs may have rose-specific tweaks to enable ROSE translators to compile them
-  // Part of solution to bug 316 :
-  // https://outreach.scidac.gov/tracker/index.php?func=detail&aid=316&group_id=24&atid=185
-     compilerNameString.push_back("-DUSE_ROSE");
+       // Liao, 2/13/2009. I think we should pass this macro to the backend compiler also
+       // User programs may have rose-specific tweaks to enable ROSE translators to compile them
+       // Part of solution to bug 316 :
+       // https://outreach.scidac.gov/tracker/index.php?func=detail&aid=316&group_id=24&atid=185
+          compilerNameString.push_back("-DUSE_ROSE");
 
-  // Liao, 9/4/2009. If OpenMP lowering is activated. -D_OPENMP should be added
-  // since we don't remove condition compilation preprocessing info. during OpenMP lowering
-     if (get_openmp_lowering())  
-     {
-       compilerNameString.push_back("-D_OPENMP");
-       // Liao, 9/22/2009, we also specify the search path for libgomp_g.h, which is installed under $ROSE_INS/include
-       // and the path to libgomp.a/libgomp.so, which are located in $GCC_GOMP_OPENMP_LIB_PATH
-
-       // Header should always be available 
-       // the conditional compilation is necessary to pass make distcheck,
-       // where only a minimum configuration options are used and not all macros are defined. 
-#ifdef ROSE_INSTALLATION_PATH 
-       string include_path(ROSE_INSTALLATION_PATH);
-       include_path += "/include"; 
-       compilerNameString.push_back("-I"+include_path); 
-#endif
-#if 0  // moved to the very end       
-#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY       
-       // lib path is available if --with-gomp_omp_runtime_library=XXX is used
-       if (USE_ROSE_GOMP_OPENMP_LIBRARY)
-       {
-         // only linking phase needs this
-         if (!get_compileOnly()) 
-         {
-           string gomp_lib_path(GCC_GOMP_OPENMP_LIB_PATH);
-           ROSE_ASSERT (gomp_lib_path.size() != 0);
- //          compilerNameString.push_back("-L"+gomp_lib_path); 
-           compilerNameString.push_back(gomp_lib_path+"/libgomp.a"); // static linking for simplicity
-           compilerNameString.push_back("-lpthread"); 
-         }
-       }
-#endif       
-#endif       
+       // Liao, 9/4/2009. If OpenMP lowering is activated. -D_OPENMP should be added
+       // since we don't remove condition compilation preprocessing info. during OpenMP lowering
+          if (get_openmp_lowering())  
+          {
+            compilerNameString.push_back("-D_OPENMP");
+          }
      }
- 
+
   // DQ (3/31/2004): New cleaned up source file handling
      Rose_STL_Container<string> argcArgvList = argv;
 
@@ -7032,6 +7143,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                objectNameSpecified = true;
              }
         }
+
      Rose_STL_Container<string> tempArgcArgv;
      for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
         {
@@ -7099,6 +7211,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("oldFileName         = %s \n",oldFileName.c_str());
 #endif
 
+  // DQ (4/2/2011): Java does not have -I as an accepted option.
+     if (get_Java_only() == false)
+        {
   // DQ (12/8/2004): Add -Ipath option so that source file's directory will be searched for any 
   // possible headers.  This is especially important when we are compiling the generated file
   // located in a different directory!  (When the original source file included header files 
@@ -7110,28 +7225,57 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // is in the current directory (likely a generated file itself; e.g. swig or ROSE applied recursively, etc.)).
   // printf ("oldFileNamePathOnly.length() = %d \n",oldFileNamePathOnly.length());
      if (oldFileNamePathOnly.empty() == false)
-        {
-#if 1       
+     {
+       vector<string>::iterator iter;
+       // find the very first -Ixxx option's position
+       for (iter = compilerNameString.begin(); iter != compilerNameString.end(); iter++) 
+       {
+         string cur_string =*iter;
+         string::size_type pos = cur_string.find("-I",0);
+         if (pos==0) 
+           break;
+       }
        // Liao, 5/15/2009
        // the input source file's path has to be the first one to be searched for header!
        // This is required since one of the SPEC CPU 2006 benchmarks: gobmk relies on this to be compiled.
-          vector<string>::iterator iter;
-       // find the very first -Ixxx option's position
-          for (iter = compilerNameString.begin(); iter != compilerNameString.end(); iter++) 
-             {
-               string cur_string =*iter;
-               string::size_type pos = cur_string.find("-I",0);
-               if (pos==0)
-                    break;
-             }
-
        // insert before the position
-          compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
-#else        
-          compilerNameString.push_back(std::string("-I") + oldFileNamePathOnly);
-#endif
+       compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
+     }
         }
 
+    // Liao 3/30/2011. the search path for the installation path should be the last one, after paths inside
+    // source trees, such as -I../../../../sourcetree/src/frontend/SageIII and 
+    // -I../../../../sourcetree/src/midend/programTransformation/ompLowering
+     if (get_openmp_lowering())  
+     {
+       vector<string>::iterator iter, iter_last_inc=compilerNameString.begin();
+       // find the very last -Ixxx option's position
+       // This for loop cannot be merged with the previous one due to iterator invalidation rules.
+       for (iter = compilerNameString.begin(); iter != compilerNameString.end(); iter++) 
+       {
+         string cur_string =*iter;
+         string::size_type pos = cur_string.find("-I",0);
+         if (pos==0) 
+         {
+           iter_last_inc = iter;
+         }
+       }
+       if (iter_last_inc != compilerNameString.end())
+         iter_last_inc ++; // accommodate the insert-before-an-iterator semantics used in vector::insert() 
+ 
+       // Liao, 9/22/2009, we also specify the search path for libgomp_g.h, which is installed under $ROSE_INS/include
+       // and the path to libgomp.a/libgomp.so, which are located in $GCC_GOMP_OPENMP_LIB_PATH
+
+       // Header should always be available 
+       // the conditional compilation is necessary to pass make distcheck,
+       // where only a minimum configuration options are used and not all macros are defined. 
+#ifdef ROSE_INSTALLATION_PATH 
+       string include_path(ROSE_INSTALLATION_PATH);
+       include_path += "/include"; 
+       compilerNameString.insert(iter_last_inc, "-I"+include_path); 
+#endif
+     }
+ 
   // DQ (4/20/2006): This allows the ROSE translator to be just a wrapper for the backend (vendor) compiler.
   // compilerNameString += get_unparse_output_filename();
      if (get_skip_unparse() == false)
@@ -7153,12 +7297,18 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
           std::string objectFileName = generateOutputFileName();
        // printf ("In buildCompilerCommandLineOptions: objectNameSpecified = %s objectFileName = %s \n",objectNameSpecified ? "true" : "false",objectFileName.c_str());
 
-       // DQ (7/14/2004): Suggested fix from Andreas, make the object file name explicit
-          if (objectNameSpecified == false)
+       // DQ (4/2/2011): Java does not have -o as an accepted option, though the "-d <dir>" can be used to specify where class files are put.
+       // Currently we explicitly output "-d ." so that generated clas files will be put into the current directory (build tree), but this
+       // is not standard semantics for Java (though it makes the Java support in ROSE consistant with other languages supported in ROSE).
+          if (get_Java_only() == false)
              {
-             //  cout<<"making object file explicit for compilation only mode without -o options"<<endl;
-               compilerNameString.push_back("-o");
-               compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+            // DQ (7/14/2004): Suggested fix from Andreas, make the object file name explicit
+               if (objectNameSpecified == false)
+                  {
+                 // cout<<"making object file explicit for compilation only mode without -o options"<<endl;
+                    compilerNameString.push_back("-o");
+                    compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+                  }
              }
         }
        else
@@ -7168,13 +7318,16 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // when the original command line is to generate the final executable.
        // We generate the final executable at the SgProject level from object files of each source file
 
-       // cout<<"turn on compilation only at the file compilation level"<<endl;
-          compilerNameString.push_back("-c");
-       // For compile+link mode, -o is used for the final executable, if it exists
-       // We make -o objectfile explicit 
-          std::string objectFileName = generateOutputFileName();
-          compilerNameString.push_back("-o");
-          compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+          if (get_Java_only() == false)
+             {
+            // cout<<"turn on compilation only at the file compilation level"<<endl;
+               compilerNameString.push_back("-c");
+            // For compile+link mode, -o is used for the final executable, if it exists
+            // We make -o objectfile explicit 
+               std::string objectFileName = generateOutputFileName();
+               compilerNameString.push_back("-o");
+               compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+             }
         }
 
 #if 0
@@ -7211,7 +7364,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 
 #if 0
      printf ("\n\n***************************************************** \n");
-     printf ("Calling SgFile::compileOutput() \n");
+     printf ("Inside of SgFile::compileOutput() \n");
      printf ("***************************************************** \n\n\n");
 #endif
 
@@ -7242,7 +7395,20 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // DQ (1/17/2006): test this
   // ROSE_ASSERT(get_fileInfo() != NULL);
 
-     const string compilerNameOrig = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+  // DQ (4/2/2011): Added language specific support.
+  // const string compilerNameOrig = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+     string compilerNameOrig = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+     if (get_Java_only() == true)
+        {
+          compilerNameOrig = BACKEND_JAVA_COMPILER_NAME_WITH_PATH;
+        }
+
+     if (get_Fortran_only() == true)
+        {
+       // printf ("Fortran language support in SgFile::compileOutput() not implemented \n");
+       // ROSE_ASSERT(false);
+          compilerNameOrig = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
+        }
 
   // BP : 11/13/2001, checking to see that the compiler name is set
      string compilerName = compilerNameOrig + " ";
@@ -7259,6 +7425,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // DQ (4/21/2006): If we have not set the unparse_output_filename then we could not have called 
   // unparse and we want to compile the original source file as a backup mechanism to generate an 
   // object file.
+  // printf ("In SgFile::compileOutput(): get_unparse_output_filename() = %s \n",get_unparse_output_filename().c_str());
      if (get_unparse_output_filename().empty() == true)
         {
           ROSE_ASSERT(get_skip_unparse() == true);
@@ -7281,6 +7448,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 
        // DQ (6/25/2006): I think it is OK to not have an output file name specified.
        // display ("In SgFile::compileOutput(): get_unparse_output_filename().empty() == true");
+
+       // printf ("Exiting as a test \n");
+       // ROSE_ASSERT(false);
         }
 #endif
 
@@ -7510,26 +7680,29 @@ SgProject::compileOutput()
             // printf ("In Project::compileOutput(): (BASE of loop) file = %d errorCode = %d localErrorCode = %d \n",i,errorCode,localErrorCode);
              }
 
-// case 3: linking at the project level
-           // Liao, 11/19/2009, 
-           // I really want to just move the SgFile::compileOutput() to SgProject::compileOutput() 
-           // and have both compilation and linking finished at the same time, just as the original command line does.
-           // Then we don't have to compose compilation command line for each of the input source file
-           //  or to compose the final linking command line. 
-           //
-           // But there may be some advantages of doing the compilation and linking separately at two levels.
-           // I just discussed it with Dan.
-           // The two level scheme is needed to support mixed language input, like a C file and a Fortran file
-           // In this case, we cannot have a single one level command line to compile and link those two files
-           // We have to compile each of them first and finally link the object files.
+       // case 3: linking at the project level (but Java codes should never be linked).
+          if (get_Java_only() == false)
+             {
+            // Liao, 11/19/2009, 
+            // I really want to just move the SgFile::compileOutput() to SgProject::compileOutput() 
+            // and have both compilation and linking finished at the same time, just as the original command line does.
+            // Then we don't have to compose compilation command line for each of the input source file
+            // or to compose the final linking command line. 
+            //
+            // But there may be some advantages of doing the compilation and linking separately at two levels.
+            // I just discussed it with Dan.
+            // The two level scheme is needed to support mixed language input, like a C file and a Fortran file
+            // In this case, we cannot have a single one level command line to compile and link those two files
+            // We have to compile each of them first and finally link the object files.
 #ifndef _MSC_VER
-     // tps 08/18/2010 : Do not link right now in Windows - it breaks - want test to pass here for now.
-     // todo windows: put this back in.
-     // linkingReturnVal = link (compilerName);
-        linkingReturnVal = link (BACKEND_CXX_COMPILER_NAME_WITH_PATH);
+            // tps 08/18/2010 : Do not link right now in Windows - it breaks - want test to pass here for now.
+            // todo windows: put this back in.
+            // linkingReturnVal = link (compilerName);
+               linkingReturnVal = link (BACKEND_CXX_COMPILER_NAME_WITH_PATH);
 #else
    #pragma message ("sageSupport.C : linkingReturnVal = link (compilerName); not implemented yet.")
 #endif
+             }
         } // end if preprocessing-only is false
 
   // return errorCode;
@@ -7692,7 +7865,7 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
 
   // This link function will be moved into the SgProject IR node when complete
      const std::string whiteSpace = " ";
-  // printf ("This link function is not longer called (I think!) \n");
+  // printf ("This link function is no longer called (I think!) \n");
   // ROSE_ASSERT(false);
 
   // DQ (10/15/2005): Trap out case of C programs where we want to make sure that we don't use the C++ compiler to do our linking!
@@ -7710,10 +7883,29 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
             // linkerName = "f77 ";
                linkerName = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
              }
+            else
+             {
+            // DQ (4/2/2011): Added support for Java (though not clear if link support for Java is well understood within ROSE).
+               if (get_Java_only() == true)
+                  {
+                    linkerName = BACKEND_JAVA_COMPILER_NAME_WITH_PATH;
+
+                 // Debugging support.
+                    display("SgProject::link()");
+
+                 // Java programs don't link so this is an error.
+                    printf ("Java programs don't link so this is an error. \n");
+                    ROSE_ASSERT(false);
+                  }
+                 else
+                  {
+                 // Nothing to do here (case of C++)
+                  }
+             }
         }
 
   // This is a better implementation since it will include any additional command line options that target the linker
-     Rose_STL_Container<string> linkingCommand ; 
+     Rose_STL_Container<string> linkingCommand; 
 
      linkingCommand.push_back (linkerName);
      // find all object files generated at file level compilation
