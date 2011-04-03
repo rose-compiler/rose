@@ -11264,8 +11264,7 @@ SgFile::compileOutput ( int fileNameIndex )
                   }
                  else
                   {
-                    printf ("Not clear what to do here! In SgFile::compileOutput() but not C,C++,Fortran, or Java \n");
-                    ROSE_ASSERT(false);
+                 // This is the case of binary analysis...(nothing to do there)
                   }
              }
         }
