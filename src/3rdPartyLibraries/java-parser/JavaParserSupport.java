@@ -339,60 +339,9 @@ class JavaParserSupport
                          System.out.println("Skipping case of array of type for now (sorry not implemented)... data field = " + fld);
                        }
 
-                 // Refactored this work so it coudl be called elsewhere.
+                 // Refactored this work so it could be called elsewhere.
                     processType(typeClass);
 
-/*
-                 // We don't have to support Java primative types as classes in the AST (I think).
-                    if (typeClass.isPrimitive() == false)
-                       {
-                      // Check if this is a type (class) that has already been handled.
-                         if (setOfClasses.contains(typeClass) == false)
-                            {
-                           // Investigate any new type.
-                              if (typeClass.isArray() == true)
-                                 {
-                                // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
-                                   System.out.println("Skipping case of array of type for now (sorry not implemented)... data field = " + fld);
-                                 }
-                                else
-                                 {
-                                // This is not an array type and not a primative type (so it should be a class, I think).
-                                   if (verboseLevel > 1)
-                                        System.out.println("Recursive call to buildImplicitClassSupport() to build type = " + nestedClassName);
-
-                                // Add this to the set of classes that we have seen... so that we will not try to process it more than once...
-                                   setOfClasses.add(typeClass);
-
-                                // Control the level of recursion so that we can debug this...it seems that
-                                // this is typically as high as 47 to process the implicitly included classes.
-                                   int implicitClassCounterBound = 1000;
-                                   if (implicitClassCounter < implicitClassCounterBound)
-                                      {
-                                     // DQ (11/2/2010): comment out this recursive call for now.
-                                        buildImplicitClassSupport(nestedClassName);
-                                      }
-                                     else
-                                      {
-                                        System.out.println("WARNING: Exceeded recursion level " + implicitClassCounter + " nestedClassName = " + nestedClassName);
-                                      }
-                                 }
-                            }
-                           else
-                            {
-                              if (verboseLevel > 2)
-                                   System.out.println("This class has been seen previously: nestedClassName = " + nestedClassName);
-                           // setOfClasses.add(typeClass);
-                            }
-                       }
-                      else
-                       {
-                      // We might actually do have to include these since they are classes in Java... 
-                      // What member functions are there on primative types?
-                         if (verboseLevel > 2)
-                              System.out.println("This class is a primitive type (sorry not implemented): type name = " + nestedClassName);
-                       }
-*/
                  // System.out.println("Exiting after returning from recursive call...");
                  // System.exit(1);
 
