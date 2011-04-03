@@ -97,6 +97,31 @@ class JavaParserSupport
 
           String nestedClassName = typeClass.getName();
 
+          System.out.println("In processType(): type = " + typeClass);
+
+          if (verboseLevel > 0)
+             {
+            // This code is part of an interogation of the data in the field and needs to be hidden yet available to support debugging.
+            // ******************************************************************************
+               System.out.println("type = " + typeClass);
+
+               System.out.println("fld.getType().isAnnotation()                 = " + typeClass.isAnnotation());
+            // System.out.println("fld.getType().isAnnotationPresent(Class<? extends Annotation> annotationClass) = " + fld.getType().isAnnotationPresent(fld.getType()));
+               System.out.println("fld.getType().isAnonymousClass()             = " + typeClass.isAnonymousClass());
+               System.out.println("fld.getType().isArray()                      = " + typeClass.isArray());
+            // Not clear what class to use as a test input for isAssignableFrom(Class<?> cls) function...
+               System.out.println("fld.getType().isAssignableFrom(Class<?> cls) = " + typeClass.isAssignableFrom(typeClass));
+               System.out.println("fld.getType().isEnum()                       = " + typeClass.isEnum());
+               System.out.println("fld.getType().isInstance(Object obj)         = " + typeClass.isInstance(typeClass));
+               System.out.println("fld.getType().isInterface()                  = " + typeClass.isInterface());
+               System.out.println("fld.getType().isLocalClass()                 = " + typeClass.isLocalClass());
+               System.out.println("fld.getType().isMemberClass()                = " + typeClass.isMemberClass());
+               System.out.println("fld.getType().isPrimitive()                  = " + typeClass.isPrimitive());
+               System.out.println("fld.getType().isSynthetic()                  = " + typeClass.isSynthetic());
+               System.out.println("-----");
+            // ******************************************************************************
+             }
+
        // We don't have to support Java primative types as classes in the AST (I think).
           if (typeClass.isPrimitive() == false)
              {
@@ -293,20 +318,6 @@ class JavaParserSupport
 
                       // I think that "synthetic" means compler generated.
                          System.out.println("fld.isSynthetic()    = " + fld.isSynthetic());
-
-                         System.out.println("fld.getType().isAnnotation()                 = " + fld.getType().isAnnotation());
-                      // System.out.println("fld.getType().isAnnotationPresent(Class<? extends Annotation> annotationClass) = " + fld.getType().isAnnotationPresent(fld.getType()));
-                         System.out.println("fld.getType().isAnonymousClass()             = " + fld.getType().isAnonymousClass());
-                         System.out.println("fld.getType().isArray()                      = " + fld.getType().isArray());
-                      // Not clear what class to use as a test input for isAssignableFrom(Class<?> cls) function...
-                         System.out.println("fld.getType().isAssignableFrom(Class<?> cls) = " + fld.getType().isAssignableFrom(fld.getType()));
-                         System.out.println("fld.getType().isEnum()                       = " + fld.getType().isEnum());
-                         System.out.println("fld.getType().isInstance(Object obj)         = " + fld.getType().isInstance(fld.getType()));
-                         System.out.println("fld.getType().isInterface()                  = " + fld.getType().isInterface());
-                         System.out.println("fld.getType().isLocalClass()                 = " + fld.getType().isLocalClass());
-                         System.out.println("fld.getType().isMemberClass()                = " + fld.getType().isMemberClass());
-                         System.out.println("fld.getType().isPrimitive()                  = " + fld.getType().isPrimitive());
-                         System.out.println("fld.getType().isSynthetic()                  = " + fld.getType().isSynthetic());
                          System.out.println("-----");
                       // ******************************************************************************
                        }
@@ -333,6 +344,7 @@ class JavaParserSupport
                  // Need to test for: isPrimative(), isArray(), isInterface(), isAssignableFrom(), isInstance()
                  // More documentation at: http://download.oracle.com/javase/1.4.2/docs/api/java/lang/Class.html
 
+                 // We can't output the full field in processType() if the type is an array (so this is just debug support).
                     if (typeClass.isArray() == true)
                        {
                       // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
@@ -387,9 +399,27 @@ class JavaParserSupport
                          System.out.println("exc #" + j + " " + evec[j]);
                     System.out.println("-----");
                   */
+
+                    Class pvec[] = ct.getParameterTypes();
+
                  // Note that I am ignoring the constructor parameter types at the moment.
                     if (verboseLevel > 2)
+                       {
                          System.out.println("constructor name = " + ct.getName());
+                         for (int j = 0; j < pvec.length; j++)
+                            {
+                              System.out.println("   constructor parameter type = " + pvec[j]);
+                            }
+                       }
+
+                    System.out.println("constructor name = " + ct.getName());
+                    for (int j = 0; j < pvec.length; j++)
+                       {
+                         System.out.println("   constructor parameter type = " + pvec[j]);
+
+                      // This is a current problem in debugging the implicit class handling in the Java support in ROSE.
+                      // processType(pvec[j]);
+                       }
 
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
