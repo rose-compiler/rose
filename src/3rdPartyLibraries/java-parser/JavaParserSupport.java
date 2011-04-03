@@ -82,7 +82,99 @@ class JavaParserSupport
 
           if (verboseLevel > 2)
                System.out.println("In JavaParserSupport::sourcePosition(ASTNode): lineNumber_end = " + lineNumber_end + " columnNumber_end = " + columnNumber_end);
-         }
+        }
+
+
+     public static void processType( Class typeClass)
+        {
+       // This function processes all the references to types found in data members, function 
+       // return types, function argument types, etc.  With each type it is included into a set
+       // (if it is not a primative type) and then an SgClassType is generated in the ROSE AST
+       // so that all references to this type can be supported.  Note that for trivial input 
+       // codes, most of the referenced classes are implicit classes; reflection is used to 
+       // traversal all of these and recursively build all types.  This is part of what is required 
+       // to support a consistant AST in ROSE.
+
+          String nestedClassName = typeClass.getName();
+
+          System.out.println("In processType(): type = " + typeClass);
+
+          if (verboseLevel > 0)
+             {
+            // This code is part of an interogation of the data in the field and needs to be hidden yet available to support debugging.
+            // ******************************************************************************
+               System.out.println("type = " + typeClass);
+
+               System.out.println("fld.getType().isAnnotation()                 = " + typeClass.isAnnotation());
+            // System.out.println("fld.getType().isAnnotationPresent(Class<? extends Annotation> annotationClass) = " + fld.getType().isAnnotationPresent(fld.getType()));
+               System.out.println("fld.getType().isAnonymousClass()             = " + typeClass.isAnonymousClass());
+               System.out.println("fld.getType().isArray()                      = " + typeClass.isArray());
+            // Not clear what class to use as a test input for isAssignableFrom(Class<?> cls) function...
+               System.out.println("fld.getType().isAssignableFrom(Class<?> cls) = " + typeClass.isAssignableFrom(typeClass));
+               System.out.println("fld.getType().isEnum()                       = " + typeClass.isEnum());
+               System.out.println("fld.getType().isInstance(Object obj)         = " + typeClass.isInstance(typeClass));
+               System.out.println("fld.getType().isInterface()                  = " + typeClass.isInterface());
+               System.out.println("fld.getType().isLocalClass()                 = " + typeClass.isLocalClass());
+               System.out.println("fld.getType().isMemberClass()                = " + typeClass.isMemberClass());
+               System.out.println("fld.getType().isPrimitive()                  = " + typeClass.isPrimitive());
+               System.out.println("fld.getType().isSynthetic()                  = " + typeClass.isSynthetic());
+               System.out.println("-----");
+            // ******************************************************************************
+             }
+
+       // We don't have to support Java primative types as classes in the AST (I think).
+          if (typeClass.isPrimitive() == false)
+             {
+            // Check if this is a type (class) that has already been handled.
+               if (setOfClasses.contains(typeClass) == false)
+                  {
+                 // Investigate any new type.
+                    if (typeClass.isArray() == true)
+                       {
+                      // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
+                      // System.out.println("Skipping case of array of type for now (sorry not implemented)... data field = " + fld);
+                         System.out.println("Skipping case of array of type for now (sorry not implemented)... data field");
+                       }
+                      else
+                       {
+                      // This is not an array type and not a primative type (so it should be a class, I think).
+                         if (verboseLevel > 1)
+                              System.out.println("Recursive call to buildImplicitClassSupport() to build type = " + nestedClassName);
+
+                      // Add this to the set of classes that we have seen... so that we will not try to process it more than once...
+                         setOfClasses.add(typeClass);
+
+                      // Control the level of recursion so that we can debug this...it seems that
+                      // this is typically as high as 47 to process the implicitly included classes.
+                         int implicitClassCounterBound = 1000;
+                         if (implicitClassCounter < implicitClassCounterBound)
+                            {
+                           // DQ (11/2/2010): comment out this recursive call for now.
+                              buildImplicitClassSupport(nestedClassName);
+                            }
+                           else
+                            {
+                              System.out.println("WARNING: Exceeded recursion level " + implicitClassCounter + " nestedClassName = " + nestedClassName);
+                            }
+                       }
+                  }
+                 else
+                  {
+                    if (verboseLevel > 2)
+                         System.out.println("This class has been seen previously: nestedClassName = " + nestedClassName);
+                 // setOfClasses.add(typeClass);
+                  }
+             }
+            else
+             {
+            // We might actually do have to include these since they are classes in Java... 
+            // What member functions are there on primative types?
+               if (verboseLevel > 2)
+                    System.out.println("This class is a primitive type (sorry not implemented): type name = " + nestedClassName);
+             }
+        }
+
+
 
      public static void buildImplicitClassSupport( String className)
         {
@@ -210,7 +302,7 @@ class JavaParserSupport
                   {
                     Field fld = fieldlist[i];
 
-                    if (verboseLevel > 4)
+                    if (verboseLevel > 0)
                        {
                       // This code is part of an interogation of the data in the field and needs to be hidden yet available to support debugging.
                       // ******************************************************************************
@@ -226,20 +318,6 @@ class JavaParserSupport
 
                       // I think that "synthetic" means compler generated.
                          System.out.println("fld.isSynthetic()    = " + fld.isSynthetic());
-
-                         System.out.println("fld.getType().isAnnotation()                 = " + fld.getType().isAnnotation());
-                      // System.out.println("fld.getType().isAnnotationPresent(Class<? extends Annotation> annotationClass) = " + fld.getType().isAnnotationPresent(fld.getType()));
-                         System.out.println("fld.getType().isAnonymousClass()             = " + fld.getType().isAnonymousClass());
-                         System.out.println("fld.getType().isArray()                      = " + fld.getType().isArray());
-                      // Not clear what class to use as a test input for isAssignableFrom(Class<?> cls) function...
-                         System.out.println("fld.getType().isAssignableFrom(Class<?> cls) = " + fld.getType().isAssignableFrom(fld.getType()));
-                         System.out.println("fld.getType().isEnum()                       = " + fld.getType().isEnum());
-                         System.out.println("fld.getType().isInstance(Object obj)         = " + fld.getType().isInstance(fld.getType()));
-                         System.out.println("fld.getType().isInterface()                  = " + fld.getType().isInterface());
-                         System.out.println("fld.getType().isLocalClass()                 = " + fld.getType().isLocalClass());
-                         System.out.println("fld.getType().isMemberClass()                = " + fld.getType().isMemberClass());
-                         System.out.println("fld.getType().isPrimitive()                  = " + fld.getType().isPrimitive());
-                         System.out.println("fld.getType().isSynthetic()                  = " + fld.getType().isSynthetic());
                          System.out.println("-----");
                       // ******************************************************************************
                        }
@@ -266,55 +344,15 @@ class JavaParserSupport
                  // Need to test for: isPrimative(), isArray(), isInterface(), isAssignableFrom(), isInstance()
                  // More documentation at: http://download.oracle.com/javase/1.4.2/docs/api/java/lang/Class.html
 
-                 // We don't have to support Java primative types as classes in the AST (I think).
-                    if (typeClass.isPrimitive() == false)
+                 // We can't output the full field in processType() if the type is an array (so this is just debug support).
+                    if (typeClass.isArray() == true)
                        {
-                      // Check if this is a type (class) that has already been handled.
-                         if (setOfClasses.contains(typeClass) == false)
-                            {
-                           // Investigate any new type.
-                              if (typeClass.isArray() == true)
-                                 {
-                                // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
-                                   System.out.println("Skipping case of array of type for now (sorry not implemented)... data field = " + fld);
-                                 }
-                                else
-                                 {
-                                // This is not an array type and not a primative type (so it should be a class, I think).
-                                   if (verboseLevel > 1)
-                                        System.out.println("Recursive call to buildImplicitClassSupport() to build type = " + nestedClassName);
-
-                                // Add this to the set of classes that we have seen... so that we will not try to process it more than once...
-                                   setOfClasses.add(typeClass);
-
-                                // Control the level of recursion so that we can debug this...it seems that
-                                // this is typically as high as 47 to process the implicitly included classes.
-                                   int implicitClassCounterBound = 10;
-                                   if (implicitClassCounter < implicitClassCounterBound)
-                                      {
-                                     // DQ (11/2/2010): comment out this recursive call for now.
-                                        buildImplicitClassSupport(nestedClassName);
-                                      }
-                                     else
-                                      {
-                                        System.out.println("WARNING: Exceeded recursion level " + implicitClassCounter + " nestedClassName = " + nestedClassName);
-                                      }
-                                 }
-                            }
-                           else
-                            {
-                              if (verboseLevel > 2)
-                                   System.out.println("This class has been seen previously: nestedClassName = " + nestedClassName);
-                           // setOfClasses.add(typeClass);
-                            }
+                      // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
+                         System.out.println("Skipping case of array of type for now (sorry not implemented)... data field = " + fld);
                        }
-                      else
-                       {
-                      // We might actually do have to include these since they are classes in Java... 
-                      // What member functions are there on primative types?
-                         if (verboseLevel > 2)
-                              System.out.println("This class is a primitive type (sorry not implemented): type name = " + nestedClassName);
-                       }
+
+                 // Refactored this work so it could be called elsewhere.
+                    processType(typeClass);
 
                  // System.out.println("Exiting after returning from recursive call...");
                  // System.exit(1);
@@ -322,15 +360,27 @@ class JavaParserSupport
                     if (verboseLevel > 2)
                          System.out.println("Build the implicit type for the data member (field) of type = " + nestedClassName);
 
+                 // System.out.println("#############################################################################################");
+                 // System.out.println("This call to JavaParserSupport.generateType() appears to be a problem: nestedClassName = " + nestedClassName);
                     JavaParserSupport.generateType(typeClass);
+                 // System.out.println("DONE: This call to JavaParserSupport.generateType() appears to be a problem: nestedClassName = " + nestedClassName);
 
                     if (verboseLevel > 2)
                          System.out.println("Build the data member (field) for name = " + fld.getName());
+
+                 // System.out.println("Exiting after call to JavaParserSupport.generateType(typeClass) implicitClassCounter = " + implicitClassCounter);
+                 // System.exit(1);
 
                     JavaParser.cactionBuildImplicitFieldSupport(fld.getName());
 
                     if (verboseLevel > 2)
                          System.out.println("DONE: Building the data member (field) for name = " + fld.getName());
+
+                    if (implicitClassCounter > 5 && false)
+                       {
+                         System.out.println("Exiting as a test implicitClassCounter = " + implicitClassCounter);
+                         System.exit(1);
+                       }
                   }
 
             // A traversal over the constructors will have to look at all types of constructor arguments 
@@ -349,9 +399,27 @@ class JavaParserSupport
                          System.out.println("exc #" + j + " " + evec[j]);
                     System.out.println("-----");
                   */
+
+                    Class pvec[] = ct.getParameterTypes();
+
                  // Note that I am ignoring the constructor parameter types at the moment.
                     if (verboseLevel > 2)
+                       {
                          System.out.println("constructor name = " + ct.getName());
+                         for (int j = 0; j < pvec.length; j++)
+                            {
+                              System.out.println("   constructor parameter type = " + pvec[j]);
+                            }
+                       }
+
+                    System.out.println("constructor name = " + ct.getName());
+                    for (int j = 0; j < pvec.length; j++)
+                       {
+                         System.out.println("   constructor parameter type = " + pvec[j]);
+
+                      // This is a current problem in debugging the implicit class handling in the Java support in ROSE.
+                      // processType(pvec[j]);
+                       }
 
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
@@ -398,7 +466,7 @@ class JavaParserSupport
 
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
-                    int methodCounterBound = 10;
+                    int methodCounterBound = 1000;
                  // int methodCounterBound = 1000;
                     if (methodCounter < methodCounterBound)
                        {
@@ -452,10 +520,50 @@ class JavaParserSupport
        // reference put onto the astJavaTypeStack).
 
           if (verboseLevel > 0)
-               System.out.println("Inside of generateType(Class) (sorry, not implemented)");
+               System.out.println("Inside of generateType(Class) (sorry, not implemented) class = " + node);
 
-       // For now just build the type to be SgTypeInt.
-          JavaParser.cactionGenerateType("int");
+          if (node.isPrimitive() == false)
+             {
+            // Investigate any new type.
+               if (node.isArray() == true)
+                  {
+                 // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
+                    System.out.println("Skipping case of array of type for now (sorry not implemented)... ");
+
+                 // Build an integer type instead of an array of the proper type (temporary fix so that I can focus on proper class support).
+                    JavaParser.cactionGenerateType("int");
+                  }
+                 else
+                  {
+                 // Note that "toString()" inserts "class" into the generated name of the type (so use "getName()").
+                    String className = node.getName();
+
+                 // If this is a class type (e.g. in the C++ sense) then we want to build a proper SgClassType IR node.
+                 // System.out.println("Build a proper class for this type = " + node);
+                 // System.out.println("Build a proper class for this type = " + className);
+
+                 // We know that this name should be interpreted as a proper class so we need to call a specific JNI function to cause it to be generated on the C++ side.
+                 // JavaParser.cactionGenerateType(className);
+                    JavaParser.cactionGenerateClassType(className);
+
+                 // System.out.println("Exiting as a test in generateType(Class) (case of proper class)");
+                 // System.exit(1);
+                  }
+             }
+            else
+             {
+               if (verboseLevel > 0)
+                    System.out.println("Build a primative type: int ");
+
+            // For now just build the type to be SgTypeInt.
+               JavaParser.cactionGenerateType("int");
+             }
+
+          if (verboseLevel > 0)
+               System.out.println("Leaving generateType(Class) (case of proper class)");
+
+       // System.out.println("Exiting as a test at bottom of generateType(Class) (case of proper class)");
+       // System.exit(1);
         }
 
      public static void generateType(TypeBinding node)
