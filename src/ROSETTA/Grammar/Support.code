@@ -11254,6 +11254,10 @@ SgFile::compileOutput ( int fileNameIndex )
         {
           if (get_Fortran_only() == true)
              {
+            // DQ (4/2/2011): some Fortran tests pass in tests/roseTests/astInterfaceTests pass in EDG options, we
+            // might want to correct this (for now we will clean up the command line as part of command line handling).
+               stripEdgCommandLineOptions( argv );
+
                stripFortranCommandLineOptions( argv );
              }
             else
