@@ -724,6 +724,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
      SgName name = convertJavaStringToCxxString(env,java_string);
   // printf ("Java_JavaParser_cactionGenerateType(): name = %s \n",name.str());
 
+#if 0
      if (name == "int")
         {
        // Specification of integer type.
@@ -735,10 +736,53 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
        else
         {
        // buildImplicitClass(name);
-#if 1
           printf ("Error: type support not implemented for name = %s \n",name.str());
           ROSE_ASSERT(false);
+        }
 #endif
+
+     if (name == "boolean")
+        {
+          astJavaTypeStack.push_front(SgTypeInt::createType());
+        }
+       else if (name == "byte")
+        {
+          astJavaTypeStack.push_front(SgTypeUnsignedChar::createType());
+        }
+       else if (name == "char")
+        {
+          astJavaTypeStack.push_front(SgTypeChar::createType());
+        }
+       else if (name == "int")
+        {
+          astJavaTypeStack.push_front(SgTypeInt::createType());
+        }
+       else if (name == "short")
+        {
+          astJavaTypeStack.push_front(SgTypeShort::createType());
+        }
+       else if (name == "float")
+        {
+          astJavaTypeStack.push_front(SgTypeFloat::createType());
+        }
+       else if (name == "long")
+        {
+          astJavaTypeStack.push_front(SgTypeLong::createType());
+        }
+       else if (name == "double")
+        {
+          astJavaTypeStack.push_front(SgTypeDouble::createType());
+        }
+       else if (name == "null")
+        {
+       // astJavaTypeStack.push_front(SgTypeInt::createType());
+          printf ("Java type null is not supported yet in ROSE \n");
+          ROSE_ASSERT(false);
+        }
+       else
+        {
+          printf ("Error: type support not implemented for name = %s \n",name.str());
+          ROSE_ASSERT(false);
         }
 
   // printf ("Leaving Java_JavaParser_cactionGenerateType() \n");
@@ -798,6 +842,26 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStatementEnd(JNIEnv *env, jclass x
 
      ROSE_ASSERT(astJavaStatementStack.empty() == false);
      astJavaStatementStack.pop_front();
+   }
+
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateArrayType(JNIEnv *env, jclass xxx)
+   {
+     if (SgProject::get_verbose() > 2)
+          printf ("Build an array type using the base type found on the type stack \n");
+
+     outputJavaState("At TOP of cactionGenerateArrayType");
+
+     ROSE_ASSERT(astJavaTypeStack.empty() == false);
+     SgArrayType* arrayType = SageBuilder::buildArrayType(astJavaTypeStack.front(),NULL);
+
+     ROSE_ASSERT(arrayType != NULL);
+     astJavaTypeStack.pop_front();
+
+     astJavaTypeStack.push_front(arrayType);
+
+     outputJavaState("At BOTTOM of cactionGenerateArrayType");
    }
 
 
