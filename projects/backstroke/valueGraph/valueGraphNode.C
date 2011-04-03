@@ -1,6 +1,7 @@
 #include "valueGraphNode.h"
 #include <ssa/staticSingleAssignment.h>
 
+#include <boost/assign/list_inserter.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 
@@ -108,71 +109,57 @@ SgType* ValueNode::getType() const
     return NULL;
 }
 
-OperatorNode::OperatorType OperatorNode::getOperatorType(VariantT t)
+std::map<VariantT, std::string> OperatorNode::typeStringTable;
+
+void OperatorNode::buildTypeStringTable()
 {
-	switch (t)
-	{
-	case V_SgAddOp:
+    boost::assign::insert(typeStringTable)
+    (V_SgAddOp,             "+" )
+    (V_SgSubtractOp,        "-" )
+    (V_SgPlusPlusOp,        "++")
+    (V_SgMinusMinusOp,      "--")
+    (V_SgMultiplyOp,        "x" )
+    (V_SgDivideOp,          "/" )
+    (V_SgGreaterThanOp,     ">" )
+    (V_SgLessThanOp,        "<" )
+    (V_SgEqualityOp,        "==")
+    (V_SgNotEqualOp,        "!=")
+    (V_SgGreaterOrEqualOp,  ">=")
+    (V_SgLessOrEqualOp,     "<=")
+    (V_SgModOp,             "%" );
+}
+
+OperatorNode::OperatorNode(VariantT t)
+    : ValueGraphNode(), type(t)
+{
+    switch (t)
+    {
 	case V_SgPlusAssignOp:
-    case V_SgPlusPlusOp:
-		return otAdd;
+		type = V_SgAddOp;
+        break;
 
 	case V_SgSubtractOp:
 	case V_SgMinusAssignOp:
-    case V_SgMinusMinusOp:
-		return otSubtract;
+        type = V_SgSubtractOp;
+        break;
 
-	case V_SgMultiplyOp:
-		return otMultiply;
-
-	case V_SgDivideOp:
-		return otDivide;
-
-	case V_SgGreaterThanOp:
-		return otGreaterThan;
-
-	case V_SgLessThanOp:
-		return otLessThan;
-
-	default:
-		ROSE_ASSERT(false);
-	}
-
-	ROSE_ASSERT(false);
-	return otUnknown;
+    default:
+        break;
+    }
+    buildTypeStringTable();
 }
 
 string OperatorNode::toString() const
 {
-	std::string label;
-	switch (type)
-	{
-		case otAdd:
-			label = "+";
-			break;
-		case otSubtract:
-			label = "-";
-			break;
-		case otMultiply:
-			label = "x";
-			break;
-		case otGreaterThan:
-			label = ">";
-			break;
-		case otLessThan:
-			label = "<";
-			break;
-		default:
-			break;
-	}
-
-	return label;
+    if (typeStringTable.count(type) > 0)
+        return typeStringTable[type];
+    return "OP";
 }
 
 std::string ValueGraphEdge::toString() const
 {
     std::string str = "cost:" + boost::lexical_cast<std::string>(cost) + "\\n";
-    str += boost::lexical_cast<std::string>(dagIndex) + " : ";
+    str += boost::lexical_cast<std::string>(dagIndex) + ":";
     string s;
     boost::to_string(paths, s);
     str += s;

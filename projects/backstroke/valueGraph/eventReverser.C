@@ -146,16 +146,15 @@ void EventReverser::buildBasicValueGraph()
                         ROSE_ASSERT(nodeVertexMap_.count(operand) > 0);
 
                         VGVertex result = createValueNode(unaryOp);
-                        VGVertex lhsv = nodeVertexMap_[operand];
-                        VGVertex rhsv = createValueOneNode();
+                        VGVertex oprdNode = nodeVertexMap_[operand];
 
-                        createOperatorNode(t, result, lhsv, rhsv);
+                        createOperatorNode(t, result, oprdNode);
                         addVariableToNode(result, operand);
 
                         // For postfix ++ and --, we should assign the value node
                         // before modified to this expression.
                         if (unaryOp->get_mode() == SgUnaryOp::postfix)
-                            nodeVertexMap_[unaryOp] = lhsv;
+                            nodeVertexMap_[unaryOp] = oprdNode;
 
                         break;
                     }

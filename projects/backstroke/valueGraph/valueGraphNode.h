@@ -153,28 +153,15 @@ struct ValueNode : ValueGraphNode
 
 struct OperatorNode : ValueGraphNode
 {
-	enum OperatorType
-	{
-		otAdd,
-		otSubtract,
-		otMultiply,
-		otDivide,
-		otMod,
-		//otAssign,
-		otGreaterThan,
-		otLessThan,
-		otUnknown
-	};
+    static std::map<VariantT, std::string> typeStringTable;
+    static void buildTypeStringTable();
 
-	OperatorNode(OperatorType t) : ValueGraphNode(), type(t) {}
-	OperatorNode(VariantT t) : ValueGraphNode(), type(getOperatorType(t)) {}
+	//OperatorNode(OperatorType t) : ValueGraphNode(), type(t) {}
+	OperatorNode(VariantT t);
 
-	//! Given a variantT value, return a coresponding operator type.
-	static OperatorType getOperatorType(VariantT t);
-	
 	virtual std::string toString() const;
 	
-	OperatorType type;
+	VariantT type;
 };
 
 #if 0

@@ -135,13 +135,11 @@ private:
     //! a varref, or an initialized name, or a value, or an expression.
 	VGVertex createValueNode(SgNode* node);
     
-    //! Create a special value node with value 1 for ++ and -- operators.
-    VGVertex createValueOneNode();
+    //! Create an binary operation node, plus three edges.
+	VGVertex createOperatorNode(VariantT t, VGVertex result, VGVertex lhs, VGVertex rhs);
 
-    //! Create an operation node, plus three edges. The fifth parameter is given
-    //! if that edge is copied to the new created edge.
-	VGVertex createOperatorNode(VariantT t, VGVertex result, 
-        VGVertex lhs, VGVertex rhs, ValueGraphEdge* edge = NULL);
+    //! Create a unary operation node, plus two edges.
+	VGVertex createOperatorNode(VariantT t, VGVertex result, VGVertex operand);
 
 	//! Add a variable to a vertex in VG.
 	void addVariableToNode(VGVertex v, SgNode* node);
