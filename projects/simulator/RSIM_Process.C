@@ -374,8 +374,10 @@ RSIM_Process::dump_core(int signo, std::string base_name)
     if (base_name.empty())
         base_name = core_base_name;
 
+#if 0 /* DEBUGGING */
     fprintf(stderr, "memory map at time of core dump:\n");
     map->dump(stderr, "  ");
+#endif
 
 #if 0 /* FIXME: we need to make core dumping thread-aware. [RPM 2011-02-03] */
     if (core_styles & CORE_ROSE)
