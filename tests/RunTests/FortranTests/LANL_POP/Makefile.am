@@ -5,7 +5,7 @@ POP_DISTRIBUTION  =  poptest.tgz
 TEST_TRANSLATOR   =  $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
 
 check-local:
-	tar xzf $(POP_DISTRIBUTION)
+	tar xzf $(srcdir)/$(POP_DISTRIBUTION) -C $(builddir)
 	cd poptest; \
 	export TRANSLATOR=$(TEST_TRANSLATOR); \
         export HUDSON_NUM_JOBS=$${NUM_PROCESS}; \

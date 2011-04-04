@@ -8,6 +8,8 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += RunTests PerformanceTests CompilerOptionsTests translatorTests
 endif
 
+SUBDIRS = RunTests
+
 # Three phases (levels) of test programs:
 #  Phase 1) Analysis only, compiles the original code
 #  Phase 2) Analysis and code generation, compiles the original code
