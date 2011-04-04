@@ -3,11 +3,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # DQ (4/17/2010): If we are not supporting C++ then we can't run most of our tests, but if 
 # we are supporting only Fortran then we can at least run the Fortran tests (same with PHP).
 # SUBDIRS = CompileTests roseTests RunTests PerformanceTests CompilerOptionsTests translatorTests
-SUBDIRS = CompileTests roseTests
-if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-   SUBDIRS += RunTests PerformanceTests CompilerOptionsTests translatorTests
-endif
-
+#SUBDIRS = CompileTests roseTests
+#if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+#   SUBDIRS += RunTests PerformanceTests CompilerOptionsTests translatorTests
+#endif
+#
 SUBDIRS = RunTests
 
 # Three phases (levels) of test programs:
