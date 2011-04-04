@@ -724,64 +724,92 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
      SgName name = convertJavaStringToCxxString(env,java_string);
   // printf ("Java_JavaParser_cactionGenerateType(): name = %s \n",name.str());
 
-#if 0
-     if (name == "int")
-        {
-       // Specification of integer type.
-          if (SgProject::get_verbose() > 0)
-               printf ("Inside of Java_JavaParser_cactionGenerateType(): building an integer type \n");
-
-          astJavaTypeStack.push_front(SgTypeInt::createType());
-        }
-       else
-        {
-       // buildImplicitClass(name);
-          printf ("Error: type support not implemented for name = %s \n",name.str());
-          ROSE_ASSERT(false);
-        }
-#endif
+  // Type details:
+  // boolean
+  //    1-bit. May take on the values true and false only. true and false are defined constants of the language 
+  //    and are not the same as True and False, TRUE and FALSE, zero and nonzero, 1 and 0 or any other numeric 
+  //    value. Booleans may not be cast into any other type of variable nor may any other variable be cast into 
+  //    a boolean.
+  // byte
+  //    1 signed byte (two's complement). Covers values from -128 to 127.
+  // short
+  //    2 bytes, signed (two's complement), -32,768 to 32,767
+  // int
+  //    4 bytes, signed (two's complement). -2,147,483,648 to 2,147,483,647. Like all numeric types ints may be 
+  //    cast into other numeric types (byte, short, long, float, double). When lossy casts are done (e.g. int 
+  //    to byte) the conversion is done modulo the length of the smaller type.
+  // long
+  //    8 bytes signed (two's complement). Ranges from -9,223,372,036,854,775,808 to +9,223,372,036,854,775,807.
+  // float
+  //    4 bytes, IEEE 754. Covers a range from 1.40129846432481707e-45 to 3.40282346638528860e+38 (positive or negative).
+  //    Like all numeric types floats may be cast into other numeric types (byte, short, long, int, double). When 
+  //    lossy casts to integer types are done (e.g. float to short) the fractional part is truncated and the conversion is done modulo the length of the smaller type.
+  // double
+  //    8 bytes IEEE 754. Covers a range from 4.94065645841246544e-324d to 1.79769313486231570e+308d (positive or negative). 
+  // char
+  //    2 bytes, unsigned, Unicode, 0 to 65,535 Chars are not the same as bytes, ints, shorts or Strings.
 
      if (name == "boolean")
         {
+       // This is a logical true/false value (it's bit widths in implementation dependent.
           astJavaTypeStack.push_front(SgTypeInt::createType());
         }
        else if (name == "byte")
         {
-          astJavaTypeStack.push_front(SgTypeUnsignedChar::createType());
+       // DQ (4/3/2011): In Java the type "byte" is signed!
+       // Reference: http://www.javamex.com/java_equivalents/unsigned.shtml
+       // astJavaTypeStack.push_front(SgTypeUnsignedChar::createType());
+          astJavaTypeStack.push_front(SgTypeSignedChar::createType());
         }
        else if (name == "char")
         {
-          astJavaTypeStack.push_front(SgTypeChar::createType());
+       // In Java, all integers are signed, except for "char". However a "char" is 2 byte unicode so it might be better for it to be SgTypeWchar.
+       // astJavaTypeStack.push_front(SgTypeChar::createType());
+       // astJavaTypeStack.push_front(SgTypeUnsignedChar::createType());
+          astJavaTypeStack.push_front(SgTypeWchar::createType());
         }
        else if (name == "int")
         {
+       // This should be a 32-bit type, but ROSE does not specify the bit length explictly (we could us 32-bit field widths, I suppose).
           astJavaTypeStack.push_front(SgTypeInt::createType());
         }
        else if (name == "short")
         {
+       // This is a 2 byte signed type.
           astJavaTypeStack.push_front(SgTypeShort::createType());
         }
        else if (name == "float")
         {
+       // This is a 4 byte floating point type.
           astJavaTypeStack.push_front(SgTypeFloat::createType());
         }
        else if (name == "long")
         {
+       // This is a 8 byte signed type.
           astJavaTypeStack.push_front(SgTypeLong::createType());
         }
        else if (name == "double")
         {
+       // This is an 8 byte floating point type.
           astJavaTypeStack.push_front(SgTypeDouble::createType());
         }
        else if (name == "null")
         {
-       // astJavaTypeStack.push_front(SgTypeInt::createType());
-          printf ("Java type null is not supported yet in ROSE \n");
+       // There is also a special null type, the type of the expression null, which has no name. Because the null type has 
+       // no name, it is impossible to declare a variable of the null type or to cast to the null type. The null reference 
+       // is the only possible value of an expression of null type. The null reference can always be cast to any reference 
+       // type. In practice, the programmer can ignore the null type and just pretend that null is merely a special literal 
+       // that can be of any reference type.
+
+       // Within ROSE it is not yet clear if I should define a new SgType (SgTypeNull) to represent a null type.  For now it
+       // is an error to try to build such a type.
+
+          printf ("Error: SgTypeNull (Java null type) support not implemented (name = %s) \n",name.str());
           ROSE_ASSERT(false);
         }
        else
         {
-          printf ("Error: type support not implemented for name = %s \n",name.str());
+          printf ("Error: default reached in switch in Java_JavaParser_cactionGenerateType() (name = %s) \n",name.str());
           ROSE_ASSERT(false);
         }
 
