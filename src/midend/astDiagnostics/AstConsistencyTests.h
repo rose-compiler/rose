@@ -158,7 +158,7 @@ class TestAstForProperlyMangledNames : public AstSimpleProcessing
 
        // DQ (2/7/2006): This is Rich's function to simplify the testing 
        // (we make it static so that it can be easily called from elsewhere).
-          static bool isValidMangledName (std::string name);
+          static bool isValidMangledName (std::string name, bool java_lang = false);
    };
 
 class TestAstForProperlySetDefiningAndNondefiningDeclarations : public AstSimpleProcessing

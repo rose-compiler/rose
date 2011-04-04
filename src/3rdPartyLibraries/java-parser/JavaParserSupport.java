@@ -95,11 +95,15 @@ class JavaParserSupport
        // traversal all of these and recursively build all types.  This is part of what is required 
        // to support a consistant AST in ROSE.
 
+       // More inforamtion on what is in the Class (and other reflection classes) can be found at:
+       //      http://download.oracle.com/javase/6/docs/api/java/lang/Class.html
+
           String nestedClassName = typeClass.getName();
 
-          System.out.println("In processType(): type = " + typeClass);
+          if (verboseLevel > 1)
+               System.out.println("In processType(): type = " + typeClass);
 
-          if (verboseLevel > 0)
+          if (verboseLevel > 1)
              {
             // This code is part of an interogation of the data in the field and needs to be hidden yet available to support debugging.
             // ******************************************************************************
@@ -131,9 +135,15 @@ class JavaParserSupport
                  // Investigate any new type.
                     if (typeClass.isArray() == true)
                        {
-                      // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
-                      // System.out.println("Skipping case of array of type for now (sorry not implemented)... data field = " + fld);
-                         System.out.println("Skipping case of array of type for now (sorry not implemented)... data field");
+                      // DQ (4/3/2011): Added support for extracting the base type of an array and recursively processing the base type.
+
+                         if (verboseLevel > 1)
+                              System.out.println("Process the base type of the array of type ... base type = " + typeClass.getComponentType());
+
+                         processType(typeClass.getComponentType());
+
+                      // System.out.println("Exiting as a test...");
+                      // System.exit(1);
                        }
                       else
                        {
@@ -269,12 +279,19 @@ class JavaParserSupport
             // Class cls = Class.forName("java.lang."+node.receiver.toString());
 
                if (verboseLevel > -1)
-                    System.out.println("Generate the class for implicit className = " + className);
+                    System.out.println("Generate the implicit Java class for className = " + className);
 
             // Note that "java.lang" does not appear to be a class (so is that root of all implicitly included classes?).
             // Class cls = Class.forName("java.lang");
             // Class cls = Class.forName("java.io.InputStream");
                Class cls = Class.forName(className);
+
+               if (verboseLevel > 2)
+                    System.out.println("Generate the interface list for class " + className);
+
+            // Generate the list if interfaces
+            // Class interfaceList[] = cls.getGenericInterfaces();
+               Class interfaceList[] = cls.getInterfaces();
 
                if (verboseLevel > 2)
                     System.out.println("Generate the method list for class " + className);
@@ -292,6 +309,7 @@ class JavaParserSupport
                if (verboseLevel > 2)
                     System.out.println("After call to cactionBuildImplicitClassSupportStart");
 
+            // This will get all fields (including private fields), getFields() will not include private fields.
                Field fieldlist[] = cls.getDeclaredFields();
 
             // This is a way to limit the number of fields to be traversed and thus control the complexity of the implicitly defined class structure.
@@ -345,10 +363,13 @@ class JavaParserSupport
                  // More documentation at: http://download.oracle.com/javase/1.4.2/docs/api/java/lang/Class.html
 
                  // We can't output the full field in processType() if the type is an array (so this is just debug support).
-                    if (typeClass.isArray() == true)
+                    if (verboseLevel > 2)
                        {
-                      // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
-                         System.out.println("Skipping case of array of type for now (sorry not implemented)... data field = " + fld);
+                         if (typeClass.isArray() == true)
+                            {
+                           // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
+                              System.out.println("Skipping case of array of type for now (sorry not implemented)... data field = " + fld);
+                            }
                        }
 
                  // Refactored this work so it could be called elsewhere.
@@ -412,13 +433,14 @@ class JavaParserSupport
                             }
                        }
 
-                    System.out.println("constructor name = " + ct.getName());
+                 // System.out.println("constructor name = " + ct.getName());
                     for (int j = 0; j < pvec.length; j++)
                        {
-                         System.out.println("   constructor parameter type = " + pvec[j]);
+                         if (verboseLevel > 2)
+                              System.out.println("   constructor parameter type = " + pvec[j]);
 
-                      // This is a current problem in debugging the implicit class handling in the Java support in ROSE.
-                      // processType(pvec[j]);
+                      // Process the paramter type (add a class if this is not already in the ROSE AST).
+                         processType(pvec[j]);
                        }
 
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
@@ -459,14 +481,38 @@ class JavaParserSupport
                     System.out.println("-----");
                  */
 
-                 // DQ (11/1/2010): Comment out while I handle data member types...
-                 // Note that I am ignoring the function type at the moment.
+                    Class pvec[] = m.getParameterTypes();
+
+                 // Note that I am ignoring the constructor parameter types at the moment.
                     if (verboseLevel > 2)
+                       {
                          System.out.println("method name = " + m.getName());
+                         System.out.println("   method return type = " + m.getReturnType());
+                         for (int j = 0; j < pvec.length; j++)
+                            {
+                              System.out.println("   method parameter type = " + pvec[j]);
+                            }
+                       }
+
+                 // System.out.println("method name = " + m.getName());
+                    for (int j = 0; j < pvec.length; j++)
+                       {
+                         if (verboseLevel > 2)
+                              System.out.println("   method return type = " + m.getReturnType());
+
+                      // Process the return type (add a class if this is not already in the ROSE AST).
+                         processType(m.getReturnType());
+
+                         if (verboseLevel > 2)
+                              System.out.println("   method parameter type = " + pvec[j]);
+
+                      // Process the paramter type (add a class if this is not already in the ROSE AST).
+                         processType(pvec[j]);
+                       }
 
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
-                    int methodCounterBound = 1000;
+                    int methodCounterBound = 5;
                  // int methodCounterBound = 1000;
                     if (methodCounter < methodCounterBound)
                        {
@@ -480,6 +526,28 @@ class JavaParserSupport
 
                     methodCounter++;
                   }
+
+            // Process the interfaces.
+               int interfaceCounter = 0;
+               for (int i = 0; i < interfaceList.length; i++)
+                  {
+                    if (verboseLevel > 2)
+                       {
+                         System.out.println("interface name = " + interfaceList[i].getName());
+                       }
+
+                    int interfaceCounterBound = 5;
+                 // int interfaceCounterBound = 1000;
+                    if (interfaceCounter < interfaceCounterBound)
+                       {
+                      // Process the interface type (add a class if this is not already in the ROSE AST).
+                         processType(interfaceList[i]);
+                       }
+
+                    interfaceCounter++;
+                  }
+
+
 
               JavaParser.cactionBuildImplicitClassSupportEnd(className);
              }
@@ -513,6 +581,56 @@ class JavaParserSupport
 
         }
 
+/*
+     public static int typeCode(String className)
+        {
+          if (verboseLevel > -1)
+               System.out.println("Inside of typeCode(String className) className = " + className);
+
+          if (className == "boolean")
+             {
+               JavaParser.generateBooleanType();
+             }
+            else if (className == "byte")
+             {
+               JavaParser.generateByteType();
+             }
+            else if (className == "char")
+             {
+               JavaParser.generateCharType();
+             }
+            else if (className == "int")
+             {
+               JavaParser.generateIntType();
+             }
+            else if (className == "short")
+             {
+               JavaParser.generateShortType();
+             }
+            else if (className == "float")
+             {
+               JavaParser.generateFloatType();
+             }
+            else if (className == "long")
+             {
+               JavaParser.generateLongType();
+             }
+            else if (className == "double")
+             {
+               JavaParser.generateDoubleType();
+             }
+            else if (className == "null")
+             {
+               JavaParser.generateNullType();
+             }
+            else
+             {
+               System.out.println("className = " + className + "not handled...");
+               System.exit(1);
+             }
+        }
+*/
+
      public static void generateType(Class node)
         {
        // This function is used to build types that are classes (implicit classes 
@@ -528,10 +646,17 @@ class JavaParserSupport
                if (node.isArray() == true)
                   {
                  // DQ (3/21/2011): If this is an array of some type then we have to query the base type and for now I will skip this.
-                    System.out.println("Skipping case of array of type for now (sorry not implemented)... ");
+                 // System.out.println("Skipping case of array of type for now (sorry not implemented)... " + node.getComponentType());
 
                  // Build an integer type instead of an array of the proper type (temporary fix so that I can focus on proper class support).
-                    JavaParser.cactionGenerateType("int");
+                 // JavaParser.cactionGenerateType("int");
+                    generateType(node.getComponentType());
+
+                 // System.out.println("Calling JavaParser.cactionGenerateArrayType()");
+                    JavaParser.cactionGenerateArrayType();
+
+                 // System.out.println("Exiting as a test in generateType(Class) (case of array type class)");
+                 // System.exit(1);
                   }
                  else
                   {
@@ -555,8 +680,13 @@ class JavaParserSupport
                if (verboseLevel > 0)
                     System.out.println("Build a primative type: int ");
 
+               String className = node.getName();
+
             // For now just build the type to be SgTypeInt.
-               JavaParser.cactionGenerateType("int");
+            // JavaParser.cactionGenerateType("int");
+               JavaParser.cactionGenerateType(className);
+
+            // buildType(className);
              }
 
           if (verboseLevel > 0)

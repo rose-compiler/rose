@@ -87,6 +87,8 @@ testWithJavaSpecification:
 testWithoutJavaSpecification:
 	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/test2011_01.java
 
+# Build a rule to allow running all tests in parallel...
+extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option
 
 # Execute the java file using: java -Djava.library.path=. HelloWorld
 
@@ -94,10 +96,11 @@ check-local:
 	@echo "Tests for Java."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
-	@$(MAKE) $(PASSING_TEST_Objects)
-	@$(MAKE) testWithJavaSpecification
-	@$(MAKE) testWithoutJavaSpecification
-	@$(MAKE) testECJ_help_option
+	@$(MAKE) $(PASSING_TEST_Objects) extraTests
+#	@$(MAKE) testWithJavaSpecification
+#	@$(MAKE) testWithoutJavaSpecification
+#	@$(MAKE) testECJ_help_option
+#	@$(MAKE) extraTests
 	@echo "************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Java_tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************************************"
