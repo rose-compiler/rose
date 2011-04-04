@@ -23,7 +23,6 @@ check-local:
 	./test.sh; \
         rm -rf poptest
 
-# TODO: add CMakeLists.txt
 EXTRA_DIST = \
 	CMakeLists.txt \
 	$(POP_DISTRIBUTION)
