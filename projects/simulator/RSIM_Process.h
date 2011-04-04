@@ -60,6 +60,7 @@ private:
     std::string tracing_file_name;      /**< Pattern for trace file names. May include %d for thread ID. */
     FILE *tracing_file;                 /**< Stream to which debugging output is sent (or NULL to suppress it) */
     unsigned tracing_flags;             /**< Bit vector of what to trace. See TraceFlags. */
+    RSIM_Callbacks callbacks;           /**< Callbacks for a process, and to initialize callbacks of new threads. */
 
 public:
 
@@ -90,7 +91,24 @@ public:
      * bitwise OR of the facilityBitMask() for each enabled facility. */
     unsigned get_tracing_flags() const;
 
+    //@{
+    /** Obtain the set of callbacks for this object.  Many of the process callbacks are used to initialize thread callbacks
+     *  when a new thread is created.
+     *
+     *  Thread safety:  This method is thread safe.  Furthermore, most methods of the returned object are also thread safe. */
+    RSIM_Callbacks &get_callbacks() {
+        return callbacks;
+    }
+    const RSIM_Callbacks &get_callbacks() const {
+        return callbacks;
+    }
+    //@}
 
+    /** Set all callbacks for this process.  Note that callbacks can be added or removed individually by invoking methods on
+     *  the callback object return by get_callbacks().
+     *
+     *  Thread safety:  This method is thread safe. */
+    void set_callbacks(const RSIM_Callbacks &cb);
 
     /**************************************************************************************************************************
      *                                  Process memory

@@ -66,6 +66,7 @@ RSIM_Process::create_thread()
     RTS_WRITE(rwlock()) {
         ROSE_ASSERT(threads.find(tid)==threads.end());
         thread = new RSIM_Thread(this);
+        thread->set_callbacks(callbacks);
         threads.insert(std::make_pair(tid, thread));
     } RTS_WRITE_END;
     return thread;
@@ -1488,8 +1489,11 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
     if (tid<0)
         pthread_exit(NULL);
 
-    /* Allow the real thread to simulate the specimen thred. */
-    return thread->main();
+    /* Allow the real thread to simulate the specimen thread. */
+    bool cb_status = thread->get_callbacks().call_pre_thread(thread, true);
+    void *retval = thread->main();
+    thread->get_callbacks().call_post_thread(thread, cb_status);
+    return retval;
 }
 
 void
@@ -1632,6 +1636,12 @@ RSIM_Process::disassemble()
     return block;
 }
 
-    
+void
+RSIM_Process::set_callbacks(const RSIM_Callbacks &cb)
+{
+    RTS_WRITE(rwlock()) {
+        callbacks = cb; // overloaded, thread safe
+    } RTS_WRITE_END;
+}
 
 #endif /* ROSE_ENABLE_SIMULATOR */

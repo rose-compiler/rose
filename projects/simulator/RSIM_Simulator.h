@@ -7,6 +7,7 @@
 #include "threadSupport.h"
 
 #include "RSIM_Common.h"
+#include "RSIM_Callbacks.h"
 #include "RSIM_SignalHandling.h"
 #include "RSIM_Process.h"
 #include "RSIM_SemanticPolicy.h"
@@ -110,6 +111,16 @@ public:
      *  the status returned by waitpid(). */
     void terminate_self();
 
+    //@{
+    /** Obtains the callbacks object associated with the simulator. */
+    RSIM_Callbacks &get_callbacks() {
+        return callbacks;
+    }
+    const RSIM_Callbacks &get_callbacks() const {
+        return callbacks;
+    }
+    //@}
+
 private:
     /** Helper for object construction. */
     void ctor();
@@ -147,7 +158,7 @@ private:
     RSIM_Process *process;              /**< Main process. */
     rose_addr_t entry_va;               /**< Main entry address. */
     static RTS_rwlock_t class_rwlock;   /**< For methods that access class variables. */
-    
+    RSIM_Callbacks callbacks;           /**< Callbacks used to initialize the RSIM_Process callbacks. */
 };
 
 

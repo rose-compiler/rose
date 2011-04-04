@@ -139,6 +139,7 @@ private:
     RTS_Message *trace_mesg[TRACE_NFACILITIES];         /**< Array indexed by TraceFacility */
     struct timeval last_report;                         /**< Time of last progress report for TRACE_PROGRESS */
     double report_interval;                             /**< Minimum seconds between progress reports for TRACE_PROGRESS */
+    RSIM_Callbacks callbacks;                           /**< Callbacks per thread */
 
     /** Return a string identifying the thread and time called. */
     std::string id();
@@ -161,7 +162,23 @@ public:
     /** Prints information about stack frames. */
     void report_stack_frames(RTS_Message*);
 
+    //@{
+    /** Obtain the set of callbacks for this object. */
+    RSIM_Callbacks &get_callbacks() {
+        return callbacks;
+    }
+    const RSIM_Callbacks &get_callbacks() const {
+        return callbacks;
+    }
+    //@}
 
+    /** Set all callbacks for this thread.  Note that callbacks can be added or removed individually by invoking methods on the
+     *  callback object returned by get_callbacks().
+     *
+     *  Thread safety: This method is not thread safe. It should be called only internally by the simulator. */
+    void set_callbacks(const RSIM_Callbacks &cb) {
+        callbacks = cb;
+    }
 
     /**************************************************************************************************************************
      *                                  System call simulation

@@ -3696,6 +3696,34 @@ main(int argc, char *argv[], char *envp[])
 {
     RSIM_Simulator sim;
 
+#if 1 /*EXAMPLE*/
+    {
+        /* An example of a pre-instruction callback which disassembles the specimen's memory image when a thread attempts to
+         * execute at the original entry point (OEP) for the first time.  The OEP is the entry address defined in the ELF file
+         * header for the specimen's executable, which is reached after the dynamic linker is simulated and thus after all
+         * required dynamic libraries have been resolved and are in memory.  A single callback object is shared between the
+         * simulator, the process, and all threads by virtue of the clone() method being a no-op.  This callback is removed
+         * from the calling thread's list of pre-instruction callbacks the first time it's called, but it would still be
+         * invoked if any other thread reaches the EOP (this doesn't normally happen in practice).  We also remove it from the
+         * calling thread's process callbacks so that new threads will not have the per-instruction overhead (in practice,
+         * there is only one thread when the dynamic linker branches to the OEP). */
+        struct DisassembleAtOep: public RSIM_Callbacks::InsnCallback {
+            virtual DisassembleAtOep *clone() { return this; }
+            virtual bool operator()(RSIM_Thread *thread, SgAsmInstruction *insn, bool prev) {
+                if (thread->get_process()->get_ep_orig_va() == insn->get_address()) {
+                    std::cout <<"disassembling at OEP...\n";
+                    SgAsmBlock *block = thread->get_process()->disassemble();
+                    AsmUnparser().unparse(std::cout, block);
+                    thread->get_callbacks().remove_pre_insn(this);
+                    thread->get_process()->get_callbacks().remove_pre_insn(this);
+                }
+                return prev;
+            }
+        };
+        sim.get_callbacks().add_pre_insn(new DisassembleAtOep);
+    }
+#endif
+
     /* Configure the simulator by parsing command-line switches. The return value is the index of the executable name in argv. */
     int n = sim.configure(argc, argv, envp);
 
