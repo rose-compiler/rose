@@ -7,7 +7,7 @@ public class simple
         {
        // int x;
        // System.out.println("Java");
-          System.exit(1,3);
+          System.exit(1);
         }
    }
 

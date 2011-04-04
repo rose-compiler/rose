@@ -41,5 +41,6 @@ Questions aboaut ECJ:
 
 
 Work to do with Craig:
-  1) Review how java error handling is done to support both OFP (Fortran) and ECJ (Java).
+  1) Review how java error handling is done to support both OFP (Fortran) and ECJ (Java);
+     make it uniform.
 
