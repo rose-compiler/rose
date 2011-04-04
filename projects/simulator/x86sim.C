@@ -3696,7 +3696,7 @@ main(int argc, char *argv[], char *envp[])
 {
     RSIM_Simulator sim;
 
-#if 1 /*EXAMPLE*/
+#if 1 /*EXAMPLE: If you change this, then also update the example text in RSIM_Simulator.h. */
     {
         /* An example of a pre-instruction callback which disassembles the specimen's memory image when a thread attempts to
          * execute at the original entry point (OEP) for the first time.  The OEP is the entry address defined in the ELF file

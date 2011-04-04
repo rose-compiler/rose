@@ -28,7 +28,7 @@
  *  interprocess signals can only be directed to simulated processes-as-a-whole (or unsimulated threads or processes).  In
  *  practice this isn't much of a restriction since inter-process, thread-to-thread communication is non-portable.
  *
- *  @subsection Asynchronous Signal Reception
+ *  @section AsyncSigRcpt Asynchronous Signal Reception
  *
  *  Signals arriving from other processes are received via an asynchronous signal handler in RSIM. For each signal that is
  *  typically used for interprocess communication (i.e., generally not program error signals like SIGFPE, SIGILL, SIGSEGV,
@@ -37,13 +37,13 @@
  *  queue of pending signals.  Signals that arrive when the queue is full are dropped.  No attempt is made to choose a thread to
  *  handle the signal, or to decide whether the current disposition is to ignore the signal.
  *
- *  @subsection Synchronous Signal Reception
+ *  @section SyncSigRcpt Synchronous Signal Reception
  *
  *  At every iteration of the big simulation loop in RSIM_Thread::main(), every thread checks whether the process-wide queue
  *  contains signals. If so, the thread acts as if it were sending those signals to its process, removing them from the head of
  *  the queue in the order they arrived.  This operation requires a process-wide exclusive lock.
  *
- *  @subsection Signal Delivery and Return
+ *  @section SigDeliv Signal Delivery and Return
  *
  *  "Signal Delivery" is the act of causing a simulated thread to handle a signal, either by doing its default action for that
  *  signal or by executing its user-defined signal handler.  At most one signal is handled per iteration of the
@@ -61,7 +61,7 @@
  *  When a user-defined signal handler returns, it will return the the special SIGHANDLER_RETURN address. RSIM notices this
  *  address and emulates system call 119, sigreturn, restoring the old signal mask and registers and resuming execution.
  *
- *  @subsection Special Signals
+ *  @section SpecialSigs Special Signals
  *
  *  When a signal is sent by a sending thread to a (different) target thread, the target thread must be awoken from any blocked
  *  system calls it might be executing on behalf of the specimen.  RSIM accomplishes this by sending SIG_WAKEUP, defined as an

@@ -378,9 +378,9 @@ private:
 
 public:
     /** Creates a new simulated thread and corresponding real thread.  Returns the ID of the new thread, or a negative errno.
-     *  The @p parent_tid_va and @p child_tid_va are optional addresses at which to write the new thread's TID if the @flags
+     *  The @p parent_tid_va and @p child_tid_va are optional addresses at which to write the new thread's TID if the @p flags
      *  contain the CLONE_PARENT_TID and/or CLONE_CHILD_TID bits.  We gaurantee that the TID is written to both before the
-     *  simulated child starts executing.  The @child_tls_va also points to a segment descriptor if the CLONE_SETTLS bit is
+     *  simulated child starts executing.  The @p child_tls_va also points to a segment descriptor if the CLONE_SETTLS bit is
      *  set.  The @p regs are the values with which to initialize the new threads registers.
      *
      *  Thread safety: This method is thread safe; it can be invoked on a single object by multiple threads concurrently. Each

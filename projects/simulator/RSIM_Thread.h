@@ -194,7 +194,7 @@ public:
     
     /** Print the name and arguments of a system call in a manner like strace using values in registers.
      *
-     *  The @v name argument should be the name of the system call. The system call number will be automatically appended to the
+     *  The @p name argument should be the name of the system call. The system call number will be automatically appended to the
      *  name.
      *
      *  The @p fmt is a format string describing the following arguments, one character per system call argument.  The following

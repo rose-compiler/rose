@@ -15,7 +15,7 @@ TEST_TARGETS =
 #  DOCUMENTATION, CONFIGURATION, ETC
 ###############################################################################################################################
 
-EXTRA_DIST += README test_status.txt syscall_tests.conf pthread_tests.conf
+EXTRA_DIST += README test_status.txt syscall_tests.conf pthread_tests.conf RSIM.dxy
 
 ###############################################################################################################################
 #  PROGRAMS

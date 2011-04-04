@@ -16,6 +16,111 @@
 
 #include <signal.h>
 
+/** @mainpage RSIM: A ROSE x86 Simulator
+ *
+ * @section Intro Introduction
+ *
+ * RSIM is a simulator library for 32-bit, Intel x86 Linux programs and runs on 32- or 64-bit Linux.  The RSIM library is
+ * demonstrated by the "x86sim" program.
+ *
+ * @section Definitions Definitions
+ *
+ * The "specimen" is the program being executed inside the simulator.
+ *
+ * The "host OS" is the system for which ROSE was compiled and on which the simulator is running.
+ *
+ * The "guest OS" is the environment (system calls, signals, etc) provided by the simulator to the specimen.
+ *
+ * @section Usage Usage
+ * 
+ * The x86sim.C program is an example demonstrating the use of the RSIM library.  See the README in that directory for a
+ * complete description of the command-line usage and capabilities.
+ *
+ * @section Design Design
+ *
+ * RSIM uses ROSE's binary support to simulate a process. Namely,
+ *
+ * <ul>
+ *   <li>The memory address space of the specimen is represented by an instance of ROSE's MemoryMap class.  Keeping the
+ *       speciment's address space separated from the simulator's address space allows the specimen to use its entire address
+ *       space however it chooses, and it prevents the specimen from being able to access the simulator's address space.
+ *
+ *       The main drawback of this design is that every specimen memory access must go through the MemoryMap, and the simulator
+ *       must marchal data between the specimen's and the simulator's address spaces when performing a system call on behalf of
+ *       the specimen.  This has an impact on performance.</li>
+ *
+ *   <li>The specimen's instructions are simulated rather than executed directly by the CPU.  The simulation is performed by
+ *       the X86InstructionSemantics class defined in ROSE and an RSIM_SemanticPolicy class defined in the simulator.  The
+ *       X86InstructionSemantics class defines what basic operations must be performed by each instruction, while the
+ *       RSIM_SemanticPolicy class defines the operations themselves.
+ *
+ *       Simulating each instruction has a number of advantages:
+ *       <ol>
+ *         <li>The specimen can be for a different architecture (guest) than that on which the simulator is running (host).</li>
+ *         <li>The simulator can handle priviledged and normal instructions in a uniform way.</li>
+ *         <li>It is easy to modify the simulator to do something special for certain instructions.</li>
+ *         <li>It allows the simulator to keep the specimen in a separate address space that doesn't overlap with the simulator's
+ *             own address space.</li>
+ *         <li>It provides a way for ROSE developers to gain confidence that ROSE's instruction semantics are working properly.
+ *             A bug in the implementation would likely cause the specimen to fail.</li>
+ *       </ol>
+ *
+ *       The main disadvantage of simulating each instruction is that it is much slower than executing instructions directly.</li>
+ *
+ *   <li>The ROSE Disassembler is used to build an intermediate representation of each instruction before the instruction can be
+ *       simulated.  Disassembly at some level is necessary in order to simulate instructions, and the level of disassembly
+ *       that the simulator uses is the same as that which ROSE uses for all other binary analyses. Besides being necessary for
+ *       simulation, this also gives us confidence that the disassembler is functioning properly.</li>
+ *
+ *   <li>Dynamic linking in the specimen is resolved as a side effect of simulation.  The simulator loads the specimen's main
+ *       executable into an address space (MemoryMap) like the OS would do, and then begins simulation.  If the main executable
+ *       has an interpreter, then the interpreter is also loaded and simulation starts in the interpreter. In this way, the
+ *       simulator is able to simulate dynamically linked executables -- it simulates the linker itself (i.e., it simulates the
+ *       ld-linux.so interpreter).</li>
+ *
+ *   <li>Specimen system calls can be intercepted by hooking into the "INT 0x80" or "SYSENTER" intruction.  In either case, the
+ *       instruction is intercepted and the simulator processes the system call, either by invoking a real system call on the
+ *       specimen's behalf, or by adjusting the specimen's state to emulate the system call.</li>
+ * </ul>
+ *
+ * @section Example Example
+ *
+ * This example shows how to use the RSIM classes.
+ *
+ * @code
+ * RSIM_Simulator sim;
+ *
+ * // Configure the simulator from command-line switches.  The
+ * // return value is the index of the executable name in argv.
+ * int n = sim.configure(argc, argv, envp);
+ *
+ * // Create the initial process object by loading a program
+ * // and initializing the stack.  This also creates the main
+ * // thread, but does not start executing it.
+ * sim.exec(argc-n, argv+n);
+ *
+ * // Get ready to execute by making the specified simulator
+ * // active.  This sets up signal handlers, etc.
+ * sim.activate();
+ *
+ * // Allow executor threads to run and return when the
+ * // simulated process terminates.  The return value is the
+ * // termination status of the simulated program, like what
+ * // would be returned by waitpid().
+ * sim.main_loop();
+ *
+ * // Restore original signal handlers, etc.  This isn't really
+ * // necessary in this simple example since we're about to
+ * // exit anyway.
+ * sim.deactivate();
+ *
+ * // Describe the termination status on stderr and then exit
+ * // ourselves with that same status.
+ * sim.describe_termination(stderr);
+ * sim.terminate_self();
+ * @endcode
+ */
+
 /** Top level class for simulating programs.
  *
  *  An RSIM_Simulator instance represents a single process that associated with a specified executable specimen.  The specimen
@@ -59,11 +164,11 @@ public:
      *  that it may call functions registered with atexit(). */
     int configure(int argc, char **argv,  char **envp=NULL);
 
-    /** Load program and create process object.  The argument vector, @argv, should contain the name of the executable and any
-     *  arguments to pass to the executable.  The executable file is located by consulting the $PATH environment variable, and
-     *  is loaded into memory and an initial RSIM_Thread is created.  The calling thread is the executor for the RSIM_Thread.
-     *  The return value is zero for success, or a negative error number on failure. This should not be confused with the
-     *  execve system call.
+    /** Load program and create process object.  The argument vector, @p argv, should contain the name of the executable and
+     *  any arguments to pass to the executable.  The executable file is located by consulting the $PATH environment variable,
+     *  and is loaded into memory and an initial RSIM_Thread is created.  The calling thread is the executor for the
+     *  RSIM_Thread.  The return value is zero for success, or a negative error number on failure. This should not be confused
+     *  with the execve system call.
      *
      *  Thread safety: This method is thread safe provided it is not invoked on the same object concurrently. */
     int exec(int argc, char **argv);

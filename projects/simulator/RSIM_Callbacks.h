@@ -22,7 +22,7 @@
  *  should not assume that any particular mutexes or read-write locks are held when the callback is invoked.  All of the
  *  RSIM_Callbacks methods are thread safe.
  *
- *  \section Example:  Disassembling a dynamically linked binary
+ *  \section Example1 Example:  Disassembling a dynamically linked binary
  *
  *  Binary executables are often dynamically linked, wherein the main binary contains only stubs for dynamic functions and
  *  those functions' text and data are loaded into process memory and linked at run time.  Since most disassemblers don't
@@ -45,18 +45,32 @@
  *      // The actual callback
  *      virtual bool operator()(RSIM_Thread *thread, SgAsmInstruction *insn, bool prev) {
  *          if (thread->get_process()->get_ep_orig_va() == insn->get_address()) {
+ *              // This thread is at the OEP.  Call the thread-safe disassembler.
  *              SgAsmBlock *block = thread->get_process()->disassemble();
+ *              // Output disassembled instructions, functions, etc.  See disassemble.C
+ *              // in tests/roseTests/binaryTests for more sophisticated examples of
+ *              // displaying instructions and other information using AsmUnparser.
  *              AsmUnparser().unparse(std::cout, block);
+ *              // Remove this callback from this thread. Also, by removing it from the
+ *              // process we prevent subsequently created threads from incuring the
+ *              // runtime overhead of invoking this callback on every instruction.
  *              thread->get_callbacks().remove_pre_insn(this);
+ *              thread->get_process()->get_callbacks().remove_pre_insn(this);
  *          }
  *          return prev;
  *      }
  *  };
  *
- *  // Register the callback to be called before every instruction.
+ *  // Register the callback to be called before every instruction.  Registering it
+ *  // for the entire simulator will cause it to also be registered for the specimen's
+ *  // process and threads when they are created later.
  *  RSIM_Simulator simulator;
  *  simulator.get_callbacks().add_pre_insn(new DisassembleAtOep);
  *  \endcode
+ *
+ *  Continue by configuring the simulator, loading the specimen executable, activating
+ *  the simulator, running the simulator, etc.  An example is provided on the RSIM
+ *  main page (\ref index).
  */
 class RSIM_Callbacks {
     /**************************************************************************************************************************
