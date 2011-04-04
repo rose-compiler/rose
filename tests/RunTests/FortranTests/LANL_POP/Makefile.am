@@ -16,6 +16,7 @@ check-local:
 	export HUDSON_FFLAGS="-ffree-line-length-0"; \
 	export HUDSON_LD="$(GFORTRAN_PATH)"; \
 	export HUDSON_CC="$(CC)"; \
+	export HUDSON_CXX="$(CXX)"; \
 	export HUDSON_Cp="/bin/cp"; \
 	export HUDSON_Cpp="/lib/cpp -P"; \
 	export HUDSON_AWK="$(AWK)"; \
