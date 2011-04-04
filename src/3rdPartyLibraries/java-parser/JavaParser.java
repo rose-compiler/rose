@@ -196,6 +196,20 @@ class JavaParser  implements Callable<Boolean>
   // public native void cactionMethodDeclarationEnd(String methodName);
      public native void cactionMethodDeclarationEnd();
 
+  // Build an array type using the base type that will be found on the astJavaTypeStack.
+     public static native void cactionGenerateArrayType();
+
+  // Support for primative types.
+     public static native void generateBooleanType();
+     public static native void generateByteType();
+     public static native void generateCharType();
+     public static native void generateIntType();
+     public static native void generateShortType();
+     public static native void generateFloatType();
+     public static native void generateLongType();
+     public static native void generateDoubleType();
+     public static native void generateNullType();
+
   // Save the compilationResult as we process the CompilationUnitDeclaration class.
   // public CompilationResult rose_compilationResult;
 
