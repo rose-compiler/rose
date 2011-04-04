@@ -8,7 +8,7 @@ TEST_TRANSLATOR   =  $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
 # the ./test.sh script is inside the untarred poptest/ directory. Therefore,
 # the correct path to the testTranslator would be: "../$(TEST_TANSLATOR)"
 check-local:
-	tar xzf $(srcdir)/$(POP_DISTRIBUTION) -C $(builddir)
+	tar xzf $(srcdir)/$(POP_DISTRIBUTION) -C .
 	cd poptest; \
 	export TRANSLATOR=../$(TEST_TRANSLATOR); \
         export HUDSON_NUM_JOBS=$${NUM_PROCESS}; \
