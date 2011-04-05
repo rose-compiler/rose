@@ -6,7 +6,7 @@ TEST_TRANSLATOR   =  $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
 
 # TOO (4/4/2011): top_builddir is calculated relative to LANL_POP/, but
 # the ./test.sh script is inside the untarred poptest/ directory. Therefore,
-# the correct path to the testTranslator would be: "../$(TEST_TANSLATOR)"
+# the correct path to the testTranslator would be: "../$(TEST_TRANSLATOR)"
 check-local:
 	tar xzf $(srcdir)/$(POP_DISTRIBUTION) -C .
 	cd poptest; \

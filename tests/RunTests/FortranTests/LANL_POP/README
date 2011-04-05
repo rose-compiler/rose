@@ -17,7 +17,22 @@ poptest/translate-pop.sh
 
 ".DS_Store (Desktop Services Store)[1] is a hidden file created by Apple Inc.'s Mac OS X operating system to store custom attributes of a folder such as the position of icons or the choice of a background image."
 
+------------------------------------------------------------------------------------------
 
+[aclocal-1.11 not found => export autotools into $PATH]
+
+CDPATH="${ZSH_VERSION+.}:" && cd . && /bin/sh
+/export/tmp.hudson-rose/too1.workspace/ROSE/tests/RunTests/Fortran_tests/LANL_POP/poptest/netcdf-4.1.1/missing
+--run aclocal-1.11 -I m4
+/export/tmp.hudson-rose/too1.workspace/ROSE/tests/RunTests/Fortran_tests/LANL_POP/poptest/netcdf-4.1.1/missing:
+line 52: aclocal-1.11: command not found
+WARNING: `aclocal-1.11' is missing on your system.  You should only need it if
+         you modified `acinclude.m4' or `configure.ac'.  You might want
+         to install the `Automake' and `Perl' packages.  Grab them from
+         any GNU archive site.
+CDPATH="${ZSH_VERSION+.}:" && cd . && /bin/sh
+
+------------------------------------------------------------------------------------------
 
 [hudson-rose@hudson-rose-15]./test.sh 
 Directory set to run
