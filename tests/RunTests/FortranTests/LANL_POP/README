@@ -34,6 +34,16 @@ CDPATH="${ZSH_VERSION+.}:" && cd . && /bin/sh
 
 ------------------------------------------------------------------------------------------
 
+checking whether CXX is set to ''... no
+checking whether FC is set to ''... no
+checking whether F90 is set to ''... no
+
+- ./configure --prefix=$absolute_netcdf_install --disable-netcdf-4 FC=$HUDSON_FC CC=$HUDSON_CC CXX=$HUDSON_CXX
++ FC=$HUDSON_FC CC=$HUDSON_CC CXX=$HUDSON_CXX; ./configure --prefix=$absolute_netcdf_install --disable-netcdf-4
+
+
+
+
 [hudson-rose@hudson-rose-15]./test.sh 
 Directory set to run
 Model name argument defaulting to test

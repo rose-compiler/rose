@@ -11,16 +11,16 @@ check-local:
 	tar xzf $(srcdir)/$(POP_DISTRIBUTION) -C .
 	cd poptest; \
 	TRANSLATOR=../$(TEST_TRANSLATOR); \
-          HUDSON_NUM_JOBS=$${NUM_PROCESS}; \
-	  HUDSON_FC="$(GFORTRAN_PATH)"; \
-	  HUDSON_FFLAGS="-ffree-line-length-0"; \
-	  HUDSON_LD="$(GFORTRAN_PATH)"; \
-	  HUDSON_CC="$(CC)"; \
-	  HUDSON_CXX="$(CXX)"; \
-	  HUDSON_Cp="/bin/cp"; \
-	  HUDSON_Cpp="/lib/cpp -P"; \
-	  HUDSON_AWK="$(AWK)"; \
-	  HUDSON_LDLIBS="$(LIBS) -lcurl"; \
+          export HUDSON_NUM_JOBS=$${NUM_PROCESS}; \
+	  export HUDSON_FC="$(GFORTRAN_PATH)"; \
+	  export HUDSON_FFLAGS="-ffree-line-length-0"; \
+	  export HUDSON_LD="$(GFORTRAN_PATH)"; \
+	  export HUDSON_CC="$(CC)"; \
+	  export HUDSON_CXX="$(CXX)"; \
+	  export HUDSON_Cp="/bin/cp"; \
+	  export HUDSON_Cpp="/lib/cpp -P"; \
+	  export HUDSON_AWK="$(AWK)"; \
+	  export HUDSON_LDLIBS="$(LIBS) -lcurl"; \
 	./test.sh; \
 	rm -rf $(srcdir)/poptest
 	@echo '*************************************************************'
