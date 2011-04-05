@@ -22,7 +22,9 @@ check-local:
 	export HUDSON_AWK="$(AWK)"; \
 	export HUDSON_LDLIBS="$(LIBS) -lcurl"; \
 	./test.sh; \
-        rm -rf poptest
+
+clean-local:
+	rm -rf poptest
 
 EXTRA_DIST = \
 	CMakeLists.txt \
