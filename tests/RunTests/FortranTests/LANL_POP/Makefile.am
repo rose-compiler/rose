@@ -10,7 +10,7 @@ TEST_TRANSLATOR   =  $(top_builddir)/tests/testTranslator
 check-local:
 	tar xzf $(srcdir)/$(POP_DISTRIBUTION) -C .
 	cd poptest; \
-	TRANSLATOR=../$(TEST_TRANSLATOR); \
+	export TRANSLATOR=../$(TEST_TRANSLATOR); \
           export HUDSON_NUM_JOBS=$${NUM_PROCESS}; \
 	  export HUDSON_FC="$(GFORTRAN_PATH)"; \
 	  export HUDSON_FFLAGS="-ffree-line-length-0"; \
