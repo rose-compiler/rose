@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 POP_DISTRIBUTION  =  poptest.tgz
-TEST_TRANSLATOR   =  $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
+TEST_TRANSLATOR   =  $(top_builddir)/tests/testTranslator
 
 # TOO (4/4/2011): top_builddir is calculated relative to LANL_POP/, but
 # the test.sh script is inside the untarred poptest/ directory. Therefore,
