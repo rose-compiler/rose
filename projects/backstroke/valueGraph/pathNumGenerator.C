@@ -1,5 +1,6 @@
 #include "pathNumGenerator.h"
 
+#include <sageInterface.h>
 #include <boost/foreach.hpp>
 #include <boost/graph/topological_sort.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -14,43 +15,57 @@ using namespace std;
 
 
 PathNumManager::PathNumManager(const BackstrokeCFG& cfg)
+    : cfg_(cfg)
+{
+    generatePathNumbers();
+    buildNodeCFGVertexMap();
+}
+
+void PathNumManager::buildNodeCFGVertexMap()
+{
+    foreach (DAGVertex v, boost::vertices(cfg_))
+    {
+        SgNode* node = cfg_[v]->getNode();
+        nodeCFGVertexMap_[node] = v;
+    }
+}
+
+void PathNumManager::generatePathNumbers()
 {
     dags_.push_back(DAG());
     DAG& dag = dags_[0];
 
-    map<BackstrokeCFG::Vertex, DAGVertex> verticesTable;
-
-    BackstrokeCFG::VertexIter v, w;
-    for (boost::tie(v, w) = boost::vertices(cfg); v != w; ++v)
+    foreach (DAGVertex v, boost::vertices(cfg_))
     {
-        DAGVertex node = boost::add_vertex(dag);
-        dag[node] = *v;
-        verticesTable[*v] = node;
+        DAGVertex dagNode = boost::add_vertex(dag);
+        dag[dagNode] = v;
+        vertexToDagIndex_[v] = make_pair(0, dagNode);
     }
 
-    BackstrokeCFG::EdgeIter e, f;
-    for (boost::tie(e, f) = boost::edges(cfg); e != f; ++e)
+    foreach (const DAGEdge& e, boost::edges(cfg_))
     {
-        ROSE_ASSERT(verticesTable.count(boost::source(*e, cfg)) > 0);
-        ROSE_ASSERT(verticesTable.count(boost::target(*e, cfg)) > 0);
+        ROSE_ASSERT(vertexToDagIndex_.count(boost::source(e, cfg_)) > 0);
+        ROSE_ASSERT(vertexToDagIndex_.count(boost::target(e, cfg_)) > 0);
 
         DAGEdge edge = boost::add_edge(
-                verticesTable[boost::source(*e, cfg)],
-                verticesTable[boost::target(*e, cfg)], dag).first;
-        dag[edge] = *e;
+                vertexToDagIndex_[boost::source(e, cfg_)].second,
+                vertexToDagIndex_[boost::target(e, cfg_)].second, dag).first;
+        dag[edge] = e;
     }
 
-    DAGVertex entry = verticesTable[cfg.getEntry()];
-    DAGVertex exit = verticesTable[cfg.getExit()];
+    DAGVertex entry = vertexToDagIndex_[cfg_.getEntry()].second;
+    DAGVertex exit = vertexToDagIndex_[cfg_.getExit()].second;
 
+    int index = 0;
     foreach (const DAG& dag, dags_)
     {
         PathNumGenerator* pathNumGen = new PathNumGenerator(dag, entry, exit);
-        pathNumGen->getEdgeValues();
-        pathNumGen->getAllPaths();
-        pathNumGen->getAllPathNumbersForEachNode();
+        pathNumGen->generatePathNumbers();
 
         pathNumGenerators_.push_back(pathNumGen);
+
+        int parentIdx = 0;
+        pathInfo_.push_back(make_pair(parentIdx, pathNumGen->getPathNum()));
     }
 }
 
@@ -60,24 +75,26 @@ PathNumManager::~PathNumManager()
         delete gen;
 }
 
-std::pair<int, std::set<int> > PathNumManager::getPathNumbers(SgNode* node) const
+std::pair<int, PathSet> PathNumManager::getPathNumbers(SgNode* node) const
 {
-    BackstrokeCFG::VertexIter v, w;
-    for (boost::tie(v, w) = boost::vertices(cfg_); v != w; ++v)
+    // Trace this node up to find which CFG vertex it belongs to.
+    while (node)
     {
-        if (node == cfg_[*v]->getNode())
-        {
-            int idx;
-            DAGVertex node;
-            ROSE_ASSERT(vertexToDagIndex_.count(*v) > 0);
-            boost::tie(idx, node) = (vertexToDagIndex_.find(*v))->second;
-
-            return std::make_pair(idx, pathNumGenerators_[idx]->getPaths(node));
-        }
+        if (nodeCFGVertexMap_.find(node) != nodeCFGVertexMap_.end())
+            break;
+        node = node->get_parent();
     }
 
-    ROSE_ASSERT(!"Could not find the given SgNode in the CFG!");
-    return std::pair<int, std::set<int> >();
+    ROSE_ASSERT(node);
+
+    BackstrokeCFG::Vertex cfgNode = nodeCFGVertexMap_.find(node)->second;
+    ROSE_ASSERT(vertexToDagIndex_.count(cfgNode) > 0);
+
+    int idx;
+    DAGVertex dagNode;
+    boost::tie(idx, dagNode) = (vertexToDagIndex_.find(cfgNode))->second;
+
+    return std::make_pair(idx, pathNumGenerators_[idx]->getPaths(dagNode));
 }
 
 
@@ -90,22 +107,21 @@ void PathNumGenerator::getEdgeValues()
     // This algorithm is from "Ball T, Larus JR. Efficient Path Profiling."
     foreach (Vertex v, nodes)
     {
-        OutEdgeIter e, f;
-        boost::tie(e, f) = boost::out_edges(v, dag_);
-        if (e == f)
+        // If this node is a leaf.
+        if (boost::out_degree(v, dag_) == 0)
         {
             pathNumbers_[v] = 1;
             continue;
         }
 
         pathNumbers_[v] = 0;
-        for (; e != f; ++e)
+        foreach (const Edge& e, boost::out_edges(v, dag_))
         {
-            Vertex tar = boost::target(*e, dag_);
+            Vertex tar = boost::target(e, dag_);
             ROSE_ASSERT(pathNumbers_.count(tar) > 0);
             ROSE_ASSERT(pathNumbers_[tar] > 0);
             
-            edgeValues_[*e] = pathNumbers_[v];
+            edgeValues_[e] = pathNumbers_[v];
             pathNumbers_[v] += pathNumbers_[tar];
         }
     }
@@ -123,12 +139,11 @@ void PathNumGenerator::getAllPaths()
         Vertex node = nodes.top();
         nodes.pop();
 
-        OutEdgeIter e, f;
-        for (boost::tie(e, f) = boost::out_edges(node, dag_); e != f; ++e)
+        foreach (const Edge& e, boost::out_edges(node, dag_))
         {
-            Vertex tar = boost::target(*e, dag_);
+            Vertex tar = boost::target(e, dag_);
             Path path = pathsOnVertex[node];
-            path.push_back(*e);
+            path.push_back(e);
             pathsOnVertex[tar].swap(path);
             
             nodes.push(tar);
@@ -158,22 +173,24 @@ void PathNumGenerator::getAllPaths()
 
 void PathNumGenerator::getAllPathNumbersForEachNode()
 {
+    int pathNumber = pathNumbers_[entry_];
+    foreach (Vertex v, boost::vertices(dag_))
+        pathsForNode_[v].resize(pathNumber);
+
     int i = 0;
     foreach (const Path& path, paths_)
     {
         foreach (const Edge& edge, path)
-            pathsForNode_[boost::target(edge, dag_)].insert(i);
+            pathsForNode_[boost::target(edge, dag_)][i] = 1;
         ++i;
     }
 
     // For each node, sort the paths it has.
-    typedef map<Vertex, set<int> >::value_type VV;
+    typedef map<Vertex, PathSet>::value_type VV;
     foreach (VV& vv, pathsForNode_)
     {
 #if 1
-        cout << vv.first << " : ";
-        copy(vv.second.begin(), vv.second.end(), ostream_iterator<int>(cout, " "));
-        cout << "\n";
+        cout << vv.first << " : " << vv.second << "\n";
 #endif
     }
 }

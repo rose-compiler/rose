@@ -68,6 +68,11 @@ bool BackstrokeCFGNodeFilter::filterExpression(SgExpression* expr) const
             isSgNotEqualOp(expr))
 		return true;
 
+//    if (isSgUnaryOp(expr) ||
+//            isSgBinaryOp(expr) ||
+//            isSgValueExp(expr))
+//        return true;
+    
 	return false;
 }
 
@@ -88,7 +93,7 @@ bool BackstrokeCFGNodeFilter::operator()(const VirtualCFG::CFGNode& cfgNode) con
 
 	switch (node->variantT())
 	{
-		case V_SgInitializedName:
+		//case V_SgInitializedName:
 		case V_SgFunctionParameterList:
 		case V_SgAssignInitializer:
 		case V_SgCaseOptionStmt:

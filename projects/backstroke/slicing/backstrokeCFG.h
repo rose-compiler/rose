@@ -113,20 +113,17 @@ class CFG : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidire
 		boost::shared_ptr<VirtualCFG::FilteredCFGNode<CFGNodeFilter> >,
 		boost::shared_ptr<VirtualCFG::FilteredCFGEdge<CFGNodeFilter> > >
 {
+	typedef typename boost::graph_traits<CFG<CFGNodeFilter> > GraphTraits;
+
 public:
-	typedef VirtualCFG::FilteredCFGNode<CFGNodeFilter> CFGNodeType;
+    typedef VirtualCFG::FilteredCFGNode<CFGNodeFilter> CFGNodeType;
 	typedef VirtualCFG::FilteredCFGEdge<CFGNodeFilter> CFGEdgeType;
 
 	typedef boost::shared_ptr<CFGNodeType> CFGNodePtr;
 	typedef boost::shared_ptr<CFGEdgeType> CFGEdgePtr;
 
-	typedef typename boost::graph_traits<CFG<CFGNodeFilter> > GraphTraits;
-	
-	typedef typename GraphTraits::vertex_descriptor Vertex;
+    typedef typename GraphTraits::vertex_descriptor Vertex;
 	typedef typename GraphTraits::edge_descriptor Edge;
-
-    typedef typename GraphTraits::vertex_iterator VertexIter;
-    typedef typename GraphTraits::edge_iterator EdgeIter;
 
 	typedef std::map<Vertex, Vertex> VertexVertexMap;
 
@@ -306,16 +303,15 @@ void CFG<CFGNodeFilter>::build(SgFunctionDefinition* funcDef)
 template <class CFGNodeFilter>
 void CFG<CFGNodeFilter>::setEntryAndExit()
 {
-	VertexIter i, j;
-	for (tie(i, j) = boost::vertices(*this); i != j; ++i)
+    foreach (Vertex v, boost::vertices(*this))
 	{
-		CFGNodePtr node = (*this)[*i];
+		CFGNodePtr node = (*this)[v];
 		if (isSgFunctionDefinition(node->getNode()))
 		{
 			if (node->getIndex() == 0)
-				entry_ = *i;
+				entry_ = v;
 			else if (node->getIndex() == 3)
-				exit_ = *i;
+				exit_ = v;
 		}
 	}
 
@@ -442,9 +438,8 @@ std::vector<typename CFG<CFGNodeFilter>::CFGNodePtr>
 CFG<CFGNodeFilter>::getAllNodes() const
 {
 	std::vector<CFGNodePtr> allNodes;
-	VertexIter i, j;
-	for (boost::tie(i, j) = boost::vertices(*this); i != j; ++i)
-		allNodes.push_back((*this)[*i]);
+    foreach (Vertex v, boost::vertices(*this))
+		allNodes.push_back((*this)[v]);
 	return allNodes;
 }
 
@@ -453,9 +448,8 @@ std::vector<typename CFG<CFGNodeFilter>::CFGEdgePtr>
 CFG<CFGNodeFilter>::getAllEdges() const
 {
 	std::vector<CFGEdgePtr> allEdges;
-	EdgeIter i, j;
-	for (boost::tie(i, j) = boost::edges(*this); i != j; ++i)
-		allEdges.push_back((*this)[*i]);
+    foreach (const Edge& e, boost::edges(*this))
+		allEdges.push_back((*this)[e]);
 	return allEdges;
 }
 
@@ -480,11 +474,10 @@ std::vector<typename CFG<CFGNodeFilter>::Edge> CFG<CFGNodeFilter>::getAllBackEdg
     // If the dominator tree is not built yet, build it now.
     getDominatorTree();
 
-    EdgeIter e, f;
-    for (tie(e, f) = boost::edges(*this); e != f; ++e)
+    foreach (const Edge& e, boost::edges(*this))
     {
-        Vertex src = boost::source(*e, *this);
-        Vertex tar = boost::target(*e, *this);
+        Vertex src = boost::source(e, *this);
+        Vertex tar = boost::target(e, *this);
 
         //Vertex v = *(dominatorTree.find(src));
         typename VertexVertexMap::const_iterator iter = dominatorTree_.find(src);
@@ -492,7 +485,7 @@ std::vector<typename CFG<CFGNodeFilter>::Edge> CFG<CFGNodeFilter>::getAllBackEdg
         {
             if (iter->second == tar)
             {
-                backEdges.push_back(*e);
+                backEdges.push_back(e);
                 break; // break the while loop
             }
             iter = dominatorTree_.find(iter->second);
