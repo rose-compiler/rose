@@ -334,14 +334,14 @@ void SteinerTreeBuilder::getPartitions(
 	D_Es.resize(size);
 	int x = 0;
 
-	for (size_t i = 0; i < m - 1; ++i)
+	for (int i = 0; i < m - 1; ++i)
 	{
 		vector<vector<int> > indices = generateCombination(m - 1, i);
 		foreach (const vector<int>& idx, indices)
 		{
 			vector<Vertex> E(idx.size() + 1);
 			E[0] = vertices[0];
-			for (int j = 0; j < idx.size(); ++j)
+			for (size_t j = 0; j < idx.size(); ++j)
 				E[j+1] = vertices[idx[j]+1];
 
 			vector<Vertex> D_E(vertices.size() - E.size());

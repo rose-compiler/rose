@@ -1,0 +1,7 @@
+#ifndef BACKSTROKE_VG_EVENTREVERSER_H
+#define	BACKSTROKE_VG_EVENTREVERSER_H
+
+#include "valueGraphNode2.h"
+
+#endif	/* BACKSTROKE_VG_EVENTREVERSER_H */
+

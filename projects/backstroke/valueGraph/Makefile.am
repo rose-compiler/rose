@@ -9,11 +9,12 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #noinst_LIBRARIES =  libBackstrokeValueGraph.a
 noinst_PROGRAMS = valueGraph
 
-valueGraph_SOURCES = valueGraphNode.C valueGraph.C steinerTree.C test.C
+valueGraph_SOURCES = valueGraphNode.C valueGraph.C eventReverser.C pathNumGenerator.C \
+		CFGFilter.C test.C
 valueGraph_LDADD = $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
 		$(top_builddir)/projects/backstroke/ssa/libSSA.a \
 		$(LIBS_WITH_RPATH) $(ROSE_LIBS)
-valueGraph_include_HEADERS = valueGraph.h valueGraphNode.h steinerTree.h
+valueGraph_include_HEADERS = valueGraph.h valueGraphNode.h pathNumGenerator.h CFGFilter.h
 valueGraph_includedir = $(includedir)/backstroke
 
 
