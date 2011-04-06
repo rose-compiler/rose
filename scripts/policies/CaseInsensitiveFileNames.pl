@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# DO NOT DISABLE without first checking with a ROSE core developer
 my $desc = <<EOF;
 Some file systems do not distinguish between upper and lower case characters in
 a file or directory name.  The following directories have files whose names

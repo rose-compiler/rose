@@ -81,11 +81,11 @@ void XOMP_init (int argc, char ** argv)
 #endif    
 }
 
-void xomp_terminate (int exitcode);
+void xomp_terminate (int* exitcode);
 #pragma weak xomp_terminate_=xomp_terminate
-void xomp_terminate (int exitcode)
+void xomp_terminate (int* exitcode)
 {
-  XOMP_terminate (exitcode);
+  XOMP_terminate (*exitcode);
 }
 // Runtime library termination routine
 void XOMP_terminate (int exitcode)
@@ -121,7 +121,7 @@ void run_me(void* data)
 #endif
 #include "run_me_defs.inc"
 
-void xomp_parallel_start (void (*func) (void *), unsigned* numThread, int * argcount, ...);
+void xomp_parallel_start (void (*func) (void *), unsigned* ifClauseValue, unsigned* numThread, int * argcount, ...);
 //Wrapper functions to support linking with Fortran programs
 //
 // OFP does not support extensions like %VAL, so we use XOMP to compensate the difference
@@ -133,7 +133,7 @@ void xomp_parallel_start (void (*func) (void *), unsigned* numThread, int * argc
 // We expect the outlined function from a Fortran task will have multiple parameters passed by references
 // This wrapper function will pack those parameters into a single one to be compatible with gomp's parallel_start function
 // A glue part from Fortran's multiple parameters --> XOMP's single parameter
-void xomp_parallel_start (void (*func) (void *), unsigned* numThread, int * argcount, ...)
+void xomp_parallel_start (void (*func) (void *), unsigned* ifClauseValue, unsigned* numThread, int * argcount, ...)
 {
   int x;
   va_list v1;
@@ -143,7 +143,7 @@ void xomp_parallel_start (void (*func) (void *), unsigned* numThread, int * argc
   if (*argcount == 0)
   {
 
-    XOMP_parallel_start (func, 0, *numThread);
+    XOMP_parallel_start (func, 0, *ifClauseValue, *numThread);
     return;
   }
   
@@ -178,10 +178,20 @@ void xomp_parallel_start (void (*func) (void *), unsigned* numThread, int * argc
   }
 }
 
-void XOMP_parallel_start (void (*func) (void *), void *data, unsigned numThread)
+void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseValue, unsigned numThreadsSpecified)
 {
 
-#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY 
+  // XOMP  to GOMP
+  unsigned numThread = 0;
+  //numThread is 1 if an IF clause is present and false, 
+  //          or the value of the NUM_THREADS clause, if present, or 0. 
+  // It is only used to indicate a combination of the NUM_THREADS clause and the IF clause. 
+  // GOMP has an internal function (gomp_resolve_num_threads()) to determine the actual number of threads to be used later on. 
+  if (!ifClauseValue)
+    numThread = 1;
+  else
+    numThread = numThreadsSpecified;
   GOMP_parallel_start (func, data, numThread);
   func(data);
 #else   
@@ -205,7 +215,81 @@ void XOMP_parallel_end (void)
 #endif    
 }
 
-//----------------
+
+//---------------------------------------------
+//Glue from Fortran to XOMP
+int xomp_sections_init_next(int * section_count);
+#pragma weak xomp_sections_init_next_=xomp_sections_init_next
+int xomp_sections_init_next(int * section_count)
+{
+  return XOMP_sections_init_next (*section_count);
+}
+// C/C++ support
+/* Initialize sections and return the next section id (starting from 0) to be executed by the current thread */
+int XOMP_sections_init_next(int section_count) 
+{
+  int result = -1;
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  result = GOMP_sections_start (section_count);
+  result --; /*GOMP sections start with 1*/
+#else
+  _ompc_section_init (section_count);
+  result = _ompc_section_id();
+  /* Omni expects sections to start with 0*/
+#endif
+  return result;
+}
+
+/* Return the next section id (starting from 1) to be executed by the current thread, value 0 means no sections left */
+int xomp_sections_next(void);
+#pragma weak xomp_sections_next_=xomp_sections_next
+int xomp_sections_next(void)
+{
+  return XOMP_sections_next();
+}
+int XOMP_sections_next(void)
+{
+  int result = -1;
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+ result = GOMP_sections_next();
+ result --;  /*GOMP sections start with 1*/
+#else
+  result = _ompc_section_id();
+#endif
+  return result;
+}
+
+void xomp_sections_end(void);
+#pragma weak xomp_sections_end_=xomp_sections_end
+void xomp_sections_end(void)
+{
+  XOMP_sections_end();
+}
+/* Called after the current thread is told that all sections are executed. It synchronizes all threads also. */
+void XOMP_sections_end(void)
+{
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  GOMP_sections_end();
+#else
+#endif
+}
+
+void xomp_sections_end_nowait(void);
+#pragma weak xomp_sections_end_nowait_=xomp_sections_end_nowait
+void xomp_sections_end_nowait(void)
+{
+  XOMP_sections_end_nowait();
+}
+/* Called after the current thread is told that all sections are executed. It does not synchronizes all threads. */
+void XOMP_sections_end_nowait(void)
+{
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY  
+  GOMP_sections_end_nowait();
+#else
+#endif
+}
+
+//---------------------------------------------
 #include "run_me_task_defs.inc"
 // statically allocated pg_parameter
 #define MAX_XOMP_TASK_NUMBER 99999 // cannot be too large, otherwise exceed static allocation limit

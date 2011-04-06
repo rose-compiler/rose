@@ -108,8 +108,9 @@ upload_edg_binary:
 	   cp $(BINARY_EDG_DIRNAME).tar.gz $(BINARY_EDG_TARBALL_DISTRIBUTION_PATH) ;\
 	fi
 
-clean-local:
-	rm -rf roseBinaryEDG-3-3-*.tar.gz
+# TOO (2/24/2011): There are two clean-local rules...moved to one at the bottom
+#clean-local:
+#	rm -rf roseBinaryEDG-3-3-*.tar.gz
 
 else 
 #------------------- no EDG sources
@@ -140,4 +141,5 @@ EDG/libroseEDG.la: $(BINARY_EDG_DIRNAME).tar.gz
 CLEANFILES = EDG/libroseEDG.la
 clean-local:
 	-rm -rf EDG/.libs/
+	-rm -rf roseBinaryEDG-3-3-*.tar.gz
 endif

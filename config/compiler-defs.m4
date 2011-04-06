@@ -25,10 +25,18 @@ dnl predefined by a specific compiler
 
   # Support for GNU gcc or g++ as a backend for compiling ROSE generated code
   # JJW 7/25/2008: Added mpi* in here, assuming they are like gcc
-    g++|gcc|mpicc|mpic++|mpicxx|mpiCC)
+  # g++|gcc|mpicc|mpic++|mpicxx|mpiCC)
+  # TOO (2/16/2011): added support for tensilica compilers, assuming they are
+  # like GCC (they use a GCC front-end)
+    g++|gcc|mpicc|mpic++|mpicxx|mpiCC|xt-xc++|xt-xcc)
              BACKEND_GCC_MAJOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
              BACKEND_GCC_MINOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
              BACKEND_GCC_PATCHLEVEL=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f3`
+             if test x$BACKEND_GCC_PATCHLEVEL = x ; then
+               echo "Warning: cannot extract the patch level from $BACKEND_CXX_COMPILER -dumpversion" 
+               echo "patchlevel is assumed to be 0"
+               BACKEND_GCC_PATCHLEVEL="0"
+             fi 
              macroString="{\"-D__GNUG__=$BACKEND_GCC_MAJOR\", \"-D__GNUC__=$BACKEND_GCC_MAJOR\", \"-D__GNUC_MINOR__=$BACKEND_GCC_MINOR\", \"-D__GNUC_PATCHLEVEL__=$BACKEND_GCC_PATCHLEVEL\""
              if test x$enable_new_edg_interface = xyes; then
                :
@@ -102,6 +110,13 @@ dnl predefined by a specific compiler
              BACKEND_GCC_MAJOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
              BACKEND_GCC_MINOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
              BACKEND_GCC_PATCHLEVEL=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f3`
+               
+             if test x$BACKEND_GCC_PATCHLEVEL = x ; then
+               echo "Warning: cannot extract the patch level from $BACKEND_CXX_COMPILER -dumpversion" 
+               echo "patchlevel is assumed to be 0"
+               BACKEND_GCC_PATCHLEVEL="0"
+             fi 
+
              macroString="{\"-D__GNUG__=$BACKEND_GCC_MAJOR\", \"-D__GNUC__=$BACKEND_GCC_MAJOR\", \"-D__GNUC_MINOR__=$BACKEND_GCC_MINOR\", \"-D__GNUC_PATCHLEVEL__=$BACKEND_GCC_PATCHLEVEL\""
              if test x$enable_new_edg_interface = xyes; then
                :
