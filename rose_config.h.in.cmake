@@ -266,6 +266,8 @@
 /* Minor version number of backend Fortran compiler. */
 #define BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER ${BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER}
 
+/* Name of backend Java compiler including path */
+#define BACKEND_JAVA_COMPILER_NAME_WITH_PATH "${BACKEND_JAVA_COMPILER}"
 
 
 /* Internal EDG specific consistency tests. */

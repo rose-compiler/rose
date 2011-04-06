@@ -300,7 +300,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
         }
        else
         {
-          if ( ( ( (file->get_C_only() == true) || (file->get_Cxx_only() == true) ) && (file->get_outputLanguage() == SgFile::e_default_output_language) ) || 
+          if ( ( ( (file->get_C_only() == true) || (file->get_Cxx_only() == true) || (file->get_Cuda_only() == true) ) && (file->get_outputLanguage() == SgFile::e_default_output_language) ) || 
                ( (file->get_outputLanguage() == SgFile::e_C_output_language) || (file->get_outputLanguage() == SgFile::e_Cxx_output_language) ) )
              {
             // Unparse using C/C++ unparser by default
@@ -806,6 +806,16 @@ resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp
              {
                outputFilename += ".s";
              }
+
+       // DQ (4/2/2011): Java output files must have the same name as the class and so all we can do is use the same name but put the generated file into the compile tree.
+       // Note that if the generated file is put into the source tree it will overwite the original source file.
+          if (file->get_Java_only() == true)
+             {
+               outputFilename = file->get_sourceFileNameWithoutPath();
+
+               printf ("Warning, output file name of generated Java code is same as input file name but must be but into a separate directory. \n");
+               ROSE_ASSERT(false);
+             }
         }
        else
         {
@@ -815,6 +825,9 @@ resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp
   // Set the output file name, since this may be called before unparse().
      file->set_unparse_output_filename(outputFilename);
      ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
+
+     printf ("Exiting output file name of generated Java code is same as input file name but must be but into a separate directory. \n");
+     ROSE_ASSERT(false);
 
   // Name the file with a separate extension.
      outputFilename += ".resetSourcePosition";
@@ -1474,7 +1487,6 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
   // file instead of the original source file.
      if (file->get_unparse_output_filename().empty() == true)
         {
-
           string outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
 
           if (file->get_binary_only() == true)
@@ -1482,10 +1494,21 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
             // outputFilename = file->get_sourceFileNameWithoutPath();
                outputFilename += ".s";
              }
-          else if (file->get_Cuda_only() == true) // Liao 12/29/2010, generate cuda source files
+            else 
              {
-               outputFilename = StringUtility::stripFileSuffixFromFileName (outputFilename);
-               outputFilename += ".cu";
+            // DQ (4/2/2011): Added Java support which requires that the filename for Java match the input file.
+               if (file->get_Java_only() == true)
+                  {
+                    outputFilename = file->get_sourceFileNameWithoutPath();
+                  }
+                 else
+                  {
+                    if (file->get_Cuda_only() == true) // Liao 12/29/2010, generate cuda source files
+                       {
+                         outputFilename = StringUtility::stripFileSuffixFromFileName (outputFilename);
+                         outputFilename += ".cu";
+                       }
+                  }
              }
 
 
