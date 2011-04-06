@@ -1,7 +1,7 @@
 #include "valueGraph.h"
+#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/graph/graphviz.hpp>
-#include <boost/timer.hpp>
 
 namespace Backstroke
 {
@@ -10,6 +10,21 @@ using namespace std;
 
 #define foreach BOOST_FOREACH
 
+
+bool EventReverser::PathEdgeSelector::operator()(const VGEdge& e) const
+{
+    ValueGraphEdge* edge = (*valueGraph)[e];
+
+    // The ordered edge does not have path information, so trace its 
+    // corresponding normal edge.
+    if (isOrderedEdge(edge))
+    {
+        VGEdge realEdge = *(boost::in_edges(
+                boost::source(e, *valueGraph), *valueGraph).first);
+        edge = (*valueGraph)[realEdge];
+    }
+    return edge->dagIndex == dagIndex && edge->paths[pathIndex];
+}
 
 void EventReverser::buildValueGraph()
 {
@@ -29,8 +44,9 @@ void EventReverser::buildValueGraph()
     addExtraNodesAndEdges();
 
     // Remove useless nodes.
-    //removeUselessNodes();
+    removeUselessNodes();
 
+    getSubGraph(0, 0);
 
     cout << "Number of nodes: " << boost::num_vertices(valueGraph_) << endl;
 }
@@ -60,7 +76,6 @@ void EventReverser::addPathsToEdges()
 
         if (ValueNode* valNode = isValueNode(valueGraph_[src]))
         {
-            cout << valNode->toString() << endl;
             boost::tie(edge->dagIndex, edge->paths) =
                     pathNumManager_.getPathNumbers(valNode->astNode);
         }
@@ -188,13 +203,13 @@ void EventReverser::addExtraNodesAndEdges()
     foreach (VGVertex v, boost::vertices(valueGraph_))
         vertices.push_back(v);
 
-    foreach (VGVertex v, vertices)
+    foreach (VGVertex node, vertices)
     {
-        OperatorNode* opNode = isOperatorNode(valueGraph_[v]);
+        OperatorNode* opNode = isOperatorNode(valueGraph_[node]);
         if (opNode == NULL)
             continue;
 
-        if (boost::in_degree(v, valueGraph_) == 0)
+        if (boost::in_degree(node, valueGraph_) == 0)
             continue;
         
         // For + and - operations.
@@ -202,9 +217,9 @@ void EventReverser::addExtraNodesAndEdges()
         {
             // Get all 3 operands first.
             VGVertex result, lhs, rhs;
-            result = *(boost::inv_adjacent_vertices(v, valueGraph_).first);
+            result = *(boost::inv_adjacent_vertices(node, valueGraph_).first);
 
-            foreach (const VGEdge& e, boost::out_edges(v, valueGraph_))
+            foreach (const VGEdge& e, boost::out_edges(node, valueGraph_))
             {
                 if (isOrderedEdge(valueGraph_[e])->index == 0)
                     lhs = boost::target(e, valueGraph_);
@@ -219,9 +234,6 @@ void EventReverser::addExtraNodesAndEdges()
             ValueGraphNode* lhsNode = valueGraph_[lhs];
             ValueGraphNode* rhsNode = valueGraph_[rhs];
 
-            VGEdge e = *(boost::in_edges(v, valueGraph_).first);
-            ValueGraphEdge* edgeToCopy = valueGraph_[e];
-
             ValueNode* lhsValNode = isValueNode(lhsNode);
             ValueNode* rhsValNode = isValueNode(rhsNode);
 
@@ -232,14 +244,16 @@ void EventReverser::addExtraNodesAndEdges()
                 VGVertex newNode = createOperatorNode(tRev, lhs, result, rhs);
 
                 VGEdge newEdge = boost::edge(lhs, newNode, valueGraph_).first;
-                *valueGraph_[newEdge] = *edgeToCopy;
+                VGEdge e = *(boost::in_edges(node, valueGraph_).first);
+                *valueGraph_[newEdge] = *valueGraph_[e];
             }
             if (!(rhsValNode && rhsValNode->isAvailable()))
             {
                 VGVertex newNode = createOperatorNode(V_SgSubtractOp, rhs, result, lhs);
 
-                VGEdge newEdge = boost::edge(lhs, newNode, valueGraph_).first;
-                *valueGraph_[newEdge] = *edgeToCopy;
+                VGEdge newEdge = boost::edge(rhs, newNode, valueGraph_).first;
+                VGEdge e = *(boost::in_edges(node, valueGraph_).first);
+                *valueGraph_[newEdge] = *valueGraph_[e];
             }
         }
         // For ++ and -- operations.
@@ -247,15 +261,15 @@ void EventReverser::addExtraNodesAndEdges()
         {
             // Get both 2 operands first.
             VGVertex result, operand;
-            result = *(boost::inv_adjacent_vertices(v, valueGraph_).first);
-            operand = *(boost::adjacent_vertices(v, valueGraph_).first);
+            result = *(boost::inv_adjacent_vertices(node, valueGraph_).first);
+            operand = *(boost::adjacent_vertices(node, valueGraph_).first);
 
             VariantT tRev = (opNode->type == V_SgPlusPlusOp) ?
                 V_SgMinusMinusOp : V_SgPlusPlusOp;
             VGVertex newNode = createOperatorNode(tRev, operand, result);
 
             VGEdge newEdge = boost::edge(operand, newNode, valueGraph_).first;
-            VGEdge e = *(boost::in_edges(v, valueGraph_).first);
+            VGEdge e = *(boost::in_edges(node, valueGraph_).first);
             *valueGraph_[newEdge] = *valueGraph_[e];
         }
     }
@@ -562,8 +576,34 @@ VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
     return VersionedVariable(varName, version);
 }
 
+void EventReverser::removeUselessEdges()
+{
+    vector<VGEdge> edgesToRemove;
+    foreach (const VGEdge& e, boost::edges(valueGraph_))
+    {
+        // We do an optimization here by removing all out edges except state
+        // saving one from an available node.
+        VGVertex src = boost::source(e, valueGraph_);
+        if (availableValues_.count(src) > 0)
+        {
+            VGVertex tar = boost::target(e, valueGraph_);
+            if (tar != root_)
+                edgesToRemove.push_back(e);
+        }
+    }
+
+    foreach (const VGEdge& edge, edgesToRemove)
+    {
+        delete valueGraph_[edge];
+        boost::remove_edge(edge, valueGraph_);
+    }
+}
+
 void EventReverser::removeUselessNodes()
 {
+    // Remove redundant edges first, then more nodes can be removed.
+    removeUselessEdges();
+    
     set<VGVertex> usableNodes;
 
     stack<VGVertex> nodes;
@@ -594,7 +634,10 @@ void EventReverser::removeUselessNodes()
     foreach (const VGEdge& e, boost::edges(valueGraph_))
     {
         if (usableNodes.count(boost::source(e, valueGraph_)) == 0)
+        {
             edgesToRemove.push_back(e);
+            continue;
+        }
     }
 
     foreach (const VGEdge& edge, edgesToRemove)
@@ -650,280 +693,5 @@ void EventReverser::valueGraphToDot(const std::string& filename) const
             boost::default_writer(), vertexIDMap);
 }
 
-
-
-#if 0
-
-
-struct VertexInfo
-{
-    VertexInfo(EventReverser::VGVertex ver = 0)
-        : v(ver), dist(INT_MAX / 2), visited(false), joinNode(false)
-    {
-        predDist[0] = predDist[1] = INT_MAX / 2;
-    }
-
-    //	bool operator < (const VertexInfo& info) const
-    //	{ return dist > info.dist; }
-
-    EventReverser::VGVertex v;
-    int dist;
-    //vector<EventReverser::VGVertex> predecessors;
-    vector<EventReverser::VGEdge> edges;
-    bool visited;
-
-    bool joinNode;
-    int predDist[2];
-};
-
-void EventReverser::shortestPath()
-{
-    VGVertexIter v, w;
-    vector<VertexInfo> verticesInfos(boost::num_vertices(valueGraph_));
-    //priority_queue<VertexInfo> workList;
-    typedef pair<int, VGVertex> DistVertexPair;
-    priority_queue<DistVertexPair, vector<DistVertexPair>, greater<DistVertexPair> > workList;
-
-    for (boost::tie(v, w) = vertices(valueGraph_); v != w; ++v)
-    {
-        VertexInfo info(*v);
-        if (*v == root_)
-            info.dist = 0;
-        if (isOperatorNode(valueGraph_[*v]))
-            info.joinNode = true;
-
-        verticesInfos[info.v] = info;
-    }
-    workList.push(make_pair(0, root_));
-
-    while (!workList.empty())
-    {
-        VGVertex r = workList.top().second;
-        workList.pop();
-
-        if (verticesInfos[r].visited)
-            continue;
-
-        VGOutEdgeIter e, f;
-        for (boost::tie(e, f) = boost::out_edges(r, valueGraph_); e != f; ++e)
-        {
-            VGVertex v = boost::target(*e, valueGraph_);
-            VertexInfo& info = verticesInfos[v];
-            if (info.visited)
-                continue;
-
-            int newDist = verticesInfos[r].dist + valueGraph_[*e]->cost;
-            if (!info.joinNode)
-            {
-                if (info.dist > newDist)
-                {
-                    info.dist = newDist;
-                    info.edges = verticesInfos[r].edges;
-                    info.edges.push_back(*e);
-                    //					info.predecessors = verticesInfos[r].predecessors;
-                    //					info.predecessors.push_back(r);
-                }
-            }
-            else
-            {
-                ROSE_ASSERT(isOrderedEdge(valueGraph_[*e]));
-                int idx = isOrderedEdge(valueGraph_[*e])->index;
-                ROSE_ASSERT(idx >= 0 && idx <= 1);
-
-                info.predDist[idx] = newDist;
-                info.dist = info.predDist[0] + info.predDist[1];
-
-                ROSE_ASSERT(!verticesInfos[r].edges.empty());
-
-                info.edges.insert(info.edges.end(),
-                        verticesInfos[r].edges.begin(), verticesInfos[r].edges.end());
-                info.edges.push_back(*e);
-            }
-
-            workList.push(make_pair(info.dist, v));
-        }
-        verticesInfos[r].visited = true;
-    }
-
-    //	foreach (VertexInfo& info, verticesInfos)
-    //	{
-    //		cout << valueGraph_[info.v]->toString() << endl << info.v << ':' << info.dist << endl;
-    //	}
-
-    foreach (VGVertex v, valuesToRestore_)
-        dagEdges_.insert(dagEdges_.end(),
-                verticesInfos[v].edges.begin(), verticesInfos[v].edges.end());
-
-    foreach (VGEdge e, dagEdges_)
-        cout << e << endl;
-}
-
-namespace // anonymous namespace
-{
-
-// A local structure to help find all paths.
-struct PathInfo
-{
-    set<EventReverser::VGVertex> nodes;
-    set<OperatorNode*> operations;
-    int cost;
-    set<EventReverser::VGVertex> nodesRestored;
-};
-
-bool increaseIndex(vector<int>& indices, const vector<int>& maxIndices)
-{
-    int i = 0;
-    while(1)
-    {
-        if (indices[i] == maxIndices[i])
-        {
-            if (i == indices.size() - 1)
-                return false;
-            indices[i] = 0;
-            ++i;
-        }
-        else
-        {
-            ++indices[i];
-            return true;
-        }
-    }
-    return true;
-}
-
-} // end of anonymous
-
-void EventReverser::getPath()
-{
-    // A map from each state variable to all its possible paths.
-    map<VGVertex, vector<PathInfo> > allPaths;
-
-    int maxCost = 0;
-    foreach (VGVertex s, valuesToRestore_)
-        maxCost += isValueNode(valueGraph_[s])->cost;
-
-    foreach (VGVertex s, valuesToRestore_)
-    {
-        ValueNode* valNode = isValueNode(valueGraph_[s]);
-        ROSE_ASSERT(valNode);
-
-        vector<PathInfo> paths;
-        PathInfo path;
-        path.nodes.insert(s);
-        path.cost = valNode->cost;
-        path.nodesRestored.insert(s);
-
-        paths.push_back(path);
-
-        // Start to search all possible paths for this variable.
-
-        for (size_t i = 0; i < paths.size(); ++i)
-        {
-            // Here we try to spread each node in the list.
-            // Copy the list to avoid invalidation due to the push_back().
-            set<VGVertex> nodes = paths[i].nodes;
-            foreach (VGVertex v, nodes)
-            {
-                ROSE_ASSERT(isValueNode(valueGraph_[v]));
-
-                // If the cost is 0, it is not necessary to go through this node.
-                if (isValueNode(valueGraph_[v])->cost == 0)
-                    continue;
-
-                PathInfo p = paths[i];
-
-                // Remove this node from the list, then spread through it.
-                p.nodes.erase(p.nodes.find(v));
-                p.nodesRestored.insert(v);
-
-                VGOutEdgeIter e, f;
-                for (boost::tie(e, f) = boost::out_edges(v, valueGraph_); e != f; ++e)
-                {
-                    VGVertex tar = boost::target(*e, valueGraph_);
-                    if (OperatorNode* operNode = isOperatorNode(valueGraph_[tar]))
-                    {
-                        PathInfo newPath = p;
-
-                        VGOutEdgeIter g, h;
-                        vector<VGVertex> operands;
-                        for (boost::tie(g, h) = boost::out_edges(tar, valueGraph_); g != h; ++g)
-                        {
-                            VGVertex operand = boost::target(*g, valueGraph_);
-                            if (p.nodesRestored.count(operand) > 0)
-                                goto NEXT;
-                            operands.push_back(operand);
-                        }
-                        ROSE_ASSERT(operands.size() == 2);
-
-                        foreach (VGVertex oper, operands)
-                            newPath.nodes.insert(oper);
-                        newPath.operations.insert(operNode);
-
-                        // If the cost of this path is greater than the max cost, discard it.
-                        newPath.cost = 0;
-                        foreach (VGVertex n, newPath.nodes)
-                            newPath.cost += isValueNode(valueGraph_[n])->cost;
-                        if (newPath.cost >= maxCost)
-                            continue;
-
-                        paths.push_back(newPath);
-                    }
-NEXT:
-                    ;
-                }
-            }
-        }
-
-        cout << "All paths for " << s << endl;
-        foreach (const PathInfo& info, paths)
-        {
-            foreach (VGVertex v, info.nodes)
-                cout << v << ' ';
-            cout << info.cost << endl;
-        }
-        cout << endl << endl;
-
-
-        allPaths[s].swap(paths);
-    }
-
-    // Find the optimal combination of paths of all state variables.
-    vector<int> indices(valuesToRestore_.size(), 0);
-    vector<int> maxIndices;
-    foreach (VGVertex v, valuesToRestore_)
-        maxIndices.push_back(allPaths[v].size() - 1);
-
-    vector<int> results;
-    int minCost = INT_MAX;
-    do
-    {
-        set<VGVertex> allNodes;
-        int i = 0;
-        int cost = 0;
-        foreach (VGVertex v, valuesToRestore_)
-        {
-            const set<VGVertex>& nodes = allPaths[v][indices[i++]].nodes;
-            allNodes.insert(nodes.begin(), nodes.end());
-
-            cost = 0;
-            foreach (VGVertex w, allNodes)
-                cost += isValueNode(valueGraph_[w])->cost;
-            if (cost >= maxCost)
-                goto NEXT2;
-        }
-        if (cost < minCost)
-        {
-            cout << cost << endl;
-            results = indices;
-            minCost = cost;
-        }
-NEXT2:
-        ;
-    } while (increaseIndex(indices, maxIndices));
-}
-
-
-
-#endif
 
 } // End of namespace Backstroke

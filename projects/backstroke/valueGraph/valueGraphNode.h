@@ -230,7 +230,7 @@ struct OrderedEdge : ValueGraphEdge
 	OrderedEdge(int idx) : index(idx) {}
 
 	virtual std::string toString() const
-	{ return "index:" + boost::lexical_cast<std::string>(index); }
+	{ return boost::lexical_cast<std::string>(index); }
 
 	int index;
 };

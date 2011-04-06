@@ -56,14 +56,16 @@ void PathNumManager::generatePathNumbers()
     DAGVertex entry = vertexToDagIndex_[cfg_.getEntry()].second;
     DAGVertex exit = vertexToDagIndex_[cfg_.getExit()].second;
 
+    int index = 0;
     foreach (const DAG& dag, dags_)
     {
         PathNumGenerator* pathNumGen = new PathNumGenerator(dag, entry, exit);
-        pathNumGen->getEdgeValues();
-        pathNumGen->getAllPaths();
-        pathNumGen->getAllPathNumbersForEachNode();
+        pathNumGen->generatePathNumbers();
 
         pathNumGenerators_.push_back(pathNumGen);
+
+        int parentIdx = 0;
+        pathInfo_.push_back(make_pair(parentIdx, pathNumGen->getPathNum()));
     }
 }
 

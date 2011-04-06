@@ -2,6 +2,7 @@
 
 #include <sageBuilder.h>
 #include <utilities/utilities.h>
+#include <boost/assign/list_inserter.hpp>
 
 namespace Backstroke
 {
@@ -10,6 +11,37 @@ using namespace std;
 using namespace boost;
 
 #define foreach BOOST_FOREACH
+
+namespace
+{
+    struct OperationTypeTable
+    {
+        OperationTypeTable()
+        {
+            boost::assign::insert(table)
+            (V_SgPlusAssignOp,      V_SgAddOp)
+            (V_SgMinusAssignOp,     V_SgMinusOp)
+            (V_SgMultAssignOp,      V_SgMultiplyOp)
+            (V_SgDivAssignOp,       V_SgDivideOp)
+            (V_SgAndAssignOp,       V_SgAndOp)
+            (V_SgIorAssignOp,       V_SgIorAssignOp)
+            (V_SgModAssignOp,       V_SgModOp)
+            (V_SgXorAssignOp,       V_SgBitXorOp)
+            (V_SgLshiftAssignOp,    V_SgLshiftOp)
+            (V_SgRshiftAssignOp,    V_SgRshiftOp);
+        }
+
+        map<VariantT, VariantT> table;
+    };
+
+    VariantT getOriginalType(VariantT t)
+    {
+        static OperationTypeTable typeTable = OperationTypeTable();
+        ROSE_ASSERT(typeTable.table.count(t) > 0);
+        return typeTable.table[t];
+    }
+
+} // end of anonymous
 
 void EventReverser::buildBasicValueGraph()
 {
@@ -190,24 +222,8 @@ void EventReverser::buildBasicValueGraph()
                         break;
                     }
 
-                    // The following three operations are constructive ones, and we create three operation
-                    // nodes for them, since the all three operands can be restored from the other two.
                 case V_SgAddOp:
                 case V_SgSubtractOp:
-                    {
-                        // FIXME Check if the variable type is integet type here.
-
-                        ROSE_ASSERT(nodeVertexMap_.count(lhs) > 0);
-                        ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
-
-                        VGVertex result = createValueNode(binOp);
-                        VGVertex lhsv = nodeVertexMap_[lhs];
-                        VGVertex rhsv = nodeVertexMap_[rhs];
-
-                        createOperatorNode(t, result, lhsv, rhsv);
-                        break;
-                    }
-
                 case V_SgMultiplyOp:
                 case V_SgDivideOp:
                 case V_SgGreaterThanOp:
@@ -227,13 +243,22 @@ void EventReverser::buildBasicValueGraph()
                     }
 
                 case V_SgPlusAssignOp:
+                case V_SgMinusAssignOp:
+                case V_SgMultAssignOp:
+                case V_SgDivAssignOp:
+                case V_SgAndAssignOp:
+                case V_SgIorAssignOp:
+                case V_SgModAssignOp:
+                case V_SgXorAssignOp:
+                case V_SgLshiftAssignOp:
+                case V_SgRshiftAssignOp:
                     {
                         VersionedVariable use = getVersionedVariable(lhs);
 
                         ROSE_ASSERT(varVertexMap_.count(use) > 0);
                         ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
 
-                        createOperatorNode(t, createValueNode(expr),
+                        createOperatorNode(getOriginalType(t), createValueNode(expr),
                                 varVertexMap_[use], nodeVertexMap_[rhs]);
                         break;
                     }

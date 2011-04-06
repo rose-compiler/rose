@@ -42,6 +42,22 @@ public:
     PathNumGenerator(const DAG& dag, Vertex entry, Vertex exit)
             : dag_(dag), entry_(entry), exit_(exit) {}
 
+    PathSet getPaths(Vertex v) const
+    {
+        ROSE_ASSERT(pathsForNode_.count(v) > 0);
+        return pathsForNode_.find(v)->second;
+    }
+    
+    void generatePathNumbers()
+    {
+        getEdgeValues();
+        getAllPaths();
+        getAllPathNumbersForEachNode();
+    }
+    
+    size_t getPathNum() const { return paths_.size(); }
+
+private:
     //! Assign values to edges then each path has a unique number.
     void getEdgeValues();
 
@@ -50,12 +66,6 @@ public:
 
     //! For each vertex in the DAG, find all paths which contain it.
     void getAllPathNumbersForEachNode();
-
-    PathSet getPaths(Vertex v) const
-    {
-        ROSE_ASSERT(pathsForNode_.count(v) > 0);
-        return pathsForNode_.find(v)->second;
-    }
 };
 
 class PathNumManager
@@ -75,6 +85,10 @@ class PathNumManager
 
     std::map<SgNode*, BackstrokeCFG::Vertex> nodeCFGVertexMap_;
     
+    //! Each element consists of the path index of the parent 
+    //! region, and the number of paths.
+    std::vector<std::pair<int, int> > pathInfo_;
+    
     //std::map<SgNode*, std::pair<int, Vertex> > sgNodeToVertexMap_;
 
     //std::map<SgNode*, std::pair<int, DAGVertex> > sgNodeToVertexMap_;
@@ -84,6 +98,10 @@ public:
     ~PathNumManager();
 
     std::pair<int, PathSet> getPathNumbers(SgNode* node) const;
+
+    //! Given the DAG index, return how many paths it has.
+    size_t getPathNum(int index) const
+    { return pathInfo_[index].second; }
 
 private:
     //! Use path number generator to generate path numbers.

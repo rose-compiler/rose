@@ -6,14 +6,11 @@
 #include "pathNumGenerator.h"
 #include <ssa/staticSingleAssignment.h>
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/bind.hpp>
+#include <boost/graph/filtered_graph.hpp>
 
 namespace Backstroke
 {
 
-
-//class ValueGraph : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-//		ValueGraphNode*, ValueGraphEdge*>
 typedef boost::adjacency_list<boost::listS, boost::listS, boost::bidirectionalS,
 		ValueGraphNode*, ValueGraphEdge*> ValueGraph;
 
@@ -24,14 +21,26 @@ public:
 	typedef boost::graph_traits<ValueGraph>::edge_descriptor VGEdge;
 
 private:
-//	typedef boost::graph_traits<ValueGraph>::vertex_iterator VGVertexIter;
-//	typedef boost::graph_traits<ValueGraph>::edge_iterator VGEdgeIter;
-//	typedef boost::graph_traits<ValueGraph>::in_edge_iterator VGInEdgeIter;
-//	typedef boost::graph_traits<ValueGraph>::out_edge_iterator VGOutEdgeIter;
-
     typedef std::pair<int, PathSet> PathSetWithIndex;
+    typedef std::vector<VGEdge> Route;
 	typedef StaticSingleAssignment SSA;
 	typedef SSA::VarName VarName;
+
+    //! A internal class which is used to get a subgraph according to the path.
+    struct PathEdgeSelector
+    {
+        PathEdgeSelector() {}
+        PathEdgeSelector(ValueGraph* vg, int dagIdx, int pathIdx)
+        : valueGraph(vg), dagIndex(dagIdx), pathIndex(pathIdx) {}
+
+        bool operator()(const VGEdge& e) const;
+
+        ValueGraph* valueGraph;
+        int dagIndex;
+        int pathIndex;
+    };
+
+    typedef boost::filtered_graph<ValueGraph, PathEdgeSelector> SubValueGraph;
 
 private:
     //! The event function definition.
@@ -106,21 +115,15 @@ public:
 
 	void buildForwardAndReverseEvent();
 
-    void getPath();
+    void getPath(const SubValueGraph& g, const std::vector<VGVertex>& valuesToRestore);
 	
 private:
 
-	/** This function set or add a def node to the value graph. If the variable defined is assigned by a
-	 *  node with a temporary variable, just set the name and version to the temporary one.
-	 *  Or else, build a new graph node and add an edge from this new node to the target node.
-	 *
-	 *  @param defNode The AST node which is defined.
-	 *  @param useVertex The value graph vertex which defineds the new node.
-	 */
-	//void setNewDefNode(SgNode* defNode, VGVertex useVertex);
-
     //! Build the main part of the value graph.
     void buildBasicValueGraph();
+
+    //! After the value graph is built, remove edges which don't help in the search.
+    void removeUselessEdges();
 
     //! After the value graph is built, remove nodes which don't help in the search.
     void removeUselessNodes();
@@ -152,6 +155,11 @@ private:
     //! we cannot get the phi node if it is not used. New phi node is added to VG,
     //! and all available variables are found.
     void processLastVersions();
+
+    //! Get all routes for state variables.
+    void getReversalRoute(const SubValueGraph& subgraph,
+                          const std::vector<VGVertex>& valuesToRestore,
+                          std::map<VGVertex, std::vector<Route> >& routes);
 
 	void writeValueGraphNode(std::ostream& out, const VGVertex& node) const
 	{
@@ -206,17 +214,17 @@ private:
 
     //! Check if a variable is a state variable.
 	bool isStateVariable(const VarName& name)
-	{
-		return stateVariables_.count(name) > 0;
-	}
+	{ return stateVariables_.count(name) > 0; }
 
 	/** Given a SgNode, return its variable name and version.
 	 * 
 	 *  @param node A SgNode which should be a variable (either a var ref or a declaration).
-	 *  //@param isUse Inidicate if the variable is a use or a def.
+	 *  @param isUse Inidicate if the variable is a use or a def.
 	 */
 	VersionedVariable getVersionedVariable(SgNode* node, bool isUse = true);
 
+    //! For each path, find its corresponding subgraph.
+    void getSubGraph(int dagIndex, int pathIndex);
 
 	static VGVertex nullVertex()
 	{ return boost::graph_traits<ValueGraph>::null_vertex(); }
