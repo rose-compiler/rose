@@ -137,6 +137,12 @@ namespace VirtualCFG
         {
             return p < o.p;
         }
+        
+        //! The underlying path in the full CFG represented by this edge in the filtered CFG.
+        const CFGPath& getPath() const
+        {
+        	return p;
+        }
     };
 
     template < typename FilterFunction > std::ostream & cfgToDot(std::ostream & o,
