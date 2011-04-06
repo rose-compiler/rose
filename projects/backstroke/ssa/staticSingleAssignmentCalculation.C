@@ -263,7 +263,7 @@ void StaticSingleAssignment::run(bool interprocedural)
 				insertPhiFunctions(func, functionCfgNodesPostorder);
 
 		//Renumber all instantiated ReachingDef objects
-		renumberAllDefinitions(functionCfgNodesPostorder);
+		renumberAllDefinitions(func, functionCfgNodesPostorder);
 
 		if (getDebug())
 			cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
@@ -417,16 +417,6 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 		current = *worklist.begin();
 		worklist.erase(worklist.begin());
 
-		//We don't want to do def_use on the ending CFGNode of the function definition
-		//so if we see it, continue.
-		//If we do this, then incorrect information will be prapogated to the beginning of the function
-		if (current == FilteredCfgNode(func->cfgForEnd()))
-		{
-			if (getDebugExtra())
-				cout << "Skipped defUse on End of function definition." << endl;
-			continue;
-		}
-
 		//Propagate defs to the current node
 		bool changed = propagateDefs(current);
 
@@ -462,15 +452,22 @@ bool StaticSingleAssignment::propagateDefs(FilteredCfgNode cfgNode)
 	//This updates the IN table with the reaching defs from previous nodes
 	updateIncomingPropagatedDefs(cfgNode);
 
+	//Special Case: the OUT table at the function definition node actually denotes definitions at the function entry
+	//So, if we're propagating to the *end* of the function, we shouldn't update the OUT table
+	if (isSgFunctionDefinition(node) && cfgNode == FilteredCfgNode(node->cfgForEnd()))
+	{
+		return false;
+	}
+	
 	//Create a staging OUT table. At the end, we will check if this table
 	//Was the same as the currently available one, to decide if any changes have occurred
-	//We initialize the OUT tabel to the IN table
+	//We initialize the OUT table to the IN table
 	NodeReachingDefTable outDefsTable = reachingDefsTable[node].first;
 
-	//Special case: the IN table of the function definition can have phi nodes inserted for the
-	//definitions reaching the END of the function. So, start with an empty table to prevent definitions
+	//Special case: the IN table of the function definition node actually denotes
+	//definitions reaching the *end* of the function. So, start with an empty table to prevent definitions
 	//from the bottom of the function from propagating to the top.
-	if (isSgFunctionDefinition(node))
+	if (isSgFunctionDefinition(node) && cfgNode == FilteredCfgNode(node->cfgForBeginning()))
 	{
 		outDefsTable.clear();
 	}
@@ -486,7 +483,7 @@ bool StaticSingleAssignment::propagateDefs(FilteredCfgNode cfgNode)
 			outDefsTable[definedVar] = localDef;
 		}
 	}
-
+	
 	//Compare old to new OUT tables
 	bool changed = (reachingDefsTable[node].second != outDefsTable);
 	if (changed)
@@ -535,7 +532,7 @@ void StaticSingleAssignment::updateIncomingPropagatedDefs(FilteredCfgNode cfgNod
 				if (existingDef->isPhiFunction() && existingDef->getDefinitionNode() == astNode)
 				{
 					//There is a phi node here. We update the phi function to point to the previous reaching definition
-					existingDef->addJoinedDef(previousDef);
+					existingDef->addJoinedDef(previousDef, inEdges[i].getPath().getEdges().back());
 				}
 				else
 				{
@@ -769,6 +766,10 @@ StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function, std::
 	{
 		SgNode* node = cfgNode.getNode();
 
+		//Don't visit the sgFunctionDefinition node twice
+		if (isSgFunctionDefinition(node) && cfgNode != FilteredCfgNode(node->cfgForBeginning()))
+			continue;
+		
 		//Check the definitions at this node and add them to the map
 		LocalDefUseTable::const_iterator defEntry = originalDefTable.find(node);
 		if (defEntry != originalDefTable.end())
@@ -872,34 +873,43 @@ void StaticSingleAssignment::populateLocalDefsTable(SgFunctionDeclaration* funct
 	trav.traverse(function, preorder);
 }
 
-void StaticSingleAssignment::renumberAllDefinitions(vector<FilteredCfgNode> cfgNodesInPostOrder)
+void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* func, vector<FilteredCfgNode> cfgNodesInPostOrder)
 {
 	//Map from each name to the next index. Not in map means 0
 	map<VarName, int> nameToNextIndexMap;
 
+	//The SgFunctionDefinition node is special. reachingDefs INTO the function definition node are actually
+	//The definitions that reach the *end* of the function
+	//reachingDefs OUT of the function definition node are the ones that come externally into the function
+	FilteredCfgNode functionStartNode = FilteredCfgNode(func->cfgForBeginning());
+	
 	//We process nodes in reverse postorder; this provides a natural numbering for definitions
 	reverse_foreach(FilteredCfgNode& cfgNode, cfgNodesInPostOrder)
 	{
 		SgNode* astNode = cfgNode.getNode();
 		
-		//Iterate over all the phi functions inserted at this node
-		foreach (NodeReachingDefTable::value_type& varDefPair, reachingDefsTable[astNode].first)
+		//Iterate over all the phi functions inserted at this node. We skip the SgFunctionDefinition entry node,
+		//since those phi functions actually belong to the bottom of the CFG
+		if (cfgNode != functionStartNode)
 		{
-			const VarName& definedVar = varDefPair.first;
-			ReachingDefPtr reachingDef = varDefPair.second;
-			
-			if (!reachingDef->isPhiFunction())
-				continue;
-
-			//Give an index to the variable
-			int index = 0;
-			if (nameToNextIndexMap.count(definedVar) > 0)
+			foreach (NodeReachingDefTable::value_type& varDefPair, reachingDefsTable[astNode].first)
 			{
-				index = nameToNextIndexMap[definedVar];
-			}
-			nameToNextIndexMap[definedVar] = index + 1;
+				const VarName& definedVar = varDefPair.first;
+				ReachingDefPtr reachingDef = varDefPair.second;
 
-			reachingDef->setRenamingNumber(index);
+				if (!reachingDef->isPhiFunction())
+					continue;
+
+				//Give an index to the variable
+				int index = 0;
+				if (nameToNextIndexMap.count(definedVar) > 0)
+				{
+					index = nameToNextIndexMap[definedVar];
+				}
+				nameToNextIndexMap[definedVar] = index + 1;
+
+				reachingDef->setRenamingNumber(index);
+			}
 		}
 
 		//Iterate over all the local definitions at the node
@@ -927,14 +937,13 @@ vector<StaticSingleAssignment::FilteredCfgNode> StaticSingleAssignment::getCfgNo
 	struct RecursiveDFS
 	{
 		static void depthFirstSearch(StaticSingleAssignment::FilteredCfgNode cfgNode, 
-			unordered_set<SgNode*>& visited, vector<StaticSingleAssignment::FilteredCfgNode>& result)
+			set<FilteredCfgNode>& visited, vector<StaticSingleAssignment::FilteredCfgNode>& result)
 		{
 			//First, make sure this node hasn't been visited yet
-			SgNode* astNode = cfgNode.getNode();
-			if (visited.count(astNode) != 0)
+			if (visited.count(cfgNode) != 0)
 				return;
 			
-			visited.insert(astNode);
+			visited.insert(cfgNode);
 			
 			//Now, visit all the node's successors
 			reverse_foreach(const FilteredCfgEdge outEdge, cfgNode.outEdges())
@@ -947,10 +956,9 @@ vector<StaticSingleAssignment::FilteredCfgNode> StaticSingleAssignment::getCfgNo
 		}
 	};
 	
-	
 	ROSE_ASSERT(func != NULL);
 
-	unordered_set<SgNode*> visited;
+	set<FilteredCfgNode> visited;
 	vector<FilteredCfgNode> results;
 	FilteredCfgNode entry = func->cfgForBeginning();
 

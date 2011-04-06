@@ -18,7 +18,7 @@ bool ReachingDef::isPhiFunction() const
 	return defType == PHI_FUNCTION;
 }
 
-const vector < shared_ptr<ReachingDef> >& ReachingDef::getJoinedDefs() const
+const vector < pair<ReachingDef::ReachingDefPtr, CFGEdge> >& ReachingDef::getJoinedDefs() const
 {
 	ROSE_ASSERT(isPhiFunction());
 	return parentDefs;
@@ -39,13 +39,14 @@ set<SgNode*> ReachingDef::getActualDefinitions() const
 	else
 	{
 		//Depth-first search of phi node graph
-		unordered_set< shared_ptr<ReachingDef> > visited;
-		vector< shared_ptr<ReachingDef> > worklist(parentDefs);
+		unordered_set<ReachingDefPtr> visited;
+		vector< pair<ReachingDefPtr, CFGEdge> > worklist(parentDefs);
 
 		while (!worklist.empty())
 		{
-			shared_ptr<ReachingDef> parentDef = worklist.back();
+			pair<ReachingDefPtr, CFGEdge> defEdgePair = worklist.back();
 			worklist.pop_back();
+			ReachingDefPtr parentDef = defEdgePair.first;
 			visited.insert(parentDef);
 
 			if (!parentDef->isPhiFunction())
@@ -54,11 +55,12 @@ set<SgNode*> ReachingDef::getActualDefinitions() const
 			}
 			else
 			{
-				foreach(shared_ptr<ReachingDef> def, parentDef->getJoinedDefs())
+				pair<ReachingDefPtr, CFGEdge> defEdgePair;
+				foreach(defEdgePair, parentDef->getJoinedDefs())
 				{
-					if (visited.count(def) == 0)
+					if (visited.count(defEdgePair.first) == 0)
 					{
-						worklist.push_back(def);
+						worklist.push_back(defEdgePair);
 					}
 				}
 			}
@@ -83,12 +85,15 @@ void ReachingDef::setDefinitionNode(SgNode* defNode)
 	thisNode = defNode;
 }
 
-bool ReachingDef::addJoinedDef(shared_ptr<ReachingDef> newDef)
+bool ReachingDef::addJoinedDef(shared_ptr<ReachingDef> newDef, CFGEdge edge)
 {
 	ROSE_ASSERT(isPhiFunction());
-	if (find(parentDefs.begin(), parentDefs.end(), newDef) == parentDefs.end())
+	
+	pair<ReachingDefPtr, CFGEdge> incomingDef(newDef, edge);
+	
+	if (find(parentDefs.begin(), parentDefs.end(), incomingDef) == parentDefs.end())
 	{
-		parentDefs.push_back(newDef);
+		parentDefs.push_back(incomingDef);
 		return true;
 	}
 	else

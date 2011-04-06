@@ -90,8 +90,6 @@ public:
 	/** Map from each node to the variables used at that node and their reaching definitions. */
 	typedef boost::unordered_map<SgNode*, NodeReachingDefTable> UseTable;
 
-	typedef ssa_private::ControlPredicate<FilteredCfgEdge> CfgPredicate;
-
 private:
 	//Private member variables
 
@@ -214,7 +212,7 @@ private:
 	 * and the local def table is populated, but before dataflow propagates the definitions. 
 	 * 
 	 * @param cfgNodesInPostOrder a list of all the CFG nodes in the function, in postorder. */
-	void renumberAllDefinitions(std::vector<FilteredCfgNode> cfgNodesInPostOrder);
+	void renumberAllDefinitions(SgFunctionDefinition* func, std::vector<FilteredCfgNode> cfgNodesInPostOrder);
 
 	/** Take all the outgoing defs from previous nodes and merge them as the incoming defs
 	 * of the current node. */

@@ -70,7 +70,7 @@ namespace ssa_private
 					//Add a control dependence from the source to the new node
 					controlDepdendences.insert(make_pair(currNode, make_pair(sourceNode, edge)));
 
-					if (StaticSingleAssignment::getDebug())
+					if (StaticSingleAssignment::getDebugExtra())
 					{
 						printf("%s is control-dependent on %s - %s \n", currNode.toStringForDebugging().c_str(),
 							sourceNode.toStringForDebugging().c_str(), edge.condition() == VirtualCFG::eckTrue ? "true" : "false");
