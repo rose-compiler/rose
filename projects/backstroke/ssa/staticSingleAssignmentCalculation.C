@@ -417,16 +417,6 @@ void StaticSingleAssignment::runDefUseDataFlow(SgFunctionDefinition* func)
 		current = *worklist.begin();
 		worklist.erase(worklist.begin());
 
-		//We don't want to do def_use on the ending CFGNode of the function definition
-		//so if we see it, continue.
-		//If we do this, then incorrect information will be prapogated to the beginning of the function
-		if (current == FilteredCfgNode(func->cfgForEnd()))
-		{
-			if (getDebugExtra())
-				cout << "Skipped defUse on End of function definition." << endl;
-			continue;
-		}
-
 		//Propagate defs to the current node
 		bool changed = propagateDefs(current);
 
@@ -462,15 +452,22 @@ bool StaticSingleAssignment::propagateDefs(FilteredCfgNode cfgNode)
 	//This updates the IN table with the reaching defs from previous nodes
 	updateIncomingPropagatedDefs(cfgNode);
 
+	//Special Case: the OUT table at the function definition node actually denotes definitions at the function entry
+	//So, if we're propagating to the *end* of the function, we shouldn't update the OUT table
+	if (isSgFunctionDefinition(node) && cfgNode == FilteredCfgNode(node->cfgForEnd()))
+	{
+		return false;
+	}
+	
 	//Create a staging OUT table. At the end, we will check if this table
 	//Was the same as the currently available one, to decide if any changes have occurred
-	//We initialize the OUT tabel to the IN table
+	//We initialize the OUT table to the IN table
 	NodeReachingDefTable outDefsTable = reachingDefsTable[node].first;
 
-	//Special case: the IN table of the function definition can have phi nodes inserted for the
-	//definitions reaching the END of the function. So, start with an empty table to prevent definitions
+	//Special case: the IN table of the function definition node actually denotes
+	//definitions reaching the *end* of the function. So, start with an empty table to prevent definitions
 	//from the bottom of the function from propagating to the top.
-	if (isSgFunctionDefinition(node))
+	if (isSgFunctionDefinition(node) && cfgNode == FilteredCfgNode(node->cfgForBeginning()))
 	{
 		outDefsTable.clear();
 	}
@@ -486,7 +483,7 @@ bool StaticSingleAssignment::propagateDefs(FilteredCfgNode cfgNode)
 			outDefsTable[definedVar] = localDef;
 		}
 	}
-
+	
 	//Compare old to new OUT tables
 	bool changed = (reachingDefsTable[node].second != outDefsTable);
 	if (changed)
@@ -769,6 +766,10 @@ StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function, std::
 	{
 		SgNode* node = cfgNode.getNode();
 
+		//Don't visit the sgFunctionDefinition node twice
+		if (isSgFunctionDefinition(node) && cfgNode != FilteredCfgNode(node->cfgForBeginning()))
+			continue;
+		
 		//Check the definitions at this node and add them to the map
 		LocalDefUseTable::const_iterator defEntry = originalDefTable.find(node);
 		if (defEntry != originalDefTable.end())
