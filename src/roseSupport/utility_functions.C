@@ -269,7 +269,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
        // DQ (8/21/2008): Only output a message when we we use verbose option.
           if ( SgProject::get_verbose() >= 1 )
-              printf ("Note: Binary executables are unparsed, but not passed to gcc as assembly source code \n");
+               printf ("Note: Binary executables are unparsed, but not passed to gcc as assembly source code \n");
 
           project->skipfinalCompileStep(true);
         }
@@ -304,8 +304,11 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
                cout << "source file(s) generated. (from AST)" << endl;
         }
 
-  // printf ("Inside of backend(SgProject*): SgProject::get_verbose() = %d \n",SgProject::get_verbose());
-  // printf ("Inside of backend(SgProject*): project->numberOfFiles() = %d \n",project->numberOfFiles());
+#if 0
+     printf ("Inside of backend(SgProject*): SgProject::get_verbose()       = %d \n",SgProject::get_verbose());
+     printf ("Inside of backend(SgProject*): project->numberOfFiles()       = %d \n",project->numberOfFiles());
+     printf ("Inside of backend(SgProject*): project->numberOfDirectories() = %d \n",project->numberOfDirectories());
+#endif
 
   // DQ (1/25/2010): We have to now test for both numberOfFiles() and numberOfDirectories(),
   // or perhaps define a more simple function to use more directly.
@@ -355,7 +358,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
        // This could be done in the 
           if (project->get_C_only() == true)
              {
-                printf ("Link using the C language linker (when handling C programs) = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
+               printf ("Link using the C language linker (when handling C programs) = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
             // finalCombinedExitStatus = project->link("gcc");
                finalCombinedExitStatus = project->link(BACKEND_C_COMPILER_NAME_WITH_PATH);
              }
@@ -363,7 +366,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
              {
             // Use the default name for C++ compiler (defined at configure time)
                if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
-                  printf ("Link using the default linker (when handling non-C programs) = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
+                    printf ("Link using the default linker (when handling non-C programs) = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
                finalCombinedExitStatus = project->link(BACKEND_CXX_COMPILER_NAME_WITH_PATH);
              }
 

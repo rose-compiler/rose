@@ -1,7 +1,7 @@
 ************************************************************************
                            ROSE Project Goal
 ************************************************************************
-
+ 
    The goal of ROSE is to provide the support required to easily build tools
 that operate on source code (analyzing or optimizing). ROSE is a library that
 makes it easy to build a wide range of tools from optimizing source-to-source 

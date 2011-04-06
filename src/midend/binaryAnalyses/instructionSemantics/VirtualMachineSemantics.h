@@ -499,7 +499,7 @@ public:
 
 
     /*************************************************************************************************************************
-     * Functions invoked by the X86InstructionSemantics class for every processed instructions
+     * Functions invoked by the X86InstructionSemantics class for every processed instruction or block
      *************************************************************************************************************************/
 
     /* Called at the beginning of X86InstructionSemantics::processInstruction() */
@@ -517,7 +517,11 @@ public:
         cur_insn = NULL;
     }
 
+    /* Called at the beginning of X86InstructionSemantics::processBlock() */
+    void startBlock(rose_addr_t addr) {}
 
+    /* Called at the end of X86InstructionSemantics::processBlock() */
+    void finishBlock(rose_addr_t addr) {}
 
     /*************************************************************************************************************************
      * Functions invoked by the X86InstructionSemantics class to construct values
