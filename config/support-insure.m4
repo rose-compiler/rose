@@ -38,23 +38,30 @@ dnl *********************************************************************
 # Specify by --with-insure= or setting insure_PREFIX.
 AC_MSG_CHECKING(for insure)
 AC_ARG_WITH(insure,
-[  --with-insure=PATH	Specify the prefix where insure is installed],
-, test "$insure_PREFIX" && with_insure="$insure_PREFIX")
+[  --with-insure=PATH	Specify the prefix where insure++ is installed], , test "$insure_PREFIX" && with_insure="$insure_PREFIX")
 test "$with_insure" && test ! "$with_insure" = no && insure_PREFIX="$with_insure"
+echo "Evaluating use of insure on commandline..."
 AC_MSG_RESULT($insure_PREFIX)
 echo "insure_PREFIX is $insure_PREFIX" >&5
+echo "insure_PREFIX is $insure_PREFIX"
 if test "$insure_PREFIX" ; then
-  insure_INCLUDES="-I$insure_PREFIX"
-  insure_LIBS="$insure_PREFIX/insure_stubs.a"
-  insure_BIN="$insure_PREFIX/insure"
+#  insure_INCLUDES="-I$insure_PREFIX"
+#  insure_LIBS="$insure_PREFIX/insure_stubs.a"
+#  insure_BIN="$insure_PREFIX/insure"
+  insure_LIBS="$insure_PREFIX/lib/libinsure.so"
+  insure_BIN="$insure_PREFIX/bin/insure"
 fi
 AC_SUBST(insure_PREFIX)
-AC_SUBST(insure_INCLUDES)
+# AC_SUBST(insure_INCLUDES)
 AC_SUBST(insure_LIBS)
 AC_SUBST(insure_BIN)
 echo "insure_INCLUDES is $insure_INCLUDES" >&5
 echo "insure_LIBS is $insure_LIBS" >&5
 echo "insure_BIN is $insure_BIN" >&5
+
+echo "insure_INCLUDES is $insure_INCLUDES"
+echo "insure_LIBS is $insure_LIBS"
+echo "insure_BIN is $insure_BIN"
 
 
 
@@ -88,6 +95,7 @@ AC_SUBST(INSURE_OPTIONS)
 
 # if test "$enable_insure_linker" = yes ; then
 # if test "$with_insure" = yes ; then
+echo "enable_insure = $enable_insure"
 if test "$enable_insure" = yes ; then
 # Setup compiler specific options for using insure
 # Different compilers (e.g KCC) require options in different order.
@@ -139,6 +147,9 @@ echo "In macro ROSE SUPPORT INSURE: CXXLD = $CXXLD"
 
 AC_SUBST(CCLD)
 AC_SUBST(CXXLD)
+
+# echo "Exiting at base of insure support."
+# exit 1
 
 # End macro ROSE_SUPPORT_INSURE.
 ]

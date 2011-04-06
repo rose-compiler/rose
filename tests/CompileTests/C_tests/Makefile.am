@@ -1,5 +1,17 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+if ROSE_USING_ALTERNATE_BACKEND_C_COMPILER
+# TOO (2/10/11): set the correct linker and linker-flags for the alternate
+# backend C compiler.
+override CCLD=@BACKEND_C_COMPILER@
+override LIBS=
+
+# TOO (2/10/11): don't run these tests if they were cross-compiled, otherwise
+# they will just fail.
+check-TESTS:
+	@echo "Skipping execution of cross-compiled tests: $(TESTS)"
+endif
+
 ##################################################################################
 # These are C testcodes targeting aspects of C that might not be a subset of C++ #
 ##################################################################################

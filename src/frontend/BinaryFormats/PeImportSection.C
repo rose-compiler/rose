@@ -17,14 +17,15 @@ SgAsmPEImportSection::import_mesg(const char *fmt, ...)
     bool printed=false;
     va_list ap;
     va_start(ap, fmt);
-    
-    if (nprinted++ < max_to_print) {
+
+    if (nprinted < max_to_print) {
         vfprintf(stderr, fmt, ap);
-        if (nprinted==max_to_print)
-            fprintf(stderr, "Subsequent import messages will be suppressed.\n");
         printed = true;
+    } else if (nprinted == max_to_print) {
+        fprintf(stderr, "Import message limit reached; import errors are now suppressed.\n");
     }
-    
+
+    nprinted++;
     va_end(ap);
     return printed;
 }
@@ -95,9 +96,9 @@ SgAsmPEImportSection::parse()
         if (rva.get_section()!=this) {
             rose_addr_t start_rva = get_mapped_actual_va() - get_base_va();
             import_mesg("SgAsmPEImportSection::ctor: warning: Name RVA is outside PE Import Table\n"
-                        "        Import Directory Entry #%zu\n"
-                        "        Name RVA is %s\n"
-                        "        PE Import Table mapped from 0x%08"PRIx64" to 0x%08"PRIx64"\n",
+                        "    Import Directory Entry #%zu\n"
+                        "    Name RVA is %s\n"
+                        "    PE Import Table mapped from 0x%08"PRIx64" to 0x%08"PRIx64"\n",
                         i,
                         rva.to_string().c_str(),
                         start_rva, start_rva+get_mapped_size());
@@ -117,7 +118,7 @@ SgAsmPEImportSection::parse()
             SgAsmPEImportILTEntry *e = ilt->get_entries()->get_vector()[j];
             SgAsmPEImportHNTEntry *hn = e->get_hnt_entry();
             if (hn!=NULL)
-                dll->add_symbol(hn->get_name()->c_str());
+                dll->add_symbol(hn->get_name()->get_string());
         }
         fhdr->add_dll(dll);
     }

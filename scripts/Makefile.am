@@ -29,7 +29,6 @@ distributedScripts =				\
      policies/UnixLineTermination.pl		\
      policies/UnusedHeaders.pl                  \
      policies/UnusedSources.pl                  \
-     policies/UniqueFortranModules.pl \
      rth_run.pl                                 \
      rth_stats.pl                               \
      runscript					\

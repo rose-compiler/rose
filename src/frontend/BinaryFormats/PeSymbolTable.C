@@ -93,7 +93,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
             set_size(size);
             if (debug) {
                 fprintf(stderr, "COFF aux func %s: bf_idx=%u, size=%u, lnum_ptr=%u, next_fn_idx=%u, res1=%u\n", 
-                        p_st_name.c_str(), bf_idx, size, lnum_ptr, next_fn_idx, res1);
+                        escapeString(p_st_name).c_str(), bf_idx, size, lnum_ptr, next_fn_idx, res1);
             }
             
         } else if (p_st_storage_class == 101 /*function*/ && (0 == p_st_name.compare(".bf") || 0 == p_st_name.compare(".ef"))) {
@@ -106,7 +106,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
             unsigned res4        = le_to_host(*(uint16_t*)&(p_aux_data[16]));
             if (debug) {
                 fprintf(stderr, "COFF aux %s: res1=%u, lnum=%u, res2=%u, res3=%u, next_bf=%u, res4=%u\n", 
-                        p_st_name.c_str(), res1, lnum, res2, res3, next_bf, res4);
+                        escapeString(p_st_name).c_str(), res1, lnum, res2, res3, next_bf, res4);
             }
             
         } else if (p_st_storage_class == 2/*external*/ && p_st_section_num == 0/*undef*/ && get_value()==0) {
@@ -118,7 +118,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
             unsigned res3        = le_to_host(*(uint16_t*)&(p_aux_data[16]));
             if (debug) {
                 fprintf(stderr, "COFF aux weak %s: sym2_idx=%u, flags=%u, res1=%u, res2=%u, res3=%u\n",
-                        p_st_name.c_str(), sym2_idx, flags, res1, res2, res3);
+                        escapeString(p_st_name).c_str(), sym2_idx, flags, res1, res2, res3);
             }
             
         } else if (p_st_storage_class == 103/*file*/ && 0 == p_st_name.compare(".file")) {
@@ -129,8 +129,10 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
                 rose_addr_t fname_offset = le_to_host(d->st_offset);
                 if (fname_offset < 4) throw FormatError("name collides with size field");
                 set_name(new SgAsmBasicString(strtab->read_content_local_str(fname_offset)));
-                if (debug)
-                    fprintf(stderr, "COFF aux file: offset=%"PRIu64", name=\"%s\"\n", fname_offset, get_name()->c_str());
+                if (debug) {
+                    fprintf(stderr, "COFF aux file: offset=%"PRIu64", name=\"%s\"\n",
+                            fname_offset, get_name()->get_string(true).c_str());
+                }
             } else {
                 /* Aux data contains a NUL-padded name; the NULs (if any) are not part of the name. */
                 ROSE_ASSERT(p_st_num_aux_entries == 1);
@@ -139,7 +141,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
                 fname[COFFSymbol_disk_size] = '\0';
                 set_name(new SgAsmBasicString(fname));
                 if (debug)
-                    fprintf(stderr, "COFF aux file: inline-name=\"%s\"\n", get_name()->c_str());
+                    fprintf(stderr, "COFF aux file: inline-name=\"%s\"\n", get_name()->get_string(true).c_str());
             }
             set_type(SYM_FILE);
 
@@ -165,12 +167,12 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
                    get_value()==0 && NULL!=fhdr->get_file()->get_section_by_name(p_st_name)) {
             /* COMDAT section */
             /*FIXME: not implemented yet*/
-            fprintf(stderr, "COFF aux comdat %s: (FIXME) not implemented yet\n", p_st_name.c_str());
+            fprintf(stderr, "COFF aux comdat %s: (FIXME) not implemented yet\n", escapeString(p_st_name).c_str());
             hexdump(stderr, (rose_addr_t) symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data);
 
         } else {
             fprintf(stderr, "COFF aux unknown %s: (FIXME) st_storage_class=%u, st_type=0x%02x, st_section_num=%d\n", 
-                    p_st_name.c_str(), p_st_storage_class, p_st_type, p_st_section_num);
+                    escapeString(p_st_name).c_str(), p_st_storage_class, p_st_type, p_st_section_num);
             hexdump(stderr, symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data);
         }
     }
@@ -298,7 +300,7 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
         break;
     }
     fprintf(f, "%s%-*s = %s\n",               p, w, "st_storage_class", s);
-    fprintf(f, "%s%-*s = \"%s\"\n",           p, w, "st_name", p_st_name.c_str());
+    fprintf(f, "%s%-*s = \"%s\"\n",           p, w, "st_name", escapeString(p_st_name).c_str());
     fprintf(f, "%s%-*s = %u\n",               p, w, "st_num_aux_entries", p_st_num_aux_entries);
     fprintf(f, "%s%-*s = %zu bytes\n",        p, w, "aux_data", p_aux_data.size());
     hexdump(f, 0, std::string(p)+"aux_data at ", p_aux_data);
@@ -345,11 +347,23 @@ SgAsmCoffSymbolTable::parse()
         throw FormatError("COFF symbol table string table size is less than four bytes");
     p_strtab->extend(strtab_size - sizeof(uint32_t));
 
+    /* Parse symbols until we've parsed the required number or we run off the end of the section. */
     for (size_t i = 0; i < fhdr->get_e_coff_nsyms(); i++) {
-        SgAsmCoffSymbol *symbol = new SgAsmCoffSymbol(fhdr, this, p_strtab, i);
-        i += symbol->get_st_num_aux_entries();
-        p_symbols->get_symbols().push_back(symbol);
+        try {
+            SgAsmCoffSymbol *symbol = new SgAsmCoffSymbol(fhdr, this, p_strtab, i);
+            i += symbol->get_st_num_aux_entries();
+            p_symbols->get_symbols().push_back(symbol);
+        } catch (const ShortRead &e) {
+            fprintf(stderr, "SgAsmCoffSymbolTable::parse: warning: read past end of section \"%s\" [%d]\n"
+                    "    symbol #%zu at file offset 0x%08"PRIx64"\n"
+                    "    skipping %zu symbols (including this one)\n",
+                    get_name()->get_string(true).c_str(), get_id(),
+                    i, e.offset,
+                    fhdr->get_e_coff_nsyms()-i);
+            break;
+        }
     }
+
     return this;
 }
 

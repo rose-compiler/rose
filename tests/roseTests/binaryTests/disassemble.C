@@ -70,6 +70,26 @@ Description:\n\
     Convenience switch that is equivalent to --ast-dot and --cfg-dot (or\n\
     --no-ast-dot and --no-cfg-dot).\n\
 \n\
+  --omit-anon=SIZE\n\
+  --no-omit-anon\n\
+    If the memory being disassembled is anonymously mapped (contains all zero\n\
+    bytes), then the disassembler might spend substantial time creating code\n\
+    that's a single, large block of instructions.  This switch can be used to\n\
+    discard regions of memory that are anonymously mapped. Any distinct region\n\
+    larger than the specified size in kilobytes (1024 multiplier) will be\n\
+    unmapped before disassembly starts.  This filter does not remove neighboring\n\
+    regions which are individually smaller than the limit but whose combined size\n\
+    is larger.  The default is to omit anonymous regions larger than 8kB.\n\
+\n\
+  --protection=PROTBITS\n\
+    Normally the disassembler will only consider data in memory that has\n\
+    execute permission.  This switch allows allows the disassembler to use a\n\
+    different set of protection bits, all of which must be set on any memory\n\
+    which is being considered for disassembly.  The PROTBITS argument is one\n\
+    or more of the letters: r (read), w (write), or x (execute), or '-'\n\
+    (ignored). PROTBITS may be the word \"any\", which has the same effect as\n\
+    not supplying any letters after the equal sign.\n\
+\n\
   --quiet\n\
   --no-quiet\n\
     Suppresses (or not) the instruction listing that is normally emitted to the\n\
@@ -124,6 +144,14 @@ Description:\n\
     to not show these hashes in the listing. Regardless of this switch, the\n\
     hashes still appear in the function listing (--show-functions) and the\n\
     CFG dot files (--cfg-dot) if they can be computed.\n\
+\n\
+  --syscalls=linux32\n\
+  --syscalls=none\n\
+    Specifies how system calls are to be named in the disassembly output.\n\
+    The value \"linux32\" uses system call numbers and names for 32-bit Linux,\n\
+    while the value \"none\" means no attempt is made to determine system call\n\
+    names.\n\
+\n\
 \n\
 In addition to the above switches, this disassembler tool passes all other\n\
 switches to the underlying ROSE library's frontend() function if that function\n\
@@ -321,9 +349,11 @@ public:
 class MyAsmUnparser: public AsmUnparser {
 private:
     bool show_hashes;
+    bool show_syscall_names;
 public:
-    MyAsmUnparser(bool show_hashes)
-        : show_hashes(show_hashes) {
+    MyAsmUnparser(bool show_hashes, bool show_syscall_names)
+        : show_hashes(show_hashes), show_syscall_names(show_syscall_names) {
+        insn_linefeed = false; /* the instruction post() method adds it */
         blk_detect_noop_seq = true;
     }
     virtual void pre(std::ostream &o, SgAsmBlock *blk) {
@@ -339,6 +369,44 @@ public:
             o <<StringUtility::addrToString(func->get_entry_va())
               <<": ============================ " <<digest_to_str(sha1) <<"\n";
         }
+    }
+
+    /* If the instruction is "INT 0x80" and EAX has a known value then append the system call name if any. */
+    virtual void post(std::ostream &o, SgAsmInstruction *_insn) {
+        SgAsmx86Instruction *insn = isSgAsmx86Instruction(_insn);
+        SgAsmBlock *block = isSgAsmBlock(_insn->get_parent());
+        if (show_syscall_names && block && insn && insn->get_kind()==x86_int) {
+            const SgAsmExpressionPtrList &opand_list = insn->get_operandList()->get_operands();
+            SgAsmExpression *expr = opand_list.size()==1 ? opand_list[0] : NULL;
+            if (expr && expr->variantT()==V_SgAsmByteValueExpression &&
+                0x80==SageInterface::getAsmConstant(isSgAsmValueExpression(expr))) {
+
+                const SgAsmStatementPtrList &stmts = block->get_statementList();
+                size_t int_n;
+                for (int_n=0; int_n<stmts.size(); int_n++)
+                    if (isSgAsmInstruction(stmts[int_n])==_insn)
+                        break;
+
+                typedef VirtualMachineSemantics::Policy Policy;
+                typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+                Policy policy;
+                Semantics semantics(policy);
+
+                try {
+                    semantics.processBlock(stmts, 0, int_n);
+                    if (policy.readGPR(x86_gpr_ax).is_known()) {
+                        int nr = policy.readGPR(x86_gpr_ax).known_value();
+                        extern std::map<int, std::string> linux32_syscalls; // defined in linux_syscalls.C
+                        const std::string &syscall_name = linux32_syscalls[nr];
+                        if (!syscall_name.empty())
+                            o <<" <" <<syscall_name <<">";
+                    }
+                } catch (const Semantics::Exception&) {
+                } catch (const Policy::Exception&) {
+                }
+            }
+        }
+        o <<"\n";
     }
 };
 
@@ -614,6 +682,19 @@ dump_CFG_CG(SgNode *ast)
     fprintf(stderr, "\n");
 }
 
+/* Returns true for any anonymous memory region containing more than a certain size. */
+static rose_addr_t large_anonymous_region_limit = 8192;
+static bool
+large_anonymous_region_p(const MemoryMap::MapElement &me)
+{
+    if (me.is_anonymous() && me.get_size()>large_anonymous_region_limit) {
+        fprintf(stderr, "ignoring zero-mapped memory at va 0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
+                me.get_va(), me.get_size(), me.get_va()+me.get_size());
+        return true;
+    }
+    return false;
+}
+
 int
 main(int argc, char *argv[]) 
 {
@@ -630,12 +711,15 @@ main(int argc, char *argv[])
     bool do_rose_help = false;
     bool do_call_disassembler = false;
     bool do_show_hashes = false;
+    bool do_omit_anon = true;                   /* see large_anonymous_region_limit global for actual limit */
+    bool do_syscall_names = true;
 
     Disassembler::AddressSet raw_entries;
     MemoryMap raw_map;
     unsigned disassembler_search = Disassembler::SEARCH_DEFAULT;
     unsigned partitioner_search = SgAsmFunctionDeclaration::FUNC_DEFAULT;
     char *partitioner_config = NULL;
+    unsigned protection = MemoryMap::MM_PROT_EXEC;
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Parse and remove the command-line switches intended for this executable, but leave the switches we don't
@@ -675,6 +759,31 @@ main(int argc, char *argv[])
                    !strcmp(argv[i], "--help")) {
             printf(usage, arg0, arg0, arg0);
             exit(0);
+        } else if (!strncmp(argv[i], "--omit-anon=", 12)) {
+            char *rest;
+            do_omit_anon = true;
+            large_anonymous_region_limit = 1024 * strtoull(argv[i]+12, &rest, 0);
+            if (rest && *rest) {
+                fprintf(stderr, "%s: invalid value for --omit-anon switch: %s\n", arg0, argv[i]+12);
+                exit(1);
+            }
+        } else if (!strcmp(argv[i], "--no-omit-anon")) {
+            do_omit_anon = false;
+        } else if (!strcmp(argv[i], "--protection=any")) {
+            protection = 0;
+        } else if (!strncmp(argv[i], "--protection=", 13)) {
+            protection = 0;
+            for (char *s=argv[i]+13; *s; s++) {
+                switch (*s) {
+                    case 'r': protection |= MemoryMap::MM_PROT_READ;  break;
+                    case 'w': protection |= MemoryMap::MM_PROT_WRITE; break;
+                    case 'x': protection |= MemoryMap::MM_PROT_EXEC;  break;
+                    case '-': break;
+                    default:
+                        fprintf(stderr, "%s: invalid --protection bit: %c\n", arg0, *s);
+                        exit(1);
+                }
+            }
         } else if (!strcmp(argv[i], "--rose-help")) {
             new_argv[new_argc++] = strdup("--help");
             do_rose_help = true;
@@ -717,7 +826,7 @@ main(int argc, char *argv[])
                 rose_addr_t raw_entry_va = strtoull(s, &rest, 0);
                 if (rest==s || errno!=0) {
                     fprintf(stderr, "%s: raw entry address expected at: %s\n", arg0, s);
-                    exit(0);
+                    exit(1);
                 }
                 raw_entries.insert(raw_entry_va);
                 if (','==*rest) rest++;
@@ -748,6 +857,15 @@ main(int argc, char *argv[])
             do_quiet = true;
         } else if (!strcmp(argv[i], "--no-quiet")) {
             do_quiet = false;
+        } else if (!strncmp(argv[i], "--syscalls=", 11)) {
+            if (!strcmp(argv[i]+11, "linux32")) {
+                do_syscall_names = true;
+            } else if (!strcmp(argv[i]+11, "none")) {
+                do_syscall_names = false;
+            } else {
+                fprintf(stderr, "%s: bad value for --syscalls switch: %s\n", arg0, argv[i]+11);
+                exit(1);
+            }
         } else if (!strcmp(argv[i], "-rose:disassembler_search")) {
             /* Keep track of disassembler search flags because we need them even if we don't invoke frontend(), but
              * also pass them along to the frontend() call. */
@@ -913,7 +1031,10 @@ main(int argc, char *argv[])
     disassembler->set_alignment(1);      /*alignment for SEARCH_WORDS (default is four)*/
     if (do_debug_disassembler)
         disassembler->set_debug(stderr);
-    
+
+    /* What kind of memory can be disassembled, as specified by the --protection switch. */
+    disassembler->set_protection(protection);
+
     /* Build the instruction partitioner and initialize it based on the -rose:partitioner_search and
      * -rose:partitioner_confg switches.  Similar to the disassembler switches, these are also available via
      * SgFile::get_partitionerSearchHeuristics() and SgFile::get_partitionerConfigurationFileName() if we had called
@@ -970,6 +1091,10 @@ main(int argc, char *argv[])
                 disassembler->search_function_symbols(&worklist, map, *hi);
         }
     }
+
+    /* Should we filter away any anonymous regions? */
+    if (do_omit_anon>0)
+        map->prune(large_anonymous_region_p);
 
     /* If the partitioner needs to execute a success program (defined in an IPD file) then it must be able to provide the
      * program with a window into the specimen's memory.  We do that by supplying the same memory map that was used for
@@ -1028,7 +1153,8 @@ main(int argc, char *argv[])
         ShowFunctions().show(block);
 
     if (!do_quiet) {
-        MyAsmUnparser unparser(do_show_hashes);
+        MyAsmUnparser unparser(do_show_hashes, do_syscall_names);
+        unparser.add_function_labels(block);
         unparser.unparse(std::cout, block);
         fputs("\n\n", stdout);
     }

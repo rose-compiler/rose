@@ -48,6 +48,9 @@ namespace OmpSupport
   //! Translate omp parallel
   void transOmpParallel(SgNode* node);
 
+  //! Translate omp sections 
+  void transOmpSections(SgNode* node);
+
   //! Translate omp task
   void transOmpTask(SgNode* node);
 

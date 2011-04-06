@@ -213,7 +213,7 @@ endif
 
 # Disassembles an executable according to various command-line switches.
 noinst_PROGRAMS += disassemble
-disassemble_SOURCES = disassemble.C
+disassemble_SOURCES = disassemble.C linux_syscalls.C
 disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 STATIC_TEST_TARGETS += disassemble.passed assembler.passed
 EXTRA_DIST += disassemble.conf disassemble.ans assembler.conf
@@ -311,6 +311,15 @@ testRegisters_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 STATIC_TEST_TARGETS += testRegisters.passed
 EXTRA_DIST += testRegisters.conf
 testRegisters.passed: testRegisters.conf testRegisters
+	@$(RTH_RUN) $< $@
+
+# Tests reading past the end-of-file
+noinst_PROGRAMS += testReadPastEOF
+testReadPastEOF_SOURCES = testReadPastEOF.C
+testReadPastEOF_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testReadPastEOF.passed
+EXTRA_DIST += testReadPastEOF.conf testReadPastEOF.ans
+testReadPastEOF.passed: testReadPastEOF.conf testReadPastEOF
 	@$(RTH_RUN) $< $@
 
 # Not sure what this does.
@@ -427,6 +436,9 @@ demo_testAstNeuter: testAstNeuter
 	: no demo yet for $<
 
 demo_testRegisters: testRegisters
+	: no demo yet for $<
+
+demo_testReadPastEOF: testReadPastEOF
 	: no demo yet for $<
 
 

@@ -220,6 +220,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/backend/unparser/formatSupport \
      -I$(top_srcdir)/src/backend/unparser/languageIndependenceSupport \
      -I$(top_srcdir)/src/backend/unparser/CxxCodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/JavaCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/FortranCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/PHPCodeGeneration \
      -I$(top_srcdir)/src/backend/asmUnparser \

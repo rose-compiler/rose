@@ -178,18 +178,6 @@ fi
 
 git submodule status
 ####################################################################################
-# (0)
-#   PRE-BUILD CLEANING 
-#
-####################################################################################
-if test -e ROSE-install ; then chmod -R u+xw ROSE-install ; fi
-    rm -rf ROSE-install
-
-if test -e ROSE-build ; then chmod -R u+wx ROSE-build ; fi
-    rm -rf ROSE-build
-    mkdir ROSE-build
-    cd ROSE-build
-####################################################################################
 # (1)
 #    CONFIGURE STEP
 #
@@ -200,6 +188,14 @@ else
    echo "Hudson tests on a new branch must run the ROSE build script."
    ./build
 fi
+
+if test -e ROSE-install ; then chmod -R u+xw ROSE-install ; fi
+    rm -rf ROSE-install
+
+if test -e ROSE-build ; then chmod -R u+wx ROSE-build ; fi
+    rm -rf ROSE-build
+    mkdir ROSE-build
+    cd ROSE-build
 
 echo "Starting configure step"
 # ../configure ${CONFIGURE_FLAGS}

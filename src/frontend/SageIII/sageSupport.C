@@ -2660,24 +2660,26 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
             // interface to be built to use case insensitive symbol table handling.
                SageBuilder::symbol_table_case_insensitive_semantics = true;
 
-            // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true).
-            // DQ (12/23/2008): Actually this is not redundant since the SgFile::initialization sets it to "false".
-            // Note: This is a little bit inconsistnat with the default set in ROSETTA.
-               file->set_requires_C_preprocessor(CommandlineProcessing::isFortranFileNameSuffixRequiringCPP(filenameExtension));
+               // determine whether to run this file through the C preprocessor
+               bool requires_C_preprocessor =
+                          // DXN (02/20/2011): rmod file should never require it
+                     (filenameExtension != "rmod")
+                      &&
+                     (
+                          // if the file extension implies it
+                          CommandlineProcessing::isFortranFileNameSuffixRequiringCPP(filenameExtension)
+                       ||
+                          //if the command line includes "-D" options
+                          ! getProject()->get_macroSpecifierList().empty()
+#if 0
+// SKW: disabled because the "*_postprocessed" dregs cause "ompLoweringTests/fortran" to fail 'distcleancheck'
+                       ||
+                          //if the command line includes "-I" options
+                          ! getProject()->get_includeDirectorySpecifierList().empty()
+#endif
+                      );
 
-            // DQ (10/18/2010): Test if the command line includes "-D" options. This is tested using the 
-            // "make testCPP_Defines" rule in the Fortran_tests directory.
-               if (getProject()->get_macroSpecifierList().empty() == false)
-                  {
-                 // Check if there are "-D" options on the command line and issue an error if the file suffix is wrong.
-                    if (file->get_requires_C_preprocessor() == false)
-                       {
-                         printf ("Error: \"-D\" options on the command line are processed within the Fortran support only for files with suffix: F, F90, F95, F03, F08. (matching gfortran behavior) \n");
-                         ROSE_ASSERT(false);
-                       }
-                  }
-
-            // printf ("Called set_requires_C_preprocessor(%s) \n",file->get_requires_C_preprocessor() ? "true" : "false");
+               file->set_requires_C_preprocessor(requires_C_preprocessor);
 
             // DQ (12/23/2008): This needs to be called after the set_requires_C_preprocessor() function is called.
             // If CPP processing is required then the global scope should have a source position using the intermediate
@@ -2838,11 +2840,25 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                             {
                               if ( CommandlineProcessing::isCudaFileNameSuffix(filenameExtension) == true )
                                  {
+                                   SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+                                   file = sourceFile;
                                    file->set_Cuda_only(true);
+
+                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                                // Note that file->get_requires_C_preprocessor() should be false.
+                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+                                   sourceFile->initializeGlobalScope();
                                  }
                                 else if ( CommandlineProcessing::isOpenCLFileNameSuffix(filenameExtension) == true )
                                  {
+                                   SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+                                   file = sourceFile;
                                    file->set_OpenCL_only(true);
+
+                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                                // Note that file->get_requires_C_preprocessor() should be false.
+                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+                                   sourceFile->initializeGlobalScope();
                                  }
                                 else if ( CommandlineProcessing::isJavaFileNameSuffix(filenameExtension) == true )
                                  {
@@ -3666,6 +3682,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         {
           inputCommandLine.push_back("--upc");
           inputCommandLine.push_back("--restrict");
+
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+       // DQ (2/17/2011): Added support for UPC (header are placed into include-staging directory).
+          inputCommandLine.push_back("--sys_include");
+          inputCommandLine.push_back(findRoseSupportPathFromBuild("include-staging", "share"));
+#endif
         }
 
   // DQ (9/19/2010): Added support for UPC++. Previously the UPC used the C++ language internally this had to 
@@ -3678,6 +3700,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
        // of C_dialect to allow C++ with UPC (which defines initial UPC++ work).
           inputCommandLine.push_back("--upc++");
           inputCommandLine.push_back("--restrict");
+
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+       // DQ (2/17/2011): Added support for UPC (header are placed into include-staging directory).
+          inputCommandLine.push_back("--sys_include");
+          inputCommandLine.push_back(findRoseSupportPathFromBuild("include-staging", "share"));
+#endif
         }
 
   // Generate --upc_threads n 
@@ -5424,25 +5452,24 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                fortran_C_preprocessor_commandLine.push_back(includeList[i]);
              }
 
+       // add option to specify preprocessing only
           fortran_C_preprocessor_commandLine.push_back("-E");
 
-#if 0
-// DQ (9/16/2009): I don't think we need to pass this to gfortran if we are just using gfortran to call CPP
+       // add source file name
+          string sourceFilename = get_sourceFileNameWithPath();
+          string preprocessFilename;
 
-// We need this #if since if gfortran is unavailable the macros for the major and minor version numbers will be empty strings (blank).
-#if USE_GFORTRAN_IN_ROSE
-       // DQ (9/16/2009): This option is not available in gfortran version 4.0.x (wonderful).
-       // DQ (5/20/2008): Need to select between fixed and free format
-       // fortran_C_preprocessor_commandLine.push_back("-ffree-line-length-none");
-          if ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER >= 1) )
-             {
-               fortran_C_preprocessor_commandLine.push_back("-ffree-line-length-none");
-             }
-#endif
-#endif
-          string sourceFilename              = get_sourceFileNameWithPath();
-          fortran_C_preprocessor_commandLine.push_back(sourceFilename);
+       // always create pseudonym for source file in case original extension does not permit preprocessing
+          string dir  = StringUtility::getPathFromFileName(sourceFilename);
+          string file = StringUtility::stripPathFromFileName(sourceFilename);
+          string base = StringUtility::stripFileSuffixFromFileName(file);
+          char * temp = tempnam(dir.c_str(), (base + "-").c_str());
+          preprocessFilename = string(temp) + ".F90"; free(temp);
+          int errorCode = link(sourceFilename.c_str(), preprocessFilename.c_str());
+          ROSE_ASSERT(!errorCode);
+          fortran_C_preprocessor_commandLine.push_back(preprocessFilename);
 
+          // add option to specify output file name
           fortran_C_preprocessor_commandLine.push_back("-o");
           string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
           fortran_C_preprocessor_commandLine.push_back(sourceFileNameOutputFromCpp);
@@ -5450,11 +5477,11 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           if ( SgProject::get_verbose() > 0 )
                printf ("cpp command line = %s \n",CommandlineProcessing::generateStringFromArgList(fortran_C_preprocessor_commandLine,false,false).c_str());
 
-          int errorCode = 0;
 #if USE_GFORTRAN_IN_ROSE
        // Some security checking here could be helpful!!!
           errorCode = systemFromVector (fortran_C_preprocessor_commandLine);
 #endif
+
        // DQ (10/1/2008): Added error checking on return value from CPP.
           if (errorCode != 0)
              {
@@ -5462,10 +5489,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                ROSE_ASSERT(false);
              }
 
-#if 0
-          printf ("Exiting as a test ... (after calling C preprocessor)\n");
-          ROSE_ASSERT(false);
-#endif
+       // clean up after alias processing
+          errorCode = unlink(preprocessFilename.c_str());
+          ROSE_ASSERT(!errorCode);
+
         }
 
 
@@ -6069,13 +6096,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 
   // printf ("######################### Inside of SgSourceFile::build_Java_AST() ############################ \n");
 
-#if 0
-  // DQ (10/26/2010): Java does not support include files (not the Java way of doing things).
-     bool requires_C_preprocessor = get_requires_C_preprocessor();
-     ROSE_ASSERT(requires_C_preprocessor == false);
-#else
      ROSE_ASSERT(get_requires_C_preprocessor() == false);
-#endif
 
   // DQ (10/11/2010): We don't need syntax checking because ECJ will do that.
   // bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
@@ -6087,43 +6108,20 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 
   // This is part of debugging output to call OFP and output the list of parser actions that WOULD be called.
   // printf ("get_output_parser_actions() = %s \n",get_output_parser_actions() ? "true" : "false");
-  // if (get_output_parser_actions() == true)
-     if (false)
+  // if (false)
+     if (get_output_parser_actions() == true)
         {
+          printf("Sorry, not implemented: output_parser_actions option is not supported for Java yet. \n");
+          ROSE_ASSERT(false);
+
        // DQ (1/19/2008): New version of OFP requires different calling syntax.
        // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " --dump " + get_sourceFileNameWithPath();
           vector<string> OFPCommandLine;
           OFPCommandLine.push_back(JAVA_JVM_PATH);
           OFPCommandLine.push_back(classpath);
-       // OFPCommandLine.push_back("fortran.ofp.FrontEnd");
-       // OFPCommandLine.push_back("--dump");
           OFPCommandLine.push_back("JavaTraversal");
+       // OFPCommandLine.push_back("--dump");
 
-       // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
-          const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
-          for (size_t i = 0; i < includeList.size(); i++)
-             {
-               OFPCommandLine.push_back(includeList[i]);
-             }
-
-#if 0
-       // DQ (10/26/2010): Java does not support include files (not the Java way of doing things).
-
-       // DQ (5/19/2008): Support for C preprocessing
-          if (requires_C_preprocessor == true)
-             {
-            // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
-            // Note that OFP has no support for CPP directives and will ignore them all.
-               string sourceFilename              = get_sourceFileNameWithPath();
-               string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
-               OFPCommandLine.push_back(sourceFileNameOutputFromCpp);
-             }
-            else
-             {
-            // Build the command line using the original file (to be used by OFP).
-               OFPCommandLine.push_back(get_sourceFileNameWithPath());
-             }
-#endif
 #if 0
           printf ("output_parser_actions: OFPCommandLine = %s \n",CommandlineProcessing::generateStringFromArgList(OFPCommandLine,false,false).c_str());
 #endif
@@ -6134,17 +6132,11 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 
           if (errorCode != 0)
              {
-               printf ("Running OFP ONLY causes an error (errorCode = %d) \n",errorCode);
-#if 1
-            // DQ (10/4/2008): Need to work with Liao to see why this passes for me but fails for him (and others).
-            // for now we can comment out the error checking on the running of OFP as part of getting the 
-            // output_parser_actions option (used for debugging).
+               printf ("Running ECJ ONLY causes an error (errorCode = %d) \n",errorCode);
                ROSE_ASSERT(false);
-#else
-               printf ("Skipping enforcement of exit after running OFP ONLY as (part of output_parser_actions option) \n");
-#endif
              }
-       // If this was selected as an option then we can stop here (rather than call OFP again).
+
+       // If this was selected as an option then we can stop here (rather than call ECJ again).
        // printf ("--- get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
           if (get_exit_after_parser() == true)
              {
@@ -6159,53 +6151,17 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
   // printf ("get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
      if (get_exit_after_parser() == true)
         {
+          printf("Sorry, not implemented: exit_after_parser option is not supported for Java yet. \n");
+          ROSE_ASSERT(false);
+
        // DQ (1/19/2008): New version of OFP requires different calling syntax.
        // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " " + get_sourceFileNameWithPath();
           vector<string> OFPCommandLine;
           OFPCommandLine.push_back(JAVA_JVM_PATH);
           OFPCommandLine.push_back(classpath);
-          OFPCommandLine.push_back("fortran.ofp.FrontEnd");
+       // OFPCommandLine.push_back("fortran.ofp.FrontEnd");
+          OFPCommandLine.push_back("JavaTraversal");
 
-          bool foundSourceDirectoryExplicitlyListedInIncludePaths = false;
-
-       // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
-          const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
-          for (size_t i = 0; i < includeList.size(); i++)
-             {
-               OFPCommandLine.push_back(includeList[i]);
-
-            // printf ("includeList[%d] = %s \n",i,includeList[i].c_str());
-
-            // I think we have to permit an optional space between the "-I" and the path
-               if ("-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
-                  {
-                 // The source file path is already included!
-                    foundSourceDirectoryExplicitlyListedInIncludePaths = true;
-                  }
-             }
-
-       // printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
-          if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
-             {
-            // Add the source directory to the include list so that we reproduce the semantics of gfortran
-               OFPCommandLine.push_back("-I" + getSourceDirectory() );
-             }
-
-#if 0
-       // DQ (10/26/2010): Java does not support include files (not the Java way of doing things).
-       // DQ (8/24/2010): Detect the use of CPP on the fortran file and use the correct generated file from CPP, if required.
-       // OFPCommandLine.push_back(get_sourceFileNameWithPath());
-          if (requires_C_preprocessor == true)
-             {
-               string sourceFilename = get_sourceFileNameWithoutPath();
-               string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
-               OFPCommandLine.push_back(sourceFileNameOutputFromCpp);
-             }
-            else
-             {
-               OFPCommandLine.push_back(get_sourceFileNameWithPath());
-             }
-#endif
 #if 0
           printf ("exit_after_parser: OFPCommandLine = %s \n",StringUtility::listToString(OFPCommandLine).c_str());
 #endif
@@ -6219,15 +6175,16 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
                printf ("Using option -rose:exit_after_parser (errorCode = %d) \n",errorCode);
                ROSE_ASSERT(false);
              }
-          printf ("Skipping all processing after parsing fortran (OFP) ... (get_exit_after_parser() == true) errorCode = %d \n",errorCode);
+          printf ("Skipping all processing after parsing java (ECJ) ... (get_exit_after_parser() == true) errorCode = %d \n",errorCode);
        // exit(0);
 
           ROSE_ASSERT(errorCode == 0);
           return errorCode;
        }
 
-  // DQ (1/19/2008): New version of OFP requires different calling syntax; new lib name is: libfortran_ofp_parser_java_FortranParserActionJNI.so old name: libparser_java_FortranParserActionJNI.so
-  // frontEndCommandLineString = std::string(argv[0]) + " --class parser.java.FortranParserActionJNI " + get_sourceFileNameWithPath();
+  // Note that for the ECJ JVM support, the filename must appear last on the command line.
+  // I think it is only an intermediate test before actually calling ECJ that requires 
+  // this so it could be relaxed with a bit of work.
      vector<string> frontEndCommandLine;
 
      frontEndCommandLine.push_back(argv[0]);
@@ -6242,62 +6199,19 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      display("Calling SgFile display");
 #endif
 
-#if 0
-  // DQ (10/26/2010): Java does not support include files (not the Java way of doing things).
-
-     const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
-     bool foundSourceDirectoryExplicitlyListedInIncludePaths = false;
-  // printf ("getSourceDirectory() = %s \n",getSourceDirectory().c_str());
-     for (size_t i = 0; i < includeList.size(); i++)
+  // Added an option to the ECJ command line to support different levels of output from the Java side of the house.
+     string verboseOptionString = "--rose:verbose " + StringUtility::numberToString(SgProject::get_verbose());
+     if (SgProject::get_verbose() > 0)
         {
-          frontEndCommandLine.push_back(includeList[i]);
-
-       // printf ("includeList[%d] = %s \n",i,includeList[i].c_str());
-
-       // I think we have to permit an optional space between the "-I" and the path
-          if (  "-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
-             {
-            // The source file path is already included!
-               foundSourceDirectoryExplicitlyListedInIncludePaths = true;
-             }
+          printf ("Debugging option to Java ECJ translation (java code) to build ROSE AST: verboseOptionString = %s \n",verboseOptionString.c_str());
         }
+     frontEndCommandLine.push_back(verboseOptionString);
 
-  // printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
-     if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
-        {
-       // Add the source directory to the include list so that we reproduce the semantics of gfortran
-          frontEndCommandLine.push_back("-I" + getSourceDirectory() );
-        }
-#else
+  // Java does not use include files, so we can enforce this.
      ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
-#endif
 
-#if 0
-  // DQ (10/26/2010): Java does not support CPP (not the Java way of doing things).
-
-  // DQ (5/19/2008): Support for C preprocessing
-     if (requires_C_preprocessor == true)
-        {
-       // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
-
-       // Note that the filename referenced in the Sg_File_Info objects will use the original file name and not 
-       // the generated file name of the CPP generated file.  This is because it gets the filename from the 
-       // SgSourceFile IR node and not from the filename provided on the internal command line generated for call OFP.
-
-          string sourceFilename              = get_sourceFileNameWithPath();
-          string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
-
-          frontEndCommandLine.push_back(sourceFileNameOutputFromCpp);
-        }
-       else
-        {
-       // If not being preprocessed, the fortran filename is just the original input source file name.
-          frontEndCommandLine.push_back(get_sourceFileNameWithPath());
-        }
-#else
-     ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
+  // Add the source file as the last argument on the command line (checked by intermediate testing before calling ECJ).
      frontEndCommandLine.push_back(get_sourceFileNameWithPath());
-#endif
 
 #if 1
      if ( get_verbose() > 0 )
@@ -6397,10 +6311,22 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::LinemarkerTraversal( co
 void
 SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode )
    {
-     SgStatement* statement = isSgStatement(astNode);
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+     extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
+    // DXN (02/21/2011): Consider the case of SgInterfaceBody.
+    // TODO: revise SgInterfaceBody::get_numberOfTraversalSuccessor() to return 1 and
+    // TODO: revise SgInterfaceBody::get_traversalSuccessorByIndex(int ) to return p_functionDeclaration
+    // Such changes will require some re-write of the code to build SgInterfaceBody.
+    // With such changes, the patch below to treat the case of SgInterfaceBody will no longer be necessary.
+    SgInterfaceBody* interfaceBody = isSgInterfaceBody(astNode);
+    if (interfaceBody)
+       {
+        AstSimpleProcessing::traverse(interfaceBody->get_functionDeclaration(), preorder);
+       }
+
+    SgStatement* statement = isSgStatement(astNode);
   // printf ("LinemarkerTraversal::visit(): statement = %p = %s \n",statement,(statement != NULL) ? statement->class_name().c_str() : "NULL");
-
      if (statement != NULL)
         {
           if ( SgProject::get_verbose() > 1 )
@@ -6457,7 +6383,14 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
                if ( SgProject::get_verbose() > 1 )
                     printf ("Setting the source position of statement = %p = %s to line = %d fileId = %d \n",statement,statement->class_name().c_str(),line,fileId);
 
-               statement->get_file_info()->set_file_id(fileId);
+          // DXN (02/18/2011): only reset the file id for the node whose file id corresponds to the "_postprocessed" file.
+               string sourceFilename              = Sg_File_Info::getFilenameFromID(fileId) ;
+               string sourceFileNameOutputFromCpp = OpenFortranParser_globalFilePointer->generate_C_preprocessor_intermediate_filename(sourceFilename);
+               int cppFileId = Sg_File_Info::getIDFromFilename(sourceFileNameOutputFromCpp);
+               if (statement->get_file_info()->get_file_id() == cppFileId)
+                  {
+                   statement->get_file_info()->set_file_id(fileId);
+                  }
             // statement->get_file_info()->set_line(line);
 
                if ( SgProject::get_verbose() > 1 )
@@ -6475,6 +6408,11 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
                ROSE_ASSERT(statement->get_file_info()->get_filenameString().empty() == false);
              }
         }
+#else  // ! ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+     // SKW: not called except from Fortran
+     printf(">>> SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit is not implemented for languages other than Fortran\n");
+     ROSE_ASSERT(false);
+#endif //   ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    }
 
 
@@ -6508,6 +6446,17 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
 
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
   // This is the function call to the EDG front-end (modified in ROSE to pass a SgFile)
+
+#if 0
+       // If this was selected as an option then we can stop here (rather than call OFP again).
+       // printf ("--- get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
+          if (get_exit_after_parser() == true)
+             {
+               printf ("Exiting after parsing... \n");
+               exit(0);
+             }
+#endif
+
      int edg_main(int, char *[], SgSourceFile & sageFile );
      int frontendErrorLevel = edg_main (edg_argc, edg_argv, *this);
 #else
@@ -6960,36 +6909,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      if (get_openmp_lowering())  
      {
        compilerNameString.push_back("-D_OPENMP");
-       // Liao, 9/22/2009, we also specify the search path for libgomp_g.h, which is installed under $ROSE_INS/include
-       // and the path to libgomp.a/libgomp.so, which are located in $GCC_GOMP_OPENMP_LIB_PATH
-
-       // Header should always be available 
-       // the conditional compilation is necessary to pass make distcheck,
-       // where only a minimum configuration options are used and not all macros are defined. 
-#ifdef ROSE_INSTALLATION_PATH 
-       string include_path(ROSE_INSTALLATION_PATH);
-       include_path += "/include"; 
-       compilerNameString.push_back("-I"+include_path); 
-#endif
-#if 0  // moved to the very end       
-#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY       
-       // lib path is available if --with-gomp_omp_runtime_library=XXX is used
-       if (USE_ROSE_GOMP_OPENMP_LIBRARY)
-       {
-         // only linking phase needs this
-         if (!get_compileOnly()) 
-         {
-           string gomp_lib_path(GCC_GOMP_OPENMP_LIB_PATH);
-           ROSE_ASSERT (gomp_lib_path.size() != 0);
- //          compilerNameString.push_back("-L"+gomp_lib_path); 
-           compilerNameString.push_back(gomp_lib_path+"/libgomp.a"); // static linking for simplicity
-           compilerNameString.push_back("-lpthread"); 
-         }
-       }
-#endif       
-#endif       
      }
- 
+
   // DQ (3/31/2004): New cleaned up source file handling
      Rose_STL_Container<string> argcArgvList = argv;
 
@@ -7161,28 +7082,56 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // is in the current directory (likely a generated file itself; e.g. swig or ROSE applied recursively, etc.)).
   // printf ("oldFileNamePathOnly.length() = %d \n",oldFileNamePathOnly.length());
      if (oldFileNamePathOnly.empty() == false)
-        {
-#if 1       
+     {
+       vector<string>::iterator iter;
+       // find the very first -Ixxx option's position
+       for (iter = compilerNameString.begin(); iter != compilerNameString.end(); iter++) 
+       {
+         string cur_string =*iter;
+         string::size_type pos = cur_string.find("-I",0);
+         if (pos==0) 
+           break;
+       }
        // Liao, 5/15/2009
        // the input source file's path has to be the first one to be searched for header!
        // This is required since one of the SPEC CPU 2006 benchmarks: gobmk relies on this to be compiled.
-          vector<string>::iterator iter;
-       // find the very first -Ixxx option's position
-          for (iter = compilerNameString.begin(); iter != compilerNameString.end(); iter++) 
-             {
-               string cur_string =*iter;
-               string::size_type pos = cur_string.find("-I",0);
-               if (pos==0)
-                    break;
-             }
-
        // insert before the position
-          compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
-#else        
-          compilerNameString.push_back(std::string("-I") + oldFileNamePathOnly);
-#endif
-        }
+       compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
+     }
 
+    // Liao 3/30/2011. the search path for the installation path should be the last one, after paths inside
+    // source trees, such as -I../../../../sourcetree/src/frontend/SageIII and 
+    // -I../../../../sourcetree/src/midend/programTransformation/ompLowering
+     if (get_openmp_lowering())  
+     {
+       vector<string>::iterator iter, iter_last_inc=compilerNameString.begin();
+       // find the very last -Ixxx option's position
+       // This for loop cannot be merged with the previous one due to iterator invalidation rules.
+       for (iter = compilerNameString.begin(); iter != compilerNameString.end(); iter++) 
+       {
+         string cur_string =*iter;
+         string::size_type pos = cur_string.find("-I",0);
+         if (pos==0) 
+         {
+           iter_last_inc = iter;
+         }
+       }
+       if (iter_last_inc != compilerNameString.end())
+         iter_last_inc ++; // accommodate the insert-before-an-iterator semantics used in vector::insert() 
+ 
+       // Liao, 9/22/2009, we also specify the search path for libgomp_g.h, which is installed under $ROSE_INS/include
+       // and the path to libgomp.a/libgomp.so, which are located in $GCC_GOMP_OPENMP_LIB_PATH
+
+       // Header should always be available 
+       // the conditional compilation is necessary to pass make distcheck,
+       // where only a minimum configuration options are used and not all macros are defined. 
+#ifdef ROSE_INSTALLATION_PATH 
+       string include_path(ROSE_INSTALLATION_PATH);
+       include_path += "/include"; 
+       compilerNameString.insert(iter_last_inc, "-I"+include_path); 
+#endif
+     }
+ 
   // DQ (4/20/2006): This allows the ROSE translator to be just a wrapper for the backend (vendor) compiler.
   // compilerNameString += get_unparse_output_filename();
      if (get_skip_unparse() == false)

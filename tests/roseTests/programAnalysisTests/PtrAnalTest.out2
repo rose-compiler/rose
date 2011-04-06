@@ -47,8 +47,8 @@ ctrl: 16->17 always
 ctrl: 17->18 always
 
  Mapping 
-SgBasicBlock:{if(end ==((0))) {head =(end =(::new ::List()));}else {( *end).::List::next =(::new ::List());end =(( *end).::List::next);}( *end).::List::val = val;( *end).::List::next =((0));}:6->18
-SgIfStmt:if(end ==((0))) {head =(end =(::new ::List()));}else {( *end).::List::next =(::new ::List());end =(( *end).::List::next);}:6->15
+SgBasicBlock:{if(end ==((0))) {head =(end =(::new ::List()));}else {( *end).::List::next =(::new ::List());end =( *end).::List::next;}( *end).::List::val = val;( *end).::List::next =((0));}:6->18
+SgIfStmt:if(end ==((0))) {head =(end =(::new ::List()));}else {( *end).::List::next =(::new ::List());end =( *end).::List::next;}:6->15
 SgExprStatement:end ==((0));:6->7
 SgEqualityOp:end ==((0)):7v:appendList-3-4
 SgVarRefExp:end:7v:appendList-3-end
@@ -60,17 +60,17 @@ SgAssignOp:head =(end =(::new List())):10v:appendList-3-head
 SgVarRefExp:head:10v:appendList-3-head
 SgAssignOp:(end =(::new List())):10v:appendList-3-end
 SgVarRefExp:end:9v:appendList-3-end
-SgBasicBlock:{( *end).::List::next =(::new ::List());end =(( *end).::List::next);}:11->15
+SgBasicBlock:{( *end).::List::next =(::new ::List());end =( *end).::List::next;}:11->15
 SgExprStatement:( *end).List::next =(::new List());:11->12
 SgAssignOp:( *end).List::next =(::new List()):12v:appendList-3-7
 SgDotExp:( *end).List::next:12v:appendList-3-7
 SgPointerDerefExp:( *end):12v:appendList-3-7
 SgVarRefExp:end:12v:appendList-3-end
 SgNewExp:(::new List()):12v:appendList-3-7
-SgExprStatement:end =(( *end).List::next);:13->15
-SgAssignOp:end =(( *end).List::next):15v:appendList-3-end
+SgExprStatement:end =( *end).List::next;:13->15
+SgAssignOp:end =( *end).List::next:15v:appendList-3-end
 SgVarRefExp:end:15v:appendList-3-end
-SgDotExp:(( *end).List::next):15v:appendList-3-end
+SgDotExp:( *end).List::next:15v:appendList-3-end
 SgPointerDerefExp:( *end):15v:appendList-3-9
 SgVarRefExp:end:13v:appendList-3-end
 SgVarRefExp:next:15d:next

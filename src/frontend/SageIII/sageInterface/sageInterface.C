@@ -3483,6 +3483,23 @@ SageInterface::is_PHP_language()
      return returnValue;
    }
 
+bool
+SageInterface::is_Cuda_language()
+   {
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_Cuda_only() == true)
+               returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 bool SageInterface::is_mixed_C_and_Cxx_language()
    {
      return is_C_language() && is_Cxx_language();
@@ -5917,7 +5934,7 @@ bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
      result = true;
    else
     {
-      if (is_C_language()||is_C99_language()||is_PHP_language())
+      if (is_C_language()||is_C99_language()||is_PHP_language()||is_Cuda_language())
       {
         if (func1->get_name() == func2->get_name())
           result = true;
@@ -6495,7 +6512,7 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
 
    SgScopeStatement* scope = target_loop->get_scope();
    ROSE_ASSERT(scope != NULL);
-   string fringe_name = "_lu_fringe";
+   string fringe_name = "_lu_fringe_"+ StringUtility::numberToString(++gensym_counter);
    SgVariableDeclaration* fringe_decl = buildVariableDeclaration(fringe_name, buildIntType(),buildAssignInitializer(initor), scope);
    insertStatementBefore(target_loop, fringe_decl);
    attachComment(fringe_decl, "iter_count = (ub-lb+1)%step ==0?(ub-lb+1)/step: (ub-lb+1)/step+1;");
@@ -8175,6 +8192,17 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                                    insertStatement(isSgStatement(parent),newStmt,insertBefore);
                                  }
                        }
+                      else // \pp (2/24/2011) added support for UpcForAll
+                        if (SgUpcForAllStatement* p = isSgUpcForAllStatement(parent))
+                        {
+                          const bool stmt_present = (  p->get_loop_body() == targetStmt
+                                                    || p->get_test() == targetStmt
+                                                    );
+
+                          // \pp \todo what if !stmt_present
+                          ROSE_ASSERT(stmt_present);
+                          insertStatement(p, newStmt, insertBefore);
+                        }
                       else
                          isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
 
@@ -8429,9 +8457,9 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
     SgClassDeclaration* nondefdecl = isSgClassDeclaration(structDecl->get_firstNondefiningDeclaration());
     ROSE_ASSERT(nondefdecl != NULL);
 
-    ROSE_ASSERT(structDecl->get_definingDeclaration() != NULL);
+    //ROSE_ASSERT(structDecl->get_definingDeclaration() != NULL);
     SgClassDeclaration* defdecl = isSgClassDeclaration(structDecl->get_definingDeclaration());
-    ROSE_ASSERT(defdecl != NULL);
+    //ROSE_ASSERT(defdecl != NULL);
 
     // Liao, 9/2/2009
     // fixup missing scope when bottomup AST building is used
@@ -8459,11 +8487,11 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
       ROSE_ASSERT(mysymbol);
       scope->insert_symbol(name, mysymbol);
 
-      ROSE_ASSERT(defdecl != NULL);
-      defdecl->set_scope(scope);
+      //ROSE_ASSERT(defdecl != NULL);
+      if (defdecl) defdecl->set_scope(scope);
       nondefdecl->set_scope(scope);
 
-      defdecl->set_parent(scope);
+      if (defdecl) defdecl->set_parent(scope);
       nondefdecl->set_parent(scope);
     }
     //fixup SgClassType, which is associated with the first non-defining declaration only
@@ -8474,15 +8502,18 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
     }
     ROSE_ASSERT (nondefdecl->get_type() != NULL);
 
-    ROSE_ASSERT(defdecl != NULL);
-    if (defdecl->get_type()!= nondefdecl->get_type())
+    //ROSE_ASSERT(defdecl != NULL);
+    if (defdecl)
     {
-      if (defdecl->get_type())
-        delete defdecl->get_type();
-      defdecl->set_type(nondefdecl->get_type());
+      if (defdecl->get_type()!= nondefdecl->get_type())
+      {
+        if (defdecl->get_type())
+          delete defdecl->get_type();
+        defdecl->set_type(nondefdecl->get_type());
+      }
+      ROSE_ASSERT (defdecl->get_type() != NULL);
+      ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
     }
-    ROSE_ASSERT (defdecl->get_type() != NULL);
-    ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
   }
 
   void SageInterface::fixClassDeclaration(SgClassDeclaration* classDecl, SgScopeStatement* scope)
@@ -11167,6 +11198,61 @@ declarationContainsDependentDeclarations( SgDeclarationStatement* decl, vector<S
 
      return returnValue;
    }
+//! Insert an expression (new_exp )before another expression (anchor_exp) has possible side effects, with minimum changes to the original semantics. This is achieved by using a comma operator: (new_exp, anchor_exp). The comma operator is returned.
+SgCommaOpExp * SageInterface::insertBeforeUsingCommaOp (SgExpression* new_exp, SgExpression* anchor_exp)
+{
+  ROSE_ASSERT (new_exp != NULL);
+  ROSE_ASSERT (anchor_exp != NULL);
+  ROSE_ASSERT (new_exp != anchor_exp);
+
+  SgNode* parent = anchor_exp->get_parent();
+  ROSE_ASSERT (parent != NULL);
+
+  //TODO use deep copy may be a better way, avoid reusing the original anchor_exp
+  SgCommaOpExp * result = buildCommaOpExp(new_exp, NULL);
+  ROSE_ASSERT (result != NULL);
+  replaceExpression (anchor_exp, result, true);
+
+  result->set_rhs_operand(anchor_exp);
+  anchor_exp->set_parent(result);
+  return result ;
+}
+
+
+//! Insert an expression (new_exp ) after another expression (anchor_exp) has possible side effects, with minimum changes to the original semantics. This is done by using two comma operators:  type T1; ... ((T1 = anchor_exp, new_exp),T1) )... , where T1 is a temp variable saving the possible side effect of anchor_exp. The top level comma op exp is returned. The reference to T1 in T1 = anchor_exp is saved in temp_ref.  
+SgCommaOpExp * SageInterface::insertAfterUsingCommaOp (SgExpression* new_exp, SgExpression* anchor_exp, SgStatement** temp_decl /* = NULL */, SgVarRefExp** temp_ref /* = NULL */)
+{
+  ROSE_ASSERT (new_exp != NULL);
+  ROSE_ASSERT (anchor_exp != NULL);
+  ROSE_ASSERT (new_exp != anchor_exp);
+
+  SgNode* parent = anchor_exp->get_parent();
+  ROSE_ASSERT (parent != NULL);
+
+  // insert TYPE T1; right before the enclosing statement of anchor_exp
+  SgType * t = anchor_exp ->get_type();
+  ROSE_ASSERT (t != NULL);
+  SgStatement * enclosing_stmt = getEnclosingStatement(anchor_exp);
+  ROSE_ASSERT (enclosing_stmt != NULL);
+
+  gensym_counter ++;
+  string temp_name = "_t_"+ StringUtility::numberToString(gensym_counter); 
+  SgVariableDeclaration* t_decl = buildVariableDeclaration(temp_name, t, NULL, enclosing_stmt->get_scope());
+  insertStatementBefore (enclosing_stmt, t_decl);
+  SgVariableSymbol * temp_sym = getFirstVarSym (t_decl);
+  ROSE_ASSERT (temp_sym != NULL);
+  if (temp_decl)
+    *temp_decl = t_decl;
+  
+  // build ((T1 = anchor_exp, new_exp),T1) )
+  SgVarRefExp * first_ref = buildVarRefExp(temp_sym); 
+  if (temp_ref) 
+    * temp_ref = first_ref;
+  SgCommaOpExp * result = buildCommaOpExp ( buildCommaOpExp (buildAssignOp ( first_ref, deepCopy(anchor_exp)), new_exp) , buildVarRefExp(temp_sym));
+  replaceExpression (anchor_exp, result, false);
+
+  return result;
+}
 
 void
 SageInterface::addMessageStatement( SgStatement* stmt, string message )

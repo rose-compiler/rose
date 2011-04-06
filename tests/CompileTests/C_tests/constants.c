@@ -27,8 +27,12 @@ void foo()
   // Note that FP_NAN and FP_INFINITE are C99 specific
 
 #ifdef __GNUC__
+// TOO (2/14/11): thrifty compiler (gcc 3.4.4) does not
+// support NAN macro
+#if __GNUC__ >= 4 
      float  a_nan_float  = NAN;
      double a_nan_double = NAN;
+#endif
 #else
      float  a_nan_float  = __NAN__;
      double a_nan_double = __NAN__;
