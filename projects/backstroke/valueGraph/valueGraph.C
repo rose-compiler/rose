@@ -11,21 +11,6 @@ using namespace std;
 #define foreach BOOST_FOREACH
 
 
-bool EventReverser::PathEdgeSelector::operator()(const VGEdge& e) const
-{
-    ValueGraphEdge* edge = (*valueGraph)[e];
-
-    // The ordered edge does not have path information, so trace its 
-    // corresponding normal edge.
-    if (isOrderedEdge(edge))
-    {
-        VGEdge realEdge = *(boost::in_edges(
-                boost::source(e, *valueGraph), *valueGraph).first);
-        edge = (*valueGraph)[realEdge];
-    }
-    return edge->dagIndex == dagIndex && edge->paths[pathIndex];
-}
-
 void EventReverser::buildValueGraph()
 {
     // First, build the basic part of the value graph.
@@ -81,7 +66,7 @@ void EventReverser::addPathsToEdges()
         }
     }
 
-#if 1
+#if 0
     set<VGVertex> processedPhiNodes;
     foreach (VGVertex phiNode, phiNodes)
     {
@@ -130,7 +115,7 @@ EventReverser::PathSetWithIndex EventReverser::addPathsForPhiNodes(
         set<EventReverser::VGVertex>& processedPhiNodes)
 {
     // Suppose all paths are in the same set.
-    map<VGEdge, PathSetWithIndex> paths;
+    //map<VGEdge, PathSetWithIndex> paths;
 
     foreach (VGVertex tar, boost::adjacent_vertices(phiNode, valueGraph_))
     {
@@ -162,6 +147,7 @@ void EventReverser::processLastVersions()
         VersionedVariable var(name, nameDef.second->getRenamingNumber());
         if (varVertexMap_.count(var) == 0)
         {
+            pseudoDefMap_[var] = nameDef.second;
             addValueGraphPhiNode(var);
         }
 
@@ -543,7 +529,7 @@ VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
         if (iter != defTable.end())
         {
             //ROSE_ASSERT(defTable.count(varName) > 0);
-            SSA::ReachingDefPtr reachingDef = defTable.find(varName)->second;
+            SSA::ReachingDefPtr reachingDef = iter->second;
             version = reachingDef->getRenamingNumber();
 
             // If its reaching def is a phi function, it's a pseudo def.

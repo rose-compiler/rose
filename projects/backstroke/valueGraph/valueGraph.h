@@ -5,6 +5,7 @@
 #include "valueGraphNode.h"
 #include "pathNumGenerator.h"
 #include <ssa/staticSingleAssignment.h>
+#include <boost/function.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/filtered_graph.hpp>
 
@@ -22,25 +23,11 @@ public:
 
 private:
     typedef std::pair<int, PathSet> PathSetWithIndex;
-    typedef std::vector<VGEdge> Route;
 	typedef StaticSingleAssignment SSA;
 	typedef SSA::VarName VarName;
-
-    //! A internal class which is used to get a subgraph according to the path.
-    struct PathEdgeSelector
-    {
-        PathEdgeSelector() {}
-        PathEdgeSelector(ValueGraph* vg, int dagIdx, int pathIdx)
-        : valueGraph(vg), dagIndex(dagIdx), pathIndex(pathIdx) {}
-
-        bool operator()(const VGEdge& e) const;
-
-        ValueGraph* valueGraph;
-        int dagIndex;
-        int pathIndex;
-    };
-
-    typedef boost::filtered_graph<ValueGraph, PathEdgeSelector> SubValueGraph;
+    typedef boost::filtered_graph<
+        ValueGraph,
+        boost::function<bool(const VGEdge&)> > SubValueGraph;
 
 private:
     //! The event function definition.
@@ -156,10 +143,12 @@ private:
     //! and all available variables are found.
     void processLastVersions();
 
+    //! Returns if the given edge belongs to the given path.
+    bool edgeBelongsToPath(const VGEdge& e, int dagIndex, int pathIndex) const;
+
     //! Get all routes for state variables.
     void getReversalRoute(const SubValueGraph& subgraph,
-                          const std::vector<VGVertex>& valuesToRestore,
-                          std::map<VGVertex, std::vector<Route> >& routes);
+                          const std::vector<VGVertex>& valuesToRestore);
 
 	void writeValueGraphNode(std::ostream& out, const VGVertex& node) const
 	{

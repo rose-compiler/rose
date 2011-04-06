@@ -1,4 +1,5 @@
 #include "valueGraph.h"
+#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 //#include <boost/graph/graphviz.hpp>
 #include <boost/lexical_cast.hpp>
@@ -52,6 +53,21 @@ void graphToDot(const Graph& g, const std::string& filename)
 #endif
 
 
+bool EventReverser::edgeBelongsToPath(const VGEdge& e, int dagIndex, int pathIndex) const
+{
+    ValueGraphEdge* edge = valueGraph_[e];
+
+    // The ordered edge does not have path information, so trace its
+    // corresponding normal edge.
+    if (isOrderedEdge(edge))
+    {
+        VGEdge realEdge = *(boost::in_edges(
+                boost::source(e, valueGraph_), valueGraph_).first);
+        edge = valueGraph_[realEdge];
+    }
+    return edge->dagIndex == dagIndex && edge->paths[pathIndex];
+}
+
 void EventReverser::getSubGraph(int dagIndex, int pathIndex)
 {
     //!!!
@@ -60,8 +76,12 @@ void EventReverser::getSubGraph(int dagIndex, int pathIndex)
     int pathNum = pathNumManager_.getPathNum(dagIndex);
     for (int i = 0; i < pathNum; ++i)
     {
-        PathEdgeSelector edgeSelector(&valueGraph_, dagIndex, i);
-        SubValueGraph subgraph(valueGraph_, edgeSelector);
+        //PathEdgeSelector edgeSelector(&valueGraph_, dagIndex, i);
+        //SubValueGraph subgraph(valueGraph_, edgeSelector);
+
+        SubValueGraph subgraph(valueGraph_,
+                               boost::bind(&EventReverser::edgeBelongsToPath,
+                                           this, ::_1, dagIndex, i));
 
         string filename = "VG" + boost::lexical_cast<string>(i);
         //cout << subgraph << endl;
@@ -72,8 +92,7 @@ void EventReverser::getSubGraph(int dagIndex, int pathIndex)
             //cout << subgraph[e]->toString() << endl;
         }
 
-        map<VGVertex, vector<Route> > routes;
-        getReversalRoute(subgraph, valuesToRestore_, routes);
+        getReversalRoute(subgraph, valuesToRestore_);
         //graphToDot(subgraph, filename);
     }
 }
@@ -83,11 +102,13 @@ namespace // anonymous namespace
 {
     typedef EventReverser::VGVertex VGVertex;
     typedef EventReverser::VGEdge   VGEdge;
+    typedef pair<vector<VGEdge>, int> RouteWithCost;
+
 
     // A local structure to help find all routes.
-    struct ReversalRoute
+    struct RouteWithNodes
     {
-        ReversalRoute() : cost(0) {}
+        RouteWithNodes() : cost(0) {}
 
         vector<VGEdge>   edges;
         vector<pair<VGVertex, VGVertex> >  nodes;
@@ -109,104 +130,116 @@ namespace // anonymous namespace
     }
 } // end of anonymous
 
+//void EventReverser::getShortestRoute(
+//        const map<VGVertex, vector<RouteWithCost> >& allRoutes)
+//{
+//
+//}
 
 void EventReverser::getReversalRoute(
         const SubValueGraph& subgraph,
-        const vector<VGVertex>& valuesToRestore,
-        map<VGVertex, vector<Route> >& allRoutes)
+        const vector<VGVertex>& valuesToRestore)
 {
+    map<VGVertex, vector<RouteWithNodes> > allRoutes;
+
     foreach (VGVertex valNode, valuesToRestore)
     {
-        ReversalRoute route;
+        RouteWithNodes route;
         route.nodes.push_back(make_pair(valNode, valNode));
 
-        vector<ReversalRoute> routes(1, route);
+        vector<RouteWithNodes> routes(1, route);
 
         // This stack stores all possible routes for the state variable.
-        stack<ReversalRoute> unfinishedRoutes;
+        stack<RouteWithNodes> unfinishedRoutes;
         unfinishedRoutes.push(route);
 
         while (!unfinishedRoutes.empty())
         {
             // Fetch a route.
-            ReversalRoute unfinishedRoute = unfinishedRoutes.top();
+            RouteWithNodes unfinishedRoute = unfinishedRoutes.top();
             unfinishedRoutes.pop();
 
-            if (!unfinishedRoute.nodes.empty())
+            if (unfinishedRoute.nodes.empty())
+                continue;
+
+            // Get the node on the top, and find it out edges.
+            VGVertex node = unfinishedRoute.nodes.back().first;
+
+            // If this node is an operatot node, add all its operands.
+            if (isOperatorNode(subgraph[node]))
             {
-                // Get the node on the top, and find it out edges.
-                VGVertex node = unfinishedRoute.nodes.back().first;
-
-                // If this node is an operatot node, add all its operands.
-                if (isOperatorNode(subgraph[node]))
-                {
-                    ReversalRoute newRoute = unfinishedRoute;
-                    foreach (const VGEdge& edge, boost::out_edges(node, subgraph))
-                    {
-                        VGVertex tar = boost::target(edge, subgraph);
-
-                        // The the following function returns true if adding
-                        // this edge will form a circle.
-                        if (containsVertex(unfinishedRoute.nodes, tar))
-                            goto NEXT;
-
-                        newRoute.edges.push_back(edge);
-                        newRoute.nodes.push_back(make_pair(tar, node));
-                    }
-                    unfinishedRoutes.push(newRoute);
-                    continue;
-                }
-
+                RouteWithNodes newRoute = unfinishedRoute;
                 foreach (const VGEdge& edge, boost::out_edges(node, subgraph))
                 {
                     VGVertex tar = boost::target(edge, subgraph);
 
-                    // If the target is the root, go back in the stack.
-                    if (tar == root_)
-                    {
-                        ReversalRoute newRoute = unfinishedRoute;
-                        newRoute.edges.push_back(edge);
-                        
-                        // Keep removing nodes from the stack if the node before this
-                        // node is its parent node.
-                        VGVertex parent;
-                        do
-                        {
-                            parent = newRoute.nodes.back().second;
-                            newRoute.nodes.pop_back();
-                            if (newRoute.nodes.empty()) break;
-                        } while (parent == newRoute.nodes.back().first);
-
-                        // If there is no nodes in this route, this route is finished.
-                        if (newRoute.nodes.empty())
-                        {
-                            foreach (const VGEdge& edge, newRoute.edges)
-                                newRoute.cost += subgraph[edge]->cost;
-                            allRoutes[valNode].push_back(newRoute.edges);
-
-
-                            foreach (const VGEdge& e, newRoute.edges)
-                                cout << subgraph[e]->toString() << " ==> ";
-                            cout << "  cost: " << newRoute.cost << "\n";
-                        }
-                        else
-                            unfinishedRoutes.push(newRoute);
-                        continue;
-                    }
-
                     // The the following function returns true if adding
                     // this edge will form a circle.
                     if (containsVertex(unfinishedRoute.nodes, tar))
-                        continue;
+                        goto NEXT;
 
-                    ReversalRoute newRoute = unfinishedRoute;
                     newRoute.edges.push_back(edge);
                     newRoute.nodes.push_back(make_pair(tar, node));
-                    unfinishedRoutes.push(newRoute);
-                } // end of foreach (const VGEdge& edge, boost::out_edges(node, subgraph))
+                }
+                unfinishedRoutes.push(newRoute);
+                continue;
+            }
+
+            foreach (const VGEdge& edge, boost::out_edges(node, subgraph))
+            {
+                VGVertex tar = boost::target(edge, subgraph);
+
+                // If the target is the root, go back in the stack.
+                if (tar == root_)
+                {
+                    RouteWithNodes newRoute = unfinishedRoute;
+                    newRoute.edges.push_back(edge);
+
+                    // Keep removing nodes from the stack if the node before this
+                    // node is its parent node.
+                    VGVertex parent;
+                    do
+                    {
+                        parent = newRoute.nodes.back().second;
+                        newRoute.nodes.pop_back();
+                        if (newRoute.nodes.empty()) break;
+                    } while (parent == newRoute.nodes.back().first);
+
+                    if (!newRoute.nodes.empty())
+                    {
+                        unfinishedRoutes.push(newRoute);
+                        continue;
+                    }
+
+#if 1
+                    foreach (const VGEdge& e, newRoute.edges)
+                        cout << subgraph[e]->toString() << " ==> ";
+                    cout << "  cost: " << newRoute.cost << "\n";
+#endif
+              
+                    // If there is no nodes in this route, this route is finished.
+                    foreach (const VGEdge& edge, newRoute.edges)
+                        newRoute.cost += subgraph[edge]->cost;
+
+                    //vector<RouteWithCost>& routeWithNodes = allRoutes[valNode];
+                    allRoutes[valNode].push_back(newRoute);
+                    //routeWithCost.back().first.swap(newRoute.edges);
+      
+                    continue;
+                }
+
+                // The the following function returns true if adding
+                // this edge will form a circle.
+                if (containsVertex(unfinishedRoute.nodes, tar))
+                    continue;
+
+                RouteWithNodes newRoute = unfinishedRoute;
+                newRoute.edges.push_back(edge);
+                newRoute.nodes.push_back(make_pair(tar, node));
+                unfinishedRoutes.push(newRoute);
+            } // end of foreach (const VGEdge& edge, boost::out_edges(node, subgraph))
 NEXT:
-                ;
-            } // end of if (!unfinishedRoute.nodes.empty())
+            ;
         } // end of while (!unfinishedRoutes.empty())
     } // end of foreach (VGVertex valNode, valuesToRestore)
 }
