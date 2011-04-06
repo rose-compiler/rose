@@ -1,4 +1,5 @@
 #include "threadSupport.h"
+#include <errno.h>
 #include <stdarg.h>
 #include <string.h>
 
@@ -6,6 +7,7 @@
  *                                      Read-write locks
  ******************************************************************************************************************************/
 
+#ifdef ROSE_THREADS_ENABLED
 int
 RTS_rwlock_init(RTS_rwlock_t *lock, pthread_rwlockattr_t *attrs)
 {
@@ -18,10 +20,18 @@ RTS_rwlock_init(RTS_rwlock_t *lock, pthread_rwlockattr_t *attrs)
     status = pthread_mutex_init(&lock->mutex, NULL);
     return status;
 }
+#else
+int
+RTS_rwlock_init(RTS_rwlock_t*, void *attrs)
+{
+    return ENOSYS;
+}
+#endif
 
 int
 RTS_rwlock_wrlock(RTS_rwlock_t *lock)
 {
+#ifdef ROSE_THREADS_ENABLED
     /* Check whether the lock is recursive in this thread. If so, then allow the request to proceed by simply updating some
      * information in the lock object. */
     bool recursive = false;
@@ -44,11 +54,15 @@ RTS_rwlock_wrlock(RTS_rwlock_t *lock)
         } RTS_MUTEX_END;
     }
     return 0;
+#else
+    return ENOSYS;
+#endif
 }
 
 int
 RTS_rwlock_rdlock(RTS_rwlock_t *lock)
 {
+#ifdef ROSE_THREADS_ENABLED
     /* Check whether this thread already holds a write lock. If so, then allow the request to proceed by simply updating some
      * information in the lock object. */
     bool recursive = false;
@@ -69,11 +83,15 @@ RTS_rwlock_rdlock(RTS_rwlock_t *lock)
     }
 
     return 0;
+#else
+    return ENOSYS;
+#endif
 }
 
 int
 RTS_rwlock_unlock(RTS_rwlock_t *lock)
 {
+#ifdef ROSE_THREADS_ENABLED
     /* Check whether this thread already holds a write lock plus one or more recursive locks.  If so, then all we need to do is
      * update some information in the lock object.
      *
@@ -93,6 +111,9 @@ RTS_rwlock_unlock(RTS_rwlock_t *lock)
     }
 
     return 0;
+#else
+    return ENOSYS;
+#endif
 }
 
 

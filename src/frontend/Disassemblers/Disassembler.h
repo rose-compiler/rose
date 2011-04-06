@@ -1,7 +1,6 @@
 #ifndef ROSE_DISASSEMBLER_H
 #define ROSE_DISASSEMBLER_H
 
-#include "threadSupport.h"
 #include "Registers.h"
 
 /** Virtual base class for instruction disassemblers.
