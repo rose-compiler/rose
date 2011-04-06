@@ -532,7 +532,7 @@ void StaticSingleAssignment::updateIncomingPropagatedDefs(FilteredCfgNode cfgNod
 				if (existingDef->isPhiFunction() && existingDef->getDefinitionNode() == astNode)
 				{
 					//There is a phi node here. We update the phi function to point to the previous reaching definition
-					existingDef->addJoinedDef(previousDef);
+					existingDef->addJoinedDef(previousDef, inEdges[i].getPath().getEdges().back());
 				}
 				else
 				{

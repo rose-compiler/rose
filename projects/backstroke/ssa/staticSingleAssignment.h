@@ -90,8 +90,6 @@ public:
 	/** Map from each node to the variables used at that node and their reaching definitions. */
 	typedef boost::unordered_map<SgNode*, NodeReachingDefTable> UseTable;
 
-	typedef ssa_private::ControlPredicate<FilteredCfgEdge> CfgPredicate;
-
 private:
 	//Private member variables
 

@@ -286,8 +286,10 @@ EventReverser::VGVertex EventReverser::addValueGraphPhiNode(VersionedVariable& v
 
     // For every phi function parameter, chech if it is also a pseudo def.
     // If it is, add another phi node and connect them. Else, add an edge.
-    foreach (SSA::ReachingDefPtr def, reachingDef->getJoinedDefs())
+	pair<SSA::ReachingDefPtr, CFGEdge> defEdgePair;
+    foreach (defEdgePair, reachingDef->getJoinedDefs())
     {
+		SSA::ReachingDefPtr def = defEdgePair.first;
         int version = def->getRenamingNumber();
 
         // If this def is also a phi node, add a varWithVersin entry
