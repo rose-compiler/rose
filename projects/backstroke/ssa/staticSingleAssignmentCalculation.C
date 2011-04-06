@@ -263,7 +263,7 @@ void StaticSingleAssignment::run(bool interprocedural)
 				insertPhiFunctions(func, functionCfgNodesPostorder);
 
 		//Renumber all instantiated ReachingDef objects
-		renumberAllDefinitions(functionCfgNodesPostorder);
+		renumberAllDefinitions(func, functionCfgNodesPostorder);
 
 		if (getDebug())
 			cout << "Running DefUse Data Flow on function: " << SageInterface::get_name(func) << func << endl;
@@ -872,34 +872,43 @@ void StaticSingleAssignment::populateLocalDefsTable(SgFunctionDeclaration* funct
 	trav.traverse(function, preorder);
 }
 
-void StaticSingleAssignment::renumberAllDefinitions(vector<FilteredCfgNode> cfgNodesInPostOrder)
+void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* func, vector<FilteredCfgNode> cfgNodesInPostOrder)
 {
 	//Map from each name to the next index. Not in map means 0
 	map<VarName, int> nameToNextIndexMap;
 
+	//The SgFunctionDefinition node is special. reachingDefs INTO the function definition node are actually
+	//The definitions that reach the *end* of the function
+	//reachingDefs OUT of the function definition node are the ones that come externally into the function
+	FilteredCfgNode functionStartNode = FilteredCfgNode(func->cfgForBeginning());
+	
 	//We process nodes in reverse postorder; this provides a natural numbering for definitions
 	reverse_foreach(FilteredCfgNode& cfgNode, cfgNodesInPostOrder)
 	{
 		SgNode* astNode = cfgNode.getNode();
 		
-		//Iterate over all the phi functions inserted at this node
-		foreach (NodeReachingDefTable::value_type& varDefPair, reachingDefsTable[astNode].first)
+		//Iterate over all the phi functions inserted at this node. We skip the SgFunctionDefinition entry node,
+		//since those phi functions actually belong to the bottom of the CFG
+		if (cfgNode != functionStartNode)
 		{
-			const VarName& definedVar = varDefPair.first;
-			ReachingDefPtr reachingDef = varDefPair.second;
-			
-			if (!reachingDef->isPhiFunction())
-				continue;
-
-			//Give an index to the variable
-			int index = 0;
-			if (nameToNextIndexMap.count(definedVar) > 0)
+			foreach (NodeReachingDefTable::value_type& varDefPair, reachingDefsTable[astNode].first)
 			{
-				index = nameToNextIndexMap[definedVar];
-			}
-			nameToNextIndexMap[definedVar] = index + 1;
+				const VarName& definedVar = varDefPair.first;
+				ReachingDefPtr reachingDef = varDefPair.second;
 
-			reachingDef->setRenamingNumber(index);
+				if (!reachingDef->isPhiFunction())
+					continue;
+
+				//Give an index to the variable
+				int index = 0;
+				if (nameToNextIndexMap.count(definedVar) > 0)
+				{
+					index = nameToNextIndexMap[definedVar];
+				}
+				nameToNextIndexMap[definedVar] = index + 1;
+
+				reachingDef->setRenamingNumber(index);
+			}
 		}
 
 		//Iterate over all the local definitions at the node
@@ -927,14 +936,13 @@ vector<StaticSingleAssignment::FilteredCfgNode> StaticSingleAssignment::getCfgNo
 	struct RecursiveDFS
 	{
 		static void depthFirstSearch(StaticSingleAssignment::FilteredCfgNode cfgNode, 
-			unordered_set<SgNode*>& visited, vector<StaticSingleAssignment::FilteredCfgNode>& result)
+			set<FilteredCfgNode>& visited, vector<StaticSingleAssignment::FilteredCfgNode>& result)
 		{
 			//First, make sure this node hasn't been visited yet
-			SgNode* astNode = cfgNode.getNode();
-			if (visited.count(astNode) != 0)
+			if (visited.count(cfgNode) != 0)
 				return;
 			
-			visited.insert(astNode);
+			visited.insert(cfgNode);
 			
 			//Now, visit all the node's successors
 			reverse_foreach(const FilteredCfgEdge outEdge, cfgNode.outEdges())
@@ -947,10 +955,9 @@ vector<StaticSingleAssignment::FilteredCfgNode> StaticSingleAssignment::getCfgNo
 		}
 	};
 	
-	
 	ROSE_ASSERT(func != NULL);
 
-	unordered_set<SgNode*> visited;
+	set<FilteredCfgNode> visited;
 	vector<FilteredCfgNode> results;
 	FilteredCfgNode entry = func->cfgForBeginning();
 

@@ -214,7 +214,7 @@ private:
 	 * and the local def table is populated, but before dataflow propagates the definitions. 
 	 * 
 	 * @param cfgNodesInPostOrder a list of all the CFG nodes in the function, in postorder. */
-	void renumberAllDefinitions(std::vector<FilteredCfgNode> cfgNodesInPostOrder);
+	void renumberAllDefinitions(SgFunctionDefinition* func, std::vector<FilteredCfgNode> cfgNodesInPostOrder);
 
 	/** Take all the outgoing defs from previous nodes and merge them as the incoming defs
 	 * of the current node. */
