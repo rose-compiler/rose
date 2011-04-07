@@ -2,6 +2,8 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 //#include <boost/graph/graphviz.hpp>
+#include <boost/graph/topological_sort.hpp>
+#include <boost/lambda/lambda.hpp>
 #include <boost/lexical_cast.hpp>
 
 namespace Backstroke
@@ -56,7 +58,7 @@ void graphToDot(const Graph& g, const std::string& filename)
 bool EventReverser::edgeBelongsToPath(const VGEdge& e, int dagIndex, int pathIndex) const
 {
     ValueGraphEdge* edge = valueGraph_[e];
-
+    
     // The ordered edge does not have path information, so trace its
     // corresponding normal edge.
     if (isOrderedEdge(edge))
@@ -79,21 +81,84 @@ void EventReverser::getSubGraph(int dagIndex, int pathIndex)
         //PathEdgeSelector edgeSelector(&valueGraph_, dagIndex, i);
         //SubValueGraph subgraph(valueGraph_, edgeSelector);
 
-        SubValueGraph subgraph(valueGraph_,
-                               boost::bind(&EventReverser::edgeBelongsToPath,
-                                           this, ::_1, dagIndex, i));
+        // First, get the subgraph for the path.
 
-        string filename = "VG" + boost::lexical_cast<string>(i);
-        //cout << subgraph << endl;
-        const char* name = "ABCDE";
-
-        foreach (const VGEdge& e, boost::edges(subgraph))
+        pair<int, int> path = make_pair(dagIndex, i);
+        set<VGVertex>& nodes = pathNodesAndEdges_[path].first;
+        set<VGEdge>&   edges = pathNodesAndEdges_[path].second;
+        foreach (const VGEdge& edge, boost::edges(valueGraph_))
         {
-            //cout << subgraph[e]->toString() << endl;
+            if (edgeBelongsToPath(edge, dagIndex, pathIndex))
+            {
+                nodes.insert(boost::source(edge, valueGraph_));
+                edges.insert(edge);
+            }
+        }
+        nodes.insert(root_);
+
+        // To resolve the problem of binding an overloaded function.
+        set<VGVertex>::const_iterator (set<VGVertex>::*findNode)
+                 (const set<VGVertex>::key_type&) const = &set<VGVertex>::find;
+        set<VGEdge>::const_iterator (set<VGEdge>::*findEdge)
+                 (const set<VGEdge>::key_type&) const = &set<VGEdge>::find;
+        SubValueGraph subgraph(valueGraph_,
+                               boost::bind(findEdge, &edges, ::_1) != edges.end(),
+                               boost::bind(findNode, &nodes, ::_1) != nodes.end());
+
+//        string filename = "VG" + boost::lexical_cast<string>(i);
+//        //cout << subgraph << endl;
+//        const char* name = "ABCDE";
+
+        SubValueGraph route = getReversalRoute(dagIndex, i,
+                                               subgraph, valuesToRestore_);
+
+        generateReverseFunction(route);
+        //graphToDot(subgraph, filename);
+    }
+}
+
+void EventReverser::generateReverseFunction(
+        //SgScopeStatement* scope,
+        const SubValueGraph& route)
+{
+
+    // The following code is needed since the value graph has VertexList=ListS which
+    // does not have a vertex_index property, which is needed by topological_sort.
+    int counter = 0;
+    map<VGVertex, int> vertexIDs;
+    foreach (VGVertex v, boost::vertices(route))
+        vertexIDs[v] = counter++;
+    // Turn a std::map into a property map.
+    boost::associative_property_map<map<VGVertex, int> > vertexIDMap(vertexIDs);
+    
+    vector<VGVertex> nodes;
+    boost::topological_sort(route, back_inserter(nodes), vertex_index_map(vertexIDMap));
+
+    foreach (VGVertex node, nodes)
+    {
+        if (node == root_)
+        {
+            foreach (const VGEdge& edge, boost::in_edges(node, route))
+            {
+                if (route[edge]->cost == 0) continue;
+                VGVertex src = boost::source(edge, route);
+                cout << "State saving: " << route[src]->toString() << endl;
+            }
+            continue;
         }
 
-        getReversalRoute(subgraph, valuesToRestore_);
-        //graphToDot(subgraph, filename);
+        if (OperatorNode* opNode = isOperatorNode(route[node]))
+        {
+//            VGEdge e = *(boost::in_edges(node, route).first);
+//            VGVertex src = boost::source(e, route);
+//            ValueNode* valNode = isValueNode(route[src]);
+             cout << "Operation: " << opNode->toString() << endl;
+        }
+        else
+        {
+             ValueNode* valNode = isValueNode(route[node]);
+             cout << valNode->vars[0] << endl;
+        }
     }
 }
 
@@ -130,17 +195,13 @@ namespace // anonymous namespace
     }
 } // end of anonymous
 
-//void EventReverser::getShortestRoute(
-//        const map<VGVertex, vector<RouteWithCost> >& allRoutes)
-//{
-//
-//}
 
-void EventReverser::getReversalRoute(
+EventReverser::SubValueGraph EventReverser::getReversalRoute(
+        int dagIndex, int pathIndex,
         const SubValueGraph& subgraph,
         const vector<VGVertex>& valuesToRestore)
 {
-    map<VGVertex, vector<RouteWithNodes> > allRoutes;
+    map<VGVertex, vector<RouteWithCost> > allRoutes;
 
     foreach (VGVertex valNode, valuesToRestore)
     {
@@ -211,7 +272,7 @@ void EventReverser::getReversalRoute(
                         continue;
                     }
 
-#if 1
+#if 0
                     foreach (const VGEdge& e, newRoute.edges)
                         cout << subgraph[e]->toString() << " ==> ";
                     cout << "  cost: " << newRoute.cost << "\n";
@@ -221,9 +282,10 @@ void EventReverser::getReversalRoute(
                     foreach (const VGEdge& edge, newRoute.edges)
                         newRoute.cost += subgraph[edge]->cost;
 
-                    //vector<RouteWithCost>& routeWithNodes = allRoutes[valNode];
-                    allRoutes[valNode].push_back(newRoute);
-                    //routeWithCost.back().first.swap(newRoute.edges);
+                    vector<RouteWithCost>& routeWithCost = allRoutes[valNode];
+                    routeWithCost.push_back(RouteWithCost());
+                    // Swap instead of copy to improve performance.
+                    routeWithCost.back().first.swap(newRoute.edges);
       
                     continue;
                 }
@@ -242,6 +304,51 @@ NEXT:
             ;
         } // end of while (!unfinishedRoutes.empty())
     } // end of foreach (VGVertex valNode, valuesToRestore)
+
+    /**************************************************************************/
+    // Now get the route for all state variables.
+    // map<VGVertex, vector<RouteWithCost> > allRoutes;
+    pair<int, int> path = make_pair(dagIndex, pathIndex);
+    set<VGVertex>& nodesInRoute = routeNodesAndEdges_[path].first;
+    set<VGEdge>&   edgesInRoute = routeNodesAndEdges_[path].second;
+
+    typedef map<VGVertex, vector<RouteWithCost> >::value_type VertexWithRoute;
+    foreach (VertexWithRoute& nodeWithRoute, allRoutes)
+    {
+        int minCost = INT_MAX;
+        size_t minIndex;
+
+        for (size_t i = 0, m = nodeWithRoute.second.size(); i < m; ++i)
+        {
+            RouteWithCost& route = nodeWithRoute.second[i];
+            foreach (const VGEdge& edge, route.first)
+                route.second += subgraph[edge]->cost;
+            if (route.second < minCost)
+            {
+                minCost = route.second;
+                minIndex = i;
+            }
+        }
+
+        foreach (const VGEdge& edge, nodeWithRoute.second[minIndex].first)
+        {
+            nodesInRoute.insert(boost::source(edge, subgraph));
+            edgesInRoute.insert(edge);
+        }
+        nodesInRoute.insert(root_);
+    }
+
+    // End.
+    /**************************************************************************/
+
+    // To resolve the problem of binding an overloaded function.
+    set<VGVertex>::const_iterator (set<VGVertex>::*findNode)
+             (const set<VGVertex>::key_type&) const = &set<VGVertex>::find;
+    set<VGEdge>::const_iterator (set<VGEdge>::*findEdge)
+             (const set<VGEdge>::key_type&) const = &set<VGEdge>::find;
+    return SubValueGraph(valueGraph_,
+                         boost::bind(findEdge, &edgesInRoute, ::_1) != edgesInRoute.end(),
+                         boost::bind(findNode, &nodesInRoute, ::_1) != nodesInRoute.end());
 }
 
 
