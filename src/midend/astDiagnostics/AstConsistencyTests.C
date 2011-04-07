@@ -842,11 +842,11 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                ROSE_ASSERT (functionExpression != NULL);
 
             // The type of expression is restricted to a subset of all possible expression (check this)
-			   while (isSgCommaOpExp(functionExpression))
-			   {
-				   functionExpression = isSgCommaOpExp(functionExpression)->get_rhs_operand();
-			   }
-			   
+                           while (isSgCommaOpExp(functionExpression))
+                           {
+                                   functionExpression = isSgCommaOpExp(functionExpression)->get_rhs_operand();
+                           }
+                           
                switch (functionExpression->variantT())
                   {
                  // these are the acceptable cases
@@ -3987,7 +3987,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
      if (node->get_freepointer() != AST_FileIO::IS_VALID_POINTER() )
      {
           printf ("Error: In TestChildPointersInMemoryPool::visit() for node = %s at %p \n",node->class_name().c_str(),node);
-		  ROSE_ASSERT(false);
+                  ROSE_ASSERT(false);
      }
 
      SgNode *parent = node->get_parent();
