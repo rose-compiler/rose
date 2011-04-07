@@ -41,7 +41,7 @@ fi
 #CONFIGURE_PREFIX_DIR="${HOME}/too1.workspace/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
 # Liao 1/6/2010
 # Remove the stale installation tree since the stale headers will be included before updated ones are used.
-rm -rf $CONFIGURE_PREFIX_DIR/*
+#rm -rf $CONFIGURE_PREFIX_DIR/*
 
 
 #########################################################################################
