@@ -1,6 +1,7 @@
 #ifndef ROSE_DISASSEMBLER_H
 #define ROSE_DISASSEMBLER_H
 
+#include "threadSupport.h"      /* needed for pthread_mutex_t in this header */
 #include "Registers.h"
 
 /** Virtual base class for instruction disassemblers.
