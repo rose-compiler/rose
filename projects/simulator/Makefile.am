@@ -15,7 +15,7 @@ TEST_TARGETS =
 #  DOCUMENTATION, CONFIGURATION, ETC
 ###############################################################################################################################
 
-EXTRA_DIST += README test_status.txt syscall_tests.conf pthread_tests.conf
+EXTRA_DIST += README test_status.txt syscall_tests.conf pthread_tests.conf RSIM.dxy
 
 ###############################################################################################################################
 #  PROGRAMS
@@ -28,6 +28,7 @@ noinst_PROGRAMS += x86sim
 include_HEADERS +=				\
 	x86sim.h				\
 	x86print.h				\
+	RSIM_Callbacks.h			\
 	RSIM_Common.h				\
 	RSIM_Process.h				\
 	RSIM_SemanticPolicy.h			\
@@ -38,6 +39,7 @@ include_HEADERS +=				\
 x86sim_SOURCES =				\
 	x86sim.C				\
 	x86print.C				\
+	RSIM_Callbacks.C			\
 	RSIM_Common.C				\
 	RSIM_Process.C				\
 	RSIM_SemanticPolicy.C			\

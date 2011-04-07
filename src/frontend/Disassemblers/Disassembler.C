@@ -9,6 +9,7 @@
 #include "DisassemblerX86.h"
 #include "BinaryLoader.h"
 #include "Partitioner.h"
+#include "threadSupport.h"
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>

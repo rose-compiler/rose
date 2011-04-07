@@ -1156,18 +1156,29 @@ class JavaTraversal  implements Callable<Boolean>
                main = new Main(new PrintWriter(System.out), new PrintWriter(System.err), true/*systemExit*/,  null/*options*/, null/*progress*/);
 
             // This is the last message printed to the console ...
-               if (verboseLevel > 2)
+               if (verboseLevel > 0)
                     System.out.println("test 1 .... (note call to main.configure(args); fails silently)");
 
-            // This line of code will fail when run ...working now!
-               main.configure(args);
+            // DQ (4/1/2011): Added try...catch to debug command line handling.
+            // We want to support the ECJ command line options where possible.
+            // This line of code will fail when run with unknown arguments...working now only with just the filename as an argument!
+            // main.configure(args);
+               try 
+                  {
+                    main.configure(args);
+                  }
+               catch (Exception e) 
+                  {
+                    System.err.println("Error in main.configure(args): " + e.getMessage()); 
+                    System.exit(1);
+                  }
 
-               if (verboseLevel > 2)
+               if (verboseLevel > 0)
                     System.out.println("test 2 ...");
 
                FileSystem environment = main.getLibraryAccess();
 
-               if (verboseLevel > 2)
+               if (verboseLevel > 0)
                     System.out.println("test 3 ...");
 
                main.compilerOptions = new CompilerOptions(main.options);

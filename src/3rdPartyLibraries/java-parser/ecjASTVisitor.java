@@ -1130,7 +1130,7 @@ class ecjASTVisitor extends ASTVisitor
 
      public boolean visit(MessageSend  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > -1)
+          if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (MessageSend,BlockScope)");
 
        // java_parser.cactionMessageSend("abc");
@@ -1151,7 +1151,7 @@ class ecjASTVisitor extends ASTVisitor
           String name                = new String(node.selector);
           String associatedClassName = node.receiver.toString();
 
-          if (java_parser.verboseLevel > -1)
+          if (java_parser.verboseLevel > 0)
              {
                System.out.println("MessageSend node = " + node);
 
@@ -1197,7 +1197,7 @@ class ecjASTVisitor extends ASTVisitor
        // java_parser.cactionExplicitConstructorCall("super");
           java_parser.cactionMessageSend(name,associatedClassName);
 
-          if (java_parser.verboseLevel > -1)
+          if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (MessageSend,BlockScope)");
 
        // System.out.println("Exiting as a test in visit (MessageSend,BlockScope)...");
@@ -1675,10 +1675,17 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (StringLiteral,BlockScope)");
 
-          java_parser.cactionStringLiteral("StringLiteral_abc");
+       // System.out.println("Inside of visit (StringLiteral,BlockScope): node = " + node);
+          String literal = new String(node.source());
+          System.out.println("Inside of visit (StringLiteral,BlockScope): node = " + literal);
+
+          java_parser.cactionStringLiteral(literal);
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (StringLiteral,BlockScope)");
+
+       // System.out.println("Exiting at base of visit (StringLiteral,BlockScope)");
+       // System.exit(1);
 
           return true; // do nothing by  node, keep traversing
         }
