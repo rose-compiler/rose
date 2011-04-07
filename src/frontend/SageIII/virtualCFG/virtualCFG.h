@@ -224,11 +224,11 @@ namespace VirtualCFG {
       return false;
     }
 
-	//! Returns the edges in the path, starting at the source and ending at the target
-	const std::vector<CFGEdge>& getEdges() const
-	{
-		return edges;
-	}
+        //! Returns the edges in the path, starting at the source and ending at the target
+        const std::vector<CFGEdge>& getEdges() const
+        {
+                return edges;
+        }
   }; // end CFGPath
 
   //! \internal Merge two CFG paths
