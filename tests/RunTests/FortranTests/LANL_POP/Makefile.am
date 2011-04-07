@@ -20,7 +20,7 @@ check-local:
 	  export HUDSON_Cp="/bin/cp"; \
 	  export HUDSON_Cpp="/lib/cpp -P"; \
 	  export HUDSON_AWK="$(AWK)"; \
-	  export HUDSON_LDLIBS="$(LIBS) -lcurl"; \
+	  export HUDSON_LDLIBS="\$$(LIBS) -lcurl"; \
 	./test.sh; \
 	rm -rf $(srcdir)/poptest
 	@echo '*************************************************************'
