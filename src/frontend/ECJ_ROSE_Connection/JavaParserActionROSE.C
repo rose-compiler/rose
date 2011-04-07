@@ -329,6 +329,15 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
      if (SgProject::get_verbose() > -1)
           printf ("building function call: name = %s from class name = %s \n",name.str(),className.str());
 
+#if 1
+  // Refactored this code to "lookupSymbolFromQualifiedName()" so it could be used to generate class types.
+     SgClassSymbol* targetClassSymbol = lookupSymbolFromQualifiedName(className);
+     ROSE_ASSERT(targetClassSymbol != NULL);
+     SgClassDeclaration* classDeclaration = isSgClassDeclaration(targetClassSymbol->get_declaration()->get_definingDeclaration());
+     ROSE_ASSERT(classDeclaration != NULL);
+     SgScopeStatement* targetClassScope = classDeclaration->get_definition();
+     ROSE_ASSERT(targetClassScope != NULL);
+#else
      list<SgName> qualifiedClassName = generateQualifierList(className);
      SgClassSymbol* previousClassSymbol = NULL;
      SgScopeStatement* previousClassScope = astJavaScopeStack.front();
@@ -406,6 +415,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
      ROSE_ASSERT(targetClassSymbol != NULL);
      SgScopeStatement* targetClassScope = previousClassScope;
      ROSE_ASSERT(targetClassScope != NULL);
+#endif
 
 #if 0
      SgClassSymbol* classSymbol = astJavaScopeStack.front()->lookup_class_symbol(className);
@@ -494,16 +504,33 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSendEnd (JNIEnv *env, jobje
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedNameReference (JNIEnv *, jobject, jstring)
+JNIEXPORT void JNICALL Java_JavaParser_cactionQualifiedNameReference (JNIEnv * env, jobject xxx, jstring java_string)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a qualified name reference \n");
    }
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *, jobject, jstring)
+JNIEXPORT void JNICALL Java_JavaParser_cactionStringLiteral (JNIEnv *env, jobject xxx, jstring java_string)
    {
      if (SgProject::get_verbose() > 0)
           printf ("Build a SgStringVal \n");
+
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     outputJavaState("cactionStringLiteral");
+
+  // string stringLiteral = "stringLiteral_abc";
+     SgName stringLiteral = convertJavaStringToCxxString(env,java_string);
+
+     printf ("Building an string value expression = %s \n",stringLiteral.str());
+
+     SgStringVal* stringValue = new SgStringVal(stringLiteral);
+     ROSE_ASSERT(stringValue != NULL);
+
+  // Set the source code position (default values for now).
+     setJavaSourcePosition(stringValue);
+
+     astJavaExpressionStack.push_front(stringValue);
+     ROSE_ASSERT(astJavaExpressionStack.empty() == false);
    }
 
 
@@ -565,7 +592,19 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
 
      SgGlobal* globalScope = getGlobalScope();
      NodeQuerySynthesizedAttributeType nodeList = NodeQuery::querySubTree(globalScope,V_SgClassDeclaration);
-               
+
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("Output the nodeList = \n");
+          for (list<SgName>::iterator i = astJavaImplicitClassList.begin(); i != astJavaImplicitClassList.end(); i++)
+             {
+               SgName classNameWithQualification = *i;
+               if (SgProject::get_verbose() > -1)
+                    printf ("   --- implicit class = %s \n",classNameWithQualification.str());
+             }
+        }
+
+  // printf ("Process the list of classes (nodeList) \n");
   // Process the classes in the list to support an implicit "use" statment of the parent of the class so that
   // each of the implicit classes will be represented in the current scope.
      for (list<SgName>::iterator i = astJavaImplicitClassList.begin(); i != astJavaImplicitClassList.end(); i++)
@@ -614,7 +653,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
 
                SgAliasSymbol* aliasSymbol = new SgAliasSymbol(classSymbol,/* isRenamed */ false);
 
-               if ( SgProject::get_verbose() > -1 )
+               if ( SgProject::get_verbose() > 0 )
                     printf ("Adding SgAliasSymbol for classNameWithoutQualification = %s \n",classNameWithoutQualification.str());
 
                globalScope->insert_symbol(classNameWithoutQualification,aliasSymbol);
@@ -654,7 +693,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitMethodSupport (JNIEnv
 // declared "public static native" instead of "public native" in the Java side of the JNI interface.
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport (JNIEnv* env, jclass xxx, jstring java_string)
    {
-     if (SgProject::get_verbose() > -1)
+     if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionBuildImplicitFieldSupport (variable declaration for field) \n");
 
      outputJavaState("At TOP of cactionBuildImplicitFieldSupport");
@@ -667,7 +706,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitFieldSupport (JNIEnv*
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      astJavaScopeStack.front()->append_statement(variableDeclaration);
 
-     if (SgProject::get_verbose() > -1)
+     if (SgProject::get_verbose() > 0)
           variableDeclaration->get_file_info()->display("source position in Java_JavaParser_cactionBuildImplicitFieldSupport(): debug");
    }
 
@@ -683,20 +722,98 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
           printf ("Inside of Java_JavaParser_cactionGenerateType() \n");
 
      SgName name = convertJavaStringToCxxString(env,java_string);
+  // printf ("Java_JavaParser_cactionGenerateType(): name = %s \n",name.str());
 
-     if (name == "int")
+  // Type details:
+  // boolean
+  //    1-bit. May take on the values true and false only. true and false are defined constants of the language 
+  //    and are not the same as True and False, TRUE and FALSE, zero and nonzero, 1 and 0 or any other numeric 
+  //    value. Booleans may not be cast into any other type of variable nor may any other variable be cast into 
+  //    a boolean.
+  // byte
+  //    1 signed byte (two's complement). Covers values from -128 to 127.
+  // short
+  //    2 bytes, signed (two's complement), -32,768 to 32,767
+  // int
+  //    4 bytes, signed (two's complement). -2,147,483,648 to 2,147,483,647. Like all numeric types ints may be 
+  //    cast into other numeric types (byte, short, long, float, double). When lossy casts are done (e.g. int 
+  //    to byte) the conversion is done modulo the length of the smaller type.
+  // long
+  //    8 bytes signed (two's complement). Ranges from -9,223,372,036,854,775,808 to +9,223,372,036,854,775,807.
+  // float
+  //    4 bytes, IEEE 754. Covers a range from 1.40129846432481707e-45 to 3.40282346638528860e+38 (positive or negative).
+  //    Like all numeric types floats may be cast into other numeric types (byte, short, long, int, double). When 
+  //    lossy casts to integer types are done (e.g. float to short) the fractional part is truncated and the conversion is done modulo the length of the smaller type.
+  // double
+  //    8 bytes IEEE 754. Covers a range from 4.94065645841246544e-324d to 1.79769313486231570e+308d (positive or negative). 
+  // char
+  //    2 bytes, unsigned, Unicode, 0 to 65,535 Chars are not the same as bytes, ints, shorts or Strings.
+
+     if (name == "boolean")
         {
-       // Specification of integer type.
-          if (SgProject::get_verbose() > 0)
-               printf ("Inside of Java_JavaParser_cactionGenerateType(): building an integer type \n");
-
+       // This is a logical true/false value (it's bit widths in implementation dependent.
           astJavaTypeStack.push_front(SgTypeInt::createType());
+        }
+       else if (name == "byte")
+        {
+       // DQ (4/3/2011): In Java the type "byte" is signed!
+       // Reference: http://www.javamex.com/java_equivalents/unsigned.shtml
+       // astJavaTypeStack.push_front(SgTypeUnsignedChar::createType());
+          astJavaTypeStack.push_front(SgTypeSignedChar::createType());
+        }
+       else if (name == "char")
+        {
+       // In Java, all integers are signed, except for "char". However a "char" is 2 byte unicode so it might be better for it to be SgTypeWchar.
+       // astJavaTypeStack.push_front(SgTypeChar::createType());
+       // astJavaTypeStack.push_front(SgTypeUnsignedChar::createType());
+          astJavaTypeStack.push_front(SgTypeWchar::createType());
+        }
+       else if (name == "int")
+        {
+       // This should be a 32-bit type, but ROSE does not specify the bit length explictly (we could us 32-bit field widths, I suppose).
+          astJavaTypeStack.push_front(SgTypeInt::createType());
+        }
+       else if (name == "short")
+        {
+       // This is a 2 byte signed type.
+          astJavaTypeStack.push_front(SgTypeShort::createType());
+        }
+       else if (name == "float")
+        {
+       // This is a 4 byte floating point type.
+          astJavaTypeStack.push_front(SgTypeFloat::createType());
+        }
+       else if (name == "long")
+        {
+       // This is a 8 byte signed type.
+          astJavaTypeStack.push_front(SgTypeLong::createType());
+        }
+       else if (name == "double")
+        {
+       // This is an 8 byte floating point type.
+          astJavaTypeStack.push_front(SgTypeDouble::createType());
+        }
+       else if (name == "null")
+        {
+       // There is also a special null type, the type of the expression null, which has no name. Because the null type has 
+       // no name, it is impossible to declare a variable of the null type or to cast to the null type. The null reference 
+       // is the only possible value of an expression of null type. The null reference can always be cast to any reference 
+       // type. In practice, the programmer can ignore the null type and just pretend that null is merely a special literal 
+       // that can be of any reference type.
+
+       // Within ROSE it is not yet clear if I should define a new SgType (SgTypeNull) to represent a null type.  For now it
+       // is an error to try to build such a type.
+
+          printf ("Error: SgTypeNull (Java null type) support not implemented (name = %s) \n",name.str());
+          ROSE_ASSERT(false);
         }
        else
         {
-          printf ("Error: type support not implemented for name = %s \n",name.str());
+          printf ("Error: default reached in switch in Java_JavaParser_cactionGenerateType() (name = %s) \n",name.str());
           ROSE_ASSERT(false);
         }
+
+  // printf ("Leaving Java_JavaParser_cactionGenerateType() \n");
 
 #if 0
      printf ("Build support for types (not finished) \n");
@@ -704,7 +821,47 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
 #endif
    }
 
+JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateClassType (JNIEnv* env, jclass xxx, jstring java_string)
+   {
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of Java_JavaParser_cactionGenerateClassType() \n");
 
+     SgName name = convertJavaStringToCxxString(env,java_string);
+
+  // printf ("In Java_JavaParser_cactionGenerateClassType(): Calling lookupSymbolFromQualifiedName(name = %s) \n",name.str());
+
+  // Lookup the name, find the symbol, build a SgClassType, and push it onto the astJavaTypeStack.
+     SgClassSymbol* targetClassSymbol = lookupSymbolFromQualifiedName(name);
+
+  // printf ("DONE: In Java_JavaParser_cactionGenerateClassType(): Calling lookupSymbolFromQualifiedName(name = %s) \n",name.str());
+  // ROSE_ASSERT(targetClassSymbol != NULL);
+     if (targetClassSymbol != NULL)
+        {
+       // printf ("In Java_JavaParser_cactionGenerateClassType(): Get the SgClassDeclaration \n");
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(targetClassSymbol->get_declaration());
+          ROSE_ASSERT(classDeclaration != NULL);
+
+       // printf ("In Java_JavaParser_cactionGenerateClassType(): Get the SgClassType \n");
+          SgClassType* classType = SgClassType::createType(classDeclaration);
+          ROSE_ASSERT(classType != NULL);
+
+          astJavaTypeStack.push_front(classType);
+        }
+       else
+        {
+       // This is OK when we are only processing a small part of the implicit class space (debugging mode) and have not built all the SgClassDeclaration IR nodes. 
+          printf ("WARNING: SgClassSymbol NOT FOUND in lookupSymbolFromQualifiedName(): name = %s (build an integer type and keep going...) \n",name.str());
+
+          astJavaTypeStack.push_front(SgTypeInt::createType());
+        }
+
+     outputJavaState("At Bottom of cactionGenerateClassType");
+
+#if 0
+     printf ("Build support for class types (not finished) \n");
+     ROSE_ASSERT(false);
+#endif
+   }
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionStatementEnd(JNIEnv *env, jclass xxx, jstring java_string /* JNIEnv *env, jobject xxx */ )
    {
@@ -713,6 +870,26 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionStatementEnd(JNIEnv *env, jclass x
 
      ROSE_ASSERT(astJavaStatementStack.empty() == false);
      astJavaStatementStack.pop_front();
+   }
+
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateArrayType(JNIEnv *env, jclass xxx)
+   {
+     if (SgProject::get_verbose() > 2)
+          printf ("Build an array type using the base type found on the type stack \n");
+
+     outputJavaState("At TOP of cactionGenerateArrayType");
+
+     ROSE_ASSERT(astJavaTypeStack.empty() == false);
+     SgArrayType* arrayType = SageBuilder::buildArrayType(astJavaTypeStack.front(),NULL);
+
+     ROSE_ASSERT(arrayType != NULL);
+     astJavaTypeStack.pop_front();
+
+     astJavaTypeStack.push_front(arrayType);
+
+     outputJavaState("At BOTTOM of cactionGenerateArrayType");
    }
 
 

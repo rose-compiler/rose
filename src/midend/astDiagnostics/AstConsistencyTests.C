@@ -1535,11 +1535,14 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
 
      string mangledName;
 
+  // DQ (4/3/2011): This is used to compute the file if isValidMangledName() fails.
+     SgFile* file = NULL;
+
   // DQ (4/28/2005): Check out the mangled name for classes
      SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
      if (classDeclaration != NULL)
         {
-// RV (2/2/2006)
+       // RV (2/2/2006)
 #if 0
           int counter = 0; // counts the numbre of scopes back to global scope (not critical, but useful for debugging)
           mangledName = classDeclaration->get_mangled_qualified_name(counter).str();
@@ -1582,14 +1585,36 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
              }
           ROSE_ASSERT(mangledName.find('>') == string::npos);
 
-       // This is Rich's test (much shorter)
+       // DQ (4/3/2011): This is a fix to permit Java names that can include '$' to be handled properly.
+       // When the simpler test fails we compute what the current langauge is (relatively expensive so 
+       // we don't want to do so for each IR node) and the rerun the test with java specified explicitly.
+          bool anErrorHasOccured = false;
           if (isValidMangledName(mangledName) != true)
              {
-               printf ("Error: failed isValidMangledName() test classDeclaration = %p = %s = %s --- mangledName = %s \n",
-                    classDeclaration,classDeclaration->get_name().str(),classDeclaration->class_name().c_str(),mangledName.c_str());
-               classDeclaration->get_file_info()->display("Error: failed isValidMangledName() test");
+             // Check first if this is for a Java file and if so then '$' is allowed.
+                file = TransformationSupport::getFile(classDeclaration);
+                ROSE_ASSERT(file != NULL);
+
+                if (file->get_Java_only() == false)
+                   {
+                     anErrorHasOccured = true;
+                   }
+                  else
+                   {
+                  // printf ("Rerun the test for isValidMangledName() with java langauge specified \n");
+                     bool javaInUse = true;
+                     anErrorHasOccured = !isValidMangledName(mangledName,javaInUse);
+                   }
+                
+               if (anErrorHasOccured == true)
+                  {
+                    printf ("Error: failed isValidMangledName() test classDeclaration = %p = %s = %s --- mangledName = %s \n",
+                         classDeclaration,classDeclaration->get_name().str(),classDeclaration->class_name().c_str(),mangledName.c_str());
+                    classDeclaration->get_file_info()->display("Error: failed isValidMangledName() test");
+                  }
              }
-          ROSE_ASSERT(isValidMangledName(mangledName) == true);
+       // ROSE_ASSERT(isValidMangledName(mangledName) == true);
+          ROSE_ASSERT(anErrorHasOccured == false);
         }
 
   // DQ (4/27/2005): Check out the mangled name for functions
@@ -1620,7 +1645,28 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
      ROSE_ASSERT(mangledName.find('@') == string::npos);
 
      ROSE_ASSERT(mangledName.find('#') == string::npos);
-     ROSE_ASSERT(mangledName.find('$') == string::npos);
+
+  // DQ (4/3/2011): Java allows for '$' so we have to exclude this test when Java is used.
+  // note that if it was isValidMangledName() failed (could be many reasons) then file has
+  // been computed and is available.
+  // ROSE_ASSERT(mangledName.find('$') == string::npos);
+     if (file == NULL || (file != NULL && file->get_Java_only() == false) )
+        {
+           ROSE_ASSERT(mangledName.find('$') == string::npos);
+        }
+       else
+        {
+       // If this is a Java file and there is a '$' is fould then assert using a weaker test.
+          if (mangledName.find('$') != string::npos)
+             {
+            // A '$' was found, check using a more expensive test.
+               ROSE_ASSERT(file->get_Java_only() == true);
+
+               bool javaInUse = true;
+               ROSE_ASSERT(isValidMangledName(mangledName,javaInUse) == true);
+             }
+        }
+
      ROSE_ASSERT(mangledName.find('%') == string::npos);
      ROSE_ASSERT(mangledName.find('^') == string::npos);
      ROSE_ASSERT(mangledName.find('&') == string::npos);
@@ -1702,18 +1748,44 @@ TestAstForProperlyMangledNames::TestAstForProperlyMangledNames()
    }
 
 bool
-TestAstForProperlyMangledNames::isValidMangledName (string name)
+TestAstForProperlyMangledNames::isValidMangledName (string name, bool java_lang /* = false */ )
    {
+  // DQ (4/3/2011): This function has been modified to permit Java specific weakened restrictions 
+  // on names. The default for java_lang is false.  If a test fails the current language is 
+  // determined and java_lang set to true if the current langage is Java for the associated SgFile.
+
+     bool result = true;
+
      if (name.empty () || isdigit (name[0]))
-          return false;
-    
-     for (string::size_type i = 0; i < name.size (); ++i)
         {
-          if (!isalnum (name[i]) && name[i] != '_')
-               return false;
+          result = false;
         }
-  // Passed all above checks -- assume OK
-     return true;
+
+     if (java_lang == true)
+        {
+       // The case for Java has to allow a few more characters into names (e.g. '$')
+          for (string::size_type i = 0; i < name.size (); ++i)
+             {
+            // printf ("java_lang == true: isalnum (name = %s name[i] = %c) = %s \n",name.c_str(),name[i],isalnum (name[i]) ? "true" : "false");
+               if (!isalnum (name[i]) && !(name[i] == '_' || name[i] == '$'))
+                  {
+                    result = false;
+                  }
+             }
+        }
+       else
+        {
+          for (string::size_type i = 0; i < name.size (); ++i)
+             {
+            // printf ("java_lang == false: isalnum (name = %s name[i] = %c) = %s \n",name.c_str(),name[i],isalnum (name[i]) ? "true" : "false");
+               if (!isalnum (name[i]) && name[i] != '_')
+                  {
+                    result = false;
+                  }
+             }
+        }
+
+     return result;
    }
 
 /*! \page AstProperties AST Properties (Consistency Tests)
