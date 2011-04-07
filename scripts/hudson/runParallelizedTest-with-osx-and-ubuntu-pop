@@ -351,8 +351,11 @@ case "$ROSE_TEST_BUILD_STYLE" in
 
     make -j${NUM_PROCESS} -C src/
     make -j${NUM_PROCESS} -C tests/
+    make -j${NUM_PROCESS} -C tests/RunTests/FortranTests/LANL_POP/ check
 if test $? -ne 0 ; then
 	exit 1
+else
+	exit 0
 fi
     ################################################################################
     # MAKE
