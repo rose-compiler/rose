@@ -1,5 +1,6 @@
 #include "valueGraph.h"
 
+#include <sageInterface.h>
 #include <sageBuilder.h>
 #include <utilities/utilities.h>
 #include <boost/assign/list_inserter.hpp>
@@ -8,7 +9,6 @@ namespace Backstroke
 {
 
 using namespace std;
-using namespace boost;
 
 #define foreach BOOST_FOREACH
 
@@ -20,11 +20,11 @@ namespace
         {
             boost::assign::insert(table)
             (V_SgPlusAssignOp,      V_SgAddOp)
-            (V_SgMinusAssignOp,     V_SgMinusOp)
+            (V_SgMinusAssignOp,     V_SgSubtractOp)
             (V_SgMultAssignOp,      V_SgMultiplyOp)
             (V_SgDivAssignOp,       V_SgDivideOp)
             (V_SgAndAssignOp,       V_SgAndOp)
-            (V_SgIorAssignOp,       V_SgIorAssignOp)
+            (V_SgIorAssignOp,       V_SgOrOp)
             (V_SgModAssignOp,       V_SgModOp)
             (V_SgXorAssignOp,       V_SgBitXorOp)
             (V_SgLshiftAssignOp,    V_SgLshiftOp)
@@ -272,9 +272,74 @@ void EventReverser::buildBasicValueGraph()
     }
 }
 
+SgVariableDeclaration* getStackVar(const string& name)
+{
+	string typeName;
+
+    vector<SgVariableDeclaration*> stackVars;
+	string stackName = name + "_stack";
+
+    SgClassDeclaration* stackTypeDeclaration = SageBuilder::buildStructDeclaration("std::deque<boost::any>");
+    SgType* stackType = stackTypeDeclaration->get_type();
+    ROSE_ASSERT(stackType);
+    //delete stackTypeDeclaration;
+
+    SgVariableDeclaration* stackDecl = SageBuilder::buildVariableDeclaration(stackName, stackType);
+    stackVars.push_back(stackDecl);
+
+
+    return stackDecl;
+	//return SageBuilder::buildVarRefExp(stackVars[0]->get_variables()[0]);
+}
 
 void EventReverser::buildForwardAndReverseEvent()
 {
+    SgFunctionDeclaration* funcDecl = funcDef_->get_declaration();
+
+    SgScopeStatement* funcScope = funcDecl->get_scope();
+    string funcName = funcDecl->get_name();
+
+    //Create the function declaration for the forward body
+    SgName fwdFuncName = funcName + "_forward";
+    SgFunctionDeclaration* fwdFuncDecl = SageBuilder::buildDefiningFunctionDeclaration(
+                    fwdFuncName, funcDecl->get_orig_return_type(),
+                    isSgFunctionParameterList(
+                        SageInterface::copyStatement(funcDecl->get_parameterList())),
+                    funcScope);
+    SgFunctionDefinition* fwdFuncDef = fwdFuncDecl->get_definition();
+    //SageInterface::replaceStatement(fwdFuncDef->get_body(), isSgBasicBlock(stmt.fwd_stmt));
+
+    //Create the function declaration for the reverse body
+    SgName rvsFuncName = funcName + "_reverse";
+    SgFunctionDeclaration* rvsFuncDecl = SageBuilder::buildDefiningFunctionDeclaration(
+                    rvsFuncName, funcDecl->get_orig_return_type(),
+                    isSgFunctionParameterList(
+                        SageInterface::copyStatement(funcDecl->get_parameterList())),
+                    funcScope);
+    SgFunctionDefinition* rvsFuncDef = rvsFuncDecl->get_definition();
+    //SageInterface::replaceStatement(rvsFuncDef->get_body(), isSgBasicBlock(stmt.rvs_stmt));
+
+    //Create the function declaration for the commit method
+    SgName cmtFuncName = funcName + "_commit";
+    SgFunctionDeclaration* cmtFuncDecl = SageBuilder::buildDefiningFunctionDeclaration(
+                    cmtFuncName, funcDecl->get_orig_return_type(),
+                    isSgFunctionParameterList(
+                        SageInterface::copyStatement(funcDecl->get_parameterList())),
+                    funcScope);
+    //SgFunctionDefinition* commitFunctionDefinition = commitFunctionDecl->get_definition();
+
+
+
+    getSubGraph(rvsFuncDef->get_body(), 0, 0);
+
+    SageInterface::insertStatementAfter(funcDecl, fwdFuncDecl);
+    SageInterface::insertStatementAfter(fwdFuncDecl, rvsFuncDecl);
+    SageInterface::insertStatementAfter(rvsFuncDecl, cmtFuncDecl);
+
+    //SageInterface::insertStatementBefore(funcDecl, getStackVar(funcName));
+	//return outputs;
+
+#if 0
 	map<OperatorNode*, tuple<VGVertex, VGVertex, VGVertex> > opReversals;
 	foreach (VGEdge e, dagEdges_)
 	{
@@ -322,7 +387,9 @@ void EventReverser::buildForwardAndReverseEvent()
 					" = " << valueGraph_[src]->toString() << endl;
 		}
 	}
-
+#endif
 }
+
+
 
 } // End of namespace Backstroke

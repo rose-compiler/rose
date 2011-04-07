@@ -234,11 +234,11 @@ private:
 	VersionedVariable getVersionedVariable(SgNode* node, bool isUse = true);
 
     //! For each path, find its corresponding subgraph.
-    void getSubGraph(int dagIndex, int pathIndex);
+    void getSubGraph(SgScopeStatement* scope, int dagIndex, int pathIndex);
 
     //! Generate the reverse function.
     void generateReverseFunction(
-        //SgScopeStatement* scope,
+        SgScopeStatement* scope,
         const SubValueGraph& route);
 
 	static VGVertex nullVertex()

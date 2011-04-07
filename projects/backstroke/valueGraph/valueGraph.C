@@ -31,7 +31,7 @@ void EventReverser::buildValueGraph()
     // Remove useless nodes.
     removeUselessNodes();
 
-    getSubGraph(0, 0);
+    buildForwardAndReverseEvent();
 
     cout << "Number of nodes: " << boost::num_vertices(valueGraph_) << endl;
 }

@@ -1,4 +1,6 @@
 #include "valueGraph.h"
+#include "eventReverser.h"
+#include <sageBuilder.h>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 //#include <boost/graph/graphviz.hpp>
@@ -12,47 +14,6 @@ namespace Backstroke
 using namespace std;
 
 #define foreach BOOST_FOREACH
-
-#if 0
-namespace
-{
-
-template <class Graph, class Vertex>
-void writeValueGraphNode(const Graph& g, std::ostream& out, const Vertex& node)
-{
-    out << "[label=\"" << g[node]->toString() << "\"]";
-}
-
-template <class Graph, class Edge>
-void writeValueGraphEdge(const Graph& g, std::ostream& out, const Edge& edge)
-{
-    out << "[label=\"" << g[edge]->toString() << "\"]";
-}
-
-template <class Graph>
-void graphToDot(const Graph& g, const std::string& filename)
-{
-    typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
-    typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
-
-    // Since the vetices are stored in a list, we have to give each vertex
-    // a unique id here.
-    int counter = 0;
-    map<Vertex, int> vertexIDs;
-    foreach (Vertex v, boost::vertices(g))
-        vertexIDs[v] = counter++;
-
-    // Turn a std::map into a property map.
-    boost::associative_property_map<map<Vertex, int> > vertexIDMap(vertexIDs);
-
-    ofstream ofile(filename.c_str(), std::ios::out);
-    boost::write_graphviz(ofile, g,
-            boost::bind(&writeValueGraphNode<Graph, Vertex>, g, ::_1, ::_2),
-            boost::bind(&writeValueGraphEdge<Graph, Edge>, g, ::_1, ::_2),
-            boost::default_writer(), vertexIDMap);
-}
-}
-#endif
 
 
 bool EventReverser::edgeBelongsToPath(const VGEdge& e, int dagIndex, int pathIndex) const
@@ -70,7 +31,8 @@ bool EventReverser::edgeBelongsToPath(const VGEdge& e, int dagIndex, int pathInd
     return edge->dagIndex == dagIndex && edge->paths[pathIndex];
 }
 
-void EventReverser::getSubGraph(int dagIndex, int pathIndex)
+void EventReverser::getSubGraph(
+        SgScopeStatement* scope, int dagIndex, int pathIndex)
 {
     //!!!
     dagIndex = 0;
@@ -112,15 +74,16 @@ void EventReverser::getSubGraph(int dagIndex, int pathIndex)
         SubValueGraph route = getReversalRoute(dagIndex, i,
                                                subgraph, valuesToRestore_);
 
-        generateReverseFunction(route);
+        generateReverseFunction(scope, route);
         //graphToDot(subgraph, filename);
     }
 }
 
 void EventReverser::generateReverseFunction(
-        //SgScopeStatement* scope,
+        SgScopeStatement* scope,
         const SubValueGraph& route)
 {
+    SageBuilder::pushScopeStack(scope);
 
     // The following code is needed since the value graph has VertexList=ListS which
     // does not have a vertex_index property, which is needed by topological_sort.
@@ -142,24 +105,49 @@ void EventReverser::generateReverseFunction(
             {
                 if (route[edge]->cost == 0) continue;
                 VGVertex src = boost::source(edge, route);
-                cout << "State saving: " << route[src]->toString() << endl;
+                ValueNode* valNode = isValueNode(route[src]);
+                //cout << "State saving: " << route[src]->toString() << endl;
+
+                SgExpression* popExpr = buildPopFunction(
+                        valNode, valNode->vars[0].name.back()->get_type());
+                SageInterface::appendStatement(
+                        SageBuilder::buildExprStatement(popExpr), scope);
             }
             continue;
         }
 
-        if (OperatorNode* opNode = isOperatorNode(route[node]))
+        OperatorNode* opNode = isOperatorNode(route[node]);
+        if (opNode == NULL) continue;
+
+        VGEdge inEdge = *(boost::in_edges(node, route).first);
+        VGVertex res = boost::source(inEdge, route);
+        ValueNode* resNode = isValueNode(route[res]);
+        ValueNode* lhsNode = NULL;
+        ValueNode* rhsNode = NULL;
+
+        if (boost::out_degree(node, route) == 1)
         {
-//            VGEdge e = *(boost::in_edges(node, route).first);
-//            VGVertex src = boost::source(e, route);
-//            ValueNode* valNode = isValueNode(route[src]);
-             cout << "Operation: " << opNode->toString() << endl;
+            VGVertex lhs = *(boost::adjacent_vertices(node, route).first);
+            lhsNode = isValueNode(route[lhs]);
         }
         else
         {
-             ValueNode* valNode = isValueNode(route[node]);
-             cout << valNode->vars[0] << endl;
+            foreach (const VGEdge& edge, boost::out_edges(node, route))
+            {
+                VGVertex tar = boost::target(edge, route);
+                if (isOrderedEdge(route[edge])->index == 0)
+                    lhsNode = isValueNode(route[tar]);
+                else
+                    rhsNode = isValueNode(route[tar]);
+            }
         }
+
+        //cout << "Operation: " << opNode->toString() << endl;
+        SgExpression* opExpr = buildOperation(resNode, opNode->type, lhsNode, rhsNode);
+        SageInterface::appendStatement(SageBuilder::buildExprStatement(opExpr), scope);
     }
+
+    SageBuilder::popScopeStack();
 }
 
 
