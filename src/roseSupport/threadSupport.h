@@ -40,10 +40,6 @@
 #  undef  ROSE_THREADS_ENABLED
 #endif
 
-#if 1 /* DEBUGGING [RPM 2011-04-07] */
-#undef ROSE_THREADS_ENABLED
-#endif
-
 /* This warning is in a public header file so that end users will see it when they compile against a version of ROSE that
  * doesn't have multi-thread support.  It would be imprudent to move this to one of the library's *.C files because then
  * an end user might spend substantial time trying to figure out why his multi-threaded program fails nondeterministically when
