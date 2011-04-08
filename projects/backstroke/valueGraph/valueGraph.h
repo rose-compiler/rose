@@ -5,6 +5,7 @@
 #include "valueGraphNode.h"
 #include "pathNumGenerator.h"
 #include <ssa/staticSingleAssignment.h>
+#include <boost/function.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/filtered_graph.hpp>
 
@@ -22,25 +23,12 @@ public:
 
 private:
     typedef std::pair<int, PathSet> PathSetWithIndex;
-    typedef std::vector<VGEdge> Route;
 	typedef StaticSingleAssignment SSA;
 	typedef SSA::VarName VarName;
-
-    //! A internal class which is used to get a subgraph according to the path.
-    struct PathEdgeSelector
-    {
-        PathEdgeSelector() {}
-        PathEdgeSelector(ValueGraph* vg, int dagIdx, int pathIdx)
-        : valueGraph(vg), dagIndex(dagIdx), pathIndex(pathIdx) {}
-
-        bool operator()(const VGEdge& e) const;
-
-        ValueGraph* valueGraph;
-        int dagIndex;
-        int pathIndex;
-    };
-
-    typedef boost::filtered_graph<ValueGraph, PathEdgeSelector> SubValueGraph;
+    typedef boost::filtered_graph<
+        ValueGraph,
+        boost::function<bool(const VGEdge&)>,
+        boost::function<bool(const VGVertex&)> > SubValueGraph;
 
 private:
     //! The event function definition.
@@ -80,6 +68,17 @@ private:
 	//! All edges in the VG which are used to reverse values.
 	std::vector<VGEdge> dagEdges_;
 
+    //! A table maps each path to all its nodes and edges in the VG. A path is expressed by
+    //! a region index and path index.
+    std::map<std::pair<int, int>, 
+             std::pair<std::set<VGVertex>,
+                       std::set<VGEdge> > > pathNodesAndEdges_;
+
+    //! A table maps the route for each path to all its nodes and edges in the VG.
+    std::map<std::pair<int, int>,
+             std::pair<std::set<VGVertex>,
+                       std::set<VGEdge> > > routeNodesAndEdges_;
+
 	////! All available nodes (the last version of state variables).
 	//std::set<Vertex> availableNodes_;
 
@@ -115,7 +114,8 @@ public:
 
 	void buildForwardAndReverseEvent();
 
-    void getPath(const SubValueGraph& g, const std::vector<VGVertex>& valuesToRestore);
+    void getPath(const SubValueGraph& g,
+                 const std::vector<VGVertex>& valuesToRestore);
 	
 private:
 
@@ -132,7 +132,8 @@ private:
     void addPathsToEdges();
 
     //! Add path information to out edges of phi nodes.
-    PathSetWithIndex addPathsForPhiNodes(VGVertex phiNode, std::set<VGVertex>& processedPhiNodes);
+    PathSetWithIndex addPathsForPhiNodes(VGVertex phiNode,
+                                         std::set<VGVertex>& processedPhiNodes);
 
     //! Create a value node from the given AST node. The node passed in should be
     //! a varref, or an initialized name, or a value, or an expression.
@@ -156,10 +157,19 @@ private:
     //! and all available variables are found.
     void processLastVersions();
 
-    //! Get all routes for state variables.
-    void getReversalRoute(const SubValueGraph& subgraph,
-                          const std::vector<VGVertex>& valuesToRestore,
-                          std::map<VGVertex, std::vector<Route> >& routes);
+    //! Returns if the given edge belongs to the given path.
+    bool edgeBelongsToPath(const VGEdge& e, int dagIndex, int pathIndex) const;
+
+    /** Get the final route in the given subgraph. The route connects each variable
+     *  to store to the root node in the value graph.
+	 *  @param path The path index.
+	 *  @param subgraph A subgraph represents a path in the CFG.
+     *  @param valuesToRestore All variables to restore in the subgraph.
+     *  @returns reversalRoute The search result.
+	 */
+    SubValueGraph getReversalRoute(int dagIndex, int pathIndex,
+                                   const SubValueGraph& subgraph,
+                                   const std::vector<VGVertex>& valuesToRestore);
 
 	void writeValueGraphNode(std::ostream& out, const VGVertex& node) const
 	{
@@ -225,6 +235,11 @@ private:
 
     //! For each path, find its corresponding subgraph.
     void getSubGraph(int dagIndex, int pathIndex);
+
+    //! Generate the reverse function.
+    void generateReverseFunction(
+        //SgScopeStatement* scope,
+        const SubValueGraph& route);
 
 	static VGVertex nullVertex()
 	{ return boost::graph_traits<ValueGraph>::null_vertex(); }
