@@ -1,6 +1,6 @@
 #include "valueGraphNode.h"
 #include <ssa/staticSingleAssignment.h>
-
+#include <sageBuilder.h>
 #include <boost/assign/list_inserter.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
@@ -57,13 +57,17 @@ std::string VersionedVariable::toString() const
 {
 	if (name.empty())
 		return "TEMP";
-	return StaticSingleAssignment::varnameToString(name) +
-			"_" + lexical_cast<string>(version);
+    string str;
+    foreach (SgInitializedName* n, name)
+        str += n->get_name() + "_";
+    str += boost::lexical_cast<string>(version);
+    return str;
 }
 
-int PhiNode::getCost() const
+SgExpression* VersionedVariable::getVarRefExp() const
 {
-    return getCostFromType(getType());
+    ROSE_ASSERT(!name.empty());
+    return SageBuilder::buildVarRefExp(name.back()->get_name());
 }
 
 std::string ValueNode::toString() const
@@ -75,38 +79,58 @@ std::string ValueNode::toString() const
 	if (isTemp())
 		os << "TEMP";
     else
-    {
-        foreach (const VersionedVariable& var, vars)
-            os << var << " ";
-    }
+        os << var << " ";
 	return os.str();
 }
 
-int ValueNode::getCost() const
+
+//void ValueNode::addVariable(const VersionedVariable& newVar)
+//{
+//    // If this value node has a value, its cost is zero.
+//    if (isSgValueExp(astNode_))
+//    {
+//        vars_.push_back(newVar);
+//        return;
+//    }
+//
+//    int costOfNewVar = getCostFromType(newVar.name.back()->get_type());
+//    if (vars_.empty() || costOfNewVar < cost)
+//    {
+//        cost = costOfNewVar;
+//        vars_.push_back(newVar);
+//    }
+//    else
+//    {
+//        vars_.insert(vars_.end() - 1, newVar);
+//    }
+//}
+
+int PhiNode::getCost() const
 {
-    int cost = 0;
-    if (!isAvailable())
-    {
-        if (isTemp())
-            cost = getCostFromType(getType());
-        else
-        {
-            // The cost is the minimum one in all variables inside.
-            cost = INT_MAX;
-            foreach (const VersionedVariable& var, vars)
-                cost = min(cost, getCostFromType(var.name.back()->get_type()));
-        }
-    }
-    return cost;
+    getCostFromType(getType());
 }
 
 SgType* ValueNode::getType() const
 {
+    SgType* type;
+
     if (SgExpression* expr = isSgExpression(astNode))
-        return expr->get_type();
+        type = expr->get_type();
     if (SgInitializedName* initName = isSgInitializedName(astNode))
-        return initName->get_type();
-    return NULL;
+        type = initName->get_type();
+
+    // Remove reference.
+    if (SgReferenceType* refType = isSgReferenceType(type))
+        type = refType->get_base_type();
+
+    return type;
+}
+
+int ValueNode::getCost() const
+{
+    if (isAvailable())
+        return 0;
+    return getCostFromType(getType());
 }
 
 std::map<VariantT, std::string> OperatorNode::typeStringTable;

@@ -131,13 +131,20 @@ private:
     //! Add path information to edges.
     void addPathsToEdges();
 
+    //! Assign a global unique name for each value node in VG.
+    void assignNameToNodes();
+
     //! Add path information to out edges of phi nodes.
     PathSetWithIndex addPathsForPhiNodes(VGVertex phiNode,
                                          std::set<VGVertex>& processedPhiNodes);
 
-    //! Create a value node from the given AST node. The node passed in should be
-    //! a varref, or an initialized name, or a value, or an expression.
-	VGVertex createValueNode(SgNode* node);
+    /** Create a value node from the given AST node.
+	 *
+	 *  @param lhsNode The AST node which contains a lvalue.
+     *  @param rhsNode The AST node which contains a rvalue.
+	 *  @returns The new vertex.
+	 */
+	VGVertex createValueNode(SgNode* lhsNode, SgNode* rhsNode);
     
     //! Create an binary operation node, plus three edges.
 	VGVertex createOperatorNode(VariantT t, VGVertex result, VGVertex lhs, VGVertex rhs);
@@ -145,8 +152,8 @@ private:
     //! Create a unary operation node, plus two edges.
 	VGVertex createOperatorNode(VariantT t, VGVertex result, VGVertex operand);
 
-	//! Add a variable to a vertex in VG.
-	void addVariableToNode(VGVertex v, SgNode* node);
+//	//! Add a variable to a vertex in VG.
+//	void addVariableToNode(VGVertex v, SgNode* node);
 
     //! Add a reverse edge for every non-ordered edge, and add extra edges for
     //! + and - operations.
@@ -217,7 +224,7 @@ private:
 	VGEdge addValueGraphOrderedEdge(VGVertex src, VGVertex tar, int index);
 
 	//! Add a phi node to the value graph.
-	VGVertex addValueGraphPhiNode(VersionedVariable& var);
+	VGVertex createPhiNode(VersionedVariable& var);
 
 	//! Connect each variable node to the root with cost.
 	void addStateSavingEdges();
@@ -235,6 +242,14 @@ private:
 
     //! For each path, find its corresponding subgraph.
     void getSubGraph(SgScopeStatement* scope, int dagIndex, int pathIndex);
+
+    //! Get all nodes in the topological order in a subgraph.
+    std::vector<VGVertex> getGraphNodesInTopologicalOrder(
+            const SubValueGraph& subgraph) const;
+
+    //! Get all operands of an operator node.
+    std::pair<ValueNode*, ValueNode*>
+    getOperands(VGVertex opNode, const SubValueGraph& subgraph) const;
 
     //! Generate the reverse function.
     void generateReverseFunction(

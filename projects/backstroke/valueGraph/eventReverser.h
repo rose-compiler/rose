@@ -8,11 +8,14 @@ namespace Backstroke
 
 class ValueNode;
 
-SgExpression* buildPushFunction(ValueNode* node);
+SgStatement* buildPushFunction(ValueNode* node);
 
-SgExpression* buildPopFunction(ValueNode* node, SgType* type);
+SgStatement* buildPopFunction(ValueNode* node);
 
-SgExpression* buildOperation(
+// If rhs is NULL, it's an assignment to itself, like a_1 = a;
+SgStatement* buildAssignOpertaion(ValueNode* lhs, ValueNode* rhs = NULL);
+
+SgStatement* buildOperation(
         ValueNode* result,
         VariantT type,
         ValueNode* lhs,

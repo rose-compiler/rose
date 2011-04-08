@@ -9,32 +9,55 @@ namespace Backstroke
 using namespace std;
 using namespace SageBuilder;
 
-//! Build a variable expression from a value node in the value graph.
-SgExpression* buildVariable(ValueNode* node)
+namespace
 {
-    SgExpression* var;
-    if (node->isAvailable())
-        var = SageInterface::copyExpression(isSgExpression(node->astNode));
-    else
-        var = buildVarRefExp(node->vars[0].name[0]);
-    return var;
-}
+    //! Build a variable expression from a value node in the value graph.
+    SgExpression* buildVariable(ValueNode* node)
+    {
+        SgExpression* var;
+        if (node->isAvailable())
+            var = SageInterface::copyExpression(isSgExpression(node->astNode));
+        else
+            var = buildVarRefExp(node->str);
+        return var;
+    }
 
-SgExpression* buildPushFunction(ValueNode* node)
+    SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr)
+    {
+        return buildVariableDeclaration(newVar->str,
+                                        newVar->getType(),
+                                        buildAssignInitializer(expr));
+    }
+
+} // end of anonymous
+
+SgStatement* buildPushFunction(ValueNode* node)
 {
 	SgExprListExp* parameters = buildExprListExp(buildVariable(node));
-	return buildFunctionCallExp("push", buildVoidType(), parameters);
+	SgExpression* pushFunc = buildFunctionCallExp("push", buildVoidType(), parameters);
+    return buildVarDeclaration(node, pushFunc);
 }
 
-SgExpression* buildPopFunction(ValueNode* node, SgType* type)
+SgStatement* buildPopFunction(ValueNode* node)
 {
-    
+    SgType* type = node->getType();
 	SgExpression* popFunc = buildFunctionCallExp("pop< " + get_type_name(type) + " >",
             type, SageBuilder::buildExprListExp());
-    return buildAssignOp(buildVariable(node), popFunc);
+    return buildVarDeclaration(node, popFunc);
 }
 
-SgExpression* buildOperation(
+SgStatement* buildAssignOpertaion(ValueNode* lhs, ValueNode* rhs)
+{
+    SgExpression* expr;
+    // If rhs is NULL, it's an assignment to itself, like a_1 = a;
+    if (rhs == NULL)
+        expr = lhs->var.getVarRefExp();
+    else
+        expr = buildVariable(rhs);
+    return buildVarDeclaration(lhs, expr);
+}
+
+SgStatement* buildOperation(
         ValueNode* result,
         VariantT type,
         ValueNode* lhs,
@@ -138,7 +161,7 @@ case V_Sg##suffix: opExpr = build##suffix(lhsExpr, rhsExpr); break;
         }
     }
 
-    return buildAssignOp(resExpr, opExpr);
+    return buildVarDeclaration(result, opExpr);
 }
 
 } // end of Backstroke

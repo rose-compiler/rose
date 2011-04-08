@@ -31,9 +31,36 @@ void EventReverser::buildValueGraph()
     // Remove useless nodes.
     removeUselessNodes();
 
+    // Assign a global unique name for each node in VG.
+    assignNameToNodes();
+
     buildForwardAndReverseEvent();
 
     cout << "Number of nodes: " << boost::num_vertices(valueGraph_) << endl;
+}
+
+void EventReverser::assignNameToNodes()
+{
+    static int counter = 0;
+
+    set<string> names;
+    foreach (VGVertex node, boost::vertices(valueGraph_))
+    {
+        ValueNode* valNode = isValueNode(valueGraph_[node]);
+        if (valNode == NULL) continue;
+        if (valNode->isAvailable()) continue;
+
+        string name;
+        if (valNode->isTemp())
+            name = "temp" + boost::lexical_cast<string>(counter++);
+        else
+            name = valNode->var.toString();
+        
+        while (names.count(name) > 0)
+            name += "_";
+        names.insert(name);
+        valNode->str = name;
+    }
 }
 
 void EventReverser::addPathsToEdges()
@@ -148,7 +175,7 @@ void EventReverser::processLastVersions()
         if (varVertexMap_.count(var) == 0)
         {
             pseudoDefMap_[var] = nameDef.second;
-            addValueGraphPhiNode(var);
+            createPhiNode(var);
         }
 
         if (isStateVariable(name))
@@ -261,7 +288,7 @@ void EventReverser::addExtraNodesAndEdges()
     }
 }
 
-EventReverser::VGVertex EventReverser::addValueGraphPhiNode(VersionedVariable& var)
+EventReverser::VGVertex EventReverser::createPhiNode(VersionedVariable& var)
 {
     // Add the phi node.
     VGVertex node = addValueGraphNode(new PhiNode(var));
@@ -287,7 +314,7 @@ EventReverser::VGVertex EventReverser::addValueGraphPhiNode(VersionedVariable& v
             if (pseudoDefMap_.count(phiVar) == 0)
             {
                 pseudoDefMap_[phiVar] = def;
-                VGVertex phiNode = addValueGraphPhiNode(phiVar);
+                VGVertex phiNode = createPhiNode(phiVar);
                 addValueGraphEdge(node, phiNode);
             }
             else
@@ -331,7 +358,7 @@ EventReverser::VGVertex EventReverser::addValueGraphPhiNode(VersionedVariable& v
             if (pseudoDefMap_.count(varInPhi) > 0)
             {
                 varInPhi.isPseudoDef = true;
-                addValueGraphPhiNode(varInPhi);
+                createPhiNode(varInPhi);
             }
             else
                 ROSE_ASSERT(false);
@@ -385,91 +412,59 @@ EventReverser::VGEdge EventReverser::addValueGraphOrderedEdge(
     return e;
 }
 
-//void EventReverser::setNewDefNode(SgNode* defNode, VGVertex useVertex)
-//{
-//	// Get the var name and version for lhs.
-//	VersionedVariable var = getVersionedVariable(defNode, false);
-//
-//	//// Find the node of rhs in the VG which should exist now.
-//	//ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
-//	//Vertex rhsVertex = nodeVertexMap_.find(rhs)->second;
-//
-//	// Assign the node with the variable name and version.
-//	//ROSE_ASSERT(node);
-//
-//	// If the node contains a temporary variable, replace it with a variable node,
-//	// else build a new node and connect them.
-//	VariableNode* varNode = isVariableNode(valueGraph_[useVertex]);
-//	if (varNode && varNode->isTemp)
-//	{
-////			delete valueGraph_[useVertex];
-////			valueGraph_[useVertex] = new VariableNode(var);
-//		// If the node is a variable node, assign the var name to it.
-//		varNode->setVariable(var);
-//
-//		// Update the node to vertex table.
-//		nodeVertexMap_[defNode] = useVertex;
-//		// Update the var to vertex map.
-//		varVertexMap_[var] = useVertex;
-//	}
-////		else if (ValueNode* valNode = isValueNode(node))
-////		{
-////			// If the node is a value node, assign the var name to it.
-////			valNode->var = var;
-////
-////			// Update the node to vertex table.
-////			nodeVertexMap_[defNode] = useVertex;
-////			// Update the var to vertex map.
-////			varVertexMap_[var] = useVertex;
-////		}
-//	else
-//	{
-//		VGVertex newVertex = addValueGraphNode(new VariableNode(var), defNode);
-//		addValueGraphEdge(newVertex, useVertex);
-//
-//		// Update tables.
-//		nodeVertexMap_[defNode] = newVertex;
-//		varVertexMap_[var] = newVertex;
-//	}
-//}
-
-EventReverser::VGVertex EventReverser::createValueNode(SgNode* node)
+EventReverser::VGVertex EventReverser::createValueNode(SgNode* lhsNode, SgNode* rhsNode)
 {
-    ValueNode* valNode = new ValueNode(node);
+    VGVertex newVertex;
 
-    // If it is a variable node.
-    if (isSgVarRefExp(node) || isSgInitializedName(node))
+    if (lhsNode)
     {
-        VersionedVariable var = getVersionedVariable(node, false);
-        valNode->vars.push_back(var);
+        //ROSE_ASSERT(isSgVarRefExp(lhsNode) || isSgInitializedName(lhsNode));
 
-        VGVertex newVertex = addValueGraphNode(valNode);
-        varVertexMap_[var] = newVertex;
-        nodeVertexMap_[node] = newVertex;
+        ValueNode* valNode = new ValueNode(lhsNode);
+        newVertex = addValueGraphNode(valNode);
 
-        return newVertex;
+        valNode->var = getVersionedVariable(lhsNode, false);
+        varVertexMap_[valNode->var] = newVertex;
+        nodeVertexMap_[lhsNode] = newVertex;
+
+        // If rhs node is NULL, add an edge.
+        if (rhsNode)
+        {
+            VGVertex rhsVertex;
+            // If rhs node is not created yet, create it first.
+            if (nodeVertexMap_.count(rhsNode) == 0)
+            {
+                //ROSE_ASSERT(!"Infeasible path???");
+                rhsVertex = addValueGraphNode(new ValueNode(rhsNode));
+                nodeVertexMap_[rhsNode] = newVertex;
+            }
+            else
+                rhsVertex = nodeVertexMap_[rhsNode];
+            
+            addValueGraphEdge(newVertex, rhsVertex);
+        }
     }
-
-    VGVertex newVertex = addValueGraphNode(valNode);
-    nodeVertexMap_[node] = newVertex;
+    else if (rhsNode)
+    {
+        newVertex = addValueGraphNode(new ValueNode(rhsNode));
+        nodeVertexMap_[rhsNode] = newVertex;
+    }
+    else
+        ROSE_ASSERT(!"At least one parameter should not be NULL!");
 
     return newVertex;
 }
 
-void EventReverser::addVariableToNode(EventReverser::VGVertex v, SgNode* node)
-{
-    ValueNode* valNode = isValueNode(valueGraph_[v]);
-    ROSE_ASSERT(valNode);
-
-    // Note that we add a variable from its def, so the second parameter below
-    // is false.
-    VersionedVariable var = getVersionedVariable(node, false);
-    valNode->vars.push_back(var);
-
-    //cout << ">>" << var <<endl;
-
-    varVertexMap_[var] = nodeVertexMap_[node] = v;
-}
+//void EventReverser::addVariableToNode(EventReverser::VGVertex v, SgNode* node)
+//{
+//    ValueNode* valNode = isValueNode(valueGraph_[v]);
+//    ROSE_ASSERT(valNode);
+//
+//    // Note that we add a variable from its def, so the second parameter below
+//    // is false.
+//    valNode->var = getVersionedVariable(node, false);
+//    varVertexMap_[valNode->var] = nodeVertexMap_[node] = v;
+//}
 
 EventReverser::VGVertex EventReverser::createOperatorNode(
         VariantT t,

@@ -79,73 +79,108 @@ void EventReverser::getSubGraph(
     }
 }
 
+vector<EventReverser::VGVertex>
+EventReverser::getGraphNodesInTopologicalOrder(
+        const SubValueGraph& subgraph) const
+{
+    // The following code is needed since the value graph has VertexList=ListS which
+    // does not have a vertex_index property, which is needed by topological_sort.
+    int counter = 0;
+    map<VGVertex, int> vertexIDs;
+    foreach (VGVertex v, boost::vertices(subgraph))
+        vertexIDs[v] = counter++;
+    // Turn a std::map into a property map.
+    boost::associative_property_map<map<VGVertex, int> > vertexIDMap(vertexIDs);
+    
+    vector<VGVertex> nodes;
+    boost::topological_sort(subgraph, back_inserter(nodes), vertex_index_map(vertexIDMap));
+    return nodes;
+}
+
+pair<ValueNode*, ValueNode*>
+EventReverser::getOperands(VGVertex opNode, const SubValueGraph& subgraph) const
+{
+    ValueNode* lhsNode = NULL;
+    ValueNode* rhsNode = NULL;
+
+    // If it's a unary operation.
+    if (boost::out_degree(opNode, subgraph) == 1)
+    {
+        VGVertex lhs = *(boost::adjacent_vertices(opNode, subgraph).first);
+        lhsNode = isValueNode(subgraph[lhs]);
+    }
+    else
+    {
+        foreach (const VGEdge& edge, boost::out_edges(opNode, subgraph))
+        {
+            VGVertex tar = boost::target(edge, subgraph);
+            if (isOrderedEdge(subgraph[edge])->index == 0)
+                lhsNode = isValueNode(subgraph[tar]);
+            else
+                rhsNode = isValueNode(subgraph[tar]);
+        }
+    }
+    return make_pair(lhsNode, rhsNode);
+}
+
 void EventReverser::generateReverseFunction(
         SgScopeStatement* scope,
         const SubValueGraph& route)
 {
     SageBuilder::pushScopeStack(scope);
 
-    // The following code is needed since the value graph has VertexList=ListS which
-    // does not have a vertex_index property, which is needed by topological_sort.
-    int counter = 0;
-    map<VGVertex, int> vertexIDs;
-    foreach (VGVertex v, boost::vertices(route))
-        vertexIDs[v] = counter++;
-    // Turn a std::map into a property map.
-    boost::associative_property_map<map<VGVertex, int> > vertexIDMap(vertexIDs);
-    
-    vector<VGVertex> nodes;
-    boost::topological_sort(route, back_inserter(nodes), vertex_index_map(vertexIDMap));
-
-    foreach (VGVertex node, nodes)
+    foreach (VGVertex node, getGraphNodesInTopologicalOrder(route))
     {
-        if (node == root_)
-        {
-            foreach (const VGEdge& edge, boost::in_edges(node, route))
-            {
-                if (route[edge]->cost == 0) continue;
-                VGVertex src = boost::source(edge, route);
-                ValueNode* valNode = isValueNode(route[src]);
-                //cout << "State saving: " << route[src]->toString() << endl;
+        if (node == root_) continue;
 
-                SgExpression* popExpr = buildPopFunction(
-                        valNode, valNode->vars[0].name.back()->get_type());
-                SageInterface::appendStatement(
-                        SageBuilder::buildExprStatement(popExpr), scope);
-            }
-            continue;
+        ValueNode* valNode = isValueNode(route[node]);
+        if (valNode == NULL)        continue;
+        if (valNode->isAvailable()) continue;
+
+        ROSE_ASSERT(boost::out_degree(node, route) == 1);
+
+        VGVertex tar = *(boost::adjacent_vertices(node, route).first);
+        SgStatement* rvsStmt;
+
+        // State saving edge.
+        if (tar == root_)
+        {
+            VGEdge edge = boost::edge(node, tar, route).first;
+            if (route[edge]->cost == 0)
+                rvsStmt = buildAssignOpertaion(valNode);
+            else
+                rvsStmt = buildPopFunction(valNode);
+        }
+        else if (ValueNode* rhsValNode = isValueNode(route[tar]))
+        {
+            rvsStmt = buildAssignOpertaion(valNode, rhsValNode);
+        }
+        else if (OperatorNode* opNode = isOperatorNode(route[tar]))
+        {
+            ValueNode* lhsNode = NULL;
+            ValueNode* rhsNode = NULL;
+            boost::tie(lhsNode, rhsNode) = getOperands(tar, route);
+
+            rvsStmt = buildOperation(valNode, opNode->type, lhsNode, rhsNode);
         }
 
-        OperatorNode* opNode = isOperatorNode(route[node]);
-        if (opNode == NULL) continue;
-
-        VGEdge inEdge = *(boost::in_edges(node, route).first);
-        VGVertex res = boost::source(inEdge, route);
-        ValueNode* resNode = isValueNode(route[res]);
-        ValueNode* lhsNode = NULL;
-        ValueNode* rhsNode = NULL;
-
-        if (boost::out_degree(node, route) == 1)
-        {
-            VGVertex lhs = *(boost::adjacent_vertices(node, route).first);
-            lhsNode = isValueNode(route[lhs]);
-        }
-        else
-        {
-            foreach (const VGEdge& edge, boost::out_edges(node, route))
-            {
-                VGVertex tar = boost::target(edge, route);
-                if (isOrderedEdge(route[edge])->index == 0)
-                    lhsNode = isValueNode(route[tar]);
-                else
-                    rhsNode = isValueNode(route[tar]);
-            }
-        }
-
-        //cout << "Operation: " << opNode->toString() << endl;
-        SgExpression* opExpr = buildOperation(resNode, opNode->type, lhsNode, rhsNode);
-        SageInterface::appendStatement(SageBuilder::buildExprStatement(opExpr), scope);
+        // Add the generated statement to the scope.
+        SageInterface::appendStatement(rvsStmt, scope);
     }
+
+    foreach (VGVertex node, valuesToRestore_)
+    {
+        ValueNode* valNode = isValueNode(route[node]);
+
+        SgExpression* lhs = valNode->var.getVarRefExp();
+        SgExpression* rhs = SageBuilder::buildVarRefExp(valNode->var.toString());
+
+        SgExpression* rvsExpr = SageBuilder::buildAssignOp(lhs, rhs);
+        SgStatement* rvsStmt = SageBuilder::buildExprStatement(rvsExpr);
+        
+        SageInterface::appendStatement(rvsStmt, scope);
+    }
+        //else if (valuesToRestore_.count(node))
 
     SageBuilder::popScopeStack();
 }
