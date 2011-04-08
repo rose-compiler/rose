@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+if !ROSE_USING_GFORTRAN_VERSION_4_0
 POP_DISTRIBUTION  =  $(srcdir)/poptest.tgz
 TEST_TRANSLATOR   =  $(top_builddir)/tests/testTranslator
 
@@ -36,4 +37,5 @@ clean-local:
 EXTRA_DIST = \
 	CMakeLists.txt \
 	$(POP_DISTRIBUTION)
+endif
 endif
