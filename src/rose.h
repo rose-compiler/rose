@@ -194,8 +194,12 @@ namespace ELF{
  * configuration process) will create a file named "rosePublicConfig.h" with properly scoped CPP symbols (e.g.,
  * "ROSE_HAVE_PTHREAD_H).
  *
+ * For legacy code that includes "rose_config.h" followed by "rose.h", simply undefine CONFIG_ROSE between those two
+ * includes. It is safe to do this because CONFIG_ROSE is not used for any other purpose.
+ *
  * This test is here rather than in src/testRoseLib.C so that developers will get this error sooner rather than having to
- * wait until all of ROSE is compiled.
+ * wait until all of ROSE is compiled.  However, it does mean that developers will need to be a bit more careful about
+ * including both the private (rose_config.h) and public (rosePublicConfig.h) files in tandem.
  ******************************************************************************************************************************/
 #ifdef CONFIG_ROSE
 #  error "rose_config.h included in public header by mistake. Use rosePublicConfig.h instead."
