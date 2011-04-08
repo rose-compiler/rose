@@ -3,6 +3,10 @@
 #ifndef ROSE_H
 #define ROSE_H
 
+/* rosePublicConfig.h has some of the same CPP symbol definitions as rose_config.h, except the names have been changed so as
+ * to not pollute the global name space.  All the names start with "ROSE_". */
+#include "rosePublicConfig.h"
+
 #include "sage3basic.hhh"
 // DQ (4/21/2009): Andreas needs to add a comment about what this is for...
 #define BOOST_WAVE_PREPROCESS_PRAGMA_BODY 1
@@ -176,5 +180,26 @@ namespace ELF{
 // DQ (4/20/2009): Added support to optionally get more information out about new delete operators.
 #define COMPILE_DEBUG_STATEMENTS 1
 
-// ifndef ROSE_H
+/******************************************************************************************************************************
+ *                            THIS CHECK SHOULD BE THE LAST THING IN THIS FILE!
+ ******************************************************************************************************************************
+ * 
+ * Make sure that autoconf macros are not defined in user code.  This test is here because CPP symbols defining the presence or
+ * absence of certain features detected by GNU autoconf (or cmake's cmake/ConfigureChecks.cmake) pollute the global name
+ * space. This makes it impossible for a user to include both ROSE's configuration results in conjunction with the
+ * configuration results of any other package.
+ *
+ * If a ROSE public header file truly needs to know a configuration result, then modify scripts/publicConfiguration.pl
+ * to include the name of the symbol you need (e.g., HAVE_PTHREAD_H).   Then config.status (which is run as part of the
+ * configuration process) will create a file named "rosePublicConfig.h" with properly scoped CPP symbols (e.g.,
+ * "ROSE_HAVE_PTHREAD_H).
+ *
+ * This test is here rather than in src/testRoseLib.C so that developers will get this error sooner rather than having to
+ * wait until all of ROSE is compiled.
+ ******************************************************************************************************************************/
+#ifdef CONFIG_ROSE
+#  error "rose_config.h included in public header by mistake. Use rosePublicConfig.h instead."
 #endif
+
+
+#endif /* !ROSE_H !*/

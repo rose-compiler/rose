@@ -21,8 +21,8 @@
  *      names begin with "RTS_" rather than "pthread_".
  */
 
-/* Needed for HAVE_PTHREAD_H definition */
-#include "rose_config.h"
+/* Needed for ROSE_HAVE_PTHREAD_H definition */
+#include "rosePublicConfig.h"
 
 #include <assert.h>
 #include <stdint.h>
@@ -32,7 +32,7 @@
 #include <string>
 
 /* Figure out whether ROSE can support multi-threading and what kind of support library is available. */
-#ifdef HAVE_PTHREAD_H
+#ifdef ROSE_HAVE_PTHREAD_H
 #  define ROSE_THREADS_ENABLED
 #  define ROSE_THREADS_POSIX
 #  include <pthread.h>
