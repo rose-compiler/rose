@@ -454,4 +454,5 @@ PrintBinaryCompatibilitySignature:
 rosePublicConfig.h: rose_config.h
 	@echo "  GEN     $@"
 	@$(top_srcdir)/scripts/publicConfiguration.pl <$^ >$@
+DISTCLEANFILES = rosePublicConfig.h
 
