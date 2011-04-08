@@ -333,7 +333,7 @@ memberFunctionSetup (SgName & name, SgClassDefinition* classDefinition, SgFuncti
 
             // This is a temporary mean to force overloaded functions to have unique names.
                name += "_overloaded_";
-               if (SgProject::get_verbose() > -1)
+               if (SgProject::get_verbose() > 0)
                     printf ("Using a temporary mean to force overloaded functions to have unique names (name = %s) \n",name.str());
              }
             else
@@ -861,7 +861,20 @@ generateQualifierList (const SgName & classNameWithQualification)
           printf ("returnList.size() = %zu \n",returnList.size());
 
 #if 0
-     printf ("Exiting in stripQualifiers(): after computing the className \n");
+     int counter = 0;
+     list<SgName>::iterator i = returnList.begin();
+     while (i != returnList.end())
+        {
+          printf ("generateQualifierList(): returnList[%d] = %s \n",counter,(*i).str());
+
+          i++;
+          counter++;
+        }
+     printf ("Leaving generateQualifierList() \n");
+#endif
+
+#if 0
+     printf ("Exiting in generateQualifierList(): after computing the className \n");
      ROSE_ASSERT(false);
 #endif
 
@@ -872,7 +885,9 @@ generateQualifierList (const SgName & classNameWithQualification)
 SgName
 stripQualifiers (const SgName & classNameWithQualification)
    {
+  // printf ("Calling generateQualifierList(): classNameWithQualification = %s \n",classNameWithQualification.str());
      list<SgName> l = generateQualifierList(classNameWithQualification);
+  // printf ("DONE: calling generateQualifierList(): classNameWithQualification = %s \n",classNameWithQualification.str());
      ROSE_ASSERT(l.empty() == false);
 
      if (SgProject::get_verbose() > 0)
@@ -880,4 +895,102 @@ stripQualifiers (const SgName & classNameWithQualification)
 
      return l.back();
    }
+
+
+SgClassSymbol* 
+lookupSymbolFromQualifiedName(string className)
+   {
+  // Java qualified names are separate by "." and can refer to classes that
+  // are implicit (not appearing in the source code).  ROSE determines all
+  // referenced implicit classes (recursively) and includes them in the AST
+  // to support a proper AST with full type resolution, etc.  This can make 
+  // the AST for even a trivial Java program rather large.
+
+     list<SgName> qualifiedClassName = generateQualifierList(className);
+     SgClassSymbol* previousClassSymbol = NULL;
+     SgScopeStatement* previousClassScope = astJavaScopeStack.front();
+     ROSE_ASSERT(previousClassScope != NULL);
+
+  // Traverse all of the classes to get to the class containing the functionName.
+     for (list<SgName>::iterator i = qualifiedClassName.begin(); i != qualifiedClassName.end(); i++)
+        {
+       // Get the class from the current scope of the nearest outer most scope.
+       // SgClassSymbol* classSymbol = astJavaScopeStack.back()->lookupSymbolInParentScopes(*i);
+
+          ROSE_ASSERT(previousClassScope != NULL);
+       // printf ("Lookup SgSymbol for name = %s i scope = %p = %s = %s \n",(*i).str(),previousClassScope,previousClassScope->class_name().c_str(),SageInterface::get_name(previousClassScope).c_str());
+          SgSymbol* tmpSymbol = SageInterface::lookupSymbolInParentScopes(*i,previousClassScope);
+
+       // ROSE_ASSERT(tmpSymbol != NULL);
+          if (tmpSymbol != NULL)
+             {
+            // printf ("Found a symbol tmpSymbol = %s = %s \n",tmpSymbol->class_name().c_str(),tmpSymbol->get_name().str());
+
+            // This is either a proper class or an alias to a class where the class is implicit or included via an import statement.
+               SgClassSymbol* classSymbol = isSgClassSymbol(tmpSymbol);
+               SgVariableSymbol* variableSymbol = isSgVariableSymbol(tmpSymbol);
+               SgAliasSymbol* aliasSymbol = isSgAliasSymbol(tmpSymbol);
+
+               if (classSymbol == NULL && aliasSymbol != NULL)
+                  {
+                 // printf ("Trace through the alias to the proper symbol in another scope. \n");
+                    classSymbol = isSgClassSymbol(aliasSymbol->get_alias());
+                  }
+                 else
+                  {
+                 // This could be a call to "System.out.println();" (see test2011_04.java) in which case
+                 // this is a variableSymbol and the type of the variable is the class which has the 
+                 // "println();" function.
+                    if (classSymbol == NULL && variableSymbol != NULL)
+                       {
+                      // Find the class associated with the type of the variable (this could be any expression so this get's messy!)
+                         SgType* tmpType = variableSymbol->get_type();
+                         ROSE_ASSERT(tmpType != NULL);
+
+                      // printf ("variable type = %p = %s \n",tmpType,tmpType->class_name().c_str());
+
+                      // This should be a SgClassType but currently all variables are build with SgTypeInt.
+                      // So this is the next item to fix in the AST.
+                         SgClassType* classType = isSgClassType(tmpType);
+                         ROSE_ASSERT(classType != NULL);
+
+                         ROSE_ASSERT(classType->get_declaration() != NULL);
+                         SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+                         ROSE_ASSERT(classDeclaration != NULL);
+
+                         SgSymbol* tmpSymbol = classDeclaration->search_for_symbol_from_symbol_table();
+                         ROSE_ASSERT(tmpSymbol != NULL);
+                         classSymbol = isSgClassSymbol(tmpSymbol);
+                         ROSE_ASSERT(classSymbol != NULL);
+                       }
+                      else
+                       {
+                         ROSE_ASSERT(classSymbol != NULL);
+                       }
+                    ROSE_ASSERT(aliasSymbol == NULL);
+                  }
+
+               ROSE_ASSERT(classSymbol != NULL);
+
+               if (SgProject::get_verbose() > 2)
+                    printf ("classSymbol = %p for class name = %s \n",classSymbol,(*i).str());
+
+               previousClassSymbol = classSymbol;
+               SgClassDeclaration* classDeclaration = isSgClassDeclaration(classSymbol->get_declaration()->get_definingDeclaration());
+               ROSE_ASSERT(classDeclaration != NULL);
+            // previousClassScope = classSymbol->get_declaration()->get_scope();
+               previousClassScope = classDeclaration->get_definition();
+               ROSE_ASSERT(previousClassScope != NULL);
+             }
+            else
+             {
+            // This is OK when we are only processing a small part of the implicit class space (debugging mode) and have not built all the SgClassDeclarations. 
+               printf ("WARNING: SgClassSymbol NOT FOUND in lookupSymbolFromQualifiedName(): name = %s \n",className.c_str());
+               previousClassSymbol = NULL;
+             }
+        }
+
+     return previousClassSymbol;
+   }
+
 

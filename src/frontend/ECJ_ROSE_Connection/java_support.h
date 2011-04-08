@@ -84,6 +84,9 @@ SgVariableDeclaration* buildSimpleVariableDeclaration(const SgName & name);
 std::list<SgName> generateQualifierList (const SgName & classNameWithQualification);
 SgName stripQualifiers (const SgName & classNameWithQualification);
 
+// It might be that this function should take a "const SgName &" instead of a "std::string".
+SgClassSymbol* lookupSymbolFromQualifiedName(std::string className);
+
 
 // endif for ROSE_JAVA_SUPPORT
 #endif

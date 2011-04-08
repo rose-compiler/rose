@@ -1,6 +1,8 @@
 #ifndef ROSE_X86SIM_PRINT_H
 #define ROSE_X86SIM_PRINT_H
 
+#include "threadSupport.h"
+
 #include <stdio.h>
 #include <stdint.h>
 

@@ -842,6 +842,11 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                ROSE_ASSERT (functionExpression != NULL);
 
             // The type of expression is restricted to a subset of all possible expression (check this)
+                           while (isSgCommaOpExp(functionExpression))
+                           {
+                                   functionExpression = isSgCommaOpExp(functionExpression)->get_rhs_operand();
+                           }
+                           
                switch (functionExpression->variantT())
                   {
                  // these are the acceptable cases
@@ -1330,7 +1335,7 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
 
         // DQ (6/17/2005): Template declarations should not be marked as compiler generated 
         // (only the instantiations are possibly marked as compiler generated).
-        if (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == true)
+        if (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == true && SgProject::get_verbose() > 0)
         {
           printf ("Warning: SgTemplateInstantiationFunctionDecl's original template declaration %s is marked as compiler generated: \n", s->get_templateDeclaration()->get_qualified_name().str());
           s->get_startOfConstruct()->display("SgTemplateInstantiationFunctionDecl debug");
@@ -1530,11 +1535,14 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
 
      string mangledName;
 
+  // DQ (4/3/2011): This is used to compute the file if isValidMangledName() fails.
+     SgFile* file = NULL;
+
   // DQ (4/28/2005): Check out the mangled name for classes
      SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
      if (classDeclaration != NULL)
         {
-// RV (2/2/2006)
+       // RV (2/2/2006)
 #if 0
           int counter = 0; // counts the numbre of scopes back to global scope (not critical, but useful for debugging)
           mangledName = classDeclaration->get_mangled_qualified_name(counter).str();
@@ -1577,14 +1585,36 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
              }
           ROSE_ASSERT(mangledName.find('>') == string::npos);
 
-       // This is Rich's test (much shorter)
+       // DQ (4/3/2011): This is a fix to permit Java names that can include '$' to be handled properly.
+       // When the simpler test fails we compute what the current langauge is (relatively expensive so 
+       // we don't want to do so for each IR node) and the rerun the test with java specified explicitly.
+          bool anErrorHasOccured = false;
           if (isValidMangledName(mangledName) != true)
              {
-               printf ("Error: failed isValidMangledName() test classDeclaration = %p = %s = %s --- mangledName = %s \n",
-                    classDeclaration,classDeclaration->get_name().str(),classDeclaration->class_name().c_str(),mangledName.c_str());
-               classDeclaration->get_file_info()->display("Error: failed isValidMangledName() test");
+             // Check first if this is for a Java file and if so then '$' is allowed.
+                file = TransformationSupport::getFile(classDeclaration);
+                ROSE_ASSERT(file != NULL);
+
+                if (file->get_Java_only() == false)
+                   {
+                     anErrorHasOccured = true;
+                   }
+                  else
+                   {
+                  // printf ("Rerun the test for isValidMangledName() with java langauge specified \n");
+                     bool javaInUse = true;
+                     anErrorHasOccured = !isValidMangledName(mangledName,javaInUse);
+                   }
+                
+               if (anErrorHasOccured == true)
+                  {
+                    printf ("Error: failed isValidMangledName() test classDeclaration = %p = %s = %s --- mangledName = %s \n",
+                         classDeclaration,classDeclaration->get_name().str(),classDeclaration->class_name().c_str(),mangledName.c_str());
+                    classDeclaration->get_file_info()->display("Error: failed isValidMangledName() test");
+                  }
              }
-          ROSE_ASSERT(isValidMangledName(mangledName) == true);
+       // ROSE_ASSERT(isValidMangledName(mangledName) == true);
+          ROSE_ASSERT(anErrorHasOccured == false);
         }
 
   // DQ (4/27/2005): Check out the mangled name for functions
@@ -1615,7 +1645,28 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
      ROSE_ASSERT(mangledName.find('@') == string::npos);
 
      ROSE_ASSERT(mangledName.find('#') == string::npos);
-     ROSE_ASSERT(mangledName.find('$') == string::npos);
+
+  // DQ (4/3/2011): Java allows for '$' so we have to exclude this test when Java is used.
+  // note that if it was isValidMangledName() failed (could be many reasons) then file has
+  // been computed and is available.
+  // ROSE_ASSERT(mangledName.find('$') == string::npos);
+     if (file == NULL || (file != NULL && file->get_Java_only() == false) )
+        {
+           ROSE_ASSERT(mangledName.find('$') == string::npos);
+        }
+       else
+        {
+       // If this is a Java file and there is a '$' is fould then assert using a weaker test.
+          if (mangledName.find('$') != string::npos)
+             {
+            // A '$' was found, check using a more expensive test.
+               ROSE_ASSERT(file->get_Java_only() == true);
+
+               bool javaInUse = true;
+               ROSE_ASSERT(isValidMangledName(mangledName,javaInUse) == true);
+             }
+        }
+
      ROSE_ASSERT(mangledName.find('%') == string::npos);
      ROSE_ASSERT(mangledName.find('^') == string::npos);
      ROSE_ASSERT(mangledName.find('&') == string::npos);
@@ -1697,18 +1748,44 @@ TestAstForProperlyMangledNames::TestAstForProperlyMangledNames()
    }
 
 bool
-TestAstForProperlyMangledNames::isValidMangledName (string name)
+TestAstForProperlyMangledNames::isValidMangledName (string name, bool java_lang /* = false */ )
    {
+  // DQ (4/3/2011): This function has been modified to permit Java specific weakened restrictions 
+  // on names. The default for java_lang is false.  If a test fails the current language is 
+  // determined and java_lang set to true if the current langage is Java for the associated SgFile.
+
+     bool result = true;
+
      if (name.empty () || isdigit (name[0]))
-          return false;
-    
-     for (string::size_type i = 0; i < name.size (); ++i)
         {
-          if (!isalnum (name[i]) && name[i] != '_')
-               return false;
+          result = false;
         }
-  // Passed all above checks -- assume OK
-     return true;
+
+     if (java_lang == true)
+        {
+       // The case for Java has to allow a few more characters into names (e.g. '$')
+          for (string::size_type i = 0; i < name.size (); ++i)
+             {
+            // printf ("java_lang == true: isalnum (name = %s name[i] = %c) = %s \n",name.c_str(),name[i],isalnum (name[i]) ? "true" : "false");
+               if (!isalnum (name[i]) && !(name[i] == '_' || name[i] == '$'))
+                  {
+                    result = false;
+                  }
+             }
+        }
+       else
+        {
+          for (string::size_type i = 0; i < name.size (); ++i)
+             {
+            // printf ("java_lang == false: isalnum (name = %s name[i] = %c) = %s \n",name.c_str(),name[i],isalnum (name[i]) ? "true" : "false");
+               if (!isalnum (name[i]) && name[i] != '_')
+                  {
+                    result = false;
+                  }
+             }
+        }
+
+     return result;
    }
 
 /*! \page AstProperties AST Properties (Consistency Tests)
@@ -2877,8 +2954,8 @@ TestExpressionTypes::visit ( SgNode* node )
        // PC (10/12/2009): The following test verifies that array types properly decay to pointer types
        //  From C99 6.3.2.1p3:
        /* Except when it is the operand of the sizeof operator or the unary & operator, or is a
-          string literal used to initialize an array, an expression that has type ‘‘array of type’’ is
-          converted to an expression with type ‘‘pointer to type’’ that points to the initial element of
+          string literal used to initialize an array, an expression that has type ‚Äò‚Äòarray of type‚Äô‚Äô is
+          converted to an expression with type ‚Äò‚Äòpointer to type‚Äô‚Äô that points to the initial element of
           the array object and is not an lvalue. */
           type = type->stripTypedefsAndModifiers();
           if (type->variantT() == V_SgArrayType || type->variantT() == V_SgTypeString)
@@ -3908,19 +3985,13 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
      ROSE_ASSERT(node != NULL);
 
      if (node->get_freepointer() != AST_FileIO::IS_VALID_POINTER() )
-        {
+     {
           printf ("Error: In TestChildPointersInMemoryPool::visit() for node = %s at %p \n",node->class_name().c_str(),node);
-        }
-     ROSE_ASSERT(node->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
+                  ROSE_ASSERT(false);
+     }
 
      SgNode *parent = node->get_parent();
-
-#if 0
-     if (isSgVariableSymbol(node))
-     {
-       printf("Debug: found a var symbol in TestChildPointersInMemoryPool::visit(), %p\n", node);
-     }
-#endif     
+  
 #if ROSE_USE_VALGRIND
      VALGRIND_CHECK_DEFINED(parent);
 #endif
@@ -3928,36 +3999,15 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
      if (parent != NULL)
         {
           bool nodeFound = false;
-#if 0
-       // This is the really naive implementation, but simple.
-          vector<pair<SgNode*,string> > v = parent->returnDataMemberPointers();
-          for (unsigned int i = 0; i < v.size(); i++)
-             {
-               if (v[i].first == node)
-                    {
-                      nodeFound = true;
-                      return;
-                    }
-             }
-#endif
-#if 0
-       // DQ (3/8/2007): This is a newer more efficent implementation (and then abstracted to a simpler function)
-       // This is 8=9 times faster than the previous implementation, however still a significant 
-       // performance problem.
-
-       // Oddly enough, the function call to isChild is a bit faster than the more direct implementation.
-       // nodeFound = parent->getChildIndex(node) != -1;
-          nodeFound = parent->isChild(node);
-#endif
 
        // DQ (3/12/2007): This is the latest implementation, here we look for the child set 
        // in a statically defined childMap. This should be a more efficient implementation.
-       // Since it uses a static map it is a problem when the function if called twice.
+       // Since it uses a static map it is a problem when the function is called twice.
           std::map<SgNode*,std::set<SgNode*> >::iterator it = childMap.find(parent);
 
           if (it != childMap.end())
              {
-            // Reuse the set that was build the first time
+            // Reuse the set that was built the first time
                nodeFound = it->second.find(node) != it->second.end();
 
             // DQ (7/1/2008): When this function is called a second time, (typically as part
@@ -3972,63 +4022,53 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
              {
             // DQ (6/6/2010): Restrict this test to only memory pool entries that are valid
                if (parent->get_freepointer() == AST_FileIO::IS_VALID_POINTER() )
-                  {
-            // build the set (and do the test)
-               childMap[parent] = std::set<SgNode*>();
-               it = childMap.find(parent);
-               ROSE_ASSERT (it != childMap.end());
+               {
+                // build the set (and do the test)
+                   childMap[parent] = std::set<SgNode*>();
+                   it = childMap.find(parent);
+                   ROSE_ASSERT (it != childMap.end());
 
-            // Later we can make this more efficient by building a set directly
-            // This style is quite inefficient since we are not makeing use of 
-            // the string type date in the pair<SgNode*,string>
+                // Later we can make this more efficient by building a set directly
+                // This style is quite inefficient since we are not makeing use of 
+                // the string type date in the pair<SgNode*,string>
 #if ROSE_USE_VALGRIND
-               if (VALGRIND_CHECK_WRITABLE(parent, sizeof(SgNode))) {
-                 fprintf(stderr, "Parent %p of child %p (a %s) has been deleted.\n", parent, node, node->class_name().c_str());
-               }
+                   if (VALGRIND_CHECK_WRITABLE(parent, sizeof(SgNode))) {
+                     fprintf(stderr, "Parent %p of child %p (a %s) has been deleted.\n", parent, node, node->class_name().c_str());
+                   }
 #endif
 
 #if 0
-             // DQ (6/5/2010): Turn this on to support debugging of the AST File I/O support for reading files (tests/testAstFileRead.C).
+                 // DQ (6/5/2010): Turn this on to support debugging of the AST File I/O support for reading files (tests/testAstFileRead.C).
 
-               /* DEBUGGING (RPM 2008-10-10)
-                * If the call to parent->returnDataMemberPointers() fails it could be due to the fact that the parent has been
-                * deleted without deleting its children. This can happen if the parent's definition in one of the *.C files
-                * in src/ROSETTA/src (such as binaryInstruction.C) has a call to setAutomaticGenerationOfDestructor with false
-                * to turn off the ROSETTA-generated destructor and the explicitly coded destructor does not destroy child
-                * nodes. */
-               printf ("DEBUG: node: %p = %s = %s parent: %p = %s \n",
-                       node, node->class_name().c_str(), SageInterface::get_name(node).c_str(),
-                       parent, parent->class_name().c_str());
-
-               if (parent->get_freepointer() != AST_FileIO::IS_VALID_POINTER() )
-                  {
-                    printf ("Error: In TestChildPointersInMemoryPool::visit() for parent = %s at %p \n",parent->class_name().c_str(),parent);
-                  }
+                   /* DEBUGGING (RPM 2008-10-10)
+                    * If the call to parent->returnDataMemberPointers() fails it could be due to the fact that the parent has been
+                    * deleted without deleting its children. This can happen if the parent's definition in one of the *.C files
+                    * in src/ROSETTA/src (such as binaryInstruction.C) has a call to setAutomaticGenerationOfDestructor with false
+                    * to turn off the ROSETTA-generated destructor and the explicitly coded destructor does not destroy child
+                    * nodes. */
+                   printf ("DEBUG: node: %p = %s = %s parent: %p = %s \n",
+                           node, node->class_name().c_str(), SageInterface::get_name(node).c_str(),
+                           parent, parent->class_name().c_str());
 #endif
 
-               vector<pair<SgNode*,string> > v = parent->returnDataMemberPointers();
-#if 0
-               if (isSgTypedefSeq(node) != NULL)
-                  {
-                    printf ("node is a SgTypedefSequence: parent = %p = %s and v.size() = %ld \n",parent,parent->class_name().c_str(),v.size());
-                  }
-#endif
-               for (unsigned long i = 0; i < v.size(); i++)
-                  {
-                 // Add the child to the set in the map
-                    it->second.insert(v[i].first);
+                   vector<pair<SgNode*,string> > v = parent->returnDataMemberPointers();
 
-                 // DQ (10/2/2010): Debugging SgType :: type_kind  data member.
-                    ROSE_ASSERT(node != NULL);
-                 // ROSE_ASSERT(v[i].first != NULL);
+                   for (unsigned long i = 0; i < v.size(); i++)
+                      {
+                     // Add the child to the set in the map
+                        it->second.insert(v[i].first);
 
-                    if (v[i].first == node)
-                         {
-                           nodeFound = true;
-                         }
-                  }
+                     // DQ (10/2/2010): Debugging SgType :: type_kind  data member.
+                        ROSE_ASSERT(node != NULL);
+                     // ROSE_ASSERT(v[i].first != NULL);
 
-            // DQ (6/6/2010): Restrict this test to only memory pool entries that are valid
+                        if (v[i].first == node)
+                             {
+                               nodeFound = true;
+                             }
+                      }
+
+                // DQ (6/6/2010): Restrict this test to only memory pool entries that are valid
                   }
              }
 
@@ -4193,18 +4233,6 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                                                   printf ("     memberFunctionDeclaration->get_parent() = %p = %s = %s \n",memberFunctionDeclarationParent,memberFunctionDeclarationParent->class_name().c_str(),SageInterface::get_name(memberFunctionDeclarationParent).c_str());
 
                                                   memberFunctionDeclaration->get_startOfConstruct()->display("Note: non-defining memberFunctionDeclaration with parent not set to class scope");
-
-                                               // ROSE_ASSERT(false);
-#if 0
-                                               // DQ (7/16/2007): This should be placed into the astPostProcessing phase.
-                                                  SgNode* parent = memberFunctionDeclaration->get_parent();
-                                                  SgScopeStatement* scope = memberFunctionDeclaration->get_scope();
-                                                  printf ("Resetting the parent to match the scope parent was set to %p = %s = %s resetting to %p = %s = %s \n",
-                                                       parent,parent->class_name().c_str(),SageInterface::get_name(parent).c_str(),
-                                                       scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
-
-                                                  memberFunctionDeclaration->set_parent(memberFunctionDeclaration->get_scope());
-#endif
                                                 }
                                            }
                                       }

@@ -183,16 +183,7 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
 int
 RSIM_Simulator::exec(int argc, char **argv)
 {
-    ROSE_ASSERT(NULL==process); /* "There can be only one!" (main process, that is) */
-
-    process = new RSIM_Process;
-    process->set_tracing(stderr, tracing_flags);
-    process->set_core_styles(core_flags);
-    process->set_interpname(interp_name);
-    process->vdso_paths = vdso_paths;
-
-    process->set_tracing_name(tracing_file_name);
-    process->open_tracing_file();
+    create_process();
 
     SgAsmGenericHeader *fhdr = process->load(argv[0]);
     entry_va = fhdr->get_base_va() + fhdr->get_entry_rva();
@@ -220,6 +211,7 @@ RSIM_Simulator::create_process()
     ROSE_ASSERT(NULL==process); /* "There can be only one!" (main process, that is) */
 
     process = new RSIM_Process;
+    process->set_callbacks(callbacks);
     process->set_tracing(stderr, tracing_flags);
     process->set_core_styles(core_flags);
     process->set_interpname(interp_name);
