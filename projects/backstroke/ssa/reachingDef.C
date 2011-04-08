@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <boost/foreach.hpp>
 #include <boost/unordered_set.hpp>
+#include <boost/tuple/tuple.hpp>
 #include <stack>
 
 #define foreach BOOST_FOREACH
@@ -18,7 +19,7 @@ bool ReachingDef::isPhiFunction() const
 	return defType == PHI_FUNCTION;
 }
 
-const vector < pair<ReachingDef::ReachingDefPtr, CFGEdge> >& ReachingDef::getJoinedDefs() const
+const map<ReachingDef::ReachingDefPtr, set<CFGEdge> >& ReachingDef::getJoinedDefs() const
 {
 	ROSE_ASSERT(isPhiFunction());
 	return parentDefs;
@@ -40,13 +41,18 @@ set<SgNode*> ReachingDef::getActualDefinitions() const
 	{
 		//Depth-first search of phi node graph
 		unordered_set<ReachingDefPtr> visited;
-		vector< pair<ReachingDefPtr, CFGEdge> > worklist(parentDefs);
+		vector< ReachingDefPtr > worklist;
+		ReachingDefPtr parentDef;
+		set<CFGEdge> edges;
+		foreach (tie(parentDef, edges), parentDefs)
+		{
+			worklist.push_back(parentDef);
+		}
 
 		while (!worklist.empty())
 		{
-			pair<ReachingDefPtr, CFGEdge> defEdgePair = worklist.back();
+			ReachingDefPtr parentDef = worklist.back();
 			worklist.pop_back();
-			ReachingDefPtr parentDef = defEdgePair.first;
 			visited.insert(parentDef);
 
 			if (!parentDef->isPhiFunction())
@@ -55,12 +61,12 @@ set<SgNode*> ReachingDef::getActualDefinitions() const
 			}
 			else
 			{
-				pair<ReachingDefPtr, CFGEdge> defEdgePair;
+				pair<ReachingDefPtr, set<CFGEdge> > defEdgePair;
 				foreach(defEdgePair, parentDef->getJoinedDefs())
 				{
 					if (visited.count(defEdgePair.first) == 0)
 					{
-						worklist.push_back(defEdgePair);
+						worklist.push_back(defEdgePair.first);
 					}
 				}
 			}
@@ -85,21 +91,10 @@ void ReachingDef::setDefinitionNode(SgNode* defNode)
 	thisNode = defNode;
 }
 
-bool ReachingDef::addJoinedDef(shared_ptr<ReachingDef> newDef, CFGEdge edge)
+void ReachingDef::addJoinedDef(shared_ptr<ReachingDef> newDef, CFGEdge edge)
 {
 	ROSE_ASSERT(isPhiFunction());
-	
-	pair<ReachingDefPtr, CFGEdge> incomingDef(newDef, edge);
-	
-	if (find(parentDefs.begin(), parentDefs.end(), incomingDef) == parentDefs.end())
-	{
-		parentDefs.push_back(incomingDef);
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	parentDefs[newDef].insert(edge);
 }
 
 void ReachingDef::setRenamingNumber(int n)
