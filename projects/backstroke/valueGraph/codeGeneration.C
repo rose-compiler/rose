@@ -1,5 +1,6 @@
 #include "eventReverser.h"
 #include "valueGraphNode.h"
+#include <utilities/utilities.h>
 #include <sageBuilder.h>
 #include <sageInterface.h>
 
@@ -8,6 +9,7 @@ namespace Backstroke
 
 using namespace std;
 using namespace SageBuilder;
+using namespace SageInterface;
 
 namespace
 {
@@ -22,20 +24,64 @@ namespace
         return var;
     }
 
-    SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr)
-    {
-        return buildVariableDeclaration(newVar->str,
-                                        newVar->getType(),
-                                        buildAssignInitializer(expr));
-    }
+
+
 
 } // end of anonymous
 
-SgStatement* buildPushFunction(ValueNode* node)
+SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr)
 {
-	SgExprListExp* parameters = buildExprListExp(buildVariable(node));
+    SgAssignInitializer* init = expr ? buildAssignInitializer(expr) : NULL;
+    return buildVariableDeclaration(newVar->str,
+                                    newVar->getType(),
+                                    init);
+}
+
+void instrumentPushFunction(ValueNode* node)
+{
+	SgExprListExp* parameters = buildExprListExp(node->var.getVarRefExp());
 	SgExpression* pushFunc = buildFunctionCallExp("push", buildVoidType(), parameters);
-    return buildVarDeclaration(node, pushFunc);
+    //return buildExprStatement(pushFunc);
+
+    SgNode* varNode = node->astNode;
+    if (SgExpression* expr = isSgExpression(varNode))
+    {
+        SgExpression* commaOp = buildCommaOpExp(pushFunc, copyExpression(expr));
+        replaceExpression(expr, commaOp);
+    }
+    else if (SgInitializedName* initName = isSgInitializedName(varNode))
+    {
+        SgNode* stmtNode = initName;
+        while (stmtNode && !isSgStatement(stmtNode))
+            stmtNode = stmtNode->get_parent();
+
+        SgStatement* pushFuncStmt = buildExprStatement(pushFunc);
+
+        if (SgFunctionParameterList* funcPara = isSgFunctionParameterList(stmtNode))
+        {
+            SgFunctionDeclaration* funcDecl =
+                    isSgFunctionDeclaration(funcPara->get_parent());
+            SgBasicBlock* funcBody = funcDecl->get_definition()->get_body();
+            prependStatement(pushFuncStmt, funcBody);
+        }
+        else
+        {
+            SgVariableDeclaration* varDecl = isSgVariableDeclaration(stmtNode);
+            ROSE_ASSERT(varDecl);
+
+            // If this declaration is not in if's condition, while's condition, etc,
+            // add the push function just below it.
+            if (BackstrokeUtility::isTrueVariableDeclaration(varDecl))
+                insertStatementAfter(varDecl, pushFuncStmt);
+            else
+                ROSE_ASSERT(!"Declaration in conditions is not handled yet!");
+        }
+
+        // If this node belongs to event parameters, add the push function just
+        // at the beginning of the forward function. Else, add the push function
+        // under the declaration.
+        cout << initName->get_parent()->class_name() << endl;
+    }
 }
 
 SgStatement* buildPopFunction(ValueNode* node)
@@ -43,7 +89,7 @@ SgStatement* buildPopFunction(ValueNode* node)
     SgType* type = node->getType();
 	SgExpression* popFunc = buildFunctionCallExp("pop< " + get_type_name(type) + " >",
             type, SageBuilder::buildExprListExp());
-    return buildVarDeclaration(node, popFunc);
+    return buildExprStatement(buildAssignOp(buildVariable(node), popFunc));
 }
 
 SgStatement* buildAssignOpertaion(ValueNode* lhs, ValueNode* rhs)
@@ -54,7 +100,7 @@ SgStatement* buildAssignOpertaion(ValueNode* lhs, ValueNode* rhs)
         expr = lhs->var.getVarRefExp();
     else
         expr = buildVariable(rhs);
-    return buildVarDeclaration(lhs, expr);
+    return buildExprStatement(buildAssignOp(buildVariable(lhs), expr));
 }
 
 SgStatement* buildOperation(
@@ -161,7 +207,7 @@ case V_Sg##suffix: opExpr = build##suffix(lhsExpr, rhsExpr); break;
         }
     }
 
-    return buildVarDeclaration(result, opExpr);
+    return buildExprStatement(buildAssignOp(buildVariable(result), opExpr));
 }
 
 } // end of Backstroke

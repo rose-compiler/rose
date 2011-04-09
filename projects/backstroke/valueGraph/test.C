@@ -1,5 +1,6 @@
 #include "valueGraph.h"
 #include <slicing/backstrokeCFG.h>
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 using namespace boost;
@@ -8,42 +9,45 @@ using namespace boost;
 
 int main(int argc, char *argv[])
 {
-  // Build the AST used by ROSE
-  SgProject* project = frontend(argc,argv);
-  SgSourceFile* sourceFile = isSgSourceFile((*project)[0]);
+    // Build the AST used by ROSE
+    SgProject* project = frontend(argc, argv);
+    SgSourceFile* sourceFile = isSgSourceFile((*project)[0]);
 
-  // Process all function definition bodies for static control flow graph generation
-  Rose_STL_Container<SgNode*> functions = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
-  for (Rose_STL_Container<SgNode*>::const_iterator i = functions.begin(); i != functions.end(); ++i)
-  {
-    SgFunctionDefinition* funcDef = isSgFunctionDefinition(*i);
-    ROSE_ASSERT (funcDef != NULL);
+    int counter = 0;
 
-	if (!funcDef->get_file_info()->isSameFile(sourceFile))
-		continue;
+    // Process all function definition bodies for static control flow graph generation
+    Rose_STL_Container<SgNode*> functions = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
+    for (Rose_STL_Container<SgNode*>::const_iterator i = functions.begin(); i != functions.end(); ++i)
+    {
+        //string cfgFileName = "CFG" + boost::lexical_cast<string > (counter) + ".dot";
+        //string vgFileName = "VG" + boost::lexical_cast<string > (counter) + ".dot";
+        string cfgFileName = "CFG.dot";
+        string vgFileName = "VG.dot";
 
-    Backstroke::BackstrokeCFG cfg(funcDef);
-	cfg.toDot("CFG.dot");
+        SgFunctionDefinition* funcDef = isSgFunctionDefinition(*i);
+        ROSE_ASSERT(funcDef != NULL);
 
+        if (!funcDef->get_file_info()->isSameFile(sourceFile))
+            continue;
+
+        Backstroke::BackstrokeCFG cfg(funcDef);
+        cfg.toDot(cfgFileName);
+
+
+
+        Backstroke::EventReverser reverser(funcDef);
+        reverser.generateCode();
+
+        reverser.valueGraphToDot(vgFileName);
+
+        cout << "Function " << counter << " is processed.\n";
+        ++counter;
+
+        break;
+    }
     // Prepend includes to test files.
     SgGlobal* globalScope = SageInterface::getFirstGlobalScope(project);
-	SageInterface::insertHeader("rctypes.h", PreprocessingInfo::after, false, globalScope);
-    
-	Backstroke::EventReverser reverser(funcDef);
-	reverser.buildValueGraph();
-//	//reverser.searchValueGraph();
-//	reverser.shortestPath();
-//	reverser.buildForwardAndReverseEvent();
-//	reverser.getPath();
+    SageInterface::insertHeader("rctypes.h", PreprocessingInfo::after, false, globalScope);
 
-//	Backstroke::ValueGraph reverseVg;
-//	// The following function makes a reverse CFG copy.
-//	boost::transpose_graph(vg, reverseVg);
-
-	reverser.valueGraphToDot("VG.dot");
-
-	break;
-  }
-
-  return backend(project);
+    return backend(project);
 }

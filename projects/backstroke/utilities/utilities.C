@@ -682,5 +682,31 @@ bool isMemberOf(const VariableRenaming::VarName& var1, const VariableRenaming::V
 	return false;
 }
 
+bool isTrueVariableDeclaration(SgVariableDeclaration* varDecl)
+{
+    SgNode* parentNode = varDecl->get_parent();
+
+    if (SgIfStmt* ifStmt = isSgIfStmt(parentNode))
+        if (ifStmt->get_conditional() == varDecl)
+            return false;
+
+    if (SgForStatement* forStmt = isSgForStatement(parentNode))
+        if (forStmt->get_test() == varDecl)
+            return false;
+
+    if (SgWhileStmt* whileStmt = isSgWhileStmt(parentNode))
+        if (whileStmt->get_condition() == varDecl)
+            return false;
+
+    if (SgSwitchStatement* switchStmt = isSgSwitchStatement(parentNode))
+        if (switchStmt->get_item_selector() == varDecl)
+            return false;
+
+    if (SgCatchOptionStmt* catchStmt = isSgCatchOptionStmt(parentNode))
+        if (catchStmt->get_condition() == varDecl)
+            return false;
+    
+    return true;
+}
 
 } // namespace backstroke_util

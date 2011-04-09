@@ -32,3 +32,5 @@ check-local:
 
 test:
 	./valueGraph -c temp.C -I/opt/local/var/macports/software/boost/1.44.0_0/opt/local/include/
+#./valueGraph -c temp1.C -I/opt/local/var/macports/software/boost/1.44.0_0/opt/local/include/
+#./valueGraph -c temp2.C -I/opt/local/var/macports/software/boost/1.44.0_0/opt/local/include/

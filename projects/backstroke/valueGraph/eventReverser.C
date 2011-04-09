@@ -282,8 +282,11 @@ SgVariableDeclaration* getStackVar(const string& name)
 	//return SageBuilder::buildVarRefExp(stackVars[0]->get_variables()[0]);
 }
 
-void EventReverser::buildForwardAndReverseEvent()
+void EventReverser::buildFunctionBodies()
 {
+    using namespace SageInterface;
+    using namespace SageBuilder;
+
     SgFunctionDeclaration* funcDecl = funcDef_->get_declaration();
 
     SgScopeStatement* funcScope = funcDecl->get_scope();
@@ -291,93 +294,54 @@ void EventReverser::buildForwardAndReverseEvent()
 
     //Create the function declaration for the forward body
     SgName fwdFuncName = funcName + "_forward";
-    SgFunctionDeclaration* fwdFuncDecl = SageBuilder::buildDefiningFunctionDeclaration(
-                    fwdFuncName, funcDecl->get_orig_return_type(),
+    SgFunctionDeclaration* fwdFuncDecl = buildDefiningFunctionDeclaration(
+                    fwdFuncName,
+                    funcDecl->get_orig_return_type(),
                     isSgFunctionParameterList(
-                        SageInterface::copyStatement(funcDecl->get_parameterList())),
+                        copyStatement(funcDecl->get_parameterList())),
                     funcScope);
-    SgFunctionDefinition* fwdFuncDef = fwdFuncDecl->get_definition();
+    fwdFuncDef_ = fwdFuncDecl->get_definition();
     //SageInterface::replaceStatement(fwdFuncDef->get_body(), isSgBasicBlock(stmt.fwd_stmt));
 
     //Create the function declaration for the reverse body
     SgName rvsFuncName = funcName + "_reverse";
-    SgFunctionDeclaration* rvsFuncDecl = SageBuilder::buildDefiningFunctionDeclaration(
-                    rvsFuncName, funcDecl->get_orig_return_type(),
+    SgFunctionDeclaration* rvsFuncDecl = buildDefiningFunctionDeclaration(
+                    rvsFuncName,
+                    funcDecl->get_orig_return_type(),
                     isSgFunctionParameterList(
-                        SageInterface::copyStatement(funcDecl->get_parameterList())),
+                        copyStatement(funcDecl->get_parameterList())),
                     funcScope);
-    SgFunctionDefinition* rvsFuncDef = rvsFuncDecl->get_definition();
+    rvsFuncDef_ = rvsFuncDecl->get_definition();
     //SageInterface::replaceStatement(rvsFuncDef->get_body(), isSgBasicBlock(stmt.rvs_stmt));
 
     //Create the function declaration for the commit method
     SgName cmtFuncName = funcName + "_commit";
-    SgFunctionDeclaration* cmtFuncDecl = SageBuilder::buildDefiningFunctionDeclaration(
-                    cmtFuncName, funcDecl->get_orig_return_type(),
+    SgFunctionDeclaration* cmtFuncDecl = buildDefiningFunctionDeclaration(
+                    cmtFuncName,
+                    funcDecl->get_orig_return_type(),
                     isSgFunctionParameterList(
-                        SageInterface::copyStatement(funcDecl->get_parameterList())),
+                        copyStatement(funcDecl->get_parameterList())),
                     funcScope);
-    //SgFunctionDefinition* commitFunctionDefinition = commitFunctionDecl->get_definition();
+    cmtFuncDef_ = cmtFuncDecl->get_definition();
 
+    // Copy the original function to forward function.
+    replaceStatement(fwdFuncDef_->get_body(),
+                     copyStatement(funcDef_->get_body()));
 
+    // Swap the following two function definitions. This is because currently there
+    // is a problem on copying a function to another. We work around it by regard the
+    // original event as the forward one, and the copy of the original event becomes
+    // the original one at last.
+    //swap(funcDef_, fwdFuncDef_);
 
-    getSubGraph(rvsFuncDef->get_body(), 0, 0);
+//    insertStatementAfter(funcDecl,    fwdFuncDecl);
+//    insertStatementAfter(fwdFuncDecl, rvsFuncDecl);
+//    insertStatementAfter(rvsFuncDecl, cmtFuncDecl);
 
-    SageInterface::insertStatementAfter(funcDecl, fwdFuncDecl);
-    SageInterface::insertStatementAfter(fwdFuncDecl, rvsFuncDecl);
-    SageInterface::insertStatementAfter(rvsFuncDecl, cmtFuncDecl);
-
+	//SageInterface::fixVariableReferences(funcScope);
+    //AstTests::runAllTests(SageInterface::getProject());
     //SageInterface::insertStatementBefore(funcDecl, getStackVar(funcName));
 	//return outputs;
-
-#if 0
-	map<OperatorNode*, tuple<VGVertex, VGVertex, VGVertex> > opReversals;
-	foreach (VGEdge e, dagEdges_)
-	{
-		VGVertex src = source(e, valueGraph_);
-		VGVertex tar = target(e, valueGraph_);
-
-
-		// If the source is the root, then it is a state saving.
-		if (src == root_)
-		{
-			// If the target is an available node, skip.
-			if (valueGraph_[e]->cost == 0)
-				continue;
-			cout << "State Saving:" << valueGraph_[tar]->toString() << endl;
-		}
-
-
-		// If the target is an operator node, store it first.
-		else if (OperatorNode* opNode = isOperatorNode(valueGraph_[tar]))
-		{
-			ROSE_ASSERT(isOrderedEdge(valueGraph_[e]));
-			if (isOrderedEdge(valueGraph_[e])->index == 0)
-				opReversals[opNode].get<1>() = src;
-			else
-				opReversals[opNode].get<2>() = src;
-		}
-
-		else if (OperatorNode* opNode = isOperatorNode(valueGraph_[src]))
-		{
-			VGVertex result = opReversals[opNode].get<0>() = tar;
-			VGVertex operand1 = opReversals[opNode].get<1>();
-			VGVertex operand2 = opReversals[opNode].get<2>();
-
-			ROSE_ASSERT(operand1 != nullVertex() &&	operand2 != nullVertex());
-
-			cout << "Reversal: " << valueGraph_[result]->toString() << " = " <<
-					valueGraph_[operand1]->toString() << opNode->toString() <<
-					valueGraph_[operand2]->toString() << endl;
-		}
-
-		// A normal assignment.
-		else
-		{
-			cout << "Reversal: " << valueGraph_[tar]->toString() <<
-					" = " << valueGraph_[src]->toString() << endl;
-		}
-	}
-#endif
 }
 
 

@@ -1,5 +1,6 @@
 #include "valueGraph.h"
 #include "eventReverser.h"
+#include "pathNumGenerator.h"
 #include <sageBuilder.h>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
@@ -129,6 +130,18 @@ void EventReverser::generateReverseFunction(
 {
     SageBuilder::pushScopeStack(scope);
 
+    // First, declare all temporary variables at the beginning of the reverse events.
+    foreach (VGVertex node, boost::vertices(route))
+    {
+        ValueNode* valNode = isValueNode(route[node]);
+        if (valNode == NULL) continue;
+        if (valNode->isAvailable()) continue;
+        
+        SgStatement* varDecl = buildVarDeclaration(valNode);
+        SageInterface::appendStatement(varDecl, scope);
+    }
+
+    // Generate the reverse code in reverse topological order of the route DAG.
     foreach (VGVertex node, getGraphNodesInTopologicalOrder(route))
     {
         if (node == root_) continue;
@@ -142,21 +155,29 @@ void EventReverser::generateReverseFunction(
         VGVertex tar = *(boost::adjacent_vertices(node, route).first);
         SgStatement* rvsStmt;
 
-        // State saving edge.
         if (tar == root_)
         {
+            // State saving edge.
             VGEdge edge = boost::edge(node, tar, route).first;
             if (route[edge]->cost == 0)
                 rvsStmt = buildAssignOpertaion(valNode);
             else
+            {
+                // State saving here.
+                // For forward event, we instrument a push function by a comma
+                // operation expression.
+                instrumentPushFunction(valNode);
                 rvsStmt = buildPopFunction(valNode);
+            }
         }
         else if (ValueNode* rhsValNode = isValueNode(route[tar]))
         {
+            // Simple assignment.
             rvsStmt = buildAssignOpertaion(valNode, rhsValNode);
         }
         else if (OperatorNode* opNode = isOperatorNode(route[tar]))
         {
+            // Rebuild the operation.
             ValueNode* lhsNode = NULL;
             ValueNode* rhsNode = NULL;
             boost::tie(lhsNode, rhsNode) = getOperands(tar, route);
@@ -168,6 +189,8 @@ void EventReverser::generateReverseFunction(
         SageInterface::appendStatement(rvsStmt, scope);
     }
 
+    // At last, assign the value restored back to state variables.
+    // Note that those values are held by temporary variables before.
     foreach (VGVertex node, valuesToRestore_)
     {
         ValueNode* valNode = isValueNode(route[node]);
@@ -244,6 +267,10 @@ EventReverser::SubValueGraph EventReverser::getReversalRoute(
             unfinishedRoutes.pop();
 
             if (unfinishedRoute.nodes.empty())
+                continue;
+            // To prevate long time search, limit the nodes in the router no more
+            // than 10.
+            if (unfinishedRoute.nodes.size() > 10)
                 continue;
 
             // Get the node on the top, and find it out edges.

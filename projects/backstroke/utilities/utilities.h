@@ -129,5 +129,9 @@ namespace BackstrokeUtility
 	//! Returns if the first given var is a member of the second one. For example, a.i is a member of a.
 	bool isMemberOf(const VariableRenaming::VarName& var1, const VariableRenaming::VarName& var2);
 
+    //! Returns if a variable declaration is a true one, and not one in if condition, while condition, etc.
+    //! In C++ standard, those declarations in condtions actually are not called declaration.
+    bool isTrueVariableDeclaration(SgVariableDeclaration* varDecl);
+
 }
 

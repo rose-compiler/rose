@@ -8,7 +8,10 @@ namespace Backstroke
 
 class ValueNode;
 
-SgStatement* buildPushFunction(ValueNode* node);
+//! Build a variable declaration.
+SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr = 0);
+
+void instrumentPushFunction(ValueNode* node);
 
 SgStatement* buildPopFunction(ValueNode* node);
 
