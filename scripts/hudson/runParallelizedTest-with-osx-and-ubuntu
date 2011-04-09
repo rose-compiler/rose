@@ -180,7 +180,7 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xmake/check/install-full" ; then
               "$machine_name" = "hudson-rose-15.llnl.gov" -o \
               "$machine_name" = "hudson-rose-16.llnl.gov" \)
   then
-    CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
+    #CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
   fi
   #######################################################################################
   #  PCH
