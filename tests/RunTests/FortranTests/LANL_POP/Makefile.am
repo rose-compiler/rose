@@ -25,6 +25,9 @@ check-local:
 	  export HUDSON_Cpp="/lib/cpp -P"; \
 	  export HUDSON_AWK="$(AWK)"; \
 	  export HUDSON_LDLIBS="\$$(LIBS) -lcurl"; \
+	  export DIFF="`which diff`"; \
+	  export MAKE="$(MAKE)"; \
+	  export SED="$(SED)"; \
 	./test.sh
 	@echo '*************************************************************'
 	@echo '** RunTests/FortranTests/LANL_POP make check rule complete **'
