@@ -393,7 +393,9 @@ visitWithAstNodePointersList ( SgNode* node, AstNodePointersList l )
    {
      for (AstNodePointersList::iterator i=l.begin(); i!=l.end(); i++)
         {
-          if (SgDotExp* dotNode=dynamic_cast<SgDotExp*>(*i))
+       // DQ (4/8/2011): This is an Insure++ issue...fixed by using the isSgDotExp() function which handles NULL pointers more cleanly.
+       // if (SgDotExp* dotNode=dynamic_cast<SgDotExp*>(*i))
+          if (SgDotExp* dotNode = isSgDotExp(*i))
              {
             // cout << "AST TEST: SgDotExp(" << dotNode->get_lhs_operand_i() << ", " 
             //      << dotNode->get_rhs_operand_i() << ") found." << endl;
