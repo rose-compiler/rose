@@ -4,6 +4,7 @@
 // User code typically includes "rose.h", not "sage3basic.h"
 #include "rose.h"
 
+
 int
 main( int argc, char * argv[] )
    {

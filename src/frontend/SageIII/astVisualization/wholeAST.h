@@ -18,6 +18,12 @@ class CustomAstDOTGenerationEdgeType
 
           std::string optionString;
 
+#if 1
+          CustomAstDOTGenerationEdgeType (SgNode* n1, SgNode* n2, std::string label = "", std::string options = "");
+          bool operator!=(const CustomAstDOTGenerationEdgeType & edge) const;
+          bool operator==(const CustomAstDOTGenerationEdgeType & edge) const;
+          bool operator< (const CustomAstDOTGenerationEdgeType & edge) const;
+#else
        // DQ (3/5/2007): Need to set the labelString, but not yet.
           CustomAstDOTGenerationEdgeType (SgNode* n1, SgNode* n2, std::string label = "", std::string options = "")
              : start(n1), end(n2), labelString(label), optionString(options) {}
@@ -31,7 +37,22 @@ class CustomAstDOTGenerationEdgeType
           bool operator!=(const CustomAstDOTGenerationEdgeType & edge) const { return (edge.start != start) || (edge.end != end) || (edge.labelString != labelString); }
           bool operator==(const CustomAstDOTGenerationEdgeType & edge) const { return (edge.start == start) && (edge.end == end) && (edge.labelString == labelString); }
        // bool operator< (const CustomAstDOTGenerationEdgeType & edge) const { return (edge.start < start) || (edge.start == start) && (edge.end < end); }
-          bool operator< (const CustomAstDOTGenerationEdgeType & edge) const { return (edge.start < start) || (((edge.start == start) && (edge.labelString == labelString)) && (edge.end < end)); }
+
+       // DQ (4/8/2011): This is an issue reported by Insure++.
+       // bool operator< (const CustomAstDOTGenerationEdgeType & edge) const { return (edge.start < start) || (((edge.start == start) && (edge.labelString == labelString)) && (edge.end < end)); }
+          bool operator< (const CustomAstDOTGenerationEdgeType & edge) const
+             {
+            // This function must only be consistant in how it implements the "<" operator.
+            // Cast pointer to size_t variables and compare the size_t type variables directly.
+               size_t edge_start_size_t = (size_t) edge.start;
+               size_t start_size_t      = (size_t) start;
+               size_t edge_end_size_t   = (size_t) edge.start;
+               size_t end_size_t        = (size_t) start;
+
+            // return (edge.start < start) || (((edge.start == start) && (edge.labelString == labelString)) && (edge.end < end)); 
+               return (edge_start_size_t < start_size_t) || (((edge_start_size_t == start_size_t) && (edge.labelString == labelString)) && (edge_end_size_t < end_size_t)); 
+             }
+#endif
    };
 
 class CustomAstDOTGenerationNodeType

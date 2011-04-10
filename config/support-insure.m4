@@ -145,6 +145,10 @@ echo "In macro ROSE SUPPORT INSURE: CCLD  = $CCLD"
 echo "In macro ROSE SUPPORT INSURE: CXX   = $CXX"
 echo "In macro ROSE SUPPORT INSURE: CXXLD = $CXXLD"
 
+# DQ (4/7/2011): Added automake conditional to control what code would be compiled 
+# and tested using Insure++ (dynamic analysis tool for error checking from Parasoft).
+AM_CONDITIONAL(ROSE_USE_INSURE, [test "x$enable_insure" = "xyes"])
+
 AC_SUBST(CCLD)
 AC_SUBST(CXXLD)
 
