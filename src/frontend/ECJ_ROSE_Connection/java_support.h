@@ -50,7 +50,8 @@ extern std::list<SgNode*> astJavaNodeStack;
 // Global list of implicit classes
 extern std::list<SgName> astJavaImplicitClassList;
 
-
+// Global stack of SgInitializedName IR nodes (used for processing function parameters)
+extern std::list<SgInitializedName*> astJavaInitializedNameStack;
 
 
 SgGlobal* getGlobalScope();
@@ -87,6 +88,7 @@ SgName stripQualifiers (const SgName & classNameWithQualification);
 // It might be that this function should take a "const SgName &" instead of a "std::string".
 SgClassSymbol* lookupSymbolFromQualifiedName(std::string className);
 
+SgClassType* lookupTypeFromQualifiedName(std::string className);
 
 // endif for ROSE_JAVA_SUPPORT
 #endif

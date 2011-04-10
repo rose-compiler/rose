@@ -13,6 +13,7 @@
    #error "PACKAGE_BUGREPORT should not be defined in user code (rose_config.h included by mistake)."
 #endif
 
+
 int
 main( int argc, char * argv[] )
    {
