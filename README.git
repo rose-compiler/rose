@@ -1,5 +1,5 @@
 ##################### How to use smgit #####################
-
+ 
 git pull not as well supported as git fetch and get merge used directly:
    smgit fetch
    smgit merge origin/master
