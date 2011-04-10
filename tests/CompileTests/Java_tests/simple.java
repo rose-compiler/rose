@@ -8,6 +8,8 @@ public class simple
        // int x;
        // System.out.println("Java");
           System.exit(1);
+       // int x;
+       // x = System.Time.getDate();
         }
    }
 

@@ -310,6 +310,13 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           nodelabel += string("\\n") + name;
         }
 
+  // DQ (4/6/2011): Added support for output of the name for SgInitializedName IR nodes.
+     SgInitializedName* initializedName = isSgInitializedName(node);
+     if (initializedName != NULL)
+        {
+          nodelabel += string("\\n") + initializedName->get_name();
+        }
+
   // DQ (1/19/2009): Added support for output of what specific instrcution this is in the dot graph.
      SgAsmInstruction* genericInstruction = isSgAsmInstruction(node);
      if (genericInstruction != NULL)
