@@ -21,6 +21,57 @@
 
 using namespace std;
 
+
+// DQ (4/8/2011): Moved this from the header file...
+CustomAstDOTGenerationEdgeType::CustomAstDOTGenerationEdgeType (SgNode* n1, SgNode* n2, std::string label, std::string options)
+   : start(n1), end(n2), labelString(label), optionString(options)
+   {
+  // Nothing to do!
+   }
+
+// DQ (4/8/2011): Moved this from the header file...
+bool
+CustomAstDOTGenerationEdgeType::operator!=(const CustomAstDOTGenerationEdgeType & edge) const
+   {
+     return (edge.start != start) || (edge.end != end) || (edge.labelString != labelString);
+   }
+
+// DQ (4/8/2011): Moved this from the header file...
+bool
+CustomAstDOTGenerationEdgeType::operator==(const CustomAstDOTGenerationEdgeType & edge) const
+   {
+     return (edge.start == start) && (edge.end == end) && (edge.labelString == labelString);
+   }
+
+// DQ (4/8/2011): Moved this from the header file... This is an issue reported by Insure++.
+bool
+CustomAstDOTGenerationEdgeType::operator< (const CustomAstDOTGenerationEdgeType & edge) const
+   {
+  // This function must only be consistant in how it implements the "<" operator.
+  // Cast pointer to size_t variables and compare the size_t type variables directly.
+     size_t edge_start_size_t = (size_t) edge.start;
+     size_t start_size_t      = (size_t) start;
+     size_t edge_end_size_t   = (size_t) edge.start;
+     size_t end_size_t        = (size_t) start;
+
+  // return (edge.start < start) || (((edge.start == start) && (edge.labelString == labelString)) && (edge.end < end)); 
+     return (edge_start_size_t < start_size_t) || (((edge_start_size_t == start_size_t) && (edge.labelString == labelString)) && (edge_end_size_t < end_size_t)); 
+   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #if 1
 CustomAstDOTGeneration::~CustomAstDOTGeneration()
    {

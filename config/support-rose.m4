@@ -1772,6 +1772,11 @@ AC_CHECK_TYPE(user_desc,
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
 AC_SUBST(PACKAGE_VERSION_NUMERIC)
 
+# This CPP symbol is defined so we can check whether rose_config.h is included into a public header file.  It serves
+# no other purpose.  The name must not begin with "ROSE_" but must have a high probability of being globally unique (which
+# is why it ends with "_ROSE").
+AC_DEFINE(CONFIG_ROSE, 1, [Always defined and used for checking whether global CPP namespace is polluted])
+
 # End macro ROSE_SUPPORT_ROSE_PART_4.
 ]
 )
@@ -2128,6 +2133,8 @@ tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
 tests/RunTests/AstDeleteTests/Makefile
+tests/RunTests/FortranTests/Makefile
+tests/RunTests/FortranTests/LANL_POP/Makefile
 tests/PerformanceTests/Makefile
 tests/CompilerOptionsTests/Makefile
 tests/CompilerOptionsTests/testCpreprocessorOption/Makefile
@@ -2346,6 +2353,12 @@ AC_CONFIG_COMMANDS([default],[[
 # Generate rose_paths.C
 AC_CONFIG_COMMANDS([rose_paths.C], [[
 	make src/util/rose_paths.C
+]])
+
+# Generate public config file from private config file. The public config file adds "ROSE_" to the beginning of
+# certain symbols. See scripts/publicConfiguration.pl for details.
+AC_CONFIG_COMMANDS([rosePublicConfig.h],[[
+	make rosePublicConfig.h
 ]])
 
 

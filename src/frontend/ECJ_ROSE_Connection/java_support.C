@@ -48,6 +48,10 @@ list<SgNode*> astJavaNodeStack;
 // Global list of implicit classes
 list<SgName> astJavaImplicitClassList;
 
+// Global stack of SgInitializedName IR nodes (used for processing function parameters)
+list<SgInitializedName*> astJavaInitializedNameStack;
+
+
 
 void
 setJavaSourcePosition( SgLocatedNode* locatedNode )
@@ -136,10 +140,11 @@ void outputJavaState( const std::string label )
         }
 
      size_t maxStackSize = astJavaScopeStack.size();
-     maxStackSize = astJavaStatementStack.size()  > maxStackSize ? astJavaStatementStack.size()  : maxStackSize;
-     maxStackSize = astJavaExpressionStack.size() > maxStackSize ? astJavaExpressionStack.size() : maxStackSize;
-     maxStackSize = astJavaTypeStack.size()       > maxStackSize ? astJavaTypeStack.size()       : maxStackSize;
-     maxStackSize = astJavaNodeStack.size()       > maxStackSize ? astJavaNodeStack.size()       : maxStackSize;
+     maxStackSize = astJavaStatementStack.size()       > maxStackSize ? astJavaStatementStack.size()       : maxStackSize;
+     maxStackSize = astJavaExpressionStack.size()      > maxStackSize ? astJavaExpressionStack.size()      : maxStackSize;
+     maxStackSize = astJavaTypeStack.size()            > maxStackSize ? astJavaTypeStack.size()            : maxStackSize;
+     maxStackSize = astJavaInitializedNameStack.size() > maxStackSize ? astJavaInitializedNameStack.size() : maxStackSize;
+     maxStackSize = astJavaNodeStack.size()            > maxStackSize ? astJavaNodeStack.size()            : maxStackSize;
 
      printf ("\n");
      printf ("\n");
@@ -149,13 +154,14 @@ void outputJavaState( const std::string label )
      std::list<SgStatement*>           ::reverse_iterator astStatementStack_iterator            = astJavaStatementStack.rbegin();
      std::list<SgExpression*>          ::reverse_iterator astExpressionStack_iterator           = astJavaExpressionStack.rbegin();
      std::list<SgType*>                ::reverse_iterator astTypeStack_iterator                 = astJavaTypeStack.rbegin();
+     std::list<SgInitializedName*>     ::reverse_iterator astInitializedNameStack_iterator      = astJavaInitializedNameStack.rbegin();
      std::list<SgNode*>                ::reverse_iterator astNodeStack_iterator                 = astJavaNodeStack.rbegin();
 
-     const int NumberOfStacks = 5;
+     const int NumberOfStacks = 6;
      struct
         { std::string name;
           int fieldWidth;
-     } stackNames[NumberOfStacks] = { {"astScopeStack", 40},   {"astStatementStack",50} ,    {"astExpressionStack",50} ,    {"astTypeStack",30},   {"astNodeStack",30} };
+     } stackNames[NumberOfStacks] = { {"astScopeStack", 40},   {"astStatementStack",50} ,    {"astExpressionStack",60} ,    {"astTypeStack",30} ,    {"astInitializedNameStack",30},   {"astNodeStack",30} };
 
      for (int k=0; k < NumberOfStacks; k++)
         {
@@ -198,6 +204,9 @@ void outputJavaState( const std::string label )
 
           outputJavaStateSupport(s,stackNames[0].fieldWidth);
 
+
+
+
           if (astStatementStack_iterator != astJavaStatementStack.rend())
              {
                s = (*astStatementStack_iterator)->class_name() + " : " + SageInterface::get_name(*astStatementStack_iterator);
@@ -210,6 +219,9 @@ void outputJavaState( const std::string label )
              }
 
           outputJavaStateSupport(s,stackNames[1].fieldWidth);
+
+
+
 
           if (astExpressionStack_iterator != astJavaExpressionStack.rend())
              {
@@ -224,6 +236,9 @@ void outputJavaState( const std::string label )
 
           outputJavaStateSupport(s,stackNames[2].fieldWidth);
 
+
+
+
           if (astTypeStack_iterator != astJavaTypeStack.rend())
              {
                s = (*astTypeStack_iterator)->class_name() + " : " + SageInterface::get_name(*astTypeStack_iterator);
@@ -237,6 +252,27 @@ void outputJavaState( const std::string label )
 
           outputJavaStateSupport(s,stackNames[3].fieldWidth);
 
+
+
+
+          if (astInitializedNameStack_iterator != astJavaInitializedNameStack.rend())
+             {
+            // Since this is the SgInitializedName stack we don't have to output the class_name for each list element.
+            // s = (*astInitializedNameStack_iterator)->class_name() + " : " + SageInterface::get_name(*astInitializedNameStack_iterator);
+               s = SageInterface::get_name(*astInitializedNameStack_iterator);
+
+               astInitializedNameStack_iterator++;
+             }
+            else
+             {
+               s = " No Type ";
+             }
+
+          outputJavaStateSupport(s,stackNames[4].fieldWidth);
+
+
+
+
           if (astNodeStack_iterator != astJavaNodeStack.rend())
              {
                s = (*astNodeStack_iterator)->class_name() + " : " + SageInterface::get_name(*astNodeStack_iterator);
@@ -248,7 +284,7 @@ void outputJavaState( const std::string label )
                s = " No Node ";
              }
 
-          outputJavaStateSupport(s,stackNames[4].fieldWidth);
+          outputJavaStateSupport(s,stackNames[5].fieldWidth);
 
           printf ("\n");
         }
@@ -290,8 +326,9 @@ convertJavaIntegerToCxxInteger(JNIEnv *env, const jint & java_integer)
      return returnValue;
    }
 
+// void memberFunctionSetup (SgName & name, SgClassDefinition* classDefinition, SgFunctionParameterList* & parameterlist, SgMemberFunctionType* & return_type)
 void
-memberFunctionSetup (SgName & name, SgClassDefinition* classDefinition, SgFunctionParameterList* & parameterlist, SgMemberFunctionType* & return_type)
+memberFunctionSetup (SgName & name, SgClassDefinition* classDefinition, SgFunctionParameterList* & parameterlist, SgMemberFunctionType* & memberFunctionType)
    {
   // Refactored code.
 
@@ -306,15 +343,61 @@ memberFunctionSetup (SgName & name, SgClassDefinition* classDefinition, SgFuncti
      SgFunctionParameterTypeList* typeList = SageBuilder::buildFunctionParameterTypeList();
      ROSE_ASSERT(typeList != NULL);
 
-  // Specify if this is const, volatile, or restrict (0 implies normal member function).
-     unsigned int mfunc_specifier = 0;
-     return_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), typeList, classDefinition, mfunc_specifier);
-     ROSE_ASSERT(return_type != NULL);
-
-     parameterlist = SageBuilder::buildFunctionParameterList(typeList);
+     ROSE_ASSERT(parameterlist == NULL);
+     parameterlist = SageBuilder::buildFunctionParameterList();
      ROSE_ASSERT(parameterlist != NULL);
 
-     SgFunctionType* func_type = SageBuilder::buildFunctionType(return_type,parameterlist);
+     ROSE_ASSERT(astJavaTypeStack.empty() == false);
+
+  // This is the return type for the member function (top of the stack).
+     SgType* return_type = astJavaTypeStack.front();
+     ROSE_ASSERT(return_type != NULL);
+     astJavaTypeStack.pop_front();
+
+#if 0
+  // Loop over the types in the astJavaTypeStack (the rest of the stack).
+     while (astJavaTypeStack.empty() == false)
+        {
+          SgType* parameterType = astJavaTypeStack.front();
+          ROSE_ASSERT(parameterType != NULL);
+
+       // Note certain this is the correct order (we might need to insert instead of append).
+          typeList->append_argument(parameterType);
+
+          astJavaTypeStack.pop_front();
+        }
+#else
+  // Loop over the types in the astJavaTypeStack (the rest of the stack).
+     while (astJavaInitializedNameStack.empty() == false)
+        {
+          SgInitializedName* initializedName = astJavaInitializedNameStack.front();
+          ROSE_ASSERT(initializedName != NULL);
+
+          SgType* parameterType = initializedName->get_type();
+          ROSE_ASSERT(parameterType != NULL);
+
+       // Note certain this is the correct order (we might need to insert instead of append).
+          typeList->append_argument(parameterType);
+
+          parameterlist->append_arg(initializedName);
+          initializedName->set_parent(parameterlist);
+
+          astJavaInitializedNameStack.pop_front();
+        }
+#endif
+
+  // Specify if this is const, volatile, or restrict (0 implies normal member function).
+     unsigned int mfunc_specifier = 0;
+  // SgMemberFunctionType* memberFunctionType = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), typeList, classDefinition, mfunc_specifier);
+  // SgMemberFunctionType* memberFunctionType = SageBuilder::buildMemberFunctionType(return_type, typeList, classDefinition, mfunc_specifier);
+     memberFunctionType = SageBuilder::buildMemberFunctionType(return_type, typeList, classDefinition, mfunc_specifier);
+     ROSE_ASSERT(memberFunctionType != NULL);
+
+  // parameterlist = SageBuilder::buildFunctionParameterList(typeList);
+     ROSE_ASSERT(parameterlist != NULL);
+
+  // SgFunctionType* func_type = SageBuilder::buildFunctionType(return_type,parameterlist);
+     SgFunctionType* func_type = memberFunctionType;
      ROSE_ASSERT(func_type != NULL);
 
   // DQ (3/24/2011): Currently we am introducing a mechanism to make sure that overloaded function will have 
@@ -380,15 +463,17 @@ buildNonDefiningMemberFunction(const SgName & inputName, SgClassDefinition* clas
      SgName name = inputName;
 
      SgFunctionParameterList* parameterlist = NULL;
-     SgMemberFunctionType* return_type = NULL;
+     SgMemberFunctionType* memberFunctionType = NULL;
+  // SgType* return_type = NULL;
 
   // Refactored code.
-     memberFunctionSetup (name,classDefinition,parameterlist,return_type);
+     memberFunctionSetup (name,classDefinition,parameterlist,memberFunctionType);
 
      ROSE_ASSERT(parameterlist != NULL);
-     ROSE_ASSERT(return_type != NULL);
+     ROSE_ASSERT(memberFunctionType != NULL);
 
-     SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildNondefiningMemberFunctionDeclaration (name, return_type, parameterlist, classDefinition );
+  // SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildNondefiningMemberFunctionDeclaration (name, return_type, parameterlist, classDefinition );
+     SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildNondefiningMemberFunctionDeclaration (name, memberFunctionType, parameterlist, classDefinition );
 
      ROSE_ASSERT(functionDeclaration != NULL);
      ROSE_ASSERT(functionDeclaration->get_definingDeclaration() == NULL);
@@ -415,15 +500,15 @@ buildDefiningMemberFunction(const SgName & inputName, SgClassDefinition* classDe
      SgName name = inputName;
 
      SgFunctionParameterList* parameterlist = NULL;
-     SgMemberFunctionType* return_type = NULL;
+     SgMemberFunctionType* memberFunctionType = NULL;
 
   // Refactored code.
-     memberFunctionSetup (name,classDefinition,parameterlist,return_type);
+     memberFunctionSetup (name,classDefinition,parameterlist,memberFunctionType);
 
      ROSE_ASSERT(parameterlist != NULL);
-     ROSE_ASSERT(return_type != NULL);
+     ROSE_ASSERT(memberFunctionType != NULL);
 
-     SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (name, return_type, parameterlist, classDefinition );
+     SgMemberFunctionDeclaration* functionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (name, memberFunctionType, parameterlist, classDefinition );
 
      ROSE_ASSERT(functionDeclaration != NULL);
      ROSE_ASSERT(functionDeclaration->get_definingDeclaration() != NULL);
@@ -947,21 +1032,32 @@ lookupSymbolFromQualifiedName(string className)
                          SgType* tmpType = variableSymbol->get_type();
                          ROSE_ASSERT(tmpType != NULL);
 
-                      // printf ("variable type = %p = %s \n",tmpType,tmpType->class_name().c_str());
+                         printf ("variable type = %p = %s \n",tmpType,tmpType->class_name().c_str());
 
                       // This should be a SgClassType but currently all variables are build with SgTypeInt.
                       // So this is the next item to fix in the AST.
                          SgClassType* classType = isSgClassType(tmpType);
-                         ROSE_ASSERT(classType != NULL);
 
-                         ROSE_ASSERT(classType->get_declaration() != NULL);
-                         SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
-                         ROSE_ASSERT(classDeclaration != NULL);
+                      // ROSE_ASSERT(classType != NULL);
+                         if (classType != NULL)
+                            {
+                              ROSE_ASSERT(classType->get_declaration() != NULL);
+                              SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+                              ROSE_ASSERT(classDeclaration != NULL);
 
-                         SgSymbol* tmpSymbol = classDeclaration->search_for_symbol_from_symbol_table();
-                         ROSE_ASSERT(tmpSymbol != NULL);
-                         classSymbol = isSgClassSymbol(tmpSymbol);
-                         ROSE_ASSERT(classSymbol != NULL);
+                              SgSymbol* tmpSymbol = classDeclaration->search_for_symbol_from_symbol_table();
+                              ROSE_ASSERT(tmpSymbol != NULL);
+                              classSymbol = isSgClassSymbol(tmpSymbol);
+                              ROSE_ASSERT(classSymbol != NULL);
+                            }
+                           else
+                            {
+                           // This case happens when we are debugging the Java support and we have not built all the 
+                           // implicit classes and yet we discover a type used in a function argument list or retun 
+                           // type that is missing. In this case return NULL and it wil be handled by the calling function.
+                              printf ("WARNING: lookupSymbolFromQualifiedName(name = %s) is returning NULL since the class type was not found (debug mode) \n",className.c_str());
+                              return NULL;
+                            }
                        }
                       else
                        {
@@ -994,3 +1090,40 @@ lookupSymbolFromQualifiedName(string className)
    }
 
 
+
+SgClassType* 
+lookupTypeFromQualifiedName(string className)
+   {
+  // Lookup the name, find the symbol, build a SgClassType, and push it onto the astJavaTypeStack.
+     SgClassSymbol* targetClassSymbol = lookupSymbolFromQualifiedName(className);
+
+     SgClassType* classType = NULL;
+
+  // printf ("DONE: In lookupTypeFromQualifiedName(): Calling lookupSymbolFromQualifiedName(name = %s) targetClassSymbol = %p \n",className.c_str(),targetClassSymbol);
+  // ROSE_ASSERT(targetClassSymbol != NULL);
+
+     if (targetClassSymbol != NULL)
+        {
+       // printf ("In Java_JavaParser_cactionGenerateClassType(): Get the SgClassDeclaration \n");
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(targetClassSymbol->get_declaration());
+          ROSE_ASSERT(classDeclaration != NULL);
+
+       // printf ("In Java_JavaParser_cactionGenerateClassType(): Get the SgClassType \n");
+       // SgClassType* classType = SgClassType::createType(classDeclaration);
+          classType = SgClassType::createType(classDeclaration);
+          ROSE_ASSERT(classType != NULL);
+
+      // astJavaTypeStack.push_front(classType);
+        }
+       else
+        {
+       // This is OK when we are only processing a small part of the implicit class space (debugging mode) and have not built all the SgClassDeclaration IR nodes. 
+          printf ("WARNING: SgClassSymbol NOT FOUND in lookupTypeFromQualifiedName(): className = %s (returning NULL) \n",className.c_str());
+#if 0
+          printf ("ERROR: type not found \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+     return classType;
+   }
