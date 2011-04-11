@@ -121,7 +121,7 @@
  * @endcode
  */
 
-/** Top level class for simulating programs.
+/** Base class for simulating programs.  Derived classes contain details about particular guest operating systems.
  *
  *  An RSIM_Simulator instance represents a single process that associated with a specified executable specimen.  The specimen
  *  process shares certain resources with the simulator process, such as process ID, signal mask, etc.  Therefore, only one
@@ -136,9 +136,9 @@
  *
  *  @code
  *  #include <rose.h>
- *  #include <RSIM_Simulator.h>
+ *  #include <RSIM_Linux32.h>
  *  int main(int argc, char *argv[], char *envp[]) {
- *      RSIM_Simulator s;
+ *      RSIM_Linux32 s;                          // RSIM_Linux32 is derived from RSIM_Simulator
  *      int n = s.configure(argc, argv, envp);   // Configure the simulator
  *      s.exec(argc-n, argv+n);                  // Create a simulated process and its initial thread
  *      s.activate();                            // Allow other real processes to signal this one
@@ -218,16 +218,54 @@ public:
      *  the status returned by waitpid(). */
     void terminate_self();
 
+    /**************************************************************************************************************************
+     *                                  Callbacks
+     **************************************************************************************************************************/
+
     //@{
     /** Obtains the callbacks object associated with the simulator. */
     RSIM_Callbacks &get_callbacks() {
         return callbacks;
     }
-    const RSIM_Callbacks &get_callbacks() const {
+    const RSIM_Callbacks get_callbacks() const {
         return callbacks;
     }
     //@}
 
+    /**************************************************************************************************************************
+     *                                  System calls
+     **************************************************************************************************************************/
+public:
+    /** Callbacks that implement a particular system call.  The @p enter callback is responsible for printing the syscall
+     *  entrance message when system call tracing is enabled; the @p body does the real work of the system call; and the @p
+     *  leave callback is to print the system call return value(s).  Any of the callbacks may throw an exception, in which case
+     *  the subsequent callbacks are not invoked. */
+    struct SystemCall {
+        SystemCall()
+            :enter(NULL), body(NULL), leave(NULL) {}
+        SystemCall(void(*enter)(RSIM_Thread*, int), void(*body)(RSIM_Thread*, int), void(*leave)(RSIM_Thread*, int))
+            :enter(enter), body(body), leave(leave) {}
+        void (*enter)(RSIM_Thread*, int callno);
+        void (*body)(RSIM_Thread*, int callno);
+        void (*leave)(RSIM_Thread*, int callno);
+    };
+
+    /** Modifies system call emulation.  Sets the callbacks associated with the specified system call.
+     *
+     *  Thread safety:  This method is thread safe. */
+    void syscall_set(int callno, const SystemCall&);
+
+    /** Returns the functions implementing the specified system call.
+     *
+     *  Thread safety:  This method is thread safe. */
+    SystemCall syscall_get(int callno) const;
+
+private:
+    std::map<int, SystemCall> syscall_table;
+
+
+    /***************************************************************************************************************************/
+    
 private:
     /** Helper for object construction. */
     void ctor();
@@ -265,6 +303,7 @@ private:
     RSIM_Process *process;              /**< Main process. */
     rose_addr_t entry_va;               /**< Main entry address. */
     static RTS_rwlock_t class_rwlock;   /**< For methods that access class variables. */
+    mutable RTS_rwlock_t instance_rwlock;/**< Read-write lock per simulator object. */
     RSIM_Callbacks callbacks;           /**< Callbacks used to initialize the RSIM_Process callbacks. */
 };
 

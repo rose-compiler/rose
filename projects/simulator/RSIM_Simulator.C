@@ -3,16 +3,96 @@
 
 #ifdef ROSE_ENABLE_SIMULATOR
 
+#include "RSIM_Simulator.h"
+
 #include <sys/wait.h>
 
 RTS_rwlock_t RSIM_Simulator::class_rwlock = RTS_RWLOCK_INITIALIZER;
 RSIM_Simulator *RSIM_Simulator::active_sim = NULL;
+
+/******************************************************************************************************************************
+ *                                      Simulator system calls
+ *
+ * These are extra system calls provided by the simulator.
+ ******************************************************************************************************************************/
+
+static void
+syscall_RSIM_is_present_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("RSIM_is_present", "");
+}
+
+static void
+syscall_RSIM_is_present(RSIM_Thread *t, int callno)
+{
+    t->syscall_return(0);
+}
+
+static void
+syscall_RSIM_is_present_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("d");
+}
+
+static void
+syscall_RSIM_message_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("RSIM_message", "s");
+}
+
+static void
+syscall_RSIM_message(RSIM_Thread *t, int callno)
+{
+    t->syscall_return(0);
+}
+
+static void
+syscall_RSIM_message_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("d");
+}
+
+static void
+syscall_RSIM_delay_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("RSIM_delay", "d");
+}
+
+static void
+syscall_RSIM_delay(RSIM_Thread *t, int callno)
+{
+    unsigned nsec = t->syscall_arg(0);
+    unsigned result = sleep(nsec);
+    t->syscall_return(result);
+}
+
+static void
+syscall_RSIM_delay_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("d");
+}
+
+/******************************************************************************************************************************
+ *                                      Class methods
+ ******************************************************************************************************************************/
+
 
 /* Constructor helper: defined here so the constructor can be modified without changing the header file, and therefore without
  * requiring that the entire librose.so sources be recompiled. */
 void
 RSIM_Simulator::ctor()
 {
+    RTS_rwlock_init(&instance_rwlock, NULL);
+
+    syscall_set(1000000, SystemCall(syscall_RSIM_is_present_enter,
+                                    syscall_RSIM_is_present,
+                                    syscall_RSIM_is_present_leave));
+    syscall_set(1000001, SystemCall(syscall_RSIM_message_enter,
+                                    syscall_RSIM_message,
+                                    syscall_RSIM_message_leave));
+    syscall_set(1000002, SystemCall(syscall_RSIM_delay_enter,
+                                    syscall_RSIM_delay,
+                                    syscall_RSIM_delay_leave));
 }
 
 int
@@ -210,7 +290,7 @@ RSIM_Simulator::create_process()
 {
     ROSE_ASSERT(NULL==process); /* "There can be only one!" (main process, that is) */
 
-    process = new RSIM_Process;
+    process = new RSIM_Process(this);
     process->set_callbacks(callbacks);
     process->set_tracing(stderr, tracing_flags);
     process->set_core_styles(core_flags);
@@ -432,6 +512,26 @@ RSIM_Simulator::terminate_self()
             sigaction(WTERMSIG(status), &old, NULL);
         }
     } RTS_WRITE_END;
+}
+
+void
+RSIM_Simulator::syscall_set(int callno, const SystemCall &callbacks)
+{
+    RTS_WRITE(instance_rwlock) {
+        syscall_table[callno] = callbacks;
+    } RTS_WRITE_END;
+}
+
+RSIM_Simulator::SystemCall
+RSIM_Simulator::syscall_get(int callno) const
+{
+    SystemCall callbacks;
+    RTS_WRITE(instance_rwlock) {
+        std::map<int, SystemCall>::const_iterator si = syscall_table.find(callno);
+        if (si!=syscall_table.end())
+            callbacks = si->second;
+    } RTS_WRITE_END;
+    return callbacks;
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */

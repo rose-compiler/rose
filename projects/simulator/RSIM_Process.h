@@ -2,6 +2,7 @@
 #define ROSE_RSIM_Process_H
 
 class RSIM_Thread;
+class RSIM_Simulator;
 
 /** Represents a single simulated process. The process object holds resources that are shared among its threads. Some of the
  *  properties of a simulated process (such as PID) are shared with the real process (the process running the simulator).
@@ -11,8 +12,8 @@ class RSIM_Thread;
 class RSIM_Process {
 public:
     /** Creates an empty process containing no threads. */
-    RSIM_Process()
-        : tracing_file(NULL), tracing_flags(0),
+    explicit RSIM_Process(RSIM_Simulator *simulator)
+        : simulator(simulator), tracing_file(NULL), tracing_flags(0),
           map(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), disassembler(NULL),
           interpretation(NULL), ep_orig_va(0), ep_start_va(0),
           terminated(false), termination_status(0), core_flags(0), btrace_file(NULL),
@@ -22,7 +23,12 @@ public:
         ctor();
     }
 
+    RSIM_Simulator *get_simulator() const {
+        return simulator;
+    }
+
 private:
+    RSIM_Simulator *simulator;
     void ctor();
 
 
@@ -416,6 +422,13 @@ private:
     int termination_status;                     /**< As would be returned by the parent's waitpid() call. */
 
 public:
+    /** Thrown by exit system calls. */
+    struct Exit {
+        Exit(int status, bool exit_process): status(status), exit_process(exit_process) {}
+        int status;                             /**< Same value as returned by waitpid(). */
+        bool exit_process;                      /**< If true, then exit the entire process. */
+    };
+
 
     /** Returns the name of the executable without any path components. */
     std::string get_exename() const {

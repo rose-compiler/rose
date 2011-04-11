@@ -233,7 +233,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &info)
                 tracing(TRACE_MISC)->mesg("dumping core...\n");
                 get_process()->dump_core(signo);
                 report_stack_frames(tracing(TRACE_MISC));
-                throw Exit((signo & 0x7f) | __WCOREFLAG, true);
+                throw RSIM_Process::Exit((signo & 0x7f) | __WCOREFLAG, true);
             case SIGTERM:
             case SIGINT:
             case SIGQUIT:
@@ -248,7 +248,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &info)
             case SIGUSR1:
             case SIGUSR2:
                 /* Exit without core dump */
-                throw Exit(signo & 0x7f, true);
+                throw RSIM_Process::Exit(signo & 0x7f, true);
             case SIGIO:
             case SIGURG:
             case SIGCHLD:
@@ -261,7 +261,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &info)
                 return 0;
             default:
                 /* Exit without a core dump */
-                throw Exit(signo & 0x7f, true);
+                throw RSIM_Process::Exit(signo & 0x7f, true);
         }
 
     } else {
@@ -463,6 +463,12 @@ RSIM_Thread::sys_sigreturn()
 }
 
 int
+RSIM_Thread::sys_sigprocmask(int how, const RSIM_SignalHandling::sigset_32 *in, RSIM_SignalHandling::sigset_32 *out)
+{
+    return sighand.sigprocmask(how, in, out);
+}
+
+int
 RSIM_Thread::signal_accept(const RSIM_SignalHandling::siginfo_32 &info)
 {
     RSIM_SignalHandling::sigset_32 mask;
@@ -609,7 +615,7 @@ RSIM_Thread::main()
             process->dump_core(SIGILL);
             report_stack_frames(tracing(TRACE_MISC));
             abort();
-        } catch (const RSIM_Thread::Exit &e) {
+        } catch (const RSIM_Process::Exit &e) {
             sys_exit(e);
             return NULL;
         } catch (const RSIM_SignalHandling::siginfo_32 &e) {
@@ -744,7 +750,7 @@ RSIM_Thread::futex_wake(uint32_t va)
 }
 
 int
-RSIM_Thread::sys_exit(const Exit &e)
+RSIM_Thread::sys_exit(const RSIM_Process::Exit &e)
 {
     RSIM_Process *process = get_process(); /* while we still have a chance */
 
@@ -826,12 +832,60 @@ RSIM_Thread::sys_sigpending(RSIM_SignalHandling::sigset_32 *result)
     return 0;
 }
 
+int
+RSIM_Thread::sys_sigsuspend(const RSIM_SignalHandling::sigset_32 *mask) {
+    int signo = sighand.sigsuspend(mask, this);
+    return signo;
+}
+
+int
+RSIM_Thread::sys_sigaltstack(const stack_32 *in, stack_32 *out)
+{
+    uint32_t sp = policy.readGPR(x86_gpr_sp).known_value();
+    return sighand.sigaltstack(in, out, sp);
+}
+
 void
 RSIM_Thread::post_fork()
 {
     my_tid = syscall(SYS_gettid);
     assert(my_tid==getpid());
     process->post_fork();
+
+    /* Pending signals are only for the parent */
+    sighand.clear_all_pending();
+
+}
+
+void
+RSIM_Thread::emulate_syscall()
+{
+    unsigned callno = policy.readGPR(x86_gpr_ax).known_value();
+    bool cb_status = callbacks.call_syscall_callbacks(RSIM_Callbacks::BEFORE, this, callno, true);
+    if (cb_status) {
+        RSIM_Simulator::SystemCall sc = get_process()->get_simulator()->syscall_get(callno);
+        if (sc.body) {
+            if (sc.enter)
+                sc.enter(this, callno);
+            sc.body(this, callno);
+            if (sc.leave)
+                sc.leave(this, callno);
+        } else {
+            char name[32];
+            sprintf(name, "syscall_%u", callno);
+            tracing(TRACE_MISC)->multipart(name, "syscall_%u(", callno);
+            for (int i=0; i<6; i++)
+                tracing(TRACE_MISC)->more("%s0x%08"PRIx32, i?", ":"", syscall_arg(i));
+            tracing(TRACE_MISC)->more(") is not implemented yet");
+            tracing(TRACE_MISC)->multipart_end();
+
+            tracing(TRACE_MISC)->mesg("dumping core...\n");
+            get_process()->dump_core(SIGSYS);
+            report_stack_frames(tracing(TRACE_MISC));
+            abort();
+        }
+    }
+    callbacks.call_syscall_callbacks(RSIM_Callbacks::AFTER, this, callno, cb_status);
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */
