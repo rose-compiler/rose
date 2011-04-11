@@ -1,5 +1,5 @@
 ##################### How to use smgit #####################
-
+ 
 git pull not as well supported as git fetch and get merge used directly:
    smgit fetch
    smgit merge origin/master
@@ -290,6 +290,8 @@ and the old one has been saved (and should be accessible for a short while).
    1) Build a new local repository:
       a. build the local repository:
            "git clone /nfs/casc/overture/ROSE/git/ROSE.git git-dq-main-rc"
+      a2. Build a branch on the remote repository:
+         "git push origin origin:refs/heads/dq-aztec-rc"
       b. build a local branch to match a branch in the remote repository:
            "git branch git-dq-main-rc --track origin/git-dq-main-rc"
       c. checkout that local branch (switch to it):

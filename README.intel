@@ -3,7 +3,7 @@ ROSE can be compiled with the Intel compiler (icc and icpc).
 The only change to the usual configure line is to set CC and CXX 
 variables on the configure command line.
 
-The addition to the configure commandline is just: "CC=icc CXX=icpc".
+The addition to the configure command line is just: "CC=icc CXX=icpc".
 
 For example:
 /home/dquinlan/ROSE/git-dq-main-rc/configure CC=icc CXX=icpc --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --prefix=/home/dquinlan/ROSE/ROSE_CompileTree/git_LINUX-64bit-4.2.4-dq-main-rc-intel_install --with-boost=/home/dquinlan/local/boost_1_37_0.gxx-4.2.4
