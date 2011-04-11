@@ -4029,7 +4029,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                    ROSE_ASSERT (it != childMap.end());
 
                 // Later we can make this more efficient by building a set directly
-                // This style is quite inefficient since we are not makeing use of 
+                // This style is quite inefficient since we are not making use of 
                 // the string type date in the pair<SgNode*,string>
 #if ROSE_USE_VALGRIND
                    if (VALGRIND_CHECK_WRITABLE(parent, sizeof(SgNode))) {
@@ -4067,8 +4067,6 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                                nodeFound = true;
                              }
                       }
-
-                // DQ (6/6/2010): Restrict this test to only memory pool entries that are valid
                   }
              }
 
