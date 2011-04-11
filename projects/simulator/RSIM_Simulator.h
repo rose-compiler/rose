@@ -138,10 +138,12 @@
  *  #include <rose.h>
  *  #include <RSIM_Simulator.h>
  *  int main(int argc, char *argv[], char *envp[]) {
- *      RSIM_Simulator s(argc, argv, envp);   // Create a simulated process and its initial thread
- *      s.activate();                         // Allow other real processes to signal this one
- *      s.main_loop();                        // Simulate until exit
- *      s.deactivate();                       // Restore original signal handlers
+ *      RSIM_Simulator s;
+ *      int n = s.configure(argc, argv, envp);   // Configure the simulator
+ *      s.exec(argc-n, argv+n);                  // Create a simulated process and its initial thread
+ *      s.activate();                            // Allow other real processes to signal this one
+ *      s.main_loop();                           // Simulate until exit
+ *      s.deactivate();                          // Restore original signal handlers
  *      return 0;
  *  }
  *  @endcode

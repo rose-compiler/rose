@@ -44,9 +44,10 @@
  *
  *      // The actual callback
  *      virtual bool operator()(RSIM_Thread *thread, SgAsmInstruction *insn, bool prev) {
- *          if (thread->get_process()->get_ep_orig_va() == insn->get_address()) {
+ *          RSIM_Process *process = thread->get_process();
+ *          if (process->get_ep_orig_va() == insn->get_address()) {
  *              // This thread is at the OEP.  Call the thread-safe disassembler.
- *              SgAsmBlock *block = thread->get_process()->disassemble();
+ *              SgAsmBlock *block = process->disassemble();
  *              // Output disassembled instructions, functions, etc.  See disassemble.C
  *              // in tests/roseTests/binaryTests for more sophisticated examples of
  *              // displaying instructions and other information using AsmUnparser.
@@ -55,7 +56,7 @@
  *              // process we prevent subsequently created threads from incuring the
  *              // runtime overhead of invoking this callback on every instruction.
  *              thread->get_callbacks().remove_pre_insn(this);
- *              thread->get_process()->get_callbacks().remove_pre_insn(this);
+ *              process->get_callbacks().remove_pre_insn(this);
  *          }
  *          return prev;
  *      }

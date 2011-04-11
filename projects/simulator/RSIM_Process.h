@@ -172,7 +172,8 @@ public:
 
     /** Returns the memory address in ROSE where the specified specimen address is located.
      *
-     *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
+     *  Thread safety: This method is thread safe; it can be invoked on a single object by multiple threads
+     *  concurrently. However, the address that is returned might be unmapped before the caller can do anything with it. */
     void *my_addr(uint32_t va, size_t size);
 
     /** Does the opposite, more or less, of my_addr(). Return a specimen virtual address that maps to the specified address in
@@ -192,11 +193,11 @@ public:
     /** Copies data from specimen address space.  Copies up to @p size bytes from the specimen memory beginning at virtual
      *  address @p va into the beginning of @p buf.  If the requested number of bytes cannot be copied because (part of) the
      *  destination address space is not mapped or because (part of) the destination address space does not have read
-     *  permission, the this method will read as much as possible up to the first invalid address.  The return value is the
+     *  permission, then this method will read as much as possible up to the first invalid address.  The return value is the
      *  number of bytes copied.
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads
-     *  concurrently. However, the address that is returned might be unmapped before the caller can do anything with it. */
+     *  concurrently. */
     size_t mem_read(void *buf, rose_addr_t va, size_t size);
 
     /** Reads a NUL-terminated string from specimen memory. The NUL is not included in the string.  If a limit is specified

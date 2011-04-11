@@ -3696,7 +3696,7 @@ main(int argc, char *argv[], char *envp[])
 {
     RSIM_Simulator sim;
 
-#if 0 /*EXAMPLE: If you change this, then also update the example text in RSIM_Simulator.h. */
+#if 0 /*EXAMPLE: If you change this, then also update the example text in RSIM_Callbacks.h. */
     {
         /* An example of a pre-instruction callback which disassembles the specimen's memory image when a thread attempts to
          * execute at the original entry point (OEP) for the first time.  The OEP is the entry address defined in the ELF file
@@ -3710,12 +3710,13 @@ main(int argc, char *argv[], char *envp[])
         struct DisassembleAtOep: public RSIM_Callbacks::InsnCallback {
             virtual DisassembleAtOep *clone() { return this; }
             virtual bool operator()(RSIM_Thread *thread, SgAsmInstruction *insn, bool prev) {
-                if (thread->get_process()->get_ep_orig_va() == insn->get_address()) {
+                RSIM_Process *process = thread->get_process();
+                if (process->get_ep_orig_va() == insn->get_address()) {
                     std::cout <<"disassembling at OEP...\n";
-                    SgAsmBlock *block = thread->get_process()->disassemble();
+                    SgAsmBlock *block = process->disassemble();
                     AsmUnparser().unparse(std::cout, block);
                     thread->get_callbacks().remove_pre_insn(this);
-                    thread->get_process()->get_callbacks().remove_pre_insn(this);
+                    process->get_callbacks().remove_pre_insn(this);
                 }
                 return prev;
             }
