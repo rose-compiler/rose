@@ -26,7 +26,8 @@ SgFunctionDeclaration* normalizeEvent(SgFunctionDeclaration* func_decl)
 	SgFunctionDefinition* def_normalized = func_decl->get_definition();
 
 	ExtractFunctionArguments::NormalizeTree(def_normalized);
-	BackstrokeNormUtility::normalize(def_normalized->get_body());
+	printf("\n\nWARNING: Backstroke Expression normalization is disabled!\n\n");
+	//BackstrokeNormUtility::normalize(def_normalized->get_body());
 
 	return func_decl;
 }
