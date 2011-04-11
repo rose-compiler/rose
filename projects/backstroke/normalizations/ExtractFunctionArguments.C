@@ -3,6 +3,9 @@
 #include <sstream>
 #include <stdio.h>
 #include "utilities/utilities.h"
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
 
 using namespace std;
 using namespace boost;
@@ -31,11 +34,21 @@ bool ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 	//Get all functions in function evaluation order
 	vector<FunctionCallInfo> functionCalls = FunctionEvaluationOrderTraversal::GetFunctionCalls(tree);
 
+#if 0
+	for (size_t i = 0; i < functionCalls.size(); i++)
+	{
+		printf("**** Function call #%d\n", i + 1);
+		SgFunctionCallExp* callExpression = functionCalls[i].functionCall;
+		printf("Function expression: %s\n", callExpression->get_function()->unparseToString().c_str());
+		printf("Arguments: %s\n\n", callExpression->get_args()->unparseToString().c_str());
+	}
+#endif
+	
 	//Go through all the function calls and replace the arguments of each one
 	bool success = true;
-	for (vector<FunctionCallInfo>::const_iterator fnCallIter = functionCalls.begin(); fnCallIter != functionCalls.end(); fnCallIter++)
+
+	foreach(const FunctionCallInfo& functionCallInfo, functionCalls)
 	{
-		const FunctionCallInfo& functionCallInfo = *fnCallIter;
 		success = success & RewriteFunctionCallArguments(functionCallInfo);
 	}
 
@@ -74,10 +87,11 @@ bool ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 
 		//Build a declaration for the temporary variable
 		SgScopeStatement* scope = functionCallInfo.tempVarDeclarationLocation->get_scope();
-		tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> tempVarInfo = BackstrokeUtility::CreateTempVariableForExpression(arg, scope, false);
-		SgVariableDeclaration* tempVarDeclaration = tempVarInfo.get<0>();
-		SgAssignOp* tempVarAssignment = tempVarInfo.get<1>();
-		SgExpression* tempVarReference = tempVarInfo.get<2>();
+	
+		SgVariableDeclaration* tempVarDeclaration;
+		SgAssignOp* tempVarAssignment;
+		SgExpression* tempVarReference;
+		tie(tempVarDeclaration, tempVarAssignment, tempVarReference) = BackstrokeUtility::CreateTempVariableForExpression(arg, scope, false);
 
 		//Insert the temporary variable declaration
 		InsertStatement(tempVarDeclaration, functionCallInfo.tempVarDeclarationLocation, functionCallInfo.tempVarDeclarationInsertionMode);
@@ -89,6 +103,7 @@ bool ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 		SgExpression* placeholderExp = SageBuilder::buildIntVal(7);
 		SgCommaOpExp* comma = SageBuilder::buildCommaOpExp(tempVarAssignment, placeholderExp);
 		SageInterface::replaceExpression(functionCall, comma, true);
+		ROSE_ASSERT(functionCall->get_parent() == NULL);
 		SageInterface::replaceExpression(placeholderExp, functionCall);
 	}
 
