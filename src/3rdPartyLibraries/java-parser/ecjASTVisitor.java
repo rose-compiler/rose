@@ -90,6 +90,14 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println(" modifiers = " + node.modifiers);
              }
 
+       // *******************************************************************************************
+       // Build the lists of type parameters and function parameters as part of building the function 
+       // declarations directly. So not there is no action for this function.
+
+       // Either that or we have to reconcile implicit processing using reflection and explicit 
+       // processing driven by the ECJ specific AST traversal ???
+       // *******************************************************************************************
+
        // Divide up the work to define an argument, the name and modifiers are simple but the type has to
        // be constructed via recursive calls that will cause it to be generated on the astJavaTypeStack.
        // java_parser.cactionArgument("Argument_block_abc");
@@ -98,13 +106,13 @@ class ecjASTVisitor extends ASTVisitor
        // java_parser.cactionArgumentModifiers(node.modifiers);
        // java_parser.cactionArgumentEnd();
 
-          JavaParserSupport.generateType(node.type);
+       // JavaParserSupport.generateType(node.type);
 
        // This rule assumes that the type will be made available on the stack (astJavaTypeStack).
        // In general we want to have rules that are specific to IR nodes and pass any constructed
        // IR nodes via the stack (rules called should have generated the constructed IR nodes on 
        // the stack within ROSE).
-          java_parser.cactionArgument(nameString,node.modifiers);
+       // java_parser.cactionArgument(nameString,node.modifiers);
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (Argument,BlockScope)");
@@ -416,6 +424,45 @@ class ecjASTVisitor extends ASTVisitor
                     System.out.println("     --- constructor typeParameters = " + node.typeParameters[i]);
                   }
              }
+            else
+             {
+            // For a function defined in the input program, the typeParameters array is empty, but the ECJ
+            // specific AST traversal will visit the type parameters. Not clear why this is organized like this.
+               System.out.println("     --- method typeParameters (empty) = " + node.typeParameters);
+             }
+
+       // Looking here for arguments (want the arguments) since they are not always in the node.typeParameters
+          if (node.arguments != null)
+             {
+               for (int i = 0, typeArgumentsLength = node.arguments.length; i < typeArgumentsLength; i++)
+                  {
+                 // System.out.println("     --- constructor arguments = " + node.arguments[i].type);
+                 // System.out.println("     --- constructor arguments (type = " + node.arguments[i].type + ", name = " + node.arguments[i].name);
+                     System.out.println("     --- constructor arguments (type = " + node.arguments[i].type + ", name = " + node.arguments[i].name.toString() + ")");
+
+                    String nameString = new String(node.arguments[i].name);
+                    System.out.println("This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (ConstructorDeclaration,ClassScope)): type = " + node.arguments[i].type + " nameString = " + nameString);
+                    JavaParserSupport.generateType(node.arguments[i].type);
+
+                 // This rule assumes that the type will be made available on the stack (astJavaTypeStack).
+                 // In general we want to have rules that are specific to IR nodes and pass any constructed
+                 // IR nodes via the stack (rules called should have generated the constructed IR nodes on 
+                 // the stack within ROSE).
+                    java_parser.cactionArgument(nameString,node.modifiers);
+
+                    System.out.println("DONE: This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (ConstructorDeclaration,ClassScope)): type = " + node.arguments[i].type + " nameString = " + nameString);
+                  }
+             }
+            else
+             {
+            // For a function defined in the input program, the typeParameters array is empty, but the ECJ
+            // specific AST traversal will visit the type parameters. Not clear why this is organized like this.
+               System.out.println("     --- method arguments (empty) = " + node.arguments);
+             }
+
+       // Push a type to serve as the return type which will be ignored for the case of a constructor
+       // (this allows us to reuse the general member function support).
+          JavaParser.cactionGenerateType("void");
 
           java_parser.cactionConstructorDeclaration(name);
 
@@ -1227,7 +1274,17 @@ class ecjASTVisitor extends ASTVisitor
                     for (int i = 0, typeArgumentsLength = node.typeParameters.length; i < typeArgumentsLength; i++)
                        {
                          System.out.println("     --- method typeParameters = " + node.typeParameters[i]);
+
+                      // System.out.println("This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (MethodDeclaration,ClassScope)): type = " + node.typeParameters[i]);
+                      // JavaParserSupport.generateType(node.typeParameters[i]);
+                      // System.out.println("DONE: This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (MethodDeclaration,ClassScope)): type = " + node.typeParameters[i]);
                        }
+                  }
+                 else
+                  {
+                 // For a function defined in the input program, the typeParameters array is empty, but the ECJ
+                 // specific AST traversal will visit the type parameters. Not clear why this is organized like this.
+                    System.out.println("     --- method typeParameters (empty) = " + node.typeParameters);
                   }
 
                if (node.statements != null)
@@ -1239,11 +1296,46 @@ class ecjASTVisitor extends ASTVisitor
                   }
              }
 
+       // Looking here for arguments (want the arguments) since they are not always in the node.typeParameters
+          if (node.arguments != null)
+             {
+               for (int i = 0, typeArgumentsLength = node.arguments.length; i < typeArgumentsLength; i++)
+                  {
+                 // System.out.println("     --- method arguments = " + node.arguments[i].type);
+                    System.out.println("     --- method arguments (type = " + node.arguments[i].type + ", name = " + new String(node.arguments[i].name) + ")");
+
+                    String nameString = new String(node.arguments[i].name);
+                    System.out.println("This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (MethodDeclaration,ClassScope)): type = " + node.arguments[i].type + " nameString = " + nameString);
+                    JavaParserSupport.generateType(node.arguments[i].type);
+
+                 // This rule assumes that the type will be made available on the stack (astJavaTypeStack).
+                 // In general we want to have rules that are specific to IR nodes and pass any constructed
+                 // IR nodes via the stack (rules called should have generated the constructed IR nodes on 
+                 // the stack within ROSE).
+                    java_parser.cactionArgument(nameString,node.modifiers);
+
+                    System.out.println("DONE: This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (MethodDeclaration,ClassScope)): type = " + node.arguments[i].type + " nameString = " + nameString);
+                  }
+             }
+            else
+             {
+            // For a function defined in the input program, the typeParameters array is empty, but the ECJ
+            // specific AST traversal will visit the type parameters. Not clear why this is organized like this.
+               System.out.println("     --- method arguments (empty) = " + node.arguments);
+             }
+
+       // Build the return type in ROSE and push it onto the stack (astJavaTypeStack).
+          JavaParserSupport.generateType(node.returnType);
+
        // System.out.println("Exiting to test error handling! \n");
        // System.exit(0);
 
        // java_parser.cactionMethodDeclaration();
        // java_parser.cactionMethodDeclaration("MethodDeclaration_abc");
+
+       // We can build this here but we can't put the symbol into the symbol tabel until 
+       // we have gathered the function parameter types so that the correct function type 
+       // can be computed.
           java_parser.cactionMethodDeclaration(name);
 
           if (java_parser.verboseLevel > 0)
@@ -2276,6 +2368,9 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("Inside of endVisit (MessageSend,BlockScope)");
 
           java_parser.cactionMessageSendEnd();
+
+       // Not clear when we have to provide a parameter.
+          java_parser.cactionStatementEnd("MessageSend");
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (MessageSend,BlockScope)");
