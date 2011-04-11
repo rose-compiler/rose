@@ -79,6 +79,10 @@ bool isVariableReference(SgExpression* expression)
 		return isVariableReference(commaOp->get_lhs_operand()) &&
 				isVariableReference(commaOp->get_rhs_operand());
 	}
+	else if (isSgPointerDerefExp(expression) || isSgCastExp(expression) || isSgAddressOfOp(expression))
+	{
+		return isVariableReference(isSgUnaryOp(expression)->get_operand());
+	}
 	else
 	{
 		return false;
@@ -98,16 +102,15 @@ bool isVariableReference(SgExpression* expression)
  *         the original expression. Delete the results that you don't need! */
 tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> CreateTempVariableForExpression(SgExpression* expression, SgScopeStatement* scope, bool initializeInDeclaration)
 {
-	SgTreeCopy copyHelp;
 	SgType* expressionType = expression->get_type();
 	SgType* variableType = expressionType;
 
 	//If the expression has a reference type, we need to use a pointer type for the temporary variable.
 	//Else, re-assigning the variable is not possible
-	bool isReferenceType = isSgReferenceType(expressionType);
+	bool isReferenceType = SageInterface::isReferenceType(expressionType);
 	if (isReferenceType)
 	{
-		SgType* expressionBaseType = isSgReferenceType(expressionType)->get_base_type();
+		SgType* expressionBaseType = expressionType->stripType(SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_REFERENCE_TYPE);
 		variableType = SageBuilder::buildPointerType(expressionBaseType);
 	}
 
@@ -115,8 +118,7 @@ tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> CreateTempVariableForE
 	string name = BackstrokeUtility::GenerateUniqueVariableName(scope);
 
 	//Initialize the temporary variable to an evaluation of the expression
-	SgAssignInitializer* initializer = NULL;
-	SgExpression* tempVarInitExpression = isSgExpression(expression->copy(copyHelp));
+	SgExpression* tempVarInitExpression = SageInterface::copyExpression(expression);
 	ROSE_ASSERT(tempVarInitExpression != NULL);
 	if (isReferenceType)
 	{
@@ -127,9 +129,10 @@ tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> CreateTempVariableForE
 	}
 
 	//Optionally initialize the variable in its declaration
+	SgAssignInitializer* initializer = NULL;
 	if (initializeInDeclaration)
 	{
-		SgExpression* initExpressionCopy = isSgExpression(tempVarInitExpression->copy(copyHelp));
+		SgExpression* initExpressionCopy = SageInterface::copyExpression(tempVarInitExpression);
 		initializer = SageBuilder::buildAssignInitializer(initExpressionCopy);
 	}
 
@@ -140,11 +143,11 @@ tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> CreateTempVariableForE
 	SgVarRefExp* tempVarReference = SageBuilder::buildVarRefExp(tempVarDeclaration);
 	SgAssignOp* assignment = SageBuilder::buildAssignOp(tempVarReference, tempVarInitExpression);
 
-	//Build the variable reference expression that can be used in place of the original expresion
+	//Build the variable reference expression that can be used in place of the original expression
 	SgExpression* varRefExpression = SageBuilder::buildVarRefExp(tempVarDeclaration);
 	if (isReferenceType)
 	{
-		//The temp variable is a pointer type, so dereference it before usint it
+		//The temp variable is a pointer type, so dereference it before using it
 		varRefExpression = SageBuilder::buildPointerDerefExp(varRefExpression);
 	}
 
