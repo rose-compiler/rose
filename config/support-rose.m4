@@ -1755,6 +1755,10 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 AC_CHECK_HEADERS(gcrypt.h)
 AC_CHECK_LIB(gcrypt,gcry_check_version)
 
+# Multi-thread support is needed by the simulator.  This also enables/disables major parts of threadSupport.[Ch] within
+# the ROSE library.
+AC_CHECK_HEADERS(pthread.h)
+
 # These headers and types are needed by projects/simulator [matzke 2009-07-02]
 AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
 AC_CHECK_HEADERS([sys/types.h sys/mman.h sys/stat.h sys/uio.h sys/wait.h sys/utsname.h sys/ioctl.h sys/sysinfo.h sys/socket.h])
@@ -1767,6 +1771,11 @@ AC_CHECK_TYPE(user_desc,
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
 AC_SUBST(PACKAGE_VERSION_NUMERIC)
+
+# This CPP symbol is defined so we can check whether rose_config.h is included into a public header file.  It serves
+# no other purpose.  The name must not begin with "ROSE_" but must have a high probability of being globally unique (which
+# is why it ends with "_ROSE").
+AC_DEFINE(CONFIG_ROSE, 1, [Always defined and used for checking whether global CPP namespace is polluted])
 
 # End macro ROSE_SUPPORT_ROSE_PART_4.
 ]
@@ -2124,6 +2133,8 @@ tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
 tests/RunTests/AstDeleteTests/Makefile
+tests/RunTests/FortranTests/Makefile
+tests/RunTests/FortranTests/LANL_POP/Makefile
 tests/PerformanceTests/Makefile
 tests/CompilerOptionsTests/Makefile
 tests/CompilerOptionsTests/testCpreprocessorOption/Makefile
@@ -2342,6 +2353,12 @@ AC_CONFIG_COMMANDS([default],[[
 # Generate rose_paths.C
 AC_CONFIG_COMMANDS([rose_paths.C], [[
 	make src/util/rose_paths.C
+]])
+
+# Generate public config file from private config file. The public config file adds "ROSE_" to the beginning of
+# certain symbols. See scripts/publicConfiguration.pl for details.
+AC_CONFIG_COMMANDS([rosePublicConfig.h],[[
+	make rosePublicConfig.h
 ]])
 
 

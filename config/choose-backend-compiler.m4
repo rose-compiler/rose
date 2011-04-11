@@ -161,6 +161,26 @@ dnl build using ROSE)
   fi
   AM_CONDITIONAL(ROSE_USING_GFORTRAN_VERSION_4_4, [test "x$gfortran_version_4_4" = "xyes"])
 
+# DQ (4/10/2011): GNU gfortran 4.5 has special problems so we avoid some tests where it fails.
+  gfortran_version_4_5=no
+  if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x5; then
+        echo "Note: we have identified version 4.5 of gfortran!"
+        gfortran_version_4_5=yes
+     fi
+  fi
+  AM_CONDITIONAL(ROSE_USING_GFORTRAN_VERSION_4_5, [test "x$gfortran_version_4_5" = "xyes"])
+
+# DQ (4/10/2011): GNU gfortran 4.6 has special problems so we avoid some tests where it fails.
+  gfortran_version_4_6=no
+  if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x6; then
+        echo "Note: we have identified version 4.6 of gfortran!"
+        gfortran_version_4_6=yes
+     fi
+  fi
+  AM_CONDITIONAL(ROSE_USING_GFORTRAN_VERSION_4_6, [test "x$gfortran_version_4_6" = "xyes"])
+
 # echo "Exiting after test of backend version number support ..."
 # exit 1
 
