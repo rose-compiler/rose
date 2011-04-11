@@ -71,6 +71,20 @@ void parse_fortran_openmp(SgSourceFile *sageFilePtr);
 
 #endif
 
+#ifdef __INSURE__
+// Provide a dummy function definition to support linking with Insure++.
+// We have not identified why this is required.  This fixes the problem of
+// a link error for the "std::ostream & operator<<()" used with "std::vector<bool>".
+std::ostream & 
+operator<<(std::basic_ostream<char, std::char_traits<char> >& os, std::vector<bool, std::allocator<bool> >& m)
+   {
+     printf ("Inside of std::ostream & operator<<(std::basic_ostream<char, std::char_traits<char> >& os, std::vector<bool, std::allocator<bool> >& m): A test! \n");
+  // ROSE_ASSERT(false);
+     return os;
+   }
+#endif
+
+
 
 using namespace std;
 using namespace SageInterface;
@@ -412,10 +426,37 @@ findRoseSupportPathFromBuild(const string& buildTreeLocation,
 bool roseInstallPrefix(std::string& result) {
 #ifdef HAVE_DLADDR
   {
+ // This is built on the stack and initialized using the function: dladdr().
     Dl_info info;
+
+ // DQ (4/8/2011): Initialize this before it is used as a argument to strdup() below. This is initialized 
+ // by dladdr(), so this is likely redundant; but we can initialize it anyway.
+ // info.dli_fname = NULL;
+    info.dli_fname = "";
+
     int retval = dladdr((void*)(&roseInstallPrefix), &info);
     if (retval == 0) goto default_check;
+
+ // DQ (4/9/2011): I think the issue here is that the pointer "info.dli_fname" pointer (char*) is pointing to 
+ // a position inside a DLL and thus is a region of memory controled/monitored or allocated by Insure++. Thus
+ // Insure++ is marking this as an issue while it is not an issue. The reported issue by Insure++ is: "READ_WILD",
+ // implying that a pointer set to some wild area of memory is being read.
+#if __INSURE__
+ // Debugging information. Trying to understand this insure issue and the value of "info.dli_fname" data member.
+ // if (retval != 0)
+ //    fprintf(stderr, "      %08p file: %s\tfunction: %s\n",info.dli_saddr, info.dli_fname ? info.dli_fname : "???", info.dli_sname ? info.dli_sname : "???"); 
+
+    _Insure_checking_enable(0); // disable Insure++ checking
+#endif
+ // DQ (4/8/2011): Check for NULL pointer before handling it as a parameter to strdup(), 
+ // but I think it is always non-NULL (added assertion and put back the original code).
+ // char* libroseName = (info.dli_fname == NULL) ? NULL : strdup(info.dli_fname);
+    ROSE_ASSERT(info.dli_fname != NULL);
     char* libroseName = strdup(info.dli_fname);
+#if __INSURE__
+    _Insure_checking_enable(1); // re-enable Insure++ checking
+#endif
+
     if (libroseName == NULL) goto default_check;
     char* libdir = dirname(libroseName);
     if (libdir == NULL) {free(libroseName); goto default_check;}

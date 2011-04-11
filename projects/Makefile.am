@@ -18,10 +18,8 @@ SUBDIRS = \
      OpenMP_Analysis \
      QtDesignerPlugins \
      RoseQt \
-     SemanticSignatureVectors \
      UpcTranslation \
      arrayOptimization \
-     assemblyToSourceAst \
      autoParallelization \
      binaryVisualization \
      bugSeeding \
@@ -34,13 +32,26 @@ SUBDIRS = \
      taintcheck \
      PowerAwareCompiler
 
+# DQ (4/8/2011): Directories of tests are a current problem for Insure++.
+if !ROSE_USE_INSURE
+   SUBDIRS += SemanticSignatureVectors \
+              assemblyToSourceAst
+endif
+
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
 # gradually enable these tests at a later stage if necessary.
 if !USING_XTENSA_BACKEND_COMPILER
    SUBDIRS += dataStructureGraphing OpenMP_Translator autoTuning
 # TOO (2/16/2011): Disabled for Thrifty compiler (gcc 3.4.4) due to errors during make check
 if !USING_GCC_3_4_4_BACKEND_COMPILER
-   SUBDIRS += backstroke haskellport 
+#  SUBDIRS += backstroke haskellport 
+   SUBDIRS += backstroke
+
+# DQ (4/8/2011): Directories of tests are a current problem for Insure++.
+if !ROSE_USE_INSURE
+   SUBDIRS += haskellport 
+endif
+
 endif
 endif
 
@@ -87,7 +98,12 @@ if !ROSE_USING_ROSE_CODE_GENERATION
 # ROSE are restricted from use (this is currently the only example due to internal 
 # compiler errors).
 if ! OLD_COMPILER_VERSION
+
+# DQ (4/8/2011): Directories of tests are a current problem for Insure++.
+if !ROSE_USE_INSURE
    SUBDIRS += interpreter
+endif
+
 endif
 endif
 

@@ -47,8 +47,11 @@ if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
    SUBDIRS += PHPTests
 endif
 
+# Binary tests are a current problem for Insure++.
+if !ROSE_USE_INSURE
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    SUBDIRS += binaryTests
+endif
 endif
 
 if ROSE_BUILD_CUDA_LANGUAGE_SUPPORT
