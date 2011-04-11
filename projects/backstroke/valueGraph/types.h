@@ -3,12 +3,15 @@
 
 #include "CFGFilter.h"
 #include <slicing/backstrokeCFG.h>
+#include <ssa/dataflowCfgFilter.h>
 #include <boost/dynamic_bitset.hpp>
 
 namespace Backstroke
 {
 
-typedef CFG<BackstrokeCFGNodeFilter> BackstrokeCFG;
+//typedef CFG<BackstrokeCFGNodeFilter> BackstrokeCFG;
+typedef CFG<ssa_private::DataflowCfgFilter> BackstrokeCFG;
+//typedef FilteredCFG BackstrokeCFG;
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
 		BackstrokeCFG::Vertex, BackstrokeCFG::Edge> DAG;

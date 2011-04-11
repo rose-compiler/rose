@@ -1,4 +1,7 @@
 #include "valueGraph.h"
+#include "eventReverser.h"
+#include "pathNumGenerator.h"
+#include <sageBuilder.h>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 //#include <boost/graph/graphviz.hpp>
@@ -12,47 +15,6 @@ namespace Backstroke
 using namespace std;
 
 #define foreach BOOST_FOREACH
-
-#if 0
-namespace
-{
-
-template <class Graph, class Vertex>
-void writeValueGraphNode(const Graph& g, std::ostream& out, const Vertex& node)
-{
-    out << "[label=\"" << g[node]->toString() << "\"]";
-}
-
-template <class Graph, class Edge>
-void writeValueGraphEdge(const Graph& g, std::ostream& out, const Edge& edge)
-{
-    out << "[label=\"" << g[edge]->toString() << "\"]";
-}
-
-template <class Graph>
-void graphToDot(const Graph& g, const std::string& filename)
-{
-    typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
-    typedef typename boost::graph_traits<Graph>::edge_descriptor Edge;
-
-    // Since the vetices are stored in a list, we have to give each vertex
-    // a unique id here.
-    int counter = 0;
-    map<Vertex, int> vertexIDs;
-    foreach (Vertex v, boost::vertices(g))
-        vertexIDs[v] = counter++;
-
-    // Turn a std::map into a property map.
-    boost::associative_property_map<map<Vertex, int> > vertexIDMap(vertexIDs);
-
-    ofstream ofile(filename.c_str(), std::ios::out);
-    boost::write_graphviz(ofile, g,
-            boost::bind(&writeValueGraphNode<Graph, Vertex>, g, ::_1, ::_2),
-            boost::bind(&writeValueGraphEdge<Graph, Edge>, g, ::_1, ::_2),
-            boost::default_writer(), vertexIDMap);
-}
-}
-#endif
 
 
 bool EventReverser::edgeBelongsToPath(const VGEdge& e, int dagIndex, int pathIndex) const
@@ -70,7 +32,8 @@ bool EventReverser::edgeBelongsToPath(const VGEdge& e, int dagIndex, int pathInd
     return edge->dagIndex == dagIndex && edge->paths[pathIndex];
 }
 
-void EventReverser::getSubGraph(int dagIndex, int pathIndex)
+void EventReverser::getSubGraph(
+        SgScopeStatement* scope, int dagIndex, int pathIndex)
 {
     //!!!
     dagIndex = 0;
@@ -112,54 +75,137 @@ void EventReverser::getSubGraph(int dagIndex, int pathIndex)
         SubValueGraph route = getReversalRoute(dagIndex, i,
                                                subgraph, valuesToRestore_);
 
-        generateReverseFunction(route);
+        generateReverseFunction(scope, route);
         //graphToDot(subgraph, filename);
     }
 }
 
-void EventReverser::generateReverseFunction(
-        //SgScopeStatement* scope,
-        const SubValueGraph& route)
+vector<EventReverser::VGVertex>
+EventReverser::getGraphNodesInTopologicalOrder(
+        const SubValueGraph& subgraph) const
 {
-
     // The following code is needed since the value graph has VertexList=ListS which
     // does not have a vertex_index property, which is needed by topological_sort.
     int counter = 0;
     map<VGVertex, int> vertexIDs;
-    foreach (VGVertex v, boost::vertices(route))
+    foreach (VGVertex v, boost::vertices(subgraph))
         vertexIDs[v] = counter++;
     // Turn a std::map into a property map.
     boost::associative_property_map<map<VGVertex, int> > vertexIDMap(vertexIDs);
     
     vector<VGVertex> nodes;
-    boost::topological_sort(route, back_inserter(nodes), vertex_index_map(vertexIDMap));
+    boost::topological_sort(subgraph, back_inserter(nodes), vertex_index_map(vertexIDMap));
+    return nodes;
+}
 
-    foreach (VGVertex node, nodes)
+pair<ValueNode*, ValueNode*>
+EventReverser::getOperands(VGVertex opNode, const SubValueGraph& subgraph) const
+{
+    ValueNode* lhsNode = NULL;
+    ValueNode* rhsNode = NULL;
+
+    // If it's a unary operation.
+    if (boost::out_degree(opNode, subgraph) == 1)
     {
-        if (node == root_)
+        VGVertex lhs = *(boost::adjacent_vertices(opNode, subgraph).first);
+        lhsNode = isValueNode(subgraph[lhs]);
+    }
+    else
+    {
+        foreach (const VGEdge& edge, boost::out_edges(opNode, subgraph))
         {
-            foreach (const VGEdge& edge, boost::in_edges(node, route))
-            {
-                if (route[edge]->cost == 0) continue;
-                VGVertex src = boost::source(edge, route);
-                cout << "State saving: " << route[src]->toString() << endl;
-            }
-            continue;
-        }
-
-        if (OperatorNode* opNode = isOperatorNode(route[node]))
-        {
-//            VGEdge e = *(boost::in_edges(node, route).first);
-//            VGVertex src = boost::source(e, route);
-//            ValueNode* valNode = isValueNode(route[src]);
-             cout << "Operation: " << opNode->toString() << endl;
-        }
-        else
-        {
-             ValueNode* valNode = isValueNode(route[node]);
-             cout << valNode->vars[0] << endl;
+            VGVertex tar = boost::target(edge, subgraph);
+            if (isOrderedEdge(subgraph[edge])->index == 0)
+                lhsNode = isValueNode(subgraph[tar]);
+            else
+                rhsNode = isValueNode(subgraph[tar]);
         }
     }
+    return make_pair(lhsNode, rhsNode);
+}
+
+void EventReverser::generateReverseFunction(
+        SgScopeStatement* scope,
+        const SubValueGraph& route)
+{
+    SageBuilder::pushScopeStack(scope);
+
+    // First, declare all temporary variables at the beginning of the reverse events.
+    foreach (VGVertex node, boost::vertices(route))
+    {
+        ValueNode* valNode = isValueNode(route[node]);
+        if (valNode == NULL) continue;
+        if (valNode->isAvailable()) continue;
+        
+        SgStatement* varDecl = buildVarDeclaration(valNode);
+        SageInterface::appendStatement(varDecl, scope);
+    }
+
+    // Generate the reverse code in reverse topological order of the route DAG.
+    foreach (VGVertex node, getGraphNodesInTopologicalOrder(route))
+    {
+        if (node == root_) continue;
+
+        ValueNode* valNode = isValueNode(route[node]);
+        if (valNode == NULL)        continue;
+        if (valNode->isAvailable()) continue;
+
+        ROSE_ASSERT(boost::out_degree(node, route) == 1);
+
+        VGVertex tar = *(boost::adjacent_vertices(node, route).first);
+        SgStatement* rvsStmt;
+
+        if (tar == root_)
+        {
+            // State saving edge.
+            VGEdge edge = boost::edge(node, tar, route).first;
+            if (route[edge]->cost == 0)
+                rvsStmt = buildAssignOpertaion(valNode);
+            else
+            {
+                // State saving here.
+                // For forward event, we instrument a push function by a comma
+                // operation expression.
+                instrumentPushFunction(valNode);
+                rvsStmt = buildPopFunction(valNode);
+            }
+        }
+        else if (ValueNode* rhsValNode = isValueNode(route[tar]))
+        {
+            // Simple assignment.
+            rvsStmt = buildAssignOpertaion(valNode, rhsValNode);
+        }
+        else if (OperatorNode* opNode = isOperatorNode(route[tar]))
+        {
+            // Rebuild the operation.
+            ValueNode* lhsNode = NULL;
+            ValueNode* rhsNode = NULL;
+            boost::tie(lhsNode, rhsNode) = getOperands(tar, route);
+
+            rvsStmt = buildOperation(valNode, opNode->type, lhsNode, rhsNode);
+        }
+
+        // Add the generated statement to the scope.
+        SageInterface::appendStatement(rvsStmt, scope);
+    }
+
+    // At last, assign the value restored back to state variables.
+    // Note that those values are held by temporary variables before.
+    foreach (VGVertex node, valuesToRestore_)
+    {
+        ValueNode* valNode = isValueNode(route[node]);
+
+        SgExpression* lhs = valNode->var.getVarRefExp();
+        SgExpression* rhs = SageBuilder::buildVarRefExp(valNode->var.toString());
+
+        SgExpression* rvsExpr = SageBuilder::buildAssignOp(lhs, rhs);
+        SgStatement* rvsStmt = SageBuilder::buildExprStatement(rvsExpr);
+        
+        SageInterface::appendStatement(rvsStmt, scope);
+    }
+        //else if (valuesToRestore_.count(node))
+
+    SageBuilder::popScopeStack();
 }
 
 
@@ -221,6 +267,10 @@ EventReverser::SubValueGraph EventReverser::getReversalRoute(
             unfinishedRoutes.pop();
 
             if (unfinishedRoute.nodes.empty())
+                continue;
+            // To prevate long time search, limit the nodes in the router no more
+            // than 10.
+            if (unfinishedRoute.nodes.size() > 10)
                 continue;
 
             // Get the node on the top, and find it out edges.

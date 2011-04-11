@@ -22,7 +22,7 @@ public:
 	typedef boost::graph_traits<ValueGraph>::edge_descriptor VGEdge;
 
 private:
-    typedef std::pair<int, PathSet> PathSetWithIndex;
+    //typedef std::pair<int, PathSet> PathSetWithIndex;
 	typedef StaticSingleAssignment SSA;
 	typedef SSA::VarName VarName;
     typedef boost::filtered_graph<
@@ -33,6 +33,15 @@ private:
 private:
     //! The event function definition.
     SgFunctionDefinition* funcDef_;
+
+    //! The forward event function definition.
+    SgFunctionDefinition* fwdFuncDef_;
+
+    //! The reverse event function definition.
+    SgFunctionDefinition* rvsFuncDef_;
+
+    //! The commit event function definition.
+    SgFunctionDefinition* cmtFuncDef_;
 
     //! The CFG of the event function.
     BackstrokeCFG cfg_;
@@ -90,32 +99,19 @@ private:
 //	typedef CDG<CFG> CDG;
 public:
 	
-	EventReverser(SgFunctionDefinition* funcDef)
-	:   funcDef_(funcDef),
-        cfg_(funcDef_),
-        ssa_(SageInterface::getProject()),
-        pathNumManager_(cfg_)
-	{
-		ssa_.run(false);
-	}
-
-    ~EventReverser()
-    {}
+	EventReverser(SgFunctionDefinition* funcDef);
 
 	//! Build the value graph for the given function.
 	void buildValueGraph();
 
+    //! Generate forward, reverse and commit functions according to the VG.
+    void generateCode();
+
 	//! Generate a dot file describing the value graph.
 	void valueGraphToDot(const std::string& filename) const;
 
-	void searchValueGraph();
-
-	void shortestPath();
-
-	void buildForwardAndReverseEvent();
-
-    void getPath(const SubValueGraph& g,
-                 const std::vector<VGVertex>& valuesToRestore);
+//    void getPath(const SubValueGraph& g,
+//                 const std::vector<VGVertex>& valuesToRestore);
 	
 private:
 
@@ -131,13 +127,26 @@ private:
     //! Add path information to edges.
     void addPathsToEdges();
 
-    //! Add path information to out edges of phi nodes.
-    PathSetWithIndex addPathsForPhiNodes(VGVertex phiNode,
-                                         std::set<VGVertex>& processedPhiNodes);
+    //! Assign a global unique name for each value node in VG.
+    void assignNameToNodes();
 
-    //! Create a value node from the given AST node. The node passed in should be
-    //! a varref, or an initialized name, or a value, or an expression.
-	VGVertex createValueNode(SgNode* node);
+    //! Build the fwd, rvs and cmt functions.
+	void buildFunctionBodies();
+
+    //! Get all functions in place.
+    void insertFunctions();
+    
+//    //! Add path information to out edges of phi nodes.
+//    PathSetWithIndex addPathsForPhiNodes(VGVertex phiNode,
+//                                         std::set<VGVertex>& processedPhiNodes);
+
+    /** Create a value node from the given AST node.
+	 *
+	 *  @param lhsNode The AST node which contains a lvalue.
+     *  @param rhsNode The AST node which contains a rvalue.
+	 *  @returns The new vertex.
+	 */
+	VGVertex createValueNode(SgNode* lhsNode, SgNode* rhsNode);
     
     //! Create an binary operation node, plus three edges.
 	VGVertex createOperatorNode(VariantT t, VGVertex result, VGVertex lhs, VGVertex rhs);
@@ -145,8 +154,8 @@ private:
     //! Create a unary operation node, plus two edges.
 	VGVertex createOperatorNode(VariantT t, VGVertex result, VGVertex operand);
 
-	//! Add a variable to a vertex in VG.
-	void addVariableToNode(VGVertex v, SgNode* node);
+//	//! Add a variable to a vertex in VG.
+//	void addVariableToNode(VGVertex v, SgNode* node);
 
     //! Add a reverse edge for every non-ordered edge, and add extra edges for
     //! + and - operations.
@@ -217,7 +226,7 @@ private:
 	VGEdge addValueGraphOrderedEdge(VGVertex src, VGVertex tar, int index);
 
 	//! Add a phi node to the value graph.
-	VGVertex addValueGraphPhiNode(VersionedVariable& var);
+	VGVertex createPhiNode(VersionedVariable& var);
 
 	//! Connect each variable node to the root with cost.
 	void addStateSavingEdges();
@@ -234,11 +243,19 @@ private:
 	VersionedVariable getVersionedVariable(SgNode* node, bool isUse = true);
 
     //! For each path, find its corresponding subgraph.
-    void getSubGraph(int dagIndex, int pathIndex);
+    void getSubGraph(SgScopeStatement* scope, int dagIndex, int pathIndex);
+
+    //! Get all nodes in the topological order in a subgraph.
+    std::vector<VGVertex> getGraphNodesInTopologicalOrder(
+            const SubValueGraph& subgraph) const;
+
+    //! Get all operands of an operator node.
+    std::pair<ValueNode*, ValueNode*>
+    getOperands(VGVertex opNode, const SubValueGraph& subgraph) const;
 
     //! Generate the reverse function.
     void generateReverseFunction(
-        //SgScopeStatement* scope,
+        SgScopeStatement* scope,
         const SubValueGraph& route);
 
 	static VGVertex nullVertex()

@@ -11,6 +11,15 @@ using namespace std;
 #define foreach BOOST_FOREACH
 
 
+EventReverser::EventReverser(SgFunctionDefinition* funcDef)
+:   funcDef_(funcDef),
+    cfg_(funcDef_),
+    ssa_(SageInterface::getProject()),
+    pathNumManager_(cfg_)
+{
+    ssa_.run(false);
+}
+
 void EventReverser::buildValueGraph()
 {
     // First, build the basic part of the value graph.
@@ -31,9 +40,67 @@ void EventReverser::buildValueGraph()
     // Remove useless nodes.
     removeUselessNodes();
 
-    getSubGraph(0, 0);
+    // Assign a global unique name for each node in VG.
+    assignNameToNodes();
+}
 
-    cout << "Number of nodes: " << boost::num_vertices(valueGraph_) << endl;
+void EventReverser::generateCode()
+{
+    // First, build the value graph.
+    buildValueGraph();
+
+    // Three new functions are built. Backup the original function here.
+    buildFunctionBodies();
+
+    getSubGraph(rvsFuncDef_->get_body(), 0, 0);
+
+    // Finally insert all functions in the code.
+    insertFunctions();
+}
+
+void EventReverser::insertFunctions()
+{
+    using namespace SageInterface;
+
+    // Switch the bodies of original and forward functions. This is because the
+    // previous instrumentation happens on original one but should be placed in
+    // the forward function.
+    SgBasicBlock* body = funcDef_->get_body();
+    funcDef_->set_body(fwdFuncDef_->get_body());
+    fwdFuncDef_->set_body(body);
+    
+    SgFunctionDeclaration* funcDecl    = funcDef_->get_declaration();
+    SgFunctionDeclaration* fwdFuncDecl = fwdFuncDef_->get_declaration();
+    SgFunctionDeclaration* rvsFuncDecl = rvsFuncDef_->get_declaration();
+    SgFunctionDeclaration* cmtFuncDecl = cmtFuncDef_->get_declaration();
+
+    insertStatementAfter(funcDecl,    fwdFuncDecl);
+    insertStatementAfter(fwdFuncDecl, rvsFuncDecl);
+    insertStatementAfter(rvsFuncDecl, cmtFuncDecl);
+}
+
+void EventReverser::assignNameToNodes()
+{
+    static int counter = 0;
+
+    set<string> names;
+    foreach (VGVertex node, boost::vertices(valueGraph_))
+    {
+        ValueNode* valNode = isValueNode(valueGraph_[node]);
+        if (valNode == NULL) continue;
+        if (valNode->isAvailable()) continue;
+
+        string name;
+        if (valNode->isTemp())
+            name = "temp" + boost::lexical_cast<string>(counter++);
+        else
+            name = valNode->var.toString();
+        
+        while (names.count(name) > 0)
+            name += "_";
+        names.insert(name);
+        valNode->str = name;
+    }
 }
 
 void EventReverser::addPathsToEdges()
@@ -110,6 +177,7 @@ void EventReverser::addPathsToEdges()
 #endif
 }
 
+#if 0
 EventReverser::PathSetWithIndex EventReverser::addPathsForPhiNodes(
         EventReverser::VGVertex phiNode,
         set<EventReverser::VGVertex>& processedPhiNodes)
@@ -133,13 +201,15 @@ EventReverser::PathSetWithIndex EventReverser::addPathsForPhiNodes(
 
     processedPhiNodes.insert(phiNode);
 }
+#endif
 
 void EventReverser::processLastVersions()
 {
     // At the end of the event, find the versions of all variables,
     // and determine which variables are avaiable during the search of VG.
     typedef SSA::NodeReachingDefTable::value_type VarNameDefPair;
-    foreach (const VarNameDefPair& nameDef, ssa_.getLastVersions(funcDef_->get_declaration()))
+    foreach (const VarNameDefPair& nameDef,
+             ssa_.getLastVersions(funcDef_->get_declaration()))
     {
         VarName name = nameDef.first;
 
@@ -148,7 +218,7 @@ void EventReverser::processLastVersions()
         if (varVertexMap_.count(var) == 0)
         {
             pseudoDefMap_[var] = nameDef.second;
-            addValueGraphPhiNode(var);
+            createPhiNode(var);
         }
 
         if (isStateVariable(name))
@@ -261,7 +331,7 @@ void EventReverser::addExtraNodesAndEdges()
     }
 }
 
-EventReverser::VGVertex EventReverser::addValueGraphPhiNode(VersionedVariable& var)
+EventReverser::VGVertex EventReverser::createPhiNode(VersionedVariable& var)
 {
     // Add the phi node.
     VGVertex node = addValueGraphNode(new PhiNode(var));
@@ -272,11 +342,14 @@ EventReverser::VGVertex EventReverser::addValueGraphPhiNode(VersionedVariable& v
 
     // For every phi function parameter, chech if it is also a pseudo def.
     // If it is, add another phi node and connect them. Else, add an edge.
-	pair<SSA::ReachingDefPtr, set<CFGEdge> > defEdgePair;
-    foreach (defEdgePair, reachingDef->getJoinedDefs())
+    typedef pair<SSA::ReachingDefPtr, set<CFGEdge> > PairT;
+	//pair<SSA::ReachingDefPtr, set<CFGEdge> > defEdgePair;
+    foreach (const PairT& defEdgePair, reachingDef->getJoinedDefs())
     {
 		SSA::ReachingDefPtr def = defEdgePair.first;
         int version = def->getRenamingNumber();
+
+        VGEdge newEdge;
 
         // If this def is also a phi node, add a varWithVersin entry
         // to the varReachingDefMap_ table.
@@ -287,13 +360,13 @@ EventReverser::VGVertex EventReverser::addValueGraphPhiNode(VersionedVariable& v
             if (pseudoDefMap_.count(phiVar) == 0)
             {
                 pseudoDefMap_[phiVar] = def;
-                VGVertex phiNode = addValueGraphPhiNode(phiVar);
-                addValueGraphEdge(node, phiNode);
+                VGVertex phiNode = createPhiNode(phiVar);
+                newEdge = addValueGraphEdge(node, phiNode);
             }
             else
             {
                 ROSE_ASSERT(varVertexMap_.count(phiVar) > 0);
-                addValueGraphEdge(node, varVertexMap_[phiVar]);
+                newEdge = addValueGraphEdge(node, varVertexMap_[phiVar]);
             }
         }
         else
@@ -301,15 +374,33 @@ EventReverser::VGVertex EventReverser::addValueGraphPhiNode(VersionedVariable& v
             VersionedVariable defVar(var.name, version);
             ROSE_ASSERT(varVertexMap_.count(defVar) > 0);
 
-            addValueGraphEdge(node, varVertexMap_[defVar]);
-#if 0
-            cout << "--- Add an edge from " << var << endl;
-            VGOutEdgeIter e, f;
-            for (boost::tie(e, f) = boost::out_edges(node, valueGraph_); e != f; ++e)
-                cout << "* ";
-            cout << endl;
-#endif
+            newEdge = addValueGraphEdge(node, varVertexMap_[defVar]);
         }
+
+#if 0
+        // Add path information for phi node here???
+        ValueGraphEdge* edge = valueGraph_[newEdge];
+        const set<CFGEdge>& cfgEdges = defEdgePair.second;
+        bool flag = true;
+        foreach (const CFGEdge& cfgEdge, cfgEdges)
+        {
+            cout << "!!!" << cfgEdge.toString() << endl;
+            SgNode* node1 = cfgEdge.source().getNode();
+            SgNode* node2 = cfgEdge.target().getNode();
+
+            cout << node1->unparseToString() << endl;
+            cout << node2->unparseToString()  << endl;
+//            if (flag)
+//            {
+//                boost::tie(edge->dagIndex, edge->paths) =
+//                    pathNumManager_.getPathNumbers(node1, node2);
+//                flag = false;
+//                continue;
+//            }
+//            edge->paths |= pathNumManager_.getPathNumbers(node1, node2).second;
+        }
+        
+#endif
         // If this def is not in the value graph, add it.
 
         //var.phiVersions.push_back(PhiNodeDependence(v));
@@ -324,14 +415,15 @@ EventReverser::VGVertex EventReverser::addValueGraphPhiNode(VersionedVariable& v
 
         cout << "Phi node dependence:" << varInPhi << endl;
 
-        // If the node which defines this phi node is not in the table, it should be another phi node.
+        // If the node which defines this phi node is not in the table,
+        // it should be another phi node.
         if (varVertexMap_.count(varInPhi) > 0)
         {
             // If this node is also a pseudo node.
             if (pseudoDefMap_.count(varInPhi) > 0)
             {
                 varInPhi.isPseudoDef = true;
-                addValueGraphPhiNode(varInPhi);
+                createPhiNode(varInPhi);
             }
             else
                 ROSE_ASSERT(false);
@@ -385,90 +477,55 @@ EventReverser::VGEdge EventReverser::addValueGraphOrderedEdge(
     return e;
 }
 
-//void EventReverser::setNewDefNode(SgNode* defNode, VGVertex useVertex)
-//{
-//	// Get the var name and version for lhs.
-//	VersionedVariable var = getVersionedVariable(defNode, false);
-//
-//	//// Find the node of rhs in the VG which should exist now.
-//	//ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
-//	//Vertex rhsVertex = nodeVertexMap_.find(rhs)->second;
-//
-//	// Assign the node with the variable name and version.
-//	//ROSE_ASSERT(node);
-//
-//	// If the node contains a temporary variable, replace it with a variable node,
-//	// else build a new node and connect them.
-//	VariableNode* varNode = isVariableNode(valueGraph_[useVertex]);
-//	if (varNode && varNode->isTemp)
-//	{
-////			delete valueGraph_[useVertex];
-////			valueGraph_[useVertex] = new VariableNode(var);
-//		// If the node is a variable node, assign the var name to it.
-//		varNode->setVariable(var);
-//
-//		// Update the node to vertex table.
-//		nodeVertexMap_[defNode] = useVertex;
-//		// Update the var to vertex map.
-//		varVertexMap_[var] = useVertex;
-//	}
-////		else if (ValueNode* valNode = isValueNode(node))
-////		{
-////			// If the node is a value node, assign the var name to it.
-////			valNode->var = var;
-////
-////			// Update the node to vertex table.
-////			nodeVertexMap_[defNode] = useVertex;
-////			// Update the var to vertex map.
-////			varVertexMap_[var] = useVertex;
-////		}
-//	else
-//	{
-//		VGVertex newVertex = addValueGraphNode(new VariableNode(var), defNode);
-//		addValueGraphEdge(newVertex, useVertex);
-//
-//		// Update tables.
-//		nodeVertexMap_[defNode] = newVertex;
-//		varVertexMap_[var] = newVertex;
-//	}
-//}
-
-EventReverser::VGVertex EventReverser::createValueNode(SgNode* node)
+EventReverser::VGVertex EventReverser::createValueNode(SgNode* lhsNode, SgNode* rhsNode)
 {
-    ValueNode* valNode = new ValueNode(node);
+    VGVertex lhsVertex;
+    VGVertex rhsVertex;
 
-    // If it is a variable node.
-    if (isSgVarRefExp(node) || isSgInitializedName(node))
+    if (rhsNode)
     {
-        VersionedVariable var = getVersionedVariable(node, false);
-        valNode->vars.push_back(var);
-
-        VGVertex newVertex = addValueGraphNode(valNode);
-        varVertexMap_[var] = newVertex;
-        nodeVertexMap_[node] = newVertex;
-
-        return newVertex;
+        // If rhs node is not created yet, create it first.
+        if (nodeVertexMap_.count(rhsNode) == 0)
+        {
+            //ROSE_ASSERT(!"Infeasible path???");
+            rhsVertex = addValueGraphNode(new ValueNode(rhsNode));
+            nodeVertexMap_[rhsNode] = rhsVertex;
+        }
+        else
+            rhsVertex = nodeVertexMap_[rhsNode];
     }
 
-    VGVertex newVertex = addValueGraphNode(valNode);
-    nodeVertexMap_[node] = newVertex;
+    // If rhsNode just contains a rvalue, combine those two nodes.
+    if (lhsNode && rhsNode)
+    {
+        ValueNode* rhsValNode = isValueNode(valueGraph_[rhsVertex]);
+        ROSE_ASSERT(rhsValNode);
+        if (rhsValNode->var.isNull())
+        {
+            rhsValNode->var = getVersionedVariable(lhsNode, false);
+            varVertexMap_[rhsValNode->var] = rhsVertex;
+            nodeVertexMap_[lhsNode] = rhsVertex;
+            return rhsVertex;
+        }
+    }
 
-    return newVertex;
-}
+    if (lhsNode)
+    {
+        ValueNode* valNode = new ValueNode(lhsNode);
+        lhsVertex = addValueGraphNode(valNode);
 
-void EventReverser::addVariableToNode(EventReverser::VGVertex v, SgNode* node)
-{
-    ValueNode* valNode = isValueNode(valueGraph_[v]);
-    ROSE_ASSERT(valNode);
+        valNode->var = getVersionedVariable(lhsNode, false);
+        varVertexMap_[valNode->var] = lhsVertex;
+        nodeVertexMap_[lhsNode] = lhsVertex;
 
-    // Note that we add a variable from its def, so the second parameter below
-    // is false.
-    VersionedVariable var = getVersionedVariable(node, false);
-    valNode->vars.push_back(var);
+        // If rhs node is not NULL, add an edge.
+        if (rhsNode)
+            addValueGraphEdge(lhsVertex, rhsVertex);
+        
+        return lhsVertex;
+    }
 
-    //cout << ">>" << var <<endl;
-
-    varVertexMap_[var] = nodeVertexMap_[node] = v;
+    return rhsVertex;
 }
 
 EventReverser::VGVertex EventReverser::createOperatorNode(
@@ -507,6 +564,7 @@ void EventReverser::addStateSavingEdges()
     {
         ValueGraphNode* node = valueGraph_[v];
 
+        // SS edges are only added to phi nodes and value nodes.
         if (!isPhiNode(node) && !isValueNode(node))
             continue;
 

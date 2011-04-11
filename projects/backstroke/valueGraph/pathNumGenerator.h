@@ -36,6 +36,7 @@ class PathNumGenerator
     std::vector<Path> paths_;
 
     std::map<Vertex, PathSet> pathsForNode_;
+    std::map<Edge,   PathSet> pathsForEdge_;
     //std::map<Vertex, std::set<int> > pathsForNode_;
 
 public:
@@ -47,12 +48,18 @@ public:
         ROSE_ASSERT(pathsForNode_.count(v) > 0);
         return pathsForNode_.find(v)->second;
     }
+
+    PathSet getPaths(const Edge& e) const
+    {
+        ROSE_ASSERT(pathsForEdge_.count(e) > 0);
+        return pathsForEdge_.find(e)->second;
+    }
     
     void generatePathNumbers()
     {
         getEdgeValues();
         getAllPaths();
-        getAllPathNumbersForEachNode();
+        getAllPathNumForNodesAndEdges();
     }
     
     size_t getPathNum() const { return paths_.size(); }
@@ -65,13 +72,15 @@ private:
     void getAllPaths();
 
     //! For each vertex in the DAG, find all paths which contain it.
-    void getAllPathNumbersForEachNode();
+    void getAllPathNumForNodesAndEdges();
 };
 
 class PathNumManager
 {
 	typedef boost::graph_traits<DAG>::vertex_descriptor DAGVertex;
-	typedef boost::graph_traits<DAG>::edge_descriptor DAGEdge;
+	typedef boost::graph_traits<DAG>::edge_descriptor   DAGEdge;
+    typedef BackstrokeCFG::Vertex CFGVertex;
+    typedef BackstrokeCFG::Edge   CFGEdge;
 
     const BackstrokeCFG& cfg_;
 
@@ -79,7 +88,10 @@ class PathNumManager
     std::vector<DAG> dags_;
 
     //! A table from each CFG vertex to the index of the DAG and the DAG vertex.
-    std::map<BackstrokeCFG::Vertex, std::pair<int, DAGVertex> > vertexToDagIndex_;
+    std::map<CFGVertex, std::pair<int, DAGVertex> > vertexToDagIndex_;
+
+    //! A table from each CFG edge to the index of the DAG and the DAG vertex.
+    std::map<CFGEdge, std::pair<int, DAGEdge> > edgeToDagIndex_;
 
     std::vector<PathNumGenerator*> pathNumGenerators_;
 
@@ -97,7 +109,11 @@ public:
     PathNumManager(const BackstrokeCFG& cfg);
     ~PathNumManager();
 
+    //! Get path numbers from a AST node.
     std::pair<int, PathSet> getPathNumbers(SgNode* node) const;
+
+    //! Get path numbers from two AST nodes, which form a CFG edge.
+    std::pair<int, PathSet> getPathNumbers(SgNode* node1, SgNode* node2) const;
 
     //! Given the DAG index, return how many paths it has.
     size_t getPathNum(int index) const

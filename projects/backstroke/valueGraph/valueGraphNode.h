@@ -45,6 +45,10 @@ struct VersionedVariable
 	: name(varName), version(ver), isPseudoDef(pseudoDef) {}
 
 	std::string toString() const;
+
+    bool isNull() const { return name.empty(); }
+    SgType* getType() const { return name.back()->get_type(); }
+    SgExpression* getVarRefExp() const;
 	
 	//! The unique name of this variable.
 	VarName name;
@@ -106,9 +110,7 @@ struct PhiNode : ValueGraphNode
 	//std::vector<ValueGraphNode*> nodes;
 
 	virtual std::string toString() const
-	{
-		return "PHI\\n" + var.toString();
-	}
+	{ return "PHI\\n" + var.toString(); }
 
     virtual int getCost() const;
 
@@ -125,30 +127,37 @@ struct PhiNode : ValueGraphNode
     GateType type;
 };
 
+//! A value node can hold a lvalue and a rvalue.
 struct ValueNode : ValueGraphNode
-{
-	ValueNode() : astNode(NULL), cost(0) {}
-	ValueNode(SgNode* node) : astNode(node), cost(0) {}
-	//ValueNode(SgValueExp* exp) : valueExp(exp), type(NULL), cost(0) {}
+{    
+	explicit ValueNode(SgNode* node = NULL) : astNode(node) {}
 
 	virtual std::string toString() const;
-
     virtual int getCost() const;
 
-	bool isTemp() const { return vars.empty(); }
+    //void addVariable(const VersionedVariable& newVar);
+
+	bool isTemp() const { return var.isNull(); }
 
     //! If the AST node is a value expression, it is avaiable.
 	bool isAvailable() const { return isSgValueExp(astNode) != NULL; }
 
+    //! Get the type of the value.
     SgType* getType() const;
+    
+
+//    SgNode* getNode() const { return astNode; }
+//    void setNode(SgNode* node)  { astNode = node; }
 
     //! The AST node which defines the variables.
     SgNode* astNode;
-    
-	//SgValueExp* valueExp;
-	//SgType* type;
-	std::vector<VersionedVariable> vars;
-    int cost;
+
+    //! All variables sharing the same value.
+	VersionedVariable var;
+
+    //! The unique name of this value node in VG which becomes
+    //! the name of the corresponding variable
+    std::string str;
 };
 
 struct OperatorNode : ValueGraphNode

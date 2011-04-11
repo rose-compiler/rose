@@ -10,11 +10,12 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 noinst_PROGRAMS = valueGraph
 
 valueGraph_SOURCES = valueGraphNode.C valueGraph.C graphSearch.C eventReverser.C \
-		pathNumGenerator.C CFGFilter.C test.C
+		pathNumGenerator.C CFGFilter.C codeGeneration.C test.C
 valueGraph_LDADD = $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
 		$(top_builddir)/projects/backstroke/ssa/libSSA.a \
 		$(LIBS_WITH_RPATH) $(ROSE_LIBS)
-valueGraph_include_HEADERS = valueGraph.h valueGraphNode.h pathNumGenerator.h CFGFilter.h types.h
+valueGraph_include_HEADERS = valueGraph.h valueGraphNode.h pathNumGenerator.h eventReverser.h \
+			CFGFilter.h types.h
 valueGraph_includedir = $(includedir)/backstroke
 
 
@@ -30,4 +31,6 @@ check-local:
 	@echo "*********************************************************************************************************"
 
 test:
-	./valueGraph -c temp.C
+	./valueGraph -c temp.C -I/opt/local/var/macports/software/boost/1.44.0_0/opt/local/include/
+#./valueGraph -c temp1.C -I/opt/local/var/macports/software/boost/1.44.0_0/opt/local/include/
+#./valueGraph -c temp2.C -I/opt/local/var/macports/software/boost/1.44.0_0/opt/local/include/
