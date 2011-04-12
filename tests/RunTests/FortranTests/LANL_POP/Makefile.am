@@ -1,10 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+TEST_TRANSLATOR   =  $(top_builddir)/tests/testTranslator
+POP_DISTRIBUTION  =  $(srcdir)/poptest.tgz
+
+
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 if !ROSE_USING_GFORTRAN_VERSION_4_0
-POP_DISTRIBUTION  =  $(srcdir)/poptest.tgz
-TEST_TRANSLATOR   =  $(top_builddir)/tests/testTranslator
-
 # TOO (4/4/2011): top_builddir is calculated relative to LANL_POP/, but
 # the test.sh script is inside the untarred poptest/ directory. Therefore,
 # the correct path to the testTranslator would be: "../$(TEST_TRANSLATOR)".
@@ -34,6 +35,7 @@ check-local:
 	@echo '*************************************************************'
 endif
 endif
+
 
 clean-local:
 	rm -rf poptest
