@@ -18,12 +18,12 @@
 
 /** @mainpage RSIM: A ROSE x86 Simulator
  *
- * @section Intro Introduction
+ * @section RSIM_Intro Introduction
  *
  * RSIM is a simulator library for 32-bit, Intel x86 Linux programs and runs on 32- or 64-bit Linux.  The RSIM library is
  * demonstrated by the "x86sim" program.
  *
- * @section Definitions Definitions
+ * @section RSIM_Definitions Definitions
  *
  * The "specimen" is the program being executed inside the simulator.
  *
@@ -31,12 +31,12 @@
  *
  * The "guest OS" is the environment (system calls, signals, etc) provided by the simulator to the specimen.
  *
- * @section Usage Usage
+ * @section RSIM_Tool The Simulator Tool
  * 
  * The x86sim.C program is an example demonstrating the use of the RSIM library.  See the README in that directory for a
  * complete description of the command-line usage and capabilities.
  *
- * @section Design Design
+ * @section RSIM_Design Design
  *
  * RSIM uses ROSE's binary support to simulate a process. Namely,
  *
@@ -75,7 +75,7 @@
  *   <li>Dynamic linking in the specimen is resolved as a side effect of simulation.  The simulator loads the specimen's main
  *       executable into an address space (MemoryMap) like the OS would do, and then begins simulation.  If the main executable
  *       has an interpreter, then the interpreter is also loaded and simulation starts in the interpreter. In this way, the
- *       simulator is able to simulate dynamically linked executables -- it simulates the linker itself (i.e., it simulates the
+ *       simulator is able to simulate dynamically linked executables&mdash;it simulates the linker itself (i.e., it simulates the
  *       ld-linux.so interpreter).</li>
  *
  *   <li>Specimen system calls can be intercepted by hooking into the "INT 0x80" or "SYSENTER" intruction.  In either case, the
@@ -83,12 +83,30 @@
  *       specimen's behalf, or by adjusting the specimen's state to emulate the system call.</li>
  * </ul>
  *
- * @section Example Example
+ * @section RSIM_Usage Using the Simulator
+ *
+ * The simulator's main class is RSIM_Simulator, but users will most often want to use one of the derived classes that has
+ * operating-system specific details, such as the RSIM_Linux32 class.
+ *
+ * Many of the actions that occur during the simulation can be tied to user-defined callbacks invoked before and/or after the
+ * action.  The callbacks are organized into collections of lists of functors as described by the RSIM_Callbacks class.  The
+ * callbacks are able to augment the normal processing, replace the normal processing, or skip the normal processing
+ * altogether depending on the situation.  For instance, a pre-instruction callback can check for unsupported instructions and
+ * skip them, or a pre-syscall callback can count the total number of system calls executed per thread.  See the RSIM_Callbacks
+ * class for details and examples.
+ *
+ * System calls made by the specimen are dispatched through a system call table which can be queried or adjusted by the
+ * RSIM_Simulator::syscall_get() and RSIM_Simulator::syscall_set() methods.  Users are thereby able to augment or replace the
+ * behavior of individual system calls. See RSIM_Simulator::SystemCall for details and examples.
+ *
+ * @section RSIM_Example Example
  *
  * This example shows how to use the RSIM classes.
  *
  * @code
- * RSIM_Simulator sim;
+ * // RSIM_Linux32 is derived from RSIM_Simulator and contains
+ * // details about how a 32-bit Linux kernel operates.
+ * RSIM_Linux32 sim;
  *
  * // Configure the simulator from command-line switches.  The
  * // return value is the index of the executable name in argv.
@@ -207,7 +225,7 @@ public:
 
     /** Enter the main simulation loop. This loop will return when the specimen terminates. The return value is the specimen
      *  termination status as it would be reported by waitpid().  Since the current process' main thread is the executor for
-     *  the main thread of the specimen, a terminated specimen doesn't actually terminate the main thread -- it just causes
+     *  the main thread of the specimen, a terminated specimen doesn't actually terminate the main thread&mdash;it just causes
      *  this method to return the would-be exit status. */
     int main_loop();
 
@@ -239,15 +257,157 @@ public:
     /** Callbacks that implement a particular system call.  The @p enter callback is responsible for printing the syscall
      *  entrance message when system call tracing is enabled; the @p body does the real work of the system call; and the @p
      *  leave callback is to print the system call return value(s).  Any of the callbacks may throw an exception, in which case
-     *  the subsequent callbacks are not invoked. */
+     *  the subsequent callbacks are not invoked.
+     *
+     *  System calls are stored in a per-simulator table that associates each call number with a SystemCall object. The
+     *  contents of the table is queried and modified with the syscall_get() and syscall_set() methods.  This makes it possible
+     *  to replace or augment each individual system call.
+     *
+     *  The simulator also invokes an optional list of user-defined callbacks before and/or after every system call as
+     *  described by RSIM_Callbacks.  Those callbacks are unrelated to the functions that implement behavior for each
+     *  individual system call, although the pre-syscall callbacks in RSIM_Callbacks can cause a system call to be skipped.
+     *
+     *  @section SystemCall_Example1 Example: Augmenting an Existing System Call
+     *
+     *  This example augments the process exit system call (the sys_exit_group() function of the Linux kernel, system call
+     *  number 252 as defined in <asm/unistd_32.h>) so that it prints a message to the standard error stream.  We implement our
+     *  extension as a body callback rather than an enter callback even though it only prints a message.
+     *
+     *  @code
+     *  RSIM_Simulator::SystemCall my_exit_group_parent;
+     *
+     *  static void my_exit_group(RSIM_Thread *t, int callno) {
+     *      // Do our own work
+     *      fprintf(stderr, "Entire process is about to exit.\n");
+     *      // Then chain to the parent
+     *      if (my_exit_group_parent.body)
+     *          my_exit_group_parent.body(t, callno);
+     *  }
+     *
+     *  int main() {
+     *      RSIM_Linux32 sim;
+     *      ...
+     *      // Save the original implementation so we can chain to it
+     *      my_exit_group_parent = sim.syscall_get(252);
+     *
+     *      // Modify the body callback to be our own implementation
+     *      RSIM_Simulator::SystemCall new_sc = my_exit_group_parent;
+     *      new_sc.body = my_exit_group;
+     *      sim.syscall_set(252, new_sc);
+     *      ...
+     *  }
+     *  @endcode
+     *
+     *  @section Syscall_Example2 Example: Implementing a New System Call
+     *
+     *  This example shows how to implement a new system call&mdash;a delay function.  It's often useful for a specimen to
+     *  pause for a specified number of seconds. Although the specimen could do that by calling the standard C alarm() function
+     *  which ultimately invokes Linux's sys_alarm(), doing so also invokes additional system calls and generates a
+     *  signal. These extra actions may interfere with other aspects that we're studying in the specimen.  Another way to pause
+     *  would be to have the specimen execute a loop, but this results in a variable delay length depending on the hardware and
+     *  system load, and it greatly increases the number of simulated instructions.  These actions also might interfere with
+     *  some aspect we're studying, such as instruction tracing.  The best approach is to implement a new system call in which
+     *  the simulator pauses on behalf of the specimen.  From the specimen's point of view, it makes a single system call which
+     *  returns at a later time.
+     *
+     *  The first step is to choose an appropriate system call number which doesn't interfere with existing system calls. One
+     *  way to do that would be to guess a number and then query the system call table with RSIM_Simulator::syscall_get() to
+     *  see if the returned SystemCall object has any non-nil pointers.  Another way, and the one we use here, is to just pick
+     *  a number arbitrarily: we use 600 because it's well above any numbers already used by the Linux kernel.
+     *
+     *  The second step is to implement three functions: one to print the system call name and arguments at the time the call
+     *  is made, a second to implement the actual system call action, and a third to print the result when the call returns.
+     *  Although its possible to place all three actions in a single function, we separate them out to make it easier for
+     *  others to augment our implementation.
+     *
+     *  The function to print the system call name and arguments follows.  The second argument to syscall_enter() is a string
+     *  specifying the types of arguments for the system call. In this case, there's one signed integer argument.  The format
+     *  specifiers are documented in the RSIM_Thread::syscall_enter() method.  The syscall_enter() method should be used rather
+     *  than printing directly to a file because:
+     *
+     *  <ul>
+     *    <li>It is automatically enabled or disabled according to the state of the system call tracing facility for the calling
+     *        thread.  The state is usually inherited from the process, which inherits its state from the simulator, which
+     *        is initialized according to the "--debug" command-line switch.</li>
+     *    <li>It is less code, which once one is familiar with the format specifiers, is easier to read than equivalent code
+     *        that prints each argument explicitly.</li>
+     *    <li>It organizes output for human consumption when multiple threads are making system calls concurrently.  For
+     *        instance, if another thread makes a system call after we're entered our system call but before we've returned,
+     *        the output will clearly indicate such without causing the two system call outputs to be mixed together in some
+     *        arbitrary, confusing manner.</li>
+     *    <li>It will likely be more portable to call syscall_enter() rather than explicitly print each argument when we add
+     *        support for abstract analysis.</li>
+     *  </ul>
+     *
+     *  @code
+     *  static void delay_enter(RSIM_Thread *t, int callno) {
+     *      t->syscall_enter("delay", "d");
+     *  }
+     *  @endcode
+     *
+     *  Next we define the function that implements the system call. We grab the first system call argument using
+     *  syscall_arg(), which is more portable than reading it directly from a machine register or the stack, then pause for the
+     *  specified amount of time, and then set the system call's return value (non-negative typically indicates success).  Note
+     *  that since the simulator is calling sleep() rather than the specimen, all the related system calls and signals happen
+     *  directly within the simulator and don't affect the specimen.  This was our goal.  Note that for simplicity we're using
+     *  sleep() rather than nanosleep(), so the multi-threading issues that affect sleep() will also affect our system call.
+     *
+     *  @code
+     *  static void delay_body(RSIM_Thread *t, int callno) {
+     *      int nsec = t->syscall_arg(0); // the first argument
+     *      while (nsec>0)
+     *         nsec = sleep(nsec);
+     *      t->syscall_return(0); // return zero for success
+     *  }
+     *  @endcode
+     *
+     *  We define the final function to print the result. The syscall_leave() argument is a string that describes what should
+     *  be printed.  As described in the documentation for that method, the letter "d" in the first position indicates that the
+     *  return value is an integer where certain negative values indicate various error conditions.  In our case, we're always
+     *  returning zero due to the syscall_return() call in the body function.  Using syscall_leave() has the same benefits as
+     *  syscall_enter() above.
+     *
+     *  @code
+     *  static void delay_leave(RSIM_Thread *t, int callno) {
+     *      t->syscall_leave("d");
+     *  }
+     *  @endcode
+     *
+     *  The only thing remaining to do is to register our new system call. Failing to register a system call will, by default,
+     *  result in a simulated core dump when the specimen invokes that system call.
+     *
+     *  @code
+     *  int main() {
+     *      RSIM_Linux32 simulator;
+     *      simulator.syscall_set(600, RSIM_Simulator::SystemCall(delay_enter, delay_body, delay_leave));
+     *      ...
+     *  }
+     *  @endcode
+     *
+     *  Within the specimen, our system call must be invoked via the syscall() function because the C library doesn't know
+     *  about it:
+     *
+     *  @code
+     *  #include <stdio.h>
+     *  #include <syscall.h>
+     *
+     *  void delay(int n) {
+     *      int result = syscall(600, n);
+     *      if (-1==result && ENOSYS==errno)
+     *          printf("we're not running in the simulator\n");
+     *  }
+     *  @endcode 
+     */
     struct SystemCall {
+        /** New set of null callbacks. */
         SystemCall()
             :enter(NULL), body(NULL), leave(NULL) {}
+        /** New set of callbacks for syscall entrance, body, and exit. */
         SystemCall(void(*enter)(RSIM_Thread*, int), void(*body)(RSIM_Thread*, int), void(*leave)(RSIM_Thread*, int))
             :enter(enter), body(body), leave(leave) {}
-        void (*enter)(RSIM_Thread*, int callno);
-        void (*body)(RSIM_Thread*, int callno);
-        void (*leave)(RSIM_Thread*, int callno);
+        void (*enter)(RSIM_Thread*, int callno);                /**< Print syscall name and arguments. */
+        void (*body)(RSIM_Thread*, int callno);                 /**< Syscall actions. */
+        void (*leave)(RSIM_Thread*, int callno);                /**< Print syscall return value and modified arguments. */
     };
 
     /** Modifies system call emulation.  Sets the callbacks associated with the specified system call.
