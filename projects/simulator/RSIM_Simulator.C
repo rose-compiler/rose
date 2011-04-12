@@ -61,8 +61,13 @@ syscall_RSIM_delay_enter(RSIM_Thread *t, int callno)
 static void
 syscall_RSIM_delay(RSIM_Thread *t, int callno)
 {
-    unsigned nsec = t->syscall_arg(0);
-    unsigned result = sleep(nsec);
+    timespec tv, rem;
+    tv.tv_sec = t->syscall_arg(0);
+    tv.tv_nsec = 0;
+
+    int result;
+    while (-1==(result=nanosleep(&tv, &rem)) && EINTR==errno)
+        tv = rem;
     t->syscall_return(result);
 }
 
