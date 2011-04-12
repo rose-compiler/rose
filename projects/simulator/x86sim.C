@@ -8,12 +8,15 @@
 
 class MySim: public RSIM_Linux32 {
 public:
-#if 1 /*EXAMPLE*/
+#if 0 /*EXAMPLE*/
     /* Shows how to replace a system call implementation so something else happens instead.  For instance, we replace the
      * open system call to ignore the file name and always open "/dev/null".  The system call tracing facility will still
      * report the original file name--we could supply an entry callback also if we wanted different behavior. */
     MySim() {
-        syscall_set(5, SystemCall(NULL, null_open, NULL));      // 5 == open; see <asm/unistd_32.h>
+        // 5 == open; see <asm/unistd_32.h>
+        SystemCall sc = syscall_get(5);
+        sc.body = null_open;
+        syscall_set(5, sc);
     }
     static void null_open(RSIM_Thread *t, int callno) {
         uint32_t flags = t->syscall_arg(1);
@@ -30,7 +33,7 @@ main(int argc, char *argv[], char *envp[])
 {
     MySim sim;
 
-#if 1 /*EXAMPLE: If you change this, then also update the example text in RSIM_Callbacks.h. */
+#if 0 /*EXAMPLE: If you change this, then also update the example text in RSIM_Callbacks.h. */
     {
         /* An example of a pre-instruction callback which disassembles the specimen's memory image when a thread attempts to
          * execute at the original entry point (OEP) for the first time.  The OEP is the entry address defined in the ELF file
