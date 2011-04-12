@@ -576,12 +576,12 @@ RSIM_Thread::main()
 
             /* Simulate an instruction */
             SgAsmx86Instruction *insn = current_insn();
-            bool cb_status = callbacks.call_pre_insn(this, insn, true);
+            bool cb_status = callbacks.call_insn_callbacks(RSIM_Callbacks::BEFORE, this, insn, true);
             if (cb_status) {
                 process->binary_trace_add(this, insn);
                 semantics.processInstruction(insn);
             }
-            callbacks.call_post_insn(this, insn, cb_status);
+            callbacks.call_insn_callbacks(RSIM_Callbacks::AFTER, this, insn, cb_status);
 
             RTS_Message *mesg = tracing(TRACE_STATE);
             if (mesg->get_file())

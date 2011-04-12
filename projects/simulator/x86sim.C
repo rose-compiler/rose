@@ -6,12 +6,31 @@
 
 #include "RSIM_Linux32.h"
 
+class MySim: public RSIM_Linux32 {
+public:
+#if 1 /*EXAMPLE*/
+    /* Shows how to replace a system call implementation so something else happens instead.  For instance, we replace the
+     * open system call to ignore the file name and always open "/dev/null".  The system call tracing facility will still
+     * report the original file name--we could supply an entry callback also if we wanted different behavior. */
+    MySim() {
+        syscall_set(5, SystemCall(NULL, null_open, NULL));      // 5 == open; see <asm/unistd_32.h>
+    }
+    static void null_open(RSIM_Thread *t, int callno) {
+        uint32_t flags = t->syscall_arg(1);
+        uint32_t mode  = (flags & O_CREAT) ? t->syscall_arg(2) : 0;
+        int fd = open("/dev/null", flags, mode);
+        t->syscall_return(fd);
+    }
+#endif
+};
+        
+
 int
 main(int argc, char *argv[], char *envp[])
 {
-    RSIM_Linux32 sim;
+    MySim sim;
 
-#if 0 /*EXAMPLE: If you change this, then also update the example text in RSIM_Callbacks.h. */
+#if 1 /*EXAMPLE: If you change this, then also update the example text in RSIM_Callbacks.h. */
     {
         /* An example of a pre-instruction callback which disassembles the specimen's memory image when a thread attempts to
          * execute at the original entry point (OEP) for the first time.  The OEP is the entry address defined in the ELF file
@@ -30,15 +49,16 @@ main(int argc, char *argv[], char *envp[])
                     std::cout <<"disassembling at OEP...\n";
                     SgAsmBlock *block = process->disassemble();
                     AsmUnparser().unparse(std::cout, block);
-                    thread->get_callbacks().remove_pre_insn(this);
-                    process->get_callbacks().remove_pre_insn(this);
+                    thread->get_callbacks().remove_insn_callback(RSIM_Callbacks::BEFORE, this);
+                    process->get_callbacks().remove_insn_callback(RSIM_Callbacks::BEFORE, this);
                 }
                 return prev;
             }
         };
-        sim.get_callbacks().add_pre_insn(new DisassembleAtOep);
+        sim.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new DisassembleAtOep);
     }
 #endif
+
 
     /* Configure the simulator by parsing command-line switches. The return value is the index of the executable name in argv. */
     int n = sim.configure(argc, argv, envp);
