@@ -1266,8 +1266,16 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatement(JNIEnv *env, jobject x
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx)
+JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx, jstring java_string)
    {
+  // This is the import statement.  The semantics is to include the named file and add its 
+  // declarations to the global scope so that they can be referenced by the current file.
+
+     if (SgProject::get_verbose() > -1)
+          printf ("Inside of Java_JavaParser_cactionImportReference() \n");
+
+     SgName name = convertJavaStringToCxxString(env,java_string);
+     printf ("import name = %s \n",name.str());
    }
 
 
