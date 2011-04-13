@@ -24,7 +24,6 @@ class Properties : public AstAttribute
 {
   public:
 
-    SgClassDefinition *invokedClass;
     SgFunctionDeclaration *functionDeclaration;
 
     Properties();
@@ -224,8 +223,6 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
         SgGraphNode* graphNode = new SgGraphNode(functionName);
         graphNode->set_SgNode(currentFunction.properties->functionDeclaration);
 
-        graphNode->addNewAttribute("Properties", currentFunction.properties);
-
         if (SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL)
         {
             std::cout << "Function: "
@@ -269,7 +266,6 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
                 Properties* newProp = new Properties(callee);
 
                 dummy->set_SgNode(newProp->functionDeclaration);
-                dummy->addNewAttribute("Properties", newProp);
 
                 returnGraph->addNode(dummy);
                 returnGraph->addDirectedEdge(startingNode, dummy);
@@ -304,6 +300,8 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
     //Now, we must clean up all the Properties* objects that we didn't use
     BOOST_FOREACH(FunctionData& currentFunction, callGraphData)
     {
+        delete currentFunction.properties;
+        
         BOOST_FOREACH(Properties* calleeProperty, currentFunction.functionList)
         {
             delete calleeProperty;
