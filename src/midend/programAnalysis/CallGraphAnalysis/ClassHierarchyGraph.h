@@ -23,16 +23,11 @@ class ClassHierarchyWrapper
 
   void setAST( SgNode *proj );
 
-#ifdef HAVE_SQLITE3
-  ClassHierarchyWrapper(  );
-
-  void writeHierarchyToDB ( sqlite3x::sqlite3_connection& gDB );
-  std::list<std::string> getDirectSubclasses( std::string className ,  sqlite3x::sqlite3_connection& gDB );
-  std::list<std::string> getSubclasses( std::string className ,  sqlite3x::sqlite3_connection& gDB );
-#endif
-
   SgIncidenceDirectedGraph* getClassHierarchyGraph();
   SgGraphNode* findNode(SgNode*);
+  
+  //! Clean up memory
+  ~ClassHierarchyWrapper();
 
   private:
   SgClassDefinitionPtrList getHierarchy ( SgClassDefinition *, EdgeDirection );
