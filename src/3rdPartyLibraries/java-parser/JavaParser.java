@@ -104,7 +104,7 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionForeachStatement();
      public native void cactionForStatement();
      public native void cactionIfStatement();
-     public native void cactionImportReference();
+     public native void cactionImportReference(String path);
      public native void cactionInitializer();
      public native void cactionInstanceOfExpression();
      public native void cactionIntLiteral();
