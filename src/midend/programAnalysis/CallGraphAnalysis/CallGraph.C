@@ -190,12 +190,7 @@ Properties* createEmptyProperty(SgFunctionDeclaration* funcDecl, SgType* type)
 {
   Properties *fctProps = new Properties();
   fctProps->functionDeclaration = NULL;
-  fctProps->functionType = NULL;
   fctProps->invokedClass = NULL;
-  fctProps->isPointer = false;
-  fctProps->isPolymorphic = false;
-
-  fctProps->functionType        = type;
   fctProps->functionDeclaration = funcDecl;
 
   return fctProps;
@@ -214,42 +209,20 @@ Properties::Properties(){
   functionType = NULL;
   functionDeclaration = NULL;
   invokedClass = NULL;
-  isPolymorphic = isPointer = false;
 };
 
 Properties::Properties(SgFunctionDeclaration* inputFunctionDeclaration){
   functionDeclaration = inputFunctionDeclaration;
   ROSE_ASSERT( functionDeclaration != NULL );
 
-  functionType = inputFunctionDeclaration->get_type()->findBaseType();
   invokedClass = NULL;
-  isPointer = isPolymorphic = false;
 }
 
 //Only used when SOLVE_FUNCTION_CALLS_IN_DB is defined
 Properties::Properties(Properties* prop){
-  isPointer=prop->isPointer;
-  isPolymorphic=prop->isPolymorphic;
   invokedClass=prop->invokedClass;
   functionDeclaration=prop->functionDeclaration;
-  functionType=prop->functionType;
-
-  hasDef=prop->hasDef;
-  isPtr=prop->isPtr;
-  isPoly=prop->isPoly;
 };
-
-Properties::Properties(bool p_hasDef, bool p_isPtr, bool p_isPoly)
-:  hasDef(p_hasDef), isPtr(p_isPtr),
-  isPoly(p_isPoly)
-{
-  functionType = NULL;
-  functionDeclaration = NULL;
-  invokedClass = NULL;
-  isPolymorphic = isPointer = false;
-};
-
-
 
 
 CallGraphBuilder::CallGraphBuilder( SgProject *proj)
@@ -783,11 +756,9 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
                 Properties* fctProps = createEmptyProperty(memberFunctionDeclaration, memberFunctionDeclaration->get_type()->findBaseType());
 
                 ROSE_ASSERT(isSgFunctionDeclaration(fctProps->functionDeclaration));
-                ROSE_ASSERT(fctProps->functionType);
 
                 if (!(isSgThisExp(leftSide) || !(memberFunctionDeclaration->get_functionModifier().isVirtual())))
                 {
-                    fctProps->isPolymorphic = true;
                     fctProps->invokedClass = isSgClassDeclaration(crtClass->get_declaration()->get_definingDeclaration())->get_definition();
                     ROSE_ASSERT(fctProps->invokedClass != NULL);
                     //cout << "SET polymorphic on class " << fctProps->invokedClass->get_qualified_name().getString()
@@ -807,7 +778,6 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
                         memberFunctionDeclaration, polymorphic);
                 for (std::vector<Properties*>::iterator it = fD.begin(); it != fD.end(); it++)
                 {
-                    ROSE_ASSERT((*it)->functionType);
                     functionList.push_back(*it);
                     //std::cout << "Found member function Call " << (*it)->unparseToString() << std::endl;
                 }
@@ -841,7 +811,6 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
             Properties* fctProps = createEmptyProperty(fctDecl, fctDecl->get_type()->findBaseType());
 
             ROSE_ASSERT(isSgFunctionDeclaration(fctProps->functionDeclaration));
-            ROSE_ASSERT(fctProps->functionType);
             ROSE_ASSERT(fctProps->functionDeclaration != NULL);
             functionList.push_back(fctProps);
             break;
