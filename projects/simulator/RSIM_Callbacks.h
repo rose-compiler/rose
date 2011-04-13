@@ -1,6 +1,102 @@
 #ifndef ROSE_RSIM_Callbacks_H
 #define ROSE_RSIM_Callbacks_H
 
+#include "threadSupport.h"
+#include <list>
+
+namespace RSIM_Callback {
+    enum Direction { FORWARD, BACKWARD };
+
+    /* Internal classes that hold a list of callbacks. */
+    template<class T>
+    class List {
+    public:
+        typedef T CallbackType;
+        typedef std::list<CallbackType*> CBList;
+
+        List() {
+            pthread_mutex_init(&mutex, NULL);
+        }
+
+        /* Append callback to end of list without copying it. */
+        CallbackType *append(CallbackType *cb) {
+            RTS_MUTEX(mutex) {
+                assert(cb!=NULL);
+                list.push_back(cb);
+            } RTS_MUTEX_END;
+            return cb;
+        }
+
+        /* Prepend callback to beginning of list without copying it. */
+        CallbackType *prepend(CallbackType *cb) {
+            RTS_MUTEX(mutex) {
+                assert(cb!=NULL);
+                list.push_front(cb);
+            } RTS_MUTEX_END;
+            return cb;
+        }
+
+        /* Remove callback from list without destroying it. */
+        bool erase(CallbackType *cb, Direction dir=FORWARD) {
+            bool erased = false;
+            RTS_MUTEX(mutex) {
+                if (FORWARD==dir) {
+                    for (typename CBList::iterator li=list.begin(); li!=list.end(); ++li) {
+                        if (*li==cb) {
+                            list.erase(li);
+                            erased = true;
+                            break;
+                        }
+                    }
+                } else {
+                    for (typename CBList::reverse_iterator li=list.rbegin(); li!=list.rend(); ++li) {
+                        if (*li==cb) {
+                            list.erase((++li).base());
+                            erased = true;
+                            break;
+                        }
+                    }
+                }
+            } RTS_MUTEX_END;
+            return erased;
+        }
+
+        /* Remove all callbacks from list without destroying them. */
+        void clear() {
+            RTS_MUTEX(mutex) {
+                list.clear();
+            } RTS_MUTEX_END;
+        }
+
+        /* Intentionally returns a copy rather than a reference */
+        std::list<CallbackType*> callbacks() const {
+            RTS_MUTEX(mutex) {
+                return list;
+            } RTS_MUTEX_END;
+        }
+
+        /* Invoke each callback of the list */
+        template<class ArgumentType>
+        bool apply(bool b, RSIM_Thread *thread, ArgumentType args, Direction dir=FORWARD) {
+            CBList list = callbacks(); /* copy, so callbacks can safely modify this object's list */
+            if (FORWARD==dir) {
+                for (typename CBList::iterator li=list.begin(); li!=list.end(); ++li) {
+                    b = (**li)(b, thread, args);
+                }
+            } else {
+                for (typename CBList::reverse_iterator li=list.rbegin(); li!=list.rend(); ++li) {
+                    b = (**li)(b, thread, args);
+                }
+            }
+            return b;
+        }
+
+    private:
+        mutable pthread_mutex_t mutex;
+        CBList list;
+    };
+};
+
 
 /** Set of callbacks.  Callbacks are user-supplied objects whose operator() is invoked at particular points during a
  *  simulation.  The set of callbacks is organized into lists and all callbacks present on a list are invoked at the desired
@@ -43,7 +139,7 @@
  *      virtual DisassembleAtOep *clone() { return this; }
  *
  *      // The actual callback
- *      virtual bool operator()(RSIM_Thread *thread, SgAsmInstruction *insn, bool prev) {
+ *      virtual bool operator()(bool prev, RSIM_Thread *thread, SgAsmInstruction *insn) {
  *          RSIM_Process *process = thread->get_process();
  *          if (process->get_ep_orig_va() == insn->get_address()) {
  *              // This thread is at the OEP.  Call the thread-safe disassembler.
@@ -99,13 +195,10 @@ private:
     void init(const RSIM_Callbacks &);
 
 public:
-    RSIM_Callbacks() {
-        pthread_mutex_init(&mutex, NULL);
-    }
+    RSIM_Callbacks() {}
 
     /** Thread-safe copy constructor. */
     RSIM_Callbacks(const RSIM_Callbacks &other) {
-        pthread_mutex_init(&mutex, NULL);
         init(other);
     }
 
@@ -123,9 +216,7 @@ public:
     /** Instruction-related callbacks. */
     class InsnCallback: public Callback {
     public:
-        /** Method invoked on an instruction. The @p prev argument is the return value from the previous callback when multiple
-         * callbacks are registered. See also, RSIM_Callbacks::add_pre_insn() and RSIM_Callbacks::add_post_insn(). */
-        virtual bool operator()(RSIM_Thread*, SgAsmInstruction*, bool prev) = 0;
+        virtual bool operator()(bool prev, RSIM_Thread*, SgAsmInstruction*) = 0;
     };
 
     /** Registers an instruction callback.  Instruction callbacks are invoked before or after (depending on @p when) every
@@ -177,7 +268,7 @@ public:
     /** System call callbacks. */
     class SyscallCallback: public Callback {
     public:
-        virtual bool operator()(RSIM_Thread*, int callno, bool prev) = 0;
+        virtual bool operator()(bool prev, RSIM_Thread*, int callno) = 0;
     };
     
     /** Registers a system call callback.  System call callbacks are invoked before or after (depending on @p when) every
@@ -230,7 +321,7 @@ public:
     /** Thread-related callbacks. */
     class ThreadCallback: public Callback {
     public:
-        virtual bool operator()(RSIM_Thread*, bool prev) = 0;
+        virtual bool operator()(bool prev, RSIM_Thread*, int/*unused*/) = 0;
     };
 
     /** Registers a thread callback.  Thread callbacks are invoked before a new thread is created or after a thread exits
@@ -271,15 +362,15 @@ public:
      *                                  Data members
      **************************************************************************************************************************/
 private:
-    mutable pthread_mutex_t mutex;
-
     /* See init() if you add more vectors */
-    std::vector<InsnCallback*> pre_insn;
-    std::vector<InsnCallback*> post_insn;
-    std::vector<SyscallCallback*> pre_syscall;
-    std::vector<SyscallCallback*> post_syscall;
-    std::vector<ThreadCallback*> pre_thread;
-    std::vector<ThreadCallback*> post_thread;
+    RSIM_Callback::List<InsnCallback> insn_pre;
+    RSIM_Callback::List<InsnCallback> insn_post;
+
+    RSIM_Callback::List<SyscallCallback> syscall_pre;
+    RSIM_Callback::List<SyscallCallback> syscall_post;
+
+    RSIM_Callback::List<ThreadCallback> thread_pre;
+    RSIM_Callback::List<ThreadCallback> thread_post;
 };
 
 #endif /* ROSE_RSIM_Callbacks_H */
