@@ -32,7 +32,8 @@ check-local:
 	@echo '*************************************************************'
 	@echo '** RunTests/FortranTests/LANL_POP make check rule complete **'
 	@echo '*************************************************************'
-
+endif
+endif
 
 clean-local:
 	rm -rf poptest
@@ -40,5 +41,3 @@ clean-local:
 EXTRA_DIST = \
 	CMakeLists.txt \
 	$(POP_DISTRIBUTION)
-endif
-endif
