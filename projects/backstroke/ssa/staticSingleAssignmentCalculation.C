@@ -68,12 +68,14 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 
 		return true;
 	}
-	else if (isSgNamespaceDefinitionStatement(varScope) || isSgGlobal(varScope))
+
+	if (isSgNamespaceDefinitionStatement(varScope) || isSgGlobal(varScope))
 	{
 		//Variables defined in a namespace or in global scope are always accessible if they're fully qualified
 		return true;
 	}
-	else if (isSgInitializedName(astNode) && isSgCtorInitializerList(astNode->get_parent()))
+
+	if (isSgInitializedName(astNode) && isSgCtorInitializerList(astNode->get_parent()))
 	{
 		//Work around a SageInterface::getScope peculiarity
 		//SageInterface::getScope returns class scope for the initialized names in the constructor initializer list,
@@ -88,7 +90,8 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 			return true;
 		}
 	}
-	else if (SgClassDefinition* varClassScope = isSgClassDefinition(varScope))
+
+	if (SgClassDefinition * varClassScope = isSgClassDefinition(varScope))
 	{
 		//If the variable is static & public, it's accessible
 		SgVariableDeclaration* varDeclaration = isSgVariableDeclaration(var[0]->get_parent());
@@ -110,7 +113,7 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 		//and is declared a friend
 		vector<SgFunctionDeclaration*> nestedFunctions =
 				SageInterface::querySubTree<SgFunctionDeclaration>(varClassScope, V_SgFunctionDeclaration);
-		foreach (SgFunctionDeclaration* nestedFunction, nestedFunctions)
+		foreach(SgFunctionDeclaration* nestedFunction, nestedFunctions)
 		{
 			if (SageInterface::getEnclosingClassDefinition(nestedFunction) != varClassScope)
 				continue;
@@ -142,7 +145,7 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 		//The two are not from the same class. Let's see if there is a friend class declaration
 		vector<SgClassDeclaration*> nestedDeclarations =
 				SageInterface::querySubTree<SgClassDeclaration>(varClassScope, V_SgClassDeclaration);
-		foreach (SgClassDeclaration* nestedDeclaration, nestedDeclarations)
+		foreach(SgClassDeclaration* nestedDeclaration, nestedDeclarations)
 		{
 			if (nestedDeclaration->get_declarationModifier().isFriend())
 			{
@@ -172,7 +175,7 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 
 			SgClassDefinition* baseClassDefinition = isSgClassDefinition(definingDeclaration->get_definition());
 			ROSE_ASSERT(baseClassDefinition != NULL);
-			foreach (SgBaseClass* grandparentClass, baseClassDefinition->get_inheritances())
+			foreach(SgBaseClass* grandparentClass, baseClassDefinition->get_inheritances())
 			{
 				worklist.insert(grandparentClass);
 			}
