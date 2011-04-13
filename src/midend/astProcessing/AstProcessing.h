@@ -957,7 +957,6 @@ constructSubTree(SgGraphNode* endnode, SgGraphNode* startnode, SgGraphNode* encp
     }
     // We compute the inedges to find the parents of our current endnode
     std::set<SgDirectedGraphEdge*> inedges = g->computeEdgeSetIn(endnode);
-    bool e = true;
     std::set<SgDirectedGraphEdge*> erased;
     lst.insert(endnode);
     std::set<SgGraphNode*> nodes;
