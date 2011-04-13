@@ -514,8 +514,8 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2010_68.f \
      test2010_69.f \
      test2011_Rice_continuation-spits-token.f \
-     test2011_Rice_initial-tab.f \
-     test2011_94.f 
+     test2011_Rice_initial-tab.f 
+
 
 
 # DQ (1/18/2011): Failing tests.
@@ -783,7 +783,8 @@ F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = \
      test2010_57.f \
      test2010_70.f \
      test2010_105.f \
-     test2010_157.f
+     test2010_157.f \
+     test2011_94.f 
 
 F03_TESTCODES_CURRENTLY_FAILING = \
      test2007_18.f03 \
