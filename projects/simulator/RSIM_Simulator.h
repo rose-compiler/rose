@@ -301,8 +301,8 @@ public:
      *  @section Syscall_Example2 Example: Implementing a New System Call
      *
      *  This example shows how to implement a new system call&mdash;a delay function.  It's often useful for a specimen to
-     *  pause for a specified number of seconds. Although the specimen could do that by calling the standard C alarm() function
-     *  which ultimately invokes Linux's sys_alarm(), doing so also invokes additional system calls and generates a
+     *  pause for a specified number of seconds. Although the specimen could do that by calling the standard C sleep() function
+     *  which ultimately invokes Linux's sys_sleep(), doing so also invokes additional system calls and generates a
      *  signal. These extra actions may interfere with other aspects that we're studying in the specimen.  Another way to pause
      *  would be to have the specimen execute a loop, but this results in a variable delay length depending on the hardware and
      *  system load, and it greatly increases the number of simulated instructions.  These actions also might interfere with
