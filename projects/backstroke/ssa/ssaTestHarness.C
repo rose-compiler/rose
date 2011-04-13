@@ -67,23 +67,24 @@ public:
 
 		if (newUses.size() != oldUses.size())
 		{
-			printf("SSA uses at node %s:%d\n", node->class_name().c_str(), node->get_file_info()->get_line());
+			printf("ERROR: Mismatch between variable renaming uses and SSA uses at node ");
+			printf(" %s:%d\nSSA uses:", node->class_name().c_str(), node->get_file_info()->get_line());
 			foreach(const StaticSingleAssignment::NodeReachingDefTable::value_type& varDefPair, newUses)
 			{
-				printf("%s, ", StaticSingleAssignment::varnameToString(varDefPair.first).c_str());
+				printf("\t%s, ", StaticSingleAssignment::varnameToString(varDefPair.first).c_str());
 			}
 			printf("\nVarRenaming uses at node:\n");
 			foreach(const VariableRenaming::NumNodeRenameTable::value_type& varDefsPair, oldUses)
 			{
-				printf("%s, ", VariableRenaming::keyToString(varDefsPair.first).c_str());
+				printf("\t%s, ", VariableRenaming::keyToString(varDefsPair.first).c_str());
 			}
 			printf("\n");
 
-			printf("\nVarRenaming uses:\n");
+			printf("\nVarRenaming uses table:\n");
 			varRenaming->printUses(node);
-			printf("\nVarRenaming defs:\n");
+			printf("\nVarRenaming defs table:\n");
 			varRenaming->printDefs(node);
-			printf("\nSSA defs:\n");
+			printf("\nSSA defs table:\n");
 			foreach (StaticSingleAssignment::NodeReachingDefTable::value_type x, ssa->getReachingDefsAtNode(node))
 			{
 				printf("%s: ", StaticSingleAssignment::varnameToString(x.first).c_str());
