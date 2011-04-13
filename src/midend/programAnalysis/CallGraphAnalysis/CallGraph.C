@@ -189,8 +189,6 @@ dummyFilter::operator() (SgFunctionDeclaration* node) const{
 Properties* createEmptyProperty(SgFunctionDeclaration* funcDecl, SgType* type)
 {
   Properties *fctProps = new Properties();
-  fctProps->functionDeclaration = NULL;
-  fctProps->invokedClass = NULL;
   fctProps->functionDeclaration = funcDecl;
 
   return fctProps;
@@ -206,21 +204,16 @@ FunctionData::isDefined ()
 
 //Only used when SOLVE_FUNCTION_CALLS_IN_DB is defined
 Properties::Properties(){
-  functionType = NULL;
   functionDeclaration = NULL;
-  invokedClass = NULL;
 };
 
 Properties::Properties(SgFunctionDeclaration* inputFunctionDeclaration){
   functionDeclaration = inputFunctionDeclaration;
   ROSE_ASSERT( functionDeclaration != NULL );
-
-  invokedClass = NULL;
 }
 
 //Only used when SOLVE_FUNCTION_CALLS_IN_DB is defined
 Properties::Properties(Properties* prop){
-  invokedClass=prop->invokedClass;
   functionDeclaration=prop->functionDeclaration;
 };
 
@@ -379,8 +372,6 @@ CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHi
                     Properties* fctProps = createEmptyProperty(memberFunctionDeclaration,
                             memberFunctionDeclaration->get_type());
 
-                    fctProps->invokedClass = memberFunctionDeclaration->get_class_scope();
-
                     functionList.push_back(fctProps);
                 }
                 // cout << "PUSHING " << memberFunctionDeclaration << "\n";
@@ -414,7 +405,6 @@ CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHi
                                 {
                                     Properties* fctProps = createEmptyProperty(nonDefDecl,
                                             nonDefDecl->get_type());
-                                    fctProps->invokedClass = nonDefDecl->get_class_scope();
 
                                     functionList.push_back(fctProps);
                                 }
@@ -423,7 +413,6 @@ CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHi
                                 if (!(defDecl->get_functionModifier().isPureVirtual()) && defDecl->get_functionModifier().isVirtual())
                             {
                                 Properties* fctProps = createEmptyProperty(defDecl, defDecl->get_type());
-                                fctProps->invokedClass = defDecl->get_class_scope();
 
                                 functionList.push_back(fctProps); // == cls_mb_decl
                             }
@@ -757,16 +746,6 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
 
                 ROSE_ASSERT(isSgFunctionDeclaration(fctProps->functionDeclaration));
 
-                if (!(isSgThisExp(leftSide) || !(memberFunctionDeclaration->get_functionModifier().isVirtual())))
-                {
-                    fctProps->invokedClass = isSgClassDeclaration(crtClass->get_declaration()->get_definingDeclaration())->get_definition();
-                    ROSE_ASSERT(fctProps->invokedClass != NULL);
-                    //cout << "SET polymorphic on class " << fctProps->invokedClass->get_qualified_name().getString()
-                    //  << "\t" << fctProps << "\n";
-                }
-
-                //functionList.push_back( fctProps );
-
                 // returns the list of all in-class declarations of functions potentially called
                 // ( may be several because of polymorphism )
                 bool polymorphic = false;
@@ -779,7 +758,6 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
                 for (std::vector<Properties*>::iterator it = fD.begin(); it != fD.end(); it++)
                 {
                     functionList.push_back(*it);
-                    //std::cout << "Found member function Call " << (*it)->unparseToString() << std::endl;
                 }
             }
         }
