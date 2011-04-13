@@ -231,6 +231,10 @@ Grammar::setUpStatements ()
 
 #endif
 
+#if USE_JAVA_IR_NODES
+  // DQ (4/12/2011): Added Java support for "import" keyword.
+     NEW_TERMINAL_MACRO (JavaImportStatement,        "JavaImportStatement",         "TEMP_JavaImportStatement" );
+#endif
 
   // DQ (8/21/2007): More IR nodes required for Fortran support
      NEW_TERMINAL_MACRO (BlockDataStatement,        "BlockDataStatement",         "TEMP_Block_Data_Statement" );
@@ -403,23 +407,23 @@ Grammar::setUpStatements ()
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
      NEW_NONTERMINAL_MACRO (Statement,
-                            ScopeStatement       | FunctionTypeTable      | DeclarationStatement            | ExprStatement         |
-                            LabelStatement       | CaseOptionStmt         | TryStmt                         | DefaultOptionStmt     |
-                            BreakStmt            | ContinueStmt           | ReturnStmt                      | GotoStatement         |
+             ScopeStatement       | FunctionTypeTable      | DeclarationStatement            | ExprStatement         |
+             LabelStatement       | CaseOptionStmt         | TryStmt                         | DefaultOptionStmt     |
+             BreakStmt            | ContinueStmt           | ReturnStmt                      | GotoStatement         |
              SpawnStmt            | NullStatement          | VariantStatement                | ForInitStatement      | 
              CatchStatementSeq    | StopOrPauseStatement   | IOStatement                     | 
              WhereStatement       | ElseWhereStatement     | NullifyStatement                | ArithmeticIfStatement |
              AssignStatement      | ComputedGotoStatement  | AssignedGotoStatement           |
           /* FortranDo            | */ AllocateStatement   | DeallocateStatement             | UpcNotifyStatement    | 
              UpcWaitStatement     | UpcBarrierStatement    | UpcFenceStatement               | 
-             OmpBarrierStatement    |  OmpTaskwaitStatement |  OmpFlushStatement             | OmpBodyStatement      |
-             SequenceStatement,
+             OmpBarrierStatement  | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
+             SequenceStatement    | JavaImportStatement,
                             "Statement","StatementTag", false);
 
-          // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
-          // InterfaceStatement   | ModuleStatement        | UseStatement                    | ContainsStatement     |
-          // DQ (11/24/2007): These are derived from IOControlStatement and are not directly derived from SgStatement
-          // InputOutputStatement | OpenStatement          | CloseStatement                  | InquireStatement      | IOFileControlStmt |
+  // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
+  // InterfaceStatement   | ModuleStatement        | UseStatement                    | ContainsStatement     |
+  // DQ (11/24/2007): These are derived from IOControlStatement and are not directly derived from SgStatement
+  // InputOutputStatement | OpenStatement          | CloseStatement                  | InquireStatement      | IOFileControlStmt |
 
   // ***********************************************************************
   // ***********************************************************************
@@ -2716,6 +2720,12 @@ Grammar::setUpStatements ()
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+
+  // DQ (4/12/2011): Added support for Java "import" statement.
+     JavaImportStatement.setFunctionPrototype ( "HEADER_JAVA_IMPORT_STATEMENT", "../Grammar/Statement.code" );
+     JavaImportStatement.setDataPrototype ( "SgName", "path", "= \"\"",
+                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // Support for C preprocessor declarations within the AST (does not solve the problem of not
   // knowing where they might be expanded within source code (something we can't see).
   // This support allows transformations to introduce their own macros.
@@ -3092,6 +3102,9 @@ Grammar::setUpStatements ()
 
 //    OmpClauseBodyStatement.setAutomaticGenerationOfDestructor(false);
 #endif
+
+  // DQ (4/12/2011): Added support for Java "import" statement.
+     JavaImportStatement.setFunctionSource     ( "SOURCE_JAVA_IMPORT_STATEMENT", "../Grammar/Statement.code" );
 
 
    }
