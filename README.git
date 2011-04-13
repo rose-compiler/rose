@@ -291,11 +291,11 @@ and the old one has been saved (and should be accessible for a short while).
       a. build the local repository:
            "git clone /nfs/casc/overture/ROSE/git/ROSE.git git-dq-main-rc"
       a2. Build a branch on the remote repository:
-         "git push origin origin:refs/heads/dq-aztec-rc"
+         "git push origin origin:refs/heads/dq-<new branch>-rc"
       b. build a local branch to match a branch in the remote repository:
-           "git branch git-dq-main-rc --track origin/git-dq-main-rc"
+           "git branch dq-<new branch>-rc --track origin/dq-<new branch>-rc"
       c. checkout that local branch (switch to it):
-           "git checkout dq-main-rc"
+           "git checkout dq-<new branch>-rc"
 
    2) One-time update the local branch to use git's submodule mechanism.
       a. merge your existing branch with master:

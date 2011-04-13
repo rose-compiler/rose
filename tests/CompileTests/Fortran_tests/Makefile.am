@@ -514,7 +514,8 @@ F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2010_68.f \
      test2010_69.f \
      test2011_Rice_continuation-spits-token.f \
-     test2011_Rice_initial-tab.f
+     test2011_Rice_initial-tab.f \
+     test2011_94.f 
 
 
 # DQ (1/18/2011): Failing tests.
@@ -1063,6 +1064,10 @@ riceBug2:$(srcdir)/test2010_78.f90 $(srcdir)/test2010_80.f90
 
 bug3:
 	../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:output_parser_actions -I$(srcdir) -c $(srcdir)/test2010_81.f90
+
+bug4:
+	../../testTranslator $(ROSE_FLAGS) -rose:output_parser_actions -I$(srcdir) -c $(srcdir)/verify.f
+
 
 # DQ (4/9/2011): Let's at least run these in parallel (more important for the Insure++ tests).
 extra_tests: $(PASSING_MODULE_TEST_Objects) testCPP_Defines testMPItypes testMultipleFortranFiles

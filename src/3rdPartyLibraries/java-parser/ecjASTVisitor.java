@@ -730,12 +730,18 @@ class ecjASTVisitor extends ASTVisitor
 
      public boolean visit(ImportReference  node, CompilationUnitScope scope)
         {
-          if (java_parser.verboseLevel > 0)
+          if (java_parser.verboseLevel > -1)
                System.out.println("Inside of visit (ImportReference,CompilationUnitScope)");
 
-          java_parser.cactionImportReference();
+          for (int i = 0, tokenArrayLength = node.tokens.length; i < tokenArrayLength; i++)
+             {
+               String tokenString = new String(node.tokens[i]);
+               System.out.println("     --- ImportReference tokens = " + tokenString);
+             }
 
-          if (java_parser.verboseLevel > 0)
+          java_parser.cactionImportReference("my_path");
+
+          if (java_parser.verboseLevel > -1)
                System.out.println("Leaving visit (ImportReference,CompilationUnitScope)");
 
           return true; // do nothing by  node, keep traversing
