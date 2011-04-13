@@ -77,7 +77,7 @@ PathNumManager::~PathNumManager()
         delete gen;
 }
 
-std::pair<int, PathSet> PathNumManager::getPathNumbers(SgNode* node) const
+PathNumManager::CFGVertex PathNumManager::getCFGNode(SgNode* node) const
 {
     // Trace this node up to find which CFG vertex it belongs to.
     while (node)
@@ -92,6 +92,13 @@ std::pair<int, PathSet> PathNumManager::getPathNumbers(SgNode* node) const
     CFGVertex cfgNode = nodeCFGVertexMap_.find(node)->second;
     ROSE_ASSERT(vertexToDagIndex_.count(cfgNode) > 0);
 
+    return cfgNode;
+}
+
+std::pair<int, PathSet> PathNumManager::getPathNumbers(SgNode* node) const
+{
+    CFGVertex cfgNode = getCFGNode(node);
+
     int idx;
     DAGVertex dagNode;
     boost::tie(idx, dagNode) = (vertexToDagIndex_.find(cfgNode))->second;
@@ -99,27 +106,24 @@ std::pair<int, PathSet> PathNumManager::getPathNumbers(SgNode* node) const
     return std::make_pair(idx, pathNumGenerators_[idx]->getPaths(dagNode));
 }
 
+std::pair<int, std::map<int, PathSet> >
+PathNumManager::getVisiblePathNumbers(SgNode* node) const
+{
+    CFGVertex cfgNode = getCFGNode(node);
+
+    int idx;
+    DAGVertex dagNode;
+    boost::tie(idx, dagNode) = (vertexToDagIndex_.find(cfgNode))->second;
+
+    return std::make_pair(idx,
+                          pathNumGenerators_[idx]->getVisibleNumAndPaths(dagNode));
+}
+
 std::pair<int, PathSet> PathNumManager::getPathNumbers(
         SgNode* node1, SgNode* node2) const
 {
-    // Trace this node up to find which CFG vertex it belongs to.
-    while (node1)
-    {
-        if (nodeCFGVertexMap_.find(node1) != nodeCFGVertexMap_.end())
-            break;
-        node1 = node1->get_parent();
-    }
-    while (node2)
-    {
-        if (nodeCFGVertexMap_.find(node2) != nodeCFGVertexMap_.end())
-            break;
-        node2 = node2->get_parent();
-    }
-
-    ROSE_ASSERT(node1 && node2);
-
-    CFGVertex cfgNode1 = nodeCFGVertexMap_.find(node1)->second;
-    CFGVertex cfgNode2 = nodeCFGVertexMap_.find(node2)->second;
+    CFGVertex cfgNode1 = getCFGNode(node1);
+    CFGVertex cfgNode2 = getCFGNode(node2);
 
     CFGEdge cfgEdge = boost::edge(cfgNode1, cfgNode2, cfg_).first;
     ROSE_ASSERT(edgeToDagIndex_.count(cfgEdge) > 0);
@@ -172,6 +176,7 @@ void PathNumGenerator::getAllPaths()
         Vertex node = nodes.top();
         nodes.pop();
 
+        // For each node, propagate its edges to its successors.
         foreach (const Edge& e, boost::out_edges(node, dag_))
         {
             Vertex tar = boost::target(e, dag_);
@@ -182,12 +187,14 @@ void PathNumGenerator::getAllPaths()
             nodes.push(tar);
         }
 
+        // The exit is the last node of each path.
         if (node == exit_)
             paths.push_back(pathsOnVertex[node]);
     }
 
     paths_.resize(paths.size());
 
+    // Get the path number as the index of each path.
     foreach (Path& path, paths)
     {
         int val = 0;
@@ -201,16 +208,28 @@ void PathNumGenerator::getAllPathNumForNodesAndEdges()
 {
     int pathNumber = pathNumbers_[entry_];
     foreach (Vertex v, boost::vertices(dag_))
-        pathsForNode_[v].resize(pathNumber);
+        pathsForNode_[v].allPath.resize(pathNumber);
     foreach (const Edge& e, boost::edges(dag_))
         pathsForEdge_[e].resize(pathNumber);
 
     int i = 0;
     foreach (const Path& path, paths_)
     {
+        // The visible number is the path number on each vertex which
+        // can see it in runtime.
+        int visibleNum = 0;
         foreach (const Edge& edge, path)
         {
-            pathsForNode_[boost::target(edge, dag_)][i] = 1;
+            visibleNum += edgeValues_[edge];
+            Vertex tar = boost::target(edge, dag_);
+
+            PathSetOnVertex& pathSetOnVertex = pathsForNode_[tar];
+
+            if (pathSetOnVertex.numToPath.count(visibleNum) == 0)
+                pathSetOnVertex.numToPath[visibleNum].resize(pathNumber);
+            pathSetOnVertex.numToPath[visibleNum][i] = 1;
+
+            pathSetOnVertex.allPath[i] = 1;
             pathsForEdge_[edge][i] = 1;
         }
         ++i;

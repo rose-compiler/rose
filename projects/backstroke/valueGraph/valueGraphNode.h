@@ -215,7 +215,8 @@ struct FunctionCallNode : ValueGraphNode
 struct ValueGraphEdge
 {
 	ValueGraphEdge() : cost(0), dagIndex(0) {}
-	ValueGraphEdge(int c) : cost(c), dagIndex(0) {}
+	ValueGraphEdge(int cst, int dagIdx, const PathSet& pths)
+    : cost(cst), dagIndex(dagIdx), paths(pths) {}
 
     virtual ~ValueGraphEdge() {}
 
@@ -236,12 +237,29 @@ struct ValueGraphEdge
 //! An edge coming from an operator node.
 struct OrderedEdge : ValueGraphEdge
 {
-	OrderedEdge(int idx) : index(idx) {}
+	explicit OrderedEdge(int idx) : index(idx) {}
 
 	virtual std::string toString() const
 	{ return boost::lexical_cast<std::string>(index); }
 
 	int index;
+};
+
+//! An edge going to the root node.
+struct StateSavingEdge : ValueGraphEdge
+{
+	//StateSavingEdge() : visiblePathNum(0) {}
+    StateSavingEdge(int cost, int dagIdx, int visibleNum, const PathSet& paths)
+    : ValueGraphEdge(cost, dagIdx, paths), visiblePathNum(visibleNum) {}
+
+	virtual std::string toString() const
+	{ 
+        std::string str = ValueGraphEdge::toString();
+        str += "\nPathNum:" + boost::lexical_cast<std::string>(visiblePathNum);
+        return str;
+    }
+
+	int visiblePathNum;
 };
 
 /**********************************************************************************************************/
@@ -270,6 +288,11 @@ inline ValueNode* isValueNode(ValueGraphNode* node)
 inline OrderedEdge* isOrderedEdge(ValueGraphEdge* edge)
 {
 	return dynamic_cast<OrderedEdge*>(edge);
+}
+
+inline StateSavingEdge* isStateSavingEdge(ValueGraphEdge* edge)
+{
+	return dynamic_cast<StateSavingEdge*>(edge);
 }
 
 }  // End of namespace Backstroke

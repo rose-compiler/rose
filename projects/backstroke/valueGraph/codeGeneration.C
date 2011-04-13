@@ -39,6 +39,7 @@ SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr)
 
 void instrumentPushFunction(ValueNode* node)
 {
+    // Build push function call.
 	SgExprListExp* parameters = buildExprListExp(node->var.getVarRefExp());
 	SgExpression* pushFunc = buildFunctionCallExp("push", buildVoidType(), parameters);
     //return buildExprStatement(pushFunc);
@@ -46,19 +47,28 @@ void instrumentPushFunction(ValueNode* node)
     SgNode* varNode = node->astNode;
     if (SgExpression* expr = isSgExpression(varNode))
     {
+        // If the target node is an expression, we have to find a proper place
+        // to place the push function. Here we insert the push function after its
+        // belonged statement.
         SgExpression* commaOp = buildCommaOpExp(pushFunc, copyExpression(expr));
         replaceExpression(expr, commaOp);
     }
     else if (SgInitializedName* initName = isSgInitializedName(varNode))
     {
+        // If the target node (def node) is a variable declaration, find this
+        // declaration statement first.
         SgNode* stmtNode = initName;
         while (stmtNode && !isSgStatement(stmtNode))
             stmtNode = stmtNode->get_parent();
 
         SgStatement* pushFuncStmt = buildExprStatement(pushFunc);
 
+        // If this node belongs to event parameters, add the push function just
+        // at the beginning of the forward function. Else, add the push function
+        // under the declaration.
         if (SgFunctionParameterList* funcPara = isSgFunctionParameterList(stmtNode))
         {
+            // If this declaration belongs to parameter list.
             SgFunctionDeclaration* funcDecl =
                     isSgFunctionDeclaration(funcPara->get_parent());
             SgBasicBlock* funcBody = funcDecl->get_definition()->get_body();
@@ -66,6 +76,7 @@ void instrumentPushFunction(ValueNode* node)
         }
         else
         {
+            // Or it is a normal declaration.
             SgVariableDeclaration* varDecl = isSgVariableDeclaration(stmtNode);
             ROSE_ASSERT(varDecl);
 
@@ -77,9 +88,6 @@ void instrumentPushFunction(ValueNode* node)
                 ROSE_ASSERT(!"Declaration in conditions is not handled yet!");
         }
 
-        // If this node belongs to event parameters, add the push function just
-        // at the beginning of the forward function. Else, add the push function
-        // under the declaration.
         cout << initName->get_parent()->class_name() << endl;
     }
 }

@@ -15,6 +15,17 @@ class PathNumGenerator
 
     typedef std::vector<Edge> Path;
 
+    // The path set on each vertex contains what path number this vertex can see
+    // and the corresponding path set of this number. The union of all path sets
+    // for all numbers is also given.
+    struct PathSetOnVertex
+    {
+        // Each visible incomplete path number and its corresponding path set.
+        std::map<int, PathSet> numToPath;
+
+        // The path set on this vertex, which should be the union of all path set above.
+        PathSet allPath;
+    };
 
     //! The DAG on which we'll add path numbers.
     const DAG& dag_;
@@ -35,18 +46,27 @@ class PathNumGenerator
     //! All paths in this DAG. The i_th path has the path number i.
     std::vector<Path> paths_;
 
-    std::map<Vertex, PathSet> pathsForNode_;
+    std::map<Vertex, PathSetOnVertex> pathsForNode_;
     std::map<Edge,   PathSet> pathsForEdge_;
     //std::map<Vertex, std::set<int> > pathsForNode_;
 
 public:
     PathNumGenerator(const DAG& dag, Vertex entry, Vertex exit)
-            : dag_(dag), entry_(entry), exit_(exit) {}
+        : dag_(dag), entry_(entry), exit_(exit)
+    {}
+
+    //! Returns the visible incomplete path numbers and their corresponding complete 
+    //! paths set of the given DAG node.
+    std::map<int, PathSet> getVisibleNumAndPaths(Vertex v) const
+    {
+        ROSE_ASSERT(pathsForNode_.count(v) > 0);
+        return pathsForNode_.find(v)->second.numToPath;
+    }
 
     PathSet getPaths(Vertex v) const
     {
         ROSE_ASSERT(pathsForNode_.count(v) > 0);
-        return pathsForNode_.find(v)->second;
+        return pathsForNode_.find(v)->second.allPath;
     }
 
     PathSet getPaths(const Edge& e) const
@@ -115,6 +135,12 @@ public:
     //! Get path numbers from two AST nodes, which form a CFG edge.
     std::pair<int, PathSet> getPathNumbers(SgNode* node1, SgNode* node2) const;
 
+    //! Get visible incomplete path numbers and their cooresponding complete path numbers.
+    //! The first member in the returned pair is the DAG index, and the second is a table
+    //! from each incomplete visible path number to its corresponding path set.
+    std::pair<int, std::map<int, PathSet> >
+    getVisiblePathNumbers(SgNode* node) const;
+
     //! Given the DAG index, return how many paths it has.
     size_t getPathNum(int index) const
     { return pathInfo_[index].second; }
@@ -125,6 +151,9 @@ private:
 
     //! Build a table from each SgNode to its belonging CFG vertex.
     void buildNodeCFGVertexMap();
+
+    //! Given a AST node, find its belonged CFG node.
+    CFGVertex getCFGNode(SgNode* node) const;
 };
 
 

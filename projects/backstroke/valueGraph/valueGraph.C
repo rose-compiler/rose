@@ -11,15 +11,6 @@ using namespace std;
 #define foreach BOOST_FOREACH
 
 
-EventReverser::EventReverser(SgFunctionDefinition* funcDef)
-:   funcDef_(funcDef),
-    cfg_(funcDef_),
-    ssa_(SageInterface::getProject()),
-    pathNumManager_(cfg_)
-{
-    ssa_.run(false);
-}
-
 void EventReverser::buildValueGraph()
 {
     // First, build the basic part of the value graph.
@@ -32,7 +23,7 @@ void EventReverser::buildValueGraph()
     addStateSavingEdges();
 
     // Add path information to edges.
-    addPathsToEdges();
+    //addPathsToEdges();
     
     // Add a reverse edge for every non-ordered edge, and add extra nodes for + and -.
     addExtraNodesAndEdges();
@@ -48,7 +39,7 @@ void EventReverser::generateCode()
 {
     // First, build the value graph.
     buildValueGraph();
-
+#if 0
     // Three new functions are built. Backup the original function here.
     buildFunctionBodies();
 
@@ -56,6 +47,7 @@ void EventReverser::generateCode()
 
     // Finally insert all functions in the code.
     insertFunctions();
+#endif
 }
 
 void EventReverser::insertFunctions()
@@ -212,21 +204,29 @@ void EventReverser::processLastVersions()
              ssa_.getLastVersions(funcDef_->get_declaration()))
     {
         VarName name = nameDef.first;
+        VGVertex node;
 
-        // For every variable, if it is not added into VG, add it now
+        // For every variable, if it is not added into VG, add it now.
         VersionedVariable var(name, nameDef.second->getRenamingNumber());
         if (varVertexMap_.count(var) == 0)
         {
             pseudoDefMap_[var] = nameDef.second;
-            createPhiNode(var);
+            node = createPhiNode(var);
         }
+        else
+            node = varVertexMap_[var];
 
         if (isStateVariable(name))
         {
-            //VersionedVariable var(name, nameDef.second->getRenamingNumber());
-
-            ROSE_ASSERT(varVertexMap_.count(var) || (cout << var, 0));
-            availableValues_.insert(varVertexMap_[var]);
+            // If the variable is a state variable, make it available.
+            availableValues_.insert(node);
+        }
+        else
+        {
+            // If this variable is not the state, it will be killed at the end
+            // of the function. Add it to the killed set, then a state saving edge
+            // is added to it.
+            varsKilledAtEventEnd_.insert(node);
         }
     }
 }
@@ -452,20 +452,30 @@ EventReverser::VGVertex EventReverser::addValueGraphNode(ValueGraphNode* newNode
 }
 
 EventReverser::VGEdge EventReverser::addValueGraphEdge(
-        EventReverser::VGVertex src, EventReverser::VGVertex tar, int cost)
-{
-    VGEdge e = boost::add_edge(src, tar, valueGraph_).first;
-    valueGraph_[e] = new ValueGraphEdge(cost);
-    return e;
-}
-
-EventReverser::VGEdge EventReverser::addValueGraphEdge(
-        EventReverser::VGVertex src, 
+        EventReverser::VGVertex src,
         EventReverser::VGVertex tar,
         ValueGraphEdge* edge)
 {
     VGEdge e = boost::add_edge(src, tar, valueGraph_).first;
     valueGraph_[e] = new ValueGraphEdge(*edge);
+    return e;
+}
+
+EventReverser::VGEdge EventReverser::addValueGraphEdge(
+        EventReverser::VGVertex src, EventReverser::VGVertex tar)
+{
+    VGEdge e = boost::add_edge(src, tar, valueGraph_).first;
+
+    ValueNode* valNode = isValueNode(valueGraph_[src]);
+    ROSE_ASSERT(valNode);
+
+    // Get the path information of this edge.
+    int dagIndex;
+    PathSet paths;
+    boost::tie(dagIndex, paths) =
+            pathNumManager_.getPathNumbers(valNode->astNode);
+    
+    valueGraph_[e] = new ValueGraphEdge(valNode->getCost(), dagIndex, paths);
     return e;
 }
 
@@ -475,6 +485,50 @@ EventReverser::VGEdge EventReverser::addValueGraphOrderedEdge(
     VGEdge e = boost::add_edge(src, tar, valueGraph_).first;
     valueGraph_[e] = new OrderedEdge(index);
     return e;
+}
+
+vector<EventReverser::VGEdge>
+EventReverser::addValueGraphStateSavingEdges(VGVertex src)
+{
+    // Get the cost to save this node.
+    int cost = 0;
+    if (availableValues_.count(src) == 0)
+        cost = valueGraph_[src]->getCost();
+
+    set<VGVertex> killers = getKillers(src);
+    vector<VGEdge> newEdges;
+
+    // The state saving is instrumented before killer nodes.
+    foreach (VGVertex killer, killers)
+    {
+        // The killer must be a value node.
+        ValueNode* valNode = isValueNode(valueGraph_[killer]);
+        ROSE_ASSERT(valNode);
+
+        // Get the path information of this edge.
+        int dagIndex;
+        map<int, PathSet> paths;
+        boost::tie(dagIndex, paths) =
+                pathNumManager_.getVisiblePathNumbers(valNode->astNode);
+
+        typedef map<int, PathSet>::value_type NumPathPair;
+        foreach (const NumPathPair& numPath, paths)
+        {
+            VGEdge e = boost::add_edge(src, root_, valueGraph_).first;
+            valueGraph_[e] = new StateSavingEdge(
+                    cost, dagIndex, numPath.first, numPath.second);
+            newEdges.push_back(e);
+        }
+    }
+
+    // If the variable is killed at the exit of a scope, add a state saving edge to it.
+
+    return newEdges;
+}
+
+set<EventReverser::VGVertex> EventReverser::getKillers(VGVertex killedNode)
+{
+    return set<VGVertex>();
 }
 
 EventReverser::VGVertex EventReverser::createValueNode(SgNode* lhsNode, SgNode* rhsNode)
@@ -568,11 +622,8 @@ void EventReverser::addStateSavingEdges()
         if (!isPhiNode(node) && !isValueNode(node))
             continue;
 
-        int cost = 0;
-        if (availableValues_.count(v) == 0)
-            cost = node->getCost();
-
-        addValueGraphEdge(v, root_, cost);
+        addValueGraphStateSavingEdges(v);
+        //addStateSavingEdge(v, cost);
     }
 }
 

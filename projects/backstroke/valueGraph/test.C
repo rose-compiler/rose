@@ -33,6 +33,12 @@ int main(int argc, char *argv[])
         Backstroke::BackstrokeCFG cfg(funcDef);
         cfg.toDot(cfgFileName);
 
+        Backstroke::FilteredCFG filteredCFG(funcDef);
+        filteredCFG.toDot("filteredCFG.dot");
+
+        Backstroke::FullCFG fullCFG(funcDef);
+        fullCFG.toDot("fullCFG.dot");
+
 
 
         Backstroke::EventReverser reverser(funcDef);

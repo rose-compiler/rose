@@ -71,6 +71,9 @@ private:
 	//! All available values, including constant and state variables (last version).
 	std::set<VGVertex> availableValues_;
 
+    //!
+    std::set<VGVertex> varsKilledAtEventEnd_;
+
 	//! All state variables.
 	std::set<VarName> stateVariables_;
 
@@ -98,8 +101,15 @@ private:
 //			VirtualCFG::InterestingEdge> CFG;
 //	typedef CDG<CFG> CDG;
 public:
-	
-	EventReverser(SgFunctionDefinition* funcDef);
+    //! The constructor.
+    EventReverser(SgFunctionDefinition* funcDef)
+    :   funcDef_(funcDef),
+        cfg_(funcDef_),
+        ssa_(SageInterface::getProject()),
+        pathNumManager_(cfg_)
+    {
+        ssa_.run(false);
+    }
 
 	//! Build the value graph for the given function.
 	void buildValueGraph();
@@ -135,6 +145,12 @@ private:
 
     //! Get all functions in place.
     void insertFunctions();
+
+    /** Given a VG node with a def, returns all VG nodes whose defs kill the given def.
+     *  @param killedNode The value graph node which must contains a value node or phi node.
+	 *  @returns The value graph nodes which kill the def in the parameter.
+	 */
+    std::set<VGVertex> getKillers(VGVertex killedNode);
     
 //    //! Add path information to out edges of phi nodes.
 //    PathSetWithIndex addPathsForPhiNodes(VGVertex phiNode,
@@ -153,9 +169,6 @@ private:
 
     //! Create a unary operation node, plus two edges.
 	VGVertex createOperatorNode(VariantT t, VGVertex result, VGVertex operand);
-
-//	//! Add a variable to a vertex in VG.
-//	void addVariableToNode(VGVertex v, SgNode* node);
 
     //! Add a reverse edge for every non-ordered edge, and add extra edges for
     //! + and - operations.
@@ -201,10 +214,9 @@ private:
 	 *
 	 *  @param src The source vertex.
 	 *  @param tar The target vertex.
-	 *  @param cost The weight of the edge.
 	 *  @returns The new added edge.
 	 */
-	VGEdge addValueGraphEdge(VGVertex src, VGVertex tar, int cost = 0);
+	VGEdge addValueGraphEdge(VGVertex src, VGVertex tar);
 
    	/** Add a new edge to the value graph.
 	 *
@@ -224,6 +236,14 @@ private:
 	 *  @returns The new added edge.
 	 */
 	VGEdge addValueGraphOrderedEdge(VGVertex src, VGVertex tar, int index);
+
+    /** Add new state saving edges to the value graph. The target is the root.
+	 *
+	 *  @param src The source vertex.
+     *  @param pathNum The visible incomplete path number on this edge.
+	 *  @returns The new added edges.
+	 */
+    std::vector<VGEdge> addValueGraphStateSavingEdges(VGVertex src);
 
 	//! Add a phi node to the value graph.
 	VGVertex createPhiNode(VersionedVariable& var);
@@ -258,8 +278,8 @@ private:
         SgScopeStatement* scope,
         const SubValueGraph& route);
 
-	static VGVertex nullVertex()
-	{ return boost::graph_traits<ValueGraph>::null_vertex(); }
+//	static VGVertex nullVertex()
+//	{ return boost::graph_traits<ValueGraph>::null_vertex(); }
 };
 
 } // End of namespace Backstroke
