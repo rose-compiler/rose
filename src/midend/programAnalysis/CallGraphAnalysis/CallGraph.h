@@ -6,15 +6,6 @@
 #include <GraphDotOutput.h>
 #include <VirtualGraphCreate.h>
 
-// DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
-// TPS (01Dec2008): Enabled mysql and this fails.
-// seems like it is not supposed to be included
-#if 0
-#include <GlobalDatabaseConnection.h>
-#endif
-#endif
-
 #include "AstDiagnostics.h"
 
 #include <sstream>
@@ -25,17 +16,8 @@
 #include <boost/foreach.hpp>
 #include <boost/unordered_map.hpp>
 
-#ifdef HAVE_SQLITE3
-#include "sqlite3x.h"
-#endif
-
 class Properties;
 class FunctionData;
-
-// driscoll6 (1/2011) Use reference-counting shared_ptrs to avoid
-// memory leaks. (at the suggestion of George (vulov1))
-#include <boost/shared_ptr.hpp>
-typedef boost::shared_ptr<Properties> PropertiesPtr;
 
 //Only used when SOLVE_FUNCTION_CALLS_IN_DB is defined
 class Properties : public AstAttribute
@@ -47,12 +29,6 @@ class Properties : public AstAttribute
     SgFunctionDeclaration *functionDeclaration;
     SgType *functionType;
 
-    std::string nid;
-    std::string label;
-    std::string type;
-    std::string scope;
-    std::string functionName;
-
     bool hasDef;
     bool isPtr;
     bool isPoly;
@@ -60,8 +36,7 @@ class Properties : public AstAttribute
     Properties();
     Properties(Properties* prop);
     Properties(SgFunctionDeclaration* inputFunctionDeclaration);
-    Properties(std::string nid, std::string label, std::string type, std::string scope,
-        bool hasDef, bool isPtr, bool isPoly);
+    Properties(bool hasDef, bool isPtr, bool isPoly);
 
 };
 

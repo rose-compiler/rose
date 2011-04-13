@@ -34,42 +34,14 @@ std::string stripGlobalModifer(std::string str){
 
 bool nodeCompareGraph(const SgGraphNode* a,const SgGraphNode* b)
 {
-	string aStr;
-
-        Properties* a_property = dynamic_cast<Properties*>(a->getAttribute("Properties"));
-        Properties* b_property = dynamic_cast<Properties*>(b->getAttribute("Properties"));
-
-        if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-        {
-          ROSE_ASSERT(a_property != NULL);
-           aStr=stripGlobalModifer(a_property->functionName);
-        }else
-        {
-          SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(a->get_SgNode());
-          ROSE_ASSERT(funcDecl != NULL);
-
-          aStr=stripGlobalModifer(funcDecl->get_qualified_name().getString());
-        }
-
-	string bStr;
-        if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-        {
-          ROSE_ASSERT(b_property != NULL);
-
-          bStr=stripGlobalModifer(b_property->functionName);
-        }else
-        {
-          SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(b->get_SgNode());
-          ROSE_ASSERT(funcDecl != NULL);
-
-          bStr=stripGlobalModifer(funcDecl->get_qualified_name().getString());
-        }
-
-	// compare length
-	if (aStr.length()<bStr.length()) return true;
-	else if (aStr.length()>bStr.length()) return false;
-	// no lengthdifference, compare text
-	else return aStr.compare(bStr)<0;
+    SgFunctionDeclaration* funcDecl1 = isSgFunctionDeclaration(a->get_SgNode());
+    ROSE_ASSERT(funcDecl1 != NULL);
+    
+    SgFunctionDeclaration* funcDecl2 = isSgFunctionDeclaration(b->get_SgNode());
+    ROSE_ASSERT(funcDecl2 != NULL);
+    	
+    return stripGlobalModifer(funcDecl1->get_qualified_name().getString()) 
+         != stripGlobalModifer(funcDecl2->get_qualified_name().getString());
 }
 
 bool nodeCompareGraphPair(const std::pair<SgGraphNode*,int>& a,const std::pair<SgGraphNode*,int>& b)
@@ -81,7 +53,7 @@ bool nodeCompareGraphPair(const std::pair<SgGraphNode*,int>& a,const std::pair<S
 
 void sortedCallGraphDump(string fileName, SgIncidenceDirectedGraph* cg)
 {
-
+    ROSE_ASSERT(var_SOLVE_FUNCTION_CALLS_IN_DB == false);
   //Opening output file
   ofstream file;
   file.open(fileName.c_str());
@@ -145,7 +117,6 @@ void sortedCallGraphDump(string fileName, SgIncidenceDirectedGraph* cg)
     calledNodes.unique();
 
     //Output the unique graph
-    Properties* cur_property = dynamic_cast<Properties*>((it->first)->getAttribute("Properties"));
     SgFunctionDeclaration* cur_function = isSgFunctionDeclaration((it->first)->get_SgNode());
 
     if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
@@ -158,11 +129,6 @@ void sortedCallGraphDump(string fileName, SgIncidenceDirectedGraph* cg)
          if((*i)->functionDeclaration != NULL && (*i) != NULL )
        */
 
-      if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-      {
-        ROSE_ASSERT( cur_property != NULL );
-        file << stripGlobalModifer(cur_property->functionName) <<" ->";
-      }else
       {
         ROSE_ASSERT( cur_function != NULL );
         file << stripGlobalModifer(cur_function->get_qualified_name().getString()) <<" ->";
@@ -174,12 +140,6 @@ void sortedCallGraphDump(string fileName, SgIncidenceDirectedGraph* cg)
       //  std::cout << "Second First node of this type " << (*i)->properties->nid << " " << (*i)->properties->functionName <<std::endl;
       //std::cout << "Second First node of this type " << (*i)->properties->nid << " " <<(*i)->properties->label << " " << (*i)->properties->type << " " << (*i)->properties->scope << " " << (*i)->properties->functionName << std::endl;
 
-
-      if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-      {
-        ROSE_ASSERT( cur_property != NULL );
-        file << stripGlobalModifer(cur_property->functionName) <<" ->";
-      }else
       {
         ROSE_ASSERT( cur_function != NULL );
         file << stripGlobalModifer(cur_function->get_qualified_name().getString()) <<" ->";
@@ -187,12 +147,8 @@ void sortedCallGraphDump(string fileName, SgIncidenceDirectedGraph* cg)
 
       for (list<SgGraphNode *>::iterator j=calledNodes.begin();j!=calledNodes.end();j++)
       {
-        Properties* j_property = dynamic_cast<Properties*>((*j)->getAttribute("Properties"));
         SgFunctionDeclaration* j_function = isSgFunctionDeclaration((*j)->get_SgNode());
 
-        if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-          file << " " << stripGlobalModifer( j_property->functionName );
-        else
           file << " " << stripGlobalModifer( j_function->get_qualified_name().getString() );
 
       }		

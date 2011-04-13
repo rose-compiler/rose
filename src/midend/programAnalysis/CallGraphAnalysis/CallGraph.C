@@ -14,52 +14,7 @@
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
-#ifdef HAVE_SQLITE3
-#include "sqlite3x.h"
-using namespace sqlite3x;
-#endif
-
-
-// DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-
-#if 0
-/************
-  **  Check to see if two member functions from two different classes have the same name
-  **  and the argument types match.
-  ************/
-bool is_functions_equal(SgMemberFunctionDeclaration* f1, SgMemberFunctionDeclaration* f2)
-{
-  bool functions_are_equal = false;
-
-
-  //See if the function types match
-  if( f1->get_name() == f2->get_name() )
-  {
-    SgTypePtrList& args_f1 = f1->get_type()->get_arguments();
-    SgTypePtrList& args_f2 = f2->get_type()->get_arguments();
-
-    //See if the arguments match
-    if( args_f1.size() == args_f2.size() )
-    {
-      functions_are_equal = true;
-
-      for(int i = 0; i < args_f1.size(); i++)
-      {
-        if( args_f1[i]->get_mangled().str() != args_f2[i]->get_mangled().str()  )
-        {
-          functions_are_equal = false;
-
-        }
-      }
-    }else
-      functions_are_equal = false;
-
-  }
-
-  return functions_are_equal;
-};
-#endif
 
 /***************************************************
  * Get the vector of base types for the current type
@@ -260,7 +215,6 @@ Properties::Properties(){
   functionDeclaration = NULL;
   invokedClass = NULL;
   isPolymorphic = isPointer = false;
-  nid=label=type=scope=functionName="not-set";
 };
 
 Properties::Properties(SgFunctionDeclaration* inputFunctionDeclaration){
@@ -270,7 +224,6 @@ Properties::Properties(SgFunctionDeclaration* inputFunctionDeclaration){
   functionType = inputFunctionDeclaration->get_type()->findBaseType();
   invokedClass = NULL;
   isPointer = isPolymorphic = false;
-  nid=label=type=scope=functionName="not-set";
 }
 
 //Only used when SOLVE_FUNCTION_CALLS_IN_DB is defined
@@ -281,29 +234,19 @@ Properties::Properties(Properties* prop){
   functionDeclaration=prop->functionDeclaration;
   functionType=prop->functionType;
 
-  nid=prop->nid;;
-  label=prop->label;;
-  type=prop->type;
-  scope=prop->scope;
-  functionName=prop->functionName;
-
   hasDef=prop->hasDef;
   isPtr=prop->isPtr;
   isPoly=prop->isPoly;
 };
 
-Properties::Properties(std::string p_nid, std::string p_label, std::string p_type, std::string p_scope,
-    bool p_hasDef, bool p_isPtr, bool p_isPoly)
-: nid(p_nid), label(p_label), type(p_type), scope(p_scope),hasDef(p_hasDef), isPtr(p_isPtr),
+Properties::Properties(bool p_hasDef, bool p_isPtr, bool p_isPoly)
+:  hasDef(p_hasDef), isPtr(p_isPtr),
   isPoly(p_isPoly)
 {
   functionType = NULL;
   functionDeclaration = NULL;
   invokedClass = NULL;
   isPolymorphic = isPointer = false;
-
-  //Filter out the parameters from the nid to get the function name
-  functionName = nid.substr(0,nid.size()-label.size());
 };
 
 
