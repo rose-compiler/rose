@@ -273,7 +273,7 @@ void StaticSingleAssignment::run(bool interprocedural)
 		runDefUseDataFlow(func);
 
 		//We have all the propagated defs, now update the use table
-		buildUseTable(func);
+		buildUseTable(functionCfgNodesPostorder);
 
 		//Annotate phi functions with dependencies
 		//annotatePhiNodeWithConditions(func, controlDependencies);
@@ -553,46 +553,39 @@ void StaticSingleAssignment::updateIncomingPropagatedDefs(FilteredCfgNode cfgNod
 	}
 }
 
-void StaticSingleAssignment::buildUseTable(SgFunctionDefinition* func)
+void StaticSingleAssignment::buildUseTable(const vector<FilteredCfgNode>& cfgNodes)
 {
+	foreach(const FilteredCfgNode& cfgNode, cfgNodes)
+	{
+		SgNode* node = cfgNode.getNode();
+
+		if (localUsesTable.count(node) == 0)
+			continue;
+
+		foreach(const VarName& usedVar, localUsesTable[node])
+		{
+			//Check the defs that are active at the current node to find the reaching definition
+			//We want to check if there is a definition entry for this use at the current node
+			if (reachingDefsTable[node].first.count(usedVar) > 0)
+			{
+				useTable[node][usedVar] = reachingDefsTable[node].first[usedVar];
+			}
+			else
+			{
+				// There are no defs for this use at this node, this shouldn't happen
+				printf("Error: Found use for the name '%s', but no reaching defs!\n", varnameToString(usedVar).c_str());
+				printf("Node is %s:%d in %s\n", node->class_name().c_str(), node->get_file_info()->get_line(),
+						node->get_file_info()->get_filename());
+				ROSE_ASSERT(false);
+			}
+		}
+	}
+
 	if (getDebug())
 	{
 		printf("Local uses table:\n");
 		printLocalDefUseTable(localUsesTable);
 	}
-
-	struct UpdateUsesTrav : public AstSimpleProcessing
-	{
-		StaticSingleAssignment* ssa;
-
-		void visit(SgNode* node)
-		{
-			if (ssa->localUsesTable.count(node) == 0)
-				return;
-
-			foreach(const VarName& usedVar, ssa->localUsesTable[node])
-			{
-  				//Check the defs that are active at the current node to find the reaching definition
-				//We want to check if there is a definition entry for this use at the current node
-				if (ssa->reachingDefsTable[node].first.count(usedVar) > 0)
-				{
-					ssa->useTable[node][usedVar] = ssa->reachingDefsTable[node].first[usedVar];
-				}
-				else
-				{
-					// There are no defs for this use at this node, this shouldn't happen
-					printf("Error: Found use for the name '%s', but no reaching defs!\n", varnameToString(usedVar).c_str());
-					printf("Node is %s:%d in %s\n", node->class_name().c_str(), node->get_file_info()->get_line(),
-						node->get_file_info()->get_filename());
-					ROSE_ASSERT(false);
-				}
-			}
-		}
-	};
-
-	UpdateUsesTrav trav;
-	trav.ssa = this;
-	trav.traverse(func->get_declaration(), preorder);
 }
 
 /** Returns a set of all the variables names that have uses in the subtree. */
@@ -756,7 +749,7 @@ void StaticSingleAssignment::insertDefsForExternalVariables(SgFunctionDeclaratio
 
 
 multimap< StaticSingleAssignment::FilteredCfgNode, pair<StaticSingleAssignment::FilteredCfgNode, StaticSingleAssignment::FilteredCfgEdge> > 
-StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function, std::vector<FilteredCfgNode> cfgNodesInPostOrder)
+StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function, const std::vector<FilteredCfgNode>& cfgNodesInPostOrder)
 {
 	if (getDebug())
 		printf("Inserting phi nodes in function %s...\n", function->get_declaration()->get_name().str());
@@ -765,7 +758,7 @@ StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function, std::
 	//First, find all the places where each name is defined
 	map<VarName, vector<FilteredCfgNode> > nameToDefNodesMap;
 
-	foreach(FilteredCfgNode& cfgNode, cfgNodesInPostOrder)
+	foreach(const FilteredCfgNode& cfgNode, cfgNodesInPostOrder)
 	{
 		SgNode* node = cfgNode.getNode();
 
@@ -876,7 +869,7 @@ void StaticSingleAssignment::populateLocalDefsTable(SgFunctionDeclaration* funct
 	trav.traverse(function, preorder);
 }
 
-void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* func, vector<FilteredCfgNode> cfgNodesInPostOrder)
+void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* func, const vector<FilteredCfgNode>& cfgNodesInPostOrder)
 {
 	//Map from each name to the next index. Not in map means 0
 	map<VarName, int> nameToNextIndexMap;
@@ -887,7 +880,7 @@ void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* func, 
 	FilteredCfgNode functionStartNode = FilteredCfgNode(func->cfgForBeginning());
 	
 	//We process nodes in reverse postorder; this provides a natural numbering for definitions
-	reverse_foreach(FilteredCfgNode& cfgNode, cfgNodesInPostOrder)
+	reverse_foreach(const FilteredCfgNode& cfgNode, cfgNodesInPostOrder)
 	{
 		SgNode* astNode = cfgNode.getNode();
 		
