@@ -186,36 +186,12 @@ dummyFilter::operator() (SgFunctionDeclaration* node) const{
 
 
 
-Properties* createEmptyProperty(SgFunctionDeclaration* funcDecl, SgType* type)
-{
-  Properties *fctProps = new Properties();
-  fctProps->functionDeclaration = funcDecl;
-
-  return fctProps;
-}
-
 
   bool 
 FunctionData::isDefined () 
 { 
   return hasDefinition; 
 }
-
-
-//Only used when SOLVE_FUNCTION_CALLS_IN_DB is defined
-Properties::Properties(){
-  functionDeclaration = NULL;
-};
-
-Properties::Properties(SgFunctionDeclaration* inputFunctionDeclaration){
-  functionDeclaration = inputFunctionDeclaration;
-  ROSE_ASSERT( functionDeclaration != NULL );
-}
-
-//Only used when SOLVE_FUNCTION_CALLS_IN_DB is defined
-Properties::Properties(Properties* prop){
-  functionDeclaration=prop->functionDeclaration;
-};
 
 
 CallGraphBuilder::CallGraphBuilder( SgProject *proj)
@@ -265,7 +241,7 @@ CallTargetSet::solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType*
 
 
 
-  std::vector<Properties*>
+  std::vector<SgFunctionDeclaration*>
 CallTargetSet::solveFunctionPointerCall( SgPointerDerefExp *pointerDerefExp, SgProject *project )
 {
   SgFunctionDeclarationPtrList functionList;
@@ -300,23 +276,11 @@ CallTargetSet::solveFunctionPointerCall( SgPointerDerefExp *pointerDerefExp, SgP
   vv.push_back(V_SgTemplateInstantiationFunctionDecl);
 
   functionList =  AstQueryNamespace::queryMemoryPool(std::bind2nd(std::ptr_fun(solveFunctionPointerCallsFunctional), fctType), &vv );
-  //std::cout << "The size of the list: " << functionList.size() << std::endl;
 
-  std::vector<Properties*> returnProperties;
-  for( SgFunctionDeclarationPtrList::iterator funcItr = functionList.begin();
-      funcItr != functionList.end(); ++funcItr ) 
-  {
-    Properties* fctProps = createEmptyProperty( *funcItr, (*funcItr)->get_type() );
-    returnProperties.push_back(fctProps);
-
-  }
-
-
-  return returnProperties;
-
+  return functionList;
 }
 
-std::vector<Properties*>
+std::vector<SgFunctionDeclaration*>
 CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHierarchyWrapper *classHierarchy)
 {
     SgBinaryOp *binaryExp = isSgBinaryOp(functionExp);
@@ -325,16 +289,11 @@ CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHi
     SgExpression *left = NULL, *right = NULL;
     SgClassType *classType = NULL;
     SgClassDefinition *classDefinition = NULL;
-    std::vector<Properties*> functionList;
+    std::vector<SgFunctionDeclaration*> functionList;
     SgMemberFunctionType *memberFunctionType = NULL;
 
     left = binaryExp->get_lhs_operand();
     right = binaryExp->get_rhs_operand();
-
-    /*printf ("binaryExp = %p = %s \n",binaryExp,binaryExp->class_name().c_str());
-    printf ("left  = %p = %s \n",left,left->class_name().c_str());
-    printf ("right = %p = %s \n",right,right->class_name().c_str());
-     */
 
     // left side of the expression should have class type
     classType = isSgClassType(left->get_type()->findBaseType());
@@ -369,12 +328,8 @@ CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHi
             {
                 if (!(memberFunctionDeclaration->get_functionModifier().isPureVirtual()))
                 {
-                    Properties* fctProps = createEmptyProperty(memberFunctionDeclaration,
-                            memberFunctionDeclaration->get_type());
-
-                    functionList.push_back(fctProps);
+                    functionList.push_back(memberFunctionDeclaration);
                 }
-                // cout << "PUSHING " << memberFunctionDeclaration << "\n";
             }
 
             // for virtual functions in polymorphic calls, we need to search down in the hierarchy of classes
@@ -403,18 +358,13 @@ CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHi
                             {
                                 if (!(nonDefDecl->get_functionModifier().isPureVirtual()) && nonDefDecl->get_functionModifier().isVirtual())
                                 {
-                                    Properties* fctProps = createEmptyProperty(nonDefDecl,
-                                            nonDefDecl->get_type());
-
-                                    functionList.push_back(fctProps);
+                                    functionList.push_back(nonDefDecl);
                                 }
                             }
                             else
                                 if (!(defDecl->get_functionModifier().isPureVirtual()) && defDecl->get_functionModifier().isVirtual())
                             {
-                                Properties* fctProps = createEmptyProperty(defDecl, defDecl->get_type());
-
-                                functionList.push_back(fctProps); // == cls_mb_decl
+                                functionList.push_back(defDecl);
                             }
                         }
                     }
@@ -427,11 +377,11 @@ CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHi
     return functionList;
 }
 
-  std::vector<Properties*>
+  std::vector<SgFunctionDeclaration*>
 CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWrapper *classHierarchy,
     SgMemberFunctionDeclaration *memberFunctionDeclaration, bool polymorphic )
 {
-  std::vector<Properties*> functionList;
+  std::vector<SgFunctionDeclaration*> functionList;
   ROSE_ASSERT ( memberFunctionDeclaration && classHierarchy );
   //  memberFunctionDeclaration->get_file_info()->display( "Member function we are considering" );
 
@@ -467,12 +417,7 @@ CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWra
     // the current function declaration is a candidate function to be called
     if ( functionDefinition )
     {
-
-      Properties* fctProps = createEmptyProperty( functionDeclarationInClass, 
-          functionDeclarationInClass->get_type() );
-
-      functionList.push_back( fctProps );
-
+      functionList.push_back( functionDeclarationInClass );
     }
     else {
       // functionDeclarationInClass->get_file_info()->display( "Pure virtual function found" );
@@ -531,10 +476,7 @@ CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWra
           ROSE_ASSERT ( functionDeclarationInClass );
           if ( !( functionDeclarationInClass->get_functionModifier().isPureVirtual() ) )
           {
-            Properties* fctProps = createEmptyProperty( functionDeclarationInClass,
-                functionDeclarationInClass->get_type() );
-
-            functionList.push_back( fctProps );
+            functionList.push_back( functionDeclarationInClass );
           }
         }
       }
@@ -542,15 +484,6 @@ CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWra
   } // end if virtual
   // non virtual (standard) member function or call not polymorphic (or both)
   else
-#if 0
-    if ( functionDeclarationInClass->get_declarationModifier().get_storageModifier().isStatic() )
-    {
-      cout << "Found static function declaration called as member function " << functionDeclarationInClass << "\n";
-      functionDeclarationInClass->get_file_info()->display("Error");
-      ROSE_ASSERT(false);
-    }
-    else
-#endif
     {
       // always pushing the in-class declaration, so we need to find that one
       SgDeclarationStatement *nonDefDeclInClass = NULL;
@@ -565,11 +498,7 @@ CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWra
         functionDeclarationInClass = memberFunctionDeclaration;
 
       ROSE_ASSERT ( functionDeclarationInClass );
-      //                           cout << "Pushing non-virtual function declaration for function "
-      //<< functionDeclarationInClass->get_name().str() << "   " << functionDeclarationInClass << "\n";
-      Properties* fctProps = createEmptyProperty(functionDeclarationInClass,
-          functionDeclarationInClass->get_type() );
-      functionList.push_back( fctProps );
+      functionList.push_back( functionDeclarationInClass );
 
     }
   return functionList;
@@ -604,12 +533,12 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
   return functionList; 
 }
 
-std::vector<Properties*>
+std::vector<SgFunctionDeclaration*>
 CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit) { 
-  std::vector<Properties*> props;
+  std::vector<SgFunctionDeclaration*> props;
   SgMemberFunctionDeclaration* memFunDecl = sgCtorInit->get_declaration();
 
-  //It's possibe to have a null constructor declaration, in case of compiler-generated
+  //It's possible to have a null constructor declaration, in case of compiler-generated
   //default constructors.
   if (memFunDecl == NULL)
   {
@@ -620,7 +549,7 @@ CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit)
   if (decl == NULL)
       decl = isSgFunctionDeclaration(memFunDecl->get_definingDeclaration());
   ROSE_ASSERT(decl != NULL);
-  props.push_back(new Properties(decl));
+  props.push_back(decl);
   return props;
 }
 
@@ -631,12 +560,11 @@ CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit)
 void 
 getPropertiesForSgConstructorInitializer(SgConstructorInitializer* sgCtorInit, 
                          ClassHierarchyWrapper* classHierarchy,
-                         Rose_STL_Container<Properties *>& functionList) {
+                         Rose_STL_Container<SgFunctionDeclaration *>& functionList) 
+{
   // currently, all constructor initializers can be handled by solveConstructorInitializer
-  const std::vector<Properties*>& props = CallTargetSet::solveConstructorInitializer(sgCtorInit);
-  foreach (Properties* prop, props) {
-    functionList.push_back(prop); //TODO faster way to append vectors?
-  }
+  const std::vector<SgFunctionDeclaration*>& props = CallTargetSet::solveConstructorInitializer(sgCtorInit);
+  functionList.insert(functionList.end(), props.begin(), props.end());
 }
 
 // Add the declaration for functionCallExp to functionList. In the case of 
@@ -645,7 +573,7 @@ getPropertiesForSgConstructorInitializer(SgConstructorInitializer* sgCtorInit,
 void
 getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
         ClassHierarchyWrapper* classHierarchy,
-        Rose_STL_Container<Properties *>& functionList)
+        Rose_STL_Container<SgFunctionDeclaration*>& functionList)
 {
     SgExpression* functionExp = sgFunCallExp->get_function();
     ROSE_ASSERT(functionExp != NULL);
@@ -660,7 +588,7 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
         case V_SgArrowStarOp:
         case V_SgDotStarOp:
         {
-            std::vector<Properties*> fD = CallTargetSet::solveMemberFunctionPointerCall(functionExp, classHierarchy);
+            std::vector<SgFunctionDeclaration*> fD = CallTargetSet::solveMemberFunctionPointerCall(functionExp, classHierarchy);
             functionList.insert(functionList.end(), fD.begin(), fD.end());
         }
         break;
@@ -740,32 +668,22 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
                 if (nonDefDecl)
                     memberFunctionDeclaration = nonDefDecl;
 
-                //Construct the Properties
-
-                Properties* fctProps = createEmptyProperty(memberFunctionDeclaration, memberFunctionDeclaration->get_type()->findBaseType());
-
-                ROSE_ASSERT(isSgFunctionDeclaration(fctProps->functionDeclaration));
-
                 // returns the list of all in-class declarations of functions potentially called
                 // ( may be several because of polymorphism )
                 bool polymorphic = false;
                 if (!isSgThisExp(leftSide))
                     polymorphic = true;
 
-                std::vector<Properties*> fD =
-                        CallTargetSet::solveMemberFunctionCall(crtClass, classHierarchy,
-                        memberFunctionDeclaration, polymorphic);
-                for (std::vector<Properties*>::iterator it = fD.begin(); it != fD.end(); it++)
-                {
-                    functionList.push_back(*it);
-                }
+                std::vector<SgFunctionDeclaration*> fD =
+                        CallTargetSet::solveMemberFunctionCall(crtClass, classHierarchy, memberFunctionDeclaration, polymorphic);
+                functionList.insert(functionList.end(), fD.begin(), fD.end());
             }
         }
         break;
         
         case V_SgPointerDerefExp:
         {
-            std::vector<Properties*> fD =
+            std::vector<SgFunctionDeclaration*> fD =
                     CallTargetSet::solveFunctionPointerCall(isSgPointerDerefExp(functionExp), SageInterface::getProject());
             functionList.insert(functionList.end(), fD.begin(), fD.end());
             break;
@@ -786,11 +704,7 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
             if (nonDefDecl)
                 fctDecl = nonDefDecl;
 
-            Properties* fctProps = createEmptyProperty(fctDecl, fctDecl->get_type()->findBaseType());
-
-            ROSE_ASSERT(isSgFunctionDeclaration(fctProps->functionDeclaration));
-            ROSE_ASSERT(fctProps->functionDeclaration != NULL);
-            functionList.push_back(fctProps);
+            functionList.push_back(fctDecl);
             break;
         }
 
@@ -807,7 +721,7 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
 
 void
 CallTargetSet::getPropertiesForExpression(SgExpression* sgexp, ClassHierarchyWrapper* classHierarchy,
-        Rose_STL_Container<Properties *>& functionList)
+        Rose_STL_Container<SgFunctionDeclaration*>& functionList)
 {
     switch (sgexp->variantT())
     {
@@ -833,34 +747,37 @@ void CallTargetSet::getDeclarationsForExpression(SgExpression* exp,
                 ClassHierarchyWrapper* classHierarchy,
                 Rose_STL_Container<SgFunctionDeclaration*>& defList)
 {
-        Rose_STL_Container<Properties*> props;
+        Rose_STL_Container<SgFunctionDeclaration*> props;
         CallTargetSet::getPropertiesForExpression(exp, classHierarchy, props);
 
-        foreach(Properties* prop, props)
+        foreach(SgFunctionDeclaration* candidateDecl, props)
         {
-                SgFunctionDeclaration* candidateDecl = prop->functionDeclaration;
                 ROSE_ASSERT(candidateDecl);
                 defList.push_back(candidateDecl);
         }
 }
 
-void 
-CallTargetSet::getDefinitionsForExpression(SgExpression* sgexp, 
-                         ClassHierarchyWrapper* classHierarchy,
-                         Rose_STL_Container<SgFunctionDefinition*>& defList) {
-  Rose_STL_Container<Properties*> props;
-  CallTargetSet::getPropertiesForExpression(sgexp, classHierarchy, props);
-  foreach (Properties* prop, props) {
-    SgFunctionDeclaration* candidateDecl = prop->functionDeclaration;
-    ROSE_ASSERT(candidateDecl);
-    candidateDecl = isSgFunctionDeclaration(candidateDecl->get_definingDeclaration());
-    if (candidateDecl != NULL) {
-      SgFunctionDefinition* candidateDef = candidateDecl->get_definition();
-      if (candidateDef != NULL) {
-        defList.push_back(candidateDef);
-      }
+void
+CallTargetSet::getDefinitionsForExpression(SgExpression* sgexp,
+        ClassHierarchyWrapper* classHierarchy,
+        Rose_STL_Container<SgFunctionDefinition*>& defList)
+{
+    Rose_STL_Container<SgFunctionDeclaration*> props;
+    CallTargetSet::getPropertiesForExpression(sgexp, classHierarchy, props);
+
+    foreach(SgFunctionDeclaration* candidateDecl, props)
+    {
+        ROSE_ASSERT(candidateDecl);
+        candidateDecl = isSgFunctionDeclaration(candidateDecl->get_definingDeclaration());
+        if (candidateDecl != NULL)
+        {
+            SgFunctionDefinition* candidateDef = candidateDecl->get_definition();
+            if (candidateDef != NULL)
+            {
+                defList.push_back(candidateDef);
+            }
+        }
     }
-  }
 }
 
 void 
@@ -901,11 +818,11 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
     hasDefinition = false;
 
     functionDeclaration = inputFunctionDeclaration;
-    properties = new Properties(inputFunctionDeclaration);
+
     SgFunctionDeclaration *defDecl =
             (
             inputFunctionDeclaration->get_definition() != NULL ?
-            inputFunctionDeclaration : isSgFunctionDeclaration(properties->functionDeclaration->get_definingDeclaration())
+            inputFunctionDeclaration : isSgFunctionDeclaration(functionDeclaration->get_definingDeclaration())
             );
 
     if (defDecl != NULL && defDecl->get_definition() == NULL)

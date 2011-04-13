@@ -16,21 +16,7 @@
 #include <boost/foreach.hpp>
 #include <boost/unordered_map.hpp>
 
-class Properties;
 class FunctionData;
-
-//Only used when SOLVE_FUNCTION_CALLS_IN_DB is defined
-class Properties : public AstAttribute
-{
-  public:
-
-    SgFunctionDeclaration *functionDeclaration;
-
-    Properties();
-    Properties(Properties* prop);
-    Properties(SgFunctionDeclaration* inputFunctionDeclaration);
-};
-
 
 typedef Rose_STL_Container<SgFunctionDeclaration *> SgFunctionDeclarationPtrList;
 typedef Rose_STL_Container<SgClassDefinition *> SgClassDefinitionPtrList;
@@ -47,24 +33,24 @@ namespace CallTargetSet
   typedef Rose_STL_Container<SgFunctionDeclaration *> SgFunctionDeclarationPtrList;
   typedef Rose_STL_Container<SgClassDefinition *> SgClassDefinitionPtrList;
   // returns the list of declarations of all functions that may get called via the specified pointer
-  std::vector<Properties*> solveFunctionPointerCall ( SgPointerDerefExp *, SgProject * );
+  std::vector<SgFunctionDeclaration*> solveFunctionPointerCall ( SgPointerDerefExp *, SgProject * );
 
   // returns the list of declarations of all functions that may get called via a member function pointer
-  std::vector<Properties*> solveMemberFunctionPointerCall ( SgExpression *,ClassHierarchyWrapper * );
+  std::vector<SgFunctionDeclaration*> solveMemberFunctionPointerCall ( SgExpression *,ClassHierarchyWrapper * );
   Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType* functionType );
 
   // returns the list of declarations of all functions that may get called via a
   // member function (non/polymorphic) call
-  std::vector<Properties*> solveMemberFunctionCall ( SgClassType *, ClassHierarchyWrapper *,            SgMemberFunctionDeclaration *, bool );
+  std::vector<SgFunctionDeclaration*> solveMemberFunctionCall ( SgClassType *, ClassHierarchyWrapper *, SgMemberFunctionDeclaration *, bool );
 
   // returns the list of Properties of all constructors that may get called via 
   // an initialization.
-  std::vector<Properties*> solveConstructorInitializer ( SgConstructorInitializer* sgCtorInit);
+  std::vector<SgFunctionDeclaration*> solveConstructorInitializer ( SgConstructorInitializer* sgCtorInit);
 
   // Populates functionList with Properties of all functions that may get called.
   void getPropertiesForExpression(SgExpression* exp,
                                     ClassHierarchyWrapper* classHierarchy,
-                                    Rose_STL_Container<Properties*>& propList);
+                                    Rose_STL_Container<SgFunctionDeclaration*>& propList);
 
   //! Populates functionList with definitions of all functions that may get called. This
   //! is basically a wrapper around getPropertiesForExpression that extracts the
@@ -96,14 +82,10 @@ class FunctionData
 
     bool isDefined (); 
 
-    //@{
-    //Interfaces only used when DB is defined
-  public:
-    FunctionData ( SgFunctionDeclaration* functionDeclaration, SgProject *project, ClassHierarchyWrapper * );
-    Properties* properties;
+    FunctionData(SgFunctionDeclaration* functionDeclaration, SgProject *project, ClassHierarchyWrapper * );
 
-    // Relevant data for call graph
-    Rose_STL_Container<Properties *> functionList;
+    //! All the callees of this function
+    Rose_STL_Container<SgFunctionDeclaration *> functionList;
 
     SgFunctionDeclaration* functionDeclaration;
 
@@ -156,8 +138,6 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
     ClassHierarchyWrapper classHierarchy(project);
     Rose_STL_Container<SgNode *>::iterator i = functionCallees.begin();
 
-    // printf ("Inside of buildCallGraph functionList.size() = %zu \n",functionList.size());
-
     Rose_STL_Container<SgNode *> resultingFunctions;
 
     //Iterate through all the functions found and resolve all the call expressions in each function with a body
@@ -188,7 +168,7 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
         if (pred(functionDeclaration) == true)
         {
             FunctionData functionData(functionDeclaration, project, &classHierarchy);
-            ROSE_ASSERT(functionData.properties->functionDeclaration != NULL);
+            ROSE_ASSERT(functionData.functionDeclaration != NULL);
 
             resultingFunctions.push_back(*i);
             callGraphData.push_back(functionData);
@@ -212,26 +192,26 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
     BOOST_FOREACH(FunctionData& currentFunction, callGraphData)
     {
         std::string functionName;
-        ROSE_ASSERT(currentFunction.properties->functionDeclaration);
-        functionName = currentFunction.properties->functionDeclaration->get_mangled_name().getString();
+        ROSE_ASSERT(currentFunction.functionDeclaration);
+        functionName = currentFunction.functionDeclaration->get_mangled_name().getString();
 
         // Generate a unique name to test against later
-        SgFunctionDeclaration* id = currentFunction.properties->functionDeclaration;
+        SgFunctionDeclaration* id = currentFunction.functionDeclaration;
         SgDeclarationStatement *nonDefDeclInClass = isSgMemberFunctionDeclaration(id->get_firstNondefiningDeclaration());
         if (nonDefDeclInClass)
             ROSE_ASSERT(id == nonDefDeclInClass);
         SgGraphNode* graphNode = new SgGraphNode(functionName);
-        graphNode->set_SgNode(currentFunction.properties->functionDeclaration);
+        graphNode->set_SgNode(currentFunction.functionDeclaration);
 
         if (SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL)
         {
             std::cout << "Function: "
-                    << currentFunction.properties->functionDeclaration->get_scope()->get_qualified_name().getString() +
-                    currentFunction.properties->functionDeclaration->get_mangled_name().getString()
+                    << currentFunction.functionDeclaration->get_scope()->get_qualified_name().getString() +
+                    currentFunction.functionDeclaration->get_mangled_name().getString()
                     << " has declaration " << currentFunction.isDefined() << "\n";
         }
         
-        graphNodes[currentFunction.properties->functionDeclaration] = graphNode;
+        graphNodes[currentFunction.functionDeclaration] = graphNode;
 
         returnGraph->addNode(graphNode);
     }
@@ -245,27 +225,24 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
     int totEdges = 0;
     BOOST_FOREACH(FunctionData& currentFunction, callGraphData)
     {
-        ROSE_ASSERT(currentFunction.properties->functionDeclaration != NULL);
+        ROSE_ASSERT(currentFunction.functionDeclaration != NULL);
         
         boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*>::iterator iter
-                = graphNodes.find(currentFunction.properties->functionDeclaration);
+                = graphNodes.find(currentFunction.functionDeclaration);
         ROSE_ASSERT(iter != graphNodes.end());
         SgGraphNode* startingNode = iter->second;
 
-        Rose_STL_Container<Properties*> & functionCallees = currentFunction.functionList;
+        Rose_STL_Container<SgFunctionDeclaration*> & functionCallees = currentFunction.functionList;
 
-        BOOST_FOREACH(Properties* callee, functionCallees)
+        BOOST_FOREACH(SgFunctionDeclaration* calleeDeclaration, functionCallees)
         {
             // if we have a pointer (no function declaration) or a virtual function, create dummy node
-            if (!(callee->functionDeclaration))
+            if (calleeDeclaration == NULL)
             {
                 ROSE_ASSERT(false); //I'm not sure if this case ever happens
                 SgGraphNode *dummy;
                 dummy = new SgGraphNode("DUMMY");
-
-                Properties* newProp = new Properties(callee);
-
-                dummy->set_SgNode(newProp->functionDeclaration);
+                dummy->set_SgNode(calleeDeclaration);
 
                 returnGraph->addNode(dummy);
                 returnGraph->addDirectedEdge(startingNode, dummy);
@@ -273,12 +250,12 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
             else
             {
                 //This function has been filtered out
-                if (pred(callee->functionDeclaration) == false)
+                if (pred(calleeDeclaration) == false)
                 {
                     continue;
                 }
 
-                iter = graphNodes.find(callee->functionDeclaration);
+                iter = graphNodes.find(calleeDeclaration);
                 ROSE_ASSERT(iter != graphNodes.end());
                 SgGraphNode *endNode = iter->second;
 
@@ -290,21 +267,10 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
                 else if (SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL)
                 {
                     std::cout << "Did not add edge since it already exist" << std::endl;
-                    std::cout << "\tEndNode " << callee->functionDeclaration->get_name().str() << "\n";
+                    std::cout << "\tEndNode " << calleeDeclaration->get_name().str() << "\n";
                 }
             }
             totEdges++;
-        }
-    }
-
-    //Now, we must clean up all the Properties* objects that we didn't use
-    BOOST_FOREACH(FunctionData& currentFunction, callGraphData)
-    {
-        delete currentFunction.properties;
-        
-        BOOST_FOREACH(Properties* calleeProperty, currentFunction.functionList)
-        {
-            delete calleeProperty;
         }
     }
     
