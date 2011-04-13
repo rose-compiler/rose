@@ -133,15 +133,13 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
     //AS (09/23/06) Query the memory pool instead of subtree of project
     VariantVector vv(V_SgFunctionDeclaration);
     GetOneFuncDeclarationPerFunction defFunc;
-    Rose_STL_Container<SgNode *> functionCallees = NodeQuery::queryMemoryPool(defFunc, &vv);
+    Rose_STL_Container<SgNode *> allFunctions = NodeQuery::queryMemoryPool(defFunc, &vv);
 
     ClassHierarchyWrapper classHierarchy(project);
-    Rose_STL_Container<SgNode *>::iterator i = functionCallees.begin();
-
-    Rose_STL_Container<SgNode *> resultingFunctions;
+    Rose_STL_Container<SgNode *>::iterator i = allFunctions.begin();
 
     //Iterate through all the functions found and resolve all the call expressions in each function with a body
-    while (i != functionCallees.end())
+    while (i != allFunctions.end())
     {
         SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(*i);
         ROSE_ASSERT(functionDeclaration != NULL);
@@ -170,20 +168,14 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
             FunctionData functionData(functionDeclaration, project, &classHierarchy);
             ROSE_ASSERT(functionData.functionDeclaration != NULL);
 
-            resultingFunctions.push_back(*i);
             callGraphData.push_back(functionData);
         }
         i++;
     }
 
-    functionCallees = resultingFunctions;
     // Build the graph
     SgIncidenceDirectedGraph *returnGraph = new SgIncidenceDirectedGraph();
     ROSE_ASSERT(returnGraph != NULL);
-
-    //Rose_STL_Container<FunctionData>::iterator currentFunction = callGraphData.begin();
-
-    //printf ("Build the node list callGraphData.size() = %zu \n",callGraphData.size());
 
     //We map each function to the corresponding graph node
     boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*> graphNodes;
@@ -215,8 +207,6 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
 
         returnGraph->addNode(graphNode);
     }
-
-
 
     if (SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL)
         std::cout << "NodeList size: " << graphNodes.size() << "\n";
