@@ -24,20 +24,12 @@ class Properties : public AstAttribute
 {
   public:
 
-    bool isPointer, isPolymorphic;
     SgClassDefinition *invokedClass;
     SgFunctionDeclaration *functionDeclaration;
-    SgType *functionType;
-
-    bool hasDef;
-    bool isPtr;
-    bool isPoly;
 
     Properties();
     Properties(Properties* prop);
     Properties(SgFunctionDeclaration* inputFunctionDeclaration);
-    Properties(bool hasDef, bool isPtr, bool isPoly);
-
 };
 
 
@@ -244,7 +236,6 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
         
         graphNodes[currentFunction.properties->functionDeclaration] = graphNode;
 
-        ROSE_ASSERT(currentFunction.properties->functionType);
         returnGraph->addNode(graphNode);
     }
 
@@ -268,8 +259,6 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
 
         BOOST_FOREACH(Properties* callee, functionCallees)
         {
-            ROSE_ASSERT(callee->functionType);
-
             // if we have a pointer (no function declaration) or a virtual function, create dummy node
             if (!(callee->functionDeclaration))
             {
@@ -281,10 +270,6 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
 
                 dummy->set_SgNode(newProp->functionDeclaration);
                 dummy->addNewAttribute("Properties", newProp);
-                if (callee->functionDeclaration && callee->functionDeclaration->get_definingDeclaration())
-                    newProp->hasDef = true;
-                else
-                    newProp->hasDef = false;
 
                 returnGraph->addNode(dummy);
                 returnGraph->addDirectedEdge(startingNode, dummy);
@@ -309,8 +294,7 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
                 else if (SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL)
                 {
                     std::cout << "Did not add edge since it already exist" << std::endl;
-                    std::cout << "\tEndNode " << callee->functionDeclaration->get_name().str()
-                            << "\t" << callee->hasDef << "\n";
+                    std::cout << "\tEndNode " << callee->functionDeclaration->get_name().str() << "\n";
                 }
             }
             totEdges++;
