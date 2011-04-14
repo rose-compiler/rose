@@ -27,6 +27,7 @@ SUBDIRS = \
      highLevelGrammars \
      javaport \
      programModeling \
+     pragmaParsing \
      roseToLLVM \
      symbolicAnalysisFramework \
      taintcheck \
