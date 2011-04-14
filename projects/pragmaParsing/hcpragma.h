@@ -11,13 +11,9 @@
 #include "rose.h"
 #include <iostream>
 
-using namespace std;
-
 using namespace SageInterface;
 using namespace SageBuilder;
 
-/* make sure the pragma name match the pragma enum declaration, in hcpragma.C */
-extern string hcpragma_names[];
 enum hcpragma_enum {
   pragma_hc_entry,
   pragma_hc_suspendable,
@@ -29,7 +25,6 @@ enum hcpragma_enum {
   pragma_hc_none
 };
 
-extern short parseHCPragma(SgPragmaDeclaration* pragmaDecl, AstAttribute** result=NULL);
 
 // Liao 4/8/2011, new AstAttribute to cover all hc pragmas
 /*
@@ -74,9 +69,9 @@ class HC_PragmaAttribute: public AstAttribute
     virtual SgExpression* get_threadsPerGrid(){assert(0);};
     virtual SgExpression* get_shared_size(){assert(0);};
 
-    virtual string toString ()
+    virtual std::string toString ()
     {
-      string result;
+      std::string result;
       result += "#pragma ";
       switch (pragma_type)
       {
@@ -102,7 +97,7 @@ class HC_PragmaAttribute: public AstAttribute
           result += "CUDA";
           break;
         default:
-          cerr<<"Error. HC_PragmaAttribute::toString(), illegal pragma type."<<endl;
+          std::cerr<<"Error. HC_PragmaAttribute::toString(), illegal pragma type."<<std::endl;
           assert(false);
       }  
       return result; 
@@ -115,9 +110,9 @@ class HC_CUDA_PragmaAttribute: public  HC_PragmaAttribute
   public:
     SgExpression* place_exp;
     HC_CUDA_PragmaAttribute (SgNode* n , hcpragma_enum p_type, SgExpression* pl):HC_PragmaAttribute(n,p_type), place_exp(pl) {} 
-    virtual string toString()
+    virtual std::string toString()
     {
-      string result = HC_PragmaAttribute::toString();
+      std::string result = HC_PragmaAttribute::toString();
 
       result += " "+place_exp->unparseToString();
 
@@ -127,7 +122,7 @@ class HC_CUDA_PragmaAttribute: public  HC_PragmaAttribute
         result += " DIM";
       else 
       {
-        cerr<<"wrong pragma type with a place expression!"<<endl;
+        std::cerr<<"wrong pragma type with a place expression!"<<std::endl;
         assert(false);  
       }
 
@@ -147,9 +142,9 @@ class HC_CUDA_autodim_PragmaAttribute: public HC_CUDA_PragmaAttribute
           SgExpression* d1_e, SgExpression* d2_e, SgExpression* d3_e, SgExpression*sz_e): 
           HC_CUDA_PragmaAttribute (n, p_type, pl), dim1_exp(d1_e), dim2_exp(d2_e), dim3_exp(d3_e),shared_size_exp(sz_e) {}
   
-  virtual string toString()
+  virtual std::string toString()
   {
-    string result= HC_CUDA_PragmaAttribute::toString();
+    std::string result= HC_CUDA_PragmaAttribute::toString();
     result += " ("+ dim1_exp->unparseToString();
     if (dim2_exp !=NULL)
       result +=", "+ dim2_exp->unparseToString();
@@ -175,9 +170,9 @@ class HC_CUDA_autodim_PragmaAttribute: public HC_CUDA_PragmaAttribute
     HC_CUDA_dim_PragmaAttribute (SgNode* n , hcpragma_enum p_type, SgExpression* pl, 
           SgExpression* block_e, SgExpression* threads_e, SgExpression*sz_e): 
           HC_CUDA_PragmaAttribute (n, p_type, pl), block_exp(block_e), threads_exp(threads_e), shared_size_exp(sz_e) {}
-   virtual string toString()
+   virtual std::string toString()
   {
-    string result= HC_CUDA_PragmaAttribute::toString();
+    std::string result= HC_CUDA_PragmaAttribute::toString();
     result += " ("+ block_exp->unparseToString();
     if (threads_exp!=NULL)
       result +=", "+ threads_exp->unparseToString();
