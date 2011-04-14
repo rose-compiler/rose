@@ -6,6 +6,6 @@ public class test2011_05
        // System.out.println("Java");
 
        // This is calling a member function in a class.
-          System.exit(1,2);
+          System.exit(1);
         }
    }
