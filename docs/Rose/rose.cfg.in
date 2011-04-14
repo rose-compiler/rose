@@ -514,6 +514,7 @@ INPUT                  = \
                          @top_srcdir@/src/util/stringSupport/stringSupportDocumentation.docs \
                          @top_srcdir@/src/util/stringSupport/ \
                          @top_srcdir@/src/util/commandlineProcessing \
+			 @top_srcdir@/src/roseSupport \
                          @top_srcdir@/src/3rdPartyLibraries/3rdPartyLibraries.docs \
                          @top_srcdir@/src/3rdPartyLibraries/MSTL/MSTL.docs \
                          @top_srcdir@/src/extra.docs \
