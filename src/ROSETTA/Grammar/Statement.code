@@ -2977,6 +2977,11 @@ HEADER_LINEMARKER_PREPROCESSOR_DIRECTIVE_STATEMENT_START
 HEADER_LINEMARKER_PREPROCESSOR_DIRECTIVE_STATEMENT_END
 
 
+HEADER_JAVA_IMPORT_STATEMENT_START
+       // We might need to be able to read this file in and process it..., but hopefully the ECJ frontend takes care of that.
+
+HEADER_JAVA_IMPORT_STATEMENT_END
+
 // #########################################################
 // #########################################################
 //                      SOURCE CODE
@@ -13740,5 +13745,14 @@ SgCAFWithTeamStatement::post_construction_initialization()
 
 SOURCE_WITH_TEAM_STATEMEMT_END
 
+SOURCE_JAVA_IMPORT_STATEMENT_START
+
+void
+SgJavaImportStatement::post_construction_initialization()
+   {
+  // Nothing to setup here.
+   }
+
+SOURCE_JAVA_IMPORT_STATEMENT_END
 
 
