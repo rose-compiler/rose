@@ -8,6 +8,7 @@
 #include "hcpragma.h"
 #include "AstFromString.h"
 #include <string>
+using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 using namespace AstFromString;
