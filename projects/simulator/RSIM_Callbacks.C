@@ -49,8 +49,8 @@ bool
 RSIM_Callbacks::remove_insn_callback(When when, InsnCallback *cb)
 {
     if (when==BEFORE)
-        return insn_pre.erase(cb, RSIM_Callback::BACKWARD);
-    return insn_post.erase(cb, RSIM_Callback::BACKWARD);
+        return insn_pre.erase(cb, ROSE_Callbacks::BACKWARD);
+    return insn_post.erase(cb, ROSE_Callbacks::BACKWARD);
 }
 
 void
@@ -67,8 +67,8 @@ bool
 RSIM_Callbacks::call_insn_callbacks(When when, RSIM_Thread *thread, SgAsmInstruction *insn, bool prev)
 {
     if (when==BEFORE)
-        return insn_pre.apply(prev, thread, insn, RSIM_Callback::FORWARD);
-    return insn_post.apply(prev, thread, insn, RSIM_Callback::FORWARD);
+        return insn_pre.apply (prev, RSIM_Callbacks::InsnCallback::Args(thread, insn), ROSE_Callbacks::FORWARD);
+    return     insn_post.apply(prev, RSIM_Callbacks::InsnCallback::Args(thread, insn), ROSE_Callbacks::FORWARD);
 }
 
 /******************************************************************************************************************************
@@ -91,8 +91,8 @@ bool
 RSIM_Callbacks::remove_syscall_callback(When when, SyscallCallback *cb)
 {
     if (when==BEFORE)
-        return syscall_pre.erase(cb, RSIM_Callback::BACKWARD);
-    return syscall_post.erase(cb, RSIM_Callback::BACKWARD);
+        return syscall_pre.erase(cb, ROSE_Callbacks::BACKWARD);
+    return syscall_post.erase(cb, ROSE_Callbacks::BACKWARD);
 }
 
 void
@@ -109,8 +109,8 @@ bool
 RSIM_Callbacks::call_syscall_callbacks(When when, RSIM_Thread *thread, int callno, bool prev)
 {
     if (when==BEFORE)
-        return syscall_pre.apply(prev, thread, callno, RSIM_Callback::FORWARD);
-    return syscall_post.apply(prev, thread, callno, RSIM_Callback::FORWARD);
+        return syscall_pre.apply (prev, RSIM_Callbacks::SyscallCallback::Args(thread, callno), ROSE_Callbacks::FORWARD);
+    return     syscall_post.apply(prev, RSIM_Callbacks::SyscallCallback::Args(thread, callno), ROSE_Callbacks::FORWARD);
 }
 
 /******************************************************************************************************************************
@@ -133,8 +133,8 @@ bool
 RSIM_Callbacks::remove_thread_callback(When when, ThreadCallback *cb)
 {
     if (when==BEFORE)
-        return thread_pre.erase(cb, RSIM_Callback::BACKWARD);
-    return thread_post.erase(cb, RSIM_Callback::BACKWARD);
+        return thread_pre.erase(cb, ROSE_Callbacks::BACKWARD);
+    return thread_post.erase(cb, ROSE_Callbacks::BACKWARD);
 }
 
 void
@@ -151,8 +151,8 @@ bool
 RSIM_Callbacks::call_thread_callbacks(When when, RSIM_Thread *thread, bool prev)
 {
     if (when==BEFORE)
-        return thread_pre.apply(prev, thread, 0, RSIM_Callback::FORWARD);
-    return thread_post.apply(prev, thread, 0, RSIM_Callback::FORWARD);
+        return thread_pre.apply (prev, RSIM_Callbacks::ThreadCallback::Args(thread), ROSE_Callbacks::FORWARD);
+    return     thread_post.apply(prev, RSIM_Callbacks::ThreadCallback::Args(thread), ROSE_Callbacks::FORWARD);
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */

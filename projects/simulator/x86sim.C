@@ -46,13 +46,13 @@ main(int argc, char *argv[], char *envp[])
          * there is only one thread when the dynamic linker branches to the OEP). */
         struct DisassembleAtOep: public RSIM_Callbacks::InsnCallback {
             virtual DisassembleAtOep *clone() { return this; }
-            virtual bool operator()(bool prev, RSIM_Thread *thread, SgAsmInstruction *insn) {
-                RSIM_Process *process = thread->get_process();
-                if (process->get_ep_orig_va() == insn->get_address()) {
+            virtual bool operator()(bool prev, const Args &args) {
+                RSIM_Process *process = args.thread->get_process();
+                if (process->get_ep_orig_va() == args.insn->get_address()) {
                     std::cout <<"disassembling at OEP...\n";
                     SgAsmBlock *block = process->disassemble();
                     AsmUnparser().unparse(std::cout, block);
-                    thread->get_callbacks().remove_insn_callback(RSIM_Callbacks::BEFORE, this);
+                    args.thread->get_callbacks().remove_insn_callback(RSIM_Callbacks::BEFORE, this);
                     process->get_callbacks().remove_insn_callback(RSIM_Callbacks::BEFORE, this);
                 }
                 return prev;
