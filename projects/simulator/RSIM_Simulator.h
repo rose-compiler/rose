@@ -435,7 +435,7 @@ public:
      *  }
      *  @endcode
      * 
-     *  @section Syscall_Example3 Example: System Call Tricks
+     *  @section Syscall_Example3 Example: One-shot Augmentation
      *
      *  Here's one way to print a special message the first time a system call is invoked.  For simplicity, we haven't worried
      *  about multiple threads&mdash;it's possible for two threads to invoke the same system call concurrently, in which case
@@ -462,6 +462,45 @@ public:
      *  NotifyOnce notifier;
      *  simulator->syscall_implementation(3)->enter.append(&notifier);
      *  simulator->syscall_implementation(4)->enter.append(&notifier);
+     *  @endcode
+     *
+     *  @section Syscall_Example4 Example: Undefining a System Call
+     *
+     *  To completely remove a system call implementation and cause the simulator to dump the specimen's core if it tries to
+     *  invoke that system call, simply remove all enter, body, and leave callbacks for that syscall.  Here we make sys_fork
+     *  (#2) and sys_clone (#120) undefined:
+     *
+     *  @code
+     *  RSIM_Linux32 *simulator = ...;
+     *
+     *  RSIM_Simulator::SystemCall *sc_fork  = simulator->syscall_implementation(2);
+     *  sc_fork->enter.clear();
+     *  sc_fork->body.clear();
+     *  sc_fork->leave.clear();
+     *
+     *  RSIM_Simulator::SystemCall *sc_clone = simulator->syscall_implementation(120);
+     *  sc_clone->enter.clear();
+     *  sc_clone->body.clear();
+     *  sc_clone->leave.clear();
+     *  @endcode
+     *
+     *  @section Syscall_Example5 Example: Replacing a System Call
+     * 
+     *  Sometimes it's useful to make a system call not do anything except return an error. Here we make sys_chown (#182)
+     *  return the "not implemented" error.
+     *
+     *  @code
+     *  class NoOp: public RSIM_Simulator::SystemCall::Callback {
+     *  public:
+     *      bool operator()(bool b, const Args &args) {
+     *          args.thread->tracing(TRACE_SYSCALL)->more("[NOOP]");
+     *          args.thread->syscall_return(-ENOSYS);
+     *          return b;
+     *      }
+     *  } syscall_noop;
+     *
+     *  RSIM_Simulator *simulator = ...;
+     *  simulator->syscall_implementation(182)->body.clear().append(&syscall_noop);
      *  @endcode
      */
     struct SystemCall {

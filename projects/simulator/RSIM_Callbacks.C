@@ -10,9 +10,11 @@ copy_callback_vector(T &dst, const T &src)
     dst.clear();
     typename T::CBList callbacks = src.callbacks();
     for (typename T::CBList::iterator ci=callbacks.begin(); ci!=callbacks.end(); ci++) {
-        typename T::CallbackType *cb = dynamic_cast<typename T::CallbackType*>((*ci)->clone());
-        assert(cb!=NULL);
-        dst.append(cb);
+        typename T::CallbackType *old_cb = *ci;
+        assert(old_cb!=NULL);
+        typename T::CallbackType *new_cb = dynamic_cast<typename T::CallbackType*>(old_cb->clone());
+        assert(old_cb!=NULL);
+        dst.append(new_cb);
     }
 }
 

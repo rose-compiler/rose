@@ -23,7 +23,7 @@
  *  should not assume that any particular mutexes or read-write locks are held when the callback is invoked.  All of the
  *  RSIM_Callbacks methods are thread safe.
  *
- *  \section Example1 Example:  Disassembling a dynamically linked binary
+ *  @section Example1 Example:  Disassembling a dynamically linked binary
  *
  *  Binary executables are often dynamically linked, wherein the main binary contains only stubs for dynamic functions and
  *  those functions' text and data are loaded into process memory and linked at run time.  Since most disassemblers don't
@@ -38,7 +38,7 @@
  *  thread-safe manner) and the assembly is unparsed to the standard output stream.  The callback is then removed from the
  *  calling thread's callbacks (although it might still be called from other threads that try to execute at the OEP).
  *
- *  \code
+ *  @code
  *  struct DisassembleAtOep: public RSIM_Callbacks::InsnCallback {
  *      // Share a single callback among the simulator, the process, and all threads.
  *      virtual DisassembleAtOep *clone() { return this; }
@@ -73,11 +73,67 @@
  *  // process and threads when they are created later.
  *  RSIM_Simulator simulator;
  *  simulator.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new DisassembleAtOep);
- *  \endcode
+ *  @endcode
  *
- *  Continue by configuring the simulator, loading the specimen executable, activating
- *  the simulator, running the simulator, etc.  An example is provided on the RSIM
- *  main page (\ref index).
+ *  Continue by configuring the simulator, loading the specimen executable, activating the simulator, running the simulator,
+ *  etc.  An example is provided on the RSIM main page (\ref index).
+ *
+ *  @section Example2 Example: Using the disassembler to trace functions
+ *
+ *  A side effect of calling RSIM_Process::disassemble() is that the resulting AST contains instruction nodes
+ *  (SgAsmInstruction) whose grandparents are function nodes (SgAsmFunctionDeclaration).  We can use this fact to print the
+ *  name of the function in which we're currently executing.
+ *
+ *  @code
+ *  class ShowFunction: public RSIM_Callbacks::InsnCallback {
+ *  public:
+ *      // Share a single callback among the simulator, the process, and all threads.
+ *      virtual ShowFunction *clone() { return this; }
+ *
+ *      // The actual callback.
+ *      virtual bool operator()(bool prev, const Args &args) {
+ *          SgAsmBlock *basic_block = isSgAsmBlock(args.insn->get_parent());
+ *          SgAsmFunctionDeclaration *func = basic_block ? isSgAsmFunctionDeclaration(basic_block->get_parent()) : NULL;
+ *          if (func && func->get_name()!=name) {
+ *              name = func->get_name();
+ *              args.thread->tracing(TRACE_MISC)->mesg("in function \"%s\"", name.c_str());
+ *          }
+ *          return prev;
+ *      }
+ *
+ *  private:
+ *      std::string name;
+ *  };
+ * 
+ *  sim.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new ShowFunction);
+ *  @endcode
+ *
+ *  The output will be something along the following lines.  The "28129:1" means the main thread of process 28129. The floating
+ *  point number which follows is the time in seconds since the start of the simulation.  The hexadecimal number is the address
+ *  of the instruction that's about to be executed followed by an instruction counter in square brackets.  Our "in function"
+ *  output appears, in this example, with system call tracing that contains the name of the system call, the system call number
+ *  from <asm/unistd_32.h>, the arguments, and the return value.
+ *
+ *  @code
+ *  28129:1 31.292 0x08048132[1]:       in function "_start"
+ *  28129:1 31.292 0x0804bea0[13]:      in function "__libc_start_main"
+ *  28129:1 31.345 0x08061db3[235]:     in function "_dl_aux_init"
+ *  28129:1 31.345 0x0804bee7[250]:     in function "__libc_start_main"
+ *  28129:1 31.345 0x0805e7c0[256]:     in function "__uname"
+ *  28129:1 31.345 0x0805e7cd[260]:     uname[122](0xbfffddb6) = 0
+ *  28129:1 31.345 0x0804bf03[264]:     in function "__libc_start_main"
+ *  28129:1 31.346 0x0804b890[338]:     in function "__pthread_initialize_minimal_internal"
+ *  28129:1 31.346 0x0804c375[348]:     in function "__libc_setup_tls"
+ *  28129:1 31.346 0x0805f5c8[376]:     in function "__sbrk"
+ *  28129:1 31.346 0x080871f0[387]:     in function "brk"
+ *  28129:1 31.346 0x080871fe[393]:     brk[45](0) = 0x080d5000
+ *  28129:1 31.346 0x0805f605[401]:     in function "__sbrk"
+ *  28129:1 31.346 0x080871f0[409]:     in function "brk"
+ *  28129:1 31.346 0x080871fe[415]:     brk[45](0x080d5c80) = 0x080d5c80
+ *  28129:1 31.346 0x0805f628[423]:     in function "__sbrk"
+ *  28129:1 31.347 0x0804c40d[431]:     in function "__libc_setup_tls"
+ *  28129:1 31.347 0x0805e070[455]:     in function "memcpy"
+ *  @endcode
  */
 class RSIM_Callbacks {
     /**************************************************************************************************************************
