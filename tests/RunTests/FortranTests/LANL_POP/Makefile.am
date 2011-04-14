@@ -1,10 +1,10 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-if !ROSE_USING_GFORTRAN_VERSION_4_0
-POP_DISTRIBUTION  =  $(srcdir)/poptest.tgz
 TEST_TRANSLATOR   =  $(top_builddir)/tests/testTranslator
 
+
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+if !ROSE_USING_GFORTRAN_VERSION_4_0
 # TOO (4/4/2011): top_builddir is calculated relative to LANL_POP/, but
 # the test.sh script is inside the untarred poptest/ directory. Therefore,
 # the correct path to the testTranslator would be: "../$(TEST_TRANSLATOR)".
@@ -12,7 +12,7 @@ TEST_TRANSLATOR   =  $(top_builddir)/tests/testTranslator
 # HUDSON_LDLIBS should equal exactly "$(LIBS) -lcurl" because $(LIBS) must
 # be expanded in the poptest Makefiles; not in this Makefile.
 check-local:
-	tar xzf $(POP_DISTRIBUTION) -C .
+	tar xzf $(srcdir)/poptest.tgz -C .
 	cd poptest; \
 	  export TRANSLATOR=../$(TEST_TRANSLATOR); \
           export HUDSON_NUM_JOBS=$${NUM_PROCESS}; \
@@ -35,9 +35,10 @@ check-local:
 endif
 endif
 
+
 clean-local:
 	rm -rf poptest
 
 EXTRA_DIST = \
 	CMakeLists.txt \
-	$(POP_DISTRIBUTION)
+	poptest.tgz
