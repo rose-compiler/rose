@@ -2018,6 +2018,7 @@ projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/SP/Makefile
+projects/pragmaParsing/Makefile
 projects/QtDesignerPlugins/Makefile
 projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile
 projects/RTED/CppRuntimeSystem/Makefile
