@@ -41,7 +41,7 @@ class JavaParserSupport
      private static int verboseLevel = 0;
 
   // Initialization function, but be called before we can use member functions in this class.
-         public static void initialize(CompilationResult x, int input_verboseLevel)
+     public static void initialize(CompilationResult x, int input_verboseLevel)
         {
        // This has to be set first (required to support source position translation).
           rose_compilationResult = x;
