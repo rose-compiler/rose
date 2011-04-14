@@ -1,7 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 TEST_TRANSLATOR   =  $(top_builddir)/tests/testTranslator
-POP_DISTRIBUTION  =  $(srcdir)/poptest.tgz
 
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
@@ -13,7 +12,7 @@ if !ROSE_USING_GFORTRAN_VERSION_4_0
 # HUDSON_LDLIBS should equal exactly "$(LIBS) -lcurl" because $(LIBS) must
 # be expanded in the poptest Makefiles; not in this Makefile.
 check-local:
-	tar xzf $(POP_DISTRIBUTION) -C .
+	tar xzf $(srcdir)/poptest.tgz -C .
 	cd poptest; \
 	  export TRANSLATOR=../$(TEST_TRANSLATOR); \
           export HUDSON_NUM_JOBS=$${NUM_PROCESS}; \
@@ -42,4 +41,4 @@ clean-local:
 
 EXTRA_DIST = \
 	CMakeLists.txt \
-	$(POP_DISTRIBUTION)
+	poptest.tgz
