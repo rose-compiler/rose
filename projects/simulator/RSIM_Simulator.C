@@ -89,15 +89,9 @@ RSIM_Simulator::ctor()
 {
     RTS_rwlock_init(&instance_rwlock, NULL);
 
-    syscall_set(1000000, SystemCall(syscall_RSIM_is_present_enter,
-                                    syscall_RSIM_is_present,
-                                    syscall_RSIM_is_present_leave));
-    syscall_set(1000001, SystemCall(syscall_RSIM_message_enter,
-                                    syscall_RSIM_message,
-                                    syscall_RSIM_message_leave));
-    syscall_set(1000002, SystemCall(syscall_RSIM_delay_enter,
-                                    syscall_RSIM_delay,
-                                    syscall_RSIM_delay_leave));
+    syscall_define(1000000, syscall_RSIM_is_present_enter, syscall_RSIM_is_present, syscall_RSIM_is_present_leave);
+    syscall_define(1000001, syscall_RSIM_message_enter,    syscall_RSIM_message,    syscall_RSIM_message_leave);
+    syscall_define(1000002, syscall_RSIM_delay_enter,      syscall_RSIM_delay,      syscall_RSIM_delay_leave);
 }
 
 int
@@ -519,24 +513,46 @@ RSIM_Simulator::terminate_self()
     } RTS_WRITE_END;
 }
 
-void
-RSIM_Simulator::syscall_set(int callno, const SystemCall &callbacks)
+bool
+RSIM_Simulator::syscall_is_implemented(int callno) const
 {
-    RTS_WRITE(instance_rwlock) {
-        syscall_table[callno] = callbacks;
-    } RTS_WRITE_END;
+    bool retval = false;
+    RTS_READ(instance_rwlock) {
+        std::map<int, SystemCall*>::const_iterator found = syscall_table.find(callno);
+        retval = (found!=syscall_table.end() &&
+                  (!found->second->enter.empty() || !found->second->body.empty() || !found->second->leave.empty()));
+    } RTS_READ_END;
+    return retval;
 }
 
-RSIM_Simulator::SystemCall
-RSIM_Simulator::syscall_get(int callno) const
+RSIM_Simulator::SystemCall *
+RSIM_Simulator::syscall_implementation(int callno)
 {
-    SystemCall callbacks;
-    RTS_WRITE(instance_rwlock) {
-        std::map<int, SystemCall>::const_iterator si = syscall_table.find(callno);
-        if (si!=syscall_table.end())
-            callbacks = si->second;
-    } RTS_WRITE_END;
-    return callbacks;
+    SystemCall *retval = NULL;
+    RTS_READ(instance_rwlock) {
+        std::map<int, SystemCall*>::iterator found = syscall_table.find(callno);
+        if (found==syscall_table.end()) {
+            retval = syscall_table[callno] = new SystemCall;
+        } else {
+            retval = found->second;
+        }
+    } RTS_READ_END;
+    return retval;
 }
+
+void
+RSIM_Simulator::syscall_define(int callno,
+                               void(*enter)(RSIM_Thread*, int callno),
+                               void(*body)(RSIM_Thread*, int callno),
+                               void(*leave)(RSIM_Thread*, int callno))
+{
+    if (enter)
+        syscall_implementation(callno)->enter.append(new SystemCall::Function(enter));
+    if (body)
+        syscall_implementation(callno)->body .append(new SystemCall::Function(body ));
+    if (leave)
+        syscall_implementation(callno)->leave.append(new SystemCall::Function(leave));
+}
+
 
 #endif /* ROSE_ENABLE_SIMULATOR */

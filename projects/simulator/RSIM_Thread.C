@@ -863,13 +863,12 @@ RSIM_Thread::emulate_syscall()
     unsigned callno = policy.readGPR(x86_gpr_ax).known_value();
     bool cb_status = callbacks.call_syscall_callbacks(RSIM_Callbacks::BEFORE, this, callno, true);
     if (cb_status) {
-        RSIM_Simulator::SystemCall sc = get_process()->get_simulator()->syscall_get(callno);
-        if (sc.body) {
-            if (sc.enter)
-                sc.enter(this, callno);
-            sc.body(this, callno);
-            if (sc.leave)
-                sc.leave(this, callno);
+        RSIM_Simulator *sim = get_process()->get_simulator();
+        if (sim->syscall_is_implemented(callno)) {
+            RSIM_Simulator::SystemCall *sc = sim->syscall_implementation(callno);
+            sc->enter.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
+            sc->body .apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
+            sc->leave.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
         } else {
             char name[32];
             sprintf(name, "syscall_%u", callno);

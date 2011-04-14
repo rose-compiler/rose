@@ -254,48 +254,80 @@ public:
      *                                  System calls
      **************************************************************************************************************************/
 public:
-    /** Callbacks that implement a particular system call.  The @p enter callback is responsible for printing the syscall
-     *  entrance message when system call tracing is enabled; the @p body does the real work of the system call; and the @p
-     *  leave callback is to print the system call return value(s).  Any of the callbacks may throw an exception, in which case
-     *  the subsequent callbacks are not invoked.
+    /** Implementations for system calls.
      *
-     *  System calls are stored in a per-simulator table that associates each call number with a SystemCall object. The
-     *  contents of the table is queried and modified with the syscall_get() and syscall_set() methods.  This makes it possible
-     *  to replace or augment each individual system call.
+     *  Whenever a specimen makes a system call, perhaps by loading a system call number into the EAX register and executing
+     *  the INT 0x80 instruction, the simulator invokes all RSIM_Callbacks::SyscallCallback functors.  If those callbacks
+     *  return false then the system call is not simulated.  Otherwise, the simulator consults a system call lookup table to
+     *  find three lists of callbacks for that specific system call.  If the table has no entry for that system call then the
+     *  simulator produces a core dump of the specimen and terminates simulation.
      *
-     *  The simulator also invokes an optional list of user-defined callbacks before and/or after every system call as
-     *  described by RSIM_Callbacks.  Those callbacks are unrelated to the functions that implement behavior for each
-     *  individual system call, although the pre-syscall callbacks in RSIM_Callbacks can cause a system call to be skipped.
+     *  Each system call implementation consists of three lists of callbacks. The first list, named "enter", contains callbacks
+     *  that print the syscall entrance message when system call tracing is enabled; the @p body list does the real work of the
+     *  system call; and the @p leave list print the system call return value(s).  For each list, the callbacks are invoked in
+     *  ROSE_Callbacks::FORWARD order. Any of the callbacks may throw an exception, in which case the subsequent callbacks on
+     *  that list and following lists are not invoked.  The reason for having three lists of callbacks rather than one callback
+     *  that does all three actions is to make it easier for users to augment an existing system call without having to
+     *  reimplement the enter/leave boilerplate, or to modify the boilerplate without having to reimplement the system call.
+     *
+     *  The system call table, indexed by call number, contains SystemCall objects (allocated on the heap) which in turn
+     *  contain the three lists of callbacks, named "enter", "body", and "leave".  These lists contain Callback (a virtual base
+     *  class) functors conforming to the requirements documented for ROSE_Callbacks in the ROSE Library Reference Manual. End
+     *  users may subclass Callback as necessary to implement a system call.  Operations on these lists are generally thread
+     *  safe, and a list can be modified even while its callbacks are executing (modifying the list doesn't immediately affect
+     *  which callbacks are invoked).
+     *
+     *  Functions to access the syscall table are:
+     *  <ul>
+     *    <li>RSIM_Simulator::syscall_is_implemented() -- predicate to test whether syscall is defined.</li>
+     *    <li>RSIM_Simulator::syscall_implementation() -- returns the SystemCall struct containg the three callback lists.</li>
+     *    <li>RSIM_Simulator::syscall_define() -- convenience method for defining function-based implementations.</li>
+     *  </ul>
+     *
+     *  The RSIM_Simulator::syscall_define() deserves special mention.  It's often more convenient to implement or augment a
+     *  system call using a function (or three, if you need to provide or modify enter/leave behavior). Unfortunately, ROSE's
+     *  ROSE_Callbacks mechanism only supports functors having specific calling conventions.  Therefore, we've defined a
+     *  SystemCall::Function class (derived from SystemCall::Callback) whose constructor takes a function pointer and whose
+     *  callback invokes that function.  Examples of this usage can be found throughout the simulator (e.g., see
+     *  RSIM_Linux32::ctor()).
      *
      *  @section SystemCall_Example1 Example: Augmenting an Existing System Call
      *
-     *  This example augments the process exit system call (the sys_exit_group() function of the Linux kernel, system call
-     *  number 252 as defined in <asm/unistd_32.h>) so that it prints a message to the standard error stream.  We implement our
-     *  extension as a body callback rather than an enter callback even though it only prints a message.
+     *  This example augments the sys_read() and sys_write() system calls in order to count the total number of calls and bytes
+     *  transferred.  We use functors (rather than functions) in order to neatly encapsulate the counters.
      *
      *  @code
-     *  RSIM_Simulator::SystemCall my_exit_group_parent;
+     *  class IOCounter: public RSIM_Simulator::SystemCall::Callback {
+     *  public:
+     *      size_t ncalls, nbytes;
+     *      IOCounter(): ncalls(0), nbytes(0) {}
      *
-     *  static void my_exit_group(RSIM_Thread *t, int callno) {
-     *      // Do our own work
-     *      fprintf(stderr, "Entire process is about to exit.\n");
-     *      // Then chain to the parent
-     *      if (my_exit_group_parent.body)
-     *          my_exit_group_parent.body(t, callno);
-     *  }
+     *      // The callback. Signature is dictated by ROSE_Callbacks. Args is a struct defined
+     *      // in the base class and contains a thread pointer and the syscall number.
+     *      bool operator()(bool b, const Args &args) {
+     *          ncalls++;
+     *          int32_t n = args.thread->syscall_arg(-1); // system call return value
+     *          if (n>0)
+     *              nbytes += (size_t)n;
+     *          return b; // per ROSE_Callbacks semantics
+     *      }
+     *  };
+     *  @endcode
      *
-     *  int main() {
-     *      RSIM_Linux32 sim;
-     *      ...
-     *      // Save the original implementation so we can chain to it
-     *      my_exit_group_parent = sim.syscall_get(252);
+     *  The next step is to instantiate one of these system call functors and register it for the appropriate system calls,
+     *  namely sys_read (#3) and sys_write (#4). We don't worry about other I/O system calls for this example.  Our functor
+     *  must be invoked after the read or write is simulated because we need to access the syscall's return value, so we append
+     *  reather than prepend.
      *
-     *      // Modify the body callback to be our own implementation
-     *      RSIM_Simulator::SystemCall new_sc = my_exit_group_parent;
-     *      new_sc.body = my_exit_group;
-     *      sim.syscall_set(252, new_sc);
-     *      ...
-     *  }
+     *  @code
+     *  RSIM_Linux32 sim;
+     *  IOCounter ioc = new IOCounter;
+     *  ...
+     *  sim.syscall_implementation(3)->body.append(ioc);
+     *  sim.syscall_implementation(4)->body.append(ioc);
+     *  ...
+     *  sim.main_loop();
+     *  std::cout <<ioc->ncalls <<" I/O calls transfered " <<ioc->nbytes <<" bytes of data" <<std::endl;
      *  @endcode
      *
      *  @section Syscall_Example2 Example: Implementing a New System Call
@@ -311,19 +343,20 @@ public:
      *  returns at a later time.
      *
      *  The first step is to choose an appropriate system call number which doesn't interfere with existing system calls. One
-     *  way to do that would be to guess a number and then query the system call table with RSIM_Simulator::syscall_get() to
-     *  see if the returned SystemCall object has any non-nil pointers.  Another way, and the one we use here, is to just pick
-     *  a number arbitrarily: we use 600 because it's well above any numbers already used by the Linux kernel.
+     *  way to do that is to guess a number and then query the system call table with RSIM_Simulator::syscall_is_implemented().
+     *  Another way, and the one we use here, is to just pick a number arbitrarily: we use 600 because it's well above any
+     *  numbers already used by the Linux kernel.
      *
      *  The second step is to implement three functions: one to print the system call name and arguments at the time the call
      *  is made, a second to implement the actual system call action, and a third to print the result when the call returns.
      *  Although its possible to place all three actions in a single function, we separate them out to make it easier for
-     *  others to augment our implementation.
+     *  others to augment our implementation.  We choose to use functions rather than functors because this is a cleaner, more
+     *  intuitive approach.
      *
-     *  The function to print the system call name and arguments follows.  The second argument to syscall_enter() is a string
-     *  specifying the types of arguments for the system call. In this case, there's one signed integer argument.  The format
-     *  specifiers are documented in the RSIM_Thread::syscall_enter() method.  The syscall_enter() method should be used rather
-     *  than printing directly to a file because:
+     *  The function to print the system call name and arguments is shown below.  The second argument to syscall_enter() is a
+     *  string specifying the types of arguments for the system call. In this example there's one signed integer argument: the
+     *  number of seconds to delay.  The format specifiers are documented in the RSIM_Thread::syscall_enter() method.  The
+     *  syscall_enter() method should be used rather than printing directly to a file because:
      *
      *  <ul>
      *    <li>It is automatically enabled or disabled according to the state of the system call tracing facility for the calling
@@ -335,6 +368,7 @@ public:
      *        instance, if another thread makes a system call after we're entered our system call but before we've returned,
      *        the output will clearly indicate such without causing the two system call outputs to be mixed together in some
      *        arbitrary, confusing manner.</li>
+     *    <li>It automatically redirects output to log files if so configured.</li>
      *    <li>It will likely be more portable to call syscall_enter() rather than explicitly print each argument when we add
      *        support for abstract analysis.</li>
      *  </ul>
@@ -349,15 +383,15 @@ public:
      *  syscall_arg(), which is more portable than reading it directly from a machine register or the stack, then pause for the
      *  specified amount of time, and then set the system call's return value (non-negative typically indicates success).  Note
      *  that since the simulator is calling sleep() rather than the specimen, all the related system calls and signals happen
-     *  directly within the simulator and don't affect the specimen.  This was our goal.  Note that for simplicity we're using
-     *  sleep() rather than nanosleep(), so the multi-threading issues that affect sleep() will also affect our system call.
+     *  directly within the simulator and don't affect the specimen.  This was our goal.  We're using sleep() for simplicity
+     *  rather than nanosleep(), so the multi-threading issues that affect sleep() will also affect our system call.
      *
      *  @code
      *  static void delay_body(RSIM_Thread *t, int callno) {
      *      int nsec = t->syscall_arg(0); // the first argument
      *      while (nsec>0)
      *         nsec = sleep(nsec);
-     *      t->syscall_return(0); // return zero for success
+     *      t->syscall_return(0); // system call's return value; zero for success
      *  }
      *  @endcode
      *
@@ -379,7 +413,10 @@ public:
      *  @code
      *  int main() {
      *      RSIM_Linux32 simulator;
-     *      simulator.syscall_set(600, RSIM_Simulator::SystemCall(delay_enter, delay_body, delay_leave));
+     *      static const int SYS_DELAY = 600;
+     *      ...
+     *      assert(!simulator.syscall_is_implemented(SYS_DELAY));
+     *      simulator.syscall_define(SYS_DELAY, delay_enter, delay_body, delay_leave);
      *      ...
      *  }
      *  @endcode
@@ -396,32 +433,100 @@ public:
      *      if (-1==result && ENOSYS==errno)
      *          printf("we're not running in the simulator\n");
      *  }
-     *  @endcode 
+     *  @endcode
+     * 
+     *  @section Syscall_Example3 Example: System Call Tricks
+     *
+     *  Here's one way to print a special message the first time a system call is invoked.  For simplicity, we haven't worried
+     *  about multiple threads&mdash;it's possible for two threads to invoke the same system call concurrently, in which case
+     *  both might print the message before either removes the functor from the callback list (and recall that removal of a
+     *  functor does not take effect until the next time the list is traversed).
+     *
+     *  @code
+     *  class NotifyOnce: public RSIM_Simulator::SystemCall::Callback {
+     *  public:
+     *      bool operator()(bool b, const Args &args) {
+     *          args.thread->tracing(TRACE_SYSCALL)->more("[FIRST CALL]");
+     *          RSIM_Simulator *sim = args.thread->get_process()->get_simulator();
+     *          sim->syscall_implementation(args.callno)->enter.erase(this);
+     *          return b;
+     *      }
+     *  };
+     *  @endcode
+     *
+     *  A single functor can be used to augment the "enter" action for multiple system calls (or we can use multiple
+     *  instances).
+     *
+     *  @code
+     *  RSIM_Linux32 *simulator = ...;
+     *  NotifyOnce notifier;
+     *  simulator->syscall_implementation(3)->enter.append(&notifier);
+     *  simulator->syscall_implementation(4)->enter.append(&notifier);
+     *  @endcode
      */
     struct SystemCall {
-        /** New set of null callbacks. */
-        SystemCall()
-            :enter(NULL), body(NULL), leave(NULL) {}
-        /** New set of callbacks for syscall entrance, body, and exit. */
-        SystemCall(void(*enter)(RSIM_Thread*, int), void(*body)(RSIM_Thread*, int), void(*leave)(RSIM_Thread*, int))
-            :enter(enter), body(body), leave(leave) {}
-        void (*enter)(RSIM_Thread*, int callno);                /**< Print syscall name and arguments. */
-        void (*body)(RSIM_Thread*, int callno);                 /**< Syscall actions. */
-        void (*leave)(RSIM_Thread*, int callno);                /**< Print syscall return value and modified arguments. */
+
+        /** Base class for system call implementations.  System calls are implemented using user-defined callbacks as described
+         *  in the documentation for ROSE_Callbacks. */
+        struct Callback {
+            struct Args {                                       /**< Arguments to pass to system call functors. */
+                Args(RSIM_Thread *thread, int callno)
+                    : thread(thread), callno(callno) {}
+                RSIM_Thread *thread;                            /**< Thread making the system call. */
+                int callno;                                     /**< System call identifying number (e.g., from unistd_32.h). */
+            };
+            virtual ~Callback() {}
+            virtual bool operator()(bool b, const Args&) = 0;
+        };
+
+        /** System call implementation based on a function.  This kind of callback is used by RSIM_Simulator::syscall_define()
+         *  when the system call has been implemented as a function rather than a class. */
+        struct Function: public Callback {
+            Function(void(*func)(RSIM_Thread*, int callno))
+                : func(func) {}
+            void (*func)(RSIM_Thread*, int callno);
+            bool operator()(bool b, const Args &a) {
+                func(a.thread, a.callno);
+                return b;
+            }
+        };
+
+        ROSE_Callbacks::List<Callback> enter;                   /**< Callbacks for entering a system call. */
+        ROSE_Callbacks::List<Callback> body;                    /**< Callbacks for system call body (the real work). */
+        ROSE_Callbacks::List<Callback> leave;                   /**< Callbacks for returning from a system call. */
     };
 
-    /** Modifies system call emulation.  Sets the callbacks associated with the specified system call.
+    /** Returns true if the specified system call exists in the system call table and has at least one callback.
      *
      *  Thread safety:  This method is thread safe. */
-    void syscall_set(int callno, const SystemCall&);
+    bool syscall_is_implemented(int callno) const;
 
-    /** Returns the functions implementing the specified system call.
+    /** Returns a reference to the struct containing callback lists for a specified system call.  If the system call number is
+     *  not defined yet, then we get back a new SystemCall struct with empty callback lists.
+     *
+     *  Thread safety:  This method is thread safe.  Once a system call is created, the SystemCall structure is allocated and
+     *  then never deleted.  The system call can be effectively de-implemented by clearing all the callback lists for that
+     *  system call. */
+    SystemCall* syscall_implementation(int callno);
+
+    /** Defines a system call implemented as function(s).  The system call is implemented as three functions (any combination
+     *  of which may be null pointers).  The @p enter function uses the tracing facility to produce messages about entering the
+     *  system call; the @p body function implements the real work of the system call; and the @p leave function uses the
+     *  tracing facility to produce messages about the return from the system call.  All functions are appended to the end of
+     *  the callback lists for the system call.
+     *
+     *  This function is intended as a convenience.  More control of registering the implementation can be had by using the
+     *  SystemCall structure directly via syscall_implementation() and either the SystemCall::Function class or a user-defined
+     *  callback class.
      *
      *  Thread safety:  This method is thread safe. */
-    SystemCall syscall_get(int callno) const;
+    void syscall_define(int callno,
+                        void (*enter)(RSIM_Thread*, int callno),
+                        void (*body )(RSIM_Thread*, int callno),
+                        void (*leave)(RSIM_Thread*, int callno));
 
 private:
-    std::map<int, SystemCall> syscall_table;
+    std::map<int/*callno*/, SystemCall*> syscall_table;
 
 
     /***************************************************************************************************************************/

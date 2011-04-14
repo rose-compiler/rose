@@ -277,7 +277,7 @@ void
 RSIM_Linux32::ctor()
 {
 #   define SC_REG(NUM, NAME, LEAVE)                                                                                            \
-       syscall_set((NUM), SystemCall(syscall_##NAME##_enter, syscall_##NAME, syscall_##LEAVE##_leave))
+        syscall_define((NUM), syscall_##NAME##_enter, syscall_##NAME, syscall_##LEAVE##_leave);
 
     /* Warning: use hard-coded values here rather than the __NR_* constants from <sys/unistd.h> because the latter varies
      * according to whether ROSE is compiled for 32- or 64-bit.  We always want the 32-bit syscall numbers here. */

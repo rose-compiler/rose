@@ -123,7 +123,7 @@ public:
      **************************************************************************************************************************/
 public:
 
-    /** Instruction-related callbacks. */
+    /** Instruction callbacks invoked on every instruction. */
     class InsnCallback: public Callback {
     public:
         struct Args {
@@ -181,7 +181,7 @@ public:
      **************************************************************************************************************************/
 public:
 
-    /** System call callbacks. */
+    /** System call callbacks invoked on every system call. */
     class SyscallCallback: public Callback {
     public:
         struct Args {
@@ -240,7 +240,7 @@ public:
      **************************************************************************************************************************/
 public:
 
-    /** Thread-related callbacks. */
+    /** Thread callbacks invoked on every thread. */
     class ThreadCallback: public Callback {
     public:
         struct Args {
