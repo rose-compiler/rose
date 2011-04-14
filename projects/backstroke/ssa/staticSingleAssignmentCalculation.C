@@ -106,7 +106,8 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 
 		//If the variable is accessed by a friend function, then it is available. Check if the function
 		//looking to access the var is a friend
-		SgFunctionDeclaration* accessingFunction = SageInterface::getEnclosingFunctionDeclaration(accessingScope, true);
+		SgFunctionDeclaration* accessingFunction = SageInterface::getEnclosingFunctionDeclaration(astNode, true);
+        ROSE_ASSERT(accessingFunction != NULL);
 		SgName accessingFunctionName = accessingFunction->get_mangled_name();
 
 		//We'll look at all functions declared inside the variables class and see if any of them is the accessing function
