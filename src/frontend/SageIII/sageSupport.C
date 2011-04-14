@@ -3417,13 +3417,17 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      bool enable_cuda   = CommandlineProcessing::isOption(argv,"-","cuda",true) || get_Cuda_only();
      bool enable_opencl = CommandlineProcessing::isOption(argv,"-","opencl",true) || get_OpenCL_only();
      
+     string header_path = findRoseSupportPathFromBuild("include-staging", "include-staging");
+     
      if (enable_cuda || enable_opencl) {
         makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
         if (enable_cuda && !enable_opencl) {
-                commandLine.push_back("-DROSE_LANGUAGE_MODE=2");
+          commandLine.push_back("--preinclude");
+          commandLine.push_back(header_path + "/cuda_HEADERS/preinclude-cuda.h");
         }
         else if (enable_opencl && !enable_cuda) {
-                commandLine.push_back("-DROSE_LANGUAGE_MODE=3");
+          commandLine.push_back("--preinclude");
+          commandLine.push_back(header_path + "/opencl_HEADERS/preinclude-opencl.h");
         }
         else {
                 printf ("Error: CUDA and OpenCL are mutually exclusive.\n");
