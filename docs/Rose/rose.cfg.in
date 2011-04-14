@@ -502,6 +502,7 @@ INPUT                  = \
                          @top_srcdir@/src/midend/astProcessing \
                          @top_srcdir@/src/midend/astQuery/QueryLib.docs \
                          @top_srcdir@/src/backend/backend.docs \
+			 @top_srcdir@/src/backend/asmUnparser \
 			 @top_srcdir@/src/backend/asmUnparser/unparseX86Asm.C \
 			 @top_srcdir@/src/backend/asmUnparser/unparseArmAsm.C \
 			 @top_srcdir@/src/backend/asmUnparser/unparsePowerpcAsm.C \
