@@ -503,6 +503,21 @@ SgFunctionCallExp*
 buildFunctionCallExp(const SgName& name, SgType* return_type, \
                 SgExprListExp* parameters=NULL, SgScopeStatement* scope=NULL);
 
+//! Build a CUDA kernel call expression (kernel<<<config>>>(parameters))
+SgCudaKernelCallExp * buildCudaKernelCallExp_nfi(
+  SgExpression * kernel,
+  SgExprListExp* parameters = NULL,
+  SgCudaKernelExecConfig * config = NULL
+);
+
+//! Build a CUDA kernel execution configuration (<<<grid, blocks, shared, stream>>>)
+SgCudaKernelExecConfig * buildCudaKernelExecConfig_nfi(
+  SgExpression *grid = NULL,
+  SgExpression *blocks = NULL,
+  SgExpression *shared = NULL,
+  SgExpression *stream = NULL
+);
+
 //! Build the rhs of a variable declaration which includes an assignment
 SgAssignInitializer * buildAssignInitializer(SgExpression * operand_i = NULL, SgType * expression_type = NULL);
 SgAssignInitializer * buildAssignInitializer_nfi(SgExpression * operand_i = NULL, SgType * expression_type = NULL);
