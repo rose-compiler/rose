@@ -146,7 +146,7 @@ int main(int argc, char** argv)
 	if (SgProject::get_verbose() > 0)
 	{
 		generateDOT(*project);
-		generateWholeGraphOfAST("wholeAST");
+		//generateWholeGraphOfAST("wholeAST");
 		
 		//Call graph
 		CallGraphBuilder CGBuilder(project);
