@@ -30,6 +30,7 @@ include_HEADERS +=				\
 	x86print.h				\
 	RSIM_Callbacks.h			\
 	RSIM_Common.h				\
+	RSIM_Linux32.h				\
 	RSIM_Process.h				\
 	RSIM_SemanticPolicy.h			\
 	RSIM_SignalHandling.h			\
@@ -41,6 +42,7 @@ x86sim_SOURCES =				\
 	x86print.C				\
 	RSIM_Callbacks.C			\
 	RSIM_Common.C				\
+	RSIM_Linux32.C				\
 	RSIM_Process.C				\
 	RSIM_SemanticPolicy.C			\
 	RSIM_SignalHandling.C			\
