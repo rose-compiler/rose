@@ -14,6 +14,7 @@ BUGS
 -The analysis repeatedly traverses the virtual CFG, instead of building a static CFG up front. While this does not impact
    correctness, it is a serious performance detriment
 
+-Interprocedural SSA always does two passes, even if no new defs have to be propagated. This doubles its runtime.
 
 TODO (in addition to fixing the above bugs)
 -----
