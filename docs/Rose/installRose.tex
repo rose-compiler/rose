@@ -152,10 +152,12 @@ and limitations on how their software may be used.
    to get gfortran installed. Be sure to use a package matching your gcc
    build number there. 
 
-   \item {\bf BOOST} : version $>=$ 1.36.0  \\
+   \item {\bf BOOST} : version 1.36.0 to 1.45.0 \\
      Visit \htmladdnormallink{www.boost.org}{http://www.boost.org/}
      for more details about BOOST and \htmladdnormallink{www.boost.org/users/download}{http://www.boost.org/users/download/}
-     for download and installation instructions. 
+     for download and installation instructions. Higher versions of boost
+     may or may not work with ROSE. We only test rose using boost 1.36.0 to 1.45.0 (10
+     versions) right now due to resource limits. 
      {\em Installation of Boost is such a common issue that we include simple directions for how to install Boost in section~\ref{gettingStarted:BOOST}}
 
    \item {\bf JAVA} : version $>$1.5.0\_11 \\
@@ -446,7 +448,7 @@ install tree). For Boost versions 1.39 or greater:
            installTree (e.g. BOOST\_INSTALL) to be used by ROSE.
            \item {\bf Important:} In running configure to build ROSE it is sometimes also required to use the 
            {\tt --with-boost-libdir=BOOST\_INSTALL/lib} in addition to the {\tt --with-boost=BOOST\_INSTALL}
-           mentioned imediately below.
+           mentioned immediately below.
 \end{enumerate}
 
 Use the BOOST\_INSTALL directory on the configure line for ROSE using: {\tt --with-boost=BOOST\_INSTALL}.
@@ -530,12 +532,15 @@ and tested internally using separate {\bf Compile Trees}. \\
            {\tt export JAVA\_HOME=/usr/apps/java/jdk1.5.0\_11} \\
            {\tt export LD\_LIBRARY\_PATH=\$JAVA\_HOME/jre/lib/i386/server:\$LD\_LIBRARY\_PATH}
 
-     \item Add the Boost library path into your LD\_LIBRARY\_PATH.\\
+     \item Add the Boost library path into your LD\_LIBRARY\_PATH. We put
+     the path in front of any other paths to avoid some old versions of
+     boost installation being picked up. \\
            For example: For Linux, 
-           {\tt LD\_LIBRARY\_PATH=\$LD\_LIBRARY\_PATH:/youpath/boost\_1\_36\_0/lib} 
+           {\tt LD\_LIBRARY\_PATH=/youpath/boost\_1\_36\_0/lib:\$LD\_LIBRARY\_PATH} 
 
            For MAC OS X: 
-           {\tt export DYLD\_LIBRARY\_PATH=\$DYLD\_LIBRARY\_PATH:/youpath/boost\_1\_36\_0-inst/lib}
+           {\tt export
+           DYLD\_LIBRARY\_PATH=/youpath/boost\_1\_36\_0-inst/lib:\$DYLD\_LIBRARY\_PATH}
 
      \item Run the {\tt configure} script. \\
            Type {\tt \{AbsoluteOrRelativePath\}/configure
@@ -858,30 +863,33 @@ rerun the {\tt configure} script without rebuilding ROSE.
 %    documentation does not yet really reflect this detail.  Also since the build process
 %    writes to the install directory we have to explain this in the documentation.}
 
-\subsection{MPI Support}
-     ROSE supports the use of MPI for parallel distributed memory program analysis, a
-research focus within the ROSE project.  To support this use the {\tt --with-mpi}
-option on the configure command line.  If you get the following message:
-%{\footnotesize
-\begin{verbatim}
-configuration file /home/<user name>/.mpd.conf not found
-A file named .mpd.conf file must be present in the user's home
-directory (/etc/mpd.conf if root) with read and write access
-only for the user, and must contain at least a line with:
-MPD_SECRETWORD=<secretword>
-One way to safely create this file is to do the following:
-  cd $HOME
-  touch .mpd.conf
-  chmod 600 .mpd.conf
-and then use an editor to insert a line like
-  MPD_SECRETWORD=mr45-j9z
-into the file.  (Of course use some other secret word than mr45-j9z.)
-\end{verbatim}
-%}
-% $ reset emacs highlighting
-Then follow the directions to build the {\tt .mpd.conf} file.  The use of the 
-MPI configure option will allow additional code in ROSE to be compiled and 
-additional tests to be run.
+% This MPI support section causes more confusion than benefits. I hide it
+% from most users  Liao 4/14/2011
+%\subsection{MPI Support}
+%     ROSE supports the use of MPI for parallel distributed memory program analysis, a
+%research focus within the ROSE project.  To support this use the 
+%{\tt --with-parallel_ast_traversal_mpi}
+%option on the configure command line.  If you get the following message:
+%%{\footnotesize
+%\begin{verbatim}
+%configuration file /home/<user name>/.mpd.conf not found
+%A file named .mpd.conf file must be present in the user's home
+%directory (/etc/mpd.conf if root) with read and write access
+%only for the user, and must contain at least a line with:
+%MPD_SECRETWORD=<secretword>
+%One way to safely create this file is to do the following:
+%  cd $HOME
+%  touch .mpd.conf
+%  chmod 600 .mpd.conf
+%and then use an editor to insert a line like
+%  MPD_SECRETWORD=mr45-j9z
+%into the file.  (Of course use some other secret word than mr45-j9z.)
+%\end{verbatim}
+%%}
+%% $ reset emacs highlighting
+%Then follow the directions to build the {\tt .mpd.conf} file.  The use of the 
+%MPI configure option will allow additional code in ROSE to be compiled and 
+%additional tests to be run.
 
 \subsection{Haskell Support}
    Haskell (ghc) is available at {\it http://www.haskell.org/ghc/}.

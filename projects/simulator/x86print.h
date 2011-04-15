@@ -13,8 +13,27 @@
  *  macros can be used to build the list succinctly.  For example:
  *
  *  \code
- *    Translate t[] = { T(PROT_READ), T(PROT_WRITE), T(PROT_EXEC), T(PROT_NONE), T_END};
+ *    Translate t[] = { TE(PROT_READ), TE(PROT_WRITE), TE(PROT_EXEC), TE(PROT_NONE), T_END};
  *  \endcode
+ *
+ *  This data structure supports a number of cases:
+ *
+ *  <ul>
+ *    <li>It can interpret an integer value as either an enumerated constant (specified with the "TE" family of macros) or
+ *        a vector of single- or multi-bit flags (specified with the "TF" family of macros).</li>
+ *    <li>The symbol can be defined before the macro that adds it to the Translate array, or it can be defined as it's
+ *        added to the array by using the macros that have a "V" (value) argument.</li>
+ *    <li>Flag symbols look only for the bits that are set in the symbol's value.  However, a mask can be supplied by
+ *        using macros that have an "M" (mask) argument.  When checking for a symbol, we look at all the bits specified
+ *        in the mask.  Under the covers, the only difference between a vector of flags and an enumeration value is that the
+ *        mask for the enumeration value has all bits set.</li>
+ *    <li>For a bit vector, bits that don't correspond to any known symbols can be formatted as an unsigned integer using
+ *        a user-supplied printf format string.  This is useful, for instance, for printing permission bits as an octal
+ *        number.</li>
+ *  </ul>
+ *
+ *  Note: doxygen doesn't seem to document C preprocessor symbols, so you'll have to look at the source code. See x86print.h
+ *  for the macro definitions; see RSIM_Common.h for example definitions; see system call handlers for example usage.
  */
 struct Translate {
     uint32_t    mask;
