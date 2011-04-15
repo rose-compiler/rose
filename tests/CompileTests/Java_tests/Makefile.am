@@ -13,6 +13,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_06.java \
      simple.java
 
+
 # This class does not match the file name.
 #    simple_fortran.java
 
