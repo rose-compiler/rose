@@ -156,7 +156,7 @@ class JavaParserSupport
 
                       // Control the level of recursion so that we can debug this...it seems that
                       // this is typically as high as 47 to process the implicitly included classes.
-                         int implicitClassCounterBound = 2000;
+                         int implicitClassCounterBound = 1000;
                          if (implicitClassCounter < implicitClassCounterBound)
                             {
                            // DQ (11/2/2010): comment out this recursive call for now.
@@ -381,19 +381,30 @@ class JavaParserSupport
                     if (verboseLevel > 2)
                          System.out.println("Build the implicit type for the data member (field) of type = " + nestedClassName);
 
-                 // System.out.println("#############################################################################################");
-                 // System.out.println("This call to JavaParserSupport.generateType() appears to be a problem: nestedClassName = " + nestedClassName);
-                    JavaParserSupport.generateType(typeClass);
-                 // System.out.println("DONE: This call to JavaParserSupport.generateType() appears to be a problem: nestedClassName = " + nestedClassName);
+                    int dataMemberCounterBound = 1000;
+                 // int dataMemberCounterBound = 1000;
+                    if (i < dataMemberCounterBound)
+                       {
+                      // System.out.println("#############################################################################################");
+                      // System.out.println("This call to JavaParserSupport.generateType() appears to be a problem: nestedClassName = " + nestedClassName);
+                         JavaParserSupport.generateType(typeClass);
+                      // System.out.println("DONE: This call to JavaParserSupport.generateType() appears to be a problem: nestedClassName = " + nestedClassName);
 
-                    if (verboseLevel > 2)
-                         System.out.println("Build the data member (field) for name = " + fld.getName());
+                         if (verboseLevel > 2)
+                              System.out.println("Build the data member (field) for name = " + fld.getName());
 
-                 // System.out.println("Exiting after call to JavaParserSupport.generateType(typeClass) implicitClassCounter = " + implicitClassCounter);
-                 // System.exit(1);
+                      // System.out.println("Exiting after call to JavaParserSupport.generateType(typeClass) implicitClassCounter = " + implicitClassCounter);
+                      // System.exit(1);
 
-                 // This function assumes that a type has been placed onto the astJavaTypeStack.
-                    JavaParser.cactionBuildImplicitFieldSupport(fld.getName());
+                      // This function assumes that a type has been placed onto the astJavaTypeStack.
+                         JavaParser.cactionBuildImplicitFieldSupport(fld.getName());
+                       }
+                      else
+                       {
+                         if (verboseLevel > 2)
+                              System.out.println("WARNING: Exceeded data member (field) handling iteration count " + i + " className = " + className);
+                       }
+                    
 
                     if (verboseLevel > 2)
                          System.out.println("DONE: Building the data member (field) for name = " + fld.getName());
@@ -447,7 +458,7 @@ class JavaParserSupport
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
                  // JavaParser.cactionBuildImplicitMethodSupport(ct.getName());
-                    int constructorMethodCounterBound = 2000;
+                    int constructorMethodCounterBound = 1000;
                  // int constructorMethodCounterBound = 1000;
                     if (constructorMethodCounter < constructorMethodCounterBound)
                        {
@@ -532,7 +543,7 @@ class JavaParserSupport
 
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
-                    int methodCounterBound = 2000;
+                    int methodCounterBound = 1000;
                  // int methodCounterBound = 1000;
                     if (methodCounter < methodCounterBound)
                        {
@@ -585,9 +596,8 @@ class JavaParserSupport
                     interfaceCounter++;
                   }
 
-
-
-              JavaParser.cactionBuildImplicitClassSupportEnd(className);
+            // This wraps up the details of processing all of the child classes (such as forming SgAliasSymbols for them in the global scope).
+               JavaParser.cactionBuildImplicitClassSupportEnd(className);
              }
 
        // try ... catch is required for using the reflection support in Java.

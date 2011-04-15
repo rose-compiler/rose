@@ -362,7 +362,8 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 1)
                System.out.println("Calling buildImplicitClassSupport for java.lang.System");
 
-          JavaParserSupport.buildImplicitClassSupport("java.lang.System");
+       // This triggers the building of a recursively identified set of classes required to define all types in the problem.
+       // JavaParserSupport.buildImplicitClassSupport("java.lang.System");
 
           if (java_parser.verboseLevel > 1)
                System.out.println("DONE: Calling buildImplicitClassSupport for java.lang.System");
