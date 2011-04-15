@@ -202,6 +202,7 @@ void StaticSingleAssignment::run(bool interprocedural)
 	reachingDefsTable.clear();
 	localUsesTable.clear();
 	useTable.clear();
+    ssaLocalDefTable.clear();
 
 	UniqueNameTraversal uniqueTrav(SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName));
 	DefsAndUsesTraversal defUseTrav(this);
@@ -544,6 +545,9 @@ void StaticSingleAssignment::updateIncomingPropagatedDefs(FilteredCfgNode cfgNod
 					//propagated.
 					if (!(*previousDef == *existingDef))
 					{
+                        SgNode* previousDefinitionNode = previousDef->getDefinitionNode();
+                        SgNode* eistingDefinitionNode = existingDef->getDefinitionNode();
+                        
 						printf("ERROR: At node %s@%d, two different definitions reach for variable %s\n",
 								astNode->class_name().c_str(), astNode->get_file_info()->get_line(), varnameToString(var).c_str());
 						ROSE_ASSERT(false);
