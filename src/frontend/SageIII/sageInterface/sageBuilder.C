@@ -2546,6 +2546,60 @@ SageBuilder::buildFunctionCallStmt(SgExpression* function_exp, SgExprListExp* pa
   return expStmt;
 }
 
+//! Build a CUDA kernel call expression (kernel<<<config>>>(parameters))
+SgCudaKernelCallExp * SageBuilder::buildCudaKernelCallExp_nfi(SgExpression * kernel, SgExprListExp* parameters, SgCudaKernelExecConfig * config) {
+  ROSE_ASSERT(kernel);
+  ROSE_ASSERT(parameters);
+  ROSE_ASSERT(config);
+
+  SgFunctionRefExp * func_ref_exp = isSgFunctionRefExp(kernel);
+  if (!func_ref_exp) {
+    std::cerr << "SgCudaKernelCallExp accept only direct reference to a function." << std::endl;
+    ROSE_ASSERT(false);
+  }
+  if (!(func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel())) {
+    std::cerr << "To build a SgCudaKernelCallExp the callee need to be a kernel (having \"__global__\" attribute)." << std::endl;
+    ROSE_ASSERT(false);
+  }
+
+  SgCudaKernelCallExp * kernel_call_expr = new SgCudaKernelCallExp(kernel, parameters, config);
+
+  kernel->set_parent(kernel_call_expr);
+  parameters->set_parent(kernel_call_expr);
+  config->set_parent(kernel_call_expr);
+
+  setOneSourcePositionNull(kernel_call_expr);
+
+  ROSE_ASSERT(kernel_call_expr);
+
+  return kernel_call_expr;  
+}
+
+//! Build a CUDA kernel execution configuration (<<<grid, blocks, shared, stream>>>)
+SgCudaKernelExecConfig * SageBuilder::buildCudaKernelExecConfig_nfi(SgExpression *grid, SgExpression *blocks, SgExpression *shared, SgExpression *stream) {
+  if (!grid || !blocks) {
+     std::cerr << "SgCudaKernelExecConfig need fields 'grid' and 'blocks' to be set." << std::endl;
+     ROSE_ASSERT(false);
+  }
+
+  // TODO-CUDA check types
+
+  SgCudaKernelExecConfig * config = new SgCudaKernelExecConfig (grid, blocks, shared, stream);
+
+  grid->set_parent(config);
+  blocks->set_parent(config);
+  if (shared)
+    shared->set_parent(config);
+  if (stream)
+    stream->set_parent(config);
+
+  setOneSourcePositionNull(config);
+  
+  ROSE_ASSERT(config);
+  
+  return config;
+}
+
 SgExprStatement*
 SageBuilder::buildAssignStatement(SgExpression* lhs,SgExpression* rhs)
 //SageBuilder::buildAssignStatement(SgExpression* lhs,SgExpression* rhs, SgScopeStatement* scope=NULL)
