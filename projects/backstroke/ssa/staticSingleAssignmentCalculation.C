@@ -537,7 +537,7 @@ void StaticSingleAssignment::updateIncomingPropagatedDefs(FilteredCfgNode cfgNod
 				if (existingDef->isPhiFunction() && existingDef->getDefinitionNode() == astNode)
 				{
 					//There is a phi node here. We update the phi function to point to the previous reaching definition
-					existingDef->addJoinedDef(previousDef, inEdges[i].getPath().getEdges().back());
+					existingDef->addJoinedDef(previousDef, inEdges[i]);
 				}
 				else
 				{
@@ -545,9 +545,6 @@ void StaticSingleAssignment::updateIncomingPropagatedDefs(FilteredCfgNode cfgNod
 					//propagated.
 					if (!(*previousDef == *existingDef))
 					{
-                        SgNode* previousDefinitionNode = previousDef->getDefinitionNode();
-                        SgNode* eistingDefinitionNode = existingDef->getDefinitionNode();
-                        
 						printf("ERROR: At node %s@%d, two different definitions reach for variable %s\n",
 								astNode->class_name().c_str(), astNode->get_file_info()->get_line(), varnameToString(var).c_str());
 						ROSE_ASSERT(false);
