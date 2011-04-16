@@ -107,7 +107,7 @@ std::string ValueNode::toString() const
 
 int PhiNode::getCost() const
 {
-    getCostFromType(getType());
+    return getCostFromType(getType());
 }
 
 SgType* ValueNode::getType() const

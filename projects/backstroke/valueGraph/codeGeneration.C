@@ -117,7 +117,7 @@ SgStatement* buildOperation(
         ValueNode* lhs,
         ValueNode* rhs)
 {
-    SgExpression* resExpr = buildVariable(result);
+    //SgExpression* resExpr = buildVariable(result);
     SgExpression* lhsExpr = buildVariable(lhs);
     SgExpression* rhsExpr = rhs ? buildVariable(rhs) : NULL;
     SgExpression* opExpr  = NULL;

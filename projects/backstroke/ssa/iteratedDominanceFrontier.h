@@ -24,14 +24,14 @@ namespace ssa_private
 	{
 		set<CfgNodeT> result;
 		set<CfgNodeT> visitedNodes;
-		set<CfgNodeT> worklist;
+		vector<CfgNodeT> worklist;
 
-		worklist.insert(startNodes.begin(), startNodes.end());
+		worklist.insert(worklist.end(), startNodes.begin(), startNodes.end());
 
 		while (!worklist.empty())
 		{
-			CfgNodeT currentNode = *worklist.begin();
-			worklist.erase(worklist.begin());
+			CfgNodeT currentNode = worklist.back();
+			worklist.pop_back();
 			visitedNodes.insert(currentNode);
 
 			//Get the dominance frontier of the node and add it to the results
@@ -45,7 +45,7 @@ namespace ssa_private
 					continue;
 
 				result.insert(dfNode);
-				worklist.insert(dfNode);
+				worklist.push_back(dfNode);
 			}
 		}
 

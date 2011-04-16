@@ -58,7 +58,6 @@ void PathNumManager::generatePathNumbers()
     DAGVertex exit  = vertexToDagIndex_[cfg_.getExit()].second;
 
     // For each DAG, generate its path information.
-    int index = 0;
     foreach (const DAG& dag, dags_)
     {
         PathNumGenerator* pathNumGen = new PathNumGenerator(dag, entry, exit);

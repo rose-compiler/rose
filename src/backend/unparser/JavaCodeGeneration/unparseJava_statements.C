@@ -78,7 +78,7 @@ JavaCodeGeneration_locatedNode::unparseFunctionParameterDeclaration (
 
      SgName        tmp_name  = initializedName->get_name();
      SgInitializer *tmp_init = initializedName->get_initializer();
-     SgType        *tmp_type = initializedName->get_type();
+     //SgType        *tmp_type = initializedName->get_type();
      ROSE_ASSERT (initializedName!= NULL);
 
      SgStorageModifier & storage = initializedName->get_storageModifier();

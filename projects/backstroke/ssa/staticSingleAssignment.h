@@ -203,7 +203,7 @@ private:
 	 * @param cfgNodesInPostOrder all the CFG nodes of the function
 	 * @returns the control dependencies. */
 	std::multimap< FilteredCfgNode, std::pair<FilteredCfgNode, FilteredCfgEdge> > insertPhiFunctions(SgFunctionDefinition* function,
-						std::vector<FilteredCfgNode> cfgNodesInPostOrder);
+						const std::vector<FilteredCfgNode>& cfgNodesInPostOrder);
 
 	/** Create ReachingDef objects for each local def and insert them in the local def table. */
 	void populateLocalDefsTable(SgFunctionDeclaration* function);
@@ -212,7 +212,7 @@ private:
 	 * and the local def table is populated, but before dataflow propagates the definitions. 
 	 * 
 	 * @param cfgNodesInPostOrder a list of all the CFG nodes in the function, in postorder. */
-	void renumberAllDefinitions(SgFunctionDefinition* func, std::vector<FilteredCfgNode> cfgNodesInPostOrder);
+	void renumberAllDefinitions(SgFunctionDefinition* func, const std::vector<FilteredCfgNode>& cfgNodesInPostOrder);
 
 	/** Take all the outgoing defs from previous nodes and merge them as the incoming defs
 	 * of the current node. */
@@ -223,8 +223,9 @@ private:
 	bool propagateDefs(FilteredCfgNode cfgNode);
 
 	/** Once all the reaching def information has been propagated, uses the reaching def information and the local
-	 * use information to match uses to their reaching defs. */
-	void buildUseTable(SgFunctionDefinition* func);
+	 * use information to match uses to their reaching defs. 
+     * @param cfgNodesInPostOrder all the nodes for which uses should be matched to defs*/
+	void buildUseTable(const std::vector<FilteredCfgNode>& cfgNodes);
 
 	/** Iterates all the CFG nodes in the function and returns them in postorder, according to depth-first search.
 	 * Reverse postorder is the most efficient order for dataflow propagation. */
