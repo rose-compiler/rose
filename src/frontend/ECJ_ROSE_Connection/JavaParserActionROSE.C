@@ -369,8 +369,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMessageSend (JNIEnv *env, jobject 
        // printf ("Build a SgTypeInt in the stack since the class was not built (debugging mode): name = %s\n",name.str());
        // astJavaTypeStack.push_front(SgTypeInt::createType());
 
-          printf ("ERROR: we can't find the targetClassScope for className = %s (skipping building this function call -- building int value expression) \n",className.str());
-          SgValueExp* dummyValueExpression = SageBuilder::buildIntVal(42);
+       // This is not correct, but it allows me to move on and debug other work for now.
+       // What this means is that functions from classes that we don't have available will not be resolved as function call expressions.
+          printf ("ERROR: we can't find the targetClassScope for className = %s (skipping building this function call -- building int value expression for the stack instead) \n",className.str());
+          SgValueExp* dummyValueExpression = SageBuilder::buildIntVal(9999999);
           ROSE_ASSERT(dummyValueExpression != NULL);
           astJavaExpressionStack.push_front(dummyValueExpression);
 
@@ -642,26 +644,129 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportStart (JN
 
      outputJavaState("At TOP of cactionBuildImplicitClassSupportStart");
 
+  // printf ("In Java_JavaParser_cactionBuildImplicitClassSupportStart(): Exiting as a test! \n");
+  // ROSE_ASSERT(false);
+
      SgName name = convertJavaStringToCxxString(env,java_string);
 
   // This builds a class to represent the implicit classes that are available by default within Java.
   // Each is built on an as needed basis (driven by references to the class).
      buildImplicitClass(name);
 
-  // Save the list of implicitly build classes so that within cactionBuildImplicitClassSupportEnd() we can
-  // process the list to support the symbol table fixup required to allow implicit named methods and
-  // data members to be properly referenced with name qulaification.
-     astJavaImplicitClassList.push_back(name);
+  // DQ (4/15/2011): This code should be refactored ...
+     SgName classNameWithQualification = name;
+     if (SgProject::get_verbose() > 0)
+          printf ("implicit class = %s \n",classNameWithQualification.str());
+
+     SgGlobal* globalScope = getGlobalScope();
+     ROSE_ASSERT(globalScope != NULL);
+
+#if 0
+  // DQ (4/15/2011): This more expensive approach is no longer required.
+
+  // We need to pick out the SgClassDeclaration from the AST to build the SgAliasSysmbol.
+  // So we build a list and find the one that matches the name, however this is a global 
+  // operation and could be made much more efficient and direct by parsing the qualified 
+  // name and finding the symbol more directly.  So this is simple to implement and should
+  // be replaced later.
+     printf ("##### Replace global search of AST to find name = %s more directly #####\n",classNameWithQualification.str());
+     NodeQuerySynthesizedAttributeType nodeList = NodeQuery::querySubTree(globalScope,V_SgClassDeclaration);
+
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("Output the nodeList (current classes in AST) = \n");
+       // for (list<SgName>::iterator i = astJavaImplicitClassList.begin(); i != astJavaImplicitClassList.end(); i++)
+          for (NodeQuerySynthesizedAttributeType::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+             {
+            // SgName classNameWithQualification = *i;
+            // if (SgProject::get_verbose() > -1)
+            //      printf ("   --- implicit class = %s \n",classNameWithQualification.str());
+
+               SgClassDeclaration* temp_classDeclaration = isSgClassDeclaration(*i);
+               ROSE_ASSERT(temp_classDeclaration != NULL);
+               printf ("   --- nodeList: %s \n",temp_classDeclaration->get_name().str());
+             }
+        }
+#endif
+
+     SgName classNameWithoutQualification = stripQualifiers(classNameWithQualification);
+     SgClassSymbol* classSymbol = globalScope->lookup_class_symbol(classNameWithoutQualification);
+     if (classSymbol != NULL)
+        {
+       // Nothing to do.
+          if (SgProject::get_verbose() > 0)
+               printf ("NOTHING TO DO: class = %s is already in global scope (qualified name = %s) \n",classNameWithoutQualification.str(),classNameWithQualification.str());
+        }
+       else
+        {
+          if (SgProject::get_verbose() > 0)
+               printf ("class = %s must be placed into global scope (qualified name = %s) \n",classNameWithoutQualification.str(),classNameWithQualification.str());
+
+#if 0
+       // DQ (4/15/2011): This more expensive approach is no longer required.
+
+       // DQ (4/15/2011): The class might not have been put into global scope, but it might be present because of a reference.
+          SgClassSymbol* alt_classSymbol = lookupSymbolFromQualifiedName(classNameWithQualification);
+          ROSE_ASSERT(alt_classSymbol != NULL);
+
+          SgClassDeclaration* targetClassDeclaration = NULL;
+          list<SgClassDeclaration*> classDeclarationList;
+          for (NodeQuerySynthesizedAttributeType::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+             {
+               SgClassDeclaration* temp_classDeclaration = isSgClassDeclaration(*i);
+               if (temp_classDeclaration->get_name() == classNameWithoutQualification)
+                  {
+                    targetClassDeclaration = temp_classDeclaration;
+                    classDeclarationList.push_back(targetClassDeclaration);
+                  }
+             }
+          ROSE_ASSERT(classDeclarationList.empty() == false);
+
+          if (classDeclarationList.size() != 1)
+             {
+               printf ("In cactionBuildImplicitClassSupportEnd(): classDeclarationList.size() = %zu \n",classDeclarationList.size());
+               outputJavaState("In buildImplicitClass(): Pop the class built implicitly from the stack.");
+             }
+          ROSE_ASSERT(classDeclarationList.size() == 1);
+
+          classSymbol = isSgClassSymbol(targetClassDeclaration->search_for_symbol_from_symbol_table());
+          if (classSymbol == NULL)
+               classSymbol = isSgClassSymbol(targetClassDeclaration->get_firstNondefiningDeclaration()->search_for_symbol_from_symbol_table());
+#else
+          classSymbol = lookupSymbolFromQualifiedName(classNameWithQualification);
+#endif
+
+          ROSE_ASSERT(classSymbol != NULL);
+
+          ROSE_ASSERT(globalScope->symbol_exists(classNameWithoutQualification) == false);
+          ROSE_ASSERT(globalScope->symbol_exists(classSymbol) == false);
+
+          SgAliasSymbol* aliasSymbol = new SgAliasSymbol(classSymbol,/* isRenamed */ false);
+
+          if ( SgProject::get_verbose() > 0 )
+               printf ("Adding SgAliasSymbol for classNameWithoutQualification = %s \n",classNameWithoutQualification.str());
+
+          globalScope->insert_symbol(classNameWithoutQualification,aliasSymbol);
+        }
 
      outputJavaState("At BOTTOM of cactionBuildImplicitClassSupportStart");
+
+#if 0
+     printf ("In Java_JavaParser_cactionBuildImplicitClassSupportStart(): Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 // DQ: Note that the function signature is abby-normal...jclass instead of jobject (because they are 
 // declared "public static native" instead of "public native" in the Java side of the JNI interface.
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIEnv* env, jclass xxx, jstring java_string)
    {
+     SgName name = convertJavaStringToCxxString(env,java_string);
+
      if (SgProject::get_verbose() > 0)
-          printf ("Build support for implicit class (end) \n");
+        printf ("Build support for implicit class (end) for class = %s \n",name.str());
+
+
 
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      outputJavaState("cactionBuildImplicitClassSupportEnd");
@@ -673,7 +778,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
      astJavaScopeStack.pop_front();
 
-  // At this point we shuld still at least have the global scope on the stack.
+  // At this point we should still at least have the global scope on the stack.
      ROSE_ASSERT(astJavaScopeStack.empty() == false);
 
   // Output the list of implicit classes seen so far...
@@ -686,21 +791,36 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
              }
         }
 
+#if 0
      SgGlobal* globalScope = getGlobalScope();
      NodeQuerySynthesizedAttributeType nodeList = NodeQuery::querySubTree(globalScope,V_SgClassDeclaration);
 
      if (SgProject::get_verbose() > 0)
         {
-          printf ("Output the nodeList = \n");
-          for (list<SgName>::iterator i = astJavaImplicitClassList.begin(); i != astJavaImplicitClassList.end(); i++)
+          printf ("Output the nodeList (current classes in AST) = \n");
+       // for (list<SgName>::iterator i = astJavaImplicitClassList.begin(); i != astJavaImplicitClassList.end(); i++)
+          for (NodeQuerySynthesizedAttributeType::iterator i = nodeList.begin(); i != nodeList.end(); i++)
              {
-               SgName classNameWithQualification = *i;
-               if (SgProject::get_verbose() > -1)
-                    printf ("   --- implicit class = %s \n",classNameWithQualification.str());
+            // SgName classNameWithQualification = *i;
+            // if (SgProject::get_verbose() > -1)
+            //      printf ("   --- implicit class = %s \n",classNameWithQualification.str());
+
+               SgClassDeclaration* temp_classDeclaration = isSgClassDeclaration(*i);
+               ROSE_ASSERT(temp_classDeclaration != NULL);
+               printf ("   --- nodeList: %s \n",temp_classDeclaration->get_name().str());
              }
         }
 
-  // printf ("Process the list of classes (nodeList) \n");
+  // We can't wait until the end of the processing for a class to build the SgAliasSymbol for the class.
+  // Else all the references that are found via recursion will not be resolved.  So this functionality
+  // to build the SgAliasSymbols is moved to Java_JavaParser_cactionBuildImplicitClassSupportStart().
+
+     printf ("In Java_JavaParser_cactionBuildImplicitClassSupportEnd(): Exiting as a test! \n");
+     ROSE_ASSERT(false);
+
+     if (SgProject::get_verbose() > 0)
+          printf ("Process the list of classes (nodeList) \n");
+
   // Process the classes in the list to support an implicit "use" statment of the parent of the class so that
   // each of the implicit classes will be represented in the current scope.
      for (list<SgName>::iterator i = astJavaImplicitClassList.begin(); i != astJavaImplicitClassList.end(); i++)
@@ -736,7 +856,13 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
                        }
                   }
                ROSE_ASSERT(classDeclarationList.empty() == false);
-               ROSE_ASSERT(classDeclarationList.size() == 1);
+
+               if (classDeclarationList.size() != 1)
+                  {
+                    printf ("In cactionBuildImplicitClassSupportEnd(): classDeclarationList.size() = %zu \n",classDeclarationList.size());
+                    outputJavaState("In buildImplicitClass(): Pop the class built implicitly from the stack.");
+                  }
+            // ROSE_ASSERT(classDeclarationList.size() == 1);
 
                classSymbol = isSgClassSymbol(targetClassDeclaration->search_for_symbol_from_symbol_table());
                if (classSymbol == NULL)
@@ -755,6 +881,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionBuildImplicitClassSupportEnd (JNIE
                globalScope->insert_symbol(classNameWithoutQualification,aliasSymbol);
              }
         }
+#endif
    }
 
 
@@ -818,6 +945,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
 
      if (SgProject::get_verbose() > 0)
           printf ("Inside of Java_JavaParser_cactionGenerateType() \n");
+
+     outputJavaState("At TOP of cactionGenerateType");
 
      SgName name = convertJavaStringToCxxString(env,java_string);
   // printf ("Java_JavaParser_cactionGenerateType(): name = %s \n",name.str());
@@ -910,8 +1039,17 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
              {
             // If the "String" class was not found then it is likely because we are in a debug mode which limits the number of implecit classes.
                printf ("Build a class for String: name = %s\n",name.str());
+               outputJavaState("In cactionGenerateType case of java.lang.String");
+
                buildImplicitClass(name);
                printf ("DONE: Build a class for String: name = %s\n",name.str());
+
+               outputJavaState("DONE: In cactionGenerateType case of java.lang.String");
+
+            // We need to leave a SgType on the astJavaTypeStack, we need to build the class to build 
+            // the SgClassType, but we don't want to leave a SgClassDefinition on the astJavaScopeStack.
+               printf ("When we just build a type we don't want the new class definition on the stack. \n");
+               astJavaScopeStack.pop_front();
 
                SgClassType* classType = lookupTypeFromQualifiedName(name);
                if (classType == NULL)
@@ -961,6 +1099,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionGenerateType (JNIEnv* env, jclass 
      ROSE_ASSERT(astJavaTypeStack.empty() == false);
 
   // printf ("Leaving Java_JavaParser_cactionGenerateType() \n");
+
+     outputJavaState("At BOTTOM of cactionGenerateType");
 
 #if 0
      printf ("Build support for types (not finished) \n");
@@ -1266,7 +1406,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatement(JNIEnv *env, jobject x
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx, jstring java_string)
+// JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx, jstring java_string, jboolean java_containsWildcard)
+// JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jclass xxx, jstring java_string, jboolean java_containsWildcard)
+// JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx, jstring java_string, jboolean java_containsWildcard)
+// JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx, jstring java_string)
+JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx, jstring java_string, jint java_containsWildcard)
    {
   // This is the import statement.  The semantics is to include the named file and add its 
   // declarations to the global scope so that they can be referenced by the current file.
@@ -1274,8 +1418,25 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobje
      if (SgProject::get_verbose() > -1)
           printf ("Inside of Java_JavaParser_cactionImportReference() \n");
 
-     SgName name = convertJavaStringToCxxString(env,java_string);
-     printf ("import name = %s \n",name.str());
+  // I could not debug passing a Java "Boolean" variable, but "int" works fine.
+  // containsWildcard = convertJavaBooleanToCxxBoolean(env,input_containsWildcard);
+  // containsWildcard = (bool) (env->CallBooleanMethod(xxx,input_containsWildcard) == 1);
+  // containsWildcard = (bool) input_containsWildcard;
+  // containsWildcard = (bool) (env->CallStaticBooleanMethod(xxx,java_containsWildcard) == 1);
+  // containsWildcard = (java_containsWildcard == 1);
+
+     SgName name           = convertJavaStringToCxxString(env,java_string);
+     bool containsWildcard = java_containsWildcard;
+
+     printf ("import name = %s containsWildcard = %s \n",name.str(),containsWildcard ? "true" : "false");
+
+     SgJavaImportStatement* importStatement = new SgJavaImportStatement(name,containsWildcard);
+     ROSE_ASSERT(importStatement != NULL);
+
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     astJavaScopeStack.front()->append_statement(importStatement);
+  // importStatement->set_parent(astJavaScopeStack.front());
+     setJavaSourcePosition(importStatement);
    }
 
 
