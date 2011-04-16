@@ -734,13 +734,39 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > -1)
                System.out.println("Inside of visit (ImportReference,CompilationUnitScope)");
 
+          String importReference = "";
           for (int i = 0, tokenArrayLength = node.tokens.length; i < tokenArrayLength; i++)
              {
                String tokenString = new String(node.tokens[i]);
                System.out.println("     --- ImportReference tokens = " + tokenString);
+
+               if (i > 0)
+                    importReference += '.';
+
+               importReference += tokenString;
              }
 
-          java_parser.cactionImportReference("my_path");
+       // if (withOnDemand && ((node.bits & ASTNode.OnDemand) != 0))
+          boolean withOnDemand = true;
+          boolean containsWildcard = false;
+          String importReferenceWithoutWildcard = importReference;
+          if (withOnDemand && ((node.bits & node.OnDemand) != 0))
+             {
+            // output.append(".*");
+               System.out.println("     --- ImportReference tokens = *");
+               importReference += ".*";
+               containsWildcard = true;
+             }
+
+          if (java_parser.verboseLevel > -1)
+               System.out.println("importReference (string) = " + importReference);
+
+       // java_parser.cactionImportReference("my_path");
+       // java_parser.cactionImportReference(importReferenceWithoutWildcard,containsWildcard);
+          int containsWildcard_integer = containsWildcard ? 1 : 0;
+       // java_parser.cactionImportReference(importReferenceWithoutWildcard,containsWildcard_integer);
+       // java_parser.cactionImportReference(importReferenceWithoutWildcard,7);
+          java_parser.cactionImportReference(importReferenceWithoutWildcard,containsWildcard_integer);
 
           if (java_parser.verboseLevel > -1)
                System.out.println("Leaving visit (ImportReference,CompilationUnitScope)");

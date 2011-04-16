@@ -1,5 +1,5 @@
 // Simplest java example (note that class name must match filename).
-// import java.io.*;
+import java.io.*;
 import java.lang.System;
 
 // import test2011_05;

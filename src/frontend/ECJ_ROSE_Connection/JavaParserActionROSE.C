@@ -1406,7 +1406,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatement(JNIEnv *env, jobject x
    }
 
 
-JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx, jstring java_string)
+// JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx, jstring java_string, jboolean java_containsWildcard)
+// JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jclass xxx, jstring java_string, jboolean java_containsWildcard)
+// JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx, jstring java_string, jboolean java_containsWildcard)
+// JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx, jstring java_string)
+JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx, jstring java_string, jint java_containsWildcard)
    {
   // This is the import statement.  The semantics is to include the named file and add its 
   // declarations to the global scope so that they can be referenced by the current file.
@@ -1414,8 +1418,25 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobje
      if (SgProject::get_verbose() > -1)
           printf ("Inside of Java_JavaParser_cactionImportReference() \n");
 
-     SgName name = convertJavaStringToCxxString(env,java_string);
-     printf ("import name = %s \n",name.str());
+  // I could not debug passing a Java "Boolean" variable, but "int" works fine.
+  // containsWildcard = convertJavaBooleanToCxxBoolean(env,input_containsWildcard);
+  // containsWildcard = (bool) (env->CallBooleanMethod(xxx,input_containsWildcard) == 1);
+  // containsWildcard = (bool) input_containsWildcard;
+  // containsWildcard = (bool) (env->CallStaticBooleanMethod(xxx,java_containsWildcard) == 1);
+  // containsWildcard = (java_containsWildcard == 1);
+
+     SgName name           = convertJavaStringToCxxString(env,java_string);
+     bool containsWildcard = java_containsWildcard;
+
+     printf ("import name = %s containsWildcard = %s \n",name.str(),containsWildcard ? "true" : "false");
+
+     SgJavaImportStatement* importStatement = new SgJavaImportStatement(name,containsWildcard);
+     ROSE_ASSERT(importStatement != NULL);
+
+     ROSE_ASSERT(astJavaScopeStack.empty() == false);
+     astJavaScopeStack.front()->append_statement(importStatement);
+  // importStatement->set_parent(astJavaScopeStack.front());
+     setJavaSourcePosition(importStatement);
    }
 
 
