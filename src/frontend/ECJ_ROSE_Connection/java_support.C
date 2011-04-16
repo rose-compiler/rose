@@ -310,8 +310,6 @@ convertJavaStringToCxxString(JNIEnv *env, const jstring & java_string)
      env->ReleaseStringUTFChars(java_string, str);
      ROSE_ASSERT(str != NULL);
 
-  // return str;
-  // return string(str);
      return returnString;
    }
 
@@ -323,7 +321,21 @@ convertJavaIntegerToCxxInteger(JNIEnv *env, const jint & java_integer)
   // Note that "env" can't be passed into this function as "const".
   // const int returnValue = env->CallIntMethod(java_integer,NULL);
      const int returnValue = java_integer;
+
      return returnValue;
+   }
+
+bool
+convertJavaBooleanToCxxBoolean(JNIEnv *env, const jboolean & java_boolean)
+   {
+  // Note that "env" can't be passed into this function as "const".
+  // const unsigned char returnValueChar = env->CallBooleanMethod(java_boolean,NULL);
+  // const bool returnValue = (returnValueChar != 0);
+
+  // const bool returnValue = (bool) (env->CallBooleanMethod(java_boolean,NULL) == 1);
+  // return returnValue;
+
+     return false;
    }
 
 // void memberFunctionSetup (SgName & name, SgClassDefinition* classDefinition, SgFunctionParameterList* & parameterlist, SgMemberFunctionType* & return_type)

@@ -2980,6 +2980,8 @@ HEADER_LINEMARKER_PREPROCESSOR_DIRECTIVE_STATEMENT_END
 HEADER_JAVA_IMPORT_STATEMENT_START
        // We might need to be able to read this file in and process it..., but hopefully the ECJ frontend takes care of that.
 
+          virtual SgName get_mangled_name (void) const;
+
 HEADER_JAVA_IMPORT_STATEMENT_END
 
 // #########################################################
@@ -13751,6 +13753,29 @@ void
 SgJavaImportStatement::post_construction_initialization()
    {
   // Nothing to setup here.
+   }
+
+// DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
+SgName
+SgJavaImportStatement::get_mangled_name(void) const
+   {
+  // The semantics of get_scope is that it can never be NULL (SgGlobal returns itself as its scope!)
+     SgScopeStatement* scope = get_scope();
+     ROSE_ASSERT(scope != NULL);
+
+     SgName returnName = SgName("_java_import_stmt_") + get_path();
+
+     if (get_containsWildCard() == true)
+        {
+          returnName += "_dot_regx_star_";
+        }
+
+#if 0
+     printf ("In SgJavaImportStatement::get_mangled_name(void): scope = %p = %s scope->get_qualified_name() = %s returnName = %s \n",
+          scope,scope->class_name().c_str(),scope->get_qualified_name().str(),returnName.str());
+#endif
+
+     return returnName;
    }
 
 SOURCE_JAVA_IMPORT_STATEMENT_END
