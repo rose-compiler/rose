@@ -1,5 +1,12 @@
 import org.eclipse.jdt.internal.compiler.batch.*;
 
+// Test if this works in Java.
+// import java; // fails
+// import java.io; // fails
+// import java.lang; // fails
+// import java.lang.*; // works
+// import java.*; // works
+
 import java.io.*;
 import java.text.*;
 import java.util.*;
@@ -351,6 +358,22 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("Compiling file = " + s);
              }
 
+       // Ouput some information about the CompilationUnitScope (we don't use the package name currently).
+          String packageReference = "";
+          for (int i = 0, tokenArrayLength = scope.currentPackageName.length; i < tokenArrayLength; i++)
+             {
+               String tokenString = new String(scope.currentPackageName[i]);
+               System.out.println("     --- packageReference tokens = " + tokenString);
+
+               if (i > 0)
+                    packageReference += '.';
+
+               packageReference += tokenString;
+             }
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Package name = " + packageReference);
+
        // Call the Java side of the JNI function.
        // This function only does a few tests on the C++ side to make sure that it is ready to construct the ROSE AST.
           java_parser.cactionCompilationUnitDeclaration(s);
@@ -362,14 +385,15 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 1)
                System.out.println("Calling buildImplicitClassSupport for java.lang.System");
 
+       // We now read in classes on demand as they are references, if they are references.  All classes are read as 
+       // required to resolved all types in the program and the implicitly read classes.  Interestingly, there
+       // are nearly 3000 classes in the 135 packages in the J2SE 1.4.2 standard class library (over 3000 classes 
+       // in 165 packages in J2SE 5.0). Commercial class libraries that you might use add many more packages. 
        // This triggers the building of a recursively identified set of classes required to define all types in the problem.
        // JavaParserSupport.buildImplicitClassSupport("java.lang.System");
 
           if (java_parser.verboseLevel > 1)
                System.out.println("DONE: Calling buildImplicitClassSupport for java.lang.System");
-
-       // This implements the equivalent of the C++ "use" statement on "java.lang".
-       // java_parser.cactionFixupGlobalScope("java.lang");
 
        // System.out.println("Exiting as a test in visit (CompilationUnitDeclaration,CompilationUnitScope)...");
        // System.exit(1);
@@ -731,6 +755,14 @@ class ecjASTVisitor extends ASTVisitor
 
      public boolean visit(ImportReference  node, CompilationUnitScope scope)
         {
+       // This is the support for the Java "import" statement (declaration).
+       // We can basically strify this step, since this is frontend handling that
+       // has no analysis requirements (that I know of).  We could translate
+       // the list of class names to a list of declarations, this might be useful
+       // at a later point. However, this would require post processing since
+       // we have not yet read in the classes that would be a part of those
+       // implicitly read as a consequence of the "import" statements.
+
           if (java_parser.verboseLevel > -1)
                System.out.println("Inside of visit (ImportReference,CompilationUnitScope)");
 
@@ -746,7 +778,6 @@ class ecjASTVisitor extends ASTVisitor
                importReference += tokenString;
              }
 
-       // if (withOnDemand && ((node.bits & ASTNode.OnDemand) != 0))
           boolean withOnDemand = true;
           boolean containsWildcard = false;
           String importReferenceWithoutWildcard = importReference;
@@ -761,13 +792,111 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > -1)
                System.out.println("importReference (string) = " + importReference);
 
-       // java_parser.cactionImportReference("my_path");
-       // java_parser.cactionImportReference(importReferenceWithoutWildcard,containsWildcard);
+       // Build the text for the token (not taken from the token stream in EDG, so it might be wrong to call this a token; fix later).
+          String text = "import";
+
+       // We know how to set these, but make them known values for initial testing.
+          int    line = 7;
+          int    col  = 42;
+
+          System.out.println("Building a JavaToken("+text+","+line+","+col+")");
+          JavaToken token = new JavaToken(text,line,col);
+          System.out.println("DONE: Building a JavaToken("+text+","+line+","+col+")");
+
+       // DQ (4/15/2011): I could not get the passing of a boolean to work, so I am just passing an integer.
           int containsWildcard_integer = containsWildcard ? 1 : 0;
-       // java_parser.cactionImportReference(importReferenceWithoutWildcard,containsWildcard_integer);
-       // java_parser.cactionImportReference(importReferenceWithoutWildcard,7);
           java_parser.cactionImportReference(importReferenceWithoutWildcard,containsWildcard_integer);
 
+       // Use the toke to set the source code position for ROSE.
+          java_parser.cactionSetSourcePosition(token);
+
+/*
+       // I now do not think this is worth doing at this point.  Basically, we will treat the "import" statement
+       // as a stringified construct (as much as I don't like that approach within a compiler).
+
+       // We now read in classes on demand as they are references, if they are references.  All classes are read as 
+       // required to resolved all types in the program and the implicitly read classes.  Interestingly, there
+       // are nearly 3000 classes in the 135 packages in the J2SE 1.4.2 standard class library (over 3000 classes 
+       // in 165 packages in J2SE 5.0). Commercial class libraries that you might use add many more packages. 
+       // This implements the equivalent of the C++ "use" statement on "java.lang".
+          System.out.println("Processing import statement: path = " + importReference + " importReferenceWithoutWildcard = " + importReferenceWithoutWildcard);
+
+          JavaParserSupport.buildImplicitClassSupport("java.lang");
+
+       // Note that reflection does not work on all levels (e.g. "java.io"), so we have to handle some cases explicitly.
+          String s = new String(node.tokens[0]);
+          int tokenArrayLength = node.tokens.length;
+          System.out.println("tokenArrayLength = " + tokenArrayLength + " s = " + s);
+          String javaString = new String("java");
+          if (s == javaString)
+             {
+               System.out.println("In path segment: s = " + s);
+               if (tokenArrayLength > 1)
+                  {
+                    s = new String(node.tokens[1]);
+
+                 // This is the start of the default implicit package within the Java standard.
+                    if (s == "lang")
+                       {
+                      // This is the start of the default implicit language package within the Java standard.
+                         if (containsWildcard == true)
+                            {
+                              System.out.println("Processing java.lang.*");
+                            }
+                           else
+                            {
+                              System.out.println("Error: import java.lang is not defined in Java");
+                              System.exit(1);
+                            }
+                       }
+                      else
+                       {
+                         if (s == "io")
+                            {
+                           // This is the start of the default implicit package within the Java standard.
+                              if (containsWildcard == true)
+                                 {
+                                   System.out.println("Processing java.io.*");
+                                 }
+                                else
+                                 {
+                                   System.out.println("Error: import java.io is not defined in Java");
+                                   System.exit(1);
+                                 }
+                            }
+                           else
+                            {
+                              System.out.println("Sorry, import java." + s + " is not implemented yet");
+                              System.exit(1);
+                            }
+                       }
+                  }
+                 else
+                  {
+                    if (containsWildcard == true)
+                       {
+                      // System.out.println("Processing java.*");
+                         System.out.println("Sorry, import java.* is not implemented yet");
+                         System.exit(1);
+                       }
+                      else
+                       {
+                         System.out.println("Error: import java is not implemented yet");
+                         System.exit(1);
+                       }
+                  }
+             }
+            else
+             {
+               System.out.println("Not a part of java standard package: import " + s + " is not implemented yet");
+               System.exit(1);
+             }
+
+       // JavaParserSupport.buildImplicitClassSupport(importReference);
+          JavaParserSupport.buildImplicitClassSupport(importReferenceWithoutWildcard);
+
+          System.out.println("DONE: Processing import statement: path = " + importReference + " importReferenceWithoutWildcard = " + importReferenceWithoutWildcard);
+*/
           if (java_parser.verboseLevel > -1)
                System.out.println("Leaving visit (ImportReference,CompilationUnitScope)");
 
