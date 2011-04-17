@@ -60,7 +60,7 @@ convert_Java_token(JNIEnv *env, jobject token)
           if (text == NULL)
              {
                fprintf(stderr, "Unable to retrieve text string from String object\n");
-               exit(1);
+               assert(false);
              }
         }
        else
