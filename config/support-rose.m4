@@ -144,6 +144,8 @@ fi
 ##
 
   ROSE_SUPPORT_LANGUAGE_CONFIG_OPTIONS
+  AC_CHECK_LIB([curl], [Curl_connect], [HAVE_CURL=yes], [HAVE_CURL=no])
+  AM_CONDITIONAL([HAS_LIBRARY_CURL], [test "x$HAVE_CURL" = "xyes"])
 
 ##
 #########################################################################################
