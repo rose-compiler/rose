@@ -418,7 +418,8 @@ syscall_exit(RSIM_Thread *t, int callno)
 static void
 syscall_exit_leave(RSIM_Thread *t, int callno)
 {
-    abort(); /* exit never returns */
+    /* This should not be reached, but might be reached if the exit system call body was skipped over. */
+    t->tracing(TRACE_SYSCALL)->more(" = <should not have returned>\n");
 }
 
 /*******************************************************************************************************************************/
@@ -3139,7 +3140,8 @@ syscall_sigreturn(RSIM_Thread *t, int callno)
 static void
 syscall_sigreturn_leave(RSIM_Thread *t, int callno)
 {
-    abort(); /* sigreturn never returns */
+    /* This should not be reached, but might be reached if the sigreturn system call body was skipped over. */
+    t->tracing(TRACE_SYSCALL)->more(" = <should not have returned>\n");
 }
 
 /*******************************************************************************************************************************/
@@ -3663,7 +3665,8 @@ syscall_rt_sigreturn(RSIM_Thread *t, int callno)
 static void
 syscall_rt_sigreturn_leave(RSIM_Thread *t, int callno)
 {
-    abort(); /* rt_sigreturn never returns */
+    /* This should not be reached, but might be reached if the rt_sigreturn system call body was skipped over. */
+    t->tracing(TRACE_SYSCALL)->more(" = <should not have returned>\n");
 }
 
 /*******************************************************************************************************************************/
@@ -4466,7 +4469,8 @@ syscall_exit_group(RSIM_Thread *t, int callno)
 static void
 syscall_exit_group_leave(RSIM_Thread *t, int callno)
 {
-    abort();    /* syscall_exit should not return */
+    /* This should not be reached, but might be reached if the exit_group system call body was skipped over. */
+    t->tracing(TRACE_SYSCALL)->more(" = <should not have returned>\n");
 }
 
 /*******************************************************************************************************************************/
