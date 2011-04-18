@@ -66,6 +66,7 @@ void outputJavaState( const std::string label );
 
 std::string convertJavaStringToCxxString  (JNIEnv *env, const jstring & java_string);
 int         convertJavaIntegerToCxxInteger(JNIEnv *env, const jint    & java_integer);
+bool        convertJavaBooleanToCxxBoolean(JNIEnv *env, const jboolean & java_boolean);
 
 // Specify the SgClassDefinition explicitly so that implicit classes are simpler to build.
 // SgMemberFunctionDeclaration* buildSimpleMemberFunction(const SgName & name);
