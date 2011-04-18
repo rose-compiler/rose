@@ -14,7 +14,8 @@ main(int argc, char *argv[], char *envp[])
 {
     RSIM_Linux32 sim;
 
-#if 0 /*EXAMPLE: If you change this, then also update the example text in RSIM_Callbacks.h. */
+    /***************************************************************************************************************************/
+#   if 0 /*EXAMPLE: If you change this, then also update the example text in RSIM_Callbacks.h. */
     {
         /* An example of a pre-instruction callback which disassembles the specimen's memory image when a thread attempts to
          * execute at the original entry point (OEP) for the first time.  The OEP is the entry address defined in the ELF file
@@ -43,9 +44,10 @@ main(int argc, char *argv[], char *envp[])
 
         sim.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new DisassembleAtOep);
     }
-#endif
+#   endif
 
-#if 0 /* EXAMPLE: If you change this then also update the example text in RSIM_Callbacks.h */
+    /***************************************************************************************************************************/
+#   if 0 /* EXAMPLE: If you change this then also update the example text in RSIM_Callbacks.h */
     {
         /* This example depends on the previous one, which called RSIM_Process::disassemble() */
         class ShowFunction: public RSIM_Callbacks::InsnCallback {
@@ -70,9 +72,10 @@ main(int argc, char *argv[], char *envp[])
 
         sim.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new ShowFunction);
     }
-#endif
+#   endif
 
-#if 0 /*EXAMPLE*/
+    /***************************************************************************************************************************/
+#   if 0 /*EXAMPLE*/
     {
         /* Shows how to replace a system call implementation so something else happens instead.  For instance, we replace the
          * open system call (#5) to ignore the file name and always open "/dev/null".  The system call tracing facility will
@@ -90,9 +93,10 @@ main(int argc, char *argv[], char *envp[])
 
         sim.syscall_implementation(5)->body.clear().append(new NullOpen);
     }
-#endif
+#   endif
 
-#if 1 /*EXAMPLE*/
+    /***************************************************************************************************************************/
+#   if 0 /*EXAMPLE: Tracing file I/O */
     {
         RSIM_Adapter::TraceFileIO *tracer = new RSIM_Adapter::TraceFileIO;
         tracer->trace_fd(0); // stdin
@@ -100,9 +104,57 @@ main(int argc, char *argv[], char *envp[])
         tracer->trace_fd(2); // stderr
         tracer->attach(&sim); //sim->adapt(tracer);
     }
-#endif
+#   endif
+
+    /***************************************************************************************************************************/
+#   if 0 /* EXAMPLE: disabling network capability */
+    {
+        static RSIM_Adapter::SyscallDisabler no_network(true);
+        no_network.prefix("NoNetwork: ");
+        no_network.disable_syscall(102/*sys_socketcall*/);
+        no_network.attach(&sim);
+    }
+#   endif
+
+    /***************************************************************************************************************************/
+#   if 0 /* EXAMPLE: disabling system calls */
+    {
+        struct Ask: public RSIM_Simulator::SystemCall::Callback {
+            std::set<int> asked;
+            bool operator()(bool syscall_enabled, const Args &args) {
+                if (asked.find(args.callno)==asked.end()) {
+                    asked.insert(args.callno);
+                    fprintf(stderr, "System call %d is currently disabled. What should I do? (s=skip, e=enable) [s] ",
+                            args.callno);
+                    char buf[200];
+                    if (fgets(buf, sizeof buf, stdin) && buf[0]=='e')
+                        syscall_enabled = true;
+                }
+                return syscall_enabled;
+            }
+        };
+
+        static RSIM_Adapter::SyscallDisabler disabler(false);
+        disabler.get_callbacks().append(new Ask);
+        disabler.attach(&sim);
+    }
+#   endif
+        
+    /***************************************************************************************************************************/
+#   if 0 /* EXAMPLE: Data injection */
+#   endif
 
 
+
+
+
+
+
+
+    /***************************************************************************************************************************
+     *                                  The main program...
+     ***************************************************************************************************************************/
+    
     /* Configure the simulator by parsing command-line switches. The return value is the index of the executable name in argv. */
     int n = sim.configure(argc, argv, envp);
 
@@ -125,6 +177,10 @@ main(int argc, char *argv[], char *envp[])
     sim.terminate_self(); // probably doesn't return
     return 0;
 }
+
+
+
+
 
 #else
 int main(int, char *argv[])
