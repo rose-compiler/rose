@@ -37,7 +37,7 @@ SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr)
                                     init);
 }
 
-void instrumentPushFunction(ValueNode* node)
+void instrumentPushFunction(ValueNode* node, SgFunctionDefinition* funcDef)
 {
     // Build push function call.
 	SgExprListExp* parameters = buildExprListExp(node->var.getVarRefExp());
@@ -63,16 +63,14 @@ void instrumentPushFunction(ValueNode* node)
 
         SgStatement* pushFuncStmt = buildExprStatement(pushFunc);
 
-        // If this node belongs to event parameters, add the push function just
-        // at the beginning of the forward function. Else, add the push function
-        // under the declaration.
-        if (SgFunctionParameterList* funcPara = isSgFunctionParameterList(stmtNode))
+        // If this node belongs to event parameters, or is defined outside the function, 
+        // add the push function just at the beginning of the forward function.
+        // Else, add the push function under the declaration.
+        if (isSgClassDefinition(stmtNode->get_parent()) ||
+                isSgFunctionParameterList(stmtNode))
         {
             // If this declaration belongs to parameter list.
-            SgFunctionDeclaration* funcDecl =
-                    isSgFunctionDeclaration(funcPara->get_parent());
-            SgBasicBlock* funcBody = funcDecl->get_definition()->get_body();
-            prependStatement(pushFuncStmt, funcBody);
+            prependStatement(pushFuncStmt, funcDef->get_body());
         }
         else
         {
@@ -92,11 +90,16 @@ void instrumentPushFunction(ValueNode* node)
     }
 }
 
-SgStatement* buildPopFunction(ValueNode* node)
+SgExpression* buildPopFunctionCall(SgType* type)
+{
+    return buildFunctionCallExp("pop< " + get_type_name(type) + " >",
+            type, SageBuilder::buildExprListExp());
+}
+
+SgStatement* buildRestorationStmt(ValueNode* node)
 {
     SgType* type = node->getType();
-	SgExpression* popFunc = buildFunctionCallExp("pop< " + get_type_name(type) + " >",
-            type, SageBuilder::buildExprListExp());
+	SgExpression* popFunc = buildPopFunctionCall(type);
     return buildExprStatement(buildAssignOp(buildVariable(node), popFunc));
 }
 

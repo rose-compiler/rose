@@ -60,8 +60,7 @@ inline void normalizeEvent(SgFunctionDefinition* func_def)
 }
 #endif
 
-//! Normalize the given function. The output is the normalized function with a different name
-//! (with "_normalized" as postfix). This function shall not modify the input function declaration.
+//! Normalize the given function. The output is the normalized function.
 SgFunctionDeclaration* normalizeEvent(SgFunctionDeclaration* func_decl);
 
 

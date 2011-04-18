@@ -64,10 +64,15 @@ void EventReverser::getSubGraph(
 //        //cout << subgraph << endl;
 //        const char* name = "ABCDE";
 
+    // Get the route for this path.
     SubValueGraph route = getReversalRoute(dagIndex, pathIndex,
                                            subgraph, valuesToRestore_);
-
+    
+    // Generate the reverse function for this route.
     generateReverseFunction(scope, route);
+
+    // Fix all variable references.
+    SageInterface::fixVariableReferences(scope);
     //graphToDot(subgraph, filename);
 }
 

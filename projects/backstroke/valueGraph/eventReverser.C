@@ -1,9 +1,6 @@
 #include "valueGraph.h"
 #include "eventReverser.h"
-#include <sageInterface.h>
-#include <sageBuilder.h>
-#include <utilities/utilities.h>
-#include <boost/assign/list_inserter.hpp>
+#include <normalizations/expNormalization.h>
 #include <boost/graph/topological_sort.hpp>
 
 namespace Backstroke
@@ -13,315 +10,32 @@ using namespace std;
 
 #define foreach BOOST_FOREACH
 
-namespace
+EventReverser::EventReverser(SgFunctionDefinition* funcDef)
+:   funcDef_(funcDef)
 {
-    struct OperationTypeTable
-    {
-        OperationTypeTable()
-        {
-            boost::assign::insert(table)
-            (V_SgPlusAssignOp,      V_SgAddOp)
-            (V_SgMinusAssignOp,     V_SgSubtractOp)
-            (V_SgMultAssignOp,      V_SgMultiplyOp)
-            (V_SgDivAssignOp,       V_SgDivideOp)
-            (V_SgAndAssignOp,       V_SgAndOp)
-            (V_SgIorAssignOp,       V_SgOrOp)
-            (V_SgModAssignOp,       V_SgModOp)
-            (V_SgXorAssignOp,       V_SgBitXorOp)
-            (V_SgLshiftAssignOp,    V_SgLshiftOp)
-            (V_SgRshiftAssignOp,    V_SgRshiftOp);
-        }
+    // Normalize the function.
+    BackstrokeNorm::normalizeEvent(funcDef_->get_declaration());
 
-        map<VariantT, VariantT> table;
-    };
+    // Three new functions are built. Backup the original function here.
+    buildFunctionBodies();
 
-    VariantT getOriginalType(VariantT t)
-    {
-        static OperationTypeTable typeTable = OperationTypeTable();
-        ROSE_ASSERT(typeTable.table.count(t) > 0);
-        return typeTable.table[t];
-    }
+    cfg_ = new BackstrokeCFG(funcDef_);
+    ssa_ = new SSA(SageInterface::getProject());
+    ssa_->run(false);
 
-} // end of anonymous
+    pathNumManager_ = new PathNumManager(cfg_);
+}
 
-void EventReverser::buildBasicValueGraph()
+EventReverser::~EventReverser()
 {
-    // Build the SSA form of the given function.
-    //SSA::NodeReachingDefTable defTable = getUsesAtNode(funcDef);
-
-    // Build a vertex which is the start point of the search.
-    //root_ = addValueGraphNode(new ValueGraphNode);
-    root_ = addValueGraphNode(new ValueGraphNode);
-
-    /***************************************************************************/
-    // We search state variables here. This part should use a functor to determine
-    // which variables are state ones.
-    // Currently, we assume the parameters are state variables in C style, while
-    // all data members are state variables in C++ style.
-    
-    // First, add all parameters of the event to the value graph.
-    SgInitializedNamePtrList& paraList = funcDef_->get_declaration()->get_args();
-    foreach (SgInitializedName* initName, paraList)
-    {
-        VGVertex newNode = createValueNode(initName, NULL);
-
-        // FIXME State variable may not be parameters.
-        // Add the variable into wanted set.
-        valuesToRestore_.push_back(newNode);
-        stateVariables_.insert(VarName(1, initName));
-    }
-
-    SgFunctionDeclaration* funcDecl = funcDef_->get_declaration();
-    // If the event is a member function.
-    if (SgMemberFunctionDeclaration* memFuncDecl = isSgMemberFunctionDeclaration(funcDecl))
-    {
-        SgClassDefinition* classDef = memFuncDecl->get_class_scope();
-        foreach (SgDeclarationStatement* decl, classDef->get_members())
-        {
-            SgVariableDeclaration* varDecl = isSgVariableDeclaration(decl);
-            if (varDecl == NULL)
-                continue;
-            foreach (SgInitializedName* initName, varDecl->get_variables())
-            {
-                VarName varName(1, initName);
-                cout << SSA::varnameToString(varName) << 1 << endl;
-                VGVertex newNode = createValueNode(initName, NULL);
-                valuesToRestore_.push_back(newNode);
-                stateVariables_.insert(VarName(1, initName));
-            }
-        }
-    }
-    /***************************************************************************/
-
-    vector<SgNode*> nodes = BackstrokeUtility::querySubTree<SgNode>(funcDef_);
-    foreach (SgNode* node, nodes)
-    {
-        //cout << node->class_name() << endl;
-
-        // Statement case: variable declaration.
-        if (SgStatement* stmt = isSgStatement(node))
-        {
-            SgVariableDeclaration* varDecl = isSgVariableDeclaration(stmt);
-            if (varDecl == NULL) continue;
-            
-            foreach (SgInitializedName* initName, varDecl->get_variables())
-            {
-                SgInitializer* initalizer = initName->get_initializer();
-
-                // A declaration without definition
-                if (initalizer == NULL)
-                {
-                    createValueNode(initName, NULL);
-                }
-                else if (SgAssignInitializer* assignInit =
-                        isSgAssignInitializer(initalizer))
-                {
-                    SgExpression* operand = assignInit->get_operand();
-                    createValueNode(initName, operand);
-                    //addVariableToNode(rhsVertex, initName);
-                }
-                else
-                {
-                    //cout << initalizer->class_name() << endl;
-                    ROSE_ASSERT(!"Can only deal with assign initializer now!");
-                }
-            }
-        }
-
-        // Expression case.
-        if (SgExpression* expr = isSgExpression(node))
-        {
-            // For a variable reference, if its def is a phi node, we build this phi node here.
-            if (BackstrokeUtility::isVariableReference(expr))
-            {
-                // For data member access, ignore its corresponding "this" pointer.
-                if (isSgThisExp(expr))
-                    continue;
-
-                if (SgArrowExp* arrowExp = isSgArrowExp(expr))
-                {
-                    if (isSgThisExp(arrowExp->get_lhs_operand()))
-                    {
-                        SgExpression* rhsExp = arrowExp->get_rhs_operand();
-                        // It is possible that this var ref is actually a def.
-                        // For example, this->a = 0;
-                        if (nodeVertexMap_.count(rhsExp) > 0)
-                            nodeVertexMap_[arrowExp] = nodeVertexMap_[rhsExp];
-                        continue;
-                    }
-                }
-
-                // A cast expression may be a variable reference.
-                if (SgCastExp* castExp = isSgCastExp(expr))
-                {
-                    ROSE_ASSERT(nodeVertexMap_.count(castExp->get_operand()));
-                    nodeVertexMap_[castExp] = nodeVertexMap_[castExp->get_operand()];
-                    continue;
-                }
-
-                // Get the var name and version for lhs.
-                // We don't know if this var is a use or def now.
-                VersionedVariable var = getVersionedVariable(expr);
-
-                // If this variable is defined by a phi function.
-                if (var.isPseudoDef)
-                {
-                    // If there is no node of var in the VG.
-                    if (varVertexMap_.find(var) == varVertexMap_.end())
-                    {
-                        createPhiNode(var);
-                    }
-
-                    ROSE_ASSERT(varVertexMap_.find(var) != varVertexMap_.end());
-
-                    // Add the node -> vertex to nodeVertexMap_
-                    nodeVertexMap_[expr] = varVertexMap_[var];
-                }
-                else
-                {
-                    cout << SageInterface::get_name(expr) << endl;
-                    cout << "&" << var.toString() << " " << var.isPseudoDef << endl;
-
-                    // If the variable is a use, it should already exist in the var->vertex table.
-                    // Find it and update the node->vertex table.
-                    // The def node is not added here. (added in assignment)
-                    printVarVertexMap();
-                    // It is possible that this var ref is actually a def. For example, a = 0;
-                    if (varVertexMap_.count(var) > 0)
-                        nodeVertexMap_[expr] = varVertexMap_[var];
-                }
-            }
-
-            // Value expression.
-            if (SgValueExp* valueExp = isSgValueExp(expr))
-            {
-                createValueNode(NULL, valueExp);
-                //addValueGraphNode(new ValueNode(valueExp), expr);
-            }
-
-            // Cast expression.
-            else if (SgCastExp* castExp = isSgCastExp(expr))
-            {
-                ROSE_ASSERT(nodeVertexMap_.count(castExp->get_operand()));
-                nodeVertexMap_[castExp] = nodeVertexMap_[castExp->get_operand()];
-            }
-
-            // Unary expressions.
-            else if (SgUnaryOp* unaryOp = isSgUnaryOp(expr))
-            {
-                SgExpression* operand = unaryOp->get_operand();
-
-                VariantT t = unaryOp->variantT();
-                switch (t)
-                {
-                case V_SgPlusPlusOp:
-                case V_SgMinusMinusOp:
-                    {
-                        ROSE_ASSERT(nodeVertexMap_.count(operand) > 0);
-
-                        VGVertex operandNode = nodeVertexMap_[operand];
-                        VGVertex result = createValueNode(operand, NULL);
-
-                        createOperatorNode(t, result, operandNode);
-                        //addVariableToNode(result, operand);
-
-                        // For postfix ++ and --, we should assign the value node
-                        // before modified to this expression.
-                        if (unaryOp->get_mode() == SgUnaryOp::postfix)
-                            nodeVertexMap_[unaryOp] = operandNode;
-                        else
-                            nodeVertexMap_[unaryOp] = result;
-
-                        break;
-                    }
-
-                default:
-                    break;
-                }
-            }
-
-            // Binary expressions.
-            else if (SgBinaryOp* binOp = isSgBinaryOp(expr))
-            {
-                SgExpression* lhs = binOp->get_lhs_operand();
-                SgExpression* rhs = binOp->get_rhs_operand();
-
-                VariantT t = binOp->variantT();
-                switch (t)
-                {
-                // For assign op, we assign the node which is assigned to with a variable name.
-                case V_SgAssignOp:
-                    if (BackstrokeUtility::isVariableReference(lhs))
-                    {
-                        VGVertex result = createValueNode(lhs, rhs);
-                        // Update the node-vertex table.
-                        nodeVertexMap_[binOp] = result;
-                    }
-                    else
-                    {
-                        ROSE_ASSERT(!"Only variable can be assigned now.");
-                    }
-
-                    break;
-                    
-                case V_SgAddOp:
-                case V_SgSubtractOp:
-                case V_SgMultiplyOp:
-                case V_SgDivideOp:
-                case V_SgGreaterThanOp:
-                case V_SgGreaterOrEqualOp:
-                case V_SgLessThanOp:
-                case V_SgLessOrEqualOp:
-                case V_SgEqualityOp:
-                case V_SgNotEqualOp:
-                    ROSE_ASSERT(nodeVertexMap_.count(lhs) > 0);
-                    ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
-
-                    createOperatorNode(t, createValueNode(NULL, binOp),
-                            nodeVertexMap_[lhs], nodeVertexMap_[rhs]);
-                    break;
-
-                case V_SgPlusAssignOp:
-                case V_SgMinusAssignOp:
-                case V_SgMultAssignOp:
-                case V_SgDivAssignOp:
-                case V_SgAndAssignOp:
-                case V_SgIorAssignOp:
-                case V_SgModAssignOp:
-                case V_SgXorAssignOp:
-                case V_SgLshiftAssignOp:
-                case V_SgRshiftAssignOp:
-                    {
-                        VersionedVariable use = getVersionedVariable(lhs);
-
-                        ROSE_ASSERT(varVertexMap_.count(use) > 0);
-                        ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
-
-                        VGVertex result = createValueNode(lhs, NULL);
-                        createOperatorNode(
-                                getOriginalType(t), result,
-                                varVertexMap_[use], nodeVertexMap_[rhs]);
-
-                        // Update the node-vertex table.
-                        nodeVertexMap_[binOp] = result;
-                        break;
-                    }
-
-                case V_SgCommaOpExp:
-                    nodeVertexMap_[binOp] = nodeVertexMap_[rhs];
-                    break;
-
-                default:
-                    break;
-                }
-            }
-        }
-    }
+    delete cfg_;
+    delete ssa_;
+    delete pathNumManager_;
 }
 
 SgVariableDeclaration* getStackVar(const string& name)
 {
-	string typeName;
+	//string typeName;
 
     vector<SgVariableDeclaration*> stackVars;
 	string stackName = name + "_stack";
@@ -445,6 +159,50 @@ EventReverser::getOperands(VGVertex opNode, const SubValueGraph& subgraph) const
     return make_pair(lhsNode, rhsNode);
 }
 
+void EventReverser::generateCode()
+{
+    // First, build the value graph.
+    buildValueGraph();
+#if 1
+
+    // Insert the declaration of the path number in the front of reverse function,
+    // and define its value from a pop function call.
+    string pathNumName = "__num__";
+    using namespace SageBuilder;
+
+    pushScopeStack(rvsFuncDef_->get_body());
+    SgVariableDeclaration* pathNumDecl =
+            SageBuilder::buildVariableDeclaration(
+                pathNumName,
+                SageBuilder::buildIntType(),
+                SageBuilder::buildAssignInitializer(
+                    buildPopFunctionCall(
+                        buildIntType())));
+    popScopeStack();
+
+    SageInterface::prependStatement(pathNumDecl, rvsFuncDef_->get_body());
+
+    size_t pathNum = pathNumManager_->getPathNum(0);
+    for (size_t i = 0; i < pathNum; ++i)
+    {
+        // Build a if branch for each path.
+        SgBasicBlock* rvsFuncBody = rvsFuncDef_->get_body();
+
+        SgBasicBlock* ifBody = SageBuilder::buildBasicBlock();
+        SgStatement* condition = SageBuilder::buildExprStatement(
+                SageBuilder::buildIntVal(i));
+        SgIfStmt* ifStmt = SageBuilder::buildIfStmt(condition, ifBody, NULL);
+
+        SageInterface::appendStatement(ifStmt, rvsFuncBody);
+        getSubGraph(ifBody, 0, i);
+    }
+    pathNumManager_->instrumentFunction(pathNumName);
+
+    // Finally insert all functions in the code.
+    insertFunctions();
+#endif
+}
+
 void EventReverser::generateReverseFunction(
         SgScopeStatement* scope,
         const SubValueGraph& route)
@@ -486,8 +244,8 @@ void EventReverser::generateReverseFunction(
             {
                 // State saving here.
                 // For forward event, we instrument a push function after the def.
-                instrumentPushFunction(valNode);
-                rvsStmt = buildPopFunction(valNode);
+                instrumentPushFunction(valNode, funcDef_);
+                rvsStmt = buildRestorationStmt(valNode);
             }
         }
         else if (ValueNode* rhsValNode = isValueNode(route[tar]))
@@ -527,6 +285,27 @@ void EventReverser::generateReverseFunction(
         //else if (valuesToRestore_.count(node))
 
     SageBuilder::popScopeStack();
+}
+
+void EventReverser::insertFunctions()
+{
+    using namespace SageInterface;
+
+    // Switch the bodies of original and forward functions. This is because the
+    // previous instrumentation happens on original one but should be placed in
+    // the forward function.
+    SgBasicBlock* body = funcDef_->get_body();
+    funcDef_->set_body(fwdFuncDef_->get_body());
+    fwdFuncDef_->set_body(body);
+
+    SgFunctionDeclaration* funcDecl    = funcDef_->get_declaration();
+    SgFunctionDeclaration* fwdFuncDecl = fwdFuncDef_->get_declaration();
+    SgFunctionDeclaration* rvsFuncDecl = rvsFuncDef_->get_declaration();
+    SgFunctionDeclaration* cmtFuncDecl = cmtFuncDef_->get_declaration();
+
+    insertStatementAfter(funcDecl,    fwdFuncDecl);
+    insertStatementAfter(fwdFuncDecl, rvsFuncDecl);
+    insertStatementAfter(rvsFuncDecl, cmtFuncDecl);
 }
 
 

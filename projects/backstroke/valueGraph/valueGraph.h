@@ -44,16 +44,16 @@ private:
     SgFunctionDefinition* cmtFuncDef_;
 
     //! The CFG of the event function.
-    BackstrokeCFG cfg_;
+    BackstrokeCFG* cfg_;
     
 	//! The SSA form of the function definition.
-	SSA ssa_;
+	SSA* ssa_;
 
 	//! The value graph object.
 	ValueGraph valueGraph_;
 
     //! This object manages the path information of the function.
-    PathNumManager pathNumManager_;
+    PathNumManager* pathNumManager_;
 	
 	//! A map from SgNode to vertex of Value Graph.
 	std::map<SgNode*, VGVertex> nodeVertexMap_;
@@ -102,14 +102,10 @@ private:
 //	typedef CDG<CFG> CDG;
 public:
     //! The constructor.
-    EventReverser(SgFunctionDefinition* funcDef)
-    :   funcDef_(funcDef),
-        cfg_(funcDef_),
-        ssa_(SageInterface::getProject()),
-        pathNumManager_(cfg_)
-    {
-        ssa_.run(false);
-    }
+    EventReverser(SgFunctionDefinition* funcDef);
+
+    //! The destructor.
+    ~EventReverser();
 
 	//! Build the value graph for the given function.
 	void buildValueGraph();

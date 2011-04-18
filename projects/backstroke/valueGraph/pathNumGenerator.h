@@ -106,7 +106,7 @@ class PathNumManager
     typedef BackstrokeCFG::Vertex CFGVertex;
     typedef BackstrokeCFG::Edge   CFGEdge;
 
-    const BackstrokeCFG& cfg_;
+    const BackstrokeCFG* cfg_;
 
     //! The first DAG is about the function, and others are all loops.
     std::vector<DAG> dags_;
@@ -130,7 +130,7 @@ class PathNumManager
     //std::map<SgNode*, std::pair<int, DAGVertex> > sgNodeToVertexMap_;
     
 public:
-    PathNumManager(const BackstrokeCFG& cfg);
+    PathNumManager(const BackstrokeCFG* cfg);
     ~PathNumManager();
 
     //! Get path numbers from a AST node.
@@ -149,7 +149,7 @@ public:
     size_t getPathNum(int index) const
     { return pathInfo_[index].second; }
 
-    void instrumentFunction();
+    void instrumentFunction(const std::string& pathNumName);
 
 private:
     //! Use path number generator to generate path numbers.
@@ -165,7 +165,7 @@ private:
     bool isDataMember(SgNode* node) const;
 
     //! Insert a path number update statement on the given CFG edge.
-    void insertPathNumOnEdge(const BackstrokeCFG::Edge& cfgEdge, int val);
+    void insertStatementOnEdge(const BackstrokeCFG::Edge& cfgEdge, SgStatement* stmt);
 };
 
 
