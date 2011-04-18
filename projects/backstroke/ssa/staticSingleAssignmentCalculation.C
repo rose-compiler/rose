@@ -204,7 +204,13 @@ void StaticSingleAssignment::run(bool interprocedural)
 	useTable.clear();
     ssaLocalDefTable.clear();
 
+	if (getDebug())
+		cout << "Running UniqueNameTraversal...\n";
 	UniqueNameTraversal uniqueTrav(SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName));
+	uniqueTrav.traverse(project);
+	if (getDebug())
+		cout << "Finished UniqueNameTraversal." << endl;
+	
 	DefsAndUsesTraversal defUseTrav(this);
 
 	//Get a list of all the functions that we'll process
@@ -221,14 +227,6 @@ void StaticSingleAssignment::run(bool interprocedural)
 	//what variables are directly modified in each function body before we do interprocedural propagation
 	foreach (SgFunctionDefinition* func, interestingFunctions)
 	{
-		if (getDebug())
-			cout << "Running UniqueNameTraversal on function:" << SageInterface::get_name(func) << func << endl;
-
-		uniqueTrav.traverse(func->get_declaration());
-
-		if (getDebug())
-			cout << "Finished UniqueNameTraversal..." << endl;
-
 		if (getDebug())
 			cout << "Running DefsAndUsesTraversal on function: " << SageInterface::get_name(func) << func << endl;
 
@@ -880,6 +878,7 @@ void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* func, 
 	//The definitions that reach the *end* of the function
 	//reachingDefs OUT of the function definition node are the ones that come externally into the function
 	FilteredCfgNode functionStartNode = FilteredCfgNode(func->cfgForBeginning());
+	FilteredCfgNode functionEndNode = FilteredCfgNode(func->cfgForEnd());
 	
 	//We process nodes in reverse postorder; this provides a natural numbering for definitions
 	reverse_foreach(const FilteredCfgNode& cfgNode, cfgNodesInPostOrder)
@@ -910,21 +909,25 @@ void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* func, 
 			}
 		}
 
-		//Iterate over all the local definitions at the node
-		foreach (NodeReachingDefTable::value_type& varDefPair, ssaLocalDefTable[astNode])
+		//Local defs at the function end actually occur at the very beginning of the function
+		if (cfgNode != functionEndNode)
 		{
-			const VarName& definedVar = varDefPair.first;
-			ReachingDefPtr reachingDef = varDefPair.second;
-
-			//Give an index to the variable
-			int index = 0;
-			if (nameToNextIndexMap.count(definedVar) > 0)
+			//Iterate over all the local definitions at the node
+			foreach (NodeReachingDefTable::value_type& varDefPair, ssaLocalDefTable[astNode])
 			{
-				index = nameToNextIndexMap[definedVar];
-			}
-			nameToNextIndexMap[definedVar] = index + 1;
+				const VarName& definedVar = varDefPair.first;
+				ReachingDefPtr reachingDef = varDefPair.second;
 
-			reachingDef->setRenamingNumber(index);
+				//Give an index to the variable
+				int index = 0;
+				if (nameToNextIndexMap.count(definedVar) > 0)
+				{
+					index = nameToNextIndexMap[definedVar];
+				}
+				nameToNextIndexMap[definedVar] = index + 1;
+
+				reachingDef->setRenamingNumber(index);
+			}
 		}
 	}
 }

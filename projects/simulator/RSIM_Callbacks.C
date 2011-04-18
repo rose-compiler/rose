@@ -4,226 +4,157 @@
 #ifdef ROSE_ENABLE_SIMULATOR
 
 template <class T>
-static bool
-remove_last(std::vector<T*> &vec, T *cb)
-{
-    if (!cb)
-        return false;
-
-    for (size_t i=vec.size(); i>0; --i) {
-        if (vec[i-1]==cb) {
-            while (i<vec.size())
-                vec[i-1] = vec[i];
-            vec.resize(vec.size()-1);
-            return true;
-        }
-    }
-
-    return false;
-}
-
-template <class T>
 static void
-copy_callback_vector(std::vector<T*> &dst, const std::vector<T*> &src)
+copy_callback_vector(T &dst, const T &src)
 {
     dst.clear();
-    for (typename std::vector<T*>::const_iterator ci=src.begin(); ci!=src.end(); ci++) {
-        T *cb = dynamic_cast<T*>((*ci)->clone());
-        assert(cb!=NULL);
-        dst.push_back(cb);
+    typename T::CBList callbacks = src.callbacks();
+    for (typename T::CBList::iterator ci=callbacks.begin(); ci!=callbacks.end(); ci++) {
+        typename T::CallbackType *old_cb = *ci;
+        assert(old_cb!=NULL);
+        typename T::CallbackType *new_cb = dynamic_cast<typename T::CallbackType*>(old_cb->clone());
+        assert(old_cb!=NULL);
+        dst.append(new_cb);
     }
 }
 
 void
 RSIM_Callbacks::init(const RSIM_Callbacks &other)
 {
-    /* FIXME: Possible deadlock when doing "a=b" and "b=a" concurrently. [RPM 2011-04-01] */
-    RTS_MUTEX(mutex) {
-        RTS_MUTEX(other.mutex) {
-            copy_callback_vector<InsnCallback>(pre_insn, other.pre_insn);
-            copy_callback_vector<InsnCallback>(post_insn, other.post_insn);
-            copy_callback_vector<ThreadCallback>(pre_thread, other.pre_thread);
-            copy_callback_vector<ThreadCallback>(post_thread, other.post_thread);
-        } RTS_MUTEX_END;
-    } RTS_MUTEX_END;
+    copy_callback_vector(insn_pre,  other.insn_pre);
+    copy_callback_vector(insn_post, other.insn_post);
+
+    copy_callback_vector(syscall_pre,  other.syscall_pre);
+    copy_callback_vector(syscall_post, other.syscall_post);
+
+    copy_callback_vector(thread_pre,  other.thread_pre);
+    copy_callback_vector(thread_post, other.thread_post);
 }
+
+/******************************************************************************************************************************
+ *                                      Instruction callbacks
+ ******************************************************************************************************************************/
 
 void
-RSIM_Callbacks::add_pre_insn(InsnCallback *cb)
+RSIM_Callbacks::add_insn_callback(When when, InsnCallback *cb)
 {
     if (cb) {
-        RTS_MUTEX(mutex) {
-            pre_insn.push_back(cb);
-        } RTS_MUTEX_END;
-    }
-}
-
-
-bool
-RSIM_Callbacks::remove_pre_insn(InsnCallback *cb)
-{
-    bool retval = false;
-    if (cb) {
-        RTS_MUTEX(mutex) {
-            retval = remove_last<InsnCallback>(pre_insn, cb);
-        } RTS_MUTEX_END;
-    }
-    return retval;
-}
-
-void
-RSIM_Callbacks::clear_pre_insn()
-{
-    RTS_MUTEX(mutex) {
-        pre_insn.clear();
-    } RTS_MUTEX_END;
-}
-
-bool
-RSIM_Callbacks::call_pre_insn(RSIM_Thread *thread, SgAsmInstruction *insn, bool prev) const
-{
-    std::vector<InsnCallback*> to_call;
-    RTS_MUTEX(mutex) {
-        to_call = pre_insn;
-    } RTS_MUTEX_END;
-
-    for (size_t i=to_call.size(); i>0; --i)
-        prev = (*to_call[i-1])(thread, insn, prev);
-
-    return prev;
-}
-
-void
-RSIM_Callbacks::add_post_insn(InsnCallback *cb)
-{
-    
-    if (cb) {
-        RTS_MUTEX(mutex) {
-            post_insn.push_back(cb);
-        } RTS_MUTEX_END;
+        if (when==BEFORE) {
+            insn_pre.append(cb);
+        } else {
+            insn_post.append(cb);
+        }
     }
 }
 
 bool
-RSIM_Callbacks::remove_post_insn(InsnCallback *cb)
+RSIM_Callbacks::remove_insn_callback(When when, InsnCallback *cb)
 {
-    bool retval = false;
-    if (cb) {
-        RTS_MUTEX(mutex) {
-            retval = remove_last<InsnCallback>(pre_insn, cb);
-        } RTS_MUTEX_END;
-    }
-    return retval;
+    if (when==BEFORE)
+        return insn_pre.erase(cb, ROSE_Callbacks::BACKWARD);
+    return insn_post.erase(cb, ROSE_Callbacks::BACKWARD);
 }
 
 void
-RSIM_Callbacks::clear_post_insn()
+RSIM_Callbacks::clear_insn_callbacks(When when)
 {
-    RTS_MUTEX(mutex) {
-        post_insn.clear();
-    } RTS_MUTEX_END;
-}
-
-bool
-RSIM_Callbacks::call_post_insn(RSIM_Thread *thread, SgAsmInstruction *insn, bool prev) const
-{
-    std::vector<InsnCallback*> to_call;
-    RTS_MUTEX(mutex) {
-        to_call = post_insn;
-    } RTS_MUTEX_END;
-
-    for (std::vector<InsnCallback*>::iterator ci=to_call.begin(); ci!=to_call.end(); ci++)
-        prev = (**ci)(thread, insn, prev);
-    return prev;
-}
-
-void
-RSIM_Callbacks::add_pre_thread(ThreadCallback *cb)
-{
-    if (cb) {
-        RTS_MUTEX(mutex) {
-            pre_thread.push_back(cb);
-        } RTS_MUTEX_END;
-    }
-}
-
-
-bool
-RSIM_Callbacks::remove_pre_thread(ThreadCallback *cb)
-{
-    bool retval = false;
-    if (cb) {
-        RTS_MUTEX(mutex) {
-            retval = remove_last<ThreadCallback>(pre_thread, cb);
-        } RTS_MUTEX_END;
-    }
-    return retval;
-}
-
-void
-RSIM_Callbacks::clear_pre_thread()
-{
-    RTS_MUTEX(mutex) {
-        pre_thread.clear();
-    } RTS_MUTEX_END;
-}
-
-bool
-RSIM_Callbacks::call_pre_thread(RSIM_Thread *thread, bool prev) const
-{
-    std::vector<ThreadCallback*> to_call;
-    RTS_MUTEX(mutex) {
-        to_call = pre_thread;
-    } RTS_MUTEX_END;
-
-    for (size_t i=to_call.size(); i>0; --i)
-        prev = (*to_call[i-1])(thread, prev);
-
-    return prev;
-}
-
-void
-RSIM_Callbacks::add_post_thread(ThreadCallback *cb)
-{
-    
-    if (cb) {
-        RTS_MUTEX(mutex) {
-            post_thread.push_back(cb);
-        } RTS_MUTEX_END;
+    if (when==BEFORE) {
+        insn_pre.clear();
+    } else {
+        insn_post.clear();
     }
 }
 
 bool
-RSIM_Callbacks::remove_post_thread(ThreadCallback *cb)
+RSIM_Callbacks::call_insn_callbacks(When when, RSIM_Thread *thread, SgAsmInstruction *insn, bool prev)
 {
-    bool retval = false;
-    if (cb) {
-        RTS_MUTEX(mutex) {
-            retval = remove_last<ThreadCallback>(post_thread, cb);
-        } RTS_MUTEX_END;
-    }
-    return retval;
+    if (when==BEFORE)
+        return insn_pre.apply (prev, RSIM_Callbacks::InsnCallback::Args(thread, insn), ROSE_Callbacks::FORWARD);
+    return     insn_post.apply(prev, RSIM_Callbacks::InsnCallback::Args(thread, insn), ROSE_Callbacks::FORWARD);
 }
 
+/******************************************************************************************************************************
+ *                                      System call callbacks
+ ******************************************************************************************************************************/
+
 void
-RSIM_Callbacks::clear_post_thread()
+RSIM_Callbacks::add_syscall_callback(When when, SyscallCallback *cb)
 {
-    RTS_MUTEX(mutex) {
-        post_thread.clear();
-    } RTS_MUTEX_END;
+    if (cb) {
+        if (when==BEFORE) {
+            syscall_pre.append(cb);
+        } else {
+            syscall_post.append(cb);
+        }
+    }
 }
 
 bool
-RSIM_Callbacks::call_post_thread(RSIM_Thread *thread, bool prev) const
+RSIM_Callbacks::remove_syscall_callback(When when, SyscallCallback *cb)
 {
-    std::vector<ThreadCallback*> to_call;
-    RTS_MUTEX(mutex) {
-        to_call = post_thread;
-    } RTS_MUTEX_END;
+    if (when==BEFORE)
+        return syscall_pre.erase(cb, ROSE_Callbacks::BACKWARD);
+    return syscall_post.erase(cb, ROSE_Callbacks::BACKWARD);
+}
 
-    for (std::vector<ThreadCallback*>::iterator ci=to_call.begin(); ci!=to_call.end(); ci++)
-        prev = (**ci)(thread, prev);
-    return prev;
+void
+RSIM_Callbacks::clear_syscall_callbacks(When when)
+{
+    if (when==BEFORE) {
+        syscall_pre.clear();
+    } else {
+        syscall_post.clear();
+    }
+}
+
+bool
+RSIM_Callbacks::call_syscall_callbacks(When when, RSIM_Thread *thread, int callno, bool prev)
+{
+    if (when==BEFORE)
+        return syscall_pre.apply (prev, RSIM_Callbacks::SyscallCallback::Args(thread, callno), ROSE_Callbacks::FORWARD);
+    return     syscall_post.apply(prev, RSIM_Callbacks::SyscallCallback::Args(thread, callno), ROSE_Callbacks::FORWARD);
+}
+
+/******************************************************************************************************************************
+ *                                      Thread callbacks
+ ******************************************************************************************************************************/
+
+void
+RSIM_Callbacks::add_thread_callback(When when, ThreadCallback *cb)
+{
+    if (cb) {
+        if (when==BEFORE) {
+            thread_pre.append(cb);
+        } else {
+            thread_post.append(cb);
+        }
+    }
+}
+
+bool
+RSIM_Callbacks::remove_thread_callback(When when, ThreadCallback *cb)
+{
+    if (when==BEFORE)
+        return thread_pre.erase(cb, ROSE_Callbacks::BACKWARD);
+    return thread_post.erase(cb, ROSE_Callbacks::BACKWARD);
+}
+
+void
+RSIM_Callbacks::clear_thread_callbacks(When when)
+{
+    if (when==BEFORE) {
+        thread_pre.clear();
+    } else {
+        thread_post.clear();
+    }
+}
+
+bool
+RSIM_Callbacks::call_thread_callbacks(When when, RSIM_Thread *thread, bool prev)
+{
+    if (when==BEFORE)
+        return thread_pre.apply (prev, RSIM_Callbacks::ThreadCallback::Args(thread), ROSE_Callbacks::FORWARD);
+    return     thread_post.apply(prev, RSIM_Callbacks::ThreadCallback::Args(thread), ROSE_Callbacks::FORWARD);
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */
