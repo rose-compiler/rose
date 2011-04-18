@@ -70,6 +70,15 @@ Unparser::Unparser( ostream* nos, string fname, Unparser_Opt nopt, UnparseFormat
      u_fortran_type = new UnparseFortran_type(this);
      u_fortran_locatedNode = new FortranCodeGeneration_locatedNode(this, fname);
 
+#if 0
+     u_java_type = NULL;
+     u_java_locatedNode = NULL;
+#else
+  // DQ (4/16/2011): Added the Java support symetric to the Fortran unparser support.
+     u_java_type = new UnparseJava_type(this);
+     u_java_locatedNode = new JavaCodeGeneration_locatedNode(this, fname);
+#endif
+
   // ROSE_ASSERT(nfile != NULL);
      ROSE_ASSERT(nos != NULL);
 
@@ -250,7 +259,16 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
      currentFile = file;
      ROSE_ASSERT(currentFile != NULL);
 
-  // file->display("file: Unparser::unparseFile");
+#if 0
+     printf ("SageInterface::is_Cxx_language()     = %s \n",SageInterface::is_Cxx_language() ? "true" : "false");
+     printf ("SageInterface::is_Fortran_language() = %s \n",SageInterface::is_Fortran_language() ? "true" : "false");
+     printf ("SageInterface::is_Java_language()    = %s \n",SageInterface::is_Java_language() ? "true" : "false");
+     printf ("file->get_outputLanguage()           = %s \n",file->get_outputLanguage() == SgFile::e_C_output_language ? "C" : 
+                                  file->get_outputLanguage() == SgFile::e_Fortran_output_language ? "Fortran" : 
+                                  file->get_outputLanguage() == SgFile::e_Java_output_language ? "Java" : "unknown");
+
+     file->display("file: Unparser::unparseFile");
+#endif
 
 #if 1
   // DQ (11/10/2007): Moved computation of hidden list from astPostProcessing.C to unparseFile so that 
@@ -304,7 +322,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
                ( (file->get_outputLanguage() == SgFile::e_C_output_language) || (file->get_outputLanguage() == SgFile::e_Cxx_output_language) ) )
              {
             // Unparse using C/C++ unparser by default
-                u_exprStmt->unparseStatement(globalScope, info);
+               u_exprStmt->unparseStatement(globalScope, info);
              }
             else
              {
@@ -315,8 +333,21 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
                   }
                  else
                   {
-                    printf ("Error: unclear how to unparse the input code! \n");
-                    ROSE_ASSERT(false);
+                    if (file->get_Java_only())
+                       {
+                      // Unparse using the new Fortran unparser!
+                         ROSE_ASSERT(u_java_locatedNode != NULL);
+
+                      // printf ("This is the unparser support for Java (exiting as a test) \n");
+                      // ROSE_ASSERT(false);
+
+                         u_java_locatedNode->unparseStatement(globalScope, info);
+                       }
+                      else
+                       {
+                         printf ("Error: unclear how to unparse the input code! \n");
+                         ROSE_ASSERT(false);
+                       }
                   }
              }
         }
