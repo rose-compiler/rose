@@ -16,6 +16,7 @@ namespace AutoParallelization
   bool enable_patch;
   bool enable_diff;
   bool b_unique_indirect_index;
+  bool enable_distance;
   DFAnalysis * defuse = NULL;
   LivenessAnalysis* liv = NULL;
 
@@ -54,6 +55,15 @@ namespace AutoParallelization
     else
       enable_diff = false;
 
+    if (CommandlineProcessing::isOption (argvList,"-rose:autopar:","enable_distance",true))
+    {
+      cout<<"Enabling compare user defined OpenMP pragmas to auto parallelization generated ones ..."<<endl;
+      enable_distance = true;
+    }
+    else
+      enable_distance = false;
+
+
     //Save -debugdep, -annot file .. etc, 
     // used internally in ReadAnnotation and Loop transformation
     CmdOptions::GetInstance()->SetOptions(argvList);
@@ -75,6 +85,7 @@ namespace AutoParallelization
       cout<<"\t-rose:autopar:enable_debug          run automatic parallelization in a debugging mode"<<endl;
       cout<<"\t-rose:autopar:enable_patch          additionally generate patch files for translations"<<endl;
       cout<<"\t-rose:autopar:unique_indirect_index assuming all arrays used as indirect indices have unique elements (no overlapping)"<<endl;
+      cout<<"\t-rose:autopar:enable_distance       report the absolute dependence distance of a dependence relation preventing parallelization"<<endl;
       cout<<"\t-annot filename                     specify annotation file for semantics of abstractions"<<endl;
       cout<<"\t-dumpannot                          dump annotation file content"<<endl;
       cout <<"---------------------------------------------------------------"<<endl;
@@ -1392,7 +1403,18 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       for (vector<DepInfo>::iterator iter= remainingDependences.begin();     
           iter != remainingDependences.end(); iter ++ )
       {
-        cout<<(*iter).toString()<<endl;
+        DepInfo di = *iter; 
+        cout<<di.toString()<<endl;
+        if (enable_distance)
+        {
+          if (di.rows()>0 && di.cols()>0)
+          {
+            int dist = (di.Entry(0,0)).GetAlign();
+            cout<<"\t Calculated dependence distance is:"<<abs(dist)<<endl;
+          }
+          else
+            cout<<"\t Estimated dependence distance is:"<<0<<endl;
+        }
       }
     }
     else
