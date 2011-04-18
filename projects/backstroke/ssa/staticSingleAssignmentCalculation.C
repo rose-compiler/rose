@@ -204,7 +204,13 @@ void StaticSingleAssignment::run(bool interprocedural)
 	useTable.clear();
     ssaLocalDefTable.clear();
 
+	if (getDebug())
+		cout << "Running UniqueNameTraversal...\n";
 	UniqueNameTraversal uniqueTrav(SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName));
+	uniqueTrav.traverse(project);
+	if (getDebug())
+		cout << "Finished UniqueNameTraversal." << endl;
+	
 	DefsAndUsesTraversal defUseTrav(this);
 
 	//Get a list of all the functions that we'll process
@@ -221,14 +227,6 @@ void StaticSingleAssignment::run(bool interprocedural)
 	//what variables are directly modified in each function body before we do interprocedural propagation
 	foreach (SgFunctionDefinition* func, interestingFunctions)
 	{
-		if (getDebug())
-			cout << "Running UniqueNameTraversal on function:" << SageInterface::get_name(func) << func << endl;
-
-		uniqueTrav.traverse(func->get_declaration());
-
-		if (getDebug())
-			cout << "Finished UniqueNameTraversal..." << endl;
-
 		if (getDebug())
 			cout << "Running DefsAndUsesTraversal on function: " << SageInterface::get_name(func) << func << endl;
 
