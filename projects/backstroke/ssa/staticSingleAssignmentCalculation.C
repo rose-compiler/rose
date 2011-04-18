@@ -880,6 +880,7 @@ void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* func, 
 	//The definitions that reach the *end* of the function
 	//reachingDefs OUT of the function definition node are the ones that come externally into the function
 	FilteredCfgNode functionStartNode = FilteredCfgNode(func->cfgForBeginning());
+	FilteredCfgNode functionEndNode = FilteredCfgNode(func->cfgForEnd());
 	
 	//We process nodes in reverse postorder; this provides a natural numbering for definitions
 	reverse_foreach(const FilteredCfgNode& cfgNode, cfgNodesInPostOrder)
@@ -910,21 +911,25 @@ void StaticSingleAssignment::renumberAllDefinitions(SgFunctionDefinition* func, 
 			}
 		}
 
-		//Iterate over all the local definitions at the node
-		foreach (NodeReachingDefTable::value_type& varDefPair, ssaLocalDefTable[astNode])
+		//Local defs at the function end actually occur at the very beginning of the function
+		if (cfgNode != functionEndNode)
 		{
-			const VarName& definedVar = varDefPair.first;
-			ReachingDefPtr reachingDef = varDefPair.second;
-
-			//Give an index to the variable
-			int index = 0;
-			if (nameToNextIndexMap.count(definedVar) > 0)
+			//Iterate over all the local definitions at the node
+			foreach (NodeReachingDefTable::value_type& varDefPair, ssaLocalDefTable[astNode])
 			{
-				index = nameToNextIndexMap[definedVar];
-			}
-			nameToNextIndexMap[definedVar] = index + 1;
+				const VarName& definedVar = varDefPair.first;
+				ReachingDefPtr reachingDef = varDefPair.second;
 
-			reachingDef->setRenamingNumber(index);
+				//Give an index to the variable
+				int index = 0;
+				if (nameToNextIndexMap.count(definedVar) > 0)
+				{
+					index = nameToNextIndexMap[definedVar];
+				}
+				nameToNextIndexMap[definedVar] = index + 1;
+
+				reachingDef->setRenamingNumber(index);
+			}
 		}
 	}
 }
