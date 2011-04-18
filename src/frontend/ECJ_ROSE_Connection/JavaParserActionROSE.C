@@ -19,7 +19,35 @@
 // Support functions so that this file can be restricted to be just parser (AST traversal) rules.
 #include "java_support.h"
 
+// DQ (4/16/2011): Support for JNI function for tokens (source code position).
+// #include "token.h"
+#include "jni_token.h"
+
 using namespace std;
+
+
+
+JNIEXPORT void JNICALL Java_JavaParser_cactionSetSourcePosition(JNIEnv *env, jclass xxx, jobject java_token)
+   {
+     if (SgProject::get_verbose() > -1)
+          printf ("Process the token to set the source code position... \n");
+
+     outputJavaState("At TOP of cactionSetSourcePosition");
+
+     Token_t* token = convert_Java_token(env,java_token);
+     ROSE_ASSERT(token != NULL);
+
+     printf ("token = %s line = %d col = %d \n",token->getText().c_str(),token->getLine(),token->getCol());
+
+#if 0
+     printf ("Exiting as a test in Java_JavaParser_cactionSetSourcePosition! \n");
+     ROSE_ASSERT(false);
+#endif
+
+     outputJavaState("At BOTTOM of cactionSetSourcePosition");
+   }
+
+
 
 /*
  * Class:     JavaParser
@@ -1406,6 +1434,7 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionIfStatement(JNIEnv *env, jobject x
    }
 
 
+// I could not make these work...
 // JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx, jstring java_string, jboolean java_containsWildcard)
 // JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jclass xxx, jstring java_string, jboolean java_containsWildcard)
 // JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobject xxx, jstring java_string, jboolean java_containsWildcard)
@@ -1414,6 +1443,8 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jobje
    {
   // This is the import statement.  The semantics is to include the named file and add its 
   // declarations to the global scope so that they can be referenced by the current file.
+  // The import directive tells the compiler where to look for the class definitions 
+  // when it comes upon a class that it cannot find in the default java.lang package.
 
      if (SgProject::get_verbose() > -1)
           printf ("Inside of Java_JavaParser_cactionImportReference() \n");

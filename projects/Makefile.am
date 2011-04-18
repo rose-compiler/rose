@@ -52,11 +52,14 @@ if !USING_GCC_3_4_4_BACKEND_COMPILER
 #  SUBDIRS += backstroke haskellport 
    SUBDIRS += backstroke
 
+# DQ (4/17/2011):This is hanging (worst kind of failing) on tux324 (for two Hudson tests a50-ROSE-BOOST-matrix-scratch in a row #334 and #335).
+if !ROSE_USING_BOOST_VERSION_1_36
 # DQ (4/16/2011): This is hanging (worst kind of failing) on tux324 (for two Hudson tests in a row #2290 and #2291).
 if !USING_GCC_4_0_4_BACKEND_COMPILER
 # DQ (4/8/2011): Directories of tests are a current problem for Insure++.
 if !ROSE_USE_INSURE
    SUBDIRS += haskellport 
+endif
 endif
 endif
 

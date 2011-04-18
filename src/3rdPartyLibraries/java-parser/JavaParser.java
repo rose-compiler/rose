@@ -215,6 +215,8 @@ class JavaParser  implements Callable<Boolean>
      public static native void generateDoubleType();
      public static native void generateNullType();
 
+     public static native void cactionSetSourcePosition(JavaToken t);
+
   // Save the compilationResult as we process the CompilationUnitDeclaration class.
   // public CompilationResult rose_compilationResult;
 
@@ -228,7 +230,7 @@ class JavaParser  implements Callable<Boolean>
 
   // -------------------------------------------------------------------------------------------
 
-         public void startParsingAST(CompilationUnitDeclaration unit /*, int input_veboseLevel */)
+     public void startParsingAST(CompilationUnitDeclaration unit /*, int input_veboseLevel */)
         {
        // Set the verbose level for ROSE specific processing on the Java specific ECJ/ROSE translation.
        // verboseLevel = input_veboseLevel;
@@ -240,12 +242,12 @@ class JavaParser  implements Callable<Boolean>
        // Example of how to call the 
        // traverseAST(unit);
 
-       // Make a copy of the compiation unit so that we can compute source code positions.
-       // rose_compilationResult = unit.compilationResult;
-          JavaParserSupport.initialize(unit.compilationResult,verboseLevel);
-
           try
              {
+            // Make a copy of the compiation unit so that we can compute source code positions.
+            // rose_compilationResult = unit.compilationResult;
+               JavaParserSupport.initialize(unit.compilationResult,verboseLevel);
+
             // Example of how to call the traversal using a better design that isolates out the traversal of the ECJ AST from the parser.
             // "final" is required because the traverse function requires the visitor to be final.
                final ecjASTVisitor visitor = new ecjASTVisitor(this);
