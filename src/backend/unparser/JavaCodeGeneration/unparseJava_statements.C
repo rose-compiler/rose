@@ -78,7 +78,7 @@ JavaCodeGeneration_locatedNode::unparseFunctionParameterDeclaration (
 
      SgName        tmp_name  = initializedName->get_name();
      SgInitializer *tmp_init = initializedName->get_initializer();
-     //SgType        *tmp_type = initializedName->get_type();
+  // SgType        *tmp_type = initializedName->get_type();
      ROSE_ASSERT (initializedName!= NULL);
 
      SgStorageModifier & storage = initializedName->get_storageModifier();
@@ -293,17 +293,34 @@ JavaCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement* st
           case V_SgUsingDirectiveStatement:            unparseUsingDirectiveStatement (stmt, info);            break;
           case V_SgUsingDeclarationStatement:          unparseUsingDeclarationStatement (stmt, info);          break;
 
-          case V_SgTemplateInstantiationDefn:          unparseClassDefnStmt(stmt, info); break;
+          case V_SgTemplateInstantiationDefn:          unparseClassDefnStmt(stmt, info);   break;
+
+       // DQ (4/16/2011): Added Java specific IR node for "import" statements.
+          case V_SgJavaImportStatement:                unparseImportDeclarationStatement(stmt, info); break;
 
           default:
              {
-               printf("CxxCodeGeneration_locatedNode::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
+               printf("JavaCodeGeneration_locatedNode::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
                ROSE_ASSERT(false);
                break;
              }
         }
    }
 
+void
+JavaCodeGeneration_locatedNode::unparseImportDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+  // There is a SgNamespaceDefinition, but it is not unparsed except through the SgNamespaceDeclaration
+
+     SgJavaImportStatement* importDeclaration = isSgJavaImportStatement(stmt);
+     ROSE_ASSERT (importDeclaration != NULL);
+     curprint ( string("import "));
+
+  // This can be an empty string (in the case of an unnamed namespace)
+     SgName name = importDeclaration->get_path();
+     curprint ( name.str());
+     curprint ("; ");
+   }
 
 void
 JavaCodeGeneration_locatedNode::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
@@ -316,7 +333,7 @@ JavaCodeGeneration_locatedNode::unparseNamespaceDeclarationStatement (SgStatemen
 
   // This can be an empty string (in the case of an unnamed namespace)
      SgName name = namespaceDeclaration->get_name();
-          curprint ( name.str());
+     curprint ( name.str());
 
      unparseStatement(namespaceDeclaration->get_definition(),info);
    }
