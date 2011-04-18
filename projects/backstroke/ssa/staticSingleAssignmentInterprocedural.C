@@ -7,9 +7,12 @@
 #include "rose.h"
 #include "CallGraph.h"
 #include "staticSingleAssignment.h"
+#include <boost/timer.hpp>
 
 #define foreach BOOST_FOREACH
 #define reverse_foreach BOOST_REVERSE_FOREACH
+
+//#define DISPLAY_TIMINGS
 
 using namespace std;
 using namespace ssa_private;
@@ -18,8 +21,16 @@ using namespace boost;
 void StaticSingleAssignment::interproceduralDefPropagation(const unordered_set<SgFunctionDefinition*>& interestingFunctions)
 {
 	ClassHierarchyWrapper* classHierarchy = new ClassHierarchyWrapper(project);
+	
+#ifdef DISPLAY_TIMINGS
+	timer time;
+#endif
 	vector<SgFunctionDefinition*> topologicalFunctionOrder = calculateInterproceduralProcessingOrder(interestingFunctions);
 
+#ifdef DISPLAY_TIMINGS
+	printf("-- Timing: Sorting functions in topological order took %.2f seconds.\n", time.elapsed());
+#endif
+	
 	//If there is no recursion, this should only requires one iteration. However, we have to always do an extra
 	//iteration in which nothing changes
 	int iteration = 0;
