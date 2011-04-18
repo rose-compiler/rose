@@ -17,7 +17,7 @@ using namespace sqlite3x;
 
 using namespace std;
 
-#ifdef HAVE_SQLITE3
+#ifdef 0
 
 
 
