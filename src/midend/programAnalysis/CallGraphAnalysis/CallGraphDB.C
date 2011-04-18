@@ -17,7 +17,7 @@ using namespace sqlite3x;
 
 using namespace std;
 
-#ifdef 0
+#if 0
 
 
 
