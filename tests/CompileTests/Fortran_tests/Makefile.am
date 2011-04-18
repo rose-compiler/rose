@@ -279,8 +279,7 @@ endif
 # test2011_Rice_alternate-return-argument.f90
 # test2011_Rice_alt-return-call.f90
 
-# SKW 3/15/2011: tests which are correct and pass in ROSE, but fail when
-# compiled with gfortrans older than 4.4.1 (and so fail in Hudson)
+# SKW 4/17/2011: tests which may actually be incorrect Fortran 90 -- need to study the standard.
 #     test2011_Rice_false-forward-decl-func-type.f90
 #     test2011_Rice_forward-ref-with-sub.f90
 #     test2011_Rice_lost-func-return-type.f90
@@ -364,15 +363,6 @@ endif
 if !ROSE_USING_GFORTRAN_VERSION_4_0
  # These are tests that fail using the gfrotran version 4.0 compiler (but pass with all other versions of gfortran).
    F90_TESTCODES_REQUIRED_TO_PASS += test2007_263.f90
-endif
-
-# SKW 3/29/2011: These tests fail when compiled with gfortrans older than 4.4.1 (and so fail in Hudson).
-if !ROSE_USING_GFORTRAN_VERSION_4_0
-if !ROSE_USING_GFORTRAN_VERSION_4_1
-   F90_TESTCODES_REQUIRED_TO_PASS += \
-     test2011_Rice_false-forward-decl-func-type.f90 \
-     test2011_Rice_forward-ref-with-sub.f90
-endif
 endif
 
 # DQ (2/1/2011): These test codes will not pass the initial syntax checking with the GNU gfortran version 4.4.x compiler.
