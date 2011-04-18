@@ -162,6 +162,9 @@ class JavaCodeGeneration_locatedNode : public UnparseLanguageIndependentConstruc
 
           virtual void unparseBasicBlockStmt   (SgStatement* stmt, SgUnparse_Info& info);
 
+       // DQ (4/16/2011): Added Java specific "import" statement.
+          virtual void unparseImportDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info);
+
           virtual void unparseIfStmt           (SgStatement* stmt, SgUnparse_Info& info);
        // virtual void unparseWhereStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseForInitStmt      (SgStatement* stmt, SgUnparse_Info& info);
