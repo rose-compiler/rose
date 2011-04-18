@@ -6,6 +6,7 @@ anti_dep.c \
 array_scalar.c \
 c99loop.c \
 complexCondition.c \
+dep_distance.c \
 doall.c \
 firstprivate.c \
 foo.c \

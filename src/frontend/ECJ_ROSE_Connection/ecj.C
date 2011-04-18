@@ -9,7 +9,10 @@
 using std::string;
 
 static jmethodID jofp_get_method(int, const char*, const char*);
-static jmethodID jofp_get_main() ;
+
+// DQ (4/17/2011): This is not used.
+// static jmethodID jofp_get_main() ;
+
 static jmethodID jofp_get_error_method();
 static jmethodID jofp_get_cons_method();
 static jclass    jofp_get_class();
@@ -159,7 +162,8 @@ jofp_get_error_method()
     return errorMethod;
 }
 
-
+#if 0
+// DQ (4/17/2011): This is not used.
 static jmethodID 
 jofp_get_main() 
 {
@@ -168,6 +172,6 @@ jofp_get_main()
         mainMethod = jofp_get_method(STATIC_METHOD, "main", "([Ljava/lang/String;)V");
    return mainMethod;
 }
-
+#endif
 
 
