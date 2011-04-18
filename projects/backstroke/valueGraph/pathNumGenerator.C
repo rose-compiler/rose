@@ -94,9 +94,24 @@ PathNumManager::CFGVertex PathNumManager::getCFGNode(SgNode* node) const
     return cfgNode;
 }
 
+bool PathNumManager::isDataMember(SgNode* node) const
+{
+    SgInitializedName* initName = isSgInitializedName(node);
+    if (initName == NULL)
+        return false;
+    if (isSgClassDefinition(initName->get_declaration()->get_parent()))
+        return true;
+    return false;
+}
+
 std::pair<int, PathSet> PathNumManager::getPathNumbers(SgNode* node) const
 {
-    CFGVertex cfgNode = getCFGNode(node);
+    CFGVertex cfgNode;
+    // If the given node is a data member of a class, set its CFG node to the entry.
+    if (isDataMember(node))
+        cfgNode = cfg_.getEntry();
+    else
+        cfgNode = getCFGNode(node);
 
     int idx;
     DAGVertex dagNode;
@@ -134,6 +149,84 @@ std::pair<int, PathSet> PathNumManager::getPathNumbers(
     return std::make_pair(idx, pathNumGenerators_[idx]->getPaths(dagEdge));
 }
 
+void PathNumManager::instrumentFunction()
+{
+    ROSE_ASSERT(pathNumGenerators_.size() == dags_.size());
+
+    SgFunctionDefinition* funcDef =
+            isSgFunctionDefinition(cfg_[cfg_.getEntry()]->getNode());
+    ROSE_ASSERT(funcDef);
+
+    string pathNumName = "__num__";
+    SgVariableDeclaration* pathNumDecl =
+            SageBuilder::buildVariableDeclaration(
+                pathNumName,
+                SageBuilder::buildIntType(),
+                SageBuilder::buildAssignInitializer(
+                    SageBuilder::buildIntVal(0)));
+    SageInterface::prependStatement(pathNumDecl, funcDef->get_body());
+
+    for (size_t i = 0, m = dags_.size(); i != m; ++i)
+    {
+        typedef map<DAGEdge, int>::value_type EdgeValuePair;
+        foreach (const EdgeValuePair& edgeVal, pathNumGenerators_[i]->edgeValues_)
+        {
+            BackstrokeCFG::Edge cfgEdge = dags_[i][edgeVal.first];
+            insertPathNumOnEdge(cfgEdge, edgeVal.second);
+        }
+    }
+
+    SageInterface::fixVariableReferences(funcDef);
+}
+
+namespace 
+{
+    SgStatement* getBelongedStatement(SgNode* node)
+    {
+        SgStatement* stmt;
+        while (!(stmt = isSgStatement(node)))
+        {
+            node = node->get_parent();
+            if (node == NULL)
+                return NULL;
+        }
+        return stmt;
+    }
+
+} // end of anonymous
+
+void PathNumManager::insertPathNumOnEdge(const BackstrokeCFG::Edge& cfgEdge, int val)
+{
+    if (val == 0) return;
+    
+    using namespace SageBuilder;
+
+    string pathNumName = "__num__";
+    SgStatement* pathNumStmt = buildExprStatement(
+                                    buildPlusAssignOp(
+                                        buildVarRefExp(pathNumName),
+                                        buildIntVal(val)));
+
+    SgNode* src = cfg_[cfgEdge]->source().getNode();
+    SgNode* tgt = cfg_[cfgEdge]->target().getNode();
+
+    if (SgIfStmt* ifStmt = isSgIfStmt(src))
+    {
+        if (SageInterface::isAncestor(src, tgt))
+        {
+            SgStatement* stmt = getBelongedStatement(tgt);
+            SageInterface::insertStatementBefore(stmt, pathNumStmt);
+        }
+        else
+        {
+            ROSE_ASSERT(ifStmt->get_false_body() == NULL);
+            // This edge must represent false body here.
+            SgBasicBlock* falseBody = buildBasicBlock(pathNumStmt);
+            ifStmt->set_false_body(falseBody);
+            falseBody->set_parent(ifStmt);
+        }
+    }
+}
 
 void PathNumGenerator::getEdgeValues()
 {

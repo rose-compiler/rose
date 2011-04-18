@@ -6,6 +6,7 @@
 namespace Backstroke
 {
 
+class PathNumManager;
 
 //! Given a DAG with its entry and exit, this class generates path numbers on its edges and vertices.
 class PathNumGenerator
@@ -49,6 +50,9 @@ class PathNumGenerator
     std::map<Vertex, PathSetOnVertex> pathsForNode_;
     std::map<Edge,   PathSet> pathsForEdge_;
     //std::map<Vertex, std::set<int> > pathsForNode_;
+
+    //! Get access to edgeValues_.
+    friend class PathNumManager;
 
 public:
     PathNumGenerator(const DAG& dag, Vertex entry, Vertex exit)
@@ -145,6 +149,8 @@ public:
     size_t getPathNum(int index) const
     { return pathInfo_[index].second; }
 
+    void instrumentFunction();
+
 private:
     //! Use path number generator to generate path numbers.
     void generatePathNumbers();
@@ -154,6 +160,12 @@ private:
 
     //! Given a AST node, find its belonged CFG node.
     CFGVertex getCFGNode(SgNode* node) const;
+
+    //! Check if the given node is a data member declaration.
+    bool isDataMember(SgNode* node) const;
+
+    //! Insert a path number update statement on the given CFG edge.
+    void insertPathNumOnEdge(const BackstrokeCFG::Edge& cfgEdge, int val);
 };
 
 

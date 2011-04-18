@@ -53,17 +53,45 @@ void EventReverser::buildBasicValueGraph()
     //root_ = addValueGraphNode(new ValueGraphNode);
     root_ = addValueGraphNode(new ValueGraphNode);
 
+    /***************************************************************************/
+    // We search state variables here. This part should use a functor to determine
+    // which variables are state ones.
+    // Currently, we assume the parameters are state variables in C style, while
+    // all data members are state variables in C++ style.
+    
     // First, add all parameters of the event to the value graph.
     SgInitializedNamePtrList& paraList = funcDef_->get_declaration()->get_args();
-    foreach (SgInitializedName* var, paraList)
+    foreach (SgInitializedName* initName, paraList)
     {
-        createValueNode(var, NULL);
+        VGVertex newNode = createValueNode(initName, NULL);
 
         // FIXME State variable may not be parameters.
         // Add the variable into wanted set.
-        valuesToRestore_.push_back(nodeVertexMap_[var]);
-        stateVariables_.insert(VarName(1, var));
+        valuesToRestore_.push_back(newNode);
+        stateVariables_.insert(VarName(1, initName));
     }
+
+    SgFunctionDeclaration* funcDecl = funcDef_->get_declaration();
+    // If the event is a member function.
+    if (SgMemberFunctionDeclaration* memFuncDecl = isSgMemberFunctionDeclaration(funcDecl))
+    {
+        SgClassDefinition* classDef = memFuncDecl->get_class_scope();
+        foreach (SgDeclarationStatement* decl, classDef->get_members())
+        {
+            SgVariableDeclaration* varDecl = isSgVariableDeclaration(decl);
+            if (varDecl == NULL)
+                continue;
+            foreach (SgInitializedName* initName, varDecl->get_variables())
+            {
+                VarName varName(1, initName);
+                cout << SSA::varnameToString(varName) << 1 << endl;
+                VGVertex newNode = createValueNode(initName, NULL);
+                valuesToRestore_.push_back(newNode);
+                stateVariables_.insert(VarName(1, initName));
+            }
+        }
+    }
+    /***************************************************************************/
 
     vector<SgNode*> nodes = BackstrokeUtility::querySubTree<SgNode>(funcDef_);
     foreach (SgNode* node, nodes)
@@ -106,6 +134,31 @@ void EventReverser::buildBasicValueGraph()
             // For a variable reference, if its def is a phi node, we build this phi node here.
             if (BackstrokeUtility::isVariableReference(expr))
             {
+                // For data member access, ignore its corresponding "this" pointer.
+                if (isSgThisExp(expr))
+                    continue;
+
+                if (SgArrowExp* arrowExp = isSgArrowExp(expr))
+                {
+                    if (isSgThisExp(arrowExp->get_lhs_operand()))
+                    {
+                        SgExpression* rhsExp = arrowExp->get_rhs_operand();
+                        // It is possible that this var ref is actually a def.
+                        // For example, this->a = 0;
+                        if (nodeVertexMap_.count(rhsExp) > 0)
+                            nodeVertexMap_[arrowExp] = nodeVertexMap_[rhsExp];
+                        continue;
+                    }
+                }
+
+                // A cast expression may be a variable reference.
+                if (SgCastExp* castExp = isSgCastExp(expr))
+                {
+                    ROSE_ASSERT(nodeVertexMap_.count(castExp->get_operand()));
+                    nodeVertexMap_[castExp] = nodeVertexMap_[castExp->get_operand()];
+                    continue;
+                }
+
                 // Get the var name and version for lhs.
                 // We don't know if this var is a use or def now.
                 VersionedVariable var = getVersionedVariable(expr);
@@ -122,15 +175,18 @@ void EventReverser::buildBasicValueGraph()
                     ROSE_ASSERT(varVertexMap_.find(var) != varVertexMap_.end());
 
                     // Add the node -> vertex to nodeVertexMap_
-                    nodeVertexMap_[expr] = varVertexMap_.find(var)->second;
+                    nodeVertexMap_[expr] = varVertexMap_[var];
                 }
                 else
                 {
-                    //cout << var.version << " " << var.isPseudoDef << endl;
+                    cout << SageInterface::get_name(expr) << endl;
+                    cout << "&" << var.toString() << " " << var.isPseudoDef << endl;
 
                     // If the variable is a use, it should already exist in the var->vertex table.
                     // Find it and update the node->vertex table.
                     // The def node is not added here. (added in assignment)
+                    printVarVertexMap();
+                    // It is possible that this var ref is actually a def. For example, a = 0;
                     if (varVertexMap_.count(var) > 0)
                         nodeVertexMap_[expr] = varVertexMap_[var];
                 }
@@ -418,7 +474,7 @@ void EventReverser::generateReverseFunction(
         ROSE_ASSERT(boost::out_degree(node, route) == 1);
 
         VGVertex tar = *(boost::adjacent_vertices(node, route).first);
-        SgStatement* rvsStmt;
+        SgStatement* rvsStmt = NULL;
 
         if (tar == root_)
         {
@@ -450,7 +506,8 @@ void EventReverser::generateReverseFunction(
         }
 
         // Add the generated statement to the scope.
-        SageInterface::appendStatement(rvsStmt, scope);
+        if (rvsStmt)
+            SageInterface::appendStatement(rvsStmt, scope);
     }
 
     // At last, assign the value restored back to state variables.

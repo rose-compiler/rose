@@ -96,41 +96,12 @@ struct ValueGraphNode
     { return 0; }
 };
 
-struct PhiNode : ValueGraphNode
-{
-    enum GateType
-    {
-        phi,
-        mu,
-        eta
-    };
-
-	PhiNode(const VersionedVariable& v) : var(v), dagIndex(0), type(phi) {}
-
-	//std::vector<ValueGraphNode*> nodes;
-
-	virtual std::string toString() const
-	{ return "PHI\\n" + var.toString(); }
-
-    virtual int getCost() const;
-
-    SgType* getType() const
-    { return var.name.back()->get_type(); }
-
-    //! The versioned variable it contains.
-	VersionedVariable var;
-
-    //! The DAG index.
-    int dagIndex;
-
-    //! The type of this gate function
-    GateType type;
-};
-
 //! A value node can hold a lvalue and a rvalue.
 struct ValueNode : ValueGraphNode
 {    
 	explicit ValueNode(SgNode* node = NULL) : astNode(node) {}
+    ValueNode(const VersionedVariable& v, SgNode* node = NULL)
+    : var(v), astNode(node) {}
 
 	virtual std::string toString() const;
     virtual int getCost() const;
@@ -149,15 +120,44 @@ struct ValueNode : ValueGraphNode
 //    SgNode* getNode() const { return astNode; }
 //    void setNode(SgNode* node)  { astNode = node; }
 
-    //! The AST node which defines the variables.
-    SgNode* astNode;
-
     //! All variables sharing the same value.
 	VersionedVariable var;
+
+    //! The AST node which defines the variables.
+    SgNode* astNode;
 
     //! The unique name of this value node in VG which becomes
     //! the name of the corresponding variable
     std::string str;
+};
+
+struct PhiNode : ValueNode
+{
+    enum GateType
+    {
+        phi,
+        mu,
+        eta
+    };
+
+	PhiNode(const VersionedVariable& v, SgNode* node)
+    : ValueNode(v, node), dagIndex(0)/*, type(phi)*/ {}
+
+	//std::vector<ValueGraphNode*> nodes;
+
+	virtual std::string toString() const
+	{ return "PHI_" + var.toString(); }
+
+    virtual int getCost() const;
+
+//    SgType* getType() const
+//    { return var.name.back()->get_type(); }
+
+    //! The DAG index.
+    int dagIndex;
+
+    //! The type of this gate function
+    //GateType type;
 };
 
 struct OperatorNode : ValueGraphNode
@@ -230,7 +230,7 @@ struct ValueGraphEdge
     //! numbers. This index represents which DAG the following paths belong to.
     int dagIndex;
 
-    //! All paths this relationship exists.
+    //! All paths on which this relationship exists.
     PathSet paths;
 };
 
@@ -244,6 +244,17 @@ struct OrderedEdge : ValueGraphEdge
 
 	int index;
 };
+
+#if 0
+//! An edge coming from a phi node.
+struct PhiEdge : ValueGraphEdge
+{
+    PhiEdge(const std::set<ReachingDef::FilteredCfgEdge>* edges)
+    : ValueGraphEdge(0, dagIdx, paths), visiblePathNum(visibleNum) {}
+    //! A set of edges indicating where the target def comes from in CFG.
+    std::set<ReachingDef::FilteredCfgEdge> cfgEdges;
+};
+#endif
 
 //! An edge going to the root node.
 struct StateSavingEdge : ValueGraphEdge

@@ -33,49 +33,42 @@ bool EventReverser::edgeBelongsToPath(const VGEdge& e, int dagIndex, int pathInd
 void EventReverser::getSubGraph(
         SgScopeStatement* scope, int dagIndex, int pathIndex)
 {
-    //!!!
-    dagIndex = 0;
-    
-    int pathNum = pathNumManager_.getPathNum(dagIndex);
-    for (int i = 0; i < pathNum; ++i)
+    //PathEdgeSelector edgeSelector(&valueGraph_, dagIndex, i);
+    //SubValueGraph subgraph(valueGraph_, edgeSelector);
+
+    // First, get the subgraph for the path.
+
+    pair<int, int> path(dagIndex, pathIndex);
+    set<VGVertex>& nodes = pathNodesAndEdges_[path].first;
+    set<VGEdge>&   edges = pathNodesAndEdges_[path].second;
+    foreach (const VGEdge& edge, boost::edges(valueGraph_))
     {
-        //PathEdgeSelector edgeSelector(&valueGraph_, dagIndex, i);
-        //SubValueGraph subgraph(valueGraph_, edgeSelector);
-
-        // First, get the subgraph for the path.
-
-        pair<int, int> path = make_pair(dagIndex, i);
-        set<VGVertex>& nodes = pathNodesAndEdges_[path].first;
-        set<VGEdge>&   edges = pathNodesAndEdges_[path].second;
-        foreach (const VGEdge& edge, boost::edges(valueGraph_))
+        if (edgeBelongsToPath(edge, dagIndex, pathIndex))
         {
-            if (edgeBelongsToPath(edge, dagIndex, pathIndex))
-            {
-                nodes.insert(boost::source(edge, valueGraph_));
-                edges.insert(edge);
-            }
+            nodes.insert(boost::source(edge, valueGraph_));
+            edges.insert(edge);
         }
-        nodes.insert(root_);
+    }
+    nodes.insert(root_);
 
-        // To resolve the problem of binding an overloaded function.
-        set<VGVertex>::const_iterator (set<VGVertex>::*findNode)
-                 (const set<VGVertex>::key_type&) const = &set<VGVertex>::find;
-        set<VGEdge>::const_iterator (set<VGEdge>::*findEdge)
-                 (const set<VGEdge>::key_type&) const = &set<VGEdge>::find;
-        SubValueGraph subgraph(valueGraph_,
-                               boost::bind(findEdge, &edges, ::_1) != edges.end(),
-                               boost::bind(findNode, &nodes, ::_1) != nodes.end());
+    // To resolve the problem of binding an overloaded function.
+    set<VGVertex>::const_iterator (set<VGVertex>::*findNode)
+             (const set<VGVertex>::key_type&) const = &set<VGVertex>::find;
+    set<VGEdge>::const_iterator (set<VGEdge>::*findEdge)
+             (const set<VGEdge>::key_type&) const = &set<VGEdge>::find;
+    SubValueGraph subgraph(valueGraph_,
+                           boost::bind(findEdge, &edges, ::_1) != edges.end(),
+                           boost::bind(findNode, &nodes, ::_1) != nodes.end());
 
 //        string filename = "VG" + boost::lexical_cast<string>(i);
 //        //cout << subgraph << endl;
 //        const char* name = "ABCDE";
 
-        SubValueGraph route = getReversalRoute(dagIndex, i,
-                                               subgraph, valuesToRestore_);
+    SubValueGraph route = getReversalRoute(dagIndex, pathIndex,
+                                           subgraph, valuesToRestore_);
 
-        generateReverseFunction(scope, route);
-        //graphToDot(subgraph, filename);
-    }
+    generateReverseFunction(scope, route);
+    //graphToDot(subgraph, filename);
 }
 
 
