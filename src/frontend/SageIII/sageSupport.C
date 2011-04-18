@@ -5579,17 +5579,21 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                 char * temp = tempnam(dir.c_str(), (base + "-").c_str());   // not deprecated in Visual Studio 2010
                 preprocessFilename = string(temp) + ".F90"; free(temp);
              // copy source file to pseudonym file
-#if !ROSE_MICROSOFT_OS
+#if 0
+                boost::filesystem::copy_file(sourceFilename, preprocessFilename);
+#else
+  #if !ROSE_MICROSOFT_OS
                 Rose_STL_Container<string> cpCommand;
                 cpCommand.push_back("cp");
                 cpCommand.push_back(sourceFilename);
                 cpCommand.push_back(preprocessFilename);
                 int errorCode = systemFromVector(cpCommand);
                 ROSE_ASSERT(!errorCode);
-#else
+  #else
                 // SKW 2011-04-15: NOT TESTED
                 bool ok = CopyFile((LPCTSTR)sourceFilename.c_str(), (LPCTSTR)preprocessFilename.c_str(), true);
                 ROSE_ASSERT(ok);
+  #endif
 #endif
 
           fortran_C_preprocessor_commandLine.push_back(preprocessFilename);
@@ -5615,17 +5619,21 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              }
 
        // clean up after alias processing
-#if !ROSE_MICROSOFT_OS
+#if 0
+        boost::filesystem::remove(preprocessFilename);
+#else
+  #if !ROSE_MICROSOFT_OS
           Rose_STL_Container<string> rmCommand; 
           rmCommand.push_back("rm");
           rmCommand.push_back("-f");
           rmCommand.push_back(preprocessFilename);
           errorCode = systemFromVector(rmCommand);
           ROSE_ASSERT(!errorCode);
-#else
+  #else
           // SKW 2011-04-15: NOT TESTED
           ok = DeleteFile((LPCTSTR)preprocessFilename.c_str());
           ROSE_ASSERT(ok);
+  #endif
 #endif
         }
 
