@@ -1196,6 +1196,10 @@ AC_ARG_ENABLE(edg_cuda, AS_HELP_STRING([--enable-edg-cuda], [Build EDG 4.0 with 
   *)   edg_cuda=false ;;
 esac])
 AM_CONDITIONAL(ROSE_BUILD_EDG_WITH_CUDA_SUPPORT, [test x$edg_cuda = xtrue])
+if test x$edg_cuda = xtrue; then
+  AC_MSG_WARN([Add CUDA specific headers to the include-staging directory.])
+  GENERATE_CUDA_SPECIFIC_HEADERS
+fi
 
 # *******************************************************************
 # Option to control internal support of OpenCL (GPU langauge support)

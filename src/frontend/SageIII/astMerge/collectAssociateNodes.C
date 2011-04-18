@@ -1817,6 +1817,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
              }
 #endif
 
+       // DQ (4/16/2011): Added support for another IR node.
+          case V_SgJavaImportStatement:
+
        // DQ (11/16/2007): Added support for another IR node.
           case V_SgFortranDo:
 

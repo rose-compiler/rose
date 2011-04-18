@@ -2967,8 +2967,11 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                 // This a not a C++ file (assume it is a C file and don't define the __cplusplus macro, just like GNU gcc would)
                                    file->set_sourceFileUsesCppFileExtension(false);
 
-                                // Use the filename suffix as a default means to set this value
-                                   file->set_outputLanguage(SgFile::e_C_output_language);
+                                // Note that we can use the C++ unparser to provide output that will support inspection of 
+                                // code from the AST, but this is a temporary solution.  The only correct setting is to use
+                                // the ongoing support within the Java specific unparser.
+                                // file->set_outputLanguage(SgFile::e_C_output_language);
+                                   file->set_outputLanguage(SgFile::e_Java_output_language);
 
                                    file->set_Java_only(true);
 
@@ -3417,13 +3420,17 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      bool enable_cuda   = CommandlineProcessing::isOption(argv,"-","cuda",true) || get_Cuda_only();
      bool enable_opencl = CommandlineProcessing::isOption(argv,"-","opencl",true) || get_OpenCL_only();
      
+     string header_path = findRoseSupportPathFromBuild("include-staging", "include-staging");
+     
      if (enable_cuda || enable_opencl) {
         makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
         if (enable_cuda && !enable_opencl) {
-                commandLine.push_back("-DROSE_LANGUAGE_MODE=2");
+          commandLine.push_back("--preinclude");
+          commandLine.push_back(header_path + "/cuda_HEADERS/preinclude-cuda.h");
         }
         else if (enable_opencl && !enable_cuda) {
-                commandLine.push_back("-DROSE_LANGUAGE_MODE=3");
+          commandLine.push_back("--preinclude");
+          commandLine.push_back(header_path + "/opencl_HEADERS/preinclude-opencl.h");
         }
         else {
                 printf ("Error: CUDA and OpenCL are mutually exclusive.\n");

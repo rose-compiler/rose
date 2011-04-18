@@ -28,6 +28,7 @@ noinst_PROGRAMS += x86sim
 include_HEADERS +=				\
 	x86sim.h				\
 	x86print.h				\
+	RSIM_Adapter.h				\
 	RSIM_Callbacks.h			\
 	RSIM_Common.h				\
 	RSIM_Linux32.h				\
@@ -40,6 +41,7 @@ include_HEADERS +=				\
 x86sim_SOURCES =				\
 	x86sim.C				\
 	x86print.C				\
+	RSIM_Adapter.C				\
 	RSIM_Callbacks.C			\
 	RSIM_Common.C				\
 	RSIM_Linux32.C				\

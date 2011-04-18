@@ -293,6 +293,11 @@ fi
 # TOO (2/16/2011): Detect Thrifty (GCC 3.4.4) compiler
 AM_CONDITIONAL(USING_GCC_3_4_4_BACKEND_COMPILER, [test "x$BACKEND_C_COMPILER_VERSION" == "x3.4.4"])
 
+# DQ (4/16/2011): Detect the GNU 4.0.4 compilers (used to turn off hanging Haskell support 
+# in projects/haskellport/tests/simplify/simplifyTest.C).  This happend twice on tux324
+# this must be looked into since it is not clear how this happened and passed commit tests.
+AM_CONDITIONAL(USING_GCC_4_0_4_BACKEND_COMPILER, [test "x$BACKEND_C_COMPILER_VERSION" == "x4.0.4"])
+
 # TOO (2/17/2011): Detect Tensilica Xtensa C/C++ compiler
 if test "x$BACKEND_C_COMPILER_NAME" == "xxt-xcc"; then
   AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, true)
