@@ -2968,8 +2968,11 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                 // This a not a C++ file (assume it is a C file and don't define the __cplusplus macro, just like GNU gcc would)
                                    file->set_sourceFileUsesCppFileExtension(false);
 
-                                // Use the filename suffix as a default means to set this value
-                                   file->set_outputLanguage(SgFile::e_C_output_language);
+                                // Note that we can use the C++ unparser to provide output that will support inspection of 
+                                // code from the AST, but this is a temporary solution.  The only correct setting is to use
+                                // the ongoing support within the Java specific unparser.
+                                // file->set_outputLanguage(SgFile::e_C_output_language);
+                                   file->set_outputLanguage(SgFile::e_Java_output_language);
 
                                    file->set_Java_only(true);
 

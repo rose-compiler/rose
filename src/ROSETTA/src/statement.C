@@ -232,6 +232,7 @@ Grammar::setUpStatements ()
 #endif
 
 #if USE_JAVA_IR_NODES
+  // DQ (4/16/2011): This is the Java specific SgJavaImportStatement (which is a declaration), there is also a Fortran specific import statment IR node.
   // DQ (4/12/2011): Added Java support for "import" keyword.
      NEW_TERMINAL_MACRO (JavaImportStatement,        "JavaImportStatement",         "TEMP_JavaImportStatement" );
 #endif
@@ -401,8 +402,8 @@ Grammar::setUpStatements ()
           UsingDirectiveStatement                 | ClassDeclaration          | ImplicitStatement    | 
           UsingDeclarationStatement               | NamelistStatement         | ImportStatement      |
           FunctionDeclaration                  /* | ModuleStatement */        | ContainsStatement    |
-          C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine,
-          "DeclarationStatement","DECL_STMT", false);
+          C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine   | 
+          JavaImportStatement, "DeclarationStatement","DECL_STMT", false);
 
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
@@ -417,7 +418,7 @@ Grammar::setUpStatements ()
           /* FortranDo            | */ AllocateStatement   | DeallocateStatement             | UpcNotifyStatement    | 
              UpcWaitStatement     | UpcBarrierStatement    | UpcFenceStatement               | 
              OmpBarrierStatement  | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
-             SequenceStatement    | JavaImportStatement,
+             SequenceStatement,
                             "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
@@ -2122,6 +2123,7 @@ Grammar::setUpStatements ()
      NamelistStatement.setDataPrototype     ( "SgNameGroupPtrList", "group_list", "",
                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (4/16/2011): This is the Fortran specific import statment IR node, there is also a Java specific SgJavaImportStatement (which is a declaration).
      ImportStatement.setFunctionPrototype ( "HEADER_IMPORT_STATEMENT", "../Grammar/Statement.code" );
   // Implement this as a list of strings for now, since it is not clear that it is limited to variables.
   // If it is limited to variable then use an expression list of variable references, or a list of initialized name objects.
@@ -2724,6 +2726,8 @@ Grammar::setUpStatements ()
   // DQ (4/12/2011): Added support for Java "import" statement.
      JavaImportStatement.setFunctionPrototype ( "HEADER_JAVA_IMPORT_STATEMENT", "../Grammar/Statement.code" );
      JavaImportStatement.setDataPrototype ( "SgName", "path", "= \"\"",
+                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     JavaImportStatement.setDataPrototype ( "bool", "containsWildCard", "= false",
                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Support for C preprocessor declarations within the AST (does not solve the problem of not
