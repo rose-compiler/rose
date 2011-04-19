@@ -150,21 +150,40 @@ RSIM_Thread::syscall_leave(const char *format, ...)
     va_list ap;
     va_start(ap, format);
 
+    bool returns_errno = false;
+    if ('d'==format[0]) {
+        returns_errno = true;
+    } else if ('D'==format[0]) {
+        /* same as 'd' except use next letter for non-error return values */
+        returns_errno = true;
+        format++;
+    }
+
     ROSE_ASSERT(strlen(format)>=1);
     RTS_Message *mesg = tracing(TRACE_SYSCALL);
     if (mesg->get_file()) {
         /* System calls return an integer (negative error numbers, non-negative success) */
         ArgInfo info;
-        uint32_t value = policy.readGPR(x86_gpr_ax).known_value();
-        syscall_arginfo(format[0], value, &info, &ap);
+        uint32_t retval = policy.readGPR(x86_gpr_ax).known_value();
+        syscall_arginfo(format[0], retval, &info, &ap);
 
         RTS_MESSAGE(*mesg) {
             mesg->more(" = ");
-            print_leave(mesg, format[0], &info);
+
+            /* Return value */
+            int error_number = (int32_t)retval<0 && (int32_t)retval>-256 ? -(int32_t)retval : 0;
+            if (returns_errno && error_number!=0) {
+                mesg->more("%"PRId32" ", retval);
+                print_enum(mesg, error_numbers, error_number);
+                mesg->more(" (%s)\n", strerror(error_number));
+            } else {
+                print_single(mesg, format[0], &info);
+                mesg->more("\n");
+            }
 
             /* Additionally, output any other buffer values that were filled in by a successful system call. */
             int result = (int)(uint32_t)(syscall_arg(-1));
-            if (format[0]!='d' || (result<-1024 || result>=0) || -EINTR==result) {
+            if (!returns_errno || (result<-1024 || result>=0) || -EINTR==result) {
                 for (size_t i=1; format[i]; i++) {
                     if ('-'!=format[i]) {
                         syscall_arginfo(format[i], syscall_arg(i-1), &info, &ap);
