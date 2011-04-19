@@ -347,8 +347,10 @@ RSIM_SignalHandling::generate(const siginfo_32 &info, RSIM_Process *process, RTS
     const char *s = "";
 
     int signo = info.si_signo;
-    if (0==signo) return 0; /* no-op for signal zero */
-    assert(signo>=1 && (size_t)signo<=8*sizeof(sigset_32));
+    if (0==signo)
+        return 0; /* no-op for signal zero */
+    if (signo<1 || (size_t)signo > 8*sizeof(sigset_32))
+        return -EINVAL;
 
     sigaction_32 sa;
     int status = process->sys_sigaction(signo, NULL, &sa);

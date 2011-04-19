@@ -1548,7 +1548,7 @@ RSIM_Process::sys_kill(pid_t pid, const RSIM_SignalHandling::siginfo_32 &info)
 
     if (pid<0)
         return -EINVAL;
-    if (signo<=0 && (size_t)signo>8*sizeof(RSIM_SignalHandling::sigset_32))
+    if (signo<0 && (size_t)signo>8*sizeof(RSIM_SignalHandling::sigset_32))
         return -EINVAL;
 
     RTS_WRITE(rwlock()) {
