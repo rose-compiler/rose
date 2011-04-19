@@ -255,6 +255,9 @@ static void syscall_gettid_enter(RSIM_Thread *t, int callno);
 static void syscall_gettid(RSIM_Thread *t, int callno);
 static void syscall_futex_enter(RSIM_Thread *t, int callno);
 static void syscall_futex(RSIM_Thread *t, int callno);
+static void syscall_sched_getaffinity_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_getaffinity(RSIM_Thread *t, int callno);
+static void syscall_sched_getaffinity_leave(RSIM_Thread *t, int callno);
 static void syscall_set_thread_area_enter(RSIM_Thread *t, int callno);
 static void syscall_set_thread_area(RSIM_Thread *t, int callno);
 static void syscall_exit_group_enter(RSIM_Thread *t, int callno);
@@ -290,108 +293,109 @@ RSIM_Linux32::ctor()
 
     /* Warning: use hard-coded values here rather than the __NR_* constants from <sys/unistd.h> because the latter varies
      * according to whether ROSE is compiled for 32- or 64-bit.  We always want the 32-bit syscall numbers here. */
-    SC_REG(1,   exit,           exit);
-    SC_REG(3,   read,           read);
-    SC_REG(4,   write,          default);
-    SC_REG(5,   open,           default);
-    SC_REG(6,   close,          default);
-    SC_REG(7,   waitpid,        waitpid);
-    SC_REG(8,   creat,          default);
-    SC_REG(9,   link,           default);
-    SC_REG(10,  unlink,         default);
-    SC_REG(11,  execve,         default);
-    SC_REG(12,  chdir,          default);
-    SC_REG(13,  time,           time);
-    SC_REG(14,  mknod,          default);
-    SC_REG(15,  chmod,          default);
-    SC_REG(19,  lseek,          default);
-    SC_REG(20,  getpid,         default);
-    SC_REG(24,  getuid,         default);
-    SC_REG(27,  alarm,          default);
-    SC_REG(29,  pause,          pause);
-    SC_REG(30,  utime,          default);
-    SC_REG(33,  access,         default);
-    SC_REG(36,  sync,           default);
-    SC_REG(37,  kill,           default);
-    SC_REG(38,  rename,         default);
-    SC_REG(39,  mkdir,          default);
-    SC_REG(40,  rmdir,          default);
-    SC_REG(41,  dup,            default);
-    SC_REG(42,  pipe,           default);
-    SC_REG(45,  brk,            brk);
-    SC_REG(47,  getgid,         default);
-    SC_REG(49,  geteuid,        default);
-    SC_REG(50,  getegid,        default);
-    SC_REG(54,  ioctl,          ioctl);
-    SC_REG(57,  setpgid,        default);
-    SC_REG(60,  umask,          default);
-    SC_REG(63,  dup2,           default);
-    SC_REG(64,  getppid,        default);
-    SC_REG(65,  getpgrp,        default);
-    SC_REG(75,  setrlimit,      default);
-    SC_REG(76,  getrlimit,      getrlimit);
-    SC_REG(78,  gettimeofday,   gettimeofday);
-    SC_REG(83,  symlink,        default);
-    SC_REG(85,  readlink,       default);               // FIXME: probably needs an explicit leave
-    SC_REG(91,  munmap,         default);
-    SC_REG(93,  ftruncate,      default);
-    SC_REG(94,  fchmod,         default);
-    SC_REG(95,  fchown,         default);
-    SC_REG(99,  statfs,         statfs);
-    SC_REG(100, fstatfs,        fstatfs);
-    SC_REG(102, socketcall,     default);
-    SC_REG(114, wait4,          wait4);
-    SC_REG(116, sysinfo,        default);               // FIXME: probably needs an explicit leave
-    SC_REG(117, ipc,            ipc);
-    SC_REG(118, fsync,          default);
-    SC_REG(119, sigreturn,      sigreturn);
-    SC_REG(120, clone,          clone);
-    SC_REG(122, uname,          default);               // FIXME: probably needs an explicit leave
-    SC_REG(125, mprotect,       mprotect);
-    SC_REG(133, fchdir,         default);
-    SC_REG(140, llseek,         default);
-    SC_REG(141, getdents,       getdents);
-    SC_REG(142, select,         select);
-    SC_REG(144, msync,          default);
-    SC_REG(146, writev,         default);
+    SC_REG(1,   exit,                           exit);
+    SC_REG(3,   read,                           read);
+    SC_REG(4,   write,                          default);
+    SC_REG(5,   open,                           default);
+    SC_REG(6,   close,                          default);
+    SC_REG(7,   waitpid,                        waitpid);
+    SC_REG(8,   creat,                          default);
+    SC_REG(9,   link,                           default);
+    SC_REG(10,  unlink,                         default);
+    SC_REG(11,  execve,                         default);
+    SC_REG(12,  chdir,                          default);
+    SC_REG(13,  time,                           time);
+    SC_REG(14,  mknod,                          default);
+    SC_REG(15,  chmod,                          default);
+    SC_REG(19,  lseek,                          default);
+    SC_REG(20,  getpid,                         default);
+    SC_REG(24,  getuid,                         default);
+    SC_REG(27,  alarm,                          default);
+    SC_REG(29,  pause,                          pause);
+    SC_REG(30,  utime,                          default);
+    SC_REG(33,  access,                         default);
+    SC_REG(36,  sync,                           default);
+    SC_REG(37,  kill,                           default);
+    SC_REG(38,  rename,                         default);
+    SC_REG(39,  mkdir,                          default);
+    SC_REG(40,  rmdir,                          default);
+    SC_REG(41,  dup,                            default);
+    SC_REG(42,  pipe,                           default);
+    SC_REG(45,  brk,                            brk);
+    SC_REG(47,  getgid,                         default);
+    SC_REG(49,  geteuid,                        default);
+    SC_REG(50,  getegid,                        default);
+    SC_REG(54,  ioctl,                          ioctl);
+    SC_REG(57,  setpgid,                        default);
+    SC_REG(60,  umask,                          default);
+    SC_REG(63,  dup2,                           default);
+    SC_REG(64,  getppid,                        default);
+    SC_REG(65,  getpgrp,                        default);
+    SC_REG(75,  setrlimit,                      default);
+    SC_REG(76,  getrlimit,                      getrlimit);
+    SC_REG(78,  gettimeofday,                   gettimeofday);
+    SC_REG(83,  symlink,                        default);
+    SC_REG(85,  readlink,                       default);               // FIXME: probably needs an explicit leave
+    SC_REG(91,  munmap,                         default);
+    SC_REG(93,  ftruncate,                      default);
+    SC_REG(94,  fchmod,                         default);
+    SC_REG(95,  fchown,                         default);
+    SC_REG(99,  statfs,                         statfs);
+    SC_REG(100, fstatfs,                        fstatfs);
+    SC_REG(102, socketcall,                     default);
+    SC_REG(114, wait4,                          wait4);
+    SC_REG(116, sysinfo,                        default);               // FIXME: probably needs an explicit leave
+    SC_REG(117, ipc,                            ipc);
+    SC_REG(118, fsync,                          default);
+    SC_REG(119, sigreturn,                      sigreturn);
+    SC_REG(120, clone,                          clone);
+    SC_REG(122, uname,                          default);               // FIXME: probably needs an explicit leave
+    SC_REG(125, mprotect,                       mprotect);
+    SC_REG(133, fchdir,                         default);
+    SC_REG(140, llseek,                         default);
+    SC_REG(141, getdents,                       getdents);
+    SC_REG(142, select,                         select);
+    SC_REG(144, msync,                          default);
+    SC_REG(146, writev,                         default);
     SC_REG(155, sched_setparam,                 default);
     SC_REG(157, sched_getscheduler,             sched_getscheduler);
     SC_REG(159, sched_get_priority_max,         default);
     SC_REG(160, sched_get_priority_min,         default);
-    SC_REG(162, nanosleep,      nanosleep);
-    SC_REG(173, rt_sigreturn,   rt_sigreturn);
-    SC_REG(174, rt_sigaction,   rt_sigaction);
-    SC_REG(175, rt_sigprocmask, rt_sigprocmask);
-    SC_REG(176, rt_sigpending,  rt_sigpending);
-    SC_REG(179, rt_sigsuspend,  rt_sigsuspend);
-    SC_REG(183, getcwd,         getcwd);
-    SC_REG(186, sigaltstack,    sigaltstack);
-    SC_REG(191, ugetrlimit,     ugetrlimit);
-    SC_REG(192, mmap2,          mmap2);
-    SC_REG(195, stat64,         stat64);
-    SC_REG(196, stat64,         stat64);        // lstat64
-    SC_REG(197, stat64,         stat64);        // fstat64
-    SC_REG(199, getuid32,       default);
-    SC_REG(200, getgid32,       default);
-    SC_REG(201, geteuid32,      default);
-    SC_REG(202, getegid32,      default);
-    SC_REG(207, fchown32,       default);
-    SC_REG(212, chown,          default);
-    SC_REG(220, getdents64,     getdents64);
-    SC_REG(221, fcntl,          fcntl);
-    SC_REG(224, gettid,         default);
-    SC_REG(240, futex,          default);
-    SC_REG(243, set_thread_area, default);
-    SC_REG(252, exit_group,     exit_group);
-    SC_REG(258, set_tid_address, default);
-    SC_REG(264, clock_settime,  default);
-    SC_REG(265, clock_gettime,  clock_gettime);
-    SC_REG(266, clock_getres,   clock_getres);
-    SC_REG(268, statfs64,       statfs64);
-    SC_REG(270, tgkill,         default);
-    SC_REG(271, utimes,         default);
-    SC_REG(306, fchmodat,       default);
-    SC_REG(311, set_robust_list, default);
+    SC_REG(162, nanosleep,                      nanosleep);
+    SC_REG(173, rt_sigreturn,                   rt_sigreturn);
+    SC_REG(174, rt_sigaction,                   rt_sigaction);
+    SC_REG(175, rt_sigprocmask,                 rt_sigprocmask);
+    SC_REG(176, rt_sigpending,                  rt_sigpending);
+    SC_REG(179, rt_sigsuspend,                  rt_sigsuspend);
+    SC_REG(183, getcwd,                         getcwd);
+    SC_REG(186, sigaltstack,                    sigaltstack);
+    SC_REG(191, ugetrlimit,                     ugetrlimit);
+    SC_REG(192, mmap2,                          mmap2);
+    SC_REG(195, stat64,                         stat64);
+    SC_REG(196, stat64,                         stat64);        // lstat64
+    SC_REG(197, stat64,                         stat64);        // fstat64
+    SC_REG(199, getuid32,                       default);
+    SC_REG(200, getgid32,                       default);
+    SC_REG(201, geteuid32,                      default);
+    SC_REG(202, getegid32,                      default);
+    SC_REG(207, fchown32,                       default);
+    SC_REG(212, chown,                          default);
+    SC_REG(220, getdents64,                     getdents64);
+    SC_REG(221, fcntl,                          fcntl);
+    SC_REG(224, gettid,                         default);
+    SC_REG(240, futex,                          default);
+    SC_REG(242, sched_getaffinity,              sched_getaffinity);
+    SC_REG(243, set_thread_area,                default);
+    SC_REG(252, exit_group,                     exit_group);
+    SC_REG(258, set_tid_address,                default);
+    SC_REG(264, clock_settime,                  default);
+    SC_REG(265, clock_gettime,                  clock_gettime);
+    SC_REG(266, clock_getres,                   clock_getres);
+    SC_REG(268, statfs64,                       statfs64);
+    SC_REG(270, tgkill,                         default);
+    SC_REG(271, utimes,                         default);
+    SC_REG(306, fchmodat,                       default);
+    SC_REG(311, set_robust_list,                default);
 
 
 #undef SC_REG
@@ -4501,6 +4505,46 @@ syscall_futex(RSIM_Thread *t, int callno)
 
     int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val3);
     t->syscall_return(-1==result ? -errno : result);
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_sched_getaffinity_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sched_getaffinity", "ddp");
+}
+
+static void
+syscall_sched_getaffinity(RSIM_Thread *t, int callno)
+{
+    pid_t pid = t->syscall_arg(0);
+    
+    size_t cpuset_nbits = t->syscall_arg(1);
+    size_t cpuset_nbytes = (cpuset_nbits+7) / 8;
+    uint8_t buf[cpuset_nbytes+sizeof(long)]; /* overallocated */
+
+    int result = sched_getaffinity(pid, cpuset_nbits, (cpu_set_t*)buf);
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    rose_addr_t cpuset_va = t->syscall_arg(2);
+    if (cpuset_nbytes!=t->get_process()->mem_write(buf, cpuset_va, cpuset_nbytes)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+}
+
+static void
+syscall_sched_getaffinity_leave(RSIM_Thread *t, int callno)
+{
+    size_t cpuset_nbits = t->syscall_arg(1);
+    size_t cpuset_nbytes = (cpuset_nbits+7) / 8;
+    t->syscall_leave("d--P", cpuset_nbytes, print_bitvec);
 }
 
 /*******************************************************************************************************************************/
