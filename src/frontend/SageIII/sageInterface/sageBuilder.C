@@ -473,25 +473,25 @@ SgFunctionType *
 SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList)
 {
   ROSE_ASSERT(return_type);
-  SgFunctionType * funcType = new SgFunctionType(return_type, false);
-  ROSE_ASSERT(funcType);
-
-  if (typeList!=NULL)
-  {
-    funcType->set_argument_list(typeList);
-    typeList->set_parent(funcType);
-  }
-  SgName typeName = funcType->get_mangled_type();
-  // maintain the type table 
+  
   SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
   ROSE_ASSERT(fTable);
-  // set its parent to global , deferred until the function is inserted to a scope
- // ROSE_ASSERT (fTable->get_parent() != NULL);
- //   fTable->set_parent();
+  
+  SgName typeName = SgFunctionType::get_mangled(return_type, typeList);
+  
+  SgFunctionType * funcType = isSgFunctionType(fTable->lookup_function_type(typeName));
+  if (funcType == NULL) {
+    funcType = new SgFunctionType(return_type, false);
+    ROSE_ASSERT(funcType);
 
-  SgType* typeInTable = fTable->lookup_function_type(typeName);
-  if (typeInTable==NULL)
+    if (typeList!=NULL)
+    {
+      funcType->set_argument_list(typeList);
+      typeList->set_parent(funcType);
+    }
+  
     fTable->insert_function_type(typeName,funcType);
+  }
 
   return funcType;
 }

@@ -7059,8 +7059,6 @@ SgSymbolTable::findfunc(const SgName & nm, const SgType* t)
 SgFunctionSymbol*
 SgSymbolTable::find_function (const SgName & nm, const SgType* t)
    {
-  // AS (083006): cleaned up logic so that the function only have one return statement.
-
      SgFunctionSymbol *s = NULL;
      assert(p_table != NULL);
      if(p_table)
@@ -7074,22 +7072,22 @@ SgSymbolTable::find_function (const SgName & nm, const SgType* t)
           std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
 
           for (hash_iterator i = range.first; i != range.second; ++i)
-             {
-            // s = isSgFunctionSymbol((*i).second);
-               s = isSgFunctionSymbol(i->second);
+            {
+              SgFunctionSymbol * sym = isSgFunctionSymbol(i->second);
+              if ( (sym != NULL) && (sym->get_declaration()->get_type() == t) && get_table()->key_eq()(sym->get_name(),nm))
+                {
+                  p_name    = nm;
+                  p_no_name = false;
+                  s = sym;
+                  break;
+                }
+            }
+         }
 
-            // if ( (s != NULL) && (s->get_declaration()->get_type() == t))
-            // FMZ (10/29/2009) should compare name also
-            // if ( (s != NULL) && (s->get_declaration()->get_type() == t) && s->get_name().str()==nm.str())
-               if ( (s != NULL) && (s->get_declaration()->get_type() == t) && get_table()->key_eq()(s->get_name(),nm))
-                  {
-                    p_name    = nm;
-                    p_no_name = false;
-                 // return ((SgFunctionSymbol *)(*i).second);
-                    break;
-                  }
-             }
-        }
+	if (s != NULL) {
+		ROSE_ASSERT(s->get_name() == nm);
+		ROSE_ASSERT(s->get_declaration()->get_type() == t);
+	}
 
      return s;
    }
