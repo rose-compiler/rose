@@ -13,7 +13,7 @@
 #include <fstream>
 #include<map>
 
-#ifdef HAVE_SQLITE3
+#if 0
 #include "sqlite3x.h"
 #endif
 
@@ -231,7 +231,7 @@ int main (int argc, char **argv){
   std::string dbName = "";
   CommandlineProcessing::isOptionWithParameter(argvList,"-db:","(name)", dbName,true);
 
-#ifdef HAVE_SQLITE3
+#if 0
   var_SOLVE_FUNCTION_CALLS_IN_DB = true;
 
 
@@ -288,7 +288,7 @@ int main (int argc, char **argv){
 
   if(var_SOLVE_FUNCTION_CALLS_IN_DB == true)
   {
-#ifdef HAVE_SQLITE3
+#if 0
     writeSubgraphToDB(*gDB, cgb.getGraph() );
 
     solveVirtualFunctions( *gDB, "ClassHierarchy" );
