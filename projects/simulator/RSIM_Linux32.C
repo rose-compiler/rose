@@ -2172,7 +2172,7 @@ syscall_ipc_enter(RSIM_Thread *t, int callno)
         case 3: /*SEMCTL*/
             switch (third & 0xff) {
                 case 16: /*SETVAL*/
-                    t->syscall_enter("ipc", "fddfP", ipc_commands, sem_control, 4, print_int_32);
+                    t->syscall_enter("ipc", "fddfP", ipc_commands, sem_control, (size_t)4, print_int_32);
                     break;
                 default:
                     t->syscall_enter("ipc", "fddfp", ipc_commands, sem_control);
@@ -4484,23 +4484,23 @@ syscall_futex_enter(RSIM_Thread *t, int callno)
     uint32_t op = t->syscall_arg(1);
     switch (op & 0x7f) {
         case 0: /*FUTEX_WAIT*/
-            t->syscall_enter("futex", "PfdP", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
+            t->syscall_enter("futex", "PfdP", (size_t)4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
             break;
         case 1: /*FUTEX_WAKE*/
-            t->syscall_enter("futex", "Pfd", 4, print_int_32, opflags);
+            t->syscall_enter("futex", "Pfd", (size_t)4, print_int_32, opflags);
             break;
         case 2: /*FUTEX_FD*/
-            t->syscall_enter("futex", "Pfd", 4, print_int_32, opflags);
+            t->syscall_enter("futex", "Pfd", (size_t)4, print_int_32, opflags);
             break;
         case 3: /*FUTEX_REQUEUE*/
-            t->syscall_enter("futex", "Pfd-P", 4, print_int_32, opflags, 4, print_int_32);
+            t->syscall_enter("futex", "Pfd-P", (size_t)4, print_int_32, opflags, (size_t)4, print_int_32);
             break;
         case 4: /*FUTEX_CMP_REQUEUE*/
-            t->syscall_enter("futex", "Pfd-Pd", 4, print_int_32, opflags, 4, print_int_32);
+            t->syscall_enter("futex", "Pfd-Pd", (size_t)4, print_int_32, opflags, (size_t)4, print_int_32);
             break;
         default:
-            t->syscall_enter("futex", "PfdPPd", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32, 
-                          4, print_int_32);
+            t->syscall_enter("futex", "PfdPPd", (size_t)4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32, 
+                             (size_t)4, print_int_32);
             break;
     }
 }
