@@ -11,6 +11,8 @@
 #define MAX_ALIGN 3
 #define MIN_ALIGN -3
 
+using namespace std;
+
 void DepRel::Reset( DepDirType t, int min, int max)
 {
   align = min;
@@ -147,6 +149,7 @@ bool DepRel :: IsBottom() const
 std:: string DepRel :: toString() const 
 {
   std:: string res;
+#if 0
   switch ( GetRelType( entryType)) {
   case DEPDIR_NONE:
     res = res + "(); "; 
@@ -167,6 +170,9 @@ std:: string DepRel :: toString() const
     res = res + " != ";
     break;
   }
+#else
+  res = res + toString(entryType);  
+#endif
   char buf[20];
   if (align != ALIGN_ALL) {
     sprintf(buf, "%d", align);
@@ -204,6 +210,35 @@ bool LessThan( const DepRel &e1, const DepRel &e2)
      return true;
   else
     return false;
+}
+
+std::string DepRel::toString(int entry_type)
+{
+  string result ;
+  switch ( GetRelType( entry_type)) {
+    case DEPDIR_NONE:
+      result = "(); ";
+      break;
+    case DEPDIR_ALL:
+      result = "* ";
+      break;
+    case DEPDIR_EQ :
+      result = "== ";
+      break;
+    case DEPDIR_LE :
+      result = "<= ";
+      break;
+    case DEPDIR_GE :
+      result = ">= ";
+      break;
+    case DEPDIR_NE :
+      result = " != ";
+      break;
+    default:
+      cerr<<"error. DepRel::toString(): Relation type is not recognized! "<<entry_type<<endl;
+      assert(0);
+  }
+  return result;
 }
 
 bool DepRel::UnionUpdate (DepRel& e1, const DepRel &e2)
