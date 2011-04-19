@@ -194,6 +194,10 @@ static void syscall_msync_enter(RSIM_Thread *t, int callno);
 static void syscall_msync(RSIM_Thread *t, int callno);
 static void syscall_writev_enter(RSIM_Thread *t, int callno);
 static void syscall_writev(RSIM_Thread *t, int callno);
+static void syscall_sched_get_priority_max_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_get_priority_max(RSIM_Thread *t, int callno);
+static void syscall_sched_get_priority_min_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_get_priority_min(RSIM_Thread *t, int callno);
 static void syscall_nanosleep_enter(RSIM_Thread *t, int callno);
 static void syscall_nanosleep(RSIM_Thread *t, int callno);
 static void syscall_nanosleep_leave(RSIM_Thread *t, int callno);
@@ -345,6 +349,8 @@ RSIM_Linux32::ctor()
     SC_REG(142, select,         select);
     SC_REG(144, msync,          default);
     SC_REG(146, writev,         default);
+    SC_REG(159, sched_get_priority_max,         default);
+    SC_REG(160, sched_get_priority_min,         default);
     SC_REG(162, nanosleep,      nanosleep);
     SC_REG(173, rt_sigreturn,   rt_sigreturn);
     SC_REG(174, rt_sigaction,   rt_sigaction);
@@ -3599,6 +3605,38 @@ syscall_writev(RSIM_Thread *t, int callno)
     t->syscall_return(retval);
     if (niov>0 && niov<=1024)
         t->tracing(TRACE_SYSCALL)->more("writev return");
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_sched_get_priority_max_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sched_get_priority_max", "e", scheduler_policies);
+}
+
+static void
+syscall_sched_get_priority_max(RSIM_Thread *t, int callno)
+{
+    int policy = t->syscall_arg(0);
+    int result = sched_get_priority_max(policy);
+    t->syscall_return(result);
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_sched_get_priority_min_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sched_get_priority_min", "e", scheduler_policies);
+}
+
+static void
+syscall_sched_get_priority_min(RSIM_Thread *t, int callno)
+{
+    int policy = t->syscall_arg(0);
+    int result = sched_get_priority_min(policy);
+    t->syscall_return(result);
 }
 
 /*******************************************************************************************************************************/

@@ -869,6 +869,17 @@ static const Translate socketcall_commands[] = {
     T_END
 };
 
+/* Scheduling policy for sched_get_priority_max() et al. */
+static const Translate scheduler_policies[] = {
+    TF3(0x0fffffff, 0, SCHED_NORMAL),
+    TF3(0x0fffffff, 1, SCHED_FIFO),
+    TF3(0x0fffffff, 2, SCHED_RR),
+    TF3(0x0fffffff, 3, SCHED_BATCH),
+    TF3(0x0fffffff, 5, SCHED_IDLE),
+    TF3(0x40000000, 0x40000000, SCHED_RESET_ON_FORK),
+    T_END
+};
+
 /* Conversion functions */
 void convert(statfs_32 *g, const statfs64_native *h);
 void convert(statfs_32 *g, const statfs_native *h);
