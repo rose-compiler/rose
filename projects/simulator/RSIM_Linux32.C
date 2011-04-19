@@ -196,6 +196,8 @@ static void syscall_writev_enter(RSIM_Thread *t, int callno);
 static void syscall_writev(RSIM_Thread *t, int callno);
 static void syscall_sched_setparam_enter(RSIM_Thread *t, int callno);
 static void syscall_sched_setparam(RSIM_Thread *t, int callno);
+static void syscall_sched_setscheduler_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_setscheduler(RSIM_Thread *t, int callno);
 static void syscall_sched_getscheduler_enter(RSIM_Thread *t, int callno);
 static void syscall_sched_getscheduler(RSIM_Thread *t, int callno);
 static void syscall_sched_getscheduler_leave(RSIM_Thread *t, int callno);
@@ -360,6 +362,7 @@ RSIM_Linux32::ctor()
     SC_REG(144, msync,                          default);
     SC_REG(146, writev,                         default);
     SC_REG(155, sched_setparam,                 default);
+    SC_REG(156, sched_setscheduler,             default);
     SC_REG(157, sched_getscheduler,             sched_getscheduler);
     SC_REG(158, sched_yield,                    default);
     SC_REG(159, sched_get_priority_max,         default);
@@ -3645,6 +3648,34 @@ syscall_sched_setparam(RSIM_Thread *t, int callno)
     host.sched_priority = guest.sched_priority;
 
     int result = sched_setparam(pid, &host);
+    t->syscall_return(-1==result ? -errno : result);
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_sched_setscheduler_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sched_setscheduler", "dfP", scheduler_policies, sizeof(sched_param_32), print_sched_param_32);
+}
+
+static void
+syscall_sched_setscheduler(RSIM_Thread *t, int callno)
+{
+    pid_t pid = t->syscall_arg(0);
+    int policy = t->syscall_arg(1);
+    rose_addr_t params_va = t->syscall_arg(2);
+
+    sched_param_32 guest;
+    if (sizeof(guest)!=t->get_process()->mem_read(&guest, params_va, sizeof guest)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    sched_param host;
+    host.sched_priority = guest.sched_priority;
+
+    int result = sched_setscheduler(pid, policy, &host);
     t->syscall_return(-1==result ? -errno : result);
 }
 
