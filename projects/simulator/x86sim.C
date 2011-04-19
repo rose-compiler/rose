@@ -5,7 +5,10 @@
 #ifdef ROSE_ENABLE_SIMULATOR /* protects this whole file */
 
 #include "RSIM_Linux32.h"
+#include "RSIM_Adapter.h"
 
+
+    
 int
 main(int argc, char *argv[], char *envp[])
 {
@@ -88,7 +91,16 @@ main(int argc, char *argv[], char *envp[])
         sim.syscall_implementation(5)->body.clear().append(new NullOpen);
     }
 #endif
-        
+
+#if 1 /*EXAMPLE*/
+    {
+        RSIM_Adapter::TraceFileIO *tracer = new RSIM_Adapter::TraceFileIO;
+        tracer->trace_fd(0); // stdin
+        tracer->trace_fd(1); // stdout
+        tracer->trace_fd(2); // stderr
+        tracer->attach(&sim); //sim->adapt(tracer);
+    }
+#endif
 
 
     /* Configure the simulator by parsing command-line switches. The return value is the index of the executable name in argv. */

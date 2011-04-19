@@ -7,7 +7,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 libdepInfoSources = \
    DepEDD.C  DepInfoAnal.C ReuseAnalysis.C DepInfo.C  \
-   DepInfoSet.C  DepRel.C  DomainInfo.C  StmtDepAnal.C
+   DepInfoSet.C  DepRel.C DepRel.h  DomainInfo.C  StmtDepAnal.C
 
 # lib_LTLIBRARIES = libdepInfo.a
 # libdepInfo_a_SOURCES  = $(libdepInfoSources)
