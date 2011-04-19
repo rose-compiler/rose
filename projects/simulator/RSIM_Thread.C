@@ -90,6 +90,7 @@ RSIM_Thread::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list *
         }
         case 'b': {     /* buffer */
             size_t advertised_size = va_arg(*ap, size_t);
+            assert(advertised_size<10*1000*1000);
             info->struct_buf = new uint8_t[advertised_size];
             info->struct_nread = get_process()->mem_read(info->struct_buf, info->val, advertised_size);
             info->struct_size = 64; /* max print width, measured in columns of output */
@@ -97,6 +98,7 @@ RSIM_Thread::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list *
         }
         case 'P': {     /*ptr to a struct*/
             info->struct_size = va_arg(*ap, size_t);
+            assert(info->struct_size<10*1000*1000);
             info->struct_printer = va_arg(*ap, ArgInfo::StructPrinter);
             info->struct_buf = new uint8_t[info->struct_size];
             info->struct_nread = get_process()->mem_read(info->struct_buf, info->val, info->struct_size);
@@ -111,6 +113,7 @@ RSIM_Thread::syscall_enterv(uint32_t *values, const char *name, const char *form
     RTS_Message *m = tracing(TRACE_SYSCALL);
 
     if (m->get_file()) {
+        assert(strlen(format)<=6);
         ArgInfo args[6];
         for (size_t i=0; format[i]; i++)
             syscall_arginfo(format[i], values?values[i]:syscall_arg(i), args+i, app);
