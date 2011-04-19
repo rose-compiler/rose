@@ -147,6 +147,23 @@ fi
   AC_CHECK_LIB([curl], [Curl_connect], [HAVE_CURL=yes], [HAVE_CURL=no])
   AM_CONDITIONAL([HAS_LIBRARY_CURL], [test "x$HAVE_CURL" = "xyes"])
 
+# http://www.gnu.org/s/hello/manual/autoconf/Running-the-Compiler.html
+    AC_MSG_CHECKING([whether your GCC version is supported by ROSE (4.0.x - 4.4.x)])
+      AC_LANG_PUSH([C])
+      AC_COMPILE_IFELSE([
+        AC_LANG_SOURCE([[
+          #if (__GNUC__ >= 4 && __GNUC_MINOR__ <= 4)
+            int rose_supported_gcc;
+          #else
+            not gcc, or gcc version is not supported by rose
+          #endif
+        ]])
+       ],
+       [AC_MSG_RESULT([done])],
+       [AC_MSG_FAILURE([your GCC version is currently NOT supported by ROSE])])
+      AC_LANG_POP([C])
+
+
 ##
 #########################################################################################
 
