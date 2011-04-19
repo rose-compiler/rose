@@ -20,6 +20,7 @@ extern "C" {
 } /* End extern C. */
 #endif
 
+#include "JavaSourceCodePosition.h"
 
 // Control output from Fortran parser
 #define DEBUG_JAVA_SUPPORT true
@@ -52,6 +53,11 @@ extern std::list<SgName> astJavaImplicitClassList;
 
 // Global stack of SgInitializedName IR nodes (used for processing function parameters)
 extern std::list<SgInitializedName*> astJavaInitializedNameStack;
+
+// Global stack of source code positions. The advantage of a stack is that we could 
+// always reference the top of the stack, and monitor the depth of the stack, and make
+// sure that we never deleted the last entry in the stack until the end of the program.
+extern std::list<JavaSourceCodePosition*> astJavaSourceCodePositionStack;
 
 
 SgGlobal* getGlobalScope();
