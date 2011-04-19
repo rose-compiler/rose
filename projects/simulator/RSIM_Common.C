@@ -440,6 +440,14 @@ print_siginfo_32(RTS_Message *m, const uint8_t *_v, size_t sz)
 }
 
 void
+print_sched_param_32(RTS_Message *m, const uint8_t *_v, size_t sz)
+{
+    assert(sizeof(sched_param_32)==sz);
+    const sched_param_32 *v = (const sched_param_32*)_v;
+    m->more("sched_priority=%"PRId32, v->sched_priority);
+}
+
+void
 convert(statfs_32 *g, const statfs64_native *h)
 {
     memset(g, 0, sizeof(*g));

@@ -880,6 +880,11 @@ static const Translate scheduler_policies[] = {
     T_END
 };
 
+/* Kernel's struct sched_param on i686 */
+struct sched_param_32 {
+    int32_t sched_priority;
+} __attribute__((packed));
+
 /* Conversion functions */
 void convert(statfs_32 *g, const statfs64_native *h);
 void convert(statfs_32 *g, const statfs_native *h);
@@ -917,5 +922,6 @@ void print_termios_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_winsize_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_exit_status_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_siginfo_32(RTS_Message *f, const uint8_t *_v, size_t sz);
+void print_sched_param_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 
 #endif /* ROSE_RSIM_Common_H */

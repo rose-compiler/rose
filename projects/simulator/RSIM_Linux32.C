@@ -194,6 +194,8 @@ static void syscall_msync_enter(RSIM_Thread *t, int callno);
 static void syscall_msync(RSIM_Thread *t, int callno);
 static void syscall_writev_enter(RSIM_Thread *t, int callno);
 static void syscall_writev(RSIM_Thread *t, int callno);
+static void syscall_sched_setparam_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_setparam(RSIM_Thread *t, int callno);
 static void syscall_sched_get_priority_max_enter(RSIM_Thread *t, int callno);
 static void syscall_sched_get_priority_max(RSIM_Thread *t, int callno);
 static void syscall_sched_get_priority_min_enter(RSIM_Thread *t, int callno);
@@ -349,6 +351,7 @@ RSIM_Linux32::ctor()
     SC_REG(142, select,         select);
     SC_REG(144, msync,          default);
     SC_REG(146, writev,         default);
+    SC_REG(155, sched_setparam,                 default);
     SC_REG(159, sched_get_priority_max,         default);
     SC_REG(160, sched_get_priority_min,         default);
     SC_REG(162, nanosleep,      nanosleep);
@@ -3605,6 +3608,33 @@ syscall_writev(RSIM_Thread *t, int callno)
     t->syscall_return(retval);
     if (niov>0 && niov<=1024)
         t->tracing(TRACE_SYSCALL)->more("writev return");
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_sched_setparam_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sched_setparam", "dP", sizeof(sched_param_32), print_sched_param_32);
+}
+
+static void
+syscall_sched_setparam(RSIM_Thread *t, int callno)
+{
+    pid_t pid = t->syscall_arg(0);
+    rose_addr_t params_va = t->syscall_arg(1);
+
+    sched_param_32 guest;
+    if (sizeof(guest)!=t->get_process()->mem_read(&guest, params_va, sizeof guest)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    sched_param host;
+    host.sched_priority = guest.sched_priority;
+
+    int result = sched_setparam(pid, &host);
+    t->syscall_return(-1==result ? -errno : result);
 }
 
 /*******************************************************************************************************************************/
