@@ -15,6 +15,10 @@ int main(int argc, char *argv[])
 
     int counter = 0;
 
+    // Draw the AST.
+    CppToDotTranslator c;
+    c.translate(argc,argv);
+    
     // Process all function definition bodies for static control flow graph generation
     Rose_STL_Container<SgNode*> functions = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
     for (Rose_STL_Container<SgNode*>::const_iterator i = functions.begin(); i != functions.end(); ++i)
@@ -33,6 +37,13 @@ int main(int argc, char *argv[])
         Backstroke::BackstrokeCFG cfg(funcDef);
         cfg.toDot(cfgFileName);
 
+//        Backstroke::FilteredCFG filteredCFG(funcDef);
+//        filteredCFG.toDot("filteredCFG.dot");
+//
+//        Backstroke::FullCFG fullCFG(funcDef);
+//        fullCFG.toDot("fullCFG.dot");
+
+
 
 
         Backstroke::EventReverser reverser(funcDef);
@@ -48,6 +59,7 @@ int main(int argc, char *argv[])
     // Prepend includes to test files.
     SgGlobal* globalScope = SageInterface::getFirstGlobalScope(project);
     SageInterface::insertHeader("rctypes.h", PreprocessingInfo::after, false, globalScope);
+
 
     return backend(project);
 }

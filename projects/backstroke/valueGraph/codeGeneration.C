@@ -37,8 +37,9 @@ SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr)
                                     init);
 }
 
-void instrumentPushFunction(ValueNode* node)
+void instrumentPushFunction(ValueNode* node, SgFunctionDefinition* funcDef)
 {
+    // Build push function call.
 	SgExprListExp* parameters = buildExprListExp(node->var.getVarRefExp());
 	SgExpression* pushFunc = buildFunctionCallExp("push", buildVoidType(), parameters);
     //return buildExprStatement(pushFunc);
@@ -46,26 +47,34 @@ void instrumentPushFunction(ValueNode* node)
     SgNode* varNode = node->astNode;
     if (SgExpression* expr = isSgExpression(varNode))
     {
+        // If the target node is an expression, we have to find a proper place
+        // to place the push function. Here we insert the push function after its
+        // belonged statement.
         SgExpression* commaOp = buildCommaOpExp(pushFunc, copyExpression(expr));
         replaceExpression(expr, commaOp);
     }
     else if (SgInitializedName* initName = isSgInitializedName(varNode))
     {
+        // If the target node (def node) is a variable declaration, find this
+        // declaration statement first.
         SgNode* stmtNode = initName;
         while (stmtNode && !isSgStatement(stmtNode))
             stmtNode = stmtNode->get_parent();
 
         SgStatement* pushFuncStmt = buildExprStatement(pushFunc);
 
-        if (SgFunctionParameterList* funcPara = isSgFunctionParameterList(stmtNode))
+        // If this node belongs to event parameters, or is defined outside the function, 
+        // add the push function just at the beginning of the forward function.
+        // Else, add the push function under the declaration.
+        if (isSgClassDefinition(stmtNode->get_parent()) ||
+                isSgFunctionParameterList(stmtNode))
         {
-            SgFunctionDeclaration* funcDecl =
-                    isSgFunctionDeclaration(funcPara->get_parent());
-            SgBasicBlock* funcBody = funcDecl->get_definition()->get_body();
-            prependStatement(pushFuncStmt, funcBody);
+            // If this declaration belongs to parameter list.
+            prependStatement(pushFuncStmt, funcDef->get_body());
         }
         else
         {
+            // Or it is a normal declaration.
             SgVariableDeclaration* varDecl = isSgVariableDeclaration(stmtNode);
             ROSE_ASSERT(varDecl);
 
@@ -77,18 +86,20 @@ void instrumentPushFunction(ValueNode* node)
                 ROSE_ASSERT(!"Declaration in conditions is not handled yet!");
         }
 
-        // If this node belongs to event parameters, add the push function just
-        // at the beginning of the forward function. Else, add the push function
-        // under the declaration.
         cout << initName->get_parent()->class_name() << endl;
     }
 }
 
-SgStatement* buildPopFunction(ValueNode* node)
+SgExpression* buildPopFunctionCall(SgType* type)
+{
+    return buildFunctionCallExp("pop< " + get_type_name(type) + " >",
+            type, SageBuilder::buildExprListExp());
+}
+
+SgStatement* buildRestorationStmt(ValueNode* node)
 {
     SgType* type = node->getType();
-	SgExpression* popFunc = buildFunctionCallExp("pop< " + get_type_name(type) + " >",
-            type, SageBuilder::buildExprListExp());
+	SgExpression* popFunc = buildPopFunctionCall(type);
     return buildExprStatement(buildAssignOp(buildVariable(node), popFunc));
 }
 
