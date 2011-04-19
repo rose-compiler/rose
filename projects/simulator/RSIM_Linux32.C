@@ -199,6 +199,8 @@ static void syscall_sched_setparam(RSIM_Thread *t, int callno);
 static void syscall_sched_getscheduler_enter(RSIM_Thread *t, int callno);
 static void syscall_sched_getscheduler(RSIM_Thread *t, int callno);
 static void syscall_sched_getscheduler_leave(RSIM_Thread *t, int callno);
+static void syscall_sched_yield_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_yield(RSIM_Thread *t, int callno);
 static void syscall_sched_get_priority_max_enter(RSIM_Thread *t, int callno);
 static void syscall_sched_get_priority_max(RSIM_Thread *t, int callno);
 static void syscall_sched_get_priority_min_enter(RSIM_Thread *t, int callno);
@@ -359,6 +361,7 @@ RSIM_Linux32::ctor()
     SC_REG(146, writev,                         default);
     SC_REG(155, sched_setparam,                 default);
     SC_REG(157, sched_getscheduler,             sched_getscheduler);
+    SC_REG(158, sched_yield,                    default);
     SC_REG(159, sched_get_priority_max,         default);
     SC_REG(160, sched_get_priority_min,         default);
     SC_REG(162, nanosleep,                      nanosleep);
@@ -3665,6 +3668,20 @@ static void
 syscall_sched_getscheduler_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("Df", scheduler_policies);
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_sched_yield_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sched_yield", "");
+}
+
+static void
+syscall_sched_yield(RSIM_Thread *t, int callno)
+{
+    t->syscall_return(sched_yield());
 }
 
 /*******************************************************************************************************************************/
