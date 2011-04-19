@@ -970,8 +970,8 @@ namespace AutoParallelization
   }
 
   // Algorithm, eliminate the following dependencies
-  // * caused by locally declared variables: already private to each iteration
-  // *  commonlevel >=0, depInfo is within a loop
+  // *  caused by locally declared variables: already private to each iteration
+  // *  commonlevel ==0, no common enclosing loops
   // *  carry level !=0, loop independent,
   // *  either source or sink variable is thread local variable 
   // *  dependencies caused by autoscoped variables (private, firstprivate, lastprivate, reduction)
@@ -1107,6 +1107,11 @@ namespace AutoParallelization
              if (indirect_table[src_node] && indirect_table[snk_node])
                continue;
            }
+          // x. Eliminate dependencies  without common enclosing loop nests
+          // -----------------------------------------------
+          if (info.CommonLevel()==0) 
+            continue;
+           
           // x. Eliminate loop-independent dependencies: 
           // -----------------------------------------------
           // loop independent dependencies: privatization can eliminate most of them
