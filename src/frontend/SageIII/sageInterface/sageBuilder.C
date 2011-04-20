@@ -2727,6 +2727,17 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
   return ifstmt;
 }
 
+SgForInitStatement * SageBuilder::buildForInitStatement_nfi(SgStatementPtrList & statements) {
+  SgForInitStatement * result = new SgForInitStatement();
+
+  result->get_init_stmt() = statements;
+
+  for (SgStatementPtrList::iterator it = result->get_init_stmt().begin(); it != result->get_init_stmt().end(); it++)
+    (*it)->set_parent(result);
+
+  return result;
+}
+
 //! Based on the contribution from Pradeep Srinivasa@ LANL
 //Liao, 8/27/2008
 SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body)
@@ -2804,6 +2815,24 @@ SgForStatement * SageBuilder::buildForStatement_nfi(SgStatement* initialize_stmt
   return result;
 }
 
+SgForStatement * SageBuilder::buildForStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body)
+{
+  SgForStatement * result = new SgForStatement(init_stmt, test, increment, loop_body);
+  ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
+  setOneSourcePositionNull(result);
+  if (test)           test->set_parent(result);
+  if (loop_body) loop_body->set_parent(result);
+  if (increment) increment->set_parent(result);
+  if (init_stmt) init_stmt->set_parent(result);
+
+  return result;
+}
+
 //! Based on the contribution from Pradeep Srinivasa@ LANL
 //Liao, 8/27/2008
 SgUpcForAllStatement * SageBuilder::buildUpcForAllStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body)
@@ -2823,6 +2852,25 @@ SgUpcForAllStatement * SageBuilder::buildUpcForAllStatement_nfi(SgStatement* ini
     init_stmt->append_init_stmt(initialize_stmt);
     initialize_stmt->set_parent(init_stmt);
   }
+
+  return result;
+}
+
+SgUpcForAllStatement * SageBuilder::buildUpcForAllStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body)
+{
+  SgUpcForAllStatement * result = new SgUpcForAllStatement(init_stmt, test, increment, affinity, loop_body);
+  ROSE_ASSERT(result);
+
+ // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
+  if (symbol_table_case_insensitive_semantics == true)
+       result->setCaseInsensitive(true);
+
+  setOneSourcePositionNull(result);
+  if (test)           test->set_parent(result);
+  if (loop_body) loop_body->set_parent(result);
+  if (increment) increment->set_parent(result);
+  if (affinity)   affinity->set_parent(result);
+  if (init_stmt) init_stmt->set_parent(result);
 
   return result;
 }
