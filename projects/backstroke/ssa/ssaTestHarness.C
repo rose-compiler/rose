@@ -178,6 +178,17 @@ int main(int argc, char** argv)
 	//Run the SSA analysis intraprocedurally
 	StaticSingleAssignment ssa(project);
 	ssa.run(false);
+	
+#if 0
+	vector<SgFunctionDefinition*> functions = SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
+	foreach (SgFunctionDefinition* function, functions)
+	{
+		if (function->get_declaration()->get_name() != "foo")
+			continue;
+		
+		break;
+	}
+#endif  
 
 	if (SgProject::get_verbose() > 0)
 	{
