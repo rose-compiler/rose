@@ -14646,7 +14646,7 @@ SgIncidenceDirectedGraph::checkIfDirectedGraphEdgeExists(SgGraphNode* src, SgGra
   it2 = iter.second;
   for (;it1!=it2; ++it1) {
     SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it1->second);
-    SgGraphNode* target = isSgGraphNode(edge->get_to());
+    SgGraphNode* target = edge->get_to();
     if (target==trg)
       return true;
   }
