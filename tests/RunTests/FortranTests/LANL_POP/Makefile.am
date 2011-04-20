@@ -17,6 +17,10 @@ check-local:
 	cd poptest; \
 	  export TRANSLATOR=../$(TEST_TRANSLATOR); \
           export HUDSON_NUM_JOBS=1; \
+	  export HUDSON_TRANSLATOR=../$(TEST_TRANSLATOR); \
+	  export HUDSON_DIFF="`which diff`"; \
+	  export HUDSON_MAKE="$(MAKE)"; \
+	  export HUDSON_SED="$(SED)"; \
 	  export HUDSON_FC="$(GFORTRAN_PATH)"; \
 	  export HUDSON_FFLAGS="-ffree-line-length-0"; \
 	  export HUDSON_LD="$(GFORTRAN_PATH)"; \
@@ -26,9 +30,6 @@ check-local:
 	  export HUDSON_Cpp="/lib/cpp -P"; \
 	  export HUDSON_AWK="$(AWK)"; \
 	  export HUDSON_LDLIBS="\$$(LIBS) -lcurl"; \
-	  export DIFF="`which diff`"; \
-	  export MAKE="$(MAKE)"; \
-	  export SED="$(SED)"; \
 	./test.sh
 	@echo '*************************************************************'
 	@echo '** RunTests/FortranTests/LANL_POP make check rule complete **'

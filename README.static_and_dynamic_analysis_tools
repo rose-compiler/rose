@@ -1,7 +1,9 @@
 This README is specific to the testing of ROSE using both static and dynamic analysis tools.
 
 
+**********************
 Static Analysis Tools:
+**********************
    We are currently using Klocwork for static analysis of the ROSE source code.  The
 results will be made available to at least the ROSE developers with internal LLNL access.
 The results viewers are propritrary and so we might not be able to do more than this.
@@ -10,8 +12,66 @@ Usage with ROSE:
    This is fairly elaborate and will be details elsewhere (if required).  There is a
 web site for viewing the generated results of the analysis (this is still being setup).
 
+Views that we want to have of Klocwork results:
+   1) Separate views of severify 1, severify 2, and severity 3 issues
 
+   2) A view of ROSE only source code, thus excluding specific directories:
+       - src/frontend/CxxFrontend/EDG/EDG_3.3
+       - src/frontend/CxxFrontend/EDG/EDG_4.0
+       - libltdl
+       - src/3rdPartyLibraries/libharu-2.1.0
+       - projects
+       - src/ROSETTA
+       - src/roseExtensions
+
+   3) View of projects directory
+
+   4) View of Fortran support (for Rice)
+       - src/3rdPartyLibraries/fortran-parser
+       - src/frontend/OpenFortranParser_SAGE_Connection
+       - src/backend/unparser/FortranCodeGeneration
+
+   5) View of Java support (for Rice)
+       - src/3rdPartyLibraries/java-parser
+       - src/frontend/ECJ_ROSE_Connection
+       - src/backend/unparser/JavaCodeGeneration
+
+   6) View of Binary Analysis support only directories (and subdirs of):
+       - src/frontend/BinaryDisassembly
+       - src/frontend/BinaryFormats
+       - src/frontend/BinaryLoader
+       - src/midend/binaryAnalyses
+       - src/backend/asmUnparser
+
+   7) Separate views of frontend, midend, and backend
+
+   8) View of src/ROSETTA directory
+
+   9) View of roseExtensions directory
+       - src/roseExtensions
+
+  10) Separate views of each EDG of the directories:
+       - src/frontend/CxxFrontend/EDG/EDG_3.3
+       - src/frontend/CxxFrontend/EDG/EDG_4.0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+***********************
 Dynamic Analysis Tools:
+***********************
    We are currently using Insure++ for dynamic analysis testing of the ROSE source code.
 The results will be made available to at least the ROSE development team.  It is less
 clear in what form the results will be made available; currently they are output to stderr
@@ -25,14 +85,27 @@ The ".psrc" file:
 to Insure++.  See Dan Quinlan for a copy of this file that is setup properly for use 
 at LLNL.
 
-   Note that Insure++ can also test STL usage (option "-Zstl"), but I have not used 
-that yet.
+Note that Insure++ can also test STL usage (option "-Zstl"), but I have not used that yet.
+
+By including the following line in the .psrc file:
+"insure++.report_file ROSE_insure_report.rpt" (without quotes)
+we can generate a report file that can be later loaded with the GUI ("insra")
+to review the results.  This is now we should generate nightly results.
+Note: You must load .rpt files through the GUI itself rather than from the command-line.
+      insra does not take command line options to make it easy the load the correct file.
+      So *.rpt files must be loaded explicitly (by clicking the load button in the GUI and
+      seleting the correct file).
+
 
 Usage with ROSE:
    We don't consider the memory leaks in ROSETTA to be important. The execution of
 ROSETTA to generate the code used in ROSE can take about an hour if it is not optimized
 (without insure++ it will take only a few seconds).  The ".psrc" file shows how this can
 be done (turning off tracking of memory leaks).
+
+
+
+
 
 
 Customization:

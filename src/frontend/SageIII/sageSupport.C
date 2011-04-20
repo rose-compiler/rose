@@ -1,3 +1,4 @@
+#include <signal.h> // SKW DEBUG
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
@@ -5568,17 +5569,36 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           string sourceFilename = get_sourceFileNameWithPath();
           string preprocessFilename;
 
-       // always create pseudonym for source file in case original extension does not permit preprocessing
-          string dir  = StringUtility::getPathFromFileName(sourceFilename);
-          string file = StringUtility::stripPathFromFileName(sourceFilename);
-          string base = StringUtility::stripFileSuffixFromFileName(file);
-          char * temp = tempnam(dir.c_str(), (base + "-").c_str());
-          preprocessFilename = string(temp) + ".F90"; free(temp);
-          int errorCode = link(sourceFilename.c_str(), preprocessFilename.c_str());
-          ROSE_ASSERT(!errorCode);
+          // use a pseudonym for source file in case original extension does not permit preprocessing
+             // compute absolute path for pseudonym
+                string dir = StringUtility::getPathFromFileName(this->get_unparse_output_filename());
+                if( dir.empty() ) dir = getWorkingDirectory();
+                string file = StringUtility::stripPathFromFileName(sourceFilename);
+                string base = StringUtility::stripFileSuffixFromFileName(file);
+                dir = StringUtility::getAbsolutePathFromRelativePath(dir);  // Windows 'tempnam' requires this
+                char * temp = tempnam(dir.c_str(), (base + "-").c_str());   // not deprecated in Visual Studio 2010
+                preprocessFilename = string(temp) + ".F90"; free(temp);
+             // copy source file to pseudonym file
+#if 0
+                boost::filesystem::copy_file(sourceFilename, preprocessFilename);
+#else
+  #if !ROSE_MICROSOFT_OS
+                Rose_STL_Container<string> cpCommand;
+                cpCommand.push_back("cp");
+                cpCommand.push_back(sourceFilename);
+                cpCommand.push_back(preprocessFilename);
+                int errorCode = systemFromVector(cpCommand);
+                ROSE_ASSERT(!errorCode);
+  #else
+                // SKW 2011-04-15: NOT TESTED
+                bool ok = CopyFile((LPCTSTR)sourceFilename.c_str(), (LPCTSTR)preprocessFilename.c_str(), true);
+                ROSE_ASSERT(ok);
+  #endif
+#endif
+
           fortran_C_preprocessor_commandLine.push_back(preprocessFilename);
 
-          // add option to specify output file name
+       // add option to specify output file name
           fortran_C_preprocessor_commandLine.push_back("-o");
           string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
           fortran_C_preprocessor_commandLine.push_back(sourceFileNameOutputFromCpp);
@@ -5599,9 +5619,22 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              }
 
        // clean up after alias processing
-          errorCode = unlink(preprocessFilename.c_str());
+#if 0
+        boost::filesystem::remove(preprocessFilename);
+#else
+  #if !ROSE_MICROSOFT_OS
+          Rose_STL_Container<string> rmCommand; 
+          rmCommand.push_back("rm");
+          rmCommand.push_back("-f");
+          rmCommand.push_back(preprocessFilename);
+          errorCode = systemFromVector(rmCommand);
           ROSE_ASSERT(!errorCode);
-
+  #else
+          // SKW 2011-04-15: NOT TESTED
+          ok = DeleteFile((LPCTSTR)preprocessFilename.c_str());
+          ROSE_ASSERT(ok);
+  #endif
+#endif
         }
 
 
