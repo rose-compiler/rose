@@ -11,11 +11,12 @@ if !ROSE_USING_GFORTRAN_VERSION_4_0
 #
 # HUDSON_LDLIBS should equal exactly "$(LIBS) -lcurl" because $(LIBS) must
 # be expanded in the poptest Makefiles; not in this Makefile.
+#          export HUDSON_NUM_JOBS=$${NUM_PROCESS}; \
 check-local:
 	tar xzf $(srcdir)/poptest.tgz -C .
 	cd poptest; \
 	  export TRANSLATOR=../$(TEST_TRANSLATOR); \
-          export HUDSON_NUM_JOBS=$${NUM_PROCESS}; \
+          export HUDSON_NUM_JOBS=1; \
 	  export HUDSON_FC="$(GFORTRAN_PATH)"; \
 	  export HUDSON_FFLAGS="-ffree-line-length-0"; \
 	  export HUDSON_LD="$(GFORTRAN_PATH)"; \
