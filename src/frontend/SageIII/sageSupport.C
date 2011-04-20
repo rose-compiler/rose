@@ -5575,12 +5575,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              // compute absolute path for pseudonym
                 string dir = StringUtility::getPathFromFileName(this->get_unparse_output_filename());
                 string abs_dir = StringUtility::getAbsolutePathFromRelativePath(dir.empty() ? getWorkingDirectory() : dir);  // Windows 'tempnam' requires this
-#if 1
-                string base = boost::filesystem::stem(sourceFilename);
-#else
                 string file = StringUtility::stripPathFromFileName(sourceFilename);
                 string base = StringUtility::stripFileSuffixFromFileName(file);
-#endif
                 char * temp = tempnam(abs_dir.c_str(), (base + "-").c_str());   // not deprecated in Visual Studio 2010
                 preprocessFilename = string(temp) + ".F90"; free(temp);
              // copy source file to pseudonym file
