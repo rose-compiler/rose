@@ -1,5 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+
+EXTRA_DIST = input1.C t41.C t42.C t43.C littletest.C
+
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
 
@@ -7,7 +10,7 @@ INCLUDES = $(ROSE_INCLUDES)
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
 # This test program does not require the rest of ROSE so it can be handled locally
-bin_PROGRAMS  = astTraversalTest testRun processnew3Down4
+bin_PROGRAMS  = astTraversalTest processnew3Down4
 
 # Allow development using -lrose -ledg (simpler) or using 
 # long list of separate libraries (for faster development)
@@ -16,10 +19,7 @@ ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 astTraversalTest_SOURCES      = astTraversalTest.C
 astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
-testRun_SOURCES      = testRun.C
-testRun_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
-
-processnew3Down4_SOURCES 	= processnew3Down4.C
+processnew3Down4_SOURCES      = processnew3Down4.C
 processnew3Down4_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 
@@ -29,18 +29,15 @@ processnew3Down4_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 testTraversals: astTraversalTest
 	./astTraversalTest -edg:w -c $(srcdir)/input1.C
 
-testTraversals: testRun
+testRunExamples: processnew3Down4
 	./processnew3Down4 $(srcdir)/t41.C
 	./processnew3Down4 $(srcdir)/t42.C
 	./processnew3Down4 $(srcdir)/t43.C
 	./processnew3Down4 $(srcdir)/littletest.C
 	rm *.dot
-
-EXTRA_DIST = input1.C
-
 check-local:
 	@$(MAKE) testTraversals
-	@$(MAKE) testRun
+	@$(MAKE) testRunExamples
 	@echo "***********************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/astProcessingTests: make check rule complete (terminated normally) ***"
 	@echo "***********************************************************************************************"
