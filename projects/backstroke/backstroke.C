@@ -52,7 +52,7 @@ reverseEvents(EventProcessor* event_processor,
 	timer analysisTimer;
 	vector<SgFunctionDeclaration*> allEventMethods = normalizeEvents(is_event, project);
 	printf("-- Timing: Normalization took %.2f seconds.\n", analysisTimer.elapsed());
-    printf("Found %d event functions.\n", allEventMethods.size());
+    printf("Found %u event functions.\n", (unsigned int)allEventMethods.size());
     fflush(stdout);
 
 	AstTests::runAllTests(project);
@@ -70,28 +70,29 @@ reverseEvents(EventProcessor* event_processor,
     event_processor->setVariableRenaming(&var_renaming);
 	printf("-- Timing: Variable Renaming took %.2f seconds.\n", analysisTimer.elapsed());
     fflush(stdout);
-    	
-	// Get the global scope.
-	SgGlobal* globalScope = SageInterface::getFirstGlobalScope(project);
-	SageBuilder::pushScopeStack(isSgScopeStatement(globalScope));
 
 	vector<ProcessedEvent> output;
-
-	foreach(SgFunctionDeclaration* event, allEventMethods)
+	set<SgGlobal*> allGlobalScopes;
+	
+	foreach(SgFunctionDeclaration* eventFunction, allEventMethods)
 	{
 		timer t;
 
+		SgGlobal* globalScope = SageInterface::getEnclosingNode<SgGlobal>(eventFunction);
+		allGlobalScopes.insert(globalScope);
+		SageBuilder::pushScopeStack(globalScope);
+		
 		ProcessedEvent processed_event;
-		processed_event.event = event;
+		processed_event.event = eventFunction;
 		
 		// Here reverse the event function into several versions.
-		processed_event.fwd_rvs_events = event_processor->processEvent(event);
+		processed_event.fwd_rvs_events = event_processor->processEvent(eventFunction);
 		ROSE_ASSERT(!processed_event.fwd_rvs_events.empty());
 
 		reverse_foreach (const EventReversalResult& fwd_rvs_event, processed_event.fwd_rvs_events)
 		{
 			// Put the generated statement after the normalized event.
-			SgFunctionDeclaration* originalEvent = isSgFunctionDeclaration(event->get_definingDeclaration());
+			SgFunctionDeclaration* originalEvent = isSgFunctionDeclaration(eventFunction->get_definingDeclaration());
 			SageInterface::insertStatementAfter(originalEvent, fwd_rvs_event.commitMethod);
 			SageInterface::insertStatementAfter(originalEvent, fwd_rvs_event.reverseEvent);
 			SageInterface::insertStatementAfter(originalEvent, fwd_rvs_event.forwardEvent);
@@ -99,23 +100,27 @@ reverseEvents(EventProcessor* event_processor,
 
 		output.push_back(processed_event);
 		
-		cout << "Time used: " << t.elapsed() << endl;
-		cout << "Event \"" << get_name(processed_event.event) << "\" as processed successfully!\n";
-	}
+		printf("-- Timing: Reversing event \"%s\" took %.2f seconds.\n", get_name(processed_event.event).c_str(),
+				analysisTimer.elapsed());
+		fflush(stdout);
 
-	// Declare all stack variables on top of the generated file.
-	foreach(SgVariableDeclaration* decl, event_processor->getAllStackDeclarations())
+		// Declare all stack variables on top of the generated file.
+		foreach(SgVariableDeclaration* decl, event_processor->getStackDeclarationsForLastEvent())
+		{
+			SageInterface::prependStatement(decl, globalScope);
+		}
+		
+		SageBuilder::popScopeStack();
+	}
+	
+	foreach(SgGlobal* globalScope, allGlobalScopes)
 	{
-		prependStatement(decl, globalScope);
+		// Prepend includes to test files.
+		insertHeader("rctypes.h", PreprocessingInfo::after, false, globalScope);
+		
+		// Fix all variable references here.
+		SageInterface::fixVariableReferences(globalScope);
 	}
-
-	// Prepend includes to test files.
-	insertHeader("rctypes.h", PreprocessingInfo::after, false, globalScope);
-
-	SageBuilder::popScopeStack();
-
-	// Fix all variable references here.
-	SageInterface::fixVariableReferences(globalScope);
 
 	return output;
 }
