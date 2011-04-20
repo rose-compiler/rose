@@ -19,16 +19,21 @@ class EventReverser
 {
 public:
 	typedef boost::graph_traits<ValueGraph>::vertex_descriptor VGVertex;
-	typedef boost::graph_traits<ValueGraph>::edge_descriptor VGEdge;
+	typedef boost::graph_traits<ValueGraph>::edge_descriptor   VGEdge;
 
 private:
     //typedef std::pair<int, PathSet> PathSetWithIndex;
 	typedef StaticSingleAssignment SSA;
-	typedef SSA::VarName VarName;
+	typedef SSA::VarName           VarName;
     typedef boost::filtered_graph<
         ValueGraph,
         boost::function<bool(const VGEdge&)>,
         boost::function<bool(const VGVertex&)> > SubValueGraph;
+
+    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
+		std::pair<PathSet, std::vector<VGEdge> >, PathSet> ReverseCFG;
+    typedef boost::graph_traits<ReverseCFG>::vertex_descriptor RvsCFGVertex;
+	typedef boost::graph_traits<ReverseCFG>::edge_descriptor   RvsCFGEdge;
 
 private:
     //! The event function definition.
@@ -97,6 +102,24 @@ private:
 	//! The start point of the search.
 	VGVertex root_;
 
+    //! This subclass is used to build the CFG for the reverse event.
+    //struct ReverseCFGBuilder
+    //{
+        //! The result from search process. Each edge is with a corresponding path info.
+     //   std::map<VGEdge, PathSet> routes;
+
+        //! Marks which vertices are visited on which paths.
+     //   std::map<VGVertex, PathSet> visitedNodes;
+
+     //   std::map<PathSet, RvsCFGVertex> cfgNodeForPath;
+
+        //map<int, RvsCFGVertex> cfgNodeForPath;
+
+        //ReverseCFG rvsCFG_;
+
+
+    //};
+
 //	typedef CFG<VirtualCFG::InterestingNode,
 //			VirtualCFG::InterestingEdge> CFG;
 //	typedef CDG<CFG> CDG;
@@ -109,6 +132,7 @@ public:
 
 	//! Build the value graph for the given function.
 	void buildValueGraph();
+
 
     //! Generate forward, reverse and commit functions according to the VG.
     void generateCode();
@@ -185,7 +209,7 @@ private:
      *  @param valuesToRestore All variables to restore in the subgraph.
      *  @returns reversalRoute The search result.
 	 */
-    SubValueGraph getReversalRoute(int dagIndex, int pathIndex,
+    std::set<VGEdge> getReversalRoute(int dagIndex, int pathIndex,
                                    const SubValueGraph& subgraph,
                                    const std::vector<VGVertex>& valuesToRestore);
 
@@ -261,7 +285,7 @@ private:
 	VersionedVariable getVersionedVariable(SgNode* node, bool isUse = true);
 
     //! For each path, find its corresponding subgraph.
-    void getSubGraph(SgScopeStatement* scope, int dagIndex, int pathIndex);
+    std::set<VGEdge> getRouteFromSubGraph(int dagIndex, int pathIndex);
 
     //! Get all nodes in the topological order in a subgraph.
     std::vector<VGVertex> getGraphNodesInTopologicalOrder(
@@ -269,13 +293,36 @@ private:
 
     //! Get all operands of an operator node.
     std::pair<ValueNode*, ValueNode*>
-    getOperands(VGVertex opNode, const SubValueGraph& subgraph) const;
+    getOperands(VGVertex opNode) const;
 
     //! Generate the reverse function.
     void generateReverseFunction(
         SgScopeStatement* scope,
         const SubValueGraph& route);
 
+    //! Build the reverse CFG for the given DAG.
+    void buildReverseCFG(int dagIndex, 
+                         std::map<VGEdge, PathSet>& routes,
+                         ReverseCFG& rvsCFG);
+    
+    //! Traverse nodes in topological order for all paths then build the reverse CFG.
+    void buildReverseCFG(
+            const VGEdge& edge,
+            const std::map<VGEdge, PathSet>& routes,
+            std::set<VGEdge>& visitedNodes,
+            std::map<PathSet, RvsCFGVertex>& cfgNodeForPath,
+            ReverseCFG& rvsCFG);
+
+    //! Generate code in a basic block of the reverse CFG.
+    void generateCodeForBasicBlock(
+            const std::vector<VGEdge>& edges,
+            SgScopeStatement* scope);
+
+    void generateCode(
+            const ReverseCFG& rvsCFG,
+            SgBasicBlock* rvsFuncBody,
+            const std::string& pathNumName);
+    
 	static VGVertex nullVertex()
 	{ return boost::graph_traits<ValueGraph>::null_vertex(); }
 
@@ -290,6 +337,15 @@ private:
         {
             std::cout << it->first.toString() << "\n";
         }
+    }
+
+    std::string edgeToString(const VGEdge& edge)
+    {
+        VGVertex src = boost::source(edge, valueGraph_);
+        VGVertex tgt = boost::target(edge, valueGraph_);
+
+        return valueGraph_[src]->toString() + " ==> " +
+               valueGraph_[tgt]->toString();
     }
 };
 

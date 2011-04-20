@@ -131,6 +131,8 @@ struct ValueNode : ValueGraphNode
     std::string str;
 };
 
+//! This node represents a phi node in the SSA form CFG. The AST node inside (actually
+//! from its parent class ValueNode) only describe the place of this Phi node in the CFG.
 struct PhiNode : ValueNode
 {
     enum GateType
@@ -160,6 +162,8 @@ struct PhiNode : ValueNode
     //GateType type;
 };
 
+//! An operator node represents a unary or binary operation. It only has one in edge,
+//! and one or two out edges, for unary and binary operation separately.
 struct OperatorNode : ValueGraphNode
 {
     static std::map<VariantT, std::string> typeStringTable;

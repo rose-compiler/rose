@@ -329,10 +329,10 @@ void PathNumGenerator::getAllPathNumForNodesAndEdges()
 
             if (pathSetOnVertex.numToPath.count(visibleNum) == 0)
                 pathSetOnVertex.numToPath[visibleNum].resize(pathNumber);
-            pathSetOnVertex.numToPath[visibleNum][i] = 1;
+            pathSetOnVertex.numToPath[visibleNum].set(i);
 
-            pathSetOnVertex.allPath[i] = 1;
-            pathsForEdge_[edge][i] = 1;
+            pathSetOnVertex.allPath.set(i);
+            pathsForEdge_[edge].set(i);
         }
         ++i;
     }
