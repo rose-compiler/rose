@@ -5533,6 +5533,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      bool requires_C_preprocessor = get_requires_C_preprocessor();
      if (requires_C_preprocessor == true)
         {
+          int errorCode;
+          
        // If we detect that the input file requires processing via CPP (e.g. filename of form *.F??) then 
        // we generate the command to run CPP on the input file and collect the results in a file with 
        // the suffix "_postprocessed.f??".  Note: instead of using CPP we use the target backend fortran 
@@ -5579,15 +5581,20 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                 char * temp = tempnam(dir.c_str(), (base + "-").c_str());   // not deprecated in Visual Studio 2010
                 preprocessFilename = string(temp) + ".F90"; free(temp);
              // copy source file to pseudonym file
-#if 0
-                boost::filesystem::copy_file(sourceFilename, preprocessFilename);
+#if 1
+                try { boost::filesystem::copy_file(sourceFilename, preprocessFilename); }
+                catch(...)
+                {
+                    printf("Error in copying file %s to %s\n", sourceFilename.c_str(), preprocessFilename.c_str());
+                    ROSE_ASSERT(False);
+                }
 #else
   #if !ROSE_MICROSOFT_OS
                 Rose_STL_Container<string> cpCommand;
                 cpCommand.push_back("cp");
                 cpCommand.push_back(sourceFilename);
                 cpCommand.push_back(preprocessFilename);
-                int errorCode = systemFromVector(cpCommand);
+                errorCode = systemFromVector(cpCommand);
                 ROSE_ASSERT(!errorCode);
   #else
                 // SKW 2011-04-15: NOT TESTED
@@ -5613,14 +5620,19 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
        // DQ (10/1/2008): Added error checking on return value from CPP.
           if (errorCode != 0)
-             {
-               printf ("Error in running cpp on Fortran code: errorCode = %d \n",errorCode);
-               ROSE_ASSERT(false);
-             }
+          {
+             printf ("Error in running cpp on Fortran code: errorCode = %d \n",errorCode);
+             ROSE_ASSERT(false);
+          }
 
        // clean up after alias processing
-#if 0
-        boost::filesystem::remove(preprocessFilename);
+#if 1
+        try { boost::filesystem::remove(preprocessFilename); }
+        catch(...)
+        {
+            printf("Error in removing file %s\n", preprocessFilename.c_str());
+            ROSE_ASSERT(False);
+        }
 #else
   #if !ROSE_MICROSOFT_OS
           Rose_STL_Container<string> rmCommand; 
