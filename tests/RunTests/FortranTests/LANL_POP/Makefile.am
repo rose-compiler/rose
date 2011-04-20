@@ -15,7 +15,6 @@ if !ROSE_USING_GFORTRAN_VERSION_4_0
 check-local:
 	tar xzf $(srcdir)/poptest.tgz -C .
 	cd poptest; \
-	  export TRANSLATOR=../$(TEST_TRANSLATOR); \
           export HUDSON_NUM_JOBS=1; \
 	  export HUDSON_TRANSLATOR=../$(TEST_TRANSLATOR); \
 	  export HUDSON_DIFF="`which diff`"; \
