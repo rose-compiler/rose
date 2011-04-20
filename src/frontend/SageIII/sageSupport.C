@@ -5585,9 +5585,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                 try { boost::filesystem::copy_file(sourceFilename, preprocessFilename); }
                 catch(exception &e)
                 {
-                    cout << "Error in copying file " << sourceFilename << " to " << preprocessFilename
-                         << " (" << e.what() << ")" << endl;
-                    ROSE_ASSERT(False);
+                  cout << "Error in copying file " << sourceFilename << " to " << preprocessFilename
+                       << " (" << e.what() << ")" << endl;
+                  ROSE_ASSERT(false);
                 }
 #else
   #if !ROSE_MICROSOFT_OS
@@ -5631,9 +5631,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
         try { boost::filesystem::remove(preprocessFilename); }
         catch(exception &e)
         {
-            cout << "Error in removing file " << preprocessFilename
-                 << " (" << e.what() << ")" << endl;
-            ROSE_ASSERT(False);
+          cout << "Error in removing file " << preprocessFilename
+               << " (" << e.what() << ")" << endl;
+          ROSE_ASSERT(false);
         }
 #else
   #if !ROSE_MICROSOFT_OS
