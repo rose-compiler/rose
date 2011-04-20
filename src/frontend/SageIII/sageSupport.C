@@ -5583,9 +5583,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              // copy source file to pseudonym file
 #if 1
                 try { boost::filesystem::copy_file(sourceFilename, preprocessFilename); }
-                catch(...)
+                catch(exception &e)
                 {
-                    printf("Error in copying file %s to %s\n", sourceFilename.c_str(), preprocessFilename.c_str());
+                    cout << "Error in copying file " << sourceFilename << " to " << preprocessFilename
+                         << " (" << e.what() << ")" << endl;
                     ROSE_ASSERT(False);
                 }
 #else
@@ -5628,9 +5629,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // clean up after alias processing
 #if 1
         try { boost::filesystem::remove(preprocessFilename); }
-        catch(...)
+        catch(exception &e)
         {
-            printf("Error in removing file %s\n", preprocessFilename.c_str());
+            cout << "Error in removing file " << preprocessFilename
+                 << " (" << e.what() << ")" << endl;
             ROSE_ASSERT(False);
         }
 #else
