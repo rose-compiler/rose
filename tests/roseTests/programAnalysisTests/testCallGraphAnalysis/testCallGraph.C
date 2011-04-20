@@ -167,7 +167,7 @@ main( int argc, char * argv[] )
      bool var_SOLVE_FUNCTION_CALLS_IN_DB = false;
   // var_SOLVE_FUNCTION_CALLS_IN_DB = true;
 
-#ifdef HAVE_SQLITE3
+#if 0
      var_SOLVE_FUNCTION_CALLS_IN_DB = true;
      std::cout << "Analyzing in DATABASE" << std::endl;
 
@@ -210,7 +210,7 @@ main( int argc, char * argv[] )
      SgIncidenceDirectedGraph *newGraph;
      if(var_SOLVE_FUNCTION_CALLS_IN_DB == true)
         {
-#ifdef HAVE_SQLITE3
+#if 0
           writeSubgraphToDB( *gDB,  CGBuilder.getGraph() );
 
           hier.writeHierarchyToDB(*gDB);
