@@ -18,7 +18,7 @@ int main(int argc, char * argv[])
 	foreach(SgClassDefinition* classDef, allClasses)
 	{
 		printf("\n%s subclasses: ", classDef->get_declaration()->get_name().str());
-		foreach(SgClassDefinition* subclass, hier.getSubclasses())
+		foreach(SgClassDefinition* subclass, hier.getSubclasses(classDef))
 		{
 			printf("%s, ", subclass->get_declaration()->get_name().str());
 		}
