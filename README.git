@@ -58,6 +58,10 @@ which in the case of the cmake branch would be
 
      git push cmake
 
+To re-trigger Hudson:
+     git commit --allow-empty -m "restart hudson"
+     git push
+
 ########## Building a Branch for a development team member ################
 
 X     git branch matt master
