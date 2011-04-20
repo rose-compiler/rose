@@ -176,7 +176,7 @@ class SgGraphTraversal
     void evaluatePaths(SgIncidenceDirectedGraph* g, SgGraphNode* realstartnode, SgGraphNode* endnode);
     bool disjoint(std::vector<std::vector<SgGraphNode*> > path, std::vector<SgGraphNode*> vec2);
     std::set<std::vector<SgGraphNode*> > flatpaths;
-    void evalNode(SgIncidenceDirectedGraph* g, SgGraphNode* n);
+//    void evalNode(SgIncidenceDirectedGraph* g, SgGraphNode* n);
     bool canSolve(SgIncidenceDirectedGraph* g, SgGraphNode* n);
     std::map<SgGraphNode*, InheritedAttributeType> inhVals;
     std::set<SgDirectedGraphEdge*> seenEdges;
@@ -294,30 +294,14 @@ SgGraphTraversal::traverse
 Input:
 @param[n] n starting node
 @param[g] SgIncidenceDirectedGraph* g, CFG calculated previously
-@param[g2] SgIncidenceDirectedgraph* g2, empty graph, used to store tree
 @param[inheritedValue] InheritedAttributeType inheritedValue, value of the starting node
-@param[nullI] InheritedAttributeType nullI, value of the null Attribute, i.e. what to attribute to a node with no value
-@param[graphTraversal] int graphTraversal, deprecated
-@param[loop] bool loop, deprecated
+@param[nullI] InheritedAttributeType nullI, value of the null Attribute, i.e. what to attribute to a node with no value\
 @param[endnode] SgGraphNode* endnode, final node
-@param par boolean to decide whether or not to use openMP parallelization, default is false
-@param deleteTree boolean to decide whether or not to delete the tree as inheritedAttributes are calculated. This has the potential to keep memory requirements under control, and thus the ability to handle larger graphs
-@return SynthesizedAttributeType is returned, currently not useful
+@param[insep] boolean to decide inseparability of the analysis function, not yet in use, set automatically to false
+@param[pCh] deprecated, set to false
+@return InheritedAttributeType, the value of the attribute at the end node
 
 */
-
-
-
-       
-       
-      
-        
-        
-    
-
-
-        
-    
 
 
 template<class InheritedAttributeType, class SynthesizedAttributeType>
@@ -383,9 +367,15 @@ InheritedAttributeType inh;
        loopnum = 0;
        //InheritedAttributeType inh;
        time(&t1);
+       
+       //this function essentially sets up for the evaluate later, it makes putting together the paths much easier
        solvePaths(g, n, endnode);
+
        time(&t2);
+
+//making sure that endnode hasn't already been evaluated before the traversal starts, unlikely but just in case
        ROSE_ASSERT(inhVals.find(endnode) == inhVals.end());
+
        std::cout << "solvePaths done" << std::endl;
        double diff = difftime(t2, t1);
        time(&t5);
@@ -393,19 +383,24 @@ InheritedAttributeType inh;
        oVals[n] = 0;
        iVals[0] = n;
        pathValMap[n] = 1;
+//inserting n as a computed node
        computedNodes.insert(n);
+//computes the order in which the nodes must be evaluated, makes computeInheritedOrdered much faster
        computeOrder(g, n, endnode);
        std::cout << "order computed" << std::endl;
+//computes the nodal inheritance values
        computeInheritedOrdered(g, n);
        std::cout << "inheritance computed" << std::endl;
        ROSE_ASSERT(oVals.find(endnode) != oVals.end());
        ROSE_ASSERT(inhVals.find(endnode) != inhVals.end());
+//value at the endnode
        InheritedAttributeType pthgraphinherit = inhVals[endnode];
        //= evaluateGraph(g, n, endnode, inheritedValue);
        time(&t6);
        std::cout << "evaluateGraph done" << std::endl;
        double diff3 = difftime(t6, t5);
        time(&t3);
+//actually evaluates every path with a user defined pathAnalyze function
        evaluatePaths(g, n, endnode);
        time(&t4);
        std::cout << "evaluatePaths done " << std::endl;
@@ -464,7 +459,9 @@ bool is_disjoint(std::set<SgGraphNode*> set1, std::set<SgGraphNode*> set2) {
 
 
 
+//Checks for disjoint, necessary in computing the paths
 template<class InheritedAttributeType, class SynthesizedAttributeType>
+inline
 bool
 SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
 disjoint(std::vector<std::vector<SgGraphNode*> > path, std::vector<SgGraphNode*> vec2) {
@@ -496,32 +493,7 @@ disjoint(std::vector<std::vector<SgGraphNode*> > path, std::vector<SgGraphNode*>
     return true;
 }
 
-
-template<class InheritedAttributeType, class SynthesizedAttributeType>
-void
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-evalNode(SgIncidenceDirectedGraph* g, SgGraphNode* n) {
-    ROSE_ASSERT(canSolve(g, n));
-    bool loop = false;
-    if (inhVals.find(n) != inhVals.end()) {
-        return;
-    }
-    std::set<SgDirectedGraphEdge*> oed = g->computeEdgeSetIn(n);
-    std::vector<InheritedAttributeType> inhs;
-
-    for (std::set<SgDirectedGraphEdge*>::iterator i = oed.begin(); i != oed.end(); i++) {
-        ROSE_ASSERT(inhVals.find((*i)->get_from()) != inhVals.end() || nullEdges.find(*i) != nullEdges.end() || loop);
-        if (inhVals.find((*i)->get_from()) != inhVals.end()) {
-            InheritedAttributeType inhX = inhVals[(*i)->get_from()];
-            inhs.push_back(inhX);
-        }
-    }
-
-    InheritedAttributeType in = evaluateInheritedAttribute(n, inhs);
-    inhVals[n] = in;
-    return;
-}
-
+//checks for solvability of a node in nodal analysis
 
 template<class InheritedAttributeType, class SynthesizedAttributeType>
 bool
@@ -542,17 +514,8 @@ canSolve(SgIncidenceDirectedGraph* g, SgGraphNode* n) {
         }
    return true;
 } 
-    
-    
-        
 
-
-
-        
-    
-
-
-
+//this function evaluates values of paths via the user-defined pathAnalyze function
 
 template<class InheritedAttributeType, class SynthesizedAttributeType>
 void
@@ -571,6 +534,9 @@ std::map<SgGraphNode*, int> currents;
 SgGraphNode* currnode;
 bool step = false;
 bool midstep = false;
+
+//note: pathsAtMk is referring to subpaths connected to that marker, a marker is a split in the graph (usually an if statement)
+
 std::vector<std::vector<SgGraphNode*> > pth = pathsAtMk[realstartnode];
 std::vector<std::vector<SgGraphNode*> > cpth = pathsAtMk[realstartnode];
     path.clear();
@@ -588,10 +554,15 @@ std::vector<std::vector<SgGraphNode*> > cpth = pathsAtMk[realstartnode];
     step = false;
     std::vector<SgGraphNode*> flatpath;
     std::vector<SgGraphNode*> sub;
+
+/*
     std::ofstream mz;
     mz.open("pathanalysis.dot");
     mz << "digraph defaultName { \n";
+*/
     std::set<std::vector<SgGraphNode*> > nullIncLoops;
+
+
     for (unsigned int p = 0; p < looppaths.size(); p++) {
         std::vector<SgGraphNode*> lp = looppaths[p];
 
@@ -625,9 +596,9 @@ std::vector<std::vector<SgGraphNode*> > cpth = pathsAtMk[realstartnode];
         if (lp.size() > 2) {   
             lpbegins[lp.front()].insert(lp);      
             pathAnalyze(lp, true, nullIncLoops);
-            for (unsigned int i = 1; i < lp.size(); i++) {
-                printNodePlusEdgesForAnalysisPath(g, lp, p, p, mz);
-            }
+            //for (unsigned int i = 1; i < lp.size(); i++) {
+            //    printNodePlusEdgesForAnalysisPath(g, lp, p, p, mz);
+            //}
         }
     }
     while (step == false) {
@@ -653,9 +624,10 @@ std::vector<std::vector<SgGraphNode*> > cpth = pathsAtMk[realstartnode];
                      }
                  }
              }
+//user defined function, run on the final path, gives the user loops that are included via "incloops" a set of vectors that contain the individual loops
              pathAnalyze(flatpath, false, incloops);
              incloops.clear();
-                printNodePlusEdgesForAnalysisPath(g, flatpath, -1, -1, mz);
+                //printNodePlusEdgesForAnalysisPath(g, flatpath, -1, -1, mz);
 
              int pts = pathsSize++;
              pathsSize += 1;
@@ -664,6 +636,11 @@ std::vector<std::vector<SgGraphNode*> > cpth = pathsAtMk[realstartnode];
              path.pop_back();
              int rounds = 0;
              bool starter = false;
+
+// This gets a bit complicated so here is an overview:
+// This is running down the graph and finding the endnode. Once it finds the endnode it goes back up to the last unevaluated subpath. It does this quickly with an integer that counts how many times that node has been used for a path. If this ends up being the number of outnodes, we don't need that node anymore, so we clear it to zero, then continue up the graph. We HAVE to reset because every time a new pathway is chosen above that node, it needs to have the ability to traverse that node.
+
+
               while (true) {
                    rounds++;
                    ROSE_ASSERT(pathsAtMk.find((path.back()).back()) != pathsAtMk.end());
@@ -688,6 +665,8 @@ std::vector<std::vector<SgGraphNode*> > cpth = pathsAtMk[realstartnode];
            }
         }
         else {
+
+//this checks first to see if we have any loops in our path. If not it continues down, if there is it goes back to the last nonloop node
         if (disjoint(path, currpth)) {
             midstep = false;
                 path.push_back(currpth);
@@ -738,7 +717,11 @@ return;
 }
     
         
-    
+//these are debugging functions, used to visually ascertain where the paths are going to check to make sure everything is evaluated
+
+
+/* DEBUGGING */
+
 template<class InheritedAttributeType, class SynthesizedAttributeType>
 void
 SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
@@ -812,6 +795,9 @@ printEdgeForAnalysisPath(SgGraphNode* g1, SgGraphNode* g2, std::ofstream &ss) {
       ss << g2->get_index() << " -> " << g1->get_index() << " [label=\"" << "Edge" << "\", style=\"" << "solid" << "\"];\n";
 }
 
+/* END DEBUGGING */
+
+//This function sets up the graph so that the evaluatePath function can easily traverse the paths
 
 template<class InheritedAttributeType, class SynthesizedAttributeType>
 void
@@ -836,7 +822,7 @@ solvePaths(SgIncidenceDirectedGraph* g, SgGraphNode* n, SgGraphNode* endnode) {
     std::map<SgGraphNode*, bool> completed;
     while (done == false) {
              ROSE_ASSERT(currn != NULL);
-            
+//check to see if we've hit the endnode or if we're done, if not continue, if so push the subpath into the "pathsAtMk" repository            
                if (currn == endnode || completed.find(currn) != completed.end()) {
                 if (pathsAtMk.find(marks.back()) == pathsAtMk.end()) {
                     std::vector<std::vector<SgGraphNode*> > emptypath;
@@ -893,6 +879,7 @@ solvePaths(SgIncidenceDirectedGraph* g, SgGraphNode* n, SgGraphNode* endnode) {
                     found = false; 
                                 
              }
+//if we haven't reached the endnode or completed, continue down the graph
              else {
             std::set<SgDirectedGraphEdge*> oedg = g->computeEdgeSetOut(currn);
             std::set<SgDirectedGraphEdge*> iedg = g->computeEdgeSetIn(currn);
@@ -960,6 +947,7 @@ solvePaths(SgIncidenceDirectedGraph* g, SgGraphNode* n, SgGraphNode* endnode) {
            return;
 }
 
+//not currently useful
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 SynthesizedAttributeType
 SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
@@ -968,6 +956,9 @@ defaultSynthesizedAttribute(InheritedAttributeType inh)
     SynthesizedAttributeType s = SynthesizedAttributeType();
     return s;
 }
+
+
+//computes the order in which to evaluate the nodes in nodal analysis so that you don't evaluate a node before you evaluate its parents
 
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 void
@@ -1013,6 +1004,8 @@ computeOrder(SgIncidenceDirectedGraph* g, SgGraphNode* n, SgGraphNode* endnode) 
     std::cout << "required orders" << orders << std::endl;
     std::cout << "incomputables.size() " << incomputables.size() << std::endl;
 }
+
+//simple fucntion to check the computability under nodal analysis
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 bool
 SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
@@ -1030,14 +1023,17 @@ computable(SgIncidenceDirectedGraph* g, SgGraphNode* n) {
     return comp;
 }
 
+
+//computes the inherited attribute values in nodal analysis
+
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 void
 SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
 computeInheritedOrdered(SgIncidenceDirectedGraph* g, SgGraphNode* n) {
     int runs = 0;
-    std::ofstream mf;
-    mf.open("analysis.dot");
-    mf << "digraph defaultName { \n";
+//    std::ofstream mf;
+//    mf.open("analysis.dot");
+//    mf << "digraph defaultName { \n";
     for (std::map<int, SgGraphNode*>::iterator i = iVals.begin(); i != iVals.end(); i++) {
         runs++;
         ROSE_ASSERT(canEval(g, (*i).second));
@@ -1047,6 +1043,7 @@ computeInheritedOrdered(SgIncidenceDirectedGraph* g, SgGraphNode* n) {
     }
 }
 
+//checks to see if evaluation is possible under nodal analysis
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 bool
 SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
@@ -1064,6 +1061,7 @@ canEval(SgIncidenceDirectedGraph* g, SgGraphNode* n) {
 }
 
 
+//actually does the evaluation
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 void
 SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
@@ -1088,6 +1086,8 @@ evalNodeOrdered(SgIncidenceDirectedGraph* g, SgGraphNode* n) {
     
 }
 
+
+//debugging function, currently not useful for the end user
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 void
 SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
@@ -1111,6 +1111,7 @@ setPathVal(SgIncidenceDirectedGraph* g, SgGraphNode* currn) {
         return;
     }
 
+//computes the next child to be analyzed in nodal analysis
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 std::pair<bool, SgGraphNode*>
 SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
@@ -1161,6 +1162,7 @@ getNextChild(SgIncidenceDirectedGraph* g, SgGraphNode* n) {
     
 }
 
+//computes the next parent to be analyzed in nodal analysis
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 std::pair<bool, SgGraphNode*>
 SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
