@@ -18,10 +18,9 @@ vector<SgFunctionDeclaration*> normalizeEvents(function<bool(SgFunctionDeclarati
 {
 	// Get the global scope.
 	vector<SgFunctionDeclaration*> events;
-	SgGlobal* global = getFirstGlobalScope(project);
 	
 	// Get every function declaration and identify if it's an event function.
-	vector<SgFunctionDeclaration*> func_decls = BackstrokeUtility::querySubTree<SgFunctionDeclaration > (global);
+	vector<SgFunctionDeclaration*> func_decls = BackstrokeUtility::querySubTree<SgFunctionDeclaration > (project);
 	foreach (SgFunctionDeclaration* decl, func_decls)
 	{
 		//This ensures that we process every function only once
@@ -34,7 +33,7 @@ vector<SgFunctionDeclaration*> normalizeEvents(function<bool(SgFunctionDeclarati
 			BackstrokeNorm::normalizeEvent(decl);
 			events.push_back(decl);
 			
-			cout << "Function " << decl->get_name().str() << " is normalized!\n" << endl;
+			cout << "Function " << decl->get_name().str() << " was normalized!\n" << endl;
 		}
 	}
 
@@ -49,24 +48,29 @@ reverseEvents(EventProcessor* event_processor,
 {
 	ROSE_ASSERT(project);
 
-	//generateGraphOfAST(project,"graph");
-	//generateWholeGraphOfAST("graph");
-
 	// Normalize all events then reverse them.
+	timer analysisTimer;
 	vector<SgFunctionDeclaration*> allEventMethods = normalizeEvents(is_event, project);
+	printf("-- Timing: Normalization took %.2f seconds.\n", analysisTimer.elapsed());
+    printf("Found %d event functions.\n", allEventMethods.size());
+    fflush(stdout);
 
 	AstTests::runAllTests(project);
-	//unparseProject(project);
-
-	VariableRenaming var_renaming(project);
-	var_renaming.run();
-	// Make sure a VariableRenaming object is set for out event processor.
-	event_processor->setVariableRenaming(&var_renaming);
-
+    
+	analysisTimer.restart();
 	StaticSingleAssignment interproceduralSsa(project);
 	interproceduralSsa.run(true);
 	event_processor->setInterproceduralSsa(&interproceduralSsa);
-
+	printf("-- Timing: Interprocedural SSA took %.2f seconds.\n", analysisTimer.elapsed());
+    fflush(stdout);
+    
+    analysisTimer.restart();
+	VariableRenaming var_renaming(project);
+	var_renaming.run();
+    event_processor->setVariableRenaming(&var_renaming);
+	printf("-- Timing: Variable Renaming took %.2f seconds.\n", analysisTimer.elapsed());
+    fflush(stdout);
+    	
 	// Get the global scope.
 	SgGlobal* globalScope = SageInterface::getFirstGlobalScope(project);
 	SageBuilder::pushScopeStack(isSgScopeStatement(globalScope));
