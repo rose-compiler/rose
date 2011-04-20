@@ -309,7 +309,8 @@ printBannerToEndStep "configure" $configure_start_time
     # Easier to sort:  date +build_%Y_day%j_%b%d_%I%P%Mm%Ssi =  build_2011_day109_Apr19_01pm35m29s
     #                  date +build_%Y_day%j_%b%d_%I%P        =  build_2011_day109_Apr19_01pm
     #
-    kwadmin load rose tables --name build_`date +build_%Y_day%j_%b%d_%I%P`
+    # rose:build_XXXX
+    kwadmin load rose tables --name `date +build_%Y_day%j_%b%d_%I%P`
     if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
         printBanner "Fatal error during 'kwbuildproject -host hudson-rose-24 -port 8080 --license-host swordfish.llnl.gov -j8 -o tables rose.out'. Aborting..."
        exit 3
