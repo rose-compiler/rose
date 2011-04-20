@@ -20,7 +20,7 @@ using namespace boost;
 
 void StaticSingleAssignment::interproceduralDefPropagation(const unordered_set<SgFunctionDefinition*>& interestingFunctions)
 {
-	ClassHierarchyWrapper* classHierarchy = new ClassHierarchyWrapper(project);
+	ClassHierarchyWrapper classHierarchy(project);
 	
 #ifdef DISPLAY_TIMINGS
 	timer time;
@@ -29,6 +29,7 @@ void StaticSingleAssignment::interproceduralDefPropagation(const unordered_set<S
 
 #ifdef DISPLAY_TIMINGS
 	printf("-- Timing: Sorting functions in topological order took %.2f seconds.\n", time.elapsed());
+    fflush(stdout);
 #endif
 	
 	//If there is no recursion, this should only requires one iteration. However, we have to always do an extra
@@ -40,7 +41,7 @@ void StaticSingleAssignment::interproceduralDefPropagation(const unordered_set<S
 		bool changedDefs = false;
 		foreach (SgFunctionDefinition* func, topologicalFunctionOrder)
 		{
-			bool newDefsForFunc = insertInterproceduralDefs(func, interestingFunctions, classHierarchy);
+			bool newDefsForFunc = insertInterproceduralDefs(func, interestingFunctions, &classHierarchy);
 			changedDefs = changedDefs || newDefsForFunc;
 		}
 
@@ -49,8 +50,6 @@ void StaticSingleAssignment::interproceduralDefPropagation(const unordered_set<S
 	}
 	if (getDebug())
 		printf("%d interprocedural iterations on the call graph!\n", iteration);
-
-	delete classHierarchy;
 }
 
 
@@ -61,7 +60,13 @@ vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralPr
 	//So that callees are processed before callers. This way we would have exact information at each call site
 	CallGraphBuilder cgBuilder(project);
 	FunctionFilter functionFilter;
+#ifdef DISPLAY_TIMINGS
+	timer time;
+#endif
 	cgBuilder.buildCallGraph(functionFilter);
+#ifdef DISPLAY_TIMINGS
+	printf("-- Timing: Building call graph took %.2f seconds.\n", time.elapsed());
+#endif
 
 	SgIncidenceDirectedGraph* callGraph = cgBuilder.getGraph();
 
@@ -243,6 +248,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 
 					//If the modified var is in the callee class scope, we know "this" has been modified
 					SgScopeStatement* varScope = SageInterface::getScope(definedVar[0]);
+                    ROSE_ASSERT(isSgClassDefinition(varScope));
 					if (varScope == calleeClassScope)
 					{
 						originalDefTable[callSite].insert(lhsVar);
@@ -250,8 +256,8 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 					}
 
 					//Even if the modified var is not in the callee's class scope, it could be an inherited variable
-					Rose_STL_Container<SgClassDefinition*> superclasses = classHierarchy->getAncestorClasses(calleeClassScope);
-					if (find(superclasses.begin(), superclasses.end(), varScope) != superclasses.end())
+					const ClassHierarchyWrapper::ClassDefSet& superclasses = classHierarchy->getAncestorClasses(calleeClassScope);
+					if (superclasses.find(isSgClassDefinition(varScope)) != superclasses.end())
 					{
 						originalDefTable[callSite].insert(lhsVar);
 						break;
