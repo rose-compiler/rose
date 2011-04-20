@@ -1038,7 +1038,7 @@ computeInheritedOrdered(SgIncidenceDirectedGraph* g, SgGraphNode* n) {
         runs++;
         ROSE_ASSERT(canEval(g, (*i).second));
         setPathVal(g, n);
-        printNodePlusEdgesForAnalysis(g, (*i).second, loopNumMap[(*i).second], pathValMap[(*i).second], mf);
+        //printNodePlusEdgesForAnalysis(g, (*i).second, loopNumMap[(*i).second], pathValMap[(*i).second], mf);
         evalNodeOrdered(g, (*i).second);
     }
 }
