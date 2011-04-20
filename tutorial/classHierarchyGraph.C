@@ -1,4 +1,5 @@
 #include "rose.h"
+#include "CallGraph.h"
 #include <boost/foreach.hpp>
 
 #define foreach BOOST_FOREACH
@@ -16,10 +17,10 @@ int main(int argc, char * argv[])
 	vector<SgClassDefinition*> allClasses = SageInterface::querySubTree<SgClassDefinition>(project, V_SgClassDefinition);
 	foreach(SgClassDefinition* classDef, allClasses)
 	{
-		printf("\n%s subclasses: ", classDef->get_declaration()->get_name().c_str());
+		printf("\n%s subclasses: ", classDef->get_declaration()->get_name().str());
 		foreach(SgClassDefinition* subclass, hier.getSubclasses())
 		{
-			printf("%s, ", subclass->get_declaration()->get_name().c_str());
+			printf("%s, ", subclass->get_declaration()->get_name().str());
 		}
 	}
 
