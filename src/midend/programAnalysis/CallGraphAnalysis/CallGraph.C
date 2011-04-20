@@ -335,9 +335,9 @@ CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHi
             if ((memberFunctionDeclaration->get_functionModifier().isVirtual() ||
                     memberFunctionDeclaration->get_functionModifier().isPureVirtual()) && !isSgThisExp(left))
             {
-                SgClassDefinitionPtrList subclasses = classHierarchy->getSubclasses(classDefinition);
+                const ClassHierarchyWrapper::ClassDefSet& subclasses = classHierarchy->getSubclasses(classDefinition);
                 //cout << "Virtual function " << memberFunctionDeclaration->get_mangled_name().str() << "\n";
-                for (SgClassDefinitionPtrList::iterator it_cls = subclasses.begin(); it_cls != subclasses.end(); it_cls++)
+                for (ClassHierarchyWrapper::ClassDefSet::const_iterator it_cls = subclasses.begin(); it_cls != subclasses.end(); it_cls++)
                 {
                     SgClassDefinition *cls = isSgClassDefinition(*it_cls);
                     SgDeclarationStatementPtrList &clsMembers = cls->get_members();
@@ -443,11 +443,11 @@ CallTargetSet::solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWra
 
     // for virtual functions, we need to search down in the hierarchy of classes
     // and retrieve all declarations of member functions with the same type
-    SgClassDefinitionPtrList subclasses = classHierarchy->getSubclasses( crtClsDef );
+    const ClassHierarchyWrapper::ClassDefSet& subclasses = classHierarchy->getSubclasses( crtClsDef );
     functionDeclarationInClass = NULL;
     string f1 = memberFunctionDeclaration->get_mangled_name().str();
     string f2;
-    for ( SgClassDefinitionPtrList::iterator it_cls = subclasses.begin(); it_cls != subclasses.end(); it_cls++ )
+    for ( ClassHierarchyWrapper::ClassDefSet::const_iterator it_cls = subclasses.begin(); it_cls != subclasses.end(); it_cls++ )
     {
       SgClassDefinition *cls = isSgClassDefinition( *it_cls );
       SgDeclarationStatementPtrList &clsMembers = cls->get_members();
