@@ -1,4 +1,4 @@
-// This is the token class in Java that will will hand as an object to the C++ JNI functions.
+// This is the token class in Java that we will hand as an object to the C++ JNI functions.
 
 public class JavaToken // extends CommonToken
    {

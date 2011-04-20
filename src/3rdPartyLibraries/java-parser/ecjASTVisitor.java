@@ -796,19 +796,25 @@ class ecjASTVisitor extends ASTVisitor
           String text = "import";
 
        // We know how to set these, but make them known values for initial testing.
-          int    line = 7;
-          int    col  = 42;
+          int    line_start = 7;
+          int    line_end   = 7;
+          int    col_start  = 42;
+          int    col_end    = 42;
 
-          System.out.println("Building a JavaToken("+text+","+line+","+col+")");
-          JavaToken token = new JavaToken(text,line,col);
-          System.out.println("DONE: Building a JavaToken("+text+","+line+","+col+")");
+          System.out.println("Building a JavaToken("+text+","+line_start+","+col_start+")");
+          JavaToken token = new JavaToken(text,line_start,col_start);
+          System.out.println("DONE: Building a JavaToken("+text+","+line_start+","+col_start+")");
+
+       // Use the newer source code position information (we can build it on the stack).
+          JavaSourcePositionInformation sourcePositionInfo = new JavaSourcePositionInformation(line_start,line_end,col_start,col_end);
+          java_parser.cactionSetSourcePosition(sourcePositionInfo);
 
        // DQ (4/15/2011): I could not get the passing of a boolean to work, so I am just passing an integer.
           int containsWildcard_integer = containsWildcard ? 1 : 0;
           java_parser.cactionImportReference(importReferenceWithoutWildcard,containsWildcard_integer);
 
-       // Use the toke to set the source code position for ROSE.
-          java_parser.cactionSetSourcePosition(token);
+       // Use the token to set the source code position for ROSE.
+          java_parser.cactionGenerateToken(token);
 
 /*
        // I now do not think this is worth doing at this point.  Basically, we will treat the "import" statement
