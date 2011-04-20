@@ -4,5 +4,8 @@ __global__ void square_array() {
 }
 
 int main(int argc, char ** argv) {
-	square_array <<< 1, 1 >>> ();
+	dim3 threads(1, 1);
+	dim3 grid(1, 1, 1);
+	
+	square_array <<< threads, grid >>> ();
 }
