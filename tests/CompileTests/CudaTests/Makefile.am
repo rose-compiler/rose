@@ -19,7 +19,8 @@ test_2011_02.cu
 
 CUDA_CODES = \
 test_2011_11.cu \
-test_2011_12.cu
+test_2011_12.cu \
+test_2011_13.cu
 
 TESTCODES = $(CUDA_NO_BUILT_IN_CODES) $(CUDA_CODES)
 
