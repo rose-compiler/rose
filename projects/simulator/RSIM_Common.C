@@ -238,8 +238,8 @@ print_robust_list_head_32(RTS_Message *m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(robust_list_head_32)==sz);
     const robust_list_head_32 *v = (const robust_list_head_32*)_v;
-    m->more("next=0x%08"PRIx32", futex=0x%08"PRIx32", pending=0x%08"PRIx32,
-            v->next, v->futex_va, v->pending_va);
+    m->more("next_va=0x%08"PRIx32", futex_offset=%"PRId32", pending_va=0x%08"PRIx32,
+            v->next_va, v->futex_offset, v->pending_va);
 }
 
 void

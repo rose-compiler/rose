@@ -108,6 +108,14 @@ public:
     /** Wake (signal) a futex. Returns the number of processes woken up on success, negative error number on failure. */
     int futex_wake(uint32_t va);
 
+    /** Traverse the robust futex list and handle futex death for each item on the list. See the Linux version of this function
+     *  for details. */
+    int exit_robust_list();
+
+    /** Handle futex death.  This function is invoked for each futex on the robust list if it's owned by the calling
+     * thread. See the Linux version of this function for details. */
+    int handle_futex_death(uint32_t futex_va, RTS_Message*);
+
     /** Simulate thread exit. Return values is that which would be returned as the status for waitpid. */
     int sys_exit(const RSIM_Process::Exit &e);
 

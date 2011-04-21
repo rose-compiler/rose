@@ -691,9 +691,9 @@ struct statfs64_native {
 };
 
 struct robust_list_head_32 {
-    uint32_t next;              /* virtual address of next entry in list; points to self if list is empty */
-    uint32_t futex_va;          /* address of futex in user space */
-    uint32_t pending_va;        /* address of list element being added while it is being added */
+    uint32_t next_va;           /* virtual address of next lock_entry in list; points to self if list is empty */
+    int32_t futex_offset;       /* offset from lock_entry to futex */
+    uint32_t pending_va;        /* copy of lock_entry as it is being added to the list */
 } __attribute__((packed));
 
 static const Translate ipc_commands[] = {

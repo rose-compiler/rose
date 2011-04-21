@@ -772,14 +772,92 @@ RSIM_Thread::futex_wake(uint32_t va)
 }
 
 int
+RSIM_Thread::handle_futex_death(uint32_t futex_va, RTS_Message *trace)
+{
+    uint32_t futex;
+    trace->more("  handling death for futex at 0x%08"PRIx32"\n", futex_va);
+
+    if (4!=get_process()->mem_read(&futex, futex_va, 4)) {
+        trace->more("    failed to read futex at 0x%08"PRIx32"\n", futex_va);
+        return -EFAULT;
+    }
+
+    /* If this thread owns the futex then set the FUTEX_OWNER_DIED and signal the futex. */
+    if (get_tid()==(int)(futex & 0x1fffffff)) {
+        /* Set the FUTEX_OWNER_DIED bit */
+        trace->more("    setting FUTEX_OWNER_DIED bit\n");
+        futex |= 0x40000000;
+        if (4!=get_process()->mem_write(&futex, futex_va, 4)) {
+            trace->more("      failed to set FUTEX_OWNER_DIED for futex at 0x%08"PRIx32"\n", futex_va);
+            return -EFAULT;
+        }
+
+        /* Wake another thread there's one waiting */
+        if (futex & 0x80000000) {
+            trace->more("    waking futex 0x%08"PRIx32"\n", futex_va);
+            int result = futex_wake(futex_va);
+            if (result<0) {
+                trace->more("      wake failed for futex at 0x%08"PRIu32"\n", futex_va);
+                return result;
+            }
+        }
+    } else {
+        trace->more("    futex is not owned by this thread; skipping\n");
+    }
+    return 0;
+}
+    
+int
+RSIM_Thread::exit_robust_list()
+{
+    int retval = 0;
+
+    if (0==robust_list_head_va)
+        return 0;
+
+    RTS_Message *trace = tracing(TRACE_THREAD);
+    trace->multipart("futex_death", "exit_robust_list():\n");
+
+    robust_list_head_32 head;
+    if (sizeof(head)!=get_process()->mem_read(&head, robust_list_head_va, sizeof head)) {
+        trace->more("  failed to read robust list head at 0x%08"PRIx32"\n", robust_list_head_va);
+        retval = -EFAULT;
+    } else {
+        static const size_t max_locks = 1000000;
+        size_t nlocks = 0;
+        uint32_t lock_entry_va = head.next_va;
+        while (lock_entry_va != robust_list_head_va && nlocks++ < max_locks) {
+            /* Don't process futex if it's pending; we'll catch it at the end instead. */
+            if (lock_entry_va != head.pending_va) {
+                uint32_t futex_va = lock_entry_va + head.futex_offset;
+                if ((retval = handle_futex_death(futex_va, trace))<0)
+                    break;
+            }
+        
+            /* Advance lock_entry_va to next item in the list. */
+            if (4!=get_process()->mem_read(&lock_entry_va, lock_entry_va, 4)) {
+                trace->more("  list pointer read failed at 0x%08"PRIx32"\n", lock_entry_va);
+                retval = -EFAULT;
+                break;
+            }
+        }
+        if (head.pending_va)
+            retval = handle_futex_death(head.pending_va, trace);
+    }
+
+    trace->multipart_end();
+    return retval;
+}
+
+int
 RSIM_Thread::sys_exit(const RSIM_Process::Exit &e)
 {
     RSIM_Process *process = get_process(); /* while we still have a chance */
 
     tracing(TRACE_THREAD)->mesg("this thread is terminating%s", e.exit_process?" (for entire process)":"");
 
-    if (robust_list_head_va)
-        tracing(TRACE_MISC)->mesg("warning: robust_list not cleaned up\n"); /* FIXME: see set_robust_list() syscall */
+    /* Clean up robust futexes */
+    exit_robust_list();
 
     /* Clear and signal child TID if necessary (CLONE_CHILD_CLEARTID) */
     if (clear_child_tid) {
