@@ -315,9 +315,10 @@ printBannerToEndStep "configure" $configure_start_time
     #                  date +build_%Y_day%j_%b%d_%I%P        =  build_2011_day109_Apr19_01pm
     #
     # rose:build_XXXX
-    kwadmin load rose tables --name `date +build_%Y_day%j_%b%d_%I%P`
+    HEAD_HASH=`git rev-parse HEAD`
+    kwadmin load rose tables --name $HEAD_HASH
     if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
-       printBanner "Fatal error during 'kwbuildproject -host hudson-rose-24 -port 8080 --license-host swordfish.llnl.gov -j8 -o tables rose.out'. Aborting..."
+       printBanner "Fatal error during 'kwadmin load rose tables --name $HEAD_HASH'. Aborting..."
        exit 3
     fi
 
