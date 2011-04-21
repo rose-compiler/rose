@@ -274,11 +274,13 @@ printBannerToEndStep "configure" $configure_start_time
 #   6) license is available for checkout
 #   7) ...
 
+    export KLOCWORK_LICENSE_FILE=27000@swordfish.llnl.gov
+
     ################################################################################
     # GENERATE THE TRACE FILE
     #
     kwinject -T rose.trace make -j${NUM_PROCESS}
-    if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
+    if [ $? -ne 0 ]  ; then
         printBanner "Fatal error during 'kwinject -T rose.trace make -j${NUM_PROCESS}'. Aborting..."
        exit 3
     fi
@@ -287,8 +289,8 @@ printBannerToEndStep "configure" $configure_start_time
     # CONVERT THE TRACE FILE TO A BUILD SPEC
     #
     kwinject -t rose.trace -o rose.out
-    if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
-        printBanner "Fatal error during 'kwinject -t rose.trace -o rose.out'. Aborting..."
+    if [ $? -ne 0 ]  ; then
+       printBanner "Fatal error during 'kwinject -t rose.trace -o rose.out'. Aborting..."
        exit 3
     fi
 
@@ -302,7 +304,7 @@ printBannerToEndStep "configure" $configure_start_time
     # aside from parsing the build.log file.
     grep -q "Reports generation stage completed" tables/build.log
     if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
-        printBanner "Fatal error during 'kwbuildproject -host hudson-rose-24 -port 8080 --license-host swordfish.llnl.gov -j8 -o tables rose.out'. Aborting..."
+       printBanner "Fatal error during 'kwbuildproject -host hudson-rose-24 -port 8080 --license-host swordfish.llnl.gov -j8 -o tables rose.out'. Aborting..."
        exit 3
     fi
 
@@ -315,7 +317,7 @@ printBannerToEndStep "configure" $configure_start_time
     # rose:build_XXXX
     kwadmin load rose tables --name `date +build_%Y_day%j_%b%d_%I%P`
     if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
-        printBanner "Fatal error during 'kwbuildproject -host hudson-rose-24 -port 8080 --license-host swordfish.llnl.gov -j8 -o tables rose.out'. Aborting..."
+       printBanner "Fatal error during 'kwbuildproject -host hudson-rose-24 -port 8080 --license-host swordfish.llnl.gov -j8 -o tables rose.out'. Aborting..."
        exit 3
     fi
 
