@@ -1513,7 +1513,7 @@ RSIM_Process::sys_exit(int status)
             RSIM_Thread *thread = ti->second;
             thread->tracing(TRACE_THREAD)->mesg("process is canceling this thread");
             pthread_cancel(thread->get_real_thread());
-            pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP); /* in case it's blocked */
+            //pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP); /* in case it's blocked */
         }
     } RTS_WRITE_END;
 }
