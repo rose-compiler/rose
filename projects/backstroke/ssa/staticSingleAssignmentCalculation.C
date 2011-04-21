@@ -115,12 +115,12 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 
 		//We'll look at all functions declared inside the variables class and see if any of them is the accessing function
 		//and is declared a friend
-		vector<SgFunctionDeclaration*> nestedFunctions =
-				SageInterface::querySubTree<SgFunctionDeclaration>(varClassScope, V_SgFunctionDeclaration);
-		foreach(SgFunctionDeclaration* nestedFunction, nestedFunctions)
+        foreach(SgDeclarationStatement* varClassMember, varClassScope->get_members())
 		{
-			if (SageInterface::getEnclosingClassDefinition(nestedFunction) != varClassScope)
-				continue;
+            if (!isSgFunctionDeclaration(varClassMember))
+                continue;
+            
+            SgFunctionDeclaration* nestedFunction = isSgFunctionDeclaration(varClassMember);
 
 			if (!nestedFunction->get_declarationModifier().isFriend())
 				continue;
@@ -218,12 +218,14 @@ void StaticSingleAssignment::run(bool interprocedural)
 		cout << "Finished UniqueNameTraversal." << endl;
 #ifdef DISPLAY_TIMINGS
 	printf("-- Timing: UniqueNameTraversal took %.2f seconds.\n", time.elapsed());
+	fflush(stdout);
 	time.restart();
 #endif
 	
 	//Get a list of all the functions that we'll process
 	unordered_set<SgFunctionDefinition*> interestingFunctions;
 	vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition> (project, V_SgFunctionDefinition);
+
 	FunctionFilter functionFilter;
 	foreach (SgFunctionDefinition* f, funcs)
 	{
@@ -232,6 +234,7 @@ void StaticSingleAssignment::run(bool interprocedural)
 	}
 #ifdef DISPLAY_TIMINGS
 	printf("-- Timing: Creating list of functions took %.2f seconds.\n", time.elapsed());
+	fflush(stdout);
 	time.restart();
 #endif
 	
@@ -259,8 +262,9 @@ void StaticSingleAssignment::run(bool interprocedural)
 	}
 	
 #ifdef DISPLAY_TIMINGS
-		printf("-- Timing: Inserting all local defs for %u functions took %.2f seconds.\n", interestingFunctions.size(), 
-				time.elapsed());
+		printf("-- Timing: Inserting all local defs for %zu functions took %.2f seconds.\n", 
+                interestingFunctions.size(), time.elapsed());
+		fflush(stdout);
 		time.restart();
 #endif
 
@@ -272,6 +276,7 @@ void StaticSingleAssignment::run(bool interprocedural)
 		
 #ifdef DISPLAY_TIMINGS
 		printf("-- Timing: Interprocedural propagation took %.2f seconds.\n", time.elapsed());
+		fflush(stdout);
 		time.restart();
 #endif
 
