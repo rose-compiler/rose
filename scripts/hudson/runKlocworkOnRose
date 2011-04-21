@@ -298,6 +298,9 @@ printBannerToEndStep "configure" $configure_start_time
     # Warning: don't use too much parallelism because the analysis is memory-intensive
     #
     kwbuildproject -host hudson-rose-24 -port 8080 --license-host swordfish.llnl.gov -j8 -o tables rose.out
+    # There is no clean way to differentiate between analysis errors and internal Klocwork errors
+    # aside from parsing the build.log file.
+    grep -q "Reports generation stage completed" tables/build.log
     if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
         printBanner "Fatal error during 'kwbuildproject -host hudson-rose-24 -port 8080 --license-host swordfish.llnl.gov -j8 -o tables rose.out'. Aborting..."
        exit 3
