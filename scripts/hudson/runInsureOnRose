@@ -3,6 +3,13 @@
 # TODO: add more summary info
 #	- List of durations for each step in the job
 #
+#  
+#  Insure++:
+#	1. ~/.psrc configuration file
+#	2. configure with '--enable-insure'
+#	3. GCC 4.2.4 for now (4.1.2 doesnt work!)
+#
+#
 #
 source scripts/hudson/runBuildStep.sh
 source scripts/hudson/debuggingPrinters.sh
@@ -22,10 +29,35 @@ hudson_start_time_seconds="$(date +%s)"
 TOP_LEVEL_ROSE_DIRECTORY="$PWD"
 LOG_LOCATION="$PWD"
 
-if test ! "x$machine_name" = "xhudson-rose-23.llnl.gov"; then
-  echo "Error on $machine_name: currently, Insure is only configured to be used from hudson-rose-24"
+# TODO: check licenses; retry? timeout
+
+if test ! -f ~/.psrc ; then
+  echo "Error: $machine_name doesn't seem to have a ~/.psrc Insure++ configuration file"
   exit 1
 fi
+if test ! -d /export/tmp.hudson-rose/tmp/ ; then
+  echo "Error: $machine_name doesn't seem to have a /export/tmp.hudson-rose/tmp/ directory for Insure++ to write cache files to. (Configured in ~/.psrc)" 
+  exit 1
+fi
+
+
+if test "x$ROSE_TEST_BUILD_STEP" = "xanalyze" ; then
+  if test \! \( "$ROSE_TEST_BUILD_DIRECTORY" = "tests/CompileTests/Cxx_tests" -o \
+                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/CompileTests/Fortran_tests" \) ; then
+    echo "Error: This hudson script has not been configured to support this build directory for Insure++ analysis: $ROSE_TEST_BUILD_DIRECTORY"
+    exit 1
+  fi
+
+  if test ! -n "${ROSE_INSURE_BUILD_TREE}" ; then
+    echo "Error: you did not specify a 'ROSE_INSURE_BUILD_TREE' for analysis = '${ROSE_INSURE_BUILD_TREE}'"
+    exit 1
+  fi
+  if test ! -d "${ROSE_INSURE_BUILD_TREE}" ; then
+    echo "Error: '${ROSE_INSURE_BUILD_TREE}' does not seem to be a valid ROSE_INSURE_BUILD_TREE for analysis"
+    exit 1
+  fi
+fi
+
 
 
 #########################################################################################
@@ -214,60 +246,97 @@ set -ex
 
 #########################################################################################
 #
-#  ROSE/build
-#
-#########################################################################################
-printBannerToStartStep "build"
-build_start_time="$(date +%s)"
-
-./build
-
-printBannerToEndStep "build" $build_start_time
-
-
-if test -e ROSE-install ; then 
-  chmod -R u+xw ROSE-install
-fi
-rm -rf ROSE-install
-mkdir ROSE-install
-CONFIGURE_PREFIX_DIR=`pwd`/ROSE-install
-
-if test -e ROSE-build ; then
-  chmod -R u+wx ROSE-build
-fi
-rm -rf ROSE-build
-
-mkdir ROSE-build
-cd ROSE-build
-
-
-#########################################################################################
-#
-#  ROSE/configure
-#
-#########################################################################################
-printBannerToStartStep "configure"
-configure_start_time="$(date +%s)"
-
-../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
-
-printBannerToEndStep "configure" $configure_start_time
-
-
-#########################################################################################
-#
 #  ROSE/make
 #
 #########################################################################################
+
+
+
+case "$ROSE_TEST_BUILD_STEP" in
+"build")
+
+	#########################################################################################
+	#
+	#  ROSE/build
+	#
+	#########################################################################################
+	printBannerToStartStep "build"
+	build_start_time="$(date +%s)"
+
+	./build
+
+	printBannerToEndStep "build" $build_start_time
+
+
+        SOURCE_TREE=`pwd`
+
+	# TOO (4/22/2011): Use a global build tree for downstream Insure++ analysis jobs to run
+	# 'make check' on
+	#cd /home/hudson-rose/workspace/hudson-insure-build
+	cd ${ROSE_INSURE_BUILD_TREE}
+
+
+	if test -e ROSE-install ; then 
+	  chmod -R u+xw ROSE-install
+	fi
+	rm -rf ROSE-install
+	mkdir ROSE-install
+	CONFIGURE_PREFIX_DIR=`pwd`/ROSE-install
+
+
+	#########################################################################################
+	#
+	#  ROSE/configure
+	#
+	#########################################################################################
+	printBannerToStartStep "configure"
+	configure_start_time="$(date +%s)"
+
+	${SOURCE_TREE}/configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
+
+	printBannerToEndStep "configure" $configure_start_time
 
     ################################################################################
     # MAKE
     #
     runBuildStep make
+
+ ;;
+
+"analyze")
+
+    # TOO (4/22/2011): Use a global build tree for downstream Insure++ analysis jobs to run
+    # 'make check' on
+    #cd /home/hudson-rose/workspace/hudson-insure-build
+    cd ${ROSE_INSURE_BUILD_TREE}
+    if ! -f Makefile ; then
+      echo "ERROR: '${ROSE_INSURE_BUILD_TREE}' doesn't seem to be a valid ROSE build tree"
+      exit 1;
+    fi
+ 
+
     ################################################################################
     # MAKE CHECK
     #
-    make check -j${NUM_PROCESS} -C src/util/stringSupport/
+    printBannerToStartStep "analyze ${ROSE_TEST_BUILD_DIRECTORY}"
+    analyze_start_time="$(date +%s)"
+
+    make check -j${NUM_PROCESS} -C ${ROSE_TEST_BUILD_DIRECTORY}
+    if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
+       printBannerToEndStep "[ERROR] analyze ${ROSE_TEST_BUILD_DIRECTORY}" $analyze_start_time
+       exit 3
+    fi
+
+    printBannerToEndStep "analyze ${ROSE_TEST_BUILD_DIRECTORY}" $analyze_start_time
+
+ ;;
+
+*)
+   echo "ERROR: unrecognized build step = $ROSE_TEST_BUILD_STEP"
+   exit 1;
+ ;;
+esac
+
 
 ####################################################################################
 # SUMMARY 
