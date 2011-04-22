@@ -22,7 +22,7 @@ hudson_start_time_seconds="$(date +%s)"
 TOP_LEVEL_ROSE_DIRECTORY="$PWD"
 LOG_LOCATION="$PWD"
 
-if test ! "x$machine_name" = "xhudson-rose-24.llnl.gov"; then
+if test ! "x$machine_name" = "xhudson-rose-23.llnl.gov"; then
   echo "Error on $machine_name: currently, Insure is only configured to be used from hudson-rose-24"
   exit 1
 fi
