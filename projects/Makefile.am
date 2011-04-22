@@ -12,6 +12,7 @@ SUBDIRS = \
      DatalogAnalysis \
      DocumentationGenerator \
      FiniteStateModelChecker \
+     HeaderFilesInclusion \
      MPICodeMotion \
      MacroRewrapper \
      OpenMP_Analysis \
@@ -36,10 +37,6 @@ SUBDIRS = \
 if !ROSE_USE_INSURE
    SUBDIRS += SemanticSignatureVectors \
               assemblyToSourceAst
-endif
-
-if !ROSE_USING_BOOST_VERSION_1_46
-   SUBDIRS += HeaderFilesInclusion
 endif
 
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
@@ -74,10 +71,7 @@ endif
 # DQ (7/21/2010): Removed RTED since it is a problem to compile with ROSE (projects/RTED/CppRuntimeSystem/test.cpp).
 # DQ (7/21/2010): Removed simulator since it is a problem to compile with ROSE (projects/simulator/emulator.C).
 if !ROSE_USING_ROSE_ANALYSIS
-if !ROSE_USING_BOOST_VERSION_1_46
-   SUBDIRS += RTED
-endif
-   SUBDIRS += simulator
+   SUBDIRS += RTED simulator
 endif
 
 # DQ (2/12/2010): compass appears to be a problem for the code generation support
