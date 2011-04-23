@@ -31,7 +31,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += astMergeTests astPerformanceTests \
               astProcessingTests astQueryTests astRewriteTests astSymbolTableTests astTokenStreamTests \
               programTransformationTests \
-              utilTests graph_tests mergeTraversal_tests \
+              graph_tests mergeTraversal_tests \
 	       	  astLValueTests
 # TOO (2/16/2011): Errors with Thrifty (GCC 3.4.4) backend compiler. We can gradually
 # enable these tests at a later stage if necessary.
@@ -51,7 +51,7 @@ if !ROSE_USE_INSURE
 # DQ (4/23/2011): At least one of the files (process_cmdline.o) in this directory does not seem 
 # to compile with Insure++ (it hangs for Hudson, but I can't reproduce the problem locally).
 # This was not a problem the second time that Insure++ compiled ROSE.
-   SUBDIRS += roseHPCToolkitTests
+   SUBDIRS += roseHPCToolkitTests utilTests
 endif
 
 # Binary tests are a current problem for Insure++.

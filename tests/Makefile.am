@@ -3,10 +3,18 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # DQ (4/17/2010): If we are not supporting C++ then we can't run most of our tests, but if 
 # we are supporting only Fortran then we can at least run the Fortran tests (same with PHP).
 # SUBDIRS = CompileTests roseTests RunTests PerformanceTests CompilerOptionsTests translatorTests
-SUBDIRS = CompileTests roseTests
+# SUBDIRS = CompileTests roseTests
+SUBDIRS = CompileTests
+if !ROSE_USE_INSURE
+# DQ (4/23/2011): Ignoring this whole directory might be over kill. But I have had problems, 
+# only on Hudson, just compiling a number of these subdirectories.
+   SUBDIRS += roseTests
+endif
+
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += RunTests PerformanceTests CompilerOptionsTests translatorTests
 endif
+
 
 # Three phases (levels) of test programs:
 #  Phase 1) Analysis only, compiles the original code
