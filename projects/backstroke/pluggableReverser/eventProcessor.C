@@ -390,20 +390,24 @@ std::vector<EventReversalResult> EventProcessor::processEvent()
 		SgFunctionDefinition* rvs_func_def = rvs_func_decl->get_definition();
 		SageInterface::replaceStatement(rvs_func_def->get_body(), isSgBasicBlock(stmt.rvs_stmt));
 
-		//Create the function declaration for the commit method
-		SgName commitFunctionName = event_->get_name() + "_commit" + counterString;
-		SgFunctionDeclaration* commitFunctionDecl =
-						SageBuilder::buildDefiningFunctionDeclaration(
-						commitFunctionName, event_->get_orig_return_type(),
-						isSgFunctionParameterList(copyStatement(event_->get_parameterList())),
-						eventScope);
-		SgFunctionDefinition* commitFunctionDefinition = commitFunctionDecl->get_definition();
+		SgFunctionDeclaration* commitFunctionDecl = NULL;
+		if (stmt.commitStatement != NULL)
+		{
+			//Create the function declaration for the commit method
+			SgName commitFunctionName = event_->get_name() + "_commit" + counterString;
+			commitFunctionDecl =
+					SageBuilder::buildDefiningFunctionDeclaration(
+					commitFunctionName, event_->get_orig_return_type(),
+					isSgFunctionParameterList(copyStatement(event_->get_parameterList())),
+					eventScope);
+			SgFunctionDefinition* commitFunctionDefinition = commitFunctionDecl->get_definition();
 
-		SgStatement* commitBody = reversalResult.generateCommitStatement();
-		SageInterface::replaceStatement(commitFunctionDefinition->get_body(), isSgBasicBlock(commitBody));
+			ROSE_ASSERT(isSgBasicBlock(stmt.commitStatement));
+			SageInterface::replaceStatement(commitFunctionDefinition->get_body(), isSgBasicBlock(stmt.commitStatement));
+		}
 
 		// Add the cost information as comments to generated functions.
-		string comment = "Cost: " + lexical_cast<string> (reversalResult.getCost().getCost());
+		string comment = "Cost: " + lexical_cast<string > (reversalResult.getCost().getCost());
 		attachComment(fwd_func_decl, comment);
 		attachComment(rvs_func_decl, comment);
 

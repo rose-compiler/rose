@@ -66,46 +66,78 @@ bool StateSavingStatementHandler::checkStatement(SgStatement* stmt) const
 
 StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& eval_result)
 {
-	SgBasicBlock* fwd_stmt = buildBasicBlock();
-    SgBasicBlock* rvs_stmt = buildBasicBlock();
+	SgBasicBlock* forwardBody = buildBasicBlock();
+    SgBasicBlock* reverseBody = buildBasicBlock();
+    SgBasicBlock* commitBody = SageBuilder::buildBasicBlock();
 
 	// If the following child result is empty, we don't have to reverse the target statement.
 	vector<EvaluationResult> child_result = eval_result.getChildResults();
 	if (!child_result.empty())
 	{
 		StatementReversal child_reversal = child_result[0].generateReverseStatement();
-		SageInterface::prependStatement(child_reversal.fwd_stmt, fwd_stmt);
-		SageInterface::appendStatement(child_reversal.rvs_stmt, rvs_stmt);
+		SageInterface::prependStatement(child_reversal.fwd_stmt, forwardBody);
+		SageInterface::appendStatement(child_reversal.rvs_stmt, reverseBody);
 	}
 	else
 	{
 		//In the forward code, include a copy of the original statement
-		SageInterface::prependStatement(copyStatement(stmt), fwd_stmt);
+		SageInterface::prependStatement(copyStatement(stmt), forwardBody);
 	}
 
 	//Now, in the forward code, push all variables on the stack. Pop them in the reverse code
 	vector<VariableRenaming::VarName> modified_vars = eval_result.getAttribute<vector<VariableRenaming::VarName> >();
 	foreach (const VariableRenaming::VarName& var_name, modified_vars)
 	{
-		//First, save the original value in the forward code
-		SgExpression* varExp = VariableRenaming::buildVariableReference(var_name);
+		//We will build a push expression and a pop expression.
+		SgExpression* valueToBePushedExpression = VariableRenaming::buildVariableReference(var_name);
+        SgExpression* assignedVarExpression = SageInterface::copyExpression(valueToBePushedExpression);
 		
 		SgType* varType = var_name.back()->get_type();
 		if (SageInterface::isPointerType(varType))
 		{
-			varExp = SageBuilder::buildPointerDerefExp(varExp);
+			valueToBePushedExpression = SageBuilder::buildPointerDerefExp(valueToBePushedExpression);
+            assignedVarExpression = SageBuilder::buildPointerDerefExp(assignedVarExpression);
 		}
-		
-		SgExpression* fwd_exp = pushVal(varExp);
+        
+        //If it's an enum type, we want to cast the value to int
+        SgType* underlyingType = valueToBePushedExpression->get_type();
+        while (true)
+        {
+            if (isSgModifierType(underlyingType))
+            {
+                underlyingType = isSgModifierType(underlyingType)->get_base_type();
+                continue;
+            }
+            else if (isSgTypedefType(underlyingType))
+            {
+                underlyingType = isSgTypedefType(underlyingType)->get_base_type();
+                continue;
+            }
+            break;
+        }
+        if (isSgEnumType(underlyingType))
+        {
+            valueToBePushedExpression = SageBuilder::buildCastExp(valueToBePushedExpression, SageBuilder::buildIntType());
+        }
+        
+		if (!SageInterface::isCopyConstructible(valueToBePushedExpression->get_type()))
+		{
+			printf("OH NO THE TYPE '%s' is not copy constructible!\n", valueToBePushedExpression->get_type()->unparseToString().c_str());
+			continue;
+		}		
+		SgExpression* fwd_exp = pushVal(valueToBePushedExpression);
 		
 		//Now, restore the value in the reverse code
-		SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(copyExpression(varExp), popVal(varExp->get_type()));
+		SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(assignedVarExpression, popVal(valueToBePushedExpression->get_type()));
+        
+        SgExpression* commitExpression = popVal(valueToBePushedExpression->get_type());
 		
-		SageInterface::prependStatement(buildExprStatement(fwd_exp), fwd_stmt);
-		SageInterface::appendStatement(buildExprStatement(rvs_exp), rvs_stmt);
+		SageInterface::prependStatement(buildExprStatement(fwd_exp), forwardBody);
+		SageInterface::appendStatement(buildExprStatement(rvs_exp), reverseBody);
+        SageInterface::prependStatement(buildExprStatement(commitExpression), commitBody);
 	}
 
-	return StatementReversal(fwd_stmt, rvs_stmt);
+	return StatementReversal(forwardBody, reverseBody, commitBody);
 }
 
 std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
@@ -167,20 +199,4 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 	results.push_back(result);
 
 	return results;
-}
-
-SgStatement* StateSavingStatementHandler::generateCommitAST(const EvaluationResult& evalResult)
-{
-	//Pop all the functions
-	SgBasicBlock* commitBody = SageBuilder::buildBasicBlock();
-
-	vector<VariableRenaming::VarName> modified_vars = evalResult.getAttribute< vector<VariableRenaming::VarName> >();
-	foreach (const VariableRenaming::VarName&  varName, modified_vars)
-	{
-		SgType* varType = varName.back()->get_type();
-		SgExpression* popExpression = popVal_front(varType);
-		SageInterface::prependStatement(SageBuilder::buildExprStatement(popExpression), commitBody);
-	}
-
-	return commitBody;
 }
