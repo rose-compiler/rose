@@ -31,8 +31,11 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += astMergeTests astPerformanceTests \
               astProcessingTests astQueryTests astRewriteTests astSymbolTableTests astTokenStreamTests \
               programTransformationTests \
-              roseHPCToolkitTests utilTests graph_tests mergeTraversal_tests \
+              utilTests graph_tests mergeTraversal_tests \
 	       	  astLValueTests
+if !ROSE_USE_INSURE
+ SUBDIRS += roseHPCToolkitTests 
+endif
 # TOO (2/16/2011): Errors with Thrifty (GCC 3.4.4) backend compiler. We can gradually
 # enable these tests at a later stage if necessary.
 if !USING_GCC_3_4_4_BACKEND_COMPILER
