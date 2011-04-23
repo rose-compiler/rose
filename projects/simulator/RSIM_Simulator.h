@@ -6,6 +6,7 @@
  * simulator. */
 #include "threadSupport.h"
 
+/* Order matters */
 #include "RSIM_Common.h"
 #include "RSIM_Callbacks.h"
 #include "RSIM_SignalHandling.h"
@@ -46,7 +47,7 @@
  *       space however it chooses, and it prevents the specimen from being able to access the simulator's address space.
  *
  *       The main drawback of this design is that every specimen memory access must go through the MemoryMap, and the simulator
- *       must marchal data between the specimen's and the simulator's address spaces when performing a system call on behalf of
+ *       must marshal data between the specimen's and the simulator's address spaces when performing a system call on behalf of
  *       the specimen.  This has an impact on performance.</li>
  *
  *   <li>The specimen's instructions are simulated rather than executed directly by the CPU.  The simulation is performed by
@@ -61,8 +62,9 @@
  *         <li>It is easy to modify the simulator to do something special for certain instructions.</li>
  *         <li>It allows the simulator to keep the specimen in a separate address space that doesn't overlap with the simulator's
  *             own address space.</li>
- *         <li>It provides a way for ROSE developers to gain confidence that ROSE's instruction semantics are working properly.
- *             A bug in the implementation would likely cause the specimen to fail.</li>
+ *         <li>It provides a way for ROSE developers to gain confidence that ROSE's instruction semantics are working
+ *             properly. These same instruction semantics are used for a wide variety of analysis within the ROSE library and
+ *             in other tools. A bug in the implementation would likely cause the simulation to fail.</li>
  *       </ol>
  *
  *       The main disadvantage of simulating each instruction is that it is much slower than executing instructions directly.</li>
@@ -95,9 +97,13 @@
  * skip them, or a pre-syscall callback can count the total number of system calls executed per thread.  See the RSIM_Callbacks
  * class for details and examples.
  *
- * System calls made by the specimen are dispatched through a system call table which can be queried or adjusted by the
- * RSIM_Simulator::syscall_get() and RSIM_Simulator::syscall_set() methods.  Users are thereby able to augment or replace the
- * behavior of individual system calls. See RSIM_Simulator::SystemCall for details and examples.
+ * System calls made by the specimen are dispatched through a system call table which can be queried or adjusted by the methods
+ * described for the RSIM_Simulator::SystemCall class. This allows users to augment or replace the code that implements various
+ * system calls.
+ *
+ * The behavior of a simulator can be modified by attaching adapters.  For instance, if you need a simulator that prints
+ * hexdumps of all data transfered over a TCP network connection, you would instantiate an RSIM_Adapter::TraceTcpIO adapter and
+ * attach it to the simulator.  Documentation can be found in the RSIM_Adapter namespace.
  *
  * @section RSIM_Example Example
  *

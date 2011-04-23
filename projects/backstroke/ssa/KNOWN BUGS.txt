@@ -31,6 +31,8 @@ BUGS
 		3; //phi node is not inserted here because a is out of scope. Now 'a' has no valid final version
 	}
 
+-Memory leak with the grall graph - the SgIncidenceDirectedGraph object is not deleted
+
 TODO (in addition to fixing the above bugs)
 -----
 

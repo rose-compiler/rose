@@ -117,8 +117,14 @@ bool ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
  * is a constant, there is no need to change it. */
 bool ExtractFunctionArguments::FunctionArgumentNeedsNormalization(SgExpression* argument)
 {
+    while ((isSgPointerDerefExp(argument) || isSgCastExp(argument) || isSgAddressOfOp(argument)))
+	{
+        argument = isSgUnaryOp(argument)->get_operand();
+    }
+
 	//For right now, move everything but a constant value or an explicit variable access
-	if (BackstrokeUtility::isVariableReference(argument) || isSgValueExp(argument) || isSgFunctionRefExp(argument))
+	if (BackstrokeUtility::isVariableReference(argument) || isSgValueExp(argument) || isSgFunctionRefExp(argument)
+            || isSgMemberFunctionRefExp(argument))
 		return false;
 
 	return true;

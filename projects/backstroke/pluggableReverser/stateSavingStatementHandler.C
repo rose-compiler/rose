@@ -87,19 +87,19 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 	vector<VariableRenaming::VarName> modified_vars = eval_result.getAttribute<vector<VariableRenaming::VarName> >();
 	foreach (const VariableRenaming::VarName& var_name, modified_vars)
 	{
+		//First, save the original value in the forward code
+		SgExpression* varExp = VariableRenaming::buildVariableReference(var_name);
+		
 		SgType* varType = var_name.back()->get_type();
 		if (SageInterface::isPointerType(varType))
 		{
-			fprintf(stderr, "ERROR: Correctly saving pointer types not yet implemented (it's not hard)\n");
-			fprintf(stderr, "The pointer is saved an restored, rather than the value it points to!\n");
-			fprintf(stderr, "Variable %s\n", VariableRenaming::keyToString(var_name).c_str());
-			ROSE_ASSERT(false);
+			varExp = SageBuilder::buildPointerDerefExp(varExp);
 		}
-
-		SgExpression* var = VariableRenaming::buildVariableReference(var_name);
-		SgExpression* fwd_exp = pushVal(var);
-		SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
-			copyExpression(var), popVal(var->get_type()));
+		
+		SgExpression* fwd_exp = pushVal(varExp);
+		
+		//Now, restore the value in the reverse code
+		SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(copyExpression(varExp), popVal(varExp->get_type()));
 		
 		SageInterface::prependStatement(buildExprStatement(fwd_exp), fwd_stmt);
 		SageInterface::appendStatement(buildExprStatement(rvs_exp), rvs_stmt);

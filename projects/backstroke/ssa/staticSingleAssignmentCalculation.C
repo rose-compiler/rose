@@ -13,6 +13,7 @@
 #include <queue>
 #include <fstream>
 #include <stack>
+#include <boost/timer.hpp>
 #include <boost/foreach.hpp>
 #include <boost/unordered_set.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -23,6 +24,8 @@
 
 #define foreach BOOST_FOREACH
 #define reverse_foreach BOOST_REVERSE_FOREACH
+
+//#define DISPLAY_TIMINGS
 
 using namespace std;
 using namespace ssa_private;
@@ -112,12 +115,12 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 
 		//We'll look at all functions declared inside the variables class and see if any of them is the accessing function
 		//and is declared a friend
-		vector<SgFunctionDeclaration*> nestedFunctions =
-				SageInterface::querySubTree<SgFunctionDeclaration>(varClassScope, V_SgFunctionDeclaration);
-		foreach(SgFunctionDeclaration* nestedFunction, nestedFunctions)
+        foreach(SgDeclarationStatement* varClassMember, varClassScope->get_members())
 		{
-			if (SageInterface::getEnclosingClassDefinition(nestedFunction) != varClassScope)
-				continue;
+            if (!isSgFunctionDeclaration(varClassMember))
+                continue;
+            
+            SgFunctionDeclaration* nestedFunction = isSgFunctionDeclaration(varClassMember);
 
 			if (!nestedFunction->get_declarationModifier().isFriend())
 				continue;
@@ -204,24 +207,38 @@ void StaticSingleAssignment::run(bool interprocedural)
 	useTable.clear();
     ssaLocalDefTable.clear();
 
+#ifdef DISPLAY_TIMINGS
+	timer time;
+#endif
 	if (getDebug())
 		cout << "Running UniqueNameTraversal...\n";
 	UniqueNameTraversal uniqueTrav(SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName));
 	uniqueTrav.traverse(project);
 	if (getDebug())
 		cout << "Finished UniqueNameTraversal." << endl;
+#ifdef DISPLAY_TIMINGS
+	printf("-- Timing: UniqueNameTraversal took %.2f seconds.\n", time.elapsed());
+	fflush(stdout);
+	time.restart();
+#endif
 	
-	DefsAndUsesTraversal defUseTrav(this);
-
 	//Get a list of all the functions that we'll process
 	unordered_set<SgFunctionDefinition*> interestingFunctions;
 	vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition> (project, V_SgFunctionDefinition);
+
 	FunctionFilter functionFilter;
 	foreach (SgFunctionDefinition* f, funcs)
 	{
 		if (functionFilter(f->get_declaration()))
 			interestingFunctions.insert(f);
 	}
+#ifdef DISPLAY_TIMINGS
+	printf("-- Timing: Creating list of functions took %.2f seconds.\n", time.elapsed());
+	fflush(stdout);
+	time.restart();
+#endif
+	
+	DefsAndUsesTraversal defUseTrav(this);
 
 	//Generate all local information before doing interprocedural analysis. This is so we know
 	//what variables are directly modified in each function body before we do interprocedural propagation
@@ -234,7 +251,7 @@ void StaticSingleAssignment::run(bool interprocedural)
 
 		if (getDebug())
 			cout << "Finished DefsAndUsesTraversal..." << endl;
-
+		
 		//Expand any member variable definition to also define its parents at the same node
 		expandParentMemberDefinitions(func->get_declaration());
 
@@ -243,12 +260,25 @@ void StaticSingleAssignment::run(bool interprocedural)
 
 		insertDefsForChildMemberUses(func->get_declaration());
 	}
+	
+#ifdef DISPLAY_TIMINGS
+		printf("-- Timing: Inserting all local defs for %zu functions took %.2f seconds.\n", 
+                interestingFunctions.size(), time.elapsed());
+		fflush(stdout);
+		time.restart();
+#endif
 
 	//Interprocedural iterations. We iterate on the call graph until all interprocedural defs are propagated
 	if (interprocedural)
 	{
 		interproceduralDefPropagation(interestingFunctions);
 	}
+		
+#ifdef DISPLAY_TIMINGS
+		printf("-- Timing: Interprocedural propagation took %.2f seconds.\n", time.elapsed());
+		fflush(stdout);
+		time.restart();
+#endif
 
 	//Now we have all local information, including interprocedural defs. Propagate the defs along control-flow
 	foreach (SgFunctionDefinition* func, interestingFunctions)

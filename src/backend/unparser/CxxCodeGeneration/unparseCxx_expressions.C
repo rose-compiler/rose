@@ -1590,15 +1590,25 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                     if (lhsClassDeclaration->get_firstNondefiningDeclaration() != functionClassDeclaration->get_firstNondefiningDeclaration())
                        {
 #if 1
-                         printf ("Warning: lhs and member function from different classes (linked though class derivation) \n");
+                        if (SgProject::get_verbose() > 0)
+                        {
+                            printf ("Warning: lhs and member function from different classes (linked though class derivation) \n");
+                        }
                          curprint ( "/* Warning: lhs and member function from different classes (linked though class derivation) */\n ");
 #endif
-                      // set<SgSymbol*> & hiddenList = functionClassDefinition->get_hidden_declaration_list();
-                         printf ("lhsClassDefinition = %p functionClassDefinition = %p \n",lhsClassDefinition,functionClassDefinition);
+
+                         if (SgProject::get_verbose() > 0)
+                         {
+                            printf ("lhsClassDefinition = %p functionClassDefinition = %p \n",lhsClassDefinition,functionClassDefinition);
+                         }
                          ROSE_ASSERT(lhsClassDefinition != NULL || functionClassDefinition != NULL);
-                      // set<SgSymbol*> & hiddenList = lhsClassDefinition->get_hidden_declaration_list();
+
+
                          set<SgSymbol*> & hiddenList = (lhsClassDefinition != NULL) ? lhsClassDefinition->get_hidden_declaration_list() : functionClassDefinition->get_hidden_declaration_list();
-                         printf ("Looking for symbol = %p \n",memberFunctionSymbol);
+                         if (SgProject::get_verbose() > 0)
+                         {
+                            printf ("Looking for symbol = %p \n",memberFunctionSymbol);
+                         }
                          set<SgSymbol*>::iterator hiddenDeclaration = hiddenList.find(memberFunctionSymbol);
                          if ( hiddenDeclaration != hiddenList.end() )
                             {

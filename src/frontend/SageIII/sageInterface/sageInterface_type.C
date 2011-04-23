@@ -3,7 +3,10 @@
 #include <iostream>
 #include "sageInterface.h"
 #include <map>
+#include <boost/foreach.hpp>
 using namespace std;
+
+#define foreach BOOST_FOREACH
 
 
 // originally from src/midend/astInlining/typeTraits.C
@@ -483,116 +486,133 @@ bool isPointerToNonConstType(SgType* type)
   }
 
   // Is a type copy constructible?  This may not quite work properly.
-  bool isCopyConstructible(SgType* type) {
-    switch (type->variantT()) {
-      case V_SgArrayType:
-        return false; //Liao, array types are not copy constructible, 3/3/2009
-        //return isCopyConstructible(isSgArrayType(type)->get_base_type());
-        break;
 
-      case V_SgModifierType:
-        return isCopyConstructible(isSgModifierType(type)->get_base_type()); 
-        break;
+bool isCopyConstructible(SgType* type)
+{
+    switch (type->variantT())
+    {
+        case V_SgArrayType:
+            return false; //Liao, array types are not copy constructible, 3/3/2009
+            //return isCopyConstructible(isSgArrayType(type)->get_base_type());
+            break;
 
-      case V_SgFunctionType:
-      case V_SgMemberFunctionType:
-      case V_SgTypeEllipse:
-        return false;
-        break;
+        case V_SgModifierType:
+            return isCopyConstructible(isSgModifierType(type)->get_base_type());
+            break;
 
-      case V_SgClassType: {
-        SgClassDeclaration* decl = 
-          isSgClassDeclaration(isSgClassType(type)->get_declaration());
-        assert (decl);
-        assert (decl->get_definingDeclaration());
-        // from forward declaration to defining declaration 
-        SgClassDefinition* defn = isSgClassDeclaration(decl->get_definingDeclaration())->get_definition();
-        assert (defn);
-        bool hasPublicCopyConstructor = false, hasAnyCopyConstructor = false;
-        // Look for user-defined constructors
-        SgDeclarationStatementPtrList& classMembers = defn->get_members();
-        for (SgDeclarationStatementPtrList::iterator i = classMembers.begin();
-            i != classMembers.end(); ++i) {
-          if (isSgFunctionDeclaration(*i)) {
-            SgFunctionDeclaration* fundecl = isSgFunctionDeclaration(*i);
-            bool thisIsAConstructor = 
-              fundecl->get_specialFunctionModifier().isConstructor();
-            std::list<SgType*> args;
-            args.push_back(new SgReferenceType(type));
-            bool isCopyConstructor = acceptsArguments(fundecl, args);
-            if (thisIsAConstructor && isCopyConstructor) {
-              hasAnyCopyConstructor = true;
-              if ((*i)->get_declarationModifier().
-                  get_accessModifier().isPublic())
-                hasPublicCopyConstructor = true;
+        case V_SgFunctionType:
+        case V_SgMemberFunctionType:
+        case V_SgTypeEllipse:
+            return false;
+            break;
+
+        case V_SgClassType:
+        {
+            SgClassDeclaration* decl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
+            ROSE_ASSERT(decl);
+            ROSE_ASSERT(decl->get_definingDeclaration());
+            // from forward declaration to defining declaration 
+            SgClassDefinition* defn = isSgClassDeclaration(decl->get_definingDeclaration())->get_definition();
+            ROSE_ASSERT(defn);
+            bool hasPublicCopyConstructor = false, hasAnyCopyConstructor = false;
+            // Look for user-defined constructors
+            SgDeclarationStatementPtrList& classMembers = defn->get_members();
+            for (SgDeclarationStatementPtrList::iterator i = classMembers.begin(); i != classMembers.end(); ++i)
+            {
+                if (isSgFunctionDeclaration(*i))
+                {
+                    SgFunctionDeclaration* fundecl = isSgFunctionDeclaration(*i);
+                    bool thisIsAConstructor = fundecl->get_specialFunctionModifier().isConstructor();
+                    std::list<SgType*> args;
+                    args.push_back(new SgReferenceType(type));
+                    bool isCopyConstructor = acceptsArguments(fundecl, args);
+                    if (thisIsAConstructor && isCopyConstructor)
+                    {
+                        hasAnyCopyConstructor = true;
+                        if ((*i)->get_declarationModifier().get_accessModifier().isPublic())
+                            hasPublicCopyConstructor = true;
+                    }
+                }
             }
-          }
-        }
-        if (hasPublicCopyConstructor) return true;
-        if (hasAnyCopyConstructor) return false;
-        // Return true if all non-static data members are copy constructible
-        for (SgDeclarationStatementPtrList::iterator i = classMembers.begin();
-            i != classMembers.end(); ++i) {
-          if (isSgVariableDeclaration(*i)) {
-            SgVariableDeclaration* decl = isSgVariableDeclaration(*i);
-            if (decl->get_declarationModifier().get_storageModifier().isStatic())
-              continue;
-            SgInitializedNamePtrList& vars = decl->get_variables();
-            for (SgInitializedNamePtrList::iterator j = vars.begin();
-                j != vars.end(); ++j) {
-              if (!isCopyConstructible((*j)->get_type()))
+                        
+            if (hasPublicCopyConstructor) 
+                return true;
+            if (hasAnyCopyConstructor) 
                 return false;
+            
+            // Return true if all non-static data members are copy constructible
+            for (SgDeclarationStatementPtrList::iterator i = classMembers.begin(); i != classMembers.end(); ++i)
+            {
+                if (isSgVariableDeclaration(*i))
+                {
+                    SgVariableDeclaration* decl = isSgVariableDeclaration(*i);
+                    if (decl->get_declarationModifier().get_storageModifier().isStatic())
+                        continue;
+                    SgInitializedNamePtrList& vars = decl->get_variables();
+                    for (SgInitializedNamePtrList::iterator j = vars.begin(); j != vars.end(); ++j)
+                    {
+                        if (!isCopyConstructible((*j)->get_type()))
+                            return false;
+                    }
+                }
             }
-          }
+            
+            //Check that all the bases classes are copy constructible
+            foreach (SgBaseClass* baseClass, defn->get_inheritances())
+            {
+                SgClassDeclaration* baseClassDecl = baseClass->get_base_class();
+                if (!isCopyConstructible(baseClassDecl->get_type()))
+                    return false;
+            }
+            
+            return true; // If no non-copy constructible data member, return true.
         }
-        return true; // If no non-copy constructible data member, return true.
-      }
-        break;
+            break;
 
-      case V_SgTypedefType:
-        return isCopyConstructible(isSgTypedefType(type)->get_base_type());
-        break;
+        case V_SgTypedefType:
+            return isCopyConstructible(isSgTypedefType(type)->get_base_type());
+            break;
 
-      case V_SgReferenceType:
-        // DQ (8/27/2006): Changed name of SgComplex to make it more consistant with other 
-        // type names and added SgTypeImaginary IR node (for C99 complex support).
-      case V_SgTypeComplex:
-      case V_SgTypeImaginary:
-      case V_SgEnumType:
-      case V_SgPointerType:
-      case V_SgPointerMemberType:
-      case V_SgTypeBool:
-      case V_SgTypeChar:
-      case V_SgTypeDefault:
-      case V_SgTypeDouble:
-      case V_SgTypeFloat:
-      case V_SgTypeGlobalVoid:
-      case V_SgTypeInt:
-      case V_SgTypeLong:
-      case V_SgTypeLongDouble:
-      case V_SgTypeLongLong:
-      case V_SgTypeShort:
-      case V_SgTypeSignedChar:
-      case V_SgTypeSignedInt:
-      case V_SgTypeSignedLong:
-      case V_SgTypeSignedShort:
-      case V_SgTypeString:
-      case V_SgTypeUnsignedChar:
-      case V_SgTypeUnsignedInt:
-      case V_SgTypeUnsignedLong:
-      case V_SgTypeUnsignedLongLong:
-      case V_SgTypeUnsignedShort:
-      case V_SgTypeVoid:
-      case V_SgTypeWchar:
-        return true;
-        break;
+        case V_SgReferenceType:
+            // DQ (8/27/2006): Changed name of SgComplex to make it more consistent with other 
+            // type names and added SgTypeImaginary IR node (for C99 complex support).
+        case V_SgTypeComplex:
+        case V_SgTypeImaginary:
+        case V_SgEnumType:
+        case V_SgPointerType:
+        case V_SgPointerMemberType:
+        case V_SgTypeBool:
+        case V_SgTypeChar:
+        case V_SgTypeDefault:
+        case V_SgTypeDouble:
+        case V_SgTypeFloat:
+        case V_SgTypeGlobalVoid:
+        case V_SgTypeInt:
+        case V_SgTypeLong:
+        case V_SgTypeLongDouble:
+        case V_SgTypeLongLong:
+        case V_SgTypeShort:
+        case V_SgTypeSignedChar:
+        case V_SgTypeSignedInt:
+        case V_SgTypeSignedLong:
+        case V_SgTypeSignedShort:
+        case V_SgTypeString:
+        case V_SgTypeUnsignedChar:
+        case V_SgTypeUnsignedInt:
+        case V_SgTypeUnsignedLong:
+        case V_SgTypeUnsignedLongLong:
+        case V_SgTypeUnsignedShort:
+        case V_SgTypeVoid:
+        case V_SgTypeWchar:
+            return true;
+            break;
 
-      default:
-        std::cerr << "In SageInterface::isCopyConstructible(), type is a " << type->class_name() << std::endl;
-        assert (!"Unknown type in isCopyConstructible()");
+        default:
+            std::cerr << "In SageInterface::isCopyConstructible(), type is a " << type->class_name() << std::endl;
+            ROSE_ASSERT(!"Unknown type in isCopyConstructible()");
     }
     return true;
-  }
+}
   // Is a type assignable?  This may not quite work properly.
   // Liao, 3/3/2009 based on the code for isCopyConstructible()
   // TYPE a, b; is a=b; allowed ?

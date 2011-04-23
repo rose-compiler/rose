@@ -274,12 +274,12 @@ bool EventProcessor::isStateVariable(const VariableRenaming::VarName& var)
 #endif
 }
 
-std::vector<SgVariableDeclaration*> EventProcessor::getAllStackDeclarations() const
+std::vector<SgVariableDeclaration*> EventProcessor::getStackDeclarationsForLastEvent() const
 {
 	vector<SgVariableDeclaration*> output;
 	typedef std::pair<std::string, SgVariableDeclaration*> pair_t;
 	foreach(const pair_t& decl_pair, stack_decls_)
-	output.push_back(decl_pair.second);
+        output.push_back(decl_pair.second);
 	return output;
 }
 
@@ -324,6 +324,7 @@ std::vector<EventReversalResult> EventProcessor::processEvent()
 {
 	// Before processing, build a variable version table for the event function.
 	VariableVersionTable var_table(event_, var_renaming_);
+    stack_decls_.clear();
 
 	//cout << "VVT:\n";
 	//var_table.print();
