@@ -532,6 +532,12 @@ bool isCopyConstructible(SgType* type)
                         if ((*i)->get_declarationModifier().get_accessModifier().isPublic())
                             hasPublicCopyConstructor = true;
                     }
+                    
+                    //Check if the function is pure virtual. If so we can't copy the class.
+                    if (fundecl->get_functionModifier().isPureVirtual())
+                    {
+                        return false;
+                    }
                 }
             }
                         
