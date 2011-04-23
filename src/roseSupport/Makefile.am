@@ -37,6 +37,7 @@ noinst_LTLIBRARIES = libroseSupport.la
 libroseSupport_la_SOURCES = $(libroseSupportSources)
 
 include_HEADERS = \
+   callbacks.h \
    transformationSupport.h \
    optionDeclaration.h \
    sourceLocationInheritedAttribute.h \
