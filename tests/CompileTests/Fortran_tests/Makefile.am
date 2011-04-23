@@ -894,9 +894,7 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 	cd ../..; $(MAKE) testTranslator
 if ROSE_USE_INSURE
 	@echo "Force the lt-testTranslator to be built in ../../.libs so that we can rename it for Insure++ runs."
-#	ls -l ../../.libs
 	../../testTranslator --help > /dev/null
-#	ls -l ../../.libs
 endif
 
 testTranslator: ../../testTranslator
@@ -926,41 +924,10 @@ if !ROSE_USE_INSURE
 #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
-#	note that just forming at least a soft link will not work.
-#	rm -f testTranslator_$(@:.o=)
-#	ls -l ../../.libs
-#	ln -s ../../.libs/testTranslator testTranslator_$(@:.o=)
-#	echo "Removing any previous link to testTranslator..."
-#	rm -f ../../.libs/testTranslator_$(@:.o=)
-#	rm -f testTranslator_$(@:.o=)
-#	echo "Copy testTranslator..."
-#	ln -s ../../.libs/testTranslator ../../.libs/testTranslator_$(@:.o=)
-#	cd ../../.libs; ln -s testTranslator testTranslator_$(@:.o=)
-#	libtool --mode=link --tag=CC -L../../.libs ln -s ../../testTranslator testTranslator_$(@:.o=)
-#	ls -l ../../.libs
-#	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
-#	cp ../../.libs/testTranslator testTranslator_$(@:.o=)
-#	program=lt-'testTranslator'
-#	progdir="$thisdir/.libs"
-#	if test ! -f "../../.libs/lt-testTranslator"; then echo "Found ../../.libs/lt-testTranslator"; else echo "Can NOT find ../../.libs/lt-testTranslator"; fi
-#	@if test -f "../../.libs/lt-testTranslator"; then echo "Found ../../.libs/lt-testTranslator"; else echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
 	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
-#	The lt-testTranslator is only built after the testTranslator is first run.
-#	Execute once to force building the lt-testTranslator file if it is not present.
-#	if test -f "../../.libs/lt-testTranslator --help"; then ../../testTranslator; fi
-#	cp ../../.libs/lt-testTranslator ../../.libs/testTranslator_$(@:.o=)
 	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
-#	cp ../../testTranslator testTranslator_$(@:.o=)
-#	ls -l testTranslator*
-#	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
-#	libtool --mode=execute ../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
-#	../../.libs/testTranslator_$(@:.o=)
-#	./testTranslator_$(@:.o=)
-#	../../.libs/testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
-#	rm -f testTranslator_$(@:.o=)
 	echo "Removing the just built copy of lt-testTranslator to save space..."
-#	rm -f ../../.libs/testTranslator_$(@:.o=)
 	rm -f testTranslator_$(@:.o=)
 endif
 
@@ -969,6 +936,13 @@ if !ROSE_USE_INSURE
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
 	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
 	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
+else
+#	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
+	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
+	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+	echo "Removing the just built copy of lt-testTranslator to save space..."
+	rm -f testTranslator_$(@:.o=)
 endif
 
 $(TEST_F77_Objects): ../../testTranslator ../../testGraphGeneration ../../testTokenGeneration ${ALL_TESTCODES}
@@ -977,6 +951,13 @@ if !ROSE_USE_INSURE
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
 	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
 	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
+else
+#	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
+	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
+	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
+	echo "Removing the just built copy of lt-testTranslator to save space..."
+	rm -f testTranslator_$(@:.o=)
 endif
 
 $(TEST_F77_FIXED_FORMAT_Objects): ../../testTranslator ../../testGraphGeneration ../../testTokenGeneration ${ALL_TESTCODES}
@@ -985,6 +966,13 @@ if !ROSE_USE_INSURE
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
 	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
 	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
+else
+#	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
+	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
+	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
+	echo "Removing the just built copy of lt-testTranslator to save space..."
+	rm -f testTranslator_$(@:.o=)
 endif
 
 # Note: If using gfortran version greater then 4.1, we can't call it with Fortran 2003 code since it is so buggy.
@@ -1003,6 +991,13 @@ if !ROSE_USE_INSURE
 #	Build a object file since gfortran fails to do so (avoids remaking the makefile target)
 	@echo "   ...force generation of $@, because gfortran compiler does not handle fortran 2003 standard (and the makefile needs $@ to avoid recompilation)."
 	@touch $@
+else
+#	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
+	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
+	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
+	echo "Removing the just built copy of lt-testTranslator to save space..."
+	rm -f testTranslator_$(@:.o=)
 endif
 
 # DQ (4/6/2010): Added test for parsing only (tested here for C++ code)
