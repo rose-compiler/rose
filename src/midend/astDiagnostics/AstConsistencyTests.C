@@ -4015,7 +4015,8 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
             // the childMap has already been set and any new declaration that was added and 
             // which generated a symbol is not in the previously defined static childMap.
             // So the test above fails and we need to use the more expensive dynamic test.
-               if (nodeFound == false)
+               // George Vulov (4/22/2011): Restrict this test to only memory pool entries that are valid
+               if (nodeFound == false && parent->get_freepointer() == AST_FileIO::IS_VALID_POINTER())
                     nodeFound = parent->isChild(node);
              }
             else
