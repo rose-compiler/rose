@@ -305,9 +305,17 @@ case "$ROSE_TEST_BUILD_STEP" in
 
 "analyze")
 
+    ssh hudson-rose@hudson-rose-23 test -d /export/tmp.hudson-rose/hudson/workspace/test-insure-build/ROSE-build;
+    if [ $? -ne 0 ] ; then
+	echo "Error: no build tree found at hudson-rose@hudson-rose-23:/export/tmp.hudson-rose/hudson/workspace/test-insure-build/ROSE-build"
+	exit 1
+    fi
+
     # TOO (4/23/2011): Use the same Insure++ ROSE build tree that was created during test-insure-build
+    # TODO: use rsync instead to make it faster
     if test "x$machine_name" = "xhudson-rose-22" ; then
-      rsync -avz `pwd`/ROSE-build/ -e ssh hudson-rose@hudson-rose-23:/export/tmp.hudson-rose/hudson/workspace/test-insure-build/ROSE-build;
+       rm -rf ROSE-build
+       scp -r hudson-rose@hudson-rose-23:/export/tmp.hudson-rose/hudson/workspace/test-insure-build/ROSE-build .
     fi
 
     cd ROSE-build
