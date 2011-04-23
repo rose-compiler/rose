@@ -56,6 +56,12 @@ private:
 
 	//! The value graph object.
 	ValueGraph valueGraph_;
+    
+	//! A special node in VG whose in edges are state saving edges.
+	VGVertex root_;
+    
+    //! The graph representing the search result, which we call route.
+    ValueGraph routeGraph_;
 
     //! This object manages the path information of the function.
     PathNumManager* pathNumManager_;
@@ -66,9 +72,9 @@ private:
 	//! A map from variable with version to vertex of Value Graph.
 	std::map<VersionedVariable, VGVertex> varVertexMap_;
 
-	//! A map from variable with version to its reaching def object.
-	//! This map is only for pseudo defs.
-	std::map<VersionedVariable, SSA::ReachingDefPtr> pseudoDefMap_;
+//	//! A map from variable with version to its reaching def object.
+//	//! This map is only for pseudo defs.
+//	std::map<VersionedVariable, SSA::ReachingDefPtr> pseudoDefMap_;
 
 	//! All values which need to be restored (state variables).
 	std::vector<VGVertex> valuesToRestore_;
@@ -99,8 +105,6 @@ private:
 	////! All available nodes (the last version of state variables).
 	//std::set<Vertex> availableNodes_;
 
-	//! The start point of the search.
-	VGVertex root_;
 
     //! This subclass is used to build the CFG for the reverse event.
     //struct ReverseCFGBuilder
@@ -120,9 +124,6 @@ private:
 
     //};
 
-//	typedef CFG<VirtualCFG::InterestingNode,
-//			VirtualCFG::InterestingEdge> CFG;
-//	typedef CDG<CFG> CDG;
 public:
     //! The constructor.
     EventReverser(SgFunctionDefinition* funcDef);
@@ -133,12 +134,18 @@ public:
 	//! Build the value graph for the given function.
 	void buildValueGraph();
 
+    //! Build the route graph representing search result.
+    void buildRouteGraph(const std::map<VGEdge, PathSet>& routes);
 
     //! Generate forward, reverse and commit functions according to the VG.
     void generateCode();
 
 	//! Generate a dot file describing the value graph.
 	void valueGraphToDot(const std::string& filename) const;
+    
+    //! Generate a dot file describing the search result.
+    void routeGraphToDot(const std::string& filename) const;
+    
 
 //    void getPath(const SubValueGraph& g,
 //                 const std::vector<VGVertex>& valuesToRestore);
@@ -258,6 +265,8 @@ private:
 	 *  @returns The new added edge.
 	 */
 	VGEdge addValueGraphOrderedEdge(VGVertex src, VGVertex tar, int index);
+    
+    void addValueGraphStateSavingEdges(VGVertex src, SgNode* killer);
 
     /** Add new state saving edges to the value graph. The target is the root.
 	 *
@@ -268,7 +277,8 @@ private:
     std::vector<VGEdge> addValueGraphStateSavingEdges(VGVertex src);
 
 	//! Add a phi node to the value graph.
-	VGVertex createPhiNode(VersionedVariable& var);
+	//VGVertex createPhiNode(VersionedVariable& var);
+    VGVertex createPhiNode(VersionedVariable& var, SSA::ReachingDefPtr reachingDef);
 
 	//! Connect each variable node to the root with cost.
 	void addStateSavingEdges();
@@ -302,13 +312,11 @@ private:
 
     //! Build the reverse CFG for the given DAG.
     void buildReverseCFG(int dagIndex, 
-                         std::map<VGEdge, PathSet>& routes,
                          ReverseCFG& rvsCFG);
     
     //! Traverse nodes in topological order for all paths then build the reverse CFG.
     void buildReverseCFG(
             const VGEdge& edge,
-            const std::map<VGEdge, PathSet>& routes,
             std::set<VGEdge>& visitedNodes,
             std::map<PathSet, RvsCFGVertex>& cfgNodeForPath,
             ReverseCFG& rvsCFG);

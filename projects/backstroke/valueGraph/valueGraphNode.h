@@ -267,14 +267,10 @@ struct StateSavingEdge : ValueGraphEdge
     StateSavingEdge(int cost, int dagIdx, int visibleNum, const PathSet& paths)
     : ValueGraphEdge(cost, dagIdx, paths), visiblePathNum(visibleNum) {}
 
-	virtual std::string toString() const
-	{ 
-        std::string str = ValueGraphEdge::toString();
-        str += "\nPathNum:" + boost::lexical_cast<std::string>(visiblePathNum);
-        return str;
-    }
+	virtual std::string toString() const;
 
 	int visiblePathNum;
+    SgNode* killer;
 };
 
 /**********************************************************************************************************/

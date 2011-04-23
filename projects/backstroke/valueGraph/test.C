@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
         Backstroke::EventReverser reverser(funcDef);
         reverser.generateCode();
 
-        reverser.valueGraphToDot(vgFileName);
+        //reverser.valueGraphToDot(vgFileName);
 
         cout << "Function " << counter << " is processed.\n";
         ++counter;

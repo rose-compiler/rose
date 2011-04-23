@@ -6,7 +6,7 @@
 #include <ssa/dataflowCfgFilter.h>
 #include <boost/dynamic_bitset.hpp>
 
-#define VG_DEBUG
+#define VG_DEBUG 
 
 namespace Backstroke
 {
