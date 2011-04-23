@@ -144,6 +144,31 @@ fi
 ##
 
   ROSE_SUPPORT_LANGUAGE_CONFIG_OPTIONS
+  AC_CHECK_LIB([curl], [Curl_connect], [HAVE_CURL=yes], [HAVE_CURL=no])
+  AM_CONDITIONAL([HAS_LIBRARY_CURL], [test "x$HAVE_CURL" = "xyes"])
+
+AC_MSG_CHECKING([whether your GCC version is supported by ROSE (4.0.x - 4.4.x)])
+AC_ARG_ENABLE([gcc-version-check],AS_HELP_STRING([--disable-gcc-version-check],[Disable GCC version 4.0.x - 4.4.x verification check]),,[enableval=yes])
+if test "x$enableval" = "xyes" ; then
+      AC_LANG_PUSH([C])
+      # http://www.gnu.org/s/hello/manual/autoconf/Running-the-Compiler.html
+      AC_COMPILE_IFELSE([
+        AC_LANG_SOURCE([[
+          #if (__GNUC__ >= 4 && __GNUC_MINOR__ <= 4)
+            int rose_supported_gcc;
+          #else
+            not gcc, or gcc version is not supported by rose
+          #endif
+        ]])
+       ],
+       [AC_MSG_RESULT([done])],
+       gcc_version=`gcc -dumpversion`
+       [AC_MSG_FAILURE([your GCC $gcc_version version is currently NOT supported by ROSE])])
+      AC_LANG_POP([C])
+else
+    AC_MSG_RESULT([skipping])
+fi
+
 
 ##
 #########################################################################################
@@ -1177,6 +1202,10 @@ AC_ARG_ENABLE(edg_cuda, AS_HELP_STRING([--enable-edg-cuda], [Build EDG 4.0 with 
   *)   edg_cuda=false ;;
 esac])
 AM_CONDITIONAL(ROSE_BUILD_EDG_WITH_CUDA_SUPPORT, [test x$edg_cuda = xtrue])
+if test x$edg_cuda = xtrue; then
+  AC_MSG_WARN([Add CUDA specific headers to the include-staging directory.])
+  GENERATE_CUDA_SPECIFIC_HEADERS
+fi
 
 # *******************************************************************
 # Option to control internal support of OpenCL (GPU langauge support)
@@ -1755,6 +1784,10 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 AC_CHECK_HEADERS(gcrypt.h)
 AC_CHECK_LIB(gcrypt,gcry_check_version)
 
+# Multi-thread support is needed by the simulator.  This also enables/disables major parts of threadSupport.[Ch] within
+# the ROSE library.
+AC_CHECK_HEADERS(pthread.h)
+
 # These headers and types are needed by projects/simulator [matzke 2009-07-02]
 AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
 AC_CHECK_HEADERS([sys/types.h sys/mman.h sys/stat.h sys/uio.h sys/wait.h sys/utsname.h sys/ioctl.h sys/sysinfo.h sys/socket.h])
@@ -1767,6 +1800,11 @@ AC_CHECK_TYPE(user_desc,
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
 AC_SUBST(PACKAGE_VERSION_NUMERIC)
+
+# This CPP symbol is defined so we can check whether rose_config.h is included into a public header file.  It serves
+# no other purpose.  The name must not begin with "ROSE_" but must have a high probability of being globally unique (which
+# is why it ends with "_ROSE").
+AC_DEFINE(CONFIG_ROSE, 1, [Always defined and used for checking whether global CPP namespace is polluted])
 
 # End macro ROSE_SUPPORT_ROSE_PART_4.
 ]
@@ -2009,6 +2047,7 @@ projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/SP/Makefile
+projects/pragmaParsing/Makefile
 projects/QtDesignerPlugins/Makefile
 projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile
 projects/RTED/CppRuntimeSystem/Makefile
@@ -2124,6 +2163,8 @@ tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
 tests/RunTests/AstDeleteTests/Makefile
+tests/RunTests/FortranTests/Makefile
+tests/RunTests/FortranTests/LANL_POP/Makefile
 tests/PerformanceTests/Makefile
 tests/CompilerOptionsTests/Makefile
 tests/CompilerOptionsTests/testCpreprocessorOption/Makefile
@@ -2179,6 +2220,7 @@ tests/CompileTests/sizeofOperation_tests/Makefile
 tests/CompileTests/MicrosoftWindows_tests/Makefile
 tests/CompileTests/nameQualificationAndTypeElaboration_tests/Makefile
 tests/CompileTests/NewEDGInterface_C_tests/Makefile
+tests/CompileTests/CudaTests/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile
@@ -2342,6 +2384,12 @@ AC_CONFIG_COMMANDS([default],[[
 # Generate rose_paths.C
 AC_CONFIG_COMMANDS([rose_paths.C], [[
 	make src/util/rose_paths.C
+]])
+
+# Generate public config file from private config file. The public config file adds "ROSE_" to the beginning of
+# certain symbols. See scripts/publicConfiguration.pl for details.
+AC_CONFIG_COMMANDS([rosePublicConfig.h],[[
+	make rosePublicConfig.h
 ]])
 
 

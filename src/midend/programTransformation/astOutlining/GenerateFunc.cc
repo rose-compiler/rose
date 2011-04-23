@@ -1214,6 +1214,11 @@ Outliner::generateFunction ( SgBasicBlock* s,
   //   replace variables to access to parameters, directly or indirectly
   variableHandling(syms, pdSyms, psyms, readOnlyVars, liveOuts, struct_decl, func);
   ROSE_ASSERT (func != NULL);
+  
+//     std::cout << func->get_type()->unparseToString() << std::endl;
+//     std::cout << func->get_parameterList()->get_args().size() << std::endl;
+     func->set_type(buildFunctionType(func->get_type()->get_return_type(), buildFunctionParameterTypeList(func->get_parameterList())));
+//     std::cout << func->get_type()->unparseToString() << std::endl;
 
   // Retest this...
   ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());

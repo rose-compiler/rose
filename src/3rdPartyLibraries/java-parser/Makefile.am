@@ -31,7 +31,7 @@ JavaTraversal.class: ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java ${sr
 #	DQ (10/13/2010): I want to avoid copying ecjROSE.jar into the build tree, but it is required for now.
 #	Only ROSE translators need it, not the javac and javah commands (above).
 	@echo "After building JavaTraversal.java, copy ecjROSE.jar from srcdir to builddir (only required for ROSE to find ecjROSE.jar (fix later))"
-	cp ${srcdir}/ecjROSE.jar ecjROSE.jar
+	(test -f ecjROSE.jar) || cp ${srcdir}/ecjROSE.jar ecjROSE.jar
 
 # I assume this is needed the same as for the JavaParserSupport.class rule
 JavaParser.class: ${srcdir}/JavaParser.java

@@ -2,6 +2,7 @@
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
+#undef CONFIG_ROSE /* prevent error about including both private and public headers; must be between rose_config.h and rose.h */
 
 #include "rose.h"
 #include <CallGraph.h>

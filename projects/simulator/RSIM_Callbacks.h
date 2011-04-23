@@ -1,6 +1,7 @@
 #ifndef ROSE_RSIM_Callbacks_H
 #define ROSE_RSIM_Callbacks_H
 
+#include "callbacks.h" /* for ROSE_Callbacks namespace */
 
 /** Set of callbacks.  Callbacks are user-supplied objects whose operator() is invoked at particular points during a
  *  simulation.  The set of callbacks is organized into lists and all callbacks present on a list are invoked at the desired
@@ -14,15 +15,15 @@
  *  callback from a list also does not delete the callback. Therefore it's safe for the clone() method to be a no-op, simply
  *  returning a pointer to the original object.
  *
- *  Callbacks are called in forward or reverse order depending on the type of list. See the various "call_*" methods for
- *  details.  Any callback is allowed to modify the lists in the RSIM_Callbacks object, and these changes don't affect which
- *  callbacks are made nor the order in which they're made until the next invocation of a "call_*" method.
+ *  Callbacks are called in the order they were added to the list. See the various "call_*" methods for details.  Any callback
+ *  is allowed to modify the lists in the RSIM_Callbacks object, and these changes don't affect which callbacks are made nor
+ *  the order in which they're made until the next invocation of a "call_*" method.
  *
  *  Callbacks may be made from multiple threads concurrently, so all callbacks should be thread safe.  Generally speaking, one
  *  should not assume that any particular mutexes or read-write locks are held when the callback is invoked.  All of the
  *  RSIM_Callbacks methods are thread safe.
  *
- *  \section Example1 Example:  Disassembling a dynamically linked binary
+ *  @section Example1 Example:  Disassembling a dynamically linked binary
  *
  *  Binary executables are often dynamically linked, wherein the main binary contains only stubs for dynamic functions and
  *  those functions' text and data are loaded into process memory and linked at run time.  Since most disassemblers don't
@@ -37,25 +38,31 @@
  *  thread-safe manner) and the assembly is unparsed to the standard output stream.  The callback is then removed from the
  *  calling thread's callbacks (although it might still be called from other threads that try to execute at the OEP).
  *
- *  \code
+ *  @code
  *  struct DisassembleAtOep: public RSIM_Callbacks::InsnCallback {
- *      // Share a single callback in simulator, process, and all threads
+ *      // Share a single callback among the simulator, the process, and all threads.
  *      virtual DisassembleAtOep *clone() { return this; }
  *
- *      // The actual callback
- *      virtual bool operator()(RSIM_Thread *thread, SgAsmInstruction *insn, bool prev) {
- *          if (thread->get_process()->get_ep_orig_va() == insn->get_address()) {
+ *      // The actual callback. See ROSE_Callbacks::List (in the ROSE documentation)
+ *      // for why it's defined this way, particularly the Args argument.  The purpose
+ *      // of the Boolean arg is described in ROSE_Callbacks::List::apply().
+ *      virtual bool operator()(bool prev, const Args &args) {
+ *          RSIM_Process *process = args.thread->get_process();
+ *          if (process->get_ep_orig_va() == args.insn->get_address()) {
  *              // This thread is at the OEP.  Call the thread-safe disassembler.
- *              SgAsmBlock *block = thread->get_process()->disassemble();
+ *              SgAsmBlock *block = process->disassemble();
+ *
  *              // Output disassembled instructions, functions, etc.  See disassemble.C
  *              // in tests/roseTests/binaryTests for more sophisticated examples of
  *              // displaying instructions and other information using AsmUnparser.
  *              AsmUnparser().unparse(std::cout, block);
+ *
  *              // Remove this callback from this thread. Also, by removing it from the
  *              // process we prevent subsequently created threads from incuring the
- *              // runtime overhead of invoking this callback on every instruction.
- *              thread->get_callbacks().remove_pre_insn(this);
- *              thread->get_process()->get_callbacks().remove_pre_insn(this);
+ *              // runtime overhead of invoking this callback on every instruction. Removal
+ *              // is entirely optional.
+ *              args.thread->get_callbacks().remove_insn_callback(RSIM_Callbacks::BEFORE, this);
+ *              process->get_callbacks().remove_insn_callback(RSIM_Callbacks::BEFORE, this);
  *          }
  *          return prev;
  *      }
@@ -65,18 +72,76 @@
  *  // for the entire simulator will cause it to also be registered for the specimen's
  *  // process and threads when they are created later.
  *  RSIM_Simulator simulator;
- *  simulator.get_callbacks().add_pre_insn(new DisassembleAtOep);
- *  \endcode
+ *  simulator.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new DisassembleAtOep);
+ *  @endcode
  *
- *  Continue by configuring the simulator, loading the specimen executable, activating
- *  the simulator, running the simulator, etc.  An example is provided on the RSIM
- *  main page (\ref index).
+ *  Continue by configuring the simulator, loading the specimen executable, activating the simulator, running the simulator,
+ *  etc.  An example is provided on the RSIM main page (\ref index).
+ *
+ *  @section Example2 Example: Using the disassembler to trace functions
+ *
+ *  A side effect of calling RSIM_Process::disassemble() is that the resulting AST contains instruction nodes
+ *  (SgAsmInstruction) whose grandparents are function nodes (SgAsmFunctionDeclaration).  We can use this fact to print the
+ *  name of the function in which we're currently executing.
+ *
+ *  @code
+ *  class ShowFunction: public RSIM_Callbacks::InsnCallback {
+ *  public:
+ *      // Share a single callback among the simulator, the process, and all threads.
+ *      virtual ShowFunction *clone() { return this; }
+ *
+ *      // The actual callback.
+ *      virtual bool operator()(bool prev, const Args &args) {
+ *          SgAsmBlock *basic_block = isSgAsmBlock(args.insn->get_parent());
+ *          SgAsmFunctionDeclaration *func = basic_block ? isSgAsmFunctionDeclaration(basic_block->get_parent()) : NULL;
+ *          if (func && func->get_name()!=name) {
+ *              name = func->get_name();
+ *              args.thread->tracing(TRACE_MISC)->mesg("in function \"%s\"", name.c_str());
+ *          }
+ *          return prev;
+ *      }
+ *
+ *  private:
+ *      std::string name;
+ *  };
+ * 
+ *  sim.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new ShowFunction);
+ *  @endcode
+ *
+ *  The output will be something along the following lines.  The "28129:1" means the main thread of process 28129. The floating
+ *  point number which follows is the time in seconds since the start of the simulation.  The hexadecimal number is the address
+ *  of the instruction that's about to be executed followed by an instruction counter in square brackets.  Our "in function"
+ *  output appears, in this example, with system call tracing that contains the name of the system call, the system call number
+ *  from <asm/unistd_32.h>, the arguments, and the return value.
+ *
+ *  @code
+ *  28129:1 31.292 0x08048132[1]:       in function "_start"
+ *  28129:1 31.292 0x0804bea0[13]:      in function "__libc_start_main"
+ *  28129:1 31.345 0x08061db3[235]:     in function "_dl_aux_init"
+ *  28129:1 31.345 0x0804bee7[250]:     in function "__libc_start_main"
+ *  28129:1 31.345 0x0805e7c0[256]:     in function "__uname"
+ *  28129:1 31.345 0x0805e7cd[260]:     uname[122](0xbfffddb6) = 0
+ *  28129:1 31.345 0x0804bf03[264]:     in function "__libc_start_main"
+ *  28129:1 31.346 0x0804b890[338]:     in function "__pthread_initialize_minimal_internal"
+ *  28129:1 31.346 0x0804c375[348]:     in function "__libc_setup_tls"
+ *  28129:1 31.346 0x0805f5c8[376]:     in function "__sbrk"
+ *  28129:1 31.346 0x080871f0[387]:     in function "brk"
+ *  28129:1 31.346 0x080871fe[393]:     brk[45](0) = 0x080d5000
+ *  28129:1 31.346 0x0805f605[401]:     in function "__sbrk"
+ *  28129:1 31.346 0x080871f0[409]:     in function "brk"
+ *  28129:1 31.346 0x080871fe[415]:     brk[45](0x080d5c80) = 0x080d5c80
+ *  28129:1 31.346 0x0805f628[423]:     in function "__sbrk"
+ *  28129:1 31.347 0x0804c40d[431]:     in function "__libc_setup_tls"
+ *  28129:1 31.347 0x0805e070[455]:     in function "memcpy"
+ *  @endcode
  */
 class RSIM_Callbacks {
     /**************************************************************************************************************************
      *                                  Types
      **************************************************************************************************************************/
 public:
+
+    enum When { BEFORE, AFTER };
 
     /** Base class for all simulator callbacks. */
     class Callback {
@@ -87,21 +152,8 @@ public:
         virtual Callback *clone() = 0;
     };
 
-    /** Instruction-related callbacks. */
-    class InsnCallback: public Callback {
-    public:
-        /** Method invoked on an instruction. The @p prev argument is the return value from the previous callback when multiple
-         * callbacks are registered. See also, RSIM_Callbacks::add_pre_insn() and RSIM_Callbacks::add_post_insn(). */
-        virtual bool operator()(RSIM_Thread*, SgAsmInstruction*, bool prev) = 0;
-    };
 
-    /** Thread-related callbacks. */
-    class ThreadCallback: public Callback {
-    public:
-        virtual bool operator()(RSIM_Thread*, bool prev) = 0;
-    };
 
-    
     /**************************************************************************************************************************
      *                                  Constructors, etc.
      **************************************************************************************************************************/
@@ -109,13 +161,10 @@ private:
     void init(const RSIM_Callbacks &);
 
 public:
-    RSIM_Callbacks() {
-        pthread_mutex_init(&mutex, NULL);
-    }
+    RSIM_Callbacks() {}
 
     /** Thread-safe copy constructor. */
     RSIM_Callbacks(const RSIM_Callbacks &other) {
-        pthread_mutex_init(&mutex, NULL);
         init(other);
     }
 
@@ -126,138 +175,169 @@ public:
     }
 
     /**************************************************************************************************************************
-     *                                  Registering and Unregistering
+     *                                  Instruction callbacks
      **************************************************************************************************************************/
 public:
 
-    /** Registers a callback object that should be invoked before every simulated instruction.  Pre-instruction callbacks are
-     *  invoked in the opposite order they were registered (see call_pre_insn() for details).  The specified callback object is
-     *  inserted into the list without copying it.
+    /** Instruction callbacks invoked on every instruction. */
+    class InsnCallback: public Callback {
+    public:
+        struct Args {
+            Args(RSIM_Thread *thread, SgAsmInstruction *insn)
+                : thread(thread), insn(insn) {}
+            RSIM_Thread *thread;
+            SgAsmInstruction *insn;
+        };
+        virtual bool operator()(bool prev, const Args&) = 0;
+    };
+
+    /** Registers an instruction callback.  Instruction callbacks are invoked before or after (depending on @p when) every
+     *  simulated instruction.  The specified callback object is inserted into the list without copying it. See
+     *  call_insn_callbacks() for details about how these callbacks are invoked.
      *
      *  Thread safety:  This method is thread safe. */
-    void add_pre_insn(InsnCallback*);
+    void add_insn_callback(When, InsnCallback*);
 
-    /** Unregisters a pre-instruction callback. The specified callback is removed from the list of pre-instruction callbacks.
-     *  If a single callback object was registered more than once, then only the most recently registered instance is removed.
-     *  This method returns true if a callback was removed.  The removed callback object is not destroyed.
+    /** Unregisters an instruction callback.  The most recently registered instance of the specified callback (if any) is
+     *  removed from the pre- or post-instruction callback list, depending on the value of @p when).  The removed callback
+     *  object is not destroyed.  Returns true if a callback was removed, false if not.
      *
      *  Thread safety:  This method is thread safe. */
-    bool remove_pre_insn(InsnCallback*);
+    bool remove_insn_callback(When, InsnCallback*);
 
-    /** Unregisters all pre-instruction callbacks.
+
+    /** Removes all instruction callbacks.  The pre- or post-instruction callbacks are removed, depending on the value of @p
+     * when. None of the removed callbacks are destroyed.
      *
      *  Thread safety:  This method is thread safe. */
-    void clear_pre_insn();
+    void clear_insn_callbacks(When);
 
-
-
-    /** Registers a callback object that should be invoked after every simulated instruction.  Post-instruction callbacks are
-     *  invoked in the order they were registered (see call_post_insn() for details).  The specified callback object is
-     *  inserted into the list without copying it.
+    /** Invokes all the instruction callbacks.  The pre- or post-instruction callbacks (depending on the value of @p when) are
+     *  invoked in the order they were registered.  The specified @p prev value is passed to the first callback as its @p prev
+     *  argument; subsequent callbacks' @p prev argument is the return value of the previous callback; the return value of the
+     *  final callback becomes the return value of this method.  However, if no callbacks are invoked (because the list is
+     *  empty) then this method's return value is the specified @p prev value.  The @p thread and @p insn are passed to each of
+     *  the callbacks.
      *
-     *  Thread safety:  This method is thread safe. */
-    void add_post_insn(InsnCallback*);
-
-    /** Unregisters a post-instruction callback.  The specified callback is removed from the list of post-instruction
-     *  callbacks. If a single callback object was registered more than once, then only the most recently registered instance is
-     *  removed. This method returns true if a callback was removed.  The removed callback object is not destroyed. */
-    bool remove_post_insn(InsnCallback*);
-
-    /** Unregisters all post-instruction callbacks.
+     *  When the simulator calls this function for pre-instruction callbacks, it does so with @p prev set.  If the return value
+     *  is false, then the instruction is not simulated. When an instruction is skipped, the callback should, as a general
+     *  rule, adjust the EIP register so that the same instruction is not simulated ad nauseam.  The post-instruction callbacks
+     *  are invoked regardless of whether the instruction was simulated, and the initial @p prev value for these callbacks is
+     *  the return value from the last pre-instruction callback (or true if there were none).
      *
-     *  Thread safety:  This method is thread safe. */
-    void clear_post_insn();
+     *  Thread safety:  This method is thread safe.  The callbacks may register and/or unregister themselves or other callbacks
+     *  from this RSIM_Callbacks object, but those actions do not affect which callbacks are made by this invocation of
+     *  call_insn_callbacks(). */
+    bool call_insn_callbacks(When, RSIM_Thread *thread, SgAsmInstruction *insn, bool prev);
 
 
-
-    /** Registers a callback object that should be invoked when a thread is created.  Pre-thread callbacks are invoked in the
-     *  opposite order they were registered (see call_pre_thread() for details).  The specified callback object is inserted
-     *  into the list without copying it.
-     *
-     *  Thread safety:  This method is thread safe. */
-    void add_pre_thread(ThreadCallback*);
-
-    /** Unregisters a pre-thread callback.  The specified callback is removed from the list of thread callbacks. If a single
-     *  callback object was registered more than once, then only the most recently registered instance is removed.  This method
-     *  returns true if a callback was removed.  The removed callback is not destroyed.
-     *
-     *  Thread safety:  This method is thread safe. */
-    bool remove_pre_thread(ThreadCallback*);
-
-    /** Unregisters all pre-thread callbacks.
-     *
-     *  Thread safety:  This method is thread safe. */
-    void clear_pre_thread();
-    
-    
-
-    /** Registers a callback object that should be invoked when a thread is destroyed.  Post-thread callbacks are invoked in
-     *  the order they were registered (see call_post_thread() for details).  The specified callback object is inserted into
-     *  the list without copying it.
-     *
-     *  Thread safety:  This method is thread safe. */
-    void add_post_thread(ThreadCallback*);
-
-    /** Unregisters a post-thread callback.  The specified callback is removed from the list of thread callbacks. If a single
-     *  callback object was registered more than once, then only the most recently registered instance is removed.  This method
-     *  returns true if a callback was removed.  The removed callback is not destroyed.
-     *
-     *  Thread safety:  This method is thread safe. */
-    bool remove_post_thread(ThreadCallback*);
-
-    /** Unregisters all post-thread callbacks.
-     *
-     *  Thread safety:  This method is thread safe. */
-    void clear_post_thread();
-    
-    
 
     /**************************************************************************************************************************
-     *                                  Invoking callbacks
+     *                                  System Call Callbacks
      **************************************************************************************************************************/
 public:
 
-    /** Invokes all the pre-instruction callbacks in the opposite order they were registered.  The @p prev argument is passed
-     *  as the @p prev value of the first callback, while the return value of a callback is used as the @p prev value for the
-     *  next callback.  The return value of the final callback (or the original @p prev if there are no callbacks) becomes the
-     *  return value of this method and is used to determine whether the instruction should be simulated (true) or skipped
-     *  (false). When skipping an instruction, it is probably necessary to adjust the thread's EIP register, or else the same
-     *  instruction will be processed in the subsequent iteration of the thread's main simulation loop.
-     *
-     *  Thread safety:  This method is thread safe.  The callbacks may register and/or unregister themselves or other callbacks
-     *  from this RSIM_Callbacks object, but those actions do not affect which callbacks are made by this invocation of
-     *  call_pre_insn(). */
-    bool call_pre_insn(RSIM_Thread*, SgAsmInstruction*, bool prev) const;
-
-    /** Invokes all the post-instruction callbacks in the order they were registered.  The @p prev argument (the return value
-     *  of the previous call_pre_insn() invocation) is passed to the first post-instruction callback. The @p prev argument for
-     *  subsequent callbacks is the return value of the previous callback.  This method returns the return value of the last
-     *  callback (or @p prev if there are no callbacks), and is ignored by the thread's main simulation loop.
-     *
-     *  Thread safety:  This method is thread safe.  The callbacks may register and/or unregister themselves or other callbacks
-     *  from this RSIM_Callbacks object, but those actions do not affect which callbacks are made by this invocation of
-     *  call_post_insn(). */
-    bool call_post_insn(RSIM_Thread*, SgAsmInstruction*, bool prev) const;
-
-    /** Invokes all the pre-thread callbacks in the opposite order they were registered. The @p prev argument is passed to the
-     *  first pre-thread callback.  The @p prev argument for subsequent callbacks is the return value of the previous
-     *  callback.  This method returns the return value of the last callback (or @p prev if there are no callbacks), which is
-     *  normally provided to the call_post_thread() method.
-     *
-     *  Thread safety:  This method is thread safe.  The callbacks may register and/or unregister themselves or other callbacks
-     *  from this RSIM_Callbacks object, but those actions do not affect which callbacks are made by this invocation of
-     *  call_pre_thread(). */
-    bool call_pre_thread(RSIM_Thread*, bool prev) const;
+    /** System call callbacks invoked on every system call. */
+    class SyscallCallback: public Callback {
+    public:
+        struct Args {
+            Args(RSIM_Thread *thread, int callno)
+                : thread(thread), callno(callno) {}
+            RSIM_Thread *thread;
+            int callno;
+        };
+        virtual bool operator()(bool prev, const Args&) = 0;
+    };
     
-    /** Invokes all the post-thread callbacks in the order they were registered.  The @p prev argument (the return value
-     *  of the previous call_pre_thread() invocation) is passed to the first post-thread callback. The @p prev argument for
-     *  subsequent callbacks is the return value of the previous callback.  This method returns the return value of the last
-     *  callback (or @p prev if there are no callbacks).
+    /** Registers a system call callback.  System call callbacks are invoked before or after (depending on @p when) every
+     *  simulated system call.  The specified callback object is inserted into the list without copying it. See
+     *  call_syscall_callbacks() for details about how these callbacks are invoked.
+     *
+     *  Thread safety:  This method is thread safe. */
+    void add_syscall_callback(When, SyscallCallback*);
+
+    /** Unregisters a system call callback.  The most recently registered instance of the specified callback (if any) is
+     *  removed from the pre- or post-syscall callback list, depending on the value of @p when).  The removed callback
+     *  object is not destroyed.  Returns true if a callback was removed, false if not.
+     *
+     *  Thread safety:  This method is thread safe. */
+    bool remove_syscall_callback(When, SyscallCallback*);
+
+
+    /** Removes all system call callbacks.  The pre- or post-syscall callbacks are removed, depending on the value of @p
+     * when. None of the removed callbacks are destroyed.
+     *
+     *  Thread safety:  This method is thread safe. */
+    void clear_syscall_callbacks(When);
+
+    /** Invokes all the system call callbacks.  The pre- or post-syscall callbacks (depending on the value of @p when) are
+     *  invoked in the order they were registered.  The specified @p prev value is passed to the first callback as its @p prev
+     *  argument; subsequent callbacks' @p prev argument is the return value of the previous callback; the return value of the
+     *  final callback becomes the return value of this method.  However, if no callbacks are invoked (because the list is
+     *  empty) then this method's return value is the specified @p prev value.  The @p thread and @p callno are passed to each
+     *  of the callbacks.
+     *
+     *  When the simulator calls this function for pre-syscall callbacks, it does so with @p prev set.  If the return value is
+     *  false, then the system call is not simulated. When a system call is skipped, the callback should, as a general rule,
+     *  adjust the EAX register to indicate the syscall return value (errors are indicated, at least for Linux system calls, as
+     *  negative integers corresponding to the values in <errno.h>.  The post-syscall callbacks are invoked regardless of
+     *  whether the system call was simulated, and the initial @p prev value for these callbacks is the return value from the
+     *  last pre-syscall callback (or true if there were none).
      *
      *  Thread safety:  This method is thread safe.  The callbacks may register and/or unregister themselves or other callbacks
      *  from this RSIM_Callbacks object, but those actions do not affect which callbacks are made by this invocation of
-     *  call_post_insn(). */
-    bool call_post_thread(RSIM_Thread*, bool prev) const;
+     *  call_syscall_callbacks(). */
+    bool call_syscall_callbacks(When, RSIM_Thread *thread, int callno, bool prev);
+
+
+
+    /**************************************************************************************************************************
+     *                                  Thread Callbacks
+     **************************************************************************************************************************/
+public:
+
+    /** Thread callbacks invoked on every thread. */
+    class ThreadCallback: public Callback {
+    public:
+        struct Args {
+            Args(RSIM_Thread *thread)
+                : thread(thread) {}
+            RSIM_Thread *thread;
+        };
+        virtual bool operator()(bool prev, const Args&) = 0;
+    };
+
+    /** Registers a thread callback.  Thread callbacks are invoked before a new thread is created or after a thread exits
+     *  (depending on @p when).  The specified callback object is inserted into the list without copying it. See
+     *  call_thread_callbacks() for details about how these callbacks are invoked.
+     *
+     *  Thread safety:  This method is thread safe. */
+    void add_thread_callback(When, ThreadCallback*);
+
+    /** Unregisters a thread callback.  The most recently registered instance of the specified callback (if any) is removed
+     *  from the pre- or post-thread callback list, depending on the value of @p when).  The removed callback object is not
+     *  destroyed.  Returns true if a callback was removed, false if not.
+     *
+     *  Thread safety:  This method is thread safe. */
+    bool remove_thread_callback(When, ThreadCallback*);
+
+
+    /** Removes all thread callbacks.  The pre- or post-thread callbacks are removed, depending on the value of @p when. None
+     * of the removed callbacks are destroyed.
+     *
+     *  Thread safety:  This method is thread safe. */
+    void clear_thread_callbacks(When);
+
+    /** Invokes all the thread callbacks.  The pre- or post-thread callbacks (depending on the value of @p when) are invoked in
+     *  the order they were registered.  The specified @p prev value is passed to the first callback as its @p prev argument;
+     *  subsequent callbacks' @p prev argument is the return value of the previous callback; the return value of the final
+     *  callback becomes the return value of this method.  However, if no callbacks are invoked (because the list is empty)
+     *  then this method's return value is the specified @p prev value.  The @p thread is passed to each of the callbacks.
+     *
+     *  Thread safety:  This method is thread safe.  The callbacks may register and/or unregister themselves or other callbacks
+     *  from this RSIM_Callbacks object, but those actions do not affect which callbacks are made by this invocation of
+     *  call_thread_callbacks(). */
+    bool call_thread_callbacks(When, RSIM_Thread *thread, bool prev);
 
 
 
@@ -265,13 +345,15 @@ public:
      *                                  Data members
      **************************************************************************************************************************/
 private:
-    mutable pthread_mutex_t mutex;
-
     /* See init() if you add more vectors */
-    std::vector<InsnCallback*> pre_insn;
-    std::vector<InsnCallback*> post_insn;
-    std::vector<ThreadCallback*> pre_thread;
-    std::vector<ThreadCallback*> post_thread;
+    ROSE_Callbacks::List<InsnCallback> insn_pre;
+    ROSE_Callbacks::List<InsnCallback> insn_post;
+
+    ROSE_Callbacks::List<SyscallCallback> syscall_pre;
+    ROSE_Callbacks::List<SyscallCallback> syscall_post;
+
+    ROSE_Callbacks::List<ThreadCallback> thread_pre;
+    ROSE_Callbacks::List<ThreadCallback> thread_post;
 };
 
 #endif /* ROSE_RSIM_Callbacks_H */

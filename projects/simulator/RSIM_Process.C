@@ -1417,6 +1417,10 @@ pid_t
 RSIM_Process::clone_thread(RSIM_Thread *thread, unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va,
                            const pt_regs_32 &regs)
 {
+#ifndef ROSE_THREADS_ENABLED
+    fprintf(stderr, "ROSE library is not thread safe; multiple threads cannot be simulated.\n");
+    abort();
+#endif
     Clone clone_info(this, flags, parent_tid_va, child_tls_va, regs);
     RTS_MUTEX(clone_info.mutex) {
         pthread_t t;
@@ -1490,9 +1494,9 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
         pthread_exit(NULL);
 
     /* Allow the real thread to simulate the specimen thread. */
-    bool cb_status = thread->get_callbacks().call_pre_thread(thread, true);
+    bool cb_status = thread->get_callbacks().call_thread_callbacks(RSIM_Callbacks::BEFORE, thread, true);
     void *retval = thread->main();
-    thread->get_callbacks().call_post_thread(thread, cb_status);
+    thread->get_callbacks().call_thread_callbacks(RSIM_Callbacks::AFTER, thread, cb_status);
     return retval;
 }
 

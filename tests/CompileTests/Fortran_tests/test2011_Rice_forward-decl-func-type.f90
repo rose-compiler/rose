@@ -1,9 +1,12 @@
 ! Rice test
-!
+! The scope of a derived type extends to the type-spec of the enclosing function-stmt.
+
 type(t) function a()
+
   type t
-    logical :: b
+    integer :: c
   end type t
   
-  a%b = .true.
+  a%c = 0
+  
 end function 

@@ -37,7 +37,7 @@ endif
 
 
 all-local: test.C
-	cp -f $(srcdir)/test.C .
+	(test -f test.C) || cp -f $(srcdir)/test.C .
 	
 clean:
 	rm -f *.C *.o t*
