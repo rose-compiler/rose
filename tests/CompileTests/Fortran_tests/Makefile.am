@@ -940,7 +940,7 @@ else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
 	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
 	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
-	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
 	echo "Removing the just built copy of lt-testTranslator to save space..."
 	rm -f testTranslator_$(@:.o=)
 endif
