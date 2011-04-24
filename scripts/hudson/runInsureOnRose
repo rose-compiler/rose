@@ -328,6 +328,9 @@ case "$ROSE_TEST_BUILD_STEP" in
         exit 1
       fi
       rm -rf ${buildTree}/*
+      if test ! -d ${buildTree} ; then
+        mkdir -p ${buildTree}
+      fi
       scp -r hudson-rose@hudson-rose-23:${ROSE_INSURE_BUILD_TREE} ${buildTree}
       cd ${buildTree}
       find . -type f -print0 | xargs -0 sed -i "s/hudson-rose-23/hudson-rose-20/g"
