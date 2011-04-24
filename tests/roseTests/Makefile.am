@@ -50,6 +50,13 @@ if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
    SUBDIRS += PHPTests
 endif
 
+if !ROSE_USE_INSURE
+# DQ (4/23/2011): At least one of the files (process_cmdline.o) in this directory does not seem 
+# to compile with Insure++ (it hangs for Hudson, but I can't reproduce the problem locally).
+# This was not a problem the second time that Insure++ compiled ROSE.
+   SUBDIRS += roseHPCToolkitTests
+endif
+
 # Binary tests are a current problem for Insure++.
 if !ROSE_USE_INSURE
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
