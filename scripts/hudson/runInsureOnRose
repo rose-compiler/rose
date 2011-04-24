@@ -19,7 +19,7 @@ set +x
 # Starting 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step...
 # Done with 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step!
 printBannerToStartStep \
-	"ROSE/scripts/hudson/runInsureOnRose"
+	"ROSE/scripts/hudson/runInsureOnRose in `pwd`"
 
 machine=`uname -m`
 machine_os=`uname -s`
