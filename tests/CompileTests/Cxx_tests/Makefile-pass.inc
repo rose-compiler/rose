@@ -67,7 +67,6 @@ test2003_19.C \
 test2003_20.C \
 test2003_21.C \
 test2003_23.C \
-test2003_24.C \
 test2003_25.C \
 test2003_26.C \
 test2003_27.C \
