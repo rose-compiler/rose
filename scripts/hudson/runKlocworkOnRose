@@ -298,8 +298,11 @@ printBannerToEndStep "configure" $configure_start_time
     # RUN THE STATIC ANALYSIS 
     #
     # Warning: don't use too much parallelism because the analysis is memory-intensive
+    # kwbuildproject returns a non-zero exist status if there are 'Build errors'
     #
+    set +e
     kwbuildproject -host hudson-rose-24 -port 8080 --license-host swordfish.llnl.gov -j8 -o tables rose.out
+    set -e
     # There is no clean way to differentiate between analysis errors and internal Klocwork errors
     # aside from parsing the build.log file.
     grep -q "Reports generation stage completed" tables/build.log
