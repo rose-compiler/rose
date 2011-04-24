@@ -306,21 +306,21 @@ case "$ROSE_TEST_BUILD_STEP" in
 "analyze")
 
     set +e
-    ssh hudson-rose@hudson-rose-23 test -d /export/tmp.hudson-rose/hudson/workspace/test-insure-build/ROSE_TEST_BUILD_STEP/build/ROSE_TEST_GCC_VERSION/4.2.4/label/hudson-rose-23/ROSE-build; 
+    ssh hudson-rose@hudson-rose-23 test -d ${ROSE_INSURE_BUILD_TREE}; then 
     if [ $? -ne 0 ] ; then
-	echo "Error: no build tree found at hudson-rose@hudson-rose-23:/export/tmp.hudson-rose/hudson/workspace/test-insure-build/ROSE_TEST_BUILD_STEP/build/ROSE_TEST_GCC_VERSION/4.2.4/label/hudson-rose-23/ROSE-build"
+	echo "Error: no build tree found at hudson-rose@hudson-rose-23:${ROSE_INSURE_BUILD_TREE}"
 	exit 1
     fi
     set -e
 
     # TOO (4/23/2011): Use the same Insure++ ROSE build tree that was created during test-insure-build
     # TODO: use rsync instead to make it faster
-    rm -rf ROSE-build
-    scp -r hudson-rose@hudson-rose-23:/export/tmp.hudson-rose/hudson/workspace/test-insure-build/ROSE_TEST_BUILD_STEP/build/ROSE_TEST_GCC_VERSION/4.2.4/label/hudson-rose-23/ROSE-build .
+    rm -v -rf ROSE-build
+    scp -v -r hudson-rose@hudson-rose-23:${ROSE_INSURE_BUILD_TREE} .
 
     cd ROSE-build
 
-    if ! -f Makefile ; then
+    if test ! -f Makefile ; then
       echo "ERROR: '${ROSE_INSURE_BUILD_TREE}' doesn't seem to be a valid ROSE build tree"
       exit 1;
     fi
@@ -331,6 +331,11 @@ case "$ROSE_TEST_BUILD_STEP" in
     #
     printBannerToStartStep "analyze ${ROSE_TEST_BUILD_DIRECTORY}"
     analyze_start_time="$(date +%s)"
+
+    if test ! -d ${ROSE_TEST_BUILD_DIRECTORY}; then
+      echo "ERROR: '${ROSE_TEST_BUILD_DIRECTORY}' doesn't seem to be a valid directory within ROSE"
+      exit 1;
+    fi
 
     make check -j${NUM_PROCESS} -C ${ROSE_TEST_BUILD_DIRECTORY}
     if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
