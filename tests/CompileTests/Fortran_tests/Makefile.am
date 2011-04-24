@@ -924,7 +924,8 @@ if !ROSE_USE_INSURE
 #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
-	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+#	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; ../../testTranslator --help > /dev/null; echo "Fixed"; fi
 	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
 	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 	echo "Removing the just built copy of lt-testTranslator to save space..."
@@ -953,7 +954,8 @@ if !ROSE_USE_INSURE
 	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
-	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+#	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; ../../testTranslator --help > /dev/null; echo "Fixed"; fi
 	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
 	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
 	echo "Removing the just built copy of lt-testTranslator to save space..."
@@ -968,7 +970,8 @@ if !ROSE_USE_INSURE
 	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
-	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+#	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; ../../testTranslator --help > /dev/null; echo "Fixed"; fi
 	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
 	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
 	echo "Removing the just built copy of lt-testTranslator to save space..."
@@ -993,7 +996,8 @@ if !ROSE_USE_INSURE
 	@touch $@
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
-	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+#	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; ../../testTranslator --help > /dev/null; echo "Fixed"; fi
 	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
 	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
 	echo "Removing the just built copy of lt-testTranslator to save space..."
