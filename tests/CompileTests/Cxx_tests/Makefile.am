@@ -6,10 +6,6 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #
 include $(srcdir)/Makefile-pass.inc
 
-if !ROSE_USE_INSURE
-   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += test2003_24.C 
-endif
-
 # Import list of C++ test cases that are known to fail:
 #   TESTCODE_CURRENTLY_FAILING
 #
