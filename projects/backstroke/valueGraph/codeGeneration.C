@@ -24,8 +24,17 @@ namespace
         return var;
     }
 
-
-
+    SgStatement* getAncestorStatement(SgNode* node)
+    {
+        SgStatement* stmt;
+        while (!(stmt = isSgStatement(node)))
+        {
+            node = node->get_parent();
+            if (node == NULL)
+                return NULL;
+        }
+        return stmt;
+    }
 
 } // end of anonymous
 
@@ -35,6 +44,18 @@ SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr)
     return buildVariableDeclaration(newVar->str,
                                     newVar->getType(),
                                     init);
+}
+
+void instrumentPushFunction(ValueNode* valNode, SgNode* astNode)
+{
+    cout << astNode->class_name() << endl;
+    // Build push function call.
+	SgExprListExp* parameters = buildExprListExp(valNode->var.getVarRefExp());
+	SgExpression* pushFunc = buildFunctionCallExp("push", buildVoidType(), parameters);    
+    SgStatement* pushFuncStmt = buildExprStatement(pushFunc);
+    
+    SgStatement* stmt = getAncestorStatement(astNode);
+    SageInterface::insertStatementBefore(stmt, pushFuncStmt); 
 }
 
 void instrumentPushFunction(ValueNode* node, SgFunctionDefinition* funcDef)

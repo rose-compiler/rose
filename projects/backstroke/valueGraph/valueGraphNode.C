@@ -156,8 +156,8 @@ void OperatorNode::buildTypeStringTable()
     (V_SgModOp,             "%" );
 }
 
-OperatorNode::OperatorNode(VariantT t)
-    : ValueGraphNode(), type(t)
+OperatorNode::OperatorNode(VariantT t, SgNode* node)
+    : ValueGraphNode(node), type(t)
 {
     switch (t)
     {

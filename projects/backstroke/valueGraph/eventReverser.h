@@ -16,6 +16,10 @@ SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr = 0);
 //! in a class, but not in a function (data member).
 void instrumentPushFunction(ValueNode* node, SgFunctionDefinition* funcDef);
 
+//! Insert a state saving statement (push function call) before the statement containing
+//! the given AST node.
+void instrumentPushFunction(ValueNode* valNode, SgNode* astNode);
+
 //! Build a pop function call.
 SgExpression* buildPopFunctionCall(SgType* type);
 

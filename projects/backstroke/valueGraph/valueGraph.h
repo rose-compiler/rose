@@ -34,6 +34,29 @@ private:
 		std::pair<PathSet, std::vector<VGEdge> >, PathSet> ReverseCFG;
     typedef boost::graph_traits<ReverseCFG>::vertex_descriptor RvsCFGVertex;
 	typedef boost::graph_traits<ReverseCFG>::edge_descriptor   RvsCFGEdge;
+    
+    //! A functor to compare two route graph edges according to their indices from 
+    //! the table passed in.
+    struct RouteGraphEdgeComp
+    {
+        RouteGraphEdgeComp(const ValueGraph& routeG, const std::map<PathSet, int>& pathsIdx)
+        : routeGraph(routeG), pathsIndexTable(pathsIdx) {}
+        
+        bool operator ()(const VGEdge& edge1, const VGEdge& edge2) const
+        {
+            //using namespace std;
+            //cout << routeGraph[edge1]->paths << endl;
+            //cout << routeGraph[edge2]->paths << endl;
+            
+            ROSE_ASSERT(pathsIndexTable.count(routeGraph[edge1]->paths));
+            ROSE_ASSERT(pathsIndexTable.count(routeGraph[edge2]->paths));
+            return pathsIndexTable.find(routeGraph[edge1]->paths)->second > 
+                   pathsIndexTable.find(routeGraph[edge2]->paths)->second;
+        }
+        
+        const ValueGraph& routeGraph;
+        const std::map<PathSet, int>& pathsIndexTable;
+    };
 
 private:
     //! The event function definition.
@@ -62,6 +85,9 @@ private:
     
     //! The graph representing the search result, which we call route.
     ValueGraph routeGraph_;
+    
+    //! The root node in routeGraph_ which is the same as in VG.
+	VGVertex routeGraphRoot_;
 
     //! This object manages the path information of the function.
     PathNumManager* pathNumManager_;
@@ -102,27 +128,6 @@ private:
              std::pair<std::set<VGVertex>,
                        std::set<VGEdge> > > routeNodesAndEdges_;
 
-	////! All available nodes (the last version of state variables).
-	//std::set<Vertex> availableNodes_;
-
-
-    //! This subclass is used to build the CFG for the reverse event.
-    //struct ReverseCFGBuilder
-    //{
-        //! The result from search process. Each edge is with a corresponding path info.
-     //   std::map<VGEdge, PathSet> routes;
-
-        //! Marks which vertices are visited on which paths.
-     //   std::map<VGVertex, PathSet> visitedNodes;
-
-     //   std::map<PathSet, RvsCFGVertex> cfgNodeForPath;
-
-        //map<int, RvsCFGVertex> cfgNodeForPath;
-
-        //ReverseCFG rvsCFG_;
-
-
-    //};
 
 public:
     //! The constructor.
@@ -133,9 +138,6 @@ public:
 
 	//! Build the value graph for the given function.
 	void buildValueGraph();
-
-    //! Build the route graph representing search result.
-    void buildRouteGraph(const std::map<VGEdge, PathSet>& routes);
 
     //! Generate forward, reverse and commit functions according to the VG.
     void generateCode();
@@ -154,6 +156,12 @@ private:
 
     //! Build the main part of the value graph.
     void buildBasicValueGraph();
+    
+    //! Build the route graph representing search result.
+    void buildRouteGraph(const std::map<VGEdge, PathSet>& routes);
+    
+    //! Remove phi nodes from the route graph to facilitate code generation.
+    void removePhiNodesFromRouteGraph();
 
     //! After the value graph is built, remove edges which don't help in the search.
     void removeUselessEdges();
@@ -251,9 +259,8 @@ private:
 	 *  @param src The source vertex.
 	 *  @param tar The target vertex.
 	 *  @param cfgEdges CFG edges from which the path information is calculated.
-	 *  @returns The new added edge.
 	 */
-    VGEdge addValueGraphPhiEdge(VGVertex src, VGVertex tar,
+    void addValueGraphPhiEdge(VGVertex src, VGVertex tar,
         const std::set<ReachingDef::FilteredCfgEdge>& cfgEdges);
 
 	/** Add a new ordered edge to the value graph.
@@ -313,6 +320,16 @@ private:
     //! Build the reverse CFG for the given DAG.
     void buildReverseCFG(int dagIndex, 
                          ReverseCFG& rvsCFG);
+    
+    //! Add a node to reverse CFG. Called by buildReverseCFG().
+    void addReverseCFGNode(
+        const PathSet& paths, const VGEdge* edge, ReverseCFG& rvsCFG,
+        std::map<PathSet, RvsCFGVertex>& rvsCFGBasicBlock,
+        std::map<PathSet, PathSet>& parentTable);
+    
+    //! Given a DAG index, return all edges of its reversal in the proper order.
+    //! This order is decided by topological order from both CFG and route graph.
+    void getRouteGraphEdgesInProperOrder(int dagIndex, std::vector<VGEdge>& result);
     
     //! Traverse nodes in topological order for all paths then build the reverse CFG.
     void buildReverseCFG(

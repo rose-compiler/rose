@@ -85,17 +85,6 @@ void EventReverser::buildBasicValueGraph()
     // Currently, we assume the parameters are state variables in C style, while
     // all data members are state variables in C++ style.
 
-    // First, add all parameters of the event to the value graph.
-    SgInitializedNamePtrList& paraList = funcDef_->get_declaration()->get_args();
-    foreach (SgInitializedName* initName, paraList)
-    {
-        VGVertex newNode = createValueNode(initName, NULL);
-
-        // FIXME State variable may not be parameters.
-        // Add the variable into wanted set.
-        valuesToRestore_.push_back(newNode);
-        stateVariables_.insert(VarName(1, initName));
-    }
 
     SgFunctionDeclaration* funcDecl = funcDef_->get_declaration();
     // If the event is a member function.
@@ -110,13 +99,32 @@ void EventReverser::buildBasicValueGraph()
             foreach (SgInitializedName* initName, varDecl->get_variables())
             {
                 VarName varName(1, initName);
-                cout << SSA::varnameToString(varName) << 1 << endl;
                 VGVertex newNode = createValueNode(initName, NULL);
                 valuesToRestore_.push_back(newNode);
                 stateVariables_.insert(VarName(1, initName));
             }
         }
+        
+        // Add all parameters of the event to the value graph.
+        SgInitializedNamePtrList& paraList = funcDef_->get_declaration()->get_args();
+        foreach (SgInitializedName* initName, paraList)
+            createValueNode(initName, NULL);
     }
+    else
+    {
+        // Add all parameters of the event to the value graph.
+        SgInitializedNamePtrList& paraList = funcDef_->get_declaration()->get_args();
+        foreach (SgInitializedName* initName, paraList)
+        {
+            VGVertex newNode = createValueNode(initName, NULL);
+
+            // FIXME State variable may not be parameters.
+            // Add the variable into wanted set.
+            valuesToRestore_.push_back(newNode);
+            stateVariables_.insert(VarName(1, initName));
+        } 
+    }
+
     /***************************************************************************/
 
     vector<SgNode*> nodes = BackstrokeUtility::querySubTree<SgNode>(funcDef_);
@@ -192,6 +200,7 @@ void EventReverser::buildBasicValueGraph()
                 // It is possible that this var ref is actually a def. For example, a = 0;
                 if (varVertexMap_.count(var) > 0)
                     nodeVertexMap_[expr] = varVertexMap_[var];
+                continue;
             }
 
             // Value expression.
@@ -462,6 +471,12 @@ EventReverser::PathSetWithIndex EventReverser::addPathsForPhiNodes(
 
 void EventReverser::processLastVersions()
 {
+    // Collect all variables visible at the end of the event. It is needed since
+    // a data member is not shown from SSA::getLastVersions() for a member event
+    // function. So if a state variable does not appear the following set, it is
+    // still available.
+    set<VarName> varNamesAtEventEnd;
+    
     // At the end of the event, find the versions of all variables,
     // and determine which variables are avaiable during the search of VG.
     typedef SSA::NodeReachingDefTable::value_type VarNameDefPair;
@@ -470,15 +485,20 @@ void EventReverser::processLastVersions()
     {
         VarName name = nameDef.first;
         VGVertex node;
+        
+        varNamesAtEventEnd.insert(name);
 
         // For every variable, if it is not added into VG, add it now.
         VersionedVariable var(name, nameDef.second->getRenamingNumber());
         //cout << "VersionedVariable:" << var.toString() << endl;
-        printVarVertexMap();
+        //printVarVertexMap();
         if (varVertexMap_.count(var) == 0)
         {
             //pseudoDefMap_[var] = nameDef.second;
-            node = createPhiNode(var, nameDef.second);
+
+            // Currently an object's member access is not added to VG.
+            if (var.name.size() == 1)
+                node = createPhiNode(var, nameDef.second);
         }
         else
             node = varVertexMap_[var];
@@ -494,6 +514,16 @@ void EventReverser::processLastVersions()
             // of the function. Add it to the killed set, then a state saving edge
             // is added to it.
             varsKilledAtEventEnd_.insert(node);
+        }
+    }
+    
+    foreach (const VarName& name, stateVariables_)
+    {
+        if (varNamesAtEventEnd.count(name) == 0)
+        {
+            VersionedVariable var(name, 0);
+            ROSE_ASSERT(varVertexMap_.count(var));
+            availableValues_.insert(varVertexMap_[var]);
         }
     }
 }
@@ -607,6 +637,8 @@ void EventReverser::addExtraNodesAndEdges()
 EventReverser::VGVertex 
 EventReverser::createPhiNode(VersionedVariable& var, SSA::ReachingDefPtr reachingDef)
 {
+    //cout << var.toString() << endl;
+    
     //ROSE_ASSERT(pseudoDefMap_.count(var) > 0);
     //SSA::ReachingDefPtr reachingDef = pseudoDefMap_[var];
     SgNode* astNode = reachingDef->getDefinitionNode();
@@ -625,7 +657,7 @@ EventReverser::createPhiNode(VersionedVariable& var, SSA::ReachingDefPtr reachin
         const set<ReachingDef::FilteredCfgEdge>& cfgEdges = defEdgePair.second;
         int version = def->getRenamingNumber();
 
-        VGEdge newEdge;
+        //VGEdge newEdge;
 
         // If this def is also a phi node, add a varWithVersin entry
         // to the varReachingDefMap_ table.
@@ -638,12 +670,12 @@ EventReverser::createPhiNode(VersionedVariable& var, SSA::ReachingDefPtr reachin
             {
                 //pseudoDefMap_[phiVar] = def;
                 VGVertex phiNode = createPhiNode(phiVar, def);
-                newEdge = addValueGraphPhiEdge(node, phiNode, cfgEdges);
+                addValueGraphPhiEdge(node, phiNode, cfgEdges);
             }
             else
             {
                 ROSE_ASSERT(varVertexMap_.count(phiVar) > 0);
-                newEdge = addValueGraphPhiEdge(node, varVertexMap_[phiVar], cfgEdges);
+                addValueGraphPhiEdge(node, varVertexMap_[phiVar], cfgEdges);
             }
         }
         else
@@ -651,7 +683,7 @@ EventReverser::createPhiNode(VersionedVariable& var, SSA::ReachingDefPtr reachin
             VersionedVariable defVar(var.name, version);
             ROSE_ASSERT(varVertexMap_.count(defVar) > 0);
 
-            newEdge = addValueGraphPhiEdge(node, varVertexMap_[defVar], cfgEdges);
+            addValueGraphPhiEdge(node, varVertexMap_[defVar], cfgEdges);
         }
 
 #if 0
@@ -755,41 +787,30 @@ EventReverser::VGEdge EventReverser::addValueGraphEdge(
     return newEdge;
 }
 
-EventReverser::VGEdge EventReverser::addValueGraphPhiEdge(
+void EventReverser::addValueGraphPhiEdge(
         EventReverser::VGVertex src, EventReverser::VGVertex tar,
         const std::set<ReachingDef::FilteredCfgEdge>& cfgEdges)
 {
-    VGEdge newEdge = boost::add_edge(src, tar, valueGraph_).first;
-
-#if 1
-    // Get the path information of this edge.
-    int dagIndex;
-    PathSet paths;
-
-    bool flag = true;
+    // For every CFG edge, we add a VG edge. This is because we want each VG
+    // edge to correspond a CFG edge.
     foreach (const ReachingDef::FilteredCfgEdge& cfgEdge, cfgEdges)
     {
         //cout << "!!!" << cfgEdge.toString() << endl;
         SgNode* node1 = cfgEdge.source().getNode();
         SgNode* node2 = cfgEdge.target().getNode();
 
-        //cout << node1->unparseToString() << endl;
-        //cout << node2->unparseToString() << endl;
-        if (flag)
-        {
-            boost::tie(dagIndex, paths) =
-                pathNumManager_->getPathNumbers(node1, node2);
-            flag = false;
-            continue;
-        }
-        paths |= pathNumManager_->getPathNumbers(node1, node2).second;
+        int dagIndex;
+        PathSet paths;
+        boost::tie(dagIndex, paths) =
+            pathNumManager_->getPathNumbers(node1, node2);
+
+        VGEdge newEdge = boost::add_edge(src, tar, valueGraph_).first;
+        valueGraph_[newEdge] = new ValueGraphEdge(0, dagIndex, paths);
     }
 
-#endif
-
     //valueGraph_[e] = new ValueGraphEdge(valNode->getCost(), dagIndex, paths);
-    valueGraph_[newEdge] = new ValueGraphEdge(0, dagIndex, paths);
-    return newEdge;
+    //valueGraph_[newEdge] = new ValueGraphEdge(0, dagIndex, paths);
+    //return newEdge;
 }
 
 EventReverser::VGEdge EventReverser::addValueGraphOrderedEdge(
@@ -820,7 +841,7 @@ void EventReverser::addValueGraphStateSavingEdges(VGVertex src, SgNode* killer)
     {
         VGEdge newEdge = boost::add_edge(src, root_, valueGraph_).first;
         valueGraph_[newEdge] = new StateSavingEdge(
-                cost, dagIndex, numPath.first, numPath.second);
+                cost, dagIndex, numPath.first, numPath.second, killer);
     }
 }
 
@@ -870,14 +891,14 @@ EventReverser::VGVertex EventReverser::createValueNode(SgNode* lhsNode, SgNode* 
         // Once a variable is defined, it may kill it previous def. Here we detect
         // all it killed defs then add state saving edges for them in this specific
         VersionedVariable var = getVersionedVariable(lhsNode, false);
-        cout << "New Var Defined: " << var.toString() << endl;
+        //cout << "New Var Defined: " << var.toString() << endl;
         SSA::NodeReachingDefTable defTable = ssa_->getReachingDefsAtNode(lhsNode);
         typedef SSA::NodeReachingDefTable::value_type reachingDefPair;
         foreach (const reachingDefPair& def, defTable)
         {
             if (def.first == var.name)
             {
-                cout << "Killed: " << def.second->getRenamingNumber() << endl;
+                //cout << "Killed: " << def.second->getRenamingNumber() << endl;
                 
                 int version = def.second->getRenamingNumber();
                 VersionedVariable killedVar(var.name, version);
@@ -1067,7 +1088,7 @@ VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
             if (reachingDef->isPhiFunction())
             {
                 VersionedVariable var(varName, version, true);
-#if 1
+#if 0
                 cout << "Found a phi node: " << var.toString() << "\n\n";
 #endif
                 //pseudoDefMap_[var] = reachingDef;

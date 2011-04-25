@@ -145,9 +145,20 @@ public:
     std::pair<int, std::map<int, PathSet> >
     getVisiblePathNumbers(SgNode* node) const;
 
-    //! Given the DAG index, return how many paths it has.
+    //! Given a DAG index, return how many paths it has.
     size_t getPathNum(int index) const
     { return pathInfo_[index].second; }
+    
+    //! Given a DAG index, return a path set with all 1 (all paths).
+    PathSet getAllPaths(int index) const
+    {
+        PathSet paths(getPathNum(index));
+        return paths.flip();
+    }
+    
+    //! Get a table from teach path set to a number representing the topological order
+    //! in the CFG.
+    std::map<PathSet, int> getPathsIndices(int index) const;
 
     void instrumentFunction(const std::string& pathNumName);
 
