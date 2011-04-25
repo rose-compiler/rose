@@ -8938,11 +8938,11 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
       if (func->get_definingDeclaration() == NULL) // prototype function
       {
         SgFunctionDeclaration * src_func = func_symbol->get_declaration();
-	if (func != src_func )
-	{
-	  ROSE_ASSERT (src_func->get_firstNondefiningDeclaration () == src_func);
-	  func->set_firstNondefiningDeclaration (func_symbol->get_declaration());
-	}
+        if (func != src_func )
+        {
+          ROSE_ASSERT (src_func->get_firstNondefiningDeclaration () == src_func);
+          func->set_firstNondefiningDeclaration (func_symbol->get_declaration());
+        }
       }
     }
 #endif    
