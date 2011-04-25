@@ -6,6 +6,7 @@
 
 #include "rose.h"
 #include <iostream>
+#include <vector>
 namespace AstFromString
 {
   // maximum length for a buffer for a variable, constant, or pragma construct name
@@ -36,7 +37,11 @@ namespace AstFromString
   bool afs_match_multiplicative_expression();
   bool afs_match_postfix_expression();
   bool afs_match_primary_expression();
+  bool afs_match_specifier_qualifier_list(std::vector<SgNode*> &);
   bool afs_match_substr(const char* substr, bool checkTrail = true);
+  bool afs_match_type_name();
+  bool afs_match_type_qualifier();
+  bool afs_match_type_specifier();
   bool afs_match_unary_expression();
   bool afs_skip_whitespace();
 

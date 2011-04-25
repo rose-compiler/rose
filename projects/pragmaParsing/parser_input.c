@@ -14,7 +14,7 @@ int foo();
 int foo();
 #pragma CUDA place1 autodim (1, foo(place1, place2), 3, -a)
 int foo();
-#pragma CUDA (a+(b-a)*b+5) dim ((place1), 2)
+#pragma CUDA (a+(b-a)*b/sizeof(double)+5) dim ((place1), 2)
 int foo();
 #pragma CUDA (place2++)++ dim (3, 4/bar(), place1+5*place2)
 int foo();
