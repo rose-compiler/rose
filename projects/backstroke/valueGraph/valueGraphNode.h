@@ -87,21 +87,24 @@ inline std::ostream& operator << (std::ostream& os, const VersionedVariable& var
 
 struct ValueGraphNode
 {
-	ValueGraphNode() {}
+	ValueGraphNode(SgNode* node = NULL) : astNode(node) {}
 
 	virtual std::string toString() const
 	{ return ""; }
 
     virtual int getCost() const
     { return 0; }
+
+    //! The corresponding AST node of this value graph node.
+    SgNode* astNode;
 };
 
 //! A value node can hold a lvalue and a rvalue.
 struct ValueNode : ValueGraphNode
 {    
-	explicit ValueNode(SgNode* node = NULL) : astNode(node) {}
+	explicit ValueNode(SgNode* node = NULL) : ValueGraphNode(node) {}
     ValueNode(const VersionedVariable& v, SgNode* node = NULL)
-    : var(v), astNode(node) {}
+    : ValueGraphNode(node), var(v) {}
 
 	virtual std::string toString() const;
     virtual int getCost() const;
@@ -123,14 +126,13 @@ struct ValueNode : ValueGraphNode
     //! All variables sharing the same value.
 	VersionedVariable var;
 
-    //! The AST node which defines the variables.
-    SgNode* astNode;
-
     //! The unique name of this value node in VG which becomes
     //! the name of the corresponding variable
     std::string str;
 };
 
+//! This node represents a phi node in the SSA form CFG. The AST node inside (actually
+//! from its parent class ValueNode) only describe the place of this Phi node in the CFG.
 struct PhiNode : ValueNode
 {
     enum GateType
@@ -160,13 +162,15 @@ struct PhiNode : ValueNode
     //GateType type;
 };
 
+//! An operator node represents a unary or binary operation. It only has one in edge,
+//! and one or two out edges, for unary and binary operation separately.
 struct OperatorNode : ValueGraphNode
 {
     static std::map<VariantT, std::string> typeStringTable;
     static void buildTypeStringTable();
 
 	//OperatorNode(OperatorType t) : ValueGraphNode(), type(t) {}
-	OperatorNode(VariantT t);
+	OperatorNode(VariantT t, SgNode* node = NULL);
 
 	virtual std::string toString() const;
 	
@@ -221,6 +225,9 @@ struct ValueGraphEdge
     virtual ~ValueGraphEdge() {}
 
 	virtual std::string toString() const;
+    
+    virtual ValueGraphEdge* clone() 
+    { return new ValueGraphEdge(*this); }
 
     //! The cost attached on this edge. The cost may come from state saving,
     //! or operations.
@@ -241,6 +248,9 @@ struct OrderedEdge : ValueGraphEdge
 
 	virtual std::string toString() const
 	{ return boost::lexical_cast<std::string>(index); }
+    
+    virtual OrderedEdge* clone() 
+    { return new OrderedEdge(*this); }
 
 	int index;
 };
@@ -260,17 +270,18 @@ struct PhiEdge : ValueGraphEdge
 struct StateSavingEdge : ValueGraphEdge
 {
 	//StateSavingEdge() : visiblePathNum(0) {}
-    StateSavingEdge(int cost, int dagIdx, int visibleNum, const PathSet& paths)
-    : ValueGraphEdge(cost, dagIdx, paths), visiblePathNum(visibleNum) {}
+    StateSavingEdge(int cost, int dagIdx, int visibleNum,
+        const PathSet& paths, SgNode* killerNode)
+    :   ValueGraphEdge(cost, dagIdx, paths), 
+        visiblePathNum(visibleNum), killer(killerNode) {}
 
-	virtual std::string toString() const
-	{ 
-        std::string str = ValueGraphEdge::toString();
-        str += "\nPathNum:" + boost::lexical_cast<std::string>(visiblePathNum);
-        return str;
-    }
+	virtual std::string toString() const;
+    
+    virtual StateSavingEdge* clone() 
+    { return new StateSavingEdge(*this); }
 
 	int visiblePathNum;
+    SgNode* killer;
 };
 
 /**********************************************************************************************************/

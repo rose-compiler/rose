@@ -30,8 +30,7 @@ bool EventReverser::edgeBelongsToPath(const VGEdge& e, int dagIndex, int pathInd
     return edge->dagIndex == dagIndex && edge->paths[pathIndex];
 }
 
-void EventReverser::getSubGraph(
-        SgScopeStatement* scope, int dagIndex, int pathIndex)
+set<EventReverser::VGEdge> EventReverser::getRouteFromSubGraph(int dagIndex, int pathIndex)
 {
     //PathEdgeSelector edgeSelector(&valueGraph_, dagIndex, i);
     //SubValueGraph subgraph(valueGraph_, edgeSelector);
@@ -65,14 +64,13 @@ void EventReverser::getSubGraph(
 //        const char* name = "ABCDE";
 
     // Get the route for this path.
-    SubValueGraph route = getReversalRoute(dagIndex, pathIndex,
-                                           subgraph, valuesToRestore_);
+    return getReversalRoute(dagIndex, pathIndex, subgraph, valuesToRestore_);
     
     // Generate the reverse function for this route.
-    generateReverseFunction(scope, route);
+    //generateReverseFunction(scope, route);
 
     // Fix all variable references.
-    SageInterface::fixVariableReferences(scope);
+    //SageInterface::fixVariableReferences(scope);
     //graphToDot(subgraph, filename);
 }
 
@@ -111,8 +109,9 @@ namespace // anonymous namespace
 } // end of anonymous
 
 
-EventReverser::SubValueGraph EventReverser::getReversalRoute(
-        int dagIndex, int pathIndex,
+set<EventReverser::VGEdge> EventReverser::getReversalRoute(
+        int dagIndex,
+        int pathIndex,
         const SubValueGraph& subgraph,
         const vector<VGVertex>& valuesToRestore)
 {
@@ -229,7 +228,8 @@ NEXT:
     // map<VGVertex, vector<RouteWithCost> > allRoutes;
     pair<int, int> path = make_pair(dagIndex, pathIndex);
     set<VGVertex>& nodesInRoute = routeNodesAndEdges_[path].first;
-    set<VGEdge>&   edgesInRoute = routeNodesAndEdges_[path].second;
+    //set<VGEdge>&   edgesInRoute = routeNodesAndEdges_[path].second;
+    set<VGEdge> edgesInRoute;
 
     typedef map<VGVertex, vector<RouteWithCost> >::value_type VertexWithRoute;
     foreach (VertexWithRoute& nodeWithRoute, allRoutes)
@@ -260,6 +260,10 @@ NEXT:
     // End.
     /**************************************************************************/
 
+    return edgesInRoute;
+    
+#if 0
+
     // To resolve the problem of binding an overloaded function.
     set<VGVertex>::const_iterator (set<VGVertex>::*findNode)
              (const set<VGVertex>::key_type&) const = &set<VGVertex>::find;
@@ -268,6 +272,7 @@ NEXT:
     return SubValueGraph(valueGraph_,
                          boost::bind(findEdge, &edgesInRoute, ::_1) != edgesInRoute.end(),
                          boost::bind(findNode, &nodesInRoute, ::_1) != nodesInRoute.end());
+#endif
 }
 
 

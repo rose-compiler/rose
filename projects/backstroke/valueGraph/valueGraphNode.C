@@ -43,6 +43,8 @@ namespace
             case V_SgClassType:
                 ROSE_ASSERT(false);
                 return 100;
+            case V_SgPointerType:
+                return sizeof(void*);
             default:
                 ROSE_ASSERT(!"Unknow type.");
                 return 100;
@@ -154,8 +156,8 @@ void OperatorNode::buildTypeStringTable()
     (V_SgModOp,             "%" );
 }
 
-OperatorNode::OperatorNode(VariantT t)
-    : ValueGraphNode(), type(t)
+OperatorNode::OperatorNode(VariantT t, SgNode* node)
+    : ValueGraphNode(node), type(t)
 {
     switch (t)
     {
@@ -174,7 +176,7 @@ OperatorNode::OperatorNode(VariantT t)
     buildTypeStringTable();
 }
 
-string OperatorNode::toString() const
+std::string OperatorNode::toString() const
 {
     if (typeStringTable.count(type) > 0)
         return typeStringTable[type];
@@ -185,11 +187,16 @@ std::string ValueGraphEdge::toString() const
 {
     std::string str = "cost:" + boost::lexical_cast<std::string>(cost) + "\\n";
     str += boost::lexical_cast<std::string>(dagIndex) + ":";
-    string s;
+    std::string s;
     boost::to_string(paths, s);
     str += s;
     return str;
 }
 
+std::string StateSavingEdge::toString() const
+{ 
+    std::string str = "SS:" + boost::lexical_cast<std::string>(visiblePathNum) + "\\n";
+    return str + ValueGraphEdge::toString();
+}
 
 } // End of namespace Backstroke

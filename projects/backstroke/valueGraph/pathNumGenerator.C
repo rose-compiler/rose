@@ -149,6 +149,31 @@ std::pair<int, PathSet> PathNumManager::getPathNumbers(
     return std::make_pair(idx, pathNumGenerators_[idx]->getPaths(dagEdge));
 }
 
+map<PathSet, int> PathNumManager::getPathsIndices(int index) const
+{
+    map<PathSet, int> pathsIndicesTable;
+
+    vector<DAGVertex> nodes;
+    boost::topological_sort(dags_[index], back_inserter(nodes));
+    
+    int num = 0;
+    foreach (DAGVertex node, nodes)
+    {
+        PathSet paths = pathNumGenerators_[index]->getPaths(node);
+        if (pathsIndicesTable.count(paths) == 0)
+            pathsIndicesTable[paths] = num++;
+        
+        foreach (const DAGEdge& edge, boost::in_edges(node, dags_[index]))
+        {
+            PathSet paths = pathNumGenerators_[index]->getPaths(edge);
+            if (pathsIndicesTable.count(paths) == 0)
+                pathsIndicesTable[paths] = num++;
+        }
+    }
+    
+    return pathsIndicesTable;
+}
+
 void PathNumManager::instrumentFunction(const string& pathNumName)
 {
     ROSE_ASSERT(pathNumGenerators_.size() == dags_.size());
@@ -193,7 +218,7 @@ void PathNumManager::instrumentFunction(const string& pathNumName)
 
 namespace 
 {
-    SgStatement* getBelongedStatement(SgNode* node)
+    SgStatement* getAncestorStatement(SgNode* node)
     {
         SgStatement* stmt;
         while (!(stmt = isSgStatement(node)))
@@ -218,7 +243,7 @@ void PathNumManager::insertStatementOnEdge(
     {
         if (SageInterface::isAncestor(src, tgt))
         {
-            SgStatement* s = getBelongedStatement(tgt);
+            SgStatement* s = getAncestorStatement(tgt);
             if (SgBasicBlock* body = isSgBasicBlock(s))
             {
                 SageInterface::prependStatement(stmt, body);
@@ -329,10 +354,10 @@ void PathNumGenerator::getAllPathNumForNodesAndEdges()
 
             if (pathSetOnVertex.numToPath.count(visibleNum) == 0)
                 pathSetOnVertex.numToPath[visibleNum].resize(pathNumber);
-            pathSetOnVertex.numToPath[visibleNum][i] = 1;
+            pathSetOnVertex.numToPath[visibleNum].set(i);
 
-            pathSetOnVertex.allPath[i] = 1;
-            pathsForEdge_[edge][i] = 1;
+            pathSetOnVertex.allPath.set(i);
+            pathsForEdge_[edge].set(i);
         }
         ++i;
     }
