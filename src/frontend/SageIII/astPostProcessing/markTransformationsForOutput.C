@@ -43,8 +43,29 @@ MarkTransformationsForOutput::evaluateInheritedAttribute (
 #endif
           if (returnAttribute.insideTransformationToOutput == true)
              {
+               // Liao 4/32/2011
+               // We want to keep the original file info for PragmaDeclaration of the following code:
+               // for () // similarly for if-stmt, etc
+               //   #pragma omp 
+                //   single-statement; 
+               // the frontend will fix the for loop's body with a basic block, which has transformation generated file info
+
+               bool bkeep= false;
+               if (isSgPragmaDeclaration(node)) 
+                   if (isSgBasicBlock(node->get_parent()))
+		   {
+		     SgLocatedNode * grand_parent = isSgLocatedNode(node->get_parent()->get_parent());
+                    // if (isSgForStatement(node->get_parent()->get_parent())
+                     //    || isSgIfStmt(node->get_parent()->get_parent()))
+		     if (grand_parent)
+		     {
+		       if (grand_parent->get_file_info()->isTransformation()==false) 
+                         bkeep = true;
+		     }
+		   }
+
             // Mark the IR node as a transformation if it is not already marked.
-               if ( fileInfo->isTransformation() == false )
+               if ( fileInfo->isTransformation() == false && !bkeep)
                   {
                  // Mark the IR node as a transformation.
                     fileInfo->setTransformation();
