@@ -16,6 +16,7 @@ namespace AutoParallelization
   bool enable_patch;
   bool enable_diff;
   bool b_unique_indirect_index;
+  bool enable_distance;
   DFAnalysis * defuse = NULL;
   LivenessAnalysis* liv = NULL;
 
@@ -54,6 +55,15 @@ namespace AutoParallelization
     else
       enable_diff = false;
 
+    if (CommandlineProcessing::isOption (argvList,"-rose:autopar:","enable_distance",true))
+    {
+      cout<<"Enabling compare user defined OpenMP pragmas to auto parallelization generated ones ..."<<endl;
+      enable_distance = true;
+    }
+    else
+      enable_distance = false;
+
+
     //Save -debugdep, -annot file .. etc, 
     // used internally in ReadAnnotation and Loop transformation
     CmdOptions::GetInstance()->SetOptions(argvList);
@@ -75,6 +85,7 @@ namespace AutoParallelization
       cout<<"\t-rose:autopar:enable_debug          run automatic parallelization in a debugging mode"<<endl;
       cout<<"\t-rose:autopar:enable_patch          additionally generate patch files for translations"<<endl;
       cout<<"\t-rose:autopar:unique_indirect_index assuming all arrays used as indirect indices have unique elements (no overlapping)"<<endl;
+      cout<<"\t-rose:autopar:enable_distance       report the absolute dependence distance of a dependence relation preventing parallelization"<<endl;
       cout<<"\t-annot filename                     specify annotation file for semantics of abstractions"<<endl;
       cout<<"\t-dumpannot                          dump annotation file content"<<endl;
       cout <<"---------------------------------------------------------------"<<endl;
@@ -959,11 +970,12 @@ namespace AutoParallelization
   }
 
   // Algorithm, eliminate the following dependencies
-  // *  commonlevel >=0, depInfo is within a loop
+  // *  caused by locally declared variables: already private to each iteration
+  // *  commonlevel ==0, no common enclosing loops
   // *  carry level !=0, loop independent,
   // *  either source or sink variable is thread local variable 
   // *  dependencies caused by autoscoped variables (private, firstprivate, lastprivate, reduction)
-  // * two array references, but SCALAR_DEP or SCALAR_BACK_DEP dependencies
+  // *  two array references, but SCALAR_DEP or SCALAR_BACK_DEP dependencies
   // OmpAttribute provides scoped variables
   // ArrayInterface and ArrayAnnotation support optional annotation based high level array abstractions
   void DependenceElimination(SgNode* sg_node, LoopTreeDepGraph* depgraph, std::vector<DepInfo>& remainings, OmpSupport::OmpAttribute* att, 
@@ -990,7 +1002,7 @@ namespace AutoParallelization
           SgScopeStatement* varscope =NULL;
           SgNode* src_node = AstNodePtr2Sage(info.SrcRef());
           SgInitializedName* src_name=NULL;
-
+          // x. Ignore dependence caused by locally declared variables: declared within the loop    
           if (src_node)
           {
             SgVarRefExp* var_ref = isSgVarRefExp(src_node);
@@ -1095,6 +1107,11 @@ namespace AutoParallelization
              if (indirect_table[src_node] && indirect_table[snk_node])
                continue;
            }
+          // x. Eliminate dependencies  without common enclosing loop nests
+          // -----------------------------------------------
+          if (info.CommonLevel()==0) 
+            continue;
+           
           // x. Eliminate loop-independent dependencies: 
           // -----------------------------------------------
           // loop independent dependencies: privatization can eliminate most of them
@@ -1352,17 +1369,18 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     ROSE_ASSERT(loop&& array_interface && annot);
     ROSE_ASSERT(isSgForStatement(loop));
     bool isParallelizable = true;
-   
+
+    int dep_dist = 999999; // the minimum dependence distance of all dependence relations for a loop. 
 
     // collect array references with indirect indexing within a loop, save the result in a lookup table
     // This work is context sensitive (depending on the outer loops), so we declare the table for each loop.
     std::map<SgNode*, bool> indirect_array_table;
-   if (b_unique_indirect_index) // uniform and collect indirect indexed array only when needed
-   {
-    // uniform array reference expressions
-    uniformIndirectIndexedArrayRefs(isSgForStatement(loop));
-    collectIndirectIndexedArrayReferences (loop, indirect_array_table);
-   }
+    if (b_unique_indirect_index) // uniform and collect indirect indexed array only when needed
+    {
+      // uniform array reference expressions
+      uniformIndirectIndexedArrayRefs(isSgForStatement(loop));
+      collectIndirectIndexedArrayReferences (loop, indirect_array_table);
+    }
     // X. Compute dependence graph for the target loop
     SgNode* sg_node = loop;
     LoopTreeDepGraph* depgraph= ComputeDependenceGraph(sg_node, array_interface, annot);
@@ -1392,8 +1410,20 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       for (vector<DepInfo>::iterator iter= remainingDependences.begin();     
           iter != remainingDependences.end(); iter ++ )
       {
-        cout<<(*iter).toString()<<endl;
+        DepInfo di = *iter; 
+        cout<<di.toString()<<endl;
+        if (enable_distance)
+        {
+          if (di.rows()>0 && di.cols()>0)
+          {
+            int dist = abs((di.Entry(0,0)).GetAlign());
+            if (dist < dep_dist)
+              dep_dist = dist;
+          }
+        }
       }
+      if (enable_distance)
+         cout<<"The minimum dependence distance of all dependences for the loop is:"<<dep_dist<<endl;
     }
     else
     {

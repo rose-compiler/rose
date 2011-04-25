@@ -1,3 +1,4 @@
+#include <signal.h> // SKW DEBUG
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
@@ -5553,7 +5554,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
      bool requires_C_preprocessor = get_requires_C_preprocessor();
      if (requires_C_preprocessor == true)
-        {
+     {
+          int errorCode;
+          
        // If we detect that the input file requires processing via CPP (e.g. filename of form *.F??) then 
        // we generate the command to run CPP on the input file and collect the results in a file with 
        // the suffix "_postprocessed.f??".  Note: instead of using CPP we use the target backend fortran 
@@ -5590,17 +5593,25 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           string sourceFilename = get_sourceFileNameWithPath();
           string preprocessFilename;
 
-       // always create pseudonym for source file in case original extension does not permit preprocessing
-          string dir  = StringUtility::getPathFromFileName(sourceFilename);
-          string file = StringUtility::stripPathFromFileName(sourceFilename);
-          string base = StringUtility::stripFileSuffixFromFileName(file);
-          char * temp = tempnam(dir.c_str(), (base + "-").c_str());
-          preprocessFilename = string(temp) + ".F90"; free(temp);
-          int errorCode = link(sourceFilename.c_str(), preprocessFilename.c_str());
-          ROSE_ASSERT(!errorCode);
+          // use a pseudonym for source file in case original extension does not permit preprocessing
+             // compute absolute path for pseudonym
+                string dir = StringUtility::getPathFromFileName(this->get_unparse_output_filename());
+                string abs_dir = StringUtility::getAbsolutePathFromRelativePath(dir.empty() ? getWorkingDirectory() : dir);  // Windows 'tempnam' requires this
+                string file = StringUtility::stripPathFromFileName(sourceFilename);
+                string base = StringUtility::stripFileSuffixFromFileName(file);
+                char * temp = tempnam(abs_dir.c_str(), (base + "-").c_str());   // not deprecated in Visual Studio 2010
+                preprocessFilename = string(temp) + ".F90"; free(temp);
+             // copy source file to pseudonym file
+                try { boost::filesystem::copy_file(sourceFilename, preprocessFilename); }
+                catch(exception &e)
+                {
+                  cout << "Error in copying file " << sourceFilename << " to " << preprocessFilename
+                       << " (" << e.what() << ")" << endl;
+                  ROSE_ASSERT(false);
+                }
           fortran_C_preprocessor_commandLine.push_back(preprocessFilename);
 
-          // add option to specify output file name
+       // add option to specify output file name
           fortran_C_preprocessor_commandLine.push_back("-o");
           string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
           fortran_C_preprocessor_commandLine.push_back(sourceFileNameOutputFromCpp);
@@ -5615,16 +5626,20 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
        // DQ (10/1/2008): Added error checking on return value from CPP.
           if (errorCode != 0)
-             {
-               printf ("Error in running cpp on Fortran code: errorCode = %d \n",errorCode);
-               ROSE_ASSERT(false);
-             }
+          {
+             printf ("Error in running cpp on Fortran code: errorCode = %d \n",errorCode);
+             ROSE_ASSERT(false);
+          }
 
        // clean up after alias processing
-          errorCode = unlink(preprocessFilename.c_str());
-          ROSE_ASSERT(!errorCode);
-
-        }
+          try { boost::filesystem::remove(preprocessFilename); }
+          catch(exception &e)
+          {
+            cout << "Error in removing file " << preprocessFilename
+                 << " (" << e.what() << ")" << endl;
+            ROSE_ASSERT(false);
+          }
+     }
 
 
   // DQ (9/30/2007): Introduce syntax checking on input code (initially we can just call the backend compiler 
