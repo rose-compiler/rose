@@ -3,18 +3,15 @@
 function printBanner {
 set +x
 if test $# = 1 -o $# = 2 ; then
-  TMPFILE=/tmp/hudson_${hudson_start_time_seconds}
-  echo "*******************************************************************"       >> $TMPFILE
-  echo "${1}"                                                                      >> $TMPFILE
-  echo ""                                                                          >> $TMPFILE
+  echo "*******************************************************************"
+  echo "${1}"
+  echo ""
   if test $# = 2 ; then
-    echo "${2}"                                                                    >> $TMPFILE
+    echo "${2}"
   else
-    echo "`date`"                                                                  >> $TMPFILE
+    echo "`date`"
   fi
-  echo "-------------------------------------------------------------------"       >> $TMPFILE
-  cat $TMPFILE
-  rm -rf $TMPFILE
+  echo "-------------------------------------------------------------------"
 else
   echo "[Error] Usage: printBanner <with-message>"
   exit 1
