@@ -56,6 +56,22 @@ dnl build using ROSE)
       echo "default back-end fortran compiler for generated translators to use: $BACKEND_FORTRAN_COMPILER"
     ])
 
+# DQ (4/2/2011): Added option to specify backend Java compiler
+  AC_ARG_WITH(alternate_backend_java_compiler,
+    [  --with-alternate_backend_java_compiler=<compiler name>
+                                Specify an alternative java back-end compiler],
+    [
+    # Use a different compiler for the backend than for the compilation of ROSE source code
+      BACKEND_JAVA_COMPILER=$with_alternate_backend_java_compiler
+      AC_SUBST(BACKEND_JAVA_COMPILER)
+      echo "alternative back-end java compiler specified for generated translators to use: $BACKEND_JAVA_COMPILER"
+    ] ,
+    [ 
+    # Alternatively use the specified java compiler
+	   BACKEND_JAVA_COMPILER="javac"
+      echo "default back-end java compiler for generated translators to use: $BACKEND_JAVA_COMPILER"
+    ])
+
 # DQ (8/29/2005): Added support for version numbering of backend compiler
   BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
   BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
@@ -145,6 +161,26 @@ dnl build using ROSE)
   fi
   AM_CONDITIONAL(ROSE_USING_GFORTRAN_VERSION_4_4, [test "x$gfortran_version_4_4" = "xyes"])
 
+# DQ (4/10/2011): GNU gfortran 4.5 has special problems so we avoid some tests where it fails.
+  gfortran_version_4_5=no
+  if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x5; then
+        echo "Note: we have identified version 4.5 of gfortran!"
+        gfortran_version_4_5=yes
+     fi
+  fi
+  AM_CONDITIONAL(ROSE_USING_GFORTRAN_VERSION_4_5, [test "x$gfortran_version_4_5" = "xyes"])
+
+# DQ (4/10/2011): GNU gfortran 4.6 has special problems so we avoid some tests where it fails.
+  gfortran_version_4_6=no
+  if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x6; then
+        echo "Note: we have identified version 4.6 of gfortran!"
+        gfortran_version_4_6=yes
+     fi
+  fi
+  AM_CONDITIONAL(ROSE_USING_GFORTRAN_VERSION_4_6, [test "x$gfortran_version_4_6" = "xyes"])
+
 # echo "Exiting after test of backend version number support ..."
 # exit 1
 
@@ -193,9 +229,14 @@ dnl build using ROSE)
   export BACKEND_C_COMPILER
   AC_DEFINE_UNQUOTED([BACKEND_C_COMPILER_NAME_WITH_PATH],"$BACKEND_C_COMPILER",[Name of backend C compiler including path (may or may not explicit include path; used to call backend).])
 
-# This will be called to execute the backend compiler (for C)
+# This will be called to execute the backend compiler (for Fortran)
   export BACKEND_FORTRAN_COMPILER
   AC_DEFINE_UNQUOTED([BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH],"$BACKEND_FORTRAN_COMPILER",[Name of backend Fortran compiler including path (may or may not explicit include path; used to call backend).])
+
+# DQ (4/2/2011): Added some support for the name of the backend Java compiler.
+# This will be called to execute the backend compiler (for Java)
+  export BACKEND_JAVA_COMPILER
+  AC_DEFINE_UNQUOTED([BACKEND_JAVA_COMPILER_NAME_WITH_PATH],"$BACKEND_JAVA_COMPILER",[Name of backend Java compiler including path (may or may not explicit include path; used to call backend).])
 
 # These are useful in handling differences between different versions of the backend compiler
 # we assume that the C and C++ compiler version number match and only record version information 
@@ -251,6 +292,11 @@ if test "x$BACKEND_CXX_COMPILER_VERSION" != "x$BACKEND_C_COMPILER_VERSION"; then
 fi
 # TOO (2/16/2011): Detect Thrifty (GCC 3.4.4) compiler
 AM_CONDITIONAL(USING_GCC_3_4_4_BACKEND_COMPILER, [test "x$BACKEND_C_COMPILER_VERSION" == "x3.4.4"])
+
+# DQ (4/16/2011): Detect the GNU 4.0.4 compilers (used to turn off hanging Haskell support 
+# in projects/haskellport/tests/simplify/simplifyTest.C).  This happend twice on tux324
+# this must be looked into since it is not clear how this happened and passed commit tests.
+AM_CONDITIONAL(USING_GCC_4_0_4_BACKEND_COMPILER, [test "x$BACKEND_C_COMPILER_VERSION" == "x4.0.4"])
 
 # TOO (2/17/2011): Detect Tensilica Xtensa C/C++ compiler
 if test "x$BACKEND_C_COMPILER_NAME" == "xxt-xcc"; then

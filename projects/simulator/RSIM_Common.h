@@ -846,7 +846,28 @@ struct winsize_32 {
 /* struct winsize is same on 32 and 64 bit architectures */
 typedef winsize_32 winsize_native;
 
-
+static const Translate socketcall_commands[] = {
+    TE2(1, SYS_SOCKET),
+    TE2(2, SYS_BIND),
+    TE2(3, SYS_CONNECT),
+    TE2(4, SYS_LISTEN),
+    TE2(5, SYS_ACCEPT),
+    TE2(6, SYS_GETSOCKNAME),
+    TE2(7, SYS_GETPEERNAME),
+    TE2(8, SYS_SOCKETPAIR),
+    TE2(9, SYS_SEND),
+    TE2(10, SYS_RECV),
+    TE2(11, SYS_SENDTO),
+    TE2(12, SYS_RECVFROM),
+    TE2(13, SYS_SHUTDOWN),
+    TE2(14, SYS_SETSOCKOPT),
+    TE2(15, SYS_GETSOCKOPT),
+    TE2(16, SYS_SENDMSG),
+    TE2(17, SYS_RECVMSG),
+    TE2(18, SYS_ACCEPT4),
+    TE2(19, SYS_RECVMMSG),
+    T_END
+};
 
 /* Conversion functions */
 void convert(statfs_32 *g, const statfs64_native *h);

@@ -213,7 +213,7 @@ endif
 
 # Disassembles an executable according to various command-line switches.
 noinst_PROGRAMS += disassemble
-disassemble_SOURCES = disassemble.C
+disassemble_SOURCES = disassemble.C linux_syscalls.C
 disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 STATIC_TEST_TARGETS += disassemble.passed assembler.passed
 EXTRA_DIST += disassemble.conf disassemble.ans assembler.conf

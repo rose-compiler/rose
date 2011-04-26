@@ -43,13 +43,16 @@ RSIM_Thread::id()
     char buf1[32];
     sprintf(buf1, "%1.3f", elapsed);
 
-    char buf2[32];
-    sprintf(buf2, "0x%08"PRIx64, policy.readIP().known_value());
+    char buf2[64];
+    int n = snprintf(buf2, sizeof(buf2), "0x%08"PRIx64"[%zu]: ", policy.readIP().known_value(), policy.get_ninsns());
+    assert(n>=0 && (size_t)n<sizeof(buf2)-1);
+    memset(buf2+n, ' ', sizeof(buf2)-n);
+    buf2[std::max(n, 21)] = '\0';
 
     return (StringUtility::numberToString(getpid()) + ":" + StringUtility::numberToString(my_seq) +
-            " " + buf2 +
             " " + buf1 +
-            ": ");
+            " " + buf2);
+
 }
 
 RTS_Message *
@@ -227,9 +230,10 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &info)
             case SIGTRAP:
             case SIGSYS:
                 /* Exit process with core dump */
-                tracing(TRACE_MISC)->mesg("dumping core\n");
+                tracing(TRACE_MISC)->mesg("dumping core...\n");
                 get_process()->dump_core(signo);
-                throw Exit((signo & 0x7f) | __WCOREFLAG, true);
+                report_stack_frames(tracing(TRACE_MISC));
+                throw RSIM_Process::Exit((signo & 0x7f) | __WCOREFLAG, true);
             case SIGTERM:
             case SIGINT:
             case SIGQUIT:
@@ -244,7 +248,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &info)
             case SIGUSR1:
             case SIGUSR2:
                 /* Exit without core dump */
-                throw Exit(signo & 0x7f, true);
+                throw RSIM_Process::Exit(signo & 0x7f, true);
             case SIGIO:
             case SIGURG:
             case SIGCHLD:
@@ -257,7 +261,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &info)
                 return 0;
             default:
                 /* Exit without a core dump */
-                throw Exit(signo & 0x7f, true);
+                throw RSIM_Process::Exit(signo & 0x7f, true);
         }
 
     } else {
@@ -459,6 +463,12 @@ RSIM_Thread::sys_sigreturn()
 }
 
 int
+RSIM_Thread::sys_sigprocmask(int how, const RSIM_SignalHandling::sigset_32 *in, RSIM_SignalHandling::sigset_32 *out)
+{
+    return sighand.sigprocmask(how, in, out);
+}
+
+int
 RSIM_Thread::signal_accept(const RSIM_SignalHandling::siginfo_32 &info)
 {
     RSIM_SignalHandling::sigset_32 mask;
@@ -499,6 +509,26 @@ RSIM_Thread::report_progress_maybe()
         }
         last_report = now;
     }
+}
+
+void
+RSIM_Thread::report_stack_frames(RTS_Message *mesg)
+{
+    if (!mesg || !mesg->get_file())
+        return;
+    RTS_MESSAGE(*mesg) {
+        mesg->multipart("stack", "stack frames:\n");
+        uint32_t bp = policy.readGPR(x86_gpr_bp).known_value();
+        uint32_t retaddr, next_bp;
+        for (int i=0; i<32; i++, bp=next_bp) {
+            if (4!=process->mem_read(&retaddr, bp+4, 4))
+                break;
+            if (4!=process->mem_read(&next_bp, bp, 4))
+                break;
+            mesg->more("  #%d: bp=0x%08"PRIx32" ret=0x%08"PRIx32"\n", i, bp, retaddr);
+        }
+        mesg->multipart_end();
+    } RTS_MESSAGE_END(true);
 }
 
 void
@@ -546,8 +576,13 @@ RSIM_Thread::main()
 
             /* Simulate an instruction */
             SgAsmx86Instruction *insn = current_insn();
-            process->binary_trace_add(this, insn);
-            semantics.processInstruction(insn);
+            bool cb_status = callbacks.call_insn_callbacks(RSIM_Callbacks::BEFORE, this, insn, true);
+            if (cb_status) {
+                process->binary_trace_add(this, insn);
+                semantics.processInstruction(insn);
+            }
+            callbacks.call_insn_callbacks(RSIM_Callbacks::AFTER, this, insn, cb_status);
+
             RTS_Message *mesg = tracing(TRACE_STATE);
             if (mesg->get_file())
                 policy.dump_registers(mesg);
@@ -555,8 +590,9 @@ RSIM_Thread::main()
             std::ostringstream s;
             s <<e;
             tracing(TRACE_MISC)->mesg("caught Disassembler::Exception: %s\n", s.str().c_str());
-            tracing(TRACE_MISC)->mesg("dumping core\n");
+            tracing(TRACE_MISC)->mesg("dumping core...\n");
             process->dump_core(SIGSEGV);
+            report_stack_frames(tracing(TRACE_MISC));
             abort();
         } catch (const RSIM_Semantics::Exception &e) {
             /* Thrown for instructions whose semantics are not implemented yet. */
@@ -564,8 +600,9 @@ RSIM_Thread::main()
             s <<e;
             tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::Exception: %s\n", s.str().c_str());
 #ifdef X86SIM_STRICT_EMULATION
-            tracing(TRACE_MISC)->mesg("dumping core\n");
+            tracing(TRACE_MISC)->mesg("dumping core...\n");
             process->dump_core(SIGILL);
+            report_stack_frames(tracing(TRACE_MISC));
             abort();
 #else
             tracing(TRACE_MISC)->mesg("exception ignored; continuing with a corrupt state...\n");
@@ -574,10 +611,11 @@ RSIM_Thread::main()
             std::ostringstream s;
             s <<e;
             tracing(TRACE_MISC)->mesg("caught semantic policy exception: %s\n", s.str().c_str());
-            tracing(TRACE_MISC)->mesg("dumping core\n");
+            tracing(TRACE_MISC)->mesg("dumping core...\n");
             process->dump_core(SIGILL);
+            report_stack_frames(tracing(TRACE_MISC));
             abort();
-        } catch (const RSIM_Thread::Exit &e) {
+        } catch (const RSIM_Process::Exit &e) {
             sys_exit(e);
             return NULL;
         } catch (const RSIM_SignalHandling::siginfo_32 &e) {
@@ -712,7 +750,7 @@ RSIM_Thread::futex_wake(uint32_t va)
 }
 
 int
-RSIM_Thread::sys_exit(const Exit &e)
+RSIM_Thread::sys_exit(const RSIM_Process::Exit &e)
 {
     RSIM_Process *process = get_process(); /* while we still have a chance */
 
@@ -723,7 +761,7 @@ RSIM_Thread::sys_exit(const Exit &e)
 
     /* Clear and signal child TID if necessary (CLONE_CHILD_CLEARTID) */
     if (clear_child_tid) {
-        tracing(TRACE_SYSCALL)->brief("waking futex 0x%08"PRIx32, clear_child_tid);
+        tracing(TRACE_SYSCALL)->mesg("waking futex 0x%08"PRIx32, clear_child_tid);
         uint32_t zero = 0;
         size_t n = process->mem_write(&zero, clear_child_tid, sizeof zero);
         ROSE_ASSERT(n==sizeof zero);
@@ -794,12 +832,59 @@ RSIM_Thread::sys_sigpending(RSIM_SignalHandling::sigset_32 *result)
     return 0;
 }
 
+int
+RSIM_Thread::sys_sigsuspend(const RSIM_SignalHandling::sigset_32 *mask) {
+    int signo = sighand.sigsuspend(mask, this);
+    return signo;
+}
+
+int
+RSIM_Thread::sys_sigaltstack(const stack_32 *in, stack_32 *out)
+{
+    uint32_t sp = policy.readGPR(x86_gpr_sp).known_value();
+    return sighand.sigaltstack(in, out, sp);
+}
+
 void
 RSIM_Thread::post_fork()
 {
     my_tid = syscall(SYS_gettid);
     assert(my_tid==getpid());
     process->post_fork();
+
+    /* Pending signals are only for the parent */
+    sighand.clear_all_pending();
+
+}
+
+void
+RSIM_Thread::emulate_syscall()
+{
+    unsigned callno = policy.readGPR(x86_gpr_ax).known_value();
+    bool cb_status = callbacks.call_syscall_callbacks(RSIM_Callbacks::BEFORE, this, callno, true);
+    if (cb_status) {
+        RSIM_Simulator *sim = get_process()->get_simulator();
+        if (sim->syscall_is_implemented(callno)) {
+            RSIM_Simulator::SystemCall *sc = sim->syscall_implementation(callno);
+            sc->enter.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
+            sc->body .apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
+            sc->leave.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
+        } else {
+            char name[32];
+            sprintf(name, "syscall_%u", callno);
+            tracing(TRACE_MISC)->multipart(name, "syscall_%u(", callno);
+            for (int i=0; i<6; i++)
+                tracing(TRACE_MISC)->more("%s0x%08"PRIx32, i?", ":"", syscall_arg(i));
+            tracing(TRACE_MISC)->more(") is not implemented yet");
+            tracing(TRACE_MISC)->multipart_end();
+
+            tracing(TRACE_MISC)->mesg("dumping core...\n");
+            get_process()->dump_core(SIGSYS);
+            report_stack_frames(tracing(TRACE_MISC));
+            abort();
+        }
+    }
+    callbacks.call_syscall_callbacks(RSIM_Callbacks::AFTER, this, callno, cb_status);
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */

@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash -e
 #
 # TODO: add more summary info
 #	- List of durations for each step in the job
@@ -34,18 +34,16 @@ if test "x$machine_os" = "xDarwin" ; then
   OS_MACHINE_LABEL=x86_64-Darwin
 elif test "x$machine" = "xi686" ; then
   OS_MACHINE_LABEL=i686-linux
-elif test "x$machine" = "x86_64" ; then
-  OS_MACHINE_LABEL=amd64-linux
 else
-  echo "Unknown machine: ${machine}"
-  exit 1
+  OS_MACHINE_LABEL=amd64-linux
 fi
 
 #CONFIGURE_PREFIX_DIR="${HOME}/too1.workspace/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
 CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
 # Liao 1/6/2010
 # Remove the stale installation tree since the stale headers will be included before updated ones are used.
-rm -rf $CONFIGURE_PREFIX_DIR/*
+# TOO (4/7/2011): rm -rf commands should have absolute paths in them to avoid unintended removals
+rm -rf ${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install
 
 
 #########################################################################################
@@ -160,7 +158,7 @@ CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-i386"
 #  testing but the way to turn it on is to specify --enable-openGL
 #
 #########################################################################################
-if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
+if test "x$ROSE_TEST_BUILD_STYLE" = "xmake/check/install-full" ; then
   CONFIGURE_FLAGS="\
 	${CONFIGURE_FLAGS} \
 	--with-qt=${ROSE_TEST_QT_PATH} \
@@ -182,7 +180,9 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
               "$machine_name" = "hudson-rose-15.llnl.gov" -o \
               "$machine_name" = "hudson-rose-16.llnl.gov" \)
   then
-    CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
+    echo "Skipping OpenGL..."
+    # admins are troubleshooting the libGL.la
+    #CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
   fi
   #######################################################################################
   #  PCH
@@ -221,16 +221,35 @@ fi
 
 #########################################################################################
 #
-#  Mac OS X 10.6 (64-bit)
-#  Ubuntu (64-bit) 
+#  Mac OS X 10.6 (64-bit) 
 #
 #########################################################################################
-if test "x$label" = "x64bit-macos-10.6" -o "x$label" = "amd64-ubuntu" ; then
+if test "x$label" = "x64bit-macos-10.6" ; then
   case "$ROSE_TEST_BUILD_STYLE" in
   "make/check/install-minimal")
          CONFIGURE_FLAGS="
                 --with-boost=${ROSE_TEST_BOOST_PATH} \
-                --with-boost-lib={$ROSE_TEST_BOOST_PATH}/lib/ \
+                --with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
+                --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+    ;;
+
+  *)
+        echo "Error: '$ROSE_TEST_BUILD_STYLE' build-style is not currently supported for '$label'"
+    ;;
+  esac
+fi
+#########################################################################################
+#
+#  Ubuntu 10.4 LTS (64-bit) 
+#
+#########################################################################################
+if test "x$label" = "xamd64-ubuntu" ; then
+  case "$ROSE_TEST_BUILD_STYLE" in
+  "make/check/install-minimal")
+         CONFIGURE_FLAGS="
+                --with-boost=${ROSE_TEST_BOOST_PATH} \
+                --with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
+                --without-java \
                 --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
     ;;
 

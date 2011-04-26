@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash -e
 
 function printBanner {
 set +x

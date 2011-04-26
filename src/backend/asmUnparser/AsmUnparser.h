@@ -13,10 +13,15 @@ public:
           blk_detect_noop_seq(false), blk_show_noop_seq(false), blk_remove_noop_seq(false), blk_show_noop_warning(true),
           blk_show_successors(true), 
           func_show_title(true), 
-          interp_show_title(true) {}
+          interp_show_title(true)
+        {}
+
     virtual ~AsmUnparser() {}
 
-    /*======================================== Properties ========================================*/
+    /**************************************************************************************************************************
+     *                                  Properties
+     **************************************************************************************************************************/
+    
 
     /* Instruction properties */
     bool insn_show_bytes;               /**< Show bytes of instruction? */
@@ -36,13 +41,38 @@ public:
     /* Interpretation properties */
     bool interp_show_title;             /**< Show interpretation title before listing functions? */
 
-    /*======================================== Context ========================================*/
-    /* These data members are set during unparsing in order to provide context to the more deeply
-     * nested methods so that unparse methods don't need so many arguments. */
+    /***************************************************************************************************************************
+     *                                  Additional information
+     *
+     * These members hold additional information that might be used when unparsing.
+     ***************************************************************************************************************************/
+
+    typedef std::map<uint64_t, std::string> LabelMap;
+
+    /** This map is consulted whenever a constant is encountered. If the constant is defined as a key of the map, then that
+     *  element's string is used as a label. */
+    LabelMap labels;
+
+    /** Adds function entry points as labels.  Traverses the supplied node to find all SgAsmFunctionDeclaration nodes and adds
+     *  their name as the label for that function's entry address. */
+    void add_function_labels(SgNode *node);
+
+    /**************************************************************************************************************************
+     *                                  Context
+     *
+     * These data members are set during unparsing in order to provide context to the more deeply nested methods so that
+     * unparse methods don't need so many arguments.
+     **************************************************************************************************************************/
+    
     bool insn_is_noop_seq;              /**< Set if instruction is part of a no-op. */
 
 
 
+    /**************************************************************************************************************************
+     *                                  Pre/Post methods
+     *
+     * Subclasses may redefine these in order to do something before and/or after each output element.
+     **************************************************************************************************************************/
 
     /* These get called before each object */
     virtual void pre(std::ostream&, SgAsmInstruction*) {};

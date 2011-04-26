@@ -2,6 +2,7 @@
 #define ROSE_RSIM_Process_H
 
 class RSIM_Thread;
+class RSIM_Simulator;
 
 /** Represents a single simulated process. The process object holds resources that are shared among its threads. Some of the
  *  properties of a simulated process (such as PID) are shared with the real process (the process running the simulator).
@@ -11,17 +12,23 @@ class RSIM_Thread;
 class RSIM_Process {
 public:
     /** Creates an empty process containing no threads. */
-    RSIM_Process()
-        : tracing_file(NULL), tracing_flags(0),
+    explicit RSIM_Process(RSIM_Simulator *simulator)
+        : simulator(simulator), tracing_file(NULL), tracing_flags(0),
           map(NULL), brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), disassembler(NULL),
-          core_flags(0), terminated(false), termination_status(0), btrace_file(NULL),
+          interpretation(NULL), ep_orig_va(0), ep_start_va(0),
+          terminated(false), termination_status(0), core_flags(0), btrace_file(NULL),
           vdso_mapped_va(0), vdso_entry_va(0),
           core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000) {
         RTS_rwlock_init(&instance_rwlock, NULL);
         ctor();
     }
 
+    RSIM_Simulator *get_simulator() const {
+        return simulator;
+    }
+
 private:
+    RSIM_Simulator *simulator;
     void ctor();
 
 
@@ -59,6 +66,7 @@ private:
     std::string tracing_file_name;      /**< Pattern for trace file names. May include %d for thread ID. */
     FILE *tracing_file;                 /**< Stream to which debugging output is sent (or NULL to suppress it) */
     unsigned tracing_flags;             /**< Bit vector of what to trace. See TraceFlags. */
+    RSIM_Callbacks callbacks;           /**< Callbacks for a process, and to initialize callbacks of new threads. */
 
 public:
 
@@ -89,7 +97,24 @@ public:
      * bitwise OR of the facilityBitMask() for each enabled facility. */
     unsigned get_tracing_flags() const;
 
+    //@{
+    /** Obtain the set of callbacks for this object.  Many of the process callbacks are used to initialize thread callbacks
+     *  when a new thread is created.
+     *
+     *  Thread safety:  This method is thread safe.  Furthermore, most methods of the returned object are also thread safe. */
+    RSIM_Callbacks &get_callbacks() {
+        return callbacks;
+    }
+    const RSIM_Callbacks &get_callbacks() const {
+        return callbacks;
+    }
+    //@}
 
+    /** Set all callbacks for this process.  Note that callbacks can be added or removed individually by invoking methods on
+     *  the callback object return by get_callbacks().
+     *
+     *  Thread safety:  This method is thread safe. */
+    void set_callbacks(const RSIM_Callbacks &cb);
 
     /**************************************************************************************************************************
      *                                  Process memory
@@ -101,6 +126,13 @@ private:
     bool mmap_recycle;                          /**< If false, then never reuse mmap addresses */
 
 public:
+
+    /** Returns the memory map for the simulated process.  MemoryMap is not thread safe [as of 2011-03-31], so all access to
+     *  the map should be protected by the process-wide read-write lock returned by the rwlock() method. */
+    MemoryMap *get_memory() const {
+        return map;
+    }
+
     /** Add a memory mapping to a specimen.  The new mapping starts at specimen address @p va (zero causes this method to
      *  choose an appropriate address) for @p size bytes.  The @p rose_perms are the MemoryMap::Protection bits, @p flags are
      *  the same as for mmap() and are defined in <sys/mman.h>, and @p offset and @p fd are as for mmap().
@@ -146,7 +178,8 @@ public:
 
     /** Returns the memory address in ROSE where the specified specimen address is located.
      *
-     *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
+     *  Thread safety: This method is thread safe; it can be invoked on a single object by multiple threads
+     *  concurrently. However, the address that is returned might be unmapped before the caller can do anything with it. */
     void *my_addr(uint32_t va, size_t size);
 
     /** Does the opposite, more or less, of my_addr(). Return a specimen virtual address that maps to the specified address in
@@ -166,11 +199,11 @@ public:
     /** Copies data from specimen address space.  Copies up to @p size bytes from the specimen memory beginning at virtual
      *  address @p va into the beginning of @p buf.  If the requested number of bytes cannot be copied because (part of) the
      *  destination address space is not mapped or because (part of) the destination address space does not have read
-     *  permission, the this method will read as much as possible up to the first invalid address.  The return value is the
+     *  permission, then this method will read as much as possible up to the first invalid address.  The return value is the
      *  number of bytes copied.
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads
-     *  concurrently. However, the address that is returned might be unmapped before the caller can do anything with it. */
+     *  concurrently. */
     size_t mem_read(void *buf, rose_addr_t va, size_t size);
 
     /** Reads a NUL-terminated string from specimen memory. The NUL is not included in the string.  If a limit is specified
@@ -230,6 +263,29 @@ public:
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
     SgAsmInstruction *get_instruction(rose_addr_t va);
+
+    /** Disassembles an entire process based on the current memory map, returning a pointer to a SgAsmBlock AST node and
+     *  inserting all new instructions into the instruction cache used by get_instruction().
+     *
+     *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threaads concurrently.
+     *  The callers are serialized and each caller will generate a new AST that does not share nodes with any AST returned by
+     *  any previous call by this thread or any other. */
+    SgAsmBlock *disassemble();
+
+    /** Returns the disassembler that is being used to obtain instructions. This disassembler is chosen automatically when the
+     *  specimen is loaded.
+     *
+     *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads
+     *  concurrently. However, the disassembler object which is returned can probably not be used concurrently by multiple
+     *  threads. See documentation for Disassembler for thread safety details. */
+    Disassembler *get_disassembler() const {
+        return disassembler;
+    }
+
+    /** Returns the total number of instructions processed across all threads.
+     *
+     *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
+    size_t get_ninsns() const;
 
 
 
@@ -329,14 +385,21 @@ private:
 
 public:
     /** Creates a new simulated thread and corresponding real thread.  Returns the ID of the new thread, or a negative errno.
-     *  The @p parent_tid_va and @p child_tid_va are optional addresses at which to write the new thread's TID if the @flags
+     *  The @p parent_tid_va and @p child_tid_va are optional addresses at which to write the new thread's TID if the @p flags
      *  contain the CLONE_PARENT_TID and/or CLONE_CHILD_TID bits.  We gaurantee that the TID is written to both before the
-     *  simulated child starts executing.  The @child_tls_va also points to a segment descriptor if the CLONE_SETTLS bit is
+     *  simulated child starts executing.  The @p child_tls_va also points to a segment descriptor if the CLONE_SETTLS bit is
      *  set.  The @p regs are the values with which to initialize the new threads registers.
      *
      *  Thread safety: This method is thread safe; it can be invoked on a single object by multiple threads concurrently. Each
      *  calling thread should pass its own RSIM_Thread as the first argument. */
     pid_t clone_thread(RSIM_Thread*, unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va, const pt_regs_32 &regs);
+
+    /** Returns the thread having the specified thread ID, or null if there is no thread with the specified ID.  Thread objects
+     *  are never deleted while a simulator is running, but they are unlinked from their parent RSIM_Process when the simulated
+     *  thread dies (and the simulating thread exits).
+     *
+     *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
+    RSIM_Thread *get_thread(pid_t tid) const;
 
     /** Remove a thread from this process.  This is normally called by the specified thread when that thread exits.  Calling
      *  this method twice for the same thread will result in a failed assertion.
@@ -346,54 +409,91 @@ public:
 
 
 
-
-
+    /***************************************************************************************************************************
+     *                                  Process loading, linking, exit, etc.
+     ***************************************************************************************************************************/
+private:
+    SgAsmInterpretation *interpretation;        /**< Chosen by the load() method. */
+    std::string exename;                        /**< Name of executable without any path components */
+    std::string interpname;                     /**< Name of interpreter from ".interp" section or "--interp=" switch */
+    rose_addr_t ep_orig_va;                     /**< Original executable entry point (a specimen virtual address). */
+    rose_addr_t ep_start_va;                    /**< Entry point where simulation starts (e.g., the dynamic linker). */
+    bool terminated;                            /**< True when the process has finished running. */
+    int termination_status;                     /**< As would be returned by the parent's waitpid() call. */
 
 public:
-    void post_fork();
+    /** Thrown by exit system calls. */
+    struct Exit {
+        Exit(int status, bool exit_process): status(status), exit_process(exit_process) {}
+        int status;                             /**< Same value as returned by waitpid(). */
+        bool exit_process;                      /**< If true, then exit the entire process. */
+    };
 
-    void btrace_close();
 
-    /* Accessors */
-    std::string get_exename() const {           /**< Returns the name of the executable without any path components. */
+    /** Returns the name of the executable without any path components. */
+    std::string get_exename() const {
         return exename;
     }
-    std::string get_interpname() const {        /**< Returns the interpreter name for dynamically linked executables. */
+
+    /** Returns the interpreter name for dynamically linked ELF executables.  This name comes from the ".interp" section of the
+     *  ELF file and is usually the name of the dynamic linker, ld-linux.so.   The interpreter name is set automatically when
+     *  the main executable is parsed, or it can be set manually with set_interpname(). */
+    std::string get_interpname() const {
         return interpname;
     }
+
+    /** Overrides the interpreter name that would have been obtained from the ELF ".interp" section.  This is useful when one
+     *  has written a custom linker.  Regardless of whether the linker is explicitly specified or comes from the ELF file, it
+     *  will be loaded into the specimen address space and executed. */
     void set_interpname(const std::string &s) {
         interpname = s;
     }
-    MemoryMap *get_memory() const {             /**< Returns the memory map for the simulated process. */
-        return map;
-    }
-    /** Sets the core dump styles. */
-    void set_core_styles(unsigned bitmask) {
-        core_flags = bitmask;
-    }
-
-    /** Loads a new executable image into an existing process. */
+    
+    /** Loads a new executable image into an existing process.  If the specified name contains no slashes, then the
+     *  corresponding file is found by trying each of the directories listed in the PATH environment variable, otherwise the
+     *  specified name is used directly.
+     *
+     *  Once the executable file is located, the ROSE frontend() is invoked to parse the container (ELF, PE, etc) but
+     *  instructions are not disassembled yet.  A particular interpretation (SgAsmInterpretation) is chosen if more than one is
+     *  available, and this becomes the node returned by get_interpretation().  The file header associated with this
+     *  interpretation becomes the return value of this method. The process' memory map is adjusted by loading any necessary
+     *  segments from the executable.
+     *
+     *  Any necessary dynamic linkers are added to the AST by using the interpreter defined in the executable (ELF ".interp"
+     *  section) or a user-specified interpreter (see set_interpname()).  The process' memory map is adjusted by loading the
+     *  interpreter.
+     *
+     *  If a virtual dynamic shared object is desired then it is parsed and loaded into the process' memory map.
+     *
+     *  A disassembler is chosen based on the interpretation. The disassembler can be obtained by calling get_disassembler().
+     *
+     *  Operating system simulation data is initialized (brk, mmap, etc). */
     SgAsmGenericHeader *load(const char *name);
 
-    /** Generate an ELF Core Dump on behalf of the specimen.  This is a real core dump that can be used with GDB and contains
-     *  the same information as if the specimen had been running natively and dumped its own core. In other words, the core
-     *  dump we generate here does not have references to the simulator even though it is being dumped by the simulator. */
-    void dump_core(int signo, std::string base_name="");
+    /** Returns the interpretation that is being simulated.  The interpretation was chosen by the load() method. */
+    SgAsmInterpretation *get_interpretation() const {
+        return interpretation;
+    }
 
-    /** Start an instruction trace file. No-op if "binary_trace" is null. */
-    void binary_trace_start();
+    /** Returns the original entry point of the executable. This is the entry point specified in the executable's file header
+     *  and might not necessarily be the same address as where the simulation begins.
+     *
+     *  Thread safety:  This method is thread safe. */
+    rose_addr_t get_ep_orig_va() const {
+        return ep_orig_va;
+    }
 
-    /** Add an instruction to the binary trace file. No-op if "binary_trace" is null. */
-    void binary_trace_add(RSIM_Thread*, const SgAsmInstruction*);
-
-    /** Returns the thread having the specified thread ID. */
-    RSIM_Thread *get_thread(pid_t tid) const;
-
-    /** Returns the total number of instructions processed across all threads. */
-    size_t get_ninsns() const;
+    /** Returns the address at which the simulation starts (or started).  This might not be the same as the program entry
+     *  address returned by get_ep_orig_va() -- when an ELF executable is dynamically linked, this is the entry point for the
+     *  dynamic linker.
+     *
+     *  Thread safety:  This method is thread safe. */
+    rose_addr_t get_ep_start_va() const {
+        return ep_start_va;
+    }
 
     /** Initializes the stack for the main thread.  The argc and argv are the command-line of the specimen, not ROSE or the
-     *  simulator.   Users generally don't need to call this. */
+     *  simulator.   Users generally don't need to call this directly. */
     void initialize_stack(SgAsmGenericHeader*, int argc, char *argv[]);
 
     /** Exit entire process. Saves the exit status (like that returned from waitpid), then joins all threads except the main
@@ -413,15 +513,32 @@ public:
         return termination_status;
     }
 
+public:
+    void post_fork();
+
+    void btrace_close();
+
+    /** Sets the core dump styles. */
+    void set_core_styles(unsigned bitmask) {
+        core_flags = bitmask;
+    }
+
+    /** Generate an ELF Core Dump on behalf of the specimen.  This is a real core dump that can be used with GDB and contains
+     *  the same information as if the specimen had been running natively and dumped its own core. In other words, the core
+     *  dump we generate here does not have references to the simulator even though it is being dumped by the simulator. */
+    void dump_core(int signo, std::string base_name="");
+
+    /** Start an instruction trace file. No-op if "binary_trace" is null. */
+    void binary_trace_start();
+
+    /** Add an instruction to the binary trace file. No-op if "binary_trace" is null. */
+    void binary_trace_add(RSIM_Thread*, const SgAsmInstruction*);
+
 private:
     std::map<pid_t, RSIM_Thread*> threads;      /**< All threads associated with this process. */
 
 private:
-    std::string exename;                        /**< Name of executable without any path components */
-    std::string interpname;                     /**< Name of interpreter from ".interp" section or "--interp=" switch */
     unsigned core_flags;                        /**< Bit vector describing how to produce core dumps. */
-    bool terminated;                            /**< True when the process has finished running. */
-    int termination_status;                     /**< As would be returned by the parent's waitpid() call. */
 
 public: /* FIXME */
     FILE *btrace_file;                          /**< Stream for binary trace. See projects/traceAnalysis/trace.C for details */

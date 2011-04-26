@@ -35,6 +35,9 @@ EXTRA_DIST = test_attach01a.sh \
 	test_prop01.sh \
 	test_dump01.sh 
 
+# DQ (4/23/2011): At least one of the files (process_cmdline.o) in this directory does not seem 
+# to compile with Insure++ (it hangs for Hudson, but I can't reproduce the problem locally)
+# This was not a problem the second time that Insure++ compiled ROSE.
 noinst_PROGRAMS = convert \
                   simple_read2 \
                   process_cmdline \

@@ -15,7 +15,7 @@ TEST_TARGETS =
 #  DOCUMENTATION, CONFIGURATION, ETC
 ###############################################################################################################################
 
-EXTRA_DIST += README test_status.txt syscall_tests.conf pthread_tests.conf
+EXTRA_DIST += README test_status.txt syscall_tests.conf pthread_tests.conf RSIM.dxy
 
 ###############################################################################################################################
 #  PROGRAMS
@@ -28,7 +28,10 @@ noinst_PROGRAMS += x86sim
 include_HEADERS +=				\
 	x86sim.h				\
 	x86print.h				\
+	RSIM_Adapter.h				\
+	RSIM_Callbacks.h			\
 	RSIM_Common.h				\
+	RSIM_Linux32.h				\
 	RSIM_Process.h				\
 	RSIM_SemanticPolicy.h			\
 	RSIM_SignalHandling.h			\
@@ -38,7 +41,10 @@ include_HEADERS +=				\
 x86sim_SOURCES =				\
 	x86sim.C				\
 	x86print.C				\
+	RSIM_Adapter.C				\
+	RSIM_Callbacks.C			\
 	RSIM_Common.C				\
+	RSIM_Linux32.C				\
 	RSIM_Process.C				\
 	RSIM_SemanticPolicy.C			\
 	RSIM_SignalHandling.C			\
@@ -1091,9 +1097,10 @@ test-inputs: $(SYS_TEST_INPUTS) $(PTHREAD_TEST_INPUTS)
 run-tests: check-syscalls check-pthread
 	@$(RTH_STATS)
 
-check-local:  #run-tests
-	@echo "The simulator project is excluded from make check for now due to random hanging problems."
-	@echo "Run 'make run-tests' in $$(pwd) instead."
+check-local: run-tests
+#check-local:  #run-tests
+#	@echo "The simulator project is excluded from make check for now due to random hanging problems."
+#	@echo "Run 'make run-tests' in $$(pwd) instead."
 
 # "tmp-sim" is the temp directory used to run the tests. See x86sim.conf.
 # Rather than stuffing *everything* in MOSTLYCLEANFILES, we use cleanup targets. This is to avoid argument lists that

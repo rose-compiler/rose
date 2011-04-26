@@ -9,12 +9,15 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_02.java \
      test2011_03.java \
      test2011_04.java \
+     test2011_05.java \
+     test2011_06.java \
      simple.java
+
 
 # This class does not match the file name.
 #    simple_fortran.java
 
-TESTCODE_CURRENTLY_FAILING = 
+TESTCODE_CURRENTLY_FAILING =
 
 noinst_headers = 
 
@@ -31,7 +34,9 @@ $(TESTCODE_CURRENTLY_FAILING)
 # File option to accumulate performance information about the compilation
 # PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/C_ROSE_PERFORMANCE_DATA.csv
 
-ROSE_FLAGS = -rose:java -rose:verbose 0 -rose:skipfinalCompileStep
+# The use of -rose:java is redundent, the source langauge can now be determined from the file suffix.
+# ROSE_FLAGS = -rose:java -rose:verbose 0 -rose:skipfinalCompileStep
+ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep
 
 PASSING_TEST_Objects = ${TESTCODES:.java=.o}
 TEST_Objects = ${ALL_TESTCODES:.java=.o}
@@ -50,7 +55,7 @@ testTranslator=../../testGraphGeneration
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 # $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.java)
 $(TEST_Objects): $(testTranslator) ../../testTranslator
-	$(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.java)
+	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/$(@:.o=.java)
 
 testJavaTraversal:
 #	Java library path specifies where the *.so file is located (JavaTraversal.so)
@@ -72,13 +77,32 @@ workingJava:
 testECJ:
 	java -cp ecjROSE.jar org.eclipse.jdt.internal.compiler.batch.Main $(srcdir)/simple.java
 
+# Test for help option to ECJ (some ECJ options not supported via ROSE).
+testECJ_help_option:
+	$(testTranslator) -rose:java -rose:verbose 0 -rose:skipfinalCompileStep -ecj:help -c $(srcdir)/simple.java
+
+# Test with the "-rose:java" specification (one way to specify the language in ROSE).
+testWithJavaSpecification:
+	$(testTranslator) -rose:java $(ROSE_FLAGS) $(srcdir)/test2011_01.java
+
+# Test without the "-rose:java" specification (ROSE can alternatively obtain the source language from the file suffix).
+testWithoutJavaSpecification:
+	$(testTranslator) $(ROSE_FLAGS) $(srcdir)/test2011_01.java
+
+# Build a rule to allow running all tests in parallel...
+extraTests: testWithJavaSpecification testWithoutJavaSpecification testECJ_help_option
+
 # Execute the java file using: java -Djava.library.path=. HelloWorld
 
 check-local:
 	@echo "Tests for Java."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_TEST_Objects) extraTests
+#	@$(MAKE) testWithJavaSpecification
+#	@$(MAKE) testWithoutJavaSpecification
+#	@$(MAKE) testECJ_help_option
+#	@$(MAKE) extraTests
 	@echo "************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Java_tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************************************"
@@ -93,6 +117,6 @@ endif
 EXTRA_DIST = $(ALL_TESTCODES)
 
 clean-local:
-	rm -f *.dot *.class rose_*.java rose_performance_report_lockfile.lock *.out
+	rm -f *.dot *.class *.java rose_performance_report_lockfile.lock *.out
 #	Remove any generated JVM log files that could have been generated (these are rare).
 	rm -f *.log

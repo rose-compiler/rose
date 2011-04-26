@@ -23,15 +23,15 @@ extract_rose_required_ecj_source_files: JavaTraversal.class
 
 # buildJavaSupport: ${srcdir}/JavaTraversal.java
 # JavaTraversal.class:
-JavaTraversal.class: ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java ${srcdir}/JavaParserSupport.java ${srcdir}/ecjASTVisitor.java
-	$(JAVAC) -d . -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java ${srcdir}/JavaParserSupport.java ${srcdir}/ecjASTVisitor.java
+JavaTraversal.class: ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java ${srcdir}/JavaParserSupport.java ${srcdir}/ecjASTVisitor.java ${srcdir}/JavaToken.java 
+	$(JAVAC) -d . -cp ${srcdir}/ecjROSE.jar:${srcdir}:. ${srcdir}/JavaTraversal.java ${srcdir}/JavaParser.java ${srcdir}/JavaParserSupport.java ${srcdir}/ecjASTVisitor.java ${srcdir}/JavaToken.java ${srcdir}/JavaSourcePositionInformation.java 
 #	DQ (11/23/2010): javah only requires the class file which are in the build directory.
 	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar:. JavaTraversal
 	$(JAVAH) -jni -classpath ${srcdir}/ecjROSE.jar:. JavaParser
 #	DQ (10/13/2010): I want to avoid copying ecjROSE.jar into the build tree, but it is required for now.
 #	Only ROSE translators need it, not the javac and javah commands (above).
 	@echo "After building JavaTraversal.java, copy ecjROSE.jar from srcdir to builddir (only required for ROSE to find ecjROSE.jar (fix later))"
-	cp ${srcdir}/ecjROSE.jar ecjROSE.jar
+	(test -f ecjROSE.jar) || cp ${srcdir}/ecjROSE.jar ecjROSE.jar
 
 # I assume this is needed the same as for the JavaParserSupport.class rule
 JavaParser.class: ${srcdir}/JavaParser.java
@@ -52,8 +52,16 @@ testJavaTraversal: ${srcdir}/JavaTraversal.java
 	javac -cp ${srcdir}/ecjROSE.jar ${srcdir}/JavaTraversal.java
 	javah -jni JavaTraversal
 
+# DQ (4/16/2011): Added support for Java specific tokens (to support source position information in ROSE).
+JavaToken.class: ${srcdir}/JavaToken.java
+	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaToken.java
 
-EXTRA_DIST = CMakeLists.txt ecjROSE.jar JavaTraversal.java JavaParser.java JavaParserSupport.java ecjASTVisitor.java
+# DQ (4/16/2011): Added support for Java specific tokens (to support source position information in ROSE).
+JavaSourcePositionInformation.class: ${srcdir}/JavaSourcePositionInformation.java
+	$(JAVAC) -cp ${srcdir}/ecjROSE.jar:${srcdir}:. JavaSourcePositionInformation.java
+
+
+EXTRA_DIST = CMakeLists.txt ecjROSE.jar JavaTraversal.java JavaParser.java JavaParserSupport.java ecjASTVisitor.java JavaToken.java JavaSourcePositionInformation.java
 
 clean-local:
 	rm -f *.dot ecjROSE.jar *.class *.java *.h

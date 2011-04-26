@@ -20,6 +20,11 @@ SUBDIRS = libltdl config src
 if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
    SUBDIRS += tests
 endif
+
+if !ROSE_USE_INSURE
+# DQ (4/23/2011): Ignoring all of these whole directories might be over kill.  But I have had problems with 
+# Insure++ compilation specific to Hudson and want to start small and work to grow the number of parts of ROSE
+# used by Insure.  Except on Hudson (e.g. on my machine) Insure++ can be used to compiler nearly all of ROSE.
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
    SUBDIRS += projects
 endif
@@ -33,6 +38,8 @@ if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
    SUBDIRS += demo
 endif
 SUBDIRS += binaries
+# endif for controling Insure++ usage.
+endif
 
 ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
 
@@ -113,8 +120,9 @@ distclean-local:
 # DQ (10/14/2010): We want to make sure that this does not go out to the install tree
 # it also should not be in the distribution (since we want rose_config.h.in to be put 
 # into the distribution instead; from which then rose_config.h is generated).
-# nodist_include_HEADERS = rose_config.h
+# However, the public version should be installed and distributed.
 noinst_HEADERS = rose_config.h
+include_HEADERS = rosePublicConfig.h
 
 # DQ (4/5/2009): This rule is not called when compiling this directory, it is only
 # called when compiling the /src/util directory (perhaps it should be located in 
@@ -447,3 +455,11 @@ release_binary_compatibility_signature=$(shell ${top_srcdir}/scripts/bincompat-s
 
 PrintBinaryCompatibilitySignature:
 	@echo "release_binary_compatibility_signature = ${release_binary_compatibility_signature}"
+
+# Generate public version of rose_config.h, which is triggered by the AC_CONFIG_COMMANDS macro near the end
+# of config/support-rose.m4 whenever config.status runs.
+rosePublicConfig.h: rose_config.h
+	@echo "  GEN     $@"
+	@$(top_srcdir)/scripts/publicConfiguration.pl <$^ >$@
+DISTCLEANFILES = rosePublicConfig.h
+

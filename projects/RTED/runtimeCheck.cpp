@@ -8,6 +8,12 @@
 #include <string>
 #include <set>
 #include <iostream>
+/* driscoll6 (4/15/11) The default Boost::Filesystem version was
+ * bumped from 2 to 3 in Boost 1.46. Use version 2 until we have time to
+ * refactor the code for version 3. */
+#define BOOST_FILESYSTEM_VERSION 2
+#include "boost/filesystem/operations.hpp"
+
 
 #include "DataStructures.h"
 #include "RtedTransformation.h"

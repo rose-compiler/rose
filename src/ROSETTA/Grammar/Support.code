@@ -4683,6 +4683,7 @@ HEADER_APPLICATION_FILE_START
                e_C_output_language,       /*!< value used to specify output of C (for testing C unparser) */
                e_Cxx_output_language,     /*!< value used to specify output of C++ (for testing C++ unparser) */
                e_Fortran_output_language, /*!< value used to specify output of Fortran (for testing the Fortran unparser from C) */
+               e_Java_output_language,    /*!< value used to specify output of Java (for testing Java unparser) */
                e_Promela_output_language, /*!< value used to specify output of Promela for uses with SPIN (unsupported option) */
                e_PHP_output_language,     /*!< value used to specify output of PHP */
                e_last_output_language     /*!< upper bound on the range of values supported for the outputLanguageOption_enum */
@@ -4785,6 +4786,14 @@ HEADER_APPLICATION_FILE_START
        // DQ (6/17/2005): I think that this should be a static function and perhaps moved to SgProject instead of in SgFile
       //! function that removes all EDG related options from a command line
           static void stripEdgCommandLineOptions ( std::vector<std::string> & argv );
+
+       // DQ (4/2/2011): Added Fortran specific support to filter command line options from the backend compiler's command line.
+      //! function that removes all OFP related options from a command line
+          static void stripFortranCommandLineOptions ( std::vector<std::string> & argv );
+
+       // DQ (4/2/2011): Added Java specific support to filter command line options from the backend compiler's command line.
+      //! function that removes all ECJ related options from a command line
+          static void stripJavaCommandLineOptions ( std::vector<std::string> & argv );
 
        // BP : 11/13/2001, modified to take compiler name
           void build_EDG_CommandLine ( std::vector<std::string> & inputCommandLine, std::vector<std::string>& argv, int fileNameIndex );
@@ -7051,8 +7060,6 @@ SgSymbolTable::findfunc(const SgName & nm, const SgType* t)
 SgFunctionSymbol*
 SgSymbolTable::find_function (const SgName & nm, const SgType* t)
    {
-  // AS (083006): cleaned up logic so that the function only have one return statement.
-
      SgFunctionSymbol *s = NULL;
      assert(p_table != NULL);
      if(p_table)
@@ -7066,22 +7073,22 @@ SgSymbolTable::find_function (const SgName & nm, const SgType* t)
           std::pair<hash_iterator, hash_iterator> range = p_table->equal_range(nm);
 
           for (hash_iterator i = range.first; i != range.second; ++i)
-             {
-            // s = isSgFunctionSymbol((*i).second);
-               s = isSgFunctionSymbol(i->second);
+            {
+              SgFunctionSymbol * sym = isSgFunctionSymbol(i->second);
+              if ( (sym != NULL) && (sym->get_declaration()->get_type() == t) && get_table()->key_eq()(sym->get_name(),nm))
+                {
+                  p_name    = nm;
+                  p_no_name = false;
+                  s = sym;
+                  break;
+                }
+            }
+         }
 
-            // if ( (s != NULL) && (s->get_declaration()->get_type() == t))
-            // FMZ (10/29/2009) should compare name also
-            // if ( (s != NULL) && (s->get_declaration()->get_type() == t) && s->get_name().str()==nm.str())
-               if ( (s != NULL) && (s->get_declaration()->get_type() == t) && get_table()->key_eq()(s->get_name(),nm))
-                  {
-                    p_name    = nm;
-                    p_no_name = false;
-                 // return ((SgFunctionSymbol *)(*i).second);
-                    break;
-                  }
-             }
-        }
+	if (s != NULL) {
+		ROSE_ASSERT(s->get_name() == nm);
+		ROSE_ASSERT(s->get_declaration()->get_type() == t);
+	}
 
      return s;
    }
@@ -11237,7 +11244,33 @@ SgFile::compileOutput ( int fileNameIndex )
 
   // DQ (2/12/2004): strip out edg specific options that 
   // would cause an error in the backend compiler.
-     stripEdgCommandLineOptions( argv );
+  // stripEdgCommandLineOptions( argv );
+     if (get_C_only() == true || get_C99_only() == true || get_Cxx_only() == true)
+        {
+          stripEdgCommandLineOptions( argv );     
+        }
+       else
+        {
+          if (get_Fortran_only() == true)
+             {
+            // DQ (4/2/2011): some Fortran tests pass in tests/roseTests/astInterfaceTests pass in EDG options, we
+            // might want to correct this (for now we will clean up the command line as part of command line handling).
+               stripEdgCommandLineOptions( argv );
+
+               stripFortranCommandLineOptions( argv );
+             }
+            else
+             {
+               if (get_Java_only() == true)
+                  {
+                    stripJavaCommandLineOptions( argv );
+                  }
+                 else
+                  {
+                 // This is the case of binary analysis...(nothing to do there)
+                  }
+             }
+        }
 
   // Call the compile
   // int errorCode = compileOutput ( argv, fileNameIndex, compilerName );
@@ -11465,9 +11498,18 @@ SgFile::generateOutputFileName() const
 
 #endif
 
-  // DQ (8/12/2007): Newer simpler code, made possible because of better internal support.  
-  // This version is also now language independent and so supports the Fortran work.
-     objectFileName = baseFileNameWithoutSuffix + ".o";
+  // DQ (4/2/2011): Added support for Java.
+     if (get_Java_only() == true)
+        {
+       // Java output files are *.class files.
+          objectFileName = baseFileNameWithoutSuffix + ".class";
+        }
+       else
+        {
+       // DQ (8/12/2007): Newer simpler code, made possible because of better internal support.  
+       // This version is also now language independent and so supports the Fortran work.
+          objectFileName = baseFileNameWithoutSuffix + ".o";
+        }
 
   // printf ("At base of SgFile::generateOutputFileName(): objectFileName = %s \n",objectFileName.c_str());
   // display("In SgFile::generateOutputFileName()");
@@ -11553,6 +11595,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_upc_threads                          = %s (value=%d) \n",  (p_upc_threads > 1) ? "true" : "false",p_upc_threads);
      printf ("     p_C99_only()                           = %s \n",(p_C99_only == true) ? "true" : "false");
      printf ("     p_Cxx_only()                           = %s \n",(p_Cxx_only == true) ? "true" : "false");
+     printf ("     p_Java_only()                          = %s \n",(p_Java_only == true) ? "true" : "false");
      printf ("     p_Fortran_only()                       = %s \n",(p_Fortran_only == true) ? "true" : "false");
      printf ("     p_F77_only()                           = %s \n",(p_F77_only == true) ? "true" : "false");
      printf ("     p_F90_only()                           = %s \n",(p_F90_only == true) ? "true" : "false");
@@ -11640,7 +11683,8 @@ SgFile::display ( const std::string & label ) const
           case SgFile::e_C_output_language:       outputLanguageName = "C";       break;
           case SgFile::e_Cxx_output_language:     outputLanguageName = "C++";     break;
           case SgFile::e_Fortran_output_language: outputLanguageName = "Fortran"; break;
-          case SgFile::e_PHP_output_language: outputLanguageName = "PHP"; break;
+          case SgFile::e_Java_output_language:    outputLanguageName = "Java";    break;
+          case SgFile::e_PHP_output_language:     outputLanguageName = "PHP";     break;
           case SgFile::e_Promela_output_language: outputLanguageName = "Promela"; break;
 
           default:

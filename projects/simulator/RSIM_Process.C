@@ -66,6 +66,7 @@ RSIM_Process::create_thread()
     RTS_WRITE(rwlock()) {
         ROSE_ASSERT(threads.find(tid)==threads.end());
         thread = new RSIM_Thread(this);
+        thread->set_callbacks(callbacks);
         threads.insert(std::make_pair(tid, thread));
     } RTS_WRITE_END;
     return thread;
@@ -84,8 +85,12 @@ RSIM_Process::remove_thread(RSIM_Thread *thread)
 RSIM_Thread *
 RSIM_Process::get_thread(pid_t tid) const
 {
-    std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.find(tid);
-    return ti==threads.end() ? NULL : ti->second;
+    RSIM_Thread *retval = NULL;
+    RTS_READ(rwlock()) {
+        std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.find(tid);
+        retval = ti==threads.end() ? NULL : ti->second;
+    } RTS_READ_END;
+    return retval;
 }
 
 size_t
@@ -125,8 +130,10 @@ size_t
 RSIM_Process::get_ninsns() const
 {
     size_t retval = 0;
-    for (std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.begin(); ti!=threads.end(); ++ti)
-        retval += ti->second->get_ninsns();
+    RTS_READ(rwlock()) {
+        for (std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.begin(); ti!=threads.end(); ++ti)
+            retval += ti->second->get_ninsns();
+    } RTS_READ_END;
     return retval;
 }
 
@@ -291,9 +298,10 @@ RSIM_Process::load(const char *name)
 
     /* Find the best interpretation and file header.  Windows PE programs have two where the first is DOS and the second is PE
      * (we'll use the PE interpretation). */
-    SgAsmInterpretation *interpretation = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
+    interpretation = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
     SgAsmGenericHeader *fhdr = interpretation->get_headers()->get_headers().front();
-    thread->policy.writeIP(fhdr->get_entry_rva() + fhdr->get_base_va());
+    ep_orig_va = ep_start_va = fhdr->get_entry_rva() + fhdr->get_base_va();
+    thread->policy.writeIP(ep_orig_va);
 
     /* Link the interpreter into the AST */
     SimLoader *loader = new SimLoader(interpretation, trace, interpname);
@@ -305,7 +313,8 @@ RSIM_Process::load(const char *name)
         SgAsmGenericSection *load0 = loader->interpreter->get_section_by_name("LOAD#0");
         if (load0 && load0->is_mapped() && load0->get_mapped_preferred_rva()==0 && load0->get_mapped_size()>0)
             loader->interpreter->set_base_va(ld_linux_base_va);
-        thread->policy.writeIP(loader->interpreter->get_entry_rva() + loader->interpreter->get_base_va());
+        ep_start_va = loader->interpreter->get_entry_rva() + loader->interpreter->get_base_va();
+        thread->policy.writeIP(ep_start_va);
     }
 
     /* Sort the headers so they're in order by entry address. In other words, if the interpreter's entry address is below the
@@ -374,8 +383,10 @@ RSIM_Process::dump_core(int signo, std::string base_name)
     if (base_name.empty())
         base_name = core_base_name;
 
+#if 0 /* DEBUGGING */
     fprintf(stderr, "memory map at time of core dump:\n");
     map->dump(stderr, "  ");
+#endif
 
 #if 0 /* FIXME: we need to make core dumping thread-aware. [RPM 2011-02-03] */
     if (core_styles & CORE_ROSE)
@@ -1406,6 +1417,10 @@ pid_t
 RSIM_Process::clone_thread(RSIM_Thread *thread, unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va,
                            const pt_regs_32 &regs)
 {
+#ifndef ROSE_THREADS_ENABLED
+    fprintf(stderr, "ROSE library is not thread safe; multiple threads cannot be simulated.\n");
+    abort();
+#endif
     Clone clone_info(this, flags, parent_tid_va, child_tls_va, regs);
     RTS_MUTEX(clone_info.mutex) {
         pthread_t t;
@@ -1478,8 +1493,11 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
     if (tid<0)
         pthread_exit(NULL);
 
-    /* Allow the real thread to simulate the specimen thred. */
-    return thread->main();
+    /* Allow the real thread to simulate the specimen thread. */
+    bool cb_status = thread->get_callbacks().call_thread_callbacks(RSIM_Callbacks::BEFORE, thread, true);
+    void *retval = thread->main();
+    thread->get_callbacks().call_thread_callbacks(RSIM_Callbacks::AFTER, thread, cb_status);
+    return retval;
 }
 
 void
@@ -1604,6 +1622,30 @@ RSIM_Process::signal_dispatch()
         int status = sys_kill(getpid(), info);
         assert(status>=0);
     }
+}
+
+SgAsmBlock *
+RSIM_Process::disassemble()
+{
+    Partitioner partitioner;
+    SgAsmBlock *block = NULL;
+
+    RTS_WRITE(rwlock()) { /* while using the memory map */
+        block = partitioner.partition(interpretation, disassembler, map);
+        const Disassembler::InstructionMap &insns = partitioner.get_instructions();
+        for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+            icache[ii->first] = ii->second;
+        }
+    } RTS_WRITE_END;
+    return block;
+}
+
+void
+RSIM_Process::set_callbacks(const RSIM_Callbacks &cb)
+{
+    RTS_WRITE(rwlock()) {
+        callbacks = cb; // overloaded, thread safe
+    } RTS_WRITE_END;
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */
