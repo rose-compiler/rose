@@ -31,7 +31,7 @@ using namespace AstFromString;
       assert (false);
     }
     // mandatory dim1
-    if (!afs_match_expression())
+    if (!afs_match_assignment_expression())
     {
       printf ("Error: expecting dim1 after parsing #pragma CUDA pl autodim(\n");
       assert (false);
@@ -43,7 +43,7 @@ using namespace AstFromString;
     //optional dim2
     if (afs_match_char(','))
     {
-      if (!afs_match_expression())
+      if (!afs_match_assignment_expression())
       {
         printf ("Error: expecting dim2 after parsing #pragma CUDA pl autodim(dim1,\n");
         assert (false);
@@ -55,7 +55,7 @@ using namespace AstFromString;
       //optional dim3
       if (afs_match_char(','))
       {
-        if (!afs_match_expression())
+        if (!afs_match_assignment_expression())
         {
           printf ("Error: expecting dim3 after parsing #pragma CUDA pl autodim(dim1,dim2,\n");
           assert (false);
@@ -66,7 +66,7 @@ using namespace AstFromString;
         // optional shared_size
         if (afs_match_char(','))
         {
-          if (!afs_match_expression())
+          if (!afs_match_assignment_expression())
           {
             printf ("Error: expecting shared_size after parsing #pragma CUDA pl autodim(dim1,dim2,dim3,\n");
             assert (false);
@@ -101,7 +101,7 @@ using namespace AstFromString;
       assert (false);
     }  
     // mandatory blocksPerGrid
-    if (!afs_match_expression())
+    if (!afs_match_assignment_expression())
     {
       printf ("Error: expecting blocksPerGrid after parsing #pragma CUDA pl dim(\n");
       assert (false);
@@ -117,7 +117,7 @@ using namespace AstFromString;
       assert (false);
     }  
 
-    if (!afs_match_expression())
+    if (!afs_match_assignment_expression())
     {
       printf ("Error: expecting threadsPerBlock_after parsing #pragma CUDA pl dim(blocksPerGrid, \n");
       assert (false);
@@ -128,7 +128,7 @@ using namespace AstFromString;
 
     if (afs_match_char(','))
     {
-      if (!afs_match_expression())
+      if (!afs_match_assignment_expression())
       {
         printf ("Error: expecting shared_size after parsing #pragma CUDA pl dim(blocksPerGrid,threadsPerBlock,\n");
         assert (false);
@@ -205,7 +205,7 @@ AstAttribute* parse_HC_Pragma(SgPragmaDeclaration* pragmaDecl)
       result = new HC_PragmaAttribute(c_sgnode, pragma_CUDA_KERNEL);
       assert (result != NULL);
     }
-    else if (afs_match_expression()) // place expression
+    else if (afs_match_assignment_expression()) // place expression
     { 
       assert (c_parsed_node != NULL);
       assert (isSgExpression(c_parsed_node) != NULL);
