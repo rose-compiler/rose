@@ -159,6 +159,7 @@ static void syscall_fstatfs(RSIM_Thread *t, int callno);
 static void syscall_fstatfs_leave(RSIM_Thread *t, int callno);
 static void syscall_socketcall_enter(RSIM_Thread *t, int callno);
 static void syscall_socketcall(RSIM_Thread *t, int callno);
+static void syscall_socketcall_leave(RSIM_Thread *t, int callno);
 static void syscall_wait4_enter(RSIM_Thread *t, int callno);
 static void syscall_wait4(RSIM_Thread *t, int callno);
 static void syscall_wait4_leave(RSIM_Thread *t, int callno);
@@ -346,7 +347,7 @@ RSIM_Linux32::ctor()
     SC_REG(95,  fchown,                         default);
     SC_REG(99,  statfs,                         statfs);
     SC_REG(100, fstatfs,                        fstatfs);
-    SC_REG(102, socketcall,                     default);
+    SC_REG(102, socketcall,                     socketcall);
     SC_REG(114, wait4,                          wait4);
     SC_REG(116, sysinfo,                        default);               // FIXME: probably needs an explicit leave
     SC_REG(117, ipc,                            ipc);
@@ -1886,6 +1887,13 @@ syscall_socketcall_enter(RSIM_Thread *t, int callno)
                 t->syscall_enter("socketcall", "fp", socketcall_commands);
             }
             break;
+        case 17: /* SYS_RECVMSG */
+            if (12==t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
+                t->syscall_enter(a, "recvmsg", "dPd", sizeof(msghdr_32), print_msghdr_32);
+            } else {
+                t->syscall_enter("socketcall", "fp", socketcall_commands);
+            }
+            break;
         default:
             t->syscall_enter("socketcall", "fp", socketcall_commands);
             break;
@@ -2028,6 +2036,114 @@ sys_recvfrom(RSIM_Thread *t, int fd, uint32_t buf_va, uint32_t buf_sz, int flags
 }
 
 static void
+sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
+{
+    int retval = 0;
+    msghdr_32 guest;
+    if (sizeof(msghdr_32)!=t->get_process()->mem_read(&guest, msghdr_va, sizeof guest)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    if (guest.msg_iovlen<0 || guest.msg_iovlen>1024) {
+        t->syscall_return(-EINVAL);
+        return;
+    }
+
+    assert(0==guest.msg_namelen); /* not implemented yet [RPM 2011-04-26] */
+
+    uint32_t *guest_bufs = new uint32_t[guest.msg_iovlen];
+    msghdr host;
+    memset(&host, 0, sizeof host);
+    host.msg_iov = new iovec[guest.msg_iovlen];
+    host.msg_iovlen = guest.msg_iovlen;
+    if ((host.msg_controllen = guest.msg_controllen) > 0) {
+        host.msg_control = new uint8_t[host.msg_controllen];
+        if (host.msg_controllen!=t->get_process()->mem_read(host.msg_control, guest.msg_control, guest.msg_controllen))
+            retval = -EFAULT;
+    }
+
+    /* Create buffers in host's memory */
+    if (0==retval) {
+        if (guest.msg_iovlen>0)
+            t->tracing(TRACE_SYSCALL)->more("\n");
+        for (size_t idx=0; idx<guest.msg_iovlen; idx++) {
+            /* Obtain buffer address */
+            uint32_t buf_va;
+            if (4!=t->get_process()->mem_read(&buf_va, guest.msg_iov+idx*8+0, 4)) {
+                if (0==idx)
+                    retval = -EFAULT;
+                t->tracing(TRACE_SYSCALL)->more("    iov #%zu: segmentation fault reading address\n", idx);
+                break;
+            }
+
+            /* Obtain buffer size */
+            uint32_t buf_sz;
+            if (4!=t->get_process()->mem_read(&buf_sz, guest.msg_iov+idx*8+4, 4)) {
+                if (0==idx)
+                    retval = -EFAULT;
+                t->tracing(TRACE_SYSCALL)->more("    iov #%zu: segmentation fault reading size\n", idx);
+                break;
+            }
+
+            t->tracing(TRACE_SYSCALL)->more("    iov #%zu: buffer=0x%08"PRIx32", size=0x%08"PRIx32"\n", idx, buf_va, buf_sz);
+
+            /* Make sure total size doesn't overflow a ssize_t for 32-bits */
+            if ((buf_sz & 0x80000000) || ((uint32_t)retval+buf_sz) & 0x80000000) {
+                if (0==idx)
+                    retval = -EINVAL;
+                t->tracing(TRACE_SYSCALL)->more(" size overflow\n");
+                break;
+            }
+
+            guest_bufs[idx] = buf_va;
+            host.msg_iov[idx].iov_base = new uint8_t[buf_sz];
+            host.msg_iov[idx].iov_len = buf_sz;
+        }
+    }
+
+    /* Make the real call */
+    if (0==retval) {
+        retval = recvmsg(fd, &host, flags);
+        if (-1==retval)
+            retval = -errno;
+    }
+
+    /* Copy data back into the guest */
+    if (retval>0) {
+        size_t to_copy = retval;
+        for (unsigned idx=0; idx<host.msg_iovlen && to_copy>0; idx++) {
+            size_t n = std::min(to_copy, host.msg_iov[idx].iov_len);
+            to_copy -= n;
+            if (n!=t->get_process()->mem_write(host.msg_iov[idx].iov_base, guest_bufs[idx], n)) {
+                retval = -EFAULT;
+                break;
+            }
+        }
+    }
+
+    /* Copy control into the guest */
+    if (host.msg_controllen>0) {
+        guest.msg_controllen = host.msg_controllen;
+        if (host.msg_controllen!=t->get_process()->mem_write(host.msg_control, guest.msg_control, host.msg_controllen))
+            retval = -EFAULT;
+    }
+
+    /* Copy msghdr into the guest */
+    if (sizeof(guest)!=t->get_process()->mem_write(&guest, msghdr_va, sizeof guest))
+        retval = -EFAULT;
+
+    /* Cleanup */
+    for (unsigned idx=0; idx<host.msg_iovlen; idx++)
+        delete[] (iovec*)host.msg_iov[idx].iov_base;
+    delete[] host.msg_iov;
+    delete[] (uint8_t*)host.msg_control;
+    delete[] guest_bufs;
+
+    t->syscall_return(retval);
+}
+
+static void
 syscall_socketcall(RSIM_Thread *t, int callno)
 {
     /* Return value is written to eax by these helper functions. The struction of this code closely follows that in the
@@ -2079,6 +2195,15 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             break;
         }
 
+        case 17: { /* SYS_RECVMSG */
+            if (12!=t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
+                t->syscall_return(-EFAULT);
+            } else {
+                sys_recvmsg(t, a[0], a[1], a[2]);
+            }
+            break;
+        }
+
         case 5: /* SYS_ACCEPT */
         case 6: /* SYS_GETSOCKNAME */
         case 7: /* SYS_GETPEERNAME */
@@ -2090,7 +2215,6 @@ syscall_socketcall(RSIM_Thread *t, int callno)
         case 14: /* SYS_SETSOCKOPT */
         case 15: /* SYS_GETSOCKOPT */
         case 16: /* SYS_SENDMSG */
-        case 17: /* SYS_RECVMSG */
         case 18: /* SYS_ACCEPT4 */
         case 19: /* SYS_RECVMMSG */
             t->syscall_return(-ENOSYS);
@@ -2099,6 +2223,47 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             t->syscall_return(-EINVAL);
             break;
     }
+}
+
+static void
+syscall_socketcall_leave(RSIM_Thread *t, int callno)
+{
+    uint32_t a[7];
+    a[0] = t->syscall_arg(-1);
+
+    switch (t->syscall_arg(0)) {
+        case 17: /* SYS_RECVMSG */
+            if (12==t->get_process()->mem_read(a+1, t->syscall_arg(1), 12)) {
+                t->syscall_leave(a, "d-P-", sizeof(msghdr_32), print_msghdr_32);
+                RTS_Message *trace = t->tracing(TRACE_SYSCALL);
+                msghdr_32 msghdr;
+                if (trace->get_file() &&
+                    (int32_t)a[0] > 0 &&
+                    sizeof(msghdr)==t->get_process()->mem_read(&msghdr, a[2], sizeof msghdr)) {
+                    trace->multipart("recvmsg", "");
+                    uint32_t nbytes = a[0];
+                    for (unsigned i=0; i<msghdr.msg_iovlen && i<1024 && nbytes>0; i++) {
+                        uint32_t vasz[2];
+                        if (8==t->get_process()->mem_read(vasz, msghdr.msg_iov+i*8, 8)) {
+                            vasz[1] = std::min(vasz[1], nbytes);
+                            nbytes -= vasz[1];
+                            uint8_t *buf = new uint8_t[vasz[1]];
+                            if (vasz[1]==t->get_process()->mem_read(buf, vasz[0], vasz[1])) {
+                                trace->more("    iov #%u: ", i);
+                                print_buffer(trace, vasz[0], buf, vasz[1], 1024);
+                                trace->more("\n");
+                            }
+                            delete[] buf;
+                        }
+                    }
+                    trace->multipart_end();
+                }
+                return;
+            }
+            break;
+    }
+
+    t->syscall_leave("d");
 }
 
 /*******************************************************************************************************************************/
