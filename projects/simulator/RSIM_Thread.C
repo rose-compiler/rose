@@ -771,7 +771,7 @@ RSIM_Thread::futex_wake(uint32_t va)
         int *addr = (int*)get_process()->my_addr(va, sizeof(int));
         if (!addr) {
             retval = -EFAULT;
-        } else if (-1 == (retval = syscall(SYS_futex, addr, 1/*FUTEX_WAKE*/))) {
+        } else if (-1 == (retval = syscall(SYS_futex, addr, 1/*FUTEX_WAKE*/, 1/*nwake*/, 0/*timeout*/, 0/*addr2*/, 0/*val3*/))) {
             retval = -errno;
         }
     } RTS_READ_END;
@@ -782,7 +782,7 @@ int
 RSIM_Thread::handle_futex_death(uint32_t futex_va, RTS_Message *trace)
 {
     uint32_t futex;
-    trace->more("  handling death for futex at 0x%08"PRIx32"\n", futex_va);
+    trace->more("\n  handling death for futex at 0x%08"PRIx32"\n", futex_va);
 
     if (4!=get_process()->mem_read(&futex, futex_va, 4)) {
         trace->more("    failed to read futex at 0x%08"PRIx32"\n", futex_va);
@@ -823,11 +823,11 @@ RSIM_Thread::exit_robust_list()
         return 0;
 
     RTS_Message *trace = tracing(TRACE_THREAD);
-    trace->multipart("futex_death", "exit_robust_list():\n");
+    trace->multipart("futex_death", "exit_robust_list()...");
 
     robust_list_head_32 head;
     if (sizeof(head)!=get_process()->mem_read(&head, robust_list_head_va, sizeof head)) {
-        trace->more("  failed to read robust list head at 0x%08"PRIx32"\n", robust_list_head_va);
+        trace->more(" <failed to read robust list head at 0x%08"PRIx32">", robust_list_head_va);
         retval = -EFAULT;
     } else {
         static const size_t max_locks = 1000000;
@@ -843,7 +843,7 @@ RSIM_Thread::exit_robust_list()
         
             /* Advance lock_entry_va to next item in the list. */
             if (4!=get_process()->mem_read(&lock_entry_va, lock_entry_va, 4)) {
-                trace->more("  list pointer read failed at 0x%08"PRIx32"\n", lock_entry_va);
+                trace->more(" <list pointer read failed at 0x%08"PRIx32">", lock_entry_va);
                 retval = -EFAULT;
                 break;
             }
@@ -852,6 +852,7 @@ RSIM_Thread::exit_robust_list()
             retval = handle_futex_death(head.pending_va, trace);
     }
 
+    trace->more(" done.\n");
     trace->multipart_end();
     return retval;
 }
@@ -868,12 +869,17 @@ RSIM_Thread::sys_exit(const RSIM_Process::Exit &e)
 
     /* Clear and signal child TID if necessary (CLONE_CHILD_CLEARTID) */
     if (clear_child_tid) {
-        tracing(TRACE_SYSCALL)->mesg("waking futex 0x%08"PRIx32, clear_child_tid);
+        tracing(TRACE_SYSCALL)->mesg("clearing child tid...");
         uint32_t zero = 0;
         size_t n = process->mem_write(&zero, clear_child_tid, sizeof zero);
-        ROSE_ASSERT(n==sizeof zero);
-        int nwoke = futex_wake(clear_child_tid);
-        ROSE_ASSERT(nwoke>=0);
+        if (n!=sizeof zero) {
+            tracing(TRACE_SYSCALL)->mesg("cannot write clear_child_tid address 0x%08"PRIx32, clear_child_tid);
+        } else {
+            tracing(TRACE_SYSCALL)->mesg("waking futex 0x%08"PRIx32, clear_child_tid);
+            int nwoke = futex_wake(clear_child_tid);
+            if (nwoke<0)
+                tracing(TRACE_SYSCALL)->mesg("wake futex 0x%08"PRIx32" failed with %d\n", clear_child_tid, nwoke);
+        }
     }
 
     /* Remove the child from the process. */
