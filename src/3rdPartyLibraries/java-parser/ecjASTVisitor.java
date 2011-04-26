@@ -1,5 +1,12 @@
 import org.eclipse.jdt.internal.compiler.batch.*;
 
+// Test if this works in Java.
+// import java; // fails
+// import java.io; // fails
+// import java.lang; // fails
+// import java.lang.*; // works
+// import java.*; // works
+
 import java.io.*;
 import java.text.*;
 import java.util.*;
@@ -90,6 +97,14 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println(" modifiers = " + node.modifiers);
              }
 
+       // *******************************************************************************************
+       // Build the lists of type parameters and function parameters as part of building the function 
+       // declarations directly. So not there is no action for this function.
+
+       // Either that or we have to reconcile implicit processing using reflection and explicit 
+       // processing driven by the ECJ specific AST traversal ???
+       // *******************************************************************************************
+
        // Divide up the work to define an argument, the name and modifiers are simple but the type has to
        // be constructed via recursive calls that will cause it to be generated on the astJavaTypeStack.
        // java_parser.cactionArgument("Argument_block_abc");
@@ -98,13 +113,13 @@ class ecjASTVisitor extends ASTVisitor
        // java_parser.cactionArgumentModifiers(node.modifiers);
        // java_parser.cactionArgumentEnd();
 
-          JavaParserSupport.generateType(node.type);
+       // JavaParserSupport.generateType(node.type);
 
        // This rule assumes that the type will be made available on the stack (astJavaTypeStack).
        // In general we want to have rules that are specific to IR nodes and pass any constructed
        // IR nodes via the stack (rules called should have generated the constructed IR nodes on 
        // the stack within ROSE).
-          java_parser.cactionArgument(nameString,node.modifiers);
+       // java_parser.cactionArgument(nameString,node.modifiers);
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (Argument,BlockScope)");
@@ -343,6 +358,22 @@ class ecjASTVisitor extends ASTVisitor
                System.out.println("Compiling file = " + s);
              }
 
+       // Ouput some information about the CompilationUnitScope (we don't use the package name currently).
+          String packageReference = "";
+          for (int i = 0, tokenArrayLength = scope.currentPackageName.length; i < tokenArrayLength; i++)
+             {
+               String tokenString = new String(scope.currentPackageName[i]);
+               System.out.println("     --- packageReference tokens = " + tokenString);
+
+               if (i > 0)
+                    packageReference += '.';
+
+               packageReference += tokenString;
+             }
+
+          if (java_parser.verboseLevel > 0)
+               System.out.println("Package name = " + packageReference);
+
        // Call the Java side of the JNI function.
        // This function only does a few tests on the C++ side to make sure that it is ready to construct the ROSE AST.
           java_parser.cactionCompilationUnitDeclaration(s);
@@ -354,19 +385,18 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 1)
                System.out.println("Calling buildImplicitClassSupport for java.lang.System");
 
-          JavaParserSupport.buildImplicitClassSupport("java.lang.System");
+       // We now read in classes on demand as they are references, if they are references.  All classes are read as 
+       // required to resolved all types in the program and the implicitly read classes.  Interestingly, there
+       // are nearly 3000 classes in the 135 packages in the J2SE 1.4.2 standard class library (over 3000 classes 
+       // in 165 packages in J2SE 5.0). Commercial class libraries that you might use add many more packages. 
+       // This triggers the building of a recursively identified set of classes required to define all types in the problem.
+       // JavaParserSupport.buildImplicitClassSupport("java.lang.System");
 
           if (java_parser.verboseLevel > 1)
                System.out.println("DONE: Calling buildImplicitClassSupport for java.lang.System");
 
-       // This implements the equivalent of the C++ "use" statement on "java.lang".
-       // java_parser.cactionFixupGlobalScope("java.lang");
-
-          if (java_parser.verboseLevel > 0)
-             {
-               System.out.println("Exiting as a test in visit (CompilationUnitDeclaration,CompilationUnitScope)...");
-               System.exit(1);
-             }
+       // System.out.println("Exiting as a test in visit (CompilationUnitDeclaration,CompilationUnitScope)...");
+       // System.exit(1);
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (CompilationUnitDeclaration,CompilationUnitScope)");
@@ -419,6 +449,45 @@ class ecjASTVisitor extends ASTVisitor
                     System.out.println("     --- constructor typeParameters = " + node.typeParameters[i]);
                   }
              }
+            else
+             {
+            // For a function defined in the input program, the typeParameters array is empty, but the ECJ
+            // specific AST traversal will visit the type parameters. Not clear why this is organized like this.
+               System.out.println("     --- method typeParameters (empty) = " + node.typeParameters);
+             }
+
+       // Looking here for arguments (want the arguments) since they are not always in the node.typeParameters
+          if (node.arguments != null)
+             {
+               for (int i = 0, typeArgumentsLength = node.arguments.length; i < typeArgumentsLength; i++)
+                  {
+                 // System.out.println("     --- constructor arguments = " + node.arguments[i].type);
+                 // System.out.println("     --- constructor arguments (type = " + node.arguments[i].type + ", name = " + node.arguments[i].name);
+                     System.out.println("     --- constructor arguments (type = " + node.arguments[i].type + ", name = " + node.arguments[i].name.toString() + ")");
+
+                    String nameString = new String(node.arguments[i].name);
+                    System.out.println("This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (ConstructorDeclaration,ClassScope)): type = " + node.arguments[i].type + " nameString = " + nameString);
+                    JavaParserSupport.generateType(node.arguments[i].type);
+
+                 // This rule assumes that the type will be made available on the stack (astJavaTypeStack).
+                 // In general we want to have rules that are specific to IR nodes and pass any constructed
+                 // IR nodes via the stack (rules called should have generated the constructed IR nodes on 
+                 // the stack within ROSE).
+                    java_parser.cactionArgument(nameString,node.modifiers);
+
+                    System.out.println("DONE: This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (ConstructorDeclaration,ClassScope)): type = " + node.arguments[i].type + " nameString = " + nameString);
+                  }
+             }
+            else
+             {
+            // For a function defined in the input program, the typeParameters array is empty, but the ECJ
+            // specific AST traversal will visit the type parameters. Not clear why this is organized like this.
+               System.out.println("     --- method arguments (empty) = " + node.arguments);
+             }
+
+       // Push a type to serve as the return type which will be ignored for the case of a constructor
+       // (this allows us to reuse the general member function support).
+          JavaParser.cactionGenerateType("void");
 
           java_parser.cactionConstructorDeclaration(name);
 
@@ -686,12 +755,155 @@ class ecjASTVisitor extends ASTVisitor
 
      public boolean visit(ImportReference  node, CompilationUnitScope scope)
         {
-          if (java_parser.verboseLevel > 0)
+       // This is the support for the Java "import" statement (declaration).
+       // We can basically strify this step, since this is frontend handling that
+       // has no analysis requirements (that I know of).  We could translate
+       // the list of class names to a list of declarations, this might be useful
+       // at a later point. However, this would require post processing since
+       // we have not yet read in the classes that would be a part of those
+       // implicitly read as a consequence of the "import" statements.
+
+          if (java_parser.verboseLevel > -1)
                System.out.println("Inside of visit (ImportReference,CompilationUnitScope)");
 
-          java_parser.cactionImportReference();
+          String importReference = "";
+          for (int i = 0, tokenArrayLength = node.tokens.length; i < tokenArrayLength; i++)
+             {
+               String tokenString = new String(node.tokens[i]);
+               System.out.println("     --- ImportReference tokens = " + tokenString);
 
-          if (java_parser.verboseLevel > 0)
+               if (i > 0)
+                    importReference += '.';
+
+               importReference += tokenString;
+             }
+
+          boolean withOnDemand = true;
+          boolean containsWildcard = false;
+          String importReferenceWithoutWildcard = importReference;
+          if (withOnDemand && ((node.bits & node.OnDemand) != 0))
+             {
+            // output.append(".*");
+               System.out.println("     --- ImportReference tokens = *");
+               importReference += ".*";
+               containsWildcard = true;
+             }
+
+          if (java_parser.verboseLevel > -1)
+               System.out.println("importReference (string) = " + importReference);
+
+       // Build the text for the token (not taken from the token stream in EDG, so it might be wrong to call this a token; fix later).
+          String text = "import";
+
+       // We know how to set these, but make them known values for initial testing.
+          int    line_start = 7;
+          int    line_end   = 7;
+          int    col_start  = 42;
+          int    col_end    = 42;
+
+          System.out.println("Building a JavaToken("+text+","+line_start+","+col_start+")");
+          JavaToken token = new JavaToken(text,line_start,col_start);
+          System.out.println("DONE: Building a JavaToken("+text+","+line_start+","+col_start+")");
+
+       // Use the newer source code position information (we can build it on the stack).
+          JavaSourcePositionInformation sourcePositionInfo = new JavaSourcePositionInformation(line_start,line_end,col_start,col_end);
+          java_parser.cactionSetSourcePosition(sourcePositionInfo);
+
+       // DQ (4/15/2011): I could not get the passing of a boolean to work, so I am just passing an integer.
+          int containsWildcard_integer = containsWildcard ? 1 : 0;
+          java_parser.cactionImportReference(importReferenceWithoutWildcard,containsWildcard_integer);
+
+       // Use the token to set the source code position for ROSE.
+          java_parser.cactionGenerateToken(token);
+
+/*
+       // I now do not think this is worth doing at this point.  Basically, we will treat the "import" statement
+       // as a stringified construct (as much as I don't like that approach within a compiler).
+
+       // We now read in classes on demand as they are references, if they are references.  All classes are read as 
+       // required to resolved all types in the program and the implicitly read classes.  Interestingly, there
+       // are nearly 3000 classes in the 135 packages in the J2SE 1.4.2 standard class library (over 3000 classes 
+       // in 165 packages in J2SE 5.0). Commercial class libraries that you might use add many more packages. 
+       // This implements the equivalent of the C++ "use" statement on "java.lang".
+          System.out.println("Processing import statement: path = " + importReference + " importReferenceWithoutWildcard = " + importReferenceWithoutWildcard);
+
+          JavaParserSupport.buildImplicitClassSupport("java.lang");
+
+       // Note that reflection does not work on all levels (e.g. "java.io"), so we have to handle some cases explicitly.
+          String s = new String(node.tokens[0]);
+          int tokenArrayLength = node.tokens.length;
+          System.out.println("tokenArrayLength = " + tokenArrayLength + " s = " + s);
+          String javaString = new String("java");
+          if (s == javaString)
+             {
+               System.out.println("In path segment: s = " + s);
+               if (tokenArrayLength > 1)
+                  {
+                    s = new String(node.tokens[1]);
+
+                 // This is the start of the default implicit package within the Java standard.
+                    if (s == "lang")
+                       {
+                      // This is the start of the default implicit language package within the Java standard.
+                         if (containsWildcard == true)
+                            {
+                              System.out.println("Processing java.lang.*");
+                            }
+                           else
+                            {
+                              System.out.println("Error: import java.lang is not defined in Java");
+                              System.exit(1);
+                            }
+                       }
+                      else
+                       {
+                         if (s == "io")
+                            {
+                           // This is the start of the default implicit package within the Java standard.
+                              if (containsWildcard == true)
+                                 {
+                                   System.out.println("Processing java.io.*");
+                                 }
+                                else
+                                 {
+                                   System.out.println("Error: import java.io is not defined in Java");
+                                   System.exit(1);
+                                 }
+                            }
+                           else
+                            {
+                              System.out.println("Sorry, import java." + s + " is not implemented yet");
+                              System.exit(1);
+                            }
+                       }
+                  }
+                 else
+                  {
+                    if (containsWildcard == true)
+                       {
+                      // System.out.println("Processing java.*");
+                         System.out.println("Sorry, import java.* is not implemented yet");
+                         System.exit(1);
+                       }
+                      else
+                       {
+                         System.out.println("Error: import java is not implemented yet");
+                         System.exit(1);
+                       }
+                  }
+             }
+            else
+             {
+               System.out.println("Not a part of java standard package: import " + s + " is not implemented yet");
+               System.exit(1);
+             }
+
+       // JavaParserSupport.buildImplicitClassSupport(importReference);
+          JavaParserSupport.buildImplicitClassSupport(importReferenceWithoutWildcard);
+
+          System.out.println("DONE: Processing import statement: path = " + importReference + " importReferenceWithoutWildcard = " + importReferenceWithoutWildcard);
+*/
+          if (java_parser.verboseLevel > -1)
                System.out.println("Leaving visit (ImportReference,CompilationUnitScope)");
 
           return true; // do nothing by  node, keep traversing
@@ -725,12 +937,12 @@ class ecjASTVisitor extends ASTVisitor
 
      public boolean visit(IntLiteral  node, BlockScope scope)
         {
-          if (java_parser.verboseLevel > 0)
+          if (java_parser.verboseLevel > -1)
                System.out.println("Inside of visit (IntLiteral,BlockScope)");
 
           java_parser.cactionIntLiteral();
 
-          if (java_parser.verboseLevel > 0)
+          if (java_parser.verboseLevel > -1)
                System.out.println("Leaving visit (IntLiteral,BlockScope)");
 
           return true; // do nothing by  node, keep traversing
@@ -1154,7 +1366,7 @@ class ecjASTVisitor extends ASTVisitor
           String name                = new String(node.selector);
           String associatedClassName = node.receiver.toString();
 
-          if (java_parser.verboseLevel > 2)
+          if (java_parser.verboseLevel > 0)
              {
                System.out.println("MessageSend node = " + node);
 
@@ -1230,7 +1442,17 @@ class ecjASTVisitor extends ASTVisitor
                     for (int i = 0, typeArgumentsLength = node.typeParameters.length; i < typeArgumentsLength; i++)
                        {
                          System.out.println("     --- method typeParameters = " + node.typeParameters[i]);
+
+                      // System.out.println("This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (MethodDeclaration,ClassScope)): type = " + node.typeParameters[i]);
+                      // JavaParserSupport.generateType(node.typeParameters[i]);
+                      // System.out.println("DONE: This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (MethodDeclaration,ClassScope)): type = " + node.typeParameters[i]);
                        }
+                  }
+                 else
+                  {
+                 // For a function defined in the input program, the typeParameters array is empty, but the ECJ
+                 // specific AST traversal will visit the type parameters. Not clear why this is organized like this.
+                    System.out.println("     --- method typeParameters (empty) = " + node.typeParameters);
                   }
 
                if (node.statements != null)
@@ -1242,11 +1464,46 @@ class ecjASTVisitor extends ASTVisitor
                   }
              }
 
+       // Looking here for arguments (want the arguments) since they are not always in the node.typeParameters
+          if (node.arguments != null)
+             {
+               for (int i = 0, typeArgumentsLength = node.arguments.length; i < typeArgumentsLength; i++)
+                  {
+                 // System.out.println("     --- method arguments = " + node.arguments[i].type);
+                    System.out.println("     --- method arguments (type = " + node.arguments[i].type + ", name = " + new String(node.arguments[i].name) + ")");
+
+                    String nameString = new String(node.arguments[i].name);
+                    System.out.println("This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (MethodDeclaration,ClassScope)): type = " + node.arguments[i].type + " nameString = " + nameString);
+                    JavaParserSupport.generateType(node.arguments[i].type);
+
+                 // This rule assumes that the type will be made available on the stack (astJavaTypeStack).
+                 // In general we want to have rules that are specific to IR nodes and pass any constructed
+                 // IR nodes via the stack (rules called should have generated the constructed IR nodes on 
+                 // the stack within ROSE).
+                    java_parser.cactionArgument(nameString,node.modifiers);
+
+                    System.out.println("DONE: This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (visit (MethodDeclaration,ClassScope)): type = " + node.arguments[i].type + " nameString = " + nameString);
+                  }
+             }
+            else
+             {
+            // For a function defined in the input program, the typeParameters array is empty, but the ECJ
+            // specific AST traversal will visit the type parameters. Not clear why this is organized like this.
+               System.out.println("     --- method arguments (empty) = " + node.arguments);
+             }
+
+       // Build the return type in ROSE and push it onto the stack (astJavaTypeStack).
+          JavaParserSupport.generateType(node.returnType);
+
        // System.out.println("Exiting to test error handling! \n");
        // System.exit(0);
 
        // java_parser.cactionMethodDeclaration();
        // java_parser.cactionMethodDeclaration("MethodDeclaration_abc");
+
+       // We can build this here but we can't put the symbol into the symbol tabel until 
+       // we have gathered the function parameter types so that the correct function type 
+       // can be computed.
           java_parser.cactionMethodDeclaration(name);
 
           if (java_parser.verboseLevel > 0)
@@ -1678,10 +1935,17 @@ class ecjASTVisitor extends ASTVisitor
           if (java_parser.verboseLevel > 0)
                System.out.println("Inside of visit (StringLiteral,BlockScope)");
 
-          java_parser.cactionStringLiteral("StringLiteral_abc");
+       // System.out.println("Inside of visit (StringLiteral,BlockScope): node = " + node);
+          String literal = new String(node.source());
+          System.out.println("Inside of visit (StringLiteral,BlockScope): node = " + literal);
+
+          java_parser.cactionStringLiteral(literal);
 
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving visit (StringLiteral,BlockScope)");
+
+       // System.out.println("Exiting at base of visit (StringLiteral,BlockScope)");
+       // System.exit(1);
 
           return true; // do nothing by  node, keep traversing
         }
@@ -2267,6 +2531,15 @@ class ecjASTVisitor extends ASTVisitor
      public void endVisit(MessageSend  node, BlockScope scope)
         {
        // do nothing  by default
+
+          if (java_parser.verboseLevel > -1)
+               System.out.println("Inside of endVisit (MessageSend,BlockScope)");
+
+          java_parser.cactionMessageSendEnd();
+
+       // Not clear when we have to provide a parameter.
+          java_parser.cactionStatementEnd("MessageSend");
+
           if (java_parser.verboseLevel > 0)
                System.out.println("Leaving endVisit (MessageSend,BlockScope)");
         }

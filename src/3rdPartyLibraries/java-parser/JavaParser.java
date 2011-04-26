@@ -62,6 +62,9 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionArgument(String argumentName, int modifiers);
      public native void cactionArrayTypeReference(String filename);
      public native void cactionMessageSend(String functionName, String associatedClassName);
+
+     public native void cactionMessageSendEnd();
+
      public native void cactionQualifiedNameReference(String filename);
      public native void cactionStringLiteral(String filename);
 
@@ -101,7 +104,12 @@ class JavaParser  implements Callable<Boolean>
      public native void cactionForeachStatement();
      public native void cactionForStatement();
      public native void cactionIfStatement();
-     public native void cactionImportReference();
+
+  // DQ (4/16/2011): I can't seem to get Boolean values to pass through the JNI C++ interface (so I will use an integer since that works fine).
+  // public native void cactionImportReference(String path);
+  // public native void cactionImportReference(String path , Boolean inputContainsWildcard );
+     public native void cactionImportReference(String path , int java_ContainsWildcard );
+
      public native void cactionInitializer();
      public native void cactionInstanceOfExpression();
      public native void cactionIntLiteral();
@@ -185,12 +193,30 @@ class JavaParser  implements Callable<Boolean>
 
   // Type support
      public static native void cactionGenerateType(String typeName);
+     public static native void cactionGenerateClassType(String className);
 
   // Closing support to finish up statement handling.
      public static native void cactionStatementEnd(String typeName);
 
   // public native void cactionMethodDeclarationEnd(String methodName);
      public native void cactionMethodDeclarationEnd();
+
+  // Build an array type using the base type that will be found on the astJavaTypeStack.
+     public static native void cactionGenerateArrayType();
+
+  // Support for primative types.
+     public static native void generateBooleanType();
+     public static native void generateByteType();
+     public static native void generateCharType();
+     public static native void generateIntType();
+     public static native void generateShortType();
+     public static native void generateFloatType();
+     public static native void generateLongType();
+     public static native void generateDoubleType();
+     public static native void generateNullType();
+
+     public static native void cactionGenerateToken(JavaToken t);
+     public static native void cactionSetSourcePosition(JavaSourcePositionInformation sp);
 
   // Save the compilationResult as we process the CompilationUnitDeclaration class.
   // public CompilationResult rose_compilationResult;
@@ -205,7 +231,7 @@ class JavaParser  implements Callable<Boolean>
 
   // -------------------------------------------------------------------------------------------
 
-         public void startParsingAST(CompilationUnitDeclaration unit /*, int input_veboseLevel */)
+     public void startParsingAST(CompilationUnitDeclaration unit /*, int input_veboseLevel */)
         {
        // Set the verbose level for ROSE specific processing on the Java specific ECJ/ROSE translation.
        // verboseLevel = input_veboseLevel;
@@ -217,12 +243,12 @@ class JavaParser  implements Callable<Boolean>
        // Example of how to call the 
        // traverseAST(unit);
 
-       // Make a copy of the compiation unit so that we can compute source code positions.
-       // rose_compilationResult = unit.compilationResult;
-          JavaParserSupport.initialize(unit.compilationResult,verboseLevel);
-
           try
              {
+            // Make a copy of the compiation unit so that we can compute source code positions.
+            // rose_compilationResult = unit.compilationResult;
+               JavaParserSupport.initialize(unit.compilationResult,verboseLevel);
+
             // Example of how to call the traversal using a better design that isolates out the traversal of the ECJ AST from the parser.
             // "final" is required because the traverse function requires the visitor to be final.
                final ecjASTVisitor visitor = new ecjASTVisitor(this);

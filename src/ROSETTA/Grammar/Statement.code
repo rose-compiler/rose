@@ -993,6 +993,8 @@ HEADER_LIST_DECLARATIONS
 
        // DQ (2/18/2006): This is now computed at runtime
        // void set_mangled_name();
+       
+          $CLASSNAME(SgForInitStatement *, SgStatement *, SgExpression *, SgStatement *);
 
           SgStatementPtrList & get_init_stmt();
           const SgStatementPtrList & get_init_stmt() const;
@@ -2934,6 +2936,9 @@ HEADER_UPC_FENCE_STATEMENT_END
 
 HEADER_UPC_FORALL_STATEMENT_START
 HEADER_LIST_DECLARATIONS
+
+       $CLASSNAME(SgForInitStatement *, SgStatement *, SgExpression *, SgExpression *, SgStatement * = NULL);
+
        // Liao, 6/17/2008 Copied from HEADER_FOR_STATEMENT_START
          SgStatementPtrList & get_init_stmt();
           const SgStatementPtrList & get_init_stmt() const;
@@ -2976,6 +2981,13 @@ HEADER_LINEMARKER_PREPROCESSOR_DIRECTIVE_STATEMENT_START
 
 HEADER_LINEMARKER_PREPROCESSOR_DIRECTIVE_STATEMENT_END
 
+
+HEADER_JAVA_IMPORT_STATEMENT_START
+       // We might need to be able to read this file in and process it..., but hopefully the ECJ frontend takes care of that.
+
+          virtual SgName get_mangled_name (void) const;
+
+HEADER_JAVA_IMPORT_STATEMENT_END
 
 // #########################################################
 // #########################################################
@@ -7299,37 +7311,48 @@ SOURCE_FOR_INIT_STATEMENT_END
 
 SOURCE_FOR_STATEMENT_START
 
+$CLASSNAME::$CLASSNAME(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body) :
+  $BASECLASS(),
+  p_for_init_stmt(init_stmt),
+  p_test(test),
+  p_increment(increment),
+  p_loop_body(loop_body)
+{
+  post_construction_initialization();
+}
+
 void
 SgForStatement::post_construction_initialization()
    {
   // DQ (6/24/2006): Refactored this code to build the SgForInitStatement 
   // for all SgForStatement as part of constructor.
-     ROSE_ASSERT(p_for_init_stmt == NULL);
-  // SgForInitStatement* forInitStatement = new SgForInitStatement(New_File_Info(this));
-     SgForInitStatement* forInitStatement = NULL;
-     if (get_startOfConstruct() != NULL)
-        {
-          forInitStatement = new SgForInitStatement(New_File_Info(this));
+     if (p_for_init_stmt == NULL) {
+    // SgForInitStatement* forInitStatement = new SgForInitStatement(New_File_Info(this));
+       SgForInitStatement* forInitStatement = NULL;
+       if (get_startOfConstruct() != NULL)
+          {
+            forInitStatement = new SgForInitStatement(New_File_Info(this));
 
-       // DQ (10/27/2006): This will have to be updated after construction, 
-       // since we don't know the ending position at this point!
-          forInitStatement->set_endOfConstruct(New_File_Info(this));
+         // DQ (10/27/2006): This will have to be updated after construction, 
+         // since we don't know the ending position at this point!
+            forInitStatement->set_endOfConstruct(New_File_Info(this));
 
-       // DQ (12/17/2006): Fixup the parents of Sg_File_Info objects
-          forInitStatement->get_startOfConstruct()->set_parent(forInitStatement);
-          forInitStatement->get_endOfConstruct()->set_parent(forInitStatement);
-        }
-       else
-        {
-          forInitStatement = new SgForInitStatement();
-        }
+         // DQ (12/17/2006): Fixup the parents of Sg_File_Info objects
+            forInitStatement->get_startOfConstruct()->set_parent(forInitStatement);
+            forInitStatement->get_endOfConstruct()->set_parent(forInitStatement);
+          }
+         else
+          {
+            forInitStatement = new SgForInitStatement();
+          }
 
-     ROSE_ASSERT(forInitStatement != NULL);
+       ROSE_ASSERT(forInitStatement != NULL);
 
-  // All SgForStatement IR nodes should have a valid SgForInitStatement (even if it is an empty list!).
-     set_for_init_stmt(forInitStatement);
-
-     forInitStatement->set_parent(this);
+    // All SgForStatement IR nodes should have a valid SgForInitStatement (even if it is an empty list!).
+       set_for_init_stmt(forInitStatement);  
+     }
+     
+     p_for_init_stmt->set_parent(this);
 
   // DQ (12/17/2006): If these are available, then set their parents as well (ok, since this is a structural issue).
      if (p_test != NULL)
@@ -7507,13 +7530,24 @@ SOURCE_FORALL_STATEMENT_END
 
 SOURCE_UPC_FORALL_STATEMENT_START
 
+$CLASSNAME::$CLASSNAME(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgExpression * affinity, SgStatement * loop_body) :
+  $BASECLASS(),
+  p_for_init_stmt(init_stmt),
+  p_test(test),
+  p_increment(increment),
+  p_affinity(affinity),
+  p_loop_body(loop_body)
+{
+  post_construction_initialization();
+}
+
 // Liao, we have to duplicate most code from SgForStatement since 
 // SgUpcForAllStatement and SgForStatement are not related 
 // Copy the member functions from SgForStatement below:
 void
 SgUpcForAllStatement::post_construction_initialization()
    {
-    ROSE_ASSERT(p_for_init_stmt == NULL);
+    if (p_for_init_stmt == NULL) {
   // SgForInitStatement* forInitStatement = new SgForInitStatement(New_File_Info(this));
      SgForInitStatement* forInitStatement = NULL;
      if (get_startOfConstruct() != NULL)
@@ -7534,11 +7568,12 @@ SgUpcForAllStatement::post_construction_initialization()
         }
 
      ROSE_ASSERT(forInitStatement != NULL);
-
+     
   // All SgUpcForAllStatement IR nodes should have a valid SgForInitStatement (even if it is an empty list!).
      set_for_init_stmt(forInitStatement);
+   }
 
-     forInitStatement->set_parent(this);
+     p_for_init_stmt->set_parent(this);
 
   // DQ (12/17/2006): If these are available, then set their parents as well (ok, since this is a structural issue).
      if (p_test != NULL)
@@ -7550,6 +7585,12 @@ SgUpcForAllStatement::post_construction_initialization()
      if (p_increment != NULL)
         {
           p_increment->set_parent(this);
+        }
+
+  // DQ (12/17/2006): If these are available, then set their parents as well (ok, since this is a structural issue).
+     if (p_affinity != NULL)
+        {
+          p_affinity->set_parent(this);
         }
 
   // DQ (12/17/2006): If these are available, then set their parents as well (ok, since this is a structural issue).
@@ -13740,5 +13781,37 @@ SgCAFWithTeamStatement::post_construction_initialization()
 
 SOURCE_WITH_TEAM_STATEMEMT_END
 
+SOURCE_JAVA_IMPORT_STATEMENT_START
+
+void
+SgJavaImportStatement::post_construction_initialization()
+   {
+  // Nothing to setup here.
+   }
+
+// DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
+SgName
+SgJavaImportStatement::get_mangled_name(void) const
+   {
+  // The semantics of get_scope is that it can never be NULL (SgGlobal returns itself as its scope!)
+     SgScopeStatement* scope = get_scope();
+     ROSE_ASSERT(scope != NULL);
+
+     SgName returnName = SgName("_java_import_stmt_") + get_path();
+
+     if (get_containsWildCard() == true)
+        {
+          returnName += "_dot_regx_star_";
+        }
+
+#if 0
+     printf ("In SgJavaImportStatement::get_mangled_name(void): scope = %p = %s scope->get_qualified_name() = %s returnName = %s \n",
+          scope,scope->class_name().c_str(),scope->get_qualified_name().str(),returnName.str());
+#endif
+
+     return returnName;
+   }
+
+SOURCE_JAVA_IMPORT_STATEMENT_END
 
 
