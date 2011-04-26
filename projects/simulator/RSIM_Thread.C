@@ -606,7 +606,9 @@ RSIM_Thread::main()
             bool cb_status = callbacks.call_insn_callbacks(RSIM_Callbacks::BEFORE, this, insn, true);
             if (cb_status) {
                 process->binary_trace_add(this, insn);
-                semantics.processInstruction(insn);
+                RTS_MUTEX(insn_mutex) {
+                    semantics.processInstruction(insn);
+                } RTS_MUTEX_END;
             }
             callbacks.call_insn_callbacks(RSIM_Callbacks::AFTER, this, insn, cb_status);
 
@@ -965,31 +967,43 @@ RSIM_Thread::post_fork()
 void
 RSIM_Thread::emulate_syscall()
 {
-    unsigned callno = policy.readGPR(x86_gpr_ax).known_value();
-    bool cb_status = callbacks.call_syscall_callbacks(RSIM_Callbacks::BEFORE, this, callno, true);
-    if (cb_status) {
-        RSIM_Simulator *sim = get_process()->get_simulator();
-        if (sim->syscall_is_implemented(callno)) {
-            RSIM_Simulator::SystemCall *sc = sim->syscall_implementation(callno);
-            sc->enter.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
-            sc->body .apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
-            sc->leave.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
-        } else {
-            char name[32];
-            sprintf(name, "syscall_%u", callno);
-            tracing(TRACE_MISC)->multipart(name, "syscall_%u(", callno);
-            for (int i=0; i<6; i++)
-                tracing(TRACE_MISC)->more("%s0x%08"PRIx32, i?", ":"", syscall_arg(i));
-            tracing(TRACE_MISC)->more(") is not implemented yet");
-            tracing(TRACE_MISC)->multipart_end();
+    int err = RTS_mutex_unlock(&insn_mutex);
+    assert(!err);
 
-            tracing(TRACE_MISC)->mesg("dumping core...\n");
-            get_process()->dump_core(SIGSYS);
-            report_stack_frames(tracing(TRACE_MISC));
-            abort();
+    try {
+        unsigned callno = policy.readGPR(x86_gpr_ax).known_value();
+        bool cb_status = callbacks.call_syscall_callbacks(RSIM_Callbacks::BEFORE, this, callno, true);
+        if (cb_status) {
+            RSIM_Simulator *sim = get_process()->get_simulator();
+            if (sim->syscall_is_implemented(callno)) {
+                RSIM_Simulator::SystemCall *sc = sim->syscall_implementation(callno);
+                sc->enter.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
+                sc->body .apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
+                sc->leave.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
+            } else {
+                char name[32];
+                sprintf(name, "syscall_%u", callno);
+                tracing(TRACE_MISC)->multipart(name, "syscall_%u(", callno);
+                for (int i=0; i<6; i++)
+                    tracing(TRACE_MISC)->more("%s0x%08"PRIx32, i?", ":"", syscall_arg(i));
+                tracing(TRACE_MISC)->more(") is not implemented yet");
+                tracing(TRACE_MISC)->multipart_end();
+
+                tracing(TRACE_MISC)->mesg("dumping core...\n");
+                get_process()->dump_core(SIGSYS);
+                report_stack_frames(tracing(TRACE_MISC));
+                abort();
+            }
         }
+        callbacks.call_syscall_callbacks(RSIM_Callbacks::AFTER, this, callno, cb_status);
+    } catch (...) {
+        err = RTS_mutex_lock(&insn_mutex);
+        assert(!err);
+        throw;
     }
-    callbacks.call_syscall_callbacks(RSIM_Callbacks::AFTER, this, callno, cb_status);
+
+    err = RTS_mutex_lock(&insn_mutex);
+    assert(!err);
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */
