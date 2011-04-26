@@ -10,6 +10,7 @@
 #include <sys/user.h>
 
 size_t RSIM_Thread::next_sequence_number = 1;
+RTS_mutex_t RSIM_Thread::insn_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_RSIM_THREAD_CLASS);
 
 /* Constructor */
 void
@@ -170,36 +171,38 @@ RSIM_Thread::syscall_leave(const char *format, ...)
         uint32_t retval = policy.readGPR(x86_gpr_ax).known_value();
         syscall_arginfo(format[0], retval, &info, &ap);
 
-        RTS_MESSAGE(*mesg) {
-            mesg->more(" = ");
+        RTS_WRITE(process->rwlock()) {
+            RTS_MESSAGE(*mesg) {
+                mesg->more(" = ");
 
-            /* Return value */
-            int error_number = (int32_t)retval<0 && (int32_t)retval>-256 ? -(int32_t)retval : 0;
-            if (returns_errno && error_number!=0) {
-                mesg->more("%"PRId32" ", retval);
-                print_enum(mesg, error_numbers, error_number);
-                mesg->more(" (%s)\n", strerror(error_number));
-            } else {
-                print_single(mesg, format[0], &info);
-                mesg->more("\n");
-            }
+                /* Return value */
+                int error_number = (int32_t)retval<0 && (int32_t)retval>-256 ? -(int32_t)retval : 0;
+                if (returns_errno && error_number!=0) {
+                    mesg->more("%"PRId32" ", retval);
+                    print_enum(mesg, error_numbers, error_number);
+                    mesg->more(" (%s)\n", strerror(error_number));
+                } else {
+                    print_single(mesg, format[0], &info);
+                    mesg->more("\n");
+                }
 
-            /* Additionally, output any other buffer values that were filled in by a successful system call. */
-            int result = (int)(uint32_t)(syscall_arg(-1));
-            if (!returns_errno || (result<-1024 || result>=0) || -EINTR==result) {
-                for (size_t i=1; format[i]; i++) {
-                    if ('-'!=format[i]) {
-                        syscall_arginfo(format[i], syscall_arg(i-1), &info, &ap);
-                        if ('P'!=format[i] || 0!=syscall_arg(i-1)) { /* no need to show null pointers */
-                            mesg->more("    result arg%zu = ", i-1);
-                            print_single(mesg, format[i], &info);
-                            mesg->more("\n");
+                /* Additionally, output any other buffer values that were filled in by a successful system call. */
+                int result = (int)(uint32_t)(syscall_arg(-1));
+                if (!returns_errno || (result<-1024 || result>=0) || -EINTR==result) {
+                    for (size_t i=1; format[i]; i++) {
+                        if ('-'!=format[i]) {
+                            syscall_arginfo(format[i], syscall_arg(i-1), &info, &ap);
+                            if ('P'!=format[i] || 0!=syscall_arg(i-1)) { /* no need to show null pointers */
+                                mesg->more("    result arg%zu = ", i-1);
+                                print_single(mesg, format[i], &info);
+                                mesg->more("\n");
+                            }
                         }
                     }
                 }
-            }
-            mesg->multipart_end();
-        } RTS_MESSAGE_END(true);
+                mesg->multipart_end();
+            } RTS_MESSAGE_END(true);
+        } RTS_WRITE_END;
     }
 
     va_end(ap);
@@ -538,19 +541,21 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg)
 {
     if (!mesg || !mesg->get_file())
         return;
-    RTS_MESSAGE(*mesg) {
-        mesg->multipart("stack", "stack frames:\n");
-        uint32_t bp = policy.readGPR(x86_gpr_bp).known_value();
-        uint32_t retaddr, next_bp;
-        for (int i=0; i<32; i++, bp=next_bp) {
-            if (4!=process->mem_read(&retaddr, bp+4, 4))
-                break;
-            if (4!=process->mem_read(&next_bp, bp, 4))
-                break;
-            mesg->more("  #%d: bp=0x%08"PRIx32" ret=0x%08"PRIx32"\n", i, bp, retaddr);
-        }
-        mesg->multipart_end();
-    } RTS_MESSAGE_END(true);
+    RTS_WRITE(get_process()->rwlock()) {
+        RTS_MESSAGE(*mesg) {
+            mesg->multipart("stack", "stack frames:\n");
+            uint32_t bp = policy.readGPR(x86_gpr_bp).known_value();
+            uint32_t retaddr, next_bp;
+            for (int i=0; i<32; i++, bp=next_bp) {
+                if (4!=process->mem_read(&retaddr, bp+4, 4))
+                    break;
+                if (4!=process->mem_read(&next_bp, bp, 4))
+                    break;
+                mesg->more("  #%d: bp=0x%08"PRIx32" ret=0x%08"PRIx32"\n", i, bp, retaddr);
+            }
+            mesg->multipart_end();
+        } RTS_MESSAGE_END(true);
+    } RTS_WRITE_END;
 }
 
 void

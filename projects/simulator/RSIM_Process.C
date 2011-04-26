@@ -1426,7 +1426,7 @@ RSIM_Process::clone_thread(RSIM_Thread *thread, unsigned flags, uint32_t parent_
         pthread_t t;
         int err = -pthread_create(&t, NULL, RSIM_Process::clone_thread_helper, &clone_info);
         if (0==err)
-            pthread_cond_wait(&clone_info.cond, &clone_info.mutex); /* wait for child to initialize */
+            pthread_cond_wait(&clone_info.cond, &clone_info.mutex.mutex); /* wait for child to initialize */
     } RTS_MUTEX_END;
     return clone_info.newtid; /* filled in by clone_thread_helper; negative on error */
 }

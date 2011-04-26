@@ -44,6 +44,9 @@ public:
     /** Main loop. This loop simulates a single specimen thread and returns when the simulated thread exits. */
     void *main();
 
+    /** The global mutex for instruction simulation. */
+    static RTS_mutex_t insn_mutex;
+
 
 
     /**************************************************************************************************************************

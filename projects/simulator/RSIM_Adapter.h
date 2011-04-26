@@ -208,7 +208,7 @@ namespace RSIM_Adapter {
          *  been neither explicitly enabled nor explicitly disabled. */
         explicit SyscallDisabler(bool dflt)
             :  syscall_cb(NULL), dflt_state(dflt) {
-            pthread_mutex_init(&mutex, NULL);
+            RTS_mutex_init(&mutex, RTS_LAYER_RSIM_SYSCALLDISABLER_OBJ, NULL);
             prefix("SyscallDisabler: ");
         }
 
@@ -271,7 +271,7 @@ namespace RSIM_Adapter {
     protected:
         /* Non mutex-protected data members */
         SyscallCB *syscall_cb;
-        mutable pthread_mutex_t mutex;
+        mutable RTS_mutex_t mutex;
         ROSE_Callbacks::List<RSIM_Simulator::SystemCall::Callback> cblist;
         
         /* Mutex-protected data members */
@@ -303,7 +303,7 @@ namespace RSIM_Adapter {
             : read_cb(this, "input"), write_cb(this, "output"),
               readv_cb(this, "input"), writev_cb(this, "output"),
               mmap_cb(this), ftruncate_cb(this) {
-            pthread_mutex_init(&mutex, NULL);
+            RTS_mutex_init(&mutex, RTS_LAYER_RSIM_TRACEIO_OBJ, NULL);
             prefix("TraceIO: ");
             hd_format.prefix = "    ";
             hd_format.multiline = true;
@@ -374,7 +374,7 @@ namespace RSIM_Adapter {
 
     protected:
         std::set<int32_t> tracefd;                              /* Set of file descriptors being traced. */
-        pthread_mutex_t mutex;                                  /* Protects tracefd */
+        RTS_mutex_t mutex;                                      /* Protects tracefd */
         ReadWriteSyscall read_cb, write_cb;                     /* Callbacks for sys_read, sys_write, etc. */
         ReadWriteVectorSyscall readv_cb, writev_cb;             /* Callbacks for sys_readv and sys_writev */
         MmapSyscall mmap_cb;                                    /* Callback for sys_mmap and sys_mmap2 */

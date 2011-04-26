@@ -7,7 +7,7 @@
 
 #include <sys/wait.h>
 
-RTS_rwlock_t RSIM_Simulator::class_rwlock = RTS_RWLOCK_INITIALIZER;
+RTS_rwlock_t RSIM_Simulator::class_rwlock = RTS_RWLOCK_INITIALIZER(RTS_LAYER_RSIM_SIMULATOR_CLASS);
 RSIM_Simulator *RSIM_Simulator::active_sim = NULL;
 
 /******************************************************************************************************************************
@@ -87,7 +87,7 @@ syscall_RSIM_delay_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Simulator::ctor()
 {
-    RTS_rwlock_init(&instance_rwlock, NULL);
+    RTS_rwlock_init(&instance_rwlock, RTS_LAYER_RSIM_SIMULATOR_OBJ, NULL);
 
     syscall_define(1000000, syscall_RSIM_is_present_enter, syscall_RSIM_is_present, syscall_RSIM_is_present_leave);
     syscall_define(1000001, syscall_RSIM_message_enter,    syscall_RSIM_message,    syscall_RSIM_message_leave);
