@@ -1487,9 +1487,16 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
 
     release_mutex:
         clone_info->newtid = tid;
-        pthread_cond_signal(&clone_info->cond);       /* tell parent we're done initializing */
-        clone_info = NULL; /* won't be valid after we release mutex */
     } RTS_MUTEX_END;
+
+    /* Parent is still blocked on pthread_cond_wait because we haven't signalled it yet.  We must signal after we've released
+     * the mutex, because once we signal, the parent could return from clone_thread(), thus removing clone_info from the
+     * stack.  It's not always safe to call pthread_cond_signal without holding the mutex, but in this case it is because we
+     * couldn't have gotten this far (we couldn't have acquired the mutex above) until the parent is inside
+     * pthread_cond_wait(). */
+    pthread_cond_signal(&clone_info->cond);       /* tell parent we're done initializing */
+    clone_info = NULL; /* won't be valid after we signal the parent */
+
     if (tid<0)
         pthread_exit(NULL);
 
