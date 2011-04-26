@@ -196,10 +196,13 @@ namespace AstFromString
      IDENTIFIER
      :     LETTER (LETTER|'0'..'9')*
      ;
+
+     You need symbol table info to parse C
+     IDENTIFIERS are either types or plain IDs
    */
   bool afs_match_identifier()
   {
-    bool result = false;
+    //bool result = false;
     char buffer[OFS_MAX_LEN];
     const char* old_char = c_char;
     afs_skip_whitespace();
@@ -309,10 +312,9 @@ namespace AstFromString
   {
     bool result = false;
     const char* old_char = c_char;
+
     if (afs_match_identifier())
-    {
       result = true;
-    }
     else if (afs_match_constant())
       result = true;
     else if( afs_match_char('('))
@@ -373,6 +375,12 @@ namespace AstFromString
 	c_parsed_node = buildPlusPlusOp (exp,SgUnaryOp::prefix );
 	result = true;
       }
+      else 
+      {
+//	printf ("error. afs_match_unary_expression() expects unary_exp after matching ++\n");
+//	assert (0);
+	c_char = old_char;
+      }
     } 
     else if (afs_match_substr("--"))
     {
@@ -384,19 +392,29 @@ namespace AstFromString
 	c_parsed_node = buildMinusMinusOp (exp,SgUnaryOp::prefix );
 	result = true;
       }
+      else 
+      {
+	//printf ("error. afs_match_unary_expression() expects unary_exp after matching --\n");
+	//assert (0);
+	c_char = old_char;
+      }
 
     } else if (afs_peak_next() == '&' || afs_peak_next() == '*'|| afs_peak_next() == '+'
 	||afs_peak_next() == '-'||afs_peak_next() == '~' || afs_peak_next() == '!' )
     {
       VariantT op_type ;
       if (afs_match_char('&'))
-      {
 	op_type = V_SgAddressOfOp;
-      }
       else if (afs_match_char('*'))
 	op_type = V_SgPointerDerefExp;
       else if (afs_match_char('-'))
 	op_type = V_SgMinusOp;
+      else if (afs_match_char('+'))
+	op_type = V_SgUnaryAddOp;
+      else if (afs_match_char('~'))
+	op_type = V_SgBitComplementOp;
+      else if (afs_match_char('!'))
+	op_type = V_SgNotOp;
       else
       {
 	printf("error. afs_match_unary_expression(): unimplemented unary operator type:\n");
@@ -418,7 +436,15 @@ namespace AstFromString
 	  case V_SgMinusOp:
 	    c_parsed_node = buildMinusOp(exp);
 	    break;
-
+	  case V_SgUnaryAddOp:
+	    c_parsed_node = buildUnaryAddOp(exp);
+	    break;
+	  case V_SgBitComplementOp:
+	    c_parsed_node = buildBitComplementOp(exp);
+	    break;
+	  case V_SgNotOp:
+	    c_parsed_node = buildNotOp(exp);
+	    break;
 	  default:
 	    printf("afs_match_unary_expression(): unhandled unary operator type\n");
 	    assert (0);
@@ -528,7 +554,7 @@ namespace AstFromString
 
     // TODO 
 #if 0    
-    if (ofs_match_abstract_declarator())
+    if (afs_match_abstract_declarator())
     {
     }
 #endif
@@ -721,7 +747,44 @@ namespace AstFromString
 
     if (afs_match_unary_expression())
       result = true;
-    //TODO real cast, need type name resolving
+    else if (afs_match_char('('))
+    {
+      if (afs_match_type_name())
+      {
+	SgType* t = isSgType(c_parsed_node);
+	assert (t!= NULL);
+	if (afs_match_char(')'))
+	{
+	  if (afs_match_cast_expression())
+	  {
+	    SgExpression* operand = isSgExpression(c_parsed_node);
+             c_parsed_node = buildCastExp(operand, t);
+	     result = true; // must set this!!
+	  }
+	  else
+	  {
+	    c_char = old_char; 
+	   // printf("error. afs_match_cast_expression() expects cast_exp after matching (type_name) \n");
+	   // assert(0);
+	  }
+	}
+	else
+	{
+          c_char = old_char; 
+	  //printf("error. afs_match_cast_expression() expects ) after matching (type_name \n");
+	  //assert(0);
+	}
+
+      }
+      else 
+      {
+	//printf("error. afs_match_cast_expression() expects type_name after matching ( \n");
+	//assert(0);
+	// should not assert here since unary_expression may start with '(' also!
+	c_char = old_char; 
+	result = false;
+      }
+    }
 
     if (result == false)   c_char = old_char;
     return result;
@@ -763,7 +826,6 @@ namespace AstFromString
 
     // try to match optional one or more +/- multi_exp
     // optional match may fail, set a rollback point first
-    //TODO fix other recursive case!! 
     old_char = c_char; // rollback point
     bool is_multiply = false; 
     bool is_divide = false; 
@@ -779,6 +841,7 @@ namespace AstFromString
       if (afs_match_cast_expression())
       {
 	SgExpression* rhs = isSgExpression(c_parsed_node);
+	assert (rhs != NULL);
 	if (is_multiply)
 	{
 	  c_parsed_node = buildMultiplyOp(lhs, rhs);
@@ -805,6 +868,8 @@ namespace AstFromString
       {
 	result = false;
 	c_char = old_char; // this round failed, restore to the lastes rollback point
+	//printf("error. afs_match_multiplicative_expression() expects cast_expression after matching * / or percentage character\n");
+	//assert (0);
 	break;
       }
 
@@ -855,7 +920,6 @@ namespace AstFromString
     { // immediate return if first term match fails
       c_char = old_char; // not really necessary here
       return false;
-
     } 
 
     // try to match optional one or more +/- multi_exp
@@ -872,6 +936,8 @@ namespace AstFromString
       if (afs_match_multiplicative_expression())
       {
 	rhs = isSgExpression(c_parsed_node);
+	assert (rhs != NULL);
+	assert (lhs != NULL);
 	if (is_plus)
 	{
 	  c_parsed_node = buildAddOp(lhs, rhs);
@@ -886,11 +952,13 @@ namespace AstFromString
 	{
 	  assert (0);
 	}
-	result = true;
+	//result = true;
       }
       else 
       {
 	c_char = old_char;
+	//printf("error in afs_match_additive_expression(): expects multiplicative_expression after matching '+' or '-'\n");
+	//assert (0);
 	break;
       }
 
@@ -906,22 +974,577 @@ namespace AstFromString
     return true;
   }
 
+  bool afs_match_lvalue()
+  {
+    if (afs_match_unary_expression())
+      return true;
+    else
+     return false; 
+  }
   /*
      ANTLR
      conditional_expression
      : logical_or_expression ('?' expression ':' conditional_expression)?
      ;
 
-
+   ? means 0 or 1 occurence
    */
   bool afs_match_conditional_expression()
   {
+#if 0
     //TODO implement anything between condition_expression and additive_expression
     if (afs_match_additive_expression())
       return true;
     else
       return false;
+#endif
+    bool result = false;    
+    const char* old_char = c_char;
+    // match the required first term
+    if (afs_match_logical_or_expression())
+    {
+      result = true;
+    }
+    else 
+    {
+      c_char = old_char;
+      return false;
+    }
+
+    // match the optional 2nd term
+    // to compose a SgConditionalExp (conditional_exp, true_exp, false_exp)
+    // preserve context first
+    SgExpression* cond_exp = isSgExpression(c_parsed_node);
+    assert (cond_exp != NULL);
+    old_char = c_char;
+    bool result2 = false;
+
+    if (afs_match_char('?'))
+    {
+      if (afs_match_expression())
+      {
+	SgExpression* true_exp = isSgExpression(c_parsed_node);
+	assert (true_exp != NULL);
+	if (afs_match_char(':'))
+	{
+	  if (afs_match_conditional_expression())
+	  {
+	    SgExpression* false_exp = isSgExpression(c_parsed_node);
+	    assert (false_exp != NULL);
+	    c_parsed_node = buildConditionalExp(cond_exp, true_exp, false_exp);
+	    result2 = true;
+	  }
+	}	   
+      }
+    }
+    if (!result2) // store contex if term2 is not matched.
+    {
+      c_char = old_char;
+      c_parsed_node = cond_exp;
+    }
+
+    return true;
   }
+  /*
+     logical_or_expression
+       : logical_and_expression ('||' logical_and_expression)*
+       ;
+
+   */
+  bool afs_match_logical_or_expression()
+  {
+    bool result = false;
+    const char* old_char = c_char;
+
+    SgExpression* lhs = NULL;
+    if (afs_match_logical_and_expression())
+    {
+      lhs = isSgExpression(c_parsed_node);
+      assert (lhs != NULL);
+      result = true; // sufficient enough
+    }
+    else
+    { // immediate return if first term match fails
+      c_char = old_char; // not really necessary here
+      return false;
+    }
+
+    // try to match optional one or more +/- multi_exp
+    old_char = c_char;
+    SgExpression* rhs = NULL;
+    while (afs_match_substr("||"))
+    {
+      if (afs_match_logical_and_expression())
+      {
+	rhs = isSgExpression(c_parsed_node);
+	assert (rhs != NULL);
+	assert (lhs != NULL);
+	c_parsed_node = buildOrOp(lhs, rhs);
+	lhs = isSgExpression(c_parsed_node);
+      }
+      else
+      {
+	c_char = old_char;
+	//printf("error in afs_match_logical_or_expression(): expects logical_and_expression after matching '||' \n");
+	//assert (0);
+	break;
+      }
+      // start the next round
+      old_char = c_char;
+    }
+    return true;   
+  }
+
+/*
+logical_and_expression
+	: inclusive_or_expression ('&&' inclusive_or_expression)*
+	;
+*/
+  bool afs_match_logical_and_expression()
+  {
+    bool result = false;
+    const char* old_char = c_char;
+
+    SgExpression* lhs = NULL;
+    if (afs_match_inclusive_or_expression())
+    {
+      lhs = isSgExpression(c_parsed_node);
+      assert (lhs != NULL);
+      result = true; // sufficient enough
+    }
+    else
+    { // immediate return if first term match fails
+      c_char = old_char; // not really necessary here
+      return false;
+    }
+
+    // try to match optional one or more +/- multi_exp
+    old_char = c_char;
+    SgExpression* rhs = NULL;
+    while (afs_match_substr("&&"))
+    {
+      if (afs_match_inclusive_or_expression())
+      {
+        rhs = isSgExpression(c_parsed_node);
+        assert (rhs != NULL);
+        assert (lhs != NULL);
+        c_parsed_node = buildAndOp(lhs, rhs);
+        lhs = isSgExpression(c_parsed_node);
+      }
+      else
+      {
+        c_char = old_char;
+       // printf("error in afs_match_logical_and_expression(): expects inclusive_or_expression after matching '&&'\n");
+       // assert (0);
+        break;
+      }
+      // start the next round
+      old_char = c_char;
+    }
+    return true;
+  }
+
+/*
+inclusive_or_expression
+	: exclusive_or_expression ('|' exclusive_or_expression)*
+	;
+*/
+  bool afs_match_inclusive_or_expression()
+  {
+    bool result = false;
+    const char* old_char = c_char;
+
+    SgExpression* lhs = NULL;
+    if (afs_match_exclusive_or_expression())
+    {
+      lhs = isSgExpression(c_parsed_node);
+      assert (lhs != NULL);
+      result = true; // sufficient enough
+    }
+    else
+    { // immediate return if first term match fails
+      c_char = old_char; // not really necessary here
+      return false;
+    }
+
+    // try to match optional one or more +/- multi_exp
+    old_char = c_char;
+    SgExpression* rhs = NULL;
+    while (afs_match_char('|'))
+    {
+      if (afs_match_exclusive_or_expression())
+      {
+        rhs = isSgExpression(c_parsed_node);
+        assert (rhs != NULL);
+        assert (lhs != NULL);
+        c_parsed_node = buildBitOrOp(lhs, rhs); //TODO verify those operator types!!
+        lhs = isSgExpression(c_parsed_node);
+      }
+      else
+      {
+        c_char = old_char;
+        //printf("error in afs_match_inclusive_or_expression(): expects exclusive_or_expression after matching '|'\n");
+        //assert (0);
+        break;
+      }
+      // start the next round
+      old_char = c_char;
+    }
+    return true;
+  }
+
+/*
+exclusive_or_expression
+	: and_expression ('^' and_expression)*
+	;
+*/
+  bool afs_match_exclusive_or_expression()
+  {
+    bool result = false;
+    const char* old_char = c_char;
+
+    SgExpression* lhs = NULL;
+    if (afs_match_and_expression())
+    {
+      lhs = isSgExpression(c_parsed_node);
+      assert (lhs != NULL);
+      result = true; // sufficient enough
+    }
+    else
+    { // immediate return if first term match fails
+      c_char = old_char; // not really necessary here
+      return false;
+    }
+
+    // try to match optional one or more +/- multi_exp
+    old_char = c_char;
+    SgExpression* rhs = NULL;
+    while (afs_match_char('^'))
+    {
+      if (afs_match_and_expression())
+      {
+        rhs = isSgExpression(c_parsed_node);
+        assert (rhs != NULL);
+        assert (lhs != NULL);
+        c_parsed_node = buildBitXorOp(lhs, rhs); // bitwise XOR a^b
+        lhs = isSgExpression(c_parsed_node);
+      }
+      else
+      {
+        c_char = old_char;
+        //printf("error in afs_match_exclusive_expression(): expects and_expression after matching '^'\n");
+        //assert (0);
+        break;
+      }
+      // start the next round
+      old_char = c_char;
+    }
+    return true;
+  }
+
+/*
+and_expression
+	: equality_expression ('&' equality_expression)*
+	;
+*/
+  bool afs_match_and_expression()
+  {
+    bool result = false;
+    const char* old_char = c_char;
+
+    SgExpression* lhs = NULL;
+    if (afs_match_equality_expression())
+    {
+      lhs = isSgExpression(c_parsed_node);
+      assert (lhs != NULL);
+      result = true; // sufficient enough
+    }
+    else
+    { // immediate return if first term match fails
+      c_char = old_char; // not really necessary here
+      return false;
+    }
+
+    // try to match optional one or more +/- multi_exp
+    old_char = c_char;
+    SgExpression* rhs = NULL;
+    while (afs_match_char('&'))
+    {
+      if (afs_match_equality_expression())
+      {
+        rhs = isSgExpression(c_parsed_node);
+        assert (rhs != NULL);
+        assert (lhs != NULL);
+        c_parsed_node = buildBitAndOp(lhs, rhs);
+        lhs = isSgExpression(c_parsed_node);
+      }
+      else
+      {
+        c_char = old_char;
+      //  printf("error in afs_match_and_expression(): expects equality_expression after matching '&'\n");
+       // assert (0);
+        break;
+      }
+      // start the next round
+      old_char = c_char;
+    }
+    return true;
+  }
+
+/*
+equality_expression
+	: relational_expression (('=='|'!=') relational_expression)*
+	;
+*/
+  bool afs_match_equality_expression()
+  {
+    bool result = false;
+    const char* old_char = c_char;
+
+    SgExpression * lhs = NULL;
+    if (afs_match_relational_expression())
+    {
+      lhs = isSgExpression(c_parsed_node);
+      assert (lhs != NULL);
+      // c_parsed_node = lhs;
+      result = true; // sufficient enough
+    }
+    else
+    { // immediate return if first term match fails
+      c_char = old_char; // not really necessary here
+      return false;
+    }
+
+    // try to match optional one or more +/- multi_exp
+    old_char = c_char;
+    bool is_equal= false;
+    bool is_not_equal = false;
+    is_equal = afs_match_substr("==");
+    if (!is_equal )
+      is_not_equal = afs_match_substr("!=");
+
+    SgExpression* rhs = NULL;
+    while (is_equal || is_not_equal )
+    {
+      if (afs_match_relational_expression())
+      {
+	rhs = isSgExpression(c_parsed_node);
+	assert (rhs != NULL);
+	assert (lhs != NULL);
+	if (is_equal)
+	{
+	  c_parsed_node = buildEqualityOp(lhs, rhs);
+	  lhs = isSgExpression(c_parsed_node); // reset lhs to prepare for the next round
+	}
+	else if (is_not_equal)
+	{
+	  c_parsed_node = buildNotEqualOp(lhs, rhs);
+	  lhs = isSgExpression(c_parsed_node);
+	}
+	else
+	{
+	  assert (0);
+	}
+	//result = true;
+      }
+      else
+      {
+	c_char = old_char;
+	//  printf("error in afs_match_additive_expression(): expects multiplicative_expression after matching '+' or '-'\n");
+	// assert (0);
+	break;
+      }
+
+      // start the next round
+      old_char = c_char;
+      is_equal= false;
+      is_not_equal = false;
+      is_equal = afs_match_substr("==");
+      if (!is_equal )
+	is_not_equal = afs_match_substr("!=");
+    }
+
+      return true;
+    }
+
+
+/*
+relational_expression
+	: shift_expression (('<'|'>'|'<='|'>=') shift_expression)*
+	;
+*/
+  bool afs_match_relational_expression()
+  {
+    bool result = false;
+    const char* old_char = c_char;
+
+    SgExpression * lhs = NULL;
+    if (afs_match_shift_expression())
+    {
+      lhs = isSgExpression(c_parsed_node);
+      assert (lhs != NULL);
+      // c_parsed_node = lhs;
+      result = true; // sufficient enough
+    }
+    else
+    { // immediate return if first term match fails
+      c_char = old_char; // not really necessary here
+      return false;
+    }
+
+    // try to match optional one or more +/- multi_exp
+    old_char = c_char;
+    bool is_less_equal = false;
+    bool is_larger_equal = false;
+    bool is_less = false;
+    bool is_larger = false;
+
+    is_less_equal = afs_match_substr("<=");
+    if (!is_less_equal)
+      is_larger_equal = afs_match_substr(">="); 
+    if (!is_larger_equal)
+      is_less = afs_match_char('<');
+    if (!is_less)
+      is_larger = afs_match_char('>');
+
+    SgExpression* rhs = NULL;
+    while (is_less_equal || is_larger_equal || is_less || is_larger)
+    {
+      if (afs_match_shift_expression())
+      {
+	rhs = isSgExpression(c_parsed_node);
+	assert (rhs != NULL);
+	assert (lhs != NULL);
+	if (is_less_equal)
+	{
+	  c_parsed_node = buildLessOrEqualOp(lhs, rhs);
+	  lhs = isSgExpression(c_parsed_node); // reset lhs to prepare for the next round
+	}
+	else if (is_larger_equal)
+	{
+	  c_parsed_node = buildGreaterOrEqualOp(lhs, rhs);
+	  lhs = isSgExpression(c_parsed_node);
+	} 
+        else if (is_less)
+	{
+	  c_parsed_node = buildLessThanOp(lhs, rhs);
+	  lhs = isSgExpression(c_parsed_node); // reset lhs to prepare for the next round
+	}
+	else if (is_larger)
+	{
+	  c_parsed_node = buildGreaterThanOp(lhs, rhs);
+	  lhs = isSgExpression(c_parsed_node);
+	}
+	else
+	{ // impossible branch
+	  assert (0);
+	}
+	//result = true;
+      }
+      else
+      {
+        // no match , rollback
+	c_char = old_char;
+	//printf("error in afs_match_additive_expression(): expects multiplicative_expression after matching '+' or '-'\n");
+	//assert (0);
+	break;
+      }
+
+      // start the next round
+      old_char = c_char;
+      is_less_equal = false;
+      is_larger_equal = false;
+      is_less = false;
+      is_larger = false;
+
+      is_less_equal = afs_match_substr("<=");
+      if (!is_less_equal)
+	is_larger_equal = afs_match_substr(">=");
+      if (!is_larger_equal)
+	is_less = afs_match_char('<');
+      if (!is_less)
+	is_larger = afs_match_char('>');
+    }
+
+    return true;
+  }
+
+/*
+shift_expression
+	: additive_expression (('<<'|'>>') additive_expression)*
+	;
+*/
+  bool afs_match_shift_expression()
+  {
+    bool result = false;
+    const char* old_char = c_char;
+
+    SgExpression * lhs = NULL;
+    if (afs_match_additive_expression())
+    {
+      lhs = isSgExpression(c_parsed_node);
+      assert (lhs != NULL);
+      // c_parsed_node = lhs;
+      result = true; // sufficient enough
+    }
+    else
+    { // immediate return if first term match fails
+      c_char = old_char; // not really necessary here
+      return false;
+    }
+
+    // try to match optional one or more +/- multi_exp
+    old_char = c_char;
+    bool is_left = false;
+    bool is_right = false;
+    is_left = afs_match_substr("<<");
+    if (!is_left)
+      is_right = afs_match_substr(">>");
+
+    SgExpression* rhs = NULL;
+    while (is_left || is_right)
+    {
+      if (afs_match_additive_expression())
+      {
+        rhs = isSgExpression(c_parsed_node);
+        assert (rhs != NULL);
+        assert (lhs != NULL);
+        if (is_left)
+        {
+          c_parsed_node = buildLshiftOp(lhs, rhs);
+          lhs = isSgExpression(c_parsed_node); // reset lhs to prepare for the next round
+        }
+        else if (is_right)
+        {
+          c_parsed_node = buildRshiftOp(lhs, rhs);
+          lhs = isSgExpression(c_parsed_node);
+        }
+        else
+        {
+          assert (0);
+        }
+        //result = true;
+      }
+      else
+      {
+        c_char = old_char;
+       // printf("error in afs_match_shift_expression(): expects additive_expression after matching '<<' or '>>'\n");
+        // assert (0);
+        break;
+      }
+
+      // start the next round
+      old_char = c_char;
+      is_left = false;
+      is_right = false;
+      is_left = afs_match_substr("<<");
+      if (!is_left)
+        is_right= afs_match_substr(">>");
+    }
+
+    return true;
+}
+
   /*
      ANTLR and YACC
      assignment_expression
@@ -961,7 +1584,7 @@ namespace AstFromString
 
     if (afs_match_conditional_expression())
       result = true;
-    else if (afs_match_unary_expression())
+    else if (afs_match_lvalue())
     {
       assert (c_parsed_node != NULL);
       SgExpression* lhs = isSgExpression(c_parsed_node);
@@ -1074,7 +1697,7 @@ namespace AstFromString
       result = true;
     }
     else
-    {
+    { // immediate return false when first required term is not matched
       c_char = old_char;
       return false;
     }
@@ -1088,10 +1711,13 @@ namespace AstFromString
 	SgExpression* argx = isSgExpression(c_parsed_node);
 	assert(argx != NULL); 
 	appendExpression(parameters, argx);
+	c_parsed_node = parameters; // must set it again since it was rewritten in match_assignment_expression()
       }
       else 
       {
 	c_char = old_char;  // optional match fails, rollback
+//	printf("error. afs_match_argument_expression_list() expects assignment_expression after matching ','\n");
+//	assert (0);
 	break;             // and break out
       }
       // prepare next round
@@ -1099,9 +1725,8 @@ namespace AstFromString
     } 
 
     assert (parameters != NULL);
-    c_parsed_node = parameters; // this is necessary since the while loop may rewrite c_parsed_node
+//    c_parsed_node = parameters; // this is necessary since the while loop may rewrite c_parsed_node
     assert (c_parsed_node == parameters);
-    assert (parameters == c_parsed_node);
 
     return true;
   }
@@ -1220,7 +1845,7 @@ postfix_operator
 	}
       }
       else  if (is_left_paren)
-      { // function call exp 
+      { // function call exp (argument_expression_list) 
 	if (afs_match_argument_expression_list())
 	{
 	  assert (c_parsed_node != NULL);
@@ -1247,7 +1872,7 @@ postfix_operator
 	  post_exp = isSgExpression(c_parsed_node);  
 	  //result = true;
 	}
-	else // one of the two cases,something is wrong
+	else // neither of the two cases,something is wrong
 	{
 	  c_char = old_char;
 	  break;
@@ -1299,7 +1924,12 @@ postfix_operator
 	c_parsed_node = buildMinusMinusOp (post_exp, SgUnaryOp::postfix);
 	post_exp = isSgExpression(c_parsed_node);  
 	// result = true;
-      }  
+      }
+      else
+      {
+	printf("error. afs_match_postfix_expression() reaches impossible if-else-if branch.\n");
+        assert(0);
+      }	
 
       // try next round
       old_char = c_char; // set new rollback point
@@ -1328,12 +1958,12 @@ postfix_operator
   }
 
   /*
-     YACC
+     YACC grammar
      expression
      : assignment_expression
      | expression ',' assignment_expression
      ;
-     ANTLR
+     ANTLR grammar
      expression
      : assignment_expression (',' assignment_expression)*
      ;
@@ -1345,12 +1975,115 @@ postfix_operator
     bool result = false;
     const char* old_char = c_char;
 
+    SgExpression* lhs = NULL;
     if (afs_match_assignment_expression())
     {
+      assert (c_parsed_node!= NULL);
+      lhs = isSgExpression(c_parsed_node);
+      assert (lhs != NULL);
       result = true;
     }
-    if (result == false)  c_char = old_char;
+    else
+    { // immediate return if first term is not matched
+      result = false;
+      c_char = old_char;
+      return false;
+    }
+
+    //TODO : 
+    // this is ambiguous when dealing with 'clause (exp, exp)'
+    // it will generate one single CommaOpExp instead of one exp as expected
+#if 0 
+
+    // match 0 or more , assignment_expression
+    // build SgCommaOpExp(lhs, c_parsed_node)
+
+    old_char = c_char; // preserve rollback point
+    while (afs_match_char(','))
+    {
+      if (afs_match_assignment_expression())
+      {
+	assert (c_parsed_node!= NULL);
+	SgExpression* rhs = isSgExpression(c_parsed_node);
+	assert (rhs != NULL);
+	lhs = buildCommaOpExp(lhs, rhs);
+        c_parsed_node = lhs;
+      }
+      else
+      {
+	// no match, rollback
+	c_char = old_char;
+	//error reporting
+//	printf("error: afs_match_expression(), expecting assignment_expression after ','\n");
+//	assert (0);
+	break;
+      }
+      old_char = c_char; 
+    }
+#endif
+    return true;
+  }
+  /*
+    constant_expression
+	: conditional_expression
+	;
+
+     */
+   bool afs_match_constant_expression()
+   {
+     if (afs_match_conditional_expression())
+       return true;
+     else
+       return false;
+   }
+  // statements
+  bool afs_match_statement()
+  {
+    bool result = false;
+    if (afs_match_labeled_statement())
+      result = true;
+    else if (afs_match_compound_statement())  
+      result = true;
+    else if (afs_match_expression_statement())
+      result = true;
+    else if (afs_match_selection_statement())
+      result = true;
+    else if (afs_match_iteration_statement())
+      result = true;
+    else if (afs_match_jump_statement())
+      result = true;
     return result;
+  }
+
+  bool afs_match_labeled_statement()
+  {
+    //TODO 
+    return false;
+  }
+  bool afs_match_compound_statement()
+  {
+    //TODO 
+    return false;
+  }
+  bool afs_match_expression_statement()
+  {
+    //TODO 
+    return false;
+  }
+  bool afs_match_selection_statement()
+  {
+    //TODO 
+    return false;
+  }
+  bool afs_match_iteration_statement()
+  {
+    //TODO 
+    return false;
+  }
+  bool afs_match_jump_statement()
+  {
+    //TODO 
+    return false;
   }
 
 } // end namespace AstFromString
