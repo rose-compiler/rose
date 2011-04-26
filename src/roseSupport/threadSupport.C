@@ -1,7 +1,162 @@
 #include "threadSupport.h"
+#include "stringify.h"
+
 #include <errno.h>
 #include <stdarg.h>
 #include <string.h>
+
+/******************************************************************************************************************************
+ *                                      Layered Synchronization Primitives
+ ******************************************************************************************************************************/
+
+static const unsigned LockedLayers_MAGIC = 0xee2894f0;
+
+struct LockedLayers {
+    unsigned magic;
+    bool active;
+    size_t total_locks;
+    size_t nlocks[RTS_LAYER_NLAYERS];
+    RTS_Layer min_locked_layer;
+};
+
+static __thread LockedLayers locked_layers;
+
+bool
+RTS_acquiring(RTS_Layer layer)
+{
+    bool retval = true;
+
+    if (0==locked_layers.magic)
+        locked_layers.magic = LockedLayers_MAGIC;
+
+    assert(locked_layers.magic==LockedLayers_MAGIC);
+    assert(layer>=0 && layer<RTS_LAYER_NLAYERS);
+
+    if (0==layer) {
+        /* totally ignore this lock */
+    } else if (!locked_layers.active) {
+        locked_layers.active = true;
+        locked_layers.min_locked_layer = layer;
+        locked_layers.nlocks[layer]++;
+        locked_layers.total_locks++;
+    } else if (layer>locked_layers.min_locked_layer) {
+        locked_layers.nlocks[layer]++;
+        locked_layers.total_locks++;
+        fprintf(stderr,
+                "\n"
+                "--------------------------------------------------------------------------------\n"
+                "ERROR: ROSE Thread Support (RTS) requires that a thread obtain synchronization\n"
+                "       locks in a particular order, according to the layer to which those locks\n"
+                "       belong, to prevent possible deadlock.  The calling thread has violated\n"
+                "       this policy by attempting to acquire locks incorrectly, namely:\n"
+                "       a lock in\n"
+                "           %s (%d)\n"
+                "       is being requested after having acquired a lock in\n"
+                "           %s (%d).\n"
+                "--------------------------------------------------------------------------------\n",
+                stringifyRTS_Layer(layer).c_str(), (int)layer,
+                stringifyRTS_Layer(locked_layers.min_locked_layer).c_str(), (int)locked_layers.min_locked_layer);
+        retval = false;
+    } else {
+        locked_layers.nlocks[layer]++;
+        locked_layers.total_locks++;
+        locked_layers.min_locked_layer = layer;
+    }
+
+    return retval;
+}
+
+void
+RTS_releasing(RTS_Layer layer)
+{
+
+#if 1   /* DEBUGGING [RPM 2011-04-22] */
+    if (layer<0 || layer>=RTS_LAYER_NLAYERS) {
+        fprintf(stderr, "ERROR: Layer=%d\n", (int)layer);
+        assert(!"ROBB");
+        abort();
+    }
+#endif
+    assert(locked_layers.magic==LockedLayers_MAGIC);
+    assert(layer>=0 && layer<RTS_LAYER_NLAYERS);
+
+    if (0==layer) {
+        /* totally ignore this lock */
+    } else {
+        assert(locked_layers.active);           /* did we forget to call RTS_acquire()? */
+        assert(locked_layers.total_locks>0);
+        assert(locked_layers.nlocks[layer]>0);
+
+        --locked_layers.nlocks[layer];
+        --locked_layers.total_locks;
+
+        if (0 == locked_layers.total_locks) {
+            locked_layers.min_locked_layer = RTS_LAYER_DONTCARE;
+            locked_layers.active = false;
+        } else if (0==locked_layers.nlocks[layer]) {
+            for (int i=locked_layers.min_locked_layer+1; i<RTS_LAYER_NLAYERS; i++) {
+                if (locked_layers.nlocks[i]) {
+                    locked_layers.min_locked_layer = (RTS_Layer)i;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+
+
+/******************************************************************************************************************************
+ *                                      Mutual Exclusion
+ ******************************************************************************************************************************/
+
+#ifdef ROSE_THREADS_ENABLED
+int
+RTS_mutex_init(RTS_mutex_t *mutex, RTS_Layer layer, pthread_mutexattr_t *attr)
+{
+    mutex->magic = RTS_MUTEX_MAGIC;
+    mutex->layer = layer;
+    return pthread_mutex_init(&mutex->mutex, attr);
+}
+#else
+int
+RTS_mutex_init(RTS_mutex_t*, RSIM_Layer, void*)
+{
+    return ENOSYS;
+}
+#endif
+    
+int
+RTS_mutex_lock(RTS_mutex_t *mutex)
+{
+#ifdef ROSE_THREADS_ENABLED
+    assert(mutex->magic==RTS_MUTEX_MAGIC);
+    if (!RTS_acquiring(mutex->layer))
+        abort();
+    int retval = pthread_mutex_lock(&mutex->mutex);
+    if (retval!=0)
+        RTS_releasing(mutex->layer);
+    return retval;
+#else
+    return ENOSYS;
+#endif
+}
+
+int
+RTS_mutex_unlock(RTS_mutex_t *mutex)
+{
+#ifdef ROSE_THREADS_ENABLED
+    assert(mutex->magic==RTS_MUTEX_MAGIC);
+    int retval = pthread_mutex_unlock(&mutex->mutex);
+    if (retval==0)
+        RTS_releasing(mutex->layer);
+    return retval;
+#else
+    return ENOSYS;
+#endif
+}
+
+
 
 
 /******************************************************************************************************************************
@@ -10,15 +165,17 @@
 
 #ifdef ROSE_THREADS_ENABLED
 int
-RTS_rwlock_init(RTS_rwlock_t *lock, pthread_rwlockattr_t *attrs)
+RTS_rwlock_init(RTS_rwlock_t *lock, RTS_Layer layer, pthread_rwlockattr_t *attrs)
 {
     memset(lock, 0, sizeof(*lock));
+    lock->magic = RTS_RWLOCK_MAGIC;
+    lock->layer = layer;
 
     int status;
     status = pthread_rwlock_init(&lock->rwlock, attrs);
     if (status) return status;
 
-    status = pthread_mutex_init(&lock->mutex, NULL);
+    status = RTS_mutex_init(&lock->mutex, RTS_LAYER_DONTCARE, NULL);
     return status;
 }
 #else
@@ -33,12 +190,13 @@ int
 RTS_rwlock_wrlock(RTS_rwlock_t *lock)
 {
 #ifdef ROSE_THREADS_ENABLED
+    assert(lock->magic == RTS_RWLOCK_MAGIC);
+
     /* Check whether the lock is recursive in this thread. If so, then allow the request to proceed by simply updating some
      * information in the lock object. */
     bool recursive = false;
     RTS_MUTEX(lock->mutex) {
         if (lock->nlocks>0 && pthread_equal(lock->owner, pthread_self())) {
-            assert(lock->nlocks < lock->max_nlocks && "too much recursion");
             recursive = true;
             lock->nlocks++;
         }
@@ -47,8 +205,13 @@ RTS_rwlock_wrlock(RTS_rwlock_t *lock)
     /* Obtain the write lock. If this is a recursive request then this thread already holds the lock. Otherwise we need to
      * obtain the lock and record which thread holds it so recursion can be detected. */
     if (!recursive) {
+        if (!RTS_acquiring(lock->layer))
+            abort();
         int status = pthread_rwlock_wrlock(&lock->rwlock);
-        if (status) return status;
+        if (status) {
+            RTS_releasing(lock->layer);
+            return status;
+        }
         RTS_MUTEX(lock->mutex) {
             lock->nlocks = 1;
             lock->owner = pthread_self();
@@ -64,12 +227,13 @@ int
 RTS_rwlock_rdlock(RTS_rwlock_t *lock)
 {
 #ifdef ROSE_THREADS_ENABLED
+    assert(lock->magic == RTS_RWLOCK_MAGIC);
+
     /* Check whether this thread already holds a write lock. If so, then allow the request to proceed by simply updating some
      * information in the lock object. */
     bool recursive = false;
     RTS_MUTEX(lock->mutex) {
         if (lock->nlocks>0 && pthread_equal(lock->owner, pthread_self())) {
-            assert(lock->nlocks < lock->max_nlocks && "too much recursion");
             recursive = true;
             lock->nlocks++;
         }
@@ -79,8 +243,13 @@ RTS_rwlock_rdlock(RTS_rwlock_t *lock)
      * we need to obtain a read lock. Per POSIX Thread specs, read locks handle recursion without any special work on our part
      * if there is no current write lock. */
     if (!recursive) {
+        if (!RTS_acquiring(lock->layer))
+            abort();
         int status = pthread_rwlock_rdlock(&lock->rwlock);
-        if (status) return status;
+        if (status) {
+            RTS_releasing(lock->layer);
+            return status;
+        }
     }
 
     return 0;
@@ -93,6 +262,8 @@ int
 RTS_rwlock_unlock(RTS_rwlock_t *lock)
 {
 #ifdef ROSE_THREADS_ENABLED
+    assert(lock->magic == RTS_RWLOCK_MAGIC);
+
     /* Check whether this thread already holds a write lock plus one or more recursive locks.  If so, then all we need to do is
      * update some information in the lock object.
      *
@@ -101,15 +272,18 @@ RTS_rwlock_unlock(RTS_rwlock_t *lock)
      *       changing because all pending write lock requests are blocked due to our holding the read lock, or
      *    2. We hold a write lock, in which case no other thread holds a lock and all pending write lock requests are blocked.
      */
-    if (lock->nlocks>0) {
-        assert(pthread_equal(lock->owner, pthread_self()));
-        lock->nlocks--;
-    }
+    RTS_MUTEX(lock->mutex) {
+        if (lock->nlocks>0) {
+            assert(pthread_equal(lock->owner, pthread_self()));
+            lock->nlocks--;
+        }
 
-    if (0==lock->nlocks) {
-        int status = pthread_rwlock_unlock(&lock->rwlock);
-        if (status) return status;
-    }
+        if (0==lock->nlocks) {
+            int status = pthread_rwlock_unlock(&lock->rwlock);
+            assert(0==status);
+            RTS_releasing(lock->layer);
+        }
+    } RTS_MUTEX_END;
 
     return 0;
 #else
@@ -123,7 +297,7 @@ RTS_rwlock_unlock(RTS_rwlock_t *lock)
  *                                      Message output
  ******************************************************************************************************************************/
 
-RTS_rwlock_t RTS_Message::rwlock = RTS_RWLOCK_INITIALIZER;
+RTS_rwlock_t RTS_Message::rwlock = RTS_RWLOCK_INITIALIZER(RTS_LAYER_RTS_MESSAGE_CLASS);
 RTS_Message *RTS_Message::in_multi = NULL;
 bool RTS_Message::sol = true;
 
