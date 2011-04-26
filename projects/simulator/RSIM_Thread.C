@@ -149,11 +149,8 @@ RSIM_Thread::syscall_enter(const char *name, const char *format, ...)
 }
 
 void
-RSIM_Thread::syscall_leave(const char *format, ...) 
+RSIM_Thread::syscall_leavev(uint32_t *values, const char *format, va_list *app) 
 {
-    va_list ap;
-    va_start(ap, format);
-
     bool returns_errno = false;
     if ('d'==format[0]) {
         returns_errno = true;
@@ -168,8 +165,8 @@ RSIM_Thread::syscall_leave(const char *format, ...)
     if (mesg->get_file()) {
         /* System calls return an integer (negative error numbers, non-negative success) */
         ArgInfo info;
-        uint32_t retval = policy.readGPR(x86_gpr_ax).known_value();
-        syscall_arginfo(format[0], retval, &info, &ap);
+        uint32_t retval = values ? values[0] : policy.readGPR(x86_gpr_ax).known_value();
+        syscall_arginfo(format[0], retval, &info, app);
 
         RTS_WRITE(process->rwlock()) {
             RTS_MESSAGE(*mesg) {
@@ -187,12 +184,13 @@ RSIM_Thread::syscall_leave(const char *format, ...)
                 }
 
                 /* Additionally, output any other buffer values that were filled in by a successful system call. */
-                int result = (int)(uint32_t)(syscall_arg(-1));
-                if (!returns_errno || (result<-1024 || result>=0) || -EINTR==result) {
+                int signed_retval = (int)retval;
+                if (!returns_errno || (signed_retval<-1024 || signed_retval>=0) || -EINTR==signed_retval) {
                     for (size_t i=1; format[i]; i++) {
                         if ('-'!=format[i]) {
-                            syscall_arginfo(format[i], syscall_arg(i-1), &info, &ap);
-                            if ('P'!=format[i] || 0!=syscall_arg(i-1)) { /* no need to show null pointers */
+                            uint32_t value = values ? values[i] : syscall_arg(i-1);
+                            syscall_arginfo(format[i], value, &info, app);
+                            if ('P'!=format[i] || 0!=value) { /* no need to show null pointers */
                                 mesg->more("    result arg%zu = ", i-1);
                                 print_single(mesg, format[i], &info);
                                 mesg->more("\n");
@@ -204,7 +202,23 @@ RSIM_Thread::syscall_leave(const char *format, ...)
             } RTS_MESSAGE_END(true);
         } RTS_WRITE_END;
     }
+}
 
+void
+RSIM_Thread::syscall_leave(uint32_t *values, const char *format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+    syscall_leavev(values, format, &ap);
+    va_end(ap);
+}
+
+void
+RSIM_Thread::syscall_leave(const char *format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+    syscall_leavev(NULL, format, &ap);
     va_end(ap);
 }
 

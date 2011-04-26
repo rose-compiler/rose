@@ -238,7 +238,7 @@ public:
      */
     void syscall_enter(const char *name, const char *fmt, ...);
 
-    /** Print the name and arguments of a system call in a manner like strace using supplied valies.  This is identical to the
+    /** Print the name and arguments of a system call in a manner like strace using supplied values.  This is identical to the
      *  other syscall_enter() method, except instead of obtaining values from the simulated thread's stack, they are supplied by
      *  the caller. */
     void syscall_enter(uint32_t *values, const char *name, const char *fmt, ...);
@@ -276,6 +276,15 @@ public:
      *
      *  This method produces no output unless system call tracing (TRACE_SYSCALL) is enabled. */
     void syscall_leave(const char *format, ...);
+
+    /** Print the return value of a system call in a manner like strace but using supplied values. This is identical to the
+     * other syscall_leave() method, except instead of obtaining values from the simulated thread's stack, they are supplied by
+     * the caller. */
+    void syscall_leave(uint32_t *values, const char *format, ...);
+
+    /** Print the return value of a system call. This is intended primarily as an internal function called by the various
+     * syscall_leave() methods. */
+    void syscall_leavev(uint32_t *values, const char *name, va_list *app);
 
 
 
