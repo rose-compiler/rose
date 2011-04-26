@@ -1017,7 +1017,18 @@ static const Translate socket_protocols[] = {
 struct sockaddr_32 {
     uint16_t    sa_family;
     char        sa_data[14];
-};
+} __attribute__((packed));
+
+struct msghdr_32 {
+    uint32_t    msg_name;               /* optional ptr to source address if socket is unconnected */
+    uint32_t    msg_namelen;            /* number of bytes pointed to by msg_name */
+    uint32_t    msg_iov;                /* ptr to iovec scatter/gather array */
+    uint32_t    msg_iovlen;             /* number of blocks */
+    uint32_t    msg_control;            /* ptr to per-protocol magic (see kernel source code) */
+    uint32_t    msg_controllen;         /* number of bytes pointed to by msg_control */
+    uint32_t    msg_flags;
+} __attribute__((packed));
+    
 
 /* command values for the ioctl syscall */
 static const Translate ioctl_commands[] = {
@@ -1262,5 +1273,6 @@ void print_winsize_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_exit_status_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_siginfo_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_sched_param_32(RTS_Message *f, const uint8_t *_v, size_t sz);
+void print_msghdr_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 
 #endif /* ROSE_RSIM_Common_H */

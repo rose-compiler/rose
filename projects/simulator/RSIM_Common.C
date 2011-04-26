@@ -448,6 +448,17 @@ print_sched_param_32(RTS_Message *m, const uint8_t *_v, size_t sz)
 }
 
 void
+print_msghdr_32(RTS_Message *m, const uint8_t *_v, size_t sz)
+{
+    assert(sizeof(msghdr_32)==sz);
+    const msghdr_32 *v = (const msghdr_32*)_v;
+    m->more("name=0x%08"PRIx32", namelen=%"PRIu32", iov=0x%08"PRIx32", iovlen=%"PRIu32
+            ", control=0x%08"PRIx32", controllen=%"PRIu32", flags=0x%08"PRIx32,
+            v->msg_name, v->msg_namelen, v->msg_iov, v->msg_iovlen,
+            v->msg_control, v->msg_controllen, v->msg_flags);
+}
+
+void
 convert(statfs_32 *g, const statfs64_native *h)
 {
     memset(g, 0, sizeof(*g));
