@@ -1014,6 +1014,11 @@ static const Translate socket_protocols[] = {
     T_END
 };
 
+struct sockaddr_32 {
+    uint16_t    sa_family;
+    char        sa_data[14];
+};
+
 /* command values for the ioctl syscall */
 static const Translate ioctl_commands[] = {
     TE(TCGETS), TE(TCSETS), TE(TCSETSW), TE(TCGETA), TE(TIOCGPGRP), TE(TIOCSPGRP), TE(TIOCSWINSZ), TE(TIOCGWINSZ),

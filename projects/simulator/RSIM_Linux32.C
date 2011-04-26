@@ -1865,6 +1865,13 @@ syscall_socketcall_enter(RSIM_Thread *t, int callno)
                 t->syscall_enter("socketcall", "fp", socketcall_commands);
             }
             break;
+        case 3: /* SYS_CONNECT */
+            if (12==t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
+                t->syscall_enter(a, "connect", "dpd");
+            } else {
+                t->syscall_enter("socketcall", "fp", socketcall_commands);
+            }
+            break;
         case 4: /* SYS_LISTEN */
             if (8==t->get_process()->mem_read(a, t->syscall_arg(1), 8)) {
                 t->syscall_enter(a, "listen", "dd");
@@ -1939,6 +1946,47 @@ sys_listen(RSIM_Thread *t, int fd, int backlog)
 }
 
 static void
+sys_connect(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen)
+{
+    sockaddr_32 guest;
+    if (sizeof(guest)!=t->get_process()->mem_read(&guest, addr_va, sizeof guest)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    switch (guest.sa_family) {
+        case AF_UNIX: {
+            bool error;
+            std::string filename = t->get_process()->read_string(addr_va+2, 0, &error);
+            if (error) {
+                t->syscall_return(-EFAULT);
+                return;
+            }
+            size_t host_sz = 2/*af_family*/ + filename.size() + 1/*NUL*/;
+            char host[host_sz];
+            *(uint16_t*)host = guest.sa_family;
+            strcpy(host+2, filename.c_str());
+#ifdef SYS_socketcall /* i686 */
+            ROSE_ASSERT(4==sizeof(int));
+            int a[3];
+            a[0] = fd;
+            a[1] = (uint32_t)host;
+            a[2] = host_sz;
+            int result = syscall(SYS_socketcall, 3/*SYS_CONNECT*/, a);
+#else /* amd64 */
+            int result = syscall(SYS_connect, fd, host, host_sz);
+#endif
+            t->syscall_return(-1==result ? -errno : result);
+            break;
+        }
+
+        default:
+            t->syscall_return(-EINVAL);
+            break;
+    }
+}
+
+static void
 syscall_socketcall(RSIM_Thread *t, int callno)
 {
     /* Return value is written to eax by these helper functions. The struction of this code closely follows that in the
@@ -1963,6 +2011,14 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             break;
         }
 
+        case 3: /* SYS_CONNECT */
+            if (12!=t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
+                t->syscall_return(-EFAULT);
+            } else {
+                sys_connect(t, a[0], a[1], a[2]);
+            }
+            break;
+
         case 4: { /* SYS_LISTEN */
             if (8!=t->get_process()->mem_read(a, t->syscall_arg(1), 8)) {
                 t->syscall_return(-EFAULT);
@@ -1972,7 +2028,6 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             break;
         }
                     
-        case 3: /* SYS_CONNECT */
         case 5: /* SYS_ACCEPT */
         case 6: /* SYS_GETSOCKNAME */
         case 7: /* SYS_GETPEERNAME */
