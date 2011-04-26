@@ -1879,6 +1879,13 @@ syscall_socketcall_enter(RSIM_Thread *t, int callno)
                 t->syscall_enter("socketcall", "fp", socketcall_commands);
             }
             break;
+        case 10: /* SYS_RECV */
+            if (16==t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
+                t->syscall_enter(a, "recv", "dpdd");
+            } else {
+                t->syscall_enter("socketcall", "fp", socketcall_commands);
+            }
+            break;
         default:
             t->syscall_enter("socketcall", "fp", socketcall_commands);
             break;
@@ -1987,6 +1994,40 @@ sys_connect(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen)
 }
 
 static void
+sys_recvfrom(RSIM_Thread *t, int fd, uint32_t buf_va, uint32_t buf_sz, int flags, uint32_t addr_va, uint32_t addr_sz)
+{
+    assert(0==addr_va); /* we don't handle recvfrom yet, only recv. */
+
+    char *buf = new char[buf_sz];
+#ifdef SYS_socketcall /* i686 */
+    ROSE_ASSERT(4==sizeof(int));
+    int a[6];
+    a[0] = fd;
+    a[1] = (uint32_t)buf;
+    a[2] = buf_sz;
+    a[3] = flags;
+    a[4] = 0;
+    a[5] = 0;
+    int result = syscall(SYS_socketcall, 10/*SYS_RECV*/, a);
+#else /* amd64 */
+    int result = syscall(SYS_recvfrom, fd, buf, buf_sz, flags, 0, 0);
+#endif
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    size_t nbytes = (size_t)result;
+    assert(nbytes <= buf_sz);
+    if (nbytes!=t->get_process()->mem_write(buf, buf_va, nbytes)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+}
+
+static void
 syscall_socketcall(RSIM_Thread *t, int callno)
 {
     /* Return value is written to eax by these helper functions. The struction of this code closely follows that in the
@@ -2011,13 +2052,14 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             break;
         }
 
-        case 3: /* SYS_CONNECT */
+        case 3: { /* SYS_CONNECT */
             if (12!=t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
                 t->syscall_return(-EFAULT);
             } else {
                 sys_connect(t, a[0], a[1], a[2]);
             }
             break;
+        }
 
         case 4: { /* SYS_LISTEN */
             if (8!=t->get_process()->mem_read(a, t->syscall_arg(1), 8)) {
@@ -2027,13 +2069,21 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             }
             break;
         }
-                    
+
+        case 10: { /* SYS_RECV */
+            if (16!=t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
+                t->syscall_return(-EFAULT);
+            } else {
+                sys_recvfrom(t, a[0], a[1], a[2], a[3], 0, 0);
+            }
+            break;
+        }
+
         case 5: /* SYS_ACCEPT */
         case 6: /* SYS_GETSOCKNAME */
         case 7: /* SYS_GETPEERNAME */
         case 8: /* SYS_SOCKETPAIR */
         case 9: /* SYS_SEND */
-        case 10: /* SYS_RECV */
         case 11: /* SYS_SENDTO */
         case 12: /* SYS_RECVFROM */
         case 13: /* SYS_SHUTDOWN */
