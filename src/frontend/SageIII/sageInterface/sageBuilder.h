@@ -191,6 +191,8 @@ SgTypeComplex* buildComplexType(SgType *base_type = NULL);
 //! Build an imaginary type
 SgTypeImaginary* buildImaginaryType(SgType *base_type = NULL);
 
+//! Build a const/volatile type qualifier
+SgConstVolatileModifier * buildConstVolatileModifier (SgConstVolatileModifier::cv_modifier_enum mtype=SgConstVolatileModifier::e_unknown);
 //@}
 
 //--------------------------------------------------------------
