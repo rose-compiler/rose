@@ -1990,10 +1990,10 @@ postfix_operator
       return false;
     }
 
-    //TODO : 
     // this is ambiguous when dealing with 'clause (exp, exp)'
-    // it will generate one single CommaOpExp instead of one exp as expected
-#if 0 
+    // it will generate one single CommaOpExp instead of one exp as expected.
+    // Users must use assignmen_expression instead to avoid this conflict.
+#if 1 
 
     // match 0 or more , assignment_expression
     // build SgCommaOpExp(lhs, c_parsed_node)

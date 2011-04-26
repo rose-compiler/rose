@@ -16,6 +16,6 @@ int foo();
 int foo();
 #pragma CUDA (a+(b-a)*b/sizeof(double)+5) dim ((place1)*sizeof(array), (int)2)
 int foo();
-#pragma CUDA (place2++)++ dim (3, 4/bar(), place1+5*place2)
+#pragma CUDA (place2++)++ dim ((3,2,place1!=place2), 4/bar(), place1+5*place2)
 int foo();
 
