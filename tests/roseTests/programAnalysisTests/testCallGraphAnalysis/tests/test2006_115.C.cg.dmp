@@ -1,10 +1,10 @@
-f ->
-g -> f
-foo -> X::operator= X::operator++ X::operator--
 X::X ->
 X::X ->
+X::operator++ ->
+X::operator++ ->
+X::operator-- ->
+X::operator-- ->
 X::operator= ->
-X::operator++ ->
-X::operator++ ->
-X::operator-- ->
-X::operator-- ->
+f ->
+foo -> X::X X::operator++ X::operator-- X::operator=
+g -> f

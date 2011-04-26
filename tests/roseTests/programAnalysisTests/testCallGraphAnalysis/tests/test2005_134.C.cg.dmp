@@ -1,2 +1,2 @@
-X::foo ->
+X::foo -> Y < int > ::Y
 Y < int > ::Y ->
