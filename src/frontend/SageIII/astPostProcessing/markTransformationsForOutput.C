@@ -53,16 +53,16 @@ MarkTransformationsForOutput::evaluateInheritedAttribute (
                bool bkeep= false;
                if (isSgPragmaDeclaration(node)) 
                    if (isSgBasicBlock(node->get_parent()))
-		   {
-		     SgLocatedNode * grand_parent = isSgLocatedNode(node->get_parent()->get_parent());
+                   {
+                     SgLocatedNode * grand_parent = isSgLocatedNode(node->get_parent()->get_parent());
                     // if (isSgForStatement(node->get_parent()->get_parent())
                      //    || isSgIfStmt(node->get_parent()->get_parent()))
-		     if (grand_parent)
-		     {
-		       if (grand_parent->get_file_info()->isTransformation()==false) 
+                     if (grand_parent)
+                     {
+                       if (grand_parent->get_file_info()->isTransformation()==false) 
                          bkeep = true;
-		     }
-		   }
+                     }
+                   }
 
             // Mark the IR node as a transformation if it is not already marked.
                if ( fileInfo->isTransformation() == false && !bkeep)
