@@ -23,6 +23,7 @@ stringify.C: $(top_srcdir)/scripts/stringify.pl
 	@echo "  GEN     $@"
 	@$(top_srcdir)/scripts/stringify.pl --generic --header --output=$@ $(top_srcdir)/src ../frontend/SageIII
 
+threadSupport.lo: stringify.h
 
 # DQ (10/11/2007): This used to be part of the template instationation mechanism, but it was 
 # based on nm and was not robust.  Instead we instantiate all templates and figure out which 
