@@ -21,7 +21,7 @@ struct PhiNodeDependence
 //		cdDefault
 //	};
 
-	PhiNodeDependence(int v)
+	explicit PhiNodeDependence(int v)
 	: version(v) {}
 
 	//! One version member of the phi function.
@@ -87,7 +87,7 @@ inline std::ostream& operator << (std::ostream& os, const VersionedVariable& var
 
 struct ValueGraphNode
 {
-	ValueGraphNode(SgNode* node = NULL) : astNode(node) {}
+	explicit ValueGraphNode(SgNode* node = NULL) : astNode(node) {}
 
 	virtual std::string toString() const
 	{ return ""; }
@@ -103,7 +103,7 @@ struct ValueGraphNode
 struct ValueNode : ValueGraphNode
 {    
 	explicit ValueNode(SgNode* node = NULL) : ValueGraphNode(node) {}
-    ValueNode(const VersionedVariable& v, SgNode* node = NULL)
+    explicit ValueNode(const VersionedVariable& v, SgNode* node = NULL)
     : ValueGraphNode(node), var(v) {}
 
 	virtual std::string toString() const;
@@ -170,11 +170,22 @@ struct OperatorNode : ValueGraphNode
     static void buildTypeStringTable();
 
 	//OperatorNode(OperatorType t) : ValueGraphNode(), type(t) {}
-	OperatorNode(VariantT t, SgNode* node = NULL);
+	explicit OperatorNode(VariantT t, SgNode* node = NULL);
 
 	virtual std::string toString() const;
 	
 	VariantT type;
+};
+
+struct FunctionCallNode: ValueGraphNode
+{
+    explicit FunctionCallNode(SgFunctionCallExp* funcCall, bool v = false)
+            : ValueGraphNode(funcCall), isVirtual(v) {}
+    
+    SgFunctionCallExp* getFunctionCallExp() const
+    { return isSgFunctionCallExp(astNode); }
+    
+    bool isVirtual;
 };
 
 #if 0
@@ -207,11 +218,6 @@ struct BinaryOperaterNode : OperatorNode
 	ValueGraphNode* rhsOperand;
 };
 #endif
-
-struct FunctionCallNode : ValueGraphNode
-{
-
-};
 
 /**********************************************************************************************************/
 // Value Graph Edges
@@ -270,18 +276,28 @@ struct PhiEdge : ValueGraphEdge
 struct StateSavingEdge : ValueGraphEdge
 {
 	//StateSavingEdge() : visiblePathNum(0) {}
-    StateSavingEdge(int cost, int dagIdx, int visibleNum,
-        const PathSet& paths, SgNode* killerNode)
+//    StateSavingEdge(int cost, int dagIdx, int visibleNum,
+//        const PathSet& paths, SgNode* killerNode)
+//    :   ValueGraphEdge(cost, dagIdx, paths), 
+//        visiblePathNum(visibleNum), killer(killerNode) {}
+    
+    StateSavingEdge(
+            int cost, int dagIdx, const PathSet& paths,
+            const std::map<int, PathSet> visiblePaths, 
+            SgNode* killerNode)
     :   ValueGraphEdge(cost, dagIdx, paths), 
-        visiblePathNum(visibleNum), killer(killerNode) {}
+        visiblePaths(visiblePaths), killer(killerNode) 
+    {}
 
 	virtual std::string toString() const;
     
     virtual StateSavingEdge* clone() 
     { return new StateSavingEdge(*this); }
 
-	int visiblePathNum;
+	//int visiblePathNum;
+    std::map<int, PathSet> visiblePaths;
     SgNode* killer;
+    
 };
 
 /**********************************************************************************************************/

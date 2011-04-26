@@ -12,6 +12,7 @@ namespace Backstroke
 using namespace std;
 
 #define foreach BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
 
 
 PathNumManager::PathNumManager(const BackstrokeCFG* cfg)
@@ -66,7 +67,7 @@ void PathNumManager::generatePathNumbers()
         pathNumGenerators_.push_back(pathNumGen);
 
         int parentIdx = 0;
-        pathInfo_.push_back(make_pair(parentIdx, pathNumGen->getPathNum()));
+        pathInfo_.push_back(make_pair(parentIdx, pathNumGen->getNumberOfPath()));
     }
 }
 
@@ -149,7 +150,7 @@ std::pair<int, PathSet> PathNumManager::getPathNumbers(
     return std::make_pair(idx, pathNumGenerators_[idx]->getPaths(dagEdge));
 }
 
-map<PathSet, int> PathNumManager::getPathsIndices(int index) const
+map<PathSet, int> PathNumManager::getPathsIndices(size_t index) const
 {
     map<PathSet, int> pathsIndicesTable;
 
@@ -162,12 +163,27 @@ map<PathSet, int> PathNumManager::getPathsIndices(int index) const
         PathSet paths = pathNumGenerators_[index]->getPaths(node);
         if (pathsIndicesTable.count(paths) == 0)
             pathsIndicesTable[paths] = num++;
+
         
         foreach (const DAGEdge& edge, boost::in_edges(node, dags_[index]))
         {
             PathSet paths = pathNumGenerators_[index]->getPaths(edge);
             if (pathsIndicesTable.count(paths) == 0)
                 pathsIndicesTable[paths] = num++;
+        }
+    }
+    
+    reverse_foreach (DAGVertex node, nodes)
+    {
+        map<int, PathSet> visiblePaths = 
+            pathNumGenerators_[index]->getVisibleNumAndPaths(node);
+        PathSet paths = pathNumGenerators_[index]->getPaths(node);
+        
+        typedef map<int, PathSet>::value_type IntPathSetPair;
+        foreach (const IntPathSetPair& intPaths, visiblePaths)
+        {
+            if (pathsIndicesTable.count(intPaths.second) == 0)
+                pathsIndicesTable[intPaths.second] = pathsIndicesTable[paths];
         }
     }
     
@@ -202,14 +218,9 @@ void PathNumManager::instrumentFunction(const string& pathNumName)
 
             // If the edge value is 0, no updating.
             if (edgeVal.second == 0) continue;
-            using namespace SageBuilder;
-            SgStatement* pathNumStmt = buildExprStatement(
-                                            buildPlusAssignOp(
-                                                buildVarRefExp(pathNumName),
-                                                buildIntVal(edgeVal.second)));
 
             // Insert the path num update on the CFG edge.
-            insertStatementOnEdge(cfgEdge, pathNumStmt);
+            insertPathNumberOnEdge(cfgEdge, pathNumName, edgeVal.second);
         }
     }
 
@@ -232,10 +243,17 @@ namespace
 
 } // end of anonymous
 
-void PathNumManager::insertStatementOnEdge(
+void PathNumManager::insertPathNumberOnEdge(
         const BackstrokeCFG::Edge& cfgEdge,
-        SgStatement* stmt)
+        const string& pathNumName,
+        int val)
 {
+    using namespace SageBuilder;
+    SgStatement* pathNumStmt = buildExprStatement(
+                                    buildPlusAssignOp(
+                                        buildVarRefExp(pathNumName),
+                                        buildIntVal(val)));
+    
     SgNode* src = (*cfg_)[cfgEdge]->source().getNode();
     SgNode* tgt = (*cfg_)[cfgEdge]->target().getNode();
 
@@ -246,7 +264,7 @@ void PathNumManager::insertStatementOnEdge(
             SgStatement* s = getAncestorStatement(tgt);
             if (SgBasicBlock* body = isSgBasicBlock(s))
             {
-                SageInterface::prependStatement(stmt, body);
+                SageInterface::prependStatement(pathNumStmt, body);
             }
             else
                 ROSE_ASSERT(!"The target of the edge from a if statement is not a basic block!");
@@ -256,9 +274,62 @@ void PathNumManager::insertStatementOnEdge(
         {
             ROSE_ASSERT(ifStmt->get_false_body() == NULL);
             // This edge must represent false body here.
-            SgBasicBlock* falseBody = SageBuilder::buildBasicBlock(stmt);
+            SgBasicBlock* falseBody = SageBuilder::buildBasicBlock(pathNumStmt);
             ifStmt->set_false_body(falseBody);
             falseBody->set_parent(ifStmt);
+        }
+    }
+    
+    else if (SgSwitchStatement* switchStmt = isSgSwitchStatement(src))
+    {
+        if (SgCaseOptionStmt* caseStmt = isSgCaseOptionStmt(tgt))
+        {
+            if (SgBasicBlock* body = isSgBasicBlock(caseStmt->get_body()))
+            {
+                SageInterface::prependStatement(pathNumStmt, body);
+                
+                // A trick to prevent that the previous case option does not have a break.
+                SgStatement* pathNumStmt2 = buildExprStatement(
+                                                buildMinusAssignOp(
+                                                    buildVarRefExp(pathNumName),
+                                                    buildIntVal(val)));
+
+                SageInterface::insertStatementBefore(caseStmt, pathNumStmt2);
+            }
+            else
+            {
+                ROSE_ASSERT(!"The target of the edge from a switch statement is not a basic block!");
+            }
+        }
+        else if (SgDefaultOptionStmt* defaultStmt = isSgDefaultOptionStmt(tgt))
+        {
+            if (SgBasicBlock* body = isSgBasicBlock(defaultStmt->get_body()))
+            {
+                SageInterface::prependStatement(pathNumStmt, body);
+                
+                // A trick to prevent that the previous case option does not have a break.
+                SgStatement* pathNumStmt2 = buildExprStatement(
+                                                buildMinusAssignOp(
+                                                    buildVarRefExp(pathNumName),
+                                                    buildIntVal(val)));
+
+                SageInterface::insertStatementBefore(defaultStmt, pathNumStmt2);
+            }
+            else
+            {
+                ROSE_ASSERT(!"The target of the edge from a switch statement is not a basic block!");
+            }
+        }
+        else if (!SageInterface::isAncestor(src, tgt))
+        {
+            // In this case, this switch statement does not have a default option.
+            // We build one here.
+            SgDefaultOptionStmt* defaultStmt = SageBuilder::buildDefaultOptionStmt(pathNumStmt);
+            switchStmt->append_default(defaultStmt);
+        }
+        else
+        {
+            ROSE_ASSERT(0);
         }
     }
 }
@@ -271,23 +342,40 @@ void PathNumGenerator::getEdgeValues()
     // This algorithm is from "Ball T, Larus JR. Efficient Path Profiling."
     foreach (Vertex v, nodes)
     {
+        size_t& pathNum = pathNumbersOnVertices_[v];
+        
         // If this node is a leaf.
         if (boost::out_degree(v, dag_) == 0)
         {
-            pathNumbers_[v] = 1;
+            pathNum = 1;
             continue;
         }
 
-        pathNumbers_[v] = 0;
+        pathNum = 0;
         foreach (const Edge& e, boost::out_edges(v, dag_))
         {
             Vertex tar = boost::target(e, dag_);
-            ROSE_ASSERT(pathNumbers_.count(tar) > 0);
-            ROSE_ASSERT(pathNumbers_[tar] > 0);
+            ROSE_ASSERT(pathNumbersOnVertices_.count(tar) > 0);
+            ROSE_ASSERT(pathNumbersOnVertices_[tar] > 0);
             
-            edgeValues_[e] = pathNumbers_[v];
-            pathNumbers_[v] += pathNumbers_[tar];
+            edgeValues_[e] = pathNum;
+            pathNum += pathNumbersOnVertices_[tar];
         }
+        
+#if 1
+        // Make pathNumbersOnVertices_[v] power of 2.
+        for (int i = 0; ; ++i)
+        {
+            size_t val = 1 << i;
+            if (pathNum == val)
+                break;
+            if (pathNum < val)
+            {
+                pathNum = val;
+                break;
+            }
+        }        
+#endif
     }
 }
 
@@ -318,22 +406,36 @@ void PathNumGenerator::getAllPaths()
         if (node == exit_)
             paths.push_back(pathsOnVertex[node]);
     }
+    
+    // Use this map to sort all paths by their values.
+    map<size_t, Path*> valuePathTable;
 
-    paths_.resize(paths.size());
-
-    // Get the path number as the index of each path.
+    // Get the value for each path. Each path has a unique value.
     foreach (Path& path, paths)
     {
-        int val = 0;
+        size_t val = 0;
         foreach (const Edge& e, path)
             val += edgeValues_[e];
-        paths_[val].swap(path);
+        valuePathTable[val] = &path;
+    }
+    
+    paths_.resize(paths.size());
+    pathNumbers_.resize(paths.size());
+    size_t idx = 0;
+    
+    typedef map<size_t, Path*>::value_type IntPathPair;
+    foreach (const IntPathPair& valPath, valuePathTable)
+    {
+        // Assign the path values here.
+        pathNumbers_[idx] = valPath.first;
+        paths_[idx].swap(*(valPath.second));
+        ++idx;
     }
 }
 
 void PathNumGenerator::getAllPathNumForNodesAndEdges()
 {
-    int pathNumber = pathNumbers_[entry_];
+    int pathNumber = getNumberOfPath();
     foreach (Vertex v, boost::vertices(dag_))
         pathsForNode_[v].allPath.resize(pathNumber);
     foreach (const Edge& e, boost::edges(dag_))

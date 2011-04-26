@@ -42,17 +42,17 @@ private:
         RouteGraphEdgeComp(const ValueGraph& routeG, const std::map<PathSet, int>& pathsIdx)
         : routeGraph(routeG), pathsIndexTable(pathsIdx) {}
         
-        bool operator ()(const VGEdge& edge1, const VGEdge& edge2) const
-        {
-            //using namespace std;
-            //cout << routeGraph[edge1]->paths << endl;
-            //cout << routeGraph[edge2]->paths << endl;
-            
-            ROSE_ASSERT(pathsIndexTable.count(routeGraph[edge1]->paths));
-            ROSE_ASSERT(pathsIndexTable.count(routeGraph[edge2]->paths));
-            return pathsIndexTable.find(routeGraph[edge1]->paths)->second > 
-                   pathsIndexTable.find(routeGraph[edge2]->paths)->second;
-        }
+        bool operator ()(const VGEdge& edge1, const VGEdge& edge2) const;
+//        {
+//            using namespace std;
+//            cout << routeGraph[edge1]->paths << endl;
+//            cout << routeGraph[edge2]->paths << endl;
+//            
+//            ROSE_ASSERT(pathsIndexTable.count(routeGraph[edge1]->paths));
+//            ROSE_ASSERT(pathsIndexTable.count(routeGraph[edge2]->paths));
+//            return pathsIndexTable.find(routeGraph[edge1]->paths)->second > 
+//                   pathsIndexTable.find(routeGraph[edge2]->paths)->second;
+//        }
         
         const ValueGraph& routeGraph;
         const std::map<PathSet, int>& pathsIndexTable;
@@ -180,6 +180,9 @@ private:
 
     //! Get all functions in place.
     void insertFunctions();
+    
+    //! Remove empty if statements.
+    void removeEmptyIfStmt();
 
     /** Given a VG node with a def, returns all VG nodes whose defs kill the given def.
      *  @param killedNode The value graph node which must contains a value node or phi node.
@@ -330,13 +333,6 @@ private:
     //! Given a DAG index, return all edges of its reversal in the proper order.
     //! This order is decided by topological order from both CFG and route graph.
     void getRouteGraphEdgesInProperOrder(int dagIndex, std::vector<VGEdge>& result);
-    
-    //! Traverse nodes in topological order for all paths then build the reverse CFG.
-    void buildReverseCFG(
-            const VGEdge& edge,
-            std::set<VGEdge>& visitedNodes,
-            std::map<PathSet, RvsCFGVertex>& cfgNodeForPath,
-            ReverseCFG& rvsCFG);
 
     //! Generate code in a basic block of the reverse CFG.
     void generateCodeForBasicBlock(
@@ -344,6 +340,7 @@ private:
             SgScopeStatement* scope);
 
     void generateCode(
+            size_t dagIndex,
             const ReverseCFG& rvsCFG,
             SgBasicBlock* rvsFuncBody,
             const std::string& pathNumName);

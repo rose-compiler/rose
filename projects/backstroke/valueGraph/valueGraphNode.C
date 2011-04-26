@@ -195,7 +195,7 @@ std::string ValueGraphEdge::toString() const
 
 std::string StateSavingEdge::toString() const
 { 
-    std::string str = "SS:" + boost::lexical_cast<std::string>(visiblePathNum) + "\\n";
+    std::string str = "SS:";// + boost::lexical_cast<std::string>(visiblePathNum) + "\\n";
     return str + ValueGraphEdge::toString();
 }
 

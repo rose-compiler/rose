@@ -39,13 +39,16 @@ class PathNumGenerator
     Vertex exit_;
 
     //! A table mapping each vertex to the number of paths on it.
-    std::map<Vertex, int> pathNumbers_;
+    std::map<Vertex, size_t> pathNumbersOnVertices_;
 
     //! A table mapping each edge to the number attached to it.
-    std::map<Edge, int> edgeValues_;
+    std::map<Edge, size_t> edgeValues_;
 
     //! All paths in this DAG. The i_th path has the path number i.
     std::vector<Path> paths_;
+    
+    //! All paths numbers for the paths above.
+    std::vector<size_t> pathNumbers_;
 
     std::map<Vertex, PathSetOnVertex> pathsForNode_;
     std::map<Edge,   PathSet> pathsForEdge_;
@@ -79,6 +82,13 @@ public:
         return pathsForEdge_.find(e)->second;
     }
     
+    //! Given a path index, return the value of this path.
+    size_t getPathNumber(size_t idx) const
+    { 
+        ROSE_ASSERT(idx < pathNumbers_.size());
+        return pathNumbers_[idx]; 
+    }
+    
     void generatePathNumbers()
     {
         getEdgeValues();
@@ -86,7 +96,7 @@ public:
         getAllPathNumForNodesAndEdges();
     }
     
-    size_t getPathNum() const { return paths_.size(); }
+    size_t getNumberOfPath() const { return paths_.size(); }
 
 private:
     //! Assign values to edges then each path has a unique number.
@@ -146,19 +156,23 @@ public:
     getVisiblePathNumbers(SgNode* node) const;
 
     //! Given a DAG index, return how many paths it has.
-    size_t getPathNum(int index) const
+    size_t getNumberOfPath(size_t index) const
     { return pathInfo_[index].second; }
     
+    //! Given a DAG index and a path index, return the path number.
+    size_t getPathNumber(size_t dagIndex, size_t pathIndex) const
+    { return pathNumGenerators_[dagIndex]->getPathNumber(pathIndex); }
+    
     //! Given a DAG index, return a path set with all 1 (all paths).
-    PathSet getAllPaths(int index) const
+    PathSet getAllPaths(size_t index) const
     {
-        PathSet paths(getPathNum(index));
+        PathSet paths(getNumberOfPath(index));
         return paths.flip();
     }
     
     //! Get a table from teach path set to a number representing the topological order
     //! in the CFG.
-    std::map<PathSet, int> getPathsIndices(int index) const;
+    std::map<PathSet, int> getPathsIndices(size_t index) const;
 
     void instrumentFunction(const std::string& pathNumName);
 
@@ -176,7 +190,10 @@ private:
     bool isDataMember(SgNode* node) const;
 
     //! Insert a path number update statement on the given CFG edge.
-    void insertStatementOnEdge(const BackstrokeCFG::Edge& cfgEdge, SgStatement* stmt);
+    void insertPathNumberOnEdge(
+            const BackstrokeCFG::Edge& cfgEdge,
+            const std::string& pathNumName,
+            int val);
 };
 
 

@@ -46,14 +46,17 @@ void writeCFGNode(std::ostream& out, const CFGNodeType& cfgNode)
 			label = "Exit\\n" + funcName;
 	}
 	
-	if (!isSgScopeStatement(node))
+	if (!isSgScopeStatement(node) && !isSgCaseOptionStmt(node) && !isSgDefaultOptionStmt(node))
 	{
 		std::string content = node->unparseToString();
 		boost::replace_all(content, "\"", "\\\"");
 		boost::replace_all(content, "\\n", "\\\\n");
 		label += content;
 	}
-	if (isSgScopeStatement(node) || label == "")
+    else
+		label += "<" + node->class_name() + ">";
+    
+    if (label == "")
 		label += "<" + node->class_name() + ">";
 	
 	out << "[label=\""  << label << "\", color=\"" << nodeColor <<

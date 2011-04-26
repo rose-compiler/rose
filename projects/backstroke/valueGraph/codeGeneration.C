@@ -20,7 +20,10 @@ namespace
         if (node->isAvailable())
             var = SageInterface::copyExpression(isSgExpression(node->astNode));
         else
-            var = buildVarRefExp(node->str);
+        {
+            var = node->var.getVarRefExp();
+            //var = buildVarRefExp(node->str);
+        }
         return var;
     }
 

@@ -222,12 +222,16 @@ void EventReverser::buildBasicValueGraph()
                 const SSA::NodeReachingDefTable& defTable =
                             ssa_->getReachingDefsAtNode(funcCall->get_parent());
 
-                #if 1
-                        cout << "Print def table:\n";
-                        typedef map<VarName, SSA::ReachingDefPtr>::value_type PT;
-                        foreach (const PT& pt, defTable)
-                        cout << "!" << SSA::varnameToString(pt.first) << " " << pt.second->getRenamingNumber() << endl;
-                #endif              
+#if 1
+                cout << "Print def table:\n";
+                typedef map<VarName, SSA::ReachingDefPtr>::value_type PT;
+                foreach(const PT& pt, defTable)
+                cout << "!" << SSA::varnameToString(pt.first) << " " << pt.second->getRenamingNumber() << endl;
+#endif              
+                
+                //createFunctionCallNode(funcCall);
+
+                   
             }
 
             // Unary expressions.
@@ -830,19 +834,34 @@ void EventReverser::addValueGraphStateSavingEdges(VGVertex src, SgNode* killer)
     
     // Get the path information of this edge.
     int dagIndex;
-    map<int, PathSet> paths;
-    boost::tie(dagIndex, paths) =
+    map<int, PathSet> visiblePaths;
+    boost::tie(dagIndex, visiblePaths) =
             pathNumManager_->getVisiblePathNumbers(killer);
+    
+    PathSet paths;
+    
+    typedef map<int, PathSet>::value_type IntPathsPair;
+    foreach (const IntPathsPair& intPaths, visiblePaths)
+    {
+        if (paths.empty())
+            paths = intPaths.second;
+        else
+            paths |= intPaths.second;
+    }
+
+    VGEdge newEdge = boost::add_edge(src, root_, valueGraph_).first;
+    valueGraph_[newEdge] = new StateSavingEdge(
+            cost, dagIndex, paths, visiblePaths, killer);
     
     ///cout << "***" << paths.size() << endl;
 
-    typedef map<int, PathSet>::value_type NumPathPair;
-    foreach (const NumPathPair& numPath, paths)
-    {
-        VGEdge newEdge = boost::add_edge(src, root_, valueGraph_).first;
-        valueGraph_[newEdge] = new StateSavingEdge(
-                cost, dagIndex, numPath.first, numPath.second, killer);
-    }
+//    typedef map<int, PathSet>::value_type NumPathPair;
+//    foreach (const NumPathPair& numPath, paths)
+//    {
+//        VGEdge newEdge = boost::add_edge(src, root_, valueGraph_).first;
+//        valueGraph_[newEdge] = new StateSavingEdge(
+//                cost, dagIndex, numPath.first, numPath.second, killer);
+//    }
 }
 
 vector<EventReverser::VGEdge>
@@ -1027,7 +1046,7 @@ void EventReverser::addStateSavingEdges()
         // A temporary work-around for lacking of getting last defs for a variable.
         if (availableValues_.count(v) > 0)
         {
-            addValueGraphStateSavingEdges(v, funcDef_->get_body());
+            addValueGraphStateSavingEdges(v, funcDef_);
         }
         
         // Add 
@@ -1269,6 +1288,19 @@ void EventReverser::routeGraphToDot(const std::string& filename) const
             boost::bind(&EventReverser::writeValueGraphNode, this, ::_1, ::_2),
             boost::bind(&EventReverser::writeValueGraphEdge, this, ::_1, ::_2),
             boost::default_writer(), vertexIDMap);
+}
+
+bool EventReverser::RouteGraphEdgeComp::operator ()(
+        const VGEdge& edge1, const VGEdge& edge2) const
+{
+//    cout << routeGraph[edge1]->paths << endl;
+//    cout << routeGraph[edge2]->paths << endl;
+//
+
+    ROSE_ASSERT(pathsIndexTable.count(routeGraph[edge1]->paths));
+    ROSE_ASSERT(pathsIndexTable.count(routeGraph[edge2]->paths));
+    return pathsIndexTable.find(routeGraph[edge1]->paths)->second > 
+           pathsIndexTable.find(routeGraph[edge2]->paths)->second;
 }
 
 
