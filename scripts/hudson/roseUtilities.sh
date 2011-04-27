@@ -110,7 +110,6 @@ if test $# = 1 ; then
 	echo "                                                              [Git]"
 	echo ""
 	echo ""
-	echo ""
 	echo "Last (5) commits:"
         git log -n5 --pretty=format:'
           + Committed %ar by %an%n
