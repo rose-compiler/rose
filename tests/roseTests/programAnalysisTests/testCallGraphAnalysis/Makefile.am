@@ -96,7 +96,7 @@ TEST_TRANSLATOR = ./testCG $(ROSE_FLAGS) -rose:verbose 0 --edg:no_warnings
 # This target compiles the ROSE test files with the testCG Translator. Then, it compares the output of the translator to previous dumps.
 $(TEST_Objects): testCG $(TESTCODES) 
 	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
-	$(TEST_TRANSLATOR) $(INCLUDES) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+	$(TEST_TRANSLATOR) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
 	@if diff -U5 $(srcdir)/tests/$(@:.o=.C.cg.dmp) $(@:.o=.cg.dmp); then :; else echo "Files differ; byte order test failed"; exit 1; fi
 	rm -f  $(@:.o=.cg.dmp)  $(@:.o=.cmp.dmp) $(@:.o=.dot)
 
