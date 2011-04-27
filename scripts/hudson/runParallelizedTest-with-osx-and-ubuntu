@@ -25,19 +25,10 @@ LOG_LOCATION="$PWD"
 #  This directory will be built into the Hudson home directory.
 #
 #########################################################################################
-if test "x$machine_os" = "xDarwin" ; then
-  OS_MACHINE_LABEL=x86_64-Darwin
-elif test "x$machine" = "xi686" ; then
-  OS_MACHINE_LABEL=i686-linux
-else
-  OS_MACHINE_LABEL=amd64-linux
-fi
 
-CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
 # Liao 1/6/2010
 # Remove the stale installation tree since the stale headers will be included before updated ones are used.
-# TOO (4/7/2011): rm -rf commands should have absolute paths in them to avoid unintended removals
-( safe_rm_rf $CONFIGURE_PREFIX_DIR ) |filterStep "MasterInstallTree removal"
+( safe_rm_rf $ROSE_CONFIGURE_PREFIX ) |filterStep "MasterInstallTree removal"
 
 #########################################################################################
 #
@@ -205,7 +196,7 @@ fi
 #  Liao : 3/22/11 - Link with GOMP and run OpenMP tests
 #######################################################################################
 if test "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" ; then
-  if test "x$OS_MACHINE_LABEL" = "xamd64-linux" ; then
+  if test "x$ROSE_MACHINE_OS_LABEL" = "xamd64-linux" ; then
     if [ -a /usr/apps/gcc/4.4.1/lib64/libgomp.a ]; then
       CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-gomp_omp_runtime_library=/usr/apps/gcc/4.4.1/lib64"
     fi
