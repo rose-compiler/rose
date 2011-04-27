@@ -123,18 +123,20 @@ RTED_CPP_TEST_DIRS = $(rted_path)/C++/array_index_out_of_bound \
 		 $(RTED_CPP_LOCAL_TEST_DIRS)
 
 RTED_UPC_TEST_DIRS = $(RTED_UPC_LOCAL_TEST_DIRS) \
-	         $(rted_path)/UPC/C_Outofbnds \
+	   $(rted_path)/UPC/C_Outofbnds \
 		 $(rted_path)/UPC/D_Outofbnds \
-		 $(rted_path)/UPC/E_Outofbnds \
-		$(rted_path)/UPC/A_Deadlcks \
-		$(rted_path)/UPC/B_RacCond \
-		$(rted_path)/UPC/F_Argmterr \
-		$(rted_path)/UPC/G_Uninit \
-		$(rted_path)/UPC/H_Memoryerr \
-		$(rted_path)/UPC/I_Wronorder \
-		$(rted_path)/UPC/J_Nonportbl \
-		$(rted_path)/UPC/K_Warnings \
-		$(rted_path)/UPC/xtra
+		 $(rted_path)/UPC/G_Uninit \
+		 $(rted_path)/UPC/H_Memoryerr \
+		 $(rted_path)/UPC/xtra
+#~	    $(rted_path)/UPC/E_Outofbnds  arrays as arguments to std function
+#~      $(rted_path)/UPC/A_Deadlcks   not our task
+#~      $(rted_path)/UPC/B_RacCond    not our task
+#~      $(rted_path)/UPC/F_Argmterr   not yet handled
+#~      $(rted_path)/UPC/I_Wronorder  not yet handled
+#~      $(rted_path)/UPC/J_Nonportbl  not yet handled
+#~      $(rted_path)/UPC/K_Warnings   not yet handled
+
+
 else
 RTED_C_TEST_DIRS = 		 $(RTED_C_LOCAL_TEST_DIRS)
 RTED_CPP_TEST_DIRS =		 $(RTED_CPP_LOCAL_TEST_DIRS)
@@ -593,7 +595,9 @@ runupc/%: rted_source/%.bin rted_source/%.expected-output
 				fi;\
 				echo -e '\n----------- Actual   Error ------------';\
 				cat $$RESULT;\
-				echo "$<" >>failure_list.txt; \
+				echo "$<" >>badlist.txt; \
+			else\
+			  echo "$<" >>goodlist.txt; \
 			fi;\
 		else\
 			./$(filter rted_source/%.bin, $?) -n 4;\
@@ -763,6 +767,10 @@ endif
 # Tests that are known to fail
 #------------------------------------------------------------------------------
 
+# upc:c_G_4_a test RTED does not catch invalid assignment
+#                  and RTED/UPC does not catch negative numbers passed as affinity expr
+# upc:c_G_2_g ptr reads are not tested when casted
+
 # TODO 2: Handle these tests
 TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/C++/allocation_deallocation_errors/C_G_2_1_g_d \
@@ -813,29 +821,23 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/C++/uninitialized_variables/c_A_6_d_in \
 					  run/C++/uninitialized_variables/c_A_6_e_in \
 					  runupc/UPC/G_Uninit/c_G_4_a \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_a_D \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_a_F \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_a_I \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_a_L \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_a_S \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_b_I \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_b_F \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_b_L \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_b_D \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_b_S \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_c_F \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_c_I \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_c_S \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_c_D \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_c_L \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_d_F \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_d_I \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_d_S \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_d_D \
-					  runupc/UPC/C_Outofbnds/c_C_10_1_d_L \
+					  runupc/UPC/G_Uninit/c_G_4_c \
+            runupc/UPC/G_Uninit/c_G_2_g_D \
+            runupc/UPC/G_Uninit/c_G_2_g_I \
+            runupc/UPC/G_Uninit/c_G_2_g_L \
+            runupc/UPC/G_Uninit/c_G_2_g_F \
+            runupc/UPC/G_Uninit/c_G_2_g_S \
+            runupc/UPC/G_Uninit/c_G_2_h_D \
+            runupc/UPC/G_Uninit/c_G_2_h_I \
+            runupc/UPC/G_Uninit/c_G_2_h_L \
+            runupc/UPC/G_Uninit/c_G_2_h_F \
+            runupc/UPC/G_Uninit/c_G_2_h_S \
 					  TheEnd_KNOWN_TO_FAIL
 
-
+# These tests do not compile
+#   most likely because a function's result value is cast
+#   to shared (as in "int shared * shared", where a stack value -the pointer-
+#   cannot be shared)
 TEST_HAS_COMPILE_ERROR = runupc/UPC/G_Uninit/c_G_1_b_D \
                          runupc/UPC/G_Uninit/c_G_1_b_I \
                          runupc/UPC/G_Uninit/c_G_1_b_L \
@@ -881,6 +883,7 @@ TEST_HAS_COMPILE_ERROR = runupc/UPC/G_Uninit/c_G_1_b_D \
                          runupc/UPC/G_Uninit/c_G_3_f_L \
                          runupc/UPC/G_Uninit/c_G_3_f_S \
                          runupc/UPC/G_Uninit/c_G_3_f_F \
+                         runupc/UPC/G_Uninit/c_G_6_a \
                          runupc/UPC/C_Outofbnds/c_C_10_2_c_F \
                          runupc/UPC/C_Outofbnds/c_C_10_2_c_I \
                          runupc/UPC/C_Outofbnds/c_C_10_2_c_L \
@@ -891,7 +894,267 @@ TEST_HAS_COMPILE_ERROR = runupc/UPC/G_Uninit/c_G_1_b_D \
                          runupc/UPC/C_Outofbnds/c_C_10_2_d_L \
                          runupc/UPC/C_Outofbnds/c_C_10_2_d_D \
                          runupc/UPC/C_Outofbnds/c_C_10_2_d_S \
+                         runupc/UPC/C_Outofbnds/c_C_10_4_c_F \
+                         runupc/UPC/C_Outofbnds/c_C_10_4_c_I \
+                         runupc/UPC/C_Outofbnds/c_C_10_4_c_L \
+                         runupc/UPC/C_Outofbnds/c_C_10_4_c_D \
+                         runupc/UPC/C_Outofbnds/c_C_10_4_c_S \
+                         runupc/UPC/C_Outofbnds/c_C_10_4_d_F \
+                         runupc/UPC/C_Outofbnds/c_C_10_4_d_I \
+                         runupc/UPC/C_Outofbnds/c_C_10_4_d_L \
+                         runupc/UPC/C_Outofbnds/c_C_10_4_d_D \
+                         runupc/UPC/C_Outofbnds/c_C_10_4_d_S \
+                         runupc/UPC/C_Outofbnds/c_C_11_2_c_F \
+                         runupc/UPC/C_Outofbnds/c_C_11_2_c_I \
+                         runupc/UPC/C_Outofbnds/c_C_11_2_c_L \
+                         runupc/UPC/C_Outofbnds/c_C_11_2_c_D \
+                         runupc/UPC/C_Outofbnds/c_C_11_2_c_S \
+                         runupc/UPC/C_Outofbnds/c_C_11_2_d_F \
+                         runupc/UPC/C_Outofbnds/c_C_11_2_d_I \
+                         runupc/UPC/C_Outofbnds/c_C_11_2_d_L \
+                         runupc/UPC/C_Outofbnds/c_C_11_2_d_D \
+                         runupc/UPC/C_Outofbnds/c_C_11_2_d_S \
+                         runupc/UPC/C_Outofbnds/c_C_11_4_c_F \
+                         runupc/UPC/C_Outofbnds/c_C_11_4_c_I \
+                         runupc/UPC/C_Outofbnds/c_C_11_4_c_L \
+                         runupc/UPC/C_Outofbnds/c_C_11_4_c_D \
+                         runupc/UPC/C_Outofbnds/c_C_11_4_c_S \
+                         runupc/UPC/C_Outofbnds/c_C_11_4_d_F \
+                         runupc/UPC/C_Outofbnds/c_C_11_4_d_I \
+                         runupc/UPC/C_Outofbnds/c_C_11_4_d_L \
+                         runupc/UPC/C_Outofbnds/c_C_11_4_d_D \
+                         runupc/UPC/C_Outofbnds/c_C_11_4_d_S \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_a_F \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_a_I \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_a_L \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_a_D \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_a_S \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_b_F \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_b_I \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_b_L \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_b_D \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_b_S \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_c_F \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_c_I \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_c_L \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_c_D \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_c_S \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_d_F \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_d_I \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_d_L \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_d_D \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_d_S \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_e_F \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_e_I \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_e_L \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_e_D \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_e_S \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_f_F \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_f_I \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_f_L \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_f_D \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_f_S \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_g_F \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_g_I \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_g_L \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_g_D \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_g_S \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_h_F \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_h_I \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_h_L \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_h_D \
+                         runupc/UPC/C_Outofbnds/c_C_6_1_h_S \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_a_F \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_a_I \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_a_L \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_a_D \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_a_S \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_b_F \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_b_I \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_b_L \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_b_D \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_b_S \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_c_F \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_c_I \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_c_L \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_c_D \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_c_S \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_d_F \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_d_I \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_d_L \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_d_D \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_d_S \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_e_F \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_e_I \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_e_L \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_e_D \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_e_S \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_f_F \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_f_I \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_f_L \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_f_D \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_f_S \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_g_F \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_g_I \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_g_L \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_g_D \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_g_S \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_h_F \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_h_I \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_h_L \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_h_D \
+                         runupc/UPC/C_Outofbnds/c_C_6_2_h_S \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_a_F \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_a_I \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_a_L \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_a_D \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_a_S \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_b_F \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_b_I \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_b_L \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_b_D \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_b_S \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_c_F \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_c_I \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_c_L \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_c_D \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_c_S \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_d_F \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_d_I \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_d_L \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_d_D \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_d_S \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_e_F \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_e_I \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_e_L \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_e_D \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_e_S \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_f_F \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_f_I \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_f_L \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_f_D \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_f_S \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_g_F \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_g_I \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_g_L \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_g_D \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_g_S \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_h_F \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_h_I \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_h_L \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_h_D \
+                         runupc/UPC/D_Outofbnds/c_D_3_1_h_S \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_a_F \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_a_I \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_a_L \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_a_D \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_a_S \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_b_F \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_b_I \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_b_L \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_b_D \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_b_S \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_c_F \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_c_I \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_c_L \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_c_D \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_c_S \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_d_F \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_d_I \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_d_L \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_d_D \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_d_S \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_e_F \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_e_I \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_e_L \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_e_D \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_e_S \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_f_F \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_f_I \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_f_L \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_f_D \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_f_S \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_g_F \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_g_I \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_g_L \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_g_D \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_g_S \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_h_F \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_h_I \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_h_L \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_h_D \
+                         runupc/UPC/D_Outofbnds/c_D_3_2_h_S \
                          TheEnd_COMPILE_ERROR
+
+# Test bugs prevent us from finding expected errors
+# BUG Description
+# c_C_10_2_a_L  (F/D) unexpected out of bounds access (allocates int, means other type[L,F,D])
+# c_C_10_2_b_L  same
+# c_C_10_4_a_L  same
+#               note, the S version does not have a bug, b/c the array is allocated
+#               in terms of int, thus no out of bounds access occurs.
+# c_C_10_4_b_L  same
+# c_C_11_2_a_L  same
+# c_C_11_2_b_L  same
+# c_C_11_4_a_L  same (see c_C_10_4_a_S)
+# c_C_11_4_b_L  same
+
+TEST_HAS_BUG = runupc/UPC/C_Outofbnds/c_C_10_2_a_F \
+               runupc/UPC/C_Outofbnds/c_C_10_2_a_L \
+               runupc/UPC/C_Outofbnds/c_C_10_2_a_D \
+               runupc/UPC/C_Outofbnds/c_C_10_2_b_F \
+               runupc/UPC/C_Outofbnds/c_C_10_2_b_L \
+               runupc/UPC/C_Outofbnds/c_C_10_2_b_D \
+							 runupc/UPC/C_Outofbnds/c_C_10_4_a_F \
+               runupc/UPC/C_Outofbnds/c_C_10_4_a_L \
+               runupc/UPC/C_Outofbnds/c_C_10_4_a_D \
+               runupc/UPC/C_Outofbnds/c_C_10_4_a_S \
+               runupc/UPC/C_Outofbnds/c_C_10_4_b_F \
+               runupc/UPC/C_Outofbnds/c_C_10_4_b_L \
+               runupc/UPC/C_Outofbnds/c_C_10_4_b_D \
+               runupc/UPC/C_Outofbnds/c_C_11_2_a_F \
+               runupc/UPC/C_Outofbnds/c_C_11_2_a_L \
+               runupc/UPC/C_Outofbnds/c_C_11_2_a_D \
+               runupc/UPC/C_Outofbnds/c_C_11_2_b_F \
+               runupc/UPC/C_Outofbnds/c_C_11_2_b_L \
+               runupc/UPC/C_Outofbnds/c_C_11_2_b_D \
+               runupc/UPC/C_Outofbnds/c_C_11_4_a_F \
+               runupc/UPC/C_Outofbnds/c_C_11_4_a_L \
+               runupc/UPC/C_Outofbnds/c_C_11_4_a_D \
+               runupc/UPC/C_Outofbnds/c_C_11_4_a_S \
+               runupc/UPC/C_Outofbnds/c_C_11_4_b_F \
+               runupc/UPC/C_Outofbnds/c_C_11_4_b_L \
+               runupc/UPC/C_Outofbnds/c_C_11_4_b_D \
+               TheEnd_TEST_BUGS
+
+
+# Late bugs do not prevent us from finding expected errors (the unexpected bug
+# occurs after the expected one).
+TEST_HAS_LATE_BUG = runupc/UPC/C_Outofbnds/c_C_10_1_c_F \
+                    runupc/UPC/C_Outofbnds/c_C_10_1_c_I \
+                    runupc/UPC/C_Outofbnds/c_C_10_1_c_L \
+                    runupc/UPC/C_Outofbnds/c_C_10_1_c_D \
+                    runupc/UPC/C_Outofbnds/c_C_10_1_c_S \
+                    runupc/UPC/C_Outofbnds/c_C_10_1_d_F \
+                    runupc/UPC/C_Outofbnds/c_C_10_1_d_I \
+                    runupc/UPC/C_Outofbnds/c_C_10_1_d_L \
+                    runupc/UPC/C_Outofbnds/c_C_10_1_d_D \
+                    runupc/UPC/C_Outofbnds/c_C_10_1_d_S \
+                    runupc/UPC/C_Outofbnds/c_C_10_3_c_F \
+                    runupc/UPC/C_Outofbnds/c_C_10_3_c_I \
+                    runupc/UPC/C_Outofbnds/c_C_10_3_c_L \
+                    runupc/UPC/C_Outofbnds/c_C_10_3_c_D \
+                    runupc/UPC/C_Outofbnds/c_C_10_3_c_S \
+                    runupc/UPC/C_Outofbnds/c_C_10_3_d_F \
+                    runupc/UPC/C_Outofbnds/c_C_10_3_d_I \
+                    runupc/UPC/C_Outofbnds/c_C_10_3_d_L \
+                    runupc/UPC/C_Outofbnds/c_C_10_3_d_D \
+                    runupc/UPC/C_Outofbnds/c_C_10_3_d_S \
+                    TheEnd_LATE_TEST_BUGS
+
+
+$(TEST_HAS_BUG):
+	@echo This test fails due to a bug in the test code: $@
 
 $(TESTS_KNOWN_TO_FAIL):
 	@echo This test is known to fail, not running it now: $@

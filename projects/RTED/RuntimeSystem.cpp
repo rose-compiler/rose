@@ -52,10 +52,17 @@ void rted_Close(const char*)
 {
   RuntimeSystem * rs = RuntimeSystem::instance();
 
-  rted_UpcExit();
+  // wait until all threads have finished their work
+  rted_barrier();
 
+  // process the last messages
+  rted_ProcessMsg();
+
+  // perform exit checks
   rs->doProgramExitChecks();
   rs->printMessage("Failed to discover error in RTED test.\n");
+
+  // done
 }
 
 
@@ -87,7 +94,7 @@ struct ArrayTypeComputer
  * whose base non-array type is base_type.
  */
 static
-RsArrayType* rs_getArrayType(TypeSystem& ts, const size_t* dimDesc, size_t size, const std::string& base_type)
+RsArrayType* rs_getArrayType(TypeSystem& ts, const size_t* dimDesc, size_t size, RsType& base_type)
 {
   assert( dimDesc != NULL && *dimDesc > 0 );
 
@@ -96,10 +103,9 @@ RsArrayType* rs_getArrayType(TypeSystem& ts, const size_t* dimDesc, size_t size,
   const size_t* last = dimDesc + *dimDesc;  // points to the last element (not one past!)
                                             //   which is the first element being processed
   size_t        no_elems = std::accumulate(first, last+1, static_cast<size_t>(1), std::multiplies<size_t>());
-  RsType*       type = ts.getTypeInfo( base_type );
   size_t        elem_size = (size / no_elems);
   size_t        last_sz = elem_size * (*last);
-  RsArrayType*  res = ts.getArrayType( type, last_sz );
+  RsArrayType*  res = ts.getArrayType( &base_type, last_sz );
 
   return std::accumulate( std::reverse_iterator<const size_t*>(last),
                           std::reverse_iterator<const size_t*>(first),
@@ -110,11 +116,27 @@ RsArrayType* rs_getArrayType(TypeSystem& ts, const size_t* dimDesc, size_t size,
 
 
 static
-RsType* rs_getType( TypeSystem& ts, std::string type, std::string base_type, std::string class_name, AddressDesc desc )
+RsType& rs_getTypeInfo_fallback(TypeSystem& ts, const std::string& type)
+{
+  RsType* res = ts.getTypeInfo(type);
+
+  if (res == NULL)
+  {
+    res = new RsClassType( type, 0, false );
+    ts.registerType( res );
+  }
+
+  assert(res != NULL);
+  return *res;
+}
+
+static
+RsType* rs_getType(TypeSystem& ts, std::string type, std::string base_type, std::string class_name, AddressDesc desc )
 {
   if( type == "SgClassType" )
     type = class_name;
-  else if( base_type == "SgClassType" ) {
+  else if( base_type == "SgClassType" )
+  {
     base_type = class_name;
     assert( base_type != "" );
   }
@@ -122,36 +144,43 @@ RsType* rs_getType( TypeSystem& ts, std::string type, std::string base_type, std
 
   RsType*        res = NULL;
 
-  if( type == "SgPointerType" ) {
-    RsType* bt = NULL;
+  if( type == "SgPointerType" )
+  {
     assert( desc.levels > 0 );
+    RsType& bt = rs_getTypeInfo_fallback(ts, base_type);
 
-    bt = ts.getTypeInfo(base_type);
-
-    if( bt == NULL ) {
-      // Create a type stub.  This will result in errors later if it is not
-      // fixed up by a subsequent registration (i.e., of that type).
-      bt = new RsClassType( base_type, 0, false );
-      ts.registerType( bt );
-    }
-
-    assert( bt != NULL );
-
-    res = ts.getPointerType(bt, desc);
-  } else {
-    res = ts.getTypeInfo( type );
-
-    if (res == NULL) {
-      // Create a type stub.  This will result in errors later if it is not
-      // fixed up by a subsequent registration (i.e., of that type).
-      res = new RsClassType( type, 0, false );
-      ts.registerType( res );
-    }
+    res = ts.getPointerType(&bt, desc);
+  }
+  else
+  {
+    res = &rs_getTypeInfo_fallback(ts, type);
   }
 
   assert( res );
   return res;
 }
+
+static
+RsType& rs_getArrayElemType(TypeSystem& ts, TypeDesc td, size_t noDimensions, const std::string& classname)
+{
+  assert(td.desc.levels >= noDimensions);
+
+  AddressDesc desc = td.desc;
+  std::string elemtype = td.base;
+
+  if (td.desc.levels > noDimensions)
+  {
+    elemtype = "SgPointerType";
+    desc = rted_deref_desc(desc);
+  }
+
+  return *rs_getType(ts, elemtype, td.base, classname, desc);
+}
+
+
+
+
+
 
 /*********************************************************
  * This function is called when an array is created
@@ -179,20 +208,14 @@ void rted_CreateHeapArr( rted_TypeDesc   td,
                          rted_SourceInfo si
                        )
 {
-  // rted_processMsg() MUST NOT be invoked here, b/c there is a
-  //   dependency between createVariable and this function (createHeapArr).
-  // \pp \todo remove dependency
-  assert(std::string("SgArrayType") == td.name);
+  assert(std::string("SgArrayType") == td.name && dimDescr && *dimDescr > 0);
 
   RuntimeSystem * rs = RuntimeSystem::instance();
   checkpoint( rs, SourcePosition(si) );
 
-  std::string     base_type(td.base);
-  if( base_type == "SgClassType" )
-    base_type = class_name;
-
-  // Aug 6 : TODO : move this to createVariable
-  RsArrayType* rstype = rs_getArrayType(*rs->getTypeSystem(), dimDescr, totalsize, base_type);
+  TypeSystem&  typesys  = *rs->getTypeSystem();
+  RsType&      rsbase   = rs_getArrayElemType(typesys, td, *dimDescr, class_name);
+  RsArrayType* rstype   = rs_getArrayType(typesys, dimDescr, totalsize, rsbase);
 
   rs->createArray( address, name, mangl_name, rstype, distributed );
 
@@ -279,7 +302,9 @@ void rted_CreateHeapPtr( rted_TypeDesc    td,
   //       Only the local thread can safely deref local pointers.
   //       if we can discern all pointers on the shared heap, we might
   //       move this code back into _rted_CreateHeapPtr
+  std::cerr << "before" << rted_ThisThread() << std::endl;
   Address     heap_address = rted_deref(address, td.desc);
+  std::cerr << "after" << rted_ThisThread() << std::endl;
   AddressDesc heap_desc = rted_deref_desc(td.desc);
 
   snd_CreateHeapPtr(td, address, heap_address, heap_desc, size, mallocSize, allocKind, class_name, si);
@@ -645,11 +670,10 @@ int rted_CreateVariable( TypeDesc td,
                          SourceInfo si
                        )
 {
-  // CreateVariable is called for stack allocations. While UPC can
-  // allocate file scope variables in the shared memory, those
-  // creation do not need to be broadcasted to other UPC threads.
-  // The RTED startup code initializing the RTED runtime system
-  // runs in any UPC thread.
+  // CreateVariable is called for stack allocations. UPC shared memory allocations
+  // need not be broadcast to other UPC threads, b/c each thread will handle them
+  // separately. (The RTED startup code initializing the RTED runtime system
+  // runs in any UPC thread.)
   rted_ProcessMsg();
 
   RuntimeSystem * rs = RuntimeSystem::instance();
@@ -663,8 +687,10 @@ int rted_CreateVariable( TypeDesc td,
   RsType * rsType = rs_getType(*rs->getTypeSystem(), type_name, td.base, class_name, td.desc);
 
   assert(rsType);
-  const bool distributed = ((td.desc.shared_mask & 1) == 1);
-  rs->createVariable(address,name,mangled_name,rsType,distributed);
+  // only arrays are truly distributed objects
+  // plain variables are solely shared (but not distributed); they reside in thread 0
+  const bool nondistributed = false;
+  rs->createVariable(address, name, mangled_name, rsType, nondistributed);
 
   if ( 1 == init ) {
     // e.g. int x = 3
@@ -749,7 +775,8 @@ int _rted_InitVariable( rted_TypeDesc    td,
 
   message << "   Init Var at address:  " << address
           << "   type: " << td.name
-          << "   size: " << size;
+          << "   size: " << size
+          << "   ptrmv: " << pointer_move;
   rs->printMessage(message.str());
 
   RsType* rs_type = rs_getType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
@@ -915,7 +942,7 @@ void rted_RegisterTypeCall( const char* nameC,
           dims[++pos] = va_arg( vl, size_t );
         }
 
-        t = rs_getArrayType(ts, dims, size, td.base);
+        t = rs_getArrayType( ts, dims, size, *ts.getTypeInfo(td.base) );
       }
       else
       {

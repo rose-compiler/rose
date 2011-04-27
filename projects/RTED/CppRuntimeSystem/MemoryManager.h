@@ -21,6 +21,7 @@
 class RuntimeSystem;
 class VariablesType;
 class RsType;
+class RsCompoundType;
 
 struct TypeTracker
 {
@@ -31,45 +32,61 @@ struct TypeTracker
 
   enum InitStatus { none, some, all };
 
-  explicit
-  TypeTracker(size_t sz)
-  : size(sz)
+  TypeTracker(size_t sz, bool distmem)
+  : size(sz), dist(distmem)
   {}
 
+  /// resizes memory allocated with realloc
   virtual void         resize( size_t newsize ) = 0;
+
+  /// returns the types for a location
   virtual TypeData&    typesof(Location) = 0;
+
+  /// returns the initlist for a location
   virtual InitData&    initlistof(Location) = 0;
-  virtual Location     add(Location l, size_t) const = 0;
-  virtual bool         distributed() const = 0;
+
+  /// returns the init status of the underlying memory chunks
   virtual InitStatus   initializationStatus() const = 0;
+
+  /// returns the first thread that owns memory as part of this allocation
+  virtual size_t       baseThread(Location l) const = 0;
+
+  /// copy ctor for polymorphic objects
   virtual TypeTracker* clone() const = 0;
 
   size_t getSize() const { return size; }
 
+  /// returns true, iff this == typeid(DistributedStorage)
+  bool distributed() const { return dist; }
+
   protected:
     size_t size;
+    bool   dist;
 };
 
-struct LocalStorage : TypeTracker
+/// \brief represents memory blocks that entirely owned by a thread
+/// \note  such blocks could be accessed by other threads (think upc_alloc)
+struct ThreadStorage : TypeTracker
 {
   TypeData types;
   InitData initialized;
 
   explicit
-  LocalStorage(size_t sz)
-  : TypeTracker(sz), types(), initialized(sz, false)
+  ThreadStorage(size_t sz)
+  : TypeTracker(sz, false), types(), initialized(sz, false)
   {}
 
   void assert_local(Location loc);
+  size_t baseThread(Location l) const;
   TypeData& typesof(Location loc);
   InitData& initlistof(Location loc);
   void resize( size_t newsize );
-  bool distributed() const;
-  Location add(Location l, size_t sz) const;
   InitStatus initializationStatus() const;
-  LocalStorage* clone() const;
+  ThreadStorage* clone() const;
 };
 
+
+/// \brief represents memory blocks that are distributed across threads
 struct DistributedStorage : TypeTracker
 {
   typedef std::vector<InitData> InitDataContainer;
@@ -88,15 +105,15 @@ struct DistributedStorage : TypeTracker
 
   explicit
   DistributedStorage(size_t sz)
-  : TypeTracker(sz), nothreads(rted_Threads()), types(nothreads), initialized(nothreads, InitData(thread_size(sz, nothreads), false))
+  : TypeTracker(sz, true), nothreads(rted_Threads()), types(nothreads),
+    initialized(nothreads, InitData(thread_size(sz, nothreads), false))
   {}
 
   void assert_threadno(Location loc);
   TypeData& typesof(Location loc);
   InitData& initlistof(Location loc);
   void resize( size_t );
-  bool distributed() const;
-  Location add(Location l, size_t sz) const;
+  size_t baseThread(Location l) const;
   InitStatus initializationStatus() const;
   DistributedStorage* clone() const;
 };
@@ -237,7 +254,7 @@ class MemoryType
         /// \return  a pointer to the newly constructed @c RsCompoundType. This
         ///          object will be on the heap and callers are responsible for
         ///          deleting it.
-        RsType* computeCompoundTypeAt(Location addr, size_t size);
+        RsCompoundType* computeCompoundTypeAt(Location addr, size_t size);
 
         /// if the entry at (iter-1) overlaps with from, use (iter-1)
         ///   as the start of the range.

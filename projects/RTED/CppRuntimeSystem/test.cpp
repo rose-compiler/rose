@@ -1,9 +1,11 @@
 // vim:sw=4 ts=4 tw=80 et sta fdm=marker:
-#include "CppRuntimeSystem.h"
-#include <boost/foreach.hpp>
 #include <iostream>
 #include <cassert>
 #include <cstdlib>
+#include <boost/foreach.hpp>
+
+#include "CppRuntimeSystem.h"
+#include "rtedsync.h"
 
 using namespace std;
 
@@ -718,6 +720,8 @@ void testPointerChanged()
 
     TypeSystem * ts = rs->getTypeSystem();
 
+    std::cout << "--- Scope 1" << std::endl;
+
     rs -> setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::Exit );
     // Case1: change of allocation chunk
     Address addr = asAddr(100);
@@ -744,6 +748,8 @@ void testPointerChanged()
     rs->endScope();
 
 
+    std::cout << "--- Scope 2" << std::endl;
+
     // Case2: change of "type-chunk"
     rs->beginScope("Scope2");
         struct A { int arr[10]; int behindArr; };
@@ -754,7 +760,7 @@ void testPointerChanged()
         ts->registerType(typeA);
 
         // Create an instance of A on stack
-        rs->createVariable(asAddr(0x42),"instanceOfA","mangled","A", nondistributed);
+        rs->createVariable(asAddr(0x42),"instanceOfA","mangled", typeA, nondistributed);
 
         rs->createVariable(asAddr(0x100),"intPtr","mangled_intPtr",ts->getPointerType("SgTypeInt"), nondistributed);
         registerPointerChange(rs, "mangled_intPtr",asAddr(0x42));
@@ -762,6 +768,8 @@ void testPointerChanged()
         try{ registerPointerChange(rs, "mangled_intPtr", asAddr(0x42) + 10*sizeof(int),true); }
         TEST_CATCH(RuntimeViolation::INVALID_PTR_ASSIGN )
     rs->endScope();
+
+    std::cout << "--- Scope 3" << std::endl;
 
     // use default policy for case 3
     rs -> setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::InvalidatePointer );
@@ -1559,13 +1567,14 @@ void testTypeConsistencyChecking() {
 }
 
 
-// \pp \todo if we compile with ROSE UPC support, this has to become upc_main
-
 extern "C"
 {
   int upc_main(int, char**, char**)
   {
       std::cout << "Start RTED single thread tests " << std::endl;
+
+      rted_UpcAllInitWorkzone();
+      rted_UpcEnterWorkzone();
 
       try
       {
@@ -1641,7 +1650,11 @@ extern "C"
       return 0;
   }
 
-#if !defined(WITH_UPC)
+#ifdef WITH_UPC
+  // \hack see comment in CppRuntimeSystem/ptrops.upc
+  // \note since this is a single threaded test, we just provide the name
+  char rted_base_hack[0];
+#else
   int main(int noargs, char** args, char** envp)
   {
     upc_main(noargs, args, envp);

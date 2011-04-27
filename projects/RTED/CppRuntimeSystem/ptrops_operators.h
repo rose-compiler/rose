@@ -30,7 +30,9 @@ bool operator==(const Address& lhs, const Address& rhs)
 {
   return (  lhs.local == rhs.local
 #if WITH_RTED
-         && lhs.thread_id == rhs.thread_id
+         && (  lhs.local == 0
+            || lhs.thread_id == rhs.thread_id
+            )
 #endif /* WITH_RTED */
          );
 }
@@ -96,11 +98,12 @@ Address sub(Address l, long ofs, bool distributed)
 {
   return add(l, -ofs, distributed);
 }
+*/
 
-/// \brief   calculates the number of bytes between lhs and rhs
+/// \brief   returns the offset of rhs from lhs (in bytes)
 /// \details see comments on add
 static inline
-long diff(Address lhs, Address rhs, bool distributed)
+long ofs(Address lhs, Address rhs, bool distributed)
 {
   long ofs = lhs.local - rhs.local;
 
@@ -112,7 +115,6 @@ long diff(Address lhs, Address rhs, bool distributed)
 
   return ofs;
 }
-*/
 
 inline
 std::ostream& operator<<(std::ostream& s, const Address& obj)

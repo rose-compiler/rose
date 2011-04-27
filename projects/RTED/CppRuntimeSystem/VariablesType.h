@@ -26,8 +26,7 @@ class VariablesType
         VariablesType( Address address,
                        const std::string & name,
                        const std::string & mangledName,
-                       RsType * type,
-                       bool distributed
+                       RsType * type
                      );
 
         ~VariablesType();

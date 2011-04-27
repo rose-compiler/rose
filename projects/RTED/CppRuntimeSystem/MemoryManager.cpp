@@ -1,6 +1,7 @@
 #include <sstream>
 #include <iostream>
 #include <memory>
+#include <typeinfo>
 
 #include "MemoryManager.h"
 
@@ -12,7 +13,7 @@ TypeTracker* createTracker(bool distr, size_t size)
 {
   if (distr) return new DistributedStorage(size);
 
-  return new LocalStorage(size);
+  return new ThreadStorage(size);
 }
 
 static inline
@@ -31,11 +32,10 @@ MemoryType::MemoryType(Location _addr, size_t _size, AllocKind ak, bool distr, c
   RuntimeSystem *   rs = RuntimeSystem::instance();
   std::stringstream msg;
 
-  msg << "  ***** Allocate Memory :: " << _addr
-      << "  size: " << _size
-      << "  @ (" << _pos.getLineInOrigFile()
-      << ", " << _pos.getLineInTransformedFile() << ")";
-
+  msg << "  ***** Allocate Memory :: [" << _addr
+      << ", " << endAddress() << ")"
+      << "  size = " << _size
+      << "  @ (" << _pos.getLineInOrigFile() << ", " << _pos.getLineInTransformedFile() << ")";
   rs->printMessage(msg.str());
 }
 
@@ -46,7 +46,7 @@ void MemoryType::resize( size_t new_size )
 
 MemoryType::Location MemoryType::endAddress() const
 {
-  return tracker->add(startAddress, getSize());
+  return ::add(startAddress, getSize(), tracker->distributed());
 }
 
 bool MemoryType::containsAddress(Location queryAddress) const
@@ -58,20 +58,20 @@ bool MemoryType::containsAddress(Location queryAddress) const
 
 MemoryType::Location MemoryType::lastValidAddress() const
 {
-  return tracker->add(startAddress, getSize()-1);
+  return ::add(startAddress, getSize()-1, tracker->distributed());
 }
 
 bool MemoryType::containsMemArea(Location queryAddr, size_t querySize) const
 {
     return (  containsAddress(queryAddr)
-           && containsAddress(tracker->add(queryAddr, querySize - 1))
+           && containsAddress(::add(queryAddr, querySize - 1, tracker->distributed()))
            );
 }
 
 bool MemoryType::overlapsMemArea(Location queryAddr, size_t querySize) const
 {
     return (  containsAddress(queryAddr)
-           || containsAddress(tracker->add(queryAddr, querySize - 1))
+           || containsAddress(::add(queryAddr, querySize - 1, tracker->distributed()))
            );
 }
 
@@ -113,7 +113,7 @@ void MemoryType::registerMemType(Location addr, RsType * type)
 {
     std::stringstream msg;
     RuntimeSystem *   rs = RuntimeSystem::instance();
-    bool              types_merged = checkAndMergeMemType(addr, type);
+    const bool        types_merged = checkAndMergeMemType(addr, type);
 
     msg << "   ++ registerMemType at: " << addr << "  type: " << type->getName() << '\n'
         << "      ++ types_merged: " << types_merged;
@@ -126,11 +126,13 @@ void MemoryType::registerMemType(Location addr, RsType * type)
         // MemoryType has been registered with type
         assert(type);
 
+        const bool distributed = tracker->distributed() && (dynamic_cast<RsArrayType*>(type) != NULL);
+
         tracker->typesof(addr)[addr.local] = type;
 
         // since we have knowledge about the type in memory, we also need to update the
         // information about "dereferentiable" memory regions i.e. pointer
-        rs->getPointerManager()->createPointer(addr, type, tracker->distributed());
+        rs->getPointerManager()->createPointer(addr, type, distributed);
     }
 
     rs->printMessage("   ++ registerMemType done.");
@@ -267,12 +269,25 @@ bool MemoryType::checkAndMergeMemType(Location addr, RsType * type)
 
     // if we have knowledge about the type in memory, we also need to update the
     // information about "dereferentiable" memory regions i.e. pointer
-    rs->getPointerManager()->createPointer(addr, type, tracker->distributed());
+    const bool distributed = tracker->distributed() && (dynamic_cast<RsArrayType*>(type) != NULL);
+
+    rs->getPointerManager()->createPointer(addr, type, distributed);
 
     return true;
 }
 
+static inline
+bool isDistMem(const TypeTracker& tracker, const RsType& t)
+{
+  std::cout << "  #@@ " << typeid(t).name() << std::endl;
+  return tracker.distributed() && (dynamic_cast< const RsArrayType* >( &t ) != NULL);
+}
 
+static
+MemoryType::Location typed_add(MemoryType::Location base, size_t offset, const TypeTracker& tracker, const RsType& t)
+{
+  return ::add(base, offset, isDistMem(tracker, t));
+}
 
 
 RsType* MemoryType::getTypeAt(Location addr, size_t size)
@@ -282,32 +297,50 @@ RsType* MemoryType::getTypeAt(Location addr, size_t size)
     TiIter       first_addr_type = type_range.first;
     TiIter       end = type_range.second;
 
+    std::cerr << "   distance = " << std::distance(first_addr_type, end) << std::endl;
+    std::cerr << "   addr = " << static_cast<const void*>(addr.local)
+              << "  first = " << static_cast<const void*>(first_addr_type->first) << std::endl;
+
     if( first_addr_type == end )
+    {
         // We know nothing about the types at offset..+size
         return &RsType::UnknownType;
+    }
 
     RsType*      res = NULL;
     TiIter       second_addr_type = first_addr_type;
 
     ++second_addr_type;
-    if (  second_addr_type == end
-       && addr.local >= first_addr_type->first // \pp what to do with negative offsets (see below)?
-       )
+    // \pp   why can there be a number of overlapping typeinfos?
+    //       possibly when continuing on an erroneous state?
+    // \todo assert(second_addr_type == end)
+
+    if ( second_addr_type == end && addr.local >= first_addr_type->first )
     {
       // We know only something about one type in this range
-      RsType* first_type = first_addr_type->second;
+      RsType*    first_type = first_addr_type->second;
+      assert(first_type);
 
-      res = first_type->getSubtypeRecursive( addr.local - first_addr_type->first,  // \pp negative?
-                                             size,
-                                             true
-                                           );
+      Location loc = { tracker->baseThread(addr), first_addr_type->first };
+      size_t   ofs = ::ofs( addr, loc, tracker->distributed() );
+
+      // \pp I do not think that the third argument is very helpful
+      //     In particular with multi-dimensional arrays, the returned
+      //     array would not always be the top level
+      res = first_type->getSubtypeRecursive( ofs, size, true /* stop-on-array */ );
+
+      std::cerr << "   res = " << static_cast<const void*>(res)
+                << "   " << typeid(first_type).name() << std::endl;
     }
 
     return res;
 }
 
-RsType* MemoryType::computeCompoundTypeAt(Location addr, size_t size)
+RsCompoundType* MemoryType::computeCompoundTypeAt(Location addr, size_t size)
 {
+    // \pp not sure why this is needed? should not we always have
+    //     type information of a memory location + length?
+
     TypeData&       tmap = tracker->typesof(addr);
     TiIterPair      type_range = getOverlappingTypeInfos( tmap, addr.local, size );
     TiIter          first_addr_type = type_range.first;
@@ -319,6 +352,10 @@ RsType* MemoryType::computeCompoundTypeAt(Location addr, size_t size)
 
     for( TiIter i = first_addr_type; i != end; ++i)
     {
+        std::stringstream out;
+        out << rted_ThisThread() << "  first: " << static_cast<const void*>(i->first) << "   addr: " << static_cast<const void*>(addr.local) << " " << (i->first <= addr.local) << "\n";
+        std::cerr << out.str() << std::flush;
+
         assert(i->first >= addr.local);
 
         size_t  subtype_offset = i->first - addr.local;
@@ -503,9 +540,10 @@ MemoryType* MemoryManager::allocateMemory(Location adrObj, size_t szObj, MemoryT
         return NULL;
     }
 
-    MemoryType tmp(adrObj, szObj, kind, distr, pos);
+    MemoryType                tmp(adrObj, szObj, kind, distr, pos);
+    MemoryTypeSet::value_type v(adrObj, tmp);
 
-    return &mem.insert(MemoryTypeSet::value_type(adrObj, tmp)).first->second;
+    return &mem.insert(v).first->second;
 }
 
 static
@@ -752,21 +790,25 @@ MemoryManager::checkIfSameChunk( Location addr1, Location addr2, size_t typeSize
     }
   }
 
-  // \pp \todo as far as I understand, getTypeAt returns the innermost type
-  //           that overlaps a certain memory region [addr1, typeSize). This
-  //           seems insufficient to protect against pointer moves
-  //           crossing array boundaries.
+  // so far we know that addr1, addr2 have been allocated within the same chunk
+  // now, test for same array chunks
+
+  // \pp as far as I understand, getTypeAt returns the innermost type
+  //     that overlaps a certain memory region [addr1, typeSize).
+  //     The current implementation stops at the highest level of array...
   RsType*               type1 = mem1 -> getTypeAt( addr1, typeSize );
   RsType*               type2 = mem1 -> getTypeAt( addr2, typeSize );
   std::auto_ptr<RsType> guard1(NULL);
   std::auto_ptr<RsType> guard2(NULL);
 
   if( !type1 ) {
+      std::cerr << "type1! " << std::endl;
       type1 = mem1 -> computeCompoundTypeAt( addr1, typeSize );
       guard1.reset(type1);
   }
 
   if( !type2 ) {
+      std::cerr << "type2! " << std::endl;
       type2 = mem1 -> computeCompoundTypeAt( addr2, typeSize );
       guard2.reset(type2);
   }
@@ -776,19 +818,36 @@ MemoryManager::checkIfSameChunk( Location addr1, Location addr2, size_t typeSize
   bool         accessOK = type1->isConsistentWith( *type2 );
   RsArrayType* array = (accessOK ? dynamic_cast< RsArrayType* >( type1 ) : 0);
 
+  std::cerr << "accOK: " << accessOK << std::endl;
+
   if (array)
   {
     // \pp \todo not sure why bounds checking is based on a relative address (addr1)
     //     and not on absolute boundaries of the chunk where this address is located...
     //     e.g., addr2 < array(addr).lb || array(addr).ub < (addr2+typeSize)
+    //     - a reason is that we want to bounds check within a multi-dimensional
+    //       array; a sub-array might not start at the same address as the
+    //       allocated chunk (which is always at [0][0]...)
+    // \bug  this works fine for arrays, but it does not seem to be OK for
+    //       pointers; in which case addr1 might point in the middle of a chunk.
+    const Location arrlb = addr1;
+    const Location arrub = ::add(addr1, array->getByteSize(), mem1->tracker->distributed());
+    const Location elemlb = addr2;
+    const Location elemub = typed_add(addr2, typeSize, *mem1->tracker, *type2);
 
-    if (  addr2 < addr1 // the array element might be before it [ -1 ]
-       || mem1->tracker->add(addr1, array->getByteSize()) < mem1->tracker->add(addr2, typeSize) // ... or after the array [ N ]...
-       )
+    std::cerr << " $2=" << addr2 << " < $1=" << addr1 << std::endl;
+    std::cerr << " $1 + " << array->getByteSize() << " = " << arrub
+              << " < $2 + " << typeSize << " = " << elemub << std::endl;
+
+    // the array element might be before it [ -1 ]
+    // ... or after the array [ N ]...
+    if ( (elemlb < arrlb) || (arrub < elemub) )
     {
       // out of bounds error (e.g. int[2][3], ref [0][3])
       accessOK = false;
     }
+
+    std::cerr << " res = " << accessOK << std::endl;
 
     /* was:
     if  !(  addr1 + array -> getByteSize() >= addr2 + typeSize  // the array element might be after the array [ N ]...
@@ -941,11 +1000,9 @@ std::ostream& operator<< (std::ostream &os, const MemoryManager& m)
     assert(false);
   }
 
-  bool DistributedStorage::distributed() const { return true; }
-
-  DistributedStorage::Location DistributedStorage::add(Location l, size_t sz) const
+  size_t DistributedStorage::baseThread(Location l) const
   {
-    return ::add(l, sz, true);
+    return l.thread_id;
   }
 
   DistributedStorage::InitStatus DistributedStorage::initializationStatus() const
@@ -974,46 +1031,34 @@ std::ostream& operator<< (std::ostream &os, const MemoryManager& m)
   }
 
 
-  inline
-  void LocalStorage::assert_local(Location loc)
+  ThreadStorage::TypeData& ThreadStorage::typesof(Location loc)
   {
-    assert(loc.thread_id == rted_ThisThread());
-  }
-
-  LocalStorage::TypeData& LocalStorage::typesof(Location loc)
-  {
-    assert_local(loc);
-
     return types;
   }
 
-  LocalStorage::InitData& LocalStorage::initlistof(Location loc)
+  ThreadStorage::InitData& ThreadStorage::initlistof(Location loc)
   {
-    assert_local(loc);
-
     return initialized;
   }
 
-  void LocalStorage::resize( size_t newsize )
+  void ThreadStorage::resize( size_t newsize )
   {
     assert( newsize >= size );
     size = newsize;
     initialized.resize(size, false);
   }
 
-  bool LocalStorage::distributed() const { return false; }
-
-  LocalStorage::Location LocalStorage::add(Location l, size_t sz) const
-  {
-    return ::add(l, sz, false);
-  }
-
-  LocalStorage::InitStatus LocalStorage::initializationStatus() const
+  ThreadStorage::InitStatus ThreadStorage::initializationStatus() const
   {
     return ::initializationStatus(initialized);
   }
 
-  LocalStorage* LocalStorage::clone() const
+  ThreadStorage* ThreadStorage::clone() const
   {
-    return new LocalStorage(*this);
+    return new ThreadStorage(*this);
+  }
+
+  size_t ThreadStorage::baseThread(Location l) const
+  {
+    return l.thread_id;
   }

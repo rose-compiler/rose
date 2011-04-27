@@ -59,7 +59,6 @@ void RtedTransformation::loadFunctionSymbols(SgProject* project) {
    ROSE_ASSERT(symbols.roseUpcExitWorkzone);
    ROSE_ASSERT(symbols.roseUpcEnterWorkzone);
    ROSE_ASSERT(symbols.roseUpcAllInitialize);
-   ROSE_ASSERT(symbols.roseUpcExit);
    ROSE_ASSERT(symbols.roseUpcBeginExclusive);
    ROSE_ASSERT(symbols.roseUpcEndExclusive);
 
@@ -84,7 +83,7 @@ void RtedTransformation::transform(SgProject* project, std::set<std::string>& rt
    if (RTEDDEBUG())   std::cout << "Running Transformation..." << std::endl;
 
    this -> rtedfiles = &rtedfiles;
-   loadFunctionSymbols(project);
+   // loadFunctionSymbols(project);
 
    VariableTraversal  varTraversal(this);
 
@@ -109,7 +108,7 @@ void RtedTransformation::transform(SgProject* project, std::set<std::string>& rt
       traverse(*travClassIt,preorder);
    }
 
-   executeTransformations();
+   // executeTransformations();
 }
 
 

@@ -145,11 +145,16 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgExpressi
    // build the function call:  rs.createHeapArr(...);
    //                        or rs.createHeapPtr(...);
    SgExprListExp*     arg_list = buildExprListExp();
+
+   // the type of the node
    SgType*            src_type = src_exp->get_type();
-   const bool         isCreateHeapArr = (src_type->class_name() == "SgArrayType");
+
+   // the underlying type, after skipping modifiers (shall we also skip typedefs?)
+   SgType*            under_type = skip_ModifierType(src_type);
+   const bool         isCreateHeapArr = (under_type->class_name() == "SgArrayType");
 
    // what kind of types do we get?
-   ROSE_ASSERT(isCreateHeapArr || src_type->class_name() == "SgPointerType");
+   ROSE_ASSERT(isCreateHeapArr || under_type->class_name() == "SgPointerType");
 
    // if we have an array, then it has to be on the stack
    ROSE_ASSERT(!isCreateHeapArr || array->allocKind == akStack);
@@ -883,8 +888,19 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
          ROSE_ASSERT( varRef );
 
          initName = varRef -> get_symbol() -> get_declaration();
-         ROSE_ASSERT(varRef);
       }// ------------------------------------------------------------
+      else if (isSgAddOp(exp) || isSgSubtractOp(exp))
+      {
+        // \pp this case is not handled by the original RTED code
+        //     --> postpone until later
+        return;
+#if OBSOLETE_CODE
+        varRef = isSgVarRefExp(addexp->get_lhs_operand());
+        ROSE_ASSERT( varRef );
+
+        initName = varRef -> get_symbol() -> get_declaration();
+#endif /* OBSOLETE_CODE */
+      }
       else {
          cerr << "RtedTransformation : PointerDerefExp - Unknown : " << exp->class_name() << "  line:"
                << pointerDeref->unparseToString() << endl;

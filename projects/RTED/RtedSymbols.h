@@ -38,7 +38,6 @@ struct RtedSymbols : AstSimpleProcessing {
   SgFunctionSymbol*   roseUpcExitWorkzone;
   SgFunctionSymbol*   roseUpcEnterWorkzone;
   SgFunctionSymbol*   roseUpcAllInitialize;
-  SgFunctionSymbol*   roseUpcExit;
   SgFunctionSymbol*   roseUpcBeginExclusive;
   SgFunctionSymbol*   roseUpcEndExclusive;
 
@@ -77,7 +76,6 @@ struct RtedSymbols : AstSimpleProcessing {
     roseUpcExitWorkzone(NULL),
     roseUpcEnterWorkzone(NULL),
     roseUpcAllInitialize(NULL),
-    roseUpcExit(NULL),
     roseUpcBeginExclusive(NULL),
     roseUpcEndExclusive(NULL),
 

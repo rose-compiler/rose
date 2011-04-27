@@ -57,12 +57,8 @@ if [ "$runtimesystem" != "" ]; then
   echo "$CMD"
   $CMD
 
-  CMD="$upc $upcflags -c $rtedsrcdir/workzone.upc"
-  echo "$CMD"
-  $CMD
-
   rtedlib="-L./CppRuntimeSystem/.libs/ -lCppRuntimeSystem"
-  objfiles="$objfiles ParallelRTS.o workzone.o RuntimeSystem.o"
+  objfiles="$objfiles ParallelRTS.o RuntimeSystem.o"
 fi
 
 CMD="$upc $upcflags $newOption -c $inpfiles"

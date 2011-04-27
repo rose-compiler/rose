@@ -22,7 +22,7 @@ class StackManager
         ~StackManager() {}
 
 
-        void addVariable(VariablesType * var);
+        void addVariable(VariablesType * var, bool distributed);
 
         /// Each variable is associated with a scope, use this function to create a new scope
         /// @param name  string description of scope, may be function name or "for-loop" ...

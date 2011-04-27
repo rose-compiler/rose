@@ -40,7 +40,8 @@ bool RtedTransformation::isVarInCreatedVariables(SgInitializedName* n) {
 
 bool isFileIOVariable(SgType* type)
 {
-        std::string name = type->unparseToString();
+        SgType*     under = skip_Typedefs(type);
+        std::string name = under->unparseToString();
 
         return name == "std::fstream";
 }
@@ -419,7 +420,8 @@ RtedTransformation::buildVariableInitCallExpr( SgInitializedName* initName,
 void RtedTransformation::insertInitializeVariable(SgInitializedName* initName, SgVarRefExp* varRefE, AllocKind allocKind)
 {
         ROSE_ASSERT(initName && varRefE);
-        ROSE_ASSERT(varRefE->get_parent()); // \pp \todo test if all varrefs are proper AST elements?
+        // assert(varRefE->get_parent()) fails b/c varRefE might not be
+        //   a proper AST element (constructed at RtedTransf_variable.cpp:763)
 
         SgStatement* stmt = NULL;
         if (varRefE->get_parent()) // we created a verRef for AssignInitializers which do not have a parent
@@ -589,6 +591,26 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE, SgExpression
         insertAccessVariable(initNamescope, derefExp, stmt, varRefE);
 }
 
+struct ReadCanceler
+{
+  int rwmask;
+
+  explicit
+  ReadCanceler(int read_write_flag)
+  : rwmask(read_write_flag)
+  {}
+
+  void cancel_read() { rwmask = 0; }
+
+  void handle(const SgNode&) { ROSE_ASSERT(false); }
+  void handle(const SgExpression&) {} // default case, no changes
+
+  void handle(const SgAddOp&) { cancel_read(); }
+  void handle(const SgSubtractOp&) { cancel_read(); }
+
+  operator int() { return rwmask; }
+};
+
 void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
                                                SgExpression* derefExp,
                                                SgStatement* stmt,
@@ -668,6 +690,20 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
                                                     isthereAnotherDerefOpBetweenCurrentAndAssign(
                                                                     derefExp);
                                     accessed_exp = deref_op -> get_operand();
+
+                                    // \pp added this extra case (to make the code uglier)
+                                    //     the case is needed to handle upc related tests
+                                    //     e.g.: *(arr + idx) = 7
+                                    //     here we do not want to test whether
+                                    //     arr is readable or not, just test
+                                    //     the writeop
+                                    //     not sure, if this disables
+                                    //     some existing RTED tests
+                                    if (!isReadOnly)
+                                    {
+                                      read_write_mask = ez::visitSgNode(ReadCanceler(read_write_mask), accessed_exp);
+                                    }
+
                                     write_location_exp = deref_op;
                                     if (!isReadOnly)
                                             read_write_mask |= Write;
@@ -679,6 +715,10 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
             }
 
             SgExprListExp* arg_list = buildExprListExp();
+
+            // \pp clear addresses if not needed
+            if ((read_write_mask & Read) != Read) accessed_exp = 0;
+            if ((read_write_mask & Write) != Write) write_location_exp = 0;
 
             appendAddressAndSize(arg_list, Elem, initscope, accessed_exp, NULL);
             appendAddressAndSize(arg_list, Elem, initscope, write_location_exp, NULL);
@@ -784,10 +824,11 @@ void RtedTransformation::visit_isAssignInitializer(SgAssignInitializer* const as
                         cerr << ">> Setting this var to be initialized : "
                              << initName->unparseToString() << endl;
 
-                        // \pp \todo I believe that the following assignment
+                        // \pp \todo I believe that the following code
                         //           can be safely removed as it duplicates
                         //           the previous store to
                         //           variableIsInitialized ...
+                        assert(variableIsInitialized[varRef] == InitializedVarMap::mapped_type(initName, allocInfo.allocKind));
                         variableIsInitialized[varRef] = InitializedVarMap::mapped_type(initName, allocInfo.allocKind);
                 }
 #endif

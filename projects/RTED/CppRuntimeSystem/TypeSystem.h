@@ -31,8 +31,9 @@ class TypeSystem
         RsType * getTypeInfo(const std::string & name);
 
 
-        RsArrayType * getArrayType(RsType * baseType, size_t size);
-        RsArrayType * getArrayType(const std::string & baseTypeName, size_t size);
+        /// creates an array with a given base type
+        RsArrayType * getArrayType(RsType* baseType, size_t elemsize);
+        RsArrayType * getArrayType(const std::string& baseTypeName, size_t size);
 
 
         RsPointerType * getPointerType(RsType * baseType, AddressDesc levelOfIndirection);

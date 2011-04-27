@@ -11,33 +11,10 @@ using namespace std;
 VariablesType::VariablesType( Address address_,
                               const std::string & name_,
                               const std::string & mangledName_,
-                              RsType * type_,
-                              bool distributed
+                              RsType * type_
                             )
 : address(address_), name(name_), mangledName(mangledName_), type(type_)
-{
-  assert(type != NULL);
-
-  RsClassType*   class_type = dynamic_cast< RsClassType* >( type );
-
-  // Variables are allocated statically. However, in UPC they can be shared
-  //   if allocated on the file scope. Thus, the locality holds only for
-  //   non UPC types (e.g., C++ classes).
-  assert(class_type == NULL || rted_isLocal(address));
-
-  RuntimeSystem* rs = RuntimeSystem::instance();
-  const bool     isCtorCall = (  class_type != NULL
-                              && rs->getMemManager()->getMemoryType(address) != NULL
-                              );
-
-  // When we create classes, the memory might be allocated in the
-  // constructor.  In these cases, it's fine to call createvar with
-  // existing memory
-  if (!isCtorCall)
-  {
-    rs->createMemory(address_, type->getByteSize(), akStack, distributed, type);
-  }
-}
+{}
 
 
 VariablesType::~VariablesType()

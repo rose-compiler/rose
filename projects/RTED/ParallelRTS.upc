@@ -2,14 +2,16 @@
 #include <assert.h>
 #include <upc.h>
 #include <string.h>
-// #include <stdio.h>
+#include <stdio.h>
 
 #include "ParallelRTS.h"
-#include "workzone.h"
 #include "RuntimeSystem.h"
 
 //
 // types
+
+// \hack see comment in CppRuntimeSystem/ptrops.upc
+shared[1] char rted_base_hack[THREADS];
 
 enum rted_MsgKind
 {
@@ -66,56 +68,6 @@ struct rted_MsgTypeDescHeader
 };
 
 typedef struct rted_MsgTypeDescHeader rted_MsgTypeDescHeader;
-
-//
-// shared heap protection (Workzone)
-//
-
-workzone_policy_t* workzone = 0;
-
-static
-void rted_UpcAllInitWorkzone(void)
-{
-  assert(!workzone);
-
-  workzone = wzp_all_alloc();
-}
-
-void rted_UpcEnterWorkzone(void)
-{
-  assert(workzone);
-
-  wzp_enter(workzone);
-}
-
-void rted_UpcExitWorkzone(void)
-{
-  assert(workzone);
-
-  wzp_exit(workzone);
-}
-
-void rted_UpcBeginExclusive(void)
-{
-  assert(workzone);
-
-  wzp_beginExperiment(workzone);
-}
-
-void rted_UpcEndExclusive(void)
-{
-  assert(workzone);
-
-  wzp_endExperiment(workzone);
-}
-
-static
-void rted_staySafe(void)
-{
-  assert(workzone);
-
-  wzp_staySafe(workzone);
-}
 
 //
 // Messaging Infrastructure - Single Reader/Multiple Writer Queue
@@ -535,7 +487,8 @@ void snd_InitVariable( rted_TypeDesc    td,
                        rted_SourceInfo  si
                      )
 {
-  printf(" sndvar from %i @ %lu\n", MYTHREAD, si.src_line);
+  fprintf(stderr, " sndvar from %i @ %lu\n", MYTHREAD, si.src_line);
+  fflush(stderr);
 
   // other threads can only deref shared addresses;
   //   \todo the current impl might fail for shared pointers that are converted
@@ -678,6 +631,9 @@ void msgRetire(shared rted_MsgHeader* m)
 // declared static by preceding declaration
 void msgBroadcast(const char* msg, const size_t len)
 {
+  // do not send if there is only one thread
+  if (THREADS == 1) return;
+
   // to be freed by the last dequeuer in retire
   shared char*                tgtblock = upc_global_alloc(len, sizeof(char[len]));
   assert(tgtblock);
@@ -689,7 +645,7 @@ void msgBroadcast(const char* msg, const size_t len)
   mb->unread_threads = THREADS - 1;
   mb->msg_lock = upc_global_lock_alloc();
 
-  fprintf(stderr, "w: %i : %i\n", MYTHREAD, ((rted_MsgHeader*) msg)->kind);
+  fprintf(stderr, "w (#%i) : %i\n", MYTHREAD, ((rted_MsgHeader*) msg)->kind);
   fflush(stderr);
 
   for (int i = 0; i < THREADS; ++i)
@@ -714,7 +670,7 @@ void msgReceive()
   shared rted_MsgHeader* m = msgDeQueue();
   rted_MsgHeader*        msg = (rted_MsgHeader*)m;
 
-  fprintf(stderr, "r: %i : %i (%i)\n", MYTHREAD, msg->kind, msg->threadno);
+  fprintf(stderr, "r (#%i) : %i (%i)\n", MYTHREAD, msg->kind, msg->threadno);
   fflush(stderr);
 
   switch (msg->kind)
@@ -760,11 +716,4 @@ void rted_UpcAllInitialize()
   // initialize the heap protection
   rted_UpcAllInitWorkzone();
   rted_UpcEnterWorkzone();
-}
-
-void rted_UpcExit()
-{
-  rted_UpcExitWorkzone();
-  upc_barrier;
-  rted_ProcessMsg();
 }

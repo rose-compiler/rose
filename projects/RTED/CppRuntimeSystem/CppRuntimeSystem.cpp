@@ -1,18 +1,19 @@
 // vim:sta et ts=4 sw=4:
-#include "CppRuntimeSystem.h"
 #include <cassert>
 #include <sstream>
 #include <iomanip>
-
 #include <fstream>
-
 #include <cstdlib> //needed for getenv("HOME") to read config file
 
 #include <boost/foreach.hpp>
 
+#include "CppRuntimeSystem.h"
+
 #ifdef ROSE_WITH_ROSEQT
 #include "DebuggerQt/RtedDebug.h"
 #endif
+
+#include "rtedsync.h"
 
 
 using namespace std;
@@ -157,7 +158,9 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
 
     if (policy == ViolationPolicy::Exit || policy == ViolationPolicy::Warn)
     {
+      rted_UpcBeginExclusive();
       (*defaultOutStr) << errmsg.str() << std::flush;
+      rted_UpcEndExclusive();
     }
 
 
@@ -301,7 +304,30 @@ void RuntimeSystem::createVariable( Address address,
                                   )
 {
   assert(type);
-  stackManager.addVariable(new VariablesType(address, name, mangledName, type, distributed));
+
+  // \todo remove the dynamic cast but overloading the interface
+  RsClassType*   class_type = dynamic_cast< RsClassType* >( type );
+
+  // Variables are allocated statically. However, in UPC they can be shared
+  //   if allocated on the file scope. Thus, the locality holds only for
+  //   non UPC types (e.g., C++ classes).
+  assert(class_type == NULL || rted_isLocal(address));
+
+  const bool     isCtorCall = (  class_type != NULL
+                              && memManager.getMemoryType(address) != NULL
+                              );
+
+  // When we create classes, the memory might be allocated in the
+  // constructor.  In these cases, it's fine to call createvar with
+  // existing memory
+  if (!isCtorCall)
+  {
+    createMemory(address, type->getByteSize(), akStack, distributed, type);
+  }
+
+  // \pp \note it seems that addVariable again registers all pointers, that
+  //           have already been registered by createMemory
+  stackManager.addVariable(new VariablesType(address, name, mangledName, type), distributed);
 }
 
 
@@ -345,9 +371,12 @@ void RuntimeSystem::createArray( Address address,
   assert(type);
 
   // creates array on the stack
-  stackManager.addVariable( new VariablesType( address, name, mangledName, type, distributed ));
+  createVariable( address, name, mangledName, type, distributed );
 
-  pointerManager.createPointer( address, type->getBaseType(), true /* \pp \todo \distmem */ );
+  RsType*    basetype = type->getBaseType();
+  const bool dist = distributed && (dynamic_cast<RsArrayType*>(basetype) != NULL);
+
+  pointerManager.createPointer( address, basetype, dist );
 
   // View an array as a pointer, which is stored at the address and which points at the address
   pointerManager.registerPointerChange( address, address, false, false);
@@ -414,7 +443,7 @@ void RuntimeSystem::registerPointerChange( Address     src,
                                            bool        checkMemLeaks
                                          )
 {
-    pointerManager.registerPointerChange(src,tgt,checkPointerMove, checkMemLeaks);
+    pointerManager.registerPointerChange(src, tgt, checkPointerMove, checkMemLeaks);
 }
 
 void RuntimeSystem::registerPointerChange( Address        src,

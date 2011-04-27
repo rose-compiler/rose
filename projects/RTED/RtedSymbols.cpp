@@ -70,7 +70,6 @@ void initialize(SgScopeStatement& n, RtedSymbols& rtedsym)
   lookup(n, "UpcExitWorkzone",          rtedsym.roseUpcExitWorkzone);
   lookup(n, "UpcEnterWorkzone",         rtedsym.roseUpcEnterWorkzone);
   lookup(n, "UpcAllInitialize",         rtedsym.roseUpcAllInitialize);
-  lookup(n, "UpcExit",                  rtedsym.roseUpcExit);
   lookup(n, "UpcBeginExclusive",        rtedsym.roseUpcBeginExclusive);
   lookup(n, "UpcEndExclusive",          rtedsym.roseUpcEndExclusive);
 }

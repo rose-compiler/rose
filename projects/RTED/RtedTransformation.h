@@ -62,6 +62,9 @@ SgType* skip_ArrPtrType(SgType* t);
 ///         t otherwise
 SgType* skip_ModifierType(SgType* t);
 
+/// \brief Follow the base type of @c type until we reach a non-typedef.
+SgType* skip_Typedefs( SgType* type );
+
 /// \brief  determines the C++ allocation kind for type t
 /// \return akCxxArrayNew if t is an array, akCxxNew otherwise
 AllocKind cxxHeapAllocKind(SgType* t);
@@ -169,7 +172,7 @@ public:
 
 private:
    // \pp added an enum to give names to what were integer values before.
-   //     Normal     ... affected size is the whole object
+   //     Whole      ... affected size is the whole object
    //     Elem       ... affected size is an array element
    enum AppendKind { Whole = 0, Elem = 2 };
 

@@ -5,6 +5,7 @@
 
 #include "CppRuntimeSystem/rted_iface_structs.h"
 #include "CppRuntimeSystem/ptrops.h"
+#include "CppRuntimeSystem/rtedsync.h"
 
 #include "ParallelRTS.h"
 

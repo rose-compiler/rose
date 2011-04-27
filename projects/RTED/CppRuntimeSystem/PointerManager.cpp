@@ -17,9 +17,20 @@ void zeroIntValueAt(Address addr)
 static
 void insert(PointerManager::TargetToPointerMap& m, const PointerManager::TargetToPointerMap::value_type& val)
 {
-  assert(val.first == val.second->getTargetAddress());
+  Address loc = val.first;
 
-  m.insert(val);
+  // note, the following assert does not hold, as it can store pointers
+  //   where the targetAddress is set to 0, if the pointer points to nowhere
+  //   (e.g., one past the last element)
+  //   was: assert(val.first == val.second->getTargetAddress())
+  if (loc != val.second->getTargetAddress())
+  {
+    RuntimeSystem::instance()->printMessage("#WARNING: corrected pointer target");
+
+    loc = val.second->getTargetAddress();
+  }
+
+  m.insert( PointerManager::TargetToPointerMap::value_type(loc, val.second) );
 }
 
 
@@ -75,6 +86,7 @@ void PointerInfo::setTargetAddress(Location newAddr, bool doCheck)
 
       target = nullAddr();
       rs->violationHandler(RuntimeViolation::INVALID_PTR_ASSIGN, ss.str());
+      std::cout << "Goodbye" << std::endl;
       return;
     }
 
@@ -137,12 +149,14 @@ void PointerManager::createDereferentiableMem(Location sourceAddress, RsType * t
         return;
     }
 
-    insert(targetToPointerMap, TargetToPointerMap::value_type(nullAddr(), pi));
+    insert(targetToPointerMap, TargetToPointerMap::value_type(nullAddr(), pi)) /* insert */;;
 }
 
 
 void PointerManager::createPointer(Location baseAddr, RsType * type, bool distributed)
 {
+    bool basetype_distributed = false;
+
     if (RsArrayType * at = dynamic_cast<RsArrayType*>(type))
     {
         // arrays are 'pseudo-pointers' whose target and source addresses are the
@@ -151,16 +165,29 @@ void PointerManager::createPointer(Location baseAddr, RsType * type, bool distri
         //  &x == x         // this is true
         createDereferentiableMem(baseAddr, at->getBaseType());
         registerPointerChange( baseAddr, baseAddr, nocheck, check );
+
+        basetype_distributed = distributed && ( dynamic_cast<RsArrayType*>(at->getBaseType()) != NULL );
     }
     else if (RsPointerType * pt = dynamic_cast<RsPointerType*>(type))
     {
         // If type is a pointer register it
         createDereferentiableMem(baseAddr, pt->getBaseType());
+        basetype_distributed = distributed && ( dynamic_cast<RsArrayType*>(pt->getBaseType()) != NULL );
     }
+    else
+    {
+      // plain types, and structures are never distributed
+      assert(!distributed);
+    }
+
 
     // If compound type, break down to basic types
     for (int i = 0; i < type->getSubtypeCount(); ++i)
-        createPointer(add(baseAddr, type->getSubtypeOffset(i), distributed), type->getSubtype(i), distributed );
+    {
+        Location l = add(baseAddr, type->getSubtypeOffset(i), distributed);
+
+        createPointer(l, type->getSubtype(i), basetype_distributed );
+    }
 
     // \pp \todo \distmem
 }
@@ -230,80 +257,74 @@ void PointerManager::registerPointerChange( Location src, Location target, RsTyp
         createDereferentiableMem(src,bt);
     }
 
-    registerPointerChange(src,target,checkPointerMove, checkMemLeaks);
+    registerPointerChange(src,target, checkPointerMove, checkMemLeaks);
 }
 
 void PointerManager::registerPointerChange( Location src, Location target, bool checkPointerMove, bool checkMemLeaks)
 {
-    PointerInfo dummy(src);
+    PointerInfo    dummy(src);
     PointerSetIter i = pointerInfoSet.find(&dummy);
 
     // forgot to call createPointer?
     // call the overloaded registerPointerChange() instead which does not require createPointer()
     assert(i != pointerInfoSet.end());
 
-    PointerInfo * pi = *i;
+    PointerInfo& pi = **i;
+    Location     oldTarget = pi.getTargetAddress();
+    bool         legal_move = true;
 
-    Location oldTarget = pi->getTargetAddress();
-
-
-    bool legal_move = true;
     if( checkPointerMove )
     {
         MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
-        legal_move = mm -> checkIfSameChunk(
-                oldTarget,
-                target,
-                pi -> getBaseType() -> getByteSize(),
-                RuntimeViolation::NONE );
+        const size_t    bytesize = pi.getBaseType() -> getByteSize();
+
+        legal_move = mm -> checkIfSameChunk(oldTarget, target, bytesize, RuntimeViolation::NONE );
 
         // This isn't a legal
-        RuntimeSystem* rs = RuntimeSystem::instance();
-        if( !legal_move ) {
-            if( rs -> violationTypePolicy[ RuntimeViolation::INVALID_PTR_ASSIGN ]
-                    == ViolationPolicy::InvalidatePointer) {
-                // Don't complain now, but invalidate the pointer so that subsequent
-                // reads or writes without first registering a pointer change will
-                // be treated as invalid
-                pi -> setTargetAddressForce( nullAddr() );
-                insert(targetToPointerMap, TargetToPointerMap::value_type( nullAddr(), pi ));
-                if( !( rs -> testingMode ))
-                  zeroIntValueAt(pi->getSourceAddress());
-            } else {
+        if( !legal_move )
+        {
+            RuntimeSystem*               rs = RuntimeSystem::instance();
+            const RuntimeViolation::Type vioid = RuntimeViolation::INVALID_PTR_ASSIGN;
+
+            if (rs->violationTypePolicy[vioid] != ViolationPolicy::InvalidatePointer)
+            {
                 // repeat check but throw invalid ptr assign
-                mm -> checkIfSameChunk(
-                    oldTarget,
-                    target,
-                    pi -> getBaseType() -> getByteSize(),
-                    RuntimeViolation::INVALID_PTR_ASSIGN );
+                mm -> checkIfSameChunk(oldTarget, target, bytesize, vioid );
+
                 // shouldn't get here
                 assert( false );
             }
+
+            // Don't complain now, but invalidate the pointer so that subsequent
+            // reads or writes without first registering a pointer change will
+            // be treated as invalid
+            pi.setTargetAddressForce( nullAddr() );
+            insert(targetToPointerMap, TargetToPointerMap::value_type( nullAddr(), &pi )) /* insert */;
+
+            if ( !(rs->testingMode) ) zeroIntValueAt(pi.getSourceAddress());
         }
     }
 
-
     // Remove the pointer info from TargetToPointerMap
-    bool res = removeFromRevMap(pi);
+    bool res = removeFromRevMap(&pi);
     assert(res); // assert that an entry has been deleted
 
     if( legal_move ) {
         try {
             // set correct target
-            pi->setTargetAddress(target);
+            pi.setTargetAddress(target);
         } catch(RuntimeViolation & vio) {
             // if target could not been set, then set pointer to null
-            pi->setTargetAddressForce( nullAddr() );
-            insert(targetToPointerMap, TargetToPointerMap::value_type(nullAddr(), pi));
+            pi.setTargetAddressForce( nullAddr() );
+            insert(targetToPointerMap, TargetToPointerMap::value_type(nullAddr(), &pi)) /* insert */;;
             throw vio;
         }
         // ...and insert it again with changed target
-        insert(targetToPointerMap, TargetToPointerMap::value_type(target, pi));
+        insert(targetToPointerMap, TargetToPointerMap::value_type(target, &pi)) /* insert */;;
     }
 
-
     if( checkMemLeaks )
-        checkForMemoryLeaks( oldTarget, pi -> getBaseType() -> getByteSize() );
+        checkForMemoryLeaks( oldTarget, pi.getBaseType()->getByteSize() );
 
 }
 
@@ -399,7 +420,7 @@ void PointerManager::invalidatePointerToRegion(MemoryType& mt)
         pi->setTargetAddress( nullLoc );
         targetToPointerMap.erase(i);
 
-        insert(targetToPointerMap, TargetToPointerMap::value_type(nullLoc, pi));
+        insert(targetToPointerMap, TargetToPointerMap::value_type(nullLoc, pi)) /* insert */;;
     }
 }
 

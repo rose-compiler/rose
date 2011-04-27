@@ -5,7 +5,7 @@
 
 #include "workzone.h"
 
-#define UNDEFINED_WRITER ((size_t)-1)
+#define UNDEFINED_WRITER 9999
 
 static inline
 void rw_assert_read_mode(rw_lock_t* rwl)

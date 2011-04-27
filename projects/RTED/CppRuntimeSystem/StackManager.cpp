@@ -10,13 +10,12 @@ StackManager::StackManager()
     beginScope("Globals");
 }
 
-void StackManager::addVariable(VariablesType * var)
+void StackManager::addVariable(VariablesType * var, bool distributed)
 {
     assert(scope.size() > 0);
     // if the variable is (or contains) pointer register it to pointer manager
 
-    // \pp \todo \distmem we cannot assume false for global variables
-    RuntimeSystem::instance()->getPointerManager()->createPointer(var->getAddress(), var->getType(), false);
+    RuntimeSystem::instance()->getPointerManager()->createPointer(var->getAddress(), var->getType(), distributed);
 
     addrToVarMap.insert(AddrToVarMap::value_type(var->getAddress(),var));
     stack.push_back(var);

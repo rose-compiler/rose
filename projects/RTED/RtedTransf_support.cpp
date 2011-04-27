@@ -140,7 +140,6 @@ bool isStructMember(const SgInitializedName& n)
 /**
  * Follow the base type of @c type until we reach a non-typedef.
  */
-static
 SgType* skip_Typedefs( SgType* type ) {
      if( isSgTypedefType( type ))
         return skip_Typedefs(

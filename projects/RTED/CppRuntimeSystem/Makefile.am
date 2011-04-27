@@ -19,7 +19,9 @@ libCppRuntimeSystem_la_SOURCES = CppRuntimeSystem.cpp \
                                  TypeSystem.cpp \
                                  PointerManager.cpp\
                                  StackManager.cpp \
-                                 ptrops.c
+                                 ptrops.c \
+                                 workzone.c \
+                                 rtedsync.c
 
 
 

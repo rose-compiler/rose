@@ -24,7 +24,7 @@ RsType *  RsType::getSubtypeRecursive(size_t offset, size_t size, bool stopAtArr
         if(stopAtArray)
         {
             RsArrayType * arr = dynamic_cast<RsArrayType*> (result);
-            if(arr && arr->getBaseType()->getByteSize() == size)
+            if (arr && arr->getBaseType()->getByteSize() == size)
             {
                 int index = arr->arrayIndex(offset);
                 return index == -1 ? NULL : result;
@@ -33,6 +33,7 @@ RsType *  RsType::getSubtypeRecursive(size_t offset, size_t size, bool stopAtArr
 
         int subTypeId = result->getSubtypeIdAt(offset);
         if(subTypeId == -1)
+        {
             return result -> getByteSize() == size
                     // The subtype completely fills the parent type, and no
                     // further refinement is possible.
@@ -40,6 +41,7 @@ RsType *  RsType::getSubtypeRecursive(size_t offset, size_t size, bool stopAtArr
                     // The subtype is larger than the type requested, and cannot
                     // be refined.
                     : NULL;
+        }
 
         if(navString)
             (*navString) += "." + result->getSubTypeString(subTypeId);
@@ -54,7 +56,9 @@ RsType *  RsType::getSubtypeRecursive(size_t offset, size_t size, bool stopAtArr
     }
 
     if (result->getByteSize() != size || offset != 0)
+    {
         return NULL;
+    }
 
     return result;
 }
@@ -129,13 +133,13 @@ bool  RsType::checkSubtypeRecursive(size_t offset,  RsType* type)
   return false;
 }
 
-bool RsType::isConsistentWith( const RsType &other ) const {
-    if( checkConsistencyWith( other ))
-        return true;
-    if( typeid( *this ) != typeid( other ))
-        return other.checkConsistencyWith( *this );
-
-    return false;
+bool RsType::isConsistentWith( const RsType &other ) const
+{
+    return (  checkConsistencyWith(other)
+           || (  typeid(*this) != typeid(other)
+              && other.checkConsistencyWith(*this)
+              )
+           );
 }
 
 
@@ -160,15 +164,10 @@ RsArrayType::RsArrayType(RsType* baseType_, size_t size__)
       baseType(baseType_)
 {
     size_t base_size = baseType -> getByteSize();
-
-    assertme( 0 == size__ % base_size," RsArrayType::RsArrayType - 0 == size__ % base_size ",
-              "0",ToString(size__ % base_size));
     assert( 0 == size__ % base_size );
-    elementCount = size__ / base_size;
 
-    assertme(elementCount>0, "RsArrayType::RsArrayType - elementCount>0",
-             ToString(elementCount),"0");
-    assert(elementCount>0);
+    elementCount = size__ / base_size;
+    assert( elementCount>0 );
 }
 
 size_t RsArrayType::getByteSize() const
@@ -254,10 +253,12 @@ int RsArrayType::arrayIndex(size_t offset) const
 {
     size_t baseSize = baseType->getByteSize();
 
-    if (offset % baseSize != 0)
+    std::cerr << "ofs: " << offset << " base: " << baseSize << " elems: " << elementCount << std::endl;
+
+    if ((offset % baseSize) != 0)
         return -1; //invalid (in between elements)
 
-    if (offset >= elementCount * baseSize)
+    if (offset >= (elementCount * baseSize))
         return -1; //invalid (behind array)
 
     return offset / baseSize;

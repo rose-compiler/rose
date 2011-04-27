@@ -83,8 +83,8 @@ namespace rted
 
     void handle(SgFunctionDefinition& n)
     {
-        vt.transf->transformIfMain(&n);
-        vt.transf->function_definitions.push_back(&n);
+        //~ vt.transf->transformIfMain(&n);
+        //~ vt.transf->function_definitions.push_back(&n);
 
         ia.function = true;
         // do not handle as SgScopeStatement

@@ -36,23 +36,6 @@ void snd_MovePointer(rted_TypeDesc, rted_Address, rted_Address, rted_AddressDesc
 /// \brief initializes the runtime system
 void rted_UpcAllInitialize(void);
 
-/// \brief releases the heap read lock
-void rted_UpcEnterWorkzone(void);
-
-/// \brief acquires the heap read lock
-void rted_UpcExitWorkzone(void);
-
-/// \brief starts an exclusive heap operation (i.e., upc_free)
-void rted_UpcBeginExclusive(void);
-
-/// \brief ends an exclusive heap operation (i.e., upc_free)
-///        see also rted_UpcBeginExclusive
-void rted_UpcEndExclusive(void);
-
-/// \brief waits for other UPC threads to finish their computation and
-///        processes all messages in the queue
-void rted_UpcExit(void);
-
 #else /* WITH_UPC */
 
 // when we do not use UPC, we compile the runtime system with empty
@@ -75,30 +58,6 @@ void snd_InitVariable(rted_TypeDesc td, rted_Address address, rted_Address heap_
 
 static inline
 void snd_MovePointer(rted_TypeDesc td, rted_Address addr, rted_Address heap_addr, rted_AddressDesc heap_desc, const char* class_name, rted_SourceInfo si)
-{}
-
-static inline
-void rted_UpcAllInitialize(void)
-{}
-
-static inline
-void rted_UpcEnterWorkzone(void)
-{}
-
-static inline
-void rted_UpcExitWorkzone(void)
-{}
-
-static inline
-void rted_UpcBeginExclusive(void)
-{}
-
-static inline
-void rted_UpcEndExclusive(void)
-{}
-
-static inline
-void rted_UpcExit(void)
 {}
 
 #endif /* WITH_UPC */

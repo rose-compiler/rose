@@ -3429,11 +3429,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      bool enable_cuda   = CommandlineProcessing::isOption(argv,"-","cuda",true) || get_Cuda_only();
      bool enable_opencl = CommandlineProcessing::isOption(argv,"-","opencl",true) || get_OpenCL_only();
 
-=======
-     
      string header_path = findRoseSupportPathFromBuild("include-staging", "include-staging");
      
->>>>>>> master
      if (enable_cuda || enable_opencl) {
         makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
         if (enable_cuda && !enable_opencl) {
@@ -5544,17 +5541,11 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      bool requires_C_preprocessor = get_requires_C_preprocessor();
      if (requires_C_preprocessor == true)
         {
-       // If we detect that the input file requires processing via CPP (e.g. filename of form *.F??) then
-       // we generate the command to run CPP on the input file and collect the results in a file with
-       // the suffix "_postprocessed.f??".  Note: instead of using CPP we use the target backend fortran
-=======
-     {
           int errorCode;
           
        // If we detect that the input file requires processing via CPP (e.g. filename of form *.F??) then 
        // we generate the command to run CPP on the input file and collect the results in a file with 
        // the suffix "_postprocessed.f??".  Note: instead of using CPP we use the target backend fortran 
->>>>>>> master
        // compiler with the "-E" option.
 
           vector<string> fortran_C_preprocessor_commandLine;
@@ -6929,11 +6920,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
 vector<string>
 SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameIndex, const string& compilerName )
    {
-<<<<<<< HEAD
-  // This function assembles the commandline that will be passed to the backend (vendor) C++/C compiler
-=======
   // This function assembles the commandline that will be passed to the backend (vendor) C++/C, Fortran, of Java compiler 
->>>>>>> master
   // (using the new generated source code from the ROSE unparser).
 
   // DQ (4/21/2006): I think we can now assert this!
@@ -7120,41 +7107,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
             // compilerNameString += " -c ";
              }
 
-<<<<<<< HEAD
-  // Liao, 9/4/2009. If OpenMP lowering is activated. -D_OPENMP should be added
-  // since we don't remove condition compilation preprocessing info. during OpenMP lowering
-     if (get_openmp_lowering())
-     {
-       compilerNameString.push_back("-D_OPENMP");
-       // Liao, 9/22/2009, we also specify the search path for libgomp_g.h, which is installed under $ROSE_INS/include
-       // and the path to libgomp.a/libgomp.so, which are located in $GCC_GOMP_OPENMP_LIB_PATH
-
-       // Header should always be available
-       // the conditional compilation is necessary to pass make distcheck,
-       // where only a minimum configuration options are used and not all macros are defined.
-#ifdef ROSE_INSTALLATION_PATH
-       string include_path(ROSE_INSTALLATION_PATH);
-       include_path += "/include";
-       compilerNameString.push_back("-I"+include_path);
-#endif
-#if 0  // moved to the very end
-#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY
-       // lib path is available if --with-gomp_omp_runtime_library=XXX is used
-       if (USE_ROSE_GOMP_OPENMP_LIBRARY)
-       {
-         // only linking phase needs this
-         if (!get_compileOnly())
-         {
-           string gomp_lib_path(GCC_GOMP_OPENMP_LIB_PATH);
-           ROSE_ASSERT (gomp_lib_path.size() != 0);
- //          compilerNameString.push_back("-L"+gomp_lib_path);
-           compilerNameString.push_back(gomp_lib_path+"/libgomp.a"); // static linking for simplicity
-           compilerNameString.push_back("-lpthread");
-         }
-       }
-#endif
-#endif
-=======
        // Liao, 2/13/2009. I think we should pass this macro to the backend compiler also
        // User programs may have rose-specific tweaks to enable ROSE translators to compile them
        // Part of solution to bug 316 :
@@ -7167,7 +7119,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
           {
             compilerNameString.push_back("-D_OPENMP");
           }
->>>>>>> master
      }
 
   // DQ (3/31/2004): New cleaned up source file handling
@@ -7331,14 +7282,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("oldFileName         = %s \n",oldFileName.c_str());
 #endif
 
-<<<<<<< HEAD
-  // DQ (12/8/2004): Add -Ipath option so that source file's directory will be searched for any
-=======
   // DQ (4/2/2011): Java does not have -I as an accepted option.
      if (get_Java_only() == false)
         {
   // DQ (12/8/2004): Add -Ipath option so that source file's directory will be searched for any 
->>>>>>> master
   // possible headers.  This is especially important when we are compiling the generated file
   // located in a different directory!  (When the original source file included header files
   // in the source directory!)  This is only important when get_useBackendOnly() == false
@@ -7359,30 +7306,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                if (pos==0)
                     break;
              }
-
-       // insert before the position
-          compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly);
-#else
-          compilerNameString.push_back(std::string("-I") + oldFileNamePathOnly);
-#endif
-=======
-     {
-       vector<string>::iterator iter;
-       // find the very first -Ixxx option's position
-       for (iter = compilerNameString.begin(); iter != compilerNameString.end(); iter++) 
-       {
-         string cur_string =*iter;
-         string::size_type pos = cur_string.find("-I",0);
-         if (pos==0) 
-           break;
-       }
        // Liao, 5/15/2009
        // the input source file's path has to be the first one to be searched for header!
        // This is required since one of the SPEC CPU 2006 benchmarks: gobmk relies on this to be compiled.
        // insert before the position
        compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
      }
->>>>>>> master
         }
 
     // Liao 3/30/2011. the search path for the installation path should be the last one, after paths inside
@@ -7460,15 +7389,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // when the original command line is to generate the final executable.
        // We generate the final executable at the SgProject level from object files of each source file
 
-<<<<<<< HEAD
-       // cout<<"turn on compilation only at the file compilation level"<<endl;
-          compilerNameString.push_back("-c");
-       // For compile+link mode, -o is used for the final executable, if it exists
-       // We make -o objectfile explicit
-          std::string objectFileName = generateOutputFileName();
-          compilerNameString.push_back("-o");
-          compilerNameString.push_back(currentDirectory + "/" + objectFileName);
-=======
           if (get_Java_only() == false)
              {
             // cout<<"turn on compilation only at the file compilation level"<<endl;
@@ -7479,7 +7399,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                compilerNameString.push_back("-o");
                compilerNameString.push_back(currentDirectory + "/" + objectFileName);
              }
->>>>>>> master
         }
 
 #if 0
@@ -7832,20 +7751,6 @@ SgProject::compileOutput()
             // printf ("In Project::compileOutput(): (BASE of loop) file = %d errorCode = %d localErrorCode = %d \n",i,errorCode,localErrorCode);
              }
 
-<<<<<<< HEAD
-// case 3: linking at the project level
-           // Liao, 11/19/2009,
-           // I really want to just move the SgFile::compileOutput() to SgProject::compileOutput()
-           // and have both compilation and linking finished at the same time, just as the original command line does.
-           // Then we don't have to compose compilation command line for each of the input source file
-           //  or to compose the final linking command line.
-           //
-           // But there may be some advantages of doing the compilation and linking separately at two levels.
-           // I just discussed it with Dan.
-           // The two level scheme is needed to support mixed language input, like a C file and a Fortran file
-           // In this case, we cannot have a single one level command line to compile and link those two files
-           // We have to compile each of them first and finally link the object files.
-=======
        // case 3: linking at the project level (but Java codes should never be linked).
           if (get_Java_only() == false)
              {
@@ -7860,7 +7765,6 @@ SgProject::compileOutput()
             // The two level scheme is needed to support mixed language input, like a C file and a Fortran file
             // In this case, we cannot have a single one level command line to compile and link those two files
             // We have to compile each of them first and finally link the object files.
->>>>>>> master
 #ifndef _MSC_VER
             // tps 08/18/2010 : Do not link right now in Windows - it breaks - want test to pass here for now.
             // todo windows: put this back in.

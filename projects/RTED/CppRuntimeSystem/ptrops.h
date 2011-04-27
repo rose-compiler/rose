@@ -56,7 +56,7 @@ typedef struct rted_AddressDesc rted_AddressDesc;
 
 #endif /* __cplusplus */
 
-/// \brief  removes levels of indirections from desc
+/// \brief  removes one level of indirections from desc
 /// \return a new Indirection Descriptor
 rted_AddressDesc rted_deref_desc(rted_AddressDesc desc);
 
