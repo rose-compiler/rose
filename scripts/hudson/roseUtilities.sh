@@ -117,6 +117,7 @@ if test $# = 1 ; then
           %s'
 
 	echo ""
+	echo ""
 	# tps (02/04/2010) : Checking the EDG submodule version
 	echo "git submodule status (EDG version) ="
 	echo "  `git submodule status`"
@@ -166,7 +167,7 @@ if test $# = 1 ; then
 	   echo "    $an_option"
 	 done
 	echo ""
-	echo "Copy me: ./configure ${CONFIGURE_FLAGS}"
+	echo "Copy me: ./configure `echo ${CONFIGURE_FLAGS} |sed 's/  //'`"
 
 	echo ""
 	echo ""
@@ -176,7 +177,7 @@ if test $# = 1 ; then
 	echo ""
 	echo "CONFIGURE_PREFIX_DIR (--prefix)=" 
 	echo ""
-	echo "    $CONFIGURE_PREFIX_DIR"
+	echo "    $ROSE_CONFIGURE_PREFIX"
 	echo ""
 	echo ""
 
