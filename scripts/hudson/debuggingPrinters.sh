@@ -94,6 +94,7 @@ rm -rf $env_dump_file
 echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
+echo "Start dump of the test environment"                                        >> $env_dump_file
 echo "*******************************************************************"       >> $env_dump_file
 echo "                        Test-environment"                                  >> $env_dump_file
 echo "                        `date`"                                            >> $env_dump_file
@@ -209,10 +210,12 @@ echo ""                                                                         
 echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"       >> $env_dump_file
 echo "                        Test-environment"                                  >> $env_dump_file
 echo "*******************************************************************"       >> $env_dump_file
+echo "End dump of the test environment"                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
 echo ""                                                                          >> $env_dump_file
+
 
 cat $env_dump_file
 set -x
