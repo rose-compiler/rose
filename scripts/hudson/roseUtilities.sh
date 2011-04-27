@@ -113,8 +113,8 @@ if test $# = 1 ; then
 	echo ""
 	echo "Last (5) commits:"
         git log -n5 --pretty=format:'
-          Committed %ar by %an%n
-          %s'
+          + Committed %ar by %an%n
+            %s'
 
 	echo ""
 	echo ""
