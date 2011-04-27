@@ -73,8 +73,8 @@ TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 # Turned of the debug flag to have a cleaner screen output, Liao, 9/16/2009
-ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict -rose:autopar:unique_indirect_index #-rose:autopar:enable_debug
-ROSE_CFLAGS = -rose:C99 --edg:no_warnings -w -rose:verbose 0 --edg:restrict -rose:autopar:unique_indirect_index -rose:autopar:enable_patch #-rose:autopar:enable_debug
+ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict -rose:autopar:unique_indirect_index #-rose:autopar:enable_distance #-rose:autopar:enable_debug
+ROSE_CFLAGS = -rose:C99 --edg:no_warnings -w -rose:verbose 0 --edg:restrict -rose:autopar:unique_indirect_index -rose:autopar:enable_patch #-rose:autopar:enable_distance #-rose:autopar:enable_debug
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
