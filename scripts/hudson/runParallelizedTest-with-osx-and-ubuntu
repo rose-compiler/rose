@@ -400,17 +400,9 @@ esac
 #########################################################################################
 #
 ##
-set +x
-   cd $TOP_LEVEL_ROSE_DIRECTORY
 
    dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-after-tests.log"
 
-   printBannerWithDate
-
-   printBannerToEndStep \
-	"[${ROSE_TEST_BUILD_STYLE}] in ROSE/scripts/hudson/runParallelizedTest-with-osx-and-ubuntu" \
-	$hudson_start_time_seconds
-set -x
 ##
 #
 #########################################################################################

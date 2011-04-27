@@ -1,5 +1,5 @@
 #!/bin/bash
-source scripts/hudson/debuggingPrinters.sh
+source scripts/hudson/roseUtilities.sh
 
 
 ####################################################################################
