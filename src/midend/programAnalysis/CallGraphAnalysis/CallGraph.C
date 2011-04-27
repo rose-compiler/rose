@@ -532,23 +532,64 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
 }
 
 std::vector<SgFunctionDeclaration*>
-CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit) { 
-  std::vector<SgFunctionDeclaration*> props;
-  SgMemberFunctionDeclaration* memFunDecl = sgCtorInit->get_declaration();
+CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit)
+{
+    //FIXME: There is a bug in this function. 
+    //Consider the inheritance hierarchy A -> B -> C (C inherits from B, B inherits from A).
+    //Let C have an explicit constructor, without explictly calling B's constructor. We will only return the constructor for C
+    
+    
+    std::vector<SgFunctionDeclaration*> props;
+    SgMemberFunctionDeclaration* memFunDecl = sgCtorInit->get_declaration();
+    
+    //It's possible to have a null constructor declaration, in case of compiler-generated
+    //default constructors.
+    if (memFunDecl == NULL || memFunDecl->get_file_info()->isCompilerGenerated())
+    {
+        //If there are superclasses, the constructors for those classes may have been called. We need to return them       
 
-  //It's possible to have a null constructor declaration, in case of compiler-generated
-  //default constructors.
-  if (memFunDecl == NULL)
-  {
-        return props;
-  }
+        //Sometimes constructor initializers appear for primitive types. (e.g. x() in a constructor initializer list)
+        if (sgCtorInit->get_class_decl() != NULL)
+        {
+            //The worklist contains classes that are initialized through compiler-generated default constructors
+            vector<SgClassDeclaration*> worklist;
+            worklist.push_back(sgCtorInit->get_class_decl());
 
-  SgFunctionDeclaration* decl = isSgFunctionDeclaration(memFunDecl->get_firstNondefiningDeclaration());
-  if (decl == NULL)
-      decl = isSgFunctionDeclaration(memFunDecl->get_definingDeclaration());
-  ROSE_ASSERT(decl != NULL);
-  props.push_back(decl);
-  return props;
+            while (!worklist.empty())
+            {
+                SgClassDeclaration* currClassDecl = worklist.back();
+                worklist.pop_back();
+
+                currClassDecl = isSgClassDeclaration(currClassDecl->get_definingDeclaration());
+                SgClassDefinition* currClass = currClassDecl->get_definition();
+
+                foreach(SgBaseClass* baseClass, currClass->get_inheritances())
+                {
+                    ROSE_ASSERT(baseClass->get_base_class() != NULL);
+                    SgMemberFunctionDeclaration* constructorCalled = SageInterface::getDefaultConstructor(baseClass->get_base_class());
+
+                    if (constructorCalled != NULL && !constructorCalled->get_file_info()->isCompilerGenerated())
+                    {
+                        props.push_back(constructorCalled);
+                    }
+                    else
+                    {
+                        worklist.push_back(baseClass->get_base_class());
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        SgMemberFunctionDeclaration* decl = isSgMemberFunctionDeclaration(memFunDecl->get_firstNondefiningDeclaration());
+        if (decl == NULL)
+            decl = isSgMemberFunctionDeclaration(memFunDecl->get_definingDeclaration());
+        ROSE_ASSERT(decl != NULL);        
+        props.push_back(decl);
+    }
+    
+    return props;
 }
 
 //

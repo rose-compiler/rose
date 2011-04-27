@@ -43,8 +43,10 @@ namespace CallTargetSet
   // member function (non/polymorphic) call
   std::vector<SgFunctionDeclaration*> solveMemberFunctionCall ( SgClassType *, ClassHierarchyWrapper *, SgMemberFunctionDeclaration *, bool );
 
-  // returns the list of Properties of all constructors that may get called via 
-  // an initialization.
+  //! Returns the list of all constructors that may get called via an initialization.
+  //! FIXME: There is a bug in this function. 
+  //! Consider the inheritance hierarchy A -> B -> C (C inherits from B, B inherits from A).
+  //! Let C have an explicit constructor, without explictly calling B's constructor. We will only return the constructor for C
   std::vector<SgFunctionDeclaration*> solveConstructorInitializer ( SgConstructorInitializer* sgCtorInit);
 
   // Populates functionList with Properties of all functions that may get called.
