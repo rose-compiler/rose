@@ -44,10 +44,10 @@ endif
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
  # libJavaTraversal_la_SOURCES = JavaTraversal.C 
-   libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C
+   libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C
 
  # DQ (10/11/2010): Put any required header files here.
-   include_HEADERS = ecj.h java_support.h token.h jni_token.h
+   include_HEADERS = ecj.h java_support.h token.h jni_token.h JavaSourceCodePosition.h jni_JavaSourceCodePosition.h
 
 # JavaParserActionROSE.C: $(ECJ_DIR)/token.h $(ECJ_DIR)/ActionEnums.h $(ECJ_DIR)/jni_token_funcs.h
 # JavaParserActionROSE.C:

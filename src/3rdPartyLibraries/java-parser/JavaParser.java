@@ -215,7 +215,8 @@ class JavaParser  implements Callable<Boolean>
      public static native void generateDoubleType();
      public static native void generateNullType();
 
-     public static native void cactionSetSourcePosition(JavaToken t);
+     public static native void cactionGenerateToken(JavaToken t);
+     public static native void cactionSetSourcePosition(JavaSourcePositionInformation sp);
 
   // Save the compilationResult as we process the CompilationUnitDeclaration class.
   // public CompilationResult rose_compilationResult;

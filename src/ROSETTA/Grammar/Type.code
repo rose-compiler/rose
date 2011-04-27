@@ -720,6 +720,9 @@ HEADER_FUNCTION_TYPE_ARGUMENTS_START
       //  void sym_print(std::ostream& os);
 
           SgSymbol* get_symbol_from_symbol_table() const;
+          
+       // TV (04/18/11): For support of shared function type.
+          static SgName get_mangled(SgType* return_type, SgFunctionParameterTypeList * typeList);
 
 HEADER_FUNCTION_TYPE_ARGUMENTS_END
 
@@ -3086,19 +3089,15 @@ SgFunctionType::insert_argument(const SgTypePtrList::iterator& where, SgType* wh
      p_argument_list->insert_argument(where,what);
    }
 
-
-// RV (1/31/2006): Changed the form of the mangled name.
-SgName
-SgFunctionType::get_mangled (void) const
-   {
-     ROSE_ASSERT(this != NULL);
-
+SgName SgFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTypeList * typeList) {
   // process argument type
-     const SgTypePtrList& args = get_arguments ();
-     SgName arg_names = mangleTypes (args.begin (), args.end ());
+     SgName arg_names;
+     if (typeList != NULL) {
+       const SgTypePtrList& args = typeList->get_arguments ();
+       arg_names = mangleTypes (args.begin (), args.end ());
+     }
 
   // process return type
-     const SgType* ret_type = get_return_type ();
      ROSE_ASSERT (ret_type);
      SgName ret_name = ret_type->get_mangled ();
 
@@ -3110,13 +3109,20 @@ SgFunctionType::get_mangled (void) const
                   << arg_names.str () // argument types
                   << "_Fe_" // end function signature
        ;
-
-#if 0
-     printf ("In SgFunctionType::get_mangled(): mangled_name = %s \n",mangled_name.str());
-#endif
-
+       
      return mangled_name;
-    }
+}
+
+// RV (1/31/2006): Changed the form of the mangled name.
+SgName
+SgFunctionType::get_mangled (void) const
+   {
+     ROSE_ASSERT(this != NULL);
+   // TV (04/19/2011): I outlined the mangling of function type in a static function to avoid
+   //		building of a function type in 'SageBuilder::buildFunctionType' (This was used
+   //		to do a search in 'globalFunctionTypeTable')
+     return get_mangled(get_return_type(), get_argument_list()); 
+   }
 
 
 #if 0
