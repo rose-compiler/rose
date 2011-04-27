@@ -40,15 +40,19 @@ hc_cuda_part = 'CUDA' kernel_part| place_part
 kernel_part = 'kernel'
 
 % place could be an expression
-place_part = expression autodim_part | dim_part
+% the grammar uses assignment_expression instead of expression to disallow comma expressions
+% (list of expressions connected with comma) e.g. exp1, exp2 will be parsed to be (ex1, exp2) otherwise.
+% 
+place_part = assignment_expression autodim_part | dim_part
 
 % autodim(<dim1>[, <dim2>, <dim3>, <shared_size>])
 %  [ ] means optional
 % , means  ',' to be simple
-autodim_part = 'autodim' '('  expression [, expression [, expression [, expression ] ] ]  ')'
+% assignment_expression is used to avoid parsing exp1, exp2, exp3 to be one single comma expression ((exp1,exp2),exp3)
+autodim_part = 'autodim' '('  assignment_expression [, assignment_expression [, assignment_expression [, assignment_expression ] ] ]  ')'
 
 % dim(blocksPerGrid, threadsPerBlock[, shared_size])
-dim_part = 'dim' '('  expression ,  expression ,  [ , expression ]  ')'
+dim_part = 'dim' '('  assignment_expression ,  assignment_expression ,  [ , assignment_expression ]  ')'
 
 ---------------- grammar end -----------
  

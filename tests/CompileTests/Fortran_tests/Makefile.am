@@ -892,6 +892,10 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 # ROSE directory structure).  This does not appear to work!
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
+if ROSE_USE_INSURE
+	@echo "Force the lt-testTranslator to be built in ../../.libs so that we can rename it for Insure++ runs."
+	../../testTranslator --help > /dev/null
+endif
 
 testTranslator: ../../testTranslator
 
@@ -913,28 +917,66 @@ $(TEST_F90_Objects): ../../testTranslator ../../testGraphGeneration ../../testTo
 #	java parser.java.FortranMain --class parser.java.FortranParserActionJNI $(srcdir)/$(@:.o=.f90)
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f90)
 # How to call a ROSE translator with a Fortran source file.
+if !ROSE_USE_INSURE
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+else
+#	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
+#	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; ../../testTranslator --help > /dev/null; echo "Fixed"; fi
+	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
+	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
+	echo "Removing the just built copy of lt-testTranslator to save space..."
+	rm -f testTranslator_$(@:.o=)
+endif
 
 $(TEST_REQUIRING_PREPROCESSOR_F90_Objects): ../../testTranslator ../../testGraphGeneration ../../testTokenGeneration ${ALL_TESTCODES}
+if !ROSE_USE_INSURE
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
 	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
 	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
+else
+#	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
+	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
+	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
+	echo "Removing the just built copy of lt-testTranslator to save space..."
+	rm -f testTranslator_$(@:.o=)
+endif
 
 $(TEST_F77_Objects): ../../testTranslator ../../testGraphGeneration ../../testTokenGeneration ${ALL_TESTCODES}
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f77)
+if !ROSE_USE_INSURE
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
 	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
 	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
+else
+#	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
+#	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; ../../testTranslator --help > /dev/null; echo "Fixed"; fi
+	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
+	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
+	echo "Removing the just built copy of lt-testTranslator to save space..."
+	rm -f testTranslator_$(@:.o=)
+endif
 
 $(TEST_F77_FIXED_FORMAT_Objects): ../../testTranslator ../../testGraphGeneration ../../testTokenGeneration ${ALL_TESTCODES}
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f)
+if !ROSE_USE_INSURE
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
 	$(VALGRIND) ../../testGraphGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
 	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
-
+else
+#	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
+#	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; ../../testTranslator --help > /dev/null; echo "Fixed"; fi
+	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
+	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f)
+	echo "Removing the just built copy of lt-testTranslator to save space..."
+	rm -f testTranslator_$(@:.o=)
+endif
 
 # Note: If using gfortran version greater then 4.1, we can't call it with Fortran 2003 code since it is so buggy.
 #       So we use -rose:skip_syntax_check to avoid the frontend syntax checking and -rose:skipfinalCompileStep
@@ -942,6 +984,7 @@ $(TEST_F77_FIXED_FORMAT_Objects): ../../testTranslator ../../testGraphGeneration
 #       the version 4.1 gfortran which has better Fortran 2003 syntax checking support. This problem is confirmed 
 #       on versions of gfortran 4.2 and 4.3.
 $(TEST_F03_Objects): ../../testTranslator ../../testGraphGeneration ../../testTokenGeneration 
+if !ROSE_USE_INSURE
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f03)
 #	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
 #	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
@@ -951,6 +994,15 @@ $(TEST_F03_Objects): ../../testTranslator ../../testGraphGeneration ../../testTo
 #	Build a object file since gfortran fails to do so (avoids remaking the makefile target)
 	@echo "   ...force generation of $@, because gfortran compiler does not handle fortran 2003 standard (and the makefile needs $@ to avoid recompilation)."
 	@touch $@
+else
+#	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
+#	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; ../../testTranslator --help > /dev/null; echo "Fixed"; fi
+	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
+	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.f03)
+	echo "Removing the just built copy of lt-testTranslator to save space..."
+	rm -f testTranslator_$(@:.o=)
+endif
 
 # DQ (4/6/2010): Added test for parsing only (tested here for C++ code)
 testParser: ../../testParser
@@ -1151,6 +1203,10 @@ clean-local:
 	rm -f rose_*.F rose_*.F77 rose_*.F90 rose_*.F95 rose_*.F03 rose_*.F08 test2007_suffixTest_0?_postprocessed.*
 	rm -f *_postprocessed.* 
 	rm -rf QMTest
-
+if ROSE_USE_INSURE
+#	Remove the links built to get the filename being compiled into the name of the executable.
+	rm -f testTranslator_*
+	rm -f *.rpt
+endif
 
 # SKW's trivial change to force new Hudson run

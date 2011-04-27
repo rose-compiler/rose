@@ -5532,7 +5532,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
      bool requires_C_preprocessor = get_requires_C_preprocessor();
      if (requires_C_preprocessor == true)
-        {
+     {
+          int errorCode;
+          
        // If we detect that the input file requires processing via CPP (e.g. filename of form *.F??) then 
        // we generate the command to run CPP on the input file and collect the results in a file with 
        // the suffix "_postprocessed.f??".  Note: instead of using CPP we use the target backend fortran 
@@ -5572,30 +5574,19 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           // use a pseudonym for source file in case original extension does not permit preprocessing
              // compute absolute path for pseudonym
                 string dir = StringUtility::getPathFromFileName(this->get_unparse_output_filename());
-                if( dir.empty() ) dir = getWorkingDirectory();
+                string abs_dir = StringUtility::getAbsolutePathFromRelativePath(dir.empty() ? getWorkingDirectory() : dir);  // Windows 'tempnam' requires this
                 string file = StringUtility::stripPathFromFileName(sourceFilename);
                 string base = StringUtility::stripFileSuffixFromFileName(file);
-                dir = StringUtility::getAbsolutePathFromRelativePath(dir);  // Windows 'tempnam' requires this
-                char * temp = tempnam(dir.c_str(), (base + "-").c_str());   // not deprecated in Visual Studio 2010
+                char * temp = tempnam(abs_dir.c_str(), (base + "-").c_str());   // not deprecated in Visual Studio 2010
                 preprocessFilename = string(temp) + ".F90"; free(temp);
              // copy source file to pseudonym file
-#if 0
-                boost::filesystem::copy_file(sourceFilename, preprocessFilename);
-#else
-  #if !ROSE_MICROSOFT_OS
-                Rose_STL_Container<string> cpCommand;
-                cpCommand.push_back("cp");
-                cpCommand.push_back(sourceFilename);
-                cpCommand.push_back(preprocessFilename);
-                int errorCode = systemFromVector(cpCommand);
-                ROSE_ASSERT(!errorCode);
-  #else
-                // SKW 2011-04-15: NOT TESTED
-                bool ok = CopyFile((LPCTSTR)sourceFilename.c_str(), (LPCTSTR)preprocessFilename.c_str(), true);
-                ROSE_ASSERT(ok);
-  #endif
-#endif
-
+                try { boost::filesystem::copy_file(sourceFilename, preprocessFilename); }
+                catch(exception &e)
+                {
+                  cout << "Error in copying file " << sourceFilename << " to " << preprocessFilename
+                       << " (" << e.what() << ")" << endl;
+                  ROSE_ASSERT(false);
+                }
           fortran_C_preprocessor_commandLine.push_back(preprocessFilename);
 
        // add option to specify output file name
@@ -5613,29 +5604,20 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
        // DQ (10/1/2008): Added error checking on return value from CPP.
           if (errorCode != 0)
-             {
-               printf ("Error in running cpp on Fortran code: errorCode = %d \n",errorCode);
-               ROSE_ASSERT(false);
-             }
+          {
+             printf ("Error in running cpp on Fortran code: errorCode = %d \n",errorCode);
+             ROSE_ASSERT(false);
+          }
 
        // clean up after alias processing
-#if 0
-        boost::filesystem::remove(preprocessFilename);
-#else
-  #if !ROSE_MICROSOFT_OS
-          Rose_STL_Container<string> rmCommand; 
-          rmCommand.push_back("rm");
-          rmCommand.push_back("-f");
-          rmCommand.push_back(preprocessFilename);
-          errorCode = systemFromVector(rmCommand);
-          ROSE_ASSERT(!errorCode);
-  #else
-          // SKW 2011-04-15: NOT TESTED
-          ok = DeleteFile((LPCTSTR)preprocessFilename.c_str());
-          ROSE_ASSERT(ok);
-  #endif
-#endif
-        }
+          try { boost::filesystem::remove(preprocessFilename); }
+          catch(exception &e)
+          {
+            cout << "Error in removing file " << preprocessFilename
+                 << " (" << e.what() << ")" << endl;
+            ROSE_ASSERT(false);
+          }
+     }
 
 
   // DQ (9/30/2007): Introduce syntax checking on input code (initially we can just call the backend compiler 
