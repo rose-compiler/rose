@@ -8920,6 +8920,7 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
      case V_SgTemplateDeclaration:
      case V_SgTypedefDeclaration:
      case V_SgFunctionDeclaration:
+     case V_SgTemplateInstantiationFunctionDecl:
   //   case V_SgLabelStatement:
   //   Label statement' scope is special, handled in fixLabelStatement()
       stmt->set_scope(scope);

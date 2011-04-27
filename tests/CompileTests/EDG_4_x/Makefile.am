@@ -4,10 +4,10 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # These are C testcodes that test the new EDG Interface (using EDG 4.0) #
 #########################################################################
 
-bin_PROGRAMS = newEDGInterfaceTranslator
+bin_PROGRAMS = EDG_4_x_Translator
 
 # This tests the ability to read and regnerate the input application and compile it using the backend compiler.
-newEDGInterfaceTranslator_SOURCES = newEDGInterfaceTranslator.C
+EDG_4_x_Translator_SOURCES = EDG_4_x_Translator.C
 
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES)
@@ -15,8 +15,8 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = CMakeLists.txt
 
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-test_CplusplusMacro_C.C \
+TESTCODES_REQUIRED_TO_PASS = \
+test_CplusplusMacro_Cpp.C \
 test2001_02.C \
 test2001_03.C \
 test2001_05.C \
@@ -50,6 +50,8 @@ test2003_36.C \
 test2004_03.C \
 test2004_04.C \
 test2004_05.C \
+test2004_06.C \
+test2004_07.C \
 test2004_13.C \
 test2004_23.C \
 test2004_28.C \
@@ -69,6 +71,7 @@ test2004_131.C \
 test2004_152.C \
 test2004_153.C \
 test2004_154.C \
+test2004_155.C \
 test2005_20.C \
 test2005_21.C \
 test2005_22.C \
@@ -82,17 +85,22 @@ test2005_95.C \
 test2005_100.C \
 test2005_125.C \
 test2005_157.C \
+test2005_158.C \
 test2005_159.C \
 test2005_164.C \
+test2005_166.C \
 test2005_169.C \
 test2005_170.C \
 test2005_176.C \
+test2005_177.C \
 test2005_180.C \
 test2005_182.C \
 test2005_184.C \
 test2005_187.C \
 test2005_191.C \
+test2005_192.C \
 test2005_198.C \
+test2005_200.C \
 test2005_202.C \
 test2005_209.C \
 test2006_07.C \
@@ -110,11 +118,13 @@ test2006_57.C \
 test2006_62.C \
 test2006_69.C \
 test2006_75.C \
+test2006_80.C \
 test2006_82.C \
 test2006_83.C \
 test2006_93.C \
 test2006_97.C \
 test2006_99.C \
+test2006_102.C \
 test2006_103.C \
 test2006_106.C \
 test2006_113.C \
@@ -127,7 +137,9 @@ test2006_148.C \
 test2006_149.C \
 test2006_150.C \
 test2006_151.C \
-test2006_154.C \
+test2006_155.C \
+test2006_157.C \
+test2006_158.C \
 test2006_181.C \
 test2008_04.C \
 X.C \
@@ -143,7 +155,6 @@ test2006_146.C \
 test2003_12.C \
 test2003_17.C \
 test2005_175.C \
-test2005_177.C \
 test2006_15.C \
 test2006_59.C \
 test2006_71.C \
@@ -154,13 +165,13 @@ test2006_160.C
 
 
 if !ROSE_USE_EDG_VERSION_4_3
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+TESTCODES_REQUIRED_TO_PASS += \
+test2003_15.C \
 test2004_19.C \
 test2005_111.C \
 test2005_165.C \
 test2006_88.C \
 test2001_26.C \
-test2003_15.C \
 test2003_19.C \
 test2004_14.C \
 test2004_72.C \
@@ -202,56 +213,29 @@ endif
 # test_CplusplusMacro_C.c
 # test_CplusplusMacro_Cpp.C
 
-# Configure-time automake conditional
-if ROSE_USE_LONG_MAKE_CHECK_RULE
+# codes that didn't pass gcc 4.1.2
+TESTCODE_FAILING_WITH_GNU = \
+test2005_201.C \
+test2006_49.C
 
-# This is the long test of ROSE (takes a while!)
-
-TESTCODES_REQUIRED_TO_PASS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
-
-else
-# Shorten the list of code to compile to simplify checks using "make distcheck"
-# Since these file reference file in the ../Cxx_tests direcotry we have to 
-# shorten this file list but not more than it is done there, else "make distcheck"
-# will fail.
-TESTCODES_REQUIRED_TO_PASS = \
-test2001_02.C \
-test2001_03.C 
-
-endif
-
-# code that didn't pass gcc 4.1.2
-TESTCODE_FAILING_WITH_GCC = \
-test2004_06.C \
-test2004_07.C \
-test2004_155.C
+BORDER_LINE_TESTCODE = \
+test2006_33.C
 
 # These are the failures that we are interested in!
-C_TESTCODE_CURRENTLY_FAILING = \
-test2005_158.C \
-test2005_166.C \
-test2005_192.C \
-test2005_200.C \
-test2005_201.C \
-test2006_33.C \
-test2006_49.C \
-test2006_80.C \
-test2006_102.C \
-test2006_155.C \
+TESTCODE_CURRENTLY_FAILING = \
+test2006_154.C \
 test2006_156.C \
-test2006_157.C \
-test2006_158.C \
 test2006_159.C \
 test2006_165.C
 
 if ROSE_USE_EDG_VERSION_4_3
-C_TESTCODE_CURRENTLY_FAILING += \
+TESTCODE_CURRENTLY_FAILING += \
+test2003_15.C \
 test2004_19.C \
 test2005_111.C \
 test2005_165.C \
 test2006_88.C \
 test2001_26.C \
-test2003_15.C \
 test2003_19.C \
 test2004_14.C \
 test2004_72.C \
@@ -278,56 +262,26 @@ endif
 # JJW 5-22-2008 This file is not portable to Mac OS X
 # test2006_44.C
 
-# DQ: I think that we are only interested in the C codes that fail (but we can decide that later)
-TESTCODE_CURRENTLY_FAILING = $(C_TESTCODE_CURRENTLY_FAILING) 
+ROSE_FLAGS = --edg:no_warnings -w
 
-# Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
-TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) 
+PASSING_TEST = $(TESTCODES_REQUIRED_TO_PASS)
 
-# QMTest allows both passing and failing tests.
-ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
+PASSING_TEST_Objects = ${PASSING_TEST:.C=.o}
 
-ROSE_FLAGS = -rose:C --edg:no_warnings -w
-
-PASSING_TEST_Objects = ${TESTCODES:.C=.o}
-TEST_Objects = ${ALL_TESTCODES:.C=.o}
-
-# Note that for these C versions of the C++ tests we get the files directly from the Cxx_tests directory
-# Add the dependence upon the source file to trigger recompilation each time the makefile is run!
-# $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.C)
-$(TEST_Objects): ./newEDGInterfaceTranslator
+$(PASSING_TEST_Objects): ./EDG_4_x_Translator
 	@echo "Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
-	cp $(srcdir)/../Cxx_tests/$(@:.o=.C) $(@:.o=.c)
-	./newEDGInterfaceTranslator $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -c $(@:.o=.c)
-	rm -f $(@:.o=.c)
+	cp $(srcdir)/../Cxx_tests/${@:.o=.C} ${@:.o=.C}
+	./EDG_4_x_Translator $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -c ${@:.o=.C}
+	rm -f ${@:.o=.C}
 
-# This requires a special makefile rule
-# Note that this will not link since gcc (typically) is used as the backend compiler and the source file lacks a "*.c" suffix.
-test2005_56.o: newEDGInterfaceTranslator
-#	../../testTranslator -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c $(srcdir)/../Cxx_tests/test2005_56.C -o test2005_56.o
+test2005_56.o: EDG_4_x_Translator
 	@echo "Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
-	cp $(srcdir)/../Cxx_tests/$(@:.o=.C) $(@:.o=.c)
-	./newEDGInterfaceTranslator $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c $(@:.o=.c)
-	rm -f $(@:.o=.c)
-
-# CURRENT_DIRECTORY = `pwd`
-# QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
-
-# Make rule to build the QMTest database files
-# $(QMTEST_Objects): ../../testTranslator
-#	@echo "Calling QMTEST_Objects rule for Cpp_tests directory: "
-#	qm.sh o rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/../Cxx_tests/$(@:.qmt=.C)
-
-# This must be placed after the more general rule to work properly!
-# test2005_56.qmt: ../../testTranslator
-#	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir) -c $(srcdir)/../Cxx_tests/$(@:.qmt=.C)
-
-# Include makefile rules specific to QMTest
-# include $(top_srcdir)/config/QMTest_makefile.inc
+	cp $(srcdir)/../Cxx_tests/${@:.o=.C} ${@:.o=.C}
+	./EDG_4_x_Translator $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c ${@:.o=.C}
+	rm -f ${@:.o=.C}
 
 check-local:
 if ROSE_USE_NEW_EDG_INTERFACE
-	@echo "Tests for C language subset of C++ (some features in C are disallowed in C++ and are tested in C_tests directory)."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "*************************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/NewEDGInterface_C_tests: make check rule complete (terminated normally) ******"
@@ -342,15 +296,22 @@ clean-local:
 	rm -f *.o rose_*.[cC] test_*.[cC]
 	rm -rf QMTest
 
-C_TESTCODE_CURRENTLY_FAILING_Objects = ${C_TESTCODE_CURRENTLY_FAILING:.C=.o}
+TESTCODE_CURRENTLY_FAILING_Objects = ${TESTCODE_CURRENTLY_FAILING:.C=.o}
 
-$(C_TESTCODE_CURRENTLY_FAILING_Objects): ./newEDGInterfaceTranslator
-	@cp $(srcdir)/../Cxx_tests/$(@:.o=.C) $(@:.o=.c)
-	@if ./newEDGInterfaceTranslator $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -c $(@:.o=.c) &> /dev/null; \
-	  then echo "***" $(@:.o=.c) " has passed !!! ***"; \
+$(TESTCODE_CURRENTLY_FAILING_Objects): ./EDG_4_x_Translator
+	@cp $(srcdir)/../Cxx_tests/${@:.o=.C} ${@:.o=.C}
+	@if ./EDG_4_x_Translator $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -c ${@:.o=.C} &> /dev/null; then \
+	  echo "***" ${@:.o=.C} " has passed !!! ***"; \
 	fi;
-	@rm -f $(@:.o=.c)
+	@rm -f ${@:.o=.C}
+
+#	  exit 1; \
+# &> /dev/null
 
 check-failures:
-	@$(MAKE) $(C_TESTCODE_CURRENTLY_FAILING_Objects)
+	@$(MAKE) $(TESTCODE_CURRENTLY_FAILING_Objects)
 
+include C-tests.inc
+include Cxx-tests.inc
+
+check-tests: check-Ctests check-Cxxtests
