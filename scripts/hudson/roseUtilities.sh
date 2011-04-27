@@ -183,7 +183,6 @@ if test $# = 1 ; then
 	echo ""
 	echo ""
   ) 2>&1 |tee $env_dump_file |filterStep "Hudson environment output"
-  [ ${PIPESTATUS[0]} -ne 0 ] && killStep "Hudson environment output"
 else
     echo "[Error] Usage: dumpHudsonEnvironment <output-file-name>"
     exit 1
