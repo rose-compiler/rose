@@ -5,9 +5,14 @@
 #
 #
 source scripts/hudson/runBuildStep.sh
-source scripts/hudson/roseUtilities.sh
+source scripts/hudson/debuggingPrinters.sh
 #########################################################################################
-( echo ) |filter ${ROSE_TEST_BUILD_STYLE}
+set +x
+# Uniform banners allows for easy parsing of the hudson console output
+# Starting 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step...
+# Done with 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step!
+printBannerToStartStep \
+	"[${ROSE_TEST_BUILD_STYLE}] in ROSE/scripts/hudson/runParallelizedTest-with-osx-and-ubuntu"
 
 machine=`uname -m`
 machine_os=`uname -s`
@@ -33,11 +38,13 @@ else
   OS_MACHINE_LABEL=amd64-linux
 fi
 
+#CONFIGURE_PREFIX_DIR="${HOME}/too1.workspace/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
 CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
 # Liao 1/6/2010
 # Remove the stale installation tree since the stale headers will be included before updated ones are used.
 # TOO (4/7/2011): rm -rf commands should have absolute paths in them to avoid unintended removals
-( safe_rm_rf $CONFIGURE_PREFIX_DIR ) |filterStep "MasterInstallTree removal"
+rm -rf ${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install
+
 
 #########################################################################################
 #
@@ -256,7 +263,6 @@ fi
 #
 ##
    dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-before-tests.log"
-exit 1
 ##
 #
 #########################################################################################
@@ -268,93 +274,100 @@ set -ex
 #
 #########################################################################################
 if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
-  (
+    rm -rf ROSE-build-cmake
+    mkdir ROSE-build-cmake
+    cd ROSE-build-cmake
 
-      rm -rf  ROSE-build-cmake
-      mkdir   ROSE-build-cmake
-      cd      ROSE-build-cmake
+    cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && make -j${NUM_PROCESS}
 
-      cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && make -j${NUM_PROCESS}
-
-  ) 2>&1 |filterStep "CMake" 
-  [ ${PIPESTATUS[0]} -ne 0 ] && killStep "CMake"
+    if [ $? -ne 0 ]  ; then
+      echo "fatal error in cmake build , aborting..."
+      exit 3
+    else
+      exit 0
+    fi
 fi
+
+
 #########################################################################################
 #
 #  ROSE/build
 #
 #########################################################################################
-(
+if test "x$ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT" = "xyes" ; then
+   echo "Skipping build at part of testing from makefile rule."
+else
+   printBannerToStartStep "build"
+   build_start_time="$(date +%s)"
 
    ./build
 
-) 2>&1 |filterStep "./build" 
-[ ${PIPESTATUS[0]} -ne 0 ] && killStep "./build"
-#########################################################################################
-#
-#  Setup Build & Install trees 
-#
-#########################################################################################
-for DIR in "ROSE-install ROSE-build" ; do
-  (
+   printBannerToEndStep "build" $build_start_time
+fi
 
-      [ -e $DIR ] && chmod -R u+xw $DIR && rm -rf $DIR && mkdir $DIR 
 
-  ) 2>&1 |filterStep "$DIR setup" 
-  [ ${PIPESTATUS[0]} -ne 0 ] && killStep "$DIR setup"
-done
+if test -e ROSE-install ; then 
+  chmod -R u+xw ROSE-install
+fi
+rm -rf ROSE-install
+
+if test -e ROSE-build ; then
+  chmod -R u+wx ROSE-build
+fi
+rm -rf ROSE-build
+
+mkdir ROSE-build
 cd ROSE-build
+
+
 #########################################################################################
 #
 #  ROSE/configure
 #
 #########################################################################################
-(
+printBannerToStartStep "configure"
+configure_start_time="$(date +%s)"
 
-    ../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
+../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
 
-) 2>&1 |filterStep "configure" 
-[ ${PIPESTATUS[0]} -ne 0 ] && killStep "configure"
+printBannerToEndStep "configure" $configure_start_time
+
+
 #########################################################################################
 #
-#  ROSE Translator Version 
-#
-#  TOO (2/24/2011): Requires librose.la
-#  DQ (2/12/2010): Added the ROSE version number to the base of the output
+#  ROSE/make
 #
 #########################################################################################
+# TOO (2/24/2011): Requires librose.la
 function printRoseTranslatorVersion {
-  (
-  
-       make PrintRoseTranslatorVersion
-
-  ) 2>&1 |filterStep "ROSE Translator Version" 
-  [ ${PIPESTATUS[0]} -ne 0 ] && killStep "ROSE Translator Version"
+    # DQ (2/12/2010): Added the ROSE version number to the base of the output
+    echo "Version numbers of ROSE and the different parts of ROSE."
+    make PrintRoseTranslatorVersion
 }
-#########################################################################################
-#
-#  Hudson Build Steps 
-#
-#
-#########################################################################################
+
+start_time_make_seconds="$(date +%s)"
+ROSE_SPEW_ANALYSIS=yes
+
 case "$ROSE_TEST_BUILD_STYLE" in
 "make/check/install-minimal"|"make/check/install-full")
 
+    if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
+        makeOutputFile="make_output.txt"
+        makeCheckOutputFile="make_check_output.txt"
+    fi
     ################################################################################
     # MAKE
     #
-    runBuildStep make "make_output.txt"
+    runBuildStep make $makeOutputFile
     ################################################################################
     # MAKE CHECK
     #
-    runBuildStep make-check "make_check_output.txt"
+    runBuildStep make-check $makeCheckOutputFile
     ################################################################################
     # MAKE INSTALL & INSTALLCHECK
     #
     runBuildStep make-install
     runBuildStep make-installcheck
-
-    printRoseTranslatorVersion
  ;;
 
 make-distcheck)
@@ -363,17 +376,19 @@ make-distcheck)
     # MAKE DISTCHECK
     #
     # Build pre-requisites: stringify.C
-    (
-        make -j${NUM_PROCESS} -C src/util/stringSupport/ libRoseStringSupport.la
-        make -j${NUM_PROCESS} -C src/util/commandlineProcessing/ libRoseCommandlineUtil.la
-        make -j${NUM_PROCESS} -C src/util/ libroseutil.la
-        make -j${NUM_PROCESS} -C src/ROSETTA/src/
-        make -j${NUM_PROCESS} -C src/roseSupport/ stringify.h
-    ) 2>&1 |filterStep "make-distcheck prerequisites" 
-    [ ${PIPESTATUS[0]} -ne 0 ] && killStep "make-distcheck prerequisites-"
+    echo "Building prerequisites for make-distcheck..."
+    make -j${NUM_PROCESS} -C src/util/stringSupport/ libRoseStringSupport.la
+    make -j${NUM_PROCESS} -C src/util/commandlineProcessing/ libRoseCommandlineUtil.la
+    make -j${NUM_PROCESS} -C src/util/ libroseutil.la
+    make -j${NUM_PROCESS} -C src/ROSETTA/src/
+    make -j${NUM_PROCESS} -C src/roseSupport/ stringify.h
 
     runBuildStep make-distcheck
 
+    # TOO (2/24/2011): Can't printRoseTranslatorVersion: requires librose.la and tests/testAnalysis
+    #make -j${NUM_PROCESS} -C src/ 
+    #make -j${NUM_PROCESS} -C tests/ testAnalysis
+    #printRoseTranslatorVersion
  ;;
 
 make-docs)
@@ -383,13 +398,11 @@ make-docs)
     #
     # Running with parallelism here does not tend to be very helpful since 
     # doxygen is what has to run and it does not run in parallel.
-    (
-        make -j${NUM_PROCESS} -C src/
-        make -j${NUM_PROCESS} -C tutorial/
-        make -j${NUM_PROCESS} -C projects/UpcTranslation/
-        make -j${NUM_PROCESS} -C tests/ testAnalysis
-    ) 2>&1 |filterStep "make-docs prerequisites" 
-    [ ${PIPESTATUS[0]} -ne 0 ] && killStep "make-docs prerequisites-"
+    echo "Building prerequisites for make-docs..."
+    make -j${NUM_PROCESS} -C src/
+    make -j${NUM_PROCESS} -C tutorial/
+    make -j${NUM_PROCESS} -C projects/UpcTranslation/
+    make -j${NUM_PROCESS} -C tests/ testAnalysis
 
     runBuildStep make-docs
 
