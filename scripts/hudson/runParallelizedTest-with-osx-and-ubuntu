@@ -1,4 +1,4 @@
-#!/bin/bash +x
+#!/bin/bash -e
 #
 # TODO: add more summary info
 #	- List of durations for each step in the job
@@ -6,6 +6,7 @@
 #
 source scripts/hudson/runBuildStep.sh
 source scripts/hudson/roseUtilities.sh
+set +x
 #########################################################################################
 ( echo ) |filter ${ROSE_TEST_BUILD_STYLE}
 
