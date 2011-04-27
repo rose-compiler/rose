@@ -76,7 +76,7 @@ dumpHudsonEnvironment() {
 set +x
 if test $# = 1 ; then
   local env_dump_file=$1
-  rm $env_dump_file
+  [ -f $env_dump_file ] && rm $env_dump_file
 
   (
 	echo ""
