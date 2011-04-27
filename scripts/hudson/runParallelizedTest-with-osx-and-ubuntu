@@ -1,4 +1,4 @@
-#!/bin/bash -e +x
+#!/bin/bash +x
 #
 # TODO: add more summary info
 #	- List of durations for each step in the job
