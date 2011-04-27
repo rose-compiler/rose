@@ -110,15 +110,17 @@ if test $# = 1 ; then
 	echo "                                                              [Git]"
 	echo ""
 	echo ""
+	echo ""
+	echo "Last (5) commits:"
+        git log -n5 --pretty=format:'
+          Committed %ar by %an%n
+          %s'
+
+	echo ""
 	# tps (02/04/2010) : Checking the EDG submodule version
 	echo "git submodule status (EDG version) ="
 	echo "  `git submodule status`"
 
-	echo ""
-	echo "[Last (5) commits]"
-        git log -n5 --pretty=format:'
-          Committed %ar by %an%n
-          %s'
 	echo ""
 	echo "-------------------------------------------------------------------"
 	echo "                                                     [Library Path]"
