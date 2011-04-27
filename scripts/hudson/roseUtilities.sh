@@ -73,7 +73,6 @@ safe_rm_rf () {
 #########################################################################################
 dumpHudsonEnvironment() {
 #########################################################################################
-set +x
 if test $# = 1 ; then
   local env_dump_file=$1
   [ -f $env_dump_file ] && rm $env_dump_file
@@ -187,5 +186,4 @@ else
     echo "[Error] Usage: dumpHudsonEnvironment <output-file-name>"
     exit 1
 fi
-set -x
 }
