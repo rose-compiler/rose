@@ -7,44 +7,118 @@
 #include "RSIM_Linux32.h"
 #include "RSIM_Adapter.h"
 
+static RTS_mutex_t global_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_RSIM_SIMULATOR_CLASS);
+static bool do_disassemble_at_coredump = false;         /* disassemble when specimen is about to dump core? */
+static std::set<rose_addr_t> do_disassemble_at_addr;    /* disassemble first time these instructions are hit. */
+static bool do_show_disassembly = false;                /* show assembly code whenever we disassemble? */
 
-    
+/* Instruction callback to run the disassembler the first time we hit disassemble_at.  Once we hit it, we reset the
+ * do_disassemble global and remove the callback from the thread and process. */
+class DisassembleAtAddress: public RSIM_Callbacks::InsnCallback {
+public:
+    virtual DisassembleAtAddress *clone() { return this; }
+    virtual bool operator()(bool prev, const Args &args) {
+        RSIM_Process *process = args.thread->get_process();
+
+        bool dis=false, clean=false;
+        RTS_MUTEX(global_mutex) {
+            if (do_disassemble_at_addr.empty()) {
+                clean = true;
+            } else if (do_disassemble_at_addr.find(args.insn->get_address())!=do_disassemble_at_addr.end()) {
+                do_disassemble_at_addr.erase(args.insn->get_address());
+                dis = true;
+                if (do_disassemble_at_addr.empty())
+                    clean = true;
+            }
+        } RTS_MUTEX_END;
+
+        if (dis) {
+            args.thread->tracing(TRACE_MISC)->mesg("disassembling at 0x%08"PRIx64"...\n", args.insn->get_address());
+            SgAsmBlock *block = process->disassemble();
+            if (do_show_disassembly)
+                AsmUnparser().unparse(std::cout, block);
+        }
+
+        if (clean) {
+            args.thread->get_callbacks().remove_insn_callback(RSIM_Callbacks::BEFORE, this);
+            process->get_callbacks().remove_insn_callback(RSIM_Callbacks::BEFORE, this);
+        }
+
+        return prev;
+    }
+};
+
+/* Process callback to run the disassembler when we're about to dump core. */
+class DisassembleAtCoreDump: public RSIM_Callbacks::ProcessCallback {
+public:
+    virtual DisassembleAtCoreDump *clone() { return this; }
+    virtual bool operator()(bool prev, const Args &args) {
+        if (args.reason==COREDUMP) {
+            RTS_Message tracer(args.process->get_tracing_file(), NULL);
+            fprintf(stderr, "disassembling at core dump\n");
+            args.process->mem_showmap(&tracer);
+            SgAsmBlock *block = args.process->disassemble();
+            if (do_show_disassembly)
+                AsmUnparser().unparse(std::cout, block);
+        }
+        return prev;
+    }
+};
+
 int
 main(int argc, char *argv[], char *envp[])
 {
     RSIM_Linux32 sim;
 
-    /***************************************************************************************************************************/
-#   if 0 /*EXAMPLE: If you change this, then also update the example text in RSIM_Callbacks.h. */
-    {
-        /* An example of a pre-instruction callback which disassembles the specimen's memory image when a thread attempts to
-         * execute at the original entry point (OEP) for the first time.  The OEP is the entry address defined in the ELF file
-         * header for the specimen's executable, which is reached after the dynamic linker is simulated and thus after all
-         * required dynamic libraries have been resolved and are in memory.  A single callback object is shared between the
-         * simulator, the process, and all threads by virtue of the clone() method being a no-op.  This callback is removed
-         * from the calling thread's list of pre-instruction callbacks the first time it's called, but it would still be
-         * invoked if any other thread reaches the EOP (this doesn't normally happen in practice).  We also remove it from the
-         * calling thread's process callbacks so that new threads will not have the per-instruction overhead (in practice,
-         * there is only one thread when the dynamic linker branches to the OEP). */
-        class DisassembleAtOep: public RSIM_Callbacks::InsnCallback {
-        public:
-            virtual DisassembleAtOep *clone() { return this; }
-            virtual bool operator()(bool prev, const Args &args) {
-                RSIM_Process *process = args.thread->get_process();
-                if (process->get_ep_orig_va() == args.insn->get_address()) {
-                    std::cout <<"disassembling at OEP...\n";
-                    SgAsmBlock *block = process->disassemble();
-                    //AsmUnparser().unparse(std::cout, block);
-                    args.thread->get_callbacks().remove_insn_callback(RSIM_Callbacks::BEFORE, this);
-                    process->get_callbacks().remove_insn_callback(RSIM_Callbacks::BEFORE, this);
+    /* Suck out any command-line switches that the tool recognizes.  Leave the others for processing by the RSIM_Simulator
+     * class. */
+    bool do_disassemble_at_oep;
+    for (int i=1; i<argc; i++) {
+        bool parsed = false;
+        if (!strncmp(argv[i], "--disassemble=", 14)) {
+            parsed = true;
+            char *at = argv[i]+14;
+            while (*at) {
+                if (!strncmp(at, "oep", 3)) {
+                    do_disassemble_at_oep = true;
+                    at += 3;
+                } else if (!strncmp(at, "core", 4)) {
+                    do_disassemble_at_coredump = true;
+                    at += 4;
+                } else if (!strncmp(at, "show", 4)) {
+                    do_show_disassembly = true;
+                    at += 4;
+                } else {
+                    char *rest;
+                    rose_addr_t addr = strtoull(at, &rest, 0);
+                    if (*rest && *rest!=',') {
+                        fprintf(stderr, "invalid argument for --disassemble switch: %s\n", at);
+                        exit(1);
+                    }
+                    do_disassemble_at_addr.insert(addr);
+                    at = rest;
                 }
-                return prev;
+                if (','==*at)
+                    at++;
             }
-        };
-
-        sim.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new DisassembleAtOep);
+        }
+        if (parsed) {
+            memmove(argv+i, argv+i+1, (argc-i)*sizeof(*argv));
+            --argc;
+            --i;
+        }
     }
-#   endif
+    
+    if (do_disassemble_at_oep || !do_disassemble_at_addr.empty())
+        sim.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new DisassembleAtAddress);
+    if (do_disassemble_at_coredump)
+        sim.get_callbacks().add_process_callback(RSIM_Callbacks::BEFORE, new DisassembleAtCoreDump);
+                
+        
+            
+
+
+
 
     /***************************************************************************************************************************/
 #   if 0 /* EXAMPLE: If you change this then also update the example text in RSIM_Callbacks.h */
@@ -161,6 +235,8 @@ main(int argc, char *argv[], char *envp[])
     /* Create the initial process object by loading a program and initializing the stack.   This also creates the main thread,
      * but does not start executing it. */
     sim.exec(argc-n, argv+n);
+    if (do_disassemble_at_oep)
+        do_disassemble_at_addr.insert(sim.get_process()->get_ep_orig_va());
 
     /* Get ready to execute by making the specified simulator active. This sets up signal handlers, etc. */
     sim.activate();
