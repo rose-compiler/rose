@@ -1041,12 +1041,12 @@ RSIM_Process::mem_showmap(RTS_Message *mesg, const char *intro, const char *pref
     if (!prefix) prefix = "    ";
 
     if (mesg && mesg->get_file()) {
-        RTS_MESSAGE(*mesg) {
-            mesg->mesg(intro);
-            RTS_READ(rwlock()) {
+        RTS_READ(rwlock()) {
+            RTS_MESSAGE(*mesg) {
+                mesg->mesg(intro);
                 map->dump(mesg->get_file(), prefix);
-            } RTS_READ_END;
-        } RTS_MESSAGE_END(true);
+            } RTS_MESSAGE_END(true);
+        } RTS_READ_END;
     }
 }
 
