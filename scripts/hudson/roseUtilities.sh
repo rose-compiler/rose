@@ -111,8 +111,9 @@ if test $# = 1 ; then
 	echo "                                                              [Git]"
 	echo ""
 	echo ""
-	echo "Last (5) commits:"
-        git log -n5 --pretty=format:'
+        [ ! -n "$ROSE_SHOW_LAST_N_COMMITS" ] || [ $ROSE_SHOW_LAST_N_COMMITS -le 0 ] && ROSE_SHOW_LAST_N_COMMITS=5
+	echo "Last ($ROSE_SHOW_LAST_N_COMMITS) commits:"
+        git log -n$ROSE_SHOW_LAST_N_COMMITS --pretty=format:'
           + Committed %ar by %an%n
             %s'
 
@@ -179,7 +180,7 @@ if test $# = 1 ; then
 	echo "                                                     [Install tree]"
 	echo ""
 	echo ""
-	echo "CONFIGURE_PREFIX_DIR (--prefix)=" 
+	echo "ROSE_CONFIGURE_PREFIX (--prefix)=" 
 	echo ""
 	echo "    $ROSE_CONFIGURE_PREFIX"
 	echo ""

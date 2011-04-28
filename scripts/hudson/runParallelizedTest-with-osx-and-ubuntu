@@ -302,7 +302,7 @@ cd ROSE-build
 #########################################################################################
 (
 
-    ../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
+    ../configure --prefix=${ROSE_CONFIGURE_PREFIX} ${CONFIGURE_FLAGS}
 
 ) 2>&1 |filterStep "configure" 
 [ ${PIPESTATUS[0]} -ne 0 ] && killStep "configure"
