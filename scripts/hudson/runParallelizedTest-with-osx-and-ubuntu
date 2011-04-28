@@ -285,7 +285,7 @@ fi
 #  Setup Build & Install trees 
 #
 #########################################################################################
-for DIR in "ROSE-install ROSE-build" ; do
+for DIR in "ROSE-install" "ROSE-build" ; do
   (
 
       [ -d "./$DIR" ] && chmod -R u+xw ./$DIR && safe_rm_rf ./$DIR && mkdir ./$DIR 
