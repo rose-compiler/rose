@@ -363,11 +363,25 @@ RSIM_Process::load(const char *name)
         disassembler->set_progress_reporting(NULL, 0); /* turn off progress reporting */
     }
 
+#if 0
     /* Initialize the brk value to be the lowest page-aligned address that is above the end of the highest mapped address but
      * below 0x40000000 (the stack, and where ld-linux.so.2 might be loaded when loaded high). */
     rose_addr_t free_area = std::max(map->find_last_free(std::max(ld_linux_base_va, (rose_addr_t)0x40000000)),
                                      (rose_addr_t)brk_base);
     brk_va = ALIGN_UP(free_area, PAGE_SIZE);
+#else
+    struct FindInitialBrk: public SgSimpleProcessing {
+        FindInitialBrk(): max_mapped_va(0) {}
+        rose_addr_t max_mapped_va;
+        void visit(SgNode *node) {
+            SgAsmGenericSection *section = isSgAsmGenericSection(node);
+            if (section && section->is_mapped())
+                max_mapped_va = std::max(section->get_mapped_actual_va() + section->get_mapped_size(), max_mapped_va);
+        }
+    } t1;
+    t1.traverse(fhdr, preorder);
+    brk_va = map->find_free(t1.max_mapped_va, PAGE_SIZE, PAGE_SIZE);
+#endif
 
     delete loader;
 
