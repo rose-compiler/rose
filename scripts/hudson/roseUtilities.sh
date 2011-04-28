@@ -155,6 +155,10 @@ if test $# = 1 ; then
 	 done
 	echo ""
 	echo "Copy me: export PATH=\"$PATH:\$PATH\""
+	echo ""
+	echo ""
+	echo "GCC = `gcc -dumpversion`"
+ 
 
 	echo ""
 	echo ""
