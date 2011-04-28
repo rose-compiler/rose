@@ -1,6 +1,6 @@
 #!/bin/bash -e
 #
-# TODO: add more summary info
+#  TODO: add more summary info
 #	- List of durations for each step in the job
 #
 #
