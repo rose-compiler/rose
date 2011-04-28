@@ -288,9 +288,11 @@ fi
 for DIR in "ROSE-install" "ROSE-build" ; do
   (
 
-      [ -d "./$DIR" ] && chmod -R u+xw ./$DIR && safe_rm_rf ./$DIR && mkdir ./$DIR 
+      [ -d "./$DIR" ] && chmod -R u+xw ./$DIR && safe_rm_rf ./$DIR
+      mkdir ./$DIR 
 
   ) 2>&1 |filterStep "$DIR setup" 
+  [ ${PIPESTATUS[0]} -ne 0 ] && killStep "workspace setup"
 done
 cd ROSE-build
 #########################################################################################
