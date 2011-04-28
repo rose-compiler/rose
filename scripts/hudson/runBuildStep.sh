@@ -34,11 +34,11 @@ function runBuildStep {
 
           [ -n "$outputFile" ] && runSpewAnalysis $outputFile
 
-      ) 2>&1 |func_filterStep "${buildStep} spew analysis" 
-      [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ] && func_killStep "${buildStep} spew analysis"
+      ) 2>&1 |filterStep "${buildStep} spew analysis" 
+      [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ] && killStep "${buildStep} spew analysis"
 
-  ) 2>&1 |func_filterStep "${buildStep}" 
-  [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ] && func_killStep "${buildStep}"
+  ) 2>&1 |filterStep "${buildStep}" 
+  [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ] && killStep "${buildStep}"
 }
 
 
