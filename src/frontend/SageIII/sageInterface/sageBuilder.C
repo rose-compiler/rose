@@ -3747,6 +3747,16 @@ SgTypeImaginary* SageBuilder::buildImaginaryType(SgType* base_type /*=NULL*/)
    ROSE_ASSERT(result!=NULL);
    return result;
  }
+//! Build a const/volatile type qualifier
+SgConstVolatileModifier * SageBuilder::buildConstVolatileModifier (SgConstVolatileModifier::cv_modifier_enum mtype/*=SgConstVolatileModifier::e_unknown*/)
+{
+  SgConstVolatileModifier * result = NULL;
+  result = new SgConstVolatileModifier();
+  ROSE_ASSERT (result != NULL);
+  result->set_modifier (mtype);  
+
+  return result;
+}
 
 SgNamespaceDefinitionStatement* SageBuilder::buildNamespaceDefinition(SgNamespaceDeclarationStatement* d)
   {
