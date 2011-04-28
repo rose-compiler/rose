@@ -22,7 +22,7 @@ int min3(int a0,int a1,int a2)
 
 double abs(double x)
 {
-  if (x < (0)) 
+  if (x < 0) 
     return -x;
   else 
     return x;
