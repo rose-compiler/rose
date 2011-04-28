@@ -380,6 +380,9 @@ RSIM_Process::load(const char *name)
 void
 RSIM_Process::dump_core(int signo, std::string base_name)
 {
+    if (!get_callbacks().call_process_callbacks(RSIM_Callbacks::BEFORE, this, RSIM_Callbacks::ProcessCallback::COREDUMP, true))
+        return;
+
     if (base_name.empty())
         base_name = core_base_name;
 
@@ -679,6 +682,9 @@ RSIM_Process::dump_core(int signo, std::string base_name)
     SgAsmExecutableFileFormat::unparseBinaryFormat(base_name, ef);
     //deleteAST(ef); /*FIXME [RPM 2010-09-18]*/
 #endif
+    
+    get_callbacks().call_process_callbacks(RSIM_Callbacks::AFTER, this,
+                                           RSIM_Callbacks::ProcessCallback::COREDUMP, true);
 }
 
 void
