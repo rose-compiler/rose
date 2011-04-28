@@ -1028,7 +1028,11 @@ struct msghdr_32 {
     uint32_t    msg_controllen;         /* number of bytes pointed to by msg_control */
     uint32_t    msg_flags;
 } __attribute__((packed));
-    
+
+struct iovec_32 {
+    uint32_t    iov_base;               /* address of buffer */
+    uint32_t    iov_len;                /* size of buffer in bytes */
+} __attribute__((packed));
 
 /* command values for the ioctl syscall */
 static const Translate ioctl_commands[] = {

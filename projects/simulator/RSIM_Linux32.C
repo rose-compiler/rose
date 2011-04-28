@@ -2039,66 +2039,40 @@ static void
 sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
 {
     int retval = 0;
+    RTS_Message *strace = t->tracing(TRACE_SYSCALL);
+
+    /* Read guest information */
     msghdr_32 guest;
     if (sizeof(msghdr_32)!=t->get_process()->mem_read(&guest, msghdr_va, sizeof guest)) {
         t->syscall_return(-EFAULT);
         return;
     }
-
     if (guest.msg_iovlen<0 || guest.msg_iovlen>1024) {
         t->syscall_return(-EINVAL);
         return;
     }
-
     assert(0==guest.msg_namelen); /* not implemented yet [RPM 2011-04-26] */
+    iovec_32 *guest_iov = new iovec_32[guest.msg_iovlen];
+    size_t guest_iov_sz = guest.msg_iovlen * sizeof(iovec_32);
+    memset(guest_iov, 0, guest_iov_sz);
+    if (guest_iov_sz!=t->get_process()->mem_read(guest_iov, guest.msg_iov, guest_iov_sz)) {
+        strace->more("<segfault reading iov>");
+        retval = -EFAULT;
+    }
 
-    uint32_t *guest_bufs = new uint32_t[guest.msg_iovlen];
+    /* Copy to host */
     msghdr host;
     memset(&host, 0, sizeof host);
-    host.msg_iov = new iovec[guest.msg_iovlen];
-    host.msg_iovlen = guest.msg_iovlen;
-    if ((host.msg_controllen = guest.msg_controllen) > 0) {
+    if (0==retval && (host.msg_controllen = guest.msg_controllen) > 0) {
         host.msg_control = new uint8_t[host.msg_controllen];
         if (host.msg_controllen!=t->get_process()->mem_read(host.msg_control, guest.msg_control, guest.msg_controllen))
             retval = -EFAULT;
     }
-
-    /* Create buffers in host's memory */
-    if (0==retval) {
-        if (guest.msg_iovlen>0)
-            t->tracing(TRACE_SYSCALL)->more("\n");
-        for (size_t idx=0; idx<guest.msg_iovlen; idx++) {
-            /* Obtain buffer address */
-            uint32_t buf_va;
-            if (4!=t->get_process()->mem_read(&buf_va, guest.msg_iov+idx*8+0, 4)) {
-                if (0==idx)
-                    retval = -EFAULT;
-                t->tracing(TRACE_SYSCALL)->more("    iov #%zu: segmentation fault reading address\n", idx);
-                break;
-            }
-
-            /* Obtain buffer size */
-            uint32_t buf_sz;
-            if (4!=t->get_process()->mem_read(&buf_sz, guest.msg_iov+idx*8+4, 4)) {
-                if (0==idx)
-                    retval = -EFAULT;
-                t->tracing(TRACE_SYSCALL)->more("    iov #%zu: segmentation fault reading size\n", idx);
-                break;
-            }
-
-            t->tracing(TRACE_SYSCALL)->more("    iov #%zu: buffer=0x%08"PRIx32", size=0x%08"PRIx32"\n", idx, buf_va, buf_sz);
-
-            /* Make sure total size doesn't overflow a ssize_t for 32-bits */
-            if ((buf_sz & 0x80000000) || ((uint32_t)retval+buf_sz) & 0x80000000) {
-                if (0==idx)
-                    retval = -EINVAL;
-                t->tracing(TRACE_SYSCALL)->more(" size overflow\n");
-                break;
-            }
-
-            guest_bufs[idx] = buf_va;
-            host.msg_iov[idx].iov_base = new uint8_t[buf_sz];
-            host.msg_iov[idx].iov_len = buf_sz;
+    if (0==retval && (host.msg_iovlen = guest.msg_iovlen) > 0) {
+        host.msg_iov = new iovec[guest.msg_iovlen];
+        for (unsigned i=0; i<host.msg_iovlen; i++) {
+            unsigned n = host.msg_iov[i].iov_len = guest_iov[i].iov_len;
+            host.msg_iov[i].iov_base = new uint8_t[n];
         }
     }
 
@@ -2109,13 +2083,13 @@ sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
             retval = -errno;
     }
 
-    /* Copy data back into the guest */
+    /* Copy iov data back into the guest */
     if (retval>0) {
         size_t to_copy = retval;
         for (unsigned idx=0; idx<host.msg_iovlen && to_copy>0; idx++) {
             size_t n = std::min(to_copy, host.msg_iov[idx].iov_len);
             to_copy -= n;
-            if (n!=t->get_process()->mem_write(host.msg_iov[idx].iov_base, guest_bufs[idx], n)) {
+            if (n!=t->get_process()->mem_write(host.msg_iov[idx].iov_base, guest_iov[idx].iov_base, n)) {
                 retval = -EFAULT;
                 break;
             }
@@ -2123,14 +2097,14 @@ sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
     }
 
     /* Copy control into the guest */
-    if (host.msg_controllen>0) {
-        guest.msg_controllen = host.msg_controllen;
-        if (host.msg_controllen!=t->get_process()->mem_write(host.msg_control, guest.msg_control, host.msg_controllen))
-            retval = -EFAULT;
-    }
+    if (retval>=0 &&
+        (guest.msg_controllen=host.msg_controllen)>0 &&
+        host.msg_controllen!=t->get_process()->mem_write(host.msg_control, guest.msg_control, host.msg_controllen))
+        retval = -EFAULT;
 
     /* Copy msghdr into the guest */
-    if (sizeof(guest)!=t->get_process()->mem_write(&guest, msghdr_va, sizeof guest))
+    guest.msg_flags = host.msg_flags;
+    if (retval>=0 && sizeof(guest)!=t->get_process()->mem_write(&guest, msghdr_va, sizeof guest))
         retval = -EFAULT;
 
     /* Cleanup */
@@ -2138,7 +2112,7 @@ sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
         delete[] (iovec*)host.msg_iov[idx].iov_base;
     delete[] host.msg_iov;
     delete[] (uint8_t*)host.msg_control;
-    delete[] guest_bufs;
+    delete[] guest_iov;
 
     t->syscall_return(retval);
 }
@@ -2245,13 +2219,13 @@ syscall_socketcall_leave(RSIM_Thread *t, int callno)
                     for (unsigned i=0; i<msghdr.msg_iovlen && i<1024 && nbytes>0; i++) {
                         uint32_t vasz[2];
                         if (8==t->get_process()->mem_read(vasz, msghdr.msg_iov+i*8, 8)) {
-                            vasz[1] = std::min(vasz[1], nbytes);
-                            nbytes -= vasz[1];
-                            uint8_t *buf = new uint8_t[vasz[1]];
-                            if (vasz[1]==t->get_process()->mem_read(buf, vasz[0], vasz[1])) {
+                            uint32_t nused = std::min(nbytes, vasz[1]);
+                            nbytes -= nused;
+                            uint8_t *buf = new uint8_t[nused];
+                            if (vasz[1]==t->get_process()->mem_read(buf, vasz[0], nused)) {
                                 trace->more("    iov #%u: ", i);
-                                print_buffer(trace, vasz[0], buf, vasz[1], 1024);
-                                trace->more("\n");
+                                print_buffer(trace, vasz[0], buf, nused, 1024);
+                                trace->more("; size total=%"PRIu32" used=%"PRIu32"\n", vasz[1], nused);
                             }
                             delete[] buf;
                         }
