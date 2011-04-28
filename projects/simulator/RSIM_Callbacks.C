@@ -29,6 +29,9 @@ RSIM_Callbacks::init(const RSIM_Callbacks &other)
 
     copy_callback_vector(thread_pre,  other.thread_pre);
     copy_callback_vector(thread_post, other.thread_post);
+
+    copy_callback_vector(process_pre,  other.process_pre);
+    copy_callback_vector(process_post, other.process_post);
 }
 
 /******************************************************************************************************************************
@@ -155,6 +158,48 @@ RSIM_Callbacks::call_thread_callbacks(When when, RSIM_Thread *thread, bool prev)
     if (when==BEFORE)
         return thread_pre.apply (prev, RSIM_Callbacks::ThreadCallback::Args(thread), ROSE_Callbacks::FORWARD);
     return     thread_post.apply(prev, RSIM_Callbacks::ThreadCallback::Args(thread), ROSE_Callbacks::FORWARD);
+}
+
+/******************************************************************************************************************************
+ *                                      Process callbacks
+ ******************************************************************************************************************************/
+
+void
+RSIM_Callbacks::add_process_callback(When when, ProcessCallback *cb)
+{
+    if (cb) {
+        if (when==BEFORE) {
+            process_pre.append(cb);
+        } else {
+            process_post.append(cb);
+        }
+    }
+}
+
+bool
+RSIM_Callbacks::remove_process_callback(When when, ProcessCallback *cb)
+{
+    if (when==BEFORE)
+        return process_pre.erase(cb, ROSE_Callbacks::BACKWARD);
+    return process_post.erase(cb, ROSE_Callbacks::BACKWARD);
+}
+
+void
+RSIM_Callbacks::clear_process_callbacks(When when)
+{
+    if (when==BEFORE) {
+        process_pre.clear();
+    } else {
+        process_post.clear();
+    }
+}
+
+bool
+RSIM_Callbacks::call_process_callbacks(When when, RSIM_Process *process, RSIM_Callbacks::ProcessCallback::Reason reason, bool prev)
+{
+    if (when==BEFORE)
+        return process_pre.apply (prev, RSIM_Callbacks::ProcessCallback::Args(process, reason), ROSE_Callbacks::FORWARD);
+    return     process_post.apply(prev, RSIM_Callbacks::ProcessCallback::Args(process, reason), ROSE_Callbacks::FORWARD);
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */
