@@ -41,7 +41,7 @@ class JavaParserSupport
      private static int verboseLevel = 0;
 
   // Initialization function, but be called before we can use member functions in this class.
-         public static void initialize(CompilationResult x, int input_verboseLevel)
+     public static void initialize(CompilationResult x, int input_verboseLevel)
         {
        // This has to be set first (required to support source position translation).
           rose_compilationResult = x;
@@ -279,7 +279,7 @@ class JavaParserSupport
             // Class cls = Class.forName("java.lang."+node.receiver.toString());
 
                if (verboseLevel > -1)
-                    System.out.println("Generate the implicit Java class for className = " + className);
+                    System.out.println("Generate the implicit Java class for className = " + className + " implicitClassCounter = " + implicitClassCounter);
 
             // Note that "java.lang" does not appear to be a class (so is that root of all implicitly included classes?).
             // Class cls = Class.forName("java.lang");
@@ -381,18 +381,30 @@ class JavaParserSupport
                     if (verboseLevel > 2)
                          System.out.println("Build the implicit type for the data member (field) of type = " + nestedClassName);
 
-                 // System.out.println("#############################################################################################");
-                 // System.out.println("This call to JavaParserSupport.generateType() appears to be a problem: nestedClassName = " + nestedClassName);
-                    JavaParserSupport.generateType(typeClass);
-                 // System.out.println("DONE: This call to JavaParserSupport.generateType() appears to be a problem: nestedClassName = " + nestedClassName);
+                    int dataMemberCounterBound = 1000;
+                 // int dataMemberCounterBound = 1000;
+                    if (i < dataMemberCounterBound)
+                       {
+                      // System.out.println("#############################################################################################");
+                      // System.out.println("This call to JavaParserSupport.generateType() appears to be a problem: nestedClassName = " + nestedClassName);
+                         JavaParserSupport.generateType(typeClass);
+                      // System.out.println("DONE: This call to JavaParserSupport.generateType() appears to be a problem: nestedClassName = " + nestedClassName);
 
-                    if (verboseLevel > 2)
-                         System.out.println("Build the data member (field) for name = " + fld.getName());
+                         if (verboseLevel > 2)
+                              System.out.println("Build the data member (field) for name = " + fld.getName());
 
-                 // System.out.println("Exiting after call to JavaParserSupport.generateType(typeClass) implicitClassCounter = " + implicitClassCounter);
-                 // System.exit(1);
+                      // System.out.println("Exiting after call to JavaParserSupport.generateType(typeClass) implicitClassCounter = " + implicitClassCounter);
+                      // System.exit(1);
 
-                    JavaParser.cactionBuildImplicitFieldSupport(fld.getName());
+                      // This function assumes that a type has been placed onto the astJavaTypeStack.
+                         JavaParser.cactionBuildImplicitFieldSupport(fld.getName());
+                       }
+                      else
+                       {
+                         if (verboseLevel > 2)
+                              System.out.println("WARNING: Exceeded data member (field) handling iteration count " + i + " className = " + className);
+                       }
+                    
 
                     if (verboseLevel > 2)
                          System.out.println("DONE: Building the data member (field) for name = " + fld.getName());
@@ -446,10 +458,29 @@ class JavaParserSupport
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
                  // JavaParser.cactionBuildImplicitMethodSupport(ct.getName());
-                    int constructorMethodCounterBound = 2;
+                    int constructorMethodCounterBound = 1000;
                  // int constructorMethodCounterBound = 1000;
                     if (constructorMethodCounter < constructorMethodCounterBound)
                        {
+                      // Note that we only want to build types for those function that we want to build.
+                      // This mechanism is one way to simplify the generated AST for debugging (restricting 
+                      // the number of functions built).
+
+                      // System.out.println("constructor name = " + ct.getName());
+                         for (int j = 0; j < pvec.length; j++)
+                            {
+                           // If we push all the types onto the stack then we have to build every constructor.
+                              if (verboseLevel > 2)
+                                   System.out.println("This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (constructor): type = " + pvec[j].getName());
+                              JavaParserSupport.generateType(pvec[j]);
+                              if (verboseLevel > 2)
+                                   System.out.println("DONE: This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (constructor): type = " + pvec[j].getName());
+                            }
+
+                      // Push a type to serve as the return type which will be ignored for the case of a constructor
+                      // (this allows us to reuse the general member function support).
+                         JavaParser.cactionGenerateType("void");
+
                          JavaParser.cactionBuildImplicitMethodSupport(ct.getName());
                        }
                       else
@@ -494,14 +525,14 @@ class JavaParserSupport
                             }
                        }
 
+                 // Process the return type (add a class if this is not already in the ROSE AST).
+                    processType(m.getReturnType());
+
                  // System.out.println("method name = " + m.getName());
                     for (int j = 0; j < pvec.length; j++)
                        {
                          if (verboseLevel > 2)
                               System.out.println("   method return type = " + m.getReturnType());
-
-                      // Process the return type (add a class if this is not already in the ROSE AST).
-                         processType(m.getReturnType());
 
                          if (verboseLevel > 2)
                               System.out.println("   method parameter type = " + pvec[j]);
@@ -512,10 +543,28 @@ class JavaParserSupport
 
                  // Simplify the generated AST by skipping the construction of all the member functions in each class.
                  // We might only want to build those member functions that are referenced in the input program (as an option).
-                    int methodCounterBound = 5;
+                    int methodCounterBound = 1000;
                  // int methodCounterBound = 1000;
                     if (methodCounter < methodCounterBound)
                        {
+                      // System.out.println("method name = " + m.getName());
+                         for (int j = 0; j < pvec.length; j++)
+                            {
+                           // If we push all the types onto the stack then we have to build every method.
+                              if (verboseLevel > 2)
+                                   System.out.println("This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (method): type = " + pvec[j].getName());
+                              JavaParserSupport.generateType(pvec[j]);
+                              if (verboseLevel > 2)
+                                   System.out.println("DONE: This call to JavaParserSupport.generateType() pushes a type onto the astJavaTypeStack (method): type = " + pvec[j].getName());
+                            }
+
+                      // DQ (4/10/11): Fix this to use the proper return type now (pushed onto stack last and interpreted at the return type).
+                      // Push a type to serve as the return type which will be ignored for the case of a method
+                      // (this allows us to reuse the general member function support).
+                      // System.out.println("Testing with made up return type");
+                      // JavaParser.cactionGenerateType("void");
+                         JavaParserSupport.generateType(m.getReturnType());
+
                          JavaParser.cactionBuildImplicitMethodSupport(m.getName());
                        }
                       else
@@ -547,9 +596,8 @@ class JavaParserSupport
                     interfaceCounter++;
                   }
 
-
-
-              JavaParser.cactionBuildImplicitClassSupportEnd(className);
+            // This wraps up the details of processing all of the child classes (such as forming SgAliasSymbols for them in the global scope).
+               JavaParser.cactionBuildImplicitClassSupportEnd(className);
              }
 
        // try ... catch is required for using the reflection support in Java.
@@ -577,8 +625,128 @@ class JavaParserSupport
           if (verboseLevel > 0)
                System.out.println("Inside of generateType(TypeReference)");
 
-          JavaParser.cactionGenerateType("int");
+          System.out.println("Inside of generateType(TypeReference) TypeReference node                            = " + node);
+          System.out.println("Inside of generateType(TypeReference) TypeReference node.implicitConversion         = " + node.implicitConversion);
+          System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType               = " + node.resolvedType);
+          System.out.println("Inside of generateType(TypeReference) TypeReference node.resolvedType.isArrayType() = " + node.resolvedType.isArrayType());
+          if (node.resolvedType.isArrayType() == true)
+             {
+            // TypeBinding baseType = ((ArrayBinding) node.resolvedType).leafComponentType;
+               ArrayBinding arrayType = (ArrayBinding) node.resolvedType;
+               System.out.println("Inside of generateType(TypeReference) ArrayBinding dimensions = " + arrayType.dimensions);
+               TypeBinding baseType = arrayType.leafComponentType;
 
+            // This outputs the declartion for the whole class.
+            // System.out.println("Inside of generateType(TypeReference) ArrayBinding baseType   = " + baseType);
+               System.out.println("Inside of generateType(TypeReference) ArrayBinding baseType (debugName) = " + baseType.debugName());
+
+               System.out.println("Inside of generateType(TypeReference) recursive call to generateType()");
+               generateType(baseType);
+             }
+            else
+             {
+            // NOTE: It would be more elegant to not depend upon the debugName() function.
+               String name = node.resolvedType.debugName();
+               System.out.println("Inside of generateType(TypeReference): NOT an array type so build SgIntType -- TypeReference node = " + name);
+
+               JavaParser.cactionGenerateType(name);
+
+            // System.out.println("Exiting as a test (built type name " + name + " by default) in generateType(TypeReference)");
+            // System.exit(1);
+            }
+
+       // JavaParser.cactionGenerateType("int");
+
+/*
+       // switch(expressionType.kind())
+          switch(node.kind())
+             {
+               case Binding.BASE_TYPE :
+            //-----------cast to something which is NOT a base type--------------------------
+                    if (expressionType == TypeBinding.NULL)
+                       {
+                         tagAsUnnecessaryCast(scope, castType);
+                         return true; //null is compatible with every thing
+                       }
+                    return false;
+
+               case Binding.ARRAY_TYPE :
+                    if (castType == expressionType)
+                       {
+                         tagAsUnnecessaryCast(scope, castType);
+                         return true; // identity conversion
+                       }
+                    switch (castType.kind())
+                       {
+                         case Binding.ARRAY_TYPE :
+                         // ( ARRAY ) ARRAY
+                              TypeBinding castElementType = ((ArrayBinding) castType).elementsType();
+                              TypeBinding exprElementType = ((ArrayBinding) expressionType).elementsType();
+                              if (exprElementType.isBaseType() || castElementType.isBaseType())
+                                 {
+                                   if (castElementType == exprElementType)
+                                      {
+                                        tagAsNeedCheckCast();
+                                        return true;
+                                      }
+                                   return false;
+                                 }
+                            // recurse on array type elements
+                               return checkCastTypesCompatibility(scope, castElementType, exprElementType, expression);
+
+                         case Binding.TYPE_PARAMETER :
+                           // ( TYPE_PARAMETER ) ARRAY
+                              TypeBinding match = expressionType.findSuperTypeOriginatingFrom(castType);
+                              if (match == null)
+                                 {
+                                   checkUnsafeCast(scope, castType, expressionType, null, true);
+                                 }
+                           // recurse on the type variable upper bound
+                              return checkCastTypesCompatibility(scope, ((TypeVariableBinding)castType).upperBound(), expressionType, expression);
+
+                         default:
+                           // ( CLASS/INTERFACE ) ARRAY
+                              switch (castType.id)
+                                 {
+                                   case T_JavaLangCloneable :
+                                   case T_JavaIoSerializable :
+                                        tagAsNeedCheckCast();
+                                        return true;
+                                   case T_JavaLangObject :
+                                        tagAsUnnecessaryCast(scope, castType);
+                                        return true;
+                                   default :
+                                        return false;
+                                 }
+                       }
+
+               case Binding.TYPE_PARAMETER :
+                    TypeBinding match = expressionType.findSuperTypeOriginatingFrom(castType);
+                    if (match != null)
+                       {
+                         return checkUnsafeCast(scope, castType, expressionType, match, false);
+                       }
+                 // recursively on the type variable upper bound
+                    return checkCastTypesCompatibility(scope, castType, ((TypeVariableBinding)expressionType).upperBound(), expression);
+
+               case Binding.WILDCARD_TYPE :
+               case Binding.INTERSECTION_TYPE :
+                    match = expressionType.findSuperTypeOriginatingFrom(castType);
+                    if (match != null)
+                       {
+                         return checkUnsafeCast(scope, castType, expressionType, match, false);
+                       }
+                // recursively on the type variable upper bound
+                   return checkCastTypesCompatibility(scope, castType, ((WildcardBinding)expressionType).bound, expression);
+
+               default:
+                  {
+                  }
+             }
+*/
+
+       // System.out.println("Exiting as a test in generateType(TypeReference)");
+       // System.exit(1);
         }
 
 /*
@@ -721,6 +889,7 @@ class JavaParserSupport
                  // return TypeBinding.BOOLEAN;
                     if (verboseLevel > 2)
                          System.out.println("switch case of T_boolean");
+                    JavaParser.cactionGenerateType("boolean");
                     break;
                   }
 
@@ -729,6 +898,7 @@ class JavaParserSupport
                  // return TypeBinding.BYTE;
                     if (verboseLevel > 2)
                          System.out.println("switch case of T_byte");
+                    JavaParser.cactionGenerateType("byte");
                     break;
                   }
 
@@ -737,6 +907,7 @@ class JavaParserSupport
                  // return TypeBinding.CHAR;
                     if (verboseLevel > 2)
                          System.out.println("switch case of T_char");
+                    JavaParser.cactionGenerateType("char");
                     break;
                   }
 
@@ -745,6 +916,7 @@ class JavaParserSupport
                  // return TypeBinding.SHORT;
                     if (verboseLevel > 2)
                          System.out.println("switch case of T_short");
+                    JavaParser.cactionGenerateType("short");
                     break;
                   }
 
@@ -753,6 +925,7 @@ class JavaParserSupport
                  // return TypeBinding.DOUBLE;
                     if (verboseLevel > 2)
                          System.out.println("switch case of T_double");
+                    JavaParser.cactionGenerateType("double");
                     break;
                   }
 
@@ -761,6 +934,7 @@ class JavaParserSupport
                  // return TypeBinding.FLOAT;
                     if (verboseLevel > 2)
                          System.out.println("switch case of T_float");
+                    JavaParser.cactionGenerateType("float");
                     break;
                   }
 
@@ -780,6 +954,7 @@ class JavaParserSupport
                  // return TypeBinding.LONG;
                     if (verboseLevel > 2)
                          System.out.println("switch case of T_long");
+                    JavaParser.cactionGenerateType("long");
                     break;
                   }
 
@@ -788,6 +963,11 @@ class JavaParserSupport
                  // return scope.getJavaLangObject();
                     if (verboseLevel > 2)
                          System.out.println("switch case of T_JavaLangObject");
+
+                    System.out.println("Case of JavaLangObject not implemented.");
+                    System.exit(1);
+
+                 // JavaParser.cactionGenerateType("Object");
                     break;
                   }
 
@@ -796,6 +976,8 @@ class JavaParserSupport
                  // return scope.getJavaLangString();
                     if (verboseLevel > 2)
                          System.out.println("switch case of T_JavaLangString");
+
+                    JavaParser.cactionGenerateType("java.lang.String");
                     break;
                   }
 

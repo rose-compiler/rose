@@ -144,6 +144,31 @@ fi
 ##
 
   ROSE_SUPPORT_LANGUAGE_CONFIG_OPTIONS
+  AC_CHECK_LIB([curl], [Curl_connect], [HAVE_CURL=yes], [HAVE_CURL=no])
+  AM_CONDITIONAL([HAS_LIBRARY_CURL], [test "x$HAVE_CURL" = "xyes"])
+
+AC_MSG_CHECKING([whether your GCC version is supported by ROSE (4.0.x - 4.4.x)])
+AC_ARG_ENABLE([gcc-version-check],AS_HELP_STRING([--disable-gcc-version-check],[Disable GCC version 4.0.x - 4.4.x verification check]),,[enableval=yes])
+if test "x$enableval" = "xyes" ; then
+      AC_LANG_PUSH([C])
+      # http://www.gnu.org/s/hello/manual/autoconf/Running-the-Compiler.html
+      AC_COMPILE_IFELSE([
+        AC_LANG_SOURCE([[
+          #if (__GNUC__ >= 4 && __GNUC_MINOR__ <= 4)
+            int rose_supported_gcc;
+          #else
+            not gcc, or gcc version is not supported by rose
+          #endif
+        ]])
+       ],
+       [AC_MSG_RESULT([done])],
+       gcc_version=`gcc -dumpversion`
+       [AC_MSG_FAILURE([your GCC $gcc_version version is currently NOT supported by ROSE])])
+      AC_LANG_POP([C])
+else
+    AC_MSG_RESULT([skipping])
+fi
+
 
 ##
 #########################################################################################
@@ -253,7 +278,7 @@ if test "x$edg_major_version_number" = "x3"; then
       echo "Recognized an accepted minor version number."
    else
       if test "x$edg_minor_version_number" = "x10"; then
-         echo "Recognized an accepted minor version number."
+         echo "ERROR: EDG version 3.10 is not supported anymore."
       else
          echo "ERROR: Could not identify the EDG minor version number."
          exit 1
@@ -267,20 +292,19 @@ else
       if test "x$edg_minor_version_number" = "x0"; then
          echo "Recognized an accepted minor version number."
       else
-         if test "x$edg_minor_version_number" = "x1"; then
+         if test "x$edg_minor_version_number" = "x3"; then
             echo "Recognized an accepted minor version number."
-
-            echo "Error: Note that EDG 4.1 is not yet supported in ROSE (should be available soon)."
-            exit 1
+            enable_edg_version43=yes
+            AC_DEFINE([ROSE_USE_EDG_VERSION_4_3], [], [Whether to use the new EDG version 4.3])
          else
             echo "ERROR: Could not identify the EDG minor version number."
             exit 1
          fi
       fi
-      enable_new_edg_interface=yes
       enable_edg_version4=yes
-      AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
       AC_DEFINE([ROSE_USE_EDG_VERSION_4], [], [Whether to use the new EDG version 4.x])
+      enable_new_edg_interface=yes
+      AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
    else
       echo "ERROR: Could not identify the EDG major version number."
       exit 1
@@ -299,7 +323,8 @@ AC_SUBST(ROSE_EDG_MINOR_VERSION_NUMBER)
 # DQ (2/3/2010): I would like to not have to use these and use the new 
 # ROSE_EDG_MAJOR_VERSION_NUMBER and ROSE_EDG_MINOR_VERSION_NUMBER instead.
 AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = xyes])
-# AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
+AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
+AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_3, [test "x$enable_edg_version43" = xyes])
 
 # DQ (1/4/2009) Added support for optional GNU language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
@@ -1177,6 +1202,10 @@ AC_ARG_ENABLE(edg_cuda, AS_HELP_STRING([--enable-edg-cuda], [Build EDG 4.0 with 
   *)   edg_cuda=false ;;
 esac])
 AM_CONDITIONAL(ROSE_BUILD_EDG_WITH_CUDA_SUPPORT, [test x$edg_cuda = xtrue])
+if test x$edg_cuda = xtrue; then
+  AC_MSG_WARN([Add CUDA specific headers to the include-staging directory.])
+  GENERATE_CUDA_SPECIFIC_HEADERS
+fi
 
 # *******************************************************************
 # Option to control internal support of OpenCL (GPU langauge support)
@@ -1830,8 +1859,14 @@ src/frontend/CxxFrontend/EDG/EDG_4.0/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.0/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.0/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.0/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/Makefile
 src/frontend/CxxFrontend/EDG/edgRose/Makefile
+src/frontend/CxxFrontend/EDG/edg43Rose/Makefile
 ])], [])
 
 
@@ -2018,6 +2053,7 @@ projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/SP/Makefile
+projects/pragmaParsing/Makefile
 projects/QtDesignerPlugins/Makefile
 projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile
 projects/RTED/CppRuntimeSystem/Makefile
@@ -2133,6 +2169,8 @@ tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
 tests/RunTests/AstDeleteTests/Makefile
+tests/RunTests/FortranTests/Makefile
+tests/RunTests/FortranTests/LANL_POP/Makefile
 tests/PerformanceTests/Makefile
 tests/CompilerOptionsTests/Makefile
 tests/CompilerOptionsTests/testCpreprocessorOption/Makefile
@@ -2188,6 +2226,8 @@ tests/CompileTests/sizeofOperation_tests/Makefile
 tests/CompileTests/MicrosoftWindows_tests/Makefile
 tests/CompileTests/nameQualificationAndTypeElaboration_tests/Makefile
 tests/CompileTests/NewEDGInterface_C_tests/Makefile
+tests/CompileTests/CudaTests/Makefile
+tests/CompileTests/EDG_4_x/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile
