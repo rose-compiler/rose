@@ -239,41 +239,43 @@ RSIM_SignalHandling::sigsuspend(const sigset_32 *new_mask_p, RSIM_Thread *thread
     int retval = 0; /* signal which has arrived, or negative error number */
 
     while (!retval) {
-        RTS_MUTEX(mutex) {
-            /* Use user supplied mask (or the current mask) augmented by also masking signals that are ignored or which are
-             * using the default handler and do not terminate the process. */
-            sigset_32 cur_mask = new_mask_p ? *new_mask_p : mask;
-            for (size_t signo=1; signo<=8*sizeof(cur_mask); signo++) {
-                sigaction_32 sa;
-                int status = thread->get_process()->sys_sigaction(signo, NULL, &sa);
-                if (status<0) {
-                    retval = status;
-                    break;
-                }
-                if (sa.handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
-                    cur_mask |= mask_of(signo);
-                } else if (sa.handler_va==(uint32_t)(uint64_t)SIG_DFL && 0==(terminating & mask_of(signo))) {
-                    cur_mask |= mask_of(signo);
-                }
-            }
-            cur_mask &= ~(mask_of(SIGKILL) | mask_of(SIGSTOP));
-            
-            /* What signals are ready to be delivered (assuming they're not masked). */
-            if (!retval) {
-                sigset_32 p = pending;
-                for (size_t i=queue_head; i!=queue_tail; i=(i+1) % QUEUE_SIZE)
-                    p |= mask_of(queue[i].si_signo);
-
-                /* Are there any unmasked signals to deliver?  Choose one, preferably a real-time signal. */
-                if (p & ~cur_mask) {
-                    for (size_t i=0; !retval && i<8*sizeof(p); i++) {
-                        int signo = (((FIRST_RT-1)+i) % (8*sizeof(p))) + 1;  /* real-time first, then wrap back to classic sigs */
-                        if (0!=((p & ~cur_mask) & mask_of(signo)))
-                            retval = signo;
+        RTS_WRITE(thread->get_process()->rwlock()) { /* needed for RSIM_Process::sys_sigaction() before RSIM_SigHandling mutex */
+            RTS_MUTEX(mutex) {
+                /* Use user supplied mask (or the current mask) augmented by also masking signals that are ignored or which are
+                 * using the default handler and do not terminate the process. */
+                sigset_32 cur_mask = new_mask_p ? *new_mask_p : mask;
+                for (size_t signo=1; signo<=8*sizeof(cur_mask); signo++) {
+                    sigaction_32 sa;
+                    int status = thread->get_process()->sys_sigaction(signo, NULL, &sa);
+                    if (status<0) {
+                        retval = status;
+                        break;
+                    }
+                    if (sa.handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
+                        cur_mask |= mask_of(signo);
+                    } else if (sa.handler_va==(uint32_t)(uint64_t)SIG_DFL && 0==(terminating & mask_of(signo))) {
+                        cur_mask |= mask_of(signo);
                     }
                 }
-            }
-        } RTS_MUTEX_END;
+                cur_mask &= ~(mask_of(SIGKILL) | mask_of(SIGSTOP));
+
+                /* What signals are ready to be delivered (assuming they're not masked). */
+                if (!retval) {
+                    sigset_32 p = pending;
+                    for (size_t i=queue_head; i!=queue_tail; i=(i+1) % QUEUE_SIZE)
+                        p |= mask_of(queue[i].si_signo);
+
+                    /* Are there any unmasked signals to deliver?  Choose one, preferably a real-time signal. */
+                    if (p & ~cur_mask) {
+                        for (size_t i=0; !retval && i<8*sizeof(p); i++) {
+                            int signo = (((FIRST_RT-1)+i) % (8*sizeof(p))) + 1;  /* real-time first, then wrap back to classics */
+                            if (0!=((p & ~cur_mask) & mask_of(signo)))
+                                retval = signo;
+                        }
+                    }
+                }
+            } RTS_MUTEX_END;
+        } RTS_WRITE_END;
         
         /* If nothing arrived then block until another signal arrives. */
         if (!retval) {
