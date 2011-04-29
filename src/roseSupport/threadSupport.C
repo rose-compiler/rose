@@ -12,18 +12,19 @@
 static const unsigned LockedLayers_MAGIC = 0xee2894f0;
 
 struct LockedLayers {
-    unsigned magic;
-    bool active;
-    size_t total_locks;
-    size_t nlocks[RTS_LAYER_NLAYERS];
-    RTS_Layer min_locked_layer;
+    unsigned magic;                             /* Always LockedLayers_MAGIC */
+    bool active;                                /* True when this struct is being used, false initially */
+    size_t total_locks;                         /* Sum across nlocks[] */
+    size_t nlocks[RTS_LAYER_NLAYERS];           /* Number of locks acquired by this thread for each layer. */
+    RTS_Layer min_locked_layer;                 /* Minimum index where nlocks[] is non-zero */
 };
 
-static __thread LockedLayers locked_layers;
+static __thread LockedLayers locked_layers;     /* Every thread must have its own private copy. */
 
 bool
 RTS_acquiring(RTS_Layer layer)
 {
+    static const bool allow_recursion = false;
     bool retval = true;
 
     if (0==locked_layers.magic)
@@ -40,29 +41,32 @@ RTS_acquiring(RTS_Layer layer)
         locked_layers.nlocks[layer]++;
         locked_layers.total_locks++;
     } else if (layer>locked_layers.min_locked_layer) {
+        if (!allow_recursion || 0==locked_layers.nlocks[layer]) {
+            fprintf(stderr,
+                    "\n"
+                    "--------------------------------------------------------------------------------\n"
+                    "ERROR: ROSE Thread Support (RTS) requires that a thread obtain synchronization\n"
+                    "       locks in a particular order, according to the layer to which those locks\n"
+                    "       belong, to prevent possible deadlock.  The calling thread has violated\n"
+                    "       this policy by attempting to acquire locks incorrectly, namely:\n"
+                    "       a lock in\n"
+                    "           %s (%d)\n"
+                    "       is being requested after having acquired a lock in\n"
+                    "           %s (%d).\n"
+                    "--------------------------------------------------------------------------------\n",
+                    stringifyRTS_Layer(layer).c_str(), (int)layer,
+                    stringifyRTS_Layer(locked_layers.min_locked_layer).c_str(), (int)locked_layers.min_locked_layer);
+            retval = false;
+        }
         locked_layers.nlocks[layer]++;
         locked_layers.total_locks++;
-        fprintf(stderr,
-                "\n"
-                "--------------------------------------------------------------------------------\n"
-                "ERROR: ROSE Thread Support (RTS) requires that a thread obtain synchronization\n"
-                "       locks in a particular order, according to the layer to which those locks\n"
-                "       belong, to prevent possible deadlock.  The calling thread has violated\n"
-                "       this policy by attempting to acquire locks incorrectly, namely:\n"
-                "       a lock in\n"
-                "           %s (%d)\n"
-                "       is being requested after having acquired a lock in\n"
-                "           %s (%d).\n"
-                "--------------------------------------------------------------------------------\n",
-                stringifyRTS_Layer(layer).c_str(), (int)layer,
-                stringifyRTS_Layer(locked_layers.min_locked_layer).c_str(), (int)locked_layers.min_locked_layer);
-        retval = false;
     } else {
         locked_layers.nlocks[layer]++;
         locked_layers.total_locks++;
         locked_layers.min_locked_layer = layer;
     }
 
+    assert(retval); /* DEBUGGING [2011-04-29] */
     return retval;
 }
 

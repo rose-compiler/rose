@@ -95,7 +95,8 @@ enum RTS_Layer {
     /* Simulator layers (see projects/simulator), 200-299
      *
      * Constraints:
-     *     RSIM_PROCESS_OBJ < RSIM_PROCESS_CLONE_OBJ
+     *     RSIM_PROCESS_OBJ        < RSIM_PROCESS_CLONE_OBJ
+     *     RSIM_SIGNALHANDLING_OBJ < RSIM_PROCESS_OBJ
      */
     RTS_LAYER_RSIM_SIGNALHANDLING_OBJ   = 200,          /**< RSIM_SignalHandling */
     RTS_LAYER_RSIM_PROCESS_OBJ          = 201,          /**< RSIM_Process */
