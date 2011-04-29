@@ -1,3 +1,11 @@
+/*
+
+FINISH TEMPFLATPATH CODE
+
+*/
+
+
+
 
 // Original Author (SgGraphTraversal mechanisms): Michael Hoffman
 //$id$
@@ -104,7 +112,7 @@ class SgGraphTraversal
     //one of the most important structures in the algorithm, this attaches SgGraphNode*s to InheritedAttributeTypes so that
     //looking up the values is possible.
     //int numnodes;
-    std::map<SgGraphNode*, InheritedAttributeType> seen;
+    //std::map<SgGraphNode*, InheritedAttributeType> seen;
     int numnodes;
     //InheritedAttributeType pthgraphinherit;
     //StaticCFG::CFG* SgCFG;
@@ -137,10 +145,14 @@ class SgGraphTraversal
     virtual SynthesizedAttributeType evaluateSynthesizedAttribute(SgGraphNode* n,
             InheritedAttributeType in,
             SynthesizedAttributesList l) = 0;
-    virtual void pathAnalyze(std::vector<SgGraphNode*> pth, bool loop=false, std::set<std::vector<SgGraphNode*> > incloops=NULL) = 0;
+    virtual void pathAnalyze(std::vector<SgGraphNode*>& pth, bool loop=false, std::set<std::vector<SgGraphNode*> >& incloops=NULL) = 0;
     //also not used, but important for possible later use of SynthesizedAttributes
     SynthesizedAttributeType defaultSynthesizedAttribute(InheritedAttributeType);
    private:
+    double distime;
+    //std::set<std::pair<std::pair<SgGraphNode*, SgGraphNode*>, std::pair<SgGraphNode*, SgGraphNode*> > > flpset;
+    //std::set<std::pair<std::pair<SgGraphNode*, SgGraphNode*>, std::pair<SgGraphNode*, SgGraphNode*> > > goodset;
+    std::set<SgGraphNode*> ploops;
     std::map<SgGraphNode*, std::set<std::vector<SgGraphNode*> > > lpbegins;
     std::map<SgGraphNode*, int> frksLeft;
     int currm;
@@ -167,6 +179,8 @@ class SgGraphTraversal
     int currprime;
     std::vector<SgGraphNode*> endnodefakes;
     std::map<SgGraphNode*, std::vector<std::vector<SgGraphNode*> > > pathsAtMk;
+    std::set<SgGraphNode*> mkloops;
+    std::map<SgGraphNode*, std::set<std::vector<SgGraphNode*> > > mkloopmap;
     std::map<SgGraphNode*, std::set<std::vector<SgGraphNode*> > > subPathsAtMk;
     std::vector<SgGraphNode*> mkglobal;
     std::vector<SgGraphNode*> clglobal;
@@ -174,7 +188,7 @@ class SgGraphTraversal
     void solvePaths(SgIncidenceDirectedGraph* g, SgGraphNode* n, SgGraphNode* endnode);
     std::vector<std::set<SgGraphNode*> > closuresVec;
     void evaluatePaths(SgIncidenceDirectedGraph* g, SgGraphNode* realstartnode, SgGraphNode* endnode);
-    bool disjoint(std::vector<std::vector<SgGraphNode*> > path, std::vector<SgGraphNode*> vec2);
+    bool disjoint(std::vector<SgGraphNode*>& path, std::vector<SgGraphNode*>& vec2) const;
     std::set<std::vector<SgGraphNode*> > flatpaths;
 //    void evalNode(SgIncidenceDirectedGraph* g, SgGraphNode* n);
     bool canSolve(SgIncidenceDirectedGraph* g, SgGraphNode* n);
@@ -208,7 +222,7 @@ class SgGraphTraversal
     std::set<SgGraphNode*> computedNodes;
     SgGraphNode* st;
     SgGraphNode* en;
-    
+    double fllp;
     int loopnum;
     //std::set<SgGraphNode*> solved;
     //InheritedAttributeType findAndReverse(SgGraphNode* n, SgIncidenceDirectedGraph* g);
@@ -317,6 +331,7 @@ traverse(SgGraphNode* n, SgIncidenceDirectedGraph* g, InheritedAttributeType inh
     loopNumMap.clear();
     nullloops = 0;
     nullEdgesPaths = 0;
+    fllp = 0.0;
     mkglobal.clear();
     clglobal.clear();
   
@@ -337,6 +352,7 @@ traverse(SgGraphNode* n, SgIncidenceDirectedGraph* g, InheritedAttributeType inh
    
    st = n;
    en = endnode;
+   distime = 0;
    int currm = 1;
    int turns = 0;
    pathsSize = 0;
@@ -401,7 +417,9 @@ InheritedAttributeType inh;
        double diff3 = difftime(t6, t5);
        time(&t3);
 //actually evaluates every path with a user defined pathAnalyze function
+       //for (int i = 0; i < 10; i++) {
        evaluatePaths(g, n, endnode);
+       //}
        time(&t4);
        std::cout << "evaluatePaths done " << std::endl;
        double diff2 = difftime(t4, t3);
@@ -411,7 +429,11 @@ InheritedAttributeType inh;
        std::cout << "entire pathsolve took: " << diff+diff2+diff3 << std::endl;
        std::cout << "potential loops: " << nullEdgesOrdered.size() << std::endl;
        std::cout << "nullNum: " << nullNum << std::endl;
-       
+       //std::cout << "goodsets: " << goodset.size() << std::endl;
+       //std::cout << "flpsets: " << flpset.size() << std::endl;
+       std::cout << "mkloops: " << mkloops.size() << std::endl;
+       std::cout << "distime: " << distime << std::endl;
+       std::cout << "fllp: " << fllp << std::endl;
        return pthgraphinherit;
    //}
    //std::cout << "number of endnodefakes: " << endnodefakes.size() << std::endl;
@@ -461,26 +483,126 @@ bool is_disjoint(std::set<SgGraphNode*> set1, std::set<SgGraphNode*> set2) {
 
 //Checks for disjoint, necessary in computing the paths
 template<class InheritedAttributeType, class SynthesizedAttributeType>
-inline
 bool
 SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-disjoint(std::vector<std::vector<SgGraphNode*> > path, std::vector<SgGraphNode*> vec2) {
+disjoint(std::vector<SgGraphNode*>& pthloops, std::vector<SgGraphNode*>& vec2) const {
+/*
+    time_t t1, t2;
+    time(&t1);
     int a = 0;
+    std::set<SgGraphNode*> s1;
+    std::set<SgGraphNode*> s2;
+    std::vector<SgGraphNode*> mkloopvec;
+    bool goodsetbool;
+    bool pbool = true;
     //std::cout << "calculating disjoint" << std::endl;
     ROSE_ASSERT((path.back()).back() == vec2.front());
+
+    //copy(vec2.begin(), vec2.end(), inserter(s2, s2.end()));
+/*
+    for (int i = 0; i < vec2.size(); i++) {
+        if (ploops.find(vec2[i]) != ploops.end()) {
+            pbool = false;
+        }
+    }
+    if (pbool) {
+        return true;
+    }
+    if (
+*/  //for (int q = 0; q < pthloops->size(); q++) {
+        for (int i = 0; i < pthloops.size(); i++) {
+            if (find(vec2.begin(), vec2.end(), pthloops[i]) != vec2.end()) {
+                return false;
+            }
+        }
+        return true;
+}
+/*
+    if (pbool) {
+        time(&t2);
+        double diff = difftime(t2, t1);
+        distime += diff;
+        return true;
+    }
     for (unsigned int k = 0; k < path.size(); k++) {
+        s1.clear();
+*/
+/*
+        pbool = true;
+        for (int p = 0; p < path[k].size(); p++) {
+            if (ploops.find(path[k][p]) != ploops.end()) {
+                pbool = false;
+            }
+        }
+//        copy(path[k].begin(), path[k].end(), inserter(s1, s1.end()));
+        if (!pbool) {
+*/
+/*
+        std::pair<std::pair<SgGraphNode*, SgGraphNode*>, std::pair<SgGraphNode*, SgGraphNode*> > flp;
+        flp.second.first = vec2[0];
+        flp.second.first = vec2[1];
+
+        flp.first.first = path[k][0];
+        flp.first.second = path[k][1];
+        if (vec2.front() == vec2.back()) {
+        time(&t2);
+        double diff = difftime(t2, t1);
+        distime += diff;
+
+            return false;
+        }
+        if (flpset.find(flp) != flpset.end()) {
+            //std::cout << "already seen" << std::endl;
+        time(&t2);
+        double diff = difftime(t2, t1);
+        distime += diff;
+
+            return false;
+        }
+*/
+/*
+        else if (goodset.find(flp) != goodset.end()) {
+            goodsetbool = true;
+        }
+*/
+/*
+        if (is_disjoint(s1,s2)) {
+            //goodset.insert(flp);
+            continue;
+        }
+        else {
+            return false;
+        }
+*/
+/*
+       else {
         std::vector<SgGraphNode*> vec1 = path[k];
-        for (unsigned int i = 0; i < vec1.size(); i++) {
-            for (unsigned int j = 0; j < vec2.size(); j++) {
-                if (vec1[i] == vec2[j]) {
-                    if (k != (path.size() - 1) || i != (vec1.size() - 1) || j != 0) {
+        
+        //for (unsigned int i = 0; i < vec1.size(); i++) {
+            for (unsigned int j = 0; j < mkloopvec.size(); j++) {
+                std::vector<SgGraphNode*>::iterator q = find(vec1.begin(), vec1.end(), mkloopvec[j]);
+                if (q != vec1.end()) {
+                    if (*q != vec1[vec1.size() - 1] || j != 0) {
+                        
+                        flpset.insert(flp);
       //                  std::cout << "not disjoint" << std::endl;
+        time(&t2);
+        double diff = difftime(t2, t1);
+        distime += diff;
+
                         return false;
                     }
                 }
             }
-        }
+        //}
+        //goodset.insert(flp);
     }
+    }
+    //}
+*/
+
+    
+/*
     for (unsigned int p = 0; p < vec2.size(); p++) {
         for (unsigned int q = 0; q < vec2.size(); q++) {
             if (p != q) {
@@ -490,9 +612,15 @@ disjoint(std::vector<std::vector<SgGraphNode*> > path, std::vector<SgGraphNode*>
             }
         }
     }
+*/
+/*
+        time(&t2);
+        double diff = difftime(t2, t1);
+        distime += diff;
+
     return true;
 }
-
+*/
 //checks for solvability of a node in nodal analysis
 
 template<class InheritedAttributeType, class SynthesizedAttributeType>
@@ -521,9 +649,27 @@ template<class InheritedAttributeType, class SynthesizedAttributeType>
 void
 SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
 evaluatePaths(SgIncidenceDirectedGraph* g, SgGraphNode* realstartnode, SgGraphNode* endnode) {
+//std::set<SgGraphNode*> seen;
+//for (std::map<SgGraphNode*, std::vector<std::vector<SgGraphNode*> > >::iterator i = pathsAtMk.begin(); i != pathsAtMk.end(); i++) {
+/*    
+    std::vector<std::vector<SgGraphNode*> > tocheck = (*i).second;
+    for (int j = 0; j < tocheck.size(); j++) {
+        for (int k = 0; k < tocheck[j].size(); k++) {
+            if (seen.find(tocheck[j][k]) != seen.end()) {
+                ploops.insert(tocheck[j][k]);
+            }
+            else {
+                seen.insert(tocheck[j][k]);
+            }
+        }
+    }
+}
+*/     
 std::vector<std::vector<SgGraphNode*> > path;
 std::vector<SgGraphNode*> spath;
 SgGraphNode* n = realstartnode;
+int successes = 0;
+int failures = 0;
 int j = 0;
 std::vector<SgGraphNode*> currpth;
 int currint = 0;
@@ -540,19 +686,27 @@ bool midstep = false;
 std::vector<std::vector<SgGraphNode*> > pth = pathsAtMk[realstartnode];
 std::vector<std::vector<SgGraphNode*> > cpth = pathsAtMk[realstartnode];
     path.clear();
-   
+    int disjoints = 0;
+    int disjointtrues = 0;
     currpth = pth[0];
     intPath[pth[0].front()] = currint;
+    std::set<SgGraphNode*> pthloopstmp;
+    SgGraphNode* fakenode;
+    pthloopstmp.insert(fakenode);
+    std::vector<std::set<SgGraphNode*> > pthloops;
+    pthloops.push_back(pthloopstmp);
+    pthloopstmp.clear();
     currint++;
     
     int stepnum = 0;
     std::vector<SgGraphNode*> rs;
     rs.push_back(realstartnode);
     path.push_back(rs);
+    //currflat.push_back(realstartnode);
     currents.clear();
 
     step = false;
-    std::vector<SgGraphNode*> flatpath;
+    //std::vector<SgGraphNode*> currflat;
     std::vector<SgGraphNode*> sub;
 
 /*
@@ -562,7 +716,7 @@ std::vector<std::vector<SgGraphNode*> > cpth = pathsAtMk[realstartnode];
 */
     std::set<std::vector<SgGraphNode*> > nullIncLoops;
 
-
+/*
     for (unsigned int p = 0; p < looppaths.size(); p++) {
         std::vector<SgGraphNode*> lp = looppaths[p];
 
@@ -601,29 +755,51 @@ std::vector<std::vector<SgGraphNode*> > cpth = pathsAtMk[realstartnode];
             //}
         }
     }
+*/
     while (step == false) {
         stepnum++;
         
         if (currpth.back() == endnode) {
             path.push_back(currpth);
-            //std::vector<SgGraphNode*> flatpath;
+            //for (int i = 0; i < currpth.size(); i++) {
+            //    currflat.push_back(currpth[i]);
+            //}
+            std::vector<SgGraphNode*> flatpath;
             //std::vector<SgGraphNode*> sub;
-            for (unsigned int q = 0; q < path.size(); q++) {
-                sub = path[q];
-                sub.pop_back();
-                for (unsigned int p = 0; p < sub.size(); p++) {
-                     flatpath.push_back(sub[p]);
+            std::set<std::vector<SgGraphNode*> > incloops;
+            time_t q1, q2;
+            //std::cout << "path.size(): " << path.size() << std::endl;
+            //std::cout << "pthloops.size(): " << pthloops.size() << std::endl;
+            ROSE_ASSERT(path.size() == pthloops.size() + 1);
+            time(&q1);
+            for (unsigned int q = 0; q < pthloops.size(); q++) {
+                //sub = path[q];
+                //sub.pop_back();
+                for (unsigned int r = 0; r < path[q].size(); r++) {
+                    flatpath.push_back(path[q][r]);
+                }
+                for (std::set<SgGraphNode*>::iterator p = pthloops[q].begin(); p != pthloops[q].end(); p++) {
+                    for (std::set<std::vector<SgGraphNode*> >::iterator o = mkloopmap[*p].begin(); o != mkloopmap[*p].end(); o++) {
+                        incloops.insert(*o);
+                    }
                  }
              }
+             for (unsigned int pt2 = 0; pt2 < path[path.size()-1].size(); pt2++) {
+                     flatpath.push_back(path[path.size()-1][pt2]);
+             }
+             
+             time(&q2);
+             fllp += difftime(q2,q1);
              flatpath.push_back(endnode);
-             std::set<std::vector<SgGraphNode*> > incloops;
-             for (unsigned int ps = 0; ps < flatpath.size(); ps++) {
+/* 
+            for (unsigned int ps = 0; ps < flatpath.size(); ps++) {
                  if (lpbegins.find(flatpath[ps]) != lpbegins.end()) {
                      for (std::set<std::vector<SgGraphNode*> >::iterator sv = lpbegins[flatpath[ps]].begin(); sv != lpbegins[flatpath[ps]].end(); sv++) {
                          incloops.insert(*sv);
                      }
                  }
              }
+*/
 //user defined function, run on the final path, gives the user loops that are included via "incloops" a set of vectors that contain the individual loops
              pathAnalyze(flatpath, false, incloops);
              incloops.clear();
@@ -656,6 +832,7 @@ std::vector<std::vector<SgGraphNode*> > cpth = pathsAtMk[realstartnode];
                    else {
                        currents[(path.back()).back()] = 0;
                        path.pop_back();
+                       pthloops.pop_back();
                    }
                    if (starter == true) {
                        step = true;
@@ -667,10 +844,50 @@ std::vector<std::vector<SgGraphNode*> > cpth = pathsAtMk[realstartnode];
         else {
 
 //this checks first to see if we have any loops in our path. If not it continues down, if there is it goes back to the last nonloop node
-        if (disjoint(path, currpth)) {
+        bool disj = true;
+        time_t tdisb, tdise;
+        time(&tdisb);
+        #pragma omp parallel for num_threads(8)
+        for (int i = 0; i < pthloops.size(); i++) {
+            for (std::set<SgGraphNode*>::iterator j = pthloops[i].begin(); j != pthloops[i].end(); j++) {
+                if (find(currpth.begin(), currpth.end(), *j) != currpth.end()) {
+                    disj = false;
+                }
+             }
+        }
+/*
+        #pragma omp parallel for num_threads(4) private(i,j)
+        for (i = 0; i < pthloops.size(); i++) {
+            if (disj) {
+            for (std::set<SgGraphNode*>::iterator j = pthloops[i].begin(); j != pthloops[i].end(); j++) {
+                if (find(currpth.begin(), currpth.end(), *j) != currpth.end()) {
+                    disj = false;
+                    //j = pthloops[i].size();
+                }
+            }
+            }
+            
+        }
+*/
+        time(&tdise);
+        distime += difftime(tdise, tdisb);
+        if (disj) {
+            
+            disjointtrues++;
+            //std::cout << "disjoints: " << disjointtrues << std::endl;
             midstep = false;
+            pthloopstmp.clear();
+                for (int i = 0; i < currpth.size(); i++) {
+                    //currflat.push_back(currpth[i]);
+                    if (mkloops.find(currpth[i]) != mkloops.end()) {
+                       pthloopstmp.insert(currpth[i]);
+                    }
+                }
+                pthloops.push_back(pthloopstmp);
                 path.push_back(currpth);
-                std::set<std::vector<SgGraphNode*> > lpth;
+                pthloopstmp.clear();
+                
+                //std::set<std::vector<SgGraphNode*> > lpth;
                 std::vector<SgGraphNode*> oldcurrpth = currpth;
                 currpth.clear();
                 if (currents.find((path.back()).back()) == currents.end()) {
@@ -694,6 +911,8 @@ std::vector<std::vector<SgGraphNode*> > cpth = pathsAtMk[realstartnode];
                         currents[backnode]++;
                     }        
      else {
+        disjoints++;
+        //std::cout << "disjoint false: " << s << std::endl;
         
         while (true) {
             if (currents[(path.back()).back()] < pathsAtMk[(path.back()).back()].size() || path.back().back() == realstartnode) {
@@ -701,6 +920,7 @@ std::vector<std::vector<SgGraphNode*> > cpth = pathsAtMk[realstartnode];
             }
             currents[(path.back()).back()] = 0;
             path.pop_back();
+            pthloops.pop_back();
         }
         if ((path.back()).back() != realstartnode) {
         currpth = (pathsAtMk[(path.back()).back()])[currents[(path.back()).back()]];
@@ -712,6 +932,8 @@ std::vector<std::vector<SgGraphNode*> > cpth = pathsAtMk[realstartnode];
     }
  }
  }
+std::cout << "successes: " << successes << std::endl;
+std::cout << "failures: " << failures << std::endl;
 
 return;
 }
@@ -830,6 +1052,12 @@ solvePaths(SgIncidenceDirectedGraph* g, SgGraphNode* n, SgGraphNode* endnode) {
                 }
                 edges = false;
                 pathsAtMk[marks.back()].push_back(mkpath);
+                //for (int mk = 0; mk < mkpath.size(); mk++) {
+                 //   std::set<SgDirectedGraphEdge*> iedg = g->computeEdgeSetIn(mkpath[mk]);
+                    //if (iedg.size() > 1) {
+                    //    ploops.insert(mkpath[mk]);
+                   // }
+                //}
                 ROSE_ASSERT(mkpath.front() == marks.back());
                 if (marks.size() == 0) {
                     return;
@@ -918,6 +1146,7 @@ solvePaths(SgIncidenceDirectedGraph* g, SgGraphNode* n, SgGraphNode* endnode) {
                currn = took;
            }
            else {
+               mkloops.insert(took);
                std::vector<SgGraphNode*> lptemp;
                lptemp.clear();
                lptemp.push_back(took);
@@ -928,6 +1157,8 @@ solvePaths(SgIncidenceDirectedGraph* g, SgGraphNode* n, SgGraphNode* endnode) {
                    lptemp.push_back(path.back());
                    
                }
+               (mkloopmap[took]).insert(lptemp);
+/*
                if (lptemp.size() > 1) {
                if (find(looppaths.begin(), looppaths.end(), lptemp) == looppaths.end() && find(lptemp.begin(), lptemp.end(), st) == lptemp.end() && find(lptemp.begin(), lptemp.end(), endnode) == lptemp.end()) {
                    looppaths.push_back(lptemp);
@@ -937,6 +1168,7 @@ solvePaths(SgIncidenceDirectedGraph* g, SgGraphNode* n, SgGraphNode* endnode) {
                    }
                }
                }
+*/
                path.push_back(took);
                currn = path.back();
                mkpath.push_back(took);
