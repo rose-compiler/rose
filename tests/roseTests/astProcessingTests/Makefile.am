@@ -1,14 +1,13 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 
-EXTRA_DIST = input1.C t41.C t42.C t43.C littletest.C
+EXTRA_DIST = input1.C test11.C test12.C test13.C test14.C
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
 
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
-
 # This test program does not require the rest of ROSE so it can be handled locally
 bin_PROGRAMS  = astTraversalTest processnew3Down4
 
@@ -30,10 +29,10 @@ testTraversals: astTraversalTest
 	./astTraversalTest -edg:w -c $(srcdir)/input1.C
 
 testRunExamples: processnew3Down4
-	./processnew3Down4 $(srcdir)/t41.C
-	./processnew3Down4 $(srcdir)/t42.C
-	./processnew3Down4 $(srcdir)/t43.C
-	./processnew3Down4 $(srcdir)/littletest.C
+	./processnew3Down4 $(srcdir)/t11.C
+	./processnew3Down4 $(srcdir)/t12.C
+	./processnew3Down4 $(srcdir)/t13.C
+	./processnew3Down4 $(srcdir)/t14.C
 	rm *.dot
 check-local:
 	@$(MAKE) testTraversals
