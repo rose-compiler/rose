@@ -356,7 +356,12 @@ case "$ROSE_TEST_BUILD_STEP" in
       exit 1;
     fi
 
-    make check -j${NUM_PROCESS} -C ${ROSE_TEST_BUILD_DIRECTORY}
+    BUILD_TARGET=check
+    if test "$ROSE_TEST_BUILD_DIRECTORY" = "tests/CompileTests/Fortran_tests" ; then
+      BUILD_TARGET=tests
+    fi
+
+    make ${BUILD_TARGET} -j${NUM_PROCESS} -C ${ROSE_TEST_BUILD_DIRECTORY}
     if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
        printBannerToEndStep "[ERROR] analyze ${ROSE_TEST_BUILD_DIRECTORY}" $analyze_start_time
        exit 3
