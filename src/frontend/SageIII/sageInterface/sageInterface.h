@@ -946,7 +946,7 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
   std::vector<SgGotoStatement*> findGotoStmts(SgStatement* scope, SgLabelStatement* l);
   std::vector<SgStatement*> getSwitchCases(SgSwitchStatement* sw);
 
-  //! Find a declaration given its name, scope (optional, can be NULL), and defining or nondefining flag.
+  //! Topdown traverse a subtree from root to find the first declaration given its name, scope (optional, can be NULL), and defining or nondefining flag.
   template <typename T>
   T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
   {
@@ -977,6 +977,8 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
     }
     return 0;
   }
+//! Topdown traverse a subtree from root to find the first function declaration matching the given name, scope (optional, can be NULL), and defining or nondefining flag. This is an instantiation of findDeclarationStatement<T>.
+  SgFunctionDeclaration* findFunctionDeclaration(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining);
 
 #if 0 //TODO
   // 1. preorder traversal from current SgNode till find next SgNode of type V_SgXXX

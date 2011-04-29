@@ -9,7 +9,7 @@ Computer requirements:
    Previous work to compile ROSE under Cygwin didn't
 work well, I expect that it is because ROSE was not 
 as far along in development and Cygwin may have improved
-over the years.  Tests in summer 2006, got initial Cygwin 
+over the years.  Tests in summer 2006 got initial Cygwin 
 support in place and added libtool support to ROSE to help
 make that happen (initial OSX support was added as well).
 Tests in summer 2008 revisited Cygwin support and got more

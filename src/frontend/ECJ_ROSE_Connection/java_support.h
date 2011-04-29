@@ -20,6 +20,7 @@ extern "C" {
 } /* End extern C. */
 #endif
 
+#include "JavaSourceCodePosition.h"
 
 // Control output from Fortran parser
 #define DEBUG_JAVA_SUPPORT true
@@ -50,7 +51,13 @@ extern std::list<SgNode*> astJavaNodeStack;
 // Global list of implicit classes
 extern std::list<SgName> astJavaImplicitClassList;
 
+// Global stack of SgInitializedName IR nodes (used for processing function parameters)
+extern std::list<SgInitializedName*> astJavaInitializedNameStack;
 
+// Global stack of source code positions. The advantage of a stack is that we could 
+// always reference the top of the stack, and monitor the depth of the stack, and make
+// sure that we never deleted the last entry in the stack until the end of the program.
+extern std::list<JavaSourceCodePosition*> astJavaSourceCodePositionStack;
 
 
 SgGlobal* getGlobalScope();
@@ -65,6 +72,7 @@ void outputJavaState( const std::string label );
 
 std::string convertJavaStringToCxxString  (JNIEnv *env, const jstring & java_string);
 int         convertJavaIntegerToCxxInteger(JNIEnv *env, const jint    & java_integer);
+bool        convertJavaBooleanToCxxBoolean(JNIEnv *env, const jboolean & java_boolean);
 
 // Specify the SgClassDefinition explicitly so that implicit classes are simpler to build.
 // SgMemberFunctionDeclaration* buildSimpleMemberFunction(const SgName & name);
@@ -87,6 +95,7 @@ SgName stripQualifiers (const SgName & classNameWithQualification);
 // It might be that this function should take a "const SgName &" instead of a "std::string".
 SgClassSymbol* lookupSymbolFromQualifiedName(std::string className);
 
+SgClassType* lookupTypeFromQualifiedName(std::string className);
 
 // endif for ROSE_JAVA_SUPPORT
 #endif

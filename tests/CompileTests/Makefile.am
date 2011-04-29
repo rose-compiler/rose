@@ -67,6 +67,13 @@ if !USING_XTENSA_BACKEND_COMPILER
    SUBDIRS += mergeAST_tests ElsaTestCases virtualCFG_tests A++Tests staticCFG_tests 
 endif
 endif
+
+if ROSE_BUILD_EDG_WITH_CUDA_SUPPORT
+   SUBDIRS += CudaTests
+endif
+
+SUBDIRS += EDG_4_x
+
 check-local:
 	@echo "*************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests: make check rule complete (terminated normally) ******"

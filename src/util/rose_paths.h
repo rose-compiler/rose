@@ -6,13 +6,13 @@
 // construction or ROSETTA used to generate ROSE requires 
 // it as well.
 #if !defined(_FILE_OFFSET_BITS)
-#define _FILE_OFFSET_BITS 64
+   #define _FILE_OFFSET_BITS 64
 #endif
 
 // DQ (4/21/2009): This must be set before sys/stat.h is included by any other header file.
-// Use of _FILE_OFFSET_BITS macro is required on 32-bit systems to controling size of "struct stat"
+// Use of _FILE_OFFSET_BITS macro is required on 32-bit systems to control the size of "struct stat"
 #if !(defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
-#error "The _FILE_OFFSET_BITS macro should be set before any sys/stat.h is included by any other header file!"
+   #error "The _FILE_OFFSET_BITS macro should be set before any sys/stat.h is included by any other header file!"
 #endif
 
 #include <string>

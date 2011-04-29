@@ -191,6 +191,8 @@ SgTypeComplex* buildComplexType(SgType *base_type = NULL);
 //! Build an imaginary type
 SgTypeImaginary* buildImaginaryType(SgType *base_type = NULL);
 
+//! Build a const/volatile type qualifier
+SgConstVolatileModifier * buildConstVolatileModifier (SgConstVolatileModifier::cv_modifier_enum mtype=SgConstVolatileModifier::e_unknown);
 //@}
 
 //--------------------------------------------------------------
@@ -503,6 +505,21 @@ SgFunctionCallExp*
 buildFunctionCallExp(const SgName& name, SgType* return_type, \
                 SgExprListExp* parameters=NULL, SgScopeStatement* scope=NULL);
 
+//! Build a CUDA kernel call expression (kernel<<<config>>>(parameters))
+SgCudaKernelCallExp * buildCudaKernelCallExp_nfi(
+  SgExpression * kernel,
+  SgExprListExp* parameters = NULL,
+  SgCudaKernelExecConfig * config = NULL
+);
+
+//! Build a CUDA kernel execution configuration (<<<grid, blocks, shared, stream>>>)
+SgCudaKernelExecConfig * buildCudaKernelExecConfig_nfi(
+  SgExpression *grid = NULL,
+  SgExpression *blocks = NULL,
+  SgExpression *shared = NULL,
+  SgExpression *stream = NULL
+);
+
 //! Build the rhs of a variable declaration which includes an assignment
 SgAssignInitializer * buildAssignInitializer(SgExpression * operand_i = NULL, SgType * expression_type = NULL);
 SgAssignInitializer * buildAssignInitializer_nfi(SgExpression * operand_i = NULL, SgType * expression_type = NULL);
@@ -698,12 +715,16 @@ inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgStatement * true_body
 }
 SgIfStmt * buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
 
+SgForInitStatement * buildForInitStatement_nfi(SgStatementPtrList & statements);
+
 //!Build a for statement, assume none of the arguments is NULL
 SgForStatement * buildForStatement(SgStatement* initialize_stmt,  SgStatement * test, SgExpression * increment, SgStatement * loop_body);
 SgForStatement * buildForStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body);
+SgForStatement * buildForStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body);
 
 //! Build a UPC forall statement
 SgUpcForAllStatement * buildUpcForAllStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body);
+SgUpcForAllStatement * buildUpcForAllStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body);
 
 //! Build while statement
 SgWhileStmt * buildWhileStmt(SgStatement *  condition, SgStatement *body);

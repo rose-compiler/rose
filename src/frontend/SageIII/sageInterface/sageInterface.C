@@ -918,6 +918,17 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
              }
 
+        // DQ (4/16/2011): Added Java import statment support.
+           case V_SgJavaImportStatement:
+             {
+               name = "_java_import_stmt_";
+               const SgJavaImportStatement* statement = isSgJavaImportStatement(declaration);
+               ROSE_ASSERT(statement != NULL);
+               ROSE_ASSERT(statement->get_parent() != NULL);
+               name += StringUtility::numberToString(const_cast<SgJavaImportStatement*>(statement));
+               break;
+             }
+
        // Note that the case for SgVariableDeclaration is not implemented
           default:
             // name = "default name (default case reached: not handled)";
@@ -5276,6 +5287,13 @@ vector<SgVariableSymbol*> SageInterface::getSymbolsUsedInExpression(SgExpression
 }
 #endif
 
+SgFunctionDeclaration* SageInterface::findFunctionDeclaration(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
+{
+  return findDeclarationStatement<SgFunctionDeclaration> (root, name, scope, isDefining);
+
+}
+
+
 SgFunctionDefinition* SageInterface::getEnclosingProcedure(SgNode* n, bool includingSelf)
 {
   return getEnclosingFunctionDefinition(n,includingSelf);
@@ -8900,6 +8918,34 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
     if (fTable->get_parent() == NULL)
       fTable->set_parent(getGlobalScope(scope));
 
+    // Liao 4/23/2010,  Fix function symbol
+    // This could happen when users copy a function, then rename it (func->set_name()), and finally insert it to a scope
+    SgFunctionDeclaration * func = isSgFunctionDeclaration(stmt); 
+    SgFunctionSymbol *func_symbol =  scope->lookup_function_symbol (func->get_name(), func->get_type());
+    if (func_symbol == NULL);
+    {
+      func_symbol = new SgFunctionSymbol (func);
+      ROSE_ASSERT (func_symbol != NULL);
+      scope ->insert_symbol(func->get_name(), func_symbol);
+    }
+#if 0    
+    // Fix local symbol, a symbol directly refer to this function declaration
+    // This could happen when a non-defining func decl is copied, the corresonding symbol will point to the original source func
+     // symbolTable->find(this) used inside get_symbol_from_symbol_table()  won't find the copied decl 
+    SgSymbol* local_symbol = func ->get_symbol_from_symbol_table();
+    if (local_symbol == NULL) // 
+    {
+      if (func->get_definingDeclaration() == NULL) // prototype function
+      {
+        SgFunctionDeclaration * src_func = func_symbol->get_declaration();
+        if (func != src_func )
+        {
+          ROSE_ASSERT (src_func->get_firstNondefiningDeclaration () == src_func);
+          func->set_firstNondefiningDeclaration (func_symbol->get_declaration());
+        }
+      }
+    }
+#endif    
   }
 
   // fix scope pointer for statements explicitly storing scope pointer
@@ -8909,6 +8955,7 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
      case V_SgTemplateDeclaration:
      case V_SgTypedefDeclaration:
      case V_SgFunctionDeclaration:
+     case V_SgTemplateInstantiationFunctionDecl:
   //   case V_SgLabelStatement:
   //   Label statement' scope is special, handled in fixLabelStatement()
       stmt->set_scope(scope);

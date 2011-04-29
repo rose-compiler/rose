@@ -50,7 +50,11 @@
  * and a few of those nodes (e.g., SgFile) depend on something defined by the Disassembler class. The Disassembler supports
  * multi threading and therefore includes this header. Therefore every ROSE library source file will spit out this warning. */
 #ifndef ROSE_THREADS_ENABLED
-#  warning "Multi-thread support is not enabled. ROSE will not be thread safe even for functions that advertise safety."
+#  ifdef _MSC_VER
+#    pragma message("Multi-thread support is not enabled. ROSE will not be thread safe even for functions that advertise safety.")
+#  else
+#    warning "Multi-thread support is not enabled. ROSE will not be thread safe even for functions that advertise safety."
+#  endif
 #endif
 
 /******************************************************************************************************************************
