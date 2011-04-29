@@ -52,17 +52,17 @@ void sla_set_debug( int d );
 
 #if 1
 #ifdef __cplusplus
-#define sla_str		sla
-#define sla_none	sla
-#define sla_float	sla
-#define sla_double	sla
-#define sla_int		sla
-#define sla_short	sla
-#define sla_long	sla
-#define sla_uint	sla
-#define sla_ushort	sla
-#define sla_ulong	sla
-#define sla_char	sla
+#define sla_str         sla
+#define sla_none        sla
+#define sla_float       sla
+#define sla_double      sla
+#define sla_int         sla
+#define sla_short       sla
+#define sla_long        sla
+#define sla_uint        sla
+#define sla_ushort      sla
+#define sla_ulong       sla
+#define sla_char        sla
 #endif
 #endif
 
@@ -76,12 +76,12 @@ int sla_none( int *argc, ARGVCONST char **argv, const char *flind, const char *a
 #ifndef SLA_FCN_PROTO
 #ifdef __cplusplus
 #define SLA_FCN_PROTO(N,T) \
-int N( std::vector<std::string>& argv	\
+int N( std::vector<std::string>& argv   \
      , const std::string& flind \
      , const std::string& assop \
      , const std::string& pname \
-     , T *value	\
-     , int argd	= 0 /* default argument */	\
+     , T *value \
+     , int argd = 0 /* default argument */      \
      )
 #else
 #define SLA_FCN_PROTO(N,T) \
@@ -100,12 +100,12 @@ int N( int *argc \
 #ifndef SLA_FCN_BEGIN
 #ifdef __cplusplus
 #define SLA_FCN_BEGIN(N,T) \
-int N( std::vector<std::string>& argv	\
+int N( std::vector<std::string>& argv   \
      , const std::string& flind \
      , const std::string& assop \
      , const std::string& pname \
-     , T *value	\
-     , int argd	\
+     , T *value \
+     , int argd \
      )
 #else
 #define SLA_FCN_BEGIN(N,T) SLA_FCN_PROTO(N,T)
@@ -205,19 +205,19 @@ int N( std::vector<std::string>& argv	\
   > pgrep 's/^(int sla\s*\([^\{]*).*$/$1;/' sla.i -s
  */
 #ifdef __cplusplus
-SLA_FCN_PROTO( sla_str,		std::string	);
+SLA_FCN_PROTO( sla_str,         std::string     );
 #else
-SLA_FCN_PROTO( sla_str,		ARGVCONST char *	);
+SLA_FCN_PROTO( sla_str,         ARGVCONST char *        );
 #endif
-SLA_FCN_PROTO( sla_float,	float			);
-SLA_FCN_PROTO( sla_double,	double			);
-SLA_FCN_PROTO( sla_int,		int			);
-SLA_FCN_PROTO( sla_short,	short 			);
-SLA_FCN_PROTO( sla_long,		long			);
-SLA_FCN_PROTO( sla_uint,		unsigned int		);
-SLA_FCN_PROTO( sla_ushort,	unsigned short		);
-SLA_FCN_PROTO( sla_ulong,	unsigned long		);
-SLA_FCN_PROTO( sla_char,		char			);
+SLA_FCN_PROTO( sla_float,       float                   );
+SLA_FCN_PROTO( sla_double,      double                  );
+SLA_FCN_PROTO( sla_int,         int                     );
+SLA_FCN_PROTO( sla_short,       short                   );
+SLA_FCN_PROTO( sla_long,                long                    );
+SLA_FCN_PROTO( sla_uint,                unsigned int            );
+SLA_FCN_PROTO( sla_ushort,      unsigned short          );
+SLA_FCN_PROTO( sla_ulong,       unsigned long           );
+SLA_FCN_PROTO( sla_char,                char                    );
 
 
 

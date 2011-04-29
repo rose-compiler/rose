@@ -51,25 +51,25 @@ class QCE_EXPORT QDocumentCursor
                         Up,
                         Down,
                         Left,
-                        PreviousCharacter = Left,
+                        PreviousCharacter = Left,                       /* NO_STRINGIFY */
                         Right,
-                        NextCharacter = Right,
+                        NextCharacter = Right,                          /* NO_STRINGIFY */
                         Start,
                         StartOfLine,
-                        StartOfBlock = StartOfLine,
+                        StartOfBlock = StartOfLine,                     /* NO_STRINGIFY */
                         StartOfWord,
                         PreviousBlock,
-                        PreviousLine = PreviousBlock,
+                        PreviousLine = PreviousBlock,                   /* NO_STRINGIFY */
                         PreviousWord,
                         WordLeft,
                         WordRight,
                         End,
                         EndOfLine,
-                        EndOfBlock = EndOfLine,
+                        EndOfBlock = EndOfLine,                         /* NO_STRINGIFY */
                         EndOfWord,
                         NextWord,
                         NextBlock,
-                        NextLine = NextBlock
+                        NextLine = NextBlock                            /* NO_STRINGIFY */
                 };
 
                 enum SelectionType

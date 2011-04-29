@@ -15,18 +15,18 @@ typedef std::list< ruleAnn * > rule_list;
 
 #if 0
 declNode::Storage_class merge_sc(declNode::Storage_class sc1,
-				 declNode::Storage_class sc2,
-				 const Coord c = Coord::Unknown);
+                                 declNode::Storage_class sc2,
+                                 const Coord c = Coord::Unknown);
 #endif
 struct _TQ merge_tq(struct _TQ ts1,
-		    struct _TQ ts2);
+                    struct _TQ ts2);
 
 // --- Global state variables ----------------
 
 void annerror(const char * msg)
 {
   Annotations::Current->Error(annlineno - line_number_offset, std::string(msg) + " near \"" +
-			      std::string(anntext) + "\"");
+                              std::string(anntext) + "\"");
 }
 
 %}
@@ -370,7 +370,7 @@ global:
   | tokGLOBAL structure
       {
         structuretree_list * temp = new structuretree_list();
-	temp->push_back( $2);
+        temp->push_back( $2);
         Annotations::Current->add_globals( temp );
       }
   ;
@@ -381,49 +381,49 @@ property:
     tokMAYPROPERTY tokID ':' optional_direction user_defined_class optional_diagnostic optional_default
       {
         Annotations::Current->add_enum_property(new enumPropertyAnn($2, $4, true, $7, $5, $6));
-	delete $2;
-	delete $5;
-	delete $6;
+        delete $2;
+        delete $5;
+        delete $6;
       }
 
   | tokMUSTPROPERTY tokID ':' optional_direction user_defined_class optional_diagnostic optional_default
       {
         Annotations::Current->add_enum_property(new enumPropertyAnn($2, $4, false, $7, $5, $6));
-	delete $2;
-	delete $5;
-	delete $6;
+        delete $2;
+        delete $5;
+        delete $6;
       }
 
   | tokMAYPROPERTY tokID ':' tokUNION_SET
       {
         Annotations::Current->add_set_property(new setPropertyAnn($2, Forward, 
-								  setPropertyAnn::Set,
-								  setPropertyAnn::Union));
-	delete $2;
+                                                                  setPropertyAnn::Set,
+                                                                  setPropertyAnn::Union));
+        delete $2;
       }
 
   | tokMUSTPROPERTY tokID ':' tokINTERSECT_SET
       {
         Annotations::Current->add_set_property(new setPropertyAnn($2, Forward, 
-								  setPropertyAnn::Set,
-								  setPropertyAnn::Intersect));
-	delete $2;
+                                                                  setPropertyAnn::Set,
+                                                                  setPropertyAnn::Intersect));
+        delete $2;
       }
 
   | tokMAYPROPERTY tokID ':' tokUNION_EQUIV
       {
         Annotations::Current->add_set_property(new setPropertyAnn($2, Forward, 
-								  setPropertyAnn::Equivalence,
-								  setPropertyAnn::Union));
-	delete $2;
+                                                                  setPropertyAnn::Equivalence,
+                                                                  setPropertyAnn::Union));
+        delete $2;
       }
 
   | tokMUSTPROPERTY tokID ':' tokINTERSECT_EQUIV
       {
         Annotations::Current->add_set_property(new setPropertyAnn($2, Forward, 
-								  setPropertyAnn::Equivalence,
-								  setPropertyAnn::Intersect));
-	delete $2;
+                                                                  setPropertyAnn::Equivalence,
+                                                                  setPropertyAnn::Intersect));
+        delete $2;
       }
 
   ;
@@ -452,7 +452,7 @@ optional_default:
 
   | tokINITIALLY tokID
       {
-	$$ = $2;
+        $$ = $2;
       }
   ;
 
@@ -465,7 +465,7 @@ optional_diagnostic: /* TB new */
 user_defined_class:
     '{' members '}'
       {
-	$$ = $2;
+        $$ = $2;
       }
   ;
 
@@ -473,13 +473,13 @@ members:
     member
       {
         $$ = new enumvalue_list();
-	$$->push_back($1);
+        $$->push_back($1);
       }
 
   | members ',' member
       {
-	$$ = $1;
-	$$->push_back($3);
+        $$ = $1;
+        $$->push_back($3);
       }
   ;
 
@@ -487,14 +487,14 @@ member:
     tokID
       {
         $$ = new enumValueAnn($1, (enumvalue_list *) 0);
-	delete $1;
+        delete $1;
       }
 
   | tokID user_defined_class
       {
-	$$ = new enumValueAnn($1, $2);
-	delete $1;
-	delete $2;
+        $$ = new enumValueAnn($1, $2);
+        delete $1;
+        delete $2;
       }
   ;
 
@@ -544,7 +544,7 @@ procedure_annotation:
 
   | analyze_annotation
       {
-	procedureAnn::Current->add_analysis($1);
+        procedureAnn::Current->add_analysis($1);
       }
 
   | report_annotation
@@ -587,26 +587,26 @@ pointer_rule_list:
 pointer_rule:
     tokIF '(' condition ')' '{' structures '}'
       {
-	procedureAnn::Current->add_on_exit(new pointerRuleAnn($3, $6, $1));
+        procedureAnn::Current->add_on_exit(new pointerRuleAnn($3, $6, $1));
       }
 
   | tokIF '(' condition ')' structure
       {
-	structuretree_list * temp = new structuretree_list();
-	temp->push_back($5);
-	procedureAnn::Current->add_on_exit(new pointerRuleAnn($3, temp, $1));
+        structuretree_list * temp = new structuretree_list();
+        temp->push_back($5);
+        procedureAnn::Current->add_on_exit(new pointerRuleAnn($3, temp, $1));
       }
 
   | tokDEFAULT '{' structures '}'
       {
-	procedureAnn::Current->add_on_exit(new pointerRuleAnn((exprAnn *)0, $3, $1));
+        procedureAnn::Current->add_on_exit(new pointerRuleAnn((exprAnn *)0, $3, $1));
       }
 
   | tokDEFAULT structure
       {
-	structuretree_list * temp = new structuretree_list();
-	temp->push_back($2);
-	procedureAnn::Current->add_on_exit(new pointerRuleAnn((exprAnn *)0, temp, $1));
+        structuretree_list * temp = new structuretree_list();
+        temp->push_back($2);
+        procedureAnn::Current->add_on_exit(new pointerRuleAnn((exprAnn *)0, temp, $1));
       }
 
   ;
@@ -615,19 +615,19 @@ structures:
     structure
       {
         $$ = new structuretree_list();
-	$$->push_back($1);
+        $$->push_back($1);
       }
 
   | structures structure
       {
-	$$ = $1;
-	$$->push_back($2);
+        $$ = $1;
+        $$->push_back($2);
       }
 
   | structures ',' structure
       {
-	$$ = $1;
-	$$->push_back($3);
+        $$ = $1;
+        $$->push_back($3);
       }
 
   | tokDELETE qualified_identifier
@@ -646,14 +646,14 @@ structures:
       {
         procedureAnn::Current->add_delete($3);
         delete $3;
-	$$ = $1;
+        $$ = $1;
       }
 
   | structures ',' tokDELETE qualified_identifier
       {
         procedureAnn::Current->add_delete($4);
         delete $4;
-	$$ = $1;
+        $$ = $1;
       }
   ;
 
@@ -662,25 +662,25 @@ structure:
       {
         $$ = new structureTreeAnn($1, (structuretree_list *)0,
                                   structureTreeAnn::None, false);
-	delete $1;
+        delete $1;
       }
 
   | tokID tokARROW structure
       {
         $$ = new structureTreeAnn($1, $3, structureTreeAnn::Arrow, false);
-	delete $1;
+        delete $1;
       }
 
   | tokID tokARROW tokNEW structure
       {
         $$ = new structureTreeAnn($1, $4, structureTreeAnn::Arrow, true);
-	delete $1;
+        delete $1;
       }
 
   | tokID '{' structures '}'
       {
         $$ = new structureTreeAnn($1, $3, structureTreeAnn::Dot, false);
-	delete $1;
+        delete $1;
       }
   ;
 
@@ -691,29 +691,29 @@ behavior_annotation:
     tokACCESS '{' identifier_list '}'
       {
         procedureAnn::Current->add_uses( $3 );
-	delete $3;
+        delete $3;
       }
 
   | tokACCESS tokID
       {
         parserid_list temp;
-	temp.push_back( * $2);
+        temp.push_back( * $2);
         procedureAnn::Current->add_uses( & temp );
-	delete $2;
+        delete $2;
       }
 
   | tokMODIFY '{' identifier_list '}'
       {
         procedureAnn::Current->add_defs( $3 );
-	delete $3;
+        delete $3;
       }
 
   | tokMODIFY tokID
       {
         parserid_list temp;
-	temp.push_back( * $2);
+        temp.push_back( * $2);
         procedureAnn::Current->add_defs( & temp );
-	delete $2;
+        delete $2;
       }
 
   ;
@@ -723,56 +723,56 @@ behavior_annotation:
 analyze_annotation:
     tokANALYZE tokID '{' rules '}'
       {
-	$$ = new analyzeAnn(Annotations::Current, $2, $4, $1);
-	delete $2;
+        $$ = new analyzeAnn(Annotations::Current, $2, $4, $1);
+        delete $2;
       }
 
   | tokANALYZE tokID '{' effects '}'
       {
-	rule_list * temp_rules = new rule_list();
-	temp_rules->push_back(new ruleAnn((exprAnn *)0, $4, $3));
-	$$ = new analyzeAnn(Annotations::Current, $2, temp_rules, $1);
-	delete $2;
+        rule_list * temp_rules = new rule_list();
+        temp_rules->push_back(new ruleAnn((exprAnn *)0, $4, $3));
+        $$ = new analyzeAnn(Annotations::Current, $2, temp_rules, $1);
+        delete $2;
       }
   ;
 
 rules:
     rule
       {
-	$$ = new rule_list();
-	$$->push_back($1);
+        $$ = new rule_list();
+        $$->push_back($1);
       }
 
   | rules rule
       {
-	$$ = $1;
-	$$->push_back($2);
+        $$ = $1;
+        $$->push_back($2);
       }
   ;
 
 rule:
     tokIF '(' condition ')' '{' effects '}'
       {
-	$$ = new ruleAnn($3, $6, $1);
+        $$ = new ruleAnn($3, $6, $1);
       }
 
   | tokIF '(' condition ')' effect
       {
-	exprann_list * temp = new exprann_list();
-	temp->push_back($5);
-	$$ = new ruleAnn($3, temp, $1);
+        exprann_list * temp = new exprann_list();
+        temp->push_back($5);
+        $$ = new ruleAnn($3, temp, $1);
       }
 
   | tokDEFAULT '{' effects '}'
       {
-	$$ = new ruleAnn((exprAnn *)0, $3, $1);
+        $$ = new ruleAnn((exprAnn *)0, $3, $1);
       }
 
   | tokDEFAULT effect
       {
-	exprann_list * temp = new exprann_list();
-	temp->push_back($2);
-	$$ = new ruleAnn((exprAnn *)0, temp, $1);
+        exprann_list * temp = new exprann_list();
+        temp->push_back($2);
+        $$ = new ruleAnn((exprAnn *)0, temp, $1);
       }
 
   ;
@@ -810,31 +810,31 @@ test:
     tokID ':' tokID property_sensitivity tokIS_BOTTOM
       {
         $$ = new enumPropertyExprAnn($4.fs, $1, $3, Broadway::Is_Bottom,
-				     (const parserID *)0, $4.line);
-	delete $1;
-	delete $3;
+                                     (const parserID *)0, $4.line);
+        delete $1;
+        delete $3;
       }
 
   | tokID property_sensitivity tokIS_BOTTOM
       {
         $$ = new enumPropertyExprAnn($2.fs, (const parserID *)0, $1, Broadway::Is_Bottom,
-				     (const parserID *)0, $2.line);
-	delete $1;
+                                     (const parserID *)0, $2.line);
+        delete $1;
       }
 
   | tokID ':' tokID property_sensitivity binary_property_operator tokID
       {
         $$ = new enumPropertyExprAnn($4.fs, $1, $3, $5.op, $6, $5.line);
-	delete $1;
-	delete $3;
-	delete $6;
+        delete $1;
+        delete $3;
+        delete $6;
       }
 
   | tokID property_sensitivity binary_property_operator tokID
       {
         $$ = new enumPropertyExprAnn($2.fs, (const parserID *)0, $1, $3.op, $4, $3.line);
-	delete $1;
-	delete $4;
+        delete $1;
+        delete $4;
       }
 
     /* --- Set property tests --- */
@@ -842,17 +842,17 @@ test:
   | tokID tokID tokID
       {
         $$ = new setPropertyExprAnn(Broadway::Before, $2, $1, Broadway::Is_Equivalent, $3, $1->line());
-	delete $1;
-	delete $2;
-	delete $3;
+        delete $1;
+        delete $2;
+        delete $3;
       }
 
   | tokID tokIS_ELEMENT_OF tokID
       {
         $$ = new setPropertyExprAnn(Broadway::Before, $3, $1, Broadway::Is_Element_Of,
-				    (const parserID *)0, $2);
-	delete $1;
-	delete $3;
+                                    (const parserID *)0, $2);
+        delete $1;
+        delete $3;
       }
 
   | tokID tokIS_EMPTYSET
@@ -860,7 +860,7 @@ test:
         $$ = new setPropertyExprAnn(Broadway::Before, $1, (const parserID *)0,
                                     Broadway::Is_EmptySet, (const parserID *)0, $2);
 
-	delete $1;
+        delete $1;
       }
 
     /* --- Numeric tests --- */
@@ -897,14 +897,14 @@ test:
 effects:
     effect
       {
-	$$ = new exprann_list();
-	$$->push_back($1);
+        $$ = new exprann_list();
+        $$->push_back($1);
       }
 
   | effects effect
       {
-	$$ = $1;
-	$$->push_back($2);
+        $$ = $1;
+        $$->push_back($2);
       }
   ;
 
@@ -913,38 +913,38 @@ effect:
   tokID tokASSIGN tokID
       {
         $$ = new enumPropertyExprAnn(Broadway::None,
-				     (const parserID *)0, $1, Broadway::Assign,
-				     $3, $2);
-	delete $1;
-	delete $3;
+                                     (const parserID *)0, $1, Broadway::Assign,
+                                     $3, $2);
+        delete $1;
+        delete $3;
       }
 
   | tokID tokWEAKASSIGN tokID
       {
         enumPropertyExprAnn * tmp = new enumPropertyExprAnn(Broadway::None,
-							    (const parserID *)0, $1, Broadway::Assign,
-							    $3, $2);
-	tmp->set_weak();
-	$$ = tmp;
-	delete $1;
-	delete $3;
+                                                            (const parserID *)0, $1, Broadway::Assign,
+                                                            $3, $2);
+        tmp->set_weak();
+        $$ = tmp;
+        delete $1;
+        delete $3;
       }
 
   | tokADD tokID
       {
         $$ = new setPropertyExprAnn(Broadway::None,
-				    (const parserID *)0, $2, Broadway::Add_Elements,
-				    (const parserID *)0, $1);
-	delete $2;
+                                    (const parserID *)0, $2, Broadway::Add_Elements,
+                                    (const parserID *)0, $1);
+        delete $2;
       }
 
   | tokID tokID tokID
       {
         $$ = new setPropertyExprAnn(Broadway::None,
-				    $2, $1, Broadway::Add_Equivalences, $3, $1->line());
-	delete $1;
-	delete $2;
-	delete $3;
+                                    $2, $1, Broadway::Add_Equivalences, $3, $1->line());
+        delete $1;
+        delete $2;
+        delete $3;
       }
   ;
 
@@ -1049,11 +1049,11 @@ report_element:
   | tokID ':' tokID property_sensitivity
       {
         $$ = new expressionReportElementAnn($4.fs,
-	                                    new enumPropertyExprAnn($4.fs, $1, $3, Broadway::Report,
+                                            new enumPropertyExprAnn($4.fs, $1, $3, Broadway::Report,
                                                                 (const parserID *)0, $1->line()),
                                             annlineno);
-	delete $1;
-	delete $3;
+        delete $1;
+        delete $3;
       }
 
   | '@' tokID
@@ -1088,7 +1088,7 @@ identifier_list:
     qualified_identifier
       { $$ = new parserid_list();
         $$->push_back( * $1 );
-	delete $1;
+        delete $1;
       } 
 
   | identifier_list ',' qualified_identifier

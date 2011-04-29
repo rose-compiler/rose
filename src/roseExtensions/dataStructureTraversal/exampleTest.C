@@ -17,8 +17,8 @@ struct testStruct
 };
 
 typedef struct io {
-	int x;
-	int y;
+        int x;
+        int y;
 } io_def;
 
 class testClass
@@ -27,7 +27,7 @@ public:
 
   testClass ()
   {
-    var1 = new foo ();		/*test = NULL; */
+    var1 = new foo ();          /*test = NULL; */
     i = 0.0;
   }
   int control_var1;

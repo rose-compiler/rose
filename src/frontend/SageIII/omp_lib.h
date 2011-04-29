@@ -3,6 +3,7 @@ C      OpenMP Fortran API v3.0
       include 'omp_lib_kinds.h'
       integer openmp_version
       parameter ( openmp_version = 200805 )
+
       external omp_set_num_threads
       external omp_get_num_threads
       integer omp_get_num_threads
@@ -35,18 +36,21 @@ C      OpenMP Fortran API v3.0
       integer omp_get_team_size
       external omp_get_active_level
       integer omp_get_active_level
+      
       external omp_init_lock
       external omp_destroy_lock
       external omp_set_lock
       external omp_unset_lock
       external omp_test_lock
       logical omp_test_lock
+
       external omp_init_nest_lock
       external omp_destroy_nest_lock
       external omp_set_nest_lock
       external omp_unset_nest_lock
       external omp_test_nest_lock
       integer omp_test_nest_lock
+
       external omp_get_wtick
       double precision omp_get_wtick
       external omp_get_wtime

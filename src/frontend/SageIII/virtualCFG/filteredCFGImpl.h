@@ -3,8 +3,7 @@
 #include <sstream>
 #include <iomanip>
 #include <stdint.h>
-
-// using namespace std;
+#include <set>
 
 #define SgNULL_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 
@@ -192,13 +191,13 @@ namespace VirtualCFG
         {
             printEdge(o, outEdges[i], false);
         }
-				#ifdef DEBUG
+                                #ifdef DEBUG
         std::vector < EdgeT > inEdges = n.inEdges();
         for (unsigned int i = 0; i < inEdges.size(); ++i)
         {
             printEdge(o, inEdges[i], true);
         }
-				#endif
+                                #endif
     }
 #if 0
     template < typename NodeT, typename EdgeT >

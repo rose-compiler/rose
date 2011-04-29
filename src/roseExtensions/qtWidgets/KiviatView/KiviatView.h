@@ -131,7 +131,7 @@ class QDESIGNER_WIDGET_EXPORT KiviatView : public QGraphicsView
         // Redraws the Datasets (call if some properties like alpha values, or color have changed
         void redrawData();
 
-    	void setupAxesCaptions();
+        void setupAxesCaptions();
 
         /// Overwritten Resize Event, used for scaling of scene
         virtual void resizeEvent(QResizeEvent * ev);

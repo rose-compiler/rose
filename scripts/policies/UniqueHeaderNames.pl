@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# DO NOT DISABLE without first checking with a ROSE core developer
 my $desc = <<EOF;
 C/C++ header files should have names that are unique across the entire ROSE
 source tree.  The uniqueness ensures that an #include directive will always
@@ -14,6 +15,7 @@ EOF
 BEGIN {push @INC, $1 if $0 =~ /(.*)\//}
 use strict;
 use FileLister;
+use Policies;
 my $warning = " (warning)";	# non-empty means issue warnings rather than errors
 
 # Create an index of all header files.
@@ -27,7 +29,7 @@ for my $dir (qw(/usr/include /usr/local/include)) {
 }
 
 # Headers in ROSE
-push @{$index{lc((/([^\/]+)$/)[0])}||=[]}, $_ for grep {/\.(h|hh)/} FileLister->new()->all_files;
+push @{$index{lc((/([^\/]+)$/)[0])}||=[]}, $_ for grep {/\.(h|hh|hpp)/} FileLister->new()->all_files;
 
 
 # Report failures

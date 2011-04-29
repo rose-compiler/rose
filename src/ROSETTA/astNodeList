@@ -577,6 +577,7 @@ SgTypeBool
 SgTypeChar
 SgTypeComplex
 SgTypeDefault
+SgTypeLabel
 SgTypeDouble
 SgTypeEllipse
 SgTypeFloat
@@ -660,4 +661,4 @@ SgTypeCAFTeam
 SgCAFWithTeamStatement
 SgCAFCoExpression
 SgTypeCrayPointer
-
+SgJavaImportStatement

@@ -8,7 +8,7 @@
 #include "wholeAST_API.h"
 
 #ifdef _MSC_VER
-#include <direct.h>	// getcwd
+#include <direct.h>     // getcwd
 #endif
 
 // DQ (10/11/2007): This is commented out to avoid use of this mechanism.
@@ -269,7 +269,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
        // DQ (8/21/2008): Only output a message when we we use verbose option.
           if ( SgProject::get_verbose() >= 1 )
-              printf ("Note: Binary executables are unparsed, but not passed to gcc as assembly source code \n");
+               printf ("Note: Binary executables are unparsed, but not passed to gcc as assembly source code \n");
 
           project->skipfinalCompileStep(true);
         }
@@ -304,8 +304,11 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
                cout << "source file(s) generated. (from AST)" << endl;
         }
 
-  // printf ("Inside of backend(SgProject*): SgProject::get_verbose() = %d \n",SgProject::get_verbose());
-  // printf ("Inside of backend(SgProject*): project->numberOfFiles() = %d \n",project->numberOfFiles());
+#if 0
+     printf ("Inside of backend(SgProject*): SgProject::get_verbose()       = %d \n",SgProject::get_verbose());
+     printf ("Inside of backend(SgProject*): project->numberOfFiles()       = %d \n",project->numberOfFiles());
+     printf ("Inside of backend(SgProject*): project->numberOfDirectories() = %d \n",project->numberOfDirectories());
+#endif
 
   // DQ (1/25/2010): We have to now test for both numberOfFiles() and numberOfDirectories(),
   // or perhaps define a more simple function to use more directly.
@@ -355,7 +358,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
        // This could be done in the 
           if (project->get_C_only() == true)
              {
-                printf ("Link using the C language linker (when handling C programs) = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
+               printf ("Link using the C language linker (when handling C programs) = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
             // finalCombinedExitStatus = project->link("gcc");
                finalCombinedExitStatus = project->link(BACKEND_C_COMPILER_NAME_WITH_PATH);
              }
@@ -363,7 +366,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
              {
             // Use the default name for C++ compiler (defined at configure time)
                if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
-                  printf ("Link using the default linker (when handling non-C programs) = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
+                    printf ("Link using the default linker (when handling non-C programs) = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
                finalCombinedExitStatus = project->link(BACKEND_CXX_COMPILER_NAME_WITH_PATH);
              }
 
@@ -471,7 +474,14 @@ backendCompilesUsingOriginalInputFile ( SgProject* project )
                printf ("numberOfFiles() = %d commandLineToGenerateObjectFile = \n     %s \n",project->numberOfFiles(),commandLineToGenerateObjectFile.c_str());
              }
 
-          finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
+       // DQ (12/28/2010): If we specified to NOT compile the input code then don't do so even when it is the 
+       // original code. This is important for Fortran 2003 test codes that will not compile with gfortran and 
+       // for which the tests/testTokenGeneration.C translator uses this function to generate object files.
+       // finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
+          if (project->get_skipfinalCompileStep() == false)
+             {
+               finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
+             }
         }
        else
         {
@@ -649,6 +659,11 @@ generateAstGraph ( const SgProject* project, int maxSize, std::string filenameSu
         {
           generateWholeGraphOfAST(filename);
         }
+       else
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("In generateAstGraph(): WHOLE AST greaph too large to generate. \n");
+        }
    }
 
 
@@ -757,7 +772,7 @@ pdfPrintAbstractSyntaxTreeEDG ( SgFile *file )
         {
           PDF_continue_text(pdfFile, buffer[i]);
        // printf ("string = %s \n",buffer[i]);
-	  i++;
+          i++;
         }
 #endif
 
@@ -835,7 +850,7 @@ ROSE::getColumnNumber ( SgLocatedNode* locatedNodePointer )
           ROSE_ASSERT (locatedNodePointer->get_file_info()->get_filename() != NULL);
           Sg_File_Info* fileInfo = locatedNodePointer->get_file_info();
           columnNumber = fileInfo->get_col();
-	}
+        }
 
      return columnNumber;
    }
@@ -995,14 +1010,14 @@ ROSE::getWorkingDirectory ()
   // CH (4/7/2010): In MSVC, the header file "direct.h" contains function 'getcwd'
 
 
-	 const char* getcwdResult = getcwd(currentDirectory,maxPathNameLength);
+         const char* getcwdResult = getcwd(currentDirectory,maxPathNameLength);
 
      if (!getcwdResult) {
        perror("getcwd: ");
        ROSE_ABORT();
      }
      string returnString = getcwdResult;
-     delete currentDirectory;
+     delete [] currentDirectory;
      currentDirectory = NULL;
      return returnString;
    }
@@ -1050,11 +1065,11 @@ ROSE::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
                parent = parent->get_parent();
              }
 
-	  if (!parent) {
-	    const SgLocatedNode* ln = isSgLocatedNode(astNode);
-	    ROSE_ASSERT (ln);
-	    return ln->get_file_info()->get_filenameString();
-	  }
+          if (!parent) {
+            const SgLocatedNode* ln = isSgLocatedNode(astNode);
+            ROSE_ASSERT (ln);
+            return ln->get_file_info()->get_filenameString();
+          }
           // ROSE_ASSERT (parent != NULL);
           const SgFile* file = isSgFile(parent);
           ROSE_ASSERT (file != NULL);
@@ -1120,41 +1135,41 @@ ROSE::getNextStatement ( SgStatement *currentStatement )
           // case V_SgBasicBlock: // Liao 10/20/2010, We should allow users to get a statement immediately AFTER a block.
           case V_SgClassDefinition:
           case V_SgFunctionDefinition:
-	  case V_SgStatement:
+          case V_SgStatement:
           case V_SgFunctionParameterList:
-					
-							 ROSE_ASSERT(0);
-							 // not specified
-							 break;
+                                        
+                                                         ROSE_ASSERT(0);
+                                                         // not specified
+                                                         break;
           default:
              {
             // We have to handle the cases of a SgStatementPtrList and a 
             // SgDeclarationStatementPtrList separately
-							 if (scope->containsOnlyDeclarations() == true)
-							 {
-								 // Usually a global scope or class declaration scope
-								 SgDeclarationStatementPtrList & declarationList = scope->getDeclarationList();
-								 Rose_STL_Container<SgDeclarationStatement*>::iterator i;
-								 for (i = declarationList.begin();(*i)!=currentStatement;i++) {}
-								 // now i == currentStatement
-								 i++;
-								 if (declarationList.end() == i) nextStatement=NULL;
-								 else nextStatement=*i;
-							 }
-							 else
-							 {
-								 SgStatementPtrList & statementList = scope->getStatementList();
-								 Rose_STL_Container<SgStatement*>::iterator i;
+                                                         if (scope->containsOnlyDeclarations() == true)
+                                                         {
+                                                                 // Usually a global scope or class declaration scope
+                                                                 SgDeclarationStatementPtrList & declarationList = scope->getDeclarationList();
+                                                                 Rose_STL_Container<SgDeclarationStatement*>::iterator i;
+                                                                 for (i = declarationList.begin();(*i)!=currentStatement;i++) {}
+                                                                 // now i == currentStatement
+                                                                 i++;
+                                                                 if (declarationList.end() == i) nextStatement=NULL;
+                                                                 else nextStatement=*i;
+                                                         }
+                                                         else
+                                                         {
+                                                                 SgStatementPtrList & statementList = scope->getStatementList();
+                                                                 Rose_STL_Container<SgStatement*>::iterator i;
                                                                  // Liao, 11/18/2009, Handle the rare case that current statement is not found
                                                                  // in its scope's statement list
-								 //for (i = statementList.begin();(*i)!=currentStatement;i++) 
-								 for (i = statementList.begin();(*i)!=currentStatement && i!= statementList.end();i++) 
+                                                                 //for (i = statementList.begin();(*i)!=currentStatement;i++) 
+                                                                 for (i = statementList.begin();(*i)!=currentStatement && i!= statementList.end();i++) 
                                                                  {
                                                                  //  SgStatement* cur_stmt = *i;
                                                                  //  cout<<"Skipping current statement: "<<cur_stmt->class_name()<<endl;
                                                                  //  cout<<cur_stmt->get_file_info()->displayString()<<endl;
                                                                  }
-								 // currentStatement is not found in the list
+                                                                 // currentStatement is not found in the list
                                                                  if (i ==  statementList.end()) 
                                                                  {
                                                                    cerr<<"fatal error: ROSE::getNextStatement(): current statement is not found within its scope's statement list"<<endl;
@@ -1166,18 +1181,18 @@ ROSE::getNextStatement ( SgStatement *currentStatement )
                                                                   }
                                                                  //  now i == currentStatement
                                                                  ROSE_ASSERT (*i == currentStatement);
-								 i++;
-								 if (statementList.end() == i) nextStatement=NULL;
-								 else nextStatement=*i;
-							 }
+                                                                 i++;
+                                                                 if (statementList.end() == i) nextStatement=NULL;
+                                                                 else nextStatement=*i;
+                                                         }
 
             // If the target statement was the last statement in a scope then 
                if (nextStatement == NULL)
-							 {
-								 // Someone might think of a better answer than NULL
-							 }
+                                                         {
+                                                                 // Someone might think of a better answer than NULL
+                                                         }
              }
-						 break;
+                                                 break;
         }
      //This assertion does not make sense. 
      //Since a trailing statement within a scope can have null next statement, 
@@ -1186,7 +1201,7 @@ ROSE::getNextStatement ( SgStatement *currentStatement )
 
      return nextStatement;
    }
-	 
+         
 SgStatement*
 ROSE::getPreviousStatement ( SgStatement *targetStatement )
    {

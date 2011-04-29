@@ -17,10 +17,10 @@
 #define _QLINE_CHANGE_PANEL_H_
 
 /*!
-	\file qlinechangepanel.h
-	\brief Definition of the QLineChangePanel class.
-	
-	\see QLineChangePanel
+        \file qlinechangepanel.h
+        \brief Definition of the QLineChangePanel class.
+        
+        \see QLineChangePanel
 */
 
 #include "qpanel.h"
@@ -32,21 +32,21 @@ class QDocumentLine;
 
 class QCE_EXPORT QLineChangePanel : public QPanel
 {
-	Q_OBJECT
-	
-	public:
-		Q_PANEL(QLineChangePanel, "Line Change Panel")
-		
-		QLineChangePanel(QWidget *p = 0);
-		virtual ~QLineChangePanel();
-		
-		virtual QString type() const;
-		
-	protected:
-		virtual void paint(QPainter *p, QEditor *e);
-		
-	private:
-		
+        Q_OBJECT
+        
+        public:
+                Q_PANEL(QLineChangePanel, "Line Change Panel")
+                
+                QLineChangePanel(QWidget *p = 0);
+                virtual ~QLineChangePanel();
+                
+                virtual QString type() const;
+                
+        protected:
+                virtual void paint(QPainter *p, QEditor *e);
+                
+        private:
+                
 };
 
 #endif // _QLINE_CHANGE_PANEL_H_

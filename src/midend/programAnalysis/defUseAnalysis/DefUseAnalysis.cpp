@@ -43,7 +43,7 @@ bool DefUseAnalysis::addID(SgNode* sgNode) {
 #pragma omp critical (DefUseAnalysisaddID) 
 #endif
       {
-	ROSE_ASSERT(sgNode);
+        ROSE_ASSERT(sgNode);
       sgNodeCounter++;
       vizzhelp[sgNode] = sgNodeCounter;
       }
@@ -58,7 +58,7 @@ bool DefUseAnalysis::addID(SgNode* sgNode) {
  *  Add an element to the indirect definition table
  *********************************************************
 void DefUseAnalysis::addIDefElement(SgNode* sgNode, 
-				SgInitializedName* initName) { 
+                                SgInitializedName* initName) { 
   idefTable.insert(make_pair(sgNode, initName));
 }
 */
@@ -67,8 +67,8 @@ void DefUseAnalysis::addIDefElement(SgNode* sgNode,
  *  Add an element to the table
  *********************************************************/
 void DefUseAnalysis::addDefElement(SgNode* sgNode, 
-				SgInitializedName* initName,
-				SgNode* defNode) { 
+                                SgInitializedName* initName,
+                                SgNode* defNode) { 
   addAnyElement(&table, sgNode, initName, defNode);
 }
 
@@ -76,8 +76,8 @@ void DefUseAnalysis::addDefElement(SgNode* sgNode,
  *  Add an element to the table
  *********************************************************/
 void DefUseAnalysis::addUseElement(SgNode* sgNode, 
-				SgInitializedName* initName,
-				SgNode* defNode) { 
+                                SgInitializedName* initName,
+                                SgNode* defNode) { 
   addAnyElement(&usetable, sgNode, initName, defNode);
 }
 
@@ -85,8 +85,8 @@ void DefUseAnalysis::addUseElement(SgNode* sgNode,
  *  Add an element to the table
  *********************************************************/
 void DefUseAnalysis::addAnyElement(tabletype* tabl, SgNode* sgNode, 
-				SgInitializedName* initName,
-				SgNode* defNode) { 
+                                SgInitializedName* initName,
+                                SgNode* defNode) { 
 #if ROSE_GCC_OMP
 #pragma omp critical (DefUseAnalysisaddUseE) 
 #endif
@@ -105,7 +105,7 @@ bool DefUseAnalysismycond(std::pair<SgInitializedName*,SgNode* > n1, SgInitializ
  *  Replace an element in the table
  *********************************************************/
 void DefUseAnalysis::replaceElement(SgNode* sgNode, 
-				    SgInitializedName* initName) {
+                                    SgInitializedName* initName) {
   ROSE_ASSERT(initName);
   // if the node is contained but not identical, then we overwrite it
   // otherwise, we do nothing
@@ -129,7 +129,7 @@ void DefUseAnalysis::replaceElement(SgNode* sgNode,
  *  Replace an element in the table
  *********************************************************/
 void DefUseAnalysis::clearUseOfElement(SgNode* sgNode, 
-				    SgInitializedName* initName) {
+                                    SgInitializedName* initName) {
 #if ROSE_GCC_OMP
 #pragma omp critical (DefUseAnalysisclearUse) 
 #endif
@@ -317,8 +317,8 @@ bool DefUseAnalysis::searchVizzMap(SgNode* node) {
     for (; i != vizzhelp.end(); ++i) {
       SgNode* initNameMM = (*i).first;
       if (initNameMM==node) {
-	isCurrentValueContained=true;
-	break;
+        isCurrentValueContained=true;
+        break;
       }
     } 
 #endif
@@ -337,8 +337,8 @@ bool DefUseAnalysis::searchMap(const tabletype* ltable, SgNode* node) {
     for (; i != ltable->end(); ++i) {
       SgNode* initNameMM = (*i).first;
       if (initNameMM==node) {
-	isCurrentValueContained=true;
-	break;
+        isCurrentValueContained=true;
+        break;
       }
     } 
   }
@@ -385,8 +385,8 @@ std::vector < SgNode* > DefUseAnalysis::getAnyFor(const multitype* multi, SgInit
       SgInitializedName* initNameMM = isSgInitializedName(i->first);
       SgNode* thenode = i->second;
       if (initName==initNameMM) {
-	// we have found the right node and right initName
-	defNodes.push_back(thenode);
+        // we have found the right node and right initName
+        defNodes.push_back(thenode);
       }
     }
   }

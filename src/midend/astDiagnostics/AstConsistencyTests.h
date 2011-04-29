@@ -158,7 +158,7 @@ class TestAstForProperlyMangledNames : public AstSimpleProcessing
 
        // DQ (2/7/2006): This is Rich's function to simplify the testing 
        // (we make it static so that it can be easily called from elsewhere).
-          static bool isValidMangledName (std::string name);
+          static bool isValidMangledName (std::string name, bool java_lang = false);
    };
 
 class TestAstForProperlySetDefiningAndNondefiningDeclarations : public AstSimpleProcessing
@@ -212,16 +212,16 @@ class TestExpressionTypes : public AstSimpleProcessing
 
 class TestLValues : public AstSimpleProcessing
 {
-	// This class uses a traversal to test the isLValue() and isDefinable() member functions on each 
-	// SgExpression IR node. The goal is to verify that each member function, were
-	// appropriate, returns whether or not its argument is an lvalue or definable.
+        // This class uses a traversal to test the isLValue() and isDefinable() member functions on each 
+        // SgExpression IR node. The goal is to verify that each member function, were
+        // appropriate, returns whether or not its argument is an lvalue or definable.
 
 public:
-	//! static function to do test on any IR node
-	// static void test(SgNode* node);
+        //! static function to do test on any IR node
+        // static void test(SgNode* node);
 
-	//! visit function required for traversal
-	void visit ( SgNode* node );
+        //! visit function required for traversal
+        void visit ( SgNode* node );
 };
 
 // class TestMangledNames : public AstSimpleProcessing
@@ -420,5 +420,41 @@ class MemoryCheckingTraversalForAstFileIO : public ROSE_VisitTraversal
           int counter;
           void visit ( SgNode* node );
    };
+
+
+
+
+
+class TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute : AstInheritedAttribute
+   {
+     public:
+       // Use the source file as a way to report better quality errors.
+          SgSourceFile* sourceFile;
+
+       // This will be set as we encounter the SgSourceFile at the top of the AST within the traversal.
+          bool caseInsensitive;
+
+       // Required constructor.
+          TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute(bool b);
+
+       // Required copy constructor.
+          TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute(const TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute & X);
+   };
+
+class TestForProperLanguageAndSymbolTableCaseSensitivity : public AstTopDownProcessing<TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute> 
+   {
+  // DQ (11/28/2010): This class is part of a test to verify consistancy of 
+  // symbol table case sensitivity with languge.  C/C++ codes should use only 
+  // case sensitive symbol tables, while Fortran codes should use only case 
+  // insensitive symbol table handling.
+
+     public:
+       // Overloaded pure virtual function.
+          TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute evaluateInheritedAttribute(SgNode* node, TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute inheritedAttribute);
+
+       // Simple funtion to call to get the traversal started (sets up the inherited attribute, etc.).
+          static void test(SgNode* node);
+   };
+
 
 #endif

@@ -21,6 +21,57 @@
 
 using namespace std;
 
+
+// DQ (4/8/2011): Moved this from the header file...
+CustomAstDOTGenerationEdgeType::CustomAstDOTGenerationEdgeType (SgNode* n1, SgNode* n2, std::string label, std::string options)
+   : start(n1), end(n2), labelString(label), optionString(options)
+   {
+  // Nothing to do!
+   }
+
+// DQ (4/8/2011): Moved this from the header file...
+bool
+CustomAstDOTGenerationEdgeType::operator!=(const CustomAstDOTGenerationEdgeType & edge) const
+   {
+     return (edge.start != start) || (edge.end != end) || (edge.labelString != labelString);
+   }
+
+// DQ (4/8/2011): Moved this from the header file...
+bool
+CustomAstDOTGenerationEdgeType::operator==(const CustomAstDOTGenerationEdgeType & edge) const
+   {
+     return (edge.start == start) && (edge.end == end) && (edge.labelString == labelString);
+   }
+
+// DQ (4/8/2011): Moved this from the header file... This is an issue reported by Insure++.
+bool
+CustomAstDOTGenerationEdgeType::operator< (const CustomAstDOTGenerationEdgeType & edge) const
+   {
+  // This function must only be consistant in how it implements the "<" operator.
+  // Cast pointer to size_t variables and compare the size_t type variables directly.
+     size_t edge_start_size_t = (size_t) edge.start;
+     size_t start_size_t      = (size_t) start;
+     size_t edge_end_size_t   = (size_t) edge.start;
+     size_t end_size_t        = (size_t) start;
+
+  // return (edge.start < start) || (((edge.start == start) && (edge.labelString == labelString)) && (edge.end < end)); 
+     return (edge_start_size_t < start_size_t) || (((edge_start_size_t == start_size_t) && (edge.labelString == labelString)) && (edge_end_size_t < end_size_t)); 
+   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #if 1
 CustomAstDOTGeneration::~CustomAstDOTGeneration()
    {
@@ -1077,7 +1128,7 @@ CustomMemoryPoolDOTGeneration::frontendCompatibilityFilter(SgNode* node)
      SgFunctionParameterList* functionParateterList = isSgFunctionParameterList(node);
      if (functionParateterList != NULL)
         {
-          SgInitializedNamePtrList::iterator i = 	functionParateterList->get_args().begin();
+          SgInitializedNamePtrList::iterator i =        functionParateterList->get_args().begin();
           while (i != functionParateterList->get_args().end())
              {
                SgInitializedName* declaration = *i;
@@ -1349,6 +1400,13 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                labelWithSourceCode += string("\\n value = ") + valueExp->get_constant_folded_value_as_string() + "  ";
              }
 
+       // DQ (2/2/2011): Added support for fortran...
+          SgActualArgumentExpression* actualArgumentExpression = isSgActualArgumentExpression(node);
+          if (actualArgumentExpression != NULL)
+             {
+               labelWithSourceCode += string("\\n name = ") + actualArgumentExpression->get_argument_name() + "  ";
+             }
+
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
@@ -1367,8 +1425,15 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
             // labelWithSourceCode = string("\\n  ") + node->unparseToString() + "  ";
              }
 
+          SgTypeDefault* defaultType = isSgTypeDefault(node);
+          if (defaultType != NULL)
+             {
+            // printf ("Graph this node (%s) \n",node->class_name().c_str());
+               labelWithSourceCode += string("\\n  name = ") + defaultType->get_name().str() + "  ";
+             }
+
        // labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
-          labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
+          labelWithSourceCode += string("\\n  ") + StringUtility::numberToString(node) + "  ";
 
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
@@ -1436,16 +1501,6 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     break;
                   }
 
-               case V_SgInitializedName:
-                  {
-                    SgInitializedName* initializedName = isSgInitializedName(node);
-                    additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=darkturquoise,fontname=\"7x13bold\",fontcolor=black,style=filled";
-                    labelWithSourceCode = string("\\n  ") + initializedName->get_name().getString() +
-                                          string("\\n  ") + StringUtility::numberToString(initializedName) + "  ";
-                 // printf ("########## initializedName->get_name() = %s \n",initializedName->get_name().str());
-                    break;
-                  }
-
                case V_SgSymbolTable:
                   {
                     SgSymbolTable* symbolTable = isSgSymbolTable(node);
@@ -1487,6 +1542,20 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
+// Liao 11/5/2010, move out of SgSupport
+       if (isSgInitializedName(node) != NULL) 
+//       case V_SgInitializedName:
+          {
+            SgInitializedName* initializedName = isSgInitializedName(node);
+            string additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=darkturquoise,fontname=\"7x13bold\",fontcolor=black,style=filled";
+            string labelWithSourceCode = string("\\n  ") + initializedName->get_name().getString() +
+                                  string("\\n  ") + StringUtility::numberToString(initializedName) + "  ";
+         // printf ("########## initializedName->get_name() = %s \n",initializedName->get_name().str());
+ //           break;
+            NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
+            addNode(graphNode);
+          }
+
 
 #if 1
      if (isSgSymbol(node) != NULL)
@@ -2318,7 +2387,7 @@ generateWholeGraphOfAST_filteredFrontendSpecificNodes( string filename, CustomMe
    {
 #ifdef _MSC_VER
   // DQ (11/27/2009): This appears to be required for MSVC (I think it is correct for GNU as well).
-	 extern set<SgNode*> getSetOfFrontendSpecificNodes();
+         extern set<SgNode*> getSetOfFrontendSpecificNodes();
 #endif
 
 #if 1

@@ -61,11 +61,8 @@ endif
 
 # DQ (4/5/2010): And we need a version of this macro withouth the paths.
 OFP_SOURCE_FILES_WITHOUT_PATHS = \
-   FortranParserAction.h \
    c_actions_jni.c \
    token.h \
-   token.c \
-   ActionEnums.h \
    jni_token_funcs.h \
    jni_token_funcs.c 
 
@@ -99,12 +96,12 @@ token.c: OpenFortranParser-${OFP_VERSION}.jar
 	@if test -e OpenFortranParser-${OFP_VERSION}.jar; then \
       echo "Found valid OpenFortranParser-${OFP_VERSION}.jar file."; \
    else \
-      echo "Error: OpenFortranParser-${OFP_VERSION}.jar file is not found."; \
+      echo "Note: OpenFortranParser-${OFP_VERSION}.jar file was not found in the build tree (OK)."; \
       if test -e ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar; then \
          echo "Found valid ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar file."; \
          cp ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar OpenFortranParser-${OFP_VERSION}.jar; \
       else \
-         echo "Error: ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar file is not found."; \
+         echo "Error: ${srcdir}/OpenFortranParser-${OFP_VERSION}.jar file is not found in the source tree or the build tree."; \
          exit 1; \
       fi; \
    fi;
@@ -117,7 +114,7 @@ token.c: OpenFortranParser-${OFP_VERSION}.jar
 	   filename=`basename $$f`; \
       echo "filename = $$filename"; \
       if test -e $$f; then \
-         echo "Using OFP source file $$f from version $(OFP_VERSION) found in OpenFortranParser-${OFP_VERSION}.jar file."; \
+         echo "Using OFP source file $f from version $(OFP_VERSION) found in OpenFortranParser-${OFP_VERSION}.jar file."; \
          cp $$f $$filename; \
       else \
          echo "Warning: $$f is not found in jar file."; \
@@ -130,7 +127,7 @@ token.c: OpenFortranParser-${OFP_VERSION}.jar
                cp ${srcdir}/$$filename $$filename; \
             fi; \
          else \
-            echo "Error: can't use default (version 0.8.1) OFP source file $filename_without_path with OpenFortranParser-${OFP_VERSION}.jar file."; \
+            echo "Error: can't use default (version 0.8.1) OFP source file $$filename with OpenFortranParser-${OFP_VERSION}.jar file."; \
             exit 1; \
          fi; \
       fi; \

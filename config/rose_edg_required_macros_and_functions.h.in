@@ -22,9 +22,15 @@
  */
 #undef __BLOCKS__
 
-/* DQ (10/22/2010): Make this use of this macro in the OSX header files disappear. */
-#define __OSX_AVAILABLE_BUT_DEPRECATED(param1,param2,param3,param4)
+/* Cong (10/20/2010): In EDG 3.x, __attribute__, __dead2, __pure2 cannot be parsed, 
+ * so we define them to nothing here.  */
+#ifndef ROSE_USE_EDG_VERSION_4
+	#define __attribute__(x)
+	#define __dead2
+	#define __pure2
 #endif
+
+#endif //#ifdef __APPLE__
 
 /* This does not work since the include path may not be set to include this file. 
    Also including this is problematic since it would be used in both the compilation 

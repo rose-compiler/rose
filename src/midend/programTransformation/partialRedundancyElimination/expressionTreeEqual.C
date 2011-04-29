@@ -31,8 +31,8 @@ bool expressionTreeEqual(SgExpression* a, SgExpression* b) {
     assert (isSgBinaryOp(b));
     return expressionTreeEqual(isSgBinaryOp(a)->get_lhs_operand(),
                                isSgBinaryOp(b)->get_lhs_operand()) &&
-	   expressionTreeEqual(isSgBinaryOp(a)->get_rhs_operand(),
-			       isSgBinaryOp(b)->get_rhs_operand());
+           expressionTreeEqual(isSgBinaryOp(a)->get_rhs_operand(),
+                               isSgBinaryOp(b)->get_rhs_operand());
   }
   if (isSgUnaryOp(a)) {
     assert (isSgUnaryOp(b));
@@ -43,10 +43,10 @@ bool expressionTreeEqual(SgExpression* a, SgExpression* b) {
     assert (isSgConditionalExp(b));
     return expressionTreeEqual(isSgConditionalExp(a)->get_conditional_exp(),
                                isSgConditionalExp(b)->get_conditional_exp()) &&
-	   expressionTreeEqual(isSgConditionalExp(a)->get_true_exp(),
-			       isSgConditionalExp(b)->get_true_exp()) &&
-	   expressionTreeEqual(isSgConditionalExp(a)->get_false_exp(),
-			       isSgConditionalExp(b)->get_false_exp());
+           expressionTreeEqual(isSgConditionalExp(a)->get_true_exp(),
+                               isSgConditionalExp(b)->get_true_exp()) &&
+           expressionTreeEqual(isSgConditionalExp(a)->get_false_exp(),
+                               isSgConditionalExp(b)->get_false_exp());
   }
   if (isSgDeleteExp(a)) {
     assert (isSgDeleteExp(b));
@@ -61,14 +61,14 @@ bool expressionTreeEqual(SgExpression* a, SgExpression* b) {
     assert (isSgFunctionCallExp(b));
     return expressionTreeEqual(isSgFunctionCallExp(a)->get_function(),
                                isSgFunctionCallExp(b)->get_function()) &&
-	   expressionTreeEqual(isSgFunctionCallExp(a)->get_args(),
-			       isSgFunctionCallExp(b)->get_args()) &&
-	   isFunctionSideEffectFree(isSgFunctionCallExp(a)->get_function());
+           expressionTreeEqual(isSgFunctionCallExp(a)->get_args(),
+                               isSgFunctionCallExp(b)->get_args()) &&
+           isFunctionSideEffectFree(isSgFunctionCallExp(a)->get_function());
   }
   if (isSgFunctionRefExp(a)) {
     assert (isSgFunctionRefExp(b));
     return (isSgFunctionRefExp(a)->get_symbol()->get_declaration() ==
-	    isSgFunctionRefExp(b)->get_symbol()->get_declaration());
+            isSgFunctionRefExp(b)->get_symbol()->get_declaration());
   }
   if (isSgAssignInitializer(a)) {
     assert (isSgAssignInitializer(b));
@@ -87,7 +87,7 @@ bool expressionTreeEqual(SgExpression* a, SgExpression* b) {
   if (isSgMemberFunctionRefExp(a)) {
     assert (isSgMemberFunctionRefExp(b));
     return (isSgMemberFunctionRefExp(a)->get_symbol()->get_declaration() ==
-	    isSgMemberFunctionRefExp(b)->get_symbol()->get_declaration());
+            isSgMemberFunctionRefExp(b)->get_symbol()->get_declaration());
   }
   if (isSgNewExp(a)) {
     assert (isSgNewExp(b));
@@ -138,7 +138,7 @@ bool expressionTreeEqual(SgExpression* a, SgExpression* b) {
   if (isSgVarRefExp(a)) {
     assert (isSgVarRefExp(b));
     return (isSgVarRefExp(a)->get_symbol()->get_declaration() ==
-	    isSgVarRefExp(b)->get_symbol()->get_declaration());
+            isSgVarRefExp(b)->get_symbol()->get_declaration());
   }
 
   cerr << a->sage_class_name() << endl;

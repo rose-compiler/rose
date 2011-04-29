@@ -166,7 +166,15 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      SgName        tmp_name  = initializedName->get_name();
      SgInitializer *tmp_init = initializedName->get_initializer();
      SgType        *tmp_type = initializedName->get_type();
-
+     ROSE_ASSERT (initializedName!= NULL);
+#if 0
+   // Liao 11/9/2010, moved to upper callers since this is called when unparsing both old-style and new-style function parameter lists
+   // Skip duplicated unparsing of the attached information for C function arguments declared in old style.
+   // They usually should be unparsed when unparsing the arguments which are outside of the parameter list
+   // See example code: tests/CompileTests/C_tests/test2010_10.c
+    if (funcdecl_stmt->get_oldStyleDefinition() == false )
+       unparseAttachedPreprocessingInfo(initializedName, info, PreprocessingInfo::before);
+#endif
   // printf ("In unparseFunctionParameterDeclaration(): Argument name = %s \n",
   //      (tmp_name.str() != NULL) ? tmp_name.str() : "NULL NAME");
 
@@ -353,6 +361,13 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
      SgInitializedNamePtrList::iterator p = funcdecl_stmt->get_args().begin();
      while ( p != funcdecl_stmt->get_args().end() )
         {
+          // Liao 11/9/2010, 
+         // Skip duplicated unparsing of the attached information for C function arguments declared in old style.
+         // They usually should be unparsed when unparsing the arguments which are outside of the parameter list
+         //  are outside of the parameter list
+         // See example code: tests/CompileTests/C_tests/test2010_10.c
+          if (funcdecl_stmt->get_oldStyleDefinition() == false)
+             unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
           unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
 
        // Move to the next argument
@@ -472,6 +487,7 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
                unp->u_sage->curprint_newline();
           while ( p != funcdecl_stmt->get_args().end() )
              {
+               unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
             // Output declarations for function parameters (using old-style K&R syntax)
             // printf ("Output declarations for function parameters (using old-style K&R syntax) \n");
                unparseFunctionParameterDeclaration(funcdecl_stmt,*p,true,ninfo2);
@@ -492,54 +508,54 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
 
 void
 Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info& info)
-{
+   {
   // This function unparses the language specific parse not handled by the base class unparseStatement() member function
 
-  ROSE_ASSERT(stmt != NULL);
+     ROSE_ASSERT(stmt != NULL);
 
 #if 0
   // Debugging support
-  SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
-  if (declarationStatement != NULL)
-  {
-    curprint( "/* In unparseLanguageSpecificStatement(): declarationStatement->get_declarationModifier().isFriend() = ");
-    declarationStatement->get_declarationModifier().isFriend() ? curprint("true") : curprint("false");
-    curprint( "*/ \n ");
-  }
+     SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
+     if (declarationStatement != NULL)
+        {
+          curprint( "/* In unparseLanguageSpecificStatement(): declarationStatement->get_declarationModifier().isFriend() = ");
+          declarationStatement->get_declarationModifier().isFriend() ? curprint("true") : curprint("false");
+          curprint( "*/ \n ");
+        }
 #endif
 
 #if 0
-  curprint ( string("\n/* Top of unparseLanguageSpecificStatement (Unparse_ExprStmt) " ) + stmt->class_name() + " */\n ");
-  ROSE_ASSERT(stmt->get_startOfConstruct() != NULL);
+     curprint ( string("\n/* Top of unparseLanguageSpecificStatement (Unparse_ExprStmt) " ) + stmt->class_name() + " */\n ");
+     ROSE_ASSERT(stmt->get_startOfConstruct() != NULL);
   // ROSE_ASSERT(stmt->getAttachedPreprocessingInfo() != NULL);
-  int numberOfComments = -1;
-  if (stmt->getAttachedPreprocessingInfo() != NULL)
-    numberOfComments = stmt->getAttachedPreprocessingInfo()->size();
-  curprint ( string("/* startOfConstruct: file = " ) + stmt->get_startOfConstruct()->get_filenameString()
-      + " raw filename = " + stmt->get_startOfConstruct()->get_raw_filename()
-      + " raw line = "     + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_line())
-      + " raw column = "   + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_col())
-      + " #comments = "    + StringUtility::numberToString(numberOfComments)
-      + " */\n ");
+     int numberOfComments = -1;
+     if (stmt->getAttachedPreprocessingInfo() != NULL)
+          numberOfComments = stmt->getAttachedPreprocessingInfo()->size();
+     curprint ( string("/* startOfConstruct: file = " ) + stmt->get_startOfConstruct()->get_filenameString()
+        + " raw filename = " + stmt->get_startOfConstruct()->get_raw_filename()
+        + " raw line = "     + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_line())
+        + " raw column = "   + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_col())
+        + " #comments = "    + StringUtility::numberToString(numberOfComments)
+        + " */\n ");
 #endif
 
 #if ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE
-  printf ("In unparseLanguageSpecificStatement(): file = %s line = %d \n",stmt->get_startOfConstruct()->get_filenameString().c_str(),stmt->get_startOfConstruct()->get_line());
+     printf ("In unparseLanguageSpecificStatement(): file = %s line = %d \n",stmt->get_startOfConstruct()->get_filenameString().c_str(),stmt->get_startOfConstruct()->get_line());
 #endif
 
 #if 0
   // Debugging support
-  SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
-  if (declarationStatement != NULL)
-  {
-    curprint ( string("\n/* Inside of Unparse_ExprStmt::unparseLanguageSpecificStatement (" ) + StringUtility::numberToString(stmt) + "): sage_class_name() = " + stmt->sage_class_name() + " */ \n");
-  }
+     SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
+     if (declarationStatement != NULL)
+        {
+          curprint ( string("\n/* Inside of Unparse_ExprStmt::unparseLanguageSpecificStatement (" ) + StringUtility::numberToString(stmt) + "): sage_class_name() = " + stmt->sage_class_name() + " */ \n");
+        }
 #endif
 
 #if 0
   // This is done in: UnparseLanguageIndependentConstructs::unparseStatement()
   // DQ (12/5/2007): Check if the call to unparse any construct changes the scope stored in info.
-  SgScopeStatement* savedScope = info.get_current_scope();
+     SgScopeStatement* savedScope = info.get_current_scope();
 #endif
 
   // DQ (12/16/2008): Added support for unparsing statements around C++ specific statements
@@ -548,175 +564,155 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
   // DQ (12/26/2007): Moved from language independent handling to C/C++ specific handling 
   // because we don't want it to appear in the Fortran code generation.
   // DQ (added comments) this is where the new lines are introduced before statements.
-  unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);
+     unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);
 
-  switch (stmt->variantT())
-  {
-    // DQ (8/14/2007): Need to move the C and C++ specific unparse member functions from the base class to this function.
+     switch (stmt->variantT())
+        {
+       // DQ (8/14/2007): Need to move the C and C++ specific unparse member functions from the base class to this function.
 
-    // scope
-    // case V_SgGlobal:                 unparseGlobalStmt(stmt, info); break;
-    // case V_SgScopeStatement:         unparseScopeStmt(stmt, info); break;
+       // scope
+       // case V_SgGlobal:                 unparseGlobalStmt(stmt, info); break;
+       // case V_SgScopeStatement:         unparseScopeStmt(stmt, info); break;
 
-    // pragmas
-    // case V_SgPragmaDeclaration:      unparsePragmaDeclStmt(stmt, info); break;
-    // scope
-    // case V_SgGlobal:                 unparseGlobalStmt(stmt, info); break;
-    //        case V_SgScopeStatement:         unparseScopeStmt (stmt, info); break;
+       // pragmas
+       // case V_SgPragmaDeclaration:      unparsePragmaDeclStmt(stmt, info); break;
+       // scope
+       // case V_SgGlobal:                 unparseGlobalStmt(stmt, info); break;
+       //        case V_SgScopeStatement:         unparseScopeStmt (stmt, info); break;
 
-    // program units
-    // case V_SgModuleStatement:          unparseModuleStmt (stmt, info); break;
-    // case V_SgProgramHeaderStatement:   unparseProgHdrStmt(stmt, info); break;
-    // case V_SgProcedureHeaderStatement: unparseProcHdrStmt(stmt, info); break;
+       // program units
+       // case V_SgModuleStatement:          unparseModuleStmt (stmt, info); break;
+       // case V_SgProgramHeaderStatement:   unparseProgHdrStmt(stmt, info); break;
+       // case V_SgProcedureHeaderStatement: unparseProcHdrStmt(stmt, info); break;
 #if 1
-    // declarations
-    // case V_SgInterfaceStatement:     unparseInterfaceStmt(stmt, info); break;
-    // case V_SgCommonBlock:            unparseCommonBlock  (stmt, info); break;
-    case V_SgVariableDeclaration:    unparseVarDeclStmt  (stmt, info); break;
-    case V_SgVariableDefinition:     unparseVarDefnStmt  (stmt, info); break;
-                                     // case V_SgParameterStatement:     unparseParamDeclStmt(stmt, info); break;
-                                     // case V_SgUseStatement:           unparseUseStmt      (stmt, info); break;
+       // declarations
+       // case V_SgInterfaceStatement:     unparseInterfaceStmt(stmt, info); break;
+       // case V_SgCommonBlock:            unparseCommonBlock  (stmt, info); break;
+          case V_SgVariableDeclaration:    unparseVarDeclStmt  (stmt, info); break;
+          case V_SgVariableDefinition:     unparseVarDefnStmt  (stmt, info); break;
+       // case V_SgParameterStatement:     unparseParamDeclStmt(stmt, info); break;
+       // case V_SgUseStatement:           unparseUseStmt      (stmt, info); break;
 
-                                     // executable statements, control flow
-    case V_SgBasicBlock:             unparseBasicBlockStmt (stmt, info); break;
-    case V_SgIfStmt:                 unparseIfStmt         (stmt, info); break;
-                                     // case V_SgFortranDo:              unparseDoStmt         (stmt, info); break;
-    case V_SgWhileStmt:              unparseWhileStmt      (stmt, info); break;
-    case V_SgSwitchStatement:        unparseSwitchStmt     (stmt, info); break;
-    case V_SgCaseOptionStmt:         unparseCaseStmt       (stmt, info); break;
-    case V_SgDefaultOptionStmt:      unparseDefaultStmt    (stmt, info); break;
-    case V_SgBreakStmt:              unparseBreakStmt      (stmt, info); break;
-    case V_SgLabelStatement:         unparseLabelStmt      (stmt, info); break;
-    case V_SgGotoStatement:          unparseGotoStmt       (stmt, info); break;
-                                     // case V_SgStopOrPauseStatement:   unparseStopOrPauseStmt(stmt, info); break;
-    case V_SgReturnStmt:             unparseReturnStmt     (stmt, info); break;
+       // executable statements, control flow
+          case V_SgBasicBlock:             unparseBasicBlockStmt (stmt, info); break;
+          case V_SgIfStmt:                 unparseIfStmt         (stmt, info); break;
+       // case V_SgFortranDo:              unparseDoStmt         (stmt, info); break;
+          case V_SgWhileStmt:              unparseWhileStmt      (stmt, info); break;
+          case V_SgSwitchStatement:        unparseSwitchStmt     (stmt, info); break;
+          case V_SgCaseOptionStmt:         unparseCaseStmt       (stmt, info); break;
+          case V_SgDefaultOptionStmt:      unparseDefaultStmt    (stmt, info); break;
+          case V_SgBreakStmt:              unparseBreakStmt      (stmt, info); break;
+          case V_SgLabelStatement:         unparseLabelStmt      (stmt, info); break;
+          case V_SgGotoStatement:          unparseGotoStmt       (stmt, info); break;
+       // case V_SgStopOrPauseStatement:   unparseStopOrPauseStmt(stmt, info); break;
+          case V_SgReturnStmt:             unparseReturnStmt     (stmt, info); break;
 #endif
-                                     // executable statements, IO
-                                     // case V_SgIOStatement:            unparseIOStmt    (stmt, info); break;
-                                     // case V_SgIOControlStatement:     unparseIOCtrlStmt(stmt, info); break;
+       // executable statements, IO
+       // case V_SgIOStatement:            unparseIOStmt    (stmt, info); break;
+       // case V_SgIOControlStatement:     unparseIOCtrlStmt(stmt, info); break;
 
-                                     // pragmas
-    case V_SgPragmaDeclaration:      unparsePragmaDeclStmt(stmt, info); break;
+       // pragmas
+          case V_SgPragmaDeclaration:      unparsePragmaDeclStmt(stmt, info); break;
 
-                                     // case DECL_STMT:          unparseDeclStmt(stmt, info);         break;
-                                     // case SCOPE_STMT:         unparseScopeStmt(stmt, info);        break;
-                                     //        case V_SgFunctionTypeTable:      unparseFuncTblStmt(stmt, info);      break;
-                                     // case GLOBAL_STMT:        unparseGlobalStmt(stmt, info);       break;
-                                     // case V_SgBasicBlock:             unparseBasicBlockStmt(stmt, info);   break;
-                                     // case IF_STMT:            unparseIfStmt(stmt, info);           break;
+       // case DECL_STMT:          unparseDeclStmt(stmt, info);         break;
+       // case SCOPE_STMT:         unparseScopeStmt(stmt, info);        break;
+       //        case V_SgFunctionTypeTable:      unparseFuncTblStmt(stmt, info);      break;
+       // case GLOBAL_STMT:        unparseGlobalStmt(stmt, info);       break;
+       // case V_SgBasicBlock:             unparseBasicBlockStmt(stmt, info);   break;
+       // case IF_STMT:            unparseIfStmt(stmt, info);           break;
 #if 1
-    case V_SgForStatement:           unparseForStmt(stmt, info);          break; 
-    case V_SgFunctionDeclaration:    unparseFuncDeclStmt(stmt, info);     break;
-    case V_SgFunctionDefinition:     unparseFuncDefnStmt(stmt, info);     break;
-    case V_SgMemberFunctionDeclaration: unparseMFuncDeclStmt(stmt, info); break;
-                                        // case VAR_DECL_STMT:      unparseVarDeclStmt(stmt, info);      break;
-                                        // case VAR_DEFN_STMT:      unparseVarDefnStmt(stmt, info);      break;
-    case V_SgClassDeclaration:       unparseClassDeclStmt(stmt, info);    break;
-    case V_SgClassDefinition:        unparseClassDefnStmt(stmt, info);    break;
-    case V_SgEnumDeclaration:        unparseEnumDeclStmt(stmt, info);     break;
-    case V_SgExprStatement:          unparseExprStmt(stmt, info);         break;
-                                     // case LABEL_STMT:         unparseLabelStmt(stmt, info);        break;
-                                     // case WHILE_STMT:         unparseWhileStmt(stmt, info);        break;
-    case V_SgDoWhileStmt:            unparseDoWhileStmt(stmt, info);      break;
-                                     // case SWITCH_STMT:        unparseSwitchStmt(stmt, info);       break;
-                                     // case CASE_STMT:          unparseCaseStmt(stmt, info);         break;
-    case V_SgTryStmt:                unparseTryStmt(stmt, info);          break;
-    case V_SgCatchOptionStmt:        unparseCatchStmt(stmt, info);        break;
-                                     // case DEFAULT_STMT:       unparseDefaultStmt(stmt, info);      break;
-                                     // case BREAK_STMT:         unparseBreakStmt(stmt, info);        break;
-    case V_SgContinueStmt:           unparseContinueStmt(stmt, info);     break;
-                                     // case RETURN_STMT:        unparseReturnStmt(stmt, info);       break;
-                                     // case GOTO_STMT:          unparseGotoStmt(stmt, info);         break;
-    case V_SgAsmStmt:                unparseAsmStmt(stmt, info);          break;
-                                     // case SPAWN_STMT:         unparseSpawnStmt(stmt, info);        break;
-    case V_SgTypedefDeclaration:     unparseTypeDefStmt(stmt, info);      break;
-    case V_SgTemplateDeclaration:    unparseTemplateDeclStmt(stmt, info); break;
+          case V_SgForStatement:           unparseForStmt(stmt, info);          break; 
+          case V_SgFunctionDeclaration:    unparseFuncDeclStmt(stmt, info);     break;
+          case V_SgFunctionDefinition:     unparseFuncDefnStmt(stmt, info);     break;
+          case V_SgMemberFunctionDeclaration: unparseMFuncDeclStmt(stmt, info); break;
+       // case VAR_DECL_STMT:      unparseVarDeclStmt(stmt, info);      break;
+       // case VAR_DEFN_STMT:      unparseVarDefnStmt(stmt, info);      break;
+          case V_SgClassDeclaration:       unparseClassDeclStmt(stmt, info);    break;
+          case V_SgClassDefinition:        unparseClassDefnStmt(stmt, info);    break;
+          case V_SgEnumDeclaration:        unparseEnumDeclStmt(stmt, info);     break;
+          case V_SgExprStatement:          unparseExprStmt(stmt, info);         break;
+       // case LABEL_STMT:         unparseLabelStmt(stmt, info);        break;
+       // case WHILE_STMT:         unparseWhileStmt(stmt, info);        break;
+          case V_SgDoWhileStmt:            unparseDoWhileStmt(stmt, info);      break;
+       // case SWITCH_STMT:        unparseSwitchStmt(stmt, info);       break;
+       // case CASE_STMT:          unparseCaseStmt(stmt, info);         break;
+          case V_SgTryStmt:                unparseTryStmt(stmt, info);          break;
+          case V_SgCatchOptionStmt:        unparseCatchStmt(stmt, info);        break;
+       // case DEFAULT_STMT:       unparseDefaultStmt(stmt, info);      break;
+       // case BREAK_STMT:         unparseBreakStmt(stmt, info);        break;
+          case V_SgContinueStmt:           unparseContinueStmt(stmt, info);     break;
+       // case RETURN_STMT:        unparseReturnStmt(stmt, info);       break;
+       // case GOTO_STMT:          unparseGotoStmt(stmt, info);         break;
+          case V_SgAsmStmt:                unparseAsmStmt(stmt, info);          break;
+       // case SPAWN_STMT:         unparseSpawnStmt(stmt, info);        break;
+          case V_SgTypedefDeclaration:     unparseTypeDefStmt(stmt, info);      break;
+          case V_SgTemplateDeclaration:    unparseTemplateDeclStmt(stmt, info); break;
 
-    case V_SgTemplateInstantiationDecl:               unparseTemplateInstantiationDeclStmt(stmt, info); break;
-    case V_SgTemplateInstantiationFunctionDecl:       unparseTemplateInstantiationFunctionDeclStmt(stmt, info); break;
-    case V_SgTemplateInstantiationMemberFunctionDecl: unparseTemplateInstantiationMemberFunctionDeclStmt(stmt, info); break;
-    case V_SgTemplateInstantiationDirectiveStatement: unparseTemplateInstantiationDirectiveStmt(stmt, info); break;
+          case V_SgTemplateInstantiationDecl:               unparseTemplateInstantiationDeclStmt(stmt, info); break;
+          case V_SgTemplateInstantiationFunctionDecl:       unparseTemplateInstantiationFunctionDeclStmt(stmt, info); break;
+          case V_SgTemplateInstantiationMemberFunctionDecl: unparseTemplateInstantiationMemberFunctionDeclStmt(stmt, info); break;
+          case V_SgTemplateInstantiationDirectiveStatement: unparseTemplateInstantiationDirectiveStmt(stmt, info); break;
 #endif
 
 #if 0
-    case PRAGMA_DECL:
-                                                      // cerr + "WARNING: unparsePragmaDeclStmt not implemented in SAGE 3 (exiting ...)" + endl;
-                                                      // This can't be an error since the A++ preprocessor currently processes #pragmas
-                                                      // (though we can ignore unparsing them)
-                                                      // ROSE_ABORT();
+          case PRAGMA_DECL:
+            // cerr + "WARNING: unparsePragmaDeclStmt not implemented in SAGE 3 (exiting ...)" + endl;
+            // This can't be an error since the A++ preprocessor currently processes #pragmas
+            // (though we can ignore unparsing them)
+            // ROSE_ABORT();
 
-                                                      unparsePragmaDeclStmt(stmt, info);
-                                                      break;
+               unparsePragmaDeclStmt(stmt, info);
+               break;
 #endif
 
 #if 1
-    case V_SgForInitStatement:                   unparseForInitStmt(stmt, info); break;
+          case V_SgForInitStatement:                   unparseForInitStmt(stmt, info); break;
 
-                                                 // Comments could be attached to these statements
-    case V_SgCatchStatementSeq:     // CATCH_STATEMENT_SEQ:
-    case V_SgFunctionParameterList: // FUNCTION_PARAMETER_LIST:
-    case V_SgCtorInitializerList:   // CTOR_INITIALIZER_LIST:
+       // Comments could be attached to these statements
+          case V_SgCatchStatementSeq:     // CATCH_STATEMENT_SEQ:
+          case V_SgFunctionParameterList: // FUNCTION_PARAMETER_LIST:
+          case V_SgCtorInitializerList:   // CTOR_INITIALIZER_LIST:
 #if PRINT_DEVELOPER_WARNINGS
-                                                 printf ("Ignore these newly implemented cases (case of %s) \n",stmt->sage_class_name());
-                                                 printf ("WARNING: These cases must be implemented so that comments attached to them can be processed \n");
+               printf ("Ignore these newly implemented cases (case of %s) \n",stmt->sage_class_name());
+               printf ("WARNING: These cases must be implemented so that comments attached to them can be processed \n");
 #endif
-                                                 // ROSE_ABORT();
-                                                 break;
+            // ROSE_ABORT();
+               break;
 
-    case V_SgNamespaceDeclarationStatement:      unparseNamespaceDeclarationStatement (stmt, info);      break;
-    case V_SgNamespaceDefinitionStatement:       unparseNamespaceDefinitionStatement (stmt, info);       break;
-    case V_SgNamespaceAliasDeclarationStatement: unparseNamespaceAliasDeclarationStatement (stmt, info); break;
-    case V_SgUsingDirectiveStatement:            unparseUsingDirectiveStatement (stmt, info);            break;
-    case V_SgUsingDeclarationStatement:          unparseUsingDeclarationStatement (stmt, info);          break;
+          case V_SgNamespaceDeclarationStatement:      unparseNamespaceDeclarationStatement (stmt, info);      break;
+          case V_SgNamespaceDefinitionStatement:       unparseNamespaceDefinitionStatement (stmt, info);       break;
+          case V_SgNamespaceAliasDeclarationStatement: unparseNamespaceAliasDeclarationStatement (stmt, info); break;
+          case V_SgUsingDirectiveStatement:            unparseUsingDirectiveStatement (stmt, info);            break;
+          case V_SgUsingDeclarationStatement:          unparseUsingDeclarationStatement (stmt, info);          break;
 
-                                                 // DQ (3/2/2005): Added support for unparsing template class definitions.  This is the case: TEMPLATE_INST_DEFN_STMT
-    case V_SgTemplateInstantiationDefn:          unparseClassDefnStmt(stmt, info); break;
+       // DQ (3/2/2005): Added support for unparsing template class definitions.  This is the case: TEMPLATE_INST_DEFN_STMT
+          case V_SgTemplateInstantiationDefn:          unparseClassDefnStmt(stmt, info); break;
 #endif
                                                  //        case V_SgNullStatement:                      unparseNullStatement(stmt, info); break;
 
-//#if USE_UPC_IR_NODES
-//#if UPC_EXTENSIONS_ALLOWED //TODO turn on by default?
-// Liao, 6/13/2008: UPC support
-    case V_SgUpcNotifyStatement:           	  unparseUpcNotifyStatement(stmt, info); break;
-    case V_SgUpcWaitStatement:            	  unparseUpcWaitStatement(stmt, info); break;
-    case V_SgUpcBarrierStatement:                 unparseUpcBarrierStatement(stmt, info); break;
-    case V_SgUpcFenceStatement:                   unparseUpcFenceStatement(stmt, info); break;
-    case V_SgUpcForAllStatement:                  unparseUpcForAllStatement(stmt, info);    break; 
+       // Liao, 6/13/2008: UPC support
+          case V_SgUpcNotifyStatement:                  unparseUpcNotifyStatement(stmt, info); break;
+          case V_SgUpcWaitStatement:                    unparseUpcWaitStatement(stmt, info); break;
+          case V_SgUpcBarrierStatement:                 unparseUpcBarrierStatement(stmt, info); break;
+          case V_SgUpcFenceStatement:                   unparseUpcFenceStatement(stmt, info); break;
+          case V_SgUpcForAllStatement:                  unparseUpcForAllStatement(stmt, info);    break; 
 
-//#endif 
-// Liao, 5/31/2009, add OpenMP support, TODO refactor some code to language independent part
-    case V_SgOmpForStatement:                      unparseOmpForStatement(stmt, info); break;
-//    case V_SgOmpAtomicStatement:                  unparseOmpAtomicStatement(stmt, info);  break;
-//    case V_SgOmpCriticalStatement:
-//    case V_SgOmpMasterStatement:
-//    case V_SgOmpOrderedStatement:
-//    case V_SgOmpSectionStatement:
-//    case V_SgOmpSectionsStatement:
-//    case V_SgOmpParallelStatement:
-//    case V_SgOmpForStatement:
-//    case V_SgOmpSingleStatement:
-//    case V_SgOmpTaskStatement:
-//                                                  {
-//                                                    unparseOmpBodyStatement(isSgOmpBodyStatement(stmt), info); break;
-                                                    //unparseOmpParallelStatement(stmt, info); break;
-//                                                  }
-//    case V_SgOmpThreadprivateStatement:
-//    {
-//      unparseOmpThreadprivateStatement(isSgOmpThreadprivateStatement(stmt),info);
-//      break;
-//      }
-    
-//    case V_SgOmpBarrierStatement:                  unparseOmpBarrierStatement(isSgOmpBarrierStatement(stmt), info);    break; 
-//    case V_SgOmpFlushStatement:                    unparseOmpFlushStatement(isSgOmpFlushStatement(stmt), info);    break; 
-//    case V_SgOmpTaskwaitStatement:                 unparseOmpTaskwaitStatement(isSgOmpTaskwaitStatement(stmt), info);    break; 
+       // Liao, 5/31/2009, add OpenMP support, TODO refactor some code to language independent part
+          case V_SgOmpForStatement:                      unparseOmpForStatement(stmt, info); break;
 
-    default:
-                                                  {
-                                                    printf("CxxCodeGeneration_locatedNode::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
-                                                    ROSE_ASSERT(false);
-                                                    break;
-                                                  }
-  }
+       // DQ (4/16/2011): Added Java specific IR node until we support the Java specific unparsing.
+          case V_SgJavaImportStatement:
+               printf ("Unsupported Java specific unparsing for import statement \n");
+            // unparseForStmt(stmt, info);
+               break;
+
+          default:
+             {
+               printf("CxxCodeGeneration_locatedNode::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
+               ROSE_ASSERT(false);
+               break;
+             }
+        }
 
   // DQ (12/16/2008): Added support for unparsing statements around C++ specific statements
   // unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
@@ -724,13 +720,13 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 #if 0
   // This is done in: UnparseLanguageIndependentConstructs::unparseStatement()
   // DQ (12/5/2007): Check if the call to unparse any construct changes the scope stored in info.
-  SgScopeStatement* scopeAfterUnparseStatement = info.get_current_scope();
-  if (savedScope != scopeAfterUnparseStatement)
-  {
-    printf ("WARNING: scopes stored in SgUnparse_Info object have been changed \n");
-  }
+     SgScopeStatement* scopeAfterUnparseStatement = info.get_current_scope();
+     if (savedScope != scopeAfterUnparseStatement)
+        {
+          printf ("WARNING: scopes stored in SgUnparse_Info object have been changed \n");
+        }
 #endif
-}
+   }
 
 
 #if 0
@@ -952,9 +948,10 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
                     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(declarationStatement);
                     ROSE_ASSERT(variableDeclaration != NULL);
                     SgInitializedNamePtrList & variableList = variableDeclaration->get_variables();
-                 // using directives must be issued sepearately for each variable!
+                 // using directives must be issued separately for each variable!
                     ROSE_ASSERT(variableList.size() == 1);
                     SgInitializedName* initializedName = *(variableList.begin());
+                    unparseAttachedPreprocessingInfo(initializedName, info, PreprocessingInfo::before);
                     ROSE_ASSERT(initializedName != NULL);
                     SgName variableName = initializedName->get_name();
                     curprint ( variableName.str());
@@ -3329,6 +3326,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint ( string(", "));
         }
         ROSE_ASSERT ((*p) != NULL);
+        unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
         curprint (  (*p)->get_name().str());
 
         // DQ (8/4/2005): Removed the use of "()" here since it breaks test2005_123.C
@@ -3557,6 +3555,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
                decl_item = *p;
                ROSE_ASSERT(decl_item != NULL);
+               unp->u_exprStmt->unparseAttachedPreprocessingInfo(decl_item, info, PreprocessingInfo::before);
 
             // printf ("In unparseVarDeclStmt(): cname = decl_item->get_name() = %s \n",decl_item->get_name().str());
 
@@ -3738,13 +3737,19 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     ROSE_ASSERT(decl_item != NULL);
                     ROSE_ASSERT(decl_item->get_parent() != NULL);
 
-                 // DQ (5/1/2005): Note clear if we can assert this!
+                 // DQ (5/1/2005): Not clear if we can assert this!
                  // ROSE_ASSERT(decl_item->get_prev_decl_item() != NULL);
                     if (decl_item->get_prev_decl_item() != NULL)
                        {
-                      // printf ("decl_item->get_prev_decl_item() = %p get_name() = %s \n",
-                      //      decl_item->get_prev_decl_item(),decl_item->get_prev_decl_item()->get_name().str());
-                         ROSE_ASSERT(decl_item->get_prev_decl_item()->get_parent() != NULL);
+                      // printf ("decl_item->get_prev_decl_item() = %p get_name() = %s \n",decl_item->get_prev_decl_item(),decl_item->get_prev_decl_item()->get_name().str());
+
+                      // DQ (2/12/2011): Commented out to support generation of graph to debug test2011_08.C, this test codes 
+                      // demonstrates that the SgInitializedName build first might only be to support a symbol and not have a
+                      // proper parent.
+                      // ROSE_ASSERT(decl_item->get_prev_decl_item()->get_parent() != NULL);
+                         SgInitializedName* previousInitializedName = decl_item->get_prev_decl_item();
+                         if (previousInitializedName->get_prev_decl_item() != NULL)
+                              ROSE_ASSERT(previousInitializedName->get_parent() != NULL);
                        }
 
                  // DQ (10/10/2006): Only do name qualification for C++
@@ -3964,6 +3969,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     ninfo.set_SkipBaseType();
                curprint ( string(","));
              }
+         unparseAttachedPreprocessingInfo(decl_item, ninfo, PreprocessingInfo::after);    
         }
 
   // curprint ( string("\n/* Handle bit fields specifiers (if any) */ \n";
@@ -4501,8 +4507,13 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           ninfo.set_inEnumDecl();
           SgInitializer *tmp_init=NULL;
           SgName tmp_name;
-#if 1
+     //TODO wrap into a function and to be called by all
           SgInitializedNamePtrList::iterator p = enum_stmt->get_enumerators().begin();
+          SgInitializedNamePtrList::iterator p_last = enum_stmt->get_enumerators().end();
+          
+                  //Guard against decrementing an invalid iterator
+                  if (p != p_last)
+                        p_last--;
           for (; p!=enum_stmt->get_enumerators().end(); p++)
           {
             // Liao, 5/14/2009
@@ -4515,6 +4526,7 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             bool isInSameFile = (field->get_file_info()->get_filename()==enum_stmt->get_file_info()->get_filename());
             if (isInSameFile)
             {
+              unparseAttachedPreprocessingInfo(field, info, PreprocessingInfo::before);
               // unparse the element   
               ROSE_ASSERT((*p) != NULL);
               tmp_name=(*p)->get_name();
@@ -4526,7 +4538,8 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                 unparseExpression(tmp_init, ninfo);
               }
 
-              if (p != enum_stmt->get_enumerators().end())
+              //if (p != (enum_stmt->get_enumerators().end()))
+              if (p != p_last)
               {
                 curprint ( string(","));
               }
@@ -4537,37 +4550,6 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           if  (enum_stmt->get_enumerators().size()!=0)
             // DQ (3/17/2005): This helps handle cases such as void foo () { #include "constant_code.h" }
             unparseAttachedPreprocessingInfo(enum_stmt, info, PreprocessingInfo::inside);
-#else
-          if (p != enum_stmt->get_enumerators().end())
-          {
-            // curprint ( string("{"; 
-            while (true)
-            {
-              ROSE_ASSERT((*p) != NULL);
-              tmp_name=(*p)->get_name();
-              tmp_init=(*p)->get_initializer();
-              curprint ( tmp_name.str());
-              if (tmp_init != NULL)
-              {
-                curprint ( string("="));
-                unparseExpression(tmp_init, ninfo);
-              }
-              p++;
-              if (p != enum_stmt->get_enumerators().end())
-              {
-                curprint ( string(","));
-              }
-              else
-                break; 
-
-            } //end while
-
-            // DQ (3/17/2005): This helps handle cases such as void foo () { #include "constant_code.h" }
-            unparseAttachedPreprocessingInfo(enum_stmt, info, PreprocessingInfo::inside);
-
-            // curprint ( string("}";
-          }
-#endif          
 
 #if 0
           if (!info.SkipSemiColon())

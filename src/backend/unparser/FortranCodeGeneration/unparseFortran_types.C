@@ -23,7 +23,8 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
 
 #if 0
      printf("In unparseType: %s\n", type->class_name().c_str());
-  // cur << "\n/* Begin unparseType: " << type->sage_class_name() << " */\n";
+  // cur << "\n/* Begin unparseType: " << type->class_name() << " */\n";
+     curprint("\n! Begin unparseType:\n");
 #endif
 #if 0
      if (isDebug())
@@ -34,8 +35,6 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
 
      switch (type->variantT())
         {
-       // case V_SgTypeUnknown:          curprint(type->sage_class_name()); break;
-       // case V_SgTypeDefault:          curprint(type->sage_class_name()); break;
           case V_SgTypeUnknown:
              {
                printf ("Error: SgTypeUnknown should not be found in AST \n");
@@ -45,20 +44,29 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
 
           case V_SgTypeDefault:
              {
-               printf ("Error: SgTypeDefault should not be found in AST \n");
-               ROSE_ASSERT(false);
+#if 0
+            // DQ (12/29/2010): This provides a more obvious way to spot where default types are used (where we used to 
+            // instead use SgTypeInt as the default type it would output "integer".
+               curprint("ROSE_DEFAULT_TYPE");
+#else
+            // DQ (12/29/2010): We used to store an SgTypeInt in the AST for the default type, now we more correctly store 
+            // the SgDefaultType, but we don't fix them all up yet (but at least they are more explicit in the AST).
+            // To make the generated code more equivalent we output "integer" for the SgTypeDefault, until it is fixed
+            // better.  Note that all of the test code in Fortran_tests/*.f,f90,f03 pass without this translation via 
+            // the backend.
+               curprint("integer");
+#endif
+
+            // DQ (1/25/2011): We now try to to translations of the use of SgTypeDefault when we see it in the AST.  This work in incomplete, so we issue a warning at the moment.
+               if ( SgProject::get_verbose() > 1 )
+                  {
+                    printf ("Warning: SgTypeDefault should not be found in AST \n");
+                  }
                break;
              }
 
-       // case V_SgTypeVoid:             curprint(type->sage_class_name()); break;
-       // case V_SgTypeVoid:             curprint("void"); break;
-
        // DQ (10/5/2010): Comment added: SgTypeVoid might be required for function handling, but for Fortran we don't unparse anything here.
-       // FMZ 6/17/2009 
           case V_SgTypeVoid:              break;
-
-       // DQ (8/16/2007): I don't think that SgGlobalVoid is used!
-       // case V_SgTypeGlobalVoid:       curprint(type->sage_class_name()); break;
 
        // DQ (10/5/2010): I don't think that SgTypeWchar is used!
        // case V_SgTypeWchar:            curprint(type->sage_class_name()); break;
@@ -68,29 +76,14 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgTypeString:           unparseStringType(type, info); break;
 
        // scalar integral types
-          case V_SgTypeChar:            unparseBaseType(type,"CHARACTER",info); break;
-       // case V_SgTypeSignedChar:       unparseBaseType(type,"CHARACTER",info); break;
-       // case V_SgTypeUnsignedChar:     unparseBaseType(type,"CHARACTER",info); break;
-
-       // case V_SgTypeShort:            unparseBaseType(type,"INTEGER",info); break;
-       // case V_SgTypeSignedShort:      unparseBaseType(type,"INTEGER",info); break;
-       // case V_SgTypeUnsignedShort:    unparseBaseType(type,"INTEGER",info); break;
-
+          case V_SgTypeChar:             unparseBaseType(type,"CHARACTER",info); break;
           case V_SgTypeInt:              unparseBaseType(type,"INTEGER",info); break;
           case V_SgTypeSignedInt:        unparseBaseType(type,"INTEGER",info); break;
           case V_SgTypeUnsignedInt:      unparseBaseType(type,"INTEGER",info); break;
 
-       // case V_SgTypeLong:             unparseBaseType(type,"INTEGER",info); break;
-       // case V_SgTypeSignedLong:       unparseBaseType(type,"INTEGER",info); break;
-       // case V_SgTypeUnsignedLong:     unparseBaseType(type,"INTEGER",info); break;
-
-       // case V_SgTypeLongLong:         unparseBaseType(type,"INTEGER",info); break;
-       // case V_SgTypeUnsignedLongLong: unparseBaseType(type,"INTEGER",info); break;
-
        // scalar floating point types
           case V_SgTypeFloat:            unparseBaseType(type,"REAL",info); break;
           case V_SgTypeDouble:           unparseBaseType(type,"DOUBLE PRECISION",info); break;
-       // case V_SgTypeLongDouble:       unparseBaseType(type,"QUAD PRECISION",info); break;
 
        // scalar boolean type
           case V_SgTypeBool:             unparseBaseType(type,"LOGICAL",info); break;
@@ -117,14 +110,9 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
        // DQ (12/1/2007): We need to unparse the kind and type parameters
           case V_SgModifierType:         unparseModifierType(type, info); break;
 
-#if 0
-       // DQ (8/15/2007): I don't think these apply to Fortran.
-          case V_SgNamedType:            unparseNameType(type, info); break;
-       // case V_SgEnumType:             unparseEnumType(type, info); break;
-          case V_SgTypedefType:          unparseTypedefType(type, info); break;
+       // DQ (1/24/2011): Added to support procedure pointers (see test2011_28.f90).
           case V_SgFunctionType:         unparseFunctionType(type, info); break;
-          case V_SgMemberFunctionType:   unparseMemberFunctionType(type, info); break;
-#endif
+
           default: 
              {
                printf("UnparserFort::unparseType: Error: No handler for %s (variant: %d)\n",type->sage_class_name(), type->variantT());
@@ -134,21 +122,9 @@ UnparseFortran_type::unparseType(SgType* type, SgUnparse_Info& info)
         }
 
 #if 0
-  // DQ (12/1/2007): This has been moved to the SgModifierType
-     SgExpression* kindExpression = type->get_type_kind();
-  // printf ("In UnparseFortran_type::unparseType(): type->get_type_kind() = %p \n",type->get_type_kind());
-     if (kindExpression != NULL)
-        {
-          curprint("(");
-          curprint("kind=");
-          unp->u_fortran_locatedNode->unparseExpression(kindExpression,info);
-          curprint(")");
-        }
-#endif
-
-#if 0
      printf ("End unparseType: %s\n",type->class_name().c_str());
-  // cur << "\n/* End unparseType: "  << type->sage_class_name() << " */\n";
+  // curprint ("\n/* End unparseType: "  << type->class_name() << " */\n");
+     curprint("\n! End unparseType: \n");
 #endif
    }
 
@@ -210,9 +186,10 @@ void
 UnparseFortran_type::unparseBaseType(SgType* type, const std::string & nameOfType, SgUnparse_Info & info)
    {
   // printf ("Inside of UnparserFort::unparseBaseType \n");
-  // cur << "\n/* Inside of UnparserFort::unparseBaseType */\n";
+  // curprint ("\n! Inside of UnparserFort::unparseBaseType \n");
      curprint(nameOfType);
      unparseTypeKind(type,info);
+  // curprint ("\n! Leaving UnparserFort::unparseBaseType \n");
    }
 
 void 
@@ -262,12 +239,26 @@ UnparseFortran_type::unparseArrayType(SgType* type, SgUnparse_Info& info)
   //   real, dimension(10, 10) :: A1, A2
   //   real, dimension(:) :: B1
   //   character(len=*) :: s1
-  
+#if 0
+     curprint ("\n! Inside of UnparserFort::unparseArrayType \n");
+#endif
+
      SgArrayType* array_type = isSgArrayType(type);
      ROSE_ASSERT(array_type != NULL);
 
   // element type
+#if 0
      unparseType(array_type->get_base_type(), info);
+#else
+  // I think that supressStrippedTypeName() and SkipBaseType() are redundant...
+     if (info.supressStrippedTypeName() == false)
+        {
+       // DQ (1/16/2011): We only want to output the name of the stripped type once!
+          SgType* stripType = array_type->stripType();
+          unparseType(stripType, info);
+          info.set_supressStrippedTypeName();
+        }
+#endif
 
   // DQ (8/5/2010): It is an error to treat an array of char as a string (see test2010_16.f90).
 #if 0
@@ -342,18 +333,36 @@ UnparseFortran_type::unparseArrayType(SgType* type, SgUnparse_Info& info)
      ROSE_ASSERT(unp->u_fortran_locatedNode != NULL);
 
      unp->u_fortran_locatedNode->unparseExprList(array_type->get_dim_info(),info,/* output parens */ true);
+
+  // DQ (1/16/2011): Plus unparse the base type...(unless it will just output the stripped types name).
+     if (array_type->get_base_type()->containsInternalTypes() == true)
+        {
+          unparseType(array_type->get_base_type(), info);
+        }
+#endif
+
+#if 0
+     curprint ("\n! Leaving UnparserFort::unparseArrayType \n");
 #endif
    }
 
 void 
 UnparseFortran_type::unparsePointerType(SgType* type, SgUnparse_Info& info)
    {
+#if 0
   // printf ("Inside of UnparserFort::unparsePointerType \n");
   // cur << "\n/* Inside of UnparserFort::unparsePointerType */\n";
-  
+     curprint ("\n! Inside of UnparserFort::unparsePointerType \n");
+#endif
+
+  // DQ (1/16/2011): Note that pointers in fortran are not expressed the same as in C/C++, are are
+  // only a part of the type which is managed more directly using attributes in the variable declaration.
+  // Not clear that we want to do anything here in the unparser...
+
      SgPointerType* pointer_type = isSgPointerType(type);
      ROSE_ASSERT(pointer_type != NULL);
 
+#if 0
   /* special cases: ptr to array, int (*p) [10] */ 
   /*                ptr to function, int (*p)(int) */
   /*                ptr to ptr to .. int (**p) (int) */
@@ -396,9 +405,29 @@ UnparseFortran_type::unparsePointerType(SgType* type, SgUnparse_Info& info)
                unparseType(pointer_type, ninfo);
              }
         }
+#else
+     if (info.supressStrippedTypeName() == false)
+        {
+       // DQ (1/16/2011): We only want to output the name of the stripped type once!
+          SgType* stripType = pointer_type->stripType();
+          unparseType(stripType, info);
+          info.set_supressStrippedTypeName();
+        }
 
+     curprint(", POINTER");
+
+  // DQ (1/16/2011): Plus unparse the base type...(unless it will just output the stripped types name).
+     if (pointer_type->get_base_type()->containsInternalTypes() == true)
+        {
+          unparseType(pointer_type->get_base_type(), info);
+        }
+#endif
+
+#if 0
   // printf ("Leaving of UnparserFort::unparsePointerType \n");
   // cur << "\n/* Leaving of UnparserFort::unparsePointerType */\n";
+     curprint ("\n! Leaving UnparserFort::unparsePointerType \n");
+#endif
    }
 
 void 
@@ -515,11 +544,18 @@ UnparseFortran_type::unparseModifierType(SgType* type, SgUnparse_Info& info)
 
 void
 UnparseFortran_type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
-{
-  SgFunctionType* func_type = isSgFunctionType(type);
-  ROSE_ASSERT (func_type != NULL);
+   {
+     SgFunctionType* func_type = isSgFunctionType(type);
+     ROSE_ASSERT (func_type != NULL);
 
-  SgUnparse_Info ninfo(info);
+     SgUnparse_Info ninfo(info);
+
+  // DQ (1/24/2011): The case of a procedure type in Fortran is quite simple.
+  // Note that test2011_28.f90 demonstrates an example of this.
+  // curprint("procedure()");
+     curprint("procedure(), pointer");
+
+#if 0
   int needParen = 0;
   if (ninfo.isReferenceToSomething() || ninfo.isPointerToSomething()) {
       needParen=1;
@@ -531,50 +567,52 @@ UnparseFortran_type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
 
   if (ninfo.isTypeFirstPart()) {
       if (needParen) {
-	  ninfo.unset_isReferenceToSomething();
-	  ninfo.unset_isPointerToSomething();
-	  unparseType(func_type->get_return_type(), ninfo);
-	  curprint("(");
-	}
+          ninfo.unset_isReferenceToSomething();
+          ninfo.unset_isPointerToSomething();
+          unparseType(func_type->get_return_type(), ninfo);
+          curprint("(");
+        }
       else {
-	  unparseType(func_type->get_return_type(), ninfo);
-	}
+          unparseType(func_type->get_return_type(), ninfo);
+        }
     }
   else {
       if (ninfo.isTypeSecondPart()) {
-	  if (needParen) {
-	      curprint(")");
-	      info.unset_isReferenceToSomething();
-	      info.unset_isPointerToSomething();
-	    }
-	  // print the arguments
-	  SgUnparse_Info ninfo2(info); 
-	  ninfo2.unset_SkipBaseType();
-	  ninfo2.unset_isTypeSecondPart();
-	  ninfo2.unset_isTypeFirstPart();
+          if (needParen) {
+              curprint(")");
+              info.unset_isReferenceToSomething();
+              info.unset_isPointerToSomething();
+            }
+          // print the arguments
+          SgUnparse_Info ninfo2(info); 
+          ninfo2.unset_SkipBaseType();
+          ninfo2.unset_isTypeSecondPart();
+          ninfo2.unset_isTypeFirstPart();
 
-	  curprint("(");
-	  SgTypePtrList::iterator p = func_type->get_arguments().begin();
-	  while(p != func_type->get_arguments().end())
-	    {
-	      // printf ("Output function argument ... \n");
-	      unparseType(*p, ninfo2);
-	      p++;
-	      if (p != func_type->get_arguments().end())
-		{ curprint(", "); }
-	    }
-	  curprint(")");
-	  unparseType(func_type->get_return_type(), info); // catch the 2nd part of the rtype
-	}
+          curprint("(");
+          SgTypePtrList::iterator p = func_type->get_arguments().begin();
+          while(p != func_type->get_arguments().end())
+            {
+              // printf ("Output function argument ... \n");
+              unparseType(*p, ninfo2);
+              p++;
+              if (p != func_type->get_arguments().end())
+                { curprint(", "); }
+            }
+          curprint(")");
+          unparseType(func_type->get_return_type(), info); // catch the 2nd part of the rtype
+        }
       else
-	{
-	  ninfo.set_isTypeFirstPart();
-	  unparseType(func_type, ninfo);
-	  ninfo.set_isTypeSecondPart();
-	  unparseType(func_type, ninfo);
-	}
+        {
+          ninfo.set_isTypeFirstPart();
+          unparseType(func_type, ninfo);
+          ninfo.set_isTypeSecondPart();
+          unparseType(func_type, ninfo);
+        }
     }
-}
+#endif
+
+   }
 
 
 //----------------------------------------------------------------------------

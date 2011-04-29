@@ -1,4 +1,4 @@
 TITLE="testing default on all linux platforms (with Java)"
 DESCRIPTION="default configuration options, gcc 4.2.4 with java"
-PREREQS="gcc-4.2.4, boost-1.36.0, automake-1.10, autoconf-2.63, java-1.5.0_08"
+PREREQS="gcc-4.2.4, boost-1.36.0, libtool-2.2.6b, automake-1.10, autoconf-2.63, java-1.5.0_08"
 CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.36.0 --with-CXX_WARNINGS=-Wall"

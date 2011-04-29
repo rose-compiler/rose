@@ -58,7 +58,7 @@ class TaskModel : public QAbstractItemModel
         QModelIndex firstError() const;
         void setFileNotFound(const QModelIndex &index, bool b);
 
-        enum Roles { File = Qt::UserRole, Line, Description, FileNotFound, Type };
+        enum Roles { File = Qt::UserRole, Line, Description, FileNotFound, Type }; /*NO_STRINGIFY*/
 
         QIcon iconFor(PatternType type);
 

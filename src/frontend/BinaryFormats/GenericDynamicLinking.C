@@ -37,9 +37,9 @@ SgAsmGenericDLL::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "lib_name", p_name->c_str());
+    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "lib_name", p_name->get_string(true).c_str());
     for (size_t i = 0; i < p_symbols.size(); i++)
-        fprintf(f, "%s%-*s = [%zd] \"%s\"\n", p, w, "symbol_name", i, p_symbols[i].c_str());
+        fprintf(f, "%s%-*s = [%zd] \"%s\"\n", p, w, "symbol_name", i, escapeString(p_symbols[i]).c_str());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -79,8 +79,8 @@ SgAsmGenericSymbol::stringifyDefState() const
 #ifndef _MSC_VER
     return stringifySgAsmGenericSymbolSymbolDefState(p_def_state);
 #else
-	ROSE_ASSERT(false);
-	return "";
+        ROSE_ASSERT(false);
+        return "";
 #endif
 }
 
@@ -90,8 +90,8 @@ SgAsmGenericSymbol::stringifyType() const
 #ifndef _MSC_VER
     return stringifySgAsmGenericSymbolSymbolType(p_type);
 #else
-	ROSE_ASSERT(false);
-	return "";
+        ROSE_ASSERT(false);
+        return "";
 #endif
 }
 
@@ -101,8 +101,8 @@ SgAsmGenericSymbol::stringifyBinding() const
 #ifndef _MSC_VER
     return stringifySgAsmGenericSymbolSymbolBinding(p_binding);
 #else
-	ROSE_ASSERT(false);
-	return "";
+        ROSE_ASSERT(false);
+        return "";
 #endif
 }
 
@@ -118,7 +118,7 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "name", p_name->c_str());
+    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "name", p_name->get_string(true).c_str());
 
     const char *s_def_state = NULL;
     switch (p_def_state) {
@@ -151,7 +151,7 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     fprintf(f, "%s%-*s = %s\n", p, w, "type", s_type);
     if (p_bound) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "bound", p_bound->get_id(), p_bound->get_name()->c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "bound", p_bound->get_id(), p_bound->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "bound");
     }

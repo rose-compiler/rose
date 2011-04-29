@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/ECJ_ROSE_Connection -I${top_builddir}/src/3rdPartyLibraries/java-parser
+INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/ECJ_ROSE_Connection -I${top_builddir}/src/3rdPartyLibraries/java-parser $(JAVA_JVM_INCLUDE)
 
 ECJ_DIR = $(top_builddir)/src/3rdPartyLibraries/java-parser
 
@@ -29,8 +29,8 @@ JavaTraversal.h:
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
  # libroseJava_la_SOURCES = JavaParserActionROSE.C java_support.C openJavaParser_main.C ecj.C
-   libroseJava_la_SOURCES = java_support.C openJavaParser_main.C ecj.C
  # libroseJava_la_SOURCES = java_support.C openJavaParser_main.C ecj.C
+   libroseJava_la_SOURCES = java_support.C openJavaParser_main.C ecj.C
 
 if !ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
  # Handle case of Java language support specified and Fortran language support NOT specified.
@@ -44,10 +44,10 @@ endif
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
  # libJavaTraversal_la_SOURCES = JavaTraversal.C 
-   libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C 
+   libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C
 
  # DQ (10/11/2010): Put any required header files here.
-   include_HEADERS = ecj.h java_support.h
+   include_HEADERS = ecj.h java_support.h token.h jni_token.h JavaSourceCodePosition.h jni_JavaSourceCodePosition.h
 
 # JavaParserActionROSE.C: $(ECJ_DIR)/token.h $(ECJ_DIR)/ActionEnums.h $(ECJ_DIR)/jni_token_funcs.h
 # JavaParserActionROSE.C:

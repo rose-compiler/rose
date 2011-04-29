@@ -70,6 +70,15 @@ Unparser::Unparser( ostream* nos, string fname, Unparser_Opt nopt, UnparseFormat
      u_fortran_type = new UnparseFortran_type(this);
      u_fortran_locatedNode = new FortranCodeGeneration_locatedNode(this, fname);
 
+#if 0
+     u_java_type = NULL;
+     u_java_locatedNode = NULL;
+#else
+  // DQ (4/16/2011): Added the Java support symetric to the Fortran unparser support.
+     u_java_type = new UnparseJava_type(this);
+     u_java_locatedNode = new JavaCodeGeneration_locatedNode(this, fname);
+#endif
+
   // ROSE_ASSERT(nfile != NULL);
      ROSE_ASSERT(nos != NULL);
 
@@ -250,7 +259,16 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
      currentFile = file;
      ROSE_ASSERT(currentFile != NULL);
 
-  // file->display("file: Unparser::unparseFile");
+#if 0
+     printf ("SageInterface::is_Cxx_language()     = %s \n",SageInterface::is_Cxx_language() ? "true" : "false");
+     printf ("SageInterface::is_Fortran_language() = %s \n",SageInterface::is_Fortran_language() ? "true" : "false");
+     printf ("SageInterface::is_Java_language()    = %s \n",SageInterface::is_Java_language() ? "true" : "false");
+     printf ("file->get_outputLanguage()           = %s \n",file->get_outputLanguage() == SgFile::e_C_output_language ? "C" : 
+                                  file->get_outputLanguage() == SgFile::e_Fortran_output_language ? "Fortran" : 
+                                  file->get_outputLanguage() == SgFile::e_Java_output_language ? "Java" : "unknown");
+
+     file->display("file: Unparser::unparseFile");
+#endif
 
 #if 1
   // DQ (11/10/2007): Moved computation of hidden list from astPostProcessing.C to unparseFile so that 
@@ -300,11 +318,11 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
         }
        else
         {
-          if ( ( ( (file->get_C_only() == true) || (file->get_Cxx_only() == true) ) && (file->get_outputLanguage() == SgFile::e_default_output_language) ) || 
+          if ( ( ( (file->get_C_only() == true) || (file->get_Cxx_only() == true) || (file->get_Cuda_only() == true) ) && (file->get_outputLanguage() == SgFile::e_default_output_language) ) || 
                ( (file->get_outputLanguage() == SgFile::e_C_output_language) || (file->get_outputLanguage() == SgFile::e_Cxx_output_language) ) )
              {
             // Unparse using C/C++ unparser by default
-                u_exprStmt->unparseStatement(globalScope, info);
+               u_exprStmt->unparseStatement(globalScope, info);
              }
             else
              {
@@ -315,8 +333,21 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
                   }
                  else
                   {
-                    printf ("Error: unclear how to unparse the input code! \n");
-                    ROSE_ASSERT(false);
+                    if (file->get_Java_only())
+                       {
+                      // Unparse using the new Fortran unparser!
+                         ROSE_ASSERT(u_java_locatedNode != NULL);
+
+                      // printf ("This is the unparser support for Java (exiting as a test) \n");
+                      // ROSE_ASSERT(false);
+
+                         u_java_locatedNode->unparseStatement(globalScope, info);
+                       }
+                      else
+                       {
+                         printf ("Error: unclear how to unparse the input code! \n");
+                         ROSE_ASSERT(false);
+                       }
                   }
              }
         }
@@ -359,6 +390,12 @@ Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     ROSE_ASSERT(file!=NULL);
 
+    /* Genenerate an ASCII dump of the entire file contents.  Generate the dump before unparsing because unparsing may perform
+     * certain relocations and normalization to the AST. */
+    // DQ (8/30/2008): This is temporary, we should review how we want to name the files 
+    // generated in the unparse phase of processing a binary.
+    file->dump_all(true, ".dump");
+
     /* Generate file name for uparser output */
     // DQ (8/30/2008): This is temporary, we should review how we want to name the files 
     // generated in the unparse phase of processing a binary.
@@ -371,12 +408,6 @@ Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
 
     /* Unparse the file to create a new executable */
     SgAsmExecutableFileFormat::unparseBinaryFormat(output_name, file);
-
-    /* Genenerate an ASCII dump of the entire file contents. This dump reflects the state of the AST after any modifications.
-     * Note that certain normalizations (such as section reallocation) might affect what is dumped. */
-    // DQ (8/30/2008): This is temporary, we should review how we want to name the files 
-    // generated in the unparse phase of processing a binary.
-    file->dump_all(true, ".dump");
 #endif
 }
 
@@ -806,6 +837,16 @@ resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp
              {
                outputFilename += ".s";
              }
+
+       // DQ (4/2/2011): Java output files must have the same name as the class and so all we can do is use the same name but put the generated file into the compile tree.
+       // Note that if the generated file is put into the source tree it will overwite the original source file.
+          if (file->get_Java_only() == true)
+             {
+               outputFilename = file->get_sourceFileNameWithoutPath();
+
+               printf ("Warning, output file name of generated Java code is same as input file name but must be but into a separate directory. \n");
+               ROSE_ASSERT(false);
+             }
         }
        else
         {
@@ -815,6 +856,9 @@ resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp
   // Set the output file name, since this may be called before unparse().
      file->set_unparse_output_filename(outputFilename);
      ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
+
+     printf ("Exiting output file name of generated Java code is same as input file name but must be but into a separate directory. \n");
+     ROSE_ASSERT(false);
 
   // Name the file with a separate extension.
      outputFilename += ".resetSourcePosition";
@@ -1012,7 +1056,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
 #endif
                   }
              }
-        }
+        }  // end if locatedNode
 
      ROSE_ASSERT (fileNameOfStatementsToUnparse.size() > 0);
 
@@ -1290,20 +1334,6 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                          break;
                        }
 
-                    case V_SgInitializedName:
-                       {
-                      // DQ (8/6/2007): This should just unparse the name (fully qualified if required).
-                      // QY: not sure how to implement this
-                      // DQ (7/23/2004): This should unparse as a declaration (type and name with initializer).
-                         const SgInitializedName* initializedName = isSgInitializedName(astNode);
-                      // roseUnparser.get_output_stream() << initializedName->get_qualified_name().str();
-                         SgScopeStatement* scope = initializedName->get_scope();
-                         if (isSgGlobal(scope) == NULL && scope->containsOnlyDeclarations() == true)
-                              roseUnparser.get_output_stream() << roseUnparser.u_exprStmt->trimGlobalScopeQualifier ( scope->get_qualified_name().getString() ) << "::";
-                         roseUnparser.get_output_stream() << initializedName->get_name().str();
-                         break;
-                       }
-
                     case V_Sg_File_Info:
                        {
                       // DQ (8/5/2007): This is implemented above as a special case!
@@ -1347,6 +1377,21 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                          ROSE_ABORT();
                 }
              }
+             // Liao 11/5/2010 move out of SgSupport
+             if (isSgInitializedName(astNode)) //       case V_SgInitializedName:
+              {
+             // DQ (8/6/2007): This should just unparse the name (fully qualified if required).
+             // QY: not sure how to implement this
+             // DQ (7/23/2004): This should unparse as a declaration (type and name with initializer).
+                const SgInitializedName* initializedName = isSgInitializedName(astNode);
+             // roseUnparser.get_output_stream() << initializedName->get_qualified_name().str();
+                SgScopeStatement* scope = initializedName->get_scope();
+                if (isSgGlobal(scope) == NULL && scope->containsOnlyDeclarations() == true)
+                     roseUnparser.get_output_stream() << roseUnparser.u_exprStmt->trimGlobalScopeQualifier ( scope->get_qualified_name().getString() ) << "::";
+                roseUnparser.get_output_stream() << initializedName->get_name().str();
+                //break;
+              }
+
 
        // Liao, 8/28/2009, support for SgLocatedNodeSupport
           if (isSgLocatedNodeSupport(astNode) !=  NULL) 
@@ -1473,7 +1518,6 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
   // file instead of the original source file.
      if (file->get_unparse_output_filename().empty() == true)
         {
-
           string outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
 
           if (file->get_binary_only() == true)
@@ -1481,6 +1525,23 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
             // outputFilename = file->get_sourceFileNameWithoutPath();
                outputFilename += ".s";
              }
+            else 
+             {
+            // DQ (4/2/2011): Added Java support which requires that the filename for Java match the input file.
+               if (file->get_Java_only() == true)
+                  {
+                    outputFilename = file->get_sourceFileNameWithoutPath();
+                  }
+                 else
+                  {
+                    if (file->get_Cuda_only() == true) // Liao 12/29/2010, generate cuda source files
+                       {
+                         outputFilename = StringUtility::stripFileSuffixFromFileName (outputFilename);
+                         outputFilename += ".cu";
+                       }
+                  }
+             }
+
 
           file->set_unparse_output_filename(outputFilename);
           ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
@@ -1491,7 +1552,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
         {
        // MS: commented out the following output
        // if ( file.get_verbose() == true )
-	    // printf ("### ROSE::skip_unparse == true: Skipping all source code generation by ROSE generated preprocessor! \n");
+            // printf ("### ROSE::skip_unparse == true: Skipping all source code generation by ROSE generated preprocessor! \n");
         }
        else
         {

@@ -5,9 +5,15 @@ $DATA_TYPE
 $CLASSNAME::get_$DATA () const
    {
      assert (this != NULL);
-     if (get_$WRAP() == 0)
-         return  0;
-     return dynamic_cast<$DATA_TYPE>(get_$WRAP()->get_$WDATA());
+     if (get_$WRAP() == NULL)
+          return  NULL;
+
+  // DQ (4/8/2011): This is an issure reported by Insure++ (READ_NULL).
+  // When inputDerivedClassPointer is NULL the cast is a read of the NULL pointer.
+  // So to fix this we return NULL directly when the input is NULL and avoid the 
+  // dynamic_cast in this case.  This is likely a performance improvement as well.
+  // return dynamic_cast<$DATA_TYPE>(get_$WRAP()->get_$WDATA());
+     return (get_$WRAP()->get_$WDATA() == NULL) ? NULL : dynamic_cast<$DATA_TYPE>(get_$WRAP()->get_$WDATA());
    }
 
 void

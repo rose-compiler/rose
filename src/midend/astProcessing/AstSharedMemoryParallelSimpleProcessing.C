@@ -213,7 +213,7 @@ void AstSharedMemoryParallelSimpleProcessing::traverseInParallel(SgNode *basenod
         pthread_create(&threads[i], NULL,
                 parallelSimpleProcessingThread,
                 new AstSharedMemoryParallelSimpleThreadArgs(parallelTraversals[i], basenode, treeTraverseOrder));
-	//	std::cerr << " starting " << i << " thread. " << std::endl;
+        //      std::cerr << " starting " << i << " thread. " << std::endl;
     }
 
     // Main "event loop" for the "master" thread: Simply wait for the
@@ -229,7 +229,7 @@ void AstSharedMemoryParallelSimpleProcessing::traverseInParallel(SgNode *basenod
     void *resultDummy;
     for (i = 0; i < numberOfThreads; i++)
         pthread_join(threads[i], &resultDummy);
-    delete threads;
+    delete [] threads;
     // Done!
 }
 
@@ -364,6 +364,6 @@ void AstSharedMemoryParallelPrePostProcessing::traverseInParallel(SgNode *baseno
     void *resultDummy;
     for (i = 0; i < numberOfThreads; i++)
         pthread_join(threads[i], &resultDummy);
-    delete threads;
+    delete [] threads;
     // Done!
 }

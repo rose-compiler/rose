@@ -364,7 +364,7 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         SgAsmGenericSection *section = p_sections->get_sections()[i];
         char label[1024];
         sprintf(label, "section[%zu]", i);
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, label, section->get_id(), section->get_name()->c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, label, section->get_id(), section->get_name()->get_string(true).c_str());
     }
     
     fprintf(f, "%s%-*s = %zu entries\n", p, w, "DLL.size", p_dlls->get_dlls().size());

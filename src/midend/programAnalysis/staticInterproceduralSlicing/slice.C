@@ -21,16 +21,16 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	SgProject *project = frontend(argc, argv);
-	SlicingInfo si=SlicingInfo();
-	si.traverse(project, preorder);
+        SgProject *project = frontend(argc, argv);
+        SlicingInfo si=SlicingInfo();
+        si.traverse(project, preorder);
 
-	SystemDependenceGraph * sdg=new SystemDependenceGraph();
-	sdg->parseProject(project);
+        SystemDependenceGraph * sdg=new SystemDependenceGraph();
+        sdg->parseProject(project);
 
-	CreateSliceSet sliceSet(sdg,si.getSlicingTargets());
-	CreateSlice cs(sliceSet.computeSliceSet());
+        CreateSliceSet sliceSet(sdg,si.getSlicingTargets());
+        CreateSlice cs(sliceSet.computeSliceSet());
 
-	cs.traverse(project);
-	project->unparse();	
+        cs.traverse(project);
+        project->unparse();     
 }

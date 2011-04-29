@@ -450,7 +450,7 @@ bool Unparse_MOD_SAGE::isUnaryPostfixOperator(SgExpression* expr)
                     if (func_name.getString() == "operator++" || func_name.getString() == "operator--")
                        {
                          SgInitializedNamePtrList argList = mfunc_decl->get_args();
-	                   // postfix operators have one argument (0), prefix operators have none ()
+                           // postfix operators have one argument (0), prefix operators have none ()
                          if (argList.size() == 1)
                             return true;
                        }
@@ -579,7 +579,7 @@ int GetOperatorVariant(SgExpression* expr) {
     else if (func_name == "operator->") return V_SgArrowExp;
     else if (func_name == "operator.") return V_SgDotExp;
     else if (func_name.find("operator") == string::npos ||
-	     func_name == "operator()") return V_SgFunctionCallExp;
+             func_name == "operator()") return V_SgFunctionCallExp;
     else if (func_name.find("operator") != string::npos) return V_SgCastExp;
     else
      {
@@ -671,6 +671,7 @@ int GetPrecedence(int variant)
           case V_SgNotOp:            return 15;
           case V_SgPointerDerefExp:
           case V_SgAddressOfOp:
+          case V_SgUpcLocalsizeofExpression:   // \pp 03/03/11
           case V_SgSizeOfOp:         return 15;
           case V_SgFunctionCallExp:  return 16;
           case V_SgPntrArrRefExp:    return 16;
@@ -718,6 +719,12 @@ int GetPrecedence(int variant)
     // TV (04/26/2010): CUDA nodes
           case V_SgCudaKernelExecConfig: return 0;
           case V_SgCudaKernelCallExp:    return 0;
+
+    // TV (04/24/2011): Add FunctionRefExp to avoid the following Warning. It occurs
+    //        after my modification for a more generic support of the original
+    //        expression tree field (especially the case of FunctionRefExp used for
+    //        function pointers initialisation).
+          case V_SgFunctionRefExp:    return 0;
 #if 0
        // Template
           case V_:              return 0;
@@ -826,7 +833,8 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(expr != NULL);
 
   // DQ (9/29/2007): Fortran subscript expressions should not be parenthesized, I think.
-     if (isSgSubscriptExpression(expr) != NULL)
+  // DXN (02/11/2011): or dot expressions, co-array expressions, or SgPntrArrRefExp
+     if (isSgSubscriptExpression(expr) != NULL || isSgDotExp(expr) || isSgCAFCoExpression(expr) || isSgPntrArrRefExp(expr) )
         {
           return false;
         }
@@ -907,6 +915,20 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
          return false;
      }
 #endif
+
+     // TV (04/25/11): I think this is not needed anymore as original expression are unparse directly instead of their parents
+/*
+     // Liao 11/5/2010,another tricky case: the current expression is the original expression tree of its parent
+     // we should not introduce additional ( ) when switching from current SgCastExp to its original SgCastExp
+     // This is true at least for SgCastExp
+     if (SgCastExp * cast_p = isSgCastExp(parentExpr)) 
+       if (cast_p->get_originalExpressionTree() == expr ) 
+         return false;
+*/
+
+     // TV (04/24/11): As compiler generated cast are not unparsed they don't need additional parenthesis.
+     if (isSgCastExp(expr) && expr->get_startOfConstruct()->isCompilerGenerated())
+       return false;     
 #if 0
   // DQ (8/8/2006): Changed as a temporary test!
   // This will need to be fixed for test2006_115.C (when run with the inliner) and needs 
@@ -1158,14 +1180,14 @@ bool Unparse_MOD_SAGE::RemovePareninExprList(SgExprListExp* expr_list) {
     if (func_call != NULL) {
       SgDotExp* dot_exp = isSgDotExp(func_call->get_function());
       if (dot_exp != NULL) {
-	SgBinaryOp* binary_op = isSgBinaryOp(dot_exp);
-	if (binary_op != NULL) {
-	  //check if there is only one expression in the list and this expression
-	  //contains the member operator() overloaded function
-	  if (i == expr_list->get_expressions().end() && 
-	      isBinaryParenOperator(binary_op->get_rhs_operand()))
-	    return true;
-	}
+        SgBinaryOp* binary_op = isSgBinaryOp(dot_exp);
+        if (binary_op != NULL) {
+          //check if there is only one expression in the list and this expression
+          //contains the member operator() overloaded function
+          if (i == expr_list->get_expressions().end() && 
+              isBinaryParenOperator(binary_op->get_rhs_operand()))
+            return true;
+        }
       }
     }
   }

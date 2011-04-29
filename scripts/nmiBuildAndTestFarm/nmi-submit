@@ -2,7 +2,10 @@
 
 require 'optparse'
 
-NmiDefaultSubmitHost = 'heller@nmi-s005.cs.wisc.edu'
+# driscoll6 10/22/2010 nmi-s005 is a development machine
+# NmiDefaultSubmitHost = 'heller@nmi-s005.cs.wisc.edu'
+NmiDefaultSubmitHost = 'heller@nmi-s003.cs.wisc.edu'
+
 SummaryWidth = 32
 
 

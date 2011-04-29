@@ -864,7 +864,7 @@ ResetParentPointers::evaluateInheritedAttribute (
 #if STRICT_ERROR_CHECKING
                  // Only SgProject and SgFile can be root nodes after EDG->SAGE translation
                     printf ("Warning: only SgProject and SgFile can be root nodes after EDG->SAGE translation \n");
-	                 ROSE_ABORT();
+                         ROSE_ABORT();
 #endif
                   }
              }
@@ -1032,10 +1032,18 @@ ResetParentPointers::evaluateInheritedAttribute (
                       // This can sometimes have a null parent (test2005_67.C) (for non-static member)
                          if (previousInitializedName->get_parent() == NULL)
                             {
-                              printf ("initializedName = %p previousInitializedName = %p get_name() = %s \n",
+                              printf ("Warning (previousInitializedName->get_parent() == NULL): initializedName = %p previousInitializedName = %p get_name() = %s \n",
                                       initializedName,previousInitializedName,previousInitializedName->get_name().str());
+                              ROSE_ASSERT(previousInitializedName->get_scope() != NULL);
+                              printf ("--- previousInitializedName->get_scope() = %p = %s \n",
+                                      previousInitializedName->get_scope(),previousInitializedName->get_scope()->class_name().c_str());
                             }
-                         ROSE_ASSERT(previousInitializedName->get_parent() != NULL);
+                      // DQ (2/12/2011): Commented out to support generation of graph to debug test2011_08.C, this test codes 
+                      // demonstrates that the SgInitializedName build first might only be to support a symbol and not have a
+                      // proper parent.
+                      // ROSE_ASSERT(previousInitializedName->get_parent() != NULL);
+                         if (previousInitializedName->get_prev_decl_item() != NULL)
+                              ROSE_ASSERT(previousInitializedName->get_parent() != NULL);
                        }
 
 #if STRICT_ERROR_CHECKING
@@ -1578,7 +1586,7 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
                     ROSE_ASSERT(support->get_file_info()->get_parent() != NULL);
                     break;
                   }
-
+#if 0 // Liao 11/5/2010, this should be handled by SgLocatedNode now
                case V_SgInitializedName:
                   {
                     SgInitializedName* initializedName = isSgInitializedName(support);
@@ -1593,7 +1601,7 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
                     ROSE_ASSERT(support->get_file_info()->get_parent() != NULL);
                     break;
                   }
-
+#endif
             // case V_SgFile:
                case V_SgSourceFile:
                case V_SgBinaryComposite:
@@ -1932,7 +1940,7 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                   if (locatedNode->get_parent()==NULL) 
                   {
                     SageInterface::dumpInfo(locatedNode,"ResetParentPointersInMemoryPool::visit() error: found a func dec without defining declaration and its non-defining declaration has no scope info. ");
-		    ROSE_ASSERT(locatedNode->get_parent() != NULL);
+                    ROSE_ASSERT(locatedNode->get_parent() != NULL);
                   }
                     break;
                   }
@@ -1968,6 +1976,7 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                     break;
                   }
 #endif
+               case V_SgInitializedName:
                default:
                   {
 #if 0
@@ -2034,7 +2043,7 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                   }
 
                case V_SgStorageModifier:
-               case V_SgInitializedName:
+            //   case V_SgInitializedName:
                case V_SgSymbolTable:
             // case V_SgFile:
                case V_SgSourceFile:

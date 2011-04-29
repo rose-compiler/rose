@@ -314,10 +314,10 @@ public:
   /** @brief Create a new property */
 
   enumPropertyAnn(const parserID * name,
-		  Direction direction,
-		  bool enforce_weak_updates,
-		  const parserID * default_name,
-		  enumvalue_list * lowest_values,
+                  Direction direction,
+                  bool enforce_weak_updates,
+                  const parserID * default_name,
+                  enumvalue_list * lowest_values,
                   parserid_list * diagnostic_values=NULL);
 
   /** @brief Clear the analysis information
@@ -356,7 +356,7 @@ public:
    * This version is for meeting individual elements. */
 
   enumValueAnn * meet(enumValueAnn * one,
-		      enumValueAnn * two);
+                      enumValueAnn * two);
 
   /** @brief Set meet function
    *
@@ -372,7 +372,7 @@ public:
    * special case that if right is top, then return false. */
 
   bool at_least(enumValueAnn * left,
-		enumValueAnn * right);
+                enumValueAnn * right);
 
   /** @brief At-most function
    *
@@ -404,9 +404,9 @@ public:
    *  Test a particular property condition between two variables. */
 #ifdef __TEST
   bool test(Broadway::Operator op, Broadway::FlowSensitivity flow_sensitivity,
-	    Location * where,
-	    pointerValue & lhs, std::string & lhs_name,
-	    pointerValue & rhs, std::string & rhs_name);
+            Location * where,
+            pointerValue & lhs, std::string & lhs_name,
+            pointerValue & rhs, std::string & rhs_name);
 
   /** @brief Test one variable
    *
@@ -414,16 +414,16 @@ public:
    *  value. */
 
   bool test(Broadway::Operator op, Broadway::FlowSensitivity flow_sensitivity,
-	    Location * where,
-	    pointerValue & lhs, std::string & lhs_name,
-	    enumvalue_set rhs_value_set);
+            Location * where,
+            pointerValue & lhs, std::string & lhs_name,
+            enumvalue_set rhs_value_set);
 
   /** @brief Property test
    *
    *  Apply the specified test operator to the two given property values. */
 
   bool test(Broadway::Operator op,
-	    enumvalue_set lhs_value_set, enumvalue_set rhs_value_set);
+            enumvalue_set lhs_value_set, enumvalue_set rhs_value_set);
 
   /** @brief Lookup flow-sensitive "now" value
    *
@@ -431,7 +431,7 @@ public:
 
 #ifdef __MEMORYACCESS
   enumvalue_set lookup_now_value(memoryBlock * property_block,
-				  memoryAccess * def_or_use);
+                                  memoryAccess * def_or_use);
 #endif
 
   /** @brief Set flow-sensitive "now" value
@@ -441,10 +441,10 @@ public:
 
 #ifdef __MEMORYACCESS
   bool update_now_value(Location * where,
-			memoryBlock * property_block,
-			memoryAccess * def_or_use,
-			enumvalue_set value,
-			bool & lost_information);
+                        memoryBlock * property_block,
+                        memoryAccess * def_or_use,
+                        enumvalue_set value,
+                        bool & lost_information);
 #endif
 
   /** @brief Set flow-insensitive must "ever" value
@@ -481,10 +481,10 @@ public:
 
 #ifdef __MEMORYBLOCK
   enumvalue_set construct_now_value(Location * where,
-				    pointerValue & variable,
-				    std::string & variable_name,
-				    bool & lost_information,
-				    memoryblock_set & complicit_property_blocks);
+                                    pointerValue & variable,
+                                    std::string & variable_name,
+                                    bool & lost_information,
+                                    memoryblock_set & complicit_property_blocks);
 #endif
 
   /** @brief Construct flow-sensitive "now" value
@@ -495,8 +495,8 @@ public:
 
 #ifdef __MEMORYBLOCK
   enumvalue_set construct_now_value(Location * where,
-				    memoryBlock * property_block,
-				    bool default_to_top);
+                                    memoryBlock * property_block,
+                                    bool default_to_top);
 #endif
 
   /** @brief Construct flow-sensitive "after now" value
@@ -545,12 +545,12 @@ public:
 #ifdef __MEMORYBLOCK
   enumvalue_set compute_next(Location * where,
                              ruleAnn * rule,
-			     exprAnn * expr,
-			     pointerValue & right,
-			     std::string & right_name,
-			     bool & rhs_lost_information,
-			     memoryblock_set & complicit_property_blocks,
-			     enumvalue_set & save_ever_values);
+                             exprAnn * expr,
+                             pointerValue & right,
+                             std::string & right_name,
+                             bool & rhs_lost_information,
+                             memoryblock_set & complicit_property_blocks,
+                             enumvalue_set & save_ever_values);
 #endif
 
   /** @brief Change state
@@ -562,18 +562,18 @@ public:
 
 #ifdef __MEMORYBLOCK
   void apply_next(Location * where,
-		  stmtLocation * parameter_callsite,
-		  ruleAnn * rule,
-		  enumPropertyExprAnn * expr,
-		  pointerValue & left,
-		  std::string & left_name,
-		  pointerValue & right,
-		  enumvalue_set new_value,
-		  bool rhs_lost_information,
-		  bool rhs_changed, // TB_unify
-		  memoryblock_set & complicit_property_blocks,
-		  enumvalue_set ever_values,
-		  memoryblock_set & changes);
+                  stmtLocation * parameter_callsite,
+                  ruleAnn * rule,
+                  enumPropertyExprAnn * expr,
+                  pointerValue & left,
+                  std::string & left_name,
+                  pointerValue & right,
+                  enumvalue_set new_value,
+                  bool rhs_lost_information,
+                  bool rhs_changed, // TB_unify
+                  memoryblock_set & complicit_property_blocks,
+                  enumvalue_set ever_values,
+                  memoryblock_set & changes);
 #endif
   /** @brief Apply merge
    *
@@ -584,7 +584,7 @@ public:
 #ifdef __MEMORYBLOCK
   void apply_merge(Location * where,
                    memoryBlock * property_block, memoryuse_list & phi_uses,
-		   memoryblock_set & changes);
+                   memoryblock_set & changes);
 #endif
 
   /** @brief Apply assignment
@@ -595,10 +595,10 @@ public:
 
 #ifdef __MEMORYBLOCK
   void apply_assignment(Location * where,
-			stmtLocation * parameter_callsite,
-			pointerValue & left, pointerValue & right,
-			bool is_parameter,
-			memoryblock_set & changes);
+                        stmtLocation * parameter_callsite,
+                        pointerValue & left, pointerValue & right,
+                        bool is_parameter,
+                        memoryblock_set & changes);
 #endif
   /** @brief Self assignment
    *
@@ -609,8 +609,8 @@ public:
 #ifdef __MEMORYBLOCK
   void self_assignment(Location * source,
                        Location * target,
-		       memoryBlock * property_block, 
-		       memoryblock_set & changes,
+                       memoryBlock * property_block, 
+                       memoryblock_set & changes,
            bool is_input);
 #endif
 
@@ -622,7 +622,7 @@ public:
 #ifdef __MEMORYBLOCK
   void conservative_procedure_call(stmtLocation * current,
                                    pointerValue & reachable,
-				   memoryblock_set & changes);
+                                   memoryblock_set & changes);
 #endif
 
   /** @brief Report
@@ -631,10 +631,10 @@ public:
    * print out the results. */
 
   void report(std::ostream & out,
-	      bool is_error, 
-	      procLocation * where,
-	      Broadway::FlowSensitivity flow_sensitivity,
-	      pointerValue & lhs, std::string & lhs_name);
+              bool is_error, 
+              procLocation * where,
+              Broadway::FlowSensitivity flow_sensitivity,
+              pointerValue & lhs, std::string & lhs_name);
 
 #endif /* __TEST */
   /** @brief Output operator */
@@ -651,7 +651,7 @@ public:
 
 #ifdef __MEMORYBLOCK
   void precision_analysis(memoryModel * memory_model,
-			  memoryblock_set & flow_sensitive);
+                          memoryblock_set & flow_sensitive);
 #endif
 
   /** @brief NEW Precision analysis
@@ -749,20 +749,20 @@ private:
 #ifdef __MEMORYBLOCK
   void track_destructive_assignments(Analyzer * analyzer,
                                      Location * where,
-				     memoryBlock * block,
-				     bool disallow_context_sensitivity,
-				     block_loc_set & already_seen,
-				     block_loc_set seen_stack,
-				     memoryblock_set & made_flow_sensitive,
-				     memoryblock_set & made_fs_destructive,
-				     block_loc_set & made_context_sensitive,
-				     block_proc_set & eval_cs_seen_destructive,
-				     block_proc_set & eval_cs_seen_complicit,
-				     block_proc_set & eval_made_cs,
-				     bool & make_chain_flow_sensitive,
-				     bool & make_chain_context_sensitive,
-				     memoryblock_vector & chain,
-				     std::string & indent);
+                                     memoryBlock * block,
+                                     bool disallow_context_sensitivity,
+                                     block_loc_set & already_seen,
+                                     block_loc_set seen_stack,
+                                     memoryblock_set & made_flow_sensitive,
+                                     memoryblock_set & made_fs_destructive,
+                                     block_loc_set & made_context_sensitive,
+                                     block_proc_set & eval_cs_seen_destructive,
+                                     block_proc_set & eval_cs_seen_complicit,
+                                     block_proc_set & eval_made_cs,
+                                     bool & make_chain_flow_sensitive,
+                                     bool & make_chain_context_sensitive,
+                                     memoryblock_vector & chain,
+                                     std::string & indent);
 #endif
   /** @brief Record tested objects
    *
@@ -773,8 +773,8 @@ private:
 #ifdef __MEMORYBLOCK
   void record_tested_objects(Location * where,
                              pointerValue & ptr,
-			     enumvalue_set & value_set,
-			     memoryblock_set & complicit_property_blocks);
+                             enumvalue_set & value_set,
+                             memoryblock_set & complicit_property_blocks);
 #endif
   /** @brief Trace object
    *
@@ -782,9 +782,9 @@ private:
 
 #ifdef __MEMORYBLOCK
   void trace_object(std::ostream & out,
-		    memoryBlock * property_block,
-		    memoryblock_set & already_seen,
-		    std::string & indent);
+                    memoryBlock * property_block,
+                    memoryblock_set & already_seen,
+                    std::string & indent);
 #endif
   /** @brief Evaluate a procedure for context sensitivity
    *
@@ -793,14 +793,14 @@ private:
 
 #ifdef __MEMORYBLOCK
   bool evaluate_context_sensitivity(Analyzer * analyzer,
-				    Location * target,
-				    memoryBlock * block,
-				    procLocation * procloc,
+                                    Location * target,
+                                    memoryBlock * block,
+                                    procLocation * procloc,
                                     bool destructive,
-				    block_proc_set & eval_cs_seen_destructive,
-				    block_proc_set & eval_cs_seen_complicit,
+                                    block_proc_set & eval_cs_seen_destructive,
+                                    block_proc_set & eval_cs_seen_complicit,
                                     block_proc_set & evaled_cs,
-				    std::string & indent);
+                                    std::string & indent);
 #endif
   /** @brief Validate context sensitivity for property
    *
@@ -808,9 +808,9 @@ private:
 
 #ifdef __MEMORYBLOCK
   bool validate_property_cs(memoryBlock * block,
-			    const callsite_objects_map & assignments,
+                            const callsite_objects_map & assignments,
                             procedureInfo *procedure, // TB
-			    std::string & indent);
+                            std::string & indent);
 #endif
     /** @brief Validate context sensitivity for multiplicity
    *
@@ -818,9 +818,9 @@ private:
 
 #ifdef __MEMORYBLOCK
   bool validate_multiplicity_cs(memoryBlock * block,
-				const callsite_objects_map & assignments,
+                                const callsite_objects_map & assignments,
                                 procedureInfo *procedure, // TB
-				std::string & indent);
+                                std::string & indent);
 #endif
   /** @brief Validate context sensitivity for regular pointer variable
    *
@@ -830,7 +830,7 @@ private:
   bool validate_pointer_cs(memoryBlock * block,
                            const callsite_objects_map & assignments,
                            procedureInfo *procedure, // TB
-			   std::string & indent);
+                           std::string & indent);
 #endif
   /** @brief Validate pointer flow sensitivity
    *
@@ -840,7 +840,7 @@ private:
 #ifdef __MEMORYBLOCK
   bool validate_pointer_fs(memoryBlock * block,
                            stmtLocation * where,
-			   std::string & indent);
+                           std::string & indent);
 #endif
   /** @brief Is location reachable?
    *
@@ -866,8 +866,8 @@ private:
 
 #ifdef __PROCEDUREINFO
   bool add_context_sensitive_proc(procedureInfo * info,
-				  procedureinfo_set & already_seen,
-				  procedureinfo_set & make_cs);
+                                  procedureinfo_set & already_seen,
+                                  procedureinfo_set & make_cs);
 #endif
 };
 

@@ -1,7 +1,13 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Add Projects that are associated with capabilities that belong to ROSE here
-SUBDIRS = roseHPCT outliner intelPin binaryAnalysis
+SUBDIRS = outliner intelPin binaryAnalysis
+
+# TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
+# gradually enable these tests at a later stage if necessary.
+if !USING_XTENSA_BACKEND_COMPILER
+SUBDIRS += roseHPCT 
+endif
 
 INCLUDES = $(ROSE_INCLUDES)
 
@@ -785,7 +791,6 @@ generatedCodeExamples = \
    debuggingSourceCodePositionInformation.out \
    commandlineProcessing.out \
    charmSupport.out \
-   codeCoverage.out \
    callGraph.pdf \
    liveness.pdf \
    classHierarchyGraph.pdf \
@@ -819,6 +824,12 @@ generatedCodeExamples = \
    rose_inputCode_VolatileTypeModifier.C \
    inputCode_dwarfAnalysis.pdf \
    inputCode_dwarfAnalysis.out
+
+# TOO (2/17/11): Errors with Tensilica's Xtensa compilers. 
+if !USING_XTENSA_BACKEND_COMPILER
+generatedCodeExamples += \
+   codeCoverage.out
+endif
 
 # #####################################
 # Output file generation rules
@@ -1187,10 +1198,16 @@ codeCoverage.out: codeCoverage $(srcdir)/inputCode_ExampleCodeCoverage.C
 	@echo "Generate executable from compilation of input code (codeCoverage) ..."
 #	While in development just run without building codeCoverage.out (and touch codeCoverage.out to allow makefile to work)
 	./codeCoverage $(ROSE_FLAGS) -c $(srcdir)/inputCode_ExampleCodeCoverage.C
+# TOO (2/18/2011): error with Tensilica's Xtensa compilers:
+# "/usr/bin/ld: inputCode_ExampleCodeCoverage.o: Relocations in generic ELF (EM: 8)"
+if !ALTERNATE_BACKEND_C_CROSS_COMPILER
 #	link the input file with the coverageCodeFromShmuel.o file (written by Shmuel, tool specific)
 	$(CXX) -o ExampleCodeCoverage_GeneratedBinary inputCode_ExampleCodeCoverage.o coverageCodeFromShmuel.o
 #	Run the input code (collect any output in codeCoverage.out)
 	./ExampleCodeCoverage_GeneratedBinary > codeCoverage.out
+else
+    @echo "Warning: skipping linking and execution of cross-compiled inputCode_ExampleCodeCoverage.o"
+endif
 	split -80 $(srcdir)/codeCoverage.C codeCoverage.
 
 callGraph.pdf: buildCallGraph
@@ -1473,7 +1490,11 @@ docs: $(noinst_PROGRAMS) $(bin_PROGRAMS) $(generatedCodeExamples)
 	@echo ""
 #	DQ (5/20/2007): Added to support Rich's work with outlining and the HPC Toolkit
 	cd outliner; $(MAKE) docs
+# TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
+# gradually enable these tests at a later stage if necessary.
+if !USING_XTENSA_BACKEND_COMPILER
 	cd roseHPCT; $(MAKE) docs
+endif
 	cd intelPin; $(MAKE) docs
 	@echo "******************************************************************"
 	@echo "Generated required documentation for tutorial (make docs rule) ..."

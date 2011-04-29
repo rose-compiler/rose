@@ -5,15 +5,8 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-/* Like get_string() except it returns a C NUL-terminated string */
-const char *
-SgAsmGenericString::c_str() const 
-{
-    return get_string().c_str();
-}
-
 std::string
-SgAsmGenericString::get_string() const
+SgAsmGenericString::get_string(bool escape) const
 {
     ROSE_ASSERT(!"should have been pure virtual if ROSETTA supported that.");
     abort();
@@ -56,8 +49,10 @@ SgAsmBasicString::ctor()
 
 /* Override ROSETTA because generated code doesn't match virtual signature in base class */
 std::string
-SgAsmBasicString::get_string() const
+SgAsmBasicString::get_string(bool escape) const
 {
+    if (escape)
+        return escapeString(p_string);
     return p_string;
 }
 void
@@ -85,7 +80,7 @@ SgAsmBasicString::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%sBasicString.", prefix);
     }
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "value", get_string().c_str());
+    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "value", get_string(true).c_str());
 }
     
 /* Stored String constructors/destructor */
@@ -120,9 +115,12 @@ SgAsmStoredString::~SgAsmStoredString()
 
 /** Returns the std::string associated with the SgAsmStoredString. */
 std::string
-SgAsmStoredString::get_string() const 
+SgAsmStoredString::get_string(bool escape) const 
 {
-    return get_storage()->get_string();
+    std::string retval = get_storage()->get_string();
+    if (escape)
+        retval = escapeString(retval);
+    return retval;
 }
 
 /** Returns the offset into the string table where the string is allocated. If the string is not allocated then this call
@@ -202,7 +200,9 @@ SgAsmStringStorage::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s =", p, w, "sec,offset,val");
     SgAsmGenericStrtab *strtab = get_strtab();
     if (strtab) {
-        fprintf(f, " section [%d] \"%s\"", strtab->get_container()->get_id(), strtab->get_container()->get_name()->c_str());
+        fprintf(f, " section [%d] \"%s\"",
+                strtab->get_container()->get_id(),
+                strtab->get_container()->get_name()->get_string(true).c_str());
     } else {
         fputs(" no section", f);
     }
@@ -211,7 +211,7 @@ SgAsmStringStorage::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         fprintf(f, ", offset 0x%08"PRIx64" (%"PRIu64")", get_offset(), get_offset());
     }
-    fprintf(f, ", \"%s\"\n", get_string().c_str());
+    fprintf(f, ", \"%s\"\n", escapeString(get_string()).c_str());
 }
 
 /** Constructs an SgAsmStoredString from an offset into this string table. */
@@ -298,7 +298,7 @@ SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
 
     /* Remove the empty string from the free list */
     if (p_dont_free)
-	get_freelist().erase(p_dont_free->get_offset(), p_dont_free->get_string().size()+1);
+        get_freelist().erase(p_dont_free->get_offset(), p_dont_free->get_string().size()+1);
 }
 
 /** Allocates storage for strings that have been modified but not allocated. We first try to fit unallocated strings into free
@@ -384,8 +384,6 @@ SgAsmGenericStrtab::reallocate(bool shrink)
         /* The string table isn't large enough, so make it larger by extending the section that contains the table. The
          * containing section's "set_size" method should add the new space to the string table's free list. If our recursion
          * level is more than two calls deep then something went horribly wrong! */
-        fprintf(stderr, "SgAsmElfStrtab::reallocate(): need to extend [%d] \"%s\" by %"PRIu64" byte%s\n", 
-                container->get_id(), container->get_name()->c_str(), extend_size, 1==extend_size?"":"s");
         static bool recursive=false;
         ROSE_ASSERT(!recursive);
         recursive = reallocated = true;
@@ -438,7 +436,8 @@ SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx) const
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     if (container) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "container", container->get_id(), container->get_name()->c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "container",
+                container->get_id(), container->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = <null>\n", p, w, "container");
     }

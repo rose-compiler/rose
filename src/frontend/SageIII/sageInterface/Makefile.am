@@ -4,10 +4,13 @@ INCLUDES = $(ROSE_INCLUDES)
 
 noinst_LTLIBRARIES = libsageInterface.la
 libsageInterface_la_SOURCES      = \
+     sageInterface.h \
      sageInterface.C \
      sageInterface_type.C \
      generateUniqueName.C \
+     sageBuilder.h \
      sageBuilder.C \
+     sageBuilder_fortran.C \
      abiStuff.C
 #     highLevelInterface.C
 
@@ -31,11 +34,11 @@ include_HEADERS = \
 #     highLevelInterface.h
 #     loopHelpers.h 
 
-if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+# if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    include_HEADERS += \
      sageInterfaceAsm.h \
      sageBuilderAsm.h 
-endif
+# endif
 
 
 #libsageInterface.la: $(libastFixup_la_OBJECTS) $(libastFixup_la_DEPENDENCIES)

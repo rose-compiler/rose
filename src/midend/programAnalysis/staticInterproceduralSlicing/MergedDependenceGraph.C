@@ -21,44 +21,44 @@ DependenceNode *MergedDependenceGraph::_importNode(DependenceNode * node)
     {
         return createNode(node);
     }*/
-		return NULL;
+                return NULL;
 }
 
 void MergedDependenceGraph::mergeGraph(DependenceGraph * graph)
 {
-	set < SimpleDirectedGraphNode * >nodes = graph->getNodes();
+        set < SimpleDirectedGraphNode * >nodes = graph->getNodes();
         // for all nodes in this graph...
-	set < SimpleDirectedGraphNode * >::iterator i;
-	DependenceNode * srcDepParent;
-	SgNode * parentSgNode,*childSgNode;
-	DependenceNode::NodeType parentType,childType;
-	for (i = nodes.begin(); i != nodes.end(); i++)
-	{
-		// get the parent in the source graph
-		srcDepParent = dynamic_cast < DependenceNode * >(*i);
-		parentSgNode= srcDepParent->getSgNode();
-		parentType=srcDepParent->getType();
-//		cout <<"Merging ParentNode: "<<parentSgNode->unparseToString()<<endl;
-		
-		set < SimpleDirectedGraphNode * >::iterator j;
-		set < SimpleDirectedGraphNode * > srcDepChildren = srcDepParent->getSuccessors(); 
-		for (j = srcDepChildren.begin(); j != srcDepChildren.end(); j++)
-		{
- 		        // get the child node in the src-graph	
-			DependenceNode * srcDepChild=dynamic_cast < DependenceNode * >(*j);
-			childSgNode=srcDepChild->getSgNode();
-			childType=srcDepChild->getType();
-//			cout <<"Merging ChildNode: "<<childSgNode->unparseToString()<<endl;
-			// get all edges between parent and child
-			set < EdgeType > edgeTypes = graph->edgeType(srcDepParent,srcDepChild);
-			for (set < EdgeType >::iterator k = edgeTypes.begin(); k != edgeTypes.end(); k++)
-			{
-				// for each edge-type establish an edge
-				// if the nodes for parent and child are not yet created, getNode will automatically create that node
-				establishEdge(getNode(parentType,parentSgNode),getNode(childType,childSgNode),*k);
-			}
-		}
-	}
+        set < SimpleDirectedGraphNode * >::iterator i;
+        DependenceNode * srcDepParent;
+        SgNode * parentSgNode,*childSgNode;
+        DependenceNode::NodeType parentType,childType;
+        for (i = nodes.begin(); i != nodes.end(); i++)
+        {
+                // get the parent in the source graph
+                srcDepParent = dynamic_cast < DependenceNode * >(*i);
+                parentSgNode= srcDepParent->getSgNode();
+                parentType=srcDepParent->getType();
+//              cout <<"Merging ParentNode: "<<parentSgNode->unparseToString()<<endl;
+                
+                set < SimpleDirectedGraphNode * >::iterator j;
+                set < SimpleDirectedGraphNode * > srcDepChildren = srcDepParent->getSuccessors(); 
+                for (j = srcDepChildren.begin(); j != srcDepChildren.end(); j++)
+                {
+                        // get the child node in the src-graph  
+                        DependenceNode * srcDepChild=dynamic_cast < DependenceNode * >(*j);
+                        childSgNode=srcDepChild->getSgNode();
+                        childType=srcDepChild->getType();
+//                      cout <<"Merging ChildNode: "<<childSgNode->unparseToString()<<endl;
+                        // get all edges between parent and child
+                        set < EdgeType > edgeTypes = graph->edgeType(srcDepParent,srcDepChild);
+                        for (set < EdgeType >::iterator k = edgeTypes.begin(); k != edgeTypes.end(); k++)
+                        {
+                                // for each edge-type establish an edge
+                                // if the nodes for parent and child are not yet created, getNode will automatically create that node
+                                establishEdge(getNode(parentType,parentSgNode),getNode(childType,childSgNode),*k);
+                        }
+                }
+        }
 }
 
 void MergedDependenceGraph::_mergeGraph(DependenceGraph * graph)
