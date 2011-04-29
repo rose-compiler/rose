@@ -261,11 +261,18 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName) {
                                         cerr << "+++++++ insert After... " << endl;
                                 }
                         }
-                } else if (isSgNamespaceDefinitionStatement(scope)) {
+                }
+                else if (isSgNamespaceDefinitionStatement(scope)) {
                         cerr
                                         << "RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
                                         << name << " : " << scope->class_name() << endl;
-                } else {
+                }
+                else if (isSgUpcForAllStatement(scope)) { // \todo implement
+                       cerr
+                                        << " ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
+                                        << " : " << scope->class_name() << "\n\n\n\n" << endl;
+                }
+                else {
                         cerr
                                         << "RuntimeInstrumentation :: Surrounding Block is not Block! : "
                                         << name << " : " << scope->class_name() << endl;
@@ -361,7 +368,7 @@ RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref,
                 var_ref=newVarRef;
 #endif
         }
-#endif    
+#endif
 
         // build the function call : runtimeSystem-->createArray(params); ---------------------------
         SgExprListExp* arg_list = buildExprListExp();
@@ -474,7 +481,7 @@ RtedTransformation::buildVariableInitCallExpr(SgInitializedName* initName,
         if (unionclass && unionclass->get_declaration()->get_class_type()
                         == SgClassDeclaration::e_union)
                 isUnionClass = true;
-        //if (!isUnionClass) 
+        //if (!isUnionClass)
         unionclass = NULL;
         appendAddressAndSize(//initName,
                         scope, exp, arg_list, 0, unionclass);
@@ -656,7 +663,13 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
                                         << " ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
                                         << name << " : " << scope->class_name() << "\n\n\n\n"
                                         << endl;
-                } else {
+                }
+                else if (isSgUpcForAllStatement(scope)) { // \todo implement
+                       cerr
+                                        << " ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
+                                        << " : " << scope->class_name() << "\n\n\n\n" << endl;
+                }
+                else {
                         cerr
                                         << " -----------> RuntimeInstrumentation :: Surrounding Block is not Block! : "
                                         << name << " : " << scope->class_name() << "  - "
@@ -736,7 +749,13 @@ void RtedTransformation::insertCheckIfThisNull(SgThisExp* texp) {
                                         << " ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
                         //<< name
                                         << " : " << scope->class_name() << "\n\n\n\n" << endl;
-                } else {
+                }
+                else if (isSgUpcForAllStatement(scope)) { // \todo implement
+                       cerr
+                                        << " ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
+                                        << " : " << scope->class_name() << "\n\n\n\n" << endl;
+                }
+                else {
                         cerr
                                         << " -----------> RuntimeInstrumentation :: Surrounding Block is not Block! : "
                         //<< name
@@ -930,7 +949,13 @@ void RtedTransformation::insertAccessVariable(SgScopeStatement* initscope,
                                         << " ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
                         //<< name
                                         << " : " << scope->class_name() << "\n\n\n\n" << endl;
-                } else {
+                }
+                else if (isSgUpcForAllStatement(scope)) { // \todo implement
+                       cerr
+                                        << " ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
+                                        << " : " << scope->class_name() << "\n\n\n\n" << endl;
+                }
+                else {
                         cerr
                                         << " -----------> RuntimeInstrumentation :: Surrounding Block is not Block! : "
                         //<< name

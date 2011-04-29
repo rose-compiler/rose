@@ -40,7 +40,7 @@ fortran_error_handler(int signum)
     else
      std::cerr <<"FATAL ERROR while parsing "<<sFilename<<std::endl;
   }
-  fflush(NULL);	// flush all stdio
+  fflush(NULL); // flush all stdio
   fortran_error_handler_end();
   exit(-1);
 }

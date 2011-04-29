@@ -3,7 +3,6 @@ int min2(int a0,int a1)
 {
   return a0 < a1?a0 : a1;
 }
-
 #define N 50
 extern void printmatrix(double x[][50UL]);
 extern void initmatrix(double x[][50UL],double s);
@@ -30,7 +29,7 @@ int main()
       for (k = 0; k <= 49; k += 1) {
         for (i = _var_1; i <= min2(49,_var_1 + 15); i += 1) {
           for (j = _var_0; j <= min2(49,_var_0 + 15); j += 1) {
-            (c[i])[j] = (((c[i])[j]) + (((a[i])[k]) * ((b[k])[j])));
+            c[i][j] = (c[i][j] + (a[i][k] * b[k][j]));
           }
         }
       }
@@ -39,4 +38,3 @@ int main()
   printmatrix(c);
   return 0;
 }
-

@@ -29,11 +29,11 @@ static std::string unparseArmCondition(ArmInstructionCondition cond) { // Unpars
 #ifndef _MSC_VER
     std::string retval = stringifyArmInstructionCondition(cond, "arm_cond_");
 #else
-	ROSE_ASSERT(false);
-	std::string retval ="";
+        ROSE_ASSERT(false);
+        std::string retval ="";
 #endif
 
-	ROSE_ASSERT(retval[0]!='(');
+        ROSE_ASSERT(retval[0]!='(');
     return retval;
 }
 
@@ -59,7 +59,9 @@ static std::string unparseArmSign(ArmSignForExpressionUnparsing sign) {
  * argument. What to do with the additional string depends on layers higher up in the call stack.
  * 
  * The sign will be prepended to the result if EXPR is a value expression of some sort. */
-static std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpressionUnparsing sign, std::string *suffix=NULL) {
+static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser::LabelMap *labels,
+                                        ArmSignForExpressionUnparsing sign, std::string *suffix=NULL)
+{
     std::string result, extra;
     if (!isSgAsmValueExpression(expr)) {
         result += unparseArmSign(sign);
@@ -67,30 +69,30 @@ static std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpress
     switch (expr->variantT()) {
         case V_SgAsmBinaryMultiply:
             ROSE_ASSERT (isSgAsmByteValueExpression(isSgAsmBinaryExpression(expr)->get_rhs()));
-            result = unparseArmExpression(isSgAsmBinaryExpression(expr)->get_lhs(), arm_sign_none) + "*" +
+            result = unparseArmExpression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, arm_sign_none) + "*" +
                      StringUtility::numberToString(isSgAsmByteValueExpression(isSgAsmBinaryExpression(expr)->get_rhs()));
             break;
         case V_SgAsmBinaryLsl:
-            result = unparseArmExpression(isSgAsmBinaryExpression(expr)->get_lhs(), arm_sign_none) + ", lsl " +
-                     unparseArmExpression(isSgAsmBinaryExpression(expr)->get_rhs(), arm_sign_none);
+            result = unparseArmExpression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, arm_sign_none) + ", lsl " +
+                     unparseArmExpression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, arm_sign_none);
             break;
         case V_SgAsmBinaryLsr:
-            result = unparseArmExpression(isSgAsmBinaryExpression(expr)->get_lhs(), arm_sign_none) + ", lsr " +
-                     unparseArmExpression(isSgAsmBinaryExpression(expr)->get_rhs(), arm_sign_none);
+            result = unparseArmExpression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, arm_sign_none) + ", lsr " +
+                     unparseArmExpression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, arm_sign_none);
             break;
         case V_SgAsmBinaryAsr:
-            result = unparseArmExpression(isSgAsmBinaryExpression(expr)->get_lhs(), arm_sign_none) + ", asr " +
-                     unparseArmExpression(isSgAsmBinaryExpression(expr)->get_rhs(), arm_sign_none);
+            result = unparseArmExpression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, arm_sign_none) + ", asr " +
+                     unparseArmExpression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, arm_sign_none);
             break;
         case V_SgAsmBinaryRor:
-            result = unparseArmExpression(isSgAsmBinaryExpression(expr)->get_lhs(), arm_sign_none) + ", ror " +
-                     unparseArmExpression(isSgAsmBinaryExpression(expr)->get_rhs(), arm_sign_none);
+            result = unparseArmExpression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, arm_sign_none) + ", ror " +
+                     unparseArmExpression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, arm_sign_none);
             break;
         case V_SgAsmUnaryRrx:
-            result = unparseArmExpression(isSgAsmUnaryExpression(expr)->get_operand(), arm_sign_none) + ", rrx";
+            result = unparseArmExpression(isSgAsmUnaryExpression(expr)->get_operand(), labels, arm_sign_none) + ", rrx";
             break;
         case V_SgAsmUnaryArmSpecialRegisterList:
-            result += unparseArmExpression(isSgAsmUnaryExpression(expr)->get_operand(), arm_sign_none) + "^";
+            result += unparseArmExpression(isSgAsmUnaryExpression(expr)->get_operand(), labels, arm_sign_none) + "^";
             break;
         case V_SgAsmExprListExp: {
             SgAsmExprListExp* el = isSgAsmExprListExp(expr);
@@ -98,7 +100,7 @@ static std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpress
             result += "{";
             for (size_t i = 0; i < exprs.size(); ++i) {
                 if (i != 0) result += ", ";
-                result += unparseArmExpression(exprs[i], arm_sign_none);
+                result += unparseArmExpression(exprs[i], labels, arm_sign_none);
             }
             result += "}";
             break;
@@ -108,24 +110,24 @@ static std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpress
         case V_SgAsmBinaryAdd: {
             /* This node cannot appear at the top of an ARM instruction operand tree */
             SgAsmBinaryExpression *e = isSgAsmBinaryExpression(expr);
-            result += unparseArmExpression(e->get_lhs(), arm_sign_none) + ", " +
-                      unparseArmExpression(e->get_rhs(), arm_sign_plus);
+            result += unparseArmExpression(e->get_lhs(), labels, arm_sign_none) + ", " +
+                      unparseArmExpression(e->get_rhs(), labels, arm_sign_plus);
             break;
         }
 
         case V_SgAsmBinarySubtract: {
             /* This node cannot appear at the top of an ARM instruction operand tree */
             SgAsmBinaryExpression *e = isSgAsmBinaryExpression(expr);
-            result += unparseArmExpression(e->get_lhs(), arm_sign_none) + ", " +
-                      unparseArmExpression(e->get_rhs(), arm_sign_minus);
+            result += unparseArmExpression(e->get_lhs(), labels, arm_sign_none) + ", " +
+                      unparseArmExpression(e->get_rhs(), labels, arm_sign_minus);
             break;
         }
 
         case V_SgAsmBinaryAddPreupdate: {
             /* This node cannot appear at the top of an ARM instruction operand tree */
             SgAsmBinaryExpression *e = isSgAsmBinaryExpression(expr);
-            result += unparseArmExpression(e->get_lhs(), arm_sign_none) + ", " +
-                      unparseArmExpression(e->get_rhs(), arm_sign_plus);
+            result += unparseArmExpression(e->get_lhs(), labels, arm_sign_none) + ", " +
+                      unparseArmExpression(e->get_rhs(), labels, arm_sign_plus);
             extra = "!";
             break;
         }
@@ -133,8 +135,8 @@ static std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpress
         case V_SgAsmBinarySubtractPreupdate: {
             /* This node cannot appear at the top of an ARM instruction operand tree */
             SgAsmBinaryExpression *e = isSgAsmBinaryExpression(expr);
-            result += unparseArmExpression(e->get_lhs(), arm_sign_none) + ", " +
-                      unparseArmExpression(e->get_rhs(), arm_sign_minus);
+            result += unparseArmExpression(e->get_lhs(), labels, arm_sign_none) + ", " +
+                      unparseArmExpression(e->get_rhs(), labels, arm_sign_minus);
             extra = "!";
             break;
         }
@@ -143,11 +145,11 @@ static std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpress
             /* Two styles of syntax depending on whether this is at top-level or inside a memory reference expression. */
             SgAsmBinaryExpression *e = isSgAsmBinaryExpression(expr);
             if (suffix) {
-                result += unparseArmExpression(e->get_lhs(), arm_sign_none);
-                extra = ", " + unparseArmExpression(e->get_rhs(), arm_sign_plus);
+                result += unparseArmExpression(e->get_lhs(), labels, arm_sign_none);
+                extra = ", " + unparseArmExpression(e->get_rhs(), labels, arm_sign_plus);
             } else {
                 /* Used by LDM* and STM* instructions outside memory reference expressions. RHS is unused. */
-                result = unparseArmExpression(e->get_lhs(), arm_sign_none) + "!";
+                result = unparseArmExpression(e->get_lhs(), labels, arm_sign_none) + "!";
             }
             break;
         }
@@ -156,11 +158,11 @@ static std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpress
             /* Two styles of syntax depending on whether this is at top-level or inside a memory reference expression. */
             SgAsmBinaryExpression *e = isSgAsmBinaryExpression(expr);
             if (suffix) {
-                result += unparseArmExpression(e->get_lhs(), arm_sign_none);
-                extra = ", " + unparseArmExpression(e->get_rhs(), arm_sign_minus);
+                result += unparseArmExpression(e->get_lhs(), labels, arm_sign_none);
+                extra = ", " + unparseArmExpression(e->get_rhs(), labels, arm_sign_minus);
             } else {
                 /* Used by LDM* and STM* instructions outside memory reference expressions. RHS is unused. */
-                result += unparseArmExpression(e->get_lhs(), arm_sign_none) + "!";
+                result += unparseArmExpression(e->get_lhs(), labels, arm_sign_none) + "!";
             }
             break;
         }
@@ -181,7 +183,7 @@ static std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpress
             }
 
             std::string suffix;
-            result += "[" + unparseArmExpression(addr, arm_sign_none, &suffix) + "]";
+            result += "[" + unparseArmExpression(addr, labels, arm_sign_none, &suffix) + "]";
             result += suffix;
             break;
         }
@@ -191,10 +193,17 @@ static std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpress
             break;
         case V_SgAsmByteValueExpression:
         case V_SgAsmWordValueExpression:
-        case V_SgAsmDoubleWordValueExpression:
-            result += "#" + unparseArmSign(sign) +
-                      StringUtility::numberToString(SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
+        case V_SgAsmDoubleWordValueExpression: {
+            uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
+            result += "#" + unparseArmSign(sign) + StringUtility::numberToString(v);
+            if (labels && v!=0) {
+                AsmUnparser::LabelMap::const_iterator li=labels->find(v);
+                if (li!=labels->end())
+                    result += "<" + li->second + ">";
+            }
             break;
+        }
+
         default: {
             std::cerr << "Unhandled expression kind " << expr->class_name() << std::endl;
             ROSE_ASSERT (false);
@@ -227,7 +236,7 @@ std::string unparseArmMnemonic(SgAsmArmInstruction *insn) {
 }
 
 /** Returns the string representation of an instruction operand. Use unparseExpress() if possible. */
-std::string unparseArmExpression(SgAsmExpression *expr) {
+std::string unparseArmExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels) {
     /* Find the instruction with which this expression is associated. */
     SgAsmArmInstruction *insn = NULL;
     for (SgNode *node=expr; !insn && node; node=node->get_parent()) {
@@ -242,27 +251,6 @@ std::string unparseArmExpression(SgAsmExpression *expr) {
         ROSE_ASSERT(tgt);
         return StringUtility::intToHex(tgt->get_value());
     } else {
-        return unparseArmExpression(expr, arm_sign_none);
+        return unparseArmExpression(expr, labels, arm_sign_none);
     }
 }
-
-#if 0 /*use unparseInstruction() instead*/
-/** Returns string representation of the instruction and all operands. */
-string unparseArmInstruction(SgAsmArmInstruction* insn) {
-    string result = unparseArmMnemonic(insn);
-    result += '\t';
-    SgAsmOperandList* opList = insn->get_operandList();
-    const SgAsmExpressionPtrList& operands = opList->get_operands();
-    for (size_t i = 0; i < operands.size(); ++i) {
-        if (i != 0) result += ", ";
-        result += unparseArmExpression(operands[i]);
-    }
-    return result;
-}
-#endif
-
-#if 0 /*use unparseInstructionWithAddress() instead*/
-string unparseArmInstructionWithAddress(SgAsmArmInstruction* insn) {
-  return StringUtility::intToHex(insn->get_address()) + '\t' + unparseArmInstruction(insn);
-}
-#endif

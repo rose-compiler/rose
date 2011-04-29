@@ -31,8 +31,8 @@ class RoseBin_Variable  {
  public:
   RoseBin_Variable(uint64_t pos,
                    std::string n,
-		   RoseBin_DataTypes::DataTypes t, std::string d, int l,
-		   std::vector<uint64_t> v) {
+                   RoseBin_DataTypes::DataTypes t, std::string d, int l,
+                   std::vector<uint64_t> v) {
     position=pos;
     name =n;
     type =t;
@@ -97,7 +97,7 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
 //#ifdef _MSC_VER
 #if 0
 //  typedef rose_hash::unordered_map< SgGraphNode*, multitype,rose_hash::hash_graph_node> tabletype;
-	// tps (12/07/2009) This seemed to work before with the above line, hmm..
+        // tps (12/07/2009) This seemed to work before with the above line, hmm..
   typedef rose_hash::unordered_map< SgGraphNode*, multitype> tabletype;
 #else
   typedef rose_hash::unordered_map< SgGraphNode*, multitype,rose_hash::hash_graph_node,rose_hash::eqstr_graph_node> tabletype;
@@ -135,10 +135,10 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
 
   int64_t check_isRegister(SgGraphNode* node,
                            SgAsmx86Instruction* inst,
-			   std::pair<X86RegisterClass, int> codeSearch,
-			   bool rightSide,
-			   std::vector<std::pair<X86RegisterClass, int> >& regsOfInterest,
-			   bool& cantTrack);
+                           std::pair<X86RegisterClass, int> codeSearch,
+                           bool rightSide,
+                           std::vector<std::pair<X86RegisterClass, int> >& regsOfInterest,
+                           bool& cantTrack);
 
 
 
@@ -148,10 +148,10 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
   uint64_t getValueInExpression(SgAsmValueExpression* valExp);
 
   int64_t trackValueForRegister(
-				SgGraphNode* node,
-				std::pair<X86RegisterClass, int>  codeSearch,
-				bool& cantTrack,
-				SgAsmx86RegisterReferenceExpression* refExpr_rightHand);
+                                SgGraphNode* node,
+                                std::pair<X86RegisterClass, int>  codeSearch,
+                                bool& cantTrack,
+                                SgAsmx86RegisterReferenceExpression* refExpr_rightHand);
 
 
   std::pair<X86RegisterClass, int>
@@ -159,13 +159,13 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
                      bool rightSide, bool& memoryReference, bool& registerReference );
 
   SgAsmExpression* getOperand(SgAsmx86Instruction* inst,
-						bool rightSide );
+                                                bool rightSide );
 
   uint64_t getValueInMemoryRefExp(SgAsmExpression* ref);
 
   bool isInstructionAlteringOneRegister(SgAsmx86Instruction* inst);
   bool altersMultipleRegisters(std::vector<std::pair<X86RegisterClass, int> >& codes,
-			      SgAsmx86Instruction* inst);
+                              SgAsmx86Instruction* inst);
 
   bool sameParents(SgGraphNode* node, SgGraphNode* next);
 
@@ -189,10 +189,10 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
 
   RoseBin_Variable* createVariable(uint64_t position,
                                    std::vector<uint64_t> pos,
-				   std::string name, RoseBin_DataTypes::DataTypes type, std::string description,
-				   int length,
-				   std::vector<uint64_t> value,
-				   bool memoryRef);
+                                   std::string name, RoseBin_DataTypes::DataTypes type, std::string description,
+                                   int length,
+                                   std::vector<uint64_t> value,
+                                   bool memoryRef);
 
   RoseBin_Variable* getVariable(uint64_t pos);
   RoseBin_Variable* getVariable(std::string var);

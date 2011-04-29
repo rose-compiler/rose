@@ -124,9 +124,9 @@ main(int argc, char *argv[])
     printf("      U = user-def detection    N = NOP/Zero padding      D = discontiguous blocks\n");
     printf("      H = insn sequence head\n");
     printf("\n");
-    printf("    Num  Low-Addr   End-Addr  Insns/Bytes   Reason      Kind   Name\n");
-    printf("    --- ---------- ---------- ------------ --------- -------- --------------------------------\n");
+    printf("    Num  Low-Addr   End-Addr  Insns/Bytes   Reason        Kind   Name\n");
+    printf("    --- ---------- ---------- ------------ ----------- -------- --------------------------------\n");
     ShowFunctions().traverseInputFiles(project, preorder);
-    printf("    --- ---------- ---------- ------------ --------- -------- --------------------------------\n");
+    printf("    --- ---------- ---------- ------------ ----------- -------- --------------------------------\n");
     return 0;
 }

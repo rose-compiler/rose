@@ -190,7 +190,7 @@ SgAsmElfSymverDefinedAux::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
   
-    fprintf(f, "%s%-*s = %s \n", p, w, "name", get_name()->c_str());
+    fprintf(f, "%s%-*s = %s \n", p, w, "name", get_name()->get_string(true).c_str());
 }
 
 /** Initialize this object with data parsed from a file. */
@@ -269,7 +269,7 @@ SgAsmElfSymverDefinedEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f,   "%s%-*s =  0x%04zx  0x%04zx 0x%08x 0x%04x", p, w, "", p_version, p_index, p_hash, (uint32_t)p_flags);
     const SgAsmElfSymverDefinedAuxPtrList &entries=get_entries()->get_entries();
     for (size_t i=0; i < entries.size(); ++i)
-        fprintf(f, "%s %s", 0==i?"":",", entries[i]->get_name()->c_str());
+        fprintf(f, "%s %s", 0==i?"":",", entries[i]->get_name()->get_string(true).c_str());
     fputc('\n', f);
 }
 
@@ -326,7 +326,7 @@ SgAsmElfSymverDefinedSection::ctor(SgAsmElfStringSection *strings)
  *  
  *  There is also nothing in particular that says Aux entries need to be next to each other.  So, the code handles the most
  *  rigidly compliant case, which is to use only the offsets and make no assumptions about layouts.
- *  				
+ *                              
  *  Also note the number of entries is specified in two ways - via null termination on the "linked list", as well as the
  *  number from the .dynamic section [DT_VERDEFNUM].  For now, we'll support the NULL terminator, restricted by ensuring we
  *  don't exceed the size of the section (to keep from running away on a bad file).
@@ -562,7 +562,7 @@ SgAsmElfSymverNeededAux::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %04zx\n", p, w, "other", get_other());
     fprintf(f, "%s%-*s = 0x%08x\n", p, w, "hash", get_hash());
     fprintf(f, "%s%-*s = 0x%04x\n", p, w, "flags", get_flags());
-    fprintf(f, "%s%-*s = %s \n", p, w, "name", get_name()->c_str());
+    fprintf(f, "%s%-*s = %s \n", p, w, "name", get_name()->get_string(true).c_str());
 }
 
 /** Initialize this auxiliary record by parsing data from the file. */
@@ -648,7 +648,7 @@ SgAsmElfSymverNeededEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     /* compact one-line-per-entry format */
     if (0==idx)
         fprintf(f, "%s%-*s   %-8s %-22s %6s %10s %6s %s\n", p, w, "", "Version", "File", "Other", "Hash", "Flags", "Name");
-    fprintf(f,   "%s%-*s =   0x%04zx %s", p, w, "", p_version, get_file_name()->c_str());
+    fprintf(f,   "%s%-*s =   0x%04zx %s", p, w, "", p_version, get_file_name()->get_string(true).c_str());
     const SgAsmElfSymverNeededAuxPtrList &entries=get_entries()->get_entries();
     if (entries.empty()) {
         fprintf(f, "<no auxiliary entries>\n");
@@ -660,7 +660,7 @@ SgAsmElfSymverNeededEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
         char auxname[32];
         sprintf(auxname, "aux[%zu]", i);
         fprintf(f,   "%s%-*s =                                 0x%04zx 0x%08x 0x%04x %s\n", p, w, auxname, 
-                aux->get_other(), aux->get_hash(), aux->get_flags(), aux->get_name()->c_str());
+                aux->get_other(), aux->get_hash(), aux->get_flags(), aux->get_name()->get_string(true).c_str());
     }
     fprintf(f, "\n");
 }

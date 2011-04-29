@@ -317,7 +317,7 @@ SgGraph::addEdge( SgGraphEdge* edge )
 // tps (12/09/09) : Cannot compile this right now.
 //#pragma message("rose_graph_support.C: Problem compiling multimap")
 #else
-		  p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(node_index_first,node_index_second),edge));
+                  p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(node_index_first,node_index_second),edge));
 #endif
 #endif
 
@@ -364,8 +364,8 @@ SgIncidenceDirectedGraph::addDirectedEdge( SgDirectedGraphEdge* edge )
   // This is using the new Graph IR node API.
      if (exists(edge) == false)
         {
-	  //	  std::cerr << " >>>>>>>>>> Edge does not exist .. adding edge : " << edge->get_node_A()->get_name() << 
-	  //  " - " << edge->get_node_B()->get_name() << std::endl;
+          //      std::cerr << " >>>>>>>>>> Edge does not exist .. adding edge : " << edge->get_node_A()->get_name() << 
+          //  " - " << edge->get_node_B()->get_name() << std::endl;
 #if 0
      rose_graph_integer_edge_hash_multimap::iterator edgeIt = get_node_index_to_edge_multimap_edgesOut().find(edge->get_node_A()->get_index());
      bool matchingEdgeIsNew = (edgeIt == get_node_index_to_edge_multimap_edgesOut().end());
@@ -395,14 +395,14 @@ SgIncidenceDirectedGraph::addDirectedEdge( SgDirectedGraphEdge* edge )
 // CH (4/9/2010): Use boost::unordered instead 
 //#ifndef _MSCx_VER
 #if 1
-		  p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(node_index_first,node_index_second),edge));
+                  p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(node_index_first,node_index_second),edge));
 #else
 // tps (12/09/09) Does not work under Windows right now.
 //#pragma message ("rose_graph_support.C: multimap does currently not work.")
 #endif
-		  //	 p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(node_index_second,node_index_first),redge));
+                  //     p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(node_index_second,node_index_first),redge));
 #endif
-		  
+                  
        // Initialize the node index --> SgGraphEdge* multimap.
        // printf ("In SgGraph::addEdge(): Insert edge %p = (%d,%d) on node %d (p_node_index_to_edge_multimap size = %zu) \n",edge,node_index_first,node_index_second,node_index_first,p_node_index_to_edge_multimap.size());
 
@@ -469,9 +469,9 @@ SgGraph::display_node_index_pair_to_edge_multimap() const
 //#ifndef _MSCx_VER
 #if 1
 // tps (12/08/09) : Does not work under windows:  error C2039: 'first' : is not a member of 'System::UInt32'
-			printf ("   node pair: (i->first.first = %d,i->first.second = %d) SgGraphEdge: i->second = %p = %d \n",i->first.first,i->first.second,i->second,i->second->get_index());
+                        printf ("   node pair: (i->first.first = %d,i->first.second = %d) SgGraphEdge: i->second = %p = %d \n",i->first.first,i->first.second,i->second,i->second->get_index());
 #endif
-		  i++;
+                  i++;
         }
 // #endif
    }
@@ -544,8 +544,8 @@ SgGraph::resize_hash_maps( size_t numberOfNodes, size_t numberOfEdges )
 //#ifdef _MSCx_VER
 #if 0
 //#pragma message ("WARNING: std::hash_map::resize() function not available in MSVC.")
-	 printf ("std::hash_map::resize() function not available in MSVC. \n");
-	 ROSE_ASSERT(false);
+         printf ("std::hash_map::resize() function not available in MSVC. \n");
+         ROSE_ASSERT(false);
 #else
      // CH (4/9/2010): boost::unordered_map uses 'rehash' instead of 'resize'  
 #if 1    

@@ -1,7 +1,7 @@
 //Author: Justin Frye
 
 #ifndef SSAANALYSIS_H
-#define	SSAANALYSIS_H
+#define SSAANALYSIS_H
 
 #include <string>
 #include <iostream>
@@ -116,34 +116,59 @@ public:
  */
 struct IsDefUseFilter
 {
-	/** Determines if the provided CFG node should be traversed during DefUse.
-	 *
-	 * @param cfgn The node in question.
-	 * @return Whether it should be traversed.
-	 */
-	bool operator() (CFGNode cfgn) const
-	{
-		SgNode *node = cfgn.getNode();
+        /** Determines if the provided CFG node should be traversed during DefUse.
+         *
+         * @param cfgn The node in question.
+         * @return Whether it should be traversed.
+         */
+        bool operator() (CFGNode cfgn) const
+        {
+                SgNode *node = cfgn.getNode();
 
-		//If it is the last node in a function call, keep it
-		if (isSgFunctionCallExp(node) && cfgn == node->cfgForEnd())
-			return true;
+                //If it is the last node in a function call, keep it
+                if (isSgFunctionCallExp(node) && cfgn == node->cfgForEnd())
+                        return true;
 
-		//The begin edges of basic blocks are not considered interesting, but we would like to keep them
-		//This is so we can propagate reachable defs to the top of a basic block
-		if (isSgBasicBlock(node) && cfgn == node->cfgForBeginning())
-			return true;
+                //The begin edges of basic blocks are not considered interesting, but we would like to keep them
+                //This is so we can propagate reachable defs to the top of a basic block
+                if (isSgBasicBlock(node) && cfgn == node->cfgForBeginning())
+                        return true;
 
-		//Remove all non-interesting nodes
-		if (!cfgn.isInteresting())
-			return false;
+                if (isSgExprStatement(node))
+                        return (cfgn == node->cfgForBeginning());
 
-		//Remove all non-beginning nodes for initNames
-		if (isSgInitializedName(node) && cfgn != node->cfgForBeginning())
-			return false;
+                if (isSgCommaOpExp(node))
+                        return (cfgn == node->cfgForBeginning());
 
-		return true;
-	}
+                //Remove all non-interesting nodes
+                if (!cfgn.isInteresting())
+                        return false;
+
+                //Remove all non-end nodes for initNames
+                if (isSgInitializedName(node) && cfgn != node->cfgForEnd())
+                        return false;
+
+                //Remove non-beginning nodes for try statements
+                if (isSgTryStmt(node) && cfgn != node->cfgForBeginning())
+                        return false;
+
+                //Use the last node of binary operators
+                if (isSgAndOp(node) || isSgOrOp(node))
+                {
+                        if (cfgn != node->cfgForEnd())
+                                return false;
+                }
+
+                //We only want the middle appearance of the teritatry operator - after its conditional expression
+                //and before the true and false bodies. This makes it behave as an if statement for data flow
+                //purposes
+                if (isSgConditionalExp(node))
+                {
+                        return cfgn.getIndex() == 1;
+                }
+
+                return true;
+        }
 };
 
 /** Class that defines an VariableRenaming of a program
@@ -179,9 +204,7 @@ public:
     /** A table mapping a name to a single node.
      */
     typedef boost::unordered_map<VarName, SgNode*> FirstDefTable;
-    /** A list of names.
-     */
-    typedef std::vector<VarName> GlobalTable;
+
     /** A vector of SgInitializedName*
      */
     typedef std::vector<SgInitializedName*> InitNameVec;
@@ -256,10 +279,6 @@ private:
      */
     NumNodeRenameTable numRenameTable;
 
-    /** A list of all the global varibales in the program.
-     */
-    GlobalTable globalVarList;
-
 public:
     VariableRenaming(SgProject* proj): project(proj), DEBUG_MODE(SgProject::get_verbose() > 0), DEBUG_MODE_EXTRA(SgProject::get_verbose() > 1){}
 
@@ -286,10 +305,6 @@ private:
      * @return The renumbering assigned to ver @ node.
      */
     int addRenameNumberForNode(const VarName& var, SgNode* node);
-    
-    /** Locate all global varibales and add them to the table.
-     */
-    void findGlobalVars();
 
     bool isBuiltinVar(const VarName& var);
 
@@ -305,7 +320,7 @@ private:
      * @param memberRefInserted Reference that indicates whether the function back-inserted a definition.
      * @return Whether the defs were different from those already on the node.
      */
-    bool mergeDefs(cfgNode curNode, bool *memberRefInserted);
+    bool mergeDefs(cfgNode curNode, bool *memberRefInserted, NodeVec &changedNodes);
 
     /** Called to update the uses on the current node.
      *
@@ -326,14 +341,6 @@ private:
      * @param results TableEntry reference where results are stored.
      */
     void aggregatePreviousDefs(cfgNode curNode, TableEntry& results);
-
-    /** Inserts definition points for all global variables.
-     *
-     * This will insert definitions for all global variables at 2 places.
-     * 1. At the entry points of all functionDefinitions.
-     * 2. At every function call expression.
-     */
-    void insertGlobalVarDefinitions();
 
     /** Expand all member definitions (chained names) to define every name in the chain.
      *
@@ -393,11 +400,17 @@ private:
      */
     bool expandMemberUses(cfgNode curNode);
 
+        /** Insert defs for functions that are declared outside the function scope. */
+        void insertDefsForExternalVariables(SgFunctionDeclaration* function);
+
+        /** Returns a set of all the variables names that have uses in the subtree. */
+        std::set<VarName> getVarsUsedInSubtree(SgNode* root);
+
     void printToDOT(SgSourceFile* file, std::ofstream &outFile);
     void printToFilteredDOT(SgSourceFile* file, std::ofstream &outFile);
 
-    void printUses(TableEntry& table);
-    void printDefs(TableEntry& table);
+    void printUses(const TableEntry& table);
+    void printDefs(const TableEntry& table);
     
 public:
     //External static helper functions/variables
@@ -442,7 +455,7 @@ public:
      * @param vec varName to get string for.
      * @return String for given varName.
      */
-    static std::string keyToString(VarName vec);
+    static std::string keyToString(const VarName& vec);
     
     void printDefs(SgNode* node);
 
@@ -476,11 +489,23 @@ public:
      */
     DefUseTable& getDefTable(){ return originalDefTable; }
 
+    /** Get the table of definitions for every node.
+     *
+     * @return Definition table.
+     */
+    const DefUseTable& getDefTable() const { return originalDefTable; }
+
     /** Get the defTable containing the propogated definition information.
      *
      * @return Def table.
      */
     DefUseTable& getPropDefTable(){ return defTable; }
+
+    /** Get the defTable containing the propogated definition information.
+     *
+     * @return Def table.
+     */
+    const DefUseTable& getPropDefTable() const { return defTable; }
 
     /** Get the table of uses for every node.
      *
@@ -488,11 +513,11 @@ public:
      */
     DefUseTable& getUseTable(){ return useTable; }
 
-    /** Get the listing of global variables.
+     /** Get the table of uses for every node.
      *
-     * @return Global Var List.
+     * @return Use Table.
      */
-    GlobalTable& getGlobalVarList(){ return globalVarList; }
+    const DefUseTable& getUseTable() const { return useTable; }
 
 
 
@@ -617,17 +642,17 @@ public:
      */
     NumNodeRenameEntry getReachingDefsAtFunctionEndForName(SgFunctionDefinition* node, const VarName& var);
 
-	/** Gets the versions of all variables reaching a statment before its execution. Notice that this method and 
-	 * getReachingDefsAtNode potentially return different values for loops. With loops, variable values from the body
-	 * of the loop flow to the top; hence getReachingDefsAtNode returns definitions from the loop body. On the other hand,
-	 * getReachingDefsAtStatementStart does not return definitions coming in from a loop body.
-	 * 
+        /** Gets the versions of all variables reaching a statment before its execution. Notice that this method and 
+         * getReachingDefsAtNode potentially return different values for loops. With loops, variable values from the body
+         * of the loop flow to the top; hence getReachingDefsAtNode returns definitions from the loop body. On the other hand,
+         * getReachingDefsAtStatementStart does not return definitions coming in from a loop body.
+         * 
      * @param statement
      * @return A table of VarName->(num, defNode) for all variables at the beginning of the statement
      */
-	NumNodeRenameTable getReachingDefsAtStatementStart(SgStatement* statement);
+        NumNodeRenameTable getReachingDefsAtStatementStart(SgStatement* statement);
 
-	/** Get the versions of all variables at the start of the given function.
+        /** Get the versions of all variables at the start of the given function.
      *
      * @param node The function to get variables for.
      * @return A table of VarName->(num, defNode) for all variables at the start of the function. Empty table otherwise.
@@ -739,15 +764,15 @@ public:
     NumNodeRenameEntry getExpandedDefsAtNodeForName(SgNode* node, const VarName& var);
 
     /** Get all definitions for the subtree rooted at this node. If m.x is defined,
-	 * the resulting table will also include a definition for m.
+         * the resulting table will also include a definition for m.
      *
      * @param node The root of the subtree to get definitions for.
      * @return The table mapping VarName->(num, node) for every definition.
      */
     NumNodeRenameTable getDefsForSubtree(SgNode* node);
 
-	/** Get all original definitions for the subtree rooted at this node. No expanded definitions
-	 * will be included - for example, if m.x is defined, there will be no definition for the structure m.
+        /** Get all original definitions for the subtree rooted at this node. No expanded definitions
+         * will be included - for example, if m.x is defined, there will be no definition for the structure m.
      *
      * @param node The root of the subtree to get definitions for.
      * @return The table mapping VarName->(num, node) for every definition.
@@ -784,16 +809,16 @@ public:
      */
     static VarName getVarName(SgNode* node);
 
-    /** Gets whether or not the initializedName is from a library.
+    /** Gets whether or not the function is from a library.
      *
      * This method checks if the variable is compiler generated, and if its
      * filename has "/include/" in it. If so, it will return true. Otherwise, it returns
      * false.
      *
-     * @param initName The SgInitializedName* to check.
+     * @param node The function to check.
      * @return true if initName is from a library, false if otherwise.
      */
-    static bool isFromLibrary(SgNode* node);
+    static bool isFromLibrary(SgFunctionDeclaration* node);
 
     /** Get an AST fragment containing the appropriate varRefs and Dot/Arrow ops to access the given variable.
      *
@@ -861,130 +886,24 @@ private:
         void setRefs(const std::vector<SgNode*>& newRefs) { refs.assign(newRefs.begin(), newRefs.end()); }
     };
 
-    /** Attribute that describes the variables modified by a given expression.
-     */
-    class VarDefUseSynthAttr
-    {
-    private:
-        /** Stores all of the varRefs that are defined in the current subtree.
-         */
-        std::vector<SgNode*> defs;
-
-        /** Stores all the varRefs that are used in the current subTree.
-         */
-        std::vector<SgNode*> uses;
-
-    public:
-        /** Create the attribute with no refs.
-         */
-        VarDefUseSynthAttr():defs(), uses(){}
-
-        /** Create the attribute with specified def/use.
-         *
-         * @param defNode The node to add to the list of defs, or NULL
-         * @param useNode The node to add to the list of uses, or NULL
-         */
-        VarDefUseSynthAttr(SgNode* defNode, SgNode* useNode)
-        {
-            if(defNode)
-                defs.push_back(defNode);
-
-            if(useNode)
-                uses.push_back(useNode);
-        }
-
-        /** Create the attribute with the list of defs and the use.
-         *
-         * @param defTree The vector of defs to add, or an empty vector.
-         * @param useNode The node to add to the list of uses, or NULL.
-         */
-        VarDefUseSynthAttr(const std::vector<SgNode*>& defTree, SgNode* useNode)
-        {
-            if(defTree.size() > 0)
-                defs.assign(defTree.begin(), defTree.end());
-
-            if(useNode)
-                uses.push_back(useNode);
-        }
-
-        /** Create the attribute with the def and list of uses.
-         *
-         * @param defNode The node to add to the list of defs, or NULL.
-         * @param useTree The vector of uses to add, or an empty vector.
-         */
-        VarDefUseSynthAttr(SgNode* defNode, const std::vector<SgNode*>& useTree)
-        {
-            if(useTree.size() > 0)
-                uses.assign(useTree.begin(), useTree.end());
-
-            if(defNode)
-                defs.push_back(defNode);
-        }
-
-        /** Create the attribute with the provided uses and defs.
-         *
-         * @param defTree The defs to use in this node, or empty vector.
-         * @param useTree The uses to use in this node, or empty vector.
-         */
-        VarDefUseSynthAttr(const std::vector<SgNode*>& defTree, const std::vector<SgNode*>& useTree)
-        {
-
-            if(defTree.size() > 0)
-                defs.assign(defTree.begin(), defTree.end());
-
-            if(useTree.size() > 0)
-                uses.assign(useTree.begin(), useTree.end());
-        }
-
-        /** Get the references for this node and below.
-         *
-         * @return A constant reference to the ref list.
-         */
-        std::vector<SgNode*>& getDefs() { return defs; }
-
-        /** Set the defs for this node and below.
-        *
-        * @param newDefs A constant reference to the defs to copy to this node.
-        */
-        void setDefs(const std::vector<SgNode*>& newDefs) { defs.assign(newDefs.begin(), newDefs.end()); }
-
-         /** Get the uses for this node and below.
-         *
-         * @return A constant reference to the use list.
-         */
-        std::vector<SgNode*>& getUses() { return uses; }
-
-        /** Set the uses for this node and below.
-        *
-        * @param newUses A constant reference to the uses to copy to this node.
-        */
-        void setUses(const std::vector<SgNode*>& newUses) { uses.assign(newUses.begin(), newUses.end()); }
-    };
-
-    class VarDefUseTraversal : public AstBottomUpProcessing<VariableRenaming::VarDefUseSynthAttr>
-    {
-        VariableRenaming* varRename;
-    public:
-        VarDefUseTraversal(VariableRenaming* varRenaming):varRename(varRenaming){}
-
-        /** Called to evaluate the synthesized attribute on every node.
-         *
-         * This function will handle passing all variables that are defined and used by a given operation.
-         *
-         * @param node The node being evaluated.
-         * @param attr The attributes from the child nodes.
-         * @return The attribute at this node.
-         */
-        virtual VariableRenaming::VarDefUseSynthAttr evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs);
-    };
-
     /** Class to traverse the AST and assign unique names to every varRef.
      */
     class UniqueNameTraversal : public AstBottomUpProcessing<VariableRenaming::VarRefSynthAttr>
     {
         VariableRenaming* varRename;
+                
+                /** All the initialized names in the project. */
+                std::vector<SgInitializedName*> allInitNames;
+
+                /** Finds initialized names that are "fake" (refer to p_prev_decl_item in the SgInitializedName docs)
+                 * and replaces them with the true declaration. */
+                SgInitializedName* resolveTemporaryInitNames(SgInitializedName* name);
+
     public:
-        UniqueNameTraversal(VariableRenaming* varRenaming):varRename(varRenaming){}
+        UniqueNameTraversal(VariableRenaming* varRenaming, const std::vector<SgInitializedName*>& allNames):
+                        varRename(varRenaming), allInitNames(allNames)
+                {
+                }
 
         /** Called to evaluate the synthesized attribute on every node.
          *
@@ -996,8 +915,95 @@ private:
          */
         virtual VariableRenaming::VarRefSynthAttr evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs);
     };
-    
+
+        /** Attribute that describes the variables used by a given expression. */
+        class ChildUses
+        {
+        private:
+                /** An assignment to the current expression in the AST would define this variable */
+                SgVarRefExp* currentVar;
+
+                /** Stores all the varRefs that are used in the current subTree. */
+                std::vector<SgNode*> uses;
+
+        public:
+
+                /** Create the attribute with no refs.   */
+                ChildUses() : currentVar(NULL)
+                { }
+
+                ChildUses(SgNode* useNode, SgVarRefExp* var)
+                {
+                        uses.push_back(useNode);
+                        currentVar = var;
+                }
+
+                /** Create the attribute with the def and list of uses.
+                 *
+                 * @param useTree The vector of uses to add, or an empty vector.
+                 */
+                ChildUses(const std::vector<SgNode*>& useTree, SgVarRefExp* var = NULL)
+                {
+                        if (useTree.size() > 0)
+                                uses.assign(useTree.begin(), useTree.end());
+                        currentVar = var;
+                }
+
+                /** Get the uses for this node and below.
+                 *
+                 * @return A constant reference to the use list.
+                 */
+                std::vector<SgNode*>& getUses()
+                {
+                        return uses;
+                }
+
+                /** Set the uses for this node and below.
+                 *
+                 * @param newUses A constant reference to the uses to copy to this node.
+                 */
+                void setUses(const std::vector<SgNode*>& newUses)
+                {
+                        uses.assign(newUses.begin(), newUses.end());
+                }
+
+                SgVarRefExp* getCurrentVar() const
+                {
+                        return currentVar;
+                }
+        };
+
+        /** This class collects all the defs and uses associated with each node in the traversed CFG.
+         * Note that this does not compute reachability information; it just records each instance of
+         * a variable used or defined. */
+        class DefsAndUsesTraversal : public AstBottomUpProcessing<ChildUses>
+        {
+                VariableRenaming* ssa;
+
+        public:
+
+                DefsAndUsesTraversal(VariableRenaming* ssa) : ssa(ssa) { }
+
+                /** Called to evaluate the synthesized attribute on every node.
+                 *
+                 * This function will handle passing all variables that are defined and used by a given operation.
+                 *
+                 * @param node The node being evaluated.
+                 * @param attr The attributes from the child nodes.
+                 * @return The attribute at this node.
+                 */
+                virtual ChildUses evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs);
+
+        private:
+
+                /** Mark all the uses as occurring at the specified node. */
+                void addUsesToNode(SgNode* node, std::vector<SgNode*> uses);
+
+                /** Mark the given variable as being defined at the node. */
+                void addDefForVarAtNode(SgVarRefExp* currentVar, SgNode* defNode);
+        };
+
 };
 
-#endif	/* SSAANALYSIS_H */
+#endif  /* SSAANALYSIS_H */
 

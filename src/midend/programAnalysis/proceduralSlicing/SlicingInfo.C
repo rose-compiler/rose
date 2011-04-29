@@ -19,5 +19,6 @@ void SlicingInfo::visit(SgNode * node) {
     } else if (pragma_name = slicestatement) {
       _markStatement = true;
     }
-
+  }
 }
+

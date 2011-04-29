@@ -2,17 +2,15 @@
 #define REVERSE_COMPUTATAION_FACILITYBUILDER_H 
 
 #include <rose.h>
-#include <string>
-#include <vector>
 
 
 SgFunctionDeclaration* buildCompareFunction(SgClassType*);
 SgFunctionDeclaration* buildInitializationFunction(SgClassType*);
 
-//*****************************************************************************
-// inits:       global varibles which should be initialized.
-// event_names: all event funtions.
-//*****************************************************************************
+/*!****************************************************************************
+*  inits:       global varibles which should be initialized.
+*  event_names: all event funtions.
+******************************************************************************/
 SgFunctionDeclaration* buildMainFunction(const std::vector<SgAssignOp*>& inits,
         const std::vector<std::string>& event_names, bool klee = false);
 

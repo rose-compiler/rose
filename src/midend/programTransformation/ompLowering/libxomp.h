@@ -5,11 +5,15 @@
 #ifndef LIB_XOMP_H 
 #define LIB_XOMP_H
 
+// Fortran outlined function uses one parameter for each variable to be passed by reference
+// We predefine a max number of parameters to be allowed here.
+#define MAX_OUTLINED_FUNC_PARAMETER_COUNT 256
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <stdbool.h>
+#include <stdlib.h> // for abort()
 
 //enum omp_rtl_enum {
 //  e_gomp,
@@ -21,12 +25,29 @@ extern "C" {
 
 //Runtime library initialization routine
 extern void XOMP_init (int argc, char ** argv);
+extern void xomp_init (void);
 
 // Runtime library termination routine
 extern void XOMP_terminate (int exitcode);
 
-extern void XOMP_parallel_start (void (*func) (void *), void *data, unsigned numThread);
+// func: pointer to a function which will be run in parallel
+// data: pointer to a data segment which will be used as the arguments of func
+// ifClauseValue: set to if-clause-expression if if-clause exists, or default is 1. 
+// numThreadsSpecified: set to the expression of num_threads clause if the clause exists, or default is 0
+extern void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseValue, unsigned numThreadsSpecified);
 extern void XOMP_parallel_end (void);
+
+/* Initialize sections and return the next section id (starting from 0) to be executed by the current thread */
+extern int XOMP_sections_init_next(int section_count); 
+
+/* Return the next section id (starting from 0) to be executed by the current thread. Return value <0 means no sections left */
+extern int XOMP_sections_next(void); 
+
+/* Called after the current thread is told that all sections are executed. It synchronizes all threads also. */
+extern void XOMP_sections_end(void);
+
+/* Called after the current thread is told that all sections are executed. It does not synchronizes all threads. */
+extern void XOMP_sections_end_nowait(void);
 
 extern void XOMP_task (void (*) (void *), void *, void (*) (void *, void *),
                        long, long, bool, unsigned);
@@ -35,12 +56,19 @@ extern void XOMP_taskwait (void);
 // scheduler functions, union of runtime library functions
 // empty body if not used by one
 // scheduler initialization, only meaningful used for OMNI
+
+// Default loop scheduling, worksharing without any schedule clause, upper bounds are inclusive
+// Kick in before all runtime libraries. We use the default loop scheduling from XOMP regardless the runtime chosen.
+extern void XOMP_loop_default(int lower, int upper, int stride, long* n_lower, long* n_upper);
+
+//! Optional init functions, mostly used for working with omni RTL
+// Non-op for gomp
 extern void XOMP_loop_static_init(int lower, int upper, int stride, int chunk_size);
 extern void XOMP_loop_dynamic_init(int lower, int upper, int stride, int chunk_size);
 extern void XOMP_loop_guided_init(int lower, int upper, int stride, int chunk_size);
 extern void XOMP_loop_runtime_init(int lower, int upper, int stride);
 
-//ordered case
+//  ordered case
 extern void XOMP_loop_ordered_static_init(int lower, int upper, int stride, int chunk_size);
 extern void XOMP_loop_ordered_dynamic_init(int lower, int upper, int stride, int chunk_size);
 extern void XOMP_loop_ordered_guided_init(int lower, int upper, int stride, int chunk_size);
@@ -49,6 +77,9 @@ extern void XOMP_loop_ordered_runtime_init(int lower, int upper, int stride);
 
 // if (start), 
 // mostly used because of gomp, omni will just call  XOMP_loop_xxx_next();
+// (long start, long end, long incr, long chunk_size,long *istart, long *iend)
+//  upper bounds are non-inclusive, 
+//  bounds for inclusive loop control will need +/-1 , depending on incremental/decremental cases
 extern bool XOMP_loop_static_start (long, long, long, long, long *, long *);
 extern bool XOMP_loop_dynamic_start (long, long, long, long, long *, long *);
 extern bool XOMP_loop_guided_start (long, long, long, long, long *, long *);
@@ -85,7 +116,7 @@ extern void XOMP_loop_end (void);
 extern void XOMP_loop_end_nowait (void);
    // --- end loop functions ---
 // flush without variable list
-extern void XOMP_flush_all ();
+extern void XOMP_flush_all (void);
 // omp flush with variable list, flush one by one, given each's start address and size
 extern void XOMP_flush_one (char * startAddress, int nbyte);
 

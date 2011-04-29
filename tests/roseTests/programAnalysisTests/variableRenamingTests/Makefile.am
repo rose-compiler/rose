@@ -805,6 +805,7 @@ lexPhase2003_01.C \
 math.C \
 inputForLoopLocator.C \
 X.C \
+test2004_136.C \
 inputBug327.C
 
 ALL_TESTCODES = \
@@ -814,7 +815,6 @@ $(TESTCODES_REQUIRED_TO_PASS)
 # (as opposed to testcodes that are expected to fail)
 FAILURE_TESTCODES = \
 test2004_02.C \
-test2004_136.C \
 test2004_159.C \
 test2004_163.C \
 test2005_68.C \

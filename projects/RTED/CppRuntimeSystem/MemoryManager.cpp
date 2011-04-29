@@ -405,7 +405,7 @@ MemoryManager::~MemoryManager()
     checkForNonFreedMem();
 
     // free all the allocation-types
-    for(set<MemoryType*>::iterator i = mem.begin(); i != mem.end(); ++i)
+    for(MemoryTypeSet::iterator i = mem.begin(); i != mem.end(); ++i)
         delete *i;
 }
 
@@ -783,7 +783,7 @@ void MemoryManager::print(ostream & os) const
 
     os << endl;
     os << "------------------------------- Memory Manager Status -----------------------------" << endl << endl;
-    for(set<MemoryType*>::iterator i = mem.begin(); i != mem.end(); ++i)
+    for(MemoryTypeSet::iterator i = mem.begin(); i != mem.end(); ++i)
         os << **i << endl;
 
     os << "-----------------------------------------------------------------------------------" << endl;

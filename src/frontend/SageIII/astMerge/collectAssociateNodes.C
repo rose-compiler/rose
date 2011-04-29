@@ -231,6 +231,9 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
                break;
              }
 
+       // DQ (2/2/2011): Unclear if there is anything to do here for this type (any associated IR nodes would have been visited already).
+          case V_SgTypeLabel:
+
        // DQ (1/6/2009): Added support for SgTypeSignedLongLong (only an error on 32 bit systems, not 64 bit systems).
           case V_SgTypeSignedLongLong:
 
@@ -377,7 +380,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),SageInterface::generateUniqueName(node,false).c_str(),matchingNodeInMergedAST,(fileInfo != NULL) ? fileInfo->get_raw_filename().c_str() : "NULL");
 #endif
 
-  // Include the current IR node in ths set of associated IR nodes
+  // Include the current IR node in this set of associated IR nodes
   // (to avoid having to add it explicitly before or after this function call).
      nodeList.insert(node);
      if (finalDeleteSet.find(node) != finalDeleteSet.end())
@@ -705,9 +708,15 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
 
                if (symbol != NULL)
                   {
-                    SgVariableSymbol* variableSymbol = isSgVariableSymbol(symbol);
+                    SgVariableSymbol*  variableSymbol = isSgVariableSymbol(symbol);
                     SgEnumFieldSymbol* enumFieldSymbol = isSgEnumFieldSymbol(symbol);
-                    if (variableSymbol == NULL && enumFieldSymbol == NULL)
+
+                 // DQ (2/2/2011): Added support for SgLabelSymbol which can also have a SgInitializedName 
+                 // IR node as a child (and thus be the symbol associated with a SgInitializedName).
+                    SgLabelSymbol*     labelSymbol     = isSgLabelSymbol(symbol);
+
+                 // if (variableSymbol == NULL && enumFieldSymbol == NULL)
+                    if (variableSymbol == NULL && enumFieldSymbol == NULL && labelSymbol == NULL)
                        {
                          printf ("symbol = %p = %s \n",symbol,symbol->class_name().c_str());
                          initializedName->get_startOfConstruct()->display("Error: initializedName located at");
@@ -715,7 +724,8 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                          SageInterface::outputLocalSymbolTables(initializedName->get_scope());
                          printf ("************************ OUTPUT SYMBOL TABLE *********************\n");
                        }
-                    ROSE_ASSERT(variableSymbol != NULL || enumFieldSymbol != NULL);
+                 // ROSE_ASSERT(variableSymbol != NULL || enumFieldSymbol != NULL);
+                    ROSE_ASSERT(variableSymbol != NULL || enumFieldSymbol != NULL || labelSymbol != NULL);
 
                     nodeList.insert(symbol);
                     ROSE_ASSERT(finalDeleteSet.find(symbol) == finalDeleteSet.end());
@@ -1807,6 +1817,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
              }
 #endif
 
+       // DQ (4/16/2011): Added support for another IR node.
+          case V_SgJavaImportStatement:
+
        // DQ (11/16/2007): Added support for another IR node.
           case V_SgFortranDo:
 
@@ -1822,6 +1835,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // DQ (11/21/2007): Added support for another IR node.
           case V_SgEquivalenceStatement:
           case V_SgCommonBlock:
+          case V_SgCommonBlockObject:
           case V_SgInterfaceStatement:
           case V_SgImportStatement:
 
@@ -1890,6 +1904,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                    }
                break;
              }
+
+       // DQ (11/20/2010): We don't share token IR nodes, I think this is not required.
+          case V_SgToken:
 
        // DQ (1/23/2010): These are relatively new IR nodes that are finally being used and tested.
           case V_SgFileList:

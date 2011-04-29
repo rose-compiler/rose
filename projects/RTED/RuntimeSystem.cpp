@@ -44,7 +44,7 @@ std::string HexToString(T t){
 
 
 
-#define CHECKPOINT rs -> checkpoint( SourcePosition( filename, atoi( line ), atoi( lineTransformed ))); 
+#define CHECKPOINT rs -> checkpoint( SourcePosition( filename, atoi( line ), atoi( lineTransformed )));
 
 enum ReadWriteMask { Read = 1, Write = 2, BoundsCheck = 4 };
 
@@ -54,7 +54,7 @@ int rs_initialized = 0;
 /*********************************************************
  * Constructor
  ********************************************************/
-RuntimeSystem* 
+RuntimeSystem*
 RuntimeSystem_getRuntimeSystem() {
   RuntimeSystem * rs = RuntimeSystem::instance();
 
@@ -71,7 +71,7 @@ RuntimeSystem_getRuntimeSystem() {
  ********************************************************/
 void
 RuntimeSystem_roseRtedClose(char* from) {
-	
+
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 
   rs->doProgramExitChecks();
@@ -87,7 +87,7 @@ RuntimeSystem_roseRtedClose(char* from) {
 
 
 // TODO 3 djh: doxygenify
-/* 
+/*
  * Returns an RsArrayType* whose dimensionality dimensions are given in vl and
  * whose base non-array type is base_type.
  */
@@ -243,14 +243,14 @@ RuntimeSystem_roseCreateHeap(const char* name, const char* mangl_name,
     //		"  class_name:" <<class_name<<"  indirection_level:"<<ToString(indirection_level)<<
     //		"  address:"<<HexToString(heap_address) <<"  malloc size:"<<ToString(mallocSize)<<endl;
 
-    RsPointerType* rs_type 
+    RsPointerType* rs_type
       = static_cast< RsPointerType* >(
           RuntimeSystem_getRsType(
 							type,
 							basetype,
 							class_name,
 							indirection_level ));
-    RsClassType* class_type 
+    RsClassType* class_type
       = dynamic_cast< RsClassType* >( rs_type -> getBaseType() );
     // A class might have had its memory allocation registered in the
     // constructor.  If there was no explicit constructor, however, we still
@@ -288,7 +288,7 @@ RuntimeSystem_roseCreateHeap(const char* name, const char* mangl_name,
  ********************************************************/
 void
 RuntimeSystem_roseAccessHeap(const char* filename,
-			      addr_type base_address, addr_type address, long int size, 
+			      addr_type base_address, addr_type address, long int size,
 			      int read_write_mask, const char* line, const char* lineTransformed){
 
 
@@ -322,7 +322,7 @@ void RuntimeSystem_checkMemoryAccess( addr_type address, long int size, int read
 
 // ***************************************** FUNCTION CALL *************************************
 
-std::vector< RsType* > 
+std::vector< RsType* >
 RuntimeSystem_roseGatherTypes( int type_count, va_list vl ) {
 
   std::vector< RsType* > types;
@@ -349,11 +349,11 @@ void RuntimeSystem_roseAssertFunctionSignature(
     va_list vl;
   va_start( vl, type_count );
 
-  std::vector< RsType* > types 
+  std::vector< RsType* > types
     = RuntimeSystem_roseGatherTypes( type_count, vl );
 
   rs -> expectFunctionSignature( name, types );
-    
+
   va_end( vl );
 }
 
@@ -365,11 +365,11 @@ void RuntimeSystem_roseConfirmFunctionSignature(
   va_list vl;
   va_start( vl, type_count );
 
-  std::vector< RsType* > types 
+  std::vector< RsType* > types
     = RuntimeSystem_roseGatherTypes( type_count, vl );
 
   rs -> confirmFunctionSignature( name, types );
-    
+
   va_end( vl );
 }
 
@@ -417,7 +417,7 @@ RuntimeSystem_isInterestingFunctionCall(const char* name) {
 //
 // This does, however, mean that the memory manager will also think writes are
 // valid, as in, e.g.
-//  
+//
 //    char* s = malloc( 5);
 //    strcpy( s, "1234";
 //    strcpy( "a constant string", s);
@@ -449,7 +449,7 @@ void RuntimeSystem_ensure_allocated_and_initialized( const void* mem, size_t siz
          NULL,                                                          \
          10                                                             \
          )
-    
+
 
 /*********************************************************
  * This function is called when one of the following functions in the code is called:
@@ -481,14 +481,14 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
 
     if( 0 == strcmp("memcpy", fname)) {
       rs->check_memcpy(
-                       (void*) args[0], 
-		       (const void*) args[2], 
+                       (void*) args[0],
+		       (const void*) args[2],
 		       (int) NUM_ARG( 4)
 		       );
     } else if ( 0 == strcmp("memmove", fname)) {
       rs->check_memmove(
-			(void*) args[0], 
-			(const void*) args[2], 
+			(void*) args[0],
+			(const void*) args[2],
 			(int) NUM_ARG( 4)
 			);
     } else if ( 0 == strcmp("strcpy", fname)) {
@@ -501,7 +501,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
 		       );
     } else if ( 0 == strcmp("strncpy", fname)) {
       rs->check_strncpy(
-			(char*) args[0], 
+			(char*) args[0],
 			(const char*) args[2],
 			NUM_ARG( 4)
 			);
@@ -510,33 +510,33 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
       HANDLE_STRING_CONSTANT( 2);
 
       rs->check_strcat(
-                       (char*) args[0], 
+                       (char*) args[0],
 		       (const char*) args[2]
 		       );
     } else if ( 0 == strcmp("strncat", fname)) {
       rs->check_strncat(
-			(char*) args[0], 
+			(char*) args[0],
 			(const char*) args[2],
 			NUM_ARG( 4)
 			);
     } else if ( 0 == strcmp("strchr", fname)) {
       rs->check_strchr(
-                       (const char*) args[0], 
+                       (const char*) args[0],
 		       (int) NUM_ARG( 2)
 		       );
     } else if ( 0 == strcmp("strpbrk", fname)) {
       rs->check_strpbrk(
-			(const char*) args[0], 
+			(const char*) args[0],
 			(const char*) args[2]
 			);
     } else if ( 0 == strcmp("strspn", fname)) {
       rs->check_strspn(
-                       (const char*) args[0], 
+                       (const char*) args[0],
 		       (const char*) args[2]
 		       );
     } else if ( 0 == strcmp("strstr", fname)) {
       rs->check_strstr(
-                       (const char*) args[0], 
+                       (const char*) args[0],
 		       (const char*) args[2]
 		       );
     } else if ( 0 == strcmp("strlen", fname)) {
@@ -604,7 +604,7 @@ RuntimeSystem_roseIOFunctionCall(const char* fname,
     //  vfprintf
     //  vprintf
     //  vsprintf
-    
+
     if ( 0 == strcmp("fclose", fname)) {
       rs -> registerFileClose( (FILE*)file );
     } else if ( 0 == strcmp("fflush", fname)) {
@@ -805,6 +805,25 @@ int RuntimeSystem_roseCreateVariable( const char* name,
   return 0;
 }
 
+#if NOT_YET_IMPLEMENTED
+int RuntimeSystem_roseCreateSharedVariable( const char* name,
+																						const char* mangled_name,
+																						const char* type,
+																						const char* basetype,
+																						size_t indirection_level,
+																						addr_type address,
+																						unsigned int size,
+																						int init,
+																						const char* class_name,
+																						const char* filename,
+																						const char* line,
+																						const char* lineTransformed
+																					)
+{
+  std::cerr << "TODO: create shared variable!" << std::endl;
+}
+#endif /* NOT_YET_IMPLEMENTED */
+
 int RuntimeSystem_roseCreateObject(
         const char* type_name,
         const char* base_type,
@@ -818,7 +837,7 @@ int RuntimeSystem_roseCreateObject(
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
   CHECKPOINT
 
-  RsClassType * rs_type 
+  RsClassType * rs_type
     = static_cast< RsClassType* >(
         RuntimeSystem_getRsType(
               type_name,
@@ -858,7 +877,7 @@ RuntimeSystem_roseInitVariable(
   rs->printMessage(message);
 
 
-    RsType* rs_type = 
+    RsType* rs_type =
     RuntimeSystem_getRsType(
 			    type,
 			    base_type,
@@ -867,7 +886,7 @@ RuntimeSystem_roseInitVariable(
 			    );
   rs -> checkMemWrite( address, size, rs_type );
 
-  
+
 
   // This assumes roseInitVariable is called after the assignment has taken
   // place (otherwise we wouldn't get the new heap address).
@@ -878,8 +897,8 @@ RuntimeSystem_roseInitVariable(
   // "   pointer_changed:" << pointer_changed << " pointer_type:" <<
   //  type<<endl;
 
-  if(     ismalloc != 1 
-	  && pointer_changed == 1 
+  if(     ismalloc != 1
+	  && pointer_changed == 1
 	  && 0 == strcmp( "SgPointerType", type )) {
 
     addr_type heap_address = *((addr_type*) address);
@@ -911,7 +930,7 @@ RuntimeSystem_roseMovePointer(
   CHECKPOINT
 
     addr_type heap_address = *((addr_type*) address);
-  RsType* rs_type = 
+  RsType* rs_type =
     RuntimeSystem_getRsType(
 			    type,
 			    base_type,
@@ -926,7 +945,7 @@ RuntimeSystem_roseMovePointer(
  * This function tells the runtime system that a variable is used
  ********************************************************/
 void RuntimeSystem_roseAccessVariable(
-				      addr_type address, 
+				      addr_type address,
 				      unsigned int size,
 				      addr_type write_address,
 				      unsigned int write_size,
@@ -969,7 +988,7 @@ RuntimeSystem_roseCheckpoint( const char* filename, const char* line, const char
 
 
 
-void 
+void
 RuntimeSystem_roseRegisterTypeCall(int count, ...) {
   // handle the parameters within this call
   va_list vl;
@@ -986,7 +1005,7 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
   addr_type sizeC = va_arg(vl,addr_type);
   //cerr << " +++++ Register Class : " << nameC << " size : " << sizeC << "  isUnion : " << isUnion << endl;
   int i=0;
-  
+
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
   CHECKPOINT
 

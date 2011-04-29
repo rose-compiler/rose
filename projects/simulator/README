@@ -42,12 +42,18 @@ Switches are:
 
 ** "progress" emits a progress report every 10 seconds.
 
+** "signal" shows information about signal handling.
+
+** "thread" shows thread creation and termination.
+
 ** "all" turns on all possible debugging switches.
 
 * "--debug" by itself is the same as "--debug=syscall,insn"
 
 * "--log=FILE" sends diagnostics to the specified file rather than
-  standard error.
+  standard error.  May include a printf-like integer format which
+  will be replaced by the PID, which is useful when the specimen
+  forks.
 
 * "--core=STYLE" where STYLE is a comma-separated list of core dump
   types. Currently supported are "elf", which produces a standard ELF
@@ -61,6 +67,24 @@ Switches are:
   from overwriting this one.  Once the core dump(s) is produced x86sim
   will continue to execute the specimen.
 
+* "--interp=NAME" overrides the interpreter name from the PT_INTERP
+  section (normally named ".interp"). The interpreter is usually
+  the linux dynamic linker, ld-linux.so.
+
+* "--vdso=PATHS" overrides the compiled in names for finding the
+  virtual dynamic shared object normally provided by the kernel. The
+  PATHS are a colon-separate list of directories and/or files. When
+  directories are specified the simulator looks for files called
+  "x86vdso" in those directories.
+
+* "--showauxv" causes the simulator to print its own ELF auxiliary
+  vector.  (The auxiliary vector for the specimen is printed by
+  "--debug=loader".)
+
+* "--trace=FILENAME" generates a binary trace that can be read
+  with the traceAnalysis project.  That project reads a trace file
+  and produces ELF and PE binary executables.
+
 Positional arguments:
 
 * "SPECIMEN" is the name of the program to simulate.  x86sim will
@@ -71,80 +95,6 @@ Positional arguments:
   not depend on this feature).
 
 * "SPECIMEN_ARGS" are all the arguments for the specimen.
-
-== Design ==
-
-x86sim uses ROSE's binary support to simulate a process:
-
-* The memory address space of the specimen is represented by an
-  instance of ROSE's MemoryMap class.  Keeping the specimen's address
-  space separated from x86sim's address space allows the specimen to
-  use its entire address space however it chooses, and it prevents the
-  specimen from being able to access x86sim's address space.
-
-  The main drawback of this design is that every specimen memory
-  access must go through the MemoryMap, and x86sim must marshal data
-  between the specimen's and x86sim's address spaces when performing a
-  system call on behalf of the specimen.  This has an impact on
-  performance.
-
-* The specimen's instructions are simulated rather than executed
-  directly by the CPU.  The simulation is performed by the
-  X86InstructionSemantics class defined in ROSE and an EmulationPolicy
-  class defined in x86sim.  The X86InstructionSemantics class defines
-  what basic operations must be performed by each instruction, while
-  the EmulationPolicy class defines the operations themselves.
-
-  Simulating each instruction has a number of advantages:
-
-     * the specimen can be for a different architecture than that on
-       which x86sim is running.
-
-     * x86sim handles priviledged instructions the same way as all
-       other instructions.
-
-     * it's easy to modify x86sim to do something special for
-       certain instructions.
-
-     * it allows x86sim to keep the specimen in a separate address
-       space that doesn't overlap with x86sim's address space.
-
-     * it's a good way to gain confidence that ROSE's instruction
-       semantics are working properly.  A bug in the implementation
-       would likely cause the specimen to fail.
-
-  The main disadvantage of simulating each instruction is that it
-  is much slower than executing instructions directly.
-
-* The ROSE Disassembler is used to build an intermediate
-  representation of each instruction before the instruction can be
-  simulated.  Disassembly at some level is necessary in order to
-  simulate instructions, and the level of disassembly that x86sim uses
-  is the same as that which ROSE uses for all other binary
-  analyses. Besides being necessary for simulation, this also gives us
-  confidence that the disassembler is functioning properly.
-
-* Dynamic linking. x86sim loads the specimen's main executable into an
-  address space (MemoryMap) like the OS would do, and then begins
-  simulation.  If the main executable has an interpreter, then the
-  interpreter is also loaded and simulation starts in the
-  interpreter. In this way, x86sim is able to simulate dynamically
-  linked executables -- it simulates the linker itself (i.e., it
-  simulates the ld-linux.so interpreter).
-
-  ROSE also has it's own dynamic linking capability which is under
-  development. The simulator could use this capability instead, which
-  would give the user more control over the linking process.
-
-* System calls. x86sim supports either the "INT 0x80" interface or
-  they "SYSENTER" interface.  In either case, the instruction is
-  intercepted and x86sim processes the system call. It does one of two
-  things: (1) x86sim may invoke the system call on behalf of the
-  specimen, or (2) x86sim may update the simulated state of the
-  specimen directly.
-
-  Handling of system calls actually makes up the bulk of the
-  EmulationPolicy class in x86sim.
 
 == System calls ==
 
@@ -340,3 +290,71 @@ with "X86SIM_". For example, to adjust the library load path
 do this:
     
     $ X86SIM_LD_LIBRARY_PATH=somedir ./x86sim a.out
+
+
+To get a specimen core dump upon return from any signal handler, use
+the "--dump=0xdeceaced" switch (as in a deceaced (sic) signal handler).
+
+
+== CROSS PLATFORM ==
+
+Here's how to run a 32-bit specimen on a 64-bit machine that doesn't
+have 32-bit compatibility. The goal is to get the specimen to follow
+the same code path in the 64-bit x86sim as it would when run natively
+on the 32-bit platform.
+
+(1) On the 32-bit machine, run "ldd $SPECIMEN" to get a list of
+    libraries, including the dynamic linker itself. Copy all of these
+    files to a directory, $LIBDIR, on the 64-bit machine.  The library
+    with no file name (if any, often called "linux-gate") is a virtual
+    dynamic shared object provided by the kernel--don't worry about
+    copying it.  The "ld-linux" shared object is the dynamic linker
+    itself, which we'll refer to as $LDLINUX.
+
+(2) Copy the virtual dynamic shared object file to the test
+    directory.  Name of file is $VDSO.
+
+      $ VDSO_BASE=0x$(setarch i386 -LRB3 dd if=/proc/self/maps |\
+	            grep vdso |\
+                    cut -d- -f1)
+ 
+    Run a couple of times to make sure the $VDSO_BASE is consistent.
+
+      $ setarch i386 -LRB3 dd bs=1024 skip=$[VDSO_BASE/1024] count=4 \
+          if=/proc/self/mem of=$VDSO
+
+(3) Copy the specimen to the 64-bit machine. This is $SPECIMEN.
+
+(4) Run the simulator as:
+
+      setarch i386 -LRB3 \
+          env \
+	      X86SIM_LD_PRELOAD= \
+              X86SIM_LD_LIBRARY_PATH=$LIBDIR \
+          x86sim \
+              --interp=$LDLINUX --vdso=$VDSO \
+              $SPECIMEN
+
+== SIGNAL HANDLING ==
+
+Signals delivered to x86sim will be treated as if they were intended
+for the specimen (x86sim never gets a SIGSEGV anyway ;-).  After the
+OS kernel delivers the signal to x86sim, x86sim will deliver it to the
+specimen. This final delivery always happens between instructions.
+
+We don't yet handle signal stacks, although adding one wouldn't be
+that hard.
+
+Pressing Control-C won't do what usually happens--it won't immediately
+kill x86sim.  Instead, the SIGINT is handled just like the other
+signals in that x86sim will deliver it to the specimen.  Usually the
+specimen will not have a handler registered for SIGINT and x86sim will
+cause the specimen to exit, thus exiting x86sim as well.  If you're
+unable to kill x86sim with a Control-C, try Control-\ or, from another
+terminal, run "kill -SIGKILL PID" where PID is the process ID of
+x86sim (and the specimen).
+
+If x86sim fails an assertion (assert() or ROSE_ASSERT()) it will look
+like the specimen failed the assertion since x86sim traps the signal
+and delivers it to the specimen. This is true of all signals produced
+by x86sim for x86sim.

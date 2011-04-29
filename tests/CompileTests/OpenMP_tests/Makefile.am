@@ -17,6 +17,8 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 C_TESTCODES_REQUIRED_TO_PASS = \
 	3loops.c \
 	jacobi.c \
+	alignment.c \
+	array_init.c \
 	atomic.c \
 	atoms-2.c \
 	barrier.c \
@@ -48,6 +50,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	hello-1.c \
 	hello-2.c \
 	hello-ordered.c \
+	init.c \
 	lastprivate0.c \
 	lastprivate.c \
 	lastprivateOrphaned.c \
@@ -59,6 +62,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	master.c \
 	masterSingle.c \
 	matrix_vector.c \
+	md_open_mp.c \
 	nestedpar1.c \
 	nestedpar.c \
 	omp1.c \
@@ -68,11 +72,17 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	ompfor4.c \
 	ompfor5.c \
 	ompfor6.c \
+	ompfor-default.c \
+	ompfor-decremental.c \
+	ompfor-static.c \
 	ompGetNumThreads.c \
 	ordered2.c \
 	ordered.c \
 	orphaned-directives.c \
 	parallel.c \
+	parallel-if.c \
+	parallel-if-numthreads.c \
+	parallel-numthreads.c \
 	parallel-reduction.c \
 	parallel-reduction2.c \
 	parallelfor.c \
@@ -81,11 +91,14 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	preprocessingInfo.c \
 	private.c \
 	privatej.c \
+	private-duplicate.c \
 	recursive.c \
 	reduction2.c \
 	reduction.c \
+	reduction-classic.c \
 	rice1.c \
 	section.c \
+	section1.c \
 	set_num_threads.c \
 	shared.c \
 	single.c \
@@ -101,6 +114,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	task_untied.c \
 	task_untied2.c \
 	task_untied3.c \
+	task_untied4.c \
 	task_underIf.c \
 	task_wait.c \
 	task_wait2.c \
@@ -128,6 +142,7 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 
 # put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine
 TESTCODE_CURRENTLY_FAILING = \
+	ompfor7.c \
 	macroCalls.c 
 
 ROSE_FLAGS = -rose:openmp:ast_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:wave

@@ -1,4 +1,4 @@
-module precision
+module precision_01
 ! use mpi
   include 'original_mpif.h'
 ! DQ (4/7/2010): removed problem code for OFP (version 0.7.2)
@@ -16,4 +16,4 @@ module precision
   real(wp), parameter :: SMALL=1.0d-20
   real(wp), parameter :: BIG=1.0d+20
 
-end module precision
+end module precision_01

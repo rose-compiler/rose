@@ -1,5 +1,5 @@
 /* DQ (8/20/2006): This example demonstrated infinite 
-   recursion in the comutation of a mangled name!
+   recursion in the computation of a mangled name!
 */
 typedef enum
 {

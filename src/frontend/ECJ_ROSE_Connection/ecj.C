@@ -9,7 +9,10 @@
 using std::string;
 
 static jmethodID jofp_get_method(int, const char*, const char*);
-static jmethodID jofp_get_main() ;
+
+// DQ (4/17/2011): This is not used.
+// static jmethodID jofp_get_main() ;
+
 static jmethodID jofp_get_error_method();
 static jmethodID jofp_get_cons_method();
 static jclass    jofp_get_class();
@@ -75,7 +78,26 @@ jofp_invoke(int argc, char **argv)
 
      if (fileName == NULL || args == NULL || type == NULL) jserver_handleException(); 
 
+#if 0
      jserver_callMethod(jofp_get_class(), jofp_get_main(), args);
+#else
+     // tps : this code is more transparent and easier to read
+     jclass cls = jserver_FindClass("JavaTraversal");
+     jmethodID  mainMethod = jserver_GetMethodID(STATIC_METHOD, cls, "main",  "([Ljava/lang/String;)V");
+     JNIEnv* env = getEnv();
+     (*env).CallStaticVoidMethod(cls, mainMethod,args);
+#endif
+
+#if 1
+     jmethodID errorMethod = jofp_get_method(STATIC_METHOD, "getError", "()Z");
+     retval = (*env).CallBooleanMethod(cls, errorMethod);
+     if (retval != 0)  {
+         fprintf(stderr, "C++ side : Error detected ---------------------------------.\n");
+         abort();
+     }      
+#endif
+
+     printf("We are done -----------------------------------------\n");
 
   // DQ (10/12/2010): This function is not implemented in the ECJ parser (only in OFP).
      jobject new_ofp_class = jofp_get_new_object(jofp_get_cons_method(),args, fileName, type);
@@ -83,9 +105,10 @@ jofp_invoke(int argc, char **argv)
   // DQ (10/12/2010): This function is not implemented in the ECJ parser (only in OFP).
      retval = jserver_callBooleanMethod(new_ofp_class, jofp_get_error_method());
 
-     if (retval != 0)  {
-         fprintf(stderr, "Warning: jserver_callBooleanMethod return non-zero result.\n");
-     }      
+     if (retval != 0)
+        {
+          fprintf(stderr, "Warning: jserver_callBooleanMethod return non-zero result.\n");
+        }
 
     return retval;
 }
@@ -102,7 +125,7 @@ jofp_get_method(int static_method, const char* name, const char* arg)
     result = jserver_GetMethodID(static_method, jofp_get_class(), name, arg);
 
     if (result == NULL) jserver_handleException();
-	return result;
+        return result;
 }
 
 
@@ -139,7 +162,8 @@ jofp_get_error_method()
     return errorMethod;
 }
 
-
+#if 0
+// DQ (4/17/2011): This is not used.
 static jmethodID 
 jofp_get_main() 
 {
@@ -148,6 +172,6 @@ jofp_get_main()
         mainMethod = jofp_get_method(STATIC_METHOD, "main", "([Ljava/lang/String;)V");
    return mainMethod;
 }
-
+#endif
 
 

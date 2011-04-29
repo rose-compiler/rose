@@ -1,0 +1,23 @@
+
+mpt_lpOutsideInterface_la_sources=\
+	$(mpt_lpOutsideInterfacePath)/ArrayAnnot.C \
+	$(mpt_lpOutsideInterfacePath)/ArrayInterface.C \
+	$(mpt_lpOutsideInterfacePath)/ArrayRewrite.C 
+
+
+mpt_lpOutsideInterface_includeHeaders=\
+	$(mpt_lpOutsideInterfacePath)/ArrayAnnot.h \
+	$(mpt_lpOutsideInterfacePath)/ArrayInterface.h \
+	$(mpt_lpOutsideInterfacePath)/ArrayRewrite.h 
+
+
+mpt_lpOutsideInterface_extraDist=\
+	$(mpt_lpOutsideInterfacePath)/CMakeLists.txt
+
+
+mpt_lpOutsideInterface_cleanLocal=\
+	rm -rf \
+		$(mpt_lpOutsideInterfacePath)/Templates.DB \
+		$(mpt_lpOutsideInterfacePath)/ii_files \
+		$(mpt_lpOutsideInterfacePath)/ti_files \
+		$(mpt_lpOutsideInterfacePath)/core

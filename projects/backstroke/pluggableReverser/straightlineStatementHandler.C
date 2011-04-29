@@ -1,10 +1,12 @@
 #include "straightlineStatementHandler.h"
 
-#include "utilities/CPPDefinesAndNamespaces.h"
+#include "utilities/cppDefinesAndNamespaces.h"
 
 #include "rose.h"
 #include "statementHandler.h"
-#include "pluggableReverser/eventHandler.h"
+#include "pluggableReverser/eventProcessor.h"
+
+using namespace std;
 
 vector<EvaluationResult> StraightlineStatementHandler::evaluate(SgStatement* statement, const VariableVersionTable& var_table)
 {

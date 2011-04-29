@@ -13,7 +13,8 @@ libroseSupportSources = \
      roseTranslators.C \
      utility_functions.C \
      memoryUsage.C \
-     stringify.C
+     stringify.C \
+     threadSupport.C
 
 # The stringify.h and stringify.C files contain functions for converting an enum constant into a string.
 # This should probably also depend on all the source files that contain enum definitions.
@@ -36,12 +37,14 @@ noinst_LTLIBRARIES = libroseSupport.la
 libroseSupport_la_SOURCES = $(libroseSupportSources)
 
 include_HEADERS = \
+   callbacks.h \
    transformationSupport.h \
    optionDeclaration.h \
    sourceLocationInheritedAttribute.h \
    roseTranslators.h \
    utility_functions.h \
-   stringify.h
+   stringify.h \
+   threadSupport.h
 
 # DQ (10/11/2007): This used to be part of the template instationation mechanism, but it was 
 # based on nm and was not robust.  Instead we instantiate all templates and figure out which 

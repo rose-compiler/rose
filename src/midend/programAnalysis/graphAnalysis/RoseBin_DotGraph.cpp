@@ -33,7 +33,7 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
 
   //  rose_graph_integer_node_hash_map node_index_to_node_map;
   //rose_graph_hash_multimap& nodes = get_nodes()->get_nodes();
-	rose_graph_integer_node_hash_map nodes = get_node_index_to_node_map();
+        rose_graph_integer_node_hash_map nodes = get_node_index_to_node_map();
   int counter=nodes.size();
 
   // DQ (4/23/2009): Added a typedef to refactor the specification of the type (and add the explicit reference to the hash function).
@@ -45,7 +45,7 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
 #else
     typedef rose_hash::unordered_set <std::string> funcNamesType;
 #endif
-	funcNamesType funcNames;
+        funcNamesType funcNames;
 
     rose_graph_integer_node_hash_map resultSet;
 
@@ -83,10 +83,10 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
 
     if (RoseBin_support::DEBUG_MODE())
       if ((counter % 10000)==0)
-	cout << " preparing function " << counter << endl;
+        cout << " preparing function " << counter << endl;
     if (!found)
 //      resultSet[node_nr]=node;
-	resultSet.insert(make_pair(node_nr,node));
+        resultSet.insert(make_pair(node_nr,node));
     else
       callMap.insert(make_pair ( funcName, nt )) ;
   }
@@ -120,39 +120,39 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
       string name = "noname";
       string type = "removed";//node->get_type();
       for (; prop!=node_p.end(); ++prop) {
-	int addr = prop->first;
-	// cerr << " dot : property for addr : " << addr << " and node " << hex_address << endl;
-	if (addr==SgGraph::nodest_jmp)
-	  nodest_jmp = true;
-	else if (addr==SgGraph::itself_call)
-	  error = true;
-	else if (addr==SgGraph::nodest_call)
-	  nodest_call = true;
-	else if (addr==SgGraph::interrupt)
-	  interrupt = true;
-	else if (addr==SgGraph::name)
-	  name = prop->second;
+        int addr = prop->first;
+        // cerr << " dot : property for addr : " << addr << " and node " << hex_address << endl;
+        if (addr==SgGraph::nodest_jmp)
+          nodest_jmp = true;
+        else if (addr==SgGraph::itself_call)
+          error = true;
+        else if (addr==SgGraph::nodest_call)
+          nodest_call = true;
+        else if (addr==SgGraph::interrupt)
+          interrupt = true;
+        else if (addr==SgGraph::name)
+          name = prop->second;
       }
 
 
       funcNr++;
       if (RoseBin_support::DEBUG_MODE())
-	cout << " Unparser Function : " << funcNr  << endl;
+        cout << " Unparser Function : " << funcNr  << endl;
 
       string add ="";
       //if (grouping) {
-      //	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
+      //        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
       //} else {
       if (nodest_jmp)
-	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
       else if (nodest_call)
-	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=orange,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=orange,fontname=\"7x13bold\",fontcolor=black,style=filled";
       else if (interrupt)
-	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=blue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=blue,fontname=\"7x13bold\",fontcolor=black,style=filled";
       else if (error)
-	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=lightblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=lightblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
       else
-	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=purple,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=purple,fontname=\"7x13bold\",fontcolor=black,style=filled";
       //}
 
       string funcName = func->get_name();
@@ -167,35 +167,35 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
       myfile << "subgraph \"cluster_" <</*name*/ hex_address<< "\" { \n";
       myfile << "\"" << hex_address << "\"[label=\"" << hex_address << ":"
              << funcName << "\\n type = " << type << "\\n \"" << add <<"];\n";
-      //	     << name << "\\n type = " << type << "\\n \"" << add <<"];\n";
+      //             << name << "\\n type = " << type << "\\n \"" << add <<"];\n";
 
       callNodeType::iterator inv = callMap.lower_bound(funcName);
       for (;inv!=callMap.upper_bound(funcName);++inv) {
-	pair <int, SgGraphNode*>  itn = inv->second;
-	//	string hex_address_n = itn.first;
-	SgGraphNode* node = isSgGraphNode(itn.second);
-	string hex_address_n = node->get_name();
-	SgNode* internal = node->get_SgNode();
-	SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
-	string name_n="noname";
-	if (func)
-	  name_n=func->get_name();
+        pair <int, SgGraphNode*>  itn = inv->second;
+        //      string hex_address_n = itn.first;
+        SgGraphNode* node = isSgGraphNode(itn.second);
+        string hex_address_n = node->get_name();
+        SgNode* internal = node->get_SgNode();
+        SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
+        string name_n="noname";
+        if (func)
+          name_n=func->get_name();
 
-	string type_n = "removed";//node->get_type();
-	map < int , string> node_p = node->get_properties();
-	map < int , string>::iterator prop = node_p.begin();
-	/*
-	for (; prop!=node_p.end(); ++prop) {
-	  int addr = prop->first;
-	  // cerr << " dot : property for addr : " << addr << " and node " << hex_address << endl;
-	  	  if (addr==SgGraph::name)
-	  name_n = prop->second;
-	}
-	*/
-	//	cerr << "    +++ funcName " << funcName << "   name_n: " << name_n << endl;
-	myfile << "\"" << hex_address_n << "\"[label=\"" << hex_address_n << ":"
+        string type_n = "removed";//node->get_type();
+        map < int , string> node_p = node->get_properties();
+        map < int , string>::iterator prop = node_p.begin();
+        /*
+        for (; prop!=node_p.end(); ++prop) {
+          int addr = prop->first;
+          // cerr << " dot : property for addr : " << addr << " and node " << hex_address << endl;
+                  if (addr==SgGraph::name)
+          name_n = prop->second;
+        }
+        */
+        //      cerr << "    +++ funcName " << funcName << "   name_n: " << name_n << endl;
+        myfile << "\"" << hex_address_n << "\"[label=\"" << hex_address_n << ":"
                << name_n << "\\n type = " << type_n << "\\n \"" << add <<"];\n";
-        //	<< name_n << "\\n type = " << type_n << "\\n \"" << add <<"];\n";
+        //      << name_n << "\\n type = " << type_n << "\\n \"" << add <<"];\n";
 
       }
 
@@ -247,12 +247,12 @@ RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forw
       funcDecl_parent = isSgAsmFunctionDeclaration(bin_inst->get_parent()->get_parent());
     if (funcDecl_parent==NULL) {
       cerr << " ERROR : printNodes preparation . No parent found for node : " << bin_inst->class_name() <<
-	"  " << hex_address << endl;
+        "  " << hex_address << endl;
       continue;
     }
     if (RoseBin_support::DEBUG_MODE())
       if ((counter % 10000)==0)
-	cout << " preparing function " << counter << endl;
+        cout << " preparing function " << counter << endl;
     inverse_nodesMap.insert(make_pair ( funcDecl_parent, nt )) ;
   }
 
@@ -285,50 +285,50 @@ RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forw
       string name = "noname";
       string type = "removed";//node->get_type();
       for (; prop!=node_p.end(); ++prop) {
-	int addr = prop->first;
-	// cerr << " dot : property for addr : " << addr << " and node " << hex_address << endl;
-	if (addr==SgGraph::nodest_jmp)
-	  nodest_jmp = true;
-	else if (addr==SgGraph::itself_call)
-	  error = true;
-	else if (addr==SgGraph::nodest_call)
-	  nodest_call = true;
-	else if (addr==SgGraph::interrupt)
-	  interrupt = true;
-	else if (addr==SgGraph::name)
-	  name = prop->second;
+        int addr = prop->first;
+        // cerr << " dot : property for addr : " << addr << " and node " << hex_address << endl;
+        if (addr==SgGraph::nodest_jmp)
+          nodest_jmp = true;
+        else if (addr==SgGraph::itself_call)
+          error = true;
+        else if (addr==SgGraph::nodest_call)
+          nodest_call = true;
+        else if (addr==SgGraph::interrupt)
+          interrupt = true;
+        else if (addr==SgGraph::name)
+          name = prop->second;
       }
 
 
       funcNr++;
       if (RoseBin_support::DEBUG_MODE())
-	cout << " Unparser Function : " << funcNr  << endl;
+        cout << " Unparser Function : " << funcNr  << endl;
 
       string add ="";
       //if (grouping) {
-      //	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
+      //        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
       //} else {
       if (nodest_jmp)
-	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
       else if (nodest_call)
-	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=orange,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=orange,fontname=\"7x13bold\",fontcolor=black,style=filled";
       else if (interrupt)
-	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=blue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=blue,fontname=\"7x13bold\",fontcolor=black,style=filled";
       else if (error)
-	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=lightblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=lightblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
       else
-	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=purple,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=purple,fontname=\"7x13bold\",fontcolor=black,style=filled";
       //}
 
       RoseBin_support::checkText(name);
       if (grouping)
-	myfile << "subgraph \"cluster_" <</*name*/ hex_address<< "\" { \n";
+        myfile << "subgraph \"cluster_" <</*name*/ hex_address<< "\" { \n";
       myfile << "\"" << hex_address << "\"[label=\"" << hex_address << ":"
              << name << "\\n type = " << type << "\\n \"" << add <<"];\n";
 
       printInternalNodes(dfg, forward_analysis, myfile, name, func);
       if (grouping)
-	myfile << "} \n";
+        myfile << "} \n";
     }
   }
 }
@@ -338,7 +338,7 @@ RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forw
 void
 RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
                                          std::ofstream& myfile, string& recursiveFunctionName,
-					 SgAsmFunctionDeclaration* p_binFunc) {
+                                         SgAsmFunctionDeclaration* p_binFunc) {
 
   inverseNodeType::iterator inv = inverse_nodesMap.lower_bound(p_binFunc);
   for (;inv!=inverse_nodesMap.upper_bound(p_binFunc);++inv) {
@@ -382,43 +382,43 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
       int addr = prop->first;
       //      cerr << " dot : property for addr : " << addr << " and node " << hex_address << " is " << prop->second << endl;
       if (addr==SgGraph::name)
-	name = prop->second;
+        name = prop->second;
       else if (addr==SgGraph::eval)
-	eval = prop->second;
+        eval = prop->second;
       else if (addr==SgGraph::regs)
-	regs = prop->second;
+        regs = prop->second;
       else if (addr==SgGraph::variable)
-	variable = prop->second;
+        variable = prop->second;
       else if (addr==SgGraph::nodest_jmp)
-	nodest_jmp = true;
+        nodest_jmp = true;
       else if (addr==SgGraph::itself_call)
-	error = true;
+        error = true;
       else if (addr==SgGraph::dfa_bufferoverflow) {
-	bufferoverflow = true;
-	dfa_variable = prop->second;
+        bufferoverflow = true;
+        dfa_variable = prop->second;
       } else if (addr==SgGraph::nodest_call)
-	nodest_call = true;
+        nodest_call = true;
       else if (addr==SgGraph::interrupt)
-	interrupt = true;
+        interrupt = true;
       else if (addr==SgGraph::done)
-	checked = true;
+        checked = true;
       else if (addr==SgGraph::dfa_standard)
-	dfa_standard = true;
+        dfa_standard = true;
       else if (addr==SgGraph::dfa_resolved_func) {
-	dfa_resolved_func = true;
-	dfa_info = prop->second;
+        dfa_resolved_func = true;
+        dfa_info = prop->second;
       } else if (addr==SgGraph::dfa_unresolved_func) {
-	dfa_unresolved_func = true;
-	dfa_info = prop->second;
+        dfa_unresolved_func = true;
+        dfa_info = prop->second;
       } else if (addr==SgGraph::dfa_variable) {
-	dfa_variable = prop->second;
-	dfa_variable_found = true;
+        dfa_variable = prop->second;
+        dfa_variable_found = true;
       } else if (addr==SgGraph::dfa_conditional_def) {
-	dfa_conditional = true;
+        dfa_conditional = true;
       } else if (addr==SgGraph::visitedCounter) {
-	visitedCounter = prop->second;
+        visitedCounter = prop->second;
       } else {
-	cerr << " *************** dotgraph: unknown property found :: " << addr << endl;
+        cerr << " *************** dotgraph: unknown property found :: " << addr << endl;
       }
     }
 
@@ -434,7 +434,7 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
       funcDecl_parent = isSgAsmFunctionDeclaration(bin_inst->get_parent()->get_parent());
     if (funcDecl_parent==NULL) {
       cerr << " ERROR : InternalNodes . No parent found for node : " << bin_inst->class_name() <<
-	"  " << hex_address << endl;
+        "  " << hex_address << endl;
       continue;
     }
     string name_parent = funcDecl_parent->get_name();
@@ -447,31 +447,31 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
 #ifndef _MSC_VER
       type += " " + stringifyX86InstructionKind(inst->get_kind(), "x86_");
 #else
-	ROSE_ASSERT(false);
+        ROSE_ASSERT(false);
 #endif
-	}
+        }
 
     string add = "";
     if (inst->get_kind() == x86_call || inst->get_kind() == x86_ret ) {
       if (nodest_call)
-      	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Blue\",fillcolor=orange,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Blue\",fillcolor=orange,fontname=\"7x13bold\",fontcolor=black,style=filled";
       else if (error)
-      	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Blue\",fillcolor=lightblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Blue\",fillcolor=lightblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
       else
-	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=pink,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=pink,fontname=\"7x13bold\",fontcolor=black,style=filled";
     } else if (inst->get_kind() == x86_jmp) {
       if (nodest_jmp)
-	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
       else
-	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
     } else
       if (x86InstructionIsControlTransfer(inst)) {
-	if (inst->get_kind() == x86_int)
-	  add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=blue,fontname=\"7x13bold\",fontcolor=black,style=filled";
-	else
-	  add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        if (inst->get_kind() == x86_int)
+          add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=blue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        else
+          add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
       } else
-	add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
+        add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
 
     if (checked)
       add = ",shape=ellipse,regular=0, sides=5,peripheries=1,color=\"Black\",fillcolor=grey,fontname=\"7x13bold\",fontcolor=black,style=filled";
@@ -500,24 +500,24 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
       char c = name[j];
       if (c==' ') continue;
       else if (c==':')
-	break;
+        break;
       else
-	nameL+=name[j];
-      //	else
+        nameL+=name[j];
+      //        else
       //  cerr << " not a digit : " << name[j] << endl;
     }
     //      string nameL=name.substr(0,9);
-	//cerr << " hexName : ." << hex_name << ". == ." << nameL << ".   out of : " << name << endl;
-	bool error=false;
+        //cerr << " hexName : ." << hex_name << ". == ." << nameL << ".   out of : " << name << endl;
+        bool error=false;
     if (type!="function") {
       if (hex_name!=nameL) {
-	//cerr << " hexName : ." << hex_name << ". == ." << nameL << ".   out of : " << name << endl;
-      	//cerr << " WARNING ................... SOMETHING IN DOT GENERATION WENT WRONG. ALLOWING THIS FOR NOW . " << endl;
-      	error=true;
+        //cerr << " hexName : ." << hex_name << ". == ." << nameL << ".   out of : " << name << endl;
+        //cerr << " WARNING ................... SOMETHING IN DOT GENERATION WENT WRONG. ALLOWING THIS FOR NOW . " << endl;
+        error=true;
       }
       ROSE_ASSERT(hex_name==nameL);
     }
-	if (!error)
+        if (!error)
     myfile << "\"" << hex_address << "\"[label=\""  << name << "\\n" << dfa_info << dfa_variable <<
       " visited: " << visitedCounter <<"\\n" <<
       "type = " << type << "\\n" << variable << "\\n" << regs << "\"" << add <<"];\n";
@@ -527,7 +527,7 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
 
 
 void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
-		bool forward_analysis, std::ofstream& myfile, bool mergedEdges) {
+                bool forward_analysis, std::ofstream& myfile, bool mergedEdges) {
   ROSE_ASSERT(info);
   if (mergedEdges) {
     createUniqueEdges();
@@ -537,7 +537,7 @@ void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
 }
 
 void RoseBin_DotGraph::printEdges_single( VirtualBinCFG::AuxiliaryInformation* info,
-		bool forward_analysis, std::ofstream& myfile) {
+                bool forward_analysis, std::ofstream& myfile) {
   // traverse edges and visualize results of graph
   //  SgGraphEdgeList* gedges = get_edges();
   rose_graph_integer_edge_hash_multimap edges =get_node_index_to_edge_multimap_edgesOut();
@@ -556,12 +556,12 @@ void RoseBin_DotGraph::printEdges_single( VirtualBinCFG::AuxiliaryInformation* i
 }
 
 void RoseBin_DotGraph::printEdges_multiple( VirtualBinCFG::AuxiliaryInformation* info,
-		bool forward_analysis, std::ofstream& myfile) {
+                bool forward_analysis, std::ofstream& myfile) {
   // traverse edges and visualize results of graph
   //  SgGraphEdgeList* gedges = get_edges();
-	rose_graph_integer_edge_hash_multimap edges =get_node_index_to_edge_multimap_edgesOut();
-	//cerr << " Writing multiEdge graph to DOT - Nr of unique Edges : " << unique_edges.size() << " compare to edges: " <<
-	//edges.size() << endl;
+        rose_graph_integer_edge_hash_multimap edges =get_node_index_to_edge_multimap_edgesOut();
+        //cerr << " Writing multiEdge graph to DOT - Nr of unique Edges : " << unique_edges.size() << " compare to edges: " <<
+        //edges.size() << endl;
   int edgeNr=0;
   rose_graph_integer_edge_hash_multimap::iterator it = edges.begin();
   for (; it!=edges.end();++it) {
@@ -576,7 +576,7 @@ void RoseBin_DotGraph::printEdges_multiple( VirtualBinCFG::AuxiliaryInformation*
 
 
 void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
-		bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge ) {
+                bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge ) {
   // traverse edges and visualize results of graph
   /*
     cerr << " Writing graph to DOT - Nr of Edges : " << edges.size() << endl;
@@ -609,16 +609,16 @@ void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
       SgAsmFunctionDeclaration* src = isSgAsmFunctionDeclaration(source->get_SgNode());
       SgAsmFunctionDeclaration* trg = isSgAsmFunctionDeclaration(target->get_SgNode());
       if (src && trg) {
-	//cerr <<"WARNING :: printEdges - edge not found: " <<
-	  RoseBin_support::HexToString(src->get_address()) << " -> " <<
-	  RoseBin_support::HexToString(trg->get_address()) << endl;
-	//return;
+        //cerr <<"WARNING :: printEdges - edge not found: " <<
+          RoseBin_support::HexToString(src->get_address()) << " -> " <<
+          RoseBin_support::HexToString(trg->get_address()) << endl;
+        //return;
       } else {
-	if (src==NULL) {
-	  // cerr <<"WARNING :: printEdges - src == NULL " << source->get_SgNode()->class_name() <<endl;
-	} else {
-	  // cerr <<"WARNING :: printEdges - trg == NULL " << target->get_SgNode()->class_name() <<endl;
-	}
+        if (src==NULL) {
+          // cerr <<"WARNING :: printEdges - src == NULL " << source->get_SgNode()->class_name() <<endl;
+        } else {
+          // cerr <<"WARNING :: printEdges - trg == NULL " << target->get_SgNode()->class_name() <<endl;
+        }
       }
     } else {
       // cerr <<"WARNING :: printEdges - source or target == NULL " <<endl;
@@ -659,12 +659,12 @@ void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
     // we use either dest or dest_list
     // dest is used for single destinations during cfg run
     // dest_list is used for a static cfg image
-	ROSE_ASSERT(info);
+        ROSE_ASSERT(info);
     vector<VirtualBinCFG::CFGEdge> outEdges = contrl->cfgBinOutEdges(info);
     if (contrl->get_kind() == x86_call || isAsmUnconditionalBranch(contrl)) {
       SgAsmInstruction* next = info->getInstructionAtAddress(contrl->get_address() + contrl->get_raw_bytes().size());
       if (next) {
-	//	  outEdges.push_back(VirtualBinCFG::CFGEdge(VirtualBinCFG::CFGNode(contrl, info), VirtualBinCFG::CFGNode(next, info), info));
+        //        outEdges.push_back(VirtualBinCFG::CFGEdge(VirtualBinCFG::CFGNode(contrl, info), VirtualBinCFG::CFGNode(next, info), info));
       }
     }
     SgAsmInstruction* dest = outEdges.empty() ? NULL : outEdges.front().target().getNode();
@@ -679,31 +679,31 @@ void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
       string add = "";
       string type = "jmp_if";
       if (contrl->get_kind() == x86_call || contrl->get_kind() == x86_ret) {
-	add= ",color=\"Red\",  style=\"dashed\"";
-	type = "call";
+        add= ",color=\"Red\",  style=\"dashed\"";
+        type = "call";
       } else if (contrl->get_kind() == x86_jmp) {
-	add= ",color=\"Red\",  style=\"dashed\"";
-	type = "jmp";
+        add= ",color=\"Red\",  style=\"dashed\"";
+        type = "jmp";
       } else
-	add = ",color=\"Green\",  style=\"dashed\"";
+        add = ",color=\"Green\",  style=\"dashed\"";
       if (dest==nextNode)
-	output =  "\"" + from_hex + "\" -> \"" + to_hex + "\"[label=\"" + type +"\\n"+ edgeLabel+ "\""  + add +  "];\n";
+        output =  "\"" + from_hex + "\" -> \"" + to_hex + "\"[label=\"" + type +"\\n"+ edgeLabel+ "\""  + add +  "];\n";
       // the destination is the next node after a control transfer
       // for this, if the source is a call or jmp, we want to hide
       // the edge
       else
-	if (forward_analysis &&
-	    (contrl->get_kind() == x86_call || contrl->get_kind() == x86_jmp)) {
-	  add = ",color=\"Yellow\",  style=\"solid\"";
-	  type="";
-	  output =  "\"" + from_hex + "\" -> \"" + to_hex + "\"[label=\"" + type  + "\\n"+ edgeLabel+"\""  + add +  "];\n";
-	}
+        if (forward_analysis &&
+            (contrl->get_kind() == x86_call || contrl->get_kind() == x86_jmp)) {
+          add = ",color=\"Yellow\",  style=\"solid\"";
+          type="";
+          output =  "\"" + from_hex + "\" -> \"" + to_hex + "\"[label=\"" + type  + "\\n"+ edgeLabel+"\""  + add +  "];\n";
+        }
     } else
       if (contrl->get_kind() == x86_ret ) { //&& dest_list_empty) {
-	// in case of a multiple return
-	string add= ",color=\"Blue\",  style=\"dashed\"";
-	string type = "ret";
-	output =  "\"" + from_hex + "\" -> \"" + to_hex + "\"[label=\"" + type  + "\\n"+ edgeLabel+"\""  + add +  "];\n";
+        // in case of a multiple return
+        string add= ",color=\"Blue\",  style=\"dashed\"";
+        string type = "ret";
+        output =  "\"" + from_hex + "\" -> \"" + to_hex + "\"[label=\"" + type  + "\\n"+ edgeLabel+"\""  + add +  "];\n";
       }
   }
 
@@ -720,15 +720,15 @@ void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
       SgAsmFunctionDeclaration* f_1 = isSgAsmFunctionDeclaration(thisNode->get_parent());
       SgAsmFunctionDeclaration* f_2 = isSgAsmFunctionDeclaration(nextNode->get_parent());
       if (f_1==NULL)
-	f_1 = isSgAsmFunctionDeclaration(thisNode->get_parent()->get_parent());
+        f_1 = isSgAsmFunctionDeclaration(thisNode->get_parent()->get_parent());
       if (f_2==NULL)
-	f_2 = isSgAsmFunctionDeclaration(nextNode->get_parent()->get_parent());
+        f_2 = isSgAsmFunctionDeclaration(nextNode->get_parent()->get_parent());
       if (f_1==f_2)
-	if (nextNode->get_kind() == x86_call || nextNode->get_kind() == x86_jmp) {
-	  string add = ",color=\"Green\",  style=\"invis\"";
-	  string type="";
-	  output =  "\"" + from_hex + "\" -> \"" + to_hex + "\"[label=\"" + type +"\\n"+ edgeLabel + "\""  + add +  "];\n";
-	}
+        if (nextNode->get_kind() == x86_call || nextNode->get_kind() == x86_jmp) {
+          string add = ",color=\"Green\",  style=\"invis\"";
+          string type="";
+          output =  "\"" + from_hex + "\" -> \"" + to_hex + "\"[label=\"" + type +"\\n"+ edgeLabel + "\""  + add +  "];\n";
+        }
     }
   }
 

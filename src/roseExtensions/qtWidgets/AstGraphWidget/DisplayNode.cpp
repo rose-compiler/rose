@@ -138,20 +138,20 @@ void DisplayNode::mouseReleaseEvent ( QGraphicsSceneMouseEvent * ev )
 
 
 DisplayTreeNode::DisplayTreeNode(QGraphicsScene * sc)
-	: parentEdge(NULL)
+        : parentEdge(NULL)
 {
 }
 
 DisplayTreeNode::~DisplayTreeNode()
 {
     // Deletion of subtree
-	foreach(DisplayEdge * e, childEdges)
-	{
-	    // the child node is deleted (and with it the whole subtree)
-	    delete e->destNode();
-	    // deletes the edge itself
-	    delete e;
-	}
+        foreach(DisplayEdge * e, childEdges)
+        {
+            // the child node is deleted (and with it the whole subtree)
+            delete e->destNode();
+            // deletes the edge itself
+            delete e;
+        }
 
    //Only outgoing edges are deleted to prevent double frees
     foreach(DisplayEdge * e, additionalEdges)
@@ -161,20 +161,20 @@ DisplayTreeNode::~DisplayTreeNode()
 
 DisplayTreeNode * DisplayTreeNode::addChild(SgNode * sgNode)
 {
-	DisplayTreeNode * child = addChild(sgNode->class_name().c_str());
-	child->setSgNode(sgNode);
+        DisplayTreeNode * child = addChild(sgNode->class_name().c_str());
+        child->setSgNode(sgNode);
 
-	return child;
+        return child;
 }
 
 DisplayTreeNode * DisplayTreeNode::addChild(const QString & dispName)
 {
-	DisplayTreeNode * child = new DisplayTreeNode(scene);
-	child->setDisplayName(dispName);
+        DisplayTreeNode * child = new DisplayTreeNode(scene);
+        child->setDisplayName(dispName);
 
-	addChild(child);
+        addChild(child);
 
-	return child;
+        return child;
 }
 
 void DisplayTreeNode::addChild(DisplayTreeNode * child)
@@ -186,7 +186,7 @@ void DisplayTreeNode::addChild(DisplayTreeNode * child)
     childEdges.push_back(newEdge);
 
     child->parentEdge = newEdge;
-	child->setScene(scene);
+        child->setScene(scene);
 }
 
 
@@ -232,7 +232,7 @@ void DisplayTreeNode::registerAdditionalEdge(DisplayEdge *e)
 {
     if(scene) scene->addItem(e);
 
-	additionalEdges.push_back(e);
+        additionalEdges.push_back(e);
 }
 
 
@@ -270,15 +270,15 @@ DisplayTreeNode * DisplayTreeNode::mergeTrees(QGraphicsScene * sc,
                                               DisplayTreeNode * n1,
                                               DisplayTreeNode * n2)
 {
-	DisplayTreeNode * newNode= new DisplayTreeNode(sc);
-	newNode->setDisplayName(name);
+        DisplayTreeNode * newNode= new DisplayTreeNode(sc);
+        newNode->setDisplayName(name);
 
-	n1->setScene(sc);
-	n2->setScene(sc);
+        n1->setScene(sc);
+        n2->setScene(sc);
 
-	newNode->addChild(n1);
-	newNode->addChild(n2);
-	return newNode;
+        newNode->addChild(n1);
+        newNode->addChild(n2);
+        return newNode;
 }
 
 
@@ -311,7 +311,7 @@ QVariant DisplayTreeNode::itemChange(GraphicsItemChange change, const QVariant &
 
 void DisplayTreeNode::deleteChildren(int from, int to)
 {
-	typedef QList<DisplayEdge*>::iterator ChildIter;
+        typedef QList<DisplayEdge*>::iterator ChildIter;
 
     ChildIter begin = childEdges.begin() + from;
     ChildIter end   = childEdges.begin() + to;
@@ -329,52 +329,52 @@ void DisplayTreeNode::deleteChildren(int from, int to)
 
 void DisplayTreeNode::simplifyTree(DisplayTreeNode * node)
 {
-	// If n successing children have no subchildren and have same caption
-	// delete them, and create node with caption "n x oldcaption"
+        // If n successing children have no subchildren and have same caption
+        // delete them, and create node with caption "n x oldcaption"
 
 
-	int startIndex = -1;
-	QString curName;
-	bool inSequence=false;
+        int startIndex = -1;
+        QString curName;
+        bool inSequence=false;
 
 
 
-	typedef QList<DisplayTreeNode *>::iterator ListIter;
+        typedef QList<DisplayTreeNode *>::iterator ListIter;
 
-	for(int i=0; i< node->childrenCount(); i++)
-	{
-		DisplayTreeNode * child = node->getChild(i);
+        for(int i=0; i< node->childrenCount(); i++)
+        {
+                DisplayTreeNode * child = node->getChild(i);
 
-		//End of Sequence
-		if(inSequence && (child->childrenCount() > 0 ||
+                //End of Sequence
+                if(inSequence && (child->childrenCount() > 0 ||
                                   child->getDisplayName() != curName) )
                 {
-			if (i - startIndex > 1)
-			{
-			    node->getChild(startIndex)->caption=QString("%1 x ").arg(i-startIndex);
-			    node->getChild(startIndex)->caption.append(curName);
-				Q_ASSERT(node->getChild(startIndex)->childrenCount()==0);
+                        if (i - startIndex > 1)
+                        {
+                            node->getChild(startIndex)->caption=QString("%1 x ").arg(i-startIndex);
+                            node->getChild(startIndex)->caption.append(curName);
+                                Q_ASSERT(node->getChild(startIndex)->childrenCount()==0);
 
-				// children[startIndex] is not deleted, but overwritten
-				node->deleteChildren(startIndex +1, i);
+                                // children[startIndex] is not deleted, but overwritten
+                                node->deleteChildren(startIndex +1, i);
 
-				i -=  i - (startIndex-1);
-			}
-			inSequence=false;
-		}
+                                i -=  i - (startIndex-1);
+                        }
+                        inSequence=false;
+                }
 
-		//Start of Sequence
-		if(!inSequence && child->childrenCount() == 0)
-		{
-			inSequence=true;
-			startIndex=i;
-			curName=child->getDisplayName();
-		}
-	}
+                //Start of Sequence
+                if(!inSequence && child->childrenCount() == 0)
+                {
+                        inSequence=true;
+                        startIndex=i;
+                        curName=child->getDisplayName();
+                }
+        }
 
-	// Traverse...
-	for(int i=0; i< node->childrenCount(); i++)
-	    simplifyTree(node->getChild(i));
+        // Traverse...
+        for(int i=0; i< node->childrenCount(); i++)
+            simplifyTree(node->getChild(i));
 }
 
 
@@ -382,31 +382,31 @@ void DisplayTreeNode::simplifyTree(DisplayTreeNode * node)
 
 DisplayTreeNode * DisplayTreeGenerator::generateTree(SgNode *sgRoot, AstFilterInterface * filter)
 {
-	treeRoot=new DisplayTreeNode();
-	treeRoot->sg=sgRoot;
-	treeRoot->caption = sgRoot->class_name().c_str();
-	treeRoot->parentEdge=NULL;
+        treeRoot=new DisplayTreeNode();
+        treeRoot->sg=sgRoot;
+        treeRoot->caption = sgRoot->class_name().c_str();
+        treeRoot->parentEdge=NULL;
 
-	for(unsigned int i=0; i< sgRoot->get_numberOfTraversalSuccessors(); i++)
-		visit(treeRoot,sgRoot->get_traversalSuccessorByIndex(i),filter);
+        for(unsigned int i=0; i< sgRoot->get_numberOfTraversalSuccessors(); i++)
+                visit(treeRoot,sgRoot->get_traversalSuccessorByIndex(i),filter);
 
-	Q_ASSERT(treeRoot);
-	return treeRoot;
+        Q_ASSERT(treeRoot);
+        return treeRoot;
 }
 
 
 void DisplayTreeGenerator::visit(DisplayTreeNode * parent, SgNode * sgNode, AstFilterInterface * filter)
 {
-	if(filter && !filter->displayNode(sgNode))
-			return;
+        if(filter && !filter->displayNode(sgNode))
+                        return;
 
-	if(sgNode==NULL)
-		return;
+        if(sgNode==NULL)
+                return;
 
-	DisplayTreeNode * dispNode = parent->addChild(sgNode);
+        DisplayTreeNode * dispNode = parent->addChild(sgNode);
 
-	for(unsigned int i=0; i< sgNode->get_numberOfTraversalSuccessors(); i++)
-		visit(dispNode,sgNode->get_traversalSuccessorByIndex(i),filter);
+        for(unsigned int i=0; i< sgNode->get_numberOfTraversalSuccessors(); i++)
+                visit(dispNode,sgNode->get_traversalSuccessorByIndex(i),filter);
 }
 
 

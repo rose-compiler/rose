@@ -16,12 +16,12 @@
 class RoseBin_CallGraphAnalysis : public RoseBin_FlowAnalysis {
   void findClusterOfNode(SgGraphNode* next_n,
                          int& currentCluster,
-			 std::map<SgAsmFunctionDeclaration*,int>& visited);
+                         std::map<SgAsmFunctionDeclaration*,int>& visited);
 
  public:
 
  RoseBin_CallGraphAnalysis(SgAsmNode* global, RoseBin_abstract* ,
-			   GraphAlgorithms* algo):RoseBin_FlowAnalysis(global,algo) {
+                           GraphAlgorithms* algo):RoseBin_FlowAnalysis(global,algo) {
     typeNode="function";
     typeEdge="CG-E";
     analysisName="callgraph";

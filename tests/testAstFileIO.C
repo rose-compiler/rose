@@ -78,7 +78,7 @@ main ( int argc, char * argv[] )
      printf ("project_identity->get_outputFileName() = %s \n",project_identity->get_outputFileName().c_str());
 #endif
 
-  // We need this to avoid some cases that are common in configure tests but it not halded for the AST file I/O.
+  // We need this to avoid some cases that are common in configure tests but it not handled for the AST file I/O.
   // if (project_identity->get_Cxx_only() == true && project_identity->get_outputFileName() != "a.out")
   // if (project_identity->get_compileOnly() == true && project_identity->get_Cxx_only() == true && project_identity->get_outputFileName() != "a.out")
      if (project_identity->get_compileOnly() == true && project_identity->get_Cxx_only() == true)
@@ -112,7 +112,7 @@ main ( int argc, char * argv[] )
 
 #if 0
   // Debugging information
-     AST_FILE_IO::printListOfPoolSizes() ;
+     AST_FILE_IO::printListOfPoolSizes();
 #endif
 
 #if 0

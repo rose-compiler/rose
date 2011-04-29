@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# DO NOT DISABLE without first checking with a ROSE core developer
 my $desc = <<EOF;
 Some developers find it annoying when source files contain exceedingly
 long lines because either the lines wrap around and make indentation less
@@ -14,6 +15,7 @@ BEGIN {push @INC, $1 if $0 =~ /(.*)\//}
 
 use strict;
 use FileLister;
+use Policies;
 use Text::Tabs;
 
 my $warning = " (warning)";	# if non-empty and policy violated, exit with a warning only
@@ -35,10 +37,10 @@ while ($ARGV[0] =~ /^-/) {
 my $nfail=0;
 my $files = FileLister->new(@ARGV);
 while (my $filename = $files->next_file) {
-  next unless $filename =~ /\.(h|hh|c|C|cpp)$/;  # look only at C/C++ source code for now (we can add more later)
+  next unless $filename =~ /\.(h|hh|hpp|c|C|cpp)$/;  # look only at C/C++ source code for now (we can add more later)
 
 
-  if (-T $filename && open FILE, "<", $filename) {
+  if (-T $filename && !is_disabled($filename) && open FILE, "<", $filename) {
     my($nlong,$nlines);
     while (<FILE>) {
       if (0==$nlines++) {

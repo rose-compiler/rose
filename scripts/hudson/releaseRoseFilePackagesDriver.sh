@@ -78,7 +78,7 @@ fi
 #--------------------------------------
 # always build fresh
 if [ $SKIP_COMPILATION -ne 1 ]; then
-  if test -e ROSE-build ; then chmod -R u+w ROSE-build ; fi
+  if test -e ROSE-build ; then chmod -R u+wx ROSE-build ; fi
   rm -rf ROSE-build
   mkdir ROSE-build
 fi

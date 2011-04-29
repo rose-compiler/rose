@@ -293,7 +293,28 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           string name = (genericDeclaration->isForward() == true) ? "isForward" : "!isForward";
           ROSE_ASSERT(name.empty() == false);
 
+       // DQ (3/20/2011): Added class names to the generated dot file graphs of the AST.
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(genericDeclaration);
+          if (classDeclaration != NULL)
+             {
+               nodelabel += string("\\n") + classDeclaration->get_name();
+             }
+
+       // DQ (3/20/2011): Added function names to the generated dot file graphs of the AST.
+          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(genericDeclaration);
+          if (functionDeclaration != NULL)
+             {
+               nodelabel += string("\\n") + functionDeclaration->get_name();
+             }
+
           nodelabel += string("\\n") + name;
+        }
+
+  // DQ (4/6/2011): Added support for output of the name for SgInitializedName IR nodes.
+     SgInitializedName* initializedName = isSgInitializedName(node);
+     if (initializedName != NULL)
+        {
+          nodelabel += string("\\n") + initializedName->get_name();
         }
 
   // DQ (1/19/2009): Added support for output of what specific instrcution this is in the dot graph.
@@ -728,7 +749,7 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
 
             // Note cast to void*
                std::string name = i->first;
-               std::string label = name + " : " + StringUtility::numberToString((void*)(attribute));
+               std::string label = name + " : " + attribute->toString();
                ss << label << "\\n";
              }
           ss << "\\n";

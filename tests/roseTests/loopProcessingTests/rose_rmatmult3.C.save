@@ -72,22 +72,22 @@ void rmatmult3(int imin,int imax,int jmin,int jmax,int kmin,int kmax,int jp,int 
   for (kk = kmin; kk <= -1 + kmax; kk += 1) {
     for (jj = jmin; jj <= -1 + jmax; jj += 1) {
       for (ii = imin; ii <= -1 + imax; ii += 1) {
-        b[(ii + (jj * jp)) + (kk * kp)] = (((dbl[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii - 1) + ((jj - 1) * jp)) + ((kk - 1) * kp)])) + ((dbc[(ii + (jj * jp)) + (kk * kp)]) * (x[(ii + ((jj - 1) * jp)) + ((kk - 1) * kp)])));
+        b[(ii + (jj * jp)) + (kk * kp)] = ((dbl[(ii + (jj * jp)) + (kk * kp)] * x[((ii - 1) + ((jj - 1) * jp)) + ((kk - 1) * kp)]) + (dbc[(ii + (jj * jp)) + (kk * kp)] * x[(ii + ((jj - 1) * jp)) + ((kk - 1) * kp)]));
       }
       for (ii = imin; ii <= -1 + imax; ii += 1) {
-        b[(ii + (jj * jp)) + (kk * kp)] = (((((b[(ii + (jj * jp)) + (kk * kp)] + ((dbr[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii + 1) + ((jj - 1) * jp)) + ((kk - 1) * kp)]))) + ((dcl[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii - 1) + (jj * jp)) + ((kk - 1) * kp)]))) + ((dcc[(ii + (jj * jp)) + (kk * kp)]) * (x[(ii + (jj * jp)) + ((kk - 1) * kp)]))) + ((dcr[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii + 1) + (jj * jp)) + ((kk - 1) * kp)]))) + ((dfl[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii - 1) + ((jj + 1) * jp)) + ((kk - 1) * kp)])));
+        b[(ii + (jj * jp)) + (kk * kp)] = (((((b[(ii + (jj * jp)) + (kk * kp)] + (dbr[(ii + (jj * jp)) + (kk * kp)] * x[((ii + 1) + ((jj - 1) * jp)) + ((kk - 1) * kp)])) + (dcl[(ii + (jj * jp)) + (kk * kp)] * x[((ii - 1) + (jj * jp)) + ((kk - 1) * kp)])) + (dcc[(ii + (jj * jp)) + (kk * kp)] * x[(ii + (jj * jp)) + ((kk - 1) * kp)])) + (dcr[(ii + (jj * jp)) + (kk * kp)] * x[((ii + 1) + (jj * jp)) + ((kk - 1) * kp)])) + (dfl[(ii + (jj * jp)) + (kk * kp)] * x[((ii - 1) + ((jj + 1) * jp)) + ((kk - 1) * kp)]));
       }
       for (ii = imin; ii <= -1 + imax; ii += 1) {
-        b[(ii + (jj * jp)) + (kk * kp)] = (((((b[(ii + (jj * jp)) + (kk * kp)] + ((dfc[(ii + (jj * jp)) + (kk * kp)]) * (x[(ii + ((jj + 1) * jp)) + ((kk - 1) * kp)]))) + ((dfr[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii + 1) + ((jj + 1) * jp)) + ((kk - 1) * kp)]))) + ((cbl[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii - 1) + ((jj - 1) * jp)) + (kk * kp)]))) + ((cbc[(ii + (jj * jp)) + (kk * kp)]) * (x[(ii + ((jj - 1) * jp)) + (kk * kp)]))) + ((cbr[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii + 1) + ((jj - 1) * jp)) + (kk * kp)])));
+        b[(ii + (jj * jp)) + (kk * kp)] = (((((b[(ii + (jj * jp)) + (kk * kp)] + (dfc[(ii + (jj * jp)) + (kk * kp)] * x[(ii + ((jj + 1) * jp)) + ((kk - 1) * kp)])) + (dfr[(ii + (jj * jp)) + (kk * kp)] * x[((ii + 1) + ((jj + 1) * jp)) + ((kk - 1) * kp)])) + (cbl[(ii + (jj * jp)) + (kk * kp)] * x[((ii - 1) + ((jj - 1) * jp)) + (kk * kp)])) + (cbc[(ii + (jj * jp)) + (kk * kp)] * x[(ii + ((jj - 1) * jp)) + (kk * kp)])) + (cbr[(ii + (jj * jp)) + (kk * kp)] * x[((ii + 1) + ((jj - 1) * jp)) + (kk * kp)]));
       }
       for (ii = imin; ii <= -1 + imax; ii += 1) {
-        b[(ii + (jj * jp)) + (kk * kp)] = (((((b[(ii + (jj * jp)) + (kk * kp)] + ((ccl[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii - 1) + (jj * jp)) + (kk * kp)]))) + ((ccc[(ii + (jj * jp)) + (kk * kp)]) * (x[(ii + (jj * jp)) + (kk * kp)]))) + ((ccr[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii + 1) + (jj * jp)) + (kk * kp)]))) + ((cfl[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii - 1) + ((jj + 1) * jp)) + (kk * kp)]))) + ((cfc[(ii + (jj * jp)) + (kk * kp)]) * (x[(ii + ((jj + 1) * jp)) + (kk * kp)])));
+        b[(ii + (jj * jp)) + (kk * kp)] = (((((b[(ii + (jj * jp)) + (kk * kp)] + (ccl[(ii + (jj * jp)) + (kk * kp)] * x[((ii - 1) + (jj * jp)) + (kk * kp)])) + (ccc[(ii + (jj * jp)) + (kk * kp)] * x[(ii + (jj * jp)) + (kk * kp)])) + (ccr[(ii + (jj * jp)) + (kk * kp)] * x[((ii + 1) + (jj * jp)) + (kk * kp)])) + (cfl[(ii + (jj * jp)) + (kk * kp)] * x[((ii - 1) + ((jj + 1) * jp)) + (kk * kp)])) + (cfc[(ii + (jj * jp)) + (kk * kp)] * x[(ii + ((jj + 1) * jp)) + (kk * kp)]));
       }
       for (ii = imin; ii <= -1 + imax; ii += 1) {
-        b[(ii + (jj * jp)) + (kk * kp)] = (((((b[(ii + (jj * jp)) + (kk * kp)] + ((cfr[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii + 1) + ((jj + 1) * jp)) + (kk * kp)]))) + ((ubl[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii - 1) + ((jj - 1) * jp)) + ((kk + 1) * kp)]))) + ((ubc[(ii + (jj * jp)) + (kk * kp)]) * (x[(ii + ((jj - 1) * jp)) + ((kk + 1) * kp)]))) + ((ubr[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii + 1) + ((jj - 1) * jp)) + ((kk + 1) * kp)]))) + ((ucl[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii - 1) + (jj * jp)) + ((kk + 1) * kp)])));
+        b[(ii + (jj * jp)) + (kk * kp)] = (((((b[(ii + (jj * jp)) + (kk * kp)] + (cfr[(ii + (jj * jp)) + (kk * kp)] * x[((ii + 1) + ((jj + 1) * jp)) + (kk * kp)])) + (ubl[(ii + (jj * jp)) + (kk * kp)] * x[((ii - 1) + ((jj - 1) * jp)) + ((kk + 1) * kp)])) + (ubc[(ii + (jj * jp)) + (kk * kp)] * x[(ii + ((jj - 1) * jp)) + ((kk + 1) * kp)])) + (ubr[(ii + (jj * jp)) + (kk * kp)] * x[((ii + 1) + ((jj - 1) * jp)) + ((kk + 1) * kp)])) + (ucl[(ii + (jj * jp)) + (kk * kp)] * x[((ii - 1) + (jj * jp)) + ((kk + 1) * kp)]));
       }
       for (ii = imin; ii <= -1 + imax; ii += 1) {
-        b[(ii + (jj * jp)) + (kk * kp)] = (((((b[(ii + (jj * jp)) + (kk * kp)] + ((ucc[(ii + (jj * jp)) + (kk * kp)]) * (x[(ii + (jj * jp)) + ((kk + 1) * kp)]))) + ((ucr[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii + 1) + (jj * jp)) + ((kk + 1) * kp)]))) + ((ufl[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii - 1) + ((jj + 1) * jp)) + ((kk + 1) * kp)]))) + ((ufc[(ii + (jj * jp)) + (kk * kp)]) * (x[(ii + ((jj + 1) * jp)) + ((kk + 1) * kp)]))) + ((ufr[(ii + (jj * jp)) + (kk * kp)]) * (x[((ii + 1) + ((jj + 1) * jp)) + ((kk + 1) * kp)])));
+        b[(ii + (jj * jp)) + (kk * kp)] = (((((b[(ii + (jj * jp)) + (kk * kp)] + (ucc[(ii + (jj * jp)) + (kk * kp)] * x[(ii + (jj * jp)) + ((kk + 1) * kp)])) + (ucr[(ii + (jj * jp)) + (kk * kp)] * x[((ii + 1) + (jj * jp)) + ((kk + 1) * kp)])) + (ufl[(ii + (jj * jp)) + (kk * kp)] * x[((ii - 1) + ((jj + 1) * jp)) + ((kk + 1) * kp)])) + (ufc[(ii + (jj * jp)) + (kk * kp)] * x[(ii + ((jj + 1) * jp)) + ((kk + 1) * kp)])) + (ufr[(ii + (jj * jp)) + (kk * kp)] * x[((ii + 1) + ((jj + 1) * jp)) + ((kk + 1) * kp)]));
       }
     }
   }
@@ -135,6 +135,5 @@ void rmatmult3(int imin,int imax,int jmin,int jmax,int kmin,int kmax,int jp,int 
 #if VALIDITY_CHECK == 1
 #endif
 #endif
-  myflops += (((53.0 * ((imax - imin))) * ((jmax - jmin))) * ((kmax - kmin)));
+  myflops += (((53.0 * (imax - imin)) * (jmax - jmin)) * (kmax - kmin));
 }
-

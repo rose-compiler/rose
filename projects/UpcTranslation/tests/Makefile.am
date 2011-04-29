@@ -17,7 +17,7 @@ rose_hello.c:../roseupcc
 	../roseupcc -c $(ROSEUPCC_FLAGS) $(srcdir)/hello.upc
 # various shared variables
 rose_shared_1.c:../roseupcc
-	../roseupcc -c $(ROSEUPCC_FLAGS) $(srcdir)/shared_1.upc
+	../roseupcc -rose:upc_threads 1 -c $(ROSEUPCC_FLAGS) $(srcdir)/shared_1.upc
 rose_shared_1.c.aa: rose_shared_1.c
 	split -67 rose_shared_1.c rose_shared_1.c.
 	test -f rose_shared_1.c.aa

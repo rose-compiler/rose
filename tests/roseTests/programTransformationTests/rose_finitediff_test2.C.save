@@ -15,112 +15,112 @@ void dgemm(int *a,int *b,int *c,int n)
         for (j = 0; j < n; j += 16) {{
             int k;
             for (k = 0; k < n; ++k) {
-              c[cache_fd__2 + k] = ((c[cache_fd__2 + k]) + ((a[cache_fd__2 + j2]) * (b[cache_fd__1 + k])));
+              c[cache_fd__2 + k] = (c[cache_fd__2 + k] + (a[cache_fd__2 + j2] * b[cache_fd__1 + k]));
             }
           }
           (cache_fd__1 += n , j2 = (1 + j2));
 {
             int k;
             for (k = 0; k < n; ++k) {
-              c[cache_fd__2 + k] = ((c[cache_fd__2 + k]) + ((a[cache_fd__2 + j2]) * (b[cache_fd__1 + k])));
+              c[cache_fd__2 + k] = (c[cache_fd__2 + k] + (a[cache_fd__2 + j2] * b[cache_fd__1 + k]));
             }
           }
           (cache_fd__1 += n , j2 = (j2 + 1));
 {
             int k;
             for (k = 0; k < n; ++k) {
-              c[cache_fd__2 + k] = ((c[cache_fd__2 + k]) + ((a[cache_fd__2 + j2]) * (b[cache_fd__1 + k])));
+              c[cache_fd__2 + k] = (c[cache_fd__2 + k] + (a[cache_fd__2 + j2] * b[cache_fd__1 + k]));
             }
           }
           (cache_fd__1 += n , j2 = (j2 + 1));
 {
             int k;
             for (k = 0; k < n; ++k) {
-              c[cache_fd__2 + k] = ((c[cache_fd__2 + k]) + ((a[cache_fd__2 + j2]) * (b[cache_fd__1 + k])));
+              c[cache_fd__2 + k] = (c[cache_fd__2 + k] + (a[cache_fd__2 + j2] * b[cache_fd__1 + k]));
             }
           }
           (cache_fd__1 += n , j2 = (j2 + 1));
 {
             int k;
             for (k = 0; k < n; ++k) {
-              c[cache_fd__2 + k] = ((c[cache_fd__2 + k]) + ((a[cache_fd__2 + j2]) * (b[cache_fd__1 + k])));
+              c[cache_fd__2 + k] = (c[cache_fd__2 + k] + (a[cache_fd__2 + j2] * b[cache_fd__1 + k]));
             }
           }
           (cache_fd__1 += n , j2 = (j2 + 1));
 {
             int k;
             for (k = 0; k < n; ++k) {
-              c[cache_fd__2 + k] = ((c[cache_fd__2 + k]) + ((a[cache_fd__2 + j2]) * (b[cache_fd__1 + k])));
+              c[cache_fd__2 + k] = (c[cache_fd__2 + k] + (a[cache_fd__2 + j2] * b[cache_fd__1 + k]));
             }
           }
           (cache_fd__1 += n , j2 = (j2 + 1));
 {
             int k;
             for (k = 0; k < n; ++k) {
-              c[cache_fd__2 + k] = ((c[cache_fd__2 + k]) + ((a[cache_fd__2 + j2]) * (b[cache_fd__1 + k])));
+              c[cache_fd__2 + k] = (c[cache_fd__2 + k] + (a[cache_fd__2 + j2] * b[cache_fd__1 + k]));
             }
           }
           (cache_fd__1 += n , j2 = (1 + j2));
 {
             int k;
             for (k = 0; k < n; ++k) {
-              c[cache_fd__2 + k] = ((c[cache_fd__2 + k]) + ((a[cache_fd__2 + j2]) * (b[cache_fd__1 + k])));
+              c[cache_fd__2 + k] = (c[cache_fd__2 + k] + (a[cache_fd__2 + j2] * b[cache_fd__1 + k]));
             }
           }
           (cache_fd__1 += n , j2 = (j2 + 1));
 {
             int k;
             for (k = 0; k < n; ++k) {
-              c[cache_fd__2 + k] = ((c[cache_fd__2 + k]) + ((a[cache_fd__2 + j2]) * (b[cache_fd__1 + k])));
+              c[cache_fd__2 + k] = (c[cache_fd__2 + k] + (a[cache_fd__2 + j2] * b[cache_fd__1 + k]));
             }
           }
           (cache_fd__1 += n , j2 = (j2 + 1));
 {
             int k;
             for (k = 0; k < n; ++k) {
-              c[cache_fd__2 + k] = ((c[cache_fd__2 + k]) + ((a[cache_fd__2 + j2]) * (b[cache_fd__1 + k])));
+              c[cache_fd__2 + k] = (c[cache_fd__2 + k] + (a[cache_fd__2 + j2] * b[cache_fd__1 + k]));
             }
           }
           (cache_fd__1 += n , j2 = (j2 + 1));
 {
             int k;
             for (k = 0; k < n; ++k) {
-              c[cache_fd__2 + k] = ((c[cache_fd__2 + k]) + ((a[cache_fd__2 + j2]) * (b[cache_fd__1 + k])));
+              c[cache_fd__2 + k] = (c[cache_fd__2 + k] + (a[cache_fd__2 + j2] * b[cache_fd__1 + k]));
             }
           }
           (cache_fd__1 += n , j2 = (j2 + 1));
 {
             int k;
             for (k = 0; k < n; ++k) {
-              c[cache_fd__2 + k] = ((c[cache_fd__2 + k]) + ((a[cache_fd__2 + j2]) * (b[cache_fd__1 + k])));
+              c[cache_fd__2 + k] = (c[cache_fd__2 + k] + (a[cache_fd__2 + j2] * b[cache_fd__1 + k]));
             }
           }
           (cache_fd__1 += n , j2 = (j2 + 1));
 {
             int k;
             for (k = 0; k < n; ++k) {
-              c[cache_fd__2 + k] = ((c[cache_fd__2 + k]) + ((a[cache_fd__2 + j2]) * (b[cache_fd__1 + k])));
+              c[cache_fd__2 + k] = (c[cache_fd__2 + k] + (a[cache_fd__2 + j2] * b[cache_fd__1 + k]));
             }
           }
           (cache_fd__1 += n , j2 = (j2 + 1));
 {
             int k;
             for (k = 0; k < n; ++k) {
-              c[cache_fd__2 + k] = ((c[cache_fd__2 + k]) + ((a[cache_fd__2 + j2]) * (b[cache_fd__1 + k])));
+              c[cache_fd__2 + k] = (c[cache_fd__2 + k] + (a[cache_fd__2 + j2] * b[cache_fd__1 + k]));
             }
           }
           (cache_fd__1 += n , j2 = (j2 + 1));
 {
             int k;
             for (k = 0; k < n; ++k) {
-              c[cache_fd__2 + k] = ((c[cache_fd__2 + k]) + ((a[cache_fd__2 + j2]) * (b[cache_fd__1 + k])));
+              c[cache_fd__2 + k] = (c[cache_fd__2 + k] + (a[cache_fd__2 + j2] * b[cache_fd__1 + k]));
             }
           }
           (cache_fd__1 += n , j2 = (j2 + 1));
 {
             int k;
             for (k = 0; k < n; ++k) {
-              c[cache_fd__2 + k] = ((c[cache_fd__2 + k]) + ((a[cache_fd__2 + j2]) * (b[cache_fd__1 + k])));
+              c[cache_fd__2 + k] = (c[cache_fd__2 + k] + (a[cache_fd__2 + j2] * b[cache_fd__1 + k]));
             }
           }
           (cache_fd__1 += n , j2 = (j2 + 1));
@@ -129,4 +129,3 @@ void dgemm(int *a,int *b,int *c,int n)
     }
   }
 }
-

@@ -1,0 +1,24 @@
+
+unparseFortran_la_sources=\
+	$(fortranCodeGenerationPath)/unparseFortran_expressions.C \
+	$(fortranCodeGenerationPath)/unparseFortran_statements.C \
+	$(fortranCodeGenerationPath)/unparseFortran_types.C \
+	$(fortranCodeGenerationPath)/unparseFortran_modfile.C
+
+
+unparseFortran_includeHeaders=\
+	$(fortranCodeGenerationPath)/unparseFortran.h \
+	$(fortranCodeGenerationPath)/unparseFortran_types.h \
+	$(fortranCodeGenerationPath)/unparseFortran_modfile.h
+
+
+unparseFortran_extraDist=\
+	$(fortranCodeGenerationPath)/CMakeLists.txt
+
+
+unparseFortran_cleanLocal=\
+	rm -rf \
+		$(fortranCodeGenerationPath)/ii_files \
+		$(fortranCodeGenerationPath)/ti_files \
+		$(fortranCodeGenerationPath)/core
+

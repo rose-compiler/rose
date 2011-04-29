@@ -5,6 +5,7 @@ INCLUDES = -Winvalid-pch $(ROSE_INCLUDES) -I$(srcdir)/graph -I$(srcdir)/libraryI
 noinst_LTLIBRARIES = libbinaryMidend.la
 libbinaryMidend_la_DEPENDENCIES =
 
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 libbinaryMidend_la_SOURCES = \
      binary_analysis.C \
      RoseBin_CompareAnalysis.cpp RoseBin_ControlFlowAnalysis.cpp \
@@ -22,6 +23,9 @@ libbinaryMidend_la_SOURCES = \
      instructionSemantics/YicesSolver.C \
      instructionSemantics/VirtualMachineSemantics.C \
      GraphAlgorithms.C
+else
+libbinaryMidend_la_SOURCES = dummyBinaryMidend.C
+endif
 
 if ROSE_USE_SQLITE_DATABASE
 libbinaryMidend_la_SOURCES += \
@@ -58,4 +62,4 @@ include_HEADERS = \
    ether.h
 
 
-EXTRA_DIST = CMakeLists.txt
+EXTRA_DIST = CMakeLists.txt dummyBinaryMidend.C

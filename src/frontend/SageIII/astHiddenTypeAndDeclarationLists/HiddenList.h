@@ -79,16 +79,16 @@ struct HashFunction_String
                         return x;
                 }*/
         public:
-// CH (4/8/2010): Use boost::unordered instead	    
+// CH (4/8/2010): Use boost::unordered instead      
 //#if _MSC_VER
-#if 0	    
-					   public:
+#if 0       
+                                           public:
       static const size_t bucket_size = 4;
       static const size_t min_buckets = 8;
 #endif
                 int operator()(const std::string & in) const
                 {
-// CH (4/8/2010): Use boost::hash instead		    
+// CH (4/8/2010): Use boost::hash instead                   
 //#if _MSC_VER
 #if 0
                         return stdext::hash_compare<char*>()((char*)in.c_str());
@@ -244,7 +244,7 @@ struct cmp_SgSymbolPointer {
 struct HashFunction_SymbolHashMap {
 
      public:
-// CH (4/8/2010): Use boost::unordered instead	    
+// CH (4/8/2010): Use boost::unordered instead      
 //#if _MSC_VER
 #if 0
           static const size_t bucket_size = 4;
@@ -254,14 +254,14 @@ struct HashFunction_SymbolHashMap {
                 int operator()(SgSymbol* S) const
                 {
                         // calculate hashfunction-value based on address of SgSymbol
-// CH (4/8/2010): Use boost::hash instead	    
+// CH (4/8/2010): Use boost::hash instead           
 //#if _MSC_VER
 #if 0
                         return stdext::hash_compare<int>()((int)S);
 #else
                         return rose_hash::hash<int>()((long int)S);
 #endif
-				}
+                                }
 
 };
 
@@ -279,7 +279,7 @@ struct UsingDirectiveWithScope {
 
 struct cmp_UsingDirectiveWithScope {
 
-	    // CH (4/7/2010): This function should be const.
+            // CH (4/7/2010): This function should be const.
         bool operator() (const UsingDirectiveWithScope & X, const UsingDirectiveWithScope & Y) const {
 
                 // at first sort after scope
@@ -313,7 +313,7 @@ struct UsingDeclarationWithScope {
 
 struct cmp_UsingDeclarationWithScope {
 
-	    // CH (4/7/2010): This function should be const.
+            // CH (4/7/2010): This function should be const.
         bool operator() (const UsingDeclarationWithScope& X, const UsingDeclarationWithScope& Y) const {
 
                 // at first sort after scope
@@ -342,7 +342,7 @@ typedef std::deque<SymbolInformation*> Vector_Of_SymbolInformation;
 //  Key: pointer to SgSymbol
 //  Value: struct of booleans for getting class, namespace & validity information
 //  
-// CH (4/8/2010): Use boost::unordered instead	    
+// CH (4/8/2010): Use boost::unordered instead      
 //#ifdef _MSC_VER
 #if 0
 typedef rose_hash::unordered_map<SgSymbol*, SymbolHashMapValue*> SymbolHashMap;
@@ -353,7 +353,7 @@ typedef rose_hash::unordered_map<SgSymbol*, SymbolHashMapValue*, HashFunction_Sy
 //  Key: symbol-name from the SymbolTable
 //  Value: HashMap of Pointers & boolean if scope can be named of this symbols
 //
-// CH (4/8/2010): Use boost::unordered instead	    
+// CH (4/8/2010): Use boost::unordered instead      
 //#ifdef _MSC_VER
 #if 0
 // typedef rose_hash::unordered_map<std::string, SymbolHashMap, HashFunction_String> ScopeStackEntry;
@@ -368,7 +368,7 @@ typedef rose_hash::unordered_map<std::string, SymbolHashMap> ScopeStackEntry;
 //  Key: (qualified) Name of namespace
 //  Value: std::vector of struct symbol table
 //
-// CH (4/8/2010): Use boost::unordered instead	    
+// CH (4/8/2010): Use boost::unordered instead      
 //#ifdef _MSC_VER
 #if 0
 // typedef rose_hash::unordered_map<std::string, Vector_Of_SymbolInformation, HashFunction_String> StringVectorHashMap;
@@ -424,7 +424,7 @@ struct NamespaceInformation {
 };
 
 typedef std::vector<NamespaceInformation> VectorOfNamespaceInformation;
-// CH (4/8/2010): Use boost::unordered instead	    
+// CH (4/8/2010): Use boost::unordered instead      
 //#ifdef _MSC_VER
 #if 0
 // typedef rose_hash::unordered_map<std::string, VectorOfNamespaceInformation, HashFunction_String> String_VectorOfNamespaceInformation_HashMap;
@@ -441,7 +441,7 @@ struct it_VectorOfNamespaceInformation_boolean {
         bool first_namespace_occurence;
 };
 
-// CH (4/8/2010): Use boost::unordered instead	    
+// CH (4/8/2010): Use boost::unordered instead      
 //#ifdef _MSC_VER
 #if 0
 // DQ (11/27/2009): Unclear now to fix this.
@@ -483,10 +483,10 @@ struct LinkedListStackSetSgDeclarationStatements {
 struct HashFunction_SgUsingDirectiveStatement {
 
         public:
-// CH (4/8/2010): Use boost::unordered instead	    
-//			#if _MSC_VER
-#if 0			
-					   public:
+// CH (4/8/2010): Use boost::unordered instead      
+//                      #if _MSC_VER
+#if 0                   
+                                           public:
       static const size_t bucket_size = 4;
       static const size_t min_buckets = 8;
 #endif
@@ -494,21 +494,21 @@ struct HashFunction_SgUsingDirectiveStatement {
                 int operator()(SgUsingDirectiveStatement* using_dir) const
                 {
                         // calculate hashfunction-value based on address of SgUsingDirectiveStatement
-// CH (4/8/2010): Use boost::hash instead	    
+// CH (4/8/2010): Use boost::hash instead           
 //#if _MSC_VER
 #if 0
                         return stdext::hash_compare<int>()((int)using_dir);
 #else
                         return rose_hash::hash<int>()((long int)using_dir);
 #endif
-				}
+                                }
 
 };
 
 //  Key: Address of SgUsingDirectiveStatement
 //  Value: LinkedListStackSetSgDeclarationStatements
 //
-// CH (4/8/2010): Use boost::unordered instead	    
+// CH (4/8/2010): Use boost::unordered instead      
 //#ifdef _MSC_VER
 #if 0
 typedef rose_hash::unordered_map<SgUsingDirectiveStatement*, LinkedListStackSetSgDeclarationStatements> UsingDirectiveStatement_LinkedListStackSetSgDeclarationStatements_HashMap;
@@ -520,31 +520,31 @@ typedef rose_hash::unordered_map<SgUsingDirectiveStatement*, LinkedListStackSetS
 struct HashFunction_SgUsingDeclarationStatement {
 
         public:
-// CH (4/8/2010): Use boost::unordered instead	    
+// CH (4/8/2010): Use boost::unordered instead      
 //#if _MSC_VER
 #if 0
-					   public:
+                                           public:
       static const size_t bucket_size = 4;
       static const size_t min_buckets = 8;
 #endif
                 int operator()(SgUsingDeclarationStatement* using_decl) const
                 {
                         // calculate hashfunction-value based on address of SgUsingDeclarationStatement
-// CH (4/8/2010): Use boost::hash instead	    
+// CH (4/8/2010): Use boost::hash instead           
 //#if _MSC_VER
 #if 0
                         return stdext::hash_compare<int>()((int)using_decl);
 #else
                         return rose_hash::hash<int>()((long int)using_decl);
 #endif
-				}
+                                }
 
 };
 
 //  Key: Address of SgUsingDirectiveStatement
 //  Value: LinkedListStackSetSgDeclarationStatements
 //
-// CH (4/8/2010): Use boost::unordered instead	    
+// CH (4/8/2010): Use boost::unordered instead      
 //#if _MSC_VER
 #if 0
 typedef rose_hash::unordered_map<SgUsingDeclarationStatement*, LinkedListStackSetSgDeclarationStatements> UsingDeclarationStatement_LinkedListStackSetSgDeclarationStatements_HashMap;
@@ -555,7 +555,7 @@ typedef rose_hash::unordered_map<SgUsingDeclarationStatement*, LinkedListStackSe
 //  Key: Address of SgUsingDirectiveStatement
 //  Value: SetSgDeclarationStatements
 //
-// CH (4/8/2010): Use boost::unordered instead	    
+// CH (4/8/2010): Use boost::unordered instead      
 //#if _MSC_VER
 #if 0
 typedef rose_hash::unordered_map<SgUsingDirectiveStatement*, SetSgDeclarationStatements> UsingDirectiveStatement_SetSgDeclarationStatements_HashMap;
@@ -566,7 +566,7 @@ typedef rose_hash::unordered_map<SgUsingDirectiveStatement*, SetSgDeclarationSta
 //  Key: Address of SgUsingDirectiveStatement
 //  Value: SetSgDeclarationStatements
 //
-// CH (4/8/2010): Use boost::unordered instead	    
+// CH (4/8/2010): Use boost::unordered instead      
 //#if _MSC_VER
 #if 0
 typedef rose_hash::unordered_map<SgUsingDeclarationStatement*, SetSgDeclarationStatements> UsingDeclarationStatement_SetSgDeclarationStatements_HashMap;
@@ -648,7 +648,7 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
 //#ifdef _MSC_VER
 // tps (12/07/2009) : FIXME; This will not work on windows right now
                 SetSgUsingDirectiveStatementsWithSgScopeStatement UsingDirectivesSet;
-				SetSgUsingDeclarationWithScopeWithSgScopeStatement UsingDeclarationsSet;
+                                SetSgUsingDeclarationWithScopeWithSgScopeStatement UsingDeclarationsSet;
 //#else
 //#pragma message ("WARNING: HiddenList : HiddenListComputationTraversal : Change implementation to work under windows. Does not work with Release (MODE)")
 //#endif

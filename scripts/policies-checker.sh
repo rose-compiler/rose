@@ -26,7 +26,7 @@ demangle () {
     s="${s%%.*}" # strip of extensions
     s="$(echo "$s" |sed 's/\([A-Z]\)/ \1/g')" # de-CamelCase
     s="${s# }" # remove leading space from de-CamelCase if necessary
-    s="$(echo "$s" |tr [A-Z] [a-z])" # convert to all lower-case
+    s="$(echo "$s" |tr A-Z a-z)" # convert to all lower-case
     echo "$s"
 }
 
@@ -42,7 +42,7 @@ for script in "$policies_dir"/*; do
     [ "$script" != "${script%.disabled}" ] && continue  # script is disabled
     [ -x "$script" ] || continue
     name="$(demangle $script)"
-    echo "  Checking $name policy ($script)"
+    echo "  POLICY  Checking $name policy ($script)" # "POLICY" causes line to be emited by scripts/rosegit/bin/rosegit-make
     $script 2>&1 |sed 's/^/    /'
     status=${PIPESTATUS[0]}
     if [[ $status = 0 ]]; then

@@ -1,8 +1,9 @@
 #!/usr/bin/perl
+# DO NOT DISABLE without first checking with a ROSE core developer
 my $desc = <<EOF;
 All source files should be mentioned in makefiles.  A source file that
-is not mentioned in a makefile is probably not used. As of 2010-10-18 
-there are 1480 violations; we will allow no more! Future work will 
+is not mentioned in a makefile is probably not used. As of 2010-10-18
+there are 1480 violations; we will allow no more! Future work will
 reduce this number to zero or something reasonable. These source files
 are not mentioned in any makefile:
 EOF
@@ -16,7 +17,7 @@ my $warning = " (warning)";	# non-empty means issue warnings rather than errors,
 # Each key is the base name of the file;
 # Each value is an array of filenames that map to this key.
 my %index;
-push @{$index{lc((/([^\/]+)$/)[0])}||=[]}, $_ for grep {/\.(h|hh|c|C|cpp)$/} FileLister->new(@ARGV)->all_files;
+push @{$index{lc((/([^\/]+)$/)[0])}||=[]}, $_ for grep {/\.(h|hh|hpp|c|C|cpp)$/} FileLister->new(@ARGV)->all_files;
 
 # Look for file names in makefiles (Makefile.am and CMakeList.txt) and remove those that we find
 # from the %index.
@@ -26,7 +27,7 @@ while (my $file = $files->next_file) {
   if (open FILE, "<", $file) {
     while (<FILE>) {
       s/#.*//;
-      s/([a-zA-Z_0-9\.]+)/delete $index{lc $1}/ge;
+      s/([-a-zA-Z_0-9\.]+)/delete $index{lc $1}/ge;
     }
     close FILE;
   }

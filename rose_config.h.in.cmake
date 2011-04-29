@@ -266,6 +266,8 @@
 /* Minor version number of backend Fortran compiler. */
 #define BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER ${BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER}
 
+/* Name of backend Java compiler including path */
+#define BACKEND_JAVA_COMPILER_NAME_WITH_PATH "${BACKEND_JAVA_COMPILER}"
 
 
 /* Internal EDG specific consistency tests. */
@@ -434,6 +436,9 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #cmakedefine HAVE_UNISTD_H 1
+
+/* Define to 1 if you have the POSIX.1003 header file, <pthread.h> */
+#cmakedefine HAVE_PTHREAD_H 1
 
 /* Define to 1 if you have the `vprintf' function. */
 #cmakedefine HAVE_VPRINTF 1

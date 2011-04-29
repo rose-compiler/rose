@@ -258,6 +258,10 @@ HEADER_LABEL_REF_EXPRESSION_START
        // virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
        // virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
+       // DQ (2/2/2011): This is support for Fortran alternative return type arguments.
+      //! Support for recognition of Fortran alternative return type arguments.
+          bool isFunctionCallArgumentForAlternativeReturnType() const;
+
 HEADER_LABEL_REF_EXPRESSION_END
 
 
@@ -311,8 +315,10 @@ HEADER_VALUE_EXPRESSION_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
+       // DQ (2/12/2011): Added const so that this could be called in get_mangled() (and more generally).
        // DQ (8/18/2009): Added support to get the constant folded value as a string instead of the expression tree.
-          std::string get_constant_folded_value_as_string();
+       // std::string get_constant_folded_value_as_string();
+          std::string get_constant_folded_value_as_string() const;
 
 HEADER_VALUE_EXPRESSION_END
 
@@ -587,6 +593,10 @@ HEADER_UNARY_ADD_OPERATOR_END
 HEADER_SIZEOF_OPERATOR_START
  // Liao, 11/17/2009
  int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
+
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_SIZEOF_OPERATOR_END
 
 
@@ -1138,12 +1148,21 @@ HEADER_DESIGNATED_INITIALIZER_START
 HEADER_DESIGNATED_INITIALIZER_END
 
 HEADER_UPC_LOCAL_SIZEOF_EXPRESSION_START
+//        virtual unsigned int cfgIndexForEnd() const;
+//        virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+//        virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_UPC_LOCAL_SIZEOF_EXPRESSION_END
 
 HEADER_UPC_BLOCK_SIZEOF_EXPRESSION_START
+//        virtual unsigned int cfgIndexForEnd() const;
+//        virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+//        virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_UPC_BLOCK_SIZEOF_EXPRESSION_END
 
 HEADER_UPC_ELEM_SIZEOF_EXPRESSION_START
+//        virtual unsigned int cfgIndexForEnd() const;
+//        virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+//        virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 HEADER_UPC_ELEM_SIZEOF_EXPRESSION_END
 
 HEADER_USER_DEFINED_UNARY_EXPRESSION_START
@@ -2124,6 +2143,63 @@ SgLabelRefExp::get_numeric_label_value() const
      return p_symbol->get_numeric_label_value();
    }
 
+bool
+SgLabelRefExp::isFunctionCallArgumentForAlternativeReturnType() const
+   {
+  // We might want to make sure that this is for a Fortran AST.
+
+  // This is relevant more for type checking than for the unparing since a SgLabel expression will always be output using "*" syntax.
+
+  // However initial results from this test is showing that the function type arguments list is at least sometime empty when it should not be.
+
+     bool returnValue = false;
+
+#if 0
+  // SgFunctionCallExp* enclosingFunctionCall = SageInterface::getEnclosingNode<SgFunctionCallExp>(this);
+     SgNode* tmp_enclosingFunctionCall = SageInterface::getEnclosingNode<SgFunctionCallExp>(this);
+     ROSE_ASSERT(tmp_enclosingFunctionCall != NULL);
+
+     SgNode* tmp_exprListExp = SageInterface::getEnclosingNode<SgExprListExp>(this);
+     ROSE_ASSERT(tmp_exprListExp != NULL);
+
+  // Compute the index position of the current element (finish later)...
+     size_t positionInList = 1;
+
+     SgFunctionCallExp* enclosingFunctionCall = isSgFunctionCallExp(tmp_enclosingFunctionCall);
+     ROSE_ASSERT(enclosingFunctionCall != NULL);
+
+     SgExpression* tmp_functionRefExp = enclosingFunctionCall->get_function();
+     ROSE_ASSERT(tmp_functionRefExp != NULL);
+
+  // Could this alternatively be a Fortran procedure pointer?
+     SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(tmp_functionRefExp);
+     ROSE_ASSERT(functionRefExp != NULL);
+
+     SgType* tmp_functionType = functionRefExp->get_type();
+     ROSE_ASSERT(tmp_functionRefExp != NULL);
+     SgFunctionType* functionType = isSgFunctionType(tmp_functionType);
+     ROSE_ASSERT(functionType != NULL);
+
+     SgFunctionParameterTypeList* functionParameterTypeList = functionType->get_argument_list();
+     ROSE_ASSERT(functionParameterTypeList != NULL);
+
+     SgTypePtrList & functionTypeArguments = functionParameterTypeList->get_arguments();
+
+     printf ("functionTypeArguments.size() = %zu \n",functionTypeArguments.size());
+     ROSE_ASSERT(positionInList < functionTypeArguments.size());
+
+     SgType* tmp_thisParametersType = functionTypeArguments[positionInList];
+     ROSE_ASSERT(tmp_thisParametersType != NULL);
+
+     SgTypeLabel* labelType = isSgTypeLabel(tmp_thisParametersType);
+
+     returnValue = (labelType != NULL);
+
+     printf ("In SgLabelRefExp::isFunctionCallArgumentForAlternativeReturnType(): returnValue = %s \n",returnValue ? "true" : "false");
+#endif
+
+     return returnValue;
+   }
 
 #if 0
 const SgName & 
@@ -5321,6 +5397,21 @@ SgUpcLocalsizeofExpression::post_construction_initialization()
    {
    }
 
+// DQ (2/12/2011): Copied this version from SgSizeOfOp::get_type().
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an unsigned integer representing the size of type 
+  // (the unsigned int should match size_t, which may or may not be defined).
+
+     ROSE_ASSERT(p_expression != NULL || p_operand_type != NULL);
+     SgType* returnType = SgTypeUnsignedInt::createType();
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+#if 0
 SgType*
 $CLASSNAME::get_type() const
    {
@@ -5328,6 +5419,7 @@ $CLASSNAME::get_type() const
      ROSE_ASSERT(returnType != NULL);
      return returnType;
    }
+#endif
 
 SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION_END
 
@@ -5338,6 +5430,21 @@ SgUpcBlocksizeofExpression::post_construction_initialization()
    {
    }
 
+// DQ (2/12/2011): Copied this version from SgSizeOfOp::get_type().
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an unsigned integer representing the size of type 
+  // (the unsigned int should match size_t, which may or may not be defined).
+
+     ROSE_ASSERT(p_expression != NULL || p_operand_type != NULL);
+     SgType* returnType = SgTypeUnsignedInt::createType();
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+#if 0
 SgType*
 $CLASSNAME::get_type() const
    {
@@ -5345,6 +5452,7 @@ $CLASSNAME::get_type() const
      ROSE_ASSERT(returnType != NULL);
      return returnType;
    }
+#endif
 
 SOURCE_UPC_BLOCK_SIZEOF_EXPRESSION_END
 
@@ -5354,6 +5462,21 @@ SgUpcElemsizeofExpression::post_construction_initialization()
    {
    }
 
+// DQ (2/12/2011): Copied this version from SgSizeOfOp::get_type().
+SgType*
+$CLASSNAME::get_type() const
+   {
+  // This function returns an unsigned integer representing the size of type 
+  // (the unsigned int should match size_t, which may or may not be defined).
+
+     ROSE_ASSERT(p_expression != NULL || p_operand_type != NULL);
+     SgType* returnType = SgTypeUnsignedInt::createType();
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+#if 0
 SgType*
 $CLASSNAME::get_type() const
    {
@@ -5361,6 +5484,7 @@ $CLASSNAME::get_type() const
      ROSE_ASSERT(returnType != NULL);
      return returnType;
    }
+#endif
 
 SOURCE_UPC_ELEM_SIZEOF_EXPRESSION_END
 

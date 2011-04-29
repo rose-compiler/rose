@@ -1,6 +1,6 @@
-% Test code from Craig (rose_bug_kind_param.f90) from email 04/15/2010 12:00 PM
+! Test code from Craig (rose_bug_kind_param.f90) from email 04/15/2010 12:00 PM
 
-module rose_define_kind
+module rose_define_kind_10_14
 
 integer, parameter :: REAL8 = SELECTED_REAL_KIND(12)
 

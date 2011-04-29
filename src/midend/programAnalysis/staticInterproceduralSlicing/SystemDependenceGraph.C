@@ -219,7 +219,7 @@ void SystemDependenceGraph::cleanUp(std::set<SgNode*> preserve)
       if (currentFormal->numPredecessors()<2) // only control edge....
       {
 #ifdef VERBOSE_DEBUG
-	  cout <<"pruning FORMALOUT "; currentFormal->writeOut(cout);cout <<endl;
+          cout <<"pruning FORMALOUT "; currentFormal->writeOut(cout);cout <<endl;
 #endif
         std::set<SimpleDirectedGraphNode *> succs=currentFormal->getSuccessors();
         deleteNode(currentFormal);

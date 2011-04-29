@@ -74,5 +74,5 @@ echo "running execFormats test to read modified executable..." >&2
 grep -v '\.data at 0x' <$exebase.new.dump >$dump3
 rm -f $exebase.new.dump
 
-diff -U10 $dump2 $dump3 | sed -n '3,$p'
+diff -U10 $dump1 $dump3 | sed -n '3,$p'
 exit 0 # success because previous diff requires human inspection

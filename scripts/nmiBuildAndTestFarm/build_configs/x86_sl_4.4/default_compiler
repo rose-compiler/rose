@@ -1,4 +1,0 @@
-TITLE="testing default compiler (3.4.6) without java"
-DESCRIPTION="default ROSE configuration options, boost 1.36 without java"
-PREREQS="boost-1.36.0, automake-1.10, autoconf-2.63, libxml2-2.7.3"
-CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.36.0 --with-CXX_WARNINGS=-Wall --without-java"

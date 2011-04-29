@@ -57,8 +57,17 @@ VALGRIND =
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 # $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.C)
 $(TEST_Objects): ../../testTranslator
+if !ROSE_USE_INSURE
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+else
+#	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
+	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; ../../testTranslator --help > /dev/null; echo "Fixed"; fi
+	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
+	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+	echo "Removing the just built copy of lt-testTranslator to save space..."
+	rm -f testTranslator_$(@:.o=)
+endif
 
 # DQ (4/6/2010): Added test for parsing only (tested here for C++ code)
 testParser:../../testParser
@@ -112,7 +121,7 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
      test2005_159.h  test2005_160.h  test2005_75.h  test2005_88.h  test2006_36.h test2006_42.h test2006_187a.h \
      test2006_187b.h test2007_08.h test2007_41.h \
      test2007_42.h test2007_47.h test2007_48.h test2007_97.h test2007_101.h test2007_136.h test2007_137.h test2007_160.h test2007_160a.h test2007_167.h \
-     test2008_11.h LogicalPath.cpp test2005_56.C
+     test2008_11.h LogicalPath.cpp test2005_56.C test2010_25.h
 
 # DQ (6/18/2008): All of these should be present...
 # confdefs.h     test2001_11.h   test2001_18B.h  test2003_12.h  test2003_25.h   test2005_154.h  test2005_159.h  test2005_26.h  test2005_88.h    test2006_187b.h  test2006_42.h   test2007_113.h  test2007_137.h   test2007_167.h  test2007_42.h  test2007_97.h

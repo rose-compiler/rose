@@ -39,7 +39,7 @@ class TransLoopFusible
 template <class Node> 
 class TransLoopSlicable
 { public: bool operator() ( TransDepGraphCreate<Node> *graph, 
-	   		  const LoopAnalInfo<Node> &l);
+                          const LoopAnalInfo<Node> &l);
 };
 
 template <class Edge, class GraphCreate>

@@ -20,44 +20,43 @@ void dgemm(double *a,double *b,double *c,int n)
           for ((cache_fd__3 = (_var_0 * n) , j = _var_0); j <= min((n + (-16)),_var_0); (cache_fd__3 += 16 * n , j += 16)) {
             int _var_2;
             (cache_fd__1 = cache_fd__3 , _var_2 = j);
-            c[cache_fd__3 + i] = ((c[cache_fd__3 + i]) + ((a[cache_fd__2 + i]) * (b[cache_fd__3 + k])));
+            c[cache_fd__3 + i] = (c[cache_fd__3 + i] + (a[cache_fd__2 + i] * b[cache_fd__3 + k]));
             (cache_fd__1 += n , _var_2 = (1 + _var_2));
-            c[cache_fd__1 + i] = ((c[cache_fd__1 + i]) + ((a[cache_fd__2 + i]) * (b[cache_fd__1 + k])));
+            c[cache_fd__1 + i] = (c[cache_fd__1 + i] + (a[cache_fd__2 + i] * b[cache_fd__1 + k]));
             (cache_fd__1 += n , _var_2 = (1 + _var_2));
-            c[cache_fd__1 + i] = ((c[cache_fd__1 + i]) + ((a[cache_fd__2 + i]) * (b[cache_fd__1 + k])));
+            c[cache_fd__1 + i] = (c[cache_fd__1 + i] + (a[cache_fd__2 + i] * b[cache_fd__1 + k]));
             (cache_fd__1 += n , _var_2 = (1 + _var_2));
-            c[cache_fd__1 + i] = ((c[cache_fd__1 + i]) + ((a[cache_fd__2 + i]) * (b[cache_fd__1 + k])));
+            c[cache_fd__1 + i] = (c[cache_fd__1 + i] + (a[cache_fd__2 + i] * b[cache_fd__1 + k]));
             (cache_fd__1 += n , _var_2 = (1 + _var_2));
-            c[cache_fd__1 + i] = ((c[cache_fd__1 + i]) + ((a[cache_fd__2 + i]) * (b[cache_fd__1 + k])));
+            c[cache_fd__1 + i] = (c[cache_fd__1 + i] + (a[cache_fd__2 + i] * b[cache_fd__1 + k]));
             (cache_fd__1 += n , _var_2 = (1 + _var_2));
-            c[cache_fd__1 + i] = ((c[cache_fd__1 + i]) + ((a[cache_fd__2 + i]) * (b[cache_fd__1 + k])));
+            c[cache_fd__1 + i] = (c[cache_fd__1 + i] + (a[cache_fd__2 + i] * b[cache_fd__1 + k]));
             (cache_fd__1 += n , _var_2 = (1 + _var_2));
-            c[cache_fd__1 + i] = ((c[cache_fd__1 + i]) + ((a[cache_fd__2 + i]) * (b[cache_fd__1 + k])));
+            c[cache_fd__1 + i] = (c[cache_fd__1 + i] + (a[cache_fd__2 + i] * b[cache_fd__1 + k]));
             (cache_fd__1 += n , _var_2 = (1 + _var_2));
-            c[cache_fd__1 + i] = ((c[cache_fd__1 + i]) + ((a[cache_fd__2 + i]) * (b[cache_fd__1 + k])));
+            c[cache_fd__1 + i] = (c[cache_fd__1 + i] + (a[cache_fd__2 + i] * b[cache_fd__1 + k]));
             (cache_fd__1 += n , _var_2 = (1 + _var_2));
-            c[cache_fd__1 + i] = ((c[cache_fd__1 + i]) + ((a[cache_fd__2 + i]) * (b[cache_fd__1 + k])));
+            c[cache_fd__1 + i] = (c[cache_fd__1 + i] + (a[cache_fd__2 + i] * b[cache_fd__1 + k]));
             (cache_fd__1 += n , _var_2 = (1 + _var_2));
-            c[cache_fd__1 + i] = ((c[cache_fd__1 + i]) + ((a[cache_fd__2 + i]) * (b[cache_fd__1 + k])));
+            c[cache_fd__1 + i] = (c[cache_fd__1 + i] + (a[cache_fd__2 + i] * b[cache_fd__1 + k]));
             (cache_fd__1 += n , _var_2 = (1 + _var_2));
-            c[cache_fd__1 + i] = ((c[cache_fd__1 + i]) + ((a[cache_fd__2 + i]) * (b[cache_fd__1 + k])));
+            c[cache_fd__1 + i] = (c[cache_fd__1 + i] + (a[cache_fd__2 + i] * b[cache_fd__1 + k]));
             (cache_fd__1 += n , _var_2 = (1 + _var_2));
-            c[cache_fd__1 + i] = ((c[cache_fd__1 + i]) + ((a[cache_fd__2 + i]) * (b[cache_fd__1 + k])));
+            c[cache_fd__1 + i] = (c[cache_fd__1 + i] + (a[cache_fd__2 + i] * b[cache_fd__1 + k]));
             (cache_fd__1 += n , _var_2 = (1 + _var_2));
-            c[cache_fd__1 + i] = ((c[cache_fd__1 + i]) + ((a[cache_fd__2 + i]) * (b[cache_fd__1 + k])));
+            c[cache_fd__1 + i] = (c[cache_fd__1 + i] + (a[cache_fd__2 + i] * b[cache_fd__1 + k]));
             (cache_fd__1 += n , _var_2 = (1 + _var_2));
-            c[cache_fd__1 + i] = ((c[cache_fd__1 + i]) + ((a[cache_fd__2 + i]) * (b[cache_fd__1 + k])));
+            c[cache_fd__1 + i] = (c[cache_fd__1 + i] + (a[cache_fd__2 + i] * b[cache_fd__1 + k]));
             (cache_fd__1 += n , _var_2 = (1 + _var_2));
-            c[cache_fd__1 + i] = ((c[cache_fd__1 + i]) + ((a[cache_fd__2 + i]) * (b[cache_fd__1 + k])));
+            c[cache_fd__1 + i] = (c[cache_fd__1 + i] + (a[cache_fd__2 + i] * b[cache_fd__1 + k]));
             (cache_fd__1 += n , _var_2 = (1 + _var_2));
-            c[cache_fd__1 + i] = ((c[cache_fd__1 + i]) + ((a[cache_fd__2 + i]) * (b[cache_fd__1 + k])));
+            c[cache_fd__1 + i] = (c[cache_fd__1 + i] + (a[cache_fd__2 + i] * b[cache_fd__1 + k]));
           }
           for (; j <= min(((-1) + n),(_var_0 + 15)); (cache_fd__3 += n , j += 1)) {
-            c[cache_fd__3 + i] = ((c[cache_fd__3 + i]) + ((a[cache_fd__2 + i]) * (b[cache_fd__3 + k])));
+            c[cache_fd__3 + i] = (c[cache_fd__3 + i] + (a[cache_fd__2 + i] * b[cache_fd__3 + k]));
           }
         }
       }
     }
   }
 }
-

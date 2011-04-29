@@ -2,6 +2,7 @@
 #define VIRTUAL_CFG_H
 
 #include <vector>
+#include <assert.h>
 
 
 //! FIXME: The CFG support for Fortran is still buggy -- if Fortran is
@@ -38,10 +39,10 @@ namespace VirtualCFG {
   enum EdgeConditionKind 
   {
     eckUnconditional, //! Normal, unconditional edge
-    eckTrue,	      //! True case of a two-way branch
-    eckFalse,	      //! False case of a two-way branch
+    eckTrue,          //! True case of a two-way branch
+    eckFalse,         //! False case of a two-way branch
     eckCaseLabel,     //! Case label (constant is given by caseLabel())
-    eckDefault,	      //! Default label
+    eckDefault,       //! Default label
     eckDoConditionPassed, //! Enter Fortran do loop body
     eckDoConditionFailed, //! Fortran do loop finished
     eckForallIndicesInRange, //! Start testing forall mask
@@ -127,10 +128,10 @@ namespace VirtualCFG {
     bool operator==(const CFGEdge& o) const {return src == o.src && tgt == o.tgt;}
     //! Compare disequality of edges
     bool operator!=(const CFGEdge& o) const {return src != o.src || tgt != o.tgt;}
-#if 0
-    //! We ban operator<() because it relies on system-specific comparisons among AST node pointers
+
+    //! operator<() has an arbitrary ordering, but allows these objects to be used with std::set and std::map
     bool operator<(const CFGEdge& o) const {return src < o.src || (src == o.src && tgt < o.tgt);}
-#endif
+
   }; // end CFGEdge
 
   //! \internal A CFG path is a set of connected CFG edges; condition and
@@ -151,6 +152,12 @@ namespace VirtualCFG {
       assert (a.edges.back().target() == b.edges.front().source());
       edges.insert(edges.end(),b.edges.begin(),b.edges.end());
     }
+
+    //George Vulov 12/1/2010: We need a default constructor
+    CFGPath()
+    {
+    }
+
     std::string toString() const;
     std::string toStringForDebugging() const;
     std::string id() const;
@@ -161,8 +168,8 @@ namespace VirtualCFG {
     //Return the first non-unconditional edge's condition
     EdgeConditionKind condition() const {
       for (unsigned int i = 0; i < edges.size(); ++i) {
-	EdgeConditionKind kind = edges[i].condition();
-	if (kind != eckUnconditional) return kind;
+        EdgeConditionKind kind = edges[i].condition();
+        if (kind != eckUnconditional) return kind;
       }
       return eckUnconditional;
     }
@@ -184,35 +191,35 @@ namespace VirtualCFG {
     std::vector<SgInitializedName*> scopesBeingExited() const {
       std::vector<SgInitializedName*> result;
       for (unsigned int i = 0; i < edges.size(); ++i) {
-	std::vector<SgInitializedName*> s_i = edges[i].scopesBeingExited();
-	result.insert(result.end(), s_i.begin(), s_i.end());
+        std::vector<SgInitializedName*> s_i = edges[i].scopesBeingExited();
+        result.insert(result.end(), s_i.begin(), s_i.end());
       }
       return result;
     }
     std::vector<SgInitializedName*> scopesBeingEntered() const {
       std::vector<SgInitializedName*> result;
       for (unsigned int i = 0; i < edges.size(); ++i) {
-	std::vector<SgInitializedName*> s_i = edges[i].scopesBeingEntered();
-	result.insert(result.end(), s_i.begin(), s_i.end());
+        std::vector<SgInitializedName*> s_i = edges[i].scopesBeingEntered();
+        result.insert(result.end(), s_i.begin(), s_i.end());
       }
       return result;
     }
     bool operator==(const CFGPath& o) const {return edges == o.edges;}
     bool operator!=(const CFGPath& o) const {return edges != o.edges;}
-#if 0
+
+    //! An arbitrary order, so we can use this in std::set and std::map
     bool operator<(const CFGPath& o) const {
-      // An arbitrary order
       if (edges.size() != o.edges.size()) {
-	return edges.size() < o.edges.size();
+        return edges.size() < o.edges.size();
       }
       for (unsigned int i = 0; i < edges.size(); ++i) {
-	if (edges[i] != o.edges[i]) {
-	  return edges[i] < o.edges[i];
-	}
+        if (edges[i] != o.edges[i]) {
+          return edges[i] < o.edges[i];
+        }
       }
       return false;
     }
-#endif
+
   }; // end CFGPath
 
   //! \internal Merge two CFG paths
@@ -286,9 +293,7 @@ namespace VirtualCFG {
     std::vector<SgInitializedName*> scopesBeingEntered() const {return p.scopesBeingEntered();}
     bool operator==(const InterestingEdge& o) const {return p == o.p;}
     bool operator!=(const InterestingEdge& o) const {return p != o.p;}
-#if 0
     bool operator<(const InterestingEdge& o) const {return p < o.p;}
-#endif
   };
 
   inline InterestingNode makeInterestingCfg(SgNode* start) {

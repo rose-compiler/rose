@@ -23,6 +23,9 @@
 #include "unparseFortran.h"
 #include "unparseFortran_types.h"
 
+#include "unparseJava.h"
+#include "unparseJava_types.h"
+
 #include "unparsePHP.h"
 
 // DQ (7/20/2008): New mechanism to permit unparsing of arbitrary strings at IR nodes.
@@ -36,14 +39,16 @@ class Unparser_Nameq;
 // typedef and anonymous declaration bugs.
 #define ANONYMOUS_TYPEDEF_FIX false
 
-// DQ (9/28/2010): At PFA (Portland Fortran Adventure) we agreeded that
-// for Fortran the line length would set to the F90 standard (132 characters).
-// For Fortran 77 this may be a problem.  If set to a line length of 72
-// characters then test2010_61.f90 will not unparse its include statement
-// correctly (a bug in ROSE).
-// #define MAX_F90_LINE_LEN 72
-// #define MAX_F90_LINE_LEN 132
-#define MAX_F90_LINE_LEN 1024
+// Whether to use Rice's code to wrap long lines in Fortran.
+#define USE_RICE_FORTRAN_WRAPPING  0  // 1 if you're Rice, 0 if you want to get through Hudson
+
+// Maximum line lengths for Fortran fixed source form and free source form, per the F90 specification.
+#if USE_RICE_FORTRAN_WRAPPING
+  #define MAX_F90_LINE_LEN_FIXED  72
+  #define MAX_F90_LINE_LEN_FREE  132
+#else
+  #define MAX_F90_LINE_LEN      1024
+#endif
 
 // DQ (2/6/03):
 // The unparser should not write to (modify) the AST.  This fix skips and locations
@@ -146,6 +151,10 @@ class Unparser
        // DQ (8/14/2007): I have added this here to be consistant, but I question if this is a good design!
           UnparseFortran_type* u_fortran_type;
           FortranCodeGeneration_locatedNode* u_fortran_locatedNode;
+
+       // DQ (4/16/2011): Added the Java support semetric to the Fortran unparser support.
+          UnparseJava_type* u_java_type;
+          JavaCodeGeneration_locatedNode* u_java_locatedNode;
 
      private:
 

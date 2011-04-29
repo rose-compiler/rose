@@ -1,6 +1,6 @@
 \section{ROSE Installation}
 
-\subsection{Requirements and Options}
+\subsection{Software/Hardware Requirements and Options}
 \label{Requirements_Installation_Testing}
    ROSE is general software and we ultimately hope to remove any specific software
 and hardware requirements.  However, our goal is to be specific about where and 
@@ -10,47 +10,62 @@ how ROSE is developed and where it is regularly tested.
 % within ROSE have some additional software requirements.
 
 \subsubsection{Required Hardware/Operating System}
-   ROSE has been developed on Linux/Intel platforms. We have  
-addressed significant portability issues for ROSE; and routinely work on
-both 64 and 32 bit Linux and Mac OSX platforms. ROSE is nightly tested on 
-about 20 different platforms (difference versions of Linux and Max OSX)
-see section ref{NMI\_testing} for details.
-We will in time expand the portability of ROSE to other platforms as 
-required.  ROSE is released as source code and a binary for the EDG
-part that permits ROSE to work with C and C++; all other support for
-Fortran and binary analysis is fully released as source code.  EDG has 
-addressed portability issues for their C++ frontend and it is available on 
-nearly all platforms (see {\tt www.EDG.com} for details); so a EDG is not 
-a barrier to portability for us.  ROSE is currently developed on
-Linux/Intel platforms and works with all modern versions of the GNU compilers 
-(3.4.x, and later). ROSE also works on both 32-bit and 64-bit architectures,
-as well as with the Intel C and C++ compilers.  Recent work has ported ROSE
-to Cygwin (under Microsoft Windows) and a port of Visual Studio is ongoing 
-work.  The Cygwin support is not released generally at the moment.
 
-Future work will focus on portability to other platforms important to users.
+ROSE has been mainly developed on Linux/Intel platforms. 
+The best supported platforms (including both 32-bit and 64-bit versions) include:
+\begin{itemize}
+\item Red Hat Enterprise Linux Client release 5.5 (Tikanga) or the
+open source equivalent, CentOS 5.5;  
+\item Mac OS X 10.6.
+\end{itemize}
+
+
+%We have addressed significant portability issues for ROSE, and routinely work on both 64
+%and 32 bit Linux and Mac OS X platforms. 
+Other Linux distributions should also work with ROSE.
+ROSE is being tested on about 20 different versions of Linux and Max OS X.
+%and works with most modern versions of the GNU compilers (4.0.x to 4.4.x
+%and Intel compilers. 
+See section ref{NMI\_testing} for current status. 
+%Recent work has ported ROSE to Cygwin (under Microsoft Windows; not
+%released generally at the moment) and.
+A port to Visual Studio is ongoing work.
+We will in time expand the portability of ROSE to other platforms as
+required.
+
+% Irrelevant details.
+%The ROSE C/C++ frontend, EDG (software from the Edison Design Group),
+%is released as source code or binary; all other language support in
+%ROSE is fully released as source code. EDG has addressed portability
+%issues for their C++ frontend and it is available on nearly all
+%platforms (see {\tt www.EDG.com} for details); so EDG is not a barrier
+%to portability for us.
+
 If you have a specific requirement for ROSE to be ported to a target platform
 please let us know.
 % At a later point we will address portability of ROSE onto other platforms:
 % mostly likely IBM AIX will be next (at some point).
 
 \subsubsection{Software Requirements}
-   You will require {\bf ONLY} a C++ compiler to compile ROSE; ROSE is written in C++.
+%This is too verbose. I merged the text into the itemized list to quickly
+%get to the point.
+%   You will require a C++ compiler to compile ROSE, and some of the test
+%cases also require a C compiler.
 % We use the GNU g++ compiler most often, but the Intel compiler (version 9.1) will also work.
-Present development work is done on Intel/Linux platforms
-%using the GNU g++ 3.3.x, 3.4.x, and 4.x; and the Intel compilers.  GNU compilers older
-using the GNU g++ 3.4.x, and 4.x; and the Intel compilers.  Other people using ROSE
-regularly use Max OSX (but version 10.5 or later).
+%Present development work is done on Intel/Linux platforms
+%using the GNU g++ 3.3.x, 3.4.x, and 4.x; and the Intel compilers.
+%using the GNU g++ 4.0.x to 4.4.x; and the Intel compilers.  Other people using ROSE
+%regularly use Mac OS X (but version 10.5, Leopard, or later).
 %GNU compilers older
 %than 3.3.x are not supported within the ROSE project, but in some cases they might work 
 %(g++ 3.2.x is likely to work, but g++ 2.96 will not work).
 
-   ROSE users may either obtain a free research license from EDG and hence ROSE with EDG source code,
-or alternatively, obtain ROSE that contains a binary version of the EDG work.
-The latter is limited to specific platforms and versions of compilers. See EDG (www.edg.com) for details 
-and limitations on how their software may be used. There is more information in the 
-ROSE Manual (see chapter {\em Getting Started}
-section {\em Getting a Version of the EDG License for Research Use}).
+%   ROSE users may either obtain a free research license from EDG and hence ROSE with EDG source code,
+%or alternatively, obtain ROSE that contains a binary version of the EDG work.
+%The latter is limited to specific platforms and versions of compilers. See EDG (www.edg.com) for details 
+%and limitations on how their software may be used. There is more information in the 
+%ROSE Manual (see chapter {\em Getting Started}
+%section {\em Getting a Version of the EDG License for Research Use}).
 
 \commentout{
    We suggest that ROSE users obtain a free research license from EDG until we 
@@ -61,49 +76,88 @@ to specific platforms and versions of compilers. See EDG (www.edg.com) for detai
 and limitations on how their software may be used.
 }
 
-{\bf Required Software:} \\
-  The following software is required in order to build and use ROSE 
-(see note about Mac OSX as well):
+%{\bf Required Software:} \\
+%  The following software is required in order to build and use ROSE 
+%(see note about Mac OS X as well):
 \begin{itemize}
    \item {\bf ROSE}: \\
-     There are three versions of ROSE supported: the {\it Distribution Version} for users
+     There are three distributions of ROSE: the {\it Distribution Version} for users
     (typical), the {\it External Development Version} for advanced users and collaborators, 
-     and the {\it Internal Development Version} (intended only for ROSE development team
-     and external developers with access to our internal SVN repository which includes the
-     EDG source code). The development versions are what are found in the ROSE software
-     repositories and have additional software requirements (subversion, JDK, autoconf,
-     automake, Doxygen, LaTeX, etc.).
+     and the {\it Internal Development Version}
    % The exact requirements are listed in the {\tt ROSE/ChangeLog} (including version numbers for each release of ROSE).
      \begin{itemize}
        \item {\bf Distribution Version} \\
-       Provided as a tared and compressed file in the form, ROSE-\VersionNumber.tar.gz.
-       It can be obtained from \htmladdnormallink{outreach.scidac.gov/projects/rose}{https://outreach.scidac.gov/projects/rose/}. 
+       Provided as a tared and compressed file named ROSE-\VersionNumber.tar.gz.
+       It can be obtained from \htmladdnormallink{https://outreach.scidac.gov/projects/rose}{https://outreach.scidac.gov/projects/rose/}. 
        This is the most typical way that users will see and work with ROSE. But it is less
        up-to-date compared to development versions.
 
-       \item {\bf External Development Version } \\
-       It is available from the SciDAC Outreach Center's subversion repository:
-       \htmladdnormallink{outreach.scidac.gov/projects/rose}{https://outreach.scidac.gov/projects/rose/}.
-       We put a subset (excluding the EDG part essentially) of the internal developer version of
-       ROSE into the external repository to enable people to have quick access to the most
-       recent new features in ROSE.  The external repository is synchronized with the
-       internal repository once a day in ideal conditions. Several branches also exist to
-       accept contributions from external collaborators.
+       \item {\bf External Development Version:git} \\
+       You can obtain it by typing \textit{git clone
+       http://www.rosecompiler.org/rose.git} 
 
-       \item {\bf Internal Development Version} \\
-       Only available directly from the LLNL's internal Subversion (SVN) repository. 
-       The details of building this version are located in the Appendix of the Manual. %\ref{gettingStarted:DeveloperInstructions}.
+       %It is available from
+       %\htmladdnormallink{http://www.rosecompiler.org/rose.git}{http://www.rosecompiler.org/rose.git}.
+       %This is a clone from our internal ROSE repository. 
+       It enables people to have the quickest access to the most recent new features in ROSE.  
+       The external git repository is synchronized with the
+       internal repository once its master branch is updated. 
+       It is highly recommended to be used by collaborators who regularly contribute back to us. 
+       %Several branches also exist to accept contributions from external collaborators.
+
+
+       \item {\bf External Development Version: subversion} \\
+       It is available from the SciDAC Outreach Center's subversion repository:
+       \htmladdnormallink{https://outreach.scidac.gov/projects/rose}{https://outreach.scidac.gov/projects/rose/}.
+       It contains only a subset of ROSE (excluding the EDG part essentially) of the internal developer version. 
+       We are trying to gradually phase out the subversion repository to
+       facilitate merging external contributions.
+
+       \item {\bf Internal Development Version: git repositories} \\
+       Internally, we maintain two git repositories internally, one for ROSE and the
+       other for EDG source code. The EDG repository is linked to the ROSE
+       repository as a git submodule. 
+       The details of getting and building this version are located in the
+       Developer Guide. %\ref{gettingStarted:DeveloperInstructions}.
+       This distribution is intended only for ROSE development team
+       and external developers with access to our internal network file
+       system.  
+      % The development versions are what are found in the ROSE software
+      % repositories and have additional software requirements: subversion, JDK, autoconf,
+      % automake, Doxygen, LaTeX, {\it etc}.
      \end{itemize}
     % ROSE is delivered as either a development version (svn) or as a distribution for
     % users. The (typical) user version comes either with EDG source or binary distribution.
 
-   \item {\bf g++} : version $>=$ 3.4.x  \\
-     In order to use OpenMP or gFortran g++ $>=$ 4.2.x is required.
+  \item {\bf git}: Required if you work with development versions of ROSE
+  using git repositories.
 
-   \item {\bf BOOST} : version $>=$ 1.36.0  \\
+  \item {\bf subversion}: Required if you work with development versions of ROSE
+  using subversion repositories.
+
+  \item {\bf wget}: Required for all external distribution/development
+  versions. \\
+  Only the internal git development version has access to EDG source code.
+  For all other cases,  wget is used to automatically download prebuilt EDG binaries matching
+  your platform, if the configure script detects that your platform is supported. 
+
+   \item {\bf g++} : version 4.0.x to 4.4.x (Support for GCC 4.5 and higher
+   versions is still ongoing work). For Mac OSX, please install XCode to
+   have g++. .
+
+   \item {\bf gfortran}: version 4.2.x to 4.4.x. Required if you want to
+   handle Fortran input. For Mac OS X 10.6, gfortran is not included in
+   XCode. We use Apple Xcode gcc-42 (gfortran) add-on provided at
+   \htmladdnormallink{http://r.research.att.com/tools/}{http://r.research.att.com/tools/}
+   to get gfortran installed. Be sure to use a package matching your gcc
+   build number there. 
+
+   \item {\bf BOOST} : version 1.36.0 to 1.45.0 \\
      Visit \htmladdnormallink{www.boost.org}{http://www.boost.org/}
      for more details about BOOST and \htmladdnormallink{www.boost.org/users/download}{http://www.boost.org/users/download/}
-     for download and installation instructions. 
+     for download and installation instructions. Higher versions of boost
+     may or may not work with ROSE. We only test rose using boost 1.36.0 to 1.45.0 (10
+     versions) right now due to resource limits. 
      {\em Installation of Boost is such a common issue that we include simple directions for how to install Boost in section~\ref{gettingStarted:BOOST}}
 
    \item {\bf JAVA} : version $>$1.5.0\_11 \\
@@ -117,14 +171,43 @@ and limitations on how their software may be used.
      Automake is a tool for automatically generating `Makefile.in' files compliant with
      the GNU Coding Standards.
 
-   \item {\bf Libtool}: version $>=$1.5.6.  Needed \emph{ONLY} for development versions. 
-\end{itemize}
+   \item {\bf GNU Libtool}: version $>=$1.5.6.  Needed \emph{ONLY} for development versions. 
+   For MAC OS X, the default libtool used is not a GNU libtool. Please
+   install GNU libtool and use it instead.
 
-{\bf Required Software for ROSE Demos:} \\
-     The ROSE demos make use of additional external software which we also find useful for
-     internal development.
-\begin{itemize}
-   \item {\bf zgrviewer}: \\
+   \item {\bf GNU Flex}: Needed \emph{ONLY} for development versions. \\
+   Flex is used to generate annotation\/OpenMP directive scanners in ROSE. 
+
+   \item {\bf GNU Bison}: Needed \emph{ONLY} for development versions. \\
+   Yacc is used to generate some annotation\/OpenMP directive parsers in ROSE. 
+
+   \item {\bf Doxygen} : Needed \emph{ONLY} for development versions. \\
+          Most ROSE documentation is generated using LaTex and Doxygen, thus
+          Doxygen is required for ROSE developers that want to regenerate the ROSE
+          documentation. This is not required for ROSE users, since all documentation is 
+          included in the ROSE distribution. Visit {\it www.doxygen.org} for details and to
+          download software.  There are no ROSE-specific configure options to use Doxygen;
+          it must only be available within your path.
+ 
+   \item {\bf ghostscript}: Needed \emph{ONLY} for development versions. \\
+   ps2pdf is need  to generate ROSE documentations.
+
+   \item {\bf DOT (GraphViz)} : Required since many ROSE tests generate
+   AST/CFG graph in dot format.\\
+          ROSE uses DOT for generating graphs of ASTs, Control Flow, etc.
+          DOT is also used internally by Doxygen.
+          Visit {\it www.graphviz.org} for details and to download software.
+          An example showing the use of the DOT to build graphs is in the ROSE Tutorial.
+          There are no ROSE-specific configure options to use dot; it must only be 
+          available within your path.
+ 
+   \item {\bf LaTex: texlive}: Needed \emph{ONLY} for development versions. \\
+     LaTeX is used for a significant portion of the ROSE documentation. LaTex is 
+     included on most Unix systems. There are no ROSE specific configure options 
+     to use LaTeX; it must only be available within your path.
+
+   \item {\bf zgrviewer}: This is needed for ROSE Demos. We use it to
+   visualize the AST tree saved in dot format. \\
      Zgrviewer is a dot file viewer that allows simple zooming, panning, etc. It is
      available on SourceForge.  Zgerviewer is a java program and installs easily.
      however the detail memory setting for java are insufficient for large dot files
@@ -135,112 +218,16 @@ and limitations on how their software may be used.
 
 \end{itemize}
 
-
-\paragraph{Mac OSX Support:}
-   It has been reported that our binary version of EDG requires Mac OS 10.5
-(which might make sense because we build it using Mac OSX version 10.5.6).  More
-specifically there are unresolved references during linking ROSE applications with
-Mac OS from 10.4.11; the solution is to upgrade your Mac OS.  Note that Mac OSX 
-version 10.4 is fairly old and so this should not be a problem on more modern Apple
-systems.  Our report about this fix also says that upgrading Xcode from version 2.4 
-to version 3.3, might be related.
-
-Note that on our Mac OSX (version 10.5.6), all of our testing of ROSE uses the following packages:
-\begin{itemize}
-   \item {\bf boost\_1\_42\_0.tar.gz}:
-     All installations of ROSE (any platform) require boost.
-
-   \item {\bf doxygen-1.5.6.src.tar.gz}:
-     Doxegen is required to build the documentation which is both distributed with ROSE
-     and make available via the ROSE web site.
-
-   \item {\bf ghostscript-8.62.tar.gz}:
-     Not clear that this is really required by ROSE.
-
-   \item {\bf latex2html-2002-2-1.tar.gz}:
-     Likely required by LaTeX (not required by ROSE as far as I know).
-
-   \item {\bf texlive2007-live-20070212.iso.zip (LaTeX)}:
-     Reqired to build the latex documentation (ROSE Manual and ROSE Tutorial).
-
-   \item {\bf fontconfig-2.6.0.tar.gz}:
-     Not clear that this is really required by ROSE.
-
-   \item {\bf graphviz-2.20.1.tar.gz}:
-     Required to generate graphs for the LaTex documentation in ROSE.
-
-   \item {\bf libtool-2.2.4.tar.bz2}:
-     Required to build ROSE (used in ROSE configuration management).
-\end{itemize}
-
-As an extra detail, our .bashrc file for Mac OSX is:
-\begin{verbatim}
-export DYLD_LIBRARY_PATH="/Users/dquinlan/local/boost_1_42_0_installTree-gxx-4.0.1/lib"
-export PATH="/Users/dquinlan/local/doxygen-install/bin:$PATH"
-export PATH="/Users/dquinlan/local/graphviz-install/bin:$PATH"
-export PATH="/Users/dquinlan/local/texlive-install/2007/bin/i386-darwin/:$PATH"
-export PATH="/Users/dquinlan/local/latex2html-install/bin/:$PATH"
-export PATH="/Users/dquinlan/local/ghostscript-install/bin/:$PATH"
-export PATH="/Users/dquinlan/local/fontconfig-install/bin/:$PATH"
-\end{verbatim}
-
-   We are not significant Mac users, ROSE is primarily developed under Linux, 
-however we are particularly interested in supporting collaborators who are, 
-so Mac OSX support is important to us.  We would appreciate any help in making 
-sure that ROSE installs smoothly on both Mac OSX and Linux.
-
-
-
-To simplify the descriptions of the build process, we define:
-\begin{itemize} 
-   \item {\bf Source Tree} \\
-         Location of source code directory (there is only one source tree).
-   \item {\bf Compile Tree} \\
-         Location of compiled object code and executables. There can be many compile trees
-         representing either different: configure options, compilers used to build ROSE
-         and ROSE translators, compilers specified as backends for ROSE (to compile ROSE
-         generated code), or architectures.
-\end{itemize}
-
-We {\em strongly} recommend that the {\bf Source Tree} and the {\bf Compile Tree} be
-different. This avoids many potential problems with the {\em make clean} rules.
-Note that the {\bf Compile Tree} will be the same as the {\bf Source Tree}
-if the user has {\em not} explicitly generated a separate directory in which to
-run {\em configure} and compile ROSE. If the {\bf Source Tree} and {\bf Compile Tree} 
-are the same, then there is only one combined {\bf Source/Compile Tree}.
-Alternatively, numerous different {\bf Compile Trees} can be used from 
-a single {\bf Source Tree}.  More than one {\bf Compile Tree} allows
-ROSE to be generated on different platforms from a single source 
-(either a generated distribution or checked out from SVN).  ROSE is developed 
-and tested internally using separate {\bf Compile Trees}. \\
-
-
-{\bf Use of Optional Software:} \\
+{\bf Optional Software:} \\
 %ROSE does not presently require any special software, but more
 More functionality within ROSE is available if one has additional (freely available) software installed:
 \begin{itemize}
-   \item {\bf libxml2-devel }: \\
+   \item {\bf libxml2-devel }: Optional for some features. \\
          Several optional features of ROSE need to handle XML files, such as
          roseHPCT and BinaryContextLookup.
-   \item {\bf Doxygen} : \\
-          Most ROSE documentation is generated using LaTex and Doxygen, thus
-          Doxygen is required for ROSE developers that want to regenerate the ROSE
-          documentation. This is not required for ROSE users, since all documentation is 
-          included in the ROSE distribution. Visit {\it www.doxygen.org} for details and to
-          download software.  There are no ROSE-specific configure options to use Doxygen;
-          it must only be available within your path.
-   \item {\bf LaTeX} : \\
-          LaTeX is used for a significant portion of the ROSE documentation. LaTex is 
-          included on most Unix systems. There are no ROSE specific configure options 
-          to use LaTeX; it must only be available within your path.
-   \item {\bf DOT (GraphViz)} : \\
-          ROSE uses DOT for generating graphs of ASTs, Control Flow, etc.
-          DOT is also used internally by Doxygen.
-          Visit {\it www.graphviz.org} for details and to download software.
-          An example showing the use of the DOT to build graphs is in the ROSE Tutorial.
-          There are no ROSE-specific configure options to use dot; it must only be 
-          available within your path.
-   \item {\bf SQLite} : \\
+
+
+ \item {\bf SQLite} : \\
           ROSE users can store persistent data across separate compilation of files by
           storing information in an SQLite database.  This is used by several features
           in ROSE (call-graph generation, for example) and may be used directly by the
@@ -263,6 +250,66 @@ More functionality within ROSE is available if one has additional (freely availa
           See directions below for how to install the Haskell (ghc) compiler.
 
 \end{itemize}
+
+%{\bf Required Software for ROSE Demos:} \\
+%     The ROSE demos make use of additional external software which we also find useful for
+%     internal development.
+%\begin{itemize}
+%\end{itemize}
+
+
+\commentout{ % Liao 2/16/2011. I merged necessary Mac information into the
+%list above
+\paragraph{Mac OS X Support:}
+   It has been reported that our binary version of EDG requires Mac OS X v10.5
+(which might make sense because we build it using Mac OS X v10.5.6).  More
+specifically there are unresolved references during linking ROSE applications with
+Mac OS X v10.4.11; the solution is to upgrade your Mac OS.  Note that Mac OS X 
+v10.4 is fairly old and so this should not be a problem on more modern Apple
+systems.  Our report about this fix also says that upgrading Xcode from version 2.4 
+to version 3.3, might be related.
+
+Note that on our Mac OS X v10.5.6, all of our testing of ROSE uses the following packages:
+\begin{itemize}
+   \item {\bf boost\_1\_42\_0.tar.gz}:
+     All installations of ROSE (any platform) require boost.
+
+   \item {\bf doxygen-1.5.6.src.tar.gz}:
+     Doxegen is required to build the documentation which is both distributed with ROSE
+     and make available via the ROSE web site.
+
+
+   \item {\bf latex2html-2002-2-1.tar.gz}:
+     Likely required by LaTeX (not required by ROSE as far as I know).
+
+   \item {\bf texlive2007-live-20070212.iso.zip (LaTeX)}:
+     Reqired to build the latex documentation (ROSE Manual and ROSE Tutorial).
+
+   \item {\bf fontconfig-2.6.0.tar.gz}:
+     Not clear that this is really required by ROSE.
+
+   \item {\bf libtool-2.2.4.tar.bz2}:
+     Required to build ROSE (used in ROSE configuration management).
+\end{itemize}
+
+As an extra detail, our .bashrc file for Mac OS X is:
+\begin{verbatim}
+export DYLD_LIBRARY_PATH="/Users/dquinlan/local/boost_1_42_0_installTree-gxx-4.0.1/lib"
+export PATH="/Users/dquinlan/local/doxygen-install/bin:$PATH"
+export PATH="/Users/dquinlan/local/graphviz-install/bin:$PATH"
+export PATH="/Users/dquinlan/local/texlive-install/2007/bin/i386-darwin/:$PATH"
+export PATH="/Users/dquinlan/local/latex2html-install/bin/:$PATH"
+export PATH="/Users/dquinlan/local/ghostscript-install/bin/:$PATH"
+export PATH="/Users/dquinlan/local/fontconfig-install/bin/:$PATH"
+\end{verbatim}
+
+   We are not significant Mac users, ROSE is primarily developed under Linux, 
+however we are particularly interested in supporting collaborators who are, 
+so Mac OS X support is important to us.  We would appreciate any help in making 
+sure that ROSE installs smoothly on both Mac OS X and Linux.
+
+}
+
 
 % \subsection{Installation and Testing }
 
@@ -319,7 +366,7 @@ and tested internally using separate {\bf Compile Trees}.
 \label{gettingStarted:SummaryInstructions}
    More specific information is available in the subsections below 
 (subsection \ref{gettingStarted:UserInstructions} and 
-subsection \ref{gettingStarted:DeveloperInstructions}), but in summary the steps are:
+subsection \ref{gettingStarted:DeveloperInstructions}) and various README files in the top of the source tree, but in summary the steps are:
 % The general steps are (but use the more details instructions below, depending 
 % on the version of ROSE that you have):
 \begin{itemize}
@@ -401,21 +448,76 @@ install tree). For Boost versions 1.39 or greater:
            installTree (e.g. BOOST\_INSTALL) to be used by ROSE.
            \item {\bf Important:} In running configure to build ROSE it is sometimes also required to use the 
            {\tt --with-boost-libdir=BOOST\_INSTALL/lib} in addition to the {\tt --with-boost=BOOST\_INSTALL}
-           mentioned imediately below.
+           mentioned immediately below.
 \end{enumerate}
 
 Use the BOOST\_INSTALL directory on the configure line for ROSE using: {\tt --with-boost=BOOST\_INSTALL}.
 
+{\em Important: Don't forget to set your LD\_LIBRARY\_PATH environment variable to include
+    the Boost lib (and sometimes lib64) directories.}
 
-% DQ (7/19/2008): Added the subject which stopped at least one user from LSU.
-  Note that the installation of Boost will frequently output 
-warnings (e.g. {\em *(Unicode/ICU support for boost.regex?..not found).*},
-these can be ignored.
+Additional notes:
+\begin{enumerate}
+    % DQ (7/19/2008): Added the subject which stopped at least one user from LSU.
+     \item Note that the installation of Boost will frequently output 
+           warnings (e.g. {\em *(Unicode/ICU support for boost.regex?..not found).*},
+           these can be ignored.
+
+    % DQ (2/1/2011): Added comment about use of Boost with later version GNU compilers.
+     \item Later versions of GNU will not work with older versions of Boost; as a data
+           point the GNU g++ version 4.4.1 does not appear to ply well with Boost 1.37 
+           (but works with Boost 1.42 just fine).
+
+\end{enumerate}
+
+\subsection{Using Insure++}
+\label{gettingStarted:insure}
+
+   It is possible to configure ROSE to use insure++ for static and dynamic analysis
+of the ROSE source code as part of development of ROSE or ROSE based tools.  This
+is a feature that is experimental, and currently not working well (because our older
+version of insure++ (version 7.1.6) is failing to compile the Linux header files used in ROSE).
+The configure option to turn on the use of insure++ is: {\em --enable-insure}.
+This is all that is required if {\tt insure} is in your path (at LLNL run: 
+{\tt source /usr/apps/insure++/default/setup.csh} for csh and 
+{\tt source /usr/apps/insure++/default/setup.sh} for bash).  
+{\em Don't use Insure++ until you have some experience with ROSE development, it makes everything more complex.}.
+
+% I don't know if this actually works since I use the setup script.
+% If you need to specify the location of {\tt insure++} then use {\em --with-insure=<path>}.
+
 
 \subsection{Building ROSE From a Distribution (ROSE-\VersionNumber.tar.gz)}
 \label{gettingStarted:UserInstructions}
+
+To simplify the descriptions of the build process, we define:
+\begin{itemize} 
+   \item {\bf Source Tree} \\
+         Location of source code directory (there is only one source tree).
+   \item {\bf Compile Tree} \\
+         Location of compiled object code and executables. There can be many compile trees
+         representing either different: configure options, compilers used to build ROSE
+         and ROSE translators, compilers specified as backends for ROSE (to compile ROSE
+         generated code), or architectures.
+\end{itemize}
+
+We {\em strongly} recommend that the {\bf Source Tree} and the {\bf Compile Tree} be
+different. This avoids many potential problems with the {\em make clean} rules.
+Note that the {\bf Compile Tree} will be the same as the {\bf Source Tree}
+if the user has {\em not} explicitly generated a separate directory in which to
+run {\em configure} and compile ROSE. If the {\bf Source Tree} and {\bf Compile Tree} 
+are the same, then there is only one combined {\bf Source/Compile Tree}.
+Alternatively, numerous different {\bf Compile Trees} can be used from 
+a single {\bf Source Tree}.  More than one {\bf Compile Tree} allows
+ROSE to be generated on different platforms from a single source 
+(either a generated distribution or checked out from svn/git repos).  ROSE is developed 
+and tested internally using separate {\bf Compile Trees}. \\
+
+
    The process for building ROSE from a ROSE {\em Distribution Version} is the same as for
-    most standard software distributions (e.g those using autoconf tools):
+   most standard software distributions (e.g those using autoconf tools). Specific details for particular
+   operating system distributions can be found in various README files in the top of the source tree. In
+   general:
 \begin{enumerate}
      \item Untar ROSE. \\
            Type {\tt tar -zxf ROSE-\VersionNumber.tar.gz} to untar the ROSE distribution.
@@ -425,17 +527,24 @@ these can be ignored.
      \item Change directory to the new compile tree directory. \\
            Type {\tt cd compileTree; }. This changes the current directory to the newly
            created directory.
-     \item Add JAVA environment variables. \\
+     \item Add JAVA environment variables if you platform is a Linux box. \\
            For example:\\
            {\tt export JAVA\_HOME=/usr/apps/java/jdk1.5.0\_11} \\
            {\tt export LD\_LIBRARY\_PATH=\$JAVA\_HOME/jre/lib/i386/server:\$LD\_LIBRARY\_PATH}
 
-     \item Add the Boost library path into your LD\_LIBRARY\_PATH.\\
-           For example: {\tt
-           LD\_LIBRARY\_PATH=\$LD\_LIBRARY\_PATH:/home/youraccount/opt/boost\_1\_36\_0/lib}
+     \item Add the Boost library path into your LD\_LIBRARY\_PATH. We put
+     the path in front of any other paths to avoid some old versions of
+     boost installation being picked up. \\
+           For example: For Linux, 
+           {\tt LD\_LIBRARY\_PATH=/youpath/boost\_1\_36\_0/lib:\$LD\_LIBRARY\_PATH} 
+
+           For MAC OS X: 
+           {\tt export
+           DYLD\_LIBRARY\_PATH=/youpath/boost\_1\_36\_0-inst/lib:\$DYLD\_LIBRARY\_PATH}
 
      \item Run the {\tt configure} script. \\
-           Type {\tt \{AbsoluteOrRelativePath\}/configure --prefix=`pwd` --with-boost=[BOOST\_installTree]} 
+           Type {\tt \{AbsoluteOrRelativePath\}/configure
+           --prefix=/yourpath/rose-inst --with-boost=[BOOST\_installTree]} 
            to run the ROSE {\tt configure} script.  The path to the configure script 
            may be either relative or absolute. The prefix option on the configure 
            command line is only required if you run {\tt make install} (suggested), because 
@@ -474,7 +583,9 @@ these can be ignored.
 \label{gettingStarted:UserInstructionsForDevelopmentVersion}
 Building ROSE from an internal or external development version is very
 similar to building it from a distribution. The major difference is that
-for development versions, you have to type ./build in the source tree to 
+for development versions, there is no configure script available . 
+
+You have to type {\tt ./build} in the source tree to 
 generate the configure script and Makefile.ins. Once this is done, the rest
 steps are the same as those of building a distribution version.
 
@@ -752,30 +863,33 @@ rerun the {\tt configure} script without rebuilding ROSE.
 %    documentation does not yet really reflect this detail.  Also since the build process
 %    writes to the install directory we have to explain this in the documentation.}
 
-\subsection{MPI Support}
-     ROSE supports the use of MPI for parallel distributed memory program analysis, a
-research focus within the ROSE project.  To support this use the {\tt --with-mpi}
-option on the configure command line.  If you get the following message:
-%{\footnotesize
-\begin{verbatim}
-configuration file /home/<user name>/.mpd.conf not found
-A file named .mpd.conf file must be present in the user's home
-directory (/etc/mpd.conf if root) with read and write access
-only for the user, and must contain at least a line with:
-MPD_SECRETWORD=<secretword>
-One way to safely create this file is to do the following:
-  cd $HOME
-  touch .mpd.conf
-  chmod 600 .mpd.conf
-and then use an editor to insert a line like
-  MPD_SECRETWORD=mr45-j9z
-into the file.  (Of course use some other secret word than mr45-j9z.)
-\end{verbatim}
-%}
-% $ reset emacs highlighting
-Then follow the directions to build the {\tt .mpd.conf} file.  The use of the 
-MPI configure option will allow additional code in ROSE to be compiled and 
-additional tests to be run.
+% This MPI support section causes more confusion than benefits. I hide it
+% from most users  Liao 4/14/2011
+%\subsection{MPI Support}
+%     ROSE supports the use of MPI for parallel distributed memory program analysis, a
+%research focus within the ROSE project.  To support this use the 
+%{\tt --with-parallel_ast_traversal_mpi}
+%option on the configure command line.  If you get the following message:
+%%{\footnotesize
+%\begin{verbatim}
+%configuration file /home/<user name>/.mpd.conf not found
+%A file named .mpd.conf file must be present in the user's home
+%directory (/etc/mpd.conf if root) with read and write access
+%only for the user, and must contain at least a line with:
+%MPD_SECRETWORD=<secretword>
+%One way to safely create this file is to do the following:
+%  cd $HOME
+%  touch .mpd.conf
+%  chmod 600 .mpd.conf
+%and then use an editor to insert a line like
+%  MPD_SECRETWORD=mr45-j9z
+%into the file.  (Of course use some other secret word than mr45-j9z.)
+%\end{verbatim}
+%%}
+%% $ reset emacs highlighting
+%Then follow the directions to build the {\tt .mpd.conf} file.  The use of the 
+%MPI configure option will allow additional code in ROSE to be compiled and 
+%additional tests to be run.
 
 \subsection{Haskell Support}
    Haskell (ghc) is available at {\it http://www.haskell.org/ghc/}.
@@ -912,16 +1026,16 @@ and select the project, {\em rose compiler}, from the pull down menu.
    These are comments collected from users about what 
 platform specific details they have discovered and shared.
 
-\subsubsection{OSX}
-   OSX does not appear to come with wget and it should be installed
+\subsubsection{Mac OS X}
+   Mac OS X does not appear to come with wget and it should be installed
 separately so that ROSE can find and download it's required EDG 
 binaries from the web (ROSE web site).
 
-\paragraph{OSX 10.5}
+\paragraph{Mac OS X v10.5, Leopard}
    We only build EDG binaries for the default GNU 4.0 compiler.
 
-\paragraph{OSX 10.6}
-   The non-standard STL hashmap implementation in OSX 10.6 is broken and so ROSE
+\paragraph{Mac OS X v10.6, Snow Leopard}
+   The non-standard STL hashmap implementation in Mac OS X v10.6 is broken and so ROSE
 can fail when using this OS.  We are working on a fix to use more standard
 features of STL.
 
@@ -944,3 +1058,105 @@ The problem that this appears to fix is that on some machines the ROSE
 file AST\_FILE\_IO.C will fail with the error {\em memory limit error},
 this flag to the Intel compiler will fix this (the mcpcom process goes above 
 2.5g memory for this file).
+
+
+\subsection{Installing ROSE under Windows}
+% Notes by tps 11/9/2010
+Under Windows ROSE uses CMake. This is a project that is currently under development. As
+of November 2010 we are able to compile and link the src directory. We are also able to 
+run example programs that link against librose and execute the frontend and backend.
+{\em However, this is an internal capability and not available externally yet since we don't
+distribute the Windows generated EDG binaries that would be required.  Also the
+current support for Windows is still incomplete, ROSE does not yet pass its internal
+tests under Windows.}
+
+\subsubsection{Setup}
+   Under Windows we use the following tools for compilation and development:
+
+\begin{itemize}
+\item Microsoft Visual Studio (9.0) : We currently use the Debug mode
+\item CMake 2.8.0 : One only needs to specify the source and build directory. All configuration options should be chosen correctly during makefile generation.
+\item Bison 2.4.1 : Used by ROSE
+\item Flex 2.5.4 : Used by ROSE
+\item Git 1.6.5 : We utilize the git shell for debugging and command line operations
+\item Boost 1.37 : Boost is required by ROSE
+\end{itemize}
+
+In order to have Hudson test ROSE under Windows, we have additional tools set up:
+
+\begin{itemize}
+\item pegeant.exe : Allows to avoid entering ssh keys when connecting to git repository
+\item Hudson client : The client can be started through the web page. All that is required is Java to be installed.
+\end{itemize}
+
+Currently under tux270-0 Flex, cmake, boost and Bison are installed under c:/ROSE. In
+addition, a ROSE test branch for ROSE-tps is installed in order to test ROSE under
+Windows locally without Hudson. The directory c:/tools contains pegeant.exe and other
+useful tools like plink.exe and puttygen.exe. See further notes below. Finally
+required ssh keys are located in c:/putty\_keys.
+
+\subsubsection{Debugging in VS 8}
+
+ROSE compiles now in release mode and debug mode. Debug mode was a challenge before because adding type-information (RTTI) caused the ROSE dll to be too large. 
+
+To use VS with debugging information right click on the ROSE.dll project and chose PROPERTIES/C-C++ INFO:
+
+\begin{itemize}
+    \item GENERAL: turn on Debugging Information Format (/Z7) - do not use DB
+    \item Language: Enable Runtime type information
+    \item Linker: Turn off incremental linking (slightly slower but takes too much memory) 
+\end{itemize}
+
+
+To test whether ROSE (src) compiles, links and a test program can run, modify the qualifiedName project in VS:
+\begin{itemize}
+    \item General and Language options as above
+    \item Debugging: enter the following under arguments ``--help'' 
+\end{itemize}
+
+This should allow you to run ``qualifiedName --help'' in debug mode and all options of rose are print out. 
+
+
+
+
+\subsubsection{Hudson specific}
+
+Setting up SSH keys on Windows Server (logged in as hudson-rose):
+
+\begin{itemize}
+\item Generate the keys:
+\begin{itemize}
+   \item Generate the keys, run ``plink -agent tux269'' and enter your
+      own login and then password. to login to tux269 and then exit.
+\end{itemize}
+
+\item Copy the keys onto tux270-0:
+\begin{itemize}
+   \item Double Click on ``My\_Computer'' icon
+   \item Goto C:, tools, pageant.exe
+   \item Double click on pageant.exe
+   \item Should display a computer with a hat on it in the bottom right 
+corner of the screen.
+   \item Right click on icon (of computer with a hat on it)
+   \item click on ``Add Key'' (this will cause a window to put up called ``Select Private Key File''
+   \item Goto ``My Computer TUX270-0'', ``Local Disk(C:)'', ``putty\_keys''
+   \item Click on file ``id\_rsa.ppk''  (this will load the private  key for 
+use by ssh).
+   \item Now try to run the git command: git clone ssh://hudson-rose@tux269/usr/casc/overture/ROSE/git/ROSE.git c:/ROSE/hudson/workspace/test-windows/label/windows-server
+\end{itemize}
+\end{itemize}
+
+Now in order to run a job from Hudson under Windows we need to start the client on the Windows side.
+Go to the hudson webpage and chose ``Manage Hudson''/''Manage Nodes''/''tux270'' and the start the JNLP agent.
+On the Windows side a client job is active now and whenever the Windows job on Hudson runs the client is activated.
+
+Currently Hudson is configured in a way that when a00-ROSE-from-scratch passes, a downstream is started and a01-ROSE-WINDOWS is started. The a01-ROSE-WINDOWS job will activate the client on tux270-0 and run the Windows test. In addition rose-hdsn-win-1 has been configured as a second Windows test node for Hudson.
+
+\subsubsection{Extending ROSE with the Windows SDK}
+
+Some functions used in Linux are not available under Windows - but they are available through the Windows SDK. For instance, realpath() in linux is available as PathCanonicalize() under Windows using the Windows SDK. You need to include : \#include ``Shlwapi.h'' and the following library into the project : shlwapi.lib (part of SDK). More information can be found at: http://msdn.microsoft.com/en-us/windows/bb980924.aspx http://en.wikipedia.org/wiki/Microsoft\_Windows\_SDK
+
+
+
+
+

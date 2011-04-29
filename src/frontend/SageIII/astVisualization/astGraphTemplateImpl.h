@@ -130,14 +130,14 @@ DataMemberPointersToIR<Functional1,Functional2>::generateGraph(SgNode* graphNode
                          generateGraph(edgeEndPoint.first,depth-1);
               }
 
-	      if(edgeReturnValue.DOTLabel == "")
-		   addEdge(graphNode,edgeEndPoint.second,edgeEndPoint.first,
-				   edgeReturnValue.DOTOptions);
-	      else
-		   addEdge(graphNode,edgeReturnValue.DOTLabel,edgeEndPoint.first,
-				   edgeReturnValue.DOTOptions);
+              if(edgeReturnValue.DOTLabel == "")
+                   addEdge(graphNode,edgeEndPoint.second,edgeEndPoint.first,
+                                   edgeReturnValue.DOTOptions);
+              else
+                   addEdge(graphNode,edgeReturnValue.DOTLabel,edgeEndPoint.first,
+                                   edgeReturnValue.DOTOptions);
 
-	 }//END IF
+         }//END IF
 
        }//END FOR
 

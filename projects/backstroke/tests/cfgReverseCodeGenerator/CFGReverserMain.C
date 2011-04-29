@@ -1,85 +1,101 @@
-#include "rose.h"
+#include <backstroke.h>
 #include <VariableRenaming.h>
-#include "utilities/CPPDefinesAndNamespaces.h"
+#include "utilities/cppDefinesAndNamespaces.h"
 #include "normalizations/expNormalization.h"
-#include "pluggableReverser/eventHandler.h"
-#include "pluggableReverser/expressionHandler.h"
-#include "pluggableReverser/statementHandler.h"
-#include "pluggableReverser/straightlineStatementHandler.h"
-#include "pluggableReverser/akgulStyleExpressionHandler.h"
-#include "pluggableReverser/returnStatementHandler.h"
-#include "pluggableReverser/variableDeclarationHandler.h"
-#include "pluggableReverser/redefineValueRestorer.h"
-#include "pluggableReverser/extractFromUseValueRestorer.h"
+#include "pluggableReverser/eventProcessor.h"
+#include "pluggableReverser/expAndStmtHandlers.h"
 
+using namespace std;
+
+struct IsEvent
+{
+	bool operator() (SgFunctionDeclaration* decl)
+	{
+		if (SgMemberFunctionDeclaration* memFunc = isSgMemberFunctionDeclaration(decl))
+		{
+			SgClassDefinition* classDef = memFunc->get_class_scope();
+			SgClassDeclaration* classDecl = classDef->get_declaration();
+			string className = classDecl->get_name();
+
+			SgNamespaceDefinitionStatement* namespaceDef = isSgNamespaceDefinitionStatement(classDecl->get_parent());
+			if (namespaceDef != NULL)
+			{
+				string namespaceName = namespaceDef->get_namespaceDeclaration()->get_name();
+				if (namespaceName == "gas_station" && className == "GasStationEvents")
+				{
+					string funcName = decl->get_name();
+
+					if (funcName == "OnArrival" || funcName == "OnFinishedPumping" || funcName == "OnFinishedPaying")
+						return true;
+				}
+			}
+		}
+		return false;
+	}
+};
+
+SgType* getPointerBaseType(SgType* type)
+{
+	if (isSgPointerType(type))
+		return isSgPointerType(type)->get_base_type();
+	else if (isSgModifierType(type))
+		return getPointerBaseType(isSgModifierType(type)->get_base_type());
+	else if (isSgTypedefType(type))
+		return getPointerBaseType(isSgTypedefType(type)->get_base_type());
+	else
+		ROSE_ASSERT(false);
+}
+
+struct VariableReversalFilter : public IVariableFilter
+{
+	virtual bool isVariableInteresting(const VariableRenaming::VarName& var) const
+	{
+		SgType* type = var[0]->get_type();
+
+		if (SageInterface::isPointerType(type))
+			type = getPointerBaseType(type);
+
+		string typeName = SageInterface::get_name(type);
+
+		return (typeName != "DESEngine");
+	}
+};
 
 int main(int argc, char** argv)
 {
-	SgProject* project = frontend(argc, argv);
+	//Add the preinclude option
+	vector<string> commandArguments(argv, argv + argc);
+	commandArguments.push_back("-include");
+	commandArguments.push_back("rctypes.h");
+
+	SgProject* project = frontend(commandArguments);
 	AstTests::runAllTests(project);
 
-	//Find the function in global scope called "reverseMe"
-	SgScopeStatement* globalScope = isSgScopeStatement(SageInterface::getFirstGlobalScope(project));
-	SgFunctionSymbol* functionSymbol = globalScope->lookup_function_symbol("reverseMe");
-	if (functionSymbol == NULL)
-	{
-		fprintf(stderr, "Please provide a function in global scope with the name \"reverseMe\"\n");
-		exit(1);
-	}
-	SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
-	functionDeclaration = isSgFunctionDeclaration(functionDeclaration->get_definingDeclaration());
-	ROSE_ASSERT(functionDeclaration != NULL);
+	VariableReversalFilter varFilter;
+	EventProcessor event_processor(&varFilter);
 
-	//Normalize the function
-	backstroke_norm::normalizeEvent(functionDeclaration);
-
-	//Create a reverser for this function
-	VariableRenaming var_renaming(project);
-	var_renaming.run();
-	EventHandler event_handler(NULL, &var_renaming);
-
+#ifdef REVERSE_CODE_GENERATION
 	//Add the handlers in order of priority. The lower ones will be used only if higher ones do not produce results
 	//Expression handlers:
-	event_handler.addExpressionHandler(new IdentityExpressionHandler);
-	event_handler.addExpressionHandler(new AkgulStyleExpressionHandler);
-	event_handler.addExpressionHandler(new StoreAndRestoreExpressionHandler);
+	event_processor.addExpressionHandler(new IdentityExpressionHandler);
+	event_processor.addExpressionHandler(new AkgulStyleExpressionHandler);
+	event_processor.addExpressionHandler(new StoreAndRestoreExpressionHandler);
 
 	//Statement handler
-	event_handler.addStatementHandler(new ReturnStatementHandler);
-	event_handler.addStatementHandler(new VariableDeclarationHandler);
-	event_handler.addStatementHandler(new StraightlineStatementHandler);
-	event_handler.addStatementHandler(new NullStatementHandler);
+	event_processor.addStatementHandler(new ReturnStatementHandler);
+	event_processor.addStatementHandler(new VariableDeclarationHandler);
+	event_processor.addStatementHandler(new StraightlineStatementHandler);
+	event_processor.addStatementHandler(new NullStatementHandler);
 
 	//Variable value extraction handlers
-	event_handler.addVariableValueRestorer(new RedefineValueRestorer);
-	event_handler.addVariableValueRestorer(new ExtractFromUseValueRestorer);
+	event_processor.addVariableValueRestorer(new RedefineValueRestorer);
+	event_processor.addVariableValueRestorer(new ExtractFromUseValueRestorer);
+#else
+	event_processor.addStatementHandler(new StateSavingStatementHandler);
+#endif
 
-	//Call the reverser and get the results
-	SageBuilder::pushScopeStack(globalScope);
-	vector<FuncDeclPair> forwardReversePairs = event_handler.processEvent(functionDeclaration);
-	vector<SgVariableDeclaration*> generatedVariables = event_handler.getAllStackDeclarations();
+	Backstroke::reverseEvents(&event_processor, IsEvent(), project);
 
-	//Insert all the generated functions right after the original function
-	foreach(FuncDeclPair originalAndInstrumented, forwardReversePairs)
-	{
-		SgFunctionDeclaration* forward = originalAndInstrumented.first;
-		SgFunctionDeclaration* reverse = originalAndInstrumented.second;
-		SageInterface::insertStatementAfter(functionDeclaration, reverse);
-		SageInterface::insertStatementAfter(functionDeclaration, forward);
-	}
-
-	//Insert all the necessary variable declarations
-	foreach(SgVariableDeclaration* var, generatedVariables)
-	{
-		SageInterface::prependStatement(var, globalScope);
-	}
-
-	//Add the header file that includes functions called by the instrumented code
-	string includes = "#include \"rctypes.h\"\n";
-	SageInterface::addTextForUnparser(globalScope, includes, AstUnparseAttribute::e_before);
-
-	//Unparse
-	SageInterface::fixVariableReferences(globalScope);
 	AstTests::runAllTests(project);
 	return backend(project);
 }

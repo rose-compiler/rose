@@ -11,7 +11,7 @@ _cdg(cdg), _ddg(ddg)
     //_interprocedural = ii;
     mergeGraph(cdg);
     mergeGraph(ddg);
-		completeFDG();
+                completeFDG();
     //_summarize();
 }
 void FunctionDependenceGraph::completeFDG()

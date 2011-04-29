@@ -350,43 +350,43 @@ SgAsmLEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     if (p_dos2_header) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "dos2_header",
-                p_dos2_header->get_id(), p_dos2_header->get_name()->c_str());
+                p_dos2_header->get_id(), p_dos2_header->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "dos2_header");
     }
     if (p_section_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table",
-                p_section_table->get_id(), p_section_table->get_name()->c_str());
+                p_section_table->get_id(), p_section_table->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "section_table");
     }
     if (p_page_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "page_table",
-                p_page_table->get_id(), p_page_table->get_name()->c_str());
+                p_page_table->get_id(), p_page_table->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "page_table");
     }
     if (p_resname_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "resname_table",
-                p_resname_table->get_id(), p_resname_table->get_name()->c_str());
+                p_resname_table->get_id(), p_resname_table->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "resname_table");
     }
     if (p_nonresname_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "nonresname_table",
-                p_nonresname_table->get_id(), p_nonresname_table->get_name()->c_str());
+                p_nonresname_table->get_id(), p_nonresname_table->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "nonresname_table");
     }
     if (p_entry_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "entry_table",
-                p_entry_table->get_id(), p_entry_table->get_name()->c_str());
+                p_entry_table->get_id(), p_entry_table->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "entry_table");
     }
     if (p_reloc_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "reloc_table",
-                p_reloc_table->get_id(), p_reloc_table->get_name()->c_str());
+                p_reloc_table->get_id(), p_reloc_table->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "reloc_table");
     }
@@ -427,7 +427,7 @@ SgAsmLEPageTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%sPageTableEntry.", prefix);
     }
 
-	int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     fprintf(f, "%s%-*s = 0x%04x\n", p, w, "flags",  p_flags);
     fprintf(f, "%s%-*s = %u\n",     p, w, "pageno", p_pageno);
@@ -536,7 +536,7 @@ SgAsmLESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%sLESectionTableEntry.", prefix);
     }
 
-	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     fprintf(f, "%s%-*s = %"PRIu64" bytes\n", p, w, "mapped_size",      p_mapped_size);
     fprintf(f, "%s%-*s = 0x%08"PRIx64"\n",   p, w, "base_addr",        p_base_addr);
@@ -631,14 +631,14 @@ SgAsmLESectionTable::ctor(rose_addr_t offset, rose_addr_t size)
 
             section_size = std::min(entry->get_mapped_size(), entry->get_pagemap_nentries() * fhdr->get_e_page_size());
 
-		} else {
+                } else {
             ROSE_ASSERT(FAMILY_LX==fhdr->get_exec_format()->get_family());
             section_offset = fhdr->get_e_data_pages_offset() + ((pageno-1) << fhdr->get_e_page_offset_shift());
 
             section_size = std::min(entry->get_mapped_size(),
                                     (rose_addr_t)(entry->get_pagemap_nentries() * (1<<fhdr->get_e_page_offset_shift())));
 
-		}
+                }
 
         SgAsmLESection *section = new SgAsmLESection(fhdr);
         section->set_offset(section_offset);
@@ -791,12 +791,12 @@ SgAsmLENameTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%sLENameTable.", prefix);
     }
 
-	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
     ROSE_ASSERT(p_names.size() == p_ordinals.size());
     for (size_t i = 0; i < p_names.size(); i++) {
-        fprintf(f, "%s%-*s = [%zd] \"%s\"\n", p, w, "names",    i, p_names[i].c_str());
+        fprintf(f, "%s%-*s = [%zd] \"%s\"\n", p, w, "names",    i, escapeString(p_names[i]).c_str());
         fprintf(f, "%s%-*s = [%zd] %u\n",     p, w, "ordinals", i, p_ordinals[i]);
     }
 }
@@ -942,7 +942,7 @@ SgAsmLEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%s%sEntryTable.", prefix, get_header()->format_name());
     }
 
-	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %zu entry points\n", p, w, "size", p_entries.size());

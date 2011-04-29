@@ -5,8 +5,8 @@ Functions detected from binary executable:
       U = user-def detection    N = NOP/Zero padding      D = discontiguous blocks
       H = insn sequence head
 
-    Num  Low-Addr   End-Addr  Insns/Bytes   Reason      Kind   Name
-    --- ---------- ---------- ------------ --------- -------- --------------------------------
+    Num  Low-Addr   End-Addr  Insns/Bytes   Reason        Kind   Name
+    --- ---------- ---------- ------------ ----------- -------- --------------------------------
       1 0x080482c8 0x080482df     8/23     .C..SP.....  unknown _init
       2 0x080482df 0x0804854b    55/210    .........DL  unknown ***uncategorized blocks***
       3 0x080482f0 0x080482f6     1/6      .C.I.......  unknown signal@plt
@@ -30,4 +30,4 @@ Functions detected from binary executable:
      21 0x08048558 0x08048560     8/8      ........N..  unknown
      22 0x08048560 0x08048590    19/48     .C..SP.....  unknown __do_global_ctors_aux
      23 0x08048590 0x080485aa    12/26     .C..SP.....  unknown _fini
-    --- ---------- ---------- ------------ --------- -------- --------------------------------
+    --- ---------- ---------- ------------ ----------- -------- --------------------------------

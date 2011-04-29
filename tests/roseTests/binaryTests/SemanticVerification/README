@@ -135,3 +135,14 @@ ROSE will ask the debugger to single step and then compare writes
 ROSE and the debugger then advance to the next breakpoint and repeat
 the process.
 
+Shortcomings
+============
+
+* The verifier does not handle interrupts, so instructions like "INT"
+  will be executed in the natively-running version (under the
+  debugger) but not in the instruction semantics layer (the
+  verifier). Therefore, one should expect the state after instructions
+  like these to be different.
+
+* The RDTSC (read timestamp counter) will return a different value
+  natively than in the verifier.

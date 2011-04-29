@@ -44,6 +44,12 @@ FortranParserState::clearStacks()
 
   // DQ (9/11/2010): Added support for lists of unresolved functions.
      currUnresolvedFunctionsList.clear();
+
+  // DQ (12/29/2010): Added support for R612 & R613 handling.
+     currAstHasSelectionSubscriptStack.clear();
+
+  // DQ (12/29/2010): Added support for R612 & R613 handling.
+     currAstMultipartReferenceStack.clear();
    }
 
 

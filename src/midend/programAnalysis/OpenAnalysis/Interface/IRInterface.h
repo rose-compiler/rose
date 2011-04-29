@@ -181,18 +181,18 @@ enum IRStmtType
   USTRUCT_TWOWAY_CONDITIONAL_T, // Unstructured branch (on true).
   USTRUCT_TWOWAY_CONDITIONAL_F, // Unstructured branch (on false).
   USTRUCT_MULTIWAY_CONDITIONAL, // Unstructured multiway branch
-				//  (e.g., computed goto in Fortran or 
-				//  jump tables in low-level/assembly
-				//  languages).
+                                //  (e.g., computed goto in Fortran or 
+                                //  jump tables in low-level/assembly
+                                //  languages).
   RETURN,                       // Return statement.
   BREAK,                        // Break statement.
   LOOP_CONTINUE,                // Loop continuation statement.
   ALTERNATE_PROC_ENTRY,         // Alternate entry point (e.g., Fortran)
   UNCONDITIONAL_JUMP,           // GOTO in HLL, or unconditional direct
-				//   jump in low-level/assembly languages.
+                                //   jump in low-level/assembly languages.
   UNCONDITIONAL_JUMP_I,         // Assigned GOTO in HLL, or unconditional
-				//   indirect jump in low-level/assembly
-				//   languages.
+                                //   indirect jump in low-level/assembly
+                                //   languages.
   NONE
 };
 

@@ -67,7 +67,6 @@ test2003_19.C \
 test2003_20.C \
 test2003_21.C \
 test2003_23.C \
-test2003_24.C \
 test2003_25.C \
 test2003_26.C \
 test2003_27.C \
@@ -154,7 +153,6 @@ test2004_79.C \
 test2004_80.C \
 test2004_81.C \
 test2004_83.C \
-test2004_82.C \
 test2004_84.C \
 test2004_85.C \
 test2004_86.C \
@@ -694,6 +692,11 @@ test2010_05.C \
 test2010_06.C \
 test2010_18.C \
 test2010_19.C \
+test2011_01.C \
+test2011_02.C \
+test2011_05.C \
+test2011_06.C \
+test2011_07.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -711,7 +714,19 @@ test2006_155.C \
 test2006_156.C \
 test2006_157.C \
 test2006_158.C \
-test2007_15.C 
+test2007_15.C \
+test2010_24.C \
+test2010_25.C
+
+if !ROSE_USE_INSURE
+# This test code fails with Insure++
+   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+      test2003_24.C \
+      test2004_82.C
+endif
+
+# DQ (2/12/2011): This test fails for the astFileIO tests in tests/roseTests/astFileIOTests.
+# test2011_08.C 
 
 # DQ (6/25/2010): Removed as part of testing!
 # test2003_01.C 

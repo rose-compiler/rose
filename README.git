@@ -1,6 +1,5 @@
-
 ##################### How to use smgit #####################
-
+  
 git pull not as well supported as git fetch and get merge used directly:
    smgit fetch
    smgit merge origin/master
@@ -59,6 +58,10 @@ which in the case of the cmake branch would be
 
      git push cmake
 
+To re-trigger Hudson:
+     git commit --allow-empty -m "restart hudson"
+     git push
+
 ########## Building a Branch for a development team member ################
 
 X     git branch matt master
@@ -75,6 +78,14 @@ X     git push origin matt
 
     < change back the file: /nfs/casc/overture/ROSE/git/ROSE.git/hooks/pre-receive >
 
+############## Building a new cloned repository and branch using smgit ############
+
+    60  15:47   smgit clone /nfs/casc/overture/ROSE/git/ROSE.git git-dq-java-rc
+    62  15:59   cd git-dq-java-rc
+  # 64  16:01   smgit branch dq-java-rc --track origin/dq-java-rc // This failed...I don't know why.
+    65  16:02   smgit branch dq-java-rc
+    66  16:02   smgit checkout dq-java-rc
+    67  16:02   git branch
 
 ############## WE DESCRIBE HOW TO CREATE A NEW BRANCH  ####################
 
@@ -181,7 +192,7 @@ Now merge the changes from "master" into my branch
    git merge origin/master
 
 Note that this will most likely go smoothly if all changes
-are tken only from "master".  so it might be helpful (to
+are taken only from "master".  so it might be helpful (to
 avoid conflicts) to NOT try to update using anyone else's
 branch.
 
@@ -282,10 +293,12 @@ and the old one has been saved (and should be accessible for a short while).
    1) Build a new local repository:
       a. build the local repository:
            "git clone /nfs/casc/overture/ROSE/git/ROSE.git git-dq-main-rc"
+      a2. Build a branch on the remote repository:
+         "git push origin origin:refs/heads/dq-<new branch>-rc"
       b. build a local branch to match a branch in the remote repository:
-           "git branch git-dq-main-rc --track origin/git-dq-main-rc"
+           "git branch dq-<new branch>-rc --track origin/dq-<new branch>-rc"
       c. checkout that local branch (switch to it):
-           "git checkout dq-main-rc"
+           "git checkout dq-<new branch>-rc"
 
    2) One-time update the local branch to use git's submodule mechanism.
       a. merge your existing branch with master:

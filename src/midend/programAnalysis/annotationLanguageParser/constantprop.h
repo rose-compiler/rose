@@ -81,7 +81,7 @@ public:
   void analyze();
 
   void eval(stmtLocation * current,
-	    exprNode * expr, constant & val);
+            exprNode * expr, constant & val);
 
 private:
 
@@ -89,9 +89,9 @@ private:
                        memoryuse_set & uses);
 
   void rebuild_constant(memoryuse_set & uses,
-			ipConstant & value);
+                        ipConstant & value);
 
   void rebuild_constant(stmtLocation * where,
-			pointerValue & pointer,
-			ipConstant & value);
+                        pointerValue & pointer,
+                        ipConstant & value);
 }

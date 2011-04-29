@@ -18,7 +18,7 @@
 //! (something, value)) (which will be changed to (var = value)).
 void doFiniteDifferencingOne(SgExpression* e, 
                              SgBasicBlock* root,
-			     RewriteRule* rules);
+                             RewriteRule* rules);
 
 //! Propagate definitions of a variable to its uses.
 //! Assumptions: var is only assigned at the top level of body

@@ -65,7 +65,7 @@ class RoseBin_DB_IDAPRO : public RoseBin_DB {
   template <class T>
     bool from_string(T& t, 
                      const std::string& s, 
-		     std::ios_base& (*f)(std::ios_base&))
+                     std::ios_base& (*f)(std::ios_base&))
     {
       std::istringstream iss(s);
       return !(iss >> f >> t).fail();
@@ -76,8 +76,8 @@ class RoseBin_DB_IDAPRO : public RoseBin_DB {
    * for each block, check what the next block is
    ****************************************************/
   //  void getControlFlow_Of_BasicBlocks(int block_id, 
-  //				     int *nextBlockTrue_address, 
-  //				     int *nextBlockFalse_address);
+  //                                 int *nextBlockTrue_address, 
+  //                                 int *nextBlockFalse_address);
 
 
 
@@ -85,10 +85,10 @@ class RoseBin_DB_IDAPRO : public RoseBin_DB {
 
  public:
   RoseBin_DB_IDAPRO(char* host, 
-		    char* user, 
-		    char* passw, 
-		    char* db
-		    ) {
+                    char* user, 
+                    char* passw, 
+                    char* db
+                    ) {
     def_host_name=host;
     def_user_name=user;
     def_password=passw;
@@ -177,14 +177,14 @@ class RoseBin_DB_IDAPRO : public RoseBin_DB {
    ****************************************************/
   void process_functions_query(MYSQL* conn, MYSQL_RES* res_set,
                                SgAsmBlock* globalBlock,
-			       std::list<std::string> functionName);
+                               std::list<std::string> functionName);
 
   /****************************************************
    * process all basic blocks in the DB
    * add the blocks to the functions
    ****************************************************
   void process_basicblock_query(MYSQL* conn, MYSQL_RES* res_set,
-				SgAsmBlock* globalBlock);
+                                SgAsmBlock* globalBlock);
   */
 
   /****************************************************

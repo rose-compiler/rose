@@ -36,7 +36,7 @@ private:
 	typedef std::map < SgInitializedName*, SgExpression* > LocalVarRestoreAttribute;
 
 	//! Get the final version for a local variable before leaving its scope.
-	VariableRenaming::NumNodeRenameEntry getLastVersion(SgInitializedName* init_name);
+	VariableRenaming::NumNodeRenameEntry getFinalVersion(SgInitializedName* init_name);
 };
 
 

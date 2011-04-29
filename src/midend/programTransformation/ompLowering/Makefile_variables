@@ -1,0 +1,39 @@
+
+mptOmpLowering_la_sources=\
+	$(mptOmpLoweringPath)/omp_lowering.cpp
+
+
+# avoid using libtool for libxomp.a since it will be directly linked to executable
+mptOmpLowering_libLibraries=\
+	libxomp.a
+
+
+libxomp_a_SOURCES=\
+	$(mptOmpLoweringPath)/xomp.c \
+	$(mptOmpLoweringPath)/run_me_callers.inc \
+	$(mptOmpLoweringPath)/run_me_defs.inc \
+	$(mptOmpLoweringPath)/run_me_callers2.inc \
+	$(mptOmpLoweringPath)/run_me_task_defs.inc
+
+
+mptOmpLowering_includeHeaders=\
+	$(mptOmpLoweringPath)/omp_lowering.h \
+	$(mptOmpLoweringPath)/libgomp_g.h \
+	$(mptOmpLoweringPath)/libompc.h \
+	$(mptOmpLoweringPath)/libxomp.h \
+	$(mptOmpLoweringPath)/libxompf.h \
+
+
+mptOmpLowering_extraDist=\
+	$(mptOmpLoweringPath)/CMakeLists.txt \
+	$(mptOmpLoweringPath)/README \
+	$(mptOmpLoweringPath)/run_me_caller_generator.sh \
+	$(mptOmpLoweringPath)/run_me_generator.sh
+
+
+mptOmpLowering_cleanLocal=\
+	rm -rf \
+		$(mptOmpLoweringPath)/Templates.DB \
+		$(mptOmpLoweringPath)/ii_files \
+		$(mptOmpLoweringPath)/ti_files \
+		$(mptOmpLoweringPath)/core

@@ -15,10 +15,15 @@ int main(int argc, char **argv) {
 
 // Skip testing on 64 bit systems for now!
 #ifndef __LP64__
+// TOO (2/16/11): error for Thrifty g++ 3.4.4
+#if __GNUC__ != 3
    // Tests of asm are included in test2006_98.C and test2006_99.C.
       __asm__ __volatile__ ("btl %1,%2 ; setcb %b0" : "=q" (__result) : "r"
          (((int) (10)) % (8 * sizeof (__fd_mask))), "m" (((readfds_)->fds_bits)[((10) / (8 * sizeof (__fd_mask)))])
          : "cc");
+#else
+  #warning "Not tested on GCC 3.x"
+#endif
 #else
   #warning "Not tested on 64 bit systems"
 #endif

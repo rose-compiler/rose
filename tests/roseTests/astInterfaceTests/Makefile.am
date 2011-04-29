@@ -23,7 +23,9 @@ noinst_PROGRAMS = \
     typeTraits livenessAnalysis buildProcedureHeaderStatement replaceMacroCalls \
     buildAbstractHandle getDependentDecls buildStructDeclaration2 buildTypedefDeclaration \
     deepDelete insertStatementBeforeFunction removeStatementCommentRelocation \
-    generateUniqueName annotateExpressionsWithUniqueNames
+    generateUniqueName annotateExpressionsWithUniqueNames buildExternalStatement \
+    buildCommonBlock doLoopNormalization buildLabelStatement2 replaceWithPattern \
+    insertBeforeUsingCommaOp insertAfterUsingCommaOp deepCopy
 
 # list of test SAGE AST builders 
 annotateExpressionsWithUniqueNames_SOURCES = annotateExpressionsWithUniqueNames.C
@@ -70,6 +72,14 @@ loopTiling_SOURCES                       = loopTiling.C
 insertStatementBeforeFunction_SOURCES    = insertStatementBeforeFunction.C
 removeStatementCommentRelocation_SOURCES = removeStatementCommentRelocation.C
 generateUniqueName_SOURCES               = generateUniqueName.C
+buildExternalStatement_SOURCES           = buildExternalStatement.C
+buildCommonBlock_SOURCES                 = buildCommonBlock.C
+doLoopNormalization_SOURCES              = doLoopNormalization.C
+buildLabelStatement2_SOURCES	         = buildLabelStatement2.C
+replaceWithPattern_SOURCES               = replaceWithPattern.C
+insertBeforeUsingCommaOp_SOURCES         = insertBeforeUsingCommaOp.C
+insertAfterUsingCommaOp_SOURCES          = insertAfterUsingCommaOp.C
+deepCopy_SOURCES                         = deepCopy.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -110,7 +120,6 @@ generatedCodeExamples = \
   rose_inputbuildNullStatement.C \
   rose_inputbuildForStmt.C \
   rose_inputcanonicalLoop.C \
-  rose_inputloopNormalization.C \
   rose_inputcollectReadWriteVariables.C \
   rose_inputtypeTraits.C \
   rose_inputlivenessAnalysis.C \
@@ -121,18 +130,27 @@ generatedCodeExamples = \
   rose_inputgetDependentDecls.C \
   rose_inputloopInterchange.C \
   rose_inputloopTiling.C \
+  rose_inputloopNormalization.C \
   rose_inputdeepDelete.C \
   rose_inputinsertStatementBeforeFunction.C \
   rose_inputRemoveStatementCommentRelocation.C \
   rose_inputgenerateUniqueName.C \
-  rose_inputannotateExpressionsWithUniqueNames.C
+  rose_inputannotateExpressionsWithUniqueNames.C \
+  rose_inputreplaceWithPattern.C \
+  rose_inputinsertBeforeUsingCommaOp.C \
+  rose_inputinsertAfterUsingCommaOp.C \
+  rose_inputdeepCopy.C
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 # if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   generatedCodeExamples += \
-    rose_inputbuildProcedureHeaderStatement.f 
+    rose_inputbuildProcedureHeaderStatement.f \
+    rose_inputbuildExternalStatement.f \
+    rose_inputbuildCommonBlock.f \
+    rose_inputdoLoopNormalization.f \
+    rose_inputbuildLabelStatement2.f
 endif
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
@@ -179,10 +197,10 @@ rose_inputbuildCpreprocessorDefineDeclaration.C:buildCpreprocessorDefineDeclarat
 rose_inputinstrumentEndOfFunction.C:instrumentEndOfFunction
 	./instrumentEndOfFunction$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputinstrumentEndOfFunction.C
 rose_inputisUpcSharedType.upc:isUpcSharedType
-	./isUpcSharedType$(EXEEXT) $(TEST_CXXFLAGS) -rose:skipfinalCompileStep -c $(srcdir)/inputisUpcSharedType.upc
+	./isUpcSharedType$(EXEEXT) $(TEST_CXXFLAGS) -rose:skipfinalCompileStep -rose:upc_threads 1 -c $(srcdir)/inputisUpcSharedType.upc
 
 rose_inputisUpcPhaseLessSharedType.upc:isUpcPhaseLessSharedType
-	./isUpcPhaseLessSharedType$(EXEEXT) $(TEST_CXXFLAGS) -rose:skipfinalCompileStep -c $(srcdir)/inputisUpcPhaseLessSharedType.upc
+	./isUpcPhaseLessSharedType$(EXEEXT) $(TEST_CXXFLAGS) -rose:skipfinalCompileStep -rose:upc_threads 1-c $(srcdir)/inputisUpcPhaseLessSharedType.upc
 
 rose_inputbuildLabelStatement.C:buildLabelStatement
 	./buildLabelStatement$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildLabelStatement.C
@@ -194,7 +212,7 @@ abiStuffTestDone: abiStuffTest inputAbiStuffTest.c
 	./abiStuffTest$(EXEEXT) $(srcdir)/inputAbiStuffTest.c && touch abiStuffTestDone
 
 rose_inputAbiStuffTestUPC.upc:abiStuffTestUPC
-	./abiStuffTestUPC$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputAbiStuffTestUPC.upc
+	./abiStuffTestUPC$(EXEEXT) $(TEST_CXXFLAGS) -rose:upc_threads 1 -c $(srcdir)/inputAbiStuffTestUPC.upc
 
 rose_inputbuildNullStatement.C:buildNullStatement
 	./buildNullStatement$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildNullStatement.C
@@ -222,22 +240,32 @@ rose_inputgenerateUniqueName.C:generateUniqueName
 rose_inputannotateExpressionsWithUniqueNames.C:annotateExpressionsWithUniqueNames
 	./annotateExpressionsWithUniqueNames$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputannotateExpressionsWithUniqueNames.C 1>rose_inputannotateExpressionsWithUniqueNames.out
 
+rose_inputinsertBeforeUsingCommaOp.C:insertBeforeUsingCommaOp
+	./insertBeforeUsingCommaOp$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputinsertBeforeUsingCommaOp.C
 
+rose_inputinsertAfterUsingCommaOp.C:insertAfterUsingCommaOp
+	./insertAfterUsingCommaOp$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputinsertAfterUsingCommaOp.C
+
+rose_inputdeepCopy.C:deepCopy
+	./deepCopy$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputdeepCopy.C
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
 rose_inputbuildProcedureHeaderStatement.f : buildProcedureHeaderStatement
 # DQ (9/13/2010): I think that we need both levels of if tests else --without-java will not work.
 # DQ (3/18/2009): Make this dependent upon if ROSE was configured to use Fortran.
 # if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 
 # if ROSE_USE_OPEN_FORTRAN_PARSER
-if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 	./buildProcedureHeaderStatement$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildProcedureHeaderStatement.f
-else
-	@echo "Fortran test (rose_inputbuildProcedureHeaderStatement.f) not run because ROSE was not configured to support Fortran tests (ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT)."
+rose_inputbuildExternalStatement.f:buildExternalStatement
+	./buildExternalStatement$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildExternalStatement.f
+rose_inputbuildCommonBlock.f:buildCommonBlock
+	./buildCommonBlock$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildCommonBlock.f
+rose_inputdoLoopNormalization.f:doLoopNormalization
+	./doLoopNormalization$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputdoLoopNormalization.f
+rose_inputbuildLabelStatement2.f:buildLabelStatement2
+	./buildLabelStatement2$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildLabelStatement2.f
 endif
 
-# else
-#	@echo "Fortran test (rose_inputbuildProcedureHeaderStatement.f) not run because ROSE was not configured to support Fortran tests (ROSE_USE_OPEN_FORTRAN_PARSER)."
-# endif
 
 rose_inputbuildAbstractHandle.C:buildAbstractHandle
 	./buildAbstractHandle$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildAbstractHandle.C
@@ -246,6 +274,9 @@ rose_inputbuildTypedefDeclaration.C:buildTypedefDeclaration
 	./buildTypedefDeclaration$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildTypedefDeclaration.C
 rose_inputgetDependentDecls.C:getDependentDecls
 	./getDependentDecls$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputgetDependentDecls.C
+
+rose_inputreplaceWithPattern.C:replaceWithPattern
+	./replaceWithPattern$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputreplaceWithPattern.C 
 
 if ROSE_USE_INDENT
 rose_inputloopUnrolling.C:loopUnrolling
@@ -312,7 +343,10 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputRemoveStatementCommentRelocation_withoutBottomBoundingStatement.C \
        inputRemoveStatementCommentRelocation_withoutTopBoundingStatement.C \
        inputRemoveStatementCommentRelocation_withoutTopandBottomBoundingStatement.C \
-       inputgenerateUniqueName.C inputannotateExpressionsWithUniqueNames.C
+       inputgenerateUniqueName.C inputannotateExpressionsWithUniqueNames.C \
+       inputbuildExternalStatement.f inputbuildCommonBlock.f inputdoLoopNormalization.f \
+       inputbuildLabelStatement2.f inputreplaceWithPattern.C inputinsertBeforeUsingCommaOp.C \
+       inputinsertAfterUsingCommaOp.C inputdeepCopy.C
 
 
 check-local:
@@ -324,5 +358,6 @@ check-local:
 
 clean-local:
 	rm -f *.o test*.C rose_*.c rose_*.C rose_*.f rose_*.cpp *.C.pdf *.c.pdf testfile525.cpp testfile626.cpp rose_*.upc abiStuffTestDone *.dot rose_*
-	   
+
+
 

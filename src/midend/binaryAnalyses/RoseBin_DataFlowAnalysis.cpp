@@ -39,9 +39,9 @@ RoseBin_DataFlowAnalysis::getDefForInst( uint64_t inst, std::pair<X86RegisterCla
     if (n) {
       SgAsmInstruction* instNode = isSgAsmInstruction(n->get_SgNode());
       if (instNode) {
-	hexSet.insert(instNode->get_address());
-	//cerr << "INSERT: getDefForInst " <<
-	//RoseBin_support::HexToString(instNode->get_address()) << endl;
+        hexSet.insert(instNode->get_address());
+        //cerr << "INSERT: getDefForInst " <<
+        //RoseBin_support::HexToString(instNode->get_address()) << endl;
       }
     }
   }
@@ -53,7 +53,7 @@ RoseBin_DataFlowAnalysis::getDefForInst( uint64_t inst, std::pair<X86RegisterCla
 
 bool
 RoseBin_DataFlowAnalysis::containsHash( nodeHashSetType& vec,
-					SgGraphNode* node) {
+                                        SgGraphNode* node) {
    nodeHashSetType:: const_iterator it = vec.find(node);
   if (it!=vec.end())
     return true;
@@ -108,8 +108,8 @@ RoseBin_DataFlowAnalysis::traverseNodes(RoseBin_DataFlowAbstract* analysis) {
       uint64_t address = inst->get_address();
       RoseBin_Variable* var = analysis->getVariable(address);
       if (var) {
-	std::string var_str = var->toString();
-	node->append_properties(SgGraph::variable,var_str);
+        std::string var_str = var->toString();
+        node->append_properties(SgGraph::variable,var_str);
       }
     }
   }
@@ -128,9 +128,9 @@ RoseBin_DataFlowAnalysis::existsPath(SgGraphNode* start, SgGraphNode* end) {
     while (next!=endAsm) {
       next = isSgAsmx86Instruction(next->cfgBinFlowOutEdge(g_algo->info));
       if (next==NULL)
-	break;
+        break;
       if ((next->get_kind() == x86_call || next->get_kind() == x86_ret) && next!=endAsm)
-	break;
+        break;
     }
     exists = true;
   }
@@ -159,7 +159,7 @@ RoseBin_DataFlowAnalysis::exceptionCall(SgAsmx86Instruction* call) {
     SgAsmExpression* expr = *(ptrList.begin());
     string replace = expr->get_replacement();
     if (replace=="_malloc" || replace=="malloc@plt"
-	|| comment=="malloc")
+        || comment=="malloc")
       exception=true;
   }
   //  cerr << "Found call --- comment = " << comment << "  exception = " << exception << endl;
@@ -176,8 +176,8 @@ RoseBin_DataFlowAnalysis::exceptionCall(SgAsmx86Instruction* call) {
  ***********************************************************************/
 void
 RoseBin_DataFlowAnalysis::traverseGraph(vector <SgGraphNode*>& rootNodes,
-					RoseBin_DataFlowAbstract* analysis,
-					bool interprocedural){
+                                        RoseBin_DataFlowAbstract* analysis,
+                                        bool interprocedural){
   if (RoseBin_support::DEBUG_MODE_MIN())
     cerr << " traverseGraph : debug: " << RoseBin_support::resBool(RoseBin_support::DEBUG_MODE()) <<
       "  debug_min : " <<  RoseBin_support::resBool(RoseBin_support::DEBUG_MODE_MIN()) << endl;
@@ -204,17 +204,17 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgGraphNode*>& rootNodes,
     funcNr++;
     if (RoseBin_support::DEBUG_MODE()) {
       cout << "\n\n -----------  dataflow analysis of function ("+RoseBin_support::ToString(funcNr)+"/"+
-	RoseBin_support::ToString(rootNodes.size())+") : " << func_name <<
-	"  visited size : " << visited.size() <<
-	"  total visited nodes : " << nrOfNodesVisited << endl;
+        RoseBin_support::ToString(rootNodes.size())+") : " << func_name <<
+        "  visited size : " << visited.size() <<
+        "  total visited nodes : " << nrOfNodesVisited << endl;
       // debug
     }
     if (RoseBin_support::DEBUG_MODE_MIN()) {
       cerr << " -----------  dataflow analysis of function ("+RoseBin_support::ToString(funcNr)+"/"+
-	RoseBin_support::ToString(rootNodes.size())+") : " << func_name <<
-	"  visited size : " << visited.size() <<
-	"  total visited nodes : " << nrOfNodesVisited <<
-	"  def size  : " << analysis->getDefinitionSize() << endl;
+        RoseBin_support::ToString(rootNodes.size())+") : " << func_name <<
+        "  visited size : " << visited.size() <<
+        "  total visited nodes : " << nrOfNodesVisited <<
+        "  def size  : " << analysis->getDefinitionSize() << endl;
     }
 
     // indicates whether the current value for this node has changed
@@ -240,32 +240,32 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgGraphNode*>& rootNodes,
       string name = vizzGraph->getProperty(SgGraph::name, node);
 
       //if (RoseBin_support::DEBUG_MODE_MIN() && node)
-      //	if (node->get_SgNode())
+      //        if (node->get_SgNode())
       //  cerr << node->get_SgNode()->class_name() << "  " << node << "  " << node->get_name() << endl;
 
       if (RoseBin_support::DEBUG_MODE_MIN() && node) {
-	SgAsmInstruction* instr = isSgAsmInstruction(node->get_SgNode());
-	if (instr) {
-	  SgAsmFunctionDeclaration* funcParent = isSgAsmFunctionDeclaration(instr->get_parent());
-	  if (funcParent) {
-	    string parent = funcParent->get_name();
-	    cout << " ---- analysis of node in function : " << parent <<
-	      "  defs " << analysis->getDefinitionSize() <<
-	      " visited : " << RoseBin_support::ToString(visitedCounter[node]) << endl;
-	  }
-	}
+        SgAsmInstruction* instr = isSgAsmInstruction(node->get_SgNode());
+        if (instr) {
+          SgAsmFunctionDeclaration* funcParent = isSgAsmFunctionDeclaration(instr->get_parent());
+          if (funcParent) {
+            string parent = funcParent->get_name();
+            cout << " ---- analysis of node in function : " << parent <<
+              "  defs " << analysis->getDefinitionSize() <<
+              " visited : " << RoseBin_support::ToString(visitedCounter[node]) << endl;
+          }
+        }
       }
 
 
       if (RoseBin_support::DEBUG_MODE())
-	cout << "\n evaluating: " << name << endl;
+        cout << "\n evaluating: " << name << endl;
       // do something with the current node
       // e.g. checkVariables(name, node);
       SgGraphNode* nodeBefore= NULL;
       BeforeMapType::const_iterator it =
-	nodeBeforeMap.find(node);
+        nodeBeforeMap.find(node);
       if (it!=nodeBeforeMap.end())
-	nodeBefore = it->second;
+        nodeBefore = it->second;
       // successor vector is empty on each new node
       successors.clear();
       ROSE_ASSERT(isSgIncidenceDirectedGraph(vizzGraph));
@@ -275,33 +275,33 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgGraphNode*>& rootNodes,
 
       // append the successors to the worklist
       if (RoseBin_support::DEBUG_MODE())
-	cout << ">> getting successors  (" << successors.size() << ") for : " << name << endl;
-      //	if (successors.size()==0)
-      //	  cout << "PROBLEM ..................................................... : " << endl;
+        cout << ">> getting successors  (" << successors.size() << ") for : " << name << endl;
+      //        if (successors.size()==0)
+      //          cout << "PROBLEM ..................................................... : " << endl;
       vector<SgGraphNode*>::iterator succ = successors.begin();
       for (;succ!=successors.end();++succ) {
-	// for each successor do...
-	SgGraphNode* next = *succ;
+        // for each successor do...
+        SgGraphNode* next = *succ;
         SgAsmx86Instruction* nodeN = isSgAsmx86Instruction(node->get_SgNode());
         //if (!nodeN) continue;
         SgAsmx86Instruction* nextN = isSgAsmx86Instruction(next->get_SgNode());
         //if (!nextN) continue;
 
-	string name_n = vizzGraph->getProperty(SgGraph::name, next);
+        string name_n = vizzGraph->getProperty(SgGraph::name, next);
 
 
 
-	bool call = false;
-	bool exceptionCallNext = false;
-	if (nextN)
-	  exceptionCallNext = exceptionCall(nextN->get_kind() == x86_call ? nextN : 0);
-	bool exceptionCallNode = false;
-	if (nodeN)
-	  exceptionCallNode = exceptionCall(nodeN->get_kind() == x86_call ? nodeN : 0);
-	if (RoseBin_support::DEBUG_MODE())
-	  std::cout << " exceptionCallNode : " << exceptionCallNode << " exceptionCallNext : " << exceptionCallNext << endl;
-	// if function call is call to malloc we have an exception and follow the call path
-	if ((exceptionCallNode && !exceptionCallNext)) {
+        bool call = false;
+        bool exceptionCallNext = false;
+        if (nextN)
+          exceptionCallNext = exceptionCall(nextN->get_kind() == x86_call ? nextN : 0);
+        bool exceptionCallNode = false;
+        if (nodeN)
+          exceptionCallNode = exceptionCall(nodeN->get_kind() == x86_call ? nodeN : 0);
+        if (RoseBin_support::DEBUG_MODE())
+          std::cout << " exceptionCallNode : " << exceptionCallNode << " exceptionCallNext : " << exceptionCallNext << endl;
+        // if function call is call to malloc we have an exception and follow the call path
+        if ((exceptionCallNode && !exceptionCallNext)) {
         } else if (
                    //if (
                    (nodeN && nodeN->get_kind() == x86_call) ||
@@ -309,78 +309,78 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgGraphNode*>& rootNodes,
           call = true;
         //bool sameParent = analysis->sameParents(node, next);
 
-	bool validNode=false;
-	if (g_algo->isValidCFGEdge(next, node) || exceptionCallNode)
-	  validNode = true;
+        bool validNode=false;
+        if (g_algo->isValidCFGEdge(next, node) || exceptionCallNode)
+          validNode = true;
 
-	// debug ------------------------
-	if (RoseBin_support::DEBUG_MODE()) {
-	  string nodeBeforeStr="";
-	  if (nodeBefore) nodeBeforeStr= nodeBefore->get_name();
-	  cout << "  DEBUG : >>>>>>>> previous node " << nodeBeforeStr
+        // debug ------------------------
+        if (RoseBin_support::DEBUG_MODE()) {
+          string nodeBeforeStr="";
+          if (nodeBefore) nodeBeforeStr= nodeBefore->get_name();
+          cout << "  DEBUG : >>>>>>>> previous node " << nodeBeforeStr
                << "      This node : " << name << "  next node : " << name_n
-	       << "  ** validNode : " << RoseBin_support::resBool(validNode) << endl;
+               << "  ** validNode : " << RoseBin_support::resBool(validNode) << endl;
         }
 
 
-	// ----------------------------------
-	if (( interprocedural==false && !call) //
-	    ||  (interprocedural==true && validNode)) {
-	  if (visited.find(next)==visited.end()) {
-	    // if the successor is not yet visited
-	    // mark as visited and put into worklist
-	    if (RoseBin_support::DEBUG_MODE())
-	      cout << " never visited next node before... " << name_n <<
-		" interprocedural : " << interprocedural << "  call : " << call << endl;
-	    if (RoseBin_support::DEBUG_MODE())
-	      cout << "adding to visited : " << name_n << endl;
+        // ----------------------------------
+        if (( interprocedural==false && !call) //
+            ||  (interprocedural==true && validNode)) {
+          if (visited.find(next)==visited.end()) {
+            // if the successor is not yet visited
+            // mark as visited and put into worklist
+            if (RoseBin_support::DEBUG_MODE())
+              cout << " never visited next node before... " << name_n <<
+                " interprocedural : " << interprocedural << "  call : " << call << endl;
+            if (RoseBin_support::DEBUG_MODE())
+              cout << "adding to visited : " << name_n << endl;
 
-	    visited.insert(next);
-	    nodeBeforeMap[next]=node;
-	    visitedCounter[next]=1;
-	    vizzGraph->setProperty(SgGraph::visitedCounter, next, RoseBin_support::ToString(1));
-	    if (!containsHash(worklist_hash,next)) {
-	      // add next node only if the next node
-	      if (RoseBin_support::DEBUG_MODE())
-		cout << "adding to worklist: " << name_n << endl;
-	      worklist.push_back(next);
-	      worklist_hash.insert(next);
-	    }
-	  } else {
-	    // if the successor has been visited, we need to check if it has changed
-	    // if it has not, we continue, else we need to push it back to the worklist
-	    int nr = visitedCounter[next];
-	    if (RoseBin_support::DEBUG_MODE())
-	      cout << " visited next node before... " << RoseBin_support::ToString(nr) <<
-		"  Changed == " << RoseBin_support::resBool(hasChanged) << endl;
+            visited.insert(next);
+            nodeBeforeMap[next]=node;
+            visitedCounter[next]=1;
+            vizzGraph->setProperty(SgGraph::visitedCounter, next, RoseBin_support::ToString(1));
+            if (!containsHash(worklist_hash,next)) {
+              // add next node only if the next node
+              if (RoseBin_support::DEBUG_MODE())
+                cout << "adding to worklist: " << name_n << endl;
+              worklist.push_back(next);
+              worklist_hash.insert(next);
+            }
+          } else {
+            // if the successor has been visited, we need to check if it has changed
+            // if it has not, we continue, else we need to push it back to the worklist
+            int nr = visitedCounter[next];
+            if (RoseBin_support::DEBUG_MODE())
+              cout << " visited next node before... " << RoseBin_support::ToString(nr) <<
+                "  Changed == " << RoseBin_support::resBool(hasChanged) << endl;
 
-	    if (hasChanged) {
-	      visitedCounter[next]=++nr;
-	      vizzGraph->setProperty(SgGraph::visitedCounter, next, RoseBin_support::ToString(nr));
-	      if (RoseBin_support::DEBUG_MODE())
-		cout << " has changed : " << RoseBin_support::resBool(hasChanged) <<
-		  "  -- interprocedural : " << RoseBin_support::resBool(interprocedural) <<
-		  "  -- Call : " << RoseBin_support::resBool(call) <<
-		  "  ------> new number: " << RoseBin_support::ToString(nr) <<
-		  "  -- contained in hash? : " << RoseBin_support::resBool(containsHash(worklist_hash,next)) <<
-		  "  ---- nr of Defs: " << RoseBin_support::ToString(analysis->getDefinitionSize()) <<
-		  "  ---- nr of Use: " << RoseBin_support::ToString(analysis->getUsageSize())
+            if (hasChanged) {
+              visitedCounter[next]=++nr;
+              vizzGraph->setProperty(SgGraph::visitedCounter, next, RoseBin_support::ToString(nr));
+              if (RoseBin_support::DEBUG_MODE())
+                cout << " has changed : " << RoseBin_support::resBool(hasChanged) <<
+                  "  -- interprocedural : " << RoseBin_support::resBool(interprocedural) <<
+                  "  -- Call : " << RoseBin_support::resBool(call) <<
+                  "  ------> new number: " << RoseBin_support::ToString(nr) <<
+                  "  -- contained in hash? : " << RoseBin_support::resBool(containsHash(worklist_hash,next)) <<
+                  "  ---- nr of Defs: " << RoseBin_support::ToString(analysis->getDefinitionSize()) <<
+                  "  ---- nr of Use: " << RoseBin_support::ToString(analysis->getUsageSize())
                      << endl;
 
-	      if (interprocedural || (!interprocedural && !call)){ //sameParent)) { //!call && ) {
-		if (!containsHash(worklist_hash,next)) {
-		  worklist_hash.insert(next);
-		  worklist.push_back(next);
-		  if (RoseBin_support::DEBUG_MODE())
-		    cout << " adding to worklist: " << name_n << endl;
-		}
-	      }
-	    } else
-	      if (RoseBin_support::DEBUG_MODE())
-		cout << " has NOT changed. " << endl;
-	    //else we continue with the next node
-	  }
-	}
+              if (interprocedural || (!interprocedural && !call)){ //sameParent)) { //!call && ) {
+                if (!containsHash(worklist_hash,next)) {
+                  worklist_hash.insert(next);
+                  worklist.push_back(next);
+                  if (RoseBin_support::DEBUG_MODE())
+                    cout << " adding to worklist: " << name_n << endl;
+                }
+              }
+            } else
+              if (RoseBin_support::DEBUG_MODE())
+                cout << " has NOT changed. " << endl;
+            //else we continue with the next node
+          }
+        }
       } // for
     } // while worklist.size()>0
 

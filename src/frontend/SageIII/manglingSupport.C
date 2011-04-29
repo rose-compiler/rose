@@ -168,7 +168,10 @@ getLocalScopeNum (const SgFunctionDefinition* func_def, const SgScopeStatement* 
 string
 mangleLocalScopeToString (const SgScopeStatement* scope)
 {
+// DQ (3/20/2011): Make this a valid ostringstream.
+// ostringstream mangled_name = "";
   ostringstream mangled_name;
+// ROSE_ASSERT(scope != NULL);
   if (scope)
     {
       // Find the function definition containing this scope.
@@ -186,8 +189,10 @@ mangleLocalScopeToString (const SgScopeStatement* scope)
 string
 mangleQualifiersToString (const SgScopeStatement* scope)
 {
-  string mangled_name;
-  if (scope)
+// DQ (3/19/2011): Make this a valid string.
+// string mangled_name = "";
+  string mangled_name = "";
+  if (scope != NULL)
     {
       switch (scope->variantT ())
         {
@@ -264,6 +269,9 @@ mangleQualifiersToString (const SgScopeStatement* scope)
 SgName
 mangleQualifiers( const SgScopeStatement* scope )
    {
+  // DQ (3/19/2011): I think that we want a valid scope else there is no proper pointer to the generated string.
+  // ROSE_ASSERT(scope != NULL);
+
      string s = mangleQualifiersToString(scope);
      return SgName (s.c_str ());
    }
@@ -712,7 +720,10 @@ mangleTranslationUnitQualifiers (const SgDeclarationStatement* decl)
    {
      if (declarationHasTranslationUnitScope(decl))
         {
-          return "_file_id_" + StringUtility::numberToString(SageInterface::getEnclosingFileNode(const_cast<SgDeclarationStatement *>(decl))->get_file_info()->get_file_id()) + "_";
+          // TV (04/22/11): I think 'decl' will refer to the same file_id than is enclosing file.
+          //         And as in EDGrose file and global scope are linked after the building of the global scope...
+          return "_file_id_" + StringUtility::numberToString(decl->get_file_info()->get_file_id()) + "_";
+          //return "_file_id_" + StringUtility::numberToString(SageInterface::getEnclosingFileNode(const_cast<SgDeclarationStatement *>(decl))->get_file_info()->get_file_id()) + "_";
         }
      else
         {

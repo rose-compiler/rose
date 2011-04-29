@@ -1,6 +1,8 @@
 #include "variableDeclarationHandler.h"
-#include "utilities/CPPDefinesAndNamespaces.h"
+#include "utilities/cppDefinesAndNamespaces.h"
 #include <rose.h>
+
+using namespace std;
 
 StatementReversal VariableDeclarationHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& evaluationResult)
 {

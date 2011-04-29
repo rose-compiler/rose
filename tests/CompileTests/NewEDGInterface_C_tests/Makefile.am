@@ -51,7 +51,6 @@ test2004_03.C \
 test2004_04.C \
 test2004_05.C \
 test2004_13.C \
-test2004_19.C \
 test2004_23.C \
 test2004_28.C \
 test2004_29.C \
@@ -81,12 +80,10 @@ test2005_84.C \
 test2005_92.C \
 test2005_95.C \
 test2005_100.C \
-test2005_111.C \
 test2005_125.C \
 test2005_157.C \
 test2005_159.C \
 test2005_164.C \
-test2005_165.C \
 test2005_169.C \
 test2005_170.C \
 test2005_176.C \
@@ -115,7 +112,6 @@ test2006_69.C \
 test2006_75.C \
 test2006_82.C \
 test2006_83.C \
-test2006_88.C \
 test2006_93.C \
 test2006_97.C \
 test2006_99.C \
@@ -134,43 +130,64 @@ test2006_151.C \
 test2006_154.C \
 test2006_181.C \
 test2008_04.C \
-X.C
+X.C \
+test2003_23.C \
+test2003_24.C \
+test2003_25.C \
+test2004_96.C \
+test2004_102.C \
+test2005_16.C \
+test2005_116.C \
+test2006_76.C \
+test2006_146.C \
+test2003_12.C \
+test2003_17.C \
+test2005_175.C \
+test2005_177.C \
+test2006_15.C \
+test2006_59.C \
+test2006_71.C \
+test2006_98.C \
+test2006_101.C \
+test2006_139.C \
+test2006_160.C
 
-# DQ (2/2/2010): Removed becuae this test now fails with the new build functions. These are all the same problem:
-# src/frontend/SageIII/sageInterface/sageInterface.C:7246: void SageInterface::fixStructDeclaration(SgClassDeclaration*, SgScopeStatement*): Assertion structDecl->get_definingDeclaration() != __null failed.
-# test2001_26.C
-# test2003_15.C 
-# test2003_19.C
-# test2003_23.C
-# test2003_24.C
-# test2003_25.C
-# test2004_14.C
-# test2004_72.C
-# test2004_96.C
-# test2004_102.C
-# test2004_163.C
-# test2005_16.C
-# test2005_56.C
-# test2005_116.C
-# test2006_40.C
-# test2006_53.C
-# test2006_76.C
-# test2006_91.C
+
+if !ROSE_USE_EDG_VERSION_4_3
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+test2004_19.C \
+test2005_111.C \
+test2005_165.C \
+test2006_88.C \
+test2001_26.C \
+test2003_15.C \
+test2003_19.C \
+test2004_14.C \
+test2004_72.C \
+test2004_163.C \
+test2005_56.C \
+test2006_40.C \
+test2006_53.C \
+test2006_91.C \
+test2006_104.C \
+test2006_105.C \
+test2006_107.C \
+test2006_108.C \
+test2006_109.C \
+test2006_111.C \
+test2006_116.C \
+test_int_lexemes.C \
+test_int_lexemes_donot_pass.C \
+test_simple_int.C \
+test_wchars.C
+endif
+
+# TV (03/19/2011): Fail during EDG parsing if 'newEDGInterfaceTranslator' is call from the libtool script. No problem with the binary.
 # test2006_94.C
-# test2006_104.C
-# test2006_105.C
-# test2006_107.C
-# test2006_108.C
-# test2006_109.C
-# test2006_111.C
-# test2006_116.C
-# test2006_146.C
+
+# TV (03/19/2011): Fail on post-processing (by GCC) because '__LP64__' is not define on with EDG 4.0
 # test2006_152.C
 # test2006_153.C
-# test_int_lexemes.C
-# test_int_lexemes_donot_pass.C
-# test_simple_int.C
-# test_wchars.C
 
 # DQ (12/4/2006): Removed because it is not a valid C file (to gcc 3.3.2), and added below!
 # test2004_06.C
@@ -203,37 +220,58 @@ test2001_03.C
 
 endif
 
+# code that didn't pass gcc 4.1.2
+TESTCODE_FAILING_WITH_GCC = \
+test2004_06.C \
+test2004_07.C \
+test2004_155.C
+
 # These are the failures that we are interested in!
 C_TESTCODE_CURRENTLY_FAILING = \
-test2003_12.C \
-test2003_17.C \
-test2004_07.C \
-test2004_06.C \
-test2004_155.C \
 test2005_158.C \
 test2005_166.C \
-test2005_175.C \
-test2005_177.C \
 test2005_192.C \
 test2005_200.C \
 test2005_201.C \
-test2006_15.C \
 test2006_33.C \
 test2006_49.C \
-test2006_59.C \
-test2006_71.C \
 test2006_80.C \
-test2006_98.C \
-test2006_101.C \
 test2006_102.C \
-test2006_139.C \
 test2006_155.C \
 test2006_156.C \
 test2006_157.C \
 test2006_158.C \
 test2006_159.C \
-test2006_160.C \
 test2006_165.C
+
+if ROSE_USE_EDG_VERSION_4_3
+C_TESTCODE_CURRENTLY_FAILING += \
+test2004_19.C \
+test2005_111.C \
+test2005_165.C \
+test2006_88.C \
+test2001_26.C \
+test2003_15.C \
+test2003_19.C \
+test2004_14.C \
+test2004_72.C \
+test2004_163.C \
+test2005_56.C \
+test2006_40.C \
+test2006_53.C \
+test2006_91.C \
+test2006_104.C \
+test2006_105.C \
+test2006_107.C \
+test2006_108.C \
+test2006_109.C \
+test2006_111.C \
+test2006_116.C \
+test_int_lexemes.C \
+test_int_lexemes_donot_pass.C \
+test_simple_int.C \
+test_wchars.C
+endif
 
 # test2004_151.C was modified to now be a C++ code and removed.
 
@@ -253,7 +291,6 @@ ROSE_FLAGS = -rose:C --edg:no_warnings -w
 
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
-
 
 # Note that for these C versions of the C++ tests we get the files directly from the Cxx_tests directory
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
@@ -304,3 +341,16 @@ endif
 clean-local:
 	rm -f *.o rose_*.[cC] test_*.[cC]
 	rm -rf QMTest
+
+C_TESTCODE_CURRENTLY_FAILING_Objects = ${C_TESTCODE_CURRENTLY_FAILING:.C=.o}
+
+$(C_TESTCODE_CURRENTLY_FAILING_Objects): ./newEDGInterfaceTranslator
+	@cp $(srcdir)/../Cxx_tests/$(@:.o=.C) $(@:.o=.c)
+	@if ./newEDGInterfaceTranslator $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -c $(@:.o=.c) &> /dev/null; \
+	  then echo "***" $(@:.o=.c) " has passed !!! ***"; \
+	fi;
+	@rm -f $(@:.o=.c)
+
+check-failures:
+	@$(MAKE) $(C_TESTCODE_CURRENTLY_FAILING_Objects)
+

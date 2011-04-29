@@ -28,10 +28,49 @@ UnparseLanguageIndependentConstructs::tostring(T t) const
      return myStream.str(); //returns the string form of the stringstream object
    }
 
-// DQ (8/13/2007): This function was implemented by Thomas
+// TODO: This code is identical to 'FortranCodeGeneration_locatedNode::curprint'. Factor this!
 void
 UnparseLanguageIndependentConstructs::curprint (const std::string & str) const
-   {
+{
+#if USE_RICE_FORTRAN_WRAPPING
+
+    if( unp->currentFile != NULL && unp->currentFile->get_Fortran_only() )
+    {
+        /// determine line wrapping parameters
+        bool is_fixed_format = unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format;
+        bool is_free_format  = unp->currentFile->get_outputFormat() == SgFile::e_free_form_output_format;
+        int max_pos = ( is_fixed_format ? MAX_F90_LINE_LEN_FIXED
+                      : is_free_format  ? MAX_F90_LINE_LEN_FREE
+                      : unp->cur.get_linewrap() );
+
+        // check whether line wrapping is needed
+        int cur_pos = unp->cur.current_col();
+        int new_pos = cur_pos + str.size();
+        if( new_pos >= max_pos )
+        {
+            if( is_fixed_format )
+                printf("Warning: line too long for Fortran fixed format (fixed format wrapping not implemented)\n");
+            else if( is_free_format )
+            {
+                // warn if successful wrapping is impossible in the current state
+                if( cur_pos + 1 > max_pos )
+                    printf("Warning: can't wrap long line in Fortran free format (no room for '&')\n");
+                else if( str.size() > (unsigned int) max_pos-1 )
+                    printf("Warning: can't wrap long line in Fortran free format (incoming string too long for a line)\n");
+
+                // emit free-format line continuation even if result will still be too long
+                unp->u_sage->curprint("&");
+                unp->cur.insert_newline(1);
+                unp->u_sage->curprint("&");
+            }
+            else
+                printf("Warning: long line not wrapped (unknown output format)\n");
+        }
+    }
+
+     unp->u_sage->curprint(str);
+     
+#else  // ! USE_RICE_FORTRAN_WRAPPING
 
      // FMZ (3/22/2010) added fortran continue line support
      bool is_fortran90 =  (unp->currentFile != NULL ) &&
@@ -49,8 +88,9 @@ UnparseLanguageIndependentConstructs::curprint (const std::string & str) const
      } 
 
      unp->u_sage->curprint(str);
-
-   }
+     
+#endif  // USE_RICE_FORTRAN_WRAPPING
+}
 
 // DQ (8/13/2007): This has been moved to the base class (language independent code)
 void
@@ -358,8 +398,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 
      curprint ( string("\n/* Unparse statement (" ) + StringUtility::numberToString(stmt) 
          + "): class_name() = " + stmt->class_name() 
-		+ " raw line (start) = " + tostring(stmt->get_startOfConstruct()->get_raw_line()) 
-		+ " raw line (end) = " + tostring(stmt->get_endOfConstruct()->get_raw_line()) 
+                + " raw line (start) = " + tostring(stmt->get_startOfConstruct()->get_raw_line()) 
+                + " raw line (end) = " + tostring(stmt->get_endOfConstruct()->get_raw_line()) 
          + " */ \n");
      char buffer[100];
      snprintf (buffer,100,"%p",stmt);
@@ -788,6 +828,20 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
         }
 #endif
 
+#if 0
+  // Liao 11/2/2010 Skip the case that an expression is located from another file (included in the current file)
+  // I moved the code to the unparser function for SgAggregatedInitializer to have bigger picture about what to parse or not
+     SgFile* cur_file = SageInterface::getEnclosingFileNode(expr);
+     if (cur_file != NULL)
+     {
+       // normal file info 
+       if (expr->get_file_info()->isTransformation() == false &&  expr->get_file_info()->isCompilerGenerated() ==false)
+       {
+         if (cur_file->get_file_info()->get_filename() != expr->get_file_info()->get_filename())
+           return;
+       }
+     }
+#endif
      if( unparseLineReplacement(expr,info) )
        return;
 
@@ -804,29 +858,47 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
   // DQ (7/20/2008): This is now revised to handle more cases than just replacement of the 
   // AST subtree with a string.  Now we can add arbitrary text into different locations
   // relative to the specific IR node.  For now we are supporting before, replace, and after.
+
+  // TV (04/22/11): More generic support of Original Expression Tree. Introduce to support function pointer cast
+  //     in function pointer initialization (test2006_160.C)
+     SgExpression* expressionTree = NULL; //expr->get_originalExpressionTree();
+     switch (expr->variantT()) {
+       case V_SgVarRefExp:
+       {
+         expressionTree = isSgExpression(isSgVarRefExp(expr)->get_originalExpressionTree());
+         break;
+       }
+       case V_SgCastExp:
+       {
+         expressionTree = isSgExpression(isSgCastExp(expr)->get_originalExpressionTree());
+         break;
+       }
+       default:
+       {
+         SgFunctionRefExp * func_ref = isSgFunctionRefExp(expr);
+         if (func_ref) {
+           expressionTree = isSgExpression(func_ref->get_originalExpressionTree());
+         }
+       }
+     }
+     
      AstUnparseAttribute* unparseAttribute = dynamic_cast<AstUnparseAttribute*>(expr->getAttribute(AstUnparseAttribute::markerName));
      if (unparseAttribute != NULL)
         {
           string code = unparseAttribute->toString(AstUnparseAttribute::e_before);
           curprint (code);
         }
-#if 0
-     if (expr->attributeExists("_UnparserSourceReplacement") == true)
-        {
-       // string rep=(expr->attribute["_UnparserSourceReplacement"])->toString();
-       // string rep=(expr->attribute()["_UnparserSourceReplacement"])->toString();
-          string rep = expr->getAttribute("_UnparserSourceReplacement")->toString();
-          cout << "UNPARSER: SOURCE REPLACEMENT:" << rep << endl;
-          curprint ( rep);
-        }
-#else
+        
   // Only replace the unparsing of the IR node with a string if a string is marked as AstUnparseAttribute::e_replace.
      if (unparseAttribute != NULL && unparseAttribute->replacementStringExists() == true)
         {
           string code = unparseAttribute->toString(AstUnparseAttribute::e_replace);
           curprint (code);
         }
-#endif
+       else if (expressionTree != NULL && info.SkipConstantFoldedExpressions() == false)
+         {
+         unparseExpression(expressionTree, info);
+         }
        else
         {
        // DQ (5/21/2004): revised need_paren handling in EDG/SAGE III and within SAGE III IR)
@@ -1273,7 +1345,8 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                                  !info.SkipFunctionDefinition();
 
        // DQ (7/19/2008): Allow expressions to have there associated comments unparsed.
-          infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL);
+       // Liao 11/9/2010: allow SgInitializedName also
+          infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL) || (isSgInitializedName (stmt) != NULL) ;
 
 #if 0
           printf ("infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
@@ -1395,8 +1468,8 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                                 else
                                    curprint ( (*i)->getString());
                             }
-						else
-						   curprint ( (*i)->getString());
+                                                else
+                                                   curprint ( (*i)->getString());
                          break;
 
                  // Comment out these declarations where they occur because we don't need
@@ -1572,6 +1645,19 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
       curprint ( string("\n /*                              rhs class name  = ") + binary_op->get_rhs_operand()->class_name() + " */ \n");
 #endif
 
+  // DQ (2/7/2011): Unparser support for more general originalExpressionTree handling.
+     SgExpression* expressionTree = binary_op->get_originalExpressionTree();
+     if (expressionTree != NULL && info.SkipConstantFoldedExpressions() == false)
+        {
+#if 0
+          printf ("Found and expression tree representing a cast expression (unfolded constant expression requiring a cast) expressionTree = %p = %s \n",
+               expressionTree,expressionTree->class_name().c_str());
+#endif
+
+          unparseExpression(expressionTree,info);
+          return;
+        }
+
   // int toplevel_expression = !info.get_nested_expression();
      bool iostream_op = false;
 
@@ -1652,7 +1738,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 
                  // Two cases must be considered here: prefix unary and postfix unary 
                  // operators. Most of the unary operators are prefix. In this case, we must
-                 // first unparse the rhs and then the lhs.	
+                 // first unparse the rhs and then the lhs.     
                  // if (isUnaryPostfixOperator(binary_op->get_rhs_operand())); // Postfix unary operator.
                     if (unp->u_sage->isUnaryPostfixOperator(binary_op->get_rhs_operand()))  // Postfix unary operator.
                        {

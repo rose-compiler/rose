@@ -17,24 +17,24 @@ class ReadAnnotCollectionWrap {
 
  public:
   ReadAnnotCollectionWrap(const TargetInfo& t, 
-			  ReadAnnotCollection<TargetInfo,sep1,sep2,end>& _op) 
+                          ReadAnnotCollection<TargetInfo,sep1,sep2,end>& _op) 
         : target(t), op(_op) {}
   bool read (istream& in)
    { 
       if (peek_ch(in) == end)
           return false;
-      // Read in the next identifier as the annotation type name 	  
+      // Read in the next identifier as the annotation type name          
       string annot = read_id(in);
       if (annot == "")
          return false;
       AnnotCollectionBase<TargetInfo> * cur = 0;
       for (typename ReadAnnotCollection<TargetInfo,sep1,sep2,end>::iterator 
-	     p = op.begin(); 
-	   p != op.end(); ++p) {
+             p = op.begin(); 
+           p != op.end(); ++p) {
          cur = *p;
          if (cur->read_annot_name(annot)) {
-	   cur->read_descriptor( target, annot, in);
-	   break;
+           cur->read_descriptor( target, annot, in);
+           break;
          }
          cur = 0;
       }
@@ -57,7 +57,7 @@ void ReadAnnotCollection<TargetInfo,sep1,sep2,e>:: read( istream& in)
      // Read in the start character for annotation collections
      if (sep1 != 0)
         read_ch(in, sep1);
-     	
+        
      ReadAnnotCollectionWrap<TargetInfo,sep1,sep2,e> op(target, *this);
      read_list( in, op, sep2);
      // Read in the end character.
@@ -93,12 +93,12 @@ bool TypeCollection<Descriptor>::
        if (p != typemap.end()) {
          if (desc != 0)
             *desc = (*p).second;
-	 if (DebugAnnot()) 
-	    cerr << "recognized type: " << name.get_string() << endl;
+         if (DebugAnnot()) 
+            cerr << "recognized type: " << name.get_string() << endl;
          return true;
        }
        if (DebugAnnot()) 
-	    cerr << "not recognize type: " << name.get_string() << endl;
+            cerr << "not recognize type: " << name.get_string() << endl;
        return false;
      }
 template <class Descriptor>
@@ -125,7 +125,7 @@ bool TypeCollection<Descriptor>::
 template <class Descriptor>
 void TypeAnnotCollection<Descriptor>:: 
 read_descriptor( const TypeDescriptor& name, const string& annotName, 
-		 istream& in)
+                 istream& in)
 {
    Descriptor d;
    d.read(in);

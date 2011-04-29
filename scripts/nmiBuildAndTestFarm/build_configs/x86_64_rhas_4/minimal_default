@@ -1,6 +1,6 @@
 TITLE="testing default on all linux platforms"
 DESCRIPTION="minimal configuration options, gcc 4.2.4, boost 1.36, without java"
-PREREQS="gcc-4.2.4, boost-1.36.0, automake-1.10, autoconf-2.63"
+PREREQS="gcc-4.2.4, boost-1.36.0, libtool-2.2.6b, automake-1.10, autoconf-2.63"
 
 # Testing with --disable-rosehpct (this test used to pass).
 # CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.36.0 --with-CXX_WARNINGS=-Wall --without-java"

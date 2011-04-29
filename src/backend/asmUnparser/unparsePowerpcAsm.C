@@ -7,6 +7,8 @@
 
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include "AsmUnparser.h"
+
 #include <iomanip>
 #include <boost/lexical_cast.hpp>
 #include "integerOps.h"
@@ -29,13 +31,13 @@ static std::string unparsePowerpcRegister(const RegisterDescriptor &rdesc)
 }
 
 /* Helper for unparsePowerpcExpression(SgAsmExpression*) */
-static std::string unparsePowerpcExpression(SgAsmExpression* expr, bool useHex) {
+static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnparser::LabelMap *labels, bool useHex) {
     std::string result = "";
     if (expr == NULL) return "BOGUS:NULL";
     switch (expr->variantT()) {
         case V_SgAsmBinaryAdd:
-            result = unparsePowerpcExpression(isSgAsmBinaryExpression(expr)->get_lhs(), false) + " + " +
-                     unparsePowerpcExpression(isSgAsmBinaryExpression(expr)->get_rhs(), false);
+            result = unparsePowerpcExpression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, false) + " + " +
+                     unparsePowerpcExpression(isSgAsmBinaryExpression(expr)->get_rhs(), labels, false);
             break;
         case V_SgAsmMemoryReferenceExpression: {
             SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(expr);
@@ -43,7 +45,7 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, bool useHex) 
             switch (addr->variantT()) {
                 case V_SgAsmBinaryAdd: {
                     SgAsmBinaryAdd* a = isSgAsmBinaryAdd(addr);
-                    std::string lhs = unparsePowerpcExpression(a->get_lhs(), false);
+                    std::string lhs = unparsePowerpcExpression(a->get_lhs(), labels, false);
                     if (isSgAsmValueExpression(a->get_rhs())) {
                         // Sign-extend from 16 bits
                         result = boost::lexical_cast<std::string>(
@@ -51,12 +53,12 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, bool useHex) 
                                       SageInterface::getAsmConstant(isSgAsmValueExpression(a->get_rhs()))));
                         result += "(" + lhs + ")";
                     } else {
-                        result = lhs + ", " + unparsePowerpcExpression(a->get_rhs(), false);
+                        result = lhs + ", " + unparsePowerpcExpression(a->get_rhs(), labels, false);
                     }
                     break;
                 }
                 default:
-                    result = "(" + unparsePowerpcExpression(addr, false) + ")";
+                    result = "(" + unparsePowerpcExpression(addr, labels, false) + ")";
                     break;
             }
             break;
@@ -70,10 +72,16 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, bool useHex) 
         case V_SgAsmWordValueExpression:
         case V_SgAsmDoubleWordValueExpression:
         case V_SgAsmQuadWordValueExpression: {
+            uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
             if (useHex) {
-                result = StringUtility::intToHex(SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
+                result = StringUtility::intToHex(v);
             } else {
-                result = StringUtility::numberToString((int64_t)SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
+                result = StringUtility::numberToString(v);
+            }
+            if (labels) {
+                AsmUnparser::LabelMap::const_iterator li = labels->find(v);
+                if (li!=labels->end())
+                    result += "<" + li->second + ">";
             }
             break;
         }
@@ -95,7 +103,7 @@ std::string unparsePowerpcMnemonic(SgAsmPowerpcInstruction *insn) {
 }
 
 /** Returns the string representation of an instruction operand. */
-std::string unparsePowerpcExpression(SgAsmExpression *expr) {
+std::string unparsePowerpcExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels) {
     /* Find the instruction with which this expression is associated. */
     SgAsmPowerpcInstruction *insn = NULL;
     for (SgNode *node=expr; !insn && node; node=node->get_parent()) {
@@ -115,28 +123,5 @@ std::string unparsePowerpcExpression(SgAsmExpression *expr) {
                              kind == powerpc_bcla) &&
                             insn->get_operandList()->get_operands().size()>=3 &&
                             expr==insn->get_operandList()->get_operands()[2]));
-    return unparsePowerpcExpression(expr, isBranchTarget);
+    return unparsePowerpcExpression(expr, labels, isBranchTarget);
 }
-
-#if 0 /*use unparseInstruction() instead*/
-/** Returns a string representation of the instruction and all operands. */
-std::string unparsePowerpcInstruction(SgAsmPowerpcInstruction* insn) {
-    std::string result = unparsePowerpcMnemonic(insn);
-    result += std::string((result.size() >= 7 ? 1 : 7 - result.size()), ' ');
-
-    SgAsmOperandList* opList = insn->get_operandList();
-    const SgAsmExpressionPtrList& operands = opList->get_operands();
-    for (size_t i = 0; i < operands.size(); ++i) {
-        if (i != 0) result += ", ";
-        result += unparsePowerpcExpression(insn, operands[i]);
-    }
-    return result;
-}
-#endif
-
-#if 0 /*use unparseInstructionWithAddress() instead */
-string unparsePowerpcInstructionWithAddress(SgAsmPowerpcInstruction* insn) {
-  if (insn == NULL) return "BOGUS:NULL";
-  return StringUtility::intToHex(insn->get_address()) + ':' + unparsePowerpcInstruction(insn);
-}
-#endif

@@ -113,7 +113,6 @@ main()
     static const unsigned char instructions[] = {0xb8, 0x01, 0x00, 0x00, 0x00, 0xbb, 0x56, 0x00, 0x00, 0x00, 0xcd, 0x80};
     SgAsmElfSection *text = new TextSection(fhdr, NELMTS(instructions), instructions);
     text->set_purpose(SgAsmGenericSection::SP_PROGRAM);         /* Program-supplied text/data/etc. */
-    text->set_offset(ALIGN_UP(text->get_offset(), 4));          /* Align on an 8-byte boundary */
     text->set_file_alignment(4);                                /* Tell reallocator about alignment constraint */
     text->set_mapped_alignment(4);                              /* Alignment constraint for memory mapping */
     text->set_mapped_preferred_rva(base_va+text->get_offset()); /* Mapped address is based on file offset */
@@ -122,13 +121,13 @@ main()
     text->set_mapped_wperm(false);                              /* Not writable */
     text->set_mapped_xperm(true);                               /* Executable */
     text->get_name()->set_string(".text");                      /* Give section the standard name */
+    text->align();                                              /* Because we changed alignment constraints */
 #else
     /* Another way to do the same thing without a temporary class. */
     ef->reallocate();
     static const unsigned char instructions[] = {0xb8, 0x01, 0x00, 0x00, 0x00, 0xbb, 0x56, 0x00, 0x00, 0x00, 0xcd, 0x80};
     SgAsmElfSection *text = new SgAsmElfSection(fhdr);
     text->set_purpose(SgAsmGenericSection::SP_PROGRAM);         /* Program-supplied text/data/etc. */
-    text->set_offset(ALIGN_UP(text->get_offset(), 4));          /* Align on an 8-byte boundary */
     text->set_file_alignment(4);                                /* Tell reallocator about alignment constraint */
     text->set_size(sizeof instructions);                        /* Give section a specific size */
     text->set_mapped_alignment(4);                              /* Alignment constraint for memory mapping */
@@ -138,6 +137,7 @@ main()
     text->set_mapped_wperm(false);                              /* Not writable */
     text->set_mapped_xperm(true);                               /* Executable */
     text->get_name()->set_string(".text");                      /* Give section the standard name */
+    text->align();                                              /* Because we changed alignment constraints */
     unsigned char *content = text->writable_content(sizeof instructions);
     memcpy(content, instructions, sizeof instructions);
 #endif

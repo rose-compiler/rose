@@ -1,5 +1,5 @@
 #include "eventReverser.h"
-#include "utilities/Utilities.h"
+#include "utilities/utilities.h"
 #include <boost/tuple/tuple.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
@@ -41,14 +41,14 @@ ExpPair EventReverser::processUnaryOp(SgUnaryOp* unary_op)
                         fwd_exp,
                         buildMinusMinusOp(
                             rvs_operand_exp, 
-                            backstroke_util::reverseOpMode(pp_op->get_mode())));
+                            BackstrokeUtility::reverseOpMode(pp_op->get_mode())));
 
             if (SgMinusMinusOp* mm_op = isSgMinusMinusOp(unary_op))
                 return ExpPair(
                         fwd_exp,
                         buildPlusPlusOp(
                             rvs_operand_exp, 
-                            backstroke_util::reverseOpMode(mm_op->get_mode())));
+                            BackstrokeUtility::reverseOpMode(mm_op->get_mode())));
         }
         // If the type is float point type (float & double), we use state saving.
         else if (operand->get_type()->isFloatType())
@@ -119,7 +119,7 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
             isSgSubtractOp(bin_op))
     {
 #if 1
-        if (backstroke_util::canBeReordered(rvs_lhs_exp, rvs_rhs_exp))
+        if (BackstrokeUtility::canBeReordered(rvs_lhs_exp, rvs_rhs_exp))
         {
             SgBinaryOp* rvs_exp = isSgBinaryOp(copyExpression(bin_op));
             rvs_exp->set_lhs_operand(rvs_lhs_exp);
@@ -212,7 +212,7 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                 {
                     SgExpression* exp = isSgExpression(node);
                     ROSE_ASSERT(exp);
-                    if (backstroke_util::areSameVariable(exp, lhs_operand))
+                    if (BackstrokeUtility::areSameVariable(exp, lhs_operand))
                     {
                         constructive = false;
                         break;
@@ -298,12 +298,12 @@ ExpPair EventReverser::processBinaryOp(SgBinaryOp* bin_op)
                 bool constructive = true;
                 for (size_t i = 0; i < vars.size(); ++i)
                 {
-                    if (backstroke_util::areSameVariable(vars[i].first, lhs_operand))
+                    if (BackstrokeUtility::areSameVariable(vars[i].first, lhs_operand))
                     {
                         ++count;
                         index = i;
                     }
-                    else if (backstroke_util::containsVariable(vars[i].first, lhs_operand))
+                    else if (BackstrokeUtility::containsVariable(vars[i].first, lhs_operand))
                     {
                         constructive = false;
                         break;
@@ -1107,7 +1107,7 @@ StmtPair EventReverser::processSwitchStatement(SgSwitchStatement* switch_stmt)
         // Declarations may appear in switch statement.
         if (body == NULL) continue;
 
-        if (!backstroke_util::hasBreakStmt(body))
+        if (!BackstrokeUtility::hasBreakStmt(body))
         {
             // If the last case or default statament does not contain a break, we have to process wait list.
             if (s != stmts.back())
@@ -1184,8 +1184,8 @@ StmtPair EventReverser::processSwitchStatement(SgSwitchStatement* switch_stmt)
         // Use a temporary variable to store the value passed into switch statement, and push it into stack
         // after the switch statement.
         string var_name = function_name_ + "_switch_item_" + lexical_cast<string>(counter_++);
-        backstroke_util::validateName(var_name, fwd_item_selector_exp);
-        backstroke_util::validateName(var_name, fwd_body);
+        BackstrokeUtility::validateName(var_name, fwd_item_selector_exp);
+        BackstrokeUtility::validateName(var_name, fwd_body);
 
         SgStatement* var_decl = buildVariableDeclaration(
                 var_name, 

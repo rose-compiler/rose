@@ -19,36 +19,36 @@
 #include "qpanel.h"
 
 /*!
-	\file qfoldpanel.h
-	\brief Definition of the QFoldPanel class.
-	
-	\see QFoldPanel
+        \file qfoldpanel.h
+        \brief Definition of the QFoldPanel class.
+        
+        \see QFoldPanel
 */
 
 class QDocumentLine;
 
 class QCE_EXPORT QFoldPanel : public QPanel
 {
-	Q_OBJECT
-	
-	public:
-		Q_PANEL(QFoldPanel, "Fold Panel")
-		
-		QFoldPanel(QWidget *p = 0);
-		virtual ~QFoldPanel();
-		
-		virtual QString type() const;
-		
-	protected:
-		virtual void mousePressEvent(QMouseEvent *e);
-		virtual void paint(QPainter *p, QEditor *e);
-		
-		QRect drawIcon(	QPainter *p, QEditor *e,
-						int x, int y, bool expand);
-		
-	private:
-		QList<QRect> m_rects;
-		QList<int> m_lines;
+        Q_OBJECT
+        
+        public:
+                Q_PANEL(QFoldPanel, "Fold Panel")
+                
+                QFoldPanel(QWidget *p = 0);
+                virtual ~QFoldPanel();
+                
+                virtual QString type() const;
+                
+        protected:
+                virtual void mousePressEvent(QMouseEvent *e);
+                virtual void paint(QPainter *p, QEditor *e);
+                
+                QRect drawIcon( QPainter *p, QEditor *e,
+                                                int x, int y, bool expand);
+                
+        private:
+                QList<QRect> m_rects;
+                QList<int> m_lines;
 };
 
 #endif // _QFOLD_PANEL_H_

@@ -7,6 +7,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #builddir = buildWorkingRose/tests/roseTests/astOutliningTests
 
 F77_TESTCODES_REQUIRED_TO_PASS = \
+array.f \
+array-variable.f \
 assignment.f \
 assignmentmain2.f \
 assignmentmain.f \

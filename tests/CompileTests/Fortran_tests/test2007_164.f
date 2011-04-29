@@ -2,6 +2,7 @@
       SUBROUTINE OUT_1
       WRITE(UNIT=*, FMT=*) 'Hello, world'
       END
+
       PROGRAM HELLO
       CALL OUT_1()
 

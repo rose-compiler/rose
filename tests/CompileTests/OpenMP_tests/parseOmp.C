@@ -27,33 +27,27 @@ void visitorTraversal::visit(SgNode* node)
       <<node->get_file_info()->get_line()<<endl;
     attributelist->print();//debug only for now
   }
+#if 1  
+  // Show OpenMP nodes also for -rose:openmp:ast_only
+  if (SageInterface::isOmpStatement(node))
+  {
+    cout<<"----------------------------"<<endl;
+    cout<<"Found a SgOmp Statement:"<<node->class_name()<<"@"<<node<<endl;
+  //  cout<<isSgStatement(node)->unparseToString()<<endl;; 
+    cout<<"file info: @"<< isSgStatement(node)->get_file_info() <<":"<<isSgStatement(node)->get_file_info()->get_filename();
+    cout<<":"<<isSgStatement(node)->get_file_info()->get_line()<<endl;
+// We now enforce OmpStatement nodes to have real file info objecs.
+    ROSE_ASSERT(isSgStatement(node)->get_file_info()->isTransformation()==false);
+  }
+#endif  
 }
 
 // must have argc and argv here!!
 int main(int argc, char * argv[])
 {
-// DQ (4/4/2010): Note that althought we don't yet support OpenMP for Fortran,
-// This function will operate on Fortran code and do some transformations
-// For example, specification of private variables will cause new variables to
-// be added to the curent scope (or at least searched for).  I am not clear if 
-// this mutable operation on the Fortran AST is intended.  For C/C++ OpenMP is 
-// of course supported.
-
   SgProject *project = frontend (argc, argv);
 
   AstTests::runAllTests(project);
-
-#if 0
-  // Output an optional graph of the AST (just the tree, when active)
-     printf ("Generating a dot file... (turn off output of dot files before committing code) \n");
-     generateDOT ( *project );
-#endif
-
-#if 0
-  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
-     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
-     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
-#endif
 
   visitorTraversal myvisitor;
   myvisitor.traverseInputFiles(project,preorder);
