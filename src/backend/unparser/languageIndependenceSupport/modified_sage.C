@@ -916,7 +916,7 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
      }
 #endif
 
-     // TV (04/25/11): I think this is not needed anymore as original expression are unparse directly instead of their parent
+     // TV (04/25/11): I think this is not needed anymore as original expression are unparse directly instead of their parents
 /*
      // Liao 11/5/2010,another tricky case: the current expression is the original expression tree of its parent
      // we should not introduce additional ( ) when switching from current SgCastExp to its original SgCastExp
