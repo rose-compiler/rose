@@ -37,7 +37,7 @@ function runBuildStep {
       ) 2>&1 |filterStep "${buildStep} spew analysis" 
 
   ) 2>&1 |filterStep "${buildStep}" 
-  [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ] && killStep "${buildStep}" || exit 0
+  [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ] && killStep "${buildStep}" || echo ""
 }
 
 
