@@ -35,14 +35,14 @@ LOG_LOCATION="$PWD"
 #  BOOST C++ 
 #
 #########################################################################################
-(
-  if test "x$label" = "x64bit-macos-10.6" ; then
-    export DYLD_LIBRARY_PATH="$ROSE_TEST_BOOST_PATH/lib:$DYLD_LIBRARY_PATH"
-  else
-    # tps : 04/26/2010 - Added support for OpenGL for 64bit
-    export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
-  fi
-) 2>&1 |filterStep "Setting up the [DY]LD_LIBRARY_PATH"
+echo "Setting up the [DY]LD_LIBRARY_PATH"
+
+	if test "x$label" = "x64bit-macos-10.6" ; then
+		export DYLD_LIBRARY_PATH="$ROSE_TEST_BOOST_PATH/lib:$DYLD_LIBRARY_PATH"
+	else
+		# tps : 04/26/2010 - Added support for OpenGL for 64bit
+		export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
+	fi
 
 
 #########################################################################################
@@ -54,54 +54,54 @@ LOG_LOCATION="$PWD"
 #  tps : 11/22/2010 : The setup.sh has been updated by admin
 #
 #########################################################################################
-(
+echo "Setting up the UPC environment" 
+
 	UPC_TEST_MACHINE=`uname -m`
 	if test "x$UPC_TEST_MACHINE" = "xi686" ; then
-	  echo "UPC is not currently tested on 32-bit machines."
+		echo "UPC is not currently tested on 32-bit machines."
 	elif test "x$label" = "x64bit-macos-10.6" ; then
-	  echo "UPC is not currently tested on 64-bit Mac OS X 10.6"
+		echo "UPC is not currently tested on 64-bit Mac OS X 10.6"
 	else
 	# Turn off bash error checking to run source with file that uses "grep" (will return error code if target is not found).
-	  set +e
-	  # This causes "symbol lookup error: /usr/libexec/gcc/x86_64-redhat-linux/4.1.2/f951: undefined symbol: __gmpn_sqr_n"
-	  # on all 4.1.2 compilers (only effects 64 bit tests since we only use this script on 64 bit machines).
-	  # This UPC support must be thought out more carefully.
-	  if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
-	    source /nfs/apps/upc/4.5.1.2/setup.sh
-	  else
-	    echo "UPC not tested 64-bit machines using gnu 4.1.2 for now."
-	  fi
-	  set -e
+		set +e
+		# This causes "symbol lookup error: /usr/libexec/gcc/x86_64-redhat-linux/4.1.2/f951: undefined symbol: __gmpn_sqr_n"
+		# on all 4.1.2 compilers (only effects 64 bit tests since we only use this script on 64 bit machines).
+		# This UPC support must be thought out more carefully.
+		if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
+	        	source /nfs/apps/upc/4.5.1.2/setup.sh
+	        else
+	       		echo "UPC not tested 64-bit machines using gnu 4.1.2 for now."
+	  	fi
+	  	set -e
 	fi
-) 2>&1 |filterStep "Setting up the UPC environment" 
 
 #########################################################################################
 #
-#  GCC 4.1.2
+#  GCC
 #
 #########################################################################################
-(
+echo "Setting up the GCC environment" 
+
 	if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
-	    GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
-	    if test -e $GCCROOT/setup.sh ; then
-		set +e
-		. $GCCROOT/setup.sh
-		set -e
-	    else
-	    # This is the case for g++ 3.4.6 (since there is no uniform existence of a setup.sh file).
-	      echo "Handling case of no $GCCROOT/setup.sh file."
+		GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
+		if test -e $GCCROOT/setup.sh ; then
+			set +e
+			. $GCCROOT/setup.sh
+			set -e
+	    	else
+	    	# This is the case for g++ 3.4.6 (since there is no uniform existence of a setup.sh file).
+	      		echo "Handling case of no $GCCROOT/setup.sh file."
 			export PATH="$GCCROOT/bin:$PATH"
 
-	    # DQ (2/15/2010): For 64-bit this has to be setup to use lib64 explicitly
-	    # export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
-	      if test "$MACHINE" = "i686" ; then
-		 export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
-	      else
-		 export LD_LIBRARY_PATH="$GCCROOT/lib64:$GCCROOT/lib:$LD_LIBRARY_PATH"
-	      fi
-	    fi
+	    		# DQ (2/15/2010): For 64-bit this has to be setup to use lib64 explicitly
+	    		# export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+	      		if test "$MACHINE" = "i686" ; then
+		 		export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+	      		else
+		 		export LD_LIBRARY_PATH="$GCCROOT/lib64:$GCCROOT/lib:$LD_LIBRARY_PATH"
+	      		fi
+	    	fi
 	fi
-) 2>&1 |filterStep "Setting up the GCC environment" 
 
 #########################################################################################
 #
@@ -110,13 +110,15 @@ LOG_LOCATION="$PWD"
 #  Note that Boost 1.39 and greater require using "--with-boost-libdir"
 #
 #########################################################################################
+echo "Setting up the ROSE configuration flags" 
+
 CONFIGURE_FLAGS="\
-    $CONFIGURE_FLAGS \
-    --with-boost=${ROSE_TEST_BOOST_PATH} \
-    --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
-    --with-java=${ROSE_TEST_JAVA_PATH} \
-    --with-ROSE_LONG_MAKE_CHECK_RULE=yes \
-    --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+	$CONFIGURE_FLAGS \
+	--with-boost=${ROSE_TEST_BOOST_PATH} \
+	--with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
+	--with-java=${ROSE_TEST_JAVA_PATH} \
+	--with-ROSE_LONG_MAKE_CHECK_RULE=yes \
+	--with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
 #########################################################################################
 #  i386 
 # 
@@ -148,11 +150,11 @@ CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-i386"
 #
 #########################################################################################
 if test "x$ROSE_TEST_BUILD_STYLE" = "xmake/check/install-full" ; then
-  CONFIGURE_FLAGS="\
-	${CONFIGURE_FLAGS} \
-	--with-qt=${ROSE_TEST_QT_PATH} \
-	--with-roseQt \
-	--with-sqlite3=${ROSE_TEST_SQLITE_PATH}"
+	CONFIGURE_FLAGS="\
+		${CONFIGURE_FLAGS} \
+		--with-qt=${ROSE_TEST_QT_PATH} \
+		--with-roseQt \
+		--with-sqlite3=${ROSE_TEST_SQLITE_PATH}"
 
   ########################################################################################
   #  OpenGL
@@ -169,9 +171,9 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xmake/check/install-full" ; then
 	      "$machine_name" = "hudson-rose-15.llnl.gov" -o \
 	      "$machine_name" = "hudson-rose-16.llnl.gov" \)
   then
-    echo "Skipping OpenGL..."
-    # admins are troubleshooting the libGL.la
-    #CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
+	echo "Skipping OpenGL..."
+	# admins are troubleshooting the libGL.la
+    	#CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
   fi
   #######################################################################################
   #  PCH
@@ -190,7 +192,7 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xmake/check/install-full" ; then
   if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o \
 		"x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \)
   then
-    CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
+  	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
   fi
 
 fi
@@ -201,11 +203,11 @@ fi
 #  Liao : 3/22/11 - Link with GOMP and run OpenMP tests
 #######################################################################################
 if test "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" ; then
-  if test "x$ROSE_MACHINE_OS_LABEL" = "xamd64-linux" ; then
-    if [ -a /usr/apps/gcc/4.4.1/lib64/libgomp.a ]; then
-      CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-gomp_omp_runtime_library=/usr/apps/gcc/4.4.1/lib64"
-    fi
-  fi
+	if test "x$ROSE_MACHINE_OS_LABEL" = "xamd64-linux" ; then
+    		if [ -a /usr/apps/gcc/4.4.1/lib64/libgomp.a ]; then
+      			CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-gomp_omp_runtime_library=/usr/apps/gcc/4.4.1/lib64"
+    		fi
+  	fi
 fi
 
 #########################################################################################
@@ -214,18 +216,18 @@ fi
 #
 #########################################################################################
 if test "x$label" = "x64bit-macos-10.6" ; then
-  case "$ROSE_TEST_BUILD_STYLE" in
-  "make/check/install-minimal")
-	 CONFIGURE_FLAGS="
-		--with-boost=${ROSE_TEST_BOOST_PATH} \
-		--with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
-		--with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
-    ;;
+	case "$ROSE_TEST_BUILD_STYLE" in
+		"make/check/install-minimal")
+	 		CONFIGURE_FLAGS="
+			--with-boost=${ROSE_TEST_BOOST_PATH} \
+			--with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
+			--with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+    		;;
 
-  *)
-	echo "Error: '$ROSE_TEST_BUILD_STYLE' build-style is not currently supported for '$label'"
-    ;;
-  esac
+		*)
+			echo "Error: '$ROSE_TEST_BUILD_STYLE' build-style is not currently supported for '$label'"
+    		;;
+  	esac
 fi
 #########################################################################################
 #
@@ -233,19 +235,19 @@ fi
 #
 #########################################################################################
 if test "x$label" = "xamd64-ubuntu" ; then
-  case "$ROSE_TEST_BUILD_STYLE" in
-  "make/check/install-minimal")
-	 CONFIGURE_FLAGS="
-		--with-boost=${ROSE_TEST_BOOST_PATH} \
-		--with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
-		--without-java \
-		--with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
-    ;;
+	case "$ROSE_TEST_BUILD_STYLE" in
+  		"make/check/install-minimal")
+	 		CONFIGURE_FLAGS="
+				--with-boost=${ROSE_TEST_BOOST_PATH} \
+				--with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
+				--without-java \
+				--with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+    		;;
 
-  *)
-	echo "Error: '$ROSE_TEST_BUILD_STYLE' build-style is not currently supported for '$label'"
-    ;;
-  esac
+  		*)
+			echo "Error: '$ROSE_TEST_BUILD_STYLE' build-style is not currently supported for '$label'"
+    		;;
+  	esac
 fi
 
 #########################################################################################
