@@ -110,8 +110,10 @@ LOG_LOCATION="$PWD"
 #  Note that Boost 1.39 and greater require using "--with-boost-libdir"
 #
 #########################################################################################
+CONFIGURE_FLAGS=""
 (
 	CONFIGURE_FLAGS="\
+	    $CONFIGURE_FLAGS \
 	    --with-boost=${ROSE_TEST_BOOST_PATH} \
 	    --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
 	    --with-java=${ROSE_TEST_JAVA_PATH} \
