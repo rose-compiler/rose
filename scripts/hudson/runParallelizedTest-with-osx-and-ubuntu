@@ -28,19 +28,21 @@ LOG_LOCATION="$PWD"
 
 # Liao 1/6/2010
 # Remove the stale installation tree since the stale headers will be included before updated ones are used.
-#( safe_rm_rf $ROSE_CONFIGURE_PREFIX ) |filterStep "MasterInstallTree removal"
+( safe_rm_rf $ROSE_CONFIGURE_PREFIX ) |filterStep "MasterInstallTree removal"
 
 #########################################################################################
 #
 #  BOOST C++ 
 #
 #########################################################################################
-if test "x$label" = "x64bit-macos-10.6" ; then
-  export DYLD_LIBRARY_PATH="$ROSE_TEST_BOOST_PATH/lib:$DYLD_LIBRARY_PATH"
-else
-  # tps : 04/26/2010 - Added support for OpenGL for 64bit
-  export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
-fi
+(
+  if test "x$label" = "x64bit-macos-10.6" ; then
+    export DYLD_LIBRARY_PATH="$ROSE_TEST_BOOST_PATH/lib:$DYLD_LIBRARY_PATH"
+  else
+    # tps : 04/26/2010 - Added support for OpenGL for 64bit
+    export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
+  fi
+) 2>&1 |filterStep "Setting up the [DY]LD_LIBRARY_PATH"
 
 
 #########################################################################################
@@ -52,52 +54,54 @@ fi
 #  tps : 11/22/2010 : The setup.sh has been updated by admin
 #
 #########################################################################################
-UPC_TEST_MACHINE=`uname -m`
-if test "x$UPC_TEST_MACHINE" = "xi686" ; then
-  echo "UPC is not currently tested on 32-bit machines."
-elif test "x$label" = "x64bit-macos-10.6" ; then
-  echo "UPC is not currently tested on 64-bit Mac OS X 10.6"
-else
-# Turn off bash error checking to run source with file that uses "grep" (will return error code if target is not found).
-  set +e
-  # This causes "symbol lookup error: /usr/libexec/gcc/x86_64-redhat-linux/4.1.2/f951: undefined symbol: __gmpn_sqr_n"
-  # on all 4.1.2 compilers (only effects 64 bit tests since we only use this script on 64 bit machines).
-  # This UPC support must be thought out more carefully.
-  if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
-    source /nfs/apps/upc/4.5.1.2/setup.sh
-  else
-    echo "UPC not tested 64-bit machines using gnu 4.1.2 for now."
-  fi
-  set -e
-fi
-
+(
+	UPC_TEST_MACHINE=`uname -m`
+	if test "x$UPC_TEST_MACHINE" = "xi686" ; then
+	  echo "UPC is not currently tested on 32-bit machines."
+	elif test "x$label" = "x64bit-macos-10.6" ; then
+	  echo "UPC is not currently tested on 64-bit Mac OS X 10.6"
+	else
+	# Turn off bash error checking to run source with file that uses "grep" (will return error code if target is not found).
+	  set +e
+	  # This causes "symbol lookup error: /usr/libexec/gcc/x86_64-redhat-linux/4.1.2/f951: undefined symbol: __gmpn_sqr_n"
+	  # on all 4.1.2 compilers (only effects 64 bit tests since we only use this script on 64 bit machines).
+	  # This UPC support must be thought out more carefully.
+	  if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
+	    source /nfs/apps/upc/4.5.1.2/setup.sh
+	  else
+	    echo "UPC not tested 64-bit machines using gnu 4.1.2 for now."
+	  fi
+	  set -e
+	fi
+) 2>&1 |filterStep "Setting up the UPC environment" 
 
 #########################################################################################
 #
 #  GCC 4.1.2
 #
 #########################################################################################
-if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
-    GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
-    if test -e $GCCROOT/setup.sh ; then
-        set +e
-        . $GCCROOT/setup.sh
-        set -e
-    else
-    # This is the case for g++ 3.4.6 (since there is no uniform existence of a setup.sh file).
-      echo "Handling case of no $GCCROOT/setup.sh file."
-		export PATH="$GCCROOT/bin:$PATH"
+(
+	if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
+	    GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
+	    if test -e $GCCROOT/setup.sh ; then
+		set +e
+		. $GCCROOT/setup.sh
+		set -e
+	    else
+	    # This is the case for g++ 3.4.6 (since there is no uniform existence of a setup.sh file).
+	      echo "Handling case of no $GCCROOT/setup.sh file."
+			export PATH="$GCCROOT/bin:$PATH"
 
-    # DQ (2/15/2010): For 64-bit this has to be setup to use lib64 explicitly
-    # export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
-      if test "$MACHINE" = "i686" ; then
-         export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
-      else
-         export LD_LIBRARY_PATH="$GCCROOT/lib64:$GCCROOT/lib:$LD_LIBRARY_PATH"
-      fi
-    fi
-fi
-
+	    # DQ (2/15/2010): For 64-bit this has to be setup to use lib64 explicitly
+	    # export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+	      if test "$MACHINE" = "i686" ; then
+		 export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+	      else
+		 export LD_LIBRARY_PATH="$GCCROOT/lib64:$GCCROOT/lib:$LD_LIBRARY_PATH"
+	      fi
+	    fi
+	fi
+) 2>&1 |filterStep "Setting up the GCC environment" 
 
 #########################################################################################
 #
@@ -106,142 +110,144 @@ fi
 #  Note that Boost 1.39 and greater require using "--with-boost-libdir"
 #
 #########################################################################################
-CONFIGURE_FLAGS="\
-    --with-boost=${ROSE_TEST_BOOST_PATH} \
-    --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
-    --with-java=${ROSE_TEST_JAVA_PATH} \
-    --with-ROSE_LONG_MAKE_CHECK_RULE=yes \
-    --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
-#########################################################################################
-#  i386 
-# 
-#  [RPM 2011-02-06]:
-#  The "--enable-i386" configure switch was added in commit f5389299 on 2011-02-06.
-#  If this switch is present, then configure will try to determine how to generate
-#  32-bit x86 executables with the C compiler and will fail if such a capability is not
-#  possible.  This is the same behavior as previously, except previously the failure didn't
-#  occur until we hit a makefile that actually tried to generate an i386 executable. 
-#  If "--disable-i386" switch were specified then tests that require i386 input files will
-#  not run (and will not cause a make failure).  If neither --enable-i386 nor --disable-i386
-#  are specified then configure will try to determine whether generating i386 is possible
-#  and act as if either --enable-i386 or --disable-i386 was specified.
-#
-#  Since we want the a00-ROSE-from-scratch Hudson tests to fail if configure can't figure out 
-#  how to generate i386, we explicitly request that i386 support be present by invoking 
-#  configure with "--enable-i386".
-#########################################################################################
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-i386"
+(
+	CONFIGURE_FLAGS="\
+	    --with-boost=${ROSE_TEST_BOOST_PATH} \
+	    --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
+	    --with-java=${ROSE_TEST_JAVA_PATH} \
+	    --with-ROSE_LONG_MAKE_CHECK_RULE=yes \
+	    --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+	#########################################################################################
+	#  i386 
+	# 
+	#  [RPM 2011-02-06]:
+	#  The "--enable-i386" configure switch was added in commit f5389299 on 2011-02-06.
+	#  If this switch is present, then configure will try to determine how to generate
+	#  32-bit x86 executables with the C compiler and will fail if such a capability is not
+	#  possible.  This is the same behavior as previously, except previously the failure didn't
+	#  occur until we hit a makefile that actually tried to generate an i386 executable. 
+	#  If "--disable-i386" switch were specified then tests that require i386 input files will
+	#  not run (and will not cause a make failure).  If neither --enable-i386 nor --disable-i386
+	#  are specified then configure will try to determine whether generating i386 is possible
+	#  and act as if either --enable-i386 or --disable-i386 was specified.
+	#
+	#  Since we want the a00-ROSE-from-scratch Hudson tests to fail if configure can't figure out 
+	#  how to generate i386, we explicitly request that i386 support be present by invoking 
+	#  configure with "--enable-i386".
+	#########################################################################################
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-i386"
 
 
-#########################################################################################
-#
-#  Full build configurations 
-#
-#  tps (10/19/10) : opengl has not been tested for a year and the binary tests in place 
-#  are failing because the infrastructure has changed. For now I have disabled openGL
-#  testing but the way to turn it on is to specify --enable-openGL
-#
-#########################################################################################
-if test "x$ROSE_TEST_BUILD_STYLE" = "xmake/check/install-full" ; then
-  CONFIGURE_FLAGS="\
-	${CONFIGURE_FLAGS} \
-	--with-qt=${ROSE_TEST_QT_PATH} \
-	--with-roseQt \
-	--with-sqlite3=${ROSE_TEST_SQLITE_PATH}"
+	#########################################################################################
+	#
+	#  Full build configurations 
+	#
+	#  tps (10/19/10) : opengl has not been tested for a year and the binary tests in place 
+	#  are failing because the infrastructure has changed. For now I have disabled openGL
+	#  testing but the way to turn it on is to specify --enable-openGL
+	#
+	#########################################################################################
+	if test "x$ROSE_TEST_BUILD_STYLE" = "xmake/check/install-full" ; then
+	  CONFIGURE_FLAGS="\
+		${CONFIGURE_FLAGS} \
+		--with-qt=${ROSE_TEST_QT_PATH} \
+		--with-roseQt \
+		--with-sqlite3=${ROSE_TEST_SQLITE_PATH}"
 
-  ########################################################################################
-  #  OpenGL
-  #
-  #  tps : 11/12/10 : Admins are installing openGL on hudson machines. Enabled openGL thereafter. Should pass.
-  #  tps : It seems opengl is not properly installed on the hudson-rose node. Skip the test on this node for now.
-  #######################################################################################
-  if test \! \( "$MACHINE" = "i686" -o \
-              "$machine_name" = "hudson-rose.llnl.gov" -o \
-              "$machine_name" = "hudson-rose-07.llnl.gov" -o \
-              "$machine_name" = "hudson-rose-08.llnl.gov" -o \
-              "$machine_name" = "hudson-rose-13.llnl.gov" -o \
-              "$machine_name" = "hudson-rose-14.llnl.gov" -o \
-              "$machine_name" = "hudson-rose-15.llnl.gov" -o \
-              "$machine_name" = "hudson-rose-16.llnl.gov" \)
-  then
-    echo "Skipping OpenGL..."
-    # admins are troubleshooting the libGL.la
-    #CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
-  fi
-  #######################################################################################
-  #  PCH
-  #
-  #  tps : 11/12/10 - OpenGL is not installed on all nodes yet. 
-  #######################################################################################
-  CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  "
+	  ########################################################################################
+	  #  OpenGL
+	  #
+	  #  tps : 11/12/10 : Admins are installing openGL on hudson machines. Enabled openGL thereafter. Should pass.
+	  #  tps : It seems opengl is not properly installed on the hudson-rose node. Skip the test on this node for now.
+	  #######################################################################################
+	  if test \! \( "$MACHINE" = "i686" -o \
+		      "$machine_name" = "hudson-rose.llnl.gov" -o \
+		      "$machine_name" = "hudson-rose-07.llnl.gov" -o \
+		      "$machine_name" = "hudson-rose-08.llnl.gov" -o \
+		      "$machine_name" = "hudson-rose-13.llnl.gov" -o \
+		      "$machine_name" = "hudson-rose-14.llnl.gov" -o \
+		      "$machine_name" = "hudson-rose-15.llnl.gov" -o \
+		      "$machine_name" = "hudson-rose-16.llnl.gov" \)
+	  then
+	    echo "Skipping OpenGL..."
+	    # admins are troubleshooting the libGL.la
+	    #CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
+	  fi
+	  #######################################################################################
+	  #  PCH
+	  #
+	  #  tps : 11/12/10 - OpenGL is not installed on all nodes yet. 
+	  #######################################################################################
+	  CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-pch  "
 
-  #######################################################################################
-  #  RTED
-  #
-  #  tps : 11/15/10 - RTED does not work for gcc 4.3.2 and 4.4.1 . This is not a problem of
-  #  our implementation but rather a problem with the test suite. For instance we get the 
-  #  following error: C_G_4_3_a_d.cpp:48: error: 'cout' was not declared in this scope
-  #######################################################################################
-  if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o \
-                "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \)
-  then
-    CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
-  fi
+	  #######################################################################################
+	  #  RTED
+	  #
+	  #  tps : 11/15/10 - RTED does not work for gcc 4.3.2 and 4.4.1 . This is not a problem of
+	  #  our implementation but rather a problem with the test suite. For instance we get the 
+	  #  following error: C_G_4_3_a_d.cpp:48: error: 'cout' was not declared in this scope
+	  #######################################################################################
+	  if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o \
+			"x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \)
+	  then
+	    CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
+	  fi
 
-fi
+	fi
 
-#######################################################################################
-# OpenMP GOMP 
-#   Only when on 64-bit Linux and gcc 4.4.1 is used.
-#  Liao : 3/22/11 - Link with GOMP and run OpenMP tests
-#######################################################################################
-if test "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" ; then
-  if test "x$ROSE_MACHINE_OS_LABEL" = "xamd64-linux" ; then
-    if [ -a /usr/apps/gcc/4.4.1/lib64/libgomp.a ]; then
-      CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-gomp_omp_runtime_library=/usr/apps/gcc/4.4.1/lib64"
-    fi
-  fi
-fi
+	#######################################################################################
+	# OpenMP GOMP 
+	#   Only when on 64-bit Linux and gcc 4.4.1 is used.
+	#  Liao : 3/22/11 - Link with GOMP and run OpenMP tests
+	#######################################################################################
+	if test "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" ; then
+	  if test "x$ROSE_MACHINE_OS_LABEL" = "xamd64-linux" ; then
+	    if [ -a /usr/apps/gcc/4.4.1/lib64/libgomp.a ]; then
+	      CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-gomp_omp_runtime_library=/usr/apps/gcc/4.4.1/lib64"
+	    fi
+	  fi
+	fi
 
-#########################################################################################
-#
-#  Mac OS X 10.6 (64-bit) 
-#
-#########################################################################################
-if test "x$label" = "x64bit-macos-10.6" ; then
-  case "$ROSE_TEST_BUILD_STYLE" in
-  "make/check/install-minimal")
-         CONFIGURE_FLAGS="
-                --with-boost=${ROSE_TEST_BOOST_PATH} \
-                --with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
-                --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
-    ;;
+	#########################################################################################
+	#
+	#  Mac OS X 10.6 (64-bit) 
+	#
+	#########################################################################################
+	if test "x$label" = "x64bit-macos-10.6" ; then
+	  case "$ROSE_TEST_BUILD_STYLE" in
+	  "make/check/install-minimal")
+		 CONFIGURE_FLAGS="
+			--with-boost=${ROSE_TEST_BOOST_PATH} \
+			--with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
+			--with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+	    ;;
 
-  *)
-        echo "Error: '$ROSE_TEST_BUILD_STYLE' build-style is not currently supported for '$label'"
-    ;;
-  esac
-fi
-#########################################################################################
-#
-#  Ubuntu 10.4 LTS (64-bit) 
-#
-#########################################################################################
-if test "x$label" = "xamd64-ubuntu" ; then
-  case "$ROSE_TEST_BUILD_STYLE" in
-  "make/check/install-minimal")
-         CONFIGURE_FLAGS="
-                --with-boost=${ROSE_TEST_BOOST_PATH} \
-                --with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
-                --without-java \
-                --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
-    ;;
+	  *)
+		echo "Error: '$ROSE_TEST_BUILD_STYLE' build-style is not currently supported for '$label'"
+	    ;;
+	  esac
+	fi
+	#########################################################################################
+	#
+	#  Ubuntu 10.4 LTS (64-bit) 
+	#
+	#########################################################################################
+	if test "x$label" = "xamd64-ubuntu" ; then
+	  case "$ROSE_TEST_BUILD_STYLE" in
+	  "make/check/install-minimal")
+		 CONFIGURE_FLAGS="
+			--with-boost=${ROSE_TEST_BOOST_PATH} \
+			--with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
+			--without-java \
+			--with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+	    ;;
 
-  *)
-        echo "Error: '$ROSE_TEST_BUILD_STYLE' build-style is not currently supported for '$label'"
-    ;;
-  esac
-fi
+	  *)
+		echo "Error: '$ROSE_TEST_BUILD_STYLE' build-style is not currently supported for '$label'"
+	    ;;
+	  esac
+	fi
+) 2>&1 |filterStep "Setting up the ROSE configuration options" 
 
 #########################################################################################
 #
