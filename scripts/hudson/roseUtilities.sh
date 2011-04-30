@@ -2,7 +2,7 @@
 
 # If non-empty, then trace execution
 debug=
-#[ -n "$debug" ] && set -x
+[ -n "$debug" ] && set -x
 
 ###############################################################################################################################
 # Functions
@@ -160,7 +160,12 @@ if test $# = 1 ; then
 	echo "Copy me: export PATH=\"$PATH:\$PATH\""
 	echo ""
 	echo ""
-	echo "GCC = `gcc -dumpversion`"
+	echo `gcc --version | head -1`
+	echo `automake --version | head -1`
+	echo `autoconf --version | head -1`
+	echo `aclocal --version | head -1`
+	echo `git --version`
+       
  
 
 	echo ""
@@ -170,6 +175,7 @@ if test $# = 1 ; then
 	echo ""
 	echo ""
 	echo "./configure"
+         [ ! -n "$CONFIGURE_FLAGS" ] && echo "CONFIGURE_FLAGS is empty='$CONFIGURE_FLAGS'" && exit 1 
 	 for an_option in ${CONFIGURE_FLAGS} ; do 
 	   echo "    $an_option"
 	 done
