@@ -62,7 +62,7 @@ ClassHierarchyWrapper::ClassHierarchyWrapper(SgNode *node)
     buildAncestorsMap(directChildren, subclasses);
 }
 
-const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getSubclasses( SgClassDefinition *cls )
+const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getSubclasses( SgClassDefinition *cls ) const
 {
     if (cls->get_declaration()->get_definingDeclaration() != NULL)
     {
@@ -86,7 +86,7 @@ const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getSubclasses( 
 }
 
 
-const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getAncestorClasses( SgClassDefinition *cls )
+const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getAncestorClasses( SgClassDefinition *cls ) const
 {
     const ClassDefSet* result = NULL;
     ClassDefToClassDefsMap::const_iterator children = ancestorClasses.find(cls);
@@ -103,7 +103,7 @@ const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getAncestorClas
     return *result;
 }
 
-const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getDirectSubclasses(SgClassDefinition * cls)
+const ClassHierarchyWrapper::ClassDefSet& ClassHierarchyWrapper::getDirectSubclasses(SgClassDefinition * cls) const
 {
     if (cls->get_declaration()->get_definingDeclaration() != NULL)
     {
