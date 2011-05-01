@@ -147,10 +147,12 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
 		}
 
 		//The two are not from the same class. Let's see if there is a friend class declaration
-		vector<SgClassDeclaration*> nestedDeclarations =
-				SageInterface::querySubTree<SgClassDeclaration>(varClassScope, V_SgClassDeclaration);
-		foreach(SgClassDeclaration* nestedDeclaration, nestedDeclarations)
+        foreach(SgDeclarationStatement* varClassMember, varClassScope->get_members())
 		{
+            SgClassDeclaration* nestedDeclaration = isSgClassDeclaration(varClassMember);
+            if (nestedDeclaration == NULL)
+                continue;
+            
 			if (nestedDeclaration->get_declarationModifier().isFriend())
 			{
 				//The variable's class has friend class. Check if the member function in question is in that friend
