@@ -327,7 +327,7 @@ function printRoseTranslatorVersion {
        make PrintRoseTranslatorVersion
 
   ) 2>&1 |filterStep "ROSE Translator Version" 
-  [ ${PIPESTATUS[0]} -ne 0 ] && killStep "ROSE Translator Version"
+  [ ${PIPESTATUS[0]} -ne 0 ] && killStep "ROSE Translator Version" || echo ""
 }
 #########################################################################################
 #
