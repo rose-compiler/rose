@@ -523,9 +523,22 @@ bool isCopyConstructible(SgType* type)
                 {
                     SgFunctionDeclaration* fundecl = isSgFunctionDeclaration(*i);
                     bool thisIsAConstructor = fundecl->get_specialFunctionModifier().isConstructor();
-                    std::list<SgType*> args;
-                    args.push_back(new SgReferenceType(type));
-                    bool isCopyConstructor = acceptsArguments(fundecl, args);
+                    bool isCopyConstructor = false;
+                    if (fundecl->get_args().size() == 1)
+                    {
+                        SgType* formalArg = fundecl->get_args().front()->get_type();
+                        
+                        //This must be a reference to the type or a const reference to the type.
+                        //Let's remove the 'const'                     
+                        formalArg = formalArg->stripTypedefsAndModifiers();
+                        if (isSgReferenceType(formalArg))
+                        {
+                            SgType* refType = isSgReferenceType(formalArg)->get_base_type();
+                            refType = refType->stripTypedefsAndModifiers();
+                            isCopyConstructor = (refType == type);
+                        }
+                    }
+                    
                     if (thisIsAConstructor && isCopyConstructor)
                     {
                         hasAnyCopyConstructor = true;
