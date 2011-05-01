@@ -12,9 +12,9 @@ int cutoff =1000;
 int
 main ()
 {
-#pragma omp parallel
+//#pragma omp parallel
   {
-#pragma omp single
+//#pragma omp single
     {
       int i;
       printf("Using %d threads.\n",omp_get_num_threads());
