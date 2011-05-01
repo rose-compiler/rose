@@ -2628,11 +2628,10 @@ static bool isFromAnotherFile (SgLocatedNode* lnode)
     // normal file info 
     if (lnode->get_file_info()->isTransformation() == false &&  lnode->get_file_info()->isCompilerGenerated() ==false)
     {
-      if (cur_file->get_file_info()->get_filename() != lnode->get_file_info()->get_filename())
+      if (lnode->get_file_info()->get_filenameString() != "" && cur_file->get_file_info()->get_filenameString() != lnode->get_file_info()->get_filenameString())
         result = true;
     }
-  } //
-
+  } // 
 
   return result;
 }

@@ -286,6 +286,14 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
+        // \pp (03/15/2011): Added case
+          case V_SgUpcThreads:
+             {
+               s = "_upc_threads_";
+               break;
+             }
+
+
           default:
              {
                printf ("Error case of value = %s not handled \n",this->class_name().c_str());
