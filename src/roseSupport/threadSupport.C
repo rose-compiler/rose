@@ -124,7 +124,7 @@ RTS_mutex_init(RTS_mutex_t *mutex, RTS_Layer layer, pthread_mutexattr_t *attr)
 }
 #else
 int
-RTS_mutex_init(RTS_mutex_t*, RSIM_Layer, void*)
+RTS_mutex_init(RTS_mutex_t*, RTS_Layer, void*)
 {
     return ENOSYS;
 }
