@@ -14,7 +14,7 @@ SUBDIRS = analysis \
          variables \
          varLatticeVector 
 
-#         chkptRangeAnalysis \
+#         chkptRangeAnalysis
 
 # there are inter dependencies among sub directories, parallel build is a bad idea for now
 #.NOTPARALLEL:
