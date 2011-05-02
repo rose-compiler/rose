@@ -16,7 +16,7 @@ int main()
   int k;
   for (i = 0; i <= 99; i += 1) {
     for (j = 0; j <= 99; j += 1) {
-      tot[i][j] = (0);
+      tot[i][j] = 0;
       duz[i][j][0] = (duz[i][j][0] * b[0]);
       for (k = 0; k <= 98; k += 1) {
         if (k >= 1) {

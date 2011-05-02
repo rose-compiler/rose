@@ -104,7 +104,9 @@ ROSETTA to generate the code used in ROSE can take about an hour if it is not op
 be done (turning off tracking of memory leaks).
 
 
-
+Usage of insra:
+   It works fine to bring up the GUI over the network from my Mac (use ssh -X option to
+   forward X specific calls).
 
 
 

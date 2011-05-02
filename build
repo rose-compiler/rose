@@ -199,8 +199,14 @@ if [[ ! -e src/frontend/CxxFrontend/EDG/Makefile.am ]]; then
         src/frontend/CxxFrontend/EDG/EDG_4.0/src/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_4.0/src/disp/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_4.0/lib/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.3/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.3/misc/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.3/src/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.3/src/disp/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_4.3/lib/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/Makefile.in \
-        src/frontend/CxxFrontend/EDG/edgRose/Makefile.in
+        src/frontend/CxxFrontend/EDG/edgRose/Makefile.in \
+        src/frontend/CxxFrontend/EDG/edg43Rose/Makefile.in
     do
         mkdir -p $(dirname $file)
         touch $file

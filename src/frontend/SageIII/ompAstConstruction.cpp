@@ -24,6 +24,57 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;
 
+// Liao 4/23/2011, special function to copy file info of the original SgPragma or Fortran comments
+static bool copyStartFileInfo (SgNode* src, SgNode* dest, OmpAttribute* oa)
+{
+  bool result = false;
+  ROSE_ASSERT (src && dest);
+  // same src and dest, no copy is needed
+  if (src == dest) return true;
+
+  SgLocatedNode* lsrc = isSgLocatedNode(src);
+  ROSE_ASSERT (lsrc);
+  SgLocatedNode* ldest= isSgLocatedNode(dest);
+  ROSE_ASSERT (ldest);
+  // ROSE_ASSERT (lsrc->get_file_info()->isTransformation() == false);
+  // already the same, no copy is needed
+  if (lsrc->get_startOfConstruct()->get_filename() == ldest->get_startOfConstruct()->get_filename()
+      && lsrc->get_startOfConstruct()->get_line() == ldest->get_startOfConstruct()->get_line()
+      && lsrc->get_startOfConstruct()->get_col() == ldest->get_startOfConstruct()->get_col())
+    return true; 
+
+  Sg_File_Info* copy = new Sg_File_Info (*(lsrc->get_startOfConstruct())); 
+  ROSE_ASSERT (copy != NULL);
+
+   // delete old start of construct
+  Sg_File_Info *old_info = ldest->get_startOfConstruct();
+  if (old_info) delete (old_info);
+
+  ldest->set_startOfConstruct(copy);
+  copy->set_parent(ldest);
+//  cout<<"debug: set ldest@"<<ldest <<" with file info @"<< copy <<endl;
+
+  ROSE_ASSERT (lsrc->get_startOfConstruct()->get_filename() == ldest->get_startOfConstruct()->get_filename());
+  ROSE_ASSERT (lsrc->get_startOfConstruct()->get_line() == ldest->get_startOfConstruct()->get_line());
+  ROSE_ASSERT (lsrc->get_startOfConstruct()->get_col() == ldest->get_startOfConstruct()->get_col());
+
+  ROSE_ASSERT (lsrc->get_startOfConstruct()->get_filename() == ldest->get_file_info()->get_filename());
+  ROSE_ASSERT (lsrc->get_startOfConstruct()->get_line() == ldest->get_file_info()->get_line());
+  ROSE_ASSERT (lsrc->get_startOfConstruct()->get_col() == ldest->get_file_info()->get_col());
+
+  ROSE_ASSERT (ldest->get_file_info() == copy);
+// Adjustment for Fortran, the AST node attaching the Fortran comment will not actual give out the accurate line number for the comment
+  if (is_Fortran_language())
+  {
+    ROSE_ASSERT (oa != NULL);
+    PreprocessingInfo *currentPreprocessingInfoPtr = oa->getPreprocessingInfo();
+    ROSE_ASSERT (currentPreprocessingInfoPtr != NULL);
+    int commentLine = currentPreprocessingInfoPtr->getLineNumber(); 
+    ldest->get_file_info()->set_line(commentLine);
+  }
+    
+  return result;
+}
 
 namespace OmpSupport
 { 
@@ -58,6 +109,22 @@ namespace OmpSupport
       {
         SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*iter);
         ROSE_ASSERT(pragmaDeclaration != NULL);
+#if 0 // We should not enforce this since the pragma may come from transformation-generated node
+        if ((pragmaDeclaration->get_file_info()->isTransformation()
+            && pragmaDeclaration->get_file_info()->get_filename()==string("transformation")))
+        {
+          cout<<"Found a pragma which is transformation generated. @"<< pragmaDeclaration;
+          cout<<pragmaDeclaration->unparseToString()<<endl;
+          pragmaDeclaration->get_file_info()->display("debug transformation generated pragma declaration.");
+          // Liao 4/23/2011
+          // #pragma omp task can shown up before a single statement body of a for loop, 
+          // In this case, the frontend will insert a basic block under the loop
+          // and put both the pragma and the single statement into the block.
+          // AstPostProcessing() will reset the transformation flag for the pragma
+          // since its parent(the block) is transformation generated, not in the original code
+          ROSE_ASSERT(pragmaDeclaration->get_file_info()->isTransformation() ==false  || pragmaDeclaration->get_file_info()->get_filename()!=string("transformation"));
+        }
+#endif  
         SageInterface::replaceMacroCallsWithExpandedStrings(pragmaDeclaration);
         string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
         istringstream istr(pragmaString);
@@ -676,12 +743,14 @@ namespace OmpSupport
         }
     }
     ROSE_ASSERT(result != NULL);
-    setOneSourcePositionForTransformation(result);
+    //setOneSourcePositionForTransformation(result);
+    // copyStartFileInfo (att->getNode(), result); // No need here since its caller will set file info again
     //set the current parent
     body->set_parent(result);
     // add clauses for those SgOmpClauseBodyStatement
     if (isSgOmpClauseBodyStatement(result))
       appendOmpClauses(isSgOmpClauseBodyStatement(result), att);
+//    result->get_file_info()->display("debug after building ..");
     return result;
   }
 
@@ -776,10 +845,12 @@ namespace OmpSupport
 
     ROSE_ASSERT(second_stmt);
     body->set_parent(second_stmt);
+    copyStartFileInfo (att->getNode(), second_stmt, att);
 
     // build the 1st directive node then
     SgOmpParallelStatement* first_stmt = new SgOmpParallelStatement(NULL, second_stmt); 
     setOneSourcePositionForTransformation(first_stmt);
+    copyStartFileInfo (att->getNode(), first_stmt, att);
     second_stmt->set_parent(first_stmt);
 
     // allocate clauses to them, let the 2nd one have higher priority 
@@ -957,6 +1028,7 @@ This is no perfect solution until we handle preprocessing information as structu
        if (isFortranEndDirective(getOmpAttribute(decl)->getOmpDirectiveType()))
           continue; 
       //cout<<"debug: convert_OpenMP_pragma_to_AST() handling pragma at "<<decl<<endl;  
+      //ROSE_ASSERT (decl->get_file_info()->get_filename() != string("transformation"));
       OmpAttributeList* oattlist= getOmpAttributeList(decl);
       ROSE_ASSERT (oattlist != NULL) ;
       vector <OmpAttribute* > ompattlist = oattlist->ompAttriList;
@@ -1027,6 +1099,8 @@ This is no perfect solution until we handle preprocessing information as structu
             }
         }
         setOneSourcePositionForTransformation(omp_stmt);
+        copyStartFileInfo (oa->getNode(), omp_stmt, oa);
+        //ROSE_ASSERT (omp_stmt->get_file_info()->isTransformation() != true);
         replaceOmpPragmaWithOmpStatement(decl, omp_stmt);
 
       } // end for (OmpAttribute)
@@ -1291,6 +1365,8 @@ This is no perfect solution until we handle preprocessing information as structu
     {
       OmpAttribute * att = *iter;
       ROSE_ASSERT (att->getNode() !=NULL);
+      ROSE_ASSERT (att->getPreprocessingInfo() !=NULL);
+      //cout<<"debug omp attribute @"<<att<<endl;
       SgStatement* stmt = isSgStatement(att->getNode());
       // TODO verify this assertion is true for Fortran OpenMP comments
       ROSE_ASSERT (stmt != NULL);
@@ -1305,6 +1381,8 @@ This is no perfect solution until we handle preprocessing information as structu
       // the pragma will have string to ease debugging
       string p_name = att->toOpenMPString();
       SgPragmaDeclaration * p_decl = buildPragmaDeclaration("omp "+ p_name, scope);
+      //preserve the original source file info ,TODO complex cases , use real preprocessing info's line information !!
+      copyStartFileInfo (att->getNode(), p_decl, att);
       omp_pragma_list.push_back(p_decl);
 
       // move the attribute to the pragma
@@ -1314,7 +1392,8 @@ This is no perfect solution until we handle preprocessing information as structu
       // remove the getPreprocessingInfo also 
       PreprocessingInfo* info = att->getPreprocessingInfo(); 
       ROSE_ASSERT (info != NULL);
-      att->setPreprocessingInfo(NULL);// set this as if the OmpAttribute was from a pragma, not from a comment
+      // We still keep the peprocessingInfo. its line number will be used later to set file info object
+      //att->setPreprocessingInfo(NULL);// set this as if the OmpAttribute was from a pragma, not from a comment
       AttachedPreprocessingInfoType *comments = stmt ->getAttachedPreprocessingInfo ();
       ROSE_ASSERT (comments != NULL);
       ROSE_ASSERT (comments->size() !=0);

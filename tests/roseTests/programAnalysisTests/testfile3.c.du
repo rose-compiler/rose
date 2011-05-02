@@ -1,38 +1,38 @@
 edge definition:SgInitializedName:a:SgVariableDeclaration:float a; 
-edge definition:SgVarRefExp:a:SgExprStatement:a =(5);  use:SgVarRefExp:a:SgExprStatement:(j) < a;  
-edge definition:SgInitializedName:b:SgVariableDeclaration:float b =(6); 
+edge definition:SgVarRefExp:a:SgExprStatement:a = 5;  use:SgVarRefExp:a:SgExprStatement:j < a;  
+edge definition:SgInitializedName:b:SgVariableDeclaration:float b = 6; 
 edge definition:SgVarRefExp:b:SgExprStatement:b--;  use:SgVarRefExp:b:SgExprStatement:b--;  
-edge definition:SgVarRefExp:b:SgExprStatement:b =(3);  use:SgVarRefExp:b:SgExprStatement:b--;  
-edge definition:SgInitializedName:c:SgVariableDeclaration:float c =(5);  use:SgVarRefExp:c:SgExprStatement:c--;  
+edge definition:SgVarRefExp:b:SgExprStatement:b = 3;  use:SgVarRefExp:b:SgExprStatement:b--;  
+edge definition:SgInitializedName:c:SgVariableDeclaration:float c = 5;  use:SgVarRefExp:c:SgExprStatement:c--;  
 edge definition:SgVarRefExp:c:SgExprStatement:c--;  use:SgVarRefExp:c:SgExprStatement:c--;  
 edge definition:SgInitializedName:i:SgVariableDeclaration:int i; 
 edge definition:SgVarRefExp:i:SgExprStatement:i = 1;  use:SgVarRefExp:i:SgExprStatement:j = i;  
-edge definition:SgVarRefExp:i:SgExprStatement:i = 1;  use:SgVarRefExp:i:SgExprStatement:x +=(x *(i));  
+edge definition:SgVarRefExp:i:SgExprStatement:i = 1;  use:SgVarRefExp:i:SgExprStatement:x +=(x * i);  
 edge definition:SgInitializedName:j:SgVariableDeclaration:int j; 
-edge definition:SgVarRefExp:j:SgForStatement:for(j = i;(j) < a;j++) {b--;c--;for(int k = 2;k < j;k++) {#pragma startx +=(x *(i));#pragma end}}  use:SgVarRefExp:j:SgForStatement:for(j = i;(j) < a;j++) {b--;c--;for(int k = 2;k < j;k++) {#pragma startx +=(x *(i));#pragma end}}  
-edge definition:SgVarRefExp:j:SgForStatement:for(j = i;(j) < a;j++) {b--;c--;for(int k = 2;k < j;k++) {#pragma startx +=(x *(i));#pragma end}}  use:SgVarRefExp:j:SgExprStatement:(j) < a;  
-edge definition:SgVarRefExp:j:SgForStatement:for(j = i;(j) < a;j++) {b--;c--;for(int k = 2;k < j;k++) {#pragma startx +=(x *(i));#pragma end}}  use:SgVarRefExp:j:SgExprStatement:k < j;  
-edge definition:SgVarRefExp:j:SgExprStatement:j = i;  use:SgVarRefExp:j:SgForStatement:for(j = i;(j) < a;j++) {b--;c--;for(int k = 2;k < j;k++) {#pragma startx +=(x *(i));#pragma end}}  
-edge definition:SgVarRefExp:j:SgExprStatement:j = i;  use:SgVarRefExp:j:SgExprStatement:(j) < a;  
+edge definition:SgVarRefExp:j:SgForStatement:for(j = i;j < a;j++) {b--;c--;for(int k = 2;k < j;k++) {#pragma startx +=(x * i);#pragma end}}  use:SgVarRefExp:j:SgForStatement:for(j = i;j < a;j++) {b--;c--;for(int k = 2;k < j;k++) {#pragma startx +=(x * i);#pragma end}}  
+edge definition:SgVarRefExp:j:SgForStatement:for(j = i;j < a;j++) {b--;c--;for(int k = 2;k < j;k++) {#pragma startx +=(x * i);#pragma end}}  use:SgVarRefExp:j:SgExprStatement:j < a;  
+edge definition:SgVarRefExp:j:SgForStatement:for(j = i;j < a;j++) {b--;c--;for(int k = 2;k < j;k++) {#pragma startx +=(x * i);#pragma end}}  use:SgVarRefExp:j:SgExprStatement:k < j;  
+edge definition:SgVarRefExp:j:SgExprStatement:j = i;  use:SgVarRefExp:j:SgForStatement:for(j = i;j < a;j++) {b--;c--;for(int k = 2;k < j;k++) {#pragma startx +=(x * i);#pragma end}}  
+edge definition:SgVarRefExp:j:SgExprStatement:j = i;  use:SgVarRefExp:j:SgExprStatement:j < a;  
 edge definition:SgVarRefExp:j:SgExprStatement:j = i;  use:SgVarRefExp:j:SgExprStatement:k < j;  
 edge definition:SgVarRefExp:j:SgExprStatement:j = 0; 
-edge definition:SgInitializedName:x:SgVariableDeclaration:float x =(0);  use:SgVarRefExp:x:SgExprStatement:x +=(x *(i));  
-edge definition:SgInitializedName:x:SgVariableDeclaration:float x =(0);  use:SgVarRefExp:x:SgExprStatement:x +=(x *(i));  
-edge definition:SgVarRefExp:x:SgExprStatement:x +=(x *(i));  use:SgVarRefExp:x:SgExprStatement:x +=(x *(i));  
-edge definition:SgVarRefExp:x:SgExprStatement:x +=(x *(i));  use:SgVarRefExp:x:SgExprStatement:x +=(x *(i));  
-edge definition:SgInitializedName:k:SgVariableDeclaration:int k = 2;  use:SgVarRefExp:k:SgForStatement:for(int k = 2;k < j;k++) {#pragma startx +=(x *(i));#pragma end}  
+edge definition:SgInitializedName:x:SgVariableDeclaration:float x = 0;  use:SgVarRefExp:x:SgExprStatement:x +=(x * i);  
+edge definition:SgInitializedName:x:SgVariableDeclaration:float x = 0;  use:SgVarRefExp:x:SgExprStatement:x +=(x * i);  
+edge definition:SgVarRefExp:x:SgExprStatement:x +=(x * i);  use:SgVarRefExp:x:SgExprStatement:x +=(x * i);  
+edge definition:SgVarRefExp:x:SgExprStatement:x +=(x * i);  use:SgVarRefExp:x:SgExprStatement:x +=(x * i);  
+edge definition:SgInitializedName:k:SgVariableDeclaration:int k = 2;  use:SgVarRefExp:k:SgForStatement:for(int k = 2;k < j;k++) {#pragma startx +=(x * i);#pragma end}  
 edge definition:SgInitializedName:k:SgVariableDeclaration:int k = 2;  use:SgVarRefExp:k:SgExprStatement:k < j;  
-edge definition:SgVarRefExp:k:SgForStatement:for(int k = 2;k < j;k++) {#pragma startx +=(x *(i));#pragma end}  use:SgVarRefExp:k:SgForStatement:for(int k = 2;k < j;k++) {#pragma startx +=(x *(i));#pragma end}  
-edge definition:SgVarRefExp:k:SgForStatement:for(int k = 2;k < j;k++) {#pragma startx +=(x *(i));#pragma end}  use:SgVarRefExp:k:SgExprStatement:k < j;  
+edge definition:SgVarRefExp:k:SgForStatement:for(int k = 2;k < j;k++) {#pragma startx +=(x * i);#pragma end}  use:SgVarRefExp:k:SgForStatement:for(int k = 2;k < j;k++) {#pragma startx +=(x * i);#pragma end}  
+edge definition:SgVarRefExp:k:SgForStatement:for(int k = 2;k < j;k++) {#pragma startx +=(x * i);#pragma end}  use:SgVarRefExp:k:SgExprStatement:k < j;  
 edge use:SgVarRefExp:i:SgExprStatement:j = i; 
 edge use:SgVarRefExp:b:SgExprStatement:b--; 
 edge use:SgVarRefExp:c:SgExprStatement:c--; 
-edge use:SgVarRefExp:j:SgForStatement:for(j = i;(j) < a;j++) {b--;c--;for(int k = 2;k < j;k++) {#pragma startx +=(x *(i));#pragma end}} 
-edge use:SgVarRefExp:j:SgExprStatement:(j) < a; 
-edge use:SgVarRefExp:a:SgExprStatement:(j) < a; 
-edge use:SgVarRefExp:x:SgExprStatement:x +=(x *(i)); 
-edge use:SgVarRefExp:x:SgExprStatement:x +=(x *(i)); 
-edge use:SgVarRefExp:i:SgExprStatement:x +=(x *(i)); 
-edge use:SgVarRefExp:k:SgForStatement:for(int k = 2;k < j;k++) {#pragma startx +=(x *(i));#pragma end} 
+edge use:SgVarRefExp:j:SgForStatement:for(j = i;j < a;j++) {b--;c--;for(int k = 2;k < j;k++) {#pragma startx +=(x * i);#pragma end}} 
+edge use:SgVarRefExp:j:SgExprStatement:j < a; 
+edge use:SgVarRefExp:a:SgExprStatement:j < a; 
+edge use:SgVarRefExp:x:SgExprStatement:x +=(x * i); 
+edge use:SgVarRefExp:x:SgExprStatement:x +=(x * i); 
+edge use:SgVarRefExp:i:SgExprStatement:x +=(x * i); 
+edge use:SgVarRefExp:k:SgForStatement:for(int k = 2;k < j;k++) {#pragma startx +=(x * i);#pragma end} 
 edge use:SgVarRefExp:k:SgExprStatement:k < j; 
 edge use:SgVarRefExp:j:SgExprStatement:k < j; 
