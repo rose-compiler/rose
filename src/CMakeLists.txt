@@ -205,6 +205,7 @@ set(rose_support_src
       ${CMAKE_SOURCE_DIR}/src/roseSupport/utility_functions.C 
       ${CMAKE_SOURCE_DIR}/src/roseSupport/memoryUsage.C
       ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.C
+      ${CMAKE_BINARY_DIR}/src/roseSupport/threadSupport.C
      )
 
 
