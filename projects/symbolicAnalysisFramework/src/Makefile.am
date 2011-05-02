@@ -1,7 +1,6 @@
 SUBDIRS = analysis \
          arrIndexLabeler \
          cfgUtils \
-         chkptRangeAnalysis \
          common \
          external \
          lattice \
@@ -14,6 +13,9 @@ SUBDIRS = analysis \
          varBitVector \
          variables \
          varLatticeVector 
+
+#         chkptRangeAnalysis \
+
 # there are inter dependencies among sub directories, parallel build is a bad idea for now
 #.NOTPARALLEL:
 #	echo "parallel build is disabled in this directory to ease complex inter-directory dependencies"

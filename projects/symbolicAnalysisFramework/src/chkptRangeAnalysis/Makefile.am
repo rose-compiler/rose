@@ -4,8 +4,8 @@ include $(top_srcdir)/projects/symbolicAnalysisFramework/common.for.dep.libs
 # Saf is the short for symbolic analysis framework.
 # it is used to avoid possible name collision 
 noinst_LTLIBRARIES = libSafchkptRangeAnalysis.la
-libSafchkptRangeAnalysis_la_SOURCES = #chkptRangeAnalysis.C
-include_HEADERS = #chkptRangeAnalysis.h
+libSafchkptRangeAnalysis_la_SOURCES = chkptRangeAnalysis.C
+include_HEADERS = chkptRangeAnalysis.h
 
 # ----------test program -------------------
 #.NOTPARALLEL:selfTest
