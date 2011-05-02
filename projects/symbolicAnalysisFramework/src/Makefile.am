@@ -31,7 +31,6 @@ libSafall_la_LIBADD = \
           $(top_builddir)/projects/symbolicAnalysisFramework/src/external/libSafexternal.la \
           $(top_builddir)/projects/symbolicAnalysisFramework/src/simpleAnalyses/libSafsimpleAnalyses.la \
           $(top_builddir)/projects/symbolicAnalysisFramework/src/lattice/libSaflattice.la \
-          $(top_builddir)/projects/symbolicAnalysisFramework/src/mpiAnal/libSafmpiAnal.la \
           $(top_builddir)/projects/symbolicAnalysisFramework/src/ompAnal/libSafompAnal.la \
           $(top_builddir)/projects/symbolicAnalysisFramework/src/rwAccessLabeler/libSafrwAccessLabeler.la \
           $(top_builddir)/projects/symbolicAnalysisFramework/src/state/libSafstate.la \
@@ -40,4 +39,5 @@ libSafall_la_LIBADD = \
           $(top_builddir)/projects/symbolicAnalysisFramework/src/variables/libSafvariables.la
 # Liao, not yet compilable 	  
 #          $(top_builddir)/projects/symbolicAnalysisFramework/src/varLatticeVector/libSafvarLatticeVector.la
-#          $(top_builddir)/projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/libSafchkptRangeAnalysis.la \
+#          $(top_builddir)/projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/libSafchkptRangeAnalysis.la 
+#          $(top_builddir)/projects/symbolicAnalysisFramework/src/mpiAnal/libSafmpiAnal.la
