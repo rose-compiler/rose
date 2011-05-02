@@ -278,7 +278,7 @@ if test "x$edg_major_version_number" = "x3"; then
       echo "Recognized an accepted minor version number."
    else
       if test "x$edg_minor_version_number" = "x10"; then
-         echo "Recognized an accepted minor version number."
+         echo "ERROR: EDG version 3.10 is not supported anymore."
       else
          echo "ERROR: Could not identify the EDG minor version number."
          exit 1
@@ -292,20 +292,19 @@ else
       if test "x$edg_minor_version_number" = "x0"; then
          echo "Recognized an accepted minor version number."
       else
-         if test "x$edg_minor_version_number" = "x1"; then
+         if test "x$edg_minor_version_number" = "x3"; then
             echo "Recognized an accepted minor version number."
-
-            echo "Error: Note that EDG 4.1 is not yet supported in ROSE (should be available soon)."
-            exit 1
+            enable_edg_version43=yes
+            AC_DEFINE([ROSE_USE_EDG_VERSION_4_3], [], [Whether to use the new EDG version 4.3])
          else
             echo "ERROR: Could not identify the EDG minor version number."
             exit 1
          fi
       fi
-      enable_new_edg_interface=yes
       enable_edg_version4=yes
-      AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
       AC_DEFINE([ROSE_USE_EDG_VERSION_4], [], [Whether to use the new EDG version 4.x])
+      enable_new_edg_interface=yes
+      AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
    else
       echo "ERROR: Could not identify the EDG major version number."
       exit 1
@@ -324,7 +323,8 @@ AC_SUBST(ROSE_EDG_MINOR_VERSION_NUMBER)
 # DQ (2/3/2010): I would like to not have to use these and use the new 
 # ROSE_EDG_MAJOR_VERSION_NUMBER and ROSE_EDG_MINOR_VERSION_NUMBER instead.
 AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = xyes])
-# AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
+AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
+AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_3, [test "x$enable_edg_version43" = xyes])
 
 # DQ (1/4/2009) Added support for optional GNU language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
@@ -1859,8 +1859,14 @@ src/frontend/CxxFrontend/EDG/EDG_4.0/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.0/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.0/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.0/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/Makefile
 src/frontend/CxxFrontend/EDG/edgRose/Makefile
+src/frontend/CxxFrontend/EDG/edg43Rose/Makefile
 ])], [])
 
 
@@ -2221,6 +2227,7 @@ tests/CompileTests/MicrosoftWindows_tests/Makefile
 tests/CompileTests/nameQualificationAndTypeElaboration_tests/Makefile
 tests/CompileTests/NewEDGInterface_C_tests/Makefile
 tests/CompileTests/CudaTests/Makefile
+tests/CompileTests/EDG_4_x/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile

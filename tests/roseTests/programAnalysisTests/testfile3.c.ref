@@ -1,26 +1,26 @@
-a =(5);
+a = 5;
 modref:  a ;  readref:  ;  killref:  a
 i = 1;
 modref:  i ;  readref:  ;  killref:  i
 j = 0;
 modref:  j ;  readref:  ;  killref:  j
-b =(3);
+b = 3;
 modref:  b ;  readref:  ;  killref:  b
-for(j = i;(j) < a;j++) {b--;c--;for(int k = 2;k < j;k++) {#pragma startx +=(x *(i));#pragma end}}
+for(j = i;j < a;j++) {b--;c--;for(int k = 2;k < j;k++) {#pragma startx +=(x * i);#pragma end}}
 modref:  j j b c k k x ;  readref:  i j a j b c k j k x x i ;  killref:  j j b c k k x
 j = i;
 modref:  j ;  readref:  i ;  killref:  j
-(j) < a;
+j < a;
 modref:  ;  readref:  j a ;  killref: 
 b--;
 modref:  b ;  readref:  b ;  killref:  b
 c--;
 modref:  c ;  readref:  c ;  killref:  c
-for(int k = 2;k < j;k++) {#pragma startx +=(x *(i));#pragma end}
+for(int k = 2;k < j;k++) {#pragma startx +=(x * i);#pragma end}
 modref:  k k x ;  readref:  k j k x x i ;  killref:  k k x
 k < j;
 modref:  ;  readref:  k j ;  killref: 
-x +=(x *(i));
+x +=(x * i);
 modref:  x ;  readref:  x x i ;  killref:  x
 return 0;
 modref:  ;  readref:  ;  killref: 
