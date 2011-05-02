@@ -345,6 +345,7 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
           case T_DOUBLE:
           case T_LONG_LONG:
           case T_UNSIGNED_LONG_LONG:
+          case T_SIGNED_LONG_LONG:
           case T_LONG_DOUBLE:
           case T_STRING:
           case T_BOOL:
