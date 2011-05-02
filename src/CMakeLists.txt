@@ -197,15 +197,15 @@ set( binaryFrontend_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/BinaryDisassembly/AST_BIN_Traversal.C
    )
 
-set(rose_support_src 
-      ${CMAKE_SOURCE_DIR}/src/roseSupport/transformationSupport.C 
-      ${CMAKE_SOURCE_DIR}/src/roseSupport/optionDeclaration.C 
-      ${CMAKE_SOURCE_DIR}/src/roseSupport/sourceLocationInheritedAttribute.C 
-      ${CMAKE_SOURCE_DIR}/src/roseSupport/roseTranslators.C 
-      ${CMAKE_SOURCE_DIR}/src/roseSupport/utility_functions.C 
+set(rose_support_src
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/transformationSupport.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/optionDeclaration.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/sourceLocationInheritedAttribute.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/roseTranslators.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/utility_functions.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/memoryUsage.C
       ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.C
-      ${CMAKE_BINARY_DIR}/src/roseSupport/threadSupport.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/threadSupport.C
      )
 
 
