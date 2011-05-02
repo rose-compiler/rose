@@ -3,6 +3,13 @@
 # TODO: add more summary info
 #	- List of durations for each step in the job
 #
+#  
+#  Insure++:
+#	1. ~/.psrc configuration file
+#	2. configure with '--enable-insure'
+#	3. GCC 4.2.4 for now (4.1.2 doesnt work!)
+#
+#
 #
 source scripts/hudson/runBuildStep.sh
 source scripts/hudson/debuggingPrinters.sh
@@ -12,7 +19,7 @@ set +x
 # Starting 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step...
 # Done with 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step!
 printBannerToStartStep \
-	"ROSE/scripts/hudson/runKlocworkOnRose"
+	"ROSE/scripts/hudson/runInsureOnRose in `pwd`"
 
 machine=`uname -m`
 machine_os=`uname -s`
@@ -22,10 +29,35 @@ hudson_start_time_seconds="$(date +%s)"
 TOP_LEVEL_ROSE_DIRECTORY="$PWD"
 LOG_LOCATION="$PWD"
 
-if test ! "x$machine_name" = "xhudson-rose-24.llnl.gov"; then
-  echo "Error on $machine_name: currently, Klocwork can only be used from hudson-rose-24"
+# TODO: check licenses; retry? timeout
+
+if test ! -f ~/.psrc ; then
+  echo "Error: $machine_name doesn't seem to have a ~/.psrc Insure++ configuration file"
   exit 1
 fi
+if test ! -d /export/tmp.hudson-rose/tmp/ ; then
+  echo "Error: $machine_name doesn't seem to have a /export/tmp.hudson-rose/tmp/ directory for Insure++ to write cache files to. (Configured in ~/.psrc)" 
+  exit 1
+fi
+
+
+if test "x$ROSE_TEST_BUILD_STEP" = "xanalyze" ; then
+  if test \! \( "$ROSE_TEST_BUILD_DIRECTORY" = "tests/CompileTests/Cxx_tests" -o \
+                "$ROSE_TEST_BUILD_DIRECTORY" = "tests/CompileTests/Fortran_tests" \) ; then
+    echo "Error: This hudson script has not been configured to support this build directory for Insure++ analysis: $ROSE_TEST_BUILD_DIRECTORY"
+    exit 1
+  fi
+
+  if test ! -n "${ROSE_INSURE_BUILD_TREE}" ; then
+    echo "Error: you did not specify a 'ROSE_INSURE_BUILD_TREE' for analysis = '${ROSE_INSURE_BUILD_TREE}'"
+    exit 1
+  fi
+#  if test ! -d "${ROSE_INSURE_BUILD_TREE}" ; then
+#    echo "Error: '${ROSE_INSURE_BUILD_TREE}' does not seem to be a valid ROSE_INSURE_BUILD_TREE for analysis"
+#    exit 1
+#  fi
+fi
+
 
 
 #########################################################################################
@@ -105,6 +137,7 @@ fi
 #
 #########################################################################################
 CONFIGURE_FLAGS="\
+    --enable-insure \
     --with-boost=${ROSE_TEST_BOOST_PATH} \
     --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
     --with-java=${ROSE_TEST_JAVA_PATH} \
@@ -213,117 +246,142 @@ set -ex
 
 #########################################################################################
 #
-#  ROSE/build
-#
-#########################################################################################
-printBannerToStartStep "build"
-build_start_time="$(date +%s)"
-
-./build
-
-printBannerToEndStep "build" $build_start_time
-
-
-if test -e ROSE-install ; then 
-  chmod -R u+xw ROSE-install
-fi
-rm -rf ROSE-install
-mkdir ROSE-install
-CONFIGURE_PREFIX_DIR=`pwd`/ROSE-install
-
-if test -e ROSE-build ; then
-  chmod -R u+wx ROSE-build
-fi
-rm -rf ROSE-build
-
-mkdir ROSE-build
-cd ROSE-build
-
-if test -e tables ; then
-  chmod -R u+wx tables
-fi
-rm -rf tables
-mkdir tables
-
-
-#########################################################################################
-#
-#  ROSE/configure
-#
-#########################################################################################
-printBannerToStartStep "configure"
-configure_start_time="$(date +%s)"
-
-../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
-
-printBannerToEndStep "configure" $configure_start_time
-
-
-#########################################################################################
-#
 #  ROSE/make
 #
 #########################################################################################
 
-# TODO: add extra validation/error checks
-#   1) check trace and build.spec (non-empty, etc.)
-#   2) rose project exists in klocwork
-#   3) database name is unique
-#   4) all klocwork services are up and running
-#   5) license server is available
-#   6) license is available for checkout
-#   7) ...
 
-    export KLOCWORK_LICENSE_FILE=27000@swordfish.llnl.gov
+
+case "$ROSE_TEST_BUILD_STEP" in
+"build")
+
+	#########################################################################################
+	#
+	#  ROSE/build
+	#
+	#########################################################################################
+	printBannerToStartStep "build"
+	build_start_time="$(date +%s)"
+
+	./build
+
+	printBannerToEndStep "build" $build_start_time
+
+        SOURCE_TREE=`pwd`
+
+	if test -e ROSE-install ; then 
+	  chmod -R u+xw ROSE-install
+	fi
+	rm -rf ROSE-install
+	mkdir ROSE-install
+	CONFIGURE_PREFIX_DIR=`pwd`/ROSE-install
+
+	if test -e ROSE-build ; then 
+	  chmod -R u+xw ROSE-build
+	fi
+	rm -rf ROSE-build
+	mkdir ROSE-build
+
+	cd ROSE-build
+
+	#########################################################################################
+	#
+	#  ROSE/configure
+	#
+	#########################################################################################
+	printBannerToStartStep "configure"
+	configure_start_time="$(date +%s)"
+
+	${SOURCE_TREE}/configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
+
+	printBannerToEndStep "configure" $configure_start_time
 
     ################################################################################
-    # GENERATE THE TRACE FILE
+    # MAKE
     #
-    kwinject -T rose.trace make -j${NUM_PROCESS}
-    if [ $? -ne 0 ]  ; then
-        printBanner "Fatal error during 'kwinject -T rose.trace make -j${NUM_PROCESS}'. Aborting..."
-       exit 3
-    fi
+    runBuildStep make
 
-    ################################################################################
-    # CONVERT THE TRACE FILE TO A BUILD SPEC
-    #
-    kwinject -t rose.trace -o rose.out
-    if [ $? -ne 0 ]  ; then
-       printBanner "Fatal error during 'kwinject -t rose.trace -o rose.out'. Aborting..."
-       exit 3
-    fi
+ ;;
 
-    ################################################################################
-    # RUN THE STATIC ANALYSIS 
-    #
-    # Warning: don't use too much parallelism because the analysis is memory-intensive
-    # kwbuildproject returns a non-zero exist status if there are 'Build errors'
-    #
+"analyze")
+
+    # Make sure the ROSE-Insure++ build tree exists
     set +e
-    kwbuildproject -host hudson-rose-24 -port 8080 --license-host swordfish.llnl.gov -j5 -o tables rose.out
+    ssh hudson-rose@hudson-rose-23 test -d ${ROSE_INSURE_BUILD_TREE}
+    if [ $? -ne 0 ] ; then
+	echo "Error: no build tree found at hudson-rose@hudson-rose-23:${ROSE_INSURE_BUILD_TREE}"
+	exit 1
+    fi
     set -e
-    # There is no clean way to differentiate between analysis errors and internal Klocwork errors
-    # aside from parsing the build.log file.
-    grep -q "Reports generation stage completed" tables/build.log
+
+    # TOO (4/23/2011): Use the same Insure++ ROSE build tree that was created during test-insure-build
+    # TODO: use rsync instead to make it faster
+    # TODO: if test-insure-build is run again, the build tree won't be valid since scp would be corrupt.
+    rm -rf ROSE-build
+    
+    # We need to copy the ROSE-Insure++ build tree to the other analysis node
+    if test "x$machine_name" = "xhudson-rose-20.llnl.gov" ; then
+      workspace=`echo $ROSE_INSURE_BUILD_TREE | sed 's/ROSE-build//;s/hudson-rose-23//'`
+      echo ${workspace}
+      if test "x$workspace" = "x" -o "x$workspace" = "x\/" ; then
+        echo "$workspace is invalid and could cause problems when issuing 'rm -rf' on it"
+        exit 1
+      fi
+      rm -rf ${workspace}
+      mkdir -p ${workspace}
+      cd ${workspace}
+      # Need the source Makefile.am's
+      scp -r hudson-rose@hudson-rose-23:${workspace}/hudson-rose-23 .
+      cd hudson-rose-23
+    else
+      scp -r hudson-rose@hudson-rose-23:${ROSE_INSURE_BUILD_TREE} .
+    fi
+
+    cd ROSE-build
+
+    if test ! -f Makefile ; then
+      echo "ERROR: '${ROSE_INSURE_BUILD_TREE}' doesn't seem to be a valid ROSE build tree"
+      exit 1;
+    fi
+ 
+
+    ################################################################################
+    # MAKE CHECK
+    #
+    printBannerToStartStep "analyze ${ROSE_TEST_BUILD_DIRECTORY}"
+    analyze_start_time="$(date +%s)"
+
+    if test ! -d ${ROSE_TEST_BUILD_DIRECTORY}; then
+      echo "ERROR: '${ROSE_TEST_BUILD_DIRECTORY}' doesn't seem to be a valid directory within ROSE"
+      exit 1;
+    fi
+
+    BUILD_TARGET=check
+    if test "$ROSE_TEST_BUILD_DIRECTORY" = "tests/CompileTests/Fortran_tests" ; then
+      BUILD_TARGET=tests
+    fi
+
+  # DQ (4/30/2011): For the Fortran work run it is serial since it appears to be a problem to run in parallel.
+  # DQ (5/1/2011): The failure mode we were seeing for Fortran can happen anytime Insure++ is run in parallel, 
+  # so we have to always run our Insure++ tests in serial to avoid errors. Set the number of processors to be
+  # used for the Insure++ testing to be "1".
+    NUM_PROCESS=1
+
+    make ${BUILD_TARGET} -j${NUM_PROCESS} -C ${ROSE_TEST_BUILD_DIRECTORY}
     if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
-       printBanner "Fatal error during 'kwbuildproject -host hudson-rose-24 -port 8080 --license-host swordfish.llnl.gov -j8 -o tables rose.out'. Aborting..."
+       printBannerToEndStep "[ERROR] analyze ${ROSE_TEST_BUILD_DIRECTORY}" $analyze_start_time
        exit 3
     fi
 
-    ################################################################################
-    # PROPAGATE RESULTS TO MYSQL 
-    #
-    # Easier to sort:  date +build_%Y_day%j_%b%d_%I%P%Mm%Ssi =  build_2011_day109_Apr19_01pm35m29s
-    #                  date +build_%Y_day%j_%b%d_%I%P        =  build_2011_day109_Apr19_01pm
-    #
-    # rose:build_XXXX
-    HEAD_HASH=`git rev-parse HEAD`
-    kwadmin load rose tables --name $HEAD_HASH
-    if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
-       printBanner "Fatal error during 'kwadmin load rose tables --name $HEAD_HASH'. Aborting..."
-       exit 3
-    fi
+    printBannerToEndStep "analyze ${ROSE_TEST_BUILD_DIRECTORY}" $analyze_start_time
+
+ ;;
+
+*)
+   echo "ERROR: unrecognized build step = $ROSE_TEST_BUILD_STEP"
+   exit 1;
+ ;;
+esac
 
 ####################################################################################
 # SUMMARY 
@@ -339,7 +397,7 @@ set +x
    printBannerWithDate
 
    printBannerToEndStep \
-	"ROSE/scripts/hudson/runKlocworkOnRose" \
+	"ROSE/scripts/hudson/runInsureOnRose" \
 	$hudson_start_time_seconds
 set -x
 ##
