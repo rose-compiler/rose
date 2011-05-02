@@ -12,9 +12,8 @@ SUBDIRS = analysis \
          unionFind \
          varBitVector \
          variables \
-         varLatticeVector 
-
-#         chkptRangeAnalysis
+         varLatticeVector \
+         chkptRangeAnalysis
 
 # there are inter dependencies among sub directories, parallel build is a bad idea for now
 #.NOTPARALLEL:
@@ -28,7 +27,6 @@ libSafall_la_LIBADD = \
           $(top_builddir)/projects/symbolicAnalysisFramework/src/analysis/libSafanalysis.la \
           $(top_builddir)/projects/symbolicAnalysisFramework/src/arrIndexLabeler/libSafarrIndexLabeler.la \
           $(top_builddir)/projects/symbolicAnalysisFramework/src/cfgUtils/libSafcfgUtils.la \
-          $(top_builddir)/projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/libSafchkptRangeAnalysis.la \
           $(top_builddir)/projects/symbolicAnalysisFramework/src/common/libSafcommon.la \
           $(top_builddir)/projects/symbolicAnalysisFramework/src/external/libSafexternal.la \
           $(top_builddir)/projects/symbolicAnalysisFramework/src/simpleAnalyses/libSafsimpleAnalyses.la \
@@ -42,3 +40,4 @@ libSafall_la_LIBADD = \
           $(top_builddir)/projects/symbolicAnalysisFramework/src/variables/libSafvariables.la
 # Liao, not yet compilable 	  
 #          $(top_builddir)/projects/symbolicAnalysisFramework/src/varLatticeVector/libSafvarLatticeVector.la
+#          $(top_builddir)/projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/libSafchkptRangeAnalysis.la \
