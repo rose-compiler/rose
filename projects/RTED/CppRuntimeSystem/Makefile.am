@@ -18,10 +18,15 @@ libCppRuntimeSystem_la_SOURCES = CppRuntimeSystem.cpp \
                                  RsType.cpp\
                                  TypeSystem.cpp \
                                  PointerManager.cpp\
-                                 StackManager.cpp \
-                                 ptrops.c \
-                                 workzone.c \
-                                 rtedsync.c
+                                 StackManager.cpp
+# TOO: Example of conditionally including files when ROSE
+# is configured with UPC support.
+if ROSE_WITH_UPC
+libCppRuntimeSystem_la_SOURCES += \
+	ptrops.upc \
+	workzone.upc \
+	rtedsync.upc
+endif
 
 
 
