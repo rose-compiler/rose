@@ -53,7 +53,7 @@ protected:
 	levels level;
 	
 public:
-	typedef enum constrTypes {
+	typedef enum {
 		unknown,
 		// This graph's constraints are represented as a conjunction of inequalities.
 		conj,
@@ -62,7 +62,7 @@ public:
 		negConj,
 		// This graph's constrants are mutually-inconsistent
 		inconsistent
-	};
+	} constrTypes;
 protected:
 	constrTypes constrType;
 	
@@ -636,7 +636,7 @@ public:
 	protected:
 	bool transitiveClosureDiv(string indent="");
 	void transitiveClosureY(const varID& x, const varID& y, bool& modified, int& numSteps, int& numInfers, bool& iterModified, string indent="");
-	void transitiveClosureZ(const varID& x, const varID& y, const varID& y, bool& modified, int& numSteps, int& numInfers, bool& iterModified, string indent="");
+	void transitiveClosureZ(const varID& x, const varID& y, const varID& z, bool& modified, int& numSteps, int& numInfers, bool& iterModified, string indent="");
 	
 	public:
 	// Computes the transitive closure of the given constraint graph,

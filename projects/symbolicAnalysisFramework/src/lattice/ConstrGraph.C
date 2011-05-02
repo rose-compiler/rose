@@ -4045,7 +4045,7 @@ bool ConstrGraph::disconnectDivOrigVar(varID var/*, int div, int rem*/, string i
 			//divVars.insert(divVar);
 			
 			// First, disconnect var from all vars but only if var is conntected to its divisibility variable
-			ROSE_ASSERT(!(getVal(var, divVar)!=NULL ^ getVal(divVar, var)!=NULL));
+			ROSE_ASSERT(!((getVal(var, divVar)!=NULL) ^ (getVal(divVar, var)!=NULL)));
 			if(getVal(var, divVar) && getVal(divVar, var))
 				modified = eraseVarConstrNoDivVars(var, true, indent+"    ") || modified;
 				

@@ -350,7 +350,7 @@ bool IntraFWDataflow::runAnalysis(const Function& func, NodeState* fState, bool 
 	cout << "entryState1 = "<<entryState->str(this, "    ")<<"\n";
 	cout << "entryState2 = "<<entryState->str(this, "    ")<<"\n";
 		
-	printf("before copyLattices on <%s | %s>\n", funcCFGStart.getNode()->unparseToString().c_str(), funcCFGStart.getNode()->class_name().c_str(), funcCFGStart.getIndex());
+	printf("before copyLattices on <%s | %s> %d\n", funcCFGStart.getNode()->unparseToString().c_str(), funcCFGStart.getNode()->class_name().c_str(), funcCFGStart.getIndex());
 	
 	int i=0;
 	cout << "Before: entryState-above="<<entryState<<"\n";

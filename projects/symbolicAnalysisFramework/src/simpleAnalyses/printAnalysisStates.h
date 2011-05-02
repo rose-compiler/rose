@@ -19,7 +19,7 @@ class printAnalysisStates : public UnstructuredPassIntraAnalysis
 	vector<int> latticeNames;
 	vector<int> factNames;
 	string indent;
-	typedef enum ab {above=0, below=1};
+	typedef enum {above=0, below=1} ab;
 	ab latSide; // Records whether we should print lattices above or below each node.
 		
 	printAnalysisStates(Analysis* creator, vector<int>& factNames, vector<int>& latticeNames, ab latSide, string indent);
