@@ -196,7 +196,7 @@ int RTS_mutex_init(RTS_mutex_t*, RTS_Layer, pthread_mutexattr_t*);
 
 #else
 
-struct RTS_Mutex {
+struct RTS_mutex_t {
     int dummy;
 };
 
