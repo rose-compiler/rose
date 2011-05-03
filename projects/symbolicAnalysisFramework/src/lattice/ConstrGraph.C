@@ -415,7 +415,7 @@ bool ConstrGraph::copyFromReplace(ConstrGraph &that, varID varTo, varID varFrom,
 
 // Copies the given var and its associated constrants from that to this.
 // Returns true if this causes this constraint graph's state to change; false otherwise.
-/*bool ConstrGraph::copyVar(const ConstrGraph& that, const varID& var)
+bool ConstrGraph::copyVar(const ConstrGraph& that, const varID& var)
 {
 	bool modified = false;
 
@@ -423,11 +423,16 @@ bool ConstrGraph::copyFromReplace(ConstrGraph &that, varID varTo, varID varFrom,
 	if((level == top) ||
 	   (level == constrKnown && constrType == inconsistent))
 		return false;
-
 	
+	// It is only worthwhile to copy a variable if that object contains real constraints
+	if((level != constrKnown) || (that.level == constrKnown && that.constrType == inconsistent))
+		return false;
 	
 	// If we were uninitialized, upgrade to being initialized, with known constraints
 	if(level == uninitialized) { level = constrKnown; modified = true; }
+	
+	ROSE_ASSERT(level==constrKnown && constrType!=inconsistent);
+	ROSE_ASSERT(that.level==constrKnown && that.constrType!=inconsistent);
 	
 	//printf("ConstrGraph::copyVar(var=%s)\n", var.str().c_str());
 	// Add var to vars if it isn't already there.
@@ -438,7 +443,9 @@ bool ConstrGraph::copyFromReplace(ConstrGraph &that, varID varTo, varID varFrom,
 	
 	// True if either both constraint graphs are negated or not negated (if a graph is negated, all of 
 	// its inequalities are flipped from ax<=by+x to by<ax-c)
-	bool sameNeg = (level==constrKnown && 
+	bool sameNeg = (constrType==that.constrType);
+	// Only implementing the case where the negation is the same since it is unclear what the semantics should be if 
+	ROSE_ASSERT(sameNeg);
 	
 	// Iterate over all the var<=x and	x<=var pairs.
 	for(map<varID, map<varID, affineInequality> >::const_iterator itX = that.vars2Value.begin();
@@ -473,7 +480,7 @@ bool ConstrGraph::copyFromReplace(ConstrGraph &that, varID varTo, varID varFrom,
 	}
 
 	return modified;
-}*/
+}
 
 // Determines whether constraints in that are different from
 // the constraints in this

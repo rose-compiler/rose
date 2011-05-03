@@ -204,15 +204,15 @@ bool OneDmesgExpr::removeMap(const procSet& domain_arg, const procSet& remR_arg)
 	// Trim remR in mRange.cg
 	
 	// If [(mRange.lb==remR.lb) <= (remR.ub==mRange.ub)]
-	if(mRange.getConstr()->eqVars(mRange.getLB(), remR.getLB()) && 
-	   mRange.getConstr()->eqVars(mRange.getUB(), remR.getUB()))
+	if(mRange.getConstr()->eqVars(mRange.getLB(), remR.getLB(), "    ") && 
+	   mRange.getConstr()->eqVars(mRange.getUB(), remR.getUB(), "    "))
 	{
 		mRange.emptify();
 		success = true;
 	}
 	// If [mRange.lb<remR.lb <= (remR.ub==mRange.ub)]
 	else if(mRange.getConstr()->ltVars(mRange.getLB(), remR.getLB()) && 
-	   mRange.getConstr()->eqVars(mRange.getUB(), remR.getUB()))
+	   mRange.getConstr()->eqVars(mRange.getUB(), remR.getUB(), "    "))
 	{
 		// then [mRange.lb, range.lb): mRange.ub < range.lb
 		mRange.getConstr()->eraseVarConstr(mRange.getUB());
@@ -227,7 +227,7 @@ bool OneDmesgExpr::removeMap(const procSet& domain_arg, const procSet& remR_arg)
 		success = true;
 	}
 	// If [(mRange.lb=remR.lb) <= remR.ub<mRange.ub]
-	else if(mRange.getConstr()->eqVars(mRange.getLB(), remR.getLB()) && 
+	else if(mRange.getConstr()->eqVars(mRange.getLB(), remR.getLB(), "    ") && 
 	        mRange.getConstr()->ltVars(remR.getUB(), mRange.getUB()))
 	{
 		// then (remR.ub, mRange.ub]: remR.ub < mRange.lb
