@@ -58,7 +58,6 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	{
 		this->divAnalysis = divAnalysis;
 		this->sgnAnalysis = sgnAnalysis;
-		rwAccessLabeler::addRWAnnotations(cfgUtils::getProject());
 		// Make sure that rankSet is non-empty
 		//rankSet.makeNonEmpty();
 	}
@@ -68,7 +67,6 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	{
 		this->divAnalysis = that.divAnalysis;
 		this->sgnAnalysis = that.sgnAnalysis;
-		rwAccessLabeler::addRWAnnotations(cfgUtils::getProject());
 		// Make sure that rankSet is non-empty
 		//rankSet.makeNonEmpty();
 	}

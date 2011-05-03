@@ -436,7 +436,7 @@ bool ConstrGraph::copyVar(const ConstrGraph& that, const varID& var)
 	
 	//printf("ConstrGraph::copyVar(var=%s)\n", var.str().c_str());
 	// Add var to vars if it isn't already there.
-	if(vars.find(var) == var.end()) {
+	if(vars.find(var) == vars.end()) {
 		modified = true;
 		vars.insert(var);
 	}

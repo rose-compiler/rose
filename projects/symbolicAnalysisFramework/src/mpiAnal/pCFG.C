@@ -34,10 +34,6 @@ pCFGNode::pCFGNode(const vector<DataflowNode>& pSetDFNodes)
 void pCFGNode::init(const vector<DataflowNode>& pSetDFNodes)
 {
 	this->pSetDFNodes = pSetDFNodes;
-	/*int i=0;
-	for(set<DataflowNode>::const_iterator it=pSetDFNodes.begin(); it!=pSetDFNodes.end(); it++, i++)
-		this->pSetDFNodes.push_back(*it);* /
-	this->pSetDFNodes = pSetDFNodes;
 	
 	// Give pSetDFNodes a canonical ordering
 	sort(this->pSetDFNodes.begin() this->pSetDFNodes.end());*/
@@ -108,13 +104,14 @@ const DataflowNode& pCFGNode::getCurNode(unsigned int pSet) const
 	ROSE_ASSERT(0<=pSet && pSet<pSetDFNodes.size());
 	return pSetDFNodes[pSet];
 }
-	
+
 const vector<DataflowNode>& pCFGNode::getPSetDFNodes() const
 {
 	return pSetDFNodes;
 }
 
-// Removes the given process set from this pCFGNode
+// Removes the given process set from this pCFGNode, pSets with numbers above pSet in this pCFGNode get 
+// renumbered to fill the hole created by the deletion: newPSet = oldPSet-1.
 void pCFGNode::removePSet(unsigned int pSet)
 {
 	ROSE_ASSERT(pSet>=0 && pSet<pSetDFNodes.size());
@@ -132,7 +129,7 @@ int pCFGNode::createPSet(const DataflowNode& startNode)
 string pCFGNode::str(string indent) const
 {
 	ostringstream outs;
-	outs << /*indent << */"[pCFGNode : \n";
+	outs << "[pCFGNode : \n";
 	for(vector<DataflowNode>::const_iterator it=pSetDFNodes.begin(); it!=pSetDFNodes.end(); )
 	{
 		outs << indent << "    <" << (*it).getNode()->class_name() << " | " << (*it).getNode()->unparseToString() << " | " << (*it).getIndex() << ">";
@@ -362,7 +359,9 @@ bool pCFG_FWDataflow::runAnalysis(const Function& func, NodeState* fState)
 			if(analysisDebugLevel>=1) 
 				cout << "@@@ Starting FRESH partition\n";
 		}
-			
+		
+		// Run the analysis on the current partition. This function updates partitionChkpts so that after the call
+		// returns, it contains the entire working set of the analysis. As such, curChkpt may be ignored after this call.
 		runAnalysis_pCFG(func, fState, curChkpt);
 
 		if(analysisDebugLevel>=1) 
@@ -382,7 +381,6 @@ bool pCFG_FWDataflow::runAnalysis(const Function& func, NodeState* fState)
 	{
 		cout << "----"<<(*it)->str("    ")<<"\n";
 	}*/
-
 			// See if we can condense any pair of partitions into a single partition
 			set<pCFG_Checkpoint*>::iterator itA=partitionChkpts.begin();
 			while(itA!=partitionChkpts.end())
@@ -487,6 +485,9 @@ bool pCFG_FWDataflow::runAnalysis(const Function& func, NodeState* fState)
 // Runs the dataflow analysis on the given partition, resuming from the given checkpoint.
 // Specifically runAnalysis_pCFG() starts the pCFG dataflow analysis at some pCFG node and continues for 
 //    as long as it can make progress.
+// Updates partitionChkpts with the partitions that result from this fragment of analysis:
+//    - If it terminates at the end of the function, nothing is added. 
+//    - Alternately, it may split the current checkpoint, adding the split partitions to partitionChkpts.
 bool pCFG_FWDataflow::runAnalysis_pCFG(pCFG_Checkpoint* chkpt)
 {
 	return runAnalysis_pCFG(chkpt->func, chkpt->fState, chkpt);
@@ -542,9 +543,6 @@ bool pCFG_FWDataflow::runAnalysis_pCFG(const Function& func, NodeState* fState, 
 		if(chkpt)
 			printf("    chkpt=%p=%s\n", chkpt, chkpt->str("    ").c_str());
 	}
-
-	// Dataflow Iterator that iterates over all the nodes in this function
-	//VirtualCFG::dataflow dfIt(funcCFGStart, funcCFGEnd);
 	
 	// Set of nodes that this analysis has blocked progress on until the next join point
 	set<DataflowNode> joinNodes;
@@ -607,11 +605,12 @@ bool pCFG_FWDataflow::runAnalysis_pCFG(const Function& func, NodeState* fState, 
 		// Process dataflow of all the process sets until they all become blocked
 		while(activePSets.size()>0)
 		{
+			// Choose the next process set to focus on
 			int curPSet;
 			// The current process set is the next active one or the process set that 
 			// performed the split from which we're restarting 
-			// (the later special condition is only needed to keep the output more readable)
-			if(chkpt==NULL || !(chkpt->isSplit)) 
+			// (the latter special condition is only needed to keep the output more readable)
+			if(chkpt==NULL || !(chkpt->isSplit))
 			{
 				//curPSet = *(activePSets.begin());
 				
@@ -666,7 +665,7 @@ if(analysisDebugLevel>=1)
 					cout << "====================================================================\n";
 					cout << "pSet "<<curPSet<<": Current Node "<<dfNode.str()<<", firstTimeVisited="<<firstTimeVisited<<", modified="<<modified<<"\n";
 					cout << "activePSets.size()="<<activePSets.size()<<"  blockedPSets.size()="<<blockedPSets.size()<<"  releasedPSets.size()="<<releasedPSets.size()<<"  n.getPSetDFNodes().size()="<<n.getPSetDFNodes().size()<<"\n";
-				}			
+				}
 /*if(isSgFunctionDefinition(dfNode.getNode()))
 {
 	watchN = n;
@@ -681,13 +680,9 @@ if(analysisDebugLevel>=1)
 				// Will be set by the code inside the if statement below to advance the 
 				// analysis along the pCFG.
 				pCFGNode descN(n);
-				// Set to true if we want to propagate the state at the bottom
-				// of this pCFGNode to its descendant, false otherwise
-				//bool propagateToDesc=true;
 				
 				// ---------------------------------------------------------------------------------------
 				
-				//latticeCopyFill(aboveCopy, pCFGState::getNodeState(func, n, this)->getLatticeAbove(this));					
 				// See if we need to merge the process sets in this pCFGNode because two sets 
 				// are at the same DataflowNodes and have the same blocked/active status
 				bool merged = mergePCFGNodes(n, descN, dfInfoAbove, func,  
@@ -1123,6 +1118,7 @@ if(analysisDebugLevel>=1)
 			mergePCFGStates(itMergSet->second, n, func, dfInfo, *(pCFGState::getNodeState(func, n, this)), pSetMigrations);
 				
 			// Update mergedN by removing all the merged process sets, except the one with the minimum value.
+/// ??? What if mergePCFGStates doesn't want to perform all the merges we indicated because its process set representation is not sufficiently rich?
 			list<int>::iterator itMerged=itMergSet->second.begin();
 			itMerged++;
 			for(; itMerged!=itMergSet->second.end(); itMerged++)
@@ -1297,8 +1293,7 @@ bool pCFG_FWDataflow::partitionTranfer(
 			splitChkpts.insert(newChkpt);
 			
 			// Propagate this pCFGNode's dataflow info to the current descendant
-			// The state of the next pCFG node
-			NodeState* nextState = pCFGState::getNodeState(func, descN, this);
+			NodeState* nextState = pCFGState::getNodeState(func, descN, this); // The state of the next pCFG node
 			ROSE_ASSERT(nextState);
 				
 			if(analysisDebugLevel>=1) 
@@ -1395,9 +1390,9 @@ bool pCFG_FWDataflow::updateLattices(vector<Lattice*>& tgtLattices, vector<Latti
 	return modified;
 }
 
-// Split the process set pSet in pCFGNOde n, resulting in a new pCFGNode that contains more 
+// Split the process set pSet in pCFGNode n, resulting in a new pCFGNode that contains more 
 //    process sets. Advances descN to be this new pCFGNode and updates activePSets to make
-//    the newly-created process sets active. It is assumed that at the start of the function n == descN.
+//    the newly-created process sets active. 
 // splitConditions - set of logical conditions that apply to each split process set
 // splitPSetNodes - the DataflowNodes that each split process set starts at.
 // if freshPSet==true, each partition will get a completely new process set and thus
@@ -1421,6 +1416,7 @@ void pCFG_FWDataflow::performPSetSplit(const pCFGNode& n, pCFGNode& descN, int p
 	// Update descN to correspond to the new pCFGNode that results from the creation
 	// of the new process sets.
 	vector<int> newPSets; // The newly-generated process sets
+	descN = n;
 	descN.advance(pSet, splitPSetNodes[0]); // pSet moves on to the first DataflowNode in splitPSetNodes
 	// Other process sets get the other DataflowNodes in splitPSetNodes
 	vector<DataflowNode>::iterator splitDFIt=splitPSetNodes.begin(); splitDFIt++;
@@ -1470,7 +1466,7 @@ void pCFG_FWDataflow::performPSetSplit(const pCFGNode& n, pCFGNode& descN, int p
 			activePSets.insert(newPSet);
 		else
 			blockedPSets.insert(newPSet);
-			
+		
 		// Create the new process set's state as a copy of pSet's state with the additional info in *splitCondIt
 		copyPSetState(func, descN, pSet, newPSet, *state,
                     dfInfo, state->getFactsMod((Analysis*)this), *splitCondIt, freshPSet);

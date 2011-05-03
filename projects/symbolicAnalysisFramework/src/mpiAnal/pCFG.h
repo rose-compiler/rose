@@ -48,7 +48,8 @@ class pCFGNode
 		
 	const vector<DataflowNode>& getPSetDFNodes() const;
 	
-	// Removes the given process set from this pCFGNode
+	// Removes the given process set from this pCFGNode, pSets with numbers above pSet in this pCFGNode get 
+	// renumbered to fill the hole created by the deletion: newPSet = oldPSet-1.
 	void removePSet(unsigned int pSet);
 	
 	// Adds a new process set to the given DFNode. This process set will start out at the given DataflowNode.
@@ -292,7 +293,7 @@ class pCFG_FWDataflow  : virtual public IntraProceduralDataflow
 
 	// Split the process set pSet in pCFGNOde n, resulting in a new pCFGNode that contains more 
 	//    process sets. Advances descN to be this new pCFGNode and updates activePSets to make
-	//    the newly-created process sets active. It is assumed that at the start of the function n == descN.
+	//    the newly-created process sets active. 
 	// splitConditions - set of logical conditions that apply to each split process set
 	// splitPSetNodes - the DataflowNodes that each split process set starts at.
 	// if freshPSet==true, each partition will get a completely new process set and thus

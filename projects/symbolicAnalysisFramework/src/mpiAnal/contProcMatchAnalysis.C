@@ -79,8 +79,7 @@ printf("pCFG_contProcMatchAnalysis::genInitState() state=%p\n", &state);*/
 		varID nprocsVarPSet = nprocsVar; nprocsVarPSet.addAnnotation(getVarAnn(curPSet), (void*)1);
 		cg->addScalar(/*nprocsVarAllPSets*/nprocsVarPSet);
 		
-		cg->addScalar(rankSetPSet.getLB());
-		cg->addScalar(rankSetPSet.getUB());
+		rankSetPSet.refreshInvariants();
 		cg->addScalar(rankVarPSet);
 		
 		// Add the default process set invariants: [0<= lb <= ub < nprocsVar] and [lb <= rankVar <= ub]
@@ -310,46 +309,27 @@ void pCFG_contProcMatchAnalysis::connectVAItoPSet(unsigned int pSet, varAffineIn
 	tgtAnnotNames.insert(getVarAnn(pSet));
 	tgtAnnotNames.insert("pCFG_common");
 	
-	if(varIneq.getX()==zeroVar   || varIneq.getY()==zeroVar ||
-	   varIneq.getX()==nprocsVar || varIneq.getY()==nprocsVar)
+	varID zeroVarAllPSets, nprocsVarAllPSets;
+	annotateCommonVars(/*n, */zeroVar, zeroVarAllPSets, nprocsVar, nprocsVarAllPSets);
+	varID nprocsVarPSet = nprocsVar; nprocsVarPSet.addAnnotation(getVarAnn(pSet), (void*)1);
+	
+	// !!! Why are we using nprocsVarPSet rather than nprocsVarAllPSets? The function's comments indicate the behavior is the reverse?
+	if(varIneq.getX()==zeroVar)        varIneq.setX(zeroVarAllPSets);
+	else if(varIneq.getX()==nprocsVar) varIneq.setX(/*nprocsVarAllPSets*/nprocsVarPSet);
+	// If varIneq.x is neither zeroVar, nor nprocsVar and does not have our target annotation, add it
+	else if(!varIneq.getX().hasAnyAnnotation(tgtAnnotNames))
 	{
-		varID zeroVarAllPSets, nprocsVarAllPSets;
-		annotateCommonVars(/*n, */zeroVar, zeroVarAllPSets, nprocsVar, nprocsVarAllPSets);
-		varID nprocsVarPSet = nprocsVar; nprocsVarPSet.addAnnotation(getVarAnn(pSet), (void*)1);
-		
-		if(varIneq.getX()==zeroVar)        varIneq.setX(zeroVarAllPSets);
-		else if(varIneq.getX()==nprocsVar) varIneq.setX(/*nprocsVarAllPSets*/nprocsVarPSet);
-		// If varIneq.x is neither zeroVar, nor nprocsVar and does not have our target annotation, add it
-		else if(!varIneq.getX().hasAnyAnnotation(tgtAnnotNames))
-		{
-			varID x = varIneq.getX(); x.addAnnotation(getVarAnn(pSet), (void*)1);
-			varIneq.setX(x);
-		}
-		
-		if(varIneq.getY()==zeroVar)        varIneq.setY(zeroVarAllPSets);
-		else if(varIneq.getY()==nprocsVar) varIneq.setY(/*nprocsVarAllPSets*/nprocsVarPSet);
-		// If varIneq.y is neither zeroVar, not nprocsVar and does not have our target annotation, add it
-		else if(!varIneq.getY().hasAnyAnnotation(tgtAnnotNames))
-		{
-			varID y = varIneq.getY(); y.addAnnotation(getVarAnn(pSet), (void*)1);
-			varIneq.setY(y);
-		}
+		varID x = varIneq.getX(); x.addAnnotation(getVarAnn(pSet), (void*)1);
+		varIneq.setX(x);
 	}
-	else
+	
+	if(varIneq.getY()==zeroVar)        varIneq.setY(zeroVarAllPSets);
+	else if(varIneq.getY()==nprocsVar) varIneq.setY(/*nprocsVarAllPSets*/nprocsVarPSet);
+	// If varIneq.y is neither zeroVar, not nprocsVar and does not have our target annotation, add it
+	else if(!varIneq.getY().hasAnyAnnotation(tgtAnnotNames))
 	{
-		// If varIneq.x does not have our target annotation, add it
-		if(!varIneq.getX().hasAnyAnnotation(tgtAnnotNames))
-		{
-			varID x = varIneq.getX(); x.addAnnotation(getVarAnn(pSet), (void*)1);
-			varIneq.setX(x);
-		}
-		
-		// If varIneq.y does not have our target annotation, add it
-		if(!varIneq.getY().hasAnyAnnotation(tgtAnnotNames))
-		{
-			varID y = varIneq.getY(); y.addAnnotation(getVarAnn(pSet), (void*)1);
-			varIneq.setY(y);
-		}
+		varID y = varIneq.getY(); y.addAnnotation(getVarAnn(pSet), (void*)1);
+		varIneq.setY(y);
 	}
 }
 
@@ -612,7 +592,7 @@ if(MPIAnalysisDebugLevel>0)
 	}
 	//if(!isIfMeetNode(dfNode))
 	if(!isSgIfStmt(dfNode.getNode()) || dfNode.getIndex()!=2)
-		// incorporate this node's inequalities from conditionals
+		// Incorporate this node's inequalities from conditionals
 		incorporateConditionalsInfo(n, pSet, func, dfNode, state, dfInfo);
 	
 	/*cout << "mid2-Transfer Function:\n";
@@ -745,8 +725,6 @@ void pCFG_contProcMatchAnalysis::fillEdgeSplits(const Function& func, const pCFG
 					edgeCG->assertCond(ineqNprocsVar);
 				}
 			}
-			
-			
 			
 			//const varAffineInequality& ineq = *it;
 			//varAffineInequality* rankIneq;
@@ -1519,7 +1497,7 @@ void pCFG_contProcMatchAnalysis::matchSendsRecvs(
 				cout << "ERROR: No receives during send-receive matching of partition. Possible deadlock!\n";
 			//ROSE_ASSERT(recvs.size()>0);
 			endProfileFunc("matchSendsRecvs");
-			return;
+			return;	
 		}
 		// If we only have receives, we have a definite deadlock
 		else if(sends.size()==0)
@@ -1533,7 +1511,7 @@ void pCFG_contProcMatchAnalysis::matchSendsRecvs(
 		
 		if(MPIAnalysisDebugLevel>0)
 			cout << "sends.size()="<<sends.size()<<"  recvs.size()="<<recvs.size()<<"\n";
-	
+		
 		// ---------------------------------------------------------
 		// Now match all send expressions to all receive expressions
 		

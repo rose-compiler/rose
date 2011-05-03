@@ -188,7 +188,7 @@ class invalidProcSet : public virtual procSet
 	{ return new invalidProcSet(); }
 };
 
-// process sets that can be represented as contiguous ranges of ranks
+// Process sets that can be represented as contiguous ranges of ranks
 class contRangeProcSet : public virtual procSet
 {
 	// The variables that represent the lower and upper bounds of the range of ranks
@@ -280,7 +280,7 @@ class contRangeProcSet : public virtual procSet
 	// Make this set non-empty, return true if this causes the set to change, false otherwise
 	bool makeNonEmpty();
 	
-	// Returns true if this and that represent the equal ranges
+	// Returns true if this and that represent equal ranges
 	bool rangeEq(const contRangeProcSet& that) const;
 	
 	// Returns true if that is at the top of but not equal to this's range
