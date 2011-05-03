@@ -3558,15 +3558,20 @@ static void
 syscall_uname(RSIM_Thread *t, int callno)
 {
     uint32_t dest_va=t->syscall_arg(0);
-    char buf[6*65];
-    memset(buf, ' ', sizeof buf);
-    strcpy(buf+0*65, "Linux");                                  /*sysname*/
-    strcpy(buf+1*65, "mymachine.example.com");                  /*nodename*/
-    strcpy(buf+2*65, "2.6.9");                                  /*release*/
-    strcpy(buf+3*65, "#1 SMP Wed Jun 18 12:35:02 EDT 2008");    /*version*/
-    strcpy(buf+4*65, "i386");                                   /*machine*/
-    strcpy(buf+5*65, "example.com");                            /*domainname*/
-    size_t nwritten = t->get_process()->mem_write(buf, dest_va, sizeof buf);
+    new_utsname_32 buf;
+    memset(&buf, ' ', sizeof buf);
+#if 0
+    strcpy(buf.sysname,         "Linux");
+    strcpy(buf.nodename,        "mymachine.example.com");
+    strcpy(buf.release,         "2.6.18");
+    strcpy(buf.version,         "#1 SMP Wed Jun 18 12:35:02 EDT 2008");
+    strcpy(buf.macine,          "i386");
+    strcpy(buf.domainname,      "example.com");
+#else
+    syscall(SYS_uname, &buf);
+#endif
+
+    size_t nwritten = t->get_process()->mem_write(&buf, dest_va, sizeof buf);
     if( nwritten <= 0 ) {
         t->syscall_return(-EFAULT);
         return;
