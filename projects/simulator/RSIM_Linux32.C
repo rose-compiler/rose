@@ -3808,6 +3808,7 @@ syscall_writev_enter(RSIM_Thread *t, int callno)
 static void
 syscall_writev(RSIM_Thread *t, int callno)
 {
+    RTS_Message *strace = t->tracing(TRACE_SYSCALL);
     uint32_t fd=t->syscall_arg(0), iov_va=t->syscall_arg(1);
     int niov=t->syscall_arg(2), idx=0;
     int retval = 0;
@@ -3815,64 +3816,58 @@ syscall_writev(RSIM_Thread *t, int callno)
         retval = -EINVAL;
     } else {
         if (niov>0)
-            t->tracing(TRACE_SYSCALL)->more("\n");
+            strace->more("\n");
         for (idx=0; idx<niov; idx++) {
             /* Obtain buffer address and size */
-            uint32_t buf_va;
-            if (4 != t->get_process()->mem_read(&buf_va, iov_va+idx*8+0, 4)) {
+            strace->more("    iov %d: ", idx);
+
+            iovec_32 iov;
+            if (sizeof(iov)!=t->get_process()->mem_read(&iov, iov_va+idx*sizeof(iov), sizeof(iov))) {
                 if (0==idx)
                     retval = -EFAULT;
-                t->tracing(TRACE_SYSCALL)->more("    #%d: segmentation fault reading address\n", idx);
+                strace->more("<segfault reading iovec>\n");
                 break;
             }
-
-            uint32_t buf_sz;
-            if (4 != t->get_process()->mem_read(&buf_sz, iov_va+idx*8+4, 4)) {
-                if (0==idx)
-                    retval = -EFAULT;
-                t->tracing(TRACE_SYSCALL)->more("    #%d: segmentation fault reading size\n", idx);
-                break;
-            }
-
-            t->tracing(TRACE_SYSCALL)->more("    #%d: va=0x%08"PRIx32", size=0x%08"PRIx32, idx, buf_va, buf_sz);
 
             /* Make sure total size doesn't overflow a ssize_t */
-            if ((buf_sz & 0x80000000) || ((uint32_t)retval+buf_sz) & 0x80000000) {
+            if ((iov.iov_len & 0x80000000) || ((uint32_t)retval+iov.iov_len) & 0x80000000) {
                 if (0==idx)
                     retval = -EINVAL;
-                t->tracing(TRACE_SYSCALL)->more(" size overflow\n");
+                strace->more("<size overflow>\n");
                 break;
             }
 
             /* Copy data from guest to host because guest memory might not be contiguous in the host. Perhaps a more
              * efficient way to do this would be to copy chunks of host-contiguous data in a loop instead. */
-            uint8_t buf[buf_sz];
-            if (buf_sz != t->get_process()->mem_read(buf, buf_va, buf_sz)) {
+            uint8_t buf[iov.iov_len];
+            if (iov.iov_len != t->get_process()->mem_read(buf, iov.iov_base, iov.iov_len)) {
                 if (0==idx)
                     retval = -EFAULT;
-                t->tracing(TRACE_SYSCALL)->more(" segmentation fault\n");
+                strace->more("<seg fault reading buffer>\n");
                 break;
             }
+            print_buffer(strace, iov.iov_base, buf, iov.iov_len, 1024);
+            strace->more(" (size=%"PRIu32")", iov.iov_len);
 
             /* Write data to the file */
-            ssize_t nwritten = write(fd, buf, buf_sz);
+            ssize_t nwritten = write(fd, buf, iov.iov_len);
             if (-1==nwritten) {
                 if (0==idx)
                     retval = -errno;
-                t->tracing(TRACE_SYSCALL)->more(" write failed (%s)\n", strerror(errno));
+                strace->more(" <write failed (%s)>\n", strerror(errno));
                 break;
             }
             retval += nwritten;
-            if ((uint32_t)nwritten<buf_sz) {
-                t->tracing(TRACE_SYSCALL)->more(" short write (%zd bytes)\n", nwritten);
+            if ((uint32_t)nwritten<iov.iov_len) {
+                strace->more(" <short write of %zd bytes>\n", nwritten);
                 break;
             }
-            t->tracing(TRACE_SYSCALL)->more("\n");
+            strace->more("\n");
         }
     }
     t->syscall_return(retval);
     if (niov>0 && niov<=1024)
-        t->tracing(TRACE_SYSCALL)->more("writev return");
+        strace->more("writev return");
 }
 
 /*******************************************************************************************************************************/
