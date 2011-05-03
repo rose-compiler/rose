@@ -30,7 +30,6 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <linux/types.h>
-#include <linux/dirent.h>
 #include <sys/stat.h>
 #include <sys/utsname.h>
 #include <fcntl.h>
