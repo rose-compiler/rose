@@ -41,8 +41,10 @@ ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const Node
 	this->ldva = ldva;
 	// Initialize the map of divisibility and sign lattices, associating divL and sgnL with the 
 	// wildcard annotation that matches all variables	
-	pair<string, void*> noAnnot("", NULL);
-	this->divL[noAnnot] = divL;
+	if(divL) {
+		pair<string, void*> noAnnot("", NULL);
+		this->divL[noAnnot] = divL;
+	}
 	// GB : 2011-03-05 (Removing Sign Lattice Dependence) this->sgnL[noAnnot] = sgnL;
 
 	initCG(func, n, state, false, indent);
@@ -95,8 +97,10 @@ ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs,
 	this->ldva = ldva;
 	// Initialize the map of divisibility and sign lattices, associating divL and sgnL with the 
 	// wildcard annotation that matches all variables	
-	pair<string, void*> noAnnot("", NULL);
-	this->divL[noAnnot] = divL;
+	if(divL) {
+		pair<string, void*> noAnnot("", NULL);
+		this->divL[noAnnot] = divL;
+	}
 	// GB : 2011-03-05 (Removing Sign Lattice Dependence)this->sgnL[noAnnot] = sgnL;
 
 	initCG(func, n, state, false, indent);

@@ -68,9 +68,9 @@ protected:
 	
 	// The function and DataflowNode that this constraint graph corresponds to
 	// as well as the node's state
-	const Function* func;
-	const DataflowNode* n;
-	const NodeState* state;
+	const Function& func;
+	const DataflowNode& n;
+	const NodeState& state;
 	
 	// Represents constrants (x<=y+c). vars2Value[x] maps to a set of constraint::<y, a, b, c>
 	//map<varID, map<varID, constraint> > vars2Value;
@@ -150,12 +150,10 @@ public:
 	            // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
 	            string indent="");
 	
-	protected:
 	// Initialization code that is common to multiple constructors
-	void initCG(const Function* func, const DataflowNode* n, const NodeState* state, 
+	void initCG(const Function& func, const DataflowNode& n, const NodeState& state, 
 	            bool initialized, string indent="");
 	
-	public:
 	~ConstrGraph ();
 	
 	// Initializes this Lattice to its default state, if it is not already initialized

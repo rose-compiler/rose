@@ -118,7 +118,7 @@ int main( int argc, char * argv[] )
 	printf("***************************************************************\n");
 	printf("********** Communication Topology Dataflow Analysis ***********\n");
 	printf("***************************************************************\n");
-	/*commTopoPartitionedAnalysis sfwpa(&da, &sa);
+	/*commTopoPartitionedAnalysis sfwpa(&ldva, &da);
 	UnstructuredPassInterAnalysis upia_sfwpa(sfwpa);
 	upia_sfwpa.runAnalysis();*/
 /* !!!! THIS MUST BE UNCOMMENTED AND FIXED !!!! 

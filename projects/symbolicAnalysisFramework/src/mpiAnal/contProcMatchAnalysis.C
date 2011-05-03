@@ -41,14 +41,11 @@ printf("pCFG_contProcMatchAnalysis::genInitState() state=%p\n", &state);*/
 	int curPSet=0;
 	
 	map<pair<string, void*>, FiniteVariablesProductLattice*> divL;
-	map<pair<string, void*>, FiniteVariablesProductLattice*> sgnL;
 	for(vector<DataflowNode>::const_iterator it=n.getPSetDFNodes().begin(); it!=n.getPSetDFNodes().end(); it++, curPSet++)
 	{
 		NodeState* state = NodeState::getNodeState(*it);
 		pair<string, void*> annotation(getVarAnn(curPSet), (void*)1);
-		
 		divL[annotation] = dynamic_cast<FiniteVariablesProductLattice*>(state->getLatticeBelow(divAnalysis, 0));
-		sgnL[annotation] = dynamic_cast<FiniteVariablesProductLattice*>(state->getLatticeBelow(sgnAnalysis, 0));
 	}
 	// Create a constraint graph from the divisiblity and sign information at all the CFG nodes that make up this pCFG node
 	ConstrGraph* cg = new ConstrGraph(func, func, n, state, ldva, divL, false, "    ");
@@ -67,9 +64,9 @@ printf("pCFG_contProcMatchAnalysis::genInitState() state=%p\n", &state);*/
 	// For each process set create a version of the key variables and add them to the constraint graph
 	varID nprocsVarAllPSets, zeroVarAllPSets;
 	annotateCommonVars(/*n, */zeroVar, zeroVarAllPSets, nprocsVar, nprocsVarAllPSets);
-	//cg->addScalar(/*nprocsVarAllPSets*/nprocsVarPSet);
+	//cg->addVar(/*nprocsVarAllPSets*/nprocsVarPSet);
 	cg->replaceVar(zeroVar, zeroVarAllPSets);
-	//cg->addScalar(zeroVarAllPSets);
+	//cg->addVar(zeroVarAllPSets);
 	
 	curPSet=0;
 	for(vector<DataflowNode>::const_iterator it=n.getPSetDFNodes().begin(); it!=n.getPSetDFNodes().end(); it++, curPSet++)
@@ -77,16 +74,16 @@ printf("pCFG_contProcMatchAnalysis::genInitState() state=%p\n", &state);*/
 		contRangeProcSet rankSetPSet = rankSet; rankSetPSet.addAnnotation(getVarAnn(curPSet), (void*)1);
 		varID rankVarPSet = rankVar; rankVarPSet.addAnnotation(getVarAnn(curPSet), (void*)1);
 		varID nprocsVarPSet = nprocsVar; nprocsVarPSet.addAnnotation(getVarAnn(curPSet), (void*)1);
-		cg->addScalar(/*nprocsVarAllPSets*/nprocsVarPSet);
+		cg->addVar(/*nprocsVarAllPSets*/nprocsVarPSet);
 		
 		rankSetPSet.refreshInvariants();
-		cg->addScalar(rankVarPSet);
+		cg->addVar(rankVarPSet);
 		
 		// Add the default process set invariants: [0<= lb <= ub < nprocsVar] and [lb <= rankVar <= ub]
 		assertProcSetInvariants(cg, rankSetPSet, zeroVarAllPSets, rankVarPSet, nprocsVarPSet);
 	}
 	cg->transitiveClosure();
-	cg->setToUninitialized();
+	cg->setToUninitialized_KeepState();
 	
 	initLattices.push_back(cg);
 	
@@ -115,8 +112,7 @@ if(MPIAnalysisDebugLevel>0)
 	//cg->beginTransaction();
 	
 	// Add the divisibility and sign lattices to the constraint graph under the annotation that belongs to tgtPSet
-	cg->addDivL(dynamic_cast<FiniteVariablesProductLattice*>(state.getLatticeBelow(divAnalysis, 0)), getVarAnn(tgtPSet), (void*)1);
-	cg->addSgnL(dynamic_cast<FiniteVariablesProductLattice*>(state.getLatticeBelow(sgnAnalysis, 0)), getVarAnn(tgtPSet), (void*)1);
+	cg->addDivL(dynamic_cast<FiniteVariablesProductLattice*>(state.getLatticeBelow(divAnalysis, 0)), getVarAnn(tgtPSet), (void*)1, "    ");
 
 	// For each process set create a version of the key variables and add them to the constraint graph
 	varID nprocsVarAllPSets, zeroVarAllPSets;
@@ -231,7 +227,7 @@ void pCFG_contProcMatchAnalysis::resetPSet(unsigned int pSet, ConstrGraph* cg,
 	annotateCommonVars(n, zeroVar, zeroVarAllPSets, nprocsVar, nprocsVarAllPSets);
 	
 	cg->eraseVarConstr(rankVarPSet);
-	cg->addScalar(rankVarPSet);
+	cg->addVar(rankVarPSet);
 	// 0<=rankVar<nprocsVar
 	cg->assertCond(zeroVarAllPSets, rankVarPSet,   1, 1, 0);
 	cg->assertCond(rankVarPSet, nprocsVarAllPSets, 1, 1, -1);
@@ -374,7 +370,7 @@ bool pCFG_contProcMatchAnalysis::transfer(const pCFGNode& n, unsigned int pSet, 
 	
 	//contRangeProcSet* nodeRankSet = dynamic_cast<contRangeProcSet*>(state.getFact((Analysis*)this, 0));
 	// If the constraint graph is already bottom, tell the calling analysis that we're at an impossible state
-	if(cg->isBottom())
+	if(!cg->isSelfConsistent())
 	{
 		deadPSet = true;
 		endProfileFunc("transfer");
@@ -398,7 +394,7 @@ bool pCFG_contProcMatchAnalysis::transfer(const pCFGNode& n, unsigned int pSet, 
 	
 	// Upgrade ial to bottom if it is currently uninitialized
 	//printf("before: cg=%s\n", cg->str("").c_str());
-	cg->initialize();
+	cg->initialize("    ");
 	//printf("after: cg->mayTrue=%d cg=%s\n", cg->mayTrue(), cg->str().c_str());
 	
 	// If this is an if statement
@@ -512,7 +508,7 @@ if(MPIAnalysisDebugLevel>0)
 			//cout << "calledFunc.get_name().getString() = "<<calledFunc.get_name().getString()<<"\n";
 			if(calledFunc.get_name().getString() == "MPI_Init")
 			{
-				/*cg->addScalar(nprocsVar);
+				/*cg->addVar(nprocsVar);
 				// 0<=rankVar<nprocsVar
 				resetRank(cg, n);*/
 				
@@ -539,7 +535,7 @@ if(MPIAnalysisDebugLevel>0)
 				if(isSgAddressOfOp(arg1) && varID::isValidVarExp(isSgAddressOfOp(arg1)->get_operand()))
 				{
 					varID rankArgVar(isSgAddressOfOp(arg1)->get_operand()); rankArgVar.addAnnotation(getVarAnn(pSet), (void*)1);
-					cg->addScalar(rankArgVar);
+					cg->addVar(rankArgVar);
 					modified = cg->assign(rankArgVar, rankVarPSet, 1, 1, 0) ||  modified;
 				}
 				else
@@ -556,7 +552,7 @@ if(MPIAnalysisDebugLevel>0)
 				if(isSgAddressOfOp(arg1) && varID::isValidVarExp(isSgAddressOfOp(arg1)->get_operand()))
 				{
 					varID nprocsArgVar(isSgAddressOfOp(arg1)->get_operand()); nprocsArgVar.addAnnotation(getVarAnn(pSet), (void*)1);
-					cg->addScalar(nprocsArgVar);
+					cg->addVar(nprocsArgVar);
 					modified = cg->assign(nprocsArgVar, /*nprocsVarAllPSets*/nprocsVarPSet, 1, 1, 0) ||  modified;
 				}
 				else
@@ -622,7 +618,7 @@ if(MPIAnalysisDebugLevel>0)
 	
 	// If this transfer function causes the constraint graph to become bottom,
 	// tell the calling analysis that we're at an impossible state
-	if(cg->isBottom())
+	if(!cg->isSelfConsistent())
 		deadPSet = true;
 	
 	endProfileFunc("transfer");
@@ -651,7 +647,7 @@ void pCFG_contProcMatchAnalysis::fillEdgeSplits(const Function& func, const pCFG
 		/*FiniteVariablesProductLattice* divProdL = dynamic_cast<FiniteVariablesProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
 		FiniteVariablesProductLattice* sgnProdL = dynamic_cast<FiniteVariablesProductLattice*>(state.getLatticeBelow(sgnAnalysis, 0));
 		ConstrGraph* edgeCG = new ConstrGraph(func, divProdL, sgnProdL, false);*/
-		ConstrGraph* edgeCG = new ConstrGraph(func, NULL, NULL, false);
+		ConstrGraph* edgeCG = new ConstrGraph(func, n, state, ldva, NULL, false);
 
 		//printf("ineqs.size()=%d\n", ineqs.size());
 		// Iterate through the current descendant's affine inequalities
@@ -887,7 +883,7 @@ bool pCFG_contProcMatchAnalysis::initPSetDFfromPartCond_ex(
 		printf("      && partitionCond: %p %s\n", partitionCond, partitionCond->str("").c_str());
 	
 	// Update the constraint graph with the partition condition
-	modified = cg->andUpd(partitionCond) || modified;
+	modified = cg->andUpd(partitionCond, "    ") || modified;
 	
 	cg->transitiveClosure();
 	
@@ -956,7 +952,7 @@ void pCFG_contProcMatchAnalysis::mergePCFGStates(
 			cout << "mergePCFGStates() A freePSet="<<freePSet<<", usedPSet="<<usedPSet<<"\n";
 		
 		// Find the next process set id that is still going to be used
-		int nextHole;
+		unsigned int nextHole;
 		do
 		{
 			usedPSet++;
@@ -1431,7 +1427,7 @@ void pCFG_contProcMatchAnalysis::matchSendsRecvs(
 		
 		if(MPIAnalysisDebugLevel>0)
 			cout << "    matchSendsRecvs() n = "<<dfNode.str()<<"\n";
-		ROSE_ASSERT(!cg->isBottom());
+		ROSE_ASSERT(cg->isSelfConsistent());
 		
 		// Skip over process sets that are blocked on the end of the function
 		if(dfNode == funcCFGEnd)
@@ -1761,8 +1757,8 @@ void pCFG_contProcMatchAnalysis::splitProcs(
    splitRankSet.cgDisconnect();
    varID rankVarSplitPSet = rankVar;     rankVarSplitPSet.addAnnotation(getVarAnn(splitPSet), (void*)1);
 	varID nprocsVarSplitPSet = nprocsVar; nprocsVarSplitPSet.addAnnotation(getVarAnn(splitPSet), (void*)1);
-   cg->removeScalar(rankVarSplitPSet);
-   //cg->removeScalar(nprocsVarSplitPSet);
+   cg->removeVar(rankVarSplitPSet);
+   //cg->removeVar(nprocsVarSplitPSet);
 	
 	if(MPIAnalysisDebugLevel>0)
 	{
@@ -1827,8 +1823,8 @@ ConstrGraph* pCFG_contProcMatchAnalysis::createPSetCondition(
 	// Add the default process set invariants: [0<= lb <= ub < nprocsVar] and [lb <= rankVar <= ub]
 	// We use the original, un-annotated versions of rankSet, rankVar and nprocsVar
 	//    because this partition has not yet been assigned to a specific process set id
-	projCG->addScalar(rankVar);
-	projCG->addScalar(nprocsVar);
+	projCG->addVar(rankVar);
+	projCG->addVar(nprocsVar);
 	assertProcSetInvariants(projCG, rankSet, zeroVarAllPSets, rankVar, nprocsVar);
 	
 	otherProcs.cgDisconnect(projCG);
@@ -1869,24 +1865,24 @@ void pCFG_contProcMatchAnalysis::cleanProcSets(ConstrGraph* cg,
 //cout << "cleanProcSets rankVar = "<<pCFG_contProcMatchAnalysis::rankVar.str()<<"\n";
 	// Reset rankVar to be strictly inside the bounds of the rankSet: rankSet.lb <= rankVar <= rankSet.ub
 	cg->eraseVarConstr(pCFG_contProcMatchAnalysis::rankVar);
-	cg->addScalar(pCFG_contProcMatchAnalysis::rankVar);
+	cg->addVar(pCFG_contProcMatchAnalysis::rankVar);
 	cg->assertCond(rankSetPSet.getLB(), pCFG_contProcMatchAnalysis::rankVar, 1, 1, 0);
 	cg->assertCond(pCFG_contProcMatchAnalysis::rankVar, rankSetPSet.getUB(), 1, 1, 0);
 	
 	if(!badSet1.emptySet() && badSet1.validSet())
 	{
-		cg->removeScalar(badSet1.getLB());
-		cg->removeScalar(badSet1.getUB());
+		cg->removeVar(badSet1.getLB());
+		cg->removeVar(badSet1.getUB());
 	}
 	if(!badSet2.emptySet() && badSet2.validSet())
 	{
-		cg->removeScalar(badSet2.getLB());
-		cg->removeScalar(badSet2.getUB());
+		cg->removeVar(badSet2.getLB());
+		cg->removeVar(badSet2.getUB());
 	}
 	if(!badSet3.emptySet() && badSet3.validSet())
 	{
-		cg->removeScalar(badSet3.getLB());
-		cg->removeScalar(badSet3.getUB());
+		cg->removeVar(badSet3.getLB());
+		cg->removeVar(badSet3.getUB());
 	}
 //cout << "cleanProcSets After cg="<<cg->str()<<"\n";
 
