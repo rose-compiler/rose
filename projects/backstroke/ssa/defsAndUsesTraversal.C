@@ -176,14 +176,14 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 		}
 		else
 		{
-			//Guard agains unary ops that have no children (exception rethrow statement)
+			//Guard against unary ops that have no children (exception rethrow statement)
 			if (attrs.size() > 0)
 			{
 				uses.insert(uses.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
 			}
 		}
 
-		//For these two definition operations, we want to insert a def for the operand
+		//For these definition operations, we want to insert a def for the operand.
 		SgVarRefExp* currentVar = NULL;
 		if (isSgMinusMinusOp(unaryOp) || isSgPlusPlusOp(unaryOp))
 		{
@@ -214,9 +214,21 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 		//Return the combined uses
 		return ChildUses(uses, currentVar);
 	}
+	else if (isSgDeleteExp(node))
+	{
+		//Deleting a variable definitely modifies it.
+		ROSE_ASSERT(attrs.size() == 1);
+		SgVarRefExp* currentVar = attrs.front().getCurrentVar();
+		
+		if (currentVar != NULL)
+		{
+			addDefForVarAtNode(currentVar, node);
+			return ChildUses(attrs.front().getUses());
+		}
+	}
 	else if (isSgStatement(node))
 	{
-		//Don't propogate uses and defs up to the statement level
+		//Don't propagate uses and defs up to the statement level
 		return ChildUses();
 	}
 	else
