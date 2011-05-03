@@ -3050,6 +3050,10 @@ VariableRenaming::ChildUses VariableRenaming::DefsAndUsesTraversal::evaluateSynt
                         addDefForVarAtNode(currentVar, node);
                         return ChildUses(attrs.front().getUses());
                 }
+                else
+                {
+                        return ChildUses();
+                }
         }
         else if (isSgStatement(node))
         {
