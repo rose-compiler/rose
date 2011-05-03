@@ -225,6 +225,10 @@ ChildUses DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, Synth
 			addDefForVarAtNode(currentVar, node);
 			return ChildUses(attrs.front().getUses());
 		}
+        else
+        {
+            return ChildUses();
+        }
 	}
 	else if (isSgStatement(node))
 	{
