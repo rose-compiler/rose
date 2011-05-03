@@ -463,7 +463,7 @@ struct X86InstructionSemantics {
                         }
                     }
                     case x86_regclass_segment: {
-                        if (0!=rre->get_descriptor().get_offset() || 32!=rre->get_descriptor().get_nbits())
+                        if (0!=rre->get_descriptor().get_offset() || 16!=rre->get_descriptor().get_nbits())
                             throw Exception("size not implemented", current_instruction);
                         X86SegmentRegister sr = (X86SegmentRegister)(rre->get_descriptor().get_minor());
                         Word(16) value = policy.readSegreg(sr);
