@@ -51,7 +51,7 @@ printf("pCFG_contProcMatchAnalysis::genInitState() state=%p\n", &state);*/
 		sgnL[annotation] = dynamic_cast<FiniteVariablesProductLattice*>(state->getLatticeBelow(sgnAnalysis, 0));
 	}
 	// Create a constraint graph from the divisiblity and sign information at all the CFG nodes that make up this pCFG node
-	ConstrGraph* cg = new ConstrGraph(func, divL, sgnL, false);
+	ConstrGraph* cg = new ConstrGraph(func, func, n, state, ldva, divL, false, "    ");
 	
 	// Create a copy of each function-visible variable (except zeroVar) for each process set in n
 	set<pair<string, void*> > noCopyAnnots;

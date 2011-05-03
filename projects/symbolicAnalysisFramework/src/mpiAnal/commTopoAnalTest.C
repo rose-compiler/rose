@@ -52,13 +52,16 @@ int main( int argc, char * argv[] )
 	cgb.buildCallGraph();
 	SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
 	*/
+
+	liveDeadAnalysisDebugLevel = 0;
 	analysisDebugLevel = 0;
-	printf("*************************************************************\n");
-	printf("*****************   Live/Dead Variable Analysis   *****************\n");
-	printf("*************************************************************\n");
+	if(liveDeadAnalysisDebugLevel) {
+		printf("*************************************************************\n");
+		printf("*****************   Live/Dead Variable Analysis   *****************\n");
+		printf("*************************************************************\n");
+	}
 	LiveDeadVarsAnalysis ldva(project);
-	//SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
-	//ContextInsensitiveInterProceduralDataflow ciipd_da(&da, graph);
+	//ContextInsensitiveInterProceduralDataflow ciipd_da(&ldva, graph);
 	UnstructuredPassInterDataflow ciipd_ldva(&ldva);
 	ciipd_ldva.runAnalysis();
 	
@@ -72,18 +75,6 @@ int main( int argc, char * argv[] )
 	ciipd_da.runAnalysis();
 	
 	//printDivAnalysisStates(&da, "[");
-	
-	analysisDebugLevel = 0;
-	
-	printf("*************************************************************\n");
-	printf("*****************   Sign Analysis   *****************\n");
-	printf("*************************************************************\n");
-	SgnAnalysis sa;
-	//ContextInsensitiveInterProceduralDataflow ciipd_sa(&sa, graph);
-	UnstructuredPassInterDataflow ciipd_sa(&sa);
-	ciipd_sa.runAnalysis();
-	
-	//printSgnAnalysisStates(&sa, "|");
 	
 	analysisDebugLevel = 0;
 	

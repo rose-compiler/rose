@@ -27,6 +27,7 @@
 #include "procSet.h"
 
 #include "ConstrGraph.h"
+#include "liveDeadVarAnalysis.h"
 #include "pCFG.h"
 
 extern int MPIAnalysisDebugLevel;
@@ -38,8 +39,10 @@ extern int MPIAnalysisDebugLevel;
 class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 {
 	protected:
+	// The LiveDeadVarsAnalysis that identifies the live/dead state of all application variables.
+	// Needed to create a FiniteVarsExprsProductLattice.
+	LiveDeadVarsAnalysis* ldva; 
 	DivAnalysis* divAnalysis;
-	SgnAnalysis* sgnAnalysis;
 	public:
 	static varID rankVar;
 	static varID nprocsVar;
@@ -54,10 +57,11 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	static contRangeProcSet rankSet;
 	
 	public:
-	pCFG_contProcMatchAnalysis(DivAnalysis* divAnalysis, SgnAnalysis* sgnAnalysis)
+	pCFG_contProcMatchAnalysis(LiveDeadVarsAnalysis* ldva, DivAnalysis* divAnalysis)
 	{
+		this->ldva = ldva;
 		this->divAnalysis = divAnalysis;
-		this->sgnAnalysis = sgnAnalysis;
+		
 		// Make sure that rankSet is non-empty
 		//rankSet.makeNonEmpty();
 	}
@@ -65,8 +69,8 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	pCFG_contProcMatchAnalysis(const pCFG_contProcMatchAnalysis& that): 
 			pCFG_FWDataflow((const pCFG_FWDataflow&) that)
 	{
+		this->ldva = that.ldva;
 		this->divAnalysis = that.divAnalysis;
-		this->sgnAnalysis = that.sgnAnalysis;
 		// Make sure that rankSet is non-empty
 		//rankSet.makeNonEmpty();
 	}
