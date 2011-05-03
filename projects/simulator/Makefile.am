@@ -2,6 +2,7 @@
 # than Linux, this simulator is simply a main() that prints an error message and exits.
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+CFLAGS32 += -static
 
 # Forward declarations for "+="
 MOSTLYCLEANFILES=
