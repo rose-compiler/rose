@@ -1073,7 +1073,7 @@ MOSTLYCLEANFILES += $(PTHREAD_TEST_INPUTS) $(addsufix .o, $(PTHREAD_TEST_INPUTS)
 
 $(PTHREAD_TEST_INPUTS): %: $(srcdir)/pthread_tests/%.c
 	@echo "  CC32    $@"
-	@$(CC) -m32 -g -I$(srcdir)/pthread_tests -Wall -o $@ $^ -lpthread -lrt
+	@$(CC) $(CFLAGS32) -g -I$(srcdir)/pthread_tests -Wall -o $@ $^ -lpthread -lrt
 
 # Target to manually build the test inputs. (Not used internally)
 .PHONY: pthread_test_inputs
