@@ -98,6 +98,12 @@ int
 RSIM_Simulator::configure(int argc, char **argv, char **envp)
 {
     int argno = 1;
+
+    if (argno>=argc) {
+        fprintf(stderr, "usage: %s [SIMULATOR_SWITCHES...] [--] SPECIMEN [SPECIMEN_ARGS...]\n", argv[0]);
+        exit(1);
+    }
+
     while (argno<argc && '-'==argv[argno][0]) {
         if (!strcmp(argv[argno], "--")) {
             argno++;
@@ -262,6 +268,8 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
 int
 RSIM_Simulator::exec(int argc, char **argv)
 {
+    assert(argc>0);
+
     create_process();
 
     SgAsmGenericHeader *fhdr = process->load(argv[0]);
