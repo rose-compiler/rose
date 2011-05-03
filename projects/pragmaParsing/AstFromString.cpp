@@ -3,6 +3,8 @@
  */
 #include "AstFromString.h"
 #include <string>
+#include <algorithm>
+
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -486,9 +488,18 @@ namespace AstFromString
   }
 
   // decode the simplest first
-  bool decode_list (const std::vector<SgNode*>& sq_list)
+  // the qualifer_specifier_list needs special attention
+  // **The original grammar is too naive*** 
+  // We can actual avoid much of this trouble if we used a better grammar. **
+
+  // the match function only saves the last matched qualifier/specifier in c_parsed_node
+  // we need to adjust the real c_parsed_node according to the combination in sq_list
+  //
+  // for example "long int" will result int type in c_parsed_node,
+  // we need to search sq_list for long and adjust c_parsed_node to be "long int" 
+  //TODO consider more complex point type case!!
+  bool decode_list (std::vector<SgNode*>& sq_list) // const vector <> & will not work with std::find() !!!
   {
-    bool result = false;
     if (sq_list.size() ==0)
     {
       printf("error in AstFromString::decode_list(): empty list!\n");  
@@ -500,22 +511,195 @@ namespace AstFromString
       // Others: void, float, double, TODO: struct/union, enum, TYPE_NAME
       // const/volatile modifier
       //c_parsed_node is the result
-      result = true;
+      return true;
     }
-    else
-    { 
-      // 5 integer types signed (optional)/ unsigned
-      //   char, 
-      //   int, short int, long int, long long int
-      // other types: void, float , double, TODO: struct/union, enum, TYPE_NAME
-      // const/volatile modifier (optional)
 
-      // 2 or more items
-      printf("error: AstFromString::decode_list(): not handled case.\n");
-      assert (0);
-    }  
+    // 2 or more items
 
-    return result;
+    // step 1: has one of 5 integer types? 
+    //--------------------------
+    //   char, 
+    //   int, short int, long int, long long int
+    //    with optional:  signed (optional)/ unsigned
+    //  we also treat long double here for convenience.
+    bool has_char = false;
+    bool has_int= false;
+    bool has_double= false;
+
+    vector<SgNode*>::iterator iter;
+    SgNode * target;
+    target = buildCharType();
+    iter  = find (sq_list.begin(), sq_list.end(), target);
+    if (iter != sq_list.end())
+      has_char = true;
+    target = buildIntType();
+    iter  = find(sq_list.begin(), sq_list.end(), target);
+    if (iter != sq_list.end())
+      has_int = true; 
+    target = buildDoubleType();
+    iter  = find(sq_list.begin(), sq_list.end(), target);
+    if (iter != sq_list.end())
+      has_double = true; 
+    assert ( int(has_char) + int(has_int) + int(has_double) <=1); // cannot have more than one base types
+
+    // handle "short int": optional last match of 'int' only return int type to us
+    if (find(sq_list.begin(), sq_list.end(), buildShortType()) != sq_list.end())
+    {
+      //assert (isSgTypeInt(c_parsed_node) != NULL);
+      c_parsed_node = buildShortType();
+    }
+
+    // Handle  "long int", "long double"  "long long int"
+    target = buildLongType();
+    iter  = find(sq_list.begin(), sq_list.end(),target);
+    if (iter != sq_list.end())
+    {
+      // long long? followed by optional "int"
+      if ((*(iter++)) == buildLongType())
+      {
+	//assert (isSgTypeInt(c_parsed_node) != NULL);
+	c_parsed_node = buildLongLongType();
+      }
+      else // single "long"
+      {
+	//could be long , long int, or long double
+	if (has_int)
+	{
+	  assert (isSgTypeInt(c_parsed_node) != NULL);
+	  c_parsed_node = buildLongType();
+	}
+	else if (has_double)
+	{
+	  assert (isSgTypeDouble(c_parsed_node) != NULL);
+	  c_parsed_node = buildLongDoubleType();
+	}
+	else
+	{
+	  printf("Error: AstFromString::decode_list(), found 'long' without companying 'int' or 'double'\n"); 
+	  assert (0);
+	}
+
+      } 
+    }
+
+    // handle optional signed /usngined 
+    bool has_signed = false;
+    bool has_unsigned = false;
+    if ( find(sq_list.begin(), sq_list.end(), buildSignedLongLongType())!= sq_list.end())
+      has_signed = true; 
+    if ( find(sq_list.begin(), sq_list.end(), buildUnsignedLongLongType())!= sq_list.end())
+      has_unsigned = true; 
+    assert (! (has_signed && has_unsigned));
+
+    // This has to be done after the adjustment of short int, long int, etc
+    if (has_int || has_char)
+    {
+      // we internally use signed long long to indicate a match of "signed"
+      switch (c_parsed_node ->variantT())
+      {
+	case V_SgTypeChar:
+	  {
+	    if (has_signed)
+	      c_parsed_node = buildSignedCharType();
+	    else if (has_unsigned)
+	      c_parsed_node = buildUnsignedCharType();
+	    // nothing further if no adjustment is needed
+	    break;
+	  }
+	case V_SgTypeInt:
+	  {
+	    if (has_signed)
+	      c_parsed_node = buildSignedIntType();
+	    else if (has_unsigned)
+	      c_parsed_node = buildUnsignedIntType();
+	    break;
+	  }
+	case V_SgTypeLong:
+	  {
+	    if (has_signed)
+	      c_parsed_node = buildSignedLongType();
+	    else if (has_unsigned)
+	      c_parsed_node = buildUnsignedLongType();
+	    break;
+	  }
+	case V_SgTypeLongLong:
+	  {
+	    if (has_signed)
+	      c_parsed_node = buildSignedLongLongType();
+	    else if (has_unsigned)
+	      c_parsed_node = buildUnsignedLongLongType();
+	    break;
+	  }
+	case V_SgTypeShort:
+	  {
+	    if (has_signed)
+	      c_parsed_node = buildSignedShortType();
+	    else if (has_unsigned)
+	      c_parsed_node = buildUnsignedShortType();
+	    break;
+	  }
+#if 1
+	case V_SgTypeUnsignedLongLong:
+	case V_SgTypeSignedLongLong:
+	  {
+	    // we don't need additional sign/unsign on top of these two types
+	    break;
+	  }
+#endif
+	default:
+	  {
+	    if (has_signed || has_unsigned)
+	    {
+	      cerr<<"Error: AstFromString::decode_list(), illegal use  of 'signed' with type: "<<c_parsed_node->class_name()<<endl;
+	      assert (0);
+	    }
+	  }
+      }
+    } // end of if (has_int || has_char)
+
+    // step 2: other types, no special treatment so far: 
+    //--------------------------
+    // void, float , double (treated as part for long in step 1 already), TODO: struct/union, enum, TYPE_NAME
+
+    // step 3: handle qualifier: const/volatile SgConstVolatileModifier
+    // c_parsed_node only keep the last match: "const char" will return char type only 
+    //--------------------------
+    assert (sq_list.size() > 1);
+    bool has_const = false;
+    bool has_volatile= false;
+    for (iter = sq_list.begin(); iter != sq_list.end(); iter ++)
+    {
+      SgNode * cur_node = *iter;
+      if (SgConstVolatileModifier* mod = isSgConstVolatileModifier(cur_node))
+      {
+	if (mod->isConst())
+	{
+	  assert (has_const == false); // can only match once
+	  has_const = true;
+	}
+	else if (mod->isVolatile())
+	{
+	  assert (has_volatile== false); // can only match once
+	  has_volatile= true;
+	}
+      }// end if
+    } // end for 
+    // it is legal to have both const and volatile modifiers
+    if (has_const)
+    {
+      SgType* base_type = isSgType(c_parsed_node);
+      assert (base_type != NULL);
+      c_parsed_node = buildConstType(base_type);
+    } 
+    if (has_volatile)
+    {
+      SgType* base_type = isSgType(c_parsed_node);
+      assert (base_type != NULL);
+      c_parsed_node = buildVolatileType(base_type);
+    } 
+
+
+    return true;
   }
   /*
      Yacc Grammar: 

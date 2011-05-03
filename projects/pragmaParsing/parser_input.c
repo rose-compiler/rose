@@ -18,4 +18,6 @@ int foo();
 int foo();
 #pragma CUDA (place2++)++ dim ((3,2,place1!=place2), 4/bar(), place1+5*place2)
 int foo();
+#pragma CUDA place1 autodim (sizeof(short int), sizeof(unsigned char), sizeof(signed long long), sizeof(const volatile float))
+int foo();
 

@@ -939,7 +939,7 @@ if !ROSE_USE_INSURE
 	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
-	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; exit 1; fi
+	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; ../../testTranslator --help > /dev/null; echo "Fixed"; fi
 	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
 	./testTranslator_$(@:.o=) $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
 	echo "Removing the just built copy of lt-testTranslator to save space..."
