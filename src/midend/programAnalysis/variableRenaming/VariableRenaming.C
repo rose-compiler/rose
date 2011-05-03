@@ -3039,6 +3039,18 @@ VariableRenaming::ChildUses VariableRenaming::DefsAndUsesTraversal::evaluateSynt
                 //Return the combined uses
                 return ChildUses(uses, currentVar);
         }
+        else if (isSgDeleteExp(node))
+        {
+                //Deleting a variable definitely modifies it.
+                ROSE_ASSERT(attrs.size() == 1);
+                SgVarRefExp* currentVar = attrs.front().getCurrentVar();
+
+                if (currentVar != NULL)
+                {
+                        addDefForVarAtNode(currentVar, node);
+                        return ChildUses(attrs.front().getUses());
+                }
+        }
         else if (isSgStatement(node))
         {
                 //Don't propogate uses and defs up to the statement level
