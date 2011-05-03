@@ -1,22 +1,15 @@
-######################################################
-# These are C+ testcodes targeting aspects of both C #
-# and C++ that can be compiled using a C++ compiler  #
-#                                                    #
-# This Makefile stub defines the macro:              #
-#                                                    #
-#   EXAMPLE_TESTCODES_REQUIRED_TO_PASS               #
-#     A list of all possible example test codes that #
-#     should pass.                                   #
-#                                                    #
-#   EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT         #
-#     A shorter list for faster testing.             #
-#                                                    #
-######################################################
 
-# 
-#  test2010_17.C 
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-test_CplusplusMacro_Cpp.C \
+CXX_TESTS_TO_CHECK = \
+certSignalExample.C \
+c++trick.C \
+dataMemberOfConst.C \
+inputBug317.C \
+inputBug327.C \
+inputForLoopLocator.C \
+lexPhase2003_01.C \
+lexPhase2003_02.C \
+longFile.C \
+math.C \
 test2001_01.C \
 test2001_02.C \
 test2001_03.C \
@@ -47,6 +40,7 @@ test2001_27.C \
 test2001_28.C \
 test2001_29.C \
 test2002_01.C \
+test2003_01.C \
 test2003_02.C \
 test2003_03.C \
 test2003_04.C \
@@ -67,6 +61,7 @@ test2003_19.C \
 test2003_20.C \
 test2003_21.C \
 test2003_23.C \
+test2003_24.C \
 test2003_25.C \
 test2003_26.C \
 test2003_27.C \
@@ -100,6 +95,7 @@ test2004_18.C \
 test2004_19.C \
 test2004_23.C \
 test2004_24.C \
+test2004_25.C \
 test2004_26.C \
 test2004_27.C \
 test2004_28.C \
@@ -152,6 +148,7 @@ test2004_78.C \
 test2004_79.C \
 test2004_80.C \
 test2004_81.C \
+test2004_82.C \
 test2004_83.C \
 test2004_84.C \
 test2004_85.C \
@@ -240,6 +237,7 @@ test2005_05.C \
 test2005_06.C \
 test2005_07.C \
 test2005_08.C \
+test2005_09.C \
 test2005_10.C \
 test2005_11.C \
 test2005_12.C \
@@ -284,6 +282,7 @@ test2005_51.C \
 test2005_52.C \
 test2005_53.C \
 test2005_55.C \
+test2005_56.C \
 test2005_57.C \
 test2005_58.C \
 test2005_59.C \
@@ -296,6 +295,7 @@ test2005_65.C \
 test2005_66.C \
 test2005_67.C \
 test2005_68.C \
+test2005_69.C \
 test2005_70.C \
 test2005_71.C \
 test2005_72.C \
@@ -312,6 +312,7 @@ test2005_81.C \
 test2005_82.C \
 test2005_83.C \
 test2005_84.C \
+test2005_85.C \
 test2005_86.C \
 test2005_87.C \
 test2005_88.C \
@@ -330,6 +331,7 @@ test2005_100.C \
 test2005_101.C \
 test2005_102.C \
 test2005_103.C \
+test2005_104.C \
 test2005_105.C \
 test2005_106.C \
 test2005_107.C \
@@ -340,6 +342,7 @@ test2005_111.C \
 test2005_112.C \
 test2005_113.C \
 test2005_114.C \
+test2005_115.C \
 test2005_116.C \
 test2005_117.C \
 test2005_118.C \
@@ -375,6 +378,7 @@ test2005_147.C \
 test2005_148.C \
 test2005_149.C \
 test2005_150.C \
+test2005_151.C \
 test2005_152.C \
 test2005_153.C \
 test2005_154.C \
@@ -390,8 +394,8 @@ test2005_163.C \
 test2005_164.C \
 test2005_165.C \
 test2005_166.C \
-test2005_168.C \
 test2005_167.C \
+test2005_168.C \
 test2005_169.C \
 test2005_170.C \
 test2005_171.C \
@@ -410,6 +414,7 @@ test2005_183.C \
 test2005_184.C \
 test2005_185.C \
 test2005_187.C \
+test2005_188.C \
 test2005_189.C \
 test2005_190.C \
 test2005_191.C \
@@ -421,8 +426,12 @@ test2005_196.C \
 test2005_197.C \
 test2005_198.C \
 test2005_199.C \
+test2005_200.C \
+test2005_201.C \
 test2005_202.C \
 test2005_203.C \
+test2005_204.C \
+test2005_205.C \
 test2005_206.C \
 test2005_207.C \
 test2005_208.C \
@@ -435,29 +444,40 @@ test2006_05.C \
 test2006_06.C \
 test2006_07.C \
 test2006_08.C \
+test2006_09.C \
 test2006_10.C \
+test2006_11.C \
 test2006_12.C \
 test2006_13.C \
 test2006_14.C \
+test2006_15.C \
 test2006_16.C \
 test2006_17.C \
 test2006_18.C \
 test2006_19.C \
 test2006_20.C \
+test2006_21.C \
 test2006_22.C \
 test2006_23.C \
+test2006_24.C \
 test2006_25.C \
 test2006_26.C \
+test2006_27.C \
 test2006_28.C \
+test2006_33.C \
 test2006_34.C \
+test2006_35.C \
+test2006_36.C \
 test2006_37.C \
 test2006_38.C \
 test2006_39.C \
 test2006_40.C \
 test2006_41.C \
 test2006_42.C \
+test2006_44.C \
 test2006_46.C \
 test2006_47.C \
+test2006_49.C \
 test2006_50.C \
 test2006_52.C \
 test2006_53.C \
@@ -467,9 +487,11 @@ test2006_56.C \
 test2006_57.C \
 test2006_58.C \
 test2006_59.C \
+test2006_60.C \
 test2006_61.C \
 test2006_62.C \
 test2006_63.C \
+test2006_64.C \
 test2006_66.C \
 test2006_67.C \
 test2006_68.C \
@@ -529,7 +551,13 @@ test2006_123.C \
 test2006_124.C \
 test2006_125.C \
 test2006_126.C \
+test2006_127.C \
+test2006_128.C \
 test2006_129.C \
+test2006_130.C \
+test2006_131.C \
+test2006_137.C \
+test2006_138.C \
 test2006_139.C \
 test2006_140.C \
 test2006_141.C \
@@ -546,6 +574,10 @@ test2006_151.C \
 test2006_152.C \
 test2006_153.C \
 test2006_154.C \
+test2006_155.C \
+test2006_156.C \
+test2006_157.C \
+test2006_158.C \
 test2006_159.C \
 test2006_160.C \
 test2006_161.C \
@@ -554,12 +586,28 @@ test2006_163.C \
 test2006_164.C \
 test2006_165.C \
 test2006_166.C \
+test2006_167.C \
+test2006_168.C \
+test2006_169.C \
+test2006_170.C \
+test2006_171.C \
+test2006_172.C \
+test2006_173.C \
+test2006_174.C \
+test2006_175.C \
+test2006_176.C \
 test2006_177.C \
 test2006_178.C \
 test2006_179.C \
+test2006_180.C \
 test2006_181.C \
+test2006_182.C \
 test2006_183.C \
+test2006_184.C \
 test2006_185.C \
+test2006_186.C \
+test2006_187.C \
+test2006_188.C \
 test2006_189.C \
 test2007_01.C \
 test2007_02.C \
@@ -575,20 +623,37 @@ test2007_11.C \
 test2007_12.C \
 test2007_13.C \
 test2007_14.C \
+test2007_15.C \
 test2007_16.C \
 test2007_17.C \
+test2007_18.C \
+test2007_19.C \
+test2007_20.C \
 test2007_21.C \
+test2007_22.C \
 test2007_23.C \
 test2007_24.C \
 test2007_25.C \
 test2007_26.C \
+test2007_27.C \
 test2007_28.C \
 test2007_29.C \
+test2007_30.C \
+test2007_31.C \
+test2007_32.C \
+test2007_33.C \
+test2007_34.C \
+test2007_35.C \
+test2007_36.C \
+test2007_37.C \
 test2007_38.C \
+test2007_39.C \
 test2007_40.C \
 test2007_41.C \
+test2007_42.C \
 test2007_43.C \
 test2007_44.C \
+test2007_45.C \
 test2007_46.C \
 test2007_47.C \
 test2007_48.C \
@@ -597,39 +662,109 @@ test2007_50.C \
 test2007_51.C \
 test2007_52.C \
 test2007_53.C \
+test2007_54.C \
 test2007_55.C \
+test2007_56.C \
 test2007_57.C \
+test2007_58.C \
 test2007_59.C \
+test2007_60.C \
+test2007_61.C \
 test2007_62.C \
+test2007_63.C \
+test2007_64.C \
+test2007_65.C \
+test2007_66.C \
+test2007_67.C \
+test2007_68.C \
+test2007_69.C \
 test2007_70.C \
+test2007_71.C \
 test2007_72.C \
+test2007_73.C \
+test2007_74.C \
 test2007_75.C \
+test2007_76.C \
 test2007_77.C \
 test2007_78.C \
+test2007_79.C \
+test2007_80.C \
 test2007_81.C \
 test2007_82.C \
 test2007_83.C \
 test2007_84.C \
 test2007_85.C \
+test2007_86.C \
+test2007_87.C \
+test2007_88.C \
+test2007_89.C \
 test2007_90.C \
+test2007_91.C \
+test2007_92.C \
+test2007_93.C \
 test2007_94.C \
+test2007_95.C \
+test2007_96.C \
+test2007_97.C \
 test2007_98.C \
+test2007_99.C \
+test2007_100.C \
+test2007_101.C \
 test2007_102.C \
 test2007_103.C \
+test2007_104.C \
+test2007_105.C \
+test2007_106.C \
+test2007_107.C \
+test2007_108.C \
+test2007_109.C \
+test2007_110.C \
+test2007_111.C \
+test2007_112.C \
+test2007_113.C \
+test2007_114.C \
+test2007_115.C \
+test2007_116.C \
+test2007_117.C \
+test2007_118.C \
+test2007_119.C \
+test2007_120.C \
+test2007_121.C \
+test2007_122.C \
+test2007_123.C \
+test2007_124.C \
+test2007_125.C \
+test2007_126.C \
+test2007_127.C \
 test2007_128.C \
+test2007_129.C \
 test2007_130.C \
+test2007_131.C \
+test2007_132.C \
 test2007_133.C \
+test2007_134.C \
 test2007_135.C \
+test2007_136.C \
 test2007_137.C \
+test2007_138.C \
+test2007_139.C \
 test2007_140.C \
 test2007_141.C \
 test2007_142.C \
+test2007_143.C \
+test2007_144.C \
+test2007_145.C \
+test2007_146.C \
 test2007_147.C \
+test2007_148.C \
+test2007_149.C \
 test2007_150.C \
 test2007_151.C \
 test2007_152.C \
+test2007_153.C \
 test2007_154.C \
 test2007_155.C \
+test2007_156.C \
 test2007_157.C \
 test2007_158.C \
 test2007_159.C \
@@ -641,16 +776,22 @@ test2007_164.C \
 test2007_165.C \
 test2007_166.C \
 test2007_167.C \
+test2007_168.C \
 test2007_169.C \
 test2007_170.C \
 test2007_171.C \
 test2007_172.C \
 test2007_173.C \
+test2007_174.C \
+test2007_175.C \
+test2007_176.C \
 test2008_01.C \
+test2008_02.C \
 test2008_03.C \
 test2008_04.C \
 test2008_05.C \
 test2008_06.C \
+test2008_07.C \
 test2008_08.C \
 test2008_09.C \
 test2008_10.C \
@@ -658,6 +799,7 @@ test2008_11.C \
 test2008_12.C \
 test2008_13.C \
 test2008_14.C \
+test2008_15.C \
 test2008_16.C \
 test2009_01.C \
 test2009_02.C \
@@ -665,113 +807,101 @@ test2009_03.C \
 test2009_04.C \
 test2009_05.C \
 test2009_06.C \
+test2009_07.C \
 test2009_08.C \
 test2009_09.C \
 test2009_10.C \
 test2009_11.C \
 test2009_12.C \
+test2009_13.C \
 test2009_14.C \
 test2009_15.C \
+test2009_16.C \
+test2009_17.C \
 test2009_18.C \
 test2009_19.C \
 test2009_20.C \
 test2009_21.C \
+test2009_22.C \
+test2009_23.C \
 test2009_24.C \
+test2009_25.C \
+test2009_26.C \
 test2009_27.C \
 test2009_28.C \
+test2009_29.C \
 test2009_30.C \
 test2009_31.C \
+test2009_32.C \
+test2009_33.C \
+test2009_34.C \
+test2009_35.C \
+test2009_36.C \
 test2009_37.C \
+test2009_38.C \
 test2009_39.C \
 test2009_40.C \
 test2009_41.C \
 test2009_42.C \
+test2009_43.C \
+test2009_44.C \
+test2009_45.C \
+test2009_46.C \
+test2009_47.C \
+test2010_01.C \
+test2010_02.C \
 test2010_03.C \
 test2010_04.C \
 test2010_05.C \
 test2010_06.C \
+test2010_07.C \
+test2010_08.C \
+test2010_09.C \
+test2010_10.C \
+test2010_11.C \
+test2010_12.C \
+test2010_13.C \
+test2010_14.C \
+test2010_15.C \
+test2010_16.C \
+test2010_17.C \
 test2010_18.C \
 test2010_19.C \
+test2010_20.C \
+test2010_21.C \
+test2010_22.C \
+test2010_23.C \
+test2010_24.C \
+test2010_25.C \
+test2010_26.C \
+test2010_27.C \
 test2011_01.C \
 test2011_02.C \
 test2011_05.C \
 test2011_06.C \
 test2011_07.C \
+test2011_08.C \
+test.C \
+test_CplusplusMacro_C.C \
+test_CplusplusMacro_Cpp.C \
+test_gnu.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
 test_wchars.C \
-lexPhase2003_01.C \
-math.C \
-inputForLoopLocator.C \
-X.C \
-inputBug317.C \
-inputBug327.C \
-test2003_01.C \
-test2005_09.C \
-test2005_104.C \
-test2006_155.C \
-test2006_156.C \
-test2006_157.C \
-test2006_158.C \
-test2007_15.C \
-test2010_24.C \
-test2010_25.C
+X.C
 
-if !ROSE_USE_INSURE
-# This test code fails with Insure++
-   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-      test2003_24.C \
-      test2004_82.C
-endif
 
-# DQ (2/12/2011): This test fails for the astFileIO tests in tests/roseTests/astFileIOTests.
-# test2011_08.C 
+$(CXX_TESTS_TO_CHECK): ./EDG_4_x_Translator
+	@cp $(srcdir)/../Cxx_tests/$@ $@
+	@if ./EDG_4_x_Translator $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -c $@ &> /dev/null; then \
+	  echo 1 $@ >> Cxx-tests.lst; \
+	else \
+	  echo 0 $@ >> Cxx-tests.lst; \
+	fi;
+	@rm -f $@
 
-# DQ (6/25/2010): Removed as part of testing!
-# test2003_01.C 
-# test2005_09.C 
-# test2005_104.C 
-# test2006_155.C 
-# test2006_156.C
-# test2006_157.C 
-# test2006_158.C 
-# test2007_15.C 
+check-Cxxtests:
+	@rm -f Cxx-tests.lst
+	@$(MAKE) $(CXX_TESTS_TO_CHECK)
 
-OLD_LIST = test2009_20.C \
-test2009_30.C \
-test2009_31.C \
-test_int_lexemes.C \
-test_int_lexemes_donot_pass.C \
-test_simple_int.C \
-test_wchars.C \
-lexPhase2003_01.C \
-math.C \
-inputForLoopLocator.C \
-X.C \
-inputBug317.C \
-inputBug327.C
-
-if !OS_MACOSX
-#	DQ (1/12/2010): This appears to fail under Mac OSX (at least version 10.5).
-   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += test2006_44.C
-endif
-
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT = \
-test2001_02.C \
-test2001_03.C \
-test2004_116.C
-
-# DQ (1/5/2009): This test fails only in the ROSE/tests/CompileTests/virtualCFG_tests directory.
-# test2009_35.C
-
-# DQ (10/5/2007): Previous problems fixed, this is a remaining problem.
-# 
-# test2005_205.C
-# test2007_95.C -- JJW 3-3-2008 gcc doesn't accept this code, and the stuff in ROSE to allow it broke Naim
-
-# DQ (1/8/2008): This does not pass the tests in: tests/roseTests/astOutliningTests
-# test2007_169.C 
-
-# JJW 5-22-2008 This is not portable to Mac OS X
-# test2006_44.C

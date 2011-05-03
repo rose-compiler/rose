@@ -720,7 +720,10 @@ mangleTranslationUnitQualifiers (const SgDeclarationStatement* decl)
    {
      if (declarationHasTranslationUnitScope(decl))
         {
-          return "_file_id_" + StringUtility::numberToString(SageInterface::getEnclosingFileNode(const_cast<SgDeclarationStatement *>(decl))->get_file_info()->get_file_id()) + "_";
+          // TV (04/22/11): I think 'decl' will refer to the same file_id than is enclosing file.
+          //         And as in EDGrose file and global scope are linked after the building of the global scope...
+          return "_file_id_" + StringUtility::numberToString(decl->get_file_info()->get_file_id()) + "_";
+          //return "_file_id_" + StringUtility::numberToString(SageInterface::getEnclosingFileNode(const_cast<SgDeclarationStatement *>(decl))->get_file_info()->get_file_id()) + "_";
         }
      else
         {
