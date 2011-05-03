@@ -261,20 +261,18 @@ RSIM_Process::load(const char *name)
         exename = strrchr(name, '/')+1;
         exeargs.push_back(std::string(name));
     } else {
-        const char *path_env = getenv("PATH");
-        if (path_env) {
-            std::string s = path_env;
-            boost::regex re;
-            re.assign("[:;]");
-            boost::sregex_token_iterator iter(s.begin(), s.end(), re, -1);
-            boost::sregex_token_iterator iterEnd;
-            for (; iter!=iterEnd; ++iter) {
-                std::string fullname = *iter + "/" + name;
-                if (access(fullname.c_str(), R_OK)>=0) {
-                    exename = name;
-                    exeargs.push_back(fullname);
-                    break;
-                }
+        assert(getenv("PATH")!=NULL);
+        std::string path_env = getenv("PATH");
+        size_t len;
+        for (size_t pos=0; pos!=std::string::npos && pos<path_env.size(); pos+=len+1) {
+            size_t colon = path_env.find_first_of(":;", pos);
+            len = colon==std::string::npos ? path_env.size()-pos : colon-pos;
+            std::string path = path_env.substr(pos, len);
+            std::string fullname = path + "/" + name;
+            if (access(fullname.c_str(), R_OK)>=0) {
+                exename = name;
+                exeargs.push_back(fullname);
+                break;
             }
         }
     }
