@@ -459,6 +459,25 @@ print_msghdr_32(RTS_Message *m, const uint8_t *_v, size_t sz)
 }
 
 void
+print_new_utsname_32(RTS_Message *m, const uint8_t *_v, size_t sz)
+{
+    assert(sizeof(new_utsname_32)==sz);
+    const new_utsname_32 *v = (const new_utsname_32*)_v;
+    m->more("sysname=");
+    print_string(m, v->sysname);
+    m->more(", nodename=");
+    print_string(m, v->nodename);
+    m->more(", release=");
+    print_string(m, v->release);
+    m->more(", version=");
+    print_string(m, v->version);
+    m->more(", machine=");
+    print_string(m, v->machine);
+    m->more(", domainname=");
+    print_string(m, v->domainname);
+}
+
+void
 convert(statfs_32 *g, const statfs64_native *h)
 {
     memset(g, 0, sizeof(*g));

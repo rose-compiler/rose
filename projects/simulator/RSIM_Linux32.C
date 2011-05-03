@@ -178,6 +178,7 @@ static void syscall_clone(RSIM_Thread *t, int callno);
 static void syscall_clone_leave(RSIM_Thread *t, int callno);
 static void syscall_uname_enter(RSIM_Thread *t, int callno);
 static void syscall_uname(RSIM_Thread *t, int callno);
+static void syscall_uname_leave(RSIM_Thread *t, int callno);
 static void syscall_fchdir_enter(RSIM_Thread *t, int callno);
 static void syscall_fchdir(RSIM_Thread *t, int callno);
 static void syscall_mprotect_enter(RSIM_Thread *t, int callno);
@@ -354,7 +355,7 @@ RSIM_Linux32::ctor()
     SC_REG(118, fsync,                          default);
     SC_REG(119, sigreturn,                      sigreturn);
     SC_REG(120, clone,                          clone);
-    SC_REG(122, uname,                          default);               // FIXME: probably needs an explicit leave
+    SC_REG(122, uname,                          uname);
     SC_REG(125, mprotect,                       mprotect);
     SC_REG(133, fchdir,                         default);
     SC_REG(140, llseek,                         default);
@@ -3574,6 +3575,12 @@ syscall_uname(RSIM_Thread *t, int callno)
 
     ROSE_ASSERT(nwritten==sizeof buf);
     t->syscall_return(0);
+}
+
+static void
+syscall_uname_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("dP", sizeof(new_utsname_32), print_new_utsname_32);
 }
 
 /*******************************************************************************************************************************/

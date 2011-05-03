@@ -1239,6 +1239,16 @@ struct sched_param_32 {
     int32_t sched_priority;
 } __attribute__((packed));
 
+/* Kernel's struct new_utsname on i386 */
+struct new_utsname_32 {
+    char sysname[65];
+    char nodename[65];
+    char release[65];
+    char version[65];
+    char machine[65];
+    char domainname[65];
+} __attribute__((packed));
+
 /* Conversion functions */
 void convert(statfs_32 *g, const statfs64_native *h);
 void convert(statfs_32 *g, const statfs_native *h);
@@ -1278,5 +1288,6 @@ void print_exit_status_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_siginfo_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_sched_param_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_msghdr_32(RTS_Message *f, const uint8_t *_v, size_t sz);
+void print_new_utsname_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 
 #endif /* ROSE_RSIM_Common_H */
