@@ -67,6 +67,9 @@ public:
         abort();
     }
 
+    /* Called by X86InstructionSemantics for the CPUID instruction */
+    void cpuid();
+
     /* Called by X86InstructionSemantics for the INT instruction */
     void interrupt(uint8_t num);
 

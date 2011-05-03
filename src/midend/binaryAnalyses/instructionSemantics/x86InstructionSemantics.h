@@ -2472,6 +2472,13 @@ struct X86InstructionSemantics {
                 break;
             }
 
+            case x86_cpuid: {
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
+                policy.cpuid();
+                break;
+            }
+
             case x86_rdtsc: {
                 if (operands.size()!=0)
                     throw Exception("instruction must have no operands", insn);

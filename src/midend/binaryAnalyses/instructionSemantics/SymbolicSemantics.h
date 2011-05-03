@@ -528,6 +528,9 @@ namespace SymbolicSemantics {
         /** Called only for the HLT instruction. */
         void hlt() {} // FIXME
 
+        /** Called only for the CPUID instruction. */
+        void cpuid() {} // FIXME
+
         /** Called only for the RDTSC instruction. */
         ValueType<64> rdtsc() {
             return ValueType<64>((uint64_t)0);

@@ -40,6 +40,29 @@ RSIM_SemanticPolicy::interrupt(uint8_t num)
 }
 
 void
+RSIM_SemanticPolicy::cpuid()
+{
+    fprintf(stderr, "CPUID\n");
+
+    int code = readGPR(x86_gpr_ax).known_value();
+
+    uint32_t dwords[4];
+    asm volatile("cpuid"
+                 :
+                 "=a"(*(dwords+0)),
+                 "=b"(*(dwords+1)),
+                 "=c"(*(dwords+2)),
+                 "=d"(*(dwords+3))
+                 :
+                 "0"(code));
+
+    writeGPR(x86_gpr_ax, number<32>(dwords[0]));
+    writeGPR(x86_gpr_bx, number<32>(dwords[1]));
+    writeGPR(x86_gpr_cx, number<32>(dwords[2]));
+    writeGPR(x86_gpr_dx, number<32>(dwords[3]));
+}
+
+void
 RSIM_SemanticPolicy::sysenter()
 {
     thread->emulate_syscall();
