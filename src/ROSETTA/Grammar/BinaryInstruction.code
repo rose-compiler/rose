@@ -1159,7 +1159,8 @@ HEADER_GENERIC_SYMBOL_START
 			SYM_ARRAY,              /* Array of some other type */
 			SYM_TLS,                /* Thread-local storage */
 			SYM_REGISTER,           /* CPU register value (see Sparc) */
-			SYM_COMMON		/* Common block */
+			SYM_COMMON,		/* Common block */
+			SYM_IFUNC,		/* Indirection function */
 		};
 
 		enum SymbolBinding {
@@ -2347,7 +2348,8 @@ HEADER_ELF_SYMBOL_START
 			STT_SECTION 	= 3,	/* associated with a section */
 			STT_FILE    	= 4,	/* name of a file */
 			STT_COMMON  	= 5,	/* common data object */
-			STT_TLS		= 6	/* thread-local data object */
+			STT_TLS		= 6,	/* thread-local data object */
+			STT_IFUNC	= 10	/* indirect function (function call w/out args results in reloc value) */
 		};
 
 #ifdef _MSC_VER
