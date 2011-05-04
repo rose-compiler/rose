@@ -42,8 +42,6 @@ RSIM_SemanticPolicy::interrupt(uint8_t num)
 void
 RSIM_SemanticPolicy::cpuid()
 {
-    fprintf(stderr, "CPUID\n");
-
     int code = readGPR(x86_gpr_ax).known_value();
 
     uint32_t dwords[4];
@@ -55,6 +53,15 @@ RSIM_SemanticPolicy::cpuid()
                  "=d"(*(dwords+3))
                  :
                  "0"(code));
+
+    /* Change "GenuineIntel" to "Genuine ROSE". Doing so should cause the caller to not execute any further CPUID
+     * instructions since there's no well-known definition for the rest of our CPUID semantics. */
+    if (0==code) {
+        dwords[3] &= 0x00ffffff; dwords[3] |= 0x20000000;           /* ' ' */
+        dwords[2] =  0x45534f52;                                    /* "ROSE" */
+    } else {
+        fprintf(stderr, "CPUID-%d probably should not have been executed!", code);
+    }
 
     writeGPR(x86_gpr_ax, number<32>(dwords[0]));
     writeGPR(x86_gpr_bx, number<32>(dwords[1]));

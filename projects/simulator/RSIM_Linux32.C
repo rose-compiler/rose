@@ -3569,6 +3569,10 @@ syscall_uname(RSIM_Thread *t, int callno)
     strcpy(buf.domainname,      "example.com");
 #else
     syscall(SYS_uname, &buf);
+    char *s;
+    if ((s=strstr(buf.release, "-amd64")))
+        *s = '\0';
+    strcpy(buf.machine, "i386");
 #endif
 
     size_t nwritten = t->get_process()->mem_write(&buf, dest_va, sizeof buf);
