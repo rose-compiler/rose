@@ -48,7 +48,7 @@ printf("pCFG_contProcMatchAnalysis::genInitState() state=%p\n", &state);*/
 		divL[annotation] = dynamic_cast<FiniteVariablesProductLattice*>(state->getLatticeBelow(divAnalysis, 0));
 	}
 	// Create a constraint graph from the divisiblity and sign information at all the CFG nodes that make up this pCFG node
-	ConstrGraph* cg = new ConstrGraph(func, func, n, state, ldva, divL, false, "    ");
+	ConstrGraph* cg = new ConstrGraph(func, n, state, ldva, divL, false, "    ");
 	
 	// Create a copy of each function-visible variable (except zeroVar) for each process set in n
 	set<pair<string, void*> > noCopyAnnots;
@@ -432,7 +432,7 @@ if(MPIAnalysisDebugLevel>0)
 			fillEdgeSplits(func, n, pSet, dfNode, state, cg, splitConditions, rankVarPSet, nprocsVarPSet);
 		}
 	}
-	else if(cg->mayTrue())
+	else if(cg->mayTrue("    "))
 	{
 if(MPIAnalysisDebugLevel>0)
 	cout << "transfer mayTrue\n";
@@ -647,7 +647,7 @@ void pCFG_contProcMatchAnalysis::fillEdgeSplits(const Function& func, const pCFG
 		/*FiniteVariablesProductLattice* divProdL = dynamic_cast<FiniteVariablesProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
 		FiniteVariablesProductLattice* sgnProdL = dynamic_cast<FiniteVariablesProductLattice*>(state.getLatticeBelow(sgnAnalysis, 0));
 		ConstrGraph* edgeCG = new ConstrGraph(func, divProdL, sgnProdL, false);*/
-		ConstrGraph* edgeCG = new ConstrGraph(func, n, state, ldva, NULL, false);
+		ConstrGraph* edgeCG = new ConstrGraph(func, n, state, ldva, (FiniteVarsExprsProductLattice*)NULL, false, "    ");
 
 		//printf("ineqs.size()=%d\n", ineqs.size());
 		// Iterate through the current descendant's affine inequalities
@@ -936,7 +936,7 @@ void pCFG_contProcMatchAnalysis::mergePCFGStates(
 		if(MPIAnalysisDebugLevel>0)
 			cout << "mergePCFGStates() Merging annotations of "<<childPSetAnnot<<" into "<<rootPSetAnnot<<"\n";
 		cg->mergeAnnotVars(rootPSetAnnot, (void*)1, childPSetAnnot, (void*)1,
-	                      noCopyAnnots, noCopyVars);
+	                      noCopyAnnots, noCopyVars, "    ");
 	}
 	if(MPIAnalysisDebugLevel>0)
 		cout << "mergePCFGStates() post-merge cg="<<cg->str()<<"\n";
