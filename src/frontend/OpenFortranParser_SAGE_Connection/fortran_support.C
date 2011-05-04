@@ -4219,6 +4219,7 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
           case AttrSpec_OPTIONAL:     variableDeclaration->get_declarationModifier().get_typeModifier().setOptional();     break;
           case AttrSpec_SAVE:         variableDeclaration->get_declarationModifier().get_typeModifier().setSave();         break;
           case AttrSpec_TARGET:       variableDeclaration->get_declarationModifier().get_typeModifier().setTarget();       break;
+          case AttrSpec_COTARGET:     break; // DXN (04/11/2011): TODO
           case AttrSpec_VALUE:        variableDeclaration->get_declarationModifier().get_typeModifier().setValue();        break;
 
        // DQ (8/28/2010): Added support required for type-attributes-spec values (TypeAttrSpec_bind does the same as AttrSpec_BINDC).
@@ -4586,7 +4587,7 @@ convertTypeOnStackToArrayType( int count )
   // Remove the base_type from the astTypeStack, before we push the new arrayType
   // astTypeStack.pop_front();
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of convertTypeOnStackToArrayType()");
 #endif
@@ -6357,6 +6358,36 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                     break;
                   }
 
+               case AttrSpec_COPOINTER:
+                  {
+                    if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                         printf ("found a COPOINTER spec \n");
+
+                    ROSE_ASSERT(!astBaseTypeStack.empty());
+
+                    if (!astTypeStack.empty()) astTypeStack.pop_front();
+
+                    SgPointerType* pointerType = astTypeStack.empty()?
+                            new SgPointerType(astBaseTypeStack.front()):
+                            new SgPointerType(astTypeStack.front());  // use the top of astTypeStack as the base type.
+                    pointerType->set_isCoArray(true);                 // a copointer is a pointer whose isCoArray flag is true.
+
+                    if (astTypeStack.empty())
+                       {
+                         astBaseTypeStack.pop_front();
+                         ROSE_ASSERT(astBaseTypeStack.empty());
+                         astBaseTypeStack.push_front(pointerType);
+                       }
+                      else
+                       {
+                         astTypeStack.pop_front();
+                         ROSE_ASSERT(astTypeStack.empty());
+                         astTypeStack.push_front(pointerType);
+                       }
+                    i++;
+                    break;
+                  }
+
                default:
                   {
                  // This is really an error because it means that we are ignoring all of attributes except 
@@ -6405,7 +6436,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
             // subsequent variables.
             // if ( (*j != AttrSpec_DIMENSION) && (*j != ComponentAttrSpec_dimension) )
                if ( (*j != AttrSpec_DIMENSION) && (*j != ComponentAttrSpec_dimension) &&
-                    (*j != AttrSpec_POINTER)   && (*j != ComponentAttrSpec_pointer) )
+                    (*j != AttrSpec_POINTER)   && (*j != ComponentAttrSpec_pointer) && (*j != AttrSpec_COPOINTER))
                   {
                  // printf ("Save the attribute = %d \n",*j);
                     savedAttributes.push_back(*j);
