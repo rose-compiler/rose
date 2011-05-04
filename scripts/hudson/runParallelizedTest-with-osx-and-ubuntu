@@ -30,6 +30,7 @@ LOG_LOCATION="$PWD"
 # Remove the stale installation tree since the stale headers will be included before updated ones are used.
 [ -n "$ROSE_CONFIGURE_PREFIX" ] && echo "ROSE_CONFIGURE_PREFIX is undefined" && exit 1
 ( safe_rm_rf $ROSE_CONFIGURE_PREFIX ) |filterStep "MasterInstallTree removal"
+( mkdir -p $ROSE_CONFIGURE_PREFIX ) |filterStep "MasterInstallTree creation: $ROSE_CONFIGURE_PREFIX"
 
 #########################################################################################
 #
