@@ -69,6 +69,12 @@ RTS_acquiring(RTS_Layer layer)
         locked_layers.total_locks++;
         locked_layers.min_locked_layer = layer;
     }
+#else
+#  ifdef _MSC_VER
+#    pragma message("Layered lock aquisition is not asserted.");
+#  else
+#    warning "Layered lock aquisition is not asserted.");
+#  endif
 #endif
 
     assert(retval); /* DEBUGGING [2011-04-29] */
