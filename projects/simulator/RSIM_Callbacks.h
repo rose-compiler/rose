@@ -114,26 +114,25 @@
  *  output appears, in this example, with system call tracing that contains the name of the system call, the system call number
  *  from <asm/unistd_32.h>, the arguments, and the return value.
  *
- *  @code
- *  28129:1 31.292 0x08048132[1]:       in function "_start"
- *  28129:1 31.292 0x0804bea0[13]:      in function "__libc_start_main"
- *  28129:1 31.345 0x08061db3[235]:     in function "_dl_aux_init"
- *  28129:1 31.345 0x0804bee7[250]:     in function "__libc_start_main"
- *  28129:1 31.345 0x0805e7c0[256]:     in function "__uname"
- *  28129:1 31.345 0x0805e7cd[260]:     uname[122](0xbfffddb6) = 0
- *  28129:1 31.345 0x0804bf03[264]:     in function "__libc_start_main"
- *  28129:1 31.346 0x0804b890[338]:     in function "__pthread_initialize_minimal_internal"
- *  28129:1 31.346 0x0804c375[348]:     in function "__libc_setup_tls"
- *  28129:1 31.346 0x0805f5c8[376]:     in function "__sbrk"
- *  28129:1 31.346 0x080871f0[387]:     in function "brk"
- *  28129:1 31.346 0x080871fe[393]:     brk[45](0) = 0x080d5000
- *  28129:1 31.346 0x0805f605[401]:     in function "__sbrk"
- *  28129:1 31.346 0x080871f0[409]:     in function "brk"
- *  28129:1 31.346 0x080871fe[415]:     brk[45](0x080d5c80) = 0x080d5c80
- *  28129:1 31.346 0x0805f628[423]:     in function "__sbrk"
- *  28129:1 31.347 0x0804c40d[431]:     in function "__libc_setup_tls"
- *  28129:1 31.347 0x0805e070[455]:     in function "memcpy"
- *  @endcode
+ *  @verbatim
+ 28129:1 31.292 0x08048132[1]:       in function "_start"
+ 28129:1 31.292 0x0804bea0[13]:      in function "__libc_start_main"
+ 28129:1 31.345 0x08061db3[235]:     in function "_dl_aux_init"
+ 28129:1 31.345 0x0804bee7[250]:     in function "__libc_start_main"
+ 28129:1 31.345 0x0805e7c0[256]:     in function "__uname"
+ 28129:1 31.345 0x0805e7cd[260]:     uname[122](0xbfffddb6) = 0
+ 28129:1 31.345 0x0804bf03[264]:     in function "__libc_start_main"
+ 28129:1 31.346 0x0804b890[338]:     in function "__pthread_initialize_minimal_internal"
+ 28129:1 31.346 0x0804c375[348]:     in function "__libc_setup_tls"
+ 28129:1 31.346 0x0805f5c8[376]:     in function "__sbrk"
+ 28129:1 31.346 0x080871f0[387]:     in function "brk"
+ 28129:1 31.346 0x080871fe[393]:     brk[45](0) = 0x080d5000
+ 28129:1 31.346 0x0805f605[401]:     in function "__sbrk"
+ 28129:1 31.346 0x080871f0[409]:     in function "brk"
+ 28129:1 31.346 0x080871fe[415]:     brk[45](0x080d5c80) = 0x080d5c80
+ 28129:1 31.346 0x0805f628[423]:     in function "__sbrk"
+ 28129:1 31.347 0x0804c40d[431]:     in function "__libc_setup_tls"
+ 28129:1 31.347 0x0805e070[455]:     in function "memcpy" @endverbatim
  */
 class RSIM_Callbacks {
     /**************************************************************************************************************************
@@ -182,11 +181,13 @@ public:
     /** Instruction callbacks invoked on every instruction. */
     class InsnCallback: public Callback {
     public:
+
+        /** Arguments passed to instruction callbacks. */
         struct Args {
             Args(RSIM_Thread *thread, SgAsmInstruction *insn)
                 : thread(thread), insn(insn) {}
-            RSIM_Thread *thread;
-            SgAsmInstruction *insn;
+            RSIM_Thread *thread;                /**< The thread on which the instruction executes. */
+            SgAsmInstruction *insn;             /**< The instruction executing. */
         };
         virtual bool operator()(bool prev, const Args&) = 0;
     };
@@ -240,11 +241,12 @@ public:
     /** System call callbacks invoked on every system call. */
     class SyscallCallback: public Callback {
     public:
+        /** Arguments passed to system call callbacks. */
         struct Args {
             Args(RSIM_Thread *thread, int callno)
                 : thread(thread), callno(callno) {}
-            RSIM_Thread *thread;
-            int callno;
+            RSIM_Thread *thread;                /**< The thread on which the system call executes. */
+            int callno;                         /**< The system call ID number. See <asm/unistd_32.h>. */
         };
         virtual bool operator()(bool prev, const Args&) = 0;
     };
@@ -292,6 +294,145 @@ public:
 
 
     /**************************************************************************************************************************
+     *                                  Signal Callbacks
+     **************************************************************************************************************************/
+public:
+
+    /** Signal callbacks.
+     *
+     *  These callbacks are invoked when a signal arrives at a thread or is delivered to the specimen (see the Reason
+     *  enumeration for definitions).  The specified RSIM_Thread passed as an argument to the callbacks (and not necessarily
+     *  corresponding to the calling thread) is the thread at which the signal has arrived or to which the signal is being
+     *  delivered.  The callbacks may cancel arrival or delivery by either returning false, or by setting the info.si_signo
+     *  member to zero.  The callbacks may change which signal has arrived or is delivered, or the information about the signal
+     *  by modifying the @p info argument.
+     *
+     *  Here's an example that prints a stack trace every time a signal arrives:
+     *  @code
+     *  // Thread callback to generate a stack trace when a signal arrives.
+     *  class SignalStackTrace: public RSIM_Callbacks::SignalCallback {
+     *  public:
+     *      virtual SignalStackTrace *clone() { return this; }
+     *      virtual bool operator()(bool prev, const Args &args) {
+     *          if (args.reason == ARRIVAL) {
+     *              args.thread->get_process()->disassemble(); // optional, so stack trace has function names
+     *              args.thread->report_stack_frames(args.thread->tracing(TRACE_MISC));
+     *          }
+     *          return prev;
+     *      }
+     *  };
+     *
+     *  int main() {
+     *     RSIM_Linux32 sim;
+     *     ...
+     *     sim.get_callbacks().add_signal_callback(RSIM_Callbacks::AFTER, new SignalStackTrace);
+     *     ...
+     *  }
+     *  @endcode
+     *
+     *  The output may look something like the following:
+     *
+     * @verbatim
+ 32300:1 00.215 0x08073742[29361]:   arrival of SIGSEGV(11) {errno=0, code=1, addr=0x00000000}
+ Partitioner: starting pass 4: 1174 functions, 95728 insns assigned to 20699 blocks (ave 5 insn/blk)
+ Partitioner: starting pass 20: 1448 functions, 118332 insns assigned to 28016 blocks (ave 4 insn/blk)
+ 32300:1 28.565 0x08073742[29361]:   stack frames:
+ 32300:1 28.565 0x08073742[29361]:     #0: bp=0xbfffdad8 ret=0x0804ff91 in function __vsnprintf
+ 32300:1 28.565 0x08073742[29361]:     #1: bp=0xbfffdbf0 ret=0x0804eff6 in function __snprintf
+ 32300:1 28.565 0x08073742[29361]:     #2: bp=0xbfffdc08 ret=0x0804adea in function tst_tmpdir
+ 32300:1 28.565 0x08073742[29361]:     #3: bp=0xbfffe048 ret=0x08048571 in function setup
+ 32300:1 28.565 0x08073742[29361]:     #4: bp=0xbfffe078 ret=0x080482a0 in function main
+ 32300:1 28.565 0x08073742[29361]:     #5: bp=0xbfffe0c8 ret=0x0804b80f in memory region syscall_tst.221.09(LOAD#0)
+ 32300:1 28.565 0x08073742[29361]:     #6: bp=0xbfffe138 ret=0x08048181 in memory region syscall_tst.221.09(LOAD#0)
+ 32300:1 28.565 0x08073742[29361]:   signal delivery to 0x0804ac89: signo=SIGSEGV, errno=0, code=SEGV_MAPERR, addr=0x00000000
+ @endverbatim
+     */
+    class SignalCallback: public Callback {
+    public:
+        /** The reason for invoking the callback. */
+        enum Reason {
+            ARRIVAL,                    /**< Signal has arrived at the thread.  It may be added to the thread's list of pending
+                                         *   signals if the signal is not being ignored.  The signal will be delivered to the
+                                         *   thread, to be handled by the thread's signal handler or default action, when the
+                                         *   thread's signal mask allows it (and DELIVERY callbacks will be made at that time).
+                                         *   An arbitrary interval may elapse between the time a signal arrives at a thread and
+                                         *   the time the signal is delivered to the thread. */
+            DELIVERY,                   /**< Signal is being delivered to the thread.  The signal has previously arrived at the
+                                         *   thread and conditions are suitable for its delivery.  Delivering a signal either
+                                         *   causes some default action to occur (e.g., exit with a core dump), or a specimen's
+                                         *   signal handler to run. */
+        };
+
+        /** Arguments passed to signal callbacks. */
+        struct Args {
+            Args(RSIM_Thread *thread, int signo, RSIM_SignalHandling::siginfo_32 *info, Reason reason)
+                : thread(thread), signo(signo), info(info), reason(reason) {}
+            /** The thread at which the signal has arrived or to which the signal is being delivered.  This might not be the
+             *    same as the calling thread. */            
+            RSIM_Thread *thread;
+            
+            /** The signal number.  Signal number zero is special: it is a valid number but refers to no signal.  Callbacks
+             *  will not normally be invoked for signal zero. */
+            int signo;
+
+            /** Information about the signal being delivered.  Callbacks are permitted to modify this struct in order to
+             *  influence the specimen. */
+            RSIM_SignalHandling::siginfo_32 *info;
+
+            /** Reason for invoking the callback. */
+            Reason reason;
+        };
+        virtual bool operator()(bool prev, const Args&) = 0;
+    };
+
+    /** Registers a signal callback. These callbacks are invoked before and after (depending on the value of @p when) a signal
+     *  arrives or is delivered.  The specified callback object is inserted into the list without copying it. See
+     *  call_signal_callbacks() for details about how these callbacks are invoked.
+     *
+     *  Thread safety:  This method is thread safe. */
+    void add_signal_callback(When, SignalCallback*);
+
+    /** Unregisters a signal callback.  The most recently registered instance of the specified callback (if any) is removed
+     *  from the pre- or post-signal callback list, depending on the value of @p when.  The removed callback object is not
+     *  destroyed.  Returns true if a callback was removed, false if not.
+     *
+     *  Thread safety:  This method is thread safe. */
+    bool remove_signal_callback(When, SignalCallback*);
+
+
+    /** Removes all signal callbacks.  The pre- or post-signal callbacks are removed, depending on the value of @p when. None
+     *  of the removed callbacks are destroyed.
+     *
+     *  Thread safety:  This method is thread safe. */
+    void clear_signal_callbacks(When);
+
+    /** Invokes all the signal callbacks.  The pre- or post-signal callbacks (depending on the value of @p when) are invoked in
+     *  the order they were registered.  The specified @p prev value is passed to the first callback as its @p prev argument;
+     *  subsequent callbacks' @p prev argument is the return value of the previous callback; the return value of the final
+     *  callback becomes the return value of this method.  However, if no callbacks are invoked (because the list is empty)
+     *  then this method's return value is the specified @p prev value.  The @p thread, signal number, and signal information
+     *  struct is passed to each of the callbacks.
+     *
+     *  The simulator invokes this method before and after signals arrive and before and after they are delivered to the
+     *  specified thread (not necessarily the calling thread).  The return value of the pre-signal callbacks determines whether
+     *  the signal is actually arrives or is delivered (true) or is discarded (false).  That return value will be passed to the
+     *  post-signal queue, which is invoked regardless of whether the signal arrived or was delivered.  The callbacks may
+     *  modify the contents of the signal information structure to influence which signal arrives or is delivered.
+     *
+     *  The post-signal callbacks for signal delivery are invoked after the delivery decision is made but before the signal is
+     *  handled by the specimen.  These callbacks are not invoked if the signal action is to exit the specimen.
+     *
+     *  Thread safety:  This method is thread safe.  The callbacks may register and/or unregister themselves or other callbacks
+     *  from this RSIM_Callbacks object, but those actions do not affect which callbacks are made by this invocation of
+     *  call_thread_callbacks(). */
+    bool call_signal_callbacks(When, RSIM_Thread *thread, int signo, RSIM_SignalHandling::siginfo_32*,
+                               SignalCallback::Reason, bool prev);
+
+
+        
+
+
+    /**************************************************************************************************************************
      *                                  Thread Callbacks
      **************************************************************************************************************************/
 public:
@@ -299,10 +440,11 @@ public:
     /** Thread callbacks invoked on every thread. */
     class ThreadCallback: public Callback {
     public:
+        /** Arguments passed to thread callbacks. */
         struct Args {
             Args(RSIM_Thread *thread)
                 : thread(thread) {}
-            RSIM_Thread *thread;
+            RSIM_Thread *thread;                /**< The thread on behalf of which this callback is made. */
         };
         virtual bool operator()(bool prev, const Args&) = 0;
     };
@@ -315,7 +457,7 @@ public:
     void add_thread_callback(When, ThreadCallback*);
 
     /** Unregisters a thread callback.  The most recently registered instance of the specified callback (if any) is removed
-     *  from the pre- or post-thread callback list, depending on the value of @p when).  The removed callback object is not
+     *  from the pre- or post-thread callback list, depending on the value of @p when.  The removed callback object is not
      *  destroyed.  Returns true if a callback was removed, false if not.
      *
      *  Thread safety:  This method is thread safe. */
@@ -391,11 +533,12 @@ public:
             FINISH,                             /**< Process has finished execution. */
         };
 
+        /** Arguments passed to process callbacks. */
         struct Args {
             Args(RSIM_Process *process, Reason reason)
                 : process(process), reason(reason) {}
-            RSIM_Process *process;
-            Reason reason;
+            RSIM_Process *process;              /**< The process on behalf of which this callback is made. */
+            Reason reason;                      /**< Reason for invoking the callback. */
         };
         virtual bool operator()(bool prev, const Args&) = 0;
     };
@@ -445,6 +588,9 @@ private:
 
     ROSE_Callbacks::List<SyscallCallback> syscall_pre;
     ROSE_Callbacks::List<SyscallCallback> syscall_post;
+
+    ROSE_Callbacks::List<SignalCallback> signal_pre;
+    ROSE_Callbacks::List<SignalCallback> signal_post;
 
     ROSE_Callbacks::List<ThreadCallback> thread_pre;
     ROSE_Callbacks::List<ThreadCallback> thread_post;

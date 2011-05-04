@@ -8,8 +8,8 @@
 
 /* Order matters */
 #include "RSIM_Common.h"
-#include "RSIM_Callbacks.h"
 #include "RSIM_SignalHandling.h"
+#include "RSIM_Callbacks.h"
 #include "RSIM_Process.h"
 #include "RSIM_SemanticPolicy.h"
 #include "RSIM_Thread.h"

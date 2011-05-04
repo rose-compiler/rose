@@ -65,6 +65,19 @@ public:
     }
 };
 
+/* Thread callback to generate a stack trace when a signal arrives */
+class SignalStackTrace: public RSIM_Callbacks::SignalCallback {
+public:
+    virtual SignalStackTrace *clone() { return this; }
+    virtual bool operator()(bool prev, const Args &args) {
+        if (args.reason == ARRIVAL) {
+            args.thread->get_process()->disassemble(); /* so stack trace has function names */
+            args.thread->report_stack_frames(args.thread->tracing(TRACE_MISC));
+        }
+        return prev;
+    }
+};
+
 int
 main(int argc, char *argv[], char *envp[])
 {
@@ -113,7 +126,8 @@ main(int argc, char *argv[], char *envp[])
         sim.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new DisassembleAtAddress);
     if (do_disassemble_at_coredump)
         sim.get_callbacks().add_process_callback(RSIM_Callbacks::BEFORE, new DisassembleAtCoreDump);
-                
+
+    sim.get_callbacks().add_signal_callback(RSIM_Callbacks::AFTER, new SignalStackTrace);
         
             
 

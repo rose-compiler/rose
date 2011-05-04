@@ -27,6 +27,9 @@ RSIM_Callbacks::init(const RSIM_Callbacks &other)
     copy_callback_vector(syscall_pre,  other.syscall_pre);
     copy_callback_vector(syscall_post, other.syscall_post);
 
+    copy_callback_vector(signal_pre,  other.signal_pre);
+    copy_callback_vector(signal_post, other.signal_post);
+
     copy_callback_vector(thread_pre,  other.thread_pre);
     copy_callback_vector(thread_post, other.thread_post);
 
@@ -72,8 +75,8 @@ bool
 RSIM_Callbacks::call_insn_callbacks(When when, RSIM_Thread *thread, SgAsmInstruction *insn, bool prev)
 {
     if (when==BEFORE)
-        return insn_pre.apply (prev, RSIM_Callbacks::InsnCallback::Args(thread, insn), ROSE_Callbacks::FORWARD);
-    return     insn_post.apply(prev, RSIM_Callbacks::InsnCallback::Args(thread, insn), ROSE_Callbacks::FORWARD);
+        return insn_pre.apply (prev, InsnCallback::Args(thread, insn), ROSE_Callbacks::FORWARD);
+    return     insn_post.apply(prev, InsnCallback::Args(thread, insn), ROSE_Callbacks::FORWARD);
 }
 
 /******************************************************************************************************************************
@@ -114,8 +117,51 @@ bool
 RSIM_Callbacks::call_syscall_callbacks(When when, RSIM_Thread *thread, int callno, bool prev)
 {
     if (when==BEFORE)
-        return syscall_pre.apply (prev, RSIM_Callbacks::SyscallCallback::Args(thread, callno), ROSE_Callbacks::FORWARD);
-    return     syscall_post.apply(prev, RSIM_Callbacks::SyscallCallback::Args(thread, callno), ROSE_Callbacks::FORWARD);
+        return syscall_pre.apply (prev, SyscallCallback::Args(thread, callno), ROSE_Callbacks::FORWARD);
+    return     syscall_post.apply(prev, SyscallCallback::Args(thread, callno), ROSE_Callbacks::FORWARD);
+}
+
+/******************************************************************************************************************************
+ *                                      Signal callbacks
+ ******************************************************************************************************************************/
+
+void
+RSIM_Callbacks::add_signal_callback(When when, SignalCallback *cb)
+{
+    if (cb) {
+        if (when==BEFORE) {
+            signal_pre.append(cb);
+        } else {
+            signal_post.append(cb);
+        }
+    }
+}
+
+bool
+RSIM_Callbacks::remove_signal_callback(When when, SignalCallback *cb)
+{
+    if (when==BEFORE)
+        return signal_pre.erase(cb, ROSE_Callbacks::BACKWARD);
+    return signal_post.erase(cb, ROSE_Callbacks::BACKWARD);
+}
+
+void
+RSIM_Callbacks::clear_signal_callbacks(When when)
+{
+    if (when==BEFORE) {
+        signal_pre.clear();
+    } else {
+        signal_post.clear();
+    }
+}
+
+bool
+RSIM_Callbacks::call_signal_callbacks(When when, RSIM_Thread *thread, int signo, RSIM_SignalHandling::siginfo_32 *info,
+                                      SignalCallback::Reason reason, bool prev)
+{
+    if (when==BEFORE)
+        return signal_pre.apply (prev, SignalCallback::Args(thread, signo, info, reason), ROSE_Callbacks::FORWARD);
+    return     signal_post.apply(prev, SignalCallback::Args(thread, signo, info, reason), ROSE_Callbacks::FORWARD);
 }
 
 /******************************************************************************************************************************
@@ -156,8 +202,8 @@ bool
 RSIM_Callbacks::call_thread_callbacks(When when, RSIM_Thread *thread, bool prev)
 {
     if (when==BEFORE)
-        return thread_pre.apply (prev, RSIM_Callbacks::ThreadCallback::Args(thread), ROSE_Callbacks::FORWARD);
-    return     thread_post.apply(prev, RSIM_Callbacks::ThreadCallback::Args(thread), ROSE_Callbacks::FORWARD);
+        return thread_pre.apply (prev, ThreadCallback::Args(thread), ROSE_Callbacks::FORWARD);
+    return     thread_post.apply(prev, ThreadCallback::Args(thread), ROSE_Callbacks::FORWARD);
 }
 
 /******************************************************************************************************************************
@@ -198,8 +244,8 @@ bool
 RSIM_Callbacks::call_process_callbacks(When when, RSIM_Process *process, RSIM_Callbacks::ProcessCallback::Reason reason, bool prev)
 {
     if (when==BEFORE)
-        return process_pre.apply (prev, RSIM_Callbacks::ProcessCallback::Args(process, reason), ROSE_Callbacks::FORWARD);
-    return     process_post.apply(prev, RSIM_Callbacks::ProcessCallback::Args(process, reason), ROSE_Callbacks::FORWARD);
+        return process_pre.apply (prev, ProcessCallback::Args(process, reason), ROSE_Callbacks::FORWARD);
+    return     process_post.apply(prev, ProcessCallback::Args(process, reason), ROSE_Callbacks::FORWARD);
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */
