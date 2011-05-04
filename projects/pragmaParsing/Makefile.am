@@ -1,10 +1,20 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-bin_PROGRAMS = hcpragma
-hcpragma_SOURCES = hcpragma.C hcpragma.h AstFromString.cpp AstFromString.h
-
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+noinst_LTLIBRARIES = libsageparser.la libparserbuilder.la
+libsageparser_la_SOURCES = AstFromString.cpp AstFromString.h
+libparserbuilder_la_SOURCES = ParserBuilder.cpp ParserBuilder.hpp
+libparserbuilder_la_LIBADD = libsageparser.la
+
+bin_PROGRAMS = hcpragma testParserBuilder
+
+hcpragma_SOURCES = hcpragma.C hcpragma.h AstFromString.h
+hcpragma_LDADD = libsageparser.la $(LDADD)
+
+testParserBuilder_SOURCES = testParserBuilder.cpp AstFromString.h ParserBuilder.hpp
+testParserBuilder_LDADD = libparserbuilder.la $(LDADD)
 
 C_TESTCODES_REQUIRED_TO_PASS = parser_input.c
 
@@ -30,7 +40,7 @@ check-local:
 	@echo "****** ROSE/projects/pragmaParsing: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
-EXTRA_DIST = $(ALL_TESTCODES) README parser_input.c
+EXTRA_DIST = $(ALL_TESTCODES) README parser_input.c ParserBuilder.tpp
 
 clean-local:
 	rm -f *.o rose_*.* *.out
