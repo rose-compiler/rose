@@ -589,7 +589,7 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg)
             SgAsmInstruction *insn = process->get_instruction(retaddr);
             SgAsmFunctionDeclaration *func = SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(insn);
             const MemoryMap::MapElement *me = NULL;
-            if (func && !func->get_name().empty()) {
+            if (func && !func->get_name().empty() && 0==(func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS)) {
                 mesg->more(" in function %s\n", func->get_name().c_str());
             } else if ((me=process->get_memory()->find(retaddr)) && !me->get_name().empty()) {
                 mesg->more(" in memory region %s\n", me->get_name().c_str());
