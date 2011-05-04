@@ -16,7 +16,7 @@ sec_to_hms () {
 
 # Make output more pretty. Reads standard input, indents and writes to standard output.
 filter () {
-    local start_time=$SECONDS prefix="    "
+    local start_time=$SECONDS prefix=""
 #    echo ""
 #    echo "********************************************************************************"
     echo "*** $*"
@@ -27,7 +27,7 @@ filter () {
 }
 
 filterStep () {
-    local start_time=$SECONDS prefix="    "
+    local start_time=$SECONDS  prefix=""
     ( echo ) 2>&1 |filter "Starting $* step"
     while read; do
         echo "${prefix}$REPLY"
