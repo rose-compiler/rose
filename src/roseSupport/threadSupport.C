@@ -71,9 +71,9 @@ RTS_acquiring(RTS_Layer layer)
     }
 #else
 #  ifdef _MSC_VER
-#    pragma message("Layered lock aquisition is not asserted.");
+#    pragma message("Layered lock aquisition is not asserted.")
 #  else
-#    warning "Layered lock aquisition is not asserted.");
+#    warning "Layered lock aquisition is not asserted."
 #  endif
 #endif
 
