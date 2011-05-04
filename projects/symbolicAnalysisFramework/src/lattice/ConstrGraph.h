@@ -213,7 +213,7 @@ public:
 	
 	// Copies the given var and its associated constrants from that to this.
 	// Returns true if this causes this constraint graph's state to change; false otherwise.
-	/bool copyVar(const ConstrGraph& that, const varID& var);
+	bool copyVar(const ConstrGraph& that, const varID& var);
 	
 protected:
 	// Determines whether constraints in cg are different from
