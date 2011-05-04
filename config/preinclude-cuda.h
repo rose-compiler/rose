@@ -1,3 +1,8 @@
+
+//typedef unsigned long size_t;
+
+#include <stdlib.h>
+
 /* CUDA Built-in Types */
 
   /*
@@ -291,11 +296,193 @@ typedef struct dim3 dim3;
 struct dim3
 {
     unsigned int x, y, z;
-/*#if defined(__cplusplus)
+#if defined(__cplusplus)
     dim3(unsigned int x = 1, unsigned int y = 1, unsigned int z = 1) : x(x), y(y), z(z) {}
     dim3(uint3 v) : x(v.x), y(v.y), z(v.z) {}
     operator uint3(void) { uint3 t; t.x = x; t.y = y; t.z = z; return t; }
-#endif*/
+#endif
+};
+
+enum cudaError
+{
+  cudaSuccess = 0,
+  cudaErrorMissingConfiguration,
+  cudaErrorMemoryAllocation,
+  cudaErrorInitializationError,
+  cudaErrorLaunchFailure,
+  cudaErrorPriorLaunchFailure,
+  cudaErrorLaunchTimeout,
+  cudaErrorLaunchOutOfResources,
+  cudaErrorInvalidDeviceFunction,
+  cudaErrorInvalidConfiguration,
+  cudaErrorInvalidDevice,
+  cudaErrorInvalidValue,
+  cudaErrorInvalidPitchValue,
+  cudaErrorInvalidSymbol,
+  cudaErrorMapBufferObjectFailed,
+  cudaErrorUnmapBufferObjectFailed,
+  cudaErrorInvalidHostPointer,
+  cudaErrorInvalidDevicePointer,
+  cudaErrorInvalidTexture,
+  cudaErrorInvalidTextureBinding,
+  cudaErrorInvalidChannelDescriptor,
+  cudaErrorInvalidMemcpyDirection,
+  cudaErrorAddressOfConstant,
+  cudaErrorTextureFetchFailed,
+  cudaErrorTextureNotBound,
+  cudaErrorSynchronizationError,
+  cudaErrorInvalidFilterSetting,
+  cudaErrorInvalidNormSetting,
+  cudaErrorMixedDeviceExecution,
+  cudaErrorCudartUnloading,
+  cudaErrorUnknown,
+  cudaErrorNotYetImplemented,
+  cudaErrorMemoryValueTooLarge,
+  cudaErrorInvalidResourceHandle,
+  cudaErrorNotReady,
+  cudaErrorInsufficientDriver,
+  cudaErrorSetOnActiveProcess,
+  cudaErrorStartupFailure = 0x7f,
+  cudaErrorApiFailureBase = 10000
+};
+
+enum cudaChannelFormatKind
+{
+  cudaChannelFormatKindSigned,
+  cudaChannelFormatKindUnsigned,
+  cudaChannelFormatKindFloat,
+  cudaChannelFormatKindNone
+};
+
+struct cudaChannelFormatDesc
+{
+  int                        x;
+  int                        y;
+  int                        z;
+  int                        w;
+  enum cudaChannelFormatKind f;
+};
+
+struct cudaArray;
+
+enum cudaMemcpyKind
+{
+  cudaMemcpyHostToHost = 0,
+  cudaMemcpyHostToDevice,
+  cudaMemcpyDeviceToHost,
+  cudaMemcpyDeviceToDevice
+};
+
+struct cudaPitchedPtr
+{
+  void   *ptr;
+  size_t  pitch;
+  size_t  xsize;
+  size_t  ysize;
+};
+
+struct cudaExtent
+{
+  size_t width;
+  size_t height;
+  size_t depth;
+};
+
+struct cudaPos
+{
+  size_t x;
+  size_t y;
+  size_t z;
+};
+
+struct cudaMemcpy3DParms
+{
+  struct cudaArray      *srcArray;
+  struct cudaPos         srcPos;
+  struct cudaPitchedPtr  srcPtr;
+
+  struct cudaArray      *dstArray;
+  struct cudaPos         dstPos;
+  struct cudaPitchedPtr  dstPtr;
+
+  struct cudaExtent      extent;
+  enum cudaMemcpyKind    kind;
+};
+
+struct cudaDeviceProp
+{
+  char   name[256];
+  size_t totalGlobalMem;
+  size_t sharedMemPerBlock;
+  int    regsPerBlock;
+  int    warpSize;
+  size_t memPitch;
+  int    maxThreadsPerBlock;
+  int    maxThreadsDim[3];
+  int    maxGridSize[3]; 
+  int    clockRate;
+  size_t totalConstMem; 
+  int    major;
+  int    minor;
+  size_t textureAlignment;
+  int    deviceOverlap;
+  int    multiProcessorCount;
+  int    kernelExecTimeoutEnabled;
+  int    __cudaReserved[39];
+};
+
+#define cudaDevicePropDontCare                             \
+        {                                                  \
+          {'\0'},    /* char   name[256];               */ \
+          0,         /* size_t totalGlobalMem;          */ \
+          0,         /* size_t sharedMemPerBlock;       */ \
+          0,         /* int    regsPerBlock;            */ \
+          0,         /* int    warpSize;                */ \
+          0,         /* size_t memPitch;                */ \
+          0,         /* int    maxThreadsPerBlock;      */ \
+          {0, 0, 0}, /* int    maxThreadsDim[3];        */ \
+          {0, 0, 0}, /* int    maxGridSize[3];          */ \
+          0,         /* int    clockRate;               */ \
+          0,         /* size_t totalConstMem;           */ \
+          -1,        /* int    major;                   */ \
+          -1,        /* int    minor;                   */ \
+          0,         /* size_t textureAlignment;        */ \
+          -1,        /* int    deviceOverlap;           */ \
+          0,         /* int    multiProcessorCount;     */ \
+          0          /* int    kernelExecTimeoutEnabled */ \
+        }
+
+typedef enum cudaError cudaError_t;
+
+typedef int cudaStream_t;
+
+typedef int cudaEvent_t;
+
+enum cudaTextureAddressMode
+{
+  cudaAddressModeWrap,
+  cudaAddressModeClamp
+};
+
+enum cudaTextureFilterMode
+{
+  cudaFilterModePoint,
+  cudaFilterModeLinear
+};
+
+enum cudaTextureReadMode
+{
+  cudaReadModeElementType,
+  cudaReadModeNormalizedFloat
+};
+
+struct textureReference
+{
+  int                          normalized;
+  enum cudaTextureFilterMode   filterMode;
+  enum cudaTextureAddressMode  addressMode[3];
+  struct cudaChannelFormatDesc channelDesc;
+  int                          __cudaReserved[16];
 };
 
 /* CUDA Built-in Variables */
@@ -369,7 +556,7 @@ __device__ int  __syncthreads_or(int predicate);
 //__device__ clock_t clock();
   
   /* Atomic functions */
-/*
+
 static __inline__ __device__ int atomicAdd(int *address, int val);
 static __inline__ __device__ unsigned int atomicAdd(unsigned int *address, unsigned int val);
 static __inline__ __device__ unsigned long long int atomicAdd(unsigned long long int *address, unsigned long long int val);
@@ -395,7 +582,7 @@ static __inline__ __device__ int atomicOr(int *address, int val);
 static __inline__ __device__ unsigned int atomicOr(unsigned int *address, unsigned int val);
 static __inline__ __device__ int atomicXor(int *address, int val);
 static __inline__ __device__ unsigned int atomicXor(unsigned int *address, unsigned int val);
-*/
+
   /* Warp Vote functions */
   
 __device__ int __all(int cond);
@@ -412,3 +599,197 @@ __device__ void __prof_trigger(int);
 
 /* CUDA API (TODO-CUDA) */
 
+#if !defined(__dv)
+
+#if defined(__cplusplus)
+
+#define __dv(v) \
+        = v
+
+#else /* __cplusplus */
+
+#define __dv(v)
+
+#endif /* __cplusplus */
+
+#endif /* !__dv */
+
+#if defined(__cplusplus)
+extern "C" {
+#endif /* __cplusplus */
+
+/*******************************************************************************
+*                                                                              *
+*                                                                              *
+*                                                                              *
+*******************************************************************************/
+
+extern __host__ cudaError_t cudaMalloc3D(struct cudaPitchedPtr* pitchDevPtr, struct cudaExtent extent);
+extern __host__ cudaError_t cudaMalloc3DArray(struct cudaArray** arrayPtr, const struct cudaChannelFormatDesc* desc, struct cudaExtent extent);
+extern __host__ cudaError_t cudaMemset3D(struct cudaPitchedPtr pitchDevPtr, int value, struct cudaExtent extent);
+extern __host__ cudaError_t cudaMemcpy3D(const struct cudaMemcpy3DParms *p);
+extern __host__ cudaError_t cudaMemcpy3DAsync(const struct cudaMemcpy3DParms *p, cudaStream_t stream);
+
+
+/*******************************************************************************
+*                                                                              *
+*                                                                              *
+*                                                                              *
+*******************************************************************************/
+
+extern __host__ cudaError_t cudaMalloc(void **devPtr, size_t size);
+extern __host__ cudaError_t cudaMallocHost(void **ptr, size_t size);
+extern __host__ cudaError_t cudaMallocPitch(void **devPtr, size_t *pitch, size_t width, size_t height);
+extern __host__ cudaError_t cudaMallocArray(struct cudaArray **array, const struct cudaChannelFormatDesc *desc, size_t width, size_t height __dv(1));
+extern __host__ cudaError_t cudaFree(void *devPtr);
+extern __host__ cudaError_t cudaFreeHost(void *ptr);
+extern __host__ cudaError_t cudaFreeArray(struct cudaArray *array);
+
+
+/*******************************************************************************
+*                                                                              *
+*                                                                              *
+*                                                                              *
+*******************************************************************************/
+
+extern __host__ cudaError_t cudaMemcpy(void *dst, const void *src, size_t count, enum cudaMemcpyKind kind);
+extern __host__ cudaError_t cudaMemcpyToArray(struct cudaArray *dst, size_t wOffset, size_t hOffset, const void *src, size_t count, enum cudaMemcpyKind kind);
+extern __host__ cudaError_t cudaMemcpyFromArray(void *dst, const struct cudaArray *src, size_t wOffset, size_t hOffset, size_t count, enum cudaMemcpyKind kind);
+extern __host__ cudaError_t cudaMemcpyArrayToArray(struct cudaArray *dst, size_t wOffsetDst, size_t hOffsetDst, const struct cudaArray *src, size_t wOffsetSrc, size_t hOffsetSrc, size_t count, enum cudaMemcpyKind kind __dv(cudaMemcpyDeviceToDevice));
+extern __host__ cudaError_t cudaMemcpy2D(void *dst, size_t dpitch, const void *src, size_t spitch, size_t width, size_t height, enum cudaMemcpyKind kind);
+extern __host__ cudaError_t cudaMemcpy2DToArray(struct cudaArray *dst, size_t wOffset, size_t hOffset, const void *src, size_t spitch, size_t width, size_t height, enum cudaMemcpyKind kind);
+extern __host__ cudaError_t cudaMemcpy2DFromArray(void *dst, size_t dpitch, const struct cudaArray *src, size_t wOffset, size_t hOffset, size_t width, size_t height, enum cudaMemcpyKind kind);
+extern __host__ cudaError_t cudaMemcpy2DArrayToArray(struct cudaArray *dst, size_t wOffsetDst, size_t hOffsetDst, const struct cudaArray *src, size_t wOffsetSrc, size_t hOffsetSrc, size_t width, size_t height, enum cudaMemcpyKind kind __dv(cudaMemcpyDeviceToDevice));
+extern __host__ cudaError_t cudaMemcpyToSymbol(const char *symbol, const void *src, size_t count, size_t offset __dv(0), enum cudaMemcpyKind kind __dv(cudaMemcpyHostToDevice));
+extern __host__ cudaError_t cudaMemcpyFromSymbol(void *dst, const char *symbol, size_t count, size_t offset __dv(0), enum cudaMemcpyKind kind __dv(cudaMemcpyDeviceToHost));
+
+/*******************************************************************************
+*                                                                              *
+*                                                                              *
+*                                                                              *
+*******************************************************************************/
+
+extern __host__ cudaError_t cudaMemcpyAsync(void *dst, const void *src, size_t count, enum cudaMemcpyKind kind, cudaStream_t stream);
+extern __host__ cudaError_t cudaMemcpyToArrayAsync(struct cudaArray *dst, size_t wOffset, size_t hOffset, const void *src, size_t count, enum cudaMemcpyKind kind, cudaStream_t stream);
+extern __host__ cudaError_t cudaMemcpyFromArrayAsync(void *dst, const struct cudaArray *src, size_t wOffset, size_t hOffset, size_t count, enum cudaMemcpyKind kind, cudaStream_t stream);
+extern __host__ cudaError_t cudaMemcpy2DAsync(void *dst, size_t dpitch, const void *src, size_t spitch, size_t width, size_t height, enum cudaMemcpyKind kind, cudaStream_t stream);
+extern __host__ cudaError_t cudaMemcpy2DToArrayAsync(struct cudaArray *dst, size_t wOffset, size_t hOffset, const void *src, size_t spitch, size_t width, size_t height, enum cudaMemcpyKind kind, cudaStream_t stream);
+extern __host__ cudaError_t cudaMemcpy2DFromArrayAsync(void *dst, size_t dpitch, const struct cudaArray *src, size_t wOffset, size_t hOffset, size_t width, size_t height, enum cudaMemcpyKind kind, cudaStream_t stream);
+extern __host__ cudaError_t cudaMemcpyToSymbolAsync(const char *symbol, const void *src, size_t count, size_t offset, enum cudaMemcpyKind kind, cudaStream_t stream);
+extern __host__ cudaError_t cudaMemcpyFromSymbolAsync(void *dst, const char *symbol, size_t count, size_t offset, enum cudaMemcpyKind kind, cudaStream_t stream);
+
+/*******************************************************************************
+*                                                                              *
+*                                                                              *
+*                                                                              *
+*******************************************************************************/
+
+extern __host__ cudaError_t cudaMemset(void *mem, int c, size_t count);
+extern __host__ cudaError_t cudaMemset2D(void *mem, size_t pitch, int c, size_t width, size_t height);
+
+/*******************************************************************************
+*                                                                              *
+*                                                                              *
+*                                                                              *
+*******************************************************************************/
+
+extern __host__ cudaError_t cudaGetSymbolAddress(void **devPtr, const char *symbol);
+extern __host__ cudaError_t cudaGetSymbolSize(size_t *size, const char *symbol);
+
+/*******************************************************************************
+*                                                                              *
+*                                                                              *
+*                                                                              *
+*******************************************************************************/
+
+extern __host__ cudaError_t cudaGetDeviceCount(int *count);
+extern __host__ cudaError_t cudaGetDeviceProperties(struct cudaDeviceProp *prop, int device);
+extern __host__ cudaError_t cudaChooseDevice(int *device, const struct cudaDeviceProp *prop);
+extern __host__ cudaError_t cudaSetDevice(int device);
+extern __host__ cudaError_t cudaGetDevice(int *device);
+
+/*******************************************************************************
+*                                                                              *
+*                                                                              *
+*                                                                              *
+*******************************************************************************/
+
+extern __host__ cudaError_t cudaBindTexture(size_t *offset, const struct textureReference *texref, const void *devPtr, const struct cudaChannelFormatDesc *desc, size_t size /*__dv(UINT_MAX)*/);
+extern __host__ cudaError_t cudaBindTextureToArray(const struct textureReference *texref, const struct cudaArray *array, const struct cudaChannelFormatDesc *desc);
+extern __host__ cudaError_t cudaUnbindTexture(const struct textureReference *texref);
+extern __host__ cudaError_t cudaGetTextureAlignmentOffset(size_t *offset, const struct textureReference *texref);
+extern __host__ cudaError_t cudaGetTextureReference(const struct textureReference **texref, const char *symbol);
+
+/*******************************************************************************
+*                                                                              *
+*                                                                              *
+*                                                                              *
+*******************************************************************************/
+
+extern __host__ cudaError_t cudaGetChannelDesc(struct cudaChannelFormatDesc *desc, const struct cudaArray *array);
+extern __host__ struct cudaChannelFormatDesc cudaCreateChannelDesc(int x, int y, int z, int w, enum cudaChannelFormatKind f);
+
+/*******************************************************************************
+*                                                                              *
+*                                                                              *
+*                                                                              *
+*******************************************************************************/
+
+extern __host__ cudaError_t cudaGetLastError(void);
+extern __host__ const char* cudaGetErrorString(cudaError_t error);
+
+/*******************************************************************************
+*                                                                              *
+*                                                                              *
+*                                                                              *
+*******************************************************************************/
+
+extern __host__ cudaError_t cudaConfigureCall(dim3 gridDim, dim3 blockDim, size_t sharedMem __dv(0), cudaStream_t stream __dv(0));
+extern __host__ cudaError_t cudaSetupArgument(const void *arg, size_t size, size_t offset);
+extern __host__ cudaError_t cudaLaunch(const char *symbol);
+
+/*******************************************************************************
+*                                                                              *
+*                                                                              *
+*                                                                              *
+*******************************************************************************/
+
+extern __host__ cudaError_t cudaStreamCreate(cudaStream_t *stream);
+extern __host__ cudaError_t cudaStreamDestroy(cudaStream_t stream);
+extern __host__ cudaError_t cudaStreamSynchronize(cudaStream_t stream);
+extern __host__ cudaError_t cudaStreamQuery(cudaStream_t stream);
+
+/*******************************************************************************
+*                                                                              *
+*                                                                              *
+*                                                                              *
+*******************************************************************************/
+
+extern __host__ cudaError_t cudaEventCreate(cudaEvent_t *event);
+extern __host__ cudaError_t cudaEventRecord(cudaEvent_t event, cudaStream_t stream);
+extern __host__ cudaError_t cudaEventQuery(cudaEvent_t event);
+extern __host__ cudaError_t cudaEventSynchronize(cudaEvent_t event);
+extern __host__ cudaError_t cudaEventDestroy(cudaEvent_t event);
+extern __host__ cudaError_t cudaEventElapsedTime(float *ms, cudaEvent_t start, cudaEvent_t end);
+
+/*******************************************************************************
+*                                                                              *
+*                                                                              *
+*                                                                              *
+*******************************************************************************/
+
+extern __host__ cudaError_t cudaSetDoubleForDevice(double *d);
+extern __host__ cudaError_t cudaSetDoubleForHost(double *d);
+
+/*******************************************************************************
+*                                                                              *
+*                                                                              *
+*                                                                              *
+*******************************************************************************/
+
+extern __host__ cudaError_t cudaThreadExit(void);
+extern __host__ cudaError_t cudaThreadSynchronize(void);
+
+#if defined(__cplusplus)
+}
+#endif /* __cplusplus */

@@ -191,6 +191,8 @@ SgTypeComplex* buildComplexType(SgType *base_type = NULL);
 //! Build an imaginary type
 SgTypeImaginary* buildImaginaryType(SgType *base_type = NULL);
 
+//! Build a const/volatile type qualifier
+SgConstVolatileModifier * buildConstVolatileModifier (SgConstVolatileModifier::cv_modifier_enum mtype=SgConstVolatileModifier::e_unknown);
 //@}
 
 //--------------------------------------------------------------
@@ -713,12 +715,16 @@ inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgStatement * true_body
 }
 SgIfStmt * buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
 
+SgForInitStatement * buildForInitStatement_nfi(SgStatementPtrList & statements);
+
 //!Build a for statement, assume none of the arguments is NULL
 SgForStatement * buildForStatement(SgStatement* initialize_stmt,  SgStatement * test, SgExpression * increment, SgStatement * loop_body);
 SgForStatement * buildForStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body);
+SgForStatement * buildForStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body);
 
 //! Build a UPC forall statement
 SgUpcForAllStatement * buildUpcForAllStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body);
+SgUpcForAllStatement * buildUpcForAllStatement_nfi(SgForInitStatement * init_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body);
 
 //! Build while statement
 SgWhileStmt * buildWhileStmt(SgStatement *  condition, SgStatement *body);

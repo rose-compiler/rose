@@ -333,6 +333,12 @@ namespace OmpSupport
            * otherwise get a compilation warning*/
           init();
           isUserDefined = true;
+          if (mNode != NULL )
+          {
+            SgLocatedNode * lnode = isSgLocatedNode (mNode);
+            ROSE_ASSERT (lnode != NULL);
+            //ROSE_ASSERT (lnode->get_file_info()->get_filename()!=std::string("transformation"));
+          }
           // Liao 2/12/2010, we allow build empty attribute as a replacement of a default constructor.
           // This is used by autoParallization to tentatively create an instance and later fill data fields.
           // assert(isDirective(omptype));

@@ -10,12 +10,14 @@ int foo();
 int foo();
 #pragma hc suspendable entry
 int foo();
-#pragma CUDA 1 autodim (1, array[8][77])
+#pragma CUDA 1 autodim ( ((1<<2 < (a==b) & place2)?(a||b|2):1^1&&0) , array[8][77])
 int foo();
-#pragma CUDA place1 autodim (1, foo(place1, place2), 3, -a)
+#pragma CUDA place1 autodim (~1, foo(place1, place2), !3, -a)
 int foo();
-#pragma CUDA (a+(b-a)*b+5) dim ((place1), 2)
+#pragma CUDA (a+(b-a)*b/sizeof(double)+5) dim ((place1)*sizeof(array), (int)2)
 int foo();
-#pragma CUDA (place2++)++ dim (3, 4/bar(), place1+5*place2)
+#pragma CUDA (place2++)++ dim ((3,2,place1!=place2), 4/bar(), place1+5*place2)
+int foo();
+#pragma CUDA place1 autodim (sizeof(short int), sizeof(unsigned char), sizeof(signed long long), sizeof(const volatile float))
 int foo();
 
