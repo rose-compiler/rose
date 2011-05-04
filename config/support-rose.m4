@@ -147,9 +147,11 @@ fi
   AC_CHECK_LIB([curl], [Curl_connect], [HAVE_CURL=yes], [HAVE_CURL=no])
   AM_CONDITIONAL([HAS_LIBRARY_CURL], [test "x$HAVE_CURL" = "xyes"])
 
-# http://www.gnu.org/s/hello/manual/autoconf/Running-the-Compiler.html
-    AC_MSG_CHECKING([whether your GCC version is supported by ROSE (4.0.x - 4.4.x)])
+AC_MSG_CHECKING([whether your GCC version is supported by ROSE (4.0.x - 4.4.x)])
+AC_ARG_ENABLE([gcc-version-check],AS_HELP_STRING([--disable-gcc-version-check],[Disable GCC version 4.0.x - 4.4.x verification check]),,[enableval=yes])
+if test "x$enableval" = "xyes" ; then
       AC_LANG_PUSH([C])
+      # http://www.gnu.org/s/hello/manual/autoconf/Running-the-Compiler.html
       AC_COMPILE_IFELSE([
         AC_LANG_SOURCE([[
           #if (__GNUC__ >= 4 && __GNUC_MINOR__ <= 4)
@@ -160,8 +162,12 @@ fi
         ]])
        ],
        [AC_MSG_RESULT([done])],
-       [AC_MSG_FAILURE([your GCC version is currently NOT supported by ROSE])])
+       gcc_version=`gcc -dumpversion`
+       [AC_MSG_FAILURE([your GCC $gcc_version version is currently NOT supported by ROSE])])
       AC_LANG_POP([C])
+else
+    AC_MSG_RESULT([skipping])
+fi
 
 
 ##
@@ -272,7 +278,7 @@ if test "x$edg_major_version_number" = "x3"; then
       echo "Recognized an accepted minor version number."
    else
       if test "x$edg_minor_version_number" = "x10"; then
-         echo "Recognized an accepted minor version number."
+         echo "ERROR: EDG version 3.10 is not supported anymore."
       else
          echo "ERROR: Could not identify the EDG minor version number."
          exit 1
@@ -286,20 +292,19 @@ else
       if test "x$edg_minor_version_number" = "x0"; then
          echo "Recognized an accepted minor version number."
       else
-         if test "x$edg_minor_version_number" = "x1"; then
+         if test "x$edg_minor_version_number" = "x3"; then
             echo "Recognized an accepted minor version number."
-
-            echo "Error: Note that EDG 4.1 is not yet supported in ROSE (should be available soon)."
-            exit 1
+            enable_edg_version43=yes
+            AC_DEFINE([ROSE_USE_EDG_VERSION_4_3], [], [Whether to use the new EDG version 4.3])
          else
             echo "ERROR: Could not identify the EDG minor version number."
             exit 1
          fi
       fi
-      enable_new_edg_interface=yes
       enable_edg_version4=yes
-      AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
       AC_DEFINE([ROSE_USE_EDG_VERSION_4], [], [Whether to use the new EDG version 4.x])
+      enable_new_edg_interface=yes
+      AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
    else
       echo "ERROR: Could not identify the EDG major version number."
       exit 1
@@ -318,7 +323,8 @@ AC_SUBST(ROSE_EDG_MINOR_VERSION_NUMBER)
 # DQ (2/3/2010): I would like to not have to use these and use the new 
 # ROSE_EDG_MAJOR_VERSION_NUMBER and ROSE_EDG_MINOR_VERSION_NUMBER instead.
 AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = xyes])
-# AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
+AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
+AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_3, [test "x$enable_edg_version43" = xyes])
 
 # DQ (1/4/2009) Added support for optional GNU language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
@@ -1216,7 +1222,7 @@ fi
 AC_SUBST(ROSE_USE_OPENCL_SUPPORT)
 
 # *********************************************************************
-# Option to control internal support of PPL (Parma Polyhedron Librairy)
+# Option to control internal support of PPL (Parma Polyhedron Library)
 # *********************************************************************
 
 # TV (05/25/2010): Check for Parma Polyhedral Library (PPL)
@@ -1251,14 +1257,135 @@ AM_CONDITIONAL(
 	[test "x$enable_ppl" = "xyes"])
 if test "x$enable_ppl" = "xyes"; then
 	if test "x$has_ppl_path" = "xyes"; then
-		PPL_LDFLAGS=" -L$ppl_path/lib -lppl"
-		PPL_CPPFLAGS="-I$ppl_path/include"
+		PPL_PATH="$ppl_path"
 		AC_DEFINE([ROSE_USE_PPL], [], [Whether to use Parma Polyhedral Library (PPL) support or not within ROSE])
 	fi
 fi
 AC_SUBST(ROSE_USE_PPL)
-AC_SUBST(PPL_LDFLAGS)
-AC_SUBST(PPL_CPPFLAGS)
+AC_SUBST(PPL_PATH)
+
+# *********************************************************************************
+# Option to control internal support of Cloog (Code generator for Polyhedral Model)
+# *********************************************************************************
+
+AC_ARG_WITH(
+	[cloog],
+	AS_HELP_STRING([--with-cloog@<:@=DIR@:>@], [use Cloog]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
+		exit 1
+	else
+		has_cloog_path="yes"
+		cloog_path="$withval"
+	fi
+	],
+	[has_cloog_path="no"]
+)
+
+AC_ARG_ENABLE(
+	cloog,
+	AS_HELP_STRING(
+		[--enable-cloog],
+		[Support for Cloog]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_CLOOG,
+	[test "x$enable_cloog" = "xyes"])
+if test "x$enable_cloog" = "xyes"; then
+	if test "x$has_cloog_path" = "xyes"; then
+		CLOOG_PATH="$cloog_path"
+		AC_DEFINE([ROSE_USE_CLOOG], [], [Whether to use Cloog support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_CLOOG)
+AC_SUBST(CLOOG_PATH)
+
+# **************************************************************************************
+# Option to control internal support of ScopLib (A classic library for Polyhedral Model)
+# **************************************************************************************
+
+AC_ARG_WITH(
+	[scoplib],
+	AS_HELP_STRING([--with-scoplib@<:@=DIR@:>@], [use ScopLib]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
+		exit 1
+	else
+		has_scoplib_path="yes"
+		scoplib_path="$withval"
+	fi
+	],
+	[has_scoplib_path="no"]
+)
+
+AC_ARG_ENABLE(
+	scoplib,
+	AS_HELP_STRING(
+		[--enable-scoplib],
+		[Support for ScopLib]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_SCOPLIB,
+	[test "x$enable_scoplib" = "xyes"])
+if test "x$enable_scoplib" = "xyes"; then
+	if test "x$has_scoplib_path" = "xyes"; then
+		SCOPLIB_PATH="$scoplib_path"
+		AC_DEFINE([ROSE_USE_SCOPLIB], [], [Whether to use ScopLib support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_SCOPLIB)
+AC_SUBST(SCOPLIB_PATH)
+
+# *************************************************************************************
+# Option to control internal support of Candl (Dependency analysis in Polyhedral Model)
+# *************************************************************************************
+
+AC_ARG_WITH(
+	[candl],
+	AS_HELP_STRING([--with-candl@<:@=DIR@:>@], [use Candl]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
+		exit 1
+	else
+		has_candl_path="yes"
+		candl_path="$withval"
+	fi
+	],
+	[has_candl_path="no"]
+)
+
+AC_ARG_ENABLE(
+	candl,
+	AS_HELP_STRING(
+		[--enable-candl],
+		[Support for Candl]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_CANDL,
+	[test "x$enable_candl" = "xyes"])
+if test "x$enable_candl" = "xyes"; then
+	if test "x$has_candl_path" = "xyes"; then
+		CANDL_PATH="$candl_path"
+		AC_DEFINE([ROSE_USE_CANDL], [], [Whether to use Candl support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_CANDL)
+AC_SUBST(CANDL_PATH)
 
 # *****************************************************************
 #            Option to define DOXYGEN SUPPORT
@@ -1853,8 +1980,14 @@ src/frontend/CxxFrontend/EDG/EDG_4.0/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.0/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.0/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.0/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/Makefile
 src/frontend/CxxFrontend/EDG/edgRose/Makefile
+src/frontend/CxxFrontend/EDG/edg43Rose/Makefile
 ])], [])
 
 
@@ -2153,6 +2286,20 @@ projects/symbolicAnalysisFramework/include/Makefile
 projects/taintcheck/Makefile
 projects/PowerAwareCompiler/Makefile
 projects/traceAnalysis/Makefile
+projects/PolyhedralModel/Makefile
+projects/PolyhedralModel/src/Makefile
+projects/PolyhedralModel/src/maths/Makefile
+projects/PolyhedralModel/src/system/Makefile
+projects/PolyhedralModel/src/misc-test/Makefile
+projects/PolyhedralModel/src/common/Makefile
+projects/PolyhedralModel/src/test-common/Makefile
+projects/PolyhedralModel/src/scoplib/Makefile
+projects/PolyhedralModel/src/rose/Makefile
+projects/PolyhedralModel/src/rose-pragma/Makefile
+projects/PolyhedralModel/src/test-rose-pragma/Makefile
+projects/PolyhedralModel/docs/Makefile
+projects/PolyhedralModel/tests/Makefile
+projects/PolyhedralModel/tests/rose-pragma/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2214,6 +2361,8 @@ tests/CompileTests/sizeofOperation_tests/Makefile
 tests/CompileTests/MicrosoftWindows_tests/Makefile
 tests/CompileTests/nameQualificationAndTypeElaboration_tests/Makefile
 tests/CompileTests/NewEDGInterface_C_tests/Makefile
+tests/CompileTests/CudaTests/Makefile
+tests/CompileTests/EDG_4_x/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile
