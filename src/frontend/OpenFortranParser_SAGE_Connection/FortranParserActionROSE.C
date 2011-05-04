@@ -3147,7 +3147,8 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
 // void c_action_attr_spec(int attr)
 void c_action_attr_spec(Token_t * attrKeyword, int attr)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+    //raise(SIGINT);
+    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R503 c_action_attr_spec(): attrKeyword = %p = %s attr = %d \n",attrKeyword,attrKeyword != NULL ? attrKeyword->text : "NULL",attr);
 
 #if 1
@@ -3270,6 +3271,13 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                  break;
               }
 
+           case AttrSpec_COPOINTER:
+              {
+                 if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                      printf ("found a COPOINTER spec \n");
+                 break;
+              }
+
            case AttrSpec_PROTECTED:
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
@@ -3288,6 +3296,14 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a TARGET spec \n");
+                 break;
+              }
+
+           case AttrSpec_COTARGET:  // DXN (04/19/2011): TODO
+              {
+                 if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                      printf ("found a COTARGET spec \n");
+                 cout << "WARNING: line " << attrKeyword->line << " col " << attrKeyword->col << ", " <<  attrKeyword->text << " not implemented."  << endl;
                  break;
               }
 
@@ -3350,7 +3366,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
           astAttributeSpecStack.push_front(attr);
         }
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R503 c_action_attr_spec()");
 #endif
@@ -3368,6 +3384,7 @@ void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec, ofp_bool hasCoarr
 void c_action_entity_decl(Token_t * id)
 #endif
    {
+    //raise(SIGINT);
     // This function R504 R503-F2008 is similar to R442 R438-F2008
 
   // Push the entities onto the list at the top of the stack
@@ -3813,10 +3830,11 @@ void c_action_entity_decl(Token_t * id)
  */
 void c_action_entity_decl_list__begin()
    {
+    //raise(SIGINT);
   // The use of the astNameListStack has been discontinued, we just use a stack of names (tokens) now!
   // This make for a simpler implementation and I don't think we require the additional complexity.
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R504 (list__begin) c_action_entity_decl_list__begin()");
 #endif
@@ -3853,6 +3871,7 @@ void c_action_entity_decl_list__begin()
 
 void c_action_entity_decl_list(int count)
    {
+    //raise(SIGINT);
     // This function R504 R503-F2008 is similar to R441 but is used for declarations in NON-types.
 
   // Since we already have the elements in the list we don't have to do anything here.
@@ -4065,6 +4084,7 @@ void c_action_array_spec__begin()
 
 void c_action_array_spec(int count)
    {
+    //raise(SIGINT);
   // The stack size should match the count, NO!
 
   // The stack size here is the number of types used to represent the array (a single SgArrayType), 
@@ -4077,7 +4097,7 @@ void c_action_array_spec(int count)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R510 c_action_array_spec(): count = %d (building the multi-dimensional shape for the future SgArrayType) astAttributeSpecStack.size() = %zu \n",count,astAttributeSpecStack.size());
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R510 #2 c_action_array_spec()");
 #endif
@@ -4117,7 +4137,7 @@ void c_action_array_spec(int count)
   // DQ (1/18/2011): Called by R510 and R443.
      processMultidimensionalSubscriptsIntoExpressionList(count);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R510 #2 c_action_array_spec()");
 #endif
@@ -4125,6 +4145,7 @@ void c_action_array_spec(int count)
 
 void c_action_array_spec_element(int type)
    {
+    //raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R510 c_action_array_spec_element(): (value pushed onto astAttributeSpecStack) type = %d \n",type);
 
@@ -6874,6 +6895,7 @@ SgCAFCoExpression *rice_dataref_coexpr;         // for 'c_action_rice_spawn_stmt
 
 void c_action_data_ref(int numPartRef)
    {
+    //raise(SIGINT);
     // DQ (12/29/2010): See notes on how R612 and R613 operate together.
 
   // This is a part of a variable reference (and likely used many other places as well)
@@ -7466,7 +7488,8 @@ void c_action_data_ref(int numPartRef)
 
 
           bool hasImageSelector = qualifiedNameList[lastElement - i].hasImageSelector;
-          SgCAFCoExpression* coExpr;
+          bool hasCo_deref = qualifiedNameList[lastElement - i].hasCo_deref;  // DXN (04/22/2011) for co-derefence of copointer
+          SgCAFCoExpression* coExpr = NULL;
           if (hasImageSelector)
           {
               coExpr = isSgCAFCoExpression(astExpressionStack.front());
@@ -7540,8 +7563,22 @@ void c_action_data_ref(int numPartRef)
                          SgVariableSymbol* temp_variableSymbol = isSgVariableSymbol(tempSymbol);
                          ROSE_ASSERT(temp_variableSymbol != NULL);
 
-                      // SgExpression* arrayVariable = new SgVarRefExp(variableSymbol);
-                         SgExpression* arrayVariable = new SgVarRefExp(temp_variableSymbol);
+                     // DXN (04/29/2011): add case for copointer dereference:
+                         SgExpression* arrayVariable = NULL;
+                         if (hasCo_deref)
+                            {
+                             SgExpression * nullExpr = new SgNullExpression();
+                             setSourcePosition(nullExpr);
+                             SgVarRefExp* temp_var = new SgVarRefExp(temp_variableSymbol);
+                             setSourcePosition(temp_var);
+                             arrayVariable = new SgCAFCoExpression(NULL,nullExpr, temp_var);
+                             nullExpr->set_parent(arrayVariable);
+                             temp_var->set_parent(arrayVariable);
+                            }
+                         else
+                            {
+                              arrayVariable = new SgVarRefExp(temp_variableSymbol);
+                            }
                          setSourcePosition(arrayVariable,nameToken);
 
                       // See test2007_36.f90 for an example of where this can be false (data statement)
@@ -7573,9 +7610,23 @@ void c_action_data_ref(int numPartRef)
                        }
                       else
                        {
-                         SgVariableSymbol* temp_variableSymbol = isSgVariableSymbol(tempSymbol);
-                         ROSE_ASSERT(temp_variableSymbol != NULL);
-                         variable = new SgVarRefExp(temp_variableSymbol);
+                          // DXN (04/29/2011): add case for copointer dereference:
+                          SgVariableSymbol* temp_variableSymbol = isSgVariableSymbol(tempSymbol);
+                          ROSE_ASSERT(temp_variableSymbol != NULL);
+                          if (hasCo_deref)
+                             {
+                               SgExpression * nullExpr = new SgNullExpression();
+                               setSourcePosition(nullExpr);
+                               SgVarRefExp* temp_var = new SgVarRefExp(temp_variableSymbol);
+                               setSourcePosition(temp_var);
+                               variable = new SgCAFCoExpression(NULL,nullExpr, temp_var);
+                               nullExpr->set_parent(variable);
+                               temp_var->set_parent(variable);
+                             }
+                          else
+                             {
+                               variable = new SgVarRefExp(temp_variableSymbol);
+                             }
                        }
 
                     break;
@@ -7586,8 +7637,22 @@ void c_action_data_ref(int numPartRef)
                     SgVariableSymbol* temp_variableSymbol = isSgVariableSymbol(tempSymbol);
                     ROSE_ASSERT(temp_variableSymbol != NULL);
 
-                 // SgExpression* arrayVariable = new SgVarRefExp(variableSymbol);
-                    SgExpression* arrayVariable = new SgVarRefExp(temp_variableSymbol);
+                    // DXN (04/29/2011): add case for copointer dereference:
+                        SgExpression* arrayVariable = NULL;
+                        if (hasCo_deref)
+                           {
+                            SgExpression * nullExpr = new SgNullExpression();
+                            setSourcePosition(nullExpr);
+                            SgVarRefExp* temp_var = new SgVarRefExp(temp_variableSymbol);
+                            setSourcePosition(temp_var);
+                            arrayVariable = new SgCAFCoExpression(NULL,nullExpr, temp_var);
+                            nullExpr->set_parent(arrayVariable);
+                            temp_var->set_parent(arrayVariable);
+                           }
+                        else
+                           {
+                             arrayVariable = new SgVarRefExp(temp_variableSymbol);
+                           }
                     setSourcePosition(arrayVariable,nameToken);
 
                  // See test2007_36.f90 for an example of where this can be false (data statement)
@@ -7707,7 +7772,6 @@ void c_action_data_ref(int numPartRef)
 #if 0
                     printf ("No special processing is required, this variable type is %s tempSymbol = %s \n",variableType->class_name().c_str(),tempSymbol->class_name().c_str());
 #endif
-                 // variable = new SgVarRefExp(variableSymbol);
                     ROSE_ASSERT(tempSymbol != NULL);
                     SgVariableSymbol* temp_variableSymbol = isSgVariableSymbol(tempSymbol);
                     ROSE_ASSERT(temp_variableSymbol != NULL);
@@ -7734,15 +7798,15 @@ void c_action_data_ref(int numPartRef)
        // Save the expression on the stack
           if (hasImageSelector)
              {
-                 ROSE_ASSERT(!coExpr->get_referData());
-                 coExpr->set_referData(variable);
-                 setSourcePosition(coExpr,nameToken);
-                 intermediateExpresionList.push_front(coExpr);
+              ROSE_ASSERT(!coExpr->get_referData());
+              coExpr->set_referData(variable);
+              variable->set_parent(coExpr);
+              setSourcePosition(coExpr,nameToken);
+              intermediateExpresionList.push_front(coExpr);
              }
-             else
+          else
              {
-                 if (variable != NULL)
-                      intermediateExpresionList.push_front(variable);
+              intermediateExpresionList.push_front(variable);  // we know variable != NULL already
              }
         }
 
@@ -7857,6 +7921,7 @@ void c_action_data_ref(int numPartRef)
  */
 void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_bool hasImageSelector)
    {
+    //raise(SIGINT);
     // This is a part of a variable reference (any likely used many other places as well)
 
   // DQ (12/29/2010): Notes on how R612 and R613 operate together.
@@ -8054,6 +8119,7 @@ void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_boo
  */
 void c_action_section_subscript(ofp_bool hasLowerBound, ofp_bool hasUpperBound, ofp_bool hasStride, ofp_bool isAmbiguous)
    {
+    //raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R619 c_action_section_subscript() hasLowerBound = %s hasUpperBound = %s hasStride = %s isAmbiguous = %s \n",
                hasLowerBound ? "true" : "false", hasUpperBound ? "true" : "false", hasStride ? "true" : "false", isAmbiguous ? "true" : "false");
@@ -8100,6 +8166,7 @@ void c_action_section_subscript_list__begin()
 
 void c_action_section_subscript_list(int count)
    {
+    //raise(SIGINT);
   // This is either a subscript or a function parameter list, or an implicit do loop.  If it is an implicit function then treat 
   // it as a function call directly, later some array references may have be be fixed up to be function 
   // calls but this will be a post processing step.
@@ -12779,7 +12846,7 @@ void c_action_stop_stmt(Token_t *label, Token_t *stopKeyword, Token_t *eos, ofp_
 #endif
 
      SgExpression* stopExpression = NULL;
-     if (astExpressionStack.empty() == false)
+     if (hasStopCode)  // DXN (04/03/2011): the stop code is at the top of the astExpressionStack
         {
        // ROSE_ASSERT(astExpressionStack.empty() == false);
           stopExpression = astExpressionStack.front();
@@ -12824,11 +12891,11 @@ void c_action_stop_code(Token_t * digitString)
 
      if (digitString != NULL)
         {
-          SgStringVal* stringValue = new SgStringVal(digitString->text);
+          SgIntVal* intValue = new SgIntVal(atol(digitString->text), digitString->text);  // DXN (04/03/2011)
 
-          setSourcePosition(stringValue,digitString);
+          setSourcePosition(intValue,digitString);
 
-          astExpressionStack.push_front(stringValue);
+          astExpressionStack.push_front(intValue);
         }
    }
 
@@ -19009,14 +19076,12 @@ void c_action_cleanUp()
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
 void c_action_coarray_spec(int arg0) 
     {
-
+    //raise(SIGINT);
      if (arg0 == 1) {
           astExpressionStack.pop_front();
      } else {
           cout << "ERROR (Rice CoArray Fortran 2.0): the co-rank must be 1." << endl;
      }
-
-
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_coarray_spec() \n");
@@ -19093,7 +19158,18 @@ void c_action_rice_image_selector(Token_t *team_id)
      SgCAFCoExpression* coExpr = new SgCAFCoExpression(teamIdReference,rankExpr,dataExpr);
      astExpressionStack.push_front(coExpr);
    }
-  
+
+/**
+ * Copointer dereference.
+ */
+void c_action_rice_co_dereference_op(Token_t *leftBracket, Token_t *rightBracket)
+   {
+    //raise(SIGINT);
+     MultipartReferenceType& mprt = astMultipartReferenceStack.front();
+     mprt.hasCo_deref = true;
+   }
+
+
 /**
  * carg_0 is a flag about the coarray status:
  *   0 --> no team image
@@ -19496,20 +19572,20 @@ void c_action_next_token(Token_t *token)
    }
 
 void c_action_cosubscript_list__begin()
-{
+   {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_cosubscript_list__begin. \n");
+   }
 
-}
 
-
-void c_action_cosubscript_list(int carg_0,Token_t* team_id) {
-
+void c_action_cosubscript_list(int carg_0,Token_t* team_id)
+   {
+    //raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_cosubscript_list,co_rank = %d \n",carg_0);
       ROSE_ASSERT(carg_0 ==1);
       c_action_rice_image_selector(team_id);
-}
+   }
 
 
 #ifdef __cplusplus
