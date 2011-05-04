@@ -365,7 +365,9 @@ case "$ROSE_TEST_BUILD_STEP" in
   # DQ (5/1/2011): The failure mode we were seeing for Fortran can happen anytime Insure++ is run in parallel, 
   # so we have to always run our Insure++ tests in serial to avoid errors. Set the number of processors to be
   # used for the Insure++ testing to be "1".
-    NUM_PROCESS=1
+  # DQ (5/3/2011): Using new information from support@parasoft (using "%p" instead of "%p" in generated file 
+  # names) we can retry running this in parallel.
+    NUM_PROCESS=16
 
     make ${BUILD_TARGET} -j${NUM_PROCESS} -C ${ROSE_TEST_BUILD_DIRECTORY}
     if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then

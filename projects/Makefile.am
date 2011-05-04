@@ -121,7 +121,9 @@ endif
 SUBDIRS += SatSolver
 # endif
 
-
+if ROSE_USE_SAT
+SUBDIRS += PolyhedralModel
+endif
 
 # DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.
 #     StaticDynamicAnalysis/DynamicCPU
