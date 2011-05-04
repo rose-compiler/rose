@@ -46,7 +46,12 @@ killStep () {
 
 # Restrict 'rm -rf' to be executed only within Hudson's workspace or the MasterInstallTree
 safe_rm_rf () {
-    if [[ "$1" =~ "^/export/tmp.hudson-rose/hudson/workspace/" ]] || [[ "$1" =~ "${HOME}/MasterInstallTree/" ]]; then
+    set +e
+        echo "$1" |grep -q "^/export/tmp.hudson-rose/hudson/workspace/\|^${HOME}/MasterInstallTree/"
+        local OK=$?
+    set -e
+
+    if $OK -eq 0
         echo "rm -rf $1"
         rm -rf $1
     else
