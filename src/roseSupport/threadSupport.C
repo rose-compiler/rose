@@ -19,13 +19,17 @@ struct LockedLayers {
     RTS_Layer min_locked_layer;                 /* Minimum index where nlocks[] is non-zero */
 };
 
-static __thread LockedLayers locked_layers;     /* Every thread must have its own private copy. */
+#ifdef ROSE_THREAD_LOCAL_STORAGE
+static ROSE_THREAD_LOCAL_STORAGE LockedLayers locked_layers; /* Every thread must have its own private copy. */
+#endif
 
 bool
 RTS_acquiring(RTS_Layer layer)
 {
-    static const bool allow_recursion = false;
     bool retval = true;
+
+#ifdef ROSE_THREAD_LOCAL_STORAGE
+    static const bool allow_recursion = false;
 
     if (0==locked_layers.magic)
         locked_layers.magic = LockedLayers_MAGIC;
@@ -65,6 +69,7 @@ RTS_acquiring(RTS_Layer layer)
         locked_layers.total_locks++;
         locked_layers.min_locked_layer = layer;
     }
+#endif
 
     assert(retval); /* DEBUGGING [2011-04-29] */
     return retval;
@@ -81,6 +86,8 @@ RTS_releasing(RTS_Layer layer)
         abort();
     }
 #endif
+
+#ifdef ROSE_THREAD_LOCAL_STORAGE
     assert(locked_layers.magic==LockedLayers_MAGIC);
     assert(layer>=0 && layer<RTS_LAYER_NLAYERS);
 
@@ -106,6 +113,7 @@ RTS_releasing(RTS_Layer layer)
             }
         }
     }
+#endif
 }
 
 
