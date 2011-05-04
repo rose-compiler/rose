@@ -8,7 +8,7 @@ matcolsum.c \
 matsum.c
 
 $(TEST_CODES): $(bin_dir)/test-rose-pragma-polyhedric-annotation \
-				$(bin_dir)/test-rose-pragma-dependency \ 
+				$(bin_dir)/test-rose-pragma-dependency \
 				$(bin_dir)/test-rose-pragma-code-generation \
 				$(bin_dir)/test-rose-pragma-generate-all-schedules
 	$(bin_dir)/test-rose-pragma-polyhedric-annotation $(srcdir)/$@ > $(@:.c=.scop)
