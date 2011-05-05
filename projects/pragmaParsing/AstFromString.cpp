@@ -3,6 +3,8 @@
  */
 #include "AstFromString.h"
 #include <string>
+#include <algorithm>
+
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -61,9 +63,9 @@ namespace AstFromString
     {
       afs_skip_whitespace();
       if (*c_char == c)
-	result = true;
+    result = true;
       else
-	result = false;
+    result = false;
     }
 
     // advance once matched
@@ -97,13 +99,13 @@ namespace AstFromString
     {
       if ((*c_char)==substr[i])
       {
-	c_char++;
+    c_char++;
       }
       else
       {
-	result = false;
-	c_char = old_char;
-	break;
+    result = false;
+    c_char = old_char;
+    break;
       }
     }
     // handle the next char after the substr match: 
@@ -115,8 +117,8 @@ namespace AstFromString
     {
       if (*c_char!=' '&&*c_char!='\0'&&*c_char!='\n'&&*c_char!='\t' &&*c_char!='!')
       {
-	result = false;
-	c_char = old_char;
+    result = false;
+    c_char = old_char;
       }
     }
     return result;
@@ -240,17 +242,17 @@ namespace AstFromString
       SgExpression* ref_exp = NULL;
       switch (sym->variantT())
       {
-	case V_SgVariableSymbol:
-	  ref_exp = buildVarRefExp(isSgVariableSymbol(sym));
-	  break;
-	case V_SgFunctionSymbol:
-	  ref_exp = buildFunctionRefExp(isSgFunctionSymbol(sym));
-	  break;
-	default:
-	  {
-	    cerr<<"error: unhandled symbol type in afs_match_identifier():"<<sym->class_name()<<endl;
-	    assert(false);
-	  }
+    case V_SgVariableSymbol:
+      ref_exp = buildVarRefExp(isSgVariableSymbol(sym));
+      break;
+    case V_SgFunctionSymbol:
+      ref_exp = buildFunctionRefExp(isSgFunctionSymbol(sym));
+      break;
+    default:
+      {
+        cerr<<"error: unhandled symbol type in afs_match_identifier():"<<sym->class_name()<<endl;
+        assert(false);
+      }
       }
       assert (ref_exp != NULL);
       c_parsed_node = ref_exp;  
@@ -320,13 +322,13 @@ namespace AstFromString
     else if( afs_match_char('('))
     {
       if(!afs_match_expression())
-	result = false;
+    result = false;
       else if (!afs_match_char(')'))
       {
-	result = false;
+    result = false;
       }
       else
-	result = true;
+    result = true;
     }
 
     if (result == false)
@@ -369,88 +371,88 @@ namespace AstFromString
     {
       if (afs_match_unary_expression())
       {
-	assert (c_parsed_node != NULL);
-	SgExpression* exp = isSgExpression(c_parsed_node);
-	assert (exp != NULL);
-	c_parsed_node = buildPlusPlusOp (exp,SgUnaryOp::prefix );
-	result = true;
+    assert (c_parsed_node != NULL);
+    SgExpression* exp = isSgExpression(c_parsed_node);
+    assert (exp != NULL);
+    c_parsed_node = buildPlusPlusOp (exp,SgUnaryOp::prefix );
+    result = true;
       }
       else 
       {
-//	printf ("error. afs_match_unary_expression() expects unary_exp after matching ++\n");
-//	assert (0);
-	c_char = old_char;
+//    printf ("error. afs_match_unary_expression() expects unary_exp after matching ++\n");
+//    assert (0);
+    c_char = old_char;
       }
     } 
     else if (afs_match_substr("--"))
     {
       if (afs_match_unary_expression())
       {
-	assert (c_parsed_node != NULL);
-	SgExpression* exp = isSgExpression(c_parsed_node);
-	assert (exp != NULL);
-	c_parsed_node = buildMinusMinusOp (exp,SgUnaryOp::prefix );
-	result = true;
+    assert (c_parsed_node != NULL);
+    SgExpression* exp = isSgExpression(c_parsed_node);
+    assert (exp != NULL);
+    c_parsed_node = buildMinusMinusOp (exp,SgUnaryOp::prefix );
+    result = true;
       }
       else 
       {
-	//printf ("error. afs_match_unary_expression() expects unary_exp after matching --\n");
-	//assert (0);
-	c_char = old_char;
+    //printf ("error. afs_match_unary_expression() expects unary_exp after matching --\n");
+    //assert (0);
+    c_char = old_char;
       }
 
     } else if (afs_peak_next() == '&' || afs_peak_next() == '*'|| afs_peak_next() == '+'
-	||afs_peak_next() == '-'||afs_peak_next() == '~' || afs_peak_next() == '!' )
+    ||afs_peak_next() == '-'||afs_peak_next() == '~' || afs_peak_next() == '!' )
     {
       VariantT op_type ;
       if (afs_match_char('&'))
-	op_type = V_SgAddressOfOp;
+    op_type = V_SgAddressOfOp;
       else if (afs_match_char('*'))
-	op_type = V_SgPointerDerefExp;
+    op_type = V_SgPointerDerefExp;
       else if (afs_match_char('-'))
-	op_type = V_SgMinusOp;
+    op_type = V_SgMinusOp;
       else if (afs_match_char('+'))
-	op_type = V_SgUnaryAddOp;
+    op_type = V_SgUnaryAddOp;
       else if (afs_match_char('~'))
-	op_type = V_SgBitComplementOp;
+    op_type = V_SgBitComplementOp;
       else if (afs_match_char('!'))
-	op_type = V_SgNotOp;
+    op_type = V_SgNotOp;
       else
       {
-	printf("error. afs_match_unary_expression(): unimplemented unary operator type:\n");
-	assert(0);
+    printf("error. afs_match_unary_expression(): unimplemented unary operator type:\n");
+    assert(0);
       }
 
       if (afs_match_cast_expression())
       {
-	SgExpression* exp = isSgExpression(c_parsed_node);
-	assert (exp != NULL);
-	switch (op_type)
-	{
-	  case V_SgAddressOfOp:
-	    c_parsed_node = buildAddressOfOp(exp);
-	    break;
-	  case V_SgPointerDerefExp:
-	    c_parsed_node = buildPointerDerefExp(exp);
-	    break;
-	  case V_SgMinusOp:
-	    c_parsed_node = buildMinusOp(exp);
-	    break;
-	  case V_SgUnaryAddOp:
-	    c_parsed_node = buildUnaryAddOp(exp);
-	    break;
-	  case V_SgBitComplementOp:
-	    c_parsed_node = buildBitComplementOp(exp);
-	    break;
-	  case V_SgNotOp:
-	    c_parsed_node = buildNotOp(exp);
-	    break;
-	  default:
-	    printf("afs_match_unary_expression(): unhandled unary operator type\n");
-	    assert (0);
-	}  
+    SgExpression* exp = isSgExpression(c_parsed_node);
+    assert (exp != NULL);
+    switch (op_type)
+    {
+      case V_SgAddressOfOp:
+        c_parsed_node = buildAddressOfOp(exp);
+        break;
+      case V_SgPointerDerefExp:
+        c_parsed_node = buildPointerDerefExp(exp);
+        break;
+      case V_SgMinusOp:
+        c_parsed_node = buildMinusOp(exp);
+        break;
+      case V_SgUnaryAddOp:
+        c_parsed_node = buildUnaryAddOp(exp);
+        break;
+      case V_SgBitComplementOp:
+        c_parsed_node = buildBitComplementOp(exp);
+        break;
+      case V_SgNotOp:
+        c_parsed_node = buildNotOp(exp);
+        break;
+      default:
+        printf("afs_match_unary_expression(): unhandled unary operator type\n");
+        assert (0);
+    }  
 
-	result = true;
+    result = true;
       }
     } else if (afs_match_substr("sizeof"))
     {
@@ -459,26 +461,26 @@ namespace AstFromString
 */
       if (afs_match_unary_expression())
       {
-	SgExpression* exp = isSgExpression(c_parsed_node);
-	assert (exp != NULL);
-	c_parsed_node = buildSizeOfOp(exp);
-	result = true;  
+    SgExpression* exp = isSgExpression(c_parsed_node);
+    assert (exp != NULL);
+    c_parsed_node = buildSizeOfOp(exp);
+    result = true;  
       } else if (afs_match_char('('))
 /*
       | SIZEOF '(' type_name ')'
  */
       {
-	if (afs_match_type_name())
-	{
-	  SgType* t = isSgType(c_parsed_node);
-	  assert (t != NULL);
-	  if (afs_match_char(')'))
-	  {
-	    c_parsed_node = buildSizeOfOp(t);
-	    result = true;
-	  }
-	}
-      }	
+    if (afs_match_type_name())
+    {
+      SgType* t = isSgType(c_parsed_node);
+      assert (t != NULL);
+      if (afs_match_char(')'))
+      {
+        c_parsed_node = buildSizeOfOp(t);
+        result = true;
+      }
+    }
+      }    
     }
 
     if (result == false)   c_char = old_char;
@@ -486,9 +488,18 @@ namespace AstFromString
   }
 
   // decode the simplest first
-  bool decode_list (const std::vector<SgNode*>& sq_list)
+  // the qualifer_specifier_list needs special attention
+  // **The original grammar is too naive*** 
+  // We can actual avoid much of this trouble if we used a better grammar. **
+
+  // the match function only saves the last matched qualifier/specifier in c_parsed_node
+  // we need to adjust the real c_parsed_node according to the combination in sq_list
+  //
+  // for example "long int" will result int type in c_parsed_node,
+  // we need to search sq_list for long and adjust c_parsed_node to be "long int" 
+  //TODO consider more complex point type case!!
+  bool decode_list (std::vector<SgNode*>& sq_list) // const vector <> & will not work with std::find() !!!
   {
-    bool result = false;
     if (sq_list.size() ==0)
     {
       printf("error in AstFromString::decode_list(): empty list!\n");  
@@ -500,22 +511,195 @@ namespace AstFromString
       // Others: void, float, double, TODO: struct/union, enum, TYPE_NAME
       // const/volatile modifier
       //c_parsed_node is the result
-      result = true;
+      return true;
     }
-    else
-    { 
-      // 5 integer types signed (optional)/ unsigned
-      //   char, 
-      //   int, short int, long int, long long int
-      // other types: void, float , double, TODO: struct/union, enum, TYPE_NAME
-      // const/volatile modifier (optional)
 
-      // 2 or more items
-      printf("error: AstFromString::decode_list(): not handled case.\n");
-      assert (0);
-    }  
+    // 2 or more items
 
-    return result;
+    // step 1: has one of 5 integer types? 
+    //--------------------------
+    //   char, 
+    //   int, short int, long int, long long int
+    //    with optional:  signed (optional)/ unsigned
+    //  we also treat long double here for convenience.
+    bool has_char = false;
+    bool has_int= false;
+    bool has_double= false;
+
+    vector<SgNode*>::iterator iter;
+    SgNode * target;
+    target = buildCharType();
+    iter  = find (sq_list.begin(), sq_list.end(), target);
+    if (iter != sq_list.end())
+      has_char = true;
+    target = buildIntType();
+    iter  = find(sq_list.begin(), sq_list.end(), target);
+    if (iter != sq_list.end())
+      has_int = true; 
+    target = buildDoubleType();
+    iter  = find(sq_list.begin(), sq_list.end(), target);
+    if (iter != sq_list.end())
+      has_double = true; 
+    assert ( int(has_char) + int(has_int) + int(has_double) <=1); // cannot have more than one base types
+
+    // handle "short int": optional last match of 'int' only return int type to us
+    if (find(sq_list.begin(), sq_list.end(), buildShortType()) != sq_list.end())
+    {
+      //assert (isSgTypeInt(c_parsed_node) != NULL);
+      c_parsed_node = buildShortType();
+    }
+
+    // Handle  "long int", "long double"  "long long int"
+    target = buildLongType();
+    iter  = find(sq_list.begin(), sq_list.end(),target);
+    if (iter != sq_list.end())
+    {
+      // long long? followed by optional "int"
+      if ((*(iter++)) == buildLongType())
+      {
+	//assert (isSgTypeInt(c_parsed_node) != NULL);
+	c_parsed_node = buildLongLongType();
+      }
+      else // single "long"
+      {
+	//could be long , long int, or long double
+	if (has_int)
+	{
+	  assert (isSgTypeInt(c_parsed_node) != NULL);
+	  c_parsed_node = buildLongType();
+	}
+	else if (has_double)
+	{
+	  assert (isSgTypeDouble(c_parsed_node) != NULL);
+	  c_parsed_node = buildLongDoubleType();
+	}
+	else
+	{
+	  printf("Error: AstFromString::decode_list(), found 'long' without companying 'int' or 'double'\n"); 
+	  assert (0);
+	}
+
+      } 
+    }
+
+    // handle optional signed /usngined 
+    bool has_signed = false;
+    bool has_unsigned = false;
+    if ( find(sq_list.begin(), sq_list.end(), buildSignedLongLongType())!= sq_list.end())
+      has_signed = true; 
+    if ( find(sq_list.begin(), sq_list.end(), buildUnsignedLongLongType())!= sq_list.end())
+      has_unsigned = true; 
+    assert (! (has_signed && has_unsigned));
+
+    // This has to be done after the adjustment of short int, long int, etc
+    if (has_int || has_char)
+    {
+      // we internally use signed long long to indicate a match of "signed"
+      switch (c_parsed_node ->variantT())
+      {
+	case V_SgTypeChar:
+	  {
+	    if (has_signed)
+	      c_parsed_node = buildSignedCharType();
+	    else if (has_unsigned)
+	      c_parsed_node = buildUnsignedCharType();
+	    // nothing further if no adjustment is needed
+	    break;
+	  }
+	case V_SgTypeInt:
+	  {
+	    if (has_signed)
+	      c_parsed_node = buildSignedIntType();
+	    else if (has_unsigned)
+	      c_parsed_node = buildUnsignedIntType();
+	    break;
+	  }
+	case V_SgTypeLong:
+	  {
+	    if (has_signed)
+	      c_parsed_node = buildSignedLongType();
+	    else if (has_unsigned)
+	      c_parsed_node = buildUnsignedLongType();
+	    break;
+	  }
+	case V_SgTypeLongLong:
+	  {
+	    if (has_signed)
+	      c_parsed_node = buildSignedLongLongType();
+	    else if (has_unsigned)
+	      c_parsed_node = buildUnsignedLongLongType();
+	    break;
+	  }
+	case V_SgTypeShort:
+	  {
+	    if (has_signed)
+	      c_parsed_node = buildSignedShortType();
+	    else if (has_unsigned)
+	      c_parsed_node = buildUnsignedShortType();
+	    break;
+	  }
+#if 1
+	case V_SgTypeUnsignedLongLong:
+	case V_SgTypeSignedLongLong:
+	  {
+	    // we don't need additional sign/unsign on top of these two types
+	    break;
+	  }
+#endif
+	default:
+	  {
+	    if (has_signed || has_unsigned)
+	    {
+	      cerr<<"Error: AstFromString::decode_list(), illegal use  of 'signed' with type: "<<c_parsed_node->class_name()<<endl;
+	      assert (0);
+	    }
+	  }
+      }
+    } // end of if (has_int || has_char)
+
+    // step 2: other types, no special treatment so far: 
+    //--------------------------
+    // void, float , double (treated as part for long in step 1 already), TODO: struct/union, enum, TYPE_NAME
+
+    // step 3: handle qualifier: const/volatile SgConstVolatileModifier
+    // c_parsed_node only keep the last match: "const char" will return char type only 
+    //--------------------------
+    assert (sq_list.size() > 1);
+    bool has_const = false;
+    bool has_volatile= false;
+    for (iter = sq_list.begin(); iter != sq_list.end(); iter ++)
+    {
+      SgNode * cur_node = *iter;
+      if (SgConstVolatileModifier* mod = isSgConstVolatileModifier(cur_node))
+      {
+	if (mod->isConst())
+	{
+	  assert (has_const == false); // can only match once
+	  has_const = true;
+	}
+	else if (mod->isVolatile())
+	{
+	  assert (has_volatile== false); // can only match once
+	  has_volatile= true;
+	}
+      }// end if
+    } // end for 
+    // it is legal to have both const and volatile modifiers
+    if (has_const)
+    {
+      SgType* base_type = isSgType(c_parsed_node);
+      assert (base_type != NULL);
+      c_parsed_node = buildConstType(base_type);
+    } 
+    if (has_volatile)
+    {
+      SgType* base_type = isSgType(c_parsed_node);
+      assert (base_type != NULL);
+      c_parsed_node = buildVolatileType(base_type);
+    } 
+
+
+    return true;
   }
   /*
      Yacc Grammar: 
@@ -587,38 +771,38 @@ namespace AstFromString
   }  
   /* Yacc grammar
     type_specifier
-    	: VOID
-    	| CHAR
-    	| SHORT
-    	| INT
-    	| LONG
-    	| FLOAT
-    	| DOUBLE
-    	| SIGNED
-    	| UNSIGNED
-    	| struct_or_union_specifier
-    	| enum_specifier
-    	| TYPE_NAME
-    	;
+        : VOID
+        | CHAR
+        | SHORT
+        | INT
+        | LONG
+        | FLOAT
+        | DOUBLE
+        | SIGNED
+        | UNSIGNED
+        | struct_or_union_specifier
+        | enum_specifier
+        | TYPE_NAME
+        ;
    ANTLR grammar:
     type_specifier
-    	: 'void'
-    	| 'char'
-    	| 'short'
-    	| 'int'
-    	| 'long'
-    	| 'float'
-    	| 'double'
-    	| 'signed'
-    	| 'unsigned'
-    	| struct_or_union_specifier
-    	| enum_specifier
-    	| type_id
-    	;
+        : 'void'
+        | 'char'
+        | 'short'
+        | 'int'
+        | 'long'
+        | 'float'
+        | 'double'
+        | 'signed'
+        | 'unsigned'
+        | struct_or_union_specifier
+        | enum_specifier
+        | type_id
+        ;
     
     type_id
         :   {isTypeName(input.LT(1).getText())}? IDENTIFIER
-    //    	{System.out.println($IDENTIFIER.text+" is a type");}
+    //        {System.out.println($IDENTIFIER.text+" is a type");}
         ;
  
   */
@@ -709,17 +893,17 @@ namespace AstFromString
       old_char= c_char;
       match_qualifier = afs_match_type_qualifier();
       if (!match_qualifier)
-	match_specifier = afs_match_type_specifier ();
+    match_specifier = afs_match_type_specifier ();
       if (match_qualifier  || match_specifier)
       {
-	cur_result = true;
-	result = true; // one occurence is sufficient for a successful match
-	sq_list.push_back(c_parsed_node);
+    cur_result = true;
+    result = true; // one occurence is sufficient for a successful match
+    sq_list.push_back(c_parsed_node);
       }
       else
       {
-	cur_result = false;
-	c_char = old_char;
+    cur_result = false;
+    c_char = old_char;
       }
     } while (cur_result);
 
@@ -751,38 +935,38 @@ namespace AstFromString
     {
       if (afs_match_type_name())
       {
-	SgType* t = isSgType(c_parsed_node);
-	assert (t!= NULL);
-	if (afs_match_char(')'))
-	{
-	  if (afs_match_cast_expression())
-	  {
-	    SgExpression* operand = isSgExpression(c_parsed_node);
+    SgType* t = isSgType(c_parsed_node);
+    assert (t!= NULL);
+    if (afs_match_char(')'))
+    {
+      if (afs_match_cast_expression())
+      {
+        SgExpression* operand = isSgExpression(c_parsed_node);
              c_parsed_node = buildCastExp(operand, t);
-	     result = true; // must set this!!
-	  }
-	  else
-	  {
-	    c_char = old_char; 
-	   // printf("error. afs_match_cast_expression() expects cast_exp after matching (type_name) \n");
-	   // assert(0);
-	  }
-	}
-	else
-	{
+         result = true; // must set this!!
+      }
+      else
+      {
+        c_char = old_char; 
+       // printf("error. afs_match_cast_expression() expects cast_exp after matching (type_name) \n");
+       // assert(0);
+      }
+    }
+    else
+    {
           c_char = old_char; 
-	  //printf("error. afs_match_cast_expression() expects ) after matching (type_name \n");
-	  //assert(0);
-	}
+      //printf("error. afs_match_cast_expression() expects ) after matching (type_name \n");
+      //assert(0);
+    }
 
       }
       else 
       {
-	//printf("error. afs_match_cast_expression() expects type_name after matching ( \n");
-	//assert(0);
-	// should not assert here since unary_expression may start with '(' also!
-	c_char = old_char; 
-	result = false;
+    //printf("error. afs_match_cast_expression() expects type_name after matching ( \n");
+    //assert(0);
+    // should not assert here since unary_expression may start with '(' also!
+    c_char = old_char; 
+    result = false;
       }
     }
 
@@ -840,37 +1024,37 @@ namespace AstFromString
     {
       if (afs_match_cast_expression())
       {
-	SgExpression* rhs = isSgExpression(c_parsed_node);
-	assert (rhs != NULL);
-	if (is_multiply)
-	{
-	  c_parsed_node = buildMultiplyOp(lhs, rhs);
-	  lhs = isSgExpression(c_parsed_node); // reset lhs to prepare for the next round
-	}
-	else if (is_divide)
-	{
-	  c_parsed_node = buildDivideOp(lhs, rhs);
-	  lhs = isSgExpression(c_parsed_node); 
-	}
-	else if (is_mod)
-	{
-	  c_parsed_node = buildModOp(lhs, rhs);
-	  lhs = isSgExpression(c_parsed_node); 
-	}
-	else
-	{
-	  printf("error. afs_match_multiplicative_expression() illegal branch reached.\n");
-	  assert (0);
-	}
-	result = true;
+    SgExpression* rhs = isSgExpression(c_parsed_node);
+    assert (rhs != NULL);
+    if (is_multiply)
+    {
+      c_parsed_node = buildMultiplyOp(lhs, rhs);
+      lhs = isSgExpression(c_parsed_node); // reset lhs to prepare for the next round
+    }
+    else if (is_divide)
+    {
+      c_parsed_node = buildDivideOp(lhs, rhs);
+      lhs = isSgExpression(c_parsed_node); 
+    }
+    else if (is_mod)
+    {
+      c_parsed_node = buildModOp(lhs, rhs);
+      lhs = isSgExpression(c_parsed_node); 
+    }
+    else
+    {
+      printf("error. afs_match_multiplicative_expression() illegal branch reached.\n");
+      assert (0);
+    }
+    result = true;
       }
       else 
       {
-	result = false;
-	c_char = old_char; // this round failed, restore to the lastes rollback point
-	//printf("error. afs_match_multiplicative_expression() expects cast_expression after matching * / or percentage character\n");
-	//assert (0);
-	break;
+    result = false;
+    c_char = old_char; // this round failed, restore to the lastes rollback point
+    //printf("error. afs_match_multiplicative_expression() expects cast_expression after matching * / or percentage character\n");
+    //assert (0);
+    break;
       }
 
       // start the next round
@@ -880,9 +1064,9 @@ namespace AstFromString
       is_mod = false;
       is_multiply = afs_match_char('*');
       if (!is_multiply )
-	is_divide = afs_match_char('/');
+    is_divide = afs_match_char('/');
       if (!is_divide)
-	is_mod= afs_match_char('%');
+    is_mod= afs_match_char('%');
     } // end while  
 
     return true; // always true if program can reach this point
@@ -935,31 +1119,31 @@ namespace AstFromString
     {
       if (afs_match_multiplicative_expression())
       {
-	rhs = isSgExpression(c_parsed_node);
-	assert (rhs != NULL);
-	assert (lhs != NULL);
-	if (is_plus)
-	{
-	  c_parsed_node = buildAddOp(lhs, rhs);
-	  lhs = isSgExpression(c_parsed_node); // reset lhs to prepare for the next round
-	}
-	else if (is_minus)
-	{
-	  c_parsed_node = buildSubtractOp(lhs, rhs);
-	  lhs = isSgExpression(c_parsed_node); 
-	}
-	else
-	{
-	  assert (0);
-	}
-	//result = true;
+    rhs = isSgExpression(c_parsed_node);
+    assert (rhs != NULL);
+    assert (lhs != NULL);
+    if (is_plus)
+    {
+      c_parsed_node = buildAddOp(lhs, rhs);
+      lhs = isSgExpression(c_parsed_node); // reset lhs to prepare for the next round
+    }
+    else if (is_minus)
+    {
+      c_parsed_node = buildSubtractOp(lhs, rhs);
+      lhs = isSgExpression(c_parsed_node); 
+    }
+    else
+    {
+      assert (0);
+    }
+    //result = true;
       }
       else 
       {
-	c_char = old_char;
-	//printf("error in afs_match_additive_expression(): expects multiplicative_expression after matching '+' or '-'\n");
-	//assert (0);
-	break;
+    c_char = old_char;
+    //printf("error in afs_match_additive_expression(): expects multiplicative_expression after matching '+' or '-'\n");
+    //assert (0);
+    break;
       }
 
       // start the next round
@@ -968,7 +1152,7 @@ namespace AstFromString
       is_minus = false; 
       is_plus = afs_match_char('+');
       if (!is_plus ) 
-	is_minus = afs_match_char('-');
+    is_minus = afs_match_char('-');
     }
 
     return true;
@@ -1023,18 +1207,18 @@ namespace AstFromString
     {
       if (afs_match_expression())
       {
-	SgExpression* true_exp = isSgExpression(c_parsed_node);
-	assert (true_exp != NULL);
-	if (afs_match_char(':'))
-	{
-	  if (afs_match_conditional_expression())
-	  {
-	    SgExpression* false_exp = isSgExpression(c_parsed_node);
-	    assert (false_exp != NULL);
-	    c_parsed_node = buildConditionalExp(cond_exp, true_exp, false_exp);
-	    result2 = true;
-	  }
-	}	   
+    SgExpression* true_exp = isSgExpression(c_parsed_node);
+    assert (true_exp != NULL);
+    if (afs_match_char(':'))
+    {
+      if (afs_match_conditional_expression())
+      {
+        SgExpression* false_exp = isSgExpression(c_parsed_node);
+        assert (false_exp != NULL);
+        c_parsed_node = buildConditionalExp(cond_exp, true_exp, false_exp);
+        result2 = true;
+      }
+    }       
       }
     }
     if (!result2) // store contex if term2 is not matched.
@@ -1076,18 +1260,18 @@ namespace AstFromString
     {
       if (afs_match_logical_and_expression())
       {
-	rhs = isSgExpression(c_parsed_node);
-	assert (rhs != NULL);
-	assert (lhs != NULL);
-	c_parsed_node = buildOrOp(lhs, rhs);
-	lhs = isSgExpression(c_parsed_node);
+    rhs = isSgExpression(c_parsed_node);
+    assert (rhs != NULL);
+    assert (lhs != NULL);
+    c_parsed_node = buildOrOp(lhs, rhs);
+    lhs = isSgExpression(c_parsed_node);
       }
       else
       {
-	c_char = old_char;
-	//printf("error in afs_match_logical_or_expression(): expects logical_and_expression after matching '||' \n");
-	//assert (0);
-	break;
+    c_char = old_char;
+    //printf("error in afs_match_logical_or_expression(): expects logical_and_expression after matching '||' \n");
+    //assert (0);
+    break;
       }
       // start the next round
       old_char = c_char;
@@ -1097,8 +1281,8 @@ namespace AstFromString
 
 /*
 logical_and_expression
-	: inclusive_or_expression ('&&' inclusive_or_expression)*
-	;
+    : inclusive_or_expression ('&&' inclusive_or_expression)*
+    ;
 */
   bool afs_match_logical_and_expression()
   {
@@ -1146,8 +1330,8 @@ logical_and_expression
 
 /*
 inclusive_or_expression
-	: exclusive_or_expression ('|' exclusive_or_expression)*
-	;
+    : exclusive_or_expression ('|' exclusive_or_expression)*
+    ;
 */
   bool afs_match_inclusive_or_expression()
   {
@@ -1195,8 +1379,8 @@ inclusive_or_expression
 
 /*
 exclusive_or_expression
-	: and_expression ('^' and_expression)*
-	;
+    : and_expression ('^' and_expression)*
+    ;
 */
   bool afs_match_exclusive_or_expression()
   {
@@ -1244,8 +1428,8 @@ exclusive_or_expression
 
 /*
 and_expression
-	: equality_expression ('&' equality_expression)*
-	;
+    : equality_expression ('&' equality_expression)*
+    ;
 */
   bool afs_match_and_expression()
   {
@@ -1293,8 +1477,8 @@ and_expression
 
 /*
 equality_expression
-	: relational_expression (('=='|'!=') relational_expression)*
-	;
+    : relational_expression (('=='|'!=') relational_expression)*
+    ;
 */
   bool afs_match_equality_expression()
   {
@@ -1328,31 +1512,31 @@ equality_expression
     {
       if (afs_match_relational_expression())
       {
-	rhs = isSgExpression(c_parsed_node);
-	assert (rhs != NULL);
-	assert (lhs != NULL);
-	if (is_equal)
-	{
-	  c_parsed_node = buildEqualityOp(lhs, rhs);
-	  lhs = isSgExpression(c_parsed_node); // reset lhs to prepare for the next round
-	}
-	else if (is_not_equal)
-	{
-	  c_parsed_node = buildNotEqualOp(lhs, rhs);
-	  lhs = isSgExpression(c_parsed_node);
-	}
-	else
-	{
-	  assert (0);
-	}
-	//result = true;
+    rhs = isSgExpression(c_parsed_node);
+    assert (rhs != NULL);
+    assert (lhs != NULL);
+    if (is_equal)
+    {
+      c_parsed_node = buildEqualityOp(lhs, rhs);
+      lhs = isSgExpression(c_parsed_node); // reset lhs to prepare for the next round
+    }
+    else if (is_not_equal)
+    {
+      c_parsed_node = buildNotEqualOp(lhs, rhs);
+      lhs = isSgExpression(c_parsed_node);
+    }
+    else
+    {
+      assert (0);
+    }
+    //result = true;
       }
       else
       {
-	c_char = old_char;
-	//  printf("error in afs_match_additive_expression(): expects multiplicative_expression after matching '+' or '-'\n");
-	// assert (0);
-	break;
+    c_char = old_char;
+    //  printf("error in afs_match_additive_expression(): expects multiplicative_expression after matching '+' or '-'\n");
+    // assert (0);
+    break;
       }
 
       // start the next round
@@ -1361,7 +1545,7 @@ equality_expression
       is_not_equal = false;
       is_equal = afs_match_substr("==");
       if (!is_equal )
-	is_not_equal = afs_match_substr("!=");
+    is_not_equal = afs_match_substr("!=");
     }
 
       return true;
@@ -1370,8 +1554,8 @@ equality_expression
 
 /*
 relational_expression
-	: shift_expression (('<'|'>'|'<='|'>=') shift_expression)*
-	;
+    : shift_expression (('<'|'>'|'<='|'>=') shift_expression)*
+    ;
 */
   bool afs_match_relational_expression()
   {
@@ -1412,42 +1596,42 @@ relational_expression
     {
       if (afs_match_shift_expression())
       {
-	rhs = isSgExpression(c_parsed_node);
-	assert (rhs != NULL);
-	assert (lhs != NULL);
-	if (is_less_equal)
-	{
-	  c_parsed_node = buildLessOrEqualOp(lhs, rhs);
-	  lhs = isSgExpression(c_parsed_node); // reset lhs to prepare for the next round
-	}
-	else if (is_larger_equal)
-	{
-	  c_parsed_node = buildGreaterOrEqualOp(lhs, rhs);
-	  lhs = isSgExpression(c_parsed_node);
-	} 
+    rhs = isSgExpression(c_parsed_node);
+    assert (rhs != NULL);
+    assert (lhs != NULL);
+    if (is_less_equal)
+    {
+      c_parsed_node = buildLessOrEqualOp(lhs, rhs);
+      lhs = isSgExpression(c_parsed_node); // reset lhs to prepare for the next round
+    }
+    else if (is_larger_equal)
+    {
+      c_parsed_node = buildGreaterOrEqualOp(lhs, rhs);
+      lhs = isSgExpression(c_parsed_node);
+    } 
         else if (is_less)
-	{
-	  c_parsed_node = buildLessThanOp(lhs, rhs);
-	  lhs = isSgExpression(c_parsed_node); // reset lhs to prepare for the next round
-	}
-	else if (is_larger)
-	{
-	  c_parsed_node = buildGreaterThanOp(lhs, rhs);
-	  lhs = isSgExpression(c_parsed_node);
-	}
-	else
-	{ // impossible branch
-	  assert (0);
-	}
-	//result = true;
+    {
+      c_parsed_node = buildLessThanOp(lhs, rhs);
+      lhs = isSgExpression(c_parsed_node); // reset lhs to prepare for the next round
+    }
+    else if (is_larger)
+    {
+      c_parsed_node = buildGreaterThanOp(lhs, rhs);
+      lhs = isSgExpression(c_parsed_node);
+    }
+    else
+    { // impossible branch
+      assert (0);
+    }
+    //result = true;
       }
       else
       {
         // no match , rollback
-	c_char = old_char;
-	//printf("error in afs_match_additive_expression(): expects multiplicative_expression after matching '+' or '-'\n");
-	//assert (0);
-	break;
+    c_char = old_char;
+    //printf("error in afs_match_additive_expression(): expects multiplicative_expression after matching '+' or '-'\n");
+    //assert (0);
+    break;
       }
 
       // start the next round
@@ -1459,11 +1643,11 @@ relational_expression
 
       is_less_equal = afs_match_substr("<=");
       if (!is_less_equal)
-	is_larger_equal = afs_match_substr(">=");
+    is_larger_equal = afs_match_substr(">=");
       if (!is_larger_equal)
-	is_less = afs_match_char('<');
+    is_less = afs_match_char('<');
       if (!is_less)
-	is_larger = afs_match_char('>');
+    is_larger = afs_match_char('>');
     }
 
     return true;
@@ -1471,8 +1655,8 @@ relational_expression
 
 /*
 shift_expression
-	: additive_expression (('<<'|'>>') additive_expression)*
-	;
+    : additive_expression (('<<'|'>>') additive_expression)*
+    ;
 */
   bool afs_match_shift_expression()
   {
@@ -1593,75 +1777,75 @@ shift_expression
       VariantT op_type; 
       bool b_match_op = true;
       if (afs_match_substr("="))
-	op_type = V_SgAssignOp;
+    op_type = V_SgAssignOp;
       else if (afs_match_substr("*="))
-	op_type = V_SgMultAssignOp;
+    op_type = V_SgMultAssignOp;
       else if (afs_match_substr("/="))
-	op_type = V_SgDivAssignOp;
+    op_type = V_SgDivAssignOp;
       else if (afs_match_substr("%="))
-	op_type = V_SgModAssignOp;
+    op_type = V_SgModAssignOp;
       else if (afs_match_substr("+="))
-	op_type = V_SgPlusAssignOp;
+    op_type = V_SgPlusAssignOp;
       else if (afs_match_substr("-="))
-	op_type = V_SgMinusAssignOp;
+    op_type = V_SgMinusAssignOp;
       else if (afs_match_substr("<<="))
-	op_type = V_SgLshiftAssignOp;
+    op_type = V_SgLshiftAssignOp;
       else if (afs_match_substr(">>="))
-	op_type = V_SgRshiftAssignOp;
+    op_type = V_SgRshiftAssignOp;
       else if (afs_match_substr("&="))
-	op_type = V_SgAndAssignOp;
+    op_type = V_SgAndAssignOp;
       else if (afs_match_substr("^="))
-	op_type = V_SgXorAssignOp;
+    op_type = V_SgXorAssignOp;
       else if (afs_match_substr("|="))
-	op_type = V_SgIorAssignOp;
+    op_type = V_SgIorAssignOp;
       else
-	b_match_op = false;
+    b_match_op = false;
 
       if (b_match_op)
-	if (afs_match_assignment_expression())
-	{
-	  SgExpression* rhs = isSgExpression(c_parsed_node);
-	  assert (rhs != NULL);
-	  switch (op_type)
-	  {
-	    case V_SgAssignOp:
-	      c_parsed_node = buildAssignOp(lhs, rhs);
-	      break;
-	    case V_SgMultAssignOp:
-	      c_parsed_node = buildMultAssignOp(lhs, rhs);
-	      break;
-	    case V_SgDivAssignOp:
-	      c_parsed_node = buildDivAssignOp(lhs, rhs);
-	      break;
-	    case V_SgModAssignOp:
-	      c_parsed_node = buildModAssignOp(lhs, rhs);
-	      break;
-	    case V_SgPlusAssignOp:
-	      c_parsed_node = buildPlusAssignOp(lhs, rhs);
-	      break;
-	    case V_SgMinusAssignOp:
-	      c_parsed_node = buildMinusAssignOp(lhs, rhs);
-	      break;
-	    case V_SgLshiftAssignOp:
-	      c_parsed_node = buildLshiftAssignOp(lhs, rhs);
-	      break;
-	    case V_SgRshiftAssignOp:
-	      c_parsed_node = buildRshiftAssignOp(lhs, rhs);
-	      break;
-	    case V_SgAndAssignOp:
-	      c_parsed_node = buildAndAssignOp(lhs, rhs);
-	      break;
-	    case V_SgXorAssignOp:
-	      c_parsed_node = buildXorAssignOp(lhs, rhs);
-	      break;
-	    case V_SgIorAssignOp:
-	      c_parsed_node = buildIorAssignOp(lhs, rhs);
-	      break;
-	    default:
-	      assert (false);
-	  }  
-	  result = true;
-	} 
+    if (afs_match_assignment_expression())
+    {
+      SgExpression* rhs = isSgExpression(c_parsed_node);
+      assert (rhs != NULL);
+      switch (op_type)
+      {
+        case V_SgAssignOp:
+          c_parsed_node = buildAssignOp(lhs, rhs);
+          break;
+        case V_SgMultAssignOp:
+          c_parsed_node = buildMultAssignOp(lhs, rhs);
+          break;
+        case V_SgDivAssignOp:
+          c_parsed_node = buildDivAssignOp(lhs, rhs);
+          break;
+        case V_SgModAssignOp:
+          c_parsed_node = buildModAssignOp(lhs, rhs);
+          break;
+        case V_SgPlusAssignOp:
+          c_parsed_node = buildPlusAssignOp(lhs, rhs);
+          break;
+        case V_SgMinusAssignOp:
+          c_parsed_node = buildMinusAssignOp(lhs, rhs);
+          break;
+        case V_SgLshiftAssignOp:
+          c_parsed_node = buildLshiftAssignOp(lhs, rhs);
+          break;
+        case V_SgRshiftAssignOp:
+          c_parsed_node = buildRshiftAssignOp(lhs, rhs);
+          break;
+        case V_SgAndAssignOp:
+          c_parsed_node = buildAndAssignOp(lhs, rhs);
+          break;
+        case V_SgXorAssignOp:
+          c_parsed_node = buildXorAssignOp(lhs, rhs);
+          break;
+        case V_SgIorAssignOp:
+          c_parsed_node = buildIorAssignOp(lhs, rhs);
+          break;
+        default:
+          assert (false);
+      }  
+      result = true;
+    } 
 
     }  
     if (result == false)   c_char = old_char;
@@ -1708,17 +1892,17 @@ shift_expression
     {
       if (afs_match_assignment_expression())
       {
-	SgExpression* argx = isSgExpression(c_parsed_node);
-	assert(argx != NULL); 
-	appendExpression(parameters, argx);
-	c_parsed_node = parameters; // must set it again since it was rewritten in match_assignment_expression()
+    SgExpression* argx = isSgExpression(c_parsed_node);
+    assert(argx != NULL); 
+    appendExpression(parameters, argx);
+    c_parsed_node = parameters; // must set it again since it was rewritten in match_assignment_expression()
       }
       else 
       {
-	c_char = old_char;  // optional match fails, rollback
-//	printf("error. afs_match_argument_expression_list() expects assignment_expression after matching ','\n");
-//	assert (0);
-	break;             // and break out
+    c_char = old_char;  // optional match fails, rollback
+//    printf("error. afs_match_argument_expression_list() expects assignment_expression after matching ','\n");
+//    assert (0);
+    break;             // and break out
       }
       // prepare next round
       old_char = c_char; 
@@ -1819,117 +2003,117 @@ postfix_operator
     {
       if (is_left_sb) // '[' expression ']'
       {
-	if (afs_match_expression()) // this will overwrite c_parsed_node
-	{  
-	  if (afs_match_char(']'))
-	  {
-	    SgExpression* arr_ref = isSgExpression(c_parsed_node);
-	    assert (arr_ref != NULL);
-	    assert (post_exp != NULL);
-	    c_parsed_node = buildPntrArrRefExp(post_exp, arr_ref);
-	    post_exp = isSgExpression(c_parsed_node);  //  update the previous postfix exp
-	    //result = true;
-	  }
-	  else
-	  {// optional match fails, rollback and breakout
-	    c_char = old_char;
-	    break;
-	    //result = false;  
-	  }
-	}
-	else 
-	{
-	  c_char = old_char;
-	  break;
-	  //result = false;  
-	}
+    if (afs_match_expression()) // this will overwrite c_parsed_node
+    {  
+      if (afs_match_char(']'))
+      {
+        SgExpression* arr_ref = isSgExpression(c_parsed_node);
+        assert (arr_ref != NULL);
+        assert (post_exp != NULL);
+        c_parsed_node = buildPntrArrRefExp(post_exp, arr_ref);
+        post_exp = isSgExpression(c_parsed_node);  //  update the previous postfix exp
+        //result = true;
+      }
+      else
+      {// optional match fails, rollback and breakout
+        c_char = old_char;
+        break;
+        //result = false;  
+      }
+    }
+    else 
+    {
+      c_char = old_char;
+      break;
+      //result = false;  
+    }
       }
       else  if (is_left_paren)
       { // function call exp (argument_expression_list) 
-	if (afs_match_argument_expression_list())
-	{
-	  assert (c_parsed_node != NULL);
-	  //cout<<"debug: "<< c_parsed_node->class_name()<<endl;
-	  SgExprListExp* parameters = isSgExprListExp(c_parsed_node);
-	  assert (parameters != NULL);
-	  if (afs_match_char(')'))
-	  {
-	    assert (post_exp != NULL);
-	    c_parsed_node = buildFunctionCallExp (post_exp, parameters);
-	    post_exp = isSgExpression(c_parsed_node);  
-	    result =true;
-	  }
-	  else 
-	  {
-	    c_char = old_char;
-	    break;
-	  }
-	}
-	else if (afs_match_char(')'))
-	{
-	  assert (post_exp != NULL);
-	  c_parsed_node = buildFunctionCallExp (post_exp, NULL);
-	  post_exp = isSgExpression(c_parsed_node);  
-	  //result = true;
-	}
-	else // neither of the two cases,something is wrong
-	{
-	  c_char = old_char;
-	  break;
-	  //  result = false;
-	}
+    if (afs_match_argument_expression_list())
+    {
+      assert (c_parsed_node != NULL);
+      //cout<<"debug: "<< c_parsed_node->class_name()<<endl;
+      SgExprListExp* parameters = isSgExprListExp(c_parsed_node);
+      assert (parameters != NULL);
+      if (afs_match_char(')'))
+      {
+        assert (post_exp != NULL);
+        c_parsed_node = buildFunctionCallExp (post_exp, parameters);
+        post_exp = isSgExpression(c_parsed_node);  
+        result =true;
+      }
+      else 
+      {
+        c_char = old_char;
+        break;
+      }
+    }
+    else if (afs_match_char(')'))
+    {
+      assert (post_exp != NULL);
+      c_parsed_node = buildFunctionCallExp (post_exp, NULL);
+      post_exp = isSgExpression(c_parsed_node);  
+      //result = true;
+    }
+    else // neither of the two cases,something is wrong
+    {
+      c_char = old_char;
+      break;
+      //  result = false;
+    }
       }
       else if (is_dot)
       {
-	if (afs_match_identifier())
-	{
-	  assert (c_parsed_node != NULL);
-	  assert (isSgExpression(c_parsed_node));
-	  assert (post_exp != NULL);
-	  c_parsed_node = buildDotExp(post_exp, isSgExpression(c_parsed_node) );
-	  post_exp = isSgExpression(c_parsed_node);  
-	}
-	else 
-	{
-	  c_char = old_char;
-	  break;
-	}
+    if (afs_match_identifier())
+    {
+      assert (c_parsed_node != NULL);
+      assert (isSgExpression(c_parsed_node));
+      assert (post_exp != NULL);
+      c_parsed_node = buildDotExp(post_exp, isSgExpression(c_parsed_node) );
+      post_exp = isSgExpression(c_parsed_node);  
+    }
+    else 
+    {
+      c_char = old_char;
+      break;
+    }
       }  
       else if (is_arrow)
       {
-	if (afs_match_identifier())
-	{
-	  assert (c_parsed_node != NULL);
-	  assert (isSgExpression(c_parsed_node));
-	  assert (post_exp != NULL);
-	  c_parsed_node = buildArrowExp(post_exp, isSgExpression(c_parsed_node) );
-	  post_exp = isSgExpression(c_parsed_node);  
-	}
-	else 
-	{
-	  c_char = old_char;
-	  break;
-	}
+    if (afs_match_identifier())
+    {
+      assert (c_parsed_node != NULL);
+      assert (isSgExpression(c_parsed_node));
+      assert (post_exp != NULL);
+      c_parsed_node = buildArrowExp(post_exp, isSgExpression(c_parsed_node) );
+      post_exp = isSgExpression(c_parsed_node);  
+    }
+    else 
+    {
+      c_char = old_char;
+      break;
+    }
       }  
       else if (is_plusplus)
       {
-	assert (post_exp != NULL);
-	c_parsed_node = buildPlusPlusOp(post_exp, SgUnaryOp::postfix);
-	post_exp = isSgExpression(c_parsed_node);  
-	//result = true;
+    assert (post_exp != NULL);
+    c_parsed_node = buildPlusPlusOp(post_exp, SgUnaryOp::postfix);
+    post_exp = isSgExpression(c_parsed_node);  
+    //result = true;
       } 
       else if (is_minusminus)
       {
-	assert (post_exp != NULL);
-	c_parsed_node = buildMinusMinusOp (post_exp, SgUnaryOp::postfix);
-	post_exp = isSgExpression(c_parsed_node);  
-	// result = true;
+    assert (post_exp != NULL);
+    c_parsed_node = buildMinusMinusOp (post_exp, SgUnaryOp::postfix);
+    post_exp = isSgExpression(c_parsed_node);  
+    // result = true;
       }
       else
       {
-	printf("error. afs_match_postfix_expression() reaches impossible if-else-if branch.\n");
+    printf("error. afs_match_postfix_expression() reaches impossible if-else-if branch.\n");
         assert(0);
-      }	
+      }    
 
       // try next round
       old_char = c_char; // set new rollback point
@@ -1943,15 +2127,15 @@ postfix_operator
       // try to match optional one of the postfix operators
       is_left_sb = afs_match_char('[');
       if (!is_left_sb)
-	is_left_paren = afs_match_char('(');
+    is_left_paren = afs_match_char('(');
       if (!is_left_paren)
-	is_dot = afs_match_char('.');
+    is_dot = afs_match_char('.');
       if (!is_dot)
-	is_arrow = afs_match_substr("->");
+    is_arrow = afs_match_substr("->");
       if (!is_arrow)
-	is_plusplus = afs_match_substr("++");
+    is_plusplus = afs_match_substr("++");
       if (!is_plusplus)
-	is_minusminus = afs_match_substr("--");
+    is_minusminus = afs_match_substr("--");
     }// end while
 
     return true; 
@@ -2003,20 +2187,20 @@ postfix_operator
     {
       if (afs_match_assignment_expression())
       {
-	assert (c_parsed_node!= NULL);
-	SgExpression* rhs = isSgExpression(c_parsed_node);
-	assert (rhs != NULL);
-	lhs = buildCommaOpExp(lhs, rhs);
+    assert (c_parsed_node!= NULL);
+    SgExpression* rhs = isSgExpression(c_parsed_node);
+    assert (rhs != NULL);
+    lhs = buildCommaOpExp(lhs, rhs);
         c_parsed_node = lhs;
       }
       else
       {
-	// no match, rollback
-	c_char = old_char;
-	//error reporting
-//	printf("error: afs_match_expression(), expecting assignment_expression after ','\n");
-//	assert (0);
-	break;
+    // no match, rollback
+    c_char = old_char;
+    //error reporting
+//    printf("error: afs_match_expression(), expecting assignment_expression after ','\n");
+//    assert (0);
+    break;
       }
       old_char = c_char; 
     }
@@ -2025,8 +2209,8 @@ postfix_operator
   }
   /*
     constant_expression
-	: conditional_expression
-	;
+    : conditional_expression
+    ;
 
      */
    bool afs_match_constant_expression()

@@ -114,7 +114,10 @@ enum RTS_Layer {
 
 /** Check for layering violations.  This should be called just before any attempt to acquire a lock.  The specified layer
  *  should be the layer of the lock being acquired.  Returns true if it is OK to acquire the lock, false if doing so could
- *  result in deadlock.  Before returning false, an error message is printed to stderr. */
+ *  result in deadlock.  Before returning false, an error message is printed to stderr.
+ *
+ *  Note that this function is a no-op when the compiler does not support the "__thread" type qualifier, nor any other
+ *  qualifier as detected by the ROSE configure script.  Currently, this is a no-op on Mac OS X. [RPM 2011-05-04] */
 bool RTS_acquiring(RTS_Layer);
 
 /** Notes the release of a lock.  This function should be called before or after each release of a lock.  The layer number is
@@ -196,7 +199,7 @@ int RTS_mutex_init(RTS_mutex_t*, RTS_Layer, pthread_mutexattr_t*);
 
 #else
 
-struct RTS_Mutex {
+struct RTS_mutex_t {
     int dummy;
 };
 
