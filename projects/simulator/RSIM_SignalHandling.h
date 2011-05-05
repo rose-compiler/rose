@@ -80,7 +80,7 @@ class RSIM_SignalHandling {
 public:
     RSIM_SignalHandling()
         : mask(0), queue_head(0), queue_tail(0), pending(0), reprocess(0) {
-        pthread_mutex_init(&mutex, NULL);
+        RTS_mutex_init(&mutex, RTS_LAYER_RSIM_SIGNALHANDLING_OBJ, NULL);
         memset(queue, 0, sizeof queue);
         memset(&stack, 0, sizeof stack);
         memset(&pending_info, 0, sizeof pending_info);
@@ -295,7 +295,7 @@ private:
     static const size_t QUEUE_SIZE = 20;
     static const int FIRST_RT = 32;     /**< Lowest numbered real-time signal; do not use SIGRTMIN. */
 
-    mutable pthread_mutex_t mutex;      /**< Protects all members of this struct. */
+    mutable RTS_mutex_t mutex;          /**< Protects all members of this struct. */
     sigset_32 mask;                     /**< Masked signals. Bit N is set if signal N+1 is masked. */
     stack_32 stack;                     /**< Possible alternative stack to using during signal handling. */
     siginfo_32 queue[QUEUE_SIZE];       /**< Queue of pending real-time signals. */

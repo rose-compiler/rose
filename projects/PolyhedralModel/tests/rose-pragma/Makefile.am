@@ -24,7 +24,7 @@ if ROSE_USE_CLOOG
 	@mkdir -p $(@:.c=)
 	$(bin_dir)/test-rose-pragma-generate-all-schedules $(srcdir)/$@ $(@:.c=)
 endif
-	
+
 
 check-local:
 	@$(MAKE) $(TEST_CODES)

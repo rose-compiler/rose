@@ -14,6 +14,7 @@ stringify.C: $(top_srcdir)/scripts/stringify.pl
 	@echo "  GEN     $@"
 	@$(top_srcdir)/scripts/stringify.pl --generic --header --output=$@ $(top_srcdir)/src ../frontend/SageIII
 
+threadSupport.lo: stringify.h
 
 noinst_LTLIBRARIES = libroseSupport.la
 
