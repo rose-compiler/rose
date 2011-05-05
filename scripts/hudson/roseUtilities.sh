@@ -51,7 +51,7 @@ safe_rm_rf () {
         local OK=$?
     set -e
 
-    if $OK -eq 0
+    if $OK -eq 0 ; then
         echo "rm -rf $1"
         rm -rf $1
     else
