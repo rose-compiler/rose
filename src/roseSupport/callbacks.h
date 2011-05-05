@@ -82,7 +82,7 @@ namespace ROSE_Callbacks {
         typedef std::list<CallbackType*> CBList;                /**< Standard vector of functor pointers. */
 
         List() {
-            pthread_mutex_init(&mutex, NULL);
+            RTS_mutex_init(&mutex, RTS_LAYER_ROSE_CALLBACKS_LIST_OBJ, NULL);
         }
 
         /** Returns the number of callbacks in the list.
@@ -211,7 +211,7 @@ namespace ROSE_Callbacks {
         }
 
     private:
-        mutable pthread_mutex_t mutex;
+        mutable RTS_mutex_t mutex;
         CBList list;
     };
 };
