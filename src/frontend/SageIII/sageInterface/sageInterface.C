@@ -7611,6 +7611,8 @@ class ConditionalExpGenerator: public StatementGenerator
 //! Merged from replaceExpressionWithStatement.C
 SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string newName/* ="" */)
 {
+  ROSE_ASSERT(from != NULL);
+  
   if (!SageInterface::isCopyConstructible(from->get_type())) {
     std::cerr << "Type " << from->get_type()->unparseToString() << " of expression " << from->unparseToString() << " is not copy constructible" << std::endl;
     ROSE_ASSERT (false);
@@ -10051,7 +10053,8 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
       SgReturnStmt* cur_stmt = isSgReturnStmt(*i);
       ROSE_ASSERT(cur_stmt);
       SgExpression * exp = cur_stmt->get_expression();
-      bool needRewrite = !(isSgValueExp(exp));
+   // TV (05/03/2011) Catch the case "return ;" where exp is NULL
+      bool needRewrite = (exp != NULL) && !(isSgValueExp(exp));
       if (needRewrite)
       {
         splitExpression(exp);

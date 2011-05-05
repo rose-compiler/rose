@@ -238,7 +238,7 @@ void setup(void)
 	tst_tmpdir();
 
 	/* create a temporary filename */
-	sprintf(fifo, "%s.%d", fifo, getpid());
+	sprintf(fifo+strlen(fifo), ".%d", getpid());
 
 }
 

@@ -342,6 +342,100 @@ public:
 
 
     /**************************************************************************************************************************
+     *                                  Process Callbacks
+     **************************************************************************************************************************/
+public:
+
+    /** Callbacks invoked for processes.
+     *
+     *  These callbacks are invoked on behalf of the entire simulated process at certain points in a process lifetime.
+     *
+     *  Here's an example that shows how to produce an assembly dump of the process' executable memory whenever it's about to
+     *  dump core rather than dumping core:
+     *
+     *  @code
+     *  class DisassembleAtCoreDump: public RSIM_Callbacks::ProcessCallback {
+     *  public:
+     *      // Allow threads, processes, and simulators to all share a single instance
+     *      // of this callback.
+     *      virtual DisassembleAtCoreDump *clone() { return this; }
+     *
+     *      // The callback itself. It does nothing unless the reason for being called
+     *      // is because the process is dumping core.
+     *      virtual bool operator()(bool retval, const Args &args) {
+     *          if (args.reason==COREDUMP) {
+     *              SgAsmBlock *block = args.process->disassemble();
+     *              AsmUnparser().unparse(std::cout, block);
+     *              retval = false; // avoid a core dump
+     *          }
+     *          return retval;
+     *      }
+     *  };
+     *
+     *  // Register the callback with the simulator, which will copy it into the
+     *  // process when the process is created.  Or we could have just registered
+     *  // it with the process directly.
+     *  DisassembleAtCoreDump dacd;
+     *  simulator.get_callbacks().add_process_callback(RSIM_Callbacks::BEFORE, &dacd);
+     *  
+     *  @endcode
+     */
+    class ProcessCallback: public Callback {
+    public:
+
+        /** Reason for invoking process callbacks. */
+        enum Reason {
+            START,                              /**< Process is starting execution. */
+            COREDUMP,                           /**< Process is about to dump core. If call_process_callbacks() return false
+                                                 *   then the core dump is avoided. */
+            FINISH,                             /**< Process has finished execution. */
+        };
+
+        struct Args {
+            Args(RSIM_Process *process, Reason reason)
+                : process(process), reason(reason) {}
+            RSIM_Process *process;
+            Reason reason;
+        };
+        virtual bool operator()(bool prev, const Args&) = 0;
+    };
+
+    /** Registers a process callback.  Process callbacks are invoked before a new process is created or when a process exits
+     *  (depending on @p when).  The specified callback object is inserted into the list without copying it. See
+     *  call_process_callbacks() for details about how these callbacks are invoked.
+     *
+     *  Thread safety:  This method is thread safe. */
+    void add_process_callback(When, ProcessCallback*);
+
+    /** Unregisters a process callback.  The most recently registered instance of the specified callback (if any) is removed
+     *  from the pre- or post-process callback list, depending on the value of @p when).  The removed callback object is not
+     *  destroyed.  Returns true if a callback was removed, false if not.
+     *
+     *  Thread safety:  This method is thread safe. */
+    bool remove_process_callback(When, ProcessCallback*);
+
+
+    /** Removes all process callbacks.  The pre- or post-process callbacks are removed, depending on the value of @p when. None
+     *  of the removed callbacks are destroyed.
+     *
+     *  Thread safety:  This method is thread safe. */
+    void clear_process_callbacks(When);
+
+    /** Invokes all the process callbacks.  The pre- or post-process callbacks (depending on the value of @p when) are invoked
+     *  in the order they were registered.  The specified @p prev value is passed to the first callback as its @p prev
+     *  argument; subsequent callbacks' @p prev argument is the return value of the previous callback; the return value of the
+     *  final callback becomes the return value of this method.  However, if no callbacks are invoked (because the list is
+     *  empty) then this method's return value is the specified @p prev value.  The @p process is passed to each of the
+     *  callbacks.
+     *
+     *  Thread safety:  This method is thread safe.  The callbacks may register and/or unregister themselves or other callbacks
+     *  from this RSIM_Callbacks object, but those actions do not affect which callbacks are made by this invocation of
+     *  call_process_callbacks(). */
+    bool call_process_callbacks(When, RSIM_Process*, RSIM_Callbacks::ProcessCallback::Reason, bool prev);
+
+
+
+    /**************************************************************************************************************************
      *                                  Data members
      **************************************************************************************************************************/
 private:
@@ -354,6 +448,9 @@ private:
 
     ROSE_Callbacks::List<ThreadCallback> thread_pre;
     ROSE_Callbacks::List<ThreadCallback> thread_post;
+
+    ROSE_Callbacks::List<ProcessCallback> process_pre;
+    ROSE_Callbacks::List<ProcessCallback> process_post;
 };
 
 #endif /* ROSE_RSIM_Callbacks_H */
