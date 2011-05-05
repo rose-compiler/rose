@@ -576,26 +576,24 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg)
     RTS_WRITE(get_process()->rwlock()) {
         mesg->multipart("stack", "stack frames:\n");
         uint32_t bp = policy.readGPR(x86_gpr_bp).known_value();
-        uint32_t retaddr, next_bp;
-        for (int i=0; i<32; i++, bp=next_bp) {
-            if (4!=process->mem_read(&retaddr, bp+4, 4))
-                break;
-            if (4!=process->mem_read(&next_bp, bp, 4))
-                break;
-            mesg->more("  #%d: bp=0x%08"PRIx32" ret=0x%08"PRIx32, i, bp, retaddr);
-
-            /* Try to get the instruction at the return address and print the name of the function in which it appears, if
-             * any. */
-            SgAsmInstruction *insn = process->get_instruction(retaddr);
+        uint32_t ip = policy.readIP().known_value();
+        for (int i=0; i<32; i++) {
+            mesg->more("  #%d: bp=0x%08"PRIx32" ip=0x%08"PRIx32, i, bp, ip);
+            SgAsmInstruction *insn = process->get_instruction(ip);
             SgAsmFunctionDeclaration *func = SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(insn);
             const MemoryMap::MapElement *me = NULL;
             if (func && !func->get_name().empty() && 0==(func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS)) {
                 mesg->more(" in function %s\n", func->get_name().c_str());
-            } else if ((me=process->get_memory()->find(retaddr)) && !me->get_name().empty()) {
+            } else if ((me=process->get_memory()->find(ip)) && !me->get_name().empty()) {
                 mesg->more(" in memory region %s\n", me->get_name().c_str());
             } else {
                 mesg->more("\n");
             }
+            
+            if (4!=process->mem_read(&ip, bp+4, 4))
+                break;
+            if (4!=process->mem_read(&bp, bp, 4))
+                break;
         }
         mesg->multipart_end();
     } RTS_WRITE_END;

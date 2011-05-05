@@ -333,18 +333,25 @@ public:
      *  The output may look something like the following:
      *
      * @verbatim
- 32300:1 00.215 0x08073742[29361]:   arrival of SIGSEGV(11) {errno=0, code=1, addr=0x00000000}
- Partitioner: starting pass 4: 1174 functions, 95728 insns assigned to 20699 blocks (ave 5 insn/blk)
- Partitioner: starting pass 20: 1448 functions, 118332 insns assigned to 28016 blocks (ave 4 insn/blk)
- 32300:1 28.565 0x08073742[29361]:   stack frames:
- 32300:1 28.565 0x08073742[29361]:     #0: bp=0xbfffdad8 ret=0x0804ff91 in function __vsnprintf
- 32300:1 28.565 0x08073742[29361]:     #1: bp=0xbfffdbf0 ret=0x0804eff6 in function __snprintf
- 32300:1 28.565 0x08073742[29361]:     #2: bp=0xbfffdc08 ret=0x0804adea in function tst_tmpdir
- 32300:1 28.565 0x08073742[29361]:     #3: bp=0xbfffe048 ret=0x08048571 in function setup
- 32300:1 28.565 0x08073742[29361]:     #4: bp=0xbfffe078 ret=0x080482a0 in function main
- 32300:1 28.565 0x08073742[29361]:     #5: bp=0xbfffe0c8 ret=0x0804b80f in memory region syscall_tst.221.09(LOAD#0)
- 32300:1 28.565 0x08073742[29361]:     #6: bp=0xbfffe138 ret=0x08048181 in memory region syscall_tst.221.09(LOAD#0)
- 32300:1 28.565 0x08073742[29361]:   signal delivery to 0x0804ac89: signo=SIGSEGV, errno=0, code=SEGV_MAPERR, addr=0x00000000
+ 4474:1 28.699 0x08094233[36578]:   arrival of SIGSEGV(11) {errno=0, code=1, addr=0x00000054}
+ Partitioner: starting pass 2: 1148 functions, 29621 insns assigned to 5236 blocks (ave 6 insn/blk)
+ Partitioner: starting pass 5: 1197 functions, 104383 insns assigned to 23030 blocks (ave 5 insn/blk)
+ Partitioner: starting pass 31: 1462 functions, 118369 insns assigned to 28267 blocks (ave 4 insn/blk)
+ 4474:1 57.897 0x08094233[36578]:   stack frames:
+ 4474:1 57.897 0x08094233[36578]:     #0: bp=0xbfffd3c4 ip=0x08094233 in function __current_locale_name
+ 4474:1 57.897 0x08094233[36578]:     #1: bp=0xbfffd3e4 ip=0x0806af47 in function dcgettext
+ 4474:1 57.897 0x08094233[36578]:     #2: bp=0xbfffd428 ip=0x0805bfa7 in function strerror_r
+ 4474:1 57.897 0x08094233[36578]:     #3: bp=0xbfffd448 ip=0x0805beea in function strerror
+ 4474:1 57.897 0x08094233[36578]:     #4: bp=0xbfffd488 ip=0x080487dd in function cleanup
+ 4474:1 57.897 0x08094233[36578]:     #5: bp=0xbfffd4a8 ip=0x0804acc2 in function def_handler
+ 4474:1 57.897 0x08094233[36578]:     #6: bp=0xbfffdad8 ip=0x0804bf28 in memory region syscall_tst.221.09(LOAD#0)
+ 4474:1 57.897 0x08094233[36578]:     #7: bp=0xbfffdbf0 ip=0x0804ff91 in function __vsnprintf
+ 4474:1 57.897 0x08094233[36578]:     #8: bp=0xbfffdc08 ip=0x0804eff6 in function __snprintf
+ 4474:1 57.897 0x08094233[36578]:     #9: bp=0xbfffe048 ip=0x0804adea in function tst_tmpdir
+ 4474:1 57.897 0x08094233[36578]:     #10: bp=0xbfffe078 ip=0x08048571 in function setup
+ 4474:1 57.897 0x08094233[36578]:     #11: bp=0xbfffe0c8 ip=0x080482a0 in function main
+ 4474:1 57.897 0x08094233[36578]:     #12: bp=0xbfffe138 ip=0x0804b80f in memory region syscall_tst.221.09(LOAD#0)
+ 4474:1 57.897 0x08094233[36578]:     #13: bp=0x00000000 ip=0x08048181 in memory region syscall_tst.221.09(LOAD#0)
  @endverbatim
      */
     class SignalCallback: public Callback {
