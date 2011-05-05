@@ -12,6 +12,23 @@ if !ROSE_USING_GFORTRAN_VERSION_4_0
 # HUDSON_LDLIBS should equal exactly "$(LIBS) -lcurl" because $(LIBS) must
 # be expanded in the poptest Makefiles; not in this Makefile.
 #
+# Liao, 5/2/2011, save all environment variables into one file to facilitate manual debugging
+debug:
+	echo "export HUDSON_NUM_JOBS=1" > debug.log
+	echo "export HUDSON_TRANSLATOR=../$(TEST_TRANSLATOR)" >> debug.log
+	echo "export HUDSON_DIFF="`which diff`"">> debug.log
+	echo "export HUDSON_MAKE="$(MAKE)"">> debug.log
+	echo "export HUDSON_SED="$(SED)"">> debug.log
+	echo "export HUDSON_FC="$(GFORTRAN_PATH)"" >> debug.log
+	echo "export HUDSON_FFLAGS=\"-ffree-line-length-0\"">> debug.log
+	echo "export HUDSON_LD="$(GFORTRAN_PATH)"">> debug.log
+	echo "export HUDSON_CC="$(CC)"">> debug.log
+	echo "export HUDSON_CXX="$(CXX)"">> debug.log
+	echo "export HUDSON_Cp="/bin/cp"">> debug.log
+	echo "export HUDSON_Cpp=\"/lib/cpp -P\"">> debug.log
+	echo "export HUDSON_AWK="$(AWK)"">> debug.log
+	echo "export HUDSON_LDLIBS=\"$(LIBS) -lcurl\"">> debug.log
+
 check-local:
 	tar xzf $(srcdir)/poptest.tgz -C .
 	cd poptest; \
