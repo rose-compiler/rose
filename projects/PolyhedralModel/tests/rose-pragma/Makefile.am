@@ -27,7 +27,9 @@ endif
 
 
 check-local:
+if ROSE_USE_PPL
 	@$(MAKE) $(TEST_CODES)
+endif
 
 clean-local:
 	rm -rf $(TEST_CODES:.c=)
