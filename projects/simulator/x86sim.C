@@ -68,10 +68,15 @@ public:
 /* Thread callback to generate a stack trace when a signal arrives */
 class SignalStackTrace: public RSIM_Callbacks::SignalCallback {
 public:
+    bool disassembled;
+    SignalStackTrace(): disassembled(false) {}
     virtual SignalStackTrace *clone() { return this; }
     virtual bool operator()(bool prev, const Args &args) {
         if (args.reason == ARRIVAL) {
-            args.thread->get_process()->disassemble(); /* so stack trace has function names */
+            if (!disassembled) {
+                args.thread->get_process()->disassemble(); /* so stack trace has function names */
+                disassembled = true;
+            }
             args.thread->report_stack_frames(args.thread->tracing(TRACE_MISC));
         }
         return prev;
