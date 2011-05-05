@@ -16,6 +16,12 @@ SgStatement* buildStatementFromString(const string& s, SgScopeStatement * scope)
   assert (scope != NULL);
   // set input and context for the parser
   c_char = s.c_str();
+#if 0
+  char* s_char = new char [s.size() +1];
+  strcpy (s_char, s.c_str());
+  c_char = s_char;
+#endif
+  assert (c_char== s.c_str());
   c_sgnode = scope;
   if (afs_match_statement())
   {
@@ -55,6 +61,20 @@ int main(int argc, char** argv)
   // labeled statement
   s= buildStatementFromString ("mylabel:;", f_body); 
   appendStatement(s, f_body);
+
+  // goto after the label statement
+  s = buildStatementFromString ("goto mylabel;", f_body);
+  appendStatement(s, f_body);
+
+  // goto statement is before the label statement
+  s = buildStatementFromString ("goto mylabel2;", f_body);
+  appendStatement(s, f_body);
+
+  // labeled statement
+  s= buildStatementFromString ("mylabel2:;", f_body); 
+  appendStatement(s, f_body);
+
+
 
   AstTests::runAllTests(project);
   backend(project);   

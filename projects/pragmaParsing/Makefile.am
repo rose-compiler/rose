@@ -53,7 +53,7 @@ check-local:
 	@echo "****** ROSE/projects/pragmaParsing: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
-EXTRA_DIST = $(ALL_TESTCODES) README parser_input.c ParserBuilder.cpp \
+EXTRA_DIST = $(ALL_TESTCODES) README \
         inputbuildFromString.C 
 
 clean-local:

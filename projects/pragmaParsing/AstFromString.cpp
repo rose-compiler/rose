@@ -247,9 +247,14 @@ namespace AstFromString
       {
         case V_SgVariableSymbol:
           ref_exp = buildVarRefExp(isSgVariableSymbol(sym));
+          c_parsed_node = ref_exp;  
           break;
         case V_SgFunctionSymbol:
           ref_exp = buildFunctionRefExp(isSgFunctionSymbol(sym));
+          c_parsed_node = ref_exp;  
+          break;
+        case V_SgLabelSymbol:
+          c_parsed_node = isSgLabelSymbol(sym);;  
           break;
         default:
           {
@@ -257,9 +262,8 @@ namespace AstFromString
             assert(false);
           }
       }
-      assert (ref_exp != NULL);
-      c_parsed_node = ref_exp;  
-    } else  if (t)
+    } 
+    else  if (t)
     {
       c_parsed_node = t;
     }
@@ -323,7 +327,10 @@ namespace AstFromString
     if (afs_match_identifier())
     {
       // identifier can return named label, which is not an expression
-      if (!isSgName(c_parsed_node))
+      // Depending on if the label statement is already created or not,
+      // the afs_match_identifier() may return the label symbol or a SgName
+      //if (!isSgName(c_parsed_node) && ! isSgLabelSymbol(c_parsed_node))
+      if (isSgExpression(c_parsed_node))
         result = true;
     }
     else if (afs_match_constant())
@@ -2267,7 +2274,8 @@ postfix_operator
     if (afs_match_identifier())
     {
       SgName* sn = isSgName(c_parsed_node);
-      if (sn != NULL)
+      SgLabelSymbol* lsym = isSgLabelSymbol(c_parsed_node);
+      if (sn != NULL || lsym != NULL)
       {
         if (afs_match_char(':') && afs_match_statement())
         {
@@ -2275,17 +2283,58 @@ postfix_operator
           assert (stmt != NULL);
           SgScopeStatement * scope = getScope(c_sgnode);
           assert (scope != NULL);
-          c_parsed_node = buildLabelStatement (*sn, stmt, scope);
+          // It is possible that a label statement is prebuilt when parsing goto IDENTIFIER.
+          // we use the label statement there
+          //SgLabelSymbol * lsym = scope->lookup_label_symbol (*sn);
+          if (lsym)
+          {
+             c_parsed_node = lsym->get_declaration();
+             // the prebuilt label statement has NULL pointer as its statement member  by default
+             // we have set it to the real statement
+             SgLabelStatement* lstmt = isSgLabelStatement(c_parsed_node);
+             lstmt->set_statement(stmt);
+             stmt->set_parent(lstmt);
+          }
+          else if (sn)
+             c_parsed_node = buildLabelStatement (*sn, stmt, scope);
+          else
+          {
+            //impossible branch reached.
+            assert (0);
+          }
+          assert (isSgLabelStatement(c_parsed_node)!=NULL);   
+          assert (isSgLabelStatement(c_parsed_node)->get_statement()!=NULL);   
           result = true;
         }
       }
-      //TODO
+      //TODO case, default
     }
 
     if (result == false)   c_char = old_char;
     return result;
   }
+/*
+Yacc grammar:
 
+compound_statement
+  : '{' '}'
+  | '{' statement_list '}'
+  | '{' declaration_list '}'
+  | '{' declaration_list statement_list '}'
+  ;
+
+
+ANTLR grammar: 
+
+compound_statement
+scope Symbols; // blocks have a scope of symbols
+@init {
+  $Symbols::types = new HashSet();
+}
+  : '{' declaration* statement_list? '}'
+  ;
+ 
+ * */
   bool afs_match_compound_statement()
   {
     //TODO 
@@ -2330,10 +2379,47 @@ postfix_operator
     return false;
 
   }
+/*
+ANTLR grammar:
+
+jump_statement
+  : 'goto' IDENTIFIER ';'
+  | 'continue' ';'
+  | 'break' ';'
+  | 'return' ';'
+  | 'return' expression ';'
+  ;
+
+*/
   bool afs_match_jump_statement()
   {
-    //TODO 
-    return false;
+    bool result = false;
+    const char* old_char = c_char;
+    if (afs_match_substr("goto") && afs_match_identifier())
+    {
+      SgScopeStatement* scope = getScope(c_sgnode);
+      assert (scope != NULL);
+
+      // two cases: the label statement is 1) already created or to 2) be created later
+      // case 1: the label statement is already created. afs_match_identifier() should return the label symbol
+      SgLabelStatement* lstmt = NULL;
+      if (SgLabelSymbol * lsym = isSgLabelSymbol(c_parsed_node))
+       {
+         lstmt = lsym->get_declaration();
+       } 
+       else if (SgName* sn = isSgName (c_parsed_node))
+         //case 2: the label symbol is not yet created.  afs_match_identifier() should return the label SgName
+       {
+         // prebuild label statement here, fix the exact location later on when parsing the label statement
+         lstmt = buildLabelStatement(*sn, NULL, scope);
+       }  
+       assert (lstmt != NULL);
+       c_parsed_node = buildGotoStatement (lstmt);
+       result = true;
+    }
+
+    if (result == false)   c_char = old_char;
+    return result;
   }
 
 } // end namespace AstFromString
