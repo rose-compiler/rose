@@ -1,7 +1,7 @@
 #ifndef CPP_RUNTIMESYSTEM_H
 #define CPP_RUNTIMESYSTEM_H
 
-#include <iostream>
+#include <iosfwd>
 #include <string>
 #include <map>
 #include <vector>
@@ -406,7 +406,7 @@ class RuntimeSystem
 
 
         void log(const std::string & msg)  { log() << msg; }
-        std::ostream & log()               { return std::cout; }
+        std::ostream& log();
 
         // Printing of RuntimeSystem status
         void printOpenFiles(std::ostream & os) const  { fileManager.print(os);    }

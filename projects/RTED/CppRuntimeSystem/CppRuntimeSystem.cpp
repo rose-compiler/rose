@@ -1,6 +1,7 @@
 // vim:sta et ts=4 sw=4:
 #include <cassert>
 #include <sstream>
+#include <iostream>
 #include <iomanip>
 #include <fstream>
 #include <cstdlib> //needed for getenv("HOME") to read config file
@@ -30,6 +31,8 @@ RuntimeSystem* RuntimeSystem::instance()
 
     return single;
 }
+
+std::ostream& RuntimeSystem::log() { return std::cout; }
 
 RuntimeSystem::RuntimeSystem()
 : testingMode( false ), qtDebugger(false), defaultOutStr(&cout)

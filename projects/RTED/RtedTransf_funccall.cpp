@@ -94,7 +94,16 @@ bool isGlobalFunctionOnIgnoreList(const std::string& name) {
           || name == "upc_alloc"
           || name == "upc_free"
           || name == "upc_global_alloc"
+          || isLibFunctionRequiringArgCheck(name)
           );
+}
+
+
+bool isLibFunctionRequiringArgCheck(const std::string& name)
+{
+  return (  name == "upc_threadof"
+         || name == "upc_addrfield"
+         );
 }
 
 void RtedTransformation::insertFuncCall(RtedArguments& args)
@@ -258,7 +267,7 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
               // instead we send it as a normal name that can be found on the stack
               SgExpression* manglName = buildStringVal(initName->get_mangled_name().str());
               if (isSgFunctionParameterList(initName->get_parent())) {
-                 //	      cerr << "\n!!!!!!!!!!parent of initName = " << initName->get_parent()->class_name() << endl;
+                 //       cerr << "\n!!!!!!!!!!parent of initName = " << initName->get_parent()->class_name() << endl;
                  manglName = buildStringVal(initName->get_name().str());
               }
               ROSE_ASSERT(manglName);
@@ -445,6 +454,8 @@ void RtedTransformation::insertFreeCall(SgExpression* freeExp, AllocKind ak)
    // upc_free requires the thread to be the only operator on the heap
    if (upcShared)
    {
+     ROSE_ASSERT(symbols.roseUpcBeginExclusive && symbols.roseUpcEndExclusive);
+
      insertCheck(ilBefore, stmt, symbols.roseUpcBeginExclusive, buildExprListExp());
      insertCheck(ilAfter,  stmt, symbols.roseUpcEndExclusive,   buildExprListExp());
    }
@@ -529,6 +540,7 @@ void RtedTransformation::addFileIOFunctionCall(SgVarRefExp* n, bool read)
 
    args.push_back(ex);
 
+   std::cerr << "@@@ my interesting func: " << fname << std::endl;
    function_call.push_back(RtedArguments(stmt, fname, readstr, "", "", n, NULL, NULL, NULL, args));
 }
 
@@ -565,6 +577,7 @@ struct FunctionCallInfo
   : trans(master), memberCall(false), name(), mangled_name(), target(NULL)
   {}
 
+  void memberFunctionCall(SgMemberFunctionRefExp& mrefExp);
   void memberFunctionCall(SgBinaryOp& n);
   void ptrToMemberFunctionCall(SgBinaryOp& n);
 
@@ -589,28 +602,31 @@ struct FunctionCallInfo
 
   void handle(SgMemberFunctionRefExp& n)
   {
-    // \pp \todo remove this function; it was in the original RTED code
-    //           (compare memberFunctionDispatch) but I believe it is dead code
-    //           b/c a SgMemberFunctionRefExp can only occur in the context
-    //           of a Dot or Arrow expression.
-    ROSE_ASSERT(false);
+    // \pp member function calls can occur in context of dot and arrow
+    //     expressions, but they can also be "naked" within a member body
+    memberFunctionCall(n);
   }
 
   void handle(SgDotStarOp& n) { ptrToMemberFunctionCall(n); }
   void handle(SgArrowStarOp& n) { ptrToMemberFunctionCall(n); }
 };
 
+void FunctionCallInfo::memberFunctionCall(SgMemberFunctionRefExp& mrefExp)
+{
+   SgMemberFunctionDeclaration* mdecl = mrefExp.getAssociatedMemberFunctionDeclaration();
+
+   memberCall = true;
+   name = mdecl->get_name();
+   mangled_name = mdecl->get_mangled_name().str();
+   target = &mrefExp;
+}
+
 void FunctionCallInfo::memberFunctionCall(SgBinaryOp& n)
 {
    SgMemberFunctionRefExp*      mrefExp = isSgMemberFunctionRefExp(n.get_rhs_operand());
    ROSE_ASSERT(mrefExp);
 
-   SgMemberFunctionDeclaration* mdecl = mrefExp->getAssociatedMemberFunctionDeclaration();
-
-   memberCall = true;
-   name = mdecl->get_name();
-   mangled_name = mdecl->get_mangled_name().str();
-   target = mrefExp;
+   memberFunctionCall(*mrefExp);
 }
 
 void FunctionCallInfo::ptrToMemberFunctionCall(SgBinaryOp& n)
@@ -619,7 +635,7 @@ void FunctionCallInfo::ptrToMemberFunctionCall(SgBinaryOp& n)
    // e.g. : (testclassA.*testclassAPtr)()
    SgExpression* right = n.get_rhs_operand();
    // we want to make sure that the right hand side is not NULL
-   //	abort();
+   // abort();
    // tps (09/24/2009) : this part is new and needs to be tested
    // testcode breaks at different location right now.
    SgVarRefExp* varrefRight = isSgVarRefExp(right);
@@ -675,6 +691,10 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
     {
       // indicate whether this is a stream operator
       addFileIOFunctionCall(varRef, callee.name == "operator>>");
+    }
+    else if (varRef)
+    {
+      std::cerr << "@@@ " << varRef->unparseToString() << "not IOVar" << std::endl;
     }
   }
 

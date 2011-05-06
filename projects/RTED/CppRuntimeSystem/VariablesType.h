@@ -2,10 +2,10 @@
 #ifndef VARIABLESTYPE_H
 #define VARIABLESTYPE_H
 
-
 #include <string>
-#include <iostream>
+#include <iosfwd>
 #include <cassert>
+
 #include "Util.h"
 
 #include "rted_typedefs.h"

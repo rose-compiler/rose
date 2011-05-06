@@ -4,7 +4,7 @@
 
 #include <set>
 #include <map>
-#include <iostream>
+#include <iosfwd>
 
 #include "Util.h"
 #include "RsType.h"

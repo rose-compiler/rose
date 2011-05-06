@@ -178,7 +178,7 @@ int rted_CreateVariable( rted_TypeDesc   td,
  * multiple times for the same address: e.g. if called in a base class
  * constructor and a sub class constructor.
  */
-int rted_CreateObject( rted_TypeDesc td, rted_Address address, rted_SourceInfo si );
+int rted_CreateObject( rted_TypeDesc td, rted_Address address, size_t sz, rted_SourceInfo si );
 
 
 int rted_InitVariable( rted_TypeDesc   td,
@@ -254,7 +254,7 @@ void rted_CheckIfThisNULL( void* thisExp, rted_SourceInfo si );
 // handle structs and classes
 void rted_RegisterTypeCall( const char*     nameC,
                             const char*     unused_typeC,
-                            const char*     isUnionType,
+                            int             isUnion,
                             size_t          sizeC,
                             rted_SourceInfo si,
                             size_t          argc,

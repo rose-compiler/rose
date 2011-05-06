@@ -1,10 +1,15 @@
 #ifndef RTEDCPPSUPPORT_H
 #define RTEDCPPSUPPORT_H
 
+
+#if OBSOLETE_CODE
+
+
 #ifdef ROSE_WITH_ROSEQT
 #include "DebuggerQt/RtedDebug.h"
 #endif
 #include "CppRuntimeSystem.h"
+
 
 void
 assertme(bool value, const std::string& text, const std::string&, const std::string&) {
@@ -26,6 +31,6 @@ assertme(bool value, const std::string& text, const std::string&, const std::str
   }
 }
 
-
+#endif /* OBSOLETE_CODE */
 
 #endif

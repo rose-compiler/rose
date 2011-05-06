@@ -57,6 +57,11 @@ SgStatement* getSurroundingStatement(SgInitializedName* n);
 ///          e.g., int* volatile X[] = /* ... */;
 SgType* skip_ArrPtrType(SgType* t);
 
+/// \brief   returns an array's base type
+/// \param t a type
+/// \return  the base_type, if it exists; t otherwise
+SgType* skip_ArrayType(SgType* t);
+
 /// \brief  skips one modifier type node
 /// \return the base type if t is an SgModifierType
 ///         t otherwise
@@ -64,6 +69,9 @@ SgType* skip_ModifierType(SgType* t);
 
 /// \brief Follow the base type of @c type until we reach a non-typedef.
 SgType* skip_Typedefs( SgType* type );
+
+/// \brief returns the UPC shared mask for a type
+size_t upcSharedMask(SgType* t);
 
 /// \brief  determines the C++ allocation kind for type t
 /// \return akCxxArrayNew if t is an array, akCxxNew otherwise
@@ -77,6 +85,10 @@ bool isStringModifyingFunctionCall(const std::string& name);
 ///          sure that we dont push variables on the stack for functions that
 ///          we dont check and hence the generated code is cleaner
 bool isGlobalFunctionOnIgnoreList(const std::string& name);
+
+/// \brief Check if a function call is a call to library function and where
+///        we check the arguments at the call site (instead of inside)
+bool isLibFunctionRequiringArgCheck(const std::string& name);
 
 /// \brief Check if a function call is a call to an IO function
 bool isFileIOFunctionCall(const std::string& name);
@@ -157,6 +169,11 @@ SgAggregateInitializer* genAggregateInitializer(SgExprListExp* initexpr, SgType*
 
 /// \brief   creates a variable reference expression from a given name
 SgVarRefExp* genVarRef( SgInitializedName* initName );
+
+/// \brief Appends all of the constructors of @c type to @c constructors. The
+///        constructors are those member functions whose name matches that of
+///        the type.
+void appendConstructors(SgClassDefinition* cdef, SgDeclarationStatementPtrList& constructors);
 
 /* -----------------------------------------------------------
  * tps : 6March 2009: This class adds transformations
@@ -286,13 +303,6 @@ public:
    void insertConfirmFunctionSignature( SgFunctionDefinition* fndef );
    void insertFreeCall(SgExpression* freeExp, AllocKind ak);
    void insertReallocateCall( SgFunctionCallExp* exp );
-
-   /**
-    * Appends all of the constructors of @c type to @c constructors.  The
-    * constructors are those member functions whose name matches that of the
-    * type.
-    */
-   void appendConstructors(SgClassDefinition* cdef, SgDeclarationStatementPtrList& constructors);
 
    /**
     * @return @c true @b iff @c exp is a descendent of an assignment expression
@@ -480,9 +490,12 @@ public:
    typedef std::vector<SgStatement*>    UpcBlockingOpsContainer;
 
    UpcBlockingOpsContainer upcBlockingOps;
+   const bool              withupc;
 
 public:
-   RtedTransformation()
+
+   explicit
+   RtedTransformation(bool testsupc)
    : AstSimpleProcessing(),
 
      symbols(),
@@ -516,7 +529,8 @@ public:
      mainBody(NULL),
      sourceFileRoseNamespaceMap(),
      classesInRTEDNamespace(),
-     upcBlockingOps()
+     upcBlockingOps(),
+     withupc(testsupc)
    {}
 
 

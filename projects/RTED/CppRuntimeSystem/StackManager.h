@@ -6,7 +6,7 @@
 
 #include <map>
 #include <vector>
-#include <iostream>
+#include <iosfwd>
 
 #include "rted_typedefs.h"
 

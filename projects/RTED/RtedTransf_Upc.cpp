@@ -16,6 +16,8 @@ void RtedTransformation::transformUpcBlockingOps(SgStatement* const stmt)
   //         some_upc_blocking_operation();
   //         rted_UpcEnterWorkzone(); // acquires heap lock (reader)
 
+  ROSE_ASSERT(withupc);
+
   static const std::string exitwz_msg("RS: UpcExitWorkzone()");
   static const std::string enterwz_msg("RS: UpcEnterWorkzone()");
 
@@ -28,31 +30,6 @@ void RtedTransformation::transformUpcBlockingOps(SgStatement* const stmt)
 }
 
 
-
-#if OBSOLETE_CODE
-
-// this code became obsolete, since it now covered by transformUpcBlockingOps
-
-void RtedTransformation::transformUpcBarriers(SgUpcBarrierStatement* const stmt)
-{
-  static const std::string prmsg("RS: processMsg()");
-
-  ROSE_ASSERT( stmt );
-
-  convertParentToBasicBlock(*stmt);
-
-  // create the call nodes
-  ROSE_ASSERT(symbols.roseProcessMsg);
-
-  SgExprListExp&         arglist = *SB::buildExprListExp();
-  SgExprStatement&       processMsgStmt = *insertCheck(ilBefore, stmt, symbols.roseProcessMsg, &arglist, prmsg);
-
-  SgUpcBarrierStatement& xtraBarrier = *buildUpcBarrierStatement();
-  /* SgExprStatement&    xtraBarrierStmt = */
-  SI::insertStatementBefore(&processMsgStmt, &xtraBarrier);
-}
-
-#endif /* OBSOLETE_CODE */
 
 #if NOT_YET_IMPLEMENTED
 

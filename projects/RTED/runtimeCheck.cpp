@@ -11,22 +11,22 @@
 /* driscoll6 (4/15/11) The default Boost::Filesystem version was
  * bumped from 2 to 3 in Boost 1.46. Use version 2 until we have time to
  * refactor the code for version 3. */
+#include "boost/algorithm/string/predicate.hpp"
+
 #define BOOST_FILESYSTEM_VERSION 2
 #include "boost/filesystem/operations.hpp"
-
 
 #include "DataStructures.h"
 #include "RtedTransformation.h"
 
-#include "boost/filesystem/operations.hpp"
-
 namespace boostfs = boost::filesystem;
 
 void
-runtimeCheck(int argc, char** argv, std::set<std::string>& rtedfiles) {
+runtimeCheck(int argc, char** argv, std::set<std::string>& rtedfiles, bool withupc)
+{
    // PARSE AND TRANSFORM - 1rst round--------------------------------
    // Init Transformation object
-   RtedTransformation rted;
+   RtedTransformation rted(withupc);
    // Start parsing the project and insert header files
    SgProject* project= NULL;
 
@@ -35,6 +35,7 @@ runtimeCheck(int argc, char** argv, std::set<std::string>& rtedfiles) {
    for (int i=0;i<argc;++i)
       std::cout << argv[i] << " " ;
    std::cout << std::endl;
+
    project = rted.parse(argc, argv);
    ROSE_ASSERT(project);
 
@@ -53,52 +54,54 @@ runtimeCheck(int argc, char** argv, std::set<std::string>& rtedfiles) {
  * Main Function for RTED
  * -----------------------------------------------------------*/
 
-int main(int argc, char** argv) {
-  static const std::string invocation = "./runtimeCheck NRFILES FILES [-I...]";
+static inline
+bool notAFile(const char* arg)
+{
+  return !boostfs::exists(arg);
+}
+
+struct FileRegistrar
+{
+  std::set<std::string> filenames;
+  bool                  withupc;
+
+  FileRegistrar()
+  : filenames(), withupc(false)
+  {}
+
+  void operator()(const char* arg)
+  {
+    filenames.insert( boostfs::system_complete( arg ).file_string() );
+    withupc = withupc || boost::ends_with( std::string(arg), std::string(".upc") );
+  }
+};
+
+int main(int argc, char** argv)
+{
    // INIT -----------------------------------------------------
    // call RTED like this:
+   const std::string invocation = "runtimeCheck FILES ROSEARGS\n"
+                                  "  FILES    ... list of project files\n"
+                                  "  ROSEARGS ... compiler/rose related arguments\n";
+
    if (argc < 2) { //7
       std::cerr << invocation << std::endl;
       exit(0);
    }
 
-   int nrfiles = (strtol(argv[1], NULL, 10));
+   char**                firstfile = argv+1;
+   char**                lastfile = std::find_if(firstfile, argv+argc, notAFile);
+   FileRegistrar         registrar = std::for_each(firstfile, lastfile, FileRegistrar() );
 
-   if (argc < nrfiles + 2) { //7
-      std::cerr << "NRFILES < NO-OF-ARGUMENTS" << std::endl << std::endl;
-      std::cerr << invocation << std::endl;
-      exit(0);
-   }
-
-   std::set <std::string> rtedfiles;
-   std::string            abs_path;
-
-   for (int i=2; i< nrfiles + 2; ++i)
-   {
-     std::string filename = argv[i];
-     const int   pos=filename.rfind("/");
-
-     if (pos>0 && pos!=(int)std::string::npos) {
-        abs_path = filename.substr(0,pos+1);
-     }
-
-     rtedfiles.insert( boostfs::system_complete( filename ).file_string() );
-     if (RTEDDEBUG())
-        std::cerr << i << ": >>>>> Found filename : " << filename << std::endl;
-   }
    // files are pushed on through bash script
-   //sort(rtedfiles.begin(), rtedfiles.end(),greater<std::string>());
    if (RTEDDEBUG())
-      std::cerr << " >>>>>>>>>>>>>>>>>>>> NR OF FILES :: " << rtedfiles.size() << std::endl;
+      std::cerr << " >>>>>>>>>>>>>>>>>>>> NR OF FILES :: " << registrar.filenames.size() << std::endl;
 
    for (int i=1; i< argc; ++i) {
       std::cout << i << " : " << argv[i] << std::endl;
    }
 
-   if (RTEDDEBUG())
-      std::cerr << "Running RTED in :" << abs_path << std::endl;
-
-   runtimeCheck(argc-1, argv+1, rtedfiles);
+   runtimeCheck(argc, argv, registrar.filenames, registrar.withupc);
    return 0;
 }
 #endif

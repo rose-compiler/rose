@@ -8,6 +8,17 @@
 #include "ptrops.h"
 #include "rted_typedefs.h"
 
+
+// from ez/util.hpp
+namespace ez
+{
+  template <class T>
+  static inline
+  void unused(const T&) {}
+}
+
+
+
 inline
 bool operator<(const Address& lhs, const Address& rhs)
 {
@@ -74,6 +85,9 @@ struct FloorDiv
 static inline
 Address add(Address l, long ofs, bool distributed)
 {
+  ez::unused(distributed);
+
+#ifdef WITH_UPC
   typedef FloorDiv<> floordiv;
 
   if (distributed)
@@ -85,6 +99,7 @@ Address add(Address l, long ofs, bool distributed)
     l.thread_id = divres.second;
     ofs = divres.first;
   }
+#endif /* WITH_UPC */
 
   l.local += ofs;
   return l;
@@ -105,13 +120,17 @@ Address sub(Address l, long ofs, bool distributed)
 static inline
 long ofs(Address lhs, Address rhs, bool distributed)
 {
+  ez::unused(distributed);
+
   long ofs = lhs.local - rhs.local;
 
+#ifdef WITH_UPC
   if (distributed)
   {
     ofs *= rted_Threads();
     ofs += lhs.thread_id - rhs.thread_id;
   }
+#endif /* WITH_UPC */
 
   return ofs;
 }

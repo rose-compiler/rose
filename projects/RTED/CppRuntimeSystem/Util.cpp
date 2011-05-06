@@ -1,8 +1,8 @@
-#include "Util.h"
-
 #include <iostream>
 #include <sstream>
 #include <cassert>
+
+#include "Util.h"
 
 // ------------------------------ Source Position -----------------------------------
 
@@ -71,7 +71,7 @@ std::ostream& operator<< (std::ostream &os, const RuntimeViolation & m)
 {
   std::stringstream stream;
 
-  stream << "Violation: " << m.getShortDesc() << " at " << m.getPos() << " "
+  stream << "Violation: " << m.getShortDesc() << " at " << m.getPos() << "! "
          << m.descStream().str();
 
   os << stream.str() << std::flush;
@@ -97,9 +97,9 @@ std::string RuntimeViolation::getShortDescFromType(Type type)
         case INVALID_PTR_ASSIGN:      return "An invalid address was assigned to pointer";
         case MEM_WITHOUT_POINTER:     return "A Memory Region cannot be reached by any pointer";
         case POINTER_CHANGED_MEMAREA: return "Pointer changed Target-MemoryRegion";
-		case INVALID_MEM_OVERLAP:	  return "Illegal Memory Overlap";
-	    case INVALID_TYPE_ACCESS:     return "Invalid access to \"typed\" memory";
-		case UNEXPECTED_FUNCTION_SIGNATURE:	return "Incorrect types at function call";
+    case INVALID_MEM_OVERLAP:   return "Illegal Memory Overlap";
+      case INVALID_TYPE_ACCESS:     return "Invalid access to \"typed\" memory";
+    case UNEXPECTED_FUNCTION_SIGNATURE: return "Incorrect types at function call";
         case NONE:                    return "Not a violation";
         default:
             // handle all possible violations!

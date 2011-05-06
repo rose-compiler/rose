@@ -35,15 +35,14 @@ void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project, vect
          std::string filename = sf->get_file_info()->get_filename();
          if (  filename.find(".cxx") != std::string::npos
             || filename.find(".cpp") != std::string::npos
-            || filename.find(".C")!=std::string::npos
+            || filename.find(".cc")  != std::string::npos
+            || filename.find(".C")   != std::string::npos
             )
          {
             // if it is not a C but C++ program, then insert namespace
             if (RTEDDEBUG()) cerr << " **** Inserting file into sourceFileRoseNamespaceMap:" << sf -> get_file_info() -> get_filename() << endl;
             //if (filename.find("_s.cpp")!=std::string::npos)
             insertNamespaceIntoSourceFile(sf);
-         } else {
-            //  cerr << " ** not a cpp file" <<filename << endl;
          }
       }
    }
@@ -68,6 +67,7 @@ void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project, vect
    for (;classIt!=results.rend(); ++classIt)
    {
       SgClassDeclaration* classDecl = isSgClassDeclaration(*classIt);
+
       if (  classDecl->get_definingDeclaration() == classDecl
          && !classDecl->get_file_info()->isCompilerGenerated()
          )
@@ -78,7 +78,8 @@ void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project, vect
           if (idx != std::string::npos)
              extension = filename.substr(idx+1);
 
-          if ((extension!="C" && extension!="cpp" && extension!="cxx" && extension!="upc" && extension!="cc") &&
+          // \note only for classes in header files that are not system includes
+          if ((extension!="C" && extension!="cpp" && extension!="cxx" && extension!="cc") &&
                 filename.find("include-staging")==string::npos &&
                 filename.find("/usr/include")==string::npos
              )
@@ -132,7 +133,7 @@ void RtedTransformation::moveupPreprocessingInfo(SgProject* project)
 
       SgNodePtrList::const_iterator   nodesIT = nodes.begin();
       SgLocatedNode*                  firstNode = isSgLocatedNode(*nodesIT);
-      AttachedPreprocessingInfoType*  info =	firstNode->getAttachedPreprocessingInfo();
+      AttachedPreprocessingInfoType*  info =  firstNode->getAttachedPreprocessingInfo();
 
       // if the first node already has the preprocessing info we are done
       if (info && info->size() > 0) continue; // we are done
@@ -232,8 +233,8 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
       cerr << "@@@@@@@@@@@@@@@@@@ TYPE OF cdn_copy->get_type() : " <<  cdn_copy->get_type() << endl;
 
       cerr << "@@@@@@@@@@@@@@@@@@ TYPE OF cd_copy->get_type()->declaration : " <<cd_copy->get_type()->get_declaration() << endl;
-      cerr << "@@@@@@@@@@@@@@@@@@ TYPE OF cd_copy->definingDeclaration : " <<	  cd_copy->get_definingDeclaration() << endl;
-      cerr << "@@@@@@@@@@@@@@@@@@ TYPE OF cd_copy->set_firstNondefiningDeclaration : " <<	  cd_copy->get_firstNondefiningDeclaration() << endl;
+      cerr << "@@@@@@@@@@@@@@@@@@ TYPE OF cd_copy->definingDeclaration : " <<   cd_copy->get_definingDeclaration() << endl;
+      cerr << "@@@@@@@@@@@@@@@@@@ TYPE OF cd_copy->set_firstNondefiningDeclaration : " <<   cd_copy->get_firstNondefiningDeclaration() << endl;
    }
    // **********************
    // add to top of each source file

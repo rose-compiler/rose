@@ -53,14 +53,19 @@ void RtedTransformation::loadFunctionSymbols(SgProject* project) {
    ROSE_ASSERT(symbols.roseRegisterTypeCall);
    ROSE_ASSERT(symbols.roseCheckIfThisNULL);
    ROSE_ASSERT(symbols.roseAddr);
-   ROSE_ASSERT(symbols.roseAddrSh);
    ROSE_ASSERT(symbols.roseClose);
 
-   ROSE_ASSERT(symbols.roseUpcExitWorkzone);
-   ROSE_ASSERT(symbols.roseUpcEnterWorkzone);
-   ROSE_ASSERT(symbols.roseUpcAllInitialize);
-   ROSE_ASSERT(symbols.roseUpcBeginExclusive);
-   ROSE_ASSERT(symbols.roseUpcEndExclusive);
+   if (withupc)
+   {
+     /* only present when compiling for UPC code */
+     ROSE_ASSERT(symbols.roseAddrSh);
+     ROSE_ASSERT(symbols.roseUpcExitWorkzone);
+     ROSE_ASSERT(symbols.roseUpcEnterWorkzone);
+     ROSE_ASSERT(symbols.roseUpcBeginExclusive);
+     ROSE_ASSERT(symbols.roseUpcEndExclusive);
+   }
+
+   ROSE_ASSERT(symbols.roseUpcAllInitialize); // see comment in ParallelRTS.h
 
    ROSE_ASSERT(symbols.roseAllocKind);
 
@@ -83,7 +88,7 @@ void RtedTransformation::transform(SgProject* project, std::set<std::string>& rt
    if (RTEDDEBUG())   std::cout << "Running Transformation..." << std::endl;
 
    this -> rtedfiles = &rtedfiles;
-   // loadFunctionSymbols(project);
+   loadFunctionSymbols(project);
 
    VariableTraversal  varTraversal(this);
 
@@ -101,6 +106,8 @@ void RtedTransformation::transform(SgProject* project, std::set<std::string>& rt
    std::vector<SgClassDeclaration*> traverseClasses;
    insertNamespaceIntoSourceFile(project, traverseClasses);
 
+   std::cerr << "@XXX = " << class_definitions.size() << std::endl;
+
    // traverse all header files and collect information
    std::vector<SgClassDeclaration*>::const_iterator travClassIt = traverseClasses.begin();
    for (;travClassIt!=traverseClasses.end();++travClassIt) {
@@ -108,7 +115,9 @@ void RtedTransformation::transform(SgProject* project, std::set<std::string>& rt
       traverse(*travClassIt,preorder);
    }
 
-   // executeTransformations();
+   std::cerr << "@XXZ = " << class_definitions.size() << std::endl;
+
+   executeTransformations();
 }
 
 
@@ -126,6 +135,8 @@ void RtedTransformation::visit(SgNode* n) {
       if (isSgClassDefinition(n)) {
          // call to a specific function that needs to be checked
          //cerr << " +++++++++++++++++++++ FOUND Class Def!! ++++++++++++++++ " << endl;
+
+         std::cerr << "ClassDef-parent: " << typeid(*n->get_parent()).name() << std::endl;
          visit_isClassDefinition(isSgClassDefinition(n));
       }
    }

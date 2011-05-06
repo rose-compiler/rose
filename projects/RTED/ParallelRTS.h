@@ -38,6 +38,8 @@ void rted_UpcAllInitialize(void);
 
 #else /* WITH_UPC */
 
+#define UNUSEDARG(X) ((void) &(X)) /* we write for C and C++ compilers ;) */
+
 // when we do not use UPC, we compile the runtime system with empty
 //   implementations.
 static inline
@@ -45,19 +47,34 @@ void rted_ProcessMsg(void)
 {}
 
 static inline
-void msg_FreeMemory(rted_Address r, rted_AllocKind a, rted_SourceInfo s)
-{}
+void snd_FreeMemory(rted_Address r, rted_AllocKind a, rted_SourceInfo s)
+{
+  UNUSEDARG(r), UNUSEDARG(a), UNUSEDARG(s);
+}
 
 static inline
-void snd_CreateHeapPtr(rted_TypeDesc td, rted_Address ad, rted_Address heap_addr, rted_AddressDesc heap_desc, size_t sz, size_t mallocsz, rted_AllocKind ak, const char* cn, rted_SourceInfo si)
-{}
+void snd_CreateHeapPtr(rted_TypeDesc td, rted_Address addr, rted_Address haddr, rted_AddressDesc hdesc, size_t sz, size_t mallocsz, rted_AllocKind ak, const char* cn, rted_SourceInfo si)
+{
+  UNUSEDARG(td), UNUSEDARG(addr), UNUSEDARG(haddr), UNUSEDARG(hdesc), UNUSEDARG(sz), UNUSEDARG(mallocsz), UNUSEDARG(ak), UNUSEDARG(cn), UNUSEDARG(si);
+}
 
 static inline
-void snd_InitVariable(rted_TypeDesc td, rted_Address address, rted_Address heap_addr, rted_AddressDesc heap_desc, size_t sz, int pointer_moved, const char* classname, rted_SourceInfo si);
-{}
+void snd_InitVariable(rted_TypeDesc td, rted_Address addr, rted_Address haddr, rted_AddressDesc hdesc, size_t sz, int pm, const char* cn, rted_SourceInfo si)
+{
+  UNUSEDARG(td), UNUSEDARG(addr), UNUSEDARG(haddr), UNUSEDARG(hdesc), UNUSEDARG(sz), UNUSEDARG(pm), UNUSEDARG(cn), UNUSEDARG(si);
+}
 
 static inline
-void snd_MovePointer(rted_TypeDesc td, rted_Address addr, rted_Address heap_addr, rted_AddressDesc heap_desc, const char* class_name, rted_SourceInfo si)
+void snd_MovePointer(rted_TypeDesc td, rted_Address addr, rted_Address haddr, rted_AddressDesc hdesc, const char* cn, rted_SourceInfo si)
+{
+  UNUSEDARG(td), UNUSEDARG(addr), UNUSEDARG(haddr), UNUSEDARG(hdesc), UNUSEDARG(cn), UNUSEDARG(si);
+}
+
+/// \note even w/o UPC this function is needed b/c it will be the first function executed in main
+///       it becomes the reference point for further RTED initializations at startup
+/// \todo remove
+static inline
+void rted_UpcAllInitialize(void)
 {}
 
 #endif /* WITH_UPC */

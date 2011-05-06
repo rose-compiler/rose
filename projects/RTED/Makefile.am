@@ -2,9 +2,10 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 EXTRA_DIST = index_array.txt \
              file_read.txt \
-	     tests upccrose required/upc.h \
+	     tests upccrose \
 	     upcparam.h upcparam_s.h \
 	     extract-actual-error.sed extract-expected-error.sed
+# required/upc.h
 
 # Currently, we exclude 32bit and MacOS
 #if !OS_VENDOR_REDHAT_32BIT
@@ -13,8 +14,8 @@ if !OS_MACOSX
 # To keep compile commands tidy, please ONLY put required include flags here.
 # tps removed -pthreads from INCLUDES
 INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch
-INCLUDES2 = $(ROSE_INCLUDES) -I../../
-UPC_INCLUDES =  -I$(srcdir)/required/
+TESTSUITEINCL = -I$(srcdir) -I.
+UPC_INCLUDES =  -I$(top_srcdir)/config
 
 EXTRACT_EXPECTED_ERROR_SCRIPT=$(srcdir)/extract-expected-error.sed
 EXTRACT_EXPECTED_ERROR=sed -n -f $(EXTRACT_EXPECTED_ERROR_SCRIPT)
@@ -33,10 +34,13 @@ bin_PROGRAMS  = runtimeCheck
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl
 #$(top_builddir)/projects/RTED/CppRuntimeSystem/libCppRuntimeSystem.a
 
-RTS=RuntimeSystem.cpp
-RTED_CXX = $(LIBTOOL) --tag=CXX --mode=link g++ $(AM_CXXFLAGS) \
+RTS=$(srcdir)/RuntimeSystem.cpp
+RTSCXX=RuntimeSystemCxx.o
+RTSUPC=RuntimeSystemUpc.o
+
+RTED_CXX = $(LIBTOOL) --tag=CXX --mode=link g++ -g $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS)
-RTED_CC = $(LIBTOOL) --tag=CC --mode=link gcc $(AM_CXXFLAGS) \
+RTED_CC = $(LIBTOOL) --tag=CC --mode=link gcc -g $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS)
 
 #$(LIBTOOL) --tag=CXX  --mode=link $(AM_PROG_UPC)
@@ -48,6 +52,7 @@ RTED_UPC =
 endif
 
 RTED_LIB=CppRuntimeSystem/libCppRuntimeSystem.la
+RTED_UPC_LIB=CppRuntimeSystem/libUpcRuntimeSystem.la
 runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransformation.cpp ExecuteTransformations.cpp \
                        RtedSymbols.cpp RtedTransf_registerType.cpp \
@@ -382,13 +387,10 @@ TRANSFORMING_FILES += rm $(patsubst %_rose$(strip $(1)), %.bin, $@);
 TRANSFORMING_FILES += echo " done.";
 TRANSFORMING_FILES += echo -n "    running transformation ... $(patsubst %_rose$(strip $(1)), %.bin, $@)";
 
-# \pp \todo calling runtimeCheck 2 seems like a bug for cases where we have
-#     only a single source file.
-
-TRANSFORMING_FILES += ./runtimeCheck 2 $(filter rted_source/%$(strip $(1)), $^) \
+TRANSFORMING_FILES += ./runtimeCheck $(filter rted_source/%$(strip $(1)), $^) \
 				       -rose:$(strip $(3)) \
 				       -c \
-				       $(INCLUDES) \
+				       $(TESTSUITEINCL) \
 				       -I$(top_builddir) \
 				       -I$(srcdir)
 if ROSE_USE_RTED
@@ -422,24 +424,24 @@ TRANSFORMING_FILES += SUPPORT_FILE='rose_$(notdir $(patsubst %_rose$(strip $(1))
 TRANSFORMING_FILES += rm -f rose_$(notdir $(patsubst %_rose$(strip $(1)), %_s$(strip $(1)), $@ ) );
 TRANSFORMING_FILES += echo " done.";
 
-rted_source/%_rose.c: runtimeCheck rted_source/%.c rted_source/%_s.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+rted_source/%_rose.c: runtimeCheck rted_source/%.c rted_source/%_s.c $(RTS) $(srcdir)/RuntimeSystem.h
 	$(call TRANSFORMING_FILES, .c, $(RTED_CC), C_Only)
 
-rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp rted_source/%_s.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp rted_source/%_s.cpp $(RTS) $(srcdir)/RuntimeSystem.h
 	$(call TRANSFORMING_FILES, .cpp, $(RTED_CXX), Cxx)
 
-rted_source/%_rose.upc: runtimeCheck rted_source/%.upc rted_source/%_s.upc $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC $(UPC_INCLUDES))
+rted_source/%_rose.upc: runtimeCheck rted_source/%.upc rted_source/%_s.upc $(RTS) $(srcdir)/RuntimeSystem.h
+	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC -DWITH_UPC $(UPC_INCLUDES))
 
 
-rted_source/%_rose.c: runtimeCheck rted_source/%.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+rted_source/%_rose.c: runtimeCheck rted_source/%.c $(RTS) $(srcdir)/RuntimeSystem.h
 	$(call TRANSFORMING_FILES, .c, $(RTED_CC), C_Only)
 
-rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp $(RTS) $(srcdir)/RuntimeSystem.h
 	$(call TRANSFORMING_FILES, .cpp, $(RTED_CXX), Cxx)
 
-rted_source/%_rose.upc: runtimeCheck rted_source/%.upc $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC $(UPC_INCLUDES))
+rted_source/%_rose.upc: runtimeCheck rted_source/%.upc $(RTS) $(srcdir)/RuntimeSystem.h
+	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC -DWITH_UPC $(UPC_INCLUDES))
 
 #------------------------------------------------------------------------------
 
@@ -462,36 +464,41 @@ rted_source/%_rose.upc: runtimeCheck rted_source/%.upc $(srcdir)/$(RTS) $(srcdir
 #				      $(3) $(RTED_LIB)";
 COMPILING_RUNTIME_SYSTEM = @echo " !>>>>>  compiling instrumented debugger code (with _s) ... $(filter rted_source/%$(strip $(1)), $^)"; \
 			   $(2) -g -o $@ $(filter rted_source/%$(strip $(1)), $^) \
-				      $(srcdir)/$(RTS) \
-				      $(INCLUDES)
+				 $(TESTSUITEINCL)
 if ROSE_USE_RTED
 COMPILING_RUNTIME_SYSTEM +=    -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))
 endif
 COMPILING_RUNTIME_SYSTEM +=    -I$(dir $(patsubst rted_source/%, $(srcdir)/%, $@)) \
 				      -I$(top_builddir) \
 				      -I$(srcdir) \
-				      $(3) $(RTED_LIB) > $@.compile.out 2> $@.compile.err \
-					  || { cat $@.compile.err; false; }; \
+				      $(3) $(4) $(5) \
+					    > $@.compile.out 2> $@.compile.err || { cat $@.compile.err; false; }; \
 			   if [ $$? -ne 0 ]; then exit 1; fi; \
 			   echo -n " done.";
 
-rted_source/%.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC))
+$(RTSCXX): $(srcdir)/RuntimeSystem.cpp $(srcdir)/RuntimeSystem.h
+	$(CXX) -g -Wall -Wextra -o $@ -c $<
 
-rted_source/%.bin: rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC))
+$(RTSUPC): $(srcdir)/RuntimeSystem.cpp $(srcdir)/RuntimeSystem.h
+	$(CXX) -g -Wall -Wextra -DWITH_UPC=1 -o $@ -c $<
 
-rted_source/%.bin: rted_source/%_rose.cpp rted_source/%_s_rose.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	$(call COMPILING_RUNTIME_SYSTEM, .cpp, $(RTED_CXX))
+rted_source/%.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(RTSCXX) $(srcdir)/RuntimeSystem.h
+	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC), $(RTED_LIB), $(RTSCXX))
 
-rted_source/%.bin: rted_source/%_rose.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	$(call COMPILING_RUNTIME_SYSTEM, .cpp, $(RTED_CXX))
+rted_source/%.bin: rted_source/%_rose.c $(RTSCXX) $(srcdir)/RuntimeSystem.h
+	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC), $(RTED_LIB), $(RTSCXX))
 
-rted_source/%.bin: rted_source/%_rose.upc rted_source/%_s_rose.upc $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	$(call COMPILING_RUNTIME_SYSTEM, .upc, $(RTED_UPC))
+rted_source/%.bin: rted_source/%_rose.cpp rted_source/%_s_rose.cpp $(RTSCXX) $(srcdir)/RuntimeSystem.h
+	$(call COMPILING_RUNTIME_SYSTEM, .cpp, $(RTED_CXX), $(RTED_LIB), $(RTSCXX))
 
-rted_source/%.bin: rted_source/%_rose.upc $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	$(call COMPILING_RUNTIME_SYSTEM, .upc, $(RTED_UPC))
+rted_source/%.bin: rted_source/%_rose.cpp $(RTSCXX) $(srcdir)/RuntimeSystem.h
+	$(call COMPILING_RUNTIME_SYSTEM, .cpp, $(RTED_CXX), $(RTED_LIB), $(RTSCXX))
+
+rted_source/%.bin: rted_source/%_rose.upc rted_source/%_s_rose.upc $(RTSUPC) $(srcdir)/RuntimeSystem.h
+	$(call COMPILING_RUNTIME_SYSTEM, .upc, $(RTED_UPC), $(RTED_UPC_LIB), $(RTSUPC))
+
+rted_source/%.bin: rted_source/%_rose.upc $(RTSUPC) $(srcdir)/RuntimeSystem.h
+	$(call COMPILING_RUNTIME_SYSTEM, .upc, $(RTED_UPC), $(RTED_UPC_LIB), $(RTSUPC))
 
 # TODO: make this aware of different file extensions ...
 
@@ -770,6 +777,13 @@ endif
 # upc:c_G_4_a test RTED does not catch invalid assignment
 #                  and RTED/UPC does not catch negative numbers passed as affinity expr
 # upc:c_G_2_g ptr reads are not tested when casted
+# upc:c_G_6_i ptr reads are not tested when evaluated as binary operations
+# upc:c_G_6_i ptr reads are not tested when evaluated as binary operations
+# upc:c_H_5_b helper file (_s) declares its own variable; RTED adds the
+#             CreateVariable call to the first function
+# upc:c_H_5_d see upc:c_H_5_b
+# upc:c_H_5_f see upc:c_H_5_b
+
 
 # TODO 2: Handle these tests
 TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
@@ -832,6 +846,11 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
             runupc/UPC/G_Uninit/c_G_2_h_L \
             runupc/UPC/G_Uninit/c_G_2_h_F \
             runupc/UPC/G_Uninit/c_G_2_h_S \
+            runupc/UPC/G_Uninit/c_G_6_i \
+            runupc/UPC/G_Uninit/c_G_6_j \
+            runupc/UPC/H_Memoryerr/c_H_5_b \
+            runupc/UPC/H_Memoryerr/c_H_5_d \
+            runupc/UPC/H_Memoryerr/c_H_5_f \
 					  TheEnd_KNOWN_TO_FAIL
 
 # These tests do not compile
@@ -1084,6 +1103,17 @@ TEST_HAS_COMPILE_ERROR = runupc/UPC/G_Uninit/c_G_1_b_D \
                          runupc/UPC/D_Outofbnds/c_D_3_2_h_L \
                          runupc/UPC/D_Outofbnds/c_D_3_2_h_D \
                          runupc/UPC/D_Outofbnds/c_D_3_2_h_S \
+                         runupc/UPC/H_Memoryerr/c_H_2_b \
+                         runupc/UPC/H_Memoryerr/c_H_2_d \
+                         runupc/UPC/H_Memoryerr/c_H_3_b \
+                         runupc/UPC/H_Memoryerr/c_H_3_d \
+                         runupc/UPC/H_Memoryerr/c_H_4_c \
+                         runupc/UPC/H_Memoryerr/c_H_5_c \
+                         runupc/UPC/H_Memoryerr/c_H_5_e \
+						             runupc/UPC/H_Memoryerr/c_H_6_c \
+						             runupc/UPC/H_Memoryerr/c_H_6_e \
+						             runupc/UPC/H_Memoryerr/c_H_7_e \
+						             runupc/UPC/H_Memoryerr/c_H_7_f \
                          TheEnd_COMPILE_ERROR
 
 # Test bugs prevent us from finding expected errors
@@ -1098,7 +1128,9 @@ TEST_HAS_COMPILE_ERROR = runupc/UPC/G_Uninit/c_G_1_b_D \
 # c_C_11_2_b_L  same
 # c_C_11_4_a_L  same (see c_C_10_4_a_S)
 # c_C_11_4_b_L  same
-
+# c_H_2_c       forward declares a function, but calls that function differently in the call
+# c_H_1_d       wrong line number for expected errors
+# c_H_7_b       memory is allocated using upc_global_alloc, but released with free (C library function)
 TEST_HAS_BUG = runupc/UPC/C_Outofbnds/c_C_10_2_a_F \
                runupc/UPC/C_Outofbnds/c_C_10_2_a_L \
                runupc/UPC/C_Outofbnds/c_C_10_2_a_D \
@@ -1125,6 +1157,10 @@ TEST_HAS_BUG = runupc/UPC/C_Outofbnds/c_C_10_2_a_F \
                runupc/UPC/C_Outofbnds/c_C_11_4_b_F \
                runupc/UPC/C_Outofbnds/c_C_11_4_b_L \
                runupc/UPC/C_Outofbnds/c_C_11_4_b_D \
+               runupc/UPC/H_Memoryerr/c_H_2_c \
+               runupc/UPC/H_Memoryerr/c_H_1_d \
+               runupc/UPC/H_Memoryerr/c_H_7_a \
+               runupc/UPC/H_Memoryerr/c_H_7_b \
                TheEnd_TEST_BUGS
 
 

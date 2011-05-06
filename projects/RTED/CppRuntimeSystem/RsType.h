@@ -4,7 +4,7 @@
 
 #include "Util.h"
 #include <string>
-#include <iostream>
+#include <iosfwd>
 #include <cassert>
 #include <vector>
 
@@ -315,7 +315,7 @@ class RsClassType : public RsType
         // Check whether memory that looks like this type could be @e other
         virtual bool checkConsistencyWith( const RsType &other ) const;
 
-		bool getIsUnionType(){return isunionType;}
+    bool getIsUnionType(){return isunionType;}
 
     protected:
         bool relaxed;

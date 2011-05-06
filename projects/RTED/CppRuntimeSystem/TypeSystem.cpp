@@ -1,6 +1,7 @@
-#include "TypeSystem.h"
-
 #include <cassert>
+#include <iostream>
+
+#include "TypeSystem.h"
 
 using namespace std;
 

@@ -15,7 +15,7 @@
 
 // \todo remove the define from here and make it a define
 //       in the ROSE configuration
-#define WITH_UPC 1
+// #define WITH_UPC 1
 
 #if __UPC__
 
@@ -87,13 +87,6 @@ rted_thread_id rted_ThisThread(void);
 /// /brief returns the current thread number; 0 for single-threaded code
 rted_thread_id rted_Threads(void);
 
-/// /brief converts a regular pointer into an rted_Address
-static inline
-rted_Address rted_Addr(const void* ptr)
-{
-  return (rted_Address) { rted_ThisThread(), (const char*)ptr };
-}
-
 /// /brief returns the description of non-shared regular object
 static inline
 rted_AddressDesc rted_obj(void)
@@ -126,13 +119,29 @@ int rted_isLocal(rted_Address addr)
   return addr.thread_id == rted_ThisThread();
 }
 
+/// /brief converts a regular pointer into an rted_Address
+static inline
+rted_Address rted_Addr(const void* ptr)
+{
+  return (rted_Address) { rted_ThisThread(), (const char*)ptr };
+}
+
 #else /* WITH_UPC */
 
 /// \brief returns true in single threaded code
 static inline
 int rted_isLocal(rted_Address addr)
 {
-  return 1;
+  ((void) (&addr)); // no compiler warning
+
+  return (1);
+}
+
+/// /brief converts a regular pointer into an rted_Address
+static inline
+rted_Address rted_Addr(const void* ptr)
+{
+  return (rted_Address) { (const char*)ptr };
 }
 
 #endif /* WITH_UPC */

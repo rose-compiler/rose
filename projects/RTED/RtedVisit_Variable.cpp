@@ -39,17 +39,33 @@ namespace rted
   }
 
   /// \brief   tests whether astNode directly or indirectly is on the right hand
-  ///          side of an expressions.
+  ///          side of a binary expressions.
   /// \details indirectly means that if astNode is a child of a non-binary
   ///          expression or a dot-expression, isRightOfBinaryOp is invoked
   ///          'recursively' (with the parent node) as the new astNode.
+  //~ static
+  //~ bool isRightOfBinaryOp(const SgExpression* expr)
+  //~ {
+    //~ const SgBinaryOp* binop = ez::ancestor<SgBinaryOp>(expr);
+//~
+    //~ if (isSgDotExp(binop)) return isRightOfBinaryOp(binop);
+    //~ return binop != NULL;
+  //~ }
+
   static
   bool isRightOfBinaryOp(const SgExpression* expr)
   {
-    const SgBinaryOp* binop = ez::ancestor<SgBinaryOp>(expr);
-
-    if (isSgDotExp(binop)) return isRightOfBinaryOp(binop);
-    return binop != NULL;
+     const SgNode* temp = expr;
+     while (!isSgProject(temp)) {
+        if (temp->get_parent() && isSgBinaryOp(temp->get_parent()) && !(isSgDotExp(temp->get_parent()) || isSgPointerDerefExp(
+              temp->get_parent())))
+           if (isSgBinaryOp(temp->get_parent())->get_rhs_operand() == temp) {
+              return true;
+           } else
+              break;
+        temp = temp->get_parent();
+     }
+     return false;
   }
 
   static
@@ -83,8 +99,8 @@ namespace rted
 
     void handle(SgFunctionDefinition& n)
     {
-        //~ vt.transf->transformIfMain(&n);
-        //~ vt.transf->function_definitions.push_back(&n);
+        vt.transf->transformIfMain(&n);
+        vt.transf->function_definitions.push_back(&n);
 
         ia.function = true;
         // do not handle as SgScopeStatement
@@ -152,11 +168,12 @@ namespace rted
       vt.transf->visit_isSgScopeStatement(&n);
     }
 
+    void handle_scope(SgScopeStatement& n) { handle(n); } // implicitly casts to SgScopeStatement
+
     void handle(SgClassDefinition& n)
     {
-      SgScopeStatement& scope = n;
+      handle_scope(n); // first handle as scope
 
-      handle(scope); // first handle as scope
       vt.transf->visit_isClassDefinition(&n);
     }
 
@@ -262,9 +279,24 @@ namespace rted
 
      // n-ary
 
+     // \note see note comment in handle(SgFunctionCallExp)
+     bool suppress_binary_for_specific_calls(const SgFunctionDeclaration* fndecl)
+     {
+       return ((fndecl != NULL) && isLibFunctionRequiringArgCheck(fndecl->get_name()));
+     }
+
      void handle(SgFunctionCallExp& n)
      {
         vt.transf->visit_isFunctionCall(&n);
+
+        // \pp binary should be suppressed for all calls
+        //     in order not to impact existing RTED tests, we suppress for
+        //     cases relevant to us
+        // \todo make suppression unconditional (remove if)
+        if (suppress_binary_for_specific_calls(n.getAssociatedFunctionDeclaration()))
+        {
+          ia.isBinaryOp = false;
+        }
      }
 
      void handle(SgPlusPlusOp& n)
@@ -347,25 +379,39 @@ namespace rted
     return (upcForall != NULL && partOfUpcForallAffinityExpr(*upcForall, expr));
   }
 
+
   /// \brief   defines patterns of binary operations that should not be tested
   /// \return  true, if an access guard should be skipped
   ///          false, otherwise
   static
-  bool test_binary_op(const VariableTraversal::BinaryOpStack& binary_ops, const SgVarRefExp& varref)
+  bool test_binary_op(const VariableTraversal::BinaryOpStack& binary_ops, SgVarRefExp& varref, const InheritedAttribute& inh)
   {
-    // not in binary context
-    if (binary_ops.empty()) return false;
+    // \pp this function seems to be to broad
+    //     For starters, I do not understand why we want to skip the test to
+    //     check whether ptr in ptr+3 is initialized (assuming ptr is of pointer type)?
 
+    // not in binary context
+    if (!inh.isBinaryOp) return false;
+
+    ROSE_ASSERT(!binary_ops.empty());
+
+    // do the real checks
     const SgBinaryOp*   binop = binary_ops.back();
     const SgExpression* rhs = binop->get_rhs_operand();
 
+    bool rob = isRightOfBinaryOp(&varref);
+
+    std::cerr << "@@@ ELIDE? " << varref.unparseToString() << " " << rob << std::endl;
+
     // \note isRightOfBinaryOp(&varref)
     //       does not mean that varref == rhs. varref could also be
-    //       an (indirect) child of binop.
-    return (  isRightOfBinaryOp(&varref)
-           && !isSgArrayType(rhs->get_type())
-           && !isSgNewExp(rhs)
-           && !isSgReferenceType(binop->get_lhs_operand()->get_type())
+    //       an (indirect) right side child of binop.
+    // \pp not sure why the side on which varref occurs matters,
+    //     when we, for example, have a commutative operation?
+    return (  !rob
+           || isSgArrayType(rhs->get_type())
+           || isSgNewExp(rhs)
+           || isSgReferenceType(binop->get_lhs_operand()->get_type())
            );
   }
 
@@ -403,44 +449,49 @@ namespace rted
 
   /// \brief   tests whether a varref is related to a function call
   /// \note    do we assume that the function has a declaration?
-  /// \todo    Can't we take the type from the call expression
-  ///          (in case that the callee is computed)? (PP)
+  /// \todo    \pp Can't we take the type from the call expression
+  ///          (in case that the callee is computed)?
   static
   bool test_call_argument(RtedTransformation* transf, const SgVarRefExp& varref)
   {
+    // this does not work if there are for example casts in between :(
     const SgExprListExp* exprl = isSgExprListExp(varref.get_parent());
     if (exprl == NULL) return false;
 
     const SgFunctionCallExp* callexp = isSgFunctionCallExp(exprl->get_parent());
     if (callexp == NULL) return false;
 
+    // \note do not move up the isUsableAsSgArrayType test
+    //       b/c we only want it to succeed if this is indeed a function call expr
+    if (rted::isUsableAsSgArrayType(transf, varref.get_type())) return true;
+
+    // \pp \todo
+    // Instead of getting the type form the fundecl, it might be better to get
+    // the type from the callee expression. This way we would always know the
+    // argument types.
+
     // try to determine the parameter type
-    SgType* param_type = NULL;
-    const SgFunctionDeclaration* fndecl = callexp->getAssociatedFunctionDeclaration();
+    const SgFunctionDeclaration*   fndecl = callexp->getAssociatedFunctionDeclaration();
+    if (fndecl == NULL) return false; // \pp not sure if this is correct
 
-    if (fndecl)
+    const SgExpressionPtrList&     args = exprl->get_expressions();
+    size_t                         arg_pos = 0;
+
+    ROSE_ASSERT(args.size() > 0); // at least varref is in args
+
+    while (args[arg_pos] != &varref)
     {
-      size_t                     arg_pos = 0;
-      const SgExpressionPtrList& args = exprl->get_expressions();
-
-      ROSE_ASSERT(args.size() > 0); // at least varref is in args
-
-      while (args[arg_pos] != &varref)
-      {
-        ++arg_pos;
-        ROSE_ASSERT( arg_pos < args.size() );
-      }
-
-      SgInitializedNamePtrList& param_lst = fndecl->get_parameterList()->get_args();
-      ROSE_ASSERT(arg_pos < param_lst.size());
-
-      if (param_lst[arg_pos] != NULL)
-         param_type = param_lst[arg_pos] -> get_type();
+      ++arg_pos;
+      ROSE_ASSERT( arg_pos < args.size() );
     }
 
-    // \pp why do we test for SgArrayType here? (PP)
-    return (  rted::isUsableAsSgArrayType(transf, varref.get_type())
-           || rted::isUsableAsSgReferenceType(transf, param_type)
+    const SgInitializedNamePtrList& param_lst = fndecl->get_parameterList()->get_args();
+
+    // \note param_lst.size() could be 0, if the compiler generated a function
+    //       prototype (i.e., there was no prototype present in the code.
+    return (  arg_pos < param_lst.size()
+           && (param_lst[arg_pos] != NULL)
+           && rted::isUsableAsSgReferenceType(transf, param_lst[arg_pos]->get_type())
            );
   }
 
@@ -454,24 +505,25 @@ namespace rted
   }
 
 
-  void VariableTraversal::handleIfVarRefExp(SgVarRefExp* varref, const InheritedAttribute& inheritedAttribute)
+  void VariableTraversal::handleIfVarRefExp(SgVarRefExp* varref, const InheritedAttribute& inh)
   {
     if (varref == NULL) return;
 
     SgInitializedName *name = varref->get_symbol()->get_declaration();
 
-    bool elide_access_guard = (  inheritedAttribute.isArrowExp );
-                             elide_access_guard = elide_access_guard || inheritedAttribute.isAddressOfOp ;
-                             elide_access_guard = elide_access_guard || in_instrumented_file(transf, name) ;
-                             elide_access_guard = elide_access_guard || test_binary_op(binary_ops, *varref) ;
-                             elide_access_guard = elide_access_guard || test_for_loops(for_loops, *varref, *name) ;
-                             elide_access_guard = elide_access_guard || test_assign_initializer(inheritedAttribute, *varref) ;
-                             elide_access_guard = elide_access_guard || test_call_argument(transf, *varref) ;
-                              // );
+    int where = 0;
+    bool elide_access_guard = (  (++where, inh.isArrowExp                            )
+                              || (++where, inh.isAddressOfOp                         )
+                              || (++where, in_instrumented_file(transf, name)        )
+                              || (++where, test_binary_op(binary_ops, *varref, inh)  )
+                              || (++where, test_for_loops(for_loops, *varref, *name) )
+                              || (++where, test_assign_initializer(inh, *varref)     )
+                              || (++where, test_call_argument(transf, *varref)       )
+                              );
 
     if (elide_access_guard)
     {
-      std::cerr << "### ELIDE" << std::endl;
+      std::cerr << "### ELIDE " << where << " " << varref->unparseToString() << std::endl;
       return;
     }
 
@@ -482,8 +534,6 @@ namespace rted
   SynthesizedAttribute VariableTraversal::evaluateSynthesizedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute, SynthesizedAttributesList childAttributes)
   {
      SynthesizedAttribute res; // = ez::visitSgNode(SafeEval(this, childAttributes));
-
-     if (!inheritedAttribute.function) return res;
 
      // take from stacks, if applicable
      if (GeneralizdFor::is(astNode))
@@ -498,8 +548,11 @@ namespace rted
        binary_ops.pop_back();
      }
 
-     // ------------------------------ visit isSgVarRefExp ----------------------------------------------
-     handleIfVarRefExp(isSgVarRefExp(astNode), inheritedAttribute);
+     if (inheritedAttribute.function)
+     {
+       // ------------------------------ visit isSgVarRefExp ----------------------------------------------
+       handleIfVarRefExp(isSgVarRefExp(astNode), inheritedAttribute);
+     }
 
      return res;
   }

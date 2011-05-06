@@ -2,7 +2,7 @@
   # rename our errors to match RTED's
   # s/Illegal Memory Overlap/memory overlap/
 
-  s/^Violation: \(.*\) at .*(\([-0-9]\+\),.*/Vio\2/i
+  s/^Violation: \(.*\) at .*(\([-0-9]\+\),\([-0-9]\+\))!.*/Vio\2/i
 }
 
 # Subtract 2 from the actual line number to compensate for the lines added by

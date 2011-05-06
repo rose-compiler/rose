@@ -1,10 +1,12 @@
 // vim:sta et:
+#include <iomanip>
+#include <cassert>
+#include <iostream>
+
 #include "PointerManager.h"
 #include "CppRuntimeSystem.h"
 #include "MemoryManager.h"
 
-#include <iomanip>
-#include <cassert>
 
 // -------------------------- Pointer Info -------------------------------
 
@@ -301,6 +303,7 @@ void PointerManager::registerPointerChange( Location src, Location target, bool 
             pi.setTargetAddressForce( nullAddr() );
             insert(targetToPointerMap, TargetToPointerMap::value_type( nullAddr(), &pi )) /* insert */;
 
+            // \pp this is a bug, as RTED changes data of a running program
             if ( !(rs->testingMode) ) zeroIntValueAt(pi.getSourceAddress());
         }
     }
@@ -395,6 +398,16 @@ void PointerManager::checkPointerDereference( Location src, Location deref_addr)
 }
 #endif /* OBSOLETE_CODE */
 
+static inline
+bool equalThreadId(const PointerManager::Location lhs, const PointerManager::Location rhs)
+{
+#ifdef WITH_UPC
+  return lhs.thread_id == rhs.thread_id;
+#else /* WITH_UPC */
+  return true;
+#endif /* WITH_UPC */
+}
+
 void PointerManager::invalidatePointerToRegion(MemoryType& mt)
 {
     typedef TargetToPointerMap::iterator Iter;
@@ -409,7 +422,8 @@ void PointerManager::invalidatePointerToRegion(MemoryType& mt)
 
     for(Iter i = aa; i != zz; ++i)
     {
-        if (!distr && aa->first.thread_id != limit.thread_id) continue;
+        // \pp !distr and threads!=thread seems to be an odd condition
+        if ( !distr && !equalThreadId(aa->first, limit) ) continue;
 
         PointerInfo * pi = i->second;
 

@@ -84,12 +84,9 @@ const char* rted_ThisShmemBase(void)
   // by subtracting the offset of this thread's entry we get a pointer
   //   to this thread's shared memory base
 
-  printf("@@@@@@@@@@@@@@@ 1\n"); fflush(stdout);
   const char* base = (const char*) ptrcast.shptr;
-  printf("@@@@@@@@@@@@@@@ 2\n"); fflush(stdout);
   const long  ofs = GUPCR_PTS_OFFSET(ptrcast.shmem);
 
-  printf("@@@@@@@@@@@@@@@ 3\n"); fflush(stdout);
   return base - ofs ;
 }
 
@@ -102,24 +99,14 @@ const char* rted_ThisShmemLimit(void)
 static inline
 shared const char* rted_asSharedPtr(rted_Address addr)
 {
-  printf("0\n");
   union rted_SharedPtrCast ptrcast;
-
-  printf("1\n");
   const long               ofs = addr.local - rted_ThisShmemBase();
-
-  printf("2\n");
   assert(ofs > 0);
 
-  printf("3\n");
-  fflush(stdout);
   GUPCR_PTS_SET_NULL_SHARED(ptrcast.shmem);
 
-  printf("4\n");
   GUPCR_PTS_SET_THREAD(ptrcast.shmem, addr.thread_id);
-  printf("5\n");
   GUPCR_PTS_SET_VADDR(ptrcast.shmem, __upc_shared_start + ofs);
-  printf("6\n");
 
   return (shared const char*)ptrcast.shptr;
 }
@@ -183,9 +170,7 @@ void rted_setIntVal(rted_Address addr, int val)
 static inline
 shared const char* shared* rted_asSharedDoublePtr(rted_Address addr)
 {
-  printf("A\n");
   shared const char* tmp = rted_asSharedPtr(addr);
-  printf("B\n");
   return (shared const char* shared*) (tmp);
 }
 

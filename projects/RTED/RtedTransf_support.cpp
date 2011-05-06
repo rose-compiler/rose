@@ -409,10 +409,14 @@ bool isConstructor( SgDeclarationStatement* decl )
 static
 bool isNonConstructor(SgDeclarationStatement* decl)
 {
-  return !isConstructor(decl);
+  bool res = !isConstructor(decl);
+
+  std::cerr << "@@Q " << res << " " << decl->unparseToString() << std::endl;
+
+  return res;
 }
 
-void RtedTransformation::appendConstructors(SgClassDefinition* cdef, SgDeclarationStatementPtrList& constructors)
+void appendConstructors(SgClassDefinition* cdef, SgDeclarationStatementPtrList& constructors)
 {
   SgDeclarationStatementPtrList& members = cdef -> get_members();
 
@@ -728,6 +732,7 @@ void RtedTransformation::appendFileInfo( SgExprListExp* arg_list, SgScopeStateme
     ROSE_ASSERT(arg_list && scope && file_info);
 
     SgExpression*           filename = buildStringVal( file_info->get_filename() );
+    // \todo adjust line number for added files
     SgExpression*           linenr = buildIntVal( file_info->get_line() );
     SgExpression*           linenrTransformed = buildOpaqueVarRefExp("__LINE__", scope);
     SgExprListExp*          fiArgs = buildExprListExp();
@@ -754,16 +759,21 @@ AllocKind cxxHeapAllocKind(SgType* t)
   return isSgArrayType(skip_ModifierType(t)) ? akCxxArrayNew : akCxxNew;
 }
 
+SgType* skip_ArrayType(SgType* t)
+{
+  SgArrayType* sgarr = isSgArrayType(t);
+  if (sgarr != NULL) return sgarr->get_base_type();
+
+  return t;
+}
+
 SgType* skip_ArrPtrType(SgType* t)
 {
+  // \pp \todo shouldn't we also skip modifier types?
   SgPointerType* sgptr = isSgPointerType(t);
   if (sgptr != NULL) return sgptr->get_base_type();
 
-  SgArrayType*   sgarr = isSgArrayType(t);
-  if (sgarr != NULL) return sgarr->get_base_type();
-
-  // \pp \todo shouldn't we also skip modifier types?
-  return t;
+  return skip_ArrayType(t);
 }
 
 struct UpcArrayDistributionHandler
@@ -778,28 +788,22 @@ struct UpcArrayDistributionHandler
   void handle(const SgNode&) { assert(false); }
 
   /// base case
-  void handle(const SgType& n)
-  {
-    std::cerr << typeid(n).name() << std::endl;
-  }
+  void handle(const SgType& n) {}
 
   void handle(const SgArrayType& n)
   {
     res.first = n.get_base_type();
-    std::cerr << typeid(n).name() << std::endl;
   }
 
   void handle(const SgTypedefType& n)
   {
     res.first = n.get_base_type();
-    std::cerr << typeid(n).name() << std::endl;
   }
 
   void handle(const SgModifierType& n)
   {
     res.first = n.get_base_type();
     res.second = (upcSharedFlag(n) == usDistributed);
-    std::cerr << typeid(n).name() << std::endl;
   }
 
   operator ResultType() { return res; }
@@ -909,15 +913,18 @@ struct IndirectionHandler
     {
       const bool sharedFlag = (upcSharedFlag(n) != usNonshared);
 
-      // \pp \note \todo the rted nov10 code does not skip over
-      //                 modifier types. That's likely a bug.
-      if (sharedFlag) skip(n);
-
       if (sharedFlag)
       {
+        skip(n);
         ROSE_ASSERT((res.second.shared_mask & 1) == 0);
 
         res.second.shared_mask |= 1;
+      }
+      else
+      {
+        // \pp \note \todo the rted nov10 code does not skip over
+        //                 modifier types. That's likely a bug.
+        res.first = &n;
       }
     }
 
@@ -944,6 +951,29 @@ indirections(SgType* t)
   return ez::visitSgNode(IndirectionHandler(), t);
 }
 
+size_t upcSharedMask(SgType* t)
+{
+  IndirectionHandler::ResultType res = ez::visitSgNode(IndirectionHandler(), t);
+
+  return res.second.shared_mask;
+}
+
+SgType* skip_References(SgType* t)
+{
+  if (!isSgReferenceType(t)) return t;
+
+  return isSgReferenceType(t)->get_base_type();
+}
+
+static
+SgType* skip_TopLevelTypes(SgType* t)
+{
+  SgType* res = skip_References(skip_ModifierType(t));
+
+  if (res == t) return res;
+  return skip_TopLevelTypes(res);
+}
+
 
 SgAggregateInitializer*
 RtedTransformation::mkTypeInformation(SgType* type, bool resolve_class_names, bool array_to_pointer)
@@ -952,7 +982,7 @@ RtedTransformation::mkTypeInformation(SgType* type, bool resolve_class_names, bo
 
   IndirectionHandler::ResultType indir_desc  = indirections(type);
   SgType*                        base_type   = indir_desc.first;
-  SgType*                        unmod_type  = skip_ModifierType(type);
+  SgType*                        unmod_type  = skip_TopLevelTypes(type);
   AddressDesc                    addrDesc    = indir_desc.second;
   std::string                    type_string = unmod_type->class_name();
   std::string                    base_type_string;
@@ -1026,7 +1056,6 @@ RtedTransformation::appendDimensions(SgExprListExp* arg_list, RtedArray* arr)
 
       SgExpression* dimexpr = ctorDimensionList(genAggregateInitializer(dimargs, roseDimensionType()));
 
-      std::cerr << dimexpr->unparseToString() << std::endl;
       SageInterface::appendExpression(arg_list, dimexpr);
 }
 
@@ -1034,7 +1063,12 @@ void RtedTransformation::appendDimensionsIfNeeded( SgExprListExp* arg_list, Rted
 {
   RtedArray* arr = rce->get_array();
 
-  if (arr == NULL) return;
+  if (arr == NULL)
+  {
+    ROSE_ASSERT(rce->extraArgSize() == 0);
+    return;
+  }
+
   appendDimensions(arg_list, arr);
 }
 
@@ -1195,11 +1229,29 @@ struct AddressOfExprBuilder
   : res(NULL)
   {}
 
+  void set(SgExpression& v) { res = &v; }
+  void address(SgExpression& v) { res = buildAddressOfOp(&v); }
+
   void handle(SgNode& n) { ROSE_ASSERT(false); }
 
-  void handle(SgExpression& n) { res = buildAddressOfOp(&n); }
+  void handle(SgExpression& n) { address(n); }
 
-  void handle(SgPointerDerefExp& n) { res = n.get_operand(); }
+  void handle(SgPointerDerefExp& n) { set(*n.get_operand()); }
+
+  void handle(SgVarRefExp& n)
+  {
+    SgType* exptype = n.get_type();
+    SgType* basetype = skip_ModifierType(exptype);
+
+    if (isSgArrayType(basetype))
+    {
+      set(n);
+    }
+    else
+    {
+      address(n);
+    }
+  }
 
   operator SgExpression*()
   {
@@ -1221,10 +1273,11 @@ SgExpression* genAddressOf(SgExpression* const exp, bool upcShared)
   // \pp \todo why can the expression be NULL?
   if (exp == NULL) return buildLongIntVal(0);
 
-  // \pp I am not convinced that we need to strip cast expressions ...
-  //     what's so bad about casting a cast?
+  // \pp skip cast expressions b/c they create an r-value
+  //     but we need an l-value when we use the address (& (int*) ptr)
   LValueVisitor       make_lvalue_visitor;
-  SgExpression* const exp_copy = make_lvalue_visitor.visit_subtree( deepCopy(exp) );
+  SgExpression*       cloneexp = deepCopy(exp);
+  SgExpression* const exp_copy = make_lvalue_visitor.visit_subtree( cloneexp );
   SgType*             char_type = buildCharType();
 
   // in UPC we must not cast away the shared modifier
@@ -1250,6 +1303,8 @@ SgFunctionCallExp* RtedTransformation::mkAddress(SgExpression* exp, bool upcShar
   //   expression to a shared char*
   if (upcShared)
   {
+    ROSE_ASSERT(withupc);
+
     SgType* char_type = buildCharType();
 
     // \pp \todo replace the magic -1 with sth more meaningful

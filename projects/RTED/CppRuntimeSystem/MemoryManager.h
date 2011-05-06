@@ -4,7 +4,7 @@
 
 
 #include <string>
-#include <iostream>
+#include <iosfwd>
 #include <vector>
 #include <set>
 #include <map>
@@ -85,6 +85,7 @@ struct ThreadStorage : TypeTracker
   ThreadStorage* clone() const;
 };
 
+#ifdef WITH_UPC
 
 /// \brief represents memory blocks that are distributed across threads
 struct DistributedStorage : TypeTracker
@@ -117,6 +118,8 @@ struct DistributedStorage : TypeTracker
   InitStatus initializationStatus() const;
   DistributedStorage* clone() const;
 };
+
+#endif /* WITH_UPC */
 
 
 /**

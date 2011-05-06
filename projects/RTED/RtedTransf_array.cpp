@@ -65,7 +65,7 @@ bool RtedTransformation::isVarRefInCreateArray(SgInitializedName* search)
  * -----------------------------------------------------------*/
 void RtedTransformation::insertArrayCreateCall(SgVarRefExp* n, RtedArray* value)
 {
-   ROSE_ASSERT(n && value && n->get_parent());
+   ROSE_ASSERT(n && value);
 
    SgInitializedName* initName = n->get_symbol()->get_declaration();
    ROSE_ASSERT(initName);
@@ -73,7 +73,8 @@ void RtedTransformation::insertArrayCreateCall(SgVarRefExp* n, RtedArray* value)
    SgStatement*       stmt = value->surroundingStatement;
    ROSE_ASSERT(stmt);
 
-   SgExpression*      srcexp = getExprBelowAssignment(n);
+   // \pp \todo check why srcexp can be w/o parent
+   SgExpression*      srcexp = n->get_parent() ? getExprBelowAssignment(n) : n;
 
    insertArrayCreateCall(stmt, initName, srcexp, value);
 }
@@ -141,6 +142,8 @@ SgStatement*
 RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgExpression* src_exp, RtedArray* array, SgStatement* stmt)
 {
    ROSE_ASSERT(initName && src_exp && array && stmt);
+
+   std::cerr << "@@@ " << src_exp->unparseToString() << std::endl;
 
    // build the function call:  rs.createHeapArr(...);
    //                        or rs.createHeapPtr(...);
@@ -247,6 +250,8 @@ void RtedTransformation::insertArrayCreateCall( SgStatement* stmt,
    // what if there is an array creation in a global scope
    else if (isSgGlobal(scope)) {
        scope = mainBody;
+
+       ROSE_ASSERT(globalsInitLoc);
        insloc = globalsInitLoc;
    }
    // \pp \todo handle variables defined in namespace
@@ -1008,8 +1013,6 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
 
 void RtedTransformation::addPaddingToAllocatedMemory(SgStatement* stmt, RtedArray* array)
 {
-    printf(">>> Padding allocated memory with blank space\n");
-    //SgStatement* stmt = getSurroundingStatement(varRef);
     ROSE_ASSERT(stmt);
     // if you find this:
     //   str1 = ((char *)(malloc(((((4 * n)) * (sizeof(char )))))));

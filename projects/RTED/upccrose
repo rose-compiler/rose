@@ -18,8 +18,7 @@
       remove=$parameter;
     elif [ "x$parameter" = "x-pthread" ] ; then
      remove=$parameter;
-    elif [ "x$parameter" = "xCppRuntimeSystem/libCppRuntimeSystem.la" ]; then
-#     newOption=$newOption" CppRuntimeSystem/.libs/libCppRuntimeSystem.so";
+    elif [ "x$parameter" = "xCppRuntimeSystem/libUpcRuntimeSystem.la" ]; then
      remove=$parameter
     elif [ "x$parameter" = "x-Winvalid-pch" ]; then
      remove=$parameter;
@@ -27,7 +26,7 @@
      remove=$parameter;
     elif [ "x$parameter" = "x-rose:UPC" ]; then
      remove=$parameter;
-    elif [[ $parameter == *RuntimeSystem.cpp ]]; then
+    elif [[ $parameter == "RuntimeSystemUpc.o" ]]; then
      runtimesystem=$parameter
     elif [[ $parameter == *.upc ]]; then
       filename=`basename $parameter .upc`
@@ -57,7 +56,7 @@ if [ "$runtimesystem" != "" ]; then
   echo "$CMD"
   $CMD
 
-  rtedlib="-L./CppRuntimeSystem/.libs/ -lCppRuntimeSystem"
+  rtedlib="-L./CppRuntimeSystem/.libs/ -lUpcRuntimeSystem"
   objfiles="$objfiles ParallelRTS.o RuntimeSystem.o"
 fi
 

@@ -12,6 +12,8 @@
 
 #include <string>
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
@@ -43,7 +45,10 @@ bool isFileIOVariable(SgType* type)
         SgType*     under = skip_Typedefs(type);
         std::string name = under->unparseToString();
 
-        return name == "std::fstream";
+        bool res =  boost::starts_with( name, std::string("class std::basic_fstream") );
+
+        // std::cerr << "@@@ IOVar?" << name << " " << res << std::endl;
+        return res;
 }
 
 
@@ -53,16 +58,25 @@ void RtedTransformation::insertCreateObjectCall(RtedClassDefinition* rcdef) {
 
         appendConstructors(cdef, constructors);
 
+        std::cerr << "XXX = " << cdef->get_qualified_name().str() << "  " << constructors.size() << std::endl;
+
         BOOST_FOREACH( SgDeclarationStatement* decl, constructors )
         {
             SgMemberFunctionDeclaration* constructor = isSgMemberFunctionDeclaration( decl );
             // validate the postcondition of appendConstructors
             ROSE_ASSERT( constructor );
 
+            std::string s(constructor->get_name());
+
+            std::cerr << "XXX = " << s << std::endl;
+
+
             // FIXME 2: Probably the thing to do in this case is simply to bail and
             // trust that the constructor will get transformed when its definition
             // is processed
             SgFunctionDefinition* def = constructor -> get_definition();
+
+
             ROSE_ASSERT( def );
 
             SgBasicBlock* body = def -> get_body();

@@ -11,7 +11,9 @@
 static inline
 TypeTracker* createTracker(bool distr, size_t size)
 {
+#ifdef WITH_UPC
   if (distr) return new DistributedStorage(size);
+#endif /* WITH_UPC */
 
   return new ThreadStorage(size);
 }
@@ -51,6 +53,9 @@ MemoryType::Location MemoryType::endAddress() const
 
 bool MemoryType::containsAddress(Location queryAddress) const
 {
+  std::cerr << "$$$ contains? " << startAddress << " <= "
+            << queryAddress << " < " << endAddress() << "(" << getSize() << ")" << std::endl;
+
     return (  startAddress <= queryAddress
            && queryAddress < endAddress()
            );
@@ -289,6 +294,19 @@ MemoryType::Location typed_add(MemoryType::Location base, size_t offset, const T
   return ::add(base, offset, isDistMem(tracker, t));
 }
 
+static inline
+MemoryType::Location makeLocation(rted_thread_id thid, const char* addr)
+{
+  MemoryType::Location loc;
+
+#ifdef WITH_UPC
+  loc.thread_id = thid;
+#endif /* WITH_UPC */
+  loc.local = addr;
+
+  return loc;
+}
+
 
 RsType* MemoryType::getTypeAt(Location addr, size_t size)
 {
@@ -321,7 +339,7 @@ RsType* MemoryType::getTypeAt(Location addr, size_t size)
       RsType*    first_type = first_addr_type->second;
       assert(first_type);
 
-      Location loc = { tracker->baseThread(addr), first_addr_type->first };
+      Location loc = makeLocation( tracker->baseThread(addr), first_addr_type->first );
       size_t   ofs = ::ofs( addr, loc, tracker->distributed() );
 
       // \pp I do not think that the third argument is very helpful
@@ -424,7 +442,7 @@ void MemoryType::print(std::ostream & os) const
 
     os << startAddress
        << " Size " << std::dec << getSize()
-       <<  "\t" << getInitString() << "\tAllocated at " << allocPos
+       <<  "\t" << getInitString() << "\tAllocated here: " << allocPos
        << std::endl;
 
     PointerManager * pm = RuntimeSystem::instance()->getPointerManager();
@@ -739,7 +757,7 @@ void MemoryManager::checkWrite(Location addr, size_t size, RsType * t)
     MemoryType *      mt = checkAccess(addr, size, t, RuntimeViolation::INVALID_WRITE);
     assert(mt && mt->beginAddress() <= addr);
 
-    // \pp \todo this implementation does not consider blocking
+    // \pp \todo this implementation does not consider UPC blocking
     //           consider modifing the initialize interface
     mt->initialize(addr, size);
     rs->printMessage("   ++ checkWrite done.");
@@ -973,7 +991,7 @@ std::ostream& operator<< (std::ostream &os, const MemoryManager& m)
     return TypeTracker::some;
   }
 
-
+#ifdef WITH_UPC
 
   inline
   void DistributedStorage::assert_threadno(Location loc)
@@ -1029,7 +1047,7 @@ std::ostream& operator<< (std::ostream &os, const MemoryManager& m)
   {
     return new DistributedStorage(*this);
   }
-
+#endif /* WITH_UPC */
 
   ThreadStorage::TypeData& ThreadStorage::typesof(Location loc)
   {
@@ -1060,5 +1078,9 @@ std::ostream& operator<< (std::ostream &os, const MemoryManager& m)
 
   size_t ThreadStorage::baseThread(Location l) const
   {
+#ifdef WITH_UPC
     return l.thread_id;
+#else  /* WITH_UPC */
+    return 0;
+#endif /* WITH_UPC */
   }

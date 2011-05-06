@@ -703,7 +703,7 @@ int rted_CreateVariable( TypeDesc td,
 }
 
 
-int rted_CreateObject( TypeDesc td, Address address, SourceInfo si )
+int rted_CreateObject( TypeDesc td, Address address, size_t sz, SourceInfo si )
 {
   rted_ProcessMsg();
 
@@ -715,7 +715,7 @@ int rted_CreateObject( TypeDesc td, Address address, SourceInfo si )
   RsType*         rs_type = rs_getType(*rs->getTypeSystem(), td.name, td.base, "", td.desc);
   RsClassType*    rs_classtype = static_cast< RsClassType* >(rs_type);
 
-  assert(rs_classtype);
+  assert(rs_classtype && rs_classtype->getByteSize() == sz);
   rs->createObject( address, rs_classtype );
 
   // can be invoked as part of an expression
@@ -780,6 +780,7 @@ int _rted_InitVariable( rted_TypeDesc    td,
   rs->printMessage(message.str());
 
   RsType* rs_type = rs_getType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
+
   rs->checkMemWrite( address, size, rs_type );
 
   // This assumes roseInitVariable is called after the assignment has taken
@@ -875,7 +876,7 @@ void rted_Checkpoint(SourceInfo si)
 
 void rted_RegisterTypeCall( const char* nameC,
                             const char* /* typeC */,
-                            const char* isUnionType,
+                            int isUnion,
                             size_t sizeC,
                             SourceInfo si,
                             size_t argc
@@ -890,7 +891,6 @@ void rted_RegisterTypeCall( const char* nameC,
   // const char*    isUnionType = va_arg(vl,const char*);
   RuntimeSystem* rs = RuntimeSystem::instance();
   TypeSystem&    ts = *rs->getTypeSystem();
-  bool           isUnion = (*isUnionType=='1');
 
   va_start(vl, argc);
 
@@ -927,22 +927,12 @@ void rted_RegisterTypeCall( const char* nameC,
         // \pp was: t = RuntimeSystem_getRsArrayType(ts, &vl, dimensionality, size, base_type );
 
         assert(argctr < argc);
-        const size_t dimensionality = va_arg( vl, size_t );
-        assert(dimensionality > 0);
+        ++argctr;  // adjust the loop counter
 
-        size_t       dims[dimensionality+1];
-        size_t       pos = 0;
+        const size_t* dimensionality = va_arg( vl, size_t* );
+        assert(*dimensionality > 0);
 
-        dims[pos] = dimensionality;
-        argctr += dimensionality + 1;  // adjust the loop counter
-        assert(argctr <= argc);
-
-        while (pos < dimensionality)
-        {
-          dims[++pos] = va_arg( vl, size_t );
-        }
-
-        t = rs_getArrayType( ts, dims, size, *ts.getTypeInfo(td.base) );
+        t = rs_getArrayType( ts, dimensionality, size, *ts.getTypeInfo(td.base) );
       }
       else
       {
@@ -958,8 +948,6 @@ void rted_RegisterTypeCall( const char* nameC,
 
       rs->printMessage(message.str());
       classType->addMember(name, t, offset);
-
-      //cerr << "Registering Member " << name << " of type " << type << " at offset " << offset << endl;
   }
 
   va_end(vl);

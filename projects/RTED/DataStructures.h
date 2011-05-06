@@ -18,47 +18,47 @@
  * -----------------------------------------------------------*/
 struct RtedArray
 {
-		SgInitializedName*         initName;
-		SgStatement*               surroundingStatement;
-		AllocKind                  allocKind;
-		SgExpression*              size;
-		std::vector<SgExpression*> indices;
+    SgInitializedName*         initName;
+    SgStatement*               surroundingStatement;
+    AllocKind                  allocKind;
+    SgExpression*              size;
+    std::vector<SgExpression*> indices;
 
-		RtedArray ( SgInitializedName* init,
-								SgStatement* stmt,
-								AllocKind _allocKind,
-								SgExpression* _size = NULL
-							)
-		: initName(init), surroundingStatement(stmt), allocKind(_allocKind), size(_size), indices()
-		{
-			ROSE_ASSERT(initName && surroundingStatement && (allocKind != akUndefined));
-			ROSE_ASSERT((allocKind == akStack) || size);
-		}
+    RtedArray ( SgInitializedName* init,
+                SgStatement* stmt,
+                AllocKind _allocKind,
+                SgExpression* _size = NULL
+              )
+    : initName(init), surroundingStatement(stmt), allocKind(_allocKind), size(_size), indices()
+    {
+      ROSE_ASSERT(initName && surroundingStatement && (allocKind != akUndefined));
+      ROSE_ASSERT((allocKind == akStack) || size);
+    }
 
-		virtual ~RtedArray() {}
+    virtual ~RtedArray() {}
 
-		std::vector<SgExpression*>&       getIndices()       { return indices; }
-		const std::vector<SgExpression*>& getIndices() const { return indices; }
+    std::vector<SgExpression*>&       getIndices()       { return indices; }
+    const std::vector<SgExpression*>& getIndices() const { return indices; }
 
-		int getDimension() const { return indices.size(); }
+    int getDimension() const { return indices.size(); }
 
-		std::string unparseToString() const
-		{
-			std::string                                  res;
-			std::vector< SgExpression* >::const_iterator i = indices.begin();
+    std::string unparseToString() const
+    {
+      std::string                                  res;
+      std::vector< SgExpression* >::const_iterator i = indices.begin();
 
-			while( i != indices.end() ) {
-						res += (*i) -> unparseToString();
-						++i;
-						if( i != indices.end() )
-								res += ", ";
-			}
+      while( i != indices.end() ) {
+            res += (*i) -> unparseToString();
+            ++i;
+            if( i != indices.end() )
+                res += ", ";
+      }
 
-			return res;
-		}
+      return res;
+    }
 
-	private:
-	  RtedArray();
+  private:
+    RtedArray();
 };
 
 
@@ -71,44 +71,43 @@ struct RtedArray
  * -----------------------------------------------------------*/
 class RtedClassElement {
  public:
-	std::string manglElementName;
-	std::string elementType;
+  std::string manglElementName;
+  std::string elementType;
   SgDeclarationStatement* sgElement;
 
   RtedClassElement( std::string _elementName,
-		                std::string _elementType,
-		                SgDeclarationStatement* _sgElement
-									)
-	: manglElementName(_elementName), elementType(_elementType), sgElement(_sgElement)
+                    std::string _elementType,
+                    SgDeclarationStatement* _sgElement
+                  )
+  : manglElementName(_elementName), elementType(_elementType), sgElement(_sgElement)
   {
-		ROSE_ASSERT(sgElement);
+    ROSE_ASSERT(sgElement);
   }
 
   virtual ~RtedClassElement() {}
 
   virtual size_t extraArgSize() { return 0; }
-	virtual RtedArray* get_array() { return NULL; }
+  virtual RtedArray* get_array() { return NULL; }
 };
 
 class RtedClassArrayElement : public RtedClassElement {
       RtedArray* array;
   public:
       RtedClassArrayElement( std::string elementName,
-														 std::string elementType,
-														 SgDeclarationStatement* sgElement,
-														 RtedArray* arr
-						               )
-			: RtedClassElement(elementName, elementType, sgElement), array(arr)
-			{
-				ROSE_ASSERT(array);
-			}
-
-      size_t extraArgSize() {
-          // dimensionality, then each dimension
-          return (array -> getDimension() + 1);
+                             std::string elementType,
+                             SgDeclarationStatement* sgElement,
+                             RtedArray* arr
+                           )
+      : RtedClassElement(elementName, elementType, sgElement), array(arr)
+      {
+        ROSE_ASSERT(array);
       }
 
-			RtedArray* get_array() { return array; }
+      size_t extraArgSize() {
+          return 1;
+      }
+
+      RtedArray* get_array() { return array; }
 };
 
 
@@ -126,21 +125,21 @@ struct RtedClassDefinition
   std::vector<RtedClassElement*> elems;
 
   RtedClassDefinition( SgClassDefinition* _classDef,
-		                   std::string _className,
-		                   std::string _classType,
+                       std::string _className,
+                       std::string _classType,
                        SgExpression* _sizeClass,
-		                   const std::vector<RtedClassElement*>& _elements
-										 )
+                       const std::vector<RtedClassElement*>& _elements
+                     )
   : classDef(_classDef), manglClassName(_className), classType(_classType),
-		sizeClass(_sizeClass), elems(_elements)
-	{
+    sizeClass(_sizeClass), elems(_elements)
+  {
     ROSE_ASSERT(classDef);
   }
 
-	size_t nrOfElems() const
-	{
-		return elems.size();
-	}
+  size_t nrOfElems() const
+  {
+    return elems.size();
+  }
 
   virtual ~RtedClassDefinition(){}
 };
@@ -157,7 +156,7 @@ class RTedVariableType {
   SgInitializedName* initName;
   SgExpression* initialized;
   RTedVariableType(SgInitializedName* init,
-		   SgExpression* initExp) {
+       SgExpression* initExp) {
     initName=init;
     initialized=initExp;
   }
@@ -183,7 +182,7 @@ struct RtedArguments {
   // we use d_name for the variable that is put on stack
   // but we also use the func name to avoid certain functions
   // for being checked
-	SgStatement*               stmt;
+  SgStatement*               stmt;
   std::string                f_name;
   std::string                f_mangled_name;
   std::string                d_name;
@@ -192,42 +191,42 @@ struct RtedArguments {
   SgExpression*              varRefExp;
   SgExpression*              leftHandSideAssignmentExpr;
   SgExpression*              leftHandSideAssignmentExprStr;
-	SgExprListExp*             argumentList;
-	SgExpressionPtrList        arguments;
+  SgExprListExp*             argumentList;
+  SgExpressionPtrList        arguments;
 
   RtedArguments( SgStatement* stm,
-	               const std::string& ffuncn,
-		             const std::string& fmangl,
-		             const std::string& funcn,
-		             const std::string& mangl,
-		             SgExpression* var,
-		             SgExpression* leftHandAssignStr,
-		             SgExpression* leftHandAssign,
-		             SgExprListExp* exprList,
-								 const SgExpressionPtrList& args
-		           )
-	: stmt(stm),
-		f_name(ffuncn), f_mangled_name(fmangl), d_name(funcn), d_mangled_name(mangl),
-		initName(NULL), varRefExp(var),
-		leftHandSideAssignmentExpr(leftHandAssign), leftHandSideAssignmentExprStr (leftHandAssignStr),
-		argumentList(exprList), arguments(args)
-	{
-		ROSE_ASSERT(var);
+                 const std::string& ffuncn,
+                 const std::string& fmangl,
+                 const std::string& funcn,
+                 const std::string& mangl,
+                 SgExpression* var,
+                 SgExpression* leftHandAssignStr,
+                 SgExpression* leftHandAssign,
+                 SgExprListExp* exprList,
+                 const SgExpressionPtrList& args
+               )
+  : stmt(stm),
+    f_name(ffuncn), f_mangled_name(fmangl), d_name(funcn), d_mangled_name(mangl),
+    initName(NULL), varRefExp(var),
+    leftHandSideAssignmentExpr(leftHandAssign), leftHandSideAssignmentExprStr (leftHandAssignStr),
+    argumentList(exprList), arguments(args)
+  {
+    ROSE_ASSERT(var);
 
-		if (isSgVarRefExp(var)) {
-			initName = isSgVarRefExp(var)->get_symbol()->get_declaration();
-			ROSE_ASSERT(initName);
-		}
-	}
+    if (isSgVarRefExp(var)) {
+      initName = isSgVarRefExp(var)->get_symbol()->get_declaration();
+      ROSE_ASSERT(initName);
+    }
+  }
 
-	std::string toString()
-	{
+  std::string toString()
+  {
     return ( "func name: " + f_name + "  func mangl_name: " + f_mangled_name
-		       + "data name: " + d_name + "  data mangl_name: " + d_mangled_name
-					 + " varRefExp : " + varRefExp->unparseToString() + " at addr: "
-					 + RoseBin_support::ToString(varRefExp)
-					 + "  stmt: "+stmt->unparseToString() + " at addr: " + RoseBin_support::ToString(stmt)
-					 );
+           + "data name: " + d_name + "  data mangl_name: " + d_mangled_name
+           + " varRefExp : " + varRefExp->unparseToString() + " at addr: "
+           + RoseBin_support::ToString(varRefExp)
+           + "  stmt: "+stmt->unparseToString() + " at addr: " + RoseBin_support::ToString(stmt)
+           );
   }
 };
 

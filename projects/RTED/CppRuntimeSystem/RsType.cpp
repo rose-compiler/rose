@@ -1,11 +1,12 @@
 // vim:sw=4 ts=4:
-#include "RsType.h"
-#include "support.h"
 
-#include <boost/foreach.hpp>
 #include <typeinfo>
 #include <cassert>
 #include <sstream>
+#include <iostream>
+#include <boost/foreach.hpp>
+
+#include "RsType.h"
 
 #include "CppRuntimeSystem.h"
 
@@ -126,9 +127,6 @@ bool  RsType::checkSubtypeRecursive(size_t offset,  RsType* type)
   //rs->printMessage("    >>> result: bytesize: " + ToString( result -> getByteSize())+
   //                " !=  size: "+ToString(size));
 
-  assertme(  result == NULL || result -> getByteSize() != size,
-             "RsType::checkSubtypeRecursive - result == NULL || result -> getByteSize() != size",
-             "",ToString(size));
   assert( result == NULL || result -> getByteSize() != size );
   return false;
 }
@@ -240,8 +238,6 @@ std::string RsArrayType::getArrayTypeName(RsType* basetype, size_t size)
 
 std::string RsArrayType::getSubTypeString(int id) const
 {
-    assertme(id >=0 && id < (int)elementCount,"RsArrayType::getSubTypeString( - id >=0 && id < elementCount",
-             ToString(id),ToString(elementCount));
     assert(id >=0 && id < (int)elementCount);
     std::stringstream ss;
     ss << "[" << id << "]";
@@ -325,21 +321,13 @@ int RsClassType::addMember(const std::string & name, RsType * type, size_t offse
         // do not assert if the class is a unionType
         //cerr << " is union type ? : " << isunionType << std::endl;
         if (isunionType==false) {
-        assertme(last.offset + last.type->getByteSize() <= offset,
-                 "RsClassType::addMember - last.offset + last.type->getByteSize() <= offset",
-     ToString(last.offset + last.type->getByteSize()),
-     ToString(offset));
-        assert(last.offset + last.type->getByteSize() <= offset);
+          assert(last.offset + last.type->getByteSize() <= offset);
         }
     }
 
     members.push_back(Member(name,type,offset));
 
     // tps (09/09/2009) This test does not apply when the SgClassType is a union
-    assertme(members.back().offset + members.back().type->getByteSize() <= byteSize,
-             "RsClassType::addMember - members.back().offset + members.back().type->getByteSize() <= byteSize)",
-       ToString(members.back().offset + members.back().type->getByteSize() ),
-       ToString(byteSize));
     assert(members.back().offset + members.back().type->getByteSize() <= byteSize);
 
     return members.size()-1;
