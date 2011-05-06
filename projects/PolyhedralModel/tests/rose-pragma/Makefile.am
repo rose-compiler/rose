@@ -35,4 +35,4 @@ clean-local:
 	rm -rf $(TEST_CODES:.c=)
 	rm -f rose_*.c *.scop *.deps
 	
-EXTRA_DIST= $(TEST_CODES)
+#EXTRA_DIST= $(TEST_CODES)
