@@ -34,7 +34,8 @@ CXX_LIB_CANDL= -L$(CANDL_PATH)/lib/ -lcandl
 endif
 
 CXX_INC_PARSER=-I$(top_srcdir)/projects/pragmaParsing/
-PARSER_OBJS=$(top_builddir)/projects/pragmaParsing/libparserbuilder.la
+#PARSER_OBJS=$(top_builddir)/projects/pragmaParsing/libparserbuilder.la
+PARSER_OBJS=$(top_builddir)/projects/pragmaParsing/AstFromString.o $(top_builddir)/projects/pragmaParsing/ParserBuilder.o
 #CXX_LIB_PARSER=-L$(top_srcdir)/projects/pragmaParsing/ -lparserbuilder
 
 LT_CXX=@echo "COMPILING $@"; libtool --mode=compile g++
