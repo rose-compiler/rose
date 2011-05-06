@@ -29,10 +29,10 @@ testTraversals: astTraversalTest
 	./astTraversalTest -edg:w -c $(srcdir)/input1.C
 
 testRunExamples: processnew3Down4
-	./processnew3Down4 $(srcdir)/t11.C
-	./processnew3Down4 $(srcdir)/t12.C
-	./processnew3Down4 $(srcdir)/t13.C
-	./processnew3Down4 $(srcdir)/t14.C
+	./processnew3Down4 $(srcdir)/test11.C
+	./processnew3Down4 $(srcdir)/test12.C
+	./processnew3Down4 $(srcdir)/test13.C
+	./processnew3Down4 $(srcdir)/test14.C
 	rm *.dot
 check-local:
 	@$(MAKE) testTraversals
