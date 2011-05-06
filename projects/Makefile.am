@@ -121,7 +121,7 @@ endif
 SUBDIRS += SatSolver
 # endif
 
-if ROSE_USE_SAT
+if ROSE_USE_PPL
 SUBDIRS += PolyhedralModel
 endif
 
