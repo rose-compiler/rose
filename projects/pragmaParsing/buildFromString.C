@@ -50,6 +50,11 @@ int main(int argc, char** argv)
   assert (f_body != NULL);
   SgStatement* s = NULL;
 
+  // for () 
+  s= buildStatementFromString ("for (i=0; i<100; i++) x+=i;", f_body); 
+  appendStatement(s, f_body);
+
+
   // build simplest expression stmt
   s= buildStatementFromString ("1+sizeof (int);", f_body);
   appendStatement(s, f_body);
@@ -82,9 +87,9 @@ int main(int argc, char** argv)
   s= buildStatementFromString ("do x == 0; \n while (1) ;", f_body); 
   appendStatement(s, f_body);
 
-  // for () 
- // s= buildStatementFromString ("for (i=0; i<100; i++) x+=i;", f_body); 
- // appendStatement(s, f_body);
+  //TEST if else
+  s= buildStatementFromString ("if (i!=0) x++; else x-- ;", f_body); 
+  appendStatement(s, f_body);
 
   // return 
   s= buildStatementFromString ("return ;", f_body); 

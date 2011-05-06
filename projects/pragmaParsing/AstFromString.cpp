@@ -82,8 +82,9 @@ namespace AstFromString
 
   //! Match a given sub c string from the input c string, again skip heading space/tabs if any
   //  checkTrail: Check the immediate following character after the match, it must be one of
-  //      whitespace, end of str, newline, tab, or '!'
+  //      whitespace, end of str, newline, tab, (, ), or '!', etc.
   //      Set to true by default, used to ensure the matched substr is a full identifier/keywords.
+  //      If try to match operators (+=, etc), please set checkTrail to false!!
   //
   //      But Fortran OpenMP allows blanks/tabs to be ignored between certain pair of keywords:
   //      e.g: end critical == endcritical  , parallel do == paralleldo
@@ -391,7 +392,7 @@ namespace AstFromString
       if (isSgExpression(c_parsed_node))
         result = true;
     }
-    else if (afs_match_substr("++"))
+    else if (afs_match_substr("++", false))
     {
       if (afs_match_unary_expression())
       {
@@ -408,7 +409,7 @@ namespace AstFromString
         c_char = old_char;
       }
     } 
-    else if (afs_match_substr("--"))
+    else if (afs_match_substr("--", false))
     {
       if (afs_match_unary_expression())
       {
@@ -1287,7 +1288,7 @@ namespace AstFromString
     // try to match optional one or more +/- multi_exp
     old_char = c_char;
     SgExpression* rhs = NULL;
-    while (afs_match_substr("||"))
+    while (afs_match_substr("||", false))
     {
       if (afs_match_logical_and_expression())
       {
@@ -1336,7 +1337,7 @@ namespace AstFromString
     // try to match optional one or more +/- multi_exp
     old_char = c_char;
     SgExpression* rhs = NULL;
-    while (afs_match_substr("&&"))
+    while (afs_match_substr("&&", false))
     {
       if (afs_match_inclusive_or_expression())
       {
@@ -1534,9 +1535,9 @@ namespace AstFromString
     old_char = c_char;
     bool is_equal= false;
     bool is_not_equal = false;
-    is_equal = afs_match_substr("==");
+    is_equal = afs_match_substr("==", false);
     if (!is_equal )
-      is_not_equal = afs_match_substr("!=");
+      is_not_equal = afs_match_substr("!=", false);
 
     SgExpression* rhs = NULL;
     while (is_equal || is_not_equal )
@@ -1574,9 +1575,9 @@ namespace AstFromString
       old_char = c_char;
       is_equal= false;
       is_not_equal = false;
-      is_equal = afs_match_substr("==");
+      is_equal = afs_match_substr("==", false);
       if (!is_equal )
-        is_not_equal = afs_match_substr("!=");
+        is_not_equal = afs_match_substr("!=", false);
     }
 
     return true;
@@ -1614,9 +1615,9 @@ namespace AstFromString
     bool is_less = false;
     bool is_larger = false;
 
-    is_less_equal = afs_match_substr("<=");
+    is_less_equal = afs_match_substr("<=", false);
     if (!is_less_equal)
-      is_larger_equal = afs_match_substr(">="); 
+      is_larger_equal = afs_match_substr(">=", false); 
     if (!is_larger_equal)
       is_less = afs_match_char('<');
     if (!is_less)
@@ -1672,9 +1673,9 @@ namespace AstFromString
       is_less = false;
       is_larger = false;
 
-      is_less_equal = afs_match_substr("<=");
+      is_less_equal = afs_match_substr("<=", false);
       if (!is_less_equal)
-        is_larger_equal = afs_match_substr(">=");
+        is_larger_equal = afs_match_substr(">=", false);
       if (!is_larger_equal)
         is_less = afs_match_char('<');
       if (!is_less)
@@ -1712,9 +1713,9 @@ namespace AstFromString
     old_char = c_char;
     bool is_left = false;
     bool is_right = false;
-    is_left = afs_match_substr("<<");
+    is_left = afs_match_substr("<<", false);
     if (!is_left)
-      is_right = afs_match_substr(">>");
+      is_right = afs_match_substr(">>", false);
 
     SgExpression* rhs = NULL;
     while (is_left || is_right)
@@ -1752,16 +1753,23 @@ namespace AstFromString
       old_char = c_char;
       is_left = false;
       is_right = false;
-      is_left = afs_match_substr("<<");
+      is_left = afs_match_substr("<<", false);
       if (!is_left)
-        is_right= afs_match_substr(">>");
+        is_right= afs_match_substr(">>", false);
     }
 
     return true;
   }
 
   /*
-     ANTLR and YACC
+     ANTLR grammar // this grammar is more right. We should try to match the longer rule first
+     assignment_expression
+      : lvalue assignment_operator assignment_expression
+      | conditional_expression
+      ;
+
+     
+     YACC grammar , this is ambiguous since conditional_expression could also a kind of unary_expression
      assignment_expression
      : conditional_expression
      | unary_expression assignment_operator assignment_expression
@@ -1796,10 +1804,9 @@ namespace AstFromString
   {
     bool result = false;
     const char* old_char = c_char;
+    SgNode* old_parsed_node = c_parsed_node;
 
-    if (afs_match_conditional_expression())
-      result = true;
-    else if (afs_match_lvalue())
+    if (afs_match_lvalue())
     {
       assert (c_parsed_node != NULL);
       SgExpression* lhs = isSgExpression(c_parsed_node);
@@ -1807,27 +1814,27 @@ namespace AstFromString
 
       VariantT op_type; 
       bool b_match_op = true;
-      if (afs_match_substr("="))
+      if (afs_match_char('='))
         op_type = V_SgAssignOp;
-      else if (afs_match_substr("*="))
+      else if (afs_match_substr("*=", false))
         op_type = V_SgMultAssignOp;
-      else if (afs_match_substr("/="))
+      else if (afs_match_substr("/=", false))
         op_type = V_SgDivAssignOp;
-      else if (afs_match_substr("%="))
+      else if (afs_match_substr("%=", false))
         op_type = V_SgModAssignOp;
-      else if (afs_match_substr("+="))
+      else if (afs_match_substr("+=", false))
         op_type = V_SgPlusAssignOp;
-      else if (afs_match_substr("-="))
+      else if (afs_match_substr("-=", false))
         op_type = V_SgMinusAssignOp;
-      else if (afs_match_substr("<<="))
+      else if (afs_match_substr("<<=", false))
         op_type = V_SgLshiftAssignOp;
-      else if (afs_match_substr(">>="))
+      else if (afs_match_substr(">>=", false))
         op_type = V_SgRshiftAssignOp;
-      else if (afs_match_substr("&="))
+      else if (afs_match_substr("&=", false))
         op_type = V_SgAndAssignOp;
-      else if (afs_match_substr("^="))
+      else if (afs_match_substr("^=", false))
         op_type = V_SgXorAssignOp;
-      else if (afs_match_substr("|="))
+      else if (afs_match_substr("|=", false))
         op_type = V_SgIorAssignOp;
       else
         b_match_op = false;
@@ -1877,8 +1884,20 @@ namespace AstFromString
           }  
           result = true;
         } 
+    } 
 
-    }  
+   if (!result)
+   {
+      c_char = old_char; // must restore first
+      c_parsed_node = old_parsed_node ;
+      // if first term match fails
+      if (afs_match_conditional_expression())
+      {
+        if (isSgExpression(c_parsed_node))
+        result = true;
+      }
+   }
+
     if (result == false)   c_char = old_char;
     return result;
 
@@ -2024,11 +2043,11 @@ postfix_operator
     if (!is_left_paren)
       is_dot = afs_match_char('.');
     if (!is_dot)
-      is_arrow = afs_match_substr("->");
+      is_arrow = afs_match_substr("->", false);
     if (!is_arrow)
-      is_plusplus = afs_match_substr("++");
+      is_plusplus = afs_match_substr("++", false);
     if (!is_plusplus)
-      is_minusminus = afs_match_substr("--");
+      is_minusminus = afs_match_substr("--", false);
 
     while (is_left_sb||is_left_paren||is_dot||is_arrow||is_plusplus||is_minusminus)
     {
@@ -2162,11 +2181,11 @@ postfix_operator
       if (!is_left_paren)
         is_dot = afs_match_char('.');
       if (!is_dot)
-        is_arrow = afs_match_substr("->");
+        is_arrow = afs_match_substr("->", false);
       if (!is_arrow)
-        is_plusplus = afs_match_substr("++");
+        is_plusplus = afs_match_substr("++", false);
       if (!is_plusplus)
-        is_minusminus = afs_match_substr("--");
+        is_minusminus = afs_match_substr("--", false);
     }// end while
 
     return true; 
@@ -2402,8 +2421,34 @@ selection_statement
  */
   bool afs_match_selection_statement()
   {
-    //TODO 
-    return false;
+    bool result = false;
+    const char* old_char = c_char;
+
+    if (afs_match_substr("if") && afs_match_char('(') && afs_match_expression() && afs_match_char(')'))
+    {
+      SgExpression* exp = isSgExpression (c_parsed_node);
+      assert (exp !=NULL);
+      if (! afs_match_statement())
+      {
+        printf("error. afs_match_selection_statement() expects statement after matching 'if' '(' expression ')'\n");
+        assert(0);
+      }
+      SgStatement* true_stmt = isSgStatement(c_parsed_node);
+      assert (true_stmt!=NULL);
+
+      SgStatement* false_stmt = NULL;
+      if (afs_match_substr("else") && afs_match_statement())
+      {
+         false_stmt = isSgStatement(c_parsed_node);
+         assert (false_stmt != NULL);
+      }
+      c_parsed_node = buildIfStmt (buildExprStatement(exp), true_stmt, false_stmt);
+      result = true;
+    }  
+    // TODO switch
+
+    if (result == false)   c_char = old_char;
+    return result;
   }
 
 /*
