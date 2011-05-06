@@ -159,6 +159,7 @@ static void syscall_fstatfs(RSIM_Thread *t, int callno);
 static void syscall_fstatfs_leave(RSIM_Thread *t, int callno);
 static void syscall_socketcall_enter(RSIM_Thread *t, int callno);
 static void syscall_socketcall(RSIM_Thread *t, int callno);
+static void syscall_socketcall_leave(RSIM_Thread *t, int callno);
 static void syscall_wait4_enter(RSIM_Thread *t, int callno);
 static void syscall_wait4(RSIM_Thread *t, int callno);
 static void syscall_wait4_leave(RSIM_Thread *t, int callno);
@@ -194,6 +195,19 @@ static void syscall_msync_enter(RSIM_Thread *t, int callno);
 static void syscall_msync(RSIM_Thread *t, int callno);
 static void syscall_writev_enter(RSIM_Thread *t, int callno);
 static void syscall_writev(RSIM_Thread *t, int callno);
+static void syscall_sched_setparam_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_setparam(RSIM_Thread *t, int callno);
+static void syscall_sched_setscheduler_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_setscheduler(RSIM_Thread *t, int callno);
+static void syscall_sched_getscheduler_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_getscheduler(RSIM_Thread *t, int callno);
+static void syscall_sched_getscheduler_leave(RSIM_Thread *t, int callno);
+static void syscall_sched_yield_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_yield(RSIM_Thread *t, int callno);
+static void syscall_sched_get_priority_max_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_get_priority_max(RSIM_Thread *t, int callno);
+static void syscall_sched_get_priority_min_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_get_priority_min(RSIM_Thread *t, int callno);
 static void syscall_nanosleep_enter(RSIM_Thread *t, int callno);
 static void syscall_nanosleep(RSIM_Thread *t, int callno);
 static void syscall_nanosleep_leave(RSIM_Thread *t, int callno);
@@ -246,6 +260,9 @@ static void syscall_gettid_enter(RSIM_Thread *t, int callno);
 static void syscall_gettid(RSIM_Thread *t, int callno);
 static void syscall_futex_enter(RSIM_Thread *t, int callno);
 static void syscall_futex(RSIM_Thread *t, int callno);
+static void syscall_sched_getaffinity_enter(RSIM_Thread *t, int callno);
+static void syscall_sched_getaffinity(RSIM_Thread *t, int callno);
+static void syscall_sched_getaffinity_leave(RSIM_Thread *t, int callno);
 static void syscall_set_thread_area_enter(RSIM_Thread *t, int callno);
 static void syscall_set_thread_area(RSIM_Thread *t, int callno);
 static void syscall_exit_group_enter(RSIM_Thread *t, int callno);
@@ -281,104 +298,111 @@ RSIM_Linux32::ctor()
 
     /* Warning: use hard-coded values here rather than the __NR_* constants from <sys/unistd.h> because the latter varies
      * according to whether ROSE is compiled for 32- or 64-bit.  We always want the 32-bit syscall numbers here. */
-    SC_REG(1,   exit,           exit);
-    SC_REG(3,   read,           read);
-    SC_REG(4,   write,          default);
-    SC_REG(5,   open,           default);
-    SC_REG(6,   close,          default);
-    SC_REG(7,   waitpid,        waitpid);
-    SC_REG(8,   creat,          default);
-    SC_REG(9,   link,           default);
-    SC_REG(10,  unlink,         default);
-    SC_REG(11,  execve,         default);
-    SC_REG(12,  chdir,          default);
-    SC_REG(13,  time,           time);
-    SC_REG(14,  mknod,          default);
-    SC_REG(15,  chmod,          default);
-    SC_REG(19,  lseek,          default);
-    SC_REG(20,  getpid,         default);
-    SC_REG(24,  getuid,         default);
-    SC_REG(27,  alarm,          default);
-    SC_REG(29,  pause,          pause);
-    SC_REG(30,  utime,          default);
-    SC_REG(33,  access,         default);
-    SC_REG(36,  sync,           default);
-    SC_REG(37,  kill,           default);
-    SC_REG(38,  rename,         default);
-    SC_REG(39,  mkdir,          default);
-    SC_REG(40,  rmdir,          default);
-    SC_REG(41,  dup,            default);
-    SC_REG(42,  pipe,           default);
-    SC_REG(45,  brk,            brk);
-    SC_REG(47,  getgid,         default);
-    SC_REG(49,  geteuid,        default);
-    SC_REG(50,  getegid,        default);
-    SC_REG(54,  ioctl,          ioctl);
-    SC_REG(57,  setpgid,        default);
-    SC_REG(60,  umask,          default);
-    SC_REG(63,  dup2,           default);
-    SC_REG(64,  getppid,        default);
-    SC_REG(65,  getpgrp,        default);
-    SC_REG(75,  setrlimit,      default);
-    SC_REG(76,  getrlimit,      getrlimit);
-    SC_REG(78,  gettimeofday,   gettimeofday);
-    SC_REG(83,  symlink,        default);
-    SC_REG(85,  readlink,       default);               // FIXME: probably needs an explicit leave
-    SC_REG(91,  munmap,         default);
-    SC_REG(93,  ftruncate,      default);
-    SC_REG(94,  fchmod,         default);
-    SC_REG(95,  fchown,         default);
-    SC_REG(99,  statfs,         statfs);
-    SC_REG(100, fstatfs,        fstatfs);
-    SC_REG(102, socketcall,     default);
-    SC_REG(114, wait4,          wait4);
-    SC_REG(116, sysinfo,        default);               // FIXME: probably needs an explicit leave
-    SC_REG(117, ipc,            ipc);
-    SC_REG(118, fsync,          default);
-    SC_REG(119, sigreturn,      sigreturn);
-    SC_REG(120, clone,          clone);
-    SC_REG(122, uname,          default);               // FIXME: probably needs an explicit leave
-    SC_REG(125, mprotect,       mprotect);
-    SC_REG(133, fchdir,         default);
-    SC_REG(140, llseek,         default);
-    SC_REG(141, getdents,       getdents);
-    SC_REG(142, select,         select);
-    SC_REG(144, msync,          default);
-    SC_REG(146, writev,         default);
-    SC_REG(162, nanosleep,      nanosleep);
-    SC_REG(173, rt_sigreturn,   rt_sigreturn);
-    SC_REG(174, rt_sigaction,   rt_sigaction);
-    SC_REG(175, rt_sigprocmask, rt_sigprocmask);
-    SC_REG(176, rt_sigpending,  rt_sigpending);
-    SC_REG(179, rt_sigsuspend,  rt_sigsuspend);
-    SC_REG(183, getcwd,         getcwd);
-    SC_REG(186, sigaltstack,    sigaltstack);
-    SC_REG(191, ugetrlimit,     ugetrlimit);
-    SC_REG(192, mmap2,          mmap2);
-    SC_REG(195, stat64,         stat64);
-    SC_REG(196, stat64,         stat64);        // lstat64
-    SC_REG(197, stat64,         stat64);        // fstat64
-    SC_REG(199, getuid32,       default);
-    SC_REG(200, getgid32,       default);
-    SC_REG(201, geteuid32,      default);
-    SC_REG(202, getegid32,      default);
-    SC_REG(207, fchown32,       default);
-    SC_REG(212, chown,          default);
-    SC_REG(220, getdents64,     getdents64);
-    SC_REG(221, fcntl,          fcntl);
-    SC_REG(224, gettid,         default);
-    SC_REG(240, futex,          default);
-    SC_REG(243, set_thread_area, default);
-    SC_REG(252, exit_group,     exit_group);
-    SC_REG(258, set_tid_address, default);
-    SC_REG(264, clock_settime,  default);
-    SC_REG(265, clock_gettime,  clock_gettime);
-    SC_REG(266, clock_getres,   clock_getres);
-    SC_REG(268, statfs64,       statfs64);
-    SC_REG(270, tgkill,         default);
-    SC_REG(271, utimes,         default);
-    SC_REG(306, fchmodat,       default);
-    SC_REG(311, set_robust_list, default);
+    SC_REG(1,   exit,                           exit);
+    SC_REG(3,   read,                           read);
+    SC_REG(4,   write,                          default);
+    SC_REG(5,   open,                           default);
+    SC_REG(6,   close,                          default);
+    SC_REG(7,   waitpid,                        waitpid);
+    SC_REG(8,   creat,                          default);
+    SC_REG(9,   link,                           default);
+    SC_REG(10,  unlink,                         default);
+    SC_REG(11,  execve,                         default);
+    SC_REG(12,  chdir,                          default);
+    SC_REG(13,  time,                           time);
+    SC_REG(14,  mknod,                          default);
+    SC_REG(15,  chmod,                          default);
+    SC_REG(19,  lseek,                          default);
+    SC_REG(20,  getpid,                         default);
+    SC_REG(24,  getuid,                         default);
+    SC_REG(27,  alarm,                          default);
+    SC_REG(29,  pause,                          pause);
+    SC_REG(30,  utime,                          default);
+    SC_REG(33,  access,                         default);
+    SC_REG(36,  sync,                           default);
+    SC_REG(37,  kill,                           default);
+    SC_REG(38,  rename,                         default);
+    SC_REG(39,  mkdir,                          default);
+    SC_REG(40,  rmdir,                          default);
+    SC_REG(41,  dup,                            default);
+    SC_REG(42,  pipe,                           default);
+    SC_REG(45,  brk,                            brk);
+    SC_REG(47,  getgid,                         default);
+    SC_REG(49,  geteuid,                        default);
+    SC_REG(50,  getegid,                        default);
+    SC_REG(54,  ioctl,                          ioctl);
+    SC_REG(57,  setpgid,                        default);
+    SC_REG(60,  umask,                          default);
+    SC_REG(63,  dup2,                           default);
+    SC_REG(64,  getppid,                        default);
+    SC_REG(65,  getpgrp,                        default);
+    SC_REG(75,  setrlimit,                      default);
+    SC_REG(76,  getrlimit,                      getrlimit);
+    SC_REG(78,  gettimeofday,                   gettimeofday);
+    SC_REG(83,  symlink,                        default);
+    SC_REG(85,  readlink,                       default);               // FIXME: probably needs an explicit leave
+    SC_REG(91,  munmap,                         default);
+    SC_REG(93,  ftruncate,                      default);
+    SC_REG(94,  fchmod,                         default);
+    SC_REG(95,  fchown,                         default);
+    SC_REG(99,  statfs,                         statfs);
+    SC_REG(100, fstatfs,                        fstatfs);
+    SC_REG(102, socketcall,                     socketcall);
+    SC_REG(114, wait4,                          wait4);
+    SC_REG(116, sysinfo,                        default);               // FIXME: probably needs an explicit leave
+    SC_REG(117, ipc,                            ipc);
+    SC_REG(118, fsync,                          default);
+    SC_REG(119, sigreturn,                      sigreturn);
+    SC_REG(120, clone,                          clone);
+    SC_REG(122, uname,                          default);               // FIXME: probably needs an explicit leave
+    SC_REG(125, mprotect,                       mprotect);
+    SC_REG(133, fchdir,                         default);
+    SC_REG(140, llseek,                         default);
+    SC_REG(141, getdents,                       getdents);
+    SC_REG(142, select,                         select);
+    SC_REG(144, msync,                          default);
+    SC_REG(146, writev,                         default);
+    SC_REG(155, sched_setparam,                 default);
+    SC_REG(156, sched_setscheduler,             default);
+    SC_REG(157, sched_getscheduler,             sched_getscheduler);
+    SC_REG(158, sched_yield,                    default);
+    SC_REG(159, sched_get_priority_max,         default);
+    SC_REG(160, sched_get_priority_min,         default);
+    SC_REG(162, nanosleep,                      nanosleep);
+    SC_REG(173, rt_sigreturn,                   rt_sigreturn);
+    SC_REG(174, rt_sigaction,                   rt_sigaction);
+    SC_REG(175, rt_sigprocmask,                 rt_sigprocmask);
+    SC_REG(176, rt_sigpending,                  rt_sigpending);
+    SC_REG(179, rt_sigsuspend,                  rt_sigsuspend);
+    SC_REG(183, getcwd,                         getcwd);
+    SC_REG(186, sigaltstack,                    sigaltstack);
+    SC_REG(191, ugetrlimit,                     ugetrlimit);
+    SC_REG(192, mmap2,                          mmap2);
+    SC_REG(195, stat64,                         stat64);
+    SC_REG(196, stat64,                         stat64);        // lstat64
+    SC_REG(197, stat64,                         stat64);        // fstat64
+    SC_REG(199, getuid32,                       default);
+    SC_REG(200, getgid32,                       default);
+    SC_REG(201, geteuid32,                      default);
+    SC_REG(202, getegid32,                      default);
+    SC_REG(207, fchown32,                       default);
+    SC_REG(212, chown,                          default);
+    SC_REG(220, getdents64,                     getdents64);
+    SC_REG(221, fcntl,                          fcntl);
+    SC_REG(224, gettid,                         default);
+    SC_REG(240, futex,                          default);
+    SC_REG(242, sched_getaffinity,              sched_getaffinity);
+    SC_REG(243, set_thread_area,                default);
+    SC_REG(252, exit_group,                     exit_group);
+    SC_REG(258, set_tid_address,                default);
+    SC_REG(264, clock_settime,                  default);
+    SC_REG(265, clock_gettime,                  clock_gettime);
+    SC_REG(266, clock_getres,                   clock_getres);
+    SC_REG(268, statfs64,                       statfs64);
+    SC_REG(270, tgkill,                         default);
+    SC_REG(271, utimes,                         default);
+    SC_REG(306, fchmodat,                       default);
+    SC_REG(311, set_robust_list,                default);
 
 
 #undef SC_REG
@@ -418,7 +442,8 @@ syscall_exit(RSIM_Thread *t, int callno)
 static void
 syscall_exit_leave(RSIM_Thread *t, int callno)
 {
-    abort(); /* exit never returns */
+    /* This should not be reached, but might be reached if the exit system call body was skipped over. */
+    t->tracing(TRACE_SYSCALL)->more(" = <should not have returned>\n");
 }
 
 /*******************************************************************************************************************************/
@@ -1841,9 +1866,30 @@ syscall_socketcall_enter(RSIM_Thread *t, int callno)
                 t->syscall_enter("socketcall", "fp", socketcall_commands);
             }
             break;
+        case 3: /* SYS_CONNECT */
+            if (12==t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
+                t->syscall_enter(a, "connect", "dpd");
+            } else {
+                t->syscall_enter("socketcall", "fp", socketcall_commands);
+            }
+            break;
         case 4: /* SYS_LISTEN */
             if (8==t->get_process()->mem_read(a, t->syscall_arg(1), 8)) {
                 t->syscall_enter(a, "listen", "dd");
+            } else {
+                t->syscall_enter("socketcall", "fp", socketcall_commands);
+            }
+            break;
+        case 10: /* SYS_RECV */
+            if (16==t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
+                t->syscall_enter(a, "recv", "dpdd");
+            } else {
+                t->syscall_enter("socketcall", "fp", socketcall_commands);
+            }
+            break;
+        case 17: /* SYS_RECVMSG */
+            if (12==t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
+                t->syscall_enter(a, "recvmsg", "dPd", sizeof(msghdr_32), print_msghdr_32);
             } else {
                 t->syscall_enter("socketcall", "fp", socketcall_commands);
             }
@@ -1915,6 +1961,163 @@ sys_listen(RSIM_Thread *t, int fd, int backlog)
 }
 
 static void
+sys_connect(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen)
+{
+    sockaddr_32 guest;
+    if (sizeof(guest)!=t->get_process()->mem_read(&guest, addr_va, sizeof guest)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    switch (guest.sa_family) {
+        case AF_UNIX: {
+            bool error;
+            std::string filename = t->get_process()->read_string(addr_va+2, 0, &error);
+            if (error) {
+                t->syscall_return(-EFAULT);
+                return;
+            }
+            size_t host_sz = 2/*af_family*/ + filename.size() + 1/*NUL*/;
+            char host[host_sz];
+            *(uint16_t*)host = guest.sa_family;
+            strcpy(host+2, filename.c_str());
+#ifdef SYS_socketcall /* i686 */
+            ROSE_ASSERT(4==sizeof(int));
+            int a[3];
+            a[0] = fd;
+            a[1] = (uint32_t)host;
+            a[2] = host_sz;
+            int result = syscall(SYS_socketcall, 3/*SYS_CONNECT*/, a);
+#else /* amd64 */
+            int result = syscall(SYS_connect, fd, host, host_sz);
+#endif
+            t->syscall_return(-1==result ? -errno : result);
+            break;
+        }
+
+        default:
+            t->syscall_return(-EINVAL);
+            break;
+    }
+}
+
+static void
+sys_recvfrom(RSIM_Thread *t, int fd, uint32_t buf_va, uint32_t buf_sz, int flags, uint32_t addr_va, uint32_t addr_sz)
+{
+    assert(0==addr_va); /* we don't handle recvfrom yet, only recv. */
+
+    char *buf = new char[buf_sz];
+#ifdef SYS_socketcall /* i686 */
+    ROSE_ASSERT(4==sizeof(int));
+    int a[6];
+    a[0] = fd;
+    a[1] = (uint32_t)buf;
+    a[2] = buf_sz;
+    a[3] = flags;
+    a[4] = 0;
+    a[5] = 0;
+    int result = syscall(SYS_socketcall, 10/*SYS_RECV*/, a);
+#else /* amd64 */
+    int result = syscall(SYS_recvfrom, fd, buf, buf_sz, flags, 0, 0);
+#endif
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    size_t nbytes = (size_t)result;
+    assert(nbytes <= buf_sz);
+    if (nbytes!=t->get_process()->mem_write(buf, buf_va, nbytes)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+}
+
+static void
+sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
+{
+    int retval = 0;
+    RTS_Message *strace = t->tracing(TRACE_SYSCALL);
+
+    /* Read guest information */
+    msghdr_32 guest;
+    if (sizeof(msghdr_32)!=t->get_process()->mem_read(&guest, msghdr_va, sizeof guest)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    if (guest.msg_iovlen<0 || guest.msg_iovlen>1024) {
+        t->syscall_return(-EINVAL);
+        return;
+    }
+    assert(0==guest.msg_namelen); /* not implemented yet [RPM 2011-04-26] */
+    iovec_32 *guest_iov = new iovec_32[guest.msg_iovlen];
+    size_t guest_iov_sz = guest.msg_iovlen * sizeof(iovec_32);
+    memset(guest_iov, 0, guest_iov_sz);
+    if (guest_iov_sz!=t->get_process()->mem_read(guest_iov, guest.msg_iov, guest_iov_sz)) {
+        strace->more("<segfault reading iov>");
+        retval = -EFAULT;
+    }
+
+    /* Copy to host */
+    msghdr host;
+    memset(&host, 0, sizeof host);
+    if (0==retval && (host.msg_controllen = guest.msg_controllen) > 0) {
+        host.msg_control = new uint8_t[host.msg_controllen];
+        if (host.msg_controllen!=t->get_process()->mem_read(host.msg_control, guest.msg_control, guest.msg_controllen))
+            retval = -EFAULT;
+    }
+    if (0==retval && (host.msg_iovlen = guest.msg_iovlen) > 0) {
+        host.msg_iov = new iovec[guest.msg_iovlen];
+        for (unsigned i=0; i<host.msg_iovlen; i++) {
+            unsigned n = host.msg_iov[i].iov_len = guest_iov[i].iov_len;
+            host.msg_iov[i].iov_base = new uint8_t[n];
+        }
+    }
+
+    /* Make the real call */
+    if (0==retval) {
+        retval = recvmsg(fd, &host, flags);
+        if (-1==retval)
+            retval = -errno;
+    }
+
+    /* Copy iov data back into the guest */
+    if (retval>0) {
+        size_t to_copy = retval;
+        for (unsigned idx=0; idx<host.msg_iovlen && to_copy>0; idx++) {
+            size_t n = std::min(to_copy, host.msg_iov[idx].iov_len);
+            to_copy -= n;
+            if (n!=t->get_process()->mem_write(host.msg_iov[idx].iov_base, guest_iov[idx].iov_base, n)) {
+                retval = -EFAULT;
+                break;
+            }
+        }
+    }
+
+    /* Copy control into the guest */
+    if (retval>=0 &&
+        (guest.msg_controllen=host.msg_controllen)>0 &&
+        host.msg_controllen!=t->get_process()->mem_write(host.msg_control, guest.msg_control, host.msg_controllen))
+        retval = -EFAULT;
+
+    /* Copy msghdr into the guest */
+    guest.msg_flags = host.msg_flags;
+    if (retval>=0 && sizeof(guest)!=t->get_process()->mem_write(&guest, msghdr_va, sizeof guest))
+        retval = -EFAULT;
+
+    /* Cleanup */
+    for (unsigned idx=0; idx<host.msg_iovlen; idx++)
+        delete[] (iovec*)host.msg_iov[idx].iov_base;
+    delete[] host.msg_iov;
+    delete[] (uint8_t*)host.msg_control;
+    delete[] guest_iov;
+
+    t->syscall_return(retval);
+}
+
+static void
 syscall_socketcall(RSIM_Thread *t, int callno)
 {
     /* Return value is written to eax by these helper functions. The struction of this code closely follows that in the
@@ -1939,6 +2142,15 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             break;
         }
 
+        case 3: { /* SYS_CONNECT */
+            if (12!=t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
+                t->syscall_return(-EFAULT);
+            } else {
+                sys_connect(t, a[0], a[1], a[2]);
+            }
+            break;
+        }
+
         case 4: { /* SYS_LISTEN */
             if (8!=t->get_process()->mem_read(a, t->syscall_arg(1), 8)) {
                 t->syscall_return(-EFAULT);
@@ -1947,21 +2159,36 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             }
             break;
         }
-                    
-        case 3: /* SYS_CONNECT */
+
+        case 10: { /* SYS_RECV */
+            if (16!=t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
+                t->syscall_return(-EFAULT);
+            } else {
+                sys_recvfrom(t, a[0], a[1], a[2], a[3], 0, 0);
+            }
+            break;
+        }
+
+        case 17: { /* SYS_RECVMSG */
+            if (12!=t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
+                t->syscall_return(-EFAULT);
+            } else {
+                sys_recvmsg(t, a[0], a[1], a[2]);
+            }
+            break;
+        }
+
         case 5: /* SYS_ACCEPT */
         case 6: /* SYS_GETSOCKNAME */
         case 7: /* SYS_GETPEERNAME */
         case 8: /* SYS_SOCKETPAIR */
         case 9: /* SYS_SEND */
-        case 10: /* SYS_RECV */
         case 11: /* SYS_SENDTO */
         case 12: /* SYS_RECVFROM */
         case 13: /* SYS_SHUTDOWN */
         case 14: /* SYS_SETSOCKOPT */
         case 15: /* SYS_GETSOCKOPT */
         case 16: /* SYS_SENDMSG */
-        case 17: /* SYS_RECVMSG */
         case 18: /* SYS_ACCEPT4 */
         case 19: /* SYS_RECVMMSG */
             t->syscall_return(-ENOSYS);
@@ -1970,6 +2197,47 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             t->syscall_return(-EINVAL);
             break;
     }
+}
+
+static void
+syscall_socketcall_leave(RSIM_Thread *t, int callno)
+{
+    uint32_t a[7];
+    a[0] = t->syscall_arg(-1);
+
+    switch (t->syscall_arg(0)) {
+        case 17: /* SYS_RECVMSG */
+            if (12==t->get_process()->mem_read(a+1, t->syscall_arg(1), 12)) {
+                t->syscall_leave(a, "d-P-", sizeof(msghdr_32), print_msghdr_32);
+                RTS_Message *trace = t->tracing(TRACE_SYSCALL);
+                msghdr_32 msghdr;
+                if (trace->get_file() &&
+                    (int32_t)a[0] > 0 &&
+                    sizeof(msghdr)==t->get_process()->mem_read(&msghdr, a[2], sizeof msghdr)) {
+                    trace->multipart("recvmsg", "");
+                    uint32_t nbytes = a[0];
+                    for (unsigned i=0; i<msghdr.msg_iovlen && i<1024 && nbytes>0; i++) {
+                        uint32_t vasz[2];
+                        if (8==t->get_process()->mem_read(vasz, msghdr.msg_iov+i*8, 8)) {
+                            uint32_t nused = std::min(nbytes, vasz[1]);
+                            nbytes -= nused;
+                            uint8_t *buf = new uint8_t[nused];
+                            if (vasz[1]==t->get_process()->mem_read(buf, vasz[0], nused)) {
+                                trace->more("    iov #%u: ", i);
+                                print_buffer(trace, vasz[0], buf, nused, 1024);
+                                trace->more("; size total=%"PRIu32" used=%"PRIu32"\n", vasz[1], nused);
+                            }
+                            delete[] buf;
+                        }
+                    }
+                    trace->multipart_end();
+                }
+                return;
+            }
+            break;
+    }
+
+    t->syscall_leave("d");
 }
 
 /*******************************************************************************************************************************/
@@ -2148,7 +2416,7 @@ syscall_ipc_enter(RSIM_Thread *t, int callno)
         case 3: /*SEMCTL*/
             switch (third & 0xff) {
                 case 16: /*SETVAL*/
-                    t->syscall_enter("ipc", "fddfP", ipc_commands, sem_control, 4, print_int_32);
+                    t->syscall_enter("ipc", "fddfP", ipc_commands, sem_control, (size_t)4, print_int_32);
                     break;
                 default:
                     t->syscall_enter("ipc", "fddfp", ipc_commands, sem_control);
@@ -3139,7 +3407,8 @@ syscall_sigreturn(RSIM_Thread *t, int callno)
 static void
 syscall_sigreturn_leave(RSIM_Thread *t, int callno)
 {
-    abort(); /* sigreturn never returns */
+    /* This should not be reached, but might be reached if the sigreturn system call body was skipped over. */
+    t->tracing(TRACE_SYSCALL)->more(" = <should not have returned>\n");
 }
 
 /*******************************************************************************************************************************/
@@ -3602,6 +3871,129 @@ syscall_writev(RSIM_Thread *t, int callno)
 /*******************************************************************************************************************************/
 
 static void
+syscall_sched_setparam_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sched_setparam", "dP", sizeof(sched_param_32), print_sched_param_32);
+}
+
+static void
+syscall_sched_setparam(RSIM_Thread *t, int callno)
+{
+    pid_t pid = t->syscall_arg(0);
+    rose_addr_t params_va = t->syscall_arg(1);
+
+    sched_param_32 guest;
+    if (sizeof(guest)!=t->get_process()->mem_read(&guest, params_va, sizeof guest)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    sched_param host;
+    host.sched_priority = guest.sched_priority;
+
+    int result = sched_setparam(pid, &host);
+    t->syscall_return(-1==result ? -errno : result);
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_sched_setscheduler_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sched_setscheduler", "dfP", scheduler_policies, sizeof(sched_param_32), print_sched_param_32);
+}
+
+static void
+syscall_sched_setscheduler(RSIM_Thread *t, int callno)
+{
+    pid_t pid = t->syscall_arg(0);
+    int policy = t->syscall_arg(1);
+    rose_addr_t params_va = t->syscall_arg(2);
+
+    sched_param_32 guest;
+    if (sizeof(guest)!=t->get_process()->mem_read(&guest, params_va, sizeof guest)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    sched_param host;
+    host.sched_priority = guest.sched_priority;
+
+    int result = sched_setscheduler(pid, policy, &host);
+    t->syscall_return(-1==result ? -errno : result);
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_sched_getscheduler_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sched_getscheduler", "d");
+}
+
+static void
+syscall_sched_getscheduler(RSIM_Thread *t, int callno)
+{
+    pid_t pid = t->syscall_arg(0);
+    int result = sched_getscheduler(pid);
+    t->syscall_return(-1==result ? -errno : result);
+}
+
+static void
+syscall_sched_getscheduler_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("Df", scheduler_policies);
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_sched_yield_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sched_yield", "");
+}
+
+static void
+syscall_sched_yield(RSIM_Thread *t, int callno)
+{
+    t->syscall_return(sched_yield());
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_sched_get_priority_max_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sched_get_priority_max", "f", scheduler_policies);
+}
+
+static void
+syscall_sched_get_priority_max(RSIM_Thread *t, int callno)
+{
+    int policy = t->syscall_arg(0);
+    int result = sched_get_priority_max(policy);
+    t->syscall_return(result);
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_sched_get_priority_min_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sched_get_priority_min", "f", scheduler_policies);
+}
+
+static void
+syscall_sched_get_priority_min(RSIM_Thread *t, int callno)
+{
+    int policy = t->syscall_arg(0);
+    int result = sched_get_priority_min(policy);
+    t->syscall_return(result);
+}
+
+/*******************************************************************************************************************************/
+
+static void
 syscall_nanosleep_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("nanosleep", "Pp", sizeof(timespec_32), print_timespec_32);
@@ -3663,7 +4055,8 @@ syscall_rt_sigreturn(RSIM_Thread *t, int callno)
 static void
 syscall_rt_sigreturn_leave(RSIM_Thread *t, int callno)
 {
-    abort(); /* rt_sigreturn never returns */
+    /* This should not be reached, but might be reached if the rt_sigreturn system call body was skipped over. */
+    t->tracing(TRACE_SYSCALL)->more(" = <should not have returned>\n");
 }
 
 /*******************************************************************************************************************************/
@@ -4335,23 +4728,23 @@ syscall_futex_enter(RSIM_Thread *t, int callno)
     uint32_t op = t->syscall_arg(1);
     switch (op & 0x7f) {
         case 0: /*FUTEX_WAIT*/
-            t->syscall_enter("futex", "PfdP", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
+            t->syscall_enter("futex", "PfdP", (size_t)4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
             break;
         case 1: /*FUTEX_WAKE*/
-            t->syscall_enter("futex", "Pfd", 4, print_int_32, opflags);
+            t->syscall_enter("futex", "Pfd", (size_t)4, print_int_32, opflags);
             break;
         case 2: /*FUTEX_FD*/
-            t->syscall_enter("futex", "Pfd", 4, print_int_32, opflags);
+            t->syscall_enter("futex", "Pfd", (size_t)4, print_int_32, opflags);
             break;
         case 3: /*FUTEX_REQUEUE*/
-            t->syscall_enter("futex", "Pfd-P", 4, print_int_32, opflags, 4, print_int_32);
+            t->syscall_enter("futex", "Pfd-P", (size_t)4, print_int_32, opflags, (size_t)4, print_int_32);
             break;
         case 4: /*FUTEX_CMP_REQUEUE*/
-            t->syscall_enter("futex", "Pfd-Pd", 4, print_int_32, opflags, 4, print_int_32);
+            t->syscall_enter("futex", "Pfd-Pd", (size_t)4, print_int_32, opflags, (size_t)4, print_int_32);
             break;
         default:
-            t->syscall_enter("futex", "PfdPPd", 4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32, 
-                          4, print_int_32);
+            t->syscall_enter("futex", "PfdPPd", (size_t)4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32, 
+                             (size_t)4, print_int_32);
             break;
     }
 }
@@ -4404,6 +4797,46 @@ syscall_futex(RSIM_Thread *t, int callno)
 
     int result = syscall(SYS_futex, futex1, op, val1, timespec, futex2, val3);
     t->syscall_return(-1==result ? -errno : result);
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_sched_getaffinity_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sched_getaffinity", "ddp");
+}
+
+static void
+syscall_sched_getaffinity(RSIM_Thread *t, int callno)
+{
+    pid_t pid = t->syscall_arg(0);
+    
+    size_t cpuset_nbits = t->syscall_arg(1);
+    size_t cpuset_nbytes = (cpuset_nbits+7) / 8;
+    uint8_t buf[cpuset_nbytes+sizeof(long)]; /* overallocated */
+
+    int result = sched_getaffinity(pid, cpuset_nbits, (cpu_set_t*)buf);
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    rose_addr_t cpuset_va = t->syscall_arg(2);
+    if (cpuset_nbytes!=t->get_process()->mem_write(buf, cpuset_va, cpuset_nbytes)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+}
+
+static void
+syscall_sched_getaffinity_leave(RSIM_Thread *t, int callno)
+{
+    size_t cpuset_nbits = t->syscall_arg(1);
+    size_t cpuset_nbytes = (cpuset_nbits+7) / 8;
+    t->syscall_leave("d--P", cpuset_nbytes, print_bitvec);
 }
 
 /*******************************************************************************************************************************/
@@ -4466,7 +4899,8 @@ syscall_exit_group(RSIM_Thread *t, int callno)
 static void
 syscall_exit_group_leave(RSIM_Thread *t, int callno)
 {
-    abort();    /* syscall_exit should not return */
+    /* This should not be reached, but might be reached if the exit_group system call body was skipped over. */
+    t->tracing(TRACE_SYSCALL)->more(" = <should not have returned>\n");
 }
 
 /*******************************************************************************************************************************/

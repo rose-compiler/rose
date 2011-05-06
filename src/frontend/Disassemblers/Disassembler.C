@@ -86,7 +86,7 @@ SgAsmInstruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>& i
 }
 
 /* Mutex for class-wide operations (such as adjusting Disassembler::disassemblers) */
-pthread_mutex_t Disassembler::class_mutex = PTHREAD_MUTEX_INITIALIZER;
+RTS_mutex_t Disassembler::class_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_DISASSEMBLER_CLASS);
 
 /* List of disassembler subclasses (protect with class_mutex) */
 std::vector<Disassembler*> Disassembler::disassemblers;
