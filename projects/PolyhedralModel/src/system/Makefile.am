@@ -13,3 +13,5 @@ clean:
 	rm -f $(obj_dir)/system/*
 	rm -rf $(obj_dir)/system/.libs
 
+EXTRA_DIST= make_rule.inc Utils.cpp \
+../../include/system/Utils.hpp
