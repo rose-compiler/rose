@@ -22,10 +22,14 @@ namespace AstFromString
   //       afs_match_xxx() try to match a pattern, undo side effect if failed.
   // afs means Ast From String 
   //!Skip 0 or more whitespace or tabs
+  /*
+   WS  :  (' '|'\r'|'\t'|'\u000C'|'\n') {$channel=HIDDEN;}
+       ;
+  */
   bool afs_skip_whitespace()
   {
     bool result = false;
-    while ((*c_char)==' '||(*c_char)=='\t')
+    while ((*c_char)==' '||(*c_char)=='\t' ||(*c_char)=='\r' ||(*c_char)=='\n')
     {
       c_char++;
       result= true;
@@ -115,7 +119,7 @@ namespace AstFromString
     // TODO: any other characters?
     if (checkTrail)
     {
-      if (*c_char!=' '&&*c_char!='\0'&&*c_char!='\n'&&*c_char!='\t' &&*c_char!='!')
+      if (*c_char!=' '&&*c_char!='\0'&&*c_char!='\n'&&*c_char!='\t' &&*c_char!='!' &&*c_char!='(' &&*c_char!=')')
       {
         result = false;
         c_char = old_char;
@@ -238,7 +242,7 @@ namespace AstFromString
     SgTypeTable * gtt = SgNode::get_globalTypeTable();
     assert (gtt != NULL);
     SgType* t = gtt->lookup_type(SgName(buffer)); 
-    assert (!(sym &&t)); // can be both a type or a variable?
+    //assert (!(sym &&t)); // can be both a type or a variable? TODO global type table stores variables and their type info.!!??
     if (sym) 
     {
       assert (sym!=NULL);
@@ -265,6 +269,7 @@ namespace AstFromString
     } 
     else  if (t)
     {
+      assert (0); // TODO global type table stores variables and their type info.It does not store type names !!!!??
       c_parsed_node = t;
     }
     else
@@ -382,7 +387,10 @@ namespace AstFromString
     const char* old_char = c_char;
 
     if (afs_match_postfix_expression())
-      result = true;
+    {
+      if (isSgExpression(c_parsed_node))
+        result = true;
+    }
     else if (afs_match_substr("++"))
     {
       if (afs_match_unary_expression())
@@ -946,7 +954,10 @@ namespace AstFromString
     const char* old_char = c_char;
 
     if (afs_match_unary_expression())
+    {
+      if (isSgExpression(c_parsed_node))
       result = true;
+    }
     else if (afs_match_char('('))
     {
       if (afs_match_type_name())
@@ -1124,6 +1135,8 @@ namespace AstFromString
 
     // try to match optional one or more +/- multi_exp
     old_char = c_char;
+    SgNode * old_parsed_node = c_parsed_node;
+
     bool is_plus = false; 
     bool is_minus = false; 
     is_plus = afs_match_char('+');
@@ -1157,6 +1170,7 @@ namespace AstFromString
       else 
       {
         c_char = old_char;
+        c_parsed_node = old_parsed_node;
         //printf("error in afs_match_additive_expression(): expects multiplicative_expression after matching '+' or '-'\n");
         //assert (0);
         break;
@@ -1164,6 +1178,7 @@ namespace AstFromString
 
       // start the next round
       old_char = c_char;
+      old_parsed_node = c_parsed_node;
       is_plus = false; 
       is_minus = false; 
       is_plus = afs_match_char('+');
@@ -2270,7 +2285,7 @@ postfix_operator
   {
     bool result = false;
     const char* old_char = c_char;
-
+    // IDENTIFIER ':' statement
     if (afs_match_identifier())
     {
       SgName* sn = isSgName(c_parsed_node);
@@ -2368,15 +2383,111 @@ scope Symbols; // blocks have a scope of symbols
     if (result == false)   c_char = old_char;
     return result;
   }
+
+/*
+ANTLR grammar
+selection_statement
+    : 'if' '(' expression ')' statement (options {k=1; backtrack=false;}:'else' statement)?
+    | 'switch' '(' expression ')' statement
+    ;
+
+Yacc grammar
+
+selection_statement
+  : IF '(' expression ')' statement
+  | IF '(' expression ')' statement ELSE statement
+  | SWITCH '(' expression ')' statement
+  ;
+
+ */
   bool afs_match_selection_statement()
   {
     //TODO 
     return false;
   }
+
+/*
+iteration_statement
+  : 'while' '(' expression ')' statement
+  | 'do' statement 'while' '(' expression ')' ';'
+  | 'for' '(' expression_statement expression_statement expression? ')' statement
+  ;
+
+*/
   bool afs_match_iteration_statement()
   {
-    //TODO 
-    return false;
+    bool result = false;
+    const char* old_char = c_char;
+    
+    // 'while' '(' expression ')' statement
+    if (afs_match_substr("while") && afs_match_char('(') && afs_match_expression() && afs_match_char(')')) 
+    {
+      SgExpression* exp = isSgExpression (c_parsed_node);
+      assert (exp != NULL);
+      if (afs_match_statement())
+      {
+        SgStatement* stmt = isSgStatement(c_parsed_node);
+        c_parsed_node = buildWhileStmt (buildExprStatement(exp), stmt);
+        result = true;
+      }  
+    }
+    // 'do' statement 'while' '(' expression ')' ';'
+    else if (afs_match_substr("do") && afs_match_statement() && afs_match_substr("while") && afs_match_char('('))
+    {
+      SgStatement* stmt = isSgStatement(c_parsed_node);
+      assert (stmt != NULL);
+      if (!afs_match_expression())
+      {
+        printf("error. afs_match_iteration_statement() expects expression after matching 'do' statement 'while' '('\n");
+        assert (0);
+      }
+      SgExpression* exp = isSgExpression (c_parsed_node);
+      assert (exp != NULL);
+       if (!afs_match_char(')'))
+      {
+        printf("error. afs_match_iteration_statement() expects ')' after matching 'do' statement 'while' '(' expression ')' \n");
+        assert (0);
+      }
+ 
+      if (!afs_match_char(';'))
+      {
+        printf("error. afs_match_iteration_statement() expects ';' after matching 'do' statement 'while' '(' expression ')' \n");
+        assert (0);
+      }
+
+      c_parsed_node = buildDoWhileStmt (stmt, buildExprStatement(exp));
+
+      result = true;
+    }
+    // 'for' '(' expression_statement expression_statement expression? ')' statement
+    else if (afs_match_substr("for") && afs_match_char('(') && afs_match_expression_statement()) 
+    {
+      SgStatement* init_stmt = isSgStatement (c_parsed_node);
+
+      if (! afs_match_expression_statement() )
+      {
+         printf("error. afs_match_iteration_statement() expects 'expression_statement' after matching 'for' '(' expression_statement\n");
+         assert (0);
+      }
+      SgStatement* test_stmt = isSgStatement (c_parsed_node);
+      SgExpression* incr_exp = NULL;
+      if (afs_match_expression())
+        incr_exp = isSgExpression(c_parsed_node);
+      if (! (afs_match_char(')') && afs_match_statement()))
+      {
+         printf("error. afs_match_iteration_statement() expects ')' statement after matching 'for' '(' expression_statement expression_statement expression? \n");
+         assert (0);
+      }
+      SgStatement * body = isSgStatement(c_parsed_node);
+      c_parsed_node = buildForStatement (init_stmt, test_stmt, incr_exp, body);
+      result = true;
+    }  
+
+    if (result == false)
+    {
+      c_char = old_char;
+    }
+    return result;
 
   }
 /*
@@ -2416,6 +2527,30 @@ jump_statement
        assert (lstmt != NULL);
        c_parsed_node = buildGotoStatement (lstmt);
        result = true;
+    }
+    else if (afs_match_substr("continue") && afs_match_char(';'))
+    {
+      c_parsed_node = buildContinueStmt();
+      result = true;
+    }
+    else if (afs_match_substr("break") && afs_match_char(';'))
+    {
+      c_parsed_node = buildBreakStmt();
+      result = true;
+    }
+    else if (afs_match_substr("return"))
+    {
+      if (afs_match_char(';'))
+      {
+        c_parsed_node = buildReturnStmt (NULL);
+        result = true;
+      } 
+      else if (afs_match_expression())
+      {
+        SgExpression* exp = isSgExpression(c_parsed_node);
+        c_parsed_node = buildReturnStmt(exp);
+        result = true;
+      }
     }
 
     if (result == false)   c_char = old_char;

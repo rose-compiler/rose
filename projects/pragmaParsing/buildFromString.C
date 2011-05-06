@@ -51,7 +51,7 @@ int main(int argc, char** argv)
   SgStatement* s = NULL;
 
   // build simplest expression stmt
-  s= buildStatementFromString ("1;", f_body);
+  s= buildStatementFromString ("1+sizeof (int);", f_body);
   appendStatement(s, f_body);
 
   // function call statement
@@ -74,7 +74,21 @@ int main(int argc, char** argv)
   s= buildStatementFromString ("mylabel2:;", f_body); 
   appendStatement(s, f_body);
 
+  // while
+  s= buildStatementFromString ("while (x != 0) \n x-- ;", f_body); 
+  appendStatement(s, f_body);
 
+  // do stmt while (exp);
+  s= buildStatementFromString ("do x == 0; \n while (1) ;", f_body); 
+  appendStatement(s, f_body);
+
+  // for () 
+ // s= buildStatementFromString ("for (i=0; i<100; i++) x+=i;", f_body); 
+ // appendStatement(s, f_body);
+
+  // return 
+  s= buildStatementFromString ("return ;", f_body); 
+  appendStatement(s, f_body);
 
   AstTests::runAllTests(project);
   backend(project);   
