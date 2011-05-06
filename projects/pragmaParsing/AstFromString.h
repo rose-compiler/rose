@@ -28,7 +28,7 @@ namespace AstFromString
   //  checkTrail: Check the immediate following character after the match, it must be one of
   //      whitespace, end of str, newline, tab, (, ), or '!', etc.
   //      Set to true by default, used to ensure the matched substr is a full identifier/keywords.
-  //      If try to match operators (+=, etc), please set checkTrail to false!!
+  // Note: If try to match non-identifier, such as operators +=, etc), please set checkTrail to false!!
   //
   //      But Fortran OpenMP allows blanks/tabs to be ignored between certain pair of keywords:
   //      e.g: end critical == endcritical  , parallel do == paralleldo
@@ -36,7 +36,6 @@ namespace AstFromString
   // return values: 
   //    true: find a match, the current char is pointed to the next char after the substr
   //    false: no match, the current char is intact
-
   bool afs_match_substr(const char* substr, bool checkTrail = true);
   bool afs_skip_whitespace();
   bool afs_match_identifier();

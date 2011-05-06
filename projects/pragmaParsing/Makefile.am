@@ -24,8 +24,8 @@ hcpragma_SOURCES = hcpragma.C hcpragma.h AstFromString.cpp AstFromString.h
 testParserBuilder_SOURCES = testParserBuilder.cpp AstFromString.cpp AstFromString.h ParserBuilder.cpp ParserBuilder.hpp
 
 
-buildFromString_SOURCES = buildFromString.C AstFromString.h
-buildFromString_LDADD = libsageparser.la $(LDADD)
+buildFromString_SOURCES = buildFromString.C AstFromString.cpp AstFromString.h
+#buildFromString_LDADD = libsageparser.la $(LDADD)
 
 C_TESTCODES_REQUIRED_TO_PASS = parser_input.c
 
