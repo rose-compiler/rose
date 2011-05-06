@@ -16,3 +16,7 @@ clean:
 	rm -rf $(obj_dir)/test-common/.libs
 	rm -f $(bin_dir)/matmul $(bin_dir)/.libs/matmul $(bin_dir)/matcolsum $(bin_dir)/.libs/matcolsum $(bin_dir)/matsum $(bin_dir)/.libs/matsum
 
+EXTRA_DIST= make_rule.inc PolyhedricDependency-test.cpp PolyhedricContainer-test.cpp matsum.cpp matmul.cpp matcolsum.cpp \
+../../include/test-common/ScopTree-test.hpp \
+../../include/test-common/PolyhedricDependency-test.hpp \
+../../include/test-common/PolyhedricContainer-test.hpp

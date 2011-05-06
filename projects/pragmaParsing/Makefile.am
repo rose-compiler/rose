@@ -3,18 +3,25 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-noinst_LTLIBRARIES = libsageparser.la libparserbuilder.la
-libsageparser_la_SOURCES = AstFromString.cpp AstFromString.h
-libparserbuilder_la_SOURCES = ParserBuilder.cpp ParserBuilder.hpp
-libparserbuilder_la_LIBADD = libsageparser.la
+#noinst_LTLIBRARIES = libsageparser.la libparserbuilder.la
+#libsageparser_la_SOURCES = AstFromString.cpp AstFromString.h
+#libparserbuilder_la_SOURCES = ParserBuilder.cpp ParserBuilder.hpp
+#libparserbuilder_la_LIBADD = libsageparser.la
+
+#noinst_PROGRAMS = hcpragma testParserBuilder
+
+#hcpragma_SOURCES = hcpragma.C hcpragma.h AstFromString.h
+#hcpragma_LDADD = $(ROSE_LIBS) $(top_builddir)/projects/pragmaParser/libparserbuilder.la
+
+#testParserBuilder_SOURCES = testParserBuilder.cpp AstFromString.h ParserBuilder.hpp
+#testParserBuilder_LDADD = $(ROSE_LIBS) $(top_builddir)/projects/pragmaParser/libparserbuilder.la
+
 
 bin_PROGRAMS = hcpragma testParserBuilder
 
-hcpragma_SOURCES = hcpragma.C hcpragma.h AstFromString.h
-hcpragma_LDADD = libsageparser.la $(LDADD)
+hcpragma_SOURCES = hcpragma.C hcpragma.h AstFromString.cpp AstFromString.h
 
-testParserBuilder_SOURCES = testParserBuilder.cpp AstFromString.h ParserBuilder.hpp
-testParserBuilder_LDADD = libparserbuilder.la $(LDADD)
+testParserBuilder_SOURCES = testParserBuilder.cpp AstFromString.cpp AstFromString.h ParserBuilder.cpp ParserBuilder.hpp
 
 C_TESTCODES_REQUIRED_TO_PASS = parser_input.c
 
