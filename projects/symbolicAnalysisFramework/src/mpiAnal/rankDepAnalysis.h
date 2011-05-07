@@ -12,6 +12,7 @@
 #include "dataflow.h"
 #include "latticeFull.h"
 #include "printAnalysisStates.h"
+#include "liveDeadVarAnalysis.h"
 
 extern int sgnAnalysisDebugLevel;
 
@@ -105,9 +106,15 @@ class MPIRankNProcsDepLattice : public FiniteLattice
 
 class MPIRankDepAnalysis : public IntraFWDataflow
 {	
+	// The LiveDeadVarsAnalysis that identifies the live/dead state of all application variables.
+	// Needed to create a FiniteVarsExprsProductLattice.
+	LiveDeadVarsAnalysis* ldva; 
+	
 	public:
-	MPIRankDepAnalysis(): IntraFWDataflow()
-	{	}
+	MPIRankDepAnalysis(LiveDeadVarsAnalysis* ldva): IntraFWDataflow()
+	{	
+		this->ldva = ldva;
+	}
 	
 	// generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
 	//vector<Lattice*> genInitState(const Function& func, const DataflowNode& n, const NodeState& state);

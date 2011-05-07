@@ -43,6 +43,10 @@ int main( int argc, char * argv[] )
 
 	initAnalysis(project);
 	
+	CallGraphBuilder cgb(project);
+	cgb.buildCallGraph();
+	SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
+	
 	analysisDebugLevel = 0;
 	
 	SaveDotAnalysis sda;
@@ -54,11 +58,8 @@ int main( int argc, char * argv[] )
 	printf("*****************   Live/Dead Variable Analysis   *****************\n");
 	printf("*************************************************************\n");
 	LiveDeadVarsAnalysis ldva(project);
-	CallGraphBuilder cgb(project);
-	cgb.buildCallGraph();
-	//SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
-	//ContextInsensitiveInterProceduralDataflow ciipd_da(&da, graph);
-	UnstructuredPassInterDataflow ciipd_ldva(&ldva);
+	ContextInsensitiveInterProceduralDataflow ciipd_ldva(&ldva, graph);
+	//UnstructuredPassInterDataflow ciipd_ldva(&ldva);
 	ciipd_ldva.runAnalysis();
 	
 	//analysisDebugLevel = 2;
@@ -66,22 +67,11 @@ int main( int argc, char * argv[] )
 	printf("*****************   Divisibility Analysis   *****************\n");
 	printf("*************************************************************\n");
 	DivAnalysis da(&ldva);
-	//SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
-	//ContextInsensitiveInterProceduralDataflow ciipd_da(&da, graph);
-	UnstructuredPassInterDataflow ciipd_da(&da);
+	ContextInsensitiveInterProceduralDataflow ciipd_da(&da, graph);
+	//UnstructuredPassInterDataflow ciipd_da(&da);
 	ciipd_da.runAnalysis();
 	
 	analysisDebugLevel = 0;
-	
-	printf("*************************************************************\n");
-	printf("*****************   Sign Analysis   *****************\n");
-	printf("*************************************************************\n");
-	SgnAnalysis sa;
-	//ContextInsensitiveInterProceduralDataflow ciipd_sa(&sa, graph);
-	UnstructuredPassInterDataflow ciipd_sa(&sa);
-	ciipd_sa.runAnalysis();
-	
-	analysisDebugLevel = 2;
 	
 	printf("*************************************************************\n");
 	printf("******************   Affine Inequalities   ******************\n");
@@ -98,7 +88,7 @@ int main( int argc, char * argv[] )
 	printf("*************************************************************\n");
 	printf("***************** Checkpoint Range Analysis *****************\n");
 	printf("*************************************************************\n");
-	ChkptRangeAnalysis cra(&da, &sa, &aip);
+	ChkptRangeAnalysis cra(&ldva, &da, &aip);
 	UnstructuredPassInterDataflow upid_cra(&cra);
 	upid_cra.runAnalysis();
 	

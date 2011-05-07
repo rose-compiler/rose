@@ -1,0 +1,209 @@
+%\documentclass[10pt]{article}
+\documentclass[10pt]{book}
+
+\usepackage[draft]{fixme}
+
+\usepackage{listings}
+
+\usepackage{html}
+\usepackage{color}
+
+\usepackage{multicol}
+\usepackage{multirow}
+
+\usepackage{graphicx}
+\usepackage{alltt}
+
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0,0,0}{#1}}
+\newcommand{\hlkey}[1]{\textcolor[rgb]{0,0,0}{\bf{#1}}}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.16,0.16,1}{#1}}
+\newcommand{\hltyp}[1]{\textcolor[rgb]{0.51,0,0}{#1}}
+\newcommand{\hlesc}[1]{\textcolor[rgb]{1,0,1}{#1}}
+\newcommand{\hlstr}[1]{\textcolor[rgb]{1,0,0}{#1}}
+\newcommand{\hldstr}[1]{\textcolor[rgb]{0.51,0.51,0}{#1}}
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.51,0.51,0.51}{\it{#1}}}
+\newcommand{\hldir}[1]{\textcolor[rgb]{0,0.51,0}{#1}}
+\newcommand{\hlsym}[1]{\textcolor[rgb]{0,0,0}{#1}}
+\newcommand{\hlline}[1]{\textcolor[rgb]{0.33,0.33,0.33}{#1}}
+
+\newcommand{\mySmallFontSize}{\scriptsize}
+\newcommand{\mySmallestFontSize}{\tiny}
+
+\newcommand{\codeFontSize}{\scriptsize}
+\newcommand{\code}[1]{{\scriptsize #1}}
+
+% Software version number
+\newcommand{\VersionNumber}{0.9.5a}
+
+\newcommand{\ExampleDirectory}{../../../../../../projects/compass/tests}
+
+% Latex trick to allow us to comment out large sections of documentation
+\newcommand{\commentout}[1]{}
+
+% change the title of the Fixme List
+\renewcommand{\listfixmename}{Things to Fix in Documentation of Compass}
+
+\newcommand{\comm}[2]{\bigskip
+                      \begin{tabular}{|p{11cm}|}\hline
+                      \multicolumn{1}{|c|}{{\bf Comment by #1}}\\ \hline
+                      #2\\ \hline
+                      \end{tabular}
+                      \bigskip
+                     }
+
+\def\verbatimfile#1{\begingroup
+                    \@verbatim \frenchspacing \@vobeyspaces
+                    \input#1 \endgroup
+}
+
+
+
+\newcounter{lineno}
+
+% Taken from verbatimfiles.sty on web
+\makeatletter %JCL
+
+\def\verbatimlisting#1{\setcounter{lineno}{0}%
+    \begingroup \@verbatim \frenchspacing \@vobeyspaces \parindent=20pt
+    \everypar{\stepcounter{lineno}\llap{\thelineno\ \ }}\input#1
+    \endgroup
+}
+
+\makeatother %JCL
+
+% \endinput
+
+
+%\addtolength{\oddsidemargin}{-0.5in}
+%\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textheight}{0.5in}
+%\addtolength{\textwidth}{0.5in}
+%\addtolength{\textwidth}{1.0in}
+%\addtolength{\topmargin}{-0.5in}
+%\addtolength{\textheight}{1.5in}
+
+% \pagenumbering{roman}
+% \pagestyle{empty}
+% \setcounter{page}{0}
+% \thispagestyle{empty}
+
+\sloppy
+
+%---------------------------------------------------------------------
+% Begin Document
+%---------------------------------------------------------------------
+
+\begin{document}
+%\bibliographystyle{plain}
+%
+
+% This draft mode eliminates the figures (leaves boxes for where they would be)
+%\psdraft
+
+\title{ {\bf \textcolor{red}{         Compass User Manual: \\ 
+                                A Tool for Source Code Checking \\
+                                        (A ROSE Tool)} \\
+                               \textcolor{blue}{Draft User Manual} \\
+                               \textcolor{green}{(Associated with ROSE Version 0.9.5a)} } }
+
+\author{ {\bf ROSE Team} \\
+         Lawrence Livermore National Laboratory \\ 
+         Livermore, CA  94550 \\
+         925-423-2668 (office)  925-422-6278 (fax) \\
+         {dquinlan}@llnl.gov \\
+         Project Web Page: http://www.rosecompiler.org \\
+         %Project Web Page: www.llnl.gov/casc/rose \\
+         UCRL Number for ROSE User Manual: UCRL-SM-210137-DRAFT \\
+         UCRL Number for ROSE Tutorial: UCRL-SM-210032-DRAFT \\
+         UCRL Number for ROSE Source Code: UCRL-CODE-155962 \\ \\
+         %\htmladdnormallink{ROSE User Manual (pdf)}{../ROSE_UserManual/ROSE-0.9.5a-UserManual.pdf} \\
+         \htmladdnormallink{ROSE User Manual
+         (pdf)}{http://www.rosecompiler.org/ROSE_UserManual/ROSE-0.9.5a-UserManual.pdf} \\
+         \htmladdnormallink{ROSE Tutorial
+         (pdf)}{http://www.rosecompiler.org/ROSE_Tutorial/ROSE-0.9.5a-Tutorial.pdf} \\
+         \htmladdnormallink{ROSE HTML Reference (html
+         only)}{http://www.rosecompiler.org/ROSE_HTML_Reference/index.html}
+       }
+
+% \textcolor{blue}{Compiler infrastructure for tools is a bit} \\
+% \textcolor{blue}{like a cannon, sometime more than you really need,} \\ 
+% \textcolor{blue}{but often all that it takes to solve the problem} \\
+
+% This doesn't seem to work.  References to this label are not resolved.
+\label{Compass:postscriptVersionOfUserManual}
+
+\begin{htmlonly}
+   \centering \includegraphics[width=3in]{../compass_rose.gif}
+\end{htmlonly}
+
+\maketitle
+
+\begin{htmlonly}
+   \centering \includegraphics[width=5in]{../compass_rose.gif}
+\end{htmlonly}
+
+
+%\begin{center}
+%\today
+%\end{center}
+
+%\newpage
+%\input{Copyright}
+%\newpage
+
+\newpage
+
+%\input{preface}
+%\input{Forward}
+
+% This fixes the really long table of contents problem
+\setcounter{tocdepth}{1}
+
+\tableofcontents
+%\listoffigures
+%\listoftables
+\newpage
+%
+
+\input{acknowledgments}
+
+\newpage
+
+\input{introduction}
+
+\newpage
+
+\input{design}
+
+\newpage
+
+\input{usingCompass}
+
+\newpage
+
+\input{usingCompassGui}
+
+\newpage
+
+\input{usingCompassVerifier}
+
+\newpage
+
+\input{compass_categories}
+
+
+% Put the list of detector documentation here
+\newpage
+
+\chapter{List of Compass Checkers}
+
+\input{compassCheckerDocs}
+
+\newpage
+\chapter{Appendix}
+
+\input{appendix}
+% }
+
+\end{document}
+

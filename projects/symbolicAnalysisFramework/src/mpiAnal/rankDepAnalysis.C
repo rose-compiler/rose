@@ -1,5 +1,6 @@
 #include "rankDepAnalysis.h"
 #include "nodeState.h"
+#include "liveDeadVarAnalysis.h"
 
 using namespace cfgUtils;
 
@@ -143,7 +144,7 @@ string MPIRankNProcsDepLattice::str(string indent)
 // depend on the process' rank or on the number of processes 
 class MPIRankDepSubtreeTraversal : public AstSimpleProcessing
 {
-	const FiniteVariablesProductLattice& prodLat;
+	const FiniteVarsExprsProductLattice& prodLat;
 	const Function& func;
 	MPIRankDepAnalysis* rankDepAnal;
 	
@@ -153,7 +154,7 @@ class MPIRankDepSubtreeTraversal : public AstSimpleProcessing
 	bool subtreeNprocsDep;
 	
 	public:
-	MPIRankDepSubtreeTraversal(FiniteVariablesProductLattice& prodLat, Function& func, 
+	MPIRankDepSubtreeTraversal(FiniteVarsExprsProductLattice& prodLat, Function& func, 
 	                           MPIRankDepAnalysis* rankDepAnal): prodLat(prodLat), func(func)
 	{
 		this->prodLat = prodLat;
@@ -168,10 +169,10 @@ class MPIRankDepSubtreeTraversal : public AstSimpleProcessing
 		if(isSgExpression(n) && varID::isValidVarExp(isSgExpression(n)))
 		{
 			NodeState* state = NodeState::getNodeState(n, 0);
-			FiniteVariablesProductLattice* prodLat = dynamic_cast<FiniteVariablesProductLattice*>(getLatticeBelow(rankDepAnal, 0));
+			FiniteVarsExprsProductLattice* prodLat = dynamic_cast<FiniteVarsExprsProductLattice*>(getLatticeBelow(rankDepAnal, 0));
 			
 			varID v(isSgExpression(n));
-			MPIRankNProcsDepLattice* rnLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(func, v));
+			MPIRankNProcsDepLattice* rnLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(v));
 			subtreeRankDep   = subtreeRankDep   || rnLat->getRankDep(true);
 			subtreeNprocsDep = subtreeNprocsDep || rnLat->getNprocsDep(true);
 		}
@@ -194,7 +195,7 @@ void MPIRankDepAnalysis::genInitState(const Function& func, const DataflowNode& 
 	
 	//vector<Lattice*> initLattices;
 	map<varID, Lattice*> constVars;
-	initLattices.push_back(new FiniteVariablesProductLattice(true, false, new MPIRankNProcsDepLattice(), constVars, NULL, func, n, state));
+	initLattices.push_back(new FiniteVarsExprsProductLattice(new MPIRankNProcsDepLattice(), constVars, NULL, ldva, n, state));
 	
 	//return initLattices;
 }
@@ -205,7 +206,7 @@ bool MPIRankDepAnalysis::transfer(const Function& func, const DataflowNode& n, N
 
 	bool modified=false;
 	
-	FiniteVariablesProductLattice* prodLat = dynamic_cast<FiniteVariablesProductLattice*>(*(dfInfo.begin()));
+	FiniteVarsExprsProductLattice* prodLat = dynamic_cast<FiniteVarsExprsProductLattice*>(*(dfInfo.begin()));
 		
 	// make sure that all the non-constant Lattices are initialized
 	const vector<Lattice*>& lattices = prodLat->getLattices();
@@ -236,7 +237,7 @@ bool MPIRankDepAnalysis::transfer(const Function& func, const DataflowNode& n, N
 			{
 				//varID rankVar((isSgVarRefExp(arg1))->get_symbol()->get_declaration());
 				varID rankVar(isSgAddressOfOp(arg1)->get_operand());
-				MPIRankNProcsDepLattice* rnLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(func, rankVar));
+				MPIRankNProcsDepLattice* rnLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(rankVar));
 				modified = rnLat->setRankDep(true) || modified;
 			}
 			else
@@ -254,7 +255,7 @@ bool MPIRankDepAnalysis::transfer(const Function& func, const DataflowNode& n, N
 			{
 				//varID rankVar((isSgVarRefExp(arg1))->get_symbol()->get_declaration());
 				varID nprocsVar(isSgAddressOfOp(arg1)->get_operand());
-				MPIRankNProcsDepLattice* rnLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(func, nprocsVar));
+				MPIRankNProcsDepLattice* rnLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(nprocsVar));
 				modified = rnLat->setNprocsDep(true);
 			}
 			else
@@ -296,7 +297,7 @@ bool MPIRankDepAnalysis::transfer(const Function& func, const DataflowNode& n, N
 		bool rhsNprocsDep = false;
 		for(varIDSet::iterator it = rhsVars.begin(); it != rhsVars.end(); it++)
 		{
-			MPIRankNProcsDepLattice* rhsrnLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(func, *it));
+			MPIRankNProcsDepLattice* rhsrnLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(*it));
 			rhsRankDep   = rhsRankDep   || rhsrnLat->getRankDep();
 			rhsNprocsDep = rhsNprocsDep || rhsrnLat->getNprocsDep();
 			if(rhsRankDep && rhsNprocsDep)
@@ -309,7 +310,7 @@ bool MPIRankDepAnalysis::transfer(const Function& func, const DataflowNode& n, N
 			// the left-hand side of the assignment must be a regular variable
 			if(varAssign)
 			{
-				MPIRankNProcsDepLattice* lhsrnLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(func, *lhsVar));
+				MPIRankNProcsDepLattice* lhsrnLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(*lhsVar));
 				if(MPIRankDepAnalysisDebugLevel>=1){
 					printf("Assignment of variable %s: rhs rankDep=%d, nprocsDep=%d\n", lhsVar->str().c_str(), rhsRankDep, rhsNprocsDep);
 				}
@@ -332,13 +333,18 @@ static Analysis* rankDepAnalysis=NULL;
 static ContextInsensitiveInterProceduralDataflow* rankDepAnal_inter=NULL;
 void runMPIRankDepAnalysis()
 {
-	rankDepAnal = new MPIRankDepAnalysis();
-	rankDepAnalysis = rankDepAnal;
-	
 	CallGraphBuilder cgb(getProject());
 	cgb.buildCallGraph();
-	rankDepAnal_inter = new ContextInsensitiveInterProceduralDataflow(rankDepAnal, cgb.getGraph());
+	SgIncidenceDirectedGraph* graph = cgb.getGraph(); 
 	
+	LiveDeadVarsAnalysis ldva(project);
+	ContextInsensitiveInterProceduralDataflow ciipd_ldva(&ldva, graph);
+	//UnstructuredPassInterDataflow ciipd_ldva(&ldva);
+	ciipd_ldva.runAnalysis();
+	
+	rankDepAnal = new MPIRankDepAnalysis(&ldva);
+	rankDepAnalysis = rankDepAnal;
+	rankDepAnal_inter = new ContextInsensitiveInterProceduralDataflow(rankDepAnal, graph);
 	rankDepAnal_inter->runAnalysis();
 	//printf("rankDepAnal=%p=%p=%p, rankDepAnal_inter=%p\n", rankDepAnal, (Analysis*)rankDepAnal, (IntraProceduralAnalysis*)rankDepAnal, rankDepAnal_inter);
 	
@@ -361,9 +367,9 @@ bool isMPIRankVarDep(const Function& func, const DataflowNode& n, varID var)
 		runMPIRankDepAnalysis();
 	
 	NodeState* state = NodeState::getNodeState(n, 0);
-	FiniteVariablesProductLattice* prodLat = dynamic_cast<FiniteVariablesProductLattice*>(state->getLatticeBelow(rankDepAnalysis, 0));
+	FiniteVarsExprsProductLattice* prodLat = dynamic_cast<FiniteVarsExprsProductLattice*>(state->getLatticeBelow(rankDepAnalysis, 0));
 	ROSE_ASSERT(prodLat);
-	MPIRankNProcsDepLattice* rnLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(func, var));
+	MPIRankNProcsDepLattice* rnLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(var));
 	if(!rnLat) return false;
 	return rnLat->getRankDep();
 }
@@ -375,8 +381,8 @@ bool isMPINprocsVarDep(const Function& func, const DataflowNode& n, varID var)
 		runMPIRankDepAnalysis();
 	
 	NodeState* state = NodeState::getNodeState(n, 0);
-	FiniteVariablesProductLattice* prodLat = dynamic_cast<FiniteVariablesProductLattice*>(state->getLatticeBelow(rankDepAnalysis, 0));
-	MPIRankNProcsDepLattice* rnLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(func, var));
+	FiniteVarsExprsProductLattice* prodLat = dynamic_cast<FiniteVarsExprsProductLattice*>(state->getLatticeBelow(rankDepAnalysis, 0));
+	MPIRankNProcsDepLattice* rnLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(var));
 	return rnLat->getNprocsDep();
 }
 
@@ -394,7 +400,7 @@ bool isMPIDep(const Function& func, const DataflowNode& n, bool& rankDep, bool& 
 	{ printf("        var %s\n", (*it).str().c_str()); }*/
 	
 	NodeState* state = NodeState::getNodeState(n, 0);
-	FiniteVariablesProductLattice* prodLat = dynamic_cast<FiniteVariablesProductLattice*>(state->getLatticeBelow(rankDepAnalysis, 0));
+	FiniteVarsExprsProductLattice* prodLat = dynamic_cast<FiniteVarsExprsProductLattice*>(state->getLatticeBelow(rankDepAnalysis, 0));
 	
 	// initialize both flags to false
 	rankDep = false;
@@ -402,7 +408,7 @@ bool isMPIDep(const Function& func, const DataflowNode& n, bool& rankDep, bool& 
 	for(varIDSet::iterator it = exprVars.begin(); it != exprVars.end(); it++)
 	{
 		//cout << "prodLat->getVarLattice(func, "<<(*it).str()<<") = "<<prodLat->getVarLattice(func, *it)->str() << "\n";
-		MPIRankNProcsDepLattice* rnLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(func, *it));
+		MPIRankNProcsDepLattice* rnLat = dynamic_cast<MPIRankNProcsDepLattice*>(prodLat->getVarLattice(*it));
 		rankDep   = rankDep   || rnLat->getRankDep();
 		nprocsDep = nprocsDep || rnLat->getNprocsDep();
 		if(rankDep && nprocsDep)

@@ -1,0 +1,130 @@
+/*!
+     \defgroup SageClasses Sage III Intermediate Representation (IR)
+     \ingroup ROSE_FrontEndGroup
+
+     \brief This class represents the Abstract Syntax Tree (AST) Intermediate Repesentation (IR) used within ROSE.
+
+     These classes have been reconstructed to be consistant with the Sage II implementation built by Dennis
+     Gannon (and others).  With Dennis's permission we have called this work Sage III.
+
+ */
+
+/*
+     \sa file:///g/g15/bronevet/Compilers/ROSE/compile/docs/Rose/html/main.html
+
+     \authors Quinlan, Schordan, Yi; plus previous work by Danny Thorne
+     \version 0.5
+     \date Dec 19th 2002
+     \bug Not finished yet.
+     \warning Some aspects still under development.
+     \todo - Finish documentation \n
+           - Upgrade to newest version of EDG C++ front end \n
+           - Reconstruct connection between EDG and SAGE III IR
+
+     \note Large parts of documentation contained in <b>ROSE/SAGE/sage.docs</b>.
+
+     These classes have been reconstructed from the Sage II implementation built by Dennis
+     Gannon (and others).  With Dennis's permission we have called this work Sage III.
+
+     \internal These classes are still under development.  More detail later...
+
+\section intro Introduction
+     Welcome to the SAGE (used within ROSE)!
+     \sa file:///g/g15/bronevet/Compilers/ROSE/compile/docs/Rose/html/main.html
+
+\section docs Documentation
+
+   Documentation is becoming available ... (please come back later)
+
+\section what What is SAGE III?
+
+   Sage III is the 3rd iteration of an intermediate representation well suited to
+   source-to-source level processing of high level languages (C++, in particular).
+   Sage III is used within the ROSE project and had been developed as part of the 
+   ROSE project using parts of the original Sage II source code.  Substantial work 
+   has gone into SAGE III, beyond that done in Sage II.  We would like to thank
+   the original Sage developers to there work.
+
+ */
+
+ /*
+     \defgroup SageType Sage III Type Classes
+     \ingroup SageClasses
+     \brief This collection of classes represent all types.
+
+     This collection of classes represent  all of the types represented in the C++ grammar.
+
+     \internal Internal details of this class are not yet documented.
+  */
+
+ /*
+     \defgroup SageStatement Sage III Statement Classes
+     \ingroup SageClasses
+     \brief This collection of classes represent all statements.
+
+     This collection of classes represent  all of the statements represented in the C++ grammar.
+
+     \internal Internal details of this class are not yet documented.
+  */
+
+ /*
+     \defgroup SageExpression Sage III Expression Classes
+     \ingroup SageClasses
+     \brief This collection of classes represent all expressions.
+
+     This collection of classes represent  all of the expressions represented in the C++ grammar.
+
+     \internal Internal details of this class are not yet documented.
+  */
+
+ /*
+     \defgroup SageSymbol Sage III Symbol Classes
+     \ingroup SageClasses
+     \brief This collection of classes represent all symbols.
+
+     This collection of classes represent  all of the symbols represented in the C++ grammar.
+
+     \internal Internal details of this class are not yet documented.
+  */
+
+
+
+// **********************************************************************************
+//             Documentation Page for get_parent() Member function
+// **********************************************************************************
+/*! \page memberFunction_getParent_DocumentationPage Member Function getParent() Documentation
+    The member function <b>get_parent()</b> is implemented on all objects subclassed from SgNode (and
+    SgLocatedNode) and return the subclassed type. Within the subclassed nodes they are
+    implemented only once and used uniformally within the leaves of the class hierarchy.
+*/
+
+// **********************************************************************************
+//         Documentation Page for Default Constructors and Destructors
+// **********************************************************************************
+/*! \page defaultConstructorDestructorDocumentationPage Default Constructor Destructor Documentation Page
+    Default constructors and destructors are not documented in the user documentation
+    because they are not useful to instantiate as objects.  They are defined only so
+    that leaf classes can be constructed within the construction of the Sage AST from the
+    EDG AST.  So they are not useful to users.
+*/
+
+// **********************************************************************************
+//                    Documentation Page for AST Attributes
+// **********************************************************************************
+/*! \page RoseAttributeMechanismPage Rose Attribute Mechanism Page
+    User-defined attributes (AST Attributes) may be attached 
+    directly to the AST.  This mechanism permits
+    the addition and removal of attribute on any node of the AST.  The existence of the
+    attributes may thus be queried from any node.  The mechanism provide a way to make
+    multiple passes over the AST and save state information into the AST for subsequent
+    traversals.  The mechanism is different from creation of inherited and synthisized 
+    attributes within the AST processing mechanism \ref ASTProcessing, since attributes
+    there allocated and deallocated automatically on the stack.  AST Attributes are
+    allocated on the heap and must be allocated, attached, detached, and deallocated 
+    explicitly by the used.
+*/
+
+
+
+
+

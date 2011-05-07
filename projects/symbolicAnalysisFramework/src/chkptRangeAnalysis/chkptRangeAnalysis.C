@@ -1,5 +1,4 @@
 #include "chkptRangeAnalysis.h"
-#include "sgnAnalysis.h"
 
 void ChkptRangeVerifAnalysis::visit(const Function& func, const DataflowNode& n, NodeState& state)
 {
@@ -57,9 +56,9 @@ void ChkptRangeAnalysis::genInitState(const Function& func, const DataflowNode& 
 /*printf("ChkptRangeAnalysis::genInitState() n=%p<%s | %s>\n", n.getNode(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());
 printf("ChkptRangeAnalysis::genInitState() state=%p\n", &state);*/
 	
-	FiniteVariablesProductLattice* divProdL = dynamic_cast<FiniteVariablesProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
-	FiniteVariablesProductLattice* sgnProdL = dynamic_cast<FiniteVariablesProductLattice*>(state.getLatticeBelow(sgnAnalysis, 0));
-	initLattices.push_back(new ConstrGraph(func, divProdL, sgnProdL, false));
+	FiniteVarsExprsProductLattice* divL = dynamic_cast<FiniteVarsExprsProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
+	initLattices.push_back(new ConstrGraph(func, n, state, ldva, divL, false, string("    ")));
+	
 	//return initLattices;
 }
 
@@ -103,9 +102,10 @@ bool ChkptRangeAnalysis::transfer(const Function& func, const DataflowNode& n, N
 				long c;
 				
 				// if the array's index expression is parseable as j+c
-				if(cfgUtils::parseAddition(indexExpr, j, negJ, k, negK, c) && k==zeroVar && !negJ)
-				{
-					modified = cg->shortenArrayRange(arrayVar, j, 1, c) || modified;
+				if(cfgUtils::parseAddition(indexExpr, j, negJ, k, negK, c) && k==zeroVar && !negJ) {
+// !!! Array functionality is not yet re-enabled in Constraint Graphs
+// !!!					modified = cg->shortenArrayRange(arrayVar, j, 1, c) || modified;
+					ROSE_ASSERT(0);
 				}
 				// else, the array's index expression is complex and we don't change its must-overwrite range
 			}
@@ -166,7 +166,9 @@ bool ChkptRangeAnalysis::transfer(const Function& func, const DataflowNode& n, N
 		varID var(initName);
 		
 		// if this is the declaration of an array
-		if(cg->isArray(var))
+		ROSE_ASSERT(0);
+// !!! Array functionality is not yet re-enabled in Constraint Graphs
+// !!! 		if(cg->isArray(var))
 		{
 			// add the constraint 0<=$var to cg
 			cg->setVal(zeroVar, var, 1, 1, 0);
@@ -231,9 +233,9 @@ bool ChkptRangeAnalysis::incorporateDivInfo(const Function& func, const Dataflow
 	ConstrGraph* cg = dynamic_cast<ConstrGraph*>(dfInfo.front());
 	
 	printf("incorporateDivInfo()\n");
-	FiniteVariablesProductLattice* prodL = dynamic_cast<FiniteVariablesProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
-	varIDSet visVars = prodL->getVisibleVars(func);
-	for(varIDSet::iterator it = visVars.begin(); it!=visVars.end(); it++)
+	FiniteVarsExprsProductLattice* prodL = dynamic_cast<FiniteVarsExprsProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
+	set<varID> liveVars = getAllLiveVarsAt(ldva, n, state, "    ");
+	for(varIDSet::iterator it = liveVars.begin(); it!=liveVars.end(); it++)
 	{
 		varID var = *it;
 		cg->addDivVar(var);
@@ -266,9 +268,9 @@ bool ChkptRangeAnalysis::removeConstrDivVars(const Function& func, const Dataflo
 	
 	printf("removeConstrDivVars()\n");
 	
-	FiniteVariablesProductLattice* prodL = dynamic_cast<FiniteVariablesProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
-	varIDSet visVars = prodL->getVisibleVars(func);
-	for(varIDSet::iterator it = visVars.begin(); it!=visVars.end(); it++)
+	FiniteVarsExprsProductLattice* prodL = dynamic_cast<FiniteVarsExprsProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
+	set<varID> liveVars = getAllLiveVarsAt(ldva, n, state, "    ");
+	for(varIDSet::iterator it = liveVars.begin(); it!=liveVars.end(); it++)
 	{
 		varID var = *it;
 		cg->disconnectDivOrigVar(var);

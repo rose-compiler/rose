@@ -40,15 +40,17 @@ printf("pCFG_contProcMatchAnalysis::genInitState() state=%p\n", &state);*/
 	// and sign product lattice
 	int curPSet=0;
 	
-	map<pair<string, void*>, FiniteVariablesProductLattice*> divL;
+	map<pair<string, void*>, FiniteVarsExprsProductLattice*> divL;
 	for(vector<DataflowNode>::const_iterator it=n.getPSetDFNodes().begin(); it!=n.getPSetDFNodes().end(); it++, curPSet++)
 	{
 		NodeState* state = NodeState::getNodeState(*it);
 		pair<string, void*> annotation(getVarAnn(curPSet), (void*)1);
-		divL[annotation] = dynamic_cast<FiniteVariablesProductLattice*>(state->getLatticeBelow(divAnalysis, 0));
+		divL[annotation] = dynamic_cast<FiniteVarsExprsProductLattice*>(state->getLatticeBelow(divAnalysis, 0));
 	}
 	// Create a constraint graph from the divisiblity and sign information at all the CFG nodes that make up this pCFG node
-	ConstrGraph* cg = new ConstrGraph(func, n, state, ldva, divL, false, "    ");
+	set<DataflowNode> nodes;
+	for(vector<DataflowNode>::const_iterator dn=n.getPSetDFNodes().begin(); dn!=n.getPSetDFNodes().end(); dn++) nodes.insert(*dn);
+	ConstrGraph* cg = new ConstrGraph(func, nodes, state, ldva, divL, false, string("    "));
 	
 	// Create a copy of each function-visible variable (except zeroVar) for each process set in n
 	set<pair<string, void*> > noCopyAnnots;
@@ -112,7 +114,7 @@ if(MPIAnalysisDebugLevel>0)
 	//cg->beginTransaction();
 	
 	// Add the divisibility and sign lattices to the constraint graph under the annotation that belongs to tgtPSet
-	cg->addDivL(dynamic_cast<FiniteVariablesProductLattice*>(state.getLatticeBelow(divAnalysis, 0)), getVarAnn(tgtPSet), (void*)1, "    ");
+	cg->addDivL(dynamic_cast<FiniteVarsExprsProductLattice*>(state.getLatticeBelow(divAnalysis, 0)), getVarAnn(tgtPSet), (void*)1, string("    "));
 
 	// For each process set create a version of the key variables and add them to the constraint graph
 	varID nprocsVarAllPSets, zeroVarAllPSets;
@@ -644,10 +646,12 @@ void pCFG_contProcMatchAnalysis::fillEdgeSplits(const Function& func, const pCFG
 			cout << "Descendant "<<i<<": "<<(*ei).target().str()<<"\n";
 		const set<varAffineInequality>& ineqs = getAffineIneq((*ei).target());
 		
-		/*FiniteVariablesProductLattice* divProdL = dynamic_cast<FiniteVariablesProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
-		FiniteVariablesProductLattice* sgnProdL = dynamic_cast<FiniteVariablesProductLattice*>(state.getLatticeBelow(sgnAnalysis, 0));
+		/*FiniteVarsExprsProductLattice* divProdL = dynamic_cast<FiniteVarsExprsProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
+		FiniteVarsExprsProductLattice* sgnProdL = dynamic_cast<FiniteVarsExprsProductLattice*>(state.getLatticeBelow(sgnAnalysis, 0));
 		ConstrGraph* edgeCG = new ConstrGraph(func, divProdL, sgnProdL, false);*/
-		ConstrGraph* edgeCG = new ConstrGraph(func, n, state, ldva, (FiniteVarsExprsProductLattice*)NULL, false, "    ");
+		//ConstrGraph* edgeCG = new ConstrGraph(func, n, state, ldva, (FiniteVarsExprsProductLattice*)NULL, false, string("    "));
+		ConstrGraph* edgeCG = new ConstrGraph(*cg);
+		edgeCG->setToBottom();
 
 		//printf("ineqs.size()=%d\n", ineqs.size());
 		// Iterate through the current descendant's affine inequalities
@@ -1292,9 +1296,11 @@ bool pCFG_contProcMatchAnalysis::incorporateDivInfo(const Function& func, const 
 	ConstrGraph* cg = dynamic_cast<ConstrGraph*>(dfInfo.front());
 	
 	printf("    incorporateDivInfo(%s)\n", func.get_name().str());
-	FiniteVariablesProductLattice* prodL = dynamic_cast<FiniteVariablesProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
-	varIDSet visVars = prodL->getVisibleVars(func);
-	for(varIDSet::iterator it = visVars.begin(); it!=visVars.end(); it++)
+	FiniteVarsExprsProductLattice* prodL = dynamic_cast<FiniteVarsExprsProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
+	//varIDSet liveVars = prodL->getVisibleVars(func);
+	set<varID> liveVars = getAllLiveVarsAt(ldva, n, state, "    ");
+	
+	for(varIDSet::iterator it = liveVars.begin(); it!=liveVars.end(); it++)
 	{
 		varID var = *it;
 		// Re-add the connection between var and its divisibility variable. The divisibility variable
@@ -1332,9 +1338,10 @@ bool pCFG_contProcMatchAnalysis::removeConstrDivVars(const Function& func, const
 	
 	printf("    removeConstrDivVars()\n");
 	
-	FiniteVariablesProductLattice* prodL = dynamic_cast<FiniteVariablesProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
-	varIDSet visVars = prodL->getVisibleVars(func);
-	for(varIDSet::iterator it = visVars.begin(); it!=visVars.end(); it++)
+	FiniteVarsExprsProductLattice* prodL = dynamic_cast<FiniteVarsExprsProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
+	//varIDSet liveVars = prodL->getVisibleVars(func);
+	set<varID> liveVars = getAllLiveVarsAt(ldva, n, state, "    ");
+	for(varIDSet::iterator it = liveVars.begin(); it!=liveVars.end(); it++)
 	{
 		varID var = *it;
 		cg->disconnectDivOrigVar(var);

@@ -36,7 +36,7 @@ void pCFGNode::init(const vector<DataflowNode>& pSetDFNodes)
 	this->pSetDFNodes = pSetDFNodes;
 	
 	// Give pSetDFNodes a canonical ordering
-	sort(this->pSetDFNodes.begin() this->pSetDFNodes.end());*/
+	sort(this->pSetDFNodes.begin(), this->pSetDFNodes.end());
 }
 
 void pCFGNode::operator = (const pCFGNode& that)
@@ -265,7 +265,7 @@ bool pCFG_Checkpoint::equiv(const pCFG_Checkpoint& that) const
 // Returns true if this causes this checkpoint to change and false otherwise.
 bool pCFG_Checkpoint::mergeUpd(const pCFG_Checkpoint& that)
 {
-	return splitCondition->meetUpdate(that.splitCondition);
+	return splitCondition->meetUpdate(that.splitCondition, "    ");
 }
 	
 // Move the given process set from blocked to active status

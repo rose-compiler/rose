@@ -16,8 +16,8 @@ static int debugLevel=0;
 	if(cg)
 	{
 		// Disconnect this process set's bounds from its constraint craph
-		cg->removeScalar(getLB());
-		cg->removeScalar(getUB());
+		cg->removeVar(getLB());
+		cg->removeVar(getUB());
 	}
 }*/
 
@@ -82,7 +82,7 @@ contRangeProcSet::contRangeProcSet(const contRangeProcSet& that, bool freshenVar
 	if(freshenVars)
 		genFreshBounds();
 	if(cg)
-		ROSE_ASSERT(cg->lteVars(lb, ub));
+		ROSE_ASSERT(cg->lteVars(lb, ub, 1, 1, 0, "    "));
 }
 
 // copies that to this, returning true if this is not changed and false otherwise
@@ -125,7 +125,7 @@ ConstrGraph* contRangeProcSet::getConstr() const
 // and false otherwise
 bool contRangeProcSet::setLB(const varID& lb)
 {
-	bool modified = cg->eqVars(this->lb, lb);
+	bool modified = cg->eqVars(this->lb, lb, "    ");
 	this->lb = lb;
 	return modified;
 }
@@ -134,7 +134,7 @@ bool contRangeProcSet::setLB(const varID& lb)
 // and false otherwise
 bool contRangeProcSet::setUB(const varID& ub)
 {
-	bool modified = cg->eqVars(this->ub, ub);
+	bool modified = cg->eqVars(this->ub, ub, "    ");
 	this->ub = ub;
 	return modified;
 }
@@ -177,8 +177,8 @@ void contRangeProcSet::refreshInvariants()
 {
 	ROSE_ASSERT(cg);
 	
-	cg->addScalar(lb);
-	cg->addScalar(ub);
+	cg->addVar(lb);
+	cg->addVar(ub);
 	// lb <= ub
 	cg->assertCond(lb, ub, 1, 1, 0);
 	cg->localTransClosure(lb);
@@ -197,7 +197,7 @@ void contRangeProcSet::genFreshBounds(int lbA, int lbB, int lbC,
 	//cout << "genFreshBounds: this1="<<str()<<"\n";
 	lb = genFreshVar();
 	//cout << "genFreshBounds: this1A="<<str()<<"\n";
-	cg->addScalar(lb);
+	cg->addVar(lb);
 	//cout << "genFreshBounds: this1B="<<str()<<"\n";
 	cg->assertCond(lb, oldLB, lbA, lbB, lbC);
 	//cout << "genFreshBounds: this1C="<<str()<<"\n";
@@ -206,7 +206,7 @@ void contRangeProcSet::genFreshBounds(int lbA, int lbB, int lbC,
 	cg->localTransClosure(lb);
 	//cout << "genFreshBounds: this1E="<<str()<<"\n";
 	ub = genFreshVar();
-	cg->addScalar(ub);
+	cg->addVar(ub);
 	cg->assertCond(ub, oldUB, ubA, ubB, ubC);
 	cg->assertCond(oldUB, ub, ubB, ubA, 0-ubC);
 	
@@ -309,7 +309,7 @@ bool contRangeProcSet::rangeEq(const contRangeProcSet& that) const
 	ROSE_ASSERT(cg == that.cg);
 	//cout << "contRangeProcSet::rangeEq: cg->eqVars("<<lb.str()<<", "<<that.lb.str()<<")="<<cg->eqVars(lb, that.lb)<<"\n";
 	//cout << "contRangeProcSet::rangeEq: cg->eqVars("<<ub.str()<<", "<<that.ub.str()<<")="<<cg->eqVars(ub, that.ub)<<"\n";
-	return (cg->eqVars(lb, that.lb) && cg->eqVars(ub, that.ub));
+	return (cg->eqVars(lb, that.lb, "    ") && cg->eqVars(ub, that.ub, "    "));
 }
 
 // Returns true if that is at the top of but not equal to this's range
@@ -319,7 +319,7 @@ bool contRangeProcSet::rangeTop(const contRangeProcSet& that) const
 	     // [lb<=that.lb <= (ub=that.ub)]
 	//cout << "cg->lteVars("<<lb.str()<<", "<<that.lb.str()<<")="<<cg->lteVars(lb, that.lb)<<"\n";
 	//cout << "cg->eqVars("<<ub.str()<<", "<<that.ub.str()<<")="<<cg->eqVars(ub, that.ub)<<"\n";
-	return (cg->lteVars(lb, that.lb) && cg->eqVars(ub, that.ub));
+	return (cg->lteVars(lb, that.lb, 1, 1, 0, "    ") && cg->eqVars(ub, that.ub, "    "));
 }
 
 // Returns true if that is at the bottom of but not equal to this's range
@@ -329,7 +329,7 @@ bool contRangeProcSet::rangeBottom(const contRangeProcSet& that) const
 	//cout << "rangeBottom: cg->lteVars("<<that.ub.str()<<", "<<ub.str()<<")="<<cg->lteVars(that.ub, ub)<<"\n";
 	ROSE_ASSERT(cg == that.cg);
 	    // [(lb=that.lb) <= that.ub<=ub]
-	return (cg->eqVars(lb, that.lb) && cg->lteVars(that.ub, ub));
+	return (cg->eqVars(lb, that.lb, "    ") && cg->lteVars(that.ub, ub, 1, 1, 0, "    "));
 }
 
 // Returns true if the ranges of this and that must be disjoint
@@ -343,18 +343,18 @@ bool contRangeProcSet::rangeDisjoint(const contRangeProcSet& that) const
 bool contRangeProcSet::overlapAbove(const contRangeProcSet& that) const
 {
 	    // that.lb <= lb <= that.ub <= ub
-	return cg->lteVars(that.lb, lb) && 
-	       cg->lteVars(lb, that.ub) &&
-	       cg->lteVars(that.ub, ub);
+	return cg->lteVars(that.lb, lb, 1, 1, 0, "    ") && 
+	       cg->lteVars(lb, that.ub, 1, 1, 0, "    ") &&
+	       cg->lteVars(that.ub, ub, 1, 1, 0, "    ");
 }
 
 // Returns true if this must overlap, with this Below that: lb <= that.lb <= ub <= that.ub
 bool contRangeProcSet::overlapBelow(const contRangeProcSet& that) const
 {
 	    // lb <= that.lb <= ub <= that.ub
-	return cg->lteVars(lb, that.lb) && 
-	       cg->lteVars(that.lb, ub) &&
-	       cg->lteVars(ub, that.ub);
+	return cg->lteVars(lb, that.lb, 1, 1, 0, "    ") && 
+	       cg->lteVars(that.lb, ub, 1, 1, 0, "    ") &&
+	       cg->lteVars(ub, that.ub, 1, 1, 0, "    ");
 }
 
 // Copies the given variable's constraints from srcCG to cg.
@@ -613,14 +613,14 @@ cout << "    cg = "<<cg->str()<<"\n";*/
 	if(emptySet())
 		return 0;
 	// If the lower bound is equal to the upper bound, the domain has a single element
-	else if(cg->eqVars(lb, ub))
+	else if(cg->eqVars(lb, ub, "    "))
 		return 1;
 	else
 	{
 		int a, b, c;
 		// If both the lower bound and the upper bound are related to each other via a 
 		// lb = ub + c relationship
-		if(cg->eqVars(lb, ub, a, b, c) && a==1 && b==1)
+		if(cg->eqVars(lb, ub, a, b, c, "    ") && a==1 && b==1)
 			return c;
 		// Otherwise, we don't know the exact size of this set and conservatively report infinity
 		else
@@ -635,8 +635,8 @@ procSet& contRangeProcSet::operator=(const procSet& that_arg)
 	valid = that.valid;
 	emptyRange = that.emptyRange;
 	cg = that.cg;
-	cg->addScalar(lb);
-	cg->addScalar(ub);
+	cg->addVar(lb);
+	cg->addVar(ub);
 	// lb == that.lb
 	cg->assertCond(lb, that.lb, 1, 1, 0); 
 	cg->assertCond(that.lb, lb, 1, 1, 0); 
@@ -676,8 +676,8 @@ bool contRangeProcSet::operator==(const procSet& that_arg) const
 	return valid == that.valid &&
 	       emptyRange == that.emptyRange &&
 	       cg == that.cg &&
-	       cg->eqVars(lb, that.lb) && 
-	       cg->eqVars(ub, that.ub);
+	       cg->eqVars(lb, that.lb, "    ") && 
+	       cg->eqVars(ub, that.ub, "    ");
 }
 
 bool contRangeProcSet::operator<(const procSet& that_arg) const
@@ -918,8 +918,8 @@ bool contRangeProcSet::cgDisconnect()
 	if(cg!=NULL)
 	{
 		// Disconnect this process set's bounds from its constraint craph
-		modified = cg->removeScalar(getLB()) || modified;
-		modified = cg->removeScalar(getUB()) || modified;
+		modified = cg->removeVar(getLB()) || modified;
+		modified = cg->removeVar(getUB()) || modified;
 		
 		cg = NULL;
 	}
@@ -936,8 +936,8 @@ bool contRangeProcSet::cgDisconnect(ConstrGraph* tgtCG) const
 	if(tgtCG!=NULL)
 	{
 		// Disconnect this process set's bounds from its constraint craph
-		modified = tgtCG->removeScalar(getLB()) || modified;
-		modified = tgtCG->removeScalar(getUB()) || modified;
+		modified = tgtCG->removeVar(getLB()) || modified;
+		modified = tgtCG->removeVar(getUB()) || modified;
 	}
 	return modified;
 }

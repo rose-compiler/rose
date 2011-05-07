@@ -23,7 +23,7 @@ static int profileLevel=0;
 }*/
 
 ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state, bool initialized, string indent) :
-	func(func), n(n), state(state)
+	func(func), state(state)
 {
 	// Start this constraint graph as Uninitialized or Bottom, as requested
 	if(initialized) level = bottom;
@@ -31,12 +31,15 @@ ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const Node
 	
 	constrChanged=false;
 	inTransaction=false;
+	
+	set<DataflowNode> nodes; nodes.insert(n);
+	initCG(func, nodes, state, false, indent);
 }
 
 ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state, 
 	      LiveDeadVarsAnalysis* ldva, FiniteVarsExprsProductLattice* divL, 
 	      // GB : 2011-03-05 (Removing Sign Lattice Dependence)FiniteVarsExprsProductLattice* sgnL, 
-	      bool initialized, string indent) : func(func), n(n), state(state)
+	      bool initialized, string indent) : func(func), state(state)
 {
 	this->ldva = ldva;
 	// Initialize the map of divisibility and sign lattices, associating divL and sgnL with the 
@@ -47,24 +50,40 @@ ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const Node
 	}
 	// GB : 2011-03-05 (Removing Sign Lattice Dependence) this->sgnL[noAnnot] = sgnL;
 
-	initCG(func, n, state, false, indent);
+	set<DataflowNode> nodes; nodes.insert(n);
+	initCG(func, nodes, state, false, indent);
 }
 
 ConstrGraph::ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state, 
 	                      LiveDeadVarsAnalysis* ldva, 
 	                      const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
 	                      // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
-	                      bool initialized, string indent) : func(func), n(n), state(state)
+	                      bool initialized, string indent) : func(func), state(state)
 {
 	this->ldva = ldva;
 	// Initialize the map of divisibility and sign lattices
 	this->divL = divL;
 	// GB : 2011-03-05 (Removing Sign Lattice Dependence)this->sgnL = sgnL;	
 
-	initCG(func, n, state, false, indent);
+	set<DataflowNode> nodes; nodes.insert(n);
+	initCG(func, nodes, state, false, indent);
 }
 
-ConstrGraph::ConstrGraph(ConstrGraph &that, bool initialized, string indent) : func(that.func), n(that.n), state(that.state)
+ConstrGraph::ConstrGraph(const Function& func, const set<DataflowNode>& nodes, const NodeState& state, 
+	                      LiveDeadVarsAnalysis* ldva, 
+	                      const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
+	                      // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
+	                      bool initialized, string indent) : func(func), state(state)
+{
+	this->ldva = ldva;
+	// Initialize the map of divisibility and sign lattices
+	this->divL = divL;
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence)this->sgnL = sgnL;	
+	
+	initCG(func, nodes, state, false, indent);
+}
+
+ConstrGraph::ConstrGraph(ConstrGraph &that, bool initialized, string indent) : func(that.func), state(that.state)
 {
 	vars = that.vars;
 	divVars = that.divVars;
@@ -74,7 +93,7 @@ ConstrGraph::ConstrGraph(ConstrGraph &that, bool initialized, string indent) : f
 	// GB : 2011-03-05 (Removing Sign Lattice Dependence)sgnL = that.sgnL;
 }
 
-ConstrGraph::ConstrGraph(const ConstrGraph* that, bool initialized, string indent) : func(that->func), n(that->n), state(that->state)
+ConstrGraph::ConstrGraph(const ConstrGraph* that, bool initialized, string indent) : func(that->func), state(that->state)
 {
 	vars = that->vars;
 	divVars = that->divVars;
@@ -92,7 +111,7 @@ ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs,
                          FiniteVarsExprsProductLattice* divL, 
                          // GB : 2011-03-05 (Removing Sign Lattice Dependence)FiniteVarsExprsProductLattice* sgnL, 
                          string indent) : 
-                         	func(func), n(n), state(state)
+                         	func(func), state(state)
 {
 	this->ldva = ldva;
 	// Initialize the map of divisibility and sign lattices, associating divL and sgnL with the 
@@ -103,7 +122,8 @@ ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs,
 	}
 	// GB : 2011-03-05 (Removing Sign Lattice Dependence)this->sgnL[noAnnot] = sgnL;
 
-	initCG(func, n, state, false, indent);
+	set<DataflowNode> nodes; nodes.insert(n);
+	initCG(func, nodes, state, false, indent);
 	
 	for(set<varAffineInequality>::const_iterator it = ineqs.begin();
 	    it!=ineqs.end(); it++)
@@ -129,14 +149,15 @@ ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs,
                          const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
                          // GB : 2011-03-05 (Removing Sign Lattice Dependence) const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
                          string indent) : 
-                                  func(func), n(n), state(state)
+                                  func(func), state(state)
 {
 	this->ldva = ldva;
 	// Initialize the map of divisibility and sign lattices
 	this->divL = divL;
 	// GB : 2011-03-05 (Removing Sign Lattice Dependence) this->sgnL = sgnL;
 
-	initCG(func, n, state, false, indent);
+	set<DataflowNode> nodes; nodes.insert(n);
+	initCG(func, nodes, state, false, indent);
 	
 	for(set<varAffineInequality>::const_iterator it = ineqs.begin();
 	    it!=ineqs.end(); it++)
@@ -157,7 +178,7 @@ ConstrGraph::ConstrGraph(const set<varAffineInequality>& ineqs,
 }
 
 // Initialization code that is common to multiple constructors
-void ConstrGraph::initCG(const Function& func, const DataflowNode& n, const NodeState& state, 
+void ConstrGraph::initCG(const Function& func, const set<DataflowNode>& nodes, const NodeState& state, 
                          bool initialized, string indent)
 {
 	// Start this constraint graph as Uninitialized or Bottom, as requested
@@ -166,7 +187,15 @@ void ConstrGraph::initCG(const Function& func, const DataflowNode& n, const Node
 	constrType = unknown;
 	
 	// Initialize vars to hold all the variables that are live at DataflowNode n
-	getAllLiveVarsAt(ldva, n, state, vars, indent+"    ");
+	for(set<DataflowNode>::const_iterator n=nodes.begin(); n!=nodes.end(); n++) {
+		// Get the variables live at DataflowNode n
+		set<varID> nodeVars;
+		getAllLiveVarsAt(ldva, *n, state, nodeVars, indent+"    ");
+		
+		// Add these variables to vars
+		for(set<varID>::iterator nv=nodeVars.begin(); nv!=nodeVars.end(); nv++)
+			vars.insert(*nv);
+	}
 	
 	// Add the zeroVar constant to the set of variables
 	vars.insert(zeroVar);
@@ -179,7 +208,7 @@ void ConstrGraph::initCG(const Function& func, const DataflowNode& n, const Node
 		modifiedVars.insert(*var);
 	}
 	
-	// Look over all variable and if there exists divisibility information for a given variable, 
+	// Look over all variables and if there exists divisibility information for a given variable, 
 	// add its divisibility variable
 	for(varIDSet::iterator var = this->vars.begin(); var != this->vars.end(); var++) {
 		FiniteVarsExprsProductLattice* divLattice = getDivLattice(*var, indent+"    ");
@@ -1383,8 +1412,11 @@ bool ConstrGraph::varHasAnnot(const varID& var, string annotName, void* annotVal
 // It is assumed that focusVars only contains scalars and not array ranges.
 ConstrGraph* ConstrGraph::getProjection(const varIDSet& focusVars, string indent)
 {
-	ConstrGraph* pCG = new ConstrGraph(func, n, state, ldva, divL, // GB : 2011-03-05 (Removing Sign Lattice Dependence) sgnL, 
-	                                   getLevel(true).first!=uninitialized, indent+"    ");
+	//ConstrGraph* pCG = new ConstrGraph(func, n, state, ldva, divL, // GB : 2011-03-05 (Removing Sign Lattice Dependence) sgnL, 
+	//                                   getLevel(true).first!=uninitialized, indent+"    ");
+
+	ConstrGraph* pCG = dynamic_cast<ConstrGraph*>(copy());
+	pCG->setToConstrKnown(conj, true, indent+"    ");
 	
 	// focusVars that are inside this->vars and their respective divisibility variables, if any
 	// We record these variables in allFocusVars and only worry about them when extracting
@@ -1464,14 +1496,16 @@ ConstrGraph* ConstrGraph::joinCG(ConstrGraph* cg1, void* cg1Annot, ConstrGraph* 
 {
 	// Both constraint graphs correspond to the same function, dataflow node and state
 	ROSE_ASSERT(cg1->func     == cg2->func);
-	ROSE_ASSERT(cg1->n        == cg2->n);
+	//ROSE_ASSERT(cg1->n        == cg2->n);
 	ROSE_ASSERT(&(cg1->state) == &(cg2->state));
 	
 	// The annotations that will be associated with the two constraint graphs are different 
 	// (otherwise there'd be collistions)
 	ROSE_ASSERT(cg1Annot != cg2Annot);
 	
-	ConstrGraph* combo = new ConstrGraph(cg1->func, cg1->n, cg1->state, true, indent+"    ");
+	//ConstrGraph* combo = new ConstrGraph(cg1->func, cg1->n, cg1->state, true, indent+"    ");
+	ConstrGraph* combo = dynamic_cast<ConstrGraph*>(cg1->copy());
+	combo->setToBottom();
 	if(debugLevel>=1)
 	{
 		cout << indent << "joinCG("<<cg1<<", "<<cg1Annot<<", "<<cg2<<", "<<cg2Annot<<", "<<annotName<<", noAnnot: [";

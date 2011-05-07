@@ -69,7 +69,7 @@ protected:
 	// The function and DataflowNode that this constraint graph corresponds to
 	// as well as the node's state
 	const Function& func;
-	const DataflowNode& n;
+	//const DataflowNode& n;
 	const NodeState& state;
 	
 	// Represents constrants (x<=y+c). vars2Value[x] maps to a set of constraint::<y, a, b, c>
@@ -129,6 +129,11 @@ public:
 	            const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
 	            // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
 	            bool initialized=true, string indent="");
+	ConstrGraph(const Function& func, const set<DataflowNode>& nodes, const NodeState& state, 
+	            LiveDeadVarsAnalysis* ldva, 
+	            const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
+	            // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
+	            bool initialized=true, string indent="");
 	
 	//ConstrGraph(const varIDSet& scalars, const varIDSet& arrays, bool initialized=true);
 	
@@ -151,7 +156,7 @@ public:
 	            string indent="");
 	
 	// Initialization code that is common to multiple constructors
-	void initCG(const Function& func, const DataflowNode& n, const NodeState& state, 
+	void initCG(const Function& func, const set<DataflowNode>& nodes, const NodeState& state, 
 	            bool initialized, string indent="");
 	
 	~ConstrGraph ();
@@ -349,6 +354,41 @@ public:
 	// has no annotations and the annotName=="".
 	static bool varHasAnnot(const varID& var, string annotName, void* annotVal, string indent="");
 	
+	// Called by analyses to create a copy of this lattice. However, if this lattice maintains any 
+	//    information on a per-variable basis, these per-variable mappings must be converted from 
+	//    the current set of variables to another set. This may be needed during function calls, 
+	//    when dataflow information from the caller/callee needs to be transferred to the callee/calleer.
+	// We do not force child classes to define their own versions of this function since not all
+	//    Lattices have per-variable information.
+	// varNameMap - maps all variable names that have changed, in each mapping pair, pair->first is the 
+	//              old variable and pair->second is the new variable
+	// func - the function that the copy Lattice will now be associated with
+	void remapVars(const map<varID, varID>& varNameMap, const Function& newFunc) {} 
+	
+	// Called by analyses to copy over from the that Lattice dataflow information into this Lattice.
+	// that contains data for a set of variables and incorporateVars must overwrite the state of just
+	// those variables, while leaving its state for other variables alone.
+	// We do not force child classes to define their own versions of this function since not all
+	//    Lattices have per-variable information.
+	void incorporateVars(Lattice* that) {}
+	
+	// Returns a Lattice that describes the information known within this lattice
+	// about the given expression. By default this could be the entire lattice or any portion of it.
+	// For example, a lattice that maintains lattices for different known variables and expression will 
+	// return a lattice for the given expression. Similarly, a lattice that keeps track of constraints
+	// on values of variables and expressions will return the portion of the lattice that relates to
+	// the given expression. 
+	// It it legal for this function to return NULL if no information is available.
+	// The function's caller is responsible for deallocating the returned object
+	Lattice* project(SgExpression* expr) { return copy(); }
+	
+	// The inverse of project(). The call is provided with an expression and a Lattice that describes
+	// the dataflow state that relates to expression. This Lattice must be of the same type as the lattice
+	// returned by project(). unProject() must incorporate this dataflow state into the overall state it holds.
+	// Call must make an internal copy of the passed-in lattice and the caller is responsible for deallocating it.
+	// Returns true if this causes this to change and false otherwise.
+	bool unProject(SgExpression* expr, Lattice* exprState) { return meetUpdate(exprState, "    "); }
+	
 	// Returns a constraint graph that only includes the constrains in this constraint graph that involve the
 	// variables in focusVars and their respective divisibility variables, if any. 
 	// It is assumed that focusVars only contains scalars and not array ranges.
@@ -440,7 +480,7 @@ public:
 	
 	// returns the sign of the given variable
 	affineInequality::signs getVarSign(const varID& var, string indent="");
-		
+			
 	// returns true of the given variable is =0 and false otherwise
 	bool isEqZero(const varID& var, string indent="");
 	
