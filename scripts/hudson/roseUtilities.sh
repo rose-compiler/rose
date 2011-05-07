@@ -16,26 +16,23 @@ sec_to_hms () {
 
 # Make output more pretty. Reads standard input, indents and writes to standard output.
 filter () {
-    local start_time=$SECONDS prefix=""
-#    echo ""
-#    echo "********************************************************************************"
+    local start_time=$SECONDS
+    echo ""
+    echo "********************************************************************************"
     echo "*** $*"
-#    echo "********************************************************************************"
-    while read; do
-        echo "${prefix}$REPLY"
-    done
+    echo "********************************************************************************"
+
+	cat
 }
 
 filterStep () {
-    local start_time=$SECONDS  prefix=""
+    local start_time=$SECONDS
     ( echo ) 2>&1 |filter "Starting $* step"
-    while read; do
-        echo "${prefix}$REPLY"
-    done
+
+	cat
+
     ( echo "Duration: $(sec_to_hms $SECONDS)" )
     ( echo ) 2>&1 |filter "Ending $* step"
-#    echo "********************************************************************************"
-#    echo ""
 }
 
 # Clearly indicate death
