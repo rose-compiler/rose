@@ -29,15 +29,17 @@ function runBuildStep {
   (
 
       ${buildStep} -j${NUM_PROCESS} 2>&1 | tee $outputFile
+      [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ] && killStep "${buildStep}" || true
 
       (
 
           [ -n "$outputFile" ] && runSpewAnalysis $outputFile
 
       ) 2>&1 |filterStep "${buildStep} spew analysis" 
+      [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ] && killStep "${buildStep}" || true
 
   ) 2>&1 |filterStep "${buildStep}" 
-  [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ] && killStep "${buildStep}" || echo ""
+  [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ] && killStep "${buildStep}" || true
 }
 
 
