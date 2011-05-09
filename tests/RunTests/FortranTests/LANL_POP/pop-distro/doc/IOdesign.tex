@@ -1,0 +1,439 @@
+\documentclass[11pt]{article}
+\usepackage{epsfig}
+\usepackage{verbatim}
+\textheight 225mm
+\topmargin 0cm
+\headsep 1.5cm
+\textwidth 16cm
+\pagestyle{headings}
+\begin{document}
+
+\title{POP I/O PACKAGE \\ Software Design Document}
+
+\author{Philip Jones \\ John Davis}
+
+% \date{04/24/01}
+
+\maketitle
+
+\tableofcontents
+
+\section{Introduction}
+This document specifies the design of I/O (Input/Output) routines 
+for POP (Parallel Ocean Program).  It lists the essential requirements 
+for the package (set of routines) and the design entities that address 
+each requirement.  
+
+\paragraph{}
+This was a blueprint for a remodelling job on an existing program, 
+not for new construction.  It started out as a specification, but it 
+was continually updated as the work proceeded.  Some of the original 
+design elements turned out to be redundant or impractical.  The 
+need for some current design elements were discovered only during 
+the coding effort.  
+
+\subsection{Purpose}
+Hopefully, now it is a record of the complete design as embodied 
+in the actual source code.  It should serve as a guide to anyone 
+who has to add a new format in addition to the existing binary 
+and netCDF formats.
+
+\subsection{Who Should Read This Document}
+The target audience is now primarily those programmers who will 
+modify the code within the I/O package.  
+\paragraph{}
+However, the I/O package will provide interfaces for all I/O performed 
+by POP on all of the architectures on which POP is run.
+Therefore, the programming interface description 
+\ref{Application Programmer Interface} is recommended for anyone 
+who needs to modify the calls which read or write data from 
+within POP's physics routines.
+
+\subsection{Traceability of Design Elements to Requirements}
+A separate formal Software Requirements Specification does not exist.
+The requirements for the I/O package are described in the next 
+section.  At the end of each requirement subsection, a reference 
+is given to the implementation subsection(s) which address that requirement.
+\paragraph{}
+The rest of the document then describes the software structure, 
+components, interfaces, and data needed for implementation of 
+the design.
+
+\section{Requirements}
+
+\subsection{General Requirements}
+
+\subsubsection{Self-describing Files}
+\label{Self-describing Files}
+Files written by this I/O package shall be self-describing.  
+The file itself (or alternatively an associated header file) 
+shall contain required file attributes, attributes for all data 
+included in the file, and position of data in the file.  
+Required file and data attributes are described below.  
+Formats like netCDF are by definition self-describing 
+and so automatically satisfy this requirement.
+(addressed by \ref{Binary File Format})
+
+\subsubsection{Data Formats}
+\label{Data Formats}
+Release 1 shall support both netCDF and Fortran direct-access 
+binary formats (the latter hereafter called binary).  
+Reading/writing data in both 32-bit and 64-bit 
+binary format shall be supported.  
+Binary format may use the machine native binary and 
+is not required to utilize IEEE binary form.  
+However, vendors without native IEEE binary representations 
+often supply appropriate switches for using IEEE format 
+for I/O and use of such flags is strongly encouraged for 
+portability of binary files.
+(addressed by \ref{Binary File Format})
+
+\subsubsection{Parallel I/O}
+\label{Parallel I/O}
+Reading and writing of the data portion of binary files 
+shall support multiple I/O processes on parallel machines 
+with the number of I/O processes determined through input at run time.  
+NetCDF currently does not support parallel I/O so writing 
+from a single node for netCDF is the only requirement.  
+Files written by this package shall be independent of the 
+number of processors used to perform the I/O.  
+MPI-IO may be optionally supported for those situations 
+in which it is useful (e.g. MPI-IO currently does not easily 
+support instances where padding of the domain is required).
+(addressed by \ref{Binary File Format})
+
+\subsubsection{Portability}
+\label{Portability}
+Supported platforms shall include those commonly used in 
+the international climate modelling community.  
+At this time, these are the SGI Origin, the IBM SP, 
+and the Compaq ES/GS series, as well as Linux clusters 
+assembled from commodity PCs.  
+Also supported, but in serial mode only, are the desktop Windows machines.
+\\ 
+Supported programming models shall include message passing (MPI), 
+shared-memory (SHMEM) and serial (single-processor).  
+Standard Fortran 90 shall be used (although C is not excluded 
+if Fortran interfaces to those routines are supported).  
+Although POP may be run in a hybrid OpenMP/MPI parallelism, 
+it is anticipated that I/O routines will be called from 
+outside a threaded region and it is therefore not required 
+that routines be thread-safe at this time.
+(addressed by \ref{Data Types})
+
+\subsubsection{Compatibility}
+\label{Compatibility}
+Files written by this package should be as compatible as 
+possible with existing POP data files.  
+In particular, binary record lengths should remain the size 
+of a two-dimensional global horizontal domain to reduce the 
+conflicts with various existing post-processing codes.  
+However, compatibility can be relaxed if sufficient need is 
+shown and in such a case, appropriate conversion utilities 
+shall be supplied to convert old data files.
+(addressed by \ref{Data Types})
+
+\subsubsection{Testing}
+\label{Testing}
+A test driver for this package shall be supplied to allow standalone testing.
+(addressed by \ref{})
+
+\subsubsection{Error Handling}
+\label{Error Handling}
+All routines should attempt to detect errors and call the 
+exit\_POP routine with a descriptive error message.  
+In most cases, this requirement can be met by proper 
+checking of the IOSTAT variable in standard Fortran I/O 
+intrinsics or by checking the error flag returned by all netCDF routines.
+(addressed by \ref{})
+
+\subsubsection{File Attributes}
+\label{File Attributes}
+Each file associated with this package shall contain at 
+least the following attributes as part of its self-description:
+
+\begin{description}
+\item [\textit{title:}] A name for the data file 
+\item [\textit{history:}] A string containing a history in some form 
+which should at least contain the date the file was 
+written (e.g. "written by POP version 1.2 on 10/25/2000") 
+\item [\textit{conventions:}] A string identifying any convention 
+this file adheres to (e.g. POP version 2.0 or NCAR/CSM conventions) 
+\end{description}
+(addressed by \ref{Data Types}, \ref{Binary File Format})
+
+\subsubsection{Data Attributes}
+\label{Data Attributes}
+Each data item written to a file shall contain at least 
+the following attributes:
+
+\begin{tabular}{|| l | l ||} \hline \hline
+Attribute & Description \\
+\hline \hline
+ \textit{short\_name}  &  {short name for the data} \\
+ \textit{long\_name}   &  {longer descriptive name for the data} \\
+ \textit{units}        &  {physical units for the data} \\
+ \textit{grid\_location} & {4-character string defining position on the grid} \\
+ \textit{ndims:}          & {number of dimensions} \\
+ \textit{valid\_range(2):} & {vector of two values giving the 
+valid min, max of the data} \\
+ \textit{missing\_value:} & {scalar value to replace 
+missing data (e.g. land points)} \\
+\hline \hline
+\end{tabular}
+
+\noindent
+It is expected that POP 2.0 will already contain a data type 
+for holding this data for many arrays in POP. 
+(addressed by \ref{Data Types}, \ref{Binary File Format})
+
+\subsection{Functional Requirements}
+
+\subsubsection{File Operations}
+\label{File Operations}
+The package shall contain routines for opening files and closing files.  
+In addition a utility routine is required for creating filenames 
+given a root, suffix (typically containing timestamp) 
+and appending a data format suffix 
+(.nc for netCDF is expected by many netCDF-aware tools). 
+(addressed by \ref{Application Programmer Interface}, \ref{Binary File Format})
+
+\subsubsection{Data Operations}
+\label{Data Operations}
+Routines for reading/writing integer, 32-bit real and 64-bit 
+real data are required.  
+Routines shall exist for reading/writing such data for scalars 
+and multi-dimensional arrays.
+(addressed by \ref{Application Programmer Interface}, \ref{Binary File Format})
+
+\subsubsection{Utilities}
+\label{Utilities}
+An I/O unit manager shall be supplied to dynamically assign 
+unit numbers to files and also to reserve units for stdin, 
+stdout, stderr, and POP's namelist input file.  
+In addition, the ability to redirect stdout and stderr to a 
+log file with a user-defined name from within the code 
+(rather than the Unix redirection) shall be included.  
+Constructors and destructors for any I/O-specific data 
+types are also required.
+(addressed by \ref{Binary File Format})
+
+\subsection{Requirements Traceability Matrix}
+The following table summarizes the relationship between the 
+numbered requirement subsections and the implementation 
+subsection(s) which tell how the requirement is met.
+\paragraph{}
+\begin{tabular}{|| r | c | c | c | c ||} \hline \hline
+ & \multicolumn{4}{|c||} {Addressed in Section} \\ \hline \hline
+Requirement & 
+    \ref{Layer Structure} & 
+        \ref{Data Types} & 
+            \ref{Application Programmer Interface} & 
+                \ref{Binary File Format}\\ 
+\hline \hline
+Self-describing Files \ref{Self-describing Files}     &   &   &   & X \\
+Data Formats          \ref{Data Formats}              &   & X &   &   \\
+Parallel I/O          \ref{Parallel I/O}              &   &   &   & X \\
+Portability           \ref{Portability}               &   & X &   &   \\
+Compatibility         \ref{Compatibility}             &   & X &   &   \\
+Testing               \ref{Testing}                   & X &   &   &   \\
+Error Handling        \ref{Error Handling}            & X &   &   &   \\
+File Attributes       \ref{File Attributes}           &   & X &   & X \\
+Data Attributes       \ref{Data Attributes}           &   & X &   & X \\
+File Operations       \ref{File Operations}           &   &   & X & X \\
+Data Operations       \ref{Data Operations}           &   &   & X & X \\
+Utilities             \ref{Utilities}                 &   &   &   & X \\ 
+\hline \hline
+\end{tabular}
+
+\section{Design and Implementation}
+
+\subsection{Layer Structure}
+\label{Layer Structure}
+Architecturally, the I/O package is composed of three layers 
+(Figure \ref{fig_modarch}). 
+\paragraph{}
+The bottom layer consists of one module with definitions for 
+all required data types.  
+\paragraph{}
+All the specific routines for each I/O format are defined 
+in a separate format-specific module in the middle layer.
+For Release 1 the middle layer contains modules for two formats, 
+io\_binary and io\_netcdf.  
+These two modules include all necessary routines and 
+data for most of the I/O for either binary or netCDF output.  
+\paragraph{}
+The highest layer consists mainly of wrappers which will 
+branch to either io\_binary or io\_netcdf routines.  Because 
+of their simplicity, open and close operations are also 
+done at this level.
+~\\
+\begin{figure}
+\begin{centering}
+\hspace{0.1cm}
+\epsfig{figure=io.eps,height=15cm}
+\caption{{\em IO Module Architecture.} \label{fig_modarch}}
+\end{centering}
+\end{figure}
+
+\subsection{Data Types}
+\label{Data Types}
+
+Understanding the detailed design of the data types is crucial 
+to the effective use of the programming interface 
+(\ref{Application Programmer Interface}).  Construction functions 
+are furnished, but they are simple routines with 
+most arguments optional and few defaults.  
+
+\subsubsection{Field Data Types}
+(addresses \ref{Data Formats})
+
+% What does this sentence mean?
+% This is scheduled to be a standard data type when 
+% POP version 2.0 is released
+% and will already be defined for many fields being 
+% sent to the I/O package.
+
+\begin{verbatim}
+type, public            :: io_field_desc
+    character(char_len)                         :: short_name
+    character(char_len)                         :: long_name
+    character(char_len)                         :: units
+    character(4)                                :: grid_loc
+    integer(i4)                                 :: missing_value
+    integer(i4), dimension(2)                   :: valid_range
+    integer(i4)                                 :: id
+    type (io_field_dim), dimension(:), pointer  :: field_dim
+    integer(i4)                                 :: nfield_dims
+    character(char_len), dimension(:), pointer  :: add_attrib_name
+    character(char_len), dimension(:), pointer  :: add_attrib_cval
+    integer(i4), dimension(:), pointer          :: add_attrib_ival
+    real(r4), dimension(:), pointer             :: add_attrib_rval
+    integer(i4)                                 :: num_iotasks
+    integer(i4)                                 :: current_rec
+    !   Only one of these next nine pointers can be associated.
+    !   The others must be nullified.  For convenience in initialization,
+    !  these declarations are the last listed in this type.
+    integer(i4), dimension(:), pointer          :: field_i_1d
+    integer(i4), dimension(:,:), pointer        :: field_i_2d
+    integer(i4), dimension(:,:,:), pointer      :: field_i_3d
+    real(r4), dimension(:), pointer             :: field_r_1d
+    real(r4), dimension(:,:), pointer           :: field_r_2d
+    real(r4), dimension(:,:,:), pointer         :: field_r_3d
+    real(r8), dimension(:), pointer             :: field_d_1d
+    real(r8), dimension(:,:), pointer           :: field_d_2d
+    real(r8), dimension(:,:,:), pointer         :: field_d_3d
+end type io_field_desc
+
+type, public :: io_field_dim
+    integer(i4) ::  id
+    integer(i4) :: length  ! 1 to n, but 0 means unlimited
+    integer(i4) :: start, stop, stride  ! For slicing and dicing
+    character(char_len)        :: name
+end type io_field_dim
+\end{verbatim}
+
+\subsubsection{File Data Types}
+(addresses \ref{Data Formats})
+\paragraph{}
+These data types describe any open file:
+
+\begin{verbatim}
+type :: datafile
+    character(char_len)                         ::  full_name
+    character(char_len)                         ::  data_format ! .bin or .nc
+    character(char_len)                         ::  root_name
+    character(char_len)                         ::  data_file_suffix
+    character(char_len)                         ::  header_file_suffix
+    integer(i4), dimension (2)           ::  id ! LUN (binary) or NCID (netcdf)
+    logical(kind=log_kind)                      ::  ldefine
+    character(char_len)                         ::  title
+    character(char_len)                         ::  history
+    character(char_len)                         ::  conventions
+    character(char_len), dimension(:), pointer  ::  add_attrib_cval
+    integer(i4), dimension(:), pointer          ::  add_attrib_ival
+    real(r4), dimension(:), pointer             ::  add_attrib_rval
+    integer(i4)                                 :: record_length
+    integer(i4)                                 :: current_record ! binary
+end type datafile
+\end{verbatim}
+\noindent
+where full\_name is the full name 
+(including path if not in current directory) of the file, 
+data\_file\_suffix is a suffix to be added to the root\_name 
+(typically containing a time step and a hist/tavg/rstrt identifier) 
+and ldefine is a logical flag to determine whether the file is in 
+"define" mode (when variables and attributes are defined).  
+The variable data\_format identifies the format of the file 
+and can currently take on the values 'bin' (for a 32-bit or 
+64-bit binary file) or 'nc' (for a netCDF file).  
+The id variable can be either a unit number for a Fortran binary file, 
+a file handle if MPI-IO is used 
+or a netCDF file id if netCDF I/O is used; it is dimensioned as a vector 
+with length 2 in order to support an associated header file if required.  
+The current\_record entry is meaningful only for binary files.  
+The add\_attrib\_x arrays can be used to define an arbitrary number 
+of additional attributes the user might like to assign to a file.  
+Note that functions for adding these attributes may be supplied in a 
+later release.
+
+\subsection{Application Programmer Interface}
+\label{Application Programmer Interface}
+(addresses \ref{Self-describing Files}, \ref{Data Formats})
+\paragraph{}
+At the scientific programming level, 
+the I/O API (Application Programmer Interface) emphasizes the data 
+rather than the routines/functions that manipulate the data.
+To do that, an object-oriented message metaphor is used, with the 
+dataset as the main object.  
+A dataset represents a set of one or more arrays of the same numeric type 
+(real, double-precision, or integer).  
+These ultimately reside in disk files, but the details are hidden 
+in lower layers of the software architecture, including those details 
+that depend on binary or netcdf format.  
+
+\begin{verbatim}
+
+		subroutine data_set (data_file, operation, io_field)
+		type (datafile), intent (inout)  :: data_file
+		character (*), intent (in)   :: operation
+		type (io_field_desc), intent (inout), optional :: io_field
+
+\end{verbatim}
+\noindent
+The operation to be performed by data\_set on data\_file is one of 
+'open\_read' (open readonly), 'open', 'inquire', 'define', 
+'read', 'write', or 'close'.  
+The optional argument io\_field is used for 
+'define', 'read', or 'write'.
+
+\paragraph{}
+Binary implementation is similar to the current read\_array 
+subroutines in POP.  
+NetCDF reads the data using netCDF calls and then distributes the 
+data using the POP-supplied gather/scatter module.
+
+\subsection{Binary File Format}
+\label{Binary File Format}
+(addresses \ref{Self-describing Files}, \ref{Data Formats})
+\paragraph{}
+Because Fortran direct-access binary files do not easily support 
+self-describing data (metadata), it is necessary to write much 
+of this information to an associated header file 
+(suffix will have .hdr added to it).  
+The I/O package will read and parse this header file 
+for all of the data attributes 
+(in particular the id for each field which is the record number 
+where the data begins).  
+In order to ease the parsing of this header file, the following 
+format is used to write attributes and scalar data:
+\begin{verbatim}
+short_name:attr_name:value
+\end{verbatim}
+\noindent
+where short\_name is the short\_name attribute of the field/data, 
+attr\_name is the attribute name and value is the value associated 
+with the attribute.  
+If attr\_name is absent, then the package assumes that the field 
+is a scalar with value value.  
+\end{document}
