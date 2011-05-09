@@ -26,7 +26,7 @@ int numFails=0;
 
 int main( int argc, char * argv[] ) 
 {
-	printf("========== S T A R T ==========\n");
+	printf("=== ======= S T A R T ======= ===\n");
 	
 	// Build the AST used by ROSE
 	SgProject* project = frontend(argc,argv);
