@@ -1044,7 +1044,7 @@ UnparseLanguageIndependentConstructs::unparseNullStatement (SgStatement* stmt, S
      ROSE_ASSERT(nullStatement != NULL);
 
   // Not much to do here except output a ";", not really required however.
-  // curprint ( string(";";
+     curprint ( string(";" ));
    }
 
 void
