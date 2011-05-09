@@ -47,6 +47,8 @@ sub new {
 sub is_3rdparty {
   local($_) = @_;
   return 1 if m(/alt-mpi-headers/mpich-([\d\.]+)(p\d)?(/|$)); # in projects/compass/src/util/MPIAbstraction
+  return 1 if m(/LANL_POP/netcdf-4\.(\d+)\.(\d+)(/|$)); # in tests/RunTests/FortranTests
+  return 1 if m(/LANL_POP/pop-distro(/|$));             # in tests/RunTests/FortranTests
   return 1 if m(/3rdPartyLibraries(/|$));
   return 0;
 }
