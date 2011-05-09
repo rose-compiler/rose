@@ -61,7 +61,7 @@ check-local:
 	@echo "***********************************************************************************************************"
 
 EXTRA_DIST = $(ALL_TESTCODES) README \
-        inputbuildFromString.C 
+        inputbuildFromString.C ParserBuilder.tpp
 
 clean-local:
 	rm -f *.o rose_*.* *.out
