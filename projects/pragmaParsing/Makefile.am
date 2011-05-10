@@ -3,10 +3,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-#noinst_LTLIBRARIES = libsageparser.la libparserbuilder.la
-#libsageparser_la_SOURCES = AstFromString.cpp AstFromString.h
-#libparserbuilder_la_SOURCES = ParserBuilder.cpp ParserBuilder.hpp
-#libparserbuilder_la_LIBADD = libsageparser.la
+lib_LTLIBRARIES = libStringParser.la
+libStringParser_la_SOURCES         = AstFromString.cpp ParserBuilder.cpp
+libStringParser_la_includedir      = $(includedir)/string-parser
+libStringParser_la_include_HEADERS = AstFromString.h ParserBuilder.hpp ParserBuilder.tpp
+libStringParser_la_CXXFLAGS        =
 
 #noinst_PROGRAMS = hcpragma testParserBuilder
 
@@ -61,7 +62,7 @@ check-local:
 	@echo "***********************************************************************************************************"
 
 EXTRA_DIST = $(ALL_TESTCODES) README \
-        inputbuildFromString.C 
+        inputbuildFromString.C
 
 clean-local:
 	rm -f *.o rose_*.* *.out

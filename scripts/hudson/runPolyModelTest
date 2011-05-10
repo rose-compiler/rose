@@ -1,0 +1,82 @@
+#!/bin/sh -ex
+
+export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:$LD_LIBRARY_PATH"
+
+machine_name=`uname -n`
+
+echo ""
+echo "**************************************************************************************"
+echo "Executing runPolyModelTest for ROSE Project on: $machine_name start_time = $start_time"
+echo "**************************************************************************************"
+
+CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+
+if test "x$ROSE_CONFIGURED_LIB" = "xppl" ; then
+  CONFIGURE_FLAGS+=" --enable-ppl=yes --with-ppl=${HUDSON_TMPDIR}/opt/ppl-0.11.2 "
+fi
+
+if test "x$ROSE_CONFIGURED_LIB" = "xppl-cloog" ; then
+  CONFIGURE_FLAGS+=" --enable-cloog=yes --with-cloog=${HUDSON_TMPDIR}/opt/cloog-0.16.2 "
+fi
+
+OS_MACHINE_LABEL=amd64-linux
+
+CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
+
+echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
+
+ROSE_DUMP_HUDSON_ENV=yes
+if test "x$ROSE_DUMP_HUDSON_ENV" = "xyes" ; then
+   echo "Dumping the Hudson environment...."
+   echo "# Required environment variables for reproducing Hudson tests" > HudsonEnvironment
+   echo "export PATH=$PATH" >> HudsonEnvironment
+   echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_JAVA_PATH=$ROSE_TEST_JAVA_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_BOOST_PATH=$ROSE_TEST_BOOST_PATH" >> HudsonEnvironment
+   echo "export ROSE_CONFIGURE_FLAGS=\"$CONFIGURE_FLAGS\"" >> HudsonEnvironment
+   echo "export ROSE_TEST_SQLITE_PATH=$ROSE_TEST_SQLITE_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_RTED_PATH=$ROSE_TEST_RTED_PATH" >> HudsonEnvironment
+   echo "export ROSE_TEST_QT_PATH=$ROSE_TEST_QT_PATH" >> HudsonEnvironment
+
+   echo "Finished dumping the Hudson environment into: $PWD/HudsonEnvironment"
+   cat $PWD/HudsonEnvironment
+fi
+
+./build
+
+if test -e ROSE-install ; then chmod -R u+wx ROSE-install ; fi
+rm -rf ROSE-install
+
+if test -e ROSE-build ; then chmod -R u+wx ROSE-build ; fi
+rm -rf ROSE-build
+mkdir ROSE-build
+cd ROSE-build
+
+../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
+
+make -j8 -C src
+
+if [ $? -ne 0 ]  ; then
+   echo "fatal error during 'make -C src'  , aborting..."
+   exit 3
+fi
+
+make -j8 -C projects/PolyhedralModel
+
+if [ $? -ne 0 ]  ; then
+   echo "fatal error during 'make -C project/PolyhedralModel'  , aborting..."
+   exit 3
+fi
+
+make -j8 -C projects/PolyhedralModel check
+
+if [ $? -ne 0 ]  ; then
+   echo "fatal error during 'make -C project/PolyhedralModel check'  , aborting..."
+   exit 3
+fi
+
+echo ""
+echo "********************************************************************"
+echo "Executed runTest for ROSE Project on: $machine_name date = $end_date"
+echo "********************************************************************"
+
