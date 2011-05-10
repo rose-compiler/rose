@@ -2568,7 +2568,6 @@ SgFunctionCallExp::replace_expression(SgExpression *o, SgExpression *n)
      if (get_function() == o)
         {
           set_function(n);
-          printf ("SgFunctionCallExp::replace_expression(): This should set the parent of the new expression. \n");
           n->set_parent(this);
 
           return 1;
