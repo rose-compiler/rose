@@ -33,8 +33,9 @@ function runBuildStep {
 
       # Run the optional spew analysis
       if [ -n "$outputFile" ] ; then 
-          if [ -s "$outputFile" ] ; then
+          if [ ! -s "$outputFile" ] ; then
               echo "outputFile='$outputFile' is empty or does not exist"
+			  ls
               exit 1
           else
               runSpewAnalysis $outputFile 2>&1 |filterStep "${buildStep} spew analysis" 
