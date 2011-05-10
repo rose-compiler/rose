@@ -234,6 +234,7 @@ SgAsmStatement
 SgAsmStmt
 SgAsmStoredString
 SgAsmStringStorage
+SgAsmTarget
 SgAsmType
 SgAsmType128bitFloat
 SgAsmType80bitFloat
