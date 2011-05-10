@@ -52,6 +52,13 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
      referencedScope->get_file_info()->display("Symbol Table Location");
 #endif
 
+     SgClassDefinition* classDefinition = isSgClassDefinition(referencedScope);
+     if (classDefinition != NULL)
+        {
+       // If this is a class definition, then we need to make sure that we only for alias symbols for those declarations.
+          printf ("Injection of symbols from a class definition needs to respect access privledge (private, protected, public) declarations \n");
+        }
+
      SgSymbolTable::BaseHashType* internalTable = symbolTable->get_table();
      ROSE_ASSERT(internalTable != NULL);
 
@@ -208,6 +215,38 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
           ROSE_ASSERT(false);
 #endif
         }
+
+
+  // DQ (5/6/2011): Added support to build SgAliasSymbols in derived class scopes that reference the symbols of the base classes associated with protected and public declarations.
+     SgClassDefinition* classDefinition = isSgClassDefinition(node);
+     if (classDefinition != NULL)
+        {
+       // Handle any derived classes.
+          SgBaseClassPtrList & baseClassList = classDefinition->get_inheritances();
+          SgBaseClassPtrList::iterator i = baseClassList.begin();
+          while (i != baseClassList.end())
+             {
+            // Check each base class.
+               SgBaseClass* baseClass = *i;
+               ROSE_ASSERT(baseClass != NULL);
+
+               SgClassDeclaration* tmpClassDeclaration    = baseClass->get_base_class();
+               ROSE_ASSERT(tmpClassDeclaration != NULL);
+               SgClassDeclaration* targetClassDeclaration = isSgClassDeclaration(tmpClassDeclaration->get_definingDeclaration());
+               ROSE_ASSERT(targetClassDeclaration != NULL);
+               SgScopeStatement*   referencedScope  = targetClassDeclaration->get_definition();
+
+            // We need this function to restrict it's injection of symbol to just those that are associated with public and protected declarations.
+               injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,classDefinition);
+
+               i++;
+             }
+#if 0
+          printf ("Exiting after evaluation of derived classes: are they visible: \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
    }
 
 
