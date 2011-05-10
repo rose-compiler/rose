@@ -47,6 +47,7 @@ test2001_27.C \
 test2001_28.C \
 test2001_29.C \
 test2002_01.C \
+   test2003_01.C \
 test2003_02.C \
 test2003_03.C \
 test2003_04.C \
@@ -417,14 +418,14 @@ test2005_192.C \
 test2005_193.C \
 test2005_194.C \
 test2005_195.C \
-test2005_196.C \
+   test2005_196.C \
 test2005_197.C \
 test2005_198.C \
 test2005_199.C \
 test2005_202.C \
 test2005_203.C \
-test2005_206.C \
-test2005_207.C \
+   test2005_206.C \
+   test2005_207.C \
 test2005_208.C \
 test2005_209.C \
 test2006_01.C \
@@ -546,6 +547,10 @@ test2006_151.C \
 test2006_152.C \
 test2006_153.C \
 test2006_154.C \
+   test2006_155.C \
+   test2006_156.C \
+   test2006_157.C \
+   test2006_158.C \
 test2006_159.C \
 test2006_160.C \
 test2006_161.C \
@@ -575,6 +580,7 @@ test2007_11.C \
 test2007_12.C \
 test2007_13.C \
 test2007_14.C \
+   test2007_15.C \
 test2007_16.C \
 test2007_17.C \
 test2007_21.C \
@@ -623,7 +629,7 @@ test2007_135.C \
 test2007_137.C \
 test2007_140.C \
 test2007_141.C \
-test2007_142.C \
+   test2007_142.C \
 test2007_147.C \
 test2007_150.C \
 test2007_151.C \
@@ -707,16 +713,41 @@ inputForLoopLocator.C \
 X.C \
 inputBug317.C \
 inputBug327.C \
-test2003_01.C \
 test2005_09.C \
 test2005_104.C \
-test2006_155.C \
-test2006_156.C \
-test2006_157.C \
-test2006_158.C \
-test2007_15.C \
 test2010_24.C \
 test2010_25.C
+
+# DQ (5/8/2011): These fail only in the generated (unparsed) code for the new name
+# qualification support.  Thus we can't use them to test the new name qualifiction
+# support until that work is connected to the unparser.  So now we include these
+# but use the rose compiler options: "-rose:skipfinalCompileStep". So we can avoid 
+# these specific errors (and those of the new name qualification tests).
+# test2005_196.C
+# test2005_206.C
+# test2005_207.C
+# test2007_142.C
+# test2003_01.C
+# test2006_155.C
+# test2006_156.C
+# test2006_157.C
+# test2006_158.C
+# test2007_15.C
+
+# DQ (5/8/2011): These are the new test codes for the new name qualification support.
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2011_19.C \
+   test2011_20.C \
+   test2011_21.C \
+   test2011_22.C \
+   test2011_23.C \
+   test2011_24.C \
+   test2011_25.C \
+   test2011_26.C \
+   test2011_27.C \
+   test2011_28.C \
+   test2011_29.C
+
 
 if !ROSE_USE_INSURE
 # This test code fails with Insure++

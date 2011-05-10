@@ -161,6 +161,12 @@ struct hash_nodeptr
                                                          const SgType* t,
                                                          SgScopeStatement *currentScope=NULL);
 
+// DQ (5/7/2011): Added support for SgClassSymbol (used in name qualification support).
+   SgClassSymbol*    lookupClassSymbolInParentScopes   (const SgName & name, SgScopeStatement *currentScope = NULL);
+   SgTypedefSymbol*  lookupTypedefSymbolInParentScopes (const SgName & name, SgScopeStatement *currentScope = NULL);
+   SgTemplateSymbol* lookupTemplateSymbolInParentScopes(const SgName & name, SgScopeStatement *currentScope = NULL);
+   SgEnumSymbol*     lookupEnumSymbolInParentScopes    (const SgName & name, SgScopeStatement *currentScope = NULL);
+
    /*! \brief set_name of symbol in symbol table.
 
        This function extracts the symbol from the relavant symbol table,

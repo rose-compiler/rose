@@ -16,5 +16,35 @@ Comments:
 
 
 
+May 2011: Continued rewrite of Name Qualification support.
+
+  A new version of the name qualification support in ROSE has been implemented.
+This work define how much name qualification is to be used in expressing names
+on C++ classes, functions, enums, types, variables, namespaces, etc.  This is 
+the forth rewrite of this subject are in ROSE, and it has been an especially 
+difficult subject are that only effects C++ source-to-source code generation.
+
+   The subject is devided over several parts each implemented incrementally
+over time so that each could be separately tested.  These parts are:
+   1) Symbol table handling:
+      Names that are included into alternative scopes (e.g. using declarations) 
+      are included using a special alias symbol (SgAliasSymbol) that recorded 
+      its visability in the current scope while clearly communicating that its 
+      location is an alternative scope.  This symbol handling applies to scopes
+      referenced using:
+        a) Using declarations
+        b) using directives
+        c) derived classes
+
+   2) Name visibility:
+      We evaluate the visiblity of each name referenced in each scope and establish
+      the minimum number of name qualifications required to make a name visible
+      using common scope rules (visibility in a parent scope).
+
+   3) Name hidding:
+      We evaluate potential ambiguity in matching names and add another level of
+      name qualification and evaluate new qualified name for further name 
+      qualifications.
+
 
 

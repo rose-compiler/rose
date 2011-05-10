@@ -5,7 +5,7 @@ INCLUDES = $(ROSE_INCLUDES)
 noinst_LTLIBRARIES = libastHiddenTypeAndDeclarationLists.la
 
 libastHiddenTypeAndDeclarationLists_la_SOURCES      = \
-     HiddenList.C  HiddenList_Intersection.C HiddenList_Output.C NamespacesAndClassTraversal.C
+     HiddenList.C  newHiddenList.C  HiddenList_Intersection.C HiddenList_Output.C NamespacesAndClassTraversal.C
 
 # HiddenList_main.C  HiddenList_Output.C
 

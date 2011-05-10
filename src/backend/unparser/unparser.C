@@ -281,7 +281,14 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
         {
        // DQ (5/22/2007): Moved from SgProject::parse() function to here so that propagateHiddenListData() could be called afterward.
        // DQ (5/8/2007): Now build the hidden lists for types and declarations (Robert Preissl's work)
+#if 0
           Hidden_List_Computation::buildHiddenTypeAndDeclarationLists(file);
+#else
+          void newBuildHiddenTypeAndDeclarationLists( SgNode* node );
+          printf ("Developing a new implementation of the hidden list support. \n");
+          newBuildHiddenTypeAndDeclarationLists(file);
+          printf ("DONE: new hidden list support built. \n");
+#endif
 
        // DQ (6/5/2007): We actually need this now since the hidden lists are not pushed to lower scopes where they are required.
        // DQ (5/22/2007): Added support for passing hidden list information about types, declarations and elaborated types to child scopes.

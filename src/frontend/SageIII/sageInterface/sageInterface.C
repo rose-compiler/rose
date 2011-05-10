@@ -4366,6 +4366,13 @@ SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name,
   // DQ (1/24/2011): This function is inconsistant with an implementation that would correctly handle SgAliasSymbols.
   // Also this function might get a SgClassSymbol instead of a SgVariableSymbol when both names are used.
   // This function needs to be fixed to handle the multi-map semantics of the symbol tables.
+
+#if 0
+  // DQ (5/7/2011): I think this implementation is not correct (does not resolve past hidden types) and so should
+  // be fixed to be consistant with the implementation of SageInterface::lookupClassSymbolInParentScopes().
+  // Since I don't know where this function is used, I don't want to change it just yet.
+     printf ("WARNING: SageInterface::lookupVariableSymbolInParentScopes() should be implemented similar to SageInterface::lookupClassSymbolInParentScopes() \n");
+
      SgVariableSymbol* result = NULL;
      SgSymbol* symbol=lookupSymbolInParentScopes(name,cscope);
      if (symbol != NULL)
@@ -4378,6 +4385,119 @@ SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name,
           result = isSgVariableSymbol(symbol);
         }
      return result;
+#else
+  // I think this is the better implementation.
+     SgVariableSymbol* symbol = NULL;
+     if (cscope == NULL)
+          cscope = SageBuilder::topScopeStack(); 
+     ROSE_ASSERT(cscope != NULL);
+
+     while ((cscope != NULL) && (symbol == NULL))
+        {
+       // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
+          symbol = cscope->lookup_variable_symbol(name);
+
+          if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
+               cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
+            else
+               cscope = NULL;
+        }
+
+     return symbol;
+#endif
+   }
+
+SgClassSymbol *
+SageInterface::lookupClassSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+   {
+  // DQ (5/7/2011): I think this is the better implementation that lookupVariableSymbolInParentScopes() should have.
+     SgClassSymbol* symbol = NULL;
+     if (cscope == NULL)
+          cscope = SageBuilder::topScopeStack(); 
+     ROSE_ASSERT(cscope != NULL);
+
+     while ((cscope != NULL) && (symbol == NULL))
+        {
+       // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
+          symbol = cscope->lookup_class_symbol(name);
+
+          if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
+               cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
+            else
+               cscope = NULL;
+        }
+
+     return symbol;
+   }
+
+SgTypedefSymbol *
+SageInterface::lookupTypedefSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+   {
+  // DQ (5/7/2011): This is similar to lookupClassSymbolInParentScopes().
+     SgTypedefSymbol* symbol = NULL;
+     if (cscope == NULL)
+          cscope = SageBuilder::topScopeStack(); 
+     ROSE_ASSERT(cscope != NULL);
+
+     while ((cscope != NULL) && (symbol == NULL))
+        {
+       // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
+          symbol = cscope->lookup_typedef_symbol(name);
+
+          if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
+               cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
+            else
+               cscope = NULL;
+        }
+
+     return symbol;
+   }
+
+SgTemplateSymbol *
+SageInterface::lookupTemplateSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+   {
+  // DQ (5/7/2011): This is similar to lookupClassSymbolInParentScopes().
+     SgTemplateSymbol* symbol = NULL;
+     if (cscope == NULL)
+          cscope = SageBuilder::topScopeStack(); 
+     ROSE_ASSERT(cscope != NULL);
+
+     while ((cscope != NULL) && (symbol == NULL))
+        {
+       // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
+          symbol = cscope->lookup_template_symbol(name);
+
+          if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
+               cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
+            else
+               cscope = NULL;
+        }
+
+     return symbol;
+   }
+
+SgEnumSymbol *
+SageInterface::lookupEnumSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+   {
+  // DQ (5/7/2011): This is similar to lookupClassSymbolInParentScopes().
+  // A templated solution might make for a better implementation.
+     SgEnumSymbol* symbol = NULL;
+     if (cscope == NULL)
+          cscope = SageBuilder::topScopeStack(); 
+     ROSE_ASSERT(cscope != NULL);
+
+     while ((cscope != NULL) && (symbol == NULL))
+        {
+       // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
+          symbol = cscope->lookup_enum_symbol(name);
+
+          if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
+               cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
+            else
+               cscope = NULL;
+        }
+
+     return symbol;
    }
 
 void
