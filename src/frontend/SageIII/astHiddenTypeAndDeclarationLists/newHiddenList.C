@@ -1045,6 +1045,16 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
      if (declaration != NULL)
         {
        // If this is a declaration of something that has a name then we need to mark it as having been seen.
+
+       // In some cases of C++ name qualification depending on if the defining declaration (or a forward 
+       // declaration is in a scope that would define the declaration to a scope where the declaration could be 
+       // present).  This detail is handled by reporting if such a declaration has been seen yet.  Since the 
+       // preorder traversal is the same as the traversal used in the unparsing it is sufficient to record
+       // the order of the processing here and not complicate the unparser directly.  Note that the use of
+       // function declarations follow these rules and so are a problem when the prototype is defined in a
+       // function (where it does not communicate the defining declarations location) instead of in a global 
+       // scope or namespace scope (where it does appear to communicate its position.
+
           SgDeclarationStatement* firstNondefiningDeclaration = declaration->get_firstNondefiningDeclaration();
           if (referencedNameSet.find(firstNondefiningDeclaration) == referencedNameSet.end())
              {
