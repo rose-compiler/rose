@@ -21,6 +21,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmBlock        , "AsmBlock",        "AsmBlockTag" );
      NEW_TERMINAL_MACRO ( AsmOperandList  , "AsmOperandList",  "AsmOperandListTag" );
      NEW_TERMINAL_MACRO(AsmTarget, "AsmTarget", "AsmTargetTag");
+     NEW_TERMINAL_MACRO(AsmTargetList, "AsmTargetList", "AsmTargetListTag");
 
      NEW_TERMINAL_MACRO(AsmArmInstruction, "AsmArmInstruction", "AsmArmInstructionTag");
      AsmArmInstruction.setFunctionPrototype("HEADER_BINARY_ARM_INSTRUCTION", "../Grammar/BinaryInstruction.code");
@@ -463,7 +464,8 @@ Grammar::setUpBinaryInstructions ()
 
      NEW_NONTERMINAL_MACRO (AsmNode,
                             AsmStatement | AsmExpression | AsmInterpretation | AsmOperandList | AsmType |
-                            AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList | AsmTarget,
+                            AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList | AsmTarget |
+                            AsmTargetList,
                             "AsmNode","AsmNodeTag", false);
 
   // DQ (3/15/2007): Added support forbinaries (along lines of suggestions by Thomas Dullien)
@@ -515,6 +517,10 @@ Grammar::setUpBinaryInstructions ()
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmTarget.setDataPrototype("SgAsmBlock*", "block", "= NULL",       /*doxygen*/
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AsmTargetList.setFunctionPrototype("HEADER_BINARY_TARGET_LIST", "../Grammar/BinaryInstruction.code");
+     AsmTargetList.setDataPrototype("SgAsmTargetPtrList", "targets", "",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
      // Instruction basic block. One entry point (first instruction) and one exit point (last instruction).
