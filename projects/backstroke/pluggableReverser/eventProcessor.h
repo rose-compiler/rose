@@ -108,7 +108,7 @@ public:
 	bool checkForInitialVersions(const VariableVersionTable& var_table);
 
 	//! Get all declarations of stacks which store values of different types.
-	std::vector<SgVariableDeclaration*> getAllStackDeclarations() const;
+	std::vector<SgVariableDeclaration*> getStackDeclarationsForLastEvent() const;
 
 	void setVariableRenaming(VariableRenaming* var_renaming)
 	{ var_renaming_ = var_renaming; }

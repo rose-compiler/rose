@@ -1,8 +1,9 @@
-#ifndef BACKSTROKE_VALUEGRAPHNODE_H
-#define	BACKSTROKE_VALUEGRAPHNODE_H
+#ifndef BACKSTROKE_VALUEGRAPHNODE2_H
+#define	BACKSTROKE_VALUEGRAPHNODE2_H
 
+#include "types.h"
 #include <rose.h>
-#include <ssa/staticSingleAssignment.h>
+#include <boost/lexical_cast.hpp>
 
 namespace Backstroke
 {
@@ -12,15 +13,15 @@ typedef std::vector<SgInitializedName*> VarName;
 
 struct PhiNodeDependence
 {
-	enum ControlDependenceType
-	{
-		cdTrue,
-		cdFalse,
-		cdCase,
-		cdDefault
-	};
+//	enum ControlDependenceType
+//	{
+//		cdTrue,
+//		cdFalse,
+//		cdCase,
+//		cdDefault
+//	};
 
-	PhiNodeDependence(int v)
+	explicit PhiNodeDependence(int v)
 	: version(v) {}
 
 	//! One version member of the phi function.
@@ -29,12 +30,13 @@ struct PhiNodeDependence
 	//!  The SgNode on which the phi function has a control dependence for the version.
 	SgNode* cdNode;
 
-	//! The control dependence type.
-	ControlDependenceType cdType;
+	////! The control dependence type.
+	//ControlDependenceType cdType;
 
-	//! If the control dependence is cdCase, this is the case value.
-	int caseValue;
+	////! If the control dependence is cdCase, this is the case value.
+	//int caseValue;
 };
+
 
 struct VersionedVariable
 {
@@ -42,6 +44,12 @@ struct VersionedVariable
 	VersionedVariable(const VarName& varName, int ver, bool pseudoDef = false)
 	: name(varName), version(ver), isPseudoDef(pseudoDef) {}
 
+	std::string toString() const;
+
+    bool isNull() const { return name.empty(); }
+    SgType* getType() const { return name.back()->get_type(); }
+    SgExpression* getVarRefExp() const;
+	
 	//! The unique name of this variable.
 	VarName name;
 
@@ -51,9 +59,10 @@ struct VersionedVariable
 	//! Indicated if this variable is defined by a phi function.
 	bool isPseudoDef;
 
-	//! All version it dependes if this variable is a pseudo def.
+	//! All versions it dependes if this variable is a pseudo def.
 	std::vector<PhiNodeDependence> phiVersions;
 };
+
 
 inline bool operator == (const VersionedVariable& var1, const VersionedVariable& var2)
 {
@@ -68,118 +77,115 @@ inline bool operator < (const VersionedVariable& var1, const VersionedVariable& 
 
 inline std::ostream& operator << (std::ostream& os, const VersionedVariable& var)
 {
-	if (var.name.empty())
-		return os << "TEMP";
-	return os << StaticSingleAssignment::varnameToString(var.name) << ' ' << var.version;
+	return os << var.toString();
 }
+
+
+/**********************************************************************************************************/
+// Value Graph Nodes
 
 
 struct ValueGraphNode
 {
-	ValueGraphNode() {}
+	explicit ValueGraphNode(SgNode* node = NULL) : astNode(node) {}
 
-	virtual void writeDotString(std::ostream& out) const
-	{
-		out << "[label=\"\"]";
-	}
+	virtual std::string toString() const
+	{ return ""; }
+
+    virtual int getCost() const
+    { return 0; }
+
+    //! The corresponding AST node of this value graph node.
+    SgNode* astNode;
 };
 
-struct TempVariableNode : ValueGraphNode
-{
-	TempVariableNode(SgType* t) : type(t) {}
-	
-	virtual void writeDotString(std::ostream& out) const
-	{
-		out << "[label=\"" << "TEMP" << "\"]";
-	}
+//! A value node can hold a lvalue and a rvalue.
+struct ValueNode : ValueGraphNode
+{    
+	explicit ValueNode(SgNode* node = NULL) : ValueGraphNode(node) {}
+    explicit ValueNode(const VersionedVariable& v, SgNode* node = NULL)
+    : ValueGraphNode(node), var(v) {}
 
-	SgType* type;
-};
+	virtual std::string toString() const;
+    virtual int getCost() const;
 
-struct VariableNode : ValueGraphNode
-{
-	VariableNode() {}
-	VariableNode(const VarName& name, int ver)
-	: var(name, ver) {}
-	VariableNode(const VersionedVariable& v)
-	: var(v) {}
+    //void addVariable(const VersionedVariable& newVar);
 
-	void setVariable(const VarName& name, int ver)
-	{
-		var.name = name;
-		var.version = ver;
-	}
+	bool isTemp() const { return var.isNull(); }
 
-	void setVariable(const VersionedVariable& v)
-	{
-		var = v;
-	}
+    //! If the AST node is a value expression, it is avaiable.
+	bool isAvailable() const { return isSgValueExp(astNode) != NULL; }
 
-	virtual void writeDotString(std::ostream& out) const
-	{
-		out << "[label=\"" << toString() << "\"]";
-	}
+    //! Get the type of the value.
+    SgType* getType() const;
+    
 
-	std::string toString() const
-	{
-		std::ostringstream os;
-		os << var;
-		return os.str();
-	}
+//    SgNode* getNode() const { return astNode; }
+//    void setNode(SgNode* node)  { astNode = node; }
 
-	//! The variable name with a version attached to this node.
+    //! All variables sharing the same value.
 	VersionedVariable var;
+
+    //! The unique name of this value node in VG which becomes
+    //! the name of the corresponding variable
+    std::string str;
 };
 
-struct PhiNode : VariableNode
+//! This node represents a phi node in the SSA form CFG. The AST node inside (actually
+//! from its parent class ValueNode) only describe the place of this Phi node in the CFG.
+struct PhiNode : ValueNode
 {
-	PhiNode(const VersionedVariable& v) : VariableNode(v) {}
+    enum GateType
+    {
+        phi,
+        mu,
+        eta
+    };
+
+	PhiNode(const VersionedVariable& v, SgNode* node)
+    : ValueNode(v, node), dagIndex(0)/*, type(phi)*/ {}
 
 	//std::vector<ValueGraphNode*> nodes;
 
-	virtual void writeDotString(std::ostream& out) const
-	{
-		out << "[label=\""  << "phi\\n" << toString() << "\"]";
-	}
+	virtual std::string toString() const
+	{ return "PHI_" + var.toString(); }
 
+    virtual int getCost() const;
+
+//    SgType* getType() const
+//    { return var.name.back()->get_type(); }
+
+    //! The DAG index.
+    int dagIndex;
+
+    //! The type of this gate function
+    //GateType type;
 };
 
-struct ValueNode : VariableNode
-{
-	ValueNode(SgValueExp* exp) : VariableNode(), valueExp(exp) {}
-
-	virtual void writeDotString(std::ostream& out) const
-	{
-		out << "[label=\""  << valueExp->unparseToString() << "\\n" << toString() << "\"]";
-	}
-
-	SgValueExp* valueExp;
-};
-
+//! An operator node represents a unary or binary operation. It only has one in edge,
+//! and one or two out edges, for unary and binary operation separately.
 struct OperatorNode : ValueGraphNode
 {
-	enum OperatorType
-	{
-		otAdd,
-		otSubtract,
-		otMultiply,
-		otDivide,
-		otMod,
-		//otAssign,
-		otGreaterThan,
-		otLessThan,
-		otUnknown
-	};
+    static std::map<VariantT, std::string> typeStringTable;
+    static void buildTypeStringTable();
 
+	//OperatorNode(OperatorType t) : ValueGraphNode(), type(t) {}
+	explicit OperatorNode(VariantT t, SgNode* node = NULL);
 
-	//! Given a variantT value, return a coresponding operator type.
-	static OperatorType getOperatorType(VariantT t);
+	virtual std::string toString() const;
+	
+	VariantT type;
+};
 
-	OperatorNode(OperatorType t) : ValueGraphNode(), type(t) {}
-	OperatorNode(VariantT t) : ValueGraphNode(), type(getOperatorType(t)) {}
-	OperatorType type;
-
-	virtual void writeDotString(std::ostream& out) const;
+struct FunctionCallNode: ValueGraphNode
+{
+    explicit FunctionCallNode(SgFunctionCallExp* funcCall, bool v = false)
+            : ValueGraphNode(funcCall), isVirtual(v) {}
+    
+    SgFunctionCallExp* getFunctionCallExp() const
+    { return isSgFunctionCallExp(astNode); }
+    
+    bool isVirtual;
 };
 
 #if 0
@@ -213,20 +219,94 @@ struct BinaryOperaterNode : OperatorNode
 };
 #endif
 
-struct FunctionCallNode : ValueGraphNode
-{
+/**********************************************************************************************************/
+// Value Graph Edges
 
+struct ValueGraphEdge
+{
+	ValueGraphEdge() : cost(0), dagIndex(0) {}
+	ValueGraphEdge(int cst, int dagIdx, const PathSet& pths)
+    : cost(cst), dagIndex(dagIdx), paths(pths) {}
+
+    virtual ~ValueGraphEdge() {}
+
+	virtual std::string toString() const;
+    
+    virtual ValueGraphEdge* clone() 
+    { return new ValueGraphEdge(*this); }
+
+    //! The cost attached on this edge. The cost may come from state saving,
+    //! or operations.
+	int cost;
+
+    //! A CFG may be seperated into several DAGs, and each DAG have its own path
+    //! numbers. This index represents which DAG the following paths belong to.
+    int dagIndex;
+
+    //! All paths on which this relationship exists.
+    PathSet paths;
 };
 
-inline VariableNode* isVariableNode(ValueGraphNode* node)
+//! An edge coming from an operator node.
+struct OrderedEdge : ValueGraphEdge
 {
-	return dynamic_cast<VariableNode*>(node);
-}
+	explicit OrderedEdge(int idx) : index(idx) {}
 
-inline TempVariableNode* isTempVariableNode(ValueGraphNode* node)
+	virtual std::string toString() const
+	{ return boost::lexical_cast<std::string>(index); }
+    
+    virtual OrderedEdge* clone() 
+    { return new OrderedEdge(*this); }
+
+	int index;
+};
+
+#if 0
+//! An edge coming from a phi node.
+struct PhiEdge : ValueGraphEdge
 {
-	return dynamic_cast<TempVariableNode*>(node);
-}
+    PhiEdge(const std::set<ReachingDef::FilteredCfgEdge>* edges)
+    : ValueGraphEdge(0, dagIdx, paths), visiblePathNum(visibleNum) {}
+    //! A set of edges indicating where the target def comes from in CFG.
+    std::set<ReachingDef::FilteredCfgEdge> cfgEdges;
+};
+#endif
+
+//! An edge going to the root node.
+struct StateSavingEdge : ValueGraphEdge
+{
+	//StateSavingEdge() : visiblePathNum(0) {}
+//    StateSavingEdge(int cost, int dagIdx, int visibleNum,
+//        const PathSet& paths, SgNode* killerNode)
+//    :   ValueGraphEdge(cost, dagIdx, paths), 
+//        visiblePathNum(visibleNum), killer(killerNode) {}
+    
+    StateSavingEdge(
+            int cost, int dagIdx, const PathSet& paths,
+            const std::map<int, PathSet> visiblePaths, 
+            SgNode* killerNode)
+    :   ValueGraphEdge(cost, dagIdx, paths), 
+        visiblePaths(visiblePaths), killer(killerNode) 
+    {}
+
+	virtual std::string toString() const;
+    
+    virtual StateSavingEdge* clone() 
+    { return new StateSavingEdge(*this); }
+
+	//int visiblePathNum;
+    std::map<int, PathSet> visiblePaths;
+    SgNode* killer;
+    
+};
+
+/**********************************************************************************************************/
+// Utility functions
+
+//inline TempVariableNode* isTempVariableNode(ValueGraphNode* node)
+//{
+//	return dynamic_cast<TempVariableNode*>(node);
+//}
 
 inline PhiNode* isPhiNode(ValueGraphNode* node)
 {
@@ -243,7 +323,17 @@ inline ValueNode* isValueNode(ValueGraphNode* node)
 	return dynamic_cast<ValueNode*>(node);
 }
 
+inline OrderedEdge* isOrderedEdge(ValueGraphEdge* edge)
+{
+	return dynamic_cast<OrderedEdge*>(edge);
+}
+
+inline StateSavingEdge* isStateSavingEdge(ValueGraphEdge* edge)
+{
+	return dynamic_cast<StateSavingEdge*>(edge);
+}
+
 }  // End of namespace Backstroke
 
-#endif	/* BACKSTROKE_VALUEGRAPHNODE_H */
+#endif	/* BACKSTROKE_VALUEGRAPHNODE2_H */
 

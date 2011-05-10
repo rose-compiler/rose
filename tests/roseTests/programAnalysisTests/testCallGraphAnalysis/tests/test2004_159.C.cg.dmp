@@ -1,6 +1,6 @@
 A::A ->
 A::A ->
-fooError -> A::operator* A::operator-> A::operator[]
 A::operator* ->
 A::operator-> ->
 A::operator[] ->
+fooError -> A::A A::operator* A::operator-> A::operator[]
