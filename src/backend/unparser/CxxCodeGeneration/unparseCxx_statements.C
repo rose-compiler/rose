@@ -4305,6 +4305,8 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
      if (p != classdefn_stmt->get_inheritances().end())
         {
           curprint ( string(": "));
+
+       // DQ (5/9/2011): This loop structure should be rewritten...
           while(true)
              {
             // DQ (4/25/2004): Use the new modifier interface
@@ -4335,16 +4337,20 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
                   {
                     curprint ( string("protected "));
                   }
-  
+
+            // DQ (5/9/2011): This might have to be a qualified name...
             // base name
                curprint ( tmp_decl->get_name().str());
                p++;
+
                if (p != classdefn_stmt->get_inheritances().end())
                   {
                     curprint ( string(","));
                   }
                  else
+                  {
                     break;
+                  }
              }
         }
 

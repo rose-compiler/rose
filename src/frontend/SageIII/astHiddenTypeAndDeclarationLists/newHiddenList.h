@@ -32,6 +32,10 @@ class HiddenListSynthesizedAttribute
    };
 
 
+class nameQualificationInformation
+   {
+   };
+
 class HiddenListTraversal : public AstTopDownBottomUpProcessing<HiddenListInheritedAttribute, HiddenListSynthesizedAttribute>
    {
      private:
