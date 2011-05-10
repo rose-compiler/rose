@@ -3955,6 +3955,27 @@ HEADER_BINARY_RET_END
 HEADER_BINARY_FUNCTION_CALL_START
 HEADER_BINARY_FUNCTION_CALL_END
 
+HEADER_BINARY_TARGET_START
+	SgAsmTarget(SgNode *parent, SgAsmBlock *target_block, rose_addr_t target_addr);
+	explicit SgAsmTarget(SgNode *parent);
+HEADER_BINARY_TARGET_END
+
+SOURCE_BINARY_TARGET_START
+	SgAsmTarget::SgAsmTarget(SgNode *parent, SgAsmBlock *target_block, rose_addr_t target_addr) {
+		set_parent(parent);
+		set_block(target_block);
+		set_address(target_addr);
+	}
+	SgAsmTarget::SgAsmTarget(SgNode *parent) {
+		set_parent(parent);
+		set_block(NULL);
+		set_address(0);
+	}
+SOURCE_BINARY_TARGET_END
+
+HEADER_BINARY_TARGET_LIST_START
+HEADER_BINARY_TARGET_LIST_END
+
 HEADER_BINARY_BLOCK_START
         void append_statement( SgAsmStatement* statement );
         void remove_statement( SgAsmStatement* statement );
