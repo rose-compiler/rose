@@ -533,9 +533,9 @@ Grammar::setUpBinaryInstructions ()
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      AsmBlock.setDataPrototype("SgAsmStatementPtrList","statementList","", //in order of execution
                                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AsmBlock.setDataPrototype("SgAddressList", "cached_successors", "",
-                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmBlock.setDataPrototype("bool", "complete_successors", "= false", // are all successors known and cached?
+     AsmBlock.setDataPrototype("SgAsmTargetPtrList", "successors", "",
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmBlock.setDataPrototype("bool", "successors_complete", "",
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
