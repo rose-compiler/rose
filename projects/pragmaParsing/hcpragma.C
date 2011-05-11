@@ -142,7 +142,7 @@ using namespace AstFromString;
     if (!afs_match_char(')'))
     {
       printf ("Error: expecting ) after parsing #pragma CUDA pl dim(...\n");
-      assert (false);
+      assert (0);
     }
 
     return result;

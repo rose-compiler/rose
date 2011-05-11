@@ -675,7 +675,7 @@ SgExprStatement*
 buildFunctionCallStmt(SgExpression* function, SgExprListExp* parameters=NULL);
 
 
-//! Build a label statement, handling label symbol and scope internally.
+//! Build a label statement, name is the label's name. Handling label symbol and scope internally.
 
 //! Note that the scope of a label statement is special. It is SgFunctionDefinition,
 //! not the closest scope statement such as SgBasicBlock. 
