@@ -5033,6 +5033,13 @@ SageInterface::getScope( const SgNode* astNode )
      //SgScopeStatement* scopeStatement = isSgScopeStatement(parentNode);
      ROSE_ASSERT (scopeStatement != NULL);
 
+     // ensure the search is inclusive
+     if (isSgScopeStatement(astNode))
+       if (isSgScopeStatement(parentNode))
+       {
+          ROSE_ASSERT (astNode == parentNode);
+       }
+
    // return scopeStatement;
        return const_cast<SgScopeStatement*>(scopeStatement);
    }

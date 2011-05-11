@@ -3832,6 +3832,7 @@ HEADER_SYMBOL_TABLE_START
 
       //! Outputs symbol table information (useful for debugging)
           void print( std::string label, VariantT nodeType = V_SgSymbol );
+          void print();
        // void print( std::string label );
 
        // Output to ostream (this function is not implemented)
@@ -7803,6 +7804,11 @@ SgSymbolTable::count(const SgName &nm) const
      return p_table->count(nm);
    }
 
+void
+SgSymbolTable::print( ) // Liao 5/5/2011. Added this to support calling this from gdb
+  {
+    print ("default settings", V_SgSymbol);
+  }
 void
 SgSymbolTable::print( std::string label, VariantT nodeType )
    {
