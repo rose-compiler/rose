@@ -9,13 +9,17 @@
 
 #include "ParallelRTS.h"
 
+#define EXITCODE_OK 0
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /***************************** HELPER FUNCTIONS *************************************/
-// \pp \todo this function leaks memory, remove from interface
-const char* rted_ConvertIntToString(int t);
+// \pp \todo using convertIntToString currently leakes memory as the generated
+//           string is never freed. This could (likely) be done in the function numval...
+const char*
+rted_ConvertIntToString(size_t num);
 
 
 #ifdef ROSE_WITH_ROSEQT

@@ -487,8 +487,8 @@ void snd_InitVariable( rted_TypeDesc    td,
                        rted_SourceInfo  si
                      )
 {
-  fprintf(stderr, " sndvar from %i @ %lu\n", MYTHREAD, si.src_line);
-  fflush(stderr);
+  //~ fprintf(stderr, " sndvar from %i @ %lu\n", MYTHREAD, si.src_line);
+  //~ fflush(stderr);
 
   // other threads can only deref shared addresses;
   //   \todo the current impl might fail for shared pointers that are converted
@@ -645,8 +645,8 @@ void msgBroadcast(const char* msg, const size_t len)
   mb->unread_threads = THREADS - 1;
   mb->msg_lock = upc_global_lock_alloc();
 
-  fprintf(stderr, "w (#%i) : %i\n", MYTHREAD, ((rted_MsgHeader*) msg)->kind);
-  fflush(stderr);
+  //~ fprintf(stderr, "w (#%i) : %i\n", MYTHREAD, ((rted_MsgHeader*) msg)->kind);
+  //~ fflush(stderr);
 
   for (int i = 0; i < THREADS; ++i)
   {
@@ -670,8 +670,8 @@ void msgReceive()
   shared rted_MsgHeader* m = msgDeQueue();
   rted_MsgHeader*        msg = (rted_MsgHeader*)m;
 
-  fprintf(stderr, "r (#%i) : %i (%i)\n", MYTHREAD, msg->kind, msg->threadno);
-  fflush(stderr);
+  //~ fprintf(stderr, "r (#%i) : %i (%i)\n", MYTHREAD, msg->kind, msg->threadno);
+  //~ fflush(stderr);
 
   switch (msg->kind)
   {

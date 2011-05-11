@@ -50,26 +50,6 @@ SgStatement* getSurroundingStatement(SgExpression* n);
 /// \overload
 SgStatement* getSurroundingStatement(SgInitializedName* n);
 
-/// \brief   returns the base type for arrays and pointers
-/// \param t a type
-/// \return  the base_type, if it exists; t otherwise
-/// \note    type-modifiers are currently not skipped (should they be?)
-///          e.g., int* volatile X[] = /* ... */;
-SgType* skip_ArrPtrType(SgType* t);
-
-/// \brief   returns an array's base type
-/// \param t a type
-/// \return  the base_type, if it exists; t otherwise
-SgType* skip_ArrayType(SgType* t);
-
-/// \brief  skips one modifier type node
-/// \return the base type if t is an SgModifierType
-///         t otherwise
-SgType* skip_ModifierType(SgType* t);
-
-/// \brief Follow the base type of @c type until we reach a non-typedef.
-SgType* skip_Typedefs( SgType* type );
-
 /// \brief returns the UPC shared mask for a type
 size_t upcSharedMask(SgType* t);
 
@@ -96,9 +76,6 @@ bool isFileIOFunctionCall(const std::string& name);
 /// \brief tests whether type is a C++ filestream (i.e., std::fstream)
 bool isFileIOVariable(SgType* type);
 
-/// \brief tests whether the declaration is a constructor
-bool isConstructor( SgDeclarationStatement* decl );
-
 /// \brief tests whether n was declared in a class / struct
 bool isStructMember(const SgInitializedName& n);
 
@@ -112,8 +89,39 @@ bool isNormalScope( SgScopeStatement* n );
 ///        OR a function parameter of a function declared extern (\pp ???)
 bool isGlobalExternVariable(SgStatement* stmt);
 
+/// \brief tests whether the declaration is a constructor
+/// \param mfun NULL will return false
+bool isConstructor( SgMemberFunctionDeclaration* mfun );
+
 /// \brief Follow the base type of @c type until we reach a non-typedef, non-reference.
 SgType* skip_ReferencesAndTypedefs( SgType* type );
+
+/// \brief returns the t's base type, iff t is a reference;
+///        t otherwise
+SgType* skip_References( SgType* t );
+
+/// \brief   returns the base type for arrays and pointers
+/// \param t a type
+/// \return  the base_type, if it exists; t otherwise
+/// \note    type-modifiers are currently not skipped (should they be?)
+///          e.g., int* volatile X[] = /* ... */;
+SgType* skip_ArrPtrType(SgType* t);
+
+/// \brief   returns an array's base type
+/// \param t a type
+/// \return  the base_type, if it exists; t otherwise
+SgType* skip_ArrayType(SgType* t);
+
+/// \brief  skips one modifier type node
+/// \return the base type if t is an SgModifierType
+///         t otherwise
+SgType* skip_ModifierType(SgType* t);
+
+/// \brief Follow the base type of @c type until we reach a non-typedef.
+SgType* skip_Typedefs( SgType* type );
+
+/// \brief skips all references and modifiers on top
+SgType* skip_TopLevelTypes( SgType* type );
 
 /// \brief checks if varRef is part of stmt
 /// \todo replace with isAncestorOf
@@ -170,10 +178,13 @@ SgAggregateInitializer* genAggregateInitializer(SgExprListExp* initexpr, SgType*
 /// \brief   creates a variable reference expression from a given name
 SgVarRefExp* genVarRef( SgInitializedName* initName );
 
+
+typedef std::vector<SgMemberFunctionDeclaration*> SgMemberFunctionDeclarationPtrList;
+
 /// \brief Appends all of the constructors of @c type to @c constructors. The
 ///        constructors are those member functions whose name matches that of
 ///        the type.
-void appendConstructors(SgClassDefinition* cdef, SgDeclarationStatementPtrList& constructors);
+void appendConstructors(SgClassDefinition* cdef, SgMemberFunctionDeclarationPtrList& constructors);
 
 /* -----------------------------------------------------------
  * tps : 6March 2009: This class adds transformations
@@ -222,7 +233,7 @@ private:
    /// when traversing variables, we find some that are initialized names
    /// instead of varrefexp, and so we create new varrefexps but we do
    /// add them later and not during the same traversal.
-   std::map<SgStatement*,SgStatement*>      insertThisStatementLater;
+   //std::map<SgStatement*,SgStatement*>      insertThisStatementLater;
 
 public:
    /// the following stores all variables that are created (and used e.g. in functions)
@@ -282,8 +293,6 @@ public:
 
    // The following are vars that are needed for transformations
    // and retrieved through the visit function
-   SgClassSymbol*                                    runtimeClassSymbol;
-   SgScopeStatement*                                 rememberTopNode;
    SgStatement*                                      mainFirst;
    SgStatement*                                      globalsInitLoc;
    SgBasicBlock*                                     mainBody;
@@ -372,6 +381,8 @@ public:
 
     SgCastExp* ctorDimensionList(SgAggregateInitializer* exp) const;
 
+    SgCastExp* ctorStringList(SgAggregateInitializer* exp) const;
+
     /// \brief   creates an address descriptor
     SgAggregateInitializer* mkAddressDesc(AddressDesc desc) const;
 
@@ -394,6 +405,12 @@ public:
 
     /// \brief returns the RTED representation type for array dimensions
     SgType* roseDimensionType() const { return SageBuilder::buildUnsignedLongType(); }
+
+    /// \brief returns the RTED representation type for char*
+    SgType* roseConstCharPtrType() const
+    {
+      return SageBuilder::buildPointerType( SageBuilder::buildConstType(SageBuilder::buildCharType()) );
+    }
 
 public:
    /// \brief rewrites the last statement in main (see member variable mainLast)
@@ -506,7 +523,6 @@ public:
      create_array_access_call(),
      variablesUsedForArray(),
      variableIsInitialized(),
-     insertThisStatementLater(),
      create_array_define_varRef_multiArray_stack(),
      variable_access_varref(),
      variable_declarations(),

@@ -26,9 +26,6 @@
 #endif
 
 
-/**********************************************************
- *  Convert to string
- *********************************************************/
 
 enum ReadWriteMask { Read = 1, Write = 2, BoundsCheck = 4 };
 
@@ -38,11 +35,14 @@ void checkpoint(RuntimeSystem* rs, const SourcePosition& info)
 {
   rs->checkpoint(info);
 
-  std::stringstream msg;
-  msg << "trace (#" << rted_ThisThread() << "): at line " << info.getLineInOrigFile()
-      << " / " << info.getLineInTransformedFile() << "\n";
+  if (diagnostics::message(diagnostics::location))
+  {
+    std::stringstream msg;
+    msg << "trace (#" << rted_ThisThread() << "): at line " << info.getLineInOrigFile()
+        << " / " << info.getLineInTransformedFile() << "\n";
 
-  std::cerr << msg.str() << std::flush;
+    rs->printMessage(msg.str());
+  }
 }
 
 /*********************************************************
@@ -251,13 +251,20 @@ void _rted_CreateHeapPtr( rted_TypeDesc    td,
   RsPointerType* rs_ptr_type = static_cast< RsPointerType* >(rs_type);
   RsClassType*   class_type = dynamic_cast< RsClassType* >(rs_ptr_type->getBaseType());
 
-  std::cerr << " registering heap type:" << td.name
-            << "   basetype: " << td.base
-            << "   class_name: " << class_name
-            << "   indirection_level: " << ToString(td.desc.levels)
-            << "   address: " << heap_address
-            << "   malloc size: " << mallocSize
-            << std::endl;
+  if ( diagnostics::message(diagnostics::memory) )
+  {
+    std::stringstream msg;
+
+    msg << " registering heap type:" << td.name
+        << "   basetype: " << td.base
+        << "   class_name: " << class_name
+        << "   indirection_level: " << ToString(td.desc.levels)
+        << "   address: " << heap_address
+        << "   malloc size: " << mallocSize
+        << std::endl;
+
+    rs->printMessage(msg.str());
+  }
 
   // A class might have had its memory allocation registered in the
   // constructor.  If there was no explicit constructor, however, we still
@@ -302,9 +309,7 @@ void rted_CreateHeapPtr( rted_TypeDesc    td,
   //       Only the local thread can safely deref local pointers.
   //       if we can discern all pointers on the shared heap, we might
   //       move this code back into _rted_CreateHeapPtr
-  std::cerr << "before" << rted_ThisThread() << std::endl;
   Address     heap_address = rted_deref(address, td.desc);
-  std::cerr << "after" << rted_ThisThread() << std::endl;
   AddressDesc heap_desc = rted_deref_desc(td.desc);
 
   snd_CreateHeapPtr(td, address, heap_address, heap_desc, size, mallocSize, allocKind, class_name, si);
@@ -771,13 +776,16 @@ int _rted_InitVariable( rted_TypeDesc    td,
 
   checkpoint( rs, SourcePosition(si) );
 
-  std::stringstream message;
+  if ( diagnostics::message(diagnostics::variable) )
+  {
+    std::stringstream message;
 
-  message << "   Init Var at address:  " << address
-          << "   type: " << td.name
-          << "   size: " << size
-          << "   ptrmv: " << pointer_move;
-  rs->printMessage(message.str());
+    message << "   Init Var at address:  " << address
+            << "   type: " << td.name
+            << "   size: " << size
+            << "   ptrmv: " << pointer_move;
+    rs->printMessage(message.str());
+  }
 
   RsType* rs_type = rs_getType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
 
@@ -940,13 +948,18 @@ void rted_RegisterTypeCall( const char* nameC,
       }
 
       assert(t != NULL);
-      std::stringstream message;
 
-      message << "   Register class-member:  " << name
-              << " offset:" << offset
-              << " size: " << size;
+      if ( diagnostics::message(diagnostics::type) )
+      {
+        std::stringstream message;
 
-      rs->printMessage(message.str());
+        message << "   Register class-member:  " << name
+                << " offset:" << offset
+                << " size: " << size;
+
+        rs->printMessage(message.str());
+      }
+
       classType->addMember(name, t, offset);
   }
 
@@ -991,4 +1004,33 @@ void rted_CheckIfThisNULL( void* thisExp, SourceInfo si)
 
   checkpoint( rs, SourcePosition(si) );
   rs->checkIfThisisNULL(thisExp);
+}
+
+static inline
+size_t digitCount(size_t num)
+{
+  size_t m = 10;
+  size_t n = 1;
+
+  while (m < num)
+  {
+    ++n;
+    m = m*10;
+  }
+
+  return n;
+}
+
+/// \brief Converts an integer to const char*
+/// \deprecated
+const char*
+rted_ConvertIntToString(size_t num)
+{
+  const size_t sz = digitCount(num) + 1;
+  char*        text = (char*)malloc(sz);
+
+  assert(text);
+  snprintf(text, sz, "%ul", num);
+
+  return text;
 }

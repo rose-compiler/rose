@@ -230,6 +230,15 @@ class MemoryType
 
         bool isDistributed() const { return tracker->distributed(); }
 
+        /// \brief C++ ctors assume that an object is cconstructed on the heap.
+        ///        Stack allocated objects straighten this out when their
+        ///        initialization is processesed.
+        void fixAllocationKind(AllocKind kind)
+        {
+          assert( (origin & akCxxHeap) == akCxxHeap );
+          origin = kind;
+        }
+
 
     private:
         typedef std::pair<TiIter,TiIter> TiIterPair;

@@ -88,7 +88,6 @@ void PointerInfo::setTargetAddress(Location newAddr, bool doCheck)
 
       target = nullAddr();
       rs->violationHandler(RuntimeViolation::INVALID_PTR_ASSIGN, ss.str());
-      std::cout << "Goodbye" << std::endl;
       return;
     }
 

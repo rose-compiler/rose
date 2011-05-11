@@ -1,14 +1,6 @@
-{
-  # rename our errors to match RTED's
-  # s/Illegal Memory Overlap/memory overlap/
-
-  s/^Violation: \(.*\) at .*(\([-0-9]\+\),\([-0-9]\+\))!.*/Vio\2/i
-}
-
-# Subtract 2 from the actual line number to compensate for the lines added by
-# the instrumentation
-s/^Vio\([0-9]\+\)$/echo $(( \1 - 2 ))/iep
-
+# \pp The number 2 is now subtracted by the RTED instrumentation tool
+# This simplifies the sed script quite a bit
+s/^Violation: \(.*\) at .*(\([-0-9]\+\),\([-0-9]\+\))!.*/\2/ip
 
 
 # was:

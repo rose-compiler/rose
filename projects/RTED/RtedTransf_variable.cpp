@@ -52,25 +52,15 @@ bool isFileIOVariable(SgType* type)
 }
 
 
-void RtedTransformation::insertCreateObjectCall(RtedClassDefinition* rcdef) {
-        SgClassDefinition*            cdef = rcdef -> classDef;
-        SgDeclarationStatementPtrList constructors;
+void RtedTransformation::insertCreateObjectCall(RtedClassDefinition* rcdef)
+{
+        SgClassDefinition*                 cdef = rcdef -> classDef;
+        SgMemberFunctionDeclarationPtrList constructors;
 
         appendConstructors(cdef, constructors);
 
-        std::cerr << "XXX = " << cdef->get_qualified_name().str() << "  " << constructors.size() << std::endl;
-
-        BOOST_FOREACH( SgDeclarationStatement* decl, constructors )
+        BOOST_FOREACH( SgMemberFunctionDeclaration* constructor, constructors )
         {
-            SgMemberFunctionDeclaration* constructor = isSgMemberFunctionDeclaration( decl );
-            // validate the postcondition of appendConstructors
-            ROSE_ASSERT( constructor );
-
-            std::string s(constructor->get_name());
-
-            std::cerr << "XXX = " << s << std::endl;
-
-
             // FIXME 2: Probably the thing to do in this case is simply to bail and
             // trust that the constructor will get transformed when its definition
             // is processed
@@ -351,7 +341,7 @@ RtedTransformation::buildVariableCreateCallExpr(SgVarRefExp* var_ref, const stri
 
         SgExpression*  callName = buildStringVal(debug_name);
         SgExpression*  callNameExp = buildStringVal(debug_name);
-        const bool     var_init = initb && isFileIOVariable(varType);
+        const bool     var_init = initb && !isFileIOVariable(varType);
 
         appendExpression(arg_list, callName);
         appendExpression(arg_list, callNameExp);
@@ -787,7 +777,12 @@ void RtedTransformation::visit_isAssignInitializer(SgAssignInitializer* const as
         ROSE_ASSERT(assign);
 
         // \pp why is assign->get_parent not enough?
-        SgInitializedName*   initName = &ez::ancestor<SgInitializedName>(*assign);
+        std::cerr << assign->unparseToString() << std::endl;
+        SgInitializedName*   initName = ez::ancestor<SgInitializedName>(assign);
+
+        // \pp assign initializers can also occur as arguments to function calls
+        //     e.g., foo(23); // void foo(const double&);
+        if (!initName) return;
 
         // ---------------------------------------------
         // we now know that this variable must be initialized

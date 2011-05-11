@@ -26,8 +26,12 @@ namespace rted
   }
 
   static
-  bool isInitializedNameInForStatement(SgForInitStatement* inits, const SgInitializedName& name)
+  bool isInitializedNameInForStatement(const VariableTraversal::LoopStack& forloops, const SgInitializedName& name)
   {
+     if (forloops.empty()) return false;
+
+     SgForInitStatement* inits = GeneralizdFor::initializer(forloops.back());
+
      // Capture for( int i = 0;
      SgNodePtrList        initialized_names = NodeQuery::querySubTree(inits, V_SgInitializedName);
      // Capture int i; for( i = 0;
@@ -43,26 +47,23 @@ namespace rted
   /// \details indirectly means that if astNode is a child of a non-binary
   ///          expression or a dot-expression, isRightOfBinaryOp is invoked
   ///          'recursively' (with the parent node) as the new astNode.
-  //~ static
-  //~ bool isRightOfBinaryOp(const SgExpression* expr)
-  //~ {
-    //~ const SgBinaryOp* binop = ez::ancestor<SgBinaryOp>(expr);
-//~
-    //~ if (isSgDotExp(binop)) return isRightOfBinaryOp(binop);
-    //~ return binop != NULL;
-  //~ }
-
   static
   bool isRightOfBinaryOp(const SgExpression* expr)
   {
      const SgNode* temp = expr;
      while (!isSgProject(temp)) {
-        if (temp->get_parent() && isSgBinaryOp(temp->get_parent()) && !(isSgDotExp(temp->get_parent()) || isSgPointerDerefExp(
-              temp->get_parent())))
+        if ( temp->get_parent()
+           && isSgBinaryOp(temp->get_parent())
+           && !(  isSgDotExp(temp->get_parent())
+               || isSgPointerDerefExp(temp->get_parent())
+               )
+           )
+        {
            if (isSgBinaryOp(temp->get_parent())->get_rhs_operand() == temp) {
               return true;
            } else
               break;
+        }
         temp = temp->get_parent();
      }
      return false;
@@ -291,7 +292,7 @@ namespace rted
 
         // \pp binary should be suppressed for all calls
         //     in order not to impact existing RTED tests, we suppress for
-        //     cases relevant to us
+        //     cases relevant to UPC
         // \todo make suppression unconditional (remove if)
         if (suppress_binary_for_specific_calls(n.getAssociatedFunctionDeclaration()))
         {
@@ -372,26 +373,58 @@ namespace rted
   /// tests if the first argument is an upc_forall loop AND if the second
   /// argument occurs in the context of the former's affinity expression.
   static
-  bool partOfUpcForallAffinityExpr(const SgStatement& forLoop, const SgExpression& expr)
+  bool partOfUpcForallAffinityExpr(const VariableTraversal::LoopStack& forloops, const SgExpression& expr)
   {
-    const SgUpcForAllStatement* upcForall = isSgUpcForAllStatement(&forLoop);
+    if (forloops.empty()) return false;
+
+    const SgUpcForAllStatement* upcForall = isSgUpcForAllStatement( forloops.back() );
 
     return (upcForall != NULL && partOfUpcForallAffinityExpr(*upcForall, expr));
   }
 
 
+  /// \brief   tests whether a varref is related to a for loop
+  /// \return  true, iff an access guard test should be skipped
+  /// \details returns true if the accessed variable is initialized in a for loop
+  ///          or if the variable is accessed in the context of a upc_forall.
+  /// \note    currently we do not test whether the UPC affinity could be out of
+  ///          bounds.
+  //~ static
+  //~ bool test_for_loops(const VariableTraversal::LoopStack& for_loops, const SgVarRefExp& varref, const SgInitializedName& varname)
+  //~ {
+    //~ if (for_loops.empty()) return false;
+//~
+    //~ SgStatement* forloop = for_loops.back();
+//~
+    //~ return (
+           //~ || rted::partOfUpcForallAffinityExpr(*forloop, varref)
+           //~ );
+  //~ }
+
+
   /// \brief   defines patterns of binary operations that should not be tested
+  /// \note    the for loop test needed to be integrated into the binary test
+  ///          b/c it is an alternative if varref is not in a binary context.
   /// \return  true, if an access guard should be skipped
   ///          false, otherwise
   static
-  bool test_binary_op(const VariableTraversal::BinaryOpStack& binary_ops, SgVarRefExp& varref, const InheritedAttribute& inh)
+  bool test_binaryop_and_forloop( const VariableTraversal::BinaryOpStack& binary_ops,
+                                  const VariableTraversal::LoopStack& forloops,
+                                  SgVarRefExp& varref,
+                                  const SgInitializedName& varname,
+                                  const InheritedAttribute& inh
+                                )
   {
     // \pp this function seems to be to broad
     //     For starters, I do not understand why we want to skip the test to
     //     check whether ptr in ptr+3 is initialized (assuming ptr is of pointer type)?
+    if ( rted::partOfUpcForallAffinityExpr(forloops, varref) ) return true;
 
     // not in binary context
-    if (!inh.isBinaryOp) return false;
+    if (!inh.isBinaryOp)
+    {
+      return rted::isInitializedNameInForStatement(forloops, varname);
+    }
 
     ROSE_ASSERT(!binary_ops.empty());
 
@@ -401,7 +434,7 @@ namespace rted
 
     bool rob = isRightOfBinaryOp(&varref);
 
-    std::cerr << "@@@ ELIDE? " << varref.unparseToString() << " " << rob << std::endl;
+    std::cerr << "@@@ ELIDE rob? " << varref.unparseToString() << " " << rob << std::endl;
 
     // \note isRightOfBinaryOp(&varref)
     //       does not mean that varref == rhs. varref could also be
@@ -415,23 +448,7 @@ namespace rted
            );
   }
 
-  /// \brief   tests whether a varref is related to a for loop
-  /// \return  true, iff an access guard test should be skipped
-  /// \details returns true if the accessed variable is initialized in a for loop
-  ///          or if the variable is accessed in the context of a upc_forall.
-  /// \note    currently we do not test whether the UPC affinity could be out of
-  ///          bounds.
-  static
-  bool test_for_loops(const VariableTraversal::LoopStack& for_loops, const SgVarRefExp& varref, const SgInitializedName& varname)
-  {
-    if (for_loops.empty()) return false;
 
-    SgStatement* forloop = for_loops.back();
-
-    return (  rted::isInitializedNameInForStatement(GeneralizdFor::initializer(forloop), varname)
-           || rted::partOfUpcForallAffinityExpr(*forloop, varref)
-           );
-  }
 
   /// \brief   tests whether a varref is related to an assign initializer
   static
@@ -512,13 +529,12 @@ namespace rted
     SgInitializedName *name = varref->get_symbol()->get_declaration();
 
     int where = 0;
-    bool elide_access_guard = (  (++where, inh.isArrowExp                            )
-                              || (++where, inh.isAddressOfOp                         )
-                              || (++where, in_instrumented_file(transf, name)        )
-                              || (++where, test_binary_op(binary_ops, *varref, inh)  )
-                              || (++where, test_for_loops(for_loops, *varref, *name) )
-                              || (++where, test_assign_initializer(inh, *varref)     )
-                              || (++where, test_call_argument(transf, *varref)       )
+    bool elide_access_guard = (  (++where, inh.isArrowExp                                                        )
+                              || (++where, inh.isAddressOfOp                                                     )
+                              || (++where, in_instrumented_file(transf, name)                                    )
+                              || (++where, test_binaryop_and_forloop(binary_ops, for_loops, *varref, *name, inh) )
+                              || (++where, test_assign_initializer(inh, *varref)                                 )
+                              || (++where, test_call_argument(transf, *varref)                                   )
                               );
 
     if (elide_access_guard)

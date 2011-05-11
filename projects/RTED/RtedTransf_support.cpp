@@ -221,6 +221,11 @@ RtedTransformation::ctorDimensionList(SgAggregateInitializer* exp) const
   return cstyle_ctor(buildArrayType(roseDimensionType(), NULL), exp);
 }
 
+SgCastExp* RtedTransformation::ctorStringList(SgAggregateInitializer* exp) const
+{
+  return cstyle_ctor(buildArrayType(roseConstCharPtrType(), NULL), exp);
+}
+
 
 SgAggregateInitializer*
 RtedTransformation::mkAddressDesc(AddressDesc desc) const
@@ -377,18 +382,10 @@ RtedTransformation::isUsedAsLvalue( SgExpression* exp ) {
     );
 }
 
-
-bool isConstructor( SgDeclarationStatement* decl )
+bool isConstructor( SgMemberFunctionDeclaration* mfun )
 {
+    if (!mfun) return false;
     // \pp \todo consider replacing with SageInterface::isCtor
-
-    // \note \tmp \pp the next line was moved in, might not be needed
-    //                for calls from ExecuteTransformations
-    SgMemberFunctionDeclaration* mfun = isSgMemberFunctionDeclaration( decl->get_definingDeclaration() );
-
-    if( !mfun )
-        // non member functions certainly aren't constructors
-        return false;
 
     SgClassDeclaration* cdef = mfun -> get_associatedClassDeclaration();
 
@@ -406,21 +403,38 @@ bool isConstructor( SgDeclarationStatement* decl )
            );
 }
 
-static
-bool isNonConstructor(SgDeclarationStatement* decl)
+template <class Iterator>
+struct CtorSelector
 {
-  bool res = !isConstructor(decl);
+  Iterator it;
 
-  std::cerr << "@@Q " << res << " " << decl->unparseToString() << std::endl;
+  explicit
+  CtorSelector(Iterator iter)
+  : it(iter)
+  {}
 
-  return res;
+  void operator()(SgDeclarationStatement* decl)
+  {
+    SgMemberFunctionDeclaration* mfun = isSgMemberFunctionDeclaration( decl->get_definingDeclaration() );
+    if (!isConstructor(mfun)) return;
+
+    *it = mfun;
+    ++it;
+  }
+};
+
+template <class Iterator>
+static inline
+CtorSelector<Iterator> ctorSelector(Iterator iter)
+{
+  return CtorSelector<Iterator>(iter);
 }
 
-void appendConstructors(SgClassDefinition* cdef, SgDeclarationStatementPtrList& constructors)
+void appendConstructors(SgClassDefinition* cdef, SgMemberFunctionDeclarationPtrList& constructors)
 {
   SgDeclarationStatementPtrList& members = cdef -> get_members();
 
-  std::remove_copy_if(members.begin(), members.end(), std::back_inserter(constructors), isNonConstructor);
+  std::for_each( members.begin(), members.end(), ctorSelector(std::back_inserter(constructors)) );
 }
 
 bool isNormalScope( SgScopeStatement* n ) {
@@ -621,7 +635,7 @@ SgExpression* getUppermostLvalue( SgExpression* exp )
 
   if (exp==NULL || exp->get_parent()==NULL) return exp;
 
-  SgType* const orig_type = exp->get_type();
+  // was: SgType* const orig_type = exp->get_type(); // see comment below
   SgDotExp*     parent = isSgDotExp( exp->get_parent() );
 
   // \pp \note why only SgDotExp? what about DotStar, Arrows, and DotArrow?
@@ -647,7 +661,8 @@ SgExpression* getUppermostLvalue( SgExpression* exp )
 
   // \pp added assert; if the function operates according to its description
   //     then the returned type has to be the same as the field type.
-  ROSE_ASSERT(exp->get_type() == orig_type);
+  // does not hold for tests/Cxx/simple/union2
+  // ROSE_ASSERT(exp->get_type() == orig_type);
 
   return exp;
 }
@@ -727,14 +742,25 @@ void RtedTransformation::appendFileInfo( SgExprListExp* arg_list, SgStatement* s
     appendFileInfo( arg_list, stmt->get_scope(), stmt->get_file_info() );
 }
 
+static
+SgGlobal* globalScope(SgScopeStatement* scope)
+{
+  SgGlobal* res = isSgGlobal(scope);
+
+  if (!res) res = ez::ancestor<SgGlobal>(scope);
+
+  ROSE_ASSERT(res);
+  return res;
+}
+
 void RtedTransformation::appendFileInfo( SgExprListExp* arg_list, SgScopeStatement* scope, Sg_File_Info* file_info)
 {
     ROSE_ASSERT(arg_list && scope && file_info);
 
+
     SgExpression*           filename = buildStringVal( file_info->get_filename() );
-    // \todo adjust line number for added files
-    SgExpression*           linenr = buildIntVal( file_info->get_line() );
-    SgExpression*           linenrTransformed = buildOpaqueVarRefExp("__LINE__", scope);
+    SgExpression*           linenr = buildIntVal( file_info->get_line() - 1);
+    SgExpression*           linenrTransformed = buildOpaqueVarRefExp("__LINE__", globalScope(scope));
     SgExprListExp*          fiArgs = buildExprListExp();
 
     appendExpression( fiArgs, filename );
@@ -754,9 +780,23 @@ SgType* skip_ModifierType(SgType* t)
   return t;
 }
 
+SgType* skip_PointerType(SgType* t)
+{
+  SgPointerType* sgptr = isSgPointerType(t);
+  if (sgptr != NULL) return sgptr->get_base_type();
+
+  return t;
+}
+
 AllocKind cxxHeapAllocKind(SgType* t)
 {
-  return isSgArrayType(skip_ModifierType(t)) ? akCxxArrayNew : akCxxNew;
+  // std::cerr << "### HEAPTYPE: " << t->unparseToString() << std::endl;
+  SgType* allocType = skip_ModifierType(skip_PointerType(t));
+
+  // \pp at least there is a pointer type that needs to be skipped
+  ROSE_ASSERT(allocType != t);
+
+  return isSgArrayType(allocType) ? akCxxArrayNew : akCxxNew;
 }
 
 SgType* skip_ArrayType(SgType* t)
@@ -965,7 +1005,6 @@ SgType* skip_References(SgType* t)
   return isSgReferenceType(t)->get_base_type();
 }
 
-static
 SgType* skip_TopLevelTypes(SgType* t)
 {
   SgType* res = skip_References(skip_ModifierType(t));
@@ -1375,7 +1414,8 @@ void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* ex
 void appendClassName( SgExprListExp* arg_list, SgType* type )
 {
     // \pp \todo skip SgModifier types (and typedefs)
-    SgType* basetype = skip_ArrPtrType(type);
+    // \was SgType* basetype = skip_ArrPtrType(type);
+    SgType* basetype = indirections(type).first;
 
     if (basetype != type)
     {

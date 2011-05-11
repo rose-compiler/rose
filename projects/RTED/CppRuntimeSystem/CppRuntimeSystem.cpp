@@ -308,7 +308,7 @@ void RuntimeSystem::createVariable( Address address,
 {
   assert(type);
 
-  // \todo remove the dynamic cast but overloading the interface
+  // \todo remove the dynamic cast by overloading the interface
   RsClassType*   class_type = dynamic_cast< RsClassType* >( type );
 
   // Variables are allocated statically. However, in UPC they can be shared
@@ -316,14 +316,17 @@ void RuntimeSystem::createVariable( Address address,
   //   non UPC types (e.g., C++ classes).
   assert(class_type == NULL || rted_isLocal(address));
 
-  const bool     isCtorCall = (  class_type != NULL
-                              && memManager.getMemoryType(address) != NULL
-                              );
+  MemoryType*    mem = class_type ? memManager.getMemoryType(address) : NULL;
+  const bool     isCtorCall = (mem != NULL);
 
   // When we create classes, the memory might be allocated in the
   // constructor.  In these cases, it's fine to call createvar with
   // existing memory
-  if (!isCtorCall)
+  if (isCtorCall)
+  {
+    mem->fixAllocationKind(akStack);
+  }
+  else
   {
     createMemory(address, type->getByteSize(), akStack, distributed, type);
   }
@@ -382,7 +385,7 @@ void RuntimeSystem::createArray( Address address,
   pointerManager.createPointer( address, basetype, dist );
 
   // View an array as a pointer, which is stored at the address and which points at the address
-  pointerManager.registerPointerChange( address, address, false, false);
+  pointerManager.registerPointerChange( address, address, false, false );
 }
 
 
@@ -574,3 +577,7 @@ void RuntimeSystem::setOutputFile(const std::string & filename)
     if(outFile.is_open());
         defaultOutStr = &outFile;
 }
+
+
+/// status variable
+int diagnostics::status = 0;

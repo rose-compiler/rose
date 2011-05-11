@@ -2,8 +2,7 @@
 #include <iostream>
 
 #include "TypeSystem.h"
-
-using namespace std;
+#include "CppRuntimeSystem.h"
 
 TypeSystem::TypeSystem()
 {
@@ -31,25 +30,32 @@ void TypeSystem::clearStatus()
 
 bool TypeSystem::registerType(RsType * t)
 {
-    pair<TypeSet::iterator, bool> res;
+    std::pair<TypeSet::iterator, bool> res;
     res =types.insert(t);
 
     if(!res.second) {
-        cerr << "Error: tried to register type " << t->getName() << " twice!" << endl;
+        std::cerr << "Error: tried to register type " << t->getName() << " twice!" << std::endl;
         assert( false );
     }
 
     return res.second;
 }
 
-RsType * TypeSystem::getTypeInfo(const string & name)
+RsType * TypeSystem::getTypeInfo(const std::string & name)
 {
 
     //TODO remove SgPointerType and SgArrayType from BasicTypes
     if(name == "SgPointerType" || name == "SgArrayType" )
     {
-      cout << endl << "getTypeInfo for " << name << "was called:" << endl;
-      cout << "SEVERE WARNING: Pointer and Arrays have now be registered differently!" << endl;
+      if ( diagnostics::warning() )
+      {
+        std::stringstream msg;
+
+        msg << "getTypeInfo for " << name << "was called:" << std::endl;
+        msg << "*** SEVERE WARNING: Pointer and Arrays have now be registered differently!" << std::endl;
+
+        RuntimeSystem::instance()->printMessage(msg.str());
+      }
     }
 
     InvalidType comparisonObject(name);
@@ -62,7 +68,7 @@ RsType * TypeSystem::getTypeInfo(const string & name)
 }
 
 
-RsArrayType * TypeSystem::getArrayType(const string& name, size_t size)
+RsArrayType * TypeSystem::getArrayType(const std::string& name, size_t size)
 {
     RsType * bt = getTypeInfo(name);
 
@@ -110,7 +116,7 @@ RsPointerType* TypeSystem::getPointerType(RsType* bt, AddressDesc desc)
     return &t;
 }
 
-RsPointerType * TypeSystem::getPointerType(const string & name, AddressDesc desc)
+RsPointerType * TypeSystem::getPointerType(const std::string & name, AddressDesc desc)
 {
     RsType * bt = getTypeInfo(name);
     return getPointerType(bt, desc);
@@ -121,19 +127,19 @@ RsPointerType * TypeSystem::getPointerType(RsType * bt)
     return getPointerType(bt, rted_ptr());
 }
 
-RsPointerType * TypeSystem::getPointerType(const string & name)
+RsPointerType * TypeSystem::getPointerType(const std::string & name)
 {
     return getPointerType(getTypeInfo(name));
 }
 
 
-void TypeSystem::print(ostream & os) const
+void TypeSystem::print(std::ostream & os) const
 {
-    os << "--------------  All Registered Types -----------------------" << endl;
+    os << "--------------  All Registered Types -----------------------" << std::endl;
     for(TypeSet::iterator it = types.begin(); it != types.end(); ++it)
         os << *it;
 
-    os << "------------------------------------------------------------" << endl;
+    os << "------------------------------------------------------------" << std::endl;
 
 }
 

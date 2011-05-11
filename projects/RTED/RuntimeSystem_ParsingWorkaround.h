@@ -19,15 +19,22 @@
 #ifndef RUNTIMESYSTEM_PARSING_WORKAROUND
 #define RUNTIMESYSTEM_PARSING_WORKAROUND
 
-#include "RuntimeSystem.h"
 #ifdef __cplusplus
 
 // tps : (10/09/2009) This will not work with a C compiler (using UPC)
 #include <iostream>
-void RuntimeSystem_work_around_parsing_errors() {
-    std::cout << "" << std::endl;
-}
 
+//~ void RuntimeSystem_work_around_parsing_errors() {
+    //~ std::cout << "" << std::endl;
+//~ }
+
+#endif
+
+#include "RuntimeSystem.h"
+
+#ifdef __cplusplus
+// to cope with tests written in old style C++
+using namespace std;
 #endif
 
 #endif

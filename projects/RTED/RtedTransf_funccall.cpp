@@ -155,6 +155,7 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
   //       dimFuncCall = 2.
   //     Subsequently, dimIsTwo replaces all occurances of (dimFuncCall == 2).
   const bool                          dimIsTwo = (dimFuncCall == 2) || isStringModifyingFunctionCall(args.f_name);
+  SgExprListExp*                      vararg_list = buildExprListExp();
 
   // iterate over all arguments of the function call, e.g. strcpy(arg1, arg2);
   SgExpressionPtrList::const_iterator it = rose_args.begin();
@@ -171,12 +172,13 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
      {
         exp = isSgUnaryOp(exp)->get_operand();
      }
-     else if (isSgVarRefExp(exp))
+
+     if (isSgVarRefExp(exp))
      {
         SgVarRefExp* var = isSgVarRefExp(exp);
         SgType*      vartype = var->get_type();
 
-        // \pp what about skipping modifier types?
+        // \pp \todo what about skipping modifier types?
         SgType*      base_type = skip_ArrPtrType(vartype);
 
         cerr << " isSgVarRefExp :: type : " << vartype->class_name() << endl;
@@ -200,14 +202,14 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
               cerr << " Found 00 - btype : " << array->get_base_type()->class_name() << "  index type: " << expr << endl;
 
               // this is the variable that we pass
-              appendExpression(arg_list, var);
+              appendExpression(vararg_list, var);
               if (dimIsTwo)
               {
                 expr = ( expr == 0 ? buildStringVal("00")
                                    : buildStringVal(expr->unparseToString() + "\0")
                        );
 
-                appendExpression(arg_list, expr);
+                appendExpression(vararg_list, expr);
               }
 
               cerr << ">>> Found variable : " << name << "  with size : " << expr->unparseToString() << "  and val : " << var << endl;
@@ -219,7 +221,7 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
 
               // this is a pointer to char* but not an array allocation yet
               // We have to pass var so we can check whether the memories overlap!
-              appendExpression(arg_list, var);
+              appendExpression(vararg_list, var);
 
               if (dimIsTwo)
               {
@@ -228,7 +230,7 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
                 // and check in the runtime system if the size for the variable is known!
                 SgExpression* manglName = buildStringVal(var->get_symbol()->get_declaration()->get_mangled_name().str());
 
-                appendExpression(arg_list, manglName);
+                appendExpression(vararg_list, manglName);
               }
            }
            else
@@ -241,13 +243,13 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
               SgExpression* andSign = buildAddressOfOp(var);
               SgExpression* charCast = buildCastExp(andSign, buildPointerType(buildCharType()));
 
-              appendExpression(arg_list, charCast);
+              appendExpression(vararg_list, charCast);
 
               if (dimIsTwo)
               {
                 SgExpression* numberToString = buildStringVal("001");
 
-                appendExpression(arg_list, numberToString);
+                appendExpression(vararg_list, numberToString);
               }
            }
         }
@@ -271,7 +273,7 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
                  manglName = buildStringVal(initName->get_name().str());
               }
               ROSE_ASSERT(manglName);
-              appendExpression(arg_list, manglName);
+              appendExpression(vararg_list, manglName);
            }
            //ROSE_ASSERT(false);
         }
@@ -293,7 +295,7 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
            appendExpression(arg_list2, var);
            SgFunctionCallExp* funcCallExp2 = buildFunctionCallExp(memRef_r2, arg_list2);
 
-           appendExpression(arg_list, funcCallExp2);
+           appendExpression(vararg_list, funcCallExp2);
            cerr << " Created Function call  convertToString" << endl;
         }
      }
@@ -306,7 +308,7 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
         {
            string theString = isSgStringVal(exp)->get_value();
 
-           appendExpression(arg_list, buildStringVal(theString + "\0"));
+           appendExpression(vararg_list, buildStringVal(theString + "\0"));
 
            if (dimIsTwo)
            {
@@ -314,7 +316,7 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
               string        sizeStringStr = RoseBin_support::ToString(sizeString);
               SgExpression* numberToString = buildStringVal(sizeStringStr);
 
-              appendExpression(arg_list, numberToString);
+              appendExpression(vararg_list, numberToString);
            }
         }
         else
@@ -323,7 +325,7 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
            string        theString = exp->unparseToString();
            SgExpression* stringExp = buildStringVal(theString + "\0");
 
-           appendExpression(arg_list, stringExp);
+           appendExpression(vararg_list, stringExp);
 
            if (dimIsTwo)
            {
@@ -331,11 +333,13 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
              string sizeStringStr = RoseBin_support::ToString(sizeString);
              SgExpression* numberToString = buildStringVal(sizeStringStr);
 
-             appendExpression(arg_list, numberToString);
+             appendExpression(vararg_list, numberToString);
            }
         }
      }
   }
+
+  appendExpression( arg_list, ctorStringList(genAggregateInitializer(vararg_list, roseConstCharPtrType())) );
 
   ROSE_ASSERT(symbols.roseFunctionCall);
   insertCheck( ilBefore,
@@ -712,10 +716,13 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
   //           but declared within a namespace.
   bool handled = !callee.memberCall;
 
-  if (!callee.memberCall)
-  {
-    handled = true;
+      if (callee.name == "operator<<")
+      {
+        std::cerr << "YZX" << std::endl;
+      }
 
+  if (handled)
+  {
     if (isStringModifyingFunctionCall(callee.name) || isFileIOFunctionCall(callee.name))
     {
        // if this is a function call that has a variable on the left hand size,
@@ -776,17 +783,19 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
 
      // if we're able to, use the function definition's body as the end of
      // scope (for line number complaints).  If not, the callsite is good too.
-     SgNode* end_of_scope = getDefiningDeclaration( fcexp );
-     if( end_of_scope )
+     SgNode*                end_of_scope = fcexp;
+     SgFunctionDeclaration* fndecl = getDefiningDeclaration( fcexp );
+     if ( fndecl )
      {
-        end_of_scope = isSgFunctionDeclaration( end_of_scope ) -> get_definition() -> get_body();
+        SgFunctionDefinition* fndef = fndecl->get_definition();
+
+        // \pp the original RTED code does not test whether get_definition
+        //     is successful (and it works). Not sure why this is required
+        //     now (to test operator<<(std::ostream&, 'std::endl')?
+        if (fndef) end_of_scope = fndef->get_body();
      }
      else
      {
-        // \pp C++ member calls should always have a defining declaration
-        ROSE_ASSERT(!callee.memberCall);
-
-        end_of_scope = fcexp;
         // FIXME 2: We may be adding a lot of unnecessary signature checks
         // If we don't have the definition, we must be doing separate
         // compilation.  We will then have to check the signature at runtime

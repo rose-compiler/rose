@@ -162,6 +162,8 @@ RsArrayType::RsArrayType(RsType* baseType_, size_t size__)
       baseType(baseType_)
 {
     size_t base_size = baseType -> getByteSize();
+
+    assert( 0 != base_size );
     assert( 0 == size__ % base_size );
 
     elementCount = size__ / base_size;
@@ -249,7 +251,10 @@ int RsArrayType::arrayIndex(size_t offset) const
 {
     size_t baseSize = baseType->getByteSize();
 
-    std::cerr << "ofs: " << offset << " base: " << baseSize << " elems: " << elementCount << std::endl;
+    //~ std::cerr << "ofs: " << offset
+              //~ << " base: " << baseSize
+              //~ << " elems: " << elementCount
+              //~ << std::endl;
 
     if ((offset % baseSize) != 0)
         return -1; //invalid (in between elements)
@@ -295,27 +300,31 @@ int RsArrayType::getKnownSubtypesOverlappingRange(size_t range_start, size_t ran
 
 
 RsClassType::RsClassType(const std::string & name, size_t byteSize_, bool isUnion)
-    : RsType(name),
-      byteSize(byteSize_), isunionType(isUnion)
+: RsType(name), relaxed(false), byteSize(byteSize_), isunionType(isUnion), members()
 {
     assert( !name.empty() );
+    // assert( byteSize_ != 0 );
 }
 
 
 int RsClassType::addMember(const std::string & name, RsType * type, size_t offset)
 {
-  assert(type!=NULL); // Tried to register MemberPointer with NULL type
-  assert((int)offset != -1);
+    assert(type!=NULL); // Tried to register MemberPointer with NULL type
+    assert((int)offset != -1);
 
-#ifdef ROSE_WITH_ROSEQT
-    if( RuntimeSystem::instance() -> isQtDebuggerEnabled() ) {
-        std::string mess = "  adding member : "+name+"  type: "+type->getName()+
-          "  offset: " + ToString(offset);
-        RtedDebug::instance()->addMessage(mess);
+    if (diagnostics::message(diagnostics::type))
+    {
+      std::stringstream msg;
+
+      msg << "  adding member : " << name
+          << "  type: " << type->getName()
+          << "  offset: " << ToString(offset);
+
+      RuntimeSystem::instance()->printMessage(msg.str());
     }
-#endif
 
-    if(members.size() >0)
+
+    if (members.size() >0)
     {
         Member & last = members.back();
         // do not assert if the class is a unionType
@@ -325,10 +334,10 @@ int RsClassType::addMember(const std::string & name, RsType * type, size_t offse
         }
     }
 
-    members.push_back(Member(name,type,offset));
-
     // tps (09/09/2009) This test does not apply when the SgClassType is a union
-    assert(members.back().offset + members.back().type->getByteSize() <= byteSize);
+    // \pp why not?
+    assert(offset + type->getByteSize() <= byteSize);
+    members.push_back(Member(name,type,offset));
 
     return members.size()-1;
 }
@@ -340,7 +349,7 @@ void RsClassType::setUnionType( bool is_union ) {
 
 bool RsClassType::isComplete(bool verbose) const
 {
-    if (verbose)
+    if ( diagnostics::message(diagnostics::memory) )
     {
         std::stringstream stream;
 
@@ -349,6 +358,7 @@ bool RsClassType::isComplete(bool verbose) const
         {
             int diff = members[i].offset;
             diff -= members[i-1].offset + members[i-1].type->getByteSize();
+
             if(diff > 0)
             {
               stream << "Padding between "
@@ -358,7 +368,7 @@ bool RsClassType::isComplete(bool verbose) const
             }
          }
 
-         std::cout << stream.str() << std::flush;
+         RuntimeSystem::instance()->printMessage(stream.str());
     }
 
     if(members.size()==0)

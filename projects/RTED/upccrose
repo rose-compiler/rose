@@ -1,15 +1,10 @@
 #!/bin/bash
 
- ccacheprefix=`which ccache`
-
- cxx="$ccacheprefix g++"
  upc="upc"
 
- runtimesystem=""
- stdlib=""
+ extraobjs=""
  rtedlib=""
  upcflags="-O0 -g -dwarf-2-upc -DWITH_UPC=1 -Wall -Wextra"
- cxxflags="-O0 -g -DWITH_UPC=1 -Wall -Wextra"
 
  for var in "$@"
  do
@@ -26,8 +21,8 @@
      remove=$parameter;
     elif [ "x$parameter" = "x-rose:UPC" ]; then
      remove=$parameter;
-    elif [[ $parameter == "RuntimeSystemUpc.o" ]]; then
-     runtimesystem=$parameter
+    elif [[ $parameter == *.o ]]; then
+      extraobjs="$extraobjs $parameter"
     elif [[ $parameter == *.upc ]]; then
       filename=`basename $parameter .upc`
       inpfiles="$inpfiles $parameter"
@@ -40,24 +35,11 @@
 #    echo "$remove";
 # --------- $parameter";
  done
-#echo "REMOVED :: $remove"
-#echo "KEPT :: $newOption"
-#echo $newOption;
 
-# compiling with C++ and RTED runtime?
-if [ "$runtimesystem" != "" ]; then
-  rtedsrcdir=`dirname $runtimesystem`
-
-  CMD="$cxx $cxxflags -c $runtimesystem"
-  echo "$CMD"
-  $CMD
-
-  CMD="$upc $upcflags -c $rtedsrcdir/ParallelRTS.upc"
-  echo "$CMD"
-  $CMD
-
+# compiling with RTED runtime?
+if [ "$extraobjs" != "" ]; then
   rtedlib="-L./CppRuntimeSystem/.libs/ -lUpcRuntimeSystem"
-  objfiles="$objfiles ParallelRTS.o RuntimeSystem.o"
+  objfiles="$objfiles $extraobjs"
 fi
 
 CMD="$upc $upcflags $newOption -c $inpfiles"
@@ -67,6 +49,3 @@ $CMD
 CMD="upc++link -dwarf-2-upc $executable $objfiles $rtedlib"
 echo "$CMD"
 $CMD
-
-#echo "rm $objfiles"
-#rm $objfiles

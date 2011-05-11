@@ -153,10 +153,11 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgExpressi
    SgType*            src_type = src_exp->get_type();
 
    // the underlying type, after skipping modifiers (shall we also skip typedefs?)
-   SgType*            under_type = skip_ModifierType(src_type);
+   SgType*            under_type = skip_TopLevelTypes(src_type);
    const bool         isCreateHeapArr = (under_type->class_name() == "SgArrayType");
 
    // what kind of types do we get?
+   std::cerr << typeid(under_type).name() << "  " << under_type->class_name() << std::endl;
    ROSE_ASSERT(isCreateHeapArr || under_type->class_name() == "SgPointerType");
 
    // if we have an array, then it has to be on the stack
@@ -1134,10 +1135,13 @@ struct ArrayInfoFinder
 
   void handle(SgPntrArrRefExp& n)
   {
-    varref = isSgVarRefExp(n.get_lhs_operand());
+    SgExpression* lhs = n.get_lhs_operand();
+    ROSE_ASSERT(lhs);
+
+    varref = isSgVarRefExp(lhs);
     if (varref != NULL) return;
 
-    set_varref(resolveToVarRefRight(n.get_rhs_operand()));
+    set_varref(resolveToVarRefRight(lhs));
   }
 
   operator SgVarRefExp*() const

@@ -32,13 +32,17 @@ MemoryType::MemoryType(Location _addr, size_t _size, AllocKind ak, bool distr, c
   tracker( createTracker(distr, _size) )
 {
   RuntimeSystem *   rs = RuntimeSystem::instance();
-  std::stringstream msg;
 
-  msg << "  ***** Allocate Memory :: [" << _addr
-      << ", " << endAddress() << ")"
-      << "  size = " << _size
-      << "  @ (" << _pos.getLineInOrigFile() << ", " << _pos.getLineInTransformedFile() << ")";
-  rs->printMessage(msg.str());
+  if ( diagnostics::message(diagnostics::memory) )
+  {
+    std::stringstream msg;
+
+    msg << "  ***** Allocate Memory :: [" << _addr
+        << ", " << endAddress() << ")"
+        << "  size = " << _size
+        << "  @ (" << _pos.getLineInOrigFile() << ", " << _pos.getLineInTransformedFile() << ")";
+    rs->printMessage(msg.str());
+  }
 }
 
 void MemoryType::resize( size_t new_size )
@@ -53,8 +57,8 @@ MemoryType::Location MemoryType::endAddress() const
 
 bool MemoryType::containsAddress(Location queryAddress) const
 {
-  std::cerr << "$$$ contains? " << startAddress << " <= "
-            << queryAddress << " < " << endAddress() << "(" << getSize() << ")" << std::endl;
+  //~ std::cerr << "$$$ contains? " << startAddress << " <= "
+            //~ << queryAddress << " < " << endAddress() << "(" << getSize() << ")" << std::endl;
 
     return (  startAddress <= queryAddress
            && queryAddress < endAddress()
@@ -112,18 +116,25 @@ void MemoryType::initialize(Location addr, size_t len)
     }
 }
 
-
+static inline
+void insert( TypeTracker::TypeData& tmap, const TypeTracker::TypeData::value_type& val )
+{
+  tmap.insert(val);
+}
 
 void MemoryType::registerMemType(Location addr, RsType * type)
 {
-    std::stringstream msg;
     RuntimeSystem *   rs = RuntimeSystem::instance();
     const bool        types_merged = checkAndMergeMemType(addr, type);
 
-    msg << "   ++ registerMemType at: " << addr << "  type: " << type->getName() << '\n'
-        << "      ++ types_merged: " << types_merged;
+    if ( diagnostics::message(diagnostics::memory) )
+    {
+      std::stringstream msg;
+      msg << "   ++ registerMemType at: " << addr << "  type: " << type->getName() << '\n'
+          << "      ++ types_merged: " << types_merged;
 
-    rs->printMessage(msg.str());
+      rs->printMessage(msg.str());
+    }
 
     if ( !types_merged )
     {
@@ -133,14 +144,17 @@ void MemoryType::registerMemType(Location addr, RsType * type)
 
         const bool distributed = tracker->distributed() && (dynamic_cast<RsArrayType*>(type) != NULL);
 
-        tracker->typesof(addr)[addr.local] = type;
+        insert( tracker->typesof(addr), TypeTracker::TypeData::value_type(addr.local, type) );
 
         // since we have knowledge about the type in memory, we also need to update the
         // information about "dereferentiable" memory regions i.e. pointer
         rs->getPointerManager()->createPointer(addr, type, distributed);
     }
 
-    rs->printMessage("   ++ registerMemType done.");
+    if ( diagnostics::message(diagnostics::memory) )
+    {
+      rs->printMessage("   ++ registerMemType done.");
+    }
 }
 
 void MemoryType::forceRegisterMemType(Location addr, RsType* type )
@@ -149,7 +163,22 @@ void MemoryType::forceRegisterMemType(Location addr, RsType* type )
     TiIterPair type_range = getOverlappingTypeInfos(tmap, addr.local, type->getByteSize());
 
     tmap.erase(type_range.first, type_range.second);
-    tmap.insert(TypeData::value_type(addr.local, type));
+    insert(tmap, TypeData::value_type(addr.local, type));
+}
+
+static
+std::string composeVioMessage(MemoryType::LocalPtr newTiStart, size_t len, RsType* t, MemoryType& mt)
+{
+    std::stringstream msg;
+
+    msg << "Tried to access the same memory region with different types" << std::endl;
+    msg << "When trying to access (" << toString(newTiStart) << ","
+        << toString(newTiStart + len) << ") "
+        << "as type " << t->getName() << std::endl;
+    msg << "Memory Region Info: " << std::endl;
+    msg << mt << std::endl;
+
+    return msg.str();
 }
 
 bool MemoryType::checkAndMergeMemType(Location addr, RsType * type)
@@ -162,22 +191,16 @@ bool MemoryType::checkAndMergeMemType(Location addr, RsType * type)
     RuntimeSystem *   rs = RuntimeSystem::instance();
     LocalPtr          newTiStart = addr.local;
     size_t            newLength = type->getByteSize();
-    std::stringstream msg;
 
-    msg << "   ++ checkAndMergeMemType newTiStart: " << toString(newTiStart)
-        << "      length: " << newLength << std::endl;
+    if ( diagnostics::message(diagnostics::memory) )
+    {
+      std::stringstream msg;
 
-    rs->printMessage( msg.str() );
+      msg << "   ++ checkAndMergeMemType newTiStart: " << toString(newTiStart)
+          << "      length: " << newLength << std::endl;
 
-    msg.clear();
-    msg << "Tried to access the same memory region with different types" << std::endl;
-    msg << "When trying to access (" << toString(newTiStart) << ","
-        << toString(newTiStart + newLength) << ") "
-        << "as type " << type->getName() << std::endl;
-    msg << "Memory Region Info: " << std::endl;
-    msg << *this << std::endl;
-
-    RuntimeViolation vio(RuntimeViolation::INVALID_TYPE_ACCESS, msg.str());
+      rs->printMessage( msg.str() );
+    }
 
     // Get a range of entries which overlap with [newTiStart,newTiEnd)
     TiIterPair res = getOverlappingTypeInfos(tmap, newTiStart, newLength);
@@ -195,8 +218,6 @@ bool MemoryType::checkAndMergeMemType(Location addr, RsType * type)
 
     if (incrementedLower == itUpper)
     {
-        rs->printMessage("     ++ incrementedLower == itUpper ");
-
         RsType*        oldType = itLower->second;
         LocalPtr       oldTiStart = itLower->first;
         size_t         oldLength = oldType->getByteSize();
@@ -205,14 +226,13 @@ bool MemoryType::checkAndMergeMemType(Location addr, RsType * type)
         // was: if( (oldTiStart <= newTiStart) && (oldTiEnd >= newTiEnd) )
         if ((diff <= 0) && (newLength <= (diff + oldLength)))
         {
-            rs->printMessage("    (diff < 0) && (newLength <= (diff + oldLength)) ");
             //Check if new entry is consistent with old one
-
             bool new_type_ok = oldType->checkSubtypeRecursive( newTiStart - oldTiStart, type );
 
-            rs->printMessage("      new_type_ok : " + ToString(new_type_ok));
             if( !new_type_ok )
             {
+                RuntimeViolation vio(RuntimeViolation::INVALID_TYPE_ACCESS, composeVioMessage(newTiStart, newLength, type, *this) );
+
                 vio.descStream() << "Previously registered Type completely overlaps new Type in an inconsistent way:"
                                  << std::endl
                                  << "Containing Type " << oldType->getName()
@@ -239,12 +259,13 @@ bool MemoryType::checkAndMergeMemType(Location addr, RsType * type)
         size_t         curLength = curType->getByteSize();
         std::ptrdiff_t diff = curStart - newTiStart;
 
-
-        std::cout << "  >> " << diff << " #" << newLength << "  #" << curLength << std::endl;
+        // std::cout << "  >> " << diff << " #" << newLength << "  #" << curLength << std::endl;
 
         // was: if ((curStart < newTiStart) || (newTiEnd < curEnd))
         if ((diff < 0) || (newLength < (diff + curLength)))
         {
+            RuntimeViolation vio(RuntimeViolation::INVALID_TYPE_ACCESS, composeVioMessage(newTiStart, newLength, type, *this) );
+
             vio.descStream() << "Previously registered Type overlaps new Type in an inconsistent way:"
                              << std::endl
                              << "Overlapping Type " << curType->getName()
@@ -258,6 +279,8 @@ bool MemoryType::checkAndMergeMemType(Location addr, RsType * type)
 
         if (sub != curType)
         {
+            RuntimeViolation vio(RuntimeViolation::INVALID_TYPE_ACCESS, composeVioMessage(newTiStart, newLength, type, *this) );
+
             vio.descStream() << "Newly registered Type completely overlaps a previous registered Type in an inconsistent way:"
                              << std::endl
                              << "Overlapping Type " << curType->getName()
@@ -270,7 +293,7 @@ bool MemoryType::checkAndMergeMemType(Location addr, RsType * type)
     }
     //All consistent - old typeInfos are replaced by big new typeInfo (merging)
     tmap.erase(itLower, itUpper);
-    tmap.insert(TypeData::value_type(addr.local, type));
+    insert( tmap, TypeData::value_type(addr.local, type) );
 
     // if we have knowledge about the type in memory, we also need to update the
     // information about "dereferentiable" memory regions i.e. pointer
@@ -284,7 +307,7 @@ bool MemoryType::checkAndMergeMemType(Location addr, RsType * type)
 static inline
 bool isDistMem(const TypeTracker& tracker, const RsType& t)
 {
-  std::cout << "  #@@ " << typeid(t).name() << std::endl;
+  // std::cout << "  #@@ " << typeid(t).name() << std::endl;
   return tracker.distributed() && (dynamic_cast< const RsArrayType* >( &t ) != NULL);
 }
 
@@ -315,9 +338,9 @@ RsType* MemoryType::getTypeAt(Location addr, size_t size)
     TiIter       first_addr_type = type_range.first;
     TiIter       end = type_range.second;
 
-    std::cerr << "   distance = " << std::distance(first_addr_type, end) << std::endl;
-    std::cerr << "   addr = " << static_cast<const void*>(addr.local)
-              << "  first = " << static_cast<const void*>(first_addr_type->first) << std::endl;
+    //~ std::cerr << "   distance = " << std::distance(first_addr_type, end) << std::endl;
+    //~ std::cerr << "   addr = " << static_cast<const void*>(addr.local)
+              //~ << "  first = " << static_cast<const void*>(first_addr_type->first) << std::endl;
 
     if( first_addr_type == end )
     {
@@ -370,16 +393,21 @@ RsCompoundType* MemoryType::computeCompoundTypeAt(Location addr, size_t size)
 
     for( TiIter i = first_addr_type; i != end; ++i)
     {
-        std::stringstream out;
-        out << rted_ThisThread() << "  first: " << static_cast<const void*>(i->first) << "   addr: " << static_cast<const void*>(addr.local) << " " << (i->first <= addr.local) << "\n";
-        std::cerr << out.str() << std::flush;
+        //~ std::stringstream out;
+        //~ out << rted_ThisThread() << "  first: " << static_cast<const void*>(i->first) << "   addr: " << static_cast<const void*>(addr.local) << " " << (i->first <= addr.local) << "\n";
+        //~ std::cerr << out.str() << std::flush;
 
-        assert(i->first >= addr.local);
+        // \bug \pp this seems a bug in the RTS implementation
+        // addr and i can overlap in a way that addr can be either smaller
+        //   or larger then i->first. Thus the following assert does not hold.
+        // assert(i->first >= addr.local);
+        if (i->first >= addr.local)
+        {
+          size_t  subtype_offset = i->first - addr.local;
+          RsType* type = i -> second;
 
-        size_t  subtype_offset = i->first - addr.local;
-        RsType* type = i -> second;
-
-        computed_type->addMember( "", type, subtype_offset );
+          computed_type->addMember( "", type, subtype_offset );
+        }
     }
 
     return computed_type;
@@ -401,13 +429,14 @@ MemoryType::TiIterPair MemoryType::getOverlappingTypeInfos(TypeData& tmap, Local
     // This function assumes that the typeInfo ranges do not overlap
 
     // end is the iterator which points to typeInfo with address >= (from + len)
-    // \pp should that not be                      "with address <= (from + len)"?
+    TiIter first = tmap.begin();
+    TiIter last = tmap.end();
     TiIter ub = tmap.lower_bound(from + len);
 
     // the same for the beginning, but there we need the previous map entry
     TiIter lb = tmap.lower_bound(from);
 
-    lb = adjustPosOnOverlap(tmap.begin(), lb, from);
+    lb = adjustPosOnOverlap(first, lb, from);
 
     return TiIterPair(lb, ub);
 }
@@ -709,10 +738,13 @@ MemoryType* MemoryManager::checkAccess(Location addr, size_t size, RsType * t, R
 
     if (t)
     {
-      std::stringstream msg;
+      if ( diagnostics::message(diagnostics::memory) )
+      {
+        std::stringstream msg;
 
-      msg << "   ++ found memory addr : " << addr << " size:" << ToString(size);
-      rs->printMessage(msg.str());
+        msg << "   ++ found memory addr : " << addr << " size:" << ToString(size);
+        rs->printMessage(msg.str());
+      }
 
       res->registerMemType(addr, t);
     }
@@ -749,10 +781,14 @@ void MemoryManager::checkRead(Location addr, size_t size, RsType * t)
 void MemoryManager::checkWrite(Location addr, size_t size, RsType * t)
 {
     RuntimeSystem*    rs = RuntimeSystem::instance();
-    std::stringstream msg;
 
-    msg << "   ++ checkWrite : " << addr << " size:" << size;
-    rs->printMessage(msg.str());
+    if ( diagnostics::message(diagnostics::memory) )
+    {
+      std::stringstream msg;
+
+      msg << "   ++ checkWrite : " << addr << " size:" << size;
+      rs->printMessage(msg.str());
+    }
 
     MemoryType *      mt = checkAccess(addr, size, t, RuntimeViolation::INVALID_WRITE);
     assert(mt && mt->beginAddress() <= addr);
@@ -760,7 +796,11 @@ void MemoryManager::checkWrite(Location addr, size_t size, RsType * t)
     // \pp \todo this implementation does not consider UPC blocking
     //           consider modifing the initialize interface
     mt->initialize(addr, size);
-    rs->printMessage("   ++ checkWrite done.");
+
+    if ( diagnostics::message(diagnostics::memory) )
+    {
+      rs->printMessage("   ++ checkWrite done.");
+    }
 }
 
 bool MemoryManager::isInitialized(Location addr, size_t size)
@@ -820,13 +860,13 @@ MemoryManager::checkIfSameChunk( Location addr1, Location addr2, size_t typeSize
   std::auto_ptr<RsType> guard2(NULL);
 
   if( !type1 ) {
-      std::cerr << "type1! " << std::endl;
+      //~ std::cerr << "type1! " << std::endl;
       type1 = mem1 -> computeCompoundTypeAt( addr1, typeSize );
       guard1.reset(type1);
   }
 
   if( !type2 ) {
-      std::cerr << "type2! " << std::endl;
+      //~ std::cerr << "type2! " << std::endl;
       type2 = mem1 -> computeCompoundTypeAt( addr2, typeSize );
       guard2.reset(type2);
   }
@@ -836,7 +876,7 @@ MemoryManager::checkIfSameChunk( Location addr1, Location addr2, size_t typeSize
   bool         accessOK = type1->isConsistentWith( *type2 );
   RsArrayType* array = (accessOK ? dynamic_cast< RsArrayType* >( type1 ) : 0);
 
-  std::cerr << "accOK: " << accessOK << std::endl;
+  //~ std::cerr << "accOK: " << accessOK << std::endl;
 
   if (array)
   {
@@ -853,9 +893,9 @@ MemoryManager::checkIfSameChunk( Location addr1, Location addr2, size_t typeSize
     const Location elemlb = addr2;
     const Location elemub = typed_add(addr2, typeSize, *mem1->tracker, *type2);
 
-    std::cerr << " $2=" << addr2 << " < $1=" << addr1 << std::endl;
-    std::cerr << " $1 + " << array->getByteSize() << " = " << arrub
-              << " < $2 + " << typeSize << " = " << elemub << std::endl;
+    //~ std::cerr << " $2=" << addr2 << " < $1=" << addr1 << std::endl;
+    //~ std::cerr << " $1 + " << array->getByteSize() << " = " << arrub
+              //~ << " < $2 + " << typeSize << " = " << elemub << std::endl;
 
     // the array element might be before it [ -1 ]
     // ... or after the array [ N ]...
@@ -865,7 +905,7 @@ MemoryManager::checkIfSameChunk( Location addr1, Location addr2, size_t typeSize
       accessOK = false;
     }
 
-    std::cerr << " res = " << accessOK << std::endl;
+    //~  std::cerr << " res = " << accessOK << std::endl;
 
     /* was:
     if  !(  addr1 + array -> getByteSize() >= addr2 + typeSize  // the array element might be after the array [ N ]...

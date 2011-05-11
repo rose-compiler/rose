@@ -498,6 +498,27 @@ class RuntimeSystem
 };
 
 
+struct diagnostics
+{
+  enum Kind
+  {
+    memory = 1,
+    variable = 1 << 1,
+    type = 1 << 2,
+    location = 1 << 3,
+    all = (1 << 4) - 1
+  };
+
+  static int status;
+
+  static
+  bool message(Kind k) { return ((status & k) == k); }
+
+  static
+  bool warning(Kind k = all) { return (k == k); }
+};
+
+
 #endif
 
 // vim:sw=4 ts=4 tw=80 et sta:
