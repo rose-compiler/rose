@@ -272,7 +272,13 @@ compare_answers: pristine.ans modified.ans
 #       from their respective distribution sites (and perhaps having some local modificatons).  We need to copy _everything_
 #       in those directories into the ROSE distribution because NetCDF and POP will be configured and built as part of testing
 #       ROSE.
-EXTRA_DIST = hudson.gnu make_rmod_deps.pl setup_run_dir.ROSE netcdf-4.1.1 pop-distro
+# Note: Specifiying $(netcdf_srcdir) and $(pop_srcidr) in the $(EXTRA_DIST) list does not work, contrary to automake
+#       documentation.  When we do that, we get errors about directories not existing (it seems that automake's makefile
+#       tries to copy the files before creating the destination directories.  Therefore, we're using the dist-hook to
+#       explicitly copy these directories.
+EXTRA_DIST = hudson.gnu make_rmod_deps.pl setup_run_dir.ROSE
+dist-hook:
+	cp -pdRv $(netcdf_srcdir) $(pop_srcdir) $(distdir)
 
 check-local: compare_answers
 
