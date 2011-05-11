@@ -37,8 +37,6 @@ if !ROSE_USING_GFORTRAN_VERSION_4_0
 SETX=
 
 
-
-
 netcdf_srcdir=$(srcdir)/netcdf-4.1.1
 netcdf_blddir=$(abspath netcdf-4.1.1)
 netcdf_prefix=$(netcdf_blddir)/installed
@@ -269,6 +267,18 @@ compare_answers: pristine.ans modified.ans
 ###############################################################################################################################
 #					automake rules
 ###############################################################################################################################
+
+# Note: netcdf-4.1.1 and pop-distro are directories whose content is not part of ROSE, but which have been downloaded
+#       from their respective distribution sites (and perhaps having some local modificatons).  We need to copy _everything_
+#       in those directories into the ROSE distribution because NetCDF and POP will be configured and built as part of testing
+#       ROSE.
+# Note: Specifiying $(netcdf_srcdir) and $(pop_srcidr) in the $(EXTRA_DIST) list does not work, contrary to automake
+#       documentation.  When we do that, we get errors about directories not existing (it seems that automake's makefile
+#       tries to copy the files before creating the destination directories.  Therefore, we're using the dist-hook to
+#       explicitly copy these directories.
+EXTRA_DIST = hudson.gnu make_rmod_deps.pl setup_run_dir.ROSE
+dist-hook:
+	cp -pdRv $(netcdf_srcdir) $(pop_srcdir) $(distdir)
 
 check-local: compare_answers
 
