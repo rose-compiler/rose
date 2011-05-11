@@ -297,26 +297,17 @@ public:
         if (defn) {
             /* Scan through the function's instructions to find the range of addresses for the function. */
             rose_addr_t func_start=~(rose_addr_t)0, func_end=0;
-            size_t ninsns=0, nbytes=0;
-            SgAsmStatementPtrList func_stmts = defn->get_statementList();
-            for (size_t i=0; i<func_stmts.size(); i++) {
-                SgAsmBlock *bb = isSgAsmBlock(func_stmts[i]);
-                if (bb) {
-                    SgAsmStatementPtrList block_stmts = bb->get_statementList();
-                    for (size_t j=0; j<block_stmts.size(); j++) {
-                        SgAsmInstruction *insn = isSgAsmInstruction(block_stmts[j]);
-                        if (insn) {
-                            ninsns++;
-                            func_start = std::min(func_start, insn->get_address());
-                            func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
-                            nbytes += insn->get_raw_bytes().size();
-                        }
-                    }
-                }
+            size_t nbytes=0;
+            std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(defn);
+            for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+                SgAsmInstruction *insn = *ii;
+                func_start = std::min(func_start, insn->get_address());
+                func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
+                nbytes += insn->get_raw_bytes().size();
             }
 
             /* Reason that this is a function */
-            printf("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" %5zu/%-6zu ", ++nfuncs, func_start, func_end, ninsns, nbytes);
+            printf("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" %5zu/%-6zu ", ++nfuncs, func_start, func_end, insns.size(), nbytes);
             fputs(defn->reason_str(true).c_str(), stdout);
 
             /* Kind of function */
@@ -486,7 +477,7 @@ dump_function_node(std::ostream &sout, SgAsmFunctionDeclaration *func, BinaryCFG
             o <<"><tr><td align=\"left\" bgcolor=\"" <<semantics_color <<"\">" <<sha1_str <<"</td></tr>";
         }
         virtual void post(std::ostream &o, SgAsmBlock*b) {
-            SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(b->get_parent());
+            SgAsmFunctionDeclaration *func = SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(b);
             o <<"</table>>";
             if (!b->get_successors_complete()) {
                 SgAsmInstruction *last_insn = isSgAsmInstruction(b->get_statementList().back());
@@ -524,7 +515,8 @@ dump_function_node(std::ostream &sout, SgAsmFunctionDeclaration *func, BinaryCFG
             for (SgAsmTargetPtrList::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
                 SgAsmBlock *target_block = cfg.block((*si)->get_address());
                 SgAsmFunctionDeclaration *target_func = target_block ?
-                                                        isSgAsmFunctionDeclaration(target_block->get_parent()) : NULL;
+                                                        SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(target_block) :
+                                                        NULL;
                 if (target_func==func) {
                     sout <<"    B" <<addrToString((*bbi)->get_address())
                          <<" -> B" <<addrToString((*si)->get_address());
@@ -573,7 +565,9 @@ dump_function_cfg(const std::string &fileprefix, SgAsmFunctionDeclaration *func,
             rose_addr_t dst_addr = ei->second;
             if (node_defined.find(dst_addr)==node_defined.end()) {
                 SgAsmBlock *dst_bb = cfg.block(dst_addr);
-                SgAsmFunctionDeclaration *dst_func = dst_bb ? isSgAsmFunctionDeclaration(dst_bb->get_parent()) : NULL;
+                SgAsmFunctionDeclaration *dst_func = dst_bb ?
+                                                     SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(dst_bb) :
+                                                     NULL;
                 if (dst_func) {
                     dump_function_node(sout, dst_func, cfg, false);
                 } else {
@@ -658,7 +652,9 @@ dump_CFG_CG(SgNode *ast)
             if (cg_defined_nodes.find(callee_addr)==cg_defined_nodes.end()) {
                 cg_defined_nodes.insert(callee_addr);
                 SgAsmBlock *callee_bb = cfg.block(callee_addr);
-                SgAsmFunctionDeclaration *callee_func = callee_bb ? isSgAsmFunctionDeclaration(callee_bb->get_parent()) : NULL;
+                SgAsmFunctionDeclaration *callee_func = callee_bb ?
+                                                        SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(callee_bb) :
+                                                        NULL;
                 if (callee_func) {
                     dump_function_node(sout, callee_func, cfg, false);
                 } else {
