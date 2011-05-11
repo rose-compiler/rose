@@ -488,7 +488,7 @@ dump_function_node(std::ostream &sout, SgAsmFunctionDeclaration *func, BinaryCFG
         virtual void post(std::ostream &o, SgAsmBlock*b) {
             SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(b->get_parent());
             o <<"</table>>";
-            if (!b->get_complete_successors()) {
+            if (!b->get_successors_complete()) {
                 SgAsmInstruction *last_insn = isSgAsmInstruction(b->get_statementList().back());
                 if (isSgAsmx86Instruction(last_insn) && isSgAsmx86Instruction(last_insn)->get_kind()==x86_ret) {
                     o <<", color=blue"; /*function return statement, not used as an unconditional branch*/
@@ -519,16 +519,16 @@ dump_function_node(std::ostream &sout, SgAsmFunctionDeclaration *func, BinaryCFG
         /* Write the edge definitions for internal flow control. Fall-through edges are black, non-fall-throughs are orange. */
         std::vector<SgAsmBlock*> bbs = SageInterface::querySubTree<SgAsmBlock>(func, V_SgAsmBlock);
         for (std::vector<SgAsmBlock*>::iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {
-            const SgAddressList &sucs = (*bbi)->get_cached_successors();
+            const SgAsmTargetPtrList &sucs = (*bbi)->get_successors();
             rose_addr_t fall_through_va = (*bbi)->get_fallthrough_va();
-            for (SgAddressList::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
-                SgAsmBlock *target_block = cfg.block(*si);
+            for (SgAsmTargetPtrList::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
+                SgAsmBlock *target_block = cfg.block((*si)->get_address());
                 SgAsmFunctionDeclaration *target_func = target_block ?
                                                         isSgAsmFunctionDeclaration(target_block->get_parent()) : NULL;
                 if (target_func==func) {
                     sout <<"    B" <<addrToString((*bbi)->get_address())
-                         <<" -> B" <<addrToString(*si);
-                    if (*si!=fall_through_va)
+                         <<" -> B" <<addrToString((*si)->get_address());
+                    if ((*si)->get_address()!=fall_through_va)
                         sout <<" [ color=orange ]"; /* black for fall-through; orange for other */
                     sout <<";\n";
                 }

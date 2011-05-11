@@ -1735,6 +1735,38 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
     }
 }
 
+void
+Partitioner::update_targets(SgNode *ast)
+{
+    /* Build a map from address to SgAsmBlock so we can do lookups quickly. */
+    struct T1: public SgSimpleProcessing {
+        std::map<rose_addr_t, SgAsmBlock*> block_map;
+        void visit(SgNode *node) {
+            SgAsmBlock *block = isSgAsmBlock(node);
+            SgAsmInstruction *insn = block && !block->get_statementList().empty() ? 
+                                     isSgAsmInstruction(block->get_statementList().front()) : NULL;
+            if (insn)
+                block_map[insn->get_address()] = block;
+        }
+    } t1;
+    t1.traverse(ast, preorder);
+
+    /* Now traverse the SgAsmTarget objects and update their block pointers. */
+    struct T2: public SgSimpleProcessing {
+        T1 *t1;
+        T2(T1 *t1): t1(t1) {}
+        void visit(SgNode *node) {
+            SgAsmTarget *target = isSgAsmTarget(node);
+            if (target && NULL==target->get_block()) {
+                std::map<rose_addr_t, SgAsmBlock*>::iterator bi = t1->block_map.find(target->get_address());
+                if (bi!=t1->block_map.end())
+                    target->set_block(bi->second);
+            }
+        }
+    };
+    T2(&t1).traverse(ast, preorder);
+}
+
 SgAsmBlock *
 Partitioner::build_ast()
 {
@@ -1769,6 +1801,7 @@ Partitioner::build_ast()
         delete catchall;
     }
 
+    update_targets(retval);
     return retval;
 }
 
@@ -1822,13 +1855,14 @@ Partitioner::build_ast(BasicBlock* bb)
         (*ii)->set_parent(retval);
     }
 
-    /* Cache block successors so other layers don't have to constantly compute them */
+    /* Cache block successors so other layers don't have to constantly compute them.  We fill in the successor SgAsmTarget
+     * objects with only the address and not pointers to blocks since we don't have all the blocks yet.  The pointers will be
+     * initialized in the no-argument version build_ast() higher up on the stack. */
     bool complete;
-    Disassembler::AddressSet sucs = successors(bb, &complete);
-    SgAddressList addrlist(sucs.begin(), sucs.end());
-    retval->set_cached_successors(addrlist);
-    retval->set_complete_successors(complete);
-
+    Disassembler::AddressSet successor_addrs = successors(bb, &complete);
+    for (Disassembler::AddressSet::iterator si=successor_addrs.begin(); si!=successor_addrs.end(); ++si)
+        retval->get_successors().push_back(new SgAsmTarget(retval, NULL, *si));
+    retval->set_successors_complete(complete);
     return retval;
 }
 

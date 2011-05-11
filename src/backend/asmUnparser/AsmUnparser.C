@@ -160,10 +160,10 @@ AsmUnparser::unparse(std::ostream &o, SgAsmBlock *blk)
              * partitioner, which does fairly extensive analysis -- definitely more than just looking at the last
              * instruction of the block! */
             o <<"            (successors:";
-            const SgAddressList &sucs = blk->get_cached_successors();
-            for (SgAddressList::const_iterator si=sucs.begin(); si!=sucs.end(); ++si)
-                o <<" " <<StringUtility::addrToString(*si);
-            if (!blk->get_complete_successors())
+            const SgAsmTargetPtrList &successors = blk->get_successors();
+            for (SgAsmTargetPtrList::const_iterator si=successors.begin(); si!=successors.end(); ++si)
+                    o <<" " <<StringUtility::addrToString((*si)->get_address());
+            if (!blk->get_successors_complete())
                 o <<"...";
             o <<")\n";
         }

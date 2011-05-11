@@ -83,15 +83,17 @@ public:
             BinaryCG *cg;
             T1(BinaryCG *cg): cg(cg) {}
             void operator()(BinaryCFG *cfg, SgAsmBlock *src_bb) {
-                SgAsmFunctionDeclaration *src_func = isSgAsmFunctionDeclaration(src_bb->get_parent());
+                SgAsmFunctionDeclaration *src_func = SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(src_bb);
                 ROSE_ASSERT(src_func!=NULL);
-                const SgAddressList &sucs = src_bb->get_cached_successors();
-                for (SgAddressList::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
-                    SgAsmBlock *dst_bb = cfg->block(*si);
-                    SgAsmFunctionDeclaration *dst_func = dst_bb ? isSgAsmFunctionDeclaration(dst_bb->get_parent()) : NULL;
-
+                const SgAsmTargetPtrList &sucs = src_bb->get_successors();
+                for (SgAsmTargetPtrList::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
+                    rose_addr_t dst_addr = (*si)->get_address();
+                    SgAsmBlock *dst_bb = cfg->block(dst_addr);
+                    SgAsmFunctionDeclaration *dst_func = dst_bb ?
+                                                         SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(dst_bb) :
+                                                         NULL;
                     if (src_func!=dst_func) {
-                        cg->caller_edges[src_func].push_back(std::make_pair(src_bb, *si));
+                        cg->caller_edges[src_func].push_back(std::make_pair(src_bb, (*si)->get_address()));
                         if (dst_func)
                             cg->callee_edges[dst_func][src_func] += 1;
                     }
