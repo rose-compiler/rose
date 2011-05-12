@@ -29,20 +29,19 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-if !ROSE_USING_GFORTRAN_VERSION_4_0
-
 # To see commands as they execute, set this to "-x"
 #SETX=-x
 SETX=
 
-
 netcdf_srcdir=$(srcdir)/netcdf-4.1.1
+pop_srcdir=$(srcdir)/pop-distro
+
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+if !ROSE_USING_GFORTRAN_VERSION_4_0
+
 netcdf_blddir=$(abspath netcdf-4.1.1)
 netcdf_prefix=$(netcdf_blddir)/installed
 netcdf_lib=$(netcdf_prefix)/lib/libnetcdf.a
-
-pop_srcdir=$(srcdir)/pop-distro
 
 translator = $(top_builddir)/tests/testTranslator
 translator_flags = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompileStep
