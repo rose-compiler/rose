@@ -263,9 +263,13 @@ compare_answers: pristine.ans modified.ans
 	diff -u $^
 	@echo "  PASSED  LANL POP tests"
 
+check-local: compare_answers
+
+endif
+endif
 
 ###############################################################################################################################
-#					automake rules
+#					automake rules for all configs
 ###############################################################################################################################
 
 # Note: netcdf-4.1.1 and pop-distro are directories whose content is not part of ROSE, but which have been downloaded
@@ -280,8 +284,6 @@ EXTRA_DIST = hudson.gnu make_rmod_deps.pl setup_run_dir.ROSE
 dist-hook:
 	cp -pdRv $(netcdf_srcdir) $(pop_srcdir) $(distdir)
 
-check-local: compare_answers
-
 clean-local:
 	rm -rf $(netcdf_blddir)
 	rm -f  hudson-environment.sh hudson.gnu
@@ -293,5 +295,3 @@ clean-local:
 	rm -f  $(patsubst %.rmod,%_postprocessed.f90,$(notdir $(pop_modified_sources)))
 	rm -f  rose_netcdf.f90 rose_typeSizes.f90
 
-endif
-endif
