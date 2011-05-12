@@ -19,7 +19,7 @@ TESTCODE_INCLUDES =
 CLEANFILES = rose_*.C rose_*.c output
 
 check-local: testLValues
-	./testLValues $(srcdir)/test_astLValues.C | tee output
+	./testLValues $(srcdir)/test_astLValues.C | tee output; [ $${PIPESTATUS[0]} -eq 0 ]
 	@echo "*********************************************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/astLValueTests/testLValues: make check rule complete (terminated normally) ***"
 	@echo "*********************************************************************************************************************"

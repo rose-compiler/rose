@@ -56,6 +56,6 @@ int main(int argc, char ** argv)
 	if (!success)
 		return 1;
 
-	return backend(project);
+	return 0;
 }
 
