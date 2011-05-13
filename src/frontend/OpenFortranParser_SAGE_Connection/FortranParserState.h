@@ -209,4 +209,7 @@ class FortranParserState
        ~FortranParserState();
    };
 
+    // DXN (05/12/2011): to record the attributes on the left-hand-side of the :: in a variable declaration
+    extern AttrSpec VarDeclAttrSpec;
+
 #endif /*__FORTRANPARSERSTATE_H_*/

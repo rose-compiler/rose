@@ -138,7 +138,7 @@ class MultipartReferenceType
           SgName name;
           bool hasSelectionSubscriptList;
           bool hasImageSelector;
-          bool hasCo_deref;  // DXN (04/22/2011): for copointer derefencing
+          bool hasCo_deref;  // DXN (04/22/2011): for copointer dereference
 
           MultipartReferenceType ( const SgName & input_name = "", const bool & input_hasSelectionSubscriptList = false, const bool & input_hasImageSelector = false,
                                    const bool & input_hasCo_deref = false)  // DXN (04/22/2011): add default values to avoid writing a separate default constructor
@@ -284,7 +284,7 @@ extern void buildAttributeSpecificationStatement ( SgAttributeSpecificationState
 // void setDeclarationAttributeSpec ( SgVariableDeclaration* variableDeclaration, int astAttributeSpec );
 void setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int astAttributeSpec );
 
-SgArrayType* convertTypeOnStackToArrayType ( int count );
+SgArrayType* convertTypeOnStackToArrayType ( int count = 1 );
 
 void processBindingAttribute( SgDeclarationStatement* declaration);
 
@@ -382,6 +382,83 @@ void convertBaseTypeToArrayWhereAppropriate();
 
 //! Refactored code to support R504.
 SgInitializedName* buildInitializedNameAndPutOntoStack(const SgName & name, SgType* type, SgInitializer* initializer);
+
+// DXN (05/04/2011): class to represent Fortran attributes
+class AttrSpec
+{
+public:
+
+    SgType* initType;
+    bool isPublic;
+    bool isPrivate;
+    bool isAllocatable;
+    bool isAsynchronous;
+    SgExprListExp* codimensionAttr;  // TODO: for the left hand side of :: in each type declaration
+    bool isContiguous;
+    SgExprListExp* dimensionAttr;  // TODO: for the left hand side of :: in each type declaration
+    bool isExternal;
+    bool isIn;
+    bool isOut;
+    bool isIntrinsic;
+    bool hasLangBinding;  // TODO
+    bool isOptional;
+    bool hasParameter;
+    bool isPointer;
+    bool isCopointer;
+    bool isProtected;
+    bool isSave;
+    bool isTarget;
+    bool isCotarget;
+    bool isValue;
+    bool isVolatile;
+    SgExpression* kindExpr;  // TODO
+    SgExpression* lenExpr;   // TODO
+
+    AttrSpec(SgType* bType = NULL, bool isPub = false, bool isPriv = false, bool isAlloc = false,
+            bool isAsync = false, SgExprListExp* codimAttr = NULL, bool isContig = false,
+            SgExprListExp* dimAttr = NULL, bool isExtern = false, bool isI = false, bool isO = false,
+            bool isIntrin = false, bool hasLangBind = false, bool isOption = false, bool hasParam = false,
+            bool isPoint = false, bool isCopoint = false,bool isProt = false, bool isSav = false,
+            bool isTarg = false, bool isCotarg = false, bool isVal = false, bool isVol = false,
+            SgExpression* kindExp = NULL, SgExpression* lenExp = NULL):
+                initType(bType), isPublic(isPub), isPrivate(isPriv), isAllocatable(isAlloc), isAsynchronous(isAsync),
+                codimensionAttr(codimAttr), isContiguous(isContig), dimensionAttr(dimAttr),
+                isExternal(isExtern), isIn(isI), isOut(isO), isIntrinsic(isIntrin),
+                hasLangBinding(hasLangBind), isOptional(isOption), hasParameter(hasParam), isPointer(isPoint),
+                isCopointer(isCopoint), isProtected(isProt), isSave(isSav), isTarget(isTarg),
+                isCotarget(isCotarg), isValue(isVal), isVolatile(isVol), kindExpr(kindExp), lenExpr(lenExp)
+    { }
+
+    ~AttrSpec()
+    {
+        initType = NULL;
+        codimensionAttr = NULL;
+        dimensionAttr = NULL;
+        kindExpr = NULL;
+        lenExpr = NULL;
+    }
+
+    void reset()
+    {
+        initType = NULL; isPublic = false; isPrivate = false; isAllocatable - false; isAsynchronous = false;
+        codimensionAttr = NULL; isContiguous = false; dimensionAttr = NULL; isExternal = false;
+        isIn = false; isOut= false; isIntrinsic = false; hasLangBinding = false; isOptional = false;
+        hasParameter = false; isPointer = false; isCopointer = false; isProtected = false;
+        isSave = false; isTarget = false; isCotarget = false; isValue = false; isVolatile = false;
+        kindExpr = NULL; lenExpr = NULL;
+    }
+
+    // DXN (0510/2011)
+    SgType* computeEntityType();
+
+    SgArrayType* buildArrayType();
+
+    /** Merge this AttrSpec with a given AttrSpec mutating this AttrSpec to contain all attributes from
+     * the given AttrSpec in such a way that the result conforms with Fortran rules.
+     */
+    void merge(AttrSpec& attrSpec);
+};
+
 
 // endif for ROSE_FORTRAN_SUPPORT
 #endif

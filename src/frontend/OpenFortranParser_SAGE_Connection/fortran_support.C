@@ -4499,7 +4499,7 @@ convertTypeOnStackToArrayType( int count )
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("In convertTypeOnStackToArrayType(count = %d) \n",count);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of convertTypeOnStackToArrayType()");
 #endif
@@ -5483,7 +5483,11 @@ buildVariableDeclarationAndCleanupTypeStack( Token_t * label )
   // I am trying to have variable built earlier than before since the Fortran "include"
   // mechanism can be called before this R501 rule and that causes problems.  Basically
   // each new include file needs to be started with an empty stack(s).
+#if DXN_CODE
+    if (!astNodeStack.empty())
+#else
      if (astNodeStack.empty() == false && astBaseTypeStack.empty() == false)
+#endif
         {
 #if 1
        // Output debugging information about saved state (stack) information.
@@ -6554,3 +6558,60 @@ buildInitializedNameAndPutOntoStack(const SgName & name, SgType* type, SgInitial
 
      return initializedName;
    }
+
+// DXN: Singleton to keep track of attribute spec.
+void AttrSpec::merge(AttrSpec& attrSpec)
+{
+// TODO
+}
+
+// DXN (0510/2011)
+SgType* AttrSpec::computeEntityType()
+{
+    //SgType* entityType = NULL;
+    //ROSE_ASSERT(!astBaseTypeStack.empty());
+    // SgType* baseType = astBaseTypeStack.front();
+    if (lenExpr)
+    {
+        // TODO: convert initType to string type with char length
+    }
+    if (codimensionAttr)
+    {
+        // TODO
+    }
+    if (dimensionAttr)
+    {
+        //astExpressionStack.push_front(dimensionAttr);
+        initType = buildArrayType();
+    }
+    if (isCopointer)
+    {
+        // TODO
+    }
+    if (isPointer)
+    {
+        // TODO
+    }
+
+    return initType; // TODO
+}
+
+SgArrayType* AttrSpec::buildArrayType()
+{
+    // TODO
+    SgExpression* sizeExpression = new SgNullExpression();
+    setSourcePosition(sizeExpression);
+ // Build the array type
+    SgArrayType* arrayType = new SgArrayType(initType,sizeExpression);
+    sizeExpression->set_parent(arrayType);
+    arrayType->set_dim_info(dimensionAttr);
+ // setSourcePosition(expresssionList);
+    dimensionAttr->set_parent(arrayType);
+    arrayType->set_rank(dimensionAttr->get_expressions().size());
+
+#if 1
+ // Output debugging information about saved state (stack) information.
+    outputState("At BOTTOM of AttrSpec::buildArrayType()");
+#endif
+    return arrayType;
+}
