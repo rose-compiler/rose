@@ -31,6 +31,9 @@ class Unparser_Nameq
           Unparser_Nameq(Unparser* unp):unp(unp){};
           virtual ~Unparser_Nameq() {};
 
+#if 0
+       // DQ (5/11/2011): OLD API.
+
        // DQ (6/4/2007): Support for name qualification (detects of a name in a scope is visible from another scope).
        // This is true iff targetScope is an outer enclosing scope of currentScope.
           bool isAnOuterScope( SgScopeStatement* currentScope, SgScopeStatement* targetScope );
@@ -48,9 +51,15 @@ class Unparser_Nameq
        // DQ (5/22/2007): Added specialized support for name qualification (part of new interface 
        // using hidden type, declaration and class elaboration lists).
           SgName generateNameQualifierForType( SgType* type, const SgUnparse_Info & info );
+#endif
 
+       // DQ (5/11/2011): New name qualification support.
+          SgName generateNameQualifier( SgInitializedName* initializedName, const SgUnparse_Info& info );
 
+          SgName generateNameQualifier( SgDeclarationStatement* declarationStatement, const SgUnparse_Info & info );
 
+       // Lower level support for generateNameQualifier() functions.
+          SgName generateNameQualifierSupport( SgScopeStatement* scope, const SgUnparse_Info& info );
    };
 
 #endif

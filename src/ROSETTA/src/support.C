@@ -461,6 +461,7 @@ Grammar::setUpSupport ()
   // Unparse_Info.setDataPrototype("SgSymbolPtrList","listOfScopeSymbols","",
   //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL);
 
+  // DQ (5/11/2011): This is depricated because this is older support for name qualification.
   // DQ (9/8/2004): Added support for output of name qualification for namespaces, needed a different
   // variable specific for namespaces because "current_context" is a SgNamedType.
      Unparse_Info.setDataPrototype("SgNamespaceDeclarationStatement*","current_namespace","= NULL",
@@ -476,6 +477,7 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("bool","outputCodeGenerationFormatDelimiters","= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
+  // DQ (5/11/2011): This is depricated because this is older support for name qualification.
   // DQ (10/10/2006): Support for reference to a list that would be used for qualified name generation for any type.
      Unparse_Info.setDataPrototype ( "SgQualifiedNamePtrList", "qualifiedNameList", "= SgQualifiedNamePtrList()",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -487,8 +489,22 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("SgFunctionCallExp*","current_function_call","= NULL",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/11/2011): This is depricated because this is older support for name qualification.
   // DQ (5/22/2007): Added scope information so that we could lookup hidden list to get qualified names correct.
      Unparse_Info.setDataPrototype("SgScopeStatement*","current_scope","= NULL",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/11/2011): Added information required for new name qualification support. We now strore this information
+  // where the named constrcuts are referenced and this information is passed through the SgUnparse_Info object.
+     Unparse_Info.setDataPrototype("int","name_qualification_length","= 0",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/11/2011): Added information required for new name qualification support.
+     Unparse_Info.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/11/2011): Added information required for new name qualification support.
+     Unparse_Info.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
@@ -514,6 +530,18 @@ Grammar::setUpSupport ()
   //              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
      BaseClass.setDataPrototype               ( "SgBaseClassModifier*", "baseClassModifier", "= NULL",
                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
+
+  // DQ (5/11/2011): Added support for name qualification.
+     BaseClass.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/11/2011): Added information required for new name qualification support.
+     BaseClass.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/11/2011): Added information required for new name qualification support.
+     BaseClass.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      FuncDecl_attr.setFunctionPrototype ( "HEADER_FUNCTION_DECLARATION_ATTRIBUTE", "../Grammar/Support.code");
      ClassDecl_attr.setFunctionPrototype( "HEADER_CLASS_DECLARATION_ATTRIBUTE", "../Grammar/Support.code");

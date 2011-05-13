@@ -14,6 +14,8 @@ using namespace std;
 // #define OUTPUT_DEBUGGING_FUNCTION_INTERNALS  0
 // #define OUTPUT_DEBUGGING_UNPARSE_INFO        0
 
+#if 0
+       // DQ (5/11/2011): OLD API.
 bool
 Unparser_Nameq::isAnOuterScope( SgScopeStatement* currentScope, SgScopeStatement* targetScope )
    {
@@ -55,8 +57,11 @@ Unparser_Nameq::isAnOuterScope( SgScopeStatement* currentScope, SgScopeStatement
 
      return result;
    }
+#endif
 
 
+#if 0
+       // DQ (5/11/2011): OLD API.
 void
 generateDeclarationAndName( SgScopeStatement* inputScope, SgName & name, SgDeclarationStatement* & declaration )
    {
@@ -134,6 +139,11 @@ generateDeclarationAndName( SgScopeStatement* inputScope, SgName & name, SgDecla
              }
         }
    }
+#endif
+
+
+#if 0
+       // DQ (5/11/2011): OLD API.
 
 SgName 
 Unparser_Nameq::generateNameQualifierForType( SgType* type, const SgUnparse_Info & info )
@@ -142,8 +152,11 @@ Unparser_Nameq::generateNameQualifierForType( SgType* type, const SgUnparse_Info
 
      return nameQualifier;
    }
+#endif
 
 
+#if 0
+       // DQ (5/11/2011): OLD API.
 
 SgName
 Unparser_Nameq::generateNameQualifier( SgDeclarationStatement* declarationStatement, const SgUnparse_Info & info, bool nestedQualification )
@@ -539,8 +552,11 @@ Unparser_Nameq::generateNameQualifier( SgDeclarationStatement* declarationStatem
 
      return qualifier;
    }
+#endif
 
 
+#if 0
+       // DQ (5/11/2011): OLD API.
 
 SgName
 Unparser_Nameq::generateNameQualifier( SgInitializedName* initializedName, const SgUnparse_Info& info, bool nestedQualification )
@@ -765,6 +781,109 @@ Unparser_Nameq::generateNameQualifier( SgInitializedName* initializedName, const
 
      return qualifier;
    }
+#endif
 
 
+// DQ (5/11/2011): New name qualification for ROSE (the 4th try).
+// This is a part of a rewrite of the name qualification support in ROSE with the follwoing properties:
+//    1) It is exact (no over qualification).
+//    2) It handled visibility of names constructs
+//    3) It resolves ambiguity of named constructs.
+//    4) It resolves where type elaboration is required.
+//    5) The inputs are carried in the SgUnparse_Info object for uniform handling.
+//    6) The the values in the SgUnparse_Info object are copied from the AST references to the named 
+//       constructs to avoid where named constructs are referenced from multiple locations and the 
+//       name qulification might be different.
+//
+//    7) What about base class qualification? I might have forgotten this one! No, this work, but might not generate the minimum length qualified name.
 
+SgName
+Unparser_Nameq::generateNameQualifier( SgInitializedName* initializedName, const SgUnparse_Info& info )
+   {
+  // This support for name qualification is C++ specific, this might be a problem that should generate a refactoring of this code.
+
+     ROSE_ASSERT(initializedName != NULL);
+     return generateNameQualifierSupport(initializedName->get_scope(),info);
+   }
+
+SgName
+Unparser_Nameq::generateNameQualifier( SgDeclarationStatement* declarationStatement, const SgUnparse_Info & info )
+   {
+  // This support for name qualification is C++ specific, this might be a problem that should generate a refactoring of this code.
+#if 1
+     printf ("In Unparser_Nameq::generateNameQualifier(): info.get_name_qualification_length()     = %d \n",info.get_name_qualification_length());
+     printf ("In Unparser_Nameq::generateNameQualifier(): info.get_type_elaboration_required()     = %s \n",info.get_type_elaboration_required() ? "true" : "false");
+     printf ("In Unparser_Nameq::generateNameQualifier(): info.get_global_qualification_required() = %s \n",info.get_global_qualification_required() ? "true" : "false");
+#endif
+
+     ROSE_ASSERT(declarationStatement != NULL);
+     return generateNameQualifierSupport(declarationStatement->get_scope(),info);
+   }
+
+
+SgName
+Unparser_Nameq::generateNameQualifierSupport( SgScopeStatement* scope, const SgUnparse_Info& info )
+   {
+  // This support for name qualification is C++ specific, this might be a problem that should generate a refactoring of this code.
+
+     printf ("In Unparser_Nameq::generateNameQualifierSupport(): info.get_name_qualification_length()     = %d \n",info.get_name_qualification_length());
+     printf ("In Unparser_Nameq::generateNameQualifierSupport(): info.get_type_elaboration_required()     = %s \n",info.get_type_elaboration_required() ? "true" : "false");
+     printf ("In Unparser_Nameq::generateNameQualifierSupport(): info.get_global_qualification_required() = %s \n",info.get_global_qualification_required() ? "true" : "false");
+
+     SgName qualifiedName;
+
+     SgName name;
+     for (int i = 0; i < info.get_name_qualification_length(); i++)
+        {
+       // Get the name of each named scope from the associated declaration and put it out.
+          printf ("In generateNameQualifierSupport(): i = %d scope = %p = %s qualifiedName = %s \n",i,scope,scope->class_name().c_str(),qualifiedName.str());
+
+          if (scope->isNamedScope() == false)
+             {
+            // Iterate to the next named scope
+               while (scope->isNamedScope() == false && isSgGlobal(scope) != NULL)
+                  {
+                    scope = scope->get_scope();
+                    ROSE_ASSERT(scope != NULL);
+
+                    if (isSgGlobal(scope))
+                       {
+                         printf ("Found the global scope! \n");
+                       }
+                  }
+
+               ROSE_ASSERT(scope != NULL);
+             }
+
+       // Generate the name of this named scope.
+          name = scope->associatedScopeName();
+
+          printf ("In generateNameQualifierSupport(): scope = %p = %s name = %s \n",scope,scope->class_name().c_str(),name.str());
+
+       // Sometimes the name can be empty (e.g. un-named namespace).
+          if (name.is_null() == false)
+             {
+            // qualifiedName += name + "::";
+               qualifiedName = name + "::" + qualifiedName;
+             }
+            else
+             {
+               printf ("ERROR: empty name for named scope = %s \n",scope->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+
+          scope = scope->get_scope();
+          ROSE_ASSERT(scope != NULL);
+
+
+        }
+
+  // Add global qualification if it is specified.
+     if (info.get_global_qualification_required() == true)
+        {
+       // qualifiedName += "::";
+          qualifiedName = "::" + qualifiedName;
+        }
+
+     return qualifiedName;
+   }

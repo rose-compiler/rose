@@ -485,6 +485,7 @@ Grammar::setUpStatements ()
      ScopeStatement.setDataPrototype    ( "SgTypeTable*","type_table","= NULL",
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
 
+  // DQ (5/11/2011): This should be depricated since we now have a newer name qualification implementation going into place.
   // DQ (6/5/2007): Specify no access functions so that we can build special ones that return by reference.
   // DQ (5/8/2007): Added type elaboration list. If a symbol is in this list then it requires type elaboration ("typically "class" keyword).
      ScopeStatement.setDataPrototype    ( "std::set<SgSymbol*>","type_elaboration_list","",
@@ -1140,6 +1141,18 @@ Grammar::setUpStatements ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      VariableDeclaration.setDataPrototype ("SgVariableDeclaration::gnu_extension_declaration_attributes_enum", "gnu_extension_declaration_attribute", "= SgVariableDeclaration::e_gnu_attribute_unspecified",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added support for name qualification.
+     VariableDeclaration.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     VariableDeclaration.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     VariableDeclaration.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      VariableDefinition.setFunctionPrototype ( "HEADER_VARIABLE_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
@@ -1978,10 +1991,36 @@ Grammar::setUpStatements ()
      UsingDeclarationStatement.setDataPrototype     ( "SgInitializedName*", "initializedName", "= NULL",
                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/12/2011): Added support for name qualification.
+     UsingDeclarationStatement.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     UsingDeclarationStatement.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     UsingDeclarationStatement.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      UsingDirectiveStatement.setFunctionPrototype ( "HEADER_USING_DIRECTIVE_STATEMENT",
                                                     "../Grammar/Statement.code" );
      UsingDirectiveStatement.setDataPrototype     ( "SgNamespaceDeclarationStatement*", "namespaceDeclaration", "= NULL",
                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added support for name qualification.
+     UsingDirectiveStatement.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     UsingDirectiveStatement.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     UsingDirectiveStatement.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 #if USE_FORTRAN_IR_NODES
      ProgramHeaderStatement.setFunctionPrototype ( "HEADER_PROGRAM_HEADER_STATEMENT", "../Grammar/Statement.code" );

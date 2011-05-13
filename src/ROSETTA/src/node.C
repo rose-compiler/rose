@@ -512,6 +512,18 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype("bool", "protected_declaration", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/12/2011): Added support for name qualification on the type referenced by the InitializedName
+  // (not the SgInitializedName itself since it might be referenced from several places, I think).
+     InitializedName.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     InitializedName.setDataPrototype("bool","type_elaboration_required_for_type","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     InitializedName.setDataPrototype("bool","global_qualification_required_for_type","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // ***********************************************************************

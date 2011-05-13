@@ -175,7 +175,7 @@ string get_type_name(SgType* t)
                                 SgClassDeclaration* decl;
                                 decl = isSgClassDeclaration(class_type->get_declaration());
                 SgName nm = decl->get_qualified_name();
-                //printf ("In unparseType(%p): nm = %s \n",t,nm.str());
+                printf ("In unparseType(%p): nm = %s \n",t,nm.str());
                 if (nm.getString() != "")
                     return nm.getString();
                 else

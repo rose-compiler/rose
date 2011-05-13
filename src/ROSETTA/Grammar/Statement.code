@@ -431,6 +431,16 @@ HEADER_SCOPE_STATEMENT_START
           bool isCaseInsensitive() const;
           void setCaseInsensitive(bool b);
 
+       // DQ (5/11/2011): Added support for new name qualification implementation.
+      //! Some scopes have associated names for purposed of name qualification. This returns true if the scope has a name, false if not.
+          bool isNamedScope();
+
+       // DQ (5/11/2011): Added support for new name qualification implementation.
+      //! Some scopes have associated names for purposed of name qualification. This generates the associated name.
+          SgName associatedScopeName();
+
+
+
      public:
 
 
@@ -5234,6 +5244,105 @@ SgScopeStatement::setCaseInsensitive(bool b)
      p_symbol_table->setCaseInsensitive(b);
    }
 
+
+bool
+SgScopeStatement::isNamedScope()
+   {
+  // DQ (5/11/2011): Added support for new name qualification.  If this is associated with 
+  // a scope that has a name then return true, else false. This is used to support the name 
+  // qualification.
+
+     bool result = false;
+     switch (this->variantT())
+        {
+       // Though it might seem incorrect, since functions have names, the SgFunctionDefinition 
+       // is not a named scope for purposes of name qualification.
+       // case SgFunctionDefinition:
+
+          case V_SgBasicBlock:
+             {
+            // A SgBasicBlock is used inside of a few declarations to define a new scope.
+            // This for this case, the enum can't nest other scopes. But field values can 
+            // be qualified, so this is a named scope when it is used in an SgEnumDeclaration.
+               SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(this->get_parent());
+               if (enumDeclaration != NULL)
+                  {
+                    result = true;
+                  }
+               break;
+             }
+
+          case V_SgClassDefinition:
+          case V_SgTemplateInstantiationDefn:
+          case V_SgNamespaceDefinitionStatement:
+             {
+               result = true;
+               break;
+             }
+
+          default:
+             {
+               printf ("Default reached in SgScopeStatement::isNamedScope(): scope = %s \n",this->class_name().c_str());
+#if 0
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+      
+     return result;
+   }
+
+// DQ (5/11/2011): Added support for new name qualification implementation.
+//! Some scopes have associated names for purposed of name qualification. This generates the associated name.
+SgName
+SgScopeStatement::associatedScopeName()
+   {
+     SgName name;
+     if (isNamedScope() == true)
+        {
+          SgDeclarationStatement* declaration = isSgDeclarationStatement(this->get_parent());
+          ROSE_ASSERT(declaration != NULL);
+          switch (declaration->variantT())
+             {
+               case V_SgClassDeclaration:
+                  {
+                    SgClassDeclaration* namedDeclaration = isSgClassDeclaration(declaration);
+                    name = namedDeclaration->get_name();
+                    break;
+                  }
+
+            // The name stored in a SgTemplateInstantiationDecl is different from that in the SgClassDeclaration base class, as I recall.
+               case V_SgTemplateInstantiationDecl:
+                  {
+                    SgTemplateInstantiationDecl* namedDeclaration = isSgTemplateInstantiationDecl(declaration);
+                    name = namedDeclaration->get_name();
+                    break;
+                  }
+
+               case V_SgNamespaceDeclarationStatement:
+                  {
+                    SgNamespaceDeclarationStatement* namedDeclaration = isSgNamespaceDeclarationStatement(declaration);
+                    name = namedDeclaration->get_name();
+                    break;
+                  }
+
+               case V_SgEnumDeclaration:
+                  {
+                    SgEnumDeclaration* namedDeclaration = isSgEnumDeclaration(declaration);
+                    name = namedDeclaration->get_name();
+                    break;
+                  }
+
+               default:
+                  {
+                    printf ("Default reached in SgScopeStatement::associatedScopeName(): scope = %s \n",this->class_name().c_str());
+                    ROSE_ASSERT(false);
+                  }
+             }
+        }
+
+     return name;
+   }
 
 SOURCE_SCOPE_STATEMENT_END
 
