@@ -746,7 +746,9 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2011_26.C \
    test2011_27.C \
    test2011_28.C \
-   test2011_29.C
+   test2011_29.C \
+   test2011_30.C \
+   test2011_31.C
 
 
 if !ROSE_USE_INSURE

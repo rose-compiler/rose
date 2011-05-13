@@ -8144,6 +8144,11 @@ SgBaseClass::post_construction_initialization()
   // data member and was forced to handle it as a pointer).
      p_baseClassModifier = new SgBaseClassModifier();
      assert ( p_baseClassModifier != NULL);
+
+  // DQ (5/12/2011): New support for name qualification.
+     p_name_qualification_length     = 0;
+     p_type_elaboration_required     = false;
+     p_global_qualification_required = false;
    }
 
 #if 0
@@ -8169,6 +8174,11 @@ SgBaseClass::SgBaseClass(const SgBaseClass& X)
      assert ( X.p_baseClassModifier != NULL);
      p_baseClassModifier = new SgBaseClassModifier( *(X.p_baseClassModifier) );
      assert ( p_baseClassModifier != NULL);
+
+  // DQ (5/12/2011): New support for name qualification.
+     p_name_qualification_length     = X.p_name_qualification_length;
+     p_type_elaboration_required     = X.p_type_elaboration_required;
+     p_global_qualification_required = X.p_global_qualification_required;
    }
 
 #if 0
@@ -8196,6 +8206,11 @@ SgBaseClass::operator= (const SgBaseClass & X)
      assert (p_baseClassModifier   != NULL);
      assert (X.p_baseClassModifier != NULL);
      *p_baseClassModifier = *X.p_baseClassModifier;
+
+  // DQ (5/12/2011): New support for name qualification.
+     p_name_qualification_length     = X.p_name_qualification_length;
+     p_type_elaboration_required     = X.p_type_elaboration_required;
+     p_global_qualification_required = X.p_global_qualification_required;
 
      return *this;
    }
@@ -12896,6 +12911,11 @@ SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
   // type, declaration and class elaboration lists stored in the scopes.
      p_current_scope = X.p_current_scope;
 
+  // DQ (5/11/2011): New support for name qualification.
+     p_name_qualification_length     = X.p_name_qualification_length;
+     p_type_elaboration_required     = X.p_type_elaboration_required;
+     p_global_qualification_required = X.p_global_qualification_required;
+
      return *this;
    }
 
@@ -12994,6 +13014,11 @@ SgUnparse_Info::post_construction_initialization()
 
   // DQ (6/2/2007): Added initialization of new data member.
      p_current_scope = NULL;
+
+  // DQ (5/11/2011): New support for name qualification.
+     p_name_qualification_length     = 0;
+     p_type_elaboration_required     = false;
+     p_global_qualification_required = false;
    }
 
 bool

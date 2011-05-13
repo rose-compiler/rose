@@ -828,6 +828,18 @@ Grammar::setUpExpressions ()
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (5/11/2011): Added support for name qualification.
+     VarRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/11/2011): Added information required for new name qualification support.
+     VarRefExp.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/11/2011): Added information required for new name qualification support.
+     VarRefExp.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      LabelRefExp.setFunctionPrototype ( "HEADER_LABEL_REF_EXPRESSION", "../Grammar/Expression.code" );
      LabelRefExp.setDataPrototype ( "SgLabelSymbol*", "symbol", "= NULL",
                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -856,6 +868,18 @@ Grammar::setUpExpressions ()
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (5/12/2011): Added support for name qualification.
+     FunctionRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     FunctionRefExp.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     FunctionRefExp.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      MemberFunctionRefExp.setFunctionPrototype ( "HEADER_MEMBER_FUNCTION_REF_EXPRESSION", "../Grammar/Expression.code" );
      MemberFunctionRefExp.setDataPrototype ( "SgMemberFunctionSymbol*", "symbol_i", "= NULL",
             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -874,6 +898,18 @@ Grammar::setUpExpressions ()
   //                 post_constructor_initialization(), as suggested by Qing).
      MemberFunctionRefExp.setDataPrototype ( "int", "need_qualifier", "= true",
                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added support for name qualification.
+     MemberFunctionRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     MemberFunctionRefExp.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     MemberFunctionRefExp.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ValueExp.setFunctionPrototype ( "HEADER_VALUE_EXPRESSION", "../Grammar/Expression.code" );
 
@@ -1056,6 +1092,20 @@ Grammar::setUpExpressions ()
   //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
      FunctionCallExp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+
+#if 0
+  // DQ (5/12/2011): Added support for name qualification.
+     FunctionCallExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     FunctionCallExp.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/12/2011): Added information required for new name qualification support.
+     FunctionCallExp.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
      ArrowExp.setFunctionPrototype ( "HEADER_ARROW_EXPRESSION", "../Grammar/Expression.code" );
 

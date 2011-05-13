@@ -287,6 +287,11 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
                   }
 #endif
 
+            // DQ (5/12/2011): Added support for newer name qualification implementation.
+               ninfo_for_type.set_name_qualification_length(initializedName->get_name_qualification_length_for_type());
+               ninfo_for_type.set_global_qualification_required(initializedName->get_global_qualification_required_for_type());
+               ninfo_for_type.set_type_elaboration_required(initializedName->get_type_elaboration_required_for_type());
+
             // unparseType(tmp_type, info);
                unp->u_type->unparseType(tmp_type, ninfo_for_type);
 
@@ -854,13 +859,25 @@ Unparse_ExprStmt::unparseUsingDirectiveStatement (SgStatement* stmt, SgUnparse_I
           usingDirective->get_namespaceDeclaration()->get_qualified_name().str());
 #endif
 
+  // DQ (5/12/2011): Support for new name qualification.
+     SgUnparse_Info tmp_info(info);
+     tmp_info.set_name_qualification_length(usingDirective->get_name_qualification_length());
+     tmp_info.set_global_qualification_required(usingDirective->get_global_qualification_required());
+
   // DQ (6/7/2007): Compute the name qualification separately.
   // curprint ( usingDirective->get_namespaceDeclaration()->get_name().str();
   // curprint ( usingDirective->get_namespaceDeclaration()->get_qualified_name().str();
-     SgName nameQualifier = unp->u_name->generateNameQualifier( usingDirective->get_namespaceDeclaration() , info );
+
+  // DQ (5/12/2011): We store the information about the name qualification in the reference to the namespace, 
+  // and not in the namespace.  This is so that multiple references to the namespace can be supported using 
+  // different levels of qualification.
+  // SgName nameQualifier = unp->u_name->generateNameQualifier( usingDirective->get_namespaceDeclaration() , info );
+     SgName nameQualifier = unp->u_name->generateNameQualifier( usingDirective->get_namespaceDeclaration() , tmp_info );
+
+  // printf ("In unparseUsingDirectiveStatement(): nameQualifier = %s \n",nameQualifier.str());
      curprint ( nameQualifier);
+
      curprint ( usingDirective->get_namespaceDeclaration()->get_name().str());
-     
 
      curprint ( string(";\n"));
    }
@@ -892,8 +909,16 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
   // printf ("In unparseUsingDeclarationStatement(): declarationStatement = %s \n",declarationStatement->sage_class_name());
   // unparseStatement(declarationStatement,info1);
 
+#if 1
+  // DQ (5/12/2011): Support for new name qualification.
+     SgUnparse_Info tmp_info1(info);
+     tmp_info1.set_name_qualification_length(usingDeclaration->get_name_qualification_length());
+     tmp_info1.set_global_qualification_required(usingDeclaration->get_global_qualification_required());
+#endif
+
      if (initializedName != NULL)
         {
+#if 0
        // DQ (9/12/2004): Add the qualification required to resolve the name
 #if 1
           SgScopeStatement* scope = initializedName->get_scope();
@@ -904,10 +929,17 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
        // DQ (8/22/2005): Added get_qualified_name() to SgInitializedName class
           curprint ( initializedName->get_qualified_name().str());
 #endif
+#else
+       // DQ (5/12/2011): Support for new name qualification.
+          SgName nameQualifier = unp->u_name->generateNameQualifier(initializedName,tmp_info1);
+          curprint(nameQualifier.str());
+          curprint(initializedName->get_name().str());
+#endif
         }
 
      if (declarationStatement != NULL)
         {
+#if 0
        // DQ (9/12/2004): Add the qualification required to resolve the name
           SgScopeStatement* scope = declarationStatement->get_scope();
 #if 1
@@ -932,6 +964,11 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
                curprint ( string(scope->get_qualified_name().str()));
             else
                curprint ( string(scope->get_qualified_name().str()) + "::");
+#endif
+#else
+       // DQ (5/12/2011): Support for new name qualification.
+          SgName nameQualifier = unp->u_name->generateNameQualifier(declarationStatement,tmp_info1);
+          curprint(nameQualifier.str());
 #endif
        // Handle the different sorts of declarations explicitly since the existing unparse functions for 
        // declarations are not setup for what the using declaration unparser requires.
@@ -3771,6 +3808,11 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                       // ROSE_ASSERT(ninfo2.get_declstatement_ptr() != NULL);
                          ROSE_ASSERT(ninfo_for_variable.get_declstatement_ptr() != NULL);
 
+                      // DQ (5/12/2011): Added support for newer name qualification implementation.
+                         ninfo_for_variable.set_name_qualification_length(vardecl_stmt->get_name_qualification_length());
+                         ninfo_for_variable.set_global_qualification_required(vardecl_stmt->get_global_qualification_required());
+                         ninfo_for_variable.set_type_elaboration_required(vardecl_stmt->get_type_elaboration_required());
+
                       // SgName nameQualifier = unp->u_type->unp->u_name->generateNameQualifier(decl_item,ninfo2);
                          SgName nameQualifier = unp->u_name->generateNameQualifier(decl_item,ninfo_for_variable);
                       // printf ("variable declaration name = %s nameQualifier = %s \n",tmp_name.str(),(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
@@ -4338,9 +4380,25 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
                     curprint ( string("protected "));
                   }
 
-            // DQ (5/9/2011): This might have to be a qualified name...
+            // DQ (5/12/2011): This might have to be a qualified name...
+               SgUnparse_Info tmp_ninfo(ninfo);
+               tmp_ninfo.set_name_qualification_length((*p)->get_name_qualification_length());
+               tmp_ninfo.set_global_qualification_required((*p)->get_global_qualification_required());
+
+               ROSE_ASSERT(tmp_decl != NULL);
+
+               SgName nameQualifier = unp->u_name->generateNameQualifier(tmp_decl,tmp_ninfo);
+
+            // Debugging code.
+               if (tmp_ninfo.get_name_qualification_length() > 0 || tmp_ninfo.get_global_qualification_required() == true)
+                  {
+                    printf ("In Unparse_ExprStmt::unparseClassDefnStmt(): nameQualifier = %s \n",nameQualifier.str());
+                  }
+               curprint(nameQualifier.str());
+
             // base name
                curprint ( tmp_decl->get_name().str());
+
                p++;
 
                if (p != classdefn_stmt->get_inheritances().end())

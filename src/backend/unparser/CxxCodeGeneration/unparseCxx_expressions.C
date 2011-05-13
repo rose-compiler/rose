@@ -676,6 +676,11 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
      SgName nameQualifier;
      if (theName->get_name() != "__assert_fail")
         {
+       // nameQualifier = unp->u_name->generateNameQualifier(theName,info);
+
+          info.set_name_qualification_length(var_ref->get_name_qualification_length());
+          info.set_global_qualification_required(var_ref->get_global_qualification_required());
+
           nameQualifier = unp->u_name->generateNameQualifier(theName,info);
         }
 
@@ -790,7 +795,13 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
 
                  // curprint ( "/* unparseFuncRef calling info.set_forceQualifiedNames() */ ";
 
-                    SgName nameQualifier = unp->u_name->generateNameQualifier( declaration, info );
+                 // DQ (5/12/2011): Support for new name qualification.
+                    SgUnparse_Info tmp_info(info);
+                    tmp_info.set_name_qualification_length(func_ref->get_name_qualification_length());
+                    tmp_info.set_global_qualification_required(func_ref->get_global_qualification_required());
+
+                 // SgName nameQualifier = unp->u_name->generateNameQualifier( declaration, info );
+                    SgName nameQualifier = unp->u_name->generateNameQualifier( declaration, tmp_info );
                  // printf ("In unparseFuncRef(): nameQualifier = %s \n",nameQualifier.str());
                  // curprint ( "\n /* unparseFuncRef using nameQualifier = " + nameQualifier.str() + " */ \n";
 #if 0
@@ -886,6 +897,8 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
             else
              {
             // curprint ( "\n /* Output the qualified class name */ \n";
+
+               printf ("In unparseMFuncRef(): Qualified names of member function reference expressions are not handled yet! \n");
 
             // DQ (10/11/2006): I don't think that we want the fully qualified name, just the class name!
             // curprint (  cdecl->get_qualified_name().str() + "::";

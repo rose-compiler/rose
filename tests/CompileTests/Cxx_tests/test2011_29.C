@@ -21,4 +21,4 @@ namespace X
 // void operator delete[](void*, const X::nothrow_t&) throw();
 
 
-void* foo(X::size_t, const X::nothrow_t&) throw();
+void* foo(X::size_t input_size, const X::nothrow_t& input_throw) throw();
