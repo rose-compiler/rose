@@ -243,6 +243,10 @@ HEADER_SCOPE_STATEMENT_START
       //! (note that it is sometime OK for there to be more than 1).
           size_t count_symbol(const SgName& n);
 
+       // DQ (5/14/2011): Added count for alias symbols (used in name qualification, since alias symbols of a base class are added to the derived class).
+      //! Count for alias symbols of a specific name, used in name qualification support.
+          size_t count_alias_symbol(const SgName& n);
+
        // Single interface for inserting symbol into symbol table
           void insert_symbol(const SgName& n, SgSymbol* s);
 
@@ -3725,6 +3729,14 @@ SgScopeStatement::count_symbol(const SgName& n)
      return p_symbol_table->count(n);
    }
 
+size_t
+SgScopeStatement::count_alias_symbol(const SgName& n)
+   {
+  // DQ (5/14/2011): Added support to count just the alias symbols that match the input name (key).
+     assert (p_symbol_table != NULL);
+     return p_symbol_table->count_aliases(n);
+   }
+
 // DQ (2/10/2007): Added test function for existence of symbols
 bool
 SgScopeStatement::symbol_exists ( const SgName & nm , SgSymbol *sp ) const
@@ -5272,6 +5284,7 @@ SgScopeStatement::isNamedScope()
                break;
              }
 
+       // case V_SgGlobal:  // global has the name "::" but it does not have an associated declaration.
           case V_SgClassDefinition:
           case V_SgTemplateInstantiationDefn:
           case V_SgNamespaceDefinitionStatement:
@@ -5332,7 +5345,14 @@ SgScopeStatement::associatedScopeName()
                     name = namedDeclaration->get_name();
                     break;
                   }
-
+#if 0
+               case V_SgGlobal:
+                  {
+                 // The name of global scope (as used for name qualification).
+                    name = "::";
+                    break;
+                  }
+#endif
                default:
                   {
                     printf ("Default reached in SgScopeStatement::associatedScopeName(): scope = %s \n",this->class_name().c_str());
@@ -5340,6 +5360,15 @@ SgScopeStatement::associatedScopeName()
                   }
              }
         }
+#if 0
+       else
+        {
+          if (isSgGlobal(this) != NULL)
+             {
+               name = "::";
+             }
+        }
+#endif
 
      return name;
    }

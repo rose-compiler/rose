@@ -124,6 +124,24 @@ HiddenListTraversal::associatedDeclaration(SgScopeStatement* scope)
                break;
              }
 
+       // Some scopes don't have an associated declaration (return NULL in these cases).
+       // Also missing some of the Fortran specific scopes.
+          case V_SgGlobal:
+          case V_SgIfStmt:
+          case V_SgWhileStmt:
+          case V_SgDoWhileStmt:
+          case V_SgForStatement:
+          case V_SgForAllStatement:
+          case V_SgBasicBlock:
+          case V_SgSwitchStatement:
+          case V_SgCatchOptionStmt:
+          case V_SgUpcForAllStatement:
+             {
+               return_declaration = NULL;
+               break;
+             }
+
+       // Catch anything that migh have been missed (and exit so it can be identified and fixed).
           default:
              {
                printf ("Default reached in HiddenListTraversal::associatedDeclaration() scope = %s \n",scope->class_name().c_str());
@@ -166,12 +184,48 @@ HiddenListTraversal::nameQualificationDepthOfParent(SgDeclarationStatement* decl
         {
        // Now ask the same question recursively using the parent declaration and the same currentScope (is it visible from the same point in the code).
           SgDeclarationStatement* parentDeclaration = associatedDeclaration(parentScope);
-       // qualificationDepth = nameQualificationDepth(parentDeclaration,parentScope,positionStatement);
-          qualificationDepth = nameQualificationDepth(parentDeclaration,currentScope,positionStatement);
+
+       // In some cases the declaration can be in a scope with is not associated with a declaration (e.g. SgBasicBlock or SgForStatement).
+          if (parentDeclaration != NULL)
+             {
+            // qualificationDepth = nameQualificationDepth(parentDeclaration,parentScope,positionStatement);
+               qualificationDepth = nameQualificationDepth(parentDeclaration,currentScope,positionStatement);
+             }
         }
 
      return qualificationDepth;
    }
+
+bool
+HiddenListTraversal::requiresTypeElaboration(SgSymbol* symbol)
+   {
+  // DQ (5/14/2011): type elaboration only works between non-types and types.  Different types must be distinquished using name qualification.
+  // If this is a type then since all types are given equal weight we need more name qualification to distinquish them.
+  // However, if this is a non-type then type elaboration is sufficent to distinquish the type (e.g. from a variable name).
+     bool typeElaborationRequired = false;
+
+     ROSE_ASSERT(symbol != NULL);
+     switch (symbol->variantT())
+        {
+          case V_SgMemberFunctionSymbol:
+          case V_SgVariableSymbol:
+               typeElaborationRequired = true;
+               break;
+
+          case V_SgTypedefSymbol:
+               typeElaborationRequired = false;
+               break;
+
+          default:
+             {
+               printf ("Default reached in HiddenListTraversal::requiresTypeElaboration(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+               ROSE_ASSERT(false);
+             }           
+        }
+
+     return typeElaborationRequired;
+   }
+
 
 
 // int HiddenListTraversal::nameQualificationDepth ( SgScopeStatement* classOrNamespaceDefinition )
@@ -276,6 +330,10 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
        // Note that there can be more than one symbol if the name is hidden in a base class scope (and thus there are SgAliasSymbols using the same name).
           SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name,currentScope);
 
+       // This is used to count the number of symbols of the same type in a single scope.
+       // size_t numberOfSymbols = 0;
+          bool forceMoreNameQualification = false;
+
           if (symbol != NULL)
              {
                printf ("Lookup symbol based on name only: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
@@ -301,9 +359,25 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                       // ROSE_ASSERT(classSymbol != NULL);
                          if (classSymbol == NULL)
                             {
-                              printf ("Type elaboration is required: declaration = %s symbol = %s \n",declaration->class_name().c_str(),symbol->class_name().c_str());
-                              typeElaborationIsRequired = true;
-
+                           // This is only type elaboration if it is a variable that is the conflict, if it is a typedef then more qualification is required. (see test2011_37.C).
+                           // printf ("Type elaboration is required: declaration = %s symbol = %s \n",declaration->class_name().c_str(),symbol->class_name().c_str());
+                           // typeElaborationIsRequired = true;
+                              if (requiresTypeElaboration(symbol) == true)
+                                 {
+                                   printf ("Type elaboration is required: declaration = %s symbol = %s \n",declaration->class_name().c_str(),symbol->class_name().c_str());
+                                   typeElaborationIsRequired = true;
+                                 }
+                                else
+                                 {
+                                // I think we have to force an extra level of name qualification.
+                                   forceMoreNameQualification = true;
+                                   printf ("Forcing an extra level of name qualification forceMoreNameQualification = %s \n",forceMoreNameQualification ? "true" : "false");
+#if 0
+                                   printf ("I think we have to force an extra level of name qualification (not implemented) \n");
+                                   ROSE_ASSERT(false);
+#endif
+                                 }
+                              
                            // Reset the symbol to one that will match the declaration.
                               symbol = SageInterface::lookupClassSymbolInParentScopes(name,currentScope);
                            // ROSE_ASSERT(symbol != NULL);
@@ -346,6 +420,8 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                               printf ("Type elaboration is required: declaration = %s symbol = %s \n",declaration->class_name().c_str(),symbol->class_name().c_str());
                               typeElaborationIsRequired = true;
 
+                              printf ("WARNING: Present implementation of symbol table will not find alias sysmbols of SgFunctionSymbol \n");
+
                            // Reset the symbol to one that will match the declaration.
                               symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,currentScope);
 
@@ -360,6 +436,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                                  }
                             }
 
+                      // numberOfSymbols = currentScope->count_symbol(name);
                          break;
                        }
 
@@ -396,8 +473,18 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                               printf ("Type elaboration is required: declaration = %s symbol = %s \n",declaration->class_name().c_str(),symbol->class_name().c_str());
                               typeElaborationIsRequired = true;
 
+                              printf ("WARNING: Present implementation of symbol table will not find alias sysmbols of SgTypedefSymbol \n");
+
                            // Reset the symbol to one that will match the declaration.
                               symbol = SageInterface::lookupTypedefSymbolInParentScopes(name,currentScope);
+                              if (symbol != NULL)
+                                 {
+                                   printf ("Lookup symbol based symbol type: reset symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+                                 }
+                                else
+                                 {
+                                   printf ("In HiddenListTraversal::nameQualificationDepth(): typedefSymbol == NULL \n");
+                                 }
                               ROSE_ASSERT(symbol != NULL);
                               printf ("Lookup symbol based symbol type: reset symbol = %p = %s \n",symbol,symbol->class_name().c_str());
                             }
@@ -485,7 +572,6 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                          break;
                        }
 
-#if 1
                     case V_SgVariableDeclaration:
                        {
                          SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(declaration);
@@ -506,7 +592,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
 
                          break;
                        }
-#endif
+
                     default:
                        {
                       // Handle cases are we work through specific example codes.
@@ -516,22 +602,56 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                   }
              }
 
+       // At this point if there was any ambiguity in the first matching symbol that was found, then
+       // we have resolved this to the correct type of symbol (SgClassSymbol, SgFunctionSymbol, etc.).
           if (symbol != NULL)
              {
-               printf ("symbol = %p = %s \n",symbol,symbol->class_name().c_str());
-
             // DQ (5/6/2011): Now we have fixed derived class symbol tables to inject there base classes symbols into the derived class.
                SgAliasSymbol* aliasSymbol = isSgAliasSymbol(symbol);
 
             // Make sure that there is no ambiguity (should be only one symbol with this name).
-               size_t numberOfSymbols = currentScope->count_symbol(name);
-               if (numberOfSymbols > 1)
+               size_t numberOfSymbols      = currentScope->count_symbol(name); 
+               size_t numberOfAliasSymbols = currentScope->count_alias_symbol(name); 
+
+               printf ("symbol = %p = %s aliasSymbol = %p numberOfSymbols = %zu \n",symbol,symbol->class_name().c_str(),aliasSymbol,numberOfSymbols);
+
+               printf ("numberOfSymbols = %zu numberOfAliasSymbols = %zu \n",numberOfSymbols,numberOfAliasSymbols);
+               numberOfSymbols = numberOfSymbols - numberOfAliasSymbols;
+               printf ("Corrected numberOfSymbols = %zu \n",numberOfSymbols);
+
+            // if (numberOfSymbols > 1)
+               if (numberOfSymbols > 1 || forceMoreNameQualification == true)
                   {
                  // If there is more than one symbol with the same name then name qualification is required to distinguish between them.
-                    printf ("Found a case of ambiguity in the currentScope = %p = %s = %s (trigger additional name qualifier). \n",currentScope,currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
+                 // The exception to this is overloaded member functions.  But might also be where type evaluation is required.
+                    printf ("Found a case of ambiguity of declaration = %s in the currentScope = %p = %s = %s (trigger additional name qualifier). \n",
+                         declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
 
-                 // But we have to keep moving up the chain of scopes to see if the parent might also require qualification.
-                    qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
+                 // Don't qualify member function defined in their associated class.
+                    SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(declaration);
+                    if (memberFunctionDeclaration != NULL)
+                       {
+                         SgScopeStatement* structurallyAssociatedScope = isSgScopeStatement(memberFunctionDeclaration->get_parent());
+                         ROSE_ASSERT(structurallyAssociatedScope != NULL);
+
+                      // Note that structurallyAssociatedDeclaration could be NULL if the function declaration is in global scope.
+                         SgDeclarationStatement* structurallyAssociatedDeclaration = associatedDeclaration(structurallyAssociatedScope);
+                         SgDeclarationStatement* semanticallyAssociatedDeclaration = memberFunctionDeclaration->get_associatedClassDeclaration();
+
+                         ROSE_ASSERT(semanticallyAssociatedDeclaration != NULL);
+
+                         if (structurallyAssociatedDeclaration != semanticallyAssociatedDeclaration)
+                            {
+                           // The associated class for the member function does not match its structural location so we require name qualification.
+                              printf ("The associated class for the member function does not match its structural location so we require name qualification \n");
+                              qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
+                            }
+                       }
+                      else
+                       {
+                      // But we have to keep moving up the chain of scopes to see if the parent might also require qualification.
+                         qualificationDepth = nameQualificationDepthOfParent(declaration,currentScope,positionStatement) + 1;
+                       }
                   }
                  else
                   {
@@ -918,6 +1038,9 @@ HiddenListTraversal::nameQualificationDepth ( SgInitializedName* initializedName
 
      SgName name = initializedName->get_name();
 
+     SgDeclarationStatement* declaration = associatedDeclaration(initializedName->get_scope());
+  // ROSE_ASSERT(declaration != NULL);
+
      SgVariableSymbol* variableSymbol = NULL;
      SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name,currentScope);
 
@@ -941,13 +1064,25 @@ HiddenListTraversal::nameQualificationDepth ( SgInitializedName* initializedName
                     printf ("In HiddenListTraversal::nameQualificationDepth(SgInitializedName*,SgScopeStatement*,SgStatement*): variableSymbol == NULL \n");
                   }
 
-               amountOfNameQualificationRequired = nameQualificationDepth(associatedDeclaration(initializedName->get_scope()),currentScope,positionStatement) + 1;
+            // amountOfNameQualificationRequired = nameQualificationDepth(associatedDeclaration(initializedName->get_scope()),currentScope,positionStatement) + 1;
+            // SgDeclarationStatement* declaration = associatedDeclaration(initializedName->get_scope());
+               ROSE_ASSERT(declaration != NULL);
+               amountOfNameQualificationRequired = nameQualificationDepth(declaration,currentScope,positionStatement) + 1;
              }
         }
        else
         {
        // Symbol for the SgInitializedName is not in the current scope or those of parent scopes.  So some name qualification is required.
-          amountOfNameQualificationRequired = nameQualificationDepth(associatedDeclaration(initializedName->get_scope()),currentScope,positionStatement) + 1;
+       // amountOfNameQualificationRequired = nameQualificationDepth(associatedDeclaration(initializedName->get_scope()),currentScope,positionStatement) + 1;
+       // SgDeclarationStatement* declaration = associatedDeclaration(initializedName->get_scope());
+       // amountOfNameQualificationRequired = nameQualificationDepth(declaration,currentScope,positionStatement) + 1;
+       // ROSE_ASSERT(declaration != NULL);
+
+       // See test2004_34.C for an example of where declaration == NULL
+          if (declaration != NULL)
+             {
+               amountOfNameQualificationRequired = nameQualificationDepth(declaration,currentScope,positionStatement) + 1;
+             }
         }
 
   // amountOfNameQualificationRequired = nameQualificationDepth(declaration,currentScope,positionStatement);
@@ -966,7 +1101,7 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
 
   // Locations where name qualified references can exist:
   //   1) Base class names
-  //   2) Variable names in declarations
+  //   2) Variable names in declarations (see test2011_30.C)
   //   3) Types referenced by variables
   //   4) Types referenced in function parameter lists
   //   5) Return types referenced by functions
@@ -976,10 +1111,15 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
   //   9) Functions reference by SgFunctionRefExp IR nodes
   //  10) Functions reference by SgMemberFunctionRefExp IR nodes
   //  11) Variable reference by SgVarRefExp IR nodes
-  //  12)
-  //  13)
-  //  14)
-  //  15)
+  //  12) Template arguments
+  //  13) Template parameters?
+  //  14) Function declarations
+  //  15) Member function declarations
+  //  16) Typedef declarations
+  //  17)
+  //  18)
+  //  19)
+  //  20)
 
      SgClassDefinition* classDefinition = isSgClassDefinition(n);
      if (classDefinition != NULL)
@@ -1033,7 +1173,12 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
           SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(initializedName->get_type());
           if (declaration != NULL)
              {
+               printf ("Putting the name qualification for the type into the SgInitializedName = %p = %s \n",initializedName,initializedName->get_name().str());
                setNameQualification(initializedName,declaration,amountOfNameQualificationRequiredForType);
+             }
+            else
+             {
+               printf ("declaration == NULL: could not put name qualification for the type into the SgInitializedName = %p = %s \n",initializedName,initializedName->get_name().str());
              }
 
           SgScopeStatement* currentScope = SageInterface::getScope(variableDeclaration);
@@ -1075,6 +1220,38 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
             // Check for different places where SgInitializedName are used to make sure that we are not missing more opportunities for name qualification.
                printf ("Note: Found SgInitializedName (%s) in initializedName->get_parent() = %s \n",initializedName->get_name().str(),initializedName->get_parent()->class_name().c_str());
              }
+        }
+
+  // Handle references to SgFunctionDeclaration...
+     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(n);
+     if (functionDeclaration != NULL)
+        {
+       // Could it be that we only want to do this for the defining declaration? No, since prototypes must also use name qualification!
+
+       // We need the structural location in scope (not the semantic one).
+          SgScopeStatement* currentScope = isSgScopeStatement(functionDeclaration->get_parent());
+          ROSE_ASSERT(currentScope != NULL);
+
+          int amountOfNameQualificationRequired = nameQualificationDepth(functionDeclaration,currentScope,functionDeclaration);
+          printf ("SgMemberFunctionDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+
+          setNameQualification(functionDeclaration,amountOfNameQualificationRequired);
+        }
+
+  // Handle references to SgMemberFunctionDeclaration...
+     SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(n);
+     if (memberFunctionDeclaration != NULL)
+        {
+       // Could it be that we only want to do this for the defining declaration? No, since prototypes must also use name qualification!
+
+       // We need the structural location in scope (not the semantic one).
+          SgScopeStatement* currentScope = isSgScopeStatement(memberFunctionDeclaration->get_parent());
+          ROSE_ASSERT(currentScope != NULL);
+
+          int amountOfNameQualificationRequired = nameQualificationDepth(memberFunctionDeclaration,currentScope,memberFunctionDeclaration);
+          printf ("SgMemberFunctionDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+
+          setNameQualification(memberFunctionDeclaration,amountOfNameQualificationRequired);
         }
 
   // Handle references in SgUsingDirectiveStatement...
@@ -1221,12 +1398,37 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
           ROSE_ASSERT(initializedName != NULL);
 
           SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
-          ROSE_ASSERT(variableDeclaration != NULL);
+       // ROSE_ASSERT(variableDeclaration != NULL);
+          if (variableDeclaration == NULL)
+             {
+            // This is the special case for the compiler generated variable "__PRETTY_FUNCTION__".
+               if (initializedName->get_name() == "__PRETTY_FUNCTION__" ||  initializedName->get_name() == "__func__")
+                  {
+                 // Skip these cases...
+                  }
+                 else
+                  {
+                 // If this is a SgInitializedName from a function parameter list then it does not need qualification.
+                    SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(initializedName->get_parent());
+                    if (functionParameterList != NULL)
+                       {
+                         printf ("Names from function parameter list can not be name qualified: name = %s \n",initializedName->get_name().str());
+                       }
+                      else
+                       {
+                         printf ("varRefExp's initialized name = %s is not associated with a SgVariableDeclaration \n",initializedName->get_name().str());
+                         initializedName->get_file_info()->display("This SgInitializedName is not associated with a SgVariableDeclaration");
+                         ROSE_ASSERT(variableDeclaration != NULL);
+                       }
+                  }
+             }
+            else
+             {
+               int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,currentScope,currentStatement);
+               printf ("SgVarRefExp's SgDeclarationStatement: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 
-          int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,currentScope,currentStatement);
-          printf ("SgVarRefExp's SgDeclarationStatement: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
-
-          setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
+               setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
+             }
         }
 
 
@@ -1377,6 +1579,63 @@ HiddenListTraversal::setNameQualification ( SgBaseClass* baseClass, SgClassDecla
 #endif
    }
 
+#if 0
+void
+HiddenListTraversal::setNameQualification ( SgMemberFunctionDeclaration* memberFunctionDeclaration, int amountOfNameQualificationRequired )
+   {
+  // This takes only a SgMemberFunctionDeclaration since it is where we locate the name qualification information AND
+  // is the correct scope from which to iterate backwards through scopes to evaluate what name qualification is required.
+
+  // Setup call to refactored code.
+     int  outputNameQualificationLength = 0;
+     bool outputGlobalQualification     = false;
+     bool outputTypeEvaluation          = false;
+
+     setNameQualificationSupport(memberFunctionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
+
+#if 1
+     memberFunctionDeclaration->set_global_qualification_required(outputGlobalQualification);
+     memberFunctionDeclaration->set_name_qualification_length(outputNameQualificationLength);
+     memberFunctionDeclaration->set_type_elaboration_required(outputTypeEvaluation);
+#endif
+
+  // There should be no type evaluation required for a variable reference, as I recall.
+     ROSE_ASSERT(outputTypeEvaluation == false);
+#if 1
+     printf ("In HiddenListTraversal::setNameQualification(): memberFunctionDeclaration->get_name_qualification_length()     = %d \n",memberFunctionDeclaration->get_name_qualification_length());
+     printf ("In HiddenListTraversal::setNameQualification(): memberFunctionDeclaration->get_type_elaboration_required()     = %s \n",memberFunctionDeclaration->get_type_elaboration_required() ? "true" : "false");
+     printf ("In HiddenListTraversal::setNameQualification(): memberFunctionDeclaration->get_global_qualification_required() = %s \n",memberFunctionDeclaration->get_global_qualification_required() ? "true" : "false");
+#endif
+   }
+#else
+void
+HiddenListTraversal::setNameQualification ( SgFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired )
+   {
+  // This takes only a SgFunctionDeclaration since it is where we locate the name qualification information AND
+  // is the correct scope from which to iterate backwards through scopes to evaluate what name qualification is required.
+
+  // Setup call to refactored code.
+     int  outputNameQualificationLength = 0;
+     bool outputGlobalQualification     = false;
+     bool outputTypeEvaluation          = false;
+
+     setNameQualificationSupport(functionDeclaration->get_scope(),amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
+
+#if 1
+     functionDeclaration->set_global_qualification_required(outputGlobalQualification);
+     functionDeclaration->set_name_qualification_length(outputNameQualificationLength);
+     functionDeclaration->set_type_elaboration_required(outputTypeEvaluation);
+#endif
+
+  // There should be no type evaluation required for a variable reference, as I recall.
+     ROSE_ASSERT(outputTypeEvaluation == false);
+#if 1
+     printf ("In HiddenListTraversal::setNameQualification(): functionDeclaration->get_name_qualification_length()     = %d \n",functionDeclaration->get_name_qualification_length());
+     printf ("In HiddenListTraversal::setNameQualification(): functionDeclaration->get_type_elaboration_required()     = %s \n",functionDeclaration->get_type_elaboration_required() ? "true" : "false");
+     printf ("In HiddenListTraversal::setNameQualification(): functionDeclaration->get_global_qualification_required() = %s \n",functionDeclaration->get_global_qualification_required() ? "true" : "false");
+#endif
+   }
+#endif
 
 void
 HiddenListTraversal::setNameQualification ( SgUsingDeclarationStatement* usingDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired )
@@ -1519,19 +1778,27 @@ HiddenListTraversal::setNameQualificationSupport(SgScopeStatement* scope, const 
      outputGlobalQualification                = false;
      outputTypeEvaluation                     = false;
 
+     printf ("In HiddenListTraversal::setNameQualificationSupport(): scope = %p = %s = %s inputNameQualificationLength = %d \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str(),inputNameQualificationLength);
+
      for (int i = 0; i < inputNameQualificationLength; i++)
         {
+          printf ("   --- In loop: scope = %p = %s = %s \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
           SgGlobal* globalScope = isSgGlobal(scope);
           if (globalScope != NULL)
              {
             // If we have iterated beyond the number of nested scopes, then set the global 
             // qualification and reduce the name_qualification_length correspondingly by one.
+
+               printf ("!!!!! We have iterated beyond the number of nested scopes: setting outputGlobalQualification == true \n");
+
                outputGlobalQualification = true;
                output_amountOfNameQualificationRequired = inputNameQualificationLength-1;
              }
 
-       // We have to scope over scopes that are not named scopes!
-          scope->get_scope();
+       // We have to loop over scopes that are not named scopes!
+          scope = scope->get_scope();
         }
+
+     printf ("In HiddenListTraversal::setNameQualificationSupport(): outputGlobalQualification = %s output_amountOfNameQualificationRequired = %d \n",outputGlobalQualification ? "true" : "false",output_amountOfNameQualificationRequired);
    }
 

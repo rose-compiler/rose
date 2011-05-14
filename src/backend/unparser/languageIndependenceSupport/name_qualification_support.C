@@ -841,12 +841,13 @@ Unparser_Nameq::generateNameQualifierSupport( SgScopeStatement* scope, const SgU
           if (scope->isNamedScope() == false)
              {
             // Iterate to the next named scope
-               while (scope->isNamedScope() == false && isSgGlobal(scope) != NULL)
+            // while (scope->isNamedScope() == false && isSgGlobal(scope) != NULL)
+               while (scope->isNamedScope() == false && isSgGlobal(scope) == NULL)
                   {
                     scope = scope->get_scope();
                     ROSE_ASSERT(scope != NULL);
 
-                    if (isSgGlobal(scope))
+                    if (isSgGlobal(scope) != NULL)
                        {
                          printf ("Found the global scope! \n");
                        }
@@ -869,7 +870,9 @@ Unparser_Nameq::generateNameQualifierSupport( SgScopeStatement* scope, const SgU
             else
              {
                printf ("ERROR: empty name for named scope = %s \n",scope->class_name().c_str());
+#if 0
                ROSE_ASSERT(false);
+#endif
              }
 
           scope = scope->get_scope();

@@ -3830,6 +3830,9 @@ HEADER_SYMBOL_TABLE_START
       //! Computes the number of symbols of a specific name
           int count(const SgName &) const;
 
+      //! Computes the number of alias symbols of a specific name (used in name qualification support).
+          int count_aliases(const SgName &) const;
+
       //! Outputs symbol table information (useful for debugging)
           void print( std::string label, VariantT nodeType = V_SgSymbol );
        // void print( std::string label );
@@ -6782,21 +6785,46 @@ SgTypedefSymbol*
 SgSymbolTable::find_typedef(const SgName & nm)
    {
      assert(p_table != NULL);
-     if(p_table)
+
+     p_iterator = p_table->find(nm);
+
+     hash_iterator save_original_iterator = p_iterator;
+
+     while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
         {
-          p_iterator = p_table->find(nm);
-       // while (p_iterator != p_table->end() && p_iterator->first == nm)
-          while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
+          if ( p_iterator->second->variantT() == V_SgTypedefSymbol)
              {
-            // if(isSgTypedefSymbol((*p_iterator).second))
-               if ( p_iterator->second->variantT() == V_SgTypedefSymbol)
-                  {
-                    p_name=nm;
-                    p_no_name = false;
-                    return (SgTypedefSymbol *) p_iterator->second;
-                  }
-               p_iterator++;
+               p_name = nm;
+               p_no_name = false;
+               return (SgTypedefSymbol *) p_iterator->second;
              }
+
+          p_iterator++;
+        }
+
+  // DQ (5/14/2011): If we have not found a symbol from the current scope, search for symbols 
+  // injected from other scopes using the Fortran "use" statment (and now also with the C++ 
+  // "using" directive, "using" declaration, and base class declarations).
+     p_iterator = save_original_iterator;
+
+     while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
+        {
+       // printf ("Looking for aliased symbols: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
+          SgAliasSymbol* aliasedSymbol = isSgAliasSymbol(p_iterator->second);
+          if (aliasedSymbol != NULL)
+             {
+            // DQ (10/9/2008): Resolve the last link in any chain of alias symbols
+            // SgVariableSymbol* variableSymbol = isSgVariableSymbol(aliasedSymbol->get_alias());
+               SgTypedefSymbol* typedefSymbol = isSgTypedefSymbol(aliasedSymbol->get_base());
+               if ( typedefSymbol != NULL )
+                  {
+                    p_name    = nm;
+                    p_no_name = false;
+                    return typedefSymbol;
+                  }
+             }
+          
+          p_iterator++;
         }
 
      return NULL;
@@ -7796,11 +7824,36 @@ SgSymbolTable::size() const
 
 // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
 int
-SgSymbolTable::count(const SgName &nm) const
+SgSymbolTable::count(const SgName & nm) const
    {
   // DQ (1/30/2007): assertion added
      assert(p_table != NULL);
      return p_table->count(nm);
+   }
+
+int
+SgSymbolTable::count_aliases(const SgName & nm) const
+   {
+     assert(p_table != NULL);
+
+  // This is the fastest way (that I know of) to iterate over just those entries that match the key.
+     std::pair<hash_iterator,hash_iterator> range = p_table->equal_range(nm);
+
+     hash_iterator start = range.first;
+     hash_iterator last  = range.second;
+
+     int count = 0;
+     hash_iterator i = start;
+     while (i != last)
+        {
+       // Count only the alias symbols.
+           if (isSgAliasSymbol((*i).second) != NULL)
+               count++;
+
+          i++;
+        }
+
+     return count;
    }
 
 void
