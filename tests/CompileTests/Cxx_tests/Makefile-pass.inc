@@ -735,6 +735,7 @@ test2010_25.C
 # test2007_15.C
 
 # DQ (5/8/2011): These are the new test codes for the new name qualification support.
+# NAME_QUALIFICATION_EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2011_19.C \
    test2011_20.C \
@@ -748,7 +749,19 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2011_28.C \
    test2011_29.C \
    test2011_30.C \
-   test2011_31.C
+   test2011_31.C \
+   test2011_32.C \
+   test2011_33.C \
+   test2011_34.C \
+   test2011_35.C \
+   test2011_36.C \
+   test2011_37.C \
+   test2011_38.C \
+   test2011_39.C
+
+# This does not work...
+# EXAMPLE_TESTCODES_REQUIRED_TO_PASS = $NAME_QUALIFICATION_EXAMPLE_TESTCODES_REQUIRED_TO_PASS + $EXAMPLE_TESTCODES_REQUIRED_TO_PASS
+    
 
 
 if !ROSE_USE_INSURE

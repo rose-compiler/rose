@@ -913,6 +913,22 @@ Grammar::setUpStatements ()
   // MK: FunctionDeclaration.excludeDataPrototype ( "SgType*"              , "orig_return_type",      "= NULL");
   // MK: FunctionDeclaration.excludeDataPrototype ( "int"                  , "from_template"   ,      "= 0");
 
+  // DQ (5/13/2011): Added support for name qualification.
+     FunctionDeclaration.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/13/2011): Added information required for new name qualification support.
+     FunctionDeclaration.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/13/2011): Added information required for new name qualification support.
+     FunctionDeclaration.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
+
+
      FunctionDefinition.setFunctionPrototype ( "HEADER_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
      FunctionDefinition.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
 #if 0

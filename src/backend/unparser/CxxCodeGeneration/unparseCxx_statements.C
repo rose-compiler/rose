@@ -183,6 +183,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      SgStorageModifier & storage = initializedName->get_storageModifier();
      if (storage.isExtern())
         {
+          printf ("In Unparse_ExprStmt::unparseFunctionParameterDeclaration(): Output the extern keyword \n");
           curprint( "extern ");
         }
 
@@ -432,6 +433,11 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
   // but it does not yet address friend functions which might require qualification.
 
      SgUnparse_Info ninfoForFunctionName(ninfo);
+
+  // DQ (5/13/2011): Support for new name qualification.
+     ninfoForFunctionName.set_name_qualification_length(funcdecl_stmt->get_name_qualification_length());
+     ninfoForFunctionName.set_global_qualification_required(funcdecl_stmt->get_global_qualification_required());
+
      if (isSgClassDefinition(funcdecl_stmt->get_parent()))
         {
        // JJW 10-23-2007 Never qualify a member function name
@@ -3260,6 +3266,10 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
       curprint ( mfuncdecl_stmt->get_name().str());
     }
 #else
+    // DQ (5/13/2011): Support for new name qualification.
+    ninfo.set_name_qualification_length(mfuncdecl_stmt->get_name_qualification_length());
+    ninfo.set_global_qualification_required(mfuncdecl_stmt->get_global_qualification_required());
+
     // Generate the qualified name
     SgName nameQualifier = unp->u_name->generateNameQualifier( mfuncdecl_stmt , ninfo );
     // printf ("nameQualifier for member function = %s \n",nameQualifier.str());
@@ -3746,6 +3756,11 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
             // ROSE_ASSERT(ninfo2.get_declstatement_ptr() != NULL);
                ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
+
+            // DQ (5/13/2011): Added support for newer name qualification implementation.
+               ninfo_for_type.set_name_qualification_length(decl_item->get_name_qualification_length_for_type());
+               ninfo_for_type.set_global_qualification_required(decl_item->get_global_qualification_required_for_type());
+               ninfo_for_type.set_type_elaboration_required(decl_item->get_type_elaboration_required_for_type());
 
             // unp->u_type->unparseType(tmp_type, ninfo2);
                ROSE_ASSERT(isSgType(tmp_type) != NULL);

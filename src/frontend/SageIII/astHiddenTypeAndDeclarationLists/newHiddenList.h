@@ -97,9 +97,15 @@ class HiddenListTraversal : public AstTopDownBottomUpProcessing<HiddenListInheri
           void setNameQualification ( SgInitializedName* initializedName, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
           void setNameQualification ( SgVariableDeclaration* variableDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
 
+       // This takes only a SgMemberFunctionDeclaration since it is where we locate the name qualification information AND is the correct scope from which to iterate backwards through scopes to evaluate what name qualification is required.
+       // void setNameQualification ( SgMemberFunctionDeclaration* memberFunctionDeclaration, int amountOfNameQualificationRequired );
+          void setNameQualification ( SgFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired );
+
           SgDeclarationStatement* getDeclarationAssociatedWithType( SgType* type );
 
        // Supporting function for different overloaded versions of the setNameQualification() function.
           void setNameQualificationSupport(SgScopeStatement* scope, const int inputNameQualificationLength, int & output_amountOfNameQualificationRequired , bool & outputGlobalQualification, bool & outputTypeEvaluation );
 
+       // DQ (5/14/2011): type elaboration only works between non-types and types.  Different types must be distinquished using name qualification.
+          bool requiresTypeElaboration(SgSymbol* symbol);
    };
