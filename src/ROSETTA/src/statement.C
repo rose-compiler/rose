@@ -925,6 +925,18 @@ Grammar::setUpStatements ()
      FunctionDeclaration.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/15/2011): Added support for name qualification.
+     FunctionDeclaration.setDataPrototype ( "int", "name_qualification_length_for_return_type", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/15/2011): Added information required for new name qualification support.
+     FunctionDeclaration.setDataPrototype("bool","type_elaboration_required_for_return_type","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/15/2011): Added information required for new name qualification support.
+     FunctionDeclaration.setDataPrototype("bool","global_qualification_required_for_return_type","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 
 

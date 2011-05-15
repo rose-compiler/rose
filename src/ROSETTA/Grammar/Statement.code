@@ -7959,6 +7959,16 @@ SgFunctionDeclaration::post_construction_initialization()
   // DQ (7/31/2006): Explicit initialization of this data member is required!
   // JJW (8/6/2008): It probably isn't now that p_exceptionSpecification is a vector
      p_exceptionSpecification.clear();
+
+  // DQ (5/14/2011): Added to support name qualification on types referenced by template arguments.
+     p_name_qualification_length     = 0;
+     p_type_elaboration_required     = false;
+     p_global_qualification_required = false;
+
+  // DQ (5/14/2011): Added to support name qualification on types referenced by template arguments.
+     p_name_qualification_length_for_return_type     = 0;
+     p_type_elaboration_required_for_return_type     = false;
+     p_global_qualification_required_for_return_type = false;
    }
 
 SgType*

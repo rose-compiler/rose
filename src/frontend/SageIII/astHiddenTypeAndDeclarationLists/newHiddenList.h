@@ -74,6 +74,7 @@ class HiddenListTraversal : public AstTopDownBottomUpProcessing<HiddenListInheri
        // int nameQualificationDepth ( SgClassDefinition* classDefinition );
           int nameQualificationDepth ( SgDeclarationStatement* declaration, SgScopeStatement* currentScope, SgStatement* positionStatement, bool forceMoreNameQualification = false );
           int nameQualificationDepth ( SgInitializedName* initializedName, SgScopeStatement* currentScope, SgStatement* positionStatement );
+          int nameQualificationDepth ( SgType* type, SgScopeStatement* currentScope, SgStatement* positionStatement );
 
           int nameQualificationDepthOfParent ( SgDeclarationStatement* declaration, SgScopeStatement* currentScope, SgStatement* positionStatement );
           int nameQualificationDepthForType  ( SgInitializedName* initializedName, SgStatement* positionStatement );
@@ -103,6 +104,11 @@ class HiddenListTraversal : public AstTopDownBottomUpProcessing<HiddenListInheri
        // This takes only a SgMemberFunctionDeclaration since it is where we locate the name qualification information AND is the correct scope from which to iterate backwards through scopes to evaluate what name qualification is required.
        // void setNameQualification ( SgMemberFunctionDeclaration* memberFunctionDeclaration, int amountOfNameQualificationRequired );
           void setNameQualification ( SgFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired );
+
+       // This is a separate function just for setting the information specific to the name qualification of return types.
+       // This information cannot be stored in the SgFunctionType since that might be shared and referenced from different locations.
+       // void setNameQualificationReturnType ( SgFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired );
+          void setNameQualificationReturnType ( SgFunctionDeclaration* functionDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
 
           SgDeclarationStatement* getDeclarationAssociatedWithType( SgType* type );
 
