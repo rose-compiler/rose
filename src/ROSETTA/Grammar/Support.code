@@ -14125,7 +14125,12 @@ void SgTemplateArgument::post_construction_initialization()
      p_type                  = NULL;
      p_expression            = NULL;
   // p_templateInstantiation = NULL;
-     p_templateDeclaration = NULL;
+     p_templateDeclaration   = NULL;
+
+  // DQ (5/14/2011): Added to support name qualification on types referenced by template arguments.
+     p_name_qualification_length     = 0;
+     p_type_elaboration_required     = false;
+     p_global_qualification_required = false;
    }
 
 // Different constructors for use in building the different types of arguments possible

@@ -5442,6 +5442,11 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint ( string("\n/* Output base type (first part) */ \n"));
 #endif
 
+       // DQ (5/14/2011): Added support for newer name qualification implementation.
+          ninfo_for_type.set_name_qualification_length(typedef_stmt->get_name_qualification_length_for_base_type());
+          ninfo_for_type.set_global_qualification_required(typedef_stmt->get_global_qualification_required_for_base_type());
+          ninfo_for_type.set_type_elaboration_required(typedef_stmt->get_type_elaboration_required_for_base_type());
+
        // unp->u_type->unparseType(btype, ninfo);
           unp->u_type->unparseType(btype, ninfo_for_type);
 

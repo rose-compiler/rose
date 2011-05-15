@@ -223,6 +223,12 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
   // (documented in the Unparse_ExprStmt::generateNameQualifier() member function.
   // newInfo.set_forceQualifiedNames();
 
+  // DQ (5/14/2011): Added support for newer name qualification implementation.
+     printf ("templateArgument->get_name_qualification_length() = %d \n",templateArgument->get_name_qualification_length());
+     newInfo.set_name_qualification_length(templateArgument->get_name_qualification_length());
+     newInfo.set_global_qualification_required(templateArgument->get_global_qualification_required());
+     newInfo.set_type_elaboration_required(templateArgument->get_type_elaboration_required());
+
   // ROSE_ASSERT(newInfo.isTypeFirstPart() == false);
   // ROSE_ASSERT(newInfo.isTypeSecondPart() == false);
 
@@ -243,6 +249,28 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                newInfo.set_SkipClassDefinition();
                newInfo.set_SkipClassSpecifier();
 
+#if 0
+            // DQ (5/14/2011): Added qualified name output; but this is handled directly by the call to unparseType().
+               SgType* type = templateArgument->get_type();
+               if (type != NULL)
+                  {
+                    SgNamedType* namedType = isSgNamedType(type);
+                    if (namedType != NULL)
+                       {
+                      // This could be a type that requires name qualification (reference to a declaration).
+
+                      // SgDeclarationStatement* templateArgumentTypeDeclaration = getDeclarationAssociatedWithType(type);
+                         SgDeclarationStatement* templateArgumentTypeDeclaration = type->getAssociatedDeclaration();
+
+                         if (templateArgumentTypeDeclaration != NULL)
+                            {
+                              SgName nameQualifier = unp->u_name->generateNameQualifier(templateArgumentTypeDeclaration,newInfo);
+                              curprint(nameQualifier);
+                            }
+                       }
+                  }
+#endif
+            // This will unparse the type will any required name qualification.
                unp->u_type->unparseType(templateArgument->get_type(),newInfo);
                break;
              }

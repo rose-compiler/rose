@@ -833,10 +833,11 @@ Unparser_Nameq::generateNameQualifierSupport( SgScopeStatement* scope, const SgU
      SgName qualifiedName;
 
      SgName name;
+     printf ("Loop bound in Unparser_Nameq::generateNameQualifierSupport(): info.get_name_qualification_length() = %d \n",info.get_name_qualification_length());
      for (int i = 0; i < info.get_name_qualification_length(); i++)
         {
        // Get the name of each named scope from the associated declaration and put it out.
-          printf ("In generateNameQualifierSupport(): i = %d scope = %p = %s qualifiedName = %s \n",i,scope,scope->class_name().c_str(),qualifiedName.str());
+          printf ("In generateNameQualifierSupport(): i = %d scope = %p = %s qualifiedName = %s info.get_name_qualification_length() = %d \n",i,scope,scope->class_name().c_str(),qualifiedName.str(),info.get_name_qualification_length());
 
           if (scope->isNamedScope() == false)
              {

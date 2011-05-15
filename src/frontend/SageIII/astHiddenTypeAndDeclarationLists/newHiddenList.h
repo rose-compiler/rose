@@ -72,14 +72,15 @@ class HiddenListTraversal : public AstTopDownBottomUpProcessing<HiddenListInheri
        // Evaluates how much name qualification is required (typically 0 (no qualification), but sometimes 
        // the depth of the nesting of scopes plus 1 (full qualification with global scoping operator)).
        // int nameQualificationDepth ( SgClassDefinition* classDefinition );
-          int nameQualificationDepth ( SgDeclarationStatement* declaration, SgScopeStatement* currentScope, SgStatement* positionStatement );
+          int nameQualificationDepth ( SgDeclarationStatement* declaration, SgScopeStatement* currentScope, SgStatement* positionStatement, bool forceMoreNameQualification = false );
           int nameQualificationDepth ( SgInitializedName* initializedName, SgScopeStatement* currentScope, SgStatement* positionStatement );
 
-          int nameQualificationDepthOfParent(SgDeclarationStatement* declaration, SgScopeStatement* currentScope, SgStatement* positionStatement );
-          int nameQualificationDepthForType ( SgInitializedName* initializedName, SgStatement* positionStatement );
+          int nameQualificationDepthOfParent ( SgDeclarationStatement* declaration, SgScopeStatement* currentScope, SgStatement* positionStatement );
+          int nameQualificationDepthForType  ( SgInitializedName* initializedName, SgStatement* positionStatement );
 
        // SgName associatedName(SgScopeStatement* scope);
-          SgDeclarationStatement* associatedDeclaration(SgScopeStatement* scope);
+          SgDeclarationStatement* associatedDeclaration ( SgScopeStatement* scope );
+          SgDeclarationStatement* associatedDeclaration ( SgType* type );
 
        // These don't really need to be virtual, since we don't derive from this class.
           virtual HiddenListInheritedAttribute evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAttribute inheritedAttribute);
@@ -96,6 +97,8 @@ class HiddenListTraversal : public AstTopDownBottomUpProcessing<HiddenListInheri
           void setNameQualification ( SgMemberFunctionRefExp* functionRefExp, SgMemberFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired );
           void setNameQualification ( SgInitializedName* initializedName, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
           void setNameQualification ( SgVariableDeclaration* variableDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
+          void setNameQualification ( SgTypedefDeclaration* typedefDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
+          void setNameQualification ( SgTemplateArgument* templateArgument, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
 
        // This takes only a SgMemberFunctionDeclaration since it is where we locate the name qualification information AND is the correct scope from which to iterate backwards through scopes to evaluate what name qualification is required.
        // void setNameQualification ( SgMemberFunctionDeclaration* memberFunctionDeclaration, int amountOfNameQualificationRequired );
