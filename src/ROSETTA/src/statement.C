@@ -1924,6 +1924,19 @@ Grammar::setUpStatements ()
      TypedefDeclaration.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/14/2011): Added support for name qualification.
+     TypedefDeclaration.setDataPrototype ( "int", "name_qualification_length_for_base_type", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/14/2011): Added information required for new name qualification support.
+     TypedefDeclaration.setDataPrototype("bool","type_elaboration_required_for_base_type","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/14/2011): Added information required for new name qualification support.
+     TypedefDeclaration.setDataPrototype("bool","global_qualification_required_for_base_type","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      PragmaDeclaration.setFunctionPrototype ( "HEADER_PRAGMA_STATEMENT", "../Grammar/Statement.code" );
 
   // DQ (3/17/2007): Since we traverse the SgPragma in a SgPragmaDeclaration, don't delete it. OK to share in AST merge also.
