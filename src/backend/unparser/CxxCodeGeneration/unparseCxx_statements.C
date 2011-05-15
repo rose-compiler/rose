@@ -399,7 +399,7 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
    {
      ROSE_ASSERT (funcdecl_stmt != NULL);
 
-  // DQ (9/8/2007): Friend function declaration should be qulified, if the associated function has already been seen.
+  // DQ (9/8/2007): Friend function declaration should be qualified, if the associated function has already been seen.
   // See test2007_124.C for an example. Friend declarations of operators are not qualified, or at least should not
   // use global qualification. If this is the first declaration, then no qualification should be used (see test2004_117.C).
      SgUnparse_Info ninfo(info);
@@ -438,6 +438,8 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
      ninfoForFunctionName.set_name_qualification_length(funcdecl_stmt->get_name_qualification_length());
      ninfoForFunctionName.set_global_qualification_required(funcdecl_stmt->get_global_qualification_required());
 
+     printf ("In unparse_helper(): funcdecl_stmt->get_name_qualification_length() = %d funcdecl_stmt->get_global_qualification_required() = %s \n",funcdecl_stmt->get_name_qualification_length(),funcdecl_stmt->get_global_qualification_required() ? "true" : "false");
+
      if (isSgClassDefinition(funcdecl_stmt->get_parent()))
         {
        // JJW 10-23-2007 Never qualify a member function name
@@ -445,7 +447,7 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
         }
      SgName nameQualifier = unp->u_name->generateNameQualifier( funcdecl_stmt , ninfoForFunctionName );
 #endif
-  // printf ("In unparse_helper(): nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
+     printf ("In unparse_helper(): nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
 
   // DQ (10/12/2006): need to trim off the global scope specifier (I think).
   // curprint( "\n/* Calling trimGlobalScopeQualifier() */\n ");
@@ -2591,6 +2593,10 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint ( string("\n/* output the return type */ \n"));
 #endif
 
+          ninfo_for_type.set_name_qualification_length(funcdecl_stmt->get_name_qualification_length_for_return_type());
+          ninfo_for_type.set_global_qualification_required(funcdecl_stmt->get_global_qualification_required_for_return_type());
+          ninfo_for_type.set_type_elaboration_required(funcdecl_stmt->get_type_elaboration_required_for_return_type());
+
        // unp->u_type->unparseType(rtype, ninfo);
           unp->u_type->unparseType(rtype, ninfo_for_type);
 
@@ -3152,6 +3158,10 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         ninfo_for_type.set_requiresGlobalNameQualification();
       }
 #endif
+
+      ninfo_for_type.set_name_qualification_length(mfuncdecl_stmt->get_name_qualification_length_for_return_type());
+      ninfo_for_type.set_global_qualification_required(mfuncdecl_stmt->get_global_qualification_required_for_return_type());
+      ninfo_for_type.set_type_elaboration_required(mfuncdecl_stmt->get_type_elaboration_required_for_return_type());
 
       // unp->u_type->unparseType(rtype, ninfo);
       unp->u_type->unparseType(rtype, ninfo_for_type);

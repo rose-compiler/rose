@@ -16,6 +16,7 @@
 # 
 #  test2010_17.C 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
+$(NAME_QUALIFICATION_EXAMPLE_TESTCODES_REQUIRED_TO_PASS) \
 test_CplusplusMacro_Cpp.C \
 test2001_01.C \
 test2001_02.C \
@@ -47,7 +48,7 @@ test2001_27.C \
 test2001_28.C \
 test2001_29.C \
 test2002_01.C \
-   test2003_01.C \
+test2003_01.C \
 test2003_02.C \
 test2003_03.C \
 test2003_04.C \
@@ -735,8 +736,8 @@ test2010_25.C
 # test2007_15.C
 
 # DQ (5/8/2011): These are the new test codes for the new name qualification support.
-# NAME_QUALIFICATION_EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+# EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+NAME_QUALIFICATION_EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2011_19.C \
    test2011_20.C \
    test2011_21.C \
@@ -757,7 +758,19 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2011_36.C \
    test2011_37.C \
    test2011_38.C \
-   test2011_39.C
+   test2011_39.C \
+   test2011_40.C \
+   test2011_41.C \
+   test2011_42.C \
+   test2011_43.C \
+   test2011_44.C \
+   test2011_45.C \
+   test2011_46.C \
+   test2011_47.C \
+   test2011_48.C \
+   test2011_49.C \
+   test2011_50.C \
+   test2011_51.C
 
 # This does not work...
 # EXAMPLE_TESTCODES_REQUIRED_TO_PASS = $NAME_QUALIFICATION_EXAMPLE_TESTCODES_REQUIRED_TO_PASS + $EXAMPLE_TESTCODES_REQUIRED_TO_PASS

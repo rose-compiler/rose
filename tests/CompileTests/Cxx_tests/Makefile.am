@@ -157,6 +157,8 @@ MPI_LOCATION = /home/dquinlan/ROSE/ROSE_TESTS/MPI_header_tests/MPI_header_tests_
 test_MPI_LAM:
 	../../testTranslator -rose:verbose 0 -I$(MPI_LOCATION)/LAM_MPI/include -c $(MPI_LOCATION)/tests/input.C
 
+print_testcodes:
+	echo $(TESTCODES)
 
 check-local:
 #	@$(MAKE) testUsingBadCommandline
