@@ -75,6 +75,23 @@ if [ $? -ne 0 ]  ; then
    exit 3
 fi
 
+make -j8 distdir
+
+if [ $? -ne 0 ]  ; then
+   echo "fatal error during 'make -C project/PolyhedralModel distdir'  , aborting..."
+   exit 3
+fi
+
+
+#cd `find . -maxdepth 1 -type d -regex "\./rose-[0-9]+\.[0-9]+\.[0-9]+[a-z]"`
+
+#find projects/PolyhedralModel/ -regex ".*\.[hct]pp" | sed 's/.*\/\([a-zA-Z0-9\-]*\.[hct]pp\)/\1/' > 
+
+#if [ $? -ne 0 ]  ; then
+#   echo "fatal error during 'make -C project/PolyhedralModel check'  , aborting..."
+#   exit 3
+#fi
+
 echo ""
 echo "********************************************************************"
 echo "Executed runTest for ROSE Project on: $machine_name date = $end_date"
