@@ -7,15 +7,15 @@ noinst_LTLIBRARIES = \
   libPolyModelSystem.la \
   libPolyModelRose.la \
   libPolyModelRosePragma.la \
-  libPolyModelScopLib.la
+  libPolyModelScopLib.la \
+  libPolyModelRoseMaxCover.la
 
 #  libPolyModelRoseFromPolyDesc.la
-#  libPolyModelRoseMaxCover.la
 
 lib_LTLIBRARIES = libPolyModel.la
 
 libPolyModel_la_SOURCES         = libPolyModelDummyFile.cpp
-libPolyModel_la_LIBADD          = libPolyModelCommon.la libPolyModelRosePragma.la libPolyModelScopLib.la
+libPolyModel_la_LIBADD          = libPolyModelCommon.la libPolyModelRosePragma.la libPolyModelScopLib.la libPolyModelRoseMaxCover.la
 libPolyModel_la_includedir      = $(includedir)/polyhedral-model/utils
 libPolyModel_la_include_HEADERS = utils/ChainedList.hpp
 
@@ -62,7 +62,7 @@ libPolyModelRose_la_SOURCES         = rose/rose-utils.cpp rose/Exception-rose.cp
 libPolyModelRose_la_CXXFLAGS        = \
   -I$(PPL_PATH)/include/ \
   $(ROSE_INCLUDES)
-libPolyModelRose_la_LIBADD          = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+libPolyModelRose_la_LIBADD          =
 libPolyModelRose_la_includedir      = $(includedir)/polyhedral-model/rose
 libPolyModelRose_la_include_HEADERS = \
   rose/rose-utils.hpp \
@@ -99,13 +99,13 @@ libPolyModelRosePragma_la_include_HEADERS = \
 
 # ROSE-MAX-COVER directory
 
-#libPolyModelRoseMaxCover_la_SOURCES         = 
-#libPolyModelRoseMaxCover_la_CXXFLAGS        =  \
-#  -I$(PPL_PATH)/include/ \
-#  $(ROSE_INCLUDES)
-#libPolyModelRoseMaxCover_la_LIBADD          = libPolyModelCommon.la
-#libPolyModelRoseMaxCover_la_includedir      = $(includedir)/polyhedral-model/rose-max-cover
-#libPolyModelRoseMaxCover_la_include_HEADERS = 
+libPolyModelRoseMaxCover_la_SOURCES         = rose-max-cover/TDBUtraversal.cpp
+libPolyModelRoseMaxCover_la_CXXFLAGS        =  \
+  -I$(PPL_PATH)/include/ \
+  $(ROSE_INCLUDES)
+libPolyModelRoseMaxCover_la_LIBADD          = 
+libPolyModelRoseMaxCover_la_includedir      = $(includedir)/polyhedral-model/rose-max-cover
+libPolyModelRoseMaxCover_la_include_HEADERS = rose-max-cover/TDBUtraversal.hpp
 
 # ROSE-FROM-POLY-DESC directory
 

@@ -8,7 +8,6 @@
 #ifndef _VARIABLE_HPP_
 #define _VARIABLE_HPP_
 
-#define PRIx64 "I64x"
 #include "rose.h"
 
 #include <string>

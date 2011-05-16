@@ -9,6 +9,7 @@
 #define _PPL_UTILS_HPP_
 
 #include <ppl.hh>
+#define PRIx64 "I64x" // Using PPL undefined this macro which is needed by a template file include by rose.h
 
 typedef Parma_Polyhedra_Library::Variable VariableID;
 typedef Parma_Polyhedra_Library::Linear_Expression LinearExpression;

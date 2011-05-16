@@ -16,13 +16,15 @@ if ROSE_USE_CLOOG
 bin_PROGRAMS += code-generation generate-all-schedules
 endif
 
+LDADD = ../../src/libPolyModel.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 polyhedral_annotation_SOURCES         = polyhedral-annotation.cpp
 polyhedral_annotation_CXXFLAGS        = \
   -I $(srcdir)/../../src/ \
   -I $(srcdir)/../../../pragmaParsing \
   -I$(PPL_PATH)/include \
   $(ROSE_INCLUDES)
-polyhedral_annotation_LDADD           = ../../src/libPolyModel.la
+polyhedral_annotation_LDADD           = $(LDADD)
 polyhedral_annotation_bindir          = $(includedir)/polyhedral-model/rose-pragma/
 
 dependency_SOURCES         = dependency.cpp
@@ -31,7 +33,7 @@ dependency_CXXFLAGS        = \
   -I $(srcdir)/../../../pragmaParsing \
   -I$(PPL_PATH)/include \
   $(ROSE_INCLUDES)
-dependency_LDADD           = ../../src/libPolyModel.la
+dependency_LDADD           = $(LDADD)
 dependency_bindir          = $(includedir)/polyhedral-model/rose-pragma/
 
 code_generation_SOURCES         = code-generation.cpp
@@ -41,7 +43,7 @@ code_generation_CXXFLAGS        = \
   -I$(PPL_PATH)/include \
   $(ROSE_INCLUDES) \
   -DCLOOG_INT_GMP -I$(CLOOG_PATH)/include
-code_generation_LDADD           = ../../src/libPolyModel.la
+code_generation_LDADD           = $(LDADD)
 code_generation_bindir          = $(includedir)/polyhedral-model/rose-pragma/
 
 generate_all_schedules_SOURCES         = generate-all-schedules.cpp
@@ -51,7 +53,7 @@ generate_all_schedules_CXXFLAGS        = \
   -I$(PPL_PATH)/include \
   $(ROSE_INCLUDES) \
   -DCLOOG_INT_GMP -I$(CLOOG_PATH)/include
-generate_all_schedules_LDADD           = ../../src/libPolyModel.la
+generate_all_schedules_LDADD           = $(LDADD)
 generate_all_schedules_bindir          = $(includedir)/polyhedral-model/rose-pragma/
 
 TEST_CODES = \
@@ -76,3 +78,7 @@ check-local:
 clean-local:
 	rm -rf $(TEST_CODES:.c=)
 	rm -f rose_*.c *.scop *.deps
+
+../../src/libPolyModel.la:
+	make -C ../../src
+

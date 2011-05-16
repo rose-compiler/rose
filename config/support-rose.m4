@@ -2298,6 +2298,7 @@ projects/PolyhedralModel/src/Makefile
 projects/PolyhedralModel/docs/Makefile
 projects/PolyhedralModel/tests/Makefile
 projects/PolyhedralModel/tests/rose-pragma/Makefile
+projects/PolyhedralModel/tests/rose-max-cover/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile

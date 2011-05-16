@@ -7,7 +7,7 @@ lib_LTLIBRARIES = libStringParser.la
 libStringParser_la_SOURCES         = AstFromString.cpp ParserBuilder.cpp
 libStringParser_la_includedir      = $(includedir)/string-parser
 libStringParser_la_include_HEADERS = AstFromString.h ParserBuilder.hpp ParserBuilder.tpp
-libStringParser_la_CXXFLAGS        =
+libStringParser_la_CXXFLAGS        = $(CXXFLAGS)
 
 #noinst_PROGRAMS = hcpragma testParserBuilder
 
