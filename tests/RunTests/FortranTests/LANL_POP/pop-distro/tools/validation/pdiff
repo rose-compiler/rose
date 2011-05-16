@@ -1,0 +1,109 @@
+#!/usr/local/gnu/bin/perl
+#
+# Filename:  pdiff
+#
+# Usage:
+#            pdiff filename1 filename2 [epsilon in parts per million]
+# where
+#            epsilon  =  maximum allowable fractional difference
+#                        between numbers, default being 1x10-6.
+#
+# This script does an intelligent compare of two ascii files containing
+# text and numeric output.  It treats multiple spaces as one space.
+#
+# If two numbers are unequal, a delta is calculated equal to the absolute
+# value of their difference divided by one of them which is non-zero.  If
+# delta is less than epsilon, the two numbers are close enough and their
+# difference will be ignored.
+#
+#
+# If parts-per-million was specified, use it; otherwise default to 1.
+#
+$ppm = @ARGV[2];
+if ($ppm <= 0.0) {
+    $ppm = 1.0;
+}
+#
+#
+# Calculate the actual epsilon as a decimal fraction.
+#
+$epsilon = $ppm*1.0e-6;
+#
+#
+# Open the two files for reading
+#
+$one = "$ARGV[0]";
+$two = "$ARGV[1]";
+open(FILE1,"$one") ||
+    die "Sorry, can't open $one";
+open(FILE2,"$two") ||
+    die "Sorry, can't open $two";
+#
+#
+# Pause before what may be a long printout.
+#
+$linenumber = 0;
+print "Comparing $one and $two with epslion $epsilon\n";
+print "Continue? [y]";
+$answer = <STDIN>;
+chop($answer);
+if($answer eq "n") {
+    die "OK\n";
+}
+#
+#
+# Loop, reading one line from each file and check for differences.
+#
+while($a = <FILE1>) {
+    if($b = <FILE2>) {
+        $linenumber = $linenumber + 1;
+        @line_a = split(' ',$a);
+        @line_b = split(' ',$b);
+        # Remove trailing NUL after splitting
+        chop($a);
+        chop($b);
+#
+#
+#       Compare the complete lines as strings;
+#       if unequal, check more carefully.
+#
+        if ($a ne $b) {
+            $i = 0;
+            while($x = shift(@line_a)) {
+                $y = shift(@line_b);
+#
+#
+#               If $x or $y is a non-numeric string, its numeric value 
+#               in Perl is zero.  If the string $x is eq to the string 
+#               $y, we're done.  If $x or $y is a numeric string, we 
+#               can calculate a meaningful delta and compare it to 
+#               epsilon.
+#
+                $i = $i + 1;
+                if ($x eq $y) {
+                    $delta = 0.0;
+                } elsif ($x != 0.0) {
+                    $delta = abs(($x - $y)/ $x);
+                } elsif ($y != 0.0) {
+                    $delta = abs(($y - $x) / $y);
+                } else {
+#
+#
+#                   If we get here, it means the strings are not 
+#                   equal, yet both evaluate to zero.  Therefore, 
+#                   at least one is a non-numeric string.
+#
+                    $delta = $epsilon + 1.0;
+                }
+                if ($delta >= $epsilon) {
+                    print "$one:$linenumber: $two:$linenumber\n";
+                    print "$a\n";
+                    print "$b\n";
+                }
+            }
+        }
+    }
+}
+print "Comparison through line number $linenumber.\n";
+close(FILE1);
+close(FILE2);

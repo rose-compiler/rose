@@ -1,0 +1,101 @@
+\documentclass[12,twoside,openright]{report}
+\usepackage{html}
+
+\title{Parallel Ocean Program (POP) User Guide}
+
+\author{Version 2.0 \\
+        Los Alamos National Laboratory \\
+        LACC 99-18}
+
+\date{23 March 2003}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+
+This manual contains detailed instructions for operating the
+POP code. It should be the only manual needed to use POP ``as is''.
+Topics include:
+
+\begin{itemize}
+\item How to compile POP, including compile-time options
+
+\item How to run POP, including run-time options in {\em namelist}
+      input
+
+\item Procedures for preparing auxiliary input files that are
+      needed if you are setting up a new grid
+
+\item Options for model diagnostics
+
+\item Options for model output files and formats
+\end{itemize}
+
+Throughout this manual, it is assumed that the operating
+system is some variant of Unix.  However, POP has been run
+on
+\hyperref{PCs under windows.}
+         {PCs under windows (see Sec. }{ for details).}
+         {sec:PCPOP}.
+
+To keep the {\em User's Guide} as short as possible, a
+{\em Reference Manual} is provided for those users who
+seek an in-depth understanding of the code, such as
+would be needed to make changes to the source code. It
+contains a thorough description of the code, including
+the model equations, their discretized form, and the
+numerical methods used for their solution.  The principal
+modules and subroutines are explained, the organization
+of the code is outlined, and the principal variables are
+defined.
+
+Whenever POP is run, the version number and release date of
+the source code on your local system is output at the beginning
+of the {\em log file}.  They
+should agree with the information on the front cover of this
+manual.  If they do not, you can obtain the current version
+of this manual at
+
+\noindent
+\htmladdnormallink{http://climate.acl.lanl.gov/models/pop/documentation}
+                  {http://climate.acl.lanl.gov/models/pop/documentation}.
+
+The Manual revision letter and release date indicate corrections
+or additions to the manual corresponding to the stated version
+of the model.
+
+If you obtained POP directly from LANL, technical support is
+provided by
+John Davis (
+\htmladdnormallink{jfd@lanl.gov}
+                  {mailto:jfd@lanl.gov}, 505-667-4793)
+and Phil Jones (\htmladdnormallink{pwjones@lanl.gov}
+                {mailto:pwjones@lanl.gov}
+                , 505-667-6386).
+If you are using POP as a component of the NCAR Climate System Model
+(CCSM), technical support is provided by NCAR.
+
+We are always interested in learning about your experiences
+with POP, favorable or otherwise. Send your comments and
+suggestions for improvements to
+\htmladdnormallink{pop\_feedback@acl.lanl.gov}
+                  {mailto:pop_feedback@acl.lanl.gov}.
+Bug reports should be sent to
+\htmladdnormallink{pop\_bugs@acl.lanl.gov}
+                  {mailto:pop_bugs@acl.lanl.gov}.
+
+\end{abstract}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\input{POPusers_chap1}
+\input{POPusers_chap2}
+\input{POPusers_chap3}
+\input{POPusers_chap4}
+\input{POPusers_chap5}
+\input{POPusers_chap6}
+\input{POPusers_chap7}
+
+\end{document}
