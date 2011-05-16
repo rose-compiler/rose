@@ -83,8 +83,8 @@ $(netcdf_lib): hudson-environment.sh
 	source hudson-environment.sh;					\
 	cp -pdR $(netcdf_srcdir) $(netcdf_blddir);			\
 	chmod -R u+w $(netcdf_blddir);					\
-	mkdir -p $(netcdf_blddir)/_build && cd $(netcdf_blddir)/_build;	\
-        ../configure --prefix=$(netcdf_prefix) --disable-netcdf-4	\
+	cd $(netcdf_blddir);						\
+        ./configure --prefix=$(netcdf_prefix) --disable-netcdf-4	\
 		FC=$$HUDSON_FC CC=$$HUDSON_CC CXX=$$HUDSON_CXX;		\
 	$$HUDSON_MAKE -j1 all;						\
 	: $$HUDSON_MAKE -j1 check;					\
