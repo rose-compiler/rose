@@ -213,7 +213,7 @@ rosegit_preamble () {
     if [ ! -n "$ROSEGIT_LOADED" ]; then
 	rosegit_find_directories
 	local branch=$(cd $ROSEGIT_SRC && git branch 2>/dev/null |sed -n '/^\*/s/^\* //p')
-	rosegit_load_config $ROSE_SRC $(rosegit_namespace) $branch $config
+	rosegit_load_config "$ROSE_SRC" "$(rosegit_namespace)" "$branch" "$config"
 	rosegit_environment
     fi
 
