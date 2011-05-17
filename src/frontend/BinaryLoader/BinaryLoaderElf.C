@@ -78,6 +78,7 @@ BinaryLoaderElf::align_values(SgAsmGenericSection *_section, MemoryMap *map,
                               ConflictResolution *resolve_p)
 {
     SgAsmElfSection *section = isSgAsmElfSection(_section);
+    assert(section); /* This method is only for ELF files. */
 
     /* ELF Segments are aligned using the superclass, but when the section has a low- or high-padding area we'll use file
      * contents for the low area and zeros for the high area. Due to our rebase() method, there should be no conflicts between
