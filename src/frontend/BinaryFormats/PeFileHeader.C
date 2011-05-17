@@ -661,7 +661,7 @@ SgAsmPEFileHeader::reallocate()
          * it here as being the minimum RVA from all the sections defined in the PE Section Table, but not smaller
          * than the value according to the specification. This alternate value is kept if it's already in the parse tree,
          * otherwise we use the correct value. (RPM 2008-10-21) */
-        rose_addr_t min_offset;
+        rose_addr_t min_offset = 0;
         for (size_t i=0, nfound=0; i<all->get_sections().size(); i++) {
             SgAsmPESection *pesec = dynamic_cast<SgAsmPESection*>(all->get_sections()[i]);
             if (pesec && pesec->get_section_entry()!=NULL) {
