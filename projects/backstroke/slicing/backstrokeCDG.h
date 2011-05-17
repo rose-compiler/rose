@@ -16,11 +16,29 @@ namespace Backstroke
 //! Define the edge type of CDG.
 struct CDGEdge
 {
-	//! The condition attached to edges in the CDG.
-	VirtualCFG::EdgeConditionKind condition;
+    //! The condition attached to edges in the CDG.
+    VirtualCFG::EdgeConditionKind condition;
 
-	//! If the condition is a case edge, this expression is the case value.
-	SgExpression* caseLabel;
+    //! If the condition is a case edge, this expression is the case value.
+    SgExpression* caseLabel;
+    
+    std::string toString() const 
+    {
+        switch (condition) 
+        {
+        case eckTrue:
+            return "T";
+        case eckFalse:
+            return "F";
+        case eckCaseLabel:
+            return "case" + caseLabel->unparseToString();
+        case eckDefault:
+            return "default";
+        default: 
+            break;
+        }
+        return "";
+    }
 
 //	//! Defines the edge kind in a CDG. There are four kinds of control dependences in a CDG:
 //	//! true, false, case and default. The latter two are for switch statement.
@@ -35,6 +53,21 @@ struct CDGEdge
 	////! If the control dependence edge is a case edge, this is the corresponding case value.
 	//int caseValue;
 };
+
+
+struct ControlDependence 
+{
+    ControlDependence(const CDGEdge& edge, SgNode* node)
+    : cdEdge(edge), cdNode(node) {}
+    
+    //! Control dependence edge.
+    CDGEdge cdEdge;
+    
+    //! Control dependence node.
+    SgNode* cdNode;
+};
+
+typedef std::vector<ControlDependence> ControlDependences;
 
 //! A class holding a Control Dependence Graph.
 
@@ -61,6 +94,12 @@ public:
 
 	//! Build the CDG from the given CFG.
 	void buildCDG(const CFGType& cfg);
+    
+    //! Given a CFG node, return all its control dependences.
+    ControlDependences getControlDependences(CFGNodePtr cfgNode);
+    
+    //! Given a AST node, return all its control dependences.
+    ControlDependences getControlDependences(SgNode* astNode);
 
 	//! Write the CDG to a dot file.
 	void toDot(const std::string& filename) const;
@@ -130,7 +169,7 @@ void CDG<CFGType>::buildCDG(const CFGType& cfg)
 	CFGType rvsCfg = cfg.makeReverseCopy();
 
 	// Build the dominator tree of the reverse CFG.
-	std::map<CFGVertexT, CFGVertexT> iDom = rvsCfg.buildDominatorTree();
+	std::map<CFGVertexT, CFGVertexT> iDom = rvsCfg.getDominatorTree();
 
 	// Build the dominance frontiers of the reverse CFG, which represents the CDG
 	// of the original CFG.
@@ -191,6 +230,46 @@ void CDG<CFGType>::buildCDG(const CFGType& cfg)
 			}
 		}
 	}
+}
+
+template <class CFGType>
+ControlDependences CDG<CFGType>::getControlDependences(CFGNodePtr cfgNode)
+{
+    ControlDependences controlDeps;
+    
+    foreach (Vertex node, boost::vertices(*this))
+    {
+        if ((*this)[node] != cfgNode) continue;
+        
+        foreach (const Edge& edge, boost::out_edges(node, *this))
+        {
+            Vertex tgt = boost::target(edge, *this);
+            controlDeps.push_back(ControlDependence((*this)[edge], (*this)[tgt]->getNode()));
+        }
+        return controlDeps;
+    }
+    
+    return controlDeps;
+}
+
+template <class CFGType>
+ControlDependences CDG<CFGType>::getControlDependences(SgNode* astNode)
+{
+    ControlDependences controlDeps;
+    
+    foreach (Vertex node, boost::vertices(*this))
+    {
+        if ((*this)[node]->getNode() != astNode) continue;
+        
+        foreach (const Edge& edge, boost::out_edges(node, *this))
+        {
+            Vertex tgt = boost::target(edge, *this);
+            controlDeps.push_back(ControlDependence((*this)[edge], (*this)[tgt]->getNode()));
+        }
+        return controlDeps;
+    }
+    
+    return controlDeps;
 }
 
 template <class CFGType>
