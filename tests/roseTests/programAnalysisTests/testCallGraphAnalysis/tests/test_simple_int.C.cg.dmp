@@ -1,5 +1,5 @@
-main -> func_char func_short
-func_int ->
 func_char ->
+func_int ->
 func_long ->
 func_short ->
+main -> func_char func_short

@@ -26,4 +26,3 @@ typedef boost::dynamic_bitset<> PathSet;
 
 
 #endif	/* BACKSTROKE_VALUEGRAPH_TYPES_H */
-

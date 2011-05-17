@@ -351,16 +351,15 @@ CDG<CFGType>::buildDominanceFrontiers(
 		CFGVertexT v = vertices.back();
 		vertices.pop_back();
 
-		typename boost::graph_traits<CFGType>::out_edge_iterator i, j;
-		for (tie(i, j) = boost::out_edges(v, cfg); i != j; ++i)
+        foreach (const CFGEdgeT& e, boost::out_edges(v, cfg))
 		{
-			CFGVertexT succ = boost::target(*i, cfg);
+			CFGVertexT succ = boost::target(e, cfg);
 
 			//if (iDom.count(*i) == 0) std::cout << cfg[*i].getNode()->class_name() << std::endl;
 			ROSE_ASSERT(iDom.count(succ) > 0);
 
 			if (iDom.find(succ)->second != v)
-				domFrontiers[v][succ].push_back(*i);
+				domFrontiers[v][succ].push_back(e);
 		}
 
 		foreach (CFGVertexT child, children[v])
