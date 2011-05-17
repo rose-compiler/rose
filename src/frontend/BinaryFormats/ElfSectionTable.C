@@ -224,11 +224,16 @@ SgAsmElfSectionTable::parse()
                         break;
                     }
                     case SgAsmElfSectionTableEntry::SHT_PROGBITS: {
-                        std::string section_name = section_name_strings->read_content_local_str(entry->get_sh_name());
-                        if (section_name == ".eh_frame") {
-                            is_parsed[i] = new SgAsmElfEHFrameSection(fhdr);
-                        } else {
+                        if (!section_name_strings) {
+                            fprintf(stderr, "SgAsmElfSectionTable::parse(): no string table for section table\n");
                             is_parsed[i] = new SgAsmElfSection(fhdr);
+                        } else {
+                            std::string section_name = section_name_strings->read_content_local_str(entry->get_sh_name());
+                            if (section_name == ".eh_frame") {
+                                is_parsed[i] = new SgAsmElfEHFrameSection(fhdr);
+                            } else {
+                                is_parsed[i] = new SgAsmElfSection(fhdr);
+                            }
                         }
                         break;
                     }
