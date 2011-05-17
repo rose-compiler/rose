@@ -29,22 +29,19 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-if !ROSE_USING_GFORTRAN_VERSION_4_0
-
 # To see commands as they execute, set this to "-x"
 #SETX=-x
 SETX=
 
-
-
-
 netcdf_srcdir=$(srcdir)/netcdf-4.1.1
+pop_srcdir=$(srcdir)/pop-distro
+
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+if !ROSE_USING_GFORTRAN_VERSION_4_0
+
 netcdf_blddir=$(abspath netcdf-4.1.1)
 netcdf_prefix=$(netcdf_blddir)/installed
 netcdf_lib=$(netcdf_prefix)/lib/libnetcdf.a
-
-pop_srcdir=$(srcdir)/pop-distro
 
 translator = $(top_builddir)/tests/testTranslator
 translator_flags = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompileStep
@@ -265,12 +262,26 @@ compare_answers: pristine.ans modified.ans
 	diff -u $^
 	@echo "  PASSED  LANL POP tests"
 
-
-###############################################################################################################################
-#					automake rules
-###############################################################################################################################
-
 check-local: compare_answers
+
+endif
+endif
+
+###############################################################################################################################
+#					automake rules for all configs
+###############################################################################################################################
+
+# Note: netcdf-4.1.1 and pop-distro are directories whose content is not part of ROSE, but which have been downloaded
+#       from their respective distribution sites (and perhaps having some local modificatons).  We need to copy _everything_
+#       in those directories into the ROSE distribution because NetCDF and POP will be configured and built as part of testing
+#       ROSE.
+# Note: Specifiying $(netcdf_srcdir) and $(pop_srcidr) in the $(EXTRA_DIST) list does not work, contrary to automake
+#       documentation.  When we do that, we get errors about directories not existing (it seems that automake's makefile
+#       tries to copy the files before creating the destination directories.  Therefore, we're using the dist-hook to
+#       explicitly copy these directories.
+EXTRA_DIST = hudson.gnu make_rmod_deps.pl setup_run_dir.ROSE
+dist-hook:
+	cp -pdRv $(netcdf_srcdir) $(pop_srcdir) $(distdir)
 
 clean-local:
 	rm -rf $(netcdf_blddir)
@@ -283,5 +294,3 @@ clean-local:
 	rm -f  $(patsubst %.rmod,%_postprocessed.f90,$(notdir $(pop_modified_sources)))
 	rm -f  rose_netcdf.f90 rose_typeSizes.f90
 
-endif
-endif
