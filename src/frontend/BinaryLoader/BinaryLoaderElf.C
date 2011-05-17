@@ -159,7 +159,8 @@ BinaryLoaderElf::add_lib_defaults(SgAsmGenericHeader *hdr/*=NULL*/)
 
     /* Add the DT_RPATH directories to the search path (only if no DT_RUNPATH). Use of DT_RPATH is deprecated. */
     std::string rpath, runpath;
-    get_dynamic_vars(hdr, rpath, runpath);
+    if (hdr)
+        get_dynamic_vars(hdr, rpath, runpath);
     if (!rpath.empty() && runpath.empty()) {
         boost::regex re;
         re.assign("[:;]");
