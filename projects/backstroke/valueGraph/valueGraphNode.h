@@ -290,10 +290,10 @@ struct StateSavingEdge : ValueGraphEdge
 //        visiblePathNum(visibleNum), killer(killerNode) {}
     
     StateSavingEdge(
-            int cost, int dagIdx, const PathSet& paths,
+            int cost, int dagIdx, const PathSet& paths, const ControlDependences& cd,
             const std::map<int, PathSet> visiblePaths, 
             SgNode* killerNode)
-    :   ValueGraphEdge(cost, dagIdx, paths), 
+    :   ValueGraphEdge(cost, dagIdx, paths, cd), 
         visiblePaths(visiblePaths), killer(killerNode) 
     {}
 

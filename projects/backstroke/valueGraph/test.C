@@ -1,6 +1,7 @@
 #include "valueGraph.h"
 #include <slicing/backstrokeCFG.h>
 #include <boost/lexical_cast.hpp>
+#include <normalizations/expNormalization.h>
 
 using namespace std;
 using namespace boost;
@@ -26,6 +27,7 @@ int main(int argc, char *argv[])
         //string cfgFileName = "CFG" + boost::lexical_cast<string > (counter) + ".dot";
         //string vgFileName = "VG" + boost::lexical_cast<string > (counter) + ".dot";
         string cfgFileName = "CFG.dot";
+         string cdgFileName = "CDG.dot";
         string vgFileName = "VG.dot";
 
         SgFunctionDefinition* funcDef = isSgFunctionDefinition(*i);
@@ -34,8 +36,12 @@ int main(int argc, char *argv[])
         if (!funcDef->get_file_info()->isSameFile(sourceFile))
             continue;
 
+        BackstrokeNorm::normalizeEvent(funcDef->get_declaration());
         Backstroke::BackstrokeCFG cfg(funcDef);
         cfg.toDot(cfgFileName);
+        
+        Backstroke::BackstrokeCDG cdg(cfg);
+        cdg.toDot(cdgFileName);
 
 //        Backstroke::FilteredCFG filteredCFG(funcDef);
 //        filteredCFG.toDot("filteredCFG.dot");

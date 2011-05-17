@@ -195,8 +195,13 @@ std::string ValueGraphEdge::toString() const
     str += s;
 #endif
     
+    if (controlDependences.empty())
+        str += "Entry";
+    
     foreach (const ControlDependence& cd, controlDependences)
     {
+        str += cd.cdEdge.toString() + ":";
+        
         if (SgIfStmt* ifStmt = isSgIfStmt(cd.cdNode))
         {
             str += ifStmt->get_conditional()->unparseToString();
@@ -204,7 +209,7 @@ std::string ValueGraphEdge::toString() const
         else 
             str += cd.cdNode->class_name();
             
-        str +=  "->" + cd.cdEdge.toString() + "\\n";
+        str += "\\n";
     }
     
     return str;

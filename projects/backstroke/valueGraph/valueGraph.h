@@ -234,15 +234,9 @@ private:
                                    const SubValueGraph& subgraph,
                                    const std::vector<VGVertex>& valuesToRestore);
 
-	void writeValueGraphNode(std::ostream& out, const VGVertex& node) const
-	{
-		out << "[label=\"" << valueGraph_[node]->toString() << "\"]";
-	}
+	void writeValueGraphNode(std::ostream& out, const VGVertex& node) const;
 
-	void writeValueGraphEdge(std::ostream& out, const VGEdge& edge) const
-	{
-		out << "[label=\"" << valueGraph_[edge]->toString() << "\"]";
-	}
+	void writeValueGraphEdge(std::ostream& out, const VGEdge& edge) const;
 
 	/** Add a new vertex to the value graph.
 	 *

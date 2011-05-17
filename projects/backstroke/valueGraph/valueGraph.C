@@ -786,9 +786,7 @@ EventReverser::VGEdge EventReverser::addValueGraphEdge(
     boost::tie(dagIndex, paths) =
             pathNumManager_->getPathNumbers(valNode->astNode);
     
-    cout << "111\n";
     ControlDependences controlDeps = cdg_->getControlDependences(valNode->astNode);
-    cout << "222\n";
     
     //valueGraph_[e] = new ValueGraphEdge(valNode->getCost(), dagIndex, paths);
     //valueGraph_[newEdge] = new ValueGraphEdge(0, dagIndex, paths);
@@ -816,8 +814,12 @@ void EventReverser::addValueGraphPhiEdge(
             pathNumManager_->getPathNumbers(node1, node2);
 
         VGEdge newEdge = boost::add_edge(src, tar, valueGraph_).first;
-        //ControlDependences controlDeps = cdg_->getControlDependences(valNode->astNode);
-        valueGraph_[newEdge] = new ValueGraphEdge(0, dagIndex, paths);
+        
+        // Note that this way works since the function is normalized and every if has
+        // two bodies (SgBasicBlock), so there is always a control dependence in CDG
+        // for either true or false body. It is like a trick here.
+        ControlDependences controlDeps = cdg_->getControlDependences(node1);
+        valueGraph_[newEdge] = new ValueGraphEdge(0, dagIndex, paths, controlDeps);
     }
 
     //valueGraph_[e] = new ValueGraphEdge(valNode->getCost(), dagIndex, paths);
@@ -858,8 +860,10 @@ void EventReverser::addValueGraphStateSavingEdges(VGVertex src, SgNode* killer)
     }
 
     VGEdge newEdge = boost::add_edge(src, root_, valueGraph_).first;
+    
+    ControlDependences controlDeps = cdg_->getControlDependences(killer);
     valueGraph_[newEdge] = new StateSavingEdge(
-            cost, dagIndex, paths, visiblePaths, killer);
+            cost, dagIndex, paths, controlDeps, visiblePaths, killer);
     
     ///cout << "***" << paths.size() << endl;
 
@@ -1311,5 +1315,24 @@ bool EventReverser::RouteGraphEdgeComp::operator ()(
            pathsIndexTable.find(routeGraph[edge2]->paths)->second;
 }
 
+void EventReverser::writeValueGraphNode(std::ostream& out, const VGVertex& node) const
+{
+    out << "[label=\"" << valueGraph_[node]->toString() << "\"";
+    
+    if (node == root_)
+        out << ", color=blue";
+    
+    cout << "]";
+}
+
+void EventReverser::writeValueGraphEdge(std::ostream& out, const VGEdge& edge) const
+{
+    out << "[label=\"" << valueGraph_[edge]->toString() << "\", fontsize = 8";
+    
+    if (isStateSavingEdge(valueGraph_[edge]))
+        out << ", color = red";
+    
+    out << "]";
+}
 
 } // End of namespace Backstroke
