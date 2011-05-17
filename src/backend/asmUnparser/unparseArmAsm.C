@@ -194,7 +194,9 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
         case V_SgAsmByteValueExpression:
         case V_SgAsmWordValueExpression:
         case V_SgAsmDoubleWordValueExpression: {
-            uint64_t v = SageInterface::getAsmConstant(isSgAsmValueExpression(expr));
+            SgAsmValueExpression *ve = isSgAsmValueExpression(expr);
+            assert(ve!=NULL);
+            uint64_t v = SageInterface::getAsmConstant(ve);
             result += "#" + unparseArmSign(sign) + StringUtility::numberToString(v);
             if (labels && v!=0) {
                 AsmUnparser::LabelMap::const_iterator li=labels->find(v);
