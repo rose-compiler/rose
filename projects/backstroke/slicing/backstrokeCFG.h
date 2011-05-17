@@ -176,10 +176,10 @@ public:
 
 	//! Build the dominator tree of this CFG.
 	//! @returns A map from each node to its immediate dominator.
-	VertexVertexMap buildDominatorTree() const;
+	VertexVertexMap getDominatorTree() const;
 
 	//! Build the postdominator tree of this CFG.
-	VertexVertexMap buildPostdominatorTree() const;
+	VertexVertexMap getPostdominatorTree() const;
 
 	//! Build a reverse CFG.
 	CFG<CFGNodeFilter> makeReverseCopy() const;
@@ -377,7 +377,7 @@ void CFG<CFGNodeFilter>::buildCFG(
 }
 
 template <class CFGNodeFilter>
-typename CFG<CFGNodeFilter>::VertexVertexMap CFG<CFGNodeFilter>::buildDominatorTree() const
+typename CFG<CFGNodeFilter>::VertexVertexMap CFG<CFGNodeFilter>::getDominatorTree() const
 {
 	VertexVertexMap immediateDominators;
 	boost::associative_property_map<VertexVertexMap> domTreePredMap(immediateDominators);
@@ -388,7 +388,7 @@ typename CFG<CFGNodeFilter>::VertexVertexMap CFG<CFGNodeFilter>::buildDominatorT
 }
 
 template <class CFGNodeFilter>
-typename CFG<CFGNodeFilter>::VertexVertexMap CFG<CFGNodeFilter>::buildPostdominatorTree() const
+typename CFG<CFGNodeFilter>::VertexVertexMap CFG<CFGNodeFilter>::getPostdominatorTree() const
 {
 	VertexVertexMap immediatePostdominators;
 	boost::associative_property_map<VertexVertexMap> postdomTreePredMap(immediatePostdominators);
