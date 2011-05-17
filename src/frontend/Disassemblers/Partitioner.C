@@ -458,8 +458,10 @@ Partitioner::load_config(const std::string &filename) {
     fstat(fd, &sb);
     char *config = new char[sb.st_size];
     ssize_t nread = read(fd, config, sb.st_size);
-    if (nread<0 || nread<sb.st_size)
+    if (nread<0 || nread<sb.st_size) {
+        delete[] config;
         throw IPDParser::Exception(strerror(errno), filename);
+    }
     IPDParser(this, config, sb.st_size, filename).parse();
     delete[] config;
     close(fd);
