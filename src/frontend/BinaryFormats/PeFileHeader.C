@@ -732,6 +732,7 @@ SgAsmPEFileHeader::reallocate()
         encode((PE64OptHeader_disk*)oh);
         rvasize_offset = sizeof(PE64OptHeader_disk);
     } else {
+        delete[] oh;
         throw FormatError("unsupported PE word size");
     }
     while (oh_size>p_e_nt_hdr_size) {
