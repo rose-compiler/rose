@@ -894,6 +894,7 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, Memor
                              rose_addr_t target_va/*=0*/, size_t nbytes/*=0*/)
 {
     SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc);
+    assert(header);
     SgAsmExecutableFileFormat::ByteOrder sex = header->get_sex();
 
     if (0==target_va)
