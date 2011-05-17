@@ -102,6 +102,10 @@ namespace VirtualCFG {
     public:
     //! Constructor
     CFGEdge(CFGNode src, CFGNode tgt): src(src), tgt(tgt) {}
+    
+    //! Default constructor. Used for compatibility with containers
+    CFGEdge() {}
+    
     //! Pretty string for Dot node labels, etc.
     std::string toString() const;
     //! String for debugging graphs
@@ -220,6 +224,11 @@ namespace VirtualCFG {
       return false;
     }
 
+        //! Returns the edges in the path, starting at the source and ending at the target
+        const std::vector<CFGEdge>& getEdges() const
+        {
+                return edges;
+        }
   }; // end CFGPath
 
   //! \internal Merge two CFG paths
