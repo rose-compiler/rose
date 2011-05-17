@@ -363,14 +363,14 @@ make-distcheck)
     # MAKE DISTCHECK
     #
     # Build pre-requisites: stringify.C
-    (
-        make -j${NUM_PROCESS} -C src/util/stringSupport/ libRoseStringSupport.la
-        make -j${NUM_PROCESS} -C src/util/commandlineProcessing/ libRoseCommandlineUtil.la
-        make -j${NUM_PROCESS} -C src/util/ libroseutil.la
-        make -j${NUM_PROCESS} -C src/ROSETTA/src/
-        make -j${NUM_PROCESS} -C src/roseSupport/ stringify.h
-    ) 2>&1 |filterStep "make-distcheck prerequisites" 
-    [ ${PIPESTATUS[0]} -ne 0 ] && killStep "make-distcheck prerequisites-"
+ #   (
+ #       make -j${NUM_PROCESS} -C src/util/stringSupport/ libRoseStringSupport.la
+ #       make -j${NUM_PROCESS} -C src/util/commandlineProcessing/ libRoseCommandlineUtil.la
+ #       make -j${NUM_PROCESS} -C src/util/ libroseutil.la
+ #       make -j${NUM_PROCESS} -C src/ROSETTA/src/
+ #       make -j${NUM_PROCESS} -C src/roseSupport/ stringify.h
+ #   ) 2>&1 |filterStep "make-distcheck prerequisites" 
+ #   [ ${PIPESTATUS[0]} -ne 0 ] && killStep "make-distcheck prerequisites-"
 
     runBuildStep make-distcheck
 
