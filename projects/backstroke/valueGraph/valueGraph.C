@@ -4,13 +4,15 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <boost/graph/topological_sort.hpp>
 
 namespace Backstroke
 {
 
 using namespace std;
 
-#define foreach BOOST_FOREACH
+#define foreach              BOOST_FOREACH
+#define reverse_foreach BOOST_REVERSE_FOREACH
 
 
 void EventReverser::buildValueGraph()
@@ -128,7 +130,20 @@ void EventReverser::buildBasicValueGraph()
     /***************************************************************************/
 
     vector<SgNode*> nodes = BackstrokeUtility::querySubTree<SgNode>(funcDef_);
-    foreach (SgNode* node, nodes)
+    
+    // FIXME Here we assume the CFG is a DAG.
+    
+    // Traverse the CFG in topological order instead of AST can make sure that each 
+    // use at any point is already added to VG.
+    
+    vector<BackstrokeCFG::Vertex> cfgNodes;
+    boost::topological_sort(*cfg_, back_inserter(cfgNodes));
+    
+    vector<SgNode*> astNodes;
+    reverse_foreach (BackstrokeCFG::Vertex v, cfgNodes)
+        astNodes.push_back((*cfg_)[v]->getNode());
+    
+    foreach (SgNode* node, astNodes)
     {
         //cout << node->class_name() << endl;
 
@@ -651,13 +666,13 @@ EventReverser::createPhiNode(VersionedVariable& var, SSA::ReachingDefPtr reachin
     VGVertex node = addValueGraphNode(new PhiNode(var, astNode));
     varVertexMap_[var] = node;
 
-    // For every phi function parameter, chech if it is also a pseudo def.
+    // For every phi function parameter, check if it is also a pseudo def.
     // If it is, add another phi node and connect them. Else, add an edge.
     typedef pair<SSA::ReachingDefPtr, set<ReachingDef::FilteredCfgEdge> > PairT;
 	//pair<SSA::ReachingDefPtr, set<CFGEdge> > defEdgePair;
     foreach (const PairT& defEdgePair, reachingDef->getJoinedDefs())
     {
-		SSA::ReachingDefPtr def = defEdgePair.first;
+        SSA::ReachingDefPtr def = defEdgePair.first;
         const set<ReachingDef::FilteredCfgEdge>& cfgEdges = defEdgePair.second;
         int version = def->getRenamingNumber();
 
@@ -690,30 +705,6 @@ EventReverser::createPhiNode(VersionedVariable& var, SSA::ReachingDefPtr reachin
             addValueGraphPhiEdge(node, varVertexMap_[defVar], cfgEdges);
         }
 
-#if 0
-        // Add path information for phi node here???
-        ValueGraphEdge* edge = valueGraph_[newEdge];
-        const set<ReachingDef::FilteredCfgEdge>& cfgEdges = defEdgePair.second;
-        bool flag = true;
-        foreach (const ReachingDef::FilteredCfgEdge& cfgEdge, cfgEdges)
-        {
-            cout << "!!!" << cfgEdge.toString() << endl;
-            SgNode* node1 = cfgEdge.source().getNode();
-            SgNode* node2 = cfgEdge.target().getNode();
-
-            cout << node1->unparseToString() << endl;
-            cout << node2->unparseToString() << endl;
-            if (flag)
-            {
-                boost::tie(edge->dagIndex, edge->paths) =
-                    pathNumManager_->getPathNumbers(node1, node2);
-                flag = false;
-                continue;
-            }
-            edge->paths |= pathNumManager_->getPathNumbers(node1, node2).second;
-        }
-        
-#endif
         // If this def is not in the value graph, add it.
 
         //var.phiVersions.push_back(PhiNodeDependence(v));

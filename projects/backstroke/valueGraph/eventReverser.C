@@ -784,7 +784,7 @@ void EventReverser::generateCode(
         SgScopeStatement* scope = NULL;
 
         PathSet paths = rvsCFG[node].first;
-        cout << "&&& " << paths << endl;
+        //cout << "&&& " << paths << endl;
         // If this node contains all paths, its scope is the reverse function body.
         if (paths.flip().none())
             scope = rvsFuncBody;
