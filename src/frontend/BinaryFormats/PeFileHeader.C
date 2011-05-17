@@ -821,7 +821,12 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     time_t t = p_e_time;
     char time_str[128];
-    strftime(time_str, sizeof time_str, "%c", localtime(&t));
+    struct tm *tm = localtime(&t);
+    if (tm) {
+        strftime(time_str, sizeof time_str, "%c", tm);
+    } else {
+        strcpy(time_str, "INVALID");
+    }
 
     SgAsmGenericHeader::dump(f, p, -1);
     fprintf(f, "%s%-*s = 0x%04x (%u)\n",               p, w, "e_cpu_type",          p_e_cpu_type, p_e_cpu_type);
