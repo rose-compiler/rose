@@ -33,6 +33,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #SETX=-x
 SETX=
 
+# Note that these have been modified from their respective distributions by someone prior to me.  It looks like
+# build systems have been adjusted to not generate documentation, and who know what else. Unfortunately, those
+# changes were never registered with our revision control system, so it might be hard to upgrade. [RPM 2011-05-18]
 netcdf_srcdir=$(srcdir)/netcdf-4.1.1
 pop_srcdir=$(srcdir)/pop-distro
 
