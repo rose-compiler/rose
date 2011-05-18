@@ -72,6 +72,11 @@ if ROSE_BUILD_EDG_WITH_CUDA_SUPPORT
    SUBDIRS += CudaTests
 endif
 
+if ROSE_BUILD_EDG_WITH_OPENCL_SUPPORT
+   SUBDIRS += OpenClTests
+endif
+
+
 SUBDIRS += EDG_4_x
 
 check-local:
