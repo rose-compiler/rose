@@ -17,6 +17,6 @@ find . -name Makefile.in | grep -v libharu | grep -v libltdl | xargs sed -i~ \
     -e '/echo.*LINK/!s/^\(CXX\)\{0,1\}LINK =/& @echo "  LINK    $@";/'       \
     -e '/echo.*COMPILE/!s/^\t\$(CXX)/\t@echo "  COMPILE $@"; $(CXX)/' \
     -e '/LIBTOOL.*quiet/!s/@LIBTOOL@/& --quiet/g' \
-    -e '/^\t\$(LIBTOOL) --tag=CXX /s/^\t/\t@echo "  COMPILE $@"; /' \
+    -e '/^\t\$(LIBTOOL)[ \t][ \t]*--tag=CXX /s/^\t/\t@echo "  COMPILE $@"; /' \
     -e '/^\t$(librose_la_LINK) -rpath /s/^\t/\t@echo "  LINK    $@"; /'
 
