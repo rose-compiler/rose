@@ -78,6 +78,7 @@ BinaryLoaderElf::align_values(SgAsmGenericSection *_section, MemoryMap *map,
                               ConflictResolution *resolve_p)
 {
     SgAsmElfSection *section = isSgAsmElfSection(_section);
+    assert(section); /* This method is only for ELF files. */
 
     /* ELF Segments are aligned using the superclass, but when the section has a low- or high-padding area we'll use file
      * contents for the low area and zeros for the high area. Due to our rebase() method, there should be no conflicts between
@@ -159,7 +160,8 @@ BinaryLoaderElf::add_lib_defaults(SgAsmGenericHeader *hdr/*=NULL*/)
 
     /* Add the DT_RPATH directories to the search path (only if no DT_RUNPATH). Use of DT_RPATH is deprecated. */
     std::string rpath, runpath;
-    get_dynamic_vars(hdr, rpath, runpath);
+    if (hdr)
+        get_dynamic_vars(hdr, rpath, runpath);
     if (!rpath.empty() && runpath.empty()) {
         boost::regex re;
         re.assign("[:;]");
@@ -893,6 +895,7 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, Memor
                              rose_addr_t target_va/*=0*/, size_t nbytes/*=0*/)
 {
     SgAsmGenericHeader *header = SageInterface::getEnclosingNode<SgAsmGenericHeader>(reloc);
+    assert(header);
     SgAsmExecutableFileFormat::ByteOrder sex = header->get_sex();
 
     if (0==target_va)

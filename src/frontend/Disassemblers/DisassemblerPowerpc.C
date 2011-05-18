@@ -49,7 +49,9 @@ SgAsmPowerpcInstruction::get_successors(bool *complete) {
             const std::vector<SgAsmExpression*> &exprs = get_operandList()->get_operands();
             ROSE_ASSERT(exprs.size()==3);
             ROSE_ASSERT(isSgAsmValueExpression(exprs[2]));
-            rose_addr_t target = SageInterface::getAsmConstant(isSgAsmValueExpression(exprs[2]));
+            SgAsmValueExpression *ve = isSgAsmValueExpression(exprs[2]);
+            assert(ve!=NULL);
+            rose_addr_t target = SageInterface::getAsmConstant(ve);
             retval.insert(target);
             retval.insert(get_address()+get_raw_bytes().size());
             break;
@@ -72,7 +74,9 @@ SgAsmPowerpcInstruction::get_successors(bool *complete) {
             const std::vector<SgAsmExpression*> &exprs = get_operandList()->get_operands();
             ROSE_ASSERT(exprs.size()==1);
             ROSE_ASSERT(isSgAsmValueExpression(exprs[0]));
-            rose_addr_t target = SageInterface::getAsmConstant(isSgAsmValueExpression(exprs[0]));
+            SgAsmValueExpression *ve = isSgAsmValueExpression(exprs[0]);
+            assert(ve!=NULL);
+            rose_addr_t target = SageInterface::getAsmConstant(ve);
             retval.insert(target);
             break;
         }

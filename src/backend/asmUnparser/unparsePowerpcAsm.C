@@ -48,9 +48,10 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnpa
                     std::string lhs = unparsePowerpcExpression(a->get_lhs(), labels, false);
                     if (isSgAsmValueExpression(a->get_rhs())) {
                         // Sign-extend from 16 bits
+                        SgAsmValueExpression *ve = isSgAsmValueExpression(a->get_rhs());
+                        assert(ve!=NULL);
                         result = boost::lexical_cast<std::string>(
-                                   (int64_t)IntegerOps::signExtend<16, 64>(
-                                      SageInterface::getAsmConstant(isSgAsmValueExpression(a->get_rhs()))));
+                                   (int64_t)IntegerOps::signExtend<16, 64>(SageInterface::getAsmConstant(ve)));
                         result += "(" + lhs + ")";
                     } else {
                         result = lhs + ", " + unparsePowerpcExpression(a->get_rhs(), labels, false);
