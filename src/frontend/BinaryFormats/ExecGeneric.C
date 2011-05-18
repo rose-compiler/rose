@@ -90,7 +90,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
 #endif
             } else {
                 if (ef) delete ef->get_data_converter();
-                delete ef;
+                delete ef;      /* ~SgAsmGenericFile() closes ef->p_fd if it was opened. */
                 ef = NULL;
             }
         }
