@@ -19,7 +19,7 @@ public:
           terminated(false), termination_status(0), core_flags(0), btrace_file(NULL),
           vdso_mapped_va(0), vdso_entry_va(0),
           core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000) {
-        RTS_rwlock_init(&instance_rwlock, NULL);
+        RTS_rwlock_init(&instance_rwlock, RTS_LAYER_RSIM_PROCESS_OBJ, NULL);
         ctor();
     }
 
@@ -352,10 +352,10 @@ private:
         Clone(RSIM_Process *process, unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va, const pt_regs_32 &regs)
             : process(process), flags(flags), newtid(-1), seq(-1),
               parent_tid_va(parent_tid_va), child_tls_va(child_tls_va), regs(regs) {
-            pthread_mutex_init(&mutex, NULL);
+            RTS_mutex_init(&mutex, RTS_LAYER_RSIM_PROCESS_CLONE_OBJ, NULL);
             pthread_cond_init(&cond, NULL);
         }
-        pthread_mutex_t mutex;                  /**< Protects entire structure. */
+        RTS_mutex_t mutex;                      /**< Protects entire structure. */
         pthread_cond_t  cond;                   /**< For coordinating between creating thread and created thread. */
         RSIM_Process    *process;               /**< Process creating the new thread. */
         unsigned        flags;                  /**< Various CLONE_* flags passed to the clone system call. */

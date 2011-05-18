@@ -85,6 +85,5 @@ void print_buffer(RTS_Message*, uint32_t addr, const uint8_t *buffer, size_t sz,
 void print_time(RTS_Message*, uint32_t value);
 void print_single(RTS_Message*, char fmt, const ArgInfo *info);
 void print_struct(RTS_Message*, uint32_t value, ArgInfo::StructPrinter printer, const uint8_t *buf, size_t need, size_t have);
-void print_leave(RTS_Message*, char fmt, const ArgInfo *info);
 
 #endif

@@ -1,0 +1,28 @@
+@multitable {@code{Linux 2.6.18-1.2257.fc5smp}} {@code{/usr/bin/posix/make}}
+@headitem O/S @tab @code{make} Utility
+@item @code{AIX 1 5} @tab @code{/bin/make}
+@item @code{AIX 1 5} @tab @code{/opt/gnu/bin/make}
+@item @code{AIX 1 5} @tab @code{/usr/ccs/bin/make}
+@item @code{Darwin 10.0.0} @tab @code{/usr/bin/gnumake}
+@item @code{Darwin 10.0.0} @tab @code{/usr/bin/make}
+@item @code{Darwin 8.11.0} @tab @code{/usr/bin/gnumake}
+@item @code{Darwin 8.11.0} @tab @code{/usr/bin/make}
+@item @code{HP-UX B.11.00} @tab @code{/bin/make}
+@item @code{HP-UX B.11.00} @tab @code{/opt/gnu/bin/make}
+@item @code{IRIX64 6.5} @tab @code{/bin/make}
+@item @code{IRIX64 6.5} @tab @code{/opt/gnu/bin/make}
+@item @code{Linux 2.6.27.24-78.2.53.fc9.x86_64} @tab @code{/usr/bin/gmake}
+@item @code{Linux 2.6.27.24-78.2.53.fc9.x86_64} @tab @code{/usr/bin/make}
+@item @code{Linux 2.6.27.25-170.2.72.fc10.x86_64} @tab @code{/usr/bin/gmake}
+@item @code{Linux 2.6.27.25-170.2.72.fc10.x86_64} @tab @code{/usr/bin/make}
+@item @code{OSF1 V5.1} @tab @code{/bin/make}
+@item @code{OSF1 V5.1} @tab @code{/opt/gnu/bin/gmake}
+@item @code{OSF1 V5.1} @tab @code{/usr/bin/posix/make}
+@item @code{OSF1 V5.1} @tab @code{/usr/ccs/bin/make}
+@item @code{SunOS 5.10} @tab @code{/opt/csw/bin/gmake}
+@item @code{SunOS 5.10} @tab @code{/usr/ccs/bin/make}
+@item @code{SunOS 5.10} @tab @code{/usr/xpg4/bin/make}
+@item @code{SunOS 5.9} @tab @code{/opt/gnu/bin/gmake}
+@item @code{SunOS 5.9} @tab @code{/usr/ccs/bin/make}
+@item @code{SunOS 5.9} @tab @code{/usr/xpg4/bin/make}
+@end multitable

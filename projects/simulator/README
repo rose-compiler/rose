@@ -358,3 +358,17 @@ If x86sim fails an assertion (assert() or ROSE_ASSERT()) it will look
 like the specimen failed the assertion since x86sim traps the signal
 and delivers it to the specimen. This is true of all signals produced
 by x86sim for x86sim.
+
+
+== MULTI-THREADED SPECIMENS ==
+
+Each thread of the specimen is simulated by its own thread in the
+simulator, just as each specimen process is simulated by its own
+simulator process.
+
+Fast user-space mutexes (futexes) don't work reliably because
+simulator memory operations are not atomic with respect to the real
+underlying sys_futex() system call.  The symptom is usually that one
+or more threads will become deadlocked when it does a futex_wait
+system call when it shouldn't, and therefore there's never a
+corresponding futex_wake from another thread.
