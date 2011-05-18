@@ -1306,7 +1306,8 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
     uint8_t modrm = 0;                          /* The ModR/M byte */
     bool modrm_defined = false;                 /* True if "modrm" is defined */
     bool reg_defined = false;                   /* True if the "reg" field of the ModR/M byte is defined */
-    uint8_t sib;                                /* SIB byte */
+    bool sib_defined = false;                   /* Is a value assigned to 'sib'? */
+    uint8_t sib = 0;                            /* SIB byte */
     int64_t displacement = 0;                   /* Displacement for ModR/M, as in "DWORD PTR ds:[rip+0x216417]" */
     uint8_t rex_byte = 0;                       /* REX byte; valid only if non-zero */
     uint64_t opcode = defn->opcode;
@@ -1444,6 +1445,7 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
                 if (modrm_defined)
                     throw Exception("multiple ModR/M-affecting operands", insn);
                 modrm = build_modrm(defn, insn, i, &sib, &displacement, &rex_byte);
+                sib_defined = true;
                 modrm_defined = true;
                 break;
             default:
@@ -1472,6 +1474,7 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
                         reg_defined = true;
                     } else {
                         modrm = build_modrm(defn, insn, i, &sib, &displacement, &rex_byte);
+                        sib_defined = true;
                         modrm_defined = true;
                     }
                     break;
@@ -1508,13 +1511,16 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
     /* Output ModR/M and SIB bytes */
     if (modrm_defined)
         retval.push_back(modrm);
-    if (modrm_defined && 4==modrm_rm(modrm) && 3!=modrm_mod(modrm))
+    if (modrm_defined && 4==modrm_rm(modrm) && 3!=modrm_mod(modrm)) {
+        assert(sib_defined);
         retval.push_back(sib);
+    }
 
     /* Output displacement for ModR/M */
     if (modrm_defined) {
-        if (0==modrm_mod(modrm) && 4==modrm_rm(modrm) && 5==sib_base(sib)) {
+        if (0==modrm_mod(modrm) && 4==modrm_rm(modrm) && (!sib_defined || 5==sib_base(sib))) {
             /* [disp32 + reg*scale] */
+            assert(sib_defined); /* sib_base must be 5 */
             retval.push_back(displacement & 0xff);
             retval.push_back((displacement>>8) & 0xff);
             retval.push_back((displacement>>16) & 0xff);
