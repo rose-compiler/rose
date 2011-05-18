@@ -75,7 +75,9 @@ hudson-environment.sh:
 # Builds the NetCDF library required by POP. The library is configured according to the environment variables
 # in hudson-environment.sh, which will be created with default values if necessary.  It is currently not possible to
 # build NetCDF in a separate build directory when the source directory is read-only. Therefore, we copy the NetCDF
-# source directory and add write permission to all files.
+# source directory and add write permission to all files. [Update: It's also apparently not possible to have a build directory
+# that's separate from the source directory because doing so fails with certain source files not found by make on at least one
+# Hudson platform. RPM 2011-05-18]
 netcdf: $(netcdf_lib)
 $(netcdf_lib): hudson-environment.sh
 	@set -e $(SETX);						\
