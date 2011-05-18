@@ -1738,33 +1738,49 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 void
 Partitioner::update_targets(SgNode *ast)
 {
+    typedef std::map<rose_addr_t, SgAsmBlock*> BlockMap;
+
     /* Build a map from address to SgAsmBlock so we can do lookups quickly. */
-    struct T1: public SgSimpleProcessing {
-        std::map<rose_addr_t, SgAsmBlock*> block_map;
+    struct BlockMapBuilder: public SgSimpleProcessing {
+        BlockMap *block_map;
+        BlockMapBuilder(SgNode *ast, BlockMap *block_map): block_map(block_map) {
+            traverse(ast, preorder);
+        }
         void visit(SgNode *node) {
             SgAsmBlock *block = isSgAsmBlock(node);
-            SgAsmInstruction *insn = block && !block->get_statementList().empty() ? 
-                                     isSgAsmInstruction(block->get_statementList().front()) : NULL;
-            if (insn)
-                block_map[insn->get_address()] = block;
-        }
-    } t1;
-    t1.traverse(ast, preorder);
-
-    /* Now traverse the SgAsmTarget objects and update their block pointers. */
-    struct T2: public SgSimpleProcessing {
-        T1 *t1;
-        T2(T1 *t1): t1(t1) {}
-        void visit(SgNode *node) {
-            SgAsmTarget *target = isSgAsmTarget(node);
-            if (target && NULL==target->get_block()) {
-                std::map<rose_addr_t, SgAsmBlock*>::iterator bi = t1->block_map.find(target->get_address());
-                if (bi!=t1->block_map.end())
-                    target->set_block(bi->second);
+            if (block!=NULL) {
+                const SgAsmStatementPtrList &stmts = block->get_statementList();
+                SgAsmInstruction *insn = stmts.empty() ? NULL : isSgAsmInstruction(stmts.front());
+                if (insn)
+                    block_map->insert(std::make_pair(insn->get_address(), block));
             }
         }
     };
-    T2(&t1).traverse(ast, preorder);
+
+    /* Now add block pointers to the successor targets. */
+    struct TargetPopulator: public SgSimpleProcessing {
+        const BlockMap &block_map;
+        TargetPopulator(SgNode *ast, const BlockMap &block_map): block_map(block_map) {
+            traverse(ast, preorder);
+        }
+        void visit(SgNode *node) {
+            SgAsmBlock *block = isSgAsmBlock(node);
+            if (block) {
+                for (size_t i=0; i<block->get_successors().size(); i++) {
+                    SgAsmTarget *target = block->get_successors()[i];
+                    if (target && NULL==target->get_block()) {
+                        BlockMap::const_iterator bi=block_map.find(target->get_address());
+                        if (bi!=block_map.end())
+                            target->set_block(bi->second);
+                    }
+                }
+            }
+        }
+    };
+    
+    BlockMap block_map;
+    BlockMapBuilder(ast, &block_map);
+    TargetPopulator(ast, block_map);
 }
 
 SgAsmBlock *
