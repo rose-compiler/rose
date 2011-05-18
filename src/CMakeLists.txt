@@ -360,6 +360,8 @@ set( midend_src
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nameQueryInheritedAttribute.C
  #${CMAKE_SOURCE_DIR}/src/midend/astQuery/queryVariant.C
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nodeQuery.C
+ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryCFG.C
+ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryCG.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/GraphAlgorithms.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/binary_analysis.C
  #${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification_writer.C
