@@ -235,7 +235,7 @@ void EventReverser::buildBasicValueGraph()
             else if (SgFunctionCallExp* funcCall = isSgFunctionCallExp(expr))
             {
                 const SSA::NodeReachingDefTable& defTable =
-                            ssa_->getReachingDefsAtNode(funcCall->get_parent());
+                    ssa_->getReachingDefsAtNode(funcCall->get_parent());
 
 #if 1
                 cout << "Print def table:\n";
