@@ -176,13 +176,13 @@ void setup()
 	/* make a temporary directory and cd to it */
 	tst_tmpdir();
 
-	sprintf(fname, "%s.%d", fname, getpid());
+	sprintf(fname+strlen(fname), ".%d", getpid());
 	if ((fileHandle = creat(fname, 0444)) == -1) {
 		tst_resm(TFAIL, "creat(2) FAILED to creat temp file");
 	}
 	sprintf(fname1, "%s/%s", fname, fname);
 
-	sprintf(good_dir, "%s.statfs.%d", good_dir, getpid());
+	sprintf(good_dir+strlen(good_dir), ".statfs.%d", getpid());
 
 #if !defined(UCLINUX)
 	bad_addr = mmap(0, 1, PROT_NONE,
