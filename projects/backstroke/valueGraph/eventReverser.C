@@ -62,7 +62,7 @@ void EventReverser::generateCode()
     popScopeStack();
 
     SageInterface::prependStatement(pathNumDecl, rvsFuncDef_->get_body());
-
+        
 #if 0
     // Declare all temporary variables at the beginning of the reverse events.
     foreach (VGVertex node, boost::vertices(valueGraph_))

@@ -1,6 +1,6 @@
 #include "pathNumGenerator.h"
+#include "eventReverser.h"
 
-#include <sageInterface.h>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/graph/topological_sort.hpp>
@@ -225,6 +225,31 @@ void PathNumManager::instrumentFunction(const string& pathNumName)
         }
     }
 
+    // In the forward event, push the path number variable to the stack just before
+    // the exit of the function.
+    
+    // Build a push function call.
+    SageBuilder::pushScopeStack(funcDef->get_body());
+    SgExpression* pathNumVar = SageBuilder::buildVarRefExp(pathNumDecl);
+    SgStatement* pushPathNumFuncCall = SageBuilder::buildExprStatement(
+            buildPushFunctionCall(pathNumVar));
+    SageBuilder::popScopeStack();
+    
+    // For each in edges to exit node of CFG, insert the push functin on that edge.
+    foreach (BackstrokeCFG::Vertex cfgNode, 
+            boost::inv_adjacent_vertices(cfg_->getExit(), *cfg_))
+    {
+        SgNode* astNode = (*cfg_)[cfgNode]->getNode();
+        
+        // For each return statement, insert the push function before it.
+        if (SgReturnStmt* returnStmt = isSgReturnStmt(astNode))
+        {
+            SgStatement* pushFuncCall = SageInterface::copyStatement(pushPathNumFuncCall);
+            SageInterface::insertStatementBefore(returnStmt, pushFuncCall);
+        }
+    }
+    SageInterface::appendStatement(pushPathNumFuncCall, funcDef->get_body());
+    
     SageInterface::fixVariableReferences(funcDef);
 }
 

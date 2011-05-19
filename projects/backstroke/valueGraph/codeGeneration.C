@@ -51,24 +51,27 @@ SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr)
 
 void instrumentPushFunction(ValueNode* valNode, SgNode* astNode)
 {
-    cout << astNode->class_name() << endl;
+    //cout << astNode->class_name() << endl;
+    
     // Build push function call.
-	SgExprListExp* parameters = buildExprListExp(valNode->var.getVarRefExp());
-	SgExpression* pushFunc = buildFunctionCallExp("push", buildVoidType(), parameters);    
+	//SgExprListExp* parameters = buildExprListExp(valNode->var.getVarRefExp());
+	//SgExpression* pushFunc = buildFunctionCallExp("push", buildVoidType(), parameters);    
+    SgExpression* pushFunc = buildPushFunctionCall(valNode->var.getVarRefExp());
     SgStatement* pushFuncStmt = buildExprStatement(pushFunc);
     
     SgStatement* stmt = getAncestorStatement(astNode);
     SageInterface::insertStatementBefore(stmt, pushFuncStmt); 
 }
 
-void instrumentPushFunction(ValueNode* node, SgFunctionDefinition* funcDef)
+void instrumentPushFunction(ValueNode* valNode, SgFunctionDefinition* funcDef)
 {
     // Build push function call.
-	SgExprListExp* parameters = buildExprListExp(node->var.getVarRefExp());
-	SgExpression* pushFunc = buildFunctionCallExp("push", buildVoidType(), parameters);
+	//SgExprListExp* parameters = buildExprListExp(valNode->var.getVarRefExp());
+	//SgExpression* pushFunc = buildFunctionCallExp("push", buildVoidType(), parameters);
+    SgExpression* pushFunc = buildPushFunctionCall(valNode->var.getVarRefExp());
     //return buildExprStatement(pushFunc);
 
-    SgNode* varNode = node->astNode;
+    SgNode* varNode = valNode->astNode;
     if (SgExpression* expr = isSgExpression(varNode))
     {
         // If the target node is an expression, we have to find a proper place
@@ -110,8 +113,14 @@ void instrumentPushFunction(ValueNode* node, SgFunctionDefinition* funcDef)
                 ROSE_ASSERT(!"Declaration in conditions is not handled yet!");
         }
 
-        cout << initName->get_parent()->class_name() << endl;
+        //cout << initName->get_parent()->class_name() << endl;
     }
+}
+
+SgExpression* buildPushFunctionCall(SgExpression* para)
+{
+    return buildFunctionCallExp("push", buildVoidType(), 
+            SageBuilder::buildExprListExp(para));
 }
 
 SgExpression* buildPopFunctionCall(SgType* type)
@@ -119,6 +128,7 @@ SgExpression* buildPopFunctionCall(SgType* type)
     return buildFunctionCallExp("pop< " + get_type_name(type) + " >",
             type, SageBuilder::buildExprListExp());
 }
+
 
 SgStatement* buildRestorationStmt(ValueNode* node)
 {

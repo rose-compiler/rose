@@ -20,6 +20,9 @@ void instrumentPushFunction(ValueNode* node, SgFunctionDefinition* funcDef);
 //! the given AST node.
 void instrumentPushFunction(ValueNode* valNode, SgNode* astNode);
 
+//! Build a push function call. The input parameter is the paramenter of the push function.
+SgExpression* buildPushFunctionCall(SgExpression* para);
+
 //! Build a pop function call.
 SgExpression* buildPopFunctionCall(SgType* type);
 
