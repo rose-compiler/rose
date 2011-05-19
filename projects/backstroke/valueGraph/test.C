@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
         //string cfgFileName = "CFG" + boost::lexical_cast<string > (counter) + ".dot";
         //string vgFileName = "VG" + boost::lexical_cast<string > (counter) + ".dot";
         string cfgFileName = "CFG.dot";
-         string cdgFileName = "CDG.dot";
+        string cdgFileName = "CDG.dot";
         string vgFileName = "VG.dot";
 
         SgFunctionDefinition* funcDef = isSgFunctionDefinition(*i);

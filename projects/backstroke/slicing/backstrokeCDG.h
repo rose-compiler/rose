@@ -54,6 +54,7 @@ struct CDGEdge
 	//int caseValue;
 };
 
+//template <class CFGType> class CDG;
 
 struct ControlDependence 
 {
@@ -62,6 +63,9 @@ struct ControlDependence
     
     //! Control dependence edge.
     CDGEdge cdEdge;
+    
+    ////! Control dependence graph node.
+    //CDGNode cdNode;
     
     //! Control dependence node.
     SgNode* cdNode;
@@ -80,8 +84,9 @@ class CDG : public boost::adjacency_list<boost::vecS, boost::vecS, boost::bidire
 public:
 	typedef typename CFGType::CFGNodePtr CFGNodePtr;
 
-	typedef typename boost::graph_traits<CDG<CFGType> >::vertex_descriptor Vertex;
-	typedef typename boost::graph_traits<CDG<CFGType> >::edge_descriptor Edge;
+    typedef typename boost::graph_traits<CDG<CFGType> > GraphTraits;
+	typedef typename GraphTraits::vertex_descriptor Vertex;
+	typedef typename GraphTraits::edge_descriptor Edge;
 
 	//! The default constructor.
 	CDG() {}
@@ -100,6 +105,11 @@ public:
     
     //! Given a AST node, return all its control dependences.
     ControlDependences getControlDependences(SgNode* astNode);
+    
+    //! Given an AST node, return its corresponding CDG node. Note that it is possile
+    //! that there are several CDG nodes containing the same AST node, in which case
+    //! we just return one of them, since they have the same control dependence.
+    Vertex getCDGVertex(SgNode* astNode);
 
 	//! Write the CDG to a dot file.
 	void toDot(const std::string& filename) const;
@@ -233,6 +243,17 @@ void CDG<CFGType>::buildCDG(const CFGType& cfg)
 }
 
 template <class CFGType>
+typename CDG<CFGType>::Vertex CDG<CFGType>::getCDGVertex(SgNode* astNode)
+{
+    foreach (Vertex node, boost::vertices(*this))
+    {
+        if ((*this)[node]->getNode() == astNode) 
+            return node;
+    }    
+    return GraphTraits::null_vertex();
+}
+
+template <class CFGType>
 ControlDependences CDG<CFGType>::getControlDependences(CFGNodePtr cfgNode)
 {
     ControlDependences controlDeps;
@@ -257,18 +278,15 @@ ControlDependences CDG<CFGType>::getControlDependences(SgNode* astNode)
 {
     ControlDependences controlDeps;
     
-    foreach (Vertex node, boost::vertices(*this))
-    {
-        if ((*this)[node]->getNode() != astNode) continue;
-        
-        foreach (const Edge& edge, boost::out_edges(node, *this))
-        {
-            Vertex tgt = boost::target(edge, *this);
-            controlDeps.push_back(ControlDependence((*this)[edge], (*this)[tgt]->getNode()));
-        }
-        return controlDeps;
-    }
+    Vertex node = getCDGVertex(astNode);
     
+    ROSE_ASSERT(node != GraphTraits::null_vertex());
+    
+    foreach (const Edge& edge, boost::out_edges(node, *this))
+    {
+        Vertex tgt = boost::target(edge, *this);
+        controlDeps.push_back(ControlDependence((*this)[edge], (*this)[tgt]->getNode()));
+    }
     return controlDeps;
 }
 

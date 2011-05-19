@@ -466,5 +466,60 @@ void PathNumGenerator::getAllPathNumForNodesAndEdges()
     }
 }
 
+#if 0
+PredicateManager::PredicateManager(const BackstrokeCFG* cfg, const BackstrokeCDG* cdg)
+: cfg_(cfg), cdg_(cdg)
+{
+    dags_.push_back(DAG());
+    DAG& dag = dags_[0];
+
+    foreach (CFGVertex v, boost::vertices(*cfg_))
+    {
+        DAGVertex dagNode = boost::add_vertex(dag);
+        dag[dagNode] = v;
+        vertexToDagIndex_[v] = make_pair(0, dagNode);
+    }
+
+    foreach (const CFGEdge& e, boost::edges(*cfg_))
+    {
+        ROSE_ASSERT(vertexToDagIndex_.count(boost::source(e, *cfg_)) > 0);
+        ROSE_ASSERT(vertexToDagIndex_.count(boost::target(e, *cfg_)) > 0);
+
+        DAGEdge dagEdge = boost::add_edge(
+                vertexToDagIndex_[boost::source(e, *cfg_)].second,
+                vertexToDagIndex_[boost::target(e, *cfg_)].second, dag).first;
+        dag[dagEdge] = e;
+        edgeToDagIndex_[e] = make_pair(0, dagEdge);
+    }
+
+    DAGVertex entry = vertexToDagIndex_[cfg_->getEntry()].second;
+    DAGVertex exit  = vertexToDagIndex_[cfg_->getExit()].second;
+    
+    vector<CFGVertex> branchNodes;
+
+    // For each DAG, generate its path information.
+    foreach (const DAG& dag, dags_)
+    {
+        foreach (DAGVertex dagNode, boost::vertices(dag))
+        {
+            // Get the number of out edges of this node.
+            int outDegree = boost::out_degree(dagNode, dag);
+            
+            if (outDegree > 1)
+            {
+                // Get the number of bits needed to save the flag of each out edge.
+                int bitsNum = 1;
+                while ((1 << bitsNum) < outDegree)
+                    ++bitsNum;
+                
+                
+                branchNodes.push_back(dag[dagNode]);
+            }
+        }
+
+    }    
+}
+
+#endif
 
 } // end of Backstroke

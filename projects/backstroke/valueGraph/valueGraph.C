@@ -509,15 +509,20 @@ void EventReverser::processLastVersions()
 
         // For every variable, if it is not added into VG, add it now.
         VersionedVariable var(name, nameDef.second->getRenamingNumber());
+        
         //cout << "VersionedVariable:" << var.toString() << endl;
         //printVarVertexMap();
+        
         if (varVertexMap_.count(var) == 0)
         {
             //pseudoDefMap_[var] = nameDef.second;
 
             // Currently an object's member access is not added to VG.
             if (var.name.size() == 1)
+            {
+                ROSE_ASSERT(nameDef.second->isPhiFunction());
                 node = createPhiNode(var, nameDef.second);
+            }
         }
         else
             node = varVertexMap_[var];

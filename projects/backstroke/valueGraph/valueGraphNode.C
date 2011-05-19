@@ -41,7 +41,7 @@ namespace
             case V_SgTypeDouble:
                 return sizeof(double);
             case V_SgClassType:
-                ROSE_ASSERT(false);
+                //ROSE_ASSERT(false);
                 return 100;
             case V_SgPointerType:
                 return sizeof(void*);

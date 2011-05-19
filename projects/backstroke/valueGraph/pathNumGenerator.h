@@ -111,8 +111,8 @@ private:
 
 class PathNumManager
 {
-	typedef boost::graph_traits<DAG>::vertex_descriptor DAGVertex;
-	typedef boost::graph_traits<DAG>::edge_descriptor   DAGEdge;
+    typedef boost::graph_traits<DAG>::vertex_descriptor DAGVertex;
+    typedef boost::graph_traits<DAG>::edge_descriptor   DAGEdge;
     typedef BackstrokeCFG::Vertex CFGVertex;
     typedef BackstrokeCFG::Edge   CFGEdge;
 
@@ -196,8 +196,41 @@ private:
             int val);
 };
 
+#if 0
+class PredicateManager
+{
+    typedef boost::graph_traits<DAG>::vertex_descriptor DAGVertex;
+    typedef boost::graph_traits<DAG>::edge_descriptor   DAGEdge;
+    typedef BackstrokeCFG::Vertex                       CFGVertex;
+    typedef BackstrokeCFG::Edge                         CFGEdge;
 
+    const BackstrokeCFG* cfg_;
+    const BackstrokeCDG* cdg_;
 
+    //! The first DAG is about the function, and others are all loops.
+    std::vector<DAG> dags_;
+
+    //! A table from each CFG vertex to the index of the DAG and the DAG vertex.
+    std::map<CFGVertex, std::pair<int, DAGVertex> > vertexToDagIndex_;
+
+    //! A table from each CFG edge to the index of the DAG and the DAG vertex.
+    std::map<CFGEdge, std::pair<int, DAGEdge> > edgeToDagIndex_;
+
+    std::map<SgNode*, BackstrokeCFG::Vertex> nodeCFGVertexMap_;
+    
+    //! Each element consists of the path index of the parent 
+    //! region, and the number of paths.
+    std::vector<std::pair<int, int> > pathInfo_;
+    
+    //std::map<SgNode*, std::pair<int, Vertex> > sgNodeToVertexMap_;
+
+    //std::map<SgNode*, std::pair<int, DAGVertex> > sgNodeToVertexMap_;
+    
+public:
+    PredicateManager(const BackstrokeCFG* cfg);
+    ~PredicateManager(); 
+};
+#endif
 
 } // end of Backstroke
 

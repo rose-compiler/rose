@@ -144,7 +144,7 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
             // Get the node on the top, and find it out edges.
             VGVertex node = unfinishedRoute.nodes.back().first;
 
-            // If this node is an operatot node, add all its operands.
+            // If this node is an operator node, add all its operands.
             if (isOperatorNode(subgraph[node]))
             {
                 RouteWithNodes newRoute = unfinishedRoute;
