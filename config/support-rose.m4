@@ -1222,7 +1222,7 @@ fi
 AC_SUBST(ROSE_USE_OPENCL_SUPPORT)
 
 # *********************************************************************
-# Option to control internal support of PPL (Parma Polyhedron Librairy)
+# Option to control internal support of PPL (Parma Polyhedron Library)
 # *********************************************************************
 
 # TV (05/25/2010): Check for Parma Polyhedral Library (PPL)
@@ -1257,14 +1257,135 @@ AM_CONDITIONAL(
 	[test "x$enable_ppl" = "xyes"])
 if test "x$enable_ppl" = "xyes"; then
 	if test "x$has_ppl_path" = "xyes"; then
-		PPL_LDFLAGS=" -L$ppl_path/lib -lppl"
-		PPL_CPPFLAGS="-I$ppl_path/include"
+		PPL_PATH="$ppl_path"
 		AC_DEFINE([ROSE_USE_PPL], [], [Whether to use Parma Polyhedral Library (PPL) support or not within ROSE])
 	fi
 fi
 AC_SUBST(ROSE_USE_PPL)
-AC_SUBST(PPL_LDFLAGS)
-AC_SUBST(PPL_CPPFLAGS)
+AC_SUBST(PPL_PATH)
+
+# *********************************************************************************
+# Option to control internal support of Cloog (Code generator for Polyhedral Model)
+# *********************************************************************************
+
+AC_ARG_WITH(
+	[cloog],
+	AS_HELP_STRING([--with-cloog@<:@=DIR@:>@], [use Cloog]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
+		exit 1
+	else
+		has_cloog_path="yes"
+		cloog_path="$withval"
+	fi
+	],
+	[has_cloog_path="no"]
+)
+
+AC_ARG_ENABLE(
+	cloog,
+	AS_HELP_STRING(
+		[--enable-cloog],
+		[Support for Cloog]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_CLOOG,
+	[test "x$enable_cloog" = "xyes"])
+if test "x$enable_cloog" = "xyes"; then
+	if test "x$has_cloog_path" = "xyes"; then
+		CLOOG_PATH="$cloog_path"
+		AC_DEFINE([ROSE_USE_CLOOG], [], [Whether to use Cloog support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_CLOOG)
+AC_SUBST(CLOOG_PATH)
+
+# **************************************************************************************
+# Option to control internal support of ScopLib (A classic library for Polyhedral Model)
+# **************************************************************************************
+
+AC_ARG_WITH(
+	[scoplib],
+	AS_HELP_STRING([--with-scoplib@<:@=DIR@:>@], [use ScopLib]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
+		exit 1
+	else
+		has_scoplib_path="yes"
+		scoplib_path="$withval"
+	fi
+	],
+	[has_scoplib_path="no"]
+)
+
+AC_ARG_ENABLE(
+	scoplib,
+	AS_HELP_STRING(
+		[--enable-scoplib],
+		[Support for ScopLib]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_SCOPLIB,
+	[test "x$enable_scoplib" = "xyes"])
+if test "x$enable_scoplib" = "xyes"; then
+	if test "x$has_scoplib_path" = "xyes"; then
+		SCOPLIB_PATH="$scoplib_path"
+		AC_DEFINE([ROSE_USE_SCOPLIB], [], [Whether to use ScopLib support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_SCOPLIB)
+AC_SUBST(SCOPLIB_PATH)
+
+# *************************************************************************************
+# Option to control internal support of Candl (Dependency analysis in Polyhedral Model)
+# *************************************************************************************
+
+AC_ARG_WITH(
+	[candl],
+	AS_HELP_STRING([--with-candl@<:@=DIR@:>@], [use Candl]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
+		exit 1
+	else
+		has_candl_path="yes"
+		candl_path="$withval"
+	fi
+	],
+	[has_candl_path="no"]
+)
+
+AC_ARG_ENABLE(
+	candl,
+	AS_HELP_STRING(
+		[--enable-candl],
+		[Support for Candl]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_CANDL,
+	[test "x$enable_candl" = "xyes"])
+if test "x$enable_candl" = "xyes"; then
+	if test "x$has_candl_path" = "xyes"; then
+		CANDL_PATH="$candl_path"
+		AC_DEFINE([ROSE_USE_CANDL], [], [Whether to use Candl support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_CANDL)
+AC_SUBST(CANDL_PATH)
 
 # *****************************************************************
 #            Option to define DOXYGEN SUPPORT
@@ -1788,6 +1909,13 @@ AC_CHECK_LIB(gcrypt,gcry_check_version)
 # the ROSE library.
 AC_CHECK_HEADERS(pthread.h)
 
+# Check for the __thread keyword.  This type qualifier creates objects that are thread local.
+AC_MSG_CHECKING([for thread local storage type qualifier])
+AC_COMPILE_IFELSE([struct S {int a, b;}; static __thread struct S x;],
+	[AC_DEFINE(ROSE_THREAD_LOCAL_STORAGE, __thread, [Define to __thread keyword for thread local storage.])
+	 AC_MSG_RESULT([__thread])],
+	[AC_MSG_RESULT([not supported])])
+
 # These headers and types are needed by projects/simulator [matzke 2009-07-02]
 AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
 AC_CHECK_HEADERS([sys/types.h sys/mman.h sys/stat.h sys/uio.h sys/wait.h sys/utsname.h sys/ioctl.h sys/sysinfo.h sys/socket.h])
@@ -2165,6 +2293,20 @@ projects/symbolicAnalysisFramework/include/Makefile
 projects/taintcheck/Makefile
 projects/PowerAwareCompiler/Makefile
 projects/traceAnalysis/Makefile
+projects/PolyhedralModel/Makefile
+projects/PolyhedralModel/src/Makefile
+projects/PolyhedralModel/src/maths/Makefile
+projects/PolyhedralModel/src/system/Makefile
+projects/PolyhedralModel/src/misc-test/Makefile
+projects/PolyhedralModel/src/common/Makefile
+projects/PolyhedralModel/src/test-common/Makefile
+projects/PolyhedralModel/src/scoplib/Makefile
+projects/PolyhedralModel/src/rose/Makefile
+projects/PolyhedralModel/src/rose-pragma/Makefile
+projects/PolyhedralModel/src/test-rose-pragma/Makefile
+projects/PolyhedralModel/docs/Makefile
+projects/PolyhedralModel/tests/Makefile
+projects/PolyhedralModel/tests/rose-pragma/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile

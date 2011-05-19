@@ -1,0 +1,80 @@
+\chapter{POP tools}\label{ch:POPtools}
+
+This chapter describes various tools available for
+creating POP input or analyzing POP output.
+
+\section{Visualizing output}\label{sec:viz}
+
+There is currently no standard tool for visualizing POP
+output.  There are two freely-available software packages
+that can be used.
+
+Ferret is a visualization tool developed by Steve Hankin at
+NOAA’s Pacific Marine Environmental Laboratory (PMEL) in Seattle.
+It is designed specifically for visualizing ocean model output
+and data. Ferret is constantly being improved and extended, and
+there is a very active email-based user group.  For more
+information about Ferret, check the Ferret website
+
+\htmladdnormallink{http://ferret.wrc.noaa.gov/Ferret/}
+                  {http://ferret.wrc.noaa.gov/Ferret/}.
+
+Other free visualization and analysis packages are available
+from the DOE-sponsored Program for Climate Model Diagnosis 
+and Intercomparison (PCMDI) at Lawrence Livermore National 
+Laboratory (LLNL).  Although originally designed for 
+visualizing atmospheric model output from the Atmospheric 
+Model Intercomparison Project (AMIP), many are applicable 
+to ocean model output and future ocean analysis tools are 
+being added.   For more information, check the website
+
+\htmladdnormallink{http://www-pcmdi.llnl.gov/software/}
+                  {http://www-pcmdi.llnl.gov/software/}.
+
+\section{Transformations from general grids}\label{sec:transgrid}
+
+All POP output is on the computational grid.  For
+general grids that are not based on latitude and longitude
+(e.g. the displaced-pole or tripole grids), analyzing or
+visualizing data leads to a distorted view of the world
+and colleagues may begin to question your geography.
+Transformation to latitude-longitude grids can be performed
+using the Spherical Remapping and Interpolation Package (SCRIP),
+available from
+
+\htmladdnormallink{http://www.acl.lanl.gov/lanlclimate/SCRIP/}
+                  {http://www.acl.lanl.gov/lanlclimate/SCRIP/}.
+
+\section{File format conversion}\label{sec:formatconvert}
+
+POP now supports direct netCDF output and such output is
+recommended unless it creates a performance bottleneck
+for large grids.  In cases where binary output is required,
+conversion to netCDF can be achieved off-line through a
+utility called bin2nc.  Unfortunately, this utility is
+being re-worked to handle the new binary output format
+so is unavailable at this time.  It would be relatively
+easy for a user to create such a code however.
+
+\section{Generating grid and bottom topography files}
+\label{sec:gridgen}
+
+\subsection{Horizontal grid and topography}\label{sec:gridgen-horiz}
+
+A graphical tool for generating horizontal grids and creating 
+bottom topography has been developed.  A working version is 
+currently in the process of being released and will support 
+almost-global Mercator grids, global displaced-pole grids,
+global tripole grids and regional grids.  Some standard grids 
+and topography used in current production runs are available 
+from the POP website.
+
+\subsection{Vertical grid}\label{sec:gridgen-vert}
+
+There is a vertical grid generating routine in the tools/grids
+subdirectory.  This code is essentially the same code used to
+generate vertical grids internally in POP, but can be used to
+generate a vertical grid file off-line which can be edited to
+suit your simulation.  Note that when changing the vertical
+grid, you will need to re-generate the bottom topography.
+

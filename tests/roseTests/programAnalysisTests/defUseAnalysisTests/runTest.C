@@ -462,14 +462,14 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 1 -----------------------------------------
       argvList[1]=srcdir+"tests/test20.C";
       results.clear();      useresults.clear();
-      testOneFunction("::bar",argvList, debug, 7, results,useresults);
+      testOneFunction("::bar",argvList, debug, 8, results,useresults);
     }
 
     if (startNrInt<=21 || testAll) {
       // ------------------------------ TESTCASE 1 -----------------------------------------
       argvList[1]=srcdir+"tests/test21.C";
       results.clear();      useresults.clear();
-      testOneFunction("::func",argvList, debug, 9, results,useresults);
+      testOneFunction("::func",argvList, debug, 10, results,useresults);
     }
 
     if (startNrInt<=22 || testAll) {
@@ -477,15 +477,15 @@ int main( int argc, char * argv[] )
       argvList[1]=srcdir+"tests/test22.C";
       results.clear();      useresults.clear();
       results.insert(pair<string,int>("b", 7));
-      testOneFunction("::func",argvList, debug, 14, results,useresults);
+      testOneFunction("::func",argvList, debug, 16, results,useresults);
     }
 
     if (startNrInt<=23 || testAll) {
       // ------------------------------ TESTCASE 1 -----------------------------------------
       argvList[1]=srcdir+"tests/test23.C";
       results.clear();      useresults.clear();
-      results.insert(pair<string,int>("a",11));
-      testOneFunction("::func",argvList, debug, 30, results,useresults);
+      results.insert(pair<string,int>("a",12));
+      testOneFunction("::func",argvList, debug, 33, results,useresults);
     }
 
     if (startNrInt<=24 || testAll) {
