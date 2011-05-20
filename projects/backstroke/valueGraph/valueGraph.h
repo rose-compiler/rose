@@ -214,7 +214,7 @@ private:
 	VGVertex createValueNode(SgNode* lhsNode, SgNode* rhsNode);
     
     //! Create an VG node for this expression.
-    VGVertex createThisNode(SgThisExp* thisExp);
+    VGVertex createThisExpNode(SgThisExp* thisExp);
     
     //! Create an operation node, plus two or three edges.
     //! The AST node passed in represents its corresponding AST node.

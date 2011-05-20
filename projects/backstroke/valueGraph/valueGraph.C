@@ -11,7 +11,7 @@ namespace Backstroke
 
 using namespace std;
 
-#define foreach              BOOST_FOREACH
+#define foreach         BOOST_FOREACH
 #define reverse_foreach BOOST_REVERSE_FOREACH
 
 
@@ -186,7 +186,7 @@ void EventReverser::buildBasicValueGraph()
                 // For data member access, ignore its corresponding "this" pointer.
                 if (SgThisExp* thisExp = isSgThisExp(expr))
                 {
-                    createThisNode(thisExp);
+                    createThisExpNode(thisExp);
                 }
 
                 else if (SgArrowExp* arrowExp = isSgArrowExp(expr))
@@ -204,7 +204,7 @@ void EventReverser::buildBasicValueGraph()
                 // A cast expression may be a variable reference.
                 else if (SgCastExp* castExp = isSgCastExp(expr))
                 {
-                    castExp->get_operand()->get_file_info()->display();
+                    //castExp->get_operand()->get_file_info()->display();
                     ROSE_ASSERT(nodeVertexMap_.count(castExp->get_operand()));
                     nodeVertexMap_[castExp] = nodeVertexMap_[castExp->get_operand()];
                 }
@@ -272,6 +272,11 @@ void EventReverser::buildBasicValueGraph()
                 case V_SgPlusPlusOp:
                 case V_SgMinusMinusOp:
                     {
+                        if (nodeVertexMap_.count(operand) == 0)
+                        {
+                            cout << "The operand of ++ or -- is not added to VG yet!\n";
+                            continue;
+                        }
                         ROSE_ASSERT(nodeVertexMap_.count(operand) > 0);
 
                         VGVertex operandNode = nodeVertexMap_[operand];
@@ -939,7 +944,7 @@ set<EventReverser::VGVertex> EventReverser::getKillers(VGVertex killedNode)
     return set<VGVertex>();
 }
 
-EventReverser::VGVertex EventReverser::createThisNode(SgThisExp* thisExp)
+EventReverser::VGVertex EventReverser::createThisExpNode(SgThisExp* thisExp)
 {
     VGVertex newNode = addValueGraphNode(new ValueNode(thisExp));
     nodeVertexMap_[thisExp] = newNode;        
@@ -1118,8 +1123,8 @@ void EventReverser::addStateSavingEdges()
 
 VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
 {
-    cout << node->class_name() << endl;
-    node->get_file_info()->display();
+    //cout << node->class_name() << endl;
+    //node->get_file_info()->display();
     VarName varName = SSA::getVarName(node);
     int version = -1;
 #if 1

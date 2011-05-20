@@ -21,6 +21,11 @@ int main(int argc, char *argv[])
     CppToDotTranslator c;
     c.translate(argc,argv);
 #endif
+    set<string> eventList;
+    eventList.insert("TransmitComplete");
+    eventList.insert("Handle");
+    eventList.insert("TransmitComplete");
+    eventList.insert("TransmitComplete");
     
     // Process all function definition bodies for static control flow graph generation
     Rose_STL_Container<SgNode*> functions = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
@@ -28,7 +33,7 @@ int main(int argc, char *argv[])
     {
         SgFunctionDefinition* funcDef = isSgFunctionDefinition(*i);
         ROSE_ASSERT(funcDef != NULL);
-        if (funcDef->get_declaration()->get_name() != "TransmitComplete")
+        if (eventList.count(funcDef->get_declaration()->get_name()) == 0)
             continue;
 
         //string cfgFileName = "CFG" + boost::lexical_cast<string > (counter) + ".dot";

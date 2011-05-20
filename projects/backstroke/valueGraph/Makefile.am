@@ -39,8 +39,8 @@ test:
 GTNETS_DIR = /home/hou1/GTNetS-MPI/SRC
 
 #$(GTNETS_DIR)/application.cc 
-#GTNETS_FILES = $(GTNETS_DIR)/application-udpsink.cc 
-GTNETS_FILES = $(GTNETS_DIR)/link-real.cc 
+#GTNETS_FILES = $(GTNETS_DIR)/application-udpsink.cc $(GTNETS_DIR)/link-real.cc
+GTNETS_FILES = $(GTNETS_DIR)/wlan.cc 
 
 gtnets:
 	./valueGraph -c $(GTNETS_FILES) -I/home/hou1/GTNetS-MPI/SRC/
