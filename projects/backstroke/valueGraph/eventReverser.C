@@ -279,30 +279,6 @@ void EventReverser::removePhiNodesFromRouteGraph()
     }
 }
 
-#if 0
-
-SgVariableDeclaration* getStackVar(const string& name)
-{
-	//string typeName;
-
-    vector<SgVariableDeclaration*> stackVars;
-	string stackName = name + "_stack";
-
-    SgClassDeclaration* stackTypeDeclaration = SageBuilder::buildStructDeclaration("std::deque<boost::any>");
-    SgType* stackType = stackTypeDeclaration->get_type();
-    ROSE_ASSERT(stackType);
-    //delete stackTypeDeclaration;
-
-    SgVariableDeclaration* stackDecl = SageBuilder::buildVariableDeclaration(stackName, stackType);
-    stackVars.push_back(stackDecl);
-
-
-    return stackDecl;
-	//return SageBuilder::buildVarRefExp(stackVars[0]->get_variables()[0]);
-}
-
-#endif
-
 void EventReverser::buildFunctionBodies()
 {
     using namespace SageInterface;
