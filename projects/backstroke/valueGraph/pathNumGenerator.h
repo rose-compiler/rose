@@ -170,7 +170,11 @@ public:
         return paths.flip();
     }
     
-    //! Get a table from teach path set to a number representing the topological order
+    //! Get a table from each AST node to a number representing the topological order
+    //! in the CFG.
+    void getAstNodeIndices(size_t index, std::map<SgNode*, int>& nodeIndicesTable) const;
+    
+    //! Get a table from each path set to a number representing the topological order
     //! in the CFG.
     std::map<PathSet, int> getPathsIndices(size_t index) const;
 

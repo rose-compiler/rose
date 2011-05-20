@@ -39,8 +39,15 @@ private:
     //! the table passed in.
     struct RouteGraphEdgeComp
     {
-        RouteGraphEdgeComp(const ValueGraph& routeG, const std::map<PathSet, int>& pathsIdx)
-        : routeGraph(routeG), pathsIndexTable(pathsIdx) {}
+        RouteGraphEdgeComp(const ValueGraph& routeG, const std::map<SgNode*, int>& nodeIdx)
+        : routeGraph(routeG), nodeIndexTable(nodeIdx) {}
+ 
+//        RouteGraphEdgeComp(const ValueGraph& routeG, const std::map<PathSet, int>& pathsIdx)
+//        : routeGraph(routeG), pathsIndexTable(pathsIdx) {}
+        
+        // For each VG edge, get the according AST node whose order in CFG decides the order of 
+        // this edge in reverse CFG.
+        SgNode* getAstNode(const VGEdge& edge) const;
         
         bool operator ()(const VGEdge& edge1, const VGEdge& edge2) const;
 //        {
@@ -55,7 +62,8 @@ private:
 //        }
         
         const ValueGraph& routeGraph;
-        const std::map<PathSet, int>& pathsIndexTable;
+        //const std::map<PathSet, int>& pathsIndexTable;
+        const std::map<SgNode*, int>& nodeIndexTable;
     };
 
 private:
@@ -205,9 +213,13 @@ private:
 	 */
 	VGVertex createValueNode(SgNode* lhsNode, SgNode* rhsNode);
     
+    //! Create an VG node for this expression.
+    VGVertex createThisNode(SgThisExp* thisExp);
+    
     //! Create an operation node, plus two or three edges.
+    //! The AST node passed in represents its corresponding AST node.
 	VGVertex createOperatorNode(
-            VariantT t,
+            VariantT t, SgNode* astNode,
             VGVertex result, VGVertex lhs, VGVertex rhs = nullVertex(),
             ValueGraphEdge* edgeToCopy = NULL);
 

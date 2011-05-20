@@ -36,6 +36,20 @@ namespace
                 return sizeof(char);
             case V_SgTypeShort:
                 return sizeof(short);
+            case V_SgTypeLong:
+                return sizeof(long);
+            case V_SgTypeLongLong:
+                return sizeof(long long);
+            case V_SgTypeUnsignedChar:
+                return sizeof(unsigned char);
+            case V_SgTypeUnsignedInt:
+                return sizeof(unsigned int);
+            case V_SgTypeUnsignedShort:
+                return sizeof(unsigned short);
+            case V_SgTypeUnsignedLongLong:
+                return sizeof(unsigned long long);
+            case V_SgTypeUnsignedLong:
+                return sizeof(unsigned long);
             case V_SgTypeFloat:
                 return sizeof(float);
             case V_SgTypeDouble:
@@ -45,7 +59,10 @@ namespace
                 return 100;
             case V_SgPointerType:
                 return sizeof(void*);
+            case V_SgTypedefType:
+                return getCostFromType(t->stripTypedefsAndModifiers());
             default:
+                cout << t->class_name() << endl;
                 ROSE_ASSERT(!"Unknow type.");
                 return 100;
         }
@@ -78,7 +95,9 @@ std::string ValueNode::toString() const
 	if (SgValueExp* valueExp = isSgValueExp(astNode))
 		os << valueExp->unparseToString() + "\\n";
 
-	if (isTemp())
+    if (isSgThisExp(astNode))
+        os << "THIS";
+    else if (isTemp())
 		os << "TEMP";
     else
         os << var << " ";

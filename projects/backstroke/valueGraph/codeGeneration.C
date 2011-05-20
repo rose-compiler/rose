@@ -252,6 +252,10 @@ case V_Sg##suffix: opExpr = build##suffix(lhsExpr, rhsExpr); break;
         }
     }
 
+    // For ++ and -- operators, no assignment is needed.
+    if (type == V_SgMinusMinusOp || type == V_SgPlusPlusOp)
+        return buildExprStatement(opExpr);
+    
     return buildExprStatement(buildAssignOp(buildVariable(result), opExpr));
 }
 

@@ -16,22 +16,27 @@ int main(int argc, char *argv[])
 
     int counter = 0;
 
+#if 0
     // Draw the AST.
     CppToDotTranslator c;
     c.translate(argc,argv);
+#endif
     
     // Process all function definition bodies for static control flow graph generation
     Rose_STL_Container<SgNode*> functions = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
     for (Rose_STL_Container<SgNode*>::const_iterator i = functions.begin(); i != functions.end(); ++i)
     {
+        SgFunctionDefinition* funcDef = isSgFunctionDefinition(*i);
+        ROSE_ASSERT(funcDef != NULL);
+        if (funcDef->get_declaration()->get_name() != "TransmitComplete")
+            continue;
+
         //string cfgFileName = "CFG" + boost::lexical_cast<string > (counter) + ".dot";
         //string vgFileName = "VG" + boost::lexical_cast<string > (counter) + ".dot";
         string cfgFileName = "CFG.dot";
         string cdgFileName = "CDG.dot";
         string vgFileName = "VG.dot";
 
-        SgFunctionDefinition* funcDef = isSgFunctionDefinition(*i);
-        ROSE_ASSERT(funcDef != NULL);
 
         if (!funcDef->get_file_info()->isSameFile(sourceFile))
             continue;
@@ -61,7 +66,7 @@ int main(int argc, char *argv[])
         cout << "Function " << counter << " is processed.\n";
         ++counter;
 
-        break;
+        //break;
     }
     // Prepend includes to test files.
     SgGlobal* globalScope = SageInterface::getFirstGlobalScope(project);

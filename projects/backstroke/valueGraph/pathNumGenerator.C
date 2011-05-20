@@ -151,6 +151,25 @@ std::pair<int, PathSet> PathNumManager::getPathNumbers(
     return std::make_pair(idx, pathNumGenerators_[idx]->getPaths(dagEdge));
 }
 
+void PathNumManager::getAstNodeIndices(size_t index, map<SgNode*, int>& nodeIndicesTable) const
+{
+    const DAG& dag = dags_[index];
+
+    vector<DAGVertex> nodes;
+    boost::topological_sort(dag, back_inserter(nodes));
+    
+    int num = 0;
+    foreach (DAGVertex node, nodes)
+    {
+        SgNode* astNode = (*cfg_)[dag[node]]->getNode();
+        nodeIndicesTable[astNode] = num++;
+    }
+    
+    // Add a NULL entry to the table because it is possible that some VG node contains
+    // a NULL AST node inside.
+    nodeIndicesTable[NULL] = 0;
+}
+
 map<PathSet, int> PathNumManager::getPathsIndices(size_t index) const
 {
     map<PathSet, int> pathsIndicesTable;

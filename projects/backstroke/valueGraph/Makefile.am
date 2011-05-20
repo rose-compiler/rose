@@ -36,3 +36,12 @@ test:
 #./valueGraph -c temp1.C -I/opt/local/var/macports/software/boost/1.44.0_0/opt/local/include/
 #./valueGraph -c temp2.C -I/opt/local/var/macports/software/boost/1.44.0_0/opt/local/include/
 
+GTNETS_DIR = /home/hou1/GTNetS-MPI/SRC
+
+#$(GTNETS_DIR)/application.cc 
+#GTNETS_FILES = $(GTNETS_DIR)/application-udpsink.cc 
+GTNETS_FILES = $(GTNETS_DIR)/link-real.cc 
+
+gtnets:
+	./valueGraph -c $(GTNETS_FILES) -I/home/hou1/GTNetS-MPI/SRC/
+

@@ -27,7 +27,7 @@ EventReverser::EventReverser(SgFunctionDefinition* funcDef)
     cfg_ = new BackstrokeCFG(funcDef_);
     cdg_ = new BackstrokeCDG(*cfg_);
     ssa_ = new SSA(SageInterface::getProject());
-    ssa_->run(true);
+    ssa_->run(false);
 
     pathNumManager_ = new PathNumManager(cfg_);
 }
@@ -413,14 +413,21 @@ EventReverser::getOperands(VGVertex opNode) const
 
 void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>& result)
 {
-    map<PathSet, int> pathsIndexTable = pathNumManager_->getPathsIndices(dagIndex);
+//    // This table is used to sort all path sets according to the topological order
+//    // in the CFG.
+//    map<PathSet, int> pathsIndexTable = pathNumManager_->getPathsIndices(dagIndex);
+        
+    // This table is used to sort all AST nodes according to the topological order
+    // in the CFG.
+    map<SgNode*, int> nodeIndexTable;
+    pathNumManager_->getAstNodeIndices(dagIndex, nodeIndexTable);
     
-    foreach (const VGEdge& edge, boost::edges(routeGraph_))
-    {
-        PathSet paths = routeGraph_[edge]->paths;
-        if (pathsIndexTable.count(paths) == 0)
-            pathsIndexTable[paths] = INT_MAX;
-    }
+//    foreach (const VGEdge& edge, boost::edges(routeGraph_))
+//    {
+//        PathSet paths = routeGraph_[edge]->paths;
+//        if (pathsIndexTable.count(paths) == 0)
+//            pathsIndexTable[paths] = INT_MAX;
+//    }
     
 #if 0
     for (map<PathSet, int>::iterator it = pathsIndexTable.begin(), itEnd = pathsIndexTable.end();
@@ -430,7 +437,7 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
     
     // A priority queue, in which elements are sorted by its index from edgeIndexTable.
     priority_queue<VGEdge, vector<VGEdge>, RouteGraphEdgeComp>  
-    nextEdgeCandidates(RouteGraphEdgeComp(routeGraph_, pathsIndexTable));
+    nextEdgeCandidates(RouteGraphEdgeComp(routeGraph_, nodeIndexTable));
     
     map<VGVertex, PathSet> nodePathsTable;
     foreach (VGVertex node, boost::vertices(routeGraph_))
@@ -491,7 +498,7 @@ void EventReverser::buildReverseCFG(
     vector<VGEdge> result;
     getRouteGraphEdgesInProperOrder(dagIndex, result);
     
-#if 1
+#if 0
     foreach (const VGEdge& edge, result)
         cout << "!!!" << routeGraph_[edge]->toString() << endl;
 #endif
