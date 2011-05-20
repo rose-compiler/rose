@@ -38,3 +38,4 @@ if ROSE_USE_CLOOG
 	rm -f $(bin_dir)/test-rose-pragma-generate-all-schedules $(bin_dir)/.libs/test-rose-pragma-generate-all-schedules
 endif
 
+EXTRA_DIST= make_rule.inc test-code-generation.cpp test-polyhedric-annotation.cpp test-generate-all-schedules.cpp test-dependency.cpp

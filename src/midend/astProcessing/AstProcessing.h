@@ -1,7 +1,5 @@
 // Original Author (AstProcessing classes): Markus Schordan
 // Rewritten by: Gergo Barany
-// Original Author (SgGraphTraversal mechanisms): Michael Hoffman
-// $Id: AstProcessing.h,v 1.6 2008/01/08 02:56:38 dquinlan Exp $
 
 #ifndef ASTPROCESSING_H
 #define ASTPROCESSING_H
@@ -28,19 +26,7 @@
 //#include "sage3.h"
 // Non-templated helper function in AstProcessing.C
 
-// 07/12/10
-/*These sets are for keeping track of the traversed nodes so as to
-avoid getting stuck in a loop. DO NOT REMOVE or the code will break 
-NOTE: All of the traverse functions (besides traverseWithinFile and traverseInputFiles)
-are overloaded to allow for graph node inputs */
 
-// 07/16/10
-/* traverseWithinFile and traverseInputFiles now contain an option input string so
-one can choose to use StaticCFG or Interprocedural (not sure that interprocedural is worth doing)
-by using "StaticCFG" or "Interprocedural" as inputs */
-
-//static std::set<SgGraphNode*> traversed;
-//static std::set<SgGraphNode*> traversed2;
 
 
 bool 
@@ -100,12 +86,6 @@ typedef DummyAttribute _DummyAttribute;
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 class SgCombinedTreeTraversal;
 
-struct compareSgGraphNode {
-    bool operator()(const SgGraphNode* a, const SgGraphNode* b) const
-    {
-        return a==b;
-    }
-};
 
 
 
@@ -192,99 +172,6 @@ private:
     SynthesizedAttributesList *synthesizedAttributes;
 };
 
-/* The SgGraphTraversal class is utilized specifically for StaticCFG traversals,
-though the input must be in terms of a SgIncidenceDirectedGraph*/
-template <class InheritedAttributeType, class SynthesizedAttributeType>
-class SgGraphTraversal
-{
-   public:
-
-    virtual ~SgGraphTraversal(); 
-    SgGraphTraversal(); 
-    // Copy operations
-    SgGraphTraversal(const SgGraphTraversal &);
-    const SgGraphTraversal &operator=(const SgGraphTraversal &);
-
-    typedef StackFrameVector<SynthesizedAttributeType> SynthesizedAttributesList;
-    //void buildGraph(SgNode*);
-    static boost::unordered_map<SgGraphNode*, InheritedAttributeType, boost::hash<SgGraphNode*>, compareSgGraphNode> graphnodeinheritedmap; 
-    //boost::unordered_map<SgGraphNode*, InheritedAttributeType, boost::hash<SgGraphNode*>, compareSgGraphNode>* graphnodeinheritedmaploop;
-    //static std::set<SgGraphNode*>* traversedreverse;
-    //static std::set<SgGraphNode*>* traversed;
-    //static std::set<SgGraphNode*>* traversedlocal;
-    //static SgGraphNode* endnode;
-    //static SgGraphNode* beginnode;
-    //static std::vector<SgDirectedGraphEdge*> currentSolving;
-    SgIncidenceDirectedGraph* getGraph();
-    SgGraphNode* getStartNode();
-    InheritedAttributeType nullInherit;
-    //static InheritedAttributeType defaultInheritedValue;
-    //void setStartNode(SgGraphNode* n);
-    //void setGraph(SgIncidenceDirectedGraph* gr);
-    //void setCFG(StaticCFG::CFG cfgh);
-    SynthesizedAttributeType traverse(SgGraphNode* basenode, SgIncidenceDirectedGraph* g, SgIncidenceDirectedGraph* g2,
-            InheritedAttributeType inheritedValue, InheritedAttributeType nullInherit,
-            int graphTraversal, bool loop, SgGraphNode* endnode);
-   protected:
-    
-    //InheritedAttributeType solveInheritedAttribute(SgGraphNode* child, std::set<SgGraphNode*>* parentset);
-    virtual InheritedAttributeType evaluateInheritedAttribute(SgGraphNode* n,
-            std::vector<InheritedAttributeType> inheritedValues) = 0;
-    virtual SynthesizedAttributeType evaluateSynthesizedAttribute(SgGraphNode* n,
-            InheritedAttributeType in,
-            SynthesizedAttributesList l) = 0;
-    /*
-    static SgIncidenceDirectedGraph* graph;
-    static SgGraphNode* startNode;
-    static StaticCFG::CFG cfghold;
-    */
-    SynthesizedAttributeType defaultSynthesizedAttribute(InheritedAttributeType);
-   private:
-    void eraseEdges(SgGraphNode* encpy, SgIncidenceDirectedGraph* g);
-    void constructSubTree(SgGraphNode* endnode, SgGraphNode* startnode, SgGraphNode* encpy, std::set<SgGraphNode*> lst, SgIncidenceDirectedGraph* g, SgIncidenceDirectedGraph* g2, SgDirectedGraphEdge* edge);
-    void calcInherited(SgGraphNode* encpy, SgGraphNode* endnode, SgIncidenceDirectedGraph* g, std::set<SgGraphNode*> lst);
-    void
-    performTraversal(SgGraphNode*, SgIncidenceDirectedGraph*, SgIncidenceDirectedGraph*, InheritedAttributeType,
-        int, bool, SgGraphNode*, bool);
-    SynthesizedAttributesList *synthesizedAttributes;
-    SynthesizedAttributeType traversalResult();
-};
-
-template <class InheritedAttributeType, class SynthesizedAttributeType> boost::unordered_map<SgGraphNode*, InheritedAttributeType, boost::hash<SgGraphNode*>, compareSgGraphNode> SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::graphnodeinheritedmap;
-//template <class InheritedAttributeType, class SynthesizedAttributeType> boost::unordered_map<SgGraphNode*, InheritedAttributeType*, boost::hash<SgGraphNode*>, compareSgGraphNode> //SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::graphnodeinheritedmaploop;
-/*
-template <class InheritedAttributeType, class SynthesizedAttributeType> std::set<SgGraphNode*>*
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::traversedreverse;
-*/
-/*
-template <class InheritedAttributeType, class SynthesizedAttributeType> SgGraphNode*
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::endnode;
-template <class InheritedAttributeType, class SynthesizedAttributeType> SgGraphNode*
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::beginnode;
-*/
-/*
-template <class InheritedAttributeType, class SynthesizedAttributeType> std::vector<SgDirectedGraphEdge*>
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::currentSolving;
-*/
-/*
-template <class InheritedAttributeType, class SynthesizedAttributeType> std::set<SgGraphNode*>*
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::traversed;
-template <class InheritedAttributeType, class SynthesizedAttributeType> std::set<SgGraphNode*>*
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::traversedlocal;
-*/
-
-//template <class InheritedAttributeType, class SynthesizedAttributeType> InheritedAttributeType
-//SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::nullInherit;
-
-//template <class InheritedAttributeType, class SynthesizedAttributeType> InheritedAttributeType
-//SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::defaultInheritedValue;
-
-
-//template <class InheritedAttributeType, class SynthesizedAttributeType> SgIncidenceDirectedGraph* SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::graph;
-//template <class InheritedAttributeType, class SynthesizedAttributeType> SgGraphNode* SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::startNode;
-//template <class InheritedAttributeType, class SynthesizedAttributeType> StaticCFG::CFG SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::cfghold;
-
-//template <class InheritedAttributeType, class SynthesizedAttributeType> SgIncidenceDirectedGraph* SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::graph;
 
 
 template <class InheritedAttributeType, class SynthesizedAttributeType>
@@ -491,21 +378,7 @@ setNodeSuccessors(SgNode* node, SuccessorsContainer& succContainer)
 }
 
 
-template<class InheritedAttributeType, class SynthesizedAttributeType>
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-SgGraphTraversal()
-  : synthesizedAttributes(new SynthesizedAttributesList())
-{
-       // endnode = new SgGraphNode();
-       // beginnode = new SgGraphNode();
-        //traversedlocal = new std::set<SgGraphNode*>;
-        //graphnodeinheritedmap = new boost::unordered_map<SgGraphNode*, InheritedAttributeType*, boost::hash<SgGraphNode*>, compareSgGraphNode>;
-        //traversed = new std::set<SgGraphNode*>;
-        //traversedreverse = new std::set<SgGraphNode*>;
-        //synthesizedAttributes = new SynthesizedAttributesList();
-        //nullInherit = new InheritedAttributeType;
-        //defaultInheritedValue = new InheritedAttributeType;
-}
+
 
 // The default constructor of the internal tree traversal class
 template<class InheritedAttributeType, class SynthesizedAttributeType>
@@ -529,20 +402,6 @@ SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::
     synthesizedAttributes = NULL;
 }
 
-template<class InheritedAttributeType, class SynthesizedAttributeType>
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-~SgGraphTraversal()
-{
-        ROSE_ASSERT(synthesizedAttributes != NULL);
-        delete synthesizedAttributes;
-        synthesizedAttributes = NULL;
-        //delete graphnodeinheritedmap;
-        //delete traversed;
-        //delete traversedreverse;
-        //delete traversedlocal;
-        //delete beginnode;
-        //delete endnode;
-}
 
 #endif
 
@@ -604,72 +463,9 @@ traverseInputFiles(SgProject* projectNode,
           traverseWithinFile((*fl_iter), inheritedValue, travOrder);
         }
    }
-/*
-template<class InheritedAttributeType, class SynthesizedAttributeType>
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-SgGraphTraversal() 
-  : //useDefaultIndexBasedTraversal(true),
-    //traversalConstraint(false),
-    //fileToVisit(NULL),
-    synthesizedAttributes(new SynthesizedAttributesList())
-{
-}
-*/
-template<class InheritedAttributeType, class SynthesizedAttributeType>
-const SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType> &
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-operator=(const SgGraphTraversal &other)
-{
-    //useDefaultIndexBasedTraversal = other.useDefaultIndexBasedTraversal;
-    //traversalConstraint = other.traversalConstraint;
-    //fileToVisit = other.fileToVisit;
 
-    ROSE_ASSERT(synthesizedAttributes != NULL);
-    delete synthesizedAttributes;
-    synthesizedAttributes = other.synthesizedAttributes->deepCopy();
 
-    return *this;
-}
 
-/*
-#ifndef SWIG
-// The destructor of the internal tree traversal class
-template<class InheritedAttributeType, class SynthesizedAttributeType>
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-~SgGraphTraversal()
-{
-    ROSE_ASSERT(synthesizedAttributes != NULL);
-    delete synthesizedAttributes;
-    synthesizedAttributes = NULL;
-}
-#endif
-*/
-
-template<class InheritedAttributeType, class SynthesizedAttributeType>
-SynthesizedAttributeType
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-traverse(SgGraphNode* n, SgIncidenceDirectedGraph* g, SgIncidenceDirectedGraph* g2, InheritedAttributeType inheritedValue, InheritedAttributeType nullI, int graphTraversal, bool loop, SgGraphNode* endnode) {
-   //traversed->clear();
-   //traversedlocal->clear();
-   //end = false;
-   //traversed2.clear();
-   synthesizedAttributes->resetStack();
-   ROSE_ASSERT(synthesizedAttributes->debugSize() == 0);   
-   graphnodeinheritedmap[n] = inheritedValue;
-   nullInherit = nullI; 
-   //SgIncidenceDirectedGraph* g2 = new SgIncidenceDirectedGraph();
-   performTraversal(n, g, g2, inheritedValue, graphTraversal, false, endnode, true);
-   return traversalResult();
-}
-
-template <class InheritedAttributeType, class SynthesizedAttributeType>
-SynthesizedAttributeType
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-defaultSynthesizedAttribute(InheritedAttributeType inh)
-{
-    SynthesizedAttributeType s = SynthesizedAttributeType();
-    return s;
-}
 
                 
 //////////////////////////////////////////////////////
@@ -924,232 +720,8 @@ traverse(SgNode *node, InheritedAttributeType inheritedValue,
     // get the result off the stack
     return traversalResult();
 }
-/*
-template<class InheritedAttributeType, class SynthesizedAttributeType>
-void
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-eraseEdges(SgGraphNode* encpy, SgIncidenceDirectedGraph* g) {
-    std::set<SgDirectedGraphEdge*> inedges = g->computeEdgeSetIn(encpy);
-    std::set<SgDirectedGraphEdge*> outedges = g->computeEdgeSetOut(encpy);
-    for (std::set<SgDirectedGraphEdge*>::iterator i = inedges.begin(); i != inedges.end(); i++) {
-        delete *i;
-    }
-    for (std::set<SgDirectedGraphEdge*>::iterator j = outedges.begin(); j != outedges.end(); j++) {
-        delete *j;
-    }
-    return;
-}
-*/
-//int c = 0;
-template<class InheritedAttributeType, class SynthesizedAttributeType>
-void
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-constructSubTree(SgGraphNode* endnode, SgGraphNode* startnode, SgGraphNode* encpy, std::set<SgGraphNode*> lst, SgIncidenceDirectedGraph* g, SgIncidenceDirectedGraph* g2, SgDirectedGraphEdge* edge) {
-    /* We have a check here to determine if we've reached the start.
-       We also want to make sure that the start has an inheritedAttribute,
-       which should always be the case
-    */
-    if (endnode == startnode) {
-        ROSE_ASSERT(graphnodeinheritedmap.find(startnode) != graphnodeinheritedmap.end());
-        graphnodeinheritedmap[encpy] = graphnodeinheritedmap[startnode];
-       
-        return;
-    }
-    // We compute the inedges to find the parents of our current endnode
-    std::set<SgDirectedGraphEdge*> inedges = g->computeEdgeSetIn(endnode);
-    std::set<SgDirectedGraphEdge*> erased;
-    lst.insert(endnode);
-    std::set<SgGraphNode*> nodes;
-    for (std::set<SgDirectedGraphEdge*>::iterator j = inedges.begin(); j != inedges.end(); j++) {
-        //This if checks both whether we have a duplicate node in a path AND whether or not
-        // we have already traversed an edge with the same source and target, we assume 
-        // that this is always skippable.
-        if (lst.find((*j)->get_from()) != lst.end() || nodes.find((*j)->get_from()) != nodes.end()) {
-             erased.insert(*j);
-        }
-        nodes.insert((*j)->get_from());   
-    }
-   nodes.clear();
-   //removing the bad edges from the calculation
-   for (std::set<SgDirectedGraphEdge*>::iterator j = erased.begin(); j != erased.end(); j++) {
-             inedges.erase(*j);   
-    }
-    erased.clear();
-    //a check against nodes that cannot get back to the start, thus eventually have no good edges and can be ignored
-    if (inedges.size() == 0) {
-        if (graphnodeinheritedmap.find(encpy) == graphnodeinheritedmap.end()) {
-            graphnodeinheritedmap[encpy] = nullInherit;
-       
-        }
-        lst.erase(endnode);
-        return;
-    }
-    else {
-        /* Here we build the tree graph. The idea here is to follow the inedges, and attach them as children to the current endnode
-           thus eventually constructing a tree from the endnode to the startnode. This of course can allow a node to show up twice
-           in the tree, and in the worst case scenario the size of the tree can be quite large. But in most cases with low average
-           inedges, which a priori seems to be a reasonable assumption in the CFG case. We build the tree with dummy nodes, as we need
-           to have the same node appear more than once in many cases.
-        */        
-        for (std::set<SgDirectedGraphEdge*>::iterator i = inedges.begin(); i != inedges.end(); i++) {
-           // if (erased.find(*i) == erased.end()) {
-                SgGraphNode* n = (*i)->get_from();          
-                SgGraphNode* ncpy = new SgGraphNode();
-                g2->addDirectedEdge(encpy, ncpy);
-                //lst.insert(n);
-                //c += 1;
-                //std::cout << "cons has been called " << c << " times" << std::endl;
-                //Recurse on a parent of the current endnode to run up towards the startnode
-                constructSubTree(n, startnode, ncpy, lst, g, g2, *i);
-                
-                lst.erase(n);
-            //}
-        }
-        inedges.clear();
-        calcInherited(encpy, endnode, g2, lst);
-        lst.erase(endnode);
-        return; 
-    }
-}
 
-template<class InheritedAttributeType, class SynthesizedAttributeType>
-void
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-calcInherited(SgGraphNode* encpy, SgGraphNode* endnode, SgIncidenceDirectedGraph* g2, std::set<SgGraphNode*> lst) {
-    /* This function should be relatively straightforward, all it does is collect the inheritedAttributes
-       that correspond to the parents, or with respect to the tree graph, its children (since the tree starts
-       at the last node). Then it calls evaluateInheritedAttribute, a user defined function
-    */
-    std::set<SgDirectedGraphEdge*> outedges = g2->computeEdgeSetOut(encpy);
-    std::vector<InheritedAttributeType> outedgesinh;
-    for (std::set<SgDirectedGraphEdge*>::iterator i = outedges.begin(); i != outedges.end(); i++) {
-        ROSE_ASSERT(graphnodeinheritedmap.find((*i)->get_to()) != graphnodeinheritedmap.end());
-        outedgesinh.push_back(graphnodeinheritedmap[(*i)->get_to()]);
-     //   graphnodeinheritedmap.erase((*i)->get_to());
-     //   delete((*i)->get_to());
-     //   delete(*i);
-    }
-    InheritedAttributeType inh = evaluateInheritedAttribute(endnode, outedgesinh);
-    graphnodeinheritedmap[encpy] = inh;
-    graphnodeinheritedmap[endnode] = inh;
-    return;
-}
 
-template<class InheritedAttributeType, class SynthesizedAttributeType>
-void
-SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-performTraversal(SgGraphNode* node, SgIncidenceDirectedGraph* g, SgIncidenceDirectedGraph* g2, InheritedAttributeType inheritedValue, int graphTraversal, bool loop, SgGraphNode* endnode, bool first)
-   {
-     /* The block contained in this if statement is the major change from the tree algorithm.
-        Since we start from the endnode in our construction of the tree graph, we can't use
-        the main recursion to calculate synthesized attributes. That recursion may be removed
-        as it is not clear that it is doing anything useful.
-     */
-     //if (first == true) {
-         std::set<SgGraphNode*> lst;
-         SgGraphNode* encpy = new SgGraphNode();
-         ROSE_ASSERT(graphnodeinheritedmap.find(node) != graphnodeinheritedmap.end());
-         constructSubTree(endnode, node, encpy, lst, g, g2, NULL);
-         ROSE_ASSERT(graphnodeinheritedmap.find(encpy) != graphnodeinheritedmap.end());
-         graphnodeinheritedmap[endnode] = graphnodeinheritedmap[encpy];
-         //graphnodeinheritedmap.erase(encpy);
-         //delete encpy;
-         return;
-    }
-     //}
-     /*
-     if (end == false) {
-     ROSE_ASSERT(g != NULL);
-     ROSE_ASSERT(isSgIncidenceDirectedGraph(g));
-     ROSE_ASSERT(isSgGraphNode(node));
-     if (node != NULL) {
-     //cout << "node is a: " << node->class_name() << endl;
-
-     
-
-     std::set<SgDirectedGraphEdge*>::iterator i;
-     std::set<SgDirectedGraphEdge*>::iterator j;
-        
-
-    std::set<SgDirectedGraphEdge*> edgeset = g->computeEdgeSetOut(node);
-    std::set<SgGraphNode*> successorset;
-
-    for (std::set<SgDirectedGraphEdge*>::iterator i = edgeset.begin(); i != edgeset.end(); i++) {
-        if (std::find(currentSolving.begin(), currentSolving.end(), *i) != currentSolving.end()) {                              
-            successorset.insert((*i)->get_to());
-        }
-        //else {
-        //    InheritedAttributeType inheritedValue = combineAttributes(*i, g, 0);
-            
-        //std::cout << "node already traversed" << std::endl;
-        //}
-     }
-     
-     //cout << "successors:" << successorset.size() << endl;
-     //cout << "starting tree descension" << endl;        
- 
-     for (std::set<SgGraphNode*>::iterator it = successorset.begin(); it != successorset.end(); it++) {
-        SgGraphNode *child = NULL;
-        child = (*it);
-        if (child != NULL) {
-        //      cout << "Child is not null" << endl;
-         
-              //if (traversed->find(child) == traversed->end()) {& traversed2.find(child) == traversed2.end() 
-                  //std::cout << "performing traversal" << std::endl;
-                  if (end == false) {
-                  performTraversal(child, g, g2, inheritedValue, graphTraversal, false, endnode, false);
-                  }
-                  
-//                   if (traversedlocal.find(node) == traversedlocal.end()) {
-//                      trav
-         }
-//                   }
-//            else {
- //               traversedlocal.insert(child);
-//            }
-              
-         else {
-           
-           if (graphTraversal == BOTH || graphTraversal == SYNTHESIZED) {
-                synthesizedAttributes->push(defaultSynthesizedAttribute(inheritedValue));
-           }
-         }
-         if (child == endnode) {
-             end = true;
-         }
-         }
-     //cout << "completed descension" << endl;
-     //cout << "completed descension" << endl;
-     size_t numberOfSuccessors = successorset.size();
-     //delete successorset;
-     //cout << "numberOfSuccessors:" << numberOfSuccessors << endl;
-     if (graphTraversal == SYNTHESIZED || graphTraversal == BOTH) {
-       //cout << "in postorder if" << endl;
-       // Now that every child's synthesized attributes are on the stack:
-       // Tell the stack how big the stack frame containing those
-       // attributes is to be, and pass that frame to
-       // evaluateSynthesizedAttribute(); then replace those results by
-       // pushing the computed value onto the stack (which pops off the
-       // previous stack frame).
-       synthesizedAttributes->setFrameSize(numberOfSuccessors);
-       ROSE_ASSERT(synthesizedAttributes->size() == numberOfSuccessors);
-       //cout << "right before synth" << endl;
-       synthesizedAttributes->push(evaluateSynthesizedAttribute(node, inheritedValue, *synthesizedAttributes));
-       }
-     }
-     else {
-          return;
-     }
-     }
-     else {
-     return;
-     }
-}
-    
-//     else {
-//          return;
-//     }
-*/
 
 template<class InheritedAttributeType, class SynthesizedAttributeType>
 void
@@ -1273,26 +845,6 @@ traversalResult()
     }
 }
 
-template <class InheritedAttributeType, class SynthesizedAttributeType>
-SynthesizedAttributeType SgGraphTraversal<InheritedAttributeType, SynthesizedAttributeType>::
-traversalResult()
-{
-    // If the stack of synthesizedAttributes contains exactly one object, then
-    // that one is the valid final result of the computation, so we should
-    // return it. Otherwise, either there are no objects on the stack (because
-    // the traversal didn't use any attributes), or there are more than one
-    // (usually because the traversal exited prematurely by throwing an
-    // exception); in this case, just return a default attribute.
-    if (synthesizedAttributes->debugSize() == 1)
-    {
-        return synthesizedAttributes->pop();
-    }
-    else
-    {
-        static SynthesizedAttributeType sa;
-        return sa;
-    }
-}
 
 // GB (05/30/2007)
 template <class InheritedAttributeType, class SynthesizedAttributeType>
