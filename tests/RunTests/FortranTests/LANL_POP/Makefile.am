@@ -29,20 +29,22 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-if !ROSE_USING_GFORTRAN_VERSION_4_0
-
 # To see commands as they execute, set this to "-x"
 #SETX=-x
 SETX=
 
-
+# Note that these have been modified from their respective distributions by someone prior to me.  It looks like
+# build systems have been adjusted to not generate documentation, and who know what else. Unfortunately, those
+# changes were never registered with our revision control system, so it might be hard to upgrade. [RPM 2011-05-18]
 netcdf_srcdir=$(srcdir)/netcdf-4.1.1
+pop_srcdir=$(srcdir)/pop-distro
+
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+if !ROSE_USING_GFORTRAN_VERSION_4_0
+
 netcdf_blddir=$(abspath netcdf-4.1.1)
 netcdf_prefix=$(netcdf_blddir)/installed
 netcdf_lib=$(netcdf_prefix)/lib/libnetcdf.a
-
-pop_srcdir=$(srcdir)/pop-distro
 
 translator = $(top_builddir)/tests/testTranslator
 translator_flags = -rose:verbose 0 -rose:skip_syntax_check -rose:skipfinalCompileStep
@@ -76,7 +78,9 @@ hudson-environment.sh:
 # Builds the NetCDF library required by POP. The library is configured according to the environment variables
 # in hudson-environment.sh, which will be created with default values if necessary.  It is currently not possible to
 # build NetCDF in a separate build directory when the source directory is read-only. Therefore, we copy the NetCDF
-# source directory and add write permission to all files.
+# source directory and add write permission to all files. [Update: It's also apparently not possible to have a build directory
+# that's separate from the source directory because doing so fails with certain source files not found by make on at least one
+# Hudson platform. RPM 2011-05-18]
 netcdf: $(netcdf_lib)
 $(netcdf_lib): hudson-environment.sh
 	@set -e $(SETX);						\
@@ -84,8 +88,8 @@ $(netcdf_lib): hudson-environment.sh
 	source hudson-environment.sh;					\
 	cp -pdR $(netcdf_srcdir) $(netcdf_blddir);			\
 	chmod -R u+w $(netcdf_blddir);					\
-	mkdir -p $(netcdf_blddir)/_build && cd $(netcdf_blddir)/_build;	\
-        ../configure --prefix=$(netcdf_prefix) --disable-netcdf-4	\
+	cd $(netcdf_blddir);						\
+        ./configure --prefix=$(netcdf_prefix) --disable-netcdf-4	\
 		FC=$$HUDSON_FC CC=$$HUDSON_CC CXX=$$HUDSON_CXX;		\
 	$$HUDSON_MAKE -j1 all;						\
 	: $$HUDSON_MAKE -j1 check;					\
@@ -263,9 +267,13 @@ compare_answers: pristine.ans modified.ans
 	diff -u $^
 	@echo "  PASSED  LANL POP tests"
 
+check-local: compare_answers
+
+endif
+endif
 
 ###############################################################################################################################
-#					automake rules
+#					automake rules for all configs
 ###############################################################################################################################
 
 # Note: netcdf-4.1.1 and pop-distro are directories whose content is not part of ROSE, but which have been downloaded
@@ -280,8 +288,6 @@ EXTRA_DIST = hudson.gnu make_rmod_deps.pl setup_run_dir.ROSE
 dist-hook:
 	cp -pdRv $(netcdf_srcdir) $(pop_srcdir) $(distdir)
 
-check-local: compare_answers
-
 clean-local:
 	rm -rf $(netcdf_blddir)
 	rm -f  hudson-environment.sh hudson.gnu
@@ -293,5 +299,3 @@ clean-local:
 	rm -f  $(patsubst %.rmod,%_postprocessed.f90,$(notdir $(pop_modified_sources)))
 	rm -f  rose_netcdf.f90 rose_typeSizes.f90
 
-endif
-endif

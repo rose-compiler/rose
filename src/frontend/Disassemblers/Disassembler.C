@@ -278,7 +278,10 @@ void
 Disassembler::disassembleInterpretation(SgAsmInterpretation *interp)
 {
     /* Create a new disassembler so we can modify its behavior locally. */
-    Disassembler *disassembler = Disassembler::lookup(interp)->clone();
+    Disassembler *disassembler = Disassembler::lookup(interp);
+    assert(disassembler);
+    disassembler = disassembler->clone();
+    assert(disassembler);
 
     /* Search methods specified with "-rose:disassembler_search" are stored in the SgFile object. Use them rather than the
      * defaults built into the Disassembler class. */
@@ -442,6 +445,7 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
                     break;
                 }
             }
+            assert(insn!=NULL);
             next_va = va + insn->get_raw_bytes().size();
             insns.insert(std::make_pair(va, insn));
 
@@ -815,7 +819,10 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
     if (!map) {
         if (p_debug)
             fprintf(p_debug, "Disassembler: no memory map; remapping all sections\n");
-        BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
+        BinaryLoader *loader = BinaryLoader::lookup(interp);
+        assert(loader);
+        loader = loader->clone();
+        assert(loader);
         loader->set_perform_dynamic_linking(false);
         loader->set_perform_remap(true);
         loader->set_perform_relocations(false);

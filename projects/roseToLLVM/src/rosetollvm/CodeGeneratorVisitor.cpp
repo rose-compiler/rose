@@ -3265,6 +3265,9 @@ void CodeGeneratorVisitor::postOrderVisit(SgNode *node) {
      else if (dynamic_cast<SgNullExpression *>(node)) {
          SgNullExpression *n = isSgNullExpression(node);
      }
+     else if (dynamic_cast<SgNullStatement *>(node)) {
+         SgNullStatement *n = isSgNullStatement(node);
+     }
      //             SgVariantExpression
      //             SgSubscriptExpression
      //             SgColonShapeExp
