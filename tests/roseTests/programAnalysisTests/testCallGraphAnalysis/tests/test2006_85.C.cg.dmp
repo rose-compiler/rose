@@ -1,5 +1,5 @@
 A::A ->
 A::A ->
-main ->
-A::~A ->
 A::operator bool ->
+A::~A ->
+main -> A::A

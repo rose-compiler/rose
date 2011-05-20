@@ -1,3 +1,3 @@
-foo -> X::operator+ X::operator->
 X::operator+ ->
 X::operator-> ->
+foo -> X::operator+ X::operator->

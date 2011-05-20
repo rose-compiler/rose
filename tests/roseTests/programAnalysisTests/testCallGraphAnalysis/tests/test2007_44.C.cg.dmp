@@ -1,2 +1,2 @@
-f -> A::operator int &
 A::operator int & ->
+f -> A::operator int &
