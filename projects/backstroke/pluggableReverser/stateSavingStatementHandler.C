@@ -12,6 +12,16 @@
 using namespace SageBuilder;
 using namespace std;
 
+//KNOWN BUGS
+//-If a modified variable is a pointer, we only dereference it once. Modifications made through a pointer-to-pointer are not
+//	saved correctly.
+//
+//PERFORMANCE HITS
+//-For polymorphic classes, instead of if-then-else, instrument the classes with an extra static int and use a switch
+//-Don't just call exit() if we encounter a class we can't save. We could be down an incorrect computation path
+
+
+
 vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefsAtNode(SgNode* node)
 {
 	const IVariableFilter* filter = getVariableFilter();
