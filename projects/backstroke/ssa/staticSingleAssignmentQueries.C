@@ -479,9 +479,10 @@ bool StaticSingleAssignment::isPrefixOfName(VarName name, VarName prefix)
 	return true;
 }
 
+const static StaticSingleAssignment::NodeReachingDefTable emptyTable;
+
 const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getReachingDefsAtNode(SgNode* node) const
 {
-	const static NodeReachingDefTable emptyTable;
 	GlobalReachingDefTable::const_iterator reachingDefsIter = reachingDefsTable.find(node);
 	if (reachingDefsIter == reachingDefsTable.end())
 	{
@@ -495,7 +496,6 @@ const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getR
 
 const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getUsesAtNode(SgNode* node) const
 {
-	const static NodeReachingDefTable emptyTable;
 	UseTable::const_iterator usesIter = useTable.find(node);
 	if (usesIter == useTable.end())
 	{
@@ -504,6 +504,19 @@ const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getU
 	else
 	{
 		return usesIter->second;
+	}
+}
+
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getDefsAtNode(SgNode* node) const
+{
+	boost::unordered_map<SgNode*, NodeReachingDefTable>::const_iterator defsIter = ssaLocalDefTable.find(node);
+	if (defsIter == ssaLocalDefTable.end())
+	{
+		return emptyTable;
+	}
+	else
+	{
+		return defsIter->second;
 	}
 }
 
