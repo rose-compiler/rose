@@ -1221,6 +1221,23 @@ if test "x$enable_opencl" = "xyes"; then
 fi
 AC_SUBST(ROSE_USE_OPENCL_SUPPORT)
 
+# *******************************************************
+# Option to control building of OpenCL support in EDG 4.0
+# *******************************************************
+
+# TV (05/06/2011): This is part of optional building of OpenCL support in EDG 4.0
+AC_MSG_CHECKING([for building of OpenCL support in EDG 4.0])
+AC_ARG_ENABLE(edg_opencl, AS_HELP_STRING([--enable-edg-opencl], [Build EDG 4.0 with OpenCL support.]), [case "${enableval}" in
+  yes) edg_opencl=true ;;
+  no)  edg_opencl=false ;;
+  *)   edg_opencl=false ;;
+esac])
+AM_CONDITIONAL(ROSE_BUILD_EDG_WITH_OPENCL_SUPPORT, [test x$edg_opencl = xtrue])
+if test x$edg_opencl = xtrue; then
+  AC_MSG_WARN([Add OpenCL specific headers to the include-staging directory.])
+  GENERATE_OPENCL_SPECIFIC_HEADERS
+fi
+
 # *********************************************************************
 # Option to control internal support of PPL (Parma Polyhedron Library)
 # *********************************************************************
@@ -1909,6 +1926,13 @@ AC_CHECK_LIB(gcrypt,gcry_check_version)
 # the ROSE library.
 AC_CHECK_HEADERS(pthread.h)
 
+# Check for the __thread keyword.  This type qualifier creates objects that are thread local.
+AC_MSG_CHECKING([for thread local storage type qualifier])
+AC_COMPILE_IFELSE([struct S {int a, b;}; static __thread struct S x;],
+	[AC_DEFINE(ROSE_THREAD_LOCAL_STORAGE, __thread, [Define to __thread keyword for thread local storage.])
+	 AC_MSG_RESULT([__thread])],
+	[AC_MSG_RESULT([not supported])])
+
 # These headers and types are needed by projects/simulator [matzke 2009-07-02]
 AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
 AC_CHECK_HEADERS([sys/types.h sys/mman.h sys/stat.h sys/uio.h sys/wait.h sys/utsname.h sys/ioctl.h sys/sysinfo.h sys/socket.h])
@@ -2362,6 +2386,7 @@ tests/CompileTests/MicrosoftWindows_tests/Makefile
 tests/CompileTests/nameQualificationAndTypeElaboration_tests/Makefile
 tests/CompileTests/NewEDGInterface_C_tests/Makefile
 tests/CompileTests/CudaTests/Makefile
+tests/CompileTests/OpenClTests/Makefile
 tests/CompileTests/EDG_4_x/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
