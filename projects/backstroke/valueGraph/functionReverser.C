@@ -1,5 +1,5 @@
 #include "valueGraph.h"
-#include "eventReverser.h"
+#include "functionReverser.h"
 #include <normalizations/expNormalization.h>
 #include <utilities/utilities.h>
 
