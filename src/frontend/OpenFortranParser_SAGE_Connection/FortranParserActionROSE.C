@@ -7684,7 +7684,6 @@ void c_action_data_ref(int numPartRef)
           ROSE_ASSERT(tempSymbol != NULL);
        // printf ("hasSelectionSubscriptList = %s tempSymbol = %p = %s \n",hasSelectionSubscriptList ? "true" : "false",tempSymbol,tempSymbol->class_name().c_str());
 
-
           bool hasImageSelector = qualifiedNameList[lastElement - i].hasImageSelector;
           bool hasCo_deref = qualifiedNameList[lastElement - i].hasCo_deref;  // DXN (04/22/2011) for co-derefence of copointer
           SgCAFCoExpression* coExpr = NULL;
@@ -19362,7 +19361,6 @@ void c_action_rice_image_selector(Token_t *team_id)
  */
 void c_action_rice_co_dereference_op(Token_t *leftBracket, Token_t *rightBracket)
    {
-    //raise(SIGINT);
      MultipartReferenceType& mprt = astMultipartReferenceStack.front();
      mprt.hasCo_deref = true;
    }
