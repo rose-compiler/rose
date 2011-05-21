@@ -1,0 +1,54 @@
+program test
+
+   type mytype 
+     integer :: i
+     integer :: A(10)
+   end type mytype
+
+   type (mytype),allocatable:: X[*]
+
+   integer :: ST(10)
+
+   integer :: i
+   integer :: rank
+   integer :: size
+   integer :: partner_0 
+   integer :: error_n
+
+   allocate(X[])
+
+   rank = team_rank()
+   size = team_size()
+
+   partner_0 = size - 1
+
+   call team_barrier()
+
+   do i=1,10 
+       ST(i) = size * 10 + i
+       error_n =  0
+       X%A(i) = (rank+1)*10 + i
+   end do
+
+   call team_barrier()
+
+   if (rank .eq. 0) then 
+       X%A(1:10) = X[partner_0]%A(1:10)
+   end if 
+
+   call team_barrier()
+   if (rank .eq. 0) then 
+      do i = 1, 10
+         if (X%A(i) .ne. ST(i)) then 
+             write(*, '(A)') "derived type test5 failed."
+             error_n = error_n +1
+         end if 
+      end do
+      
+      if (error_n .eq. 0) then
+          write(*, '(A)') "derived type test5 OK."
+      end if
+  end if 
+
+
+end 

@@ -1,0 +1,77 @@
+program test21
+    integer,allocatable::A(:)[*]
+    interface 
+      subroutine foo(A)
+         integer :: A(:)[*]
+      end subroutine foo
+    end interface 
+
+    integer :: size,rank,partner, rankd
+
+    size = team_size(team_world)
+    rank = team_rank(team_world)
+    rankd = team_rank()
+
+    partner = size-rank - 1
+
+    allocate(A(4)[])
+
+    A(1) = rank
+
+    call team_barrier()
+
+    if (rank .eq. (size-1)) then 
+       A(1)[0] =A(1)
+    end if 
+
+    call team_barrier()
+
+    if (rank .eq. 0) then
+       if (A(1) .eq. partner) then 
+          write(*, '(A)') "test21 OK: step 1 of 3"
+       else
+          print *, "test21 failed: in caller,A(1) should be ",partner, " but we have A(1)= ", A(1)
+       endif 
+    end if 
+
+    call team_barrier()
+
+    call foo(A(:))
+
+    call team_barrier()
+
+    if (rank .eq. 0) then
+      if (A(1) .eq. 1) then 
+         write(*, '(A)') "test21 OK: step 3 of 3"
+       else 
+         print *, "test21 failed: in caller, A(1) should be value reseted in the callee (0) instead of ",A(1)
+     end if
+    end if 
+    call team_barrier()
+end
+
+
+subroutine foo(A)
+    integer A(:)[*]
+    integer rank
+
+    rank = team_rank()
+    A(1) = rank
+
+    call team_barrier()
+
+    if (rank .eq. 1) then
+      A(1)[0] =  A(1)
+    end  if
+
+    call team_barrier()
+
+    if (rank .eq. 0)  then 
+      if (A(1) .eq. 1) then 
+         write(*, '(A)') "test21 OK: step 2 of 3"
+      else 
+        write(*, '(A)') "test21 failed: callee reset A(1)[0] = 0"
+      end if 
+    end if
+
+end

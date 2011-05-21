@@ -1,0 +1,6 @@
+! copointer to 1-dim coarray
+program prog4_2_2
+ integer, copointer, dimension(:) :: cp[*]
+ cp[](1)[2] = 99  
+end program
+

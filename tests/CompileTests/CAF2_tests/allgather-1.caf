@@ -1,0 +1,32 @@
+program allgathertest
+
+   integer  :: npe, mypid, i
+   integer(8), allocatable, dimension(:) :: outbuf[*]
+   integer(8) :: mydata
+
+   logical :: success
+
+   npe = team_size()
+   mypid = team_rank()
+
+   allocate(outbuf(0:npe-1)[])
+   mydata = mypid
+
+   call team_barrier()
+
+   call CAF_COLLECTIVES_ALLGATHER(TEAM_WORLD, mydata, 8_8, outbuf)
+
+   success = .true.
+   do i = 0, npe - 1
+      success = success .and. outbuf(i) .eq. i
+   end do
+
+   if (.not. success) then
+      print *, "test failed for image ", mypid, "output: ", outbuf
+   end if
+
+   if (success .and. 0 .eq. mypid) then
+      write(*, '(A)') "Test passed"
+   endif
+   
+end program allgathertest

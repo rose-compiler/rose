@@ -1,0 +1,75 @@
+program assumed_size_coarray_test_2
+    integer,allocatable::A(:)[*]
+    interface 
+      subroutine foo(A)
+         integer:: A(*)[*]
+      END Subroutine foo
+     end interface 
+
+    integer:: size,rank,partner
+
+    size = team_size()
+    rank = team_rank()
+
+    partner = size-rank - 1
+
+    allocate(A(4)[])
+
+    A(1) = rank
+
+    call team_barrier()
+
+    if (rank .eq. (size-1)) then
+        A(1)[0@team_world] =A(1)
+    end if 
+
+    call team_barrier()
+
+    if (rank .eq. 0) then
+        if (A(1) .eq. partner) then 
+           write(*, '(A)') "Assumed_size_coarray_test_2 : step 1 of 3, in caller, assgin value locally"
+        else
+           print *, "Assumed_size_coarray_test_2 failed: in caller,A(1) should be ",partner, " but we have A(1)= ", A(1)
+        endif 
+    end if 
+
+    call team_barrier()
+
+    call foo(A(:))
+
+    call team_barrier()
+
+    if (rank .eq. 0) then
+      if (A(1) .eq. 1) then 
+         write(*, '(A)') "Assumed_size_coarray_test_2 : step 3 of 3, back to the caller, check the remote write."
+       else 
+         print *, "Assumed_size_coarray_test_2 failed: in caller, A(1) should be value reseted in the callee (0) instead of ",A(1)
+     end if
+    end if 
+    call team_barrier()
+end
+
+
+subroutine foo(A)
+    integer A(*)[*]
+    integer rank
+
+    rank = team_rank(team_world)
+    A(1) = rank
+
+    call team_barrier()
+    if (rank .eq. 1) then
+      A(1)[0] =  A(1)
+    end  if
+
+    call team_barrier()
+
+    if (rank .eq. 0)  then 
+      if (A(1) .eq. 1) then 
+         write(*, '(A)') "Assumed_size_coarray_test_2 : step 2 of 3, remote write in callee"
+      else 
+        print *,"Assumed_size_coarray_test_2 failed: callee reset A(1)[0] = 0"
+      end if 
+    end if
+
+end
