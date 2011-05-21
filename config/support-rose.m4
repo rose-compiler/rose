@@ -2347,6 +2347,7 @@ tests/CompileTests/Fortran_tests/LANL_POP/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
+tests/CompileTests/CAF2_tests/Makefile
 tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
@@ -2473,9 +2474,6 @@ binaries/samples/Makefile
 
 # DQ (8/12/2010): We want to get permission to distribute these files as test codes.
 # tests/CompileTests/Fortran_tests/LANL_POP/Makefile
-
-# DQ (8/4/2010): Removed this directory
-# tests/CompileTests/CAF_tests/Makefile
 
 # DQ (10/24/2009): We don't need to support EDG 3.10 anymore.
 # src/frontend/CxxFrontend/EDG_3.10/Makefile
