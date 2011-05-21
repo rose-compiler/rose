@@ -1,0 +1,5 @@
+program derived
+
+ a[4@team]%field = 2
+ b = a(1)[4]%field
+end program
