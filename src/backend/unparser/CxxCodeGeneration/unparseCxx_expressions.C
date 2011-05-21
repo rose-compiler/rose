@@ -2412,7 +2412,7 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
 
   // DQ (6/15/2005): reinterpret_cast always needs parens
      if (addParens == true)
-          curprint ( "/* part of cast */ (");
+          curprint ( " (");
      unparseExpression(cast_op->get_operand(), info); 
 
      if (addParens == true)
