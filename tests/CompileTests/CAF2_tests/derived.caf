@@ -1,5 +1,14 @@
 program derived
 
- a[4@team]%field = 2
- b = a(1)[4]%field
+  type :: D
+    integer :: c
+  end type
+  
+  type(D) :: a[*]
+  integer k
+  team t
+  
+  a[4@t]%c = 0
+  k = a[4]%c
+  
 end program
