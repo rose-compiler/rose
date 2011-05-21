@@ -353,6 +353,10 @@ public:
 	/** Returns a list of all the variables used at this node. Note that uses don't propagate past an SgStatement.
 	  * Each use is mapped to the reaching definition to which the use corresponds. */
 	const NodeReachingDefTable& getUsesAtNode(SgNode* node) const;
+	
+	/** Returns a list of all the variables defined at the given node. Note that this will return an empty
+	 * collections for nodes that do not modify any variables. Compare this function to getReachingDefsAtNode. */
+	const NodeReachingDefTable& getDefsAtNode(SgNode* node) const;
 
 	/** Returns a set of all the variables names that have uses in the subtree. */
 	std::set<VarName> getVarsUsedInSubtree(SgNode* root) const;

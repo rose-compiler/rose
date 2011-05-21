@@ -232,7 +232,7 @@ SgVarRefExp* EventProcessor::getStackVar(SgType* type)
 		type_name = "boost::any";
 	}
 
-	string stack_name = event_->get_name() + "_" + stackIdentifier + "_stack";
+	string stack_name = event_->get_mangled_name().getString() + "_" + stackIdentifier + "_stack";
 	if (stack_decls_.count(stack_name) == 0)
 	{
 		SgClassDeclaration* stackTypeDeclaration = SageBuilder::buildStructDeclaration("std::deque<" + type_name + ">");
