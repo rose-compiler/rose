@@ -31,7 +31,6 @@ TESTCODES_REQUIRED_TO_PASS = \
     caf.caf \
     cmdline-1.caf \
     cmdline-2.caf \
-    co_access.caf \
     coarray-3.caf \
     coarray-4.caf \
     coarray-6.caf \
@@ -67,8 +66,6 @@ TESTCODES_REQUIRED_TO_PASS = \
     event.caf \
     explicit-shape-1.caf \
     func-decl-1.caf \
-    func-decl-2.caf \
-    func-decl-3.caf \
     func-decl-4.caf \
     get-1.caf \
     get-2.caf \
