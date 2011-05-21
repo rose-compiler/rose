@@ -1,4 +1,3 @@
-//Author: Justin Frye <jafrye@tamu.edu>
 #pragma once
 #include "rose.h"
 #include "staticSingleAssignment.h"

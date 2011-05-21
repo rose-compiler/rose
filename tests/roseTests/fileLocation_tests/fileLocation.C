@@ -357,7 +357,7 @@ visitorTraversal::visit(SgNode* n)
 
                FileNameLocation fileTypeClassification = classification.getLocation();
                FileNameLibrary  libraryClassification  = classification.getLibrary();
-               int pathEditDistance = classification.getDistanceFromSourceDirectory();
+               //int pathEditDistance = classification.getDistanceFromSourceDirectory();
 
 #if 1
 	       if (fileTypeClassification == FILENAME_LOCATION_UNKNOWN)

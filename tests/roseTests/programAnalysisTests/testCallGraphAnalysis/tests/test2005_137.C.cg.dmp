@@ -1,4 +1,4 @@
-main -> foo < A >  foo < int > 
-foo < A >  -> A::increment
 A::increment ->
+foo < A >  -> A::increment
 foo < int >  ->
+main -> foo < A >  foo < int > 

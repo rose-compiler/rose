@@ -200,6 +200,9 @@ void getAndReplaceModifyingExpression(SgExpression*& e)
 
 SgExpression* propagateCommaOpExp(SgExpression* exp)
 {
+    // The normalized result.
+    SgCommaOpExp* new_comma_op = NULL;
+
     if (SgBinaryOp* bin_op = isSgBinaryOp(exp))
     {
         // Ignore comma operator.
@@ -212,22 +215,45 @@ SgExpression* propagateCommaOpExp(SgExpression* exp)
         // (a, b) + c  ==>  (a, b + c)
         if (SgCommaOpExp* comma_op = isSgCommaOpExp(lhs))
         {
-            SgBinaryOp* new_exp = isSgBinaryOp(copyExpression(bin_op));
-            new_exp->set_lhs_operand(copyExpression(comma_op->get_rhs_operand()));
-            new_exp->set_rhs_operand(copyExpression(rhs));
+            // If this binary operation is a dot expression, and it is used to reference
+            // a member function, like (a, b).foo(c), we have to trace up to the function
+            // call expression. The lhs operand of the dot exp above is (a, b) and rhs is
+            // foo, but the whole expression is a function call. So we have to replace this
+            // function call by the comma exp.
+            if (SgDotExp* dot_exp = isSgDotExp(bin_op))
+            {
+                if (SgFunctionCallExp* func_call_exp =
+                        isSgFunctionCallExp(dot_exp->get_parent()))
+                {
+                    SgDotExp* new_dot_exp = isSgDotExp(copyExpression(dot_exp));
+                    new_dot_exp->set_lhs_operand(copyExpression(comma_op->get_rhs_operand()));
+                    new_dot_exp->set_rhs_operand(copyExpression(dot_exp->get_rhs_operand()));
 
-            SgCommaOpExp* new_comma_op = buildBinaryExpression<SgCommaOpExp>(
-                    copyExpression(comma_op->get_lhs_operand()), new_exp);
-            replaceExpression(bin_op, new_comma_op);
+                    SgFunctionCallExp* new_func_call =
+                            isSgFunctionCallExp(copyExpression(func_call_exp));
+                    new_func_call->set_function(new_dot_exp);
+                    new_func_call->set_args(
+                        isSgExprListExp(copyExpression(func_call_exp->get_args())));
 
-            propagateCommaOpAndConditionalExp(new_comma_op->get_lhs_operand());
-            propagateCommaOpAndConditionalExp(new_comma_op->get_rhs_operand());
+                    new_comma_op = buildBinaryExpression<SgCommaOpExp>(
+                            copyExpression(comma_op->get_lhs_operand()), new_func_call);
+                    replaceExpression(func_call_exp, new_comma_op);
+                }
+            }
+            else
+            {
+                SgBinaryOp* new_exp = isSgBinaryOp(copyExpression(bin_op));
+                new_exp->set_lhs_operand(copyExpression(comma_op->get_rhs_operand()));
+                new_exp->set_rhs_operand(copyExpression(rhs));
 
-            return new_comma_op;
+                new_comma_op = buildBinaryExpression<SgCommaOpExp>(
+                        copyExpression(comma_op->get_lhs_operand()), new_exp);
+                replaceExpression(bin_op, new_comma_op);
+            }
         }
 
         // Operator || and && cannot use the following transformation
-        if (!isSgAndOp(bin_op) && !isSgOrOp(bin_op))
+        else if (!isSgAndOp(bin_op) && !isSgOrOp(bin_op))
         {
             // a + (b, c)  ==>  (b, a + c)
             if (SgCommaOpExp* comma_op = isSgCommaOpExp(rhs))
@@ -236,19 +262,14 @@ SgExpression* propagateCommaOpExp(SgExpression* exp)
                 new_exp->set_lhs_operand(copyExpression(lhs));
                 new_exp->set_rhs_operand(copyExpression(comma_op->get_rhs_operand()));
 
-                SgCommaOpExp* new_comma_op = buildBinaryExpression<SgCommaOpExp>(
+                new_comma_op = buildBinaryExpression<SgCommaOpExp>(
                         copyExpression(comma_op->get_lhs_operand()), new_exp);
                 replaceExpression(bin_op, new_comma_op);
-
-                propagateCommaOpAndConditionalExp(new_comma_op->get_lhs_operand());
-                propagateCommaOpAndConditionalExp(new_comma_op->get_rhs_operand());
-
-                return new_comma_op;
             }
         }
     }
 
-    if (SgUnaryOp* unary_op = isSgUnaryOp(exp))
+    else if (SgUnaryOp* unary_op = isSgUnaryOp(exp))
     {
         SgExpression* operand = unary_op->get_operand();
 
@@ -258,18 +279,13 @@ SgExpression* propagateCommaOpExp(SgExpression* exp)
             SgUnaryOp* new_exp = isSgUnaryOp(copyExpression(unary_op));
             new_exp->set_operand(copyExpression(comma_op->get_rhs_operand()));
 
-            SgCommaOpExp* new_comma_op = buildBinaryExpression<SgCommaOpExp>(
+            new_comma_op = buildBinaryExpression<SgCommaOpExp>(
                     copyExpression(comma_op->get_lhs_operand()), new_exp);
             replaceExpression(unary_op, new_comma_op);
-
-            propagateCommaOpAndConditionalExp(new_comma_op->get_lhs_operand());
-            propagateCommaOpAndConditionalExp(new_comma_op->get_rhs_operand());
-
-            return new_comma_op;
         }
     }
 
-    if (SgConditionalExp* cond_exp = isSgConditionalExp(exp))
+    else if (SgConditionalExp* cond_exp = isSgConditionalExp(exp))
     {   
         SgExpression* cond = cond_exp->get_conditional_exp();
 
@@ -278,15 +294,17 @@ SgExpression* propagateCommaOpExp(SgExpression* exp)
         {
             SgConditionalExp* new_cond_exp = isSgConditionalExp(copyExpression(cond_exp));
             new_cond_exp->set_conditional_exp(copyExpression(comma_op->get_rhs_operand()));
-            SgCommaOpExp* new_comma_op = buildBinaryExpression<SgCommaOpExp>(
+            new_comma_op = buildBinaryExpression<SgCommaOpExp>(
                     copyExpression(comma_op->get_lhs_operand()), new_cond_exp);
             replaceExpression(cond_exp, new_comma_op);
-
-            propagateCommaOpAndConditionalExp(new_comma_op->get_lhs_operand());
-            propagateCommaOpAndConditionalExp(new_comma_op->get_rhs_operand());
-
-            return new_comma_op;
         }
+    }
+
+    if (new_comma_op)
+    {
+        propagateCommaOpAndConditionalExp(new_comma_op->get_lhs_operand());
+        propagateCommaOpAndConditionalExp(new_comma_op->get_rhs_operand());
+        return new_comma_op;
     }
     return exp;
 }

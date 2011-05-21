@@ -10,7 +10,6 @@
 #include <utilities/cppDefinesAndNamespaces.h>
 
 using namespace SageBuilder;
-using namespace SageInterface;
 using namespace std;
 
 vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefsAtNode(SgNode* node)
@@ -21,7 +20,7 @@ vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefsAtNode(
 	{
 		// Get the declaration of this variable to see if it's declared inside of the given statement.
 		// If so, we don't have to store this variable.
-		if (!isAncestor(node, var_name[0]->get_declaration()) && filter->isVariableInteresting(var_name))
+		if (!SageInterface::isAncestor(node, var_name[0]->get_declaration()) && filter->isVariableInteresting(var_name))
 			modified_vars.push_back(var_name);
 	}
 
@@ -64,48 +63,173 @@ bool StateSavingStatementHandler::checkStatement(SgStatement* stmt) const
 	return false;
 }
 
+bool isPureVirtualClass(SgType* type, const ClassHierarchyWrapper& classHierarchy)
+{
+    SgClassType* classType = isSgClassType(type);
+    if (classType == NULL)
+        return false;
+    
+    SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+    ROSE_ASSERT(classDeclaration != NULL);
+    
+    classDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
+    if (classDeclaration == NULL)
+    {
+        //There's no defining declaration. We really can't tell
+        return false;
+    }
+    SgClassDefinition* classDefinition = classDeclaration->get_definition();
+    set<SgMemberFunctionDeclaration*> classFunctions;
+        
+    //Find all superclasses
+    const ClassHierarchyWrapper::ClassDefSet& ancestors =  classHierarchy.getAncestorClasses(classDefinition);
+    set<SgClassDefinition*> inclusiveAncestors(ancestors.begin(), ancestors.end());
+    inclusiveAncestors.insert(classDefinition);
+    
+    //Find all virtual and concrete functions
+    set<SgMemberFunctionDeclaration*> concreteFunctions, pureVirtualFunctions;
+    foreach(SgClassDefinition* c, inclusiveAncestors)
+    {
+        foreach(SgDeclarationStatement* memberDeclaration, c->get_members())
+        {
+            if (SgMemberFunctionDeclaration* memberFunction = isSgMemberFunctionDeclaration(memberDeclaration))
+            {
+                if (memberFunction->get_functionModifier().isPureVirtual())
+                {
+                    pureVirtualFunctions.insert(memberFunction);
+                }
+                else
+                {
+                    concreteFunctions.insert(memberFunction);
+                }
+            }
+        }
+    }
+    
+    //Check if each virtual function is implemented somewhere
+    foreach (SgMemberFunctionDeclaration* virtualFunction, pureVirtualFunctions)
+    {
+        bool foundConcrete = false;
+        
+        foreach (SgMemberFunctionDeclaration* concreteFunction, concreteFunctions)
+        {
+            if (concreteFunction->get_name() != virtualFunction->get_name())
+                continue;
+            
+            if (concreteFunction->get_args().size() != virtualFunction->get_args().size())
+                continue;
+            
+            bool argsMatch = true;
+            for(size_t i = 0; i < concreteFunction->get_args().size(); i++)
+            {
+                if (concreteFunction->get_args()[i]->get_type() != virtualFunction->get_args()[i]->get_type())
+                {
+                    argsMatch = false;
+                    break;
+                }
+            }
+            
+            if (!argsMatch)
+                continue;
+            
+            foundConcrete = true;
+            break;
+        }
+        
+        //If there's a pure virtual function with no corresponding concrete function, the type is pure virtual
+        if (!foundConcrete)
+        {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
 StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& eval_result)
 {
-	SgBasicBlock* fwd_stmt = buildBasicBlock();
-    SgBasicBlock* rvs_stmt = buildBasicBlock();
+	SgBasicBlock* forwardBody = buildBasicBlock();
+    SgBasicBlock* reverseBody = buildBasicBlock();
+    SgBasicBlock* commitBody = SageBuilder::buildBasicBlock();
+    
+    ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
 
 	// If the following child result is empty, we don't have to reverse the target statement.
 	vector<EvaluationResult> child_result = eval_result.getChildResults();
 	if (!child_result.empty())
 	{
 		StatementReversal child_reversal = child_result[0].generateReverseStatement();
-		SageInterface::prependStatement(child_reversal.fwd_stmt, fwd_stmt);
-		SageInterface::appendStatement(child_reversal.rvs_stmt, rvs_stmt);
+		SageInterface::prependStatement(child_reversal.fwd_stmt, forwardBody);
+		SageInterface::appendStatement(child_reversal.rvs_stmt, reverseBody);
 	}
 	else
 	{
 		//In the forward code, include a copy of the original statement
-		SageInterface::prependStatement(copyStatement(stmt), fwd_stmt);
+		SageInterface::prependStatement(SageInterface::copyStatement(stmt), forwardBody);
 	}
 
 	//Now, in the forward code, push all variables on the stack. Pop them in the reverse code
 	vector<VariableRenaming::VarName> modified_vars = eval_result.getAttribute<vector<VariableRenaming::VarName> >();
 	foreach (const VariableRenaming::VarName& var_name, modified_vars)
 	{
+		//We will build a push expression and a pop expression.
+		SgExpression* valueToBePushedExpression = VariableRenaming::buildVariableReference(var_name);
+        SgExpression* assignedVarExpression = SageInterface::copyExpression(valueToBePushedExpression);
+		
 		SgType* varType = var_name.back()->get_type();
 		if (SageInterface::isPointerType(varType))
 		{
-			fprintf(stderr, "ERROR: Correctly saving pointer types not yet implemented (it's not hard)\n");
-			fprintf(stderr, "The pointer is saved an restored, rather than the value it points to!\n");
-			fprintf(stderr, "Variable %s\n", VariableRenaming::keyToString(var_name).c_str());
-			ROSE_ASSERT(false);
+			valueToBePushedExpression = SageBuilder::buildPointerDerefExp(valueToBePushedExpression);
+            assignedVarExpression = SageBuilder::buildPointerDerefExp(assignedVarExpression);
 		}
-
-		SgExpression* var = VariableRenaming::buildVariableReference(var_name);
-		SgExpression* fwd_exp = pushVal(var);
-		SgExpression* rvs_exp = buildBinaryExpression<SgAssignOp>(
-			copyExpression(var), popVal(var->get_type()));
+        
+        //If it's an enum type, we want to cast the value to int
+        SgType* underlyingType = valueToBePushedExpression->get_type();
+        while (true)
+        {
+            if (isSgModifierType(underlyingType))
+            {
+                underlyingType = isSgModifierType(underlyingType)->get_base_type();
+                continue;
+            }
+            else if (isSgTypedefType(underlyingType))
+            {
+                underlyingType = isSgTypedefType(underlyingType)->get_base_type();
+                continue;
+            }
+            break;
+        }
+        if (isSgEnumType(underlyingType))
+        {
+            valueToBePushedExpression = SageBuilder::buildCastExp(valueToBePushedExpression, SageBuilder::buildIntType());
+        }
+                
+		if (!SageInterface::isCopyConstructible(valueToBePushedExpression->get_type()))
+		{
+			printf("OH NO THE TYPE '%s' is not copy constructible!\n", valueToBePushedExpression->get_type()->unparseToString().c_str());
+            printf("The type %s abstract\n", isPureVirtualClass(valueToBePushedExpression->get_type(), classHierarchy) ? "IS" : "IS NOT");
+			continue;
+		}		
+		SgExpression* fwd_exp = pushVal(valueToBePushedExpression);
 		
-		SageInterface::prependStatement(buildExprStatement(fwd_exp), fwd_stmt);
-		SageInterface::appendStatement(buildExprStatement(rvs_exp), rvs_stmt);
+		//Now, restore the value in the reverse code
+        SgExpression* poppedExpression = popVal(valueToBePushedExpression->get_type());
+        
+        //C++ requires ints to be explictly cased to enums
+        if (isSgEnumType(underlyingType))
+        {
+            poppedExpression = SageBuilder::buildCastExp(poppedExpression, underlyingType);
+        }
+		SgExpression* rvs_exp = SageBuilder::buildAssignOp(assignedVarExpression, poppedExpression);
+        
+        SgExpression* commitExpression = popVal(valueToBePushedExpression->get_type());
+		
+		SageInterface::prependStatement(buildExprStatement(fwd_exp), forwardBody);
+		SageInterface::appendStatement(buildExprStatement(rvs_exp), reverseBody);
+        SageInterface::prependStatement(buildExprStatement(commitExpression), commitBody);
 	}
 
-	return StatementReversal(fwd_stmt, rvs_stmt);
+	return StatementReversal(forwardBody, reverseBody, commitBody);
 }
 
 std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement* stmt, const VariableVersionTable& var_table)
@@ -167,20 +291,4 @@ std::vector<EvaluationResult> StateSavingStatementHandler::evaluate(SgStatement*
 	results.push_back(result);
 
 	return results;
-}
-
-SgStatement* StateSavingStatementHandler::generateCommitAST(const EvaluationResult& evalResult)
-{
-	//Pop all the functions
-	SgBasicBlock* commitBody = SageBuilder::buildBasicBlock();
-
-	vector<VariableRenaming::VarName> modified_vars = evalResult.getAttribute< vector<VariableRenaming::VarName> >();
-	foreach (const VariableRenaming::VarName&  varName, modified_vars)
-	{
-		SgType* varType = varName.back()->get_type();
-		SgExpression* popExpression = popVal_front(varType);
-		SageInterface::prependStatement(SageBuilder::buildExprStatement(popExpression), commitBody);
-	}
-
-	return commitBody;
 }

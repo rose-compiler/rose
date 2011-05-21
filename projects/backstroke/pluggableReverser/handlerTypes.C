@@ -81,11 +81,6 @@ StatementReversal EvaluationResult::generateReverseStatement() const
 	return getStatementHandler()->generateReverseAST(getStatementInput(), *this);
 }
 
-SgStatement* EvaluationResult::generateCommitStatement() const
-{
-	return getStatementHandler()->generateCommitAST(*this);
-}
-
 void EvaluationResult::printHandlers() const
 {
 	static int tab_num = 0;
@@ -156,10 +151,4 @@ const StaticSingleAssignment* ReversalHandlerBase::getSsa() const
 const IVariableFilter* ReversalHandlerBase::getVariableFilter() const
 {
 	return event_handler_->variableFilter_;
-}
-
-SgStatement* StatementReversalHandler::generateCommitAST(const EvaluationResult& evaluationResult)
-{
-	fprintf(stderr, "BACKSTROKE WARNING: Generating empty commit AST\n");
-	return SageBuilder::buildBasicBlock();
 }
