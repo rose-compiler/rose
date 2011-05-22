@@ -11,7 +11,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 
 /**
  * class representing a prolog list*/
-class PrologList : public PrologTerm {
+class PrologList : public PrologCompTerm {
  public:
   /**default constructor*/
   PrologList() {}
@@ -71,7 +71,7 @@ class PrologList : public PrologTerm {
 
 /**
  * class representing a prolog list*/
-class PrologList : public PrologTerm {
+class PrologList : public PrologCompTerm {
  public:
   /** empty list */
   PrologList() {
@@ -82,7 +82,7 @@ class PrologList : public PrologTerm {
 #   endif
   }
 
-  PrologList(term_t t) : PrologTerm(t) {}
+  PrologList(term_t t) : PrologCompTerm(t) {}
 
   /** construct from vector*/
   PrologList(std::vector<PrologTerm*> v) {

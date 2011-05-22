@@ -745,7 +745,8 @@ RoseToTerm::getInitializedNameSpecific(SgInitializedName* n) {
      new PrologAtom(n->get_name().getString()),
      /* static? (relevant for unparsing if scope is a class)*/
      getEnum(n->get_storageModifier().isStatic(), re.static_flags),
-     scope);
+     scope,
+     PPI(n));
 }
 
 /**

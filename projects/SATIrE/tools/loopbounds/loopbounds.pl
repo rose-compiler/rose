@@ -28,7 +28,7 @@ References
 
 @author 
 
-Copyright (C) 2007-2009, Adrian Prantl <adrian@complang.tuwien.ac.at>
+Copyright (C) 2007-2010, Adrian Prantl <adrian@complang.tuwien.ac.at>
 
 @license 
 

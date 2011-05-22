@@ -245,6 +245,7 @@ TermToRose::toRose(PrologTerm* t) {
     string tname = c->getName();
     debug("converting " + tname + "\n");
     if (isPrologList(c->at(0))) {
+      //cerr << "list"<<endl;
       node = listToRose(c,tname);
     } else {
       switch (c->getSubTerms().size()) {
@@ -265,6 +266,7 @@ TermToRose::toRose(PrologTerm* t) {
     cerr << "**WARNING: could not translate the term '" 
 	 << t->getRepresentation() << "'" 
          << " of arity " << t->getArity() << "." << endl;
+    assert(0);
   }
 
   SgLocatedNode* ln = isSgLocatedNode(node);
@@ -866,6 +868,17 @@ SgType*
 TermToRose::createType(PrologTerm* t) {
   SgType* type = NULL;
   string id = t->getRepresentation();
+
+  //cerr<<id<<endl;
+  PrologCompTerm* ct = dynamic_cast<PrologCompTerm*>(t);
+  if (ct && 
+      t->getName() == "array_type" && ct->at(2)->getRepresentation() == "null"){
+    // The difference between ArrayType and PointerType is mostly syntactical
+    // we therefore treat them as equivalent in the lookup table.
+    id = string("pointer_type(")+ct->at(1)->getRepresentation()+")";
+    //cerr<<"-->"<<id<<endl;
+  }
+
   if (lookupType(&type, id, false)) {
     return type;
   }

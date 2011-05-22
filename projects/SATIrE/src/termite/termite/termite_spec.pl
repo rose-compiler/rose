@@ -286,7 +286,7 @@ default_annotation ::=
 
 initialized_name_annotation ::=
     initialized_name_annotation(type, name, todo /* storage modifier */,
-                                scope_name?).
+                                scope_name?, preprocessing_info).
 
 function_declaration_annotation ::=
     function_declaration_annotation(type, name, declaration_modifier,

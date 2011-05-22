@@ -180,6 +180,9 @@ chain_up(Assertions, DA, AI, FI,  Statement) :-
      Statement = expr_statement(PreExp, DA, AI, FI))
   ).
   
+% do not modify guarded terms
+assertions(I, n, I, guard(Term), Term).
+
 % transform basic blocks with their variable declarations in effect
 assertions(y-Decls0, y-Decls, y-Decls0, Bb, Bb) :-
   Bb = basic_block(Stmts, _,_,_),
@@ -278,8 +281,6 @@ assertions(y-[], y-[], y-VarsTypes, global(Decls, An, Ai, Fi),
   D1 =.. D_u1, 
   Decls1 = [D1|Ds].
 
-% do not modify guarded terms
-assertions(I, n, I, guard(Term), Term).
 % leave all other terms alone
 assertions(I, I, I, Term, Term).
 %-----------------------------------------------------------------------  

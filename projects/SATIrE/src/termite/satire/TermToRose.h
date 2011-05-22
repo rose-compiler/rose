@@ -207,6 +207,9 @@ public:
       std::cerr << "**ERROR: Symbol lookup failed: (";
       if (*decl != NULL) std::cerr << ((SgNode*)*decl)->class_name() <<"*) ";
       std::cerr << id << std::endl;
+      std::cerr << "FIXME: forward-referencing function references\n" 
+		<< "       are not yet implemented. See lookaheadDecl()." 
+		<< std::endl;
       ROSE_ASSERT(false);
       *decl = NULL;
     }

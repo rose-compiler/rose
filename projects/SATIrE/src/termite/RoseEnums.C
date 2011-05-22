@@ -227,6 +227,7 @@ static const char* e_DirectiveType[] = {
   "c_StyleComment",
   "cplusplusStyleComment",
   "fortranStyleComment",
+  "F90StyleComment",
   "cpreprocessorBlankLine",
 
   "cpreprocessorIncludeDeclaration",
@@ -250,6 +251,10 @@ static const char* e_DirectiveType[] = {
   // AS (11/18/05): Added macro support
   "cSkippedToken",
   "cMacroCall",
+
+  // AS & LIAO (8/12/2008): A PreprocessingInfo that is a 
+  // hand made MacroCall that will expand into a valid statement.
+  "cMacroCallStatement",
 
   // A line replacement will replace a sub-tree in the AST
   // after a node with position (filename",line)
