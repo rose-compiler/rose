@@ -494,6 +494,12 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("SgScopeStatement*","current_scope","= NULL",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/21/2011): Added information required for new name qualification support. This is the node used to
+  // lookup the string computed to support the name qualified name for either the declaration name or type name
+  // that requires qualiticcation.
+     Unparse_Info.setDataPrototype("SgNode*","reference_node_for_qualification","= NULL",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (5/11/2011): Added information required for new name qualification support. We now strore this information
   // where the named constrcuts are referenced and this information is passed through the SgUnparse_Info object.
      Unparse_Info.setDataPrototype("int","name_qualification_length","= 0",
@@ -506,6 +512,7 @@ Grammar::setUpSupport ()
   // DQ (5/11/2011): Added information required for new name qualification support.
      Unparse_Info.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
 

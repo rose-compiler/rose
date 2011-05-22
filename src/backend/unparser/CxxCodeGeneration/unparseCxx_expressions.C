@@ -196,7 +196,7 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
 void
 Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, SgUnparse_Info& info)
    {
-      ROSE_ASSERT(templateArgument != NULL);
+     ROSE_ASSERT(templateArgument != NULL);
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      printf ("Unparse TemplateArgument (%p) \n",templateArgument);
@@ -224,10 +224,15 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
   // newInfo.set_forceQualifiedNames();
 
   // DQ (5/14/2011): Added support for newer name qualification implementation.
-     printf ("templateArgument->get_name_qualification_length() = %d \n",templateArgument->get_name_qualification_length());
+     printf ("In unparseTemplateArgument(): templateArgument->get_name_qualification_length() = %d \n",templateArgument->get_name_qualification_length());
      newInfo.set_name_qualification_length(templateArgument->get_name_qualification_length());
      newInfo.set_global_qualification_required(templateArgument->get_global_qualification_required());
      newInfo.set_type_elaboration_required(templateArgument->get_type_elaboration_required());
+
+#if 0
+     printf ("Exiting in unparseTemplateArgument() to see whate this is called \n");
+     ROSE_ASSERT(false);
+#endif
 
   // ROSE_ASSERT(newInfo.isTypeFirstPart() == false);
   // ROSE_ASSERT(newInfo.isTypeSecondPart() == false);
@@ -241,6 +246,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                printf ("In unparseTemplateArgument(): templateArgument->get_type() = %s \n",templateArgument->get_type()->sage_class_name());
                unp->u_exprStmt->curprint ( "\n /* templateArgument->get_type() */ \n");
 #endif
+            // curprint ( "\n /* SgTemplateArgument::type_argument */ \n");
 
             // DQ (11/27/2004): Set these (though I am not sure that they help!)
             // newInfo.unset_isTypeFirstPart();
@@ -282,6 +288,7 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                printf ("In unparseTemplateArgument(): templateArgument->get_expression() = %s \n",templateArgument->get_expression()->sage_class_name());
                unp->u_exprStmt->curprint ( "\n /* templateArgument->get_expression() */ \n");
 #endif
+            // curprint ( "\n /* SgTemplateArgument::nontype_argument */ \n");
 
             // DQ (1/5/2007): test2007_01.C demonstrated where this expression argument requires qualification.
             // printf ("Template argument = %p = %s \n",templateArgument->get_expression(),templateArgument->get_expression()->class_name().c_str());
@@ -296,6 +303,8 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
              {
             // unparseTemplateName(templateArgument->xxx,newInfo);
                ROSE_ASSERT(templateArgument->get_templateDeclaration() != NULL);
+
+            // curprint ( "\n /* SgTemplateArgument::template_template_argument */ \n");
 
             // DQ (8/24/2006): Skip output of the extra space.
             // unp->u_exprStmt->curprint ( templateArgument->get_templateDeclaration()->get_name().str() << " ";

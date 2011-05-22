@@ -62,6 +62,10 @@ class HiddenListTraversal : public AstTopDownBottomUpProcessing<HiddenListInheri
        // Data
           std::set<SgNode*> referencedNameSet;
 
+       // We keep the qualified names as a map of strings with keys defined by the SgNode pointer values.
+          std::map<SgNode*,std::string> qualifiedNameMapForNames;
+          std::map<SgNode*,std::string> qualifiedNameMapForTypes;
+
        // Member functions:
           std::list<SgNode*> gatherNamesInClass( SgClassDefinition* classDefinition );
 
@@ -113,8 +117,11 @@ class HiddenListTraversal : public AstTopDownBottomUpProcessing<HiddenListInheri
           SgDeclarationStatement* getDeclarationAssociatedWithType( SgType* type );
 
        // Supporting function for different overloaded versions of the setNameQualification() function.
-          void setNameQualificationSupport(SgScopeStatement* scope, const int inputNameQualificationLength, int & output_amountOfNameQualificationRequired , bool & outputGlobalQualification, bool & outputTypeEvaluation );
-
+          std::string setNameQualificationSupport ( SgScopeStatement* scope, const int inputNameQualificationLength, int & output_amountOfNameQualificationRequired , bool & outputGlobalQualification, bool & outputTypeEvaluation );
+ 
        // DQ (5/14/2011): type elaboration only works between non-types and types.  Different types must be distinquished using name qualification.
           bool requiresTypeElaboration(SgSymbol* symbol);
+
+       // DQ (5/15/2011): Added support for template arguments and their recursive handling.
+          void evaluateNameQualificationForTemplateArgumentList ( SgTemplateArgumentPtrList & templateArgumentList, SgScopeStatement* currentScope, SgStatement* positionStatement );
    };

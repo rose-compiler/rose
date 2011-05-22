@@ -259,7 +259,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
      currentFile = file;
      ROSE_ASSERT(currentFile != NULL);
 
-#if 0
+#if 1
      printf ("SageInterface::is_Cxx_language()     = %s \n",SageInterface::is_Cxx_language() ? "true" : "false");
      printf ("SageInterface::is_Fortran_language() = %s \n",SageInterface::is_Fortran_language() ? "true" : "false");
      printf ("SageInterface::is_Java_language()    = %s \n",SageInterface::is_Java_language() ? "true" : "false");
@@ -271,6 +271,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
 #endif
 
 #if 1
+  // DQ (5/15/2011): Moved this to be called in the postProcessingSupport() (before resetTemplateNames() else template names will not be set properly).
+
   // DQ (11/10/2007): Moved computation of hidden list from astPostProcessing.C to unparseFile so that 
   // it will be called AFTER any transformations and immediately before code generation where it is 
   // really required.  This part of a fix for Liao's outliner, but should be useful for numerous 
@@ -284,10 +286,24 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
 #if 0
           Hidden_List_Computation::buildHiddenTypeAndDeclarationLists(file);
 #else
+       // DQ (5/15/2011): Test clearing the mangled name map.
+          printf ("Calling SgNode::clearGlobalMangledNameMap() \n");
+          SgNode::clearGlobalMangledNameMap();
+
           void newBuildHiddenTypeAndDeclarationLists( SgNode* node );
           printf ("Developing a new implementation of the hidden list support. \n");
           newBuildHiddenTypeAndDeclarationLists(file);
           printf ("DONE: new hidden list support built. \n");
+
+#if 0
+       // DQ (5/16/2011): Test clearing the mangled name map (so that unparsing will use the name qualification data in each node).
+       // See if this fixes test2011_54.C
+          printf ("Calling SgNode::clearGlobalMangledNameMap() \n");
+          SgNode::clearGlobalMangledNameMap();
+
+       // DQ (5/15/2011): It might be that the AST symbol tables should be rebuilt after fixing the name qualification.
+          fixupAstSymbolTables(file);
+#endif
 #endif
 
        // DQ (6/5/2007): We actually need this now since the hidden lists are not pushed to lower scopes where they are required.
@@ -969,7 +985,7 @@ globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoP
 #pragma omp critical (unparser)
 #endif
      {
-       returnString=globalUnparseToString_OpenMPSafe(astNode,inputUnparseInfoPointer);
+       returnString = globalUnparseToString_OpenMPSafe(astNode,inputUnparseInfoPointer);
      }
      return returnString;
    }
@@ -1122,6 +1138,9 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                inheritedAttributeInfoPointer->set_current_scope(TransformationSupport::getGlobalScope(astNode));
              }
 #endif
+
+       // DQ (5/19/2011): Allow compiler generated statements to be unparsed by default.
+          inheritedAttributeInfoPointer->set_outputCompilerGeneratedStatements();
         }
 
      ROSE_ASSERT (inheritedAttributeInfoPointer != NULL);
@@ -1176,7 +1195,6 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
   // Turn ON the error checking which triggers an error if the default SgUnparse_Info constructor is called
   // SgUnparse_Info::forceDefaultConstructorToTriggerError = true;
 
-#if 1
   // DQ (10/19/2004): Cleaned up this code, remove this dead code after we are sure that this worked properly
   // Actually, this code is required to be this way, since after this branch the current function returns and
   // some data must be cleaned up differently!  So put this back and leave it this way, and remove the
@@ -1215,7 +1233,6 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
              }
         }
        else
-#endif
         {
        // DQ (1/12/2003): Only now try to trap use of SgUnparse_Info default constructor
        // Turn ON the error checking which triggers an error if the default SgUnparse_Info constructor is called
@@ -1238,6 +1255,8 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                  else
                   {
                  // Unparse as a C/C++ code.
+                 // printf ("Calling roseUnparser.u_exprStmt->unparseStatement() stmt = %s \n",stmt->class_name().c_str());
+                 // roseUnparser.u_exprStmt->curprint ("Output from curprint");
                     roseUnparser.u_exprStmt->unparseStatement ( const_cast<SgStatement*>(stmt), inheritedAttributeInfo );
                   }
              }
@@ -1436,48 +1455,13 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
 
 string get_output_filename( SgFile& file)
    {
-#if 1
   // DQ (10/15/2005): This can now be made to be a simpler function!
-      if (file.get_unparse_output_filename().empty() == true)
-         {
-           printf ("Error: no output file name specified, use \"-o <output filename>\" option on commandline (see --help for options) \n");
-         }
+     if (file.get_unparse_output_filename().empty() == true)
+        {
+          printf ("Error: no output file name specified, use \"-o <output filename>\" option on commandline (see --help for options) \n");
+        }
      ROSE_ASSERT(file.get_unparse_output_filename().empty() == false);
      return file.get_unparse_output_filename();
-#else
-  // Use the filename with ".rose" suffix for the output file from ROSE (the unparsed C++ code file)
-  // This allows Makefiles to have suffix rules drive the generation of the *.C.rose from from ROSE
-  // and then permits the C++ compiler to be called to generate the *.o file from the *.C.rose file
-     char outputFilename[256];
-
-  // if (file.get_unparse_output_filename() != NULL)
-     if (file.get_unparse_output_filename().empty() == false)
-        {
-       // allow the user to specify the name of the output file
-#if 0
-          printf ("VALID file.get_unparse_output_filename() found: %s \n",
-               file.get_unparse_output_filename());
-#endif
-          sprintf(outputFilename,"%s",file.get_unparse_output_filename());
-        }
-       else
-        {
-       // use a prefix plus the original input file name to name the output file
-#if 0
-          printf ("NO VALID file.get_unparse_output_filename() found, using filename to build one: rose_<%s> \n",
-               file.getFileName());
-#endif
-          sprintf(outputFilename,"rose_%s",file.getFileName());
-
-          printf ("I think this case is never used! Exiting ... \n");
-          ROSE_ASSERT (false);
-        }
-#if 1
-     if ( file.get_verbose() == true )
-          printf ("\nROSE unparsed outputFile name is %s \n\n",outputFilename);
-#endif
-     return string(outputFilename);
-#endif
    }
 
 // DQ (10/11/2007): I think this is redundant with the Unparser::unparseFile() member function

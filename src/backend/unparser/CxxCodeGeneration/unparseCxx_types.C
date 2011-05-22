@@ -721,7 +721,7 @@ void Unparse_Type::unparseNameType(SgType* type, SgUnparse_Info& info)
 void
 Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
    {
-#if 0
+#if 1
      printf ("Inside of Unparse_Type::unparseClassType \n");
 #endif
 
@@ -729,7 +729,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
      info.display("Inside of Unparse_Type::unparseClassType");
 #endif
 
-         // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
+  // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
 
      SgClassType* class_type = isSgClassType(type);
      ROSE_ASSERT(class_type != NULL);
@@ -825,6 +825,8 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
        // bases typedefed types).
           SgName nm = decl->get_name();
 
+          printf ("In unparseClassType: nm = %s \n",nm.str());
+
        // DQ (6/27/2006): nm.is_null() is a better test for an empty name, don't output the qualifier for un-named
        // structs.  This is part of the fix for the Red Hat 7.3 gconv problem (see ChangeLog for details).
        // if (nm.str() != NULL)
@@ -851,6 +853,8 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 
                  // The C++ support is more complex and can require qualified names!
                     SgName nameQualifier = unp->u_name->generateNameQualifier( decl , info );
+                    info.display("Output SgUnparse_Info object to support name qualification");
+
                  // SgName nameQualifier = unp->u_name->generateNameQualifierForType( type , info );
 #if 0
                     printf ("In unparseClassType: nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
@@ -1138,7 +1142,7 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
      SgTypedefType* typedef_type = isSgTypedefType(type);
      ROSE_ASSERT(typedef_type != NULL);
 
-  // printf ("Inside of Unparse_Type::unparseTypedefType name = %p = %s \n",typedef_type,typedef_type->get_name().str());
+     printf ("Inside of Unparse_Type::unparseTypedefType name = %p = %s \n",typedef_type,typedef_type->get_name().str());
   // curprint ( "\n/* Inside of Unparse_Type::unparseTypedefType */ \n";
 
 #if 0
@@ -1246,7 +1250,7 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
             // The C++ support is more complex and can require qualified names!
                SgName nameQualifier = unp->u_name->generateNameQualifier( tdecl , info );
 
-            // printf ("nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
+               printf ("In unparseTypedefType(): nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
             // curprint ( "\n/* nameQualifier (from unp->u_name->generateNameQualifier function) = " + nameQualifier + " */ \n ";
                curprint ( nameQualifier.str());
                SgName nm = typedef_type->get_name();

@@ -12969,6 +12969,9 @@ SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
      p_type_elaboration_required     = X.p_type_elaboration_required;
      p_global_qualification_required = X.p_global_qualification_required;
 
+  // DQ (5/21/2011): New support for name qualification.
+     p_reference_node_for_qualification = X.p_reference_node_for_qualification;
+
      return *this;
    }
 
@@ -13072,6 +13075,9 @@ SgUnparse_Info::post_construction_initialization()
      p_name_qualification_length     = 0;
      p_type_elaboration_required     = false;
      p_global_qualification_required = false;
+
+  // DQ (5/21/2011): New support for name qualification.
+     p_reference_node_for_qualification = NULL;
    }
 
 bool
@@ -13875,6 +13881,9 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("p_outputCodeGenerationFormatDelimiters = %s \n",p_outputCodeGenerationFormatDelimiters ? "true" : "false");
      printf ("p_current_function_call                = %p \n",p_current_function_call);
      printf ("p_current_scope                        = %p = %s \n",p_current_scope,p_current_scope != NULL ? p_current_scope->class_name().c_str() : "EmPtY sTrInG");
+
+  // DQ (5/21/2011): Added support for name qualification...
+     printf ("p_reference_node_for_qualification     = %p = %s \n",p_reference_node_for_qualification,p_reference_node_for_qualification != NULL ? p_reference_node_for_qualification->class_name().c_str() : "EmPtY sTrInG");
    }
 
 string

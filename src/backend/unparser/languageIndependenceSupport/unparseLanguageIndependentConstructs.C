@@ -102,8 +102,9 @@ UnparseLanguageIndependentConstructs::markGeneratedFile() const
 // This has been simplified by Markus Kowarschik. We need to introduce the
 // case of statements that have been introduced by transformations.
 // bool Unparser::statementFromFile ( SgStatement* stmt, char* sourceFilename )
+// bool UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, string sourceFilename )
 bool
-UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, string sourceFilename )
+UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, string sourceFilename, SgUnparse_Info& info )
    {
   // If the filename of the statement and the input filename are the same then 
   // the return result is true.  IF not then we have to look to see if there
@@ -158,10 +159,16 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
           ROSE_ASSERT(stmt->get_file_info() != NULL);
           bool isOutputInCodeGeneration = stmt->get_file_info()->isOutputInCodeGeneration();
 
+       // DQ (5/19/2011): Output generated code... (allows unparseToString() to be used with template instantations to support name qualification).
+          bool forceOutputOfGeneratedCode = info.outputCompilerGeneratedStatements();
+
        // DQ (1/11/2006): OutputCodeGeneration is not set to be true where transformations 
        // require it.  Transformation to include header files don't set the OutputCodeGeneration flag.
        // if (isOutputInCodeGeneration || isTransformation)
-          if (isOutputInCodeGeneration == true)
+       // if (isOutputInCodeGeneration == true)
+
+       // DQ (5/19/2011): Output generated code is specified.
+          if (isOutputInCodeGeneration == true || forceOutputOfGeneratedCode == true)
              {
                statementInFile = true;
              }
@@ -479,10 +486,15 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
      ROSE_ASSERT(stmt->get_file_info() != NULL);
 
 #if 1 // FIXME cause conflict in "make check"?
+  // DQ (5/19/2011): Allow unparsing of even compiler generated statements when specified via the SgUnparse_Info object.
   // FMZ : we have ".rmod" file which will not satisfy this condition
   // JJW (6/23/2008): Move check for statement-within-file here rather than in individual procedures
-     if (!statementFromFile(stmt, getFileName()))
+  // if (!statementFromFile(stmt, getFileName()))
+     if (!statementFromFile(stmt, getFileName(), info))
         {
+#if 1
+          printf ("WARNING: Skipping calls to output statements that are not recorded as being in the targer file \n");
+#endif
           return;
         }
 #endif

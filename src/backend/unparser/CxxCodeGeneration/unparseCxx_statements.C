@@ -526,6 +526,8 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 
      ROSE_ASSERT(stmt != NULL);
 
+  // curprint("In unparseLanguageSpecificStatement()");
+
 #if 0
   // Debugging support
      SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
@@ -1230,6 +1232,8 @@ Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt (SgStatement* stmt, SgUnp
 
      SgClassDeclaration* classDeclaration = isSgClassDeclaration(templateInstantiationDeclaration);
      ROSE_ASSERT(classDeclaration != NULL);
+
+  // curprint("Output in curprint in Unparse_ExprStmt::unparseTemplateInstantiationDeclStmt()");
 
 #if OUTPUT_DEBUGGING_CLASS_NAME
      printf ("Inside of unparseTemplateInstantiationDeclStmt() stmt = %p/%p name = %s  templateName = %s transformed = %s/%s prototype = %s compiler-generated = %s compiler-generated and marked for output = %s \n",
@@ -3631,7 +3635,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
                ROSE_ASSERT(ninfo.get_declstatement_ptr() != NULL);
 
-            // printf ("namedType = %p \n",namedType);
+               printf ("Inside of unparseVarDeclStmt: namedType = %p \n",namedType);
                if (namedType != NULL)
                   {
                  // DQ (10/5/2004): This controls the unparsing of the class definition
@@ -3718,10 +3722,10 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // ROSE_ASSERT(declStmt != NULL);
             // ROSE_ASSERT(isSgTypedefDeclaration(declStmt) == NULL);
 
-#if 0
-               printf ("first = %s \n",(first == true) ? "true" : "false");
-               printf ("declStmt = %p \n",declStmt);
-               printf ("isSgTypedefDeclaration(declStmt) = %p \n",isSgTypedefDeclaration(declStmt));
+#if 1
+               printf ("Inside of unparseVarDeclStmt: first = %s \n",(first == true) ? "true" : "false");
+               printf ("Inside of unparseVarDeclStmt: declStmt = %p \n",declStmt);
+               printf ("Inside of unparseVarDeclStmt: isSgTypedefDeclaration(declStmt) = %p \n",isSgTypedefDeclaration(declStmt));
 #endif
 
             // DQ (11/28/2004): Is this always true?  If so then we can simplify the code!
@@ -3755,6 +3759,10 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // printf ("In Unparse_ExprStmt::unparseVarDeclStmt(): This variable declaration requires a global qualifier \n");
                  // ninfo2.set_forceQualifiedNames();
                     ninfo_for_type.set_requiresGlobalNameQualification();
+
+                 // DQ (5/21/2011): Set the reference node for the qualified name lookup.
+                    ninfo_for_type.set_reference_node_for_qualification(decl_item);
+                    ROSE_ASSERT(ninfo_for_type.get_reference_node_for_qualification() != NULL);
                   }
 #endif
             // ninfo2.set_isTypeFirstPart();
@@ -3768,13 +3776,16 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
 
             // DQ (5/13/2011): Added support for newer name qualification implementation.
+               printf ("Inside of unparseVarDeclStmt: decl_item->get_name_qualification_length_for_type() = %d \n",decl_item->get_name_qualification_length_for_type());
                ninfo_for_type.set_name_qualification_length(decl_item->get_name_qualification_length_for_type());
                ninfo_for_type.set_global_qualification_required(decl_item->get_global_qualification_required_for_type());
                ninfo_for_type.set_type_elaboration_required(decl_item->get_type_elaboration_required_for_type());
 
+               printf ("Inside of unparseVarDeclStmt: calling unparseType() tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
             // unp->u_type->unparseType(tmp_type, ninfo2);
                ROSE_ASSERT(isSgType(tmp_type) != NULL);
                unp->u_type->unparseType(tmp_type, ninfo_for_type);
+               printf ("Inside of unparseVarDeclStmt: DONE calling unparseType() \n");
 
             // ROSE_ASSERT(ninfo2.get_declstatement_ptr() != NULL);
                ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() != NULL);
