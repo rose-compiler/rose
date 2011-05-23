@@ -6,6 +6,8 @@
 #include <queue>
 #include <boost/any.hpp>
 
+#define __BACKSTROKE
+
 template <class T>
 T push(std::deque<T>& data_stack, T val)
 {
