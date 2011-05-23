@@ -460,6 +460,7 @@ Partitioner::load_config(const std::string &filename) {
     ssize_t nread = read(fd, config, sb.st_size);
     if (nread<0 || nread<sb.st_size) {
         delete[] config;
+        close(fd);
         throw IPDParser::Exception(strerror(errno), filename);
     }
     IPDParser(this, config, sb.st_size, filename).parse();
