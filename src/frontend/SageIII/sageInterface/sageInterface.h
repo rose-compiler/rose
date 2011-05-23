@@ -650,6 +650,11 @@ bool isCopyConstructible(SgType* type);
 //! Is a type assignable?  This may not quite work properly.
 bool isAssignable(SgType* type);
 
+//! Check if a class type is a pure virtual class. True means that there is at least
+//! one pure virtual function that has not been overridden. 
+//! In the case of an incomplete class type (forward declaration), this function returns false.
+bool isPureVirtualClass(SgType* type, const ClassHierarchyWrapper& classHierarchy);
+
 //! Does a type have a trivial (built-in) destructor?
 bool hasTrivialDestructor(SgType* t);
 
