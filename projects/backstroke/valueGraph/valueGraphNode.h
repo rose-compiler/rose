@@ -187,6 +187,8 @@ struct FunctionCallNode: ValueGraphNode
     SgFunctionCallExp* getFunctionCallExp() const
     { return isSgFunctionCallExp(astNode); }
     
+    virtual std::string toString() const;
+    
     bool isVirtual;
 };
 
@@ -329,6 +331,11 @@ inline OperatorNode* isOperatorNode(ValueGraphNode* node)
 inline ValueNode* isValueNode(ValueGraphNode* node)
 {
 	return dynamic_cast<ValueNode*>(node);
+}
+
+inline FunctionCallNode* isFunctionCallNode(ValueGraphNode* node)
+{
+	return dynamic_cast<FunctionCallNode*>(node);
 }
 
 inline OrderedEdge* isOrderedEdge(ValueGraphEdge* edge)

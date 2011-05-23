@@ -1,5 +1,5 @@
 #include "pathNumGenerator.h"
-#include "eventReverser.h"
+#include "functionReverser.h"
 
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>

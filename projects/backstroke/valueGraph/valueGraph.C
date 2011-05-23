@@ -244,8 +244,23 @@ void EventReverser::buildBasicValueGraph()
             
             else if (SgFunctionCallExp* funcCall = isSgFunctionCallExp(expr))
             {
-                // If this function call returns a value, create a temporary value node.
-                createValueNode(NULL, funcCall);
+#if 1
+                const SSA::NodeReachingDefTable& defTable =
+                    ssa_->getReachingDefsAtNode(funcCall);
+                cout << "Print def table:\n";
+                typedef map<VarName, SSA::ReachingDefPtr>::value_type PT;
+                foreach(const PT& pt, defTable)
+                {
+                    cout << "!" << SSA::varnameToString(pt.first) << " " << 
+                            pt.second->getRenamingNumber() << endl;
+                }
+#endif
+                
+                createFunctionCallNode(funcCall);
+                
+                
+                //// If this function call returns a value, create a temporary value node.
+                //createValueNode(NULL, funcCall);
 #if 0
                 const SSA::NodeReachingDefTable& defTable =
                     ssa_->getReachingDefsAtNode(funcCall->get_parent());
@@ -605,8 +620,10 @@ void EventReverser::addExtraNodesAndEdges()
         if (tar == root_)
             continue;
 
-        // If the edge is not connected to an operator node, make a reverse copy.
-        if (isOperatorNode(valueGraph_[src]) || isOperatorNode(valueGraph_[tar]))
+        // If the edge is not connected to an operator node or function call node,
+        // make a reverse copy.
+        if (isOperatorNode(valueGraph_[src]) || isOperatorNode(valueGraph_[tar]) ||
+            isFunctionCallNode(valueGraph_[src]) || isFunctionCallNode(valueGraph_[tar]))
             continue;
 
         addValueGraphEdge(tar, src, valueGraph_[edge]);
@@ -814,7 +831,7 @@ EventReverser::VGEdge EventReverser::addValueGraphEdge(
     ValueNode* valNode = isValueNode(valueGraph_[src]);
     ROSE_ASSERT(valNode);
 
-    // Get the path information of this edge.
+    // Get the path information of this edge from the source node.
     int dagIndex;
     PathSet paths;
     boost::tie(dagIndex, paths) =
@@ -951,43 +968,87 @@ EventReverser::VGVertex EventReverser::createThisExpNode(SgThisExp* thisExp)
     return newNode;
 }
 
+EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp* funcCallExp)
+{
+    // Build a node for this function call in VG.
+    FunctionCallNode* funcCallNode = new FunctionCallNode(funcCallExp);
+    VGVertex funcCallVertex = addValueGraphNode(funcCallNode);
+    nodeVertexMap_[funcCallExp] = funcCallVertex;
+    
+    const SSA::NodeReachingDefTable& defTable =
+            ssa_->getDefsAtNode(funcCallExp);
+    typedef map<VarName, SSA::ReachingDefPtr>::value_type PT;
+
+    foreach(const PT& pt, defTable)
+    {
+        // Build a node for the value defined in this function call in VG.
+        VersionedVariable var(pt.first, pt.second->getRenamingNumber());
+        createValueNode(NULL, funcCallExp);
+        
+        // Here we set the AST node of this value to be the function call expression
+        // in order to get its correct path information.
+        ValueNode* valNode = new ValueNode(var, funcCallExp);
+        VGVertex lhsVertex = addValueGraphNode(valNode);
+        varVertexMap_[var] = lhsVertex;
+        
+        // Add an edge from the value to the function call.
+        addValueGraphEdge(lhsVertex, funcCallVertex);
+        
+        // Add state saving edges for killed defs.
+        addStateSavingEdges(var, funcCallExp);
+    }    
+    
+    return funcCallVertex;
+}
+
+void EventReverser::addStateSavingEdges(const VersionedVariable& var, SgNode* astNode)
+{
+    if (astNode == NULL) return;
+    // If the lhs node is a declaration, no state saving is added here.
+    if (isSgInitializedName(astNode)) return;
+    
+    // Once a variable is defined, it may kill it previous def. Here we detect
+    // all it killed defs then add state saving edges for them in this specific
+    //cout << "New Var Defined: " << var.toString() << endl;
+    SSA::NodeReachingDefTable defTable = ssa_->getReachingDefsAtNode(astNode);
+    
+    typedef SSA::NodeReachingDefTable::value_type reachingDefPair;
+    foreach (const reachingDefPair& def, defTable)
+    {
+        if (def.first == var.name)
+        {
+            cout << "Killed: " << def.second->getRenamingNumber() << endl;
+
+            int version = def.second->getRenamingNumber();
+            //ROSE_ASSERT(version != var.version);
+            
+            VersionedVariable killedVar(var.name, version);
+
+#if 1
+            // It is possible that the phi node is not built at this point.
+            if (varVertexMap_.count(killedVar) == 0)
+            {
+                ROSE_ASSERT(def.second->isPhiFunction());
+                createPhiNode(killedVar, def.second);
+            }
+#endif
+            ROSE_ASSERT(varVertexMap_.count(killedVar));
+
+            addValueGraphStateSavingEdges(varVertexMap_[killedVar], astNode);
+        }
+    }
+}
+
 EventReverser::VGVertex EventReverser::createValueNode(SgNode* lhsNode, SgNode* rhsNode)
 {
     VGVertex lhsVertex;
     VGVertex rhsVertex;
+    VersionedVariable var = getVersionedVariable(lhsNode, false);
     
-    // Add state saving edge here
-    // If the lhs node is a declaration, no state saving is added here.
-    if (lhsNode && !isSgInitializedName(lhsNode))
+    if (lhsNode)
     {
-        // Once a variable is defined, it may kill it previous def. Here we detect
-        // all it killed defs then add state saving edges for them in this specific
-        VersionedVariable var = getVersionedVariable(lhsNode, false);
-        //cout << "New Var Defined: " << var.toString() << endl;
-        SSA::NodeReachingDefTable defTable = ssa_->getReachingDefsAtNode(lhsNode);
-        typedef SSA::NodeReachingDefTable::value_type reachingDefPair;
-        foreach (const reachingDefPair& def, defTable)
-        {
-            if (def.first == var.name)
-            {
-                //cout << "Killed: " << def.second->getRenamingNumber() << endl;
-                
-                int version = def.second->getRenamingNumber();
-                VersionedVariable killedVar(var.name, version);
-                
-#if 1
-                // It is possible that the phi node is not built at this point.
-                if (varVertexMap_.count(killedVar) == 0)
-                {
-                    ROSE_ASSERT(def.second->isPhiFunction());
-                    createPhiNode(killedVar, def.second);
-                }
-#endif
-                ROSE_ASSERT(varVertexMap_.count(killedVar));
-                
-                addValueGraphStateSavingEdges(varVertexMap_[killedVar], lhsNode);
-            }
-        }
+        // Add state saving edge here
+        addStateSavingEdges(var, lhsNode);
     }
 
     if (rhsNode)
@@ -1010,7 +1071,8 @@ EventReverser::VGVertex EventReverser::createValueNode(SgNode* lhsNode, SgNode* 
         ROSE_ASSERT(rhsValNode);
         if (rhsValNode->var.isNull())
         {
-            rhsValNode->var = getVersionedVariable(lhsNode, false);
+            //rhsValNode->var = getVersionedVariable(lhsNode, false);
+            rhsValNode->var = var;
             varVertexMap_[rhsValNode->var] = rhsVertex;
             nodeVertexMap_[lhsNode] = rhsVertex;
             return rhsVertex;
@@ -1019,7 +1081,7 @@ EventReverser::VGVertex EventReverser::createValueNode(SgNode* lhsNode, SgNode* 
 
     if (lhsNode)
     {
-        VersionedVariable var = getVersionedVariable(lhsNode, false);
+        //VersionedVariable var = getVersionedVariable(lhsNode, false);
         ValueNode* valNode = new ValueNode(var, lhsNode);
         lhsVertex = addValueGraphNode(valNode);
 
@@ -1123,6 +1185,9 @@ void EventReverser::addStateSavingEdges()
 
 VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
 {
+    if (node == NULL)
+        return VersionedVariable();
+    
     //cout << node->class_name() << endl;
     //node->get_file_info()->display();
     VarName varName = SSA::getVarName(node);

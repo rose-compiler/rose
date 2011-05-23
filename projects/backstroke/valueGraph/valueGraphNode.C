@@ -202,6 +202,14 @@ std::string OperatorNode::toString() const
     return "OP";
 }
 
+std::string FunctionCallNode::toString() const
+{
+    string str = getFunctionCallExp()->getAssociatedFunctionDeclaration()->get_name();
+    if (isVirtual)
+        str += "\\nVIRTUAL";
+    return str;
+}
+
 std::string ValueGraphEdge::toString() const
 {
     std::string str;

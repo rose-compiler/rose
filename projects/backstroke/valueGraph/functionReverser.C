@@ -27,7 +27,7 @@ EventReverser::EventReverser(SgFunctionDefinition* funcDef)
     cfg_ = new BackstrokeCFG(funcDef_);
     cdg_ = new BackstrokeCDG(*cfg_);
     ssa_ = new SSA(SageInterface::getProject());
-    ssa_->run(false);
+    ssa_->run(true);
 
     pathNumManager_ = new PathNumManager(cfg_);
 }
@@ -520,7 +520,7 @@ void EventReverser::addReverseCFGNode(
         }
     }
 
-#if 1
+#if 0
         cout << "\nNow add the following edge to reverse CFG:\n";
         cout << paths << " : ";
         if (edge)
@@ -566,7 +566,7 @@ void EventReverser::addReverseCFGNode(
         // Branch node.
         if (paths.is_subset_of(visiblePaths))
         {
-            cout << "Parent Paths: " << paths << " : " << fullPaths << endl;;
+            //cout << "Parent Paths: " << paths << " : " << fullPaths << endl;;
             parentTable[paths] = fullPaths;
         }
         
@@ -593,8 +593,8 @@ void EventReverser::addReverseCFGNode(
         // Join node.
         else if (visiblePaths.is_subset_of(paths) && parentTable[visiblePaths] == paths)
         {
-            cout << "Parent Paths: " << paths << " : " << 
-                    parentTable[parentTable[fullPaths]] << endl;
+            //cout << "Parent Paths: " << paths << " : " << 
+            //        parentTable[parentTable[fullPaths]] << endl;
             
             ROSE_ASSERT(parentTable.count(visiblePaths));
             ROSE_ASSERT(parentTable.count(parentTable[visiblePaths]));
@@ -605,11 +605,11 @@ void EventReverser::addReverseCFGNode(
         else
         {
             // If the code is structured, we will add a join node here.
-            cout << "***" << visiblePaths << endl;
+            //cout << "***" << visiblePaths << endl;
             ROSE_ASSERT(parentTable.count(visiblePaths) && parentTable[visiblePaths].size());
             
             PathSet newPaths = parentTable[visiblePaths];
-            cout << newPaths << endl;
+            //cout << newPaths << endl;
             //getchar();
             //if (paths.is_subset_of(newPaths))
             {
@@ -801,7 +801,7 @@ void EventReverser::generateCode(
             // The last edge can get the current scope.
             if (outEdges.empty())
             {
-                cout << "Path added: " << condPaths << endl;
+                //cout << "Path added: " << condPaths << endl;
                 scopeTable[condPaths] = scope;
                 break;
             }
@@ -855,7 +855,7 @@ void EventReverser::generateCode(
             SageInterface::appendStatement(ifStmt, scope);
 
             // Assign the scope to successors.
-            cout << "Path added: " << condPaths << endl;
+            //cout << "Path added: " << condPaths << endl;
             scopeTable[condPaths] = trueBody;
             scope = falseBody;
 //            

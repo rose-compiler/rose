@@ -205,6 +205,10 @@ private:
 //    PathSetWithIndex addPathsForPhiNodes(VGVertex phiNode,
 //                                         std::set<VGVertex>& processedPhiNodes);
 
+    //! Add state saving edges for those killed by the given var. The second parameter
+    //! is the AST ndoe which defines the first parameter.
+    void addStateSavingEdges(const VersionedVariable& var, SgNode* astNode);
+    
     /** Create a value node from the given AST node.
 	 *
 	 *  @param lhsNode The AST node which contains a lvalue.
@@ -212,6 +216,11 @@ private:
 	 *  @returns The new vertex.
 	 */
 	VGVertex createValueNode(SgNode* lhsNode, SgNode* rhsNode);
+    
+    //! Create an VG node for a functioin call expression. If this function call
+    //! modifies a value, create a value node for it, and add an edge between the
+    //! value node and function call node.
+    VGVertex createFunctionCallNode(SgFunctionCallExp* funcCallExp);
     
     //! Create an VG node for this expression.
     VGVertex createThisExpNode(SgThisExp* thisExp);
