@@ -1,2 +1,2 @@
-main -> A::foobar
 A::foobar ->
+main -> A::foobar

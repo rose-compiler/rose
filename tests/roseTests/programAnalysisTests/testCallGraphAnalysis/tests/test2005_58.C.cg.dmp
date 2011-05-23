@@ -1,2 +1,2 @@
-main -> foobar < int > 
 foobar < int >  ->
+main -> foobar < int > 
