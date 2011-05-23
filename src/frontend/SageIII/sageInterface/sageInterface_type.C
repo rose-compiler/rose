@@ -6,8 +6,6 @@
 #include <boost/foreach.hpp>
 using namespace std;
 
-#include "ClassHierarchyGraph.h"
-
 #define foreach BOOST_FOREACH
 
 
