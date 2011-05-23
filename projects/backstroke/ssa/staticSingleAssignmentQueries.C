@@ -490,7 +490,26 @@ const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getO
 	}
 	else
 	{
-		return reachingDefsIter->second.second;
+		if (isSgFunctionDefinition(node))
+			return reachingDefsIter->second.first;
+		else
+			return reachingDefsIter->second.second;
+	}
+}
+
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getReachingDefsAtNode_(SgNode* node) const
+{
+	GlobalReachingDefTable::const_iterator reachingDefsIter = reachingDefsTable.find(node);
+	if (reachingDefsIter == reachingDefsTable.end())
+	{
+		return emptyTable;
+	}
+	else
+	{
+		if (isSgFunctionDefinition(node))
+			return reachingDefsIter->second.second;
+		else
+			return reachingDefsIter->second.first;
 	}
 }
 

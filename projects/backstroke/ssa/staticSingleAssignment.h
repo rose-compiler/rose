@@ -350,7 +350,11 @@ public:
 	 * This function does not work correctly for "container" nodes such as SgBasicBlock, SgCommaOp,  SgExprStmt.
 	 *  If there is a definition at the node itself, e.g. SgAssignOp, it is included in the outgoing defs. */
 	const NodeReachingDefTable& getOutgoingDefsAtNode(SgNode* node) const;
-
+	
+	/** Returns the definitions of all the variables immediately before the given node has executed.
+	 *  If there is a definition at the node itself, e.g. SgAssignOp, it is not included in the reaching defs. */
+	const NodeReachingDefTable& getReachingDefsAtNode_(SgNode* node) const;
+	
 	/** Returns a list of all the variables used at this node. Note that uses don't propagate past an SgStatement.
 	  * Each use is mapped to the reaching definition to which the use corresponds. */
 	const NodeReachingDefTable& getUsesAtNode(SgNode* node) const;
