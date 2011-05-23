@@ -346,9 +346,10 @@ public:
 		return localUsesTable;
 	}
 
-	/** Returns the reaching definitions at the given node. If there is a definition at the node itself,
-	  * e.g. SgAssignOp, it is considered to reach the node. */
-	const NodeReachingDefTable& getReachingDefsAtNode(SgNode* node) const;
+	/** Returns the definitions of all the variables right after the given node has executed.
+	 * This function does not work correctly for "container" nodes such as SgBasicBlock, SgCommaOp,  SgExprStmt.
+	 *  If there is a definition at the node itself, e.g. SgAssignOp, it is included in the outgoing defs. */
+	const NodeReachingDefTable& getOutgoingDefsAtNode(SgNode* node) const;
 
 	/** Returns a list of all the variables used at this node. Note that uses don't propagate past an SgStatement.
 	  * Each use is mapped to the reaching definition to which the use corresponds. */

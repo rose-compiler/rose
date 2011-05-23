@@ -481,7 +481,7 @@ bool StaticSingleAssignment::isPrefixOfName(VarName name, VarName prefix)
 
 const static StaticSingleAssignment::NodeReachingDefTable emptyTable;
 
-const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getReachingDefsAtNode(SgNode* node) const
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getOutgoingDefsAtNode(SgNode* node) const
 {
 	GlobalReachingDefTable::const_iterator reachingDefsIter = reachingDefsTable.find(node);
 	if (reachingDefsIter == reachingDefsTable.end())
@@ -624,7 +624,7 @@ StaticSingleAssignment::NodeReachingDefTable StaticSingleAssignment::getLastVers
 
 		void visit(SgNode* node)
 		{
-			const NodeReachingDefTable& reachingDefsHere = ssa->getReachingDefsAtNode(node);
+			const NodeReachingDefTable& reachingDefsHere = ssa->getOutgoingDefsAtNode(node);
 
 			foreach(const NodeReachingDefTable::value_type& varDefPair, reachingDefsHere)
 			{
