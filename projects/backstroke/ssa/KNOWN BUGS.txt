@@ -1,6 +1,10 @@
 BUGS
 ----
 
+-StaticSingleAssignment::getLastVersions does not work correctly because variables are filtered when they go out of scope.
+    If a variable should have a phi node as its last version, that phi node might not get inserted because the function
+    is not accessible there.
+
 -SERIOUS INTERPROCEDURAL BUG: Interprocedural definitions are P-defs, or possible definitions, rather than D-defs (definite
 	definitions. As such, they should not (always) kill the previous reaching definition!
 
@@ -31,7 +35,6 @@ BUGS
 		3; //phi node is not inserted here because a is out of scope. Now 'a' has no valid final version
 	}
 
--Memory leak with the grall graph - the SgIncidenceDirectedGraph object is not deleted
 
 TODO (in addition to fixing the above bugs)
 -----

@@ -29,6 +29,15 @@ public:
 		/** Compare reaching defs at node. */
 		StaticSingleAssignment::NodeReachingDefTable newReachingDefs = ssa->getOutgoingDefsAtNode(node);
 		VariableRenaming::NumNodeRenameTable oldReachingDefs = varRenaming->getReachingDefsAtNode(node);
+		
+		if (isSgFunctionDefinition(node))
+		{
+			newReachingDefs = ssa->getLastVersions(isSgFunctionDefinition(node)->get_declaration());
+			oldReachingDefs = varRenaming->getReachingDefsAtFunctionEnd(isSgFunctionDefinition(node));
+			
+			//FIXME: The StaticSingleAssignment::getLastVersions function is broken
+			return;
+		}
 
 		StaticSingleAssignment::ReachingDefPtr reachingDef;
 		StaticSingleAssignment::VarName var;
