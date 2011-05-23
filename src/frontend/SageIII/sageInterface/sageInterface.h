@@ -18,6 +18,7 @@ SgFile* determineFileType ( std::vector<std::string> argv, int& nextErrorCode, S
 
 #include "LivenessAnalysis.h"
 #include "abstract_handle.h"
+#include "ClassHierarchyGraph.h"
 
 // DQ (8/19/2004): Moved from ROSE/src/midend/astRewriteMechanism/rewrite.h
 //! A global function for getting the string associated with an enum (which is defined in global scope)
