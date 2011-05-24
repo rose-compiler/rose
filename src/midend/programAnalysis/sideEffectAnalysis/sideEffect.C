@@ -1,4 +1,5 @@
 #include <rose.h>
+#include "stringify.h"
 #include "sideEffect.h"
 #include "SqliteDatabaseGraph.h"
 #include "string_functions.h"
@@ -777,15 +778,16 @@ SideEffect::getNodeIdentifier(SgNode *node)
   Sg_File_Info* nodeinfo = node->get_file_info();
 
   // milki (07/07/2010) Revert back to name/line/col/variant format
+  // matzke (05/18/2011) Uses variant name rather than a number. Numbers change over time and the test fails.
 
   string fileName = node->get_file_info()->get_filenameString();
   fileName = stripPathFromFileName(fileName);
 
   char tmp[strlen(node->get_file_info()->get_filename()) + 512];
   //sprintf(tmp, "%s-%ld", fileName.c_str(), (long)node);
-  sprintf(tmp, "%s-%d-%d-%d", fileName.c_str(),
-      nodeinfo->get_line(), nodeinfo->get_col(),
-      node->variantT());
+  sprintf(tmp, "%s-%d-%d-%s", fileName.c_str(),
+          nodeinfo->get_line(), nodeinfo->get_col(),
+          stringifyVariantT(node->variantT(), "V_").c_str());
 
   string id = tmp;
 

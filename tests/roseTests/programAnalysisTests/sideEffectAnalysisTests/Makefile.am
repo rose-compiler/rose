@@ -24,28 +24,28 @@ TESTCODES =
 check-local:	testSideEffect
 	@echo "Run test code ..."
 	./testSideEffect $(srcdir)/testGlobal1.C | grep -i 'side effect' > tmp
-	diff tmp $(srcdir)/testGlobal1.outx
+	diff -u tmp $(srcdir)/testGlobal1.outx
 	-rm *db
 	./testSideEffect $(srcdir)/testGlobal2.C | grep -i 'side effect' > tmp
-	diff tmp $(srcdir)/testGlobal2.outx
+	diff -u tmp $(srcdir)/testGlobal2.outx
 	-rm *db
 	./testSideEffect $(srcdir)/testRef.C | grep -i 'side effect' > tmp
-	diff tmp $(srcdir)/testRef.outx
+	diff -u tmp $(srcdir)/testRef.outx
 	-rm *db
 	./testSideEffect $(srcdir)/testPtr1.C | grep -i 'side effect' > tmp
-	diff tmp $(srcdir)/testPtr1.outx
+	diff -u tmp $(srcdir)/testPtr1.outx
 	-rm *db
 	./testSideEffect $(srcdir)/testClasses1.C | grep -i 'side effect' > tmp
-	diff tmp $(srcdir)/testClasses1.outx
+	diff -u tmp $(srcdir)/testClasses1.outx
 	-rm *db
 	./testSideEffect $(srcdir)/testClasses2.C | grep -i 'side effect' > tmp
-	diff tmp $(srcdir)/testClasses2.outx
+	diff -u tmp $(srcdir)/testClasses2.outx
 	-rm *db
 	./testSideEffect $(srcdir)/testClasses3.C | grep -i 'side effect' > tmp
-	diff tmp $(srcdir)/testClasses3.outx
+	diff -u tmp $(srcdir)/testClasses3.outx
 	-rm *db
 	./testSideEffect $(srcdir)/testLoop.C | grep -i 'side effect' > tmp
-	diff tmp $(srcdir)/testLoop.outx
+	diff -u tmp $(srcdir)/testLoop.outx
 	-rm *db
 	@echo "Side-Effect Tests Passed"
 

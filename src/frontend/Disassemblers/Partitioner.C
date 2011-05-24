@@ -1738,6 +1738,54 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
     }
 }
 
+void
+Partitioner::update_targets(SgNode *ast)
+{
+    typedef std::map<rose_addr_t, SgAsmBlock*> BlockMap;
+
+    /* Build a map from address to SgAsmBlock so we can do lookups quickly. */
+    struct BlockMapBuilder: public SgSimpleProcessing {
+        BlockMap *block_map;
+        BlockMapBuilder(SgNode *ast, BlockMap *block_map): block_map(block_map) {
+            traverse(ast, preorder);
+        }
+        void visit(SgNode *node) {
+            SgAsmBlock *block = isSgAsmBlock(node);
+            if (block!=NULL) {
+                const SgAsmStatementPtrList &stmts = block->get_statementList();
+                SgAsmInstruction *insn = stmts.empty() ? NULL : isSgAsmInstruction(stmts.front());
+                if (insn)
+                    block_map->insert(std::make_pair(insn->get_address(), block));
+            }
+        }
+    };
+
+    /* Now add block pointers to the successor targets. */
+    struct TargetPopulator: public SgSimpleProcessing {
+        const BlockMap &block_map;
+        TargetPopulator(SgNode *ast, const BlockMap &block_map): block_map(block_map) {
+            traverse(ast, preorder);
+        }
+        void visit(SgNode *node) {
+            SgAsmBlock *block = isSgAsmBlock(node);
+            if (block) {
+                for (size_t i=0; i<block->get_successors().size(); i++) {
+                    SgAsmTarget *target = block->get_successors()[i];
+                    if (target && NULL==target->get_block()) {
+                        BlockMap::const_iterator bi=block_map.find(target->get_address());
+                        if (bi!=block_map.end())
+                            target->set_block(bi->second);
+                    }
+                }
+            }
+        }
+    };
+    
+    BlockMap block_map;
+    BlockMapBuilder(ast, &block_map);
+    TargetPopulator(ast, block_map);
+}
+
 SgAsmBlock *
 Partitioner::build_ast()
 {
@@ -1772,6 +1820,7 @@ Partitioner::build_ast()
         delete catchall;
     }
 
+    update_targets(retval);
     return retval;
 }
 
@@ -1825,13 +1874,14 @@ Partitioner::build_ast(BasicBlock* bb)
         (*ii)->set_parent(retval);
     }
 
-    /* Cache block successors so other layers don't have to constantly compute them */
+    /* Cache block successors so other layers don't have to constantly compute them.  We fill in the successor SgAsmTarget
+     * objects with only the address and not pointers to blocks since we don't have all the blocks yet.  The pointers will be
+     * initialized in the no-argument version build_ast() higher up on the stack. */
     bool complete;
-    Disassembler::AddressSet sucs = successors(bb, &complete);
-    SgAddressList addrlist(sucs.begin(), sucs.end());
-    retval->set_cached_successors(addrlist);
-    retval->set_complete_successors(complete);
-
+    Disassembler::AddressSet successor_addrs = successors(bb, &complete);
+    for (Disassembler::AddressSet::iterator si=successor_addrs.begin(); si!=successor_addrs.end(); ++si)
+        retval->get_successors().push_back(new SgAsmTarget(retval, NULL, *si));
+    retval->set_successors_complete(complete);
     return retval;
 }
 

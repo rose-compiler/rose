@@ -98,7 +98,7 @@ main(int argc, char *argv[])
         T1(rose_addr_t a): removal_addr(a) {}
         void visit(SgNode *node) {
             SgAsmBlock *bb = isSgAsmBlock(node);
-            SgAsmFunctionDeclaration *func = bb ? isSgAsmFunctionDeclaration(bb->get_parent()) : NULL;
+            SgAsmFunctionDeclaration *func = bb ? SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(bb) : NULL;
             if (func && bb->get_address()==removal_addr) {
                 SgAsmStatementPtrList::iterator found = std::find(func->get_statementList().begin(), 
                                                                   func->get_statementList().end(),
