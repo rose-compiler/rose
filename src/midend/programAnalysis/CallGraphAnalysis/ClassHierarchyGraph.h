@@ -1,43 +1,46 @@
 #ifndef CLASS_HIERARCHY_GRAPH_H
 #define CLASS_HIERARCHY_GRAPH_H
 
-typedef std::list<SgGraphNode *> ClassHierarchyNodePtrList;
-
+#include <vector>
+#include <boost/unordered_map.hpp>
+#include <boost/unordered_set.hpp>
 
 class ClassHierarchyWrapper
 {
-  SgNode *root;
-  SgIncidenceDirectedGraph* classGraph;
+public:
+    typedef boost::unordered_set<SgClassDefinition*> ClassDefSet;
+        
+private:
+    typedef boost::unordered_map<SgClassDefinition*,  ClassDefSet> ClassDefToClassDefsMap;
+    
+    /** Map from each class to all its immediate superclasses. */
+    ClassDefToClassDefsMap directParents;
+    
+    /** Map from each class to all its immediate subclasses. */
+    ClassDefToClassDefsMap directChildren;
+    
+    /** Map from class to all (strict) ancestors. */
+    ClassDefToClassDefsMap ancestorClasses;
+    
+    /** Map from class to all (strict) subclasses. */
+    ClassDefToClassDefsMap subclasses;
+    
+    SgIncidenceDirectedGraph* classGraph;
 
-  public:
+public:
 
-  enum EdgeDirection
-  {
-    EdgeOut,
-    EdgeIn
-  } ;
-  ClassHierarchyWrapper( SgNode *node );
-  SgClassDefinitionPtrList getSubclasses( SgClassDefinition * );
-  SgClassDefinitionPtrList getDirectSubclasses( SgClassDefinition * );
-  SgClassDefinitionPtrList getAncestorClasses( SgClassDefinition * );
+    ClassHierarchyWrapper(SgNode *node);
+    const ClassDefSet& getSubclasses(SgClassDefinition *) const;
+    const ClassDefSet& getDirectSubclasses(SgClassDefinition *) const;
+    const ClassDefSet& getAncestorClasses(SgClassDefinition *) const;
 
-  void setAST( SgNode *proj );
+private:
 
-#ifdef HAVE_SQLITE3
-  ClassHierarchyWrapper(  );
-
-  void writeHierarchyToDB ( sqlite3x::sqlite3_connection& gDB );
-  std::list<std::string> getDirectSubclasses( std::string className ,  sqlite3x::sqlite3_connection& gDB );
-  std::list<std::string> getSubclasses( std::string className ,  sqlite3x::sqlite3_connection& gDB );
-#endif
-
-  SgIncidenceDirectedGraph* getClassHierarchyGraph();
-  SgGraphNode* findNode(SgNode*);
-
-  private:
-  SgClassDefinitionPtrList getHierarchy ( SgClassDefinition *, EdgeDirection );
+    /** Computes the transitive closure of the child-parent class relationship.
+     * @param parents map from each class to its parents. 
+     * @param transitiveParents map from each class to all its ancestors */
+    static void buildAncestorsMap(const ClassDefToClassDefsMap& parents, ClassDefToClassDefsMap& transitiveParents);
 };
 
 
-// endif for CLASS_HIERARCHY_GRAPH_H
 #endif
