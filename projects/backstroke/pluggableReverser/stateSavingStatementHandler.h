@@ -17,6 +17,11 @@ class StateSavingStatementHandler : public StatementReversalHandler
 	//! Get all modified variables from the given statement. Note the returned defs don't contain variables
 	//! declared inside of this statement, and if one variable is a member of another one, we just include the latter one.
 	std::vector<VariableRenaming::VarName> getAllDefsAtNode(SgNode* node);
+	
+	//! Push/pop the given variable. 
+	void saveOneVariable(const VariableRenaming::VarName& varName, SgBasicBlock* forwardBody, SgBasicBlock* reverseBody,
+		SgBasicBlock* commitBody, const ClassHierarchyWrapper& classHierarchy);
+	
 public:
     StateSavingStatementHandler() { name_ = "State Saving Statement Handler"; }
 
