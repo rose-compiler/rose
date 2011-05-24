@@ -1,24 +1,18 @@
 #include "sage3basic.h"
-#include "BinaryCG.h"
+#include "BinaryFunctionCall.h"
 
-/** Build a function call graph from a global control flow graph.
- *
- *  Given a control flow graph (CFG) over multiple functions, create a function call graph (CG). The CG is formed by collapsing
- *  CFG vertices that belong to a single SgAsmFunctionDeclaration and replacing them with the SgAsmFunctionDeclaration.  When
- *  collapsing the CFG vertices into a CG vertex, the edges between those CFG vertices are not represented by a self-loop in
- *  the CG unless the target of the edge was the entry block of the function. */
-RoseBinaryAnalysis::FunctionCallGraph
-RoseBinaryAnalysis::build_cg(ControlFlowGraph &cfg)
+void
+BinaryAnalysis::FunctionCall::build_graph(const ControlFlow::Graph &cfg, Graph &cg/*out*/)
 {
-    FunctionCallGraph cg;
-
-    typedef boost::graph_traits<FunctionCallGraph>::vertex_descriptor CG_Vertex;
-    typedef boost::graph_traits<ControlFlowGraph>::vertex_descriptor CFG_Vertex;
+    typedef boost::graph_traits<Graph>::vertex_descriptor CG_Vertex;
+    typedef boost::graph_traits<ControlFlow::Graph>::vertex_descriptor CFG_Vertex;
     typedef std::map<SgAsmFunctionDeclaration*, CG_Vertex> FunctionVertexMap;
+
+    cg.clear();
 
     /* Add CG vertices by collapsing CFG nodes that belong to a common function. */
     FunctionVertexMap fv_map;
-    boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
+    boost::graph_traits<ControlFlow::Graph>::vertex_iterator vi, vi_end;
     for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
         SgAsmBlock *block = get(boost::vertex_name, cfg, *vi);
         SgAsmFunctionDeclaration *func = block->get_enclosing_function();
@@ -31,7 +25,7 @@ RoseBinaryAnalysis::build_cg(ControlFlowGraph &cfg)
     }
 
     /* Add edges whose target is a function entry block. */
-    boost::graph_traits<ControlFlowGraph>::edge_iterator ei, ei_end;
+    boost::graph_traits<ControlFlow::Graph>::edge_iterator ei, ei_end;
     for (boost::tie(ei, ei_end)=edges(cfg); ei!=ei_end; ++ei) {
         CFG_Vertex cfg_a = source(*ei, cfg);
         CFG_Vertex cfg_b = target(*ei, cfg);
@@ -44,28 +38,30 @@ RoseBinaryAnalysis::build_cg(ControlFlowGraph &cfg)
         if (block_b==func_b->get_entry_block())
             add_edge(cg_a, cg_b, cg);
     }
+}
 
+BinaryAnalysis::FunctionCall::Graph
+BinaryAnalysis::FunctionCall::build_graph(const ControlFlow::Graph &cfg)
+{
+    Graph cg;
+    build_graph(cfg, cg);
     return cg;
 }
 
-/** Build a function call graph for an AST.
- *
- *  Builds a function call graph (CG) for part of an AST rooted at @p root.  The result is identical to the graph returned when
- *  we build a CG from a control flow graph (CFG) of the same subtree, but this function is more efficient since it never
- *  constructs the CFG. */
-RoseBinaryAnalysis::FunctionCallGraph
-RoseBinaryAnalysis::build_cg(SgNode *root)
+void
+BinaryAnalysis::FunctionCall::build_graph(SgNode *root, Graph &cg/*out*/)
 {
-    typedef boost::graph_traits<FunctionCallGraph>::vertex_descriptor Vertex;
+    typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
     typedef std::map<SgAsmFunctionDeclaration*, Vertex> FunctionVertexMap;
     FunctionVertexMap fv_map;
-    FunctionCallGraph cg;
+
+    cg.clear();
 
     /* Visiter that adds a vertex for each unique function. */
-    struct VertexAdder: public SgSimpleProcessing {
-        FunctionCallGraph &cg;
+    struct VertexAdder: public AstSimpleProcessing {
+        Graph &cg;
         FunctionVertexMap &fv_map;
-        VertexAdder(FunctionCallGraph &cg, FunctionVertexMap &fv_map): cg(cg), fv_map(fv_map) {}
+        VertexAdder(Graph &cg, FunctionVertexMap &fv_map): cg(cg), fv_map(fv_map) {}
         void visit(SgNode *node) {
             SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
             if (func) {
@@ -77,10 +73,10 @@ RoseBinaryAnalysis::build_cg(SgNode *root)
     };
 
     /* Visitor that adds edges for each vertex.  Traversal should be over one function at a time. */
-    struct EdgeAdder: public SgSimpleProcessing {
-        FunctionCallGraph &cg;
+    struct EdgeAdder: public AstSimpleProcessing {
+        Graph &cg;
         FunctionVertexMap &fv_map;
-        EdgeAdder(FunctionCallGraph &cg, FunctionVertexMap &fv_map): cg(cg), fv_map(fv_map) {}
+        EdgeAdder(Graph &cg, FunctionVertexMap &fv_map): cg(cg), fv_map(fv_map) {}
         SgAsmFunctionDeclaration *function_of(SgAsmBlock *block) {
             return block ? block->get_enclosing_function() : NULL;
         }
@@ -103,11 +99,17 @@ RoseBinaryAnalysis::build_cg(SgNode *root)
     };
 
     VertexAdder(cg, fv_map).traverse(root, preorder);
-    boost::graph_traits<FunctionCallGraph>::vertex_iterator vi, vi_end;
+    boost::graph_traits<Graph>::vertex_iterator vi, vi_end;
     for (boost::tie(vi, vi_end)=vertices(cg); vi!=vi_end; ++vi) {
         SgAsmFunctionDeclaration *source_func = get(boost::vertex_name, cg, *vi);
         EdgeAdder(cg, fv_map).traverse(source_func, preorder);
     }
+}
 
+BinaryAnalysis::FunctionCall::Graph
+BinaryAnalysis::FunctionCall::build_graph(SgNode *root)
+{
+    Graph cg;
+    build_graph(root, cg);
     return cg;
 }

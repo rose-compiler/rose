@@ -535,7 +535,9 @@ Grammar::setUpBinaryInstructions ()
                                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmBlock.setDataPrototype("SgAsmTargetPtrList", "successors", "",
                                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmBlock.setDataPrototype("bool", "successors_complete", "",
+     AsmBlock.setDataPrototype("bool", "successors_complete", "= false",
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmBlock.setDataPrototype("SgAsmBlock*", "immediate_dominator", "=NULL",
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
