@@ -366,9 +366,9 @@ marker_atom(freq(marker(Ms, M), _), Atom) :-
   concat_atom(Xs, '_', Atom), !.
 
 
-% Get the loop bound annotation of a basic block
-get_loopbound(basic_block(Stmts, _An, _Ai, _Fi), LoopBound) :-
-  get_annot(Stmts, wcet_loopbound(LoopBound), _).
+% Get the upper loop bound annotation of a basic block
+get_loopbound(basic_block(Stmts, _An, _Ai, _Fi), UpperLoopBound) :-
+  get_annot(Stmts, wcet_loopbound(_..UpperLoopBound), _).
 
 % Insert a pragma if not there already
 update_pragma(zipper(Stmts, Ctx), Annot, zipper(Stmts, Ctx)) :-
