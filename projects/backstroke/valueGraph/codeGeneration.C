@@ -26,20 +26,19 @@ namespace
         }
         return var;
     }
-
-    SgStatement* getAncestorStatement(SgNode* node)
-    {
-        SgStatement* stmt;
-        while (!(stmt = isSgStatement(node)))
-        {
-            node = node->get_parent();
-            if (node == NULL)
-                return NULL;
-        }
-        return stmt;
-    }
-
 } // end of anonymous
+
+SgStatement* getAncestorStatement(SgNode* node)
+{
+    SgStatement* stmt;
+    while (!(stmt = isSgStatement(node)))
+    {
+        node = node->get_parent();
+        if (node == NULL)
+            return NULL;
+    }
+    return stmt;
+}
 
 SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr)
 {
@@ -121,6 +120,11 @@ SgExpression* buildPushFunctionCall(SgExpression* para)
 {
     return buildFunctionCallExp("push", buildVoidType(), 
             SageBuilder::buildExprListExp(para));
+}
+
+SgStatement* buildPushStatement(ValueNode* valNode)
+{
+    return buildExprStatement(buildPushFunctionCall(valNode->var.getVarRefExp()));
 }
 
 SgExpression* buildPopFunctionCall(SgType* type)

@@ -8,6 +8,9 @@ namespace Backstroke
 
 class ValueNode;
 
+//! Given a AST node, get the first statement which contains this node.
+SgStatement* getAncestorStatement(SgNode* node);
+
 //! Build a variable declaration.
 SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr = 0);
 
@@ -20,8 +23,11 @@ void instrumentPushFunction(ValueNode* node, SgFunctionDefinition* funcDef);
 //! the given AST node.
 void instrumentPushFunction(ValueNode* valNode, SgNode* astNode);
 
-//! Build a push function call. The input parameter is the paramenter of the push function.
+//! Build a push function call expression. The input parameter is the paramenter of the push function.
 SgExpression* buildPushFunctionCall(SgExpression* para);
+
+//! Build a push function call statement. The input parameter is the paramenter of the push function.
+SgStatement* buildPushStatement(ValueNode* valNode);
 
 //! Build a pop function call.
 SgExpression* buildPopFunctionCall(SgType* type);

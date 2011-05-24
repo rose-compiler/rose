@@ -33,7 +33,8 @@ int main(int argc, char *argv[])
     {
         SgFunctionDefinition* funcDef = isSgFunctionDefinition(*i);
         ROSE_ASSERT(funcDef != NULL);
-        if (eventList.count(funcDef->get_declaration()->get_name()) == 0)
+        string funcName = funcDef->get_declaration()->get_name();
+        if (eventList.count(funcName) == 0)
             continue;
 
         //string cfgFileName = "CFG" + boost::lexical_cast<string > (counter) + ".dot";
@@ -68,10 +69,10 @@ int main(int argc, char *argv[])
 
         //reverser.valueGraphToDot(vgFileName);
 
-        cout << "Function " << counter << " is processed.\n";
+        cout << "Function " << funcName << " is processed.\n";
         ++counter;
 
-        //break;
+        break;
     }
     // Prepend includes to test files.
     SgGlobal* globalScope = SageInterface::getFirstGlobalScope(project);

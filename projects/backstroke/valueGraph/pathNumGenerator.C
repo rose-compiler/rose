@@ -273,21 +273,21 @@ void PathNumManager::instrumentFunction(const string& pathNumName)
     SageInterface::fixVariableReferences(funcDef);
 }
 
-namespace 
-{
-    SgStatement* getAncestorStatement(SgNode* node)
-    {
-        SgStatement* stmt;
-        while (!(stmt = isSgStatement(node)))
-        {
-            node = node->get_parent();
-            if (node == NULL)
-                return NULL;
-        }
-        return stmt;
-    }
-
-} // end of anonymous
+//namespace 
+//{
+//    SgStatement* getAncestorStatement(SgNode* node)
+//    {
+//        SgStatement* stmt;
+//        while (!(stmt = isSgStatement(node)))
+//        {
+//            node = node->get_parent();
+//            if (node == NULL)
+//                return NULL;
+//        }
+//        return stmt;
+//    }
+//
+//} // end of anonymous
 
 void PathNumManager::insertPathNumberOnEdge(
         const BackstrokeCFG::Edge& cfgEdge,

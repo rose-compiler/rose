@@ -683,6 +683,11 @@ void EventReverser::generateCodeForBasicBlock(
         SageInterface::appendStatement(varDecl, scope);
     }
 #endif
+    
+    // This table is used to locate where to push a value. A function call may 
+    // modify several values, and the order of those push and pop should be correct.
+    // Without this table, the order may be wrong.
+    map<SgNode*, SgStatement*> pushLocations;
 
     // Generate the reverse code in reverse topological order of the route DAG.
     foreach (const VGEdge& edge, edges)
@@ -706,7 +711,26 @@ void EventReverser::generateCodeForBasicBlock(
             {
                 // State saving here.
                 // For forward event, we instrument a push function after the def.
-                instrumentPushFunction(valNode, ssEdge->killer);
+                
+                //instrumentPushFunction(valNode, ssEdge->killer);
+                
+                SgStatement* pushFuncStmt = buildPushStatement(valNode);
+                
+                // Find the correct location to put the push function call.
+                SgNode* killer = ssEdge->killer;
+                SgStatement* pushLocation = NULL;
+                if (pushLocations.count(killer) == 0)
+                {
+                    pushLocation = getAncestorStatement(killer);
+                    pushLocations[killer] = pushLocation;
+                }
+                else
+                    pushLocation = pushLocations[killer];
+                
+                SageInterface::insertStatementBefore(pushLocation, pushFuncStmt); 
+                // Update the location so that the next push is put before this push.
+                pushLocations[killer] = pushFuncStmt;
+                
                 //instrumentPushFunction(valNode, funcDef_);
                 rvsStmt = buildRestorationStmt(valNode);
             }

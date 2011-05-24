@@ -168,6 +168,9 @@ private:
     //! Build the main part of the value graph.
     void buildBasicValueGraph();
     
+    //! Process all data members of a class by adding them into state variables set.
+    void processClassDataMembers(SgClassDefinition* classDef);
+    
     //! Build the route graph representing search result.
     void buildRouteGraph(const std::map<VGEdge, PathSet>& routes);
     

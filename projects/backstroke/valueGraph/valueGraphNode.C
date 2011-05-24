@@ -86,7 +86,7 @@ std::string VersionedVariable::toString() const
 SgExpression* VersionedVariable::getVarRefExp() const
 {
     ROSE_ASSERT(!name.empty());
-    return SageBuilder::buildVarRefExp(name.back()->get_name());
+    return SageBuilder::buildVarRefExp(name.back());//->get_name());
 }
 
 std::string ValueNode::toString() const
@@ -204,7 +204,17 @@ std::string OperatorNode::toString() const
 
 std::string FunctionCallNode::toString() const
 {
-    string str = getFunctionCallExp()->getAssociatedFunctionDeclaration()->get_name();
+    string str;
+    if (SgFunctionCallExp* funcCallExp = getFunctionCallExp())
+    {
+        SgFunctionDeclaration* funcDecl = funcCallExp->getAssociatedFunctionDeclaration();
+        if (funcDecl)
+            str += funcDecl->get_name();
+    }
+    
+    if (str == "")
+        str += "NO NAME";
+    
     if (isVirtual)
         str += "\\nVIRTUAL";
     return str;
