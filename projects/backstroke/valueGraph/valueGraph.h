@@ -196,7 +196,7 @@ private:
     void insertFunctions();
     
     //! Remove empty if statements.
-    void removeEmptyIfStmt();
+    void removeEmptyIfStmt(SgNode* node);
 
     /** Given a VG node with a def, returns all VG nodes whose defs kill the given def.
      *  @param killedNode The value graph node which must contains a value node or phi node.
@@ -358,12 +358,14 @@ private:
     //! Generate code in a basic block of the reverse CFG.
     void generateCodeForBasicBlock(
             const std::vector<VGEdge>& edges,
-            SgScopeStatement* scope);
+            SgScopeStatement* rvsScope,
+            SgScopeStatement* cmtScope);
 
     void generateCode(
             size_t dagIndex,
             const ReverseCFG& rvsCFG,
             SgBasicBlock* rvsFuncBody,
+            SgBasicBlock* cmtFuncBody,
             const std::string& pathNumName);
     
 	static VGVertex nullVertex()

@@ -54,6 +54,9 @@ link-real:
 interface-real:
 	./valueGraph -c $(GTNETS_DIR)/interface-real.cc -I/home/hou1/GTNetS-MPI/SRC/
 
+l2proto802:
+	./valueGraph -c $(GTNETS_DIR)/l2proto802.11.cc -I/home/hou1/GTNetS-MPI/SRC/
+
 gtnets:
 	./valueGraph -c $(GTNETS_FILES) -I/home/hou1/GTNetS-MPI/SRC/
 

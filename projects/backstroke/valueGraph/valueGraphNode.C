@@ -61,6 +61,8 @@ namespace
                 return sizeof(void*);
             case V_SgTypedefType:
                 return getCostFromType(t->stripTypedefsAndModifiers());
+            case V_SgEnumType:
+                return sizeof(int);
             default:
                 cout << t->class_name() << endl;
                 ROSE_ASSERT(!"Unknow type.");
@@ -207,9 +209,12 @@ std::string FunctionCallNode::toString() const
     string str;
     if (SgFunctionCallExp* funcCallExp = getFunctionCallExp())
     {
+#if 0
         SgFunctionDeclaration* funcDecl = funcCallExp->getAssociatedFunctionDeclaration();
         if (funcDecl)
             str += funcDecl->get_name();
+#endif
+        str += funcCallExp->unparseToString();
     }
     
     if (str == "")

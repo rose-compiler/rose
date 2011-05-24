@@ -116,6 +116,15 @@ void EventReverser::buildBasicValueGraph()
             stateVariables_.insert(VarName(1, initName));
         } 
     }
+    
+#if 1
+    cout << "State vars:\n";
+    foreach (const VarName& var, stateVariables_)
+    {
+        cout << VersionedVariable(var, 0) << "\n";
+    }
+    cout << "\n\n";
+#endif
 
     /***************************************************************************/
 
@@ -212,34 +221,33 @@ void EventReverser::buildBasicValueGraph()
 
                 else if (SgVarRefExp* varRefExp = isSgVarRefExp(expr))
                 {
-
-                    
                     // Get the var name and version for lhs.
                     // We don't know if this var is a use or def now.
                     //cout << expr->unparseToString() << endl;
                     VersionedVariable var = getVersionedVariable(varRefExp);
                     
-                                        
-                    SgDeclarationStatement* varDecl = varRefExp->get_symbol()
-                            ->get_declaration()->get_declaration();
-                    
-                    // If this var ref is declared in a class and it is not static.
-                    if (isSgClassDefinition(varDecl->get_parent()) && 
-                            !SageInterface::isStatic(varDecl))
-                    {
-                        cout << "New var skipped: " << var << endl;
-                        continue;
-                    }
-                    
                     // It is possible that this var ref is actually a def. For example, a = 0;
                     map<VersionedVariable, VGVertex>::iterator iter = varVertexMap_.find(var);
                     if (iter != varVertexMap_.end())
+                    {
                         nodeVertexMap_[varRefExp] = iter->second;
+                    }
                     else
                     {
 //                        createValueNode(varRefExp->get_symbol()->get_declaration(), NULL);
 //                        cout << varRefExp->unparseToString() << endl;
 //                        ROSE_ASSERT(varVertexMap_.count(var));
+                        
+                        SgDeclarationStatement* varDecl = varRefExp->get_symbol()
+                                ->get_declaration()->get_declaration();
+
+                        // If this var ref is declared in a class and it is not static.
+                        if (isSgClassDefinition(varDecl->get_parent()) && 
+                                !SageInterface::isStatic(varDecl))
+                        {
+                            cout << "New var skipped: " << var << endl;
+                            continue;
+                        }
                     }
                 }
                 
@@ -261,8 +269,14 @@ void EventReverser::buildBasicValueGraph()
             // Cast expression.
             else if (SgCastExp* castExp = isSgCastExp(expr))
             {
-                ROSE_ASSERT(nodeVertexMap_.count(castExp->get_operand()));
-                nodeVertexMap_[castExp] = nodeVertexMap_[castExp->get_operand()];
+                //ROSE_ASSERT(nodeVertexMap_.count(castExp->get_operand()));
+                if (nodeVertexMap_.count(castExp->get_operand()) > 0)
+                    nodeVertexMap_[castExp] = nodeVertexMap_[castExp->get_operand()];
+                else
+                {
+                    cout << "The operand of cast expression " << castExp->unparseToString()
+                            << " is not added to VG yet!\n";
+                }
             }
             
             else if (SgFunctionCallExp* funcCall = isSgFunctionCallExp(expr))
@@ -1251,8 +1265,8 @@ VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
     if (node == NULL)
         return VersionedVariable();
     
-#if 0
-    cout << node->class_name() << endl;
+#if 1
+    cout << node->class_name() << " : " << node->unparseToString() << endl;
     node->get_file_info()->display();
 #endif
     
@@ -1267,6 +1281,10 @@ VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
         version = 0;
     }
 #endif
+    
+    if (varName.empty())
+        return VersionedVariable(varName, -1);
+    
     ROSE_ASSERT(!varName.empty());
 
     // First, check if there is any use at the given node. If not, it should be a def.

@@ -133,6 +133,11 @@ SgExpression* buildPopFunctionCall(SgType* type)
             type, SageBuilder::buildExprListExp());
 }
 
+SgStatement* buildPopStatement(SgType* type)
+{
+    return buildExprStatement(buildPopFunctionCall(type));
+}
+
 
 SgStatement* buildRestorationStmt(ValueNode* node)
 {
@@ -152,7 +157,7 @@ SgStatement* buildAssignOpertaion(ValueNode* lhs, ValueNode* rhs)
     return buildExprStatement(buildAssignOp(buildVariable(lhs), expr));
 }
 
-SgStatement* buildOperation(
+SgStatement* buildOperationStatement(
         ValueNode* result,
         VariantT type,
         ValueNode* lhs,

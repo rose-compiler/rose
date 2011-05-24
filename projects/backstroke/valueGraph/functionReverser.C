@@ -62,6 +62,7 @@ void EventReverser::generateCode()
     popScopeStack();
 
     SageInterface::prependStatement(pathNumDecl, rvsFuncDef_->get_body());
+    SageInterface::prependStatement(SageInterface::copyStatement(pathNumDecl), cmtFuncDef_->get_body());
         
 #if 0
     // Declare all temporary variables at the beginning of the reverse events.
@@ -115,7 +116,7 @@ void EventReverser::generateCode()
     ofile.close();
 #endif
 
-    generateCode(0, rvsCFG, rvsFuncDef_->get_body(), pathNumName);
+    generateCode(0, rvsCFG, rvsFuncDef_->get_body(), cmtFuncDef_->get_body(), pathNumName);
 
     pathNumManager_->instrumentFunction(pathNumName);
 
@@ -124,7 +125,8 @@ void EventReverser::generateCode()
     
     // It is likely that there are lots of empty if statements in reverse event.
     // Remove them here.
-    removeEmptyIfStmt();
+    removeEmptyIfStmt(rvsFuncDef_);
+    removeEmptyIfStmt(cmtFuncDef_);
 #endif
 }
 
@@ -667,9 +669,10 @@ void EventReverser::addReverseCFGNode(
 
 void EventReverser::generateCodeForBasicBlock(
         const vector<VGEdge>& edges,
-        SgScopeStatement* scope)
+        SgScopeStatement* rvsScope,
+        SgScopeStatement* cmtScope)
 {
-    SageBuilder::pushScopeStack(scope);
+    SageBuilder::pushScopeStack(rvsScope);
 
 #if 0
     // First, declare all temporary variables at the beginning of the reverse events.
@@ -685,7 +688,7 @@ void EventReverser::generateCodeForBasicBlock(
 #endif
     
     // This table is used to locate where to push a value. A function call may 
-    // modify several values, and the order of those push and pop should be correct.
+    // modify several values, and the order of those pushes and pops should be correct.
     // Without this table, the order may be wrong.
     map<SgNode*, SgStatement*> pushLocations;
 
@@ -701,6 +704,7 @@ void EventReverser::generateCodeForBasicBlock(
         if (valNode->isAvailable()) continue;
 
         SgStatement* rvsStmt = NULL;
+        SgStatement* cmtStmt = NULL;
 
         if (StateSavingEdge* ssEdge = isStateSavingEdge(routeGraph_[edge]))
         {
@@ -710,7 +714,7 @@ void EventReverser::generateCodeForBasicBlock(
             else
             {
                 // State saving here.
-                // For forward event, we instrument a push function after the def.
+                // For forward event, we instrument a push function before the def.
                 
                 //instrumentPushFunction(valNode, ssEdge->killer);
                 
@@ -733,6 +737,9 @@ void EventReverser::generateCodeForBasicBlock(
                 
                 //instrumentPushFunction(valNode, funcDef_);
                 rvsStmt = buildRestorationStmt(valNode);
+                
+                // Build the commit statement.
+                cmtStmt = buildPopStatement(valNode->getType());
             }
         }
         else if (ValueNode* rhsValNode = isValueNode(routeGraph_[tgt]))
@@ -747,12 +754,15 @@ void EventReverser::generateCodeForBasicBlock(
             ValueNode* rhsNode = NULL;
             boost::tie(lhsNode, rhsNode) = getOperands(tgt);
 
-            rvsStmt = buildOperation(valNode, opNode->type, lhsNode, rhsNode);
+            rvsStmt = buildOperationStatement(valNode, opNode->type, lhsNode, rhsNode);
         }
 
         // Add the generated statement to the scope.
         if (rvsStmt)
-            SageInterface::appendStatement(rvsStmt, scope);
+            SageInterface::appendStatement(rvsStmt, rvsScope);
+        
+        if (cmtStmt)
+            SageInterface::appendStatement(cmtStmt, cmtScope);
     }
 
 #if 0
@@ -780,29 +790,46 @@ void EventReverser::generateCode(
         size_t dagIndex,
         const ReverseCFG& rvsCFG,
         SgBasicBlock* rvsFuncBody,
+        SgBasicBlock* cmtFuncBody,
         const string& pathNumName)
 {
     using namespace SageBuilder;
+    using namespace SageInterface;
     
-    map<PathSet, SgScopeStatement*> scopeTable;
+    int counter = 0;
+    
+    // Build an anonymous namespace.
+    SgGlobal* globalScope = getGlobalScope(fwdFuncDef_);
+    SgNamespaceDeclarationStatement* anonymousNamespaceDecl = buildNamespaceDeclaration("", globalScope);
+    SgNamespaceDefinitionStatement* anonymousNamespace = buildNamespaceDefinition(anonymousNamespaceDecl);
+    prependStatement(anonymousNamespaceDecl, globalScope);
+    
+    map<PathSet, SgScopeStatement*> rvsScopeTable;
+    map<PathSet, SgScopeStatement*> cmtScopeTable;
 
     foreach (RvsCFGVertex node, boost::vertices(boost::make_reverse_graph(rvsCFG)))
     {
-        SgScopeStatement* scope = NULL;
+        SgScopeStatement* rvsScope = NULL;
+        SgScopeStatement* cmtScope = NULL;
 
         PathSet paths = rvsCFG[node].first;
         //cout << "&&& " << paths << endl;
         // If this node contains all paths, its scope is the reverse function body.
         if (paths.flip().none())
-            scope = rvsFuncBody;
+        {
+            rvsScope = rvsFuncBody;
+            cmtScope = cmtFuncBody;
+        }
         else
         {
-            ROSE_ASSERT(scopeTable.count(rvsCFG[node].first));
-            scope = scopeTable[rvsCFG[node].first];
+            ROSE_ASSERT(rvsScopeTable.count(rvsCFG[node].first));
+            ROSE_ASSERT(cmtScopeTable.count(rvsCFG[node].first));
+            rvsScope = rvsScopeTable[rvsCFG[node].first];
+            cmtScope = cmtScopeTable[rvsCFG[node].first];
         }
 
         // Generate all code in the scope of this node.
-        generateCodeForBasicBlock(rvsCFG[node].second, scope);
+        generateCodeForBasicBlock(rvsCFG[node].second, rvsScope, cmtScope);
 
         vector<RvsCFGEdge> outEdges;
         foreach (const RvsCFGEdge& outEdge, boost::out_edges(node, rvsCFG))
@@ -826,7 +853,8 @@ void EventReverser::generateCode(
             if (outEdges.empty())
             {
                 //cout << "Path added: " << condPaths << endl;
-                scopeTable[condPaths] = scope;
+                rvsScopeTable[condPaths] = rvsScope;
+                cmtScopeTable[condPaths] = cmtScope;
                 break;
             }
             
@@ -842,9 +870,10 @@ void EventReverser::generateCode(
 //                condPaths = paths2;
 
             // Build every thing in the scope of this node.
-            pushScopeStack(scope);
+            pushScopeStack(rvsScope);
 
             vector<SgExpression*> conditions;
+            vector<int> pathNums;
 
             // Find the path set with the minimum number of paths, then build a
             // logical or expression.
@@ -854,6 +883,8 @@ void EventReverser::generateCode(
                 if (condPaths[i])
                 {
                     size_t val = pathNumManager_->getPathNumber(dagIndex, i);
+                    pathNums.push_back(val);
+                    
                     SgVarRefExp* numVar = buildVarRefExp(pathNumName);
                     SgIntVal* intVal = buildIntVal(val);
                     SgExpression* cond = buildEqualityOp(numVar, intVal);
@@ -869,19 +900,65 @@ void EventReverser::generateCode(
                 else
                     condition = buildOrOp(condition, cond);
             }
+            
+            // Here we put all path numbers into an array then do a binary search
+            // on this array. It can improve the performance.
+            
+            if (conditions.size() > 4)
+            {
+                // Build an array containing all path numbers.
+                
+                //pushScopeStack(anonymousNamespace);
+                
+                SgArrayType* pathNumArrayType = 
+                        buildArrayType(buildIntType(), buildIntVal(pathNums.size()));
+                
+                vector<SgExpression*> pathNumExps;
+                foreach (int num, pathNums)
+                    pathNumExps.push_back(buildIntVal(num));
+                
+                SgInitializer* initList = 
+                        buildAggregateInitializer(buildExprListExp(pathNumExps));
+                
+                string arrayName = "conditions" + boost::lexical_cast<string>(counter++);
+                SgVariableDeclaration* pathNumArray = 
+                        buildVariableDeclaration(arrayName, pathNumArrayType, initList, anonymousNamespace);
+                setStatic(pathNumArray);
+                
+                //anonymousNamespace->append_declaration(pathNumArray);
+                prependStatement(pathNumArray, rvsFuncBody);
+                prependStatement(copyStatement(pathNumArray), cmtFuncBody);
+                
+                //popScopeStack();
+                
+                SgExprListExp* para = 
+                        buildExprListExp(buildVarRefExp(pathNumArray), buildVarRefExp(pathNumName));
+                condition = buildFunctionCallExp("__check__", buildBoolType(), para);
+            }
 
-            SgBasicBlock* trueBody = buildBasicBlock();
-            SgBasicBlock* falseBody = buildBasicBlock();
-            SgIfStmt* ifStmt = 
-                    buildIfStmt(buildExprStatement(condition), trueBody, falseBody);
+            SgBasicBlock* rvsTrueBody = buildBasicBlock();
+            SgBasicBlock* rvsFalseBody = buildBasicBlock();
+            SgIfStmt* rvsIfStmt = 
+                    buildIfStmt(buildExprStatement(condition), rvsTrueBody, rvsFalseBody);
+            
+            SgBasicBlock* cmtTrueBody = buildBasicBlock();
+            SgBasicBlock* cmtFalseBody = buildBasicBlock();
+            SgIfStmt* cmtIfStmt = 
+                    buildIfStmt(buildExprStatement(
+                            copyExpression(condition)), 
+                            cmtTrueBody, cmtFalseBody);
 
             // Add this if statement to the scope.
-            SageInterface::appendStatement(ifStmt, scope);
+            appendStatement(rvsIfStmt, rvsScope);
+            appendStatement(cmtIfStmt, cmtScope);
 
             // Assign the scope to successors.
             //cout << "Path added: " << condPaths << endl;
-            scopeTable[condPaths] = trueBody;
-            scope = falseBody;
+            rvsScopeTable[condPaths] = rvsTrueBody;
+            cmtScopeTable[condPaths] = cmtTrueBody;
+            
+            rvsScope = rvsFalseBody;
+            cmtScope = cmtFalseBody;
 //            
 //            if (condPaths == paths1)
 //            {
@@ -897,10 +974,6 @@ void EventReverser::generateCode(
             popScopeStack();
             //continue;
         }
-//        if (outEdges.size() > 2)
-//        {
-//            ROSE_ASSERT(!"Have not handled this case!");
-//        }
     }
 
 }
@@ -966,7 +1039,7 @@ void EventReverser::generateReverseFunction(
             ValueNode* rhsNode = NULL;
             boost::tie(lhsNode, rhsNode) = getOperands(tar, route);
 
-            rvsStmt = buildOperation(valNode, opNode->type, lhsNode, rhsNode);
+            rvsStmt = buildOperationStatement(valNode, opNode->type, lhsNode, rhsNode);
         }
 
         // Add the generated statement to the scope.
@@ -1015,9 +1088,9 @@ void EventReverser::insertFunctions()
     insertStatementAfter(rvsFuncDecl, cmtFuncDecl);
 }
 
-void EventReverser::removeEmptyIfStmt()
+void EventReverser::removeEmptyIfStmt(SgNode* node)
 {    
-    vector<SgIfStmt*> ifStmts = BackstrokeUtility::querySubTree<SgIfStmt>(rvsFuncDef_);
+    vector<SgIfStmt*> ifStmts = BackstrokeUtility::querySubTree<SgIfStmt>(node);
     foreach (SgIfStmt* ifStmt, ifStmts)
     {
         SgBasicBlock* trueBody = isSgBasicBlock(ifStmt->get_true_body());

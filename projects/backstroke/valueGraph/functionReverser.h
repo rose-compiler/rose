@@ -32,13 +32,16 @@ SgStatement* buildPushStatement(ValueNode* valNode);
 //! Build a pop function call.
 SgExpression* buildPopFunctionCall(SgType* type);
 
+//! Build a pop function call statement.
+SgStatement* buildPopStatement(SgType* type);
+
 //! Build a statement to restore the given node.
 SgStatement* buildRestorationStmt(ValueNode* node);
 
 // If rhs is NULL, it's an assignment to itself, like a_1 = a;
 SgStatement* buildAssignOpertaion(ValueNode* lhs, ValueNode* rhs = NULL);
 
-SgStatement* buildOperation(
+SgStatement* buildOperationStatement(
         ValueNode* result,
         VariantT type,
         ValueNode* lhs,
