@@ -249,7 +249,7 @@ public:
         class Anonymous {
         private:
             Anonymous(const Anonymous &other) { abort(); }
-            Anonymous &operator=(const Anonymous &other) { abort(); }
+            Anonymous &operator=(const Anonymous &other) { abort(); return *this; } // return is to silence Klockwork
         public:
             Anonymous(): refcount(1), base(NULL) {}
             size_t refcount;

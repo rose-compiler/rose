@@ -17,6 +17,8 @@ using namespace std;
 using namespace boost;
 
 
+#define foreach BOOST_FOREACH
+
 int main(int argc, char *argv[])
 {
   // Build the AST used by ROSE
@@ -48,11 +50,20 @@ int main(int argc, char *argv[])
 	filteredCfg.toDot("filteredCFG.dot");
 
 	cout << num_vertices(cfg) << endl;
+
+    // Find all loops.
+    vector<CFG::Vertex> headers = cfg.getAllLoopHeaders();
+    foreach (CFG::Vertex v, headers)
+    {
+        Backstroke::writeCFGNode(cout, *cfg[v]);
+        cout << '\n';
+    }
+
 	//Backstroke::FilteredCFG rvsCfg = cfg;//.makeReverseCopy();
 	//rvsCfg.toDot("CFG.dot");
 	//buildDominatorTree(rvsCfg);
 
-#if 1
+#if 0
 	Backstroke::CDG<CFG> cdg(cfg);
 	cdg.toDot("CDG.dot");
 

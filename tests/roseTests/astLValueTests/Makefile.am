@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-EXTRA_DIST =
+EXTRA_DIST = test_astLValues.C
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
@@ -19,7 +19,7 @@ TESTCODE_INCLUDES =
 CLEANFILES = rose_*.C rose_*.c output
 
 check-local: testLValues
-	./testLValues $(srcdir)/test_astLValues.C | tee output
+	./testLValues $(srcdir)/test_astLValues.C | tee output; [ $${PIPESTATUS[0]} -eq 0 ]
 	@echo "*********************************************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/astLValueTests/testLValues: make check rule complete (terminated normally) ***"
 	@echo "*********************************************************************************************************************"

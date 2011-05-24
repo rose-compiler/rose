@@ -1,4 +1,4 @@
-foo -> A::c
 A::a ->
 A::b ->
 A::c ->
+foo -> A::c

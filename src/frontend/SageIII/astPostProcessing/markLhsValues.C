@@ -128,7 +128,7 @@ MarkLhsValues::visit(SgNode* node)
                        }
                   }
 
-               SgExpression* rhs = binaryOperator->get_rhs_operand();
+               //SgExpression* rhs = binaryOperator->get_rhs_operand();
                // Liao 3/14/2011. This function is called by builders for binary expressions. 
                // These builders can accept empty right hand operands.
                // ROSE_ASSERT(rhs != NULL);
