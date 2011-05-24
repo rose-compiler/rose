@@ -115,16 +115,17 @@ $(TESTCODES_REQUIRED_TO_PASS)
 
 ROSE_FLAGS = -rose:caf2.0 -rose:skip_syntax_check -rose:skipfinalCompileStep
 
-PASSING_TEST_Objects = ${TESTCODES:.f90=.o}
-TEST_Objects = ${ALL_TESTCODES:.f90=.o}
+PASSING_TEST_Objects = ${TESTCODES:.caf=.o}
+TEST_Objects = ${ALL_TESTCODES:.caf=.o}
 
-$(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.f90)
-	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.f90)
 
-../../testTranslator:
-	cd ../..; $(MAKE) testTranslator
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
-# QMTEST_Objects = ${ALL_TESTCODES:.f90=.qmt}
+$(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.caf)
+	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.caf)
+
+#../../testTranslator:
+#	cd ../..; $(MAKE) testTranslator
 
 # put the headers here for now. TODO: Move them to a better place
 EXTRA_DIST = $(ALL_TESTCODES) 
@@ -133,8 +134,17 @@ check-local:
 	@echo "Tests for CAF2 examples."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***********************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/CAF2_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/CompileTests/CAF2_tests: make check rule complete (terminated normally) *****"
 	@echo "***********************************************************************************************"
+
+else
+
+# Fortran support not available in ROSE unless specified on the configure command line.
+check-local:
+    @echo "***********************************************************************************"
+    @echo "****** ROSE/tests/CompileTests/CAF2_tests: FORTRAN NOT CONFIGURED IN ROSE *********"
+    @echo "***********************************************************************************"
+endif
 
 clean-local:
 	rm -f *.o rose_*.* *.rmod
