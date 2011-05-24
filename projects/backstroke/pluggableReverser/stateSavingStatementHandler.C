@@ -104,6 +104,14 @@ SgType* removePointerOrReferenceType(SgType* t)
 	return t;
 }
 
+SgStatement*  generateErrorHandling(const char* message)
+{
+	//For now we just generate exit(1)
+	SgExprListExp* params = SageBuilder::buildExprListExp(SageBuilder::buildIntVal(1));
+	SgType* returnType = SageBuilder::buildVoidType();
+	SgScopeStatement* scope = SageInterface::getFirstGlobalScope(SageInterface::getProject());
+	return SageBuilder::buildFunctionCallStmt("exit", returnType, params, scope);
+}
 
 void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarName& varName, SgBasicBlock* forwardBody, 
 		SgBasicBlock* reverseBody, SgBasicBlock* commitBody, const ClassHierarchyWrapper& classHierarchy)
@@ -139,6 +147,12 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 				{
 					if (!SageInterface::isPureVirtualClass(subclass->get_declaration()->get_type(), classHierarchy))
 						concreteSubclasses.insert(subclass);
+				}
+				
+				//Don't forget to include the parent class itself
+				if (!SageInterface::isPureVirtualClass(classType, classHierarchy))
+				{
+					concreteSubclasses.insert(classDef);
 				}
 
 				//Construct the appropriate cast for each concrete subclass.
@@ -201,15 +215,13 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 					}
 					else
 					{
-						printf("OH NO THE TYPE '%s' is not copy constructible!\n", castedVars[i]->get_type()->unparseToString().c_str());
+						printf("OH NO THE TYPE '%s' is not copy constructible!\n", 
+								castedVars[i]->get_type()->unparseToString().c_str());
 						printf("The type %s abstract\n", 
 								SageInterface::isPureVirtualClass(castedVars[i]->get_type(), classHierarchy) ? "IS" : "IS NOT");
 
 						//We insert exit(1). The simulation will exit if it finds a runtime type that it cannot save
-						SgExprListExp* params = SageBuilder::buildExprListExp(SageBuilder::buildIntVal(1));
-						SgType* returnType = SageBuilder::buildVoidType();
-						SgScopeStatement* scope = SageInterface::getFirstGlobalScope(SageInterface::getProject());
-						pushTrueBody = SageBuilder::buildFunctionCallStmt("exit", returnType, params, scope);
+						pushTrueBody = generateErrorHandling("The type is not copy constructible.");
 					}
 
 					SgExpression* conditional = typeComparisonExpressions[i];
@@ -227,6 +239,8 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 
 				if (!pushIfStatements.empty())
 				{
+					const char* errorMsg = "Encountered dynamic type that was not handled";
+					SageInterface::replaceStatement(pushIfStatements.back()->get_false_body(), generateErrorHandling(errorMsg));
 					SageInterface::prependStatement(pushIfStatements.front(), forwardBody);
 				}
 
