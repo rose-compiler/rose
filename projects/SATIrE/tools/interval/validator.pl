@@ -111,7 +111,10 @@ stmt_decls_infos_asserted(Statement, Decls, AI, FI, AssertedStatement) :-
   info_decls_assertions(PostInfo, Decls, PostAssertions),
   chain_up(PreAssertions, DA, AI, FI, PreStmt),
   chain_up(PostAssertions, DA, AI, FI, PostStmt),
-  flatten([PreStmt, Statement, PostStmt], AssertedStatement).
+  flatten([PreStmt, Statement, PostStmt], L),
+  (  L = [Stmt]
+  -> AssertedStatement = Stmt
+  ;  AssertedStatement = L).
 
 % added case to generate negative assertions for unreachable program points
 info_decls_assertions(Info, Decls, Assertions) :-
