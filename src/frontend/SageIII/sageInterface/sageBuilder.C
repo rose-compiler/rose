@@ -1629,6 +1629,18 @@ SgNewExp * SageBuilder::buildNewExp(SgType* type,
   return result;
 }
 
+SgDeleteExp* SageBuilder::buildDeleteExp(SgExpression* variable,
+                                         short is_array,
+                                         short need_global_specifier,
+                                         SgFunctionDeclaration* deleteOperatorDeclaration)
+{
+  SgDeleteExp* result = new SgDeleteExp(variable, is_array, 
+          need_global_specifier, deleteOperatorDeclaration);
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
 SgCastExp * SageBuilder::buildCastExp_nfi(SgExpression *  operand_i,
                 SgType * expression_type,
                 SgCastExp::cast_type_enum cast_type)
