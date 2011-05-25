@@ -104,6 +104,45 @@ SgType* removePointerOrReferenceType(SgType* t)
 	return t;
 }
 
+SgExpression* StateSavingStatementHandler::restoreOneVariable(const VariableRenaming::VarName& varName, SgType* pushedType)
+{
+	SgType* varDeclaredType = varName.back()->get_type();
+	SgType* dereferencedType = removePointerOrReferenceType(varDeclaredType);
+
+	SgExpression* assignedVarExpression = VariableRenaming::buildVariableReference(varName);
+
+	//Now, restore the value in the reverse code
+	SgExpression* poppedExpression = popVal(pushedType);
+
+	//C++ requires ints to be explictly cased to enums
+	if (isSgEnumType(dereferencedType))
+	{
+		poppedExpression = SageBuilder::buildCastExp(poppedExpression, dereferencedType);
+	}
+	
+	SgExpression* result = NULL;
+	
+	//For pointers, we have to call the copy constructor explicitly. We can't rely on the assignment operator,
+	//because the lhs pointer may be null
+	if (SageInterface::isPointerType(varDeclaredType))
+	{
+		SgExprListExp* constructorParam = SageBuilder::buildExprListExp(poppedExpression);
+		SgConstructorInitializer* copyConstructor = 
+				SageBuilder::buildConstructorInitializer(NULL, constructorParam, pushedType, false, true, true, true);
+		
+		SgNewExp* copiedVar = SageBuilder::buildNewExp(pushedType, NULL, copyConstructor, NULL, 0, NULL);
+		
+		SgAssignOp* assignCopy = SageBuilder::buildAssignOp(assignedVarExpression, copiedVar);
+		result = assignCopy;
+	}
+	else
+	{
+		result = SageBuilder::buildAssignOp(assignedVarExpression, poppedExpression);
+	}
+	
+	return result;
+}
+
 SgStatement*  generateErrorHandling(const char* message)
 {
 	//For now we just generate exit(1)
@@ -249,20 +288,18 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 				vector<SgStatement*> casesWithAssignments, casesWithoutAssignment;
 				for (size_t i = 0; i < castedVars.size(); i++)
 				{
-					//We want to build an assignment like "var = pop<var type>()";
-					SgExpression* varExpression = SageInterface::copyExpression(castedVars[i]);
-					SgExpression* poppedVal = popVal(varExpression->get_type());
-					SgAssignOp* assignment = SageBuilder::buildAssignOp(varExpression, poppedVal);
+                    //Build the actual assignment statement that pops the value and assigns it to the variable
+					SgExpression* assign = restoreOneVariable(varName, castedVars[i]->get_type());
 
 					//Perform the assignment then break (for the reverse function)
-					SgStatement* caseBody = SageBuilder::buildBasicBlock(SageBuilder::buildExprStatement(assignment),
+					SgStatement* caseBody = SageBuilder::buildBasicBlock(SageBuilder::buildExprStatement(assign),
 							SageBuilder::buildBreakStmt());
 
 					SgCaseOptionStmt* caseStmt = SageBuilder::buildCaseOptionStmt(SageBuilder::buildIntVal(i), caseBody);
 					casesWithAssignments.push_back(caseStmt);
 
 					//Pop without performing an assignment (for the commit function)
-					SgStatement* popStatement = SageBuilder::buildExprStatement(SageInterface::copyExpression(poppedVal));
+					SgStatement* popStatement = SageBuilder::buildExprStatement(popVal(castedVars[i]->get_type()));
 					SgStatement* commitCaseBody = SageBuilder::buildBasicBlock(popStatement, SageBuilder::buildBreakStmt());
 					casesWithoutAssignment.push_back(commitCaseBody);
 				}
@@ -315,19 +352,11 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 	SgExpression* fwd_exp = pushVal(valueToBePushedExpression);
 
 	//Now, restore the value in the reverse code
-	SgExpression* poppedExpression = popVal(valueToBePushedExpression->get_type());
-
-	//C++ requires ints to be explictly cased to enums
-	if (isSgEnumType(underlyingType))
-	{
-		poppedExpression = SageBuilder::buildCastExp(poppedExpression, underlyingType);
-	}
-	SgExpression* rvs_exp = SageBuilder::buildAssignOp(assignedVarExpression, poppedExpression);
-
+    SgExpression* assign = restoreOneVariable(varName, valueToBePushedExpression->get_type());
 	SgExpression* commitExpression = popVal(valueToBePushedExpression->get_type());
 
 	SageInterface::prependStatement(buildExprStatement(fwd_exp), forwardBody);
-	SageInterface::appendStatement(buildExprStatement(rvs_exp), reverseBody);
+	SageInterface::appendStatement(buildExprStatement(assign), reverseBody);
 	SageInterface::appendStatement(buildExprStatement(commitExpression), commitBody);
 }
 

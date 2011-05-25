@@ -21,6 +21,9 @@ class StateSavingStatementHandler : public StatementReversalHandler
 	//! Push/pop the given variable. 
 	void saveOneVariable(const VariableRenaming::VarName& varName, SgBasicBlock* forwardBody, SgBasicBlock* reverseBody,
 		SgBasicBlock* commitBody, const ClassHierarchyWrapper& classHierarchy);
+
+	//! Generates the code that pops a value from the stack and assigns it to the given variable.
+	SgExpression* restoreOneVariable(const VariableRenaming::VarName& varName, SgType* pushedType);
 	
 public:
     StateSavingStatementHandler() { name_ = "State Saving Statement Handler"; }
