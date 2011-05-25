@@ -706,7 +706,7 @@ public:
 
 private:
     RTS_Message() {abort();}
-    RTS_Message& operator=(RTS_Message&) {abort();}
+    RTS_Message& operator=(RTS_Message&) { abort(); return *this; } // return is to silence Klocwork
     void ctor();                                        /**< Constructor helper. */
     void dtor();                                        /**< Desctructor helper. */
     void terminate();                                   /**< Terminate line if necessary. */

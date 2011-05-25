@@ -176,7 +176,9 @@ these switches can be obtained by specifying the \"--rose-help\" switch.\n\
 #include "BinaryLoader.h"
 #include "VirtualMachineSemantics.h"
 #include "SMTSolver.h"
-#include "bincfg.h"
+#include "BinaryControlFlow.h"
+#include "BinaryFunctionCall.h"
+#include "BinaryDominance.h"
 
 /*FIXME: Rose cannot parse this file.*/
 #ifndef CXX_IS_ROSE_ANALYSIS
@@ -297,26 +299,17 @@ public:
         if (defn) {
             /* Scan through the function's instructions to find the range of addresses for the function. */
             rose_addr_t func_start=~(rose_addr_t)0, func_end=0;
-            size_t ninsns=0, nbytes=0;
-            SgAsmStatementPtrList func_stmts = defn->get_statementList();
-            for (size_t i=0; i<func_stmts.size(); i++) {
-                SgAsmBlock *bb = isSgAsmBlock(func_stmts[i]);
-                if (bb) {
-                    SgAsmStatementPtrList block_stmts = bb->get_statementList();
-                    for (size_t j=0; j<block_stmts.size(); j++) {
-                        SgAsmInstruction *insn = isSgAsmInstruction(block_stmts[j]);
-                        if (insn) {
-                            ninsns++;
-                            func_start = std::min(func_start, insn->get_address());
-                            func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
-                            nbytes += insn->get_raw_bytes().size();
-                        }
-                    }
-                }
+            size_t nbytes=0;
+            std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(defn);
+            for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+                SgAsmInstruction *insn = *ii;
+                func_start = std::min(func_start, insn->get_address());
+                func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
+                nbytes += insn->get_raw_bytes().size();
             }
 
             /* Reason that this is a function */
-            printf("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" %5zu/%-6zu ", ++nfuncs, func_start, func_end, ninsns, nbytes);
+            printf("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" %5zu/%-6zu ", ++nfuncs, func_start, func_end, insns.size(), nbytes);
             fputs(defn->reason_str(true).c_str(), stdout);
 
             /* Kind of function */
@@ -347,67 +340,87 @@ public:
 
 /* Unparser that outputs some extra information */
 class MyAsmUnparser: public AsmUnparser {
-private:
-    bool show_hashes;
-    bool show_syscall_names;
 public:
-    MyAsmUnparser(bool show_hashes, bool show_syscall_names)
-        : show_hashes(show_hashes), show_syscall_names(show_syscall_names) {
-        insn_linefeed = false; /* the instruction post() method adds it */
-        blk_detect_noop_seq = true;
-    }
-    virtual void pre(std::ostream &o, SgAsmBlock *blk) {
-        unsigned char sha1[20];
-        if (show_hashes && block_hash(blk, sha1)) {
-            o <<StringUtility::addrToString(blk->get_address()) 
-              <<": " <<digest_to_str(sha1) <<"\n";
+    MyAsmUnparser(bool show_hashes, bool show_syscall_names) {
+        if (show_hashes) {
+            function_callbacks.pre.append(&functionHash);
+            basicblock_callbacks.pre.append(&blockHash);
         }
-    }
-    virtual void pre(std::ostream &o, SgAsmFunctionDeclaration *func) {
-        unsigned char sha1[20];
-        if (show_hashes && function_hash(func, sha1)) {
-            o <<StringUtility::addrToString(func->get_entry_va())
-              <<": ============================ " <<digest_to_str(sha1) <<"\n";
+        if (show_syscall_names) {
+            insn_callbacks.post.append(&syscallName);
         }
     }
 
-    /* If the instruction is "INT 0x80" and EAX has a known value then append the system call name if any. */
-    virtual void post(std::ostream &o, SgAsmInstruction *_insn) {
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(_insn);
-        SgAsmBlock *block = isSgAsmBlock(_insn->get_parent());
-        if (show_syscall_names && block && insn && insn->get_kind()==x86_int) {
-            const SgAsmExpressionPtrList &opand_list = insn->get_operandList()->get_operands();
-            SgAsmExpression *expr = opand_list.size()==1 ? opand_list[0] : NULL;
-            if (expr && expr->variantT()==V_SgAsmByteValueExpression &&
-                0x80==SageInterface::getAsmConstant(isSgAsmValueExpression(expr))) {
+private:
+    /* Functor to add a hash to the beginning of basic block output. */
+    class BlockHash: public UnparserCallback {
+    public:
+        bool operator()(bool enabled, const BasicBlockArgs &args) {
+            unsigned char sha1[20];
+            if (enabled && block_hash(args.block, sha1))
+                args.output <<StringUtility::addrToString(args.block->get_address()) <<": " <<digest_to_str(sha1) <<"\n";
+            return enabled;
+        }
+    };
+    
+    /* Functor to add a hash to the beginning of every function. */
+    class FunctionHash: public UnparserCallback {
+    public:
+        bool operator()(bool enabled, const FunctionArgs &args) {
+            unsigned char sha1[20];
+            if (enabled && function_hash(args.func, sha1)) {
+                args.output <<StringUtility::addrToString(args.func->get_entry_va())
+                            <<": ============================ " <<digest_to_str(sha1) <<"\n";
+            }
+            return enabled;
+        }
+    };
+    
+    /* Functor to add syscall name after "INT 80" instructions */
+    class SyscallName: public UnparserCallback {
+    public:
+        bool operator()(bool enabled, const InsnArgs &args) {
+            SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
+            SgAsmBlock *block = SageInterface::getEnclosingNode<SgAsmBlock>(args.insn);
+            if (enabled && insn && block && insn->get_kind()==x86_int) {
+                const SgAsmExpressionPtrList &opand_list = insn->get_operandList()->get_operands();
+                SgAsmExpression *expr = opand_list.size()==1 ? opand_list[0] : NULL;
+                if (expr && expr->variantT()==V_SgAsmByteValueExpression &&
+                    0x80==SageInterface::getAsmConstant(isSgAsmValueExpression(expr))) {
 
-                const SgAsmStatementPtrList &stmts = block->get_statementList();
-                size_t int_n;
-                for (int_n=0; int_n<stmts.size(); int_n++)
-                    if (isSgAsmInstruction(stmts[int_n])==_insn)
-                        break;
+                    const SgAsmStatementPtrList &stmts = block->get_statementList();
+                    size_t int_n;
+                    for (int_n=0; int_n<stmts.size(); int_n++)
+                        if (isSgAsmInstruction(stmts[int_n])==args.insn)
+                            break;
 
-                typedef VirtualMachineSemantics::Policy Policy;
-                typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
-                Policy policy;
-                Semantics semantics(policy);
+                    typedef VirtualMachineSemantics::Policy Policy;
+                    typedef X86InstructionSemantics<Policy, VirtualMachineSemantics::ValueType> Semantics;
+                    Policy policy;
+                    Semantics semantics(policy);
 
-                try {
-                    semantics.processBlock(stmts, 0, int_n);
-                    if (policy.readGPR(x86_gpr_ax).is_known()) {
-                        int nr = policy.readGPR(x86_gpr_ax).known_value();
-                        extern std::map<int, std::string> linux32_syscalls; // defined in linux_syscalls.C
-                        const std::string &syscall_name = linux32_syscalls[nr];
-                        if (!syscall_name.empty())
-                            o <<" <" <<syscall_name <<">";
+                    try {
+                        semantics.processBlock(stmts, 0, int_n);
+                        if (policy.readGPR(x86_gpr_ax).is_known()) {
+                            int nr = policy.readGPR(x86_gpr_ax).known_value();
+                            extern std::map<int, std::string> linux32_syscalls; // defined in linux_syscalls.C
+                            const std::string &syscall_name = linux32_syscalls[nr];
+                            if (!syscall_name.empty())
+                                args.output <<" <" <<syscall_name <<">";
+                        }
+                    } catch (const Semantics::Exception&) {
+                    } catch (const Policy::Exception&) {
                     }
-                } catch (const Semantics::Exception&) {
-                } catch (const Policy::Exception&) {
                 }
             }
+            return enabled;
         }
-        o <<"\n";
-    }
+    };
+    
+private:
+    BlockHash blockHash;
+    FunctionHash functionHash;
+    SyscallName syscallName;
 };
 
 /* Generate the "label" attribute for a function node in a *.dot file. */
@@ -447,62 +460,119 @@ function_url_attr(SgAsmFunctionDeclaration *func)
 /* Prints a graph node for a function. If @p verbose is true then the basic blocks of the funtion are displayed along with
  * control flow edges within the function. */
 static std::string
-dump_function_node(std::ostream &sout, SgAsmFunctionDeclaration *func, BinaryCFG &cfg, bool verbose) 
+dump_function_node(std::ostream &sout, SgAsmFunctionDeclaration *func, BinaryAnalysis::ControlFlow::Graph &global_cfg,
+                   bool verbose) 
 {
     using namespace StringUtility;
 
-    struct Unparser: public AsmUnparser {
+    class Unparser: public AsmUnparser {
+    private:
         std::set<std::string> semantics_seen;
-        SgAsmFunctionDeclaration *cur_func;
-        Unparser(): cur_func(NULL) {
-            insn_show_bytes = false;
-            insn_linefeed = false;
-            blk_detect_noop_seq = true;
-            blk_remove_noop_seq = false;
-            blk_show_noop_warning = false;
-            blk_show_successors = false;
-            func_show_title = false;
-            interp_show_title = false;
-        }
-        virtual void pre(std::ostream &o, SgAsmInstruction*) {
-            o <<"<tr>"
-              <<"<td align=\"left\"" <<(insn_is_noop_seq?" bgcolor=\"gray50\"":"") <<">";
-        }
-        virtual void post(std::ostream &o, SgAsmInstruction*) {
-            o <<"</td></tr>";
-        }
-        virtual void pre(std::ostream &o, SgAsmBlock *b) {
-            std::string semantics_color = "green";
-            unsigned char sha1[20];
-            block_hash(b, sha1);
-            std::string sha1_str = digest_to_str(sha1);
-            if (semantics_seen.find(sha1_str)!=semantics_seen.end()) {
-                semantics_color = "orange";
-            } else {
-                semantics_seen.insert(sha1_str);
-            }
-            o <<"B" <<StringUtility::addrToString(b->get_address()) <<" [ label=<<table border=\"0\"";
-            if (b->get_address()==cur_func->get_entry_va()) o <<" bgcolor=\"lightskyblue1\"";
-            o <<"><tr><td align=\"left\" bgcolor=\"" <<semantics_color <<"\">" <<sha1_str <<"</td></tr>";
-        }
-        virtual void post(std::ostream &o, SgAsmBlock*b) {
-            SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(b->get_parent());
-            o <<"</table>>";
-            if (!b->get_complete_successors()) {
-                SgAsmInstruction *last_insn = isSgAsmInstruction(b->get_statementList().back());
-                if (isSgAsmx86Instruction(last_insn) && isSgAsmx86Instruction(last_insn)->get_kind()==x86_ret) {
-                    o <<", color=blue"; /*function return statement, not used as an unconditional branch*/
-                } else {
-                    o <<", color=red"; /*red implies that we don't have complete information for successors*/
+
+        /* Generates the GraphViz node for a basic block, and the HTML table header for the node's label. */
+        struct BasicBlockGraphvizNodeStart: public UnparserCallback {
+            std::set<std::string> &semantics_seen;
+            BasicBlockGraphvizNodeStart(std::set<std::string> &semantics_seen)
+                : semantics_seen(semantics_seen) {}
+            virtual bool operator()(bool enabled, const BasicBlockArgs &args) {
+                if (enabled) {
+                    std::string semantics_color = "green";
+                    unsigned char sha1[20];
+                    block_hash(args.block, sha1);
+                    std::string sha1_str = digest_to_str(sha1);
+                    if (semantics_seen.find(sha1_str)!=semantics_seen.end()) {
+                        semantics_color = "orange";
+                    } else {
+                        semantics_seen.insert(sha1_str);
+                    }
+                    args.output <<"B" <<StringUtility::addrToString(args.block->get_address()) <<" [ label=<<table border=\"0\"";
+                    SgAsmFunctionDeclaration *func = args.block->get_enclosing_function();
+                    if (func && args.block->get_address()==func->get_entry_va())
+                        args.output <<" bgcolor=\"lightskyblue1\"";
+                    args.output <<"><tr><td align=\"left\" bgcolor=\"" <<semantics_color <<"\">"
+                                <<sha1_str.substr(0, 16) <<"...</td></tr>";
                 }
-            } else if (func && b->get_address()==func->get_entry_va()) {
-                o <<", color=blue"; /*function entry node*/
+                return enabled;
             }
-            o <<" ];\n";
-        }
-        virtual void pre(std::ostream&, SgAsmFunctionDeclaration *func) {
-            semantics_seen.clear();
-            cur_func = func;
+        } basicBlockGraphvizNodeStart;
+
+        /* Generates the body of the basic block inside the GraphViz node. */
+        struct BasicBlockGraphvizNodeBody: public UnparserCallback {
+            virtual bool operator()(bool enabled, const BasicBlockArgs &args) {
+                if (enabled) {
+                    for (size_t i=0; i<args.insns.size(); i++) {
+                        std::ostringstream ss;
+                        args.unparser->unparse_insn(enabled, ss, args.insns[i], i);
+                        bool is_noop = i<args.unparser->insn_is_noop.size() && args.unparser->insn_is_noop[i];
+                        args.output <<"<tr>"
+                                    <<"<td align=\"left\"" <<(is_noop?" bgcolor=\"gray50\"":"") <<">"
+                                    <<StringUtility::htmlEscape(ss.str())
+                                    <<"</td></tr>";
+                    }
+                }
+                return enabled;
+            }
+        } basicBlockGraphvizNodeBody;
+
+        /* Generates the end of the HTML table for a GraphViz node label, and the rest of the information for the node. */
+        struct BasicBlockGraphvizNodeEnd: public UnparserCallback {
+            virtual bool operator()(bool enabled, const BasicBlockArgs &args) {
+                if (enabled) {
+                    SgAsmFunctionDeclaration *func = args.block->get_enclosing_function();
+                    args.output <<"</table>>";
+                    if (!args.block->get_successors_complete()) {
+                        assert(!args.block->get_statementList().empty());
+                        SgAsmInstruction *last_insn = isSgAsmInstruction(args.block->get_statementList().back());
+                        if (isSgAsmx86Instruction(last_insn) && isSgAsmx86Instruction(last_insn)->get_kind()==x86_ret) {
+                            args.output <<", color=blue"; /*function return statement, not used as an unconditional branch*/
+                        } else {
+                            args.output <<", color=red"; /*red implies that we don't have complete information for successors*/
+                        }
+                    } else if (func && args.block->get_address()==func->get_entry_va()) {
+                        args.output <<", color=blue"; /*function entry node*/
+                    }
+                    args.output <<" ];\n";
+                }
+                return enabled;
+            }
+        } basicBlockGraphvizNodeEnd;
+
+        /* Clear the per-function unparsing information. */
+        struct FunctionCleanup: public UnparserCallback {
+            std::set<std::string> &semantics_seen;
+            FunctionCleanup(std::set<std::string> &semantics_seen)
+                : semantics_seen(semantics_seen) {}
+            virtual bool operator()(bool enabled, const FunctionArgs &args) {
+                semantics_seen.clear();
+                return enabled;
+            }
+        } functionCleanup;
+
+    public:
+        Unparser()
+            : basicBlockGraphvizNodeStart(semantics_seen),
+              functionCleanup(semantics_seen) {
+
+            insn_callbacks.pre
+                .clear()
+                .append(&insnAddress);
+            insn_callbacks.post
+                .clear();
+
+            basicblock_callbacks.pre
+                .append(&basicBlockNoopUpdater)         /* calculate no-op subsequences needed by insns */
+                .append(&basicBlockGraphvizNodeStart);  /* beginning of GraphViz node */
+            basicblock_callbacks.unparse
+                .replace(&basicBlockBody, &basicBlockGraphvizNodeBody);
+            basicblock_callbacks.post
+                .clear()
+                .append(&basicBlockGraphvizNodeEnd);    /* end of GraphViz node */
+
+            function_callbacks.pre
+                .clear();
+            function_callbacks.post
+                .clear()
+                .append(&functionCleanup);
         }
     } unparser;
 
@@ -516,25 +586,31 @@ dump_function_node(std::ostream &sout, SgAsmFunctionDeclaration *func, BinaryCFG
         /* Write the node definitions (basic blocks of this function) */
         unparser.unparse(sout, func);
 
-        /* Write the edge definitions for internal flow control. Fall-through edges are black, non-fall-throughs are orange. */
-        std::vector<SgAsmBlock*> bbs = SageInterface::querySubTree<SgAsmBlock>(func, V_SgAsmBlock);
-        for (std::vector<SgAsmBlock*>::iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {
-            const SgAddressList &sucs = (*bbi)->get_cached_successors();
-            rose_addr_t fall_through_va = (*bbi)->get_fallthrough_va();
-            for (SgAddressList::const_iterator si=sucs.begin(); si!=sucs.end(); ++si) {
-                SgAsmBlock *target_block = cfg.block(*si);
-                SgAsmFunctionDeclaration *target_func = target_block ?
-                                                        isSgAsmFunctionDeclaration(target_block->get_parent()) : NULL;
-                if (target_func==func) {
-                    sout <<"    B" <<addrToString((*bbi)->get_address())
-                         <<" -> B" <<addrToString(*si);
-                    if (*si!=fall_through_va)
-                        sout <<" [ color=orange ]"; /* black for fall-through; orange for other */
-                    sout <<";\n";
+        /* Write the edge definitions for internal (intra-function) flow control. Fall-through edges are black,
+         * non-fall-throughs are orange. We could have just as easily used Boost's depth_first_search(), but our nested loops
+         * here allow us to short circuit the traversal and consider only the edges originating from blocks within this
+         * function. */
+        boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_iterator vi, vi_end;
+        for (boost::tie(vi, vi_end)=vertices(global_cfg); vi!=vi_end; ++vi) {
+            SgAsmBlock *src_block = get(boost::vertex_name, global_cfg, *vi);
+            SgAsmFunctionDeclaration *src_func = src_block->get_enclosing_function();
+            if (src_func==func) {
+                rose_addr_t src_fallthrough_va = src_block->get_fallthrough_va();
+                boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::out_edge_iterator ei, ei_end;
+                for (boost::tie(ei, ei_end)=out_edges(*vi, global_cfg); ei!=ei_end; ++ei) {
+                    SgAsmBlock *dst_block = get(boost::vertex_name, global_cfg, target(*ei, global_cfg));
+                    SgAsmFunctionDeclaration *dst_func = dst_block->get_enclosing_function();
+                    if (src_func==dst_func) {
+                        sout <<"    B" <<addrToString(src_block->get_address())
+                             <<" -> B" <<addrToString(dst_block->get_address());
+                        if (dst_block->get_address()!=src_fallthrough_va)
+                            sout <<" [ color=orange ]"; /* black for fall-through; orange for other */
+                        sout <<";\n";
+                    }
                 }
             }
         }
-        sout <<"  };\n"; /*subgraph*/
+        sout <<" };\n"; /*subgraph*/
     } else {
         sout <<"B" <<addrToString(func->get_entry_va())
              <<" [ " <<label_attr <<", " <<function_url_attr(func) <<" ];\n";
@@ -545,7 +621,8 @@ dump_function_node(std::ostream &sout, SgAsmFunctionDeclaration *func, BinaryCFG
 /* Create a graphvis *.dot file of the control-flow graph for the specified function, along with the call graph edges into and
  * out of the specified function. */
 static void
-dump_function_cfg(const std::string &fileprefix, SgAsmFunctionDeclaration *func, BinaryCFG &cfg, BinaryCG &cg)
+dump_function_cfg(const std::string &fileprefix, SgAsmFunctionDeclaration *func,
+                  BinaryAnalysis::ControlFlow::Graph &global_cfg)
 {
     using namespace StringUtility;
 
@@ -558,35 +635,38 @@ dump_function_cfg(const std::string &fileprefix, SgAsmFunctionDeclaration *func,
     sout <<"digraph " <<func_node_name <<" {\n"
          <<"  node [ shape = box ];\n";
 
-    std::string my_node = dump_function_node(sout, func, cfg, true);
-    Disassembler::AddressSet node_defined;      /* nodes (virtual addresses) that we've defined in this graph so far */
-    node_defined.insert(func->get_entry_va());
+    std::string my_node = dump_function_node(sout, func, global_cfg, true);
+    std::set<SgAsmFunctionDeclaration*> node_defined;
+    node_defined.insert(func);
 
     /* Add nodes and edges for functions that this function calls. The edges each go from one of this function's basic blocks
      * to either the entry node of another function or to the address of a block which has not been disassembled. The nodes
      * for the former case are collapsed function nodes with names beginning with "F"; while the latter case nodes have names
      * beginning with "B" and are shaded pink for higher visibility. */
-    BinaryCG::CallerMap::const_iterator caller_i = cg.caller_edges.find(func);
-    if (caller_i!=cg.caller_edges.end()) {
-        for (BinaryCG::CallToEdges::const_iterator ei=caller_i->second.begin(); ei!=caller_i->second.end(); ++ei) {
-            SgAsmBlock *src_bb = ei->first;
-            rose_addr_t dst_addr = ei->second;
-            if (node_defined.find(dst_addr)==node_defined.end()) {
-                SgAsmBlock *dst_bb = cfg.block(dst_addr);
-                SgAsmFunctionDeclaration *dst_func = dst_bb ? isSgAsmFunctionDeclaration(dst_bb->get_parent()) : NULL;
-                if (dst_func) {
-                    dump_function_node(sout, dst_func, cfg, false);
-                } else {
-                    /* Node is not present in the CFG, so print a "B" (block) node rather than an "F" (function) node. */
-                    sout <<"B" <<addrToString(dst_addr) <<" [ style=filled, color=lightpink ];\n";
+    boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_iterator vi, vi_end;
+    for (boost::tie(vi, vi_end)=vertices(global_cfg); vi!=vi_end; ++vi) {
+        SgAsmBlock *src_block = get(boost::vertex_name, global_cfg, *vi);
+        SgAsmFunctionDeclaration *src_func = src_block->get_enclosing_function();
+        if (src_func==func) {
+            boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::out_edge_iterator ei, ei_end;
+            for (boost::tie(ei, ei_end)=out_edges(*vi, global_cfg); ei!=ei_end; ++ei) {
+                SgAsmBlock *dst_block = get(boost::vertex_name, global_cfg, target(*ei, global_cfg));
+                SgAsmFunctionDeclaration *dst_func = dst_block->get_enclosing_function();
+                if (dst_block==dst_func->get_entry_block()) {
+                    /* This is a function call edge of the CFG */
+                    if (node_defined.find(dst_func)==node_defined.end()) {
+                        dump_function_node(sout, dst_func, global_cfg, false);
+                        node_defined.insert(dst_func);
+                    }
+                    sout <<"B" <<addrToString(src_block->get_address())
+                         <<" -> B" <<addrToString(dst_block->get_address())
+                         <<" [ color=blue ];\n";
                 }
-                node_defined.insert(dst_addr);
             }
-            sout <<"B" <<addrToString(src_bb->get_address()) <<" -> B" <<addrToString(dst_addr)
-                 <<" [ color=blue ];\n";
         }
     }
 
+#if 0
     /* Add nodes and edges for functions that call this function and the edge cardinality. */
     BinaryCG::CalleeMap::const_iterator callee_i = cg.callee_edges.find(func);
     if (callee_i!=cg.callee_edges.end()) {
@@ -602,6 +682,7 @@ dump_function_cfg(const std::string &fileprefix, SgAsmFunctionDeclaration *func,
                  <<" [ color=blue, label=\"" <<ei->second <<" call" <<(1==ei->second?"":"s") <<"\" ];\n";
         }
     }
+#endif
 
     sout <<"}\n";
     fputs(sout.str().c_str(), out);
@@ -614,18 +695,20 @@ dump_CFG_CG(SgNode *ast)
 {
     using namespace StringUtility;
 
-    std::vector<SgAsmFunctionDeclaration*> funcs = SageInterface::querySubTree<SgAsmFunctionDeclaration>
-                                                   (ast, V_SgAsmFunctionDeclaration);
-
     /* Create the control flow graph, but exclude blocks that are part of the "unassigned blocks" function. Note that if the
      * "-rose:partitioner_search -unassigned" switch is passed to the disassembler then the unassigned blocks will already
      * have been pruned from the AST anyway. */
-    BinaryCFG cfg(ast);
-    for (std::vector<SgAsmFunctionDeclaration*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi) {
-        if (0 != ((*fi)->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS))
-            cfg.erase(*fi);
+    BinaryAnalysis::ControlFlow::Graph global_cfg = BinaryAnalysis::ControlFlow().build_graph(ast);
+    {
+        boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_iterator vi, vi_end;
+        for (boost::tie(vi, vi_end)=vertices(global_cfg); vi!=vi_end; ++vi) {
+            SgAsmFunctionDeclaration *func = get(boost::vertex_name, global_cfg, *vi)->get_enclosing_function();
+            if (!func || 0!=(func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS)) {
+                clear_vertex(*vi, global_cfg);
+                remove_vertex(*vi, global_cfg);
+            }
+        }
     }
-    BinaryCG cg(cfg);
 
     /* Get the base name for the output files. */
     SgFile *srcfile = NULL;
@@ -633,50 +716,41 @@ dump_CFG_CG(SgNode *ast)
         srcfile = isSgFile(n);
     std::string filename = srcfile ? srcfile->get_sourceFileNameWithoutPath() : "x";
 
-    /* Generate a dot file for the function call graph. This is a slight bit complex because the CG has edges from blocks to
-     * functions but we need edges from functions to functions. Also, we want to annotate the edge with the number of calls. */
-    std::set<rose_addr_t> cg_defined_nodes;
-    fprintf(stderr, "  generating: cg");
-    FILE *out = fopen((filename+"-cg.dot").c_str(), "w");
-    ROSE_ASSERT(out);
+    /* Generate a dot file for the function call graph. */
     std::stringstream sout;
     sout <<"digraph callgraph {\n"
          <<"node [ shape = box ];\n";
-    for (BinaryCG::CallerMap::const_iterator i1=cg.caller_edges.begin(); i1!=cg.caller_edges.end(); ++i1) {
-        SgAsmFunctionDeclaration *caller = i1->first;
-        if (cg_defined_nodes.find(caller->get_entry_va())==cg_defined_nodes.end()) {
-            cg_defined_nodes.insert(caller->get_entry_va());
-            dump_function_node(sout, caller, cfg, false);
+    BinaryAnalysis::FunctionCall::Graph cg = BinaryAnalysis::FunctionCall().build_graph(global_cfg);
+    {
+        boost::graph_traits<BinaryAnalysis::FunctionCall::Graph>::vertex_iterator vi, vi_end;
+        for (boost::tie(vi, vi_end)=vertices(cg); vi!=vi_end; ++vi) {
+            SgAsmFunctionDeclaration *func = get(boost::vertex_name, cg, *vi);
+            dump_function_node(sout, func, global_cfg, false);
         }
-        typedef std::map<rose_addr_t/*callee_addr*/, size_t/*count*/> CalleeCounts;
-        CalleeCounts callee_counts;
-        for (BinaryCG::CallToEdges::const_iterator i2=i1->second.begin(); i2!=i1->second.end(); ++i2) {
-            callee_counts[i2->second]++;
-        }
-        for (CalleeCounts::iterator cci=callee_counts.begin(); cci!=callee_counts.end(); ++cci) {
-            rose_addr_t callee_addr = cci->first;
-            if (cg_defined_nodes.find(callee_addr)==cg_defined_nodes.end()) {
-                cg_defined_nodes.insert(callee_addr);
-                SgAsmBlock *callee_bb = cfg.block(callee_addr);
-                SgAsmFunctionDeclaration *callee_func = callee_bb ? isSgAsmFunctionDeclaration(callee_bb->get_parent()) : NULL;
-                if (callee_func) {
-                    dump_function_node(sout, callee_func, cfg, false);
-                } else {
-                    sout <<"  B" <<addrToString(callee_addr) <<" [ style=filled, color=lightpink ];\n";
-                }
-            }
-            sout <<"  B" <<addrToString(caller->get_entry_va()) <<" -> B" <<addrToString(callee_addr)
-                 <<" [ label=\"" <<cci->second <<"\" ];\n";
+    }
+    {
+        boost::graph_traits<BinaryAnalysis::FunctionCall::Graph>::edge_iterator ei, ei_end;
+        for (boost::tie(ei, ei_end)=edges(cg); ei!=ei_end; ++ei) {
+            SgAsmFunctionDeclaration *src_func = get(boost::vertex_name, cg, source(*ei, cg));
+            SgAsmFunctionDeclaration *dst_func = get(boost::vertex_name, cg, target(*ei, cg));
+            sout <<"B" <<addrToString(src_func->get_entry_va())
+                 <<" -> B" <<addrToString(dst_func->get_entry_va())
+                 <<" [label=\"0\" ];\n"; //FIXME: number of calls from src_func to dst_func
         }
     }
     sout <<"}\n";
-    fputs(sout.str().c_str(), out);
-    fclose(out);
+    {
+        FILE *out = fopen((filename + "-cg.dot").c_str(), "w");
+        assert(out!=NULL);
+        fputs(sout.str().c_str(), out);
+        fclose(out);
+    }
     
     /* Generate a dot file for each function */
+    std::vector<SgAsmFunctionDeclaration*> funcs = SageInterface::querySubTree<SgAsmFunctionDeclaration>(ast);
     for (std::vector<SgAsmFunctionDeclaration*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi) {
         if (0 == ((*fi)->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS))
-            dump_function_cfg(filename, *fi, cfg, cg);
+            dump_function_cfg(filename, *fi, global_cfg);
     }
 
     fprintf(stderr, "\n");
@@ -1131,6 +1205,20 @@ main(int argc, char *argv[])
         block->set_parent(interp);
     }
     
+
+#if 1 /* TESTING NEW FEATURE [RPM 2011-05-23] */
+    {
+        std::vector<SgAsmFunctionDeclaration*> functions = SageInterface::querySubTree<SgAsmFunctionDeclaration>(interp);
+        for (size_t i=0; i<functions.size(); i++) {
+            SgAsmFunctionDeclaration *func = functions[i];
+            BinaryAnalysis::ControlFlow::Graph cfg = BinaryAnalysis::ControlFlow().build_graph(func);
+            BinaryAnalysis::ControlFlow::Vertex start = (BinaryAnalysis::ControlFlow::Vertex)0;
+            assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
+            BinaryAnalysis::Dominance::Graph dg = BinaryAnalysis::Dominance().build_idom_graph(cfg, start);
+        }
+    }
+#endif
+
     /*------------------------------------------------------------------------------------------------------------------------
      * Show the results
      *------------------------------------------------------------------------------------------------------------------------*/

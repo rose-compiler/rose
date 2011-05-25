@@ -4,8 +4,7 @@ SUBDIRS = SemanticVerification libraryIdentification_tests Dwarf_tests Pin_tests
 
 EXTRA_DIST = \
 	runExecFormatsTest testShiftResizeSection.sh \
-        testSampleBinary.sh testSampleBinaries.conf testFunctionDetection.pl \
-	bincfg.h
+        testSampleBinary.sh testSampleBinaries.conf testFunctionDetection.pl
 
 # Forward declarations
 STATIC_TEST_TARGETS=

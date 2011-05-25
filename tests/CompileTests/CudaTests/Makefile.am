@@ -1,9 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-#########################################################################
-# These are C testcodes that test the new EDG Interface (using EDG 4.0) #
-#########################################################################
-
 bin_PROGRAMS = CudaTests
 
 # This tests the ability to read and regnerate the input CUDA code.
@@ -33,7 +29,7 @@ $(TESTCODES_Objects): ./CudaTests
 
 check-local:
 if ROSE_BUILD_EDG_WITH_CUDA_SUPPORT
-	@echo "Tests C for CUDA"
+	@echo "Tests C for CUDA support (parsing)"
 	@$(MAKE) $(TESTCODES_Objects)
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/CudaTests: make check rule complete (terminated normally) ******"

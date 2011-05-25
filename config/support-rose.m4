@@ -1221,6 +1221,23 @@ if test "x$enable_opencl" = "xyes"; then
 fi
 AC_SUBST(ROSE_USE_OPENCL_SUPPORT)
 
+# *******************************************************
+# Option to control building of OpenCL support in EDG 4.0
+# *******************************************************
+
+# TV (05/06/2011): This is part of optional building of OpenCL support in EDG 4.0
+AC_MSG_CHECKING([for building of OpenCL support in EDG 4.0])
+AC_ARG_ENABLE(edg_opencl, AS_HELP_STRING([--enable-edg-opencl], [Build EDG 4.0 with OpenCL support.]), [case "${enableval}" in
+  yes) edg_opencl=true ;;
+  no)  edg_opencl=false ;;
+  *)   edg_opencl=false ;;
+esac])
+AM_CONDITIONAL(ROSE_BUILD_EDG_WITH_OPENCL_SUPPORT, [test x$edg_opencl = xtrue])
+if test x$edg_opencl = xtrue; then
+  AC_MSG_WARN([Add OpenCL specific headers to the include-staging directory.])
+  GENERATE_OPENCL_SPECIFIC_HEADERS
+fi
+
 # *********************************************************************
 # Option to control internal support of PPL (Parma Polyhedron Library)
 # *********************************************************************
@@ -2370,6 +2387,7 @@ tests/CompileTests/MicrosoftWindows_tests/Makefile
 tests/CompileTests/nameQualificationAndTypeElaboration_tests/Makefile
 tests/CompileTests/NewEDGInterface_C_tests/Makefile
 tests/CompileTests/CudaTests/Makefile
+tests/CompileTests/OpenClTests/Makefile
 tests/CompileTests/EDG_4_x/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile

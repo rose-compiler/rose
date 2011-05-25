@@ -1748,7 +1748,7 @@ getVarRefForFormal(SgFunctionDefinition *functionDefinition,
   // Iterate over the formal parameters as represented by
   // SgInitializedNames.  
   const SgInitializedNamePtrList &formalParams = parameterList->get_args(); 
-  ROSE_ASSERT (formalNum >= 0 && formalNum < formalParams.size());
+  ROSE_ASSERT (formalNum >= 0 && ((size_t)formalNum) < formalParams.size());
   SgInitializedName *specifiedInitName = formalParams[formalNum];
   ROSE_ASSERT(specifiedInitName != NULL);
 
@@ -2452,8 +2452,8 @@ DefaultFunctionGenerator::generateDefaultFunctionCall(SgMemberFunctionDeclaratio
           cout<<"Generating copy constructor call for "<<parentClassDef->get_qualified_name().str()<<endl;
   }
 
-  SgMemberFunctionType *functype = 
-    generateDefaultFunctionType(enumFunctionType, parentClassDef);
+  //SgMemberFunctionType *functype = 
+  //  generateDefaultFunctionType(enumFunctionType, parentClassDef);
 
   // Create SgMemberFunctionSymbol.
   SgMemberFunctionSymbol *functionSymbol = isSgMemberFunctionSymbol(func->get_symbol_from_symbol_table());

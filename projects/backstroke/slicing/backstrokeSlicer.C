@@ -189,7 +189,7 @@ set<SgExpression*> Slicer::getDirectUses(SgNode* node, bool useDef)
 		return uses;
 	}
 
-	if (SgVariableDeclaration* varDecl = isSgVariableDeclaration(node))
+	if (isSgVariableDeclaration(node))
 	{
 		return uses;
 	}
