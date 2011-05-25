@@ -7,6 +7,7 @@
 
 #include "x86print.h"
 
+#include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
 #include <signal.h>
@@ -72,6 +73,339 @@ struct user_desc_32 {
     unsigned int  limit_in_pages:1;
     unsigned int  seg_not_present:1;
     unsigned int  useable:1;
+};
+
+/* Error numbers.  FIXME:  Are we sure that these host numbers are valid for the target machine also? I hope so, because we use
+ * these symbolic names throughout the syscall handling code in x86sim.C [RPM 2010-08-07] */
+static const Translate error_numbers[] = {
+    TE(EPERM), TE(ENOENT), TE(ESRCH), TE(EINTR), TE(EIO), TE(ENXIO), TE(E2BIG), TE(ENOEXEC),
+    TE(EBADF), TE(ECHILD), TE(EAGAIN), TE(ENOMEM), TE(EACCES), TE(EFAULT), TE(ENOTBLK),
+    TE(EBUSY), TE(EEXIST), TE(EXDEV), TE(ENODEV), TE(ENOTDIR), TE(EISDIR), TE(EINVAL),
+    TE(ENFILE), TE(EMFILE), TE(ENOTTY), TE(ETXTBSY), TE(EFBIG), TE(ENOSPC), TE(ESPIPE),
+    TE(EROFS), TE(EMLINK), TE(EPIPE), TE(EDOM), TE(ERANGE), TE(EDEADLK), TE(ENAMETOOLONG),
+    TE(ENOLCK), TE(ENOSYS), TE(ENOTEMPTY), TE(ELOOP), TE(ENOMSG), TE(EIDRM),
+#ifdef EAGAIN
+    TE(EAGAIN),
+#endif
+#ifdef EWOULDBLOCK
+    TE(EWOULDBLOCK),
+#endif
+#ifdef ECHRNG
+    TE(ECHRNG),
+#endif
+#ifdef EL2NSYNC
+    TE(EL2NSYNC),
+#endif
+#ifdef EL3HLT
+    TE(EL3HLT),
+#endif
+#ifdef EL3RST
+    TE(EL3RST),
+#endif
+#ifdef ELNRNG
+    TE(ELNRNG),
+#endif
+#ifdef EUNATCH
+    TE(EUNATCH),
+#endif
+#ifdef ENOCSI
+    TE(ENOCSI),
+#endif
+#ifdef EL2HLT
+    TE(EL2HLT),
+#endif
+#ifdef EBADE
+    TE(EBADE),
+#endif
+#ifdef EBADR
+    TE(EBADR),
+#endif
+#ifdef EXFULL
+    TE(EXFULL),
+#endif
+#ifdef ENOANO
+    TE(ENOANO),
+#endif
+#ifdef EBADRQC
+    TE(EBADRQC),
+#endif
+#ifdef EBADSLT
+    TE(EBADSLT),
+#endif
+#ifdef EBFONT
+    TE(EBFONT),
+#endif
+#ifdef ENOSTR
+    TE(ENOSTR),
+#endif
+#ifdef ENODATA
+    TE(ENODATA),
+#endif
+#ifdef ETIME
+    TE(ETIME),
+#endif
+#ifdef ENOSR
+    TE(ENOSR),
+#endif
+#ifdef ENONET
+    TE(ENONET),
+#endif
+#ifdef ENOPKG
+    TE(ENOPKG),
+#endif
+#ifdef EREMOTE
+    TE(EREMOTE),
+#endif
+#ifdef ENOLINK
+    TE(ENOLINK),
+#endif
+#ifdef EADV
+    TE(EADV),
+#endif
+#ifdef ESRMNT
+    TE(ESRMNT),
+#endif
+#ifdef ECOMM
+    TE(ECOMM),
+#endif
+#ifdef EPROTO
+    TE(EPROTO),
+#endif
+#ifdef EMULTIHOP
+    TE(EMULTIHOP),
+#endif
+#ifdef EDOTDOT
+    TE(EDOTDOT),
+#endif
+#ifdef EBADMSG
+    TE(EBADMSG),
+#endif
+#ifdef EOVERFLOW
+    TE(EOVERFLOW),
+#endif
+#ifdef ENOTUNIQ
+    TE(ENOTUNIQ),
+#endif
+#ifdef EBADFD
+    TE(EBADFD),
+#endif
+#ifdef EREMCHG
+    TE(EREMCHG),
+#endif
+#ifdef ELIBACC
+    TE(ELIBACC),
+#endif
+#ifdef ELIBBAD
+    TE(ELIBBAD),
+#endif
+#ifdef ELIBSCN
+    TE(ELIBSCN),
+#endif
+#ifdef ELIBMAX
+    TE(ELIBMAX),
+#endif
+#ifdef ELIBEXEC
+    TE(ELIBEXEC),
+#endif
+#ifdef EILSEQ
+    TE(EILSEQ),
+#endif
+#ifdef ERESTART
+    TE(ERESTART),
+#endif
+#ifdef ESTRPIPE
+    TE(ESTRPIPE),
+#endif
+#ifdef EUSERS
+    TE(EUSERS),
+#endif
+#ifdef ENOTSOCK
+    TE(ENOTSOCK),
+#endif
+#ifdef EDESTADDRREQ
+    TE(EDESTADDRREQ),
+#endif
+#ifdef EMSGSIZE
+    TE(EMSGSIZE),
+#endif
+#ifdef EPROTOTYPE
+    TE(EPROTOTYPE),
+#endif
+#ifdef ENOPROTOOPT
+    TE(ENOPROTOOPT),
+#endif
+#ifdef EPROTONOSUPPORT
+    TE(EPROTONOSUPPORT),
+#endif
+#ifdef ESOCKTNOSUPPORT
+    TE(ESOCKTNOSUPPORT),
+#endif
+#ifdef EOPNOTSUPP
+    TE(EOPNOTSUPP),
+#endif
+#ifdef EPFNOSUPPORT
+    TE(EPFNOSUPPORT),
+#endif
+#ifdef EAFNOSUPPORT
+    TE(EAFNOSUPPORT),
+#endif
+#ifdef EADDRINUSE
+    TE(EADDRINUSE),
+#endif
+#ifdef EADDRNOTAVAIL
+    TE(EADDRNOTAVAIL),
+#endif
+#ifdef ENETDOWN
+    TE(ENETDOWN),
+#endif
+#ifdef ENETUNREACH
+    TE(ENETUNREACH),
+#endif
+#ifdef ENETRESET
+    TE(ENETRESET),
+#endif
+#ifdef ECONNABORTED
+    TE(ECONNABORTED),
+#endif
+#ifdef ECONNRESET
+    TE(ECONNRESET),
+#endif
+#ifdef ENOBUFS
+    TE(ENOBUFS),
+#endif
+#ifdef EISCONN
+    TE(EISCONN),
+#endif
+#ifdef ENOTCONN
+    TE(ENOTCONN),
+#endif
+#ifdef ESHUTDOWN
+    TE(ESHUTDOWN),
+#endif
+#ifdef ETOOMANYREFS
+    TE(ETOOMANYREFS),
+#endif
+#ifdef ETIMEDOUT
+    TE(ETIMEDOUT),
+#endif
+#ifdef ECONNREFUSED
+    TE(ECONNREFUSED),
+#endif
+#ifdef EHOSTDOWN
+    TE(EHOSTDOWN),
+#endif
+#ifdef EHOSTUNREACH
+    TE(EHOSTUNREACH),
+#endif
+#ifdef EALREADY
+    TE(EALREADY),
+#endif
+#ifdef EINPROGRESS
+    TE(EINPROGRESS),
+#endif
+#ifdef ESTALE
+    TE(ESTALE),
+#endif
+#ifdef EUCLEAN
+    TE(EUCLEAN),
+#endif
+#ifdef ENOTNAM
+    TE(ENOTNAM),
+#endif
+#ifdef ENAVAIL
+    TE(ENAVAIL),
+#endif
+#ifdef EISNAM
+    TE(EISNAM),
+#endif
+#ifdef EREMOTEIO
+    TE(EREMOTEIO),
+#endif
+#ifdef EDQUOT
+    TE(EDQUOT),
+#endif
+#ifdef ENOMEDIUM
+    TE(ENOMEDIUM),
+#endif
+#ifdef EMEDIUMTYPE
+    TE(EMEDIUMTYPE),
+#endif
+#ifdef ECANCELED
+    TE(ECANCELED),
+#endif
+#ifdef ENOKEY
+    TE(ENOKEY),
+#endif
+#ifdef EKEYEXPIRED
+    TE(EKEYEXPIRED),
+#endif
+#ifdef EKEYREVOKED
+    TE(EKEYREVOKED),
+#endif
+#ifdef EKEYREJECTED
+        TE(EKEYREJECTED),
+#endif
+#ifdef EOWNERDEAD
+        TE(EOWNERDEAD),
+#endif
+#ifdef ENOTRECOVERABLE
+        TE(ENOTRECOVERABLE),
+#endif
+#ifdef ENOTSUP
+        TE(ENOTSUP),
+#endif
+#ifdef EPROCLIM
+        TE(EPROCLIM),
+#endif
+#ifdef EBADRPC
+        TE(EBADRPC),
+#endif
+#ifdef ERPCMISMATCH
+        TE(ERPCMISMATCH),
+#endif
+#ifdef EPROGUNAVAIL
+        TE(EPROGUNAVAIL),
+#endif
+#ifdef EPROGMISMATCH
+        TE(EPROGMISMATCH),
+#endif
+#ifdef EPROCUNAVAIL
+        TE(EPROCUNAVAIL),
+#endif
+#ifdef EFTYPE
+        TE(EFTYPE),
+#endif
+#ifdef EAUTH
+        TE(EAUTH),
+#endif
+#ifdef ENEEDAUTH
+        TE(ENEEDAUTH),
+#endif
+#ifdef EPWROFF
+        TE(EPWROFF),
+#endif
+#ifdef EDEVERR
+        TE(EDEVERR),
+#endif
+#ifdef EBADEXEC
+        TE(EBADEXEC),
+#endif
+#ifdef EBADARCH
+        TE(EBADARCH),
+#endif
+#ifdef ESHLIBVERS
+        TE(ESHLIBVERS),
+#endif
+#ifdef EBADMACHO
+        TE(EBADMACHO),
+#endif
+#ifdef ENOATTR
+        TE(ENOATTR), 
+#endif
+#ifdef ENOPOLICY
+        TE(ENOPOLICY),
+#endif
+        T_END
 };
 
 static const Translate rlimit_resources[] = {
@@ -357,9 +691,9 @@ struct statfs64_native {
 };
 
 struct robust_list_head_32 {
-    uint32_t next;              /* virtual address of next entry in list; points to self if list is empty */
-    uint32_t futex_va;          /* address of futex in user space */
-    uint32_t pending_va;        /* address of list element being added while it is being added */
+    uint32_t next_va;           /* virtual address of next lock_entry in list; points to self if list is empty */
+    int32_t futex_offset;       /* offset from lock_entry to futex */
+    uint32_t pending_va;        /* copy of lock_entry as it is being added to the list */
 } __attribute__((packed));
 
 static const Translate ipc_commands[] = {
@@ -680,6 +1014,26 @@ static const Translate socket_protocols[] = {
     T_END
 };
 
+struct sockaddr_32 {
+    uint16_t    sa_family;
+    char        sa_data[14];
+} __attribute__((packed));
+
+struct msghdr_32 {
+    uint32_t    msg_name;               /* optional ptr to source address if socket is unconnected */
+    uint32_t    msg_namelen;            /* number of bytes pointed to by msg_name */
+    uint32_t    msg_iov;                /* ptr to iovec scatter/gather array */
+    uint32_t    msg_iovlen;             /* number of blocks */
+    uint32_t    msg_control;            /* ptr to per-protocol magic (see kernel source code) */
+    uint32_t    msg_controllen;         /* number of bytes pointed to by msg_control */
+    uint32_t    msg_flags;
+} __attribute__((packed));
+
+struct iovec_32 {
+    uint32_t    iov_base;               /* address of buffer */
+    uint32_t    iov_len;                /* size of buffer in bytes */
+} __attribute__((packed));
+
 /* command values for the ioctl syscall */
 static const Translate ioctl_commands[] = {
     TE(TCGETS), TE(TCSETS), TE(TCSETSW), TE(TCGETA), TE(TIOCGPGRP), TE(TIOCSPGRP), TE(TIOCSWINSZ), TE(TIOCGWINSZ),
@@ -846,7 +1200,44 @@ struct winsize_32 {
 /* struct winsize is same on 32 and 64 bit architectures */
 typedef winsize_32 winsize_native;
 
+static const Translate socketcall_commands[] = {
+    TE2(1, SYS_SOCKET),
+    TE2(2, SYS_BIND),
+    TE2(3, SYS_CONNECT),
+    TE2(4, SYS_LISTEN),
+    TE2(5, SYS_ACCEPT),
+    TE2(6, SYS_GETSOCKNAME),
+    TE2(7, SYS_GETPEERNAME),
+    TE2(8, SYS_SOCKETPAIR),
+    TE2(9, SYS_SEND),
+    TE2(10, SYS_RECV),
+    TE2(11, SYS_SENDTO),
+    TE2(12, SYS_RECVFROM),
+    TE2(13, SYS_SHUTDOWN),
+    TE2(14, SYS_SETSOCKOPT),
+    TE2(15, SYS_GETSOCKOPT),
+    TE2(16, SYS_SENDMSG),
+    TE2(17, SYS_RECVMSG),
+    TE2(18, SYS_ACCEPT4),
+    TE2(19, SYS_RECVMMSG),
+    T_END
+};
 
+/* Scheduling policy for sched_get_priority_max() et al. */
+static const Translate scheduler_policies[] = {
+    TF3(0x0fffffff, 0, SCHED_NORMAL),
+    TF3(0x0fffffff, 1, SCHED_FIFO),
+    TF3(0x0fffffff, 2, SCHED_RR),
+    TF3(0x0fffffff, 3, SCHED_BATCH),
+    TF3(0x0fffffff, 5, SCHED_IDLE),
+    TF3(0x40000000, 0x40000000, SCHED_RESET_ON_FORK),
+    T_END
+};
+
+/* Kernel's struct sched_param on i686 */
+struct sched_param_32 {
+    int32_t sched_priority;
+} __attribute__((packed));
 
 /* Conversion functions */
 void convert(statfs_32 *g, const statfs64_native *h);
@@ -885,5 +1276,7 @@ void print_termios_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_winsize_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_exit_status_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_siginfo_32(RTS_Message *f, const uint8_t *_v, size_t sz);
+void print_sched_param_32(RTS_Message *f, const uint8_t *_v, size_t sz);
+void print_msghdr_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 
 #endif /* ROSE_RSIM_Common_H */

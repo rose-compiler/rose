@@ -858,29 +858,47 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
   // DQ (7/20/2008): This is now revised to handle more cases than just replacement of the 
   // AST subtree with a string.  Now we can add arbitrary text into different locations
   // relative to the specific IR node.  For now we are supporting before, replace, and after.
+
+  // TV (04/22/11): More generic support of Original Expression Tree. Introduce to support function pointer cast
+  //     in function pointer initialization (test2006_160.C)
+     SgExpression* expressionTree = NULL; //expr->get_originalExpressionTree();
+     switch (expr->variantT()) {
+       case V_SgVarRefExp:
+       {
+         expressionTree = isSgExpression(isSgVarRefExp(expr)->get_originalExpressionTree());
+         break;
+       }
+       case V_SgCastExp:
+       {
+         expressionTree = isSgExpression(isSgCastExp(expr)->get_originalExpressionTree());
+         break;
+       }
+       default:
+       {
+         SgFunctionRefExp * func_ref = isSgFunctionRefExp(expr);
+         if (func_ref) {
+           expressionTree = isSgExpression(func_ref->get_originalExpressionTree());
+         }
+       }
+     }
+     
      AstUnparseAttribute* unparseAttribute = dynamic_cast<AstUnparseAttribute*>(expr->getAttribute(AstUnparseAttribute::markerName));
      if (unparseAttribute != NULL)
         {
           string code = unparseAttribute->toString(AstUnparseAttribute::e_before);
           curprint (code);
         }
-#if 0
-     if (expr->attributeExists("_UnparserSourceReplacement") == true)
-        {
-       // string rep=(expr->attribute["_UnparserSourceReplacement"])->toString();
-       // string rep=(expr->attribute()["_UnparserSourceReplacement"])->toString();
-          string rep = expr->getAttribute("_UnparserSourceReplacement")->toString();
-          cout << "UNPARSER: SOURCE REPLACEMENT:" << rep << endl;
-          curprint ( rep);
-        }
-#else
+        
   // Only replace the unparsing of the IR node with a string if a string is marked as AstUnparseAttribute::e_replace.
      if (unparseAttribute != NULL && unparseAttribute->replacementStringExists() == true)
         {
           string code = unparseAttribute->toString(AstUnparseAttribute::e_replace);
           curprint (code);
         }
-#endif
+       else if (expressionTree != NULL && info.SkipConstantFoldedExpressions() == false)
+         {
+         unparseExpression(expressionTree, info);
+         }
        else
         {
        // DQ (5/21/2004): revised need_paren handling in EDG/SAGE III and within SAGE III IR)
@@ -1026,7 +1044,11 @@ UnparseLanguageIndependentConstructs::unparseNullStatement (SgStatement* stmt, S
      ROSE_ASSERT(nullStatement != NULL);
 
   // Not much to do here except output a ";", not really required however.
-  // curprint ( string(";";
+     if (!info.inConditional() && !info.SkipSemiColon())
+       {
+         curprint ( string(";"));
+       }
+
    }
 
 void

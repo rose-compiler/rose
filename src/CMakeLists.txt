@@ -1,3 +1,4 @@
+#										-*- cmake -*-
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ddisc_union=union" )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ddisc_union=union" )
 
@@ -76,6 +77,12 @@ SET_SOURCE_FILES_PROPERTIES(
 SET_SOURCE_FILES_PROPERTIES(
      ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.C
      ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.h
+     PROPERTIES GENERATED 1
+     )
+
+# Tell cmake that this file is generated (see scripts/publicConfiguration.pl)
+SET_SOURCE_FILES_PROPERTIES(
+     ${CMAKE_BINARY_DIR}/rosePublicConfig.h
      PROPERTIES GENERATED 1
      )
 
@@ -190,14 +197,15 @@ set( binaryFrontend_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/BinaryDisassembly/AST_BIN_Traversal.C
    )
 
-set(rose_support_src 
-      ${CMAKE_SOURCE_DIR}/src/roseSupport/transformationSupport.C 
-      ${CMAKE_SOURCE_DIR}/src/roseSupport/optionDeclaration.C 
-      ${CMAKE_SOURCE_DIR}/src/roseSupport/sourceLocationInheritedAttribute.C 
-      ${CMAKE_SOURCE_DIR}/src/roseSupport/roseTranslators.C 
-      ${CMAKE_SOURCE_DIR}/src/roseSupport/utility_functions.C 
+set(rose_support_src
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/transformationSupport.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/optionDeclaration.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/sourceLocationInheritedAttribute.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/roseTranslators.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/utility_functions.C
       ${CMAKE_SOURCE_DIR}/src/roseSupport/memoryUsage.C
       ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.C
+      ${CMAKE_SOURCE_DIR}/src/roseSupport/threadSupport.C
      )
 
 
@@ -352,6 +360,9 @@ set( midend_src
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nameQueryInheritedAttribute.C
  #${CMAKE_SOURCE_DIR}/src/midend/astQuery/queryVariant.C
  ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nodeQuery.C
+ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryControlFlow.C
+ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryDominance.C
+ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryFunctionCall.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/GraphAlgorithms.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/binary_analysis.C
  #${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification_writer.C
@@ -805,11 +816,27 @@ add_custom_target(
      DEPENDS ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.C ${CMAKE_BINARY_DIR}/src/roseSupport/stringify.h
      )
 add_dependencies(generate_stringify rosetta_generated)
+
+###############################################################################################################################
+### The rose_config.h file generated during the configuration process contains CPP symbols that indicate what features are
+### available during compilation.  This file cannot be included into end-user source code because it pollutes the global name
+### space.  Therefore, we create a copy called rosePublicConfig.h containing only certain symbols and whose names are modified
+### by prepending "ROSE_".
+add_custom_command(
+     OUTPUT ${CMAKE_BINARY_DIR}/rosePublicConfig.h
+     COMMAND perl ${CMAKE_SOURCE_DIR}/scripts/publicConfiguration.pl <${CMAKE_BINARY_DIR}/rose_config.h >${CMAKE_BINARY_DIR}/rosePublicConfig.h
+     DEPENDS ${CMAKE_BINARY_DIR}/rose_config.h
+     )
+add_custom_target(
+     generate_rosePublicConfig
+     DEPENDS ${CMAKE_BINARY_DIR}/rosePublicConfig.h
+     )
+
 ###############################################################################################################################
 
 
 add_library(ROSE_DLL SHARED ${rose_LIB_SRCS} )
-add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR edg33 libhpdf generate_stringify) 
+add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR edg33 libhpdf generate_stringify generate_rosePublicConfig) 
 
 # tps : independant Components : ROSE, libhpdf
 set(LINK_FILES

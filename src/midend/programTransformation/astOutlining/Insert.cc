@@ -210,6 +210,7 @@ public:
         proto_ = insertManually (def_decl_, glob_scope_, cur_decl);
         throw string ("done");
       }
+    
   }
 
   SgFunctionDeclaration* getProto (void) { return proto_; }
@@ -272,13 +273,13 @@ insertGlobalPrototype (SgFunctionDeclaration* def,
   if (def && scope)
   {
  // DQ (3/3/2009): Why does this code use try .. catch blocks (exception handling)?
+    GlobalProtoInserter ins (def, scope);
     try
     {
-      GlobalProtoInserter ins (def, scope);
       ins.traverse (scope, preorder);
-      prototype = ins.getProto();
     }
     catch (string & s) { ROSE_ASSERT (s == "done"); }
+    prototype = ins.getProto();
 
     if (!prototype && default_target) // No declaration found
        {
@@ -598,8 +599,8 @@ Outliner::insert (SgFunctionDeclaration* func,
       // the function symbol will be re-generated when the function prototypes are generated
       // So we need to remove the symbol for C/C++ and keep it for Fortran 
       // Liao, 3/11/2009
-     if (SageInterface::is_Fortran_language() != true)
-     {
+  //   if (SageInterface::is_Fortran_language() != true)
+/*     {
        // The constructed defining declaration should have a symbol in its scope, remove it.
        SgFunctionSymbol* definingFunctionSymbol = isSgFunctionSymbol(scope->lookup_symbol(func->get_name()));
        ROSE_ASSERT(definingFunctionSymbol != NULL);
@@ -608,7 +609,9 @@ Outliner::insert (SgFunctionDeclaration* func,
        definingFunctionSymbol = NULL;
        ROSE_ASSERT(scope->lookup_symbol(func->get_name()) == NULL);
      }
-  // Put the input function into the target scope
+*/  
+     
+     // Put the input function into the target scope
      scope->append_declaration (func);
      func->set_scope (scope);
      func->set_parent (scope);
@@ -696,7 +699,7 @@ Outliner::insert (SgFunctionDeclaration* func,
           printf ("Output the symbol table: \n");
           scope->get_symbol_table()->print("Building the outline function prototype in the SEPARATE file");
 #endif
-
+        
        // Build a function prototype and insert it first (will be at the top of the generated file).
           outlinedFileFunctionPrototype = SageBuilder::buildNondefiningFunctionDeclaration (func,scope);
        // scope->append_declaration (outlinedFileFunctionPrototype);
@@ -713,11 +716,12 @@ Outliner::insert (SgFunctionDeclaration* func,
           ROSE_ASSERT(outlinedFileFunctionPrototypeSymbol->get_declaration() == outlinedFileFunctionPrototype);
 
        // DQ (2/27/2009): Assert this as a test!
-          ROSE_ASSERT(outlinedFileFunctionPrototype->get_definingDeclaration() == NULL);
+       // TV (04/18/2011): replace '== NULL' by '== func' as this is enforced by the builder (also comment the next statement)
+          ROSE_ASSERT(outlinedFileFunctionPrototype->get_definingDeclaration() == func);
 
        // DQ (2/20/2009): ASK LIAO: If func is a defining declaration then shouldn't the 
        // SageBuilder::buildNondefiningFunctionDeclaration() set the definingDeclaration?
-          outlinedFileFunctionPrototype->set_definingDeclaration(func);
+       // outlinedFileFunctionPrototype->set_definingDeclaration(func);
           outlinedFileFunctionPrototype->set_parent(scope);
           outlinedFileFunctionPrototype->set_scope(scope);
 

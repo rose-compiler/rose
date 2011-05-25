@@ -1,0 +1,9 @@
+This is a project to explore if we can have a generic interface for users
+to parse C strings into ROSE AST subtrees. 
+
+This can be useful in two scenarios
+1. supporting parsing user-defined pragmas with expression fields
+2. supporting generating AST from an input string.
+
+
+Liao 4/13/2011

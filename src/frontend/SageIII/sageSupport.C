@@ -71,6 +71,20 @@ void parse_fortran_openmp(SgSourceFile *sageFilePtr);
 
 #endif
 
+#ifdef __INSURE__
+// Provide a dummy function definition to support linking with Insure++.
+// We have not identified why this is required.  This fixes the problem of
+// a link error for the "std::ostream & operator<<()" used with "std::vector<bool>".
+std::ostream & 
+operator<<(std::basic_ostream<char, std::char_traits<char> >& os, std::vector<bool, std::allocator<bool> >& m)
+   {
+     printf ("Inside of std::ostream & operator<<(std::basic_ostream<char, std::char_traits<char> >& os, std::vector<bool, std::allocator<bool> >& m): A test! \n");
+  // ROSE_ASSERT(false);
+     return os;
+   }
+#endif
+
+
 
 using namespace std;
 using namespace SageInterface;
@@ -124,6 +138,17 @@ SgValueExp::get_constant_folded_value_as_string() const
                s = buffer;
                break;
              }
+          
+         case V_SgLongLongIntVal:
+         {
+            const SgLongLongIntVal* integerValueExpression = isSgLongLongIntVal(this);
+            ROSE_ASSERT(integerValueExpression != NULL);
+            long long int numericValue = integerValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %ld \n",numericValue);
+            snprintf (buffer,max_buffer_size,"%lld",numericValue);
+            s = buffer;
+            break;
+         }
 
        // DQ (10/5/2010): Added case
           case V_SgShortVal: 
@@ -137,6 +162,17 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
+          case V_SgUnsignedShortVal:
+          {
+               const SgUnsignedShortVal* integerValueExpression = isSgUnsignedShortVal(this);
+               ROSE_ASSERT(integerValueExpression != NULL);
+               unsigned short int numericValue = integerValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %ld \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%u",numericValue);
+               s = buffer;
+               break;
+          }
+          
           case V_SgUnsignedLongLongIntVal:
              {
                const SgUnsignedLongLongIntVal* integerValueExpression = isSgUnsignedLongLongIntVal(this);
@@ -248,6 +284,14 @@ SgValueExp::get_constant_folded_value_as_string() const
                s = string("_enum_") + string(buffer);
                break;
              }
+
+        // \pp (03/15/2011): Added case
+          case V_SgUpcThreads:
+             {
+               s = "_upc_threads_";
+               break;
+             }
+
 
           default:
              {
@@ -412,10 +456,37 @@ findRoseSupportPathFromBuild(const string& buildTreeLocation,
 bool roseInstallPrefix(std::string& result) {
 #ifdef HAVE_DLADDR
   {
+ // This is built on the stack and initialized using the function: dladdr().
     Dl_info info;
+
+ // DQ (4/8/2011): Initialize this before it is used as a argument to strdup() below. This is initialized 
+ // by dladdr(), so this is likely redundant; but we can initialize it anyway.
+ // info.dli_fname = NULL;
+    info.dli_fname = "";
+
     int retval = dladdr((void*)(&roseInstallPrefix), &info);
     if (retval == 0) goto default_check;
+
+ // DQ (4/9/2011): I think the issue here is that the pointer "info.dli_fname" pointer (char*) is pointing to 
+ // a position inside a DLL and thus is a region of memory controled/monitored or allocated by Insure++. Thus
+ // Insure++ is marking this as an issue while it is not an issue. The reported issue by Insure++ is: "READ_WILD",
+ // implying that a pointer set to some wild area of memory is being read.
+#if __INSURE__
+ // Debugging information. Trying to understand this insure issue and the value of "info.dli_fname" data member.
+ // if (retval != 0)
+ //    fprintf(stderr, "      %08p file: %s\tfunction: %s\n",info.dli_saddr, info.dli_fname ? info.dli_fname : "???", info.dli_sname ? info.dli_sname : "???"); 
+
+    _Insure_checking_enable(0); // disable Insure++ checking
+#endif
+ // DQ (4/8/2011): Check for NULL pointer before handling it as a parameter to strdup(), 
+ // but I think it is always non-NULL (added assertion and put back the original code).
+ // char* libroseName = (info.dli_fname == NULL) ? NULL : strdup(info.dli_fname);
+    ROSE_ASSERT(info.dli_fname != NULL);
     char* libroseName = strdup(info.dli_fname);
+#if __INSURE__
+    _Insure_checking_enable(1); // re-enable Insure++ checking
+#endif
+
     if (libroseName == NULL) goto default_check;
     char* libdir = dirname(libroseName);
     if (libdir == NULL) {free(libroseName); goto default_check;}
@@ -2926,8 +2997,11 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                 // This a not a C++ file (assume it is a C file and don't define the __cplusplus macro, just like GNU gcc would)
                                    file->set_sourceFileUsesCppFileExtension(false);
 
-                                // Use the filename suffix as a default means to set this value
-                                   file->set_outputLanguage(SgFile::e_C_output_language);
+                                // Note that we can use the C++ unparser to provide output that will support inspection of 
+                                // code from the AST, but this is a temporary solution.  The only correct setting is to use
+                                // the ongoing support within the Java specific unparser.
+                                // file->set_outputLanguage(SgFile::e_C_output_language);
+                                   file->set_outputLanguage(SgFile::e_Java_output_language);
 
                                    file->set_Java_only(true);
 
@@ -3376,13 +3450,17 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      bool enable_cuda   = CommandlineProcessing::isOption(argv,"-","cuda",true) || get_Cuda_only();
      bool enable_opencl = CommandlineProcessing::isOption(argv,"-","opencl",true) || get_OpenCL_only();
      
+     string header_path = findRoseSupportPathFromBuild("include-staging", "include-staging");
+     
      if (enable_cuda || enable_opencl) {
         makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
         if (enable_cuda && !enable_opencl) {
-                commandLine.push_back("-DROSE_LANGUAGE_MODE=2");
+          commandLine.push_back("--preinclude");
+          commandLine.push_back(header_path + "/cuda_HEADERS/preinclude-cuda.h");
         }
         else if (enable_opencl && !enable_cuda) {
-                commandLine.push_back("-DROSE_LANGUAGE_MODE=3");
+          commandLine.push_back("--preinclude");
+          commandLine.push_back(header_path + "/opencl_HEADERS/preinclude-opencl.h");
         }
         else {
                 printf ("Error: CUDA and OpenCL are mutually exclusive.\n");
@@ -5483,7 +5561,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
      bool requires_C_preprocessor = get_requires_C_preprocessor();
      if (requires_C_preprocessor == true)
-        {
+     {
+          int errorCode;
+          
        // If we detect that the input file requires processing via CPP (e.g. filename of form *.F??) then 
        // we generate the command to run CPP on the input file and collect the results in a file with 
        // the suffix "_postprocessed.f??".  Note: instead of using CPP we use the target backend fortran 
@@ -5520,17 +5600,26 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           string sourceFilename = get_sourceFileNameWithPath();
           string preprocessFilename;
 
-       // always create pseudonym for source file in case original extension does not permit preprocessing
-          string dir  = StringUtility::getPathFromFileName(sourceFilename);
-          string file = StringUtility::stripPathFromFileName(sourceFilename);
-          string base = StringUtility::stripFileSuffixFromFileName(file);
-          char * temp = tempnam(dir.c_str(), (base + "-").c_str());
-          preprocessFilename = string(temp) + ".F90"; free(temp);
-          int errorCode = link(sourceFilename.c_str(), preprocessFilename.c_str());
-          ROSE_ASSERT(!errorCode);
+          // use a pseudonym for source file in case original extension does not permit preprocessing
+             // compute absolute path for pseudonym
+                // TODO: when boost 1.46 is available, use boost::filesystem to get 'dir', 'abs_dir', and 'base'
+                string dir = StringUtility::getPathFromFileName(this->get_unparse_output_filename());
+                string abs_dir = StringUtility::getAbsolutePathFromRelativePath(dir.empty() ? getWorkingDirectory() : dir);  // Windows 'tempnam' requires this
+                string file = StringUtility::stripPathFromFileName(sourceFilename);
+                string base = StringUtility::stripFileSuffixFromFileName(file);
+                char * temp = tempnam(abs_dir.c_str(), (base + "-").c_str());   // not deprecated in Visual Studio 2010
+                preprocessFilename = string(temp) + ".F90"; free(temp);
+             // copy source file to pseudonym file
+                try { boost::filesystem::copy_file(sourceFilename, preprocessFilename); }
+                catch(exception &e)
+                {
+                  cout << "Error in copying file " << sourceFilename << " to " << preprocessFilename
+                       << " (" << e.what() << ")" << endl;
+                  ROSE_ASSERT(false);
+                }
           fortran_C_preprocessor_commandLine.push_back(preprocessFilename);
 
-          // add option to specify output file name
+       // add option to specify output file name
           fortran_C_preprocessor_commandLine.push_back("-o");
           string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
           fortran_C_preprocessor_commandLine.push_back(sourceFileNameOutputFromCpp);
@@ -5545,16 +5634,20 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
        // DQ (10/1/2008): Added error checking on return value from CPP.
           if (errorCode != 0)
-             {
-               printf ("Error in running cpp on Fortran code: errorCode = %d \n",errorCode);
-               ROSE_ASSERT(false);
-             }
+          {
+             printf ("Error in running cpp on Fortran code: errorCode = %d \n",errorCode);
+             ROSE_ASSERT(false);
+          }
 
        // clean up after alias processing
-          errorCode = unlink(preprocessFilename.c_str());
-          ROSE_ASSERT(!errorCode);
-
-        }
+          try { boost::filesystem::remove(preprocessFilename); }
+          catch(exception &e)
+          {
+            cout << "Error in removing file " << preprocessFilename
+                 << " (" << e.what() << ")" << endl;
+            ROSE_ASSERT(false);
+          }
+     }
 
 
   // DQ (9/30/2007): Introduce syntax checking on input code (initially we can just call the backend compiler 

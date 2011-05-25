@@ -144,6 +144,31 @@ fi
 ##
 
   ROSE_SUPPORT_LANGUAGE_CONFIG_OPTIONS
+  AC_CHECK_LIB([curl], [Curl_connect], [HAVE_CURL=yes], [HAVE_CURL=no])
+  AM_CONDITIONAL([HAS_LIBRARY_CURL], [test "x$HAVE_CURL" = "xyes"])
+
+AC_MSG_CHECKING([whether your GCC version is supported by ROSE (4.0.x - 4.4.x)])
+AC_ARG_ENABLE([gcc-version-check],AS_HELP_STRING([--disable-gcc-version-check],[Disable GCC version 4.0.x - 4.4.x verification check]),,[enableval=yes])
+if test "x$enableval" = "xyes" ; then
+      AC_LANG_PUSH([C])
+      # http://www.gnu.org/s/hello/manual/autoconf/Running-the-Compiler.html
+      AC_COMPILE_IFELSE([
+        AC_LANG_SOURCE([[
+          #if (__GNUC__ >= 4 && __GNUC_MINOR__ <= 4)
+            int rose_supported_gcc;
+          #else
+            not gcc, or gcc version is not supported by rose
+          #endif
+        ]])
+       ],
+       [AC_MSG_RESULT([done])],
+       gcc_version=`gcc -dumpversion`
+       [AC_MSG_FAILURE([your GCC $gcc_version version is currently NOT supported by ROSE])])
+      AC_LANG_POP([C])
+else
+    AC_MSG_RESULT([skipping])
+fi
+
 
 ##
 #########################################################################################
@@ -253,7 +278,7 @@ if test "x$edg_major_version_number" = "x3"; then
       echo "Recognized an accepted minor version number."
    else
       if test "x$edg_minor_version_number" = "x10"; then
-         echo "Recognized an accepted minor version number."
+         echo "ERROR: EDG version 3.10 is not supported anymore."
       else
          echo "ERROR: Could not identify the EDG minor version number."
          exit 1
@@ -267,20 +292,19 @@ else
       if test "x$edg_minor_version_number" = "x0"; then
          echo "Recognized an accepted minor version number."
       else
-         if test "x$edg_minor_version_number" = "x1"; then
+         if test "x$edg_minor_version_number" = "x3"; then
             echo "Recognized an accepted minor version number."
-
-            echo "Error: Note that EDG 4.1 is not yet supported in ROSE (should be available soon)."
-            exit 1
+            enable_edg_version43=yes
+            AC_DEFINE([ROSE_USE_EDG_VERSION_4_3], [], [Whether to use the new EDG version 4.3])
          else
             echo "ERROR: Could not identify the EDG minor version number."
             exit 1
          fi
       fi
-      enable_new_edg_interface=yes
       enable_edg_version4=yes
-      AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
       AC_DEFINE([ROSE_USE_EDG_VERSION_4], [], [Whether to use the new EDG version 4.x])
+      enable_new_edg_interface=yes
+      AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
    else
       echo "ERROR: Could not identify the EDG major version number."
       exit 1
@@ -299,7 +323,8 @@ AC_SUBST(ROSE_EDG_MINOR_VERSION_NUMBER)
 # DQ (2/3/2010): I would like to not have to use these and use the new 
 # ROSE_EDG_MAJOR_VERSION_NUMBER and ROSE_EDG_MINOR_VERSION_NUMBER instead.
 AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = xyes])
-# AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
+AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
+AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_3, [test "x$enable_edg_version43" = xyes])
 
 # DQ (1/4/2009) Added support for optional GNU language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
@@ -1177,6 +1202,10 @@ AC_ARG_ENABLE(edg_cuda, AS_HELP_STRING([--enable-edg-cuda], [Build EDG 4.0 with 
   *)   edg_cuda=false ;;
 esac])
 AM_CONDITIONAL(ROSE_BUILD_EDG_WITH_CUDA_SUPPORT, [test x$edg_cuda = xtrue])
+if test x$edg_cuda = xtrue; then
+  AC_MSG_WARN([Add CUDA specific headers to the include-staging directory.])
+  GENERATE_CUDA_SPECIFIC_HEADERS
+fi
 
 # *******************************************************************
 # Option to control internal support of OpenCL (GPU langauge support)
@@ -1192,8 +1221,25 @@ if test "x$enable_opencl" = "xyes"; then
 fi
 AC_SUBST(ROSE_USE_OPENCL_SUPPORT)
 
+# *******************************************************
+# Option to control building of OpenCL support in EDG 4.0
+# *******************************************************
+
+# TV (05/06/2011): This is part of optional building of OpenCL support in EDG 4.0
+AC_MSG_CHECKING([for building of OpenCL support in EDG 4.0])
+AC_ARG_ENABLE(edg_opencl, AS_HELP_STRING([--enable-edg-opencl], [Build EDG 4.0 with OpenCL support.]), [case "${enableval}" in
+  yes) edg_opencl=true ;;
+  no)  edg_opencl=false ;;
+  *)   edg_opencl=false ;;
+esac])
+AM_CONDITIONAL(ROSE_BUILD_EDG_WITH_OPENCL_SUPPORT, [test x$edg_opencl = xtrue])
+if test x$edg_opencl = xtrue; then
+  AC_MSG_WARN([Add OpenCL specific headers to the include-staging directory.])
+  GENERATE_OPENCL_SPECIFIC_HEADERS
+fi
+
 # *********************************************************************
-# Option to control internal support of PPL (Parma Polyhedron Librairy)
+# Option to control internal support of PPL (Parma Polyhedron Library)
 # *********************************************************************
 
 # TV (05/25/2010): Check for Parma Polyhedral Library (PPL)
@@ -1228,14 +1274,135 @@ AM_CONDITIONAL(
 	[test "x$enable_ppl" = "xyes"])
 if test "x$enable_ppl" = "xyes"; then
 	if test "x$has_ppl_path" = "xyes"; then
-		PPL_LDFLAGS=" -L$ppl_path/lib -lppl"
-		PPL_CPPFLAGS="-I$ppl_path/include"
+		PPL_PATH="$ppl_path"
 		AC_DEFINE([ROSE_USE_PPL], [], [Whether to use Parma Polyhedral Library (PPL) support or not within ROSE])
 	fi
 fi
 AC_SUBST(ROSE_USE_PPL)
-AC_SUBST(PPL_LDFLAGS)
-AC_SUBST(PPL_CPPFLAGS)
+AC_SUBST(PPL_PATH)
+
+# *********************************************************************************
+# Option to control internal support of Cloog (Code generator for Polyhedral Model)
+# *********************************************************************************
+
+AC_ARG_WITH(
+	[cloog],
+	AS_HELP_STRING([--with-cloog@<:@=DIR@:>@], [use Cloog]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
+		exit 1
+	else
+		has_cloog_path="yes"
+		cloog_path="$withval"
+	fi
+	],
+	[has_cloog_path="no"]
+)
+
+AC_ARG_ENABLE(
+	cloog,
+	AS_HELP_STRING(
+		[--enable-cloog],
+		[Support for Cloog]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_CLOOG,
+	[test "x$enable_cloog" = "xyes"])
+if test "x$enable_cloog" = "xyes"; then
+	if test "x$has_cloog_path" = "xyes"; then
+		CLOOG_PATH="$cloog_path"
+		AC_DEFINE([ROSE_USE_CLOOG], [], [Whether to use Cloog support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_CLOOG)
+AC_SUBST(CLOOG_PATH)
+
+# **************************************************************************************
+# Option to control internal support of ScopLib (A classic library for Polyhedral Model)
+# **************************************************************************************
+
+AC_ARG_WITH(
+	[scoplib],
+	AS_HELP_STRING([--with-scoplib@<:@=DIR@:>@], [use ScopLib]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
+		exit 1
+	else
+		has_scoplib_path="yes"
+		scoplib_path="$withval"
+	fi
+	],
+	[has_scoplib_path="no"]
+)
+
+AC_ARG_ENABLE(
+	scoplib,
+	AS_HELP_STRING(
+		[--enable-scoplib],
+		[Support for ScopLib]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_SCOPLIB,
+	[test "x$enable_scoplib" = "xyes"])
+if test "x$enable_scoplib" = "xyes"; then
+	if test "x$has_scoplib_path" = "xyes"; then
+		SCOPLIB_PATH="$scoplib_path"
+		AC_DEFINE([ROSE_USE_SCOPLIB], [], [Whether to use ScopLib support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_SCOPLIB)
+AC_SUBST(SCOPLIB_PATH)
+
+# *************************************************************************************
+# Option to control internal support of Candl (Dependency analysis in Polyhedral Model)
+# *************************************************************************************
+
+AC_ARG_WITH(
+	[candl],
+	AS_HELP_STRING([--with-candl@<:@=DIR@:>@], [use Candl]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
+		exit 1
+	else
+		has_candl_path="yes"
+		candl_path="$withval"
+	fi
+	],
+	[has_candl_path="no"]
+)
+
+AC_ARG_ENABLE(
+	candl,
+	AS_HELP_STRING(
+		[--enable-candl],
+		[Support for Candl]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_CANDL,
+	[test "x$enable_candl" = "xyes"])
+if test "x$enable_candl" = "xyes"; then
+	if test "x$has_candl_path" = "xyes"; then
+		CANDL_PATH="$candl_path"
+		AC_DEFINE([ROSE_USE_CANDL], [], [Whether to use Candl support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_CANDL)
+AC_SUBST(CANDL_PATH)
 
 # *****************************************************************
 #            Option to define DOXYGEN SUPPORT
@@ -1755,6 +1922,17 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 AC_CHECK_HEADERS(gcrypt.h)
 AC_CHECK_LIB(gcrypt,gcry_check_version)
 
+# Multi-thread support is needed by the simulator.  This also enables/disables major parts of threadSupport.[Ch] within
+# the ROSE library.
+AC_CHECK_HEADERS(pthread.h)
+
+# Check for the __thread keyword.  This type qualifier creates objects that are thread local.
+AC_MSG_CHECKING([for thread local storage type qualifier])
+AC_COMPILE_IFELSE([struct S {int a, b;}; static __thread struct S x;],
+	[AC_DEFINE(ROSE_THREAD_LOCAL_STORAGE, __thread, [Define to __thread keyword for thread local storage.])
+	 AC_MSG_RESULT([__thread])],
+	[AC_MSG_RESULT([not supported])])
+
 # These headers and types are needed by projects/simulator [matzke 2009-07-02]
 AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
 AC_CHECK_HEADERS([sys/types.h sys/mman.h sys/stat.h sys/uio.h sys/wait.h sys/utsname.h sys/ioctl.h sys/sysinfo.h sys/socket.h])
@@ -1767,6 +1945,11 @@ AC_CHECK_TYPE(user_desc,
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
 AC_SUBST(PACKAGE_VERSION_NUMERIC)
+
+# This CPP symbol is defined so we can check whether rose_config.h is included into a public header file.  It serves
+# no other purpose.  The name must not begin with "ROSE_" but must have a high probability of being globally unique (which
+# is why it ends with "_ROSE").
+AC_DEFINE(CONFIG_ROSE, 1, [Always defined and used for checking whether global CPP namespace is polluted])
 
 # End macro ROSE_SUPPORT_ROSE_PART_4.
 ]
@@ -1821,8 +2004,14 @@ src/frontend/CxxFrontend/EDG/EDG_4.0/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.0/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.0/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.0/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.3/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/Makefile
 src/frontend/CxxFrontend/EDG/edgRose/Makefile
+src/frontend/CxxFrontend/EDG/edg43Rose/Makefile
 ])], [])
 
 
@@ -2009,6 +2198,7 @@ projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/SP/Makefile
+projects/pragmaParsing/Makefile
 projects/QtDesignerPlugins/Makefile
 projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile
 projects/RTED/CppRuntimeSystem/Makefile
@@ -2120,10 +2310,26 @@ projects/symbolicAnalysisFramework/include/Makefile
 projects/taintcheck/Makefile
 projects/PowerAwareCompiler/Makefile
 projects/traceAnalysis/Makefile
+projects/PolyhedralModel/Makefile
+projects/PolyhedralModel/src/Makefile
+projects/PolyhedralModel/src/maths/Makefile
+projects/PolyhedralModel/src/system/Makefile
+projects/PolyhedralModel/src/misc-test/Makefile
+projects/PolyhedralModel/src/common/Makefile
+projects/PolyhedralModel/src/test-common/Makefile
+projects/PolyhedralModel/src/scoplib/Makefile
+projects/PolyhedralModel/src/rose/Makefile
+projects/PolyhedralModel/src/rose-pragma/Makefile
+projects/PolyhedralModel/src/test-rose-pragma/Makefile
+projects/PolyhedralModel/docs/Makefile
+projects/PolyhedralModel/tests/Makefile
+projects/PolyhedralModel/tests/rose-pragma/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
 tests/RunTests/AstDeleteTests/Makefile
+tests/RunTests/FortranTests/Makefile
+tests/RunTests/FortranTests/LANL_POP/Makefile
 tests/PerformanceTests/Makefile
 tests/CompilerOptionsTests/Makefile
 tests/CompilerOptionsTests/testCpreprocessorOption/Makefile
@@ -2158,6 +2364,7 @@ tests/CompileTests/Fortran_tests/LANL_POP/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
+tests/CompileTests/CAF2_tests/Makefile
 tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
@@ -2179,6 +2386,9 @@ tests/CompileTests/sizeofOperation_tests/Makefile
 tests/CompileTests/MicrosoftWindows_tests/Makefile
 tests/CompileTests/nameQualificationAndTypeElaboration_tests/Makefile
 tests/CompileTests/NewEDGInterface_C_tests/Makefile
+tests/CompileTests/CudaTests/Makefile
+tests/CompileTests/OpenClTests/Makefile
+tests/CompileTests/EDG_4_x/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile
@@ -2283,9 +2493,6 @@ binaries/samples/Makefile
 # DQ (8/12/2010): We want to get permission to distribute these files as test codes.
 # tests/CompileTests/Fortran_tests/LANL_POP/Makefile
 
-# DQ (8/4/2010): Removed this directory
-# tests/CompileTests/CAF_tests/Makefile
-
 # DQ (10/24/2009): We don't need to support EDG 3.10 anymore.
 # src/frontend/CxxFrontend/EDG_3.10/Makefile
 # src/frontend/CxxFrontend/EDG_3.10/misc/Makefile
@@ -2342,6 +2549,12 @@ AC_CONFIG_COMMANDS([default],[[
 # Generate rose_paths.C
 AC_CONFIG_COMMANDS([rose_paths.C], [[
 	make src/util/rose_paths.C
+]])
+
+# Generate public config file from private config file. The public config file adds "ROSE_" to the beginning of
+# certain symbols. See scripts/publicConfiguration.pl for details.
+AC_CONFIG_COMMANDS([rosePublicConfig.h],[[
+	make rosePublicConfig.h
 ]])
 
 

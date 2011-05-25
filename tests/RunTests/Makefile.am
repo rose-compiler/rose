@@ -7,7 +7,12 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Comment out P++ tests until they compile properly
 # SUBDIRS = A++Tests P++Tests
+#SUBDIRS = . A++Tests AstDeleteTests
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 SUBDIRS = . A++Tests AstDeleteTests
+else
+SUBDIRS =
+endif
 
 INCLUDES =  \
         $(ROSE_INCLUDES) 
@@ -25,6 +30,8 @@ generatedCodeExamples =
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+SUBDIRS += FortranTests
+
 generatedCodeExamples += \
 	  rose_inputtraverseCommonBlock.f
 

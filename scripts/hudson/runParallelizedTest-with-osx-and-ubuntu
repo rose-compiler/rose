@@ -1,18 +1,13 @@
-#!/bin/sh -e
+#!/bin/bash -e
 #
-# TODO: add more summary info
+#  TODO: add more summary info
 #	- List of durations for each step in the job
 #
 #
 source scripts/hudson/runBuildStep.sh
-source scripts/hudson/debuggingPrinters.sh
+source scripts/hudson/roseUtilities.sh
 #########################################################################################
-set +x
-# Uniform banners allows for easy parsing of the hudson console output
-# Starting 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step...
-# Done with 'build|configure|make|make install|make installcheck|make check|make distcheck|make docs' step!
-printBannerToStartStep \
-	"[${ROSE_TEST_BUILD_STYLE}] in ROSE/scripts/hudson/runParallelizedTest-with-osx-and-ubuntu"
+( echo ) |filter "Starting ${ROSE_TEST_BUILD_STYLE}..."
 
 machine=`uname -m`
 machine_os=`uname -s`
@@ -30,35 +25,26 @@ LOG_LOCATION="$PWD"
 #  This directory will be built into the Hudson home directory.
 #
 #########################################################################################
-if test "x$machine_os" = "xDarwin" ; then
-  OS_MACHINE_LABEL=x86_64-Darwin
-elif test "x$machine" = "xi686" ; then
-  OS_MACHINE_LABEL=i686-linux
-elif test "x$machine" = "x86_64" ; then
-  OS_MACHINE_LABEL=amd64-linux
-else
-  echo "Unknown machine: ${machine}"
-  exit 1
-fi
 
-#CONFIGURE_PREFIX_DIR="${HOME}/too1.workspace/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
-CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
 # Liao 1/6/2010
 # Remove the stale installation tree since the stale headers will be included before updated ones are used.
-rm -rf $CONFIGURE_PREFIX_DIR/*
-
+[ ! -n "$ROSE_CONFIGURE_PREFIX" ] && echo "ROSE_CONFIGURE_PREFIX is undefined" && exit 1
+( safe_rm_rf $ROSE_CONFIGURE_PREFIX ) |filterStep "MasterInstallTree removal"
+( mkdir -p $ROSE_CONFIGURE_PREFIX ) |filterStep "MasterInstallTree creation: $ROSE_CONFIGURE_PREFIX"
 
 #########################################################################################
 #
 #  BOOST C++ 
 #
 #########################################################################################
-if test "x$label" = "x64bit-macos-10.6" ; then
-  export DYLD_LIBRARY_PATH="$ROSE_TEST_BOOST_PATH/lib:$DYLD_LIBRARY_PATH"
-else
-  # tps : 04/26/2010 - Added support for OpenGL for 64bit
-  export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
-fi
+echo "Setting up the [DY]LD_LIBRARY_PATH"
+
+	if test "x$label" = "x64bit-macos-10.6" ; then
+		export DYLD_LIBRARY_PATH="$ROSE_TEST_BOOST_PATH/lib:$DYLD_LIBRARY_PATH"
+	else
+		# tps : 04/26/2010 - Added support for OpenGL for 64bit
+		export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
+	fi
 
 
 #########################################################################################
@@ -70,52 +56,54 @@ fi
 #  tps : 11/22/2010 : The setup.sh has been updated by admin
 #
 #########################################################################################
-UPC_TEST_MACHINE=`uname -m`
-if test "x$UPC_TEST_MACHINE" = "xi686" ; then
-  echo "UPC is not currently tested on 32-bit machines."
-elif test "x$label" = "x64bit-macos-10.6" ; then
-  echo "UPC is not currently tested on 64-bit Mac OS X 10.6"
-else
-# Turn off bash error checking to run source with file that uses "grep" (will return error code if target is not found).
-  set +e
-  # This causes "symbol lookup error: /usr/libexec/gcc/x86_64-redhat-linux/4.1.2/f951: undefined symbol: __gmpn_sqr_n"
-  # on all 4.1.2 compilers (only effects 64 bit tests since we only use this script on 64 bit machines).
-  # This UPC support must be thought out more carefully.
-  if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
-    source /nfs/apps/upc/4.5.1.2/setup.sh
-  else
-    echo "UPC not tested 64-bit machines using gnu 4.1.2 for now."
-  fi
-  set -e
-fi
+echo "Setting up the UPC environment" 
 
+	UPC_TEST_MACHINE=`uname -m`
+	if test "x$UPC_TEST_MACHINE" = "xi686" ; then
+		echo "UPC is not currently tested on 32-bit machines."
+	elif test "x$label" = "x64bit-macos-10.6" ; then
+		echo "UPC is not currently tested on 64-bit Mac OS X 10.6"
+	else
+	# Turn off bash error checking to run source with file that uses "grep" (will return error code if target is not found).
+		set +e
+		# This causes "symbol lookup error: /usr/libexec/gcc/x86_64-redhat-linux/4.1.2/f951: undefined symbol: __gmpn_sqr_n"
+		# on all 4.1.2 compilers (only effects 64 bit tests since we only use this script on 64 bit machines).
+		# This UPC support must be thought out more carefully.
+		if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
+	        	source /nfs/apps/upc/4.5.1.2/setup.sh
+	        else
+	       		echo "UPC not tested 64-bit machines using gnu 4.1.2 for now."
+	  	fi
+	  	set -e
+	fi
 
 #########################################################################################
 #
-#  GCC 4.1.2
+#  GCC
 #
 #########################################################################################
-if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
-    GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
-    if test -e $GCCROOT/setup.sh ; then
-        set +ex
-        . $GCCROOT/setup.sh
-        set -ex
-    else
-    # This is the case for g++ 3.4.6 (since there is no uniform existence of a setup.sh file).
-      echo "Handling case of no $GCCROOT/setup.sh file."
-		export PATH="$GCCROOT/bin:$PATH"
+echo "Setting up the GCC environment" 
 
-    # DQ (2/15/2010): For 64-bit this has to be setup to use lib64 explicitly
-    # export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
-      if test "$MACHINE" = "i686" ; then
-         export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
-      else
-         export LD_LIBRARY_PATH="$GCCROOT/lib64:$GCCROOT/lib:$LD_LIBRARY_PATH"
-      fi
-    fi
-fi
+	if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
+		GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
+		if test -e $GCCROOT/setup.sh ; then
+			set +e
+			. $GCCROOT/setup.sh
+			set -e
+	    	else
+	    	# This is the case for g++ 3.4.6 (since there is no uniform existence of a setup.sh file).
+	      		echo "Handling case of no $GCCROOT/setup.sh file."
+			export PATH="$GCCROOT/bin:$PATH"
 
+	    		# DQ (2/15/2010): For 64-bit this has to be setup to use lib64 explicitly
+	    		# export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+	      		if test "$MACHINE" = "i686" ; then
+		 		export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+	      		else
+		 		export LD_LIBRARY_PATH="$GCCROOT/lib64:$GCCROOT/lib:$LD_LIBRARY_PATH"
+	      		fi
+	    	fi
+	fi
 
 #########################################################################################
 #
@@ -124,12 +112,15 @@ fi
 #  Note that Boost 1.39 and greater require using "--with-boost-libdir"
 #
 #########################################################################################
+echo "Setting up the ROSE configuration flags" 
+
 CONFIGURE_FLAGS="\
-    --with-boost=${ROSE_TEST_BOOST_PATH} \
-    --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
-    --with-java=${ROSE_TEST_JAVA_PATH} \
-    --with-ROSE_LONG_MAKE_CHECK_RULE=yes \
-    --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+	$CONFIGURE_FLAGS \
+	--with-boost=${ROSE_TEST_BOOST_PATH} \
+	--with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
+	--with-java=${ROSE_TEST_JAVA_PATH} \
+	--with-ROSE_LONG_MAKE_CHECK_RULE=yes \
+	--with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
 #########################################################################################
 #  i386 
 # 
@@ -160,12 +151,12 @@ CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-i386"
 #  testing but the way to turn it on is to specify --enable-openGL
 #
 #########################################################################################
-if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
-  CONFIGURE_FLAGS="\
-	${CONFIGURE_FLAGS} \
-	--with-qt=${ROSE_TEST_QT_PATH} \
-	--with-roseQt \
-	--with-sqlite3=${ROSE_TEST_SQLITE_PATH}"
+if test "x$ROSE_TEST_BUILD_STYLE" = "xmake/check/install-full" ; then
+	CONFIGURE_FLAGS="\
+		${CONFIGURE_FLAGS} \
+		--with-qt=${ROSE_TEST_QT_PATH} \
+		--with-roseQt \
+		--with-sqlite3=${ROSE_TEST_SQLITE_PATH}"
 
   ########################################################################################
   #  OpenGL
@@ -174,15 +165,17 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
   #  tps : It seems opengl is not properly installed on the hudson-rose node. Skip the test on this node for now.
   #######################################################################################
   if test \! \( "$MACHINE" = "i686" -o \
-              "$machine_name" = "hudson-rose.llnl.gov" -o \
-              "$machine_name" = "hudson-rose-07.llnl.gov" -o \
-              "$machine_name" = "hudson-rose-08.llnl.gov" -o \
-              "$machine_name" = "hudson-rose-13.llnl.gov" -o \
-              "$machine_name" = "hudson-rose-14.llnl.gov" -o \
-              "$machine_name" = "hudson-rose-15.llnl.gov" -o \
-              "$machine_name" = "hudson-rose-16.llnl.gov" \)
+	      "$machine_name" = "hudson-rose.llnl.gov" -o \
+	      "$machine_name" = "hudson-rose-07.llnl.gov" -o \
+	      "$machine_name" = "hudson-rose-08.llnl.gov" -o \
+	      "$machine_name" = "hudson-rose-13.llnl.gov" -o \
+	      "$machine_name" = "hudson-rose-14.llnl.gov" -o \
+	      "$machine_name" = "hudson-rose-15.llnl.gov" -o \
+	      "$machine_name" = "hudson-rose-16.llnl.gov" \)
   then
-    CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
+	echo "Skipping OpenGL..."
+	# admins are troubleshooting the libGL.la
+    	#CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --enable-rose-openGL"
   fi
   #######################################################################################
   #  PCH
@@ -199,9 +192,9 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
   #  following error: C_G_4_3_a_d.cpp:48: error: 'cout' was not declared in this scope
   #######################################################################################
   if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o \
-                "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \)
+		"x$ROSE_TEST_GCC_VERSION" = "x4.4.1" \)
   then
-    CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
+  	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-rted=${ROSE_TEST_RTED_PATH}"
   fi
 
 fi
@@ -212,32 +205,51 @@ fi
 #  Liao : 3/22/11 - Link with GOMP and run OpenMP tests
 #######################################################################################
 if test "x$ROSE_TEST_GCC_VERSION" = "x4.4.1" ; then
-  if test "x$OS_MACHINE_LABEL" = "xamd64-linux" ; then
-    if [ -a /usr/apps/gcc/4.4.1/lib64/libgomp.a ]; then
-      CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-gomp_omp_runtime_library=/usr/apps/gcc/4.4.1/lib64"
-    fi
-  fi
+	if test "x$ROSE_MACHINE_OS_LABEL" = "xamd64-linux" ; then
+    		if [ -a /usr/apps/gcc/4.4.1/lib64/libgomp.a ]; then
+      			CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-gomp_omp_runtime_library=/usr/apps/gcc/4.4.1/lib64"
+    		fi
+  	fi
 fi
 
 #########################################################################################
 #
-#  Mac OS X 10.6 (64-bit)
-#  Ubuntu (64-bit) 
+#  Mac OS X 10.6 (64-bit) 
 #
 #########################################################################################
-if test "x$label" = "x64bit-macos-10.6" -o "x$label" = "amd64-ubuntu" ; then
-  case "$ROSE_TEST_BUILD_STYLE" in
-  "make/check/install-minimal")
-         CONFIGURE_FLAGS="
-                --with-boost=${ROSE_TEST_BOOST_PATH} \
-                --with-boost-lib={$ROSE_TEST_BOOST_PATH}/lib/ \
-                --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
-    ;;
+if test "x$label" = "x64bit-macos-10.6" ; then
+	case "$ROSE_TEST_BUILD_STYLE" in
+		"make/check/install-minimal")
+	 		CONFIGURE_FLAGS="
+			--with-boost=${ROSE_TEST_BOOST_PATH} \
+			--with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
+			--with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+    		;;
 
-  *)
-        echo "Error: '$ROSE_TEST_BUILD_STYLE' build-style is not currently supported for '$label'"
-    ;;
-  esac
+		*)
+			echo "Error: '$ROSE_TEST_BUILD_STYLE' build-style is not currently supported for '$label'"
+    		;;
+  	esac
+fi
+#########################################################################################
+#
+#  Ubuntu 10.4 LTS (64-bit) 
+#
+#########################################################################################
+if test "x$label" = "xamd64-ubuntu" ; then
+	case "$ROSE_TEST_BUILD_STYLE" in
+  		"make/check/install-minimal")
+	 		CONFIGURE_FLAGS="
+				--with-boost=${ROSE_TEST_BOOST_PATH} \
+				--with-boost-lib=${ROSE_TEST_BOOST_PATH}/lib/ \
+				--without-java \
+				--with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall"
+    		;;
+
+  		*)
+			echo "Error: '$ROSE_TEST_BUILD_STYLE' build-style is not currently supported for '$label'"
+    		;;
+  	esac
 fi
 
 #########################################################################################
@@ -248,107 +260,101 @@ fi
 #
 #########################################################################################
 
-set -ex
+set -e
 #########################################################################################
 #
 #  CMake build 
 #
 #########################################################################################
 if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
-    rm -rf ROSE-build-cmake
-    mkdir ROSE-build-cmake
-    cd ROSE-build-cmake
+  (
 
-    cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && make -j${NUM_PROCESS}
+      rm -rf  ROSE-build-cmake
+      mkdir   ROSE-build-cmake
+      cd      ROSE-build-cmake
 
-    if [ $? -ne 0 ]  ; then
-      echo "fatal error in cmake build , aborting..."
-      exit 3
-    else
-      exit 0
-    fi
+      cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && make -j${NUM_PROCESS}
+
+  ) 2>&1 |filterStep "CMake" 
+  [ ${PIPESTATUS[0]} -ne 0 ] && killStep "CMake" || exit 0
 fi
-
-
 #########################################################################################
 #
 #  ROSE/build
 #
 #########################################################################################
-if test "x$ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT" = "xyes" ; then
-   echo "Skipping build at part of testing from makefile rule."
-else
-   printBannerToStartStep "build"
-   build_start_time="$(date +%s)"
+(
 
    ./build
 
-   printBannerToEndStep "build" $build_start_time
-fi
+) 2>&1 |filterStep "./build" 
+[ ${PIPESTATUS[0]} -ne 0 ] && killStep "./build"
+#########################################################################################
+#
+#  Setup Build & Install trees 
+#
+#########################################################################################
+for DIR in "ROSE-install" "ROSE-build" ; do
+  (
 
+      [ -d "./$DIR" ] && chmod -R u+xw ./$DIR && safe_rm_rf `pwd`/$DIR
+      mkdir ./$DIR 
 
-if test -e ROSE-install ; then 
-  chmod -R u+xw ROSE-install
-fi
-rm -rf ROSE-install
-
-if test -e ROSE-build ; then
-  chmod -R u+wx ROSE-build
-fi
-rm -rf ROSE-build
-
-mkdir ROSE-build
+  ) 2>&1 |filterStep "$DIR setup" 
+  [ ${PIPESTATUS[0]} -ne 0 ] && killStep "workspace setup"
+done
 cd ROSE-build
-
-
 #########################################################################################
 #
 #  ROSE/configure
 #
 #########################################################################################
-printBannerToStartStep "configure"
-configure_start_time="$(date +%s)"
+(
 
-../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
+    ../configure --prefix=${ROSE_CONFIGURE_PREFIX} ${CONFIGURE_FLAGS}
 
-printBannerToEndStep "configure" $configure_start_time
-
-
+) 2>&1 |filterStep "configure" 
+[ ${PIPESTATUS[0]} -ne 0 ] && killStep "configure"
 #########################################################################################
 #
-#  ROSE/make
+#  ROSE Translator Version 
+#
+#  TOO (2/24/2011): Requires librose.la
+#  DQ (2/12/2010): Added the ROSE version number to the base of the output
 #
 #########################################################################################
-# TOO (2/24/2011): Requires librose.la
 function printRoseTranslatorVersion {
-    # DQ (2/12/2010): Added the ROSE version number to the base of the output
-    echo "Version numbers of ROSE and the different parts of ROSE."
-    make PrintRoseTranslatorVersion
+  (
+  
+       make PrintRoseTranslatorVersion
+
+  ) 2>&1 |filterStep "ROSE Translator Version" 
+  [ ${PIPESTATUS[0]} -ne 0 ] && killStep "ROSE Translator Version" || echo ""
 }
-
-start_time_make_seconds="$(date +%s)"
-ROSE_SPEW_ANALYSIS=yes
-
+#########################################################################################
+#
+#  Hudson Build Steps 
+#
+#
+#########################################################################################
 case "$ROSE_TEST_BUILD_STYLE" in
 "make/check/install-minimal"|"make/check/install-full")
 
-    if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
-        makeOutputFile="make_output.txt"
-        makeCheckOutputFile="make_check_output.txt"
-    fi
     ################################################################################
     # MAKE
     #
-    runBuildStep make $makeOutputFile
+    runBuildStep make "make_output.txt"
     ################################################################################
     # MAKE CHECK
     #
-    runBuildStep make-check $makeCheckOutputFile
+    runBuildStep make-check "make_check_output.txt"
     ################################################################################
     # MAKE INSTALL & INSTALLCHECK
     #
     runBuildStep make-install
     runBuildStep make-installcheck
+
+    printRoseTranslatorVersion
  ;;
 
 make-distcheck)
@@ -357,19 +363,17 @@ make-distcheck)
     # MAKE DISTCHECK
     #
     # Build pre-requisites: stringify.C
-    echo "Building prerequisites for make-distcheck..."
-    make -j${NUM_PROCESS} -C src/util/stringSupport/ libRoseStringSupport.la
-    make -j${NUM_PROCESS} -C src/util/commandlineProcessing/ libRoseCommandlineUtil.la
-    make -j${NUM_PROCESS} -C src/util/ libroseutil.la
-    make -j${NUM_PROCESS} -C src/ROSETTA/src/
-    make -j${NUM_PROCESS} -C src/roseSupport/ stringify.h
+ #   (
+ #       make -j${NUM_PROCESS} -C src/util/stringSupport/ libRoseStringSupport.la
+ #       make -j${NUM_PROCESS} -C src/util/commandlineProcessing/ libRoseCommandlineUtil.la
+ #       make -j${NUM_PROCESS} -C src/util/ libroseutil.la
+ #       make -j${NUM_PROCESS} -C src/ROSETTA/src/
+ #       make -j${NUM_PROCESS} -C src/roseSupport/ stringify.h
+ #   ) 2>&1 |filterStep "make-distcheck prerequisites" 
+ #   [ ${PIPESTATUS[0]} -ne 0 ] && killStep "make-distcheck prerequisites-"
 
     runBuildStep make-distcheck
 
-    # TOO (2/24/2011): Can't printRoseTranslatorVersion: requires librose.la and tests/testAnalysis
-    #make -j${NUM_PROCESS} -C src/ 
-    #make -j${NUM_PROCESS} -C tests/ testAnalysis
-    #printRoseTranslatorVersion
  ;;
 
 make-docs)
@@ -379,11 +383,13 @@ make-docs)
     #
     # Running with parallelism here does not tend to be very helpful since 
     # doxygen is what has to run and it does not run in parallel.
-    echo "Building prerequisites for make-docs..."
-    make -j${NUM_PROCESS} -C src/
-    make -j${NUM_PROCESS} -C tutorial/
-    make -j${NUM_PROCESS} -C projects/UpcTranslation/
-    make -j${NUM_PROCESS} -C tests/ testAnalysis
+    (
+        make -j${NUM_PROCESS} -C src/
+        make -j${NUM_PROCESS} -C tutorial/
+        make -j${NUM_PROCESS} -C projects/UpcTranslation/
+        make -j${NUM_PROCESS} -C tests/ testAnalysis
+    ) 2>&1 |filterStep "make-docs prerequisites" 
+    [ ${PIPESTATUS[0]} -ne 0 ] && killStep "make-docs prerequisites-"
 
     runBuildStep make-docs
 
@@ -403,17 +409,9 @@ esac
 #########################################################################################
 #
 ##
-set +x
-   cd $TOP_LEVEL_ROSE_DIRECTORY
 
    dumpHudsonEnvironment "${LOG_LOCATION}/HudsonEnvironment-after-tests.log"
 
-   printBannerWithDate
-
-   printBannerToEndStep \
-	"[${ROSE_TEST_BUILD_STYLE}] in ROSE/scripts/hudson/runParallelizedTest-with-osx-and-ubuntu" \
-	$hudson_start_time_seconds
-set -x
 ##
 #
 #########################################################################################

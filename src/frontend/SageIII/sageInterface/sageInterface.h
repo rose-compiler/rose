@@ -946,7 +946,7 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
   std::vector<SgGotoStatement*> findGotoStmts(SgStatement* scope, SgLabelStatement* l);
   std::vector<SgStatement*> getSwitchCases(SgSwitchStatement* sw);
 
-  //! Find a declaration given its name, scope (optional, can be NULL), and defining or nondefining flag.
+  //! Topdown traverse a subtree from root to find the first declaration given its name, scope (optional, can be NULL), and defining or nondefining flag.
   template <typename T>
   T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
   {
@@ -977,6 +977,8 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
     }
     return 0;
   }
+//! Topdown traverse a subtree from root to find the first function declaration matching the given name, scope (optional, can be NULL), and defining or nondefining flag. This is an instantiation of findDeclarationStatement<T>.
+  SgFunctionDeclaration* findFunctionDeclaration(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining);
 
 #if 0 //TODO
   // 1. preorder traversal from current SgNode till find next SgNode of type V_SgXXX
@@ -996,11 +998,23 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
   \brief Backwards traverse through the AST to find a node, findEnclosingXXX()
 */
 // remember to put const to all arguments.
-//! Traverse back through a node's parents to find the first node matching the desired type and its derived types, includingSelf specifies if the current node is checked.
+
+
+/** Find a node by type using upward traversal.
+ *
+ *  Traverse backward through a specified node's ancestors, starting with the node's parent and progressing to more distant
+ *  ancestors, to find the first node matching the specified or derived type.  If @p includingSelf is true then the
+ *  starting node, @p astNode, is returned if its type matches, otherwise the search starts at the parent of @p astNode.
+ *
+ *  If no ancestor of the requisite type of subtypes is found then this function returns a null pointer.
+ *
+ *  If @p astNode is the null pointer, then the return value is a null pointer. That is, if there is no node, then there cannot
+ *  be an enclosing node of the specified type. */
 template <typename NodeType>
 NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf=false)
 {
-  ROSE_ASSERT(astNode!=NULL);
+  if (NULL==astNode)
+    return NULL;
   if ((includingSelf)&&(dynamic_cast<const NodeType*>(astNode)))
     return const_cast<NodeType*>(dynamic_cast<const NodeType*> (astNode));
 
@@ -1011,7 +1025,7 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf=false
   return const_cast<NodeType*>(dynamic_cast<const NodeType*> (parent));
 }
 
-//! Get the closest scope
+//! Get the closest scope from astNode. Return astNode if it is already a scope.
 SgScopeStatement* getScope(const SgNode* astNode);
 
   //! Traverse back through a node's parents to find the enclosing global scope

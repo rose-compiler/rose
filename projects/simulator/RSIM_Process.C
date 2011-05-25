@@ -66,6 +66,7 @@ RSIM_Process::create_thread()
     RTS_WRITE(rwlock()) {
         ROSE_ASSERT(threads.find(tid)==threads.end());
         thread = new RSIM_Thread(this);
+        thread->set_callbacks(callbacks);
         threads.insert(std::make_pair(tid, thread));
     } RTS_WRITE_END;
     return thread;
@@ -84,8 +85,12 @@ RSIM_Process::remove_thread(RSIM_Thread *thread)
 RSIM_Thread *
 RSIM_Process::get_thread(pid_t tid) const
 {
-    std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.find(tid);
-    return ti==threads.end() ? NULL : ti->second;
+    RSIM_Thread *retval = NULL;
+    RTS_READ(rwlock()) {
+        std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.find(tid);
+        retval = ti==threads.end() ? NULL : ti->second;
+    } RTS_READ_END;
+    return retval;
 }
 
 size_t
@@ -125,8 +130,10 @@ size_t
 RSIM_Process::get_ninsns() const
 {
     size_t retval = 0;
-    for (std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.begin(); ti!=threads.end(); ++ti)
-        retval += ti->second->get_ninsns();
+    RTS_READ(rwlock()) {
+        for (std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.begin(); ti!=threads.end(); ++ti)
+            retval += ti->second->get_ninsns();
+    } RTS_READ_END;
     return retval;
 }
 
@@ -291,9 +298,10 @@ RSIM_Process::load(const char *name)
 
     /* Find the best interpretation and file header.  Windows PE programs have two where the first is DOS and the second is PE
      * (we'll use the PE interpretation). */
-    SgAsmInterpretation *interpretation = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
+    interpretation = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
     SgAsmGenericHeader *fhdr = interpretation->get_headers()->get_headers().front();
-    thread->policy.writeIP(fhdr->get_entry_rva() + fhdr->get_base_va());
+    ep_orig_va = ep_start_va = fhdr->get_entry_rva() + fhdr->get_base_va();
+    thread->policy.writeIP(ep_orig_va);
 
     /* Link the interpreter into the AST */
     SimLoader *loader = new SimLoader(interpretation, trace, interpname);
@@ -305,7 +313,8 @@ RSIM_Process::load(const char *name)
         SgAsmGenericSection *load0 = loader->interpreter->get_section_by_name("LOAD#0");
         if (load0 && load0->is_mapped() && load0->get_mapped_preferred_rva()==0 && load0->get_mapped_size()>0)
             loader->interpreter->set_base_va(ld_linux_base_va);
-        thread->policy.writeIP(loader->interpreter->get_entry_rva() + loader->interpreter->get_base_va());
+        ep_start_va = loader->interpreter->get_entry_rva() + loader->interpreter->get_base_va();
+        thread->policy.writeIP(ep_start_va);
     }
 
     /* Sort the headers so they're in order by entry address. In other words, if the interpreter's entry address is below the
@@ -354,11 +363,25 @@ RSIM_Process::load(const char *name)
         disassembler->set_progress_reporting(NULL, 0); /* turn off progress reporting */
     }
 
+#if 0
     /* Initialize the brk value to be the lowest page-aligned address that is above the end of the highest mapped address but
      * below 0x40000000 (the stack, and where ld-linux.so.2 might be loaded when loaded high). */
     rose_addr_t free_area = std::max(map->find_last_free(std::max(ld_linux_base_va, (rose_addr_t)0x40000000)),
                                      (rose_addr_t)brk_base);
     brk_va = ALIGN_UP(free_area, PAGE_SIZE);
+#else
+    struct FindInitialBrk: public SgSimpleProcessing {
+        FindInitialBrk(): max_mapped_va(0) {}
+        rose_addr_t max_mapped_va;
+        void visit(SgNode *node) {
+            SgAsmGenericSection *section = isSgAsmGenericSection(node);
+            if (section && section->is_mapped())
+                max_mapped_va = std::max(section->get_mapped_actual_va() + section->get_mapped_size(), max_mapped_va);
+        }
+    } t1;
+    t1.traverse(fhdr, preorder);
+    brk_va = map->find_free(t1.max_mapped_va, PAGE_SIZE, PAGE_SIZE);
+#endif
 
     delete loader;
 
@@ -371,6 +394,9 @@ RSIM_Process::load(const char *name)
 void
 RSIM_Process::dump_core(int signo, std::string base_name)
 {
+    if (!get_callbacks().call_process_callbacks(RSIM_Callbacks::BEFORE, this, RSIM_Callbacks::ProcessCallback::COREDUMP, true))
+        return;
+
     if (base_name.empty())
         base_name = core_base_name;
 
@@ -670,6 +696,9 @@ RSIM_Process::dump_core(int signo, std::string base_name)
     SgAsmExecutableFileFormat::unparseBinaryFormat(base_name, ef);
     //deleteAST(ef); /*FIXME [RPM 2010-09-18]*/
 #endif
+    
+    get_callbacks().call_process_callbacks(RSIM_Callbacks::AFTER, this,
+                                           RSIM_Callbacks::ProcessCallback::COREDUMP, true);
 }
 
 void
@@ -1032,12 +1061,12 @@ RSIM_Process::mem_showmap(RTS_Message *mesg, const char *intro, const char *pref
     if (!prefix) prefix = "    ";
 
     if (mesg && mesg->get_file()) {
-        RTS_MESSAGE(*mesg) {
-            mesg->mesg(intro);
-            RTS_READ(rwlock()) {
+        RTS_READ(rwlock()) {
+            RTS_MESSAGE(*mesg) {
+                mesg->mesg(intro);
                 map->dump(mesg->get_file(), prefix);
-            } RTS_READ_END;
-        } RTS_MESSAGE_END(true);
+            } RTS_MESSAGE_END(true);
+        } RTS_READ_END;
     }
 }
 
@@ -1089,17 +1118,16 @@ RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsig
                      (rose_perms & MemoryMap::MM_PROT_EXEC  ? PROT_EXEC  : 0));
 
     RTS_WRITE(rwlock()) {
-        if (0==start) {
+        if (0==start && 0==(flags & MAP_FIXED)) {
             try {
                 start = map->find_free(mmap_start, aligned_size, PAGE_SIZE);
             } catch (const MemoryMap::NoFreeSpace &e) {
                 start = (rose_addr_t)(int64_t)-ENOMEM;
                 break;
             }
+            if (!mmap_recycle)
+                mmap_start = std::max(mmap_start, start);
         }
-
-        if (!mmap_recycle)
-            mmap_start = std::max(mmap_start, start);
 
         if (flags & MAP_ANONYMOUS) {
             buf = mmap(NULL, size, prot, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
@@ -1408,12 +1436,16 @@ pid_t
 RSIM_Process::clone_thread(RSIM_Thread *thread, unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va,
                            const pt_regs_32 &regs)
 {
+#ifndef ROSE_THREADS_ENABLED
+    fprintf(stderr, "ROSE library is not thread safe; multiple threads cannot be simulated.\n");
+    abort();
+#endif
     Clone clone_info(this, flags, parent_tid_va, child_tls_va, regs);
     RTS_MUTEX(clone_info.mutex) {
         pthread_t t;
         int err = -pthread_create(&t, NULL, RSIM_Process::clone_thread_helper, &clone_info);
         if (0==err)
-            pthread_cond_wait(&clone_info.cond, &clone_info.mutex); /* wait for child to initialize */
+            pthread_cond_wait(&clone_info.cond, &clone_info.mutex.mutex); /* wait for child to initialize */
     } RTS_MUTEX_END;
     return clone_info.newtid; /* filled in by clone_thread_helper; negative on error */
 }
@@ -1474,14 +1506,24 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
 
     release_mutex:
         clone_info->newtid = tid;
-        pthread_cond_signal(&clone_info->cond);       /* tell parent we're done initializing */
-        clone_info = NULL; /* won't be valid after we release mutex */
     } RTS_MUTEX_END;
+
+    /* Parent is still blocked on pthread_cond_wait because we haven't signalled it yet.  We must signal after we've released
+     * the mutex, because once we signal, the parent could return from clone_thread(), thus removing clone_info from the
+     * stack.  It's not always safe to call pthread_cond_signal without holding the mutex, but in this case it is because we
+     * couldn't have gotten this far (we couldn't have acquired the mutex above) until the parent is inside
+     * pthread_cond_wait(). */
+    pthread_cond_signal(&clone_info->cond);       /* tell parent we're done initializing */
+    clone_info = NULL; /* won't be valid after we signal the parent */
+
     if (tid<0)
         pthread_exit(NULL);
 
-    /* Allow the real thread to simulate the specimen thred. */
-    return thread->main();
+    /* Allow the real thread to simulate the specimen thread. */
+    bool cb_status = thread->get_callbacks().call_thread_callbacks(RSIM_Callbacks::BEFORE, thread, true);
+    void *retval = thread->main();
+    thread->get_callbacks().call_thread_callbacks(RSIM_Callbacks::AFTER, thread, cb_status);
+    return retval;
 }
 
 void
@@ -1497,7 +1539,7 @@ RSIM_Process::sys_exit(int status)
             RSIM_Thread *thread = ti->second;
             thread->tracing(TRACE_THREAD)->mesg("process is canceling this thread");
             pthread_cancel(thread->get_real_thread());
-            pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP); /* in case it's blocked */
+            //pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP); /* in case it's blocked */
         }
     } RTS_WRITE_END;
 }
@@ -1532,7 +1574,7 @@ RSIM_Process::sys_kill(pid_t pid, const RSIM_SignalHandling::siginfo_32 &info)
 
     if (pid<0)
         return -EINVAL;
-    if (signo<=0 && (size_t)signo>8*sizeof(RSIM_SignalHandling::sigset_32))
+    if (signo<0 && (size_t)signo>8*sizeof(RSIM_SignalHandling::sigset_32))
         return -EINVAL;
 
     RTS_WRITE(rwlock()) {
@@ -1606,6 +1648,30 @@ RSIM_Process::signal_dispatch()
         int status = sys_kill(getpid(), info);
         assert(status>=0);
     }
+}
+
+SgAsmBlock *
+RSIM_Process::disassemble()
+{
+    Partitioner partitioner;
+    SgAsmBlock *block = NULL;
+
+    RTS_WRITE(rwlock()) { /* while using the memory map */
+        block = partitioner.partition(interpretation, disassembler, map);
+        const Disassembler::InstructionMap &insns = partitioner.get_instructions();
+        for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+            icache[ii->first] = ii->second;
+        }
+    } RTS_WRITE_END;
+    return block;
+}
+
+void
+RSIM_Process::set_callbacks(const RSIM_Callbacks &cb)
+{
+    RTS_WRITE(rwlock()) {
+        callbacks = cb; // overloaded, thread safe
+    } RTS_WRITE_END;
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */

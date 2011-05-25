@@ -29,6 +29,7 @@ distributedScripts =				\
      policies/UnixLineTermination.pl		\
      policies/UnusedHeaders.pl                  \
      policies/UnusedSources.pl                  \
+     publicConfiguration.pl			\
      rth_run.pl                                 \
      rth_stats.pl                               \
      runscript					\
@@ -45,6 +46,11 @@ bin_SCRIPTS =  $(distributedScripts)
 # DQ (12/7/2009): Test for the ROSE example workspace generator.
 # Build the directory in the compile tree.
 ExampleRoseWorkspaceTestDirectory = tmpRoseWorkspace
+if ROSE_USE_INTERNAL_JAVA_SUPPORT
+        ExampleRoseWorkspaceConfigure=./configure --with-boost=$(ac_boost_path) --prefix=@prefix@
+else
+        ExampleRoseWorkspaceConfigure=./configure --with-boost=$(ac_boost_path) --prefix=@prefix@ --without-java
+endif
 # This tests the new ROSE workspace
 testExampleRoseWorkspace:
 	echo "absolute_path_srcdir = $(absolute_path_srcdir)"
@@ -57,7 +63,7 @@ testExampleRoseWorkspace:
 	cd $(ExampleRoseWorkspaceTestDirectory); \
 	./build --srcpath $(absolute_path_srcdir) --verbose; \
 	echo "Building the compile tree in the source tree for the example ROSE workspace."; \
-	./configure --with-boost=$(ac_boost_path) --prefix=@prefix@; \
+	$(ExampleRoseWorkspaceConfigure); \
 	make;
 
 # This may be the cause of recursion in the make "check rule"

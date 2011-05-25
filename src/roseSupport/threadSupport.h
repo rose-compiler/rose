@@ -21,16 +21,111 @@
  *      names begin with "RTS_" rather than "pthread_".
  */
 
+/* Needed for ROSE_HAVE_PTHREAD_H definition */
+#include "rosePublicConfig.h"
+
 #include <assert.h>
-#include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <string>
 
+/* Figure out whether ROSE can support multi-threading and what kind of support library is available. */
+#ifdef ROSE_HAVE_PTHREAD_H
+#  define ROSE_THREADS_ENABLED
+#  define ROSE_THREADS_POSIX
+#  include <pthread.h>
+#else
+#  undef  ROSE_THREADS_ENABLED
+#endif
+
+/* This warning is in a public header file so that end users will see it when they compile against a version of ROSE that
+ * doesn't have multi-thread support.  It would be imprudent to move this to one of the library's *.C files because then
+ * an end user might spend substantial time trying to figure out why his multi-threaded program fails nondeterministically when
+ * the ROSE documentation advertises that certain functions are thread safe.
+ *
+ * Unfortunately, due to the way ROSE's header files are organized, threadSupport.h will be included by pretty much every
+ * ROSE library source file because every file includes _all_ the Sage node definitions (instead of only the ones it needs),
+ * and a few of those nodes (e.g., SgFile) depend on something defined by the Disassembler class. The Disassembler supports
+ * multi threading and therefore includes this header. Therefore every ROSE library source file will spit out this warning. */
+#ifndef ROSE_THREADS_ENABLED
+#  ifdef _MSC_VER
+#    pragma message("Multi-thread support is not enabled. ROSE will not be thread safe even for functions that advertise safety.")
+#  else
+#    warning "Multi-thread support is not enabled. ROSE will not be thread safe even for functions that advertise safety."
+#  endif
+#endif
+
+
 /******************************************************************************************************************************
- *                                      Paired macros for using pthread_mutex_t
+ *                                      Layered Synchronization Primitives
+ ******************************************************************************************************************************/
+
+/** Layers where syncrhonization primitives are defined.
+ *
+ *  When a thread intends to acquire multiple locks at a time, it must acquire those locks in a particular order to prevent
+ *  deadlock.  Deadlock can occur when thread 1 attempts to acquire lock A and then B, while thread 2 attempts to acquire lock
+ *  B and then A.  By defining every lock to belong to a particular software layer, we can impose a partial ordering on the
+ *  locks and enforce the requirement that a thread obtain locks in that order.  To use the previous example, if lock A belongs
+ *  to layer X and lock B to layer Y, then a rule that says "locks of layer X must be acquired before locks of layer Y when
+ *  attempting to acquire both at once" would be sufficient to prevent deadlock.  This mechanism makes no attempt to define an
+ *  acquisition order for locks of the same layer (at least not at this time).
+ *
+ *  When a thread acquires locks from more than one layer at a time, they must be acquired in descending order by layer (they
+ *  can be released in any order).  If a thread attempts to aquire a lock whose layer is greater than the minimum layer for
+ *  which it already holds a lock, then an error message is emitted and the process aborts.
+ *
+ *  New layers can be added to this enum and the RTS_LAYER_NLAYERS constant can be increased if necessary.  When a layer's
+ *  number is changed, all of ROSE must be recompiled.  The constant name is used in error messages. Names ending with "_CLASS"
+ *  refer to synchronization primities that are class data members (or global), while those ending with "_OBJ" belong to a
+ *  particular object.
+ *
+ *  Layer zero is special and is the default layer for all syncronization primitives not explicitly associated with any layer.
+ *  Locks in layer zero can be acquired in any order without generating an error message (so silent deadlock is a distinct
+ *  possibility). */
+enum RTS_Layer {
+    RTS_LAYER_DONTCARE = 0,
+
+    /* ROSE library layers, 100-199 */
+    RTS_LAYER_RTS_MESSAGE_CLASS         = 100,          /**< RTS_Message */
+    RTS_LAYER_ROSE_CALLBACKS_LIST_OBJ   = 105,          /**< ROSE_Callbacks::List */
+    RTS_LAYER_DISASSEMBLER_CLASS        = 110,          /**< Disassembler */
+
+    /* Simulator layers (see projects/simulator), 200-299
+     *
+     * Constraints:
+     *     RSIM_PROCESS_OBJ        < RSIM_PROCESS_CLONE_OBJ
+     *     RSIM_SIGNALHANDLING_OBJ < RSIM_PROCESS_OBJ
+     */
+    RTS_LAYER_RSIM_SIGNALHANDLING_OBJ   = 200,          /**< RSIM_SignalHandling */
+    RTS_LAYER_RSIM_PROCESS_OBJ          = 201,          /**< RSIM_Process */
+    RTS_LAYER_RSIM_PROCESS_CLONE_OBJ    = 202,          /**< RSIM_Process::Clone */
+    RTS_LAYER_RSIM_THREAD_OBJ           = 203,          /**< RSIM_Thread */
+    RTS_LAYER_RSIM_THREAD_CLASS         = 204,          /**< RSIM_Thread */
+    RTS_LAYER_RSIM_SYSCALLDISABLER_OBJ  = 205,          /**< RSIM_Adapter::SyscallDisabler */
+    RTS_LAYER_RSIM_TRACEIO_OBJ          = 206,          /**< RSIM_Adapter::TraceIO */
+    RTS_LAYER_RSIM_SIMULATOR_CLASS      = 207,          /**< RSIM_Simulator */
+    RTS_LAYER_RSIM_SIMULATOR_OBJ        = 208,          /**< RSIM_Simulator */
+
+    /* Max number of layers (i.e., 0 through N-1) */
+    RTS_LAYER_NLAYERS                   = 300
+};
+
+/** Check for layering violations.  This should be called just before any attempt to acquire a lock.  The specified layer
+ *  should be the layer of the lock being acquired.  Returns true if it is OK to acquire the lock, false if doing so could
+ *  result in deadlock.  Before returning false, an error message is printed to stderr.
+ *
+ *  Note that this function is a no-op when the compiler does not support the "__thread" type qualifier, nor any other
+ *  qualifier as detected by the ROSE configure script.  Currently, this is a no-op on Mac OS X. [RPM 2011-05-04] */
+bool RTS_acquiring(RTS_Layer);
+
+/** Notes the release of a lock.  This function should be called before or after each release of a lock.  The layer number is
+ *  that of the lock which is release. */
+void RTS_releasing(RTS_Layer);
+
+/******************************************************************************************************************************
+ *                                      Paired macros for using mutual exclusion locks
  ******************************************************************************************************************************/
 
 /** Protect a critical section with a mutual exclusion lock.
@@ -52,25 +147,75 @@
  *  If the mutex is an error checking mutex then ROSE will assert that the lock is not already held by this thread. If the
  *  mutex is recursive then the lock will be obtained recursively if necessary.
  */
-#define RTS_MUTEX(MUTEX)                                                                                                       \
+#ifdef ROSE_THREADS_ENABLED
+#  define RTS_MUTEX(MUTEX)                                                                                                     \
     do {        /* standard CPP macro protection */                                                                            \
-        pthread_mutex_t *RTS_Mp_mutex = &(MUTEX); /* saved for when we need to unlock it */                                    \
-        int RTS_Mp_err = pthread_mutex_lock(RTS_Mp_mutex);                                                                     \
+        RTS_mutex_t *RTS_Mp_mutex = &(MUTEX); /* saved for when we need to unlock it */                                        \
+        int RTS_Mp_err = RTS_mutex_lock(RTS_Mp_mutex);                                                                         \
         assert(0==RTS_Mp_err);                                                                                                 \
         do {    /* so we can catch "break" statements */                                                                       \
-            try {                                                                                                              \
+            try {
 
 /** End an RTS_MUTEX construct. */
-#define RTS_MUTEX_END                                                                                                          \
+#  define RTS_MUTEX_END                                                                                                        \
             } catch (...) {                                                                                                    \
-                RTS_Mp_err = pthread_mutex_unlock(RTS_Mp_mutex);                                                               \
+                RTS_Mp_err = RTS_mutex_unlock(RTS_Mp_mutex);                                                                   \
                 assert(0==RTS_Mp_err);                                                                                         \
                 throw;                                                                                                         \
             }                                                                                                                  \
         } while (0);                                                                                                           \
-        RTS_Mp_err = pthread_mutex_unlock(RTS_Mp_mutex);                                                                       \
+        RTS_Mp_err = RTS_mutex_unlock(RTS_Mp_mutex);                                                                           \
         assert(0==RTS_Mp_err);                                                                                                 \
     } while (0)
+#else
+#  define RTS_MUTEX(MUTEX)                                                                                                     \
+    do {
+#  define RTS_MUTEX_END                                                                                                        \
+    } while (0)
+#endif
+
+/******************************************************************************************************************************
+ *                                      Types and functions for mutexes
+ ******************************************************************************************************************************/
+
+#define RTS_MUTEX_MAGIC 0x1a95a713
+
+#ifdef ROSE_THREADS_ENABLED
+
+/** Mutual exclusion lock.
+ *
+ *  This struct is intended to provide a portable implementation of mutual exclusion locks (mutexes).  It should be used in a
+ *  manner similar to POSIX Threads' pthread_mutex_t. */
+struct RTS_mutex_t {
+    unsigned magic;
+    RTS_Layer layer;
+    pthread_mutex_t mutex;
+};
+
+#define RTS_MUTEX_INITIALIZER(LAYER) { RTS_MUTEX_MAGIC, (LAYER), PTHREAD_MUTEX_INITIALIZER }
+
+/** Initialize a mutual exclusion lock. */
+int RTS_mutex_init(RTS_mutex_t*, RTS_Layer, pthread_mutexattr_t*);
+
+#else
+
+struct RTS_mutex_t {
+    int dummy;
+};
+
+#define RTS_MUTEX_INITIALIZER(LAYER) { 0 }
+
+int RTS_mutex_init(RTS_mutex_t*, RTS_Layer, void*);
+
+#endif
+
+/** Obtain an exclusive lock.  Behavior is similar to pthread_mutex_lock().  Returns zero on success, errno on failure. */
+int RTS_mutex_lock(RTS_mutex_t*);
+
+/** Release an exclusive lock.  Behavior is similar to pthread_mutex_unlock(). Returns zero on success, errno on failure. */
+int RTS_mutex_unlock(RTS_mutex_t*);
+
+
 
 
 /*******************************************************************************************************************************
@@ -160,7 +305,8 @@
  *  };
  *  @endcode
  */
-#define RTS_RWLOCK(RWLOCK, HOW)                                                                                                \
+#ifdef ROSE_THREADS_ENABLED
+#  define RTS_RWLOCK(RWLOCK, HOW)                                                                                              \
     do {        /* standard CPP macro protection */                                                                            \
         RTS_rwlock_t *RTS_Wp_rwlock = &(RWLOCK); /* saved for when we need to unlock it */                                     \
         int RTS_Wp_err = RTS_rwlock_##HOW(RTS_Wp_rwlock);                                                                      \
@@ -168,7 +314,7 @@
         do {    /* so we can catch "break" statements */                                                                       \
             try {
                 
-#define RTS_RWLOCK_END                                                                                                         \
+#  define RTS_RWLOCK_END                                                                                                       \
             } catch (...) {                                                                                                    \
                 RTS_Wp_err = RTS_rwlock_unlock(RTS_Wp_rwlock);                                                                 \
                 assert(0==RTS_Wp_err);                                                                                         \
@@ -179,6 +325,13 @@
         assert(0==RTS_Wp_err);                                                                                                 \
     } while (0)
 
+#else
+#  define RTS_RWLOCK(RWLOCK, HOW)                                                                                              \
+    do {
+#  define RTS_RWLOCK_END                                                                                                       \
+    } while (0)
+#endif
+
 #define RTS_READ(RWLOCK)        RTS_RWLOCK(RWLOCK, rdlock)                      /**< See RTS_RWLOCK. */
 #define RTS_READ_END            RTS_RWLOCK_END                                  /**< See RTS_RWLOCK. */
 #define RTS_WRITE(RWLOCK)       RTS_RWLOCK(RWLOCK, wrlock)                      /**< See RTS_RWLOCK. */
@@ -188,26 +341,48 @@
  *                                      Types and functions for RTS_rwlock_t
  *
  * Programmers should generally use the RTS_READ and RTS_WRITE macros in their source code. The symbols defined here are
- * similar to pthread_rwlock* symbols and are mostly to support RTS_READ and RTS_WRITE macros (like how the pthread_mutex*
+ * similar to pthread_rwlock* symbols and are mostly to support RTS_READ and RTS_WRITE macros (like how the RTS_mutex*
  * symbols support the RTS_MUTEX macro).
  *******************************************************************************************************************************/
 
 /** A read-write lock for ROSE Thread Support.  As with POSIX Thread types, this type should be treated as opaque and
  *  initialized with RTS_RWLOCK_INITIALIZER or RTS_rwlock_init().  It is used as the argument for RTS_READ and RTS_WRITE
  *  macros. */
+#ifdef ROSE_THREADS_ENABLED
 struct RTS_rwlock_t {
+    unsigned magic;                             /* always RTS_RWLOCK_MAGIC after initialization */
+    RTS_Layer layer;                            /* software layer to which this lock belongs, or zero */
     pthread_rwlock_t rwlock;                    /* the main read-write lock */
-    pthread_mutex_t mutex;                      /* mutex to protect the following data members */
-    static const size_t max_nlocks = 64;        /* max number of locks: 8*sizeof(lock_types) */
+    RTS_mutex_t mutex;                          /* mutex to protect the following data members */
     size_t nlocks;                              /* number of write locks held */
     pthread_t owner;                            /* thread that currently holds the write lock */
 };
+#else
+struct RTS_rwlock_t {
+    int dummy;
+};
+#endif
+
+#define RTS_RWLOCK_MAGIC 0x20e7f3f4
 
 /** Static initializer for an RTS_rwlock_t instance, similar in nature to PTHREAD_RWLOCK_INITIALIZER. */
-#define RTS_RWLOCK_INITIALIZER { PTHREAD_RWLOCK_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, 0/*...*/ }
+#ifdef ROSE_THREADS_ENABLED
+#  define RTS_RWLOCK_INITIALIZER(LAYER) { RTS_RWLOCK_MAGIC,                                                                    \
+                                          (LAYER),                                                                             \
+                                          PTHREAD_RWLOCK_INITIALIZER,                                                          \
+                                          RTS_MUTEX_INITIALIZER(RTS_LAYER_DONTCARE),                                           \
+                                          0/*...*/                                                                             \
+                                         }
+#else
+#  define RTS_RWLOCK_INITIALIZER(LAYER) { 0 }
+#endif
 
+#ifdef ROSE_THREADS_ENABLED
 /** Intializes an RTS_rwlock_t in a manner similar to pthread_rwlock_init(). */
-int RTS_rwlock_init(RTS_rwlock_t *rwlock, pthread_rwlockattr_t *wrlock_attrs);
+int RTS_rwlock_init(RTS_rwlock_t *rwlock, RTS_Layer, pthread_rwlockattr_t *wrlock_attrs);
+#else
+int RTS_rwlock_init(RTS_rwlock_t *rwlock, RTS_Layer, void                 *wrlock_attrs);
+#endif
               
 /** Obtain a read lock.
  *
@@ -256,6 +431,7 @@ int RTS_rwlock_wrlock(RTS_rwlock_t *rwlock);
 int RTS_rwlock_unlock(RTS_rwlock_t *rwlock);
 
 
+
 /*******************************************************************************************************************************
  *                                      Paired macros for initialization functions
  *******************************************************************************************************************************/
@@ -296,12 +472,13 @@ int RTS_rwlock_unlock(RTS_rwlock_t *rwlock);
  *  }
  *  @endcode
  */
-#define RTS_INIT(MUTEX, ALLOW_RECURSION)                                                                                       \
+#ifdef ROSE_THREADS_ENABLED
+#  define RTS_INIT(MUTEX, ALLOW_RECURSION)                                                                                     \
     do {                                                                                                                       \
         static bool RTS_Is_initialized=false, RTS_Is_initializing=false;        /* "s"==shared; "p"=private */                 \
         static pthread_t RTS_Is_initializer;                                                                                   \
         static pthread_cond_t RTS_Is_condition=PTHREAD_COND_INITIALIZER;                                                       \
-        pthread_mutex_t *RTS_Ip_mutex = &(MUTEX);                                                                              \
+        RTS_mutex_t *RTS_Ip_mutex = &(MUTEX);                                                                                  \
         bool RTS_Ip_initialized, RTS_Ip_initializing;                                                                          \
         bool RTS_Ip_allow_recursion = (ALLOW_RECURSION);                                                                       \
                                                                                                                                \
@@ -322,7 +499,7 @@ int RTS_rwlock_unlock(RTS_rwlock_t *rwlock);
 
 
 /** End an RTS_INIT construct. */
-#define RTS_INIT_END                                                                                                           \
+#  define RTS_INIT_END                                                                                                         \
                     } catch (...) {                                                                                            \
                         /* If the user supplied body throws an exception, consider the body to have completed. */              \
                         RTS_MUTEX(*RTS_Ip_mutex) {                                                                             \
@@ -352,11 +529,23 @@ int RTS_rwlock_unlock(RTS_rwlock_t *rwlock);
                  * RTS_I_LOCK before the first thread completed the initialization. */                                         \
                 RTS_MUTEX(*RTS_Ip_mutex) {                                                                                     \
                     while (!RTS_Is_initialized)                                                                                \
-                        pthread_cond_wait(&RTS_Is_condition, RTS_Ip_mutex);                                                    \
+                        pthread_cond_wait(&RTS_Is_condition, &(RTS_Ip_mutex->mutex));                                          \
                 } RTS_MUTEX_END;                                                                                               \
             }                                                                                                                  \
         }                                                                                                                      \
     } while (0)
+#else
+#  define RTS_INIT(MUTEX, ALLOW_RECURSION)                                                                                     \
+    do {                                                                                                                       \
+        static bool RTS_Is_initialized=false;                                                                                  \
+        if (!RTS_Is_initialized) {                                                                                             \
+            RTS_Is_initialized = true;                                                                                         \
+            do {
+#  define RTS_INIT_END                                                                                                         \
+            } while (0);                                                                                                       \
+        }                                                                                                                      \
+    } while (0)
+#endif
 
 #define RTS_INIT_RECURSIVE(MUTEX)       RTS_INIT(MUTEX, true)                   /**< See RTS_INIT */
 #define RTS_INIT_NONRECURSIVE(MUTEX)    RTS_INIT(MUTEX, false)                  /**< See RTS_INIT */
@@ -517,7 +706,7 @@ public:
 
 private:
     RTS_Message() {abort();}
-    RTS_Message& operator=(RTS_Message&) {abort();}
+    RTS_Message& operator=(RTS_Message&) { abort(); return *this; } // return is to silence Klocwork
     void ctor();                                        /**< Constructor helper. */
     void dtor();                                        /**< Desctructor helper. */
     void terminate();                                   /**< Terminate line if necessary. */
@@ -573,7 +762,8 @@ private:
  *  }
  *  @endcode
  */
-#define RTS_MESSAGE(MESG)                                                                                                      \
+#ifdef ROSE_THREADS_ENABLED
+#  define RTS_MESSAGE(MESG)                                                                                                    \
     do {                                                                                                                       \
         RTS_Message *RTS_Mp_mesg = &(MESG);                                                                                    \
         int RTS_Mp_err = RTS_Mp_mesg->lock();                                                                                  \
@@ -581,7 +771,7 @@ private:
         do {                                                                                                                   \
             try {
 
-#define RTS_MESSAGE_END(SOL)                                                                                                   \
+#  define RTS_MESSAGE_END(SOL)                                                                                                 \
             } catch (...) {                                                                                                    \
                 RTS_Mp_err = RTS_Mp_mesg->unlock((SOL));                                                                       \
                 assert(0==RTS_Mp_err);                                                                                         \
@@ -591,10 +781,14 @@ private:
         RTS_Mp_err = RTS_Mp_mesg->unlock((SOL));                                                                               \
         assert(0==RTS_Mp_err);                                                                                                 \
     } while (0)
+#else
+#  define RTS_MESSAGE(MESG)                                                                                                    \
+    do {
+#  define RTS_MESSAGE_END(SOL)                                                                                                 \
+    } while (0)
+#endif
 //@}
-    
-        
-        
-        
 
+
+        
 #endif /* !ROSE_threadSupport_H !*/

@@ -1,0 +1,358 @@
+&domain_nml
+  nprocs_clinic = 1
+  nprocs_tropic = 1
+  clinic_distribution_type = 'balanced'
+  tropic_distribution_type = 'cartesian'
+  ew_boundary_type = 'cyclic'
+  ns_boundary_type = 'closed'
+/
+
+&io_nml
+  num_iotasks = 1
+  lredirect_stdout = .false.
+  log_filename = 'pop.out'
+  luse_pointer_files = .false.
+  pointer_filename = 'pop_pointer'
+/
+
+&time_manager_nml
+  runid          = 'your_id_here'
+  stop_option    = 'nstep'
+  stop_count     = 20
+  time_mix_opt   = 'avgfit'
+  fit_freq       = 1
+  time_mix_freq  = 17
+  dt_option      = 'auto_dt'
+  dt_count       = 1
+  impcor         = .true.
+  laccel         = .false.
+  accel_file     = 'unknown_accel_file'
+  dtuxcel        = 1.0
+  allow_leapyear = .false.
+  iyear0         = 0
+  imonth0        = 1
+  iday0          = 1
+  ihour0         = 0
+  iminute0       = 0
+  isecond0       = 0
+  date_separator = ' '
+/
+
+&grid_nml
+   horiz_grid_opt       = 'internal'
+   horiz_grid_file      = 'unknown_horiz_grid'
+   sfc_layer_opt        = 'varthick'
+   vert_grid_opt        = 'internal'
+   vert_grid_file       = 'unknown_vert_grid'
+   topography_opt       = 'internal'
+   topography_file      = 'unknown_topography'
+   partial_bottom_cells = .false.
+   bottom_cell_file     = 'unknown_bottom_cell'
+   region_mask_file     = 'unknown_region_mask'
+   topo_smooth          = .false.
+   flat_bottom          = .false.
+   lremove_points       = .false.
+/
+
+&init_ts_nml
+   init_ts_option   = 'internal'
+   init_ts_file     = 'unknown_init_ts'
+   init_ts_file_fmt = 'bin'
+/
+
+&diagnostics_nml
+   diag_global_freq_opt   = 'nstep'
+   diag_global_freq       = 1
+   diag_cfl_freq_opt      = 'nstep'
+   diag_cfl_freq          = 1
+   diag_transp_freq_opt   = 'never'
+   diag_transp_freq       = 1
+   diag_transport_file    = 'sample_transport_file'
+   diag_outfile           = 'pop_diag'
+   diag_transport_outfile = 'pop_transp'
+   diag_all_levels        = .false.
+   cfl_all_levels         = .false.
+/
+
+&restart_nml
+   restart_freq_opt = 'never' 
+   restart_freq     = 100000
+   restart_outfile  = 'unknown_restart_outfile'
+   restart_fmt      = 'bin'
+   leven_odd_on     = .false. 
+   even_odd_freq    = 100000
+   pressure_correction = .false.
+/
+
+&tavg_nml
+   tavg_freq_opt  = 'never'
+   tavg_freq      = 100000
+   tavg_start_opt = 'nstep'
+   tavg_start     = 0
+   tavg_infile    = 'unknown_tavg_infile'
+   tavg_fmt_in    = 'nc'
+   tavg_outfile   = 'unknown_tavg_outfile'
+   tavg_fmt_out   = 'nc'
+   tavg_contents  = 'sample_tavg_contents'
+/
+
+&history_nml
+   history_freq_opt = 'never'
+   history_freq     = 100000
+   history_outfile  = 'unknown_history'
+   history_fmt      = 'nc'
+   history_contents = 'sample_history_contents'
+/
+
+&movie_nml
+   movie_freq_opt  = 'never'
+   movie_freq      = 100000
+   movie_outfile   = 'unknown_movie'
+   movie_fmt       = 'nc'
+   movie_contents  = 'sample_movie_contents'
+/
+
+&solver_nml
+   solv_convrg    = 1.e-12
+   solv_max_iters = 200
+   solv_ncheck    = 10
+   lprecond       = .false.
+   solv_type      = 'pcg'
+   precond_file   = 'empty'
+/
+
+&vertical_mix_nml
+   vmix_choice = 'rich'
+   aidif       = 1.0
+   bottom_drag = 1.225e-3
+   implicit_vertical_mix = .true.
+   convection_type = 'diffusion'
+   nconvad = 2
+   convect_diff = 1000.0
+   convect_visc = 1000.0
+   bottom_heat_flx = 0.0
+   bottom_heat_flx_depth = 100000.00 
+/
+
+&vmix_const_nml
+   const_vvc   = 0.25
+   const_vdc   = 0.25
+/
+
+&vmix_rich_nml
+   bckgrnd_vvc = 1.0
+   bckgrnd_vdc = 0.1
+   rich_mix    = 50.0
+/
+
+&vmix_kpp_nml
+   bckgrnd_vdc1    = 0.1
+   bckgrnd_vdc2    = 0.0
+   bckgrnd_vdc_dpth= 0.0
+   bckgrnd_vdc_linv= 0.0
+   Prandtl         = 10.0
+   rich_mix        = 50.0
+   lrich           = .true.
+   ldbl_diff       = .false.
+   lshort_wave     = .false.
+   lcheckekmo      = .false.
+   num_v_smooth_Ri = 1
+/
+
+&advect_nml
+   tadvect_ctype = 'centered'
+/
+
+&hmix_nml
+   hmix_momentum_choice = 'del2'
+   hmix_tracer_choice   = 'del2'
+/
+
+&hmix_del2u_nml
+   lauto_hmix           = .true. 
+   lvariable_hmix       = .false. 
+   am                   = 1.e8
+/
+
+&hmix_del2t_nml
+   lauto_hmix           = .true. 
+   lvariable_hmix       = .false. 
+   ah                   = 1.e8
+/
+
+&hmix_del4u_nml
+   lauto_hmix           = .true. 
+   lvariable_hmix       = .false. 
+   am                   = -0.6e20
+/
+
+&hmix_del4t_nml
+   lauto_hmix           = .true. 
+   lvariable_hmix       = .false. 
+   ah                   = -0.2e20
+/
+
+&hmix_gm_nml
+   kappa_choice         = 'constant'
+   slope_control_choice = 'notanh'
+   kappa_depth_1        = 1.0
+   kappa_depth_2        = 0.0
+   kappa_depth_scale    = 150000.0
+   ah                   = 0.8e7
+   ah_bolus             = 0.8e7
+   ah_bkg               = 0.0
+   slm_r                = 0.01
+   slm_b                = 0.01
+   gm_bolus             = .false.
+/
+
+&hmix_aniso_nml
+   hmix_alignment_choice = 'flow'
+   lvariable_hmix_aniso = .false.
+   lsmag_aniso = .false.
+   visc_para = 0.0
+   visc_perp = 0.0
+   c_para = 0.0
+   c_perp = 0.0
+   u_para = 0.0
+   u_perp = 0.0
+   var_viscosity_infile      = 'unknown_var_viscosity_infile'
+   var_viscosity_infile_fmt  = 'bin'
+   var_viscosity_outfile     = 'unknown_var_viscosity_outfile'
+   var_viscosity_outfile_fmt = 'bin'
+   vconst_1       = 1.e7_r8
+   vconst_2       = 24.5_r8
+   vconst_3       = 0.2_r8
+   vconst_4       = 1.e-8_r8
+   vconst_5       = 3
+   vconst_6       = 1.e7_r8
+   smag_lat       = 20.0_r8
+   smag_lat_fact  = 0.98_r8
+   smag_lat_gauss = 98.0_r8
+/
+
+&state_nml
+   state_choice = 'mwjf'
+   state_file = 'internal'
+   state_range_opt = 'enforce'
+   state_range_freq = 100000   
+/
+
+&baroclinic_nml
+   reset_to_freezing = .true.
+/
+
+&ice_nml
+   ice_freq_opt = 'never'
+   ice_freq     = 100000
+   kmxice   = 1
+/
+
+&pressure_grad_nml
+   lpressure_avg = .true.
+   lbouss_correct = .true.
+/
+
+&topostress_nml
+   ltopostress = .false.
+   nsmooth_topo = 0
+/
+
+&xdisplay_nml
+   lxdisplay = .false.
+   nstep_xdisplay = 1
+/
+
+&forcing_ws_nml
+   ws_data_type    = 'analytic'
+   ws_data_inc     = 1.e20
+   ws_interp_freq  = 'never'
+   ws_interp_type  = 'nearest'
+   ws_interp_inc   = 1.e20
+   ws_filename     = 'unknown-ws'
+   ws_file_fmt     = 'bin'
+   ws_data_renorm  = 1.
+/
+
+&forcing_shf_nml
+   shf_formulation    = 'restoring'
+   shf_data_type      = 'none'
+   shf_data_inc       = 1.e20
+   shf_interp_freq    = 'never'
+   shf_interp_type    = 'nearest'
+   shf_interp_inc     = 1.e20
+   shf_restore_tau    = 1.e20
+   shf_weak_restore   = 0.0
+   shf_strong_restore = 0.0
+   shf_filename       = 'unknown-shf'
+   shf_file_fmt       = 'bin'
+   shf_data_renorm    = 1.
+   jerlov_water_type  = 3
+/
+
+&forcing_sfwf_nml
+   sfwf_formulation    = 'restoring'
+   sfwf_data_type      = 'none'
+   sfwf_data_inc       = 1.e20
+   sfwf_interp_freq    = 'never'
+   sfwf_interp_type    = 'nearest'
+   sfwf_interp_inc     = 1.e20
+   sfwf_restore_tau    = 1.e20
+   sfwf_weak_restore   = .092
+   sfwf_strong_restore = .6648
+   sfwf_filename       = 'unknown-sfwf'
+   sfwf_file_fmt       = 'bin'
+   sfwf_data_renorm    = 1.
+   ladjust_precip      = .false.
+   lfw_as_salt_flx     = .false.
+/
+
+&forcing_pt_interior_nml
+   pt_interior_formulation = 'restoring'
+   pt_interior_data_type   = 'none'
+   pt_interior_data_inc    = 1.e20
+   pt_interior_interp_freq = 'never'
+   pt_interior_interp_type = 'nearest'
+   pt_interior_interp_inc  = 1.e20
+   pt_interior_restore_tau = 1.e20
+   pt_interior_filename    = 'unknown-pt_interior'
+   pt_interior_file_fmt    = 'bin'
+   pt_interior_data_renorm = 1.
+   pt_interior_restore_max_level = 0
+   pt_interior_variable_restore  = .false.
+   pt_interior_restore_filename  = 'unknown-pt_interior_restore'
+   pt_interior_restore_file_fmt  = 'bin'
+/
+
+&forcing_s_interior_nml
+   s_interior_formulation = 'restoring'
+   s_interior_data_type   = 'none'
+   s_interior_data_inc    = 1.e20
+   s_interior_interp_freq = 'never'
+   s_interior_interp_type = 'nearest'
+   s_interior_interp_inc  = 1.e20
+   s_interior_restore_tau = 1.e20
+   s_interior_filename    = 'unknown-s_interior'
+   s_interior_file_fmt    = 'bin'
+   s_interior_data_renorm = 1.
+   s_interior_restore_max_level = 0
+   s_interior_variable_restore  = .false.
+   s_interior_restore_filename  = 'unknown-s_interior_restore'
+   s_interior_restore_file_fmt  = 'bin'
+/
+
+&forcing_ap_nml
+   ap_data_type   = 'none'
+   ap_data_inc    = 1.e20
+   ap_interp_freq = 'never'
+   ap_interp_type = 'nearest'
+   ap_interp_inc  = 1.e20
+   ap_filename    = 'unknown-ap'
+   ap_file_fmt    = 'bin'
+   ap_data_renorm = 1.
+/
+
+&coupled_nml
+   coupled_freq_opt = 'never'
+   coupled_freq     = 100000
+/

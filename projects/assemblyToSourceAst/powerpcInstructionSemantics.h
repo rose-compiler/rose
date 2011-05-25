@@ -620,6 +620,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            break;
          }
 
+#if 0 /* Duplicate of a subsequent case.  Whoever is reposible for this needs to fix it. (both commented out) */
       case powerpc_addic:
          {
            ROSE_ASSERT(operands.size() == 3);
@@ -635,6 +636,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            policy.writeSPR(powerpc_spr_xer,policy.or_(policy.and_(policy.readSPR(powerpc_spr_xer),number<32>(0xDFFFFFFFU)),policy.ite(carry_out,number<32>(0x20000000U),number<32>(0x0))));
            break;
          }
+#endif
 
       case powerpc_addic_record:
          {
@@ -674,6 +676,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            break;
          }
 
+#if 0 /* Duplicate of a previous case. Whoever is responsible for this needs to fix it. (both commented out) */
       case powerpc_addic:
          {
            ROSE_ASSERT(operands.size() == 3);
@@ -685,6 +688,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
            break;
          }
+#endif
 
 
       case powerpc_subfze:

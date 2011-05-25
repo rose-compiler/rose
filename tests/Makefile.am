@@ -3,10 +3,19 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # DQ (4/17/2010): If we are not supporting C++ then we can't run most of our tests, but if 
 # we are supporting only Fortran then we can at least run the Fortran tests (same with PHP).
 # SUBDIRS = CompileTests roseTests RunTests PerformanceTests CompilerOptionsTests translatorTests
-SUBDIRS = CompileTests roseTests
-if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-   SUBDIRS += RunTests PerformanceTests CompilerOptionsTests translatorTests
+# SUBDIRS = CompileTests roseTests
+SUBDIRS = CompileTests
+if !ROSE_USE_INSURE
+# DQ (4/23/2011): Ignoring this whole directory might be over kill. But I have had problems, 
+# only on Hudson, just compiling a number of these subdirectories.
+   SUBDIRS += roseTests
 endif
+
+SUBDIRS += RunTests
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+   SUBDIRS += PerformanceTests CompilerOptionsTests translatorTests
+endif
+
 
 # Three phases (levels) of test programs:
 #  Phase 1) Analysis only, compiles the original code
@@ -66,7 +75,10 @@ EXTRA_DIST = CMakeLists.txt inputFile.C tests.tex
 # *******  Analysis Tests  *******
 # ********************************
 testObjectFileAnalysis: testAnalysis
-	./testAnalysis $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_Analysis_inputFile.o
+#	DQ (4/19/2011): copy $(srcdir)/inputFile.C to intermediate file to avoid collisions in generation of rose_inputFile.C within parallel make.
+	cp $(srcdir)/inputFile.C inputObjectFileAnalysis.C
+#	./testAnalysis $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_Analysis_inputFile.o
+	./testAnalysis $(INCLUDES) -c inputObjectFileAnalysis.C -o alt_Analysis_inputFile.o
 
 testLinkFileAnalysis: testObjectFileAnalysis
 #	./testAnalysis $(INCLUDES) alt_inputFile.o -o alt_inputFile
@@ -86,7 +98,10 @@ test_testAnalysis: testObjectFileAnalysis testLinkFileAnalysis testCppFileAnalys
 # *******  Code Generation Tests  ********
 # ****************************************
 testObjectFileCodeGeneration: testCodeGeneration
-	./testCodeGeneration $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_CodeGeneration_inputFile.o
+#	DQ (4/19/2011): copy $(srcdir)/inputFile.C to intermediate file to avoid collisions in generation of rose_inputFile.C within parallel make.
+	cp $(srcdir)/inputFile.C inputObjectFileCodeGeneration.C
+#	./testCodeGeneration $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_CodeGeneration_inputFile.o
+	./testCodeGeneration $(INCLUDES) -c inputObjectFileCodeGeneration.C -o alt_CodeGeneration_inputFile.o
 
 testLinkFileCodeGeneration: testObjectFileCodeGeneration
 	./testCodeGeneration -rose:Cxx alt_CodeGeneration_inputFile.o -o testLinkFileCodeGenerationExecutable
@@ -105,7 +120,10 @@ test_testCodeGeneration: testObjectFileCodeGeneration testLinkFileCodeGeneration
 # *******  Translator Tests  *******
 # **********************************
 testObjectFileTranslator: testTranslator
-	./testTranslator $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_Translator_inputFile.o
+#	DQ (4/19/2011): copy $(srcdir)/inputFile.C to intermediate file to avoid collisions in generation of rose_inputFile.C within parallel make.
+	cp $(srcdir)/inputFile.C inputObjectFileTranslator.C
+#	./testTranslator $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_Translator_inputFile.o
+	./testTranslator $(INCLUDES) -c inputObjectFileTranslator.C -o alt_Translator_inputFile.o
 
 testLinkFileTranslator: testObjectFileTranslator
 	./testTranslator $(INCLUDES) alt_Translator_inputFile.o -o testLinkFileTranslatorExecutable
@@ -149,7 +167,10 @@ testSimpleLinkFileTranslator: testTranslator
 # *******  Token Generation Tests  ********
 # *****************************************
 testObjectFileTokenGeneration: testTokenGeneration
-	./testTokenGeneration $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_TokenGeneration_inputFile.o
+#	DQ (4/19/2011): copy $(srcdir)/inputFile.C to intermediate file to avoid collisions in generation of rose_inputFile.C within parallel make.
+	cp $(srcdir)/inputFile.C alt_ObjectFileTokenGeneration_inputFile.C
+#	./testTokenGeneration $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_TokenGeneration_inputFile.o
+	./testTokenGeneration $(INCLUDES) -c alt_ObjectFileTokenGeneration_inputFile.C -o alt_TokenGeneration_inputFile.o
 
 test_testTokenGeneration: testObjectFileTokenGeneration 
 
@@ -172,6 +193,7 @@ myCleanRule:
 	rm -f testLinkFileAnalysisExecutable testLinkFileCodeGenerationExecutable testLinkFileTranslatorExecutable testExecutableFileAstFileIOExecutable
 	rm -f testExecutableFileAnalysisExecutable testExecutableFileCodeGenerationExecutable testExecutableFileTranslatorExecutable
 	rm -f rose_*.C inputFileTranslator.C inputFileCodeGeneration.C inputFileAnalysis.C inputSimpleLinkFileTranslator.C inputFileAstFileIO.C
+	rm -f inputObjectFileAnalysis.C inputObjectFileCodeGeneration.C inputObjectFileTranslator.C alt_ObjectFileTokenGeneration_inputFile.C
 	rm -f alt_AstFileIO_inputFile* alt_AstFileRead_inputFile* a.out *.dot *.binary
 	rm -f *.C_identity 
 

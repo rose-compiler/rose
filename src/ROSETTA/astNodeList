@@ -234,6 +234,8 @@ SgAsmStatement
 SgAsmStmt
 SgAsmStoredString
 SgAsmStringStorage
+SgAsmTarget
+SgAsmTargetList
 SgAsmType
 SgAsmType128bitFloat
 SgAsmType80bitFloat
@@ -661,4 +663,4 @@ SgTypeCAFTeam
 SgCAFWithTeamStatement
 SgCAFCoExpression
 SgTypeCrayPointer
-
+SgJavaImportStatement

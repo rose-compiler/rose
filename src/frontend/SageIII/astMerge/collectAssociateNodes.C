@@ -269,6 +269,7 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
           case V_SgTypeUnsignedShort:
           case V_SgTypeVoid:
           case V_SgTypeWchar:
+          case V_SgTypeCAFTeam:
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
        // Allow this as an IR node into the AST.
           case V_SgPartialFunctionType:
@@ -1816,6 +1817,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 #endif
+
+       // DQ (4/16/2011): Added support for another IR node.
+          case V_SgJavaImportStatement:
 
        // DQ (11/16/2007): Added support for another IR node.
           case V_SgFortranDo:

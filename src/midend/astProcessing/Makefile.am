@@ -44,7 +44,7 @@ include_HEADERS = \
    AstReverseSimpleProcessing.h Ast.h AstRestructure.h AstClearVisitFlags.h \
    AstTraversal.h AstCombinedProcessing.h AstCombinedProcessingImpl.h \
    AstCombinedSimpleProcessing.h StackFrameVector.h AstSharedMemoryParallelProcessing.h \
-   AstSharedMemoryParallelProcessingImpl.h AstSharedMemoryParallelSimpleProcessing.h
+   AstSharedMemoryParallelProcessingImpl.h AstSharedMemoryParallelSimpleProcessing.h graphProcessing.h
 
 # Removed AstTests.h AstStatistics.h 
 

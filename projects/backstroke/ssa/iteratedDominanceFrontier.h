@@ -24,14 +24,14 @@ namespace ssa_private
 	{
 		set<CfgNodeT> result;
 		set<CfgNodeT> visitedNodes;
-		set<CfgNodeT> worklist;
+		vector<CfgNodeT> worklist;
 
-		worklist.insert(startNodes.begin(), startNodes.end());
+		worklist.insert(worklist.end(), startNodes.begin(), startNodes.end());
 
 		while (!worklist.empty())
 		{
-			CfgNodeT currentNode = *worklist.begin();
-			worklist.erase(worklist.begin());
+			CfgNodeT currentNode = worklist.back();
+			worklist.pop_back();
 			visitedNodes.insert(currentNode);
 
 			//Get the dominance frontier of the node and add it to the results
@@ -45,7 +45,7 @@ namespace ssa_private
 					continue;
 
 				result.insert(dfNode);
-				worklist.insert(dfNode);
+				worklist.push_back(dfNode);
 			}
 		}
 
@@ -66,7 +66,7 @@ namespace ssa_private
 		ControlFlowGraph functionCfg(func);
 
 		//Build the dominator tree
-		typename ControlFlowGraph::VertexVertexMap dominatorTreeMap = functionCfg.buildDominatorTree();
+		typename ControlFlowGraph::VertexVertexMap dominatorTreeMap = functionCfg.getDominatorTree();
 
 		//TODO: This code converts a VertexVertex Map to a  boost graph. Should be factored out
 		typedef adjacency_list<vecS, vecS, bidirectionalS, CfgNodeT> TreeType;
@@ -165,7 +165,7 @@ namespace ssa_private
 		//While we're at it, calcualte the postdominator tree
 		if (iPostDominatorMap != NULL)
 		{
-			typename ControlFlowGraph::VertexVertexMap postDominatorTreeMap = functionCfg.buildPostdominatorTree();
+			typename ControlFlowGraph::VertexVertexMap postDominatorTreeMap = functionCfg.getPostdominatorTree();
 
 			BOOST_FOREACH(typename ControlFlowGraph::VertexVertexMap::value_type& nodePostDominatorPair, postDominatorTreeMap)
 			{

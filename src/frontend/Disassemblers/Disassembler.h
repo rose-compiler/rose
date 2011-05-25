@@ -1,7 +1,7 @@
 #ifndef ROSE_DISASSEMBLER_H
 #define ROSE_DISASSEMBLER_H
 
-#include "threadSupport.h"
+#include "threadSupport.h"      /* needed for RTS_mutex_t in this header */
 #include "Registers.h"
 
 /** Virtual base class for instruction disassemblers.
@@ -688,7 +688,7 @@ protected:
     static time_t progress_time;                        /**< Time of last report, or zero if no report has been generated. */
     static FILE *progress_file;                         /**< File to which reports are made. Null disables reporting. */
 
-    static pthread_mutex_t class_mutex;                 /**< Mutex for class-wide thread safety */
+    static RTS_mutex_t class_mutex;                     /**< Mutex for class-wide thread safety */
 };
 
 #endif

@@ -1,0 +1,64 @@
+program assumed_size_coarray_test
+    integer,allocatable::A(:)[*]
+    interface 
+       subroutine foo(A)
+          integer:: A(1:*)[*]
+       end subroutine foo
+    end interface 
+
+    integer:: size,rank,partner
+
+    size = team_size()
+    rank = team_rank()
+
+    partner = size-rank - 1
+
+    allocate(A(4)[])
+
+    A(1) = rank
+
+    call team_barrier()
+
+    if (rank .eq. 0) then
+       A(1) =A(1)[partner]
+       if (A(1) .eq. partner) then 
+          write(*, '(A)') "Assumed size coarray test:step 1 of 3 in the caller."
+       else
+          print *, "Assumed size coarray test fail: in caller,A(1) should be ",partner, " but we have A(1)= ", A(1)
+       endif 
+    end if 
+
+    call team_barrier()
+
+    call foo(A(:))
+
+    call team_barrier()
+
+    if (rank .eq. 0) then
+      if (A(1) .eq. 1) then 
+         write(*, '(A)') "Assumed size coarray test: step 3 of 3 back to the caller"
+       else 
+         print *, "Assumed size coarray test failed: in caller, A(1) should be value reseted in the callee (0) instead of ",A(1)
+     end if
+    end if 
+    call team_barrier()
+end
+
+
+subroutine foo(A)
+    integer A(1:*)[*]
+    integer rank
+
+    rank = team_rank()
+
+
+    if (rank .eq. 0)  then 
+      A(1) =  A(1)[1]
+      if (A(1) .eq. 1) then 
+         write(*, '(A)') "Assumed size coarray test: step 2 of 3 in the callee"
+      else 
+        print *,"Assumed size coarray test failed: callee reset A(1)[0] = 0"
+      end if 
+    end if
+
+end

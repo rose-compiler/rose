@@ -1,4 +1,4 @@
-main -> func_float func_double func_long_double
-func_float ->
 func_double ->
+func_float ->
 func_long_double ->
+main -> func_double func_float func_long_double

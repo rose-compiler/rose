@@ -459,6 +459,9 @@ typedef SgAsmStatementPtrList*              SgAsmStatementPtrListPtr;
 typedef Rose_STL_Container<SgAsmExpression*> SgAsmExpressionPtrList;
 typedef SgAsmExpressionPtrList*              SgAsmExpressionPtrListPtr;
 
+typedef Rose_STL_Container<SgAsmTarget*> SgAsmTargetPtrList;
+typedef SgAsmTargetPtrList* 		 SgAsmTargetPtrListPtr;
+
 // DQ (3/15/2007): Added support for binaries.
 typedef Rose_STL_Container<SgAsmDeclaration*> SgAsmDeclarationPtrList;
 typedef SgAsmDeclarationPtrList*              SgAsmDeclarationPtrListPtr;

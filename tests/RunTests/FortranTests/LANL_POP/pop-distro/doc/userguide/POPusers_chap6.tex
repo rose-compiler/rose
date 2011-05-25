@@ -1,0 +1,63 @@
+\chapter{Trouble-shooting}\label{ch:trouble}
+
+If you encounter problems getting POP to run, a list of
+known bugs is maintained at the POP website and the user
+should check there before contacting the developers.
+In addition, there are other common sources of error
+listed below with suggestions for avoiding such problems.
+
+\subsection{Timestep stability criteria}
+\label{sec:trouble-timestep}
+
+As part of the POP diagnostics, the Courant number for
+various processes can be output.  The Courant number
+should always be less than one and often should be
+kept under 0.5 for stability.  If such a CFL condition
+is exceeded, reducing the timestep may be a solution.
+However, it should be noted that often other
+underlying problems may be causing these limits to
+be exceeded (e.g. unrealistically high velocities)
+and reducing the timestep will only prolong the agony.
+In such cases, the particular CFL condition that is
+violated can help pinpoint the source of the problem.
+
+\subsection{Checking the global energy and work balances}
+\label{sec:trouble-balance}
+
+\subsection{Getting the right combination of mixing options}
+\label{sec:trouble-mixing}
+
+\subsection{Getting the right combination of forcing options}
+\label{sec:trouble-forcing}
+
+\subsection{Properly normalizing input salinity values}
+\label{sec:trouble-salinity}
+
+The units for salinity in the model are g/g.  Care must be
+taken to renormalize salinity data, which is often in g/kg.
+
+\section{Running POP on PCs}
+\label{sec:PCPOP}
+
+POP has been successfully run on a single-processor Intel PC
+with Windows NT. POP was built with Digital Visual
+Fortran 5.0 as a Win32 console application (meaning you run
+it with a command line in a DOS window).  The make system
+used for other platforms was not used on the PC. Instead, a
+standard Visual Studio project was created.
+
+Source files added to the project were
+\begin{itemize}
+\item All .F90 and .C files in source subdirectory
+\item All .F90 files in serial subdirectory
+\end{itemize}
+
+In addition to the defaults, these Fortran preprocessor
+options `/fpp' was needed.
+To enable POP to run the test problem without stack overflow,
+reserve stack memory was set to 64 MB. A lower
+value may be possible, but 48 MB was not enough.
+The debug version required the link option: /nodefaultlib:libc.
+The release version (optimized) ran the test problem in about
+four minutes (262 seconds) on a 450 MHz, 256 MB
+Pentium II PC.
