@@ -102,6 +102,18 @@ BinaryAnalysis::Dominance::apply_to_ast(const ControlFlow::Graph &cfg, const Rel
     }
 }
 
+/* See header file for documentation. */
+void
+BinaryAnalysis::Dominance::cache_vertex_descriptors(const Graph &cfg)
+{
+    boost::graph_traits<Graph>::vertex_iterator vi, vi_end;
+    for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
+        SgAsmBlock *block = get(boost::vertex_name, cfg, *vi);
+        assert(block!=NULL); /* every vertex must point to a block */
+        block->set_cached_vertex(*vi);
+    }
+}
+
 /* Loosely based on an algorithm from Rice University known to be O(n^2) where n is the number of vertices in the control flow
  * subgraph connected to the start vertex.  According to the Rice paper, their algorithm outperforms Lengauer-Tarjan on
  * typicall control flow graphs even though asymptotically, Lengauer-Tarjan is better.  The Rice algorithm is also much

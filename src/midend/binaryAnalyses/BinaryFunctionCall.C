@@ -1,6 +1,18 @@
 #include "sage3basic.h"
 #include "BinaryFunctionCall.h"
 
+/* See header file for documentation. */
+void
+BinaryAnalysis::FunctionCall::cache_vertex_descriptors(const Graph &cg)
+{
+    boost::graph_traits<Graph>::vertex_iterator vi, vi_end;
+    for (boost::tie(vi, vi_end)=vertices(cg); vi!=vi_end; ++vi) {
+        SgAsmFunctionDeclaration *func = get(boost::vertex_name, cg, *vi);
+        assert(func!=NULL); /* every vertex must point to a function */
+        func->set_cached_vertex(*vi);
+    }
+}
+
 void
 BinaryAnalysis::FunctionCall::build_graph(const ControlFlow::Graph &cfg, Graph &cg/*out*/)
 {

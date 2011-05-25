@@ -55,6 +55,19 @@ namespace BinaryAnalysis {
          *  block is set to true, but this may change in the future. */
         void apply_to_ast(const Graph&);
 
+        /** Cache vertex descriptors in AST.
+         *
+         *  The vertices of a control flow graph are of type Vertex, and point at the basic blocks (SgAsmBlock) of the
+         *  AST. Although most graph algorithms will only need to map Vertex to SgAsmBlock, the inverse mapping is also
+         *  sometimes useful.  That mapping can be stored into an std::map via graph traversal, or stored in the AST itself
+         *  attached to each SgAsmBlock.  Using an std::map requires an O(log N) lookup each time we need to get the vertex
+         *  descriptor from a block, while storing the vertex descriptor in the AST requires O(1) lookup time.
+         *
+         *  The vertex descriptors are available via SgAsmBlock::get_cached_vertex().  Other graph types (e.g., dominance
+         *  graphs) might also use the same cache line.  The cached vertex is stored as a size_t, which is the same underlying
+         *  type for CFG vertices. */
+        void cache_vertex_descriptors(const Graph&);
+
         /** Builds a control flow graph for part of an AST.
          *
          *  Builds a control flow graph for the part of the abstract syntax tree rooted at @p root by traversing the AST to

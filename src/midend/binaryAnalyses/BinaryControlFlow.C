@@ -49,6 +49,18 @@ BinaryAnalysis::ControlFlow::apply_to_ast(const Graph &cfg)
 
 /* See header file for documentation. */
 void
+BinaryAnalysis::ControlFlow::cache_vertex_descriptors(const Graph &cfg)
+{
+    boost::graph_traits<Graph>::vertex_iterator vi, vi_end;
+    for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
+        SgAsmBlock *block = get(boost::vertex_name, cfg, *vi);
+        assert(block!=NULL); /* every vertex must point to a block */
+        block->set_cached_vertex(*vi);
+    }
+}
+
+/* See header file for documentation. */
+void
 BinaryAnalysis::ControlFlow::build_graph(SgNode *root, Graph &cfg)
 {
     typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;

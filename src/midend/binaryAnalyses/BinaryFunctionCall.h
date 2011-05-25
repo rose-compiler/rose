@@ -33,6 +33,20 @@ namespace BinaryAnalysis {
                                       boost::property<boost::vertex_name_t, SgAsmFunctionDeclaration*>
                                      > Graph;
 
+        /** Cache vertex descriptors in AST.
+         *
+         *  The vertices of a function call graph are of type Vertex, and point at the functions (SgAsmFunctionDeclaration) of
+         *  the AST. Although most graph algorithms will only need to map Vertex to SgAsmFunctionDeclaration, the inverse
+         *  mapping is also sometimes useful.  That mapping can be stored into an std::map via graph traversal, or stored in
+         *  the AST itself attached to each SgAsmFunctionDeclaration.  Using an std::map requires an O(log N) lookup each time
+         *  we need to get the vertex descriptor for a function, while storing the vertex descriptor in the AST requires O(1)
+         *  lookup time.
+         *
+         *  The vertex descriptors are available via SgAsmFunctionDeclaration::get_cached_vertex().  Other graph types (e.g.,
+         *  dominance graphs) might also use the same cache line.  The cached vertex is stored as a size_t, which is the same
+         *  underlying type for function call graph vertices. */
+        void cache_vertex_descriptors(const Graph&);
+
         /** Build a function call graph from a control flow graph.
          *
          *  Given a control flow graph (CFG) spanning multiple functions, create a function call graph (CG) by collapsing

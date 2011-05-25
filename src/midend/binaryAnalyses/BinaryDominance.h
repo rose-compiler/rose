@@ -114,6 +114,19 @@ namespace BinaryAnalysis {
         void apply_to_ast(const ControlFlow::Graph &cfg, const RelationMap&);
         /** @} */
 
+        /** Cache vertex descriptors in AST.
+         *
+         *  The vertices of a dominance graph are of type Vertex, and point at the basic blocks (SgAsmBlock) of the
+         *  AST. Although most graph algorithms will only need to map Vertex to SgAsmBlock, the inverse mapping is also
+         *  sometimes useful.  That mapping can be stored into an std::map via graph traversal, or stored in the AST itself
+         *  attached to each SgAsmBlock.  Using an std::map requires an O(log N) lookup each time we need to get the vertex
+         *  descriptor from a block, while storing the vertex descriptor in the AST requires O(1) lookup time.
+         *
+         *  The vertex descriptors are available via SgAsmBlock::get_cached_vertex().  Other graph types (e.g., control flow
+         *  graphs) might also use the same cache line.  The cached vertex is stored as a size_t, which is the same underlying
+         *  type for dominance graph vertices. */
+        void cache_vertex_descriptors(const Graph&);
+
         /** Checks that dominance relationships are consistent in an AST.
          *
          *  This method traverses the given AST to ensure that dominance relationships are consistent.  It checks the following
