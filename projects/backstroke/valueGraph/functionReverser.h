@@ -8,6 +8,9 @@ namespace Backstroke
 
 class ValueNode;
 
+//! Build a variable expression from a value node in the value graph.
+SgExpression* buildVariable(ValueNode* node);
+
 //! Given a AST node, get the first statement which contains this node.
 SgStatement* getAncestorStatement(SgNode* node);
 
@@ -29,11 +32,17 @@ SgExpression* buildPushFunctionCall(SgExpression* para);
 //! Build a push function call statement. The input parameter is the paramenter of the push function.
 SgStatement* buildPushStatement(ValueNode* valNode);
 
+//! Build a push function call statement for a pointer variable.
+SgStatement* buildPushStatementForPointerType(ValueNode* valNode);
+
 //! Build a pop function call.
 SgExpression* buildPopFunctionCall(SgType* type);
 
 //! Build a pop function call statement.
 SgStatement* buildPopStatement(SgType* type);
+
+//! Build an expression to restore the given node.
+SgExpression* buildRestorationExp(ValueNode* node);
 
 //! Build a statement to restore the given node.
 SgStatement* buildRestorationStmt(ValueNode* node);

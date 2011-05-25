@@ -11,22 +11,20 @@ using namespace std;
 using namespace SageBuilder;
 using namespace SageInterface;
 
-namespace
+
+//! Build a variable expression from a value node in the value graph.
+SgExpression* buildVariable(ValueNode* node)
 {
-    //! Build a variable expression from a value node in the value graph.
-    SgExpression* buildVariable(ValueNode* node)
+    SgExpression* var;
+    if (node->isAvailable())
+        var = SageInterface::copyExpression(isSgExpression(node->astNode));
+    else
     {
-        SgExpression* var;
-        if (node->isAvailable())
-            var = SageInterface::copyExpression(isSgExpression(node->astNode));
-        else
-        {
-            var = node->var.getVarRefExp();
-            //var = buildVarRefExp(node->str);
-        }
-        return var;
+        var = node->var.getVarRefExp();
+        //var = buildVarRefExp(node->str);
     }
-} // end of anonymous
+    return var;
+}
 
 SgStatement* getAncestorStatement(SgNode* node)
 {
@@ -127,6 +125,17 @@ SgStatement* buildPushStatement(ValueNode* valNode)
     return buildExprStatement(buildPushFunctionCall(valNode->var.getVarRefExp()));
 }
 
+SgStatement* buildPushStatementForPointerType(ValueNode* valNode)
+{
+    SgExpression* var = buildPointerDerefExp(valNode->var.getVarRefExp());
+    SgExprListExp* exprList = buildExprListExp(var);
+    SgPointerType* ptrType = isSgPointerType(valNode->getType());
+    ROSE_ASSERT(ptrType);
+    SgNewExp* newExp = buildNewExp(ptrType->get_base_type(), exprList, 0, 0, 0, 0);
+    
+    return buildExprStatement(buildPushFunctionCall(newExp));
+}
+
 SgExpression* buildPopFunctionCall(SgType* type)
 {
     return buildFunctionCallExp("pop< " + get_type_name(type) + " >",
@@ -138,12 +147,16 @@ SgStatement* buildPopStatement(SgType* type)
     return buildExprStatement(buildPopFunctionCall(type));
 }
 
-
-SgStatement* buildRestorationStmt(ValueNode* node)
+SgExpression* buildRestorationExp(ValueNode* node)
 {
     SgType* type = node->getType();
 	SgExpression* popFunc = buildPopFunctionCall(type);
-    return buildExprStatement(buildAssignOp(buildVariable(node), popFunc));
+    return buildAssignOp(buildVariable(node), popFunc);
+}
+
+SgStatement* buildRestorationStmt(ValueNode* node)
+{
+    return buildExprStatement(buildRestorationExp(node));
 }
 
 SgStatement* buildAssignOpertaion(ValueNode* lhs, ValueNode* rhs)

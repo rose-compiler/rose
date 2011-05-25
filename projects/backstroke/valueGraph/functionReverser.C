@@ -672,7 +672,9 @@ void EventReverser::generateCodeForBasicBlock(
         SgScopeStatement* rvsScope,
         SgScopeStatement* cmtScope)
 {
-    SageBuilder::pushScopeStack(rvsScope);
+    using namespace SageBuilder;
+    
+    pushScopeStack(rvsScope);
 
 #if 0
     // First, declare all temporary variables at the beginning of the reverse events.
@@ -713,13 +715,6 @@ void EventReverser::generateCodeForBasicBlock(
                 ;//rvsStmt = buildAssignOpertaion(valNode);
             else
             {
-                // State saving here.
-                // For forward event, we instrument a push function before the def.
-                
-                //instrumentPushFunction(valNode, ssEdge->killer);
-                
-                SgStatement* pushFuncStmt = buildPushStatement(valNode);
-                
                 // Find the correct location to put the push function call.
                 SgNode* killer = ssEdge->killer;
                 SgStatement* pushLocation = NULL;
@@ -731,15 +726,53 @@ void EventReverser::generateCodeForBasicBlock(
                 else
                     pushLocation = pushLocations[killer];
                 
+                
+                SgStatement* pushFuncStmt = NULL;
+                
+                // If the variable is a pointer, do a deep copy of it.
+                if (isSgPointerType(valNode->getType()))
+                {
+                    pushFuncStmt = buildPushStatementForPointerType(valNode);
+                    
+                    //instrumentPushFunction(valNode, funcDef_);
+                    rvsStmt = buildExprStatement(buildCommaOpExp(
+                            buildDeleteExp(buildVariable(valNode), 0, 0, 0),
+                            buildRestorationExp(valNode)));
+                    
+                    //rvsStmt = buildRestorationStmt(valNode);
+
+                    // Build the commit statement.
+                    cmtStmt = buildExprStatement(buildDeleteExp(
+                            buildPopFunctionCall(valNode->getType()), 0, 0, 0));
+                }
+                else
+                {
+                    pushFuncStmt = buildPushStatement(valNode);
+                    
+                    
+                    //instrumentPushFunction(valNode, funcDef_);
+                    rvsStmt = buildRestorationStmt(valNode);
+
+                    // Build the commit statement.
+                    cmtStmt = buildPopStatement(valNode->getType());
+                }
+                
+                // State saving here.
+                // For forward event, we instrument a push function before the def.
+                
+                //instrumentPushFunction(valNode, ssEdge->killer);
+                
+                //SgStatement* pushFuncStmt = buildPushStatement(valNode);
+                
                 SageInterface::insertStatementBefore(pushLocation, pushFuncStmt); 
                 // Update the location so that the next push is put before this push.
                 pushLocations[killer] = pushFuncStmt;
                 
-                //instrumentPushFunction(valNode, funcDef_);
-                rvsStmt = buildRestorationStmt(valNode);
+                ////instrumentPushFunction(valNode, funcDef_);
+                //rvsStmt = buildRestorationStmt(valNode);
                 
-                // Build the commit statement.
-                cmtStmt = buildPopStatement(valNode->getType());
+                //// Build the commit statement.
+                //cmtStmt = buildPopStatement(valNode->getType());
             }
         }
         else if (ValueNode* rhsValNode = isValueNode(routeGraph_[tgt]))
@@ -783,7 +816,7 @@ void EventReverser::generateCodeForBasicBlock(
         //else if (valuesToRestore_.count(node))
 #endif
 
-    SageBuilder::popScopeStack();
+    popScopeStack();
 }
 
 void EventReverser::generateCode(
@@ -892,14 +925,8 @@ void EventReverser::generateCode(
                 }
             }
 
+            // The if condition.
             SgExpression* condition = NULL;
-            foreach (SgExpression* cond, conditions)
-            {
-                if (condition == NULL)
-                    condition = cond;
-                else
-                    condition = buildOrOp(condition, cond);
-            }
             
             // Here we put all path numbers into an array then do a binary search
             // on this array. It can improve the performance.
@@ -934,6 +961,17 @@ void EventReverser::generateCode(
                 SgExprListExp* para = 
                         buildExprListExp(buildVarRefExp(pathNumArray), buildVarRefExp(pathNumName));
                 condition = buildFunctionCallExp("__check__", buildBoolType(), para);
+            }
+            else
+            {
+                // Build a logical or expression.
+                foreach (SgExpression* cond, conditions)
+                {
+                    if (condition == NULL)
+                        condition = cond;
+                    else
+                        condition = buildOrOp(condition, cond);
+                } 
             }
 
             SgBasicBlock* rvsTrueBody = buildBasicBlock();
