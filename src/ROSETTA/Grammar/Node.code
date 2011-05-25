@@ -13,7 +13,7 @@ HEADER_NODE_PREDECLARATION_START
 #include "Cxx_Grammar.h"
 
 #include "processSupport.h"
-#define __builtin_constant_p (exp) (0)
+#define __builtin_constant_p(exp) (0)
 
 
 class PreprocessingInfo;
