@@ -719,6 +719,12 @@ int GetPrecedence(int variant)
     // TV (04/26/2010): CUDA nodes
           case V_SgCudaKernelExecConfig: return 0;
           case V_SgCudaKernelCallExp:    return 0;
+
+    // TV (04/24/2011): Add FunctionRefExp to avoid the following Warning. It occurs
+    //        after my modification for a more generic support of the original
+    //        expression tree field (especially the case of FunctionRefExp used for
+    //        function pointers initialisation).
+          case V_SgFunctionRefExp:    return 0;
 #if 0
        // Template
           case V_:              return 0;
@@ -909,12 +915,20 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
          return false;
      }
 #endif
+
+     // TV (04/25/11): I think this is not needed anymore as original expression are unparse directly instead of their parents
+/*
      // Liao 11/5/2010,another tricky case: the current expression is the original expression tree of its parent
      // we should not introduce additional ( ) when switching from current SgCastExp to its original SgCastExp
      // This is true at least for SgCastExp
      if (SgCastExp * cast_p = isSgCastExp(parentExpr)) 
        if (cast_p->get_originalExpressionTree() == expr ) 
          return false;
+*/
+
+     // TV (04/24/11): As compiler generated cast are not unparsed they don't need additional parenthesis.
+     if (isSgCastExp(expr) && expr->get_startOfConstruct()->isCompilerGenerated())
+       return false;     
 #if 0
   // DQ (8/8/2006): Changed as a temporary test!
   // This will need to be fixed for test2006_115.C (when run with the inliner) and needs 

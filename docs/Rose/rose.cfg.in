@@ -166,7 +166,7 @@ INHERIT_DOCS           = YES
 # member in the group (if any) for the other members of the group. By default 
 # all members of a group must be documented explicitly.
 
-DISTRIBUTE_GROUP_DOC   = NO
+DISTRIBUTE_GROUP_DOC   = YES
 
 # The TAB_SIZE tag can be used to set the number of spaces in a tab. 
 # Doxygen uses this value to replace tabs by spaces in code fragments.
@@ -502,6 +502,7 @@ INPUT                  = \
                          @top_srcdir@/src/midend/astProcessing \
                          @top_srcdir@/src/midend/astQuery/QueryLib.docs \
                          @top_srcdir@/src/backend/backend.docs \
+			 @top_srcdir@/src/backend/asmUnparser \
 			 @top_srcdir@/src/backend/asmUnparser/unparseX86Asm.C \
 			 @top_srcdir@/src/backend/asmUnparser/unparseArmAsm.C \
 			 @top_srcdir@/src/backend/asmUnparser/unparsePowerpcAsm.C \
@@ -514,6 +515,7 @@ INPUT                  = \
                          @top_srcdir@/src/util/stringSupport/stringSupportDocumentation.docs \
                          @top_srcdir@/src/util/stringSupport/ \
                          @top_srcdir@/src/util/commandlineProcessing \
+			 @top_srcdir@/src/roseSupport \
                          @top_srcdir@/src/3rdPartyLibraries/3rdPartyLibraries.docs \
                          @top_srcdir@/src/3rdPartyLibraries/MSTL/MSTL.docs \
                          @top_srcdir@/src/extra.docs \

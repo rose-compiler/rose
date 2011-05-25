@@ -918,6 +918,17 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
              }
 
+        // DQ (4/16/2011): Added Java import statment support.
+           case V_SgJavaImportStatement:
+             {
+               name = "_java_import_stmt_";
+               const SgJavaImportStatement* statement = isSgJavaImportStatement(declaration);
+               ROSE_ASSERT(statement != NULL);
+               ROSE_ASSERT(statement->get_parent() != NULL);
+               name += StringUtility::numberToString(const_cast<SgJavaImportStatement*>(statement));
+               break;
+             }
+
        // Note that the case for SgVariableDeclaration is not implemented
           default:
             // name = "default name (default case reached: not handled)";
@@ -5022,6 +5033,13 @@ SageInterface::getScope( const SgNode* astNode )
      //SgScopeStatement* scopeStatement = isSgScopeStatement(parentNode);
      ROSE_ASSERT (scopeStatement != NULL);
 
+     // ensure the search is inclusive
+     if (isSgScopeStatement(astNode))
+       if (isSgScopeStatement(parentNode))
+       {
+          ROSE_ASSERT (astNode == parentNode);
+       }
+
    // return scopeStatement;
        return const_cast<SgScopeStatement*>(scopeStatement);
    }
@@ -5275,6 +5293,13 @@ vector<SgVariableSymbol*> SageInterface::getSymbolsUsedInExpression(SgExpression
   return vis.symbols;
 }
 #endif
+
+SgFunctionDeclaration* SageInterface::findFunctionDeclaration(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
+{
+  return findDeclarationStatement<SgFunctionDeclaration> (root, name, scope, isDefining);
+
+}
+
 
 SgFunctionDefinition* SageInterface::getEnclosingProcedure(SgNode* n, bool includingSelf)
 {
@@ -5887,29 +5912,12 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
   {
     deepDelete(oldExp); // avoid dangling node in memory pool
   }
+  else
+  {
+      oldExp->set_parent(NULL);
+  }
 
 } //replaceExpression()
-
-#if 0 // move to header
-// Contributed by Jeremiah
-//! Get all nodes with a certain variant, with an appropriate downcast. FIXME:
-//! there needs to be a static method in each SgNode subclass that returns the
-//! correct variant number.
-template <typename NodeType>
-std::vector<NodeType*> SageInterface::querySubTree(SgNode* top, VariantT variant) {
-
-  Rose_STL_Container<SgNode*> nodes = NodeQuery::querySubTree(top,variant);
-  std::vector<NodeType*> result(nodes.size(), NULL);
-  int count = 0;
-  for (Rose_STL_Container<SgNode*>::const_iterator i = nodes.begin();
-       i != nodes.end(); ++i, ++count) {
-    NodeType* node = dynamic_cast<NodeType*>(*i);
-    ROSE_ASSERT (node);
-    result[count] = node;
-  }
-  return result;
-}
-#endif
 
  SgStatement* SageInterface::getNextStatement(SgStatement * currentStmt)
 {
@@ -7593,6 +7601,8 @@ class ConditionalExpGenerator: public StatementGenerator
 //! Merged from replaceExpressionWithStatement.C
 SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string newName/* ="" */)
 {
+  ROSE_ASSERT(from != NULL);
+  
   if (!SageInterface::isCopyConstructible(from->get_type())) {
     std::cerr << "Type " << from->get_type()->unparseToString() << " of expression " << from->unparseToString() << " is not copy constructible" << std::endl;
     ROSE_ASSERT (false);
@@ -8900,6 +8910,34 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
     if (fTable->get_parent() == NULL)
       fTable->set_parent(getGlobalScope(scope));
 
+    // Liao 4/23/2010,  Fix function symbol
+    // This could happen when users copy a function, then rename it (func->set_name()), and finally insert it to a scope
+    SgFunctionDeclaration * func = isSgFunctionDeclaration(stmt); 
+    SgFunctionSymbol *func_symbol =  scope->lookup_function_symbol (func->get_name(), func->get_type());
+    if (func_symbol == NULL);
+    {
+      func_symbol = new SgFunctionSymbol (func);
+      ROSE_ASSERT (func_symbol != NULL);
+      scope ->insert_symbol(func->get_name(), func_symbol);
+    }
+#if 0    
+    // Fix local symbol, a symbol directly refer to this function declaration
+    // This could happen when a non-defining func decl is copied, the corresonding symbol will point to the original source func
+     // symbolTable->find(this) used inside get_symbol_from_symbol_table()  won't find the copied decl 
+    SgSymbol* local_symbol = func ->get_symbol_from_symbol_table();
+    if (local_symbol == NULL) // 
+    {
+      if (func->get_definingDeclaration() == NULL) // prototype function
+      {
+        SgFunctionDeclaration * src_func = func_symbol->get_declaration();
+        if (func != src_func )
+        {
+          ROSE_ASSERT (src_func->get_firstNondefiningDeclaration () == src_func);
+          func->set_firstNondefiningDeclaration (func_symbol->get_declaration());
+        }
+      }
+    }
+#endif    
   }
 
   // fix scope pointer for statements explicitly storing scope pointer
@@ -8909,6 +8947,7 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
      case V_SgTemplateDeclaration:
      case V_SgTypedefDeclaration:
      case V_SgFunctionDeclaration:
+     case V_SgTemplateInstantiationFunctionDecl:
   //   case V_SgLabelStatement:
   //   Label statement' scope is special, handled in fixLabelStatement()
       stmt->set_scope(scope);
@@ -10004,7 +10043,8 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
       SgReturnStmt* cur_stmt = isSgReturnStmt(*i);
       ROSE_ASSERT(cur_stmt);
       SgExpression * exp = cur_stmt->get_expression();
-      bool needRewrite = !(isSgValueExp(exp));
+   // TV (05/03/2011) Catch the case "return ;" where exp is NULL
+      bool needRewrite = (exp != NULL) && !(isSgValueExp(exp));
       if (needRewrite)
       {
         splitExpression(exp);

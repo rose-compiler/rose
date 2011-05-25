@@ -1,13 +1,23 @@
 
 $CLASSNAME* is$CLASSNAME ( $ROOT_NODE_OF_GRAMMAR* inputDerivedClassPointer )
    {
-     return dynamic_cast<$CLASSNAME*>(inputDerivedClassPointer);
+  // DQ (4/8/2011): This is an issure reported by Insure++ (READ_NULL).
+  // When inputDerivedClassPointer is NULL the cast is a read of the NULL pointer.
+  // So to fix this we return NULL directly when the input is NULL and avoid the 
+  // dynamic_cast in this case.  This is likely a performance improvement as well.
+  // return dynamic_cast<$CLASSNAME*>(inputDerivedClassPointer);
+     return (inputDerivedClassPointer == NULL) ? NULL : dynamic_cast<$CLASSNAME*>(inputDerivedClassPointer);
    }
 
 // DQ (11/8/2003): Added version of functions taking const pointer
 const $CLASSNAME* is$CLASSNAME ( const $ROOT_NODE_OF_GRAMMAR* inputDerivedClassPointer )
    {
-     return dynamic_cast<const $CLASSNAME*>(inputDerivedClassPointer);
+  // DQ (4/8/2011): This is an issure reported by Insure++ (READ_NULL).
+  // When inputDerivedClassPointer is NULL the cast is a read of the NULL pointer.
+  // So to fix this we return NULL directly when the input is NULL and avoid the 
+  // dynamic_cast in this case.  This is likely a performance improvement as well.
+  // return dynamic_cast<const $CLASSNAME*>(inputDerivedClassPointer);
+     return (inputDerivedClassPointer == NULL) ? NULL : dynamic_cast<const $CLASSNAME*>(inputDerivedClassPointer);
    }
 
 
