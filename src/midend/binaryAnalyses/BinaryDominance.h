@@ -34,6 +34,51 @@ namespace BinaryAnalysis {
      *  The Dominance class provides two forms for most methods: one form in which the result is returned by reference, and one
      *  form in which the result is returned by value.  The return-by-reference functions are slightly faster since they don't
      *  require the result to be copied.
+     *
+     *  @section BinaryDominance_Ex1 Example
+     *
+     *  This example shows one way to initialize the SgAsmBlock::get_immediate_dominator() information for an entire AST.  We
+     *  use an AST traversal to find the function nodes (SgAsmFunctionDeclaration), and for each function we calculate that
+     *  function's control flow graph, and use the control flow graph to calculate the dominance graph.  We then clear all
+     *  previous immediate dominator pointers in the function, and re-initialize them with the dominance graph.  The reason we
+     *  first clear the AST is because apply_to_ast() only initializes the blocks which have dominators; if we didn't clear the
+     *  AST then some of the blocks might have stale data.
+     *
+     *  Control flow graphs and dominance graphs are created with methods of a control flow and dominance class, respectively.
+     *  The reason for this extra class is to hold various properties that might affect how the graphs are created, such as
+     *  whether we want a debug trace of the creation process (the commented out line).
+     *
+     *  @code
+     *  // The AST traversal.
+     *  struct CalculateDominance: public AstSimpleProcessing {
+     *      BinaryAnalysis::ControlFlow &cfg_analysis;
+     *      BinaryAnalysis::Dominance &dom_analysis;
+     *      CalculateDominance(BinaryAnalysis::ControlFlow &cfg_analysis,
+     *                         BinaryAnalysis::Dominance &dom_analysis)
+     *          : cfg_analysis(cfg_analysis), dom_analysis(dom_analysis)
+     *          {}
+     *      void visit(SgNode *node) {
+     *          using namespace BinaryAnalysis;
+     *          SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
+     *          if (func) {
+     *              ControlFlow::Graph cfg = cfg_analysis.build_graph(func);
+     *              ControlFlow::Vertex entry = 0; // first vertex is function entry block
+     *              assert(get(boost::vertex_name, cfg, entry) == func->get_entry_block());
+     *              Dominance::Graph dg = dom_analysis.build_idom_graph(cfg, entry);
+     *              dom_analysis.clear_ast(func);
+     *              dom_analysis.apply_to_ast(dg);
+     *          }
+     *      }
+     *  };
+     *
+     *  // Create the analysis objects
+     *  BinaryAnalysis::ControlFlow cfg_analysis;
+     *  BinaryAnalysis::Dominance   dom_analysis;
+     *  //dom_analysis.set_debug(stderr);
+     *
+     *  // Perform the analysis; results are stored in the AST.
+     *  CalculateDominance(cfg_analysis, dom_analysis).traverse(project, preorder);
+     *  @endcode
      */
     class Dominance {
     public:
@@ -72,6 +117,11 @@ namespace BinaryAnalysis {
          *  The graph contains vertex descriptors of this type, with an associate internal property map that points to the
          *  SgAsmBlock objects in the AST. */
         typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
+
+        /** Type of graph edge.
+         *
+         *  The graph contains edges that flow from dominator block to subordinate block. */
+        typedef boost::graph_traits<Graph>::edge_descriptor   Edge;
 
         /** Vector representation of the dominance relation.  The vector is indexed by the CFG vertex descriptor. For each CFG
          *  vertex, idx, the value stored in the vector at index idx is the CFG vertex which is the dominator of vertex idx.

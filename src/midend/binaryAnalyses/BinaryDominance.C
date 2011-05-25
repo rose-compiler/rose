@@ -178,8 +178,8 @@ BinaryAnalysis::Dominance::build_idom_vector(const ControlFlow::Graph &cfg, Cont
     }
 
     /* Initialize */
-    std::vector<ControlFlow::Vertex> rflowlist; /* reverse mapping; flowlist[i]==v implies rflowlist[v]==i */
-    std::vector<ControlFlow::Vertex> flowlist = ControlFlow::flow_order(cfg, start, &rflowlist);
+    std::vector<size_t> rflowlist; /* reverse mapping; flowlist[i]==v implies rflowlist[v]==i */
+    std::vector<ControlFlow::Vertex> flowlist = ControlFlow().flow_order(cfg, start, &rflowlist);
     std::vector<size_t> idom(flowlist.size());
     for (size_t i=0; i<flowlist.size(); i++)
         idom[i] = i; /* idom[i]==i implies idom[i] is unknown */
@@ -213,7 +213,7 @@ BinaryAnalysis::Dominance::build_idom_vector(const ControlFlow::Graph &cfg, Cont
         changed = false;
         if (debug)
             fprintf(debug, "  Next pass through vertices...\n");
-        for (ControlFlow::Vertex vertex_i=0; vertex_i<flowlist.size(); vertex_i++) {
+        for (size_t vertex_i=0; vertex_i<flowlist.size(); vertex_i++) {
             ControlFlow::Vertex vertex = flowlist[vertex_i];
             if (debug) {
                 fprintf(debug, "    vertex #%zu(%zu)", (size_t)vertex_i, (size_t)vertex);
@@ -228,11 +228,11 @@ BinaryAnalysis::Dominance::build_idom_vector(const ControlFlow::Graph &cfg, Cont
 
             if (vertex!=start) {
                 boost::graph_traits<ControlFlow::Graph>::in_edge_iterator pi, pi_end; /*predecessors*/
-                ControlFlow::Vertex new_idom = vertex_i; /*undefined for now*/
+                size_t new_idom = vertex_i; /*undefined for now*/
                 for (boost::tie(pi, pi_end)=in_edges(vertex, cfg); pi!=pi_end; ++pi) {
                     ControlFlow::Vertex predecessor = source(*pi, cfg);
                     assert(predecessor>=0 && predecessor<rflowlist.size());
-                    ControlFlow::Vertex predecessor_i = rflowlist[predecessor];
+                    size_t predecessor_i = rflowlist[predecessor];
                     if (debug)
                         fprintf(debug, "      pred #%zd(%zu)", (size_t)predecessor_i, (size_t)predecessor);
 
@@ -252,7 +252,7 @@ BinaryAnalysis::Dominance::build_idom_vector(const ControlFlow::Graph &cfg, Cont
                                 fprintf(debug, ", ");
                                 debug_dom_set(debug, vertex_i, predecessor_i, idom, flowlist);
                             }
-                            ControlFlow::Vertex f1=new_idom, f2=predecessor_i;
+                            size_t f1=new_idom, f2=predecessor_i;
                             while (f1!=f2) {
                                 while (f1 > f2)
                                     f1 = idom[f1];
@@ -287,7 +287,7 @@ BinaryAnalysis::Dominance::build_idom_vector(const ControlFlow::Graph &cfg, Cont
 
     if (debug) {
         fprintf(debug, "  Final dom sets:\n");
-        for (ControlFlow::Vertex vertex_i=0; vertex_i<flowlist.size(); vertex_i++) {
+        for (size_t vertex_i=0; vertex_i<flowlist.size(); vertex_i++) {
             ControlFlow::Vertex vertex = flowlist[vertex_i];
             fprintf(debug, "    #%zu(%zu) has dominators ", (size_t)vertex_i, (size_t)vertex);
             debug_dom_set(debug, vertex_i, idom[vertex_i], idom, flowlist);

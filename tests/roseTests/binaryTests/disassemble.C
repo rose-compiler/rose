@@ -1217,9 +1217,35 @@ main(int argc, char *argv[])
         interp->set_global_block(block);
         block->set_parent(interp);
     }
-    
 
 #if 1 /* TESTING NEW FEATURES [RPM 2011-05-23] */
+    {
+        struct CalculateDominance: public AstSimpleProcessing {
+            BinaryAnalysis::ControlFlow &cfg_analysis;
+            BinaryAnalysis::Dominance &dom_analysis;
+            CalculateDominance(BinaryAnalysis::ControlFlow &cfg_analysis,
+                               BinaryAnalysis::Dominance &dom_analysis)
+                : cfg_analysis(cfg_analysis), dom_analysis(dom_analysis)
+                {}
+            void visit(SgNode *node) {
+                using namespace BinaryAnalysis;
+                SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
+                if (func) {
+                    ControlFlow::Graph cfg = cfg_analysis.build_graph(func);
+                    ControlFlow::Vertex entry = 0; /* see build_graph() */
+                    assert(get(boost::vertex_name, cfg, entry) == func->get_entry_block());
+                    Dominance::Graph dg = dom_analysis.build_idom_graph(cfg, entry);
+                    dom_analysis.clear_ast(func);
+                    dom_analysis.apply_to_ast(dg);
+                }
+            }
+        };
+        BinaryAnalysis::ControlFlow cfg_analysis;
+        BinaryAnalysis::Dominance   dom_analysis;
+        // dom_analysis.set_debug(stderr);
+        CalculateDominance(cfg_analysis, dom_analysis).traverse(interp, preorder);
+    }
+#elif 0
     {
         /* Initializes the p_immediate_dominator data member of SgAsmBlock objects in the entire AST as follows:
          *     For each function
@@ -1240,7 +1266,7 @@ main(int argc, char *argv[])
             dom_analysis.apply_to_ast(dg);
         }
     }
-#else
+#elif 0
     {
         /* Initialize the p_immediate_dominator data member of SgAsmBlock objects in the entire AST as follows:
          *     1. Compute the CFG over the entire AST
