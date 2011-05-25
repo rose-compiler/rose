@@ -4109,7 +4109,6 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
    }
 
 
-// void setDeclarationAttributeSpec ( SgVariableDeclaration* variableDeclaration, int astAttributeSpec )
 void
 setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int astAttributeSpec )
    {
@@ -4280,27 +4279,6 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
             // ROSE_ASSERT(false);
                break;
 
-#if ROSE_OFP_MINOR_VERSION_NUMBER == 7
-       // DQ (4/5/2010): These have been removed from OFP 0.8.0
-          case ComponentAttrSpec_dimension_paren:
-#if 0
-            // DQ (8/29/2010): This should be enabled so that we can at least see that it is not implemented.
-            // FMZ 6/15/2009 : this should be ok
-               printf ("Error: ComponentAttrSpec_dimension_paren used as an attribute specifier (unclear how to process this) \n");
-               ROSE_ASSERT(false);
-#endif
-            // Laksono 2009.10.16: This is a Fortran legal syntax to have an array inside a type!
-               variableDeclaration->get_declarationModifier().get_typeModifier().setDimension();
-            // printf ("Error: ComponentAttrSpec_dimension_paren used as an attribute specifier (unclear how to process this) \n");
-            // ROSE_ASSERT(false);
-               break;
-
-          case ComponentAttrSpec_dimension_bracket:
-               printf ("Error: ComponentAttrSpec_dimension_bracket used as an attribute specifier (unclear how to process this) \n");
-               ROSE_ASSERT(false);
-               break;
-#endif
-
           case ComponentAttrSpec_allocatable:
                printf ("Error: ComponentAttrSpec_allocatable used as an attribute specifier (unclear how to process this) \n");
                ROSE_ASSERT(false);
@@ -4317,12 +4295,10 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
                break;
 
           case ComponentAttrSpec_len:
-#if 1
             // DQ (8/28/2010): Uncommented this out (problems here are likely due to another bug where the ComponentAttrSpec_len is not set properly.
             // FMZ 6/15/2009 : this should be ok
                printf ("Error: ComponentAttrSpec_len used as an attribute specifier (unclear how to process this) \n");
                ROSE_ASSERT(false);
-#endif
                break;
 
        // DQ (8/29/2010): Added support for new enum values
