@@ -20,6 +20,8 @@ NonTerminalNode::NonTerminalNode() :
 {}
 
 NonTerminalNode::~NonTerminalNode() {}
+
+NonTerminalNode::LexemeInstance::~LexemeInstance() {}
        
 bool NonTerminalNode::operator () (std::string & str, std::vector<LexemeInstance *> & lexemes) {
     
@@ -90,7 +92,7 @@ void NonTerminalNode::collectChilds(std::set<GrammarNode *> & childs) const {
     }
 }
 
-void NonTerminalNode::NonTerminalLexemeInstance::polymorphic() const {}
+NonTerminalNode::NonTerminalLexemeInstance::~NonTerminalLexemeInstance() {}
 
 /*  */
 
@@ -140,7 +142,7 @@ OneOrMore::OneOrMore(GrammarNode * node) :
 OneOrMore::~OneOrMore() {}
         
 bool OneOrMore::operator () (std::string & str, std::vector<LexemeInstance *> & lexemes) {
-    int beginning_size = lexemes.size();
+    unsigned int beginning_size = lexemes.size();
     while ((*p_node)(str, lexemes));
     return beginning_size < lexemes.size();
 }
@@ -157,6 +159,8 @@ TerminalNode::TerminalNode() :
 {}
 
 TerminalNode::~TerminalNode() {}
+
+TerminalNode::TerminalNodeLexemeInstance::~TerminalNodeLexemeInstance() {}
 
 /*  */
 
@@ -186,7 +190,7 @@ bool SpaceNode::operator () (std::string & str, std::vector<LexemeInstance *> & 
     }
 }
 
-void SpaceNode::SpaceNodeLexemeInstance::polymorphic() const {}
+SpaceNode::SpaceNodeLexemeInstance::~SpaceNodeLexemeInstance() {}
 
 /*  */
      
@@ -214,11 +218,11 @@ bool LabelNode::operator () (std::string & str, std::vector<LexemeInstance *> & 
         return false;
 }
 
-void LabelNode::LabelNodeLexemeInstance::polymorphic() const {}
+LabelNode::LabelNodeLexemeInstance::~LabelNodeLexemeInstance() {}
 
 /*  */
 
-void SageNode::SageNodeLexemeInstance::polymorphic() const {}
+SageNode::SageNodeLexemeInstance::~SageNodeLexemeInstance() {}
 
 SageNode::SageNode(VariantT v, SgScopeStatement * scope) :
     TerminalNode(),
