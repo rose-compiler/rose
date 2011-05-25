@@ -349,6 +349,7 @@ public:
         if (show_syscall_names) {
             insn_callbacks.post.append(&syscallName);
         }
+        basicblock_callbacks.post.prepend(&dominatorBlock);
     }
 
 private:
@@ -416,11 +417,23 @@ private:
             return enabled;
         }
     };
+
+    /* Functor to emit immediate dominator of each basic block. */
+    class DominatorBlock: public UnparserCallback {
+    public:
+        bool operator()(bool enabled, const BasicBlockArgs &args) {
+            SgAsmBlock *idom = args.block->get_immediate_dominator();
+            if (enabled && idom)
+                args.output <<"            (dominator " <<StringUtility::addrToString(idom->get_address()) <<")\n";
+            return enabled;
+        }
+    };
     
 private:
     BlockHash blockHash;
     FunctionHash functionHash;
     SyscallName syscallName;
+    DominatorBlock dominatorBlock;
 };
 
 /* Generate the "label" attribute for a function node in a *.dot file. */
@@ -1206,15 +1219,50 @@ main(int argc, char *argv[])
     }
     
 
-#if 1 /* TESTING NEW FEATURE [RPM 2011-05-23] */
+#if 1 /* TESTING NEW FEATURES [RPM 2011-05-23] */
     {
+        /* Initializes the p_immediate_dominator data member of SgAsmBlock objects in the entire AST as follows:
+         *     For each function
+         *       1. compute the CFG over that function
+         *       2. calculate the DG with that CFG
+         *       3. apply the DG to the AST */
+        BinaryAnalysis::ControlFlow cfg_analysis;
+        BinaryAnalysis::Dominance dom_analysis;
+        //dom_analysis.set_debug(stderr);
         std::vector<SgAsmFunctionDeclaration*> functions = SageInterface::querySubTree<SgAsmFunctionDeclaration>(interp);
         for (size_t i=0; i<functions.size(); i++) {
             SgAsmFunctionDeclaration *func = functions[i];
-            BinaryAnalysis::ControlFlow::Graph cfg = BinaryAnalysis::ControlFlow().build_graph(func);
+            BinaryAnalysis::ControlFlow::Graph cfg = cfg_analysis.build_graph(func);
             BinaryAnalysis::ControlFlow::Vertex start = (BinaryAnalysis::ControlFlow::Vertex)0;
             assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
-            BinaryAnalysis::Dominance::Graph dg = BinaryAnalysis::Dominance().build_idom_graph(cfg, start);
+            BinaryAnalysis::Dominance::Graph dg = dom_analysis.build_idom_graph(cfg, start);
+            dom_analysis.clear_ast(func);
+            dom_analysis.apply_to_ast(dg);
+        }
+    }
+#else
+    {
+        /* Initialize the p_immediate_dominator data member of SgAsmBlock objects in the entire AST as follows:
+         *     1. Compute the CFG over the entire AST
+         *     2. calculate the DG starting with the program entry point
+         *     3. apply the DG to the AST */
+        BinaryAnalysis::ControlFlow cfg_analysis;
+        BinaryAnalysis::ControlFlow::Graph global_cfg = cfg_analysis.build_graph(interp);
+        BinaryAnalysis::Dominance dom_analysis;
+        dom_analysis.set_debug(stderr);
+        cfg_analysis.cache_vertex_descriptors(global_cfg);
+        dom_analysis.clear_ast(interp);
+        std::vector<SgAsmFunctionDeclaration*> functions = SageInterface::querySubTree<SgAsmFunctionDeclaration>(interp);
+        for (size_t i=0; i<functions.size(); i++) {
+            SgAsmFunctionDeclaration *func = functions[i];
+            if (func->get_reason() & SgAsmFunctionDeclaration::FUNC_ENTRY_POINT) {
+                SgAsmBlock *block = func->get_entry_block();
+                assert(block!=NULL);
+                BinaryAnalysis::ControlFlow::Vertex start = block->get_cached_vertex();
+                assert(get(boost::vertex_name, global_cfg, start)==block);
+                BinaryAnalysis::Dominance::Graph dg = dom_analysis.build_idom_graph(global_cfg, start);
+                dom_analysis.apply_to_ast(dg);
+            }
         }
     }
 #endif
