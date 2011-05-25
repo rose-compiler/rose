@@ -361,6 +361,11 @@ SgNewExp * buildNewExp(SgType* type,
                        SgExpression* expr, 
                        short int val, 
                        SgFunctionDeclaration* funcDecl);
+
+SgDeleteExp* buildDeleteExp(SgExpression* variable,
+                            short is_array,
+                            short need_global_specifier,
+                            SgFunctionDeclaration* deleteOperatorDeclaration);
  
 
 #undef BUILD_UNARY_PROTO
