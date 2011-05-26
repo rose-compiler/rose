@@ -301,7 +301,7 @@ MemoryMap::insert(MapElement add)
         while (i!=elements.end()) {
             MapElement &old = *i;
             if (add.merge(old)) {
-                elements.erase(i);
+                i = elements.erase(i);
             } else {
                 ++i;
             }
@@ -352,7 +352,7 @@ MemoryMap::erase(MapElement me)
                 tosave.offset += (me.va+me.size) - old.va;
                 saved.push_back(tosave);
             }
-            elements.erase(i);
+            i = elements.erase(i);
         }
 
         /* Now add saved elements back in. */
