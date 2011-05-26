@@ -99,7 +99,7 @@ BinaryAnalysis::ControlFlow::build_graph(SgNode *root, Graph &cfg)
         const SgAsmTargetPtrList &succs = source->get_successors();
         for (SgAsmTargetPtrList::const_iterator si=succs.begin(); si!=succs.end(); ++si) {
             SgAsmBlock *target = (*si)->get_block(); // might be null
-            if (!is_edge_filtered(source, target)) {
+            if (target && !is_edge_filtered(source, target)) {
                 BlockVertexMap::iterator bvmi=bv_map.find(target);
                 if (bvmi!=bv_map.end())
                     add_edge(*vi, bvmi->second, cfg);
