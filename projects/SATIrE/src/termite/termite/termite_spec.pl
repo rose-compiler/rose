@@ -359,6 +359,7 @@ type ::=
   | function_type(type /* return */, todo /* ellipses */, [type] /* args */)
   | modifier_type(type, type_modifier)
   | named_type
+  | type_default
   | pointer_type(type).
 
 basic_type ::=
@@ -367,6 +368,8 @@ basic_type ::=
         type_signed_char, type_string, type_unsigned_char,
         type_unsigned_int, type_unsigned_long, type_unsigned_long_long,
         type_unsigned_short, type_void].
+
+type_default ::= atoms [type_default].
 
 named_type ::=
     class_type(name, todo, todo)
