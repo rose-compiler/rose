@@ -635,7 +635,7 @@ unparse1(UI, variable_declaration([ClassDeclaration|[InitializedName|INs]],
   unparse_modifier(Mod),
   ClassDeclaration = class_declaration(_, _, _, _), !,
   InitializedName = initialized_name(_,
-	initialized_name_annotation(_, Name, _, _), _, _),
+	initialized_name_annotation(_, Name, _, _, _), _, _),
   unparse(UI, ClassDeclaration),
   write(Name), % eat the modifier
   unparse(UI, variable_declaration(INs, variable_declaration_specific(null), Ai, Fi)).
@@ -648,7 +648,7 @@ unparse1(UI, variable_declaration([InitializedName|INs], Spec, Ai, Fi)) :- !,
   unparse(UI, variable_declaration(INs, variable_declaration_specific(null), Ai, Fi)).
 
 unparse1(UI, initialized_name(Initializer,
-			 initialized_name_annotation(Type, Name, _,_),_, _)) :-
+			 initialized_name_annotation(Type, Name, _,_,_),_, _)) :-
   !,
   unparse_type(UI, Name, Type),
   (Initializer = null -> true ; write(' = ')),
@@ -727,7 +727,7 @@ unparse_array_type(_UI, _).
 unparse_enum(_UI, []) :- !.
 unparse_enum(UI, [N|Ns]) :- !,
   N = initialized_name(Initializer,
-		       initialized_name_annotation(_Type, Name, _, _), _, _),
+		       initialized_name_annotation(_Type, Name, _, _, _), _, _),
   write(Name),
   (Initializer = null
   -> true
@@ -797,8 +797,8 @@ replace_types([I|Is],
 replace_types([I|Is],
 	      function_type(ReturnT, NumParams, [Type|Ts]),
 	      [J|Js]) :- !,
-  I = initialized_name(A, initialized_name_annotation(_, B, C, D), Ai, Fi),
-  J = initialized_name(A, initialized_name_annotation(Type, B, C, D), Ai, Fi),
+  I = initialized_name(A, initialized_name_annotation(_, B, C, D, E), Ai, Fi),
+  J = initialized_name(A, initialized_name_annotation(Type, B, C, D, E), Ai, Fi),
   replace_types(Is, function_type(ReturnT, NumParams, Ts), Js).
 replace_types(_,_,_) :- trace.
 
