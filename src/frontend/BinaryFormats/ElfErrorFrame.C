@@ -313,7 +313,7 @@ SgAsmElfEHFrameSection::parse()
 
             /* Augmentation data. The format of the augmentation data in the CIE record is determined by reading the
              * characters of the augmentation string. */ 
-            if (astr[0]=='z') {
+            if (!astr.empty() && astr[0]=='z') {
                 for (size_t i=1; i<astr.size(); i++) {
                     if ('L'==astr[i]) {
                         read_content_local(at++, &u8_disk, 1);
