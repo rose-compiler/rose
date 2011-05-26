@@ -3035,25 +3035,28 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
             // ROSE_ASSERT(false);
 
             // Modify the type that was previously built
-               SgType* typeNode = astTypeStack.front();
+                if (!astTypeStack.empty())
+                {
+                    SgType* typeNode = astTypeStack.front();
 
-            // printf ("In c_action_declaration_type_spec(): astExpressionStack.size() = %zu \n",astExpressionStack.size());
- 
-            // DQ (12/1/2007): I think this is now taken care of in R404
-               ROSE_ASSERT(astExpressionStack.empty() == true);
-               if (astExpressionStack.empty() == false)
-                  {
-                    SgExpression* kindExpression = astExpressionStack.front();
- 
-                 // DQ (12/1/2007): I think this is now taken care of in R404
-                 // typeNode->set_type_kind(kindExpression);
+                    // printf ("In c_action_declaration_type_spec(): astExpressionStack.size() = %zu \n",astExpressionStack.size());
 
-                 // DQ (9/30/2007): Set the parent (if not this is caught in AST whole graph generation)
-                    kindExpression->set_parent(typeNode);
+                    // DQ (12/1/2007): I think this is now taken care of in R404
+                    ROSE_ASSERT(astExpressionStack.empty() == true);
+                    if (astExpressionStack.empty() == false)
+                    {
+                        SgExpression* kindExpression = astExpressionStack.front();
 
-                    printf ("After setting the kind, the expression stack size = %zu \n",astExpressionStack.size());
-                    astExpressionStack.pop_front();
-                  }
+                        // DQ (12/1/2007): I think this is now taken care of in R404
+                        // typeNode->set_type_kind(kindExpression);
+
+                        // DQ (9/30/2007): Set the parent (if not this is caught in AST whole graph generation)
+                        kindExpression->set_parent(typeNode);
+
+                        printf("After setting the kind, the expression stack size = %zu \n", astExpressionStack.size());
+                        astExpressionStack.pop_front();
+                    }
+                }
                break;
              }
 
