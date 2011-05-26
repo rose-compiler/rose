@@ -5575,12 +5575,16 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
              {
             // Only modify the list once per iteration over the captureList
             // if ((*comments)[*k] == NULL)
-               if (*k == NULL)
-                  {
-                    comments->erase(k);
+                if (*k == NULL)
+                {
+                    k = comments->erase(k);
                     modifiedList = true;
-                  }
-               k++;
+                    continue;
+                }
+                else
+                {
+                    k++;
+                }
              }
         }
    }
