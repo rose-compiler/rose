@@ -871,8 +871,10 @@ TermToRose::createType(PrologTerm* t) {
 
   //cerr<<id<<endl;
   PrologCompTerm* ct = dynamic_cast<PrologCompTerm*>(t);
-  if (ct && 
-      t->getName() == "array_type" && ct->at(2)->getRepresentation() == "null"){
+  if (ct 
+      && t->getName() == "array_type" 
+      && ct->getArity() > 2 
+      && ct->at(2)->getRepresentation() == "null") {
     // The difference between ArrayType and PointerType is mostly syntactical
     // we therefore treat them as equivalent in the lookup table.
     id = string("pointer_type(")+ct->at(1)->getRepresentation()+")";
