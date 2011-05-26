@@ -6317,7 +6317,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                     outputState("In processAttributeSpecStack(): After processing type for AttrSpec_DIMENSION");
 #endif
                  // Increment as many times as required past this dimension case.
-                    while ((*i == AttrSpec_DIMENSION || *i == ComponentAttrSpec_dimension) )
+                    while (i != astAttributeSpecStack.end() && (*i == AttrSpec_DIMENSION || *i == ComponentAttrSpec_dimension) )
                        {
                          i++;
                        }
