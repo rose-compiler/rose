@@ -72,6 +72,26 @@ namespace BinaryAnalysis {
      *  ControlFlow::Graph cg = ControlFlow().build_call_graph(interp);
      *  @endcode
      *
+     *  Since binary control flow graphs are simply Boost graphs, they can be easily printed as GraphViz graphs using
+     *  boost::write_graphviz().  If you want something other than vertex descriptors in the graphs, you could use a
+     *  PropertyWriter class, like this one, which labels the vertices the the basic block address:
+     *
+     *  @code
+     *  // Label the graphviz vertices with basic block addresses.
+     *  // Boost requires this to be declared at file scope.
+     *  struct GraphvizVertexWriter {
+     *      const BinaryAnalysis::ControlFlow::Graph &cfg;
+     *      GraphvizVertexWriter(BinaryAnalysis::ControlFlow::Graph &cfg): cfg(cfg) {}
+     *      void operator()(std::ostream &output, const BinaryAnalysis::ControlFlow::Vertex &v) {
+     *          SgAsmBlock *block = get(boost::vertex_name, cfg, v);
+     *          output <<"[ label=\"" <<StringUtility::addrToString(block->get_address()) <<"\" ]";
+     *      }
+     *  };
+     *
+     *  // Write the graph
+     *  boost::write_graphviz(std::cout, cfg, GraphvizVertexWriter(cfg));
+     *  @endcode
+     *
      *  [1] https://secure.wikimedia.org/wikipedia/en/wiki/Control_flow_graph */
     class ControlFlow {
     public:
