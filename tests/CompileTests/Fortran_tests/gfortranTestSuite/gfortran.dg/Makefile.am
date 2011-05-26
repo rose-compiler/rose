@@ -1680,7 +1680,7 @@ tests:
 
 check-local:
 	@echo "Tests for Fortran (from the gfortran tests suit)."
-	@echo "Output the version number of the gfrotran being used."
+	@echo "Output the version number of the gfortran being used."
 	@gfortran --version
 	@echo "Run the gfortran testsuit tests...."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest

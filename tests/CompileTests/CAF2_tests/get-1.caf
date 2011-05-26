@@ -1,0 +1,64 @@
+program  test3
+   integer,allocatable::A(:,:)[*]
+   interface 
+      subroutine foo(A)
+         integer :: A[*]
+      end subroutine foo
+    end interface 
+
+   integer :: size,rank,partner
+
+   size = team_size()
+   rank = team_rank()
+
+   partner = size-rank - 1
+
+   allocate(A(4,4)[])
+
+   A(3,3) = rank
+
+   call team_barrier()
+
+   if (rank .eq. 0) then
+       A(3,3) =A(3,3)[partner]
+       if (A(3,3) .eq. partner) then 
+          write(*, '(A)') "test3 OK: step 1 of 3"
+       else
+          print *, "test3 failed: in caller,A(1) should be ",partner, " but we have A(3,3)= ", A(3,3)
+       endif 
+   end if 
+
+   call team_barrier()
+
+   call foo(A(3,3))
+
+   call team_barrier()
+
+   if (rank .eq. 0) then
+     if (A(3,3) .eq. 1) then 
+        write(*, '(A)') "test3 OK: step 3 of 3"
+      else 
+        print *, "test3 failed: in caller, A(3,3) should be value reseted in the callee (0) instead of ",A(3,3)
+    end if
+   end if 
+   call team_barrier()
+end program
+
+
+subroutine foo(A)
+  integer A[*]
+  integer rank
+
+  rank = team_rank(team_world)
+
+
+  if (rank .eq. 0)  then 
+    A =  A[1]
+    if (A .eq. 1) then 
+       write(*, '(A)') "test3 OK: step 2 of 3"
+    else 
+      print *,"test3 faile: callee reset A[0] = 0"
+   end if 
+ end if
+
+end

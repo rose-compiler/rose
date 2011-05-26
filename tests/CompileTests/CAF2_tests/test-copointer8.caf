@@ -1,0 +1,16 @@
+program prog8
+  integer :: wrank, wsize, a(:,:)[*] 
+  integer, copointer :: x(:,:)
+  integer :: a(:)[*] 
+  allocate(a(1:20)[@team_world]) 
+  wrank = team_rank(team_world)
+  wsize = team_size(team_world)
+  x => a(4:20, 2:25)[mod(wrank + 1, wsize)]
+  prank = imageof(x)
+  if (prank .eq. wrank) then
+    x(7,9) = 4 
+  else
+    x[](7, 9) = 4
+  endif
+end program
+

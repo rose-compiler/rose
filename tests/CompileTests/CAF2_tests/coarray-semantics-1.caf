@@ -1,0 +1,14 @@
+program static_test
+  integer :: a(10,10)[*]
+  integer :: i, j
+  do i = 1, 10
+    do j = 1, 10
+      a(i,j) = i + (j - 1) * 10
+    enddo
+  enddo
+  if (team_rank(team_default) == 0) then
+  do i = 1, 10
+    write(*, '(I10)') a(i,:)
+  enddo
+  endif
+end program static_test

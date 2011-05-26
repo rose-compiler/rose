@@ -1,4 +1,3 @@
-#include <signal.h> // SKW DEBUG
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
@@ -5603,6 +5602,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
           // use a pseudonym for source file in case original extension does not permit preprocessing
              // compute absolute path for pseudonym
+                // TODO: when boost 1.46 is available, use boost::filesystem to get 'dir', 'abs_dir', and 'base'
                 string dir = StringUtility::getPathFromFileName(this->get_unparse_output_filename());
                 string abs_dir = StringUtility::getAbsolutePathFromRelativePath(dir.empty() ? getWorkingDirectory() : dir);  // Windows 'tempnam' requires this
                 string file = StringUtility::stripPathFromFileName(sourceFilename);
