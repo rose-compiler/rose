@@ -558,7 +558,11 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
         if (it_in != in.end() && inOLD.size() > 0) {
                 // compare the oldIN and the newIN and see if in[n] has changed
                 bool equal = false;
-                equal = std::equal(in[sgNode].begin(), in[sgNode].end(), inOLD.begin());
+                
+                if (in[sgNode].size() == inOLD.size())
+                {
+                    equal = std::equal(in[sgNode].begin(), in[sgNode].end(), inOLD.begin());
+                }
                 if (!equal)
                         has_changed = true;
         }
