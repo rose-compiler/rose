@@ -63,6 +63,9 @@ timer:
 udpsink:
 	./valueGraph -c $(GTNETS_DIR)/application-udpsink.cc -I/home/hou1/GTNetS-MPI/SRC/
 
+cbr:
+	./valueGraph -c $(GTNETS_DIR)/application-cbr.cc -I/home/hou1/GTNetS-MPI/SRC/
+
 gtnets:
 	./valueGraph -c $(GTNETS_FILES) -I/home/hou1/GTNetS-MPI/SRC/
 

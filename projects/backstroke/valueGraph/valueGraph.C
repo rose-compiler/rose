@@ -615,11 +615,6 @@ void EventReverser::processLastVersions()
     // still available.
     set<VarName> varNamesAtEventEnd;
     
-    
-    foreach (VGVertex v, availableValues_)
-    if (ValueNode* valNode = isValueNode(valueGraph_[v]))
-    cout << "Available???:\t" << valNode->var << endl;
-    
     // At the end of the event, find the versions of all variables,
     // and determine which variables are avaiable during the search of VG.
     typedef SSA::NodeReachingDefTable::value_type VarNameDefPair;
@@ -634,7 +629,7 @@ void EventReverser::processLastVersions()
         // For every variable, if it is not added into VG, add it now.
         VersionedVariable var(name, nameDef.second->getRenamingNumber());
         
-        cout << "VersionedVariable:\t" << var.toString() << endl;
+        //cout << "VersionedVariable:\t" << var.toString() << endl;
         //printVarVertexMap();
         
         if (varVertexMap_.count(var) == 0)
@@ -659,8 +654,6 @@ void EventReverser::processLastVersions()
         {
             // If the variable is a state variable, make it available.
             addAvailableValue(node);
-            if (ValueNode* valNode = isValueNode(valueGraph_[node]))
-                cout << "==>\t" << valNode->var << endl;
         }
         else
         {
@@ -670,11 +663,6 @@ void EventReverser::processLastVersions()
             varsKilledAtEventEnd_.insert(node);
         }
     }
-    
-    
-    foreach (VGVertex v, availableValues_)
-    if (ValueNode* valNode = isValueNode(valueGraph_[v]))
-    cout << "Available!!!:\t" << valNode->var << endl;
     
     // Those data members which are not modified by the event are also available.
     foreach (const VarName& name, stateVariables_)
@@ -799,7 +787,7 @@ void EventReverser::addExtraNodesAndEdges()
 EventReverser::VGVertex 
 EventReverser::createPhiNode(VersionedVariable& var, SSA::ReachingDefPtr reachingDef)
 {
-    cout << var.toString() << endl;
+    //cout << var.toString() << endl;
     
     //ROSE_ASSERT(pseudoDefMap_.count(var) > 0);
     //SSA::ReachingDefPtr reachingDef = pseudoDefMap_[var];

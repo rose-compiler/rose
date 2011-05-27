@@ -24,11 +24,15 @@ int main(int argc, char *argv[])
     set<string> eventList;
     eventList.insert("Handle");
     eventList.insert("StartApp");
-    //eventList.insert("StopApp");
+    eventList.insert("StopApp");
     eventList.insert("TransmitComplete");
     eventList.insert("SendNotification");
     eventList.insert("WirelessTxStart");
     eventList.insert("WirelessTxEnd");
+    eventList.insert("PacketRxStart");
+    eventList.insert("PacketRxEnd");
+    eventList.insert("GetL2Proto");
+    eventList.insert("Busy");
     
     vector<SgFunctionDefinition*> funcDefs;
 
@@ -88,10 +92,14 @@ int main(int argc, char *argv[])
 
         cout << "\nFunction " << funcName << " is processed.\n\n";
     }
+
     // Prepend includes to test files.
     SgGlobal* globalScope = SageInterface::getFirstGlobalScope(project);
     SageInterface::insertHeader("rctypes.h", PreprocessingInfo::after, false, globalScope);
 
+    //AstTests::runAllTests(project);
+
+    cout << "\n\nDone!\n\n";
 
     return backend(project);
 }

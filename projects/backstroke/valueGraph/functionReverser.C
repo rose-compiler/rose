@@ -356,6 +356,11 @@ void EventReverser::buildFunctionBodies()
     // Copy the original function to forward function.
     replaceStatement(fwdFuncDef_->get_body(),
                      copyStatement(funcDef_->get_body()));
+    
+    ROSE_ASSERT(funcDef_->get_body()->get_parent() == funcDef_);
+    ROSE_ASSERT(fwdFuncDef_->get_body()->get_parent() == fwdFuncDef_);
+    ROSE_ASSERT(rvsFuncDef_->get_body()->get_parent() == rvsFuncDef_);
+    ROSE_ASSERT(cmtFuncDef_->get_body()->get_parent() == cmtFuncDef_);
 
     // Swap the following two function definitions. This is because currently there
     // is a problem on copying a function to another. We work around it by regard the
@@ -878,6 +883,7 @@ void EventReverser::generateCodeForBasicBlock(
                     }
                 }
                 
+                cout << funcName << endl;
                 ROSE_ASSERT(fwdFuncRef && rvsFuncRef && cmtFuncRef);
 
                 SgThisExp* thisExp = isSgThisExp(arrowExp->get_lhs_operand());
@@ -972,11 +978,11 @@ void EventReverser::generateCode(
     
     int counter = 0;
     
-    // Build an anonymous namespace.
-    SgGlobal* globalScope = getGlobalScope(fwdFuncDef_);
-    SgNamespaceDeclarationStatement* anonymousNamespaceDecl = buildNamespaceDeclaration("", globalScope);
-    SgNamespaceDefinitionStatement* anonymousNamespace = buildNamespaceDefinition(anonymousNamespaceDecl);
-    prependStatement(anonymousNamespaceDecl, globalScope);
+//    // Build an anonymous namespace.
+//    SgGlobal* globalScope = getGlobalScope(fwdFuncDef_);
+//    SgNamespaceDeclarationStatement* anonymousNamespaceDecl = buildNamespaceDeclaration("", globalScope);
+//    SgNamespaceDefinitionStatement* anonymousNamespace = buildNamespaceDefinition(anonymousNamespaceDecl);
+//    prependStatement(anonymousNamespaceDecl, globalScope);
     
     map<PathSet, SgScopeStatement*> rvsScopeTable;
     map<PathSet, SgScopeStatement*> cmtScopeTable;
@@ -1090,7 +1096,7 @@ void EventReverser::generateCode(
                 
                 string arrayName = "conditions" + boost::lexical_cast<string>(counter++);
                 SgVariableDeclaration* pathNumArray = 
-                        buildVariableDeclaration(arrayName, pathNumArrayType, initList, anonymousNamespace);
+                        buildVariableDeclaration(arrayName, pathNumArrayType, initList);
                 setStatic(pathNumArray);
                 
                 //anonymousNamespace->append_declaration(pathNumArray);
@@ -1267,9 +1273,11 @@ void EventReverser::insertFunctions()
     // the forward function.
     SgBasicBlock* body = funcDef_->get_body();
     funcDef_->set_body(fwdFuncDef_->get_body());
+    fwdFuncDef_->get_body()->set_parent(funcDef_);
     fwdFuncDef_->set_body(body);
+    body->set_parent(fwdFuncDef_);
 
-    SgDeclarationStatement* funcDecl   = funcDef_->get_declaration()->get_definingDeclaration();
+    SgDeclarationStatement* funcDecl   = funcDef_->get_declaration();//->get_definingDeclaration();
     SgFunctionDeclaration* fwdFuncDecl = fwdFuncDef_->get_declaration();
     SgFunctionDeclaration* rvsFuncDecl = rvsFuncDef_->get_declaration();
     SgFunctionDeclaration* cmtFuncDecl = cmtFuncDef_->get_declaration();
@@ -1285,10 +1293,22 @@ void EventReverser::insertFunctions()
     }
 #endif
     
+#if 0
+    cout << fwdFuncDecl->unparseToString() << "\n\n";
+    cout << rvsFuncDecl->unparseToString() << "\n\n";
+    cout << cmtFuncDecl->unparseToString() << "\n\n";
+#endif 
+    
 #if 1
     insertStatementAfter(funcDecl,    fwdFuncDecl);
     insertStatementAfter(fwdFuncDecl, rvsFuncDecl);
     insertStatementAfter(rvsFuncDecl, cmtFuncDecl);
+    
+    
+    ROSE_ASSERT(funcDef_->get_body()->get_parent() == funcDef_);
+    ROSE_ASSERT(fwdFuncDef_->get_body()->get_parent() == fwdFuncDef_);
+    ROSE_ASSERT(rvsFuncDef_->get_body()->get_parent() == rvsFuncDef_);
+    ROSE_ASSERT(cmtFuncDef_->get_body()->get_parent() == cmtFuncDef_);
 #else
     SgGlobal* globalScope = SageInterface::getGlobalScope(funcDef_);
     SageInterface::appendStatement(fwdFuncDecl, globalScope);

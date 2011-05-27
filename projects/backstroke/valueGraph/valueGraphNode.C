@@ -217,8 +217,27 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall)
     {
         //isVirtual = true;
         if (SgArrowExp* arrowExp = isSgArrowExp(funcCall->get_function()))
+        {
             if (isSgThisExp(arrowExp->get_lhs_operand()))
-                isVirtual = true;
+            {
+                SgMemberFunctionRefExp* funcRef = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
+                if (funcRef)
+                {
+                    SgMemberFunctionDeclaration* funcDecl = funcRef->getAssociatedMemberFunctionDeclaration();
+                    //cout << funcDecl->get_name().str() << funcDecl->get_functionModifier().isVirtual() << endl;
+                    isVirtual = funcDecl->get_functionModifier().isVirtual();
+
+                    if (isVirtual)
+                    cout << funcDecl->get_name().str() << "\t: VIRTUAL1\n\n";
+                }
+
+                else 
+                {
+                    isVirtual = true;
+                    cout << "UNKNOWN" << "\t: VIRTUAL2\n\n";
+                }
+            }
+        }
     }
     else
     {
@@ -230,6 +249,9 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall)
                 SgMemberFunctionDeclaration* funcDecl = funcRef->getAssociatedMemberFunctionDeclaration();
                 //cout << funcDecl->get_name().str() << funcDecl->get_functionModifier().isVirtual() << endl;
                 isVirtual = funcDecl->get_functionModifier().isVirtual();
+                
+                if (isVirtual)
+                cout << funcDecl->get_name().str() << "\t: VIRTUAL3\n\n";
             }
         }
         //isVirtual = true;
