@@ -25,7 +25,8 @@ struct IsEvent
 			string className = classDecl->get_name();
 
 			if (className == "UDPSink" || className == "InterfaceReal" || className == "L2Proto802_11" 
-					|| className == "WirelessLink" || className == "InterfaceReal" || className == "Timer")
+					|| className == "WirelessLink" || className == "InterfaceReal" || className == "Timer"
+                    || className == "CBRApplication" || className == "LinkReal")
 			{
 				return true;
 			}
