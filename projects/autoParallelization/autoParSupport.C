@@ -1084,7 +1084,7 @@ namespace AutoParallelization
           {
             std::vector<SgInitializedName*> scoped_vars;
             CollectScopedVariables(att, scoped_vars);
-            std::vector<SgInitializedName*>::iterator hit1,hit2;
+            std::vector<SgInitializedName*>::iterator hit1 = scoped_vars.end(), hit2 = scoped_vars.end();
             //for (hit1=scoped_vars.begin();hit1!=scoped_vars.end();hit1++)
             //  cout<<"scoped var:"<<*hit1 <<" name:"<<(*hit1)->get_name().getString()<<endl;
             if (src_name)
