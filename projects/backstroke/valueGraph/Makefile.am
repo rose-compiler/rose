@@ -40,7 +40,15 @@ GTNETS_DIR = /home/hou1/GTNetS-MPI/SRC
 
 #$(GTNETS_DIR)/application.cc 
 #GTNETS_FILES = $(GTNETS_DIR)/application-udpsink.cc $(GTNETS_DIR)/link-real.cc
-GTNETS_FILES = $(GTNETS_DIR)/wlan.cc 
+GTNETS_FILES = $(GTNETS_DIR)/wlan.cc \
+$(GTNETS_DIR)/application.cc \
+$(GTNETS_DIR)/link-real.cc \
+$(GTNETS_DIR)/interface-real.cc \
+$(GTNETS_DIR)/l2proto802.11.cc  \
+$(GTNETS_DIR)/timer.cc \
+$(GTNETS_DIR)/application-udpsink.cc \
+$(GTNETS_DIR)/application-cbr.cc
+
 
 wlan:
 	./valueGraph -c $(GTNETS_DIR)/wlan.cc -I/home/hou1/GTNetS-MPI/SRC/

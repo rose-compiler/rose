@@ -1588,7 +1588,7 @@ void EventReverser::writeValueGraphNode(std::ostream& out, const VGVertex& node)
     if (node == root_)
         out << ", color=blue";
     
-    cout << "]";
+    out << "]";
 }
 
 void EventReverser::writeValueGraphEdge(std::ostream& out, const VGEdge& edge) const
@@ -1597,7 +1597,6 @@ void EventReverser::writeValueGraphEdge(std::ostream& out, const VGEdge& edge) c
     
     if (isStateSavingEdge(valueGraph_[edge]))
         out << ", color = red";
-    
     out << "]";
 }
 

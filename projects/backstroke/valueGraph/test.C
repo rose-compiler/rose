@@ -55,11 +55,15 @@ int main(int argc, char *argv[])
     StaticSingleAssignment* ssa = new StaticSingleAssignment(SageInterface::getProject());
     ssa->run(true);
 
+    set<SgGlobal*> globalScopes;
+
     foreach (SgFunctionDefinition* funcDef, funcDefs)
     {
         string funcName = funcDef->get_declaration()->get_name();
+        globalScopes.insert(SageInterface::getGlobalScope(funcDef));
 
-        cout << "\nNow processing " << funcName << "\n\n";
+        cout << "\nNow processing " << funcName << "\tfrom\n";
+        cout << funcDef->get_file_info()->get_filenameString() << "\n\n";
 
         //string cfgFileName = "CFG" + boost::lexical_cast<string > (counter) + ".dot";
         //string vgFileName = "VG" + boost::lexical_cast<string > (counter) + ".dot";
@@ -70,7 +74,7 @@ int main(int argc, char *argv[])
         //if (!funcDef->get_file_info()->isSameFile(sourceFile))
         //    continue;
 
-#if 1
+#if 0
         Backstroke::BackstrokeCFG cfg(funcDef);
         cfg.toDot(cfgFileName);
         
@@ -94,8 +98,8 @@ int main(int argc, char *argv[])
     }
 
     // Prepend includes to test files.
-    SgGlobal* globalScope = SageInterface::getFirstGlobalScope(project);
-    SageInterface::insertHeader("rctypes.h", PreprocessingInfo::after, false, globalScope);
+    foreach (SgGlobal* globalScope, globalScopes)
+        SageInterface::insertHeader("rctypes.h", PreprocessingInfo::after, false, globalScope);
 
     //AstTests::runAllTests(project);
 
