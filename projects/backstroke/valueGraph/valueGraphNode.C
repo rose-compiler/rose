@@ -204,6 +204,40 @@ std::string OperatorNode::toString() const
     return "OP";
 }
 
+FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall)
+        : ValueGraphNode(funcCall), isVirtual(false)
+{
+    
+#if 1
+            
+    SgFunctionDeclaration* funcDecl = funcCall->getAssociatedFunctionDeclaration();
+    // In some cases, such as function pointers and virtual functions, the function 
+    // called cannot be resolved statically; for those cases this function returns NULL.
+    if (funcDecl == NULL)
+    {
+        //isVirtual = true;
+        if (SgArrowExp* arrowExp = isSgArrowExp(funcCall->get_function()))
+            if (isSgThisExp(arrowExp->get_lhs_operand()))
+                isVirtual = true;
+    }
+    else
+    {
+        if (SgArrowExp* arrowExp = isSgArrowExp(funcCall->get_function()))
+        {
+            if (isSgThisExp(arrowExp->get_lhs_operand()))
+            {
+                SgMemberFunctionRefExp* funcRef = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
+                SgMemberFunctionDeclaration* funcDecl = funcRef->getAssociatedMemberFunctionDeclaration();
+                //cout << funcDecl->get_name().str() << funcDecl->get_functionModifier().isVirtual() << endl;
+                isVirtual = funcDecl->get_functionModifier().isVirtual();
+            }
+        }
+        //isVirtual = true;
+    }
+    
+#endif
+}
+
 std::string FunctionCallNode::toString() const
 {
     string str;
@@ -229,7 +263,7 @@ std::string ValueGraphEdge::toString() const
 {
     std::string str;
     
-#if 0
+#if 1
     str += "cost:" + boost::lexical_cast<std::string>(cost) + "\\n";
     str += boost::lexical_cast<std::string>(dagIndex) + ":";
     std::string s;

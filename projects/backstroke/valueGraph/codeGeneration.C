@@ -26,18 +26,6 @@ SgExpression* buildVariable(ValueNode* node)
     return var;
 }
 
-SgStatement* getAncestorStatement(SgNode* node)
-{
-    SgStatement* stmt;
-    while (!(stmt = isSgStatement(node)))
-    {
-        node = node->get_parent();
-        if (node == NULL)
-            return NULL;
-    }
-    return stmt;
-}
-
 SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr)
 {
     SgAssignInitializer* init = expr ? buildAssignInitializer(expr) : NULL;
@@ -56,7 +44,7 @@ void instrumentPushFunction(ValueNode* valNode, SgNode* astNode)
     SgExpression* pushFunc = buildPushFunctionCall(valNode->var.getVarRefExp());
     SgStatement* pushFuncStmt = buildExprStatement(pushFunc);
     
-    SgStatement* stmt = getAncestorStatement(astNode);
+    SgStatement* stmt = SageInterface::getEnclosingStatement(astNode);
     SageInterface::insertStatementBefore(stmt, pushFuncStmt); 
 }
 
@@ -131,7 +119,10 @@ SgStatement* buildPushStatementForPointerType(ValueNode* valNode)
     SgExprListExp* exprList = buildExprListExp(var);
     SgPointerType* ptrType = isSgPointerType(valNode->getType());
     ROSE_ASSERT(ptrType);
-    SgNewExp* newExp = buildNewExp(ptrType->get_base_type(), exprList, 0, 0, 0, 0);
+    SgType* type = ptrType->get_base_type();
+    SgConstructorInitializer* initializer = 
+            buildConstructorInitializer(0, exprList, type, 0, 0, 1, 0);
+    SgNewExp* newExp = buildNewExp(type, 0, initializer, 0, 0, 0);
     
     return buildExprStatement(buildPushFunctionCall(newExp));
 }
@@ -158,6 +149,15 @@ SgStatement* buildRestorationStmt(ValueNode* node)
 {
     return buildExprStatement(buildRestorationExp(node));
 }
+
+#if 0
+SgExpression* buildVirtualFunctionCall(const string& funcName, SgType* returnType)
+{
+    SgExpression* funcCall = buildFunctionCallExp(funcName, returnType);
+    return buildArrowOp(buildThis)
+        cmtStmt = buildExprStatement(cmtFuncCall);
+}
+#endif
 
 SgStatement* buildAssignOpertaion(ValueNode* lhs, ValueNode* rhs)
 {

@@ -57,6 +57,12 @@ interface-real:
 l2proto802:
 	./valueGraph -c $(GTNETS_DIR)/l2proto802.11.cc -I/home/hou1/GTNetS-MPI/SRC/
 
+timer:
+	./valueGraph -c $(GTNETS_DIR)/timer.cc -I/home/hou1/GTNetS-MPI/SRC/
+
+udpsink:
+	./valueGraph -c $(GTNETS_DIR)/application-udpsink.cc -I/home/hou1/GTNetS-MPI/SRC/
+
 gtnets:
 	./valueGraph -c $(GTNETS_FILES) -I/home/hou1/GTNetS-MPI/SRC/
 

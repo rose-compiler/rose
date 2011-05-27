@@ -139,6 +139,7 @@ PathNumManager::getVisiblePathNumbers(SgNode* node) const
 std::pair<int, PathSet> PathNumManager::getPathNumbers(
         SgNode* node1, SgNode* node2) const
 {
+    //cout << node1->unparseToString() << ' ' << node2->unparseToString() << endl;
     CFGVertex cfgNode1 = getCFGNode(node1);
     CFGVertex cfgNode2 = getCFGNode(node2);
 
@@ -211,7 +212,7 @@ map<PathSet, int> PathNumManager::getPathsIndices(size_t index) const
     return pathsIndicesTable;
 }
 
-void PathNumManager::instrumentFunction(const string& pathNumName)
+void PathNumManager::insertPathNumberToEvents(const string& pathNumName)
 {
     ROSE_ASSERT(pathNumGenerators_.size() == dags_.size());
 
@@ -307,7 +308,7 @@ void PathNumManager::insertPathNumberOnEdge(
     {
         if (SageInterface::isAncestor(src, tgt))
         {
-            SgStatement* s = getAncestorStatement(tgt);
+            SgStatement* s = SageInterface::getEnclosingStatement(tgt);
             if (SgBasicBlock* body = isSgBasicBlock(s))
             {
                 SageInterface::prependStatement(pathNumStmt, body);

@@ -22,20 +22,40 @@ int main(int argc, char *argv[])
     c.translate(argc,argv);
 #endif
     set<string> eventList;
-    eventList.insert("TransmitComplete");
     eventList.insert("Handle");
+    eventList.insert("StartApp");
+    //eventList.insert("StopApp");
     eventList.insert("TransmitComplete");
-    eventList.insert("TransmitComplete");
+    eventList.insert("SendNotification");
+    eventList.insert("WirelessTxStart");
+    eventList.insert("WirelessTxEnd");
     
+    vector<SgFunctionDefinition*> funcDefs;
+
     // Process all function definition bodies for static control flow graph generation
     Rose_STL_Container<SgNode*> functions = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
     for (Rose_STL_Container<SgNode*>::const_iterator i = functions.begin(); i != functions.end(); ++i)
     {
         SgFunctionDefinition* funcDef = isSgFunctionDefinition(*i);
         ROSE_ASSERT(funcDef != NULL);
+
         string funcName = funcDef->get_declaration()->get_name();
-        if (eventList.count(funcName) == 0)
-            continue;
+        //cout << "FUNC:\t" << funcName << endl;
+        if (eventList.count(funcName) > 0)
+        {
+            BackstrokeNorm::normalizeEvent(funcDef->get_declaration());
+            funcDefs.push_back(funcDef);
+        }
+    }
+
+    StaticSingleAssignment* ssa = new StaticSingleAssignment(SageInterface::getProject());
+    ssa->run(true);
+
+    foreach (SgFunctionDefinition* funcDef, funcDefs)
+    {
+        string funcName = funcDef->get_declaration()->get_name();
+
+        cout << "\nNow processing " << funcName << "\n\n";
 
         //string cfgFileName = "CFG" + boost::lexical_cast<string > (counter) + ".dot";
         //string vgFileName = "VG" + boost::lexical_cast<string > (counter) + ".dot";
@@ -43,11 +63,10 @@ int main(int argc, char *argv[])
         string cdgFileName = "CDG.dot";
         string vgFileName = "VG.dot";
 
+        //if (!funcDef->get_file_info()->isSameFile(sourceFile))
+        //    continue;
 
-        if (!funcDef->get_file_info()->isSameFile(sourceFile))
-            continue;
-
-        BackstrokeNorm::normalizeEvent(funcDef->get_declaration());
+#if 1
         Backstroke::BackstrokeCFG cfg(funcDef);
         cfg.toDot(cfgFileName);
         
@@ -59,20 +78,15 @@ int main(int argc, char *argv[])
 //
 //        Backstroke::FullCFG fullCFG(funcDef);
 //        fullCFG.toDot("fullCFG.dot");
+#endif
 
-
-
-
-        Backstroke::EventReverser reverser(funcDef);
         //reverser.buildValueGraph();
-        reverser.generateCode();
+        Backstroke::EventReverser reverser(ssa);
+        reverser.reverseEvent(funcDef);
 
         //reverser.valueGraphToDot(vgFileName);
 
-        cout << "Function " << funcName << " is processed.\n";
-        ++counter;
-
-        break;
+        cout << "\nFunction " << funcName << " is processed.\n\n";
     }
     // Prepend includes to test files.
     SgGlobal* globalScope = SageInterface::getFirstGlobalScope(project);

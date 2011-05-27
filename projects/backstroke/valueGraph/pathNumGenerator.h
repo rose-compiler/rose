@@ -178,7 +178,7 @@ public:
     //! in the CFG.
     std::map<PathSet, int> getPathsIndices(size_t index) const;
 
-    void instrumentFunction(const std::string& pathNumName);
+    void insertPathNumberToEvents(const std::string& pathNumName);
 
 private:
     //! Use path number generator to generate path numbers.

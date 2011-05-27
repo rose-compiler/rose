@@ -6,6 +6,7 @@
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/graph/topological_sort.hpp>
+#include <boost/graph/filtered_graph.hpp>
 
 namespace Backstroke
 {
@@ -15,54 +16,44 @@ using namespace std;
 #define foreach BOOST_FOREACH
 #define reverse_foreach BOOST_REVERSE_FOREACH
 
-EventReverser::EventReverser(SgFunctionDefinition* funcDef)
-:   funcDef_(funcDef)
+EventReverser::EventReverser(SSA* ssa)
+:   cfg_(NULL), cdg_(NULL), 
+    ssa_(ssa), 
+    pathNumManager_(NULL)
 {
-    // Normalize the function.
-    BackstrokeNorm::normalizeEvent(funcDef_->get_declaration());
-
-    // Three new functions are built. Backup the original function here.
-    buildFunctionBodies();
-
-    cfg_ = new BackstrokeCFG(funcDef_);
-    cdg_ = new BackstrokeCDG(*cfg_);
-    ssa_ = new SSA(SageInterface::getProject());
-    ssa_->run(true);
-
-    pathNumManager_ = new PathNumManager(cfg_);
+    // Note that all event functions must be normalized before creating an event reverser!!!
+    //ssa_->run(true);
 }
 
 EventReverser::~EventReverser()
 {
     delete cfg_;
     delete cdg_;
-    delete ssa_;
     delete pathNumManager_;
+}
+
+
+void EventReverser::reverseEvent(SgFunctionDefinition* funcDef)
+{
+    funcDef_ = funcDef;
+    
+    //// Normalize the function.
+    //BackstrokeNorm::normalizeEvent(funcDef_->get_declaration());
+
+    // Three new functions are built. Backup the original function here.
+    buildFunctionBodies();
+    
+    cfg_ = new BackstrokeCFG(funcDef_);
+    cdg_ = new BackstrokeCDG(*cfg_);
+    pathNumManager_ = new PathNumManager(cfg_);
+    
+    generateCode();
 }
 
 void EventReverser::generateCode()
 {
     // First, build the value graph.
     buildValueGraph();
-#if 1
-
-    // Insert the declaration of the path number in the front of reverse function,
-    // and define its value from a pop function call.
-    string pathNumName = "__num__";
-    using namespace SageBuilder;
-
-    pushScopeStack(rvsFuncDef_->get_body());
-    SgVariableDeclaration* pathNumDecl =
-            SageBuilder::buildVariableDeclaration(
-                pathNumName,
-                SageBuilder::buildIntType(),
-                SageBuilder::buildAssignInitializer(
-                    buildPopFunctionCall(
-                        buildIntType())));
-    popScopeStack();
-
-    SageInterface::prependStatement(pathNumDecl, rvsFuncDef_->get_body());
-    SageInterface::prependStatement(SageInterface::copyStatement(pathNumDecl), cmtFuncDef_->get_body());
         
 #if 0
     // Declare all temporary variables at the beginning of the reverse events.
@@ -116,9 +107,37 @@ void EventReverser::generateCode()
     ofile.close();
 #endif
 
+    string pathNumName = "__num__";
+    
+    using namespace SageBuilder;
+    // If the number of path is 1, we don't have to use path numbers.
+    if (pathNum > 1)
+    {
+        // Insert the declaration of the path number in the front of reverse function,
+        // and define its value from a pop function call.
+        pushScopeStack(rvsFuncDef_->get_body());
+        SgVariableDeclaration* pathNumDecl =
+                SageBuilder::buildVariableDeclaration(
+                    pathNumName,
+                    SageBuilder::buildIntType(),
+                    SageBuilder::buildAssignInitializer(
+                        buildPopFunctionCall(
+                            buildIntType())));
+        popScopeStack();
+
+        SageInterface::prependStatement(pathNumDecl, rvsFuncDef_->get_body());
+        SageInterface::prependStatement(SageInterface::copyStatement(pathNumDecl), cmtFuncDef_->get_body());
+    }
+    
+    // Build all three functions.
     generateCode(0, rvsCFG, rvsFuncDef_->get_body(), cmtFuncDef_->get_body(), pathNumName);
 
-    pathNumManager_->instrumentFunction(pathNumName);
+
+    // If the number of path is 1, we don't have to use path numbers.
+    if (pathNum > 1)
+    {
+        pathNumManager_->insertPathNumberToEvents(pathNumName);
+    }
 
     // Finally insert all functions in the code.
     insertFunctions();
@@ -127,7 +146,6 @@ void EventReverser::generateCode()
     // Remove them here.
     removeEmptyIfStmt(rvsFuncDef_);
     removeEmptyIfStmt(cmtFuncDef_);
-#endif
 }
 
 void EventReverser::buildRouteGraph(const map<VGEdge, PathSet>& routes)
@@ -174,8 +192,18 @@ void EventReverser::buildRouteGraph(const map<VGEdge, PathSet>& routes)
         routeGraph_[e] = newEdge;
     }
     
-    // Set the root of the route graph.
-    routeGraphRoot_ = nodeTable[root_];
+    // It is possible that routeGraph_ has no node at this point.
+    if (boost::num_vertices(routeGraph_) == 0)
+    {
+        routeGraphRoot_ = boost::add_vertex(routeGraph_);
+        routeGraph_[routeGraphRoot_] = valueGraph_[root_];
+    }
+    else
+    {
+        // Set the root of the route graph.
+        ROSE_ASSERT(nodeTable.count(root_));
+        routeGraphRoot_ = nodeTable[root_];
+    }
     
     // Switch all nodes in valuesToRestore_ to those in route graph.
     // It is important since the code generation is performed on route graph, not
@@ -673,6 +701,7 @@ void EventReverser::generateCodeForBasicBlock(
         SgScopeStatement* cmtScope)
 {
     using namespace SageBuilder;
+    using namespace SageInterface;
     
     pushScopeStack(rvsScope);
 
@@ -720,7 +749,7 @@ void EventReverser::generateCodeForBasicBlock(
                 SgStatement* pushLocation = NULL;
                 if (pushLocations.count(killer) == 0)
                 {
-                    pushLocation = getAncestorStatement(killer);
+                    pushLocation = SageInterface::getEnclosingStatement(killer);
                     pushLocations[killer] = pushLocation;
                 }
                 else
@@ -789,13 +818,125 @@ void EventReverser::generateCodeForBasicBlock(
 
             rvsStmt = buildOperationStatement(valNode, opNode->type, lhsNode, rhsNode);
         }
+        else if (FunctionCallNode* funcCallNode = isFunctionCallNode(routeGraph_[tgt]))
+        {
+            // Virtual function call.
+            SgFunctionCallExp* funcCallExp = funcCallNode->getFunctionCallExp();
+            ROSE_ASSERT(funcCallExp);
+            SgArrowExp* arrowExp = isSgArrowExp(funcCallExp->get_function());
+            SgMemberFunctionRefExp* funcRef = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
+            SgMemberFunctionDeclaration* funcDecl = funcRef->getAssociatedMemberFunctionDeclaration();
+            SgType* returnType = funcCallExp->get_type();
+            
+            string funcName = funcDecl->get_name().str();
+            string fwdFuncName = funcName + "_forward";
+            string rvsFuncName = funcName + "_reverse";
+            string cmtFuncName = funcName + "_commit";
+            
+            if (SgMemberFunctionDeclaration* memFuncDecl = 
+                    isSgMemberFunctionDeclaration(funcDef_->get_declaration()))
+            {
+                SgMemberFunctionRefExp* fwdFuncRef = NULL;
+                SgMemberFunctionRefExp* rvsFuncRef = NULL;
+                SgMemberFunctionRefExp* cmtFuncRef = NULL;
+
+                SgClassDefinition* classDef = memFuncDecl->get_class_scope();
+                ROSE_ASSERT(classDef);
+                
+                foreach (SgDeclarationStatement* decl, classDef->get_members())
+                {
+                    SgMemberFunctionDeclaration* memFuncDecl = 
+                            isSgMemberFunctionDeclaration(decl);
+                    if (memFuncDecl == NULL)
+                        continue;
+                    
+                    SgName funcName = memFuncDecl->get_name();
+                    
+                    //cout << "FUNC:\t" << funcName.str() << endl;
+                    //cout << fwdFuncName << " " << rvsFuncName << " " << cmtFuncName << endl;
+                    
+                    if (funcName == fwdFuncName)
+                    {
+                        fwdFuncRef = buildMemberFunctionRefExp(
+                                isSgMemberFunctionSymbol(
+                                    memFuncDecl->get_symbol_from_symbol_table()),
+                                true, false);
+                    }
+                    else if (funcName == rvsFuncName)
+                    {
+                        rvsFuncRef = buildMemberFunctionRefExp(
+                                isSgMemberFunctionSymbol(
+                                    memFuncDecl->get_symbol_from_symbol_table()),
+                                true, false);
+                    }
+                    else if (funcName == cmtFuncName)
+                    {
+                        cmtFuncRef = buildMemberFunctionRefExp(
+                                isSgMemberFunctionSymbol(
+                                    memFuncDecl->get_symbol_from_symbol_table()),
+                                true, false);
+                    }
+                }
+                
+                ROSE_ASSERT(fwdFuncRef && rvsFuncRef && cmtFuncRef);
+
+                SgThisExp* thisExp = isSgThisExp(arrowExp->get_lhs_operand());
+                ROSE_ASSERT(thisExp);
+                ROSE_ASSERT(copyExpression(thisExp));
+
+                SgFunctionCallExp* fwdFuncCall = isSgFunctionCallExp(copyExpression(funcCallExp));
+                arrowExp = isSgArrowExp(fwdFuncCall->get_function());
+                replaceExpression(arrowExp->get_rhs_operand(), fwdFuncRef);
+                
+                SgFunctionCallExp* rvsFuncCall = isSgFunctionCallExp(copyExpression(funcCallExp));
+                arrowExp = isSgArrowExp(rvsFuncCall->get_function());
+                replaceExpression(rvsFuncCall->get_args(), buildExprListExp());
+                replaceExpression(arrowExp->get_rhs_operand(), rvsFuncRef);
+                
+                SgFunctionCallExp* cmtFuncCall = isSgFunctionCallExp(copyExpression(funcCallExp));
+                arrowExp = isSgArrowExp(cmtFuncCall->get_function());
+                replaceExpression(cmtFuncCall->get_args(), buildExprListExp());
+                replaceExpression(arrowExp->get_rhs_operand(), cmtFuncRef);
+                
+#if 0
+                SgExpression* fwdFuncCall = buildFunctionCallExp(buildArrowExp(
+                        copyExpression(thisExp), fwdFuncRef));
+                replaceExpression(funcCallExp, fwdFuncCall);
+
+                SgExpression* rvsFuncCall = buildFunctionCallExp(buildArrowExp(
+                        copyExpression(thisExp), rvsFuncRef));
+                rvsStmt = buildExprStatement(rvsFuncCall);
+
+                SgExpression* cmtFuncCall = buildFunctionCallExp(buildArrowExp(
+                        copyExpression(thisExp), cmtFuncRef));
+                cmtStmt = buildExprStatement(cmtFuncCall);
+#endif
+                
+                replaceExpression(funcCallExp, fwdFuncCall);
+                rvsStmt = buildExprStatement(rvsFuncCall);
+                cmtStmt = buildExprStatement(cmtFuncCall);
+            }
+            else
+            {
+                SgExpression* fwdFuncCall = buildFunctionCallExp(fwdFuncName, returnType);
+                //fwdFuncCall = buildArrowExp(SageInterface::copyExpression(thisExp), fwdFuncCall);
+                SageInterface::replaceExpression(funcCallExp, fwdFuncCall);
+
+                SgExpression* rvsFuncCall = buildFunctionCallExp(rvsFuncName, returnType);
+                //SgExpression* rvsFuncCall = buildFunctionCallExp(SageInterface::copyExpression(arrowExp));
+                rvsStmt = buildExprStatement(rvsFuncCall);
+
+                SgExpression* cmtFuncCall = buildFunctionCallExp(cmtFuncName, returnType);
+                cmtStmt = buildExprStatement(cmtFuncCall);
+            }
+        }
 
         // Add the generated statement to the scope.
         if (rvsStmt)
-            SageInterface::appendStatement(rvsStmt, rvsScope);
+            appendStatement(rvsStmt, rvsScope);
         
         if (cmtStmt)
-            SageInterface::appendStatement(cmtStmt, cmtScope);
+            appendStatement(cmtStmt, cmtScope);
     }
 
 #if 0
@@ -931,7 +1072,7 @@ void EventReverser::generateCode(
             // Here we put all path numbers into an array then do a binary search
             // on this array. It can improve the performance.
             
-            if (conditions.size() > 4)
+            if (conditions.size() > 8)
             {
                 // Build an array containing all path numbers.
                 
@@ -958,9 +1099,21 @@ void EventReverser::generateCode(
                 
                 //popScopeStack();
                 
-                SgExprListExp* para = 
-                        buildExprListExp(buildVarRefExp(pathNumArray), buildVarRefExp(pathNumName));
+#if 0
+                SgExprListExp* para = buildExprListExp(
+                                            buildVarRefExp(pathNumArray), 
+                                            buildUnsignedIntVal(conditions.size()), 
+                                            buildVarRefExp(pathNumName));
                 condition = buildFunctionCallExp("__check__", buildBoolType(), para);
+#endif
+                
+                SgExprListExp* para = buildExprListExp(
+                                        buildVarRefExp(pathNumArray), 
+                                        buildAddOp(
+                                            buildVarRefExp(pathNumArray), 
+                                            buildUnsignedIntVal(conditions.size())),
+                                        buildVarRefExp(pathNumName));
+                condition = buildFunctionCallExp("std::binary_search", buildBoolType(), para);
             }
             else
             {
@@ -1116,14 +1269,32 @@ void EventReverser::insertFunctions()
     funcDef_->set_body(fwdFuncDef_->get_body());
     fwdFuncDef_->set_body(body);
 
-    SgFunctionDeclaration* funcDecl    = funcDef_->get_declaration();
+    SgDeclarationStatement* funcDecl   = funcDef_->get_declaration()->get_definingDeclaration();
     SgFunctionDeclaration* fwdFuncDecl = fwdFuncDef_->get_declaration();
     SgFunctionDeclaration* rvsFuncDecl = rvsFuncDef_->get_declaration();
     SgFunctionDeclaration* cmtFuncDecl = cmtFuncDef_->get_declaration();
-
+    
+#if 0
+    if (SgMemberFunctionDeclaration* memFuncDecl = isSgMemberFunctionDeclaration(funcDecl))
+    {
+        SgClassDefinition* classDef = memFuncDecl->get_class_scope();
+        ROSE_ASSERT(classDef);
+        classDef->append_member(fwdFuncDecl);
+        classDef->append_member(rvsFuncDecl);
+        classDef->append_member(cmtFuncDecl);
+    }
+#endif
+    
+#if 1
     insertStatementAfter(funcDecl,    fwdFuncDecl);
     insertStatementAfter(fwdFuncDecl, rvsFuncDecl);
     insertStatementAfter(rvsFuncDecl, cmtFuncDecl);
+#else
+    SgGlobal* globalScope = SageInterface::getGlobalScope(funcDef_);
+    SageInterface::appendStatement(fwdFuncDecl, globalScope);
+    SageInterface::appendStatement(rvsFuncDecl, globalScope);
+    SageInterface::appendStatement(cmtFuncDecl, globalScope);
+#endif
 }
 
 void EventReverser::removeEmptyIfStmt(SgNode* node)

@@ -181,8 +181,7 @@ struct OperatorNode : ValueGraphNode
 
 struct FunctionCallNode: ValueGraphNode
 {
-    explicit FunctionCallNode(SgFunctionCallExp* funcCall, bool v = false)
-            : ValueGraphNode(funcCall), isVirtual(v) {}
+    explicit FunctionCallNode(SgFunctionCallExp* funcCall);
     
     SgFunctionCallExp* getFunctionCallExp() const
     { return isSgFunctionCallExp(astNode); }

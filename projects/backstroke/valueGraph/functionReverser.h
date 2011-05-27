@@ -11,9 +11,6 @@ class ValueNode;
 //! Build a variable expression from a value node in the value graph.
 SgExpression* buildVariable(ValueNode* node);
 
-//! Given a AST node, get the first statement which contains this node.
-SgStatement* getAncestorStatement(SgNode* node);
-
 //! Build a variable declaration.
 SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr = 0);
 

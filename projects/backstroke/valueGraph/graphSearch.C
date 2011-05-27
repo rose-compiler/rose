@@ -119,6 +119,20 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
 
     foreach (VGVertex valNode, valuesToRestore)
     {
+        // For dummy nodes.
+        if (ValueNode* v = isValueNode(valueGraph_[valNode]))
+        {
+            if (v->isTemp())
+            {
+                PathSet path = valueGraph_[*(boost::out_edges(valNode, valueGraph_).first)]->paths;
+                if (!path[pathIndex])
+                {
+                    continue;
+                }
+            }
+        }
+        
+        
         RouteWithNodes route;
         route.nodes.push_back(make_pair(valNode, valNode));
 

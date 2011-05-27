@@ -142,10 +142,12 @@ private:
 
 public:
     //! The constructor.
-    EventReverser(SgFunctionDefinition* funcDef);
+    EventReverser(SSA* ssa);
 
     //! The destructor.
     ~EventReverser();
+    
+    void reverseEvent(SgFunctionDefinition* funcDef);
 
 	//! Build the value graph for the given function.
 	void buildValueGraph();
@@ -170,6 +172,19 @@ private:
     
     //! Process all data members of a class by adding them into state variables set.
     void processClassDataMembers(SgClassDefinition* classDef);
+    
+    // The following functions are used to build the value graph.
+    void processStatement(SgStatement* stmt);
+    void processExpression(SgExpression* expr);
+    void processVariableReference(SgExpression* var);
+    
+    //! Add the given vertex as an available value.
+    void addAvailableValue(VGVertex val)
+    { availableValues_.insert(val); }
+    
+    //! Returns if a value is available.
+    bool isAvailableValue(VGVertex val) const
+    { return availableValues_.find(val) != availableValues_.end(); }
     
     //! Build the route graph representing search result.
     void buildRouteGraph(const std::map<VGEdge, PathSet>& routes);
@@ -315,8 +330,8 @@ private:
 	void addStateSavingEdges();
 
     //! Check if a variable is a state variable.
-	bool isStateVariable(const VarName& name)
-	{ return stateVariables_.count(name) > 0; }
+	bool isStateVariable(const VarName& name) const
+	{ return stateVariables_.find(name) != stateVariables_.end(); }
 
 	/** Given a SgNode, return its variable name and version.
 	 * 

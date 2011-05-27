@@ -14,7 +14,6 @@ using namespace std;
 #define foreach         BOOST_FOREACH
 #define reverse_foreach BOOST_REVERSE_FOREACH
 
-
 void EventReverser::buildValueGraph()
 {
     // First, build the basic part of the value graph.
@@ -117,7 +116,7 @@ void EventReverser::buildBasicValueGraph()
         } 
     }
     
-#if 1
+#if 0
     cout << "State vars:\n";
     foreach (const VarName& var, stateVariables_)
     {
@@ -149,306 +148,310 @@ void EventReverser::buildBasicValueGraph()
         // Statement case: variable declaration.
         if (SgStatement* stmt = isSgStatement(node))
         {
-            SgVariableDeclaration* varDecl = isSgVariableDeclaration(stmt);
-            if (varDecl == NULL) continue;
-
-            foreach (SgInitializedName* initName, varDecl->get_variables())
-            {
-                SgInitializer* initalizer = initName->get_initializer();
-
-                // A declaration without definition
-                if (initalizer == NULL)
-                {
-                    createValueNode(initName, NULL);
-                }
-                else if (SgAssignInitializer* assignInit =
-                        isSgAssignInitializer(initalizer))
-                {
-                    SgExpression* operand = assignInit->get_operand();
-                    createValueNode(initName, operand);
-                    //addVariableToNode(rhsVertex, initName);
-                }
-                else
-                {
-                    //cout << initalizer->class_name() << endl;
-                    //ROSE_ASSERT(!"Can only deal with assign initializer now!");
-                }
-            }
+            processStatement(stmt);
         }
 
         // Expression case.
-        if (SgExpression* expr = isSgExpression(node))
+        else if (SgExpression* expr = isSgExpression(node))
         {
-            // For a variable reference, if its def is a phi node, we build this phi node here.
-            if (BackstrokeUtility::isVariableReference(expr))
+            processExpression(expr);
+        }
+    }
+}
+
+void EventReverser::processStatement(SgStatement* stmt)
+{
+    SgVariableDeclaration* varDecl = isSgVariableDeclaration(stmt);
+    if (varDecl == NULL) return;
+
+    foreach (SgInitializedName* initName, varDecl->get_variables())
+    {
+        SgInitializer* initalizer = initName->get_initializer();
+
+        // A declaration without definition
+        if (initalizer == NULL)
+        {
+            createValueNode(initName, NULL);
+        }
+        else if (SgAssignInitializer* assignInit =
+                isSgAssignInitializer(initalizer))
+        {
+            SgExpression* operand = assignInit->get_operand();
+            createValueNode(initName, operand);
+            //addVariableToNode(rhsVertex, initName);
+        }
+        else
+        {
+            //cout << initalizer->class_name() << endl;
+            //ROSE_ASSERT(!"Can only deal with assign initializer now!");
+        }
+    }
+}
+
+void EventReverser::processExpression(SgExpression* expr)
+{
+    if (BackstrokeUtility::isVariableReference(expr))
+    {
+        processVariableReference(expr);
+        return;
+    }
+
+    // Value expression.
+    if (SgValueExp* valueExp = isSgValueExp(expr))
+    {
+        createValueNode(NULL, valueExp);
+        //addValueGraphNode(new ValueNode(valueExp), expr);
+    }
+
+    // Cast expression.
+    else if (SgCastExp* castExp = isSgCastExp(expr))
+    {
+        //ROSE_ASSERT(nodeVertexMap_.count(castExp->get_operand()));
+        if (nodeVertexMap_.count(castExp->get_operand()) > 0)
+            nodeVertexMap_[castExp] = nodeVertexMap_[castExp->get_operand()];
+        else
+        {
+            cout << "The operand of cast expression " << castExp->unparseToString()
+                    << " is not added to VG yet!\n";
+        }
+    }
+
+    else if (SgFunctionCallExp* funcCall = isSgFunctionCallExp(expr))
+    {
+#if 0
+        const SSA::NodeReachingDefTable& defTable =
+            ssa_->getReachingDefsAtNode_(funcCall);
+        cout << "Print def table:\n";
+        typedef map<VarName, SSA::ReachingDefPtr>::value_type PT;
+        foreach(const PT& pt, defTable)
+        {
+            cout << "!" << SSA::varnameToString(pt.first) << " " << 
+                    pt.second->getRenamingNumber() << endl;
+        }
+#endif
+
+        createFunctionCallNode(funcCall);
+    }
+
+    // Unary expressions.
+    else if (SgUnaryOp* unaryOp = isSgUnaryOp(expr))
+    {
+        SgExpression* operand = unaryOp->get_operand();
+
+        VariantT t = unaryOp->variantT();
+        switch (t)
+        {
+        case V_SgPlusPlusOp:
+        case V_SgMinusMinusOp:
             {
-                // For data member access, ignore its corresponding "this" pointer.
-                if (SgThisExp* thisExp = isSgThisExp(expr))
+                if (nodeVertexMap_.count(operand) == 0)
                 {
-                    createThisExpNode(thisExp);
+                    cout << "The operand of ++ or -- is not added to VG yet!\n";
+                    return;
                 }
+                ROSE_ASSERT(nodeVertexMap_.count(operand) > 0);
 
-                else if (SgArrowExp* arrowExp = isSgArrowExp(expr))
-                {
-                    if (isSgThisExp(arrowExp->get_lhs_operand()))
-                    {
-                        SgExpression* rhsExp = arrowExp->get_rhs_operand();
-                        // It is possible that this var ref is actually a def.
-                        // For example, this->a = 0;
-                        if (nodeVertexMap_.count(rhsExp) > 0)
-                            nodeVertexMap_[arrowExp] = nodeVertexMap_[rhsExp];
-                    }
-                }
+                VGVertex operandNode = nodeVertexMap_[operand];
+                VGVertex result = createValueNode(operand, NULL);
 
-                // A cast expression may be a variable reference.
-                else if (SgCastExp* castExp = isSgCastExp(expr))
-                {
-                    //castExp->get_operand()->get_file_info()->display();
-                    //ROSE_ASSERT(nodeVertexMap_.count(castExp->get_operand()));
-                    if (nodeVertexMap_.count(castExp->get_operand()) > 0)
-                        nodeVertexMap_[castExp] = nodeVertexMap_[castExp->get_operand()];
-                }
-                
-                else if (SgPointerDerefExp* ptrDerefExp = isSgPointerDerefExp(expr))
-                {
-                    // ...
-                }
-                
-                else if (SgAddressOfOp* addressOfOp = isSgAddressOfOp(expr))
-                {
-                    
-                }
+                createOperatorNode(t, unaryOp, result, operandNode);
+                //addVariableToNode(result, operand);
 
-                else if (SgVarRefExp* varRefExp = isSgVarRefExp(expr))
-                {
-                    // Get the var name and version for lhs.
-                    // We don't know if this var is a use or def now.
-                    //cout << expr->unparseToString() << endl;
-                    VersionedVariable var = getVersionedVariable(varRefExp);
-                    
-                    // It is possible that this var ref is actually a def. For example, a = 0;
-                    map<VersionedVariable, VGVertex>::iterator iter = varVertexMap_.find(var);
-                    if (iter != varVertexMap_.end())
-                    {
-                        nodeVertexMap_[varRefExp] = iter->second;
-                    }
-                    else
-                    {
+                // For postfix ++ and --, we should assign the value node
+                // before modified to this expression.
+                if (unaryOp->get_mode() == SgUnaryOp::postfix)
+                    nodeVertexMap_[unaryOp] = operandNode;
+                else
+                    nodeVertexMap_[unaryOp] = result;
+
+                break;
+            }
+
+        case V_SgAddressOfOp:
+        case V_SgNotOp:
+        case V_SgMinusOp:
+        //case V_SgPointerDerefExp:
+        case V_SgUnaryAddOp:
+            if (nodeVertexMap_.count(operand) == 0)
+            {
+                cout << "The operand of " << unaryOp->class_name() << " is not added to VG yet!\n";
+                return;
+            }
+            ROSE_ASSERT(nodeVertexMap_.count(operand) > 0);
+            createOperatorNode(t, unaryOp, createValueNode(NULL, unaryOp), 
+                nodeVertexMap_[operand]);
+            break;
+
+        default:
+            ROSE_ASSERT("Unary op not handled yet!");
+            break;
+        }
+    }
+
+    // Binary expressions.
+    else if (SgBinaryOp* binOp = isSgBinaryOp(expr))
+    {
+        SgExpression* lhs = binOp->get_lhs_operand();
+        SgExpression* rhs = binOp->get_rhs_operand();
+
+        VariantT t = binOp->variantT();
+        switch (t)
+        {
+        // For assign op, we assign the node which is assigned to with a variable name.
+        case V_SgAssignOp:
+            if (BackstrokeUtility::isVariableReference(lhs))
+            {
+                VGVertex result = createValueNode(lhs, rhs);
+                // Update the node-vertex table.
+                nodeVertexMap_[binOp] = result;
+            }
+            else
+            {
+                ROSE_ASSERT(!"Only variable can be assigned now.");
+            }
+
+            break;
+
+        case V_SgAddOp:
+        case V_SgSubtractOp:
+        case V_SgMultiplyOp:
+        case V_SgDivideOp:
+        case V_SgGreaterThanOp:
+        case V_SgGreaterOrEqualOp:
+        case V_SgLessThanOp:
+        case V_SgLessOrEqualOp:
+        case V_SgEqualityOp:
+        case V_SgNotEqualOp:
+        case V_SgAndOp:
+        case V_SgOrOp:
+        case V_SgBitAndOp:
+        case V_SgBitOrOp:
+        case V_SgBitXorOp:
+            if (nodeVertexMap_.count(lhs) == 0 || nodeVertexMap_.count(rhs) == 0)
+            {
+                cout << "The operand is not added to VG yet!\n";
+                return;
+            }
+            ROSE_ASSERT(nodeVertexMap_.count(lhs) > 0);
+            ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
+
+            createOperatorNode(t, binOp, createValueNode(NULL, binOp),
+                    nodeVertexMap_[lhs], nodeVertexMap_[rhs]);
+            break;
+
+        case V_SgPlusAssignOp:
+        case V_SgMinusAssignOp:
+        case V_SgMultAssignOp:
+        case V_SgDivAssignOp:
+        case V_SgAndAssignOp:
+        case V_SgIorAssignOp:
+        case V_SgModAssignOp:
+        case V_SgXorAssignOp:
+        case V_SgLshiftAssignOp:
+        case V_SgRshiftAssignOp:
+            {
+                VersionedVariable use = getVersionedVariable(lhs);
+
+                ROSE_ASSERT(varVertexMap_.count(use) > 0);
+                ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
+
+                VGVertex result = createValueNode(lhs, NULL);
+                createOperatorNode(
+                        getOriginalType(t), binOp, result,
+                        varVertexMap_[use], nodeVertexMap_[rhs]);
+
+                // Update the node-vertex table.
+                nodeVertexMap_[binOp] = result;
+                break;
+            }
+
+        case V_SgCommaOpExp:
+            nodeVertexMap_[binOp] = nodeVertexMap_[rhs];
+            break;
+
+        default:
+            break;
+        }
+    }
+}
+
+void EventReverser::processVariableReference(SgExpression* expr)
+{
+    // For a variable reference, if its def is a phi node, we build this phi node here.
+
+    // For data member access, ignore its corresponding "this" pointer.
+    if (SgThisExp* thisExp = isSgThisExp(expr))
+    {
+        createThisExpNode(thisExp);
+    }
+
+    else if (SgArrowExp* arrowExp = isSgArrowExp(expr))
+    {
+        if (isSgThisExp(arrowExp->get_lhs_operand()))
+        {
+            SgExpression* rhsExp = arrowExp->get_rhs_operand();
+            // It is possible that this var ref is actually a def.
+            // For example, this->a = 0;
+            if (nodeVertexMap_.count(rhsExp) > 0)
+                nodeVertexMap_[arrowExp] = nodeVertexMap_[rhsExp];
+        }
+    }
+
+    // A cast expression may be a variable reference.
+    else if (SgCastExp* castExp = isSgCastExp(expr))
+    {
+        //castExp->get_operand()->get_file_info()->display();
+        //ROSE_ASSERT(nodeVertexMap_.count(castExp->get_operand()));
+        if (nodeVertexMap_.count(castExp->get_operand()) > 0)
+            nodeVertexMap_[castExp] = nodeVertexMap_[castExp->get_operand()];
+    }
+
+    else if (SgPointerDerefExp* ptrDerefExp = isSgPointerDerefExp(expr))
+    {
+        // ...
+    }
+
+    else if (SgAddressOfOp* addressOfOp = isSgAddressOfOp(expr))
+    {
+
+    }
+
+    else if (SgVarRefExp* varRefExp = isSgVarRefExp(expr))
+    {
+        // Get the var name and version for lhs.
+        // We don't know if this var is a use or def now.
+        //cout << expr->unparseToString() << endl;
+        VersionedVariable var = getVersionedVariable(varRefExp);
+
+        // It is possible that this var ref is actually a def. For example, a = 0;
+        map<VersionedVariable, VGVertex>::iterator iter = varVertexMap_.find(var);
+        if (iter != varVertexMap_.end())
+        {
+            nodeVertexMap_[varRefExp] = iter->second;
+        }
+        else
+        {
 //                        createValueNode(varRefExp->get_symbol()->get_declaration(), NULL);
 //                        cout << varRefExp->unparseToString() << endl;
 //                        ROSE_ASSERT(varVertexMap_.count(var));
-                        
-                        SgDeclarationStatement* varDecl = varRefExp->get_symbol()
-                                ->get_declaration()->get_declaration();
 
-                        // If this var ref is declared in a class and it is not static.
-                        if (isSgClassDefinition(varDecl->get_parent()) && 
-                                !SageInterface::isStatic(varDecl))
-                        {
-                            cout << "New var skipped: " << var << endl;
-                            continue;
-                        }
-                    }
-                }
-                
-                else
-                {
-                    cout << expr->class_name() << endl;
-                    //ROSE_ASSERT(false);
-                }
-                continue;
-            }
+            SgDeclarationStatement* varDecl = varRefExp->get_symbol()
+                    ->get_declaration()->get_declaration();
 
-            // Value expression.
-            if (SgValueExp* valueExp = isSgValueExp(expr))
+            // If this var ref is declared in a class and it is not static.
+            if (isSgClassDefinition(varDecl->get_parent()) && 
+                    !SageInterface::isStatic(varDecl))
             {
-                createValueNode(NULL, valueExp);
-                //addValueGraphNode(new ValueNode(valueExp), expr);
-            }
-
-            // Cast expression.
-            else if (SgCastExp* castExp = isSgCastExp(expr))
-            {
-                //ROSE_ASSERT(nodeVertexMap_.count(castExp->get_operand()));
-                if (nodeVertexMap_.count(castExp->get_operand()) > 0)
-                    nodeVertexMap_[castExp] = nodeVertexMap_[castExp->get_operand()];
-                else
-                {
-                    cout << "The operand of cast expression " << castExp->unparseToString()
-                            << " is not added to VG yet!\n";
-                }
-            }
-            
-            else if (SgFunctionCallExp* funcCall = isSgFunctionCallExp(expr))
-            {
-#if 0
-                const SSA::NodeReachingDefTable& defTable =
-                    ssa_->getReachingDefsAtNode_(funcCall);
-                cout << "Print def table:\n";
-                typedef map<VarName, SSA::ReachingDefPtr>::value_type PT;
-                foreach(const PT& pt, defTable)
-                {
-                    cout << "!" << SSA::varnameToString(pt.first) << " " << 
-                            pt.second->getRenamingNumber() << endl;
-                }
-#endif
-                
-                createFunctionCallNode(funcCall);
-                
-                
-                //// If this function call returns a value, create a temporary value node.
-                //createValueNode(NULL, funcCall);
-#if 0
-                const SSA::NodeReachingDefTable& defTable =
-                    ssa_->getOutgoingDefsAtNode(funcCall->get_parent());
-
-                cout << "Print def table:\n";
-                typedef map<VarName, SSA::ReachingDefPtr>::value_type PT;
-                foreach(const PT& pt, defTable)
-                cout << "!" << SSA::varnameToString(pt.first) << " " << pt.second->getRenamingNumber() << endl;
-#endif              
-                
-                //createFunctionCallNode(funcCall);
-
-                   
-            }
-
-            // Unary expressions.
-            else if (SgUnaryOp* unaryOp = isSgUnaryOp(expr))
-            {
-                SgExpression* operand = unaryOp->get_operand();
-
-                VariantT t = unaryOp->variantT();
-                switch (t)
-                {
-                case V_SgPlusPlusOp:
-                case V_SgMinusMinusOp:
-                    {
-                        if (nodeVertexMap_.count(operand) == 0)
-                        {
-                            cout << "The operand of ++ or -- is not added to VG yet!\n";
-                            continue;
-                        }
-                        ROSE_ASSERT(nodeVertexMap_.count(operand) > 0);
-
-                        VGVertex operandNode = nodeVertexMap_[operand];
-                        VGVertex result = createValueNode(operand, NULL);
-
-                        createOperatorNode(t, unaryOp, result, operandNode);
-                        //addVariableToNode(result, operand);
-
-                        // For postfix ++ and --, we should assign the value node
-                        // before modified to this expression.
-                        if (unaryOp->get_mode() == SgUnaryOp::postfix)
-                            nodeVertexMap_[unaryOp] = operandNode;
-                        else
-                            nodeVertexMap_[unaryOp] = result;
-
-                        break;
-                    }
-                
-                case V_SgAddressOfOp:
-                case V_SgNotOp:
-                case V_SgMinusOp:
-                //case V_SgPointerDerefExp:
-                case V_SgUnaryAddOp:
-                    ROSE_ASSERT(nodeVertexMap_.count(operand) > 0);
-                    createOperatorNode(t, unaryOp, createValueNode(NULL, unaryOp), 
-                        nodeVertexMap_[operand]);
-                    break;
-
-                default:
-                    ROSE_ASSERT("Unary op not handled yet!");
-                    break;
-                }
-            }
-
-            // Binary expressions.
-            else if (SgBinaryOp* binOp = isSgBinaryOp(expr))
-            {
-                SgExpression* lhs = binOp->get_lhs_operand();
-                SgExpression* rhs = binOp->get_rhs_operand();
-
-                VariantT t = binOp->variantT();
-                switch (t)
-                {
-                // For assign op, we assign the node which is assigned to with a variable name.
-                case V_SgAssignOp:
-                    if (BackstrokeUtility::isVariableReference(lhs))
-                    {
-                        VGVertex result = createValueNode(lhs, rhs);
-                        // Update the node-vertex table.
-                        nodeVertexMap_[binOp] = result;
-                    }
-                    else
-                    {
-                        ROSE_ASSERT(!"Only variable can be assigned now.");
-                    }
-
-                    break;
-
-                case V_SgAddOp:
-                case V_SgSubtractOp:
-                case V_SgMultiplyOp:
-                case V_SgDivideOp:
-                case V_SgGreaterThanOp:
-                case V_SgGreaterOrEqualOp:
-                case V_SgLessThanOp:
-                case V_SgLessOrEqualOp:
-                case V_SgEqualityOp:
-                case V_SgNotEqualOp:
-                case V_SgAndOp:
-                case V_SgOrOp:
-                case V_SgBitAndOp:
-                case V_SgBitOrOp:
-                case V_SgBitXorOp:
-                    if (nodeVertexMap_.count(lhs) == 0 || nodeVertexMap_.count(rhs) == 0)
-                    {
-                        cout << "The operand is not added to VG yet!\n";
-                        continue;
-                    }
-                    ROSE_ASSERT(nodeVertexMap_.count(lhs) > 0);
-                    ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
-
-                    createOperatorNode(t, binOp, createValueNode(NULL, binOp),
-                            nodeVertexMap_[lhs], nodeVertexMap_[rhs]);
-                    break;
-
-                case V_SgPlusAssignOp:
-                case V_SgMinusAssignOp:
-                case V_SgMultAssignOp:
-                case V_SgDivAssignOp:
-                case V_SgAndAssignOp:
-                case V_SgIorAssignOp:
-                case V_SgModAssignOp:
-                case V_SgXorAssignOp:
-                case V_SgLshiftAssignOp:
-                case V_SgRshiftAssignOp:
-                    {
-                        VersionedVariable use = getVersionedVariable(lhs);
-
-                        ROSE_ASSERT(varVertexMap_.count(use) > 0);
-                        ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
-
-                        VGVertex result = createValueNode(lhs, NULL);
-                        createOperatorNode(
-                                getOriginalType(t), binOp, result,
-                                varVertexMap_[use], nodeVertexMap_[rhs]);
-
-                        // Update the node-vertex table.
-                        nodeVertexMap_[binOp] = result;
-                        break;
-                    }
-
-                case V_SgCommaOpExp:
-                    nodeVertexMap_[binOp] = nodeVertexMap_[rhs];
-                    break;
-
-                default:
-                    break;
-                }
+                //cout << "New var skipped: " << var << endl;
+                return;
             }
         }
+    }
+
+    else
+    {
+        cout << expr->class_name() << endl;
+        //ROSE_ASSERT(false);
     }
 }
 
@@ -612,6 +615,11 @@ void EventReverser::processLastVersions()
     // still available.
     set<VarName> varNamesAtEventEnd;
     
+    
+    foreach (VGVertex v, availableValues_)
+    if (ValueNode* valNode = isValueNode(valueGraph_[v]))
+    cout << "Available???:\t" << valNode->var << endl;
+    
     // At the end of the event, find the versions of all variables,
     // and determine which variables are avaiable during the search of VG.
     typedef SSA::NodeReachingDefTable::value_type VarNameDefPair;
@@ -626,7 +634,7 @@ void EventReverser::processLastVersions()
         // For every variable, if it is not added into VG, add it now.
         VersionedVariable var(name, nameDef.second->getRenamingNumber());
         
-        //cout << "VersionedVariable:" << var.toString() << endl;
+        cout << "VersionedVariable:\t" << var.toString() << endl;
         //printVarVertexMap();
         
         if (varVertexMap_.count(var) == 0)
@@ -650,7 +658,9 @@ void EventReverser::processLastVersions()
         if (isStateVariable(name))
         {
             // If the variable is a state variable, make it available.
-            availableValues_.insert(node);
+            addAvailableValue(node);
+            if (ValueNode* valNode = isValueNode(valueGraph_[node]))
+                cout << "==>\t" << valNode->var << endl;
         }
         else
         {
@@ -661,13 +671,19 @@ void EventReverser::processLastVersions()
         }
     }
     
+    
+    foreach (VGVertex v, availableValues_)
+    if (ValueNode* valNode = isValueNode(valueGraph_[v]))
+    cout << "Available!!!:\t" << valNode->var << endl;
+    
+    // Those data members which are not modified by the event are also available.
     foreach (const VarName& name, stateVariables_)
     {
         if (varNamesAtEventEnd.count(name) == 0)
         {
             VersionedVariable var(name, 0);
             ROSE_ASSERT(varVertexMap_.count(var));
-            availableValues_.insert(varVertexMap_[var]);
+            addAvailableValue(varVertexMap_[var]);
         }
     }
 }
@@ -783,7 +799,7 @@ void EventReverser::addExtraNodesAndEdges()
 EventReverser::VGVertex 
 EventReverser::createPhiNode(VersionedVariable& var, SSA::ReachingDefPtr reachingDef)
 {
-    //cout << var.toString() << endl;
+    cout << var.toString() << endl;
     
     //ROSE_ASSERT(pseudoDefMap_.count(var) > 0);
     //SSA::ReachingDefPtr reachingDef = pseudoDefMap_[var];
@@ -897,16 +913,16 @@ EventReverser::VGEdge EventReverser::addValueGraphEdge(
         return newEdge;
     }
 
-    ValueNode* valNode = isValueNode(valueGraph_[src]);
-    ROSE_ASSERT(valNode);
+    ValueGraphNode* node = valueGraph_[src];
+    //ROSE_ASSERT(valNode);
 
     // Get the path information of this edge from the source node.
     int dagIndex;
     PathSet paths;
     boost::tie(dagIndex, paths) =
-            pathNumManager_->getPathNumbers(valNode->astNode);
+            pathNumManager_->getPathNumbers(node->astNode);
     
-    ControlDependences controlDeps = cdg_->getControlDependences(valNode->astNode);
+    ControlDependences controlDeps = cdg_->getControlDependences(node->astNode);
     
     //valueGraph_[e] = new ValueGraphEdge(valNode->getCost(), dagIndex, paths);
     //valueGraph_[newEdge] = new ValueGraphEdge(0, dagIndex, paths);
@@ -927,6 +943,9 @@ void EventReverser::addValueGraphPhiEdge(
         //cout << "!!!" << cfgEdge.toString() << endl;
         SgNode* node1 = cfgEdge.source().getNode();
         SgNode* node2 = cfgEdge.target().getNode();
+        
+       // cout << "\nSRC: " << node1->class_name() << endl;
+        //cout << "TGT: " << node2->class_name() << endl;
 
         int dagIndex;
         PathSet paths;
@@ -957,9 +976,13 @@ EventReverser::VGEdge EventReverser::addValueGraphOrderedEdge(
 
 void EventReverser::addValueGraphStateSavingEdges(VGVertex src, SgNode* killer)
 {
+//    foreach (VGVertex v, availableValues_)
+//    if (ValueNode* valNode = isValueNode(valueGraph_[v]))
+//    cout << "Available:\t" << valNode->var << endl;
+        
     // Get the cost to save this node.
     int cost = 0;
-    if (availableValues_.count(src) == 0)
+    if (!isAvailableValue(src))
         cost = valueGraph_[src]->getCost();
     
     // Get the path information of this edge.
@@ -999,9 +1022,13 @@ void EventReverser::addValueGraphStateSavingEdges(VGVertex src, SgNode* killer)
 vector<EventReverser::VGEdge>
 EventReverser::addValueGraphStateSavingEdges(VGVertex src)
 {
+//    foreach (VGVertex v, availableValues_)
+//    if (ValueNode* valNode = isValueNode(valueGraph_[v]))
+//    cout << "Available:\t" << valNode->var << endl;
+    
     // Get the cost to save this node.
     int cost = 0;
-    if (availableValues_.count(src) == 0)
+    if (!isAvailableValue(src))
         cost = valueGraph_[src]->getCost();
 
     vector<VGEdge> newEdges;
@@ -1045,6 +1072,31 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
     VGVertex funcCallVertex = addValueGraphNode(funcCallNode);
     nodeVertexMap_[funcCallExp] = funcCallVertex;
     
+    
+    // For a virtual function call, its inverse is called in reverse function.
+    // Black box style inversion is not used.
+    if (funcCallNode->isVirtual)
+    {
+        // If the function called is a virtual one, add two dummy value nodes then its
+        // inverse can be generated temporarily. This is a workaround!
+        ValueNode* valueNodeIn  = new ValueNode(funcCallExp);
+        ValueNode* valueNodeOut = new ValueNode(funcCallExp);
+        VGVertex inVertex  = addValueGraphNode(valueNodeIn);
+        VGVertex outVertex = addValueGraphNode(valueNodeOut);
+
+        // Add an edge from the in value to the function call.
+        addValueGraphEdge(inVertex, funcCallVertex);
+
+        // Add an edge from the in value to the function call.
+        addValueGraphEdge(funcCallVertex, outVertex);
+        
+        addAvailableValue(outVertex);
+        valuesToRestore_.push_back(inVertex);
+        
+        return funcCallVertex;
+    }
+    
+    
     const SSA::NodeReachingDefTable& defTable = ssa_->getDefsAtNode(funcCallExp);
     typedef map<VarName, SSA::ReachingDefPtr>::value_type PT;
 
@@ -1065,7 +1117,7 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
         
         // Add state saving edges for killed defs.
         addStateSavingEdges(var, funcCallExp);
-    }    
+    }
     
     return funcCallVertex;
 }
@@ -1118,7 +1170,7 @@ EventReverser::VGVertex EventReverser::createValueNode(SgNode* lhsNode, SgNode* 
     VGVertex rhsVertex;
     VersionedVariable var = getVersionedVariable(lhsNode, false);
     
-    cout << "New var added: " << var << endl;
+    //cout << "New var added: " << var << endl;
     
     if (lhsNode)
     {
@@ -1237,7 +1289,7 @@ void EventReverser::addStateSavingEdges()
 #endif
         
         // A temporary work-around for lacking of getting last defs for a variable.
-        if (availableValues_.count(v) > 0)
+        if (isAvailableValue(v))
         {
             addValueGraphStateSavingEdges(v, funcDef_);
         }
@@ -1251,7 +1303,7 @@ void EventReverser::addStateSavingEdges()
         // for backup
 #if 0
         int cost  = 0;
-        if (availableValues_.count(v) == 0)
+        if (isAvailableValue(v))
             cost = node->getCost();
         addStateSavingEdge(v, cost);
 #endif
@@ -1265,7 +1317,7 @@ VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
     if (node == NULL)
         return VersionedVariable();
     
-#if 1
+#if 0
     cout << node->class_name() << " : " << node->unparseToString() << endl;
     node->get_file_info()->display();
 #endif
@@ -1379,7 +1431,7 @@ void EventReverser::removeUselessEdges()
         // We do an optimization here by removing all out edges except state
         // saving one from an available node.
         VGVertex src = boost::source(e, valueGraph_);
-        if (availableValues_.count(src) > 0)
+        if (isAvailableValue(src))
         {
             VGVertex tar = boost::target(e, valueGraph_);
             if (tar != root_)
