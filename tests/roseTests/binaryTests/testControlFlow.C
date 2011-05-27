@@ -25,7 +25,7 @@ struct OnlyCallEdges: public BinaryAnalysis::ControlFlow::EdgeFilter {
 int
 main(int argc, char *argv[])
 {
-    /* Alrogithm is first argument. */
+    /* Algorithm is first argument. */
     assert(argc>1);
     std::string algorithm = argv[1];
     memmove(argv+1, argv+2, argc-1); /* also copy null ptr */
@@ -74,6 +74,8 @@ main(int argc, char *argv[])
         BinaryAnalysis::ControlFlow::Graph cfg = cfg_analyzer.build_graph(interps.back());
         boost::write_graphviz(std::cout, cfg, GraphvizVertexWriter(cfg));
     }
+
+    return 0;
 };
 
         

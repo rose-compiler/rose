@@ -67,6 +67,17 @@ MOSTLYCLEANFILES += cfg_x86.dot
 testBinCG.passed: testBinCG.conf testBinCG testBinCFG.passed
 	@$(RTH_RUN) INPUT=libm-2.3.6.so $< $@
 
+# Tests for the newer BinaryAnalysis::FunctionCall class.
+noinst_PROGRAMS += testFunctionCall
+testFunctionCall_SOURCES = testFunctionCall.C
+testFunctionCall_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testFunctionCall-A.passed testFunctionCall-B.passed
+EXTRA_DIST += testFunctionCall.conf testFunctionCall-A.dot testFunctionCall-B.dot
+testFunctionCall-A.passed: testFunctionCall.conf testFunctionCall
+	@$(RTH_RUN) CMD=testFunctionCall ALGORITHM=A INPUT=buffer2.bin $< $@
+testFunctionCall-B.passed: testFunctionCall.conf testFunctionCall
+	@$(RTH_RUN) CMD=testFunctionCall ALGORITHM=B INPUT=buffer2.bin $< $@
+
 
 # Tests ELF string table reallocation functions by changing some strings.  At first glance this would appear to be something
 # quite easy to do, but it turns out to involve lots of details.
