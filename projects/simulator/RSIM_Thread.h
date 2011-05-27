@@ -165,15 +165,16 @@ public:
     /** Prints information about stack frames. */
     void report_stack_frames(RTS_Message*);
 
-    //@{
-    /** Obtain the set of callbacks for this object. */
+    /** Obtain the set of callbacks for this object.
+     *
+     *  @{ */
     RSIM_Callbacks &get_callbacks() {
         return callbacks;
     }
     const RSIM_Callbacks &get_callbacks() const {
         return callbacks;
     }
-    //@}
+    /** @} */
 
     /** Set all callbacks for this thread.  Note that callbacks can be added or removed individually by invoking methods on the
      *  callback object returned by get_callbacks().
@@ -251,12 +252,13 @@ public:
      * itself (which might only be valid until syscall_return() is invoked. */
     uint32_t syscall_arg(int idx);
 
-    //@{
     /** Sets the return value for a system call.  The system call does not actually return by calling this function, it only
-     *  sets the value which will eventually be returned. */
+     *  sets the value which will eventually be returned.
+     *
+     *  @{ */
     void syscall_return(const RSIM_SEMANTIC_VTYPE<32> &value);
     void syscall_return(int value);
-    //@}
+    /** @} */
 
     /** Print the return value of a system call in a manner like strace.  The format is the same as for the syscall_enter()
      *  methods except the first letter refers to the system call return value (the remaining letters are the arguments). The
@@ -309,13 +311,14 @@ public:
      *  shut down and the simulator returns to user control. */
     int signal_deliver(const RSIM_SignalHandling::siginfo_32&);
 
-    //@{
     /** Handles return from a signal handler. Returns zero on success, negative errno on failure. The only failure that is
      *  detected at this time is -EFAULT when reading the signal handler stack frame, in which case a message is printed to
-     *  TRACE_SIGNAL and no registers or memory are modified. */
+     *  TRACE_SIGNAL and no registers or memory are modified.
+     *
+     *  @{ */
     int sys_sigreturn();
     int sys_rt_sigreturn();
-    //@}
+    /** @} */
 
     /** Accepts a signal from the process manager for later delivery.  This function is called by RSIM_Process::sys_kill() to
      *  decide to which thread a signal should be delivered.  If the thread can accept the specified signal, then it does so,

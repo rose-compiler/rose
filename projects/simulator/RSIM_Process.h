@@ -40,7 +40,6 @@ private:
 
 public:
 
-    //@{
     /** Returns the read-write lock for this object.
      *
      *  Although most RSIM_Process methods are already thread safe, it is sometimes necessary to protect access to data members
@@ -48,14 +47,16 @@ public:
      *  and RTS_WRITE.  The returned lock is the same lock as the inherently thread-safe methods of this class already use.
      *  See RTS_rwlock_rdlock() and RTS_rwlock_wrlock() for a description of the semantics.
      *
-     *  These locks should be held for as little time as possible, and certainly not over a system call that might block. */
+     *  These locks should be held for as little time as possible, and certainly not over a system call that might block.
+     *
+     *  @{ */
     RTS_rwlock_t &rwlock() {
         return instance_rwlock;
     }
     RTS_rwlock_t &rwlock() const {
         return instance_rwlock;
     }
-    //@}
+    /** @} */
 
 
 
@@ -97,18 +98,19 @@ public:
      * bitwise OR of the facilityBitMask() for each enabled facility. */
     unsigned get_tracing_flags() const;
 
-    //@{
     /** Obtain the set of callbacks for this object.  Many of the process callbacks are used to initialize thread callbacks
      *  when a new thread is created.
      *
-     *  Thread safety:  This method is thread safe.  Furthermore, most methods of the returned object are also thread safe. */
+     *  Thread safety:  This method is thread safe.  Furthermore, most methods of the returned object are also thread safe.
+     *
+     *  @{ */
     RSIM_Callbacks &get_callbacks() {
         return callbacks;
     }
     const RSIM_Callbacks &get_callbacks() const {
         return callbacks;
     }
-    //@}
+    /** @} */
 
     /** Set all callbacks for this process.  Note that callbacks can be added or removed individually by invoking methods on
      *  the callback object return by get_callbacks().

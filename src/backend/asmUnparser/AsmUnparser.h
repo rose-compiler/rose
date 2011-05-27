@@ -183,7 +183,6 @@ public:
         
         virtual ~UnparserCallback() {}
 
-        //@{
         /** Default callbacks. The default is to abort, because if these are called it means one of three things:
          *  <ol>
          *     <li>The arguments are wrong in the subclass and the subclass therefore isn't providing an implementation
@@ -193,12 +192,12 @@ public:
          *     <li>The functor was added to the wrong callback list.  For instance, an instruction functor was accidently
          *         added to one of the function callback lists.</li>
          *  </ol>
-         */
+         *  @{ */
         virtual bool operator()(bool enabled, const InsnArgs&)           { abort(); }
         virtual bool operator()(bool enabled, const BasicBlockArgs&)     { abort(); }
         virtual bool operator()(bool enabled, const FunctionArgs&)       { abort(); }
         virtual bool operator()(bool enabled, const InterpretationArgs&) { abort(); }
-        //@}
+        /** @} */
     };
 
     /**************************************************************************************************************************
@@ -435,13 +434,14 @@ public:
      *  contained in the specified AST.  A return value of zero means that nothing was unparsed and no output was produced. */
     virtual size_t unparse(std::ostream&, SgNode *ast);
 
-    //@{
-    /** Unparse an object. These are called by unparse(), but might also be called by callbacks. */
+    /** Unparse an object. These are called by unparse(), but might also be called by callbacks.
+     *
+     *  @{ */
     virtual bool unparse_insn(bool enabled, std::ostream&, SgAsmInstruction*, size_t position_in_block=0);
     virtual bool unparse_basicblock(bool enabled, std::ostream&, SgAsmBlock*);
     virtual bool unparse_function(bool enabled, std::ostream&, SgAsmFunctionDeclaration*);
     virtual bool unparse_interpretation(bool enabled, std::ostream&, SgAsmInterpretation*);
-    //@}
+    /** @} */
 
     /** Maps integers to labels. */
     typedef std::map<uint64_t, std::string> LabelMap;

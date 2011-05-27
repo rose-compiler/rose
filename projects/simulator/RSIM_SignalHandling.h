@@ -192,14 +192,15 @@ public:
     /** Signal to use when notifying a thread that a signal has been added to its queue. */
     static const int SIG_WAKEUP;
 
-    //@{
     /** Class methods to create signal information objects.  The names (after the "mk_" prefix) correspond to the union member
-     *  names in the siginfo_32 struct. */
+     *  names in the siginfo_32 struct.
+     *
+     *  @{ */
     static siginfo_32 mk_kill(int signo, int code);
     static siginfo_32 mk_sigfault(int signo, int code, uint32_t addr);
     static siginfo_32 mk_rt(int signo, int code);
     static siginfo_32 mk(const siginfo_t*);
-    //@}
+    /** @} */
 
     /** Returns a signal set having only the specified signal. Note: this cannot be named "sigmask" since that's a macro in
      *  some versions of "signal.h".
