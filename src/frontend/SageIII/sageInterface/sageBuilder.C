@@ -1929,13 +1929,13 @@ SageBuilder::buildConstructorInitializer(
    {
   // Prototype:
   // SgConstructorInitializer (SgMemberFunctionDeclaration *declaration, SgExprListExp *args, SgType *expression_type, 
-  //	bool need_name, bool need_qualifier, bool need_parenthesis_after_name, bool associated_class_unknown);
+  //    bool need_name, bool need_qualifier, bool need_parenthesis_after_name, bool associated_class_unknown);
 
      //George Vulov (05/24/2011) Modified this assertion to allow for a NULL declaration (in case of implicit constructors)
      ROSE_ASSERT(declaration == NULL || declaration->get_associatedClassDeclaration() != NULL);
 
      SgConstructorInitializer* result = new SgConstructorInitializer( declaration, args, expression_type, need_name, 
-					need_qualifier, need_parenthesis_after_name, associated_class_unknown );
+                                        need_qualifier, need_parenthesis_after_name, associated_class_unknown );
      ROSE_ASSERT(result != NULL);
      if (args != NULL)
         {
