@@ -119,6 +119,9 @@ PASSING_TEST_Objects = ${TESTCODES:.caf=.o}
 TEST_Objects = ${ALL_TESTCODES:.caf=.o}
 
 
+# put the headers here for now. TODO: Move them to a better place
+EXTRA_DIST = $(ALL_TESTCODES) 
+
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
 $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.caf)
@@ -126,9 +129,6 @@ $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.caf)
 
 #../../testTranslator:
 #	cd ../..; $(MAKE) testTranslator
-
-# put the headers here for now. TODO: Move them to a better place
-EXTRA_DIST = $(ALL_TESTCODES) 
 
 check-local:
 	@echo "Tests for CAF2 examples."
