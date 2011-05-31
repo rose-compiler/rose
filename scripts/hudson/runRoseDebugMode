@@ -9,6 +9,8 @@ source scripts/hudson/roseUtilities.sh
 #########################################################################################
 ( echo ) |filter "Starting ${ROSE_TEST_BUILD_STYLE}..."
 
+[ ! -n "$ROSE_CONFIGURE_PREFIX" ] && killStep "\$ROSE_CONFIGURE_PREFIX is undefined"
+
 machine=`uname -m`
 machine_os=`uname -s`
 machine_name=`uname -n`
