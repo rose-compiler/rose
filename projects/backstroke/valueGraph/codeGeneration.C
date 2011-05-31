@@ -115,6 +115,7 @@ SgStatement* buildPushStatement(ValueNode* valNode)
 
 SgStatement* buildPushStatementForPointerType(ValueNode* valNode)
 {
+#if 0
     SgExpression* var = buildPointerDerefExp(valNode->var.getVarRefExp());
     SgExprListExp* exprList = buildExprListExp(var);
     SgPointerType* ptrType = isSgPointerType(valNode->getType());
@@ -123,6 +124,11 @@ SgStatement* buildPushStatementForPointerType(ValueNode* valNode)
     SgConstructorInitializer* initializer = 
             buildConstructorInitializer(0, exprList, type, 0, 0, 1, 0);
     SgNewExp* newExp = buildNewExp(type, 0, initializer, 0, 0, 0);
+#endif
+    
+    // Build a function call to __clone__ instead of a new operation.
+    SgExprListExp* exprList = buildExprListExp(valNode->var.getVarRefExp());
+    SgFunctionCallExp* newExp = buildFunctionCallExp("__clone__", valNode->getType(), exprList);
     
     return buildExprStatement(buildPushFunctionCall(newExp));
 }

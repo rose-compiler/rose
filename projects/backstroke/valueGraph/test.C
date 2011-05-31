@@ -87,16 +87,20 @@ int main(int argc, char *argv[])
 //        Backstroke::FullCFG fullCFG(funcDef);
 //        fullCFG.toDot("fullCFG.dot");
 #endif
-
+        
+#if 1
         //reverser.buildValueGraph();
         Backstroke::EventReverser reverser(ssa);
         reverser.reverseEvent(funcDef);
+#endif
 
         //reverser.valueGraphToDot(vgFileName);
 
         cout << "\nFunction " << funcName << " is processed.\n\n";
     }
 
+    cout << "The number of global scopes is: " << globalScopes.size() << endl;
+    
     // Prepend includes to test files.
     foreach (SgGlobal* globalScope, globalScopes)
         SageInterface::insertHeader("rctypes.h", PreprocessingInfo::after, false, globalScope);

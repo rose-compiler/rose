@@ -337,8 +337,9 @@ void EventReverser::buildFunctionBodies()
     SgFunctionDeclaration* rvsFuncDecl = buildDefiningFunctionDeclaration(
                     rvsFuncName,
                     funcDecl->get_orig_return_type(),
-                    isSgFunctionParameterList(
-                        copyStatement(funcDecl->get_parameterList())),
+                    buildFunctionParameterList(),
+                    //isSgFunctionParameterList(
+                    //    copyStatement(funcDecl->get_parameterList())),
                     funcScope);
     rvsFuncDef_ = rvsFuncDecl->get_definition();
     //SageInterface::replaceStatement(rvsFuncDef->get_body(), isSgBasicBlock(stmt.rvs_stmt));
@@ -348,8 +349,9 @@ void EventReverser::buildFunctionBodies()
     SgFunctionDeclaration* cmtFuncDecl = buildDefiningFunctionDeclaration(
                     cmtFuncName,
                     funcDecl->get_orig_return_type(),
-                    isSgFunctionParameterList(
-                        copyStatement(funcDecl->get_parameterList())),
+                    buildFunctionParameterList(),
+                    //isSgFunctionParameterList(
+                    //    copyStatement(funcDecl->get_parameterList())),
                     funcScope);
     cmtFuncDef_ = cmtFuncDecl->get_definition();
 
@@ -838,14 +840,13 @@ void EventReverser::generateCodeForBasicBlock(
             string rvsFuncName = funcName + "_reverse";
             string cmtFuncName = funcName + "_commit";
             
-            if (SgMemberFunctionDeclaration* memFuncDecl = 
-                    isSgMemberFunctionDeclaration(funcDef_->get_declaration()))
+            if (SgClassDefinition* classDef = funcDecl->get_class_scope())
             {
-                SgMemberFunctionRefExp* fwdFuncRef = NULL;
-                SgMemberFunctionRefExp* rvsFuncRef = NULL;
-                SgMemberFunctionRefExp* cmtFuncRef = NULL;
+                SgMemberFunctionSymbol* fwdFuncSymbol = NULL;
+                SgMemberFunctionSymbol* rvsFuncSymbol = NULL;
+                SgMemberFunctionSymbol* cmtFuncSymbol = NULL;
 
-                SgClassDefinition* classDef = memFuncDecl->get_class_scope();
+                //cout << "Class Name: " << classDef->get_declaration()->get_name().str() << endl;
                 ROSE_ASSERT(classDef);
                 
                 foreach (SgDeclarationStatement* decl, classDef->get_members())
@@ -856,35 +857,30 @@ void EventReverser::generateCodeForBasicBlock(
                         continue;
                     
                     SgName funcName = memFuncDecl->get_name();
+                    //cout << memFuncDecl->get_qualified_name().str() << endl;
                     
                     //cout << "FUNC:\t" << funcName.str() << endl;
                     //cout << fwdFuncName << " " << rvsFuncName << " " << cmtFuncName << endl;
                     
                     if (funcName == fwdFuncName)
                     {
-                        fwdFuncRef = buildMemberFunctionRefExp(
-                                isSgMemberFunctionSymbol(
-                                    memFuncDecl->get_symbol_from_symbol_table()),
-                                true, false);
+                        fwdFuncSymbol = isSgMemberFunctionSymbol(
+                                memFuncDecl->get_symbol_from_symbol_table());
                     }
                     else if (funcName == rvsFuncName)
                     {
-                        rvsFuncRef = buildMemberFunctionRefExp(
-                                isSgMemberFunctionSymbol(
-                                    memFuncDecl->get_symbol_from_symbol_table()),
-                                true, false);
+                        rvsFuncSymbol = isSgMemberFunctionSymbol(
+                                memFuncDecl->get_symbol_from_symbol_table());
                     }
                     else if (funcName == cmtFuncName)
                     {
-                        cmtFuncRef = buildMemberFunctionRefExp(
-                                isSgMemberFunctionSymbol(
-                                    memFuncDecl->get_symbol_from_symbol_table()),
-                                true, false);
+                        cmtFuncSymbol = isSgMemberFunctionSymbol(
+                                memFuncDecl->get_symbol_from_symbol_table());
                     }
                 }
                 
-                cout << funcName << endl;
-                ROSE_ASSERT(fwdFuncRef && rvsFuncRef && cmtFuncRef);
+                //cout << funcName << endl;
+                ROSE_ASSERT(fwdFuncSymbol && rvsFuncSymbol && cmtFuncSymbol);
 
                 SgThisExp* thisExp = isSgThisExp(arrowExp->get_lhs_operand());
                 ROSE_ASSERT(thisExp);
@@ -892,17 +888,24 @@ void EventReverser::generateCodeForBasicBlock(
 
                 SgFunctionCallExp* fwdFuncCall = isSgFunctionCallExp(copyExpression(funcCallExp));
                 arrowExp = isSgArrowExp(fwdFuncCall->get_function());
-                replaceExpression(arrowExp->get_rhs_operand(), fwdFuncRef);
+                funcRef = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
+                funcRef->set_symbol(fwdFuncSymbol);
+                // FIXME The following method does not work!!
+                //replaceExpression(arrowExp->get_rhs_operand(), fwdFuncRef);
                 
                 SgFunctionCallExp* rvsFuncCall = isSgFunctionCallExp(copyExpression(funcCallExp));
                 arrowExp = isSgArrowExp(rvsFuncCall->get_function());
                 replaceExpression(rvsFuncCall->get_args(), buildExprListExp());
-                replaceExpression(arrowExp->get_rhs_operand(), rvsFuncRef);
+                funcRef = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
+                funcRef->set_symbol(rvsFuncSymbol);
+                //replaceExpression(arrowExp->get_rhs_operand(), rvsFuncRef);
                 
                 SgFunctionCallExp* cmtFuncCall = isSgFunctionCallExp(copyExpression(funcCallExp));
                 arrowExp = isSgArrowExp(cmtFuncCall->get_function());
                 replaceExpression(cmtFuncCall->get_args(), buildExprListExp());
-                replaceExpression(arrowExp->get_rhs_operand(), cmtFuncRef);
+                funcRef = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
+                funcRef->set_symbol(cmtFuncSymbol);
+                //replaceExpression(arrowExp->get_rhs_operand(), cmtFuncRef);
                 
 #if 0
                 SgExpression* fwdFuncCall = buildFunctionCallExp(buildArrowExp(
@@ -924,6 +927,8 @@ void EventReverser::generateCodeForBasicBlock(
             }
             else
             {
+                ROSE_ASSERT(0);
+                
                 SgExpression* fwdFuncCall = buildFunctionCallExp(fwdFuncName, returnType);
                 //fwdFuncCall = buildArrowExp(SageInterface::copyExpression(thisExp), fwdFuncCall);
                 SageInterface::replaceExpression(funcCallExp, fwdFuncCall);
