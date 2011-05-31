@@ -730,7 +730,6 @@ private:
  *                                      Paired macros for messages
  ******************************************************************************************************************************/
 
-//@{
 /** Provides a locked context for messaging.  Normal message output methods do not require locking since they perform the
  *  locking implicitly.  However, one needs to provide some kind of customized output not otherwise possible, a lock needs to
  *  be obtained while that output is produced. See RTS_Messsage::lock() for details.
@@ -761,6 +760,8 @@ private:
  *      mesg.mesg("    arg(%d) = %d\n", i, arg[i]);
  *  }
  *  @endcode
+ *
+ *  @{
  */
 #ifdef ROSE_THREADS_ENABLED
 #  define RTS_MESSAGE(MESG)                                                                                                    \
@@ -787,7 +788,7 @@ private:
 #  define RTS_MESSAGE_END(SOL)                                                                                                 \
     } while (0)
 #endif
-//@}
+/** @} */
 
 
         

@@ -539,6 +539,8 @@ Grammar::setUpBinaryInstructions ()
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmBlock.setDataPrototype("SgAsmBlock*", "immediate_dominator", "=NULL",
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmBlock.setDataPrototype("size_t", "cached_vertex", "= (size_t)(-1)", // see BinaryAnalysis::ControlFlow
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      AsmOperandList.setFunctionPrototype        ( "HEADER_BINARY_OPERAND_LIST", "../Grammar/BinaryInstruction.code");
@@ -2000,6 +2002,8 @@ Grammar::setUpBinaryInstructions ()
      AsmFunctionDeclaration.setDataPrototype("SgSymbolTable*", "symbol_table", "= NULL",
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE,
                                              NO_COPY_DATA);
+     AsmFunctionDeclaration.setDataPrototype("size_t", "cached_vertex", "= (size_t)(-1)", // see BinaryAnalysis::FunctionCall
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
