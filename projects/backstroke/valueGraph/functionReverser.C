@@ -130,7 +130,7 @@ void EventReverser::generateCode()
     }
     
     // Build all three functions.
-    generateCode(0, rvsCFG, rvsFuncDef_->get_body(), cmtFuncDef_->get_body(), pathNumName);
+    //generateCode(0, rvsCFG, rvsFuncDef_->get_body(), cmtFuncDef_->get_body(), pathNumName);
 
 
     // If the number of path is 1, we don't have to use path numbers.
@@ -337,9 +337,9 @@ void EventReverser::buildFunctionBodies()
     SgFunctionDeclaration* rvsFuncDecl = buildDefiningFunctionDeclaration(
                     rvsFuncName,
                     funcDecl->get_orig_return_type(),
-                    buildFunctionParameterList(),
-                    //isSgFunctionParameterList(
-                    //    copyStatement(funcDecl->get_parameterList())),
+                    //buildFunctionParameterList(),
+                    isSgFunctionParameterList(
+                        copyStatement(funcDecl->get_parameterList())),
                     funcScope);
     rvsFuncDef_ = rvsFuncDecl->get_definition();
     //SageInterface::replaceStatement(rvsFuncDef->get_body(), isSgBasicBlock(stmt.rvs_stmt));
@@ -349,15 +349,28 @@ void EventReverser::buildFunctionBodies()
     SgFunctionDeclaration* cmtFuncDecl = buildDefiningFunctionDeclaration(
                     cmtFuncName,
                     funcDecl->get_orig_return_type(),
-                    buildFunctionParameterList(),
-                    //isSgFunctionParameterList(
-                    //    copyStatement(funcDecl->get_parameterList())),
+                    //buildFunctionParameterList(),
+                    isSgFunctionParameterList(
+                        copyStatement(funcDecl->get_parameterList())),
                     funcScope);
     cmtFuncDef_ = cmtFuncDecl->get_definition();
 
     // Copy the original function to forward function.
     replaceStatement(fwdFuncDef_->get_body(),
                      copyStatement(funcDef_->get_body()));
+    
+    // Print the name of the handler at the beginning of each event.
+#if 1
+    SgMemberFunctionDeclaration* memFuncDecl = isSgMemberFunctionDeclaration(funcDef_->get_declaration());
+    string className;
+    if (memFuncDecl)
+        className += memFuncDecl->get_associatedClassDeclaration()->get_name().str();
+    SgExprListExp* exprList = buildExprListExp(buildStringVal(className + string("::") + funcName + string("\\n")));
+    SgFunctionCallExp* printFuncName = buildFunctionCallExp(
+            "printf", buildVoidType(), exprList, funcDef_->get_body());
+    prependStatement(buildExprStatement(printFuncName), funcDef_->get_body());
+    prependStatement(buildExprStatement(copyExpression(printFuncName)), fwdFuncDef_->get_body());
+#endif
     
     ROSE_ASSERT(funcDef_->get_body()->get_parent() == funcDef_);
     ROSE_ASSERT(fwdFuncDef_->get_body()->get_parent() == fwdFuncDef_);
