@@ -6,7 +6,7 @@ AC_DEFUN([ROSE_SUPPORT_PYTHON],
 
 AC_MSG_CHECKING(for python >= 2.4.0)
 AC_ARG_WITH(python,
-[  --with-python       Specify the path to the Python 2.4 interpreter (the binary itself)],
+[  --with-python=PATH       Specify the path to the Python 2.4 interpreter (the binary itself)],
 ,
 )
 
@@ -21,7 +21,7 @@ Please use: --with-python=/path/to/python/bin/python
 EOF
 fi
 
-PYTHONGUESSES="$with_python python2.4 python2.5 python2.6 python"
+PYTHONGUESSES="$with_python python2.4 python2.5 python2.6 python2.7 python"
 echo "Python interpreter guesses: $PYTHONGUESSES"
 
 goodPy()

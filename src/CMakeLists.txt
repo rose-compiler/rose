@@ -124,6 +124,9 @@ set( phpFrontend_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/PHPFrontend/PHPFrontend.C
      )
 
+set( pythonFrontend_SRC 
+     ${CMAKE_SOURCE_DIR}/src/frontend/PythonFrontend/PythonFrontend.C
+     )
 set( astFixup_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astFixup/AstFixup.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astFixup/fixupforGnuBackendCompiler.C 
@@ -776,6 +779,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${roseBinaryLoader_SRC}
  ${roseAsmUnparser_SRC}
  ${phpFrontend_SRC}
+ ${pythonFrontend_SRC}
  ${libastMerge_SRC}
  ${astFixup_SRC}
  ${midend_src}

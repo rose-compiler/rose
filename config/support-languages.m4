@@ -27,6 +27,7 @@ echo ""
 #	--enable-fortran
 #	--enable-java
 #	--enable-php
+#	--enable-python
 #	--enable-opencl
 #
 #	TODO:
@@ -38,7 +39,7 @@ echo ""
 #########################################################################################
 #
 ##
-   ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php opencl"
+   ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php python opencl"
 ##
 #
 #########################################################################################
@@ -61,7 +62,7 @@ if test "x$USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION" = "xno" ; then
 #########################################################################################
 AC_ARG_ENABLE([languages],
 #########################################################################################
-               AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,binary-analysis,c,c++,cuda,fortran,java,opencl,php (default=all)]),,
+               AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,binary-analysis,c,c++,cuda,fortran,java,opencl,php,python (default=all)]),,
                [enableval=all])
 
 	       # Default support for all languages
@@ -293,6 +294,32 @@ AC_ARG_ENABLE([php],
                ##########################################################################
                ,)
 #########################################################################################
+AC_ARG_ENABLE([python],
+#########################################################################################
+               AS_HELP_STRING([--enable-python],[Enable Python language support in ROSE (default=yes)]),
+               ##########################################################################
+                echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "python"
+                if test $? = 0 ; then 
+                  list_has_python=yes
+                fi
+                case "$enableval" in
+                  [yes)]
+                  	if test "x$list_has_python" != "xyes" ; then
+                          # --enable-languages does not include python, but --enable-python=yes
+                  	  LANGUAGES_TO_SUPPORT+=" python"
+                        fi
+                  	;;
+                  [no)]
+                        # remove 'python' from support languages list
+                  	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/python//g'`"
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-python='$enableval' is not supported. Use 'yes' or 'no'])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
+#########################################################################################
 AC_ARG_ENABLE([opencl],
 #########################################################################################
                AS_HELP_STRING([--enable-opencl],[Enable OpenCL language support in ROSE (default=yes)]),
@@ -363,6 +390,7 @@ none|no)
 	support_fortran_language=no
 	support_java_language=no
 	support_php_language=no
+	support_python_language=no
 	support_opencl_language=no
 	AC_MSG_WARN([you did not enable any language support])
 	;;
@@ -411,6 +439,10 @@ php)
 	support_php_language=yes
 	AC_DEFINE([ROSE_BUILD_PHP_LANGUAGE_SUPPORT], [], [Build ROSE to support the PHP langauge])
 	;;
+python)
+	support_python_language=yes
+	AC_DEFINE([ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT], [], [Build ROSE to support the Python langauge])
+	;;
 opencl)
 	support_opencl_language=yes
 	AC_DEFINE([ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT], [], [Build ROSE to support the OpenCL langauge])
@@ -450,6 +482,7 @@ print_isLanguageSupported "Cuda" "$support_cuda_language"
 print_isLanguageSupported "Fortran" "$support_fortran_language"
 print_isLanguageSupported "Java" "$support_java_language"
 print_isLanguageSupported "PHP" "$support_php_language"
+print_isLanguageSupported "Python" "$support_python_language"
 print_isLanguageSupported "OpenCL" "$support_opencl_language"
 echo ""
 echo "(+)enabled (-)disabled"
@@ -489,6 +522,7 @@ elif test $count_of_languages_to_support = 1 ; then
 
     with_haskell=no
     with_php=no
+    with_python=no
     enable_binary_analysis_tests=no
 
     # Allow tests directory to be run so that we can run the Fortran tests.
@@ -523,6 +557,7 @@ elif test $count_of_languages_to_support = 1 ; then
     # So these should be expressed in terms of the "with" and "enable" versions of each option's macro.
     # without_php=yes
     with_php=no
+    with_python=no
 
     # disable_binary_analysis_tests=yes
     enable_binary_analysis_tests=no
@@ -549,6 +584,16 @@ elif test $count_of_languages_to_support = 1 ; then
   # Only PHP 
   #
   if test "x$support_php_language" = "xyes" ; then
+    with_haskell=no
+    enable_binary_analysis_tests=no
+    enable_projects_directory=no
+    enable_tutorial_directory=no
+  fi
+
+  #
+  # Only Python
+  #
+  if test "x$support_python_language" = "xyes" ; then
     with_haskell=no
     enable_binary_analysis_tests=no
     enable_projects_directory=no
@@ -588,6 +633,15 @@ elif test $count_of_languages_to_support = 1 ; then
     echo "[[$LANGUAGES_TO_SUPPORT-only support]] with PHP"
   elif test "x$with_php" = "xno" ; then
     echo "[[$LANGUAGES_TO_SUPPORT-only support]] without PHP"
+  fi
+
+  #
+  # Python
+  #
+  if test "x$with_python" = "xyes" ; then
+    echo "[[$LANGUAGES_TO_SUPPORT-only support]] with Python"
+  elif test "x$with_python" = "xno" ; then
+    echo "[[$LANGUAGES_TO_SUPPORT-only support]] without Python"
   fi
 
   #
@@ -645,6 +699,7 @@ AM_CONDITIONAL(ROSE_BUILD_CXX_LANGUAGE_SUPPORT, [test "x$support_cxx_language" =
 AM_CONDITIONAL(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT, [test "x$support_fortran_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT, [test "x$support_java_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_PHP_LANGUAGE_SUPPORT, [test "x$support_php_language" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT, [test "x$support_python_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT, [test "x$support_binaries" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT, [test "x$support_cuda_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT, [test "x$support_opencl_language" = xyes])
@@ -804,6 +859,27 @@ AC_ARG_ENABLE([only-php],
                   	;;
                   [*)]
                   	[AC_MSG_FAILURE([--enable-only-php='$enableval' is not supported. Use '--enable-only-php(=yes)' (see ./configure --help)])]
+                 	;;
+                esac
+               ##########################################################################
+               ,)
+
+#########################################################################################
+AC_ARG_ENABLE([only-python],
+#########################################################################################
+              AS_HELP_STRING([--enable-only-python(=yes)],
+                             [Enable ONLY Python support in ROSE (Warning: '--enable-only-python=no' and '--disable-only-python' are no longer supported)]),
+               ##########################################################################
+                case "$enableval" in
+                  [yes)]
+                  	LANGUAGES_TO_SUPPORT="python"
+                        USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
+                  	;;
+                  [no)]
+                  	[AC_MSG_FAILURE([--enable-only-python='$enableval' and --disable-only-python are no longer supported. Use '--disable-python' (see ./configure --help)])]
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-only-python='$enableval' is not supported. Use '--enable-only-python(=yes)' (see ./configure --help)])]
                  	;;
                 esac
                ##########################################################################

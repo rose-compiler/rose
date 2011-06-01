@@ -842,6 +842,10 @@ ROSE_SUPPORT_PHP
 
 AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
 
+ROSE_SUPPORT_PYTHON
+
+AM_CONDITIONAL(ROSE_USE_PYTHON,test ! "$with_python" = no)
+
 #ASR
 ROSE_SUPPORT_LLVM
 
@@ -2083,6 +2087,7 @@ src/frontend/CxxFrontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
+src/frontend/PythonFrontend/Makefile
 src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
