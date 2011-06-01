@@ -18699,8 +18699,15 @@ void c_action_end_of_stmt(Token_t * eos)
  * start_of_file
  *
  * @param filename The name of the file
+ * @param path The full path of the file
+ *
+ * Modified v0.8.3 (path argument added)
  */
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 3
+void c_action_start_of_file(const char *filename, const char *path)
+#else
 void c_action_start_of_file(const char *filename)
+#endif
    {
     // New function to support Fortran include mechanism
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -18786,10 +18793,16 @@ void c_action_start_of_file(const char *filename)
  * end_of_file
  *
  * @param filename The name of the file
+ * @param path The full path of the file
  *
- * Modified v0.7.2 (new argument added)
+ * Modified v0.7.2 (filename argument added)
+ * Modified v0.8.3 (path argument added)
  */
-void c_action_end_of_file(const char * filename)
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 3
+void c_action_end_of_file(const char *filename, const char *path)
+#else
+void c_action_end_of_file(const char *filename)
+#endif
    {
     // New function to support Fortran include mechanism
 
