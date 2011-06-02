@@ -18,6 +18,7 @@
 #else
 #include <sys/wait.h>
 #include "PHPFrontend.h"
+#include "PythonFrontend.h"
 #endif
 
 #ifdef _MSC_VER
@@ -6705,6 +6706,17 @@ SgSourceFile::build_PHP_AST()
      return frontendErrorLevel;
    }
 
+int
+SgSourceFile::build_Python_AST()
+   {
+     string pythonFileName = this->get_sourceFileNameWithPath();
+#ifdef ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+     int frontendErrorLevel = python_main(pythonFileName, this);
+#else
+     int frontendErrorLevel = 0;
+#endif
+     return frontendErrorLevel;
+   }
 
 /* Parses a single binary file and adds a SgAsmGenericFile node under this SgBinaryComposite node. */
 void
@@ -6899,16 +6911,30 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                   }
                  else
                   {
-                    frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
-
-                 // DQ (12/29/2008): The newer version of EDG (version 3.10 and 4.0) use different return codes for indicating an error.
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-                 // Any non-zero value indicates an error.
-                    frontend_failed = (frontendErrorLevel != 0);
+                      if ( get_Python_only() == true )
+                         {
+#ifdef ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+                             frontendErrorLevel = build_Python_AST();
+                             frontend_failed = (frontendErrorLevel > 0);
 #else
-                 // non-zero error code can mean warnings were produced, values greater than 3 indicate errors.
-                    frontend_failed = (frontendErrorLevel > 3);
+                             fprintf(stderr, "ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT is not defined. Trying to parse a Python file when Python is not supported (ROSE must be configured using --with-python (default)) \n");
+                             ROSE_ASSERT(false);
 #endif
+
+                         }
+                      else
+                         {
+                             frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
+
+                             // DQ (12/29/2008): The newer version of EDG (version 3.10 and 4.0) use different return codes for indicating an error.
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+                             // Any non-zero value indicates an error.
+                             frontend_failed = (frontendErrorLevel != 0);
+#else
+                             // non-zero error code can mean warnings were produced, values greater than 3 indicate errors.
+                             frontend_failed = (frontendErrorLevel > 3);
+#endif
+                         }
                   }
              }
         }
