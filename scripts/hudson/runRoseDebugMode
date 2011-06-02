@@ -92,8 +92,7 @@ CONFIGURE_FLAGS="\
 	--with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib \
 	--with-java=${ROSE_TEST_JAVA_PATH} \
 	--with-ROSE_LONG_MAKE_CHECK_RULE=yes \
-	--with-CXX_DEBUG=\"-g -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC\" \
-	--with-C_DEBUG=\"-g\" \
+	--with-C_DEBUG=-g \
 	--with-CXX_WARNINGS=-Wall"
 #########################################################################################
 #  i386 
@@ -228,7 +227,7 @@ cd ROSE-build
 #########################################################################################
 (
 
-    ../configure --prefix=${ROSE_CONFIGURE_PREFIX} ${CONFIGURE_FLAGS}
+    ../configure --prefix=${ROSE_CONFIGURE_PREFIX} ${CONFIGURE_FLAGS} --with-CXX_DEBUG="-g -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC"
 
 ) 2>&1 |filterStep "configure" 
 [ ${PIPESTATUS[0]} -ne 0 ] && killStep "configure"
