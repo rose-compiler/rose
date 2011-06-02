@@ -784,7 +784,9 @@ void turnConditionalExpIntoStmt(SgExpression* exp)
 			ROSE_ASSERT(var_decl->get_variables().size() == 1);
 
 			SgType* type = var_decl->get_variables().front()->get_type();
-			ROSE_ASSERT(isScalarType(type));
+            //cout << type->class_name() << endl;
+            type = type->stripTypedefsAndModifiers();
+			ROSE_ASSERT(isScalarType(type) || isSgEnumType(type));
 			
 			// Note that a variable declaration can appear in the condition part of if, for, etc.
 			// Here we only deal with those which are exactly in a basic block.
