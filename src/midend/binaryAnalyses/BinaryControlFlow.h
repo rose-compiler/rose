@@ -365,7 +365,9 @@ namespace BinaryAnalysis {
         template<class ControlFlowGraph>
         struct ReturnBlocks: public boost::default_dfs_visitor {
             typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
-            std::vector<Vertex> blocks;
+            typedef std::vector<Vertex> Vector;
+            Vector &blocks;
+            ReturnBlocks(Vector &blocks): blocks(blocks) {}
             void finish_vertex(Vertex v, ControlFlowGraph g);
         };
 
@@ -397,8 +399,7 @@ BinaryAnalysis::ControlFlow::apply_to_ast(const ControlFlowGraph &cfg)
     typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
     for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
         SgAsmBlock *block = get(boost::vertex_name, cfg, *vi);
-        assert(block!=NULL); /* every vertex must point to a block */
-        if (is_vertex_filtered(block))
+        if (!block || is_vertex_filtered(block))
             continue;
 
         /* Delete old targets */
@@ -412,8 +413,7 @@ BinaryAnalysis::ControlFlow::apply_to_ast(const ControlFlowGraph &cfg)
         typename boost::graph_traits<ControlFlowGraph>::out_edge_iterator ei, ei_end;
         for (boost::tie(ei, ei_end)=out_edges(*vi, cfg); ei!=ei_end; ++ei) {
             SgAsmBlock *target_block = get(boost::vertex_name, cfg, target(*ei, cfg));
-            assert(target_block!=NULL); /* every vertex must point to a block */
-            if (!is_edge_filtered(block, target_block)) {
+            if (target_block && !is_edge_filtered(block, target_block)) {
                 SgAsmTarget *target = new SgAsmTarget();
                 target->set_address(target_block->get_address());
                 target->set_block(target_block);
@@ -429,8 +429,7 @@ BinaryAnalysis::ControlFlow::cache_vertex_descriptors(const ControlFlowGraph &cf
     typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
     for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
         SgAsmBlock *block = get(boost::vertex_name, cfg, *vi);
-        assert(block!=NULL); /* every vertex must point to a block */
-        if (!is_vertex_filtered(block))
+        if (block && !is_vertex_filtered(block))
             block->set_cached_vertex(*vi);
     }
 }
@@ -488,8 +487,7 @@ BinaryAnalysis::ControlFlow::build_cg_from_ast(SgNode *root, ControlFlowGraph &c
         EdgeFilter *parent;
         T1(EdgeFilter *parent): parent(parent) {}
         bool operator()(ControlFlow *analyzer, SgAsmBlock *src, SgAsmBlock *dst) {
-            assert(dst!=NULL);
-            SgAsmFunctionDeclaration *func = dst->get_enclosing_function();
+            SgAsmFunctionDeclaration *func = dst ? dst->get_enclosing_function() : NULL;
             if (!func || dst!=func->get_entry_block())
                 return false;
             if (parent)
@@ -598,10 +596,11 @@ std::vector<typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor>
 BinaryAnalysis::ControlFlow::return_blocks(const ControlFlowGraph &cfg,
                                            typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start)
 {
-    ReturnBlocks<ControlFlowGraph> result;
+    typename ReturnBlocks<ControlFlowGraph>::Vector result;
+    ReturnBlocks<ControlFlowGraph> visitor(result);
     std::vector<boost::default_color_type> colors(num_vertices(cfg), boost::white_color);
-    depth_first_visit(cfg, start, result, &(colors[0]));
-    return result.blocks;
+    depth_first_visit(cfg, start, visitor, &(colors[0]));
+    return result;
 }
 
 template<class ControlFlowGraph>

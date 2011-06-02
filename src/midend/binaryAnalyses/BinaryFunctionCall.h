@@ -229,8 +229,7 @@ BinaryAnalysis::FunctionCall::cache_vertex_descriptors(const FunctionCallGraph &
     typename boost::graph_traits<FunctionCallGraph>::vertex_iterator vi, vi_end;
     for (boost::tie(vi, vi_end)=vertices(cg); vi!=vi_end; ++vi) {
         SgAsmFunctionDeclaration *func = get(boost::vertex_name, cg, *vi);
-        assert(func!=NULL); /* every vertex must point to a function */
-        if (!is_vertex_filtered(func))
+        if (func && !is_vertex_filtered(func))
             func->set_cached_vertex(*vi);
     }
 }

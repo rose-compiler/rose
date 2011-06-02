@@ -4,9 +4,6 @@
 #include "sage3basic.h"
 #include "BinaryDominance.h"
 
-#include <boost/graph/depth_first_search.hpp>
-#include <boost/graph/reverse_graph.hpp>
-
 void
 BinaryAnalysis::Dominance::clear_ast(SgNode *ast)
 {
