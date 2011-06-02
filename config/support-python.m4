@@ -61,6 +61,16 @@ fi
 
 AC_SUBST(python_path)
 
+# Determine settings for the python development environment.
+# Provides:
+#   PYTHON_CPPFLAGS
+#   PYTHON_EXTRA_LDFLAGS
+#   PYTHON_EXTRA_LIBS
+#   PYTHON_LDFLAGS
+#   PYTHON_SITE_PKG
+#   PYTHON_VERSION
+AX_PYTHON_DEVEL()
+
 # End macro ROSE_SUPPORT_PYTHON.
 ]
 )
