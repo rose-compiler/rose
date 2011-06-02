@@ -78,6 +78,17 @@ testFunctionCall-A.passed: testFunctionCall.conf testFunctionCall
 testFunctionCall-B.passed: testFunctionCall.conf testFunctionCall
 	@$(RTH_RUN) CMD=testFunctionCall ALGORITHM=B INPUT=buffer2.bin $< $@
 
+# Tests for control flow dominance graphs.
+noinst_PROGRAMS += testDominance
+testDominance_SOURCES = testDominance.C
+testDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testDominance-A.passed testDominance-B.passed
+EXTRA_DIST += testDominance.conf testDominance-A.dot testDominance-B.dot
+testDominance-A.passed: testDominance.conf testDominance
+	@$(RTH_RUN) CMD=testDominance ALGORITHM=A INPUT=buffer2.bin $< $@
+testDominance-B.passed: testDominance.conf testDominance
+	@$(RTH_RUN) CMD=testDominance ALGORITHM=B INPUT=buffer2.bin $< $@
+
 
 # Tests ELF string table reallocation functions by changing some strings.  At first glance this would appear to be something
 # quite easy to do, but it turns out to involve lots of details.

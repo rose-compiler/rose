@@ -5,10 +5,12 @@
 #include <boost/graph/graphviz.hpp>
 
 /* Label the graphviz vertices with function entry addresses rather than vertex numbers. */
+template<class FunctionCallGraph>
 struct GraphvizVertexWriter {
-    const BinaryAnalysis::FunctionCall::Graph &g;
-    GraphvizVertexWriter(BinaryAnalysis::FunctionCall::Graph &g): g(g) {}
-    void operator()(std::ostream &output, const BinaryAnalysis::FunctionCall::Vertex &v) {
+    typedef typename boost::graph_traits<FunctionCallGraph>::vertex_descriptor Vertex;
+    const FunctionCallGraph &g;
+    GraphvizVertexWriter(FunctionCallGraph &g): g(g) {}
+    void operator()(std::ostream &output, const Vertex &v) {
         SgAsmFunctionDeclaration *func = get(boost::vertex_name, g, v);
         output <<"[ label=\"" <<StringUtility::addrToString(func->get_entry_va()) <<"\" ]";
     }
@@ -33,17 +35,20 @@ main(int argc, char *argv[])
 
     /* Calculate plain old CG over entire interpretation. */
     if (algorithm=="A") {
+        typedef BinaryAnalysis::FunctionCall::Graph CG;
         BinaryAnalysis::FunctionCall cg_analyzer;
-        BinaryAnalysis::FunctionCall::Graph cg = cg_analyzer.build_graph(interps.back());
-        boost::write_graphviz(std::cout, cg, GraphvizVertexWriter(cg));
+        CG cg = cg_analyzer.build_cg_from_ast<CG>(interps.back());
+        boost::write_graphviz(std::cout, cg, GraphvizVertexWriter<CG>(cg));
     }
 
     /* Calculate the call graph from the control flow graph. */
     if (algorithm=="B") {
-        BinaryAnalysis::ControlFlow::Graph cfg = BinaryAnalysis::ControlFlow().build_graph(interps.back());
+        typedef BinaryAnalysis::ControlFlow::Graph CFG;
+        typedef BinaryAnalysis::FunctionCall::Graph CG;
+        CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(interps.back());
         BinaryAnalysis::FunctionCall cg_analyzer;
-        BinaryAnalysis::FunctionCall::Graph cg = cg_analyzer.build_graph(cfg);
-        boost::write_graphviz(std::cout, cg, GraphvizVertexWriter(cg));
+        CG cg = cg_analyzer.build_cg_from_cfg<CG>(cfg);
+        boost::write_graphviz(std::cout, cg, GraphvizVertexWriter<CG>(cg));
     }
 
     return 0;
