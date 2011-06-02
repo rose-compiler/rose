@@ -2267,7 +2267,6 @@ FortranCodeGeneration_locatedNode::unparseUserDefinedBinaryOp (SgExpression* exp
 void
 FortranCodeGeneration_locatedNode::unparseCoArrayExpression (SgExpression* expr, SgUnparse_Info& info)
    {
-    
     // printf("unparseCoArrayExpression\n");
  
     bool hasImageSelec = false;

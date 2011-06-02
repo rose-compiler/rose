@@ -1053,7 +1053,7 @@ echo "ofp_major_version_number = $ofp_major_version_number"
 echo "ofp_minor_version_number = $ofp_minor_version_number"
 echo "ofp_patch_version_number = $ofp_patch_version_number"
 
-ofp_jar_file_contains_java_file = false
+ofp_jar_file_contains_java_file=false
 if test "x$ofp_major_version_number" = "x0"; then
    echo "Recognized an accepted major version number."
    if test "x$ofp_minor_version_number" = "x8"; then
@@ -1063,10 +1063,12 @@ if test "x$ofp_major_version_number" = "x0"; then
          echo "Recognized an accepted patch version number (very old version of OFP)."
       else
          if test "x$ofp_patch_version_number" = "x1"; then
-            echo "Recognized an olded but accepted patch version number ONLY for testing."
+            echo "Recognized an older but accepted patch version number ONLY for testing."
          else
-            ofp_jar_file_contains_java_file = true
+            ofp_jar_file_contains_java_file=true
             if test "x$ofp_patch_version_number" = "x2"; then
+               echo "Recognized an accepted patch version number."
+            elif test "x$ofp_patch_version_number" = "x3"; then
                echo "Recognized an accepted patch version number ONLY for testing."
             else
 #              echo "ERROR: Could not identify the OFP patch version number."
@@ -1121,7 +1123,16 @@ AC_SUBST(ROSE_OFP_PATCH_VERSION_NUMBER)
 # CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar:.
 # CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar:.
 # CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
+#
+# OFP version 0.8.2 and antlr 3.2 are the defaults
+#
 CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
+
+if test "x$ofp_minor_version_number" = "x8"; then
+   if test "x$ofp_patch_version_number" = "x3"; then
+      CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.3-complete.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
+   fi
+fi
 
 export CLASSPATH
 AC_SUBST(CLASSPATH)
@@ -2067,6 +2078,7 @@ src/frontend/SageIII/astTokenStream/Makefile
 src/frontend/SageIII/astHiddenTypeAndDeclarationLists/Makefile
 src/frontend/SageIII/astVisualization/Makefile
 src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
+src/frontend/SageIII/astFromString/Makefile
 src/frontend/CxxFrontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
@@ -2364,6 +2376,7 @@ tests/CompileTests/Fortran_tests/LANL_POP/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
+tests/CompileTests/CAF2_tests/Makefile
 tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
@@ -2491,9 +2504,6 @@ binaries/samples/Makefile
 
 # DQ (8/12/2010): We want to get permission to distribute these files as test codes.
 # tests/CompileTests/Fortran_tests/LANL_POP/Makefile
-
-# DQ (8/4/2010): Removed this directory
-# tests/CompileTests/CAF_tests/Makefile
 
 # DQ (10/24/2009): We don't need to support EDG 3.10 anymore.
 # src/frontend/CxxFrontend/EDG_3.10/Makefile

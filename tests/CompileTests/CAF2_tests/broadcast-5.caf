@@ -1,0 +1,49 @@
+!
+! This program tests broadcasting of derived type array variables
+!
+	program broadcast_derived_type
+
+	type :: value_type
+	  real(selected_real_kind(6)), dimension(2) :: value
+	end type value_type
+
+	integer :: nprocs, me, i
+	logical :: test_result
+	real(selected_real_kind(6)) :: sum_global, sum_val
+	type (value_type) :: val, valcopy
+
+	sum_global = 0
+	val%value = 0
+	test_result = .true.
+	nprocs = team_size()
+	me = team_rank()
+
+	if (me .eq. 0) then	
+	  val%value = (/1.0d0, 2.0d0/)
+	end if
+	sum_val = sum(val%value) * nprocs
+	
+	call team_broadcast(val%value, 0)
+	valcopy%value = val%value
+
+	do i = 0, nprocs - 1
+	  if (me .eq. i) then
+	    val%value = valcopy%value
+	  end if
+	  call team_broadcast(val%value, i)
+	  if (me .eq. 0) then
+	    sum_global = sum_global + sum(val%value)
+	    val%value = 0.0d0
+	  end if
+	end do
+
+	if (me .eq. 0) then
+	  if (sum_global .ne. sum_val) test_result = .false.
+        end if
+
+	if (me .eq. 0) then
+	  if (test_result) write (*, '(A)') 'Test passed.'
+	  if (.not. test_result) write (*, '(A)') 'Test failed.'
+	end if
+
+	end program broadcast_derived_type

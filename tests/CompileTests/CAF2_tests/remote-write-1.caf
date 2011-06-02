@@ -1,0 +1,36 @@
+program  testwrite
+   integer,allocatable::A(:)[*]
+   integer :: size,rank,i,val, error
+
+   size = team_size()
+   rank = team_rank()
+
+   allocate(A(4)[])
+
+   do i = 1,4
+      A(i) = rank * 100 + rank * 10 + rank
+   end do
+
+   call team_barrier()
+
+   do i = 1,4
+      A(rank+1)[i-1] = rank + 10
+   end do
+
+   call team_barrier()
+
+   error = 0
+   do i = 1,4
+      val = A(i)
+      if (i - 1 + 10 .ne. val) then
+        error = error + 1
+        print *, rank, "read: ", val, "should be: ", i - 1 + 10
+      endif
+   end do
+
+   if (0 .ne. error) then
+      print *, "Test failed for image ", rank
+   else if (0 .eq. rank) then
+      write(*, '(A)') "Test passed"
+   endif
+end program

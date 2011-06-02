@@ -211,6 +211,9 @@ if [[ ! -e src/frontend/CxxFrontend/EDG/Makefile.am ]]; then
         mkdir -p $(dirname $file)
         touch $file
     done
+    # TV (05/25/2011): To work when distributed as binary EDG 4.x needs this file
+    touch src/frontend/CxxFrontend/EDG/EDG_4.0/lib/predefined_macros.txt
+    touch src/frontend/CxxFrontend/EDG/EDG_4.3/lib/predefined_macros.txt
 fi
 
 # Run all autoconf, indenting their output for readability.  Exit if a tool fails (this is different than the

@@ -2912,6 +2912,9 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
     Rose_STL_Container<SgNode*> nodeList2 = NodeQuery::querySubTree(file, V_SgOmpDoStatement);
     
     Rose_STL_Container<SgNode*> nodeList_merged (nodeList.size() + nodeList2.size()) ;
+    
+    std::sort(nodeList.begin(), nodeList.end());
+    std::sort(nodeList2.begin(), nodeList2.end());
     std::merge (nodeList.begin(), nodeList.end(), nodeList2.begin(), nodeList2.end(), nodeList_merged.begin());
 
     Rose_STL_Container<SgNode*>::iterator nodeListIterator = nodeList_merged.begin();

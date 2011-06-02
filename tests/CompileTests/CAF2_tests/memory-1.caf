@@ -1,0 +1,28 @@
+program memorytest
+
+   integer(8), allocatable, dimension(:) :: buffer[*]
+   logical :: success
+   integer(8) :: dummy, mypid
+
+   success = .true.;
+   mypid = team_rank()
+
+   do j = 1, 100
+     allocate(buffer(1:100)[])
+
+     do i = 1, 100
+       buffer(i) = i
+     end do
+
+     dummy = dummy + buffer(mypid)
+
+     deallocate(buffer)
+   end do
+
+   if (.not. success .or. 1000 .eq. mypid) then
+       print *, dummy
+   endif
+
+   write(*, '(A)') "test succeeded"   
+
+end program memorytest

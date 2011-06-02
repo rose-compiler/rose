@@ -1,0 +1,16 @@
+/*!
+\class SgAsmTarget
+\brief This class represents a possible link between SgAsmBlock objects.
+
+This class is used to link one SgAsmBlock (the source) to another (the
+target) when it's possible that the target block does not exist.
+
+SgAsmTarget objects can be used to represent targets of branch
+instructions. If the instruction branches to an address which is known
+but has not been disassembled, then the SgAsmTarget stores a null
+block pointer and the target address.  If the target is known, then
+the SgAsmTarget holds the target block pointer and the address is
+unused (although it can still be retrieved with get_address()).
+
+*/
+
