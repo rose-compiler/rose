@@ -55,6 +55,7 @@ EOF
 done
 
 if test -z "$python_path";
+   AC_DEFINE([USE_ROSE_PYTHON_SUPPORT],1,[Controls use of ROSE support for Python.])
 then
     echo "Could not find Python >=2.4.0!"
 fi
