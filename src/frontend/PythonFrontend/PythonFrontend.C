@@ -11,7 +11,7 @@ int python_main(std::string, SgFile*)
     return -1;
 }
 
-#else // Else if Python *is enabled*
+#else // USE_ROSE_PYTHON_SUPPORT is defined
 
 #include <iostream>
 
@@ -30,4 +30,4 @@ int python_main(std::string, SgFile*)
     return -1;
 }
 
-#endif // else (ROSE_PYTHON is defined)
+#endif
