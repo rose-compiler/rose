@@ -299,7 +299,7 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 					casesWithAssignments.push_back(caseStmt);
 
 					//Pop without performing an assignment (for the commit function)
-					SgStatement* popStatement = SageBuilder::buildExprStatement(popVal(castedVars[i]->get_type()));
+					SgStatement* popStatement = SageBuilder::buildExprStatement(popVal_front(castedVars[i]->get_type()));
 					SgStatement* commitCaseBody = SageBuilder::buildBasicBlock(popStatement, SageBuilder::buildBreakStmt());
 					casesWithoutAssignment.push_back(commitCaseBody);
 				}
@@ -353,11 +353,11 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 
 	//Now, restore the value in the reverse code
     SgExpression* assign = restoreOneVariable(varName, valueToBePushedExpression->get_type());
-	SgExpression* commitExpression = popVal(valueToBePushedExpression->get_type());
+	SgExpression* commitExpression = popVal_front(valueToBePushedExpression->get_type());
 
 	SageInterface::prependStatement(buildExprStatement(fwd_exp), forwardBody);
 	SageInterface::appendStatement(buildExprStatement(assign), reverseBody);
-	SageInterface::appendStatement(buildExprStatement(commitExpression), commitBody);
+	SageInterface::prependStatement(buildExprStatement(commitExpression), commitBody);
 }
 
 StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* stmt, const EvaluationResult& eval_result)
