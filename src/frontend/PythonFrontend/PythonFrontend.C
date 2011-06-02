@@ -8,7 +8,7 @@
 
 int python_main(std::string, SgFile*)
 {
-    std::cerr << "ROSE was built without Python support" << std::endl;
+    std::cerr << "python_main was called" << std::endl;
     return -1;
 }
 
