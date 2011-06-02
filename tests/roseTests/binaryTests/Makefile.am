@@ -82,12 +82,16 @@ testFunctionCall-B.passed: testFunctionCall.conf testFunctionCall
 noinst_PROGRAMS += testDominance
 testDominance_SOURCES = testDominance.C
 testDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-STATIC_TEST_TARGETS += testDominance-A.passed testDominance-B.passed
-EXTRA_DIST += testDominance.conf testDominance-A.dot testDominance-B.dot
+STATIC_TEST_TARGETS += testDominance-A.passed testDominance-B.passed testDominance-C.passed testDominance-D.passed
+EXTRA_DIST += testDominance.conf testDominance-A.ans testDominance-B.ans testDominance-C.ans testDominance-D.ans
 testDominance-A.passed: testDominance.conf testDominance
 	@$(RTH_RUN) CMD=testDominance ALGORITHM=A INPUT=buffer2.bin $< $@
 testDominance-B.passed: testDominance.conf testDominance
 	@$(RTH_RUN) CMD=testDominance ALGORITHM=B INPUT=buffer2.bin $< $@
+testDominance-C.passed: testDominance.conf testDominance
+	@$(RTH_RUN) CMD=testDominance ALGORITHM=C INPUT=buffer2.bin $< $@
+testDominance-D.passed: testDominance.conf testDominance
+	@$(RTH_RUN) CMD=testDominance ALGORITHM=D INPUT=buffer2.bin $< $@
 
 
 # Tests ELF string table reallocation functions by changing some strings.  At first glance this would appear to be something

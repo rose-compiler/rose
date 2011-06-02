@@ -51,7 +51,7 @@ main(int argc, char *argv[])
             void visit(SgNode *node) {
                 SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
                 if (func) {
-                    std::cout <<"Function <" <<func->get_name() <<">"
+                    std::cout <<"test A in function <" <<func->get_name() <<">"
                               <<" at " <<StringUtility::addrToString(func->get_entry_va()) <<"\n";
                     CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(func);
                     CFG_Vertex start = 0;
@@ -78,14 +78,14 @@ main(int argc, char *argv[])
             void visit(SgNode *node) {
                 SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
                 if (func) {
-                    std::cout <<"Function <" <<func->get_name() <<">"
+                    std::cout <<"test B in function <" <<func->get_name() <<">"
                               <<" at " <<StringUtility::addrToString(func->get_entry_va()) <<"\n";
                     CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(func);
                     CFG_Vertex start = 0;
                     assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
                     BinaryAnalysis::Dominance analyzer;
                     RelMap rmap = analyzer.build_idom_relation_from_cfg(cfg, start);
-                    DG dg = analyzer.build_idom_graph_from_relation<DG>(cfg, rmap);
+                    DG dg = analyzer.build_graph_from_relation<DG>(cfg, rmap);
                     std::string fname = nameprefix + StringUtility::numberToString(++counter) + ".dot";
                     std::ofstream out(fname.c_str());
                     boost::write_graphviz(out, dg, GraphvizVertexWriter<DG>(dg));
@@ -93,6 +93,60 @@ main(int argc, char *argv[])
             }
         };
         TB().traverse(interp, preorder);
+    }
+
+    /* Calculate immediate post dominator graph from the control flow graph. Do this for each function. */
+    if (algorithm=="C") {
+        typedef BinaryAnalysis::Dominance::Graph DG;
+
+        struct TC: public AstSimpleProcessing {
+            int counter;
+            TC(): counter(0) {}
+            void visit(SgNode *node) {
+                SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
+                if (func) {
+                    std::cout <<"test C in function <" <<func->get_name() <<">"
+                              <<" at " <<StringUtility::addrToString(func->get_entry_va()) <<"\n";
+                    CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(func);
+                    CFG_Vertex start = 0;
+                    assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
+                    BinaryAnalysis::Dominance analyzer;
+                    DG dg = analyzer.build_postdom_graph_from_cfg<DG>(cfg, start);
+                    std::string fname = nameprefix + StringUtility::numberToString(++counter) + ".dot";
+                    std::ofstream out(fname.c_str());
+                    boost::write_graphviz(out, dg, GraphvizVertexWriter<DG>(dg));
+                }
+            }
+        };
+        TC().traverse(interp, preorder);
+    }
+
+    /* Calculate immediate post dominator graph from post dominator relation map. Do this for each function. */
+    if (algorithm=="D") {
+        typedef BinaryAnalysis::Dominance::Graph DG;
+        typedef BinaryAnalysis::Dominance::RelationMap<CFG> RelMap;
+
+        struct TD: public AstSimpleProcessing {
+            int counter;
+            TD(): counter(0) {}
+            void visit(SgNode *node) {
+                SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
+                if (func) {
+                    std::cout <<"test D in function <" <<func->get_name() <<">"
+                              <<" at " <<StringUtility::addrToString(func->get_entry_va()) <<"\n";
+                    CFG cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(func);
+                    CFG_Vertex start = 0;
+                    assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
+                    BinaryAnalysis::Dominance analyzer;
+                    RelMap rmap = analyzer.build_postdom_relation_from_cfg(cfg, start);
+                    DG dg = analyzer.build_graph_from_relation<DG>(cfg, rmap);
+                    std::string fname = nameprefix + StringUtility::numberToString(++counter) + ".dot";
+                    std::ofstream out(fname.c_str());
+                    boost::write_graphviz(out, dg, GraphvizVertexWriter<DG>(dg));
+                }
+            }
+        };
+        TD().traverse(interp, preorder);
     }
 
     return 0;
