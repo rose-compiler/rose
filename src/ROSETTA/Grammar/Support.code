@@ -4687,6 +4687,7 @@ HEADER_APPLICATION_FILE_START
                e_Java_output_language,    /*!< value used to specify output of Java (for testing Java unparser) */
                e_Promela_output_language, /*!< value used to specify output of Promela for uses with SPIN (unsupported option) */
                e_PHP_output_language,     /*!< value used to specify output of PHP */
+               e_Python_output_language,  /*!< value used to specify output of Python */
                e_last_output_language     /*!< upper bound on the range of values supported for the outputLanguageOption_enum */
              };
 
@@ -11698,6 +11699,7 @@ SgFile::display ( const std::string & label ) const
           case SgFile::e_Fortran_output_language: outputLanguageName = "Fortran"; break;
           case SgFile::e_Java_output_language:    outputLanguageName = "Java";    break;
           case SgFile::e_PHP_output_language:     outputLanguageName = "PHP";     break;
+          case SgFile::e_Python_output_language:  outputLanguageName = "Python";  break;
           case SgFile::e_Promela_output_language: outputLanguageName = "Promela"; break;
 
           default:
