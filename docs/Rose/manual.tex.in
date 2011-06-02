@@ -212,6 +212,9 @@ linkcolor=black,
 
 \input{binaryAnalysis}
 
+% driscoll6, 6/2/2011: Documentation for Python support
+\input{PythonSupport}
+
 % djh, 10/28/2009: putting RTED manual/chapter here for lack of a better place.
 % Perhaps it should be moved.
 \input{RTED}
