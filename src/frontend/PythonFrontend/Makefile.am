@@ -1,5 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+AM_CPPFLAGS = $(PYTHON_CPPFLAGS)
+AM_LDFLAGS = $(PYTHON_LDFLAGS)
+
 INCLUDES = $(ROSE_INCLUDES)
 
 # This will cause the dynamic library to be built (as librosePythonFrontend.so)
