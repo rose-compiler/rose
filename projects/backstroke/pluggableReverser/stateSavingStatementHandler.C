@@ -316,7 +316,7 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 				switchBody = SageBuilder::buildBasicBlock();
 				SageInterface::appendStatementList(casesWithoutAssignment, switchBody);
 				SgSwitchStatement* commitSwitch = SageBuilder::buildSwitchStatement(selectorExpression, switchBody);
-				SageInterface::appendStatement(commitSwitch, commitBody);
+				SageInterface::prependStatement(commitSwitch, commitBody);
 
 				return;
 			} //end if there are any subclasses
@@ -417,7 +417,7 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 
 			//Build the if-statement for the commit body
 			SgIfStmt* commitNullCheck = (SgIfStmt*)SageInterface::copyStatement(reverseNullCheck);
-			SageInterface::appendStatement(commitNullCheck, commitBody);
+			SageInterface::prependStatement(commitNullCheck, commitBody);
 			
 			//Now, actually generate the code to save / restore the variable (inside the body of the NULL guards)
 			saveOneVariable(varName, 
