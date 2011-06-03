@@ -4,14 +4,16 @@
 #include "Python.h"
 
 /* Return the number of arguments of the application command line */
+PyObject* sage_buildAddOp(PyObject *self, PyObject *args);
 PyObject* sage_buildGlobal(PyObject *self, PyObject *args);
 PyObject* sage_buildPrintStmt(PyObject *self, PyObject *args);
 PyObject* sage_buildStringVal(PyObject *self, PyObject *args);
 
 static PyMethodDef SageBuilderMethods[] = {
-    {"buildGlobal", sage_buildGlobal, METH_KEYWORDS, "Builds an SgGlobal node."},
-    {"buildPrintStmt", sage_buildPrintStmt, METH_KEYWORDS, "Builds an SgPrintStmt node."},
-    {"buildStringVal", sage_buildStringVal, METH_KEYWORDS, "Builds an SgStringVal node."},
+    {"buildAddOp", sage_buildAddOp, METH_VARARGS, "Builds an SgAddOp node."},
+    {"buildGlobal", sage_buildGlobal, METH_VARARGS, "Builds an SgGlobal node."},
+    {"buildPrintStmt", sage_buildPrintStmt, METH_VARARGS, "Builds an SgPrintStmt node."},
+    {"buildStringVal", sage_buildStringVal, METH_VARARGS, "Builds an SgStringVal node."},
     {NULL, NULL, 0, NULL}
 };
 
