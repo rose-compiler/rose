@@ -368,6 +368,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astTokenStream 
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astHiddenTypeAndDeclarationLists 
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFileIO 
+     ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFromString 
      ${ROSE_TOP_SRC_DIR}/src/frontend/OpenFortranParser_SAGE_Connection 
      ${ROSE_TOP_SRC_DIR}/src/frontend/PHPFrontend 
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryFormats 

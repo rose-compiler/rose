@@ -3035,25 +3035,28 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
             // ROSE_ASSERT(false);
 
             // Modify the type that was previously built
-               SgType* typeNode = astTypeStack.front();
+                if (!astTypeStack.empty())
+                {
+                    SgType* typeNode = astTypeStack.front();
 
-            // printf ("In c_action_declaration_type_spec(): astExpressionStack.size() = %zu \n",astExpressionStack.size());
- 
-            // DQ (12/1/2007): I think this is now taken care of in R404
-               ROSE_ASSERT(astExpressionStack.empty() == true);
-               if (astExpressionStack.empty() == false)
-                  {
-                    SgExpression* kindExpression = astExpressionStack.front();
- 
-                 // DQ (12/1/2007): I think this is now taken care of in R404
-                 // typeNode->set_type_kind(kindExpression);
+                    // printf ("In c_action_declaration_type_spec(): astExpressionStack.size() = %zu \n",astExpressionStack.size());
 
-                 // DQ (9/30/2007): Set the parent (if not this is caught in AST whole graph generation)
-                    kindExpression->set_parent(typeNode);
+                    // DQ (12/1/2007): I think this is now taken care of in R404
+                    ROSE_ASSERT(astExpressionStack.empty() == true);
+                    if (astExpressionStack.empty() == false)
+                    {
+                        SgExpression* kindExpression = astExpressionStack.front();
 
-                    printf ("After setting the kind, the expression stack size = %zu \n",astExpressionStack.size());
-                    astExpressionStack.pop_front();
-                  }
+                        // DQ (12/1/2007): I think this is now taken care of in R404
+                        // typeNode->set_type_kind(kindExpression);
+
+                        // DQ (9/30/2007): Set the parent (if not this is caught in AST whole graph generation)
+                        kindExpression->set_parent(typeNode);
+
+                        printf("After setting the kind, the expression stack size = %zu \n", astExpressionStack.size());
+                        astExpressionStack.pop_front();
+                    }
+                }
                break;
              }
 
@@ -18696,8 +18699,15 @@ void c_action_end_of_stmt(Token_t * eos)
  * start_of_file
  *
  * @param filename The name of the file
+ * @param path The full path of the file
+ *
+ * Modified v0.8.3 (path argument added)
  */
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 3
+void c_action_start_of_file(const char *filename, const char *path)
+#else
 void c_action_start_of_file(const char *filename)
+#endif
    {
     // New function to support Fortran include mechanism
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -18783,10 +18793,16 @@ void c_action_start_of_file(const char *filename)
  * end_of_file
  *
  * @param filename The name of the file
+ * @param path The full path of the file
  *
- * Modified v0.7.2 (new argument added)
+ * Modified v0.7.2 (filename argument added)
+ * Modified v0.8.3 (path argument added)
  */
-void c_action_end_of_file(const char * filename)
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 3
+void c_action_end_of_file(const char *filename, const char *path)
+#else
+void c_action_end_of_file(const char *filename)
+#endif
    {
     // New function to support Fortran include mechanism
 
