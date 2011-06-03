@@ -35,15 +35,8 @@ endif
 
 # DQ (7/25/2010): These should not be at the end, but it is easier to split out Fortran support this way.
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-#   SUBDIRS += Fortran_tests caf2.0_tests
-   SUBDIRS += Fortran_tests
- # DQ (8/4/2010): This test directory should not be included.
- # CAF_tests
+   SUBDIRS += Fortran_tests CAF2_tests
 endif
- # DQ (8/4/2010): This test directory should not be included.
- # CAF_tests
- # DQ (8/4/2010): This test directory should not be included.
- # CAF_tests
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
    SUBDIRS += Java_tests 
@@ -71,6 +64,11 @@ endif
 if ROSE_BUILD_EDG_WITH_CUDA_SUPPORT
    SUBDIRS += CudaTests
 endif
+
+if ROSE_BUILD_EDG_WITH_OPENCL_SUPPORT
+   SUBDIRS += OpenClTests
+endif
+
 
 SUBDIRS += EDG_4_x
 

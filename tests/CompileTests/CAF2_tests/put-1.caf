@@ -1,0 +1,31 @@
+module module_put
+  ! static allocation
+  integer :: a(100)[*]  
+end module
+
+program cafput
+  use module_put
+  integer :: rank, remote_rank
+  logical :: passed
+
+  passed = .true.
+
+  ! local put
+  rank = team_rank()
+  a(rank+1) = rank
+
+  ! remote put
+  remote_rank = mod(rank+1, team_size())
+  a(remote_rank+1) = rank
+
+  if ((a(rank+1) .ne. rank) .or. (a(remote_rank+1) .ne. rank)) then
+    print *, "Test failed for image ", rank
+    passed = .false.
+  endif
+
+  if ((0 .eq. rank) .and. passed) then
+     write(*, '(A)') "Test passed."
+  endif
+
+!  print *, rank, a(rank+1), remote_rank, a(remote_rank+1)
+end program

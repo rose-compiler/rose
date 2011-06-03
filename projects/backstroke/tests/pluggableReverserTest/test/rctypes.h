@@ -49,7 +49,7 @@ void pop_front(std::deque<boost::any>& data_stack)
 {
     data_stack.pop_front();
 }
-
+#if 0
 /**********************************************************************************
  * The following random number generator functions are to make sure the event and forward event
  * functions received the same random numbers, in order to make test pass.
@@ -69,6 +69,6 @@ int rand_num_fwd()
     random_numbers.pop();
     return num;
 }
-
+#endif
 
 #endif

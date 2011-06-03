@@ -11,25 +11,26 @@ struct IsEvent
 {
 	bool operator() (SgFunctionDeclaration* decl)
 	{
+		string funcName = decl->get_name();
+			
+		//All event handler functions are named "Handle"
+		if (funcName != "Handle")
+			return false;
+		
+		
 		if (SgMemberFunctionDeclaration* memFunc = isSgMemberFunctionDeclaration(decl))
 		{
 			SgClassDefinition* classDef = memFunc->get_class_scope();
 			SgClassDeclaration* classDecl = classDef->get_declaration();
 			string className = classDecl->get_name();
 
-			SgNamespaceDefinitionStatement* namespaceDef = isSgNamespaceDefinitionStatement(classDecl->get_parent());
-			if (namespaceDef != NULL)
+			if (className == "UDPSink" || className == "InterfaceReal" || className == "L2Proto802_11" 
+					|| className == "WirelessLink" || className == "InterfaceReal" || className == "Timer")
 			{
-				string namespaceName = namespaceDef->get_namespaceDeclaration()->get_name();
-				if (namespaceName == "gas_station" && className == "GasStationEvents")
-				{
-					string funcName = decl->get_name();
-
-					if (funcName == "OnArrival" || funcName == "OnFinishedPumping" || funcName == "OnFinishedPaying")
-						return true;
-				}
+				return true;
 			}
 		}
+		
 		return false;
 	}
 };

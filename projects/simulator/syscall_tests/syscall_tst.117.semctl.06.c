@@ -227,6 +227,7 @@ static void dotest(key_t key)
 			int j;
 			maxsemstring = "";
 			for (j = 0; j < NSEMS; j++) {
+#warning "FIXME: asprintf can't be used like this! [RPM 2011-04-20]"
 				if (asprintf(&maxsemstring, "%s%s%d",
 					     maxsemstring, (j ? ":" : ""),
 					     maxsemvals[j]) < 0) {

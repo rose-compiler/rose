@@ -1,6 +1,3 @@
-k -> foo1 A::f3 B::f1 B::f2 B::f3
-foo1 -> k foo1
-main -> k
 A::f1 ->
 A::f2 ->
 A::f3 ->
@@ -9,3 +6,6 @@ B::f2 -> B::f3 B::f4
 B::f3 ->
 B::f4 ->
 B::f5 -> B::f1 B::f2 B::f3
+foo1 -> foo1 k
+k -> A::f3 B::f1 B::f2 B::f3 foo1
+main -> k

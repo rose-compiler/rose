@@ -1,0 +1,69 @@
+module scalar_variables
+     integer A[*]
+end module scalar_variables
+
+program test4
+   use scalar_variables
+   integer :: size
+   integer :: rank 
+   integer :: partner
+
+   size    = team_size()  
+   rank    = team_rank()
+
+   partner =  size-rank-1
+
+   call team_barrier()
+   A = partner
+
+   if (rank .eq. 0)  then
+       if (A .eq. partner)  then 
+           write(*, '(A)') "OK, assign a scalar module coarray variable in a subroutine."
+       else 
+          write(*, '(A)') "test4 failed: assign value in a subroutine"
+       end if 
+   end if 
+
+   call team_barrier()
+
+   if (rank .eq. 0 ) then 
+       A  =  A[partner]
+   endif
+
+  call team_barrier()
+
+  if (rank .eq. 0 ) then 
+     if (A.eq.0) then 
+       write(*, '(A)') "OK, remote read a scalar coarray variable."
+     else 
+       write(*, '(A)') "test4 failed: remote read a scalar coarray variable."
+   endif
+endif
+
+
+
+  call team_barrier()
+
+  A = rank
+
+  call team_barrier()
+
+  if (rank .eq. size-1 ) then  
+      A[0]  =  A
+  endif
+
+  call team_barrier()
+
+  if (rank .eq. 0)  then
+       if (A .eq. partner)  then 
+           write(*, '(A)') "OK, remote write a scalar module coarray variable in a subroutine."
+       else 
+          write(*, '(A)') "test4 failed: remote write in a subroutine"
+       end if 
+   end if 
+          
+call team_barrier()
+
+end  program
+
+

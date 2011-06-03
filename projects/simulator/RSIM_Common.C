@@ -238,8 +238,8 @@ print_robust_list_head_32(RTS_Message *m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(robust_list_head_32)==sz);
     const robust_list_head_32 *v = (const robust_list_head_32*)_v;
-    m->more("next=0x%08"PRIx32", futex=0x%08"PRIx32", pending=0x%08"PRIx32,
-            v->next, v->futex_va, v->pending_va);
+    m->more("next_va=0x%08"PRIx32", futex_offset=%"PRId32", pending_va=0x%08"PRIx32,
+            v->next_va, v->futex_offset, v->pending_va);
 }
 
 void
@@ -437,6 +437,25 @@ print_siginfo_32(RTS_Message *m, const uint8_t *_v, size_t sz)
             }
             break;
     }
+}
+
+void
+print_sched_param_32(RTS_Message *m, const uint8_t *_v, size_t sz)
+{
+    assert(sizeof(sched_param_32)==sz);
+    const sched_param_32 *v = (const sched_param_32*)_v;
+    m->more("sched_priority=%"PRId32, v->sched_priority);
+}
+
+void
+print_msghdr_32(RTS_Message *m, const uint8_t *_v, size_t sz)
+{
+    assert(sizeof(msghdr_32)==sz);
+    const msghdr_32 *v = (const msghdr_32*)_v;
+    m->more("name=0x%08"PRIx32", namelen=%"PRIu32", iov=0x%08"PRIx32", iovlen=%"PRIu32
+            ", control=0x%08"PRIx32", controllen=%"PRIu32", flags=0x%08"PRIx32,
+            v->msg_name, v->msg_namelen, v->msg_iov, v->msg_iovlen,
+            v->msg_control, v->msg_controllen, v->msg_flags);
 }
 
 void

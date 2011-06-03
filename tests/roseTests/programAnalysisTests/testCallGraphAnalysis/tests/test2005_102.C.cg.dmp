@@ -1,2 +1,2 @@
-foo -> boost::throw_exception
 boost::throw_exception ->
+foo -> boost::throw_exception

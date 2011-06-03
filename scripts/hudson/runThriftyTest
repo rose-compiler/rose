@@ -56,7 +56,7 @@ cd ROSE-build
 
 # TODO: build and run tests
 
-    ../configure --prefix=`pwd`/${ROSE_TEST_INSTALL_PREFIX} ${CONFIGURE_FLAGS}
+    ../configure --prefix=${ROSE_TEST_INSTALL_PREFIX} ${CONFIGURE_FLAGS}
     runBuildStep make
     runBuildStep make-check
     runBuildStep make-install

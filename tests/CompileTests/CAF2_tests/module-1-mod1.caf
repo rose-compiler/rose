@@ -1,0 +1,11 @@
+module module_mod1
+   integer, allocatable, dimension(:,:) :: foo[*]
+contains
+
+   subroutine do_initialize(val)
+      integer(8) :: val
+      allocate(foo(val,val)[])
+      foo(0,0) = val
+   end subroutine initialize
+
+end module module_mod1

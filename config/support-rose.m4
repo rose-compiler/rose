@@ -1054,7 +1054,7 @@ echo "ofp_major_version_number = $ofp_major_version_number"
 echo "ofp_minor_version_number = $ofp_minor_version_number"
 echo "ofp_patch_version_number = $ofp_patch_version_number"
 
-ofp_jar_file_contains_java_file = false
+ofp_jar_file_contains_java_file=false
 if test "x$ofp_major_version_number" = "x0"; then
    echo "Recognized an accepted major version number."
    if test "x$ofp_minor_version_number" = "x8"; then
@@ -1064,10 +1064,12 @@ if test "x$ofp_major_version_number" = "x0"; then
          echo "Recognized an accepted patch version number (very old version of OFP)."
       else
          if test "x$ofp_patch_version_number" = "x1"; then
-            echo "Recognized an olded but accepted patch version number ONLY for testing."
+            echo "Recognized an older but accepted patch version number ONLY for testing."
          else
-            ofp_jar_file_contains_java_file = true
+            ofp_jar_file_contains_java_file=true
             if test "x$ofp_patch_version_number" = "x2"; then
+               echo "Recognized an accepted patch version number."
+            elif test "x$ofp_patch_version_number" = "x3"; then
                echo "Recognized an accepted patch version number ONLY for testing."
             else
 #              echo "ERROR: Could not identify the OFP patch version number."
@@ -1122,7 +1124,16 @@ AC_SUBST(ROSE_OFP_PATCH_VERSION_NUMBER)
 # CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar:.
 # CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar:.
 # CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
+#
+# OFP version 0.8.2 and antlr 3.2 are the defaults
+#
 CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
+
+if test "x$ofp_minor_version_number" = "x8"; then
+   if test "x$ofp_patch_version_number" = "x3"; then
+      CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.3-complete.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
+   fi
+fi
 
 export CLASSPATH
 AC_SUBST(CLASSPATH)
@@ -1222,8 +1233,25 @@ if test "x$enable_opencl" = "xyes"; then
 fi
 AC_SUBST(ROSE_USE_OPENCL_SUPPORT)
 
+# *******************************************************
+# Option to control building of OpenCL support in EDG 4.0
+# *******************************************************
+
+# TV (05/06/2011): This is part of optional building of OpenCL support in EDG 4.0
+AC_MSG_CHECKING([for building of OpenCL support in EDG 4.0])
+AC_ARG_ENABLE(edg_opencl, AS_HELP_STRING([--enable-edg-opencl], [Build EDG 4.0 with OpenCL support.]), [case "${enableval}" in
+  yes) edg_opencl=true ;;
+  no)  edg_opencl=false ;;
+  *)   edg_opencl=false ;;
+esac])
+AM_CONDITIONAL(ROSE_BUILD_EDG_WITH_OPENCL_SUPPORT, [test x$edg_opencl = xtrue])
+if test x$edg_opencl = xtrue; then
+  AC_MSG_WARN([Add OpenCL specific headers to the include-staging directory.])
+  GENERATE_OPENCL_SPECIFIC_HEADERS
+fi
+
 # *********************************************************************
-# Option to control internal support of PPL (Parma Polyhedron Librairy)
+# Option to control internal support of PPL (Parma Polyhedron Library)
 # *********************************************************************
 
 # TV (05/25/2010): Check for Parma Polyhedral Library (PPL)
@@ -1258,14 +1286,135 @@ AM_CONDITIONAL(
 	[test "x$enable_ppl" = "xyes"])
 if test "x$enable_ppl" = "xyes"; then
 	if test "x$has_ppl_path" = "xyes"; then
-		PPL_LDFLAGS=" -L$ppl_path/lib -lppl"
-		PPL_CPPFLAGS="-I$ppl_path/include"
+		PPL_PATH="$ppl_path"
 		AC_DEFINE([ROSE_USE_PPL], [], [Whether to use Parma Polyhedral Library (PPL) support or not within ROSE])
 	fi
 fi
 AC_SUBST(ROSE_USE_PPL)
-AC_SUBST(PPL_LDFLAGS)
-AC_SUBST(PPL_CPPFLAGS)
+AC_SUBST(PPL_PATH)
+
+# *********************************************************************************
+# Option to control internal support of Cloog (Code generator for Polyhedral Model)
+# *********************************************************************************
+
+AC_ARG_WITH(
+	[cloog],
+	AS_HELP_STRING([--with-cloog@<:@=DIR@:>@], [use Cloog]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
+		exit 1
+	else
+		has_cloog_path="yes"
+		cloog_path="$withval"
+	fi
+	],
+	[has_cloog_path="no"]
+)
+
+AC_ARG_ENABLE(
+	cloog,
+	AS_HELP_STRING(
+		[--enable-cloog],
+		[Support for Cloog]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_CLOOG,
+	[test "x$enable_cloog" = "xyes"])
+if test "x$enable_cloog" = "xyes"; then
+	if test "x$has_cloog_path" = "xyes"; then
+		CLOOG_PATH="$cloog_path"
+		AC_DEFINE([ROSE_USE_CLOOG], [], [Whether to use Cloog support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_CLOOG)
+AC_SUBST(CLOOG_PATH)
+
+# **************************************************************************************
+# Option to control internal support of ScopLib (A classic library for Polyhedral Model)
+# **************************************************************************************
+
+AC_ARG_WITH(
+	[scoplib],
+	AS_HELP_STRING([--with-scoplib@<:@=DIR@:>@], [use ScopLib]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
+		exit 1
+	else
+		has_scoplib_path="yes"
+		scoplib_path="$withval"
+	fi
+	],
+	[has_scoplib_path="no"]
+)
+
+AC_ARG_ENABLE(
+	scoplib,
+	AS_HELP_STRING(
+		[--enable-scoplib],
+		[Support for ScopLib]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_SCOPLIB,
+	[test "x$enable_scoplib" = "xyes"])
+if test "x$enable_scoplib" = "xyes"; then
+	if test "x$has_scoplib_path" = "xyes"; then
+		SCOPLIB_PATH="$scoplib_path"
+		AC_DEFINE([ROSE_USE_SCOPLIB], [], [Whether to use ScopLib support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_SCOPLIB)
+AC_SUBST(SCOPLIB_PATH)
+
+# *************************************************************************************
+# Option to control internal support of Candl (Dependency analysis in Polyhedral Model)
+# *************************************************************************************
+
+AC_ARG_WITH(
+	[candl],
+	AS_HELP_STRING([--with-candl@<:@=DIR@:>@], [use Candl]),
+	[
+	if test "$withval" = "no"; then
+		echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
+		exit 1
+	elif test "$withval" = "yes"; then
+		echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
+		exit 1
+	else
+		has_candl_path="yes"
+		candl_path="$withval"
+	fi
+	],
+	[has_candl_path="no"]
+)
+
+AC_ARG_ENABLE(
+	candl,
+	AS_HELP_STRING(
+		[--enable-candl],
+		[Support for Candl]
+	)
+)
+AM_CONDITIONAL(
+	ROSE_USE_CANDL,
+	[test "x$enable_candl" = "xyes"])
+if test "x$enable_candl" = "xyes"; then
+	if test "x$has_candl_path" = "xyes"; then
+		CANDL_PATH="$candl_path"
+		AC_DEFINE([ROSE_USE_CANDL], [], [Whether to use Candl support or not within ROSE])
+	fi
+fi
+AC_SUBST(ROSE_USE_CANDL)
+AC_SUBST(CANDL_PATH)
 
 # *****************************************************************
 #            Option to define DOXYGEN SUPPORT
@@ -1789,6 +1938,13 @@ AC_CHECK_LIB(gcrypt,gcry_check_version)
 # the ROSE library.
 AC_CHECK_HEADERS(pthread.h)
 
+# Check for the __thread keyword.  This type qualifier creates objects that are thread local.
+AC_MSG_CHECKING([for thread local storage type qualifier])
+AC_COMPILE_IFELSE([struct S {int a, b;}; static __thread struct S x;],
+	[AC_DEFINE(ROSE_THREAD_LOCAL_STORAGE, __thread, [Define to __thread keyword for thread local storage.])
+	 AC_MSG_RESULT([__thread])],
+	[AC_MSG_RESULT([not supported])])
+
 # These headers and types are needed by projects/simulator [matzke 2009-07-02]
 AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
 AC_CHECK_HEADERS([sys/types.h sys/mman.h sys/stat.h sys/uio.h sys/wait.h sys/utsname.h sys/ioctl.h sys/sysinfo.h sys/socket.h])
@@ -1923,6 +2079,7 @@ src/frontend/SageIII/astTokenStream/Makefile
 src/frontend/SageIII/astHiddenTypeAndDeclarationLists/Makefile
 src/frontend/SageIII/astVisualization/Makefile
 src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
+src/frontend/SageIII/astFromString/Makefile
 src/frontend/CxxFrontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
@@ -2166,6 +2323,20 @@ projects/symbolicAnalysisFramework/include/Makefile
 projects/taintcheck/Makefile
 projects/PowerAwareCompiler/Makefile
 projects/traceAnalysis/Makefile
+projects/PolyhedralModel/Makefile
+projects/PolyhedralModel/src/Makefile
+projects/PolyhedralModel/src/maths/Makefile
+projects/PolyhedralModel/src/system/Makefile
+projects/PolyhedralModel/src/misc-test/Makefile
+projects/PolyhedralModel/src/common/Makefile
+projects/PolyhedralModel/src/test-common/Makefile
+projects/PolyhedralModel/src/scoplib/Makefile
+projects/PolyhedralModel/src/rose/Makefile
+projects/PolyhedralModel/src/rose-pragma/Makefile
+projects/PolyhedralModel/src/test-rose-pragma/Makefile
+projects/PolyhedralModel/docs/Makefile
+projects/PolyhedralModel/tests/Makefile
+projects/PolyhedralModel/tests/rose-pragma/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2206,6 +2377,7 @@ tests/CompileTests/Fortran_tests/LANL_POP/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
 tests/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
+tests/CompileTests/CAF2_tests/Makefile
 tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
@@ -2228,6 +2400,7 @@ tests/CompileTests/MicrosoftWindows_tests/Makefile
 tests/CompileTests/nameQualificationAndTypeElaboration_tests/Makefile
 tests/CompileTests/NewEDGInterface_C_tests/Makefile
 tests/CompileTests/CudaTests/Makefile
+tests/CompileTests/OpenClTests/Makefile
 tests/CompileTests/EDG_4_x/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
@@ -2332,9 +2505,6 @@ binaries/samples/Makefile
 
 # DQ (8/12/2010): We want to get permission to distribute these files as test codes.
 # tests/CompileTests/Fortran_tests/LANL_POP/Makefile
-
-# DQ (8/4/2010): Removed this directory
-# tests/CompileTests/CAF_tests/Makefile
 
 # DQ (10/24/2009): We don't need to support EDG 3.10 anymore.
 # src/frontend/CxxFrontend/EDG_3.10/Makefile

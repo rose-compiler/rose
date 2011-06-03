@@ -1,0 +1,44 @@
+!
+! This program tests broadcasting of allocatable array
+!
+	program broadcast_allocatable
+
+	integer :: nprocs, me, i
+	logical :: test_result
+	real :: sum_global, sum_val
+	real, allocatable, dimension(:) :: val, valcopy
+
+	allocate (val(2),valcopy(2))	
+	sum_global = 0
+	val = 0
+	test_result = .true.
+	nprocs = team_size()
+	me = team_rank()
+
+	if (me .eq. 0) then	
+	  val = (/1.0d0, 2.0d0/)
+	end if
+	sum_val = sum(val) * nprocs
+	
+	call team_broadcast(val, 0)
+	valcopy = val
+
+	do i = 0, nprocs - 1
+	  if (me .eq. i) then
+	    val = valcopy
+	  end if
+	  call team_broadcast(val, i)
+	  if (me .eq. 0) then
+	    sum_global = sum_global + sum(val)
+	    val = 0.0d0
+	  end if
+	end do
+
+	if (me .eq. 0) then
+	  if (sum_global .ne. sum_val) test_result = .false.
+	  if (test_result) write (*, '(A)') 'Test passed.'
+	  if (.not. test_result) write (*, '(A)') 'Test failed.'
+	end if
+
+	deallocate(val, valcopy)
+	end program broadcast_allocatable

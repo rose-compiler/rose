@@ -71,7 +71,7 @@ test2003_30.C \
 test2003_31.C \
 test2003_32.C \
 test2003_35.C \
-test2003_36.C \  
+test2003_36.C \
 test2003_37.C \
 test2003_38.C \
 test2004_01.C \

@@ -1,6 +1,10 @@
-foo -> A::foo A0::foo A0::foo B::B::operator bool
+A0::foo ->
+A0::foo ->
 A::A ->
 A::A ->
+A::A1::foo ->
+A::A1_::foo ->
+A::A1__::foo ->
 A::bar -> A::foo
 A::foo ->
 A::foo ->
@@ -15,12 +19,8 @@ A::foo ->
 A::foo ->
 A::foo ->
 A::foo ->
-A0::foo ->
-A0::foo ->
+A::operator bool ->
 B::B::bar -> A::foo
 B::B::foo ->
-A::A1::foo ->
-A::A1_::foo ->
-A::A1__::foo ->
-A::operator bool ->
 B::B::operator bool ->
+foo -> A0::foo A0::foo A::A A::A A::foo B::B::operator bool

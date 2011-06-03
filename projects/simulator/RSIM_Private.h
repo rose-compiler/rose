@@ -14,7 +14,8 @@
     defined(HAVE_LINUX_TYPES_H) && defined(HAVE_LINUX_DIRENT_H) && defined(HAVE_LINUX_UNISTD_H) &&                             \
     defined(HAVE_SYS_TYPES_H) && defined(HAVE_SYS_MMAN_H) && defined(HAVE_SYS_STAT_H) && defined(HAVE_SYS_UIO_H) &&            \
     defined(HAVE_SYS_WAIT_H) && defined(HAVE_SYS_UTSNAME_H) && defined(HAVE_SYS_IOCTL_H) && defined(HAVE_SYS_SYSINFO_H) &&     \
-    defined(HAVE_SYS_SOCKET_H) && defined(HAVE_TERMIOS_H) && defined(HAVE_GRP_H) && defined(HAVE_SYSCALL_H)
+    defined(HAVE_SYS_SOCKET_H) && defined(HAVE_TERMIOS_H) && defined(HAVE_GRP_H) && defined(HAVE_SYSCALL_H) &&                 \
+    defined(ROSE_THREADS_POSIX)
 #  define ROSE_ENABLE_SIMULATOR
 #  include "RSIM_Simulator.h"
 #else

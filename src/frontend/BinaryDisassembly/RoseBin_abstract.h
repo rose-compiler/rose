@@ -36,7 +36,7 @@ class RoseBin_abstract : public AstSimpleProcessing {
     //    RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::none;
   }
   
-  ~RoseBin_abstract() {
+  virtual ~RoseBin_abstract() {
     if (globalNode)
       delete globalNode;
   }

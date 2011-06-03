@@ -1,6 +1,6 @@
 foo ->
-min ->
 getIterator ->
+min ->
 myVector::myVector ->
 myVector::myVector ->
 myVector::operator* ->
