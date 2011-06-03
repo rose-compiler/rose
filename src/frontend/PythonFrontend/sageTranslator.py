@@ -25,6 +25,9 @@ class SageTranslator(ast.NodeVisitor):
     subforest = self.generic_visit(node)
     return sage.buildGlobal(subforest)
 
+  def visit_Num(self, node):
+    return sage.buildLongIntVal(node.n)
+
   def visit_Print(self, node):
     subforest = self.generic_visit(node)
     return sage.buildPrintStmt(subforest)
