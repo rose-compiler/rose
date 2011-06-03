@@ -84,6 +84,7 @@ testDominance_SOURCES = testDominance.C
 testDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 STATIC_TEST_TARGETS += testDominance-A.passed testDominance-B.passed testDominance-C.passed testDominance-D.passed
 EXTRA_DIST += testDominance.conf testDominance-A.ans testDominance-B.ans testDominance-C.ans testDominance-D.ans
+MOSTLYCLEANFILES += testDominance-[A-Z]?*.dot
 testDominance-A.passed: testDominance.conf testDominance
 	@$(RTH_RUN) CMD=testDominance ALGORITHM=A INPUT=buffer2.bin $< $@
 testDominance-B.passed: testDominance.conf testDominance
