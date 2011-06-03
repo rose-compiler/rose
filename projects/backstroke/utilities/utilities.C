@@ -154,6 +154,12 @@ tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> CreateTempVariableForE
 	return make_tuple(tempVarDeclaration, assignment, varRefExpression);
 }
 
+SgExpression* buildAssert(SgExpression* check)
+{
+	string functionName = "assert";
+	return SageBuilder::buildFunctionCallExp(functionName, buildVoidType(), buildExprListExp(check));
+}
+
 
 vector<SgExpression*> findVarReferences(VariableRenaming::VarName var, SgNode* root)
 {
