@@ -9,63 +9,60 @@
 #include "Util.h"
 #include "RsType.h"
 
-class TypeSystem
+struct TypeSystem
 {
-    public:
+        typedef std::set< const RsType*, PointerCompare > NamedTypeContainer;
+        typedef std::vector< RsBasicType >                BasicTypeContainer;
+
         /// Registers all base-types
         TypeSystem();
 
-        /// Frees all RsType* in the types map
-        ~TypeSystem();
-
-
-        /// Add a type to the typesystem
-        /// @param type  pointer to type-info, the object is freed by the TypeSystem
-        /// @return false if type with that name already exists
-        bool registerType(RsType * type);
-
-
-
         /// Returns type-information for a registered type
         /// or NULL if type is unknown
-        RsType * getTypeInfo(const std::string & name);
-
+        const RsType* getTypeInfo(const std::string & name);
 
         /// creates an array with a given base type
-        RsArrayType * getArrayType(RsType* baseType, size_t elemsize);
-        RsArrayType * getArrayType(const std::string& baseTypeName, size_t size);
+        const RsArrayType* getArrayType(const RsType* baseType, size_t elemsize);
+        const RsArrayType* getArrayType(const std::string& baseTypeName, size_t size);
 
+        const RsPointerType* getPointerType(const RsType* baseType, AddressDesc levelOfIndirection);
+        const RsPointerType* getPointerType(const std::string& baseTypeName, AddressDesc levelOfIndirection);
 
-        RsPointerType * getPointerType(RsType * baseType, AddressDesc levelOfIndirection);
-        RsPointerType * getPointerType(const std::string & baseTypeName, AddressDesc levelOfIndirection);
+        const RsPointerType* getPointerType(const RsType* baseType);
+        const RsPointerType* getPointerType(const std::string& baseTypeName);
 
-        RsPointerType * getPointerType(RsType * baseType);
-        RsPointerType * getPointerType(const std::string & baseTypeName);
+        RsClassType& getClassType(const std::string& name, size_t sz = 0, bool uniontype = false);
 
         /// Removes all registered datatypes, and adds the base datatypes
         void clearStatus();
 
-        void print(std::ostream & os) const;
+        void print(std::ostream& os) const;
 
-        typedef std::set<RsType*, PointerCompare > TypeSet;
-        typedef TypeSet::const_iterator const_iterator;
-
-        // const_iterator begin() const { return types.begin(); }
-        // const_iterator end()   const { return types.end();   }
+        NamedTypeContainer::const_iterator begin() const { return types.begin(); }
+        NamedTypeContainer::const_iterator end()   const { return types.end();   }
     protected:
-        typedef std::map<size_t, RsPointerType>     TypeDerivatives;
-        typedef std::map<RsType*, TypeDerivatives>  TypeContainer;
+        typedef std::map<size_t, RsPointerType>           TypeDerivatives;
+        typedef std::map<const RsType*, TypeDerivatives>  TypeContainer;
 
-        typedef std::map<size_t, RsArrayType>       ArrayDimensions;
-        typedef std::map<RsType*, ArrayDimensions>  ArrayDimContainer;
+        typedef std::map<size_t, RsArrayType>             ArrayDimensions;
+        typedef std::map<const RsType*, ArrayDimensions>  ArrayDimContainer;
 
-        TypeSet           types;
-        TypeContainer     ptrTypeMap;
-        ArrayDimContainer arrTypeMap;
+        typedef std::map< std::string, RsClassType >      ClassContainer;
+
+        /// Add a type to the typesystem
+        /// @param type  pointer to type-info, the object is freed by the TypeSystem
+        void registerType(const RsType& t);
+
+        /// adds all base types
+        void registerBaseTypes();
+
+        NamedTypeContainer       types;
+        TypeContainer            ptrTypeMap;
+        ArrayDimContainer        arrTypeMap;
+        ClassContainer           classMap;
+        const BasicTypeContainer basictypes;
 };
 
-std::ostream& operator<< (std::ostream &os, const TypeSystem & m);
-
-
+std::ostream& operator<< (std::ostream& os, const TypeSystem& m);
 
 #endif

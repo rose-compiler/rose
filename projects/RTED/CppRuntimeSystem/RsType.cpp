@@ -13,9 +13,10 @@
 
 RsType& RsType::UnknownType = *(new RsCompoundType( "Unknown", 0 ));
 
-RsType *  RsType::getSubtypeRecursive(size_t offset, size_t size, bool stopAtArray, std::string * navString)
+const RsType*
+RsType::getSubtypeRecursive(size_t offset, size_t size, bool stopAtArray, std::string * navString) const
 {
-    RsType * result = this;
+    const RsType* result = this;
 
     if(navString)
         *navString = getName();
@@ -24,7 +25,7 @@ RsType *  RsType::getSubtypeRecursive(size_t offset, size_t size, bool stopAtArr
     {
         if(stopAtArray)
         {
-            RsArrayType * arr = dynamic_cast<RsArrayType*> (result);
+            const RsArrayType * arr = dynamic_cast<const RsArrayType*>(result);
             if (arr && arr->getBaseType()->getByteSize() == size)
             {
                 int index = arr->arrayIndex(offset);
@@ -48,7 +49,7 @@ RsType *  RsType::getSubtypeRecursive(size_t offset, size_t size, bool stopAtArr
             (*navString) += "." + result->getSubTypeString(subTypeId);
 
         offset -= result->getSubtypeOffset(subTypeId);
-        RsType* subtype = result->getSubtype(subTypeId);
+        const RsType* subtype = result->getSubtype(subTypeId);
 
         if( subtype -> getByteSize() < size )
             break;
@@ -64,12 +65,12 @@ RsType *  RsType::getSubtypeRecursive(size_t offset, size_t size, bool stopAtArr
     return result;
 }
 
-bool  RsType::checkSubtypeRecursive(size_t offset,  RsType* type)
+bool RsType::checkSubtypeRecursive(size_t offset, const RsType* type) const
 {
   //  RuntimeSystem * rs = RuntimeSystem::instance();
   //rs->printMessage("    >>> checkSubtypeRecursive ");
-  RsType * result = this;
-  size_t size = type -> getByteSize();
+  const RsType* result = this;
+  size_t        size = type -> getByteSize();
 
   bool isunion = false;
   unsigned int resultsize = result->getByteSize();
@@ -82,8 +83,8 @@ bool  RsType::checkSubtypeRecursive(size_t offset,  RsType* type)
       return true;
 
     // tps (09/10/09) Handle union type
-    RsClassType* ct_result = dynamic_cast<RsClassType*>( result);
-    if (ct_result && ct_result->getIsUnionType()) isunion=true;
+    const RsClassType* ct_result = dynamic_cast<const RsClassType*>( result);
+    if (ct_result && ct_result->isUnionType()) isunion=true;
 
     int subTypeId = -1;
     std::vector<int> subTypeIdvec;
@@ -108,7 +109,7 @@ bool  RsType::checkSubtypeRecursive(size_t offset,  RsType* type)
       for (; it!=subTypeIdvec.end(); ++it) {
         subTypeId = *it;
         //              addr_type temp_offset = offset- result->getSubtypeOffset(subTypeId);
-        RsType* temp_result =  result->getSubtype(subTypeId);
+        const RsType* temp_result =  result->getSubtype(subTypeId);
         if (temp_result==type)
           break;
       }
@@ -141,13 +142,13 @@ bool RsType::isConsistentWith( const RsType &other ) const
 }
 
 
-std::ostream& operator<< (std::ostream &os, const RsType * m)
+std::ostream& operator<< (std::ostream &os, const RsType* m)
 {
     m->print(os);
     return os;
 }
 
-std::ostream& operator<< (std::ostream &os, const RsType & m)
+std::ostream& operator<< (std::ostream &os, const RsType& m)
 {
     m.print(os);
     return os;
@@ -157,7 +158,7 @@ std::ostream& operator<< (std::ostream &os, const RsType & m)
 // ---------------------------------- RsArrayType ------------------------------------------
 
 
-RsArrayType::RsArrayType(RsType* baseType_, size_t size__)
+RsArrayType::RsArrayType(const RsType* baseType_, size_t size__)
     : RsType(getArrayTypeName(baseType_, size__)),
       baseType(baseType_)
 {
@@ -180,7 +181,7 @@ int RsArrayType::getSubtypeCount() const
     return elementCount;
 }
 
-RsType * RsArrayType::getSubtype(int i) const
+const RsType* RsArrayType::getSubtype(int i) const
 {
     if(i>=0 && i<(int)elementCount)
         return baseType;
@@ -203,7 +204,7 @@ int RsArrayType::getSubtypeIdAt(size_t offset) const
     return offset / baseType->getByteSize();
 }
 
-RsType * RsArrayType::getSubtypeAt ( size_t offset) const
+const RsType* RsArrayType::getSubtypeAt ( size_t offset) const
 {
     if( ! isValidOffset(offset))
         return NULL;
@@ -228,7 +229,7 @@ bool  RsArrayType::isValidOffset(size_t offset) const
     return baseType->isValidOffset(inTypeOffset);
 }
 
-std::string RsArrayType::getArrayTypeName(RsType* basetype, size_t size)
+std::string RsArrayType::getArrayTypeName(const RsType* basetype, size_t size)
 {
     assert(basetype);
 
@@ -307,7 +308,7 @@ RsClassType::RsClassType(const std::string & name, size_t byteSize_, bool isUnio
 }
 
 
-int RsClassType::addMember(const std::string & name, RsType * type, size_t offset)
+int RsClassType::addMember(const std::string & name, const RsType* type, size_t offset)
 {
     assert(type!=NULL); // Tried to register MemberPointer with NULL type
     assert((int)offset != -1);
@@ -323,21 +324,18 @@ int RsClassType::addMember(const std::string & name, RsType * type, size_t offse
       RuntimeSystem::instance()->printMessage(msg.str());
     }
 
-
-    if (members.size() >0)
+    if (members.size() > 0)
     {
-        Member & last = members.back();
+        Member& last = members.back();
         // do not assert if the class is a unionType
         //cerr << " is union type ? : " << isunionType << std::endl;
-        if (isunionType==false) {
-          assert(last.offset + last.type->getByteSize() <= offset);
-        }
+        assert(isunionType || (last.offset + last.type->getByteSize() <= offset));
     }
 
     // tps (09/09/2009) This test does not apply when the SgClassType is a union
     // \pp why not?
     assert(offset + type->getByteSize() <= byteSize);
-    members.push_back(Member(name,type,offset));
+    members.push_back(Member(name, type, offset));
 
     return members.size()-1;
 }
@@ -385,7 +383,7 @@ int RsClassType::getSubtypeCount() const
 }
 
 
-RsType * RsClassType::getSubtype(int i) const
+const RsType* RsClassType::getSubtype(int i) const
 {
     assert(i>=0 && i<(int)members.size());
     return members[i].type;
@@ -452,7 +450,7 @@ std::vector<int> RsClassType::getSubtypeUnionIdAt(size_t offset) const
     return retvalvec;
 }
 
-RsType * RsClassType::getSubtypeAt(size_t offset) const
+const RsType* RsClassType::getSubtypeAt(size_t offset) const
 {
     int id = getSubtypeIdAt(offset);
     if (id==-1)
@@ -514,30 +512,39 @@ bool RsClassType::checkConsistencyWith(const RsType& other) const {
     if( !relaxed )
         return RsType::checkConsistencyWith( other );
 
-    BOOST_FOREACH( Member m, members ) {
-        RsType &type = *(m.type);
+    BOOST_FOREACH( Member m, members )
+    {
+        const RsType& type = *(m.type);
 
         // Range is m.offset..m.offset=m.size
         // if other has 1 known type there, and >= 0 unknown types, check consistency
         // if other has > 1 non-unknown types
         //      my type must be consistent with all of other's types
         // if other has 0 types, offset is illegal, fail
-        RsType *partner = other.getSubtypeAt( m.offset );
+        const RsType* partner = other.getSubtypeAt( m.offset );
 
-        if( !partner )
+        if ( !partner )
             // Other has no type at that offset
+        {
             return false;
-        if( other.getKnownSubtypesOverlappingRange(
-                    m.offset + partner -> getByteSize(),
-                    m.offset + m.type -> getByteSize()) > 0 )
+        }
+
+        const size_t overlaprange = other.getKnownSubtypesOverlappingRange( m.offset + partner->getByteSize(),
+                                                                            m.offset + m.type -> getByteSize()
+                                                                          );
+        if ( overlaprange > 0 )
             // Our single type overlaps multiple other non-unknown types
             // e.g. int[2] overlapping int, char or int, int
+        {
             return false;
+        }
 
         // Our member type is the same width as other's, minus space of unknown
         // type, but it may still be inconsistent (e.g. char[4] vs. int)
-        if( !type.isConsistentWith( *partner ))
+        if ( !type.isConsistentWith(*partner) )
+        {
             return false;
+        }
     }
 
     // we didn't find any inconsistency
@@ -546,14 +553,14 @@ bool RsClassType::checkConsistencyWith(const RsType& other) const {
 
 // ----------------------------------- RsCompoundType-----------------------------------
 
-int RsCompoundType::addMember(const std::string & name, RsType * type, size_t offset) {
+int RsCompoundType::addMember(const std::string & name, const RsType* type, size_t offset) {
     if( this -> byteSize < offset + type -> getByteSize() )
         this -> byteSize += type -> getByteSize();
     return RsClassType::addMember( name, type, offset );
 }
 
-RsType* RsCompoundType::getSubtypeAt( size_t offset ) const {
-    RsType* type = RsClassType::getSubtypeAt( offset );
+const RsType* RsCompoundType::getSubtypeAt( size_t offset ) const {
+    const RsType* type = RsClassType::getSubtypeAt( offset );
 
     return (type != NULL) ? type : &RsType::UnknownType;
 }
@@ -614,46 +621,37 @@ std::string RsBasicType::getDisplayName() const
 
 std::string RsBasicType::readValueAt(Address addr) const
 {
-    if (!rted_isLocal(addr))
-    {
-      return "todo: cannot read non-local address.";
-    }
-
-    // \pp \todo we need to know whether the adress is shared or not
-    std::stringstream       str;
-    MemoryManager *         m = RuntimeSystem::instance()->getMemManager();
-
-    if (! m->isInitialized(addr, getByteSize()))
-      return "Not initialized";
+    std::string          res;
+    const MemoryManager* m = rtedRTS(this)->getMemManager();
 
     switch (type)
     {
-        case SgTypeBool:             str <<  *m->readMemory<bool>(addr);                break;
-        case SgTypeChar:             str <<  *m->readMemory<char>(addr);                break;
-        case SgTypeWchar:            str <<  *m->readMemory<wchar_t>(addr);             break;
-        case SgTypeDouble:           str <<  *m->readMemory<double>(addr);              break;
-        case SgTypeFloat:            str <<  *m->readMemory<float>(addr);               break;
-        case SgTypeInt:              str <<  *m->readMemory<int>(addr);                 break;
-        case SgTypeLong:             str <<  *m->readMemory<long>(addr);                break;
-        case SgTypeLongDouble:       str <<  *m->readMemory<long double>(addr);         break;
-        case SgTypeLongLong:         str <<  *m->readMemory<long long>(addr);           break;
-        case SgTypeShort:            str <<  *m->readMemory<short>(addr);               break;
-        case SgTypeSignedChar:       str <<  *m->readMemory<signed char>(addr);         break;
-        case SgTypeSignedInt:        str <<  *m->readMemory<signed int>(addr);          break;
-        case SgTypeSignedLong:       str <<  *m->readMemory<signed long>(addr);         break;
-        case SgTypeSignedLongLong:   str <<  *m->readMemory<signed long long>(addr);    break;
-        case SgTypeSignedShort:      str <<  *m->readMemory<signed short>(addr);        break;
-        case SgTypeUnsignedChar:     str <<  *m->readMemory<unsigned char>(addr);       break;
-        case SgTypeUnsignedInt:      str <<  *m->readMemory<unsigned int>(addr);        break;
-        case SgTypeUnsignedLong:     str <<  *m->readMemory<unsigned long>(addr);       break;
-        case SgTypeUnsignedLongLong: str <<  *m->readMemory<unsigned long long>(addr);  break;
-        case SgTypeUnsignedShort:    str <<  *m->readMemory<unsigned short>(addr);      break;
-        case SgTypeString:           str <<  *m->readMemory<char*>(addr);               break;
+        case SgTypeBool:             res = m->readMemory<bool>(addr);                break;
+        case SgTypeChar:             res = m->readMemory<char>(addr);                break;
+        case SgTypeWchar:            res = m->readMemory<wchar_t>(addr);             break;
+        case SgTypeDouble:           res = m->readMemory<double>(addr);              break;
+        case SgTypeFloat:            res = m->readMemory<float>(addr);               break;
+        case SgTypeInt:              res = m->readMemory<int>(addr);                 break;
+        case SgTypeLong:             res = m->readMemory<long>(addr);                break;
+        case SgTypeLongDouble:       res = m->readMemory<long double>(addr);         break;
+        case SgTypeLongLong:         res = m->readMemory<long long>(addr);           break;
+        case SgTypeShort:            res = m->readMemory<short>(addr);               break;
+        case SgTypeSignedChar:       res = m->readMemory<signed char>(addr);         break;
+        case SgTypeSignedInt:        res = m->readMemory<signed int>(addr);          break;
+        case SgTypeSignedLong:       res = m->readMemory<signed long>(addr);         break;
+        case SgTypeSignedLongLong:   res = m->readMemory<signed long long>(addr);    break;
+        case SgTypeSignedShort:      res = m->readMemory<signed short>(addr);        break;
+        case SgTypeUnsignedChar:     res = m->readMemory<unsigned char>(addr);       break;
+        case SgTypeUnsignedInt:      res = m->readMemory<unsigned int>(addr);        break;
+        case SgTypeUnsignedLong:     res = m->readMemory<unsigned long>(addr);       break;
+        case SgTypeUnsignedLongLong: res = m->readMemory<unsigned long long>(addr);  break;
+        case SgTypeUnsignedShort:    res = m->readMemory<unsigned short>(addr);      break;
+        case SgTypeString:           res = m->readMemory<char*>(addr);               break;
         default:                     std::cerr << "RsBasicType::readValueAt with unknown type";
                                      assert(false);
     }
 
-    return str.str();
+    return res;
 }
 
 RsBasicType RsBasicType::create(SgType ty)
@@ -700,7 +698,7 @@ RsBasicType RsBasicType::create(SgType ty)
 // ----------------------------------- RsPointerType --------------------------------------
 
 
-RsPointerType::RsPointerType(RsType * baseType_)
+RsPointerType::RsPointerType(const RsType* baseType_)
 : RsBasicType( RsBasicType::create(RsBasicType::SgPointerType) ), baseType(baseType_)
 {}
 
@@ -708,3 +706,5 @@ std::string RsPointerType::getDisplayName() const
 {
     return baseType->getDisplayName() + "*";
 }
+
+const char RsClassType::invalidname[] = "-";

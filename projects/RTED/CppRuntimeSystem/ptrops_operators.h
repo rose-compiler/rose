@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <ostream>
+#include <iostream>
 
 #include "ptrops.h"
 #include "rted_typedefs.h"
@@ -18,14 +19,29 @@ namespace ez
 }
 
 
+inline
+std::ostream& operator<<(std::ostream& s, const Address& obj)
+{
+  const void* addr = obj.local;
+
+  s << addr;
+
+#ifdef WITH_UPC
+  s << " @" << obj.thread_id;
+
+  if (rted_isLocal(obj)) s << " (local)";
+#endif /* WITH_UPC */
+
+  return s;
+}
 
 inline
 bool operator<(const Address& lhs, const Address& rhs)
 {
   return (  lhs.local < rhs.local
-#if WITH_RTED
+#if WITH_UPC
          || (lhs.local == rhs.local && lhs.thread_id < rhs.thread_id)
-#endif /* WITH_RTED */
+#endif /* WITH_UPC */
          );
 }
 
@@ -40,11 +56,11 @@ inline
 bool operator==(const Address& lhs, const Address& rhs)
 {
   return (  lhs.local == rhs.local
-#if WITH_RTED
+#if WITH_UPC
          && (  lhs.local == 0
             || lhs.thread_id == rhs.thread_id
             )
-#endif /* WITH_RTED */
+#endif /* WITH_UPC */
          );
 }
 
@@ -75,6 +91,12 @@ struct FloorDiv
   }
 };
 
+static inline
+std::ostream& operator<<(std::ostream& out, std::pair<long, long> p)
+{
+  return out << "(" << p.first << ", " << p.second << ")";
+}
+
 /// \brief   adds ofs bytes to an address
 /// \details takes into account whether the memory is distributed. the argument
 ///          distributed needs to be false for local memory and shared
@@ -83,21 +105,34 @@ struct FloorDiv
 ///          upc_all_alloc)
 /// \todo    Also, we likely need to take the blocking factor into account.
 static inline
-Address add(Address l, long ofs, bool distributed)
+Address add(Address l, long ofs, long blocksize)
 {
-  ez::unused(distributed);
+  ez::unused(blocksize);
 
 #ifdef WITH_UPC
   typedef FloorDiv<> floordiv;
 
-  if (distributed)
+  // \todo distributed < 0
+  if (blocksize > 0)
   {
+    const std::pair<long, long> blocks = floordiv::div(ofs, blocksize);
     const long                  threadcount = rted_Threads();
-    const long                  adjofs = l.thread_id + ofs;
-    const std::pair<long, long> divres = floordiv::div(adjofs, threadcount);
+    const long                  adjblocks = blocks.first + l.thread_id;
+    const std::pair<long, long> threads = floordiv::div(adjblocks, threadcount);
 
-    l.thread_id = divres.second;
-    ofs = divres.first;
+#if EXTENDEDDBG
+    std::cerr << "addr = " << l << std::endl
+              << "ofs = " << ofs << std::endl
+              << "bs = " << blocksize << std::endl
+              << std::endl
+              << "blocks = " << blocks << std::endl
+              << "threads = " << threadcount << std::endl
+              << "adjblocks = " << adjblocks << std::endl
+              << "threads = " << threads << std::endl;
+#endif /* EXTENDEDDBG */
+
+    l.thread_id = threads.second;
+    ofs = (threads.first * blocksize) + blocks.second;
   }
 #endif /* WITH_UPC */
 
@@ -105,50 +140,15 @@ Address add(Address l, long ofs, bool distributed)
   return l;
 }
 
-/*
-/// \brief   subtracts ofs bytes from the address
-/// \details see comments on add
-static inline
-Address sub(Address l, long ofs, bool distributed)
-{
-  return add(l, -ofs, distributed);
-}
-*/
-
-/// \brief   returns the offset of rhs from lhs (in bytes)
-/// \details see comments on add
-static inline
-long ofs(Address lhs, Address rhs, bool distributed)
-{
-  ez::unused(distributed);
-
-  long ofs = lhs.local - rhs.local;
-
-#ifdef WITH_UPC
-  if (distributed)
-  {
-    ofs *= rted_Threads();
-    ofs += lhs.thread_id - rhs.thread_id;
-  }
-#endif /* WITH_UPC */
-
-  return ofs;
-}
-
+/// \brief variant that adjusts the address for a specified phase within a block
+///        before adding the offset to the address.
 inline
-std::ostream& operator<<(std::ostream& s, const Address& obj)
+Address add(Address l, long ofs, long blocksize, long phase)
 {
-  const void* addr = obj.local;
+   l.local -= phase;
+   ofs += phase;
 
-  s << addr;
-
-#ifdef WITH_UPC
-  s << " @" << obj.thread_id;
-
-  if (rted_isLocal(obj)) s << " (local)";
-#endif /* WITH_UPC */
-
-  return s;
+   return add(l, ofs, blocksize);
 }
 
 inline
@@ -162,5 +162,18 @@ bool isNullAddr(const Address& obj)
 {
   return obj.local == NULL;
 }
+
+#if OBSOLETE_CODE
+/// \brief   subtracts ofs bytes from the address
+/// \details see comments on add
+static inline
+Address sub(Address l, long ofs, bool distributed, int blockofs)
+{
+  return add(l, -ofs, distributed);
+}
+
+/// \note see byte_offset in MemoryManager.cpp
+long ofs(Address lhs, Address rhs, bool distributed);
+#endif /* OBSOLETE_CODE */
 
 #endif /* _PTROPS_OPERATORS_H */

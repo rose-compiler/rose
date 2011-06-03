@@ -23,105 +23,6 @@ class VariablesType;
 class RsType;
 class RsCompoundType;
 
-struct TypeTracker
-{
-  typedef const char*                   LocalPtr;
-  typedef std::map<LocalPtr, RsType*>   TypeData;
-  typedef std::vector<bool>             InitData;
-  typedef Address                       Location;
-
-  enum InitStatus { none, some, all };
-
-  TypeTracker(size_t sz, bool distmem)
-  : size(sz), dist(distmem)
-  {}
-
-  /// resizes memory allocated with realloc
-  virtual void         resize( size_t newsize ) = 0;
-
-  /// returns the types for a location
-  virtual TypeData&    typesof(Location) = 0;
-
-  /// returns the initlist for a location
-  virtual InitData&    initlistof(Location) = 0;
-
-  /// returns the init status of the underlying memory chunks
-  virtual InitStatus   initializationStatus() const = 0;
-
-  /// returns the first thread that owns memory as part of this allocation
-  virtual size_t       baseThread(Location l) const = 0;
-
-  /// copy ctor for polymorphic objects
-  virtual TypeTracker* clone() const = 0;
-
-  size_t getSize() const { return size; }
-
-  /// returns true, iff this == typeid(DistributedStorage)
-  bool distributed() const { return dist; }
-
-  protected:
-    size_t size;
-    bool   dist;
-};
-
-/// \brief represents memory blocks that entirely owned by a thread
-/// \note  such blocks could be accessed by other threads (think upc_alloc)
-struct ThreadStorage : TypeTracker
-{
-  TypeData types;
-  InitData initialized;
-
-  explicit
-  ThreadStorage(size_t sz)
-  : TypeTracker(sz, false), types(), initialized(sz, false)
-  {}
-
-  void assert_local(Location loc);
-  size_t baseThread(Location l) const;
-  TypeData& typesof(Location loc);
-  InitData& initlistof(Location loc);
-  void resize( size_t newsize );
-  InitStatus initializationStatus() const;
-  ThreadStorage* clone() const;
-};
-
-#ifdef WITH_UPC
-
-/// \brief represents memory blocks that are distributed across threads
-struct DistributedStorage : TypeTracker
-{
-  typedef std::vector<InitData> InitDataContainer;
-  typedef std::vector<TypeData> TypeDataContainer;
-
-  const int         nothreads;
-  TypeDataContainer types;
-  InitDataContainer initialized;
-
-  static
-  size_t thread_size(size_t sz, size_t no_threads)
-  {
-    // \pp \todo account for uneven blocksizes
-    return (sz / no_threads) + 1;
-  }
-
-  explicit
-  DistributedStorage(size_t sz)
-  : TypeTracker(sz, true), nothreads(rted_Threads()), types(nothreads),
-    initialized(nothreads, InitData(thread_size(sz, nothreads), false))
-  {}
-
-  void assert_threadno(Location loc);
-  TypeData& typesof(Location loc);
-  InitData& initlistof(Location loc);
-  void resize( size_t );
-  size_t baseThread(Location l) const;
-  InitStatus initializationStatus() const;
-  DistributedStorage* clone() const;
-};
-
-#endif /* WITH_UPC */
-
-
 /**
  * Keeps track of information about memory, such as address, size, and known
  * type information.  It is generally unnecessary for users to handle MemoryType
@@ -129,40 +30,30 @@ struct DistributedStorage : TypeTracker
  *
  * Most uses of the MemoryManager can be handled indirectly via RuntimeSystem.
  */
-class MemoryType
+struct MemoryType
 {
-    public:
-        typedef TypeTracker::Location Location;
-        typedef TypeTracker::LocalPtr LocalPtr;
-        typedef TypeTracker::TypeData TypeData;
-        typedef TypeData::iterator    TiIter;
+        typedef rted_Address                    Location;
+        typedef rted_AllocKind                  AllocKind;
 
-        typedef rted_AllocKind        AllocKind;
+        typedef const char*                     LocalPtr;
+        typedef std::vector<bool>               InitData;
+        typedef std::map<size_t, const RsType*> TypeData;
+        typedef TypeData::iterator              TiIter;
 
-        MemoryType(Location addr, size_t size, AllocKind kind, bool distr, const SourcePosition& pos);
+        enum InitStatus { none, some, all };
 
-        MemoryType(const MemoryType& orig)
-        : startAddress(orig.startAddress), origin(orig.origin),
-          allocPos(orig.allocPos), tracker(orig.tracker->clone())
-        {}
-
-        ~MemoryType()
-        {
-          delete tracker;
-        }
+        MemoryType(Location addr, size_t size, AllocKind kind, long blsz, const SourcePosition& pos);
 
         /// Checks if an address lies in this memory chunk
         bool containsAddress(Location addr) const;
         /// Checks if a memory area is part of this allocation
         bool containsMemArea(Location addr, size_t size) const;
-        /// Checks if this MemoryType overlaps another area
-        bool overlapsMemArea(Location queryAddr, size_t querySize) const;
 
         /// Less operator uses startAdress
-        bool operator< (const MemoryType & other) const;
+        bool operator< (const MemoryType& other) const;
 
         Location               beginAddress() const { return startAddress; }
-        size_t                 getSize()      const { return tracker->getSize(); }
+        size_t                 getSize()      const { return initdata.size(); }
         const SourcePosition & getPos()       const { return allocPos; }
         AllocKind              howCreated()   const { return origin; }
 
@@ -178,7 +69,8 @@ class MemoryType
         bool  isInitialized(Location addr, size_t len) const;
 
         /// Initialized a part of memory
-        void  initialize   (Location addr, size_t len) ;
+        /// returns true, iff the location was not initialized before
+        bool initialize   (Location addr, size_t len) ;
 
         /// Returns "Initialized" "Not initialized" or "Partially initialized"
         /// only for display purposes
@@ -191,12 +83,17 @@ class MemoryType
         void print() const;
 
         template<typename T>
-        const T* readMemory(Location addr) const
+        std::string readMemory(Location addr) const
         {
-            // \pp \todo make fir for upc shared memory reads
-            assert(isInitialized(addr, sizeof(T)));
+            if (isInitialized(addr, sizeof(T))) return "not initialized";
 
-            return static_cast<const T*>(addr);
+            // \pp \todo for upc shared memory reads
+            if (!rted_isLocal(addr)) return "not accessible";
+
+            std::stringstream mem;
+
+            mem << *(reinterpret_cast<const T*>(addr.local));
+            return mem.str();
         }
 
         /// This functions checks and registers typed access to memory
@@ -205,32 +102,40 @@ class MemoryType
         /// and if its later on accessed with a different type, a violation is reported
         /// however it is possible to access the mem-region later with "containing" types
         /// f.e. first access with int-pointer, then with struct pointer, which as as first member an int
-        void registerMemType(Location addr, RsType * type);
+        /// \return true, iff the internal state changed
+        bool registerMemType(Location loc, size_t ofs, const RsType* type);
 
         /**
          * As @see registerMemType, except that memory is not checked.  The type
-         * at @c offset is forced to be @c type.
+         * at offset 0 is forced to be @c type.
          */
-        void forceRegisterMemType(Location addr, RsType* type );
+        void forceRegisterMemType(const RsType* type);
 
         /**
          * As @see registerMemType, except that memory is only checked and
          * merged, i.e. besides merging, no new types will be registered.
          *
-         * @return  @c true @b iff a merge occurred.
+         * @return  @c (true, X) @b iff a merge occurred.
+         *             (X, true) iff there was a state modification
          */
-        bool checkAndMergeMemType(Location addr, RsType * type);
+        std::pair<bool, bool>
+        checkAndMergeMemType(size_t ofs, const RsType* type);
 
+        //! \overload
+        std::pair<bool, bool>
+        checkAndMergeMemType(Location addr, const RsType* type);
 
         /// Returns the RsType, or the CONTAINING ARRAY type which is associated with that offset
         /// to distinguish between nested types (class with has members of other classes)
         /// an additional size parameter is needed
         /// if no TypeInfo is found, null is returned
-        RsType* getTypeAt(Location addr, size_t size);
+        const RsType* getTypeAt(size_t addr, size_t size) const;
 
-        bool isDistributed() const { return tracker->distributed(); }
+        bool isDistributed() const { return blocksize != 0; }
 
-        /// \brief C++ ctors assume that an object is cconstructed on the heap.
+        long blockSize() const { return blocksize; }
+
+        /// \brief C++ ctors assume that an object is constructed on the heap.
         ///        Stack allocated objects straighten this out when their
         ///        initialization is processesed.
         void fixAllocationKind(AllocKind kind)
@@ -243,19 +148,20 @@ class MemoryType
     private:
         typedef std::pair<TiIter,TiIter> TiIterPair;
 
-
-        void insertType(Location offset, RsType * type);
+        void insertType(Location offset, const RsType* type);
 
         Location        startAddress; ///< address where memory chunk starts
-        // size_t          size;         ///< Size of allocation
         AllocKind       origin;       ///< Where the memory is located and how the location was created
         SourcePosition  allocPos;     ///< Position in source file where malloc/new was called
-        TypeTracker*    tracker;      ///< stores for every byte if it was initialized
-                                      ///  keeps track of types used to access memory locations.
+        TypeData        typedata;
+        InitData        initdata;
+        long            blocksize;
 
-        /// Determines all typeinfos which intersect the defined offset-range [from,to)
-        /// "to" is exclusive i.e. typeInfos with startOffset==to are not included
-        TiIterPair getOverlappingTypeInfos(TypeData& tmap, LocalPtr lptr, size_t len);
+        // \brief Determines all typeinfos which intersect the defined offset-range [from,to)
+        //        "to" is exclusive i.e. typeInfos with startOffset==to are not included
+        // \note made static function in cpp file
+        // TiIterPair getOverlappingTypeInfos(TypeData& tmap, size_t startofs, size_t len);
+
 
         /// \brief   Computes an @c RsCompoundType for offset, size pairs for
         ///          which a type could not be found. The compound type will
@@ -266,16 +172,12 @@ class MemoryType
         /// \return  a pointer to the newly constructed @c RsCompoundType. This
         ///          object will be on the heap and callers are responsible for
         ///          deleting it.
-        RsCompoundType* computeCompoundTypeAt(Location addr, size_t size);
-
-        /// if the entry at (iter-1) overlaps with from, use (iter-1)
-        ///   as the start of the range.
-        TiIter adjustPosOnOverlap(TiIter first, TiIter iter, LocalPtr from);
+        const RsCompoundType* computeCompoundTypeAt(size_t ofs, size_t size) const;
 
         friend class MemoryManager;
 };
-std::ostream& operator<< (std::ostream &os, const MemoryType & m);
 
+std::ostream& operator<< (std::ostream& os, const MemoryType& m);
 
 
 /**
@@ -285,42 +187,44 @@ std::ostream& operator<< (std::ostream &os, const MemoryType & m);
  * With the exception of bounds checking via @ref checkIfSameChunk, MemoryManager is
  * expected to be used indirectly, via calls to functions of RuntimeSystem.
  */
-class MemoryManager
+struct MemoryManager
 {
-    public:
         typedef Address Location;
 
-        MemoryManager();
+        MemoryManager()
+        : mem()
+        {}
 
         /// Destructor checks if there are still allocations which are not freed
         ~MemoryManager();
 
         /// \brief  Create a new allocation based on the parameters
         /// \return a pointer to the actual stored object (NULL in case something went wrong)
-        MemoryType* allocateMemory(Location addr, size_t size, MemoryType::AllocKind kind, bool distr, const SourcePosition& pos);
+        MemoryType* allocateMemory(Location addr, size_t size, MemoryType::AllocKind kind, long blocksize, const SourcePosition& pos);
 
         /// Frees allocated memory, throws error when no allocation is managed at this addr
         void freeMemory(Location addr, MemoryType::AllocKind);
-
 
         /// Prints information about all currently allocated memory areas
         void print(std::ostream & os) const;
 
         /// Check if memory region is allocated and initialized
         /// @param size     size=sizeof(DereferencedType)
-        void checkRead  (Location addr, size_t size, RsType * t=NULL);
+        void checkRead (Location addr, size_t size) const;
 
         /// Checks if memory at position can be safely written, i.e. is allocated
         /// if true it marks that memory region as initialized
         /// that means this function should be called on every write!
-        void checkWrite (Location addr, size_t size, RsType * t=NULL);
+        /// returns true if there was a status change
+        bool checkWrite (Location addr, size_t size, const RsType* t = NULL);
 
+        /// \brief returns the allocation region around addr
+        const MemoryType* checkLocation(Location addr, size_t size, RuntimeViolation::Type vioType) const;
 
         /**
          * @return @b true if the memory region containing
          * @c addr @c.. @c addr+size is initialized. */
-        bool  isInitialized(Location addr, size_t size);
-
+        bool  isInitialized(Location addr, size_t size) const;
 
         /// This check is intended to detect array out of bounds
         /// even if the plain memory access is legal (
@@ -332,13 +236,12 @@ class MemoryManager
         ///         otherwise.
         /// There a two kinds of violation: change of allocation chunk
         ///                                 change of "typed-chunk" (see example)
-        bool checkIfSameChunk(Location a1, Location a2, RsType * t);
-        bool checkIfSameChunk(
-                Location a1,
-                Location a2,
-                size_t size,
-                RuntimeViolation::Type violation = RuntimeViolation::POINTER_CHANGED_MEMAREA
-        );
+        bool checkIfSameChunk(Location a1, Location a2, const RsType* t) const;
+        bool checkIfSameChunk( Location a1,
+                               Location a2,
+                               size_t size,
+                               RuntimeViolation::Type violation = RuntimeViolation::POINTER_CHANGED_MEMAREA
+                             ) const;
 
         /// Reports a violation for all non freed memory locations
         /// call this function at end of program
@@ -350,52 +253,45 @@ class MemoryManager
 
         /// Returns the MemoryType which stores the allocation information which is
         /// registered for this addr, or NULL if nothing is registered
-        MemoryType * getMemoryType(Location addr);
+        MemoryType*       getMemoryType(Location addr);
+        const MemoryType* getMemoryType(Location addr) const;
 
         /// Returns mem-area which contains a given area, or NULL if nothing found
-        MemoryType * findContainingMem(Location addr, size_t size) ;
+        MemoryType*       findContainingMem(Location addr, size_t size) ;
+        const MemoryType* findContainingMem(Location addr, size_t size) const;
 
         /// Returns mem-area which overlaps with given area, or NULL if nothing found
-        bool existOverlappingMem(Location addr, size_t size) ;
-
-
-        typedef std::map<Location, MemoryType> MemoryTypeSet;
-        const  MemoryTypeSet & getAllocationSet() const { return mem; }
-
-
-        template<typename T>
-        const T* readMemory(Location address)
-        {
-            // \pp \todo read only when address is local, otherwise
-            //           return NULL
-            checkRead(address, sizeof(T));
-            return reinterpret_cast<const T*>(address.local);
-        }
-
-
-    private:
-
-        /**
-         * Checks if memory region is allocated
-         * @param addr  startAddress
-         * @param size  size of chunk
-         * @param t     if t != NULL, a accessMemWithType is called
-         *              (which registers type and if there is already a type registered checks for consistency)
-         * @param vio   the violation which is thrown if the chunk is not allocated
-         *              (should be INVALID_READ or INVALID_WRITE)
-         * @return the allocated memory chunk
-         */
-        MemoryType* checkAccess(Location addr, size_t size, RsType * t, RuntimeViolation::Type vio);
+        bool existOverlappingMem(Location addr, size_t size, long blocksize) const;
 
         /// Queries the map for a potential matching memory area
         /// finds the memory region with next lower or equal address
-        MemoryType * findPossibleMemMatch(Location addr);
+        MemoryType*       findPossibleMemMatch(Location addr);
+        const MemoryType* findPossibleMemMatch(Location addr) const;
 
-        void failNotSameChunk( RsType*, RsType*, Location, Location, MemoryType*, MemoryType*, RuntimeViolation::Type violation);
+        typedef std::map<Location, MemoryType> MemoryTypeSet;
+        const MemoryTypeSet& getAllocationSet() const { return mem; }
+
+        template<typename T>
+        std::string readMemory(Location addr) const
+        {
+            const MemoryType* mt = findContainingMem(addr, sizeof(T));
+
+            if (!mt) return "unknown location";
+
+            return mt->readMemory<T>(addr);
+        }
+
+    private:
+        void failNotSameChunk( const RsType& type1,
+                               const RsType& type2,
+                               Location addr1,
+                               Location addr2,
+                               const MemoryType& mem,
+                               RuntimeViolation::Type violation
+                             ) const;
 
 
         MemoryTypeSet mem;
-
 
         friend class CStdLibManager;
 };

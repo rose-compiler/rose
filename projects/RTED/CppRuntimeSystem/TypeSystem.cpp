@@ -1,51 +1,95 @@
 #include <cassert>
 #include <iostream>
+#include <algorithm>
 
 #include "TypeSystem.h"
 #include "CppRuntimeSystem.h"
 
-TypeSystem::TypeSystem()
+static
+TypeSystem::BasicTypeContainer makeBasicTypes()
 {
-    //call clear, to register all base types
-    clearStatus();
+  TypeSystem::BasicTypeContainer container;
+  const size_t                   szBasicTypes = RsBasicType::SgUnknownType - RsBasicType::SgTypeBool;
+
+  container.reserve(szBasicTypes);
+  for (RsBasicType::SgType i = RsBasicType::SgTypeBool; i < RsBasicType::SgUnknownType; ++i)
+  {
+    container.push_back(RsBasicType::create(i));
+  }
+
+  return container;
 }
 
-TypeSystem::~TypeSystem()
+TypeSystem::TypeSystem()
+: types(), ptrTypeMap(), arrTypeMap(), basictypes(makeBasicTypes())
 {
-    for(TypeSet::iterator i = types.begin(); i != types.end(); ++i)
-        delete *i;
+    // register all base types
+    registerBaseTypes();
+}
+
+struct TypeRegistrar
+{
+  typedef void (TypeSystem::* Memfun)(const RsType&);
+
+  TypeSystem& ts;
+  Memfun      fn;
+
+  TypeRegistrar(TypeSystem& typesys, Memfun f)
+  : ts(typesys), fn(f)
+  {}
+
+  void operator()(const RsBasicType& t)
+  {
+    (ts.*fn)(t);
+  }
+};
+
+
+void TypeSystem::registerBaseTypes()
+{
+  std::for_each( basictypes.begin(),
+                 basictypes.end(),
+                 TypeRegistrar(*this, &TypeSystem::registerType)
+                 // std::bind1st(std::mem_fun(), this)
+               );
 }
 
 void TypeSystem::clearStatus()
 {
     types.clear();
-
-    for (RsBasicType::SgType i = RsBasicType::SgTypeBool; i < RsBasicType::SgUnknownType; ++i)
-    {
-        const bool success = registerType( new RsBasicType(RsBasicType::create(i)) );
-        assert(success);
-    }
+    classMap.clear();
+    registerBaseTypes();
 }
 
 
-bool TypeSystem::registerType(RsType * t)
+void TypeSystem::registerType(const RsType& t)
 {
-    std::pair<TypeSet::iterator, bool> res;
-    res =types.insert(t);
+    std::pair<NamedTypeContainer::iterator, bool> res = types.insert(&t);
 
-    if(!res.second) {
-        std::cerr << "Error: tried to register type " << t->getName() << " twice!" << std::endl;
+    if (!res.second)
+    {
+        std::cerr << "Error: tried to register type " << t.getName() << " twice!" << std::endl;
         assert( false );
     }
-
-    return res.second;
 }
 
-RsType * TypeSystem::getTypeInfo(const std::string & name)
+RsClassType& TypeSystem::getClassType(const std::string& name, size_t sz /*= 0*/, bool uniontype /*= false*/)
 {
+  RsClassType& entry = classMap[name];
 
-    //TODO remove SgPointerType and SgArrayType from BasicTypes
-    if(name == "SgPointerType" || name == "SgArrayType" )
+  if (entry.invalid())
+  {
+    entry = RsClassType(name, sz, uniontype);
+    registerType(entry);
+  }
+
+  return entry;
+}
+
+const RsType* TypeSystem::getTypeInfo(const std::string& name)
+{
+    // TODO remove SgPointerType and SgArrayType from BasicTypes
+    if (name == "SgPointerType" || name == "SgArrayType")
     {
       if ( diagnostics::warning() )
       {
@@ -58,26 +102,24 @@ RsType * TypeSystem::getTypeInfo(const std::string & name)
       }
     }
 
-    InvalidType comparisonObject(name);
+    InvalidType                  comparisonObject(name);
+    NamedTypeContainer::iterator i = types.find(&comparisonObject);
 
-    TypeSet::iterator i = types.find(&comparisonObject);
-    if(i == types.end())
-        return NULL;
-    else
-        return *i;
+    if (i == types.end()) return NULL;
+    return *i;
 }
 
 
-RsArrayType * TypeSystem::getArrayType(const std::string& name, size_t size)
+const RsArrayType* TypeSystem::getArrayType(const std::string& name, size_t size)
 {
-    RsType * bt = getTypeInfo(name);
+    const RsType* bt = getTypeInfo(name);
 
     assert( bt );
-    return getArrayType(bt,size);
+    return getArrayType(bt, size);
 }
 
 
-RsArrayType* TypeSystem::getArrayType(RsType* bt, size_t size)
+const RsArrayType* TypeSystem::getArrayType(const RsType* bt, size_t size)
 {
     ArrayDimensions& m = arrTypeMap[bt];
     RsArrayType&     t = m[size];
@@ -92,7 +134,7 @@ RsArrayType* TypeSystem::getArrayType(RsType* bt, size_t size)
 }
 
 
-RsPointerType* TypeSystem::getPointerType(RsType* bt, AddressDesc desc)
+const RsPointerType* TypeSystem::getPointerType(const RsType* bt, AddressDesc desc)
 {
     assert( rted_isPtr(desc) >= 1 );
     assert( bt != NULL );
@@ -116,18 +158,18 @@ RsPointerType* TypeSystem::getPointerType(RsType* bt, AddressDesc desc)
     return &t;
 }
 
-RsPointerType * TypeSystem::getPointerType(const std::string & name, AddressDesc desc)
+const RsPointerType* TypeSystem::getPointerType(const std::string& name, AddressDesc desc)
 {
-    RsType * bt = getTypeInfo(name);
+    const RsType* bt = getTypeInfo(name);
     return getPointerType(bt, desc);
 }
 
-RsPointerType * TypeSystem::getPointerType(RsType * bt)
+const RsPointerType* TypeSystem::getPointerType(const RsType* bt)
 {
     return getPointerType(bt, rted_ptr());
 }
 
-RsPointerType * TypeSystem::getPointerType(const std::string & name)
+const RsPointerType* TypeSystem::getPointerType(const std::string & name)
 {
     return getPointerType(getTypeInfo(name));
 }
@@ -136,7 +178,7 @@ RsPointerType * TypeSystem::getPointerType(const std::string & name)
 void TypeSystem::print(std::ostream & os) const
 {
     os << "--------------  All Registered Types -----------------------" << std::endl;
-    for(TypeSet::iterator it = types.begin(); it != types.end(); ++it)
+    for (NamedTypeContainer::iterator it = types.begin(); it != types.end(); ++it)
         os << *it;
 
     os << "------------------------------------------------------------" << std::endl;

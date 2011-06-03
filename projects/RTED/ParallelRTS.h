@@ -25,13 +25,13 @@ void rted_ProcessMsg(void);
 void snd_FreeMemory(rted_Address addr, rted_AllocKind freeKind, rted_SourceInfo si);
 
 /// \brief shares information about non-local heap allocations
-void snd_CreateHeapPtr(rted_TypeDesc, rted_Address, rted_Address, rted_AddressDesc, size_t, size_t, rted_AllocKind, const char*, rted_SourceInfo);
+void snd_AllocMem(rted_TypeDesc, rted_Address, rted_Address, long, size_t, rted_AllocKind, const char*, rted_SourceInfo);
 
 /// \brief shares information about variable initializations
-void snd_InitVariable(rted_TypeDesc, rted_Address, rted_Address, rted_AddressDesc, size_t, int, const char*, rted_SourceInfo);
+void snd_InitVariable(rted_TypeDesc, rted_Address, rted_Address, size_t, int, const char*, rted_SourceInfo);
 
 /// \brief shares information about pointer movements
-void snd_MovePointer(rted_TypeDesc, rted_Address, rted_Address, rted_AddressDesc, const char*, rted_SourceInfo);
+void snd_MovePointer(rted_TypeDesc, rted_Address, rted_Address, const char*, rted_SourceInfo);
 
 /// \brief initializes the runtime system
 void rted_UpcAllInitialize(void);
@@ -53,21 +53,21 @@ void snd_FreeMemory(rted_Address r, rted_AllocKind a, rted_SourceInfo s)
 }
 
 static inline
-void snd_CreateHeapPtr(rted_TypeDesc td, rted_Address addr, rted_Address haddr, rted_AddressDesc hdesc, size_t sz, size_t mallocsz, rted_AllocKind ak, const char* cn, rted_SourceInfo si)
+void snd_AllocMem(rted_TypeDesc td, rted_Address addr, rted_Address haddr, long blocksz, size_t mallocsz, rted_AllocKind ak, const char* cn, rted_SourceInfo si)
 {
-  UNUSEDARG(td), UNUSEDARG(addr), UNUSEDARG(haddr), UNUSEDARG(hdesc), UNUSEDARG(sz), UNUSEDARG(mallocsz), UNUSEDARG(ak), UNUSEDARG(cn), UNUSEDARG(si);
+  UNUSEDARG(td), UNUSEDARG(addr), UNUSEDARG(haddr), UNUSEDARG(blocksz), UNUSEDARG(mallocsz), UNUSEDARG(ak), UNUSEDARG(cn), UNUSEDARG(si);
 }
 
 static inline
-void snd_InitVariable(rted_TypeDesc td, rted_Address addr, rted_Address haddr, rted_AddressDesc hdesc, size_t sz, int pm, const char* cn, rted_SourceInfo si)
+void snd_InitVariable(rted_TypeDesc td, rted_Address addr, rted_Address haddr, size_t sz, int pm, const char* cn, rted_SourceInfo si)
 {
-  UNUSEDARG(td), UNUSEDARG(addr), UNUSEDARG(haddr), UNUSEDARG(hdesc), UNUSEDARG(sz), UNUSEDARG(pm), UNUSEDARG(cn), UNUSEDARG(si);
+  UNUSEDARG(td), UNUSEDARG(addr), UNUSEDARG(haddr), UNUSEDARG(sz), UNUSEDARG(pm), UNUSEDARG(cn), UNUSEDARG(si);
 }
 
 static inline
-void snd_MovePointer(rted_TypeDesc td, rted_Address addr, rted_Address haddr, rted_AddressDesc hdesc, const char* cn, rted_SourceInfo si)
+void snd_MovePointer(rted_TypeDesc td, rted_Address addr, rted_Address haddr, const char* cn, rted_SourceInfo si)
 {
-  UNUSEDARG(td), UNUSEDARG(addr), UNUSEDARG(haddr), UNUSEDARG(hdesc), UNUSEDARG(cn), UNUSEDARG(si);
+  UNUSEDARG(td), UNUSEDARG(addr), UNUSEDARG(haddr), UNUSEDARG(cn), UNUSEDARG(si);
 }
 
 /// \note even w/o UPC this function is needed b/c it will be the first function executed in main

@@ -3,16 +3,11 @@
 
 #include "rose.h"
 
-bool RTEDDEBUG();
-
-/* -----------------------------------------------------------
- * tps : 6March 2009: This class adds transformations
- * so that runtime errors are caught at runtime before they happen
- * -----------------------------------------------------------*/
-struct RtedSymbols : AstSimpleProcessing {
-  SgFunctionSymbol*   roseCreateHeapArr;
-  SgFunctionSymbol*   roseCreateHeapPtr;
-  SgFunctionSymbol*   roseAccessHeap;
+struct RtedSymbols
+{
+  SgFunctionSymbol*   roseCreateArray;
+  SgFunctionSymbol*   roseAllocMem;
+  SgFunctionSymbol*   roseAccessArray;
   SgFunctionSymbol*   roseCheckpoint;
   SgFunctionSymbol*   roseFunctionCall;
   SgFunctionSymbol*   roseAssertFunctionSignature;
@@ -43,15 +38,15 @@ struct RtedSymbols : AstSimpleProcessing {
 
   SgEnumDeclaration*  roseAllocKind;
 
-  SgType*             roseTypeDesc;
-  SgType*             roseAddressDesc;
-  SgType*             roseSourceInfo;
+  SgClassType*        roseTypeDesc;
+  SgClassType*        roseAddressDesc;
+  SgClassType*        roseSourceInfo;
   SgTypedefType*      size_t_member;
 
   RtedSymbols()
-  : roseCreateHeapArr(NULL),
-    roseCreateHeapPtr(NULL),
-    roseAccessHeap(NULL),
+  : roseCreateArray(NULL),
+    roseAllocMem(NULL),
+    roseAccessArray(NULL),
     roseCheckpoint(NULL),
     roseFunctionCall(NULL),
     roseAssertFunctionSignature(NULL),
@@ -87,8 +82,7 @@ struct RtedSymbols : AstSimpleProcessing {
     size_t_member(NULL)
   {}
 
-  // Traverse all nodes and check properties
-  virtual void visit(SgNode* n) ;
+  void initialize(SgGlobal& n);
 
   static const std::string prefix;
 };

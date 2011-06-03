@@ -106,6 +106,79 @@ bool isLibFunctionRequiringArgCheck(const std::string& name)
          );
 }
 
+namespace
+{
+  struct IsIntType
+  {
+    const SgType* res;
+
+    IsIntType()
+    : res(NULL)
+    {}
+
+    template <class SageNode>
+    void skip(const SageNode& n) { res = n.get_base_type(); }
+
+    void found(const SgType& n) { res = &n; }
+
+    void handle(const SgNode&)                { ROSE_ASSERT(false); }
+
+    void handle(const SgType&)                { /* not an int */ }
+
+    void handle(const SgTypeChar& n)          { found(n); }
+    void handle(const SgTypeSignedChar& n)    { found(n); }
+    void handle(const SgTypeUnsignedChar& n)  { found(n); }
+    void handle(const SgTypeShort& n)         { found(n); }
+    void handle(const SgTypeSignedShort& n)   { found(n); }
+    void handle(const SgTypeUnsignedShort& n) { found(n); }
+    void handle(const SgTypeInt& n)           { found(n); }
+    void handle(const SgTypeSignedInt& n)     { found(n); }
+    void handle(const SgTypeUnsignedInt& n)   { found(n); }
+    void handle(const SgTypeLong& n)          { found(n); }
+    void handle(const SgTypeSignedLong& n)    { found(n); }
+    void handle(const SgTypeUnsignedLong& n)  { found(n); }
+
+    void handle(const SgModifierType& n)      { skip(n); }
+    void handle(const SgTypedefType& n)       { skip(n); }
+
+    operator const SgType*() { return res; }
+  };
+};
+
+static
+bool isIntType(const SgType* n)
+{
+  const SgType* curr = NULL;
+  const SgType* next = n;
+
+  do
+  {
+    curr = next;
+    next = ez::visitSgNode(IsIntType(), curr);
+  } while (next && next != curr);
+
+  return (next != NULL);
+}
+
+static
+bool isFunctionCallReturningInt(SgExpression* exp)
+{
+  SgFunctionCallExp* funcall = isSgFunctionCallExp(exp);
+
+  return (funcall && isIntType(funcall->get_type()));
+}
+
+SgFunctionCallExp* RtedTransformation::convertIntToString(SgExpression* i)
+{
+  ROSE_ASSERT(symbols.roseConvertIntToString);
+
+  SgFunctionRefExp*  memRef_r = buildFunctionRefExp(symbols.roseConvertIntToString);
+  SgExprListExp*     arg_list = buildExprListExp();
+
+  appendExpression(arg_list, i);
+  return buildFunctionCallExp(memRef_r, arg_list);
+}
+
 void RtedTransformation::insertFuncCall(RtedArguments& args)
 {
   // fixed arguments
@@ -154,6 +227,7 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
   //     dimIsTwo is newly introduced and is true when the original code had
   //       dimFuncCall = 2.
   //     Subsequently, dimIsTwo replaces all occurances of (dimFuncCall == 2).
+  // \pp why do we need dimIsTwo anyways, the arguments seem to be not used in the backend
   const bool                          dimIsTwo = (dimFuncCall == 2) || isStringModifyingFunctionCall(args.f_name);
   SgExprListExp*                      vararg_list = buildExprListExp();
 
@@ -162,14 +236,13 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
 
   for (; it != rose_args.end(); ++it)
   {
-     // \pp deep copy... I wonder who frees the memory
-     //     if not the complete expression is needed,
-     //     as e.g. in the unary branch?
      SgExpression* exp = deepCopy(*it);
 
      // ************ unary operation *******************************
      if (isSgUnaryOp(exp))
      {
+        // \pp why are unary operations skipped?
+        // \pp \memleak as exp is no longer referenced
         exp = isSgUnaryOp(exp)->get_operand();
      }
 
@@ -287,54 +360,52 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
            }
 
            ROSE_ASSERT(dimIsTwo);
-           ROSE_ASSERT(symbols.roseConvertIntToString);
 
-           SgFunctionRefExp*  memRef_r2 = buildFunctionRefExp(symbols.roseConvertIntToString);
-           SgExprListExp*     arg_list2 = buildExprListExp();
-
-           appendExpression(arg_list2, var);
-           SgFunctionCallExp* funcCallExp2 = buildFunctionCallExp(memRef_r2, arg_list2);
-
-           appendExpression(vararg_list, funcCallExp2);
+           appendExpression(vararg_list, convertIntToString(var));
            cerr << " Created Function call  convertToString" << endl;
         }
      }
      // --------- this is not a varRefExp ----
+     else if (isSgStringVal(exp))
+     {
+        string theString = isSgStringVal(exp)->get_value();
+
+        appendExpression(vararg_list, buildStringVal(theString + "\0"));
+
+        if (dimIsTwo)
+        {
+           size_t        sizeString = theString.size() + 1; // add the '\0' to it
+           string        sizeStringStr = RoseBin_support::ToString(sizeString);
+           SgExpression* numberToString = buildStringVal(sizeStringStr);
+
+           appendExpression(vararg_list, numberToString);
+        }
+     }
+     else if (isFunctionCallReturningInt(exp))
+     {
+       appendExpression(vararg_list, convertIntToString(exp));
+
+       if (dimIsTwo)
+       {
+         appendExpression(vararg_list, buildStringVal("-1"));
+       }
+     }
      else
      {
-        // if it is already a string, dont add extra quotes
-        cerr << " isNotSgVarRefExp exp : " << exp->class_name() << "   " << exp->unparseToString() << endl;
-        if (isSgStringVal(exp))
+        // default create a string
+        string        theString = exp->unparseToString();
+        SgExpression* stringExp = buildStringVal(theString + "\0");
+
+        appendExpression(vararg_list, stringExp);
+
+        if (dimIsTwo)
         {
-           string theString = isSgStringVal(exp)->get_value();
+          // \pp why is this needed
+          size_t sizeString = theString.size();
+          string sizeStringStr = RoseBin_support::ToString(sizeString);
+          SgExpression* numberToString = buildStringVal(sizeStringStr);
 
-           appendExpression(vararg_list, buildStringVal(theString + "\0"));
-
-           if (dimIsTwo)
-           {
-              size_t        sizeString = theString.size() + 1; // add the '\0' to it
-              string        sizeStringStr = RoseBin_support::ToString(sizeString);
-              SgExpression* numberToString = buildStringVal(sizeStringStr);
-
-              appendExpression(vararg_list, numberToString);
-           }
-        }
-        else
-        {
-           // default create a string
-           string        theString = exp->unparseToString();
-           SgExpression* stringExp = buildStringVal(theString + "\0");
-
-           appendExpression(vararg_list, stringExp);
-
-           if (dimIsTwo)
-           {
-             size_t sizeString = theString.size();
-             string sizeStringStr = RoseBin_support::ToString(sizeString);
-             SgExpression* numberToString = buildStringVal(sizeStringStr);
-
-             appendExpression(vararg_list, numberToString);
-           }
+          appendExpression(vararg_list, numberToString);
         }
      }
   }
@@ -510,23 +581,31 @@ getExpressionLeftOfAssignmentFromChildOnRight(SgFunctionCallExp* n) {
 
 static
 std::string
-getMangledNameOfExpression(SgExpression* expr) {
+getMangledNameOfExpression(SgExpression* expr)
+{
   string manglName;
   // look for varRef in the expr and return its mangled name
   const SgNodePtrList& var_refs = NodeQuery::querySubTree(expr,V_SgVarRefExp);
-  if (var_refs.size()==0) {
+
+  if (var_refs.size()==0)
+  {
     // there should be at least one var ref
     cerr << " getMangledNameOfExpression: varRef on left hand side not found : " << expr->unparseToString() << endl;
-  } else if (var_refs.size()==1) {
+  }
+  else if (var_refs.size()==1)
+  {
     // correct, found on var ref
     SgVarRefExp* varRef = isSgVarRefExp(*(var_refs.begin()));
     ROSE_ASSERT(varRef && varRef->get_symbol()->get_declaration());
     manglName = varRef->get_symbol()->get_declaration()->get_mangled_name();
     cerr << " getMangledNameOfExpression: found varRef: " << manglName << endl;
-  } else if (var_refs.size()>1) {
+  }
+  else if (var_refs.size()>1)
+  {
     // error
     cerr << " getMangledNameOfExpression: Too many varRefs on left hand side : " << var_refs.size() << endl;
   }
+
   return manglName;
 }
 
@@ -715,11 +794,6 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
   //           This is to avoid false positives on functions with the same name
   //           but declared within a namespace.
   bool handled = !callee.memberCall;
-
-      if (callee.name == "operator<<")
-      {
-        std::cerr << "YZX" << std::endl;
-      }
 
   if (handled)
   {

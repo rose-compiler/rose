@@ -22,7 +22,7 @@ class StackManager
         ~StackManager() {}
 
 
-        void addVariable(VariablesType * var, bool distributed);
+        void addVariable(VariablesType * var, long blocksize);
 
         /// Each variable is associated with a scope, use this function to create a new scope
         /// @param name  string description of scope, may be function name or "for-loop" ...
@@ -43,7 +43,7 @@ class StackManager
 
 
         /// Returns variable at given memory location, or NULL if no var found
-        VariablesType * getVariable(Location);
+        const VariablesType* getVariable(Location) const;
 
         /// Returns Variable by mangledName (which is unique)
         /// much slower thant the version with address!, does linear search in stack
@@ -64,7 +64,7 @@ class StackManager
         struct ScopeInfo
         {
             ScopeInfo( const std::string & _name, int index)
-                : name(_name), stackIndex(index)
+            : name(_name), stackIndex(index)
             {}
 
             std::string name;        /// description of scope, either function-name or something like "for-loop"

@@ -26,24 +26,22 @@ class VariablesType
         VariablesType( Address address,
                        const std::string & name,
                        const std::string & mangledName,
-                       RsType * type
+                       const RsType* type
                      );
-
-        ~VariablesType();
 
         const std::string & getName()        const  { return name;        }
         const std::string & getMangledName() const  { return mangledName; }
-        RsType *            getType()        const  { return type;        }
+        const RsType*       getType()        const  { return type;        }
         Location            getAddress()     const  { return address; }
         size_t              getSize()        const;
 
         /// returns the allocation information for this var
-        MemoryType *        getAllocation()  const;
+        const MemoryType*   getAllocation()  const;
 
         void print(std::ostream & os) const;
 
         /// If this variable is registered as a pointer the PointerInfo is return, else NULL
-        PointerInfo * getPointerInfo() const ;
+        const PointerInfo* getPointerInfo() const;
 
     private:
         /// address of this variable in memory
@@ -56,7 +54,7 @@ class VariablesType
         std::string mangledName;
 
         /// string with class name of rose-type
-        RsType * type;
+        const RsType* type;
 };
 
 

@@ -24,6 +24,12 @@ struct RtedArray
     SgExpression*              size;
     std::vector<SgExpression*> indices;
 
+    RtedArray()
+    : initName(NULL), surroundingStatement(NULL), allocKind(akUndefined), size(0), indices()
+    {
+      // \todo remove constructor and use insert for adding elements to the map
+    }
+
     RtedArray ( SgInitializedName* init,
                 SgStatement* stmt,
                 AllocKind _allocKind,
@@ -34,8 +40,6 @@ struct RtedArray
       ROSE_ASSERT(initName && surroundingStatement && (allocKind != akUndefined));
       ROSE_ASSERT((allocKind == akStack) || size);
     }
-
-    virtual ~RtedArray() {}
 
     std::vector<SgExpression*>&       getIndices()       { return indices; }
     const std::vector<SgExpression*>& getIndices() const { return indices; }
@@ -56,9 +60,6 @@ struct RtedArray
 
       return res;
     }
-
-  private:
-    RtedArray();
 };
 
 

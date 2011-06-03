@@ -13,6 +13,8 @@
 #include "CppRuntimeSystem/rted_iface_structs.h"
 #include "CppRuntimeSystem/rted_typedefs.h"
 
+enum { RTEDDEBUG = 1 };
+
 //
 // convenience and debug functions
 //
@@ -22,9 +24,6 @@ SgScopeStatement* get_scope(SgInitializedName* initname)
 {
   return initname ? initname->get_scope() : NULL;
 }
-
-/// \brief returns whether a name belongs to rted (i.e., has prefix "rted_")
-bool isRtedDecl(const std::string& name);
 
 /// \brief returns true if func points to the main function of a
 ///        C, C++, or UPC program.
@@ -123,11 +122,26 @@ SgType* skip_Typedefs( SgType* type );
 /// \brief skips all references and modifiers on top
 SgType* skip_TopLevelTypes( SgType* type );
 
+/// skips potential typedefs and references and returns the array underneath
+SgReferenceType* isUsableAsSgReferenceType( SgType* type );
+
+/// skips potential modifiers and returns the reference
+SgArrayType* isUsableAsSgArrayType( SgType* type );
+
+/// \brief skips a pointer type and derivatives (typedefs and modifiers if they
+///        belong to a pointer type)
+// SgType* skip_PointerLevel(SgType* t);
+
+/// finds a pointer types under top level types (such as modifiers, references)
+SgPointerType* discover_PointerType(SgType* t);
+
 /// \brief checks if varRef is part of stmt
+/// \deprecated
 /// \todo replace with isAncestorOf
 bool traverseAllChildrenAndFind(SgExpression* varRef, SgStatement* stmt);
 
 /// \brief checks if initName is part of stmt
+/// \deprecated
 /// \todo replace with isAncestorOf
 bool traverseAllChildrenAndFind(SgInitializedName* initName, SgStatement* stmt);
 
@@ -138,8 +152,9 @@ bool traverseAllChildrenAndFind(SgInitializedName* initName, SgStatement* stmt);
 ///         conversion to a SgBasicBlock node.
 SgBasicBlock& requiresParentIsBasicBlock(SgStatement& stmt);
 
-/// \brief returns true if type is a UPC distributed array type
-bool isUpcDistributedArray(const SgType* t);
+/// \brief returns the UPC blocksize of types
+///        if the type is not a upc shared type the returned blocksize is 0.
+long upcBlocksize(const SgType* n);
 
 /// appends the classname
 void appendClassName( SgExprListExp* arg_list, SgType* type );
@@ -221,8 +236,8 @@ private:
    // VARIABLES ------------------------------------------------------------
    // ------------------------ array ------------------------------------
    /// The array of callArray calls that need to be inserted
-   std::map<SgVarRefExp*, RtedArray*>       create_array_define_varRef_multiArray;
-   std::map<SgPntrArrRefExp*, RtedArray*>   create_array_access_call;
+   std::map<SgVarRefExp*, RtedArray>        create_array_define_varRef_multiArray;
+   std::map<SgPntrArrRefExp*, RtedArray>    create_array_access_call;
 
    /// remember variables that were used to create an array. These cant be reused for array usage calls
    std::vector<SgVarRefExp*>                variablesUsedForArray;
@@ -239,7 +254,7 @@ public:
    /// the following stores all variables that are created (and used e.g. in functions)
    /// We need to store the name, type and intialized value
    /// We need to store the variables that are being accessed
-   std::map<SgInitializedName*, RtedArray*> create_array_define_varRef_multiArray_stack;
+   std::map<SgInitializedName*, RtedArray>  create_array_define_varRef_multiArray_stack;
    std::vector<SgVarRefExp*>                variable_access_varref;
    std::vector<SgInitializedName*>          variable_declarations;
    std::vector<SgFunctionDefinition*>       function_definitions;
@@ -320,12 +335,6 @@ public:
    bool isthereAnotherDerefOpBetweenCurrentAndAssign(SgExpression* exp );
 
 public:
-   /**
-    * @return @c SgPointerType if @c type is a pointer type, reference to pointer
-    * type or typedef whose base type is a pointer type, and @c null otherwise.
-    */
-   SgArrayType* isUsableAsSgArrayType( SgType* type );
-   SgReferenceType* isUsableAsSgReferenceType( SgType* type );
    bool isInInstrumentedFile( SgNode* n );
    void visit_isArraySgAssignOp(SgAssignOp* const);
 
@@ -342,9 +351,10 @@ private:
 
    // ********************* Deep copy classes in headers into source **********
    SgClassDeclaration* instrumentClassDeclarationIntoTopOfAllSourceFiles(SgProject* project, SgClassDeclaration* classDecl);
-   bool hasPrivateDataMembers(SgClassDeclaration* cd_copy);
+
+   /// (temporarily) disabled
    void moveupPreprocessingInfo(SgProject* project);
-   void insertNamespaceIntoSourceFile(SgSourceFile* sf);
+
    //typedef std::map<SgSourceFile*, std::pair < SgNamespaceDeclarationStatement*,
    //                                    SgNamespaceDeclarationStatement* > > SourceFileRoseNMType;
    //std::vector<std::string> classesInRTEDNamespace;
@@ -421,24 +431,23 @@ public:
    void visit_isArrayPntrArrRefExp(SgPntrArrRefExp* const n);
    void visit_isSgScopeStatement(SgScopeStatement* const n);
 
-   void addPaddingToAllocatedMemory(SgStatement* stmt,  RtedArray* array);
+   void addPaddingToAllocatedMemory(SgStatement* stmt, const RtedArray& array);
 
    // Function that inserts call to array : runtimeSystem->callArray
-   void insertArrayCreateCall(SgVarRefExp* n, RtedArray* value);
-   void insertArrayCreateCall(SgInitializedName* initName,  RtedArray* value);
-   void insertArrayCreateCall(SgStatement* stmt, SgInitializedName* const initName, SgExpression* const srcexp, RtedArray* const value);
-   SgStatement* buildArrayCreateCall(SgInitializedName* initName, SgExpression* src_exp, RtedArray* array, SgStatement* stmt);
+   void insertArrayCreateCall(const RtedArray& value, SgVarRefExp* n);
+   void insertArrayCreateCall(const RtedArray& value);
+   void insertArrayCreateCall(SgExpression* const srcexp, const RtedArray& value);
+   SgStatement* buildArrayCreateCall(SgExpression* const src_exp, const RtedArray& array, SgStatement* const stmt);
 
-   void insertArrayAccessCall(SgPntrArrRefExp* arrayExp, RtedArray* value);
-   void insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefExp* arrayExp, RtedArray* array);
+   void insertArrayAccessCall(SgPntrArrRefExp* arrayExp, const RtedArray& value);
+   void insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefExp* arrayExp, const RtedArray& array);
 
-   std::pair<SgInitializedName*,SgVarRefExp*> getRightOfDot(SgDotExp* dot , std::string str, SgVarRefExp* varRef);
-   std::pair<SgInitializedName*,SgVarRefExp*> getRightOfDotStar(SgDotStarOp* dot , std::string str, SgVarRefExp* varRef);
-   std::pair<SgInitializedName*,SgVarRefExp*> getRightOfArrow(SgArrowExp* arrow , std::string str, SgVarRefExp* varRef);
-   std::pair<SgInitializedName*,SgVarRefExp*> getRightOfArrowStar(SgArrowStarOp* arrowstar, std::string str, SgVarRefExp* varRef);
-   std::pair<SgInitializedName*,SgVarRefExp*> getPlusPlusOp(SgPlusPlusOp* plus ,std::string str, SgVarRefExp* varRef);
-   std::pair<SgInitializedName*,SgVarRefExp*> getMinusMinusOp(SgMinusMinusOp* minus ,std::string str, SgVarRefExp* varRef);
-   std::pair<SgInitializedName*,SgVarRefExp*> getRightOfPointerDeref(SgPointerDerefExp* dot, std::string str, SgVarRefExp* varRef);
+   //~ std::pair<SgInitializedName*,SgVarRefExp*> getRightOfDotStar(SgDotStarOp* dot , std::string str, SgVarRefExp* varRef);
+   //~ std::pair<SgInitializedName*,SgVarRefExp*> getRightOfArrow(SgArrowExp* arrow , std::string str, SgVarRefExp* varRef);
+   //~ std::pair<SgInitializedName*,SgVarRefExp*> getRightOfArrowStar(SgArrowStarOp* arrowstar, std::string str, SgVarRefExp* varRef);
+   //~ std::pair<SgInitializedName*,SgVarRefExp*> getPlusPlusOp(SgPlusPlusOp* plus ,std::string str, SgVarRefExp* varRef);
+   //~ std::pair<SgInitializedName*,SgVarRefExp*> getMinusMinusOp(SgMinusMinusOp* minus ,std::string str, SgVarRefExp* varRef);
+   //~ std::pair<SgInitializedName*,SgVarRefExp*> getRightOfPointerDeref(SgPointerDerefExp* dot, std::string str, SgVarRefExp* varRef);
 
    bool isVarRefInCreateArray(SgInitializedName* search);
    void insertFuncCall(RtedArguments& args);
@@ -451,6 +460,11 @@ public:
    /// even if the memory was readable, ensure we stayed within array bounds.
    void insert_pointer_change( SgExpression* op );
 private:
+
+   /// \brief converts an expression yielding an integer to a char*
+   /// \note  used to pass unstructured arguments to the runtime-system
+   SgFunctionCallExp* convertIntToString(SgExpression* i);
+
    // simple scope handling
    void bracketWithScopeEnterExit( SgFunctionDefinition* fndef );
    void bracketWithScopeEnterExit( SgStatement* stmt_or_block, Sg_File_Info* exit_file_info );
@@ -550,17 +564,19 @@ public:
    {}
 
 
-   // analyse file and apply necessary (call) transformations
+   /// \brief analyse file and apply necessary (call) transformations
    void transform(SgProject* project, std::set<std::string> &rtedfiles);
 
-   // Run frontend and return project
+   /// \brief Run frontend and return project
    SgProject* parse(int argc, char** argv);
-   void loadFunctionSymbols(SgProject* project);
+
+   /// \brief Looks up RTED symbols in the given source file (needed for transformations)
+   void loadFunctionSymbols(SgSourceFile& n);
 
    SgAggregateInitializer* mkTypeInformation(SgType* type, bool resolve_class_names, bool array_to_pointer);
 
    /// \brief appends the array dimensions to the argument list
-   void appendDimensions(SgExprListExp* arg_list, RtedArray*);
+   void appendDimensions(SgExprListExp* arg_list, const RtedArray&);
 
    /// \brief appends the array dimensions to the argument list if needed
    ///        (i.e., rce is a RtedClassArrayElement)
@@ -603,9 +619,11 @@ public:
    void visit_isClassDefinition(SgClassDefinition* const cdef);
 
    void executeTransformations();
-   void insertNamespaceIntoSourceFile(  SgProject* project, std::vector<SgClassDeclaration*> &traverseClasses);
+   void insertNamespaceIntoSourceFile(SgSourceFile* sf);
+   void insertNamespaceIntoSourceFile(SgProject* project);
+   // void insertNamespaceIntoSourceFile(SgProject* project, std::vector<SgClassDeclaration*>&);
 
-   void populateDimensions( RtedArray* array, SgInitializedName* init, SgArrayType* type );
+   void populateDimensions( RtedArray& array, SgInitializedName* init, SgArrayType* type );
    void transformIfMain(SgFunctionDefinition* const);
 
    //

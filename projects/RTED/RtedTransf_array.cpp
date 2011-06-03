@@ -19,8 +19,7 @@ using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
-static
-inline
+static inline
 void ROSE_ASSERT_MSG(bool b, const std::string& msg)
 {
   if (!b)
@@ -39,11 +38,46 @@ struct InitNameComp
   : obj(iname)
   {}
 
-  bool operator()(const std::map<SgVarRefExp*, RtedArray*>::value_type& v) const
+  bool operator()(const std::map<SgVarRefExp*, RtedArray>::value_type& v) const
   {
-    return v.second->initName == obj;
+    return v.second.initName == obj;
   }
 };
+
+
+static
+void appendUpcBlocksize(SgExprListExp* arg_list, SgType* arrtype)
+{
+  //               == -2 ... distributed with max blocking (i.e., shared [*] )
+  //               == -1 ... block size omitted ( same as blocksize = 1)
+  //               ==  0 ... non-distributed (indefinite block size)
+  long               blocksize = upcBlocksize(arrtype);
+
+  if (blocksize == -1 /* default blocksize */)
+  {
+    blocksize = 1;
+  }
+
+  // -2 ... max blocking (blocking factor calculated at runtime)
+  //  0 ... non-distributed
+  // >0 ... blocking factor
+  ROSE_ASSERT(blocksize >= 0 || blocksize == -2);
+
+  appendExpression(arg_list, buildLongIntVal(blocksize));
+}
+
+static
+void appendUpcBlocksize(SgExprListExp* arg_list, SgInitializedName* initName)
+{
+  appendUpcBlocksize(arg_list, initName->get_type());
+}
+
+static
+void appendUpcBlocksize(SgExprListExp* arg_list, const RtedArray& arr)
+{
+  appendUpcBlocksize(arg_list, arr.initName);
+}
+
 
 
 /* -----------------------------------------------------------
@@ -54,8 +88,8 @@ bool RtedTransformation::isVarRefInCreateArray(SgInitializedName* search)
   if (create_array_define_varRef_multiArray_stack.find(search) != create_array_define_varRef_multiArray_stack.end())
     return true;
 
-  std::map<SgVarRefExp*, RtedArray*>::iterator aa = create_array_define_varRef_multiArray.begin();
-  std::map<SgVarRefExp*, RtedArray*>::iterator zz = create_array_define_varRef_multiArray.end();
+  std::map<SgVarRefExp*, RtedArray>::iterator aa = create_array_define_varRef_multiArray.begin();
+  std::map<SgVarRefExp*, RtedArray>::iterator zz = create_array_define_varRef_multiArray.end();
 
   return std::find_if(aa, zz, InitNameComp(search)) != zz;
 }
@@ -63,31 +97,22 @@ bool RtedTransformation::isVarRefInCreateArray(SgInitializedName* search)
 /* -----------------------------------------------------------
  * Perform Transformation: insertArrayCreateCall
  * -----------------------------------------------------------*/
-void RtedTransformation::insertArrayCreateCall(SgVarRefExp* n, RtedArray* value)
+void RtedTransformation::insertArrayCreateCall(const RtedArray& arr, SgVarRefExp* n)
 {
-   ROSE_ASSERT(n && value);
+   ROSE_ASSERT(n);
 
-   SgInitializedName* initName = n->get_symbol()->get_declaration();
-   ROSE_ASSERT(initName);
-
-   SgStatement*       stmt = value->surroundingStatement;
-   ROSE_ASSERT(stmt);
-
-   // \pp \todo check why srcexp can be w/o parent
+   // \pp \todo check why n can be w/o parent
    SgExpression*      srcexp = n->get_parent() ? getExprBelowAssignment(n) : n;
 
-   insertArrayCreateCall(stmt, initName, srcexp, value);
+   insertArrayCreateCall(srcexp, arr);
 }
 
 
-void RtedTransformation::insertArrayCreateCall(SgInitializedName* initName, RtedArray* value) {
-   ROSE_ASSERT(initName && value);
+void RtedTransformation::insertArrayCreateCall(const RtedArray& arr)
+{
+   SgVarRefExp* var_ref = genVarRef(arr.initName);
 
-   SgVarRefExp* var_ref = genVarRef(initName);
-   SgStatement* stmt = value->surroundingStatement;
-   ROSE_ASSERT(stmt);
-
-   insertArrayCreateCall(stmt, initName, var_ref, value);
+   insertArrayCreateCall(var_ref, arr);
 }
 
 // \pp \todo add to SageBuilder
@@ -139,14 +164,15 @@ RtedTransformation::mkAllocKind(AllocKind ak) const
 
 
 SgStatement*
-RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgExpression* src_exp, RtedArray* array, SgStatement* stmt)
+RtedTransformation::buildArrayCreateCall(SgExpression* const src_exp, const RtedArray& array, SgStatement* const stmt)
 {
-   ROSE_ASSERT(initName && src_exp && array && stmt);
+   ROSE_ASSERT(src_exp && stmt);
 
    std::cerr << "@@@ " << src_exp->unparseToString() << std::endl;
 
    // build the function call:  rs.createHeapArr(...);
    //                        or rs.createHeapPtr(...);
+   SgInitializedName* initName = array.initName;
    SgExprListExp*     arg_list = buildExprListExp();
 
    // the type of the node
@@ -154,14 +180,14 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgExpressi
 
    // the underlying type, after skipping modifiers (shall we also skip typedefs?)
    SgType*            under_type = skip_TopLevelTypes(src_type);
-   const bool         isCreateHeapArr = (under_type->class_name() == "SgArrayType");
+   const bool         isCreateArray = (under_type->class_name() == "SgArrayType");
 
    // what kind of types do we get?
-   std::cerr << typeid(under_type).name() << "  " << under_type->class_name() << std::endl;
-   ROSE_ASSERT(isCreateHeapArr || under_type->class_name() == "SgPointerType");
+   // std::cerr << typeid(under_type).name() << "  " << under_type->class_name() << std::endl;
+   ROSE_ASSERT(isCreateArray || under_type->class_name() == "SgPointerType");
 
    // if we have an array, then it has to be on the stack
-   ROSE_ASSERT(!isCreateHeapArr || array->allocKind == akStack);
+   ROSE_ASSERT(!isCreateArray || array.allocKind == akStack);
 
    SgScopeStatement*  scope = get_scope(initName);
 
@@ -172,13 +198,13 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgExpressi
    SgFunctionSymbol*  rted_fun = NULL;
 
    // target specific parameters
-   if (isCreateHeapArr)
+   if (isCreateArray)
    {
+     // Is this array distributed across threads?
+     appendUpcBlocksize( arg_list, array );
+
      // Is this array initialized?  int x[] = { 1, 2, 3 };
      appendBool( arg_list, (initName->get_initializer() != NULL) );
-
-     // Is this array distributed across threads?
-     appendBool( arg_list, isUpcDistributedArray(type) );
 
      // Dimension info
      appendDimensions(arg_list, array);
@@ -189,20 +215,27 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgExpressi
      // mangeled name
      appendExpression(arg_list, buildStringVal(initName->get_mangled_name().str()));
 
-     rted_fun = symbols.roseCreateHeapArr;
+     rted_fun = symbols.roseCreateArray;
    }
    else
    {
-     ROSE_ASSERT(array->size);
-     SgExpression*      size = buildCastExp(array->size, buildUnsignedLongType());
+     // \pp \todo not sure whether finding the first pointer type is sufficient
+     //           for pointer assignments to variables having arbitrary types.
+     SgPointerType* ptrtype = discover_PointerType(type);
+
+     // get the blocksize of the allocation?
+     appendUpcBlocksize( arg_list, ptrtype->get_base_type() );
+
+     ROSE_ASSERT(array.size);
+     SgExpression*      size = buildCastExp(array.size, buildUnsignedLongType());
 
      appendExpression(arg_list, size);
 
      // track whether heap memory was allocated via malloc or new, to ensure
      // that free/delete matches
-     appendExpression(arg_list, mkAllocKind(array->allocKind));
+     appendExpression(arg_list, mkAllocKind(array.allocKind));
 
-     rted_fun = symbols.roseCreateHeapPtr;
+     rted_fun = symbols.roseAllocMem;
    }
 
    appendClassName(arg_list, type);
@@ -215,21 +248,20 @@ RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, SgExpressi
    return exprStmt;
 }
 
-void RtedTransformation::insertArrayCreateCall( SgStatement* stmt,
-                                                SgInitializedName* const initName,
-                                                SgExpression* const srcexp,
-                                                RtedArray* const array
-                                              )
+void RtedTransformation::insertArrayCreateCall( SgExpression* const srcexp, const RtedArray& array )
 {
-   ROSE_ASSERT(stmt && srcexp && initName && array);
+   ROSE_ASSERT(srcexp);
+
+   SgStatement*               stmt = array.surroundingStatement;
+   SgInitializedName* const   initName = array.initName;
 
    // Skipping extern arrays because they will be handled in the defining
    //   translation unit.
    // \pp \todo Maybe we should check that there really is one...
    if (isGlobalExternVariable(stmt)) return;
 
-   SgStatement*         insloc = stmt;
-   SgScopeStatement*    scope = stmt->get_scope();
+   SgStatement*               insloc = stmt;
+   SgScopeStatement*          scope = stmt->get_scope();
    ROSE_ASSERT(scope);
 
    // what if there is an array creation within a ClassDefinition
@@ -239,14 +271,14 @@ void RtedTransformation::insertArrayCreateCall( SgStatement* stmt,
        ROSE_ASSERT(decl);
        stmt = isSgVariableDeclaration(decl->get_parent());
        if (!stmt) {
-         cerr << " Error . stmt is unknown : " << decl->get_parent()->class_name() << endl;
+         std::cerr << " Error . stmt is unknown : " << decl->get_parent()->class_name() << std::endl;
          ROSE_ASSERT( false );
        }
        scope = scope->get_scope();
        insloc = stmt;
        // We want to insert the stmt before this classdefinition, if its still in a valid block
-       cerr << " ....... Found ClassDefinition Scope. New Scope is : " << scope->class_name() << "  stmt:"
-            << stmt->class_name() << endl;
+       std::cerr << " ....... Found ClassDefinition Scope. New Scope is : " << scope->class_name() << "  stmt:"
+            << stmt->class_name() << std::endl;
    }
    // what if there is an array creation in a global scope
    else if (isSgGlobal(scope)) {
@@ -258,10 +290,10 @@ void RtedTransformation::insertArrayCreateCall( SgStatement* stmt,
    // \pp \todo handle variables defined in namespace
 
    if (isSgIfStmt(scope)) {
-       SgStatement* exprStmt = buildArrayCreateCall(initName, srcexp, array, stmt);
+       SgStatement* exprStmt = buildArrayCreateCall(srcexp, array, stmt);
        ROSE_ASSERT(exprStmt);
        // get the two bodies of the ifstmt and prepend to them
-       cerr << "If Statment : inserting createHeap" << endl;
+       std::cerr << "If Statment : inserting createHeap" << std::endl;
        SgStatement* trueb = isSgIfStmt(scope)->get_true_body();
        SgStatement* falseb = isSgIfStmt(scope)->get_false_body();
        bool partOfTrue = traverseAllChildrenAndFind(srcexp, trueb);
@@ -289,33 +321,23 @@ void RtedTransformation::insertArrayCreateCall( SgStatement* stmt,
              falseb = bb;
          }
          prependStatement(exprStmt, isSgScopeStatement(falseb));
-       } else if (partOfCondition) {
-         // \pp \todo why do we modify the false branch, if it was a condition?
-         // \pp \note this branch looks dead b/c partOfCondition is tested before
-         ROSE_ASSERT(false);
-
-         // create false statement, this is sometimes needed
-         SgBasicBlock* bb = buildBasicBlock();
-         bb->set_parent(isSgIfStmt(scope));
-         isSgIfStmt(scope)->set_false_body(bb);
-         prependStatement(exprStmt, isSgScopeStatement(bb));
        }
    } else if (isSgBasicBlock(scope)) {
-       SgStatement* exprStmt = buildArrayCreateCall(initName, srcexp, array, stmt);
+       SgStatement* exprStmt = buildArrayCreateCall(srcexp, array, stmt);
 
        insertStatementAfter(insloc, exprStmt);
 
        // insert in sequence
        if (insloc == globalsInitLoc) globalsInitLoc = exprStmt;
 
-       string empty_comment = "";
+       std::string empty_comment = "";
        attachComment(exprStmt, empty_comment, PreprocessingInfo::before);
-       string comment = "RS : Create Array Variable, paramaters : (name, manglname, typr, basetype, address, sizeof(type), array size, fromMalloc, filename, linenr, linenrTransformed, dimension info ...)";
+       std::string comment = "RS : Create Array Variable, paramaters : (name, manglname, typr, basetype, address, sizeof(type), array size, fromMalloc, filename, linenr, linenrTransformed, dimension info ...)";
        attachComment(exprStmt, comment, PreprocessingInfo::before);
   } else {
       const std::string    name = initName->get_mangled_name().str();
 
-      cerr << "RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << endl;
+      std::cerr << "RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << std::endl;
       ROSE_ASSERT(isSgNamespaceDefinitionStatement(scope));
   }
 
@@ -323,21 +345,18 @@ void RtedTransformation::insertArrayCreateCall( SgStatement* stmt,
    // for detecting other bugs such as not null terminated strings
    // therefore we call a function that appends code to the
    // original program to add padding different from '\0'
-   if (array->allocKind != akStack)
+   if (array.allocKind != akStack)
       addPaddingToAllocatedMemory(stmt, array);
 }
 
 /* -----------------------------------------------------------
  * Perform Transformation: insertArrayCreateAccessCall
  * -----------------------------------------------------------*/
-void RtedTransformation::insertArrayAccessCall(SgPntrArrRefExp* arrayExp, RtedArray* value)
+void RtedTransformation::insertArrayAccessCall(SgPntrArrRefExp* arrayExp, const RtedArray& value)
 {
-   ROSE_ASSERT( arrayExp && value );
+   ROSE_ASSERT( arrayExp );
 
-   SgStatement* stmt = value->surroundingStatement;
-   ROSE_ASSERT( stmt );
-
-   insertArrayAccessCall(stmt, arrayExp, value);
+   insertArrayAccessCall(value.surroundingStatement, arrayExp, value);
 }
 
 
@@ -354,15 +373,42 @@ struct ReadWriteContextFinder
   {}
 
   void Read()  { res.first |= RtedTransformation::Read; }
-  void Write() { res.first |= RtedTransformation::Write; }
+  void Write() { /*res.first |= RtedTransformation::Write;*/ }
 
-  void handle(const SgNode&) { assert(false); }
+  void handle(const SgNode& n)
+  {
+    std::cerr << typeid(n).name() << std::endl;
+    assert(false);
+  }
+
+  // int x = arr[3];
+  void handle(const SgInitializedName& n) { Read(); }
 
   // if not a write in statement context, its a read
+  // \pp this is not necessarily the case
+  //     consider:
+  //       int a[2][2];
+  //       a[2] + 3;  /* no effect */
+  //     the expression has no effect (unless in an upc_forall context)
   void handle(const SgStatement&) { Read(); }
 
+  // forwarding function
+  void handle_statement(const SgStatement& n) { handle(n); }
+
+  // \pp \quickfix see comment in handle(const SgStatement&)
+  void handle(const SgUpcForAllStatement& n)
+  {
+    if (n.get_affinity() != child)
+    {
+      handle_statement(n);
+    }
+  }
+
   // continue looking
-  void handle(const SgExpression& n) { res.second = n.get_parent(); }
+  void handle(const SgExpression& n)
+  {
+    res.second = &n;
+  }
 
   void handle(const SgAssignOp& n)
   {
@@ -394,14 +440,16 @@ struct ReadWriteContextFinder
   void handle(const SgRshiftAssignOp& n)  { handle_short_cut_operators(n); }
   void handle(const SgXorAssignOp& n)     { handle_short_cut_operators(n); }
 
-  void handle(const SgPntrArrRefExp& n) { /* \pp why empty? */ }
+  // when there is an SgPntrArrRefExp, the first SgPntrArrRefExp encountered
+  //   will only be bounds checked (no read/write)
+  void handle(const SgPntrArrRefExp& n)   { }
 
   void handle(const SgDotExp& n)
   {
     if (n.get_lhs_operand() != child)
     {
       // recurse
-      res.second = n.get_parent();
+      res.second = &n;
     }
     else
     {
@@ -426,7 +474,7 @@ int read_write_context(const SgExpression* node)
   return res.first;
 }
 
-void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefExp* arrRefExp, RtedArray* array)
+void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefExp* arrRefExp, const RtedArray& array)
 {
   SgScopeStatement* scope = stmt->get_scope();
   ROSE_ASSERT(scope);
@@ -448,7 +496,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefEx
   // for contiguous array, base is at &array[0] whether on heap or on stack
   SgPntrArrRefExp*  array_base = deepCopy(arrRefExp);
 
-  array_base -> set_rhs_operand(buildIntVal(0));  // \pp \todo leaks memory
+  array_base -> set_rhs_operand(buildIntVal(0));  // \pp \todo \memleak
 
   SgExprListExp*    arg_list = buildExprListExp();
 
@@ -457,27 +505,30 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefEx
   appendExpression(arg_list, buildIntVal(read_write_mask));
   appendFileInfo(arg_list, stmt);
 
-  ROSE_ASSERT(symbols.roseAccessHeap);
+  ROSE_ASSERT(symbols.roseAccessArray);
   insertCheck( ilBefore,
                stmt,
-               symbols.roseAccessHeap,
+               symbols.roseAccessArray,
                arg_list,
                "RS : Access Array Variable, paramaters : (name, dim 1 location, dim 2 location, read_write_mask, filename, linenr, linenrTransformed, part of error message)"
               );
 }
 
-void RtedTransformation::populateDimensions(RtedArray* array, SgInitializedName* init, SgArrayType* type_) {
-   std::vector<SgExpression*>& indices = array -> getIndices();
+void RtedTransformation::populateDimensions(RtedArray& array, SgInitializedName* init, SgArrayType* type_)
+{
+   ROSE_ASSERT(init && type_);
+
+   std::vector<SgExpression*>& indices = array.getIndices();
 
    bool implicit_index = false;
    SgType* type = type_;
-   while (isSgArrayType(type)) {
-      SgExpression* index = isSgArrayType(type) -> get_index();
+   while (SgArrayType* arrtype = isSgArrayType(type)) {
+      SgExpression* index = arrtype -> get_index();
       if (index)
          indices.push_back(index);
       else
          implicit_index = true;
-      type = isSgArrayType(type) -> get_base_type();
+      type = arrtype -> get_base_type();
    }
 
    // handle implicit first dimension for array initializers
@@ -538,19 +589,19 @@ void RtedTransformation::visit_isSgPointerDerefExp(SgPointerDerefExp* const n)
       if (left == varRef || left == NULL)
       {
          variable_access_pointerderef[n] = varRef;
-         cerr << "$$$ DotExp: " << dotExp << "   arrowExp: " << arrowExp << endl;
-         cerr << "  &&& Adding : " << varRef->unparseToString() << endl;
+         std::cerr << "$$$ DotExp: " << dotExp << "   arrowExp: " << arrowExp << std::endl;
+         std::cerr << "  &&& Adding : " << varRef->unparseToString() << std::endl;
       }
       else
       {
-         cerr << "$$$ Found a SgPointerDerefExp  but not adding to list. " << endl;
-         cerr << "  $$$ DotExp: " << dotExp << "   arrowExp: " << arrowExp << endl;
-         cerr << "  $$$ left: " << left->unparseToString() << "   varRef: " << varRef->unparseToString() << endl;
+         std::cerr << "$$$ Found a SgPointerDerefExp  but not adding to list. " << std::endl;
+         std::cerr << "  $$$ DotExp: " << dotExp << "   arrowExp: " << arrowExp << std::endl;
+         std::cerr << "  $$$ left: " << left->unparseToString() << "   varRef: " << varRef->unparseToString() << std::endl;
       }
    }
 
    if (vars.size() > 1) {
-      cerr << "Warning : We added more than one SgVarRefExp to this map for SgPointerDerefExp. This might be a problem" << endl;
+      std::cerr << "Warning : We added more than one SgVarRefExp to this map for SgPointerDerefExp. This might be a problem" << std::endl;
       //exit(1);
    }
 
@@ -561,10 +612,10 @@ void RtedTransformation::visit_isSgPointerDerefExp(SgPointerDerefExp* const n)
       SgThisExp* varRef = isSgThisExp(*it2);
       ROSE_ASSERT(varRef);
       variable_access_arrowthisexp[n] = varRef;
-      cerr << " &&& Adding : " << varRef->unparseToString() << endl;
+      std::cerr << " &&& Adding : " << varRef->unparseToString() << std::endl;
    }
    if (vars2.size() > 1) {
-      cerr << "Warning : We added more than one SgThisExp to this map for SgArrowExp. This might be a problem" << endl;
+      std::cerr << "Warning : We added more than one SgThisExp to this map for SgArrowExp. This might be a problem" << std::endl;
       //exit(1);
    }
 #endif
@@ -586,15 +637,15 @@ void RtedTransformation::visit_isSgArrowExp(SgArrowExp* const n)
       SgExpression* left = n->get_lhs_operand();
       if (left == varRef) {
          variable_access_arrowexp[n] = varRef;
-         cerr << " &&& Adding : " << varRef->unparseToString() << endl;
+         std::cerr << " &&& Adding : " << varRef->unparseToString() << std::endl;
       } else {
-         cerr << " &&& Not adding varRef because on right hand side of -> :" << varRef->unparseToString() << endl;
-         cerr << "   &&& left : " << left->unparseToString() << "  varRef: " << varRef << "  left:" << left << endl;
+         std::cerr << " &&& Not adding varRef because on right hand side of -> :" << varRef->unparseToString() << std::endl;
+         std::cerr << "   &&& left : " << left->unparseToString() << "  varRef: " << varRef << "  left:" << left << std::endl;
       }
    }
 
    if (vars.size() > 1) {
-      cerr << "Warning : We added more than one SgVarRefExp to this map for SgArrowExp. This might be a problem" << endl;
+      std::cerr << "Warning : We added more than one SgVarRefExp to this map for SgArrowExp. This might be a problem" << std::endl;
       //exit(1);
    }
 #if 1
@@ -604,10 +655,10 @@ void RtedTransformation::visit_isSgArrowExp(SgArrowExp* const n)
       SgThisExp* varRef = isSgThisExp(*it2);
       ROSE_ASSERT(varRef);
       variable_access_arrowthisexp[n] = varRef;
-      cerr << " &&& Adding : " << varRef->unparseToString() << endl;
+      std::cerr << " &&& Adding : " << varRef->unparseToString() << std::endl;
    }
    if (vars2.size() > 1) {
-      cerr << "Warning : We added more than one SgThisExp to this map for SgArrowExp. This might be a problem" << endl;
+      std::cerr << "Warning : We added more than one SgThisExp to this map for SgArrowExp. This might be a problem" << std::endl;
       //exit(1);
    }
 #endif
@@ -618,12 +669,9 @@ RtedTransformation::arrayHeapAlloc(SgInitializedName* initName, SgVarRefExp* var
 {
   ROSE_ASSERT(initName && varRef && sz);
 
-  SgStatement* stmt = getSurroundingStatement(varRef);
-  RtedArray*   array = new RtedArray(initName, stmt, ak, sz);
-
   // varRef can not be an array access, its only an array Create
   variablesUsedForArray.push_back(varRef);
-  create_array_define_varRef_multiArray[varRef] = array;
+  create_array_define_varRef_multiArray[varRef] = RtedArray(initName, getSurroundingStatement(varRef), ak, sz);
 }
 
 void RtedTransformation::arrayHeapAlloc1( SgInitializedName* initName,
@@ -718,14 +766,341 @@ AllocKind RtedTransformation::arrayAllocCall(SgInitializedName* initName, SgVarR
     res = arrayAllocCall(initName, varRef, args, funcr->getAssociatedFunctionDeclaration(), default_result);
   } else {
      // right hand side of assign should only contain call to malloc somewhere
-     cerr << "RtedTransformation: UNHANDLED AND ACCEPTED FOR NOW. Right of Assign : Unknown (Array creation) : "
-          << "  line:" << varRef->unparseToString() << endl;
+     std::cerr << "RtedTransformation: UNHANDLED AND ACCEPTED FOR NOW. Right of Assign : Unknown (Array creation) : "
+          << "  line:" << varRef->unparseToString() << std::endl;
      //     ROSE_ASSERT(false);
   }
 
   return res;
 }
 
+
+/****************************************
+ * This function returns InitializedName
+ * for a DotExpr
+ ****************************************/
+static
+SgVarRefExp* getRightOfDot(SgDotExp* dot)
+{
+  SgExpression*      rightDot = dot->get_rhs_operand();
+  ROSE_ASSERT(rightDot);
+
+  SgVarRefExp*       varRef = isSgVarRefExp(rightDot);
+  ROSE_ASSERT(varRef);
+
+  return varRef;
+}
+
+
+/****************************************
+ * This function returns InitializedName
+ * for a ArrowExp
+ ****************************************/
+static
+SgVarRefExp* getRightOfArrow(SgArrowExp* arrow)
+{
+  SgExpression*      rightArrow = arrow->get_rhs_operand();
+  ROSE_ASSERT(rightArrow);
+
+  SgVarRefExp*       varRef = isSgVarRefExp(rightArrow);
+  ROSE_ASSERT(varRef);
+
+  return varRef;
+}
+
+/****************************************
+ * This function returns InitializedName
+ * for a PlusPlusOp
+ ****************************************/
+static
+SgVarRefExp* getPlusPlusOp(SgPlusPlusOp* plus)
+{
+  SgExpression*      expPl = plus->get_operand();
+  ROSE_ASSERT(expPl);
+
+  SgVarRefExp*       varRef =  isSgVarRefExp(expPl);
+  ROSE_ASSERT(varRef);
+
+  return varRef;
+}
+
+
+/****************************************
+ * This function returns InitializedName
+ * for a DotExpr
+ ****************************************/
+static
+SgVarRefExp* getRightOfPointerDeref(SgPointerDerefExp* dot)
+{
+  SgExpression* rightDot = dot->get_operand();
+  ROSE_ASSERT(rightDot);
+
+  SgVarRefExp*  varRef = isSgVarRefExp(rightDot);
+  ROSE_ASSERT(varRef);
+
+  return varRef;
+}
+
+static
+SgVarRefExp* getRightOfDotStar(SgDotStarOp* dot)
+{
+  SgExpression*      rightDot = dot->get_rhs_operand();
+  ROSE_ASSERT(rightDot);
+
+  SgVarRefExp*       varRef = isSgVarRefExp(rightDot);
+  ROSE_ASSERT(varRef);
+
+  return varRef;
+}
+
+static
+SgVarRefExp* getRightOfArrowStar(SgArrowStarOp* arrowstar)
+{
+  SgExpression*      rightArrow = arrowstar->get_rhs_operand();
+  ROSE_ASSERT(rightArrow);
+
+  SgVarRefExp*       varRef = isSgVarRefExp(rightArrow);
+  ROSE_ASSERT(varRef);
+
+  return varRef;
+}
+
+
+/****************************************
+ * This function returns InitializedName
+ * for a MinusMinusOp
+ ****************************************/
+static
+SgVarRefExp* getMinusMinusOp(SgMinusMinusOp* minus)
+{
+  SgExpression*      expPl = minus->get_operand();
+  ROSE_ASSERT(expPl);
+
+  SgVarRefExp*       varRef = isSgVarRefExp(expPl);
+  ROSE_ASSERT(varRef);
+
+  return varRef;
+}
+
+namespace
+{
+  struct VarrefFinderResult
+  {
+      static
+      SgInitializedName* declOf(SgVarRefExp* vref)
+      {
+        ROSE_ASSERT(vref && vref->get_symbol());
+
+        SgInitializedName* iname = vref->get_symbol()->get_declaration();
+        ROSE_ASSERT(iname);
+
+        return iname;
+      }
+
+      explicit
+      VarrefFinderResult(SgVarRefExp* vref)
+      : varf(vref), skip(false)
+      {}
+
+      VarrefFinderResult()
+      : varf(NULL), skip(true)
+      {}
+
+      SgInitializedName* initname()  const { return declOf(varf); }
+      SgVarRefExp*       varref()    const { return varf; }
+      bool               ignore()    const { return skip; }
+
+    private:
+      SgVarRefExp*       varf;
+      bool               skip;
+  };
+
+  struct VarrefFinder
+  {
+    typedef VarrefFinderResult Result;
+
+    Result res;
+
+    VarrefFinder()
+    : res(NULL)
+    {}
+
+    void set_result(SgVarRefExp* n)
+    {
+      ROSE_ASSERT(n);
+      res = Result(n);
+    }
+
+    void failed()
+    {
+      res = Result();
+    }
+
+    void handle(SgNode&) { assert(false); }
+
+    void handle(SgVarRefExp& n)
+    {
+      set_result(&n);
+    }
+
+    void handle_dot(SgDotExp& n)
+    {
+      set_result(getRightOfDot(&n));
+    }
+
+    void handle_arrow(SgArrowExp& n)
+    {
+      set_result(getRightOfArrow(&n));
+    }
+
+    void handle_incr(SgPlusPlusOp& n)
+    {
+      set_result(getPlusPlusOp(&n));
+    }
+
+    void handle_decr(SgMinusMinusOp& n)
+    {
+      set_result(getMinusMinusOp(&n));
+    }
+
+    void handle_pointerderef(SgPointerDerefExp& n)
+    {
+      set_result(getRightOfPointerDeref(&n));
+    }
+
+    void handle(SgPntrArrRefExp& n)
+    {
+      // \pp maybe we should just invoke visitSgNode(VarInfoFinder(), n.get_lhs_operand())
+
+      SgPntrArrRefExp* arrref = &n;
+      while ( arrref )
+      {
+        SgExpression* exp = arrref->get_lhs_operand();
+
+        arrref = NULL;
+        if (SgVarRefExp* varRef = isSgVarRefExp(exp))
+        {
+          set_result(varRef);
+        }
+        else if (SgDotExp* dotexp = isSgDotExp(exp))
+        {
+          handle_dot(*dotexp);
+        }
+        else if (SgArrowExp* arrowexp = isSgArrowExp(exp))
+        {
+          handle_arrow(*arrowexp);
+        }
+        else if (SgPointerDerefExp* ptrderef = isSgPointerDerefExp(exp))
+        {
+          handle_pointerderef(*ptrderef);
+        }
+        else if (SgPntrArrRefExp* arrrefexp = isSgPntrArrRefExp(exp))
+        {
+          // loop variable update
+          arrref = arrrefexp;
+        }
+        else
+        {
+          std::cerr << "RtedTransformation : Left of pntrArr2 - Unknown : " << exp->class_name() << std::endl;
+          ROSE_ASSERT(false);
+        }
+      }
+    }
+
+    void handle(SgPointerDerefExp& n)
+    {
+      SgExpression* exp = n.get_operand();
+
+      if (SgVarRefExp* varrefexp = isSgVarRefExp(exp))
+      {
+        set_result(varrefexp);
+      }
+      else if (SgPlusPlusOp* plusplus = isSgPlusPlusOp(exp))
+      {
+        handle_incr(*plusplus);
+      }
+      else if (SgMinusMinusOp* minusminus = isSgMinusMinusOp(exp))
+      {
+        handle_decr(*minusminus);
+      }
+      else if (SgDotExp* dotexp = isSgDotExp(exp))
+      {
+        handle_dot(*dotexp);
+      }// ------------------------------------------------------------
+      else if (SgPointerDerefExp* ptrderefexp = isSgPointerDerefExp(exp))
+      {
+        handle_pointerderef(*ptrderefexp);
+      }// ------------------------------------------------------------
+      else if (SgArrowExp* arrowexp = isSgArrowExp(exp))
+      {
+        handle_arrow(*arrowexp);
+      }// ------------------------------------------------------------
+      else if (isSgCastExp(exp))
+      {
+         // \pp this does not seem to be the right thing to do
+         const SgNodePtrList& vars = NodeQuery::querySubTree(exp, V_SgVarRefExp);
+         ROSE_ASSERT( vars.size() > 0 );
+
+         set_result(isSgVarRefExp(vars[0]));
+      }
+      else if (isSgAddOp(exp) || isSgSubtractOp(exp))
+      {
+        // \pp look on left side?
+        failed();
+      }
+      else
+      {
+        ROSE_ASSERT(exp);
+        std::cerr << "RtedTransformation : PointerDerefExp - Unknown : " << exp->class_name() << "  line:" << n.unparseToString() << std::endl;
+      }
+    }
+
+    void handle(SgDotExp& n)
+    {
+      handle_dot(n);
+    }
+
+    void handle(SgArrowExp& n)
+    {
+      handle_arrow(n);
+    }
+
+    void handle(SgFunctionCallExp& n)
+    {
+      std::cerr << "RtedTransformation: UNHANDLED BUT ACCEPTED FOR NOW - Left of assign - line:" << n.unparseToString() << std::endl;
+
+      SgExpression* exp = n.get_function();
+      SgDotExp*     dotexp = isSgDotExp(exp);
+
+      if (dotexp)
+      {
+         SgExpression* const     rightDot = dotexp->get_rhs_operand();
+         SgExpression* const     leftDot = dotexp->get_lhs_operand();
+         ROSE_ASSERT(rightDot && leftDot);
+
+         SgVarRefExp* const      varRefL = isSgVarRefExp(leftDot);
+         SgMemberFunctionRefExp* varRefR = isSgMemberFunctionRefExp(rightDot);
+
+         if (varRefL && varRefR)
+         {
+            set_result(varRefL);
+         }
+      }
+    }
+
+    void handle(SgArrowStarOp& n)
+    {
+      set_result(getRightOfArrowStar(&n));
+    }
+
+    void handle(SgDotStarOp& n)
+    {
+      set_result(getRightOfDotStar(&n));
+    }
+
+    operator Result() { return res; }
+  };
+}
 
 
 // TODO 2 djh:  rewrite this function to be more robust
@@ -735,23 +1110,258 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
 {
    ROSE_ASSERT(assign);
 
-   SgInitializedName* initName = NULL;
-   SgExpression*      expr_l = assign->get_lhs_operand();
-   SgExpression*      expr_r = assign->get_rhs_operand();
+   std::cerr << "   ::: Checking assignment : " << assign->unparseToString() << std::endl;
 
-   // varRef ([indx1][indx2]) = malloc (size); // total array alloc
-   // varRef [indx1]([]) = malloc (size); // indx2 array alloc
-   SgExpression*      indx1 = NULL;
-   SgExpression*      indx2 = NULL;
+   SgExpression* const           expr_l = assign->get_lhs_operand();
+   VarrefFinder::Result          res = ez::visitSgNode(VarrefFinder(), expr_l);
 
-   cerr << "   ::: Checking assignment : " << assign->unparseToString() << endl;
+   if (!res.varref())
+   {
+     // did not find anything meaningful
+     ROSE_ASSERT(res.ignore()); // breaks on unexpected code
 
-   // FIXME 2: This probably does not handle n-dimensional arrays
+     std::cerr << "#WARNING: unhandled assignment operation: '" << assign->unparseToString() << "'" << std::endl;
+     return;
+   }
+
+   SgInitializedName* const      initName = res.initname();
+   SgVarRefExp* const            varRef = res.varref();
+   ROSE_ASSERT(initName && initName->get_type() && varRef);
+
+   // handle MALLOC: function call
+   SgExpression* const           expr_r = assign->get_rhs_operand();
+   AllocKind                     last_alloc = akUndefined;
+   const SgNodePtrList&          calls = NodeQuery::querySubTree(expr_r, V_SgFunctionCallExp);
+   SgNodePtrList::const_iterator it = calls.begin();
+   for (; it != calls.end(); ++it) {
+      SgFunctionCallExp* funcc = isSgFunctionCallExp(*it);
+      ROSE_ASSERT(funcc);
+
+      SgExprListExp*     size = deepCopy(funcc->get_args());
+      ROSE_ASSERT(size);
+
+      SgExpression*      func = funcc->get_function();
+
+      last_alloc = arrayAllocCall(initName, varRef, size, isSgFunctionRefExp(func), last_alloc);
+   }
+
+   // FIXME 3: This won't handle weird cases with, e.g. multiple news on the rhs,
+   //    but for those cases this entire function is probably broken.  Consider,
+   //    e.g.
+   //        int *a, *b;
+   //        a = ( b = new int, new int );
    //
-   // left side contains SgInitializedName somewhere ... search
-   SgVarRefExp*       varRef = isSgVarRefExp(expr_l);
-   SgPntrArrRefExp*   pntrArr = isSgPntrArrRefExp(expr_l);
-   SgPointerDerefExp* pointerDeref = isSgPointerDerefExp(expr_l);
+   // handle new (implicit C++ malloc)
+   const SgNodePtrList& newnodes = NodeQuery::querySubTree( expr_r, V_SgNewExp );
+   BOOST_FOREACH(SgNode* exp, newnodes)
+   {
+      // FIXME 2: this is a false positive if operator new is overloaded
+      SgNewExp* new_op = isSgNewExp(exp);
+      ROSE_ASSERT( new_op );
+
+      const AllocKind allocKind = cxxHeapAllocKind(new_op->get_type());
+
+      arrayHeapAlloc(initName, varRef, buildSizeOfOp(new_op -> get_specified_type()), allocKind);
+   }
+
+   // ---------------------------------------------
+   // handle variables ..............................
+   // here we should know the initName of the variable on the left hand side
+   // we now know that this variable must be initialized
+   // if we have not set this variable to be initialized yet,
+   // we do so
+   std::cerr << ">> Setting this var to be initialized : " << initName->unparseToString() << std::endl;
+   variableIsInitialized[varRef] = InitializedVarMap::mapped_type(initName, last_alloc);
+}
+
+void RtedTransformation::addPaddingToAllocatedMemory(SgStatement* stmt, const RtedArray& array)
+{
+    ROSE_ASSERT(stmt);
+    // if you find this:
+    //   str1 = ((char *)(malloc(((((4 * n)) * (sizeof(char )))))));
+    // add the following lines:
+    //   int i;
+    //   for (i = 0; (i) < malloc(((((4 * n)) * (sizeof(char )); i++)
+    //     str1[i] = ' ';
+
+    // we do this only for char*
+    SgInitializedName* initName = array.initName;
+    SgType*            type = initName->get_type();
+    ROSE_ASSERT(type);
+    std::cerr << " Padding type : " << type->class_name() << std::endl;
+
+    // \pp \todo do we need to skip modifiers?
+    if (!isSgPointerType(type)) return;
+
+    SgType* basetype = isSgPointerType(type)->get_base_type();
+    std::cerr << " Base type : " << basetype->class_name() << std::endl;
+
+    // since this is mainly to handle char* correctly, we only deal with one dim array for now
+    if (basetype && isSgTypeChar(basetype) && array.getDimension() == 1)
+    {
+      // allocated size
+      SgScopeStatement* scope = stmt->get_scope();
+      SgExpression* size = array.getIndices()[0];
+      pushScopeStack(scope);
+      // int i;
+      SgVariableDeclaration* stmt1 = buildVariableDeclaration("i", buildIntType(), NULL);
+      //for(i=0;..)
+      SgStatement* init_stmt = buildAssignStatement(buildVarRefExp("i"), buildIntVal(0));
+
+      // for(..,i<size,...) It is an expression, not a statement!
+      SgExprStatement* cond_stmt = NULL;
+      cond_stmt = buildExprStatement(buildLessThanOp(buildVarRefExp("i"), size));
+
+      // for (..,;...;i++); not ++i;
+      SgExpression* incr_exp = NULL;
+      incr_exp = buildPlusPlusOp(buildVarRefExp("i"), SgUnaryOp::postfix);
+      // loop body statement
+      SgStatement* loop_body = NULL;
+      SgExpression* lhs = buildPntrArrRefExp(buildVarRefExp(array.initName->get_name()), buildVarRefExp("i"));
+      SgExpression* rhs = buildCharVal(' ');
+      loop_body = buildAssignStatement(lhs, rhs);
+      //loop_body = buildExprStatement(stmt2);
+
+
+      SgForStatement* forloop = buildForStatement(init_stmt, cond_stmt, incr_exp, loop_body);
+
+      SgBasicBlock* bb = buildBasicBlock(stmt1, forloop);
+      insertStatementAfter(stmt, bb);
+      std::string comment = "RS: Padding this newly generated array with empty space.";
+      attachComment(bb, comment, PreprocessingInfo::before);
+      popScopeStack();
+   }
+}
+
+
+namespace
+{
+  struct VarRefFinder
+  {
+    SgVarRefExp* res;
+
+    VarRefFinder()
+    : res(NULL)
+    {}
+
+    void handle(SgNode&) { assert(false); }
+
+    void handle_dotarrow(SgBinaryOp& n)
+    {
+      res = isSgVarRefExp(n.get_rhs_operand());
+    }
+
+    void handle(SgDotExp& n) { handle_dotarrow(n); }
+    void handle(SgArrowExp& n) { handle_dotarrow(n); }
+
+    void handle(SgPointerDerefExp& n)
+    {
+      res = isSgVarRefExp(n.get_operand());
+    }
+
+    void handle(SgPntrArrRefExp& n)
+    {
+      res = ez::visitSgNode(VarRefFinder(), n.get_lhs_operand());
+    }
+
+    void handle(SgVarRefExp& n) { res = &n; }
+
+    operator SgVarRefExp*() { return res; }
+  };
+
+  struct ArrayInfoFinder
+  {
+    SgVarRefExp* varref;
+
+    ArrayInfoFinder()
+    : varref(NULL)
+    {}
+
+    void set_varref(SgVarRefExp* n)
+    {
+      ROSE_ASSERT(n);
+      varref = n;
+    }
+
+    void handle_member_selection(SgBinaryOp& n)
+    {
+      set_varref(isSgVarRefExp(n.get_rhs_operand()));
+    }
+
+    void handle(SgNode&) { ROSE_ASSERT(false); }
+
+    void handle(SgVarRefExp& n)
+    {
+      set_varref(&n);
+    }
+
+    void handle(SgArrowExp& n)
+    {
+      handle_member_selection(n);
+    }
+
+    void handle(SgDotExp& n)
+    {
+      handle_member_selection(n);
+    }
+
+    void handle(SgPointerDerefExp& n)
+    {
+      set_varref(isSgVarRefExp(n.get_operand()));
+    }
+
+    void handle(SgPntrArrRefExp& n)
+    {
+      SgExpression* lhs = n.get_lhs_operand();
+      SgVarRefExp*  res = ez::visitSgNode(VarRefFinder(), lhs);
+
+      set_varref(res);
+    }
+
+    operator SgVarRefExp*() const
+    {
+      ROSE_ASSERT(varref);
+      return varref;
+    }
+  };
+}
+
+void RtedTransformation::visit_isArrayPntrArrRefExp(SgPntrArrRefExp* const arrRefExp)
+{
+    ROSE_ASSERT(arrRefExp);
+
+    // make sure the parent is not another pntr array (pntr->pntr), we only want the top one
+    // also, ensure we don't count arr[ix].member as an array access, e.g. in the
+    // following:
+    //    arr[ix].member = 2;
+    // we need only checkwrite &( arr[ix].member ), which is handled by init var.
+    if (isSgPntrArrRefExp(arrRefExp->get_parent())) return;
+
+    // right hand side can be any expression!
+    SgExpression*                             left = arrRefExp->get_lhs_operand();
+    SgVarRefExp*                              varref = ez::visitSgNode(ArrayInfoFinder(), left);
+    std::vector<SgVarRefExp*>::const_iterator aa = variablesUsedForArray.begin();
+    std::vector<SgVarRefExp*>::const_iterator zz = variablesUsedForArray.end();
+
+    // \pp why do we create an array access call if we do NOT find the varref?
+    const bool                                create_access_call = (std::find(aa, zz, varref) == zz);
+
+    if (create_access_call)
+    {
+       SgInitializedName* initName = varref->get_symbol()->get_declaration();
+       ROSE_ASSERT(initName);
+
+       std::cerr << "!! CALL : " << varref << " - " << varref->unparseToString() << "    size : " << create_array_access_call.size()
+                 << " : " << arrRefExp->unparseToString() << std::endl;
+       create_array_access_call[arrRefExp] = RtedArray(initName, getSurroundingStatement(arrRefExp), akStack);
+    }
+}
+
+
+#endif
+
+
+#if 0
 
    if (varRef) {
       // is variable on left side
@@ -763,7 +1373,6 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
       // is array on left side
       // could be pntr[indx1]  or pntr[indx1][indx2]
       SgExpression* expr_ll = pntrArr->get_lhs_operand();
-      indx1 = pntrArr->get_rhs_operand();
       ROSE_ASSERT(expr_ll);
       varRef = isSgVarRefExp(expr_ll);
       if (varRef) {
@@ -773,7 +1382,6 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
          SgPntrArrRefExp* pntrArr2 = isSgPntrArrRefExp(expr_ll);
          ROSE_ASSERT(pntrArr2);
          SgExpression* expr_lll = pntrArr2->get_lhs_operand();
-         indx2 = pntrArr2->get_rhs_operand();
          varRef = isSgVarRefExp(expr_lll);
          if (varRef) {
             // we assume pntr[indx1][indx2] = malloc
@@ -797,11 +1405,11 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
             ROSE_ASSERT( varRef );
             initName = varRef -> get_symbol() -> get_declaration();
          } else {
-            cerr << "RtedTransformation : Left of pntrArr2 - Unknown : " << expr_lll->class_name() << endl;
+            std::cerr << "RtedTransformation : Left of pntrArr2 - Unknown : " << expr_lll->class_name() << std::endl;
             ROSE_ASSERT(false);
          }
       } else if (isSgDotExp(expr_ll)) {
-         cerr << "RtedTransformation : isSgDotExp : " << endl;
+         std::cerr << "RtedTransformation : isSgDotExp : " << std::endl;
 
          std::pair<SgInitializedName*, SgVarRefExp*> mypair = getRightOfDot(isSgDotExp(expr_ll),
                "Left of pntrArr - Right of Dot  - line: " + expr_ll->unparseToString() + " ", varRef);
@@ -810,7 +1418,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
          if (initName)
             ROSE_ASSERT(varRef);
       } else if (isSgPointerDerefExp(expr_ll)) {
-         cerr << "RtedTransformation : isSgPointerDerefExp : " << endl;
+         std::cerr << "RtedTransformation : isSgPointerDerefExp : " << std::endl;
 
          std::pair<SgInitializedName*, SgVarRefExp*> mypair = getRightOfPointerDeref(isSgPointerDerefExp(expr_ll),
                "Left of pntrArr - Right of PointerDeref  - line: " + expr_ll->unparseToString() + " ", varRef);
@@ -819,7 +1427,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
          if (initName)
             ROSE_ASSERT(varRef);
       } else if (isSgArrowExp(expr_ll)) {
-         cerr << "RtedTransformation : isSgArrowExp : " << endl;
+         std::cerr << "RtedTransformation : isSgArrowExp : " << std::endl;
          std::pair<SgInitializedName*, SgVarRefExp*> mypair = getRightOfArrow(isSgArrowExp(expr_ll),
                "Left of pntrArr - Right of Arrow  - line: " + expr_ll->unparseToString() + " ", varRef);
          initName = mypair.first;
@@ -827,8 +1435,8 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
          if (initName)
             ROSE_ASSERT(varRef);
       } else {
-         cerr << "RtedTransformation : Left of pntrArr - Unknown : " << expr_ll->class_name() << "  line:"
-               << expr_ll->unparseToString() << endl;
+         std::cerr << "RtedTransformation : Left of pntrArr - Unknown : " << expr_ll->class_name() << "  line:"
+               << expr_ll->unparseToString() << std::endl;
          ROSE_ASSERT(false);
       }
    } // ------------------------------------------------------------
@@ -900,23 +1508,17 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
         // \pp this case is not handled by the original RTED code
         //     --> postpone until later
         return;
-#if OBSOLETE_CODE
-        varRef = isSgVarRefExp(addexp->get_lhs_operand());
-        ROSE_ASSERT( varRef );
-
-        initName = varRef -> get_symbol() -> get_declaration();
-#endif /* OBSOLETE_CODE */
       }
       else {
-         cerr << "RtedTransformation : PointerDerefExp - Unknown : " << exp->class_name() << "  line:"
-               << pointerDeref->unparseToString() << endl;
+         std::cerr << "RtedTransformation : PointerDerefExp - Unknown : " << exp->class_name() << "  line:"
+               << pointerDeref->unparseToString() << std::endl;
 
          //      ROSE_ASSERT(false);
       }
    } // ------------------------------------------------------------
    else if (isSgFunctionCallExp(expr_l)) {
-      cerr << "RtedTransformation: UNHANDLED BUT ACCEPTED FOR NOW - Left of assign - Unknown : " << expr_l->class_name()
-            << "  line:" << expr_l->unparseToString() << endl;
+      std::cerr << "RtedTransformation: UNHANDLED BUT ACCEPTED FOR NOW - Left of assign - Unknown : " << expr_l->class_name()
+            << "  line:" << expr_l->unparseToString() << std::endl;
 #if 1
       SgFunctionCallExp* expcall = isSgFunctionCallExp(expr_l);
       SgExpression* exp = expcall->get_function();
@@ -952,234 +1554,9 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
       ROSE_ASSERT(!initName || varRef);
    }// ------------------------------------------------------------
    else {
-      cerr << "RtedTransformation : Left of assign - Unknown : " << expr_l->class_name() << "  line:"
-            << expr_l->unparseToString() << endl;
+      std::cerr << "RtedTransformation : Left of assign - Unknown : " << expr_l->class_name() << "  line:"
+            << expr_l->unparseToString() << std::endl;
       ROSE_ASSERT(false);
    }
-   cerr << " expr_l : " << expr_l->class_name() << endl;
-   ROSE_ASSERT(initName);
-
-   // handle MALLOC: function call
-   AllocKind                     last_alloc = akUndefined; // \pp should this be akUndefined?
-   const SgNodePtrList&          calls = NodeQuery::querySubTree(expr_r, V_SgFunctionCallExp);
-   SgNodePtrList::const_iterator it = calls.begin();
-   for (; it != calls.end(); ++it) {
-      SgFunctionCallExp* funcc = isSgFunctionCallExp(*it);
-      ROSE_ASSERT(funcc);
-
-      SgExprListExp*     size = deepCopy(funcc->get_args());
-      ROSE_ASSERT(size);
-
-      // find if sizeof present in size operator
-      // \pp why do we require that there is exactly one sizeof operand?
-      //~ const SgNodePtrList& results = NodeQuery::querySubTree(size, V_SgSizeOfOp);
-      //~ ROSE_ASSERT_MSG(results.size() == 1, "Expected to find excactly 1 sizeof operand. Abort.");
-
-      SgExpression*      func = funcc->get_function();
-
-      last_alloc = arrayAllocCall(initName, varRef, size, isSgFunctionRefExp(func), last_alloc);
-   }
-
-   // FIXME 3: This won't handle weird cases with, e.g. multiple news on the rhs,
-   //    but for those cases this entire function is probably broken.  Consider,
-   //    e.g.
-   //        int *a, *b;
-   //        a = ( b = new int, new int );
-   //
-   // handle new (implicit C++ malloc)
-   const SgNodePtrList& newnodes = NodeQuery::querySubTree( expr_r, V_SgNewExp );
-   ROSE_ASSERT( (newnodes.size() == 0) || varRef );
-   BOOST_FOREACH(SgNode* exp, newnodes)
-   {
-      // FIXME 2: this is a false positive if operator new is overloaded
-      SgNewExp* new_op = isSgNewExp(exp);
-      ROSE_ASSERT( new_op );
-
-      const AllocKind allocKind = cxxHeapAllocKind(new_op->get_type());
-
-      arrayHeapAlloc(initName, varRef, buildSizeOfOp(new_op -> get_specified_type()), allocKind);
-   }
-
-   // ---------------------------------------------
-   // handle variables ..............................
-   // here we should know the initName of the variable on the left hand side
-   ROSE_ASSERT(initName && varRef);
-
-   // we now know that this variable must be initialized
-   // if we have not set this variable to be initialized yet,
-   // we do so
-   cerr << ">> Setting this var to be initialized : " << initName->unparseToString() << endl;
-   variableIsInitialized[varRef] = InitializedVarMap::mapped_type(initName, last_alloc);
-}
-
-void RtedTransformation::addPaddingToAllocatedMemory(SgStatement* stmt, RtedArray* array)
-{
-    ROSE_ASSERT(stmt);
-    // if you find this:
-    //   str1 = ((char *)(malloc(((((4 * n)) * (sizeof(char )))))));
-    // add the following lines:
-    //   int i;
-    //   for (i = 0; (i) < malloc(((((4 * n)) * (sizeof(char )); i++)
-    //     str1[i] = ' ';
-
-    // we do this only for char*
-    SgInitializedName* initName = array->initName;
-    SgType*            type = initName->get_type();
-    ROSE_ASSERT(type);
-    cerr << " Padding type : " << type->class_name() << endl;
-
-    // \pp \todo do we need to skip modifiers?
-    if (!isSgPointerType(type)) return;
-
-    SgType* basetype = isSgPointerType(type)->get_base_type();
-    cerr << " Base type : " << basetype->class_name() << endl;
-
-    // since this is mainly to handle char* correctly, we only deal with one dim array for now
-    if (basetype && isSgTypeChar(basetype) && array->getDimension() == 1)
-    {
-      // allocated size
-      SgScopeStatement* scope = stmt->get_scope();
-      SgExpression* size = array->getIndices()[0];
-      pushScopeStack(scope);
-      // int i;
-      SgVariableDeclaration* stmt1 = buildVariableDeclaration("i", buildIntType(), NULL);
-      //for(i=0;..)
-      SgStatement* init_stmt = buildAssignStatement(buildVarRefExp("i"), buildIntVal(0));
-
-      // for(..,i<size,...) It is an expression, not a statement!
-      SgExprStatement* cond_stmt = NULL;
-      cond_stmt = buildExprStatement(buildLessThanOp(buildVarRefExp("i"), size));
-
-      // for (..,;...;i++); not ++i;
-      SgExpression* incr_exp = NULL;
-      incr_exp = buildPlusPlusOp(buildVarRefExp("i"), SgUnaryOp::postfix);
-      // loop body statement
-      SgStatement* loop_body = NULL;
-      SgExpression* lhs = buildPntrArrRefExp(buildVarRefExp(array->initName->get_name()), buildVarRefExp("i"));
-      SgExpression* rhs = buildCharVal(' ');
-      loop_body = buildAssignStatement(lhs, rhs);
-      //loop_body = buildExprStatement(stmt2);
-
-
-      SgForStatement* forloop = buildForStatement(init_stmt, cond_stmt, incr_exp, loop_body);
-
-      SgBasicBlock* bb = buildBasicBlock(stmt1, forloop);
-      insertStatementAfter(stmt, bb);
-      string comment = "RS: Padding this newly generated array with empty space.";
-      attachComment(bb, comment, PreprocessingInfo::before);
-      popScopeStack();
-   }
-}
-
-static
-SgVarRefExp* resolveToVarRefRight(SgExpression* expr)
-{
-  ROSE_ASSERT(expr);
-
-  SgVarRefExp* result = NULL;
-
-  if (  isSgDotExp(expr) || isSgArrowExp( expr ) )
-  {
-    result = isSgVarRefExp(isSgBinaryOp(expr)->get_rhs_operand());
-  }
-  else if( isSgPointerDerefExp( expr ))
-  {
-    result = isSgVarRefExp( isSgUnaryOp( expr ) -> get_operand() );
-  }
-
-  ROSE_ASSERT(result);
-  return result;
-}
-
-
-struct ArrayInfoFinder
-{
-  SgVarRefExp* varref;
-
-  ArrayInfoFinder()
-  : varref(NULL)
-  {}
-
-  void set_varref(SgVarRefExp* n)
-  {
-    ROSE_ASSERT(n);
-    varref = n;
-  }
-
-  void handle_member_selection(SgBinaryOp& n)
-  {
-    set_varref(isSgVarRefExp(n.get_rhs_operand()));
-  }
-
-  void handle(SgNode&) { ROSE_ASSERT(false); }
-
-  void handle(SgVarRefExp& n)
-  {
-    set_varref(&n);
-  }
-
-  void handle(SgArrowExp& n)
-  {
-    handle_member_selection(n);
-  }
-
-  void handle(SgDotExp& n)
-  {
-    handle_member_selection(n);
-  }
-
-  void handle(SgPointerDerefExp& n)
-  {
-    set_varref(isSgVarRefExp(n.get_operand()));
-  }
-
-  void handle(SgPntrArrRefExp& n)
-  {
-    SgExpression* lhs = n.get_lhs_operand();
-    ROSE_ASSERT(lhs);
-
-    varref = isSgVarRefExp(lhs);
-    if (varref != NULL) return;
-
-    set_varref(resolveToVarRefRight(lhs));
-  }
-
-  operator SgVarRefExp*() const
-  {
-    ROSE_ASSERT(varref);
-    return varref;
-  }
-};
-
-void RtedTransformation::visit_isArrayPntrArrRefExp(SgPntrArrRefExp* const arrRefExp)
-{
-    ROSE_ASSERT(arrRefExp);
-
-    // make sure the parent is not another pntr array (pntr->pntr), we only want the top one
-    // also, ensure we don't count arr[ix].member as an array access, e.g. in the
-    // following:
-    //    arr[ix].member = 2;
-    // we need only checkwrite &( arr[ix].member ), which is handled by init var.
-    if (isSgPntrArrRefExp(arrRefExp->get_parent())) return;
-
-    // right hand side can be any expression!
-    SgExpression*                             left = arrRefExp->get_lhs_operand();
-    SgVarRefExp*                              varref = ez::visitSgNode(ArrayInfoFinder(), left);
-    std::vector<SgVarRefExp*>::const_iterator aa = variablesUsedForArray.begin();
-    std::vector<SgVarRefExp*>::const_iterator zz = variablesUsedForArray.end();
-    const bool                                create_access_call = (std::find(aa, zz, varref) == zz);
-
-    if (create_access_call)
-    {
-       SgInitializedName* initName = varref->get_symbol()->get_declaration();
-       ROSE_ASSERT(initName);
-
-       RtedArray*         array = new RtedArray(initName, getSurroundingStatement(arrRefExp), akStack);
-       std::cerr << "!! CALL : " << varref << " - " << varref->unparseToString() << "    size : " << create_array_access_call.size()
-                 << "  -- " << array->unparseToString() << " : " << arrRefExp->unparseToString() << endl;
-       create_array_access_call[arrRefExp] = array;
-    }
-}
-
-
+   std::cerr << " expr_l : " << expr_l->class_name() << std::endl;
 #endif

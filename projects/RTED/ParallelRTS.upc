@@ -13,6 +13,12 @@
 // \hack see comment in CppRuntimeSystem/ptrops.upc
 shared[1] char rted_base_hack[THREADS];
 
+// flag passed to the processing functions in the RuntimeSystem.cpp
+//   indicating that the origin is in another thread
+static const int msgHandling = 0;
+
+static const char* localBaseAddr;
+
 enum rted_MsgKind
 {
   mskFreeMemory,
@@ -25,8 +31,8 @@ typedef enum rted_MsgKind rted_MsgKind;
 
 struct rted_MsgMasterBlock
 {
-  int          unread_threads;
-  upc_lock_t*  msg_lock;
+  int         unread_threads;
+  upc_lock_t* msg_lock;
 };
 
 typedef struct rted_MsgMasterBlock rted_MsgMasterBlock;
@@ -83,6 +89,17 @@ struct MsgQSingleReadMultipleWrite
 typedef struct MsgQSingleReadMultipleWrite MsgQSingleReadMultipleWrite;
 
 shared[1] MsgQSingleReadMultipleWrite msgQueue[THREADS];
+
+
+/// \brief shared addresses are sent relatively to the shared memory base
+///        of a UPC thread.
+struct rted_RelativeAddress
+{
+  rted_thread_id  thread_id;
+  size_t          sharedmem_offset; // should this be ptrdiff_t?
+};
+
+typedef struct rted_RelativeAddress rted_RelativeAddress;
 
 //
 // Queue operations
@@ -164,30 +181,18 @@ void msgw_Header(char* out, rted_MsgHeader head)
 static
 void msgw_Address(char* buf, rted_Address addr)
 {
-  *((rted_Address*) buf) = addr;
+  rted_RelativeAddress reladdr = { addr.thread_id, addr.local - localBaseAddr };
+
+  *((rted_RelativeAddress*) buf) = reladdr;
 }
 
 static
 rted_Address msgr_Address(const char* buf)
 {
-  return *((const rted_Address*) buf);
+  const rted_RelativeAddress* reladdr = ((const rted_RelativeAddress*) buf);
+
+  return (rted_Address) { reladdr->thread_id, localBaseAddr + reladdr->sharedmem_offset };
 }
-
-
-// AddressDesc
-
-static
-void msgw_AddressDesc(char* buf, rted_AddressDesc desc)
-{
-  *((rted_AddressDesc*) buf) = desc;
-}
-
-static
-rted_AddressDesc msgr_AddressDesc(const char* buf)
-{
-  return *((rted_AddressDesc*) buf);
-}
-
 
 // AllocKind
 
@@ -295,6 +300,18 @@ size_t msgr_SizeT(const char* buf)
 }
 
 static
+void msgw_Long(char* buf, size_t s)
+{
+  *((long*)buf) = s;
+}
+
+static
+long msgr_Long(const char* buf)
+{
+  return *((const long*)buf);
+}
+
+static
 void msgw_Int(char* buf, int i)
 {
   *((size_t*)buf) = i;
@@ -343,13 +360,13 @@ void rcv_FreeMemory( const rted_MsgHeader* msg )
 {
   const char*          buf = (const char*) msg;
   const size_t         ad_ofs = sizeof(rted_MsgHeader);
-  const size_t         ak_ofs = ad_ofs + sizeof(rted_Address);
+  const size_t         ak_ofs = ad_ofs + sizeof(rted_RelativeAddress);
   const size_t         si_ofs = ak_ofs + sizeof(rted_AllocKind);
 
   const rted_AllocKind freeKind = msgr_AllocKind(buf + ak_ofs);
   assert(freeKind == akUpcSharedHeap);
 
-  _rted_FreeMemory( msgr_Address(buf+ad_ofs), freeKind, msgr_SourceInfo(buf+si_ofs) );
+  _rted_FreeMemory( msgr_Address(buf+ad_ofs), freeKind, msgr_SourceInfo(buf+si_ofs), msgHandling );
 }
 
 void snd_FreeMemory( rted_Address addr, rted_AllocKind freeKind, rted_SourceInfo si )
@@ -360,7 +377,7 @@ void snd_FreeMemory( rted_Address addr, rted_AllocKind freeKind, rted_SourceInfo
   const size_t si_len = msgsz_SourceInfo(si);
 
   const size_t ad_ofs = sizeof(rted_MsgHeader);
-  const size_t ak_ofs = ad_ofs + sizeof(rted_Address);
+  const size_t ak_ofs = ad_ofs + sizeof(rted_RelativeAddress);
   const size_t si_ofs = ak_ofs + sizeof(rted_AllocKind);
   const size_t blocksz  = si_ofs + si_len;
   char         msg[blocksz];
@@ -384,42 +401,40 @@ int shareHeapAllocInfo(rted_AllocKind allocKind, rted_TypeDesc td)
 }
 
 
-void rcv_CreateHeapPtr( const rted_MsgHeader* msg )
+void rcv_AllocMem( const rted_MsgHeader* msg )
 {
   const char*  buf = (const char*) msg;
   const size_t td_ofs = sizeof(rted_MsgHeader);
   const size_t ad_ofs = td_ofs + msglen_Typedesc(buf + td_ofs);
-  const size_t ha_ofs = ad_ofs + sizeof(rted_Address);
-  const size_t hd_ofs = ha_ofs + sizeof(rted_Address);
-  const size_t sz_ofs = hd_ofs + sizeof(rted_AddressDesc);
-  const size_t ma_ofs = sz_ofs + sizeof(size_t);
+  const size_t ha_ofs = ad_ofs + sizeof(rted_RelativeAddress);
+  const size_t bl_ofs = ha_ofs + sizeof(rted_RelativeAddress);
+  const size_t ma_ofs = bl_ofs + sizeof(long);
   const size_t ak_ofs = ma_ofs + sizeof(size_t);
   const size_t cn_ofs = ak_ofs + sizeof(rted_AllocKind);
   const size_t si_ofs = cn_ofs + msglen_String(buf + cn_ofs);
 
-  _rted_CreateHeapPtr( msgr_TypeDesc   (buf + td_ofs),
-                       msgr_Address    (buf + ad_ofs),
-                       msgr_Address    (buf + ha_ofs),
-                       msgr_AddressDesc(buf + hd_ofs),
-                       msgr_SizeT      (buf + sz_ofs),
-                       msgr_SizeT      (buf + ma_ofs),
-                       msgr_AllocKind  (buf + ak_ofs),
-                       msgr_String     (buf + cn_ofs),
-                       msgr_SourceInfo (buf + si_ofs)
-                     );
+  _rted_AllocMem( msgr_TypeDesc   (buf + td_ofs),
+                  msgr_Address    (buf + ad_ofs),
+                  msgr_Address    (buf + ha_ofs),
+                  msgr_Long       (buf + bl_ofs),
+                  msgr_SizeT      (buf + ma_ofs),
+                  msgr_AllocKind  (buf + ak_ofs),
+                  msgr_String     (buf + cn_ofs),
+                  msgr_SourceInfo (buf + si_ofs),
+                  msgHandling
+                );
 }
 
 
-void snd_CreateHeapPtr( rted_TypeDesc    td,
-                        rted_Address     address,
-                        rted_Address     heap_address,
-                        rted_AddressDesc heap_desc,
-                        size_t           size,
-                        size_t           mallocSize,
-                        rted_AllocKind   allocKind,
-                        const char*      class_name,
-                        rted_SourceInfo  si
-                      )
+void snd_AllocMem( rted_TypeDesc    td,
+                   rted_Address     address,
+                   rted_Address     heap_address,
+                   long             blocksize,
+                   size_t           mallocSize,
+                   rted_AllocKind   allocKind,
+                   const char*      class_name,
+                   rted_SourceInfo  si
+                 )
 {
   if (!shareHeapAllocInfo(allocKind, td)) return;
 
@@ -429,10 +444,9 @@ void snd_CreateHeapPtr( rted_TypeDesc    td,
 
   const size_t          td_ofs = sizeof(rted_MsgHeader);
   const size_t          ad_ofs = td_ofs + td_len.total;
-  const size_t          ha_ofs = ad_ofs + sizeof(rted_Address);
-  const size_t          hd_ofs = ha_ofs + sizeof(rted_Address);
-  const size_t          sz_ofs = hd_ofs + sizeof(rted_AddressDesc);
-  const size_t          ma_ofs = sz_ofs + sizeof(size_t);
+  const size_t          ha_ofs = ad_ofs + sizeof(rted_RelativeAddress);
+  const size_t          bl_ofs = ha_ofs + sizeof(rted_RelativeAddress);
+  const size_t          ma_ofs = bl_ofs + sizeof(long);
   const size_t          ak_ofs = ma_ofs + sizeof(size_t);
   const size_t          cn_ofs = ak_ofs + sizeof(rted_AllocKind);
   const size_t          si_ofs = cn_ofs + cn_len;
@@ -443,8 +457,7 @@ void snd_CreateHeapPtr( rted_TypeDesc    td,
   msgw_TypeDesc   (msg + td_ofs, td, td_len);
   msgw_Address    (msg + ad_ofs, address);
   msgw_Address    (msg + ha_ofs, heap_address);
-  msgw_AddressDesc(msg + hd_ofs, heap_desc);
-  msgw_SizeT      (msg + sz_ofs, size);
+  msgw_Long       (msg + bl_ofs, blocksize);
   msgw_SizeT      (msg + ma_ofs, mallocSize);
   msgw_AllocKind  (msg + ak_ofs, allocKind);
   msgw_String     (msg + cn_ofs, class_name, cn_len);
@@ -459,9 +472,8 @@ void rcv_InitVariable( const rted_MsgHeader* msg )
   const char*  buf = (const char*) msg;
   const size_t td_ofs = sizeof(rted_MsgHeader);
   const size_t ad_ofs = td_ofs + msglen_Typedesc(buf + td_ofs);
-  const size_t ha_ofs = ad_ofs + sizeof(rted_Address);
-  const size_t hd_ofs = ha_ofs + sizeof(rted_Address);
-  const size_t sz_ofs = hd_ofs + sizeof(rted_AddressDesc);
+  const size_t ha_ofs = ad_ofs + sizeof(rted_RelativeAddress);
+  const size_t sz_ofs = ha_ofs + sizeof(rted_RelativeAddress);
   const size_t pm_ofs = sz_ofs + sizeof(size_t);
   const size_t cn_ofs = pm_ofs + sizeof(int);
   const size_t si_ofs = cn_ofs + msglen_String(buf + cn_ofs);
@@ -469,18 +481,17 @@ void rcv_InitVariable( const rted_MsgHeader* msg )
   _rted_InitVariable( msgr_TypeDesc   (buf + td_ofs),
                       msgr_Address    (buf + ad_ofs),
                       msgr_Address    (buf + ha_ofs),
-                      msgr_AddressDesc(buf + hd_ofs),
                       msgr_SizeT      (buf + sz_ofs),
                       msgr_Int        (buf + pm_ofs),
                       msgr_String     (buf + cn_ofs),
-                      msgr_SourceInfo (buf + si_ofs)
+                      msgr_SourceInfo (buf + si_ofs),
+                      msgHandling
                     );
 }
 
 void snd_InitVariable( rted_TypeDesc    td,
                        rted_Address     address,
                        rted_Address     heap_address,
-                       rted_AddressDesc heap_desc,
                        size_t           size,
                        int              pointer_move,
                        const char*      class_name,
@@ -502,9 +513,8 @@ void snd_InitVariable( rted_TypeDesc    td,
 
   const size_t          td_ofs = sizeof(rted_MsgHeader);
   const size_t          ad_ofs = td_ofs + td_len.total;
-  const size_t          ha_ofs = ad_ofs + sizeof(rted_Address);
-  const size_t          hd_ofs = ha_ofs + sizeof(rted_Address);
-  const size_t          sz_ofs = hd_ofs + sizeof(rted_AddressDesc);
+  const size_t          ha_ofs = ad_ofs + sizeof(rted_RelativeAddress);
+  const size_t          sz_ofs = ha_ofs + sizeof(rted_RelativeAddress);
   const size_t          pm_ofs = sz_ofs + sizeof(size_t);
   const size_t          cn_ofs = pm_ofs + sizeof(int);
   const size_t          si_ofs = cn_ofs + cn_len;
@@ -515,7 +525,6 @@ void snd_InitVariable( rted_TypeDesc    td,
   msgw_TypeDesc   (msg + td_ofs, td, td_len);
   msgw_Address    (msg + ad_ofs, address);
   msgw_Address    (msg + ha_ofs, heap_address);
-  msgw_AddressDesc(msg + hd_ofs, heap_desc);
   msgw_SizeT      (msg + sz_ofs, size);
   msgw_Int        (msg + pm_ofs, pointer_move);
   msgw_String     (msg + cn_ofs, class_name, cn_len);
@@ -529,17 +538,16 @@ void rcv_MovePointer( const rted_MsgHeader* msg )
   const char*  buf = (const char*) msg;
   const size_t td_ofs = sizeof(rted_MsgHeader);
   const size_t ad_ofs = td_ofs + msglen_Typedesc(buf + td_ofs);
-  const size_t ha_ofs = ad_ofs + sizeof(rted_Address);
-  const size_t hd_ofs = ha_ofs + sizeof(rted_Address);
-  const size_t cn_ofs = hd_ofs + sizeof(rted_AddressDesc);
+  const size_t ha_ofs = ad_ofs + sizeof(rted_RelativeAddress);
+  const size_t cn_ofs = ha_ofs + sizeof(rted_RelativeAddress);
   const size_t si_ofs = cn_ofs + msglen_String(buf + cn_ofs);
 
   _rted_MovePointer( msgr_TypeDesc   (buf + td_ofs),
                      msgr_Address    (buf + ad_ofs),
                      msgr_Address    (buf + ha_ofs),
-                     msgr_AddressDesc(buf + hd_ofs),
                      msgr_String     (buf + cn_ofs),
-                     msgr_SourceInfo (buf + si_ofs)
+                     msgr_SourceInfo (buf + si_ofs),
+                     msgHandling
                    );
 }
 
@@ -548,7 +556,6 @@ void rcv_MovePointer( const rted_MsgHeader* msg )
 void snd_MovePointer( rted_TypeDesc td,
                       rted_Address address,
                       rted_Address heap_address,
-                      rted_AddressDesc heap_desc,
                       const char* class_name,
                       rted_SourceInfo si
                     )
@@ -563,9 +570,8 @@ void snd_MovePointer( rted_TypeDesc td,
 
   const size_t          td_ofs = sizeof(rted_MsgHeader);
   const size_t          ad_ofs = td_ofs + td_len.total;
-  const size_t          ha_ofs = ad_ofs + sizeof(rted_Address);
-  const size_t          hd_ofs = ha_ofs + sizeof(rted_Address);
-  const size_t          cn_ofs = hd_ofs + sizeof(rted_AddressDesc);
+  const size_t          ha_ofs = ad_ofs + sizeof(rted_RelativeAddress);
+  const size_t          cn_ofs = ha_ofs + sizeof(rted_RelativeAddress);
   const size_t          si_ofs = cn_ofs + cn_len;
   const size_t          blocksz = si_ofs + si_len;
   char                  msg[blocksz];
@@ -574,7 +580,6 @@ void snd_MovePointer( rted_TypeDesc td,
   msgw_TypeDesc   (msg + td_ofs, td, td_len);
   msgw_Address    (msg + ad_ofs, address);
   msgw_Address    (msg + ha_ofs, heap_address);
-  msgw_AddressDesc(msg + hd_ofs, heap_desc);
   msgw_String     (msg + cn_ofs, class_name, cn_len);
   msgw_SourceInfo (msg + si_ofs, si, si_len);
 
@@ -680,7 +685,7 @@ void msgReceive()
       break;
 
     case mskCreateHeapPtr:
-      rcv_CreateHeapPtr(msg);
+      rcv_AllocMem(msg);
       break;
 
     case mskInitVariable:
@@ -712,8 +717,24 @@ void rted_UpcAllInitialize()
 {
   // create the messageing system for the current thread
   upcAllInitMsgQueue();
-
+  localBaseAddr = rted_ThisShmemBase();
   // initialize the heap protection
   rted_UpcAllInitWorkzone();
   rted_UpcEnterWorkzone();
 }
+
+
+#if OBSOLETE_CODE
+// AddressDesc
+static
+void msgw_AddressDesc(char* buf, rted_AddressDesc desc)
+{
+  *((rted_AddressDesc*) buf) = desc;
+}
+
+static
+rted_AddressDesc msgr_AddressDesc(const char* buf)
+{
+  return *((rted_AddressDesc*) buf);
+}
+#endif /* OBSOLETE_CODE */

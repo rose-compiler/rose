@@ -13,10 +13,6 @@
 
 #include <stdlib.h>
 
-// \todo remove the define from here and make it a define
-//       in the ROSE configuration
-// #define WITH_UPC 1
-
 #if __UPC__
 
 #include <upc.h>

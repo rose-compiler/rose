@@ -2,10 +2,71 @@
 #include <iomanip>
 #include <cassert>
 #include <iostream>
+#include <algorithm>
 
 #include "PointerManager.h"
 #include "CppRuntimeSystem.h"
 #include "MemoryManager.h"
+
+
+// auxiliary classes and functions
+
+static inline
+bool equalThreadId(const Address& lhs, const Address& rhs)
+{
+#ifdef WITH_UPC
+  return lhs.thread_id == rhs.thread_id;
+#else /* WITH_UPC */
+  return true;
+#endif /* WITH_UPC */
+}
+
+
+template <class _ForwardIterator, class _Predicate>
+struct SequenceFilter
+{
+  typedef _ForwardIterator              iterator;
+  typedef typename iterator::value_type value_type;
+  typedef typename iterator::reference  reference;
+
+  iterator       aa;
+  const iterator zz;
+  _Predicate     pred;
+
+  SequenceFilter(iterator first, iterator last, _Predicate p)
+  : aa(first), zz(last), pred(p)
+  {
+    if ((aa != zz) && !pred(*aa)) next();
+  }
+
+  bool empty() const { return aa == zz; }
+
+  void next()
+  {
+    ++aa;
+    aa = std::find_if(aa, zz, pred);
+  }
+
+  iterator  iter() { return aa; }
+  reference elem() { return *aa; }
+};
+
+struct MemareaMembershipChecker
+{
+  const bool    distributed;
+  Address       baseaddr;
+
+  explicit
+  MemareaMembershipChecker(const MemoryType& memtype)
+  : distributed(memtype.isDistributed()), baseaddr(memtype.beginAddress())
+  {}
+
+  bool operator()(const PointerManager::TargetToPointerMap::value_type& entry) const
+  {
+    return distributed || equalThreadId(entry.first, baseaddr);
+  }
+};
+
 
 
 // -------------------------- Pointer Info -------------------------------
@@ -40,7 +101,7 @@ PointerInfo::PointerInfo(Location s)
 : source(s), target(nullAddr()), baseType(NULL)
 {}
 
-PointerInfo::PointerInfo(Location s, Location t, RsType * type)
+PointerInfo::PointerInfo(Location s, Location t, const RsType* type)
 : source(s), target(nullAddr()), baseType(type)
 {
     setTargetAddress(t);
@@ -56,9 +117,10 @@ PointerInfo::~PointerInfo()
      setTargetAddress(nullAddr());
 }
 
-VariablesType * PointerInfo::getVariable() const
+const VariablesType*
+PointerInfo::getVariable() const
 {
-    return RuntimeSystem::instance()->getStackManager()->getVariable(source);
+    return rtedRTS(this)->getStackManager()->getVariable(source);
 }
 
 bool PointerInfo::operator< (const PointerInfo & other ) const
@@ -69,17 +131,16 @@ bool PointerInfo::operator< (const PointerInfo & other ) const
 
 void PointerInfo::setTargetAddress(Location newAddr, bool doCheck)
 {
-    RuntimeSystem* rs = RuntimeSystem::instance();
-    MemoryManager* mm = rs->getMemManager();
+    MemoryManager* mm = rtedRTS(this)->getMemManager();
     const size_t   objsz = baseType->getByteSize();
     MemoryType*    newMem = mm->findContainingMem(newAddr, objsz);
 
     if (!newMem && !isNullAddr(newAddr)) //new address is invalid
     {
-      std::stringstream ss;
+      std::stringstream    ss;
+
       ss << "Tried to assign non allocated address 0x" << newAddr;
-      VariablesType * var = getVariable();
-      if (var)
+      if (const VariablesType* var = getVariable())
           ss << " to pointer " << var->getName();
       else
           ss << " to pointer at address 0x" << source;
@@ -87,7 +148,7 @@ void PointerInfo::setTargetAddress(Location newAddr, bool doCheck)
       ss << std::endl;
 
       target = nullAddr();
-      rs->violationHandler(RuntimeViolation::INVALID_PTR_ASSIGN, ss.str());
+      RuntimeSystem::instance()->violationHandler(RuntimeViolation::INVALID_PTR_ASSIGN, ss.str());
       return;
     }
 
@@ -122,12 +183,8 @@ void PointerInfo::print(std::ostream& os) const
 {
     os << std::setw(6) << std::setfill('0') << getSourceAddress() << "\t"
        << std::setw(6) << std::setfill('0') << getTargetAddress() << "\t"
-       << getBaseType()->getName();
-
-    VariablesType * var = getVariable();
-    if(var)
-        os << "\t" << *var;
-
+       << getBaseType()->getName()
+       << (getVariable() ? "\t" : "");
 }
 
 std::ostream& operator<< (std::ostream& os, const PointerInfo& m)
@@ -140,25 +197,24 @@ std::ostream& operator<< (std::ostream& os, const PointerInfo& m)
 // -------------------------- PointerManager -------------------------------
 
 
-void PointerManager::createDereferentiableMem(Location sourceAddress, RsType * type)
+void PointerManager::createDereferentiableMem(Location sourceAddress, const RsType* type)
 {
     PointerInfo * pi = new PointerInfo(sourceAddress, nullAddr(), type);
     std::pair<PointerSet::iterator, bool>  res = pointerInfoSet.insert(pi);
-    if(!res.second)//pointer was already registered
+
+    if (!res.second)  //pointer was already registered
     {
         delete pi;
         return;
     }
 
-    insert(targetToPointerMap, TargetToPointerMap::value_type(nullAddr(), pi)) /* insert */;;
+    insert(targetToPointerMap, TargetToPointerMap::value_type(nullAddr(), pi)) /* insert */;
 }
 
 
-void PointerManager::createPointer(Location baseAddr, RsType * type, bool distributed)
+void PointerManager::createPointer(Location baseAddr, const RsType* type, long blocksize)
 {
-    bool basetype_distributed = false;
-
-    if (RsArrayType * at = dynamic_cast<RsArrayType*>(type))
+    if (const RsArrayType* at = dynamic_cast<const RsArrayType*>(type))
     {
         // arrays are 'pseudo-pointers' whose target and source addresses are the
         // same, i.e.
@@ -166,31 +222,30 @@ void PointerManager::createPointer(Location baseAddr, RsType * type, bool distri
         //  &x == x         // this is true
         createDereferentiableMem(baseAddr, at->getBaseType());
         registerPointerChange( baseAddr, baseAddr, nocheck, check );
-
-        basetype_distributed = distributed && ( dynamic_cast<RsArrayType*>(at->getBaseType()) != NULL );
     }
-    else if (RsPointerType * pt = dynamic_cast<RsPointerType*>(type))
+    else if (const RsPointerType* pt = dynamic_cast<const RsPointerType*>(type))
     {
         // If type is a pointer register it
         createDereferentiableMem(baseAddr, pt->getBaseType());
-        basetype_distributed = distributed && ( dynamic_cast<RsArrayType*>(pt->getBaseType()) != NULL );
+
+        // blocksize does not matter here, b/c pointer types have
+        //   getSubtypeCount() == 0
+        // blocksize = 0 /* correct? */
     }
     else
     {
-      // plain types, and structures are never distributed
-      assert(!distributed);
+        // plain types, and structures are never distributed
+        blocksize = 0;
     }
-
 
     // If compound type, break down to basic types
-    for (int i = 0; i < type->getSubtypeCount(); ++i)
+    const int szSubtypes = type->getSubtypeCount();
+    for (int i = 0; i < szSubtypes; ++i)
     {
-        Location l = add(baseAddr, type->getSubtypeOffset(i), distributed);
+        Location l = add(baseAddr, type->getSubtypeOffset(i), blocksize);
 
-        createPointer(l, type->getSubtype(i), basetype_distributed );
+        createPointer(l, type->getSubtype(i), blocksize);
     }
-
-    // \pp \todo \distmem
 }
 
 
@@ -216,7 +271,7 @@ void PointerManager::deletePointer( Location src, bool checks )
 }
 
 
-void PointerManager::deletePointerInRegion( MemoryType& mt )
+void PointerManager::deletePointerInRegion( const MemoryType& mt )
 {
     Location       from(mt.beginAddress());
     Location       to(mt.lastValidAddress());
@@ -225,8 +280,8 @@ void PointerManager::deletePointerInRegion( MemoryType& mt )
     PointerSetIter lb = pointerInfoSet.lower_bound(&objFrom);
     PointerSetIter ub = pointerInfoSet.upper_bound(&objTo  );
 
-    // First store all pointer which have to be deleted
-    // erase(lb, ub) doesn't work because the pointer need to be removed from map
+    // First store all pointers that have to be deleted
+    // erase(lb, ub) doesn't work because the pointers need to be removed from map
     std::vector< PointerInfo* > toDelete(lb, ub);
 
     for ( unsigned int i=0; i<toDelete.size(); ++i )
@@ -242,23 +297,38 @@ void PointerManager::deletePointerInRegion( MemoryType& mt )
 }
 
 
-void PointerManager::registerPointerChange( Location src, Location target, RsType * bt, bool checkPointerMove, bool checkMemLeaks)
+void PointerManager::registerPointerChange( Location src, Location target, const RsType* bt, bool checkPointerMove, bool checkMemLeaks)
 {
-    PointerInfo dummy(src);
-    PointerSetIter i = pointerInfoSet.find(&dummy);
+    PointerInfo    dummy(src);
+    PointerSetIter it = pointerInfoSet.find(&dummy);
 
-    if (i != pointerInfoSet.end())
+    if (it != pointerInfoSet.end())
     {
         // if pointer exists already, make sure that baseTypes match
-        assert( (*i) -> baseType = bt );
+        // \note this was assert( (*it)->baseType = bt )
+        //       after changing = to ==, the assumption does not hold
+        //       assert( (*it)->baseType == bt )
+        if (((*it)->baseType != bt) && diagnostics::warning())
+        {
+          std::stringstream msg;
+
+          msg << "WARNING: type mismatch.\n"
+              << "  original type = " << (*it)->baseType->getName()
+              << "  new type =      " << bt->getName()
+              << std::endl;
+
+          RuntimeSystem::instance()->printMessage(msg.str());
+
+          (*it)->baseType = bt; // \todo remove
+        }
     }
     else
     {
         // create the pointer
-        createDereferentiableMem(src,bt);
+        createDereferentiableMem(src, bt);
     }
 
-    registerPointerChange(src,target, checkPointerMove, checkMemLeaks);
+    registerPointerChange(src, target, checkPointerMove, checkMemLeaks);
 }
 
 void PointerManager::registerPointerChange( Location src, Location target, bool checkPointerMove, bool checkMemLeaks)
@@ -276,8 +346,8 @@ void PointerManager::registerPointerChange( Location src, Location target, bool 
 
     if( checkPointerMove )
     {
-        MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
-        const size_t    bytesize = pi.getBaseType() -> getByteSize();
+        const MemoryManager* mm = rtedRTS(this)->getMemManager();
+        const size_t         bytesize = pi.getBaseType() -> getByteSize();
 
         legal_move = mm -> checkIfSameChunk(oldTarget, target, bytesize, RuntimeViolation::NONE );
 
@@ -287,10 +357,10 @@ void PointerManager::registerPointerChange( Location src, Location target, bool 
             RuntimeSystem*               rs = RuntimeSystem::instance();
             const RuntimeViolation::Type vioid = RuntimeViolation::INVALID_PTR_ASSIGN;
 
-            if (rs->violationTypePolicy[vioid] != ViolationPolicy::InvalidatePointer)
+            if (rs->vioPolicy(vioid) != ViolationPolicy::InvalidatePointer)
             {
                 // repeat check but throw invalid ptr assign
-                mm -> checkIfSameChunk(oldTarget, target, bytesize, vioid );
+                mm -> checkIfSameChunk( oldTarget, target, bytesize, vioid );
 
                 // shouldn't get here
                 assert( false );
@@ -303,7 +373,7 @@ void PointerManager::registerPointerChange( Location src, Location target, bool 
             insert(targetToPointerMap, TargetToPointerMap::value_type( nullAddr(), &pi )) /* insert */;
 
             // \pp this is a bug, as RTED changes data of a running program
-            if ( !(rs->testingMode) ) zeroIntValueAt(pi.getSourceAddress());
+            if ( !(rs->testing()) ) zeroIntValueAt(pi.getSourceAddress());
         }
     }
 
@@ -318,11 +388,11 @@ void PointerManager::registerPointerChange( Location src, Location target, bool 
         } catch(RuntimeViolation & vio) {
             // if target could not been set, then set pointer to null
             pi.setTargetAddressForce( nullAddr() );
-            insert(targetToPointerMap, TargetToPointerMap::value_type(nullAddr(), &pi)) /* insert */;;
+            insert(targetToPointerMap, TargetToPointerMap::value_type(nullAddr(), &pi)) /* insert */;
             throw vio;
         }
         // ...and insert it again with changed target
-        insert(targetToPointerMap, TargetToPointerMap::value_type(target, &pi)) /* insert */;;
+        insert(targetToPointerMap, TargetToPointerMap::value_type(target, &pi)) /* insert */;
     }
 
     if( checkMemLeaks )
@@ -331,121 +401,101 @@ void PointerManager::registerPointerChange( Location src, Location target, bool 
 }
 
 
-bool PointerManager::checkForMemoryLeaks( PointerInfo* pi )
+bool PointerManager::checkForMemoryLeaks( const PointerInfo* pi ) const
 {
-    return checkForMemoryLeaks(
-        pi -> getTargetAddress(),
-        pi -> getBaseType() -> getByteSize(),
-        pi
-    );
+    return checkForMemoryLeaks( pi -> getTargetAddress(),
+                                pi -> getBaseType() -> getByteSize(),
+                                pi
+                              );
 }
 
-bool PointerManager::checkForMemoryLeaks( Location address, size_t type_size, PointerInfo* pointer_to_blame )
+bool
+PointerManager::checkForMemoryLeaks(Location address, size_t type_size, const PointerInfo* pointer_to_blame) const
 {
-    typedef TargetToPointerMap::const_iterator ConstIterator;
+    typedef TargetToPointerMap::const_iterator                      ConstIterator;
+    typedef SequenceFilter<ConstIterator, MemareaMembershipChecker> PointerFilter;
 
-    bool found_leaks = false;
-    MemoryManager * mm = RuntimeSystem::instance() -> getMemManager();
-    MemoryType * mem = mm->findContainingMem( address, type_size );
+    const MemoryManager* mm = rtedRTS(this)->getMemManager();
+    const MemoryType*    mem = mm->findContainingMem( address, type_size );
 
-    if(mem && (mem->howCreated() != akStack)) // no memory leaks on stack
+    if (!mem || (mem->howCreated() == akStack)) return false;
+
+    // find other pointer still pointing to this region
+    ConstIterator aa = targetRegionIterBegin( mem -> beginAddress() );
+    ConstIterator zz = targetRegionIterBegin( mem -> endAddress() );
+    PointerFilter range(aa, zz, MemareaMembershipChecker(*mem));
+    const bool    found_leaks = range.empty();
+
+    if (found_leaks)
     {
-        // find other pointer still pointing to this region
-        ConstIterator begin = targetRegionIterBegin( mem -> beginAddress() );
-        ConstIterator end   = targetRegionIterBegin( mem -> endAddress() );
+        std::stringstream msg;
 
-        // if nothing found create violation
-        if (begin == end)
+        msg << "No pointer to allocated memory region: " << std::endl;
+        if( pointer_to_blame )
         {
-            found_leaks = true;
-            RuntimeSystem * rs = RuntimeSystem::instance();
-            std::stringstream ss;
-            ss << "No pointer to allocated memory region: " << std::endl;
-            if( pointer_to_blame ) {
-                ss << *mem << std::endl << "because this pointer has changed: " <<std::endl;
-                ss << *pointer_to_blame << std::endl;
-            }
-            rs->violationHandler(RuntimeViolation::MEM_WITHOUT_POINTER, ss.str());
+            msg << *mem << std::endl << "because this pointer has changed: " <<std::endl;
+            msg << *pointer_to_blame << std::endl;
         }
 
+        RuntimeSystem::instance()->violationHandler(RuntimeViolation::MEM_WITHOUT_POINTER, msg.str());
     }
+
     return found_leaks;
 }
 
 
-void PointerManager::checkIfPointerNULL( void* pointer)
+void PointerManager::checkIfPointerNULL( const void* pointer) const
 {
-  RuntimeSystem * rs = RuntimeSystem::instance();
-  if (pointer==NULL) {
+  if (pointer==NULL)
+  {
     std::stringstream ss;
     ss << "Accessing (This) NULL Pointer: " << std::endl;
-    rs->violationHandler(RuntimeViolation::INVALID_WRITE, ss.str());
+
+    RuntimeSystem::instance()->violationHandler(RuntimeViolation::INVALID_WRITE, ss.str());
   }
 }
 
-#if OBSOLETE_CODE
-void PointerManager::checkPointerDereference( Location src, Location deref_addr)
+void PointerManager::invalidatePointerToRegion(const MemoryType& mt)
 {
-    MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
+    typedef TargetToPointerMap::iterator                   Iter;
+    typedef SequenceFilter<Iter, MemareaMembershipChecker> PointerFilter;
 
-    PointerInfo dummy (src);
-    PointerSetIter i = pointerInfoSet.find(&dummy);
-    assert(i != pointerInfoSet.end());
-    PointerInfo * pi = *i;
+    const Address  lb = mt.beginAddress();
+    const Address  ub = mt.lastValidAddress();
+    const Iter     aa = targetRegionIterBegin(lb);
+    const Iter     zz = targetRegionIterEnd(ub);
+    PointerFilter  range(aa, zz, MemareaMembershipChecker(mt));
+    const Location nullLoc = nullAddr();
+    const long     blocksz = mt.blockSize();
 
-    mm->checkIfSameChunk(pi->getTargetAddress(),deref_addr,pi->getBaseType());
-}
-#endif /* OBSOLETE_CODE */
-
-static inline
-bool equalThreadId(const PointerManager::Location lhs, const PointerManager::Location rhs)
-{
-#ifdef WITH_UPC
-  return lhs.thread_id == rhs.thread_id;
-#else /* WITH_UPC */
-  return true;
-#endif /* WITH_UPC */
-}
-
-void PointerManager::invalidatePointerToRegion(MemoryType& mt)
-{
-    typedef TargetToPointerMap::iterator Iter;
-
-    const Address lb = mt.beginAddress();
-    const Address ub = mt.lastValidAddress();
-    const Iter    aa = targetToPointerMap.lower_bound(lb);
-    const Iter    zz = targetToPointerMap.upper_bound(ub);
-    Location      limit = mt.endAddress();
-    Location      nullLoc = nullAddr();
-    const bool    distr = mt.isDistributed();
-
-    for(Iter i = aa; i != zz; ++i)
+    while (!range.empty())
     {
-        // \pp !distr and threads!=thread seems to be an odd condition
-        if ( !distr && !equalThreadId(aa->first, limit) ) continue;
+      PointerInfo* pi = range.elem().second;
 
-        PointerInfo * pi = i->second;
+      assert(add(pi->getTargetAddress(), pi->getBaseType()->getByteSize()-1, blocksz) <= ub);
 
-        // assert that the object/value pointed does not cross the
-        //   memory region boundary.
-        assert(add(pi->getTargetAddress(), pi->getBaseType()->getByteSize(), distr) <= limit);
+      // \todo check if setTargetAddress does not already erase the element
+      //       from the map
+      pi->setTargetAddress( nullLoc );
+      targetToPointerMap.erase( range.iter() );
 
-        pi->setTargetAddress( nullLoc );
-        targetToPointerMap.erase(i);
+      insert(targetToPointerMap, TargetToPointerMap::value_type(nullLoc, pi)) /* insert */;
 
-        insert(targetToPointerMap, TargetToPointerMap::value_type(nullLoc, pi)) /* insert */;;
+      range.next();
     }
 }
 
 
-bool PointerManager::removeFromRevMap(PointerInfo * pi)
+bool PointerManager::removeFromRevMap(PointerInfo* pi)
 {
+    typedef TargetToPointerMap::iterator MapIter;
+
     assert(!targetToPointerMap.empty());
 
-    typedef TargetToPointerMap::iterator MapIter;
     std::pair<MapIter,MapIter> range = targetToPointerMap.equal_range(pi->getTargetAddress());
-    //    bool found=false;
-    for(MapIter i = range.first; i !=  range.second; ++i)
+
+    // \note no need to filter, all entries point to a specific target
+    for (MapIter i = range.first; i !=  range.second; ++i)
     {
         if( i->second == pi)
         {
@@ -458,10 +508,17 @@ bool PointerManager::removeFromRevMap(PointerInfo * pi)
 }
 
 
-PointerManager::PointerSetIter PointerManager::sourceRegionIter(Location sourceAddr)
+PointerManager::PointerSetIter
+PointerManager::sourceRegionIter(Location sourceAddr) const
 {
     PointerInfo dummy(sourceAddr);
     return pointerInfoSet.lower_bound(&dummy);
+}
+
+PointerManager::TargetToPointerMap::iterator
+PointerManager::targetRegionIterBegin(Location targetAddr)
+{
+    return targetToPointerMap.lower_bound(targetAddr);
 }
 
 PointerManager::TargetToPointerMap::const_iterator
@@ -470,12 +527,17 @@ PointerManager::targetRegionIterBegin(Location targetAddr) const
     return targetToPointerMap.lower_bound(targetAddr);
 }
 
+PointerManager::TargetToPointerMap::iterator
+PointerManager::targetRegionIterEnd(Location targetAddr)
+{
+    return targetToPointerMap.upper_bound(targetAddr);
+}
+
 PointerManager::TargetToPointerMap::const_iterator
 PointerManager::targetRegionIterEnd(Location targetAddr) const
 {
     return targetToPointerMap.upper_bound(targetAddr);
 }
-
 
 void PointerManager::clearStatus()
 {
@@ -506,4 +568,35 @@ void PointerManager::print(std::ostream& os) const
     }
 
     os << "----------------------------------------------------------" << std::endl;
+}
+
+void PointerManager::printPointersToThisChunk(std::ostream& os, const MemoryType& mt) const
+{
+    typedef TargetToPointerMap::const_iterator                      ConstIterator;
+    typedef SequenceFilter<ConstIterator, MemareaMembershipChecker> PointerFilter;
+
+    ConstIterator aa = targetRegionIterBegin(mt.beginAddress());
+    ConstIterator zz = targetRegionIterEnd(mt.lastValidAddress());
+    PointerFilter range(aa, zz, MemareaMembershipChecker(mt));
+
+    // \todo \upcptr filter out pointers that do not belong here
+    if (!range.empty())
+    {
+        os << "\tPointer to this chunk: ";
+        while (!range.empty())
+        {
+            if (const VariablesType* vt = range.elem().second->getVariable())
+            {
+                os << "\t" << vt->getName() << " ";
+            }
+            else
+            {
+                os << "\t" << "Addr: " << range.elem().second->getSourceAddress() << " ";
+            }
+
+            range.next();
+        }
+
+        os <<std::endl;
+    }
 }

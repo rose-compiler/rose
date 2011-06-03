@@ -15,7 +15,22 @@
 using namespace std;
 using namespace SageBuilder;
 
-void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project, vector<SgClassDeclaration*>& traverseClasses)
+static
+bool hasPrivateDataMembers(SgClassDeclaration* cd_copy)
+{
+   const SgNodePtrList&          variables = NodeQuery::querySubTree(cd_copy,  V_SgVariableDeclaration);
+   SgNodePtrList::const_iterator varIt = variables.begin();
+   for (; varIt != variables.end(); ++varIt) {
+      SgVariableDeclaration* node = isSgVariableDeclaration(*varIt);
+      SgAccessModifier am =  node->get_declarationModifier().get_accessModifier();
+      if (am.isPrivate())
+         return true;
+   }
+   return false;
+}
+
+
+void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project )
 {
    //*******************************************
    // for all of the sourcefiles create a namespace at the top of the file
@@ -40,14 +55,14 @@ void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project, vect
             )
          {
             // if it is not a C but C++ program, then insert namespace
-            if (RTEDDEBUG()) cerr << " **** Inserting file into sourceFileRoseNamespaceMap:" << sf -> get_file_info() -> get_filename() << endl;
+            if (RTEDDEBUG) cerr << " **** Inserting file into sourceFileRoseNamespaceMap:" << sf -> get_file_info() -> get_filename() << endl;
             //if (filename.find("_s.cpp")!=std::string::npos)
             insertNamespaceIntoSourceFile(sf);
          }
       }
    }
 
-   if (RTEDDEBUG())  cerr << "Deep copy of all C++ class declarations to allow offsetof to be used." << endl;
+   if (RTEDDEBUG)  cerr << "Deep copy of all C++ class declarations to allow offsetof to be used." << endl;
    const SgNodePtrList& results = NodeQuery::querySubTree(project,V_SgClassDeclaration);
    // insert at top of all C files in reverse order
    // only if the class has a constructor and if it is declared in a header file
@@ -63,6 +78,7 @@ void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project, vect
    ROSE_ASSERT(resultsInv.size()==results.size());
 #endif
 
+   std::vector<SgClassDeclaration*> traverseClasses;
    SgNodePtrList::const_reverse_iterator classIt = results.rbegin();
    for (;classIt!=results.rend(); ++classIt)
    {
@@ -72,32 +88,57 @@ void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project, vect
          && !classDecl->get_file_info()->isCompilerGenerated()
          )
       {
-          string filename = classDecl->get_file_info()->get_filenameString();
-          size_t idx = filename.rfind('.');
-          std::string extension;
+          const string filename = classDecl->get_file_info()->get_filenameString();
+          const size_t idx = filename.rfind('.');
+          std::string  extension;
+
           if (idx != std::string::npos)
+          {
              extension = filename.substr(idx+1);
+          }
 
           // \note only for classes in header files that are not system includes
-          if ((extension!="C" && extension!="cpp" && extension!="cxx" && extension!="cc") &&
-                filename.find("include-staging")==string::npos &&
-                filename.find("/usr/include")==string::npos
+          if (  extension != "C"
+             && extension != "cpp"
+             && extension != "cxx"
+             && extension != "cc"
+             && filename.find("include-staging") == string::npos
+             && filename.find("/usr/include") == string::npos
              )
           {
-             std::vector<std::pair<SgNode*,std::string> > vec = classDecl->returnDataMemberPointers();
-             if (RTEDDEBUG()) cerr << "\n ** Deep copy: Found classDecl : " << classDecl->get_name().str() << "  in File: " << filename <<
-                   "    with number of datamembers: " << vec.size() << "   defining " <<
-                   (classDecl->get_definingDeclaration()==classDecl) << endl;
-             if (hasPrivateDataMembers(classDecl)) {
-                /*SgClassDeclaration* cdl = */instrumentClassDeclarationIntoTopOfAllSourceFiles(project, classDecl);
-                //traverseClasses.push_back(cdl);
-             } //else
+             if (RTEDDEBUG)
+             {
+               size_t szDataMem = classDecl->returnDataMemberPointers().size();
+
+               cerr << "\n ** Deep copy: Found classDecl : " << classDecl->get_name().str()
+                    << "  in File: " << filename << "    with number of datamembers: " << szDataMem
+                    << "   defining " << (classDecl->get_definingDeclaration() == classDecl)
+                    << endl;
+             }
+
+             if (hasPrivateDataMembers(classDecl))
+             {
+                instrumentClassDeclarationIntoTopOfAllSourceFiles(project, classDecl);
+             }
+
              traverseClasses.push_back(classDecl);
           }
        }
    }
-   moveupPreprocessingInfo(project);
 
+   // \pp not sure why moveupPreprocessingInfo is needed
+   //     commented out for now.
+   // moveupPreprocessingInfo(project);
+
+   // traverse all header files and collect information
+   std::vector<SgClassDeclaration*>::const_iterator travClassIt = traverseClasses.begin();
+   std::vector<SgClassDeclaration*>::const_iterator travClassEnd = traverseClasses.end();
+
+   for (; travClassIt != travClassEnd; ++travClassIt)
+   {
+      // traverse the new classes with RTED namespace
+      traverse(*travClassIt, preorder);
+   }
 }
 
 /// \brief  starting from n returns the first AST node that is an SgStatement
@@ -125,7 +166,7 @@ void RtedTransformation::moveupPreprocessingInfo(SgProject* project)
 
       // if the first located node has the preprocessing info then we are fine
       // otherwise move the info up to the first one
-      if (RTEDDEBUG()) cerr << "Moving up preprocessing info for file : "        << sf->get_file_info()->get_filename() << endl;
+      if (RTEDDEBUG) cerr << "Moving up preprocessing info for file : "        << sf->get_file_info()->get_filename() << endl;
 
       // \pp this flattens the entire tree ...
       const SgNodePtrList&            nodes = NodeQuery::querySubTree(sf, V_SgLocatedNode);
@@ -158,17 +199,6 @@ void RtedTransformation::moveupPreprocessingInfo(SgProject* project)
    }
 }
 
-bool RtedTransformation::hasPrivateDataMembers(SgClassDeclaration* cd_copy) {
-   const SgNodePtrList&          variables = NodeQuery::querySubTree(cd_copy,  V_SgVariableDeclaration);
-   SgNodePtrList::const_iterator varIt = variables.begin();
-   for (; varIt != variables.end(); ++varIt) {
-      SgVariableDeclaration* node = isSgVariableDeclaration(*varIt);
-      SgAccessModifier am =  node->get_declarationModifier().get_accessModifier();
-      if (am.isPrivate())
-         return true;
-   }
-   return false;
-}
 
 void RtedTransformation::insertNamespaceIntoSourceFile(SgSourceFile* sf) {
    cerr << "Building Namespace RTED" << endl;
@@ -176,7 +206,7 @@ void RtedTransformation::insertNamespaceIntoSourceFile(SgSourceFile* sf) {
    // the first namespace is used for all forward declarations
    SgNamespaceDeclarationStatement* rosenamesp = buildNamespaceDeclaration(
          "RTED", sf->get_globalScope());
-   if (RTEDDEBUG()) cerr << " *** Prepending namespace to sf->globalScope() : " <<  sf->get_globalScope() << endl;
+   if (RTEDDEBUG) cerr << " *** Prepending namespace to sf->globalScope() : " <<  sf->get_globalScope() << endl;
 
    SageInterface::prependStatement(rosenamesp, sf->get_globalScope());
    ROSE_ASSERT(rosenamesp->get_definition()->get_parent());
@@ -186,7 +216,7 @@ void RtedTransformation::insertNamespaceIntoSourceFile(SgSourceFile* sf) {
 SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSourceFiles(
       SgProject* project, SgClassDeclaration* classDecl) {
    // **********************
-   if (RTEDDEBUG()) cerr <<"@@@ instrumenting into top "<< endl;
+   if (RTEDDEBUG) cerr <<"@@@ instrumenting into top "<< endl;
    // deep copy the classdecl and make it unparseable
    SgClassDeclaration* cd_copy = SageInterface::deepCopy(classDecl);
    // cout << ">>>>>> Original ClassType :::: " << classDecl->get_type() << endl;
@@ -203,7 +233,7 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
       file_info->setOutputInCodeGeneration();
       //cerr << "copying node : " << node->class_name() << endl;
    }
-   if (RTEDDEBUG()) cerr << "deep copy of firstnondefining" << endl;
+   if (RTEDDEBUG) cerr << "deep copy of firstnondefining" << endl;
 
    SgClassDeclaration* nondefDecl = isSgClassDeclaration(classDecl->get_firstNondefiningDeclaration());
    SgClassDeclaration* cdn_copy = SageInterface::deepCopy(nondefDecl);
@@ -226,7 +256,7 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
    cdn_copy->set_definingDeclaration(cd_copy);
    cd_copy->set_type(cdn_copy->get_type());
 
-   if (RTEDDEBUG()) {
+   if (RTEDDEBUG) {
       cerr << "@@@@@@@@@@@@@@ Original Class classDecl : " << classDecl << " :: " << cd_copy << endl;
       cerr << "@@@@@@@@@@@@@@ Original Class nondefining : " << classDecl->get_firstNondefiningDeclaration()<< " :: " << cdn_copy << endl;
       cerr << "@@@@@@@@@@@@@@@@@@ TYPE OF cd_copy->get_type() : " << cd_copy->get_type() << endl;
@@ -247,10 +277,11 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
    {
       SgSourceFile* sf = *aa;
       bool          isInSourceFileSet = isInInstrumentedFile(sf);
+      assert( isInSourceFileSet ); // \pp seems to always hold
 
       if (!isInSourceFileSet) continue;
 
-      if (RTEDDEBUG()) cerr << "Looking through sourcefile: " << sf -> get_file_info() -> get_filename() << endl;
+      if (RTEDDEBUG) cerr << "Looking through sourcefile: " << sf -> get_file_info() -> get_filename() << endl;
       // once we have the new class_decl inserted, we remove all functions and the constructor and destructor
       const SgNodePtrList&          remNodes = NodeQuery::querySubTree(cd_copy, V_SgFunctionDeclaration);
       SgNodePtrList::const_iterator remNodesIt = remNodes.begin();
@@ -260,7 +291,7 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
         SageInterface::removeStatement(node);
       }
 
-      if (RTEDDEBUG()) cerr << "  changing privates to public" << endl;
+      if (RTEDDEBUG) cerr << "  changing privates to public" << endl;
       // change each private: to public:
       SgClassDefinition* cd_def = cd_copy->get_definition();
       ROSE_ASSERT(cd_def);
@@ -277,7 +308,7 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
       }
 
       // get the namespace RTED to put new class into
-      if (RTEDDEBUG()) cerr << "Finding Namespace RTED  "  <<  endl;
+      if (RTEDDEBUG) cerr << "Finding Namespace RTED  "  <<  endl;
 
       SourceFileRoseNMType::const_iterator pit = sourceFileRoseNamespaceMap.find(sf);
       ROSE_ASSERT(pit!=sourceFileRoseNamespaceMap.end());
@@ -285,7 +316,7 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
       SgNamespaceDeclarationStatement* firstNamespace = pit->second;
 
       // insert at top of file - after includes
-      if (RTEDDEBUG())
+      if (RTEDDEBUG)
       {
          cerr << " Prepending to source file: " << sf -> get_file_info() -> get_filename()
               << "   class : " << cd_copy->get_name().str()

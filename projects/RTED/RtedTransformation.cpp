@@ -28,13 +28,16 @@ RtedTransformation::parse(int argc, char** argv) {
  * Load all function symbols that are needed for transformations
  * Basically we need to know which functions to insert
  * -----------------------------------------------------------*/
-void RtedTransformation::loadFunctionSymbols(SgProject* project) {
-   // traverse the AST and find locations that need to be transformed
-   symbols.traverse(project, preorder);
+void RtedTransformation::loadFunctionSymbols(SgSourceFile& n)
+{
+   SgGlobal* globalScope = n.get_globalScope();
+   ROSE_ASSERT(globalScope);
 
-   ROSE_ASSERT(symbols.roseCreateHeapArr);
-   ROSE_ASSERT(symbols.roseCreateHeapPtr);
-   ROSE_ASSERT(symbols.roseAccessHeap);
+   symbols.initialize(*globalScope);
+
+   ROSE_ASSERT(symbols.roseCreateArray);
+   ROSE_ASSERT(symbols.roseAllocMem);
+   ROSE_ASSERT(symbols.roseAccessArray);
    ROSE_ASSERT(symbols.roseCheckpoint);
    ROSE_ASSERT(symbols.roseFunctionCall);
    ROSE_ASSERT(symbols.roseAssertFunctionSignature);
@@ -83,16 +86,14 @@ void RtedTransformation::transform(SgProject* project, std::set<std::string>& rt
    using rted::VariableTraversal;
    using rted::InheritedAttribute;
 
-   ROSE_ASSERT( project);
+   ROSE_ASSERT(project);
 
-   if (RTEDDEBUG())   std::cout << "Running Transformation..." << std::endl;
+   if (RTEDDEBUG) std::cout << "Running Transformation..." << std::endl;
 
-   this -> rtedfiles = &rtedfiles;
-   loadFunctionSymbols(project);
+   this->rtedfiles = &rtedfiles;
 
-   VariableTraversal  varTraversal(this);
+   VariableTraversal                varTraversal(this);
 
-   //   InheritedAttribute inheritedAttribute(bools);
    // Call the traversal starting at the project (root) node of the AST
    varTraversal.traverseInputFiles(project, InheritedAttribute());
 
@@ -103,19 +104,8 @@ void RtedTransformation::transform(SgProject* project, std::set<std::string>& rt
    // \pp \note can the loop be done as part of varTraversal, or seperated into
    //           another class? This way we could eliminate the dependency
    //           between Rtedtransformation and AstSimpleProcessing.
-   std::vector<SgClassDeclaration*> traverseClasses;
-   insertNamespaceIntoSourceFile(project, traverseClasses);
 
-   std::cerr << "@XXX = " << class_definitions.size() << std::endl;
-
-   // traverse all header files and collect information
-   std::vector<SgClassDeclaration*>::const_iterator travClassIt = traverseClasses.begin();
-   for (;travClassIt!=traverseClasses.end();++travClassIt) {
-      // traverse the new classes with RTED namespace
-      traverse(*travClassIt,preorder);
-   }
-
-   std::cerr << "@XXZ = " << class_definitions.size() << std::endl;
+   insertNamespaceIntoSourceFile(project);
 
    executeTransformations();
 }

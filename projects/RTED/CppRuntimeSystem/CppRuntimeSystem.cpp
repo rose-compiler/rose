@@ -190,17 +190,18 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
 
 void RuntimeSystem::doProgramExitChecks()
 {
-    // exit global scope
-    stackManager.endScope();
-    // allows you to call doProgramExitChecks but then keep going without first
-    // calling clearStatus.  Convenient for testing, but not generally
-    // recommended.
-    stackManager.beginScope("Globals");
+  // exit global scope
+  stackManager.endScope();
 
+  // allows you to call doProgramExitChecks but then keep going without first
+  // calling clearStatus.  Convenient for testing, but not generally
+  // recommended.
+  stackManager.beginScope("Globals");
 
-    // Check for memory leaks
-    memManager.checkForNonFreedMem();
-    fileManager.checkForOpenFiles();
+  // Check for memory leaks
+  memManager.checkForNonFreedMem();
+
+  fileManager.checkForOpenFiles();
 }
 
 
@@ -218,7 +219,7 @@ void RuntimeSystem::clearStatus()
 // --------------------- Mem Checking ---------------------------------
 
 
-void RuntimeSystem::createMemory(Address addr, size_t size, MemoryType::AllocKind kind, bool distributed, RsType * type)
+void RuntimeSystem::createMemory(Address addr, size_t size, MemoryType::AllocKind kind, long blocksize, const RsType* type)
 {
   // \pp it seems that we only get the type for stack allocations
   //     should the type initialization then be moved to createStackMemory?
@@ -226,14 +227,14 @@ void RuntimeSystem::createMemory(Address addr, size_t size, MemoryType::AllocKin
   //     is alloca handled?
 
   // \pp \todo move the registerMemType call into allocateMemory
-  MemoryType* nb = memManager.allocateMemory(addr, size, kind, distributed, curPos);
+  MemoryType* nb = memManager.allocateMemory(addr, size, kind, blocksize, curPos);
 
   if (kind == akStack && nb != NULL)
   {
     // stack memory must have a type
     assert(type != NULL);
 
-    nb->registerMemType(addr, type);
+    nb->registerMemType(addr, 0, type);
     assert(type->getByteSize() == size);
   }
 }
@@ -242,12 +243,11 @@ void RuntimeSystem::createMemory(Address addr, size_t size, MemoryType::AllocKin
 void RuntimeSystem::createStackMemory(Address addr, size_t size, const std::string& strType)
 {
     // \note only called once (by test.cpp)
-    RsType*    type = typeSystem.getTypeInfo(strType);
-    const bool nondistributed = false;
+    const RsType* type = typeSystem.getTypeInfo(strType);
+    const long    nondistributed = 0;
 
     createMemory(addr, size, akStack, nondistributed, type);
 }
-
 
 
 void RuntimeSystem::freeMemory(Address addr, MemoryType::AllocKind kind)
@@ -256,14 +256,27 @@ void RuntimeSystem::freeMemory(Address addr, MemoryType::AllocKind kind)
 }
 
 
-void RuntimeSystem::checkMemRead(Address addr, size_t size, RsType* t)
+void RuntimeSystem::checkMemRead(Address addr, size_t size) const
 {
-    memManager.checkRead(addr, size, t);
+    memManager.checkRead(addr, size);
 }
 
-void RuntimeSystem::checkMemWrite(Address addr, size_t size, RsType * t)
+void RuntimeSystem::checkMemLoc(Address addr, size_t size) const
 {
-    memManager.checkWrite(addr, size, t);
+    // \todo the violation should become invalid access
+    memManager.checkLocation(addr, size, RuntimeViolation::INVALID_READ);
+}
+
+
+        /// Checks if the specified memory region is allocated
+void RuntimeSystem::checkBounds(Address addr, Address accaddr, size_t size) const
+{
+    memManager.checkIfSameChunk(addr, accaddr, size);
+}
+
+bool RuntimeSystem::checkMemWrite(Address addr, size_t size, const RsType* t)
+{
+    return memManager.checkWrite(addr, size, t);
 }
 
 
@@ -274,12 +287,12 @@ void RuntimeSystem::createVariable( Address address,
                                     const std::string& name,
                                     const std::string& mangledName,
                                     const std::string& typeString,
-                                    bool distributed
+                                    long blocksize
                                   )
 {
     //TODO deprecated, because with typeString no pointer and arrays can be registered
-    TypeSystem* ts = getTypeSystem();
-    RsType*     type = ts->getTypeInfo(typeString);
+    TypeSystem*   ts = getTypeSystem();
+    const RsType* type = ts->getTypeInfo(typeString);
 
     if(!type)
     {
@@ -296,28 +309,28 @@ void RuntimeSystem::createVariable( Address address,
     }
 
     assert(type != NULL);
-    createVariable(address, name, mangledName, type, distributed);
+    createVariable(address, name, mangledName, type, blocksize);
 }
 
 void RuntimeSystem::createVariable( Address address,
                                     const std::string& name,
                                     const std::string& mangledName,
-                                    RsType *  type,
-                                    bool distributed
+                                    const RsType*  type,
+                                    long blocksize
                                   )
 {
   assert(type);
 
   // \todo remove the dynamic cast by overloading the interface
-  RsClassType*   class_type = dynamic_cast< RsClassType* >( type );
+  const RsClassType* class_type = dynamic_cast< const RsClassType* >( type );
 
   // Variables are allocated statically. However, in UPC they can be shared
   //   if allocated on the file scope. Thus, the locality holds only for
   //   non UPC types (e.g., C++ classes).
   assert(class_type == NULL || rted_isLocal(address));
 
-  MemoryType*    mem = class_type ? memManager.getMemoryType(address) : NULL;
-  const bool     isCtorCall = (mem != NULL);
+  MemoryType*        mem = class_type ? memManager.getMemoryType(address) : NULL;
+  const bool         isCtorCall = (mem != NULL);
 
   // When we create classes, the memory might be allocated in the
   // constructor.  In these cases, it's fine to call createvar with
@@ -328,12 +341,12 @@ void RuntimeSystem::createVariable( Address address,
   }
   else
   {
-    createMemory(address, type->getByteSize(), akStack, distributed, type);
+    createMemory(address, type->getByteSize(), akStack, blocksize, type);
   }
 
   // \pp \note it seems that addVariable again registers all pointers, that
   //           have already been registered by createMemory
-  stackManager.addVariable(new VariablesType(address, name, mangledName, type), distributed);
+  stackManager.addVariable(new VariablesType(address, name, mangledName, type), blocksize);
 }
 
 
@@ -344,70 +357,66 @@ void RuntimeSystem::createArray( Address address,
                                  const std::string & mangledName,
                                  const std::string & baseType,
                                  size_t size,
-                                 bool distributed
+                                 long blocksize
                                )
 {
-  RsType * t = typeSystem.getTypeInfo(baseType);
+  const RsType* t = typeSystem.getTypeInfo(baseType);
   assert( t );
-  createArray(address, name, mangledName, t, size, distributed);
+  createArray(address, name, mangledName, t, size, blocksize);
 }
 
 
 void RuntimeSystem::createArray( Address address,
                                  const std::string & name,
                                  const std::string & mangledName,
-                                 RsType * baseType,
+                                 const RsType* baseType,
                                  size_t size,
-                                 bool distributed
+                                 long blocksize
                                )
 {
-  RsArrayType * arrType = typeSystem.getArrayType(baseType, size);
+  const RsArrayType* arrType = typeSystem.getArrayType(baseType, size);
 
-  createArray( address, name, mangledName, arrType, distributed);
+  createArray( address, name, mangledName, arrType, blocksize);
 }
 
 
 void RuntimeSystem::createArray( Address address,
                                  const std::string& name,
                                  const std::string& mangledName,
-                                 RsArrayType * type,
-                                 bool distributed
+                                 const RsArrayType* type,
+                                 long blocksize
                                )
 {
   assert(type);
 
   // creates array on the stack
-  createVariable( address, name, mangledName, type, distributed );
-
-  RsType*    basetype = type->getBaseType();
-  const bool dist = distributed && (dynamic_cast<RsArrayType*>(basetype) != NULL);
-
-  pointerManager.createPointer( address, basetype, dist );
+  createVariable( address, name, mangledName, type, blocksize );
+  pointerManager.createPointer( address, type->getBaseType(), blocksize );
 
   // View an array as a pointer, which is stored at the address and which points at the address
   pointerManager.registerPointerChange( address, address, false, false );
 }
 
 
-void RuntimeSystem::createObject(Address address, RsClassType* type)
+void RuntimeSystem::createObject(Address address, const RsClassType* type)
 {
-    // \pp \todo It might be necessary to extend the parameter list with an
-    //           allocation kind, so we can distinguish between C++ new
-    //           and C++ new[] ...
     assert(type != NULL);
 
     const size_t         szObj = type->getByteSize();
     MemoryType*          mt = memManager.findContainingMem(address, 1);
 
-    if (mt) {
-        const bool base_ctor = szObj > mt->getSize() && address == mt->beginAddress();
+    if (mt)
+    {
+        const bool base_ctor = (szObj > mt->getSize()) && (address == mt->beginAddress());
 
-        if (base_ctor) {
+        if (base_ctor)
+        {
             // Same address, larger size.  We assume that a base type was
             // registered, and now the derived's constructor has been called
-
             mt -> resize( szObj );
-            mt -> forceRegisterMemType( address, type );
+
+            // \note address == mt->beginAddress(), thus ofs of forceRegisterType is always 0
+            mt -> forceRegisterMemType( type );
         }
 
         // \pp \todo what if !base_ctor?
@@ -415,12 +424,16 @@ void RuntimeSystem::createObject(Address address, RsClassType* type)
     }
 
     // create a new entry
-    const bool  nondistributed = false; // C++ only operates on non-distribited space
+    const long  nondistributed = 0; // C++ only operates on non-distribited space
+
+    // \note we assume that this object is created on the heap ...
+    //       for stack objects this information is fixed later
+    //       see MemoryType::fixAllocationKind
     MemoryType* nb = memManager.allocateMemory(address, szObj, akCxxNew, nondistributed, curPos);
 
     // after the new block is allocated (and if the allocation succeeded)
     //   register the proper memory layout
-    if (nb) nb->registerMemType(address, type);
+    if (nb) nb->registerMemType(address, 0, type);
 }
 
 
@@ -442,9 +455,7 @@ void RuntimeSystem::endScope ()
 
 
 void RuntimeSystem::registerPointerChange( Address     src,
-                                           AddressDesc, // \pp \todo remove
                                            Address     tgt,
-                                           AddressDesc, // \pp \todo remove
                                            bool        checkPointerMove,
                                            bool        checkMemLeaks
                                          )
@@ -452,13 +463,11 @@ void RuntimeSystem::registerPointerChange( Address     src,
     pointerManager.registerPointerChange(src, tgt, checkPointerMove, checkMemLeaks);
 }
 
-void RuntimeSystem::registerPointerChange( Address        src,
-                                           AddressDesc, // \pp \todo remove
-                                           Address        tgt,
-                                           AddressDesc, // \pp \todo remove
-                                           RsPointerType* pt,
-                                           bool           checkPointerMove,
-                                           bool           checkMemLeaks
+void RuntimeSystem::registerPointerChange( Address              src,
+                                           Address              tgt,
+                                           const RsPointerType* pt,
+                                           bool                 checkPointerMove,
+                                           bool                 checkMemLeaks
                                          )
 {
     assert( pt );
@@ -467,16 +476,8 @@ void RuntimeSystem::registerPointerChange( Address        src,
 }
 
 
-#if OBSOLETE_CODE
-// \pp \todo remove superfluous parameter
-void RuntimeSystem::checkPointerDereference(Address src, AddressDesc, Address derefed_address, AddressDesc)
+void RuntimeSystem::checkIfThisisNULL(void* thisExp) const
 {
-    pointerManager.checkPointerDereference(src, derefed_address);
-}
-#endif /* OBSOLETE_CODE */
-
-void RuntimeSystem::checkIfThisisNULL(void* thisExp) {
-
   pointerManager.checkIfPointerNULL(thisExp);
 }
 
@@ -503,9 +504,6 @@ void RuntimeSystem::checkFileAccess(FILE * file, bool read)
     fileManager.checkFileAccess(file,read);
 }
 
-
-
-
 void RuntimeSystem::registerFileOpen(std::fstream& file,const string & openendFile, int mode)
 {
       fileManager.openFile(file, openendFile,(FileOpenMode)mode, curPos);
@@ -528,36 +526,34 @@ void RuntimeSystem::checkFileAccess(std::fstream& file, bool read)
 
 // --------------------- Function Signature Verification -----------------
 
-void RuntimeSystem::expectFunctionSignature(const std::string & name, const std::vector< RsType* >& types)
+void RuntimeSystem::expectFunctionSignature(std::string name, TypeList& types)
 {
-    nextCallFunctionName = name;
-    nextCallFunctionTypes = types;
+    nextCallFunctionName.swap(name);
+    nextCallFunctionTypes.swap(types);
 }
 
-void RuntimeSystem::confirmFunctionSignature(const std::string & name, const std::vector< RsType* >& types )
+void RuntimeSystem::confirmFunctionSignature(const std::string& name, const TypeList& types) const
 {
-    if( !( name == nextCallFunctionName ))
-        // nothing to confirm
-        return;
+    // nothing to confirm
+    if (!( name == nextCallFunctionName )) return;
 
-    if( nextCallFunctionTypes != types ) {
+    if ( nextCallFunctionTypes != types )
+    {
         stringstream ss;
         ss  << "A call to function " << name
             << " had unexpected return or parameter type(s)." << endl << endl
 
             << "The callsite expected the following:" << endl;
-        BOOST_FOREACH( RsType* type, nextCallFunctionTypes ) {
+        BOOST_FOREACH( const RsType* type, nextCallFunctionTypes ) {
             ss << "\t" << type -> getDisplayName() << endl;
         }
 
         ss  << "But the definition is:" << endl;
-        BOOST_FOREACH( RsType* type, types ) {
+        BOOST_FOREACH( const RsType* type, types ) {
             ss << "\t" << type -> getDisplayName() << endl;
         }
 
-        violationHandler(
-            RuntimeViolation::UNEXPECTED_FUNCTION_SIGNATURE,
-            ss.str() );
+        RuntimeSystem::instance()->violationHandler( RuntimeViolation::UNEXPECTED_FUNCTION_SIGNATURE, ss.str() );
     }
 }
 
@@ -580,4 +576,12 @@ void RuntimeSystem::setOutputFile(const std::string & filename)
 
 
 /// status variable
-int diagnostics::status = 0;
+int diagnostics::status = 0 /*diagnostics::memory*/;
+
+#if OBSOLETE_CODE
+// \pp \todo remove superfluous parameter
+void RuntimeSystem::checkPointerDereference(Address src, AddressDesc, Address derefed_address, AddressDesc)
+{
+    pointerManager.checkPointerDereference(src, derefed_address);
+}
+#endif /* OBSOLETE_CODE */

@@ -32,40 +32,41 @@ class RsType
         virtual ~RsType() {}
 
         /// Returns the size in byte for this type
-        virtual size_t       getByteSize() const = 0;
+        virtual size_t        getByteSize() const = 0;
 
         /// Returns the number of subtypes (i.e. number of members, or array size)
-        virtual int          getSubtypeCount() const = 0;
+        virtual int           getSubtypeCount() const = 0;
 
         /// Returns the number of subtypes overlapping the given range that are
         /// not RsType::UnknownType
-        virtual int          getKnownSubtypesOverlappingRange(
+        virtual int           getKnownSubtypesOverlappingRange(
                                 size_t range_start, size_t range_end ) const = 0;
 
         /// Returns the info class for the i'th subtype
-        virtual RsType *     getSubtype(int i) const = 0;
+        virtual const RsType* getSubtype(int i) const = 0;
 
         /// Returns the offset in bytes where a subtype is located
         /// the subtypes are ordered by their offset, i.e. larger id means larger offset
         /// offset(id) + getSubtype(id)->size() + padding = offset(id+1)
-        virtual int          getSubtypeOffset(int id) const = 0;
+        virtual int           getSubtypeOffset(int id) const = 0;
 
         /// Returns the subtype-id which is located at a specific offset
         /// or -1 if the offset lies in a padding area, or is too big
-        virtual int          getSubtypeIdAt(size_t offset) const = 0;
+        virtual int           getSubtypeIdAt(size_t offset) const = 0;
 
         /// Returns the subtype which is located at a specific offset
         /// or -1 if the offset lies in a padding area, or is too big
-        virtual RsType *     getSubtypeAt(size_t offset) const = 0;
+        virtual const RsType* getSubtypeAt(size_t offset) const = 0;
 
         /// Returns the subtype at an offset, which is of specified size
         /// recursively resolves subtypes
         /// nav is a string output parameter filled with: "typename.member1.submember" etc.
         /// return NULL if no such subtype exists
-        virtual RsType *     getSubtypeRecursive(size_t offset,
-                                                 size_t size,
-                                                 bool stopAtArray=false,
-                                                 std::string * nav = NULL ) ;
+        const RsType* getSubtypeRecursive( size_t offset,
+                                           size_t size,
+                                           bool stopAtArray = false,
+                                           std::string* nav = NULL
+                                         ) const;
 
         /**
          * Recursively checks to see if @c type has been written at @c offset,
@@ -75,7 +76,7 @@ class RsType
          *
          * @return  @c true @b iff @c type has been written at @c offset .
          */
-        bool checkSubtypeRecursive( size_t offset, RsType* type);
+        bool checkSubtypeRecursive( size_t offset, const RsType* type) const;
 
         /// Checks if a given offset is valid (not too big, and not in a padding region)
         virtual bool  isValidOffset(size_t offset) const =0;
@@ -168,9 +169,7 @@ class RsArrayType : public RsType
         : RsType(), baseType(NULL), elementCount(0)
         {}
 
-        RsArrayType(RsType * baseType, size_t size);
-        virtual ~RsArrayType() {}
-
+        RsArrayType(const RsType* baseType, size_t size);
 
         /// Returns the size in byte for this type
         virtual size_t       getByteSize() const;
@@ -180,11 +179,10 @@ class RsArrayType : public RsType
 
         /// Returns the number of subtypes overlapping the given range that are
         /// not RsType::UnknownType
-        virtual int          getKnownSubtypesOverlappingRange(
-                                size_t range_start, size_t range_end ) const;
+        virtual int          getKnownSubtypesOverlappingRange( size_t range_start, size_t range_end ) const;
 
         /// Returns the info class for the an element (equal for all i's)
-        virtual RsType *     getSubtype(int i) const;
+        virtual const RsType* getSubtype(int i) const;
 
         /// Checks if id<membercount, then returns the baseType
         virtual int          getSubtypeOffset(int id) const ;
@@ -193,7 +191,7 @@ class RsArrayType : public RsType
         virtual int          getSubtypeIdAt(size_t offset) const;
 
         /// checks for valid offset then returns basetype
-        virtual RsType *     getSubtypeAt  (size_t offset) const;
+        virtual const RsType* getSubtypeAt  (size_t offset) const;
 
         /// Checks if a given offset is valid (not too big, and not in a padding region)
         virtual bool  isValidOffset(size_t offset) const;
@@ -208,7 +206,7 @@ class RsArrayType : public RsType
         /// Each type has a name, only arrays don't have one
         /// therefore a pseudo-name is generated __array_baseTypeName_size;
         /// this is done by this function
-        static std::string getArrayTypeName(RsType * basetype, size_t size);
+        static std::string getArrayTypeName(const RsType* basetype, size_t size);
 
 
         virtual std::string getDisplayName() const;
@@ -217,8 +215,8 @@ class RsArrayType : public RsType
         // Check whether memory that looks like this type could be @e other
         virtual bool checkConsistencyWith( const RsType &other ) const;
 
-        RsType * getBaseType() const          { return baseType; }
-        int      arrayIndex(size_t offset) const;
+        const RsType* getBaseType() const          { return baseType; }
+        int           arrayIndex(size_t offset) const;
 
 
         bool operator==(const RsArrayType& rhs) const
@@ -229,18 +227,22 @@ class RsArrayType : public RsType
         }
 
     private:
-        RsType * baseType;
-        size_t   elementCount;
-
+        const RsType* baseType;
+        size_t        elementCount;
 };
 
 
-class RsClassType : public RsType
+struct RsClassType : RsType
 {
-    public:
+        static const char invalidname[];
+
         /// Creates new ClassType whith specified name and size in bytes
         /// members-info is added via addMember()
-        RsClassType(const std::string & name, size_t byteSize, bool isUnionType);
+        RsClassType(const std::string& name, size_t byteSize, bool isUnionType);
+
+        RsClassType()
+        : RsType(invalidname), relaxed(false), byteSize(0), isunionType(false)
+        {}
 
         /// Adds a member, and checks if typeinfo is consistent (i.e. does not exceed byteSize)
         /// @param name name of the member variable
@@ -248,11 +250,11 @@ class RsClassType : public RsType
         /// @param offset offset from the start-address of the class, if no offset is given, it is appended on the back
         /// @return id of added member
         // was: pp/ virtual int addMember(const std::string & name, RsType * type, size_t offset=-1);
-        virtual int addMember(const std::string& name, RsType * type, size_t offset);
+        virtual int addMember(const std::string& name, const RsType* type, size_t offset);
 
         /// adds a new member at the back of the type
         /// \note is this only used for testing?
-        int addMember(const std::string& name, RsType * type)
+        int addMember(const std::string& name, const RsType* type)
         {
           size_t offset=0;
 
@@ -282,7 +284,7 @@ class RsClassType : public RsType
         virtual int          getKnownSubtypesOverlappingRange(size_t range_start, size_t range_end) const;
 
         /// Returns the info class for the i'th member
-        virtual RsType *     getSubtype(int i) const;
+        virtual const RsType* getSubtype(int i) const;
 
         /// Returns the offset in bytes where a member is located
         /// the members are ordered by their offset, i.e. larger id means larger offset
@@ -296,7 +298,7 @@ class RsClassType : public RsType
 
         /// Returns the member which is located at a specific offset
         /// or -1 if the offset lies in a padding area, or is too big
-        virtual RsType *     getSubtypeAt  (size_t offset) const;
+        virtual const RsType* getSubtypeAt  (size_t offset) const;
 
         /// Checks if a given offset is valid (not too big, and not in a padding region)
         virtual bool         isValidOffset(size_t offset) const;
@@ -315,29 +317,30 @@ class RsClassType : public RsType
         // Check whether memory that looks like this type could be @e other
         virtual bool checkConsistencyWith( const RsType &other ) const;
 
-    bool getIsUnionType(){return isunionType;}
+        bool isUnionType() const { return isunionType; }
+
+        bool invalid() const { return stringId == invalidname; }
 
     protected:
         bool relaxed;
         size_t byteSize;
         bool isunionType;
 
-
         struct Member
         {
-                Member(const std::string& name_, RsType* type_, size_t offset_)
+                Member(const std::string& name_, const RsType* type_, size_t offset_)
                 : name(name_), type(type_), offset(offset_)
                 {}
 
-                std::string name;
-                RsType*     type;
-                size_t      offset;
+                std::string   name;
+                const RsType* type;
+                size_t        offset;
         };
 
         std::vector<Member>  members;
 };
-std::ostream& operator<< (std::ostream &os, const RsType * m);
-std::ostream& operator<< (std::ostream &os, const RsType & m);
+std::ostream& operator<< (std::ostream &os, const RsType* m);
+std::ostream& operator<< (std::ostream &os, const RsType& m);
 
 
 
@@ -346,19 +349,19 @@ class RsTypeDef : public RsType
     public:
         /// Creates a typedef info "typedef unsigned int uint"
         /// then name would be "uint" and refType the type-information for unsigned int
-        RsTypeDef(const std::string & name, RsType * refType);
+        RsTypeDef(const std::string& name, RsType* refType);
 
 
-        virtual size_t       getByteSize()     const              { return refType->getByteSize();     }
-        virtual int          getSubtypeCount() const              { return refType->getSubtypeCount(); }
-        virtual int          getKnownSubtypesOverlappingRange(size_t range_start, size_t range_end) const
+        virtual size_t        getByteSize()     const              { return refType->getByteSize();     }
+        virtual int           getSubtypeCount() const              { return refType->getSubtypeCount(); }
+        virtual int           getKnownSubtypesOverlappingRange(size_t range_start, size_t range_end) const
                                                                   { return refType->getKnownSubtypesOverlappingRange( range_start, range_end );}
-        virtual RsType *     getSubtype(int i) const              { return refType->getSubtype(i);     }
-        virtual int          getSubtypeOffset(int id) const       { return refType->getSubtypeOffset(id); }
-        virtual int          getSubtypeIdAt(size_t offset)        { return refType->getSubtypeIdAt(offset);}
-        virtual RsType *     getSubtypeAt  (size_t offset) const  { return refType->getSubtypeAt(offset);}
-        virtual bool         isValidOffset(size_t offset) const   { return refType->isValidOffset(offset);}
-        std::string          getSubTypeString(int id) const       { return refType->getSubTypeString(id); }
+        virtual const RsType* getSubtype(int i) const              { return refType->getSubtype(i);     }
+        virtual int           getSubtypeOffset(int id) const       { return refType->getSubtypeOffset(id); }
+        virtual int           getSubtypeIdAt(size_t offset)        { return refType->getSubtypeIdAt(offset);}
+        virtual const RsType* getSubtypeAt  (size_t offset) const  { return refType->getSubtypeAt(offset);}
+        virtual bool          isValidOffset(size_t offset) const   { return refType->isValidOffset(offset);}
+        std::string           getSubTypeString(int id) const       { return refType->getSubTypeString(id); }
 
         /// Print type information to a stream
         virtual void  print(std::ostream & os) const;
@@ -426,21 +429,21 @@ class RsBasicType : public RsType
 
         virtual ~RsBasicType() {}
 
-        SgType               getSgType()       const               { return type;     }
+        SgType                getSgType()       const               { return type;     }
 
-        virtual size_t       getByteSize()     const               { return byteSize; }
-        virtual int          getSubtypeCount() const               { return 0;        }
-        virtual int          getKnownSubtypesOverlappingRange(size_t, size_t) const
+        virtual size_t        getByteSize()     const               { return byteSize; }
+        virtual int           getSubtypeCount() const               { return 0;        }
+        virtual int           getKnownSubtypesOverlappingRange(size_t, size_t) const
                                                                    { return 0; }
 
-        virtual RsType *     getSubtype(int) const                 { return NULL;     }
-        virtual int          getSubtypeOffset(int) const           { return -1;       }
-        virtual int          getSubtypeIdAt(size_t) const          { return -1;       }
-        virtual RsType *     getSubtypeAt  (size_t) const          { return NULL;     }
-        virtual bool         isValidOffset(size_t offset) const    { return offset < byteSize;}
-        std::string          getSubTypeString(int) const           { return ""; }
+        virtual const RsType* getSubtype(int) const                 { return NULL;     }
+        virtual int           getSubtypeOffset(int) const           { return -1;       }
+        virtual int           getSubtypeIdAt(size_t) const          { return -1;       }
+        virtual const RsType* getSubtypeAt  (size_t) const          { return NULL;     }
+        virtual bool          isValidOffset(size_t offset) const    { return offset < byteSize;}
+        std::string           getSubTypeString(int) const           { return ""; }
 
-        virtual std::string  getDisplayName() const;
+        virtual std::string   getDisplayName() const;
 
 
         /// Interprets memory at specified address as this basic type
@@ -474,7 +477,7 @@ class RsPointerType : public RsBasicType
 {
     public:
         explicit
-        RsPointerType(RsType * baseType);
+        RsPointerType(const RsType * baseType);
 
         RsPointerType()
         : RsBasicType(), baseType(NULL)
@@ -484,7 +487,7 @@ class RsPointerType : public RsBasicType
 
         virtual std::string getDisplayName() const;
 
-        RsType * getBaseType() const  { return baseType; }
+        const RsType* getBaseType() const  { return baseType; }
 
         bool operator==(const RsPointerType& rhs) const
         {
@@ -495,7 +498,7 @@ class RsPointerType : public RsBasicType
         /// Type the pointer points to
         /// pointer may point to other RsPointerType's
         /// to represent double/multiple pointers
-        RsType * baseType;
+        const RsType* baseType;
 };
 
 /// An @c RsCompoundType is a loose collection of subtypes, with gaps
@@ -512,9 +515,9 @@ class RsCompoundType : public RsClassType {
             : RsClassType( name, byteSize, false ) { this -> relaxed = true; }
 
         // was: pp/ int addMember(const std::string & name, RsType * type, addr_type offset=-1);
-        int addMember(const std::string& name, RsType * type, size_t offset);
+        int addMember(const std::string& name, const RsType* type, size_t offset);
 
-        virtual RsType*  getSubtypeAt( size_t offset ) const;
+        virtual const RsType*  getSubtypeAt( size_t offset ) const;
 };
 
 /// Class with has a valid name
@@ -528,12 +531,12 @@ class InvalidType : public RsType
         virtual int          getSubtypeCount() const               { assert(false); return 0;     }
         virtual int          getKnownSubtypesOverlappingRange(size_t, size_t) const
                                                                    { assert( false ); return 0; }
-        virtual RsType *     getSubtype(int) const                 { assert(false); return NULL;  }
-        virtual int          getSubtypeOffset(int) const           { assert(false); return -1;    }
-        virtual int          getSubtypeIdAt(size_t)const           { assert(false); return -1;    }
-        virtual RsType *     getSubtypeAt  (size_t) const          { assert(false); return NULL;  }
-        virtual bool         isValidOffset(size_t) const           { assert(false); return false; }
-        std::string          getSubTypeString(int) const           { assert(false); return ""; }
+        virtual const RsType* getSubtype(int) const                 { assert(false); return NULL;  }
+        virtual int           getSubtypeOffset(int) const           { assert(false); return -1;    }
+        virtual int           getSubtypeIdAt(size_t)const           { assert(false); return -1;    }
+        virtual const RsType* getSubtypeAt  (size_t) const          { assert(false); return NULL;  }
+        virtual bool          isValidOffset(size_t) const           { assert(false); return false; }
+        std::string           getSubTypeString(int) const           { assert(false); return ""; }
 
         /// Print type information to a stream
         virtual void  print(std::ostream & os) const               { os << "Invalid Type" << std::endl; }

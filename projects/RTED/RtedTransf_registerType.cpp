@@ -84,21 +84,23 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* const cdef)
 
         SgInitializedNamePtrList vars = varDecl->get_variables();
         SgInitializedNamePtrList::const_iterator itvar = vars.begin();
-        for (;itvar!=vars.end();++itvar) {
+        for (; itvar!=vars.end(); ++itvar) {
           SgInitializedName* initName = *itvar;
           string name = initName->get_mangled_name();
           string type = initName->get_type()->class_name();
-          //VariantT variant = initName->get_type()->variantT();
-          //cerr << " *********** VarientT = " << getSgVariant(variant) << endl;
 
-          RtedClassElement* el;
-          if( isSgArrayType( initName -> get_type() )) {
+          RtedClassElement* el = NULL;
+          if (SgArrayType* arrtype = isSgArrayType( initName -> get_type()))
+          {
             RtedArray* arrayRted = new RtedArray( initName, getSurroundingStatement(initName), akStack );
-            populateDimensions( arrayRted, initName, isSgArrayType( initName -> get_type() ));
+            populateDimensions( *arrayRted, initName, arrtype );
             el = new RtedClassArrayElement( name, type, sgElement, arrayRted );
-          } else {
-            el = new RtedClassElement(name,type,sgElement);
           }
+          else
+          {
+            el = new RtedClassElement(name, type, sgElement);
+          }
+
           elements.push_back(el);
         }
       }
@@ -117,6 +119,13 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* const cdef)
                                    buildSizeOfOp( cdef->get_declaration()->get_type() ),
                                    elements
                                  );
+}
+
+/// \brief returns whether a name belongs to rted (i.e., has prefix "rted_")
+static inline
+bool isRtedDecl(const std::string& name)
+{
+  return boost::starts_with(name, RtedSymbols::prefix);
 }
 
 void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* const rtedClass)
@@ -170,7 +179,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* const rtedC
       if (stmtVar) {
         stmt = appendToGlobalConstructor(stmt->get_scope(),
             rtedClass->classDef->get_declaration()->get_name());
-        scope = isSgScopeStatement(globalFunction);
+        scope = globalFunction;
         ROSE_ASSERT(isNormalScope( scope));
         cerr << "Current scope = " << scope->class_name() << endl;
         global_stmt = true;

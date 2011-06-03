@@ -11,23 +11,19 @@ using namespace std;
 VariablesType::VariablesType( Address address_,
                               const std::string & name_,
                               const std::string & mangledName_,
-                              RsType * type_
+                              const RsType* type_
                             )
 : address(address_), name(name_), mangledName(mangledName_), type(type_)
 {}
 
 
-VariablesType::~VariablesType()
+const MemoryType*
+VariablesType::getAllocation() const
 {
-    RuntimeSystem::instance()->freeMemory(address, akStack);
-}
+    const MemoryManager* mm = rtedRTS(this)->getMemManager();
+    const MemoryType*    mt = mm->getMemoryType(address);
 
-MemoryType * VariablesType::getAllocation() const
-{
-    MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
-    MemoryType *    mt = mm->getMemoryType(address);
-
-    //assert that in this chunk only this variable is stored
+    // assert that in this chunk only this variable is stored
     assert(mt && mt->getSize() == type->getByteSize());
 
     return mt;
@@ -40,18 +36,20 @@ size_t  VariablesType::getSize() const
 }
 
 
-PointerInfo * VariablesType::getPointerInfo() const
+const PointerInfo*
+VariablesType::getPointerInfo() const
 {
-    PointerManager *               pm = RuntimeSystem::instance()->getPointerManager();
+    const PointerManager*          pm = rtedRTS(this)->getPointerManager();
     PointerManager::PointerSetIter it = pm->sourceRegionIter(address);
 
-    if (it == pm->getPointerSet().end())
-        return NULL;
+    if (  (it == pm->getPointerSet().end())
+       || ((*it)->getSourceAddress() != address)
+       )
+    {
+       return NULL;
+    }
 
-    if ((*it)->getSourceAddress() == address)
-        return *it;
-    else
-        return NULL;
+    return *it;
 }
 
 

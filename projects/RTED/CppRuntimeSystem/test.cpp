@@ -11,7 +11,7 @@ using namespace std;
 
 ostream& out = cout;
 
-static const bool nondistributed = false;
+static const long nondistributed = 0;
 
 static
 void freeMemory(RuntimeSystem* rs, Address addr, MemoryType::AllocKind kind = akCxxNew)
@@ -20,13 +20,13 @@ void freeMemory(RuntimeSystem* rs, Address addr, MemoryType::AllocKind kind = ak
 }
 
 static
-void createMemory(RuntimeSystem* rs, Address addr, size_t sz, MemoryType::AllocKind kind = akCxxNew, RsType* t = NULL)
+void createMemory(RuntimeSystem* rs, Address addr, size_t sz, MemoryType::AllocKind kind = akCxxNew, const RsType* t = NULL)
 {
-  rs->createMemory(addr, sz, kind, t, nondistributed);
+  rs->createMemory(addr, sz, kind, nondistributed, t);
 }
 
 static
-void createArray(RuntimeSystem* rs, Address addr, const char* a, const char* b, RsArrayType* arr)
+void createArray(RuntimeSystem* rs, Address addr, const char* a, const char* b, const RsArrayType* arr)
 {
   rs->createArray(addr, a, b, arr, nondistributed);
 }
@@ -46,12 +46,12 @@ static
 void registerPointerChange( RuntimeSystem* rs,
                             Address src,
                             Address tgt,
-                            RsPointerType* t,
+                            const RsPointerType* t,
                             bool checkPointerMove = false,
                             bool checkMemLeaks = true
                           )
 {
-    rs->registerPointerChange(src, rted_ptr(), tgt, rted_ptr(), t, checkPointerMove, checkMemLeaks);
+    rs->registerPointerChange(src, tgt, t, checkPointerMove, checkMemLeaks);
 }
 
 
@@ -63,7 +63,7 @@ void registerPointerChange( RuntimeSystem* rs,
                             bool checkMemLeaks = true
                           )
 {
-    rs->registerPointerChange(src, rted_ptr(), tgt, rted_ptr(), checkPointerMove, checkMemLeaks);
+    rs->registerPointerChange(src, tgt, checkPointerMove, checkMemLeaks);
 }
 
 static
@@ -80,14 +80,23 @@ void registerPointerChange( RuntimeSystem* rs,
 }
 
 static
-void checkMemRead(RuntimeSystem* rs, Address addr, size_t sz, RsType* t = NULL)
+void checkMemRead(RuntimeSystem* rs, Address addr, size_t sz)
 {
-  rs->checkMemRead(addr, sz, t);
+  rs->checkMemRead(addr, sz);
+}
+
+static
+void registerMemType(MemoryType& mt, size_t ofs, const RsType* t)
+{
+  Address addr = mt.beginAddress();
+
+  addr.local += ofs;
+  mt.registerMemType(addr, ofs, t);
 }
 
 
 static
-void checkMemWrite(RuntimeSystem* rs, Address addr, size_t sz, RsType* t = NULL)
+void checkMemWrite(RuntimeSystem* rs, Address addr, size_t sz, const RsType* t = NULL)
 {
   rs->checkMemWrite(addr, sz, t);
 }
@@ -111,6 +120,12 @@ inline
 const T* point_to(const Address& addr)
 {
   return reinterpret_cast<const T*>(addr.local);
+}
+
+static
+void checkIfSameChunk(MemoryManager& mm, const Address& base, const Address& addr, size_t sz)
+{
+  mm.checkIfSameChunk(base, addr, sz);
 }
 
 
@@ -680,9 +695,9 @@ void testLostMemRegionFromDoublePointer()
     TypeSystem * ts = rs -> getTypeSystem();
 
     AddressDesc ptr_desc = rted_ptr();
-    RsType*     int_ptr = ts -> getPointerType( "SgTypeInt", ptr_desc );
+const RsType*     int_ptr = ts -> getPointerType( "SgTypeInt", ptr_desc );
     AddressDesc ptr_ptr_desc = rted_address_of(ptr_desc);
-    RsType*     int_ptr_ptr = ts -> getPointerType( "SgTypeInt", ptr_ptr_desc );
+const RsType*     int_ptr_ptr = ts -> getPointerType( "SgTypeInt", ptr_ptr_desc );
 
     Address var_addr = asAddr(0x7ffb0);
     Address heap_addr_outer = asAddr(0x42);
@@ -753,11 +768,10 @@ void testPointerChanged()
     // Case2: change of "type-chunk"
     rs->beginScope("Scope2");
         struct A { int arr[10]; int behindArr; };
-        RsClassType * typeA = new RsClassType("A",sizeof(A),false);
+        RsClassType * typeA = &ts->getClassType("A",sizeof(A),false);
         typeA->addMember("arr",ts->getArrayType("SgTypeInt",10 * sizeof(int)), offsetof(A,arr));
         typeA->addMember("behindArr",ts->getTypeInfo("SgTypeInt"),offsetof(A,behindArr));
         assert(typeA->isComplete());
-        ts->registerType(typeA);
 
         // Create an instance of A on stack
         rs->createVariable(asAddr(0x42),"instanceOfA","mangled", typeA, nondistributed);
@@ -821,10 +835,9 @@ void testPointerTracking()
     TypeSystem * ts = rs->getTypeSystem();
 
     // class A { int arr[2]; int intBehindArr; }
-    RsClassType * type = new RsClassType("A",3*sizeof(int),false);
+    RsClassType * type = &ts->getClassType("A",3*sizeof(int),false);
     type->addMember("arr",ts->getArrayType("SgTypeInt",2 * sizeof(int)));
     type->addMember("intBehindArr",ts->getTypeInfo("SgTypeInt"));
-    ts->registerType(type);
 
     rs->beginScope("TestScope");
     rs->createVariable(asAddr(42), "instanceOfA","mangled","A", nondistributed);
@@ -858,10 +871,7 @@ void testMultidimensionalStackArrayAccess()
 
     // int x[ 2 ][ 3 ]
     //  type array of array of int
-    RsArrayType * type = ts -> getArrayType(
-        ts -> getArrayType( "SgTypeInt", 3 * intsz),
-        2 * 3 * sizeof( int )
-    );
+    const RsArrayType* type = ts->getArrayType( ts->getArrayType( "SgTypeInt", 3 * intsz), 2 * 3 * sizeof(int) );
 
     rs->beginScope("TestScope");
 
@@ -870,15 +880,15 @@ void testMultidimensionalStackArrayAccess()
     // check legal memory read from same memory region, but out of bounds on
     // inner array, i.e check
     //  x[ 0 ][ 3 ]     // actually x[ 1 ][ 0 ]
-    try { mm -> checkIfSameChunk( asAddr(0x100), asAddr(0x100) + 3 * intsz, intsz); }
+    try { checkIfSameChunk( *mm, asAddr(0x100), asAddr(0x100) + 3 * intsz, intsz); }
     TEST_CATCH ( RuntimeViolation::POINTER_CHANGED_MEMAREA )
     // as above, but out of bounds in the other direction
-    try { mm -> checkIfSameChunk( asAddr(0x100) + 3 * intsz, asAddr(0x100) + 2 * intsz, intsz); }
+    try { checkIfSameChunk( *mm, asAddr(0x100) + 3 * intsz, asAddr(0x100) + 2 * intsz, intsz); }
     TEST_CATCH ( RuntimeViolation::POINTER_CHANGED_MEMAREA )
 
     CHECKPOINT
     // as above, but this time legally access the sub array
-    mm -> checkIfSameChunk( asAddr(0x100) + 3 * intsz, asAddr(0x100) + 3 * intsz, intsz);
+    checkIfSameChunk( *mm, asAddr(0x100) + 3 * intsz, asAddr(0x100) + 3 * intsz, intsz);
 
     rs->endScope();
 
@@ -932,9 +942,9 @@ void testDoubleArrayHeapAccess()
     TypeSystem * ts = rs -> getTypeSystem();
 
     AddressDesc ptr_desc = rted_ptr();
-    RsType*     int_ptr = ts -> getPointerType( "SgTypeInt", ptr_desc );
+const RsType*     int_ptr = ts -> getPointerType( "SgTypeInt", ptr_desc );
     AddressDesc ptr_ptr_desc = rted_address_of(ptr_desc);
-    RsType*     int_ptr_ptr = ts -> getPointerType( "SgTypeInt", ptr_ptr_desc );
+const RsType*     int_ptr_ptr = ts -> getPointerType( "SgTypeInt", ptr_ptr_desc );
 
     Address var_addr = asAddr(0x7ffb0);
     Address heap_addr_outer = asAddr(0x42);
@@ -1258,33 +1268,31 @@ void testTypeSystemDetectNested()
 
     // Register Struct A
     struct A { int a1; char a2; double a3; };
-    RsClassType * typeA = new RsClassType("A",sizeof(A),false);
+    RsClassType * typeA = &ts->getClassType("A",sizeof(A),false);
     typeA->addMember("a1",ts->getTypeInfo("SgTypeInt"),   offsetof(A,a1));
     typeA->addMember("a2",ts->getTypeInfo("SgTypeChar"),  offsetof(A,a2));
     typeA->addMember("a3",ts->getTypeInfo("SgTypeDouble"),offsetof(A,a3));
     assert(typeA->isComplete());
-    ts->registerType(typeA);
 
     // Register Struct B
     struct B { A arr[10]; char b1; int b2; };
-    RsClassType * typeB = new RsClassType("B",sizeof(B),false);
+    RsClassType * typeB = &ts->getClassType("B",sizeof(B),false);
     typeB->addMember("arr",ts->getArrayType("A",10 * sizeof(struct A)),    offsetof(B,arr));
     typeB->addMember("b1",ts->getTypeInfo("SgTypeChar"),offsetof(B,b1) );
     typeB->addMember("b2",ts->getTypeInfo("SgTypeInt"), offsetof(B,b2));
     assert(typeB->isComplete());
-    ts->registerType(typeB);
 
 
     CHECKPOINT
     // Create Memory with first an A and then a B
     const Address ADDR = asAddr(42);
     createMemory(rs, ADDR, sizeof(A)+sizeof(B));
-    MemoryType * mt = rs->getMemManager()->getMemoryType(ADDR);
-    mt->registerMemType(ADDR, ts->getTypeInfo("A"));
+    MemoryType* mt = rs->getMemManager()->getMemoryType(ADDR);
+    registerMemType(*mt, 0, ts->getTypeInfo("A"));
     CHECKPOINT
-    mt->registerMemType(ADDR + sizeof(A), ts->getTypeInfo("B"));
+    registerMemType(*mt, 0 + sizeof(A), ts->getTypeInfo("B"));
     CHECKPOINT
-    mt->registerMemType(ADDR + sizeof(A) + offsetof(A,a3), ts->getTypeInfo("SgTypeDouble"));
+    registerMemType(*mt, 0 + sizeof(A) + offsetof(A,a3), ts->getTypeInfo("SgTypeDouble"));
 
 
     //rs->setQtDebuggerEnabled(true);
@@ -1299,20 +1307,20 @@ void testTypeSystemDetectNested()
 
     CHECKPOINT
     //Access to padded area
-    try { mt->registerMemType(ADDR + offsetof(A,a2)+1,ts->getTypeInfo("SgTypeChar")); }
+    try { registerMemType(*mt, 0 + offsetof(A,a2)+1,ts->getTypeInfo("SgTypeChar")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
     CHECKPOINT
     //Access to padded area
     //Wrong type
-    try { mt->registerMemType(ADDR, ts->getTypeInfo("B")); }
+    try { registerMemType(*mt, 0, ts->getTypeInfo("B")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
     CHECKPOINT
     //Access to padded area
     //Wrong basic type
-    mt->registerMemType(ADDR + offsetof(A,a2), ts->getTypeInfo("SgTypeChar"));
-    try { mt->registerMemType(ADDR + offsetof(A,a2), ts->getTypeInfo("SgTypeInt")); }
+    registerMemType(*mt, 0 + offsetof(A,a2), ts->getTypeInfo("SgTypeChar"));
+    try { registerMemType(*mt, 0 + offsetof(A,a2), ts->getTypeInfo("SgTypeInt")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
     rs->log() << "Type System Status after test" << endl;
@@ -1330,29 +1338,28 @@ void testTypeSystemMerge()
     TypeSystem * ts = rs->getTypeSystem();
 
     struct A { int a1; int a2; float a3; };
-    RsClassType * typeA = new RsClassType("A",sizeof(A),false);
-    typeA->addMember("a1",ts->getTypeInfo("SgTypeInt"),  offsetof(A,a1));
-    typeA->addMember("a2",ts->getTypeInfo("SgTypeInt"),  offsetof(A,a2));
-    typeA->addMember("a3",ts->getTypeInfo("SgTypeFloat"),offsetof(A,a3));
+    RsClassType * typeA = &ts->getClassType("A",sizeof(A),false);
+    typeA->addMember("a1", ts->getTypeInfo("SgTypeInt"),   offsetof(A,a1));
+    typeA->addMember("a2", ts->getTypeInfo("SgTypeInt"),   offsetof(A,a2));
+    typeA->addMember("a3", ts->getTypeInfo("SgTypeFloat"), offsetof(A,a3));
     assert(typeA->isComplete());
-    ts->registerType(typeA);
 
     rs -> checkpoint( SourcePosition() );
     const Address ADDR = asAddr(42);
     createMemory(rs, ADDR, 100);
 
-        MemoryType * mt = rs->getMemManager()->getMemoryType(ADDR);
+        MemoryType* mt = rs->getMemManager()->getMemoryType(ADDR);
         //first part in mem is a double
-        mt->registerMemType(ADDR, ts->getTypeInfo("SgTypeDouble"));
+        registerMemType(*mt, 0, ts->getTypeInfo("SgTypeDouble"));
 
         //then two ints are accessed
-        mt->registerMemType(ADDR + sizeof(double)+offsetof(A,a1),ts->getTypeInfo("SgTypeInt"));
-        mt->registerMemType(ADDR + sizeof(double)+offsetof(A,a2),ts->getTypeInfo("SgTypeInt") );
+        registerMemType(*mt, 0 + sizeof(double)+offsetof(A,a1),ts->getTypeInfo("SgTypeInt"));
+        registerMemType(*mt, 0 + sizeof(double)+offsetof(A,a2),ts->getTypeInfo("SgTypeInt") );
         //then the same location is accessed with an struct of two int -> has to merge
-        mt->registerMemType(ADDR + sizeof(double),typeA);
+        registerMemType(*mt, 0 + sizeof(double),typeA);
 
         // because of struct access it is known that after the two ints a float follows -> access with int failes
-        try { mt->registerMemType(ADDR + sizeof(double) + offsetof(A,a3), ts->getTypeInfo("SgTypeInt")); }
+        try { registerMemType(*mt, 0 + sizeof(double) + offsetof(A,a3), ts->getTypeInfo("SgTypeInt")); }
         TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
 
@@ -1370,12 +1377,10 @@ void testPartialTypeSystemArrayAccess() {
 
     // register type(s)
     struct Typ { char a; int b; };
-    RsClassType *typ = new RsClassType( "Typ", sizeof( Typ ),false);
-    typ -> addMember( "a", ts -> getTypeInfo( "SgTypeInt" ), offsetof( Typ, a ));
-    typ -> addMember( "b", ts -> getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
-
+    RsClassType *typ = &ts->getClassType( "Typ", sizeof( Typ ),false);
+    typ -> addMember( "a", ts->getTypeInfo( "SgTypeInt" ), offsetof( Typ, a ));
+    typ -> addMember( "b", ts->getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
     assert( typ -> isComplete() );
-    ts -> registerType( typ );
 
     Address Addr = asAddr(0x42);
     size_t el2_offset = sizeof( Typ );
@@ -1388,9 +1393,9 @@ void testPartialTypeSystemArrayAccess() {
     //  0       8   12  16
     //  ////[int]////[int]
     //  [  Typ  ]/////////
-    MemoryType *mt = mm -> getMemoryType( Addr );
-    mt -> registerMemType( Addr, typ );
-    mt -> registerMemType( Addr + el2_b_offset, ts -> getTypeInfo( "SgTypeInt" ));
+    MemoryType*mt = mm -> getMemoryType( Addr );
+    registerMemType( *mt, 0, typ );
+    registerMemType( *mt, 0 + el2_b_offset, ts->getTypeInfo( "SgTypeInt" ));
 
     // Check array access of larger type.  So far we have no reason to complain:
     // we don't know the full type at 8..16, but the part we do know is
@@ -1399,7 +1404,7 @@ void testPartialTypeSystemArrayAccess() {
     //  0       8   12  16
     //          [  Typ?  ]
     CHECKPOINT
-    mm -> checkIfSameChunk( Addr, Addr + el2_offset, (size_t)sizeof( Typ ));
+    checkIfSameChunk( *mm, Addr, Addr + el2_offset, (size_t)sizeof( Typ ));
 
     freeMemory(rs,  Addr );
     CLEANUP
@@ -1415,7 +1420,7 @@ void testTypeSystemSubtypes() {
     class Base { public: int x; };
     class Sub : public Base { public: int y[ 200 ]; };
     RsClassType* rs_base = new RsClassType( "Base", sizeof( Base ), false );
-    rs_base -> addMember( "x", ts -> getTypeInfo( "SgTypeInt" ), offsetof( Base, x ));
+    rs_base -> addMember( "x", ts->getTypeInfo( "SgTypeInt" ), offsetof( Base, x ));
     assert( rs_base -> isComplete() );
 
     RsClassType* rs_sub = new RsClassType( "Sub", sizeof( Sub ), false );
@@ -1431,7 +1436,7 @@ void testTypeSystemSubtypes() {
     rs -> createObject( asAddr(0x42), rs_sub );
     MemoryType* mt = mm -> findContainingMem( asAddr(0x42), 1 );
     assert( mt );
-    assert( rs_sub == mt -> getTypeAt( asAddr(0x42), mt -> getSize() ));
+    assert( rs_sub == mt -> getTypeAt( 0, mt -> getSize() ));
 
     freeMemory(rs, asAddr(0x42) );
 
@@ -1440,7 +1445,7 @@ void testTypeSystemSubtypes() {
     rs -> createObject( asAddr(0x42), rs_base );
     mt = mm -> findContainingMem( asAddr(0x42), 1 );
     assert( mt );
-    assert( rs_sub == mt -> getTypeAt( asAddr(0x42), mt -> getSize() ));
+    assert( rs_sub == mt -> getTypeAt( 0, mt -> getSize() ));
 
     freeMemory(rs, asAddr(0x42) );
 
@@ -1457,11 +1462,11 @@ void testTypeSystemNested() {
     class Base { public: int x; };
     class Composite { public: int p; Base y[ 200 ]; };
     RsClassType* rs_base = new RsClassType( "Base", sizeof( Base ), false );
-    rs_base -> addMember( "x", ts -> getTypeInfo( "SgTypeInt" ), offsetof( Base, x ));
+    rs_base -> addMember( "x", ts->getTypeInfo( "SgTypeInt" ), offsetof( Base, x ));
     assert( rs_base -> isComplete() );
 
     RsClassType* rs_composite = new RsClassType( "Composite", sizeof( Composite ), false );
-    rs_composite -> addMember( "p", ts -> getTypeInfo( "SgTypeInt" ), offsetof( Composite, p ));
+    rs_composite -> addMember( "p", ts->getTypeInfo( "SgTypeInt" ), offsetof( Composite, p ));
     rs_composite -> addMember(
         "y",
         ts -> getArrayType( rs_base, sizeof( Base[ 200 ])),
@@ -1474,11 +1479,11 @@ void testTypeSystemNested() {
     rs -> createObject( asAddr(0x42), rs_composite );
     MemoryType* mt = mm -> findContainingMem( asAddr(0x42), 1 );
     assert( mt );
-    assert( rs_composite == mt -> getTypeAt( asAddr(0x42), mt -> getSize() ));
+    assert( rs_composite == mt -> getTypeAt( 0, mt -> getSize() ));
 
     rs -> createObject( asAddr(0x42) + offsetof( Composite, y ), rs_base );
     assert( mt );
-    assert( rs_composite == mt -> getTypeAt( asAddr(0x42), mt -> getSize() ));
+    assert( rs_composite == mt -> getTypeAt( 0, mt -> getSize() ));
 
     freeMemory(rs,  asAddr(0x42) );
 
@@ -1492,35 +1497,33 @@ void testTypeConsistencyChecking() {
 
     // register user types
     struct Typ { char a; int b; };
-    RsClassType *typ = new RsClassType( "TypA", sizeof( Typ ),false);
-    typ -> addMember( "a", ts -> getTypeInfo( "SgTypeChar" ), offsetof( Typ, a ));
-    typ -> addMember( "b", ts -> getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
+    RsClassType *typ = &ts->getClassType( "TypA", sizeof( Typ ), false);
+    typ -> addMember( "a", ts->getTypeInfo( "SgTypeChar" ), offsetof( Typ, a ));
+    typ -> addMember( "b", ts->getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
     assert( typ -> isComplete() );
-    ts -> registerType( typ );
 
-    typ = new RsClassType( "TypB", sizeof( Typ ),false);
-    typ -> addMember( "a", ts -> getTypeInfo( "SgTypeChar" ), offsetof( Typ, a ));
-    typ -> addMember( "b", ts -> getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
+    typ = &ts->getClassType( "TypB", sizeof( Typ ),false);
+    typ -> addMember( "a", ts->getTypeInfo( "SgTypeChar" ), offsetof( Typ, a ));
+    typ -> addMember( "b", ts->getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
     assert( typ -> isComplete() );
-    ts -> registerType( typ );
 
     // gather types
-    const RsType & int_typ = *(ts -> getTypeInfo( "SgTypeInt" ));
-    const RsType & typA = *(ts -> getTypeInfo( "TypA" ));
-    const RsType & typB = *(ts -> getTypeInfo( "TypB" ));
+    const RsType & int_typ = *(ts->getTypeInfo( "SgTypeInt" ));
+    const RsType & typA = *(ts->getTypeInfo( "TypA" ));
+    const RsType & typB = *(ts->getTypeInfo( "TypB" ));
 
     vector< RsType* > to_delete;
     // char, 4 unknown
     RsCompoundType* compound = new RsCompoundType( sizeof( Typ ));
     RsType &compound_char = *compound;
     to_delete.push_back( compound );
-    compound -> addMember( "", ts -> getTypeInfo( "SgTypeChar" ), offsetof( Typ, a ));
+    compound -> addMember( "", ts->getTypeInfo( "SgTypeChar" ), offsetof( Typ, a ));
 
     // 1 unknown, int
     compound = new RsCompoundType( sizeof( Typ ));
     RsType &compound_int = *compound;
     to_delete.push_back( compound );
-    compound -> addMember( "", ts -> getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
+    compound -> addMember( "", ts->getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
 
     // 5 char
     compound = new RsCompoundType( sizeof( Typ ));

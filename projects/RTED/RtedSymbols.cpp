@@ -1,148 +1,127 @@
-#include "rose.h"
-
-#include <boost/algorithm/string/predicate.hpp>
+#include <iostream>
 
 #include "RtedSymbols.h"
+
 #include "rosez.hpp"
 
-bool RTEDDEBUG() { return true; }
-
-bool isRtedDecl(const std::string& name)
+static
+void presence_test(const std::string& name, void *const symptr)
 {
-  return boost::starts_with(name, RtedSymbols::prefix);
-}
+  if (symptr) return;
 
-static inline
-SgFunctionSymbol*
-find_sym(SgScopeStatement& n, const std::string& name, SgFunctionSymbol*)
-{
-  return n.lookup_function_symbol(name);
+  std::cerr << "#Error: Unable to locate symbol for '" << name << "'.\n"
+            << "        Did you include 'RTED/RuntimeSystem.h' ?"
+            << std::endl;
+
+  exit(1);
 }
 
 static inline
 SgClassSymbol*
-find_sym(SgScopeStatement& n, const std::string& name, SgClassSymbol*)
+find_sym(SgScopeStatement& n, const std::string& name, SgClassType*)
 {
-  return n.lookup_class_symbol(name);
-}
+  SgClassSymbol* const res = n.lookup_class_symbol(name);
 
-template <class T>
-static inline
-void lookup(SgScopeStatement& n, const std::string& name, T*& res)
-{
-  std::string sym(RtedSymbols::prefix);
-
-  sym.append(name);
-
-  SgFunctionSymbol* func = find_sym(n, sym, res);
-  if (func == NULL) return;
-
-  res = func;
-  if (RTEDDEBUG()) std::cerr << "Found MemberName : " << name << std::endl;
+  presence_test(name, res);
+  return res;
 }
 
 static inline
-void initialize(SgScopeStatement& n, RtedSymbols& rtedsym)
+SgTypedefSymbol*
+find_sym(SgScopeStatement& n, const std::string& name, SgTypedefType*)
 {
-  lookup(n, "CreateHeapArr",            rtedsym.roseCreateHeapArr);
-  lookup(n, "CreateHeapPtr",            rtedsym.roseCreateHeapPtr);
-  lookup(n, "AccessHeap",               rtedsym.roseAccessHeap);
-  lookup(n, "Checkpoint",               rtedsym.roseCheckpoint);
-  lookup(n, "FunctionCall",             rtedsym.roseFunctionCall);
-  lookup(n, "AssertFunctionSignature",  rtedsym.roseAssertFunctionSignature);
-  lookup(n, "ConfirmFunctionSignature", rtedsym.roseConfirmFunctionSignature);
-  lookup(n, "ConvertIntToString",       rtedsym.roseConvertIntToString);
-  lookup(n, "CreateVariable",           rtedsym.roseCreateVariable);
-  lookup(n, "CreateObject",             rtedsym.roseCreateObject);
-  lookup(n, "InitVariable",             rtedsym.roseInitVariable);
-  lookup(n, "MovePointer",              rtedsym.roseMovePointer);
-  lookup(n, "EnterScope",               rtedsym.roseEnterScope);
-  lookup(n, "ExitScope",                rtedsym.roseExitScope);
-  lookup(n, "AccessVariable",           rtedsym.roseAccessVariable);
-  lookup(n, "IOFunctionCall",           rtedsym.roseIOFunctionCall);
-  lookup(n, "RegisterTypeCall",         rtedsym.roseRegisterTypeCall);
-  lookup(n, "FreeMemory",               rtedsym.roseFreeMemory);
-  lookup(n, "ReallocateMemory",         rtedsym.roseReallocateMemory);
-  lookup(n, "CheckIfThisNULL",          rtedsym.roseCheckIfThisNULL);
-  lookup(n, "Addr",                     rtedsym.roseAddr);
-  lookup(n, "AddrSh",                   rtedsym.roseAddrSh);
-  lookup(n, "Close",                    rtedsym.roseClose);
-  lookup(n, "UpcExitWorkzone",          rtedsym.roseUpcExitWorkzone);
-  lookup(n, "UpcEnterWorkzone",         rtedsym.roseUpcEnterWorkzone);
-  lookup(n, "UpcAllInitialize",         rtedsym.roseUpcAllInitialize);
-  lookup(n, "UpcBeginExclusive",        rtedsym.roseUpcBeginExclusive);
-  lookup(n, "UpcEndExclusive",          rtedsym.roseUpcEndExclusive);
+  SgTypedefSymbol* const res = n.lookup_typedef_symbol(name);
+
+  presence_test(name, res);
+  return res;
 }
 
-struct RtedSymbolWrapper
+template <class SageType>
+static inline
+SageType*
+create_type(SgScopeStatement& n, const std::string& name, SageType* tag)
 {
-  RtedSymbols& rs;
-
-  explicit
-  RtedSymbolWrapper(RtedSymbols& syms)
-  : rs(syms)
-  {}
-
-  void handle_rtedTypes(const std::string& name, SgClassDeclaration& n)
-  {
-    if      (name == "rted_AddressDesc") rs.roseAddressDesc = SgClassType::createType(&n);
-    else if (name == "rted_TypeDesc")    rs.roseTypeDesc    = SgClassType::createType(&n);
-    else if (name == "rted_SourceInfo")  rs.roseSourceInfo  = SgClassType::createType(&n);
-  }
-
-  void handle_rtedTypes(const std::string& name, SgEnumDeclaration& n)
-  {
-    if      (name == "rted_AllocKind")   rs.roseAllocKind   = &n;
-  }
-
-  template <class SageNode>
-  void handle_rtedTypes(SageNode& n)
-  {
-    const std::string& name = n.get_name().str();
-
-    if ( !isRtedDecl(name) ) return;
-
-    handle_rtedTypes(name, n);
-  }
-
-  void handle(SgNode&)
-  {}
-
-  void handle(SgGlobal& n)
-  {
-    initialize(n, rs);
-  }
-
-  void handle(SgTypedefDeclaration& n)
-  {
-    const std::string& name = n.get_name().str();
-
-    if (name=="size_t")
-    {
-      rs.size_t_member = SgTypedefType::createType(&n);
-
-      if (RTEDDEBUG())
-        std::cerr << "Found Type : " << name << std::endl;
-    }
-  }
-
-  void handle(SgEnumDeclaration& n)
-  {
-    handle_rtedTypes(n);
-  }
-
-  void handle(SgClassDeclaration& n)
-  {
-    handle_rtedTypes(n);
-  }
-};
-
-
-void RtedSymbols::visit(SgNode* n)
-{
-  // ******************** DETECT Member functions in RuntimeSystem.h *************************************************************
-  ez::visitSgNode(RtedSymbolWrapper(*this), n);
-  // ******************** DETECT Member functions in RuntimeSystem.h *************************************************************
+  return SageType::createType(find_sym(n, name, tag)->get_declaration());
 }
+
+std::string rtedIdentifier(const std::string& name)
+{
+  std::string res;
+
+  res.reserve(name.size() + RtedSymbols::prefix.size());
+  res.append(RtedSymbols::prefix);
+  res.append(name);
+
+  return res;
+}
+
+static
+void set_typedef_type(SgScopeStatement& n, const std::string& name, SgTypedefType*& res)
+{
+  res = create_type(n, name, res);
+  ROSE_ASSERT(res);
+}
+
+static
+void set_rtedtype(SgScopeStatement& n, const std::string& name, SgClassType*& res)
+{
+  res = create_type(n, rtedIdentifier(name), res);
+  ROSE_ASSERT(res);
+}
+
+static
+void set_rtedenum(SgScopeStatement& n, const std::string& name, SgEnumDeclaration*& res)
+{
+  res = n.lookup_enum_symbol(rtedIdentifier(name))->get_declaration();
+  ROSE_ASSERT(res);
+}
+
+static
+void set_rtedfunc(SgGlobal& n, const std::string& name, SgFunctionSymbol*& res)
+{
+  res = n.lookup_function_symbol(rtedIdentifier(name));
+  // cannot assert for upc functions :(   was: ROSE_ASSERT(res);
+}
+
+void RtedSymbols::initialize(SgGlobal& n)
+{
+  set_rtedfunc(n, "CreateArray",              roseCreateArray);
+  set_rtedfunc(n, "AllocMem",                 roseAllocMem);
+  set_rtedfunc(n, "AccessArray",              roseAccessArray);
+  set_rtedfunc(n, "Checkpoint",               roseCheckpoint);
+  set_rtedfunc(n, "FunctionCall",             roseFunctionCall);
+  set_rtedfunc(n, "AssertFunctionSignature",  roseAssertFunctionSignature);
+  set_rtedfunc(n, "ConfirmFunctionSignature", roseConfirmFunctionSignature);
+  set_rtedfunc(n, "ConvertIntToString",       roseConvertIntToString);
+  set_rtedfunc(n, "CreateVariable",           roseCreateVariable);
+  set_rtedfunc(n, "CreateObject",             roseCreateObject);
+  set_rtedfunc(n, "InitVariable",             roseInitVariable);
+  set_rtedfunc(n, "MovePointer",              roseMovePointer);
+  set_rtedfunc(n, "EnterScope",               roseEnterScope);
+  set_rtedfunc(n, "ExitScope",                roseExitScope);
+  set_rtedfunc(n, "AccessVariable",           roseAccessVariable);
+  set_rtedfunc(n, "IOFunctionCall",           roseIOFunctionCall);
+  set_rtedfunc(n, "RegisterTypeCall",         roseRegisterTypeCall);
+  set_rtedfunc(n, "FreeMemory",               roseFreeMemory);
+  set_rtedfunc(n, "ReallocateMemory",         roseReallocateMemory);
+  set_rtedfunc(n, "CheckIfThisNULL",          roseCheckIfThisNULL);
+  set_rtedfunc(n, "Addr",                     roseAddr);
+  set_rtedfunc(n, "AddrSh",                   roseAddrSh);
+  set_rtedfunc(n, "Close",                    roseClose);
+  set_rtedfunc(n, "UpcExitWorkzone",          roseUpcExitWorkzone);
+  set_rtedfunc(n, "UpcEnterWorkzone",         roseUpcEnterWorkzone);
+  set_rtedfunc(n, "UpcAllInitialize",         roseUpcAllInitialize);
+  set_rtedfunc(n, "UpcBeginExclusive",        roseUpcBeginExclusive);
+  set_rtedfunc(n, "UpcEndExclusive",          roseUpcEndExclusive);
+
+  set_rtedtype(n, "AddressDesc",              roseAddressDesc);
+  set_rtedtype(n, "TypeDesc",                 roseTypeDesc);
+  set_rtedtype(n, "SourceInfo",               roseSourceInfo);
+
+  set_rtedenum(n, "AllocKind",                roseAllocKind);
+
+  set_typedef_type(n, "size_t",               size_t_member);
+}
+
 
 const std::string RtedSymbols::prefix("rted_");

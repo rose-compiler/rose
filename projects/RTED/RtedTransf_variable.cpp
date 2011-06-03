@@ -265,10 +265,11 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName)
                 // FIXME 2: stmt == mainFirst is probably wrong for cases where the
                 // statment we want to instrument really is the first one in main (and not
                 // merely one in the global scope)
-                if (stmt == mainFirst && initName->get_scope()
-                                != mainFirst->get_scope()) {
-                        mainBody -> prepend_statement(exprStmt);
-                        cerr << "+++++++ insert Before... " << endl;
+                if (stmt == mainFirst && initName->get_scope() != mainFirst->get_scope()) {
+                        insertStatementAfter(globalsInitLoc, exprStmt);
+                        globalsInitLoc = exprStmt;
+                        // mainBody -> prepend_statement(exprStmt);
+                        // cerr << "+++++++ insert Before... " << endl;
                 } else {
                         // insert new stmt (exprStmt) after (old) stmt
                         insertStatementAfter(stmt, exprStmt);
@@ -312,7 +313,7 @@ RtedTransformation::buildVariableCreateCallExpr(SgInitializedName* initName, boo
 
         string debug_name = initName -> get_name();
 
-        // \pp \todo genVarRef seems to leek
+        // \pp \todo genVarRef seems to leak
         return buildVariableCreateCallExpr(genVarRef(initName), debug_name, initb);
 }
 
@@ -637,7 +638,7 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
     ROSE_ASSERT(scope);
 
     cerr << "          ... running insertAccessVariable :  " //<< name
-                    << "   scope: " << scope->class_name() << endl;
+         << "   scope: " << scope->class_name() << endl;
 
     adjustStmtAndScopeIfNeeded_NoCompilerGen(stmt, scope, mainFirst);
 
@@ -645,37 +646,42 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
     {
             // build the function call : runtimeSystem-->createArray(params); ---------------------------
 
-            int read_write_mask = Read;
+            int           read_write_mask = Read;
             SgExpression* accessed_exp = varRefE;
-            SgExpression* write_location_exp = varRefE;
-            if (derefExp) {
+            SgExpression* write_location_exp = 0;
+            if (derefExp)
+            {
                     SgPointerDerefExp* deref_op = isSgPointerDerefExp(derefExp);
-                    SgArrowExp* arrow_op = isSgArrowExp(derefExp);
+                    SgArrowExp*        arrow_op = isSgArrowExp(derefExp);
                     ROSE_ASSERT( deref_op || arrow_op );
 
-                    if (arrow_op) {
+                    if (arrow_op)
+                    {
                             // with
                             //    p -> b = 2
                             // we need to be able to read
                             //    *p
-                            if (isUsedAsLvalue(arrow_op)) {
+                            if (isUsedAsLvalue(arrow_op))
+                            {
                                     bool isReadOnly =
                                                     isthereAnotherDerefOpBetweenCurrentAndAssign(
                                                                     derefExp);
-                                    if (isSgThisExp(arrow_op->get_lhs_operand())) {
-                                            return;
-
-                                    } else {
-                                            accessed_exp = arrow_op->get_lhs_operand();
-                                            if (!isReadOnly)
-                                                    read_write_mask |= Write;
+                                    if (isSgThisExp(arrow_op->get_lhs_operand()))
+                                    {
+                                       return;
                                     }
-                                    write_location_exp = arrow_op;
-                            } else {
+
+                                    accessed_exp = arrow_op->get_lhs_operand();
+                                    if (!isReadOnly)
+                                    {
+                                       read_write_mask |= Write;
+                                       write_location_exp = arrow_op;
+                                    }
+                            }
+                            else
+                            {
                                     // not a l-value
-                                    write_location_exp = 0;
-                                    if (isSgMemberFunctionType(
-                                                    arrow_op -> get_rhs_operand() -> get_type()))
+                                    if (isSgMemberFunctionType(arrow_op -> get_rhs_operand() -> get_type()))
                                             // for member function invocations, we just want to
                                             // check that the pointer is good
                                             accessed_exp = arrow_op -> get_lhs_operand();
@@ -683,13 +689,16 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
                                             // normally we'll be reading the member itself
                                             accessed_exp = arrow_op;
                             }
-                    } else {
+                    }
+                    else
+                    {
                             // consider
                             //    int *p;
                             //    *p = 24601;
                             //  It is necessary that &p, sizeof(p) is readable, but not
                             //  &(*p), sizeof(*p).
-                            if (isUsedAsLvalue(derefExp)) {
+                            if (isUsedAsLvalue(derefExp))
+                            {
                                     bool isReadOnly =
                                                     isthereAnotherDerefOpBetweenCurrentAndAssign(
                                                                     derefExp);
@@ -706,14 +715,13 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
                                     if (!isReadOnly)
                                     {
                                       read_write_mask = ez::visitSgNode(ReadCanceler(read_write_mask), accessed_exp);
+                                      write_location_exp = deref_op;
+                                      read_write_mask |= Write;
                                     }
-
-                                    write_location_exp = deref_op;
-                                    if (!isReadOnly)
-                                            read_write_mask |= Write;
-                            } else {
+                            }
+                            else
+                            {
                                     accessed_exp = deref_op;
-                                    write_location_exp = 0;
                             }
                     }
             }
@@ -821,14 +829,12 @@ void RtedTransformation::visit_isAssignInitializer(SgAssignInitializer* const as
                         //
                         //          int* x = (int*) malloc( sizeof( int ));
                         SgExpression* sizeExp = buildSizeOfOp(allocInfo.newtype);
-                        RtedArray*    array = new RtedArray( initName,
-                                                             getSurroundingStatement(initName),
-                                                             allocInfo.allocKind,
-                                                             sizeExp
-                                                           );
+                        RtedArray     arr(initName, getSurroundingStatement(initName), allocInfo.allocKind, sizeExp);
 
                         variablesUsedForArray.push_back(varRef);
-                        create_array_define_varRef_multiArray[varRef] = array;
+                        create_array_define_varRef_multiArray[varRef] = arr;
+
+
 
                         cerr << ">> Setting this var to be initialized : "
                              << initName->unparseToString() << endl;
@@ -837,8 +843,8 @@ void RtedTransformation::visit_isAssignInitializer(SgAssignInitializer* const as
                         //           can be safely removed as it duplicates
                         //           the previous store to
                         //           variableIsInitialized ...
-                        assert(variableIsInitialized[varRef] == InitializedVarMap::mapped_type(initName, allocInfo.allocKind));
-                        variableIsInitialized[varRef] = InitializedVarMap::mapped_type(initName, allocInfo.allocKind);
+                        //~ assert(variableIsInitialized[varRef] == InitializedVarMap::mapped_type(initName, allocInfo.allocKind));
+                        //~ variableIsInitialized[varRef] = InitializedVarMap::mapped_type(initName, allocInfo.allocKind);
                 }
 #endif
 

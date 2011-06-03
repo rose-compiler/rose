@@ -93,8 +93,11 @@ namespace rted
 
     void handle(SgSourceFile& n)
     {
-      ROSE_ASSERT(vt.transf->srcfiles.empty() || vt.transf->srcfiles.back() != &n);
+      const bool first = vt.transf->srcfiles.empty();
 
+      ROSE_ASSERT(first || vt.transf->srcfiles.back() != &n);
+
+      if (first) vt.transf->loadFunctionSymbols(n);
       vt.transf->srcfiles.push_back(&n);
     }
 
@@ -138,7 +141,7 @@ namespace rted
         // ignore arrays in parameter lists as they're actually pointers, not stack arrays
         if ( !array || isStructMember(n) || isFunctionParameter(n) ) return;
 
-        RtedArray* arrayRted = new RtedArray(&n, getSurroundingStatement(&n), akStack);
+        RtedArray arrayRted(&n, getSurroundingStatement(&n), akStack);
 
         vt.transf->populateDimensions( arrayRted, &n, array );
         vt.transf->create_array_define_varRef_multiArray_stack[&n] = arrayRted;
@@ -180,7 +183,7 @@ namespace rted
 
     void handle_gfor(SgScopeStatement& sgfor)
     {
-      handle(sgfor); // as ScopeStatement
+      handle_scope(sgfor);
 
       vt.for_loops.push_back(&sgfor);
       ia.isForStatement = true;
@@ -293,7 +296,8 @@ namespace rted
         // \pp binary should be suppressed for all calls
         //     in order not to impact existing RTED tests, we suppress for
         //     cases relevant to UPC
-        // \todo make suppression unconditional (remove if)
+        // \todo 1) make suppression unconditional (remove if)
+        // \todo 2) I think the following code is obsolete
         if (suppress_binary_for_specific_calls(n.getAssociatedFunctionDeclaration()))
         {
           ia.isBinaryOp = false;
@@ -330,26 +334,25 @@ namespace rted
     return ez::visitSgNode(InheritedAttributeHandler(*this, inheritedAttribute), astNode);
   }
 
-  /// wraps RtedTransformation::isUsableAsSgArrayType and makes sure that type is
+  /// wraps ::isUsableAsSgArrayType and makes sure that type is
   /// not null.
   static
-  bool isUsableAsSgArrayType(RtedTransformation* transf, SgType* type)
+  bool isUsableAsSgArrayTypeChecked(SgType* type)
   {
-    return (type != NULL) && transf->isUsableAsSgArrayType(type);
+    return (type != NULL) && ::isUsableAsSgArrayType(type);
   }
 
-  /// wraps RtedTransformation::isUsableAsSgReferenceType and makes sure that
+  /// wraps ::isUsableAsSgReferenceType and makes sure that
   /// type is not null.
   static
-  bool isUsableAsSgReferenceType(RtedTransformation* transf, SgType* type)
+  bool isUsableAsSgReferenceTypeChecked(SgType* type)
   {
-    return (type != NULL) && transf->isUsableAsSgReferenceType(type);
+    return (type != NULL) && ::isUsableAsSgReferenceType(type);
   }
 
   /// \brief tests if the first argument is an ancestor of the second argument
   /// \note  see also SageInterface::isAncestor (which is defined over arbitrary
   ///        nodes).
-  static
   bool isAncestorOf(const SgExpression& ancestor, const SgExpression& expr)
   {
     const SgExpression* parent = isSgExpression(expr.get_parent());
@@ -434,8 +437,6 @@ namespace rted
 
     bool rob = isRightOfBinaryOp(&varref);
 
-    std::cerr << "@@@ ELIDE rob? " << varref.unparseToString() << " " << rob << std::endl;
-
     // \note isRightOfBinaryOp(&varref)
     //       does not mean that varref == rhs. varref could also be
     //       an (indirect) right side child of binop.
@@ -480,7 +481,7 @@ namespace rted
 
     // \note do not move up the isUsableAsSgArrayType test
     //       b/c we only want it to succeed if this is indeed a function call expr
-    if (rted::isUsableAsSgArrayType(transf, varref.get_type())) return true;
+    if (isUsableAsSgArrayTypeChecked(varref.get_type())) return true;
 
     // \pp \todo
     // Instead of getting the type form the fundecl, it might be better to get
@@ -508,7 +509,7 @@ namespace rted
     //       prototype (i.e., there was no prototype present in the code.
     return (  arg_pos < param_lst.size()
            && (param_lst[arg_pos] != NULL)
-           && rted::isUsableAsSgReferenceType(transf, param_lst[arg_pos]->get_type())
+           && isUsableAsSgReferenceTypeChecked(param_lst[arg_pos]->get_type())
            );
   }
 
@@ -528,18 +529,17 @@ namespace rted
 
     SgInitializedName *name = varref->get_symbol()->get_declaration();
 
-    int where = 0;
-    bool elide_access_guard = (  (++where, inh.isArrowExp                                                        )
-                              || (++where, inh.isAddressOfOp                                                     )
-                              || (++where, in_instrumented_file(transf, name)                                    )
-                              || (++where, test_binaryop_and_forloop(binary_ops, for_loops, *varref, *name, inh) )
-                              || (++where, test_assign_initializer(inh, *varref)                                 )
-                              || (++where, test_call_argument(transf, *varref)                                   )
+    bool elide_access_guard = (  (inh.isArrowExp                                                        )
+                              || (inh.isAddressOfOp                                                     )
+                              || (in_instrumented_file(transf, name)                                    )
+                              || (test_binaryop_and_forloop(binary_ops, for_loops, *varref, *name, inh) )
+                              || (test_assign_initializer(inh, *varref)                                 )
+                              || (test_call_argument(transf, *varref)                                   )
                               );
 
     if (elide_access_guard)
     {
-      std::cerr << "### ELIDE " << where << " " << varref->unparseToString() << std::endl;
+      // std::cerr << "### ELIDE " << where << " " << varref->unparseToString() << std::endl;
       return;
     }
 

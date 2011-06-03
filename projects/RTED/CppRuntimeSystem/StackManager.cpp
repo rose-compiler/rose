@@ -10,26 +10,29 @@ StackManager::StackManager()
     beginScope("Globals");
 }
 
-void StackManager::addVariable(VariablesType * var, bool distributed)
+void StackManager::addVariable(VariablesType* var, long blocksize)
 {
     assert(scope.size() > 0);
     // if the variable is (or contains) pointer register it to pointer manager
 
-    RuntimeSystem::instance()->getPointerManager()->createPointer(var->getAddress(), var->getType(), distributed);
+    const RsType* vartype = var->getType();
+    const Address varaddr = var->getAddress();
 
-    addrToVarMap.insert(AddrToVarMap::value_type(var->getAddress(),var));
+    rtedRTS(this)->getPointerManager()->createPointer(varaddr, vartype, blocksize);
+
+    addrToVarMap.insert(AddrToVarMap::value_type(varaddr, var));
     stack.push_back(var);
 }
 
 
 
-VariablesType * StackManager::getVariable(Location addr)
+const VariablesType* StackManager::getVariable(Location addr) const
 {
-    AddrToVarMap::iterator it = addrToVarMap.find(addr);
-    if (it == addrToVarMap.end())
-        return NULL;
-    else
-        return it->second;
+    AddrToVarMap::const_iterator it = addrToVarMap.find(addr);
+
+    if (it == addrToVarMap.end()) return NULL;
+
+    return it->second;
 }
 
 VariablesType * StackManager::getVariableByMangledName(const string& mangledName)
@@ -44,7 +47,7 @@ VariablesType * StackManager::getVariableByMangledName(const string& mangledName
 
 void StackManager::getVariableByName(const std::string& name, vector<VariablesType*> & result)
 {
-    for (size_t i=0; i < stack.size(); i++)
+    for (size_t i=0; i < stack.size(); ++i)
     {
         if(stack[i]->getName() == name)
             result.push_back(stack[i]);
@@ -60,17 +63,21 @@ void StackManager::beginScope(const std::string & name)
 
 void StackManager::endScope()
 {
-    assert( scope.size() > 0);
+    assert( scope.size() > 0 );
 
     ScopeInfo lastScope = scope.back();
     scope.pop_back();
 
-    for(int i=stack.size()-1; i >= lastScope.stackIndex ; i--)
+    for (int i=stack.size()-1; i >= lastScope.stackIndex; --i)
     {
-        addrToVarMap.erase(stack.back()->getAddress());
-        delete stack.back();
+        VariablesType* var = stack.back();
+        const Address  varaddr = var->getAddress();
 
         stack.pop_back();
+        addrToVarMap.erase(varaddr);
+        RuntimeSystem::instance()->freeMemory(varaddr, akStack);
+
+        delete var;
     }
 
     assert((int)stack.size() == lastScope.stackIndex);

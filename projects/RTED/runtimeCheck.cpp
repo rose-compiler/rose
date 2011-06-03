@@ -30,7 +30,7 @@ runtimeCheck(int argc, char** argv, std::set<std::string>& rtedfiles, bool withu
    // Start parsing the project and insert header files
    SgProject* project= NULL;
 
-   if (RTEDDEBUG())
+   if (RTEDDEBUG)
       std::cerr << "Parsing original files... " << std::endl;
    for (int i=0;i<argc;++i)
       std::cout << argv[i] << " " ;
@@ -40,12 +40,12 @@ runtimeCheck(int argc, char** argv, std::set<std::string>& rtedfiles, bool withu
    ROSE_ASSERT(project);
 
    // perform all necessary transformations (calls)
-   if (RTEDDEBUG())
+   if (RTEDDEBUG)
       std::cerr << "Conducting transformations... " << std::endl;
    rted.transform(project, rtedfiles);
 
    // call backend and create a new rose_rose_filename.c source file
-   if (RTEDDEBUG())
+   if (RTEDDEBUG)
       std::cerr << "Calling ROSE backend... " << std::endl;
    backend(project);
 }
@@ -94,7 +94,7 @@ int main(int argc, char** argv)
    FileRegistrar         registrar = std::for_each(firstfile, lastfile, FileRegistrar() );
 
    // files are pushed on through bash script
-   if (RTEDDEBUG())
+   if (RTEDDEBUG)
       std::cerr << " >>>>>>>>>>>>>>>>>>>> NR OF FILES :: " << registrar.filenames.size() << std::endl;
 
    for (int i=1; i< argc; ++i) {

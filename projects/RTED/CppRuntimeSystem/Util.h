@@ -75,29 +75,29 @@ class RuntimeViolation
 
         enum Type
         {
-                DOUBLE_ALLOCATION,       // try to reserve memory with lies in already allocated mem
-                INVALID_FREE,            // called free on non allocated address
-                MEMORY_LEAK,             // some allocated memory was not freed on program exit
-                EMPTY_ALLOCATION,        // trying to get a memory area of size 0
-                INVALID_READ,            // trying to read non-allocated or non-initialized mem region
-                INVALID_WRITE,           // trying to write to non-allocated mem region
-                INVALID_FILE_OPEN,       // fopen could not open file, fileHandle==NULL
-                DOUBLE_FILE_OPEN,        // trying to register the same file-pointer twice
-                INVALID_FILE_CLOSE,      // trying to close a file which has already been closed / not opened
-                INVALID_FILE_ACCESS,     // trying to access file which is not opened
-                UNCLOSED_FILES,          // some opened files where not closed before program exit
-                INVALID_PTR_ASSIGN,      // a invalid address (not allocated) is assigned to a pointer
-                MEM_WITHOUT_POINTER,     // the last pointer which has pointed to a mem-location
-                                         // has been deregistered
-                POINTER_CHANGED_MEMAREA, // a pointer changed the memory area which it points to
-                                         // (may be an error if changed by pointer arithmetic)
-                INVALID_MEM_OVERLAP,     // some memory chunk overlaps with some
-                                         // other memory chunk illegaly, e.g. in arguments to memcpy
-                INVALID_TYPE_ACCESS,     // invalid access to "typed" memory
-                UNEXPECTED_FUNCTION_SIGNATURE,  // a c program compiled with a missing or wrong
-          // prototype gave the wrong types at the callsite
-                NONE,                   // no violation
-    UNKNOWN_VIOLATION
+                DOUBLE_ALLOCATION,              ///< try to reserve memory with lies in already allocated mem
+                INVALID_FREE,                   ///< called free on non allocated address
+                MEMORY_LEAK,                    ///< some allocated memory was not freed on program exit
+                EMPTY_ALLOCATION,               ///< trying to get a memory area of size 0
+                INVALID_READ,                   ///< trying to read non-allocated or non-initialized mem region
+                INVALID_WRITE,                  ///< trying to write to non-allocated mem region
+                INVALID_FILE_OPEN,              ///< fopen could not open file, fileHandle==NULL
+                DOUBLE_FILE_OPEN,               ///< trying to register the same file-pointer twice
+                INVALID_FILE_CLOSE,             ///< trying to close a file which has already been closed / not opened
+                INVALID_FILE_ACCESS,            ///< trying to access file which is not opened
+                UNCLOSED_FILES,                 ///< some opened files where not closed before program exit
+                INVALID_PTR_ASSIGN,             ///< a invalid address (not allocated) is assigned to a pointer
+                MEM_WITHOUT_POINTER,            ///< the last pointer which has pointed to a mem-location
+                                                ///  has been deregistered
+                POINTER_CHANGED_MEMAREA,        ///< a pointer changed the memory area which it points to
+                                                ///  (may be an error if changed by pointer arithmetic)
+                INVALID_MEM_OVERLAP,            ///< some memory chunk overlaps with some
+                                                ///  other memory chunk illegaly, e.g. in arguments to memcpy
+                INVALID_TYPE_ACCESS,            ///< invalid access to "typed" memory
+                UNEXPECTED_FUNCTION_SIGNATURE,  ///< a c program compiled with a missing or wrong
+                                                ///  prototype gave the wrong types at the callsite
+                NONE,                           ///< no violation
+                UNKNOWN_VIOLATION
         };
 
 
