@@ -9,11 +9,13 @@ INCLUDES = $(ROSE_INCLUDES)
 noinst_LTLIBRARIES = librosePythonFrontend.la
 
 librosePythonFrontend_la_DEPENDENCIES =
-librosePythonFrontend_la_SOURCES = PythonFrontend.C PythonFrontend.h
+librosePythonFrontend_la_SOURCES = \
+	SagePythonInterface.C \
+	PythonFrontend.C
 
-dist_include_HEADERS = PythonFrontend.h
+include_HEADERS = PythonFrontend.h SagePythonInterface.h
 
-include_HEADERS = 
-
+sageTranslator_PYTHON = sageTranslator.py
+sageTranslatordir = $(libdir)/python/sageTranslator
 
 EXTRA_DIST = CMakeLists.txt

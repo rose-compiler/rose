@@ -14,15 +14,83 @@ int python_main(std::string, SgFile*)
 #else // USE_ROSE_PYTHON_SUPPORT is defined
 
 #include <iostream>
+#include <stdio.h> // TODO remove eventually, switch to iostream
 
-#include <Python.h>
+#include "SagePythonInterface.h"
 
-int python_main(std::string, SgFile*)
+#define ROSE_PYTHON_FRONTEND_MODULE_NAME "sageTranslator"
+#define ROSE_PYTHON_FRONTEND_TRANSLATOR_FXN_NAME "translate" 
+
+using namespace std;
+
+static PyMethodDef SageBuilderMethods[] = {
+    {"numargs", emb_numargs, METH_VARARGS,
+        "Return the number of arguments received by the process."},
+    {NULL, NULL, 0, NULL}
+};
+
+int
+runPythonFrontend(SgFile* file)
+{
+    PyObject *pName, *pModule, *pFunc;
+    PyObject *pValue, *pArgs;
+
+    Py_InitModule("sage", SageBuilderMethods);
+
+    pName = PyString_FromString(ROSE_PYTHON_FRONTEND_MODULE_NAME);
+
+    //PyRun_SimpleString("import os; print os.getcwd()");
+
+    pModule = PyImport_Import(pName);
+    Py_DECREF(pName);
+
+    if (pModule != NULL) {
+        pFunc = PyObject_GetAttrString(pModule, ROSE_PYTHON_FRONTEND_TRANSLATOR_FXN_NAME);
+
+        std::string filename = file->get_sourceFileNameWithPath();
+        pValue = PyString_FromString(filename.c_str());
+        pArgs = PyTuple_New(1);
+        PyTuple_SetItem(pArgs, 0, pValue);
+
+        if (pFunc && PyCallable_Check(pFunc)) {
+            pValue = PyObject_CallObject(pFunc, pArgs);
+            Py_DECREF(pArgs);
+
+            if (pValue != NULL) {
+                printf("Result of call: %ld\n", PyInt_AsLong(pValue));
+                Py_DECREF(pValue);
+            }
+            else {
+                Py_DECREF(pFunc);
+                Py_DECREF(pModule);
+                PyErr_Print();
+                fprintf(stderr,"Call failed\n");
+                return 1;
+            }
+        }
+        else {
+            if (PyErr_Occurred())
+                PyErr_Print();
+            fprintf(stderr, "Cannot find function \"%s\"\n", 
+                    ROSE_PYTHON_FRONTEND_TRANSLATOR_FXN_NAME);
+        }
+        Py_XDECREF(pFunc);
+        Py_DECREF(pModule);
+    }
+    else {
+        PyErr_Print();
+        fprintf(stderr, "Failed to load \"%s\"\n", "FOOOB");
+        return 1;
+    }
+    return 0;
+}
+
+int python_main(std::string filename, SgFile* file)
 {
     std::cout << "python_main was called. Launching interpreter." << std::endl;
 
     Py_Initialize();
-    PyRun_SimpleString("print 'Hello world!'");
+    runPythonFrontend(file);
     Py_Finalize();
 
     std::cout << "Interpreter terminated." << std::endl;
