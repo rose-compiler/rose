@@ -6,6 +6,7 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/algorithm.hpp>
 #include <boost/lambda/bind.hpp>
+#include <boost/tuple/tuple.hpp>
 #include <utilities/utilities.h>
 #include <utilities/cppDefinesAndNamespaces.h>
 
@@ -143,6 +144,11 @@ SgExpression* StateSavingStatementHandler::restoreOneVariable(const VariableRena
 	return result;
 }
 
+SgExpression* buildNULL()
+{
+    return SageBuilder::buildLongIntVal(0);
+}
+
 SgStatement*  generateErrorHandling(const char* message)
 {
 	//For now we just generate exit(1)
@@ -178,148 +184,190 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 			//Get all subclasses of the class
 			const ClassHierarchyWrapper::ClassDefSet& subclasses = classHierarchy.getSubclasses(classDef);
 
-			if (subclasses.size() > 0)
+			//Ok, this class has subclasses. We need to generate a sequence of if/else if's to cast to the right type
+			vector<SgClassDefinition*> concreteSubclasses;
+			foreach (SgClassDefinition* subclass, subclasses)
 			{
-				//Ok, this class has subclasses. We need to generate a sequence of if/else if's to cast to the right type
-				set<SgClassDefinition*> concreteSubclasses;
-				foreach (SgClassDefinition* subclass, subclasses)
+				if (!SageInterface::isPureVirtualClass(subclass->get_declaration()->get_type(), classHierarchy))
+					concreteSubclasses.push_back(subclass);
+			}
+
+			//Don't forget to include the parent class itself
+			if (!SageInterface::isPureVirtualClass(classType, classHierarchy))
+			{
+				concreteSubclasses.push_back(classDef);
+			}
+
+			//Construct the appropriate cast for each concrete subclass.
+			vector<SgExpression*> castedVars;
+			foreach (SgClassDefinition* subclass, concreteSubclasses)
+			{
+				//Cast the variable to its subclass
+				SgType* subclassType = NULL;
+				if (isVarPointer)
+					subclassType = SageBuilder::buildPointerType(subclass->get_declaration()->get_type());
+				else if (isVarReference)
+					subclassType = SageBuilder::buildReferenceType(subclass->get_declaration()->get_type());
+
+				SgExpression* castedVarExp = VariableRenaming::buildVariableReference(varName);
+				castedVarExp = SageBuilder::buildCastExp(castedVarExp, subclassType, SgCastExp::e_static_cast);
+
+				//If the variable is a pointer, we dereference it so we save the value, not the pointer
+				if (isVarPointer)
+					castedVarExp = SageBuilder::buildPointerDerefExp(castedVarExp);
+
+				castedVars.push_back(castedVarExp);
+			}
+
+			//Construct the boolean expression that checks if the variable is of the given subclass.
+			//We can use dynamic_cast or typeid
+			vector<SgExpression*> typeComparisonExpressions;
+			foreach(SgClassDefinition* subclass, concreteSubclasses)
+			{
+				//We have to construct an expression like dynamic_cast<var> != NULL
+				SgExpression* pointerVar = VariableRenaming::buildVariableReference(varName);
+				if (isVarReference)
 				{
-					if (!SageInterface::isPureVirtualClass(subclass->get_declaration()->get_type(), classHierarchy))
-						concreteSubclasses.insert(subclass);
-				}
-				
-				//Don't forget to include the parent class itself
-				if (!SageInterface::isPureVirtualClass(classType, classHierarchy))
-				{
-					concreteSubclasses.insert(classDef);
-				}
-
-				//Construct the appropriate cast for each concrete subclass.
-				vector<SgExpression*> castedVars;
-				foreach (SgClassDefinition* subclass, concreteSubclasses)
-				{
-					//Cast the variable to its subclass
-					SgType* subclassType = NULL;
-					if (isVarPointer)
-						subclassType = SageBuilder::buildPointerType(subclass->get_declaration()->get_type());
-					else if (isVarReference)
-						subclassType = SageBuilder::buildReferenceType(subclass->get_declaration()->get_type());
-
-					SgExpression* castedVarExp = VariableRenaming::buildVariableReference(varName);
-					castedVarExp = SageBuilder::buildCastExp(castedVarExp, subclassType, SgCastExp::e_static_cast);
-
-					//If the variable is a pointer, we dereference it so we save the value, not the pointer
-					if (isVarPointer)
-						castedVarExp = SageBuilder::buildPointerDerefExp(castedVarExp);
-
-					castedVars.push_back(castedVarExp);
-				}
-
-				//Construct the boolean expression that checks if the variable is of the given subclass.
-				//We can use dynamic_cast or typeid
-				vector<SgExpression*> typeComparisonExpressions;
-				foreach(SgClassDefinition* subclass, concreteSubclasses)
-				{
-					//We have to construct an expression like dynamic_cast<var> != NULL
-					SgExpression* pointerVar = VariableRenaming::buildVariableReference(varName);
-					if (isVarReference)
-					{
-						pointerVar = SageBuilder::buildAddressOfOp(pointerVar);
-					}
-
-					SgType* classPointerType = SageBuilder::buildPointerType(subclass->get_declaration()->get_type());
-					SgExpression* dynamicCast = 
-								SageBuilder::buildCastExp(pointerVar, classPointerType, SgCastExp::e_dynamic_cast);
-
-					//Now check if the dynamic cast is null
-					SgExpression* comparison = SageBuilder::buildNotEqualOp(dynamicCast, SageBuilder::buildLongIntVal(0));
-					typeComparisonExpressions.push_back(comparison);
+					pointerVar = SageBuilder::buildAddressOfOp(pointerVar);
 				}
 
-				//Now we have all the casted variables and the expressions that check for the dynamic type
-				//Now we just have to build a chain of if-else if to push the appropriate type
-				vector<SgIfStmt*> pushIfStatements;
-				ROSE_ASSERT(castedVars.size() == typeComparisonExpressions.size());
-				for (size_t i = 0; i < castedVars.size(); i++)
+				SgType* classPointerType = SageBuilder::buildPointerType(subclass->get_declaration()->get_type());
+				SgExpression* dynamicCast = 
+							SageBuilder::buildCastExp(pointerVar, classPointerType, SgCastExp::e_dynamic_cast);
+
+				//Now check if the dynamic cast is null
+				SgExpression* comparison = SageBuilder::buildNotEqualOp(dynamicCast, SageBuilder::buildLongIntVal(0));
+				typeComparisonExpressions.push_back(comparison);
+			}
+
+			//Now we have all the casted variables and the expressions that check for the dynamic type
+			//Now we just have to build a chain of if-else to instantiate the appropriate type
+			vector<SgIfStmt*> forwardIfStatements;
+			ROSE_ASSERT(castedVars.size() == typeComparisonExpressions.size());
+			for (size_t i = 0; i < castedVars.size(); i++)
+			{
+				SgStatement* pushTrueBody = NULL;
+
+				if (SageInterface::isCopyConstructible(castedVars[i]->get_type()))
 				{
-					SgStatement* pushTrueBody = NULL;
+					//We call the copy constructor of the subclass
+					SgExprListExp* constructorParam = SageBuilder::buildExprListExp(castedVars[i]);
+					SgConstructorInitializer* copyConstructor = 
+							SageBuilder::buildConstructorInitializer(NULL, constructorParam, castedVars[i]->get_type(), 
+							false, true, true, true);
 
-					if (SageInterface::isCopyConstructible(castedVars[i]->get_type()))
-					{
-						//We push two things. First, we push an integer which identifies which class this was.
-						//Then, we push the class itself
-						SgStatement* pushClassId = SageBuilder::buildExprStatement(pushVal(SageBuilder::buildIntVal(i)));
-						SgStatement* pushClassValue = SageBuilder::buildExprStatement(pushVal(castedVars[i]));
-						pushTrueBody = SageBuilder::buildBasicBlock(pushClassId, pushClassValue);
-					}
-					else
-					{
-						printf("OH NO THE TYPE '%s' is not copy constructible!\n", 
-								castedVars[i]->get_type()->unparseToString().c_str());
-						printf("The type %s abstract\n", 
-								SageInterface::isPureVirtualClass(castedVars[i]->get_type(), classHierarchy) ? "IS" : "IS NOT");
+					SgNewExp* copiedVar = SageBuilder::buildNewExp(castedVars[i]->get_type(), NULL, copyConstructor, NULL, 0, NULL);
 
-						//We insert exit(1). The simulation will exit if it finds a runtime type that it cannot save
-						pushTrueBody = generateErrorHandling("The type is not copy constructible.");
-					}
+					//Now, push the resulting pointer
+					pushTrueBody = SageBuilder::buildExprStatement(pushVal(copiedVar, varType));
+				}
+				else
+				{
+					printf("OH NO THE TYPE '%s' is not copy constructible!\n", 
+							castedVars[i]->get_type()->unparseToString().c_str());
+					printf("The type %s abstract\n", 
+							SageInterface::isPureVirtualClass(castedVars[i]->get_type(), classHierarchy) ? "IS" : "IS NOT");
 
-					SgExpression* conditional = typeComparisonExpressions[i];
-					SgStatement* falseBody = SageBuilder::buildBasicBlock();
-					SgIfStmt* latestCheck = SageBuilder::buildIfStmt(conditional, pushTrueBody, falseBody);
-
-					//All this if-statement to the chain
-					if (!pushIfStatements.empty())
-					{
-						SageInterface::replaceStatement(pushIfStatements.back()->get_false_body(), latestCheck);
-					}
-
-					pushIfStatements.push_back(latestCheck);
+					//We insert exit(1). The simulation will exit if it finds a runtime type that it cannot save
+					pushTrueBody = generateErrorHandling("The type is not copy constructible.");
 				}
 
-				if (!pushIfStatements.empty())
+				SgExpression* conditional = typeComparisonExpressions[i];
+				SgStatement* falseBody = SageBuilder::buildBasicBlock();
+				SgIfStmt* latestCheck = SageBuilder::buildIfStmt(conditional, pushTrueBody, falseBody);
+
+				//All this if-statement to the chain
+				if (!forwardIfStatements.empty())
 				{
-					const char* errorMsg = "Encountered dynamic type that was not handled";
-					SageInterface::replaceStatement(pushIfStatements.back()->get_false_body(), generateErrorHandling(errorMsg));
-					SageInterface::prependStatement(pushIfStatements.front(), forwardBody);
+					SageInterface::replaceStatement(forwardIfStatements.back()->get_false_body(), latestCheck);
 				}
 
-				//Now, we have to build the reverse part, where we cast appropriately when we pop the class
-				//We can use a switch statement because we pushed the id of the concrete class
-				vector<SgStatement*> casesWithAssignments, casesWithoutAssignment;
-				for (size_t i = 0; i < castedVars.size(); i++)
+				forwardIfStatements.push_back(latestCheck);
+			}
+
+			if (!forwardIfStatements.empty())
+			{
+				const char* errorMsg = "Encountered dynamic type that was not handled";
+				SageInterface::replaceStatement(forwardIfStatements.back()->get_false_body(), generateErrorHandling(errorMsg));
+				SageInterface::prependStatement(forwardIfStatements.front(), forwardBody);
+			}
+
+			//Now, we have to build the reverse part, where we pop and assign. This is pretty standard
+			SgExpression* varRef = VariableRenaming::buildVariableReference(varName);
+			SgExpression* reverseAssign = SageBuilder::buildAssignOp(varRef, popVal(varType));
+			SageInterface::appendStatement(SageBuilder::buildExprStatement(reverseAssign), reverseBody);
+
+			//In the commit function, we pop to a temporary variable. Then, we cast that variable to an appropriate
+			//subclass and call delete
+
+
+			//Declare the temporary variable to store the popped value
+			SgVariableDeclaration* tempVarDecl;
+			SgExpression* tempVarRef;
+			SgAssignOp* reassignTempVar;
+			boost::tie(tempVarDecl, reassignTempVar, tempVarRef) = 
+					BackstrokeUtility::CreateTempVariableForExpression(popVal_front(varType), commitBody, true);
+			SageInterface::deepDelete(reassignTempVar);
+			reassignTempVar = NULL;
+
+			//Build if-statments that check for the actual type of the popped value
+			vector<SgIfStmt*> commitIfStatements;
+			for (size_t i = 0; i < castedVars.size(); i++)
+			{
+				//We only push vars that are copy constructible, so there's no need to do extra checks in the commit function
+				if (!SageInterface::isCopyConstructible(castedVars[i]->get_type()))
+					continue;
+
+				SgExpression* varRef = SageInterface::copyExpression(tempVarRef);
+				SgType* dynamicType = SageBuilder::buildPointerType(concreteSubclasses[i]->get_declaration()->get_type());
+				SgExpression* dynamicCast =
+						SageBuilder::buildCastExp(varRef, dynamicType, SgCastExp::e_dynamic_cast);
+
+				//Now check if the dynamic cast is not null
+				SgExpression* comparison = SageBuilder::buildNotEqualOp(dynamicCast, buildNULL());
+
+
+				//Perform a static cast to the dynamic type, then call delete
+				SgExpression* staticCast = 
+						SageBuilder::buildCastExp(SageInterface::copyExpression(tempVarRef), dynamicType);
+				SgDeleteExp* deleteVar = new SgDeleteExp(staticCast, false, false, NULL);
+				SageInterface::setOneSourcePositionForTransformation(deleteVar);
+
+
+				//Now build an if-statement that checks for the dynamic type, and if the dynamic type matches,
+				//we call delete
+				SgStatement* falseBody = SageBuilder::buildBasicBlock();
+				SgIfStmt* latestCheck = 
+						SageBuilder::buildIfStmt(comparison, SageBuilder::buildExprStatement(deleteVar), falseBody);
+
+
+				//All this if-statement to the chain
+				if (!commitIfStatements.empty())
 				{
-                    //Build the actual assignment statement that pops the value and assigns it to the variable
-					SgExpression* assign = restoreOneVariable(varName, castedVars[i]->get_type());
-
-					//Perform the assignment then break (for the reverse function)
-					SgStatement* caseBody = SageBuilder::buildBasicBlock(SageBuilder::buildExprStatement(assign),
-							SageBuilder::buildBreakStmt());
-
-					SgCaseOptionStmt* caseStmt = SageBuilder::buildCaseOptionStmt(SageBuilder::buildIntVal(i), caseBody);
-					casesWithAssignments.push_back(caseStmt);
-
-					//Pop without performing an assignment (for the commit function)
-					SgStatement* popStatement = SageBuilder::buildExprStatement(popVal_front(castedVars[i]->get_type()));
-					SgStatement* commitCaseBody = SageBuilder::buildBasicBlock(popStatement, SageBuilder::buildBreakStmt());
-					casesWithoutAssignment.push_back(commitCaseBody);
+					SageInterface::replaceStatement(commitIfStatements.back()->get_false_body(), latestCheck);
 				}
 
-				//Build & insert the switch statement for the reverse function
-				SgExpression* selectorExpression = popVal(SageBuilder::buildIntType());
-				SgBasicBlock* switchBody = SageBuilder::buildBasicBlock();
-				SageInterface::appendStatementList(casesWithAssignments, switchBody);       
-				SgSwitchStatement* reverseSwitch = SageBuilder::buildSwitchStatement(selectorExpression, switchBody);
-				SageInterface::appendStatement(reverseSwitch, reverseBody);
+				commitIfStatements.push_back(latestCheck);
+			} //End loop over all subclasses
 
-				//Build & insert the switch statement for the commit function
-				selectorExpression = SageInterface::copyExpression(selectorExpression);
-				switchBody = SageBuilder::buildBasicBlock();
-				SageInterface::appendStatementList(casesWithoutAssignment, switchBody);
-				SgSwitchStatement* commitSwitch = SageBuilder::buildSwitchStatement(selectorExpression, switchBody);
-				SageInterface::prependStatement(commitSwitch, commitBody);
 
-				return;
-			} //end if there are any subclasses
+			if (!commitIfStatements.empty())
+			{
+				//In the last 'else' block, we want to assert that the pointer is null since it didn't match any of the 
+				//dynamic types we tried
+				SgExpression* varRef = SageInterface::copyExpression(tempVarRef);
+				SgExpression* nullAssert = BackstrokeUtility::buildAssert(SageBuilder::buildEqualityOp(varRef, buildNULL()));
+				SageInterface::replaceStatement(commitIfStatements.back()->get_false_body(), 
+						SageBuilder::buildExprStatement(nullAssert));
+
+				SageInterface::prependStatement(commitIfStatements.front(), commitBody);
+			}
+			SageInterface::prependStatement(tempVarDecl, commitBody);
+
+			SageInterface::deepDelete(tempVarRef);
+			tempVarRef = NULL;
+
+			return;
 		} //end if the var has class type
 	} //end if var is pointer or reference
 
@@ -395,35 +443,19 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
 			//Build the if-statement for the forward body
 			SgExpression* var = VariableRenaming::buildVariableReference(varName);
 			SgExpression* varNotNullCondition = SageBuilder::buildNotEqualOp(var, SageBuilder::buildLongIntVal(0));
-			SgBasicBlock* nonNullBody = SageBuilder::buildBasicBlock();
-			SgIfStmt* forwardNullCheck = SageBuilder::buildIfStmt(varNotNullCondition, nonNullBody, NULL);
+			SgBasicBlock* ifNonNullBody = SageBuilder::buildBasicBlock();
+            
+            //In the NULL case, we just push NULL to the stack
+            SgStatement* assignNull = SageBuilder::buildExprStatement(pushVal(buildNULL(),  varType));
+            SgStatement* ifNullBody = SageBuilder::buildBasicBlock(assignNull);
+            
+			SgIfStmt* forwardNullCheck = SageBuilder::buildIfStmt(varNotNullCondition, ifNonNullBody, ifNullBody);
 			SageInterface::prependStatement(forwardNullCheck, forwardBody);
 			
-			//In the forward body, we also push one bit to indicate whether the pointer was null or not
-			SgExpression* pushNullBit = pushVal(SageInterface::copyExpression(varNotNullCondition));
-			SageInterface::insertStatementAfter(forwardNullCheck, SageBuilder::buildExprStatement(pushNullBit));
-			
-			//Build the if-statement for the reverse body
-			SgExpression* reverseCondition = popVal(SageBuilder::buildBoolType());
-			SgIfStmt* reverseNullCheck = SageBuilder::buildIfStmt(reverseCondition, SageBuilder::buildBasicBlock(), 
-					SageBuilder::buildBasicBlock());
-			SageInterface::appendStatement(reverseNullCheck, reverseBody);
-			
-			//In the reverse body, assign the pointer to NULL if it was null originally
-			SgExpression* assignVarToNull = 
-					SageBuilder::buildAssignOp(VariableRenaming::buildVariableReference(varName), SageBuilder::buildLongIntVal(0));
-			SageInterface::appendStatement(SageBuilder::buildExprStatement(assignVarToNull), 
-					(SgBasicBlock*)reverseNullCheck->get_false_body());
-
-			//Build the if-statement for the commit body
-			SgIfStmt* commitNullCheck = (SgIfStmt*)SageInterface::copyStatement(reverseNullCheck);
-			SageInterface::prependStatement(commitNullCheck, commitBody);
 			
 			//Now, actually generate the code to save / restore the variable (inside the body of the NULL guards)
 			saveOneVariable(varName, 
-					(SgBasicBlock*)forwardNullCheck->get_true_body(), 
-					(SgBasicBlock*)reverseNullCheck->get_true_body(), 
-					(SgBasicBlock*)commitNullCheck->get_true_body(), classHierarchy);
+					(SgBasicBlock*)forwardNullCheck->get_true_body(), reverseBody, commitBody, classHierarchy);
 		}
 		else
 		{
