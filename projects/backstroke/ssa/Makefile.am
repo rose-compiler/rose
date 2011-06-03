@@ -65,7 +65,6 @@ test2010_01.c \
 test2010_02.c \
 test2010_03.c \
 test2010_04.c \
-test2010_05.c \
 test2010_06.c \
 test2010_07.c \
 test2010_08.c \
@@ -87,8 +86,8 @@ YardenPragmaPackExample.c \
 Yarden_client.c 
 
 C_FAILURE_TESTCODES = \
-gzip.c \
-expected failure (need special compile cmd) test2005_168.c
+expected failure (need special compile cmd) test2005_168.c \
+gzip.c
 
 
 CXX_TESTCODES_REQUIRED_TO_PASS CXX_= \
@@ -757,15 +756,15 @@ test2005_114.C \
 test2006_47.C 
 
 
-C_TEST_Objects = ${C_TESTCODES_REQUIRED_TO_PASS:.C=.o}
+C_TEST_Objects = ${C_TESTCODES_REQUIRED_TO_PASS:.c=.o}
 
 C_TEST_INCLUDES = \
 	-I$(top_srcdir)/tests/CompileTests/A++Code \
 	-I$(top_srcdir)/tests/CompileTests/C_tests 
 
 $(C_TEST_Objects): ssaTestHarness
-	@cp $(top_srcdir)/tests/CompileTests/C_tests/$(@:.o=.C) $(@:.o=.C)
-	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(C_TEST_INCLUDES) -c $(@:.o=.C)
+	@cp $(top_srcdir)/tests/CompileTests/C_tests/$(@:.o=.c) $(@:.o=.c)
+	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(C_TEST_INCLUDES) -c $(@:.o=.c)
 
 CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
