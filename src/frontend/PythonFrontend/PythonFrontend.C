@@ -23,12 +23,6 @@ int python_main(std::string, SgFile*)
 
 using namespace std;
 
-static PyMethodDef SageBuilderMethods[] = {
-    {"numargs", emb_numargs, METH_VARARGS,
-        "Return the number of arguments received by the process."},
-    {NULL, NULL, 0, NULL}
-};
-
 int
 runPythonFrontend(SgFile* file)
 {
