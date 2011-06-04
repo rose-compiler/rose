@@ -26,17 +26,17 @@ using namespace std;
 int
 runPythonFrontend(SgFile* file)
 {
-    PyObject *pName, *pModule, *pFunc;
+    PyObject *pModule, *pFunc;
     PyObject *pValue, *pArgs;
+
+    //PyRun_SimpleString("import os; print 'cwd is', os.getcwd()");
+    //PyRun_SimpleString("import sys; print 'path is', sys.path");
 
     Py_InitModule("sage", SageBuilderMethods);
 
-    pName = PyString_FromString(ROSE_PYTHON_FRONTEND_MODULE_NAME);
-
     //PyRun_SimpleString("import os; print os.getcwd()");
 
-    pModule = PyImport_Import(pName);
-    Py_DECREF(pName);
+    pModule = PyImport_ImportModule(ROSE_PYTHON_FRONTEND_MODULE_NAME);
 
     if (pModule != NULL) {
         pFunc = PyObject_GetAttrString(pModule, ROSE_PYTHON_FRONTEND_TRANSLATOR_FXN_NAME);
@@ -51,7 +51,10 @@ runPythonFrontend(SgFile* file)
             Py_DECREF(pArgs);
 
             if (pValue != NULL) {
-                printf("Result of call: %ld\n", PyInt_AsLong(pValue));
+                //printf("Result of call: %ld\n", PyInt_AsLong(pValue));
+                PyObject* capsule = PyTuple_GetItem(pArgs, 0);
+                //SgNode* sage_ast = PyDecapsulate<SgNode>(capsule);
+                //ROSE_ASSERT(sage_ast != NULL);
                 Py_DECREF(pValue);
             }
             else {
@@ -73,7 +76,7 @@ runPythonFrontend(SgFile* file)
     }
     else {
         PyErr_Print();
-        fprintf(stderr, "Failed to load \"%s\"\n", "FOOOB");
+        fprintf(stderr, "Failed to load module \"%s\".\n", ROSE_PYTHON_FRONTEND_MODULE_NAME);
         return 1;
     }
     return 0;
