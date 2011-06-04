@@ -3027,6 +3027,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                   file->set_outputLanguage(SgFile::e_Python_output_language);
 
                                   file->set_Python_only(true);
+                                  file->set_skipfinalCompileStep(true);
 
                                   // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
                                   // Note that file->get_requires_C_preprocessor() should be false.

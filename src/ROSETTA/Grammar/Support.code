@@ -11280,7 +11280,7 @@ SgFile::compileOutput ( int fileNameIndex )
                   }
                  else
                   {
-                 // This is the case of binary analysis...(nothing to do there)
+                 // This is the case of binary analysis or python...(nothing to do there)
                   }
              }
         }
