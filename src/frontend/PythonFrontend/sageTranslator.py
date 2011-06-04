@@ -6,13 +6,22 @@ OPERATOR_BUILDFXN_MAP = {
     ast.Add: sage.buildAddOp,
 }
 
+class FileInfo():
+  def __init__(self, filename, node):
+    self.filename = filename
+    self.lineno = node.lineno
+    self.col_offset = node.col_offset
+
 class SageTranslator(ast.NodeVisitor):
+
+  def __init__(self, filename):
+    self.filename = filename
 
   def __call__(self, syntax_tree):
     return self.visit(syntax_tree)
 
   def generic_visit(self, node):
-    print "Generic: ", node.__class__.__name__
+    print "No visit() method define for class: ", node.__class__.__name__
     return map(self.visit, ast.iter_child_nodes(node))
 
   def visit_BinOp(self, node):
@@ -33,7 +42,7 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildPrintStmt(subforest)
 
   def visit_Str(self, node):
-    return sage.buildStringVal(node.s)
+    return sage.buildStringVal(node.s, FileInfo(self.filename, node))
 
 
 def translate(infilename):
@@ -45,7 +54,7 @@ def translate(infilename):
     print >>sys.stderr, "IO error when reading file: %s" % infilename
     exit(1)
   syntax_tree = ast.parse(contents)
-  return SageTranslator().visit(syntax_tree)
+  return SageTranslator(infilename).visit(syntax_tree)
 
 def main(argv):
   map(translate, argv[1:])

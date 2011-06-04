@@ -28,6 +28,54 @@ SgNode_T* PyDecapsulate(PyObject* capsule) {
 }
 
 /*
+ * Set the SgNode's Sg_File_Info parameters based on values from
+ * the given FileInfo Python object.
+ */
+void set_File_Info(SgNode* sg_node, PyObject* py_file_info) {
+    ROSE_ASSERT(sg_node != NULL);
+    Sg_File_Info* sg_file_info = sg_node->get_file_info();
+
+    /* Create a new Sg_File_Info node if one doesn't exist. */
+    if (sg_file_info == NULL) {
+        cerr << "Warning: no existing file info for "
+             << sg_node->class_name() << endl;
+        sg_file_info = new Sg_File_Info();
+        SgLocatedNode* sg_located_node = isSgLocatedNode(sg_node);
+        if (sg_located_node == NULL) {
+            cerr << "warning: cannot set file info on " 
+                << sg_node->class_name() << endl;
+        } else {
+            sg_located_node->set_file_info( sg_file_info );
+        }
+    }
+
+    /* General settings */
+    sg_file_info->unsetTransformation();
+
+    /* Set the line number */
+    PyObject* py_lineno = PyObject_GetAttrString(py_file_info, "lineno");
+    int lineno = (int) PyInt_AsLong(py_lineno);
+    sg_file_info->set_line(lineno);
+
+    /* Set the column offset */
+    PyObject* py_col_offset = PyObject_GetAttrString(py_file_info, "col_offset");
+    int col_offset = (int) PyInt_AsLong(py_col_offset);
+    sg_file_info->set_col(col_offset);
+
+    /* Set the file name */
+    PyObject* py_filename = PyObject_GetAttrString(py_file_info, "filename");
+    std::string filename = std::string( PyString_AsString(py_filename) );
+    sg_file_info->set_filenameString(filename);
+
+#if 1
+    cout << "File_Info for " << sg_node->class_name() 
+        << "\n\tlineno = " << sg_file_info->get_line() 
+        << "\n\tcolno = " << sg_file_info->get_col() 
+        << "\n\tfname = " << sg_file_info->get_filenameString() << endl;
+#endif
+}
+
+/*
  * Build an SgAddOp node from the given Python statements.
  *  - PyObject* args = (PyObject*, PyObject*)
  */
@@ -106,9 +154,10 @@ PyObject*
 sage_buildStringVal(PyObject *self, PyObject *args)
 {
     cout << "Hello from buildStringVal()" << endl;
-    char* cstr = NULL;
-    PyArg_ParseTuple(args, "s", &cstr); // TODO error handling
-    string str = string(cstr);
-    SgStringVal* sg_string_val = SageBuilder::buildStringVal_nfi(str);
+    PyObject* py_str = PyTuple_GetItem(args, 0);
+    char* c_str = PyString_AsString(py_str);
+    string str = string(c_str);
+    SgStringVal* sg_string_val = SageBuilder::buildStringVal(str);
+    set_File_Info(sg_string_val, PyTuple_GetItem(args, 1));
     return PyEncapsulate(sg_string_val);
 }
