@@ -30,6 +30,9 @@ namespace BackstrokeUtility
 	boost::tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression* > CreateTempVariableForExpression(SgExpression* expression,
 			SgScopeStatement* scope, bool initializeInDeclaration);
 
+	//! Returns a call to std::assert, with the specified expression passed as an argument.
+	SgExpression* buildAssert(SgExpression* check);
+	
 	//! Collects all the uses of the given variable in the given subtree. Correctly handles expanded
 	//! variables, such a p.x. All the reference expressions for p.x would be SgDotOp's or SgArrowOp's
 	std::vector<SgExpression*> findVarReferences(VariableRenaming::VarName var, SgNode* root);

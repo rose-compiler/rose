@@ -25,9 +25,11 @@ T pop(std::deque<T>& data_stack)
 
 //!Pop from the front of a stack. Used in fossil collection
 template <class T>
-void pop_front(std::deque<T>& data_stack)
+const T& pop_front(std::deque<T>& data_stack)
 {
+	const T& val = data_stack.front();
     data_stack.pop_front();
+	return val;
 }
 
 template <class T>
@@ -38,19 +40,22 @@ T push(std::deque<boost::any>& data_stack, T val)
 }
 
 template <class T>
-T pop(std::deque<boost::any>& data_stack)
+const T& pop(std::deque<boost::any>& data_stack)
 {
-    T val = boost::any_cast<T>(data_stack.back());
+    const T& val = boost::any_cast<T>(data_stack.back());
     data_stack.pop_back();
     return val;
 }
 
 //!Pop from the front of a stack. Used in fossil collection
 template <class T>
-void pop_front(std::deque<boost::any>& data_stack)
+const T& pop_front(std::deque<boost::any>& data_stack)
 {
-    data_stack.pop_front();
+	const T& val = boost::any_cast<T>(data_stack.front());
+	data_stack.pop_front();
+	return val;
 }
+
 #if 0
 /**********************************************************************************
  * The following random number generator functions are to make sure the event and forward event
