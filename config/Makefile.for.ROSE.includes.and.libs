@@ -225,6 +225,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/backend/unparser/JavaCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/FortranCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/PHPCodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/PythonCodeGeneration \
      -I$(top_srcdir)/src/backend/asmUnparser \
      -I$(top_srcdir)/src/util \
      -I$(top_srcdir)/src/util/support \

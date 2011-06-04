@@ -21,6 +21,7 @@ unparser_la_sources=\
 	$(unparseJavaCodeGeneration_la_sources) \
 	$(unparseLanguageIndependenceSupport_la_sources) \
 	$(unparsePHPCodeGeneration_la_sources)
+	$(unparsePythonCodeGeneration_la_sources)
 
 
 unparser_includeHeaders=\
@@ -31,6 +32,7 @@ unparser_includeHeaders=\
 	$(unparseJavaCodeGeneration_includeHeaders) \
 	$(unparseLanguageIndependenceSupport_includeHeaders) \
 	$(unparsePHPCodeGeneration_includeHeaders)
+	$(unparsePythonCodeGeneration_includeHeaders)
 
 
 
@@ -43,6 +45,7 @@ unparser_extraDist=\
 	$(unparseFortran_extraDist) \
 	$(unparseLanguageIndependenceSupport_extraDist) \
 	$(unparsePHPCodeGeneration_extraDist)
+	$(unparsePythonCodeGeneration_extraDist)
 
 
 unparser_cleanLocal=\
@@ -57,3 +60,4 @@ unparser_cleanLocal=\
 	$(unparseFortran_cleanLocal); \
 	$(unparseLanguageIndependenceSupport_cleanLocal); \
 	$(unparsePHPCodeGeneration_cleanLocal)
+	$(unparsePythonCodeGeneration_cleanLocal)
