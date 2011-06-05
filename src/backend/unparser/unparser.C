@@ -347,9 +347,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
                        {
                            if (file->get_Python_only())
                               {
-                                  std::cout << "Unparsing Python!" << std::endl;
-                                  //Unparse_PHP unparser(this,file->get_unparse_output_filename());
-                                  //unparser.unparseStatement(globalScope, info);
+                                  Unparse_Python unparser(this,file->get_unparse_output_filename());
+                                  unparser.unparseStatement(globalScope, info);
                               }
                            else
                              {
