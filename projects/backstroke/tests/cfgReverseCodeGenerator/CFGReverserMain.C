@@ -52,14 +52,34 @@ struct VariableReversalFilter : public IVariableFilter
 {
 	virtual bool isVariableInteresting(const VariableRenaming::VarName& var) const
 	{
+		static ClassHierarchyWrapper* classHierarchy = new ClassHierarchyWrapper(SageInterface::getProject());
+		
 		SgType* type = var[0]->get_type();
 
 		if (SageInterface::isPointerType(type))
 			type = getPointerBaseType(type);
 
 		string typeName = SageInterface::get_name(type);
+		if (typeName == "Simulator" || typeName == "Event")
+			return false;
+		
+		//Don't save event objects
+		if (SgClassType* classType = isSgClassType(type))
+		{
+			SgClassDeclaration* typeDecl = (SgClassDeclaration*)classType->get_declaration()->get_definingDeclaration();
+			ROSE_ASSERT(typeDecl != NULL);
+			SgClassDefinition* classDef = typeDecl->get_definition();
+			ROSE_ASSERT(classDef != NULL);
+			const ClassHierarchyWrapper::ClassDefSet& superclasses = classHierarchy->getAncestorClasses(classDef);
+			
+			foreach (SgClassDefinition* superclass, superclasses)
+			{
+				if (SageInterface::get_name(superclass->get_declaration()->get_type()) == "Event")
+					return false;
+			}
+		}
 
-		return (typeName != "DESEngine");
+		return true;
 	}
 };
 
