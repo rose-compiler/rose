@@ -18,6 +18,8 @@ int python_main(std::string, SgFile*)
 
 #include "SagePythonInterface.h"
 
+#include "AstDOTGeneration.h"
+
 #define ROSE_PYTHON_FRONTEND_MODULE_NAME "sageTranslator"
 #define ROSE_PYTHON_FRONTEND_TRANSLATOR_FXN_NAME "translate" 
 
@@ -51,11 +53,24 @@ runPythonFrontend(SgFile* file)
             Py_DECREF(pArgs);
 
             if (pValue != NULL) {
-                //printf("Result of call: %ld\n", PyInt_AsLong(pValue));
-                PyObject* capsule = PyTuple_GetItem(pArgs, 0);
-                //SgNode* sage_ast = PyDecapsulate<SgNode>(capsule);
-                //ROSE_ASSERT(sage_ast != NULL);
+                void* capsule_ptr = PyCapsule_GetPointer(pValue, NULL);
+                SgGlobal* sg_global = static_cast<SgGlobal*>(capsule_ptr);
+                SgSourceFile* sg_source_file = isSgSourceFile(file);
+                sg_source_file->set_globalScope(sg_global);
+                sg_global->set_parent(sg_source_file);
+
                 Py_DECREF(pValue);
+#if 0
+                // code to attach the file to the SgProject tree
+                SgProject* proj = SageInterface::getProject();
+                SgFileList* file_list = proj->get_fileList_ptr();
+                SgFilePtrList& file_ptr_list = file_list->get_listOfFiles();
+                file_ptr_list.push_back(file);
+
+                // show the dot graph
+                AstDOTGeneration dotgen;
+                dotgen.generate(SageInterface::getProject(), "my.dot");
+#endif
             }
             else {
                 Py_DECREF(pFunc);
