@@ -14,8 +14,8 @@ class FileInfo():
 
 class SageTranslator(ast.NodeVisitor):
 
-  def __init__(self, filename):
-    self.filename = filename
+  def __init__(self, file):
+    self.file = file
 
   def __call__(self, syntax_tree):
     return self.visit(syntax_tree)
@@ -42,7 +42,7 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildPrintStmt(subforest)
 
   def visit_Str(self, node):
-    return sage.buildStringVal(node.s, FileInfo(self.filename, node))
+    return sage.buildStringVal(node.s, FileInfo(self.file, node))
 
 
 def translate(infilename):
