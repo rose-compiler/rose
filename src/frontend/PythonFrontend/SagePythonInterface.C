@@ -76,13 +76,35 @@ void set_File_Info(SgNode* sg_node, PyObject* py_file_info) {
 }
 
 /*
+ * Adds children to a node.
+ * TODO: Add support for other SgNode subclasses besides SgGlobal.
+ */
+PyObject*
+sage_addChildrenToNode(PyObject *self, PyObject *args)
+{
+    PyObject* sg_node_capsule = PyTuple_GetItem(args, 0);
+    SgGlobal* sg_global = PyDecapsulate<SgGlobal>(sg_node_capsule);
+    ROSE_ASSERT(sg_global);
+
+    PyObject* argv = PyTuple_GetItem(args, 1);
+    Py_ssize_t argc = PyList_Size(argv);
+    for (int i = 0; i < argc; i++) {
+       PyObject* capsule = PyList_GetItem(argv, i);
+       SgDeclarationStatement* sg_child = 
+           PyDecapsulate<SgDeclarationStatement>(capsule);
+       sg_global->append_declaration(sg_child);
+    }
+    return Py_None;
+}
+
+/*
  * Build an SgAddOp node from the given Python statements.
  *  - PyObject* args = (PyObject*, PyObject*)
  */
 PyObject*
 sage_buildAddOp(PyObject *self, PyObject *args)
 {
-    cout << "Hello from buildAddOp()" << endl;
+    //cout << "Hello from buildAddOp()" << endl;
     PyObject* lhs_capsule = PyTuple_GetItem(args, 0);
     PyObject* rhs_capsule = PyTuple_GetItem(args, 1);
     SgExpression* lhs = PyDecapsulate<SgExpression>(lhs_capsule);
@@ -92,14 +114,33 @@ sage_buildAddOp(PyObject *self, PyObject *args)
 }
 
 /*
+ * Build a FunctionDef
+ */
+PyObject*
+sage_buildFunctionDef(PyObject *self, PyObject *args)
+{
+    cout << "Hello from buildFunctionDef()" << endl;
+    SgFunctionDeclaration* sg_func_decl = 
+        SageBuilder::buildDefiningFunctionDeclaration("newfunc",
+                SageBuilder::buildUnknownType(), 
+                SageBuilder::buildFunctionParameterList(),
+                new SgGlobal());
+
+    return PyEncapsulate(sg_func_decl);
+}
+
+/*
  * Build an SgGlobal node from the given list of Python statements.
  *  - PyObject* args = ( [PyObject*, PyObject*, ...], )
  */
 PyObject*
 sage_buildGlobal(PyObject *self, PyObject *args)
 {
-    cout << "Hello from buildGlobal()" << endl;
-    return Py_BuildValue("i", 0);
+    PyObject* arg0 = PyTuple_GetItem(args, 0);
+    std::string filename = std::string( PyString_AsString(arg0) );
+    Sg_File_Info* sg_file_info = new Sg_File_Info(filename, 0, 0);
+    SgGlobal* sg_global = new SgGlobal(sg_file_info);
+    return PyEncapsulate(sg_global);
 }
 
 /*
@@ -109,7 +150,7 @@ sage_buildGlobal(PyObject *self, PyObject *args)
 PyObject*
 sage_buildLongIntVal(PyObject *self, PyObject *args)
 {
-    cout << "Hello from buildLongIntVal()" << endl;
+    //cout << "Hello from buildLongIntVal()" << endl;
     PyObject* val_obj = PyTuple_GetItem(args, 0);
     long value = PyInt_AsLong(val_obj);
     SgLongIntVal* sg_long_int_val = 
@@ -125,7 +166,7 @@ sage_buildLongIntVal(PyObject *self, PyObject *args)
 PyObject*
 sage_buildPrintStmt(PyObject *self, PyObject *args)
 {
-    cout << "Hello from buildPrintStmt()" << endl;
+    //cout << "Hello from buildPrintStmt()" << endl;
     PyObject* arg1v = PyTuple_GetItem(args, 0);
     Py_ssize_t arg1c = PyList_Size(arg1v);
     for (int i = 0; i < arg1c; i++) {
@@ -141,7 +182,7 @@ sage_buildPrintStmt(PyObject *self, PyObject *args)
 PyObject*
 sage_buildStringVal(PyObject *self, PyObject *args)
 {
-    cout << "Hello from buildStringVal()" << endl;
+    //cout << "Hello from buildStringVal()" << endl;
     PyObject* py_str = PyTuple_GetItem(args, 0);
     char* c_str = PyString_AsString(py_str);
     string str = string(c_str);
