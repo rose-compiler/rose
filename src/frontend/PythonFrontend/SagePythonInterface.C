@@ -67,7 +67,7 @@ void set_File_Info(SgNode* sg_node, PyObject* py_file_info) {
     std::string filename = std::string( PyString_AsString(py_filename) );
     sg_file_info->set_filenameString(filename);
 
-#if 1
+#if 0
     cout << "File_Info for " << sg_node->class_name() 
         << "\n\tlineno = " << sg_file_info->get_line() 
         << "\n\tcolno = " << sg_file_info->get_col() 
@@ -128,22 +128,10 @@ sage_buildPrintStmt(PyObject *self, PyObject *args)
     cout << "Hello from buildPrintStmt()" << endl;
     PyObject* arg1v = PyTuple_GetItem(args, 0);
     Py_ssize_t arg1c = PyList_Size(arg1v);
-#if 0
-    SgPrintStmt* sg_print_statement = buildSgPrintStmt_nfi();
-#endif
     for (int i = 0; i < arg1c; i++) {
        PyObject* capsule = PyList_GetItem(arg1v, i);
-#if 0
-       SgExpression* exp = 
-           (SgExpression*) PyCapsule_GetPointer(capsule, NULL);
-       sg_print_statement->append_expression(exp);
-#endif
     }
-#if 0
-    return PyEncapsulate(sg_print_statement);
-#else
     return Py_BuildValue("i", 0);
-#endif
 }
 
 /* 
