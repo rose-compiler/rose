@@ -27,7 +27,7 @@ T pop(std::deque<T>& data_stack)
 template <class T>
 const T& pop_front(std::deque<T>& data_stack)
 {
-	const T& val = data_stack.front();
+	T val = data_stack.front();
     data_stack.pop_front();
 	return val;
 }
@@ -42,7 +42,7 @@ T push(std::deque<boost::any>& data_stack, T val)
 template <class T>
 const T& pop(std::deque<boost::any>& data_stack)
 {
-    const T& val = boost::any_cast<T>(data_stack.back());
+    T val = boost::any_cast<T>(data_stack.back());
     data_stack.pop_back();
     return val;
 }
@@ -51,7 +51,7 @@ const T& pop(std::deque<boost::any>& data_stack)
 template <class T>
 const T& pop_front(std::deque<boost::any>& data_stack)
 {
-	const T& val = boost::any_cast<T>(data_stack.front());
+	T val = boost::any_cast<T>(data_stack.front());
 	data_stack.pop_front();
 	return val;
 }
