@@ -155,7 +155,12 @@ SgStatement*  generateErrorHandling(const char* message)
 	SgExprListExp* params = SageBuilder::buildExprListExp(SageBuilder::buildIntVal(1));
 	SgType* returnType = SageBuilder::buildVoidType();
 	SgScopeStatement* scope = SageInterface::getFirstGlobalScope(SageInterface::getProject());
-	return SageBuilder::buildFunctionCallStmt("exit", returnType, params, scope);
+	SgStatement* exitFunctionCall = SageBuilder::buildFunctionCallStmt("exit", returnType, params, scope);
+	
+	//Attach the message as a comment
+	SageInterface::attachComment(exitFunctionCall, message);
+	
+	return exitFunctionCall;
 }
 
 void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarName& varName, SgBasicBlock* forwardBody, 
@@ -291,7 +296,11 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 				SageInterface::replaceStatement(forwardIfStatements.back()->get_false_body(), generateErrorHandling(errorMsg));
 				SageInterface::prependStatement(forwardIfStatements.front(), forwardBody);
 			}
-
+			else
+			{
+				const char* errorMsg = "Found no subclasses that were copy constructible!";
+				SageInterface::prependStatement(generateErrorHandling(errorMsg), forwardBody);
+			}
 			//Now, we have to build the reverse part, where we pop and assign. This is pretty standard
 			SgExpression* varRef = VariableRenaming::buildVariableReference(varName);
 			SgExpression* reverseAssign = SageBuilder::buildAssignOp(varRef, popVal(varType));
@@ -414,7 +423,7 @@ StatementReversal StateSavingStatementHandler::generateReverseAST(SgStatement* s
     SgBasicBlock* reverseBody = buildBasicBlock();
     SgBasicBlock* commitBody = SageBuilder::buildBasicBlock();
     
-    ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
+    static ClassHierarchyWrapper classHierarchy(SageInterface::getProject());
 
 	// If the following child result is empty, we don't have to reverse the target statement.
 	vector<EvaluationResult> child_result = eval_result.getChildResults();
