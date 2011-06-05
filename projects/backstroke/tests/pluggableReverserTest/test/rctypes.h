@@ -9,10 +9,10 @@
 #define __BACKSTROKE
 
 template <class T>
-T push(std::deque<T>& data_stack, T val)
+void push(std::deque<T>& data_stack, T val)
 {
     data_stack.push_back(val);
-    return val;
+    //return val;
 }
 
 template <class T>
@@ -25,7 +25,7 @@ T pop(std::deque<T>& data_stack)
 
 //!Pop from the front of a stack. Used in fossil collection
 template <class T>
-const T& pop_front(std::deque<T>& data_stack)
+T pop_front(std::deque<T>& data_stack)
 {
 	T val = data_stack.front();
     data_stack.pop_front();
@@ -33,14 +33,14 @@ const T& pop_front(std::deque<T>& data_stack)
 }
 
 template <class T>
-T push(std::deque<boost::any>& data_stack, T val)
+void push(std::deque<boost::any>& data_stack, T val)
 {
     data_stack.push_back(boost::any(val));
-    return val;
+    //return val;
 }
 
 template <class T>
-const T& pop(std::deque<boost::any>& data_stack)
+T pop(std::deque<boost::any>& data_stack)
 {
     T val = boost::any_cast<T>(data_stack.back());
     data_stack.pop_back();
@@ -49,7 +49,7 @@ const T& pop(std::deque<boost::any>& data_stack)
 
 //!Pop from the front of a stack. Used in fossil collection
 template <class T>
-const T& pop_front(std::deque<boost::any>& data_stack)
+T pop_front(std::deque<boost::any>& data_stack)
 {
 	T val = boost::any_cast<T>(data_stack.front());
 	data_stack.pop_front();
