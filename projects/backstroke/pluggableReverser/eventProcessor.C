@@ -286,7 +286,7 @@ std::vector<SgVariableDeclaration*> EventProcessor::getStackDeclarationsForLastE
 SgExpression* EventProcessor::pushVal(SgExpression* exp, SgType* returnType)
 {
 	SgExprListExp* parameters = SageBuilder::buildExprListExp(getStackVar(returnType), exp);
-	return buildFunctionCallExp("push", returnType, parameters);
+	return buildFunctionCallExp("push< " + get_type_name(returnType) + " >", returnType, parameters);
 }
 
 SgExpression* EventProcessor::popVal(SgType* type)
