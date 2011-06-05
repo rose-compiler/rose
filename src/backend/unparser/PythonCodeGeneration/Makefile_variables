@@ -1,18 +1,18 @@
 
 unparsePythonCodeGeneration_la_sources=\
-	$(PythonCodeGenerationPath)/unparsePython.C
+	$(pythonCodeGenerationPath)/unparsePython.C
 
 
 unparsePythonCodeGeneration_includeHeaders=\
-	$(PythonCodeGenerationPath)/unparsePython.h
+	$(pythonCodeGenerationPath)/unparsePython.h
 
 
 unparsePythonCodeGeneration_extraDist=\
-	$(PythonCodeGenerationPath)/CMakeLists.txt
+	$(pythonCodeGenerationPath)/CMakeLists.txt
 
 
 unparsePythonCodeGeneration_cleanLocal=\
 	rm -rf \
-		$(PythonCodeGenerationPath)/ii_files \
-		$(PythonCodeGenerationPath)/ti_files \
-		$(PythonCodeGenerationPath)/core
+		$(pythonCodeGenerationPath)/ii_files \
+		$(pythonCodeGenerationPath)/ti_files \
+		$(pythonCodeGenerationPath)/core

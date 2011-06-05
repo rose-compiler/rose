@@ -62,7 +62,6 @@ class SageTranslator(ast.NodeVisitor):
     capsule = sage.buildFunctionDef(self.file_info(node), scope)
     self.scopeStack.push(capsule)
     body_forest = map(self.visit, node.body)
-    print body_forest
     sage.addChildrenToNode(capsule, body_forest)
     self.scopeStack.pop(capsule)
     return capsule

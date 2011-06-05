@@ -105,7 +105,6 @@ sage_addChildrenToNode(PyObject *self, PyObject *args)
                  break;
              }
         case V_SgFunctionDeclaration: {
-                 cerr << "sg fun decl" << endl;
                  SgFunctionDeclaration* sg_fun_decl = 
                      isSgFunctionDeclaration(sg_node);
                  SgBasicBlock* sg_basic_block = 
