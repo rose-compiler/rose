@@ -60,7 +60,7 @@ runPythonFrontend(SgFile* file)
                 sg_global->set_parent(sg_source_file);
 
                 Py_DECREF(pValue);
-#if 0
+#if 1
                 // code to attach the file to the SgProject tree
                 SgProject* proj = SageInterface::getProject();
                 SgFileList* file_list = proj->get_fileList_ptr();
@@ -69,7 +69,7 @@ runPythonFrontend(SgFile* file)
 
                 // show the dot graph
                 AstDOTGeneration dotgen;
-                dotgen.generate(SageInterface::getProject(), "my.dot");
+                dotgen.generate(SageInterface::getProject(), "my");
 #endif
             }
             else {

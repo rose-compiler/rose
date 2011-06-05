@@ -87,16 +87,44 @@ PyObject*
 sage_addChildrenToNode(PyObject *self, PyObject *args)
 {
     PyObject* sg_node_capsule = PyTuple_GetItem(args, 0);
-    SgGlobal* sg_global = PyDecapsulate<SgGlobal>(sg_node_capsule);
-    ROSE_ASSERT(sg_global);
+    SgNode* sg_node = PyDecapsulate<SgNode>(sg_node_capsule);
+    ROSE_ASSERT(sg_node);
 
     PyObject* argv = PyTuple_GetItem(args, 1);
     Py_ssize_t argc = PyList_Size(argv);
-    for (int i = 0; i < argc; i++) {
-       PyObject* capsule = PyList_GetItem(argv, i);
-       SgDeclarationStatement* sg_child = 
-           PyDecapsulate<SgDeclarationStatement>(capsule);
-       sg_global->append_declaration(sg_child);
+
+    switch (sg_node->variantT()) {
+        case V_SgGlobal: {
+                 SgGlobal* sg_global = isSgGlobal(sg_node);
+                 for (int i = 0; i < argc; i++) {
+                     PyObject* capsule = PyList_GetItem(argv, i);
+                     SgDeclarationStatement* sg_child = 
+                         PyDecapsulate<SgDeclarationStatement>(capsule);
+                     sg_global->append_declaration(sg_child);
+                 }
+                 break;
+             }
+        case V_SgFunctionDeclaration: {
+                 cerr << "sg fun decl" << endl;
+                 SgFunctionDeclaration* sg_fun_decl = 
+                     isSgFunctionDeclaration(sg_node);
+                 SgBasicBlock* sg_basic_block = 
+                     sg_fun_decl->get_definition()->get_body();
+                 ROSE_ASSERT(sg_basic_block);
+                 for (int i = 0; i < argc; i++) {
+                     PyObject* capsule = PyList_GetItem(argv, i);
+                     SgStatement* sg_child = 
+                         PyDecapsulate<SgStatement>(capsule);
+                     sg_basic_block->get_statements().push_back(sg_child);
+                 }
+                 break;
+             }
+        default: {
+                 cerr << "Unhandled node type in sage_addChildrenToNode " 
+                     << sg_node->class_name() << endl;
+                 ROSE_ASSERT(!"unhandled node type");
+                 break;
+             }
     }
     return Py_None;
 }
