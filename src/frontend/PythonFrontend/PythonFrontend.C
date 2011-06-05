@@ -58,19 +58,7 @@ runPythonFrontend(SgFile* file)
                 SgSourceFile* sg_source_file = isSgSourceFile(file);
                 sg_source_file->set_globalScope(sg_global);
                 sg_global->set_parent(sg_source_file);
-
                 Py_DECREF(pValue);
-#if 1
-                // code to attach the file to the SgProject tree
-                SgProject* proj = SageInterface::getProject();
-                SgFileList* file_list = proj->get_fileList_ptr();
-                SgFilePtrList& file_ptr_list = file_list->get_listOfFiles();
-                file_ptr_list.push_back(file);
-
-                // show the dot graph
-                AstDOTGeneration dotgen;
-                dotgen.generate(SageInterface::getProject(), "my");
-#endif
             }
             else {
                 Py_DECREF(pFunc);
@@ -99,7 +87,7 @@ runPythonFrontend(SgFile* file)
 
 int python_main(std::string filename, SgFile* file)
 {
-    std::cout << "python_main was called. Launching interpreter." << std::endl;
+    std::cout << "Launching interpreter." << std::endl;
 
     Py_Initialize();
     runPythonFrontend(file);
