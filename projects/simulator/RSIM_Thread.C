@@ -675,6 +675,7 @@ RSIM_Thread::main()
             report_stack_frames(tracing(TRACE_MISC));
             abort();
 #else
+            report_stack_frames(tracing(TRACE_MISC));
             tracing(TRACE_MISC)->mesg("exception ignored; continuing with a corrupt state...\n");
 #endif
         } catch (const RSIM_SEMANTIC_POLICY::Exception &e) {
