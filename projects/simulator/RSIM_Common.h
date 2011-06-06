@@ -15,6 +15,7 @@
 
 #include <sys/ioctl.h>
 #include <sys/ipc.h>
+#include <sys/mman.h>
 #include <sys/msg.h>
 #include <sys/resource.h>
 #include <sys/sem.h>
@@ -1248,6 +1249,20 @@ struct new_utsname_32 {
     char machine[65];
     char domainname[65];
 } __attribute__((packed));
+
+/* Third arg of madvise syscall */
+static const Translate madvise_behaviors[] = {
+    TE(MADV_NORMAL), TE(MADV_RANDOM), TE(MADV_SEQUENTIAL), TE(MADV_WILLNEED), TE(MADV_DONTNEED),
+    TE(MADV_REMOVE), TE(MADV_DONTFORK), TE(MADV_DOFORK), TE(MADV_HWPOISON),
+#ifdef MADV_SOFT_OFFLINE
+    TE(MADV_SOFT_OFFLINE),
+#endif
+    TE(MADV_MERGEABLE), TE(MADV_UNMERGEABLE),
+#ifdef MADV_HUGEPAGE
+    TE(MADV_HUGEPAGE), TE(MADV_NOHUGEPAGE),
+#endif
+    T_END
+};
 
 /* Conversion functions */
 void convert(statfs_32 *g, const statfs64_native *h);
