@@ -491,6 +491,10 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("SgScopeStatement*","current_scope","= NULL",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // driscoll6 (6/6/2011): Added nesting level information for Python unparsing.
+     Unparse_Info.setDataPrototype("int","nestingLevel","= 0",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
 
   // DQ (4/29/2004): Removed in place of new modifier interface
