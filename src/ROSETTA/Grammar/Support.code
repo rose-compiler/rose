@@ -12869,6 +12869,9 @@ SgUnparse_Info::SgUnparse_Info (  )
 
   // Test the isSgUnparse_Info() function since it has been problematic
      assert(isSgUnparse_Info(this) != NULL);
+
+  // Initialize the nesting level to 0 (for python).
+       p_nestingLevel = 0;
    }
 
 // DQ (1/5/2008): I think this is a redundant function with the one in sageInterface.C
@@ -12891,6 +12894,9 @@ SgUnparse_Info::SgUnparse_Info ( const SgUnparse_Info & X )
 
      assert (p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
   // assert (SgNO_UNPARSE_INFO.p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
+
+     // Copy nesting level (for python).
+     p_nestingLevel = X.p_nestingLevel;
    }
 
 SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )

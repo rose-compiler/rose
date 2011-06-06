@@ -15,7 +15,6 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
      public:
           Unparse_Python(Unparser* unp, std::string fname);
           virtual ~Unparse_Python();
-          virtual void unparseStatement(SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseLanguageSpecificStatement(SgStatement*, SgUnparse_Info&);
           virtual void unparseLanguageSpecificExpression(SgExpression*, SgUnparse_Info&);
           virtual void unparseStringVal(SgExpression*, SgUnparse_Info&);

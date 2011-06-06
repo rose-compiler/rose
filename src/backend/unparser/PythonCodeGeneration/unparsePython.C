@@ -18,12 +18,6 @@ Unparse_Python::~Unparse_Python()
 }
 
 void
-Unparse_Python::unparseStatement(SgStatement* stmt, SgUnparse_Info& info)
-{
-    UnparseLanguageIndependentConstructs::unparseStatement(stmt, info);
-}
-
-void
 Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
                                                  SgUnparse_Info& info)
 {
@@ -40,6 +34,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         default: {
             cerr << "unparse(" << stmt->class_name()
                  << "*) is unimplemented." << endl;
+            break;
         }
     }
 }
@@ -67,7 +62,9 @@ Unparse_Python::ws_prefix(int nesting_level) {
 /* ================== Node-specific unparsing functions ===================== */
 
 void
-Unparse_Python::unparseAddOp(SgAddOp* sg_add_op, SgUnparse_Info& info) {
+Unparse_Python::unparseAddOp(SgAddOp* sg_add_op,
+                             SgUnparse_Info& info)
+{
     unparseExpression(sg_add_op->get_lhs_operand(), info);
     curprint(" + ");
     unparseExpression(sg_add_op->get_rhs_operand(), info);
@@ -75,8 +72,10 @@ Unparse_Python::unparseAddOp(SgAddOp* sg_add_op, SgUnparse_Info& info) {
 
 void
 Unparse_Python::unparseBasicBlock(SgBasicBlock* bblock,
-                                  SgUnparse_Info& info) {
+                                  SgUnparse_Info& info)
+{
     foreach (SgStatement* child, bblock->get_statements()) {
+        cout << "nesting level is " << info.get_nestingLevel() << endl;
         curprint( ws_prefix(1) );
         unparseStatement(child, info);
         stringstream code;
@@ -87,7 +86,8 @@ Unparse_Python::unparseBasicBlock(SgBasicBlock* bblock,
 
 void
 Unparse_Python::unparseFunctionDeclaration(SgFunctionDeclaration* func_decl,
-                                           SgUnparse_Info& info) {
+                                           SgUnparse_Info& info)
+{
     stringstream code;
     string func_name = func_decl->get_name().getString();
     code << "def " << func_name << "():" << endl; //TODO: param list
@@ -98,7 +98,8 @@ Unparse_Python::unparseFunctionDeclaration(SgFunctionDeclaration* func_decl,
 
 void
 Unparse_Python::unparseFunctionDefinition(SgFunctionDefinition* func_decl,
-                                           SgUnparse_Info& info) {
+                                          SgUnparse_Info& info)
+{
     unparseStatement(func_decl->get_body(), info);
 }
 
