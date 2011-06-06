@@ -162,13 +162,19 @@ sage_buildExpr(PyObject *self, PyObject *args)
 PyObject*
 sage_buildFunctionDef(PyObject *self, PyObject *args)
 {
-    PyObject* scope_capsule = PyTuple_GetItem(args, 1);
+    PyObject* func_def_capsule = PyTuple_GetItem(args, 0);
+    PyObject* file_info_capsule = PyTuple_GetItem(args, 1);
+    PyObject* scope_capsule = PyTuple_GetItem(args, 2);
+
     SgScopeStatement* sg_scope_statement = 
         PyDecapsulate<SgScopeStatement>(scope_capsule);
 
+    PyObject* py_name = PyObject_GetAttrString(func_def_capsule, "name");
+    string func_name = string( PyString_AsString(py_name) );
+
     // TODO: Figure out types, parse parameter list
     SgFunctionDeclaration* sg_func_decl = 
-        SageBuilder::buildDefiningFunctionDeclaration("newfunc",
+        SageBuilder::buildDefiningFunctionDeclaration(func_name,
                 SageBuilder::buildUnknownType(), 
                 SageBuilder::buildFunctionParameterList(),
                 sg_scope_statement);
