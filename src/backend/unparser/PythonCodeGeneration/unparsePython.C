@@ -36,6 +36,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(FunctionDeclaration);
         CASE_DISPATCH_AND_BREAK(FunctionDefinition);
         CASE_DISPATCH_AND_BREAK(StringVal);
+        CASE_DISPATCH_AND_BREAK(AddOp);
         default: {
             cerr << "unparse(" << stmt->class_name()
                  << "*) is unimplemented." << endl;
@@ -64,6 +65,13 @@ Unparse_Python::ws_prefix(int nesting_level) {
 }
 
 /* ================== Node-specific unparsing functions ===================== */
+
+void
+Unparse_Python::unparseAddOp(SgAddOp* sg_add_op, SgUnparse_Info& info) {
+    unparseExpression(sg_add_op->get_lhs_operand(), info);
+    curprint(" + ");
+    unparseExpression(sg_add_op->get_rhs_operand(), info);
+}
 
 void
 Unparse_Python::unparseBasicBlock(SgBasicBlock* bblock,

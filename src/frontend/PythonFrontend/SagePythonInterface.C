@@ -210,10 +210,14 @@ sage_buildGlobal(PyObject *self, PyObject *args)
 PyObject*
 sage_buildLongIntVal(PyObject *self, PyObject *args)
 {
-    PyObject* val_obj = PyTuple_GetItem(args, 0);
-    long value = PyInt_AsLong(val_obj);
+    PyObject* py_value = PyTuple_GetItem(args, 0);
+    PyObject* file_info_capsule = PyTuple_GetItem(args, 1);
+
+    long value = PyInt_AsLong(py_value);
     SgLongIntVal* sg_long_int_val = 
-        SageBuilder::buildLongIntVal_nfi(value, "TODO");
+        SageBuilder::buildLongIntVal(value);
+
+    set_File_Info(sg_long_int_val, file_info_capsule);
     return PyEncapsulate(sg_long_int_val);
 }
 
