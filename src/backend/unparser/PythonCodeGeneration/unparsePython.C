@@ -75,11 +75,12 @@ Unparse_Python::unparseBasicBlock(SgBasicBlock* bblock,
                                   SgUnparse_Info& info)
 {
     foreach (SgStatement* child, bblock->get_statements()) {
-        cout << "nesting level is " << info.get_nestingLevel() << endl;
-        curprint( ws_prefix(1) );
+        curprint( ws_prefix(info.get_nestingLevel()) );
         unparseStatement(child, info);
+
+        //TODO easier way to print newline
         stringstream code;
-        code << endl; //TODO easier way to print newline
+        code << endl; 
         curprint( code.str() );
     }
 }
@@ -93,7 +94,9 @@ Unparse_Python::unparseFunctionDeclaration(SgFunctionDeclaration* func_decl,
     code << "def " << func_name << "():" << endl; //TODO: param list
     curprint (code.str());
 
+    info.set_nestingLevel( info.get_nestingLevel()+1 );
     unparseStatement(func_decl->get_definition(), info);
+    info.set_nestingLevel( info.get_nestingLevel()-1 );
 }
 
 void
