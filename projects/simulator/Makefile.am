@@ -19,15 +19,23 @@ TEST_TARGETS =
 EXTRA_DIST += README test_status.txt syscall_tests.conf pthread_tests.conf RSIM.dxy
 
 ###############################################################################################################################
-#  PROGRAMS
+#  SIMULATOR LIBRARY
 ###############################################################################################################################
 
-# The new simulator, which uses ROSE interfaces where possible.  The rest of this makefile deals only with this new simulator.
-# Do not install RSIM_Private.h -- it is only used during compilation.
-EXTRA_DIST += RSIM_Private.h
-noinst_PROGRAMS += x86sim
+noinst_LTLIBRARIES = libRSIM.la
+libRSIM_la_CPPFLAGS = $(ROSE_INCLUDES)
+libRSIM_la_SOURCES =				\
+	x86print.C				\
+	RSIM_Adapter.C				\
+	RSIM_Callbacks.C			\
+	RSIM_Common.C				\
+	RSIM_Linux32.C				\
+	RSIM_Process.C				\
+	RSIM_SemanticPolicy.C			\
+	RSIM_SignalHandling.C			\
+	RSIM_Simulator.C			\
+	RSIM_Thread.C
 include_HEADERS +=				\
-	x86sim.h				\
 	x86print.h				\
 	RSIM_Adapter.h				\
 	RSIM_Callbacks.h			\
@@ -39,20 +47,28 @@ include_HEADERS +=				\
 	RSIM_Simulator.h			\
 	RSIM_Templates.h			\
 	RSIM_Thread.h
-x86sim_SOURCES =				\
-	x86sim.C				\
-	x86print.C				\
-	RSIM_Adapter.C				\
-	RSIM_Callbacks.C			\
-	RSIM_Common.C				\
-	RSIM_Linux32.C				\
-	RSIM_Process.C				\
-	RSIM_SemanticPolicy.C			\
-	RSIM_SignalHandling.C			\
-	RSIM_Simulator.C			\
-	RSIM_Thread.C
+
+###############################################################################################################################
+#  PROGRAMS
+###############################################################################################################################
+
+# The new simulator, which uses ROSE interfaces where possible.  The rest of this makefile deals only with this new simulator.
+# Do not install RSIM_Private.h -- it is only used during compilation.
+EXTRA_DIST += RSIM_Private.h
+noinst_PROGRAMS += x86sim
+include_HEADERS += x86sim.h
+x86sim_SOURCES = x86sim.C
 x86sim_CPPFLAGS = $(ROSE_INCLUDES) -DX86_VDSO_PATH_1='"$(srcdir)"' -DX86_VDSO_PATH_2='"$(include_dir)"'
-x86sim_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
+x86sim_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
+
+###############################################################################################################################
+#  DEMOS
+###############################################################################################################################
+
+noinst_PROGRAMS += demo1
+demo1_SOURCES = demo1.C
+demo1_CPPFLAGS = $(ROSE_INCLUDES)
+demo1_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 ###############################################################################################################################
 #  SYSTEM CALL TESTS
