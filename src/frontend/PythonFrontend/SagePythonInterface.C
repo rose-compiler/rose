@@ -51,6 +51,7 @@ void set_File_Info(SgNode* sg_node, PyObject* py_file_info) {
 
     /* General settings */
     sg_file_info->unsetTransformation();
+    sg_file_info->setOutputInCodeGeneration();
 
     /* Set the line number */
     PyObject* py_lineno = PyObject_GetAttrString(py_file_info, "lineno");
@@ -184,10 +185,15 @@ sage_buildGlobal(PyObject *self, PyObject *args)
 {
     PyObject* arg0 = PyTuple_GetItem(args, 0);
     std::string filename = std::string( PyString_AsString(arg0) );
+
     Sg_File_Info* sg_file_info = new Sg_File_Info(filename, 0, 0);
+    sg_file_info->unsetTransformation();
+    sg_file_info->setOutputInCodeGeneration();
+
     SgGlobal* sg_global = new SgGlobal(sg_file_info);
     sg_global->set_startOfConstruct(sg_file_info);
     sg_global->set_endOfConstruct(new Sg_File_Info(filename, 0, 0));
+
     return PyEncapsulate(sg_global);
 }
 

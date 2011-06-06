@@ -22,6 +22,14 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
 
        // DQ (9/6/2010): Mark the derived class to support debugging.
           virtual std::string languageName() const { return "Python Unparser"; }
+
+     protected:
+          virtual void unparseBasicBlock(SgBasicBlock*, SgUnparse_Info&);
+          virtual void unparseFunctionDeclaration(SgFunctionDeclaration*, SgUnparse_Info&);
+          virtual void unparseFunctionDefinition(SgFunctionDefinition*, SgUnparse_Info&);
+          virtual void unparseStringVal(SgStringVal*, SgUnparse_Info&);
+
+          virtual std::string ws_prefix(int nesting_level);
    };
 
 #endif /* UNPARSER_PYTHON_H_ */
