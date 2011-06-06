@@ -3957,11 +3957,33 @@ HEADER_BINARY_RET_END
 HEADER_BINARY_FUNCTION_CALL_START
 HEADER_BINARY_FUNCTION_CALL_END
 
+HEADER_BINARY_TARGET_START
+	SgAsmTarget(SgNode *parent, SgAsmBlock *target_block, rose_addr_t target_addr);
+	explicit SgAsmTarget(SgNode *parent);
+HEADER_BINARY_TARGET_END
+
+SOURCE_BINARY_TARGET_START
+	SgAsmTarget::SgAsmTarget(SgNode *parent, SgAsmBlock *target_block, rose_addr_t target_addr) {
+		set_parent(parent);
+		set_block(target_block);
+		set_address(target_addr);
+	}
+	SgAsmTarget::SgAsmTarget(SgNode *parent) {
+		set_parent(parent);
+		set_block(NULL);
+		set_address(0);
+	}
+SOURCE_BINARY_TARGET_END
+
+HEADER_BINARY_TARGET_LIST_START
+HEADER_BINARY_TARGET_LIST_END
+
 HEADER_BINARY_BLOCK_START
         void append_statement( SgAsmStatement* statement );
         void remove_statement( SgAsmStatement* statement );
         void remove_children (  );
         rose_addr_t get_fallthrough_va(); /*implemented in Disassembler.C*/
+	SgAsmFunctionDeclaration *get_enclosing_function() const;
 HEADER_BINARY_BLOCK_END
 
 
@@ -3979,6 +4001,7 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 	void remove_statement(SgAsmStatement* statement);
 	void append_dest(SgAsmStatement* instruction);
 	void remove_children();
+	SgAsmBlock *get_entry_block() const;
 
    std::string get_functionReasonString();
 
@@ -4525,6 +4548,10 @@ SgAsmBlock::remove_statement( SgAsmStatement* statement )
             p_statementList.erase(l);
    }
 
+SgAsmFunctionDeclaration *
+SgAsmBlock::get_enclosing_function() const {
+	return SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(this);
+}
 SOURCE_BINARY_BLOCK_END
 
 
@@ -4639,6 +4666,13 @@ SgAsmFunctionDeclaration::append_block( SgAsmBlock* operand )
      p_body.push_back(operand);
    }
 */
+
+SgAsmBlock *
+SgAsmFunctionDeclaration::get_entry_block() const {
+	SgAsmStatementPtrList::const_iterator si = p_statementList.begin();
+	return si==p_statementList.end() ? NULL : isSgAsmBlock(*si);
+}
+
 
 // DQ (4/29/2010): Added function to return string for function reason field (for debugging).
 string

@@ -1,17 +1,37 @@
-\chapter{Heterogeneous computing}
+\chapter{CUDA and OpenCL}
 
 \label{heterogeneous:heterogeneous}
 
-{\em {\bf Current Status}: ROSE presently supports the generation of both CUDA and OpenCl.  We
-    are actively working on being able to read CUDA and OpenCL but this aspect is not in
-    place yet.  Thus ROSE translators may be built that read C/C++/Fortran and generate
-    CUDA or OpenCL (several have been built by external research groups).}
+{\em {\bf Current Status (May 2011) }: ROSE presently supports the generation of both CUDA and OpenCl.
+    Thus ROSE translators may be built that read C/C++/Fortran and generate
+    CUDA or OpenCL (several have been built by external research groups).
+    We are now able to read CUDA and still working on OpenCL (which is not distribute yet).}
 \vspace{0.25in}
 
-This chapter details how heterogeneous computing is supported by ROSE. First devices support that we appended to ROSE were GPU \footnote{Graphic Processing Unit}
-with C for CUDA \footnote{Compute Unified Device Architecture, NVidia architecture model for their devices} and OpenCL \footnote{Open Compute Language,
+This chapter details the support of C for CUDA \footnote{Compute Unified Device Architecture, NVidia architecture model for their devices} and OpenCL \footnote{Open Compute Language,
 an open standard to program heterogeneous system, managed by the Khronos Group}.
 
+	\section{How to use CUDA and OpenCL in ROSE}
+	
+	Both CUDA and OpenCL are enable in ROSE from two configuration options.
+\begin{itemize}
+	\item \emph{--enable-(cuda/opencl)}: to enable the internal support of these languages.
+	\item \emph{--enable-edg-(cuda/opencl)}: to enable the frontend support (parsing)
+\end{itemize}
+	As the support of CUDA/OpenCL parsing have been developt in EDG 4.0, you also need to use the option \emph{--enable-edg-version=4.0}.\\
+	\\
+	If you use the binary version of EDG (most common case for external users), you do not need the option \emph{--enable-edg-(cuda/opencl)} as to avoid 
+	multiple versions of the binaries we directly distribute EDG 4.0 with CUDA/OpenCL support (the option may still be needed to build some sub-project using CUDA/OpenCL support).\\
+	\\
+	To build and test the CUDA/OpenCL support with your version of ROSE: \\
+	\$ ROSE\_SRC\_TREE/configure --enable-edg-version=4.0 --enable-cuda --enable-edg-cuda --enable-opencl --enable-edg-opencl [...] \\
+	\$ make \\
+	\$ make -Ctests/CompileTests/NewEDGInterface\_C\_tests check \# tests EDG 4.0 \\
+	\$ make -Ctests/CompileTests/CudaTests check \# tests CUDA support \\
+	\$ make -Ctests/CompileTests/OpenCLTests check \# tests OpenCL support \\
+	\\
+	You can look on the test directories to see the current state of CUDA/OpenCL support.
+	
 	\section{IR adaptations}
 	
 		Both CUDA and OpenCL use extensions of C ANSI 99, these extensions need to be catch by SageIII. We will describe theses adaptations below.

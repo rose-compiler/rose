@@ -2,6 +2,11 @@
 include ../../makefile.inc
 
 include ../../src/test-rose-pragma/make_rule.inc
+include ../../src/rose-pragma/make_rule.inc
+include ../../src/rose/make_rule.inc
+include ../../src/common/make_rule.inc
+include ../../src/maths/make_rule.inc
+include ../../src/system/make_rule.inc
 
 TEST_CODES = \
 matcolsum.c \
@@ -22,8 +27,12 @@ endif
 
 
 check-local:
+if ROSE_USE_PPL
 	@$(MAKE) $(TEST_CODES)
+endif
 
 clean-local:
 	rm -rf $(TEST_CODES:.c=)
 	rm -f rose_*.c *.scop *.deps
+	
+#EXTRA_DIST= $(TEST_CODES)

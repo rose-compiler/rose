@@ -1,0 +1,234 @@
+\chapter{Introduction}\label{ch:intro}
+
+Here we present a bit of POP history so you may
+marvel at the once-revolutionary advances and rest
+secure in the knowledge that we are working diligently
+(and sometimes even successfully) to continue such advances
+in the future.  If you are bored with such historical
+ramblings or simply wish to rush into actually running
+ocean simulations, feel free to skip over this section
+and perhaps read it later over a nice cappuccino, or
+a glass of port beside the fire, or maybe a beer at
+your favorite brew pub.
+
+\section{Brief history of POP development}\label{sec:POPhistory}
+
+The Parallel Ocean Program (POP) was developed at LANL under
+the sponsorship of the Department of Energy's CHAMMP program, which
+brought massively parallel computers to the realm of climate modeling.
+POP is a descendent of the Bryan-Cox-Semtner class of ocean
+models first developed by Kirk Bryan and Michael Cox \cite{Bryan69} at
+the NOAA Geophysical Fluid Dynamics Laboratory in Princeton, NJ in
+the late 1960’s. POP had its origins in a version of the model
+developed by  Semtner and Chervin \cite{Semtner86}
+\cite{ChervinSemtner88}.  The complete
+``family tree'' of the BCS models is displayed in
+\hyperref{the figure below}
+         {Figure }{}
+         {fig:POPtree}
+(courtesy of Bert Semtner, Naval Postgraduate School).
+
+\begin{figure}\label{fig:POPtree}
+\caption{Bryan-Cox-Semtner model family tree}
+\begin{htmlonly}
+\htmladdimg{SRC="POPfamily.gif" ALT="POPFamilyTree"}
+\end{htmlonly}
+\begin{latexonly}
+Figure currently exists in on-line version only.
+\end{latexonly}
+\end{figure}
+
+Under the CHAMMP program, the Semtner-Chervin version was
+rewritten in CM Fortran for the Connection Machine
+CM-2 and CM-5 massively parallel computers. Experience
+with the resulting model led to a number of changes
+resulting in what is now known as the Parallel Ocean
+Program (POP).  Although originally motivated by the adaptation
+of POP for massively parallel computers, many of these changes
+improved not only its computational performance but the fidelity
+of the model’s physical representation of the real ocean. The
+most significant of these improvements are summarized below.
+Details can be found in articles by Smith, \cite{SmithEtal92},
+Dukowicz et al., \cite{DukEtal93}, and
+Dukowicz and Smith \cite{DukSmith94}.  The model has
+continued to develop to adapt to new machines, incorporate
+new numerical algorithms and introduce new physical
+parameterizations.
+
+\section{Improvements introduced in POP}\label{sec:POPimprove}
+
+\subsection{Surface-pressure formulation of barotropic mode}
+\label{sec:improve-psfc}
+
+The barotropic streamfunction formulation in the standard
+BCS models required an additional equation to be solved for each
+continent and island that penetrated the ocean surface. This was
+costly even on machines like Cray parallel-vector-processor computers,
+which had fast memory access. To reduce the number of equations to
+solve with the barotropic streamfunction formulation, it was common
+practice to submerge islands, connect them to nearby continents with
+artificial land bridges, or merge an island chain into a single mass
+without gaps. The first modification created artificial gaps,
+permitting increased flow, while the latter two closed channels that
+should exist.
+
+On distributed-memory parallel computers, these added equations
+were even more costly because each required gathering data from an
+arbitrarily large set of processors to perform a line-integral around
+each landmass. This computational dilemma was addressed by developing
+a new formulation of the barotropic mode based on surface pressure.
+The boundary condition for the surface pressure at a land-ocean
+interface point is local, which eliminates the non-local line-integral.
+
+Consequently, the surface-pressure formulation permits any
+number of islands to be included at no additional computational cost,
+so all channels can be treated as precisely as the resolution of the
+grid permits.
+
+Another problem with the barotropic streamfunction formulation is that
+the elliptic problem to be solved is ill-conditioned if bottom
+topography has large spatial gradients.  The bottom topography must be
+smoothed to maintain numerical stability.  Although this reduces the
+fidelity of the simulation, it does have the “desirable” side effect
+(given the other limitations of the streamfunction approach mentioned
+above) of submerging many islands, thereby reducing the number of
+equations to be solved. In contrast, the surface-pressure formulation
+allows more realistic, unsmoothed bottom topography to be used with
+no reduction in time step.
+
+\subsection{Free-surface boundary condition}\label{sec:improve-freesfc}
+
+The original ``rigid-lid'' boundary condition was replaced by an
+implicit free-surface boundary condition that allows the air-sea
+interface to evolve freely and makes sea-surface height a prognostic
+variable.
+
+\subsection{Latitudinal scaling of horizontal diffusion}
+\label{sec:improve-latscale}
+
+Scaling of the horizontal diffusion coefficient by $\cos^n(\theta)$
+was introduced, where $\theta$ is latitude, $n=1$ for Laplacian mixing
+and $n=3$ for bi-harmonic mixing. This {\em optional} scaling
+prevents horizontal diffusion from limiting the time step severely at
+high latitudes, yet keeps diffusion large enough to maintain numerical
+stability.
+
+\subsection{Pressure-averaging}\label{sec:improve-pressavg}
+
+After the temperature and salinity have been updated to
+time-step $n+1$ in the baroclinic routines, the density $\rho^{n+1}$
+and pressure $p^{n+1}$ can be computed. By computing the pressure
+gradient with a linear combination of $p$ at three time-levels
+($n-1$, $n$, and $n+1$), a technique well known in atmospheric
+modeling \cite{BrownCampana78}, it is possible to increase the
+time-step by as much as a factor of two.
+
+\subsection{Designed for parallel computers}\label{sec:improve-parallel}
+
+The code is written in Fortran90 and can be run on a variety
+of parallel and serial computer architectures. Originally,
+the code was written using a data-parallel approach for the
+Thinking Machines Connection Machine.  Later versions used
+a more traditional domain decomposition style using MPI
+or SHMEM for inter-processor communications.  The most
+recent version of the code supports current clusters
+of shared-memory multi-processor nodes through the use of
+thread-based parallism (OpenMP) between processors on a
+node and message-passing (MPI or SHMEM) for communication
+between nodes.  The flexibility of mixing thread-based
+and message-passing programming models gives the user the
+option of choosing the best combination of styles to suit
+a given machine.
+
+\subsection{General orthogonal coordinates in horizontal}
+\label{sec:improve-grid}
+
+The primitive equations were reformulated and discretized
+to allow the use of any locally orthogonal horizontal grid. This
+provides alternatives to the standard latitude-longitude grid with
+its singularity at the North Pole.
+
+This generalization made possible the development of the
+\hyperref{displaced-pole grid}
+         {displaced-pole grid (Fig.}{)}
+         {fig:dpgrid},
+which moves
+the singularity arising from convergence of meridians at
+the North Pole into an adjacent landmass such as North America,
+Russia or Greenland. Such a displaced pole leaves a smooth,
+singularity-free grid in the Arctic Ocean. That grid joins
+smoothly at the equator with a standard Mercator grid in the
+Southern Hemisphere.  The most recent versions of the code
+also support a
+\hyperref{tripole grid}
+         {tripole grid (Fig.}{)}
+         {fig:tripole}
+in which two poles can be placed opposite each other in land
+masses near the North Pole to give more uniform grid spacing
+in the Arctic Ocean while maintaining all the advantages
+of the displaced pole grids.
+
+\begin{figure}\label{fig:dpgrid}
+\caption{Displaced-pole grid}
+\begin{htmlonly}
+\htmladdimg{SRC="POPdpgrid.jpg" ALT="POPDipoleGrid"}
+\end{htmlonly}
+\begin{latexonly}
+Figure currently exists in on-line version only.
+\end{latexonly}
+\end{figure}
+
+\begin{figure}\label{fig:tripole}
+\caption{Tripole grid}
+\begin{htmlonly}
+\htmladdimg{SRC="POPtripole.jpg" ALT="POPTripoleGrid"}
+\end{htmlonly}
+\begin{latexonly}
+Figure currently exists in on-line version only.
+\end{latexonly}
+\end{figure}
+
+\section{POP applications to date}\label{sec:applications}
+
+\subsection{High-resolution global and regional modeling}
+\label{sec:high-res}
+
+In the period 1994-97, POP was used to perform high resolution
+($0.28^\circ$ at the Equator) global ocean simulations, running on the
+Thinking Machines CM5 computer then located at LANL's Advanced
+Computing Laboratory. (Output from these runs is available at
+\htmladdnormallink{http://climate.acl.lanl.gov}
+                  {http://climate.acl.lanl.gov}.
+The primary motivation for performing such high-resolution simulations
+is to resolve mesoscale eddies that play an important role in the
+dynamics of the ocean. Comparison of sea-surface
+height variability measured by the TOPEX/Poseidon satellite with that
+simulated by POP gave convincing evidence that still higher resolution
+was required (Fu and Smith \cite{FuSmith96};
+Maltrud \cite{MaltrudEtal98}).
+
+At the time, it was not possible to do a higher resolution calculation
+on the global scale, so an Atlantic Ocean simulation was done with
+$0.1^\circ$ resolution at the Equator. This calculation agreed well
+with observations of sea-surface height variability in
+the Gulf Stream.  Many other features of the flow were also well
+simulated \cite{SmithEtal99}.  Using the $0.1^\circ$ case as a
+benchmark, lower resolution cases were done at $0.2^\circ$ and
+$0.4^\circ$; a comparison can be found at
+\htmladdnormallink{http://neit.cgd.ucar.edu/oce/bryan/woce-poster.html}
+                  {http://neit.cgd.ucar.edu/oce/bryan/woce-poster.html}.
+
+Recently, it has become possible to begin a $0.1^\circ$ global
+simulation and such a simulation has been started.  In addition,
+higher resolution North Atlantic simulations have also been
+initiated.
+
+\subsection{Coupled models}\label{sec:coupled-sims}
+
+POP and the Los Alamos sea-ice model (CICE) have been adopted 
+as the ocean and sea ice components of the Community Climate 
+System Model (CCSM) at NCAR.  POP and CICE are
+also being used in coupled model development efforts at Colorado
+State University and UCLA. Information on CICE can be found at
+\htmladdnormallink{http://climate.acl.lanl.gov/models/cice}
+                  {http://climate.acl.lanl.gov/models/cice}.

@@ -68,7 +68,7 @@ bool CallGraphQuery::pathExist(CallGraphCreate::Node* from, CallGraphCreate::Nod
 #else
 bool CallGraphQuery::pathExist(SgGraphNode* from, SgGraphNode* to)
 {
-  return findEdge( cgBuilder->getGraph(), from,to) != NULL ?  true : false;
+    return cgBuilder->getGraph()->checkIfDirectedGraphEdgeExists(from, to);
 }
 
 #endif

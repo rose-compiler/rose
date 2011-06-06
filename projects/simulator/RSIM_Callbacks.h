@@ -93,7 +93,9 @@
  *      // The actual callback.
  *      virtual bool operator()(bool prev, const Args &args) {
  *          SgAsmBlock *basic_block = isSgAsmBlock(args.insn->get_parent());
- *          SgAsmFunctionDeclaration *func = basic_block ? isSgAsmFunctionDeclaration(basic_block->get_parent()) : NULL;
+ *          SgAsmFunctionDeclaration *func = basic_block ?
+ *                                           SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(basic_block) :
+ *                                           NULL;
  *          if (func && func->get_name()!=name) {
  *              name = func->get_name();
  *              args.thread->tracing(TRACE_MISC)->mesg("in function \"%s\"", name.c_str());

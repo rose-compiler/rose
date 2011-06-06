@@ -1025,7 +1025,7 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf=false
   return const_cast<NodeType*>(dynamic_cast<const NodeType*> (parent));
 }
 
-//! Get the closest scope
+//! Get the closest scope from astNode. Return astNode if it is already a scope.
 SgScopeStatement* getScope(const SgNode* astNode);
 
   //! Traverse back through a node's parents to find the enclosing global scope

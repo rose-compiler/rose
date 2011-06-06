@@ -1,0 +1,236 @@
+program p
+
+!  COPOINTERS TO INTRINSIC BASE TYPE
+
+! simple copointer variable declarations
+
+  integer, copointer :: p1
+  integer, copointer, dimension(:) :: p2
+  integer, copointer :: p3(:)
+  integer, copointer :: pp1_a, pp1_b
+  integer, copointer, dimension(:) :: pp2_1, pp2_2
+  integer, copointer :: pp3_1(:), pp3_2(:)
+  integer, copointer :: pp4_1(:), pp4_2
+  integer, copointer :: pp5_1, pp5_2(:)
+
+! simple copointer covariable declarations
+
+  integer, copointer :: cp1 [*]
+  integer, copointer, dimension(:) :: cp2 [*]
+  integer, copointer :: cp3(:) [*]
+  integer, copointer :: cpp1_a [*], cpp1_b [*]
+  integer, copointer, dimension(:) :: cpp2_1 [*], cpp2_2 [*]
+  integer, copointer :: cpp3_1(:) [*], cpp3_2(:) [*]
+  integer, copointer :: cpp4_1(:) [*], cpp4_2[ *]
+  integer, copointer :: cpp5_1 [*], cpp5_2(:) [*]
+
+! more complicated copointer variable declarations
+
+  integer, copointer, allocatable :: ap1_a
+  integer, copointer, allocatable, dimension(:) :: ap2_a
+  integer, copointer, allocatable :: ap3_a(:)
+  integer, copointer, allocatable :: ap1_a1, ap1_a2
+  integer, copointer, allocatable, dimension(:) :: ap2_a1, ap2_a2
+  integer, copointer, allocatable :: ap3_a1(:), ap3_a2(:)
+  integer, copointer, allocatable :: ap4_a1(:), ap4_a2
+  integer, copointer, allocatable :: ap5_a1, ap5_a2(:)
+
+  integer, allocatable, copointer :: ap1_b
+  integer, allocatable, copointer, dimension(:) :: ap2_b
+  integer, allocatable, copointer :: ap3_b(:)
+  integer, allocatable, copointer :: ap1_b1, ap1_b2
+  integer, allocatable, copointer, dimension(:) :: ap2_b1, ap2_b2
+  integer, allocatable, copointer :: ap3_b1(:), ap3_b2(:)
+  integer, allocatable, copointer :: ap4_b1(:), ap4_b2
+  integer, allocatable, copointer :: ap5_b1, ap5_b2(:)
+
+  integer, copointer, target :: tp1_a
+  integer, copointer, target, dimension(:) :: tp2_a
+  integer, copointer, target :: tp3_a(:)
+  integer, copointer, target :: tp1_a1, tp1_a2
+  integer, copointer, target, dimension(:) :: tp2_a1, tp2_a2
+  integer, copointer, target :: tp3_a1(:), tp3_a2(:)
+  integer, copointer, target :: tp4_a1(:), tp4_a2
+  integer, copointer, target :: tp5_a1, tp5_a2(:)
+
+  integer, target, copointer :: tp1_b
+  integer, target, copointer, dimension(:) :: tp2_b
+  integer, target, copointer :: tp3_b(:)
+  integer, target, copointer :: tp1_b1, tp1_b2
+  integer, target, copointer, dimension(:) :: tp2_b1, tp2_b2
+  integer, target, copointer :: tp3_b1(:), tp3_b2(:)
+  integer, target, copointer :: tp4_b1(:), tp4_b2
+  integer, target, copointer :: tp5_b1, tp5_b2(:)
+
+  integer, copointer, cotarget :: ctp1_a
+  integer, copointer, cotarget, dimension(:) :: ctp2_a
+  integer, copointer, cotarget :: ctp3_a(:)
+  integer, copointer, cotarget :: ctp1_a1, ctp1_a2
+  integer, copointer, cotarget, dimension(:) :: ctp2_a1, ctp2_a2
+  integer, copointer, cotarget :: ctp3_a1(:), ctp3_a2(:)
+  integer, copointer, cotarget :: ctp4_a1(:), ctp4_a2
+  integer, copointer, cotarget :: ctp5_a1, ctp5_a2(:)
+
+  integer, cotarget, copointer :: ctp1_b
+  integer, cotarget, copointer, dimension(:) :: ctp2_b
+  integer, cotarget, copointer :: ctp3_b(:)
+  integer, cotarget, copointer :: ctp1_b1, ctp1_b2
+  integer, cotarget, copointer, dimension(:) :: ctp2_b1, ctp2_b2
+  integer, cotarget, copointer :: ctp3_b1(:), ctp3_b2(:)
+  integer, cotarget, copointer :: ctp4_b1(:), ctp4_b2
+  integer, cotarget, copointer :: ctp5_b1, ctp5_b2(:)
+
+! more complicated copointer covariable declarations
+
+  integer, copointer, allocatable :: cap1_a [*]
+  integer, copointer, allocatable, dimension(:) :: cap2_a [*]
+  integer, copointer, allocatable :: cap3_a(:) [*]
+  integer, copointer, allocatable :: cap1_a1 [*], cap1_a2 [*]
+  integer, copointer, allocatable, dimension(:) :: cap2_a1 [*], cap2_a2 [*]
+  integer, copointer, allocatable :: cap3_a1(:) [*], cap3_a2(:) [*]
+  integer, copointer, allocatable :: cap4_a1(:) [*], cap4_a2 [*]
+  integer, copointer, allocatable :: cap5_a1 [*], cap5_a2(:) [*]
+
+  integer, allocatable, copointer :: cap1_b [*]
+  integer, allocatable, copointer, dimension(:) :: cap2_b [*]
+  integer, allocatable, copointer :: cap3_b(:) [*]
+  integer, allocatable, copointer :: cap1_b1 [*], cap1_b2 [*]
+  integer, allocatable, copointer, dimension(:) :: cap2_b1 [*], cap2_b2 [*]
+  integer, allocatable, copointer :: cap3_b1(:) [*], cap3_b2(:) [*]
+  integer, allocatable, copointer :: cap4_b1(:) [*], cap4_b2 [*]
+  integer, allocatable, copointer :: cap5_b1 [*], cap5_b2(:) [*]
+
+  integer, copointer, target :: tp1_a [*]
+  integer, copointer, target, dimension(:) :: tp2_a [*]
+  integer, copointer, target :: tp3_a(:) [*]
+  integer, copointer, target :: tp1_a1 [*], tp1_a2 [*]
+  integer, copointer, target, dimension(:) :: tp2_a1 [*], tp2_a2 [*]
+  integer, copointer, target :: tp3_a1(:) [*], tp3_a2(:) [*]
+  integer, copointer, target :: tp4_a1(:) [*], tp4_a2 [*]
+  integer, copointer, target :: tp5_a1 [*], tp5_a2(:) [*]
+
+  integer, target, copointer :: tp1_b [*]
+  integer, target, copointer, dimension(:) :: tp2_b [*]
+  integer, target, copointer :: tp3_b(:) [*]
+  integer, target, copointer :: tp1_b1, tp1_b2 [*]
+  integer, target, copointer, dimension(:) :: tp2_b1 [*], tp2_b2 [*]
+  integer, target, copointer :: tp3_b1(:) [*], tp3_b2(:) [*]
+  integer, target, copointer :: tp4_b1(:) [*], tp4_b2 [*]
+  integer, target, copointer :: tp5_b1 [*], tp5_b2(:) [*]
+
+
+! COPOINTERS TO DERIVED BASE TYPE
+
+  type:: T1
+    integer :: i
+    real :: r
+  end type
+
+! simple copointer-to-derived-type covariable declarations
+
+  type(T1), copointer :: T1_cp1 [*]
+  type(T1), copointer, dimension(:) :: T1_cp2 [*]
+  type(T1), copointer :: T1_cp3(:) [*]
+  type(T1), copointer :: T1_cpp1_a [*], T1_cpp1_b [*]
+  type(T1), copointer, dimension(:) :: T1_cpp2_1 [*], T1_cpp2_2 [*]
+  type(T1), copointer :: T1_cpp3_1(:) [*], T1_cpp3_2(:) [*]
+  type(T1), copointer :: T1_cpp4_1(:) [*], T1_cpp4_2[ *]
+  type(T1), copointer :: T1_cpp5_1 [*], T1_cpp5_2(:) [*]
+
+! more complicated copointer-to-derived-type variable declarations
+
+  type(T1), copointer, allocatable :: T1_ap1_a
+  type(T1), copointer, allocatable, dimension(:) :: T1_ap2_a
+  type(T1), copointer, allocatable :: T1_ap3_a(:)
+  type(T1), copointer, allocatable :: T1_ap1_a1, T1_ap1_a2
+  type(T1), copointer, allocatable, dimension(:) :: T1_ap2_a1, T1_ap2_a2
+  type(T1), copointer, allocatable :: T1_ap3_a1(:), T1_ap3_a2(:)
+  type(T1), copointer, allocatable :: T1_ap4_a1(:), T1_ap4_a2
+  type(T1), copointer, allocatable :: T1_ap5_a1, T1_ap5_a2(:)
+
+  type(T1), allocatable, copointer :: T1_ap1_b
+  type(T1), allocatable, copointer, dimension(:) :: T1_ap2_b
+  type(T1), allocatable, copointer :: T1_ap3_b(:)
+  type(T1), allocatable, copointer :: T1_ap1_b1, T1_ap1_b2
+  type(T1), allocatable, copointer, dimension(:) :: T1_ap2_b1, T1_ap2_b2
+  type(T1), allocatable, copointer :: T1_ap3_b1(:), T1_ap3_b2(:)
+  type(T1), allocatable, copointer :: T1_ap4_b1(:), T1_ap4_b2
+  type(T1), allocatable, copointer :: T1_ap5_b1, T1_ap5_b2(:)
+
+  type(T1), copointer, target :: T1_tp1_a
+  type(T1), copointer, target, dimension(:) :: T1_tp2_a
+  type(T1), copointer, target  :: T1_tp3_a(:)
+  type(T1), copointer, target :: T1_tp1_a1, T1_tp1_a2
+  type(T1), copointer, target, dimension(:) :: T1_tp2_a1, T1_tp2_a2
+  type(T1), copointer, target :: T1_tp3_a1(:), T1_tp3_a2(:)
+  type(T1), copointer, target :: T1_tp4_a1(:), T1_tp4_a2
+  type(T1), copointer, target :: T1_tp5_a1, T1_tp5_a2(:)
+
+  type(T1), target, copointer :: T1_tp1_b
+  type(T1), target, copointer, dimension(:) :: T1_tp2_b
+  type(T1), target, copointer :: T1_tp3_b(:)
+  type(T1), target, copointer :: T1_tp1_b1, T1_tp1_b2
+  type(T1), target, copointer, dimension(:) :: T1_tp2_b1, T1_tp2_b2
+  type(T1), target, copointer :: T1_tp3_b1(:), T1_tp3_b2(:)
+  type(T1), target, copointer :: T1_tp4_b1(:), T1_tp4_b2
+  type(T1), target, copointer :: T1_tp5_b1, T1_tp5_b2(:)
+
+
+! COPOINTERS TO DERIVED BASE TYPE CONTAINING COPOINTERS
+
+  type:: T2
+    integer :: i
+    real, copointer :: p
+  end type
+
+! simple copointer-to-derived-type covariable declarations
+
+  type(T2), copointer :: T2_cp1 [*]
+  type(T2), copointer, dimension(:) :: T2_cp2 [*]
+  type(T2), copointer :: T2_cp3(:) [*]
+  type(T2), copointer :: T2_cpp1_a [*], T2_cpp1_b [*]
+  type(T2), copointer, dimension(:) :: T2_cpp2_1 [*], T2_cpp2_2 [*]
+  type(T2), copointer :: T2_cpp3_1(:) [*], T2_cpp3_2(:) [*]
+  type(T2), copointer :: T2_cpp4_1(:) [*], T2_cpp4_2[ *]
+  type(T2), copointer :: T2_cpp5_1 [*], T2_cpp5_2(:) [*]
+
+! more complicated copointer-to-derived-type variable declarations
+
+  type(T2), copointer, allocatable :: T2_ap1_a
+  type(T2), copointer, allocatable, dimension(:) :: T2_ap2_a
+  type(T2), copointer, allocatable :: T2_ap3_a(:)
+  type(T2), copointer, allocatable :: T2_ap1_a1, T2_ap1_a2
+  type(T2), copointer, allocatable, dimension(:) :: T2_ap2_a1, T2_ap2_a2
+  type(T2), copointer, allocatable :: T2_ap3_a1(:), T2_ap3_a2(:)
+  type(T2), copointer, allocatable :: T2_ap4_a1(:), T2_ap4_a2
+  type(T2), copointer, allocatable :: T2_ap5_a1, T2_ap5_a2(:)
+
+  type(T2), allocatable, copointer :: T2_ap1_b
+  type(T2), allocatable, copointer, dimension(:) :: T2_ap2_b
+  type(T2), allocatable, copointer :: T2_ap3_b(:)
+  type(T2), allocatable, copointer :: T2_ap1_b1, T2_ap1_b2
+  type(T2), allocatable, copointer, dimension(:) :: T2_ap2_b1, T2_ap2_b2
+  type(T2), allocatable, copointer :: T2_ap3_b1(:), T2_ap3_b2(:)
+  type(T2), allocatable, copointer :: T2_ap4_b1(:), T2_ap4_b2
+  type(T2), allocatable, copointer :: T2_ap5_b1, T2_ap5_b2(:)
+
+  type(T2), copointer, target :: T2_tp1_a
+  type(T2), copointer, target, dimension(:) :: T2_tp2_a
+  type(T2), copointer, target  :: T2_tp3_a(:)
+  type(T2), copointer, target :: T2_tp1_a1, T2_tp1_a2
+  type(T2), copointer, target, dimension(:) :: T2_tp2_a1, T2_tp2_a2
+  type(T2), copointer, target :: T2_tp3_a1(:), T2_tp3_a2(:)
+  type(T2), copointer, target :: T2_tp4_a1(:), T2_tp4_a2
+  type(T2), copointer, target :: T2_tp5_a1, T2_tp5_a2(:)
+
+  type(T2), target, copointer :: T2_tp1_b
+  type(T2), target, copointer, dimension(:) :: T2_tp2_b
+  type(T2), target, copointer :: T2_tp3_b(:)
+  type(T2), target, copointer :: T2_tp1_b1, T2_tp1_b2
+  type(T2), target, copointer, dimension(:) :: T2_tp2_b1, T2_tp2_b2
+  type(T2), target, copointer :: T2_tp3_b1(:), T2_tp3_b2(:)
+  type(T2), target, copointer :: T2_tp4_b1(:), T2_tp4_b2
+  type(T2), target, copointer :: T2_tp5_b1, T2_tp5_b2(:)
+
+
+end program

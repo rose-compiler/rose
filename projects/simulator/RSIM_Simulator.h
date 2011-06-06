@@ -248,15 +248,16 @@ public:
      *                                  Callbacks
      **************************************************************************************************************************/
 
-    //@{
-    /** Obtains the callbacks object associated with the simulator. */
+    /** Obtains the callbacks object associated with the simulator.
+     *
+     *  @{ */
     RSIM_Callbacks &get_callbacks() {
         return callbacks;
     }
     const RSIM_Callbacks get_callbacks() const {
         return callbacks;
     }
-    //@}
+    /** @} */
 
     /**************************************************************************************************************************
      *                                  System calls
