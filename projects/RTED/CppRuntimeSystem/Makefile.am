@@ -5,7 +5,7 @@ RuntimeSystemlib_LTLIBRARIES = libCppRuntimeSystem.la libUpcRuntimeSystem.la
 
 SUBDIRS = DebuggerQt
 
-INCLUDES = . ..
+INCLUDES = . .. $(ROSE_BOOST_PREINCLUDE_PATH) $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA
 
 # $(ROSE_INCLUDES)
 
@@ -45,11 +45,14 @@ libUpcRuntimeSystem_la_SOURCES = CppRuntimeSystem-upc.cpp \
                                  workzone-upc.upc \
                                  rtedsync-upc.upc
 
+ptrops-upc.upc: $(srcdir)/ptrops.c
+	upc -E -DWITH_UPC $(INCLUDES) $< -o $@
+
 %-upc.cpp: $(srcdir)/%.cpp
-	$(CXX) -E -DWITH_UPC $< -o $@
+	$(CXX) -E -DWITH_UPC $(INCLUDES) $< -o $@
 
 %-upc.upc: $(srcdir)/%.upc
-	cp $< $@
+	upc -E -DWITH_UPC $(INCLUDES) $< -o $@
 
 
 if ROSE_WITH_ROSEQT
