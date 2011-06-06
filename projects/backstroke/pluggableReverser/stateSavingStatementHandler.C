@@ -301,19 +301,95 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 				const char* errorMsg = "Found no subclasses that were copy constructible!";
 				SageInterface::prependStatement(generateErrorHandling(errorMsg), forwardBody);
 			}
-			//Now, we have to build the reverse part, where we pop and assign. This is pretty standard
-			SgExpression* varRef = VariableRenaming::buildVariableReference(varName);
-			SgExpression* reverseAssign = SageBuilder::buildAssignOp(varRef, popVal(varType));
-			SageInterface::appendStatement(SageBuilder::buildExprStatement(reverseAssign), reverseBody);
-
-			//In the commit function, we pop to a temporary variable. Then, we cast that variable to an appropriate
-			//subclass and call delete
-
-
+			
+			//
+			// Now, we have to build the reverse part,. We pop the value, test for its dynamic type, then call the 
+			// assignment operator
+			//
+			
 			//Declare the temporary variable to store the popped value
 			SgVariableDeclaration* tempVarDecl;
 			SgExpression* tempVarRef;
 			SgAssignOp* reassignTempVar;
+			boost::tie(tempVarDecl, reassignTempVar, tempVarRef) = 
+					BackstrokeUtility::CreateTempVariableForExpression(popVal(varType), reverseBody, true);
+			SageInterface::deepDelete(reassignTempVar);
+			reassignTempVar = NULL;
+
+			//Build if-statments that check for the actual type of the popped value
+			vector<SgIfStmt*> reverseIfStatements;
+			for (size_t i = 0; i < castedVars.size(); i++)
+			{
+				//We only push vars that are copy constructible, so there's no need to do extra checks in the commit function
+				if (!SageInterface::isCopyConstructible(castedVars[i]->get_type()))
+					continue;
+
+				SgExpression* poppedVarRef = SageInterface::copyExpression(tempVarRef);
+				SgType* dynamicType = SageBuilder::buildPointerType(concreteSubclasses[i]->get_declaration()->get_type());
+				SgExpression* dynamicCast =
+						SageBuilder::buildCastExp(poppedVarRef, dynamicType, SgCastExp::e_dynamic_cast);
+
+				//Now check if the dynamic cast is not null
+				SgExpression* comparison = SageBuilder::buildNotEqualOp(dynamicCast, buildNULL());
+
+
+				//Perform a cast to the dynamic type of the popped value
+				SgExpression* castedPoppedVal = SageBuilder::buildCastExp(SageInterface::copyExpression(tempVarRef), dynamicType);
+				castedPoppedVal = SageBuilder::buildPointerDerefExp(castedPoppedVal);
+				
+				//Perform a cast of the original variable (and dereference)
+				//The extra cast ensures that the most specific assignment operator that's applicable will be used
+				SgExpression* varRef = VariableRenaming::buildVariableReference(varName);
+				varRef = SageBuilder::buildCastExp(varRef, dynamicType);
+				varRef = SageBuilder::buildPointerDerefExp(varRef);
+				
+				SgAssignOp* invokeAssignmentOp = SageBuilder::buildAssignOp(varRef, castedPoppedVal);
+				
+				//Now build an if-statement that checks for the dynamic type, and if the dynamic type matches,
+				//we do the assignment
+				SgStatement* falseBody = SageBuilder::buildBasicBlock();
+				SgIfStmt* latestCheck = 
+						SageBuilder::buildIfStmt(comparison, SageBuilder::buildExprStatement(invokeAssignmentOp), falseBody);
+
+				//All this if-statement to the chain
+				if (!reverseIfStatements.empty())
+				{
+					SageInterface::replaceStatement(reverseIfStatements.back()->get_false_body(), latestCheck);
+				}
+
+				reverseIfStatements.push_back(latestCheck);
+			} //End loop over all subclasses
+			
+
+			//Put the if-statement in the reverse body
+			SageInterface::appendStatement(tempVarDecl, reverseBody);
+			if (!reverseIfStatements.empty())
+			{
+				//In the last 'else' block, we want to assert that the pointer is null since it didn't match any of the 
+				//dynamic types we tried.
+				SgExpression* tempVar = SageInterface::copyExpression(tempVarRef);
+				SgExpression* nullAssert = BackstrokeUtility::buildAssert(SageBuilder::buildEqualityOp(tempVar, buildNULL()));
+				
+				//Assign the variable pointer to NULL
+				SgExpression* varRef = VariableRenaming::buildVariableReference(varName);
+				SgAssignOp* assignToNull = SageBuilder::buildAssignOp(varRef, buildNULL());
+				
+				SgBasicBlock* falseBody = SageBuilder::buildBasicBlock(
+						SageBuilder::buildExprStatement(nullAssert), SageBuilder::buildExprStatement(assignToNull));
+				SageInterface::replaceStatement(reverseIfStatements.back()->get_false_body(), falseBody);
+				
+				SageInterface::appendStatement(reverseIfStatements.front(), reverseBody);
+			}
+			SageInterface::deepDelete(tempVarRef);
+			tempVarRef = NULL;
+
+
+			//
+			//In the commit function, we pop to a temporary variable. Then, we cast that variable to an appropriate
+			//subclass and call delete
+			//
+
+			//Declare the temporary variable to store the popped value
 			boost::tie(tempVarDecl, reassignTempVar, tempVarRef) = 
 					BackstrokeUtility::CreateTempVariableForExpression(popVal_front(varType), commitBody, true);
 			SageInterface::deepDelete(reassignTempVar);
