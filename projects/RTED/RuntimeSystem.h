@@ -51,6 +51,7 @@ void rted_Checkpoint(rted_SourceInfo si);
 void rted_CreateArray( rted_TypeDesc   td,
                        rted_Address    address,
                        size_t          totalsize,
+                       rted_AllocKind  allocKind,
                        long            blocksize,
                        int             initialized,
                        const size_t*   dimDescr,
@@ -76,9 +77,9 @@ void rted_CreateArray( rted_TypeDesc   td,
 void rted_AllocMem( rted_TypeDesc   td,
                     rted_Address    address,
                     size_t          size,
+                    rted_AllocKind  allocKind,
                     long            blocksize,
                     size_t          mallocSize,
-                    rted_AllocKind  allocKind,
                     const char*     class_name,
                     rted_SourceInfo si
                   );

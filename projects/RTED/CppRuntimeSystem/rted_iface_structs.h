@@ -21,22 +21,25 @@ struct rted_SourceInfo
 
 enum rted_AllocKind
 {
-  akUndefined      = 0,
+  akUndefined       = 0,
 
   /* allocation categories */
-  akStack          = 16,
-  akCHeap          = 32,
-  akCxxHeap        = 64,   /* C++ new/delete */
-  akUpcSharedHeap  = 128,  /* UPC, but also used for upc_free */
+  akGlobal          = 8,    /* Global memory (allocated on the file scope) */
+  akStack           = 16,   /* Stack memory (allocated during function execution */
+  akCHeap           = 32,   /* C style heap allocation: malloc and friends */
+  akCxxHeap         = 64,   /* C++ new/delete */
+  akUpcShared       = 128,  /* UPC, but also used for upc_free */
 
   /* C++ */
-  akCxxNew         = 1 | akCxxHeap, /* for new and delete */
-  akCxxArrayNew    = 2 | akCxxHeap, /* for new T[] and delete[] */
+  akCxxNew          = 1 | akCxxHeap, /* for new and delete */
+  akCxxArrayNew     = 2 | akCxxHeap, /* for new T[] and delete[] */
 
   /* UPC */
-  akUpcAlloc       = 1 | akUpcSharedHeap, /* and upc_local_alloc */
-  akUpcGlobalAlloc = 2 | akUpcSharedHeap,
-  akUpcAllAlloc    = 3 | akUpcSharedHeap
+  akUpcAlloc        = 1 | akUpcShared, /* and upc_local_alloc */
+  akUpcGlobalAlloc  = 2 | akUpcShared,
+  akUpcAllAlloc     = 3 | akUpcShared,
+
+  akUpcSharedGlobal = akGlobal | akUpcShared
 };
 
 

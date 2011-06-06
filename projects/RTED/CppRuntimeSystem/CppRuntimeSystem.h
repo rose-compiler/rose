@@ -173,6 +173,7 @@ struct RuntimeSystem
                              const std::string& name,
                              const std::string& mangledName,
                              const std::string& typeString,
+                             AllocKind          ak,
                              long               blocksize
                            );
 
@@ -180,6 +181,7 @@ struct RuntimeSystem
                              const std::string& name,
                              const std::string& mangledName,
                              const RsType*      type,
+                             AllocKind          ak,
                              long               blocksize
                            );
 
@@ -189,6 +191,7 @@ struct RuntimeSystem
                             const std::string& mangledName,
                             const std::string& baseType,
                             size_t             size,
+                            AllocKind          ak,
                             long               blocksize
                         );
 
@@ -197,6 +200,7 @@ struct RuntimeSystem
                             const std::string& mangledName,
                             const RsType*      baseType,
                             size_t             size,
+                            AllocKind          ak,
                             long               blocksize
                         );
 
@@ -204,6 +208,7 @@ struct RuntimeSystem
                             const std::string& name,
                             const std::string& mangledName,
                             const RsArrayType* type,
+                            AllocKind          ak,
                             long               blocksize
                         );
 

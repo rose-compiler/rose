@@ -283,11 +283,12 @@ bool RuntimeSystem::checkMemWrite(Address addr, size_t size, const RsType* t)
 // --------------------- Stack Variables ---------------------------------
 
 
-void RuntimeSystem::createVariable( Address address,
+void RuntimeSystem::createVariable( Address            address,
                                     const std::string& name,
                                     const std::string& mangledName,
                                     const std::string& typeString,
-                                    long blocksize
+                                    AllocKind          ak,
+                                    long               blocksize
                                   )
 {
     //TODO deprecated, because with typeString no pointer and arrays can be registered
@@ -309,17 +310,18 @@ void RuntimeSystem::createVariable( Address address,
     }
 
     assert(type != NULL);
-    createVariable(address, name, mangledName, type, blocksize);
+    createVariable(address, name, mangledName, type, ak, blocksize);
 }
 
-void RuntimeSystem::createVariable( Address address,
+void RuntimeSystem::createVariable( Address            address,
                                     const std::string& name,
                                     const std::string& mangledName,
-                                    const RsType*  type,
-                                    long blocksize
+                                    const RsType*      type,
+                                    AllocKind          ak,
+                                    long               blocksize
                                   )
 {
-  assert(type);
+  assert( type && (ak & (akStack | akGlobal)) );
 
   // \todo remove the dynamic cast by overloading the interface
   const RsClassType* class_type = dynamic_cast< const RsClassType* >( type );
@@ -337,11 +339,11 @@ void RuntimeSystem::createVariable( Address address,
   // existing memory
   if (isCtorCall)
   {
-    mem->fixAllocationKind(akStack);
+    mem->fixAllocationKind(ak);
   }
   else
   {
-    createMemory(address, type->getByteSize(), akStack, blocksize, type);
+    createMemory(address, type->getByteSize(), ak, blocksize, type);
   }
 
   // \pp \note it seems that addVariable again registers all pointers, that
@@ -357,12 +359,13 @@ void RuntimeSystem::createArray( Address address,
                                  const std::string & mangledName,
                                  const std::string & baseType,
                                  size_t size,
+                                 AllocKind ak,
                                  long blocksize
                                )
 {
   const RsType* t = typeSystem.getTypeInfo(baseType);
   assert( t );
-  createArray(address, name, mangledName, t, size, blocksize);
+  createArray(address, name, mangledName, t, size, ak, blocksize);
 }
 
 
@@ -371,12 +374,13 @@ void RuntimeSystem::createArray( Address address,
                                  const std::string & mangledName,
                                  const RsType* baseType,
                                  size_t size,
+                                 AllocKind ak,
                                  long blocksize
                                )
 {
   const RsArrayType* arrType = typeSystem.getArrayType(baseType, size);
 
-  createArray( address, name, mangledName, arrType, blocksize);
+  createArray( address, name, mangledName, arrType, ak, blocksize );
 }
 
 
@@ -384,13 +388,14 @@ void RuntimeSystem::createArray( Address address,
                                  const std::string& name,
                                  const std::string& mangledName,
                                  const RsArrayType* type,
+                                 AllocKind ak,
                                  long blocksize
                                )
 {
   assert(type);
 
   // creates array on the stack
-  createVariable( address, name, mangledName, type, blocksize );
+  createVariable( address, name, mangledName, type, ak, blocksize );
   pointerManager.createPointer( address, type->getBaseType(), blocksize );
 
   // View an array as a pointer, which is stored at the address and which points at the address

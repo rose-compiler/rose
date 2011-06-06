@@ -520,7 +520,7 @@ void RtedTransformation::insertFreeCall(SgExpression* freeExp, AllocKind ak)
    SgExprListExp* arg_list = buildExprListExp();
 
    appendExpression( arg_list, mkAddress(address_expression, upcShared) );
-   appendExpression( arg_list, mkAllocKind(ak) );
+   appendAllocKind( arg_list, ak );
    appendFileInfo( arg_list, stmt );
 
    // have to check validity of call to free before the call itself

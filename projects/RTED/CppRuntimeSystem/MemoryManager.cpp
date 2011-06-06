@@ -15,14 +15,6 @@ const void* toString(MemoryType::LocalPtr ptr)
   return ptr;
 }
 
-static inline
-bool isDistributed(AllocKind allocKind)
-{
-  return (  ((allocKind & akUpcSharedHeap) == akUpcSharedHeap)
-         && allocKind != akUpcAlloc
-         );
-}
-
 template <class Container>
 struct ContainerTraits
 {
@@ -107,7 +99,7 @@ MemoryType::MemoryType(Location _addr, size_t _size, AllocKind ak, long blsz, co
         << ", " << addrlimit << ")"
         << "  size = " << _size
         << "  blocksize = " << blocksize
-        << "  distributed = " << ::isDistributed(ak)
+        << "  distributed = " << isDistributed()
         << "  @ (" << _pos.getLineInOrigFile() << ", " << _pos.getLineInTransformedFile() << ")";
     rs->printMessage(msg.str());
   }
@@ -714,7 +706,8 @@ std::string allocDisplayName(AllocKind ak)
 
   switch (ak)
   {
-    case akStack          : res = "Stack"; break;
+    case akStack          : res = "Stack (function scope)"; break;
+    case akGlobal         : res = "Global (file scope)"; break;
     case akCHeap          : res = "malloc/calloc"; break;
 
     /* C++ */
@@ -739,7 +732,6 @@ std::string freeDisplayName(AllocKind ak)
 
   switch (ak)
   {
-    case akStack          : res = "stack (rted bug?) free"; break;
     case akCHeap          : res = "free"; break;
 
     /* C++ */
@@ -747,8 +739,8 @@ std::string freeDisplayName(AllocKind ak)
     case akCxxArrayNew    : res = "operator delete[]"; break;
 
     /* UPC */
-    case akUpcSharedHeap  : res = "upc_free"; break;
-    default               : res = "unknown deallocation method";
+    case akUpcShared      : res = "upc_free"; break;
+    default               : res = "unknown deallocation method (rted bug?)";
   }
 
   assert(res != NULL);
@@ -761,9 +753,12 @@ alloc_free_mismatch(MemoryType& m, AllocKind howAlloced, AllocKind howFreed)
 {
   std::stringstream desc;
 
-  if (howAlloced == akStack)
+  if (howAlloced & (akStack | akGlobal))
   {
-    desc << "Stack memory was explicitly freed (0x" << m << ")" << std::endl;
+    desc << allocDisplayName(static_cast<AllocKind>(howAlloced & (akStack | akGlobal)))
+         << " memory was explicitly freed (0x" << m << ") with "
+         << freeDisplayName(howFreed)
+         << std::endl;
   }
   else
   {
@@ -816,7 +811,7 @@ void MemoryManager::freeMemory(Location addr, MemoryType::AllocKind freekind)
 
     // allockind can be different from freekind
     //   e.g., upc_free subsumes all upc allocations
-    if ((allockind & freekind) != freekind)
+    if ((allockind & (freekind | akStack | akGlobal)) != freekind)
     {
       RuntimeSystem* rs = RuntimeSystem::instance();
       std::string    msg = alloc_free_mismatch(*m, allockind, freekind);

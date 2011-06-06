@@ -214,6 +214,7 @@ rs_getArrayElemType(TypeSystem& ts, TypeDesc td, size_t noDimensions, const std:
 void rted_CreateArray( rted_TypeDesc   td,
                        rted_Address    address,
                        size_t          totalsize,
+                       rted_AllocKind  allocKind,
                        long            blocksize,
                        int             initialized,
                        const size_t*   dimDescr,
@@ -313,10 +314,10 @@ void _rted_AllocMem( rted_TypeDesc    td,
 
 void rted_AllocMem( rted_TypeDesc   td,
                     rted_Address    address,
-                    size_t          /*size*/,
+                    size_t          size,
+                    rted_AllocKind  allocKind,
                     long            blocksize,
                     size_t          mallocSize,
-                    rted_AllocKind  allocKind,
                     const char*     class_name,
                     rted_SourceInfo si
                   )

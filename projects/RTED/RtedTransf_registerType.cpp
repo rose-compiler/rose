@@ -92,8 +92,9 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* const cdef)
           RtedClassElement* el = NULL;
           if (SgArrayType* arrtype = isSgArrayType( initName -> get_type()))
           {
+            // \pp akStack should probably be akUndefined or akEmbedded
             RtedArray* arrayRted = new RtedArray( initName, getSurroundingStatement(initName), akStack );
-            populateDimensions( *arrayRted, initName, arrtype );
+            populateDimensions( *arrayRted, *initName, arrtype );
             el = new RtedClassArrayElement( name, type, sgElement, arrayRted );
           }
           else

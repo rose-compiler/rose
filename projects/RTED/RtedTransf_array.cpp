@@ -132,21 +132,23 @@ std::string enumstring(AllocKind ak)
 
   switch (ak)
   {
-    case akUndefined:      res = "akUndefined"; break;
-    case akStack:          res = "akStack"; break;
-    case akCHeap:          res = "akCHeap"; break;
+    case akUndefined:       res = "akUndefined"; break;
+    case akGlobal:          res = "akGlobal"; break;
+    case akStack:           res = "akStack"; break;
+    case akCHeap:           res = "akCHeap"; break;
 
     /* C++ */
-    case akCxxNew:         res = "akCxxNew"; break;
-    case akCxxArrayNew:    res = "akCxxArrayNew"; break;
+    case akCxxNew:          res = "akCxxNew"; break;
+    case akCxxArrayNew:     res = "akCxxArrayNew"; break;
 
     /* UPC */
-    case akUpcSharedHeap:  res = "akUpcSharedHeap"; break;
-    case akUpcAlloc:       res = "akUpcAlloc"; break;
-    case akUpcGlobalAlloc: res = "akUpcGlobalAlloc"; break;
-    case akUpcAllAlloc:    res = "akUpcAllAlloc"; break;
+    case akUpcSharedHeap:   res = "akUpcSharedHeap"; break;
+    case akUpcAlloc:        res = "akUpcAlloc"; break;
+    case akUpcGlobalAlloc:  res = "akUpcGlobalAlloc"; break;
+    case akUpcAllAlloc:     res = "akUpcAllAlloc"; break;
+    case akUpcSharedGlobal: res = "akUpcSharedGlobal"; break;
 
-    default:               ROSE_ASSERT(false);
+    default:                ROSE_ASSERT(false);
   }
 
   ROSE_ASSERT(res != NULL);
@@ -187,12 +189,15 @@ RtedTransformation::buildArrayCreateCall(SgExpression* const src_exp, const Rted
    ROSE_ASSERT(isCreateArray || under_type->class_name() == "SgPointerType");
 
    // if we have an array, then it has to be on the stack
-   ROSE_ASSERT(!isCreateArray || array.allocKind == akStack);
+   ROSE_ASSERT( !isCreateArray || ((array.allocKind & (akStack | akGlobal)) != 0) );
 
    SgScopeStatement*  scope = get_scope(initName);
 
    appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(src_type, false, false)));
    appendAddressAndSize(arg_list, Whole, scope, src_exp, NULL /* unionclass */);
+
+   // track how and where the memory/array was allocated
+   appendAllocKind(arg_list, array.allocKind);
 
    SgType*            type = initName->get_type();
    SgFunctionSymbol*  rted_fun = NULL;
@@ -230,10 +235,6 @@ RtedTransformation::buildArrayCreateCall(SgExpression* const src_exp, const Rted
      SgExpression*      size = buildCastExp(array.size, buildUnsignedLongType());
 
      appendExpression(arg_list, size);
-
-     // track whether heap memory was allocated via malloc or new, to ensure
-     // that free/delete matches
-     appendExpression(arg_list, mkAllocKind(array.allocKind));
 
      rted_fun = symbols.roseAllocMem;
    }
@@ -345,7 +346,7 @@ void RtedTransformation::insertArrayCreateCall( SgExpression* const srcexp, cons
    // for detecting other bugs such as not null terminated strings
    // therefore we call a function that appends code to the
    // original program to add padding different from '\0'
-   if (array.allocKind != akStack)
+   if ( (array.allocKind & (akStack | akGlobal)) == 0 )
       addPaddingToAllocatedMemory(stmt, array);
 }
 
@@ -514,9 +515,9 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefEx
               );
 }
 
-void RtedTransformation::populateDimensions(RtedArray& array, SgInitializedName* init, SgArrayType* type_)
+void RtedTransformation::populateDimensions(RtedArray& array, SgInitializedName& init, SgArrayType* type_)
 {
-   ROSE_ASSERT(init && type_);
+   ROSE_ASSERT(type_);
 
    std::vector<SgExpression*>& indices = array.getIndices();
 
@@ -767,7 +768,7 @@ AllocKind RtedTransformation::arrayAllocCall(SgInitializedName* initName, SgVarR
   } else {
      // right hand side of assign should only contain call to malloc somewhere
      std::cerr << "RtedTransformation: UNHANDLED AND ACCEPTED FOR NOW. Right of Assign : Unknown (Array creation) : "
-          << "  line:" << varRef->unparseToString() << std::endl;
+               << "  line:" << varRef->unparseToString() << std::endl;
      //     ROSE_ASSERT(false);
   }
 

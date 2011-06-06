@@ -333,7 +333,6 @@ sharedTest(const SgType* n)
   return res.shared;
 }
 
-static
 bool isUpcShared(const SgType* n)
 {
   return sharedTest(n).first >= usShared;
@@ -344,6 +343,14 @@ long upcBlocksize(const SgType* n)
   return sharedTest(n).second;
 }
 
+
+AllocKind varAllocKind(const SgInitializedName& n)
+{
+  if (!isSgGlobal(n.get_scope())) return akStack;
+  if (isUpcShared(n.get_type()))  return akUpcSharedGlobal;
+
+  return akGlobal;
+}
 
 SgExpression*
 RtedTransformation::getExprBelowAssignment( SgExpression* exp ) {
@@ -634,6 +641,13 @@ void RtedTransformation::appendFileInfo( SgExprListExp* arg_list, SgStatement* s
     appendFileInfo( arg_list, stmt->get_scope(), stmt->get_file_info() );
 }
 
+void RtedTransformation::appendAllocKind( SgExprListExp* arg_list, AllocKind kind)
+{
+  ROSE_ASSERT( arg_list );
+
+  appendExpression(arg_list, mkAllocKind(kind));
+}
+
 static
 SgGlobal* globalScope(SgScopeStatement* scope)
 {
@@ -754,7 +768,6 @@ SgPointerType* discover_PointerType(SgType* t)
 
 AllocKind cxxHeapAllocKind(SgType* t)
 {
-  // std::cerr << "### HEAPTYPE: " << t->unparseToString() << std::endl;
   SgType* allocType = skip_ModifierType(skip_PointerType(t));
 
   // \pp at least there is a pointer type that needs to be skipped
@@ -900,13 +913,6 @@ struct IndirectionHandler
 TypeStructureInfo indirections(SgType* t)
 {
   return ez::visitSgNode(IndirectionHandler(), t);
-}
-
-size_t upcSharedMask(SgType* t)
-{
-  TypeStructureInfo res = ez::visitSgNode(IndirectionHandler(), t);
-
-  return res.desc.shared_mask;
 }
 
 SgType* skip_References(SgType* t)

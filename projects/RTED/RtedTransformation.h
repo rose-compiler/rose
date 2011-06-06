@@ -49,9 +49,6 @@ SgStatement* getSurroundingStatement(SgExpression* n);
 /// \overload
 SgStatement* getSurroundingStatement(SgInitializedName* n);
 
-/// \brief returns the UPC shared mask for a type
-size_t upcSharedMask(SgType* t);
-
 /// \brief  determines the C++ allocation kind for type t
 /// \return akCxxArrayNew if t is an array, akCxxNew otherwise
 AllocKind cxxHeapAllocKind(SgType* t);
@@ -147,7 +144,7 @@ bool traverseAllChildrenAndFind(SgInitializedName* initName, SgStatement* stmt);
 
 /// \brief  converts the parent to a basic block (unless it already is one)
 /// \return a SgBasicBlock object
-/// \note   compare to SageBuilder::ensureParentIsBasicBlock, this function
+/// \note   compared to SageBuilder::ensureParentIsBasicBlock, this function
 ///         requires that stmt appears in a context that allows its
 ///         conversion to a SgBasicBlock node.
 SgBasicBlock& requiresParentIsBasicBlock(SgStatement& stmt);
@@ -155,6 +152,17 @@ SgBasicBlock& requiresParentIsBasicBlock(SgStatement& stmt);
 /// \brief returns the UPC blocksize of types
 ///        if the type is not a upc shared type the returned blocksize is 0.
 long upcBlocksize(const SgType* n);
+
+/// \brief returns true, iff n is a shared type
+///        e.g., shared int a;
+///              shared[] int x[2][3][4];
+///            *but not*
+///              shared int* p;
+bool isUpcShared(const SgType* n);
+
+/// \brief returns the region where the variable n is allocated
+///        either akStack, akGlobal, or akUpcSharedGlobal
+AllocKind varAllocKind(const SgInitializedName& n);
 
 /// appends the classname
 void appendClassName( SgExprListExp* arg_list, SgType* type );
@@ -340,6 +348,9 @@ public:
 
    void appendFileInfo( SgExprListExp* arg_list, SgStatement* stmt);
    void appendFileInfo( SgExprListExp* arg_list, SgScopeStatement* scope, Sg_File_Info* n);
+
+   /// appends the allocation kind
+   void appendAllocKind( SgExprListExp* arg_list, AllocKind kind );
 
    /// appends a function signature (typecount, returntype, arg1, ... argn)
    /// to the argument list.
@@ -623,7 +634,7 @@ public:
    void insertNamespaceIntoSourceFile(SgProject* project);
    // void insertNamespaceIntoSourceFile(SgProject* project, std::vector<SgClassDeclaration*>&);
 
-   void populateDimensions( RtedArray& array, SgInitializedName* init, SgArrayType* type );
+   void populateDimensions( RtedArray& array, SgInitializedName& init, SgArrayType* type );
    void transformIfMain(SgFunctionDefinition* const);
 
    //

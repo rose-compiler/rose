@@ -344,6 +344,8 @@ RtedTransformation::buildVariableCreateCallExpr(SgVarRefExp* var_ref, const stri
         SgExpression*  callNameExp = buildStringVal(debug_name);
         const bool     var_init = initb && !isFileIOVariable(varType);
 
+
+
         appendExpression(arg_list, callName);
         appendExpression(arg_list, callNameExp);
         appendBool      (arg_list, var_init);
@@ -410,7 +412,7 @@ RtedTransformation::buildVariableInitCallExpr( SgInitializedName* initName,
         appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(exp -> get_type(), false, false)) );
         appendAddressAndSize(arg_list, Whole, scope, exp, NULL);
         appendExpression(arg_list, buildIntVal(is_pointer_change));
-        appendExpression(arg_list, mkAllocKind(allockind));
+        appendAllocKind(arg_list, allockind);
         appendClassName(arg_list, exp -> get_type());
         appendFileInfo(arg_list, stmt);
 
@@ -764,8 +766,9 @@ struct AllocInfo
   SgType*   newtype;
   AllocKind allocKind;
 
-  AllocInfo()
-  : newtype(NULL), allocKind(akStack)
+  explicit
+  AllocInfo(AllocKind default_kind)
+  : newtype(NULL), allocKind(default_kind)
   {}
 
   void handle(SgNode&) { ROSE_ASSERT(false); }
@@ -814,14 +817,13 @@ void RtedTransformation::visit_isAssignInitializer(SgAssignInitializer* const as
                 // \pp \todo do we need the following line?
                 varRef->get_file_info()->unsetOutputInCodeGeneration();
 
-                const AllocInfo    allocInfo = ez::visitSgNode(AllocInfo(), assign->get_operand());
+                const AllocInfo    allocInfo = ez::visitSgNode(AllocInfo(akStack), assign->get_operand());
 
                 cerr << "Adding variable init : " << varRef->unparseToString() << endl;
                 variableIsInitialized[varRef] = InitializedVarMap::mapped_type(initName, allocInfo.allocKind);
 
                 // tps (09/15/2009): The following code handles AssignInitializers for SgNewExp
                 // e.g. int *p = new int;
-#if 1
                 // \pp \todo the following block could be pushed into AllocInfo
                 if (allocInfo.newtype) {
                         // TODO 2: This handles new assign initializers, but not malloc assign
@@ -846,8 +848,6 @@ void RtedTransformation::visit_isAssignInitializer(SgAssignInitializer* const as
                         //~ assert(variableIsInitialized[varRef] == InitializedVarMap::mapped_type(initName, allocInfo.allocKind));
                         //~ variableIsInitialized[varRef] = InitializedVarMap::mapped_type(initName, allocInfo.allocKind);
                 }
-#endif
-
         }
 
         // ---------------------------------------------

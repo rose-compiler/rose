@@ -74,260 +74,273 @@ namespace rted
       return isSgPointerType( skip_ReferencesAndTypedefs( type ));
   }
 
-
-  struct InheritedAttributeHandler
+  namespace
   {
-    VariableTraversal& vt;
-    InheritedAttribute ia;
-
-    InheritedAttributeHandler(VariableTraversal& trav, const InheritedAttribute& inh)
-    : vt(trav), ia(inh)
-    {}
-
-    void storeUpcBlockingOp(SgStatement& n)
+    struct VarDeclHandler
     {
-      vt.transf->upcBlockingOps.push_back(&n);
-    }
+      VariableTraversal& vt;
+      SgInitializedName& initname;
 
-    void handle(SgNode&) {}
+      VarDeclHandler(VariableTraversal& vartrav, SgInitializedName& iname)
+      : vt(vartrav), initname(iname)
+      {}
 
-    void handle(SgSourceFile& n)
-    {
-      const bool first = vt.transf->srcfiles.empty();
+      void handle(SgNode&) { assert(false); }
 
-      ROSE_ASSERT(first || vt.transf->srcfiles.back() != &n);
-
-      if (first) vt.transf->loadFunctionSymbols(n);
-      vt.transf->srcfiles.push_back(&n);
-    }
-
-    void handle(SgFunctionDefinition& n)
-    {
-        vt.transf->transformIfMain(&n);
-        vt.transf->function_definitions.push_back(&n);
-
-        ia.function = true;
-        // do not handle as SgScopeStatement
-    }
-
-    void handle(SgVariableDeclaration& n)
-    {
-      if (isSgClassDefinition(n.get_parent())) return;
-
-      const SgInitializedNamePtrList&          vars = n.get_variables();
-      SgInitializedNamePtrList::const_iterator zz = vars.end();
-
-      for (SgInitializedNamePtrList::const_iterator it = vars.begin(); it != zz; ++it)
+      // regular variable declaration
+      void handle(SgType&)
       {
-           SgInitializedName* initName = *it;
-           SgType*            initType = initName -> get_type();
-
-           // references are skipped by the nov2010 implementation
-           // array types are skipped because they are handled by createHeapArr
-           if ( isSgReferenceType( initType ) || isSgArrayType(skip_ModifierType(initType)) )
-             continue;
-
-           vt.transf->variable_declarations.push_back(initName);
+        vt.transf->variable_declarations.push_back(initName);
       }
-    }
 
-    void handle(SgInitializedName& n)
+      // nothing to be done for references
+      void handle(SgReferenceType&) {}
+
+      // handle arrays
+      void handle(SgArrayType& arrtype)
+      {
+        // \pp \note the Nov'10 RTED code would skip this when we get a modifier-type
+        //     something like: if (&n != initname.get_type()) return;
+        RtedArray arrayRted(&initname, getSurroundingStatement(&initname), varAllocKind(initname));
+
+        vt.transf->populateDimensions( arrayRted, initname, arrtype );
+        vt.transf->create_array_define_varRef_multiArray_stack[&initname] = arrayRted;
+      }
+    };
+
+
+    struct InheritedAttributeHandler
     {
-        SgArrayType*       array = isSgArrayType(n.get_typeptr());
+      VariableTraversal& vt;
+      InheritedAttribute ia;
 
+      InheritedAttributeHandler(VariableTraversal& trav, const InheritedAttribute& inh)
+      : vt(trav), ia(inh)
+      {}
+
+      void storeUpcBlockingOp(SgStatement& n)
+      {
+        vt.transf->upcBlockingOps.push_back(&n);
+      }
+
+      void handle(SgNode&) {}
+
+      void handle(SgSourceFile& n)
+      {
+        const bool first = vt.transf->srcfiles.empty();
+
+        ROSE_ASSERT(first || vt.transf->srcfiles.back() != &n);
+
+        if (first) vt.transf->loadFunctionSymbols(n);
+        vt.transf->srcfiles.push_back(&n);
+      }
+
+      void handle(SgFunctionDefinition& n)
+      {
+          vt.transf->transformIfMain(&n);
+          vt.transf->function_definitions.push_back(&n);
+
+          ia.function = true;
+          // do not handle as SgScopeStatement
+      }
+
+
+      void handle(SgInitializedName& n)
+      {
         // something like: struct type { int before; char c[ 10 ]; int after; }
         // does not need a createarray call, as the type is registered and any array
         // information will be tracked when variables of that type are created.
         // ignore arrays in parameter lists as they're actually pointers, not stack arrays
-        if ( !array || isStructMember(n) || isFunctionParameter(n) ) return;
+        if (isStructMember(n) || isFunctionParameter(n)) return;
 
-        RtedArray arrayRted(&n, getSurroundingStatement(&n), akStack);
+        // \pp should we also skip typedefs?
+        SgType* unmodType = skip_ModifierType(n.get_type());
 
-        vt.transf->populateDimensions( arrayRted, &n, array );
-        vt.transf->create_array_define_varRef_multiArray_stack[&n] = arrayRted;
-    }
+        ez::visitSgNode(VarDeclHandler(vt, n), unmodType);
+      }
 
-    void handle(SgAssignInitializer& n)
-    {
-        vt.transf->visit_isAssignInitializer(&n);
-        ia.isAssignInitializer = true;
-    }
+      void handle(SgAssignInitializer& n)
+      {
+          vt.transf->visit_isAssignInitializer(&n);
+          ia.isAssignInitializer = true;
+      }
 
-    void handle(SgReturnStmt& n)
-    {
-      if (!n.get_expression()) return;
+      void handle(SgReturnStmt& n)
+      {
+        if (!n.get_expression()) return;
 
-      vt.transf->returnstmt.push_back(&n);
-    }
+        vt.transf->returnstmt.push_back(&n);
+      }
 
-    void handle(SgUpcBarrierStatement& n) { storeUpcBlockingOp(n); }
+      void handle(SgUpcBarrierStatement& n) { storeUpcBlockingOp(n); }
 
-    void handle(SgUpcWaitStatement& n)
-    {
-      storeUpcBlockingOp(n);
-    }
+      void handle(SgUpcWaitStatement& n)
+      {
+        storeUpcBlockingOp(n);
+      }
 
-    void handle(SgScopeStatement& n)
-    {
-      vt.transf->visit_isSgScopeStatement(&n);
-    }
+      void handle(SgScopeStatement& n)
+      {
+        vt.transf->visit_isSgScopeStatement(&n);
+      }
 
-    void handle_scope(SgScopeStatement& n) { handle(n); } // implicitly casts to SgScopeStatement
+      void handle_scope(SgScopeStatement& n) { handle(n); } // implicitly casts to SgScopeStatement
 
-    void handle(SgClassDefinition& n)
-    {
-      handle_scope(n); // first handle as scope
+      void handle(SgClassDefinition& n)
+      {
+        handle_scope(n); // first handle as scope
 
-      vt.transf->visit_isClassDefinition(&n);
-    }
+        vt.transf->visit_isClassDefinition(&n);
+      }
 
-    void handle_gfor(SgScopeStatement& sgfor)
-    {
-      handle_scope(sgfor);
+      void handle_gfor(SgScopeStatement& sgfor)
+      {
+        handle_scope(sgfor);
 
-      vt.for_loops.push_back(&sgfor);
-      ia.isForStatement = true;
-    }
+        vt.for_loops.push_back(&sgfor);
+        ia.isForStatement = true;
+      }
 
-    void handle(SgForStatement& n)
-    {
-      handle_gfor(n);
-    }
+      void handle(SgForStatement& n)
+      {
+        handle_gfor(n);
+      }
 
-    void handle(SgUpcForAllStatement& n)
-    {
-      handle_gfor(n);
-    }
+      void handle(SgUpcForAllStatement& n)
+      {
+        handle_gfor(n);
+      }
 
-     //
-     // Expressions
-     //
-
-
-     /// Visit pointer assignments whose lhs is computed from the original value of
-     /// the pointer by virtue of the operator alone (e.g. ++, --)  As a heuristic,
-     /// we say that such operations should not change the @e "Memory Chunk", i.e.
-     /// the array the pointer refers to.
-     void push_if_ptr_movement(SgExpression& astNode, SgExpression* operand)
-     {
-        if( isUsableAsSgPointerType( operand -> get_type() )) {
-           // we don't care about int++, only pointers, or reference to pointers.
-           vt.transf->pointer_movements.push_back( &astNode );
-        }
-     }
-
-     // unary
-
-     void handle(SgAddressOfOp& n)
-     {
-       ia.isAddressOfOp = true;
-       /* returns immediately */
-     }
-
-     void handle(SgPointerDerefExp& n)
-     {
-        // if this is a varrefexp and it is not initialized, we flag it.
-        // do only if it is by itself or on right hand side of assignment
-        vt.transf->visit_isSgPointerDerefExp(&n);
-     }
+       //
+       // Expressions
+       //
 
 
-     // binary
+       /// Visit pointer assignments whose lhs is computed from the original value of
+       /// the pointer by virtue of the operator alone (e.g. ++, --)  As a heuristic,
+       /// we say that such operations should not change the @e "Memory Chunk", i.e.
+       /// the array the pointer refers to.
+       void push_if_ptr_movement(SgExpression& astNode, SgExpression* operand)
+       {
+          if( isUsableAsSgPointerType( operand -> get_type() )) {
+             // we don't care about int++, only pointers, or reference to pointers.
+             vt.transf->pointer_movements.push_back( &astNode );
+          }
+       }
 
-     void handle(SgBinaryOp& n)
-     {
-        if (ia.isArrowExp || ia.isAddressOfOp) return;
+       // unary
 
-        vt.binary_ops.push_back(&n);
-        ia.isBinaryOp = true;
-     }
+       void handle(SgAddressOfOp& n)
+       {
+         ia.isAddressOfOp = true;
+         /* returns immediately */
+       }
 
-     void handle_binary(SgBinaryOp& n) { handle(n); }  // implcitely casts to SgBinaryOp
+       void handle(SgPointerDerefExp& n)
+       {
+          // if this is a varrefexp and it is not initialized, we flag it.
+          // do only if it is by itself or on right hand side of assignment
+          vt.transf->visit_isSgPointerDerefExp(&n);
+       }
 
-     void handle(SgDotExp&) { /* skip binary handling */ }
 
-     void handle(SgPntrArrRefExp& n)
-     {
-       vt.transf->visit_isArrayPntrArrRefExp(&n);
-       handle_binary(n);
-     }
+       // binary
 
-     void handle(SgArrowExp& n)
-     {
-       vt.transf->visit_isSgArrowExp(&n);
-       ia.isArrowExp = true;
-       /* skip binary handling */
-     }
+       void handle(SgBinaryOp& n)
+       {
+          if (ia.isArrowExp || ia.isAddressOfOp) return;
 
-     void handle(SgAssignOp& n)
-     {
-        // 1. look for MALLOC
-        // 2. Look for assignments to variables - i.e. a variable is initialized
-        // 3. Assign variables that come from assign initializers (not just assignments
-        std::cerr << n.unparseToString() << std::endl;
-        vt.transf->visit_isArraySgAssignOp(&n);
-        handle_binary(n);
-     }
+          vt.binary_ops.push_back(&n);
+          ia.isBinaryOp = true;
+       }
 
-     void handle(SgMinusAssignOp& n)
-     {
-       push_if_ptr_movement(n, n.get_lhs_operand());
-       handle_binary(n);
-     }
+       void handle_binary(SgBinaryOp& n) { handle(n); }  // implcitely casts to SgBinaryOp
 
-     void handle(SgPlusAssignOp& n)
-     {
-       push_if_ptr_movement(n, n.get_lhs_operand());
-       handle_binary(n);
-     }
+       void handle(SgDotExp&) { /* skip binary handling */ }
 
-     // n-ary
+       void handle(SgPntrArrRefExp& n)
+       {
+         vt.transf->visit_isArrayPntrArrRefExp(&n);
+         handle_binary(n);
+       }
 
-     // \note see note comment in handle(SgFunctionCallExp)
-     bool suppress_binary_for_specific_calls(const SgFunctionDeclaration* fndecl)
-     {
-       return ((fndecl != NULL) && isLibFunctionRequiringArgCheck(fndecl->get_name()));
-     }
+       void handle(SgArrowExp& n)
+       {
+         vt.transf->visit_isSgArrowExp(&n);
+         ia.isArrowExp = true;
+         /* skip binary handling */
+       }
 
-     void handle(SgFunctionCallExp& n)
-     {
-        vt.transf->visit_isFunctionCall(&n);
+       void handle(SgAssignOp& n)
+       {
+          // 1. look for MALLOC
+          // 2. Look for assignments to variables - i.e. a variable is initialized
+          // 3. Assign variables that come from assign initializers (not just assignments
+          std::cerr << n.unparseToString() << std::endl;
+          vt.transf->visit_isArraySgAssignOp(&n);
+          handle_binary(n);
+       }
 
-        // \pp binary should be suppressed for all calls
-        //     in order not to impact existing RTED tests, we suppress for
-        //     cases relevant to UPC
-        // \todo 1) make suppression unconditional (remove if)
-        // \todo 2) I think the following code is obsolete
-        if (suppress_binary_for_specific_calls(n.getAssociatedFunctionDeclaration()))
-        {
-          ia.isBinaryOp = false;
-        }
-     }
+       void handle(SgMinusAssignOp& n)
+       {
+         push_if_ptr_movement(n, n.get_lhs_operand());
+         handle_binary(n);
+       }
 
-     void handle(SgPlusPlusOp& n)
-     {
-       push_if_ptr_movement(n, n.get_operand());
-     }
+       void handle(SgPlusAssignOp& n)
+       {
+         push_if_ptr_movement(n, n.get_lhs_operand());
+         handle_binary(n);
+       }
 
-     void handle(SgMinusMinusOp& n)
-     {
-       push_if_ptr_movement(n, n.get_operand());
-     }
+       // n-ary
 
-     void handle(SgDeleteExp& del)
-     {
-        typedef RtedTransformation::Deallocations Deallocations;
+       // \note see note comment in handle(SgFunctionCallExp)
+       bool suppress_binary_for_specific_calls(const SgFunctionDeclaration* fndecl)
+       {
+         return ((fndecl != NULL) && isLibFunctionRequiringArgCheck(fndecl->get_name()));
+       }
 
-        const AllocKind allocKind = (del.get_is_array() ? akCxxArrayNew : akCxxNew);
+       void handle(SgFunctionCallExp& n)
+       {
+          vt.transf->visit_isFunctionCall(&n);
 
-        vt.transf->frees.push_back( Deallocations::value_type(&del, allocKind) );
-     }
+          // \pp binary should be suppressed for all calls
+          //     in order not to impact existing RTED tests, we suppress for
+          //     cases relevant to UPC
+          // \todo 1) make suppression unconditional (remove if)
+          // \todo 2) I think the following code is obsolete
+          if (suppress_binary_for_specific_calls(n.getAssociatedFunctionDeclaration()))
+          {
+            ia.isBinaryOp = false;
+          }
+       }
 
-     operator InheritedAttribute()
-     {
-       return ia;
-     }
-  };
+       void handle(SgPlusPlusOp& n)
+       {
+         push_if_ptr_movement(n, n.get_operand());
+       }
+
+       void handle(SgMinusMinusOp& n)
+       {
+         push_if_ptr_movement(n, n.get_operand());
+       }
+
+       void handle(SgDeleteExp& del)
+       {
+          typedef RtedTransformation::Deallocations Deallocations;
+
+          const AllocKind allocKind = (del.get_is_array() ? akCxxArrayNew : akCxxNew);
+
+          vt.transf->frees.push_back( Deallocations::value_type(&del, allocKind) );
+       }
+
+       operator InheritedAttribute()
+       {
+         return ia;
+       }
+    };
+  }
 
   InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute)
   {
