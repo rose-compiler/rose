@@ -240,7 +240,54 @@ main(int argc, char *argv[], char *envp[])
 #   endif
 
 
-
+    /***************************************************************************************************************************
+     * The ld-linux.so.2 on Robb's machine executes a couple of instructions that aren't yet handled by ROSE.  So we handle
+     * them here.  It turns out that we don't actually need to handle them in order for the linker to still work.
+     *
+     * 0x40014cd0: movd   mmx0, DWORD PTR ds:[eax + 0x04]
+     *     10673:1 0.000 0x40014cd5[957]:     stack frames:
+     *     10673:1 0.000 0x40014cd5[957]:       #0: bp=0xbfffe0a0 ip=0x40014cd5 in memory region ld-linux.so.2(LOAD#0)
+     *     10673:1 0.000 0x40014cd5[957]:       #1: bp=0xbfffe0e8 ip=0x40001238 in memory region ld-linux.so.2(LOAD#0)
+     *     10673:1 0.000 0x40014cd5[957]:       #2: bp=0x00000000 ip=0x40000857 in memory region ld-linux.so.2(LOAD#0)
+     * 0x40014cd8: movq   QWORD PTR ss:[ebp + 0xd4<-0x2c>], mmx0]
+     *     10673:1 0.000 0x40014cdd[959]:     stack frames:
+     *     10673:1 0.000 0x40014cdd[959]:       #0: bp=0xbfffe0a0 ip=0x40014cdd in memory region ld-linux.so.2(LOAD#0)
+     *     10673:1 0.000 0x40014cdd[959]:       #1: bp=0xbfffe0e8 ip=0x40001238 in memory region ld-linux.so.2(LOAD#0)
+     *     10673:1 0.000 0x40014cdd[959]:       #2: bp=0x00000000 ip=0x40000857 in memory region ld-linux.so.2(LOAD#0)
+     */
+#if 1
+    {
+        struct LinkerFixups: public RSIM_Callbacks::InsnCallback {
+        public:
+            VirtualMachineSemantics::ValueType<32> v1;
+            virtual LinkerFixups *clone() { return this; }
+            virtual bool operator()(bool enabled, const Args &args) {
+                SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
+                if (enabled && insn) {
+                    rose_addr_t newip = insn->get_address() + insn->get_raw_bytes().size();
+                    const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
+                    if (insn->get_address()==0x40014cd0 && x86_movd==insn->get_kind()) {
+                        std::cerr <<"LinkerFixups: handling " <<unparseInstructionWithAddress(insn) <<"\n";
+                        v1 = args.thread->semantics.read32(operands[1]);
+                        args.thread->policy.writeIP(args.thread->policy.number<32>(newip));
+                        enabled = false; // skip this instruction
+                    } else if (insn->get_address()==0x40014cd8 && x86_movq==insn->get_kind()) {
+                        std::cerr <<"LinkerFixups: handling " <<unparseInstructionWithAddress(insn) <<"\n";
+                        VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
+                        args.thread->policy.writeMemory(x86_segreg_ss, addr, v1, args.thread->policy.true_());
+                        addr = args.thread->policy.add<32>(addr, args.thread->policy.number<32>(4));
+                        args.thread->policy.writeMemory(x86_segreg_ss, addr, args.thread->policy.number<32>(0),
+                                                        args.thread->policy.true_());
+                        args.thread->policy.writeIP(args.thread->policy.number<32>(newip));
+                        enabled = false; // skip this instruction
+                    }
+                }
+                return enabled;
+            }
+        };
+        sim.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new LinkerFixups);
+    }
+#endif
 
 
 
