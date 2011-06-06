@@ -12,7 +12,8 @@ struct GraphvizVertexWriter {
     void operator()(std::ostream &output,
                     const typename boost::graph_traits<DominanceGraph>::vertex_descriptor &v) {
         SgAsmBlock *block = get(boost::vertex_name, g, v);
-        output <<"[ label=\"" <<StringUtility::addrToString(block->get_address()) <<"\" ]";
+        if (block)
+            output <<"[ label=\"" <<StringUtility::addrToString(block->get_address()) <<"\" ]";
     }
 };
 
