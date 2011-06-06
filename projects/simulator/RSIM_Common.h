@@ -1264,6 +1264,33 @@ static const Translate madvise_behaviors[] = {
     T_END
 };
 
+/* Third arg of mmap syscall */
+static const Translate mmap_pflags[] = {
+    TF(PROT_READ), TF(PROT_WRITE), TF(PROT_EXEC), TF(PROT_NONE),
+    T_END
+};
+
+/* Fourth argument of mmap syscall */
+static const Translate mmap_mflags[] = {
+    TF(MAP_SHARED), TF(MAP_PRIVATE), TF(MAP_ANONYMOUS), TF(MAP_DENYWRITE),
+    TF(MAP_EXECUTABLE), TF(MAP_FILE), TF(MAP_FIXED), TF(MAP_GROWSDOWN),
+    TF(MAP_LOCKED), TF(MAP_NONBLOCK), TF(MAP_NORESERVE), TF(MAP_POPULATE),
+#ifdef MAP_32BIT
+    TF(MAP_32BIT),
+#endif
+    T_END
+};
+
+/* Struct for argument of old mmap (syscall 90 in 32-bit x86) */
+struct mmap_arg_struct_32 {
+    uint32_t    addr;
+    uint32_t    len;
+    uint32_t    prot;
+    uint32_t    flags;
+    uint32_t    fd;
+    uint32_t    offset;
+} __attribute__((packed));
+
 /* Conversion functions */
 void convert(statfs_32 *g, const statfs64_native *h);
 void convert(statfs_32 *g, const statfs_native *h);
@@ -1304,5 +1331,6 @@ void print_siginfo_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_sched_param_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_msghdr_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 void print_new_utsname_32(RTS_Message *f, const uint8_t *_v, size_t sz);
+void print_mmap_arg_struct_32(RTS_Message *f, const uint8_t *_v, size_t sz);
 
 #endif /* ROSE_RSIM_Common_H */

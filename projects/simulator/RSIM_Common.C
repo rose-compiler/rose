@@ -478,6 +478,18 @@ print_new_utsname_32(RTS_Message *m, const uint8_t *_v, size_t sz)
 }
 
 void
+print_mmap_arg_struct_32(RTS_Message *m, const uint8_t *_v, size_t sz)
+{
+    assert(sizeof(mmap_arg_struct_32)==sz);
+    const mmap_arg_struct_32 *v = (const mmap_arg_struct_32*)_v;
+    m->more("addr=0x%08"PRIx32", len=%"PRId32", prot=", v->addr, v->len);
+    print_flags(m, mmap_pflags, v->prot);
+    m->more(", flags=");
+    print_flags(m, mmap_mflags, v->flags);
+    m->more(", fd=%"PRId32", offset=%"PRId32, v->fd, v->offset);
+}
+
+void
 convert(statfs_32 *g, const statfs64_native *h)
 {
     memset(g, 0, sizeof(*g));

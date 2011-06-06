@@ -165,6 +165,9 @@ static void syscall_mkdir(RSIM_Thread *t, int callno);
 static void syscall_mkdir_enter(RSIM_Thread *t, int callno);
 static void syscall_mknod(RSIM_Thread *t, int callno);
 static void syscall_mknod_enter(RSIM_Thread *t, int callno);
+static void syscall_mmap(RSIM_Thread *t, int callno);
+static void syscall_mmap_enter(RSIM_Thread *t, int callno);
+static void syscall_mmap_leave(RSIM_Thread *t, int callno);
 static void syscall_mmap2(RSIM_Thread *t, int callno);
 static void syscall_mmap2_enter(RSIM_Thread *t, int callno);
 static void syscall_mmap2_leave(RSIM_Thread *t, int callno);
@@ -343,6 +346,7 @@ RSIM_Linux32::ctor()
     SC_REG(78,  gettimeofday,                   gettimeofday);
     SC_REG(83,  symlink,                        default);
     SC_REG(85,  readlink,                       default);               // FIXME: probably needs an explicit leave
+    SC_REG(90,  mmap,                           mmap);
     SC_REG(91,  munmap,                         default);
     SC_REG(93,  ftruncate,                      default);
     SC_REG(94,  fchmod,                         default);
@@ -1675,6 +1679,36 @@ syscall_readlink(RSIM_Thread *t, int callno)
         ROSE_ASSERT(nwritten == (size_t)result);
     }
     t->syscall_return(result);
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_mmap_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("mmap", "P", sizeof(mmap_arg_struct_32), print_mmap_arg_struct_32);
+}
+
+/* See also: syscall_mmap2 */
+static void
+syscall_mmap(RSIM_Thread *t, int callno)
+{
+    mmap_arg_struct_32 args;
+    uint32_t args_va = t->syscall_arg(0);
+    if (sizeof(args)!=t->get_process()->mem_read(&args, args_va, sizeof args)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    uint32_t result = t->get_process()->mem_map(args.addr, args.len, args.prot, args.flags, args.offset, args.fd);
+    t->syscall_return(result);
+}
+
+static void
+syscall_mmap_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("p");
+    t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap syscall:\n");
 }
 
 /*******************************************************************************************************************************/
@@ -4310,15 +4344,7 @@ syscall_sigaltstack_leave(RSIM_Thread *t, int callno)
 static void
 syscall_mmap2_enter(RSIM_Thread *t, int callno)
 {
-    static const Translate pflags[] = { TF(PROT_READ), TF(PROT_WRITE), TF(PROT_EXEC), TF(PROT_NONE), T_END };
-    static const Translate mflags[] = { TF(MAP_SHARED), TF(MAP_PRIVATE), TF(MAP_ANONYMOUS), TF(MAP_DENYWRITE),
-                                        TF(MAP_EXECUTABLE), TF(MAP_FILE), TF(MAP_FIXED), TF(MAP_GROWSDOWN),
-                                        TF(MAP_LOCKED), TF(MAP_NONBLOCK), TF(MAP_NORESERVE),
-#ifdef MAP_32BIT
-                                        TF(MAP_32BIT),
-#endif
-                                        TF(MAP_POPULATE), T_END };
-    t->syscall_enter("mmap2", "pdffdd", pflags, mflags);
+    t->syscall_enter("mmap2", "pdffdd", mmap_pflags, mmap_mflags);
 }
 
 static void
