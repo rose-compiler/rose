@@ -941,9 +941,12 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
   if (scope == NULL)
     scope = SageBuilder::topScopeStack();
   ROSE_ASSERT(scope != NULL);
-  ROSE_ASSERT(scope->containsOnlyDeclarations());
   ROSE_ASSERT(name.is_null() == false);
   ROSE_ASSERT(return_type != NULL);
+
+  if (SageInterface::is_Python_language() == false) {
+      ROSE_ASSERT(scope->containsOnlyDeclarations());
+  }
 
   // build function type, manage function type symbol internally
   SgFunctionType * func_type = buildFunctionType(return_type,paralist);
