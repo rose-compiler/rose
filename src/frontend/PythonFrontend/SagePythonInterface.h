@@ -1,9 +1,10 @@
 #ifndef SAGE_PYTHON_INTERFACE_H_
 #define SAGE_PYTHON_INTERFACE_H_
 
-#include "Python.h"
+#include <Python.h>
 
-/* Return the number of arguments of the application command line */
+#include "SagePythonSupport.h"
+
 PyObject* sage_buildAddOp(PyObject *self, PyObject *args);
 PyObject* sage_buildExpr(PyObject *self, PyObject *args);
 PyObject* sage_buildFunctionDef(PyObject *self, PyObject *args);
@@ -29,5 +30,6 @@ static PyMethodDef SageBuilderMethods[] = {
     {"addChildrenToNode", sage_addChildrenToNode, METH_VARARGS, "Add children to a given SgNode."},
     {NULL, NULL, 0, NULL}
 };
+
 
 #endif /* SAGE_PYTHON_INTERFACE_H_ */
