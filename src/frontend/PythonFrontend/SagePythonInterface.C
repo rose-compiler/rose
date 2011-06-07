@@ -130,25 +130,6 @@ sage_addChildrenToNode(PyObject *self, PyObject *args)
 }
 
 /**
- * Get the scope statement associated with the capsule's
- * SgNode.
- */
-SgScopeStatement*
-getAssociatedScopeStatement(PyObject* scope_capsule) {
-    SgScopeStatement* sg_scope_statement = NULL;
-    SgNode* sg_node = PyDecapsulate<SgNode>(scope_capsule);
-    switch(sg_node->variantT()) {
-        case V_SgGlobal:
-            return isSgGlobal(sg_node);
-        case V_SgFunctionDeclaration:
-            return isSgFunctionDeclaration(sg_node)->get_definition();
-    }
-    cerr << "Unhandled scope statement: "
-        << sg_node->class_name() << endl;
-    ROSE_ABORT();
-}
-
-/**
  * Build a SgFunctionParameterList from the given Python
  * Arg object.
  */
@@ -242,7 +223,7 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
         buildFunctionParameterList(py_args, py_defaults_capsules);
 
     SgScopeStatement* sg_scope_statement =
-        getAssociatedScopeStatement(scope_capsule);
+        PyDecapsulate<SgScopeStatement>(scope_capsule);
 
     // TODO: Figure out types, parse parameter list
     SgFunctionDeclaration* sg_func_decl =
@@ -251,7 +232,10 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
                 sg_params,
                 sg_scope_statement);
 
-    return PyEncapsulate(sg_func_decl);
+    PyObject* return_tuple = PyTuple_New(2);
+    PyTuple_SetItem(return_tuple, 0, PyEncapsulate(sg_func_decl));
+    PyTuple_SetItem(return_tuple, 1, PyEncapsulate(sg_func_decl->get_definition()));
+    return return_tuple;
 }
 
 /*
@@ -305,7 +289,7 @@ sage_buildName(PyObject *self, PyObject *args)
 
     PyObject* py_scope_capsule = PyTuple_GetItem(args, 1);
     SgScopeStatement* scope =
-        getAssociatedScopeStatement(py_scope_capsule);
+        PyDecapsulate<SgScopeStatement>(py_scope_capsule);
     ROSE_ASSERT(scope != NULL);
 
     SgVarRefExp* sg_var_ref = SageBuilder::buildVarRefExp(id, scope);
