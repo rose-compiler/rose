@@ -309,9 +309,22 @@ sage_buildPrintStmt(PyObject *self, PyObject *args)
     return Py_BuildValue("i", 0);
 }
 
-/* 
+/*
+ * Build an SgReturnStmt node from the given Python object.
+ *  - PyObject* args = ( PyObject*, )
+ */
+PyObject*
+sage_buildReturnStmt(PyObject *self, PyObject *args)
+{
+    PyObject* py_exp_capsule = PyTuple_GetItem(args, 0);
+    SgExpression* sg_exp = PyDecapsulate<SgExpression>(py_exp_capsule);
+    SgReturnStmt* sg_return = SageBuilder::buildReturnStmt(sg_exp);
+    return PyEncapsulate(sg_return);
+}
+
+/*
  * Build an SgStringVal node from the given Python String object.
- *  - PyObject* args = ( PyStringObject*, ) 
+ *  - PyObject* args = ( PyStringObject*, )
  */
 PyObject*
 sage_buildStringVal(PyObject *self, PyObject *args)
