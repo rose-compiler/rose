@@ -185,7 +185,7 @@ cout << "mid2-Transfer Function:\n";
 cout << cg->str("    ") << "\n";
 	
 	// incorporate this node's divisibility information
-	incorporateDivInfo(func, n, state, dfInfo);
+// noDivVars 	incorporateDivInfo(func, n, state, dfInfo);
 
 cout << "late-Transfer Function:\n";
 cout << cg->str("    ") << "\n";
@@ -193,8 +193,8 @@ cout << cg->str("    ") << "\n";
 	cg->endTransaction();
 	
 	//cg->beginTransaction();
-	removeConstrDivVars(func, n, state, dfInfo);
-	cg->divVarsClosure();
+// noDivVars 	removeConstrDivVars(func, n, state, dfInfo);
+// noDivVars 	cg->divVarsClosure();
 	//cg->endTransaction();
 	
 	return modified;
@@ -227,68 +227,68 @@ bool ChkptRangeAnalysis::incorporateConditionalsInfo(const Function& func, const
 
 // incorporates the current node's divisibility information into the current node's constraint graph
 // returns true if this causes the constraint graph to change and false otherwise
-bool ChkptRangeAnalysis::incorporateDivInfo(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
-{
-	bool modified = false;
-	ConstrGraph* cg = dynamic_cast<ConstrGraph*>(dfInfo.front());
-	
-	printf("incorporateDivInfo()\n");
-	FiniteVarsExprsProductLattice* prodL = dynamic_cast<FiniteVarsExprsProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
-	set<varID> liveVars = getAllLiveVarsAt(ldva, n, state, "    ");
-	for(varIDSet::iterator it = liveVars.begin(); it!=liveVars.end(); it++)
-	{
-		varID var = *it;
-		cg->addDivVar(var);
-		
-		/* // create the divisibility variable for the current variable 
-		varID divVar = ConstrGraph::getDivScalar(var);*/
-		
-		/*DivLattice* varDivL = dynamic_cast<DivLattice*>(prodL->getVarLattice(func, var));
-		
-		// incorporate this variable's divisibility information (if any)
-		if(varDivL->getLevel() == DivLattice::divKnown && !(varDivL->getDiv()==1 && varDivL->getRem()==0))
-		{
-			modified = cg->addDivVar(var, varDivL->getDiv(), varDivL->getRem()) || modified;
-		}
-		else if(varDivL->getLevel() != DivLattice::bottom)
-		{
-			modified = cg->addDivVar(var, 1, 0) || modified;
-		}*/
-	}
-	
-	return modified;
-}
+// noDivVars bool ChkptRangeAnalysis::incorporateDivInfo(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
+// noDivVars {
+// noDivVars 	bool modified = false;
+// noDivVars 	ConstrGraph* cg = dynamic_cast<ConstrGraph*>(dfInfo.front());
+// noDivVars 	
+// noDivVars 	printf("incorporateDivInfo()\n");
+// noDivVars 	FiniteVarsExprsProductLattice* prodL = dynamic_cast<FiniteVarsExprsProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
+// noDivVars 	set<varID> liveVars = getAllLiveVarsAt(ldva, n, state, "    ");
+// noDivVars 	for(varIDSet::iterator it = liveVars.begin(); it!=liveVars.end(); it++)
+// noDivVars 	{
+// noDivVars 		varID var = *it;
+// noDivVars 		cg->addDivVar(var);
+// noDivVars 		
+// noDivVars 		/* // create the divisibility variable for the current variable 
+// noDivVars 		varID divVar = ConstrGraph::getDivScalar(var);*/
+// noDivVars 		
+// noDivVars 		/*DivLattice* varDivL = dynamic_cast<DivLattice*>(prodL->getVarLattice(func, var));
+// noDivVars 		
+// noDivVars 		// incorporate this variable's divisibility information (if any)
+// noDivVars 		if(varDivL->getLevel() == DivLattice::divKnown && !(varDivL->getDiv()==1 && varDivL->getRem()==0))
+// noDivVars 		{
+// noDivVars 			modified = cg->addDivVar(var, varDivL->getDiv(), varDivL->getRem()) || modified;
+// noDivVars 		}
+// noDivVars 		else if(varDivL->getLevel() != DivLattice::bottom)
+// noDivVars 		{
+// noDivVars 			modified = cg->addDivVar(var, 1, 0) || modified;
+// noDivVars 		}*/
+// noDivVars 	}
+// noDivVars 	
+// noDivVars 	return modified;
+// noDivVars }
 
 // For any variable for which we have divisibility info, remove its constraints to other variables (other than its
 // divisibility variable)
-bool ChkptRangeAnalysis::removeConstrDivVars(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
-{
-	bool modified = false;
-	ConstrGraph* cg = dynamic_cast<ConstrGraph*>(dfInfo.front());
-	
-	printf("removeConstrDivVars()\n");
-	
-	FiniteVarsExprsProductLattice* prodL = dynamic_cast<FiniteVarsExprsProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
-	set<varID> liveVars = getAllLiveVarsAt(ldva, n, state, "    ");
-	for(varIDSet::iterator it = liveVars.begin(); it!=liveVars.end(); it++)
-	{
-		varID var = *it;
-		cg->disconnectDivOrigVar(var);
-		/*DivLattice* varDivL = dynamic_cast<DivLattice*>(prodL->getVarLattice(func, var));
-		
-		// incorporate this variable's divisibility information (if any)
-		if(varDivL->getLevel() == DivLattice::divKnown && !(varDivL->getDiv()==1 && varDivL->getRem()==0))
-		{
-			cg->disconnectDivOrigVar(var, varDivL->getDiv(), varDivL->getRem());
-		}
-		else if(varDivL->getLevel() != DivLattice::bottom)
-		{
-			cg->disconnectDivOrigVar(var, 1, 0);
-		}*/
-	}
-	
-	cout << cg->str("    ") << "\n";
-	
-	return modified;
-}
+// noDivVars bool ChkptRangeAnalysis::removeConstrDivVars(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
+// noDivVars {
+// noDivVars 	bool modified = false;
+// noDivVars 	ConstrGraph* cg = dynamic_cast<ConstrGraph*>(dfInfo.front());
+// noDivVars 	
+// noDivVars 	printf("removeConstrDivVars()\n");
+// noDivVars 	
+// noDivVars 	FiniteVarsExprsProductLattice* prodL = dynamic_cast<FiniteVarsExprsProductLattice*>(state.getLatticeBelow(divAnalysis, 0));
+// noDivVars 	set<varID> liveVars = getAllLiveVarsAt(ldva, n, state, "    ");
+// noDivVars 	for(varIDSet::iterator it = liveVars.begin(); it!=liveVars.end(); it++)
+// noDivVars 	{
+// noDivVars 		varID var = *it;
+// noDivVars 		cg->disconnectDivOrigVar(var);
+// noDivVars 		/*DivLattice* varDivL = dynamic_cast<DivLattice*>(prodL->getVarLattice(func, var));
+// noDivVars 		
+// noDivVars 		// incorporate this variable's divisibility information (if any)
+// noDivVars 		if(varDivL->getLevel() == DivLattice::divKnown && !(varDivL->getDiv()==1 && varDivL->getRem()==0))
+// noDivVars 		{
+// noDivVars 			cg->disconnectDivOrigVar(var, varDivL->getDiv(), varDivL->getRem());
+// noDivVars 		}
+// noDivVars 		else if(varDivL->getLevel() != DivLattice::bottom)
+// noDivVars 		{
+// noDivVars 			cg->disconnectDivOrigVar(var, 1, 0);
+// noDivVars 		}*/
+// noDivVars 	}
+// noDivVars 	
+// noDivVars 	cout << cg->str("    ") << "\n";
+// noDivVars 	
+// noDivVars 	return modified;
+// noDivVars }
 

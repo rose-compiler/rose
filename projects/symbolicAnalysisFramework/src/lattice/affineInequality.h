@@ -301,19 +301,18 @@ class affineInequalityFact : public NodeFact
 /********************************
  *** affineInequalitiesPlacer ***
  ********************************/
+// points trueIneqFact and falseIneqFact to freshly allocated objects that represent the true and false
+// branches of the control flow guarded by the given expression. They are set to NULL if our representation
+// cannot represent one of the expressions.
+// doFalseBranch - if =true, falseIneqFact is set to the correct false-branch condition and to NULL otherwise
+void setTrueFalseIneq(SgExpression* expr, 
+                      affineInequalityFact **trueIneqFact, affineInequalityFact **falseIneqFact, 
+                      bool doFalseBranch);
+	                             
 class affineInequalitiesPlacer : public UnstructuredPassIntraAnalysis
 {
 	public:
 	void visit(const Function& func, const DataflowNode& n, NodeState& state);
-	
-	protected:
-		// points trueIneqFact and falseIneqFact to freshly allocated objects that represent the true and false
-	// branches of the control flow guarded by the given expression. They are set to NULL if our representation
-	// cannot represent one of the expressions.
-	// doFalseBranch - if =true, falseIneqFact is set to the correct false-branch condition and to NULL otherwise
-	static void setTrueFalseIneq(SgExpression* expr, 
-	                             affineInequalityFact **trueIneqFact, affineInequalityFact **falseIneqFact, 
-	                             bool doFalseBranch);
 };
 
 /*// Looks over all the conditional statements in the application and associates appropriate 
@@ -342,5 +341,8 @@ void runAffineIneqPlacer(bool printStates=false);
 
 // returns the set of inequalities known to be true at the given DataflowNode
 const set<varAffineInequality>& getAffineIneq(const DataflowNode& n);
+
+// Returns the set of inequalities known to be true at the given DataflowNode's descendants
+list<set<varAffineInequality> > getAffineIneqDesc(const DataflowNode& n);
 
 #endif

@@ -213,7 +213,7 @@ CPPFLAGS =
 CXX = /usr/local/bin/g++
 CXXCPP = /usr/local/bin/g++ -E
 CXXDEPMODE = depmode=none
-CXXFLAGS = 
+CXXFLAGS =  -g
 CXXLD = /usr/local/bin/g++
 CXX_DEBUG = 
 CXX_OPTIMIZE = 

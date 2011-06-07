@@ -183,8 +183,8 @@ CXXCOMPILE = @echo "  COMPILE $@"; $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES
 LTCXXCOMPILE = @echo "  COMPILE $@"; $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) \
 	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
 	$(AM_CXXFLAGS) $(CXXFLAGS)
-CXXLINK = @echo "  LINK    $@"; $(LIBTOOL) --tag=CXX --mode=link $(CXXLD) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+CXXLINK = @echo "  LINK    $@"; \
+        $(LIBTOOL) --tag=CXX --mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(libSaflattice_la_SOURCES) $(selfTest_SOURCES)
 DIST_SOURCES = $(libSaflattice_la_SOURCES) $(selfTest_SOURCES)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
@@ -251,7 +251,7 @@ CPPFLAGS =
 CXX = /usr/local/bin/g++
 CXXCPP = /usr/local/bin/g++ -E
 CXXDEPMODE = depmode=none
-CXXFLAGS = 
+CXXFLAGS =  -g
 CXXLD = /usr/local/bin/g++
 CXX_DEBUG = 
 CXX_OPTIMIZE = 
@@ -1115,16 +1115,17 @@ libSaflattice_la_SOURCES = ConstrGraph.C  intArithLogical.C  lattice.C affineIne
 include_HEADERS = ConstrGraph.h  intArithLogical.h  latticeFull.h  lattice.h affineInequality.h
 selfTest_SOURCES = selfTest.C
 # the order or la files matters!!
-selfTest_LDADD = libSaflattice.la \
+selfTest_LDADD = \
+	$(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
+	$(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
+	libSaflattice.la \
 	$(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
 	$(SAF_BUILD_ROOT)/src/cfgUtils/libSafcfgUtils.la \
 	$(SAF_BUILD_ROOT)/src/variables/libSafvariables.la \
 	$(SAF_BUILD_ROOT)/src/rwAccessLabeler/libSafrwAccessLabeler.la \
 	$(SAF_BUILD_ROOT)/src/arrIndexLabeler/libSafarrIndexLabeler.la \
 	$(SAF_BUILD_ROOT)/src/state/libSafstate.la \
-	$(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
 	$(SAF_BUILD_ROOT)/src/external/libSafexternal.la \
-	$(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
 	$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #	./selfTest test_example.c
 EXTRA_DIST = test.C
@@ -1181,6 +1182,7 @@ clean-noinstPROGRAMS:
 	done
 selfTest$(EXEEXT): $(selfTest_OBJECTS) $(selfTest_DEPENDENCIES) 
 	@rm -f selfTest$(EXEEXT)
+	echo "$(CXXLINK) $(selfTest_LDFLAGS) $(selfTest_OBJECTS) $(selfTest_LDADD) $(LIBS)"
 	$(CXXLINK) $(selfTest_LDFLAGS) $(selfTest_OBJECTS) $(selfTest_LDADD) $(LIBS)
 
 mostlyclean-compile:

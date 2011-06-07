@@ -54,13 +54,13 @@ bool IfMeetLat::meetUpdate(Lattice* that)
 		copy(that);
 		isIfMeet = false;
 		initialized=true;
-		//printf("meetUpdate Case 1, result: %s\n", str("").c_str());
+		//Dbg::dbg << "meetUpdate Case 1, result: "<<str("")<<endl;
 		return true;
 	}
 	else if(!dynamic_cast<IfMeetLat*>(that)->initialized)
 	{
 		initialized=true;
-		//printf("meetUpdate Case 2, result: %s\n", str("").c_str());
+		//Dbg::dbg << "meetUpdate Case 2, result: "<<str("")<<endl;
 		return false;
 	}
 	else 
@@ -119,7 +119,7 @@ string IfMeetLat::str(string indent)
 {
 	ostringstream ss;
 
-	ss << indent << "IfMeetLat[initialized="<<(initialized?"true":"false")<<", isIfMeet="<<(isIfMeet?"true":"false")<<"\n";
+	ss << indent << "IfMeetLat[initialized="<<(initialized?"true":"false")<<", isIfMeet="<<(isIfMeet?"true":"false")<<endl;
 	ss << indent << "          ifHist = <";
 	for(vector<bool>::iterator it = ifHist.begin(); it!=ifHist.end(); )
 	{
@@ -167,7 +167,7 @@ void IfMeetDetector::genInitState(const Function& func, const DataflowNode& n, c
 bool IfMeetDetector::transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
 {
 	/*printf("-----------------------------------\n");
-	printf("IfMeetDetector::transfer() function %s() node=<%s | %s>\n", func.get_name().str(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());*/
+	printf("IfMeetDetector::transfer() function %s() node=[%s | %s]\n", func.get_name().str(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());*/
 	
 	//bool modified = false;
 	IfMeetLat* ifml = dynamic_cast<IfMeetLat*>(dfInfo.front());
@@ -363,7 +363,7 @@ string RankDepIfMeetLat::str(string indent)
 {
 	ostringstream ss;
 
-	ss << indent << "RankDepIfMeetLat[initialized="<<(initialized?"true":"false")<<", isIfMeet="<<(isIfMeet?"true":"false")<<"\n";
+	ss << indent << "RankDepIfMeetLat[initialized="<<(initialized?"true":"false")<<", isIfMeet="<<(isIfMeet?"true":"false")<<endl;
 	ss << indent << "          ifHist = <";
 	for(vector<bool>::iterator it = ifHist.begin(); it!=ifHist.end(); )
 	{
@@ -411,9 +411,9 @@ void RankDepIfMeetDetector::genInitState(const Function& func, const DataflowNod
 bool RankDepIfMeetDetector::transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
 {
 	/*printf("-----------------------------------\n");
-	printf("IfMeetDetector::transfer() function %s() node=<%s | %s>\n", func.get_name().str(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());
+	printf("IfMeetDetector::transfer() function %s() node=[%s | %s]\n", func.get_name().str(), n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());
 	
-	cout << "dfInfo.front() = "<<dfInfo.front()->str() << "\n";*/
+	Dbg::dbg << "dfInfo.front() = "<<dfInfo.front()->str() << endl;*/
 	//bool modified = false;
 	RankDepIfMeetLat* ifml = dynamic_cast<RankDepIfMeetLat*>(dfInfo.front());
 	

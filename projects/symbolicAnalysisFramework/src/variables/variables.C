@@ -506,12 +506,12 @@ bool operator != (SgExpression* expr, const varID &var)
  **************/
 
 // string representation of the variable reference
-/*const char* varID::str()
-{
-	return getString().c_str();
-}*/
-
+// If noAnnot is true, excludes annotations from the name.
 string varID::str() const
+{
+	return str(false);
+}
+string varID::str(bool noAnnot) const
 {
 //	printf("components.size()=%d\n", components.size());
 	ostringstream outs;
@@ -535,9 +535,11 @@ string varID::str() const
 	else
 		outs << name;
 	
-	for(map<string, void*>::const_iterator it=annotations.begin(); it!=annotations.end(); it++)
-	{
-		outs << "|" << it->first << "->" << it->second;
+	if(!noAnnot) {
+		for(map<string, void*>::const_iterator it=annotations.begin(); it!=annotations.end(); it++)
+		{
+			outs << ":" << it->first << "_" << it->second;
+		}
 	}
 	
 	return outs.str();

@@ -165,7 +165,7 @@ CONVENIENCE_LTDL_FALSE =
 CONVENIENCE_LTDL_TRUE = #
 CPP = /usr/local/bin/gcc -E
 CPPFLAGS = 
-CXX = /usr/local/bin/g++
+CXX = /usr/local/bin/g++ -g
 CXXCPP = /usr/local/bin/g++ -E
 CXXDEPMODE = depmode=none
 CXXFLAGS = 

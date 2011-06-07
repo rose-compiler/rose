@@ -1119,6 +1119,8 @@ libSafchkptRangeAnalysis_la_SOURCES = chkptRangeAnalysis.C
 include_HEADERS = chkptRangeAnalysis.h
 selfTest_SOURCES = selfTest.C
 selfTest_LDADD = libSafchkptRangeAnalysis.la \
+	$(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
+	$(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
 	$(SAF_BUILD_ROOT)/src/lattice/libSaflattice.la \
 	$(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
 	$(SAF_BUILD_ROOT)/src/cfgUtils/libSafcfgUtils.la \
@@ -1128,9 +1130,6 @@ selfTest_LDADD = libSafchkptRangeAnalysis.la \
 	$(SAF_BUILD_ROOT)/src/varBitVector/libSafvarBitVector.la \
 	$(SAF_BUILD_ROOT)/src/rwAccessLabeler/libSafrwAccessLabeler.la \
 	$(SAF_BUILD_ROOT)/src/arrIndexLabeler/libSafarrIndexLabeler.la \
-	$(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
-	$(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
-	$(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
 	$(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #	./selfTest $(srcdir)/test_example.c
 EXTRA_DIST = test_example.c

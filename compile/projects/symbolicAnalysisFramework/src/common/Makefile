@@ -135,7 +135,7 @@ CONFIG_HEADER = $(top_builddir)/rose_config.h
 CONFIG_CLEAN_FILES =
 LTLIBRARIES = $(noinst_LTLIBRARIES)
 libSafcommon_la_LIBADD =
-am_libSafcommon_la_OBJECTS = genUID.lo
+am_libSafcommon_la_OBJECTS = genUID.lo common.lo
 libSafcommon_la_OBJECTS = $(am_libSafcommon_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp =
@@ -220,7 +220,7 @@ CPPFLAGS =
 CXX = /usr/local/bin/g++
 CXXCPP = /usr/local/bin/g++ -E
 CXXDEPMODE = depmode=none
-CXXFLAGS = 
+CXXFLAGS = -g
 CXXLD = /usr/local/bin/g++
 CXX_DEBUG = 
 CXX_OPTIMIZE = 
@@ -1083,7 +1083,7 @@ INCLUDES = $(ROSE_INCLUDES) \
 # Saf is the short for symbolic analysis framework.
 # it is used to avoid possible name collision 
 noinst_LTLIBRARIES = libSafcommon.la
-libSafcommon_la_SOURCES = common.h genUID.C
+libSafcommon_la_SOURCES = common.h genUID.C common.C
 include_HEADERS = common.h  genUID.h
 all: all-am
 

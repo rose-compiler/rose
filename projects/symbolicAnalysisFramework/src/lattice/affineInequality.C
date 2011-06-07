@@ -340,9 +340,9 @@ string affineInequalityFact::str(string indent) const
 // branches of the control flow guarded by the given expression. They are set to NULL if our representation
 // cannot represent one of the expressions.
 // doFalseBranch - if =true, falseIneqFact is set to the correct false-branch condition and to NULL otherwise
-void affineInequalitiesPlacer::setTrueFalseIneq(SgExpression* expr, 
-                             affineInequalityFact **trueIneqFact, affineInequalityFact **falseIneqFact, 
-                             bool doFalseBranch)
+void setTrueFalseIneq(SgExpression* expr, 
+                      affineInequalityFact **trueIneqFact, affineInequalityFact **falseIneqFact, 
+                      bool doFalseBranch)
 {
 	varID x, y;
 	bool negX, negY;
@@ -512,6 +512,57 @@ const set<varAffineInequality>& getAffineIneq(const DataflowNode& n)
 		return emptySet;
 }
 
+// Returns the set of inequalities known to be true at the given DataflowNode's descendants
+list<set<varAffineInequality> > getAffineIneqDesc(const DataflowNode& n)
+{
+	if(analysisDebugLevel>1) printf("getAffineIneqDesc node=<%s | %s>\n", n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());
+	
+	list<set<varAffineInequality> > ineqs;
+	
+	affineInequalityFact *trueIneqFact=NULL, *falseIneqFact=NULL;
+	bool doFalseBranch;
+	// this conditional statement's test expression
+	SgExpression* testExpr;
+	
+	if(isSgIfStmt(n.getNode()))
+	{
+		SgIfStmt* ifStmt = isSgIfStmt(n.getNode());
+		ROSE_ASSERT(isSgExprStatement(ifStmt->get_conditional()));
+		testExpr = isSgExprStatement(ifStmt->get_conditional())->get_expression();
+		doFalseBranch = true;
+	}
+	else if(isSgForStatement(n.getNode()))
+	{
+		SgForStatement* forStmt = isSgForStatement(n.getNode());
+		ROSE_ASSERT(isSgExprStatement(forStmt->get_test()));
+		testExpr = isSgExprStatement(forStmt->get_test())->get_expression();
+		doFalseBranch = true;
+	}
+	else
+		return ineqs;
+		
+	// Generate the inequality attributes that will be associated with this if/for statement's 
+	// true and false branches
+	setTrueFalseIneq(testExpr, &trueIneqFact, &falseIneqFact, doFalseBranch);
+				
+	// iterate over both the descendants
+	vector<DataflowEdge> edges = n.outEdges();
+	//printf("edges.size()=%d, trueIneqFact=%p, falseIneqFact=%p\n", edges.size(), trueIneqFact, falseIneqFact);
+	if(analysisDebugLevel>1)
+	{
+		cout << "trueIneqFact="<<trueIneqFact->str()<<"\n";
+		if(doFalseBranch)
+			cout << "falseIneqFact="<<falseIneqFact->str()<<"\n";
+	}
+	for(vector<DataflowEdge>::iterator ei = edges.begin(); ei!=edges.end(); ei++)
+	{
+		if((*ei).condition() == eckTrue && trueIneqFact)
+			ineqs.push_back(trueIneqFact->ineqs);
+		else if((*ei).condition() == eckFalse && falseIneqFact)
+			ineqs.push_back(falseIneqFact->ineqs);
+	}
+	return ineqs;
+}
 
 // represents a full affine inequality, including the variables involved in the inequality
 /***************************
@@ -1028,7 +1079,7 @@ bool affineInequality::semLessThan(const affineInequality& that,
 	// If x is a constant, the constraint with the tighter lower bound on y is semantically smaller
 	if(xConst)
 	{
-		cout << indent << "x is constant, This bound: "<<((xZero->getC()*a-c)/b)<<" <= y, That bound: "<<((xZero->getC()*that.a-that.c)/that.b)<<" <= y\n";
+		//cout << indent << "x is constant, This bound: "<<((xZero->getC()*a-c)/b)<<" <= y, That bound: "<<((xZero->getC()*that.a-that.c)/that.b)<<" <= y\n";
 		// xConst*a <= y*b + c AND xConst*a' <= y*b' + c'
 		// xConst*a-c <= y*b       xConst*a'-c' <= y*b'
 		// (xConst*a-c) / b <= y*b (xConst*a'-c') / b' <= y
@@ -1048,7 +1099,7 @@ bool affineInequality::semLessThan(const affineInequality& that,
 	else if(yConst)
 	{
 		//printf("yZero, c == that.c=%d, a<that.a=%d, a==1 && that.a==1=%d, c<that.c=%d\n", c == that.c, a<that.a, a==1 && that.a==1, c<that.c);
-		cout << indent << "x is constant, This bound: x <= "<<((yZero->getC()*b+c)/a)<<", That bound: x <= "<<((yZero->getC()*that.b+that.c)/that.a)<<"\n";
+		//cout << indent << "x is constant, This bound: x <= "<<((yZero->getC()*b+c)/a)<<", That bound: x <= "<<((yZero->getC()*that.b+that.c)/that.a)<<"\n";
 		// x*a <= yConst*b + c    AND x*a' <= yConst*b + c'
 		// x <= (yConst*b + c)/a      x <= (yConst*b + c')/a'
 		// The constraint with the smaller rhs is tighter since it admits fewer values of x
@@ -1073,13 +1124,13 @@ bool affineInequality::semLessThan(const affineInequality& that,
 		if(b*that.a == a*that.b)
 		{
 	//printf("affineInequality::operator<<  c=%d, that.c=%d\n", c, that.c);
-			cout << indent << "neither constant, slopes equal, c*that.a="<<c*that.a<<" that.c*a="<<that.c*a<<"\n";
+			//cout << indent << "neither constant, slopes equal, c*that.a="<<c*that.a<<" that.c*a="<<that.c*a<<"\n";
 			// this has more information than that if its' y-intercept is lower, since it leaves x 
 			// with fewer valid points relative to y
 			return c*that.a < that.c*a;
 		}
 		else {
-			cout << indent << "sem< slopes!= this="<<str("")<<" that="<<that.str("")<<"\n";
+			//cout << indent << "sem< slopes!= this="<<str("")<<" that="<<that.str("")<<"\n";
 			// Identify the y-coordinate of the intersection of This line and THAT line
 			//      this                                        that
 			// x*a = y*b + c          AND x*a' = y*b' + c'
@@ -1090,18 +1141,18 @@ bool affineInequality::semLessThan(const affineInequality& that,
 			// yIntersect = (c'*a - c*a')/(b*a' - b'*a)
 			// y*zyA <= ZERO + zyA     AND ZERO <= y*zyB' + zyC'
 			double yIntersect = (that.c*a - c*that.a)/(b*that.a - that.b*a);
-			cout << indent << "    yIntersect="<<yIntersect<<" this slope="<<(b/a)<<" that slope="<<(that.b/that.a)<<"\n";
-			if(zeroY && yZero) cout << indent << "    zeroY="<<zeroY->str("")<<" yZero="<<yZero->str("")<<"\n";
+			//cout << indent << "    yIntersect="<<yIntersect<<" this slope="<<(b/a)<<" that slope="<<(that.b/that.a)<<"\n";
+			//if(zeroY && yZero) cout << indent << "    zeroY="<<zeroY->str("")<<" yZero="<<yZero->str("")<<"\n";
 			
 			// If the slope of This line is higher than the slope of That line (equivalent to b/a > that.b/that.a)
 			if(b*that.a > a*that.b) {
 				// If the only valid points are above the y-intersection, This is tighter than That
 				if(zeroY && zeroY->level==constrKnown && zeroY->c>(0-yIntersect*zeroY->b)) {
-					cout << indent << "    " << "only valid points are above the y-intersection, This is tighter than That\n";
+					//cout << indent << "    " << "only valid points are above the y-intersection, This is tighter than That\n";
 					return true;
 				// If the only valid points are below the y-intersection, That is tighter than This
 				} else if(yZero && yZero->level==constrKnown && yZero->c<yIntersect*yZero->a) {
-					cout << indent << "    " << "only valid points are below the y-intersection, That is tighter than This\n";
+					//cout << indent << "    " << "only valid points are below the y-intersection, That is tighter than This\n";
 					return false;
 				}
 			}
@@ -1109,11 +1160,11 @@ bool affineInequality::semLessThan(const affineInequality& that,
 			else if(b*that.a > a*that.b) {
 				// If the only valid points are above the y-intersection, That is tighter than This
 				if(zeroY && zeroY->level==constrKnown && zeroY->c>(0-yIntersect*zeroY->b)) {
-					cout << indent << "    " << "only valid points are above the y-intersection, That is tighter than This\n";
+					//cout << indent << "    " << "only valid points are above the y-intersection, That is tighter than This\n";
 					return false;
 				// If the only valid points are below the y-intersection, This is tighter than That
 				} else if(yZero && yZero->level==constrKnown && yZero->c<yIntersect*yZero->a) {
-					cout << indent << "    " << "only valid points are below the y-intersection, This is tighter than That\n";
+					//cout << indent << "    " << "only valid points are below the y-intersection, This is tighter than That\n";
 					return true;
 				}
 			}
@@ -1133,18 +1184,18 @@ bool affineInequality::semLessThan(const affineInequality& that,
 			// xIntersect = (c*b' - c'*b)/(a*b'- a'*b)
 			// x*zxA <= ZERO + zxC     AND ZERO <= x*zxB' + zxC'
 			double xIntersect = (that.c*b - c*that.b)/(b*that.a - that.b*a);
-			cout << indent << "    xIntersect="<<xIntersect<<" this slope="<<(b/a)<<" that slope="<<(that.b/that.a)<<"\n";
+			//cout << indent << "    xIntersect="<<xIntersect<<" this slope="<<(b/a)<<" that slope="<<(that.b/that.a)<<"\n";
 			if(zeroX && xZero) cout << indent << "    zeroX="<<zeroX->str("")<<" xZero="<<xZero->str("")<<"\n";
 			
 			// If the slope of This line is higher than the slope of That line (equivalent to b/a > that.b/that.a)
 			if(b*that.a > a*that.b) {
 				// If the only valid points are above the x-intersection, This is tighter than That
 				if(zeroX && zeroX->level==constrKnown && zeroX->c>(0-xIntersect*zeroX->b)) {
-					cout << indent << "    " << "only valid points are above the x-intersection, This is tighter than That\n";
+					//cout << indent << "    " << "only valid points are above the x-intersection, This is tighter than That\n";
 					return true;
 				// If the only valid points are below left the c-intersection, That is tighter than This
 				} else if(xZero && xZero->level==constrKnown && xZero->c<xIntersect*xZero->a) {
-					cout << indent << "    " << "only valid points are below left the c-intersection, That is tighter than This\n";
+					//cout << indent << "    " << "only valid points are below left the c-intersection, That is tighter than This\n";
 					return false;
 				}
 			}
@@ -1152,11 +1203,11 @@ bool affineInequality::semLessThan(const affineInequality& that,
 			else if(b*that.a > a*that.b) {
 				// If the only valid points are above the x-intersection, That is tighter than This
 				if(zeroX && zeroX->level==constrKnown && zeroX->c>(0-yIntersect*zeroX->b)) {
-					cout << indent << "    " << "only valid points are above the x-intersection, That is tighter than This\n";
+					//cout << indent << "    " << "only valid points are above the x-intersection, That is tighter than This\n";
 					return false;
 				// If the only valid points are below the x-intersection, This is tighter than That
 				} else if(xZero && xZero->level==constrKnown && xZero->c<yIntersect*xZero->a) {
-					cout << indent << "    " << "only valid points are below the x-intersection, This is tighter than That\n";
+					//cout << indent << "    " << "only valid points are below the x-intersection, This is tighter than That\n";
 					return true;
 				}
 			}
@@ -1906,18 +1957,18 @@ string affineInequality::str(string indent)// const
 	
 	if(level==bottom)
 		//outs << "<constraint: ["<<y.str()<<"] bottom>";
-		outs << "<aI: bottom>";
+		outs << "[aI: bottom]";
 	else if(level==constrKnown)
 		//outs << "<affineInequality: x*"<<a<<" <= "<<y.str<<"*"<<b<<" + "<<c<<">";
 		if(xSign==unknownSgn && ySign==unknownSgn)
-			outs << "<aI: x*"<<a<<" <= y*"<<b<<" + "<<c<<">";
+			outs << "[aI: x*"<<a<<" <= y*"<<b<<" + "<<c<<"]";
 		else
-			outs << "<aI: x*"<<a<<" <= y*"<<b<<" + "<<c<<">";//|"<<signToString(xSign)<<"|"<<signToString(ySign)<<">";
+			outs << "[aI: x*"<<a<<" <= y*"<<b<<" + "<<c<<"]";//|"<<signToString(xSign)<<"|"<<signToString(ySign)<<">";
 	else if(level==top)
 		//outs << "<affineInequality: ["<<y.str()<<"] top>";
-		outs << "<aI: top>";
+		outs << "[aI: top]";
 	
-	return outs.str();
+	return Dbg::escape(outs.str());
 }
 
 string affineInequality::str(string indent) const
@@ -1925,16 +1976,16 @@ string affineInequality::str(string indent) const
 	ostringstream outs;
 	
 	if(level==bottom)
-		//outs << "<constraint: ["<<y.str()<<"] bottom>";
-		outs << "<aI: bottom>";
+		//outs << "[constraint: ["<<y.str()<<"] bottom]";
+		outs << "[aI: bottom>";
 	else if(level==constrKnown)
-		//outs << "<affineInequality: x*"<<a<<" <= "<<y.str<<"*"<<b<<" + "<<c<<">";
-		outs << "<aI: x*"<<a<<" <= y*"<<b<<" + "<<c<<"";//|"<<signToString(xSign)<<"|"<<signToString(ySign)<<">";
+		//outs << "[affineInequality: x*"<<a<<" <= "<<y.str<<"*"<<b<<" + "<<c<<"]";
+		outs << "[aI: x*"<<a<<" <= y*"<<b<<" + "<<c<<"]";//|"<<signToString(xSign)<<"|"<<signToString(ySign)<<">";
 	else if(level==top)
 		//outs << "<affineInequality: ["<<y.str()<<"] top>";
-		outs << "<aI: top>";
+		outs << "[aI: top]";
 	
-	return outs.str();
+	return Dbg::escape(outs.str());
 }
 
 string affineInequality::str(varID x, varID y, string indent) const
@@ -1942,15 +1993,15 @@ string affineInequality::str(varID x, varID y, string indent) const
 	ostringstream outs;
 	
 	if(level==bottom)
-		outs << "<aI: ["<<x.str()<<"->"<<y.str()<<"] bottom>";
+		outs << "[aI: ["<<x.str()<<"->"<<y.str()<<"] bottom]";
 	/*else if(level==falseConstr)
-		outs << "<aI: ["<<x.str()<<"->"<<y.str()<<"] falseConstr>";*/
+		outs << "[aI: ["<<x.str()<<"->"<<y.str()<<"] falseConstr]";*/
 	else if(level==constrKnown)
-		outs << "<aI: "<<x.str()<<"*"<<a<<" <= "<<y.str()<<"*"<<b<<" + "<<c<<"";//|"<<signToString(xSign)<<"|"<<signToString(ySign)<<">";
+		outs << "[aI: "<<x.str()<<"*"<<a<<" <= "<<y.str()<<"*"<<b<<" + "<<c<<"]";//|"<<signToString(xSign)<<"|"<<signToString(ySign)<<">";
 	else if(level==top)
-		outs << "<aI: ["<<x.str()<<"->"<<y.str()<<"] top>";
+		outs << "[aI: ["<<x.str()<<"->"<<y.str()<<"] top]";
 	
-	return outs.str();
+	return Dbg::escape(outs.str());
 }
 
 // Prints out the negation of the constraint ax <= by+c
@@ -1959,15 +2010,15 @@ string affineInequality::strNeg(varID x, varID y, string indent) const
 	ostringstream outs;
 	
 	if(level==bottom)
-		outs << "<aI: ["<<x.str()<<"->"<<y.str()<<"] bottom>";
+		outs << "[aI: ["<<x.str()<<"->"<<y.str()<<"] bottom]";
 	/*else if(level==falseConstr)
-		outs << "<aI: ["<<x.str()<<"->"<<y.str()<<"] falseConstr>";*/
+		outs << "[aI: ["<<x.str()<<"->"<<y.str()<<"] falseConstr]";*/
 	else if(level==constrKnown)
-		outs << "<aI: "<<x.str()<<"*"<<a<<" > "<<y.str()<<"*"<<b<<" + "<<c<<"";//|"<<signToString(xSign)<<"|"<<signToString(ySign)<<">";
+		outs << "[aI: "<<x.str()<<"*"<<a<<" > "<<y.str()<<"*"<<b<<" + "<<c<<"]";//|"<<signToString(xSign)<<"|"<<signToString(ySign)<<">";
 	else if(level==top)
-		outs << "<aI: ["<<x.str()<<"->"<<y.str()<<"] top>";
+		outs << "[aI: ["<<x.str()<<"->"<<y.str()<<"] top]";
 	
-	return outs.str();
+	return Dbg::escape(outs.str());
 }
 
 /*// the basic logical operations that must be supported by any implementation of 

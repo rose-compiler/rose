@@ -84,20 +84,20 @@ class pCFG_Checkpoint
 	NodeState* fState;
 	
 	// Set of processes that are currently active (i.e. not blocked)
-	set<int> activePSets;
+	set<unsigned int> activePSets;
 	
 	// Set of processes that are currently blocked on communication or the end of the function
-	set<int> blockedPSets;
+	set<unsigned int> blockedPSets;
 	
 	// Set of processes that are are moved from blocked to active status from the time the 
 	// analysis is checkpointed to the time that it resumes
-	set<int> releasedPSets;
+	set<unsigned int> releasedPSets;
 	
 	// True if this checkpoint corresponds to a process set split
 	bool isSplit;
 	
 	// The process set that performed the split
-	int splitPSet;
+	unsigned int splitPSet;
 	
 	// The conditions that pertain to the splitPSet along the various splits
 	//pCFG_SplitConditions splitConditions;
@@ -106,18 +106,18 @@ class pCFG_Checkpoint
 	pCFG_Checkpoint(const pCFG_Checkpoint &that);
 	
 	pCFG_Checkpoint(pCFGNode n, const Function& func, NodeState* fState,
-	                const set<int>& activePSets, const set<int>& blockedPSets, const set<int>& releasedPSets, 
-	                bool isSplit, int splitPSet,
+	                const set<unsigned int>& activePSets, const set<unsigned int>& blockedPSets, const set<unsigned int>& releasedPSets, 
+	                bool isSplit, unsigned int splitPSet,
 	                /*pCFG_SplitConditions splitConditions*/ConstrGraph* splitCondition);
 	
 	// The constructor that corresponds to process set splits
 	pCFG_Checkpoint(pCFGNode n, const Function& func, NodeState* fState,
-	                const set<int>& activePSets, const set<int>& blockedPSets, const set<int>& releasedPSets, int splitPSet,
+	                const set<unsigned int>& activePSets, const set<unsigned int>& blockedPSets, const set<unsigned int>& releasedPSets, unsigned int splitPSet,
 	                /*pCFG_SplitConditions splitConditions*/ConstrGraph* splitCondition);
 	
 	// The constructor that corresponds to blocked process sets
 	pCFG_Checkpoint(pCFGNode n, const Function& func, NodeState* fState,
-	                set<int> activePSets, set<int> blockedPSets);
+	                set<unsigned int> activePSets, set<unsigned int> blockedPSets);
 	
 	~pCFG_Checkpoint();
 	
@@ -130,7 +130,7 @@ class pCFG_Checkpoint
 	bool mergeUpd(const pCFG_Checkpoint& that);
 	
 	// Move the given process set from blocked to active status
-	void resumePSet(int pSet);
+	void resumePSet(unsigned int pSet);
 	
 	string str(string indent="") const;
 }; // pCFG_Checkpoint
@@ -157,7 +157,8 @@ class pCFG_FWDataflow  : virtual public IntraProceduralDataflow
 	// Runs the intra-procedural analysis on the given function. Returns true if 
 	// the function's NodeState gets modified as a result and false otherwise.
 	// state - the function's NodeState
-	bool runAnalysis(const Function& func, NodeState* state);
+	// NOTE: !!!There is currently no support for connecting this analysis to inter-procedural analyses!!!
+	bool runAnalysis(const Function& func, NodeState* state, bool analyzeDueToCallers, set<Function> calleesUpdated);
 	
 	// Runs the dataflow analysis on the given partition, resuming from the given checkpoint.
 	// Specifically runAnalysis_pCFG() starts the pCFG dataflow analysis at some pCFG node and continues for 
@@ -169,9 +170,9 @@ class pCFG_FWDataflow  : virtual public IntraProceduralDataflow
 	// Merge any process sets that are at equivalent dataflow states.
 	// Return true if any process sets were merged, false otherwise.
 	// If no processes are merged, mergePCFGNodes does not modify mergedN, dfInfo, activePSets, blockedPSets or releasedPSets.
-	bool mergePCFGNodes(const pCFGNode& n, pCFGNode& mergedN, vector<Lattice*>& dfInfo,
-	                    const Function& func, 
-	                    set<int>& activePSets, set<int>& blockedPSets, set<int>& releasedPSets);
+	bool mergePCFGNodes(const pCFGNode& n, pCFGNode& mergedN, 
+	                    const Function& func, NodeState& state, vector<Lattice*>& dfInfo, 
+	                    set<unsigned int>& activePSets, set<unsigned int>& blockedPSets, set<unsigned int>& releasedPSets, string indent="");
 	
 	// Adds the set of checkpoints to the overall set of checkpoints currently active
 	// in this analysis. The caller is required to return immediately to the surrounding
@@ -198,7 +199,7 @@ class pCFG_FWDataflow  : virtual public IntraProceduralDataflow
 	// If omitRankSet==true, does not copy the constraints on srcPSet's bounds variables but
 	// instead just adds them with no non-trivial constraints.
 	virtual void copyPSetState(const Function& func, const pCFGNode& n, 
-                              int srcPSet, int tgtPSet, NodeState& state,
+                              unsigned int srcPSet, unsigned int tgtPSet, NodeState& state,
                               vector<Lattice*>& lattices, vector<NodeFact*>& facts, 
                               ConstrGraph* partitionCond, bool omitRankSet)=0;
 	
@@ -224,7 +225,7 @@ class pCFG_FWDataflow  : virtual public IntraProceduralDataflow
 	//             perform send-receive matching.
 	// Returns true if any of the input lattices changed as a result of the transfer function and
 	//    false otherwise.
-	virtual bool transfer(const pCFGNode& n, int pSet, const Function& func, 
+	virtual bool transfer(const pCFGNode& n, unsigned int pSet, const Function& func, 
 	                      NodeState& state, const vector<Lattice*>&  dfInfo, 
 	                      bool& deadPSet, bool& splitPSet, vector<DataflowNode>& splitPSetNodes,
                          bool& splitPNode, vector<ConstrGraph*>& splitConditions, bool& blockPSet)=0;
@@ -238,7 +239,7 @@ class pCFG_FWDataflow  : virtual public IntraProceduralDataflow
 	// Called when a process set is partitioned to allow the specific analysis to update the
 	// dataflow state for that process set with the set's specific condition.
 	// Returns true if this causes the dataflow state to change and false otherwise
-	virtual bool initPSetDFfromPartCond(const Function& func, const pCFGNode& n, int pSet, 
+	virtual bool initPSetDFfromPartCond(const Function& func, const pCFGNode& n, unsigned int pSet, 
 	                                   const vector<Lattice*>& dfInfo, const vector<NodeFact*>& facts,
 	                                   ConstrGraph* partitionCond)=0;
 	
@@ -247,8 +248,8 @@ class pCFG_FWDataflow  : virtual public IntraProceduralDataflow
 	// pSetMigrations (initially assumed empty) is set to indicate which process sets have moved
 	//    to new ids, with the key representing the process set's original id and the value entry
 	//    representing the new id.
-	virtual void mergePCFGStates(const list<int>& pSetsToMerge, const pCFGNode& n, const Function& func, 
-	                             const vector<Lattice*>& dfInfo, NodeState& state, map<int, int>& pSetMigrations)=0;
+	virtual void mergePCFGStates(const list<unsigned int>& pSetsToMerge, const pCFGNode& n, const Function& func, 
+	                             NodeState& state, const vector<Lattice*>& dfInfo, map<unsigned int, unsigned int>& pSetMigrations)=0;
 	
 
 	// Performs send-receive matching on a fully-blocked analysis partition. 
@@ -261,7 +262,7 @@ class pCFG_FWDataflow  : virtual public IntraProceduralDataflow
 	                                              const Function& func, NodeState* fState)=0;*/
 	virtual void matchSendsRecvs(const pCFGNode& n, const vector<Lattice*>& dfInfo, NodeState* state, 
 	                     // Set by analysis to identify the process set that was split
-	                     int& splitPSet,
+	                     unsigned int& splitPSet,
 	                     vector<ConstrGraph*>& splitConditions, 
 	                     vector<DataflowNode>& splitPSetNodes,
 	                     // for each split process set, true if its active and false if it is blocked
@@ -278,18 +279,18 @@ class pCFG_FWDataflow  : virtual public IntraProceduralDataflow
 	// If the transfer function wants to split across multiple descendants, partitionTranfer() generates
 	//    the resulting checkpoints, performs the split and sets splitPSet to true.
 	// Otherwise, sets neither to true.
-	bool partitionTranfer(const pCFGNode& n, pCFGNode& descN, int curPSet, const Function& func, NodeState* fState, 
+	bool partitionTranfer(const pCFGNode& n, pCFGNode& descN, unsigned int curPSet, const Function& func, NodeState* fState, 
 	                      const DataflowNode& dfNode, NodeState* state, 
 	                      vector<Lattice*>& dfInfoBelow, vector<Lattice*>& dfInfoNewBelow, 
 	                      bool& deadPSet, bool& splitPSet, bool& splitPNode, bool& blockPSet, 
-	                      set<int>& activePSets, set<int>& blockedPSets, set<int>& releasedPSets,
+	                      set<unsigned int>& activePSets, set<unsigned int>& blockedPSets, set<unsigned int>& releasedPSets,
                          const DataflowNode& funcCFGEnd);
 
 	// Updates the lattices in tgtLattices from the lattices in srcLattices. For a given lattice pair <t, s>
 	//    (t from tgtLattices, s from srcLattices), t = t widen (t union s).
 	// If delSrcLattices==true, deletes all the lattices in srcLattices.
 	// Returns true if this causes the target lattices to change, false otherwise.
-	bool updateLattices(vector<Lattice*>& tgtLattices, vector<Lattice*>& srcLattices, bool delSrcLattices);
+	bool updateLattices(vector<Lattice*>& tgtLattices, vector<Lattice*>& srcLattices, bool delSrcLattices, string indent="");
 
 	// Split the process set pSet in pCFGNOde n, resulting in a new pCFGNode that contains more 
 	//    process sets. Advances descN to be this new pCFGNode and updates activePSets to make
@@ -299,29 +300,29 @@ class pCFG_FWDataflow  : virtual public IntraProceduralDataflow
 	// if freshPSet==true, each partition will get a completely new process set and thus
 	//    must be set fresh. If freshPSet==false, each partition's process set is simply
 	//    an updated version of the old process set (i.e. an extra condition is applied).
-	void performPSetSplit(const pCFGNode& n, pCFGNode& descN, int pSet, 
+	void performPSetSplit(const pCFGNode& n, pCFGNode& descN, unsigned int pSet, 
 	               vector<Lattice*>& dfInfo,
 	               vector<ConstrGraph*> splitConditions, vector<DataflowNode> splitPSetNodes,
 	               vector<bool>& splitPSetActive, 
 	               const Function& func, NodeState* fState, NodeState* state, 
-	               set<int>& activePSets, set<int>& blockedPSets, set<int>& releasedPSets,
-	               bool freshPSet);
+	               set<unsigned int>& activePSets, set<unsigned int>& blockedPSets, set<unsigned int>& releasedPSets,
+	               bool freshPSet, string indent);
 	
 	// Removes all known bounds on pSet's process set in dfInfo and replaces them with the default
 	// constraints on process set bounds.
-	virtual void resetPSet(int pSet, vector<Lattice*>& dfInfo)=0;
+	virtual void resetPSet(unsigned int pSet, vector<Lattice*>& dfInfo)=0;
 	
 	// propagates the forward dataflow info from the current node's NodeState (curNodeState) to the next node's 
 	// NodeState (nextNodeState)
 	/*bool */void propagateFWStateToNextNode(const Function& func, 
                       const vector<Lattice*>& curNodeLattices, const pCFGNode& curNode, const NodeState& curNodeState, 
                       vector<Lattice*>& nextNodeLattices, const pCFGNode& nextNode,
-                      ConstrGraph* partitionCond, int pSet);
+                      ConstrGraph* partitionCond, unsigned int pSet, string indent="");
              
 	// Moves the given process set from srcPSets to destPSets. If noSrcOk==false, does nothing
 	// if pSet is not inside srcPSets. If noSrcOk==true, adds pSet to destPSets regardless.
 	// Returns true if the process set was in srcPSets and false otherwise.
-	static bool movePSet(int pSet, set<int>& destPSets, set<int>& srcPSets, bool noSrcOk=false);
+	static bool movePSet(unsigned int pSet, set<unsigned int>& destPSets, set<unsigned int>& srcPSets, bool noSrcOk=false);
 };
 
 #endif

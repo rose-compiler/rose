@@ -205,7 +205,7 @@ class contRangeProcSet : public virtual procSet
 	// The number of variables that have been generated as range lower and upper bounds
 	static int varCount;
 	
-	varID genFreshVar();
+	varID genFreshVar(string prefix="");
 	
 	public:
 	// Creates an empty set
@@ -217,6 +217,10 @@ class contRangeProcSet : public virtual procSet
 	// this->ub*ubA = ub*ubB + ubC
 	contRangeProcSet(varID lb, int lbA, int lbB, int lbC,
 	                 varID ub, int ubA, int ubB, int ubC,
+	                 ConstrGraph* cg);
+	contRangeProcSet(varID lb, int lbA, int lbB, int lbC,
+	                 varID ub, int ubA, int ubB, int ubC,
+	                 string annotName, void* annot,
 	                 ConstrGraph* cg);
 	
 	// if freshenVars==true, calls genFreshBounds() to make this set use different lower and upper
@@ -251,8 +255,10 @@ class contRangeProcSet : public virtual procSet
 	// Generates new lower and upper bound variables that are set to be equal to the original
 	// lower and upper bound variables in this procSet's constraint graph as:
 	// newLB*lbA = oldLB*lbB + lbC and newUB*ubA = oldUB*ubB + ubC
+	// If annotName!="", the bounds variables will have the annotation annotName->annot
 	void genFreshBounds(int lbA=1, int lbB=1, int lbC=0,
-	                    int ubA=1, int ubB=1, int ubC=0);
+	                    int ubA=1, int ubB=1, int ubC=0, 
+	                    string annotName="", void* annot=NULL);
 	
 	// Transition from using the current constraint graph to using newCG, while annotating
 	// the lower and upper bound variables with the given annotation annotName->annot.

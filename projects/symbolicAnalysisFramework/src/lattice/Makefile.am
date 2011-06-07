@@ -13,16 +13,16 @@ noinst_PROGRAMS = selfTest
 selfTest_SOURCES = selfTest.C
 # the order or la files matters!!
 selfTest_LDADD = \
+         $(SAF_BUILD_ROOT)/src/state/libSafstate.la \
+         $(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
          libSaflattice.la \
          $(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
          $(SAF_BUILD_ROOT)/src/cfgUtils/libSafcfgUtils.la \
          $(SAF_BUILD_ROOT)/src/variables/libSafvariables.la \
          $(SAF_BUILD_ROOT)/src/rwAccessLabeler/libSafrwAccessLabeler.la \
          $(SAF_BUILD_ROOT)/src/arrIndexLabeler/libSafarrIndexLabeler.la \
-         $(SAF_BUILD_ROOT)/src/state/libSafstate.la \
          $(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
          $(SAF_BUILD_ROOT)/src/external/libSafexternal.la \
-         $(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la
 
 selfTest_LDADD += $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 

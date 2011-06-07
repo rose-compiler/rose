@@ -163,12 +163,12 @@ am__DEPENDENCIES_7 = $(top_builddir)/src/librose.la \
 	$(am__DEPENDENCIES_6) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 dominatorAnalysisSelfTest_DEPENDENCIES =  \
-	$(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
 	$(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
+	$(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
 	$(SAF_BUILD_ROOT)/src/lattice/libSaflattice.la \
+	$(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
 	$(SAF_BUILD_ROOT)/src/cfgUtils/libSafcfgUtils.la \
 	$(SAF_BUILD_ROOT)/src/variables/libSafvariables.la \
-	$(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
 	$(SAF_BUILD_ROOT)/src/state/libSafstate.la \
 	$(SAF_BUILD_ROOT)/src/rwAccessLabeler/libSafrwAccessLabeler.la \
 	$(SAF_BUILD_ROOT)/src/arrIndexLabeler/libSafarrIndexLabeler.la \
@@ -178,12 +178,12 @@ am_factPlacer_OBJECTS = factPlacer.$(OBJEXT)
 factPlacer_OBJECTS = $(am_factPlacer_OBJECTS)
 factPlacer_LDADD = $(LDADD)
 factPlacer_DEPENDENCIES =  \
-	$(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
 	$(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
+	$(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
 	$(SAF_BUILD_ROOT)/src/lattice/libSaflattice.la \
+	$(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
 	$(SAF_BUILD_ROOT)/src/cfgUtils/libSafcfgUtils.la \
 	$(SAF_BUILD_ROOT)/src/variables/libSafvariables.la \
-	$(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
 	$(SAF_BUILD_ROOT)/src/state/libSafstate.la \
 	$(SAF_BUILD_ROOT)/src/rwAccessLabeler/libSafrwAccessLabeler.la \
 	$(SAF_BUILD_ROOT)/src/arrIndexLabeler/libSafarrIndexLabeler.la \
@@ -200,9 +200,9 @@ am_latticePlacer_OBJECTS = latticePlacer.$(OBJEXT)
 latticePlacer_OBJECTS = $(am_latticePlacer_OBJECTS)
 latticePlacer_LDADD = $(LDADD)
 latticePlacer_DEPENDENCIES =  \
-	$(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
 	$(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
 	$(SAF_BUILD_ROOT)/src/lattice/libSaflattice.la \
+	$(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
 	$(SAF_BUILD_ROOT)/src/cfgUtils/libSafcfgUtils.la \
 	$(SAF_BUILD_ROOT)/src/variables/libSafvariables.la \
 	$(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
@@ -217,9 +217,9 @@ liveDeadVarAnalysisSelfTest_OBJECTS =  \
 	$(am_liveDeadVarAnalysisSelfTest_OBJECTS)
 liveDeadVarAnalysisSelfTest_LDADD = $(LDADD)
 liveDeadVarAnalysisSelfTest_DEPENDENCIES =  \
-	$(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
 	$(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
 	$(SAF_BUILD_ROOT)/src/lattice/libSaflattice.la \
+	$(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
 	$(SAF_BUILD_ROOT)/src/cfgUtils/libSafcfgUtils.la \
 	$(SAF_BUILD_ROOT)/src/variables/libSafvariables.la \
 	$(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
@@ -232,12 +232,12 @@ am_scalarFWDataflow_OBJECTS = scalarFWDataflow.$(OBJEXT)
 scalarFWDataflow_OBJECTS = $(am_scalarFWDataflow_OBJECTS)
 scalarFWDataflow_LDADD = $(LDADD)
 scalarFWDataflow_DEPENDENCIES =  \
-	$(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
 	$(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
+	$(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
 	$(SAF_BUILD_ROOT)/src/lattice/libSaflattice.la \
+	$(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
 	$(SAF_BUILD_ROOT)/src/cfgUtils/libSafcfgUtils.la \
 	$(SAF_BUILD_ROOT)/src/variables/libSafvariables.la \
-	$(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
 	$(SAF_BUILD_ROOT)/src/state/libSafstate.la \
 	$(SAF_BUILD_ROOT)/src/rwAccessLabeler/libSafrwAccessLabeler.la \
 	$(SAF_BUILD_ROOT)/src/arrIndexLabeler/libSafarrIndexLabeler.la \
@@ -249,9 +249,9 @@ sequenceStructAnalysisSelfTest_OBJECTS =  \
 	$(am_sequenceStructAnalysisSelfTest_OBJECTS)
 sequenceStructAnalysisSelfTest_LDADD = $(LDADD)
 sequenceStructAnalysisSelfTest_DEPENDENCIES =  \
-	$(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
 	$(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
 	$(SAF_BUILD_ROOT)/src/lattice/libSaflattice.la \
+	$(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
 	$(SAF_BUILD_ROOT)/src/cfgUtils/libSafcfgUtils.la \
 	$(SAF_BUILD_ROOT)/src/variables/libSafvariables.la \
 	$(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
@@ -268,8 +268,8 @@ CXXCOMPILE = @echo "  COMPILE $@"; $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES
 LTCXXCOMPILE = @echo "  COMPILE $@"; $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) \
 	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
 	$(AM_CXXFLAGS) $(CXXFLAGS)
-CXXLINK = @echo "  LINK    $@"; $(LIBTOOL) --tag=CXX --mode=link $(CXXLD) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+CXXLINK = @echo "  LINK    $@";  \
+	$(LIBTOOL) --tag=CXX --mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(dominatorAnalysisSelfTest_SOURCES) $(factPlacer_SOURCES) \
 	$(genCFG_SOURCES) $(genInterestingCFG_SOURCES) \
 	$(latticePlacer_SOURCES) \
@@ -1207,12 +1207,12 @@ genCFG_SOURCES = genCFG.C
 # Liao 10/7/2010
 # the order of some la files matter:
 # e.g. lattice and analysis.la should be listed first
-LDADD = $(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
-	$(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
+LDADD = $(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
+	$(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
 	$(SAF_BUILD_ROOT)/src/lattice/libSaflattice.la \
+	$(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
 	$(SAF_BUILD_ROOT)/src/cfgUtils/libSafcfgUtils.la \
 	$(SAF_BUILD_ROOT)/src/variables/libSafvariables.la \
-	$(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
 	$(SAF_BUILD_ROOT)/src/state/libSafstate.la \
 	$(SAF_BUILD_ROOT)/src/rwAccessLabeler/libSafrwAccessLabeler.la \
 	$(SAF_BUILD_ROOT)/src/arrIndexLabeler/libSafarrIndexLabeler.la \
@@ -1266,6 +1266,7 @@ dominatorAnalysisSelfTest$(EXEEXT): $(dominatorAnalysisSelfTest_OBJECTS) $(domin
 	$(CXXLINK) $(dominatorAnalysisSelfTest_LDFLAGS) $(dominatorAnalysisSelfTest_OBJECTS) $(dominatorAnalysisSelfTest_LDADD) $(LIBS)
 factPlacer$(EXEEXT): $(factPlacer_OBJECTS) $(factPlacer_DEPENDENCIES) 
 	@rm -f factPlacer$(EXEEXT)
+	echo "$(CXXLINK) $(factPlacer_LDFLAGS) $(factPlacer_OBJECTS) $(factPlacer_LDADD) $(LIBS)"
 	$(CXXLINK) $(factPlacer_LDFLAGS) $(factPlacer_OBJECTS) $(factPlacer_LDADD) $(LIBS)
 genCFG$(EXEEXT): $(genCFG_OBJECTS) $(genCFG_DEPENDENCIES) 
 	@rm -f genCFG$(EXEEXT)
@@ -1281,6 +1282,7 @@ liveDeadVarAnalysisSelfTest$(EXEEXT): $(liveDeadVarAnalysisSelfTest_OBJECTS) $(l
 	$(CXXLINK) $(liveDeadVarAnalysisSelfTest_LDFLAGS) $(liveDeadVarAnalysisSelfTest_OBJECTS) $(liveDeadVarAnalysisSelfTest_LDADD) $(LIBS)
 scalarFWDataflow$(EXEEXT): $(scalarFWDataflow_OBJECTS) $(scalarFWDataflow_DEPENDENCIES) 
 	@rm -f scalarFWDataflow$(EXEEXT)
+	echo "$(CXXLINK) $(scalarFWDataflow_LDFLAGS) $(scalarFWDataflow_OBJECTS) $(scalarFWDataflow_LDADD) $(LIBS)"
 	$(CXXLINK) $(scalarFWDataflow_LDFLAGS) $(scalarFWDataflow_OBJECTS) $(scalarFWDataflow_LDADD) $(LIBS)
 sequenceStructAnalysisSelfTest$(EXEEXT): $(sequenceStructAnalysisSelfTest_OBJECTS) $(sequenceStructAnalysisSelfTest_DEPENDENCIES) 
 	@rm -f sequenceStructAnalysisSelfTest$(EXEEXT)

@@ -225,6 +225,7 @@ class ProductLattice : public virtual Lattice
 	public:
 	ProductLattice();
 	ProductLattice(const vector<Lattice*>& lattices);
+	~ProductLattice();
 	
 	void init(const vector<Lattice*>& lattices);
 	
@@ -284,7 +285,7 @@ class FiniteProductLattice : public virtual ProductLattice, public virtual Finit
 				ROSE_ASSERT((*it)->finiteLattice());
 	}
 	
-	// returns a copy of this lattice
+	// Returns a copy of this lattice
 	Lattice* copy() const
 	{
 		return new FiniteProductLattice(*this);

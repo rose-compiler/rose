@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 	printf("*************************************************************\n");
 	printf("*****************   Live/Dead Variable Analysis   *****************\n");
 	printf("*************************************************************\n");
-	LiveDeadVarsAnalysis ldva(project);
+	LiveDeadVarsAnalysis ldva(project, NULL);
 	//CallGraphBuilder cgb(project);
 	//cgb.buildCallGraph();
 	//SgIncidenceDirectedGraph* graph = cgb.getGraph(); 

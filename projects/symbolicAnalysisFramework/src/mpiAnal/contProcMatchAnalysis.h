@@ -42,7 +42,10 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	// The LiveDeadVarsAnalysis that identifies the live/dead state of all application variables.
 	// Needed to create a FiniteVarsExprsProductLattice.
 	LiveDeadVarsAnalysis* ldva; 
+	// The DivAnalysis that provides variable divisibility information
 	DivAnalysis* divAnalysis;
+	// The MPIRankDepAnalysis that reports whether a variable is dependent on the rank or the number of ranks
+	MPIRankDepAnalysis* rda;
 	public:
 	static varID rankVar;
 	static varID nprocsVar;
@@ -57,10 +60,11 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	static contRangeProcSet rankSet;
 	
 	public:
-	pCFG_contProcMatchAnalysis(LiveDeadVarsAnalysis* ldva, DivAnalysis* divAnalysis)
+	pCFG_contProcMatchAnalysis(LiveDeadVarsAnalysis* ldva, DivAnalysis* divAnalysis, MPIRankDepAnalysis* rda)
 	{
 		this->ldva = ldva;
 		this->divAnalysis = divAnalysis;
+		this->rda = rda;
 		
 		// Make sure that rankSet is non-empty
 		//rankSet.makeNonEmpty();
@@ -71,6 +75,7 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	{
 		this->ldva = that.ldva;
 		this->divAnalysis = that.divAnalysis;
+		this->rda = that.rda;
 		// Make sure that rankSet is non-empty
 		//rankSet.makeNonEmpty();
 	}
@@ -85,7 +90,7 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	// If omitRankSet==true, does not copy the constraints on srcPSet's bounds variables but
 	// instead just adds them with no non-trivial constraints.
 	void copyPSetState(const Function& func, const pCFGNode& n, 
-                      int srcPSet, int tgtPSet, NodeState& state,
+                      unsigned int srcPSet, unsigned int tgtPSet, NodeState& state,
                       vector<Lattice*>& lattices, vector<NodeFact*>& facts, 
                       ConstrGraph* partitionCond, bool omitRankSet);
 	
@@ -95,7 +100,7 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	
 	// Helper method for resetPSet that makes it easier to call it from inside pCFG_contProcMatchAnalysis.
 	void resetPSet(unsigned int pSet, ConstrGraph* cg, 
-	               const varID& /*nprocsVarAllPSets*/nprocsVarPSet, const varID& zeroVarAllPSets);
+	               const varID& nprocsVarAllPSets /*nprocsVarPSet=>nprocsVarAllPSets : GB-2011-05-31 : nprocsVarPSet*/, const varID& zeroVarAllPSets);
 	
 	// Resets the state of rankVar inside the given constraint graph and re-establishes its basic 
 	// constraints: 0<=rankVar<nprocsVar
@@ -111,11 +116,13 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
    static string getVarAnn(unsigned int pSet);
    
 	// Asserts within this constraint graph the standard invariants on process sets:
-	// [0<= lb <= ub < nprocsVar] and [lb <= rankVar <= ub]
+	// [0<= lb], [ub < nprocsVar] and [lb <= rankVar <= ub]
+	// If mayBeEmpty is true, also asserts  lb <= ub
 	// Returns true if this causes the constraint graph to change, false otherwise
 	static bool assertProcSetInvariants(ConstrGraph* cg, const contRangeProcSet& rankSetPSet,
 	                                    const varID& zeroVarAllPSets, const varID& rankVarPSet,
-	                                    const varID& nprocsVarPSet);
+	                                    const varID& nprocsVarAllPSets /*nprocsVarPSet=>nprocsVarAllPSets : GB-2011-05-31 : nprocsVarPSet*/,
+	                                    bool mayBeEmpty);
    
    // Update varIneq's variables with the annotations that connect them to pSet
 	void connectVAItoPSet(unsigned int pSet, varAffineInequality& varIneq);
@@ -142,11 +149,11 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	
 	// incorporates the current node's divisibility information into the current node's constraint graph
 	// returns true if this causes the constraint graph to change and false otherwise
-	bool incorporateDivInfo(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo);
+	// noDivVars bool incorporateDivInfo(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo);
 	
 	// For any variable for which we have divisibility info, remove its constraints to other variables (other than its
 	// divisibility variable)
-	bool removeConstrDivVars(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo);
+	// noDivVars bool removeConstrDivVars(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo);
 
 	// Creates a new instance of the derived object that is a copy of the original instance.
 	// This instance will be used to instantiate a new partition of the analysis.
@@ -174,17 +181,17 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	//             perform send-receive matching.
 	// Returns true if any of the input lattices changed as a result of the transfer function and
 	//    false otherwise.
-	 bool transfer(const pCFGNode& n, unsigned int pSet, const Function& func, 
-	               NodeState& state, const vector<Lattice*>&  dfInfo, 
-	               bool& deadPSet, bool& splitPSet, vector<DataflowNode>& splitPSetNodes,
-                 bool& splitPNode, vector<ConstrGraph*>& splitConditions, bool& blockPSet);
+	bool transfer(const pCFGNode& n, unsigned int pSet, const Function& func, 
+	              NodeState& state, const vector<Lattice*>&  dfInfo, 
+	              bool& deadPSet, bool& splitPSet, vector<DataflowNode>& splitPSetNodes,
+	              bool& splitPNode, vector<ConstrGraph*>& splitConditions, bool& blockPSet);
 	
 	// Iterates over the outgoing edges of a given node and fills splitConditions with the actual split conditions
 	// of these edges. It is specifically designed to look for how each edge condition relates to tgtVar
 	// and adds those conditions to splitConditions as well
-	void fillEdgeSplits(const Function& func, const pCFGNode& n, int splitPSet, 
+	void fillEdgeSplits(const Function& func, const pCFGNode& n, unsigned int splitPSet, 
 	                    const DataflowNode& dfNode, NodeState& state, ConstrGraph* cg, 
-	                    vector<ConstrGraph*>& splitConditions, const varID& tgtVar, const varID& nprocsVarPSet);
+	                    vector<ConstrGraph*>& splitConditions, const varID& tgtVar, const varID& nprocsVarAllPSets /*nprocsVarPSet=>nprocsVarAllPSets : GB-2011-05-31 : nprocsVarPSet*/, string indent="");
 	
 	// If possible according to the inequalities in cg, connect the given inequality to an 
 	// inequality about tgtVar and assert that new inequality in newCG.
@@ -214,8 +221,8 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	// pSetMigrations (initially assumed empty) is set to indicate which process sets have moved
 	//    to new ids, with the key representing the process set's original id and the value entry
 	//    representing the new id.
-	void mergePCFGStates(const list<int>& pSetsToMerge, const pCFGNode& n, const Function& func, 
-	                     const vector<Lattice*>& dfInfo, NodeState& state, map<int, int>& pSetMigrations);
+	void mergePCFGStates(const list<unsigned int>& pSetsToMerge, const pCFGNode& n, const Function& func, 
+	                     NodeState& state, const vector<Lattice*>& dfInfo, map<unsigned int, unsigned int>& pSetMigrations);
 	
 	// Infers the best possible constraints on the upper and lower bounds of the process set from 
 	// the constraints on rankVar
@@ -224,7 +231,8 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	
 	// Transfer constraints from other process set's nprocsVar to this process set's nprocsVar
 	// Returns true if this causes the dataflow state to change and false otherwise
-	bool forceNProcsUnity(const Function& func, const pCFGNode& n, unsigned int pSet, ConstrGraph* cg);
+	/*nprocsVarPSet=>nprocsVarAllPSets : GB-2011-05-31 : 
+	bool forceNProcsUnity(const Function& func, const pCFGNode& n, unsigned int pSet, ConstrGraph* cg);*/
 	
 	// Performs send-receive matching on a fully-blocked analysis partition. 
 	// If some process sets need to be split, returns the set of checkpoints that corresponds to this pCFG node's descendants.
@@ -236,7 +244,7 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	                                      const Function& func, NodeState* fState);*/
 	void matchSendsRecvs(const pCFGNode& n, const vector<Lattice*>& dfInfo, NodeState* state, 
 	                     // Set by analysis to identify the process set that was split
-	                     int& splitPSet,
+	                     unsigned int& splitPSet,
 	                     vector<ConstrGraph*>& splitConditions, 
 	                     vector<DataflowNode>& splitPSetNodes,
 	                     // for each split process set, true if its active and false if it is blocked
@@ -247,7 +255,7 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	                     const Function& func, NodeState* fState);
 	
 	// Release the given process set by moving it from from blockedPSets to activePSets and releasedPSets
-	static void releasePSet(unsigned int pSet, set<int>& activePSets, set<int>& blockedPSets, set<int>& releasedPSets);
+	static void releasePSet(unsigned int pSet, set<unsigned int>& activePSets, set<unsigned int>& blockedPSets, set<unsigned int>& releasedPSets);
 	
 	// Split the given partition into released processes and blocked processes, using the given process sets. All process
 	//    sets are assumed to use the cg constraint graph, which contains information about all of them.
@@ -259,7 +267,7 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	                                 const contRangeProcSet& releasedProcs, const contRangeProcSet& blockedProcs, 
 	                                 const contRangeProcSet& otherProcs1, const contRangeProcSet& otherProcs2,
 	                                 const Function& func, NodeState* fState);*/
-	void splitProcs(const pCFGNode& n, ConstrGraph* cg, const DataflowNode& dfNode, int splitPSet, 
+	void splitProcs(const pCFGNode& n, ConstrGraph* cg, const DataflowNode& dfNode, unsigned int splitPSet, 
                    vector<ConstrGraph*>& splitConditions, vector<DataflowNode>& splitPSetNodes,
                    // for each split process set, true if its active and false if it is blocked
 	                vector<bool>& splitPSetActive,
@@ -270,8 +278,10 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	//    into then tgtProcs set and return it.
 	// otherProcs and otherProcsSet contain the other relevant process sets whose bounds need to be removed 
 	//    from the partition condition's constraint graph.
-	ConstrGraph* createPSetCondition(ConstrGraph* cg, int splitPSet, const contRangeProcSet& tgtProcs, 
-                                    const contRangeProcSet& otherProcs, const set<contRangeProcSet>& otherProcsSet);
+	// mayBeEmpty indicates whether the new process set may be empty, in which case we add the constraint UB < nprocsVar
+	//    or may not be empty, in which case we add UB <= nprocsVar
+	ConstrGraph* createPSetCondition(ConstrGraph* cg, unsigned int splitPSet, const contRangeProcSet& tgtProcs, 
+                                    const contRangeProcSet& otherProcs, const set<contRangeProcSet>& otherProcsSet, bool mayBeEmpty);
 	
 	// Replaces the upper and lower bounds of goodSet with those of rank set so that some partition can
 	//     assume the identity of the ranks in goodSet.
@@ -281,5 +291,15 @@ class pCFG_contProcMatchAnalysis : public virtual pCFG_FWDataflow
 	                          const contRangeProcSet& badSet1, const contRangeProcSet& badSet2, 
 	                          const contRangeProcSet& badSet3);
 };
+
+/************** DESIGN COMMENTS **************
+Representation of sets of ranks
+-------------------------------
+The ranks that exist in a given process set are represented by the variable rankVar. Each process set has its own copy of this variable and the different copies are differentiated by annotating each with the ID of its parent process set. rankVar is a set-valued variable with an upper bound UB and lower bound LB and the set of variables it represents is all the values >=LB and <=UB, inclusive. This relationship is not trivial to represent using constraint graphs because by default they are focused on representing loose constraints: the fact "rankVar <= q" does not imply that rankVar contains all the possible values <=q. As such, we represent the fact that rankVar contains all the values between LB and UB by representing LB and UB as explicit variables, annotated with the parent process set. Further, we don't want to maintain regular loose relationships between LB/UB and other variables because information that LB>=q && LB>=r && LB>=s is not useful when deciding whether a given process p (q<= p <r) is within the bounds or outside them. As such, we maintain tight relationships between LB/UB and other variables by recording in the constraint graph the variable(s) that LB and UB are EQUAL to. Thus, we'll maintain that LB=q && LB=r, which will make it possible to always decide if p is within the bounds, since q<= p <r is not possible. This means that we need to be extra careful to ensure that we never assign LB or UB to be equal to two mutually-inconsistent variables (e.g. LB=q && LB=r but q < r) since this will lead to inconsistencies.
+
+It may happen that UB=q and the analysis discovers a new constraint q<=r, either by analyzing a conditional or by inferring from other constraints. This will cause the graph to infer that UB<=r && UB=q, which is still consistent. The only way to get an inconsistency is if we know "s<=UB=u && s>r" and then infer that u<=r. This will create the inconsistency "r<s<=UB<u<=r === r<r". However, since we only directly update the constraints on UB by assigning it to a variable, if "s<=UB=u" then independently "s<=u". As such, the inconcistency must exist in the graph independently of UB and is thus a part of the original application and indicates that the current CFG node is unreachable.
+
+If we discover that rankVar>=l or rankVar<=u, we will try to determine if the new bounds are useful for constraining the set of rankVar's values. However, since we can't assign LB or UB to mutually inconsistent variables, we have to choose one option and stick with it. We use the constraint graph to check if l>=LB/u<=UB, in which case LB/UB is assigned to l/u. This does not necessarily mean that the new bounds must be tighter (the constraint graph maintains may-constraints, not must-constraints) but this is the heuristic we use to make the best guess while avoiding inconsistencies in the constraint graph.
+*/
 
 #endif

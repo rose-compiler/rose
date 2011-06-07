@@ -26,16 +26,26 @@ OneDmesgExpr::OneDmesgExpr(SgExpression* expr, ConstrGraph* cg)
 	bool negI, negJ;
 	short op;
 	long c;
-
+	
 	// i+c or i*c
 	if(cfgUtils::parseExpr(expr, op, i, negI, j, negJ, c) && 
 		(op==cfgUtils::none || (op==cfgUtils::add && j==zeroVar) || (op==cfgUtils::mult && j==oneVar)))
 	{
+		varID zeroVarAllPSets = zeroVar;
+		zeroVarAllPSets.addAnnotation("pCFG_common", (void*)1);
+		
 		if(op==cfgUtils::none)
 		{
+			// [c, c]
+			if(i == zeroVar && j == zeroVar) {
+				contRangeProcSet procs(zeroVarAllPSets, 1, 1, -c, zeroVarAllPSets, 1, 1, -c, cg);
+				mRange = procs;
+			}
 			// [i, i]
-			contRangeProcSet procs(i, 1, 1, 0, i, 1, 1, 0, cg);
-			mRange = procs;
+			else {
+				contRangeProcSet procs(i, 1, 1, 0, i, 1, 1, 0, cg);
+				mRange = procs;
+			}
 		}
 		else if(op==cfgUtils::add)
 		{
@@ -73,27 +83,47 @@ OneDmesgExpr::OneDmesgExpr(SgExpression* expr, ConstrGraph* cg, unsigned int pSe
 	if(cfgUtils::parseExpr(expr, op, i, negI, j, negJ, c) && 
 		(op==cfgUtils::none || (op==cfgUtils::add && j==zeroVar) || (op==cfgUtils::mult && j==oneVar)))
 	{
-		if(i == zeroVar) i.addAnnotation("pCFG_common", (void*)1);
-		else             i.addAnnotation(pCFG_contProcMatchAnalysis::getVarAnn(pSet), (void*)1);
-		if(j == zeroVar) j.addAnnotation("pCFG_common", (void*)1);
-		else             j.addAnnotation(pCFG_contProcMatchAnalysis::getVarAnn(pSet), (void*)1);
+		bool iIsZero = (i == zeroVar);
+		bool jIsZero = (j == zeroVar);
+		if(iIsZero) i.addAnnotation("pCFG_common", (void*)1);
+		else        i.addAnnotation(pCFG_contProcMatchAnalysis::getVarAnn(pSet), (void*)1);
+		if(jIsZero) j.addAnnotation("pCFG_common", (void*)1);
+		else        j.addAnnotation(pCFG_contProcMatchAnalysis::getVarAnn(pSet), (void*)1);
+			
+		varID zeroVarAllPSets = zeroVar;
+		zeroVarAllPSets.addAnnotation("pCFG_common", (void*)1);
 		
+		//if(MPIAnalysisDebugLevel>0) Dbg::dbg << "op="<<op<<" i="<<i<<" j="<<j<<" c="<<c<<endl;
 		if(op==cfgUtils::none)
 		{
+			// [c, c]
+			if(iIsZero && jIsZero) {
+				contRangeProcSet procs(zeroVarAllPSets, 1, 1, -c, zeroVarAllPSets, 1, 1, -c, pCFG_contProcMatchAnalysis::getVarAnn(pSet), (void*)1, cg);
+				
+				//if(MPIAnalysisDebugLevel>0) { Dbg::dbg << "OneDmesgExpr::OneDmesgExpr() A Created procs="<<procs.str("    ")<<". cg="<<endl; Dbg::dbg << cg->str() << endl; }
+				mRange = procs;
+				//if(MPIAnalysisDebugLevel>0) { Dbg::dbg << "OneDmesgExpr::OneDmesgExpr() A After setConstrAnnot() procs="<<procs.str("    ")<<". cg="<<endl; Dbg::dbg << cg->str() << endl; }
+			}
 			// [i, i]
-			contRangeProcSet procs(i, 1, 1, 0, i, 1, 1, 0, cg);
-			mRange = procs;
+			else {
+				contRangeProcSet procs(i, 1, 1, 0, i, 1, 1, 0, pCFG_contProcMatchAnalysis::getVarAnn(pSet), (void*)1, cg);
+				//if(MPIAnalysisDebugLevel>0) { Dbg::dbg << "OneDmesgExpr::OneDmesgExpr() B Created procs="<<procs.str("    ")<<". cg="<<endl; Dbg::dbg << cg->str() << endl; }
+				mRange = procs;
+				//if(MPIAnalysisDebugLevel>0) { Dbg::dbg << "OneDmesgExpr::OneDmesgExpr() B After setConstrAnnot() procs="<<procs.str("    ")<<". cg="<<endl; Dbg::dbg << cg->str() << endl; }
+			}
 		}
 		else if(op==cfgUtils::add)
 		{
 			// [i+c, i+c]
-			contRangeProcSet procs(i, 1, 1, c, i, 1, 1, c, cg);
+			contRangeProcSet procs(i, 1, 1, c, i, 1, 1, c, pCFG_contProcMatchAnalysis::getVarAnn(pSet), (void*)1, cg);
+			procs.setConstrAnnot(cg, pCFG_contProcMatchAnalysis::getVarAnn(pSet), (void*)1);
 			mRange = procs;
 		}
 		else if(op==cfgUtils::mult)
 		{
 			// [i*c, i*c]
-			contRangeProcSet procs(i, 1, c, 0, i, 1, c, 0, cg);
+			contRangeProcSet procs(i, 1, c, 0, i, 1, c, 0, pCFG_contProcMatchAnalysis::getVarAnn(pSet), (void*)1, cg);
+			procs.setConstrAnnot(cg, pCFG_contProcMatchAnalysis::getVarAnn(pSet), (void*)1);
 			mRange = procs;
 		}
 	}
@@ -109,29 +139,29 @@ OneDmesgExpr::OneDmesgExpr(SgExpression* expr, ConstrGraph* cg, unsigned int pSe
 // Returns the a reference to a heap-allocated subset of domain on which the message expression 
 // recv o send is the identity function or an invalid subdomain is no such subdomain exists
 procSet& OneDmesgExpr::getIdentityDomain(const mesgExpr& recv_arg, const mesgExpr& send, 
-                                        const procSet& domain_arg) const
+                                         const procSet& domain_arg) const
 {
-	//const contRangeProcSet& domain = (const contRangeProcSet&)domain_arg;
 	const contRangeProcSet& domain = dynamic_cast<const contRangeProcSet&>(domain_arg);
 	const OneDmesgExpr& recv   = dynamic_cast<const OneDmesgExpr&>(recv_arg);
-	
-//cout << "^^^^^^^^^^^^^^^^^^^^^\n";
-//cout << "getIdentityDomain: domain.size()="<<domain.size()<<", domain="<<domain.str()<<"\n";
+
+	Dbg::enterFunc("getIdentityDomain");
+	//Dbg::dbg << "^^^^^^^^^^^^^^^^^^^^^"<<endl;
+	Dbg::dbg << "getIdentityDomain: domain.size()="<<domain.size()<<", domain="<<domain.str()<<endl;
 	// if its a broadcast, with one process sending to a specific set of receiver processes
 	if(domain.size() == 1)
 	{
-//cout << "getIdentityDomain: send="<<send.str()<<"\n";
+		Dbg::dbg << "getIdentityDomain: send="<<send.str()<<endl;
 		contRangeProcSet& sendImage = dynamic_cast<contRangeProcSet&>(send.getImage(domain));
-//cout << "getIdentityDomain: sendImage="<<sendImage.str()<<"\n";
+		Dbg::dbg << "getIdentityDomain: sendImage="<<sendImage.str()<<endl;
 		// the intersection of senders matched by receivers and the actual sender domain
 		// is the subset of the senders on which recv o send is the identity
 		contRangeProcSet& recvImage = recv.getImage(sendImage);
-//cout << "getIdentityDomain: recvImage="<<recvImage.str()<<", recvImage.getConstr()="<<recvImage.getConstr()<<"\n";
+		Dbg::dbg << "getIdentityDomain: recvImage="<<recvImage.str()<<", recvImage.getConstr()="<<recvImage.getConstr()->str()<<endl;
 		sendImage.cgDisconnect();
 		delete &sendImage;
 		recvImage.intersectUpd(domain);
-/*cout << "getIdentityDomain: recvImage I domain="<<recvImage.str()<<", recvImage.getConstr()="<<recvImage.getConstr()<<"\n";
-cout << "cg = "<<recvImage.getConstr()->str()<<"\n";*/
+Dbg::dbg << "getIdentityDomain: recvImage domain="<<recvImage.str()<<", recvImage.getConstr()="<<recvImage.getConstr()->str()<<endl;
+		Dbg::exitFunc("getIdentityDomain");
 		return recvImage;
 	}
 	// If multiple processes are sending to the same set of receivers, each receiver will see multiple
@@ -150,11 +180,13 @@ cout << "cg = "<<recvImage.getConstr()->str()<<"\n";*/
 		// exactly one spot
 		if(recvImage.size()==1)
 		{
+			Dbg::exitFunc("getIdentityDomain");
 			return recvImage;
 		}
 		else
 		{
 			recvImage.invalidate();
+			Dbg::exitFunc("getIdentityDomain");
 			return recvImage;
 		}
 	}
@@ -177,8 +209,8 @@ contRangeProcSet& OneDmesgExpr::getImage(const contRangeProcSet& domain_arg) con
 {
 	//const contRangeProcSet& domain = dynamic_cast<const contRangeProcSet&>(domain_arg);
 	contRangeProcSet* procs = new contRangeProcSet(mRange, true);
-	//cout << "OneDmesgExpr::getImage: procs="<<procs->str()<<"\n";
-	//cout << "OneDmesgExpr::getImage: mRange="<<mRange.str()<<"\n";
+	//Dbg::dbg << "OneDmesgExpr::getImage: procs="<<procs->str()<<endl;
+	//Dbg::dbg << "OneDmesgExpr::getImage: mRange="<<mRange.str()<<endl;
 	return *procs;
 }
 
@@ -259,8 +291,8 @@ bool OneDmesgExpr::mustMergeable(const mesgExpr& that_arg) const
 	const OneDmesgExpr& that = dynamic_cast<const OneDmesgExpr&>(that_arg);
 	ROSE_ASSERT(mRange.getConstr() == that.mRange.getConstr());
 	
-	/*cout << "mustMergeable: eqVars("<<mRange.getUB().str()<<", "<<that.mRange.getLB().str()<<", 1, 1, -1)="<<mRange.getConstr()->eqVars(mRange.getUB(), that.mRange.getLB(), 1, 1, -1)<<"\n";
-	cout << "mustMergeable: eqVars("<<that.mRange.getUB().str()<<", "<<mRange.getLB().str()<<", 1, 1, -1)="<<mRange.getConstr()->eqVars(mRange.getUB(), that.mRange.getLB(), 1, 1, -1)<<"\n";*/
+	/*Dbg::dbg << "mustMergeable: eqVars("<<mRange.getUB().str()<<", "<<that.mRange.getLB().str()<<", 1, 1, -1)="<<mRange.getConstr()->eqVars(mRange.getUB(), that.mRange.getLB(), 1, 1, -1)<<endl;
+	Dbg::dbg << "mustMergeable: eqVars("<<that.mRange.getUB().str()<<", "<<mRange.getLB().str()<<", 1, 1, -1)="<<mRange.getConstr()->eqVars(mRange.getUB(), that.mRange.getLB(), 1, 1, -1)<<endl;*/
 	
 	       // [range][that.range] == mRange.ub*1 = that.mRange.lb*1 - 1
 	return mRange.getConstr()->eqVars(mRange.getUB(), that.mRange.getLB(), 1, 1, -1) ||
@@ -276,12 +308,12 @@ bool OneDmesgExpr::mergeUpd(const mesgExpr& that_arg)
 	ROSE_ASSERT(mRange.getConstr() == that.mRange.getConstr());
 	
 	if(analysisDebugLevel>=1) 
-		cout << "mRange.getConstr()->eqVars("<<mRange.getUB().str()<<", "<<that.mRange.getLB().str()<<", 1, 1, -1)="<<mRange.getConstr()->eqVars(mRange.getUB(), that.mRange.getLB(), 1, 1, -1)<<"\n";
+		Dbg::dbg << "mRange.getConstr()-&lt;eqVars("<<mRange.getUB().str()<<", "<<that.mRange.getLB().str()<<", 1, 1, -1)="<<mRange.getConstr()->eqVars(mRange.getUB(), that.mRange.getLB(), 1, 1, -1)<<endl;
 	// [range][that.range] == mRange.ub*1 = that.mRange.lb*1 - 1
 	if(mRange.getConstr()->eqVars(mRange.getUB(), that.mRange.getLB(), 1, 1, -1))
 		mRange.assignUB(that.mRange.getUB());
 	if(analysisDebugLevel>=1) 
-		cout << "mRange.getConstr()->eqVars("<<that.mRange.getLB().str()<<", "<<mRange.getUB().str()<<", 1, 1, -1)="<<mRange.getConstr()->eqVars(that.mRange.getLB(), mRange.getLB(), 1, 1, -1)<<"\n";
+		Dbg::dbg << "mRange.getConstr()-&lt;eqVars("<<that.mRange.getLB().str()<<", "<<mRange.getUB().str()<<", 1, 1, -1)="<<mRange.getConstr()->eqVars(that.mRange.getLB(), mRange.getLB(), 1, 1, -1)<<endl;
 	// [that.range][range] == that.rangeUB*1 = rangeLB*1 - 1
 	if(mRange.getConstr()->eqVars(that.mRange.getUB(), mRange.getLB(), 1, 1, -1))
 		mRange.assignLB(that.mRange.getLB());

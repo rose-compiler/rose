@@ -197,9 +197,11 @@ public:
 	 *** OUTPUT ***
 	 **************/
 	
-	// string representation of the variable reference
+	// string representation of the variable reference.
+	// If noAnnot is true, excludes annotations from the name.
 	//const char* str();
 	string str() const;
+	string str(bool noAnnot) const;
 	
 	// string representation of the variable reference, with variable/field names augmented with 
 	// the line numbers where they were defined. File names are omitted for brevity	
@@ -210,7 +212,7 @@ public:
 	// with the pointers to their declarations
 	//const char* str_ptr();
 	string str_ptr() const;
-	
+		
 	/**********************
 	 *** SEMANTINC INFO ***
 	 **********************/
@@ -286,9 +288,6 @@ varID SgExpr2Var(SgExpression* expr);
 
 // Returns true if the given expression can be interepreted as a concrete variable
 bool isVarExpr(SgExpression* expr);
-
-// convert from variable id to variable name
-std::string getVariableName( varID var );
 
 // translate from an expression that uses a variable to that variable's unique id
 // currently supported: a (SgVarRefExp), a.i (SgDotExp), 

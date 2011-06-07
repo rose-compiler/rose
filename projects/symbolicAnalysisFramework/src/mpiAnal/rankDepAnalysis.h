@@ -14,7 +14,7 @@
 #include "printAnalysisStates.h"
 #include "liveDeadVarAnalysis.h"
 
-extern int sgnAnalysisDebugLevel;
+extern int MPIRankDepAnalysisDebugLevel;
 
 // Maintains sign information about live variables. If a given variable may be either positive or negative, this object becomes top.
 // There is one SgnLattice object for every variable
@@ -105,15 +105,10 @@ class MPIRankNProcsDepLattice : public FiniteLattice
 };
 
 class MPIRankDepAnalysis : public IntraFWDataflow
-{	
-	// The LiveDeadVarsAnalysis that identifies the live/dead state of all application variables.
-	// Needed to create a FiniteVarsExprsProductLattice.
-	LiveDeadVarsAnalysis* ldva; 
-	
+{
 	public:
-	MPIRankDepAnalysis(LiveDeadVarsAnalysis* ldva): IntraFWDataflow()
+	MPIRankDepAnalysis(): IntraFWDataflow()
 	{	
-		this->ldva = ldva;
 	}
 	
 	// generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
@@ -124,7 +119,11 @@ class MPIRankDepAnalysis : public IntraFWDataflow
 	bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo);
 };
 
-void runMPIRankDepAnalysis();
+MPIRankDepAnalysis* runMPIRankDepAnalysis(SgIncidenceDirectedGraph* graph, string indent="");
+
+// Prints the Lattices set by the given MPIRankDepAnalysis 
+void printMPIRankDepAnalysisStates(string indent="");
+void printMPIRankDepAnalysisStates(MPIRankDepAnalysis* rankDepAnal, string indent="");
 
 // Returns whether the given variable at the given DataflowNode depends on the process' rank
 bool isMPIRankVarDep(const Function& func, const DataflowNode& n, varID var);

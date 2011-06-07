@@ -26,7 +26,7 @@ int numFails=0;
 
 int main( int argc, char * argv[] ) 
 {
-	printf("=== ======= S T A R T ======= ===\n");
+	printf("========== S T A R T ==========\n");
 	
 	// Build the AST used by ROSE
 	SgProject* project = frontend(argc,argv);
@@ -106,12 +106,12 @@ int main( int argc, char * argv[] )
 	//printf("***************************************************************\n");
 	//printf("***************** Scalar FW Dataflow Analysis *****************\n");
 	//printf("***************************************************************\n");
-//	ConstrGraphAnalysis cga(&ldva, &da/*GB : 2011-03-05 (Removing Sign Lattice Dependence), &sa*/);
+	ConstrGraphAnalysis cga(&ldva, &da/*GB : 2011-03-05 (Removing Sign Lattice Dependence), &sa*/);
 //	ContextInsensitiveInterProceduralDataflow ciipd_cga(&cga, graph);
 //	//UnstructuredPassInterDataflow ciipd_cga(&cga);
 //	ciipd_cga.runAnalysis();
-//	
-//	printConstrGraphAnalysisStates(&cga, "<");
+	
+	printConstrGraphAnalysisStates(&cga, "<");
 
 	if(numFails==0)
 		printf("PASS\n");

@@ -81,8 +81,8 @@ class LiveVarsLattice : public FiniteLattice
 	// It is assumed that a newly-added variable has not been added before and that a variable that is being
 	//    removed was previously added
 	// Returns true if this causes the lattice to change and false otherwise.
-	bool addVar(varID var);
-	bool remVar(varID var);
+	bool addVar(const varID& var);
+	bool remVar(const varID& var);
 	
 	// Returns true if the given variable is recorded as live and false otherwise
 	bool isLiveVar(varID var);
@@ -101,11 +101,22 @@ class LiveVarsLattice : public FiniteLattice
 // !!!    - IT DOES NOT CONSIDER INTERNALS OF ARRAYS OR OTHER HEAP MEMORY
 class LiveDeadVarsAnalysis : public IntraBWDataflow
 {
+	public:
+	// Virtual class that allows users of the LiveDeadVarsAnalysis to mark certain variables as 
+	// being used inside a function call if the function's body is not available.
+	class funcSideEffectUses
+	{
+		public:
+		// Returns the set of variables that are used in a call to the given function for which a body has not been provided.
+		// The function is also provided with the DataflowNode where the function was called, as well as its state.
+		virtual set<varID> usedVarsInFunc(const Function& func, const DataflowNode& n, NodeState& state)=0;
+	};
+
 	protected:
-	
+	funcSideEffectUses* fseu;
 	
 	public:
-	LiveDeadVarsAnalysis(SgProject *project);
+	LiveDeadVarsAnalysis(SgProject *project, funcSideEffectUses* fseu=NULL);
 	
 	// Generates the initial lattice state for the given dataflow node, in the given function, with the given NodeState
 	void genInitState(const Function& func, const DataflowNode& n, const NodeState& state,
@@ -143,10 +154,16 @@ class VarsExprsProductLattice: public virtual ProductLattice
 	DataflowNode n;
 	const NodeState& state;
 	
+	protected:
+	// Minimal constructor that initializes just the portions of the object required to make an 
+	// initial blank VarsExprsProductLattice
+	VarsExprsProductLattice(const DataflowNode& n, const NodeState& state);
+	
+	// Retrns a blank instance of a VarsExprsProductLattice that only has the fields n and state set
+	virtual VarsExprsProductLattice* blankVEPL(const DataflowNode& n, const NodeState& state)=0;
+	
 	public:
 	// creates a new VarsExprsProductLattice
-	// includeScalars - if =true, a lattice is created for each scalar variable
-	// includeArrays - if =true, a lattice is created for each array variable 
 	// perVarLattice - sample lattice that will be associated with every variable in scope at node n
 	//     it should be assumed that the object pointed to by perVarLattice will be either
 	//     used internally by this VarsExprsProductLatticeobject or deallocated
@@ -162,24 +179,25 @@ class VarsExprsProductLattice: public virtual ProductLattice
 	                        const map<varID, Lattice*>& constVarLattices, 
 	                        Lattice* allVarLattice,
 	                        LiveDeadVarsAnalysis* ldva, 
-	                        const DataflowNode& n, const NodeState& state) : 
-	                        	perVarLattice(perVarLattice), allVarLattice(allVarLattice), ldva(ldva), n(n), state(state)
-	{
-		
-	}
+	                        const DataflowNode& n, const NodeState& state);
 	                        
-	// copy constructor
+	// Create a copy of that. It is assumed that the types of all the lattices in  VarsExprsProductLattice that are
+	// the same as in this.
 	VarsExprsProductLattice(const VarsExprsProductLattice& that);
+	
+	~VarsExprsProductLattice();
 	
 	public:
 	
+	// Returns the Lattice mapped to the given variable of NULL if nothing is mapped to it
 	Lattice* getVarLattice(const varID& var);
 	
-	protected:
-	// sets up the varLatticeIndex map, if necessary
-	void setUpVarLatticeIndex() {}
+	// Returns the set of all variables mapped by this VarsExprsProductLattice
+	set<varID> getAllVars();
 	
-	// returns the index of var among the variables associated with func
+	protected:
+	
+	// Returns the index of var among the variables associated with func
 	// or -1 otherwise
 	int getVarIndex(const varID& var);
 	
@@ -187,6 +205,8 @@ class VarsExprsProductLattice: public virtual ProductLattice
 	
 	// Overwrites the state of this Lattice with that of that Lattice
 	void copy(Lattice* that);
+	// Set this to be a copy of that. It is assumed that the types of all the lattices in  VarsExprsProductLattice 
+	// that are the same as in this.
 	void copy(const VarsExprsProductLattice* that);
 	
 	// Called by analyses to create a copy of this lattice. However, if this lattice maintains any 
@@ -207,12 +227,36 @@ class VarsExprsProductLattice: public virtual ProductLattice
 	//    Lattices have per-variable information.
 	void incorporateVars(Lattice* that);
 	
+	// Returns a Lattice that describes the information known within this lattice
+	// about the given expression. By default this could be the entire lattice or any portion of it.
+	// For example, a lattice that maintains lattices for different known variables and expression will 
+	// return a lattice for the given expression. Similarly, a lattice that keeps track of constraints
+	// on values of variables and expressions will return the portion of the lattice that relates to
+	// the given expression. 
+	// It it legal for this function to return NULL if no information is available.
+	// The function's caller is responsible for deallocating the returned object
+	Lattice* project(SgExpression* expr);
+	
+	// The inverse of project(). The call is provided with an expression and a Lattice that describes
+	// the dataflow state that relates to expression. This Lattice must be of the same type as the lattice
+	// returned by project(). unProject() must incorporate this dataflow state into the overall state it holds.
+	// Call must make an internal copy of the passed-in lattice and the caller is responsible for deallocating it.
+	// Returns true if this causes this to change and false otherwise.
+	bool unProject(SgExpression* expr, Lattice* exprState);
+	
 	// Functions used to inform this lattice that a given variable is now in use (e.g. a variable has entered 
 	//    scope or an expression is being analyzed) or is no longer in use (e.g. a variable has exited scope or
 	//    an expression or variable is dead).
 	// Returns true if this causes this Lattice to change and false otherwise.
 	bool addVar(const varID& var);
 	bool remVar(const varID& var);
+	
+	// Sets the lattice of the given var to be lat. 
+	// If the variable is already mapped to some other Lattice, 
+	//   If *(the current lattice) == *lat, the mapping is not changed
+	//   If *(the current lattice) != *lat, the current lattice is deallocated and var is mapped to lat->copy()
+	// Returns true if this causes this Lattice to change and false otherwise.
+	bool addVar(const varID& var, Lattice* lat);
 	
 	// The string that represents this object
 	// If indent!="", every line of this string must be prefixed by indent
@@ -222,6 +266,14 @@ class VarsExprsProductLattice: public virtual ProductLattice
 
 class FiniteVarsExprsProductLattice : public virtual VarsExprsProductLattice, public virtual FiniteProductLattice
 {
+	protected:
+	// Minimal constructor that initializes just the portions of the object required to make an 
+	// initial blank VarsExprsProductLattice
+	FiniteVarsExprsProductLattice(const DataflowNode& n, const NodeState& state);
+	
+	// Retrns a blank instance of a VarsExprsProductLattice that only has the fields n and state set
+	VarsExprsProductLattice* blankVEPL(const DataflowNode& n, const NodeState& state);
+		
 	public:
 	// creates a new VarsExprsProductLattice
 	// perVarLattice - sample lattice that will be associated with every variable in scope at node n
@@ -239,30 +291,24 @@ class FiniteVarsExprsProductLattice : public virtual VarsExprsProductLattice, pu
 	                             const map<varID, Lattice*>& constVarLattices, 
 	                             Lattice* allVarLattice,
 	                             LiveDeadVarsAnalysis* ldva, 
-	                             const DataflowNode& n, const NodeState& state) :
-	    VarsExprsProductLattice(perVarLattice, constVarLattices, allVarLattice, ldva, n, state), 
-	    FiniteProductLattice()
-	{
-		cout << "FiniteVarsExprsProductLattice n="<<n.getNode()<<" = <"<<n.getNode()->unparseToString()<<" | "<<n.getNode()->class_name()<<" | "<<n.getIndex()<<">\n";
-		verifyFinite();
-	}
+	                             const DataflowNode& n, const NodeState& state);
 	
-	FiniteVarsExprsProductLattice(const FiniteVarsExprsProductLattice& that) : 
-		VarsExprsProductLattice(that), FiniteProductLattice()
-	{
-		cout << "FiniteVarsExprsProductLattice::copy n="<<n.getNode()<<" = <"<<n.getNode()->unparseToString()<<" | "<<n.getNode()->class_name()<<" | "<<n.getIndex()<<">\n";
-		verifyFinite();
-	}
+	FiniteVarsExprsProductLattice(const FiniteVarsExprsProductLattice& that);
 	
 	// returns a copy of this lattice
-	Lattice* copy() const
-	{
-		return new FiniteVarsExprsProductLattice(*this);
-	}
+	Lattice* copy() const;
 };
 
 class InfiniteVarsExprsProductLattice: public virtual VarsExprsProductLattice, public virtual InfiniteProductLattice
 {
+	protected:
+	// Minimal constructor that initializes just the portions of the object required to make an 
+	// initial blank VarsExprsProductLattice
+	InfiniteVarsExprsProductLattice(const DataflowNode& n, const NodeState& state);
+	
+	// Retrns a blank instance of a VarsExprsProductLattice that only has the fields n and state set
+	VarsExprsProductLattice* blankVEPL(const DataflowNode& n, const NodeState& state);
+	
 	public:
 	// creates a new VarsExprsProductLattice
 	// perVarLattice - sample lattice that will be associated with every variable in scope at node n
@@ -280,22 +326,12 @@ class InfiniteVarsExprsProductLattice: public virtual VarsExprsProductLattice, p
 	                                const map<varID, Lattice*>& constVarLattices, 
 	                                Lattice* allVarLattice,
 	                                LiveDeadVarsAnalysis* ldva, 
-	                                const DataflowNode& n, const NodeState& state) :
-	    VarsExprsProductLattice(perVarLattice, constVarLattices, allVarLattice, ldva, n, state), 
-	    InfiniteProductLattice()
-	{
-	}
+	                                const DataflowNode& n, const NodeState& state);
 	
-	InfiniteVarsExprsProductLattice(const FiniteVarsExprsProductLattice& that) : 
-		VarsExprsProductLattice(that), InfiniteProductLattice()
-	{
-	}
+	InfiniteVarsExprsProductLattice(const FiniteVarsExprsProductLattice& that);
 	
 	// returns a copy of this lattice
-	Lattice* copy() const
-	{
-		return new InfiniteVarsExprsProductLattice(*this);
-	}
+	Lattice* copy() const;
 };
 
 // prints the Lattices set by the given LiveDeadVarsAnalysis 

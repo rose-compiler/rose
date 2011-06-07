@@ -66,7 +66,7 @@ class ConstrGraphAnalysis : public IntraFWDataflow
 	
 	// incorporates the current node's divisibility information into the current node's constraint graph
 	// returns true if this causes the constraint graph to change and false otherwise
-	bool incorporateDivInfo(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo, string indent="");
+	//bool incorporateDivInfo(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo, string indent="");
 	
 	// For any variable for which we have divisibility info, remove its constraints to other variables (other than its
 	// divisibility variable)

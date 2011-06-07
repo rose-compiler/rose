@@ -160,7 +160,7 @@ bool DivLattice::matchDivAddSubt(DivLattice* one, DivLattice* two, long& div, lo
 	// If these object have the same div
 	if(one->div == two->div)
 	{
-		cout << "DivLattice::matchDivAddSubt() one="<<one->str("")<<" two="<<two->str("")<<"\n";
+		Dbg::dbg << "DivLattice::matchDivAddSubt() one="<<one->str("")<<" two="<<two->str("")<<"\n";
 		div = one->div;
 		if(plus) rem = (one->rem + two->rem)%div;
 		else     rem = (one->rem - two->rem + div)%div;
@@ -192,17 +192,17 @@ bool DivLattice::meetUpdate(Lattice* that_arg)
 	short oldLevel = level;
 	DivLattice* that = dynamic_cast<DivLattice*>(that_arg);
 
-/*printf("DivLattice::meetUpdate\n");
-cout << "this: " << str("") << "\n";
-cout << "that: " << that->str("") << "\n";*/
+/*Dbg::dbg << "DivLattice::meetUpdate\n";
+Dbg::dbg << "this: " << str("") << "\n";
+Dbg::dbg << "that: " << that->str("") << "\n";*/
 
 	// if this object is uninitialized, just copy the state of that
 	if(level==uninitialized)
 	{
-		//cout << "    level="<<level<<" that->level="<<that->level<<"\n";
+		//Dbg::dbg << "    level="<<level<<" that->level="<<that->level<<"\n";
 		if(that->level > uninitialized)
 			copy(that);
-		//cout << "    level="<<level<<" that->level="<<that->level<<"\n";
+		//Dbg::dbg << "    level="<<level<<" that->level="<<that->level<<"\n";
 		goto Done;
 	}
 	// else, if that is uninitialized, leave this alone
@@ -263,7 +263,7 @@ cout << "that: " << that->str("") << "\n";*/
 			}
 			else if(level==valKnown && that->level==divKnown)
 			{
-				//cout << "(level==valKnown && that->level==divKnown) value%that->div="<<(value%that->div)<<" that->rem="<<that->rem<<"\n";
+				//Dbg::dbg << "(level==valKnown && that->level==divKnown) value%that->div="<<(value%that->div)<<" that->rem="<<that->rem<<"\n";
 				// if this can be divided by that->div to get that->rem as the remainder,
 				// we can use that->div, that->rem to represent both objects
 				if(value%that->div == that->rem)
@@ -278,7 +278,7 @@ cout << "that: " << that->str("") << "\n";*/
 			}
 			else if(level==divKnown && that->level==valKnown)
 			{
-				//cout << "(level==divKnown && that->level==valKnown) that->value%div="<<that->value%div<<" == rem="<<rem<<"\n";
+				//Dbg::dbg << "(level==divKnown && that->level==valKnown) that->value%div="<<that->value%div<<" == rem="<<rem<<"\n";
 				// if this can be divided by that->div to get that->rem as the remainder,
 				// we can use div, rem to represent both objects
 				if(that->value%div == rem)
@@ -329,7 +329,7 @@ bool DivLattice::operator==(Lattice* that_arg)
 {
 	DivLattice* that = dynamic_cast<DivLattice*>(that_arg);
 	
-	/*cout << "operator == ("<<str()<<", "<<that->str()<<"): "<<((value == that->value) &&
+	/*Dbg::dbg << "operator == ("<<str()<<", "<<that->str()<<"): "<<((value == that->value) &&
 	       (div == that->div) &&
 	       (rem == that->rem) &&
 	       (level == that->level))<<"\n";*/
@@ -444,17 +444,16 @@ bool DivLattice::mult(long multiplier)
 string DivLattice::str(string indent)
 {
 	ostringstream outs;
-	//printf("DivLattice::str() level=%d\n", level);
 	if(level == uninitialized)
-		outs << indent << "<level: uninitialized>";
+		outs << indent << "[level: uninitialized]";
 	else if(level == bottom)
-		outs << indent << "<level: bottom>";
+		outs << indent << "[level: bottom]";
 	else if(level == valKnown)
-		outs << indent << "<level: valKnown, val="<<value<<">";
+		outs << indent << "[level: valKnown, val="<<value<<"]";
 	else if(level == divKnown)
-		outs << indent << "<level: divKnown, div="<<div<<", rem="<<rem<<">";
+		outs << indent << "[level: divKnown, div="<<div<<", rem="<<rem<<"]";
 	else if(level == top)
-		outs << indent << "<level: top>";
+		outs << indent << "[level: top]";
 	return outs.str();
 }
 
@@ -488,9 +487,9 @@ void DivAnalysis::genInitState(const Function& func, const DataflowNode& n, cons
 	//vector<Lattice*> initLattices;
 	map<varID, Lattice*> emptyM;
 	FiniteVarsExprsProductLattice* l = new FiniteVarsExprsProductLattice((Lattice*)new DivLattice(), emptyM/*genConstVarLattices()*/, 
-	                                                                     (Lattice*)NULL, ldva, /*func, */n, state);
-	cout << "DivAnalysis::genInitState, returning l="<<l<<" n=<"<<n.getNode()->unparseToString()<<" | "<<n.getNode()->class_name()<<" | "<<n.getIndex()<<">\n";
-	cout << "    l="<<l->str("    ")<<"\n";
+	                                                                     (Lattice*)NULL, ldva, /*func, */n, state);         
+	//Dbg::dbg << "DivAnalysis::genInitState, returning l="<<l<<" n=<"<<Dbg::escape(n.getNode()->unparseToString())<<" | "<<n.getNode()->class_name()<<" | "<<n.getIndex()<<">\n";
+	//Dbg::dbg << "    l="<<l->str("    ")<<"\n";
 	initLattices.push_back(l);
 	
 	
@@ -499,7 +498,7 @@ void DivAnalysis::genInitState(const Function& func, const DataflowNode& n, cons
 for(vector<Lattice*>::iterator it = initLattices.begin(); 
     it!=initLattices.end(); it++)
 {	
-	cout << *it << ": " << (*it)->str("    ") << "\n";
+	Dbg::dbg << *it << ": " << (*it)->str("    ") << "\n";
 }*/
 	
 	//return initLattices;
@@ -522,9 +521,9 @@ for(vector<Lattice*>::iterator it = initLattices.begin();
 
 		constVars_init = true;
 		/ *
-		cout << "constVars:\n";
+		Dbg::dbg << "constVars:\n";
 		for(map<varID, Lattice*>::iterator it = constVars.begin(); it!=constVars.end(); it++)
-		{ cout << it->first.str() << ": " << it->second->str("") << "\n"; }
+		{ Dbg::dbg << it->first.str() << ": " << it->second->str("") << "\n"; }
 		
 		printf("oneVar == zeroVar = %d\n", oneVar == zeroVar);
 		printf("oneVar < zeroVar = %d\n", oneVar < zeroVar);
@@ -540,7 +539,7 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 	
 	FiniteVarsExprsProductLattice* prodLat = dynamic_cast<FiniteVarsExprsProductLattice*>(*(dfInfo.begin()));
 	
-	//cout << "transfer A prodLat="<<prodLat<<"="<<prodLat->str("    ")<<"\n";
+	//Dbg::dbg << "transfer A prodLat="<<prodLat<<"="<<prodLat->str("    ")<<"\n";
 	// Make sure that all the lattices are initialized
 	//prodLat->initialize();
 	const vector<Lattice*>& lattices = prodLat->getLattices();
@@ -553,7 +552,7 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 		varID lhs = SgExpr2Var(isSgAssignOp(n.getNode())->get_lhs_operand());
 		varID rhs = SgExpr2Var(isSgAssignOp(n.getNode())->get_rhs_operand());
 		if(divAnalysisDebugLevel>=1) {
-			cout << "res="<<res.str()<<" lhs="<<lhs.str()<<" rhs="<<rhs.str()<<"\n";
+			Dbg::dbg << "res="<<res.str()<<" lhs="<<lhs.str()<<" rhs="<<rhs.str()<<"\n";
 		}
 		
 		DivLattice* resLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(res));
@@ -561,9 +560,9 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 		DivLattice* rhsLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(rhs));
 		
 		if(divAnalysisDebugLevel>=1) {
-			if(resLat) cout << "resLat=\n    "<<resLat->str("    ")<<"\n";
-			if(lhsLat) cout << "lhsLat=\n    "<<lhsLat->str("    ")<<"\n";
-			if(rhsLat) cout << "rhsLat=\n    "<<rhsLat->str("    ")<<"\n";
+			if(resLat) Dbg::dbg << "resLat=\n    "<<resLat->str("    ")<<"\n";
+			if(lhsLat) Dbg::dbg << "lhsLat=\n    "<<lhsLat->str("    ")<<"\n";
+			if(rhsLat) Dbg::dbg << "rhsLat=\n    "<<rhsLat->str("    ")<<"\n";
 		}
 		
 		// Copy the lattice of the right-hand-side to both the left-hand-side variable and to the assignment expression itself
@@ -579,8 +578,8 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 		DivLattice* asgnLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(asgn));
 		DivLattice* resLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(res));
 		if(divAnalysisDebugLevel>=1) {
-			if(asgnLat) cout << "asgnLat=    "<<asgnLat->str("    ")<<"\n";
-			if(resLat) cout << "resLat=    "<<resLat->str("    ")<<"\n";
+			if(asgnLat) Dbg::dbg << "asgnLat=    "<<asgnLat->str("    ")<<"\n";
+			if(resLat) Dbg::dbg << "resLat=    "<<resLat->str("    ")<<"\n";
 		}
 
 		// If the result expression is live
@@ -591,19 +590,19 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 		varID var(initName);
 		DivLattice* varLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(var));
 		
-		//cout << "DivAnalysis::transfer() isSgInitializedName var="<<var.str()<<" varLat="<<varLat<<"\n";
+		//Dbg::dbg << "DivAnalysis::transfer() isSgInitializedName var="<<var.str()<<" varLat="<<varLat<<"\n";
 		
 		// if this is a scalar that we care about, initialize it to Bottom
 		if(varLat)
 		{
-			//if(divAnalysisDebugLevel>=1) cout << "Variable declaration: "<<var.str()<<", get_initializer()="<<initName->get_initializer()<<"\n";
+			//if(divAnalysisDebugLevel>=1) Dbg::dbg << "Variable declaration: "<<var.str()<<", get_initializer()="<<initName->get_initializer()<<"\n";
 			// If there was no initializer
 			if(initName->get_initializer()==NULL)
 				modified = varLat->setBot() || modified;
 			else {
 				varID init = SgExpr2Var(initName->get_initializer());
 				DivLattice* initLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(init));
-				//if(divAnalysisDebugLevel>=1) cout << "    init="<<init.str()<<" initLat="<<initLat<<"\n";
+				//if(divAnalysisDebugLevel>=1) Dbg::dbg << "    init="<<init.str()<<" initLat="<<initLat<<"\n";
 				if(initLat) {
 					varLat->copy(initLat);
 					modified = true;
@@ -658,7 +657,7 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 				lhs = SgExpr2Var(isSgBinaryOp(n.getNode())->get_lhs_operand());
 				arg1 = lhs;
 				arg2 = SgExpr2Var(isSgBinaryOp(n.getNode())->get_rhs_operand());
-				//cout << "lhs="<<lhs.str()<<" arg1="<<arg1.str()<<" arg2="<<arg2.str()<<"\n";
+				//Dbg::dbg << "lhs="<<lhs.str()<<" arg1="<<arg1.str()<<" arg2="<<arg2.str()<<"\n";
 			} else {
 				arg1 = SgExpr2Var(isSgBinaryOp(n.getNode())->get_lhs_operand());
 				arg2 = SgExpr2Var(isSgBinaryOp(n.getNode())->get_rhs_operand());
@@ -672,10 +671,10 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 			if(isSgMinusMinusOp(n.getNode()) || isSgPlusPlusOp(n.getNode())) {
 				arg2Lat = new DivLattice(1);
 			}
-			//cout << "res="<<res.str()<<" arg1="<<arg1.str()<<" arg1Lat="<<arg1Lat<<", arg2Lat="<<arg2Lat<<"\n";
+			//Dbg::dbg << "res="<<res.str()<<" arg1="<<arg1.str()<<" arg1Lat="<<arg1Lat<<", arg2Lat="<<arg2Lat<<"\n";
 		}
 		resLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(res));
-		//cout << "transfer B, resLat="<<resLat<<"\n";
+		//Dbg::dbg << "transfer B, resLat="<<resLat<<"\n";
 		
 		// If the result expression is dead but the left-hand-side of the expression is live,
 		// update the left-hand-side with the result
@@ -686,7 +685,7 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 			prodLat->getVarLattice(lhs)!=NULL)
 		{ resLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(lhs)); }
 		
-		//cout << "transfer C, resLat="<<resLat<<"\n";
+		//Dbg::dbg << "transfer C, resLat="<<resLat<<"\n";
 		// If the result or left-hand-side expression as well as the arguments are live
 		if(resLat && arg1Lat && arg2Lat) {
 			// ADDITION / SUBTRACTION
@@ -759,7 +758,7 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 				resLat->copy(arg1Lat); modified = true;
 			// MULTIPLICATION
 			} else if(isSgMultAssignOp(n.getNode()) || isSgMultiplyOp(n.getNode())) {
-				if(divAnalysisDebugLevel>=1) printf("   case i = j * k\n");
+				if(divAnalysisDebugLevel>=1) Dbg::dbg << "   case i = j * k\n";
 				/*printf("arg1Lat = %s\n", arg1Lat->str().c_str());
 				printf("arg2Lat = %s\n", arg2Lat->str().c_str());*/
 				
@@ -793,7 +792,7 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 					modified = resLat->setTop() || modified;
 			// DIVISION
 			} else if(isSgDivAssignOp(n.getNode()) || isSgDivideOp(n.getNode())) {
-				if(divAnalysisDebugLevel>=1) printf("   case i = j / k\n");
+				if(divAnalysisDebugLevel>=1) Dbg::dbg << "   case i = j / k\n";
 			
 				// Both Bottom
 				if(arg1Lat->getLevel() == DivLattice::bottom || arg2Lat->getLevel() == DivLattice::bottom)
@@ -818,7 +817,7 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 					modified = resLat->setTop() || modified;
 			// MODULUS
 			} else if(isSgModAssignOp(n.getNode()) || isSgModOp(n.getNode())) {
-				if(divAnalysisDebugLevel>=1) printf("   case i = j %% k\n");
+				if(divAnalysisDebugLevel>=1) Dbg::dbg << "   case i = j %% k\n";
 				
 				// Both Bottom
 				if(arg1Lat->getLevel() == DivLattice::bottom || arg2Lat->getLevel() == DivLattice::bottom)
@@ -848,10 +847,10 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 				isSgMultAssignOp(n.getNode()) || isSgDivAssignOp(n.getNode()) ||
 				isSgModAssignOp(n.getNode())) {
 				// If we didn't use the lhs lattice as resLat, copy resLat into lhsLat
-				//cout << "prodLat->getVarLattice("<<res.str()<<")="<<prodLat->getVarLattice(res)<<"\n";
+				//Dbg::dbg << "prodLat-&lt;getVarLattice("<<res.str()<<")="<<prodLat-&lt;getVarLattice(res)<<"\n";
 				if(prodLat->getVarLattice(res)!=NULL) {
 					DivLattice* lhsLat = dynamic_cast<DivLattice*>(prodLat->getVarLattice(lhs));
-					//cout << "prodLat->getVarLattice("<<lhs.str()<<")="<<lhsLat<<"\n";
+					//Dbg::dbg << "prodLat-&lt;getVarLattice("<<lhs.str()<<")="<<lhsLat<<"\n";
 					if(lhsLat) // If the left-hand-side contains an identifiable variable
 						lhsLat->copy(resLat);
 				}
@@ -863,7 +862,7 @@ bool DivAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
 			delete arg2Lat;
 	} else
 		return false;
-	//cout << "transfer C\n";
+	//Dbg::dbg << "transfer C\n";
 	
 	return modified;
 }

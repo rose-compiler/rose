@@ -330,6 +330,13 @@ ProductLattice::ProductLattice(const vector<Lattice*>& lattices)
 	init(lattices);
 }
 
+ProductLattice::~ProductLattice()
+{
+	// Deallocate all the lattices
+	for(vector<Lattice*>::iterator lat=lattices.begin(); lat!=lattices.end(); lat++)
+		delete *lat;
+}
+
 void ProductLattice::init(const vector<Lattice*>& lattices)
 {
 	this->lattices = lattices;
@@ -364,7 +371,11 @@ void ProductLattice::copy_lattices(vector<Lattice*>& newLattices) const
 void ProductLattice::copy(Lattice* that_arg)
 {
 	ProductLattice* that = dynamic_cast<ProductLattice*>(that_arg);
+	ROSE_ASSERT(that);
 	level = that->level;
+	// Deallocate all the Lattices
+	for(vector<Lattice*>::iterator lat=lattices.begin(); lat!=lattices.end(); lat++)
+		delete *lat;
 	lattices.clear();
 	that->copy_lattices(lattices);
 }

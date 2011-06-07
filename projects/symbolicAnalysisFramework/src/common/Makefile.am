@@ -7,7 +7,7 @@ include $(top_srcdir)/projects/symbolicAnalysisFramework/common.for.dep.libs
 # Saf is the short for symbolic analysis framework.
 # it is used to avoid possible name collision 
 noinst_LTLIBRARIES = libSafcommon.la
-libSafcommon_la_SOURCES = common.h genUID.C
+libSafcommon_la_SOURCES = common.h genUID.C common.C
 include_HEADERS = common.h  genUID.h
 
 # ----------test program -------------------

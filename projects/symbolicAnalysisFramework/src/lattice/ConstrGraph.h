@@ -21,6 +21,11 @@
 // GB : 2011-03-05 (Removing Sign Lattice Dependence)#include "sgnAnalysis.h"
 #include "liveDeadVarAnalysis.h"
 
+extern int CGDebugLevel;
+extern int CGmeetDebugLevel;
+extern int CGprofileLevel;
+extern int CGdebugTransClosure;
+
 // top - relations between each pair of variables are unknown or too complex to be representable as affine inequalities (minimal information)
 // intermediate - some concrete information is known about some variable pairs
 // bottom - impossible situation (maximal information) (bottom flag = true)
@@ -28,7 +33,7 @@
 // By default the constraint graph is = top. Since this implies a top inequality between every pair, we don't 
 // actually maintain such affineInequality objects. Instead, if there is no affineInequality between a pair of
 // variables, this itself implies that this affineInequality=top.
-class ConstrGraph : public virtual InfiniteLattice//, public virtual LogicalCond
+class ConstrGraph : public virtual InfiniteLattice, public dottable//, public virtual LogicalCond
 {
 public:
 	// Possible levels of this constraint graph, defined by their information content in ascending order.
@@ -103,19 +108,43 @@ protected:
 	set<varID> vars;
 	
 	// set of variables for which we have divisibility information
-	set<varID> divVars;
+	// noDivVars set<varID> divVars;
 	
 	// Flag indicating whether some of the constraints have changed since the last time
 	// this graph was checked for bottom-ness
 	bool constrChanged;
 	// Set of variables the for which we've added constraints since the last transitive closure
-	set<varID> newConstrVars;
+	/* GB 2011-06-02 : newConstrVars->modifiedVars : set<varID> newConstrVars; */
 	// Set of variables the constraints on which have been modified since the last transitive closure
 	set<varID> modifiedVars;
 	
 
 	/**** Constructors & Destructors ****/
-	//ConstrGraph(bool initialized=true, string indent="");
+	public:
+	// DataflowNode Descriptor object that summarizes the key info about a DataflowNode
+	// in case this ConstrGraph must represent the state of multiple nodes
+	class NodeDesc {
+		public:
+		const DataflowNode& n;
+		const NodeState& state;
+		string annotName;
+		void* annotVal;
+		set<varID> varsToInclude; // Set of variables that must be included in the ConstrGraph that describes this node, even if they are not live
+		NodeDesc(const DataflowNode& n, const NodeState& state, string annotName, void* annotVal, const set<varID>& varsToInclude) : 
+			n(n), state(state), annotName(annotName), annotVal(annotVal), varsToInclude(varsToInclude) {}
+		NodeDesc(const DataflowNode& n, const NodeState& state, string annotName, void* annotVal) : 
+			n(n), state(state), annotName(annotName), annotVal(annotVal) {}
+		NodeDesc(const DataflowNode& n, const NodeState& state) : 
+			n(n), state(state), annotName(""), annotVal(NULL) {}
+		bool operator==(const NodeDesc& that) const { return n==that.n && &state==&(that.state) && annotName==that.annotName && annotVal==that.annotVal && varsToInclude==that.varsToInclude; }
+		bool operator<(const NodeDesc& that) const { 
+			return (n<that.n) ||
+			       (n==that.n && &state< &(that.state)) || 
+			       (n==that.n && &state==&(that.state) && annotName<that.annotName) ||
+			       (n==that.n && &state==&(that.state) && annotName==that.annotName && annotVal<that.annotVal) ||
+			       (n==that.n && &state==&(that.state) && annotName==that.annotName && annotVal==that.annotVal && varsToInclude<that.varsToInclude);
+		}
+	};
 	
 protected:
 	ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state, bool initialized=false, string indent="");
@@ -129,7 +158,7 @@ public:
 	            const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
 	            // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
 	            bool initialized=true, string indent="");
-	ConstrGraph(const Function& func, const set<DataflowNode>& nodes, const NodeState& state, 
+	ConstrGraph(const Function& func, const set<NodeDesc>& nodes, const NodeState& state, 
 	            LiveDeadVarsAnalysis* ldva, 
 	            const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
 	            // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
@@ -155,10 +184,17 @@ public:
 	            // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
 	            string indent="");
 	
-	// Initialization code that is common to multiple constructors
-	void initCG(const Function& func, const set<DataflowNode>& nodes, const NodeState& state, 
-	            bool initialized, string indent="");
+	protected:
+	// Initialization code that is common to multiple constructors. 
+	// func - The function that the object corresponds to
+	// nodes - set of NodeDesc objects, each of which contains
+	//    n - a Dataflow node this ConstrGraph corresponds to
+	//    state - the NodeState of node n
+	//    annotName/annotVal - the annotation that will be associated with all variables live at node n
+	// initialized - If false, starts this ConstrGraph as uninitialized. If false, starts it at bottom.
+	void initCG(const Function& func, const set<NodeDesc>& nodes, bool initialized, string indent="");
 	
+	public:
 	~ConstrGraph ();
 	
 	// Initializes this Lattice to its default state, if it is not already initialized
@@ -167,10 +203,10 @@ public:
 	{ initialize(""); }
 	
 	// For a given variable returns the corresponding divisibility variable
-	static varID getDivVar(const varID& scalar);
+	// noDivVars static varID getDivVar(const varID& scalar);
 	
 	// Returns true if the given variable is a divisibility variable and false otherwise
-	static bool isDivVar(const varID& scalar);
+	// noDivVars static bool isDivVar(const varID& scalar);
 	
 	// Returns a divisibility product lattice that matches the given variable
 	FiniteVarsExprsProductLattice* getDivLattice(const varID& var, string indent="");
@@ -664,7 +700,6 @@ public:
 	//      at the first level by vals2Value[itThisX->first].
 	void OrAndWidenUpdate_YinThatNotThis(
 		                            bool OR, bool limitToThat, 
-		                            map<varID, affineInequality>::iterator& itThisY, 
 		                            map<varID, map<varID, affineInequality> >::iterator& itThatX,
 		                            map<varID, affineInequality>::iterator& itThatY, 
 		                            map<varID, affineInequality>& additionsToThis, 
@@ -683,16 +718,16 @@ public:
 	// focusing on the constraints of scalars that have divisibility variables
 	// we only bother propagating constraints to each such variable through its divisibility variable
 	// Returns true if this causes the graph to change and false otherwise.
-	bool divVarsClosure(string indent="");
+	// noDivVars bool divVarsClosure(string indent="");
 	
 	// The portion of divVarsClosure that is called for every y variable. Thus, given x and x' (x's divisibility variable)
 	// divVarsClosure_perY() is called for every scalar or array y to infer the x->y connection thru x->x'->y and
 	// infer the y->x connection thru x->x'->x
 	// Returns true if this causes the graph to change and false otherwise.
-	bool divVarsClosure_perY(const varID& x, const varID& divX, const varID& y, 
-	                         affineInequality* constrXDivX, affineInequality* constrDivXX/*,
-	                         affineInequality::signs xSign, affineInequality::signs ySign*/,
-	                         string indent="");
+	// noDivVars bool divVarsClosure_perY(const varID& x, const varID& divX, const varID& y, 
+	// noDivVars                          affineInequality* constrXDivX, affineInequality* constrDivXX/*,
+	// noDivVars                          affineInequality::signs xSign, affineInequality::signs ySign*/,
+	// noDivVars                          string indent="");
 	
 	// Computes the transitive closure of this constraint graph while modifying 
 	// only the constraints that involve the given variable
@@ -713,18 +748,18 @@ public:
 	// will be x = x'*d + r
 	// returns true if this causes the constraint graph to be modified (it may not if this 
 	//    information is already in the graph) and false otherwise
-	bool addDivVar(varID var/*, int div, int rem*/, bool killDivVar=false, string indent="");
+	// noDivVars bool addDivVar(varID var/*, int div, int rem*/, bool killDivVar=false, string indent="");
 	
 	// Disconnect this variable from all other variables except its divisibility variable. This is done 
 	// in order to compute the original variable's relationships while taking its divisibility information 
 	// into account.
 	// Returns true if this causes the constraint graph to be modified and false otherwise
-	bool disconnectDivOrigVar(varID var/*, int div, int rem*/, string indent="");
+	// noDivVars bool disconnectDivOrigVar(varID var/*, int div, int rem*/, string indent="");
 	
 	// Finds the variable within this constraint graph that corresponds to the given divisibility variable.
 	//    If such a variable exists, returns the pair <variable, true>.
 	//    Otherwise, returns <???, false>.
-	pair<varID, bool> divVar2Var(const varID& divVar, string indent="");
+	// noDivVars pair<varID, bool> divVar2Var(const varID& divVar, string indent="");
 	
 	// Adds a new divisibility lattice, with the associated anotation
 	// Returns true if this causes the constraint graph to be modified and false otherwise
@@ -825,6 +860,14 @@ public:
 	// If useIsBottom=true, isBottom() is used to determine whether the graph is =bottom.
 	// Otherwise, the bottom variable is checked.
 	string str(string indent, bool useIsBottom);
+	
+	// Returns a string that containts the representation of this constraint graph as a graph in the DOT language
+	// that has the given name
+	string toDOT(string graphName);
+	
+	// Returns a string that containts the representation of this constraint graph as a graph in the DOT language
+	// that has the given name, focusing the graph on just the variables inside focusVars.
+	string toDOT(string graphName, set<varID>& focusVars);
 	
 public:
 	/**** Comparison Functions ****/	

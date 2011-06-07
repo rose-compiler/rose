@@ -57,7 +57,7 @@ int main( int argc, char * argv[] )
 	printf("*************************************************************\n");
 	printf("*****************   Live/Dead Variable Analysis   *****************\n");
 	printf("*************************************************************\n");
-	LiveDeadVarsAnalysis ldva(project);
+	LiveDeadVarsAnalysis ldva(project, NULL);
 	ContextInsensitiveInterProceduralDataflow ciipd_ldva(&ldva, graph);
 	//UnstructuredPassInterDataflow ciipd_ldva(&ldva);
 	ciipd_ldva.runAnalysis();

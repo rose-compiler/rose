@@ -1,6 +1,6 @@
 #include "procSet.h"
 
-static int debugLevel=0;
+static int debugLevel=1;
 
 /***********
  * procSet *
@@ -24,20 +24,21 @@ static int debugLevel=0;
 // The number of variables that have been generated as range lower and upper bounds
 int contRangeProcSet::varCount=0;
 	
-varID contRangeProcSet::genFreshVar()
+varID contRangeProcSet::genFreshVar(string prefix)
 {
 	ostringstream outs;
-	outs << "boundVar_" << varCount;
+	if(prefix=="") outs << "boundVar_"<< varCount;
+	else           outs << prefix<<"_" << varCount;
 	varCount++;
 	varID var(outs.str());
-	//cout << outs.str()<<" : "<<var.str()<<"\n";;
+	//Dbg::dbg << outs.str()<<" : "<<var.str()<<endl;;
 	return var;
 }
 
 contRangeProcSet::contRangeProcSet(bool emptyRange)
 {
-	lb = genFreshVar();
-	ub = genFreshVar();
+	lb = genFreshVar("LB");
+	ub = genFreshVar("UB");
 	cg = NULL;
 	emptyRange = emptyRange;
 	valid = true;
@@ -69,6 +70,20 @@ contRangeProcSet::contRangeProcSet(varID lb, int lbA, int lbB, int lbC,
 	//ROSE_ASSERT(cg->lteVars(this->lb, this->ub));
 }
 
+contRangeProcSet::contRangeProcSet(varID lb, int lbA, int lbB, int lbC,
+                                   varID ub, int ubA, int ubB, int ubC,
+                                   string annotName, void* annot,
+                                   ConstrGraph* cg)
+{
+	this->cg = cg;
+	this->lb = lb;
+	this->ub = ub;
+	genFreshBounds(lbA, lbB, lbC, ubA, ubB, ubC, annotName, annot);
+	emptyRange = false;
+	valid = true;
+	//ROSE_ASSERT(cg->lteVars(this->lb, this->ub));
+}
+
 // if freshenVars==true, calls genFreshBounds() to make this set use different lower and upper
 // bound variables from that set, while ensuring that the bound variables themselves are 
 // equal to each other in cg
@@ -77,12 +92,17 @@ contRangeProcSet::contRangeProcSet(const contRangeProcSet& that, bool freshenVar
 	lb = that.lb;
 	ub = that.ub;
 	cg = that.cg;
+	
 	emptyRange = that.emptyRange;
 	valid = that.valid;
-	if(freshenVars)
-		genFreshBounds();
-	if(cg)
+	if(freshenVars) genFreshBounds();
+	if(cg) {
+		if(!(cg->lteVars(lb, ub, 1, 1, 0, "    "))) {
+			Dbg::dbg << "contRangeProcSet::contRangeProcSet() ASSERT FAILURE: ROSE_ASSERT(cg-&lt;lteVars("<<lb<<", "<<ub<<", 1, 1, 0)) cg="<<endl;
+			Dbg::dbg << cg->str() << endl;
+		}
 		ROSE_ASSERT(cg->lteVars(lb, ub, 1, 1, 0, "    "));
+	}
 }
 
 // copies that to this, returning true if this is not changed and false otherwise
@@ -144,10 +164,11 @@ bool contRangeProcSet::setUB(const varID& ub)
 bool contRangeProcSet::assignLB(const varID& newLB, int a, int b, int c)
 {
 	bool modified=false;
-	//cout << "assignLB("<<lb.str()<<" => "<<newLB.str()<<")\n";
+	//Dbg::dbg << "assignLB("<<lb<<" => "<<newLB<<")"<<endl;
 	cg->eraseVarConstr(lb);
-	modified = modified || cg->assertCond(lb, newLB, a, b, c);
-	modified = modified || cg->assertCond(newLB, lb, a, b, 0-c);
+	//Dbg::dbg << "erased LB "<<lb<<" cg = "<<cg<<" = "<<cg->str()<<endl;
+	modified = cg->assertCond(lb, newLB, a, b, c) || modified;
+	modified = cg->assertCond(newLB, lb, b, a, 0-c) || modified;
 	return modified;
 }
 
@@ -156,10 +177,11 @@ bool contRangeProcSet::assignLB(const varID& newLB, int a, int b, int c)
 bool contRangeProcSet::assignUB(const varID& newUB, int a, int b, int c)
 {
 	bool modified=false;
-	//cout << "assignUB("<<ub.str()<<" => "<<newUB.str()<<")\n";
+	//Dbg::dbg << "assignUB("<<ub<<" => "<<newUB<<")"<<endl;
 	cg->eraseVarConstr(ub);
-	modified = modified || cg->assertCond(ub, newUB, a, b, c);
-	modified = modified || cg->assertCond(newUB, ub, a, b, 0-c);
+	//Dbg::dbg << "erased UB "<<ub<<" cg = "<<cg<<" = "<<cg->str()<<endl;
+	modified = cg->assertCond(ub, newUB, a, b, c) || modified;
+	modified = cg->assertCond(newUB, ub, b, a, 0-c) || modified;
 	return modified;
 }
 
@@ -180,46 +202,42 @@ void contRangeProcSet::refreshInvariants()
 	cg->addVar(lb);
 	cg->addVar(ub);
 	// lb <= ub
-	cg->assertCond(lb, ub, 1, 1, 0);
+	/*GB 2011-06-01 NO-LB-UB-rankVar : cg->assertCond(lb, ub, 1, 1, 0);
+	
 	cg->localTransClosure(lb);
-	cg->localTransClosure(ub);
+	cg->localTransClosure(ub);*/
 }
 
 // Generates new lower and upper bound variables that are set to be equal to the original
 // lower and upper bound variables in this procSet's constraint graph as:
 // newLB*lbA = oldLB*lbB + lbC and newUB*ubA = oldUB*ubB + ubC
+// If annotName!="", the bounds variables will have the annotation annotName->annot
 void contRangeProcSet::genFreshBounds(int lbA, int lbB, int lbC,
-                                      int ubA, int ubB, int ubC)
+                                      int ubA, int ubB, int ubC, 
+                                      string annotName, void* annot)
 {
 	const varID oldLB = lb;
-	const varID oldUB = ub;
-	//cout << "genFreshBounds: lb="<<lb.str()<<" ub="<<ub.str()<<"  oldLB="<<oldLB.str()<<" oldUB="<<oldUB.str()<<"\n";
-	//cout << "genFreshBounds: this1="<<str()<<"\n";
-	lb = genFreshVar();
-	//cout << "genFreshBounds: this1A="<<str()<<"\n";
+	lb = genFreshVar("LB");
+	if(annotName != "") lb.addAnnotation(annotName, annot);
 	cg->addVar(lb);
-	//cout << "genFreshBounds: this1B="<<str()<<"\n";
-	cg->assertCond(lb, oldLB, lbA, lbB, lbC);
-	//cout << "genFreshBounds: this1C="<<str()<<"\n";
-	cg->assertCond(oldLB, lb, lbB, lbA, 0-lbC);
-	//cout << "genFreshBounds: this1D="<<str()<<"\n";
-	cg->localTransClosure(lb);
-	//cout << "genFreshBounds: this1E="<<str()<<"\n";
-	ub = genFreshVar();
+	Dbg::dbg << "    Assigning="<<lbA<<"*"<<lb<<" = "<<lbB<<"*"<<oldLB<<" + "<<lbC<<endl;
+	//cg->assertCond(lb, oldLB, lbA, lbB, lbC);
+	//cg->assertCond(oldLB, lb, lbB, lbA, 0-lbC);
+	cg->assign(lb, oldLB, lbA, lbB, lbC);
+
+	const varID oldUB = ub;			
+	ub = genFreshVar("UB");
+	if(annotName != "") ub.addAnnotation(annotName, annot);
 	cg->addVar(ub);
-	cg->assertCond(ub, oldUB, ubA, ubB, ubC);
-	cg->assertCond(oldUB, ub, ubB, ubA, 0-ubC);
+	Dbg::dbg << "    Assigning="<<ubA<<"*"<<ub<<" = "<<ubB<<"*"<<oldUB<<" + "<<ubC<<endl;
+	//cg->assertCond(ub, oldUB, ubA, ubB, ubC);
+	//cg->assertCond(oldUB, ub, ubB, ubA, 0-ubC);
+	cg->assign(ub, oldUB, ubA, ubB, ubC);
 	
-	//cout << "genFreshBounds: this2="<<str()<<"\n";
-	
+	// lb <= ub
 	cg->assertCond(lb, ub, 1, 1, 0);
 	cg->localTransClosure(lb);
 	cg->localTransClosure(ub);
-	
-	//cout << "genFreshBounds: this3="<<str()<<"\n";
-	
-	//cout << "genFreshBounds2: lb="<<lb.str()<<" ub="<<ub.str()<<"  oldLB="<<oldLB.str()<<" oldUB="<<oldUB.str()<<"\n";
-	//cout << "genFreshBounds2: cg="<<cg->str()<<"\n";
 }
 
 // Transition from using the current constraint graph to using newCG, while annotating
@@ -307,8 +325,8 @@ bool contRangeProcSet::makeNonEmpty()
 bool contRangeProcSet::rangeEq(const contRangeProcSet& that) const
 {
 	ROSE_ASSERT(cg == that.cg);
-	//cout << "contRangeProcSet::rangeEq: cg->eqVars("<<lb.str()<<", "<<that.lb.str()<<")="<<cg->eqVars(lb, that.lb)<<"\n";
-	//cout << "contRangeProcSet::rangeEq: cg->eqVars("<<ub.str()<<", "<<that.ub.str()<<")="<<cg->eqVars(ub, that.ub)<<"\n";
+	//Dbg::dbg << "contRangeProcSet::rangeEq: cg->eqVars("<<lb.str()<<", "<<that.lb.str()<<")="<<cg->eqVars(lb, that.lb)<<endl;
+	//Dbg::dbg << "contRangeProcSet::rangeEq: cg->eqVars("<<ub.str()<<", "<<that.ub.str()<<")="<<cg->eqVars(ub, that.ub)<<endl;
 	return (cg->eqVars(lb, that.lb, "    ") && cg->eqVars(ub, that.ub, "    "));
 }
 
@@ -317,16 +335,16 @@ bool contRangeProcSet::rangeTop(const contRangeProcSet& that) const
 {
 	ROSE_ASSERT(cg == that.cg);
 	     // [lb<=that.lb <= (ub=that.ub)]
-	//cout << "cg->lteVars("<<lb.str()<<", "<<that.lb.str()<<")="<<cg->lteVars(lb, that.lb)<<"\n";
-	//cout << "cg->eqVars("<<ub.str()<<", "<<that.ub.str()<<")="<<cg->eqVars(ub, that.ub)<<"\n";
+	//Dbg::dbg << "cg->lteVars("<<lb.str()<<", "<<that.lb.str()<<")="<<cg->lteVars(lb, that.lb)<<endl;
+	//Dbg::dbg << "cg->eqVars("<<ub.str()<<", "<<that.ub.str()<<")="<<cg->eqVars(ub, that.ub)<<endl;
 	return (cg->lteVars(lb, that.lb, 1, 1, 0, "    ") && cg->eqVars(ub, that.ub, "    "));
 }
 
 // Returns true if that is at the bottom of but not equal to this's range
 bool contRangeProcSet::rangeBottom(const contRangeProcSet& that) const
 {
-	//cout << "rangeBottom: cg->eqVars("<<lb.str()<<", "<<that.lb.str()<<")="<<cg->eqVars(lb, that.lb)<<"\n";
-	//cout << "rangeBottom: cg->lteVars("<<that.ub.str()<<", "<<ub.str()<<")="<<cg->lteVars(that.ub, ub)<<"\n";
+	//Dbg::dbg << "rangeBottom: cg->eqVars("<<lb.str()<<", "<<that.lb.str()<<")="<<cg->eqVars(lb, that.lb)<<endl;
+	//Dbg::dbg << "rangeBottom: cg->lteVars("<<that.ub.str()<<", "<<ub.str()<<")="<<cg->lteVars(that.ub, ub)<<endl;
 	ROSE_ASSERT(cg == that.cg);
 	    // [(lb=that.lb) <= that.ub<=ub]
 	return (cg->eqVars(lb, that.lb, "    ") && cg->lteVars(that.ub, ub, 1, 1, 0, "    "));
@@ -378,7 +396,7 @@ procSet& contRangeProcSet::intersect(const contRangeProcSet& that, bool transClo
 	//const contRangeProcSet& that = dynamic_cast<const contRangeProcSet&>(that_arg);
 	contRangeProcSet* thisCopy = new contRangeProcSet(*this);
 	thisCopy->genFreshBounds();
-	//printf("thisCopy=%p\n", thisCopy);
+	//Dbg::dbg << "thisCopy="<<thisCopy<<endl;
 	thisCopy->intersectUpd(that, transClosure);
 	return *thisCopy;
 	/*const contRangeProcSet& that = (const contRangeProcSet&)that_arg;
@@ -434,43 +452,43 @@ bool contRangeProcSet::intersectUpd(const contRangeProcSet& that, bool transClos
 {
 	bool modified = false;
 	
-	//cout << "contRangeProcSet::intersectUpd\n";
+	//Dbg::dbg << "contRangeProcSet::intersectUpd"<<endl;
 	
 	// If the ranges are equal
 	if(rangeEq(that))
-	{ if(debugLevel>0) cout << "contRangeProcSet::intersectUpd equal ranges\n"; }
+	{ if(debugLevel>0) Dbg::dbg << "contRangeProcSet::intersectUpd equal ranges"<<endl; }
 	// If that is inside this' range
 	else if(rangeTop(that) || rangeBottom(that))
 	{
-		if(debugLevel>0) cout << "contRangeProcSet::intersectUpd this inside that\n"; 
+		if(debugLevel>0) Dbg::dbg << "contRangeProcSet::intersectUpd this inside that"<<endl; 
 		modified = copy(that);
 	}
 	// If this and that have an empty intersection
 	else if(rangeDisjoint(that))
 	{
-		if(debugLevel>0) cout << "contRangeProcSet::intersectUpd disjoint ranges\n"; 
+		if(debugLevel>0) Dbg::dbg << "contRangeProcSet::intersectUpd disjoint ranges"<<endl; 
 		modified = emptify();
 	}
 	// If this and that must overlap with this Below that: lb <= that.lb <= ub <= that.ub
 	else if(overlapBelow(that))
 	{
-		if(debugLevel>0) cout << "contRangeProcSet::intersectUpd overlapBelow\n"; 
+		if(debugLevel>0) Dbg::dbg << "contRangeProcSet::intersectUpd overlapBelow"<<endl; 
 		modified = lb != that.lb;
 		lb = that.lb;
 	}
 	// If this and that must overlap with this Above that: that.lb <= lb <= that.ub <= ub
 	else if(overlapAbove(that))
 	{
-		if(debugLevel>0) cout << "contRangeProcSet::intersectUpd overlapAbove\n"; 
+		if(debugLevel>0) Dbg::dbg << "contRangeProcSet::intersectUpd overlapAbove"<<endl; 
 		modified = ub != that.ub;
 		ub = that.ub;
 	}
 	// Else, this is an un-representable set
 	else
 	{
-		if(debugLevel>0) cout << "contRangeProcSet::intersectUpd invalid intersection\n"; 
-		if(debugLevel>0) cout << "    this="<<str()<<"\n";
-		if(debugLevel>0) cout << "    that="<<that.str()<<"\n";
+		if(debugLevel>0) Dbg::dbg << "contRangeProcSet::intersectUpd invalid intersection"<<endl; 
+		if(debugLevel>0) Dbg::dbg << "    this="<<str()<<endl;
+		if(debugLevel>0) Dbg::dbg << "    that="<<that.str()<<endl;
 		modified = invalidate();
 	}
 	
@@ -488,11 +506,8 @@ procSet& contRangeProcSet::rem(const procSet& that_arg) const
 procSet& contRangeProcSet::rem(const contRangeProcSet& that, bool transClosure) const
 {
 	contRangeProcSet* thisCopy = new contRangeProcSet(*this);
-	//cout << "rem 1: this="<<str()<<", thisCopy="<<thisCopy->str()<<", that="<<that.str()<<"\n";
 	thisCopy->genFreshBounds();
-	//cout << "rem 2: this="<<str()<<", thisCopy="<<thisCopy->str()<<", that="<<that.str()<<"\n";
 	thisCopy->remUpd(that, transClosure);
-	//cout << "rem 3: this="<<str()<<", thisCopy="<<thisCopy->str()<<", that="<<that.str()<<"\n";
 	return *thisCopy;
 }
 
@@ -509,19 +524,23 @@ bool contRangeProcSet::remUpd(const contRangeProcSet& that, bool transClosure)
 {
 	bool modified = false;
 	
+	if(debugLevel>0) {
+		Dbg::dbg << "remUpd: this="<<str("")<<endl;
+		Dbg::dbg << "        that="<<that.str("")<<endl;
+	}
 	//initialized = dynamic_cast<IfMeetLat*>(that)->initialized;
 	ROSE_ASSERT(cg == that.cg);
 	
 	// If the range to be removed is equal to this range
 	if(rangeEq(that))
 	{
-		if(debugLevel>0) cout << "remUpd: equal\n";
+		if(debugLevel>0) Dbg::dbg << "    remUpd: equal"<<endl;
 		modified = emptify() || modified;
 	}
 	// If [lb<=that.lb <= (ub=that.ub)]
 	else if(rangeTop(that))
 	{
-		if(debugLevel>0) cout << "remUpd: that rangeTop of this\n";
+		if(debugLevel>0) Dbg::dbg << "    remUpd: that rangeTop of this"<<endl;
 		// [lb, that.lb) : ub = that.lb-1
 		cg->eraseVarConstr(ub);
 		cg->assertCond(ub, that.lb, 1, 1, -1);
@@ -534,13 +553,13 @@ bool contRangeProcSet::remUpd(const contRangeProcSet& that, bool transClosure)
 	// If [that.lb<=lb <= (ub=that.ub)]
 	else if(that.rangeTop(*this))
 	{
-		if(debugLevel>0) cout << "remUpd: this rangeTop of that\n";
+		if(debugLevel>0) Dbg::dbg << "    remUpd: this rangeTop of that"<<endl;
 		modified = emptify() || modified;
 	}
 	// If [(lb=that.lb) <= that.ub<=ub]
 	else if(rangeBottom(that))
 	{
-		if(debugLevel>0) cout << "remUpd: that rangeBottom of this\n";
+		if(debugLevel>0) Dbg::dbg << "    remUpd: that rangeBottom of this"<<endl;
 		// (that.ub, ub] : that.ub+1 = lb
 		cg->eraseVarConstr(lb);
 		cg->assertCond(that.ub, lb, 1, 1, -1);
@@ -553,20 +572,20 @@ bool contRangeProcSet::remUpd(const contRangeProcSet& that, bool transClosure)
 	// If [lb<=that.lb <= (ub=that.ub)]
 	else if(that.rangeBottom(*this))
 	{
-		if(debugLevel>0) cout << "remUpd: this rangeBottom of that\n";
+		if(debugLevel>0) Dbg::dbg << "    remUpd: this rangeBottom of that"<<endl;
 		modified = emptify() || modified;
 	}
 	// If [lb, ub] < [that.lb, that.ub] or [that.lb, that.ub] < [lb, ub]
 	else if(rangeDisjoint(that))
 	{
-		cout << "remUpd: that rangeDisjoint this\n";
+		Dbg::dbg << "    remUpd: that rangeDisjoint this"<<endl;
 		// the two sets are non-overlapping, so nothing happens
 		modified = false;
 	}
 	// If this and that must overlap with this Below that: lb <= that.lb <= ub <= that.ub
 	else if(overlapBelow(that))
 	{
-		if(debugLevel>0) cout << "remUpd: this rangeBelow of that\n";
+		if(debugLevel>0) Dbg::dbg << "    remUpd: this rangeBelow of that"<<endl;
 		// [lb, that.lb) : ub = that.lb-1
 		cg->eraseVarConstr(ub);
 		cg->assertCond(ub, that.lb, 1, 1, -1);
@@ -579,7 +598,7 @@ bool contRangeProcSet::remUpd(const contRangeProcSet& that, bool transClosure)
 	// If this and that must overlap with this Above that: that.lb <= lb <= that.ub <= ub
 	else if(overlapAbove(that))
 	{
-		if(debugLevel>0) cout << "remUpd: this rangeAbove of that\n";
+		if(debugLevel>0) Dbg::dbg << "    remUpd: this rangeAbove of that"<<endl;
 		// [that.ub, lb) : that.ub = lb-1
 		cg->eraseVarConstr(lb);
 		cg->assertCond(that.ub, lb, 1, 1, -1);
@@ -608,8 +627,8 @@ bool contRangeProcSet::validSet() const
 // The size of this process set, either a specific integer or infinity
 int contRangeProcSet::size() const
 {
-/*cout << "contRangeProcSet::size() : cg->eqVars("<<lb.str()<<", "<<ub.str()<<")="<<cg->eqVars(lb, ub)<<"\n";
-cout << "    cg = "<<cg->str()<<"\n";*/
+/*Dbg::dbg << "contRangeProcSet::size() : cg->eqVars("<<lb.str()<<", "<<ub.str()<<")="<<cg->eqVars(lb, ub)<<endl;
+Dbg::dbg << "    cg = "<<cg->str()<<endl;*/
 	if(emptySet())
 		return 0;
 	// If the lower bound is equal to the upper bound, the domain has a single element
@@ -710,7 +729,7 @@ string contRangeProcSet::str(string indent)
 		outs << indent << "<contRangeProcSet: [";
 		if(cg)
 		{
-			outs << lb.str()<<":";
+			outs << lb.str()<<"=";
 			map<varID, affineInequality> eqLB = cg->getEqVars(lb);
 			outs << "{" ;
 			if(eqLB.size()>0)
@@ -756,7 +775,7 @@ string contRangeProcSet::str(string indent)
 			map<varID, affineInequality> eqUB = cg->getEqVars(ub);
 			if(eqUB.size()>0)
 			{
-				outs << ub.str()<<":";
+				outs << ub.str()<<"=";
 				for(map<varID, affineInequality>::iterator it=eqUB.begin(); it!=eqUB.end(); )
 				{
 					if(it->second.getA()!=1)
@@ -799,7 +818,7 @@ string contRangeProcSet::str(string indent)
 			outs << lb.str() << " - " << ub.str() << "]>";
 		}
 	}
-	return outs.str();
+	return Dbg::escape(outs.str());
 }
 
 string contRangeProcSet::str(string indent) const
@@ -903,7 +922,7 @@ string contRangeProcSet::str(string indent) const
 			outs << lb.str() << " - " << ub.str() << "]>";
 		}
 	}
-	return outs.str();
+	return Dbg::escape(outs.str());
 }
 
 // Removes the upper and lower bounds of this set from its associated constraint graph
