@@ -188,6 +188,8 @@ static void syscall_pause_enter(RSIM_Thread *t, int callno);
 static void syscall_pause_leave(RSIM_Thread *t, int callno);
 static void syscall_pipe(RSIM_Thread *t, int callno);
 static void syscall_pipe_enter(RSIM_Thread *t, int callno);
+static void syscall_prctl(RSIM_Thread *t, int callno);
+static void syscall_prctl_enter(RSIM_Thread *t, int callno);
 static void syscall_read(RSIM_Thread *t, int callno);
 static void syscall_read_enter(RSIM_Thread *t, int callno);
 static void syscall_read_leave(RSIM_Thread*, int callno);
@@ -375,6 +377,7 @@ RSIM_Linux32::ctor()
     SC_REG(159, sched_get_priority_max,         default);
     SC_REG(160, sched_get_priority_min,         default);
     SC_REG(162, nanosleep,                      nanosleep);
+    SC_REG(172, prctl,                          default);
     SC_REG(173, rt_sigreturn,                   rt_sigreturn);
     SC_REG(174, rt_sigaction,                   rt_sigaction);
     SC_REG(175, rt_sigprocmask,                 rt_sigprocmask);
@@ -4079,6 +4082,44 @@ syscall_nanosleep_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
 }
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_prctl_enter(RSIM_Thread *t, int callno)
+{
+    switch (t->syscall_arg(0)) {
+        case PR_SET_NAME:
+            t->syscall_enter("prctl", "es", prctl_options);
+            break;
+        default:
+            t->syscall_enter("prctl", "exxxx");
+            break;
+    }
+}
+
+static void
+syscall_prctl(RSIM_Thread *t, int callno)
+{
+    int option = t->syscall_arg(0);
+    switch (option) {
+        case PR_SET_NAME: {
+            bool error;
+            std::string name = t->get_process()->read_string(t->syscall_arg(1), 17, &error);
+            if (error) {
+                t->syscall_return(-EFAULT);
+                return;
+            }
+            int result = prctl(PR_SET_NAME, name.c_str());
+            t->syscall_return(-1==result ? -errno : result);
+            break;
+        }
+        default:
+            t->syscall_return(-ENOSYS); // FIXME
+            break;
+    }
+}
+
 
 /*******************************************************************************************************************************/
 

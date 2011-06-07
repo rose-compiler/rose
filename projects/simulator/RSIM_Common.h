@@ -17,6 +17,7 @@
 #include <sys/ipc.h>
 #include <sys/mman.h>
 #include <sys/msg.h>
+#include <sys/prctl.h>
 #include <sys/resource.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
@@ -1290,6 +1291,42 @@ struct mmap_arg_struct_32 {
     uint32_t    fd;
     uint32_t    offset;
 } __attribute__((packed));
+
+static const Translate prctl_options[] = {
+    TE(PR_SET_PDEATHSIG),
+    TE(PR_GET_PDEATHSIG),
+    TE(PR_GET_DUMPABLE),
+    TE(PR_SET_DUMPABLE),
+    TE(PR_GET_UNALIGN),
+    TE(PR_SET_UNALIGN),
+    TE(PR_GET_KEEPCAPS),
+    TE(PR_SET_KEEPCAPS),
+    TE(PR_GET_FPEMU),
+    TE(PR_SET_FPEMU),
+    TE(PR_GET_FPEXC),
+    TE(PR_SET_FPEXC),
+    TE(PR_GET_TIMING),
+    TE(PR_SET_TIMING),
+    TE(PR_SET_NAME),
+    TE(PR_GET_NAME),
+    TE(PR_GET_ENDIAN),
+    TE(PR_SET_ENDIAN),
+    TE(PR_GET_SECCOMP),
+    TE(PR_SET_SECCOMP),
+    TE(PR_CAPBSET_READ),
+    TE(PR_CAPBSET_DROP),
+    TE(PR_GET_TSC),
+    TE(PR_SET_TSC),
+    TE(PR_GET_SECUREBITS),
+    TE(PR_SET_SECUREBITS),
+    TE(PR_SET_TIMERSLACK),
+    TE(PR_GET_TIMERSLACK),
+    TE(PR_TASK_PERF_EVENTS_DISABLE),
+    TE(PR_TASK_PERF_EVENTS_ENABLE),
+    TE(PR_MCE_KILL),
+    TE(PR_MCE_KILL_GET),
+    T_END
+};
 
 /* Conversion functions */
 void convert(statfs_32 *g, const statfs64_native *h);
