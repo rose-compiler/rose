@@ -26,12 +26,13 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
 #define CASE_DISPATCH_AND_BREAK(sg_t) \
   case V_Sg ##sg_t : unparse ##sg_t (isSg##sg_t (stmt),info); break;
 
+        CASE_DISPATCH_AND_BREAK(AddOp);
         CASE_DISPATCH_AND_BREAK(BasicBlock);
         CASE_DISPATCH_AND_BREAK(FunctionDeclaration);
         CASE_DISPATCH_AND_BREAK(FunctionDefinition);
         CASE_DISPATCH_AND_BREAK(FunctionParameterList);
+        CASE_DISPATCH_AND_BREAK(ReturnStmt);
         CASE_DISPATCH_AND_BREAK(StringVal);
-        CASE_DISPATCH_AND_BREAK(AddOp);
         default: {
             cerr << "unparse Statement (" << stmt->class_name()
                  << "*) is unimplemented." << endl;
@@ -151,6 +152,14 @@ Unparse_Python::unparseInitializedName(SgInitializedName* init_name,
     if (init_name->get_initializer() != NULL) {
         unparseExpression(init_name->get_initializer(), info);
     }
+}
+
+void
+Unparse_Python::unparseReturnStmt(SgReturnStmt* return_stmt,
+                                  SgUnparse_Info& info)
+{
+    curprint("return ");
+    unparseExpression(return_stmt->get_expression(), info);
 }
 
 void
