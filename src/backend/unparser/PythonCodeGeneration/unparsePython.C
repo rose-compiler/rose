@@ -91,12 +91,14 @@ Unparse_Python::unparseFunctionDeclaration(SgFunctionDeclaration* func_decl,
 {
     stringstream code;
     string func_name = func_decl->get_name().getString();
-    code << "def " << func_name << "():" << endl; //TODO: param list
+    code << "def " << func_name << "(";
+    //TODO: param list
+    code << "):" << endl;
     curprint (code.str());
 
-    info.set_nestingLevel( info.get_nestingLevel()+1 );
+    info.inc_nestingLevel();
     unparseStatement(func_decl->get_definition(), info);
-    info.set_nestingLevel( info.get_nestingLevel()-1 );
+    info.dec_nestingLevel();
 }
 
 void

@@ -5691,6 +5691,10 @@ HEADER_UNPARSE_INFO_START
           void set_outputFortranModFile();
           void unset_outputFortranModFile();
 
+       // driscoll6 (6/6/2011) Mutators for p_nestingLevel
+          void inc_nestingLevel();
+          void dec_nestingLevel();
+
 HEADER_UNPARSE_INFO_END
 
 
@@ -13928,6 +13932,19 @@ SgUnparse_Info::getStructureTagList ()
   // Access function for internal STL list
      return p_structureTagProcessingList;
    }
+
+void
+SgUnparse_Info::inc_nestingLevel() {
+    p_nestingLevel += 1;
+}
+
+void
+SgUnparse_Info::dec_nestingLevel() {
+    p_nestingLevel -= 1;
+    if (p_nestingLevel < 0) {
+        cerr << "warning: SgUnparse_Info.p_nestingLevel decremented below zero." << endl;
+    }
+}
 
 SOURCE_UNPARSE_INFO_END
 
