@@ -129,6 +129,25 @@ sage_addChildrenToNode(PyObject *self, PyObject *args)
     return Py_None;
 }
 
+/**
+ * Get the scope statement associated with the capsule's
+ * SgNode.
+ */
+SgScopeStatement*
+getAssociatedScopeStatement(PyObject* scope_capsule) {
+    SgScopeStatement* sg_scope_statement = NULL;
+    SgNode* sg_node = PyDecapsulate<SgNode>(scope_capsule);
+    switch(sg_node->variantT()) {
+        case V_SgGlobal:
+            return isSgGlobal(sg_node);
+        case V_SgFunctionDeclaration:
+            return isSgFunctionDeclaration(sg_node)->get_definition();
+    }
+    cerr << "Unhandled scope statement: "
+        << sg_node->class_name() << endl;
+    ROSE_ABORT();
+}
+
 /*
  * Build an SgAddOp node from the given Python statements.
  *  - PyObject* args = (PyObject*, PyObject*)
@@ -166,16 +185,17 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
     PyObject* file_info_capsule = PyTuple_GetItem(args, 1);
     PyObject* scope_capsule = PyTuple_GetItem(args, 2);
 
-    SgScopeStatement* sg_scope_statement = 
-        PyDecapsulate<SgScopeStatement>(scope_capsule);
 
     PyObject* py_name = PyObject_GetAttrString(func_def_capsule, "name");
     string func_name = string( PyString_AsString(py_name) );
 
+    SgScopeStatement* sg_scope_statement =
+        getAssociatedScopeStatement(scope_capsule);
+
     // TODO: Figure out types, parse parameter list
-    SgFunctionDeclaration* sg_func_decl = 
+    SgFunctionDeclaration* sg_func_decl =
         SageBuilder::buildDefiningFunctionDeclaration(func_name,
-                SageBuilder::buildUnknownType(), 
+                SageBuilder::buildUnknownType(),
                 SageBuilder::buildFunctionParameterList(),
                 sg_scope_statement);
 

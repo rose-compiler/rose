@@ -80,7 +80,7 @@ Unparse_Python::unparseBasicBlock(SgBasicBlock* bblock,
 
         //TODO easier way to print newline
         stringstream code;
-        code << endl; 
+        code << endl;
         curprint( code.str() );
     }
 }
