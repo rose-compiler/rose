@@ -99,28 +99,28 @@ sage_addChildrenToNode(PyObject *self, PyObject *args)
                  SgGlobal* sg_global = isSgGlobal(sg_node);
                  for (int i = 0; i < argc; i++) {
                      PyObject* capsule = PyList_GetItem(argv, i);
-                     SgDeclarationStatement* sg_child = 
+                     SgDeclarationStatement* sg_child =
                          PyDecapsulate<SgDeclarationStatement>(capsule);
                      sg_global->append_declaration(sg_child);
                  }
                  break;
              }
         case V_SgFunctionDeclaration: {
-                 SgFunctionDeclaration* sg_fun_decl = 
+                 SgFunctionDeclaration* sg_fun_decl =
                      isSgFunctionDeclaration(sg_node);
-                 SgBasicBlock* sg_basic_block = 
+                 SgBasicBlock* sg_basic_block =
                      sg_fun_decl->get_definition()->get_body();
                  ROSE_ASSERT(sg_basic_block);
                  for (int i = 0; i < argc; i++) {
                      PyObject* capsule = PyList_GetItem(argv, i);
-                     SgStatement* sg_child = 
+                     SgStatement* sg_child =
                          PyDecapsulate<SgStatement>(capsule);
                      sg_basic_block->get_statements().push_back(sg_child);
                  }
                  break;
              }
         default: {
-                 cerr << "Unhandled node type in sage_addChildrenToNode " 
+                 cerr << "Unhandled node type in sage_addChildrenToNode "
                      << sg_node->class_name() << endl;
                  ROSE_ASSERT(!"unhandled node type");
                  break;
@@ -146,6 +146,32 @@ getAssociatedScopeStatement(PyObject* scope_capsule) {
     cerr << "Unhandled scope statement: "
         << sg_node->class_name() << endl;
     ROSE_ABORT();
+}
+
+/**
+ * Build a SgFunctionParameterList from the given Python
+ * Arg object.
+ */
+SgFunctionParameterList*
+buildFunctionParameterList(PyObject* args) {
+    PyObject* py_args = PyObject_GetAttrString(args, "args");
+    SgFunctionParameterList* sg_params =
+        SageBuilder::buildFunctionParameterList();
+
+    Py_ssize_t py_argc = PyList_Size(py_args);
+    for (int i = 0; i < py_argc; i++) {
+        PyObject* py_name = PyList_GetItem(py_args, i);
+        PyObject* py_id = PyObject_GetAttrString(py_name, "id");
+        char* id = PyString_AsString(py_id);
+
+        SgType* sg_type = SageBuilder::buildVoidType();
+        SgInitializedName* sg_name =
+            SageBuilder::buildInitializedName(id, sg_type);
+
+        sg_params->append_arg(sg_name);
+    }
+
+    return sg_params;
 }
 
 /*
@@ -189,6 +215,10 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
     PyObject* py_name = PyObject_GetAttrString(func_def_capsule, "name");
     string func_name = string( PyString_AsString(py_name) );
 
+    PyObject* py_args = PyObject_GetAttrString(func_def_capsule, "args");
+    SgFunctionParameterList* sg_params =
+        buildFunctionParameterList(py_args);
+
     SgScopeStatement* sg_scope_statement =
         getAssociatedScopeStatement(scope_capsule);
 
@@ -196,7 +226,7 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
     SgFunctionDeclaration* sg_func_decl =
         SageBuilder::buildDefiningFunctionDeclaration(func_name,
                 SageBuilder::buildUnknownType(),
-                SageBuilder::buildFunctionParameterList(),
+                sg_params,
                 sg_scope_statement);
 
     return PyEncapsulate(sg_func_decl);
