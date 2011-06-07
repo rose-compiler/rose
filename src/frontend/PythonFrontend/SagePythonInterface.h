@@ -9,6 +9,7 @@ PyObject* sage_buildAddOp(PyObject *self, PyObject *args);
 PyObject* sage_buildExpr(PyObject *self, PyObject *args);
 PyObject* sage_buildFunctionDef(PyObject *self, PyObject *args);
 PyObject* sage_buildGlobal(PyObject *self, PyObject *args);
+PyObject* sage_buildIf(PyObject *self, PyObject *args);
 PyObject* sage_buildLongIntVal(PyObject *self, PyObject *args);
 PyObject* sage_buildName(PyObject *self, PyObject *args);
 PyObject* sage_buildPrintStmt(PyObject *self, PyObject *args);
@@ -22,6 +23,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildExpr", sage_buildExpr, METH_VARARGS, "Builds an Expr node."},
     {"buildFunctionDef", sage_buildFunctionDef, METH_VARARGS, "Builds an SgFunctionDeclaration node."},
     {"buildGlobal", sage_buildGlobal, METH_VARARGS, "Builds an SgGlobal node."},
+    {"buildIf", sage_buildIf, METH_VARARGS, "Builds an if stmt  node."},
     {"buildLongIntVal", sage_buildLongIntVal, METH_VARARGS, "Builds an SgIntVal node."},
     {"buildPrintStmt", sage_buildPrintStmt, METH_VARARGS, "Builds an SgPrintStmt node."},
     {"buildName", sage_buildName, METH_VARARGS, "Builds an SgVarRefExp from a Name node."},
