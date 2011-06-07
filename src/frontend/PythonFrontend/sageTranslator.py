@@ -68,14 +68,19 @@ class SageTranslator(ast.NodeVisitor):
     return capsule
 
   def visit_Module(self, node):
-    sg_scope_capsule = sage.buildGlobal(self.filename)
+    scope_capsule = sage.buildGlobal(self.filename)
 
-    self.scopeStack.push(sg_scope_capsule)
+    self.scopeStack.push(scope_capsule)
     subforest = self.generic_visit(node)
-    self.scopeStack.pop(sg_scope_capsule)
+    self.scopeStack.pop(scope_capsule)
 
-    sage.addChildrenToNode(sg_scope_capsule, subforest)
-    return sg_scope_capsule
+    sage.addChildrenToNode(scope_capsule, subforest)
+    return scope_capsule
+
+  def visit_Name(self, node):
+    print "building name:", node.id
+    scope = self.scopeStack.peek()
+    return sage.buildName(node.id, scope)
 
   def visit_Num(self, node):
     return sage.buildLongIntVal(node.n, self.file_info(node))

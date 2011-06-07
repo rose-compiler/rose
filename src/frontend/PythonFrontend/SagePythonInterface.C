@@ -247,7 +247,7 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
     // TODO: Figure out types, parse parameter list
     SgFunctionDeclaration* sg_func_decl =
         SageBuilder::buildDefiningFunctionDeclaration(func_name,
-                SageBuilder::buildUnknownType(),
+                SageBuilder::buildVoidType(),
                 sg_params,
                 sg_scope_statement);
 
@@ -286,11 +286,30 @@ sage_buildLongIntVal(PyObject *self, PyObject *args)
     PyObject* file_info_capsule = PyTuple_GetItem(args, 1);
 
     long value = PyInt_AsLong(py_value);
-    SgLongIntVal* sg_long_int_val = 
+    SgLongIntVal* sg_long_int_val =
         SageBuilder::buildLongIntVal(value);
 
     set_File_Info(sg_long_int_val, file_info_capsule);
     return PyEncapsulate(sg_long_int_val);
+}
+
+/*
+ * Build an SgVarRefExp node from the given Python Name node.
+ *  - PyObject* args = ( PyObject* id, PyObject* scope )
+ */
+PyObject*
+sage_buildName(PyObject *self, PyObject *args)
+{
+    PyObject* py_id = PyTuple_GetItem(args, 0);
+    char* id = PyString_AsString(py_id);
+
+    PyObject* py_scope_capsule = PyTuple_GetItem(args, 1);
+    SgScopeStatement* scope =
+        getAssociatedScopeStatement(py_scope_capsule);
+    ROSE_ASSERT(scope != NULL);
+
+    SgVarRefExp* sg_var_ref = SageBuilder::buildVarRefExp(id, scope);
+    return PyEncapsulate(sg_var_ref);
 }
 
 /*
