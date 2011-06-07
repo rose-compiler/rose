@@ -84,6 +84,10 @@ class SageTranslator(ast.NodeVisitor):
     subforest = self.generic_visit(node)
     return sage.buildPrintStmt(subforest, self.file_info(node))
 
+  def visit_Return(self, node):
+    value = self.visit(node.value)
+    return sage.buildReturnStmt(value)
+
   def visit_Str(self, node):
     return sage.buildStringVal(node.s, self.file_info(node))
 
