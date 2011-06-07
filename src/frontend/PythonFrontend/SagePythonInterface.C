@@ -153,13 +153,17 @@ getAssociatedScopeStatement(PyObject* scope_capsule) {
  * Arg object.
  */
 SgFunctionParameterList*
-buildFunctionParameterList(PyObject* args) {
+buildFunctionParameterList(PyObject* args, PyObject* py_defaults_list) {
     PyObject* py_args = PyObject_GetAttrString(args, "args");
     SgFunctionParameterList* sg_params =
         SageBuilder::buildFunctionParameterList();
 
     Py_ssize_t py_argc = PyList_Size(py_args);
-    for (int i = 0; i < py_argc; i++) {
+    Py_ssize_t py_defaults_argc = PyList_Size(py_defaults_list);
+    Py_ssize_t py_simples_argc = py_argc - py_defaults_argc;
+
+    /* Handle simple parameters */
+    for (int i = 0; i < py_simples_argc; i++) {
         PyObject* py_name = PyList_GetItem(py_args, i);
         PyObject* py_id = PyObject_GetAttrString(py_name, "id");
         char* id = PyString_AsString(py_id);
@@ -167,6 +171,23 @@ buildFunctionParameterList(PyObject* args) {
         SgType* sg_type = SageBuilder::buildVoidType();
         SgInitializedName* sg_name =
             SageBuilder::buildInitializedName(id, sg_type);
+
+        sg_params->append_arg(sg_name);
+    }
+
+    /* Handle default parameters */
+    for (int i = 0; i < py_defaults_argc; i++) {
+        PyObject* py_name = PyList_GetItem(py_args, py_simples_argc+i);
+        PyObject* py_default = PyList_GetItem(py_defaults_list, i);
+        PyObject* py_id = PyObject_GetAttrString(py_name, "id");
+        char* id = PyString_AsString(py_id);
+
+        SgExpression* sg_default = PyDecapsulate<SgExpression>(py_default);
+        SgType* sg_type = SageBuilder::buildVoidType();
+        SgInitializer* sg_init =
+            SageBuilder::buildAssignInitializer(sg_default);
+        SgInitializedName* sg_name =
+            SageBuilder::buildInitializedName(id, sg_type, sg_init);
 
         sg_params->append_arg(sg_name);
     }
@@ -208,8 +229,9 @@ PyObject*
 sage_buildFunctionDef(PyObject *self, PyObject *args)
 {
     PyObject* func_def_capsule = PyTuple_GetItem(args, 0);
-    PyObject* file_info_capsule = PyTuple_GetItem(args, 1);
-    PyObject* scope_capsule = PyTuple_GetItem(args, 2);
+    PyObject* py_defaults_capsules = PyTuple_GetItem(args, 1);
+    PyObject* file_info_capsule = PyTuple_GetItem(args, 2);
+    PyObject* scope_capsule = PyTuple_GetItem(args, 3);
 
 
     PyObject* py_name = PyObject_GetAttrString(func_def_capsule, "name");
@@ -217,7 +239,7 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
 
     PyObject* py_args = PyObject_GetAttrString(func_def_capsule, "args");
     SgFunctionParameterList* sg_params =
-        buildFunctionParameterList(py_args);
+        buildFunctionParameterList(py_args, py_defaults_capsules);
 
     SgScopeStatement* sg_scope_statement =
         getAssociatedScopeStatement(scope_capsule);

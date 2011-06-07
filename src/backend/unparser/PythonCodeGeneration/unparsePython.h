@@ -24,10 +24,12 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
 
      protected:
           virtual void unparseAddOp(SgAddOp*, SgUnparse_Info&);
+          virtual void unparseAssignInitializer(SgAssignInitializer*, SgUnparse_Info&);
           virtual void unparseBasicBlock(SgBasicBlock*, SgUnparse_Info&);
           virtual void unparseFunctionDeclaration(SgFunctionDeclaration*, SgUnparse_Info&);
           virtual void unparseFunctionDefinition(SgFunctionDefinition*, SgUnparse_Info&);
           virtual void unparseFunctionParameterList(SgFunctionParameterList*, SgUnparse_Info&);
+          virtual void unparseInitializedName(SgInitializedName*, SgUnparse_Info&);
           virtual void unparseStringVal(SgStringVal*, SgUnparse_Info&);
 
           virtual std::string ws_prefix(int nesting_level);

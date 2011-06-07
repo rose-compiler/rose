@@ -33,7 +33,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(StringVal);
         CASE_DISPATCH_AND_BREAK(AddOp);
         default: {
-            cerr << "unparse(" << stmt->class_name()
+            cerr << "unparse Statement (" << stmt->class_name()
                  << "*) is unimplemented." << endl;
             break;
         }
@@ -41,9 +41,17 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
 }
 
 void
-Unparse_Python::unparseLanguageSpecificExpression(SgExpression*, SgUnparse_Info&)
+Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
+                                                  SgUnparse_Info& info)
 {
-    cout << "Unparse_Python language specific expression" << endl;
+    switch (stmt->variantT()) {
+        CASE_DISPATCH_AND_BREAK(AssignInitializer);
+        default: {
+            cerr << "unparse Expression (" << stmt->class_name()
+                 << "*) is unimplemented." << endl;
+            break;
+        }
+    }
 }
 
 void
@@ -69,6 +77,14 @@ Unparse_Python::unparseAddOp(SgAddOp* sg_add_op,
     unparseExpression(sg_add_op->get_lhs_operand(), info);
     curprint(" + ");
     unparseExpression(sg_add_op->get_rhs_operand(), info);
+}
+
+void
+Unparse_Python::unparseAssignInitializer(SgAssignInitializer* sg_assign_init,
+                             SgUnparse_Info& info)
+{
+    curprint("=");
+    unparseExpression(sg_assign_init->get_operand(), info);
 }
 
 void
@@ -121,11 +137,19 @@ Unparse_Python::unparseFunctionParameterList(SgFunctionParameterList* param_list
     SgInitializedNamePtrList::iterator name_iter;
     SgInitializedName* init_name;
     for (name_iter = arg_list.begin(); name_iter != arg_list.end(); name_iter++) {
-        init_name = *name_iter;
-        stringstream code;
-        code << ((name_iter == arg_list.begin()) ? "" : ", ");
-        code << init_name->get_name().str();
-        curprint(code.str());
+        if (name_iter != arg_list.begin())
+            curprint(", ");
+        unparseInitializedName(*name_iter, info);
+    }
+}
+
+void
+Unparse_Python::unparseInitializedName(SgInitializedName* init_name,
+                                       SgUnparse_Info& info)
+{
+    curprint(init_name->get_name().str());
+    if (init_name->get_initializer() != NULL) {
+        unparseExpression(init_name->get_initializer(), info);
     }
 }
 
