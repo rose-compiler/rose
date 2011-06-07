@@ -46,13 +46,13 @@ libUpcRuntimeSystem_la_SOURCES = CppRuntimeSystem-upc.cpp \
                                  rtedsync-upc.upc
 
 ptrops-upc.upc: $(srcdir)/ptrops.c
-	upc -E -DWITH_UPC $(INCLUDES) $< -o $@
+	cp $< $@
 
 %-upc.cpp: $(srcdir)/%.cpp
 	$(CXX) -E -DWITH_UPC $(INCLUDES) $< -o $@
 
 %-upc.upc: $(srcdir)/%.upc
-	upc -E -DWITH_UPC $(INCLUDES) $< -o $@
+	cp $< $@
 
 
 if ROSE_WITH_ROSEQT

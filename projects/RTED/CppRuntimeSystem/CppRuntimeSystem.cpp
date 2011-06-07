@@ -229,7 +229,7 @@ void RuntimeSystem::createMemory(Address addr, size_t size, MemoryType::AllocKin
   // \pp \todo move the registerMemType call into allocateMemory
   MemoryType* nb = memManager.allocateMemory(addr, size, kind, blocksize, curPos);
 
-  if (kind == akStack && nb != NULL)
+  if ((kind & (akStack | akGlobal)) && nb != NULL)
   {
     // stack memory must have a type
     assert(type != NULL);
@@ -252,7 +252,7 @@ void RuntimeSystem::createStackMemory(Address addr, size_t size, const std::stri
 
 void RuntimeSystem::freeMemory(Address addr, MemoryType::AllocKind kind)
 {
-    memManager.freeMemory(addr, kind);
+    memManager.freeHeapMemory(addr, kind);
 }
 
 
@@ -274,9 +274,13 @@ void RuntimeSystem::checkBounds(Address addr, Address accaddr, size_t size) cons
     memManager.checkIfSameChunk(addr, accaddr, size);
 }
 
-bool RuntimeSystem::checkMemWrite(Address addr, size_t size, const RsType* t)
+bool
+RuntimeSystem::checkMemWrite(Address addr, size_t size, const RsType* t)
 {
-    return memManager.checkWrite(addr, size, t);
+    std::pair<MemoryType*, bool> res = memManager.checkWrite(addr, size, t);
+    AllocKind                    ak = res.first->howCreated();
+
+    return res.second && (ak & akUpcShared);
 }
 
 
@@ -581,7 +585,7 @@ void RuntimeSystem::setOutputFile(const std::string & filename)
 
 
 /// status variable
-int diagnostics::status = 0 /*diagnostics::memory*/;
+int diagnostics::status = 0; /* diagnostics::memory | diagnostics::location; */
 
 #if OBSOLETE_CODE
 // \pp \todo remove superfluous parameter

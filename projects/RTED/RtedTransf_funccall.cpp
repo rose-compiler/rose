@@ -516,7 +516,7 @@ void RtedTransformation::insertFreeCall(SgExpression* freeExp, AllocKind ak)
 
    ROSE_ASSERT( stmt && address_expression );
 
-   const bool     upcShared = ((ak & akUpcSharedHeap) == akUpcSharedHeap);
+   const bool     upcShared = ((ak & akUpcShared) == akUpcShared);
    SgExprListExp* arg_list = buildExprListExp();
 
    appendExpression( arg_list, mkAddress(address_expression, upcShared) );
@@ -775,10 +775,6 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
       // indicate whether this is a stream operator
       addFileIOFunctionCall(varRef, callee.name == "operator>>");
     }
-    else if (varRef)
-    {
-      std::cerr << "@@@ " << varRef->unparseToString() << "not IOVar" << std::endl;
-    }
   }
 
   cerr << "\n@@@@ Found a function call: " << callee.name;
@@ -838,7 +834,7 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
     }
     else if( "upc_free" == callee.name )
     {
-       frees.push_back( Deallocations::value_type(fcexp, akUpcSharedHeap) );
+       frees.push_back( Deallocations::value_type(fcexp, akUpcShared) );
     }
     else if (upcHeapManagementNeeded(callee.name))
     {

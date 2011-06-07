@@ -344,10 +344,18 @@ long upcBlocksize(const SgType* n)
 }
 
 
+static
+bool isStaticVariable(const SgInitializedName& n)
+{
+  return n.get_declaration()->get_declarationModifier().get_storageModifier().isStatic();
+}
+
+
 AllocKind varAllocKind(const SgInitializedName& n)
 {
-  if (!isSgGlobal(n.get_scope())) return akStack;
-  if (isUpcShared(n.get_type()))  return akUpcSharedGlobal;
+  if (!isSgGlobal(n.get_scope()) && !isStaticVariable(n)) return akStack;
+
+  if (isUpcShared(n.get_type())) return akUpcSharedGlobal;
 
   return akGlobal;
 }

@@ -364,7 +364,7 @@ void rcv_FreeMemory( const rted_MsgHeader* msg )
   const size_t         si_ofs = ak_ofs + sizeof(rted_AllocKind);
 
   const rted_AllocKind freeKind = msgr_AllocKind(buf + ak_ofs);
-  assert(freeKind == akUpcSharedHeap);
+  assert(freeKind == akUpcShared);
 
   _rted_FreeMemory( msgr_Address(buf+ad_ofs), freeKind, msgr_SourceInfo(buf+si_ofs), msgHandling );
 }
@@ -372,7 +372,7 @@ void rcv_FreeMemory( const rted_MsgHeader* msg )
 void snd_FreeMemory( rted_Address addr, rted_AllocKind freeKind, rted_SourceInfo si )
 {
   // nothing to communicate on local frees (even if they were erroneous)
-  if ((freeKind & akUpcSharedHeap) != akUpcSharedHeap) return;
+  if (freeKind != akUpcShared) return;
 
   const size_t si_len = msgsz_SourceInfo(si);
 
@@ -391,12 +391,17 @@ void snd_FreeMemory( rted_Address addr, rted_AllocKind freeKind, rted_SourceInfo
 }
 
 static
-int shareHeapAllocInfo(rted_AllocKind allocKind, rted_TypeDesc td)
+int shareHeapAllocInfo(rted_AllocKind allocKind)
 {
   // the other upc-threads know about upc_all_alloc already
-  return (  (allocKind == akStack && td.desc.shared_mask != 0) // shared array
-         || (allocKind == akUpcAlloc)
-         || (allocKind == akUpcGlobalAlloc)
+  return (allocKind == akUpcAlloc) || (allocKind == akUpcGlobalAlloc);
+}
+
+static
+int inSharedRegion(rted_Address addr)
+{
+  return (  addr.local >= localBaseAddr
+         && addr.local <  rted_ThisShmemLimit()
          );
 }
 
@@ -436,7 +441,7 @@ void snd_AllocMem( rted_TypeDesc    td,
                    rted_SourceInfo  si
                  )
 {
-  if (!shareHeapAllocInfo(allocKind, td)) return;
+  if (!shareHeapAllocInfo(allocKind)) return;
 
   const rted_szTypeDesc td_len = msgsz_TypeDesc(td);
   const size_t          cn_len = msgsz_String(class_name);
@@ -498,14 +503,10 @@ void snd_InitVariable( rted_TypeDesc    td,
                        rted_SourceInfo  si
                      )
 {
-  //~ fprintf(stderr, " sndvar from %i @ %lu\n", MYTHREAD, si.src_line);
-  //~ fflush(stderr);
-
   // other threads can only deref shared addresses;
-  //   \todo the current impl might fail for shared pointers that are converted
-  //         to local pointers.
-  //         make and run testcase
-  if ((td.desc.shared_mask & 1) == 0) return;
+  if (!inSharedRegion(address) || (pointer_move && !inSharedRegion(heap_address))) return;
+
+  assert(td.desc.shared_mask != 0);
 
   const rted_szTypeDesc td_len = msgsz_TypeDesc(td);
   const size_t          cn_len = msgsz_String(class_name);
@@ -552,7 +553,6 @@ void rcv_MovePointer( const rted_MsgHeader* msg )
 }
 
 
-
 void snd_MovePointer( rted_TypeDesc td,
                       rted_Address address,
                       rted_Address heap_address,
@@ -562,7 +562,11 @@ void snd_MovePointer( rted_TypeDesc td,
 {
   // Sharing info about pointer moves is only needed when the pointer itself
   //   is shared.
-  if ((td.desc.shared_mask & 1) == 0) return;
+  // \todo the runtime manager keeps a reference count to the allocated
+  //       addresses, therefore we might need to share this info.
+  if (!inSharedRegion(address)) return;
+
+  assert(td.desc.shared_mask != 0);
 
   const rted_szTypeDesc td_len = msgsz_TypeDesc(td);
   const size_t          cn_len = msgsz_String(class_name);

@@ -63,9 +63,12 @@ void StackManager::beginScope(const std::string & name)
 
 void StackManager::endScope()
 {
-    assert( scope.size() > 0 );
+    const size_t noScopes = scope.size();
+
+    assert( noScopes > 0 );
 
     ScopeInfo lastScope = scope.back();
+
     scope.pop_back();
 
     for (int i=stack.size()-1; i >= lastScope.stackIndex; --i)
@@ -75,7 +78,7 @@ void StackManager::endScope()
 
         stack.pop_back();
         addrToVarMap.erase(varaddr);
-        RuntimeSystem::instance()->freeMemory(varaddr, akStack);
+        rtedRTS(this)->getMemManager()->freeStackMemory(varaddr);
 
         delete var;
     }
@@ -95,7 +98,8 @@ const std::string & StackManager::getScopeName(int i) const
     return scope[i].name;
 }
 
-StackManager::VariableIter StackManager::variablesBegin(int i) const
+StackManager::VariableStack::const_iterator
+StackManager::variablesBegin(int i) const
 {
     assert(i >=0 );
     assert(i < (int)scope.size());
@@ -103,7 +107,8 @@ StackManager::VariableIter StackManager::variablesBegin(int i) const
     return stack.begin() + scope[i].stackIndex;
 }
 
-StackManager::VariableIter StackManager::variablesEnd(int i) const
+StackManager::VariableStack::const_iterator
+StackManager::variablesEnd(int i) const
 {
     assert(i >=0 );
     assert(i < (int)scope.size());
@@ -132,11 +137,11 @@ void StackManager::print(ostream & os) const
     os << endl;
     os << "------------------------------- Stack Status --------------------------------------" << endl << endl;
 
-    for(unsigned int sc=0; sc < scope.size(); sc++)
+    for (unsigned int sc=0; sc < scope.size(); sc++)
     {
         os << scope[sc].name << ":" << endl;
 
-        for (VariableIter i  = variablesBegin(sc); i != variablesEnd(sc); ++i)
+        for (VariableStack::const_iterator i = variablesBegin(sc); i != variablesEnd(sc); ++i)
              os << "\t" << **i << endl;
 
     }

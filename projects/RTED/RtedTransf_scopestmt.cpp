@@ -1,3 +1,8 @@
+
+#if 0
+
+OBSOLETE
+
 #include <rose.h>
 
 // DQ (2/9/2010): Testing use of ROE to compile ROSE.
@@ -18,7 +23,7 @@ RtedTransformation::visit_isSgScopeStatement( SgScopeStatement* const n)
 {
     ROSE_ASSERT(n);
 
-    if(   isSgWhileStmt( n)
+    if (   isSgWhileStmt( n)
           || isSgSwitchStatement( n)
           || isSgIfStmt( n)
           || isSgForStatement( n)
@@ -39,5 +44,7 @@ RtedTransformation::visit_isSgScopeStatement( SgScopeStatement* const n)
       scopes[ n ] = n;
     }
 }
+
+#endif
 
 #endif

@@ -38,7 +38,7 @@ struct RtedArray
     : initName(init), surroundingStatement(stmt), allocKind(_allocKind), size(_size), indices()
     {
       ROSE_ASSERT(initName && surroundingStatement && (allocKind != akUndefined));
-      ROSE_ASSERT((allocKind == akStack) || size);
+      ROSE_ASSERT((allocKind & (akStack | akGlobal)) || size);
     }
 
     std::vector<SgExpression*>&       getIndices()       { return indices; }

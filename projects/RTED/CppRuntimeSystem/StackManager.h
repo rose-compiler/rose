@@ -15,7 +15,8 @@ class VariablesType;
 
 class StackManager
 {
-    typedef Address Location;
+    typedef Address                     Location;
+    typedef std::vector<VariablesType*> VariableStack;
 
     public:
         StackManager();
@@ -37,10 +38,8 @@ class StackManager
         int                 getScopeCount()     const;
         const std::string & getScopeName(int i) const;
 
-        typedef std::vector<VariablesType*>::const_iterator VariableIter;
-        VariableIter variablesBegin(int scopeId) const;
-        VariableIter variablesEnd(int scopeId)   const;
-
+        VariableStack::const_iterator variablesBegin(int scopeId) const;
+        VariableStack::const_iterator variablesEnd(int scopeId)   const;
 
         /// Returns variable at given memory location, or NULL if no var found
         const VariablesType* getVariable(Location) const;
@@ -71,9 +70,9 @@ class StackManager
             int         stackIndex;  /// index in stack-array where this scope starts
         };
 
-        std::vector<ScopeInfo>       scope;
-        std::vector<VariablesType *> stack;
-        AddrToVarMap                 addrToVarMap;
+        std::vector<ScopeInfo>  scope;
+        VariableStack           stack;
+        AddrToVarMap            addrToVarMap;
 };
 
 #endif

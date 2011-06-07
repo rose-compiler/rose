@@ -444,10 +444,6 @@ struct RuntimeSystem
         int                getScopeCount()     const;
         const std::string& getScopeName(int i) const;
 
-        typedef std::vector<VariablesType*>::const_iterator VariableIter;
-        VariableIter variablesBegin(int scopeId) const;
-        VariableIter variablesEnd(int scopeId)   const;
-
         void printMessage(const std::string& message);
 
         bool testing() const { return testingMode; }

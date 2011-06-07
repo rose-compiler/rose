@@ -214,7 +214,7 @@ void appendConstructors(SgClassDefinition* cdef, SgMemberFunctionDeclarationPtrL
  * so that runtime errors are caught at runtime before they happen
  * -----------------------------------------------------------*/
 
-class RtedTransformation : public AstSimpleProcessing
+class RtedTransformation
 {
    typedef std::map<SgVarRefExp*,std::pair< SgInitializedName*, AllocKind> > InitializedVarMap;
 
@@ -438,9 +438,7 @@ public:
    void insertMainCloseCall();
 
    void visit_isAssignInitializer(SgAssignInitializer* const n);
-
    void visit_isArrayPntrArrRefExp(SgPntrArrRefExp* const n);
-   void visit_isSgScopeStatement(SgScopeStatement* const n);
 
    void addPaddingToAllocatedMemory(SgStatement* stmt, const RtedArray& array);
 
@@ -499,8 +497,7 @@ private:
    void insertVariableCreateInitForParams( SgFunctionDefinition* n);
    void insertAccessVariable(SgVarRefExp* varRefE,SgExpression* derefExp);
    void insertAccessVariable(SgThisExp* varRefE,SgExpression* derefExp);
-   void insertAccessVariable(SgScopeStatement* scope,
-         SgExpression* derefExp, SgStatement* stmt, SgExpression* varRefE);
+   void insertAccessVariable(SgScopeStatement* scope, SgExpression* derefExp, SgStatement* stmt, SgExpression* varRefE);
    void addFileIOFunctionCall(SgVarRefExp* n, bool read);
    void insertCheckIfThisNull(SgThisExp* texp);
 
@@ -538,9 +535,7 @@ public:
 
    explicit
    RtedTransformation(bool testsupc)
-   : AstSimpleProcessing(),
-
-     symbols(),
+   : symbols(),
      srcfiles(),
      rtedfiles(NULL),
 
@@ -634,13 +629,13 @@ public:
    void insertNamespaceIntoSourceFile(SgProject* project);
    // void insertNamespaceIntoSourceFile(SgProject* project, std::vector<SgClassDeclaration*>&);
 
-   void populateDimensions( RtedArray& array, SgInitializedName& init, SgArrayType* type );
+   void populateDimensions( RtedArray& array, SgInitializedName& init, SgArrayType& type );
    void transformIfMain(SgFunctionDefinition* const);
 
    //
    // dependencies on AstSimpleProcessing
    //   (see also comment in RtedTransformation.cpp)
-   virtual void visit(SgNode* n); // needed for the class extraction
+   // virtual void visit(SgNode* n); // needed for the class extraction
 
    //
    // implemented in RtedTransf_Upc.cpp

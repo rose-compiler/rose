@@ -184,9 +184,10 @@ extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
 int rted_CreateVariable( rted_TypeDesc   td,
                          rted_Address    address,
                          size_t          size,
+                         int             init,
+                         rted_AllocKind  ak,
                          const char*     name,
                          const char*     mangled_name,
-                         int             init,
                          const char*     class_name,
                          rted_SourceInfo si
                        );
@@ -204,7 +205,6 @@ int rted_InitVariable( rted_TypeDesc   td,
                        rted_Address    address,
                        size_t          size,
                        int             pointer_changed,
-                       rted_AllocKind  allocKind,
                        const char*     class_name,
                        rted_SourceInfo si
                      );

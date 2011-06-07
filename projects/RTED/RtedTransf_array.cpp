@@ -6,6 +6,7 @@
 
 #include <string>
 #include <algorithm>
+#include <numeric>
 
 #include <boost/foreach.hpp>
 
@@ -142,7 +143,7 @@ std::string enumstring(AllocKind ak)
     case akCxxArrayNew:     res = "akCxxArrayNew"; break;
 
     /* UPC */
-    case akUpcSharedHeap:   res = "akUpcSharedHeap"; break;
+    case akUpcShared:       res = "akUpcShared"; break;
     case akUpcAlloc:        res = "akUpcAlloc"; break;
     case akUpcGlobalAlloc:  res = "akUpcGlobalAlloc"; break;
     case akUpcAllAlloc:     res = "akUpcAllAlloc"; break;
@@ -515,21 +516,22 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt, SgPntrArrRefEx
               );
 }
 
-void RtedTransformation::populateDimensions(RtedArray& array, SgInitializedName& init, SgArrayType* type_)
+
+void RtedTransformation::populateDimensions(RtedArray& array, SgInitializedName& init, SgArrayType& type_)
 {
-   ROSE_ASSERT(type_);
+   std::vector<SgExpression*> indices;
+   bool                       implicit_index = false;
+   SgArrayType*               arrtype = &type_;
 
-   std::vector<SgExpression*>& indices = array.getIndices();
-
-   bool implicit_index = false;
-   SgType* type = type_;
-   while (SgArrayType* arrtype = isSgArrayType(type)) {
+   while (arrtype)
+   {
       SgExpression* index = arrtype -> get_index();
       if (index)
          indices.push_back(index);
       else
          implicit_index = true;
-      type = arrtype -> get_base_type();
+
+      arrtype = isSgArrayType(arrtype -> get_base_type());
    }
 
    // handle implicit first dimension for array initializers
@@ -537,21 +539,17 @@ void RtedTransformation::populateDimensions(RtedArray& array, SgInitializedName&
    //      int p[][2][3] = {{{ 1, 2, 3 }, { 4, 5, 6 }}}
    //  we can calculate the first dimension as
    //      sizeof( p ) / ( sizeof( int ) * 2 * 3 )
-   if (implicit_index) {
-      SgType* uint = buildUnsignedIntType();
-      Sg_File_Info* file_info = init -> get_file_info();
+   if (implicit_index)
+   {
+      SgExpression* mulid = buildIntVal(1);
+      SgExpression* denominator = std::accumulate(indices.begin(), indices.end(), mulid, buildMultiplyOp);
+      SgVarRefExp*  varref = buildVarRefExp(&init, getSurroundingStatement(&init)->get_scope());
+      SgExpression* sz = buildDivideOp(buildSizeOfOp(varref), denominator);
 
-      std::vector<SgExpression*>::iterator i = indices.begin();
-      SgExpression* denominator = buildSizeOfOp(type);
-      while (i != indices.end()) {
-         denominator = new SgMultiplyOp(file_info, denominator, *i, uint);
-         ++i;
-      }
-      ROSE_ASSERT( denominator != NULL );
-
-      indices.insert(indices.begin(), new SgDivideOp(file_info, buildSizeOfOp(buildVarRefExp(init,
-            getSurroundingStatement(init) -> get_scope())), denominator, uint));
+      indices.insert(indices.begin(), sz);
    }
+
+   array.getIndices().swap(indices);
 }
 
 
@@ -1354,6 +1352,8 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgPntrArrRefExp* const arrRe
 
        std::cerr << "!! CALL : " << varref << " - " << varref->unparseToString() << "    size : " << create_array_access_call.size()
                  << " : " << arrRefExp->unparseToString() << std::endl;
+
+       // \todo distinguish between akStack and akGlobal
        create_array_access_call[arrRefExp] = RtedArray(initName, getSurroundingStatement(arrRefExp), akStack);
     }
 }

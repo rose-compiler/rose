@@ -234,10 +234,9 @@ void rted_CreateArray( rted_TypeDesc   td,
   const RsArrayType* rstype   = rs_getArrayType(typesys, dimDescr, totalsize, rsbase);
   const long         blocksz  = rsbase.getByteSize() * blocksize;
 
-  rs->createArray( address, name, mangl_name, rstype, blocksz );
+  rs->createArray( address, name, mangl_name, rstype, allocKind, blocksz );
 
   if (initialized) {
-    // \pp was: rs->checkMemWrite( address, elemsize );
     rs->checkMemWrite( address, totalsize );
   }
 }
@@ -292,7 +291,7 @@ void _rted_AllocMem( rted_TypeDesc    td,
   {
     // FIXME 2: This won't handle the unlikely case of a C++ object being
     // allocated via malloc and then freed with delete.
-    assert( allocKind != akStack );
+    assert( (allocKind & (akStack | akGlobal)) == 0 );
 
     // \todo implement blocksize == -2 (automatic UPC blocksize)
     //       low priority b/c the frontend calculates this for us
@@ -314,7 +313,7 @@ void _rted_AllocMem( rted_TypeDesc    td,
 
 void rted_AllocMem( rted_TypeDesc   td,
                     rted_Address    address,
-                    size_t          size,
+                    size_t          /*size*/,
                     rted_AllocKind  allocKind,
                     long            blocksize,
                     size_t          mallocSize,
@@ -419,11 +418,16 @@ void RuntimeSystem_ensure_allocated_and_initialized( Address addr, size_t size)
   // We trust that anything allocated is properly initialized -- we're not
   // working around a string constant so there's no need for us to do anything.
   if (rs->getMemManager()->findContainingMem(addr, 1) != NULL)
+  {
+    // \pp \todo should not we at least check that we can write size bytes?
     return;
+  }
 
   const bool nondistributed = false;
-  // \pp ???
-  rs->createArray(addr, "StringConstant", "MangledStringConstant", "SgTypeChar", size, nondistributed);
+
+  // \pp first we create an array, and then we check that we can write to it
+  //     why???
+  rs->createArray(addr, "StringConstant", "MangledStringConstant", "SgTypeChar", size, akGlobal, nondistributed);
   rs->checkMemWrite(addr, size);
 }
 
@@ -673,20 +677,21 @@ void rted_ExitScope(const char*, SourceInfo si)
  * This function tells the runtime system that a variable is created
  * we store the type of the variable and whether it has been intialized
  ********************************************************/
-int rted_CreateVariable( TypeDesc td,
-                         Address address,
-                         size_t size,
-                         const char* name,
-                         const char* mangled_name,
-                         int init,
-                         const char* class_name,
-                         SourceInfo si
+int rted_CreateVariable( rted_TypeDesc   td,
+                         rted_Address    address,
+                         size_t          size,
+                         int             init,
+                         rted_AllocKind  ak,
+                         const char*     name,
+                         const char*     mangled_name,
+                         const char*     class_name,
+                         rted_SourceInfo si
                        )
 {
-  // CreateVariable is called for stack allocations. UPC shared memory allocations
-  // need not be broadcast to other UPC threads, b/c each thread will handle them
-  // separately. (The RTED startup code initializing the RTED runtime system
-  // runs in any UPC thread.)
+  // CreateVariable is called for stack and global allocations. UPC shared
+  // memory allocations need not be broadcast to other UPC threads, b/c each
+  // thread will handle them separately. (The RTED startup code initializing
+  // the RTED runtime system runs in any UPC thread.)
   rted_ProcessMsg();
 
   RuntimeSystem* rs = RuntimeSystem::instance();
@@ -702,7 +707,7 @@ int rted_CreateVariable( TypeDesc td,
   // only arrays can be distributed across threads
   // plain variables are solely shared (but not distributed); they reside in thread 0
   const bool     nondistributed = false;
-  rs->createVariable(address, name, mangled_name, &rsType, nondistributed);
+  rs->createVariable(address, name, mangled_name, &rsType, ak, nondistributed);
 
   if ( 1 == init ) {
     // e.g. int x = 3
@@ -744,25 +749,21 @@ int rted_InitVariable( rted_TypeDesc   td,
                        rted_Address    address,
                        size_t          size,
                        int             pointer_changed,
-                       rted_AllocKind  allocKind,
                        const char*     class_name,
                        rted_SourceInfo si
                      )
 {
   rted_ProcessMsg();
 
-  const int     pointer_move = (  (allocKind & akUndefined) == akUndefined
-                               && pointer_changed == 1
-                               && strcmp( "SgPointerType", td.name) == 0
-                               );
-  const Address heap_address = pointer_move ? rted_deref(address, td.desc) : nullAddr();
-  const bool    sendupd = _rted_InitVariable( td, address, heap_address, size, pointer_move, class_name, si, primaryLoc );
+  assert(!pointer_changed || strcmp( "SgPointerType", td.name) == 0);
+
+  const Address heap_address = pointer_changed ? rted_deref(address, td.desc) : nullAddr();
+  const bool    sendupd = _rted_InitVariable( td, address, heap_address, size, pointer_changed, class_name, si, primaryLoc );
 
   if (sendupd)
   {
-    snd_InitVariable(td, address, heap_address, size, pointer_move, class_name, si);
+    snd_InitVariable(td, address, heap_address, size, pointer_changed, class_name, si);
   }
-
 
   /* can be invoked from expression context */
   return 0;
@@ -806,7 +807,7 @@ int _rted_InitVariable( rted_TypeDesc    td,
   {
     const RsPointerType* rp = &dynamic_cast<const RsPointerType&>(rs_type);
 
-    rs->registerPointerChange( address, heap_address, rp, false, true );
+    rs->registerPointerChange( address, heap_address, rp, false, true /* check leaks */ );
     sendupd = true;
   }
 

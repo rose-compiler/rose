@@ -18,7 +18,7 @@ using namespace SageBuilder;
 static
 bool hasPrivateDataMembers(SgClassDeclaration* cd_copy)
 {
-   const SgNodePtrList&          variables = NodeQuery::querySubTree(cd_copy,  V_SgVariableDeclaration);
+   const SgNodePtrList&          variables = NodeQuery::querySubTree(cd_copy, V_SgVariableDeclaration);
    SgNodePtrList::const_iterator varIt = variables.begin();
    for (; varIt != variables.end(); ++varIt) {
       SgVariableDeclaration* node = isSgVariableDeclaration(*varIt);
@@ -27,6 +27,60 @@ bool hasPrivateDataMembers(SgClassDeclaration* cd_copy)
          return true;
    }
    return false;
+}
+
+
+namespace {
+  struct ClassCollector : AstSimpleProcessing
+  {
+    std::vector<SgClassDeclaration*>& classdecls;
+
+    explicit
+    ClassCollector(std::vector<SgClassDeclaration*>& out)
+    : AstSimpleProcessing(), classdecls(out)
+    {}
+
+    void visit(SgNode* n)
+    {
+      SgClassDeclaration* classDecl = isSgClassDeclaration(n);
+
+      if (!classDecl) return;
+
+      if (  classDecl->get_definingDeclaration() == classDecl
+         && !classDecl->get_file_info()->isCompilerGenerated()
+         )
+      {
+          const string filename = classDecl->get_file_info()->get_filenameString();
+          const size_t idx = filename.rfind('.');
+          std::string  extension;
+
+          if (idx != std::string::npos)
+          {
+             extension = filename.substr(idx+1);
+          }
+
+          // \note only for classes in header files that are not system includes
+          if (  extension != "C"
+             && extension != "cpp"
+             && extension != "cxx"
+             && extension != "cc"
+             && filename.find("include-staging") == string::npos
+             && filename.find("/usr/include") == string::npos
+             )
+          {
+            classdecls.push_back(classDecl);
+          }
+      }
+    }
+  };
+}
+
+static
+void collectClassesInHeaderFiles(SgProject* project, std::vector<SgClassDeclaration*>& classdecls)
+{
+  ClassCollector collector(classdecls);
+
+  collector.traverse(project, preorder);
 }
 
 
@@ -63,82 +117,32 @@ void RtedTransformation::insertNamespaceIntoSourceFile( SgProject* project )
    }
 
    if (RTEDDEBUG)  cerr << "Deep copy of all C++ class declarations to allow offsetof to be used." << endl;
-   const SgNodePtrList& results = NodeQuery::querySubTree(project,V_SgClassDeclaration);
+   std::vector<SgClassDeclaration*> classdecls;
+
+   collectClassesInHeaderFiles(project, classdecls);
+
    // insert at top of all C files in reverse order
    // only if the class has a constructor and if it is declared in a header file
-   // \pp why?
+   std::vector<SgClassDeclaration*>::const_reverse_iterator classaa = classdecls.rbegin();
+   std::vector<SgClassDeclaration*>::const_reverse_iterator classzz = classdecls.rend();
 
-#if 0
-   // tps (11/06/2009) : it seems that the reverse iterator does not work on MAC OS, so I added another loop to get the reverse vector
-   vector<SgNode*>::const_iterator classItR = results.begin();
-   vector<SgNode*> resultsInv;
-   for (;classItR!=results.end(); ++classItR) {
-      resultsInv.insert(resultsInv.begin(),*classItR);
-   }
-   ROSE_ASSERT(resultsInv.size()==results.size());
-#endif
-
-   std::vector<SgClassDeclaration*> traverseClasses;
-   SgNodePtrList::const_reverse_iterator classIt = results.rbegin();
-   for (;classIt!=results.rend(); ++classIt)
+   while (classaa != classzz)
    {
-      SgClassDeclaration* classDecl = isSgClassDeclaration(*classIt);
+     SgClassDeclaration* classDecl = *classaa;
 
-      if (  classDecl->get_definingDeclaration() == classDecl
-         && !classDecl->get_file_info()->isCompilerGenerated()
-         )
-      {
-          const string filename = classDecl->get_file_info()->get_filenameString();
-          const size_t idx = filename.rfind('.');
-          std::string  extension;
+     if (hasPrivateDataMembers(classDecl))
+     {
+        instrumentClassDeclarationIntoTopOfAllSourceFiles(project, classDecl);
+     }
 
-          if (idx != std::string::npos)
-          {
-             extension = filename.substr(idx+1);
-          }
+     visit_isClassDefinition(classDecl->get_definition());
 
-          // \note only for classes in header files that are not system includes
-          if (  extension != "C"
-             && extension != "cpp"
-             && extension != "cxx"
-             && extension != "cc"
-             && filename.find("include-staging") == string::npos
-             && filename.find("/usr/include") == string::npos
-             )
-          {
-             if (RTEDDEBUG)
-             {
-               size_t szDataMem = classDecl->returnDataMemberPointers().size();
-
-               cerr << "\n ** Deep copy: Found classDecl : " << classDecl->get_name().str()
-                    << "  in File: " << filename << "    with number of datamembers: " << szDataMem
-                    << "   defining " << (classDecl->get_definingDeclaration() == classDecl)
-                    << endl;
-             }
-
-             if (hasPrivateDataMembers(classDecl))
-             {
-                instrumentClassDeclarationIntoTopOfAllSourceFiles(project, classDecl);
-             }
-
-             traverseClasses.push_back(classDecl);
-          }
-       }
+     ++classaa;
    }
 
    // \pp not sure why moveupPreprocessingInfo is needed
    //     commented out for now.
    // moveupPreprocessingInfo(project);
-
-   // traverse all header files and collect information
-   std::vector<SgClassDeclaration*>::const_iterator travClassIt = traverseClasses.begin();
-   std::vector<SgClassDeclaration*>::const_iterator travClassEnd = traverseClasses.end();
-
-   for (; travClassIt != travClassEnd; ++travClassIt)
-   {
-      // traverse the new classes with RTED namespace
-      traverse(*travClassIt, preorder);
-   }
 }
 
 /// \brief  starting from n returns the first AST node that is an SgStatement
@@ -276,10 +280,7 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
    for (; aa != zz; ++aa)
    {
       SgSourceFile* sf = *aa;
-      bool          isInSourceFileSet = isInInstrumentedFile(sf);
-      assert( isInSourceFileSet ); // \pp seems to always hold
-
-      if (!isInSourceFileSet) continue;
+      assert( isInInstrumentedFile(sf) );
 
       if (RTEDDEBUG) cerr << "Looking through sourcefile: " << sf -> get_file_info() -> get_filename() << endl;
       // once we have the new class_decl inserted, we remove all functions and the constructor and destructor

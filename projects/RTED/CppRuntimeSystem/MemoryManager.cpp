@@ -773,11 +773,9 @@ alloc_free_mismatch(MemoryType& m, AllocKind howAlloced, AllocKind howFreed)
   return desc.str();
 }
 
-
-void MemoryManager::freeMemory(Location addr, MemoryType::AllocKind freekind)
+static
+void checkDeallocationAddress(MemoryType* m, MemoryType::Location addr, MemoryType::AllocKind freekind)
 {
-    MemoryType*    m = findContainingMem(addr, 1);
-
     // free on unknown address
     if (m == NULL)
     {
@@ -787,7 +785,7 @@ void MemoryManager::freeMemory(Location addr, MemoryType::AllocKind freekind)
         desc << freeDisplayName(freekind);
         desc << " was called with unknown address " << addr <<std::endl;
         desc << " Allocated Memory Regions:" << std::endl;
-        print(desc);
+        // MemoryManager::print(desc);
         rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
         return;
     }
@@ -805,13 +803,18 @@ void MemoryManager::freeMemory(Location addr, MemoryType::AllocKind freekind)
         rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
         return;
     }
+}
 
+void MemoryManager::freeMemory(MemoryType* m, MemoryType::AllocKind freekind)
+{
     // free stack memory explicitly (i.e. not via exitScope)
     MemoryType::AllocKind allockind = m->howCreated();
 
     // allockind can be different from freekind
     //   e.g., upc_free subsumes all upc allocations
-    if ((allockind & (freekind | akStack | akGlobal)) != freekind)
+    // (1) same method used to allocate and free
+    // (2) no free of global memory
+    if ( (allockind & (freekind | akGlobal | akStack)) != freekind )
     {
       RuntimeSystem* rs = RuntimeSystem::instance();
       std::string    msg = alloc_free_mismatch(*m, allockind, freekind);
@@ -828,6 +831,24 @@ void MemoryManager::freeMemory(Location addr, MemoryType::AllocKind freekind)
     // successful free, erase allocation info from map
     mem.erase(m->beginAddress());
 }
+
+
+void MemoryManager::freeHeapMemory(Location addr, MemoryType::AllocKind freekind)
+{
+    MemoryType* mt = findContainingMem(addr, 1);
+
+    checkDeallocationAddress(mt, addr, freekind);
+    freeMemory( findContainingMem(addr, 1), freekind );
+}
+
+void MemoryManager::freeStackMemory(Location addr)
+{
+    MemoryType* mt = findContainingMem(addr, 1);
+
+    checkDeallocationAddress(mt, addr, akStack);
+    freeMemory( findContainingMem(addr, 1), mt->howCreated() );
+}
+
 
 template <class MemManager>
 static
@@ -882,7 +903,8 @@ void MemoryManager::checkRead(Location addr, size_t size) const
     }
 }
 
-bool MemoryManager::checkWrite(Location addr, size_t size, const RsType* t)
+std::pair<MemoryType*, bool>
+MemoryManager::checkWrite(Location addr, size_t size, const RsType* t)
 {
     if ( diagnostics::message(diagnostics::memory) )
     {
@@ -922,7 +944,7 @@ bool MemoryManager::checkWrite(Location addr, size_t size, const RsType* t)
       RuntimeSystem::instance()->printMessage("   ++ checkWrite done.");
     }
 
-    return statuschange;
+    return std::make_pair(mt, statuschange);
 }
 
 bool MemoryManager::isInitialized(Location addr, size_t size) const

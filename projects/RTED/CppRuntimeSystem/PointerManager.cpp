@@ -418,7 +418,7 @@ PointerManager::checkForMemoryLeaks(Location address, size_t type_size, const Po
     const MemoryManager* mm = rtedRTS(this)->getMemManager();
     const MemoryType*    mem = mm->findContainingMem( address, type_size );
 
-    if (!mem || (mem->howCreated() == akStack)) return false;
+    if (!mem || (mem->howCreated() & (akStack | akGlobal))) return false;
 
     // find other pointer still pointing to this region
     ConstIterator aa = targetRegionIterBegin( mem -> beginAddress() );

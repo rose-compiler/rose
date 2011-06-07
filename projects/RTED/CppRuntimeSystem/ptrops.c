@@ -92,8 +92,29 @@ const char* rted_ThisShmemBase(void)
 
 const char* rted_ThisShmemLimit(void)
 {
-  // \pp \todo get the real limit
-  return (const char*) ~0;
+  // \hack
+  // Since we do not get the high boundary for the shared heap
+  // we return the current stack location.
+  // The implementation assumes that the stack is located in the
+  // high address range and grows towards the low addresses.
+  //
+  // high -----------------
+  //      - Stack         -
+  //      -----------------  <--- return this address
+  //            ...
+  // mid  -----------------
+  //      - Shared Heap   -
+  //      -----------------  <--- rted_ThisShmemBase
+  //            ...
+  // low  -----------------
+  //      - Local Heap    -
+  //      -----------------
+  //
+  // \todo get the real limit of the shared heap
+
+  char curr;
+
+  return &curr;
 }
 
 static inline

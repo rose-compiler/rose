@@ -144,7 +144,6 @@ struct MemoryType
           origin = kind;
         }
 
-
     private:
         typedef std::pair<TiIter,TiIter> TiIterPair;
 
@@ -202,8 +201,11 @@ struct MemoryManager
         /// \return a pointer to the actual stored object (NULL in case something went wrong)
         MemoryType* allocateMemory(Location addr, size_t size, MemoryType::AllocKind kind, long blocksize, const SourcePosition& pos);
 
-        /// Frees allocated memory, throws error when no allocation is managed at this addr
-        void freeMemory(Location addr, MemoryType::AllocKind);
+        /// tracks dynamic memory deallocations
+        void freeHeapMemory(Location addr, MemoryType::AllocKind freekind);
+
+        /// tracks deallocations related to scope exits
+        void freeStackMemory(Location addr);
 
         /// Prints information about all currently allocated memory areas
         void print(std::ostream & os) const;
@@ -212,11 +214,12 @@ struct MemoryManager
         /// @param size     size=sizeof(DereferencedType)
         void checkRead (Location addr, size_t size) const;
 
-        /// Checks if memory at position can be safely written, i.e. is allocated
-        /// if true it marks that memory region as initialized
-        /// that means this function should be called on every write!
-        /// returns true if there was a status change
-        bool checkWrite (Location addr, size_t size, const RsType* t = NULL);
+        /// \brief  Checks if memory at position can be safely written, i.e. is allocated
+        ///         if true it marks that memory region as initialized
+        ///         that means this function should be called on every write!
+        /// \return the allocation method and a flag indicating whether there was a status change
+        ///         (i.e. from uninitialized to initialized (or storing a different type)
+        std::pair<MemoryType*, bool> checkWrite (Location addr, size_t size, const RsType* t = NULL);
 
         /// \brief returns the allocation region around addr
         const MemoryType* checkLocation(Location addr, size_t size, RuntimeViolation::Type vioType) const;
@@ -290,6 +293,8 @@ struct MemoryManager
                                RuntimeViolation::Type violation
                              ) const;
 
+        /// Frees allocated memory, throws error when no allocation is managed at this addr
+        void freeMemory(MemoryType* m, MemoryType::AllocKind);
 
         MemoryTypeSet mem;
 

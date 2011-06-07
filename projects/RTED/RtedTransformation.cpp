@@ -115,23 +115,6 @@ void RtedTransformation::transform(SgProject* project, std::set<std::string>& rt
  * Collects information needed for transformations
  * -----------------------------------------------------------*/
 
-// \pp this is called from AstSimpleProcessing::traverse
-void RtedTransformation::visit(SgNode* n) {
-   if (isSgScopeStatement(n)) {
-
-      // if, while, do, etc., where we need to check for locals going out of scope
-      visit_isSgScopeStatement(isSgScopeStatement(n));
-      // *********************** DETECT structs and class definitions ***************
-      if (isSgClassDefinition(n)) {
-         // call to a specific function that needs to be checked
-         //cerr << " +++++++++++++++++++++ FOUND Class Def!! ++++++++++++++++ " << endl;
-
-         std::cerr << "ClassDef-parent: " << typeid(*n->get_parent()).name() << std::endl;
-         visit_isClassDefinition(isSgClassDefinition(n));
-      }
-   }
-}
-
 #endif
 
 // vim:et sta ts=2 sw=2:

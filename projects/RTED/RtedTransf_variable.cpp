@@ -317,6 +317,7 @@ RtedTransformation::buildVariableCreateCallExpr(SgInitializedName* initName, boo
         return buildVariableCreateCallExpr(genVarRef(initName), debug_name, initb);
 }
 
+
 SgFunctionCallExp*
 RtedTransformation::buildVariableCreateCallExpr(SgVarRefExp* var_ref, const string& debug_name, bool initb)
 {
@@ -340,18 +341,18 @@ RtedTransformation::buildVariableCreateCallExpr(SgVarRefExp* var_ref, const stri
 
         appendAddressAndSize(arg_list, Whole, scope, var_ref, NULL);
 
+        const bool     var_init = initb && !isFileIOVariable(varType);
+        AllocKind      allocKind = varAllocKind(*initName);
         SgExpression*  callName = buildStringVal(debug_name);
         SgExpression*  callNameExp = buildStringVal(debug_name);
-        const bool     var_init = initb && !isFileIOVariable(varType);
 
-
+        appendBool      (arg_list, var_init);
+        appendAllocKind (arg_list, allocKind);
 
         appendExpression(arg_list, callName);
         appendExpression(arg_list, callNameExp);
-        appendBool      (arg_list, var_init);
-
-        appendClassName(arg_list, varType);
-        appendFileInfo(arg_list, scope, var_ref->get_file_info());
+        appendClassName (arg_list, varType);
+        appendFileInfo  (arg_list, scope, var_ref->get_file_info());
 
         ROSE_ASSERT(symbols.roseCreateVariable);
         SgFunctionRefExp* memRef_r = buildFunctionRefExp(symbols.roseCreateVariable);
@@ -407,12 +408,15 @@ RtedTransformation::buildVariableInitCallExpr( SgInitializedName* initName,
         //    *p = 10;
         const int               is_pointer_change = (  isSgExprStatement(stmt)
                                                     && isSgPointerType(exp->get_type())
+                                                    && ((allockind & akUndefined) == akUndefined)
                                                     );
+
+        // \pp The test for akUndefined was moved from RuntmieSystem.cpp
+        //     Not sure why we need it.
 
         appendExpression(arg_list, ctorTypeDesc(mkTypeInformation(exp -> get_type(), false, false)) );
         appendAddressAndSize(arg_list, Whole, scope, exp, NULL);
         appendExpression(arg_list, buildIntVal(is_pointer_change));
-        appendAllocKind(arg_list, allockind);
         appendClassName(arg_list, exp -> get_type());
         appendFileInfo(arg_list, stmt);
 
