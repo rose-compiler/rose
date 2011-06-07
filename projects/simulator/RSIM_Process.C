@@ -1207,24 +1207,26 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
         melmt.set_name("[stack]");
         map->insert(melmt);
 
-        /* Initialize the stack with specimen's argc and argv. Also save the arguments in the class. */
-        ROSE_ASSERT(exeargs.size()==1);                     /* contains only the executable path */
-        std::vector<uint32_t> pointers;                     /* pointers pushed onto stack at the end of initialization */
-        pointers.push_back(argc);
-        for (int i=0; i<argc; i++) {
-            std::string arg;
-            if (0==i) {
-                arg = exeargs[0];
-            } else {
-                arg = argv[i];
-                exeargs.push_back(arg);
-            }
-            size_t len = arg.size() + 1; /*inc. NUL termination*/
+        /* Save specimen arguments in RSIM_Process object. The executable name is already there. */
+        assert(exeargs.size()==1);
+        for (int i=1; i<argc; i++)
+            exeargs.push_back(std::string(argv[i]));
+
+        /* Initialize the stack with the specimen's argc and argv.  The argv data must be stored contiguously with arg[0] at
+         * the low address and arg[argc-1] at the high address. (WINE's preloader.c set_process_name() depends on this). */
+        std::vector<uint32_t> pointers(argc+1, 0);              /* pointers pushed onto stack at the end of initialization */
+        pointers[0] = exeargs.size();
+        for (size_t i=exeargs.size(); i>0; --i) {
+            size_t len = exeargs[i-1].size() + 1;               /* inc. NUL terminator */
             sp -= len;
-            mem_write(arg.c_str(), sp, len);
-            pointers.push_back(sp);
-            if (trace)
-                fprintf(trace, "argv[%d] %zu bytes at 0x%08zu = \"%s\"\n", i, len, sp, arg.c_str());
+            mem_write(exeargs[i-1].c_str(), sp, len);
+            pointers[i] = sp;
+        }
+        if (trace) {
+            for (size_t i=0; i<exeargs.size(); i++) {
+                fprintf(trace, "argv[%zu] %zu bytes at 0x%08"PRIx32" = \"%s\"\n", i,
+                        exeargs[i].size()+1, pointers[i+1], exeargs[i].c_str());
+            }
         }
         pointers.push_back(0); /*the argv NULL terminator*/
 
@@ -1234,6 +1236,8 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
          * deleted from the list and its value used for FOO; but if X86SIM_FOO is present without FOO, then we just change the
          * name to FOO and leave it at that location. We do all this so that variables are in the same order whether run
          * natively or under the simulator. */
+        std::vector<size_t> env_offsets;
+        std::string env_buffer;
         std::map<std::string, std::string> envvars;
         std::map<std::string, std::string>::iterator found;
         for (int i=0; environ[i]; i++) {
@@ -1243,7 +1247,7 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
             std::string val(eq+1);
             envvars.insert(std::make_pair(var, val));
         }
-        for (int i=0, j=0; environ[i]; i++) {
+        for (int i=0; environ[i]; i++) {
             char *eq = strchr(environ[i], '=');
             ROSE_ASSERT(eq!=NULL);
             std::string var(environ[i], eq-environ[i]);
@@ -1263,142 +1267,145 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
                 }
             }
             std::string env = var + "=" + val;
-            sp -= env.size() + 1;
-            mem_write(env.c_str(), sp, env.size()+1);
-            pointers.push_back(sp);
-            if (trace)
-                fprintf(trace, "environ[%d] %zu bytes at 0x%08zu = \"%s\"\n", j++, env.size(), sp, env.c_str());
+            env_offsets.push_back(env_buffer.size());
+            env_buffer += env + (char)0;
+        }
+        sp -= env_buffer.size();
+        mem_write(env_buffer.c_str(), sp, env_buffer.size());
+
+        for (size_t i=0; i<env_offsets.size(); i++) {
+            pointers.push_back(sp+env_offsets[i]);
+            if (trace) {
+                fprintf(trace, "environ[%zu] %zu bytes at 0x%08zx = \"\%s\"\n",
+                        i, strlen(&(env_buffer[env_offsets[i]]))+1, sp+env_offsets[i], &(env_buffer[env_offsets[i]]));
+            }
         }
         pointers.push_back(0); /*environment NULL terminator*/
 
-        /* Initialize stack with auxv, where each entry is two words in the pointers vector. This information is only present for
-         * dynamically linked executables. The order and values were determined by running the simulator with the "--showauxv"
-         * switch on hudson-rose-07. */
-        if (fhdr->get_section_by_name(".interp")) {
-            struct T1: public SgSimpleProcessing {
-                rose_addr_t phdr_rva;
-                T1(): phdr_rva(0) {}
-                void visit(SgNode *node) {
-                    SgAsmElfSection *section = isSgAsmElfSection(node);
-                    SgAsmElfSegmentTableEntry *entry = section ? section->get_segment_entry() : NULL;
-                    if (0==phdr_rva && entry && entry->get_type()==SgAsmElfSegmentTableEntry::PT_PHDR)
-                        phdr_rva = section->get_mapped_preferred_rva();
-                }
-            } t1;
-            t1.traverse(fhdr, preorder);
-            auxv.clear();
-
-            if (vdso_mapped_va!=0) {
-                /* AT_SYSINFO */
-                auxv.push_back(32);
-                auxv.push_back(vdso_entry_va);
-                if (trace)
-                    fprintf(trace, "AT_SYSINFO:       0x%08"PRIx32"\n", auxv.back());
-
-                /* AT_SYSINFO_PHDR */
-                auxv.push_back(33);
-                auxv.push_back(vdso_mapped_va);
-                if (trace)
-                    fprintf(trace, "AT_SYSINFO_PHDR:  0x%08"PRIx32"\n", auxv.back());
+        /* Initialize stack with auxv, where each entry is two words in the pointers vector.  The order and values were
+         * determined by running the simulator with the "--showauxv" switch on hudson-rose-07. */
+        struct T1: public SgSimpleProcessing {
+            rose_addr_t phdr_rva;
+            T1(): phdr_rva(0) {}
+            void visit(SgNode *node) {
+                SgAsmElfSection *section = isSgAsmElfSection(node);
+                SgAsmElfSegmentTableEntry *entry = section ? section->get_segment_entry() : NULL;
+                if (0==phdr_rva && entry && entry->get_type()==SgAsmElfSegmentTableEntry::PT_PHDR)
+                    phdr_rva = section->get_mapped_preferred_rva();
             }
+        } t1;
+        t1.traverse(fhdr, preorder);
+        auxv.clear();
 
-            /* AT_HWCAP (see linux <include/asm/cpufeature.h>). */
-            auxv.push_back(16);
-            uint32_t hwcap = 0xbfebfbfful; /* value used by hudson-rose-07 */
-            auxv.push_back(hwcap);
-
+        if (vdso_mapped_va!=0) {
+            /* AT_SYSINFO */
+            auxv.push_back(32);
+            auxv.push_back(vdso_entry_va);
             if (trace)
-                fprintf(trace, "AT_HWCAP:         0x%08"PRIx32"\n", auxv.back());
+                fprintf(trace, "AT_SYSINFO:       0x%08"PRIx32"\n", auxv.back());
 
-            /* AT_PAGESZ */
-            auxv.push_back(6);
-            auxv.push_back(PAGE_SIZE);
+            /* AT_SYSINFO_PHDR */
+            auxv.push_back(33);
+            auxv.push_back(vdso_mapped_va);
             if (trace)
-                fprintf(trace, "AT_PAGESZ:        %"PRId32"\n", auxv.back());
+                fprintf(trace, "AT_SYSINFO_PHDR:  0x%08"PRIx32"\n", auxv.back());
+        }
 
-            /* AT_CLKTCK */
-            auxv.push_back(17);
-            auxv.push_back(100);
+        /* AT_HWCAP (see linux <include/asm/cpufeature.h>). */
+        auxv.push_back(16);
+        uint32_t hwcap = 0xbfebfbfful; /* value used by hudson-rose-07, and wortheni(Xeon X5680) */
+        auxv.push_back(hwcap);
+        if (trace)
+            fprintf(trace, "AT_HWCAP:         0x%08"PRIx32"\n", auxv.back());
+
+        /* AT_PAGESZ */
+        auxv.push_back(6);
+        auxv.push_back(PAGE_SIZE);
+        if (trace)
+            fprintf(trace, "AT_PAGESZ:        %"PRId32"\n", auxv.back());
+
+        /* AT_CLKTCK */
+        auxv.push_back(17);
+        auxv.push_back(100);
+        if (trace)
+            fprintf(trace, "AT_CLKTCK:        %"PRId32"\n", auxv.back());
+
+        /* AT_PHDR */
+        auxv.push_back(3); /*AT_PHDR*/
+        auxv.push_back(t1.phdr_rva + fhdr->get_base_va());
+        if (trace)
+            fprintf(trace, "AT_PHDR:          0x%08"PRIx32"\n", auxv.back());
+
+        /*AT_PHENT*/
+        auxv.push_back(4);
+        auxv.push_back(fhdr->get_phextrasz() + sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
+        if (trace)
+            fprintf(trace, "AT_PHENT:         %"PRId32"\n", auxv.back());
+
+        /* AT_PHNUM */
+        auxv.push_back(5);
+        auxv.push_back(fhdr->get_e_phnum());
+        if (trace)
+            fprintf(trace, "AT_PHNUM:         %"PRId32"\n", auxv.back());
+
+        /* AT_BASE */
+        auxv.push_back(7);
+        auxv.push_back(fhdr->get_section_by_name(".interp") ? ld_linux_base_va : 0);
+        if (trace)
+            fprintf(trace, "AT_BASE:          0x%08"PRIx32"\n", auxv.back());
+
+        /* AT_FLAGS */
+        auxv.push_back(8);
+        auxv.push_back(0);
+        if (trace)
+            fprintf(trace, "AT_FLAGS:         0x%08"PRIx32"\n", auxv.back());
+
+        /* AT_ENTRY */
+        auxv.push_back(9);
+        auxv.push_back(fhdr->get_entry_rva() + fhdr->get_base_va());
+        if (trace)
+            fprintf(trace, "AT_ENTRY:         0x%08"PRIx32"\n", auxv.back());
+
+        /* AT_UID */
+        auxv.push_back(11);
+        auxv.push_back(getuid());
+        if (trace)
+            fprintf(trace, "AT_UID:           %"PRId32"\n", auxv.back());
+
+        /* AT_EUID */
+        auxv.push_back(12);
+        auxv.push_back(geteuid());
+        if (trace)
+            fprintf(trace, "AT_EUID:          %"PRId32"\n", auxv.back());
+
+        /* AT_GID */
+        auxv.push_back(13);
+        auxv.push_back(getgid());
+        if (trace)
+            fprintf(trace, "AT_GID:           %"PRId32"\n", auxv.back());
+
+        /* AT_EGID */
+        auxv.push_back(14);
+        auxv.push_back(getegid());
+        if (trace)
+            fprintf(trace, "AT_EGID:          %"PRId32"\n", auxv.back());
+
+        /* AT_SECURE */
+        auxv.push_back(23);
+        auxv.push_back(false);
+        if (trace)
+            fprintf(trace, "AT_SECURE:        %"PRId32"\n", auxv.back());
+
+        /* AT_PLATFORM */
+        {
+            const char *platform = "i686";
+            size_t len = strlen(platform)+1;
+            sp -= len;
+            mem_write(platform, sp, len);
+            auxv.push_back(15);
+            auxv.push_back(sp);
             if (trace)
-                fprintf(trace, "AT_CLKTCK:        %"PRId32"\n", auxv.back());
-
-            /* AT_PHDR */
-            auxv.push_back(3); /*AT_PHDR*/
-            auxv.push_back(t1.phdr_rva + fhdr->get_base_va());
-            if (trace)
-                fprintf(trace, "AT_PHDR:          0x%08"PRIx32"\n", auxv.back());
-
-            /*AT_PHENT*/
-            auxv.push_back(4);
-            auxv.push_back(fhdr->get_phextrasz() + sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
-            if (trace)
-                fprintf(trace, "AT_PHENT:         %"PRId32"\n", auxv.back());
-
-            /* AT_PHNUM */
-            auxv.push_back(5);
-            auxv.push_back(fhdr->get_e_phnum());
-            if (trace)
-                fprintf(trace, "AT_PHNUM:         %"PRId32"\n", auxv.back());
-
-            /* AT_BASE */
-            auxv.push_back(7);
-            auxv.push_back(ld_linux_base_va);
-            if (trace)
-                fprintf(trace, "AT_BASE:          0x%08"PRIx32"\n", auxv.back());
-
-            /* AT_FLAGS */
-            auxv.push_back(8);
-            auxv.push_back(0);
-            if (trace)
-                fprintf(trace, "AT_FLAGS:         0x%08"PRIx32"\n", auxv.back());
-
-            /* AT_ENTRY */
-            auxv.push_back(9);
-            auxv.push_back(fhdr->get_entry_rva() + fhdr->get_base_va());
-            if (trace)
-                fprintf(trace, "AT_ENTRY:         0x%08"PRIx32"\n", auxv.back());
-
-            /* AT_UID */
-            auxv.push_back(11);
-            auxv.push_back(getuid());
-            if (trace)
-                fprintf(trace, "AT_UID:           %"PRId32"\n", auxv.back());
-
-            /* AT_EUID */
-            auxv.push_back(12);
-            auxv.push_back(geteuid());
-            if (trace)
-                fprintf(trace, "AT_EUID:          %"PRId32"\n", auxv.back());
-
-            /* AT_GID */
-            auxv.push_back(13);
-            auxv.push_back(getgid());
-            if (trace)
-                fprintf(trace, "AT_GID:           %"PRId32"\n", auxv.back());
-
-            /* AT_EGID */
-            auxv.push_back(14);
-            auxv.push_back(getegid());
-            if (trace)
-                fprintf(trace, "AT_EGID:          %"PRId32"\n", auxv.back());
-
-            /* AT_SECURE */
-            auxv.push_back(23);
-            auxv.push_back(false);
-            if (trace)
-                fprintf(trace, "AT_SECURE:        %"PRId32"\n", auxv.back());
-
-            /* AT_PLATFORM */
-            {
-                const char *platform = "i686";
-                size_t len = strlen(platform)+1;
-                sp -= len;
-                mem_write(platform, sp, len);
-                auxv.push_back(15);
-                auxv.push_back(sp);
-                if (trace)
-                    fprintf(trace, "AT_PLATFORM:      0x%08"PRIx32" (%s)\n", auxv.back(), platform);
-            }
+                fprintf(trace, "AT_PLATFORM:      0x%08"PRIx32" (%s)\n", auxv.back(), platform);
         }
 
         /* AT_NULL */
