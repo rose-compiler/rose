@@ -96,6 +96,43 @@ sage_buildGlobal(PyObject *self, PyObject *args)
 }
 
 /*
+ * Build an SgIfStmt node from the given list of Python statements.
+ *  - PyObject* args = ( PyObject* test,
+ *                       [ PyObject* body0, PyObject* body1, ...],
+ *                       [ PyObject* orelse0, PyObject* orelse1, ...]
+ *                     )
+ */
+PyObject*
+sage_buildIf(PyObject *self, PyObject *args)
+{
+    PyObject* py_test =        PyTuple_GetItem(args, 0);
+    PyObject* py_body_list =   PyTuple_GetItem(args, 1);
+    PyObject* py_orelse_list = PyTuple_GetItem(args, 2);
+
+    SgBasicBlock* true_body = SageBuilder::buildBasicBlock();
+    Py_ssize_t tbodyc = PyList_Size(py_body_list);
+    for (int i = 0; i < tbodyc; i++) {
+        PyObject* py_stmt = PyList_GetItem(py_body_list, i);
+        SgStatement* sg_stmt = PyDecapsulate<SgStatement>(py_stmt);
+        true_body->append_statement(sg_stmt);
+    }
+
+    Py_ssize_t fbodyc = PyList_Size(py_orelse_list);
+    SgBasicBlock* false_body =
+        (fbodyc > 0) ? SageBuilder::buildBasicBlock() : NULL;
+    for (int i = 0; i < fbodyc; i++) {
+        PyObject* py_stmt = PyList_GetItem(py_orelse_list, i);
+        SgStatement* sg_stmt = PyDecapsulate<SgStatement>(py_stmt);
+        false_body->append_statement(sg_stmt);
+    }
+
+    SgExpression* test = PyDecapsulate<SgExpression>(py_test);
+    SgIfStmt* sg_if_stmt =
+        SageBuilder::buildIfStmt(test, true_body, false_body);
+    return PyEncapsulate(sg_if_stmt);
+}
+
+/*
  * Build an SgLongIntVal node from the given Python integer.
  *  - PyObject* args = (PyObject*,)
  */

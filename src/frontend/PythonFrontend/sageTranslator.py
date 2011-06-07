@@ -53,6 +53,12 @@ class SageTranslator(ast.NodeVisitor):
     build_fxn = OPERATOR_BUILDFXN_MAP[node.op.__class__]
     return build_fxn(lhs, rhs, self.file_info(node))
 
+  def visit_If(self, node):
+    test = self.visit(node.test)
+    body = map(self.visit, node.body)
+    orelse = map(self.visit, node.orelse)
+    return sage.buildIf(test, body, orelse)
+
   def visit_Expr(self, node):
     value = self.visit(node.value)
     return sage.buildExpr(value)
