@@ -78,7 +78,6 @@ class SageTranslator(ast.NodeVisitor):
     return scope_capsule
 
   def visit_Name(self, node):
-    print "building name:", node.id
     scope = self.scopeStack.peek()
     return sage.buildName(node.id, scope)
 

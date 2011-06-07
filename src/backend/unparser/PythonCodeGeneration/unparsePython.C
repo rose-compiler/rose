@@ -47,6 +47,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
 {
     switch (stmt->variantT()) {
         CASE_DISPATCH_AND_BREAK(AssignInitializer);
+        CASE_DISPATCH_AND_BREAK(VarRefExp);
         default: {
             cerr << "unparse Expression (" << stmt->class_name()
                  << "*) is unimplemented." << endl;
@@ -158,7 +159,7 @@ void
 Unparse_Python::unparseReturnStmt(SgReturnStmt* return_stmt,
                                   SgUnparse_Info& info)
 {
-    curprint("return ");
+    curprint("return");
     unparseExpression(return_stmt->get_expression(), info);
 }
 
@@ -168,6 +169,17 @@ Unparse_Python::unparseStringVal(SgStringVal* str,
 {
     stringstream code;
     code << "\"" << str->get_value() << "\"";
+    curprint( code.str() );
+}
+
+void
+Unparse_Python::unparseVarRefExp(SgVarRefExp* var_ref_exp,
+                                 SgUnparse_Info& info)
+{
+    SgVariableSymbol* symbol = var_ref_exp->get_symbol();
+
+    stringstream code;
+    code << " " << symbol->get_name().str();
     curprint( code.str() );
 }
 

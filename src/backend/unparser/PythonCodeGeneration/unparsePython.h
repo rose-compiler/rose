@@ -32,6 +32,7 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual void unparseInitializedName(SgInitializedName*, SgUnparse_Info&);
           virtual void unparseReturnStmt(SgReturnStmt*, SgUnparse_Info&);
           virtual void unparseStringVal(SgStringVal*, SgUnparse_Info&);
+          virtual void unparseVarRefExp(SgVarRefExp*, SgUnparse_Info&);
 
           virtual std::string ws_prefix(int nesting_level);
    };
