@@ -9,7 +9,7 @@ latticePlacer_SOURCES = latticePlacer.C
 scalarFWDataflow_SOURCES = scalarFWDataflow.C
 liveDeadVarAnalysisSelfTest_SOURCES = liveDeadVarAnalysisSelfTest.C
 dominatorAnalysisSelfTest_SOURCES = dominatorAnalysisSelfTest.C
-sequenceStructAnalysisSelfTest_SOURCES = sequenceStructAnalysisSelfTest.C
+#sequenceStructAnalysisSelfTest_SOURCES = sequenceStructAnalysisSelfTest.C
 #pathSensitive_SOURCES = pathSensitive.C pathSensitive.h
 genInterestingCFG_SOURCES = genInterestingCFG.C
 genCFG_SOURCES = genCFG.C
@@ -44,7 +44,7 @@ check-local:factPlacer latticePlacer scalarFWDataflow pathSensitive
 #	./pathSensitive $(srcdir)/test_examples/pathSensitive_example.cpp > pathSensitive_out
 	./dominatorAnalysisSelfTest $(srcdir)/test_examples/dominator_example.cpp > dominatorAnalysis_out
 	./liveDeadVarAnalysisSelfTest $(srcdir)/test_examples/liveDead_example.cpp > liveDeadAnalysis_out
-	./sequenceStructAnalysisSelfTest $(srcdir)/test_examples/SendRecvMD.cpp > sequenceStructAnalysis_out
+#	./sequenceStructAnalysisSelfTest $(srcdir)/test_examples/SendRecvMD.cpp > sequenceStructAnalysis_out
 
 EXTRA_DIST =  test_examples 
 clean-local:
