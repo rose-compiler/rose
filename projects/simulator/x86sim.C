@@ -140,7 +140,7 @@ main(int argc, char *argv[], char *envp[])
 
 
     /***************************************************************************************************************************/
-#   if 0 /* EXAMPLE: If you change this then also update the example text in RSIM_Callbacks.h */
+#   if 1 /* EXAMPLE: If you change this then also update the example text in RSIM_Callbacks.h */
     {
         /* This example depends on the previous one, which called RSIM_Process::disassemble() */
         class ShowFunction: public RSIM_Callbacks::InsnCallback {

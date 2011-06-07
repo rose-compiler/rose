@@ -29,6 +29,7 @@ RSIM_Process::ctor()
     gdt[0x23>>3].read_exec_only = 1;
     gdt[0x23>>3].limit_in_pages = 1;
     gdt[0x23>>3].useable = 1;
+
     gdt[0x2b>>3].entry_number = 0x2b>>3;
     gdt[0x2b>>3].limit = 0x000fffff;
     gdt[0x2b>>3].seg_32bit = 1;
@@ -1155,7 +1156,7 @@ RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsig
             }
 
             MemoryMap::MapElement melmt(start, aligned_size, buf, 0, rose_perms);
-            melmt.set_name("mmap2("+melmt_name+")");
+            melmt.set_name("mmap("+melmt_name+")");
             map->erase(melmt); /*clear space space first to avoid MemoryMap::Inconsistent exception*/
             map->insert(melmt);
         }
@@ -1176,7 +1177,7 @@ RSIM_Process::gdt_entry(int idx)
 {
     user_desc_32 *retval;
     RTS_READ(rwlock()) {
-        ROSE_ASSERT(idx>0 && idx<GDT_ENTRIES);
+        ROSE_ASSERT(idx>=0 && idx<GDT_ENTRIES);
         ROSE_ASSERT(idx<GDT_ENTRY_TLS_MIN || idx>GDT_ENTRY_TLS_MAX); /* call only from RSIM_Thread::set_gdt */
         retval = gdt + idx;
     } RTS_READ_END;

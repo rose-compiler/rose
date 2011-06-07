@@ -18,8 +18,8 @@ RSIM_SemanticPolicy::ctor()
     writeSegreg(x86_segreg_ds, 0x2b);
     writeSegreg(x86_segreg_es, 0x2b);
     writeSegreg(x86_segreg_ss, 0x2b);
-    writeSegreg(x86_segreg_fs, 0x2b);
-    writeSegreg(x86_segreg_gs, 0x2b);
+    writeSegreg(x86_segreg_fs, 0);
+    writeSegreg(x86_segreg_gs, 0);
 
 }
 
@@ -155,7 +155,7 @@ RSIM_SemanticPolicy::pop()
 void
 RSIM_SemanticPolicy::writeSegreg(X86SegmentRegister sr, const VirtualMachineSemantics::ValueType<16> &val)
 {
-    ROSE_ASSERT(3 == (val.known_value() & 7)); /*GDT and privilege level 3*/
+    ROSE_ASSERT(0==val.known_value() || 3 == (val.known_value() & 7)); /*GDT and privilege level 3*/
     VirtualMachineSemantics::Policy::writeSegreg(sr, val);
     load_sr_shadow(sr, val.known_value()>>3);
 }
@@ -180,7 +180,7 @@ RSIM_SemanticPolicy::load_sr_shadow(X86SegmentRegister sr, unsigned gdt_num)
 {
     user_desc_32 *info = thread->gdt_entry(gdt_num);
     sr_shadow[sr] = *info;
-    ROSE_ASSERT(sr_shadow[sr].present);
+    //ROSE_ASSERT(sr_shadow[sr].present); //checked when used
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */
