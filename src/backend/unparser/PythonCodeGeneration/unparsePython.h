@@ -27,13 +27,13 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual void unparseBasicBlock(SgBasicBlock*, SgUnparse_Info&);
           virtual void unparseFunctionDeclaration(SgFunctionDeclaration*, SgUnparse_Info&);
           virtual void unparseFunctionDefinition(SgFunctionDefinition*, SgUnparse_Info&);
+          virtual void unparseFunctionParameterList(SgFunctionParameterList*, SgUnparse_Info&);
           virtual void unparseStringVal(SgStringVal*, SgUnparse_Info&);
 
           virtual std::string ws_prefix(int nesting_level);
    };
 
 #endif /* UNPARSER_PYTHON_H_ */
- 
 
 
 

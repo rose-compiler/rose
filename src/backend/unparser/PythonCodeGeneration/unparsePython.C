@@ -29,6 +29,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(BasicBlock);
         CASE_DISPATCH_AND_BREAK(FunctionDeclaration);
         CASE_DISPATCH_AND_BREAK(FunctionDefinition);
+        CASE_DISPATCH_AND_BREAK(FunctionParameterList);
         CASE_DISPATCH_AND_BREAK(StringVal);
         CASE_DISPATCH_AND_BREAK(AddOp);
         default: {
@@ -89,12 +90,16 @@ void
 Unparse_Python::unparseFunctionDeclaration(SgFunctionDeclaration* func_decl,
                                            SgUnparse_Info& info)
 {
-    stringstream code;
+    stringstream code0;
     string func_name = func_decl->get_name().getString();
-    code << "def " << func_name << "(";
-    //TODO: param list
-    code << "):" << endl;
-    curprint (code.str());
+    code0 << "def " << func_name << "(";
+    curprint (code0.str());
+
+    unparseStatement(func_decl->get_parameterList(), info);
+
+    stringstream code1;
+    code1 << "):" << endl;
+    curprint (code1.str());
 
     info.inc_nestingLevel();
     unparseStatement(func_decl->get_definition(), info);
@@ -106,6 +111,22 @@ Unparse_Python::unparseFunctionDefinition(SgFunctionDefinition* func_decl,
                                           SgUnparse_Info& info)
 {
     unparseStatement(func_decl->get_body(), info);
+}
+
+void
+Unparse_Python::unparseFunctionParameterList(SgFunctionParameterList* param_list,
+                                             SgUnparse_Info& info)
+{
+    SgInitializedNamePtrList& arg_list = param_list->get_args();
+    SgInitializedNamePtrList::iterator name_iter;
+    SgInitializedName* init_name;
+    for (name_iter = arg_list.begin(); name_iter != arg_list.end(); name_iter++) {
+        init_name = *name_iter;
+        stringstream code;
+        code << ((name_iter == arg_list.begin()) ? "" : ", ");
+        code << init_name->get_name().str();
+        curprint(code.str());
+    }
 }
 
 void
