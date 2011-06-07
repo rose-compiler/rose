@@ -11,9 +11,13 @@ noinst_LTLIBRARIES = librosePythonFrontend.la
 librosePythonFrontend_la_DEPENDENCIES =
 librosePythonFrontend_la_SOURCES = \
 	SagePythonInterface.C \
+	SagePythonSupport.C \
 	PythonFrontend.C
 
-include_HEADERS = PythonFrontend.h SagePythonInterface.h
+include_HEADERS = \
+	PythonFrontend.h \
+	SagePythonInterface.h \
+	SagePythonSupport.C
 
 sageTranslator_PYTHON = sageTranslator.py
 sageTranslatordir = $(libdir)/python/sageTranslator
