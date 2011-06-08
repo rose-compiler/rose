@@ -2568,7 +2568,6 @@ SgFunctionCallExp::replace_expression(SgExpression *o, SgExpression *n)
      if (get_function() == o)
         {
           set_function(n);
-          printf ("SgFunctionCallExp::replace_expression(): This should set the parent of the new expression. \n");
           n->set_parent(this);
 
           return 1;
@@ -3594,11 +3593,6 @@ SOURCE_CAST_EXPRESSION_START
 void
 SgCastExp::post_construction_initialization() 
    {
-  // p_cast_type = c_cast_e;
-     p_cast_type = e_C_style_cast;
-
-  // DQ (1/14/2006): set_type is removed
-  // set_type();
    }
 
 // DQ (6/14/2005): Modified to make enum name consistant with elsewhere in ROSE (Sage III)
