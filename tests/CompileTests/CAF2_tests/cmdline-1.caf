@@ -1,0 +1,44 @@
+program args_test
+  integer, external :: caf_command_argument_count
+  external :: caf_get_command_argument
+  integer, external :: caf_no_arg
+  integer :: count, i
+  character(70) :: v
+  character(160) :: all 
+  character(100) :: some 
+  integer :: length, status
+  count = caf_command_argument_count()
+
+  do i = 1, count - 1
+    call caf_get_command_argument(i, loc(v), len(v), length, status)
+    write(*, '(A,I10,A,I10,A,I10)') "argument", i, "='", v, "' length =", length, "status =", status
+  enddo
+
+  call caf_get_command_argument(count, loc(v), len(v), length, status)
+  write(*, '(A,I10)') "argument count is", count
+  write(*, '(A, A)') "the argument is :", v
+  write(*, '(A,I10)') "length =", length
+  write(*, '(A,I10)') "status =", status
+
+  call caf_get_command_argument(-1, loc(v), len(v), length, status)
+  write(*, '(A,A)') "argument -1 is:", v
+  write(*, '(A,I10)') "length =", length
+  write(*, '(A,I10)') "status =", status
+
+  call caf_get_command_argument(-1, loc(v), len(v), caf_no_arg, caf_no_arg)
+  write(*, '(A,A)') "argument -1 is:", v
+
+  call caf_get_command(loc(all), len(all), length, status)
+  write(*, '(A,A)') "command(160) is: ", all
+  write(*, '(A,I10)') "length =", length
+  write(*, '(A,I10)') "status =", status
+
+  call caf_get_command(loc(some), len(some), length, status)
+  write(*, '(A,A)') "command(100) is: ", some
+  write(*, '(A,I10)') "length =", length
+  write(*, '(A,I10)') "status =", status
+
+  call caf_get_command(loc(some), len(some), caf_no_arg, caf_no_arg)
+  write(*, '(A,A)') "command(100) is: ", some
+
+end program args_test

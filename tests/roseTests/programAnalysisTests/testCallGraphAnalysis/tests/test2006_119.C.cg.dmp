@@ -1,17 +1,17 @@
-main -> B2::B2 B1::~B1 B2::~B2 B3::~B3 A1::virtual_foo A3::virtual_foo B1::virtual_foo B3::virtual_foo A2::nonvirtual_foo B2::nonvirtual_foo
 A1::A1 ->
-A2::A2 ->
-A3::A3 ->
-B2::B2 ->
-A1::~A1 ->
-A2::~A2 ->
-A3::~A3 ->
-B1::~B1 ->
-B2::~B2 ->
-B3::~B3 ->
 A1::virtual_foo ->
-A3::virtual_foo ->
-B1::virtual_foo ->
-B3::virtual_foo ->
+A1::~A1 ->
+A2::A2 ->
 A2::nonvirtual_foo ->
+A2::~A2 ->
+A3::A3 ->
+A3::virtual_foo ->
+A3::~A3 ->
+B1::virtual_foo ->
+B1::~B1 ->
+B2::B2 ->
 B2::nonvirtual_foo ->
+B2::~B2 ->
+B3::virtual_foo ->
+B3::~B3 ->
+main -> A1::A1 A1::virtual_foo A2::A2 A2::nonvirtual_foo A3::A3 A3::virtual_foo B1::virtual_foo B1::~B1 B2::B2 B2::nonvirtual_foo B3::virtual_foo B3::~B3

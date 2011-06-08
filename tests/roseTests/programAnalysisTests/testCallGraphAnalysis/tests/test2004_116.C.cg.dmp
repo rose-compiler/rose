@@ -1,47 +1,47 @@
-operator* ->
-operator* ->
-operator+ ->
-operator+ ->
-operator- ->
-operator- ->
-operator/ ->
-operator/ ->
-Internal_Index::grow -> Internal_Index::shrink
-Internal_Index::list ->
-Internal_Index::length ->
-Internal_Index::shrink ->
+Internal_Index::Consistency_Check ->
+Internal_Index::Internal_Index ->
+Internal_Index::Internal_Index ->
+Internal_Index::Internal_Index ->
+Internal_Index::Internal_Index ->
+Internal_Index::Internal_Index ->
+Internal_Index::Test_Consistency ->
+Internal_Index::adjustBase ->
+Internal_Index::adjustBound ->
 Internal_Index::display ->
 Internal_Index::getBase ->
-Internal_Index::getMode ->
 Internal_Index::getBound ->
 Internal_Index::getCount ->
 Internal_Index::getLength -> Internal_Index::length
+Internal_Index::getLocalPart ->
+Internal_Index::getLocalPartData ->
+Internal_Index::getMode ->
+Internal_Index::getModeString ->
+Internal_Index::getPointerToLocalPart ->
 Internal_Index::getStride ->
-Internal_Index::operator- ->
-Internal_Index::operator= ->
-Internal_Index::adjustBase ->
+Internal_Index::grow -> Internal_Index::shrink
+Internal_Index::length ->
+Internal_Index::list ->
 Internal_Index::operator!= -> Internal_Index::operator==
 Internal_Index::operator() ->
 Internal_Index::operator() ->
 Internal_Index::operator*= ->
 Internal_Index::operator+= ->
+Internal_Index::operator- ->
 Internal_Index::operator-= ->
 Internal_Index::operator/= ->
+Internal_Index::operator= ->
 Internal_Index::operator== ->
-Internal_Index::adjustBound ->
-Internal_Index::getLocalPart ->
-Internal_Index::getModeString ->
-Internal_Index::Internal_Index ->
-Internal_Index::Internal_Index ->
-Internal_Index::Internal_Index ->
-Internal_Index::Internal_Index ->
-Internal_Index::Internal_Index ->
 Internal_Index::setBoundsCheck ->
+Internal_Index::shrink -> Internal_Index::Internal_Index Internal_Index::Internal_Index
 Internal_Index::~Internal_Index ->
-Internal_Index::Test_Consistency ->
-Internal_Index::getLocalPartData ->
-Internal_Index::Consistency_Check ->
 OptionDeclaration::OptionDeclaration ->
 OptionDeclaration::OptionDeclaration ->
 OptionDeclaration::OptionDeclaration ->
-Internal_Index::getPointerToLocalPart ->
+operator* -> Internal_Index::Internal_Index
+operator* -> Internal_Index::Internal_Index
+operator+ -> Internal_Index::Internal_Index
+operator+ -> Internal_Index::Internal_Index
+operator- -> Internal_Index::Internal_Index
+operator- -> Internal_Index::Internal_Index
+operator/ -> Internal_Index::Internal_Index
+operator/ -> Internal_Index::Internal_Index

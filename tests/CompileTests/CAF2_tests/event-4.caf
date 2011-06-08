@@ -1,0 +1,42 @@
+program event_test
+
+    event,allocatable:: a_event(:)[*]
+    event,allocatable:: e_event(:)[*]
+
+    integer :: rank
+    integer :: size
+    integer :: partner_0
+
+    integer(8) :: e_count
+
+    size = team_size()
+    rank = team_rank()
+
+    partner_0 = size-1
+    e_count = 1
+
+    allocate(a_event(10)[])
+    allocate(e_event(10)[])
+
+
+    if (rank .eq. 0) then
+      write(*, '(A)') "event_test_4 OK: allocate events"
+    endif 
+
+    call event_init(a_event,10)
+    call event_init(e_event,10)
+
+    if (rank .eq. 0) then
+      write(*, '(A)') "event_test_4 OK:  event_init"
+    endif 
+
+    call team_barrier()
+
+    if (rank .eq. 0) then
+      call event_wait(a_event(1),e_count)
+    else if (rank .eq. partner_0) then 
+      call event_notify(a_event(1)[0],e_count)
+    end if 
+
+
+end program event_test

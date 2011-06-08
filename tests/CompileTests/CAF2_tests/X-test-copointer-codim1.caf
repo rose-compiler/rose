@@ -1,0 +1,4 @@
+program test_copointer_codim1
+  integer, copointer, codimension[*] :: cp0
+  k = cp0[][9]
+end program

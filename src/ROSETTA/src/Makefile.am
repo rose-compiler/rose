@@ -75,6 +75,7 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-l
 VALGRIND =
 
 # Build the grammar for generating the C++ preprocessor.
+rosetta_generated: $(CXX_PREPROC_CODES)
 $(CXX_PREPROC_CODES): CxxGrammarMetaProgram$(EXEEXT) $(GRAMMAR_SOURCE_FILES)
 #  Build a link so that the executable can find the *.code file in ../Grammar
 #	rm -f Grammar

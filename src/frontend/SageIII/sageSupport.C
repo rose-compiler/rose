@@ -1,4 +1,3 @@
-#include <signal.h> // SKW DEBUG
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
@@ -139,6 +138,17 @@ SgValueExp::get_constant_folded_value_as_string() const
                s = buffer;
                break;
              }
+          
+         case V_SgLongLongIntVal:
+         {
+            const SgLongLongIntVal* integerValueExpression = isSgLongLongIntVal(this);
+            ROSE_ASSERT(integerValueExpression != NULL);
+            long long int numericValue = integerValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %ld \n",numericValue);
+            snprintf (buffer,max_buffer_size,"%lld",numericValue);
+            s = buffer;
+            break;
+         }
 
        // DQ (10/5/2010): Added case
           case V_SgShortVal: 
@@ -152,6 +162,17 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
+          case V_SgUnsignedShortVal:
+          {
+               const SgUnsignedShortVal* integerValueExpression = isSgUnsignedShortVal(this);
+               ROSE_ASSERT(integerValueExpression != NULL);
+               unsigned short int numericValue = integerValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %ld \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%u",numericValue);
+               s = buffer;
+               break;
+          }
+          
           case V_SgUnsignedLongLongIntVal:
              {
                const SgUnsignedLongLongIntVal* integerValueExpression = isSgUnsignedLongLongIntVal(this);

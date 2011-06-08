@@ -1,12 +1,15 @@
 
-========================================================
-Instructions for installing ROSE locally on Debian Lenny
-========================================================
+=========================================================
+Instructions for installing ROSE locally on Debian Stable
+=========================================================
 
 2011-01-05
 
+These instructions were initially written for Debian Lenny, and have
+been modified to describe Debian Squeeze, which is largely the
+same as Lenny.
 
-0. Install Debian Lenny. You can do this in a virtual machine, in
+0. Install Debian. You can do this in a virtual machine, in
    which case you can save some time by not installing the entire
    graphical user interface (X server, window managers, etc).  If you
    go this route, you may want to install openssh-server so you can
@@ -22,12 +25,12 @@ Instructions for installing ROSE locally on Debian Lenny
 
 	# aptitude install openssh-server
 
-1. You'll need some additional packages beyond the basic stuff.  So
-   edit /etc/apt/sources.list and add the words "contrib" and
-   "non-free" to the end of each line.  Also add two additional
-   backports lines that will allow you to install more recent
-   libraries, including boost 1.40.  The file should contain lines
-   similar to these:
+1. [Only for Lenny; skip this step for Squeeze] You'll need some
+   additional packages beyond the basic stuff.  So edit
+   /etc/apt/sources.list and add the words "contrib" and "non-free" to
+   the end of each line.  Also add two additional backports lines that
+   will allow you to install more recent libraries, including boost
+   1.40.  The file should contain lines similar to these:
 
 	deb http://ftp.us.debian.org/debian/ lenny main contrib non-free
 	deb-src http://ftp.us.debian.org/debian/ lenny main contrib non-free
@@ -56,11 +59,15 @@ Instructions for installing ROSE locally on Debian Lenny
 	# aptitude install libqt4-dev qt4-dev-tools
 	# aptitude install libsqlite3-dev 
 	# aptitude install libssl-dev libxml2-dev libgcrypt11-dev
-
+	# aptitude install dot2tex swig default-jdk gfortran
 
 4. Install libboost1.40-dev and related development libraries. These
    probably aren't all needed, but we might as well install them all
    while we're at it.
+
+   On Squeeze, the easiest way to get all these is to install just
+   libboost1.42-all-dev.  You can do "aptitude search libboost" to
+   figure out which version number to use.
 
 	# aptitude install libboost1.40-dev
 	# aptitude install libboost-date-time1.40-dev
@@ -142,7 +149,7 @@ Instructions for installing ROSE locally on Debian Lenny
 Installing Internal Projects that use ROSE
 ==========================================
 
-Internal projects are packaged searately from ROSE, they use the same
+Internal projects are packaged separately from ROSE, they use the same
 basic build process and scripts, and they reference an installed copy
 of ROSE (the ROSE headers and libraries).
 

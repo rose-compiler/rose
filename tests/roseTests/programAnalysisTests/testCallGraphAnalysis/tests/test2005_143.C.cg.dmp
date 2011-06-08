@@ -1,8 +1,8 @@
-foo -> myVector::norm myVector::operator/
+foo -> myVector::myVector myVector::norm myVector::operator/
 min ->
+myVector::myVector ->
+myVector::myVector ->
 myVector::norm ->
-myVector::myVector ->
-myVector::myVector ->
 myVector::operator* ->
 myVector::operator+ ->
 myVector::operator- ->

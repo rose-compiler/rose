@@ -316,6 +316,7 @@ collectAbstractHandles(SgProject* proj,  TargetList_t& targets)
 #pragma warning "PragmaInterface: Returning arbitrary value";
   return 0;
 #endif
+return 0;
 }
 
 //-------------------top level drivers----------------------------------------

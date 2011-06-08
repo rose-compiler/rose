@@ -628,6 +628,24 @@ StaticSingleAssignment::NodeReachingDefTable StaticSingleAssignment::getLastVers
 	VersionsTraversal defsTrav;
 	defsTrav.ssa = this;
 	defsTrav.traverse(func->get_definingDeclaration(), preorder);
-
-	return defsTrav.lastVersions;
+	NodeReachingDefTable& lastVersions = defsTrav.lastVersions;
+	
+	//We also have to explicitly handle phi nodes inserted at the end of the function.
+	//These are stored as the IN definition of the SgFunctionDefinition node
+	ROSE_ASSERT(func->get_definition() != NULL);
+	GlobalReachingDefTable::const_iterator defsAtSgFunctionDefIter = reachingDefsTable.find(func->get_definition());
+	if (defsAtSgFunctionDefIter != reachingDefsTable.end())
+	{
+		foreach(const NodeReachingDefTable::value_type& varDefPair, defsAtSgFunctionDefIter->second.first)
+		{
+			const VarName& var = varDefPair.first;
+			ROSE_ASSERT(varDefPair.second->getRenamingNumber() >= 0);
+			if (lastVersions.count(var) == 0 || lastVersions[var]->getRenamingNumber() < varDefPair.second->getRenamingNumber())
+			{
+				lastVersions[var] = varDefPair.second;
+			}
+		}
+	}
+	
+	return lastVersions;
 }

@@ -29,21 +29,27 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x080482dd: c9                |.     |   leave  
 0x080482de: c3                |.     |   ret    
             (successors:...)
+
 0x080482f0: ============================ Function (function call, import) <signal@plt>
 0x080482f0: ff 25 b4 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496b4]
             (successors:...)
+
 0x08048300: ============================ Function (function call, import) <puts@plt>
 0x08048300: ff 25 b8 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496b8]
             (successors:...)
+
 0x08048310: ============================ Function (function call, import) <__libc_start_main@plt>
 0x08048310: ff 25 bc 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496bc]
             (successors:...)
+
 0x08048320: ============================ Function (function call, import) <_exit@plt>
 0x08048320: ff 25 c0 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496c0]
             (successors:...)
+
 0x08048330: ============================ Function (function call, import) <__gmon_start__@plt>
 0x08048330: ff 25 c4 96 04 08 |.%....|   jmp    DWORD PTR ds:[0x080496c4]
             (successors:...)
+
 0x08048340: ============================ Function (entry point, symbol) <_start>
 0x08048340: 31 ed             |1.    |   xor    ebp, ebp
 0x08048342: 5e                |^     |   pop    esi
@@ -62,10 +68,12 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 
 0x08048361: f4                |.     |   hlt    
             (successors:)
+
 0x08048362: ============================ Function (padding) unknown name
 0x08048362: 90                |.     |   nop    
 0x08048363: 90                |.     |   nop    
             (successors: 0x08048364)
+
 0x08048364: ============================ Function (function call, symbol) <call_gmon_start>
 0x08048364: 55                |U     |   push   ebp
 0x08048365: 89 e5             |..    |   mov    ebp, esp
@@ -87,6 +95,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x08048386: c9                |.     |   leave  
 0x08048387: c3                |.     |   ret    
             (successors:...)
+
 0x08048388: ============================ Function (padding) unknown name
 0x08048388: 90                |.     |   nop    
 0x08048389: 90                |.     |   nop    
@@ -97,6 +106,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x0804838e: 90                |.     |   nop    
 0x0804838f: 90                |.     |   nop    
             (successors: 0x08048390)
+
 0x08048390: ============================ Function (function call, symbol) <__do_global_dtors_aux>
 0x08048390: 55                |U     |   push   ebp
 0x08048391: 89 e5             |..    |   mov    ebp, esp
@@ -133,6 +143,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x080483cc: c9                |.     |   leave  
 0x080483cd: c3                |.     |   ret    
             (successors:...)
+
 0x080483d0: ============================ Function (function call, symbol, discontiguous) <frame_dummy>
 0x080483d0: 55                |U     |   push   ebp
 0x080483d1: 89 e5             |..    |   mov    ebp, esp
@@ -151,6 +162,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x08048402: 5d                |]     |   pop    ebp
 0x08048403: c3                |.     |   ret    
             (successors:...)
+
 0x08048404: ============================ Function (function call, symbol) <bar>
 0x08048404: 55                |U     |   push   ebp
 0x08048405: 89 e5             |..    |   mov    ebp, esp
@@ -163,6 +175,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x08048416: c9                |.     |   leave  
 0x08048417: c3                |.     |   ret    
             (successors:...)
+
 0x08048418: ============================ Function (function call, symbol) <foo>
 0x08048418: 55                |U     |   push   ebp
 0x08048419: 89 e5             |..    |   mov    ebp, esp
@@ -174,6 +187,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x08048429: 00                |.     |   mov    DWORD PTR ss:[esp], 0x00000000
 0x0804842a: e8 f1 fe ff ff    |..... |   call   0x08048320<_exit@plt>
             (successors: 0x08048320)
+
 0x0804842f: ============================ Function (symbol) <handler>
 0x0804842f: 55                |U     |   push   ebp
 0x08048430: 89 e5             |..    |   mov    ebp, esp
@@ -181,6 +195,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x08048435: ff 05 d8 96 04 08 |......|   inc    DWORD PTR ds:[0x080496d8]
 0x0804843b: e8 d8 ff ff ff    |..... |   call   0x08048418<foo>
             (successors: 0x08048418)
+
 0x0804845b: ============================ Function (symbol) <main>
 0x0804845b: 55                |U     |   push   ebp
 0x0804845c: 89 e5             |..    |   mov    ebp, esp
@@ -199,6 +214,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x08048484: c9                |.     |   leave  
 0x08048485: c3                |.     |   ret    
             (successors:...)
+
 0x08048486: ============================ Function (padding) unknown name
 0x08048486: 90                |.     |   nop    
 0x08048487: 90                |.     |   nop    
@@ -211,6 +227,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x0804848e: 90                |.     |   nop    
 0x0804848f: 90                |.     |   nop    
             (successors: 0x08048490)
+
 0x08048490: ============================ Function (symbol) <__libc_csu_init>
 0x08048490: 55                |U     |   push   ebp
 0x08048491: 89 e5             |..    |   mov    ebp, esp
@@ -237,6 +254,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x080484c6: 5d                |]     |   pop    ebp
 0x080484c7: c3                |.     |   ret    
             (successors:...)
+
 0x08048500: ============================ Function (symbol, discontiguous) <__libc_csu_fini>
 0x08048500: 55                |U     |   push   ebp
 0x08048501: 89 e5             |..    |   mov    ebp, esp
@@ -265,6 +283,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x08048556: 5d                |]     |   pop    ebp
 0x08048557: c3                |.     |   ret    
             (successors:...)
+
 0x08048558: ============================ Function (padding) unknown name
 0x08048558: 90                |.     |   nop    
 0x08048559: 90                |.     |   nop    
@@ -275,6 +294,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x0804855e: 90                |.     |   nop    
 0x0804855f: 90                |.     |   nop    
             (successors: 0x08048560)
+
 0x08048560: ============================ Function (function call, symbol) <__do_global_ctors_aux>
 0x08048560: 55                |U     |   push   ebp
 0x08048561: 89 e5             |..    |   mov    ebp, esp
@@ -305,6 +325,7 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x0804858e: 5d                |]     |   pop    ebp
 0x0804858f: c3                |.     |   ret    
             (successors:...)
+
 0x08048590: ============================ Function (function call, symbol) <_fini>
 0x08048590: 55                |U     |   push   ebp
 0x08048591: 89 e5             |..    |   mov    ebp, esp
@@ -321,9 +342,11 @@ disassembled 256 instructions and 1 failure (use --show-bad to see errors)
 0x080485a8: c9                |.     |   leave  
 0x080485a9: c3                |.     |   ret    
             (successors:...)
+
 0x080485aa: ============================ Function (padding) unknown name
 0x080485aa: 00 00             |..    |   add    BYTE PTR ds:[eax], al
             (successors: 0x080485ac)
+
 
 
 generating ASCII dump...

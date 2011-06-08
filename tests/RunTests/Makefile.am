@@ -8,7 +8,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # Comment out P++ tests until they compile properly
 # SUBDIRS = A++Tests P++Tests
 #SUBDIRS = . A++Tests AstDeleteTests
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 SUBDIRS = . A++Tests AstDeleteTests
+else
+SUBDIRS =
+endif
 
 INCLUDES =  \
         $(ROSE_INCLUDES) 

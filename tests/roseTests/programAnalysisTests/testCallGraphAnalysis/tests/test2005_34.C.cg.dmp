@@ -1,5 +1,5 @@
-foo ->
 X::X ->
 X::X ->
 Y::Y ->
-foobar ->
+foo ->
+foobar -> X::X X::X Y::Y

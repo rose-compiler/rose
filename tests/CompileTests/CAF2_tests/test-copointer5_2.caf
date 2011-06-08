@@ -1,0 +1,6 @@
+! copointer to 1-dim array
+program prog5_2
+ integer, copointer:: cp1(:)
+ cp1[](3) = 5
+end program
+
