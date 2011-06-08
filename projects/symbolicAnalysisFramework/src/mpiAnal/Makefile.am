@@ -42,6 +42,6 @@ check-local:selfTest
 
 EXTRA_DIST =  fanExchange.C fanoutBcast.C fanInGather.C pCFG_Partitioned.C
 clean-local:
-	rm -f *.o rose_*.[cC] *.dot *.out rose_*.cpp *.patch *.loT
+	rm -f *.o rose_*.[cC] *.dot *.out rose_*.cpp *.patch *.loT  detail.html summary.html index.html dbg_imgs
 
 
