@@ -5483,11 +5483,10 @@ buildVariableDeclarationAndCleanupTypeStack( Token_t * label )
   // I am trying to have variable built earlier than before since the Fortran "include"
   // mechanism can be called before this R501 rule and that causes problems.  Basically
   // each new include file needs to be started with an empty stack(s).
-#if DXN_CODE
-    if (!astNodeStack.empty())
-#else
+
+    //    if (!astNodeStack.empty())
+
      if (astNodeStack.empty() == false && astBaseTypeStack.empty() == false)
-#endif
         {
 #if 1
        // Output debugging information about saved state (stack) information.
