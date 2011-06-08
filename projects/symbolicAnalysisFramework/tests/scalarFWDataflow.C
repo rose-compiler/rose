@@ -34,6 +34,7 @@ int main( int argc, char * argv[] )
 	//cfgUtils::initCFGUtils(project);
 
 	initAnalysis(project);
+	Dbg::init("Communication Topology Analysis Test", ".", "index.html");	
 	
 	analysisDebugLevel = 0;
 	

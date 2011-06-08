@@ -303,6 +303,7 @@ int main( int argc, char * argv[] )
 	SgProject* project = frontend(argc,argv);
 	
 	initAnalysis(project);
+	Dbg::init("Communication Topology Analysis Test", ".", "index.html");	
 	
 	/*analysisDebugLevel = 0;
 	

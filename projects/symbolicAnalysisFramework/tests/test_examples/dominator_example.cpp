@@ -11,7 +11,7 @@ void testFunc7() {}
 
 int foo()
 {
-	int b=0;
+	int b;
 	b++;
 	
 	testFunc0();
