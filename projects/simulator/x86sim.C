@@ -134,7 +134,29 @@ main(int argc, char *argv[], char *envp[])
 
     sim.get_callbacks().add_signal_callback(RSIM_Callbacks::AFTER, new SignalStackTrace);
         
-            
+        
+#if 1
+    {
+        char **p = envp;
+        while (*p) ++p;
+        for (uint64_t *av=(uint64_t*)(p+1); 0!=*av; av+=2) {
+            if (33==av[0]) {
+                void *sysinfo_ehdr = (void*)(av[1]);
+                std::string vdso_name_temp = "x86sim.vdso";
+                int fd = open(vdso_name_temp.c_str(), O_CREAT|O_EXCL|O_RDWR, 0666);
+                if (fd>=0) {
+                    write(fd, sysinfo_ehdr, 4096);
+                    close(fd);
+                    fprintf(stderr, "%s: saved vdso in %s\n", argv[0], vdso_name_temp.c_str());
+                }
+                break;
+            }
+        }
+    }
+#endif
+
+    
+    
 
 
 
