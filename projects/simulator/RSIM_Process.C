@@ -1113,15 +1113,20 @@ RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsig
                      (rose_perms & MemoryMap::MM_PROT_EXEC  ? PROT_EXEC  : 0));
 
     RTS_WRITE(rwlock()) {
-        if (0==start && 0==(flags & MAP_FIXED)) {
-            try {
-                start = map->find_free(mmap_start, aligned_size, PAGE_SIZE);
-            } catch (const MemoryMap::NoFreeSpace &e) {
-                start = (rose_addr_t)(int64_t)-ENOMEM;
+        if (0==start) {
+            if (0!=(flags & MAP_FIXED)) {
+                start = (rose_addr_t)(int64_t)-EPERM; /* Linux does not allow addr 0 to be mapped */
                 break;
+            } else {
+                try {
+                    start = map->find_free(mmap_start, aligned_size, PAGE_SIZE);
+                } catch (const MemoryMap::NoFreeSpace &e) {
+                    start = (rose_addr_t)(int64_t)-ENOMEM;
+                    break;
+                }
+                if (!mmap_recycle)
+                    mmap_start = std::max(mmap_start, start);
             }
-            if (!mmap_recycle)
-                mmap_start = std::max(mmap_start, start);
         }
 
         if (flags & MAP_ANONYMOUS) {
