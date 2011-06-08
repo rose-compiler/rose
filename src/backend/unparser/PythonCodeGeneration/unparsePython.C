@@ -29,6 +29,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(AddOp);
         CASE_DISPATCH_AND_BREAK(BasicBlock);
         CASE_DISPATCH_AND_BREAK(ExprStatement);
+        CASE_DISPATCH_AND_BREAK(FunctionCallExp);
         CASE_DISPATCH_AND_BREAK(FunctionDeclaration);
         CASE_DISPATCH_AND_BREAK(FunctionDefinition);
         CASE_DISPATCH_AND_BREAK(FunctionParameterList);
@@ -49,7 +50,9 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
                                                   SgUnparse_Info& info)
 {
     switch (stmt->variantT()) {
+        CASE_DISPATCH_AND_BREAK(AssignOp);
         CASE_DISPATCH_AND_BREAK(AssignInitializer);
+        CASE_DISPATCH_AND_BREAK(FunctionCallExp);
         CASE_DISPATCH_AND_BREAK(VarRefExp);
         default: {
             cerr << "unparse Expression (" << stmt->class_name()
@@ -60,9 +63,10 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
 }
 
 void
-Unparse_Python::unparseStringVal(SgExpression*, SgUnparse_Info&)
+Unparse_Python::unparseStringVal(SgExpression* str_exp, SgUnparse_Info& info)
 {
-    cout << "Unparse_Python string val" << endl;
+    SgStringVal* str_val = isSgStringVal(str_exp);
+    curprint(str_val->get_value());
 }
 
 std::string
@@ -93,6 +97,15 @@ Unparse_Python::unparseAssignInitializer(SgAssignInitializer* sg_assign_init,
 }
 
 void
+Unparse_Python::unparseAssignOp(SgAssignOp* sg_assign_op,
+                                SgUnparse_Info& info)
+{
+    unparseExpression(sg_assign_op->get_lhs_operand(), info);
+    curprint("=");
+    unparseExpression(sg_assign_op->get_rhs_operand(), info);
+}
+
+void
 Unparse_Python::unparseBasicBlock(SgBasicBlock* bblock,
                                   SgUnparse_Info& info)
 {
@@ -112,6 +125,17 @@ Unparse_Python::unparseExprStatement(SgExprStatement* expr_stmt,
                                      SgUnparse_Info& info)
 {
     unparseExpression(expr_stmt->get_expression(), info);
+}
+
+void
+Unparse_Python::unparseFunctionCallExp(SgFunctionCallExp* func_call,
+                                       SgUnparse_Info& info)
+{
+    SgFunctionSymbol* func_sym = func_call->getAssociatedFunctionSymbol();
+    string func_name = func_sym->get_name().getString();
+    curprint(func_name + string("("));
+    unparseExpression(func_call->get_args(), info);
+    curprint(")");
 }
 
 void
@@ -198,7 +222,7 @@ void
 Unparse_Python::unparseReturnStmt(SgReturnStmt* return_stmt,
                                   SgUnparse_Info& info)
 {
-    curprint("return");
+    curprint("return ");
     unparseExpression(return_stmt->get_expression(), info);
 }
 

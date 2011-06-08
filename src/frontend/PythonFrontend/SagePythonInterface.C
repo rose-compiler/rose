@@ -28,6 +28,56 @@ sage_buildAddOp(PyObject *self, PyObject *args)
 }
 
 /*
+ * Build an SgAddOp node from the given Python statements.
+ *  - PyObject* args = (PyObject*, PyObject*)
+ */
+PyObject*
+sage_buildCall(PyObject *self, PyObject *args)
+{
+    PyObject* py_name    = PyTuple_GetItem(args, 0);
+    PyObject* py_args    = PyTuple_GetItem(args, 1);
+    PyObject* py_kwargs  = PyTuple_GetItem(args, 2);
+    PyObject* py_scope   = PyTuple_GetItem(args, 3);
+
+    std::vector<SgExpression*> sg_exprs;
+    Py_ssize_t argc = PyList_Size(py_args);
+    for (int i = 0; i < argc; i++) {
+        PyObject* py_arg = PyList_GetItem(py_args, i);
+        SgExpression* sg_exp = PyDecapsulate<SgExpression>(py_arg);
+        sg_exprs.push_back(sg_exp);
+    }
+    Py_ssize_t kwargc = PyList_Size(py_kwargs);
+    for (int i = 0; i < kwargc; i++) {
+        PyObject* py_kwarg = PyList_GetItem(py_kwargs, i);
+        SgExpression* sg_exp = PyDecapsulate<SgExpression>(py_kwarg);
+        if (sg_exp == NULL) {
+            SgNode* sg_node = PyDecapsulate<SgNode>(py_kwarg);
+            if (sg_node == NULL) {
+                cout << "null sg node" << endl;
+            } else {
+                cout << "bad node: " << sg_node->class_name() << endl;
+            }
+        }
+        sg_exprs.push_back(sg_exp);
+    }
+    SgExprListExp* sg_expr_list_exp =
+        SageBuilder::buildExprListExp(sg_exprs);
+
+    SgScopeStatement* sg_scope = PyDecapsulate<SgScopeStatement>(py_scope);
+    ROSE_ASSERT(sg_scope != NULL);
+    SgName sg_func_name = SgName( PyString_AsString(py_name) );
+    SgFunctionSymbol* sg_func_symbol = isSgFunctionSymbol(
+        SageInterface::lookupSymbolInParentScopes(sg_func_name, sg_scope));
+    if (sg_func_symbol == NULL) {
+        cerr << "Cannot find symbol: " << sg_func_name.str() << endl;
+    }
+
+    SgFunctionCallExp* sg_function_call_exp =
+        SageBuilder::buildFunctionCallExp(sg_func_symbol, sg_expr_list_exp);
+    return PyEncapsulate(sg_function_call_exp);
+}
+
+/*
  * Build an Expr node from the given Python statements.
  *  - PyObject* args = (PyObject*)
  */
@@ -133,6 +183,24 @@ sage_buildIf(PyObject *self, PyObject *args)
 }
 
 /*
+ * Builds a keyword node.
+ */
+PyObject*
+sage_buildKeyword(PyObject *self, PyObject *args)
+{
+    PyObject* py_key   = PyTuple_GetItem(args, 0);
+    PyObject* py_value = PyTuple_GetItem(args, 1);
+
+    SgExpression* sg_key   = PyDecapsulate<SgExpression>(py_key);
+    SgExpression* sg_value = PyDecapsulate<SgExpression>(py_value);
+
+    SgAssignOp* sg_assign_op =
+        SageBuilder::buildAssignOp(sg_key, sg_value);
+
+    return PyEncapsulate(sg_assign_op);
+}
+
+/*
  * Build an SgLongIntVal node from the given Python integer.
  *  - PyObject* args = (PyObject*,)
  */
@@ -209,6 +277,5 @@ sage_buildStringVal(PyObject *self, PyObject *args)
     char* c_str = PyString_AsString(py_str);
     std::string str = std::string(c_str);
     SgStringVal* sg_string_val = SageBuilder::buildStringVal(str);
-    set_File_Info(sg_string_val, PyTuple_GetItem(args, 1));
     return PyEncapsulate(sg_string_val);
 }

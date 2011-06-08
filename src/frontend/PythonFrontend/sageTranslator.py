@@ -53,11 +53,12 @@ class SageTranslator(ast.NodeVisitor):
     build_fxn = OPERATOR_BUILDFXN_MAP[node.op.__class__]
     return build_fxn(lhs, rhs, self.file_info(node))
 
-  def visit_If(self, node):
-    test = self.visit(node.test)
-    body = map(self.visit, node.body)
-    orelse = map(self.visit, node.orelse)
-    return sage.buildIf(test, body, orelse)
+  def visit_Call(self, node):
+    name = node.func.id
+    args = map(self.visit, node.args)
+    kwargs = map(self.visit, node.keywords)
+    scope = self.scopeStack.peek()
+    return sage.buildCall(name, args, kwargs, scope)
 
   def visit_Expr(self, node):
     value = self.visit(node.value)
@@ -72,6 +73,17 @@ class SageTranslator(ast.NodeVisitor):
     sage.addChildrenToNode(capsule, body_forest)
     self.scopeStack.pop(scope)
     return capsule
+
+  def visit_If(self, node):
+    test = self.visit(node.test)
+    body = map(self.visit, node.body)
+    orelse = map(self.visit, node.orelse)
+    return sage.buildIf(test, body, orelse)
+
+  def visit_keyword(self, node):
+    arg = self.visit(node.arg)
+    value = self.visit(node.value)
+    return sage.buildKeyword(arg, value)
 
   def visit_Module(self, node):
     scope_capsule = sage.buildGlobal(self.filename)
@@ -101,6 +113,8 @@ class SageTranslator(ast.NodeVisitor):
   def visit_Str(self, node):
     return sage.buildStringVal(node.s, self.file_info(node))
 
+  def visit_str(self, str):
+    return sage.buildStringVal(str)
 
 def translate(infilename):
   try:
