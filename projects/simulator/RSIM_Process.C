@@ -332,29 +332,25 @@ RSIM_Process::load(const char *name)
     map = interpretation->get_map();
 
     /* Load and map the virtual dynamic shared library. */
-    if (!loader->interpreter) {
-        if (trace)
-            fprintf(trace, "warning: static executable; no vdso necessary\n");
-    } else {
-        bool vdso_loaded = false;
-        for (size_t i=0; i<vdso_paths.size() && !vdso_loaded; i++) {
-            for (int j=0; j<2 && !vdso_loaded; j++) {
-                std::string vdso_name = vdso_paths[i] + (j ? "" : "/" + this->vdso_name);
-                if (trace)
-                    fprintf(trace, "looking for vdso: %s\n", vdso_name.c_str());
-                if ((vdso_loaded = loader->map_vdso(vdso_name, interpretation, map))) {
-                    vdso_mapped_va = loader->vdso_mapped_va;
-                    vdso_entry_va = loader->vdso_entry_va;
-                    if (trace) {
-                        fprintf(trace, "mapped %s at 0x%08"PRIx64" with entry va 0x%08"PRIx64"\n",
-                                vdso_name.c_str(), vdso_mapped_va, vdso_entry_va);
-                    }
+    bool vdso_loaded = false;
+    for (size_t i=0; i<vdso_paths.size() && !vdso_loaded; i++) {
+        for (int j=0; j<2 && !vdso_loaded; j++) {
+            std::string vdso_name = vdso_paths[i] + (j ? "" : "/" + this->vdso_name);
+            if (trace)
+                fprintf(trace, "looking for vdso: %s\n", vdso_name.c_str());
+            if ((vdso_loaded = loader->map_vdso(vdso_name, interpretation, map))) {
+                vdso_mapped_va = loader->vdso_mapped_va;
+                vdso_entry_va = loader->vdso_entry_va;
+                if (trace) {
+                    fprintf(trace, "mapped %s at 0x%08"PRIx64" with entry va 0x%08"PRIx64"\n",
+                            vdso_name.c_str(), vdso_mapped_va, vdso_entry_va);
                 }
             }
         }
-        if (!vdso_loaded && trace)
-            fprintf(trace, "warning: cannot find a virtual dynamic shared object\n");
     }
+    if (!vdso_loaded && trace && !vdso_paths.empty())
+        fprintf(trace, "warning: cannot find a virtual dynamic shared object\n");
+
 
     /* Find a disassembler. */
     if (!disassembler) {

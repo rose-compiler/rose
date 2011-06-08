@@ -137,7 +137,8 @@ public:
 
     /** Add a memory mapping to a specimen.  The new mapping starts at specimen address @p va (zero causes this method to
      *  choose an appropriate address) for @p size bytes.  The @p rose_perms are the MemoryMap::Protection bits, @p flags are
-     *  the same as for mmap() and are defined in <sys/mman.h>, and @p offset and @p fd are as for mmap().
+     *  the same as for mmap() and are defined in <sys/mman.h>, and @p offset and @p fd are as for mmap().  Returns a negative
+     *  error number on failure.
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
     rose_addr_t mem_map(rose_addr_t va, size_t size, unsigned rose_perms, unsigned flags, size_t offset, int fd);
