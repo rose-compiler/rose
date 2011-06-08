@@ -12,7 +12,8 @@ RSIM_SemanticPolicy::ctor()
         writeFlag((X86Flag)i, 0);
     writeIP(0);
     writeFlag((X86Flag)1, true_());
-    writeGPR(x86_gpr_sp, 0xbffff000ul);     /* high end of stack, exclusive */
+
+    writeGPR(x86_gpr_sp, 0xc0000000ul); /* high end of stack, exclusive */
 
     writeSegreg(x86_segreg_cs, 0x23);
     writeSegreg(x86_segreg_ds, 0x2b);
