@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "FortranParserState.h"
 
+AttrSpec* FortranParserState::varDeclAttrSpec = new AttrSpec();
 stack<FortranParserState*>  FortranParserState::statesStack;
 
 // Constructor:
@@ -20,6 +21,7 @@ FortranParserState::~FortranParserState()
       statesStack.pop(); 
       //printf("FortranParserState:: pop out  the stack \n");
       clearStacks();
+      delete varDeclAttrSpec;
   }
 
 

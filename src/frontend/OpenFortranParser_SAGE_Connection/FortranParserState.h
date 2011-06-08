@@ -4,6 +4,7 @@
 // DQ (10/11/2010): We only require this include to support the type: AstNameListType.
 #include "fortran_support.h"
 
+#define VarDeclAttrSpec               (*(FortranParserState::varDeclAttrSpec))
 #define astScopeStack                 (*(FortranParserState::getCurrentScopeStack()))
 #define astExpressionStack            (*(FortranParserState::getCurrentExpressionStack()))
 #define astNodeStack                  (*(FortranParserState::getCurrentNodeStack()))
@@ -42,6 +43,10 @@ class FortranParserState
    {
   // This class supports a stack of the collections of stacks required to represent 
   // the state within the translation of the OFP actions to build the ROSE AST.
+
+     public:
+    // DXN (05/12/2011): to record the attributes on the left-hand-side of the :: in a variable declaration
+       static  AttrSpec* varDeclAttrSpec;
 
      private:
        static stack<FortranParserState*>  statesStack;
@@ -208,8 +213,5 @@ class FortranParserState
     //   Pop out the stack, clean all the member stacks 
        ~FortranParserState();
    };
-
-    // DXN (05/12/2011): to record the attributes on the left-hand-side of the :: in a variable declaration
-    extern AttrSpec VarDeclAttrSpec;
 
 #endif /*__FORTRANPARSERSTATE_H_*/

@@ -321,7 +321,6 @@ void c_action_keyword()
  */
 void c_action_name(Token_t *id)
    {
-    //raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_name(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
 
@@ -3462,7 +3461,6 @@ void c_action_entity_decl(Token_t * id)
      outputState("At TOP of R504 R503-F2008 c_action_entity_decl()");
 #endif
 
-#if !SKIP_C_ACTION_IMPLEMENTATION
 
 #if DXN_CODE
 #if !SKIP_C_ACTION_IMPLEMENTATION
@@ -3604,9 +3602,13 @@ void c_action_entity_decl(Token_t * id)
         astTypeStack.pop_front();
     ROSE_ASSERT(astTypeStack.empty());
 
-#endif  //  SKIP_C_ACTION_IMPLEMENTATION
+    // !SKIP_C_ACTION_IMPLEMENTATION
+#endif
 
 #else
+
+
+#if !SKIP_C_ACTION_IMPLEMENTATION
   // AstNameListStackType::iterator topOfStack = astNameListStack.begin();
   // (*topOfStack)->push_back(id);
 
@@ -4001,8 +4003,10 @@ void c_action_entity_decl(Token_t * id)
           astTypeStack.pop_front();
           ROSE_ASSERT(astTypeStack.empty() == true);
        }
+        // !SKIP_C_ACTION_IMPLEMENTATION
 #endif
-#endif  // buildVariableDeclarationAndCleanupTypeStack
+
+#endif
 
 #if 1
   // Output debugging information about saved state (stack) information.
@@ -4086,12 +4090,23 @@ void c_action_entity_decl_list(int count)
   // DQ (1/28/2009): Can we assert this!
      ROSE_ASSERT(astNodeStack.size() == (size_t) count);
 
+#if DXN_CODE
+
+     SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(NULL,false);
+     ROSE_ASSERT(variableDeclaration->get_file_info()->isCompilerGenerated() == false);
+     cleanupTypeStackAfterDeclaration();
+     ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock || getTopOfScopeStack()->variantT() == V_SgClassDefinition);
+     getTopOfScopeStack()->append_statement(variableDeclaration);
+
+#else
+
   // DQ (1/28/2009): Refactored this code so it could be called in R442, R501, R504 and R1238.
   // I think this is the earliest point at which this can be called, after this point if
   // there additional modified for the variables, then they will have to update the
   // declaration and/or build new statements to do the modifications (e.g. dimension statments).
 
      buildVariableDeclarationAndCleanupTypeStack(NULL);
+#endif
 
 #if 1
   // Output debugging information about saved state (stack) information.
@@ -4246,7 +4261,6 @@ void c_action_access_spec(Token_t * keyword, int type)
 // void c_action_language_binding_spec(Token_t * id, ofp_bool hasName)
 void c_action_language_binding_spec(Token_t * keyword, Token_t * id, ofp_bool hasName)
    {
-    //raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_language_binding_spec(): keyword = %p = %s id = %p = %s hasName = %s \n",keyword,keyword != NULL ? keyword->text : "NULL",id,id != NULL ? id->text : "NULL",hasName ? "true" : "false");
 
@@ -4536,7 +4550,6 @@ void c_action_explicit_shape_spec_list(int count)
 // void c_action_intent_spec(int intent)
 void c_action_intent_spec(Token_t * intentKeyword1, Token_t * intentKeyword2, int intent)
    {
-    //raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_intent_spec() intentKeyword1 = %p = %s intentKeyword2 = %p = %s intent = %d \n",intentKeyword1,intentKeyword1 != NULL ? intentKeyword1->text : "NULL",intentKeyword2,intentKeyword2 != NULL ? intentKeyword2->text : "NULL",intent);
 
@@ -7093,7 +7106,6 @@ SgCAFCoExpression *rice_dataref_coexpr;         // for 'c_action_rice_spawn_stmt
 
 void c_action_data_ref(int numPartRef)
    {
-    //raise(SIGINT);
     // DQ (12/29/2010): See notes on how R612 and R613 operate together.
 
   // This is a part of a variable reference (and likely used many other places as well)
@@ -8119,7 +8131,6 @@ void c_action_data_ref(int numPartRef)
  */
 void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_bool hasImageSelector)
    {
-    //raise(SIGINT);
     // This is a part of a variable reference (any likely used many other places as well)
 
   // DQ (12/29/2010): Notes on how R612 and R613 operate together.
@@ -8317,7 +8328,6 @@ void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_boo
  */
 void c_action_section_subscript(ofp_bool hasLowerBound, ofp_bool hasUpperBound, ofp_bool hasStride, ofp_bool isAmbiguous)
    {
-    //raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R619 c_action_section_subscript() hasLowerBound = %s hasUpperBound = %s hasStride = %s isAmbiguous = %s \n",
                hasLowerBound ? "true" : "false", hasUpperBound ? "true" : "false", hasStride ? "true" : "false", isAmbiguous ? "true" : "false");
@@ -8364,7 +8374,6 @@ void c_action_section_subscript_list__begin()
 
 void c_action_section_subscript_list(int count)
    {
-    //raise(SIGINT);
   // This is either a subscript or a function parameter list, or an implicit do loop.  If it is an implicit function then treat 
   // it as a function call directly, later some array references may have be be fixed up to be function 
   // calls but this will be a post processing step.
@@ -19274,7 +19283,6 @@ void c_action_cleanUp()
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
 void c_action_coarray_spec(int arg0) 
     {
-    //raise(SIGINT);
      if (arg0 == 1) {
           astExpressionStack.pop_front();
      } else {
@@ -19362,7 +19370,6 @@ void c_action_rice_image_selector(Token_t *team_id)
  */
 void c_action_rice_co_dereference_op(Token_t *leftBracket, Token_t *rightBracket)
    {
-    //raise(SIGINT);
      MultipartReferenceType& mprt = astMultipartReferenceStack.front();
      mprt.hasCo_deref = true;
    }
@@ -19778,7 +19785,6 @@ void c_action_cosubscript_list__begin()
 
 void c_action_cosubscript_list(int carg_0,Token_t* team_id)
    {
-    //raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_cosubscript_list,co_rank = %d \n",carg_0);
       ROSE_ASSERT(carg_0 ==1);
