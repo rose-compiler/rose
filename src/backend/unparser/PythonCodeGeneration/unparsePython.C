@@ -52,6 +52,7 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
     switch (stmt->variantT()) {
         CASE_DISPATCH_AND_BREAK(AssignOp);
         CASE_DISPATCH_AND_BREAK(AssignInitializer);
+        CASE_DISPATCH_AND_BREAK(ExponentiationOp);
         CASE_DISPATCH_AND_BREAK(FunctionCallExp);
         CASE_DISPATCH_AND_BREAK(VarRefExp);
         default: {
@@ -66,7 +67,8 @@ void
 Unparse_Python::unparseStringVal(SgExpression* str_exp, SgUnparse_Info& info)
 {
     SgStringVal* str_val = isSgStringVal(str_exp);
-    curprint(str_val->get_value());
+    curprint(string("\"") + str_val->get_value() + string("\""));
+    //TODO what about other types of python strings
 }
 
 std::string
@@ -118,6 +120,15 @@ Unparse_Python::unparseBasicBlock(SgBasicBlock* bblock,
         code << endl;
         curprint( code.str() );
     }
+}
+
+void
+Unparse_Python::unparseExponentiationOp(SgExponentiationOp* exp,
+                                        SgUnparse_Info& info)
+{
+    unparseExpression(exp->get_lhs_operand(), info);
+    curprint("**");
+    unparseExpression(exp->get_rhs_operand(), info);
 }
 
 void

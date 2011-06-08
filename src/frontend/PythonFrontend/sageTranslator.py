@@ -4,6 +4,7 @@ import sage
 
 OPERATOR_BUILDFXN_MAP = {
     ast.Add: sage.buildAddOp,
+    ast.Pow: sage.buildPower,
 }
 
 class FileInfo():
@@ -60,6 +61,12 @@ class SageTranslator(ast.NodeVisitor):
     scope = self.scopeStack.peek()
     return sage.buildCall(name, args, kwargs, scope)
 
+  def visit_ExceptHandler(self, node):
+    e_name = node.name
+    e_type = node.type
+    e_body = map(self.visit, node.body)
+    return sage.buildExceptHandler(e_name, e_type, e_body)
+
   def visit_Expr(self, node):
     value = self.visit(node.value)
     return sage.buildExpr(value)
@@ -70,7 +77,7 @@ class SageTranslator(ast.NodeVisitor):
     (capsule, scope) = sage.buildFunctionDef(node, defaults, self.file_info(node), scope)
     self.scopeStack.push(scope)
     body_forest = map(self.visit, node.body)
-    sage.addChildrenToNode(capsule, body_forest)
+    sage.appendStatements(capsule, body_forest)
     self.scopeStack.pop(scope)
     return capsule
 
@@ -92,7 +99,7 @@ class SageTranslator(ast.NodeVisitor):
     subforest = self.generic_visit(node)
     self.scopeStack.pop(scope_capsule)
 
-    sage.addChildrenToNode(scope_capsule, subforest)
+    sage.appendStatements(scope_capsule, subforest)
     return scope_capsule
 
   def visit_Name(self, node):
@@ -115,6 +122,18 @@ class SageTranslator(ast.NodeVisitor):
 
   def visit_str(self, str):
     return sage.buildStringVal(str)
+
+  def visit_TryExcept(self, node):
+    body = map(self.visit, node.body)
+    handlers = map(self.visit, node.handlers)
+    orelse = map(self.visit, node.orelse)
+    return sage.buildTryExcept(body, handlers, orelse)
+
+  def visit_TryFinally(self, node):
+    body = map(self.visit, node.body)
+    finalbody = map(self.visit, node.finalbody)
+    return sage.buildTryFinally(body, finalbody)
+
 
 def translate(infilename):
   try:

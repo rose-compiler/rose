@@ -82,6 +82,23 @@ sage_buildCall(PyObject *self, PyObject *args)
  *  - PyObject* args = (PyObject*)
  */
 PyObject*
+sage_buildExceptHandler(PyObject *self, PyObject *args)
+{
+    PyObject* py_name = PyTuple_GetItem(args, 0);
+    PyObject* py_type = PyTuple_GetItem(args, 1);
+    PyObject* py_body = PyTuple_GetItem(args, 2);
+
+    // TODO: add buildCatchOptionStmt to SageBuilder
+    cerr << "sage_buildExceptHandler is unimplemented" << endl;
+    //SgNode* sg_value = SageBuilder::buildBasicBlock();
+    return PyEncapsulate(NULL);
+}
+
+/*
+ * Build an Expr node from the given Python statements.
+ *  - PyObject* args = (PyObject*)
+ */
+PyObject*
 sage_buildExpr(PyObject *self, PyObject *args)
 {
     PyObject* py_value = PyTuple_GetItem(args, 0);
@@ -238,6 +255,21 @@ sage_buildName(PyObject *self, PyObject *args)
 }
 
 /*
+ */
+PyObject*
+sage_buildPower(PyObject *self, PyObject *args)
+{
+    PyObject* rhs = PyTuple_GetItem(args, 0);
+    PyObject* lhs = PyTuple_GetItem(args, 1);
+
+    SgExpression* sg_base = PyDecapsulate<SgExpression>(lhs);
+    SgExpression* sg_pow  = PyDecapsulate<SgExpression>(rhs);
+    SgExponentiationOp* sg_exp_op =
+      SageBuilder::buildExponentiationOp(sg_base, sg_pow);
+    return PyEncapsulate(sg_exp_op);
+}
+
+/*
  * Build an SgPrintStmt node from the given list of Python
  * expressions.
  *  - PyObject* args = ( [PyObject*, PyObject*, ... ], )
@@ -266,6 +298,34 @@ sage_buildReturnStmt(PyObject *self, PyObject *args)
     return PyEncapsulate(sg_return);
 }
 
+/*
+ */
+PyObject*
+sage_buildTryExcept(PyObject *self, PyObject *args)
+{
+    PyObject* py_body     = PyTuple_GetItem(args, 0);
+    PyObject* py_handlers = PyTuple_GetItem(args, 1);
+    PyObject* py_orelse   = PyTuple_GetItem(args, 2);
+
+    // TODO: add buildTryExcept to SageBuilder
+    cerr << "sage_buildTryExcept is unimplemented" << endl;
+    SgNode* sg_value = SageBuilder::buildBasicBlock();
+    return PyEncapsulate(sg_value);
+}
+
+/*
+ */
+PyObject*
+sage_buildTryFinally(PyObject *self, PyObject *args)
+{
+    PyObject* py_body      = PyTuple_GetItem(args, 0);
+    PyObject* py_finalbody = PyTuple_GetItem(args, 1);
+
+    // TODO: add buildTryExcept to SageBuilder
+    cerr << "sage_buildTryFinally is unimplemented" << endl;
+    SgNode* sg_value = SageBuilder::buildBasicBlock();
+    return PyEncapsulate(sg_value);
+}
 /*
  * Build an SgStringVal node from the given Python String object.
  *  - PyObject* args = ( PyStringObject*, )

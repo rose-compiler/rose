@@ -30,7 +30,8 @@ void set_File_Info(SgNode* sg_node, PyObject* py_file_info);
  * Adds children to a node.
  * TODO: Add support for other SgNode subclasses besides SgGlobal.
  */
-PyObject* sage_addChildrenToNode(PyObject *self, PyObject *args);
+PyObject*
+sage_appendStatements(PyObject *self, PyObject *args);
 
 
 /**
