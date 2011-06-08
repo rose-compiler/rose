@@ -64,47 +64,51 @@ void set_File_Info(SgNode* sg_node, PyObject* py_file_info) {
 }
 
 PyObject*
-sage_addChildrenToNode(PyObject *self, PyObject *args)
+sage_appendStatements(PyObject *self, PyObject *args)
 {
-    PyObject* sg_node_capsule = PyTuple_GetItem(args, 0);
-    SgNode* sg_node = PyDecapsulate<SgNode>(sg_node_capsule);
-    ROSE_ASSERT(sg_node);
 
-    PyObject* argv = PyTuple_GetItem(args, 1);
-    Py_ssize_t argc = PyList_Size(argv);
+    PyObject* py_target = PyTuple_GetItem(args, 0);
+    PyObject* py_stmts  = PyTuple_GetItem(args, 1);
 
-    switch (sg_node->variantT()) {
-        case V_SgGlobal: {
-                 SgGlobal* sg_global = isSgGlobal(sg_node);
-                 for (int i = 0; i < argc; i++) {
-                     PyObject* capsule = PyList_GetItem(argv, i);
-                     SgDeclarationStatement* sg_child =
-                         PyDecapsulate<SgDeclarationStatement>(capsule);
-                     sg_global->append_declaration(sg_child);
-                 }
-                 break;
-             }
-        case V_SgFunctionDeclaration: {
-                 SgFunctionDeclaration* sg_fun_decl =
-                     isSgFunctionDeclaration(sg_node);
-                 SgBasicBlock* sg_basic_block =
-                     sg_fun_decl->get_definition()->get_body();
-                 ROSE_ASSERT(sg_basic_block);
-                 for (int i = 0; i < argc; i++) {
-                     PyObject* capsule = PyList_GetItem(argv, i);
-                     SgStatement* sg_child =
-                         PyDecapsulate<SgStatement>(capsule);
-                     sg_basic_block->get_statements().push_back(sg_child);
-                 }
-                 break;
-             }
-        default: {
-                 cerr << "Unhandled node type in sage_addChildrenToNode "
-                     << sg_node->class_name() << endl;
-                 ROSE_ASSERT(!"unhandled node type");
-                 break;
-             }
+    SgScopeStatement* sg_target =
+        PyDecapsulate<SgScopeStatement>(py_target);
+    ROSE_ASSERT(sg_target != NULL);
+
+    Py_ssize_t stmtc = PyList_Size(py_stmts);
+    for (int i = 0; i < stmtc; i++) {
+        PyObject* capsule = PyList_GetItem(py_stmts, i);
+        SgStatement* sg_child = PyDecapsulate<SgStatement>(capsule);
+        if (isSgExpression(sg_child) != NULL) {
+            sg_child =
+                SageBuilder::buildExprStatement( isSgExpression(sg_child) );
+        }
+        // SageInterface::appendStatement calls functions that assert because of
+        // (the lack of)? declaration statements in the given scopes. Until I suppress
+        // this behavior for Python, use this simple version of the appendStatement
+        // implementation:
+        //SageInterface::appendStatement(sg_child, sg_target);
+        switch (sg_target->variantT()) {
+            case V_SgGlobal: {
+              if (isSgDeclarationStatement(sg_child) == NULL) {
+                  cerr << "adding non-declaration statements to the global scope is not yet supported" << endl;
+              } else {
+                  isSgGlobal(sg_target)->get_declarations().push_back(isSgDeclarationStatement(sg_child));
+                  sg_child->set_parent(sg_target);
+              }
+              break;
+            }
+            case V_SgFunctionDeclaration: {
+              SgBasicBlock* body = isSgFunctionDeclaration(sg_target)->get_definition()->get_body();
+              body->append_statement(sg_child);
+              sg_child->set_parent(body);
+              break;
+            }
+            default:
+              cerr << "Unhandled node type in sage_appendStatements: " << sg_target->class_name() << endl;
+              break;
+        }
     }
+
     return Py_None;
 }
 
