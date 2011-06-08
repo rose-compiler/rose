@@ -28,9 +28,12 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
 
         CASE_DISPATCH_AND_BREAK(AddOp);
         CASE_DISPATCH_AND_BREAK(BasicBlock);
+        CASE_DISPATCH_AND_BREAK(ExprStatement);
         CASE_DISPATCH_AND_BREAK(FunctionDeclaration);
         CASE_DISPATCH_AND_BREAK(FunctionDefinition);
         CASE_DISPATCH_AND_BREAK(FunctionParameterList);
+        CASE_DISPATCH_AND_BREAK(IfStmt);
+        CASE_DISPATCH_AND_BREAK(LongIntVal);
         CASE_DISPATCH_AND_BREAK(ReturnStmt);
         CASE_DISPATCH_AND_BREAK(StringVal);
         default: {
@@ -105,6 +108,13 @@ Unparse_Python::unparseBasicBlock(SgBasicBlock* bblock,
 }
 
 void
+Unparse_Python::unparseExprStatement(SgExprStatement* expr_stmt,
+                                     SgUnparse_Info& info)
+{
+    unparseExpression(expr_stmt->get_expression(), info);
+}
+
+void
 Unparse_Python::unparseFunctionDeclaration(SgFunctionDeclaration* func_decl,
                                            SgUnparse_Info& info)
 {
@@ -146,6 +156,26 @@ Unparse_Python::unparseFunctionParameterList(SgFunctionParameterList* param_list
 }
 
 void
+Unparse_Python::unparseIfStmt(SgIfStmt* if_stmt,
+                              SgUnparse_Info& info)
+{
+    curprint("if ");
+    unparseStatement(if_stmt->get_conditional(), info);
+    curprint(":\n");
+
+    info.inc_nestingLevel();
+    unparseStatement(if_stmt->get_true_body(), info);
+    info.dec_nestingLevel();
+
+    if (if_stmt->get_false_body() != NULL) {
+        curprint(ws_prefix(info.get_nestingLevel()) + "else:\n");
+        info.inc_nestingLevel();
+        unparseStatement(if_stmt->get_false_body(), info);
+        info.dec_nestingLevel();
+    }
+}
+
+void
 Unparse_Python::unparseInitializedName(SgInitializedName* init_name,
                                        SgUnparse_Info& info)
 {
@@ -153,6 +183,15 @@ Unparse_Python::unparseInitializedName(SgInitializedName* init_name,
     if (init_name->get_initializer() != NULL) {
         unparseExpression(init_name->get_initializer(), info);
     }
+}
+
+void
+Unparse_Python::unparseLongIntVal(SgLongIntVal* long_int_val,
+                                  SgUnparse_Info& info)
+{
+    stringstream code;
+    code << long_int_val->get_value();
+    curprint( code.str() );
 }
 
 void

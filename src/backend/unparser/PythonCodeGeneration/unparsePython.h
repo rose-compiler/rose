@@ -26,10 +26,13 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual void unparseAddOp(SgAddOp*, SgUnparse_Info&);
           virtual void unparseAssignInitializer(SgAssignInitializer*, SgUnparse_Info&);
           virtual void unparseBasicBlock(SgBasicBlock*, SgUnparse_Info&);
+          virtual void unparseExprStatement(SgExprStatement*, SgUnparse_Info&);
           virtual void unparseFunctionDeclaration(SgFunctionDeclaration*, SgUnparse_Info&);
           virtual void unparseFunctionDefinition(SgFunctionDefinition*, SgUnparse_Info&);
           virtual void unparseFunctionParameterList(SgFunctionParameterList*, SgUnparse_Info&);
+          virtual void unparseIfStmt(SgIfStmt*, SgUnparse_Info&);
           virtual void unparseInitializedName(SgInitializedName*, SgUnparse_Info&);
+          virtual void unparseLongIntVal(SgLongIntVal*, SgUnparse_Info&);
           virtual void unparseReturnStmt(SgReturnStmt*, SgUnparse_Info&);
           virtual void unparseStringVal(SgStringVal*, SgUnparse_Info&);
           virtual void unparseVarRefExp(SgVarRefExp*, SgUnparse_Info&);
