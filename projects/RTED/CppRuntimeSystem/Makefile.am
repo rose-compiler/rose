@@ -1,7 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 RuntimeSystemlibdir = $(libdir)
-RuntimeSystemlib_LTLIBRARIES = libCppRuntimeSystem.la libUpcRuntimeSystem.la
+RuntimeSystemlib_LTLIBRARIES = libCppRuntimeSystem.la
+
+if ROSE_WITH_UPC
+RuntimeSystemlib_LTLIBRARIES += libUpcRuntimeSystem.la
+endif
 
 SUBDIRS = DebuggerQt
 
@@ -20,16 +24,6 @@ libCppRuntimeSystem_la_SOURCES = CppRuntimeSystem.cpp \
                                  PointerManager.cpp\
                                  StackManager.cpp \
                                  ptrops.c
-
-
-# TOO: Example of conditionally including files when ROSE
-# is configured with UPC support.
-#if ROSE_WITH_UPC
-#libCppRuntimeSystem_la_SOURCES += \
-#	ptrops.upc \
-#	workzone.upc \
-#	rtedsync.upc
-#endif
 
 if ROSE_WITH_UPC
 
@@ -91,4 +85,4 @@ check-local:
 
 
 clean-local:
-	rm -rf *.dot Templates.DB *~ rose_rose* test *.bin *.txt *.c *.cpp
+	rm -rf *.dot Templates.DB *~ rose_rose* test *.bin *.txt *.c *.cpp *upc.upc
