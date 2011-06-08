@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <set>
-#include "rose.h"
+#include "sage3basic.hhh"
 
 namespace ParserBuilder {
 
@@ -30,7 +30,7 @@ class GrammarNode {
         struct LexemeInstance {
             std::string original_string;
             GrammarNode * matching_node;
-            virtual void polymorphic() const = 0;
+            virtual ~LexemeInstance();
         };
 
     public:
@@ -49,7 +49,7 @@ class NonTerminalNode : public GrammarNode {
     public:
         struct NonTerminalLexemeInstance : public GrammarNode::LexemeInstance {
             std::vector<LexemeInstance *> childs_productions;
-            virtual void polymorphic() const;
+            virtual ~NonTerminalLexemeInstance();
         };
 
     protected:
@@ -121,7 +121,7 @@ class OneOrMore : public NonTerminalNode {
 class TerminalNode : public GrammarNode {
     public:
         struct TerminalNodeLexemeInstance : public GrammarNode::LexemeInstance {
-            virtual void polymorphic() const = 0;
+            virtual ~TerminalNodeLexemeInstance();
         };
         
     public:
@@ -137,7 +137,7 @@ class TerminalNode : public GrammarNode {
 class SpaceNode : public TerminalNode {
     public:
         struct SpaceNodeLexemeInstance : public TerminalNode::TerminalNodeLexemeInstance {
-            virtual void polymorphic() const;
+            virtual ~SpaceNodeLexemeInstance();
         };
         
     public:
@@ -153,7 +153,7 @@ class SpaceNode : public TerminalNode {
 class LabelNode : public TerminalNode {
     public:
         struct LabelNodeLexemeInstance : public TerminalNode::TerminalNodeLexemeInstance {
-            virtual void polymorphic() const;
+            virtual ~LabelNodeLexemeInstance();
         };
         
     protected:
@@ -173,7 +173,7 @@ class SageNode : public TerminalNode {
     public:
         struct SageNodeLexemeInstance : public TerminalNode::TerminalNodeLexemeInstance {
             SgNode * sage_node;
-            virtual void polymorphic() const;
+            virtual ~SageNodeLexemeInstance();
         };
         
     protected:

@@ -42,6 +42,20 @@ MOSTLYCLEANFILES += cfg_x86.dot
 testBinCFG.passed: testBinCFG.conf testBinCFG
 	@$(RTH_RUN) INPUT=libm-2.3.6.so $< $@
 
+# Tests for the newer BinaryAnalysis::ControlFlow class.
+noinst_PROGRAMS += testControlFlow
+testControlFlow_SOURCES = testControlFlow.C
+testControlFlow_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+STATIC_TEST_TARGETS += testControlFlow-A.passed testControlFlow-B.passed testControlFlow-C.passed testControlFlow-D.passed
+EXTRA_DIST += testControlFlow.conf testControlFlow-A.dot testControlFlow-B.dot testControlFlow-C.dot testControlFlow-D.dot
+testControlFlow-A.passed: testControlFlow.conf testControlFlow
+	@$(RTH_RUN) CMD=testControlFlow ALGORITHM=A INPUT=buffer2.bin $< $@
+testControlFlow-B.passed: testControlFlow.conf testControlFlow
+	@$(RTH_RUN) CMD=testControlFlow ALGORITHM=B INPUT=buffer2.bin $< $@
+testControlFlow-C.passed: testControlFlow.conf testControlFlow
+	@$(RTH_RUN) CMD=testControlFlow ALGORITHM=C INPUT=buffer2.bin $< $@
+testControlFlow-D.passed: testControlFlow.conf testControlFlow
+	@$(RTH_RUN) CMD=testControlFlow ALGORITHM=D INPUT=buffer2.bin $< $@
 
 #Test the binary call graph that uses the semantic representation to perform an accurate analysis
 noinst_PROGRAMS += testBinCG
