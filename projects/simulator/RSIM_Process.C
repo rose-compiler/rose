@@ -1214,23 +1214,15 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
         for (int i=1; i<argc; i++)
             exeargs.push_back(std::string(argv[i]));
 
-        /* Initialize the stack with the specimen's argc and argv.  The argv data must be stored contiguously with arg[0] at
-         * the low address and arg[argc-1] at the high address. (WINE's preloader.c set_process_name() depends on this). */
-        std::vector<uint32_t> pointers(argc+1, 0);              /* pointers pushed onto stack at the end of initialization */
-        pointers[0] = exeargs.size();
-        for (size_t i=exeargs.size(); i>0; --i) {
-            size_t len = exeargs[i-1].size() + 1;               /* inc. NUL terminator */
-            sp -= len;
-            mem_write(exeargs[i-1].c_str(), sp, len);
-            pointers[i] = sp;
-        }
-        if (trace) {
-            for (size_t i=0; i<exeargs.size(); i++) {
-                fprintf(trace, "argv[%zu] %zu bytes at 0x%08"PRIx32" = \"%s\"\n", i,
-                        exeargs[i].size()+1, pointers[i+1], exeargs[i].c_str());
-            }
-        }
-        pointers.push_back(0); /*the argv NULL terminator*/
+        /* Not sure what the first eight bytes are */
+        static const uint8_t unknown_top[] = {0, 0, 0, 0, 0, 0, 0, 0};
+        sp -= sizeof unknown_top;
+        mem_write(unknown_top, sp, sizeof unknown_top);
+
+        /* Copy the executable name to the top of the stack. It will be pointed to by the AT_EXECFN auxv. */
+        sp -= exeargs[0].size() + 1;
+        uint32_t execfn_va = sp;
+        mem_write(exeargs[0].c_str(), sp, exeargs[0].size()+1);
 
         /* Create new environment variables by stripping "X86SIM_" off the front of any environment variable and using that
          * value to override the non-X86SIM_ value, if any.  We try to make sure the variables are in the same order as if the
@@ -1273,16 +1265,56 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
             env_buffer += env + (char)0;
         }
         sp -= env_buffer.size();
-        mem_write(env_buffer.c_str(), sp, env_buffer.size());
+        uint32_t env_va = sp;
+        mem_write(env_buffer.c_str(), env_va, env_buffer.size());
 
+        /* Initialize the stack with the specimen's argc and argv.  The argv data must be stored contiguously with arg[0] at
+         * the low address and arg[argc-1] at the high address. (WINE's preloader.c set_process_name() depends on this). */
+        std::vector<uint32_t> pointers(argc+1, 0);              /* pointers pushed onto stack at the end of initialization */
+        pointers[0] = exeargs.size();
+        for (size_t i=exeargs.size(); i>0; --i) {
+            size_t len = exeargs[i-1].size() + 1;               /* inc. NUL terminator */
+            sp -= len;
+            mem_write(exeargs[i-1].c_str(), sp, len);
+            pointers[i] = sp;
+        }
+        if (trace) {
+            for (size_t i=0; i<exeargs.size(); i++) {
+                fprintf(trace, "argv[%zu] %zu bytes at 0x%08"PRIx32" = \"%s\"\n", i,
+                        exeargs[i].size()+1, pointers[i+1], exeargs[i].c_str());
+            }
+        }
+        pointers.push_back(0); /*the argv NULL terminator*/
+
+        /* Add envp pointers to the stack */
         for (size_t i=0; i<env_offsets.size(); i++) {
-            pointers.push_back(sp+env_offsets[i]);
+            pointers.push_back(env_va+env_offsets[i]);
             if (trace) {
                 fprintf(trace, "environ[%zu] %zu bytes at 0x%08zx = \"\%s\"\n",
-                        i, strlen(&(env_buffer[env_offsets[i]]))+1, sp+env_offsets[i], &(env_buffer[env_offsets[i]]));
+                        i, strlen(&(env_buffer[env_offsets[i]]))+1, env_va+env_offsets[i], &(env_buffer[env_offsets[i]]));
             }
         }
         pointers.push_back(0); /*environment NULL terminator*/
+
+        /* Push certain auxv data items onto the stack. */
+        sp &= ~0xf;
+
+        static const char *platform = "i686";
+        sp -= strlen(platform)+1;
+        uint32_t platform_va = sp;
+        mem_write(platform, platform_va, strlen(platform)+1);
+
+        static const uint8_t random_data[] = {                  /* use hard-coded values for reproducibility */
+            0x00, 0x11, 0x22, 0x33,
+            0xff, 0xee, 0xdd, 0xcc,
+            0x88, 0x99, 0xaa, 0xbb,
+            0x77, 0x66, 0x55, 0x44
+        };
+        sp -= sizeof random_data;
+        uint32_t random_data_va = sp;
+        mem_write(random_data, random_data_va, sizeof random_data);
+
+
 
         /* Initialize stack with auxv, where each entry is two words in the pointers vector.  The order and values were
          * determined by running the simulator with the "--showauxv" switch on hudson-rose-07. */
@@ -1310,7 +1342,7 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
             auxv.push_back(33);
             auxv.push_back(vdso_mapped_va);
             if (trace)
-                fprintf(trace, "AT_SYSINFO_PHDR:  0x%08"PRIx32"\n", auxv.back());
+                fprintf(trace, "AT_SYSINFO_EHDR:  0x%08"PRIx32"\n", auxv.back());
         }
 
         /* AT_HWCAP (see linux <include/asm/cpufeature.h>). */
@@ -1393,22 +1425,28 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
             fprintf(trace, "AT_EGID:          %"PRId32"\n", auxv.back());
 
         /* AT_SECURE */
-        auxv.push_back(23);
+        auxv.push_back(23); /* 0x17 */
         auxv.push_back(false);
         if (trace)
             fprintf(trace, "AT_SECURE:        %"PRId32"\n", auxv.back());
 
+        /* AT_RANDOM */
+        auxv.push_back(25);/* 0x19 */
+        auxv.push_back(random_data_va);
+        if (trace)
+            fprintf(trace, "AT_RANDOM:       0x%08"PRIx32"\n", auxv.back());
+
+        /* AT_EXECFN */
+        auxv.push_back(31); /* 0x1f */
+        auxv.push_back(execfn_va);
+        if (trace)
+            fprintf(trace, "AT_EXECFN:       0x%08"PRIx32" (%s)\n", auxv.back(), exeargs[0].c_str());
+    
         /* AT_PLATFORM */
-        {
-            const char *platform = "i686";
-            size_t len = strlen(platform)+1;
-            sp -= len;
-            mem_write(platform, sp, len);
-            auxv.push_back(15);
-            auxv.push_back(sp);
-            if (trace)
-                fprintf(trace, "AT_PLATFORM:      0x%08"PRIx32" (%s)\n", auxv.back(), platform);
-        }
+        auxv.push_back(15);
+        auxv.push_back(platform_va);
+        if (trace)
+            fprintf(trace, "AT_PLATFORM:      0x%08"PRIx32" (%s)\n", auxv.back(), platform);
 
         /* AT_NULL */
         auxv.push_back(0);
@@ -1421,8 +1459,8 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
          *    environment with NULL terminator
          *    auxv pairs terminated with (AT_NULL,0)
          */
-        sp &= ~3U; /*align to four-bytes*/
         sp -= 4 * pointers.size();
+        sp &= ~0xf; /*align to 16 bytes*/
         mem_write(&(pointers[0]), sp, 4*pointers.size());
 
         main_thread->policy.writeGPR(x86_gpr_sp, sp);
