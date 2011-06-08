@@ -10,7 +10,7 @@
 
 #include <boost/foreach.hpp>
 
-#include "rosez.hpp"
+#include "sageGeneric.hpp"
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -470,7 +470,7 @@ int read_write_context(const SgExpression* node)
 
   while (res.second)
   {
-    res = ez::visitSgNode(ReadWriteContextFinder(res.second), res.second->get_parent());
+    res = sg::dispatch(ReadWriteContextFinder(res.second), res.second->get_parent());
   }
 
   return res.first;
@@ -1112,7 +1112,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgAssignOp* const assign)
    std::cerr << "   ::: Checking assignment : " << assign->unparseToString() << std::endl;
 
    SgExpression* const           expr_l = assign->get_lhs_operand();
-   VarrefFinder::Result          res = ez::visitSgNode(VarrefFinder(), expr_l);
+   VarrefFinder::Result          res = sg::dispatch(VarrefFinder(), expr_l);
 
    if (!res.varref())
    {
@@ -1260,7 +1260,7 @@ namespace
 
     void handle(SgPntrArrRefExp& n)
     {
-      res = ez::visitSgNode(VarRefFinder(), n.get_lhs_operand());
+      res = sg::dispatch(VarRefFinder(), n.get_lhs_operand());
     }
 
     void handle(SgVarRefExp& n) { res = &n; }
@@ -1312,7 +1312,7 @@ namespace
     void handle(SgPntrArrRefExp& n)
     {
       SgExpression* lhs = n.get_lhs_operand();
-      SgVarRefExp*  res = ez::visitSgNode(VarRefFinder(), lhs);
+      SgVarRefExp*  res = sg::dispatch(VarRefFinder(), lhs);
 
       set_varref(res);
     }
@@ -1338,7 +1338,7 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgPntrArrRefExp* const arrRe
 
     // right hand side can be any expression!
     SgExpression*                             left = arrRefExp->get_lhs_operand();
-    SgVarRefExp*                              varref = ez::visitSgNode(ArrayInfoFinder(), left);
+    SgVarRefExp*                              varref = sg::dispatch(ArrayInfoFinder(), left);
     std::vector<SgVarRefExp*>::const_iterator aa = variablesUsedForArray.begin();
     std::vector<SgVarRefExp*>::const_iterator zz = variablesUsedForArray.end();
 

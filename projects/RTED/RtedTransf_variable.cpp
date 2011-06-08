@@ -18,7 +18,7 @@
 #include "DataStructures.h"
 #include "RtedTransformation.h"
 
-#include "rosez.hpp"
+#include "sageGeneric.hpp"
 
 using namespace std;
 using namespace SageInterface;
@@ -720,7 +720,7 @@ void RtedTransformation::insertAccessVariable( SgScopeStatement* initscope,
                                     //     some existing RTED tests
                                     if (!isReadOnly)
                                     {
-                                      read_write_mask = ez::visitSgNode(ReadCanceler(read_write_mask), accessed_exp);
+                                      read_write_mask = sg::dispatch(ReadCanceler(read_write_mask), accessed_exp);
                                       write_location_exp = deref_op;
                                       read_write_mask |= Write;
                                     }
@@ -793,7 +793,7 @@ void RtedTransformation::visit_isAssignInitializer(SgAssignInitializer* const as
 
         // \pp why is assign->get_parent not enough?
         std::cerr << assign->unparseToString() << std::endl;
-        SgInitializedName*   initName = ez::ancestor<SgInitializedName>(assign);
+        SgInitializedName*   initName = sg::ancestor<SgInitializedName>(assign);
 
         // \pp assign initializers can also occur as arguments to function calls
         //     e.g., foo(23); // void foo(const double&);
@@ -821,7 +821,7 @@ void RtedTransformation::visit_isAssignInitializer(SgAssignInitializer* const as
                 // \pp \todo do we need the following line?
                 varRef->get_file_info()->unsetOutputInCodeGeneration();
 
-                const AllocInfo    allocInfo = ez::visitSgNode(AllocInfo(akStack), assign->get_operand());
+                const AllocInfo    allocInfo = sg::dispatch(AllocInfo(akStack), assign->get_operand());
 
                 cerr << "Adding variable init : " << varRef->unparseToString() << endl;
                 variableIsInitialized[varRef] = InitializedVarMap::mapped_type(initName, allocInfo.allocKind);

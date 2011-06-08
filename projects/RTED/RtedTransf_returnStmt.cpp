@@ -5,7 +5,7 @@
 
 #include <string>
 
-#include "rosez.hpp"
+#include "sageGeneric.hpp"
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -18,7 +18,7 @@ using namespace SageBuilder;
 void
 RtedTransformation::changeReturnStmt(SgReturnStmt * rstmt)
 {
-	ROSE_ASSERT(rstmt);
+  ROSE_ASSERT(rstmt);
   std::cerr << "\n\n@@@@@@@@@@@@@@@@@@@@@@@ enter ReturnStmtChange" << std::endl;
 
   SgExpression*         rightOfRet = rstmt->get_expression();
@@ -31,19 +31,19 @@ RtedTransformation::changeReturnStmt(SgReturnStmt * rstmt)
   SgScopeStatement*     scope = rstmt->get_scope();
   std::string           name = "rstmt";
 
-	name.append(scope->get_qualified_name().str());
+  name.append(scope->get_qualified_name().str());
 
-	SgName                rName( name );
-	SgAssignInitializer*  init = buildAssignInitializer(rightOfRet);
+  SgName                rName( name );
+  SgAssignInitializer*  init = buildAssignInitializer(rightOfRet);
   SgStatement*          newStmt = buildVariableDeclaration( rName,
-												 																	  deepCopy(typeRet),
-												 																	  init,
-												 																	  scope
-										    																	);
+                                                            deepCopy(typeRet),
+                                                            init,
+                                                            scope
+                                                          );
   SgVarRefExp*          vexp = buildVarRefExp(rName, rstmt->get_scope());
   SgStatement*          newRtnStmt = buildReturnStmt( vexp );
 
-	replaceStatement( rstmt, newRtnStmt );
+  replaceStatement( rstmt, newRtnStmt );
   insertStatementBefore( newRtnStmt, newStmt );
 
   //replaceExpression(rightOfRet,vexp);
@@ -51,15 +51,15 @@ RtedTransformation::changeReturnStmt(SgReturnStmt * rstmt)
   if (it!=scopes.end()) {
     SgNode* fcall = it->second;
 
-		scopes.erase(it->first);
+    scopes.erase(it->first);
     scopes[newStmt]=fcall;
   }
 
 /*
-  SgFunctionDefinition* main = &ez::ancestor<SgFunctionDefinition>(*rstmt);
+  SgFunctionDefinition* main = &sg::ancestor<SgFunctionDefinition>(*rstmt);
 
   if (is_main_func(main))
-	{
+  {
     // overwrite the last statment in main;
     mainLast = newRtnStmt;
     std::cerr << "\n\n@@@@@@@@@@@@@@@@@@@@@@@ Changing mainLast in ReturnStmtChange" << std::endl;

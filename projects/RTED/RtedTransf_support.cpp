@@ -10,7 +10,7 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include "rosez.hpp"
+#include "sageGeneric.hpp"
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -91,12 +91,12 @@ SgUpcLocalsizeofOp* buildUpcLocalsizeofOp(SgExpression* exp)
 
 SgStatement* getSurroundingStatement(SgExpression* n)
 {
-  return ez::ancestor<SgStatement>(n);
+  return sg::ancestor<SgStatement>(n);
 }
 
 SgStatement* getSurroundingStatement(SgInitializedName* n)
 {
-  return ez::ancestor<SgStatement>(n);
+  return sg::ancestor<SgStatement>(n);
 }
 
 SgAggregateInitializer* genAggregateInitializer(SgExprListExp* initexpr, SgType* type)
@@ -323,11 +323,11 @@ static
 std::pair<UpcSharedKind, long>
 sharedTest(const SgType* n)
 {
-  SharedQueryResult res = ez::visitSgNode(SharedQueryHandler(), n);
+  SharedQueryResult res = sg::dispatch(SharedQueryHandler(), n);
 
   while (res.kind() <= usNonshared && res.base)
   {
-    res = ez::visitSgNode(SharedQueryHandler(), res.base);
+    res = sg::dispatch(SharedQueryHandler(), res.base);
   }
 
   return res.shared;
@@ -661,7 +661,7 @@ SgGlobal* globalScope(SgScopeStatement* scope)
 {
   SgGlobal* res = isSgGlobal(scope);
 
-  if (!res) res = ez::ancestor<SgGlobal>(scope);
+  if (!res) res = sg::ancestor<SgGlobal>(scope);
 
   ROSE_ASSERT(res);
   return res;
@@ -716,7 +716,7 @@ struct PointerLevelSkipper
   template <class SageNode>
   void skip(SageNode& n)
   {
-    res = ez::visitSgNode(PointerLevelSkipper(res), n.get_base_type());
+    res = sg::dispatch(PointerLevelSkipper(res), n.get_base_type());
   }
 
   void handle(SgNode&) { ROSE_ASSERT(false); }
@@ -735,7 +735,7 @@ struct PointerLevelSkipper
 
 SgType* skip_PointerLevel(SgType* t)
 {
-  return  ez::visitSgNode(PointerLevelSkipper(t), t);
+  return  sg::dispatch(PointerLevelSkipper(t), t);
 }
 */
 
@@ -750,7 +750,7 @@ struct PointerDiscoverer
   template <class SgNodeType>
   void skip(SgNodeType& n)
   {
-    res = ez::visitSgNode(PointerDiscoverer(), n.get_base_type());
+    res = sg::dispatch(PointerDiscoverer(), n.get_base_type());
   }
 
   void handle(SgNode& n)
@@ -771,7 +771,7 @@ struct PointerDiscoverer
 
 SgPointerType* discover_PointerType(SgType* t)
 {
-  return ez::visitSgNode(PointerDiscoverer(), t);
+  return sg::dispatch(PointerDiscoverer(), t);
 }
 
 AllocKind cxxHeapAllocKind(SgType* t)
@@ -835,19 +835,19 @@ struct IndirectionHandler
     template <class SageNode>
     void add_indirection(SageNode& n)
     {
-      res = ez::visitSgNode(IndirectionHandler(), n.get_base_type());
+      res = sg::dispatch(IndirectionHandler(), n.get_base_type());
       res.desc = rted_address_of(res.desc);
     }
 
     template <class SageNode>
     void skip(SageNode& n)
     {
-      res = ez::visitSgNode(IndirectionHandler(), n.get_base_type());
+      res = sg::dispatch(IndirectionHandler(), n.get_base_type());
     }
 
     void unexpected(SgNode& n)
     {
-      ez::unused(n);
+      sg::unused(n);
       ROSE_ASSERT(false);
     }
 
@@ -920,7 +920,7 @@ struct IndirectionHandler
 ///         storage properties
 TypeStructureInfo indirections(SgType* t)
 {
-  return ez::visitSgNode(IndirectionHandler(), t);
+  return sg::dispatch(IndirectionHandler(), t);
 }
 
 SgType* skip_References(SgType* t)
@@ -1240,7 +1240,7 @@ struct AddressOfExprBuilder
 static
 SgExpression* addressOfExpr(SgExpression* n)
 {
-  return ez::visitSgNode(AddressOfExprBuilder(), n);
+  return sg::dispatch(AddressOfExprBuilder(), n);
 }
 
 

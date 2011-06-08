@@ -6,7 +6,7 @@
 #include <string>
 #include <set>
 
-#include "rosez.hpp"
+#include "sageGeneric.hpp"
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -154,7 +154,7 @@ SgStatement* getStatementLevelNode(SgLocatedNode& n)
   SgStatement* stmt = isSgStatement(&n);
   if (stmt) return stmt;
 
-  return &ez::ancestor<SgStatement>(n);
+  return &sg::ancestor<SgStatement>(n);
 }
 
 

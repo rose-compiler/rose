@@ -6,7 +6,7 @@
 #include <string>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include "rosez.hpp"
+#include "sageGeneric.hpp"
 
 #include "RtedTransformation.h"
 
@@ -154,7 +154,7 @@ bool isIntType(const SgType* n)
   do
   {
     curr = next;
-    next = ez::visitSgNode(IsIntType(), curr);
+    next = sg::dispatch(IsIntType(), curr);
   } while (next && next != curr);
 
   return (next != NULL);
@@ -748,7 +748,7 @@ void RtedTransformation::visit_isFunctionCall(SgFunctionCallExp* const fcexp)
   ROSE_ASSERT(fcexp);
 
   SgExpression* const                 fun = fcexp->get_function();
-  const FunctionCallInfo              callee = ez::visitSgNode(FunctionCallInfo(*this), fun);
+  const FunctionCallInfo              callee = sg::dispatch(FunctionCallInfo(*this), fun);
 
   // \pp \todo \note The current implementation cannot handle function targets
   //                 determined at runtime (e.g., function pointer).

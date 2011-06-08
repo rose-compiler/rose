@@ -9,7 +9,7 @@
 #include <numeric>
 #include <string>
 
-#include "rosez.hpp"
+#include "sageGeneric.hpp"
 
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -157,7 +157,7 @@ namespace rted
       // \pp should we also skip typedefs?
       SgType* unmodType = skip_ModifierType(n.get_type());
 
-      ez::visitSgNode(VarTypeHandler(*vt.transf, n), unmodType);
+      sg::dispatch(VarTypeHandler(*vt.transf, n), unmodType);
     }
 
     void handle(SgAssignInitializer& n)
@@ -347,7 +347,7 @@ namespace rted
 
   InheritedAttribute VariableTraversal::evaluateInheritedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute)
   {
-    return ez::visitSgNode(InheritedAttributeHandler(*this, inheritedAttribute), astNode);
+    return sg::dispatch(InheritedAttributeHandler(*this, inheritedAttribute), astNode);
   }
 
   /// wraps ::isUsableAsSgArrayType and makes sure that type is
@@ -451,14 +451,12 @@ namespace rted
     const SgBinaryOp*   binop = binary_ops.back();
     const SgExpression* rhs = binop->get_rhs_operand();
 
-    bool rob = isRightOfBinaryOp(&varref);
-
     // \note isRightOfBinaryOp(&varref)
     //       does not mean that varref == rhs. varref could also be
     //       an (indirect) right side child of binop.
     // \pp not sure why the side on which varref occurs matters,
     //     when we, for example, have a commutative operation?
-    return (  !rob
+    return (  !isRightOfBinaryOp(&varref)
            || isSgArrayType(rhs->get_type())
            || isSgNewExp(rhs)
            || isSgReferenceType(binop->get_lhs_operand()->get_type())
@@ -565,7 +563,7 @@ namespace rted
 
   SynthesizedAttribute VariableTraversal::evaluateSynthesizedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute, SynthesizedAttributesList childAttributes)
   {
-     SynthesizedAttribute res; // = ez::visitSgNode(SafeEval(this, childAttributes));
+     SynthesizedAttribute res; // = sg::dispatch(SafeEval(this, childAttributes));
 
      // take from stacks, if applicable
      if (GeneralizdFor::is(astNode))
