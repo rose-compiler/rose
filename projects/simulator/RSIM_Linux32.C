@@ -1710,7 +1710,7 @@ syscall_mmap(RSIM_Thread *t, int callno)
 static void
 syscall_mmap_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("p");
+    t->syscall_leave("Dp");
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap syscall:\n");
 }
 
@@ -4401,7 +4401,7 @@ syscall_mmap2(RSIM_Thread *t, int callno)
 static void
 syscall_mmap2_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("p");
+    t->syscall_leave("Dp");
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap2 syscall:\n");
 }
 
