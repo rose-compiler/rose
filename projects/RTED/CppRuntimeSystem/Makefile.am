@@ -31,6 +31,8 @@ libCppRuntimeSystem_la_SOURCES = CppRuntimeSystem.cpp \
 #	rtedsync.upc
 #endif
 
+if ROSE_WITH_UPC
+
 libUpcRuntimeSystem_la_SOURCES = CppRuntimeSystem-upc.cpp \
                                  FileManager-upc.cpp \
                                  Util-upc.cpp \
@@ -53,6 +55,8 @@ ptrops-upc.upc: $(srcdir)/ptrops.c
 
 %-upc.upc: $(srcdir)/%.upc
 	cp $< $@
+
+endif
 
 
 if ROSE_WITH_ROSEQT

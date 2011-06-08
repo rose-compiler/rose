@@ -234,11 +234,6 @@ RtedTransformation::ctorDimensionList(SgAggregateInitializer* exp) const
   return cstyle_ctor(buildArrayType(roseDimensionType(), NULL), exp);
 }
 
-SgCastExp* RtedTransformation::ctorStringList(SgAggregateInitializer* exp) const
-{
-  return cstyle_ctor(buildArrayType(roseConstCharPtrType(), NULL), exp);
-}
-
 
 SgAggregateInitializer*
 RtedTransformation::mkAddressDesc(AddressDesc desc) const

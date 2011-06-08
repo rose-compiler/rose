@@ -179,6 +179,20 @@ SgFunctionCallExp* RtedTransformation::convertIntToString(SgExpression* i)
   return buildFunctionCallExp(memRef_r, arg_list);
 }
 
+static
+SgName mkRtedName()
+{
+  static size_t counter = 0;
+
+  std::stringstream ss;
+
+  ss << "tmp" << counter << "_rted";
+  ++counter;
+
+  return ss.str();
+}
+
+
 void RtedTransformation::insertFuncCall(RtedArguments& args)
 {
   // fixed arguments
@@ -410,7 +424,16 @@ void RtedTransformation::insertFuncCall(RtedArguments& args)
      }
   }
 
-  appendExpression( arg_list, ctorStringList(genAggregateInitializer(vararg_list, roseConstCharPtrType())) );
+  // insert temporary array variable to work around not-an lvalue array error
+  SgName                  tmpName = mkRtedName();
+  SgType*                 constCharPtr = roseConstCharPtrType();
+  SgType*                 constCharPtrArr = buildArrayType(constCharPtr, NULL);
+  SgAggregateInitializer* tmparrInit = genAggregateInitializer(vararg_list, constCharPtr);
+  SgVariableDeclaration*  tmparr = buildVariableDeclaration( tmpName, constCharPtrArr, tmparrInit, scope );
+
+  SageInterface::insertStatement(stmt, tmparr, true /* before */);
+
+  appendExpression( arg_list, buildVarRefExp(tmparr) );
 
   ROSE_ASSERT(symbols.roseFunctionCall);
   insertCheck( ilBefore,

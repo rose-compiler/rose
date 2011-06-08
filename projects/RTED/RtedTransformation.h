@@ -402,8 +402,6 @@ public:
 
     SgCastExp* ctorDimensionList(SgAggregateInitializer* exp) const;
 
-    SgCastExp* ctorStringList(SgAggregateInitializer* exp) const;
-
     /// \brief   creates an address descriptor
     SgAggregateInitializer* mkAddressDesc(AddressDesc desc) const;
 
