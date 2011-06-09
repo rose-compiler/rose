@@ -25,7 +25,7 @@ int python_main(std::string, SgFile*)
 
 using namespace std;
 
-int
+SgGlobal*
 runPythonFrontend(SgFile* file)
 {
     PyObject *pModule, *pFunc;
@@ -55,17 +55,15 @@ runPythonFrontend(SgFile* file)
             if (pValue != NULL) {
                 void* capsule_ptr = PyCapsule_GetPointer(pValue, NULL);
                 SgGlobal* sg_global = static_cast<SgGlobal*>(capsule_ptr);
-                SgSourceFile* sg_source_file = isSgSourceFile(file);
-                sg_source_file->set_globalScope(sg_global);
-                sg_global->set_parent(sg_source_file);
                 Py_DECREF(pValue);
+                return sg_global;
             }
             else {
                 Py_DECREF(pFunc);
                 Py_DECREF(pModule);
                 PyErr_Print();
                 fprintf(stderr,"Call failed\n");
-                return 1;
+                return NULL;
             }
         }
         else {
@@ -80,9 +78,9 @@ runPythonFrontend(SgFile* file)
     else {
         PyErr_Print();
         fprintf(stderr, "Failed to load module \"%s\".\n", ROSE_PYTHON_FRONTEND_MODULE_NAME);
-        return 1;
+        return NULL;
     }
-    return 0;
+    return NULL;
 }
 
 int python_main(std::string filename, SgFile* file)
@@ -90,10 +88,16 @@ int python_main(std::string filename, SgFile* file)
     std::cout << "Launching interpreter." << std::endl;
 
     Py_Initialize();
-    runPythonFrontend(file);
+    SgGlobal* sg_global = runPythonFrontend(file);
     Py_Finalize();
 
-    std::cout << "Interpreter terminated." << std::endl;
+    const char* str = (sg_global != NULL) ? "success" : "failed";
+    std::cout << "Interpreter terminated (" << str << ")." << std::endl;
+
+    SgSourceFile* sg_source_file = isSgSourceFile(file);
+    sg_source_file->set_globalScope(sg_global);
+    sg_global->set_parent(sg_source_file);
+    file->set_skip_commentsAndDirectives(true);
 
     return -1;
 }
