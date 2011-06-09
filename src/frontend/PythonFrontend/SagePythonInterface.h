@@ -6,6 +6,7 @@
 #include "SagePythonSupport.h"
 
 PyObject* sage_buildAddOp(PyObject *self, PyObject *args);
+PyObject* sage_buildBinOp(PyObject *self, PyObject *args);
 PyObject* sage_buildCall(PyObject *self, PyObject *args);
 PyObject* sage_buildExceptHandler(PyObject *self, PyObject *args);
 PyObject* sage_buildExpr(PyObject *self, PyObject *args);
@@ -24,6 +25,7 @@ PyObject* sage_buildTryFinally(PyObject *self, PyObject *args);
 
 static PyMethodDef SageBuilderMethods[] = {
     {"buildAddOp", sage_buildAddOp, METH_VARARGS, "Builds an SgAddOp node."},
+    {"buildBinOp", sage_buildBinOp, METH_VARARGS, "Builds a binary expression node."},
     {"buildCall", sage_buildCall, METH_VARARGS, "Builds an SgFunctionCallExp node."},
     {"buildExceptHandler", sage_buildExceptHandler, METH_VARARGS, "Builds an exception handler node."},
     {"buildExpr", sage_buildExpr, METH_VARARGS, "Builds an Expr node."},

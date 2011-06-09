@@ -2,9 +2,19 @@ import sys, ast
 
 import sage
 
-OPERATOR_BUILDFXN_MAP = {
-    ast.Add: sage.buildAddOp,
-    ast.Pow: sage.buildPower,
+OPERATOR_MAP = {
+    ast.Add:      "+",
+    ast.BitAnd:   "&",
+    ast.BitOr:    "|",
+    ast.BitXor:   "^",
+    ast.Div:      "/",
+    ast.FloorDiv: "//",
+    ast.LShift:   "<<",
+    ast.Mod:      "%",
+    ast.Mult:     "*",
+    ast.Pow:      "**",
+    ast.RShift:   ">>",
+    ast.Sub:      "-",
 }
 
 class FileInfo():
@@ -51,8 +61,8 @@ class SageTranslator(ast.NodeVisitor):
   def visit_BinOp(self, node):
     lhs = self.visit(node.left)
     rhs = self.visit(node.right)
-    build_fxn = OPERATOR_BUILDFXN_MAP[node.op.__class__]
-    return build_fxn(lhs, rhs, self.file_info(node))
+    op_str = OPERATOR_MAP[node.op.__class__]
+    return sage.buildBinOp(lhs, rhs, op_str)
 
   def visit_Call(self, node):
     name = node.func.id
@@ -74,7 +84,8 @@ class SageTranslator(ast.NodeVisitor):
   def visit_FunctionDef(self, node):
     scope = self.scopeStack.peek()
     defaults = map(self.visit, node.args.defaults)
-    (capsule, scope) = sage.buildFunctionDef(node, defaults, self.file_info(node), scope)
+    (capsule, scope) = \
+        sage.buildFunctionDef(node, defaults, self.file_info(node), scope)
     self.scopeStack.push(scope)
     body_forest = map(self.visit, node.body)
     sage.appendStatements(capsule, body_forest)

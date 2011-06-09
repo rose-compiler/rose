@@ -26,7 +26,6 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
 #define CASE_DISPATCH_AND_BREAK(sg_t) \
   case V_Sg ##sg_t : unparse ##sg_t (isSg##sg_t (stmt),info); break;
 
-        CASE_DISPATCH_AND_BREAK(AddOp);
         CASE_DISPATCH_AND_BREAK(BasicBlock);
         CASE_DISPATCH_AND_BREAK(ExprStatement);
         CASE_DISPATCH_AND_BREAK(FunctionCallExp);
@@ -50,11 +49,25 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
                                                   SgUnparse_Info& info)
 {
     switch (stmt->variantT()) {
-        CASE_DISPATCH_AND_BREAK(AssignOp);
         CASE_DISPATCH_AND_BREAK(AssignInitializer);
-        CASE_DISPATCH_AND_BREAK(ExponentiationOp);
         CASE_DISPATCH_AND_BREAK(FunctionCallExp);
         CASE_DISPATCH_AND_BREAK(VarRefExp);
+
+        case V_SgAddOp:
+        case V_SgSubtractOp:
+        case V_SgMultiplyOp:
+        case V_SgDivideOp:
+        case V_SgBitAndOp:
+        case V_SgBitOrOp:
+        case V_SgBitXorOp:
+        case V_SgModOp:
+        case V_SgIntegerDivideOp:
+        case V_SgLshiftOp:
+        case V_SgRshiftOp:
+        case V_SgExponentiationOp:
+            unparseBinaryOp( isSgBinaryOp(stmt), info );
+            break;
+
         default: {
             cerr << "unparse Expression (" << stmt->class_name()
                  << "*) is unimplemented." << endl;
@@ -82,29 +95,11 @@ Unparse_Python::ws_prefix(int nesting_level) {
 /* ================== Node-specific unparsing functions ===================== */
 
 void
-Unparse_Python::unparseAddOp(SgAddOp* sg_add_op,
-                             SgUnparse_Info& info)
-{
-    unparseExpression(sg_add_op->get_lhs_operand(), info);
-    curprint(" + ");
-    unparseExpression(sg_add_op->get_rhs_operand(), info);
-}
-
-void
 Unparse_Python::unparseAssignInitializer(SgAssignInitializer* sg_assign_init,
                              SgUnparse_Info& info)
 {
     curprint("=");
     unparseExpression(sg_assign_init->get_operand(), info);
-}
-
-void
-Unparse_Python::unparseAssignOp(SgAssignOp* sg_assign_op,
-                                SgUnparse_Info& info)
-{
-    unparseExpression(sg_assign_op->get_lhs_operand(), info);
-    curprint("=");
-    unparseExpression(sg_assign_op->get_rhs_operand(), info);
 }
 
 void
@@ -123,12 +118,30 @@ Unparse_Python::unparseBasicBlock(SgBasicBlock* bblock,
 }
 
 void
-Unparse_Python::unparseExponentiationOp(SgExponentiationOp* exp,
-                                        SgUnparse_Info& info)
+Unparse_Python::unparseBinaryOp(SgBinaryOp* bin_op,
+                                SgUnparse_Info& info)
 {
-    unparseExpression(exp->get_lhs_operand(), info);
-    curprint("**");
-    unparseExpression(exp->get_rhs_operand(), info);
+    unparseExpression(bin_op->get_lhs_operand(), info);
+    switch(bin_op->variantT()) {
+        case V_SgAddOp:            curprint(" + ");  break;
+        case V_SgAssignOp:         curprint(" = ");  break;
+        case V_SgBitAndOp:         curprint(" & ");  break;
+        case V_SgBitOrOp:          curprint(" | ");  break;
+        case V_SgBitXorOp:         curprint(" ^ ");  break;
+        case V_SgDivideOp:         curprint(" / ");  break;
+        case V_SgExponentiationOp: curprint(" ** "); break;
+        case V_SgIntegerDivideOp:  curprint(" // "); break;
+        case V_SgLshiftOp:         curprint(" << "); break;
+        case V_SgModOp:            curprint(" % ");  break;
+        case V_SgMultiplyOp:       curprint(" * ");  break;
+        case V_SgRshiftOp:         curprint(" >> "); break;
+        case V_SgSubtractOp:       curprint(" - ");  break;
+        default: {
+            cerr << "Unhandled SgBinaryOp: " << bin_op->class_name() << endl;
+            ROSE_ABORT();
+        }
+    }
+    unparseExpression(bin_op->get_rhs_operand(), info);
 }
 
 void
