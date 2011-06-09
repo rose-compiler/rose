@@ -32,6 +32,53 @@ sage_buildAddOp(PyObject *self, PyObject *args)
  *  - PyObject* args = (PyObject*, PyObject*)
  */
 PyObject*
+sage_buildBinOp(PyObject *self, PyObject *args)
+{
+    PyObject* lhs_capsule = PyTuple_GetItem(args, 0);
+    PyObject* rhs_capsule = PyTuple_GetItem(args, 1);
+    PyObject* py_operation = PyTuple_GetItem(args, 2);
+
+    SgExpression* lhs = PyDecapsulate<SgExpression>(lhs_capsule);
+    SgExpression* rhs = PyDecapsulate<SgExpression>(rhs_capsule);
+    std::string op = std::string( PyString_AsString(py_operation) );
+    SgBinaryOp* sg_bin_op = NULL;
+    if      (op == "+")
+        sg_bin_op = SageBuilder::buildAddOp(lhs, rhs);
+    else if (op == "-")
+        sg_bin_op = SageBuilder::buildSubtractOp(lhs, rhs);
+    else if (op == "*")
+        sg_bin_op = SageBuilder::buildMultiplyOp(lhs, rhs);
+    else if (op == "/")
+        sg_bin_op = SageBuilder::buildDivideOp(lhs, rhs);
+    else if (op == "//")
+        sg_bin_op = SageBuilder::buildIntegerDivideOp(lhs, rhs);
+    else if (op == "%")
+        sg_bin_op = SageBuilder::buildModOp(lhs, rhs);
+    else if (op == "<<")
+        sg_bin_op = SageBuilder::buildLshiftOp(lhs, rhs);
+    else if (op == ">>")
+        sg_bin_op = SageBuilder::buildRshiftOp(lhs, rhs);
+    else if (op == "&")
+        sg_bin_op = SageBuilder::buildBitAndOp(lhs, rhs);
+    else if (op == "|")
+        sg_bin_op = SageBuilder::buildBitOrOp(lhs, rhs);
+    else if (op == "^")
+        sg_bin_op = SageBuilder::buildBitXorOp(lhs, rhs);
+    else if (op == "**")
+        sg_bin_op = SageBuilder::buildExponentiationOp(lhs, rhs);
+    else {
+        cerr << "Unrecognized binary operator: " << op << endl;
+        ROSE_ABORT();
+    }
+
+    return PyEncapsulate(sg_bin_op);
+}
+
+/*
+ * Build an SgAddOp node from the given Python statements.
+ *  - PyObject* args = (PyObject*, PyObject*)
+ */
+PyObject*
 sage_buildCall(PyObject *self, PyObject *args)
 {
     PyObject* py_name    = PyTuple_GetItem(args, 0);
@@ -134,6 +181,12 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
                 SageBuilder::buildVoidType(),
                 sg_params,
                 sg_scope_statement);
+
+    if (sg_func_decl->get_definition()->get_body() == NULL) {
+        cerr << "NULL func def body" << endl;
+        sg_func_decl->get_definition()->set_body(
+                SageBuilder::buildBasicBlock());
+    }
 
     PyObject* return_tuple = PyTuple_New(2);
     PyTuple_SetItem(return_tuple, 0, PyEncapsulate(sg_func_decl));
