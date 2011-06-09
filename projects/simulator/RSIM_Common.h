@@ -1267,7 +1267,7 @@ static const Translate madvise_behaviors[] = {
 
 /* Third arg of mmap syscall */
 static const Translate mmap_pflags[] = {
-    TF(PROT_READ), TF(PROT_WRITE), TF(PROT_EXEC), TF(PROT_NONE),
+    TF(PROT_READ), TF(PROT_WRITE), TF(PROT_EXEC), TF3(-1, 0, PROT_NONE),
     T_END
 };
 

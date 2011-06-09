@@ -3654,8 +3654,7 @@ syscall_fchdir(RSIM_Thread *t, int callno)
 static void
 syscall_mprotect_enter(RSIM_Thread *t, int callno)
 {
-    static const Translate pflags[] = { TF(PROT_READ), TF(PROT_WRITE), TF(PROT_EXEC), TF(PROT_NONE), T_END };
-    t->syscall_enter("mprotect", "pdf", pflags);
+    t->syscall_enter("mprotect", "pdf", mmap_pflags);
 }
 
 static void
