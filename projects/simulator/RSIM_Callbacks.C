@@ -24,6 +24,9 @@ RSIM_Callbacks::init(const RSIM_Callbacks &other)
     copy_callback_vector(insn_pre,  other.insn_pre);
     copy_callback_vector(insn_post, other.insn_post);
 
+    copy_callback_vector(memory_pre, other.memory_pre);
+    copy_callback_vector(memory_post, other.memory_post);
+
     copy_callback_vector(syscall_pre,  other.syscall_pre);
     copy_callback_vector(syscall_post, other.syscall_post);
 
@@ -77,6 +80,50 @@ RSIM_Callbacks::call_insn_callbacks(When when, RSIM_Thread *thread, SgAsmInstruc
     if (when==BEFORE)
         return insn_pre.apply (prev, InsnCallback::Args(thread, insn), ROSE_Callbacks::FORWARD);
     return     insn_post.apply(prev, InsnCallback::Args(thread, insn), ROSE_Callbacks::FORWARD);
+}
+
+/******************************************************************************************************************************
+ *                                      Memory callbacks
+ ******************************************************************************************************************************/
+
+void
+RSIM_Callbacks::add_memory_callback(When when, MemoryCallback *cb)
+{
+    if (cb) {
+        if (when==BEFORE) {
+            memory_pre.append(cb);
+        } else {
+            memory_post.append(cb);
+        }
+    }
+}
+
+bool
+RSIM_Callbacks::remove_memory_callback(When when, MemoryCallback *cb)
+{
+    if (when==BEFORE)
+        return memory_pre.erase(cb, ROSE_Callbacks::BACKWARD);
+    return memory_post.erase(cb, ROSE_Callbacks::BACKWARD);
+}
+
+void
+RSIM_Callbacks::clear_memory_callbacks(When when)
+{
+    if (when==BEFORE) {
+        memory_pre.clear();
+    } else {
+        memory_post.clear();
+    }
+}
+
+bool
+RSIM_Callbacks::call_memory_callbacks(When when,
+                                      RSIM_Process *process, MemoryMap::Protection how, rose_addr_t va, size_t nbytes,
+                                      bool prev)
+{
+    if (when==BEFORE)
+        return memory_pre.apply (prev, MemoryCallback::Args(process, how, va, nbytes), ROSE_Callbacks::FORWARD);
+    return     memory_post.apply(prev, MemoryCallback::Args(process, how, va, nbytes), ROSE_Callbacks::FORWARD);
 }
 
 /******************************************************************************************************************************

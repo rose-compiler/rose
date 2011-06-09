@@ -97,20 +97,26 @@ RSIM_Process::get_thread(pid_t tid) const
 size_t
 RSIM_Process::mem_write(const void *buf, rose_addr_t va, size_t size, unsigned req_perms/*=MM_PROT_WRITE*/)
 {
-    size_t retval;
+    size_t retval = 0;
+    bool cb_status = callbacks.call_memory_callbacks(RSIM_Callbacks::BEFORE, this, MemoryMap::MM_PROT_WRITE, va, size, true);
     RTS_WRITE(rwlock()) {
-        retval = map->write(buf, va, size, req_perms);
+        if (cb_status)
+            retval = map->write(buf, va, size, req_perms);
     } RTS_WRITE_END;
+    callbacks.call_memory_callbacks(RSIM_Callbacks::AFTER, this, MemoryMap::MM_PROT_WRITE, va, size, cb_status);
     return retval;
 }
 
 size_t
 RSIM_Process::mem_read(void *buf, rose_addr_t va, size_t size, unsigned req_perms/*=MM_PROT_READ*/)
 {
-    size_t retval;
+    size_t retval = 0;
+    bool cb_status = callbacks.call_memory_callbacks(RSIM_Callbacks::BEFORE, this, MemoryMap::MM_PROT_READ, va, size, true);
     RTS_READ(rwlock()) {
-        retval = map->read(buf, va, size, req_perms);
+        if (cb_status)
+            retval = map->read(buf, va, size, req_perms);
     } RTS_READ_END;
+    callbacks.call_memory_callbacks(RSIM_Callbacks::AFTER, this, MemoryMap::MM_PROT_READ, va, size, cb_status);
     return retval;
 }
 

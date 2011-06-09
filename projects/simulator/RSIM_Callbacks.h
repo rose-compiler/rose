@@ -236,6 +236,68 @@ public:
 
 
     /**************************************************************************************************************************
+     *                                  Memory Callbacks
+     **************************************************************************************************************************/
+public:
+
+    /** Memory callbacks invoked on every memory access. */
+    class MemoryCallback: public Callback {
+    public:
+
+        /** Arguments passed to memory callbacks. */
+        struct Args {
+            Args(RSIM_Process *process, MemoryMap::Protection how, rose_addr_t va, size_t nbytes)
+                : process(process), how(how), va(va), nbytes(nbytes) {}
+            RSIM_Process *process;              /**< The process whose memory is accessed. */
+            MemoryMap::Protection how;          /**< How memory is being access. */
+            rose_addr_t va;                     /**< Virtual address for beginning of memory access. */
+            size_t nbytes;                      /**< Size of memory access. */
+        };
+        virtual bool operator()(bool prev, const Args&) = 0;
+    };
+        
+    /** Registers a memory callback.  Memory callbacks are invoked before or after (depending on @p when) every
+     *  memory access.  The specified callback object is inserted into the list without copying it. See
+     *  call_memory_callbacks() for details about how these callbacks are invoked.
+     *
+     *  Thread safety:  This method is thread safe. */
+    void add_memory_callback(When, MemoryCallback*);
+
+    /** Unregisters a memory callback.  The most recently registered instance of the specified callback (if any) is
+     *  removed from the pre- or post-memory callback list, depending on the value of @p when).  The removed callback
+     *  object is not destroyed.  Returns true if a callback was removed, false if not.
+     *
+     *  Thread safety:  This method is thread safe. */
+    bool remove_memory_callback(When, MemoryCallback*);
+
+
+    /** Removes all memory callbacks.  The pre- or post-memory callbacks are removed, depending on the value of @p
+     * when. None of the removed callbacks are destroyed.
+     *
+     *  Thread safety:  This method is thread safe. */
+    void clear_memory_callbacks(When);
+
+    /** Invokes all the memory callbacks.  The pre- or post-memory callbacks (depending on the value of @p when) are
+     *  invoked in the order they were registered.  The specified @p prev value is passed to the first callback as its @p prev
+     *  argument; subsequent callbacks' @p prev argument is the return value of the previous callback; the return value of the
+     *  final callback becomes the return value of this method.  However, if no callbacks are invoked (because the list is
+     *  empty) then this method's return value is the specified @p prev value.  The other arguments are passed to each of
+     *  the callbacks.
+     *
+     *  When the simulator calls this function for pre-memory callbacks, it does so with @p prev set.  If the return value is
+     *  false, then the memory access fails. The post-memory callbacks are invoked regardless of whether the memory was
+     *  accessed, and the initial @p prev value for these callbacks is the return value from the last pre-memory callback (or
+     *  true if there were none).
+     *
+     *  Thread safety:  This method is thread safe.  The callbacks may register and/or unregister themselves or other callbacks
+     *  from this RSIM_Callbacks object, but those actions do not affect which callbacks are made by this invocation of
+     *  call_memory_callbacks(). */
+    bool call_memory_callbacks(When, RSIM_Process *process, MemoryMap::Protection how, rose_addr_t va, size_t nbytes, bool prev);
+
+
+
+
+    /**************************************************************************************************************************
      *                                  System Call Callbacks
      **************************************************************************************************************************/
 public:
@@ -594,6 +656,9 @@ private:
     /* See init() if you add more vectors */
     ROSE_Callbacks::List<InsnCallback> insn_pre;
     ROSE_Callbacks::List<InsnCallback> insn_post;
+
+    ROSE_Callbacks::List<MemoryCallback> memory_pre;
+    ROSE_Callbacks::List<MemoryCallback> memory_post;
 
     ROSE_Callbacks::List<SyscallCallback> syscall_pre;
     ROSE_Callbacks::List<SyscallCallback> syscall_post;

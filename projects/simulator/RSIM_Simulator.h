@@ -269,6 +269,9 @@ public:
     void install_callback(RSIM_Callbacks::InsnCallback *cb) {
         callbacks.add_insn_callback(RSIM_Callbacks::BEFORE, cb);
     }
+    void install_callback(RSIM_Callbacks::MemoryCallback *cb) {
+        callbacks.add_memory_callback(RSIM_Callbacks::BEFORE, cb);
+    }
     void install_callback(RSIM_Callbacks::SyscallCallback *cb) {
         callbacks.add_syscall_callback(RSIM_Callbacks::BEFORE, cb);
     }
