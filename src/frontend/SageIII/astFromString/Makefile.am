@@ -12,5 +12,4 @@ include_HEADERS = AstFromString.h ParserBuilder.hpp ParserBuilder.tpp
 
 clean-local:
 	rm -f *.la
-	rm -rf .libs/
 
