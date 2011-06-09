@@ -5,19 +5,83 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-/** Show memory mapping when an address is executed. */
-class MemoryMapDumper: public RSIM_Callbacks::InsnCallback {
+/** Prints the name of the currently executing function.
+ *
+ *  In order for this to work, instructions must be assigned to functions.  This can be done by the MemoryDisassembler
+ *  tool. The function name is printed to the TRACE_MISC facility whenever the current function changes. */
+class FunctionReporter: public RSIM_Callbacks::InsnCallback {
 public:
-    rose_addr_t when;
-
-    MemoryMapDumper(rose_addr_t when)
-        : when(when) {}
-
-    virtual MemoryMapDumper *clone() { return this; }
+    virtual FunctionReporter *clone() { return this; }
 
     virtual bool operator()(bool enabled, const Args &args) {
-        if (enabled && args.insn->get_address()==when)
-            args.thread->get_process()->mem_showmap(args.thread->tracing(TRACE_MISC));
+        SgAsmBlock *basic_block = isSgAsmBlock(args.insn->get_parent());
+        SgAsmFunctionDeclaration *func = basic_block ? basic_block->get_enclosing_function() : NULL;
+        std::string new_name = func ? func->get_name() : "";
+        if (new_name!=name) {
+            name = new_name;
+            if (name.empty()) {
+                args.thread->tracing(TRACE_MISC)->mesg("in unknown function");
+            } else {
+                args.thread->tracing(TRACE_MISC)->mesg("in function \"%s\"", name.c_str());
+            }
+        }
+        return enabled;
+    }
+
+private:
+    std::string name;
+};
+
+
+/** Checks whether specimen memory matches a known value.
+ *
+ *  This instruction callback reads from the specified memory area and verifies that the conetnts of memory at that location
+ *  match the expected value.  If not, a message is printed to the TRACE_MISC facility and the callback is disabled.
+ *
+ *  Here's an example of how to use this tool:
+ *  @code
+ *  uint8_t valid_mem = {0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x00, 0xef,
+ *                       0x67, 0x00, 0x00, 0x00, 0x7f, 0x00, 0x00, 0x03};
+ *  MemoryChecker mcheck(0x7c402740, sizeof valid_mem, valid_mem);
+ *  simulator.install_callback(&mcheck);
+ *  @endcode
+ */
+class MemoryChecker: public RSIM_Callbacks::InsnCallback {
+    uint8_t *buffer;
+public:
+    rose_addr_t va;                             /**< Starting address of memory to check. */
+    size_t nbytes;                              /**< Number of bytes to check. */
+    const uint8_t *answer;                      /**< Valid memory values to check against. */
+    bool report_short;                          /**< Treat short read as a difference. */
+    bool triggered;                             /**< Set once the checker has been triggered. */
+
+    MemoryChecker(rose_addr_t va, size_t nbytes, const uint8_t *answer)
+        : va(va), nbytes(nbytes), answer(answer), report_short(false), triggered(false) {
+        buffer = new uint8_t[nbytes];
+    }
+
+    ~MemoryChecker() {
+        delete[] buffer;
+    }
+
+    virtual MemoryChecker *clone() { return this; }
+
+    virtual bool operator()(bool enabled, const Args &args) {
+        if (!triggered) {
+            size_t nread = args.thread->get_process()->mem_read(buffer, va, nbytes);
+            if (nread<nbytes && report_short) {
+                args.thread->tracing(TRACE_MISC)->mesg("MemoryChecker: read failed at 0x%08"PRIx64, va+nread);
+                triggered = true;
+            } else {
+                for (size_t i=0; i<nread && i<nbytes; i++) {
+                    if (answer[i]!=buffer[i]) {
+                        args.thread->tracing(TRACE_MISC)->mesg("MemoryChecker: failed at 0x%08"PRIx64, va+i);
+                        triggered = true;
+                        break;
+                    }
+                }
+            }
+        }
         return enabled;
     }
 };
@@ -27,9 +91,9 @@ public:
  *  Runs the disassembler the first time we hit the specified execution address. */
 class MemoryDisassembler: public RSIM_Callbacks::InsnCallback {
 public:
-    rose_addr_t when;                   // IP value when this callback is triggered
-    bool triggered;                     // set once this callback has been triggered
-    bool show;                          // if true, then emit the results to stdout
+    rose_addr_t when;                   /**< IP value when this callback is to be triggered. */
+    bool triggered;                     /**< Set once this callback has been triggered. */
+    bool show;                          /**< Controls whether result is emitted. If true, then emit the results to stdout. */
 
     MemoryDisassembler(rose_addr_t when, bool show)
         : when(when), triggered(false), show(show) {}
@@ -67,11 +131,11 @@ public:
  */
 class MemoryInitializer: public RSIM_Callbacks::InsnCallback {
 public:
-    std::string filename;               // name of file containing memory image
-    rose_addr_t memaddr;                // address where file is loaded
-    rose_addr_t when;                   // IP value when this callback is triggered
-    bool triggered;                     // set once this callback has been triggered
-    bool need_write_perm;               // write permission needed?
+    std::string filename;               /**< Name of file containing memory image. */
+    rose_addr_t memaddr;                /**< Address where file contents are loaded. */
+    rose_addr_t when;                   /**< IP value when this callback is to be triggered. */
+    bool triggered;                     /**< Set once this callback has been triggered. */
+    bool need_write_perm;               /**< Is write permission needed on the memory? */
 
     MemoryInitializer(const std::string &filename, rose_addr_t memaddr, rose_addr_t when)
         : filename(filename), memaddr(memaddr), when(when), triggered(false), need_write_perm(true) {}
@@ -115,12 +179,29 @@ public:
     }
 };
 
+/** Show memory mapping when an address is executed. */
+class MemoryMapDumper: public RSIM_Callbacks::InsnCallback {
+public:
+    rose_addr_t when;                   /**< IP value when this callback is to be triggered. */
+
+    MemoryMapDumper(rose_addr_t when)
+        : when(when) {}
+
+    virtual MemoryMapDumper *clone() { return this; }
+
+    virtual bool operator()(bool enabled, const Args &args) {
+        if (enabled && args.insn->get_address()==when)
+            args.thread->get_process()->mem_showmap(args.thread->tracing(TRACE_MISC));
+        return enabled;
+    }
+};
+
 /** Prints register contents.
  *
  *  Every time execution hits a specified address, registers are dumped to the TRACE_MISC facility. */
 class RegisterDumper: public RSIM_Callbacks::InsnCallback {
 public:
-    rose_addr_t when;                   // IP value when this callback is triggered
+    rose_addr_t when;                   /**< IP value when this callback is to be triggered. */
 
     RegisterDumper(rose_addr_t when)
         : when(when) {}
@@ -137,7 +218,7 @@ public:
 /** Generates a stack trace when a signal arrives. */
 class SignalStackTrace: public RSIM_Callbacks::SignalCallback {
 public:
-    bool disassembled;
+    bool disassembled;                  /**< Controls disassembly.  If clear, then disassemble memory and set. */
 
     SignalStackTrace()
         : disassembled(false) {}

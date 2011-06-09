@@ -144,33 +144,8 @@ main(int argc, char *argv[], char *envp[])
 
 
     /***************************************************************************************************************************/
-#   if 1 /* EXAMPLE: If you change this then also update the example text in RSIM_Callbacks.h */
-    {
-        /* This example depends on the previous one, which called RSIM_Process::disassemble() */
-        class ShowFunction: public RSIM_Callbacks::InsnCallback {
-        public:
-            // Share a single callback among the simulator, the process, and all threads.
-            virtual ShowFunction *clone() { return this; }
-
-            // The actual callback.
-            virtual bool operator()(bool prev, const Args &args) {
-                SgAsmBlock *basic_block = isSgAsmBlock(args.insn->get_parent());
-                SgAsmFunctionDeclaration *func = basic_block ?
-                                                 SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(basic_block) :
-                                                 NULL;
-                if (func && func->get_name()!=name) {
-                    name = func->get_name();
-                    args.thread->tracing(TRACE_MISC)->mesg("in function \"%s\"", name.c_str());
-                }
-                return prev;
-            }
-
-        private:
-            std::string name;
-        };
-
-        sim.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new ShowFunction);
-    }
+#   if 1 /* EXAMPLE: report function names. */
+    sim.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new FunctionReporter);
 #   endif
 
     /***************************************************************************************************************************/
