@@ -74,41 +74,12 @@ bool StateSavingStatementHandler::checkStatement(SgStatement* stmt) const
 	return false;
 }
 
-/** Given a type, remove all outer layers of SgModiferType and SgTypeDefType. */
-SgType* cleanModifersAndTypeDefs(SgType* t)
-{
-	while (true)
-	{
-		if (isSgModifierType(t))
-		{
-			t = isSgModifierType(t)->get_base_type();
-			continue;
-		}
-		else if (isSgTypedefType(t))
-		{
-			t = isSgTypedefType(t)->get_base_type();
-			continue;
-		}
-		return t;
-	}
-}
 
-SgType* removePointerOrReferenceType(SgType* t)
-{
-	t = cleanModifersAndTypeDefs(t);
-	if (isSgPointerType(t))
-		t = isSgPointerType(t)->get_base_type();
-	else if (isSgReferenceType(t))
-		t = isSgReferenceType(t)->get_base_type();
-	
-	t = cleanModifersAndTypeDefs(t);
-	return t;
-}
 
 SgExpression* StateSavingStatementHandler::restoreOneVariable(const VariableRenaming::VarName& varName, SgType* pushedType)
 {
 	SgType* varDeclaredType = varName.back()->get_type();
-	SgType* dereferencedType = removePointerOrReferenceType(varDeclaredType);
+	SgType* dereferencedType = BackstrokeUtility::removePointerOrReferenceType(varDeclaredType);
 
 	SgExpression* assignedVarExpression = VariableRenaming::buildVariableReference(varName);
 
@@ -174,7 +145,7 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 	{
 		//If the variable has a class type and it's accessed through a pointer or a reference,
 		//we have to find the concrete type to save.
-		SgType* dereferencedType = removePointerOrReferenceType(varType);
+		SgType* dereferencedType = BackstrokeUtility::removePointerOrReferenceType(varType);
 
 		if (SgClassType* classType = isSgClassType(dereferencedType))
 		{
@@ -205,6 +176,7 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 
 			//Construct the appropriate cast for each concrete subclass.
 			vector<SgExpression*> castedVars;
+			vector<SgType*> concreteTypes;
 			foreach (SgClassDefinition* subclass, concreteSubclasses)
 			{
 				//Cast the variable to its subclass
@@ -213,13 +185,10 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 					subclassType = SageBuilder::buildPointerType(subclass->get_declaration()->get_type());
 				else if (isVarReference)
 					subclassType = SageBuilder::buildReferenceType(subclass->get_declaration()->get_type());
+				concreteTypes.push_back(subclass->get_declaration()->get_type());
 
 				SgExpression* castedVarExp = VariableRenaming::buildVariableReference(varName);
 				castedVarExp = SageBuilder::buildCastExp(castedVarExp, subclassType, SgCastExp::e_static_cast);
-
-				//If the variable is a pointer, we dereference it so we save the value, not the pointer
-				if (isVarPointer)
-					castedVarExp = SageBuilder::buildPointerDerefExp(castedVarExp);
 
 				castedVars.push_back(castedVarExp);
 			}
@@ -253,15 +222,9 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 			{
 				SgStatement* pushTrueBody = NULL;
 
-				if (SageInterface::isCopyConstructible(castedVars[i]->get_type()))
+				if (SageInterface::isCopyConstructible(concreteTypes[i]))
 				{
-					//We call the copy constructor of the subclass
-					SgExprListExp* constructorParam = SageBuilder::buildExprListExp(castedVars[i]);
-					SgConstructorInitializer* copyConstructor = 
-							SageBuilder::buildConstructorInitializer(NULL, constructorParam, castedVars[i]->get_type(), 
-							false, true, true, true);
-
-					SgNewExp* copiedVar = SageBuilder::buildNewExp(castedVars[i]->get_type(), NULL, copyConstructor, NULL, 0, NULL);
+					SgExpression* copiedVar = cloneValueExp(castedVars[i], castedVars[i]->get_type());
 
 					//Now, push the resulting pointer
 					pushTrueBody = SageBuilder::buildExprStatement(pushVal(copiedVar, varType));
@@ -269,7 +232,7 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 				else
 				{
 					printf("OH NO THE TYPE '%s' is not copy constructible!\n", 
-							castedVars[i]->get_type()->unparseToString().c_str());
+							concreteTypes[i]->unparseToString().c_str());
 					printf("The type %s abstract\n", 
 							SageInterface::isPureVirtualClass(castedVars[i]->get_type(), classHierarchy) ? "IS" : "IS NOT");
 
@@ -321,11 +284,11 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 			for (size_t i = 0; i < castedVars.size(); i++)
 			{
 				//We only push vars that are copy constructible, so there's no need to do extra checks in the commit function
-				if (!SageInterface::isCopyConstructible(castedVars[i]->get_type()))
+				if (!SageInterface::isCopyConstructible(concreteTypes[i]))
 					continue;
 
 				SgExpression* poppedVarRef = SageInterface::copyExpression(tempVarRef);
-				SgType* dynamicType = SageBuilder::buildPointerType(concreteSubclasses[i]->get_declaration()->get_type());
+				SgType* dynamicType = castedVars[i]->get_type();
 				SgExpression* dynamicCast =
 						SageBuilder::buildCastExp(poppedVarRef, dynamicType, SgCastExp::e_dynamic_cast);
 
@@ -335,21 +298,18 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 
 				//Perform a cast to the dynamic type of the popped value
 				SgExpression* castedPoppedVal = SageBuilder::buildCastExp(SageInterface::copyExpression(tempVarRef), dynamicType);
-				castedPoppedVal = SageBuilder::buildPointerDerefExp(castedPoppedVal);
 				
 				//Perform a cast of the original variable (and dereference)
 				//The extra cast ensures that the most specific assignment operator that's applicable will be used
 				SgExpression* varRef = VariableRenaming::buildVariableReference(varName);
-				varRef = SageBuilder::buildCastExp(varRef, dynamicType);
-				varRef = SageBuilder::buildPointerDerefExp(varRef);
 				
-				SgAssignOp* invokeAssignmentOp = SageBuilder::buildAssignOp(varRef, castedPoppedVal);
+				SgExpression* assignment = assignPointerExp(varRef, castedPoppedVal, dereferencedType, concreteTypes[i]);
 				
 				//Now build an if-statement that checks for the dynamic type, and if the dynamic type matches,
 				//we do the assignment
 				SgStatement* falseBody = SageBuilder::buildBasicBlock();
 				SgIfStmt* latestCheck = 
-						SageBuilder::buildIfStmt(comparison, SageBuilder::buildExprStatement(invokeAssignmentOp), falseBody);
+						SageBuilder::buildIfStmt(comparison, SageBuilder::buildExprStatement(assignment), falseBody);
 
 				//All this if-statement to the chain
 				if (!reverseIfStatements.empty())
@@ -400,7 +360,7 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 			for (size_t i = 0; i < castedVars.size(); i++)
 			{
 				//We only push vars that are copy constructible, so there's no need to do extra checks in the commit function
-				if (!SageInterface::isCopyConstructible(castedVars[i]->get_type()))
+				if (!SageInterface::isCopyConstructible(concreteTypes[i]))
 					continue;
 
 				SgExpression* varRef = SageInterface::copyExpression(tempVarRef);
@@ -467,8 +427,8 @@ void StateSavingStatementHandler::saveOneVariable(const VariableRenaming::VarNam
 
 	//If it's an enum type, we want to cast the value to int
 	SgType* underlyingType = valueToBePushedExpression->get_type();
-	underlyingType = cleanModifersAndTypeDefs(underlyingType);
-
+	underlyingType = BackstrokeUtility::cleanModifersAndTypeDefs(underlyingType);	
+	
 	if (isSgEnumType(underlyingType))
 	{
 		valueToBePushedExpression = SageBuilder::buildCastExp(valueToBePushedExpression, SageBuilder::buildIntType());
