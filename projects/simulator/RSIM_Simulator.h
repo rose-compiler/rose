@@ -260,6 +260,29 @@ public:
     }
     /** @} */
 
+    /** Install a callback object.
+     *
+     *  This is just a convenient way of installing a callback object.  It appends it to the BEFORE slot of the appropriate
+     *  queue.
+     *
+     *  @{ */
+    void install_callback(RSIM_Callbacks::InsnCallback *cb) {
+        callbacks.add_insn_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::SyscallCallback *cb) {
+        callbacks.add_syscall_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::SignalCallback *cb) {
+        callbacks.add_signal_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::ThreadCallback *cb) {
+        callbacks.add_thread_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::ProcessCallback *cb) {
+        callbacks.add_process_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    /** @} */
+
     /**************************************************************************************************************************
      *                                  System calls
      **************************************************************************************************************************/
