@@ -65,6 +65,12 @@ x86sim_SOURCES = x86sim.C
 x86sim_CPPFLAGS = $(ROSE_INCLUDES) -DX86_VDSO_PATH_1='"$(srcdir)"' -DX86_VDSO_PATH_2='"$(include_dir)"'
 x86sim_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
+# Simulator for windows programs
+noinst_PROGRAMS += x86win
+x86win_SOURCES = x86win.C
+x86win_CPPFLAGS = $(ROSE_INCLUDES)
+x86win_LDADD = libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 ###############################################################################################################################
 #  DEMOS
 ###############################################################################################################################
