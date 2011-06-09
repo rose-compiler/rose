@@ -621,39 +621,6 @@ BinaryAnalysis::Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &
                                 }
                             }
                         }
-                        
-
-//                      if (new_idom==vertex_i) {                               /* if new_idom is undefined... */
-//                          if (idom[predecessor_i]!=predecessor_i || predecessor==start) { /* pred is start or its idom defined */
-//                              new_idom = predecessor_i;
-//                              if (debug) {
-//                                  fprintf(debug, "; new doms of #%zu(%zu) are ", vertex_i, vertex);
-//                                  debug_dom_set(debug, vertex_i, predecessor_i, idom, flowlist);
-//                              }
-//                          } else if (debug) {
-//                              fprintf(debug, "; no change -- pred dom set not defined yet");
-//                          }
-//                      } else if (idom[predecessor_i]!=predecessor_i) {
-//                          if (debug) {
-//                              fprintf(debug, "; new doms of #%zu(%zu) are intersect(", vertex_i, vertex);
-//                              debug_dom_set(debug, vertex_i, new_idom, idom, flowlist);
-//                              fprintf(debug, ", ");
-//                              debug_dom_set(debug, vertex_i, predecessor_i, idom, flowlist);
-//                          }
-//                          size_t f1=new_idom, f2=predecessor_i;
-//                          while (f1!=f2) {
-//                              while (f1 > f2)
-//                                  f1 = idom[f1];
-//                              while (f2 > f1)
-//                                  f2 = idom[f2];
-//                          }
-//                          new_idom = f1;
-//                          if (debug) {
-//                              fprintf(debug, ") = ");
-//                              debug_dom_set(debug, vertex_i, new_idom, idom, flowlist);
-//                          }
-//                      }
-
                     }
                     if (debug)
                         fprintf(debug, "\n");
