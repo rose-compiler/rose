@@ -95,21 +95,21 @@ RSIM_Process::get_thread(pid_t tid) const
 }
 
 size_t
-RSIM_Process::mem_write(const void *buf, rose_addr_t va, size_t size)
+RSIM_Process::mem_write(const void *buf, rose_addr_t va, size_t size, unsigned req_perms/*=MM_PROT_WRITE*/)
 {
     size_t retval;
     RTS_WRITE(rwlock()) {
-        retval = map->write(buf, va, size);
+        retval = map->write(buf, va, size, req_perms);
     } RTS_WRITE_END;
     return retval;
 }
 
 size_t
-RSIM_Process::mem_read(void *buf, rose_addr_t va, size_t size)
+RSIM_Process::mem_read(void *buf, rose_addr_t va, size_t size, unsigned req_perms/*=MM_PROT_READ*/)
 {
     size_t retval;
     RTS_READ(rwlock()) {
-        retval = map->read(buf, va, size);
+        retval = map->read(buf, va, size, req_perms);
     } RTS_READ_END;
     return retval;
 }

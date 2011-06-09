@@ -196,8 +196,11 @@ public:
      *  space is not mapped or because (part of) the destination address space does not have write permission, the this method
      *  will write as much as possible up to the first invalid address.  The return value is the number of bytes copied.
      *
+     *  The specimen memory map must have the required permission bits set in order for the write to succeed.  By default, the
+     *  memory must be writable.
+     *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    size_t mem_write(const void *buf, rose_addr_t va, size_t size);
+    size_t mem_write(const void *buf, rose_addr_t va, size_t size, unsigned req_perms=MemoryMap::MM_PROT_WRITE);
 
     /** Copies data from specimen address space.  Copies up to @p size bytes from the specimen memory beginning at virtual
      *  address @p va into the beginning of @p buf.  If the requested number of bytes cannot be copied because (part of) the
@@ -205,9 +208,12 @@ public:
      *  permission, then this method will read as much as possible up to the first invalid address.  The return value is the
      *  number of bytes copied.
      *
+     *  The specimen memory map must have the required permission bits set in order for the read to succeed.  By default, the
+     *  memory must be readable.
+     *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads
      *  concurrently. */
-    size_t mem_read(void *buf, rose_addr_t va, size_t size);
+    size_t mem_read(void *buf, rose_addr_t va, size_t size, unsigned req_perms=MemoryMap::MM_PROT_READ);
 
     /** Reads a NUL-terminated string from specimen memory. The NUL is not included in the string.  If a limit is specified
      *  then the returned string will contain at most this many characters (a value of zero implies no limit).  If the string
