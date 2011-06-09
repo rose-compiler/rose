@@ -51,12 +51,15 @@ class MemoryChecker: public RSIM_Callbacks::InsnCallback {
 public:
     rose_addr_t va;                             /**< Starting address of memory to check. */
     size_t nbytes;                              /**< Number of bytes to check. */
-    const uint8_t *answer;                      /**< Valid memory values to check against. */
+    uint8_t *answer;                            /**< Valid memory values to check against. User-supplied buffer. */
     bool report_short;                          /**< Treat short read as a difference. */
-    bool triggered;                             /**< Set once the checker has been triggered. */
+    bool update_answer;                         /**< If true, update answer when memory changes, and re-arm. */
+    bool show_stack_frames;                     /**< If true, show stack frames when memory changes. */
+    bool armed;                                 /**< Is this callback armed? */
 
-    MemoryChecker(rose_addr_t va, size_t nbytes, const uint8_t *answer)
-        : va(va), nbytes(nbytes), answer(answer), report_short(false), triggered(false) {
+    MemoryChecker(rose_addr_t va, size_t nbytes, uint8_t *answer, bool update_answer)
+        : va(va), nbytes(nbytes), answer(answer), report_short(false), update_answer(update_answer),
+          show_stack_frames(true), armed(true) {
         buffer = new uint8_t[nbytes];
     }
 
@@ -67,16 +70,23 @@ public:
     virtual MemoryChecker *clone() { return this; }
 
     virtual bool operator()(bool enabled, const Args &args) {
-        if (!triggered) {
+        if (armed) {
             size_t nread = args.thread->get_process()->mem_read(buffer, va, nbytes);
             if (nread<nbytes && report_short) {
                 args.thread->tracing(TRACE_MISC)->mesg("MemoryChecker: read failed at 0x%08"PRIx64, va+nread);
-                triggered = true;
+                armed = false;
             } else {
                 for (size_t i=0; i<nread && i<nbytes; i++) {
                     if (answer[i]!=buffer[i]) {
-                        args.thread->tracing(TRACE_MISC)->mesg("MemoryChecker: failed at 0x%08"PRIx64, va+i);
-                        triggered = true;
+                        args.thread->tracing(TRACE_MISC)->mesg("MemoryChecker: memory changed at 0x%08"PRIx64
+                                                               " from 0x%02x to 0x%02x", va+i, answer[i], buffer[i]);
+                        if (show_stack_frames)
+                            args.thread->report_stack_frames(args.thread->tracing(TRACE_MISC));
+                        if (update_answer) {
+                            memcpy(answer, buffer, std::min(nread, nbytes));
+                        } else {
+                            armed = false;
+                        }
                         break;
                     }
                 }
