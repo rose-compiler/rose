@@ -158,10 +158,7 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
             argno++;
 
         } else if (!strcmp(argv[argno], "--debug")) {
-            tracing_flags = tracingFacilityBit(TRACE_MISC)    |
-                            tracingFacilityBit(TRACE_INSN)    |
-                            tracingFacilityBit(TRACE_SYSCALL) |
-                            tracingFacilityBit(TRACE_SIGNAL);
+            tracing_flags = tracingFacilityBit(TRACE_MISC);
             argno++;
 
         } else if (!strncmp(argv[argno], "--core=", 7)) {
