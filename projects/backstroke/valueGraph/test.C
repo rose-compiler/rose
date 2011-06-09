@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 
     int counter = 0;
 
-#if 0
+#if 1
     // Draw the AST.
     CppToDotTranslator c;
     c.translate(argc,argv);
@@ -33,6 +33,10 @@ int main(int argc, char *argv[])
     eventList.insert("PacketRxEnd");
     eventList.insert("GetL2Proto");
     eventList.insert("Busy");
+    eventList.insert("Send");
+    //eventList.insert("DataIndication");
+    eventList.insert("Timeout");
+    eventList.insert("Notify");
     
     vector<SgFunctionDefinition*> funcDefs;
 
@@ -74,7 +78,7 @@ int main(int argc, char *argv[])
         //if (!funcDef->get_file_info()->isSameFile(sourceFile))
         //    continue;
 
-#if 0
+#if 1
         Backstroke::BackstrokeCFG cfg(funcDef);
         cfg.toDot(cfgFileName);
         
@@ -94,7 +98,7 @@ int main(int argc, char *argv[])
         reverser.reverseEvent(funcDef);
 #endif
 
-        //reverser.valueGraphToDot(vgFileName);
+        reverser.valueGraphToDot(vgFileName);
 
         cout << "\nFunction " << funcName << " is processed.\n\n";
     }

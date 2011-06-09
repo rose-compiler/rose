@@ -189,6 +189,7 @@ struct FunctionCallNode: ValueGraphNode
     virtual std::string toString() const;
     
     bool isVirtual;
+    bool isConst;
 };
 
 #if 0

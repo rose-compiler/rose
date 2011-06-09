@@ -108,6 +108,18 @@ SgExpression* buildPushFunctionCall(SgExpression* para)
             SageBuilder::buildExprListExp(para));
 }
 
+SgExpression* buildStoreFunctionCall(SgExpression* para)
+{
+    return buildFunctionCallExp("__store__", buildVoidType(), 
+            SageBuilder::buildExprListExp(para));
+}
+
+SgExpression* buildRestoreFunctionCall(SgExpression* para)
+{
+    return buildFunctionCallExp("__restore__", buildVoidType(), 
+            SageBuilder::buildExprListExp(para));
+}
+
 SgStatement* buildPushStatement(ValueNode* valNode)
 {
     return buildExprStatement(buildPushFunctionCall(valNode->var.getVarRefExp()));
@@ -125,17 +137,27 @@ SgStatement* buildPushStatementForPointerType(ValueNode* valNode)
             buildConstructorInitializer(0, exprList, type, 0, 0, 1, 0);
     SgNewExp* newExp = buildNewExp(type, 0, initializer, 0, 0, 0);
 #endif
-    
-    // Build a function call to __clone__ instead of a new operation.
-    SgExprListExp* exprList = buildExprListExp(valNode->var.getVarRefExp());
-    SgFunctionCallExp* newExp = buildFunctionCallExp("__clone__", valNode->getType(), exprList);
-    
-    return buildExprStatement(buildPushFunctionCall(newExp));
+        
+    return buildExprStatement(
+            buildPushFunctionCall(
+                buildCloneFunctionCall(valNode->var.getVarRefExp(), valNode->getType())));
+}
+
+SgExpression* buildCloneFunctionCall(SgExpression* exp, SgType* type)
+{
+    SgExprListExp* exprList = buildExprListExp(exp);
+    return buildFunctionCallExp("__clone__", type, exprList); 
+}
+
+SgExpression* buildDestroyFunctionCall(SgExpression* exp)
+{
+    SgExprListExp* exprList = buildExprListExp(exp);
+    return buildFunctionCallExp("__destroy__", buildVoidType(), exprList); 
 }
 
 SgExpression* buildPopFunctionCall(SgType* type)
 {
-    return buildFunctionCallExp("pop< " + get_type_name(type) + " >",
+    return buildFunctionCallExp("__pop__< " + get_type_name(type) + " >",
             type, SageBuilder::buildExprListExp());
 }
 

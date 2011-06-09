@@ -119,18 +119,22 @@ void EventReverser::generateCode()
         SgVariableDeclaration* pathNumDecl =
                 SageBuilder::buildVariableDeclaration(
                     pathNumName,
-                    SageBuilder::buildIntType(),
+                    SageBuilder::buildIntType()/*,
                     SageBuilder::buildAssignInitializer(
                         buildPopFunctionCall(
-                            buildIntType())));
+                            buildIntType()))*/);
+        SgStatement* restoreNum = SageBuilder::buildExprStatement(
+                    buildRestoreFunctionCall(buildVarRefExp(pathNumDecl)));
         popScopeStack();
 
+        SageInterface::prependStatement(restoreNum, rvsFuncDef_->get_body());
         SageInterface::prependStatement(pathNumDecl, rvsFuncDef_->get_body());
+        SageInterface::prependStatement(SageInterface::copyStatement(restoreNum), cmtFuncDef_->get_body());
         SageInterface::prependStatement(SageInterface::copyStatement(pathNumDecl), cmtFuncDef_->get_body());
     }
     
     // Build all three functions.
-    //generateCode(0, rvsCFG, rvsFuncDef_->get_body(), cmtFuncDef_->get_body(), pathNumName);
+    generateCode(0, rvsCFG, rvsFuncDef_->get_body(), cmtFuncDef_->get_body(), pathNumName);
 
 
     // If the number of path is 1, we don't have to use path numbers.
@@ -320,40 +324,50 @@ void EventReverser::buildFunctionBodies()
 
     SgScopeStatement* funcScope = funcDecl->get_scope();
     string funcName = funcDecl->get_name();
+    
+    if (SgMemberFunctionDeclaration* memFuncDecl = isSgMemberFunctionDeclaration(funcDecl))
+    {
+        //SgMemberFunctionType* memFuncType = isSgMemberFunctionType(memFuncDecl->get_type());
+        //ROSE_ASSERT(memFuncType);
 
-    //Create the function declaration for the forward body
-    SgName fwdFuncName = funcName + "_forward";
-    SgFunctionDeclaration* fwdFuncDecl = buildDefiningFunctionDeclaration(
-                    fwdFuncName,
-                    funcDecl->get_orig_return_type(),
-                    isSgFunctionParameterList(
-                        copyStatement(funcDecl->get_parameterList())),
-                    funcScope);
-    fwdFuncDef_ = fwdFuncDecl->get_definition();
-    //SageInterface::replaceStatement(fwdFuncDef->get_body(), isSgBasicBlock(stmt.fwd_stmt));
+        //Create the function declaration for the forward body
+        SgName fwdFuncName = funcName + "_forward";
+        SgFunctionDeclaration* fwdFuncDecl = buildDefiningMemberFunctionDeclaration(
+                        fwdFuncName,
+                        funcDecl->get_orig_return_type(),
+                        isSgFunctionParameterList(
+                            copyStatement(funcDecl->get_parameterList())),
+                        funcScope);
+        fwdFuncDef_ = fwdFuncDecl->get_definition();
+        //SageInterface::replaceStatement(fwdFuncDef->get_body(), isSgBasicBlock(stmt.fwd_stmt));
 
-    //Create the function declaration for the reverse body
-    SgName rvsFuncName = funcName + "_reverse";
-    SgFunctionDeclaration* rvsFuncDecl = buildDefiningFunctionDeclaration(
-                    rvsFuncName,
-                    funcDecl->get_orig_return_type(),
-                    //buildFunctionParameterList(),
-                    isSgFunctionParameterList(
-                        copyStatement(funcDecl->get_parameterList())),
-                    funcScope);
-    rvsFuncDef_ = rvsFuncDecl->get_definition();
-    //SageInterface::replaceStatement(rvsFuncDef->get_body(), isSgBasicBlock(stmt.rvs_stmt));
+        //Create the function declaration for the reverse body
+        SgName rvsFuncName = funcName + "_reverse";
+        SgFunctionDeclaration* rvsFuncDecl = buildDefiningMemberFunctionDeclaration(
+                        rvsFuncName,
+                        funcDecl->get_orig_return_type(),
+                        //buildFunctionParameterList(),
+                        isSgFunctionParameterList(
+                            copyStatement(funcDecl->get_parameterList())),
+                        funcScope);
+        rvsFuncDef_ = rvsFuncDecl->get_definition();
+        //SageInterface::replaceStatement(rvsFuncDef->get_body(), isSgBasicBlock(stmt.rvs_stmt));
 
-    //Create the function declaration for the commit method
-    SgName cmtFuncName = funcName + "_commit";
-    SgFunctionDeclaration* cmtFuncDecl = buildDefiningFunctionDeclaration(
-                    cmtFuncName,
-                    funcDecl->get_orig_return_type(),
-                    //buildFunctionParameterList(),
-                    isSgFunctionParameterList(
-                        copyStatement(funcDecl->get_parameterList())),
-                    funcScope);
-    cmtFuncDef_ = cmtFuncDecl->get_definition();
+        //Create the function declaration for the commit method
+        SgName cmtFuncName = funcName + "_commit";
+        SgFunctionDeclaration* cmtFuncDecl = buildDefiningMemberFunctionDeclaration(
+                        cmtFuncName,
+                        funcDecl->get_orig_return_type(),
+                        //buildFunctionParameterList(),
+                        isSgFunctionParameterList(
+                            copyStatement(funcDecl->get_parameterList())),
+                        funcScope);
+        cmtFuncDef_ = cmtFuncDecl->get_definition();
+    }
+    else
+    {
+        ROSE_ASSERT(false);
+    }
 
     // Copy the original function to forward function.
     replaceStatement(fwdFuncDef_->get_body(),
@@ -365,11 +379,28 @@ void EventReverser::buildFunctionBodies()
     string className;
     if (memFuncDecl)
         className += memFuncDecl->get_associatedClassDeclaration()->get_name().str();
-    SgExprListExp* exprList = buildExprListExp(buildStringVal(className + string("::") + funcName + string("\\n")));
-    SgFunctionCallExp* printFuncName = buildFunctionCallExp(
-            "printf", buildVoidType(), exprList, funcDef_->get_body());
-    prependStatement(buildExprStatement(printFuncName), funcDef_->get_body());
-    prependStatement(buildExprStatement(copyExpression(printFuncName)), fwdFuncDef_->get_body());
+    
+    string funcNames[4];
+    funcNames[0] = "_forward";
+    funcNames[2] = "_reverse";
+    funcNames[3] = "_commit";
+    
+    SgScopeStatement* scopes[4];
+    scopes[0] = funcDef_->get_body();
+    scopes[1] = fwdFuncDef_->get_body();
+    scopes[2] = rvsFuncDef_->get_body();
+    scopes[3] = cmtFuncDef_->get_body();
+    
+    for (int i = 0; i < 4; ++i)
+    {
+        string name = className + string("::") + funcName + funcNames[i] + string("\\n");
+        SgExprListExp* exprList = buildExprListExp(buildStringVal(name));
+    
+        SgFunctionCallExp* printFuncName = buildFunctionCallExp(
+            "printf", buildVoidType(), exprList, scopes[i]);
+    
+        prependStatement(buildExprStatement(printFuncName), scopes[i]);
+    }
 #endif
     
     ROSE_ASSERT(funcDef_->get_body()->get_parent() == funcDef_);
@@ -754,11 +785,13 @@ void EventReverser::generateCodeForBasicBlock(
         if (valNode == NULL)        continue;
         if (valNode->isAvailable()) continue;
 
+        SgStatement* pushFuncStmt = NULL;
         SgStatement* rvsStmt = NULL;
         SgStatement* cmtStmt = NULL;
 
         if (StateSavingEdge* ssEdge = isStateSavingEdge(routeGraph_[edge]))
         {
+#if 1
             // State saving edge.
             if (ssEdge->cost == 0)
                 ;//rvsStmt = buildAssignOpertaion(valNode);
@@ -776,8 +809,17 @@ void EventReverser::generateCodeForBasicBlock(
                     pushLocation = pushLocations[killer];
                 
                 
-                SgStatement* pushFuncStmt = NULL;
+                pushFuncStmt = buildExprStatement(
+                        buildStoreFunctionCall(valNode->var.getVarRefExp()));
+
+                //instrumentPushFunction(valNode, funcDef_);
+                rvsStmt = buildExprStatement(
+                        buildRestoreFunctionCall(valNode->var.getVarRefExp()));
+
+                // Build the commit statement.
+                cmtStmt = buildPopStatement(valNode->getType());
                 
+#if 0
                 // If the variable is a pointer, do a deep copy of it.
                 if (isSgPointerType(valNode->getType()))
                 {
@@ -785,14 +827,17 @@ void EventReverser::generateCodeForBasicBlock(
                     
                     //instrumentPushFunction(valNode, funcDef_);
                     rvsStmt = buildExprStatement(buildCommaOpExp(
-                            buildDeleteExp(buildVariable(valNode), 0, 0, 0),
+                            buildDestroyFunctionCall(valNode->var.getVarRefExp()),
+                            //buildDeleteExp(buildVariable(valNode), 0, 0, 0),
                             buildRestorationExp(valNode)));
                     
                     //rvsStmt = buildRestorationStmt(valNode);
 
                     // Build the commit statement.
-                    cmtStmt = buildExprStatement(buildDeleteExp(
-                            buildPopFunctionCall(valNode->getType()), 0, 0, 0));
+                    cmtStmt = buildExprStatement(
+                            buildDestroyFunctionCall(buildPopFunctionCall(valNode->getType())));
+                            //buildDeleteExp(buildPopFunctionCall(valNode->getType()), 0, 0, 0));
+                    //cmtStmt = buildExprStatement(buildPopFunctionCall(valNode->getType()));
                 }
                 else
                 {
@@ -805,6 +850,7 @@ void EventReverser::generateCodeForBasicBlock(
                     // Build the commit statement.
                     cmtStmt = buildPopStatement(valNode->getType());
                 }
+#endif
                 
                 // State saving here.
                 // For forward event, we instrument a push function before the def.
@@ -823,6 +869,7 @@ void EventReverser::generateCodeForBasicBlock(
                 //// Build the commit statement.
                 //cmtStmt = buildPopStatement(valNode->getType());
             }
+#endif
         }
         else if (ValueNode* rhsValNode = isValueNode(routeGraph_[tgt]))
         {
@@ -840,11 +887,15 @@ void EventReverser::generateCodeForBasicBlock(
         }
         else if (FunctionCallNode* funcCallNode = isFunctionCallNode(routeGraph_[tgt]))
         {
+#if 1
             // Virtual function call.
             SgFunctionCallExp* funcCallExp = funcCallNode->getFunctionCallExp();
             ROSE_ASSERT(funcCallExp);
-            SgArrowExp* arrowExp = isSgArrowExp(funcCallExp->get_function());
-            SgMemberFunctionRefExp* funcRef = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
+            SgMemberFunctionRefExp* funcRef = NULL;
+            if (SgBinaryOp* binExp = isSgBinaryOp(funcCallExp->get_function()))
+                funcRef = isSgMemberFunctionRefExp(binExp->get_rhs_operand());
+            ROSE_ASSERT(funcRef);
+            
             SgMemberFunctionDeclaration* funcDecl = funcRef->getAssociatedMemberFunctionDeclaration();
             SgType* returnType = funcCallExp->get_type();
             
@@ -892,31 +943,31 @@ void EventReverser::generateCodeForBasicBlock(
                     }
                 }
                 
-                //cout << funcName << endl;
+                cout << "Processing Function Call:\t" << funcName << endl;
                 ROSE_ASSERT(fwdFuncSymbol && rvsFuncSymbol && cmtFuncSymbol);
 
-                SgThisExp* thisExp = isSgThisExp(arrowExp->get_lhs_operand());
-                ROSE_ASSERT(thisExp);
-                ROSE_ASSERT(copyExpression(thisExp));
+                //SgThisExp* thisExp = isSgThisExp(arrowExp->get_lhs_operand());
+                //ROSE_ASSERT(thisExp);
+                //ROSE_ASSERT(copyExpression(thisExp));
 
                 SgFunctionCallExp* fwdFuncCall = isSgFunctionCallExp(copyExpression(funcCallExp));
-                arrowExp = isSgArrowExp(fwdFuncCall->get_function());
-                funcRef = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
+                if (SgBinaryOp* binExp = isSgBinaryOp(fwdFuncCall->get_function()))
+                    funcRef = isSgMemberFunctionRefExp(binExp->get_rhs_operand());
                 funcRef->set_symbol(fwdFuncSymbol);
                 // FIXME The following method does not work!!
                 //replaceExpression(arrowExp->get_rhs_operand(), fwdFuncRef);
                 
                 SgFunctionCallExp* rvsFuncCall = isSgFunctionCallExp(copyExpression(funcCallExp));
-                arrowExp = isSgArrowExp(rvsFuncCall->get_function());
                 replaceExpression(rvsFuncCall->get_args(), buildExprListExp());
-                funcRef = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
+                if (SgBinaryOp* binExp = isSgBinaryOp(rvsFuncCall->get_function()))
+                    funcRef = isSgMemberFunctionRefExp(binExp->get_rhs_operand());
                 funcRef->set_symbol(rvsFuncSymbol);
                 //replaceExpression(arrowExp->get_rhs_operand(), rvsFuncRef);
                 
                 SgFunctionCallExp* cmtFuncCall = isSgFunctionCallExp(copyExpression(funcCallExp));
-                arrowExp = isSgArrowExp(cmtFuncCall->get_function());
                 replaceExpression(cmtFuncCall->get_args(), buildExprListExp());
-                funcRef = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
+                if (SgBinaryOp* binExp = isSgBinaryOp(cmtFuncCall->get_function()))
+                    funcRef = isSgMemberFunctionRefExp(binExp->get_rhs_operand());
                 funcRef->set_symbol(cmtFuncSymbol);
                 //replaceExpression(arrowExp->get_rhs_operand(), cmtFuncRef);
                 
@@ -953,6 +1004,7 @@ void EventReverser::generateCodeForBasicBlock(
                 SgExpression* cmtFuncCall = buildFunctionCallExp(cmtFuncName, returnType);
                 cmtStmt = buildExprStatement(cmtFuncCall);
             }
+#endif
         }
 
         // Add the generated statement to the scope.

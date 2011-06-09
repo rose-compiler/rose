@@ -23,8 +23,16 @@ void instrumentPushFunction(ValueNode* node, SgFunctionDefinition* funcDef);
 //! the given AST node.
 void instrumentPushFunction(ValueNode* valNode, SgNode* astNode);
 
+SgExpression* buildCloneFunctionCall(SgExpression* exp, SgType* type);
+
+SgExpression* buildDestroyFunctionCall(SgExpression* exp);
+
 //! Build a push function call expression. The input parameter is the paramenter of the push function.
 SgExpression* buildPushFunctionCall(SgExpression* para);
+
+SgExpression* buildStoreFunctionCall(SgExpression* para);
+
+SgExpression* buildRestoreFunctionCall(SgExpression* para);
 
 //! Build a push function call statement. The input parameter is the paramenter of the push function.
 SgStatement* buildPushStatement(ValueNode* valNode);

@@ -205,7 +205,7 @@ std::string OperatorNode::toString() const
 }
 
 FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall)
-        : ValueGraphNode(funcCall), isVirtual(false)
+        : ValueGraphNode(funcCall), isVirtual(false), isConst(false)
 {
     
 #if 1
@@ -215,44 +215,49 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall)
     // called cannot be resolved statically; for those cases this function returns NULL.
     if (funcDecl == NULL)
     {
+        SgMemberFunctionRefExp* funcRef = NULL;
+        
         //isVirtual = true;
-        if (SgArrowExp* arrowExp = isSgArrowExp(funcCall->get_function()))
+        if (SgBinaryOp* binExp = isSgBinaryOp(funcCall->get_function()))
+            funcRef = isSgMemberFunctionRefExp(binExp->get_rhs_operand());
+        
+            //if (isSgThisExp(arrowExp->get_lhs_operand()))
+        if (funcRef)
         {
-            if (isSgThisExp(arrowExp->get_lhs_operand()))
-            {
-                SgMemberFunctionRefExp* funcRef = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
-                if (funcRef)
-                {
-                    SgMemberFunctionDeclaration* funcDecl = funcRef->getAssociatedMemberFunctionDeclaration();
-                    //cout << funcDecl->get_name().str() << funcDecl->get_functionModifier().isVirtual() << endl;
-                    isVirtual = funcDecl->get_functionModifier().isVirtual();
+            SgMemberFunctionDeclaration* funcDecl = funcRef->getAssociatedMemberFunctionDeclaration();
+            //cout << funcDecl->get_name().str() << funcDecl->get_functionModifier().isVirtual() << endl;
+            isVirtual = funcDecl->get_functionModifier().isVirtual();
+            //cout << "@@@" << funcDecl->get_type()->unparseToString() << endl;
+            //isConst = SageInterface::isConstType(funcDecl->isDefinedInClass());
+            isConst = funcDecl->isDefinedInClass();
 
-                    if (isVirtual)
-                    cout << funcDecl->get_name().str() << "\t: VIRTUAL1\n\n";
-                }
+            //if (isVirtual)
+            //cout << funcDecl->get_name().str() << "\t: VIRTUAL1\n\n";
+        }
 
-                else 
-                {
-                    isVirtual = true;
-                    cout << "UNKNOWN" << "\t: VIRTUAL2\n\n";
-                }
-            }
+        else 
+        {
+            isVirtual = true;
+            //cout << "UNKNOWN" << "\t: VIRTUAL2\n\n";
         }
     }
+    
     else
     {
-        if (SgArrowExp* arrowExp = isSgArrowExp(funcCall->get_function()))
+        SgMemberFunctionRefExp* funcRef = NULL;
+        if (SgBinaryOp* binExp = isSgBinaryOp(funcCall->get_function()))
+            funcRef = isSgMemberFunctionRefExp(binExp->get_rhs_operand());
+        
+        if (funcRef)
         {
-            if (isSgThisExp(arrowExp->get_lhs_operand()))
-            {
-                SgMemberFunctionRefExp* funcRef = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
+                //SgMemberFunctionRefExp* funcRef = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
                 SgMemberFunctionDeclaration* funcDecl = funcRef->getAssociatedMemberFunctionDeclaration();
                 //cout << funcDecl->get_name().str() << funcDecl->get_functionModifier().isVirtual() << endl;
                 isVirtual = funcDecl->get_functionModifier().isVirtual();
+                isConst = SageInterface::isConstType(funcDecl->get_type());
                 
-                if (isVirtual)
-                cout << funcDecl->get_name().str() << "\t: VIRTUAL3\n\n";
-            }
+                //if (isVirtual)
+                //cout << funcDecl->get_name().str() << "\t: VIRTUAL3\n\n";
         }
         //isVirtual = true;
     }

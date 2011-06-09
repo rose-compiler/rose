@@ -35,6 +35,12 @@ void PathNumManager::buildNodeCFGVertexMap()
 
 void PathNumManager::generatePathNumbers()
 {
+    map<CFGVertex, set<CFGVertex> > loops = cfg_->getAllLoops();
+    cout << cfg_->getAllBackEdges().size() << endl;
+    cout << loops.begin()->second.size() << endl;
+    getchar();
+    
+    
     dags_.push_back(DAG());
     DAG& dag = dags_[0];
 

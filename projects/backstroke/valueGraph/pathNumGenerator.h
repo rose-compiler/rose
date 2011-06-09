@@ -5,6 +5,10 @@
 
 namespace Backstroke
 {
+    
+    
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
+    BackstrokeCFG::Vertex, BackstrokeCFG::Edge> DAG;
 
 class PathNumManager;
 

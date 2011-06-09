@@ -1063,7 +1063,7 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
     
     // For a virtual function call, its inverse is called in reverse function.
     // Black box style inversion is not used.
-    if (funcCallNode->isVirtual)
+    if (funcCallNode->isVirtual && !funcCallNode->isConst)
     {
         // If the function called is a virtual one, add two dummy value nodes then its
         // inverse can be generated temporarily. This is a workaround!
