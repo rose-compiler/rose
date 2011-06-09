@@ -32,11 +32,43 @@ private:
     std::string name;
 };
 
+/** Watches for memory access.
+ *
+ *  This memory callback watches for access to certain memory locations and prints a message to the specified facility when
+ *  such an access occurs.
+ *
+ *  See also, MemoryChecker, which checks the contents of memory after every instruction. */
+class MemoryAccessWatcher: public RSIM_Callbacks::MemoryCallback {
+public:
+    RTS_Message *mesg;                          /**< Tracing facility, since no thread is available. */
+    rose_addr_t va;                             /**< Starting address for watched memory region. */
+    size_t nbytes;                              /**< Size of watched memory region. */
+    unsigned how;                               /**< What kind of access we are watching. This should be a mask of
+                                                 *   MemoryMap::Protection bits. */
+
+    MemoryAccessWatcher(rose_addr_t va, size_t nbytes, unsigned how, RTS_Message *mesg=NULL)
+        : mesg(mesg), va(va), nbytes(nbytes), how(how) {
+        if (!mesg)
+            this->mesg = new RTS_Message(stderr, NULL);
+    }
+
+    virtual MemoryAccessWatcher *clone() { return this; }
+
+    virtual bool operator()(bool enabled, const Args &args) {
+        if (enabled && 0!=(args.how & how) && args.va<va+nbytes && args.va+args.nbytes>=va) {
+            mesg->mesg("MemoryAccessWatcher: triggered for access at 0x%08"PRIx64" for %zu byte%s\n",
+                       args.va, args.nbytes, 1==args.nbytes?"":"s");
+        }
+        return enabled;
+    }
+};
 
 /** Checks whether specimen memory matches a known value.
  *
  *  This instruction callback reads from the specified memory area and verifies that the conetnts of memory at that location
  *  match the expected value.  If not, a message is printed to the TRACE_MISC facility and the callback is disabled.
+ *
+ *  See also, MemoryAccessWatcher, which is a memory callback to look for memory access.
  *
  *  Here's an example of how to use this tool:
  *  @code
