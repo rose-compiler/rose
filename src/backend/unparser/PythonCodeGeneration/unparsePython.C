@@ -109,11 +109,7 @@ Unparse_Python::unparseBasicBlock(SgBasicBlock* bblock,
     foreach (SgStatement* child, bblock->get_statements()) {
         curprint( ws_prefix(info.get_nestingLevel()) );
         unparseStatement(child, info);
-
-        //TODO easier way to print newline
-        stringstream code;
-        code << endl;
-        curprint( code.str() );
+        curprint("\n");
     }
 }
 
@@ -122,25 +118,26 @@ Unparse_Python::unparseBinaryOp(SgBinaryOp* bin_op,
                                 SgUnparse_Info& info)
 {
     unparseExpression(bin_op->get_lhs_operand(), info);
+    curprint(" ");
     switch(bin_op->variantT()) {
-        case V_SgAddOp:            curprint(" + ");  break;
-        case V_SgAssignOp:         curprint(" = ");  break;
-        case V_SgBitAndOp:         curprint(" & ");  break;
-        case V_SgBitOrOp:          curprint(" | ");  break;
-        case V_SgBitXorOp:         curprint(" ^ ");  break;
-        case V_SgDivideOp:         curprint(" / ");  break;
-        case V_SgExponentiationOp: curprint(" ** "); break;
-        case V_SgIntegerDivideOp:  curprint(" // "); break;
-        case V_SgLshiftOp:         curprint(" << "); break;
-        case V_SgModOp:            curprint(" % ");  break;
-        case V_SgMultiplyOp:       curprint(" * ");  break;
-        case V_SgRshiftOp:         curprint(" >> "); break;
-        case V_SgSubtractOp:       curprint(" - ");  break;
-        default: {
-            cerr << "Unhandled SgBinaryOp: " << bin_op->class_name() << endl;
+        case V_SgAddOp:            curprint(ROSE_PYTHON_ADD_OP);     break;
+        case V_SgAssignOp:         curprint(ROSE_PYTHON_ASSIGN_OP);  break;
+        case V_SgBitAndOp:         curprint(ROSE_PYTHON_BITAND_OP);  break;
+        case V_SgBitOrOp:          curprint(ROSE_PYTHON_BITOR_OP);   break;
+        case V_SgBitXorOp:         curprint(ROSE_PYTHON_BITXOR_OP);  break;
+        case V_SgDivideOp:         curprint(ROSE_PYTHON_DIV_OP);     break;
+        case V_SgExponentiationOp: curprint(ROSE_PYTHON_EXP_OP);     break;
+        case V_SgIntegerDivideOp:  curprint(ROSE_PYTHON_IDIV_OP);    break;
+        case V_SgLshiftOp:         curprint(ROSE_PYTHON_LSHIFT_OP);  break;
+        case V_SgModOp:            curprint(ROSE_PYTHON_MOD_OP);     break;
+        case V_SgMultiplyOp:       curprint(ROSE_PYTHON_MULT_OP);    break;
+        case V_SgRshiftOp:         curprint(ROSE_PYTHON_RSHIFT_OP);  break;
+        case V_SgSubtractOp:       curprint(ROSE_PYTHON_SUB_OP);     break;
+        default: { cerr << "Unhandled SgBinaryOp: " << bin_op->class_name() << endl;
             ROSE_ABORT();
         }
     }
+    curprint(" ");
     unparseExpression(bin_op->get_rhs_operand(), info);
 }
 
