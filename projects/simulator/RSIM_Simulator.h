@@ -14,6 +14,7 @@
 #include "RSIM_SemanticPolicy.h"
 #include "RSIM_Thread.h"
 #include "RSIM_Templates.h"
+#include "RSIM_Tools.h"
 
 #include <signal.h>
 

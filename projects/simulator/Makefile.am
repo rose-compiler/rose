@@ -33,7 +33,8 @@ libRSIM_la_SOURCES =				\
 	RSIM_SemanticPolicy.C			\
 	RSIM_SignalHandling.C			\
 	RSIM_Simulator.C			\
-	RSIM_Thread.C
+	RSIM_Thread.C				\
+	RSIM_Tools.C
 include_HEADERS +=				\
 	x86print.h				\
 	RSIM_Adapter.h				\
@@ -45,7 +46,11 @@ include_HEADERS +=				\
 	RSIM_SignalHandling.h			\
 	RSIM_Simulator.h			\
 	RSIM_Templates.h			\
-	RSIM_Thread.h
+	RSIM_Thread.h				\
+	RSIM_Tools.h
+
+$(libRSIM_la_SOURCES:.C=.o): %.o: %.h
+$(libRSIM_la_SOURCES:.C=.lo): %.lo: %.h
 
 ###############################################################################################################################
 #  PROGRAMS
