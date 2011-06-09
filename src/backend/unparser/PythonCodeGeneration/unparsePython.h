@@ -41,6 +41,20 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual std::string ws_prefix(int nesting_level);
    };
 
+#define ROSE_PYTHON_ADD_OP      "+"
+#define ROSE_PYTHON_ASSIGN_OP   "="
+#define ROSE_PYTHON_BITAND_OP   "&"
+#define ROSE_PYTHON_BITOR_OP    "|"
+#define ROSE_PYTHON_BITXOR_OP   "^"
+#define ROSE_PYTHON_DIV_OP      "/"
+#define ROSE_PYTHON_EXP_OP      "**"
+#define ROSE_PYTHON_IDIV_OP     "//"
+#define ROSE_PYTHON_LSHIFT_OP   "<<"
+#define ROSE_PYTHON_RSHIFT_OP   ">>"
+#define ROSE_PYTHON_MOD_OP      "%"
+#define ROSE_PYTHON_MULT_OP     "*"
+#define ROSE_PYTHON_SUB_OP      "-"
+
 #endif /* UNPARSER_PYTHON_H_ */
 
 

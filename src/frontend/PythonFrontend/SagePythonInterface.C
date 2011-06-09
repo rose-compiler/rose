@@ -4,6 +4,8 @@
 #include "sageBuilder.h"
 #include "SagePythonInterface.h"
 
+#include "unparsePython.h" // for operator ROSE_PYTHON_<op>_OP strings. TODO put somewhere better.
+
 /**
  * Implementation of the Sage-Python interface.
  */
@@ -42,29 +44,29 @@ sage_buildBinOp(PyObject *self, PyObject *args)
     SgExpression* rhs = PyDecapsulate<SgExpression>(rhs_capsule);
     std::string op = std::string( PyString_AsString(py_operation) );
     SgBinaryOp* sg_bin_op = NULL;
-    if      (op == "+")
+    if      (op == ROSE_PYTHON_ADD_OP)
         sg_bin_op = SageBuilder::buildAddOp(lhs, rhs);
-    else if (op == "-")
+    else if (op == ROSE_PYTHON_SUB_OP)
         sg_bin_op = SageBuilder::buildSubtractOp(lhs, rhs);
-    else if (op == "*")
+    else if (op == ROSE_PYTHON_MULT_OP)
         sg_bin_op = SageBuilder::buildMultiplyOp(lhs, rhs);
-    else if (op == "/")
+    else if (op == ROSE_PYTHON_DIV_OP)
         sg_bin_op = SageBuilder::buildDivideOp(lhs, rhs);
-    else if (op == "//")
+    else if (op == ROSE_PYTHON_IDIV_OP)
         sg_bin_op = SageBuilder::buildIntegerDivideOp(lhs, rhs);
-    else if (op == "%")
+    else if (op == ROSE_PYTHON_MOD_OP)
         sg_bin_op = SageBuilder::buildModOp(lhs, rhs);
-    else if (op == "<<")
+    else if (op == ROSE_PYTHON_LSHIFT_OP)
         sg_bin_op = SageBuilder::buildLshiftOp(lhs, rhs);
-    else if (op == ">>")
+    else if (op == ROSE_PYTHON_RSHIFT_OP)
         sg_bin_op = SageBuilder::buildRshiftOp(lhs, rhs);
-    else if (op == "&")
+    else if (op == ROSE_PYTHON_BITAND_OP)
         sg_bin_op = SageBuilder::buildBitAndOp(lhs, rhs);
-    else if (op == "|")
+    else if (op == ROSE_PYTHON_BITOR_OP)
         sg_bin_op = SageBuilder::buildBitOrOp(lhs, rhs);
-    else if (op == "^")
+    else if (op == ROSE_PYTHON_BITXOR_OP)
         sg_bin_op = SageBuilder::buildBitXorOp(lhs, rhs);
-    else if (op == "**")
+    else if (op == ROSE_PYTHON_EXP_OP)
         sg_bin_op = SageBuilder::buildExponentiationOp(lhs, rhs);
     else {
         cerr << "Unrecognized binary operator: " << op << endl;
