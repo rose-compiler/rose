@@ -10,7 +10,7 @@
 
 #define SKIP_C_ACTION_IMPLEMENTATION 0
 #define DXN_DEBUG 1
-#define DXN_CODE 1
+#define DXN_CODE 0
 
 using namespace std;
 
