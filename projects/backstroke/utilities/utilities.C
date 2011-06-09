@@ -718,4 +718,36 @@ bool isTrueVariableDeclaration(SgVariableDeclaration* varDecl)
     return true;
 }
 
+
+SgType* cleanModifersAndTypeDefs(SgType* t)
+{
+	while (true)
+	{
+		if (isSgModifierType(t))
+		{
+			t = isSgModifierType(t)->get_base_type();
+			continue;
+		}
+		else if (isSgTypedefType(t))
+		{
+			t = isSgTypedefType(t)->get_base_type();
+			continue;
+		}
+		return t;
+	}
+}
+
+
+SgType* removePointerOrReferenceType(SgType* t)
+{
+	t = cleanModifersAndTypeDefs(t);
+	if (isSgPointerType(t))
+		t = isSgPointerType(t)->get_base_type();
+	else if (isSgReferenceType(t))
+		t = isSgReferenceType(t)->get_base_type();
+	
+	t = cleanModifersAndTypeDefs(t);
+	return t;
+}
+
 } // namespace backstroke_util

@@ -136,5 +136,11 @@ namespace BackstrokeUtility
     //! In C++ standard, those declarations in conditions actually are not called declaration.
     bool isTrueVariableDeclaration(SgVariableDeclaration* varDecl);
 
+	/** Given a type, remove all outer layers of SgModiferType and SgTypeDefType. */
+	SgType* cleanModifersAndTypeDefs(SgType* t);
+
+	/** Given a type, remove one layer of pointers/reference types. 
+	 * If the type is a pointer-to-pointer, this function just removes the first layer. */
+	SgType* removePointerOrReferenceType(SgType* t);
 }
 
