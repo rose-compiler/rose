@@ -73,7 +73,7 @@ BinaryLoader::MappingContribution
 BinaryLoaderElf::align_values(SgAsmGenericSection *_section, MemoryMap *map,
                               rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
                               rose_addr_t *va_p, rose_addr_t *mem_size_p,
-                              rose_addr_t *offset_p, rose_addr_t *file_size_p,
+                              rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
                               rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
                               ConflictResolution *resolve_p)
 {
@@ -88,10 +88,11 @@ BinaryLoaderElf::align_values(SgAsmGenericSection *_section, MemoryMap *map,
 
 
         MappingContribution retval = BinaryLoader::align_values(section, map, malign_lo_p, malign_hi_p, va_p,
-                                                                mem_size_p, offset_p, file_size_p, va_offset_p,
+                                                                mem_size_p, offset_p, file_size_p, map_private_p, va_offset_p,
                                                                 anon_lo_p, anon_hi_p, resolve_p);
         *anon_lo_p = false;
         *anon_hi_p = false;
+        *map_private_p = true;
         *resolve_p = RESOLVE_OVERMAP;
         return retval;
     }
@@ -120,6 +121,7 @@ BinaryLoaderElf::align_values(SgAsmGenericSection *_section, MemoryMap *map,
     *file_size_p = section->get_size();
     *va_offset_p = 0;
     *anon_lo_p = *anon_hi_p = true;
+    *map_private_p = false;
     *resolve_p = RESOLVE_OVERMAP;       /*erase (part of) the previous ELF Segment's memory */
     return CONTRIBUTE_ADD;
 }

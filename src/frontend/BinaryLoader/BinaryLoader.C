@@ -365,12 +365,12 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
 
             /* Figure out alignment, etc. */
             rose_addr_t malign_lo=1, malign_hi=1, va=0, mem_size=0, offset=0, file_size=0, va_offset=0;
-            bool anon_lo=true, anon_hi=true;
+            bool anon_lo=true, anon_hi=true, map_private=false;
             ConflictResolution resolve = RESOLVE_THROW;
             MappingContribution contrib = align_values(section, map,                      /* inputs */
                                                        &malign_lo, &malign_hi,            /* alignment outputs */
                                                        &va, &mem_size,                    /* memory location outputs */
-                                                       &offset, &file_size,               /* file location outputs */
+                                                       &offset, &file_size, &map_private, /* file location outputs */
                                                        &va_offset, &anon_lo, &anon_hi,    /* internal location outputs */
                                                        &resolve);                         /* conflict resolution output */
             rose_addr_t falign_lo = std::max(section->get_file_alignment(), (rose_addr_t)1);
@@ -540,13 +540,21 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             /* Map the section. We use the file content as the underlying storage of the map because we might be mapping parts of
              * the file left and right of the actual section. */
             if (mem_size>0) {
-                MemoryMap::MapElement me(va, mem_size, &(file->get_data()[0]), offset, mapperms);
                 if (debug) {
-                    fprintf(debug, "    %-41s va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64"\n",
-                            "Mapping section:", va, mem_size, va+mem_size);
+                    fprintf(debug, "    %-41s va=0x%08"PRIx64" + 0x%08"PRIx64" = 0x%08"PRIx64" %s\n",
+                            "Mapping section:", va, mem_size, va+mem_size, map_private?"private":"shared");
                 }
-                me.set_name(melmt_name);
-                map->insert(me);
+                if (map_private) {
+                    uint8_t *storage = new uint8_t[mem_size];
+                    memcpy(storage, &(file->get_data()[offset]), mem_size);
+                    MemoryMap::MapElement me(va, mem_size, storage, 0, mapperms);
+                    me.set_name(melmt_name);
+                    map->insert(me);
+                } else {
+                    MemoryMap::MapElement me(va, mem_size, &(file->get_data()[0]), offset, mapperms);
+                    me.set_name(melmt_name);
+                    map->insert(me);
+                }
             }
 
             if (debug) {
@@ -687,7 +695,7 @@ BinaryLoader::MappingContribution
 BinaryLoader::align_values(SgAsmGenericSection *section, MemoryMap *map,
                            rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
                            rose_addr_t *va_p, rose_addr_t *mem_size_p,
-                           rose_addr_t *offset_p, rose_addr_t *file_size_p,
+                           rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
                            rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p, 
                            ConflictResolution *resolve_p)
 {
@@ -735,6 +743,7 @@ BinaryLoader::align_values(SgAsmGenericSection *section, MemoryMap *map,
     *mem_size_p = mem_size;
     *offset_p = offset;
     *file_size_p = file_size;
+    *map_private_p = false;
     *va_offset_p = va_offset;
     *anon_lo_p = true;
     *anon_hi_p = true;
