@@ -49,4 +49,4 @@ check-local:factPlacer latticePlacer scalarFWDataflow
 
 EXTRA_DIST =  test_examples 
 clean-local:
-	rm -f *.o rose_*.[cC] *.dot *.out rose_*.cpp *.patch *.loT *_out detail.html summary.html index.html dbg_imgs
+	rm -rf *.o rose_*.[cC] *.dot *.out rose_*.cpp *.patch *.loT *_out detail.html summary.html index.html dbg_imgs
