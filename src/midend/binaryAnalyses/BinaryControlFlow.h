@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_ControlFlow_H
 
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/depth_first_search.hpp>
 
 class SgNode;
 class SgAsmBlock;
@@ -44,37 +45,51 @@ namespace BinaryAnalysis {
      *
      *  // Generate a control flow graph over an entire interpretation. It will include
      *  // all basic blocks, but only edges which are function calls.
+     *  typedef ControlFlow::Graph CFG;
      *  SgAsmInterpretation *interp = ...;
-     *  ControlFlow::Graph cfg = analyzer.build_graph(interp);
+     *  CFG cfg = analyzer.build_cfg_from_ast<CFG>(interp);
      *  @endcode
      *
-     *  Another way to do the same thing is to first build a complete control flow graph and then do a filtered-copy to obtain
-     *  a second graph with only the function call edges:
+     *  Note that the build_cfg_from_ast(), as well as most of the other methods in this class, are function templates that
+     *  take a graph type as an argument.  For convenience, this class defines a default graph type, Graph.  Any Boost
+     *  adjacency list graph type can be used as long as the following are true:
+     *
+     *  <ul>
+     *    <li>the graph vertices are stored as a vector ("vecS" as the second template argument of adjacency_list)</li>
+     *    <li>the graph is bidirectional ("bidrectionalS" as the third template argument),</li>
+     *    <li>the boost::vertex_name property is a SgAsmBlock pointer.</li>
+     *  </ul>
+     *
+     *  Another way to build a function call graph is to first build a complete control flow graph and then do a filtered copy
+     *  to obtain a second graph with only the function call edges:
      *
      *  @code
      *  // Build a complete control flow graph using a default
      *  // control flow analyzer.
-     *  ControlFlow::Graph cfg = ControlFlow().build_graph(interp);
+     *  typedef BinaryAnalysis::ControlFlow::Graph CFG;
+     *  CFG cfg = ControlFlow().build_cfg_from_ast<CFG>(interp);
      *
      *  // Using the same analyzer as the previous example, one that
      *  // filters out all but the function call edges, create a call
      *  // graph.
-     *  ControlFlow::Graph cg = analyzer.copy(cfg);
+     *  CFG cg = analyzer.copy(cfg);
      *  @endcode
      *
      *  The BinaryAnalysis::FunctionCall::Graph differs from a filtered ControlFlow::Graph in that the former's vertices point
      *  to functions (SgAsmFunctionDeclaration) in the AST while the latter's points to basic blocks (SgAsmBlock).  However,
      *  building a CFG that has only function call edges is a common enough operation that we provide a method to do just
-     *  that.  The benefit of using build_call_graph() is that the user can easily define an additional edge
-     *  filter to even further restrict the edges (see build_call_graph() source code for an example).
+     *  that.  The benefit of using build_cg_from_ast() is that the user can easily define an additional edge
+     *  filter to even further restrict the edges (see that method's source code for an example).
      *
      *  @code
-     *  ControlFlow::Graph cg = ControlFlow().build_call_graph(interp);
+     *  typedef ControlFlow::Graph CFG;
+     *  CFG cg = ControlFlow().build_cg_from_ast<CFG>(interp);
      *  @endcode
      *
      *  Since binary control flow graphs are simply Boost graphs, they can be easily printed as GraphViz graphs using
      *  boost::write_graphviz().  If you want something other than vertex descriptors in the graphs, you could use a
-     *  PropertyWriter class, like this one, which labels the vertices the the basic block address:
+     *  PropertyWriter class, like this one, which labels the vertices the the basic block address.  Ideally, one would
+     *  use a class template, but we keep this example simple:
      *
      *  @code
      *  // Label the graphviz vertices with basic block addresses.
@@ -100,20 +115,17 @@ namespace BinaryAnalysis {
             {}
         
 
-        /** A control flow graph.
+        /** Default control flow graph type.
          *
          *  A control flow graph is simply a Boost graph whose vertex descriptors are integers and whose vertices point to
-         *  SgAsmBlock nodes in the AST (via the boost::vertex_name property).  The graph edges represent flow of control from one
-         *  SgAsmBlock to another.  Since the control flow graph is a Boost graph, it is endowed with all the features of a Boost
-         *  graph and can be the operand of the various Boost graph algorithms.  See build_cfg() for specifics about what is
-         *  included in such a graph. */
+         *  SgAsmBlock nodes in the AST (via the boost::vertex_name property).  The graph edges represent flow of control from
+         *  one SgAsmBlock to another.  Since the control flow graph is a Boost graph, it is endowed with all the features of a
+         *  Boost graph and can be the operand of the various Boost graph algorithms.  See build_cfg_from_ast() for specifics
+         *  about what is included in such a graph. */
         typedef boost::adjacency_list<boost::listS,                                 /* edges of each vertex in std::list */
                                       boost::vecS,                                  /* vertices in std::vector */
                                       boost::bidirectionalS,
                                       boost::property<boost::vertex_name_t, SgAsmBlock*> > Graph;
-
-        typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;   /**< Graph vertex type. */
-        typedef boost::graph_traits<Graph>::edge_descriptor   Edge;     /**< Graph edge type. */
 
         /**********************************************************************************************************************
          *                                      Filters
@@ -202,14 +214,15 @@ namespace BinaryAnalysis {
 
         /** Applies graph to AST.
          *
-         *  Just as a control flow graph can be built from the successor lists stored in the AST (see build_graph()), a graph
-         *  can be used to initialize the successor information in an AST.  This function does that.  Only the blocks which are
-         *  vertices of the graph and which pass the current vertex filter are affected.  Only edges that pass the current edge
-         *  filter are added as successors to the (cleared) block successor list.
+         *  Just as a control flow graph can be built from the successor lists stored in the AST (see build_cfg_from_ast()), a
+         *  graph can be used to initialize the successor information in an AST.  This function does that.  Only the blocks
+         *  which are vertices of the graph and which pass the current vertex filter are affected.  Only edges that pass the
+         *  current edge filter are added as successors to the (cleared) block successor list.
          *
          *  At this time [2011-05-19] the successor_complete property of each affected block is set to true, but this may
          *  change in the future. */
-        void apply_to_ast(const Graph&);
+        template<class ControlFlowGraph>
+        void apply_to_ast(const ControlFlowGraph&);
 
         /** Cache vertex descriptors in AST.
          *
@@ -224,7 +237,8 @@ namespace BinaryAnalysis {
          *  type for CFG vertices.
          *
          *  The current vertex filter determines which blocks are modified. */
-        void cache_vertex_descriptors(const Graph&);
+        template<class ControlFlowGraph>
+        void cache_vertex_descriptors(const ControlFlowGraph&);
 
         /**********************************************************************************************************************
          *                                      Graph construction methods
@@ -250,8 +264,11 @@ namespace BinaryAnalysis {
          *  </ul>
          *
          *  @{ */
-        Graph build_graph(SgNode *root);
-        void build_graph(SgNode *root, Graph &cfg/*out*/);
+        template<class ControlFlowGraph>
+        ControlFlowGraph build_cfg_from_ast(SgNode *root);
+
+        template<class ControlFlowGraph>
+        void build_cfg_from_ast(SgNode *root, ControlFlowGraph &cfg/*out*/);
         /** @} */
 
         /** Builds a control flow graph with only function call edges.
@@ -263,8 +280,11 @@ namespace BinaryAnalysis {
          *  only accepts edges whose target is a function entry block.
          *
          *  @{ */
-        Graph build_call_graph(SgNode *root);
-        void build_call_graph(SgNode *root, Graph &cfg/*out*/);
+        template<class ControlFlowGraph>
+        ControlFlowGraph build_cg_from_ast(SgNode *root);
+
+        template<class ControlFlowGraph>
+        void build_cg_from_ast(SgNode *root, ControlFlowGraph &cfg/*out*/);
         /** @} */
 
         /** Copies a graph while filtering.
@@ -277,15 +297,31 @@ namespace BinaryAnalysis {
          *  If an edge is unfiltered but one of its vertices is filtered, then the edge will not be included in the result.
          *
          *  @{ */
-        Graph copy(const Graph&src);
-        void copy(const Graph &src, Graph &dst);
+        template<class ControlFlowGraph>
+        ControlFlowGraph copy(const ControlFlowGraph &src);
+
+        template<class ControlFlowGraph>
+        void copy(const ControlFlowGraph &src, ControlFlowGraph &dst/*out*/);
         /** @} */
 
         /**********************************************************************************************************************
          *                                      Miscellaneous members
          **********************************************************************************************************************/
-    public:
 
+    private:
+        /* Visitor used by flow_order().  Declaring this in function scope results in boost errors (boost-1.42, 2011-05). */
+        template<class ControlFlowGraph>
+        struct FlowOrder: public boost::default_dfs_visitor {
+            typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
+            typedef std::vector<Vertex> VertexList;
+            typedef std::vector<size_t> ReverseVertexList;
+            VertexList *forward_order;
+            FlowOrder(VertexList *forward_order): forward_order(forward_order) {}
+            void compute(const ControlFlowGraph &g, Vertex v0, ReverseVertexList *reverse_order);
+            void finish_vertex(Vertex v, ControlFlowGraph g);
+        };
+            
+    public:
         /** Orders nodes by depth first search reverse post order.
          *
          *  Reversed, depth-first-search, post-order is a common node order needed for solving flow equations, and this method
@@ -318,8 +354,271 @@ namespace BinaryAnalysis {
          *  } while (changed);
          *  @endcode
          */
-        std::vector<Vertex> flow_order(const Graph&, Vertex start, std::vector<size_t> *reverse_order=NULL);
+        template<class ControlFlowGraph>
+        std::vector<typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor>
+        flow_order(const ControlFlowGraph&,
+                   typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                   std::vector<size_t> *reverse_order=NULL);
+
+    private:
+        /* Visitor used by return_blocks(). Declaring this in function scope results in boost errors (boost-1.42, 2011-05). */
+        template<class ControlFlowGraph>
+        struct ReturnBlocks: public boost::default_dfs_visitor {
+            typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
+            typedef std::vector<Vertex> Vector;
+            Vector &blocks;
+            ReturnBlocks(Vector &blocks): blocks(blocks) {}
+            void finish_vertex(Vertex v, ControlFlowGraph g);
+        };
+
+    public:
+        /** Returns list of function return blocks.
+         *
+         *  More specifically, this method traverses the control flow graph (CFG) beginning at the specified node and returns a
+         *  list (in depth first search order) of all vertices which are in the connected subgraph and which do not have any
+         *  known successors, but at least one unknown successor. */
+        template<class ControlFlowGraph>
+        std::vector<typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor>
+        return_blocks(const ControlFlowGraph &cfg,
+                      typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start);
     };
+}
+
+
+
+
+
+/******************************************************************************************************************************
+ *                                      Function template definitions
+ ******************************************************************************************************************************/
+
+template<class ControlFlowGraph>
+void
+BinaryAnalysis::ControlFlow::apply_to_ast(const ControlFlowGraph &cfg)
+{
+    typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
+    for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
+        SgAsmBlock *block = get(boost::vertex_name, cfg, *vi);
+        if (!block || is_vertex_filtered(block))
+            continue;
+
+        /* Delete old targets */
+        const SgAsmTargetPtrList &targets = block->get_successors();
+        for (SgAsmTargetPtrList::const_iterator ti=targets.begin(); ti!=targets.end(); ++ti)
+            delete *ti;
+
+        /* Add new targets */
+        block->set_successors_complete(true);
+        block->get_successors().clear();
+        typename boost::graph_traits<ControlFlowGraph>::out_edge_iterator ei, ei_end;
+        for (boost::tie(ei, ei_end)=out_edges(*vi, cfg); ei!=ei_end; ++ei) {
+            SgAsmBlock *target_block = get(boost::vertex_name, cfg, target(*ei, cfg));
+            if (target_block && !is_edge_filtered(block, target_block)) {
+                SgAsmTarget *target = new SgAsmTarget();
+                target->set_address(target_block->get_address());
+                target->set_block(target_block);
+            }
+        }
+    }
+}
+
+template<class ControlFlowGraph>
+void
+BinaryAnalysis::ControlFlow::cache_vertex_descriptors(const ControlFlowGraph &cfg)
+{
+    typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
+    for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
+        SgAsmBlock *block = get(boost::vertex_name, cfg, *vi);
+        if (block && !is_vertex_filtered(block))
+            block->set_cached_vertex(*vi);
+    }
+}
+
+template<class ControlFlowGraph>
+void
+BinaryAnalysis::ControlFlow::build_cfg_from_ast(SgNode *root, ControlFlowGraph &cfg)
+{
+    typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
+    typedef std::map<SgAsmBlock*, Vertex> BlockVertexMap;
+    BlockVertexMap bv_map;
+
+    cfg.clear();
+
+    /* Define the vertices. */
+    struct T1: public AstSimpleProcessing {
+        ControlFlow *analyzer;
+        ControlFlowGraph &cfg;
+        BlockVertexMap &bv_map;
+        T1(ControlFlow *analyzer, ControlFlowGraph &cfg, BlockVertexMap &bv_map)
+            : analyzer(analyzer), cfg(cfg), bv_map(bv_map)
+            {}
+        void visit(SgNode *node) {
+            SgAsmBlock *block = isSgAsmBlock(node);
+            if (block && !analyzer->is_vertex_filtered(block)) {
+                Vertex vertex = add_vertex(cfg);
+                bv_map[block] = vertex;
+                put(boost::vertex_name, cfg, vertex, block);
+            }
+        }
+    };
+    T1(this, cfg, bv_map).traverse(root, preorder); /* preorder guarantees that the highest SgAsmBlock will be vertex zero */
+
+    /* Add the edges. */
+    typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
+    for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
+        SgAsmBlock *source = boost::get(boost::vertex_name, cfg, *vi);
+        const SgAsmTargetPtrList &succs = source->get_successors();
+        for (SgAsmTargetPtrList::const_iterator si=succs.begin(); si!=succs.end(); ++si) {
+            SgAsmBlock *target = (*si)->get_block(); // might be null
+            if (target && !is_edge_filtered(source, target)) {
+                typename BlockVertexMap::iterator bvmi=bv_map.find(target);
+                if (bvmi!=bv_map.end())
+                    add_edge(*vi, bvmi->second, cfg);
+            }
+        }
+    }
+}
+
+template<class ControlFlowGraph>
+void
+BinaryAnalysis::ControlFlow::build_cg_from_ast(SgNode *root, ControlFlowGraph &cfg/*out*/)
+{
+    struct T1: public EdgeFilter {
+        EdgeFilter *parent;
+        T1(EdgeFilter *parent): parent(parent) {}
+        bool operator()(ControlFlow *analyzer, SgAsmBlock *src, SgAsmBlock *dst) {
+            SgAsmFunctionDeclaration *func = dst ? dst->get_enclosing_function() : NULL;
+            if (!func || dst!=func->get_entry_block())
+                return false;
+            if (parent)
+                return (*parent)(analyzer, src, dst);
+            return true;
+        }
+    };
+
+    EdgeFilter *parent = get_edge_filter();
+    T1 edge_filter(parent);
+    try {
+        set_edge_filter(&edge_filter);
+        build_cfg_from_ast(root, cfg);
+    } catch (...) {
+        set_edge_filter(parent);
+        throw;
+    }
+    set_edge_filter(parent);
+}
+
+template<class ControlFlowGraph>
+void
+BinaryAnalysis::ControlFlow::copy(const ControlFlowGraph &src, ControlFlowGraph &dst/*out*/)
+{
+    typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
+    Vertex NO_VERTEX = boost::graph_traits<ControlFlowGraph>::null_vertex();
+
+    dst.clear();
+    std::vector<Vertex> src_to_dst(num_vertices(src), NO_VERTEX);
+
+    typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
+    for (boost::tie(vi, vi_end)=vertices(src); vi!=vi_end; ++vi) {
+        SgAsmBlock *block = get(boost::vertex_name, src, *vi);
+        if (!is_vertex_filtered(block)) {
+            src_to_dst[*vi] = add_vertex(dst);
+            put(boost::vertex_name, dst, src_to_dst[*vi], block);
+        }
+    }
+
+    typename boost::graph_traits<ControlFlowGraph>::edge_iterator ei, ei_end;
+    for (boost::tie(ei, ei_end)=edges(src); ei!=ei_end; ++ei) {
+        if (NO_VERTEX!=src_to_dst[source(*ei, src)] && NO_VERTEX!=src_to_dst[target(*ei, src)]) {
+            SgAsmBlock *block1 = get(boost::vertex_name, src, source(*ei, src));
+            SgAsmBlock *block2 = get(boost::vertex_name, src, target(*ei, src));
+            if (!is_edge_filtered(block1, block2))
+                add_edge(src_to_dst[source(*ei, src)], src_to_dst[target(*ei, src)], dst);
+        }
+    }
+}
+
+template<class ControlFlowGraph>
+ControlFlowGraph
+BinaryAnalysis::ControlFlow::copy(const ControlFlowGraph &src)
+{
+    ControlFlowGraph dst;
+    copy(src, dst);
+    return dst;
+}
+
+template<class ControlFlowGraph>
+void
+BinaryAnalysis::ControlFlow::FlowOrder<ControlFlowGraph>::compute(const ControlFlowGraph &g, Vertex v0,
+                                                                  ReverseVertexList *reverse_order) {
+    forward_order->clear();
+    std::vector<boost::default_color_type> colors(num_vertices(g), boost::white_color);
+    depth_first_visit(g, v0, *this, &(colors[0]));
+    assert(!forward_order->empty()); /* it should at least contain v0 */
+    std::reverse(forward_order->begin(), forward_order->end());
+    if (reverse_order) {
+        reverse_order->clear();
+        reverse_order->resize(num_vertices(g), (size_t)(-1));
+        for (size_t i=0; i<forward_order->size(); i++)
+            (*reverse_order)[(*forward_order)[i]] = i;
+    }
+}
+
+template<class ControlFlowGraph>
+void
+BinaryAnalysis::ControlFlow::FlowOrder<ControlFlowGraph>::finish_vertex(Vertex v, ControlFlowGraph g) {
+    forward_order->push_back(v);
+}
+
+template<class ControlFlowGraph>
+std::vector<typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor>
+BinaryAnalysis::ControlFlow::flow_order(const ControlFlowGraph &cfg,
+                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                                        std::vector<size_t> *reverse_order/*=NULL*/)
+{
+    std::vector<typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor> forward_order;
+    FlowOrder<ControlFlowGraph>(&forward_order).compute(cfg, start, reverse_order);
+    return forward_order;
+}
+
+template<class ControlFlowGraph>
+void
+BinaryAnalysis::ControlFlow::ReturnBlocks<ControlFlowGraph>::finish_vertex(Vertex v, ControlFlowGraph g)
+{
+    typename boost::graph_traits<ControlFlowGraph>::out_edge_iterator ei, ei_end;
+    boost::tie(ei, ei_end) = out_edges(v, g);
+    if (ei==ei_end)
+        blocks.push_back(v);
+}
+    
+template<class ControlFlowGraph>
+std::vector<typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor>
+BinaryAnalysis::ControlFlow::return_blocks(const ControlFlowGraph &cfg,
+                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start)
+{
+    typename ReturnBlocks<ControlFlowGraph>::Vector result;
+    ReturnBlocks<ControlFlowGraph> visitor(result);
+    std::vector<boost::default_color_type> colors(num_vertices(cfg), boost::white_color);
+    depth_first_visit(cfg, start, visitor, &(colors[0]));
+    return result;
+}
+
+template<class ControlFlowGraph>
+ControlFlowGraph
+BinaryAnalysis::ControlFlow::build_cfg_from_ast(SgNode *root)
+{
+    ControlFlowGraph cfg;
+    build_cfg_from_ast(root, cfg);
+    return cfg;
+}
+
+template<class ControlFlowGraph>
+ControlFlowGraph
+BinaryAnalysis::ControlFlow::build_cg_from_ast(SgNode *root)
+{
+    ControlFlowGraph cfg;
+    build_cg_from_ast(root, cfg);
+    return cfg;
 }
 
 #endif

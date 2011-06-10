@@ -707,13 +707,15 @@ static void
 dump_CFG_CG(SgNode *ast)
 {
     using namespace StringUtility;
+    typedef BinaryAnalysis::ControlFlow::Graph CFG;
+    typedef BinaryAnalysis::FunctionCall::Graph CG;
 
     /* Create the control flow graph, but exclude blocks that are part of the "unassigned blocks" function. Note that if the
      * "-rose:partitioner_search -unassigned" switch is passed to the disassembler then the unassigned blocks will already
      * have been pruned from the AST anyway. */
-    BinaryAnalysis::ControlFlow::Graph global_cfg = BinaryAnalysis::ControlFlow().build_graph(ast);
+    CFG global_cfg = BinaryAnalysis::ControlFlow().build_cfg_from_ast<CFG>(ast);
     {
-        boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_iterator vi, vi_end;
+        boost::graph_traits<CFG>::vertex_iterator vi, vi_end;
         for (boost::tie(vi, vi_end)=vertices(global_cfg); vi!=vi_end; ++vi) {
             SgAsmFunctionDeclaration *func = get(boost::vertex_name, global_cfg, *vi)->get_enclosing_function();
             if (!func || 0!=(func->get_reason() & SgAsmFunctionDeclaration::FUNC_LEFTOVERS)) {
@@ -733,16 +735,16 @@ dump_CFG_CG(SgNode *ast)
     std::stringstream sout;
     sout <<"digraph callgraph {\n"
          <<"node [ shape = box ];\n";
-    BinaryAnalysis::FunctionCall::Graph cg = BinaryAnalysis::FunctionCall().build_graph(global_cfg);
+    CG cg = BinaryAnalysis::FunctionCall().build_cg_from_cfg<CG>(global_cfg);
     {
-        boost::graph_traits<BinaryAnalysis::FunctionCall::Graph>::vertex_iterator vi, vi_end;
+        boost::graph_traits<CG>::vertex_iterator vi, vi_end;
         for (boost::tie(vi, vi_end)=vertices(cg); vi!=vi_end; ++vi) {
             SgAsmFunctionDeclaration *func = get(boost::vertex_name, cg, *vi);
             dump_function_node(sout, func, global_cfg, false);
         }
     }
     {
-        boost::graph_traits<BinaryAnalysis::FunctionCall::Graph>::edge_iterator ei, ei_end;
+        boost::graph_traits<CG>::edge_iterator ei, ei_end;
         for (boost::tie(ei, ei_end)=edges(cg); ei!=ei_end; ++ei) {
             SgAsmFunctionDeclaration *src_func = get(boost::vertex_name, cg, source(*ei, cg));
             SgAsmFunctionDeclaration *dst_func = get(boost::vertex_name, cg, target(*ei, cg));
@@ -1229,12 +1231,14 @@ main(int argc, char *argv[])
                 {}
             void visit(SgNode *node) {
                 using namespace BinaryAnalysis;
+                typedef ControlFlow::Graph CFG;
+                typedef boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
                 SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
                 if (func) {
-                    ControlFlow::Graph cfg = cfg_analysis.build_graph(func);
-                    ControlFlow::Vertex entry = 0; /* see build_graph() */
+                    CFG cfg = cfg_analysis.build_cfg_from_ast<CFG>(func);
+                    CFG_Vertex entry = 0; /* see build_graph() */
                     assert(get(boost::vertex_name, cfg, entry) == func->get_entry_block());
-                    Dominance::Graph dg = dom_analysis.build_idom_graph(cfg, entry);
+                    Dominance::Graph dg = dom_analysis.build_idom_graph_from_cfg<Dominance::Graph>(cfg, entry);
                     dom_analysis.clear_ast(func);
                     dom_analysis.apply_to_ast(dg);
                 }
@@ -1242,7 +1246,7 @@ main(int argc, char *argv[])
         };
         BinaryAnalysis::ControlFlow cfg_analysis;
         BinaryAnalysis::Dominance   dom_analysis;
-        // dom_analysis.set_debug(stderr);
+        dom_analysis.set_debug(stderr);
         CalculateDominance(cfg_analysis, dom_analysis).traverse(interp, preorder);
     }
 #elif 0
