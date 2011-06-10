@@ -3,6 +3,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/graph/graphviz.hpp>
 #include <boost/graph/topological_sort.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
@@ -35,17 +36,28 @@ void PathNumManager::buildNodeCFGVertexMap()
 
 void PathNumManager::generatePathNumbers()
 {
+    // Get all loops in this CFG.
     map<CFGVertex, set<CFGVertex> > loops = cfg_->getAllLoops();
-    cout << cfg_->getAllBackEdges().size() << endl;
-    cout << loops.begin()->second.size() << endl;
-    getchar();
+    set<CFGVertex> cfgNodesInLoop;
     
+    // Get all CFG nodes in loop.
+    typedef pair<CFGVertex, set<CFGVertex> > NodeToNodes;
+    foreach (const NodeToNodes& loop, loops)
+        cfgNodesInLoop.insert(loop.second.begin(), loop.second.end());
     
-    dags_.push_back(DAG());
+    dags_.resize(loops.size() + 1);
+    //dags_.resize(1);
+        
+    // Build the first DAG which contains the whole CFG without loops.
+    // Each loop is represented by its header in this DAG.
+    
     DAG& dag = dags_[0];
 
     foreach (CFGVertex v, boost::vertices(*cfg_))
     {
+        if (cfgNodesInLoop.count(v) > 0)
+            continue;
+        
         DAGVertex dagNode = boost::add_vertex(dag);
         dag[dagNode] = v;
         vertexToDagIndex_[v] = make_pair(0, dagNode);
@@ -53,6 +65,12 @@ void PathNumManager::generatePathNumbers()
 
     foreach (const CFGEdge& e, boost::edges(*cfg_))
     {
+        CFGVertex src = boost::source(e, *cfg_);
+        CFGVertex tgt = boost::target(e, *cfg_);
+        // If both nodes are in a loop, don't add it to this DAG now.
+        if (cfgNodesInLoop.count(src) > 0 || cfgNodesInLoop.count(tgt) > 0)
+            continue;
+                
         ROSE_ASSERT(vertexToDagIndex_.count(boost::source(e, *cfg_)) > 0);
         ROSE_ASSERT(vertexToDagIndex_.count(boost::target(e, *cfg_)) > 0);
 
@@ -62,20 +80,95 @@ void PathNumManager::generatePathNumbers()
         dag[dagEdge] = e;
         edgeToDagIndex_[e] = make_pair(0, dagEdge);
     }
-
-    DAGVertex entry = vertexToDagIndex_[cfg_->getEntry()].second;
-    DAGVertex exit  = vertexToDagIndex_[cfg_->getExit()].second;
-
-    // For each DAG, generate its path information.
-    foreach (const DAG& dag, dags_)
+    
+    // For each loop, add all its exit edges to the first DAG.
+    foreach (const NodeToNodes& loop, loops)
     {
-        PathNumGenerator* pathNumGen = new PathNumGenerator(dag, entry, exit);
+        CFGVertex header = loop.first;
+        // If this header is in another loop, continue.
+        if (cfgNodesInLoop.count(header) > 0)
+            continue;
+        
+        foreach (CFGVertex node, loop.second)
+        {
+            foreach (const CFGEdge& edge, boost::out_edges(node, *cfg_))
+            {
+                CFGVertex tgt = boost::target(edge, *cfg_);
+                if (cfgNodesInLoop.count(tgt) > 0 || tgt == header)
+                    continue;
+                
+                DAGEdge dagEdge = boost::add_edge(
+                    vertexToDagIndex_[header].second,
+                    vertexToDagIndex_[tgt].second, dag).first;
+                dag[dagEdge] = edge;
+                edgeToDagIndex_[edge] = make_pair(0, dagEdge);
+            }
+        }
+    }
+    
+    // Entries and exits of all DAGs.
+    vector<DAGVertex> entries(dags_.size());
+    vector<DAGVertex> exits(dags_.size());
+    entries[0] = vertexToDagIndex_[cfg_->getEntry()].second;
+    exits[0]   = vertexToDagIndex_[cfg_->getExit()].second;
+    
+    // Then build other dags for loops.
+    int dagIdx = 1;
+    foreach (NodeToNodes loop, loops)
+    {
+        DAG& dag = dags_[dagIdx];
+        CFGVertex header = loop.first;
+        loop.second.insert(header);
+        
+        foreach (CFGVertex cfgNode, loop.second)
+        {
+            DAGVertex dagNode = boost::add_vertex(dag);
+            dag[dagNode] = cfgNode;
+            vertexToDagIndex_[cfgNode] = make_pair(dagIdx, dagNode);
+        }
+        // Set the exit of the CFG as the exit of this DAG.
+        DAGVertex exit = boost::add_vertex(dag);
+        dag[exit] = cfg_->getExit();
+        
+        foreach (CFGVertex cfgNode, loop.second)
+        {            
+            foreach (const CFGEdge& edge, boost::out_edges(cfgNode, *cfg_))
+            {
+                DAGVertex dagSrc = vertexToDagIndex_[cfgNode].second;
+                DAGVertex dagTgt;
+                CFGVertex tgt = boost::target(edge, *cfg_);
+                
+                // If the target is a node not in this loop, set it to exit.
+                if (loop.second.count(tgt) == 0 || tgt == header)
+                    dagTgt = exit;
+                else
+                    dagTgt = vertexToDagIndex_[tgt].second;
+                
+                DAGEdge dagEdge = boost::add_edge(dagSrc, dagTgt, dag).first;
+                dag[dagEdge] = edge;
+                edgeToDagIndex_[edge] = make_pair(dagIdx, dagEdge);
+            }
+        }
+        entries[dagIdx] = vertexToDagIndex_[header].second;
+        exits[dagIdx] = exit;
+        
+        ++dagIdx;
+    }
+
+    pathNumGenerators_.resize(dags_.size());
+    // For each DAG, generate its path information.
+    for (size_t i = 0, n = dags_.size(); i != n; ++i)
+    {
+        PathNumGenerator* pathNumGen = 
+                new PathNumGenerator(dags_[i], entries[i], exits[i]);
         pathNumGen->generatePathNumbers();
-
-        pathNumGenerators_.push_back(pathNumGen);
-
-        int parentIdx = 0;
-        pathInfo_.push_back(make_pair(parentIdx, pathNumGen->getNumberOfPath()));
+        //cout << pathNumGen->getNumberOfPath() << endl;
+        pathNumGenerators_[i] = pathNumGen;
+        pathInfo_.push_back(make_pair(i, pathNumGen->getNumberOfPath()));
+        
+        char filename[16];
+        sprintf(filename, "dag%u.dot", i);
+        dagToDot(dags_[i], filename);
     }
 }
 
@@ -385,6 +478,12 @@ void PathNumManager::insertPathNumberOnEdge(
             ROSE_ASSERT(0);
         }
     }
+}
+
+void PathNumManager::dagToDot(const DAG& dag, const std::string& filename)
+{
+    ofstream ofile(filename.c_str(), std::ios::out);
+    boost::write_graphviz(ofile, dag);    
 }
 
 void PathNumGenerator::getEdgeValues()

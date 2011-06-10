@@ -183,6 +183,9 @@ public:
     std::map<PathSet, int> getPathsIndices(size_t index) const;
 
     void insertPathNumberToEvents(const std::string& pathNumName);
+    
+    //! Build a graph in dot file representing the given DAG.
+    void dagToDot(const DAG& dag, const std::string& filename);
 
 private:
     //! Use path number generator to generate path numbers.

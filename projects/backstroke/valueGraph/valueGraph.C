@@ -134,11 +134,25 @@ void EventReverser::buildBasicValueGraph()
     // Traverse the CFG in topological order instead of AST can make sure that each 
     // use at any point is already added to VG.
     
-    vector<BackstrokeCFG::Vertex> cfgNodes;
-    boost::topological_sort(*cfg_, back_inserter(cfgNodes));
+    
+    // Filter all back edges of the CFG out then we can do a topological sort.
+    vector<CFGEdge> backEdges = cfg_->getAllBackEdges();
+    set<CFGEdge> backEdgesSet(backEdges.begin(), backEdges.end());
+    typedef boost::filtered_graph<
+            BackstrokeCFG,
+            boost::function<bool(const CFGEdge&) > > FilterdCFG;
+    
+    // To resolve the problem of binding an overloaded function.
+    set<CFGEdge>::const_iterator (set<CFGEdge>::*findEdge)
+            (const set<CFGEdge>::key_type&) const = &set<CFGEdge>::find;
+    FilterdCFG filteredCFG(*cfg_, 
+            boost::bind(findEdge, &backEdgesSet, ::_1) == backEdgesSet.end());
+    
+    vector<CFGVertex> cfgNodes;
+    boost::topological_sort(filteredCFG, back_inserter(cfgNodes));
     
     vector<SgNode*> astNodes;
-    reverse_foreach (BackstrokeCFG::Vertex v, cfgNodes)
+    reverse_foreach (CFGVertex v, cfgNodes)
         astNodes.push_back((*cfg_)[v]->getNode());
     
     foreach (SgNode* node, astNodes)
@@ -825,6 +839,11 @@ EventReverser::createPhiNode(VersionedVariable& var, SSA::ReachingDefPtr reachin
             else
             {
                 ROSE_ASSERT(varVertexMap_.count(phiVar) > 0);
+                
+                // This should be a bug in SSA.
+                if (node == varVertexMap_[phiVar])
+                    continue;
+                
                 addValueGraphPhiEdge(node, varVertexMap_[phiVar], cfgEdges);
             }
         }
@@ -1345,6 +1364,12 @@ VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
             //ROSE_ASSERT(defTable.count(varName) > 0);
             SSA::ReachingDefPtr reachingDef = iter->second;
             version = reachingDef->getRenamingNumber();
+            VersionedVariable var(varName, version);
+            
+            // If this var already exists, return it.
+            map<VersionedVariable, VGVertex>::iterator it = varVertexMap_.find(var);
+            if (it != varVertexMap_.end())
+                return it->first;
 
             // If its reaching def is a phi function, it's a pseudo def.
             // Note why we capture the phi node here is because we cannot access phi

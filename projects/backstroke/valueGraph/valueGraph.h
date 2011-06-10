@@ -30,8 +30,11 @@ private:
             boost::function<bool(const VGEdge&) >,
             boost::function<bool(const VGVertex&) > > SubValueGraph;
 
+    typedef BackstrokeCFG::Vertex CFGVertex;
+    typedef BackstrokeCFG::Edge   CFGEdge;
+    
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-    std::pair<PathSet, std::vector<VGEdge> >, PathSet> ReverseCFG;
+        std::pair<PathSet, std::vector<VGEdge> >, PathSet> ReverseCFG;
     typedef boost::graph_traits<ReverseCFG>::vertex_descriptor RvsCFGVertex;
     typedef boost::graph_traits<ReverseCFG>::edge_descriptor RvsCFGEdge;
     

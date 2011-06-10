@@ -298,6 +298,8 @@ std::string ValueGraphEdge::toString() const
     str += s;
 #endif
     
+#if 0
+    str += "\\n";
     if (controlDependences.empty())
         str += "Entry";
     
@@ -314,6 +316,7 @@ std::string ValueGraphEdge::toString() const
             
         str += "\\n";
     }
+#endif
     
     return str;
 }
