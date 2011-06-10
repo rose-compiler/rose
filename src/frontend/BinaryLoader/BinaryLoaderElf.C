@@ -90,10 +90,17 @@ BinaryLoaderElf::align_values(SgAsmGenericSection *_section, MemoryMap *map,
         MappingContribution retval = BinaryLoader::align_values(section, map, malign_lo_p, malign_hi_p, va_p,
                                                                 mem_size_p, offset_p, file_size_p, map_private_p, va_offset_p,
                                                                 anon_lo_p, anon_hi_p, resolve_p);
+
         *anon_lo_p = false;
-        *anon_hi_p = false;
         *map_private_p = true;
         *resolve_p = RESOLVE_OVERMAP;
+
+        if (section->get_mapped_size()==section->get_size()) {
+            *anon_hi_p = false;
+        } else {
+            *anon_hi_p = true;
+        }
+
         return retval;
     }
 
