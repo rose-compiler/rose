@@ -15,18 +15,65 @@ using namespace std;
 
 
 /*
- * Build an SgAddOp node from the given Python statements.
+ * Build an SgOp node from the given Python statements.
  *  - PyObject* args = (PyObject*, PyObject*)
  */
 PyObject*
-sage_buildAddOp(PyObject *self, PyObject *args)
+sage_buildAugAssign(PyObject *self, PyObject *args)
 {
     PyObject* lhs_capsule = PyTuple_GetItem(args, 0);
     PyObject* rhs_capsule = PyTuple_GetItem(args, 1);
+    PyObject* py_operation = PyTuple_GetItem(args, 2);
+
     SgExpression* lhs = PyDecapsulate<SgExpression>(lhs_capsule);
     SgExpression* rhs = PyDecapsulate<SgExpression>(rhs_capsule);
-    SgAddOp* sg_add_op = SageBuilder::buildAddOp(lhs, rhs);
-    return PyEncapsulate(sg_add_op);
+    std::string op = std::string( PyString_AsString(py_operation) );
+    cerr << "lhs: " << lhs->class_name() << endl;
+    cerr << "rhs: " << rhs->class_name() << endl;
+    cerr << "op: " << op << endl;
+    SgBinaryOp* sg_bin_op = NULL;
+    if      (op == ROSE_PYTHON_AUG_ADD_OP)
+        sg_bin_op = SageBuilder::buildPlusAssignOp(lhs, rhs);
+    else if (op == ROSE_PYTHON_AUG_SUB_OP)
+        sg_bin_op = SageBuilder::buildMinusAssignOp(lhs, rhs);
+    else if (op == ROSE_PYTHON_AUG_MULT_OP)
+        sg_bin_op = SageBuilder::buildMultAssignOp(lhs, rhs);
+    else if (op == ROSE_PYTHON_AUG_DIV_OP)
+        sg_bin_op = SageBuilder::buildDivAssignOp(lhs, rhs);
+    else if (op == ROSE_PYTHON_AUG_IDIV_OP) {
+        //sg_bin_op = SageBuilder::buildIntegerDivideAssignOp(lhs, rhs);
+        cerr << "Error: no SgIntegerDivAssignOp node." << endl;
+        ROSE_ABORT();
+    }
+    else if (op == ROSE_PYTHON_AUG_MOD_OP)
+        sg_bin_op = SageBuilder::buildModAssignOp(lhs, rhs);
+    else if (op == ROSE_PYTHON_AUG_LSHIFT_OP)
+        sg_bin_op = SageBuilder::buildLshiftAssignOp(lhs, rhs);
+    else if (op == ROSE_PYTHON_AUG_RSHIFT_OP)
+        sg_bin_op = SageBuilder::buildRshiftAssignOp(lhs, rhs);
+    else if (op == ROSE_PYTHON_AUG_BITAND_OP) {
+        //sg_bin_op = SageBuilder::buildBitAndAssignOp(lhs, rhs);
+        cerr << "Error: no SgBitAndAssignOp node." << endl;
+        ROSE_ABORT();
+    }
+    else if (op == ROSE_PYTHON_AUG_BITOR_OP) {
+        sg_bin_op = SageBuilder::buildBitOrOp(lhs, rhs);
+        //sg_bin_op = SageBuilder::buildBitAndAssignOp(lhs, rhs);
+        cerr << "Error: no SgBitOrAssignOp node." << endl;
+        ROSE_ABORT();
+    }
+    else if (op == ROSE_PYTHON_AUG_BITXOR_OP) {
+        //sg_bin_op = SageBuilder::buildBitXorAssignOp(lhs, rhs);
+        cerr << "Error: no SgBitXorAssignOp node." << endl;
+        ROSE_ABORT();
+    }
+    else if (op == ROSE_PYTHON_AUG_EXP_OP)
+        sg_bin_op = SageBuilder::buildExponentiationOp(lhs, rhs);
+    else {
+        cerr << "Unrecognized aug assign operator: " << op << endl;
+        ROSE_ABORT();
+    }
+    return PyEncapsulate(sg_bin_op);
 }
 
 /*
@@ -124,6 +171,22 @@ sage_buildCall(PyObject *self, PyObject *args)
     SgFunctionCallExp* sg_function_call_exp =
         SageBuilder::buildFunctionCallExp(sg_func_symbol, sg_expr_list_exp);
     return PyEncapsulate(sg_function_call_exp);
+}
+
+/*
+ * Build an SgOp node from the given Python statements.
+ *  - PyObject* args = (PyObject*, PyObject*)
+ */
+PyObject*
+sage_buildCompare(PyObject *self, PyObject *args)
+{
+    PyObject* py_left        = PyTuple_GetItem(args, 0);
+    PyObject* py_ops         = PyTuple_GetItem(args, 1);
+    PyObject* py_comparators = PyTuple_GetItem(args, 2);
+
+    cerr << "Error: Comparisons require new sage node. Skipping." << endl;
+    SgExpression* left = SageBuilder::buildStringVal("COMPARISON");
+    return PyEncapsulate(left);
 }
 
 /*
@@ -305,8 +368,21 @@ sage_buildName(PyObject *self, PyObject *args)
         PyDecapsulate<SgScopeStatement>(py_scope_capsule);
     ROSE_ASSERT(scope != NULL);
 
-    SgVarRefExp* sg_var_ref = SageBuilder::buildVarRefExp(id, scope);
-    return PyEncapsulate(sg_var_ref);
+    SgName sg_name(id);
+    SgVariableSymbol* sg_sym = scope->lookup_variable_symbol( sg_name );
+    if (sg_sym == NULL) {
+#if 0 //TODO figure out vardecls/initnames/symbols/varrefexps
+        cerr << "Decl: " << id << endl;
+        SgType* sg_type = SageBuilder::buildVoidType();
+        SgVariableDeclaration* sg_var_decl =
+            SageBuilder::buildVariableDeclaration(sg_name, sg_type, NULL, scope);
+#endif
+        SgStringVal* sg_str = SageBuilder::buildStringVal(id); //TODO this is wrong
+        return PyEncapsulate(sg_str);
+    } else {
+        SgVarRefExp* sg_var_ref = SageBuilder::buildVarRefExp(sg_sym);
+        return PyEncapsulate(sg_var_ref);
+    }
 }
 
 /*

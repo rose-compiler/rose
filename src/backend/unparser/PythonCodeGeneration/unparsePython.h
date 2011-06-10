@@ -55,6 +55,34 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
 #define ROSE_PYTHON_MULT_OP     "*"
 #define ROSE_PYTHON_SUB_OP      "-"
 
+#define ROSE_PYTHON_AUG_ADD_OP      "+="
+#define ROSE_PYTHON_AUG_BITAND_OP   "&="
+#define ROSE_PYTHON_AUG_BITOR_OP    "|="
+#define ROSE_PYTHON_AUG_BITXOR_OP   "^="
+#define ROSE_PYTHON_AUG_DIV_OP      "/="
+#define ROSE_PYTHON_AUG_EXP_OP      "**="
+#define ROSE_PYTHON_AUG_IDIV_OP     "//="
+#define ROSE_PYTHON_AUG_LSHIFT_OP   "<<="
+#define ROSE_PYTHON_AUG_RSHIFT_OP   ">>="
+#define ROSE_PYTHON_AUG_MOD_OP      "%="
+#define ROSE_PYTHON_AUG_MULT_OP     "*="
+#define ROSE_PYTHON_AUG_SUB_OP      "-="
+
+#define ROSE_PYTHON_EQ_OP   "=="
+#define ROSE_PYTHON_NE_OP   "!="
+#define ROSE_PYTHON_LE_OP   "<="
+#define ROSE_PYTHON_GE_OP   ">="
+#define ROSE_PYTHON_LT_OP   "<"
+#define ROSE_PYTHON_GT_OP   ">"
+#define ROSE_PYTHON_IS_OP      "is"
+#define ROSE_PYTHON_ISNOT_OP   "is not"
+#define ROSE_PYTHON_IN_OP      "in"
+#define ROSE_PYTHON_NOTIN_OP   "not in"
+
+#define ROSE_PYTHON_AND_OP  "and"
+#define ROSE_PYTHON_OR_OP   "or"
+#define ROSE_PYTHON_NOT_OP  "not"
+
 #endif /* UNPARSER_PYTHON_H_ */
 
 
