@@ -224,10 +224,11 @@ sage_buildExpr(PyObject *self, PyObject *args)
 PyObject*
 sage_buildFunctionDef(PyObject *self, PyObject *args)
 {
-    PyObject* func_def_capsule = PyTuple_GetItem(args, 0);
+    PyObject* func_def_capsule     = PyTuple_GetItem(args, 0);
     PyObject* py_defaults_capsules = PyTuple_GetItem(args, 1);
-    PyObject* file_info_capsule = PyTuple_GetItem(args, 2);
-    PyObject* scope_capsule = PyTuple_GetItem(args, 3);
+    PyObject* py_decorators        = PyTuple_GetItem(args, 2);
+    PyObject* file_info_capsule    = PyTuple_GetItem(args, 3);
+    PyObject* scope_capsule        = PyTuple_GetItem(args, 4);
 
 
     PyObject* py_name = PyObject_GetAttrString(func_def_capsule, "name");
@@ -240,18 +241,26 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
     SgScopeStatement* sg_scope_statement =
         PyDecapsulate<SgScopeStatement>(scope_capsule);
 
-    // TODO: Figure out types, parse parameter list
+    cout << "ping " << func_name << endl;
     SgFunctionDeclaration* sg_func_decl =
         SageBuilder::buildDefiningFunctionDeclaration(func_name,
                 SageBuilder::buildVoidType(),
                 sg_params,
                 sg_scope_statement);
 
-    if (sg_func_decl->get_definition()->get_body() == NULL) {
-        cerr << "NULL func def body" << endl;
-        sg_func_decl->get_definition()->set_body(
-                SageBuilder::buildBasicBlock());
+    std::vector<SgExpression*> decorator_list;
+    Py_ssize_t decc = PyList_Size(py_decorators);
+    for(int i = 0; i < decc; i++) {
+        PyObject* py_exp = PyList_GetItem(py_decorators, i);
+        SgExpression* exp = PyDecapsulate<SgExpression>(py_exp);
+        decorator_list.push_back(exp);
     }
+    SgExprListExp* decorators = SageBuilder::buildExprListExp(decorator_list);
+    sg_func_decl->set_decoratorList(decorators);
+    decorators->set_parent(sg_func_decl);
+
+    cout << "fndd: " << sg_func_decl->get_firstNondefiningDeclaration() << endl;
+    cout << "  dd: " << sg_func_decl->get_definingDeclaration() << endl;
 
     PyObject* return_tuple = PyTuple_New(2);
     PyTuple_SetItem(return_tuple, 0, PyEncapsulate(sg_func_decl));
