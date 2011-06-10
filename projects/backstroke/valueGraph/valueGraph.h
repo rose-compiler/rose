@@ -112,9 +112,9 @@ private:
     //! A map from variable with version to vertex of Value Graph.
     std::map<VersionedVariable, VGVertex> varVertexMap_;
 
-    //	//! A map from variable with version to its reaching def object.
-    //	//! This map is only for pseudo defs.
-    //	std::map<VersionedVariable, SSA::ReachingDefPtr> pseudoDefMap_;
+    //! A map from each phi node to its reaching def object.
+    //! This map is only for pseudo defs.
+    std::map<VGVertex, SSA::ReachingDefPtr> pseudoDefMap_;
 
     //! All values which need to be restored (state variables).
     std::vector<VGVertex> valuesToRestore_;
@@ -331,6 +331,9 @@ private:
 
 	//! Connect each variable node to the root with cost.
 	void addStateSavingEdges();
+    
+    //! Connect all phi nodes to their defs.
+    void addPhiEdges();
 
     //! Check if a variable is a state variable.
 	bool isStateVariable(const VarName& name) const

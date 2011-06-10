@@ -374,7 +374,7 @@ void EventReverser::buildFunctionBodies()
                      copyStatement(funcDef_->get_body()));
     
     // Print the name of the handler at the beginning of each event.
-#if 1
+#if 0
     SgMemberFunctionDeclaration* memFuncDecl = isSgMemberFunctionDeclaration(funcDef_->get_declaration());
     string className;
     if (memFuncDecl)

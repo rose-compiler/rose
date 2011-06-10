@@ -21,6 +21,10 @@ void EventReverser::buildValueGraph()
 
     // Process all variable of their last versions.
     processLastVersions();
+    
+    // Add all phi node edges. This is done at last because a def of a phi node may
+    // not be created when this phi node is created.
+    addPhiEdges();
 
     // Add all state saving edges.
     addStateSavingEdges();
@@ -633,7 +637,8 @@ void EventReverser::processLastVersions()
     // and determine which variables are avaiable during the search of VG.
     typedef SSA::NodeReachingDefTable::value_type VarNameDefPair;
     foreach (const VarNameDefPair& nameDef,
-             ssa_->getLastVersions(funcDef_->get_declaration()))
+             //ssa_->getLastVersions(funcDef_->get_declaration()))
+             ssa_->getOutgoingDefsAtNode(funcDef_))
     {
         VarName name = nameDef.first;
         VGVertex node;
@@ -642,7 +647,7 @@ void EventReverser::processLastVersions()
 
         // For every variable, if it is not added into VG, add it now.
         VersionedVariable var(name, nameDef.second->getRenamingNumber());
-        
+                
         //cout << "VersionedVariable:\t" << var.toString() << endl;
         //printVarVertexMap();
         
@@ -810,6 +815,10 @@ EventReverser::createPhiNode(VersionedVariable& var, SSA::ReachingDefPtr reachin
     // Add the phi node.
     VGVertex node = addValueGraphNode(new PhiNode(var, astNode));
     varVertexMap_[var] = node;
+    
+    // Add the reaching def of this phi node to the table then all phi edges will
+    // be added after the VG is built.
+    pseudoDefMap_[node] = reachingDef;
 
     // For every phi function parameter, check if it is also a pseudo def.
     // If it is, add another phi node and connect them. Else, add an edge.
@@ -818,10 +827,8 @@ EventReverser::createPhiNode(VersionedVariable& var, SSA::ReachingDefPtr reachin
     foreach (const PairT& defEdgePair, reachingDef->getJoinedDefs())
     {
         SSA::ReachingDefPtr def = defEdgePair.first;
-        const set<ReachingDef::FilteredCfgEdge>& cfgEdges = defEdgePair.second;
+        //const set<ReachingDef::FilteredCfgEdge>& cfgEdges = defEdgePair.second;
         int version = def->getRenamingNumber();
-
-        //VGEdge newEdge;
 
         // If this def is also a phi node, add a varWithVersin entry
         // to the varReachingDefMap_ table.
@@ -830,65 +837,11 @@ EventReverser::createPhiNode(VersionedVariable& var, SSA::ReachingDefPtr reachin
             VersionedVariable phiVar(var.name, version, true);
             // If this phi node is not added to VG.
             if (varVertexMap_.count(phiVar) == 0)
-            //if (pseudoDefMap_.count(phiVar) == 0)
             {
-                //pseudoDefMap_[phiVar] = def;
                 VGVertex phiNode = createPhiNode(phiVar, def);
-                addValueGraphPhiEdge(node, phiNode, cfgEdges);
-            }
-            else
-            {
-                ROSE_ASSERT(varVertexMap_.count(phiVar) > 0);
-                
-                // This should be a bug in SSA.
-                if (node == varVertexMap_[phiVar])
-                    continue;
-                
-                addValueGraphPhiEdge(node, varVertexMap_[phiVar], cfgEdges);
             }
         }
-        else
-        {
-            VersionedVariable defVar(var.name, version);
-//            cout << defVar << endl;
-//            ROSE_ASSERT(varVertexMap_.count(defVar) > 0);
-
-            if (varVertexMap_.count(defVar) > 0)
-                addValueGraphPhiEdge(node, varVertexMap_[defVar], cfgEdges);
-        }
-
-        // If this def is not in the value graph, add it.
-
-        //var.phiVersions.push_back(PhiNodeDependence(v));
     }
-
-#if 0
-    // Connect the pseudo def to real defs.
-    foreach (const PhiNodeDependence& def, var.phiVersions)
-    {
-        // We cannot build a var like this since it may be another phi node.
-        VersionedVariable varInPhi(var.name, def.version);
-
-        cout << "Phi node dependence:" << varInPhi << endl;
-
-        // If the node which defines this phi node is not in the table,
-        // it should be another phi node.
-        if (varVertexMap_.count(varInPhi) > 0)
-        {
-            // If this node is also a pseudo node.
-            if (pseudoDefMap_.count(varInPhi) > 0)
-            {
-                varInPhi.isPseudoDef = true;
-                createPhiNode(varInPhi);
-            }
-            else
-                ROSE_ASSERT(false);
-            ROSE_ASSERT(varVertexMap_.count(varInPhi) > 0);
-        }
-
-        addValueGraphEdge(node, varVertexMap_[varInPhi], 0);
-    }
-#endif
 
     return node;
 }
@@ -1251,6 +1204,39 @@ EventReverser::VGVertex EventReverser::createOperatorNode(
         addValueGraphOrderedEdge(op, rhs, 1);
 
     return op;
+}
+
+void EventReverser::addPhiEdges()
+{
+    foreach (VGVertex node, boost::vertices(valueGraph_))
+    {
+        PhiNode* phiNode = isPhiNode(valueGraph_[node]);
+        if (phiNode == NULL) continue;
+        
+        ROSE_ASSERT(pseudoDefMap_.count(node));
+        
+        SSA::ReachingDefPtr reachingDef = pseudoDefMap_[node];
+            
+        // For every phi function parameter, check if it is also a pseudo def.
+        // If it is, add another phi node and connect them. Else, add an edge.
+        typedef pair<SSA::ReachingDefPtr, set<ReachingDef::FilteredCfgEdge> > PairT;
+        //pair<SSA::ReachingDefPtr, set<CFGEdge> > defEdgePair;
+        foreach (const PairT& defEdgePair, reachingDef->getJoinedDefs())
+        {
+            SSA::ReachingDefPtr def = defEdgePair.first;
+            const set<ReachingDef::FilteredCfgEdge>& cfgEdges = defEdgePair.second;
+            int version = def->getRenamingNumber();
+            
+            VersionedVariable defVar(phiNode->var.name, version);
+            ROSE_ASSERT(varVertexMap_.count(defVar));
+            
+            // This should be a bug in SSA.
+            if (node == varVertexMap_[defVar])
+                continue;
+
+            addValueGraphPhiEdge(node, varVertexMap_[defVar], cfgEdges);
+        }
+    }
 }
 
 void EventReverser::addStateSavingEdges()

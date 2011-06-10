@@ -44,6 +44,7 @@ void PathNumManager::generatePathNumbers()
     typedef pair<CFGVertex, set<CFGVertex> > NodeToNodes;
     foreach (const NodeToNodes& loop, loops)
         cfgNodesInLoop.insert(loop.second.begin(), loop.second.end());
+    //cout << cfgNodesInLoop.size() << endl;
     
     dags_.resize(loops.size() + 1);
     //dags_.resize(1);
@@ -62,6 +63,9 @@ void PathNumManager::generatePathNumbers()
         dag[dagNode] = v;
         vertexToDagIndex_[v] = make_pair(0, dagNode);
     }
+    
+    //cout << boost::num_vertices(*cfg_) << endl;
+    //cout << boost::num_vertices(dag) << endl;
 
     foreach (const CFGEdge& e, boost::edges(*cfg_))
     {
@@ -70,7 +74,7 @@ void PathNumManager::generatePathNumbers()
         // If both nodes are in a loop, don't add it to this DAG now.
         if (cfgNodesInLoop.count(src) > 0 || cfgNodesInLoop.count(tgt) > 0)
             continue;
-                
+        
         ROSE_ASSERT(vertexToDagIndex_.count(boost::source(e, *cfg_)) > 0);
         ROSE_ASSERT(vertexToDagIndex_.count(boost::target(e, *cfg_)) > 0);
 
