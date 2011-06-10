@@ -80,6 +80,12 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
             unparseBinaryOp( isSgBinaryOp(stmt), info );
             break;
 
+        case V_SgUnaryAddOp:
+        case V_SgMinusOp:
+        case V_SgBitComplementOp:
+            unparseUnaryOp( isSgUnaryOp(stmt), info );
+            break;
+
         default: {
             cerr << "unparse Expression (" << stmt->class_name()
                  << "*) is unimplemented." << endl;
@@ -289,6 +295,22 @@ Unparse_Python::unparseStringVal(SgStringVal* str,
     stringstream code;
     code << "\"" << str->get_value() << "\"";
     curprint( code.str() );
+}
+
+void
+Unparse_Python::unparseUnaryOp(SgUnaryOp* unary_op,
+                               SgUnparse_Info& info)
+{
+    switch(unary_op->variantT()) {
+        case V_SgUnaryAddOp:      curprint(ROSE_PYTHON_UADD_OP);   break;
+        case V_SgMinusOp:         curprint(ROSE_PYTHON_USUB_OP);   break;
+        case V_SgBitComplementOp: curprint(ROSE_PYTHON_INVERT_OP); break;
+        default: {
+            cerr << "Unhandled SgUnaryOp: " << unary_op->class_name() << endl;
+            ROSE_ABORT();
+        }
+    }
+    unparseExpression(unary_op->get_operand(), info);
 }
 
 void

@@ -2,7 +2,13 @@ import sys, ast
 
 import sage
 
-OPERATOR_MAP = {
+UNARY_OPERATOR_MAP = {
+    ast.UAdd:     "+",
+    ast.USub:     "-",
+    ast.Invert:   "~"
+}
+
+BINARY_OPERATOR_MAP = {
     ast.Add:      "+",
     ast.BitAnd:   "&",
     ast.BitOr:    "|",
@@ -95,7 +101,7 @@ class SageTranslator(ast.NodeVisitor):
   def visit_BinOp(self, node):
     lhs = self.visit(node.left)
     rhs = self.visit(node.right)
-    op_str = OPERATOR_MAP[node.op.__class__]
+    op_str = BINARY_OPERATOR_MAP[node.op.__class__]
     return sage.buildBinOp(lhs, rhs, op_str)
 
   def visit_Call(self, node):
@@ -185,6 +191,11 @@ class SageTranslator(ast.NodeVisitor):
     body = map(self.visit, node.body)
     finalbody = map(self.visit, node.finalbody)
     return sage.buildTryFinally(body, finalbody)
+
+  def visit_UnaryOp(self, node):
+    operand = self.visit(node.operand)
+    op_str = UNARY_OPERATOR_MAP[node.op.__class__]
+    return sage.buildUnaryOp(op_str, operand)
 
 
 def translate(infilename):

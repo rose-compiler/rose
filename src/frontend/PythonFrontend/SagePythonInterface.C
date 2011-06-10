@@ -241,7 +241,6 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
     SgScopeStatement* sg_scope_statement =
         PyDecapsulate<SgScopeStatement>(scope_capsule);
 
-    cout << "ping " << func_name << endl;
     SgFunctionDeclaration* sg_func_decl =
         SageBuilder::buildDefiningFunctionDeclaration(func_name,
                 SageBuilder::buildVoidType(),
@@ -258,9 +257,6 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
     SgExprListExp* decorators = SageBuilder::buildExprListExp(decorator_list);
     sg_func_decl->set_decoratorList(decorators);
     decorators->set_parent(sg_func_decl);
-
-    cout << "fndd: " << sg_func_decl->get_firstNondefiningDeclaration() << endl;
-    cout << "  dd: " << sg_func_decl->get_definingDeclaration() << endl;
 
     PyObject* return_tuple = PyTuple_New(2);
     PyTuple_SetItem(return_tuple, 0, PyEncapsulate(sg_func_decl));
@@ -466,6 +462,32 @@ sage_buildTryFinally(PyObject *self, PyObject *args)
     SgNode* sg_value = SageBuilder::buildBasicBlock();
     return PyEncapsulate(sg_value);
 }
+
+/*
+ */
+PyObject*
+sage_buildUnaryOp(PyObject *self, PyObject *args)
+{
+    PyObject* py_operation = PyTuple_GetItem(args, 0);
+    PyObject* py_operand   = PyTuple_GetItem(args, 1);
+
+    SgExpression* operand = PyDecapsulate<SgExpression>(py_operand);
+    std::string op = std::string( PyString_AsString(py_operation) );
+    SgUnaryOp* sg_unary_op = NULL;
+    if      (op == ROSE_PYTHON_UADD_OP)
+        sg_unary_op = SageBuilder::buildUnaryAddOp(operand);
+    else if (op == ROSE_PYTHON_USUB_OP)
+        sg_unary_op = SageBuilder::buildMinusOp(operand);
+    else if (op == ROSE_PYTHON_INVERT_OP)
+        sg_unary_op = SageBuilder::buildBitComplementOp(operand);
+    else {
+        cerr << "Unrecognized unary operator: " << op << endl;
+        ROSE_ABORT();
+    }
+    ROSE_ASSERT(sg_unary_op != NULL);
+    return PyEncapsulate(sg_unary_op);
+}
+
 /*
  * Build an SgStringVal node from the given Python String object.
  *  - PyObject* args = ( PyStringObject*, )

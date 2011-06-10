@@ -36,6 +36,7 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
           virtual void unparseLongIntVal(SgLongIntVal*, SgUnparse_Info&);
           virtual void unparseReturnStmt(SgReturnStmt*, SgUnparse_Info&);
           virtual void unparseStringVal(SgStringVal*, SgUnparse_Info&);
+          virtual void unparseUnaryOp(SgUnaryOp*, SgUnparse_Info&);
           virtual void unparseVarRefExp(SgVarRefExp*, SgUnparse_Info&);
 
           virtual std::string ws_prefix(int nesting_level);
@@ -82,6 +83,10 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
 #define ROSE_PYTHON_AND_OP  "and"
 #define ROSE_PYTHON_OR_OP   "or"
 #define ROSE_PYTHON_NOT_OP  "not"
+
+#define ROSE_PYTHON_UADD_OP   "+"
+#define ROSE_PYTHON_USUB_OP   "-"
+#define ROSE_PYTHON_INVERT_OP "~"
 
 #endif /* UNPARSER_PYTHON_H_ */
 

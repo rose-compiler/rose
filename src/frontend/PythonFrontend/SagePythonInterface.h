@@ -23,6 +23,7 @@ PyObject* sage_buildReturnStmt(PyObject *self, PyObject *args);
 PyObject* sage_buildStringVal(PyObject *self, PyObject *args);
 PyObject* sage_buildTryExcept(PyObject *self, PyObject *args);
 PyObject* sage_buildTryFinally(PyObject *self, PyObject *args);
+PyObject* sage_buildUnaryOp(PyObject *self, PyObject *args);
 
 static PyMethodDef SageBuilderMethods[] = {
     {"buildAugAssign", sage_buildAugAssign, METH_VARARGS, "Builds an augmented assignment node."},
@@ -43,6 +44,7 @@ static PyMethodDef SageBuilderMethods[] = {
     {"buildStringVal", sage_buildStringVal, METH_VARARGS, "Builds an SgStringVal node."},
     {"buildTryExcept", sage_buildTryExcept, METH_VARARGS, "Builds an try stmt node."},
     {"buildTryFinally", sage_buildTryFinally, METH_VARARGS, "Builds an try/finally stmt node."},
+    {"buildUnaryOp", sage_buildUnaryOp, METH_VARARGS, "Builds unary operation node."},
 
     {"appendStatements", (PyCFunction)sage_appendStatements, METH_VARARGS | METH_KEYWORDS, "Add children to a given SgNode."},
 
