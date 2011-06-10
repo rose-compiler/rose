@@ -8,6 +8,7 @@
 #include "rose_config.h"
 
 #define SKIP_C_ACTION_IMPLEMENTATION 0
+#define DXN_DEBUG 1
 
 using namespace std;
 
@@ -3008,7 +3009,7 @@ c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos
 // void c_action_declaration_type_spec(int type)
 void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
    {
-  // The type value makes it clear what the type will be for the variable declaration being defined in the next setof rules.
+    // The type value makes it clear what the type will be for the variable declaration being defined in the next setof rules.
   // We need to save this information so that we can know the type of the variable declaration when it is later built.
 
   // So we need to build the SgType and push it onto the type stack!
@@ -3016,7 +3017,7 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R502 c_action_declaration_type_spec() udtKeyword = %p = %s type = %d \n",udtKeyword,udtKeyword != NULL ? udtKeyword->text : "NULL",type);
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R502 c_action_declaration_type_spec()");
 #endif
@@ -3118,7 +3119,7 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
                printf ("No type found on astTypeStack (make sure there is a base type on the astBaseTypeStack) \n");
           ROSE_ASSERT(astBaseTypeStack.empty() == false);
         }
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R502 c_action_declaration_type_spec()");
 #endif
@@ -3367,7 +3368,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
           astAttributeSpecStack.push_front(attr);
         }
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R503 c_action_attr_spec()");
 #endif
@@ -3833,7 +3834,7 @@ void c_action_entity_decl_list__begin()
   // The use of the astNameListStack has been discontinued, we just use a stack of names (tokens) now!
   // This make for a simpler implementation and I don't think we require the additional complexity.
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R504 (list__begin) c_action_entity_decl_list__begin()");
 #endif
@@ -4094,7 +4095,7 @@ void c_action_array_spec(int count)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R510 c_action_array_spec(): count = %d (building the multi-dimensional shape for the future SgArrayType) astAttributeSpecStack.size() = %zu \n",count,astAttributeSpecStack.size());
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R510 #2 c_action_array_spec()");
 #endif
@@ -4134,7 +4135,7 @@ void c_action_array_spec(int count)
   // DQ (1/18/2011): Called by R510 and R443.
      processMultidimensionalSubscriptsIntoExpressionList(count);
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R510 #2 c_action_array_spec()");
 #endif
@@ -4253,7 +4254,7 @@ void c_action_array_spec_element(int type)
   // This implementation is specific to type == ArraySpecElement_expr, I 
   // don't have examples of where the type is any other value at present.
   // ROSE_ASSERT(type == ArraySpecElement_expr);
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R510 #3 c_action_array_spec_element()");
 #endif
