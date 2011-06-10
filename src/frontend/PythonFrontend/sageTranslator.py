@@ -17,6 +17,34 @@ OPERATOR_MAP = {
     ast.Sub:      "-",
 }
 
+AUG_OPERATOR_MAP = {
+    ast.Add:      "+=",
+    ast.BitAnd:   "&=",
+    ast.BitOr:    "|=",
+    ast.BitXor:   "^=",
+    ast.Div:      "/=",
+    ast.FloorDiv: "//=",
+    ast.LShift:   "<<=",
+    ast.Mod:      "%=",
+    ast.Mult:     "*=",
+    ast.Pow:      "**=",
+    ast.RShift:   ">>=",
+    ast.Sub:      "-=",
+}
+
+COMP_OPERATOR_MAP = {
+    ast.Eq:       "==",
+    ast.NotEq:    "!=",
+    ast.LtE:      "<=",
+    ast.GtE:      ">=",
+    ast.Lt:       "<",
+    ast.Gt:       ">",
+    ast.Is:       "is",
+    ast.IsNot:    "is not",
+    ast.In:       "in",
+    ast.NotIn:    "not in"
+}
+
 class FileInfo():
 
   def __init__(self, filename, node):
@@ -58,6 +86,12 @@ class SageTranslator(ast.NodeVisitor):
     #print "generic_visit for class: ", node.__class__.__name__
     return map(self.visit, ast.iter_child_nodes(node))
 
+  def visit_AugAssign(self, node):
+    target = self.visit(node.target)
+    value  = self.visit(node.value)
+    op_str = AUG_OPERATOR_MAP[node.op.__class__]
+    return sage.buildAugAssign(target, value, op_str)
+
   def visit_BinOp(self, node):
     lhs = self.visit(node.left)
     rhs = self.visit(node.right)
@@ -70,6 +104,12 @@ class SageTranslator(ast.NodeVisitor):
     kwargs = map(self.visit, node.keywords)
     scope = self.scopeStack.peek()
     return sage.buildCall(name, args, kwargs, scope)
+
+  def visit_Compare(self, node):
+    lhs = self.visit(node.left)
+    comparators = map(self.visit, node.comparators)
+    ops = map(lambda op: COMP_OPERATOR_MAP[op.__class__], node.ops)
+    return sage.buildCompare(lhs, ops, comparators)
 
   def visit_ExceptHandler(self, node):
     e_name = node.name

@@ -65,6 +65,18 @@ Unparse_Python::unparseLanguageSpecificExpression(SgExpression* stmt,
         case V_SgLshiftOp:
         case V_SgRshiftOp:
         case V_SgExponentiationOp:
+        case V_SgPlusAssignOp:
+    //  case V_SgBitAndAssignOp:
+    //  case V_SgBitOrAssignOp:
+    //  case V_SgBitXorAssignOp:
+        case V_SgDivAssignOp:
+    //  case V_SgExpAssignOp:
+    //  case V_SgIntegerDivAssignOp:
+        case V_SgLshiftAssignOp:
+        case V_SgRshiftAssignOp:
+        case V_SgModAssignOp:
+        case V_SgMultAssignOp:
+        case V_SgMinusAssignOp:
             unparseBinaryOp( isSgBinaryOp(stmt), info );
             break;
 
@@ -120,19 +132,31 @@ Unparse_Python::unparseBinaryOp(SgBinaryOp* bin_op,
     unparseExpression(bin_op->get_lhs_operand(), info);
     curprint(" ");
     switch(bin_op->variantT()) {
-        case V_SgAddOp:            curprint(ROSE_PYTHON_ADD_OP);     break;
-        case V_SgAssignOp:         curprint(ROSE_PYTHON_ASSIGN_OP);  break;
-        case V_SgBitAndOp:         curprint(ROSE_PYTHON_BITAND_OP);  break;
-        case V_SgBitOrOp:          curprint(ROSE_PYTHON_BITOR_OP);   break;
-        case V_SgBitXorOp:         curprint(ROSE_PYTHON_BITXOR_OP);  break;
-        case V_SgDivideOp:         curprint(ROSE_PYTHON_DIV_OP);     break;
-        case V_SgExponentiationOp: curprint(ROSE_PYTHON_EXP_OP);     break;
-        case V_SgIntegerDivideOp:  curprint(ROSE_PYTHON_IDIV_OP);    break;
-        case V_SgLshiftOp:         curprint(ROSE_PYTHON_LSHIFT_OP);  break;
-        case V_SgModOp:            curprint(ROSE_PYTHON_MOD_OP);     break;
-        case V_SgMultiplyOp:       curprint(ROSE_PYTHON_MULT_OP);    break;
-        case V_SgRshiftOp:         curprint(ROSE_PYTHON_RSHIFT_OP);  break;
-        case V_SgSubtractOp:       curprint(ROSE_PYTHON_SUB_OP);     break;
+        case V_SgAddOp:            curprint(ROSE_PYTHON_ADD_OP);        break;
+        case V_SgAssignOp:         curprint(ROSE_PYTHON_ASSIGN_OP);     break;
+        case V_SgBitAndOp:         curprint(ROSE_PYTHON_BITAND_OP);     break;
+        case V_SgBitOrOp:          curprint(ROSE_PYTHON_BITOR_OP);      break;
+        case V_SgBitXorOp:         curprint(ROSE_PYTHON_BITXOR_OP);     break;
+        case V_SgDivideOp:         curprint(ROSE_PYTHON_DIV_OP);        break;
+        case V_SgExponentiationOp: curprint(ROSE_PYTHON_EXP_OP);        break;
+        case V_SgIntegerDivideOp:  curprint(ROSE_PYTHON_IDIV_OP);       break;
+        case V_SgLshiftOp:         curprint(ROSE_PYTHON_LSHIFT_OP);     break;
+        case V_SgModOp:            curprint(ROSE_PYTHON_MOD_OP);        break;
+        case V_SgMultiplyOp:       curprint(ROSE_PYTHON_MULT_OP);       break;
+        case V_SgRshiftOp:         curprint(ROSE_PYTHON_RSHIFT_OP);     break;
+        case V_SgSubtractOp:       curprint(ROSE_PYTHON_SUB_OP);        break;
+        case V_SgPlusAssignOp:     curprint(ROSE_PYTHON_AUG_ADD_OP);    break;
+    //  case V_SgBitAndAssignOp:   curprint(ROSE_PYTHON_AUG_BITAND_OP); break;
+    //  case V_SgBitOrAssignOp:    curprint(ROSE_PYTHON_AUG_BITOR_OP);  break;
+    //  case V_SgBitXorAssignOp:   curprint(ROSE_PYTHON_AUG_BITXOR_OP); break;
+        case V_SgDivAssignOp:      curprint(ROSE_PYTHON_AUG_DIV_OP);    break;
+    //  case V_SgExpAssignOp:      curprint(ROSE_PYTHON_AUG_EXP_OP);    break;
+    //  case V_SgIntegerDivAssignOp: curprint(ROSE_PYTHON_AUG_IDIV_OP); break;
+        case V_SgLshiftAssignOp:   curprint(ROSE_PYTHON_AUG_LSHIFT_OP); break;
+        case V_SgRshiftAssignOp:   curprint(ROSE_PYTHON_AUG_RSHIFT_OP); break;
+        case V_SgModAssignOp:      curprint(ROSE_PYTHON_AUG_MOD_OP);    break;
+        case V_SgMultAssignOp:     curprint(ROSE_PYTHON_AUG_MULT_OP);   break;
+        case V_SgMinusAssignOp:    curprint(ROSE_PYTHON_AUG_SUB_OP);    break;
         default: { cerr << "Unhandled SgBinaryOp: " << bin_op->class_name() << endl;
             ROSE_ABORT();
         }
