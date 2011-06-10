@@ -18,8 +18,6 @@ int python_main(std::string, SgFile*)
 
 #include "SagePythonInterface.h"
 
-#include "AstDOTGeneration.h"
-
 #define ROSE_PYTHON_FRONTEND_MODULE_NAME "sageTranslator"
 #define ROSE_PYTHON_FRONTEND_TRANSLATOR_FXN_NAME "translate" 
 

@@ -187,6 +187,15 @@ void
 Unparse_Python::unparseFunctionDeclaration(SgFunctionDeclaration* func_decl,
                                            SgUnparse_Info& info)
 {
+    SgExprListExp* decoratorList = func_decl->get_decoratorList();
+    SgExpressionPtrList& decorators = decoratorList->get_expressions();
+    SgExpressionPtrList::iterator dec_it;
+    for(dec_it = decorators.begin(); dec_it != decorators.end(); dec_it++) {
+        curprint("@");
+        unparseExpression(*dec_it, info);
+        curprint(string("\n") + ws_prefix(info.get_nestingLevel()));
+    }
+
     stringstream code0;
     string func_name = func_decl->get_name().getString();
     code0 << "def " << func_name << "(";
@@ -201,6 +210,8 @@ Unparse_Python::unparseFunctionDeclaration(SgFunctionDeclaration* func_decl,
     info.inc_nestingLevel();
     unparseStatement(func_decl->get_definition(), info);
     info.dec_nestingLevel();
+
+    curprint(string("\n") + ws_prefix(info.get_nestingLevel()));
 }
 
 void

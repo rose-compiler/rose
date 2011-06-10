@@ -124,8 +124,9 @@ class SageTranslator(ast.NodeVisitor):
   def visit_FunctionDef(self, node):
     scope = self.scopeStack.peek()
     defaults = map(self.visit, node.args.defaults)
+    decorators = map(self.visit, node.decorator_list)
     (capsule, scope) = \
-        sage.buildFunctionDef(node, defaults, self.file_info(node), scope)
+        sage.buildFunctionDef(node, defaults, decorators, self.file_info(node), scope)
     self.scopeStack.push(scope)
     body_forest = map(self.visit, node.body)
     sage.appendStatements(capsule, body_forest)
