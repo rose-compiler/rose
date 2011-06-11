@@ -37,6 +37,7 @@ void PathNumManager::buildNodeCFGVertexMap()
 void PathNumManager::generatePathNumbers()
 {
     // Get all loops in this CFG.
+    set<CFGEdge> backEdges = cfg_->getAllBackEdges();
     map<CFGVertex, set<CFGVertex> > loops = cfg_->getAllLoops();
     set<CFGVertex> cfgNodesInLoop;
     
@@ -50,14 +51,14 @@ void PathNumManager::generatePathNumbers()
     //dags_.resize(1);
         
     // Build the first DAG which contains the whole CFG without loops.
-    // Each loop is represented by its header in this DAG.
+    // This is done by removing all back edges.
     
     DAG& dag = dags_[0];
 
     foreach (CFGVertex v, boost::vertices(*cfg_))
     {
-        if (cfgNodesInLoop.count(v) > 0)
-            continue;
+        //if (cfgNodesInLoop.count(v) > 0)
+        //    continue;
         
         DAGVertex dagNode = boost::add_vertex(dag);
         dag[dagNode] = v;
@@ -71,9 +72,14 @@ void PathNumManager::generatePathNumbers()
     {
         CFGVertex src = boost::source(e, *cfg_);
         CFGVertex tgt = boost::target(e, *cfg_);
-        // If both nodes are in a loop, don't add it to this DAG now.
-        if (cfgNodesInLoop.count(src) > 0 || cfgNodesInLoop.count(tgt) > 0)
+        
+        // Ignore back edges.
+        if (backEdges.count(e) > 0)
             continue;
+        
+        //// If both nodes are in a loop, don't add it to this DAG now.
+        //if (cfgNodesInLoop.count(src) > 0 || cfgNodesInLoop.count(tgt) > 0)
+        //    continue;
         
         ROSE_ASSERT(vertexToDagIndex_.count(boost::source(e, *cfg_)) > 0);
         ROSE_ASSERT(vertexToDagIndex_.count(boost::target(e, *cfg_)) > 0);
@@ -85,30 +91,30 @@ void PathNumManager::generatePathNumbers()
         edgeToDagIndex_[e] = make_pair(0, dagEdge);
     }
     
-    // For each loop, add all its exit edges to the first DAG.
-    foreach (const NodeToNodes& loop, loops)
-    {
-        CFGVertex header = loop.first;
-        // If this header is in another loop, continue.
-        if (cfgNodesInLoop.count(header) > 0)
-            continue;
-        
-        foreach (CFGVertex node, loop.second)
-        {
-            foreach (const CFGEdge& edge, boost::out_edges(node, *cfg_))
-            {
-                CFGVertex tgt = boost::target(edge, *cfg_);
-                if (cfgNodesInLoop.count(tgt) > 0 || tgt == header)
-                    continue;
-                
-                DAGEdge dagEdge = boost::add_edge(
-                    vertexToDagIndex_[header].second,
-                    vertexToDagIndex_[tgt].second, dag).first;
-                dag[dagEdge] = edge;
-                edgeToDagIndex_[edge] = make_pair(0, dagEdge);
-            }
-        }
-    }
+//    // For each loop, add all its exit edges to the first DAG.
+//    foreach (const NodeToNodes& loop, loops)
+//    {
+//        CFGVertex header = loop.first;
+//        // If this header is in another loop, continue.
+//        if (cfgNodesInLoop.count(header) > 0)
+//            continue;
+//        
+//        foreach (CFGVertex node, loop.second)
+//        {
+//            foreach (const CFGEdge& edge, boost::out_edges(node, *cfg_))
+//            {
+//                CFGVertex tgt = boost::target(edge, *cfg_);
+//                if (cfgNodesInLoop.count(tgt) > 0 || tgt == header)
+//                    continue;
+//                
+//                DAGEdge dagEdge = boost::add_edge(
+//                    vertexToDagIndex_[header].second,
+//                    vertexToDagIndex_[tgt].second, dag).first;
+//                dag[dagEdge] = edge;
+//                edgeToDagIndex_[edge] = make_pair(0, dagEdge);
+//            }
+//        }
+//    }
     
     // Entries and exits of all DAGs.
     vector<DAGVertex> entries(dags_.size());
@@ -142,6 +148,11 @@ void PathNumManager::generatePathNumbers()
                 DAGVertex dagTgt;
                 CFGVertex tgt = boost::target(edge, *cfg_);
                 
+                // If the edge is an exit edge, don't add it.
+                if (loop.second.count(tgt) == 0)
+                    continue;
+                
+                // If the edge is a back edge, set its target to the exit.
                 // If the target is a node not in this loop, set it to exit.
                 if (loop.second.count(tgt) == 0 || tgt == header)
                     dagTgt = exit;

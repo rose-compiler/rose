@@ -140,8 +140,7 @@ void EventReverser::buildBasicValueGraph()
     
     
     // Filter all back edges of the CFG out then we can do a topological sort.
-    vector<CFGEdge> backEdges = cfg_->getAllBackEdges();
-    set<CFGEdge> backEdgesSet(backEdges.begin(), backEdges.end());
+    set<CFGEdge> backEdges = cfg_->getAllBackEdges();
     typedef boost::filtered_graph<
             BackstrokeCFG,
             boost::function<bool(const CFGEdge&) > > FilterdCFG;
@@ -150,7 +149,7 @@ void EventReverser::buildBasicValueGraph()
     set<CFGEdge>::const_iterator (set<CFGEdge>::*findEdge)
             (const set<CFGEdge>::key_type&) const = &set<CFGEdge>::find;
     FilterdCFG filteredCFG(*cfg_, 
-            boost::bind(findEdge, &backEdgesSet, ::_1) == backEdgesSet.end());
+            boost::bind(findEdge, &backEdges, ::_1) == backEdges.end());
     
     vector<CFGVertex> cfgNodes;
     boost::topological_sort(filteredCFG, back_inserter(cfgNodes));
@@ -368,6 +367,12 @@ void EventReverser::processExpression(SgExpression* expr)
         case V_SgLshiftAssignOp:
         case V_SgRshiftAssignOp:
             {
+                if (nodeVertexMap_.count(lhs) == 0 || nodeVertexMap_.count(rhs) == 0)
+                {
+                    cout << "The operand is not added to VG yet!\n";
+                    return;
+                }
+
                 VersionedVariable use = getVersionedVariable(lhs);
 
                 ROSE_ASSERT(varVertexMap_.count(use) > 0);
@@ -1096,6 +1101,8 @@ void EventReverser::addStateSavingEdges(const VersionedVariable& var, SgNode* as
     typedef SSA::NodeReachingDefTable::value_type reachingDefPair;
     foreach (const reachingDefPair& def, defTable)
     {
+        // FIXME cannot get the correct reaching def for a loop header!!
+        
         if (def.first == var.name)
         {
             //cout << "Killed: " << def.second->getRenamingNumber() << endl;
@@ -1208,6 +1215,8 @@ EventReverser::VGVertex EventReverser::createOperatorNode(
 
 void EventReverser::addPhiEdges()
 {
+    set<CFGEdge> backEdges = cfg_->getAllBackEdges();
+    
     foreach (VGVertex node, boost::vertices(valueGraph_))
     {
         PhiNode* phiNode = isPhiNode(valueGraph_[node]);
@@ -1228,13 +1237,35 @@ void EventReverser::addPhiEdges()
             int version = def->getRenamingNumber();
             
             VersionedVariable defVar(phiNode->var.name, version);
-            ROSE_ASSERT(varVertexMap_.count(defVar));
+            
+            // Currently the extern variables may not be built here. Just skip it.
+            if (varVertexMap_.count(defVar) == 0)
+                continue;
+            //cout << defVar.toString() << endl;
+            //ROSE_ASSERT(varVertexMap_.count(defVar));
             
             // This should be a bug in SSA.
             if (node == varVertexMap_[defVar])
                 continue;
 
             addValueGraphPhiEdge(node, varVertexMap_[defVar], cfgEdges);
+            
+            if (phiNode->mu)
+                continue;
+            
+            foreach (const CFGEdge& backEdge, backEdges)
+            //foreach (const ReachingDef::FilteredCfgEdge& cfgEdge, cfgEdges)
+            {
+                // If the def is coming through a back edge, set this phi not to a mu node.
+                if (cfgEdges.count(*(*cfg_)[backEdge]) == 0)
+                    continue;
+                    
+                phiNode->mu = true;
+                // A Mu mode can kill the defs from non-back edge. Add state
+                // saving edges here.
+                addStateSavingEdges(phiNode->var, (*cfg_)[backEdge]->target().getNode());
+                break;
+            }
         }
     }
 }

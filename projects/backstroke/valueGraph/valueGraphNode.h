@@ -137,20 +137,20 @@ struct ValueNode : ValueGraphNode
 //! from its parent class ValueNode) only describe the place of this Phi node in the CFG.
 struct PhiNode : ValueNode
 {
-    enum GateType
-    {
-        phi,
-        mu,
-        eta
-    };
+//    enum GateType
+//    {
+//        phi,
+//        mu,
+//        eta
+//    };
 
 	PhiNode(const VersionedVariable& v, SgNode* node)
-    : ValueNode(v, node), dagIndex(0)/*, type(phi)*/ {}
+    : ValueNode(v, node), dagIndex(0), mu(false)/*, type(phi)*/ {}
 
 	//std::vector<ValueGraphNode*> nodes;
 
 	virtual std::string toString() const
-	{ return "PHI_" + var.toString(); }
+	{ return (mu ? "MU_" : "PHI_") + var.toString(); }
 
     virtual int getCost() const;
 
@@ -159,6 +159,8 @@ struct PhiNode : ValueNode
 
     //! The DAG index.
     int dagIndex;
+    
+    bool mu;
 
     //! The type of this gate function
     //GateType type;

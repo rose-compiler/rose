@@ -37,6 +37,7 @@ int main(int argc, char *argv[])
     //eventList.insert("DataIndication");
     eventList.insert("Timeout");
     eventList.insert("Notify");
+    eventList.insert("SendPending");
     
     vector<SgFunctionDefinition*> funcDefs;
 
