@@ -27,7 +27,7 @@ bool ExtractFunctionArguments::NormalizeTree(SgNode* tree)
 					constructor->get_file_info()->get_line(),
 					constructor->get_file_info()->get_filename(),
 					constructor->unparseToString().c_str());
-			return false;
+			//return false;
 		}
 	}
 
@@ -69,13 +69,17 @@ bool ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 				functionCall->get_file_info()->get_filename(), functionCall->get_file_info()->get_line());
 		fprintf(stderr, "\t%s\n", functionCall->unparseToString().c_str());
 		fprintf(stderr, "If you are using function pointers, save the function pointer first and then call the function on another line.\n");
-		return false;
+		//return false;
 	}
 
 	SgExprListExp* functionArgs = functionCall->get_args();
 	ROSE_ASSERT(functionArgs != NULL);
 
-	SgExpressionPtrList& argumentList = functionArgs->get_expressions();
+	SgExpressionPtrList argumentList = functionArgs->get_expressions();
+
+    // We also normalize the caller if the fucntion called is a member function.
+    if (SgBinaryOp* binExp = isSgBinaryOp(functionCall->get_function()))
+        argumentList.push_back(binExp->get_lhs_operand());
 
 	//Go over all the function arguments, pull them out
 	foreach (SgExpression* arg, argumentList)
