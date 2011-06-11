@@ -1,0 +1,20 @@
+Name: rose
+Version: 0.9.5.1
+Cabal-Version: >= 1.2
+License: BSD3
+License-File: LICENSE
+Author: Peter Collingbourne
+Homepage: http://www.rose-compiler.org
+Category: Compilers/Interpreters
+Synopsis: Bindings for the ROSE compiler
+Build-Type: Simple
+
+Library
+  Extensions: ForeignFunctionInterface, DeriveDataTypeable, MultiParamTypeClasses, RankNTypes, FlexibleInstances, TypeSynonymInstances, ExistentialQuantification
+  Build-Depends: base, haskell98, syb, mtl, containers
+  Exposed-Modules: ROSE Data.DataMc ROSE.Sage3 ROSE.Sage3.Misc ROSE.Sage3.SYB @GENERATED_MODULES@
+  Other-Modules: ROSE.CxxContainers
+  Extra-Libraries: rose rosehswrap
+  Extra-Lib-Dirs: ../..//src/.libs .libs
+  if os(linux)
+    ld-options: -Wl,-rpath,../..//src/.libs -Wl,-rpath,.libs

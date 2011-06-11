@@ -1,0 +1,123 @@
+/* #line 1 "/g/g15/bronevet/Compilers/ROSE/src/ROSETTA/Grammar/grammarAST_FileIoHeader.code" */
+
+#ifndef AST_FILE_IO_HEADER
+#define AST_FILE_IO_HEADER
+#include "AstSpecificDataManagingClass.h"
+#include <ostream>
+#include <string>
+/* JH (11/23/2005) : This class provides all memory management ans methods to handle the 
+   file storage of ASTs. For more inforamtion about the methods have a look at :
+   src/ROSETTA/Grammar/grammarAST_FileIoHeader.code
+*/
+
+
+#define REGISTER_ATTRIBUTE_FOR_FILE_IO(CLASS_TO_BE_REGISTERED ) AST_FILE_IO::registerAttribute<CLASS_TO_BE_REGISTERED> ( ) ;
+
+typedef AstSpecificDataManagingClass AstData;
+
+class AST_FILE_IO
+   {
+     public:
+
+#if 1
+  // This class is used only for debugging...
+     class MemoryCheckingTraversalForAstFileIO : public ROSE_VisitTraversal
+        {
+          public:
+            // int counter;
+
+               void visit ( SgNode* node )
+                  {
+                    ROSE_ASSERT(node != NULL);
+                 // printf ("MemoryCheckingTraversalForAstFileIO::visit: node = %s \n",node->class_name().c_str());
+                    ROSE_ASSERT(node->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
+                    node->checkDataMemberPointersIfInMemoryPool();
+                  }
+        };
+#endif
+
+       typedef AstAttribute* (AstAttribute::*CONSTRUCTOR)( void );
+  /* We are using the V_Sg... enumeration. Additionally, we introduce totalNumberOfIRNodes the number
+     of non terminals and terminals .
+  */
+     private:
+       enum { totalNumberOfIRNodes = 666}; 
+       static unsigned long binarySearch( unsigned long globalIndex, int start = 0 , int end = totalNumberOfIRNodes );
+       static unsigned long linearSearch( unsigned long globalIndex ) ;
+       static std :: map < std::string, CONSTRUCTOR > registeredAttributes; 
+       static bool freepointersOfCurrentAstAreSetToGlobalIndices;
+       static unsigned long listOfMemoryPoolSizes [ totalNumberOfIRNodes + 1] ;
+    // searches pointerContainingGlobalIndex in regions of listOfAccumulatedPoolSizes, in order to compute the global index 
+       static SgNode* getPointerFromGlobalIndex ( unsigned long globalIndex ); 
+       static std::vector<AstData*> vectorOfASTs ;
+       static AstData *actualRebuildAst; 
+
+     public:
+    // sets up the lost of pool sizes that contain valid entries 
+       static void startUp ( SgProject* root ); 
+
+    // sets up the lost of pool sizes that contain valid entries 
+       static unsigned long getSizeOfMemoryPool ( const int position ); 
+       static unsigned long getSizeOfMemoryPoolUpToAst ( AstData* astInPool, const int position ); 
+       static unsigned long getAccumulatedPoolSizeOfNewAst( const int position);
+       static unsigned long getAccumulatedPoolSizeOfAst( AstData* astInPool, const int position);
+       static unsigned long getPoolSizeOfNewAst( const int sgVariant);
+       static unsigned long getTotalNumberOfNodesOfAstInMemoryPool ( ); 
+       static unsigned long getTotalNumberOfNodesOfNewAst ();
+       static bool areFreepointersContainingGlobalIndices ( );
+
+    // some methods not used so far ... or not more used   
+       static unsigned long getGlobalIndexFromSgClassPointer ( SgNode* pointer ) ;
+       static SgNode* getSgClassPointerFromGlobalIndex ( unsigned long globalIndex) ;
+       static void compressAstInMemoryPool() ;
+       static void resetValidAstAfterWriting();
+       static void clearAllMemoryPools ( );
+       static void deleteStaticData( );
+       static void deleteStoredAsts( );
+       static void setStaticDataOfAst(AstData* astInPool);
+       static int getNumberOfAsts ();
+       static void addNewAst (AstData* newAst);
+       static void extendMemoryPoolsForRebuildingAST ( );
+       static void writeASTToStream ( std::ostream& out );
+       static void writeASTToFile ( std::string fileName );
+       static std::string writeASTToString ();
+       static SgProject* readASTFromStream ( std::istream& in );
+       static SgProject* readASTFromFile (std::string fileName );
+       static SgProject* readASTFromString ( const std::string& s );
+       static void printFileMaps () ;
+       static void printListOfPoolSizes () ;
+       static void printListOfPoolSizesOfAst (int index) ;
+       static AstData* getAst (int index) ;
+       static AstData* getAstWithRoot (SgProject* root) ;
+
+       template <class TYPE>
+       static void registerAttribute ( ); 
+       static const std::map <std::string, CONSTRUCTOR>& getRegisteredAttributes ();
+
+    // DQ (2/27/2010): Reset the AST File I/O data structures to permit writing a file after the reading and merging of files.
+       static void reset();
+
+    // DQ (2/27/2010): Show what the values are for debugging (e.g. write after read).
+       static void display(const std::string & label);
+   };
+
+
+template <class TYPE>
+inline void 
+ AST_FILE_IO::registerAttribute ( ) 
+   { 
+      std::string name = TYPE().attribute_class_name();
+      if ( registeredAttributes.find ( name ) == registeredAttributes.end() )
+         { 
+           registeredAttributes[name] = (CONSTRUCTOR)(&TYPE::constructor) ;
+         }
+   }
+
+inline const std::map <std::string, AST_FILE_IO::CONSTRUCTOR>& 
+ AST_FILE_IO::getRegisteredAttributes ( )
+   {
+     return registeredAttributes; 
+   } 
+#endif //AST_FILE_IO_HEADER
+
+

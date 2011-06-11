@@ -1,0 +1,399 @@
+\documentclass[10pt]{book}
+
+% Fixme margin note package (turn on draft mode)
+%\usepackage[final]{fixme}
+\usepackage[draft]{fixme}
+
+\usepackage{listings}
+% \lstloadlanguages{APP}
+\lstset{ numbers=left,
+}
+
+\usepackage{html}
+\usepackage{color}
+\usepackage[pdftex]{graphicx}
+
+\usepackage{moreverb}
+
+\usepackage{hyperref}
+\hypersetup {
+colorlinks= true,
+urlcolor=blue,
+citecolor=black,
+linkcolor=black,
+}
+
+\newcommand{\mySmallFontSize}{\scriptsize}
+\newcommand{\mySmallestFontSize}{\tiny}
+
+% Liao, 7/13/2009, need them to access any other directories in source and
+% build tree
+\newcommand{\TOPSRCDIR}{../../../..}
+\newcommand{\TOPBUILDDIR}{../../../}
+\newcommand{\TranslatorExampleDirectory}{../../../../exampleTranslators/documentedExamples/simpleTranslatorExamples}
+\newcommand{\TranslatorExampleCompileTreeDirectory}{/g/g15/bronevet/Compilers/ROSE/compile/exampleTranslators/documentedExamples/simpleTranslatorExamples}
+\newcommand{\AstRewriteExampleDirectory}{../../../../exampleTranslators/documentedExamples/AstRewriteExamples}
+\newcommand{\TutorialExampleDirectory}{../../../../tutorial}
+\newcommand{\TutorialExampleBuildDirectory}{../../..//tutorial}
+\newcommand{\DatabaseExampleDirectory}{../../../../exampleTranslators/documentedExamples/dataBaseExamples}
+
+% Software version number
+\newcommand{\VersionNumber}{0.9.5a}
+
+% Latex trick to allow us to comment out large sections of documentation
+\newcommand{\commentout}[1]{}
+
+% change the title of the Fixme List
+\renewcommand{\listfixmename}{Things to Fix in Documentation of ROSE}
+
+\newcommand{\comm}[2]{\bigskip
+                      \begin{tabular}{|p{11cm}|}\hline
+                      \multicolumn{1}{|c|}{{\bf Comment by #1}}\\ \hline
+                      #2\\ \hline
+                      \end{tabular}
+                      \bigskip
+                     }
+
+\def\verbatimfile#1{\begingroup
+                    \@verbatim \frenchspacing \@vobeyspaces
+                    \input#1 \endgroup
+}
+
+
+% Not sure why we need this.
+%\newcounter{lineno}
+
+% Taken from verbatimfiles.sty on web
+%\makeatletter %JCL
+
+\def\verbatimlisting#1{\setcounter{lineno}{0}%
+    \begingroup \@verbatim \frenchspacing \@vobeyspaces \parindent=20pt
+    \everypar{\stepcounter{lineno}\llap{\thelineno\ \ }}\input#1
+    \endgroup
+}
+
+%\makeatother %JCL
+
+% \endinput
+
+
+\addtolength{\oddsidemargin}{-1.0in}
+\addtolength{\evensidemargin}{-1.0in}
+\addtolength{\textwidth}{1.0in}
+
+%\sloppy
+
+%---------------------------------------------------------------------
+% Begin Document
+%---------------------------------------------------------------------
+
+\begin{document}
+
+%\bibliographystyle{plain}
+%
+%\psdraft
+
+\frontmatter
+
+\title{ {\bf \textcolor{red}{          ROSE  Tutorial: \\ 
+                                     A Tool for Building \\
+                                Source-to-Source Translators} \\
+                             \textcolor{blue}{Draft Tutorial} \\
+                               \textcolor{green}{(version 0.9.5a)} } }
+
+\author{ 
+    {\bf Daniel Quinlan, Markus Schordan, Richard Vuduc, Qing Yi} \\
+    {\bf Thomas Panas, Chunhua Liao, and Jeremiah J. Willcock} \\
+         Lawrence Livermore National Laboratory \\ 
+         Livermore, CA  94550 \\
+         925-423-2668 (office) \\
+         925-422-6278 (fax) \\
+         \{dquinlan,panas2,liao6\}@llnl.gov \\
+          markus@complang.tuwien.ac.at \\
+          qingyi@cs.utsa.edu \\
+          richie@cc.gatech.edu \\
+          jewillco@osl.iu.edu \\
+         Project Web Page: www.rosecompiler.org \\
+         UCRL Number for ROSE User Manual: UCRL-SM-210137-DRAFT \\
+         UCRL Number for ROSE Tutorial: UCRL-SM-210032-DRAFT \\
+         UCRL Number for ROSE Source Code: UCRL-CODE-155962 \\
+%        \htmladdnormallink{ROSE User Manual (postscript version)}{../ROSE_UserManual/ROSE-0.9.5a-UserManual.ps} \\
+%        \htmladdnormallink{ROSE User Manual (html version)}{../ROSE_UserManual/manual.html} \\
+%        \htmladdnormallink{ROSE Tutorial (html version)}{../ROSE_Tutorial/tutorial.html} \\
+         \htmladdnormallink{ROSE User Manual
+           (pdf)}{http://www.rosecompiler.org/ROSE_UserManual/ROSE-0.9.5a-UserManual.pdf} \\
+         \htmladdnormallink{ROSE Tutorial
+           (pdf)}{http://www.rosecompiler.org/ROSE_Tutorial/ROSE-0.9.5a-Tutorial.pdf} \\
+         \htmladdnormallink{ROSE HTML Reference (html
+             only)}{http://www.rosecompiler.org/ROSE_HTML_Reference/index.html}
+       }
+
+% Replaced with relative links
+% \htmladdnormallink{ROSE User Manual (postscript version)}{file:///g/g15/bronevet/Compilers/ROSE/compile/docs/Rose/ROSE-0.9.5a-UserManual.ps}
+% \htmladdnormallink{ROSE Tutorial (postscript version)}{file:///g/g15/bronevet/Compilers/ROSE/compile/docs/Rose/Tutorial/ROSE-0.9.5a-Tutorial.ps}
+% \htmladdnormallink{ROSE User Manual (html version)}{file:///g/g15/bronevet/Compilers/ROSE/compile/docs/Rose/ROSE_WebPages/ROSE_UserManual/manual.html}
+% \htmladdnormallink{ROSE Tutorial (html version)}{file:///g/g15/bronevet/Compilers/ROSE/compile/docs/Rose/ROSE_WebPages/ROSE_Tutorial/tutorial.html}
+% \htmladdnormallink{ROSE HTML Reference (html only)}{file:///g/g15/bronevet/Compilers/ROSE/compile/docs/Rose/ROSE_WebPages/ROSE_HTML_Reference/index.html}
+
+
+% This doesn't seem to work.  References to this label are not resolved.
+\label{Rose:postscriptVersionOfTutorial}
+
+\begin{htmlonly}
+   \centering \includegraphics[width=3in]{../compass_rose.gif}
+\end{htmlonly}
+
+\maketitle
+
+\begin{htmlonly}
+   \centering \includegraphics[width=5in]{../compass_rose.gif}
+\end{htmlonly}
+
+\begin{center}
+\today
+\end{center}
+
+%\newpage
+%\input{Copyright}
+%\newpage
+
+%\input{preface}
+%\input{Forward}
+%\input{acknowledgments}
+
+\tableofcontents
+\listoffigures
+% \listoftables
+\newpage
+%
+
+%\newpage
+% \input{Copyright}
+%\newpage
+
+% % Not sure why this causes a line to be printed in the latex file.
+% % The strange line is not printed if we place the lstset command 
+% % here (not sure why?).
+% \lstset{
+%    language=C++,
+%  % language=APP,
+%  % basicstyle=\small,                 % print whole listing small
+%    basicstyle=\scriptsize,            % print whole listing scriptsize
+%  % keywordstyle=\color{red}\bfseries\underbar, % underlined bold red keywords
+%  % keywordstyle=\bfseries\underbar, % underlined bold red keywords
+%    keywordstyle=\color{red}\bfseries, % underlined bold red keywords
+%    ndkeywordstyle=\color{blue}, % underlined bold red keywords
+%  % rdkeywordstyle=\color{blue}, % underlined bold red keywords
+%    identifierstyle={},                % nothing happens to other identifiers
+%  % identifierstyle=\color{blue},                % nothing happens to other identifiers
+%    commentstyle=\color{green},                % nothing happens to other identifiers
+%  % stringstyle=\ttfamily,             % typerwriter type for strings
+%  % stringstyle=\color{cyan}\ttfamily,             % typerwriter type for strings Magenta
+%    stringstyle=\color{magenta}\ttfamily,             % typerwriter type for strings Magenta
+%    stringspaces=false,                % no special string spaces
+%    labelstyle=\scriptsize,
+%    labelstep=1,
+%    labelsep=10pt
+% }
+
+% \input{Tutorial/tutorial}
+
+\mainmatter
+%-----------------------------------------------------------
+%            Introduction
+%-----------------------------------------------------------
+\input{introduction}
+\input{gettingStarted}
+% Liao, 9/17/2009, Out of date information. We have better text in the
+% developer guide now.
+%\input{howToContribute}
+\input{tutorialMakefile}
+
+%-----------------------------------------------------------
+%          Working with ROSE AST 
+%-----------------------------------------------------------
+\part[Working with the ROSE AST]{  Working with the ROSE AST \\
+\vspace{1.0in}
+\normalsize{Getting familiar with the ROSE AST is the basis for any advanced
+usage of ROSE. This part of tutorial collects examples for AST
+visualization, traversal, query, and debugging.}
+}
+%\part[Stable Parts of ROSE]{  Stable Parts of ROSE \\
+%\vspace{1.0in}
+%\normalsize{These parts of ROSE are tested regularly on large scale applications and are
+%    suitable for use on ROSE projects requiring the greatest levels of robustness.}
+%\fixme{Lay out rules and criteria for the classification of different parts of ROSE.}
+%}
+
+\input{identityTranslator}
+\input{ASTGraphGenerator}
+\input{wholeGraphAST}
+\input{AST_PDF_Generator}
+\input{traversal}
+% the chapter talking about scope uses AST traversal
+% So I moved it after the traversal chapter.  Liao 3/3/2010
+\input{scopeInformation}
+\input{queryLibraryExample}
+\input{astFileIO}
+\input{debuggingSupport}
+
+%-----------------------------------------------------------
+%           Complex Types
+%-----------------------------------------------------------
+\part[Complex Types]{ Complex Types \\
+\vspace{1.0in}
+\normalsize{This part elaborates some details for handling complex types in
+ROSE.}
+}
+\input{modifiers}
+\input{typeInfoFromFunctionParameters}
+\input{resolveOverloadedFunction}
+\input{templateParameter}
+\input{templateSupport}
+
+%\part[Experimental Parts of ROSE]{ Experimental Parts of ROSE \\ 
+%\part[Testing Parts of ROSE]{ Testing Parts of ROSE \\
+%\vspace{1.0in}
+%\normalsize{These parts of ROSE are moderately well tested but not tested at a scale sufficent for
+%our own use on large scale applications.}
+%\fixme{Lay out rules and criteria for the classification of different parts of ROSE.}
+%}
+
+%-----------------------------------------------------------
+%           Program Analyses
+%-----------------------------------------------------------
+\part[Program Analyses]{ Program Analyses \\
+\vspace{1.0in}
+\normalsize{This part exemplifies the use of existing ROSE analyses and how
+to build customized analyses using ROSE.}
+}
+\input{loopRecognition}
+\input{virtualCFG}
+\input{buildCFG}
+\input{defuseAnalysis}
+\input{buildCallGraph}
+\input{classHierarchyGraph}
+\input{dataBaseSupport}
+\input{customGraphs} 
+
+%-----------------------------------------------------------
+%           Program Transformations and Optimizations
+%-----------------------------------------------------------
+\part[Program Transformations and Optimizations]{ Program Transformations
+and Optimizations \\
+\vspace{1.0in}
+\normalsize{This part gives examples of building source-to-source program
+transformations and optimizations.}
+}
+% name generation is a good start point for learning transformation
+\input{uniqueNames}
+\input{commandlineProcessing}
+\input{codeGenerationFormatControl}
+
+%---- begin chapter for AST construction
+% DQ (6/24/2008): Need to combine these into a
+% single file if it is to be a single chapter.
+\input{addVariableDeclaration}
+\input{addExpression}
+\input {addAssignmentStmt}
+\input{addFunctionDeclaration}
+\input{instrumentationExample}
+\input{globalVariableHandling}
+%-------end of chapter for AST construction
+
+\input{addingComments}  % handling preprocessing information
+\input{partialRedundancyElimination}
+\input{inliner}
+\input{outliner}
+\input{loopOptimization}
+\input{paramerizedTranslation}
+
+
+%-----------------------------------------------------------
+%          Correctness Checking 
+%-----------------------------------------------------------
+\part[Correctness Checking]{ Correctness Checking \\
+\vspace{1.0in}
+\normalsize{Tutorials of using ROSE to help program correctness checking or
+debugging.}
+}
+
+\input{codeCoverage}
+\input{bugSeeding}
+
+%-----------------------------------------------------------
+%          Binary Support
+%-----------------------------------------------------------
+\part[Binary Support]{ Binary Support \\
+\vspace{1.0in}
+\normalsize{Tutorials of using ROSE to handle binary executable files.}
+}
+\input{instructionSemantics}
+\input{binaryAnalysis}
+\input{binaryConstruction}
+\input{dwarfDebugSupport}
+
+%-----------------------------------------------------------
+%          Interacting with Other Tools
+%-----------------------------------------------------------
+\part[Interacting with Other Tools]{ Interacting with Other Tools \\
+\vspace{1.0in}
+\normalsize{How to build interoperable tools using ROSE.}
+}
+\input{abstractHandle}
+\input{roseHPCT}
+\input{tauInstrumentation}
+\input{haskell}
+
+%-----------------------------------------------------------
+%          Parallelism
+%-----------------------------------------------------------
+
+\part[Parallelism]{ Parallelism \\
+\vspace{1.0in}
+\normalsize{Topics relevant to shared or distributed parallel computing using ROSE.}
+}
+\input{sharedMemoryTraversals}
+\input{distributedMemoryTraversals}
+\input{parallelChecker}
+\input{reductionRecognition}
+
+%-----------------------------------------------------------
+%         Summary
+%-----------------------------------------------------------
+\part[Tutorial Summary]{ Tutorial Summary \\
+\vspace{1.0in}
+\normalsize{Summary of the ROSE tutorials.}
+}
+\input{wrapup}
+\backmatter
+
+% Appendix is for new ideas about how to organize the tutorial
+\input{appendix}
+% Borrow glossary from ROSE User Manual (copied into docs/Rose/Tutorial by Makefile)
+\input{glossary}
+
+\end{document}
+
+
+%----------------------- old text ----------------------------------
+%\part[Bleeding-Edge Parts of ROSE]{ Bleeding-Edge Parts of ROSE \\
+%\part[Experimental Parts of ROSE]{ Experimental Parts of ROSE \\ 
+%\vspace{1.0in}
+%\normalsize{These parts of ROSE are either new or not well tested on real
+%    applications.}
+%\fixme{Lay out rules and criteria for the classification of different parts of ROSE.}
+%}
+
+% \input{recognitionOfAbstractions}
+% These should not be separate chapters!
+% \input{debuggingIRnodeToString}
+% \input{debuggingSourceCodePositionInformation}
+
+% Disabled as it breaks new assertion in Copy Mechanism, Liao, 2/7/2008
+%\input{copyHelp}
+
+
+
+
+

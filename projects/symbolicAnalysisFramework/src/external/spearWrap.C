@@ -241,3 +241,5 @@ int SpearExpr::globalUID=0;
 #ifdef THREADED
 pthread_mutex_t SpearExpr::SEMutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
+
+SpearExpr::~SpearExpr() {}
