@@ -552,8 +552,8 @@ void StaticSingleAssignment::updateIncomingPropagatedDefs(FilteredCfgNode cfgNod
 
 			//Here we don't propagate defs for variables that went out of scope
 			//(built-in vars are body-scoped but we inserted the def at the SgFunctionDefinition node, so we make an exception)
-			if (!isVarInScope(var, astNode) && !isBuiltinVar(var))
-				continue;
+			//if (!isVarInScope(var, astNode) && !isBuiltinVar(var))
+			//	continue;
 
 			//If this is the first time this def has propagated to this node, just copy it over
 			if (incomingDefTable.count(var) == 0)
@@ -846,8 +846,8 @@ StaticSingleAssignment::insertPhiFunctions(SgFunctionDefinition* function, const
 			ROSE_ASSERT(reachingDefsTable[node].first.count(var) == 0);
 
 			//We don't want to insert phi defs for functions that have gone out of scope
-			if (!isVarInScope(var, node))
-				continue;
+			//if (!isVarInScope(var, node))
+			//	continue;
 			
 			reachingDefsTable[node].first[var] = ReachingDefPtr(new ReachingDef(node, ReachingDef::PHI_FUNCTION));
 
