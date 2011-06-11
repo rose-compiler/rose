@@ -215,10 +215,10 @@ public:
     bool isReducible() const { return true; }
 
     //! Get all back edges in the CFG. A back edge is one whose target dominates its source.
-    std::vector<Edge> getAllBackEdges() const;
+    std::set<Edge> getAllBackEdges() const;
 
     //! Get all loop headers in this CFG. A natural loop only has one header.
-    std::vector<Vertex> getAllLoopHeaders() const;
+    Vertices getAllLoopHeaders() const;
     
     //! Get all loops in this CFG. Each loop is represented by its header and all CFG nodes 
     //! belonging to it.
@@ -477,10 +477,10 @@ typename CFG<CFGNodeFilter>::Vertex CFG<CFGNodeFilter>::getVertexForNode(const C
 }
 
 template <class CFGNodeFilter>
-std::vector<typename CFG<CFGNodeFilter>::Edge> 
+std::set<typename CFG<CFGNodeFilter>::Edge> 
 CFG<CFGNodeFilter>::getAllBackEdges() const
 {
-    std::vector<Edge> backEdges;
+    std::set<Edge> backEdges;
 
     // If the dominator tree is not built yet, build it now.
     getDominatorTree();
@@ -496,7 +496,7 @@ CFG<CFGNodeFilter>::getAllBackEdges() const
         {
             if (iter->second == tar)
             {
-                backEdges.push_back(e);
+                backEdges.insert(e);
                 break; // break the while loop
             }
             iter = dominatorTree_.find(iter->second);
@@ -507,13 +507,13 @@ CFG<CFGNodeFilter>::getAllBackEdges() const
 }
 
 template <class CFGNodeFilter>
-std::vector<typename CFG<CFGNodeFilter>::Vertex> 
+typename CFG<CFGNodeFilter>::Vertices
 CFG<CFGNodeFilter>::getAllLoopHeaders() const
 {
-    std::vector<Edge> backEdges = getAllBackEdges();
-    std::vector<Vertex> headers;
+    std::set<Edge> backEdges = getAllBackEdges();
+    Vertices headers;
     foreach (Edge e, backEdges)
-        headers.push_back(boost::target(e, *this));
+        headers.insert(boost::target(e, *this));
     return headers;
 }
 
@@ -533,7 +533,7 @@ template <class CFGNodeFilter>
 std::map<typename CFG<CFGNodeFilter>::Vertex, typename CFG<CFGNodeFilter>::Vertices>
 CFG<CFGNodeFilter>::getAllLoops() const
 {
-    std::vector<Edge> backEdges = getAllBackEdges();
+    std::set<Edge> backEdges = getAllBackEdges();
     std::map<Vertex, Vertices> loops;
     
     // Build a reverse CFG.
@@ -560,7 +560,7 @@ CFG<CFGNodeFilter>::getAllLoops() const
         
         Vertices& verticesInLoop = loops[header];
         verticesInLoop.insert(vertices.begin(), vertices.end());
-        verticesInLoop.insert(header);
+        //verticesInLoop.insert(header);
     }
     return loops;
 }
