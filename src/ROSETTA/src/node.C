@@ -245,6 +245,23 @@ Grammar::setUpNodes ()
      Node.setDataPrototype("static std::map<std::string, int>", "shortMangledNameCache", "",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+  // DQ (5/28/2011): Added central location for qualified name maps (for names and types).
+  // these maps store the required qualified name for where an IR node is referenced (not
+  // at the IR node which has the qlocal qualifier).  Thus we can support multiple references 
+  // to an IR node which might have different qualified names.  This is critical to the 
+  // qualified name support.
+     Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForNames","",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForTypes","",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // DQ (6/3/2011): Names of types that can have embedded qualified names have names that are dependent 
+  // upon the location where they are referenced.  This map stored the generated names of such types
+  // which are then used in the unparsing.  This is relevant only for C++ and is a part of the name 
+  // qualification support in the unparser.
+     Node.setDataPrototype("static std::map<SgNode*,std::string>","globalTypeNameMap","",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
   // Not clear how to best to this, perhaps ROSETTA should define a function.
   // DQ (11/25/2007): Language classification field.  Now that we are supporting multiple languages
   // it is helpful to have a way to classify the IR nodes as to what language they belong.  Most are

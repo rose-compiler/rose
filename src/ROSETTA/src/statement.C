@@ -64,7 +64,7 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (BasicBlock,                "BasicBlock",                "BASIC_BLOCK_STMT");
      NEW_TERMINAL_MACRO (Global,                    "Global",                    "GLOBAL_STMT" );
      NEW_TERMINAL_MACRO (IfStmt,                    "IfStmt",                    "IF_STMT" );
-     NEW_TERMINAL_MACRO (FunctionDefinition,        "FunctionDefinition",        "FUNC_DEFN_STMT" );
+  // NEW_TERMINAL_MACRO (FunctionDefinition,        "FunctionDefinition",        "FUNC_DEFN_STMT" );
      NEW_TERMINAL_MACRO (WhileStmt,                 "WhileStmt",                 "WHILE_STMT" );
      NEW_TERMINAL_MACRO (DoWhileStmt,               "DoWhileStmt",               "DO_WHILE_STMT" );
      NEW_TERMINAL_MACRO (SwitchStatement,           "SwitchStatement",           "SWITCH_STMT" );
@@ -99,10 +99,21 @@ Grammar::setUpStatements ()
   // NEW_TERMINAL_MACRO (PragmaStatement, "PragmaStatement", "PRAGMA_STMT" );
      NEW_TERMINAL_MACRO (PragmaDeclaration, "PragmaDeclaration", "PRAGMA_DECL" );
 
+
   // Added template support
   // Note: TemplateInstantiationDecl should have been called TemplateClassInstantiationDecl
   //       to better match TemplateInstantiationFunctionDecl (suggested name change).
-     NEW_TERMINAL_MACRO (TemplateDeclaration,       "TemplateDeclaration",       "TEMPLATE_DECL_STMT" );
+
+  // DQ (6/10/2011): Added more IR nodes specific to template declarations. Note that later we want 
+  // TemplateDeclaration to not be allowed so that we can force the derived IR nodes to be used instead.
+  // NEW_TERMINAL_MACRO (TemplateDeclaration,       "TemplateDeclaration",       "TEMPLATE_DECL_STMT" );
+     NEW_TERMINAL_MACRO (TemplateClassDeclaration,    "TemplateClassDeclaration",    "TEMPLATE_CLASS_DECL_STMT" );
+  // NEW_TERMINAL_MACRO (TemplateFunctionDeclaration, "TemplateFunctionDeclaration", "TEMPLATE_FUNCTION_DECL_STMT" );
+     NEW_TERMINAL_MACRO (TemplateMemberFunctionDeclaration, "TemplateMemberFunctionDeclaration", "TEMPLATE_MEMBER_FUNCTION_DECL_STMT" );
+     NEW_NONTERMINAL_MACRO (TemplateFunctionDeclaration, TemplateMemberFunctionDeclaration, "TemplateFunctionDeclaration",  "TEMPLATE_FUNCTION_DECL_STMT", true );
+
+     NEW_NONTERMINAL_MACRO (TemplateDeclaration,
+          TemplateClassDeclaration | TemplateFunctionDeclaration, "TemplateDeclaration", "TEMPLATE_DECL_STMT", true);
 
   // DQ (9/12/2004): Adding new IR node to support instantiation directives (C++ template language construct)
   // NEW_TERMINAL_MACRO (TemplateInstantiationDirective,    "TemplateInstantiationDirective",    "TEMPLATE_INST_DIRECTIVE_STMT" );
@@ -158,7 +169,7 @@ Grammar::setUpStatements ()
   // FMZ (2/3/2009): Added co-array "withteam" stmt
   //  NEW_TERMINAL_MACRO (WithTeamStatement,         "WithTeamStatement",         "WITHTEAM_DECL_STMT" );
   // FMZ (2/17/2009): We re-defined "withteam" stmt
-    NEW_TERMINAL_MACRO (CAFWithTeamStatement,         "CAFWithTeamStatement",         "WITHTEAM_STMT" );
+     NEW_TERMINAL_MACRO (CAFWithTeamStatement,         "CAFWithTeamStatement",         "WITHTEAM_STMT" );
 
   // DQ (12/18/2007): Added support for Fortran Format statement
      NEW_TERMINAL_MACRO (FormatStatement,           "FormatStatement",           "FORMAT_STATEMENT" );
@@ -302,15 +313,23 @@ Grammar::setUpStatements ()
   // DQ (4/16/2005): Added specific support in the IR for explicit template instantiation directives (to fix linking issues)
      NEW_TERMINAL_MACRO (TemplateInstantiationDirectiveStatement, "TemplateInstantiationDirectiveStatement", "TEMPLATE_INST_DIRECTIVE_STMT" );
 
+  // DQ (6/10/2011): Added template specific definitions.
+     NEW_TERMINAL_MACRO (TemplateClassDefinition,          "TemplateClassDefinition",    "TEMPLATE_CLASS_DEF_STMT" );
+     NEW_TERMINAL_MACRO (TemplateFunctionDefinition,       "TemplateFunctionDefinition", "TEMPLATE_FUNCTION_DEF_STMT" );
+
      NEW_NONTERMINAL_MACRO (ClassDeclaration, TemplateInstantiationDecl | DerivedTypeStatement | ModuleStatement, "ClassDeclaration", "CLASS_DECL_STMT", true );
-     NEW_NONTERMINAL_MACRO (ClassDefinition,  TemplateInstantiationDefn, "ClassDefinition",  "CLASS_DEFN_STMT", true );
+  // NEW_NONTERMINAL_MACRO (ClassDefinition,  TemplateInstantiationDefn, "ClassDefinition",  "CLASS_DEFN_STMT", true );
+     NEW_NONTERMINAL_MACRO (ClassDefinition,  TemplateInstantiationDefn | TemplateClassDefinition, "ClassDefinition",  "CLASS_DEFN_STMT", true );
+
+  // DQ (6/10/2011): Changed this to be a non-terminal and added TemplateFunctionDefinition
+     NEW_NONTERMINAL_MACRO (FunctionDefinition, TemplateFunctionDefinition, "FunctionDefinition",  "FUNC_DEFN_STMT", true );
 
   // Note that the associate statement is really a scope, with its own declarations of variables declared by reference to 
   // other variables or expressions.  They are only l-values if and only if the rhs is a l-value (I think).
      NEW_NONTERMINAL_MACRO (ScopeStatement,
-          Global                       | BasicBlock         | IfStmt             | ForStatement    | FunctionDefinition |
-          ClassDefinition              | WhileStmt          | DoWhileStmt        | SwitchStatement | CatchOptionStmt    |
-          NamespaceDefinitionStatement | BlockDataStatement | AssociateStatement | FortranDo       | ForAllStatement    |
+          Global                       | BasicBlock           | IfStmt             | ForStatement    | FunctionDefinition |
+          ClassDefinition              | WhileStmt            | DoWhileStmt        | SwitchStatement | CatchOptionStmt    |
+          NamespaceDefinitionStatement | BlockDataStatement   | AssociateStatement | FortranDo       | ForAllStatement    |
           UpcForAllStatement           | CAFWithTeamStatement
        /* | TemplateInstantiationDefn */,
           "ScopeStatement","SCOPE_STMT", false);
@@ -1283,6 +1302,18 @@ Grammar::setUpStatements ()
      ClassDeclaration.setDataPrototype ( "bool", "explicit_interface", "= false",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/5/2011): Added support for name qualification.
+     ClassDeclaration.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/5/2011): Added information required for new name qualification support.
+     ClassDeclaration.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/5/2011): Added information required for new name qualification support.
+     ClassDeclaration.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // This class contains two lists (we don't know if this edit/substitution mechanism for work for two lists)
      ClassDefinition.setFunctionPrototype ( "HEADER_CLASS_DEFINITION_STATEMENT", "../Grammar/Statement.code" );      
      ClassDefinition.editSubstitute       ( "HEADER_LIST_DECLARATIONS_1", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
@@ -1357,6 +1388,25 @@ Grammar::setUpStatements ()
   // function declaration).
      TemplateDeclaration.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/10/2011): Added support for template class declaration, also template function declaration, 
+  // and template member function declaration.  Might also want a TemplateVariableDeclaration (using 
+  // a TemplateDeclaration for now).
+     TemplateClassDeclaration.setFunctionPrototype  ( "HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+     TemplateClassDeclaration.setDataPrototype ( "SgTemplateClassDefinition*", "definition", "= NULL",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     TemplateFunctionDeclaration.setFunctionPrototype  ( "HEADER_TEMPLATE_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+     TemplateFunctionDeclaration.setDataPrototype ( "SgTemplateFunctionDefinition*", "definition", "= NULL",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     TemplateMemberFunctionDeclaration.setFunctionPrototype  ( "HEADER_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+  // TemplateMemberFunctionDeclaration.setDataPrototype ( "SgTemplateFunctionDefinition*", "definition", "= NULL",
+  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     TemplateClassDefinition.setFunctionPrototype    ( "HEADER_TEMPLATE_CLASS_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
+     TemplateFunctionDefinition.setFunctionPrototype ( "HEADER_TEMPLATE_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
+
 
   // DQ (4/16/2005): Added support for explicit template instantiation to IR (required to address template linking issues)
      TemplateInstantiationDirectiveStatement.setFunctionPrototype  ( "HEADER_TEMPLATE_INSTANTIATION_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
@@ -2962,6 +3012,13 @@ Grammar::setUpStatements ()
      TemplateInstantiationFunctionDecl.editSubstitute ( "$CLASSNAME", "SgTemplateInstantiationFunctionDecl" );
   // TemplateInstantiationMemberFunctionDecl.editSubstitute ( "SOURCE_RESET_TEMPLATE_NAME", "SOURCE_RESET_TEMPLATE_NAME", "../Grammar/Statement.code" );
      TemplateInstantiationMemberFunctionDecl.editSubstitute ( "$CLASSNAME", "SgTemplateInstantiationMemberFunctionDecl" );
+
+  // DQ (6/10/2011): Added support for more detail in the template declaration support.
+     TemplateClassDeclaration.setFunctionSource          ( "SOURCE_TEMPLATE_CLASS_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+     TemplateFunctionDeclaration.setFunctionSource       ( "SOURCE_TEMPLATE_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+     TemplateMemberFunctionDeclaration.setFunctionSource ( "SOURCE_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+     TemplateClassDefinition.setFunctionSource           ( "SOURCE_TEMPLATE_CLASS_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
+     TemplateFunctionDefinition.setFunctionSource        ( "SOURCE_TEMPLATE_FUNCTION_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
 
   // Support for pragmas in the IR
      PragmaDeclaration.setFunctionSource      ( "SOURCE_PRAGMA_STATEMENT", "../Grammar/Statement.code" );

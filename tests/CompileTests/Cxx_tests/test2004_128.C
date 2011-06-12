@@ -173,6 +173,8 @@ namespace Geometry
 
 namespace Geometry
    {
+#if 1
+  // DQ (5/30/2011): The name qualification for Zone clears the qualified name in the map where we store the state.
      template <class CoordinateSystem>
      class PolyMesh<CoordinateSystem>::Zone
         {
@@ -185,6 +187,7 @@ namespace Geometry
                typedef typename PolyMesh<CoordinateSystem>::Corner **         CornerIterator;
                typedef typename PolyMesh<CoordinateSystem>::Corner * const *  const_CornerIterator;
         };
+#endif
    }
 
 // Simple initial test
@@ -197,5 +200,10 @@ X2<  Geometry::MeshBase < Geometry::PolygonalMeshTypeInfo > >::Scalar *sp;
 Geometry::Field <Geometry::MeshBase < Geometry::PolygonalMeshTypeInfo >,
                  X1<Geometry::MeshBase < Geometry::PolygonalMeshTypeInfo > >::Zone,
                  X2<Geometry::MeshBase < Geometry::PolygonalMeshTypeInfo > >::Scalar > *sp2;
+
+// DQ (5/30/2011): The name qualification for the 2nd and 3rd template arguments are reversed in the unparsed code.
+Geometry::Field <Geometry::MeshBase < Geometry::PolygonalMeshTypeInfo >,
+                 X2<Geometry::MeshBase < Geometry::PolygonalMeshTypeInfo > >::Zone,
+                 X1<Geometry::MeshBase < Geometry::PolygonalMeshTypeInfo > >::Scalar > sp3;
 
 

@@ -37,7 +37,15 @@ class A
    {
      public:
           int f1() {}
-          int f2() { pf = &A::f1; return (this->*pf)(); }
+          int f2()
+             {
+            // Note that though our name qualification mechanism would not cause this to be qualified and EDG accepts it unqualified, 
+            // GNU reports that "ISO C++ forbids taking the address of an unqualified or parenthesized non-static member function to 
+            // form a pointer to member function.  Say '&A::f1'".  So we must force qualification of such member functions used this way.
+            // pf = &A::f1;
+               pf = &f1;
+               return (this->*pf)();
+             }
           int (A::*pf) ();
    };
 

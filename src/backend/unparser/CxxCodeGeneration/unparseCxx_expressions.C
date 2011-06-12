@@ -39,6 +39,7 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
 
 #if 0
      printf ("In C/C++ Unparse_ExprStmt::unparseLanguageSpecificExpression ( expr = %p = %s ) language = %s \n",expr,expr->class_name().c_str(),languageName().c_str());
+     curprint ( string("\n /*    unparseLanguageSpecificExpression(): class name  = ") + expr->class_name().c_str() + " */ \n");
 #endif
 
      switch (expr->variant())
@@ -58,7 +59,7 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case UNSIGNED_LONG_INT_VAL: { unparseULongIntVal(expr, info); break; }
           case FLOAT_VAL: { unparseFloatVal(expr, info); break; }
           case LONG_DOUBLE_VAL: { unparseLongDoubleVal(expr, info); break; }
-          // Liao, 6/18/2008 , UPC identifiers 
+       // Liao, 6/18/2008 , UPC identifiers 
           case UPC_THREADS: { unparseUpcThreads(expr, info); break; }
           case UPC_MYTHREAD: { unparseUpcMythread(expr, info); break; }
           case FUNC_CALL: { unparseFuncCall(expr, info); break; }
@@ -229,6 +230,10 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
      newInfo.set_global_qualification_required(templateArgument->get_global_qualification_required());
      newInfo.set_type_elaboration_required(templateArgument->get_type_elaboration_required());
 
+  // DQ (5/30/2011): Added support for name qualification.
+     newInfo.set_reference_node_for_qualification(templateArgument);
+     ROSE_ASSERT(newInfo.get_reference_node_for_qualification() != NULL);
+
 #if 0
      printf ("Exiting in unparseTemplateArgument() to see whate this is called \n");
      ROSE_ASSERT(false);
@@ -255,7 +260,23 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                newInfo.set_SkipClassDefinition();
                newInfo.set_SkipClassSpecifier();
 
-#if 0
+#if 1
+            // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+            // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+            // stored in a map to the IR node that references the type.
+               SgName nameQualifier;
+               if (templateArgument->get_name_qualification_length() > 0)
+                  {
+                    std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(templateArgument);
+                    ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForTypes().end());
+                    if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+                       {
+                         nameQualifier = i->second;
+                         printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+                         curprint(nameQualifier);
+                       }
+                  }
+#else
             // DQ (5/14/2011): Added qualified name output; but this is handled directly by the call to unparseType().
                SgType* type = templateArgument->get_type();
                if (type != NULL)
@@ -714,11 +735,37 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
      if (theName->get_name() != "__assert_fail")
         {
        // nameQualifier = unp->u_name->generateNameQualifier(theName,info);
-
+#if 0
           info.set_name_qualification_length(var_ref->get_name_qualification_length());
           info.set_global_qualification_required(var_ref->get_global_qualification_required());
 
           nameQualifier = unp->u_name->generateNameQualifier(theName,info);
+#else
+#if 0
+       // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
+       // different and so it depends upon where the type is referenced.  Thus the qualified name is 
+       // stored in a map to the IR node that references the type.
+          if (var_ref->get_name_qualification_length() > 0)
+             {
+               printf ("We should have a qualified name in the map for SgVarRefExp = %p \n",var_ref);
+
+               std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(var_ref);
+               ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+               if (i != SgNode::get_globalQualifiedNameMapForNames().end())
+                  {
+                    nameQualifier = i->second;
+                    printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+                 // curprint(nameQualifier);
+                  }
+
+               printf ("nameQualifier for variable reference = %s \n",nameQualifier.str());
+            // ROSE_ASSERT(false);
+             }
+#else
+       // DQ (5/30/2011): Newest refactored support for name qualification.
+          nameQualifier = var_ref->get_qualified_name_prefix();
+#endif
+#endif
         }
 
 #if 0
@@ -838,7 +885,11 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
                     tmp_info.set_global_qualification_required(func_ref->get_global_qualification_required());
 
                  // SgName nameQualifier = unp->u_name->generateNameQualifier( declaration, info );
-                    SgName nameQualifier = unp->u_name->generateNameQualifier( declaration, tmp_info );
+                 // SgName nameQualifier = unp->u_name->generateNameQualifier( declaration, tmp_info );
+
+                 // DQ (5/29/2011): Newest refactored support for name qualification.
+                    SgName nameQualifier = func_ref->get_qualified_name_prefix();
+
                  // printf ("In unparseFuncRef(): nameQualifier = %s \n",nameQualifier.str());
                  // curprint ( "\n /* unparseFuncRef using nameQualifier = " + nameQualifier.str() + " */ \n";
 #if 0
@@ -873,7 +924,7 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
    {
-           // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
+  // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
 
 //#ifndef _MSCx_VER
 //#pragma message ("WARNING: Commented out body of unparseMFuncRef()")
@@ -899,9 +950,10 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
   // DQ (2/16/2004): error in templates (test2004_18.C)
      ROSE_ASSERT (cdef != NULL);
      SgClassDeclaration* decl;
-         decl = cdef->get_declaration();
+     decl = cdef->get_declaration();
+
 #if 0
-     printf ("Inside of unparseMFuncRef expr = %p (name = %s::%s) \n",expr,cdecl->get_name().str(),mfd->get_name().str());
+     printf ("Inside of unparseMFuncRef expr = %p (name = %s::%s) \n",expr,decl->get_name().str(),mfd->get_name().str());
      curprint ( "\n /* Inside of unparseMFuncRef */ \n");
 #endif
 #if 0
@@ -936,11 +988,17 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
             // curprint ( "\n /* Output the qualified class name */ \n";
 
                printf ("In unparseMFuncRef(): Qualified names of member function reference expressions are not handled yet! \n");
-
+#if 0
             // DQ (10/11/2006): I don't think that we want the fully qualified name, just the class name!
             // curprint (  cdecl->get_qualified_name().str() + "::";
                curprint (  string(decl->get_name().str()) + "::");
             // curprint ( "\n /* DONE: Output the qualified class name */ \n";
+#else
+            // DQ (6/1/2011): Use the newly generated qualified names.
+               SgName nameQualifier = mfunc_ref->get_qualified_name_prefix();
+               curprint (nameQualifier);
+               printf ("Output name qualification for SgMemberFunctionDeclaration: nameQualifier = %s \n",nameQualifier.str());
+#endif
                print_colons = true;
              }
         }
@@ -949,6 +1007,7 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
 
   // char* func_name = mfunc_ref->get_symbol()->get_name();
      string func_name = mfunc_ref->get_symbol()->get_name().str();
+  // curprint ( "\n /* Inside of unparseMFuncRef func_name = " + func_name + " */ \n");
 
 #if 0
      printf ("func_name before processing to extract operator substring = %s \n",func_name.c_str());
@@ -1089,6 +1148,7 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
        // curprint ( mfunc_ref->get_symbol()->get_name();
           unp->u_debug->printDebugInfo("unparseMFuncRef, Function Name: ", false); unp->u_debug->printDebugInfo(func_name.c_str(), true);
         }
+
 #if 0
      printf ("Leaving unparseMFuncRef \n");
      curprint ( "\n/* leaving unparseMFuncRef */ \n");
@@ -1948,9 +2008,9 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                     if (con_init != NULL && unp->u_sage->isOneElementList(con_init))
                        {
                          unp->u_debug->printDebugInfo("entering unp->u_sage->unparseOneElemConInit", true);
-                      // curprint ( "\n/* unp->u_sage->unparseOneElemConInit in unparseFuncCall */ \n"; 
+                      // curprint ( "\n/* unp->u_sage->unparseOneElemConInit in unparseFuncCall */ \n"); 
                          unparseOneElemConInit(con_init, newinfo);
-                      // curprint ( "\n/* DONE: unp->u_sage->unparseOneElemConInit in unparseFuncCall */ \n"; 
+                      // curprint ( "\n/* DONE: unp->u_sage->unparseOneElemConInit in unparseFuncCall */ \n"); 
                        }
                       else
                        {
@@ -1985,8 +2045,9 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 
        // curprint ( "\n/* Leaving processing second part in unparseFuncCall */ \n";
         }
+
 #if 0
-  // printf ("Leaving Unparse_ExprStmt::unparseFuncCall \n");
+     printf ("Leaving Unparse_ExprStmt::unparseFuncCall \n");
      curprint ( "\n/* Leaving Unparse_ExprStmt::unparseFuncCall */ \n");
 #endif
    }
@@ -2038,6 +2099,10 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
           info2.set_SkipClassDefinition();
           info2.unset_isTypeFirstPart();
           info2.unset_isTypeSecondPart();
+
+       // DQ (6/2/2011): Added support for name qualification of types reference via sizeof operator.
+          info2.set_reference_node_for_qualification(sizeof_op);
+
           unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
         }
      curprint ( ")");
@@ -2127,27 +2192,33 @@ Unparse_ExprStmt::unparseUpcElemSizeOfOp(SgExpression* expr, SgUnparse_Info & in
      curprint ( ")");
    }
 
-void Unparse_ExprStmt::unparseTypeIdOp(SgExpression* expr, SgUnparse_Info& info) {
-  SgTypeIdOp* typeid_op = isSgTypeIdOp(expr);
-  ROSE_ASSERT(typeid_op != NULL);
+void Unparse_ExprStmt::unparseTypeIdOp(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgTypeIdOp* typeid_op = isSgTypeIdOp(expr);
+     ROSE_ASSERT(typeid_op != NULL);
   /* code inserted from specification */
 
-   curprint ( "typeid(");
-   if (typeid_op->get_operand_expr() != NULL)
-      {
-        ROSE_ASSERT(typeid_op->get_operand_expr() != NULL);
-        unparseExpression(typeid_op->get_operand_expr(), info);
-      }
-     else
-      {
-        ROSE_ASSERT(typeid_op->get_operand_type() != NULL);
-        SgUnparse_Info info2(info);
-        info2.unset_SkipBaseType();
-        info2.set_SkipClassDefinition();
-        unp->u_type->unparseType(typeid_op->get_operand_type(), info2);
-      }
-   curprint ( ")");
-}
+     curprint ( "typeid(");
+     if (typeid_op->get_operand_expr() != NULL)
+        {
+          ROSE_ASSERT(typeid_op->get_operand_expr() != NULL);
+          unparseExpression(typeid_op->get_operand_expr(), info);
+        }
+       else
+        {
+          ROSE_ASSERT(typeid_op->get_operand_type() != NULL);
+          SgUnparse_Info info2(info);
+          info2.unset_SkipBaseType();
+          info2.set_SkipClassDefinition();
+
+       // DQ (6/2/2011): Added support for name qualification of types reference via sizeof operator.
+          info2.set_reference_node_for_qualification(typeid_op);
+
+          unp->u_type->unparseType(typeid_op->get_operand_type(), info2);
+        }
+
+     curprint ( ")");
+   }
 
 void Unparse_ExprStmt::unparseNotOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "!", info); }
 void Unparse_ExprStmt::unparseDerefOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "*", info); }
@@ -2248,6 +2319,10 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
      newinfo.unset_isTypeFirstPart();
      newinfo.unset_isTypeSecondPart();
 
+  // DQ (5/30/2011): Added support for name qualification.
+     newinfo.set_reference_node_for_qualification(cast_op);
+     ROSE_ASSERT(newinfo.get_reference_node_for_qualification() != NULL);
+
   // DQ (10/8/2004): Never unparse the declaration from within a cast expression (see testcode2001_28.C)!
      newinfo.set_SkipDefinition();
 
@@ -2283,14 +2358,26 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                return;
              }
            else 
-             cast_op = isSgCastExp(expr); // restore to the original non-null value otherwise
+               cast_op = isSgCastExp(expr); // restore to the original non-null value otherwise
 #else
-             // Liao, 11/8/2010, we should now always unparse the original expression tree, regardless its Variant_T value
-               unparseExpression(expressionTree,info);
-               return;
-
-#endif             
+       // Liao, 11/8/2010, we should now always unparse the original expression tree, regardless its Variant_T value
+          unparseExpression(expressionTree,info);
+          return;
+#endif
         }
+
+#if 0
+  // DQ (6/2/2011): Output the previously generated name qualification (empty is not required).
+  // SgName nameQualifier = cast_op->get_qualified_name_prefix();
+     SgName nameQualifier = cast_op->get_qualified_name_prefix_for_referenced_type();
+     curprint ("/* nameQualifier = " + nameQualifier + " */ \n");
+     curprint (nameQualifier);
+#else
+  // DQ (6/2/2011): I think this is all that is required.
+  // SgName nameQualifier = cast_op->get_qualified_name_prefix_for_referenced_type();
+  // curprint ("/* nameQualifier = " + nameQualifier + " */ \n");
+     newinfo.set_reference_node_for_qualification(cast_op);
+#endif
 
      bool addParens = false;
      switch(cast_op->cast_type())
@@ -2399,7 +2486,7 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                   {
                  // (P *) expr
                  // check if the expression that we are casting is not a string
-                 // curprint ( "\n /* explicit cast: cast_op->get_operand_i() = " + cast_op->get_operand_i()->sage_class_name() + " */ \n";
+                    curprint ( "\n /* explicit cast: cast_op->get_operand_i() = " + cast_op->get_operand_i()->class_name() + " */ \n");
                     if (cast_op->get_operand_i()->variant() != STRING_VAL)
                        {
                       // it is not a string, so we always cast
@@ -2510,6 +2597,10 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
      newinfo.unset_SkipBaseType();
 
   // This fixes a bug having to do with the unparsing of the type name of constructors in return statements.
+
+  // DQ (5/30/2011): Added support for name qualification.
+     newinfo.set_reference_node_for_qualification(new_op);
+     ROSE_ASSERT(newinfo.get_reference_node_for_qualification() != NULL);
 
   // curprint ( "\n /* Output type name for new operator */ \n";
 
@@ -2770,102 +2861,136 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 
 void
 Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
-{
-#if 0
-  printf ("In Unparse_ExprStmt::unparseConInit expr = %p \n",expr);
-  printf ("WARNING: This is redundent with the Unparse_ExprStmt::unp->u_sage->unparseOneElemConInit (This function does not handle qualidied names!) \n");
+   {
+#if 1
+     printf ("In Unparse_ExprStmt::unparseConInit expr = %p \n",expr);
+     printf ("WARNING: This is redundent with the Unparse_ExprStmt::unp->u_sage->unparseOneElemConInit (This function does not handle qualidied names!) \n");
 #endif
 
-  SgConstructorInitializer* con_init = isSgConstructorInitializer(expr);
-  ROSE_ASSERT(con_init != NULL);
+     SgConstructorInitializer* con_init = isSgConstructorInitializer(expr);
+     ROSE_ASSERT(con_init != NULL);
   /* code inserted from specification */
 
-  SgUnparse_Info newinfo(info);
-  bool outputParenthisis = false;
+     SgUnparse_Info newinfo(info);
+     bool outputParenthisis = false;
 
-#if 0
+#if 1
      printf ("In unparseConInit(): con_init->get_need_name()        = %s \n",(con_init->get_need_name() == true) ? "true" : "false");
      printf ("In unparseConInit(): con_init->get_is_explicit_cast() = %s \n",(con_init->get_is_explicit_cast() == true) ? "true" : "false");
      curprint ( string("\n /* con_init->get_need_name()        = ") + (con_init->get_need_name() ? "true" : "false") + " */ \n");
      curprint ( string("\n /* con_init->get_is_explicit_cast() = ") + (con_init->get_is_explicit_cast() ? "true" : "false") + " */ \n");
 #endif
 
+     SgNode* nodeReferenceToType = newinfo.get_reference_node_for_qualification();
+     printf ("In unparseConInit(): nodeReferenceToType = %p \n",nodeReferenceToType);
+     if (nodeReferenceToType != NULL)
+        {
+          printf ("In unparseConInit(): nodeReferenceToType = %p = %s \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str());
+          curprint ("\n /* In unparseConInit(): nodeReferenceToType = " + nodeReferenceToType->class_name() + " */ \n");
+        }
+       else
+        {
+          curprint ("\n /* In unparseConInit(): nodeReferenceToType = NULL */ \n");
+
+       // DQ (6/4/2011): If it is not set then set it to the SgConstructorInitializer expression.
+       // We can't enforce that it be non-null since that would have far reaching effects on the 
+       // unparser implementation.
+       // newinfo.set_reference_node_for_qualification(con_init);
+        }
+
+  // This should have been set from wherever it is called.
+  // ROSE_ASSERT(newinfo.get_reference_node_for_qualification() != NULL);
+
   // DQ (3/17/2005): Ignoring ned_name in favor of is_explicit_cast!
   // if (con_init->get_need_name() == true)
-  if ((con_init->get_need_name() == true) && (con_init->get_is_explicit_cast() == true) )
-  {
-    // for foo(B())
-    SgName nm;
+     if ((con_init->get_need_name() == true) && (con_init->get_is_explicit_cast() == true) )
+        {
+       // for foo(B())
+          SgName nm;
 
-    // DQ (12/4/2003): Added assertion (one of these is required!)
-    // ROSE_ASSERT (con_init->get_declaration() != NULL || con_init->get_class_decl() != NULL);
+       // DQ (12/4/2003): Added assertion (one of these is required!)
+       // ROSE_ASSERT (con_init->get_declaration() != NULL || con_init->get_class_decl() != NULL);
 
-    // DQ (8/5/2005): Both are now required (under a policy of not having NULL pointers)
-    // Well actually the case of a cast introduced by initialization from the return of 
-    // a function does not have the information about the class declaration or the constructor, 
-    // so we can't assert this. The value of the field bool p_associated_class_unknown 
-    // now indicates when both pointers are NULL (else they should be valid pointers).
-    // ROSE_ASSERT (con_init->get_declaration() != NULL && con_init->get_class_decl() != NULL);
+       // DQ (8/5/2005): Both are now required (under a policy of not having NULL pointers)
+       // Well actually the case of a cast introduced by initialization from the return of 
+       // a function does not have the information about the class declaration or the constructor, 
+       // so we can't assert this. The value of the field bool p_associated_class_unknown 
+       // now indicates when both pointers are NULL (else they should be valid pointers).
+       // ROSE_ASSERT (con_init->get_declaration() != NULL && con_init->get_class_decl() != NULL);
 
-    ROSE_ASSERT ( con_init->get_associated_class_unknown() == true || 
-        con_init->get_declaration() != NULL || 
-        con_init->get_class_decl() != NULL);
+          ROSE_ASSERT ( con_init->get_associated_class_unknown() == true || 
+                        con_init->get_declaration() != NULL || 
+                        con_init->get_class_decl() != NULL);
 
-    // DQ (4/27/2006): Maybe we can finally assert this!
-    // ROSE_ASSERT ( con_init->get_associated_class_unknown() == true);
+       // DQ (4/27/2006): Maybe we can finally assert this!
+       // ROSE_ASSERT ( con_init->get_associated_class_unknown() == true);
 
-    // DQ (8/5/2005): Now this logic is greatly simplified! Unforntunately not!
+       // DQ (8/5/2005): Now this logic is greatly simplified! Unforntunately not!
+       // DQ (6/1/2011): It can't be this simple since con_init->get_declaration() 
+       // can be NULL where in a struct there is no constructor defined.
 #if 0
-    if (con_init->get_declaration() != NULL)
-    {
-      nm = con_init->get_declaration()->get_qualified_name();
-    }
+          if (con_init->get_declaration() != NULL)
+             {
+               nm = con_init->get_declaration()->get_qualified_name();
+             }
 #else
-    // printf ("con_init->get_declaration() = %s \n",con_init->get_declaration() ? "true" : "false");
-    // curprint ( "\n /* con_init->get_declaration() = %s " + (con_init->get_declaration() ? "true" : "false") + " */ \n";
-    if (con_init->get_declaration() != NULL)
-    {
+          printf ("con_init->get_declaration() = %s \n",con_init->get_declaration() ? "true" : "false");
+          curprint ( "\n /* con_init->get_declaration() = " + string(con_init->get_declaration() ? "valid" : "null") + " pointer */ \n");
+          if (con_init->get_declaration() != NULL)
+             {
 #if 0
-      // printf ("con_init->get_need_qualifier() = %s \n",con_init->get_need_qualifier() ? "true" : "false");
-      if (con_init->get_need_qualifier())
-        nm = con_init->get_declaration()->get_qualified_name();
-      else
-        nm = con_init->get_declaration()->get_name();
+            // printf ("con_init->get_need_qualifier() = %s \n",con_init->get_need_qualifier() ? "true" : "false");
+               if (con_init->get_need_qualifier())
+                    nm = con_init->get_declaration()->get_qualified_name();
+                 else
+                    nm = con_init->get_declaration()->get_name();
 #else
-      nm = con_init->get_declaration()->get_qualified_name();
+            // DQ (6/1/2011): Newest refactored support for name qualification.
+            // nm = con_init->get_declaration()->get_qualified_name();
+               SgName nameQualifier = con_init->get_qualified_name_prefix();
+               nm = nameQualifier + con_init->get_declaration()->get_name();
 #endif
-    }
-    else
-    {
-      // printf ("con_init->get_class_decl() = %s \n",con_init->get_class_decl() ? "true" : "false");
-      if (con_init->get_class_decl() != NULL)
-      {
+             }
+            else
+             {
+            // printf ("con_init->get_class_decl() = %s \n",con_init->get_class_decl() ? "true" : "false");
+               if (con_init->get_class_decl() != NULL)
+                  {
 #if 0
-        // printf ("con_init->get_need_qualifier() = %s \n",con_init->get_need_qualifier() ? "true" : "false");
-        if (con_init->get_need_qualifier())
-          nm = con_init->get_class_decl()->get_qualified_name();
-        else
-          nm = con_init->get_class_decl()->get_name();
+                 // printf ("con_init->get_need_qualifier() = %s \n",con_init->get_need_qualifier() ? "true" : "false");
+                    if (con_init->get_need_qualifier())
+                         nm = con_init->get_class_decl()->get_qualified_name();
+                      else
+                         nm = con_init->get_class_decl()->get_name();
 #else
-        nm = con_init->get_class_decl()->get_qualified_name();
-#endif
-      }
-    }
-#endif
-    ROSE_ASSERT ( nm.is_null() == false );
-    // printf ("In Unparse_ExprStmt::unparseConInit: info.PrintName() = %s nm = %s \n",info.PrintName() ? "true" : "false",nm.str());
-    // curprint ( "\n /* Debugging In Unparse_ExprStmt::unparseConInit: nm = " + nm.str() + " */ \n";
+                 // DQ (6/1/2011): Newest refactored support for name qualification.
+                 // nm = con_init->get_class_decl()->get_qualified_name();
 
-    // purify error: nm.str() could be a NULL string
-    // if (unp->u_sage->printConstructorName(con_init) && info.PrintName())
-    // if ( unp->u_sage->printConstructorName(con_init) )
-    if ( unp->u_sage->printConstructorName(con_init) && !nm.is_null() )
-    {
-      // printf ("unp->u_sage->printConstructorName(con_init) == true \n");
-      curprint ( nm.str());
-      outputParenthisis = true;
-    }
-  }
+                    SgName nameQualifier = con_init->get_qualified_name_prefix();
+                    printf ("In Unparse_ExprStmt::unparseConInit(): con_init->get_declaration() == NULL -- nameQualifier = %s \n",nameQualifier.str());
+
+                    nm = nameQualifier + con_init->get_class_decl()->get_name();
+#endif
+                  }
+             }
+#endif
+
+          printf ("In Unparse_ExprStmt::unparseConInit(): nm = %s \n",nm.str());
+
+          ROSE_ASSERT ( nm.is_null() == false );
+       // printf ("In Unparse_ExprStmt::unparseConInit: info.PrintName() = %s nm = %s \n",info.PrintName() ? "true" : "false",nm.str());
+       // curprint ( "\n /* Debugging In Unparse_ExprStmt::unparseConInit: nm = " + nm.str() + " */ \n";
+
+       // purify error: nm.str() could be a NULL string
+       // if (unp->u_sage->printConstructorName(con_init) && info.PrintName())
+       // if ( unp->u_sage->printConstructorName(con_init) )
+          if ( unp->u_sage->printConstructorName(con_init) && !nm.is_null() )
+             {
+            // printf ("unp->u_sage->printConstructorName(con_init) == true \n");
+               curprint ( nm.str());
+               outputParenthisis = true;
+             }
+        }
 
   // printf ("Now unparse the constructor arguments \n");
   // newinfo.display("Unparse_ExprStmt::unparseConInit");
@@ -2873,88 +2998,89 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
   // DQ (11/13/2004): Remove the parenthesis if we don't output the constructor name
   // this would only work if there was a single argument to the constructor!
-  if (con_init->get_args() && unp->u_sage->printConstructorName(con_init))
-  {
-    curprint ( "("); 
-  }
+     if (con_init->get_args() && unp->u_sage->printConstructorName(con_init))
+        {
+          curprint ( "("); 
+        }
 #endif
 
 #if 0
   // DQ (4/1/2005): If we have arguments then definitly output the opening and closing parenthesis
   // if (con_init->get_args())
-  if ( (con_init->get_args() != NULL) && (con_init->get_args()->get_expressions().empty() == false) )
-  {
-    curprint ( "/* (reset) trigger output of ()  outputParenthisis = " + (outputParenthisis ? "true" : "false") + " */ ");
-    outputParenthisis = true;
-  }
+     if ( (con_init->get_args() != NULL) && (con_init->get_args()->get_expressions().empty() == false) )
+        {
+          curprint ( "/* (reset) trigger output of ()  outputParenthisis = " + (outputParenthisis ? "true" : "false") + " */ ");
+          outputParenthisis = true;
+        }
 #else
-  if ( con_init->get_args() == NULL )
-  {
-    printf ("Error: con_init->get_args() == NULL \n");
-    con_init->get_file_info()->display("Error: con_init->get_args() == NULL");
-  }
-  ROSE_ASSERT(con_init->get_args() != NULL);
-  if ( con_init->get_need_parenthesis_after_name() == true )
-  {
-    // printf ("Output the parenthisis after the class name \n");
-    outputParenthisis = true;
-  }
+     if ( con_init->get_args() == NULL )
+        {
+          printf ("Error: con_init->get_args() == NULL \n");
+          con_init->get_file_info()->display("Error: con_init->get_args() == NULL");
+        }
+     ROSE_ASSERT(con_init->get_args() != NULL);
+     if ( con_init->get_need_parenthesis_after_name() == true )
+        {
+       // printf ("Output the parenthisis after the class name \n");
+          outputParenthisis = true;
+        }
 #endif
 
   // DQ (4/1/2005): sometimes con_init->get_args() is NULL (as in test2005_42.C)
-  if (outputParenthisis == true)
-    curprint ( "(");
+     if (outputParenthisis == true)
+          curprint ( "(");
 
-  if (con_init->get_args())
-  {
-    // DQ (11/13/2004): Remove the parenthesis if we don't output the constructor name
-    // this would only work if there was a single argument to the constructor!
+     if (con_init->get_args())
+        {
+       // DQ (11/13/2004): Remove the parenthesis if we don't output the constructor name
+       // this would only work if there was a single argument to the constructor!
 
-    // DQ (3/17/2005): Remove the parenthesis if we don't output the constructor name
-    // DQ (3/17/2005): Put the parenthesis BACK!
-    // We need this to avoid: doubleArray *arrayPtr1 = (new doubleArray 42); (where it should have been "(42)")
-    // if (con_init->get_is_explicit_cast() == true)
-    //      curprint ( "(";
+       // DQ (3/17/2005): Remove the parenthesis if we don't output the constructor name
+       // DQ (3/17/2005): Put the parenthesis BACK!
+       // We need this to avoid: doubleArray *arrayPtr1 = (new doubleArray 42); (where it should have been "(42)")
+       // if (con_init->get_is_explicit_cast() == true)
+       //      curprint ( "(";
 
-    unparseExpression(con_init->get_args(), newinfo);
+          unparseExpression(con_init->get_args(), newinfo);
 
-    // DQ (3/17/2005): Remove the parenthesis if we don't output the constructor name
-    // if (con_init->get_is_explicit_cast() == true)
-    //      curprint ( ")";
-  }
+       // DQ (3/17/2005): Remove the parenthesis if we don't output the constructor name
+       // if (con_init->get_is_explicit_cast() == true)
+       //      curprint ( ")";
+        }
 
-  if (outputParenthisis == true)
-  {
-    curprint ( ")");
-  }
+     if (outputParenthisis == true)
+        {
+          curprint ( ")");
+        }
 
 #if 0
-  else
-  {
-    // DQ (5/29/2004) Skip this so that we can avoid unparsing "B b;" as "B b();" since
-    // this is a problem for g++ if a reference is taken to "b" (see test2004_44.C).
-    // Verify that P::P():B() {} will still unparse correctly, ... it does!
-    // for P::P():B() {}
-    // if (con_init->get_need_name() || con_init->get_need_paren())
-    if (con_init->get_need_paren() == true)
-    {
-      printf ("Handle case of: P::P():B() {} (where B is a data member in the preinitialization list) \n");
-      curprint ( "()");
-    }
-  }
+       else
+        {
+       // DQ (5/29/2004) Skip this so that we can avoid unparsing "B b;" as "B b();" since
+       // this is a problem for g++ if a reference is taken to "b" (see test2004_44.C).
+       // Verify that P::P():B() {} will still unparse correctly, ... it does!
+       // for P::P():B() {}
+       // if (con_init->get_need_name() || con_init->get_need_paren())
+          if (con_init->get_need_paren() == true)
+             {
+               printf ("Handle case of: P::P():B() {} (where B is a data member in the preinitialization list) \n");
+               curprint ( "()");
+             }
+        }
 #endif
 
 #if 0
   // DQ (11/13/2004): Remove the parenthesis if we don't output the constructor name
   // this would only work if there was a single argument to the constructor!
-  if (con_init->get_args() && unp->u_sage->printConstructorName(con_init))
-  {
-    curprint ( ")"); 
-  }
+     if (con_init->get_args() && unp->u_sage->printConstructorName(con_init))
+        {
+          curprint ( ")"); 
+        }
 #endif
 
   // printf ("Leaving Unparse_ExprStmt::unparseConInit \n");
-}
+   }
+
 
 void
 Unparse_ExprStmt::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)

@@ -42,6 +42,7 @@ namespace Geometry
 // X2<  Geometry::MeshBase < Geometry::PolygonalMeshTypeInfo > >::Scalar *sp;
 // X2<  Geometry::MeshBase < Geometry::PolygonalMeshTypeInfo > >::Scalar sp_0;
 
+// X2<  Geometry::MeshBase < Geometry::PolygonalMeshTypeInfo > >::Zone sp_1;
 X2<  Geometry::MeshBase < Geometry::PolygonalMeshTypeInfo > >::Zone sp_1;
 
 // X2<  Geometry::MeshBase < int > >::Scalar sp_1;

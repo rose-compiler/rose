@@ -550,6 +550,8 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
+            // DQ (6/11/2011): Added support for new template IR nodes.
+               case V_SgTemplateClassDeclaration:
                case V_SgTemplateDeclaration:
                   {
                     const SgTemplateDeclaration* declaration = isSgTemplateDeclaration(statement);

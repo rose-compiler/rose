@@ -53,13 +53,19 @@ class Unparser_Nameq
           SgName generateNameQualifierForType( SgType* type, const SgUnparse_Info & info );
 #endif
 
-       // DQ (5/11/2011): New name qualification support.
-          SgName generateNameQualifier( SgInitializedName* initializedName, const SgUnparse_Info& info );
+       // DQ (6/2/2011): New name qualification support.
+         SgName lookup_generated_qualified_name ( SgNode* n );
 
-          SgName generateNameQualifier( SgDeclarationStatement* declarationStatement, const SgUnparse_Info & info );
+       // DQ (5/11/2011): New name qualification support.
+       // SgName generateNameQualifier( SgInitializedName* initializedName, const SgUnparse_Info& info );
+          SgName generateNameQualifier( SgInitializedName* initializedName, const SgUnparse_Info& info, bool qualificationOfType = false );
+
+       // SgName generateNameQualifier( SgDeclarationStatement* declarationStatement, const SgUnparse_Info & info );
+          SgName generateNameQualifier( SgDeclarationStatement* declarationStatement, const SgUnparse_Info & info, bool qualificationOfType = false );
 
        // Lower level support for generateNameQualifier() functions.
-          SgName generateNameQualifierSupport( SgScopeStatement* scope, const SgUnparse_Info& info );
+       // SgName generateNameQualifierSupport( SgScopeStatement* scope, const SgUnparse_Info& info );
+          SgName generateNameQualifierSupport( SgScopeStatement* scope, const SgUnparse_Info& info, bool qualificationOfType );
    };
 
 #endif
