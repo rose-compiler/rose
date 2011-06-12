@@ -27,7 +27,8 @@ bool EventReverser::edgeBelongsToPath(const VGEdge& e, int dagIndex, int pathInd
                 boost::source(e, valueGraph_), valueGraph_).first);
         edge = valueGraph_[realEdge];
     }
-    return edge->dagIndex == dagIndex && edge->paths[pathIndex];
+    
+    return edge->paths.hasPath(dagIndex, pathIndex);
 }
 
 set<EventReverser::VGEdge> EventReverser::getRouteFromSubGraph(int dagIndex, int pathIndex)
@@ -124,8 +125,8 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
         {
             if (v->isTemp())
             {
-                PathSet path = valueGraph_[*(boost::out_edges(valNode, valueGraph_).first)]->paths;
-                if (!path[pathIndex])
+                PathInfo paths = valueGraph_[*(boost::out_edges(valNode, valueGraph_).first)]->paths;
+                if (!paths[dagIndex][pathIndex])
                 {
                     continue;
                 }

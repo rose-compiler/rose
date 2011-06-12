@@ -190,7 +190,7 @@ private:
     { return availableValues_.find(val) != availableValues_.end(); }
     
     //! Build the route graph representing search result.
-    void buildRouteGraph(const std::map<VGEdge, PathSet>& routes);
+    void buildRouteGraph(const std::map<VGEdge, PathInfo>& routes);
     
     //! Remove phi nodes from the route graph to facilitate code generation.
     void removePhiNodesFromRouteGraph();

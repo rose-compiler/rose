@@ -12,7 +12,6 @@ namespace Backstroke
 typedef std::vector<SgInitializedName*> VarName;
 
 
-
 struct PhiNodeDependence
 {
 //	enum ControlDependenceType
@@ -166,6 +165,21 @@ struct PhiNode : ValueNode
     //GateType type;
 };
 
+//! A Mu node is a special phi node which has a data dependence through a back 
+//! edge in a loop. This node is placed on the loop header node in CFG.
+struct MuNode : ValueNode
+{
+    MuNode(const VersionedVariable& v, SgNode* node)
+    : ValueNode(v, node), dagIndex(0)/*, type(phi)*/ {}
+    	
+    virtual std::string toString() const
+	{ return "MU_" + var.toString(); }
+
+    //! The DAG index.
+    int dagIndex;
+    
+};
+
 //! An operator node represents a unary or binary operation. It only has one in edge,
 //! and one or two out edges, for unary and binary operation separately.
 struct OperatorNode : ValueGraphNode
@@ -230,12 +244,12 @@ struct BinaryOperaterNode : OperatorNode
 
 struct ValueGraphEdge
 {
-    ValueGraphEdge() : cost(0), dagIndex(0) {}
-    ValueGraphEdge(int cst, int dagIdx, const PathSet& pths)
-    : cost(cst), dagIndex(dagIdx), paths(pths) {}
+    ValueGraphEdge() : cost(0) {}
+    ValueGraphEdge(int cst, const PathInfo& pths)
+    : cost(cst), paths(pths) {}
     
-    ValueGraphEdge(int cst, int dagIdx, const PathSet& pths, const ControlDependences& cd)
-    : cost(cst), dagIndex(dagIdx), paths(pths), controlDependences(cd) {}
+    ValueGraphEdge(int cst, const PathInfo& pths, const ControlDependences& cd)
+    : cost(cst), paths(pths), controlDependences(cd) {}
 
     virtual ~ValueGraphEdge() {}
 
@@ -247,13 +261,9 @@ struct ValueGraphEdge
     //! The cost attached on this edge. The cost may come from state saving,
     //! or operations.
 	int cost;
-
-    //! A CFG may be seperated into several DAGs, and each DAG have its own path
-    //! numbers. This index represents which DAG the following paths belong to.
-    int dagIndex;
-
+    
     //! All paths on which this relationship exists.
-    PathSet paths;
+    PathInfo paths;
     
     //! All immediate control dependences representing conditions in VG.
     ControlDependences controlDependences;
@@ -294,13 +304,19 @@ struct StateSavingEdge : ValueGraphEdge
 //        visiblePathNum(visibleNum), killer(killerNode) {}
     
     StateSavingEdge(
-            int cost, int dagIdx, const PathSet& paths, const ControlDependences& cd,
+            int cost, const PathInfo& paths, const ControlDependences& cd,
             const std::map<int, PathSet> visiblePaths, 
             SgNode* killerNode)
-    :   ValueGraphEdge(cost, dagIdx, paths, cd), 
+    :   ValueGraphEdge(cost, paths, cd), 
         visiblePaths(visiblePaths), killer(killerNode) 
     {}
-
+    
+    StateSavingEdge(
+            int cost, const PathInfo& paths, const ControlDependences& cd,
+            SgNode* killerNode)
+    :   ValueGraphEdge(cost, paths, cd), killer(killerNode) 
+    {}
+    
 	virtual std::string toString() const;
     
     virtual StateSavingEdge* clone() 
@@ -333,6 +349,11 @@ inline OperatorNode* isOperatorNode(ValueGraphNode* node)
 inline ValueNode* isValueNode(ValueGraphNode* node)
 {
 	return dynamic_cast<ValueNode*>(node);
+}
+
+inline MuNode* isMuNode(ValueGraphNode* node)
+{
+	return dynamic_cast<MuNode*>(node);
 }
 
 inline FunctionCallNode* isFunctionCallNode(ValueGraphNode* node)

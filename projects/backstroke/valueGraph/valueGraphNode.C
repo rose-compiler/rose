@@ -292,10 +292,7 @@ std::string ValueGraphEdge::toString() const
     
 #if 1
     str += "cost:" + boost::lexical_cast<std::string>(cost) + "\\n";
-    str += boost::lexical_cast<std::string>(dagIndex) + ":";
-    std::string s;
-    boost::to_string(paths, s);
-    str += s;
+    str += paths.toString();
 #endif
     
 #if 0

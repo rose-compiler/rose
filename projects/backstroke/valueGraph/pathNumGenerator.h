@@ -6,7 +6,6 @@
 namespace Backstroke
 {
     
-    
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
     BackstrokeCFG::Vertex, BackstrokeCFG::Edge> DAG;
 
@@ -54,7 +53,8 @@ class PathNumGenerator
     //! All paths numbers for the paths above.
     std::vector<size_t> pathNumbers_;
 
-    std::map<Vertex, PathSetOnVertex> pathsForNode_;
+    //std::map<Vertex, PathSetOnVertex> pathsForNode_;
+    std::map<Vertex, PathSet> pathsForNode_;
     std::map<Edge,   PathSet> pathsForEdge_;
     //std::map<Vertex, std::set<int> > pathsForNode_;
 
@@ -68,16 +68,18 @@ public:
 
     //! Returns the visible incomplete path numbers and their corresponding complete 
     //! paths set of the given DAG node.
-    std::map<int, PathSet> getVisibleNumAndPaths(Vertex v) const
+    std::map<int, PathInfo> getVisibleNumAndPaths(Vertex v) const
     {
-        ROSE_ASSERT(pathsForNode_.count(v) > 0);
-        return pathsForNode_.find(v)->second.numToPath;
+        return std::map<int, PathInfo>();
+        //ROSE_ASSERT(pathsForNode_.count(v) > 0);
+        //return pathsForNode_.find(v)->second.numToPath;
     }
 
     PathSet getPaths(Vertex v) const
     {
         ROSE_ASSERT(pathsForNode_.count(v) > 0);
-        return pathsForNode_.find(v)->second.allPath;
+        //return pathsForNode_.find(v)->second.allPath;
+        return pathsForNode_.find(v)->second;
     }
 
     PathSet getPaths(const Edge& e) const
@@ -126,10 +128,10 @@ class PathNumManager
     std::vector<DAG> dags_;
 
     //! A table from each CFG vertex to the index of the DAG and the DAG vertex.
-    std::map<CFGVertex, std::pair<int, DAGVertex> > vertexToDagIndex_;
+    std::map<CFGVertex, std::map<int, DAGVertex> > vertexToDagIndex_;
 
     //! A table from each CFG edge to the index of the DAG and the DAG vertex.
-    std::map<CFGEdge, std::pair<int, DAGEdge> > edgeToDagIndex_;
+    std::map<CFGEdge, std::map<int, DAGEdge> > edgeToDagIndex_;
 
     std::vector<PathNumGenerator*> pathNumGenerators_;
 
@@ -148,10 +150,10 @@ public:
     ~PathNumManager();
 
     //! Get path numbers from a AST node.
-    std::pair<int, PathSet> getPathNumbers(SgNode* node) const;
+    PathInfo getPathNumbers(SgNode* node) const;
 
     //! Get path numbers from two AST nodes, which form a CFG edge.
-    std::pair<int, PathSet> getPathNumbers(SgNode* node1, SgNode* node2) const;
+    PathInfo getPathNumbers(SgNode* node1, SgNode* node2) const;
 
     //! Get visible incomplete path numbers and their cooresponding complete path numbers.
     //! The first member in the returned pair is the DAG index, and the second is a table
@@ -180,7 +182,7 @@ public:
     
     //! Get a table from each path set to a number representing the topological order
     //! in the CFG.
-    std::map<PathSet, int> getPathsIndices(size_t index) const;
+    //std::map<PathSet, int> getPathsIndices(size_t index) const;
 
     void insertPathNumberToEvents(const std::string& pathNumName);
     

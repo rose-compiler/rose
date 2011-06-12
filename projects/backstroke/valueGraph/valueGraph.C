@@ -555,8 +555,7 @@ void EventReverser::addPathsToEdges()
 
         if (ValueNode* valNode = isValueNode(valueGraph_[src]))
         {
-            boost::tie(edge->dagIndex, edge->paths) =
-                    pathNumManager_->getPathNumbers(valNode->astNode);
+            edge->paths = pathNumManager_->getPathNumbers(valNode->astNode);
         }
     }
 
@@ -882,17 +881,14 @@ EventReverser::VGEdge EventReverser::addValueGraphEdge(
     //ROSE_ASSERT(valNode);
 
     // Get the path information of this edge from the source node.
-    int dagIndex;
-    PathSet paths;
-    boost::tie(dagIndex, paths) =
-            pathNumManager_->getPathNumbers(node->astNode);
+    PathInfo paths = pathNumManager_->getPathNumbers(node->astNode);
     
     ControlDependences controlDeps = cdg_->getControlDependences(node->astNode);
     
     //valueGraph_[e] = new ValueGraphEdge(valNode->getCost(), dagIndex, paths);
     //valueGraph_[newEdge] = new ValueGraphEdge(0, dagIndex, paths);
     
-    valueGraph_[newEdge] = new ValueGraphEdge(0, dagIndex, paths, controlDeps);
+    valueGraph_[newEdge] = new ValueGraphEdge(0, paths, controlDeps);
     
     return newEdge;
 }
@@ -911,19 +907,15 @@ void EventReverser::addValueGraphPhiEdge(
         
        // cout << "\nSRC: " << node1->class_name() << endl;
         //cout << "TGT: " << node2->class_name() << endl;
-
-        int dagIndex;
-        PathSet paths;
-        boost::tie(dagIndex, paths) =
-            pathNumManager_->getPathNumbers(node1, node2);
-
-        VGEdge newEdge = boost::add_edge(src, tar, valueGraph_).first;
         
         // Note that this way works since the function is normalized and every if has
         // two bodies (SgBasicBlock), so there is always a control dependence in CDG
         // for either true or false body. It is like a trick here.
+
+        VGEdge newEdge = boost::add_edge(src, tar, valueGraph_).first;
+        PathInfo paths = pathNumManager_->getPathNumbers(node1, node2);
         ControlDependences controlDeps = cdg_->getControlDependences(node1);
-        valueGraph_[newEdge] = new ValueGraphEdge(0, dagIndex, paths, controlDeps);
+        valueGraph_[newEdge] = new ValueGraphEdge(0, paths, controlDeps);
     }
 
     //valueGraph_[e] = new ValueGraphEdge(valNode->getCost(), dagIndex, paths);
@@ -950,13 +942,12 @@ void EventReverser::addValueGraphStateSavingEdges(VGVertex src, SgNode* killer)
     if (!isAvailableValue(src))
         cost = valueGraph_[src]->getCost();
     
+#if 0
     // Get the path information of this edge.
     int dagIndex;
     map<int, PathSet> visiblePaths;
     boost::tie(dagIndex, visiblePaths) =
             pathNumManager_->getVisiblePathNumbers(killer);
-    
-    PathSet paths;
     
     typedef map<int, PathSet>::value_type IntPathsPair;
     foreach (const IntPathsPair& intPaths, visiblePaths)
@@ -966,12 +957,15 @@ void EventReverser::addValueGraphStateSavingEdges(VGVertex src, SgNode* killer)
         else
             paths |= intPaths.second;
     }
-
-    VGEdge newEdge = boost::add_edge(src, root_, valueGraph_).first;
+#endif
     
+    VGEdge newEdge = boost::add_edge(src, root_, valueGraph_).first;
+    PathInfo paths = pathNumManager_->getPathNumbers(killer);
     ControlDependences controlDeps = cdg_->getControlDependences(killer);
     valueGraph_[newEdge] = new StateSavingEdge(
-            cost, dagIndex, paths, controlDeps, visiblePaths, killer);
+            cost, paths, controlDeps, killer);
+    //valueGraph_[newEdge] = new StateSavingEdge(
+    //        cost, paths, controlDeps, visiblePaths, killer);
     
     ///cout << "***" << paths.size() << endl;
 
@@ -1006,11 +1000,8 @@ EventReverser::addValueGraphStateSavingEdges(VGVertex src)
     ROSE_ASSERT(astNode);
 
     // Get the path information of this edge.
-    int dagIndex;
-    PathSet paths;
-    boost::tie(dagIndex, paths) = pathNumManager_->getPathNumbers(astNode);
-
-    valueGraph_[newEdge] = new ValueGraphEdge(cost, dagIndex, paths);
+    PathInfo paths = pathNumManager_->getPathNumbers(astNode);
+    valueGraph_[newEdge] = new ValueGraphEdge(cost, paths);
 
     // If the variable is killed at the exit of a scope, add a state saving edge to it.
 
