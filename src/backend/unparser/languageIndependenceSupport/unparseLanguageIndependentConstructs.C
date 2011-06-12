@@ -492,7 +492,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // if (!statementFromFile(stmt, getFileName()))
      if (!statementFromFile(stmt, getFileName(), info))
         {
-#if 1
+#if 0
           printf ("WARNING: Skipping calls to output statements that are not recorded as being in the targer file \n");
 #endif
           return;
@@ -1844,6 +1844,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(binary_op->get_rhs_operand());
 
             // curprint ( "\n /* mfunc_ref = " + StringUtility::numberToString(mfunc_ref) + " */ \n";
+            // curprint ( "\n /* unparseBinaryExpr(): Test 1  mfunc_ref = " + StringUtility::numberToString(mfunc_ref) + "*/ \n");
 
                unp->u_debug->printDebugInfo("lhs: ", false);
 
@@ -1852,6 +1853,8 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                ROSE_ASSERT(lhs != NULL);
             // if (isSgBinaryOp(lhs) != NULL || isSgConstructorInitializer(lhs) != NULL )
                SgConstructorInitializer* constructor = isSgConstructorInitializer(lhs);
+
+            // curprint ( "\n /* unparseBinaryExpr(): Test 2  constructor = " + StringUtility::numberToString(constructor) + "*/ \n");
 
             // printf ("############## constructor = %p \n",constructor);
                ROSE_ASSERT( (constructor == NULL) || (constructor != NULL && constructor->get_args() != NULL) );
@@ -1879,8 +1882,13 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                     curprint ("(");
                   }
 
+            // curprint ( "\n /* unparseBinaryExpr(): Test 3  before unparseExpression() lhs = " + lhs->class_name() + "*/ \n");
+
             // unparseExpression(binary_op->get_lhs_operand(), info);
                unparseExpression(lhs, info);
+
+            // curprint ( "\n /* unparseBinaryExpr(): Test 4  after unparseExpression() lhs = " + lhs->class_name() + "*/ \n");
+
                unp->u_debug->printDebugInfo(getSgVariant(expr->variant()), true);
 
                if (addParensForLhs == true)
@@ -1918,8 +1926,10 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 //                  if ( (mfunc_ref != NULL) && !isOperator(mfunc_ref) )
                     if ( (mfunc_ref == NULL) || !unp->u_sage->isOperator(mfunc_ref) )
                        {
+                      // curprint ( "\n /* unparseBinaryExpr(): Test 4.4  before output of info.get_operator_name() = " + info.get_operator_name() + "*/ \n");
                       // curprint ( "\n /* Print out the dot in second case */ \n";
                          curprint ( info.get_operator_name());
+                      // curprint ( "\n /* unparseBinaryExpr(): Test 4.5  after output of info.get_operator_name() = " + info.get_operator_name() + "*/ \n");
                          unp->u_debug->printDebugInfo("printed dot because is not operator overloading function", true);
                        }
                   }
@@ -2002,6 +2012,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
           ROSE_ASSERT(info.get_nested_expression() != 0);
 #if 0
           printf ("In unparseBinaryExpr() -- before output of RHS: info.get_nested_expression() = %d info.get_operator_name() = %s \n",info.get_nested_expression(),info.get_operator_name().c_str());
+          curprint ( "\n /* unparseBinaryExpr(): Test 4.9  before unparseExpression() info.get_operator_name() = " + info.get_operator_name() + "*/ \n");
 #endif
           SgExpression* rhs = binary_op->get_rhs_operand();
           if (info.get_operator_name() == ",")
@@ -2014,8 +2025,10 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
              }
             else
              {
+            // curprint ( "\n /* unparseBinaryExpr(): Test 5  before unparseExpression() rhs = " + rhs->class_name() + "*/ \n");
             // unparseExpression(binary_op->get_rhs_operand(), info);
                unparseExpression(rhs, info);
+            // curprint ( "\n /* unparseBinaryExpr(): Test 6  after unparseExpression() rhs = " + rhs->class_name() + "*/ \n");
              }
         }
 
@@ -2456,8 +2469,11 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                          info.set_requiresGlobalNameQualification();
                        }
 #endif
-                    SgName nameQualifier = unp->u_name->generateNameQualifier(enum_val->get_declaration(),info);
-                 // printf ("variable's nameQualifier = %s \n",(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
+                 // DQ (6/9/2011): Newest refactored support for name qualification.
+                 // SgName nameQualifier = unp->u_name->generateNameQualifier(enum_val->get_declaration(),info);
+                    SgName nameQualifier = enum_val->get_qualified_name_prefix();
+
+                    printf ("variable's nameQualifier = %s \n",(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
                  // ROSE_ASSERT (nameQualifier.is_null() == false);
                     if (nameQualifier.is_null() == false)
                        {

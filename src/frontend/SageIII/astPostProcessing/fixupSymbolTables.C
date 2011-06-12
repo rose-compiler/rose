@@ -148,6 +148,7 @@ FixupAstSymbolTables::visit ( SgNode* node )
 
             // reset the symbolTable using the get_symbol_table() member function
                symbolTable = scope->get_symbol_table();
+               ROSE_ASSERT(symbolTable != NULL);
 
             // DQ (2/16/2006): Set this parent directly (now tested)
                symbolTable->set_parent(scope);

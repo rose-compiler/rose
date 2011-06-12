@@ -259,7 +259,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
      currentFile = file;
      ROSE_ASSERT(currentFile != NULL);
 
-#if 1
+#if 0
      printf ("SageInterface::is_Cxx_language()     = %s \n",SageInterface::is_Cxx_language() ? "true" : "false");
      printf ("SageInterface::is_Fortran_language() = %s \n",SageInterface::is_Fortran_language() ? "true" : "false");
      printf ("SageInterface::is_Java_language()    = %s \n",SageInterface::is_Java_language() ? "true" : "false");

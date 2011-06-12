@@ -1990,14 +1990,14 @@ SgType::getAssociatedDeclaration() const
    {
      SgDeclarationStatement* declaration = NULL;
 
-     printf ("In getDeclarationAssociatedWithType(): type = %s \n",class_name().c_str());
+  // printf ("In SgType::getAssociatedDeclaration(): type = %s \n",class_name().c_str());
 
   // Resolve to the base type (but not past typedef types).  Note that a subtle point is that 
   // we want to avoid expressing typedefs that are private in functions that are public.
      SgType* strippedType = this->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
      ROSE_ASSERT(strippedType != NULL);
 
-     printf ("In getAssociatedDeclaration(): strippedType = %s \n",strippedType->class_name().c_str());
+  // printf ("In getAssociatedDeclaration(): strippedType = %s \n",strippedType->class_name().c_str());
 
   // Check if this is a named type (either SgClassType, SgEnumType, or SgTypedefType).
      SgNamedType* namedType = isSgNamedType(strippedType);
@@ -2007,7 +2007,7 @@ SgType::getAssociatedDeclaration() const
           declaration = namedType->get_declaration();
           ROSE_ASSERT(declaration != NULL);
 
-          printf ("In HiddenListTraversal::getDeclarationAssociatedWithType(): declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+       // printf ("In HiddenListTraversal::getDeclarationAssociatedWithType(): declaration = %p = %s \n",declaration,declaration->class_name().c_str());
         }
 
      return declaration;

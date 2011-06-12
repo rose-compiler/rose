@@ -607,6 +607,8 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
 
      switch (declaration->variantT())
         {
+       // DQ (6/11/2011): Added support for new template IR nodes.
+          case V_SgTemplateClassDeclaration:
           case V_SgTemplateDeclaration:
                name = isSgTemplateDeclaration(declaration)->get_name().str();
                break;
@@ -952,6 +954,11 @@ SageInterface::get_name ( const SgScopeStatement* scope )
 
      switch (scope->variantT())
         {
+       // DQ (6/11/2011): Added support for new template IR nodes.
+          case V_SgTemplateClassDefinition:
+               name = get_name(isSgTemplateClassDefinition(scope)->get_declaration());
+               break;
+
           case V_SgClassDefinition:
           case V_SgTemplateInstantiationDefn:
                name = get_name(isSgClassDefinition(scope)->get_declaration());
@@ -4331,33 +4338,39 @@ SgFunctionSymbol *SageInterface::lookupFunctionSymbolInParentScopes (const SgNam
 // SgScopeStatement* SgStatement::get_scope
 // SgScopeStatement* SgStatement::get_scope() assumes all parent pointers are set, which is
 // not always true during translation.
-SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name,
-        SgScopeStatement *cscope)
-{
-    SgSymbol* symbol = NULL;
-    if (cscope == NULL)
-        cscope = SageBuilder::topScopeStack(); 
-    ROSE_ASSERT(cscope);
+SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+   {
+     SgSymbol* symbol = NULL;
+     if (cscope == NULL)
+          cscope = SageBuilder::topScopeStack(); 
 
-    while ((cscope!=NULL)&&(symbol==NULL))
-    {
-        symbol = cscope->lookup_symbol(name);
-        //debug
-        // cscope->print_symboltable("debug sageInterface.C L3749...");
-        if (cscope->get_parent()!=NULL) // avoid calling get_scope when parent is not set
-            cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
-        else 
-            cscope = NULL;
-    }
+     ROSE_ASSERT(cscope != NULL);
 
-    if (symbol==NULL)
-    {
-        //    printf ("Warning: could not locate the specified name %s in any outer symbol table \n"e,
-        //      name.str());
-        //  ROSE_ASSERT(false); 
-    }
-    return symbol;
-}
+  // printf ("In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s \n",cscope,cscope->class_name().c_str());
+     while ((cscope != NULL) && (symbol == NULL))
+        {
+       // printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s \n",cscope,cscope->class_name().c_str());
+          symbol = cscope->lookup_symbol(name);
+
+       // debug
+       // cscope->print_symboltable("In SageInterface:: lookupSymbolInParentScopes(): debug");
+
+          if (cscope->get_parent()!=NULL) // avoid calling get_scope when parent is not set
+               cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
+            else 
+               cscope = NULL;
+
+       // printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
+        }
+
+     if (symbol == NULL)
+        {
+       // printf ("Warning: could not locate the specified name %s in any outer symbol table \n",name.str());
+       // ROSE_ASSERT(false); 
+        }
+
+     return symbol;
+   }
 
 SgVariableSymbol *
 SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name,
@@ -4499,6 +4512,30 @@ SageInterface::lookupEnumSymbolInParentScopes (const SgName &  name, SgScopeStat
 
      return symbol;
    }
+
+SgNamespaceSymbol *
+SageInterface::lookupNamespaceSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
+   {
+  // DQ (5/7/2011): This is similar to lookupClassSymbolInParentScopes().
+     SgNamespaceSymbol* symbol = NULL;
+     if (cscope == NULL)
+          cscope = SageBuilder::topScopeStack(); 
+     ROSE_ASSERT(cscope != NULL);
+
+     while ((cscope != NULL) && (symbol == NULL))
+        {
+       // I think this will resolve SgAliasSymbols to be a SgNamespaceSymbol where the alias is of a SgNamespaceSymbol.
+          symbol = cscope->lookup_namespace_symbol(name);
+
+          if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
+               cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
+            else
+               cscope = NULL;
+        }
+
+     return symbol;
+   }
+
 
 void
 SageInterface::setSourcePosition( SgLocatedNode* locatedNode )

@@ -1,13 +1,247 @@
 // This is the location of all the name qualification support functions
-// required for code generation (only applicable to C++)
+// required for code generation (unparser) (only applicable to C++).
 
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "unparser.h"
-// #include "name_qualification_support.h"
 
-// DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+
+// DQ (5/11/2011): New name qualification for ROSE (the 4th try).
+// This is a part of a rewrite of the name qualification support in ROSE with the follwoing properties:
+//    1) It is exact (no over qualification).
+//    2) It handles visibility of names constructs
+//    3) It resolves ambiguity of named constructs.
+//    4) It resolves where type elaboration is required.
+//    5) The inputs are carried in the SgUnparse_Info object for uniform handling.
+//    6) The the values in the SgUnparse_Info object are copied from the AST references to the named 
+//       constructs to avoid where named constructs are referenced from multiple locations and the 
+//       name qulification might be different.
+//
+//    7) What about base class qualification? I might have forgotten this one! No, this works, 
+//       but might not generate the minimum length qualified name.
+
+
+
+SgName
+Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
+   {
+  // These are all of the types of IR nodes that can reference anything that is qualified.
+  // It is a longer list than I expected (or designed for initially), but still not unreasonable.
+
+     SgName nameQualifier;
+
+     if (referencedNode == NULL)
+        {
+          printf ("Note that info.set_reference_node_for_qualification(SgNode*) should have been called before calling this function. \n");
+        }
+     ROSE_ASSERT(referencedNode != NULL);
+
+     switch (referencedNode->variantT())
+        {
+          case V_SgInitializedName:
+             {
+               SgInitializedName* initializedName = isSgInitializedName(referencedNode);
+               nameQualifier = initializedName->get_qualified_name_prefix_for_type();
+               break;
+             }
+
+          case V_SgFunctionDeclaration:
+          case V_SgMemberFunctionDeclaration:
+          case V_SgTemplateInstantiationFunctionDecl:
+          case V_SgTemplateInstantiationMemberFunctionDecl:
+             {
+               SgFunctionDeclaration* node = isSgFunctionDeclaration(referencedNode);
+               nameQualifier = node->get_qualified_name_prefix_for_return_type();
+               break;
+             }
+
+          case V_SgTypedefDeclaration:
+             {
+               SgTypedefDeclaration* node = isSgTypedefDeclaration(referencedNode);
+               nameQualifier = node->get_qualified_name_prefix_for_base_type();
+               break;
+             }
+
+          case V_SgTemplateArgument:
+             {
+            // SgTemplateArgument* node = isSgTemplateArgument(referencedNode);
+            // nameQualifier = node->get_qualified_name_prefix_for_type();
+               break;
+             }
+
+          case V_SgTypeIdOp:
+          case V_SgSizeOfOp:
+          case V_SgNewExp:
+          case V_SgCastExp:
+             {
+            // SgCastExp* node = isSgCastExp(referencedNode);
+               SgExpression* node = isSgExpression(referencedNode);
+               nameQualifier = node->get_qualified_name_prefix_for_referenced_type();
+               break;
+             }
+
+          case V_SgClassType:
+             {
+            // These can appear in throw expression lists...ignore for now...
+            // SgType* node = isSgType(referencedNode);
+            // nameQualifier = node->get_qualified_name_prefix_for_type();
+               printf ("WARNING: Note that qualified types in throw expression lists are not yet supported... \n");
+               break;
+             }
+
+          case V_SgFunctionType:
+             {
+            // These can appear in typedefs of function pointers...ignore for now...
+            // SgType* node = isSgType(referencedNode);
+            // nameQualifier = node->get_qualified_name_prefix_for_type();
+               printf ("WARNING: Note that qualified types in function pointer typedefs are not yet supported... \n");
+               break;
+             }
+
+          case V_SgTypedefType:
+             {
+            // These can appear in typedef types...ignore for now...
+            // SgType* node = isSgType(referencedNode);
+            // nameQualifier = node->get_qualified_name_prefix_for_type();
+               printf ("WARNING: Note that qualified types in typedef types are not yet supported... \n");
+               break;
+             }
+
+
+#if 0
+          case V_:
+             {
+               * node = is (referencedNode);
+               nameQualifier = node->get_qualified_name_prefix_for_type();
+               break;
+             }
+#endif
+          default:
+             {
+               printf ("In unparseClassType: Sorry not implemented case of name qualification for info.get_reference_node_for_qualification() = %s \n",referencedNode->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return nameQualifier;
+   }
+
+
+
+
+
+SgName
+Unparser_Nameq::generateNameQualifier( SgInitializedName* initializedName, const SgUnparse_Info& info, bool qualificationOfType )
+   {
+  // This unparser support for name qualification is C++ specific.
+  // This interface takes a boolean value to distinquish which of 
+  // the two maps of IR nodes to qualified name strings to use 
+  // (the map for named constructs and the map for types).
+
+     ROSE_ASSERT(initializedName != NULL);
+     return generateNameQualifierSupport(initializedName->get_scope(),info,qualificationOfType);
+   }
+
+SgName
+Unparser_Nameq::generateNameQualifier( SgDeclarationStatement* declarationStatement, const SgUnparse_Info & info, bool qualificationOfType )
+   {
+  // This unparser support for name qualification is C++ specific.
+
+#if 1
+     printf ("In Unparser_Nameq::generateNameQualifier(): qualificationOfType                      = %s \n",qualificationOfType ? "true" : "false");
+     printf ("In Unparser_Nameq::generateNameQualifier(): info.get_name_qualification_length()     = %d \n",info.get_name_qualification_length());
+     printf ("In Unparser_Nameq::generateNameQualifier(): info.get_type_elaboration_required()     = %s \n",info.get_type_elaboration_required() ? "true" : "false");
+     printf ("In Unparser_Nameq::generateNameQualifier(): info.get_global_qualification_required() = %s \n",info.get_global_qualification_required() ? "true" : "false");
+#endif
+
+     ROSE_ASSERT(declarationStatement != NULL);
+     return generateNameQualifierSupport(declarationStatement->get_scope(),info,qualificationOfType);
+   }
+
+
+SgName
+Unparser_Nameq::generateNameQualifierSupport ( SgScopeStatement* scope, const SgUnparse_Info& info, bool qualificationOfType )
+   {
+  // DQ (5/28/2011): We need this information to be passed in from the outside (qualificationOfType):
+  //    qualificationOfName == true implies this is name qualification for a name vs a type.
+  //    qualificationOfName == false implies this is name qualification for a type.
+  // note that the complete minimally qualified name is stored and retrieved from the map using
+  // either SgNode::get_globalQualifiedNameMapForNames() or SgNode::get_globalQualifiedNameMapForTypes().
+  // bool qualificationOfType = false;
+
+     SgName qualifiedName;
+
+  // If the name qualification length required is zero then we can return an empty string and avoid the logic below.
+     if (info.get_name_qualification_length() > 0)
+        {
+       // DQ (5/28/2011): Adding support for qualified name lookup.
+          SgNode* nameQualificationReferenceNode = info.get_reference_node_for_qualification();
+          if (nameQualificationReferenceNode != NULL)
+             {
+               if (qualificationOfType == false)
+                  {
+                    std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(nameQualificationReferenceNode);
+                    if (i != SgNode::get_globalQualifiedNameMapForNames().end())
+                       {
+                         qualifiedName = i->second;
+                       }
+                      else
+                       {
+                         printf ("key not found in node map nameQualificationReferenceNode = %s \n",nameQualificationReferenceNode->class_name().c_str());
+                         ROSE_ASSERT(false);
+                       }
+                  }
+                 else
+                  {
+                    std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(nameQualificationReferenceNode);
+                    if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+                       {
+                         qualifiedName = i->second;
+                       }
+                      else
+                       {
+                      // Debugging support...
+                         printf ("key not found in type map nameQualificationReferenceNode = %s \n",nameQualificationReferenceNode->class_name().c_str());
+
+                      // Extra Debugging support...
+                         switch(nameQualificationReferenceNode->variantT())
+                            {
+                              case V_SgInitializedName:
+                                 {
+                                   SgInitializedName* initializedName = isSgInitializedName(nameQualificationReferenceNode);
+                                   printf ("initializedName = %s \n",initializedName->get_name().str());
+                                   break;
+                                 }
+
+                              default:
+                                 {
+                                   printf ("Default reached in switch(nameQualificationReferenceNode->variantT()) \n");
+                                   ROSE_ASSERT(false);
+                                 }
+                            }
+                         ROSE_ASSERT(false);
+                       }
+                  }
+             }
+            else
+             {
+            // This should be an error.
+               printf ("Error: nameQualificationReferenceNode == NULL but info.get_name_qualification_length() = %d \n",info.get_name_qualification_length());
+               ROSE_ASSERT(false);
+             }
+        }
+       else
+        {
+          printf ("return empty qualified name since info.get_name_qualification_length() == 0 \n");
+        }
+
+     return qualifiedName;
+   }
+
+
+
+
+
 
 // DQ (4/16/2007): Commented out.
 // #define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 1
@@ -784,42 +1018,11 @@ Unparser_Nameq::generateNameQualifier( SgInitializedName* initializedName, const
 #endif
 
 
-// DQ (5/11/2011): New name qualification for ROSE (the 4th try).
-// This is a part of a rewrite of the name qualification support in ROSE with the follwoing properties:
-//    1) It is exact (no over qualification).
-//    2) It handled visibility of names constructs
-//    3) It resolves ambiguity of named constructs.
-//    4) It resolves where type elaboration is required.
-//    5) The inputs are carried in the SgUnparse_Info object for uniform handling.
-//    6) The the values in the SgUnparse_Info object are copied from the AST references to the named 
-//       constructs to avoid where named constructs are referenced from multiple locations and the 
-//       name qulification might be different.
-//
-//    7) What about base class qualification? I might have forgotten this one! No, this work, but might not generate the minimum length qualified name.
 
-SgName
-Unparser_Nameq::generateNameQualifier( SgInitializedName* initializedName, const SgUnparse_Info& info )
-   {
-  // This support for name qualification is C++ specific, this might be a problem that should generate a refactoring of this code.
+#if 0
 
-     ROSE_ASSERT(initializedName != NULL);
-     return generateNameQualifierSupport(initializedName->get_scope(),info);
-   }
-
-SgName
-Unparser_Nameq::generateNameQualifier( SgDeclarationStatement* declarationStatement, const SgUnparse_Info & info )
-   {
-  // This support for name qualification is C++ specific, this might be a problem that should generate a refactoring of this code.
-#if 1
-     printf ("In Unparser_Nameq::generateNameQualifier(): info.get_name_qualification_length()     = %d \n",info.get_name_qualification_length());
-     printf ("In Unparser_Nameq::generateNameQualifier(): info.get_type_elaboration_required()     = %s \n",info.get_type_elaboration_required() ? "true" : "false");
-     printf ("In Unparser_Nameq::generateNameQualifier(): info.get_global_qualification_required() = %s \n",info.get_global_qualification_required() ? "true" : "false");
-#endif
-
-     ROSE_ASSERT(declarationStatement != NULL);
-     return generateNameQualifierSupport(declarationStatement->get_scope(),info);
-   }
-
+// DQ (5/29/2011): Remove this when the name qualification is passing more tests.
+#error "OLD CODE ... will be removed"
 
 SgName
 Unparser_Nameq::generateNameQualifierSupport( SgScopeStatement* scope, const SgUnparse_Info& info )
@@ -891,3 +1094,5 @@ Unparser_Nameq::generateNameQualifierSupport( SgScopeStatement* scope, const SgU
 
      return qualifiedName;
    }
+#endif
+
