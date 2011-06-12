@@ -46,6 +46,9 @@ void EventReverser::reverseEvent(SgFunctionDefinition* funcDef)
     cfg_ = new BackstrokeCFG(funcDef_);
     cdg_ = new BackstrokeCDG(*cfg_);
     pathNumManager_ = new PathNumManager(cfg_);
+
+    // Get all backedges from this CFG.
+    backEdges_ = cfg_->getAllBackEdges();
     
     generateCode();
 }

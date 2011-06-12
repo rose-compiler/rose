@@ -283,14 +283,24 @@ struct OrderedEdge : ValueGraphEdge
 	int index;
 };
 
-#if 0
+#if 1
 //! An edge coming from a phi node.
 struct PhiEdge : ValueGraphEdge
 {
-    PhiEdge(const std::set<ReachingDef::FilteredCfgEdge>* edges)
-    : ValueGraphEdge(0, dagIdx, paths), visiblePathNum(visibleNum) {}
+    PhiEdge(int cst, const PathInfo& pths, const ControlDependences& cd)
+    : ValueGraphEdge(cst, pths, cd), muEdge(false) {}
+    //PhiEdge(const std::set<ReachingDef::FilteredCfgEdge>* edges)
+    //: ValueGraphEdge(0, dagIdx, paths), visiblePathNum(visibleNum) {}
     //! A set of edges indicating where the target def comes from in CFG.
-    std::set<ReachingDef::FilteredCfgEdge> cfgEdges;
+    //std::set<ReachingDef::FilteredCfgEdge> cfgEdges;
+    
+    virtual std::string toString() const
+    {
+        std::string str = ValueGraphEdge::toString();
+        return muEdge ? str + "\\nMU" : str;
+    }
+    
+    bool muEdge;
 };
 #endif
 
@@ -369,6 +379,11 @@ inline OrderedEdge* isOrderedEdge(ValueGraphEdge* edge)
 inline StateSavingEdge* isStateSavingEdge(ValueGraphEdge* edge)
 {
 	return dynamic_cast<StateSavingEdge*>(edge);
+}
+
+inline PhiEdge* isPhiEdge(ValueGraphEdge* edge)
+{
+	return dynamic_cast<PhiEdge*>(edge);
 }
 
 }  // End of namespace Backstroke

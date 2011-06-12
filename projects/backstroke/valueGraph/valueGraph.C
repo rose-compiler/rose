@@ -720,6 +720,11 @@ void EventReverser::addExtraNodesAndEdges()
         if (isOperatorNode(valueGraph_[src]) || isOperatorNode(valueGraph_[tar]) ||
             isFunctionCallNode(valueGraph_[src]) || isFunctionCallNode(valueGraph_[tar]))
             continue;
+        
+        // If the edge is a mu edge, don't add a reverse edge.
+        if (PhiEdge* phiEdge = isPhiEdge(valueGraph_[edge]))
+            if (phiEdge->muEdge)
+                continue;
 
         addValueGraphEdge(tar, src, valueGraph_[edge]);
     }
@@ -842,7 +847,8 @@ EventReverser::createPhiNode(VersionedVariable& var, SSA::ReachingDefPtr reachin
             // If this phi node is not added to VG.
             if (varVertexMap_.count(phiVar) == 0)
             {
-                VGVertex phiNode = createPhiNode(phiVar, def);
+                //VGVertex phiNode = createPhiNode(phiVar, def);
+                createPhiNode(phiVar, def);
             }
         }
     }
@@ -915,7 +921,17 @@ void EventReverser::addValueGraphPhiEdge(
         VGEdge newEdge = boost::add_edge(src, tar, valueGraph_).first;
         PathInfo paths = pathNumManager_->getPathNumbers(node1, node2);
         ControlDependences controlDeps = cdg_->getControlDependences(node1);
-        valueGraph_[newEdge] = new ValueGraphEdge(0, paths, controlDeps);
+        PhiEdge* phiEdge = new PhiEdge(0, paths, controlDeps);
+        
+        // If this def is coming from a backedge, label it as a mu edge.
+        foreach (const CFGEdge& backEdge, backEdges_)
+        {
+            if (cfgEdge != *(*cfg_)[backEdge])
+                continue;
+            phiEdge->muEdge = true;
+            break;
+        }
+        valueGraph_[newEdge] = phiEdge;
     }
 
     //valueGraph_[e] = new ValueGraphEdge(valNode->getCost(), dagIndex, paths);
@@ -1205,9 +1221,7 @@ EventReverser::VGVertex EventReverser::createOperatorNode(
 }
 
 void EventReverser::addPhiEdges()
-{
-    set<CFGEdge> backEdges = cfg_->getAllBackEdges();
-    
+{    
     foreach (VGVertex node, boost::vertices(valueGraph_))
     {
         PhiNode* phiNode = isPhiNode(valueGraph_[node]);
@@ -1244,7 +1258,7 @@ void EventReverser::addPhiEdges()
             if (phiNode->mu)
                 continue;
             
-            foreach (const CFGEdge& backEdge, backEdges)
+            foreach (const CFGEdge& backEdge, backEdges_)
             //foreach (const ReachingDef::FilteredCfgEdge& cfgEdge, cfgEdges)
             {
                 // If the def is coming through a back edge, set this phi not to a mu node.

@@ -141,6 +141,9 @@ private:
     std::map<std::pair<int, int>,
              std::pair<std::set<VGVertex>,
                        std::set<VGEdge> > > routeNodesAndEdges_;
+    
+    //! All backedges in the CFG.
+    std::set<CFGEdge> backEdges_;
 
 
 public:
