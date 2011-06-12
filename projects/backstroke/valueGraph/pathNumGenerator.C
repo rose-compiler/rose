@@ -248,12 +248,11 @@ PathInfo PathNumManager::getPathNumbers(SgNode* node) const
 std::pair<int, std::map<int, PathSet> >
 PathNumManager::getVisiblePathNumbers(SgNode* node) const
 {
+#if 0
     CFGVertex cfgNode = getCFGNode(node);
 
     int idx;
     DAGVertex dagNode;
-    
-#if 0
     boost::tie(idx, dagNode) = (vertexToDagIndex_.find(cfgNode))->second;
 
     //PathInfo paths;

@@ -63,9 +63,13 @@ set<EventReverser::VGEdge> EventReverser::getRouteFromSubGraph(int dagIndex, int
 //        string filename = "VG" + boost::lexical_cast<string>(i);
 //        //cout << subgraph << endl;
 //        const char* name = "ABCDE";
+    
+    set<VGVertex> availableNodes;
+    availableNodes.insert(root_);
 
     // Get the route for this path.
-    return getReversalRoute(dagIndex, pathIndex, subgraph, valuesToRestore_);
+    return getReversalRoute(dagIndex, pathIndex, subgraph, 
+            valuesToRestore_, availableNodes);
     
     // Generate the reverse function for this route.
     //generateReverseFunction(scope, route);
@@ -114,7 +118,8 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
         int dagIndex,
         int pathIndex,
         const SubValueGraph& subgraph,
-        const vector<VGVertex>& valuesToRestore)
+        const vector<VGVertex>& valuesToRestore,
+        const set<VGVertex>& availableNodes)
 {
     map<VGVertex, vector<RouteWithCost> > allRoutes;
 
@@ -184,7 +189,8 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
                 VGVertex tar = boost::target(edge, subgraph);
 
                 // If the target is the root, go back in the stack.
-                if (tar == root_)
+                if (availableNodes.count(tar) > 0)
+                //if (tar == root_)
                 {
                     RouteWithNodes newRoute = unfinishedRoute;
                     newRoute.edges.push_back(edge);

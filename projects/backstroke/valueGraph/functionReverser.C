@@ -70,18 +70,22 @@ void EventReverser::generateCode()
 
     map<VGEdge, PathInfo> routes;
 
-    int dagIndex = 0;
-    // Just for DAG 0.
-    size_t pathNum = pathNumManager_->getNumberOfPath(0);
-    for (size_t i = 0; i < pathNum; ++i)
+    for (int dagIndex = 0, dagNum = pathNumManager_->getNumberOfDags(); 
+            dagIndex < dagNum; ++dagIndex)
     {
-        set<VGEdge> route = getRouteFromSubGraph(dagIndex, i);
-
-        foreach (const VGEdge& edge, route)
+        // Just for DAG 0.
+        size_t pathNum = pathNumManager_->getNumberOfPath(dagIndex);
+        for (size_t i = 0; i < pathNum; ++i)
         {
-            if (routes.count(edge) == 0)
-                routes[edge][dagIndex].resize(pathNum);
-            routes[edge][dagIndex].set(i);
+            // Search the subgraph then get the shorted paths.
+            set<VGEdge> route = getRouteFromSubGraph(dagIndex, i);
+
+            foreach (const VGEdge& edge, route)
+            {
+                if (routes.count(edge) == 0)
+                    routes[edge][dagIndex].resize(pathNum);
+                routes[edge][dagIndex].set(i);
+            }
         }
     }
     
@@ -110,39 +114,17 @@ void EventReverser::generateCode()
 
     string pathNumName = "__num__";
     
-    using namespace SageBuilder;
     // If the number of path is 1, we don't have to use path numbers.
-    if (pathNum > 1)
-    {
-        // Insert the declaration of the path number in the front of reverse function,
-        // and define its value from a pop function call.
-        pushScopeStack(rvsFuncDef_->get_body());
-        SgVariableDeclaration* pathNumDecl =
-                SageBuilder::buildVariableDeclaration(
-                    pathNumName,
-                    SageBuilder::buildIntType()/*,
-                    SageBuilder::buildAssignInitializer(
-                        buildPopFunctionCall(
-                            buildIntType()))*/);
-        SgStatement* restoreNum = SageBuilder::buildExprStatement(
-                    buildRestoreFunctionCall(buildVarRefExp(pathNumDecl)));
-        popScopeStack();
-
-        SageInterface::prependStatement(restoreNum, rvsFuncDef_->get_body());
-        SageInterface::prependStatement(pathNumDecl, rvsFuncDef_->get_body());
-        SageInterface::prependStatement(SageInterface::copyStatement(restoreNum), cmtFuncDef_->get_body());
-        SageInterface::prependStatement(SageInterface::copyStatement(pathNumDecl), cmtFuncDef_->get_body());
-    }
+    //if (pathNum > 1)
+        buildPathNumDeclaration(pathNumName);
     
     // Build all three functions.
     generateCode(0, rvsCFG, rvsFuncDef_->get_body(), cmtFuncDef_->get_body(), pathNumName);
 
 
     // If the number of path is 1, we don't have to use path numbers.
-    if (pathNum > 1)
-    {
+    //if (pathNum > 1)
         pathNumManager_->insertPathNumberToEvents(pathNumName);
-    }
 
     // Finally insert all functions in the code.
     insertFunctions();
@@ -151,6 +133,30 @@ void EventReverser::generateCode()
     // Remove them here.
     removeEmptyIfStmt(rvsFuncDef_);
     removeEmptyIfStmt(cmtFuncDef_);
+}
+
+void EventReverser::buildPathNumDeclaration(const string& pathNumName)
+{
+    using namespace SageBuilder;
+
+    // Insert the declaration of the path number in the front of reverse function,
+    // and define its value from a pop function call.
+    pushScopeStack(rvsFuncDef_->get_body());
+    SgVariableDeclaration* pathNumDecl =
+            SageBuilder::buildVariableDeclaration(
+                pathNumName,
+                SageBuilder::buildIntType()/*,
+                SageBuilder::buildAssignInitializer(
+                    buildPopFunctionCall(
+                        buildIntType()))*/);
+    SgStatement* restoreNum = SageBuilder::buildExprStatement(
+                buildRestoreFunctionCall(buildVarRefExp(pathNumDecl)));
+    popScopeStack();
+
+    SageInterface::prependStatement(restoreNum, rvsFuncDef_->get_body());
+    SageInterface::prependStatement(pathNumDecl, rvsFuncDef_->get_body());
+    SageInterface::prependStatement(SageInterface::copyStatement(restoreNum), cmtFuncDef_->get_body());
+    SageInterface::prependStatement(SageInterface::copyStatement(pathNumDecl), cmtFuncDef_->get_body());
 }
 
 void EventReverser::buildRouteGraph(const map<VGEdge, PathInfo>& routes)

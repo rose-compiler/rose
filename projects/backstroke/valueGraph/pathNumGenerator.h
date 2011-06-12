@@ -176,6 +176,8 @@ public:
         return paths.flip();
     }
     
+    size_t getNumberOfDags() const { return dags_.size(); }
+    
     //! Get a table from each AST node to a number representing the topological order
     //! in the CFG.
     void getAstNodeIndices(size_t index, std::map<SgNode*, int>& nodeIndicesTable) const;

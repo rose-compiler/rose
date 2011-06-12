@@ -189,6 +189,9 @@ private:
     bool isAvailableValue(VGVertex val) const
     { return availableValues_.find(val) != availableValues_.end(); }
     
+    //! Build the path number declaration.
+    void buildPathNumDeclaration(const std::string& pathNumName);
+    
     //! Build the route graph representing search result.
     void buildRouteGraph(const std::map<VGEdge, PathInfo>& routes);
     
@@ -274,7 +277,8 @@ private:
 	 */
     std::set<VGEdge> getReversalRoute(int dagIndex, int pathIndex,
                                    const SubValueGraph& subgraph,
-                                   const std::vector<VGVertex>& valuesToRestore);
+                                   const std::vector<VGVertex>& valuesToRestore,
+                                   const std::set<VGVertex>& availableNodes);
 
 	void writeValueGraphNode(std::ostream& out, const VGVertex& node) const;
 
