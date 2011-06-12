@@ -258,9 +258,16 @@ FixupAstSymbolTables::visit ( SgNode* node )
 
                          if (scopeOfDeclarationToFindInScope != scopeOfDeclarationAssociatedWithType)
                             {
-                           // Houston, we have a problem!  The trick is to fix it...
+                           // DQ (6/12/2011): Houston, we have a problem!  The trick is to fix it...
+                           // A symbol has been placed into a scope when we could not be certain which scope it should be placed.
+                           // We have a default of placing such symbols into the global scope, but it might be better to just have 
+                           // a special scope where such symbols could be placed so that we could have them separate from the global 
+                           // scope and then fix them up more clearly.
+
+                           // Note that test2011_80.C still fails but the AST is at least correct (I think).
                               SgGlobal* scopeOfDeclarationToFindInScope_GlobalScope      = isSgGlobal(scopeOfDeclarationToFindInScope);
                               SgGlobal* scopeOfDeclarationAssociatedWithType_GlobalScope = isSgGlobal(scopeOfDeclarationAssociatedWithType);
+
                               if (scopeOfDeclarationToFindInScope_GlobalScope != NULL)
                                  {
                                 // In general which ever scope is the global scope is where the error is...
