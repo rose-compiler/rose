@@ -788,9 +788,10 @@ NAME_QUALIFICATION_EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2006_86.C \
    test2006_121.C \
    test2006_139.C \
-   test2006_147.C
+   test2006_147.C \
+   test2008_04.C
 
-# DQ (6/11/2011): Failing name qualification tests (where we stand):
+# DQ (6/12/2011): Failing name qualification tests (where we stand):
 # test2006_151.C
 # test2006_159.C
 # test2007_01.C
@@ -799,8 +800,8 @@ NAME_QUALIFICATION_EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 # test2007_17.C
 # test2007_55.C
 # test2007_78.C
-# test2008_04.C
 # test2009_37.C
+# test2011_80.C
 
 # DQ (6/5/2011): Failing name qualification tests (see where we stand):
 # test2005_112.C 

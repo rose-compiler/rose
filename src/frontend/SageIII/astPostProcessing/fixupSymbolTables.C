@@ -130,11 +130,14 @@ FixupAstSymbolTables::visit ( SgNode* node )
      SgScopeStatement* scope = isSgScopeStatement(node);
      if (scope != NULL)
         {
+#if 1
+          printf ("AST Fixup: Fixup Symbol Table for %p = %s at: \n",scope,scope->class_name().c_str());
+#endif
           SgSymbolTable* symbolTable = scope->get_symbol_table();
           if (symbolTable == NULL)
              {
 #if 0
-               printf ("AST Fixup: Building Symbol Table for %p = %s at: \n",scope,scope->sage_class_name());
+               printf ("AST Fixup: Fixup Symbol Table for %p = %s at: \n",scope,scope->class_name().c_str());
                scope->get_file_info()->display("Symbol Table Location");
 #endif
                SgSymbolTable* tempSymbolTable = new SgSymbolTable();
@@ -180,6 +183,181 @@ FixupAstSymbolTables::visit ( SgNode* node )
 
           SgSymbolTable::BaseHashType* internalTable = symbolTable->get_table();
           ROSE_ASSERT(internalTable != NULL);
+
+#if 1
+       // DQ (6/12/2011): Fixup symbol table by removing symbols that are not associated with a declaration in the current scope.
+          int idx = 0;
+          SgSymbolTable::hash_iterator i = internalTable->begin();
+          while (i != internalTable->end())
+             {
+            // DQ: removed SgName casting operator to char*
+            // cout << "[" << idx << "] " << (*i).first.str();
+               ROSE_ASSERT ( (*i).first.str() != NULL );
+               ROSE_ASSERT ( isSgSymbol( (*i).second ) != NULL );
+
+            // printf ("Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) sage_class_name() = %s \n",
+            //      idx,(*i).first.str(),(*i).second->sage_class_name());
+
+               SgSymbol* symbol = isSgSymbol((*i).second);
+               ROSE_ASSERT ( symbol != NULL );
+
+               SgDeclarationStatement* declarationToFindInScope = NULL;
+
+            // We have to look at each type of symbol separately!  This is because there is no virtual function,
+            // the reason for this is that each get_declaration() function returns a different type!
+            // ROSE_ASSERT ( symbol->get_declaration() != NULL );
+               switch(symbol->variantT())
+                  {
+                    case V_SgClassSymbol:
+                       {
+                         SgClassSymbol* classSymbol = isSgClassSymbol(symbol);
+                         ROSE_ASSERT(classSymbol != NULL);
+                         ROSE_ASSERT(classSymbol->get_declaration() != NULL);
+
+                      // Search for the declaration in the associated scope.
+                         declarationToFindInScope = classSymbol->get_declaration();
+                         ROSE_ASSERT(declarationToFindInScope != NULL);
+
+                         SgClassDeclaration* classDeclaration = isSgClassDeclaration(declarationToFindInScope);
+                         ROSE_ASSERT(classDeclaration != NULL);
+
+                         SgName name = classDeclaration->get_name();
+
+                      // SgType* declarationType = declarationToFindInScope->get_type();
+                         SgType* declarationType = classDeclaration->get_type();
+                         ROSE_ASSERT(declarationType != NULL);
+
+                         if (declarationToFindInScope->get_definingDeclaration() != NULL)
+                            {
+                              declarationToFindInScope = declarationToFindInScope->get_definingDeclaration();
+                              SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(declarationToFindInScope);
+                              ROSE_ASSERT(definingClassDeclaration != NULL);
+
+                           // SgType* definingDeclarationType = declarationToFindInScope->get_type();
+                              SgType* definingDeclarationType = definingClassDeclaration->get_type();
+                              ROSE_ASSERT(definingDeclarationType != NULL);
+
+                           // A simple rule that all declarations should follow (now that we have proper global type tables).
+                              ROSE_ASSERT(definingDeclarationType == declarationType);
+                            }
+
+                         SgNamedType* namedType = isSgNamedType(declarationType);
+                         ROSE_ASSERT(namedType != NULL);
+
+                         SgDeclarationStatement* declarationAssociatedToType = namedType->get_declaration();
+                         ROSE_ASSERT(declarationAssociatedToType != NULL);
+
+                         printf ("Found a symbol without a matching declaration in the current scope (declList): declarationToFindInScope = %p = %s \n",declarationToFindInScope,declarationToFindInScope->class_name().c_str());
+                         printf ("Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) class_name() = %s \n",idx,(*i).first.str(),(*i).second->class_name().c_str());
+
+                         SgScopeStatement* scopeOfDeclarationToFindInScope      = declarationToFindInScope->get_scope();
+                         SgScopeStatement* scopeOfDeclarationAssociatedWithType = declarationAssociatedToType->get_scope();
+
+                         printf ("declarationToFindInScope = %p declarationToFindInScope->get_scope() = %p = %s \n",declarationToFindInScope,declarationToFindInScope->get_scope(),declarationToFindInScope->get_scope()->class_name().c_str());
+                         printf ("declarationAssociatedToType = %p declarationAssociatedToType->get_scope() = %p = %s \n",declarationAssociatedToType,declarationAssociatedToType->get_scope(),declarationAssociatedToType->get_scope()->class_name().c_str());
+
+                         if (scopeOfDeclarationToFindInScope != scopeOfDeclarationAssociatedWithType)
+                            {
+                           // Houston, we have a problem!  The trick is to fix it...
+                              SgGlobal* scopeOfDeclarationToFindInScope_GlobalScope      = isSgGlobal(scopeOfDeclarationToFindInScope);
+                              SgGlobal* scopeOfDeclarationAssociatedWithType_GlobalScope = isSgGlobal(scopeOfDeclarationAssociatedWithType);
+                              if (scopeOfDeclarationToFindInScope_GlobalScope != NULL)
+                                 {
+                                // In general which ever scope is the global scope is where the error is...
+                                // This is because when we don't know where to put a symbol (e.g. from a declaration of a pointer) we put it into global scope.
+                                // There is even an agrument that this is correct as a default for C/C++, but only if it must exist (see test2011_80.C).
+                                // Remove the symbol from the symbol table of the global scope.
+
+                                   printf ("Remove the associated symbol in the current symbol table \n");
+
+                                   ROSE_ASSERT (declarationToFindInScope->get_scope() == declarationAssociatedToType->get_scope());
+                                 }
+                                else
+                                 {
+                                   if (scopeOfDeclarationAssociatedWithType_GlobalScope != NULL)
+                                      {
+                                        printf ("Remove the associated symbol in the global scope (other symble table) \n");
+                                        SgClassSymbol* symbol = scopeOfDeclarationAssociatedWithType->lookup_class_symbol(name);
+                                        ROSE_ASSERT(symbol != NULL);
+                                        scopeOfDeclarationAssociatedWithType->remove_symbol(symbol);
+
+                                     // Note that this will cause the parent to be reset to point to the correct symbol table (which is fine).
+                                        symbol->set_parent(NULL);
+
+                                        declarationAssociatedToType->set_scope(scopeOfDeclarationToFindInScope);
+                                        declarationAssociatedToType->set_parent(scopeOfDeclarationToFindInScope);
+                                      }
+                                     else
+                                      {
+                                     // I don't know how to fix this case...
+                                        printf ("Symbol table problem identified, but I don't know how to fix it! \n");
+                                        ROSE_ASSERT(false);
+                                      }
+                                 }
+                            }
+                      // ROSE_ASSERT (declarationToFindInScope->get_scope() == declarationAssociatedToType->get_scope());
+
+                         break;
+                       }
+
+                    default:
+                       {
+                         printf ("Ignoring non SgClassSymbols (fixupSymbolTables.C) symbol = %s \n",symbol->class_name().c_str());
+                      // ROSE_ASSERT(false);
+                       }
+                  }
+
+
+            // DQ (6/12/2011): This test may not be relevant, since it is violated in many common ways 
+            // (e.g. base types of a typedef have declarations that appear in the symbol table but not 
+            // in the associated scope).
+               SgClassDeclaration* classDeclaration = isSgClassDeclaration(declarationToFindInScope);
+               SgTemplateInstantiationDecl* templateClassInstantiationDeclaration = isSgTemplateInstantiationDecl(declarationToFindInScope);
+               
+            // if (declarationToFindInScope != NULL)
+               if (classDeclaration != NULL && templateClassInstantiationDeclaration == NULL)
+                  {
+                 // By handling each kind of scope separately we can avoid making copies of the vectors of pointers that will be searched.
+                 // It is however a linear search through the scope, but only to match pointer values.
+                    if (scope->containsOnlyDeclarations() == true)
+                       {
+                         SgDeclarationStatementPtrList & declList = scope->getDeclarationList();
+                      // if (declList.find(declarationToFindInScope) == declList.end())
+                         if (find(declList.begin(),declList.end(),declarationToFindInScope) == declList.end())
+                            {
+                              printf ("Found a symbol without a matching declaration in the current scope (declList): declarationToFindInScope = %p = %s \n",declarationToFindInScope,declarationToFindInScope->class_name().c_str());
+
+                              printf ("Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) class_name() = %s \n",idx,(*i).first.str(),(*i).second->class_name().c_str());
+#if 0
+                              printf ("Exiting as a test...\n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+                       }
+                      else
+                       {
+                         SgStatementPtrList & stmtList = scope->getStatementList();
+                      // if (stmtList.find(declarationToFindInScope) == stmtList.end())
+                         if (find(stmtList.begin(),stmtList.end(),declarationToFindInScope) == stmtList.end())
+                            {
+                              printf ("Found a symbol without a matching declaration in the current scope (stmtList): declarationToFindInScope = %p = %s \n",declarationToFindInScope,declarationToFindInScope->class_name().c_str());
+
+                              printf ("Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) class_name() = %s \n",idx,(*i).first.str(),(*i).second->class_name().c_str());
+#if 0
+                              printf ("Exiting as a test...\n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+                       }
+                  }
+
+            // Increment iterator!
+               i++;
+
+            // Increment counter!
+               idx++;
+             }
+#endif
 
 #if 0
        // DQ (8/2/2005): this has been moved to the AST consistancy tests
