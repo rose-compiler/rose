@@ -47,27 +47,8 @@ struct PathInfo : std::map<int, PathSet>
     }
 };
 
-inline PathInfo operator&(const PathInfo& path1, const PathInfo& path2)
-{
-    PathInfo paths;
-    std::map<int, PathSet>::const_iterator
-        first1 = path1.begin(),
-        last1 = path1.end(),
-        first2 = path2.begin(),
-        last2 = path2.end();
-
-    while (first1!=last1 && first2!=last2)
-    {
-        if (first1->first < first2->first) ++first1;
-        else if (first2->first < first1->first) ++first2;
-        else 
-        {
-            paths[first1->first] = first1->second & first2->second;
-            ++first1; ++first2; 
-        }
-    }
-    return paths;
-}
+PathInfo operator&(const PathInfo& path1, const PathInfo& path2);
+PathInfo operator|(const PathInfo& path1, const PathInfo& path2);
 
 } // end of Backstroke
 

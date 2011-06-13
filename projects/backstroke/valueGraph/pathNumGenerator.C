@@ -129,6 +129,7 @@ void PathNumManager::generatePathNumbers()
     {
         DAG& dag = dags_[dagIdx];
         CFGVertex header = loop.first;
+        headerToDagIndex_[header] = dagIdx;
         loop.second.insert(header);
         
         foreach (CFGVertex cfgNode, loop.second)
@@ -140,6 +141,7 @@ void PathNumManager::generatePathNumbers()
         // Set the exit of the CFG as the exit of this DAG.
         DAGVertex exit = boost::add_vertex(dag);
         dag[exit] = cfg_->getExit();
+        vertexToDagIndex_[cfg_->getExit()][dagIdx] = exit;
         
         foreach (CFGVertex cfgNode, loop.second)
         {            

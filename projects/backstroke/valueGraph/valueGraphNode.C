@@ -133,6 +133,15 @@ int PhiNode::getCost() const
     return getCostFromType(getType());
 }
 
+std::string PhiNode::toString() const
+{ 
+    if (mu)
+        return "MU_" + var.toString() + "\\n" 
+                + boost::lexical_cast<std::string>(dagIndex);
+    else
+        return "PHI_" + var.toString();
+}
+
 SgType* ValueNode::getType() const
 {
     SgType* type;

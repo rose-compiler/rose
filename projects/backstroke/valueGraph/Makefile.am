@@ -10,7 +10,7 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 noinst_PROGRAMS = valueGraph
 
 valueGraph_SOURCES = valueGraphNode.C valueGraph.C graphSearch.C functionReverser.C \
-		pathNumGenerator.C CFGFilter.C codeGeneration.C test.C
+		pathNumGenerator.C CFGFilter.C codeGeneration.C types.C test.C
 valueGraph_LDADD = $(top_builddir)/projects/backstroke/utilities/libBackstrokeUtilities.a \
 		$(top_builddir)/projects/backstroke/normalizations/libBackstrokeNormalizations.a \
 		$(top_builddir)/projects/backstroke/ssa/libSSA.a \

@@ -64,12 +64,12 @@ set<EventReverser::VGEdge> EventReverser::getRouteFromSubGraph(int dagIndex, int
 //        //cout << subgraph << endl;
 //        const char* name = "ABCDE";
     
-    set<VGVertex> availableNodes;
-    availableNodes.insert(root_);
+    //set<VGVertex> availableNodes;
+    //availableNodes.insert(root_);
 
     // Get the route for this path.
     return getReversalRoute(dagIndex, pathIndex, subgraph, 
-            valuesToRestore_, availableNodes);
+            valuesToRestore_[dagIndex], availableValues_[dagIndex]);
     
     // Generate the reverse function for this route.
     //generateReverseFunction(scope, route);
@@ -118,13 +118,16 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
         int dagIndex,
         int pathIndex,
         const SubValueGraph& subgraph,
-        const vector<VGVertex>& valuesToRestore,
+        const set<VGVertex>& valuesToRestore,
         const set<VGVertex>& availableNodes)
 {
     map<VGVertex, vector<RouteWithCost> > allRoutes;
 
     foreach (VGVertex valNode, valuesToRestore)
     {
+        // A flag for mu node search.
+        bool firstNode = true;
+        
         // For dummy nodes.
         if (ValueNode* v = isValueNode(valueGraph_[valNode]))
         {
@@ -172,9 +175,20 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
                 {
                     VGVertex tar = boost::target(edge, subgraph);
 
+                    bool flag = false;
+                    // If the target node is a mu node, we allow the formation of circle.
+                    PhiNode* phiNode = isPhiNode(valueGraph_[tar]);
+                    if (phiNode && phiNode->mu)
+                    {
+                        if (dagIndex != phiNode->dagIndex)
+                            flag = true;                    
+                    }
+                    else
+                        flag = true;
+                
                     // The the following function returns true if adding
                     // this edge will form a circle.
-                    if (containsVertex(unfinishedRoute.nodes, tar))
+                    if (flag && containsVertex(unfinishedRoute.nodes, tar))
                         goto NEXT;
 
                     newRoute.edges.push_back(edge);
@@ -187,10 +201,20 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
             foreach (const VGEdge& edge, boost::out_edges(node, subgraph))
             {
                 VGVertex tar = boost::target(edge, subgraph);
-
-                // If the target is the root, go back in the stack.
-                if (availableNodes.count(tar) > 0)
-                //if (tar == root_)
+                
+                // For loop search, if the source is the mu node and the target
+                // is the root, and this is the first time to traverse the mu 
+                // node, then the root should not be reached.
+                if (tar == root_ && firstNode)
+                {
+                    if (PhiNode* phiNode = isPhiNode(valueGraph_[node]))
+                        if (phiNode->mu)
+                            continue;
+                }
+                
+                // If the target is an available node, go back in the stack.
+                //if (availableNodes.count(tar) > 0)
+                if (tar == root_)
                 {
                     RouteWithNodes newRoute = unfinishedRoute;
                     newRoute.edges.push_back(edge);
@@ -223,15 +247,27 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
 
                     vector<RouteWithCost>& routeWithCost = allRoutes[valNode];
                     routeWithCost.push_back(RouteWithCost());
-                    // Swap instead of copy to improve performance.
+                    // Swap instead of copy for performance.
                     routeWithCost.back().first.swap(newRoute.edges);
       
                     continue;
                 }
 
+
+                bool flag = false;
+                // If the target node is a mu node, we allow the formation of circle.
+                PhiNode* phiNode = isPhiNode(valueGraph_[tar]);
+                if (phiNode && phiNode->mu)
+                {
+                    if (dagIndex != phiNode->dagIndex)
+                        flag = true;                    
+                }
+                else
+                    flag = true;
+
                 // The the following function returns true if adding
                 // this edge will form a circle.
-                if (containsVertex(unfinishedRoute.nodes, tar))
+                if (flag && containsVertex(unfinishedRoute.nodes, tar))
                     continue;
 
                 RouteWithNodes newRoute = unfinishedRoute;
@@ -240,7 +276,7 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
                 unfinishedRoutes.push(newRoute);
             } // end of foreach (const VGEdge& edge, boost::out_edges(node, subgraph))
 NEXT:
-            ;
+            firstNode = false;
         } // end of while (!unfinishedRoutes.empty())
     } // end of foreach (VGVertex valNode, valuesToRestore)
 

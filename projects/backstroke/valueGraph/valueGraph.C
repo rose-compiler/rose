@@ -115,7 +115,7 @@ void EventReverser::buildBasicValueGraph()
 
             // FIXME State variable may not be parameters.
             // Add the variable into wanted set.
-            valuesToRestore_.push_back(newNode);
+            valuesToRestore_[0].insert(newNode);
             stateVariables_.insert(VarName(1, initName));
         } 
     }
@@ -490,7 +490,7 @@ void EventReverser::processClassDataMembers(SgClassDefinition* classDef)
         {
             VarName varName(1, initName);
             VGVertex newNode = createValueNode(initName, NULL);
-            valuesToRestore_.push_back(newNode);
+            valuesToRestore_[0].insert(newNode);
             stateVariables_.insert(VarName(1, initName));
         }
     }
@@ -978,8 +978,8 @@ void EventReverser::addValueGraphStateSavingEdges(VGVertex src, SgNode* killer)
     VGEdge newEdge = boost::add_edge(src, root_, valueGraph_).first;
     PathInfo paths = pathNumManager_->getPathNumbers(killer);
     ControlDependences controlDeps = cdg_->getControlDependences(killer);
-    valueGraph_[newEdge] = new StateSavingEdge(
-            cost, paths, controlDeps, killer);
+    valueGraph_[newEdge] = new StateSavingEdge(cost, paths, controlDeps, killer);
+    
     //valueGraph_[newEdge] = new StateSavingEdge(
     //        cost, paths, controlDeps, visiblePaths, killer);
     
@@ -1063,7 +1063,7 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
         addValueGraphEdge(funcCallVertex, outVertex);
         
         addAvailableValue(outVertex);
-        valuesToRestore_.push_back(inVertex);
+        valuesToRestore_[0].insert(inVertex);
         
         return funcCallVertex;
     }
@@ -1266,6 +1266,8 @@ void EventReverser::addPhiEdges()
                     continue;
                     
                 phiNode->mu = true;
+                phiNode->dagIndex = pathNumManager_->getLoopDagIndex(phiNode->astNode);
+                
                 // A Mu mode can kill the defs from non-back edge. Add state
                 // saving edges here.
                 addStateSavingEdges(phiNode->var, (*cfg_)[backEdge]->target().getNode());
@@ -1321,6 +1323,26 @@ void EventReverser::addStateSavingEdges()
         if (isAvailableValue(v))
         {
             addValueGraphStateSavingEdges(v, funcDef_);
+        }
+        
+        // For a mu node, make it available for its own DAG
+        // Note this a kind of hack when doing this. A mu node is available in its
+        // own DAG. The path information only contains those paths in this DAG.
+        if (PhiNode* phiNode = isPhiNode(valueGraph_[v]))
+        {
+            if (phiNode->mu)
+            {
+                VGEdge newEdge = boost::add_edge(v, root_, valueGraph_).first;
+                PathInfo paths = pathNumManager_->getPathNumbers(funcDef_);
+                
+                // The real paths only contains the paths in its own DAG.
+                PathInfo realPaths;
+                realPaths[phiNode->dagIndex] = paths[phiNode->dagIndex];
+                
+                // Null control dependence.
+                ControlDependences controlDeps;
+                valueGraph_[newEdge] = new StateSavingEdge(0, realPaths, controlDeps, NULL);
+            }
         }
         
         // Add 
@@ -1489,7 +1511,7 @@ void EventReverser::removeUselessNodes()
     set<VGVertex> usableNodes;
 
     stack<VGVertex> nodes;
-    foreach(VGVertex node, valuesToRestore_)
+    foreach (VGVertex node, valuesToRestore_[0])
     {
         usableNodes.insert(node);
         nodes.push(node);

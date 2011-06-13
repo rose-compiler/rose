@@ -117,11 +117,12 @@ private:
     std::map<VGVertex, SSA::ReachingDefPtr> pseudoDefMap_;
 
     //! All values which need to be restored (state variables).
-    std::vector<VGVertex> valuesToRestore_;
+    //std::vector<VGVertex> valuesToRestore_;
+    std::vector<std::set<VGVertex> > valuesToRestore_;
 
     //! All available values, including constant and state variables (last version).
-    std::set<VGVertex> availableValues_;
-
+    //std::set<VGVertex> availableValues_
+    std::vector<std::set<VGVertex> > availableValues_;
     //!
     std::set<VGVertex> varsKilledAtEventEnd_;
 
@@ -186,11 +187,11 @@ private:
     
     //! Add the given vertex as an available value.
     void addAvailableValue(VGVertex val)
-    { availableValues_.insert(val); }
+    { availableValues_[0].insert(val); }
     
     //! Returns if a value is available.
     bool isAvailableValue(VGVertex val) const
-    { return availableValues_.find(val) != availableValues_.end(); }
+    { return availableValues_[0].find(val) != availableValues_[0].end(); }
     
     //! Build the path number declaration.
     void buildPathNumDeclaration(const std::string& pathNumName);
@@ -280,7 +281,7 @@ private:
 	 */
     std::set<VGEdge> getReversalRoute(int dagIndex, int pathIndex,
                                    const SubValueGraph& subgraph,
-                                   const std::vector<VGVertex>& valuesToRestore,
+                                   const std::set<VGVertex>& valuesToRestore,
                                    const std::set<VGVertex>& availableNodes);
 
 	void writeValueGraphNode(std::ostream& out, const VGVertex& node) const;

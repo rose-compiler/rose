@@ -148,8 +148,7 @@ struct PhiNode : ValueNode
 
 	//std::vector<ValueGraphNode*> nodes;
 
-	virtual std::string toString() const
-	{ return (mu ? "MU_" : "PHI_") + var.toString(); }
+	virtual std::string toString() const;
 
     virtual int getCost() const;
 

@@ -50,6 +50,11 @@ void EventReverser::reverseEvent(SgFunctionDefinition* funcDef)
     // Get all backedges from this CFG.
     backEdges_ = cfg_->getAllBackEdges();
     
+    // Get the number of DAGs for this function.
+    int dagNum = pathNumManager_->getDagNum();
+    valuesToRestore_.resize(dagNum);
+    availableValues_.resize(dagNum);
+    
     generateCode();
 }
 
@@ -70,11 +75,32 @@ void EventReverser::generateCode()
         SageInterface::appendStatement(varDecl, rvsFuncDef_->get_body());
     }
 #endif
-
+    
+    // Get all values which are needed or available for all DAGs here.
+    foreach (VGVertex node, boost::vertices(valueGraph_))
+    {
+        if (PhiNode* phiNode = isPhiNode(valueGraph_[node]))
+        {
+            if (phiNode->mu)
+            {
+                availableValues_[phiNode->dagIndex].insert(node);
+                valuesToRestore_[phiNode->dagIndex].insert(node);
+            }
+        }
+    }
+    // Put root as the available values.
+    availableValues_[0].insert(root_);
+    for (size_t i = 1, s = availableValues_.size(); i != s; ++i)
+    {
+        availableValues_[i].insert(
+            availableValues_[0].begin(), availableValues_[0].end());
+    }
+    
+    
     map<VGEdge, PathInfo> routes;
 
-    for (int dagIndex = 0, dagNum = pathNumManager_->getNumberOfDags(); 
-            dagIndex < dagNum; ++dagIndex)
+    int dagNum = pathNumManager_->getNumberOfDags();
+    for (int dagIndex = 0; dagIndex < dagNum; ++dagIndex)
     {
         // Just for DAG 0.
         size_t pathNum = pathNumManager_->getNumberOfPath(dagIndex);
@@ -85,9 +111,10 @@ void EventReverser::generateCode()
 
             foreach (const VGEdge& edge, route)
             {
-                if (routes.count(edge) == 0)
-                    routes[edge][dagIndex].resize(pathNum);
-                routes[edge][dagIndex].set(i);
+                PathSet& path = routes[edge][dagIndex];
+                if (path.empty())
+                    path.resize(pathNum);
+                path.set(i);
             }
         }
     }
@@ -106,28 +133,33 @@ void EventReverser::generateCode()
 #endif
 
     // Generate the reverse code for rvs event.
-    ReverseCFG rvsCFG;
-    buildReverseCFG(0, rvsCFG);
+    vector<ReverseCFG> rvsCFGs(dagNum);
+    for (int i = 0; i < dagNum; ++i)
+    {
+        buildReverseCFG(i, rvsCFGs[i]);
+        
+        char name[32];
+        sprintf(name, "rvsCFG%d.dot", i);
+        ofstream ofile(name, std::ios::out);
+        boost::write_graphviz(ofile, rvsCFGs[i]);
+    }
     
-#ifdef VG_DEBUG
-    ofstream ofile("rvsCFG.dot", std::ios::out);
-    boost::write_graphviz(ofile, rvsCFG);
-    ofile.close();
-#endif
+    //buildReverseCFG(0, rvsCFG);
+    
 
     string pathNumName = "__num__";
     
     // If the number of path is 1, we don't have to use path numbers.
     //if (pathNum > 1)
-        buildPathNumDeclaration(pathNumName);
+    buildPathNumDeclaration(pathNumName);
     
     // Build all three functions.
-    generateCode(0, rvsCFG, rvsFuncDef_->get_body(), cmtFuncDef_->get_body(), pathNumName);
+    generateCode(0, rvsCFGs[0], rvsFuncDef_->get_body(), cmtFuncDef_->get_body(), pathNumName);
 
 
     // If the number of path is 1, we don't have to use path numbers.
     //if (pathNum > 1)
-        pathNumManager_->insertPathNumberToEvents(pathNumName);
+    pathNumManager_->insertPathNumberToEvents(pathNumName);
 
     // Finally insert all functions in the code.
     insertFunctions();
@@ -222,13 +254,13 @@ void EventReverser::buildRouteGraph(const map<VGEdge, PathInfo>& routes)
     // Switch all nodes in valuesToRestore_ to those in route graph.
     // It is important since the code generation is performed on route graph, not
     // value graph.
-    vector<VGVertex> newValuesToRestore;
-    foreach (VGVertex node, valuesToRestore_)
+    set<VGVertex> newValuesToRestore;
+    foreach (VGVertex node, valuesToRestore_[0])
     {
         if (nodeTable.count(node) > 0)
-            newValuesToRestore.push_back(nodeTable[node]);
+            newValuesToRestore.insert(nodeTable[node]);
     }
-    valuesToRestore_.swap(newValuesToRestore);
+    valuesToRestore_[0].swap(newValuesToRestore);
     
     removePhiNodesFromRouteGraph();
 }
@@ -240,82 +272,83 @@ void EventReverser::removePhiNodesFromRouteGraph()
     // Then remove edges on phi nodes to ease the source code generation.
     foreach (VGVertex node, boost::vertices(routeGraph_))
     {
-        if (isPhiNode(routeGraph_[node]))
+        PhiNode* phiNode = isPhiNode(routeGraph_[node]);
+        if (phiNode == NULL || phiNode->mu)
+            continue;
+        
+        // If there exists a pair of in and out edges for this phi node and 
+        // the paths of one of them is a subset of the other one, we can forward
+        // an edge by passing this phi node.
+        foreach (const VGEdge& outEdge, boost::out_edges(node, routeGraph_))
+        //if (boost::out_degree(node, routeGraph_) == 1)
         {
-            // If there exists a pair of in and out edges for this phi node and 
-            // the paths of one of them is a subset of the other one, we can forward
-            // an edge by passing this phi node.
-            foreach (const VGEdge& outEdge, boost::out_edges(node, routeGraph_))
-            //if (boost::out_degree(node, routeGraph_) == 1)
+            //VGEdge outEdge = *(boost::out_edges(node, routeGraph_).first);
+            VGVertex tgt = boost::target(outEdge, routeGraph_);
+            const PathInfo& pathsOnOutEdge = routeGraph_[outEdge]->paths;
+
+            foreach (const VGEdge& inEdge, boost::in_edges(node, routeGraph_))
             {
-                //VGEdge outEdge = *(boost::out_edges(node, routeGraph_).first);
-                VGVertex tgt = boost::target(outEdge, routeGraph_);
-                const PathInfo& pathsOnOutEdge = routeGraph_[outEdge]->paths;
-                
-                foreach (const VGEdge& inEdge, boost::in_edges(node, routeGraph_))
+                const PathInfo& pathsOnInEdge =  routeGraph_[inEdge]->paths;
+
+                //ROSE_ASSERT(pathsOnInEdge.is_subset_of(pathsOnOutEdge) ||
+                //        pathsOnOutEdge.is_subset_of(pathsOnInEdge));
+
+                // Add a new edge first, then attach the information in which
+                // the cost is the one on the out edge and the path set is the one
+                // on the in edge.
+                PathInfo newPaths = pathsOnInEdge & pathsOnOutEdge;
+                if (newPaths.empty())
+                    continue;
+
+                VGVertex src = boost::source(inEdge, routeGraph_);
+
+                // Multiple state saving edges with cost 0 can be merged.
+                // Then we don't have to add a new edge.
+                StateSavingEdge* ssEdge = isStateSavingEdge(routeGraph_[outEdge]);
+                if (ssEdge && ssEdge->cost == 0);
                 {
-                    const PathInfo& pathsOnInEdge =  routeGraph_[inEdge]->paths;
-                    
-                    //ROSE_ASSERT(pathsOnInEdge.is_subset_of(pathsOnOutEdge) ||
-                    //        pathsOnOutEdge.is_subset_of(pathsOnInEdge));
-                    
-                    // Add a new edge first, then attach the information in which
-                    // the cost is the one on the out edge and the path set is the one
-                    // on the in edge.
-                    PathInfo newPaths = pathsOnInEdge & pathsOnOutEdge;
-                    if (newPaths.empty())
-                        continue;
-                    
-                    VGVertex src = boost::source(inEdge, routeGraph_);
-                    
-                    // Multiple state saving edges with cost 0 can be merged.
-                    // Then we don't have to add a new edge.
-                    StateSavingEdge* ssEdge = isStateSavingEdge(routeGraph_[outEdge]);
-                    if (ssEdge && ssEdge->cost == 0);
+                    bool flag = false;
+                    foreach (const VGEdge& e, boost::out_edges(src, routeGraph_))
                     {
-                        bool flag = false;
-                        foreach (const VGEdge& e, boost::out_edges(src, routeGraph_))
+                        // Their targets must be the same.
+                        if (boost::target(e, routeGraph_) != tgt)
+                            continue;
+
+                        StateSavingEdge* ssEdge2 = isStateSavingEdge(routeGraph_[e]);
+                        if (ssEdge2 && ssEdge2->cost == 0)
                         {
-                            // Their targets must be the same.
-                            if (boost::target(e, routeGraph_) != tgt)
-                                continue;
-                            
-                            StateSavingEdge* ssEdge2 = isStateSavingEdge(routeGraph_[e]);
-                            if (ssEdge2 && ssEdge2->cost == 0)
-                            {
-                                // This part is incorrect now.
-                                ROSE_ASSERT(false);
-                                //ssEdge2->paths |= newPaths;
-                                flag = true;
-                                break;
-                            }
+                            // This part is incorrect now.
+                            //ROSE_ASSERT(false);
+                            ssEdge2->paths = ssEdge2->paths | newPaths;
+                            flag = true;
+                            break;
                         }
-                        if (flag) continue;
                     }
-                    
-                    ValueGraphEdge* newEdge = routeGraph_[outEdge]->clone();
-                    newEdge->paths = newPaths;
-                    VGEdge e = boost::add_edge(src, tgt, routeGraph_).first;
-                    routeGraph_[e] = newEdge;
-                    
-#if 0
-                    if (pathsOnInEdge.is_subset_of(pathsOnOutEdge))
-                        newEdge->paths = pathsOnInEdge;
-                    else if (pathsOnOutEdge.is_subset_of(pathsOnInEdge))
-                        newEdge->paths = pathsOnOutEdge;
-                    else
-                    {
-                        //ROSE_ASSERT(false);
-                        continue;
-                    }
-#endif
-                    
-                    //newEdge->paths = routeGraph_[inEdge]->paths;
+                    if (flag) continue;
                 }
+
+                ValueGraphEdge* newEdge = routeGraph_[outEdge]->clone();
+                newEdge->paths = newPaths;
+                VGEdge e = boost::add_edge(src, tgt, routeGraph_).first;
+                routeGraph_[e] = newEdge;
+
+#if 0
+                if (pathsOnInEdge.is_subset_of(pathsOnOutEdge))
+                    newEdge->paths = pathsOnInEdge;
+                else if (pathsOnOutEdge.is_subset_of(pathsOnInEdge))
+                    newEdge->paths = pathsOnOutEdge;
+                else
+                {
+                    //ROSE_ASSERT(false);
+                    continue;
+                }
+#endif
+
+                //newEdge->paths = routeGraph_[inEdge]->paths;
             }
-            
-            nodesToRemove.insert(node);
-        }        
+        }
+
+        nodesToRemove.insert(node);
     }
 
     
@@ -337,7 +370,7 @@ void EventReverser::buildFunctionBodies()
     SgScopeStatement* funcScope = funcDecl->get_scope();
     string funcName = funcDecl->get_name();
     
-    if (SgMemberFunctionDeclaration* memFuncDecl = isSgMemberFunctionDeclaration(funcDecl))
+    if (/*SgMemberFunctionDeclaration* memFuncDecl = */isSgMemberFunctionDeclaration(funcDecl))
     {
         //SgMemberFunctionType* memFuncType = isSgMemberFunctionType(memFuncDecl->get_type());
         //ROSE_ASSERT(memFuncType);
@@ -523,8 +556,13 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
     while (!nextEdgeCandidates.empty())
     {
         VGEdge edge = nextEdgeCandidates.top();
-        result.push_back(edge);
         nextEdgeCandidates.pop();
+        
+        // If this edge does not belong to the route of the given DAG.
+        if (routeGraph_[edge]->paths.count(dagIndex) == 0)
+            continue;
+        
+        result.push_back(edge);
         
         VGVertex src = boost::source(edge, routeGraph_);
         PathSet& pathsOnSrc = nodePathsTable[src][dagIndex];
@@ -535,6 +573,10 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
         // if any of it can be added to candidates.
         foreach (const VGEdge& inEdge, boost::in_edges(src, routeGraph_))
         {
+            // If this edge does not belong to the route of the given DAG.
+            if (routeGraph_[inEdge]->paths.count(dagIndex) == 0)
+                continue;
+            
             if (routeGraph_[inEdge]->paths[dagIndex].is_subset_of(pathsOnSrc))
             {
                 if (traversedEdges.count(inEdge) == 0)

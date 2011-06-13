@@ -141,6 +141,9 @@ class PathNumManager
     //! region, and the number of paths.
     std::vector<std::pair<int, int> > pathInfo_;
     
+    //! A table mapping each loop header to its DAG index.
+    std::map<CFGVertex, int> headerToDagIndex_;
+    
     //std::map<SgNode*, std::pair<int, Vertex> > sgNodeToVertexMap_;
 
     //std::map<SgNode*, std::pair<int, DAGVertex> > sgNodeToVertexMap_;
@@ -175,6 +178,11 @@ public:
         PathSet paths(getNumberOfPath(index));
         return paths.flip();
     }
+    
+    size_t getDagNum() const { return dags_.size(); }
+    
+    int getLoopDagIndex(SgNode* header) const
+    { return headerToDagIndex_.find(getCFGNode(header))->second; }
     
     size_t getNumberOfDags() const { return dags_.size(); }
     
