@@ -189,10 +189,10 @@ public:
     }
 };
 
-/** Initialize memory from file.
+/** Initialize memory.
  *
- *  When a certain instruction address is hit, a file is read into the specimens address space to initialize some of its
- *  memory.  This callback is triggered only one time.
+ *  When a certain instruction address is hit, memory is initialized by reading from a file or using a user-supplied buffer.
+ *  This callback is triggered only one time.
  *
  *  The memory which is being written to should have write permission in order for this callback to succeed.  You can try
  *  changing need_write_perm to false, but if the underlying memory (in the simulator) was mapped without write permission
@@ -207,47 +207,59 @@ public:
  */
 class MemoryInitializer: public RSIM_Callbacks::InsnCallback {
 public:
-    std::string filename;               /**< Name of file containing memory image. */
+    std::string filename;               /**< Optional name of file containing memory image. */
+    const uint8_t *new_value;           /**< Optional pointer to bytes to be written. */
+    size_t nbytes;                      /**< Number of bytes pointed to by new_value. */
     rose_addr_t memaddr;                /**< Address where file contents are loaded. */
     rose_addr_t when;                   /**< IP value when this callback is to be triggered. */
     bool triggered;                     /**< Set once this callback has been triggered. */
     bool need_write_perm;               /**< Is write permission needed on the memory? */
 
     MemoryInitializer(const std::string &filename, rose_addr_t memaddr, rose_addr_t when)
-        : filename(filename), memaddr(memaddr), when(when), triggered(false), need_write_perm(true) {}
+        : filename(filename), new_value(NULL), nbytes(0),
+          memaddr(memaddr), when(when), triggered(false), need_write_perm(true) {}
+    MemoryInitializer(const uint8_t *new_value, size_t nbytes, rose_addr_t memaddr, rose_addr_t when)
+        : new_value(new_value), nbytes(nbytes),
+          memaddr(memaddr), when(when), triggered(false), need_write_perm(true) {}
 
     virtual MemoryInitializer *clone() { return this; }
 
     virtual bool operator()(bool enabled, const Args &args) {
         if (enabled && !triggered && args.insn->get_address()==when) {
             triggered = true;
-            int fd = open(filename.c_str(), O_RDONLY);
-            if (fd<0) {
-                perror(filename.c_str());
-                return enabled;
-            }
-
-            uint8_t buf[4096];
-            ssize_t nread;
             size_t total_written=0;
-            rose_addr_t va = memaddr;
-            while ((nread=read(fd, buf, sizeof buf))>0) {
-                unsigned perms = need_write_perm ? MemoryMap::MM_PROT_WRITE : MemoryMap::MM_PROT_NONE;
-                size_t nwrite = args.thread->get_process()->mem_write(buf, va, (size_t)nread, perms);
-                total_written += nwrite;
-                va += nwrite;
-                if (nwrite!=(size_t)nread) {
-                    fprintf(stderr, "MemoryInitializer write failed at 0x%08"PRIx64"\n", va);
-                    break;
-                }
-            }
-            if (nread<0) {
-                close(fd);
-                perror(filename.c_str());
-                return enabled;
-            }
-            close(fd);
+            unsigned perms = need_write_perm ? MemoryMap::MM_PROT_WRITE : MemoryMap::MM_PROT_NONE;
 
+            if (new_value) {
+                total_written = args.thread->get_process()->mem_write(new_value, memaddr, nbytes, perms);
+                if (total_written!=nbytes)
+                    fprintf(stderr, "MemoryInitializer write failed at 0x%08"PRIx64"\n", memaddr+total_written);
+            } else {
+                int fd = open(filename.c_str(), O_RDONLY);
+                if (fd<0) {
+                    perror(filename.c_str());
+                    return enabled;
+                }
+
+                uint8_t buf[4096];
+                ssize_t nread;
+                rose_addr_t va = memaddr;
+                while ((nread=read(fd, buf, sizeof buf))>0) {
+                    size_t nwrite = args.thread->get_process()->mem_write(buf, va, (size_t)nread, perms);
+                    total_written += nwrite;
+                    va += nwrite;
+                    if (nwrite!=(size_t)nread) {
+                        fprintf(stderr, "MemoryInitializer write failed at 0x%08"PRIx64"\n", va);
+                        break;
+                    }
+                }
+                if (nread<0) {
+                    close(fd);
+                    perror(filename.c_str());
+                    return enabled;
+                }
+                close(fd);
+            }
             RTS_Message *m = args.thread->tracing(TRACE_MISC);
             m->mesg("MemoryInitializer triggered: wrote 0x%zx bytes at 0x%08"PRIx64, total_written, memaddr);
         }
