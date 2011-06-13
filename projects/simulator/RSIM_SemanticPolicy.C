@@ -167,10 +167,10 @@ RSIM_SemanticPolicy::startInstruction(SgAsmInstruction* insn)
     RTS_Message *mesg = tracing(TRACE_INSN);
     if (mesg->get_file()) {
         if (isatty(fileno(mesg->get_file()))) {
-            fprintf(mesg->get_file(), "\033[K\n[%07zu] %s\033[K\r\033[1A",
-                    get_ninsns(), unparseInstructionWithAddress(insn).c_str());
+            fprintf(mesg->get_file(), "\033[K\n%s\033[K\r\033[1A",
+                    unparseInstruction(insn).c_str());
         } else {
-            mesg->mesg("[#%07zu] : %s\n", get_ninsns(), unparseInstruction(insn).c_str());
+            mesg->mesg("%s", unparseInstruction(insn).c_str());
         }
     }
     VirtualMachineSemantics::Policy::startInstruction(insn);
