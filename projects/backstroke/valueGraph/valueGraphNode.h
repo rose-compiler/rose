@@ -274,7 +274,8 @@ struct OrderedEdge : ValueGraphEdge
 	explicit OrderedEdge(int idx) : index(idx) {}
 
 	virtual std::string toString() const
-	{ return boost::lexical_cast<std::string>(index); }
+	{ return boost::lexical_cast<std::string>(index) 
+            + "\\n" + ValueGraphEdge::toString(); }
     
     virtual OrderedEdge* clone() 
     { return new OrderedEdge(*this); }

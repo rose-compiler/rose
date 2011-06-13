@@ -392,7 +392,7 @@ private:
 
     void generateCode(
             size_t dagIndex,
-            const ReverseCFG& rvsCFG,
+            const std::vector<ReverseCFG>& rvsCFGs,
             SgBasicBlock* rvsFuncBody,
             SgBasicBlock* cmtFuncBody,
             const std::string& pathNumName);

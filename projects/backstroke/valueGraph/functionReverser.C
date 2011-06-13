@@ -76,6 +76,9 @@ void EventReverser::generateCode()
     }
 #endif
     
+    // Discard all available values here.
+    availableValues_[0].clear();
+    
     // Get all values which are needed or available for all DAGs here.
     foreach (VGVertex node, boost::vertices(valueGraph_))
     {
@@ -86,6 +89,12 @@ void EventReverser::generateCode()
                 availableValues_[phiNode->dagIndex].insert(node);
                 valuesToRestore_[phiNode->dagIndex].insert(node);
             }
+        }
+        else if (ValueNode* valNode = isValueNode(valueGraph_[node]))
+        {
+            // Add all constants to available values.
+            if (valNode->isAvailable())
+                availableValues_[0].insert(node);
         }
     }
     // Put root as the available values.
@@ -154,7 +163,7 @@ void EventReverser::generateCode()
     buildPathNumDeclaration(pathNumName);
     
     // Build all three functions.
-    generateCode(0, rvsCFGs[0], rvsFuncDef_->get_body(), cmtFuncDef_->get_body(), pathNumName);
+    generateCode(0, rvsCFGs, rvsFuncDef_->get_body(), cmtFuncDef_->get_body(), pathNumName);
 
 
     // If the number of path is 1, we don't have to use path numbers.
@@ -262,7 +271,7 @@ void EventReverser::buildRouteGraph(const map<VGEdge, PathInfo>& routes)
     }
     valuesToRestore_[0].swap(newValuesToRestore);
     
-    removePhiNodesFromRouteGraph();
+    //removePhiNodesFromRouteGraph();
 }
 
 void EventReverser::removePhiNodesFromRouteGraph()
@@ -609,9 +618,15 @@ void EventReverser::buildReverseCFG(
     vector<VGEdge> result;
     getRouteGraphEdgesInProperOrder(dagIndex, result);
     
-#if 0
+#if 1
     foreach (const VGEdge& edge, result)
-        cout << "!!!" << routeGraph_[edge]->toString() << endl;
+    {
+        VGVertex src = boost::source(edge, valueGraph_);
+        VGVertex tgt = boost::target(edge, valueGraph_);
+        cout << valueGraph_[src]->toString() << " ==> " 
+                << valueGraph_[tgt]->toString() << endl;
+        //cout << "!!!" << routeGraph_[edge]->toString() << endl;
+    }
 #endif
     
     
@@ -645,7 +660,7 @@ void EventReverser::addReverseCFGNode(
         map<PathSet, RvsCFGVertex>::iterator iter = rvsCFGBasicBlock.find(paths);
 
         // If the rvs CFG does not have a node for this path now, or if it has, but
-        // that basic block node alreay has out edges (which means that basic block
+        // that basic block node already has out edges (which means that basic block
         // is finished), create a new one.
         if (iter != rvsCFGBasicBlock.end() &&
                 boost::out_degree(iter->second, rvsCFG) == 0)
@@ -680,7 +695,7 @@ void EventReverser::addReverseCFGNode(
     vector<pair<PathSet, RvsCFGVertex> > newEdges;
 
 //NEXT:
-    // For each visible CFG node, connect an edge to from previous nodes
+    // For each visible CFG node, connect an edge from previous nodes
     // to the new node if possible.
     for (PathVertexIter it = rvsCFGBasicBlock.begin(),
             itEnd = rvsCFGBasicBlock.end();
@@ -1092,7 +1107,7 @@ void EventReverser::generateCodeForBasicBlock(
 
 void EventReverser::generateCode(
         size_t dagIndex,
-        const ReverseCFG& rvsCFG,
+        const vector<ReverseCFG>& rvsCFGs,
         SgBasicBlock* rvsFuncBody,
         SgBasicBlock* cmtFuncBody,
         const string& pathNumName)
@@ -1110,13 +1125,26 @@ void EventReverser::generateCode(
     
     map<PathSet, SgScopeStatement*> rvsScopeTable;
     map<PathSet, SgScopeStatement*> cmtScopeTable;
+    
+#if 0
+    for (int i = 1; i < rvsCFGs.size(); ++i)
+    {
+        foreach (RvsCFGVertex node, boost::vertices(rvsCFGs[i]))
+            generateCodeForBasicBlock(rvsCFGs[i][node].second, rvsFuncBody, cmtFuncBody);
+    }
+#endif
 
-    foreach (RvsCFGVertex node, boost::vertices(boost::make_reverse_graph(rvsCFG)))
+    //boost::reverse_graph<ReverseCFG> rvsCFG 
+    //        = boost::make_reverse_graph(rvsCFGs[0]);
+    //foreach (RvsCFGVertex node, boost::vertices(boost::make_reverse_graph(rvsCFGs[0])))
+    const ReverseCFG& rvsCFG = rvsCFGs[0];
+    //reverse_foreach (RvsCFGVertex node, boost::vertices(rvsCFG))
+    foreach (RvsCFGVertex node, boost::vertices(rvsCFG))
     {
         SgScopeStatement* rvsScope = NULL;
         SgScopeStatement* cmtScope = NULL;
 
-        PathSet paths = rvsCFG[node].first;
+        PathSet paths = rvsCFGs[0][node].first;
         //cout << "&&& " << paths << endl;
         // If this node contains all paths, its scope is the reverse function body.
         if (paths.flip().none())
@@ -1133,7 +1161,7 @@ void EventReverser::generateCode(
         }
 
         // Generate all code in the scope of this node.
-        generateCodeForBasicBlock(rvsCFG[node].second, rvsScope, cmtScope);
+        generateCodeForBasicBlock(rvsCFGs[0][node].second, rvsScope, cmtScope);
 
         vector<RvsCFGEdge> outEdges;
         foreach (const RvsCFGEdge& outEdge, boost::out_edges(node, rvsCFG))
@@ -1150,7 +1178,7 @@ void EventReverser::generateCode(
         //if (outEdges.size() == 2)
         while (!outEdges.empty())
         {
-            PathSet condPaths = rvsCFG[outEdges.back()];
+            PathSet condPaths = rvsCFGs[0][outEdges.back()];
             outEdges.pop_back();
             
             // The last edge can get the current scope.
