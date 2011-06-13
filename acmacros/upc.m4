@@ -16,5 +16,5 @@ AC_CHECK_TOOLS([UPC], [m4_default([$1], [upcc upc])], [:])
 if test "$UPC" = :; then
   AC_MSG_ERROR([no Unified Parallel C compiler was found], [77])
 fi
-_AM_IF_OPTION([no-dependencies],, [_AM_DEPENDENCIES([UPC])])dnl
+## _AM_IF_OPTION([no-dependencies],, [_AM_DEPENDENCIES([UPC])])dnl
 ])
