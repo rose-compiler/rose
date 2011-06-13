@@ -27,42 +27,7 @@ public:
 class Rdtsc: public RSIM_Callbacks::InsnCallback {
 public:
     virtual Rdtsc *clone() { return this; }
-#if 0
-    /* Method 1: Use value obtained manually from GDB.  The deltas will be much larger than the specimen running natively. */
-    size_t index;
-    std::vector<uint64_t> values;
-    Rdtsc() :index(0) {
-        values.push_back(0xf95654a57da20ull);
-        values.push_back(0xf9600d6542551ull);
-        values.push_back(0xf96847e0d705aull);
-        values.push_back(0xf96bda83742f3ull);
-        values.push_back(0xf96f157c8ed33ull);
-        values.push_back(0xf971a57ec0ae7ull);
-        values.push_back(0xf9742fe76523cull);
-        values.push_back(0xf9762f9bc171bull);
-        values.push_back(0xf977d5c45d33eull);
-        values.push_back(0xf979b58ede376ull);
-        values.push_back(0xf97b502bb8877ull);
-        values.push_back(0xf97e33947c78aull);
-        values.push_back(0xf982044019373ull);
-        values.push_back(0xf9842e2f190c7ull);
-        values.push_back(0xf9869346f023full);
-        values.push_back(0xf98904046d465ull);
-        values.push_back(0xf98b7e5eb8d24ull);
-        values.push_back(0xf98d9cff31ec2ull);
-        values.push_back(0xf98fa66a0e1bfull);
-    };
-    uint64_t next_value(const Args&) {
-        return index < values.size() ? values[index++] : values.back();
-    }
-#elsif 0
-    /* Method 2: The TSC is based on the number of instructions simulated. */
-    static const uint64_t start = 0xf95654a57da20ull;   // arbitrary
-    uint64_t next_value(const Args &args) {
-        return start + 1234 * args.thread->policy.get_ninsns();
-    }
-#else
-    /* Method 3: The TSC is based on the number of instructions simulated and a manual adjustment. */
+    /* The TSC is based on the number of instructions simulated and a manual adjustment. */
     static const uint64_t start = 0xf95654a57da20ull;   // arbitrary
     size_t index;
     std::vector<int> adjustment;
@@ -77,7 +42,7 @@ public:
     uint64_t next_value(const Args& args) {
         return start + 1234 * args.thread->policy.get_ninsns() + (index < adjustment.size() ? adjustment[index++] : 0);
     }
-#endif
+
     virtual bool operator()(bool enabled, const Args &args) {
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
         if (insn && x86_rdtsc==insn->get_kind()) {
@@ -90,6 +55,56 @@ public:
             args.thread->policy.writeIP(args.thread->policy.number<32>(newip));
             enabled = false;
             args.thread->tracing(TRACE_MISC)->mesg("RDTSC adjustment; returning 0x%016"PRIx64, value);
+        }
+        return enabled;
+    }
+};
+
+/***************************************************************************************************************************
+ * The ld-linux.so.2 on Robb's machine executes a couple of instructions that aren't yet handled by ROSE.  So we handle
+ * them here.  It turns out that we don't actually need to handle them in order for the linker to still work.
+ *
+ * 0x40014cd0: movd   mmx0, DWORD PTR ds:[eax + 0x04]
+ *     10673:1 0.000 0x00014cd5[957]:     stack frames:
+ *     10673:1 0.000 0x00014cd5[957]:       #0: bp=0xbfffe0a0 ip=0x00014cd5 in memory region ld-linux.so.2(LOAD#0)
+ *     10673:1 0.000 0x00014cd5[957]:       #1: bp=0xbfffe0e8 ip=0x00001238 in memory region ld-linux.so.2(LOAD#0)
+ *     10673:1 0.000 0x00014cd5[957]:       #2: bp=0x00000000 ip=0x00000857 in memory region ld-linux.so.2(LOAD#0)
+ * 0x40014cd8: movq   QWORD PTR ss:[ebp + 0xd4<-0x2c>], mmx0]
+ *     10673:1 0.000 0x00014cdd[959]:     stack frames:
+ *     10673:1 0.000 0x00014cdd[959]:       #0: bp=0xbfffe0a0 ip=0x00014cdd in memory region ld-linux.so.2(LOAD#0)
+ *     10673:1 0.000 0x00014cdd[959]:       #1: bp=0xbfffe0e8 ip=0x00001238 in memory region ld-linux.so.2(LOAD#0)
+ *     10673:1 0.000 0x00014cdd[959]:       #2: bp=0x00000000 ip=0x00000857 in memory region ld-linux.so.2(LOAD#0)
+ */
+class LinkerFixups: public RSIM_Callbacks::InsnCallback {
+public:
+    rose_addr_t base_va;
+    VirtualMachineSemantics::ValueType<32> v1;
+
+    LinkerFixups(rose_addr_t base_va)
+        : base_va(base_va) {}
+
+    virtual LinkerFixups *clone() { return this; }
+
+    virtual bool operator()(bool enabled, const Args &args) {
+        SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
+        if (enabled && insn) {
+            rose_addr_t newip = insn->get_address() + insn->get_raw_bytes().size();
+            const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
+            if (insn->get_address()==base_va+0x00014cd0 && x86_movd==insn->get_kind()) {
+                std::cerr <<"LinkerFixups: handling " <<unparseInstructionWithAddress(insn) <<"\n";
+                v1 = args.thread->semantics.read32(operands[1]);
+                args.thread->policy.writeIP(args.thread->policy.number<32>(newip));
+                enabled = false; // skip this instruction
+            } else if (insn->get_address()==base_va+0x00014cd8 && x86_movq==insn->get_kind()) {
+                std::cerr <<"LinkerFixups: handling " <<unparseInstructionWithAddress(insn) <<"\n";
+                VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
+                args.thread->policy.writeMemory(x86_segreg_ss, addr, v1, args.thread->policy.true_());
+                addr = args.thread->policy.add<32>(addr, args.thread->policy.number<32>(4));
+                args.thread->policy.writeMemory(x86_segreg_ss, addr, args.thread->policy.number<32>(0),
+                                                args.thread->policy.true_());
+                args.thread->policy.writeIP(args.thread->policy.number<32>(newip));
+                enabled = false; // skip this instruction
+            }
         }
         return enabled;
     }
@@ -108,6 +123,14 @@ main(int argc, char *argv[], char *envp[])
     StackInitializer stack_initializer("x-real-initial-stack", 0xbffeb000, 0, 0xbfffef70);
     sim.install_callback(&stack_initializer);
     sim.install_callback(new FunctionReporter);
+
+    /* Emulate instructions that ROSE doesn't handle yet. */
+    sim.install_callback(new LinkerFixups(0x68000000));
+
+#if 0
+    static uint8_t entry[] = {0x10, 0x93, 0x04, 0x08};
+    sim.install_callback(new MemoryInitializer(entry, sizeof entry, 0xbfffee88, 0x6800252b));
+#endif
 
 #if 0
     /* Initializing memory stuff */
