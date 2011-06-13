@@ -155,6 +155,40 @@ public:
     }
 };
 
+/** Show memory contents. */
+class MemoryDumper: public RSIM_Callbacks::InsnCallback {
+public:
+    rose_addr_t when;                   /**< IP value when this callback is to be triggered. */
+    rose_addr_t va;                     /**< Starting address to dump. */
+    size_t nbytes;                      /**< Number of bytes to dump. */
+    HexdumpFormat fmt;                  /**< Format to use for hexdump. */
+
+    MemoryDumper(rose_addr_t when, rose_addr_t va, size_t nbytes)
+        : when(when), va(va), nbytes(nbytes) {
+        fmt.prefix = "  ";
+        fmt.multiline = true;
+    }
+
+    virtual MemoryDumper *clone() { return this; }
+
+    virtual bool operator()(bool enabled, const Args &args) {
+        if (enabled && args.insn->get_address()==when) {
+            RTS_Message *m = args.thread->tracing(TRACE_MISC);
+            m->multipart("MemoryDumper", "MemoryDumper triggered: dumping %zu byte%s at 0x%08"PRIx64"\n",
+                         nbytes, 1==nbytes?"":"s", va);
+            uint8_t *buffer = new uint8_t[nbytes];
+            size_t nread = args.thread->get_process()->mem_read(buffer, va, nbytes);
+            if (nread < nbytes)
+                m->mesg("MemoryDumper: read failed at 0x%08"PRIx64, va+nread);
+            std::string s = SgAsmExecutableFileFormat::hexdump(va, buffer, nbytes, fmt);
+            m->more("%s", s.c_str());
+            m->multipart_end();
+            delete[] buffer;
+        }
+        return enabled;
+    }
+};
+
 /** Initialize memory from file.
  *
  *  When a certain instruction address is hit, a file is read into the specimens address space to initialize some of its
