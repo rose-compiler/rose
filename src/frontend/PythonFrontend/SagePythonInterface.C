@@ -282,7 +282,18 @@ sage_buildGlobal(PyObject *self, PyObject *args)
     sg_global->set_startOfConstruct(sg_file_info);
     sg_global->set_endOfConstruct(new Sg_File_Info(filename, 0, 0));
 
-    return PyEncapsulate(sg_global);
+    SgFunctionDeclaration* sg_main_func_decl =
+        SageBuilder::buildDefiningFunctionDeclaration( SgName("__main__"),
+                SageBuilder::buildVoidType(),
+                SageBuilder::buildFunctionParameterList(),
+                sg_global);
+
+    SageInterface::appendStatement(sg_main_func_decl, sg_global);
+
+    PyObject* return_tuple = PyTuple_New(2);
+    PyTuple_SetItem(return_tuple, 0, PyEncapsulate(sg_global));
+    PyTuple_SetItem(return_tuple, 1, PyEncapsulate(sg_main_func_decl));
+    return return_tuple;
 }
 
 /*

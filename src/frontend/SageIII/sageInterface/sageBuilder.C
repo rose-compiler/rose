@@ -1021,7 +1021,12 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
 
   func->set_parent(scope);
   func->set_scope(scope);
-  
+
+  // driscoll6 (6/13/11) Support for function decorators in Python.
+  SgExprListExp* decorators = buildExprListExp();
+  func->set_decoratorList(decorators);
+  decorators->set_parent(func);
+
   // set File_Info as transformation generated
   setSourcePositionForTransformation(func);
   return func;

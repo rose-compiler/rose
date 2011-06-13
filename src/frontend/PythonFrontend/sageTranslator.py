@@ -151,14 +151,15 @@ class SageTranslator(ast.NodeVisitor):
     return sage.buildKeyword(arg, value)
 
   def visit_Module(self, node):
-    scope_capsule = sage.buildGlobal(self.filename)
+    (scope, main_func) = sage.buildGlobal(self.filename)
 
-    self.scopeStack.push(scope_capsule)
+    self.scopeStack.push(scope)
     subforest = self.generic_visit(node)
-    self.scopeStack.pop(scope_capsule)
+    self.scopeStack.pop(scope)
 
-    sage.appendStatements(scope_capsule, subforest)
-    return scope_capsule
+    print subforest
+    sage.appendStatements(main_func, subforest)
+    return scope
 
   def visit_Name(self, node):
     scope = self.scopeStack.peek()
