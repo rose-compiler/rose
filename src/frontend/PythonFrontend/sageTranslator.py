@@ -157,7 +157,6 @@ class SageTranslator(ast.NodeVisitor):
     subforest = self.generic_visit(node)
     self.scopeStack.pop(scope)
 
-    print subforest
     sage.appendStatements(main_func, subforest)
     return scope
 
