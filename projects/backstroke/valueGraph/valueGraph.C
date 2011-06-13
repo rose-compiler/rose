@@ -901,42 +901,28 @@ EventReverser::VGEdge EventReverser::addValueGraphEdge(
 
 void EventReverser::addValueGraphPhiEdge(
         EventReverser::VGVertex src, EventReverser::VGVertex tar,
-        const std::set<ReachingDef::FilteredCfgEdge>& cfgEdges)
+        const BackstrokeCFG::CFGEdgeType& cfgEdge)
 {
     // For every CFG edge, we add a VG edge. This is because we want each VG
     // edge to correspond a CFG edge.
-    foreach (const ReachingDef::FilteredCfgEdge& cfgEdge, cfgEdges)
-    {
-        //cout << "!!!" << cfgEdge.toString() << endl;
-        SgNode* node1 = cfgEdge.source().getNode();
-        SgNode* node2 = cfgEdge.target().getNode();
-        
-       // cout << "\nSRC: " << node1->class_name() << endl;
-        //cout << "TGT: " << node2->class_name() << endl;
-        
-        // Note that this way works since the function is normalized and every if has
-        // two bodies (SgBasicBlock), so there is always a control dependence in CDG
-        // for either true or false body. It is like a trick here.
 
-        VGEdge newEdge = boost::add_edge(src, tar, valueGraph_).first;
-        PathInfo paths = pathNumManager_->getPathNumbers(node1, node2);
-        ControlDependences controlDeps = cdg_->getControlDependences(node1);
-        PhiEdge* phiEdge = new PhiEdge(0, paths, controlDeps);
-        
-        // If this def is coming from a backedge, label it as a mu edge.
-        foreach (const CFGEdge& backEdge, backEdges_)
-        {
-            if (cfgEdge != *(*cfg_)[backEdge])
-                continue;
-            phiEdge->muEdge = true;
-            break;
-        }
-        valueGraph_[newEdge] = phiEdge;
-    }
+    //cout << "!!!" << cfgEdge.toString() << endl;
+    SgNode* node1 = cfgEdge.source().getNode();
+    SgNode* node2 = cfgEdge.target().getNode();
 
-    //valueGraph_[e] = new ValueGraphEdge(valNode->getCost(), dagIndex, paths);
-    //valueGraph_[newEdge] = new ValueGraphEdge(0, dagIndex, paths);
-    //return newEdge;
+    // cout << "\nSRC: " << node1->class_name() << endl;
+    //cout << "TGT: " << node2->class_name() << endl;
+
+    // Note that this way works since the function is normalized and every if has
+    // two bodies (SgBasicBlock), so there is always a control dependence in CDG
+    // for either true or false body. It is like a trick here.
+
+
+    VGEdge newEdge = boost::add_edge(src, tar, valueGraph_).first;
+
+    PathInfo paths = pathNumManager_->getPathNumbers(node1, node2);
+    ControlDependences controlDeps = cdg_->getControlDependences(node1);
+    valueGraph_[newEdge] = new PhiEdge(0, paths, controlDeps);
 }
 
 EventReverser::VGEdge EventReverser::addValueGraphOrderedEdge(
@@ -977,6 +963,11 @@ void EventReverser::addValueGraphStateSavingEdges(VGVertex src, SgNode* killer)
     
     VGEdge newEdge = boost::add_edge(src, root_, valueGraph_).first;
     PathInfo paths = pathNumManager_->getPathNumbers(killer);
+    
+    // For a Mu node, we should remove the correspoding paths of the same DAG index.
+    if (MuNode* muNode = isMuNode(valueGraph_[src]))
+        paths.erase(paths.find(muNode->dagIndex));
+    
     ControlDependences controlDeps = cdg_->getControlDependences(killer);
     valueGraph_[newEdge] = new StateSavingEdge(cost, paths, controlDeps, killer);
     
@@ -1222,14 +1213,35 @@ EventReverser::VGVertex EventReverser::createOperatorNode(
 
 void EventReverser::addPhiEdges()
 {    
+    // It is possible that new nodes will be added, so first collect all phi nodes.
+    vector<pair<VGVertex, PhiNode*> > phiNodes;
     foreach (VGVertex node, boost::vertices(valueGraph_))
     {
         PhiNode* phiNode = isPhiNode(valueGraph_[node]);
+        if(phiNode) 
+            phiNodes.push_back(make_pair(node, phiNode));
+    }
+    
+    // Get all back edges in CFG.
+    set<BackstrokeCFG::CFGEdgeType> backEdges;
+    foreach (const CFGEdge& cfgEdge, cfg_->getAllBackEdges())
+    backEdges.insert(*(*cfg_)[cfgEdge]);
+    
+    typedef pair<VGVertex, PhiNode*> VertexPhiNode;
+    foreach (const VertexPhiNode& vertexNode, phiNodes)
+    {
+        VGVertex node = vertexNode.first;
+        PhiNode* phiNode = vertexNode.second;
+        
         if (phiNode == NULL) continue;
         
         ROSE_ASSERT(pseudoDefMap_.count(node));
         
         SSA::ReachingDefPtr reachingDef = pseudoDefMap_[node];
+        
+        // A copy of a Mu node.
+        MuNode* newMuNode = NULL;
+        VGVertex duplicatedNode;
             
         // For every phi function parameter, check if it is also a pseudo def.
         // If it is, add another phi node and connect them. Else, add an edge.
@@ -1238,7 +1250,7 @@ void EventReverser::addPhiEdges()
         foreach (const PairT& defEdgePair, reachingDef->getJoinedDefs())
         {
             SSA::ReachingDefPtr def = defEdgePair.first;
-            const set<ReachingDef::FilteredCfgEdge>& cfgEdges = defEdgePair.second;
+            const set<BackstrokeCFG::CFGEdgeType>& cfgEdges = defEdgePair.second;
             int version = def->getRenamingNumber();
             
             VersionedVariable defVar(phiNode->var.name, version);
@@ -1253,25 +1265,32 @@ void EventReverser::addPhiEdges()
             if (node == varVertexMap_[defVar])
                 continue;
 
-            addValueGraphPhiEdge(node, varVertexMap_[defVar], cfgEdges);
-            
-            if (phiNode->mu)
-                continue;
-            
-            foreach (const CFGEdge& backEdge, backEdges_)
-            //foreach (const ReachingDef::FilteredCfgEdge& cfgEdge, cfgEdges)
+            foreach (const BackstrokeCFG::CFGEdgeType& cfgEdge, cfgEdges)
             {
-                // If the def is coming through a back edge, set this phi not to a mu node.
-                if (cfgEdges.count(*(*cfg_)[backEdge]) == 0)
-                    continue;
-                    
-                phiNode->mu = true;
-                phiNode->dagIndex = pathNumManager_->getLoopDagIndex(phiNode->astNode);
-                
-                // A Mu mode can kill the defs from non-back edge. Add state
-                // saving edges here.
-                addStateSavingEdges(phiNode->var, (*cfg_)[backEdge]->target().getNode());
-                break;
+                if (backEdges.count(cfgEdge))
+                {
+                    if (newMuNode == NULL)
+                    {
+                        MuNode* muNode = new MuNode(*phiNode);
+                        muNode->dagIndex = pathNumManager_->getLoopDagIndex(phiNode->astNode);
+                        
+                        valueGraph_[node] = muNode;
+                        delete phiNode;
+                        
+                        // A Mu mode can kill the defs from non-back edge. Add state
+                        // saving edges here.
+                        addStateSavingEdges(phiNode->var, cfgEdge.target().getNode());
+                        
+                        // For a Mu node, we duplicate it and connect all Mu edges to it.
+                        duplicatedNode = boost::add_vertex(valueGraph_);
+                        newMuNode = new MuNode(*muNode);
+                        newMuNode->isCopy = true;
+                        valueGraph_[duplicatedNode] = newMuNode;
+                    }
+                    addValueGraphPhiEdge(duplicatedNode, varVertexMap_[defVar], cfgEdge);
+                }
+                else
+                    addValueGraphPhiEdge(node, varVertexMap_[defVar], cfgEdge);
             }
         }
     }
@@ -1328,21 +1347,22 @@ void EventReverser::addStateSavingEdges()
         // For a mu node, make it available for its own DAG
         // Note this a kind of hack when doing this. A mu node is available in its
         // own DAG. The path information only contains those paths in this DAG.
-        if (PhiNode* phiNode = isPhiNode(valueGraph_[v]))
+        if (MuNode* muNode = isMuNode(valueGraph_[v]))
         {
-            if (phiNode->mu)
-            {
-                VGEdge newEdge = boost::add_edge(v, root_, valueGraph_).first;
-                PathInfo paths = pathNumManager_->getPathNumbers(funcDef_);
-                
-                // The real paths only contains the paths in its own DAG.
-                PathInfo realPaths;
-                realPaths[phiNode->dagIndex] = paths[phiNode->dagIndex];
-                
-                // Null control dependence.
-                ControlDependences controlDeps;
-                valueGraph_[newEdge] = new StateSavingEdge(0, realPaths, controlDeps, NULL);
-            }
+            if (!muNode->isCopy)
+                continue;
+            
+            // Only if the Mu node is a copy when it is available.
+            VGEdge newEdge = boost::add_edge(v, root_, valueGraph_).first;
+            PathInfo paths = pathNumManager_->getPathNumbers(funcDef_);
+
+            // The real paths only contains the paths in its own DAG.
+            PathInfo realPaths;
+            realPaths[muNode->dagIndex] = paths[muNode->dagIndex];
+
+            // Null control dependence.
+            ControlDependences controlDeps;
+            valueGraph_[newEdge] = new StateSavingEdge(0, realPaths, controlDeps, NULL);
         }
         
         // Add 
@@ -1620,8 +1640,8 @@ SgNode* EventReverser::RouteGraphEdgeComp::getAstNode(const VGEdge& edge) const
     return routeGraph[tgt]->astNode;  
 }
 
-bool EventReverser::RouteGraphEdgeComp::operator ()(
-        const VGEdge& edge1, const VGEdge& edge2) const
+bool EventReverser::RouteGraphEdgeComp::operator()(
+        const VGEdge& edge1, const VGEdge& edge2) const 
 {
 //    cout << routeGraph[edge1]->paths << endl;
 //    cout << routeGraph[edge2]->paths << endl;
@@ -1634,10 +1654,13 @@ bool EventReverser::RouteGraphEdgeComp::operator ()(
     SgNode* node2 = getAstNode(edge2);
     //cout << node1->class_name() << endl;
     //cout << node2->class_name() << endl;
-    ROSE_ASSERT(nodeIndexTable.count(node1));
-    ROSE_ASSERT(nodeIndexTable.count(node2));
-    return nodeIndexTable.find(node1)->second <
-           nodeIndexTable.find(node2)->second;
+    map<SgNode*, int>::const_iterator iter1 = nodeIndexTable.find(node1);
+    map<SgNode*, int>::const_iterator iter2 = nodeIndexTable.find(node2);
+    
+    int val1 = (iter1 == nodeIndexTable.end()) ? INT_MAX : iter1->second;
+    int val2 = (iter2 == nodeIndexTable.end()) ? INT_MAX : iter2->second;
+    
+    return val1 < val2;
     
 #if 0
     ROSE_ASSERT(pathsIndexTable.count(routeGraph[edge1]->paths));

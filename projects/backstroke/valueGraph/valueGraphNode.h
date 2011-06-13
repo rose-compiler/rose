@@ -144,21 +144,22 @@ struct PhiNode : ValueNode
 //    };
 
 	PhiNode(const VersionedVariable& v, SgNode* node)
-    : ValueNode(v, node), dagIndex(0), mu(false)/*, type(phi)*/ {}
+    : ValueNode(v, node) {}
 
 	//std::vector<ValueGraphNode*> nodes;
 
-	virtual std::string toString() const;
+	virtual std::string toString() const
+    { return "PHI_" + var.toString(); }
 
     virtual int getCost() const;
 
 //    SgType* getType() const
 //    { return var.name.back()->get_type(); }
 
-    //! The DAG index.
-    int dagIndex;
+//    //! The DAG index.
+//    int dagIndex;
     
-    bool mu;
+    //bool mu;
 
     //! The type of this gate function
     //GateType type;
@@ -166,17 +167,26 @@ struct PhiNode : ValueNode
 
 //! A Mu node is a special phi node which has a data dependence through a back 
 //! edge in a loop. This node is placed on the loop header node in CFG.
-struct MuNode : ValueNode
+struct MuNode : PhiNode
 {
     MuNode(const VersionedVariable& v, SgNode* node)
-    : ValueNode(v, node), dagIndex(0)/*, type(phi)*/ {}
+    : PhiNode(v, node), dagIndex(0), isCopy(false) {}
+    
+    explicit MuNode(const PhiNode& phiNode) 
+    : PhiNode(phiNode), dagIndex(0), isCopy(false) {}
     	
     virtual std::string toString() const
-	{ return "MU_" + var.toString(); }
+	{ 
+        std::string str = "MU_" + var.toString() + "\\n" 
+                + boost::lexical_cast<std::string>(dagIndex);
+        return isCopy ? str + "\\nAVAILABLE" : str;
+    }
 
     //! The DAG index.
     int dagIndex;
     
+    //! If it is a copy.
+    bool isCopy;
 };
 
 //! An operator node represents a unary or binary operation. It only has one in edge,

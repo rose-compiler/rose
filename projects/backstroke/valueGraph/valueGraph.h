@@ -33,8 +33,15 @@ private:
     typedef BackstrokeCFG::Vertex CFGVertex;
     typedef BackstrokeCFG::Edge   CFGEdge;
     
+    struct ReverseCFGNode
+    {
+        ReverseCFGNode() : dagIndex(0) {}
+        PathSet paths;
+        std::vector<VGEdge> edges;
+        int dagIndex;
+    };
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-        std::pair<PathSet, std::vector<VGEdge> >, PathSet> ReverseCFG;
+        ReverseCFGNode, PathSet> ReverseCFG;
     typedef boost::graph_traits<ReverseCFG>::vertex_descriptor RvsCFGVertex;
     typedef boost::graph_traits<ReverseCFG>::edge_descriptor RvsCFGEdge;
     
@@ -143,8 +150,8 @@ private:
              std::pair<std::set<VGVertex>,
                        std::set<VGEdge> > > routeNodesAndEdges_;
     
-    //! All backedges in the CFG.
-    std::set<CFGEdge> backEdges_;
+    ////! All backedges in the CFG.
+    //std::set<CFGEdge> backEdges_;
 
 
 public:
@@ -311,7 +318,7 @@ private:
 	 *  @param cfgEdges CFG edges from which the path information is calculated.
 	 */
     void addValueGraphPhiEdge(VGVertex src, VGVertex tar,
-        const std::set<ReachingDef::FilteredCfgEdge>& cfgEdges);
+        const BackstrokeCFG::CFGEdgeType& cfgEdge);
 
 	/** Add a new ordered edge to the value graph.
 	 *
@@ -391,10 +398,10 @@ private:
             SgScopeStatement* cmtScope);
 
     void generateCode(
-            size_t dagIndex,
+            int dagIndex,
             const std::vector<ReverseCFG>& rvsCFGs,
-            SgBasicBlock* rvsFuncBody,
-            SgBasicBlock* cmtFuncBody,
+            SgScopeStatement* rvsFuncBody,
+            SgScopeStatement* cmtFuncBody,
             const std::string& pathNumName);
     
 	static VGVertex nullVertex()

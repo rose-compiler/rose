@@ -116,9 +116,9 @@ namespace // anonymous namespace
     // the same as the given one.
     bool isMuNode(ValueGraphNode* node, int dagIndex)
     {
-        if (PhiNode* phiNode = isPhiNode(node))
+        if (MuNode* muNode = isMuNode(node))
         {
-            if (phiNode->mu && dagIndex == phiNode->dagIndex)
+            if (dagIndex == muNode->dagIndex)
                 return true;
         }
         return false;
@@ -179,14 +179,7 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
             // Get the node on the top, and find it out edges.
             VGVertex node = unfinishedRoute.nodes.back().first;
             
-            // For loops, the first node is available. We should keep searching
-            // so ignore this case.
-            // The first condition below means loop case, and the second means
-            // this is the first node in the route.
-            if (dagIndex > 0 && unfinishedRoute.nodes.size() == 1)
-                ;
-            // If this node is available.
-            else if (availableNodes.count(node) > 0)
+            if (availableNodes.count(node) > 0)
             //if (tar == root_ || )
             {                
                 //cout << "AVAILABLE: " << valueGraph_[node]->toString() << endl;
@@ -239,8 +232,7 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
 
                     // The the following function returns true if adding
                     // this edge will form a circle.
-                    if (!isMuNode(valueGraph_[tar], dagIndex) 
-                            && containsVertex(unfinishedRoute.nodes, tar))
+                    if (containsVertex(unfinishedRoute.nodes, tar))
                         goto NEXT;
 
                     newRoute.edges.push_back(edge);
@@ -311,8 +303,7 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
 
                 // The the following function returns true if adding
                 // this edge will form a circle.
-                if (!isMuNode(valueGraph_[tar], dagIndex) 
-                        && containsVertex(unfinishedRoute.nodes, tar))
+                if (containsVertex(unfinishedRoute.nodes, tar))
                     continue;
 
                 RouteWithNodes newRoute = unfinishedRoute;
