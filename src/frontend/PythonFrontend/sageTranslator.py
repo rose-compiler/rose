@@ -197,6 +197,13 @@ class SageTranslator(ast.NodeVisitor):
     op_str = UNARY_OPERATOR_MAP[node.op.__class__]
     return sage.buildUnaryOp(op_str, operand)
 
+  def visit_While(self, node):
+    test = self.visit(node.test)
+    body = sage.buildSuite(map(self.visit, node.body))
+    #orelse = sage.buildSuite(map(self.visit, node.orelse))
+    #return sage.buildWhile(test, body, orelse)
+    return sage.buildWhile(test, body)
+
 
 def translate(infilename):
   try:

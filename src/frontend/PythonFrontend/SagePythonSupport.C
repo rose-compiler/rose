@@ -78,15 +78,6 @@ sage_appendStatements(PyObject *self, PyObject *args)
     for (int i = 0; i < stmtc; i++) {
         PyObject* capsule = PyList_GetItem(py_stmts, i);
         SgStatement* sg_child = PyDecapsulate<SgStatement>(capsule);
-        if (isSgExpression(sg_child) != NULL) {
-            sg_child = SageBuilder::buildExprStatement(
-                    PyDecapsulate<SgExpression>(capsule));
-        }
-
-        if (sg_child==NULL) {
-            cerr << "Can't id " << PyDecapsulate<SgNode>(capsule)->class_name() << endl;
-        }
-        ROSE_ASSERT(sg_child != NULL);
         // SageInterface::appendStatement calls functions that assert because of
         // (the lack of)? declaration statements in the given scopes. Until I suppress
         // this behavior for Python, use this simple version of the appendStatement

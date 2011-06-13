@@ -448,6 +448,23 @@ sage_buildReturnStmt(PyObject *self, PyObject *args)
 /*
  */
 PyObject*
+sage_buildSuite(PyObject *self, PyObject *args)
+{
+    SgBasicBlock* sg_basic_block = SageBuilder::buildBasicBlock();
+    PyObject* py_body = PyTuple_GetItem(args, 0);
+    Py_ssize_t body_c = PyList_Size(py_body);
+    for (int i = 0; i < body_c; i++) {
+        PyObject* capsule = PyList_GetItem(py_body, i);
+        SgStatement* sg_stmt = PyDecapsulate<SgStatement>(capsule);
+        SageInterface::appendStatement(sg_stmt, sg_basic_block);
+    }
+    return PyEncapsulate(sg_basic_block);
+}
+
+
+/*
+ */
+PyObject*
 sage_buildTryExcept(PyObject *self, PyObject *args)
 {
     PyObject* py_body     = PyTuple_GetItem(args, 0);
@@ -511,4 +528,21 @@ sage_buildStringVal(PyObject *self, PyObject *args)
     std::string str = std::string(c_str);
     SgStringVal* sg_string_val = SageBuilder::buildStringVal(str);
     return PyEncapsulate(sg_string_val);
+}
+
+/*
+ */
+PyObject*
+sage_buildWhile(PyObject *self, PyObject *args)
+{
+    PyObject* py_test   = PyTuple_GetItem(args, 0);
+    PyObject* py_body   = PyTuple_GetItem(args, 1);
+    //PyObject* py_orelse = PyTuple_GetItem(args, 2);
+
+    SgStatement* test = PyDecapsulate<SgStatement>(py_test);
+    SgStatement* body = PyDecapsulate<SgStatement>(py_body);
+    //SgStatement* orelse = PyDecapsulate<SgStatement>(py_orelse);
+
+    SgWhileStmt* sg_while_stmt = SageBuilder::buildWhileStmt(test, body);
+    return PyEncapsulate(sg_while_stmt);
 }

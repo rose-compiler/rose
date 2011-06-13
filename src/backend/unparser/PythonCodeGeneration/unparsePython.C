@@ -36,6 +36,7 @@ Unparse_Python::unparseLanguageSpecificStatement(SgStatement* stmt,
         CASE_DISPATCH_AND_BREAK(LongIntVal);
         CASE_DISPATCH_AND_BREAK(ReturnStmt);
         CASE_DISPATCH_AND_BREAK(StringVal);
+        CASE_DISPATCH_AND_BREAK(WhileStmt);
         default: {
             cerr << "unparse Statement (" << stmt->class_name()
                  << "*) is unimplemented." << endl;
@@ -322,5 +323,18 @@ Unparse_Python::unparseVarRefExp(SgVarRefExp* var_ref_exp,
     stringstream code;
     code << " " << symbol->get_name().str();
     curprint( code.str() );
+}
+
+void
+Unparse_Python::unparseWhileStmt(SgWhileStmt* while_stmt,
+                                 SgUnparse_Info& info)
+{
+    curprint("while ");
+    unparseStatement(while_stmt->get_condition(), info);
+    curprint(":\n");
+
+    info.inc_nestingLevel();
+    unparseStatement(while_stmt->get_body(), info);
+    info.dec_nestingLevel();
 }
 
