@@ -1246,7 +1246,7 @@ main(int argc, char *argv[])
         };
         BinaryAnalysis::ControlFlow cfg_analysis;
         BinaryAnalysis::Dominance   dom_analysis;
-        dom_analysis.set_debug(stderr);
+        //dom_analysis.set_debug(stderr);
         CalculateDominance(cfg_analysis, dom_analysis).traverse(interp, preorder);
     }
 #elif 0
