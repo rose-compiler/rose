@@ -16,6 +16,7 @@ bool SaveDotAnalysis::runAnalysis(const Function& func, NodeState* state)
 		cfgToDot(fileCFG, func.get_name(), func.get_definition()->cfgForBeginning());
 		fileCFG.close();
 	}
+	return false;
 }
 
 // Saves the CFGs of all the functions into their own files

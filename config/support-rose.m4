@@ -1037,12 +1037,12 @@ AC_ARG_ENABLE(ofp-version,
 # DQ (7/31/2010): Changed the default version of OFP to 0.8.1 (now distributed with ROSE).
 echo "enable_ofp_version = $enable_ofp_version"
 if test "x$enable_ofp_version" = "x"; then
-   echo "Default version of OFP used (0.8.2)"
+   echo "Default version of OFP used (0.8.3)"
    ofp_major_version_number=0
    ofp_minor_version_number=8
  # DQ (9/26/2010): Changed default version to 0.8.2
- # ofp_patch_version_number=1
-   ofp_patch_version_number=2
+ # CER (6/2/2011): Changed default version to 0.8.3
+   ofp_patch_version_number=3
 else
    ofp_major_version_number=`echo $enable_ofp_version | cut -d\. -f1`
    ofp_minor_version_number=`echo $enable_ofp_version | cut -d\. -f2`
@@ -1069,7 +1069,7 @@ if test "x$ofp_major_version_number" = "x0"; then
             if test "x$ofp_patch_version_number" = "x2"; then
                echo "Recognized an accepted patch version number."
             elif test "x$ofp_patch_version_number" = "x3"; then
-               echo "Recognized an accepted patch version number ONLY for testing."
+               echo "Recognized an accepted patch version number."
             else
 #              echo "ERROR: Could not identify the OFP patch version number."
                echo "Recognized an accepted patch version number (later than default)."
@@ -1123,11 +1123,11 @@ AC_SUBST(ROSE_OFP_PATCH_VERSION_NUMBER)
 # CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar:.
 # CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar:.
 # CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
-#
-# OFP version 0.8.2 and antlr 3.2 are the defaults
-#
 CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
 
+#
+# OFP version 0.8.3 and antlr 3.3 are the defaults
+#
 if test "x$ofp_minor_version_number" = "x8"; then
    if test "x$ofp_patch_version_number" = "x3"; then
       CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.3-complete.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.

@@ -267,7 +267,7 @@ Sg_File_Info* Function::get_file_info() const
 }
 
 // returns the parameters of this function
-SgInitializedNamePtrList Function::get_params()
+SgInitializedNamePtrList Function::get_params() const
 {
 	if(decl)
 		return get_declaration()->get_args();
@@ -276,6 +276,20 @@ SgInitializedNamePtrList Function::get_params()
 		SgInitializedNamePtrList list;
 		return list;
 	}
+}
+
+string Function::str(string indent) const
+{
+	ostringstream oss;
+	oss << get_name().getString()<<"(";
+	SgInitializedNamePtrList params = get_params();
+	for(SgInitializedNamePtrList::iterator in=params.begin(); in!=params.end(); ) {
+		oss << (*in)->get_name().getString();
+		in++;
+		if(in!=params.end()) oss << ", ";
+	}
+	oss << ")";
+	return oss.str();
 }
 
 /******************************
@@ -490,6 +504,23 @@ const CGFunction* TraverseCallGraph::getFunc(const Function& func)
 }
 
 /************************************
+ ***** TraverseCallGraphUnordered *****
+ ************************************/
+
+TraverseCallGraphUnordered::TraverseCallGraphUnordered(SgIncidenceDirectedGraph* graph): 
+	TraverseCallGraph(graph)
+{}
+
+void TraverseCallGraphUnordered::traverse()
+{
+	for(set<CGFunction>::iterator f=functions.begin(); f!=functions.end(); f++) {
+		visit(&(*f));
+	}
+}
+
+TraverseCallGraphUnordered::~TraverseCallGraphUnordered() {}
+
+/************************************
  ***** TraverseCallGraphTopDown *****
  ************************************/
 
@@ -539,7 +570,7 @@ void TraverseCallGraphTopDown<InheritedAttribute>::traverse_rec(const CGFunction
 	printf("                    numCallers[fd]=%d\n", numCallers[fd]);*/
 	
 	// if we've added all of this function's inherited attributes to its record
-	if(visitRecords[fd].fromCallers.size()>=numCallers[fd])
+	if(visitRecords[fd].fromCallers.size()>=(unsigned int)numCallers[fd])
 	{
 		// call visit the current function
 		InheritedAttribute results = visit(fd, visitRecords[fd].fromCallers);
@@ -573,6 +604,9 @@ void TraverseCallGraphTopDown<InheritedAttribute>::traverse_rec(const CGFunction
 		}
 	}
 }
+
+template <class InheritedAttribute>
+TraverseCallGraphTopDown<InheritedAttribute>::~TraverseCallGraphTopDown() {}
 
 /*************************************
  ***** TraverseCallGraphBottomUp *****
@@ -653,12 +687,17 @@ SynthesizedAttribute TraverseCallGraphBottomUp<SynthesizedAttribute>::traverse_r
 	// add the current function's result to the visitRecords for use by this function's callers
 	visitRecords[fd] = res;
 	//printf(">>>\n");
+	
+	return res;
 }
+
+template <class SynthesizedAttribute>
+TraverseCallGraphBottomUp<SynthesizedAttribute>::~TraverseCallGraphBottomUp() {}
 
 //}
 
 /*************************************
- ***** TraverseCallGraphFreeform *****
+ ***** TraverseCallGraphDataflow *****
  *************************************/
 TraverseCallGraphDataflow::TraverseCallGraphDataflow(SgIncidenceDirectedGraph* graph): TraverseCallGraph(graph)
 {}
@@ -689,6 +728,8 @@ void TraverseCallGraphDataflow::addToRemaining(const CGFunction* func)
 	// insert func, if it was not found
 	remaining.push_back(func);
 }
+
+TraverseCallGraphDataflow::~TraverseCallGraphDataflow() {}
 
 /*********************************************************
  ***               numCallersAnnotator                 ***

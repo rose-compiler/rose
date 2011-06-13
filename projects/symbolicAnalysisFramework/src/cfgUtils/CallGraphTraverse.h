@@ -65,7 +65,9 @@ class Function
 	Sg_File_Info* get_file_info() const;
 	
 	// returns the parameters of this function
-	SgInitializedNamePtrList get_params();
+	SgInitializedNamePtrList get_params() const;
+	
+	string str(string indent="") const;
 };
 
 // extension of the generic function class that also contains all the SgGraphNodes that refer to the function
@@ -101,7 +103,6 @@ class CGFunction : public Function
 	// Traverses the callers or callees of this function
 	class iterator
 	{
-		
 		// direction in which the iterator is going
 		//SgIncidenceDirectedGraph::EdgeDirection iterDir;
 		// side of an edge that we're going to be following
@@ -319,6 +320,18 @@ class TraverseCallGraph
 	const CGFunction* getFunc(const Function& func);
 };
 
+/* Un-ordered traversal of the call graph */
+class TraverseCallGraphUnordered : public TraverseCallGraph
+{
+	public:
+	TraverseCallGraphUnordered(SgIncidenceDirectedGraph* graph);
+	
+	void traverse();
+		
+	virtual void visit(const CGFunction* func)=0;
+	
+	virtual ~TraverseCallGraphUnordered();
+};
 
 template <class InheritedAttribute>
 class TraverseCallGraphTopDown : public TraverseCallGraph
@@ -344,6 +357,9 @@ class TraverseCallGraphTopDown : public TraverseCallGraph
 	                  map<const CGFunction*, funcRecord> &visitRecords, 
 	                  set<pair<const CGFunction*, const CGFunction*> > &touchedEdges,
 	                  InheritedAttribute &fromCaller);
+
+	public:
+	virtual ~TraverseCallGraphTopDown();
 };
 
 
@@ -363,6 +379,9 @@ class TraverseCallGraphBottomUp : public TraverseCallGraph
 	SynthesizedAttribute traverse_rec(const CGFunction* fd, 
                   map<const CGFunction*, SynthesizedAttribute> &visitRecords, 
                   set<pair<const CGFunction*, const CGFunction*> > &touchedEdges);
+	
+	public:
+	virtual ~TraverseCallGraphBottomUp();
 };
 
 // CallGraph traversal useful for inter-procedural dataflow analyses because it starts
@@ -382,6 +401,8 @@ class TraverseCallGraphDataflow : public TraverseCallGraph
 	
 	// adds func to the back of the remaining list, if its not already there
 	void addToRemaining(const CGFunction* func);
+	
+	virtual ~TraverseCallGraphDataflow();
 };
 
 /*********************************************************

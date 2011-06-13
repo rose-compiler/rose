@@ -33,21 +33,30 @@ automated tests ({\em make check} makefile rule).  If you want to add a new
 feature to ROSE, show us your tests.
 %}}}
 
-\section{Working with the ROSE GIT repositories}
-This section is mostly useful for internal ROSE developers who have access
-to LLNL's network file system hosting ROSE's git repository or external
-developers who are comfortable with using git. 
-Otherwise, external developers are suggested to use our external SVN repository as
-described in Section~\ref{gettingStarted::svn}.
+%----------------------------------------------------------------------------------------
+%
+%--
 
-We have two git repositories for ROSE: an internal one at LLNL (\textit{/nfs/casc/overture/ROSE/git/ROSE-EDG.git}) and an external
-one hosted at \url{http://www.rosecompiler.org/rose.git}. These two repositories share histories so that
-you can work closely with us as an external developing using our latest work. 
-Some tips for using them are gathered in this section.
+	\section{Working with the ROSE Git repositories}
 
+%--
+%
+%----------------------------------------------------------------------------------------
+This section is most useful for ROSE developers who have access to LLNL's network file
+system (NFS).
+\newline\newline
+We have (2) Git repositories:
+\begin{itemize}
+	\item internal: \textit{/nfs/casc/overture/ROSE/git/ROSE-EDG.git}
+	\item external: \url{http://www.rosecompiler.org/rose.git} -- is synced with the internal repository.
+\end{itemize}
 
-\subsection{Continuous Integration in ROSE}
-
+\textit{We also have an external SVN repository (see Section~\ref{gettingStarted::svn})}.
+%----------------------------------------------------------------------------------------
+%--
+	\subsection{Continuous Integration in ROSE}
+%--
+%----------------------------------------------------------------------------------------
 The ROSE project uses a workflow that automates the central principles of
 continuous integration in order to make integrating the work from different
 developers a non-event. Because the integration process only integrates
@@ -92,21 +101,27 @@ an external release based on the master branch will be made available
 outside. 
 
 
-\subsection{The Internal Repository}
+\subsection{The Internal Git Repository}
 
-The ROSE internal repository (the shared git repository shown in
-Fig.~\ref{fig:rose-git-hudson}) is hosted under \textit{/nfs/casc/overture/ROSE/git/ROSE.git}.
-It keeps track of the latest work of each
-internal developer (who have an account with LLNL). Each
-developer will make a complete local copy of the repository which he can use to
-perform his work and he can push his work from this copy to a branch he owns in the 
-central repository when he is ready. 
+The internal ROSE Git repository (Fig.~\ref{fig:rose-git-hudson}) is hosted under
+\textit{/nfs/casc/overture/ROSE/git/ROSE.git}. External collaborators can access
+this NFS path through any of these internal LLNL hosts: \texttt{tuxblue[1-6|9-13]}.
+\begin{verbatim}
+    $ git clone ssh://<user>@tuxblue[1-6|9-13]/nfs/casc/overture/ROSE/git/ROSE.git
+\end{verbatim}
 
-\subsection{Structure of Repositories and Branch Naming Conventions}
+Updates to the "Release Candidate" (*-rc) branches in this internal repository
+trigger our Continuous Integration framework. Although you'll want to make a
+local clone of ROSE for development purposes, you must make sure to push your
+changes to your remote branch for testing and integration purposes.
 
+The \texttt{master} branch always contains the latest work of ROSE and can only
+be updated by our continuous integration framework.
+
+\subsection{Our Git Naming Conventions}
 
 Both the internal and the external ROSE repositories are structured according to
-an continuous integration workflow using git best practises. The master branch
+n continuous integration workflow using Git best practices. The master branch
 contains the latest work in ROSE that passes the tests and each developer can
 create any number of branches that he owns. No developer can modify
 a branch owned by another developer, but a group branch can be created that 

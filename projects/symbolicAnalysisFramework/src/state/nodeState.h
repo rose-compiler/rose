@@ -176,15 +176,19 @@ class NodeState
 	// adds the given lattice, organizing it under the given analysis and lattice name
 	//void addLattice(const Analysis* analysis, int latticeName, Lattice* l);
 	
-	// sets this node's lattices for this analysis
+	
+	// Sets this node's lattices for this analysis, making copies of the provided lattices.
+	// This call takes the actual provided lattices and does not make a copy of them.
 	void setLattices(const Analysis* analysis, vector<Lattice*>& lattices);
 	
 	// Sets this node's above lattices for this analysis to the given vector of lattices, 
-	// deleting any previous mapping (the previous Lattices are freed)
+	// deleting any previous mapping (the previous Lattices are freed). This call
+	// takes the actual provided lattices and does not make a copy of them.
 	void setLatticeAbove(const Analysis* analysis, vector<Lattice*>& lattices);
 	
 	// Sets this node's below lattices for this analysis to the given vector of lattices, 
-	// deleting any previous mapping (the previous Lattices are freed)
+	// deleting any previous mapping (the previous Lattices are freed). This call
+	// takes the actual provided lattices and does not make a copy of them.
 	void setLatticeBelow(const Analysis* analysis, vector<Lattice*>& lattices);
 	
 	// returns the given lattice from above the node that is owned by the given analysis
@@ -248,7 +252,8 @@ class NodeState
 	void addFact(const Analysis* analysis, int factName, NodeFact* f);
 	
 	// associates the given analysis with the given map of fact names to NodeFacts, 
-	// deleting any previous association (the previous NodeFacts are freed)
+	// deleting any previous association (the previous NodeFacts are freed). This call
+	// takes the actual provided facts and does not make a copy of them.
 	//void setFacts(const Analysis* analysis, const map <int, NodeFact*>& newFacts);
 	void setFacts(const Analysis* analysis, const vector<NodeFact*>& newFacts);
 	
@@ -339,6 +344,8 @@ class NodeState
 		
 	/*public:
 	void operator=(NodeState& that);*/
+	public:
+	string str(Analysis* analysis, string indent="") const;
 };
 
 #endif

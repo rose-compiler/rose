@@ -41,7 +41,7 @@ class saveAllDataflow : public IntraFWDataflow
 	bool transfer(const Function& func, const DataflowNode& n, NodeState& state, const vector<Lattice*>& dfInfo)
 	{
 		printf("saveAllDataflow: node=<%s | %s>\n", n.getNode()->class_name().c_str(), n.getNode()->unparseToString().c_str());
-		printf("   isSgAddOp(n.getNode()=%d\n", isSgAddOp(n.getNode()));
+		printf("   isSgAddOp(n.getNode()=%p\n", isSgAddOp(n.getNode()));
 		bool modified = false;
 		if(isSgAddOp(n.getNode()))
 		{
@@ -102,6 +102,7 @@ int main( int argc, char * argv[] )
 	cfgUtils::initCFGUtils(project);
 
 	initAnalysis(project);
+	Dbg::init("Communication Topology Analysis Test", ".", "index.html");	
 	
 	analysisDebugLevel = 0;
 	

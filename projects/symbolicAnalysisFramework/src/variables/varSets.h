@@ -24,9 +24,8 @@ namespace varSets
   // returns the set of all global scalars
   // getCompilerGen - if =true, the returned set includes compiler-generated variables and doesn't if =false
   varIDSet& getGlobalScalars(SgProject* project, bool getCompilerGen=false);
-
-
-
+  
+  
   /*=======================================
     ============   Locals   ============
     =======================================*/  
@@ -41,6 +40,21 @@ namespace varSets
   varIDSet& getLocalScalars(const Function& func, bool getCompilerGen=false);
 
 
+  /*=================================================
+    ============   Function Parameters   ============
+    =================================================*/
+  
+  void initFuncParams(const Function& func, bool getCompilerGen=false);
+
+  // returns the set of variables that are the parameters of the given function
+  varIDSet& getFuncParamVars(const Function& func, bool getCompilerGen=false);
+
+  // returns the set of arrays that are the parameters of the given function
+  varIDSet& getFuncParamArrays(const Function& func, bool getCompilerGen=false);
+
+  // returns the set of scalars that are the parameters of the given function
+  varIDSet& getFuncParamlScalars(const Function& func, bool getCompilerGen=false);
+
   /*=======================================
     ========  Referenced Variables  =======
     =======================================*/
@@ -54,6 +68,8 @@ namespace varSets
   // returns the set of scalars referenced in the given function
   varIDSet& getFuncRefScalars(const Function& func);
 
+  
+
   /*=======================================
     ============   Utilities   ============
     =======================================*/
@@ -63,7 +79,7 @@ namespace varSets
   void getDeclaredVars(SgNode* root, bool getCompilerGen, varIDSet& declaredVars);
 
   // given a set of variables, creates a new set that only contains the 
-  // non-array variables in the original set and returns this set
+  // array variables in the original set and returns this set
   varIDSet arraysFilter(varIDSet& vars);
 
   // given a set of variables, creates a new set that only contains the 

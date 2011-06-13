@@ -73,6 +73,8 @@ public:
 		// Every line of this string must be prefixed by indent.
 		// The last character of the returned string should not be '\n', even if it is a multi-line string.
 		virtual string str(string indent="")=0;
+
+		virtual ~exprLeafOrNode() {}
 	};
 	
 	class logicNode;

@@ -1303,11 +1303,8 @@ OCT_1_2010_F03_TESTCODES_REQUIRED_TO_PASS = \
    array_constructor_25.f03 \
    array_constructor_29.f03 \
    array_constructor_type_1.f03 \
-   array_constructor_type_10.f03 \
    array_constructor_type_12.f03 \
-   array_constructor_type_21.f03 \
    array_constructor_type_4.f03 \
-   array_constructor_type_7.f03 \
    array_constructor_type_8.f03 \
    binding_label_tests_12.f03 \
    binding_label_tests_14.f03 \
@@ -1331,6 +1328,7 @@ OCT_1_2010_F03_TESTCODES_REQUIRED_TO_PASS = \
    value_7.f03
 
 # DQ (12/5/2010): Failing test as a result of newer bug fixes.
+# CER (6/7/2011): This file has been moved to FAILING list so this comment can be removed
 # array_constructor_type_19.f03
 
 # This list is supposed to be empty.
@@ -1510,7 +1508,10 @@ zero_sized_1.f90
 F77_FIXED_FORMAT_TESTCODES_CURRENTLY_FAILING = 
 
 F03_TESTCODES_CURRENTLY_FAILING = \
-   array_constructor_type_19.f03
+   array_constructor_type_7.f03 \
+   array_constructor_type_10.f03 \
+   array_constructor_type_19.f03 \
+   array_constructor_type_21.f03
 
 # DQ (10/27/2010): Having this list allows us to pass the test in: ./scripts/policies/UnusedSources.pl
 # I'm not sure that we need this files in our Fortran test suit however, they are from gfortran's test
