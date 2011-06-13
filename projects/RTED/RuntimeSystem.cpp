@@ -118,11 +118,24 @@ rs_getArrayType(TypeSystem& ts, const size_t* dimDesc, size_t size, const RsType
                         ).first;
 }
 
+static
+const RsType* rs_getTypeInfo(const TypeSystem& ts, const std::string& type)
+{
+  static const RsType* cached = ts.getTypeInfo(type);
+
+  if (cached->getName() != type)
+  {
+    cached = ts.getTypeInfo(type);
+  }
+
+  return cached;
+}
+
 
 static
 const RsType& rs_getTypeInfo_fallback(TypeSystem& ts, const std::string& type)
 {
-  const RsType* res = ts.getTypeInfo(type);
+  const RsType* res = rs_getTypeInfo(ts, type);
 
   if (res == NULL)
   {
@@ -758,7 +771,7 @@ int rted_InitVariable( rted_TypeDesc   td,
   assert(!pointer_changed || strcmp( "SgPointerType", td.name) == 0);
 
   const Address heap_address = pointer_changed ? rted_deref(address, td.desc) : nullAddr();
-  const bool    sendupd = _rted_InitVariable( td, address, heap_address, size, pointer_changed, class_name, si, primaryLoc );
+  const bool    sendupd = _rted_InitVariable( td, address, nullAddr() /*heap_address*/, size, pointer_changed, class_name, si, primaryLoc );
 
   if (sendupd)
   {
@@ -782,18 +795,18 @@ int _rted_InitVariable( rted_TypeDesc    td,
 {
   RuntimeSystem* rs = RuntimeSystem::instance();
 
-  checkpoint( rs, SourcePosition(si), originloc );
-
-  if ( diagnostics::message(diagnostics::variable) )
-  {
-    std::stringstream message;
-
-    message << "   Init Var at address:  " << address
-            << "   type: " << td.name
-            << "   size: " << size
-            << "   ptrmv: " << pointer_move;
-    rs->printMessage(message.str());
-  }
+  //~ checkpoint( rs, SourcePosition(si), originloc );
+//~
+  //~ if ( diagnostics::message(diagnostics::variable) )
+  //~ {
+    //~ std::stringstream message;
+//~
+    //~ message << "   Init Var at address:  " << address
+            //~ << "   type: " << td.name
+            //~ << "   size: " << size
+            //~ << "   ptrmv: " << pointer_move;
+    //~ rs->printMessage(message.str());
+  //~ }
 
   const RsType& rs_type = rs_simpleGetType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
   bool          sendupd = rs->checkMemWrite( address, size, &rs_type );
@@ -803,13 +816,13 @@ int _rted_InitVariable( rted_TypeDesc    td,
   //
   // Note that we cannot call registerPointerChange until after the memory
   // creation is registered, which is done in roseCreateHeap.
-  if ( pointer_move )
-  {
-    const RsPointerType* rp = &dynamic_cast<const RsPointerType&>(rs_type);
-
-    rs->registerPointerChange( address, heap_address, rp, false, true /* check leaks */ );
-    sendupd = true;
-  }
+  //~ if ( pointer_move )
+  //~ {
+    //~ const RsPointerType* rp = &dynamic_cast<const RsPointerType&>(rs_type);
+//~
+    //~ rs->registerPointerChange( address, heap_address, rp, false, true /* check leaks */ );
+    //~ sendupd = true;
+  //~ }
 
   // can be invoked as part of an expression
   return sendupd;
@@ -941,7 +954,7 @@ void rted_RegisterTypeCall( const char* nameC,
         const size_t* dimensionality = va_arg( vl, size_t* );
         assert(*dimensionality > 0);
 
-        t = rs_getArrayType( ts, dimensionality, size, *ts.getTypeInfo(td.base) );
+        t = rs_getArrayType( ts, dimensionality, size, rs_getTypeInfo_fallback(ts, td.base) );
       }
       else
       {

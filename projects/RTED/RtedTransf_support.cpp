@@ -45,16 +45,14 @@ struct TypeStructureInfo
  * surrounds a given Node or Expression
  ****************************************/
 
-bool is_main_func(const SgFunctionDefinition* fndef)
+bool is_main_func(const SgFunctionDefinition& fndef)
 {
-  ROSE_ASSERT(fndef);
-
-  const SgFunctionDeclaration* fndecl = fndef->get_declaration();
+  const SgFunctionDeclaration* fndecl = fndef.get_declaration();
   ROSE_ASSERT(fndecl);
 
   const std::string fnname = fndecl->get_name().str();
 
-  return (  isSgGlobal(fndef->get_scope())
+  return (  isSgGlobal(fndef.get_scope())
          && (  fnname == "main"
             || fnname == "upc_main"
             )

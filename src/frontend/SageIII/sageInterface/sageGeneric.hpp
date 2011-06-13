@@ -1,14 +1,19 @@
 #ifndef _SAGEGENERIC_HPP
 
-//
-// This file implements generic (template) sage query functions
-//
+/// \file sageGeneric.hpp
+///       This file implements generic (template) sage query functions
+///       Currently this includes functions for:
+///       - dispatching according to the type of a sage node (dispatch)
+///       - finding the ancestor with a specific node type (ancestor)
+///       - recovering the type of a sage node assertively (assert_node_type)
+/// \email peter.pirkelbauer@llnl.gov
 
 #define _SAGEGENERIC_HPP
 
-#include <typeinfo>
+#include <stdexcept>
 
 #if !defined(NDEBUG)
+#include <typeinfo>
 #include <iostream>
 #endif /* NDEBUG */
 
@@ -38,19 +43,21 @@ namespace sg
     typedef const T2 type;
   };
 
-
-  //
-  // Sage query functions
-
   static inline
-  void log_type(const SgNode& n)
+  void unexpected_node(const SgNode& n)
   {
     sg::unused(n);
 
 #if !defined(NDEBUG)
     std::cerr << typeid(n).name() << std::endl;
 #endif
+
+    ROSE_ASSERT(false);
+    throw std::logic_error("Encountered unexpected sage node. Please send a bug report to the maintainer.");
   }
+
+  //
+  // Sage query functions
 
   /// \brief *unchecked* down cast from SgNode to SageNode
   template <class SageNode>
@@ -69,7 +76,7 @@ namespace sg
     return static_cast<const SageNode&>(n);
   }
 
-  /// \brief basic dispatcher for dispatch
+  /// \brief implementation for dispatcher objects
   ///        ( invokes roseVisitor.handle(sgnode) )
   template <class T>
   struct VisitDispatcher
@@ -82,7 +89,7 @@ namespace sg
     }
   };
 
-  /// \brief dispatcher for visitors passed as pointers
+  /// \brief implementation for dispatcher pointers
   ///        ( invokes roseVisitor->handle(sgnode) )
   template <class T>
   struct VisitDispatcher<T*>
@@ -2711,8 +2718,7 @@ namespace sg
       case V_SgNumVariants:
       case V_SgType:        /* fall-through */
       default:
-        log_type(*n);
-        ROSE_ASSERT(false);
+        unexpected_node(*n);
     }
 
     return rv;
@@ -2724,27 +2730,54 @@ namespace sg
   /// \tparam   RoseVisitor, the visitor that will be called back with
   ///           the recovered type information. The handle function with
   ///           the most suitable SgNode type will get invoked.
-  /// \param rv an instance of a rose visitor; note that the argument is
+  /// \param rv an instance of a rose visitor; note that the argument is essentially
   ///           passed by value (similar to STL's for_each).
   /// \param n  a Sage node
   /// \return   a copy of the RoseVisitor object
-  /// \example
   /// \code
-  ///   struct Handler
+  ///   struct Counter
   ///   {
+  ///      size_t expr;
+  ///      size_t decl;
+  ///
+  ///      Counter() : expr(0), decl(0) {}
+  ///
   ///      // base case (all uninteresting nodes fall into this function)
   ///      void handle(const SgNode&) {}
   ///
   ///      // expression specific code
-  ///      void handle(const SgExpression& n) { ++expr; }
+  ///      void handle(const SgExpression&) { ++expr; }
   ///
-  ///      // declaration specific code
-  ///      void handle(const SgDeclarationStatement& n) { ++decl; }
+  ///      // statement specific code
+  ///      void handle(const SgStatement&)  { ++stmt; }
   ///   };
   ///
+  ///   struct Traversal : ASTTraversal
+  ///   {
+  ///     Counter ctr;
   ///
+  ///     void visit(SgNode* n)
+  ///     {
+  ///       // Since ctr is copied when passed to dispatch
+  ///       // the changed counter state has to be stored back.
+  ///       ctr = sg::dispatch(ctr, n);
+  ///
+  ///       // Alternatively, a pointer to the counter object
+  ///       // could be passed to dispatch:
+  ///       //   sg::dispatch(&ctr, n);
+  ///     }
+  ///
+  ///     void run(SgNode& root)
+  ///     {
+  ///       traverse(&root, preorder);
+  ///
+  ///       std::cout << "Expr/Stmt ratio = " << ratio(ctr.expr, ctr.stmt) << std::endl;
+  ///     }
+  ///
+  ///     static
+  ///     float ratio(float a, float b) { return a/b; }
+  ///   };
   /// \endcode
-  /// \details
   template <class RoseVisitor>
   inline
   RoseVisitor
@@ -2753,7 +2786,7 @@ namespace sg
     return _dispatch(rv, n);
   }
 
-  ///! \overload
+  /// \overload
   template <class RoseVisitor>
   inline
   RoseVisitor
@@ -2822,6 +2855,9 @@ namespace sg
   ///                                                 the specified type cannot be found )
   ///          const SgNode& -> const AncestorNode& ( assert(false) when an ancestor of
   ///                                                 the specified type cannot be found )
+  /// \code
+  ///   const SgStatement* enclosingStatement(const SgExpression* e)  { return sg::ancestor<SgStatement>(e); }
+  /// \endcode
   template <class AncestorNode>
   AncestorNode* ancestor(SgNode* n)
   {
@@ -2830,7 +2866,7 @@ namespace sg
     return _ancestor<AncestorNode>(*n);
   }
 
-  ///! \overload
+  /// \overload
   template <class AncestorNode>
   const AncestorNode* ancestor(const SgNode* n)
   {
@@ -2839,7 +2875,7 @@ namespace sg
     return _ancestor<const AncestorNode>(*n);
   }
 
-  ///! \overload
+  /// \overload
   template <class AncestorNode>
   AncestorNode& ancestor(SgNode& n)
   {
@@ -2849,7 +2885,7 @@ namespace sg
     return *res;
   }
 
-  ///! \overload
+  /// \overload
   template <class AncestorNode>
   const AncestorNode& ancestor(const SgNode& n)
   {
@@ -2870,23 +2906,28 @@ namespace sg
     : res(NULL)
     {}
 
-    void handle(SgBaseNode& n) { log_type(n); assert(false); }
-    void handle(SageNode& n) { res = &n; }
+    void handle(SgBaseNode& n) { unexpected_node(n); }
+    void handle(SageNode& n)   { res = &n; }
 
     operator SageNode* () { return res; }
   };
 
+  /// \brief  asserts that n has type SageNode
+  /// \code
+  ///   SgStatement* stmt = assert_sage_type<SgStatement>(expr.get_parent());
+  ///   ROSE_ASSERT(stmt); // holds b/c assert_sage_type aborts if the input node is not a SgStatement
+  /// \endcode
   template <class SageNode>
   SageNode* assert_sage_type(SgNode* n)
   {
     return sg::dispatch(TypeRecoveryHandler<SageNode>(), n);
   }
 
+  /// \overload
   template <class SageNode>
   const SageNode* assert_sage_type(const SgNode* n)
   {
     return sg::dispatch(TypeRecoveryHandler<const SageNode>(), n);
   }
 }
-
 #endif /* _SAGEGENERIC_HPP */

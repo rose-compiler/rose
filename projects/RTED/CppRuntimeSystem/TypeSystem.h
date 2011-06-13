@@ -2,24 +2,55 @@
 #ifndef TYPESYSTEM_H
 #define TYPESYSTEM_H
 
-#include <set>
 #include <map>
+#include <boost/unordered_map.hpp>
 #include <iosfwd>
 
 #include "Util.h"
 #include "RsType.h"
 
+/*
+
+#include <boost/unordered_set.hpp>
+#include <boost/functional/hash.hpp>
+
+struct TypeHasher : public std::unary_function<const RsType*, std::size_t>
+{
+  size_t operator()(const RsType* t) const
+  {
+    using ::boost::hash_value;
+
+    return hash_value(t->getName());
+  }
+};
+
+struct TypeComp : public std::binary_function<const RsType*, const RsType*, bool>
+{
+  size_t operator()(const RsType* lhs, const RsType* rhs) const
+  {
+    return lhs->getName() == rhs->getName();
+  }
+};
+
+*/
+
 struct TypeSystem
 {
-        typedef std::set< const RsType*, PointerCompare > NamedTypeContainer;
-        typedef std::vector< RsBasicType >                BasicTypeContainer;
+        // typedef boost::unordered_set< const RsType*, TypeHasher, TypeComp > NamedTypeContainer;
+        // typedef std::set<const RsType*, PointerCompare>                     NamedTypeContainer;
+
+        // typedef std::map<std::string, const RsType*>                        NamedTypeContainer;
+
+        typedef boost::unordered_map<std::string, const RsType*>            NamedTypeContainer;
+
+        typedef std::vector< RsBasicType >                                  BasicTypeContainer;
 
         /// Registers all base-types
         TypeSystem();
 
         /// Returns type-information for a registered type
         /// or NULL if type is unknown
-        const RsType* getTypeInfo(const std::string & name);
+        const RsType* getTypeInfo(const std::string& name) const;
 
         /// creates an array with a given base type
         const RsArrayType* getArrayType(const RsType* baseType, size_t elemsize);

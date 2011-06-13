@@ -70,7 +70,7 @@ struct MemoryType
 
         /// Initialized a part of memory
         /// returns true, iff the location was not initialized before
-        bool initialize   (Location addr, size_t len) ;
+        bool initialize   (size_t ofs, size_t len) ;
 
         /// Returns "Initialized" "Not initialized" or "Partially initialized"
         /// only for display purposes
@@ -188,14 +188,12 @@ std::ostream& operator<< (std::ostream& os, const MemoryType& m);
  */
 struct MemoryManager
 {
-        typedef Address Location;
+        typedef Address                        Location;
+        typedef std::map<Location, MemoryType> MemoryTypeSet;
 
         MemoryManager()
         : mem()
         {}
-
-        /// Destructor checks if there are still allocations which are not freed
-        ~MemoryManager();
 
         /// \brief  Create a new allocation based on the parameters
         /// \return a pointer to the actual stored object (NULL in case something went wrong)
@@ -227,7 +225,7 @@ struct MemoryManager
         /**
          * @return @b true if the memory region containing
          * @c addr @c.. @c addr+size is initialized. */
-        bool  isInitialized(Location addr, size_t size) const;
+        bool isInitialized(Location addr, size_t size) const;
 
         /// This check is intended to detect array out of bounds
         /// even if the plain memory access is legal (
@@ -271,7 +269,6 @@ struct MemoryManager
         MemoryType*       findPossibleMemMatch(Location addr);
         const MemoryType* findPossibleMemMatch(Location addr) const;
 
-        typedef std::map<Location, MemoryType> MemoryTypeSet;
         const MemoryTypeSet& getAllocationSet() const { return mem; }
 
         template<typename T>

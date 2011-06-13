@@ -67,7 +67,7 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
 		       RtedSymbols.h \
 		       DataStructures.h \
 		       RuntimeSystem_ParsingWorkaround.h \
-		       RtedVisit_Variable.cpp RtedVisit.h rosez.hpp
+		       RtedVisit_Variable.cpp RtedVisit.h
 
 # \pp included: RuntimeSystem.h RuntimeSystem.cpp
 

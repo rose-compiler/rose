@@ -8,7 +8,6 @@
 #include "CppRuntimeSystem.h"
 #include "rtedsync.h"
 
-
 static inline
 const void* toString(MemoryType::LocalPtr ptr)
 {
@@ -38,6 +37,59 @@ struct ConstLike<const X, Y>
 {
   typedef const Y type;
 };
+
+namespace
+{
+  struct MemTypeCache
+  {
+    typedef unsigned int         CacheIdx;
+    typedef MemoryType::Location Location;
+
+    static const char CACHEELEMS = 4;
+
+    CacheIdx     pos;
+    MemoryType*  cache[CACHEELEMS];
+
+    MemTypeCache()
+    : pos(0)
+    {
+      for (CacheIdx i = 0; i < CACHEELEMS; ++i)
+      {
+        cache[i] = 0;
+      }
+    }
+
+    MemoryType* findContainingMem(Location addr, size_t sz) const
+    {
+      int i = CACHEELEMS;
+
+      while ( i && cache[i] )
+      {
+        if (cache[i]->containsMemArea(addr, sz)) return cache[i];
+
+        --i;
+      }
+
+      return NULL;
+    }
+
+    void store(MemoryType& mt)
+    {
+      pos = (pos + 1) % CACHEELEMS;
+      cache[pos] = &mt;
+    }
+
+    void clear(MemoryType& mt)
+    {
+      for (CacheIdx i = 0; i < CACHEELEMS; ++i)
+      {
+        if (cache[i] == &mt) cache[i] = NULL;
+      }
+    }
+  };
+}
+
+static MemTypeCache memtypecache;
 
 static
 std::ptrdiff_t byte_offset(Address base, Address elem, size_t blocksize, size_t blockofs);
@@ -152,9 +204,8 @@ bool MemoryType::isInitialized(Location addr, size_t len) const
     return true;
 }
 
-bool MemoryType::initialize(Location addr, size_t len)
+bool MemoryType::initialize(size_t offset, size_t len)
 {
-    const size_t offset = byte_offset(startAddress, addr, blockSize(), 0);
     const size_t limit = offset + len;
     bool         statuschange = false;
 
@@ -589,12 +640,6 @@ std::ostream& operator<< (std::ostream& os, const MemoryType& m)
 
 // -----------------------    MemoryManager  --------------------------------------
 
-MemoryManager::~MemoryManager()
-{
-  checkForNonFreedMem();
-}
-
-
 /// \brief templated implementation of findPossibleMemMatch
 ///        to propagte the constness from the memory set to the result type
 template <class MemTypeSet>
@@ -655,7 +700,16 @@ MemType* validateMembership(MemType* mt, Address addr, size_t size)
 
 MemoryType* MemoryManager::findContainingMem(Location addr, size_t size)
 {
-    return ::validateMembership(findPossibleMemMatch(addr), addr, size);
+    MemoryType* res = memtypecache.findContainingMem(addr, size);
+
+    if (!res)
+    {
+      res = ::validateMembership(findPossibleMemMatch(addr), addr, size);
+
+      if (res) memtypecache.store(*res);
+    }
+
+    return res;
 }
 
 const MemoryType*
@@ -695,8 +749,11 @@ MemoryType* MemoryManager::allocateMemory(Location adrObj, size_t szObj, MemoryT
 
     MemoryType                tmp(adrObj, szObj, kind, blocksize, pos);
     MemoryTypeSet::value_type v(adrObj, tmp);
+    MemoryType&               res = mem.insert(v).first->second;
 
-    return &mem.insert(v).first->second;
+    memtypecache.store(res);
+
+    return &res;
 }
 
 static
@@ -838,7 +895,8 @@ void MemoryManager::freeHeapMemory(Location addr, MemoryType::AllocKind freekind
     MemoryType* mt = findContainingMem(addr, 1);
 
     checkDeallocationAddress(mt, addr, freekind);
-    freeMemory( findContainingMem(addr, 1), freekind );
+    memtypecache.clear(*mt);
+    freeMemory( mt, freekind );
 }
 
 void MemoryManager::freeStackMemory(Location addr)
@@ -846,7 +904,8 @@ void MemoryManager::freeStackMemory(Location addr)
     MemoryType* mt = findContainingMem(addr, 1);
 
     checkDeallocationAddress(mt, addr, akStack);
-    freeMemory( findContainingMem(addr, 1), mt->howCreated() );
+    memtypecache.clear(*mt);
+    freeMemory( mt, mt->howCreated() );
 }
 
 
@@ -919,6 +978,8 @@ MemoryManager::checkWrite(Location addr, size_t size, const RsType* t)
 
     // the address has to be inside the block
     assert(mt && mt->containsMemArea(addr, size));
+    const long    blocksize = mt->blockSize();
+    const size_t  ofs = byte_offset(mt->beginAddress(), addr, blocksize, 0);
 
     if (t)
     {
@@ -931,13 +992,10 @@ MemoryManager::checkWrite(Location addr, size_t size, const RsType* t)
         rs->printMessage(msg.str());
       }
 
-      const long   blocksize = mt->blockSize();
-      const size_t ofs = byte_offset(mt->beginAddress(), addr, blocksize, 0);
-
       statuschange = mt->registerMemType(addr, ofs, t);
     }
 
-    statuschange = mt->initialize(addr, size) || statuschange;
+    statuschange = mt->initialize(ofs, size) || statuschange;
 
     if ( diagnostics::message(diagnostics::memory) )
     {

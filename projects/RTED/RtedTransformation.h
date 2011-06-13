@@ -29,7 +29,7 @@ SgScopeStatement* get_scope(SgInitializedName* initname)
 ///        C, C++, or UPC program.
 /// \note  recognizes UPC main functions (as opposed to SageInterface::isMain)
 // \pp \todo integrate into SageInterface::isMain
-bool is_main_func(const SgFunctionDefinition* func);
+bool is_main_func(const SgFunctionDefinition& func);
 
 /// \brief builds a UPC barrier statement
 // \pp \todo integrate into SageBuilder
@@ -628,7 +628,7 @@ public:
    // void insertNamespaceIntoSourceFile(SgProject* project, std::vector<SgClassDeclaration*>&);
 
    void populateDimensions( RtedArray& array, SgInitializedName& init, SgArrayType& type );
-   void transformIfMain(SgFunctionDefinition* const);
+   void transformIfMain(SgFunctionDefinition&);
 
    //
    // dependencies on AstSimpleProcessing

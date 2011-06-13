@@ -400,8 +400,10 @@ int shareHeapAllocInfo(rted_AllocKind allocKind)
 static
 int inSharedRegion(rted_Address addr)
 {
+  const char pseudo_limit; // see comment at rted_ThisShmemLimit
+
   return (  addr.local >= localBaseAddr
-         && addr.local <  rted_ThisShmemLimit()
+         && addr.local <  &pseudo_limit
          );
 }
 
@@ -506,7 +508,10 @@ void snd_InitVariable( rted_TypeDesc    td,
   // other threads can only deref shared addresses;
   if (!inSharedRegion(address) || (pointer_move && !inSharedRegion(heap_address))) return;
 
-  assert(td.desc.shared_mask != 0);
+  // \note td.desc.shared_mask != 0 is NOT the same as testing whether an
+  //       address is in the shared memory region.
+  //       The shared mask test does not include C - pointers to the local
+  //       shared memory region.
 
   const rted_szTypeDesc td_len = msgsz_TypeDesc(td);
   const size_t          cn_len = msgsz_String(class_name);
@@ -566,7 +571,7 @@ void snd_MovePointer( rted_TypeDesc td,
   //       addresses, therefore we might need to share this info.
   if (!inSharedRegion(address)) return;
 
-  assert(td.desc.shared_mask != 0);
+  // \note see snd_InitVariable (td.desc.shared_mask != 0);
 
   const rted_szTypeDesc td_len = msgsz_TypeDesc(td);
   const size_t          cn_len = msgsz_String(class_name);
