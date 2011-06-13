@@ -67,6 +67,12 @@ public:
         abort();
     }
 
+    /* Called by RDTSC to return time stamp counter.  The simulator doesn't really have a time stamp counter, so we'll just
+     * return the number of instructions simulated (counting the RDTSC itself) instead. */
+    VirtualMachineSemantics::ValueType<64> rdtsc() {
+        return get_ninsns();
+    }
+
     /* Called by X86InstructionSemantics for the CPUID instruction */
     void cpuid();
 
