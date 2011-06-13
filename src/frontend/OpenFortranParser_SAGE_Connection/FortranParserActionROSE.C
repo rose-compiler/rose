@@ -18699,19 +18699,19 @@ void c_action_end_of_stmt(Token_t * eos)
  * start_of_file
  *
  * @param filename The name of the file
- * @param path The full path of the file
+ * @param filepath The full path of the file
  *
- * Modified v0.8.3 (path argument added)
+ * Modified v0.8.3 (filepath argument added)
  */
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 3
-void c_action_start_of_file(const char *filename, const char *path)
+void c_action_start_of_file(const char *filename, const char *filepath)
 #else
-void c_action_start_of_file(const char *filename)
+void c_action_start_of_file(const char *filepath)
 #endif
    {
     // New function to support Fortran include mechanism
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_start_of_file(%s) \n",filename);
+          printf ("In c_action_start_of_file(%s) \n",filepath);
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -18723,15 +18723,15 @@ void c_action_start_of_file(const char *filename)
 
   // DXN: We create a SgFortranIncludeLine node only when the current file is not a top level file
   // and is not an rmod file.  When parsing a top level file, the astIncludeStack should be empty.
-     if (!astIncludeStack.empty() && !isARoseModuleFile(filename))
+     if (!astIncludeStack.empty() && !isARoseModuleFile(filepath))
         {
        // After the first time, ever call to this function is significant (represents use of the
        // Fortran include mechanism; not formally a part of the language grammar).
 
-          SgFortranIncludeLine* includeLine = new SgFortranIncludeLine(filename);
+          SgFortranIncludeLine* includeLine = new SgFortranIncludeLine(filepath);
 
           if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-               printf ("Note: Need a token to represent the the filename so that we can get the position of the include statment \n");
+               printf ("Note: Need a token to represent the filename so that we can get the position of the include statement\n");
 
        // Get the last statment (this is an expensive way to do that).
           SgScopeStatement* scope = astScopeStack.front();
@@ -18754,7 +18754,7 @@ void c_action_start_of_file(const char *filename)
 
           Sg_File_Info* fileInfo = new Sg_File_Info(filenameOfIncludeLocation,lineNumberOfLastStatement,columnNumber);
 
-       // We need a way to get the source position o fthe Fortran include line.
+       // We need a way to get the source position of the Fortran include line.
        // setSourcePositionCompilerGenerated(includeLine);
        // setSourcePosition(includeLine);
           includeLine->set_file_info(fileInfo);
@@ -18771,7 +18771,7 @@ void c_action_start_of_file(const char *filename)
        // files the call to c_action_start_of_file() is triggered by a symantic
        // handling of the use statement, not the existance of the Fortran include
        // so it should be a mistake to insert an Fortran include statement!
-       // ROSE_ASSERT(includeLine->get_file_info()->get_filenameString() != string(filename));
+       // ROSE_ASSERT(includeLine->get_file_info()->get_filenameString() != string(filepath));
 
           ROSE_ASSERT(astScopeStack.empty() == false);
 
@@ -18782,7 +18782,8 @@ void c_action_start_of_file(const char *filename)
           includeLine->set_firstNondefiningDeclaration(includeLine); 
         }
 
-     astIncludeStack.push_back(filename);
+     astIncludeStack.push_back(filepath);
+
 #if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of c_action_start_of_file()");
@@ -18793,15 +18794,15 @@ void c_action_start_of_file(const char *filename)
  * end_of_file
  *
  * @param filename The name of the file
- * @param path The full path of the file
+ * @param filepath The full path of the file
  *
  * Modified v0.7.2 (filename argument added)
- * Modified v0.8.3 (path argument added)
+ * Modified v0.8.3 (filepath argument added)
  */
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 3
-void c_action_end_of_file(const char *filename, const char *path)
+void c_action_end_of_file(const char *filename, const char *filepath)
 #else
-void c_action_end_of_file(const char *filename)
+void c_action_end_of_file(const char *filepath)
 #endif
    {
     // New function to support Fortran include mechanism

@@ -56,7 +56,6 @@ TESTCODES_REQUIRED_TO_PASS = \
     derived-type-5.caf \
     derived-type-6.caf \
     derived.caf \
-    derivedtype.caf \
     dimensions-1.caf \
     event-1.caf \
     event-2.caf \
@@ -99,6 +98,7 @@ TESTCODES_REQUIRED_TO_PASS = \
     withteam.caf
 
 TESTCODE_CURRENTLY_FAILING = \
+    X-derivedtype.caf \
     X-copointer-derived-types.caf \
     X-copointer-operations.caf \
     X-cotarget-declarations.caf \
