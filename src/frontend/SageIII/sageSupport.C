@@ -5475,7 +5475,17 @@ global_build_classpath()
   // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar", "lib/antlr-runtime-3.0.1.jar") + ":";
   // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar", "lib/stringtemplate-3.1b1.jar") + ":";
   // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
-     classpath += findRoseSupportPathFromSource("src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
+
+     // CER (6/6/2011): Added support for OFP version 0.8.3 which requires antlr-3.3-complete.jar.  
+     //
+     ROSE_ASSERT(ROSE_OFP_MAJOR_VERSION_NUMBER >= 0);
+     ROSE_ASSERT(ROSE_OFP_MINOR_VERSION_NUMBER >= 8);
+     if (ROSE_OFP_PATCH_VERSION_NUMBER >= 3) {
+        classpath += findRoseSupportPathFromSource("src/3rdPartyLibraries/antlr-jars/antlr-3.3-complete.jar", "lib/antlr-3.3-complete.jar") + ":";
+     }
+     else {
+        classpath += findRoseSupportPathFromSource("src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
+     }
 
   // Open Fortran Parser (OFP) support (this is the jar file)
      string ofp_jar_file_name = string("OpenFortranParser-") + StringUtility::numberToString(ROSE_OFP_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_MINOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_PATCH_VERSION_NUMBER) + string(".jar");
