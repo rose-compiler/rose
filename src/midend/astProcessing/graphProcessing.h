@@ -1087,8 +1087,9 @@ solvePaths(SgIncidenceDirectedGraph* g, SgGraphNode* n, SgGraphNode* endnode) {
                                 path.clear();
                             }
                             path.push_back(marks.back());
-                            if (mkpath.back() != marks.back()) {
-                            mkpath.push_back(marks.back());
+                            if ( mkpath.empty() || (mkpath.back() != marks.back()) ) {
+                                ROSE_ASSERT(!marks.empty());
+                                mkpath.push_back(marks.back());
                             }
                             taken.insert(tooked);
                             took = tooked->get_to();

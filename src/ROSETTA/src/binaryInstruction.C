@@ -20,7 +20,8 @@ Grammar::setUpBinaryInstructions ()
 
      NEW_TERMINAL_MACRO ( AsmBlock        , "AsmBlock",        "AsmBlockTag" );
      NEW_TERMINAL_MACRO ( AsmOperandList  , "AsmOperandList",  "AsmOperandListTag" );
-
+     NEW_TERMINAL_MACRO(AsmTarget, "AsmTarget", "AsmTargetTag");
+     NEW_TERMINAL_MACRO(AsmTargetList, "AsmTargetList", "AsmTargetListTag");
 
      NEW_TERMINAL_MACRO(AsmArmInstruction, "AsmArmInstruction", "AsmArmInstructionTag");
      AsmArmInstruction.setFunctionPrototype("HEADER_BINARY_ARM_INSTRUCTION", "../Grammar/BinaryInstruction.code");
@@ -463,7 +464,8 @@ Grammar::setUpBinaryInstructions ()
 
      NEW_NONTERMINAL_MACRO (AsmNode,
                             AsmStatement | AsmExpression | AsmInterpretation | AsmOperandList | AsmType |
-                            AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList,
+                            AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList | AsmTarget |
+                            AsmTargetList,
                             "AsmNode","AsmNodeTag", false);
 
   // DQ (3/15/2007): Added support forbinaries (along lines of suggestions by Thomas Dullien)
@@ -508,6 +510,18 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
+     // Link to a SgAsmBlock - This is more than a SgAsmBlockPtr.  SgAsmBlockPtr can only point to a block, but sometimes
+     // we need to represent an address that has no block.
+     AsmTarget.setFunctionPrototype("HEADER_BINARY_TARGET", "../Grammar/BinaryInstruction.code");
+     AsmTarget.setDataPrototype("rose_addr_t", "address", "= 0",        /*doxygen*/
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmTarget.setDataPrototype("SgAsmBlock*", "block", "= NULL",       /*doxygen*/
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AsmTargetList.setFunctionPrototype("HEADER_BINARY_TARGET_LIST", "../Grammar/BinaryInstruction.code");
+     AsmTargetList.setDataPrototype("SgAsmTargetPtrList", "targets", "",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
 
      // Instruction basic block. One entry point (first instruction) and one exit point (last instruction).
      AsmBlock.setFunctionPrototype( "HEADER_BINARY_BLOCK", "../Grammar/BinaryInstruction.code");
@@ -519,9 +533,13 @@ Grammar::setUpBinaryInstructions ()
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      AsmBlock.setDataPrototype("SgAsmStatementPtrList","statementList","", //in order of execution
                                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AsmBlock.setDataPrototype("SgAddressList", "cached_successors", "",
+     AsmBlock.setDataPrototype("SgAsmTargetPtrList", "successors", "",
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmBlock.setDataPrototype("bool", "successors_complete", "= false",
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmBlock.setDataPrototype("bool", "complete_successors", "= false", // are all successors known and cached?
+     AsmBlock.setDataPrototype("SgAsmBlock*", "immediate_dominator", "=NULL",
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmBlock.setDataPrototype("size_t", "cached_vertex", "= (size_t)(-1)", // see BinaryAnalysis::ControlFlow
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
@@ -1984,6 +2002,8 @@ Grammar::setUpBinaryInstructions ()
      AsmFunctionDeclaration.setDataPrototype("SgSymbolTable*", "symbol_table", "= NULL",
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE,
                                              NO_COPY_DATA);
+     AsmFunctionDeclaration.setDataPrototype("size_t", "cached_vertex", "= (size_t)(-1)", // see BinaryAnalysis::FunctionCall
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
@@ -2361,6 +2381,7 @@ Grammar::setUpBinaryInstructions ()
   // Non binary File IR node support
 
      AsmBlock.setFunctionSource                    ( "SOURCE_BINARY_BLOCK", "../Grammar/BinaryInstruction.code");
+     AsmTarget.setFunctionSource                   ( "SOURCE_BINARY_TARGET", "../Grammar/BinaryInstruction.code");
      AsmOperandList.setFunctionSource              ( "SOURCE_BINARY_OPERAND_LIST", "../Grammar/BinaryInstruction.code");
      AsmDataStructureDeclaration.setFunctionSource ( "SOURCE_BINARY_DATA_STRUCTURE", "../Grammar/BinaryInstruction.code");
      AsmInstruction.setFunctionSource              ( "SOURCE_BINARY_INSTRUCTION", "../Grammar/BinaryInstruction.code");

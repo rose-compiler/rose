@@ -26,12 +26,14 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::emptyRenameTable;
 VariableRenaming::NumNodeRenameEntry VariableRenaming::emptyRenameEntry;
 
 //Printing functions
+
 std::string VariableRenaming::keyToString(const VarName& vec)
 {
     std::string name = "";
+
     foreach(const VarName::value_type& iter, vec)
     {
-        if(iter != vec.front())
+        if (iter != vec.front())
         {
             name += ":";
         }
@@ -43,11 +45,12 @@ std::string VariableRenaming::keyToString(const VarName& vec)
 
 void VariableRenaming::printDefs(SgNode* node)
 {
-    std::cout << "Def Table for [" << node->class_name() << ":" << node <<"]:" << std::endl;
+    std::cout << "Def Table for [" << node->class_name() << ":" << node << "]:" << std::endl;
 
     foreach(TableEntry::value_type& entry, defTable[node])
     {
         std::cout << "  Defs for [" << keyToString(entry.first) << "]:" << std::endl;
+
         foreach(NodeVec::value_type& iter, entry.second)
         {
             std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
@@ -59,9 +62,10 @@ void VariableRenaming::printDefs(const std::map< std::vector<SgInitializedName*>
 {
     std::cout << "Def Table:" << std::endl;
 
-    foreach(const TableEntry::value_type& entry,table)
+    foreach(const TableEntry::value_type& entry, table)
     {
         std::cout << "  Defs for [" << keyToString(entry.first) << "]:" << std::endl;
+
         foreach(const NodeVec::value_type& iter, entry.second)
         {
             std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
@@ -71,11 +75,12 @@ void VariableRenaming::printDefs(const std::map< std::vector<SgInitializedName*>
 
 void VariableRenaming::printOriginalDefs(SgNode* node)
 {
-    std::cout << "Original Def Table for [" << node->class_name() << ":" << node <<"]:" << std::endl;
+    std::cout << "Original Def Table for [" << node->class_name() << ":" << node << "]:" << std::endl;
 
     foreach(TableEntry::value_type& entry, originalDefTable[node])
     {
         std::cout << "  Defs for [" << keyToString(entry.first) << "]:" << std::endl;
+
         foreach(NodeVec::value_type& iter, entry.second)
         {
             std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
@@ -89,11 +94,12 @@ void VariableRenaming::printOriginalDefTable()
 
     foreach(DefUseTable::value_type& node, originalDefTable)
     {
-        std::cout << "  Original Def Table for [" << node.first->class_name() << ":" << node.first <<"]:" << std::endl;
+        std::cout << "  Original Def Table for [" << node.first->class_name() << ":" << node.first << "]:" << std::endl;
 
         foreach(TableEntry::value_type& entry, originalDefTable[node.first])
         {
             std::cout << "    Defs for [" << keyToString(entry.first) << "]:" << std::endl;
+
             foreach(NodeVec::value_type& iter, entry.second)
             {
                 std::cout << "      -[" << iter->class_name() << ":" << iter << "]" << std::endl;
@@ -104,11 +110,12 @@ void VariableRenaming::printOriginalDefTable()
 
 void VariableRenaming::printUses(SgNode* node)
 {
-    std::cout << "Use Table for [" << node->class_name() << ":" << node <<"]:" << std::endl;
+    std::cout << "Use Table for [" << node->class_name() << ":" << node << "]:" << std::endl;
 
-    foreach(TableEntry::value_type& entry,useTable[node])
+    foreach(TableEntry::value_type& entry, useTable[node])
     {
         std::cout << "  Uses for [" << keyToString(entry.first) << "]:" << std::endl;
+
         foreach(NodeVec::value_type& iter, entry.second)
         {
             std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
@@ -120,9 +127,10 @@ void VariableRenaming::printUses(const std::map< std::vector<SgInitializedName*>
 {
     std::cout << "Use Table:" << std::endl;
 
-    foreach(const TableEntry::value_type& entry,table)
+    foreach(const TableEntry::value_type& entry, table)
     {
         std::cout << "  Uses for [" << keyToString(entry.first) << "]:" << std::endl;
+
         foreach(const NodeVec::value_type& iter, entry.second)
         {
             std::cout << "    -[" << iter->class_name() << ":" << iter << "]" << std::endl;
@@ -147,6 +155,7 @@ void VariableRenaming::printRenameTable(const NodeNumRenameTable& table)
     cout << "Rename Table:" << endl;
 
     //Iterate the table
+
     foreach(const NodeNumRenameTable::value_type& entry, table)
     {
         cout << "  Names for [" << keyToString(entry.first) << "]:" << endl;
@@ -161,6 +170,7 @@ void VariableRenaming::printRenameTable(const NumNodeRenameTable& table)
     cout << "Rename Table:" << endl;
 
     //Iterate the table
+
     foreach(const NumNodeRenameTable::value_type& entry, table)
     {
         std::cout << "  Names for [" << keyToString(entry.first) << "]:" << std::endl;
@@ -174,42 +184,44 @@ void VariableRenaming::printRenameEntry(const NodeNumRenameEntry& entry)
 {
     int start = 0;
     int end = 0;
-    
+
     //Iterate the entry
+
     foreach(const NodeNumRenameEntry::value_type& iter, entry)
     {
-        if(start == 0 && end == 0)
+        if (start == 0 && end == 0)
         {
             start = iter.second;
             end = iter.second;
             continue;
         }
 
-        if(start > iter.second)
+        if (start > iter.second)
         {
             start = iter.second;
         }
 
-        if(end < iter.second)
+        if (end < iter.second)
         {
             end = iter.second;
         }
     }
 
-    while(start <= end)
+    while (start <= end)
     {
         SgNode* current = NULL;
         //Find the entry for start if it exists
+
         foreach(const NodeNumRenameEntry::value_type& iter, entry)
         {
-            if(iter.second == start)
+            if (iter.second == start)
             {
                 current = iter.first;
                 break;
             }
         }
 
-        if(current != NULL)
+        if (current != NULL)
         {
             cout << "      " << start << ": " << current << endl;
         }
@@ -221,6 +233,7 @@ void VariableRenaming::printRenameEntry(const NodeNumRenameEntry& entry)
 void VariableRenaming::printRenameEntry(const NumNodeRenameEntry& entry)
 {
     //Iterate the entry
+
     foreach(const NumNodeRenameEntry::value_type& iter, entry)
     {
         cout << "      " << iter.first << ": " << iter.second << endl;
@@ -229,52 +242,51 @@ void VariableRenaming::printRenameEntry(const NumNodeRenameEntry& entry)
 
 VarUniqueName* VariableRenaming::getUniqueName(SgNode* node)
 {
-    if(!node->attributeExists(VariableRenaming::varKeyTag))
+    if (!node->attributeExists(VariableRenaming::varKeyTag))
     {
         return NULL;
     }
-    VarUniqueName* uName = dynamic_cast<VarUniqueName*>(node->getAttribute(VariableRenaming::varKeyTag));
+    VarUniqueName* uName = dynamic_cast<VarUniqueName*> (node->getAttribute(VariableRenaming::varKeyTag));
     return uName;
 }
 
 VariableRenaming::VarName VariableRenaming::getVarName(SgNode* node)
 {
-    if(node == NULL || getUniqueName(node) == NULL)
+    if (node == NULL || getUniqueName(node) == NULL)
     {
         return VariableRenaming::VarName();
     }
     return getUniqueName(node)->getKey();
 }
 
-
 bool VariableRenaming::isFromLibrary(SgFunctionDeclaration* node)
 {
-  Sg_File_Info* fi = node->get_file_info();
-  if (fi->isCompilerGenerated() && !isSgTemplateInstantiationFunctionDecl(node)
-                                && !isSgTemplateInstantiationMemberFunctionDecl(node))
-  {     
-      return true;
-  }
- 
-  string filename = fi->get_filenameString();
-  //cout << "Filename string '" << filename << "' for " << node->class_name() << node << endl;
-  if ((filename.find("include") != std::string::npos))
-  {
-      //cout << "Found 'include' in string." << endl;
-      return true;
-  }
-  return false;
+    Sg_File_Info* fi = node->get_file_info();
+    if (fi->isCompilerGenerated() && !isSgTemplateInstantiationFunctionDecl(node)
+            && !isSgTemplateInstantiationMemberFunctionDecl(node))
+    {
+        return true;
+    }
+
+    string filename = fi->get_filenameString();
+    //cout << "Filename string '" << filename << "' for " << node->class_name() << node << endl;
+    if ((filename.find("include") != std::string::npos))
+    {
+        //cout << "Found 'include' in string." << endl;
+        return true;
+    }
+    return false;
 }
 
 bool VariableRenaming::isBuiltinVar(const VarName& var)
 {
-        string name = var[0]->get_name().getString();
-        if (name == "__func__" ||
-                        name == "__FUNCTION__" ||
-                        name == "__PRETTY_FUNCTION__")
-                return true;
+    string name = var[0]->get_name().getString();
+    if (name == "__func__" ||
+            name == "__FUNCTION__" ||
+            name == "__PRETTY_FUNCTION__")
+        return true;
 
-        return false;
+    return false;
 }
 
 bool VariableRenaming::isPrefixOfName(VarName name, VarName prefix)
@@ -284,16 +296,16 @@ bool VariableRenaming::isPrefixOfName(VarName name, VarName prefix)
     iter = std::search(name.begin(), name.end(), prefix.begin(), prefix.end());
 
     //If the prefix is at the beginning of the name
-    if(iter == name.begin())
+    if (iter == name.begin())
     {
         return true;
     }
-    //If the prefix is not in the name
-    else if(iter == name.end())
+        //If the prefix is not in the name
+    else if (iter == name.end())
     {
         return false;
     }
-    //Found the prefix, but inside the name instead of at beginning
+        //Found the prefix, but inside the name instead of at beginning
     else
     {
         //We don't want to assert, just return false.
@@ -302,6 +314,7 @@ bool VariableRenaming::isPrefixOfName(VarName name, VarName prefix)
 }
 
 //Function to perform the VariableRenaming and annotate the AST
+
 void VariableRenaming::run()
 {
     originalDefTable.clear();
@@ -312,62 +325,62 @@ void VariableRenaming::run()
     nodeRenameTable.clear();
     numRenameTable.clear();
 
-    if(DEBUG_MODE)
+    if (DEBUG_MODE)
         cout << "Performing UniqueNameTraversal..." << endl;
 
-    UniqueNameTraversal uniqueTrav(this, SageInterface::querySubTree<SgInitializedName>(project, V_SgInitializedName));
-    std::vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
+    UniqueNameTraversal uniqueTrav(this, SageInterface::querySubTree<SgInitializedName > (project, V_SgInitializedName));
+    std::vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition > (project, V_SgFunctionDefinition);
     std::vector<SgFunctionDefinition*>::iterator iter = funcs.begin();
-    for(;iter != funcs.end(); ++iter)
+    for (; iter != funcs.end(); ++iter)
     {
         SgFunctionDeclaration* func = (*iter)->get_declaration();
         ROSE_ASSERT(func);
-        if(!isFromLibrary(func))
+        if (!isFromLibrary(func))
         {
-            if(DEBUG_MODE)
+            if (DEBUG_MODE)
                 cout << "Running UniqueNameTrav on " << func->get_name().getString() << func << endl;
             uniqueTrav.traverse(func);
         }
     }
 
-    if(DEBUG_MODE)
+    if (DEBUG_MODE)
         cout << "Finished UniqueNameTrav..." << endl;
 
-        VariableRenaming::DefsAndUsesTraversal defUseTrav(this);
-    for(iter = funcs.begin();iter != funcs.end(); ++iter)
+    VariableRenaming::DefsAndUsesTraversal defUseTrav(this);
+    for (iter = funcs.begin(); iter != funcs.end(); ++iter)
     {
         SgFunctionDeclaration* func = (*iter)->get_declaration();
         ROSE_ASSERT(func);
-        if(!isFromLibrary(func))
+        if (!isFromLibrary(func))
         {
-            if(DEBUG_MODE)
+            if (DEBUG_MODE)
                 cout << "Running defUseTrav on function: " << func->get_name().getString() << func << endl;
             defUseTrav.traverse(func);
         }
     }
 
-    if(DEBUG_MODE)
+    if (DEBUG_MODE)
         cout << "Finished DefUseTraversal." << endl;
 
-    if(DEBUG_MODE)
+    if (DEBUG_MODE)
     {
         printOriginalDefTable();
     }
-    
-    if(DEBUG_MODE)
+
+    if (DEBUG_MODE)
         cout << "Performing DefUse." << endl;
 
-    for(iter = funcs.begin();iter != funcs.end(); ++iter)
+    for (iter = funcs.begin(); iter != funcs.end(); ++iter)
     {
         SgFunctionDefinition* func = (*iter);
         ROSE_ASSERT(func);
-        if(!isFromLibrary(func->get_declaration()))
+        if (!isFromLibrary(func->get_declaration()))
         {
-                        if(DEBUG_MODE)
-                                cout << "Inserting external variable definitions." << endl;
-                        insertDefsForExternalVariables(func->get_declaration());
+            if (DEBUG_MODE)
+                cout << "Inserting external variable definitions." << endl;
+            insertDefsForExternalVariables(func->get_declaration());
 
-            if(DEBUG_MODE)
+            if (DEBUG_MODE)
                 cout << "Running DefUse on function: " << func->get_declaration()->get_name().getString() << func << endl;
             runDefUse(func);
         }
@@ -377,99 +390,103 @@ void VariableRenaming::run()
 /** Insert defs for functions that are declared outside the function scope. */
 void VariableRenaming::insertDefsForExternalVariables(SgFunctionDeclaration* function)
 {
-        ROSE_ASSERT(function->get_definition() != NULL);
+    ROSE_ASSERT(function->get_definition() != NULL);
 
-        set<VarName> usedNames = getVarsUsedInSubtree(function);
+    set<VarName> usedNames = getVarsUsedInSubtree(function);
 
-        TableEntry& originalVarsAtFunctionEntry = originalDefTable[function->get_definition()];
-        TableEntry& expandedVarsAtFunctionEntry = expandedDefTable[function->get_definition()];
+    TableEntry& originalVarsAtFunctionEntry = originalDefTable[function->get_definition()];
+    TableEntry& expandedVarsAtFunctionEntry = expandedDefTable[function->get_definition()];
 
-        //Iterate over each used variable and check it it is declared outside of the function scope
-        foreach(const VarName& usedVar, usedNames)
+    //Iterate over each used variable and check it it is declared outside of the function scope
+
+    foreach(const VarName& usedVar, usedNames)
+    {
+        VarName rootName;
+        rootName.assign(1, usedVar[0]);
+
+        SgScopeStatement* varScope = SageInterface::getScope(rootName[0]);
+        SgScopeStatement* functionScope = function->get_definition();
+
+        //If it is a local variable, there should be a def somewhere inside the function
+        if (varScope == functionScope || SageInterface::isAncestor(functionScope, varScope))
         {
-                VarName rootName;
-                rootName.assign(1, usedVar[0]);
-
-                SgScopeStatement* varScope = SageInterface::getScope(rootName[0]);
-                SgScopeStatement* functionScope = function->get_definition();
-
-                //If it is a local variable, there should be a def somewhere inside the function
-                if (varScope == functionScope || SageInterface::isAncestor(functionScope, varScope))
-                {
-                        //We still need to insert defs for compiler-generated variables (e.g. __func__), since they don't have defs in the AST
-                        if (!isBuiltinVar(rootName))
-                                continue;
-                }
-                else if (isSgGlobal(varScope))
-                {
-                        //Handle the case of declaring "extern int x" inside the function
-                        //Then, x has global scope but it actually has a definition inside the function so we don't need to insert one
-                        if (SageInterface::isAncestor(function->get_definition(), rootName[0]))
-                        {
-                                //When else could a var be declared inside a function and be global?
-                                SgVariableDeclaration* varDecl = isSgVariableDeclaration(rootName[0]->get_parent());
-                                ROSE_ASSERT(varDecl != NULL);
-                                ROSE_ASSERT(varDecl->get_declarationModifier().get_storageModifier().isExtern());
-                                continue;
-                        }
-                }
-
-                //Are there any other types of external vars?
-                ROSE_ASSERT(isBuiltinVar(rootName) || isSgClassDefinition(varScope) || isSgNamespaceDefinitionStatement(varScope)
-                                || isSgGlobal(varScope));
-
-                //The variable is not in local scope; we need to insert a def for it at the function definition
-                for (size_t i = 0; i < usedVar.size(); i++)
-                {
-                        //Create a new varName vector that goes from beginning to end - i
-                        VarName newName;
-                        newName.assign(usedVar.begin(), usedVar.end() - i);
-                        if (originalVarsAtFunctionEntry[newName].empty())
-                        {
-                                originalVarsAtFunctionEntry[newName].push_back(function->get_definition());
-                        }
-                        ROSE_ASSERT(expandedVarsAtFunctionEntry.count(newName) == 0);
-                }
+            //We still need to insert defs for compiler-generated variables (e.g. __func__), since they don't have defs in the AST
+            if (!isBuiltinVar(rootName))
+                continue;
         }
+        else if (isSgGlobal(varScope))
+        {
+            //Handle the case of declaring "extern int x" inside the function
+            //Then, x has global scope but it actually has a definition inside the function so we don't need to insert one
+            if (SageInterface::isAncestor(function->get_definition(), rootName[0]))
+            {
+                //When else could a var be declared inside a function and be global?
+                SgVariableDeclaration* varDecl = isSgVariableDeclaration(rootName[0]->get_parent());
+                ROSE_ASSERT(varDecl != NULL);
+                ROSE_ASSERT(varDecl->get_declarationModifier().get_storageModifier().isExtern());
+                continue;
+            }
+        }
+
+        //Are there any other types of external vars?
+        ROSE_ASSERT(isBuiltinVar(rootName) || isSgClassDefinition(varScope) || isSgNamespaceDefinitionStatement(varScope)
+                || isSgGlobal(varScope));
+
+        //The variable is not in local scope; we need to insert a def for it at the function definition
+        for (size_t i = 0; i < usedVar.size(); i++)
+        {
+            //Create a new varName vector that goes from beginning to end - i
+            VarName newName;
+            newName.assign(usedVar.begin(), usedVar.end() - i);
+            if (originalVarsAtFunctionEntry[newName].empty())
+            {
+                originalVarsAtFunctionEntry[newName].push_back(function->get_definition());
+            }
+            ROSE_ASSERT(expandedVarsAtFunctionEntry.count(newName) == 0);
+        }
+    }
 }
 
 /** Returns a set of all the variables names that have uses in the subtree. */
 set<VariableRenaming::VarName> VariableRenaming::getVarsUsedInSubtree(SgNode* root)
 {
-        class CollectUsesVarsTraversal : public AstSimpleProcessing
+
+    class CollectUsesVarsTraversal : public AstSimpleProcessing
+    {
+    public:
+        VariableRenaming* ssa;
+
+        //All the varNames that have uses in the function
+        set<VarName> usedNames;
+
+        void visit(SgNode* node)
         {
-        public:
-                VariableRenaming* ssa;
+            DefUseTable::const_iterator defEntry = ssa->useTable.find(node);
+            if (defEntry != ssa->useTable.end())
+            {
 
-                //All the varNames that have uses in the function
-                set<VarName> usedNames;
-
-                void visit(SgNode* node)
+                foreach(TableEntry::value_type& varDefsPair, ssa->useTable[node])
                 {
-                        DefUseTable::const_iterator defEntry = ssa->useTable.find(node);
-                        if (defEntry != ssa->useTable.end())
-                        {
-                                foreach(TableEntry::value_type& varDefsPair, ssa->useTable[node])
-                                {
-                                        usedNames.insert(varDefsPair.first);
-                                }
-                        }
-
-                        defEntry = ssa->originalDefTable.find(node);
-                        if (defEntry != ssa->originalDefTable.end())
-                        {
-                                foreach(TableEntry::value_type& varDefsPair, ssa->originalDefTable[node])
-                                {
-                                        usedNames.insert(varDefsPair.first);
-                                }
-                        }
+                    usedNames.insert(varDefsPair.first);
                 }
-        };
+            }
 
-        CollectUsesVarsTraversal usesTrav;
-        usesTrav.ssa = this;
-        usesTrav.traverse(root, preorder);
-        return usesTrav.usedNames;
+            defEntry = ssa->originalDefTable.find(node);
+            if (defEntry != ssa->originalDefTable.end())
+            {
+
+                foreach(TableEntry::value_type& varDefsPair, ssa->originalDefTable[node])
+                {
+                    usedNames.insert(varDefsPair.first);
+                }
+            }
+        }
+    };
+
+    CollectUsesVarsTraversal usesTrav;
+    usesTrav.ssa = this;
+    usesTrav.traverse(root, preorder);
+    return usesTrav.usedNames;
 }
 
 void VariableRenaming::toDOT(const std::string fileName)
@@ -477,17 +494,18 @@ void VariableRenaming::toDOT(const std::string fileName)
     ROSE_ASSERT(fileName != "");
 
     typedef std::vector<SgSourceFile*> fileVec;
-    fileVec files = SageInterface::querySubTree<SgSourceFile>(project, V_SgSourceFile);
+    fileVec files = SageInterface::querySubTree<SgSourceFile > (project, V_SgSourceFile);
 
     //print all the functions in each file
+
     foreach(fileVec::value_type& file, files)
     {
         ofstream outFile((StringUtility::stripPathFromFileName(file->getFileName())
-                            + "_" + fileName).c_str());
+                + "_" + fileName).c_str());
 
-        if(!outFile.good())
+        if (!outFile.good())
         {
-            if(DEBUG_MODE)
+            if (DEBUG_MODE)
                 cout << "Error printing DOT." << endl;
 
             return;
@@ -503,17 +521,18 @@ void VariableRenaming::toFilteredDOT(const std::string fileName)
     ROSE_ASSERT(fileName != "");
 
     typedef std::vector<SgSourceFile*> fileVec;
-    fileVec files = SageInterface::querySubTree<SgSourceFile>(project, V_SgSourceFile);
+    fileVec files = SageInterface::querySubTree<SgSourceFile > (project, V_SgSourceFile);
 
     //print all the functions in each file
+
     foreach(fileVec::value_type& file, files)
     {
         ofstream outFile((StringUtility::stripPathFromFileName(file->getFileName())
-                            + "_filtered_" + fileName).c_str());
+                + "_filtered_" + fileName).c_str());
 
-        if(!outFile.good())
+        if (!outFile.good())
         {
-            if(DEBUG_MODE)
+            if (DEBUG_MODE)
                 cout << "Error printing DOT." << endl;
 
             return;
@@ -526,9 +545,9 @@ void VariableRenaming::toFilteredDOT(const std::string fileName)
 
 void VariableRenaming::printToDOT(SgSourceFile* source, std::ofstream &outFile)
 {
-    if(!outFile.good())
+    if (!outFile.good())
     {
-        if(DEBUG_MODE)
+        if (DEBUG_MODE)
             cout << "Error: Bad ofstream in printToDOT()" << endl;
         return;
     }
@@ -537,12 +556,13 @@ void VariableRenaming::printToDOT(SgSourceFile* source, std::ofstream &outFile)
     typedef CFGEdge cfgEdge;
 
     typedef std::vector<SgFunctionDefinition*> funcDefVec;
-    funcDefVec funcs = SageInterface::querySubTree<SgFunctionDefinition>(source, V_SgFunctionDefinition);
+    funcDefVec funcs = SageInterface::querySubTree<SgFunctionDefinition > (source, V_SgFunctionDefinition);
 
     //Start the graph
     outFile << "digraph SSAGraph {\n";
 
     //Iterate all the functions and print them in the same file.
+
     foreach(funcDefVec::value_type& func, funcs)
     {
         vector<cfgNode> visited;
@@ -551,12 +571,12 @@ void VariableRenaming::printToDOT(SgSourceFile* source, std::ofstream &outFile)
 
         traverse.push(current);
 
-        while(!traverse.empty())
+        while (!traverse.empty())
         {
             current = traverse.top();
 
             //If not visited
-            if(std::count(visited.begin(),visited.end(),current) == 0)
+            if (std::count(visited.begin(), visited.end(), current) == 0)
             {
                 //Visit the node and print it
                 std::string id = current.id();
@@ -572,9 +592,9 @@ void VariableRenaming::printToDOT(SgSourceFile* source, std::ofstream &outFile)
                     nodeColor = "red";
 
                 std::string name = "";
-                if(uniqueName)
+                if (uniqueName)
                 {
-                    if(DEBUG_MODE)
+                    if (DEBUG_MODE)
                         cout << "Getting Unique Name attribute." << endl;
                     VarUniqueName *attr = getUniqueName(current.getNode());
                     ROSE_ASSERT(attr);
@@ -584,9 +604,11 @@ void VariableRenaming::printToDOT(SgSourceFile* source, std::ofstream &outFile)
 
                 //Print the defs to a string
                 std::stringstream defUse;
+
                 foreach(TableEntry::value_type& entry, defTable[current.getNode()])
                 {
                     defUse << "Def [" << keyToString(entry.first) << "]: ";
+
                     foreach(NodeVec::value_type& val, entry.second)
                     {
                         defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
@@ -594,9 +616,11 @@ void VariableRenaming::printToDOT(SgSourceFile* source, std::ofstream &outFile)
                     defUse << "\\n";
                 }
                 //Print the uses to a string
+
                 foreach(TableEntry::value_type& entry, useTable[current.getNode()])
                 {
                     defUse << "Use [" << keyToString(entry.first) << "]: ";
+
                     foreach(NodeVec::value_type& val, entry.second)
                     {
                         defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
@@ -605,16 +629,16 @@ void VariableRenaming::printToDOT(SgSourceFile* source, std::ofstream &outFile)
                 }
 
                 //Copy out the string and trim off the last '\n'
-                std::string defUseStr = defUse.str().substr(0,defUse.str().size()-2);
+                std::string defUseStr = defUse.str().substr(0, defUse.str().size() - 2);
 
 
                 //Print this node
-                outFile << id << " [label=\"<"  << escapeString(current.getNode()->class_name()) << ">:" << current.getNode()
+                outFile << id << " [label=\"<" << escapeString(current.getNode()->class_name()) << ">:" << current.getNode()
                         //Now we add the unique name information
-                        << ((name != "")? "\\n" : "") << name
-                        << ((defUseStr != "")? "\\n" : "") << defUseStr
+                        << ((name != "") ? "\\n" : "") << name
+                        << ((defUseStr != "") ? "\\n" : "") << defUseStr
                         << "\", color=\"" << nodeColor << "\", style=\""
-                        << (current.isInteresting()? "solid" : "dotted") << "\"];\n";
+                        << (current.isInteresting() ? "solid" : "dotted") << "\"];\n";
 
                 //Now print the out edges
                 std::vector<cfgEdge> outEdges = current.outEdges();
@@ -630,10 +654,11 @@ void VariableRenaming::printToDOT(SgSourceFile* source, std::ofstream &outFile)
             visited.push_back(current);
 
             std::vector<cfgEdge> outEdges = current.outEdges();
+
             foreach(std::vector<cfgEdge>::value_type& edge, outEdges)
             {
                 //If we haven't seen the target of this node yet, process the node
-                if(std::count(visited.begin(),visited.end(),edge.target()) == 0)
+                if (std::count(visited.begin(), visited.end(), edge.target()) == 0)
                 {
                     traverse.push(edge.target());
                     break;
@@ -641,13 +666,14 @@ void VariableRenaming::printToDOT(SgSourceFile* source, std::ofstream &outFile)
             }
 
             //If there are no new out edges to explore
-            if(traverse.top() == current)
+            if (traverse.top() == current)
             {
                 std::vector<cfgEdge> inEdges = current.inEdges();
+
                 foreach(std::vector<cfgEdge>::value_type& edge, inEdges)
                 {
                     //If we haven't seen the target of this node yet, process the node
-                    if(std::count(visited.begin(),visited.end(),edge.target()) == 0)
+                    if (std::count(visited.begin(), visited.end(), edge.target()) == 0)
                     {
                         traverse.push(edge.source());
                         break;
@@ -656,7 +682,7 @@ void VariableRenaming::printToDOT(SgSourceFile* source, std::ofstream &outFile)
             }
 
             //No out or in edges left to print, pop this node
-            if(traverse.top() == current)
+            if (traverse.top() == current)
             {
                 traverse.pop();
             }
@@ -669,9 +695,9 @@ void VariableRenaming::printToDOT(SgSourceFile* source, std::ofstream &outFile)
 
 void VariableRenaming::printToFilteredDOT(SgSourceFile* source, std::ofstream& outFile)
 {
-    if(!outFile.good())
+    if (!outFile.good())
     {
-        if(DEBUG_MODE)
+        if (DEBUG_MODE)
             cout << "Error: Bad ofstream in printToDOT()" << endl;
         return;
     }
@@ -680,12 +706,13 @@ void VariableRenaming::printToFilteredDOT(SgSourceFile* source, std::ofstream& o
     typedef FilteredCFGEdge<IsDefUseFilter> cfgEdge;
 
     typedef std::vector<SgFunctionDefinition*> funcDefVec;
-    funcDefVec funcs = SageInterface::querySubTree<SgFunctionDefinition>(source, V_SgFunctionDefinition);
+    funcDefVec funcs = SageInterface::querySubTree<SgFunctionDefinition > (source, V_SgFunctionDefinition);
 
     //Start the graph
     outFile << "digraph SSAGraph {\n";
 
     //Iterate all the functions and print them in the same file.
+
     foreach(funcDefVec::value_type& func, funcs)
     {
         vector<cfgNode> visited;
@@ -694,12 +721,12 @@ void VariableRenaming::printToFilteredDOT(SgSourceFile* source, std::ofstream& o
 
         traverse.push(current);
 
-        while(!traverse.empty())
+        while (!traverse.empty())
         {
             current = traverse.top();
 
             //If not visited
-            if(std::count(visited.begin(),visited.end(),current) == 0)
+            if (std::count(visited.begin(), visited.end(), current) == 0)
             {
                 //Visit the node and print it
                 std::string id = current.id();
@@ -715,9 +742,9 @@ void VariableRenaming::printToFilteredDOT(SgSourceFile* source, std::ofstream& o
                     nodeColor = "red";
 
                 std::string name = "";
-                if(uniqueName)
+                if (uniqueName)
                 {
-                    if(DEBUG_MODE)
+                    if (DEBUG_MODE)
                         cout << "Getting Unique Name attribute." << endl;
                     VarUniqueName *attr = getUniqueName(current.getNode());
                     ROSE_ASSERT(attr);
@@ -727,9 +754,11 @@ void VariableRenaming::printToFilteredDOT(SgSourceFile* source, std::ofstream& o
 
                 //Print the defs to a string
                 std::stringstream defUse;
+
                 foreach(TableEntry::value_type& entry, defTable[current.getNode()])
                 {
                     defUse << "Def [" << keyToString(entry.first) << "]: ";
+
                     foreach(NodeVec::value_type& val, entry.second)
                     {
                         defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
@@ -737,9 +766,11 @@ void VariableRenaming::printToFilteredDOT(SgSourceFile* source, std::ofstream& o
                     defUse << "\\n";
                 }
                 //Print the uses to a string
+
                 foreach(TableEntry::value_type& entry, useTable[current.getNode()])
                 {
                     defUse << "Use [" << keyToString(entry.first) << "]: ";
+
                     foreach(NodeVec::value_type& val, entry.second)
                     {
                         defUse << getRenameNumberForNode(entry.first, val) << ": " << val << ", ";
@@ -748,16 +779,16 @@ void VariableRenaming::printToFilteredDOT(SgSourceFile* source, std::ofstream& o
                 }
 
                 //Copy out the string and trim off the last '\n'
-                std::string defUseStr = defUse.str().substr(0,defUse.str().size()-2);
+                std::string defUseStr = defUse.str().substr(0, defUse.str().size() - 2);
 
 
                 //Print this node
-                outFile << id << " [label=\"<"  << escapeString(current.getNode()->class_name()) << ">:" << current.getNode()
+                outFile << id << " [label=\"<" << escapeString(current.getNode()->class_name()) << ">:" << current.getNode()
                         //Now we add the unique name information
-                        << ((name != "")? "\\n" : "") << name
-                        << ((defUseStr != "")? "\\n" : "") << defUseStr
+                        << ((name != "") ? "\\n" : "") << name
+                        << ((defUseStr != "") ? "\\n" : "") << defUseStr
                         << "\", color=\"" << nodeColor << "\", style=\""
-                        << (current.isInteresting()? "solid" : "dotted") << "\"];\n";
+                        << (current.isInteresting() ? "solid" : "dotted") << "\"];\n";
 
                 //Now print the out edges
                 std::vector<cfgEdge> outEdges = current.outEdges();
@@ -773,10 +804,11 @@ void VariableRenaming::printToFilteredDOT(SgSourceFile* source, std::ofstream& o
             visited.push_back(current);
 
             std::vector<cfgEdge> outEdges = current.outEdges();
+
             foreach(std::vector<cfgEdge>::value_type& edge, outEdges)
             {
                 //If we haven't seen the target of this node yet, process the node
-                if(std::count(visited.begin(),visited.end(),edge.target()) == 0)
+                if (std::count(visited.begin(), visited.end(), edge.target()) == 0)
                 {
                     traverse.push(edge.target());
                     break;
@@ -784,13 +816,14 @@ void VariableRenaming::printToFilteredDOT(SgSourceFile* source, std::ofstream& o
             }
 
             //If there are no new out edges to explore
-            if(traverse.top() == current)
+            if (traverse.top() == current)
             {
                 std::vector<cfgEdge> inEdges = current.inEdges();
+
                 foreach(std::vector<cfgEdge>::value_type& edge, inEdges)
                 {
                     //If we haven't seen the target of this node yet, process the node
-                    if(std::count(visited.begin(),visited.end(),edge.target()) == 0)
+                    if (std::count(visited.begin(), visited.end(), edge.target()) == 0)
                     {
                         traverse.push(edge.source());
                         break;
@@ -799,48 +832,49 @@ void VariableRenaming::printToFilteredDOT(SgSourceFile* source, std::ofstream& o
             }
 
             //No out or in edges left to print, pop this node
-            if(traverse.top() == current)
+            if (traverse.top() == current)
             {
                 traverse.pop();
             }
         }
     }
-   
+
     //End the graph
     outFile << "}\n";
 }
 
 SgInitializedName* VariableRenaming::UniqueNameTraversal::resolveTemporaryInitNames(SgInitializedName* name)
 {
-        //Initialized names are children of varRefs when names are used before they are declared (possible in class definitions)
-        if (isSgVarRefExp(name->get_parent()))
-        {
-                foreach(SgInitializedName* otherName, allInitNames)
-                {
-                        if (otherName->get_prev_decl_item() == name)
-                                return otherName;
-                }
-        }
+    //Initialized names are children of varRefs when names are used before they are declared (possible in class definitions)
+    if (isSgVarRefExp(name->get_parent()))
+    {
 
-        //Class variables defined in constructor pre-initializer lists have an extra initialized name there (so there can be an assign
-        // initializer). Track down the real initialized name corresponding to the declaration of the variable inside a class scope
-        if (isSgCtorInitializerList(name->get_declaration()))
+        foreach(SgInitializedName* otherName, allInitNames)
         {
-                if (name->get_prev_decl_item() != NULL)
-                        return name->get_prev_decl_item();
+            if (otherName->get_prev_decl_item() == name)
+                return otherName;
         }
+    }
 
-        return name;
+    //Class variables defined in constructor pre-initializer lists have an extra initialized name there (so there can be an assign
+    // initializer). Track down the real initialized name corresponding to the declaration of the variable inside a class scope
+    if (isSgCtorInitializerList(name->get_declaration()))
+    {
+        if (name->get_prev_decl_item() != NULL)
+            return name->get_prev_decl_item();
+    }
+
+    return name;
 }
 
 VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs)
 {
-    if(varRename->getDebugExtra())
+    if (varRename->getDebugExtra())
     {
         cout << "Examining " << node->class_name() << node << endl;
     }
     //First we check if this is an initName
-    if(isSgInitializedName(node))
+    if (isSgInitializedName(node))
     {
         SgInitializedName* name = resolveTemporaryInitNames(isSgInitializedName(node));
 
@@ -850,12 +884,12 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
 
         return VariableRenaming::VarRefSynthAttr(name);
     }
-    //Next, see if it is a varRef
-    else if(isSgVarRefExp(node))
+        //Next, see if it is a varRef
+    else if (isSgVarRefExp(node))
     {
         SgVarRefExp* var = isSgVarRefExp(node);
 
-        if(attrs.size() != 0)
+        if (attrs.size() != 0)
         {
             cout << "Error: Found VarRef with children." << endl;
             ROSE_ASSERT(false);
@@ -867,13 +901,13 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
 
         return VariableRenaming::VarRefSynthAttr(var);
     }
-    //We check if it is a 'this' expression, since we want to be able to version 'this' as well.
-    //We don't have an SgInitializedName for 'this', so we use a flag in the unique names
-    else if(isSgThisExp(node))
+        //We check if it is a 'this' expression, since we want to be able to version 'this' as well.
+        //We don't have an SgInitializedName for 'this', so we use a flag in the unique names
+    else if (isSgThisExp(node))
     {
         SgThisExp* thisExp = isSgThisExp(node);
 
-        if(attrs.size() != 0)
+        if (attrs.size() != 0)
         {
             cout << "Error: Found ThisExp with children." << endl;
             ROSE_ASSERT(false);
@@ -881,10 +915,10 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
 
         return VariableRenaming::VarRefSynthAttr(thisExp);
     }
-    //Now we check if we have reached a Dot Expression, where we have to merge names.
-    else if(isSgDotExp(node))
+        //Now we check if we have reached a Dot Expression, where we have to merge names.
+    else if (isSgDotExp(node))
     {
-        if(attrs.size() != 2)
+        if (attrs.size() != 2)
         {
             cout << "Error: Found dot operator without exactly 2 children." << endl;
             ROSE_ASSERT(false);
@@ -892,11 +926,11 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
 
         //We want to update the naming for the RHS child
         //Check if the LHS has at least one varRef
-        if(attrs[0].getRefs().size() > 0)
+        if (attrs[0].getRefs().size() > 0)
         {
             bool thisExp = false;
             //Check if our LHS varRef is the 'this' expression
-            if(isSgThisExp(attrs[0].getRefs()[attrs[0].getRefs().size() - 1]))
+            if (isSgThisExp(attrs[0].getRefs()[attrs[0].getRefs().size() - 1]))
             {
                 thisExp = true;
             }
@@ -904,40 +938,40 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
             //Get the unique name from the highest varRef in the LHS, since this will have the most
             //fully qualified UniqueName.
             VarUniqueName* lhsName;
-            if(!thisExp)
+            if (!thisExp)
             {
-                lhsName = dynamic_cast<VarUniqueName*>(attrs[0].getRefs()[attrs[0].getRefs().size() - 1]->getAttribute(VariableRenaming::varKeyTag));
+                lhsName = dynamic_cast<VarUniqueName*> (attrs[0].getRefs()[attrs[0].getRefs().size() - 1]->getAttribute(VariableRenaming::varKeyTag));
                 ROSE_ASSERT(lhsName);
             }
 
             //Check if the RHS has a single varRef
-            if(attrs[1].getRefs().size() == 1)
+            if (attrs[1].getRefs().size() == 1)
             {
                 SgVarRefExp* varRef = isSgVarRefExp(attrs[1].getRefs()[0]);
 
-                if(varRef)
+                if (varRef)
                 {
-                    if(!thisExp)
+                    if (!thisExp)
                     {
                         //Create the uniqueName from the uniqueName of the lhs prepended to the rhs uniqueName
-                        VarUniqueName* uName = new VarUniqueName(lhsName->getKey(), 
-                                                                resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
+                        VarUniqueName* uName = new VarUniqueName(lhsName->getKey(),
+                                resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
                         uName->setUsesThis(lhsName->getUsesThis());
-                        varRef->setAttribute(VariableRenaming::varKeyTag,uName);
+                        varRef->setAttribute(VariableRenaming::varKeyTag, uName);
 
                         VarUniqueName* uName2 = new VarUniqueName(*uName);
-                        node->setAttribute(VariableRenaming::varKeyTag,uName2);
+                        node->setAttribute(VariableRenaming::varKeyTag, uName2);
                     }
                     else
                     {
                         //Create the UniqueName from the current varRef, and stores that it uses 'this'
                         VarUniqueName* uName = new VarUniqueName(
-                                                                resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
+                                resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
                         uName->setUsesThis(true);
-                        varRef->setAttribute(VariableRenaming::varKeyTag,uName);
+                        varRef->setAttribute(VariableRenaming::varKeyTag, uName);
 
                         VarUniqueName* uName2 = new VarUniqueName(*uName);
-                        node->setAttribute(VariableRenaming::varKeyTag,uName2);
+                        node->setAttribute(VariableRenaming::varKeyTag, uName2);
                     }
 
                     //Return the combination of the LHS and RHS varRefs
@@ -961,21 +995,21 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
         }
         else
         {
-            
+
             //The LHS has no varRefs, so there can be no explicit naming of varRefs above this point.
 
             //We need to check if the RHS had a name assigned.
             //If so, we need to remove it, because it will be incorrect.
-            if(attrs[1].getRefs().size() == 1)
+            if (attrs[1].getRefs().size() == 1)
             {
                 SgVarRefExp* varRef = isSgVarRefExp(attrs[1].getRefs()[0]);
 
-                if(varRef)
+                if (varRef)
                 {
                     //If the RHS is a varRef and has the naming attribute set, remove it
-                    if(varRef->attributeExists(VariableRenaming::varKeyTag))
+                    if (varRef->attributeExists(VariableRenaming::varKeyTag))
                     {
-                        VarUniqueName* name = dynamic_cast<VarUniqueName*>(varRef->getAttribute(VariableRenaming::varKeyTag));
+                        VarUniqueName* name = dynamic_cast<VarUniqueName*> (varRef->getAttribute(VariableRenaming::varKeyTag));
                         varRef->removeAttribute(VariableRenaming::varKeyTag);
                         delete name;
                     }
@@ -985,10 +1019,10 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
             return VarRefSynthAttr();
         }
     }
-    //Now we check if we have reached an ArrowExpression, we have to merge names.
-    else if(isSgArrowExp(node))
+        //Now we check if we have reached an ArrowExpression, we have to merge names.
+    else if (isSgArrowExp(node))
     {
-        if(attrs.size() != 2)
+        if (attrs.size() != 2)
         {
             cout << "Error: Found arrow operator without exactly 2 children." << endl;
             ROSE_ASSERT(false);
@@ -996,52 +1030,52 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
 
         //We want to update the naming for the RHS child
         //Check if the LHS has at least one varRef
-        if(attrs[0].getRefs().size() > 0)
+        if (attrs[0].getRefs().size() > 0)
         {
             bool thisExp = false;
             //Check if our LHS varRef is the 'this' expression
-            if(isSgThisExp(attrs[0].getRefs()[attrs[0].getRefs().size() - 1]))
+            if (isSgThisExp(attrs[0].getRefs()[attrs[0].getRefs().size() - 1]))
             {
                 thisExp = true;
             }
-            
+
             //Get the unique name from the highest varRef in the LHS, since this will have the most
             //fully qualified UniqueName.
             VarUniqueName* lhsName;
-            if(!thisExp)
+            if (!thisExp)
             {
-                lhsName = dynamic_cast<VarUniqueName*>(attrs[0].getRefs()[attrs[0].getRefs().size() - 1]->getAttribute(VariableRenaming::varKeyTag));
+                lhsName = dynamic_cast<VarUniqueName*> (attrs[0].getRefs()[attrs[0].getRefs().size() - 1]->getAttribute(VariableRenaming::varKeyTag));
                 ROSE_ASSERT(lhsName);
             }
-            
+
             //Check if the RHS has a single varRef
-            if(attrs[1].getRefs().size() == 1)
+            if (attrs[1].getRefs().size() == 1)
             {
                 SgVarRefExp* varRef = isSgVarRefExp(attrs[1].getRefs()[0]);
 
-                if(varRef)
+                if (varRef)
                 {
-                    if(!thisExp)
+                    if (!thisExp)
                     {
                         //Create the uniqueName from the uniqueName of the lhs prepended to the rhs uniqueName
-                        VarUniqueName* uName = new VarUniqueName(lhsName->getKey(), 
-                                                                resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
+                        VarUniqueName* uName = new VarUniqueName(lhsName->getKey(),
+                                resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
                         uName->setUsesThis(lhsName->getUsesThis());
-                        varRef->setAttribute(VariableRenaming::varKeyTag,uName);
+                        varRef->setAttribute(VariableRenaming::varKeyTag, uName);
 
                         VarUniqueName* uName2 = new VarUniqueName(*uName);
-                        node->setAttribute(VariableRenaming::varKeyTag,uName2);
+                        node->setAttribute(VariableRenaming::varKeyTag, uName2);
                     }
                     else
                     {
                         //Create the UniqueName from the current varRef, and stores that it uses 'this'
                         VarUniqueName* uName = new VarUniqueName(
-                                                                resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
+                                resolveTemporaryInitNames(varRef->get_symbol()->get_declaration()));
                         uName->setUsesThis(true);
-                        varRef->setAttribute(VariableRenaming::varKeyTag,uName);
+                        varRef->setAttribute(VariableRenaming::varKeyTag, uName);
 
                         VarUniqueName* uName2 = new VarUniqueName(*uName);
-                        node->setAttribute(VariableRenaming::varKeyTag,uName2);
+                        node->setAttribute(VariableRenaming::varKeyTag, uName2);
                     }
 
                     //Return the combination of the LHS and RHS varRefs
@@ -1069,16 +1103,16 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
 
             //We need to check if the RHS had a name assigned.
             //If so, we need to remove it, because it will be incorrect.
-            if(attrs[1].getRefs().size() == 1)
+            if (attrs[1].getRefs().size() == 1)
             {
                 SgVarRefExp* varRef = isSgVarRefExp(attrs[1].getRefs()[0]);
 
-                if(varRef)
+                if (varRef)
                 {
                     //If the RHS is a varRef and has the naming attribute set, remove it
-                    if(varRef->attributeExists(VariableRenaming::varKeyTag))
+                    if (varRef->attributeExists(VariableRenaming::varKeyTag))
                     {
-                        VarUniqueName* name = dynamic_cast<VarUniqueName*>(varRef->getAttribute(VariableRenaming::varKeyTag));
+                        VarUniqueName* name = dynamic_cast<VarUniqueName*> (varRef->getAttribute(VariableRenaming::varKeyTag));
                         varRef->removeAttribute(VariableRenaming::varKeyTag);
                         delete name;
                     }
@@ -1088,11 +1122,11 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
             return VarRefSynthAttr();
         }
     }
-    //Now we hit the default case. We should return a merged list.
+        //Now we hit the default case. We should return a merged list.
     else
     {
         std::vector<SgNode*> names;
-        for(unsigned int i = 0; i < attrs.size(); i++)
+        for (unsigned int i = 0; i < attrs.size(); i++)
         {
             names.insert(names.end(), attrs[i].getRefs().begin(), attrs[i].getRefs().end());
         }
@@ -1101,7 +1135,6 @@ VariableRenaming::VarRefSynthAttr VariableRenaming::UniqueNameTraversal::evaluat
     }
 }
 
-
 void VariableRenaming::runDefUse(SgFunctionDefinition* func)
 {
     //Keep track of visited nodes
@@ -1109,26 +1142,26 @@ void VariableRenaming::runDefUse(SgFunctionDefinition* func)
 
     //Reset the first def list to prevent errors with global vars.
     firstDefList.clear();
-    
+
     cfgNodeVec worklist;
 
     cfgNode current = cfgNode(func->cfgForBeginning());
     worklist.push_back(current);
 
-    while(!worklist.empty())
+    while (!worklist.empty())
     {
-        if(DEBUG_MODE)
+        if (DEBUG_MODE)
             cout << "-------------------------------------------------------------------------" << endl;
         //Get the node to work on
         current = worklist.back();
-                worklist.pop_back();
+        worklist.pop_back();
 
         //We don't want to do def_use on the ending CFGNode of the function definition
         //so if we see it, continue.
         //If we do this, then incorrect information will be propogated to the beginning of the function
-        if(current == cfgNode(func->cfgForEnd()))
+        if (current == cfgNode(func->cfgForEnd()))
         {
-            if(DEBUG_MODE)
+            if (DEBUG_MODE)
                 cout << "Skipped defUse on End of function definition." << endl;
             continue;
         }
@@ -1139,32 +1172,33 @@ void VariableRenaming::runDefUse(SgFunctionDefinition* func)
 
         //If memberRefs were inserted, then there are nodes previous to this one that are different.
         //Thus, we need to add those nodes to the working list
-        if(memberRefInserted)
+        if (memberRefInserted)
         {
             //Clear the worklist and visited list
             worklist.clear();
             visited.clear();
 
             //Insert each changed node into the list
+
             foreach(SgNode* chNode, changedNodes)
             {
                 //Get the cfg node for this AST node
-                                cfgNode nextNode;
-                                IsDefUseFilter filter;
-                                for (int i = 0; ; i++)
-                                {
-                                        CFGNode unfiltered(chNode, i);
-                                        if (filter(unfiltered))
-                                        {
-                                                nextNode = unfiltered;
-                                                break;
-                                        }
-                                }
+                cfgNode nextNode;
+                IsDefUseFilter filter;
+                for (int i = 0;; i++)
+                {
+                    CFGNode unfiltered(chNode, i);
+                    if (filter(unfiltered))
+                    {
+                        nextNode = unfiltered;
+                        break;
+                    }
+                }
                 //Only insert the node in the worklist if it isn't there already.
                 worklist.push_back(nextNode);
-                if(DEBUG_MODE)
-                   cout << "Member Ref Inserted: Added " << nextNode.getNode()->class_name() << nextNode.getNode() <<
-                                                   " to the worklist." << endl;
+                if (DEBUG_MODE)
+                    cout << "Member Ref Inserted: Added " << nextNode.getNode()->class_name() << nextNode.getNode() <<
+                    " to the worklist." << endl;
             }
 
             //Restart work from where the new def was inserted.
@@ -1175,34 +1209,35 @@ void VariableRenaming::runDefUse(SgFunctionDefinition* func)
         cfgEdgeVec outEdges = current.outEdges();
 
         //For every edge, add it to the worklist if it is not seen or something has changed
+
         reverse_foreach(cfgEdgeVec::value_type& edge, outEdges)
         {
             cfgNode nextNode = edge.target();
 
             //Only insert the node in the worklist if it isn't there already.
-            if(std::find(worklist.begin(), worklist.end(), nextNode) == worklist.end())
+            if (std::find(worklist.begin(), worklist.end(), nextNode) == worklist.end())
             {
-                if(changed)
+                if (changed)
                 {
                     //Add the node to the worklist
                     worklist.push_back(nextNode);
-                    if(DEBUG_MODE)
+                    if (DEBUG_MODE)
                         cout << "Defs Changed: Added " << nextNode.getNode()->class_name() << ": Line "
-                                                                << nextNode.getNode()->get_file_info()->get_line() << ", " << nextNode.getNode() <<
-                                                                " to the worklist." << endl;
+                        << nextNode.getNode()->get_file_info()->get_line() << ", " << nextNode.getNode() <<
+                        " to the worklist." << endl;
                 }
-                //If the next node has not yet been visited
-                                else if (visited.count(nextNode.getNode()) == 0)
+                    //If the next node has not yet been visited
+                else if (visited.count(nextNode.getNode()) == 0)
                 {
                     //Add it to the worklist
                     worklist.push_back(nextNode);
-                    if(DEBUG_MODE)
+                    if (DEBUG_MODE)
                         cout << "Next unvisited: Added " << nextNode.getNode()->class_name() << ": Line "
-                                                                << nextNode.getNode()->get_file_info()->get_line() << ", " << nextNode.getNode() <<
-                                                                " to the worklist." << endl;
+                        << nextNode.getNode()->get_file_info()->get_line() << ", " << nextNode.getNode() <<
+                        " to the worklist." << endl;
                 }
             }
-            
+
         }
 
         //Mark the current node as seen
@@ -1215,29 +1250,29 @@ bool VariableRenaming::defUse(FilteredCFGNode<IsDefUseFilter> node, bool *member
     SgNode* current = node.getNode();
 
     //Handle each type of node
-    if(DEBUG_MODE)
-        cout << "Performing DefUse on " << current->class_name() << 
-                                ": Line " << current->get_file_info()->get_line() << ", " << current << endl;
+    if (DEBUG_MODE)
+        cout << "Performing DefUse on " << current->class_name() <<
+        ": Line " << current->get_file_info()->get_line() << ", " << current << endl;
 
     bool defChanged = false;
     bool defRefInserted = false;
     bool useRefInserted = false;
     defChanged = mergeDefs(node, &defRefInserted, changedNodes);
 
-        if (defRefInserted)
-        {
-                *memberRefInserted = true;
-                return defChanged;
-        }
+    if (defRefInserted)
+    {
+        *memberRefInserted = true;
+        return defChanged;
+    }
 
     resolveUses(node, &useRefInserted, changedNodes);
 
     *memberRefInserted = useRefInserted;
 
 
-    if(DEBUG_MODE)
-        cout << "Defs were " << ((defChanged)?"changed.":"same.") << endl;
-    
+    if (DEBUG_MODE)
+        cout << "Defs were " << ((defChanged) ? "changed." : "same.") << endl;
+
     return defChanged;
 }
 
@@ -1247,7 +1282,7 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted, NodeV
 
     bool changed = false;
 
-    if(DEBUG_MODE)
+    if (DEBUG_MODE)
     {
         cout << "merging defs..." << endl;
         printDefs(node);
@@ -1262,11 +1297,11 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted, NodeV
     //We perform a few steps. This is dependent on the number of incoming edges.
 
     /*1 Edge: When we have linear control flow, we do the following:
-    *        1. Copy the definitions from the previous node wholesale to a staging table.
-    *        2. Copy in the original definitions from the current node, overwriting those
-    *           from the previous node.
-    *        3. Compare the staging and current tables, and only overwrite if needed.
-    */
+     *        1. Copy the definitions from the previous node wholesale to a staging table.
+     *        2. Copy in the original definitions from the current node, overwriting those
+     *           from the previous node.
+     *        3. Compare the staging and current tables, and only overwrite if needed.
+     */
 
     /*2+ Edges: When we have branched control flow, we do the following:
      *       1. Copy the definitions from the previous node(s) wholesale to a staging table.
@@ -1278,34 +1313,37 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted, NodeV
 
     //Expand any member variable references at the current node.
     expandMemberDefinitions(curNode);
-    
+
     TableEntry propDefs;
     //Retrieve the defs coming from previous cfgNodes
     aggregatePreviousDefs(curNode, propDefs);
 
-        //Make sure variables always have a first definition
-        if (!isSgFunctionDefinition(node) && (!isSgInitializedName(node) || isSgCtorInitializerList(node->get_parent())))
+    //Make sure variables always have a first definition
+    if (!isSgFunctionDefinition(node) && (!isSgInitializedName(node) || isSgCtorInitializerList(node->get_parent())))
+    {
+
+        foreach(TableEntry::value_type& entry, originalDefTable[node])
         {
-                foreach(TableEntry::value_type& entry, originalDefTable[node])
-                {
-                        if (propDefs.find(entry.first) == propDefs.end())
-                        {
-                                *memberRefInserted = insertExpandedDefsForUse(curNode, entry.first, changedNodes) || *memberRefInserted;
-                                if (*memberRefInserted)
-                                        break;
-                        }
-                }
+            if (propDefs.find(entry.first) == propDefs.end())
+            {
+                *memberRefInserted = insertExpandedDefsForUse(curNode, entry.first, changedNodes) || *memberRefInserted;
+                if (*memberRefInserted)
+                    break;
+            }
         }
+    }
 
     //Replace every entry in staging table that has definition in original defs
     //Also assign renaming numbers to any new definitions
+
     foreach(TableEntry::value_type& entry, originalDefTable[node])
     {
         //Replace the entry for this variable with the definitions at this node.
         propDefs[entry.first] = entry.second;
 
         //Now, iterate the definition vector for this node
-                ROSE_ASSERT(entry.second.size() == 1);
+        ROSE_ASSERT(entry.second.size() == 1);
+
         foreach(NodeVec::value_type& defNode, entry.second)
         {
             //Assign a number to each new definition. The function will prevent duplicates
@@ -1316,23 +1354,25 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted, NodeV
     //For every originalDef, insert expanded defs for any propagated defs
     //that have an originalDef as a prefix
     VarName expVar;
+
     foreach(TableEntry::value_type& entry, originalDefTable[node])
     {
+
         foreach(TableEntry::value_type& propEntry, propDefs)
         {
             //Don't insert a def if it is already originally defined.
-            if(originalDefTable[node].count(propEntry.first) != 0)
+            if (originalDefTable[node].count(propEntry.first) != 0)
             {
                 continue;
             }
             //If the original def is a prefix of the propogated def, add a def at this node
             //Compare sizes to guard against inserting original def in expanded table
-            if(isPrefixOfName(propEntry.first, entry.first) && (propEntry.first.size() > entry.first.size()))
+            if (isPrefixOfName(propEntry.first, entry.first) && (propEntry.first.size() > entry.first.size()))
             {
                 //Set this node as a definition point of the variable.
-                expandedDefTable[node][propEntry.first].assign(1,node);
-                                ROSE_ASSERT(expandedDefTable[node][propEntry.first].size() == 1);
-                if(DEBUG_MODE_EXTRA)
+                expandedDefTable[node][propEntry.first].assign(1, node);
+                ROSE_ASSERT(expandedDefTable[node][propEntry.first].size() == 1);
+                if (DEBUG_MODE_EXTRA)
                 {
                     cout << "Inserted expandedDef for [" << keyToString(propEntry.first) << "] with originalDef prefix [" << keyToString(entry.first) << "]" << endl;
                 }
@@ -1342,11 +1382,13 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted, NodeV
 
     //Replace every entry in staging table that has definition in expandedDefs
     //Also assign renaming numbers to any new definitions
+
     foreach(TableEntry::value_type& entry, expandedDefTable[node])
     {
         propDefs[entry.first] = entry.second;
 
         //Now, iterate the definition vector for this node
+
         foreach(NodeVec::value_type& defNode, entry.second)
         {
             //Assign a number to each new definition. The function will prevent duplicates
@@ -1355,24 +1397,25 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted, NodeV
     }
 
     //If there is an initial definition of a name at this node, we should insert it in the table
+
     foreach(TableEntry::value_type& entry, originalDefTable[node])
     {
         //If the given variable name is not present in the first def table
-        if(firstDefList.count(entry.first) == 0)
+        if (firstDefList.count(entry.first) == 0)
         {
             //Set this node as the first definition point of this variable.
             firstDefList[entry.first] = node;
         }
     }
 
-    if(DEBUG_MODE_EXTRA)
+    if (DEBUG_MODE_EXTRA)
     {
         cout << "Local Defs replaced in propDefs ";
         printDefs(propDefs);
     }
 
     //Now do a comparison to see if we should copy
-    if(propDefs != defTable[node])
+    if (propDefs != defTable[node])
     {
         defTable[node] = propDefs;
         changed = true;
@@ -1382,13 +1425,13 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted, NodeV
         changed = false;
     }
 
-    if(DEBUG_MODE)
+    if (DEBUG_MODE)
     {
         cout << "Defs after Merge..." << endl;
         printDefs(node);
     }
 
-    if(DEBUG_MODE)
+    if (DEBUG_MODE)
     {
         printRenameTable();
     }
@@ -1399,11 +1442,11 @@ bool VariableRenaming::mergeDefs(cfgNode curNode, bool *memberRefInserted, NodeV
 void VariableRenaming::aggregatePreviousDefs(cfgNode curNode, TableEntry& results)
 {
     //SgNode* node = curNode.getNode();
-    
+
     //Get the previous edges in the CFG for this node
     cfgEdgeVec inEdges = curNode.inEdges();
 
-    if(inEdges.size() == 1)
+    if (inEdges.size() == 1)
     {
         SgNode* prev = inEdges[0].source().getNode();
 
@@ -1417,10 +1460,10 @@ void VariableRenaming::aggregatePreviousDefs(cfgNode curNode, TableEntry& result
         //Copy the previous node defs to the staging table
         results = defTable[prev];
     }
-    else if(inEdges.size() > 1)
+    else if (inEdges.size() > 1)
     {
         //Iterate all of the incoming edges
-        for(unsigned int i = 0; i < inEdges.size(); i++)
+        for (unsigned int i = 0; i < inEdges.size(); i++)
         {
             SgNode* prev = inEdges[i].source().getNode();
 
@@ -1432,6 +1475,7 @@ void VariableRenaming::aggregatePreviousDefs(cfgNode curNode, TableEntry& result
             }*/
 
             //Perform the union of all the infoming definitions.
+
             foreach(TableEntry::value_type& entry, defTable[prev])
             {
                 //Insert the definitions for this node at the end of the list
@@ -1439,8 +1483,9 @@ void VariableRenaming::aggregatePreviousDefs(cfgNode curNode, TableEntry& result
             }
         }
     }
-    
+
     //Sort every vector in propDefs and remove duplicates
+
     foreach(TableEntry::value_type& entry, results)
     {
         std::sort(entry.second.begin(), entry.second.end());
@@ -1458,14 +1503,13 @@ void VariableRenaming::aggregatePreviousDefs(cfgNode curNode, TableEntry& result
     return;
 }
 
-
 bool VariableRenaming::expandMemberDefinitions(cfgNode curNode)
 {
     SgNode* node = curNode.getNode();
 
     bool changed = false;
 
-    if(DEBUG_MODE_EXTRA)
+    if (DEBUG_MODE_EXTRA)
     {
         cout << "Expanding member defs at " << node->class_name() << node << endl;
         cout << "Original Node ";
@@ -1473,40 +1517,41 @@ bool VariableRenaming::expandMemberDefinitions(cfgNode curNode)
     }
 
     //We want to iterate the vars defined on this node, and expand them
+
     foreach(TableEntry::value_type& entry, originalDefTable[node])
     {
-        if(DEBUG_MODE_EXTRA)
+        if (DEBUG_MODE_EXTRA)
         {
             cout << "Checking [" << keyToString(entry.first) << "]" << endl;
         }
 
         //Check if the variableName has multiple parts
-        if(entry.first.size() == 1)
+        if (entry.first.size() == 1)
         {
             continue;
         }
 
         //We are dealing with a multi-part variable, loop the entry and expand it
         //Start at one so we don't get the same defs in the original and expanded defs
-        for(unsigned int i = 1; i < entry.first.size(); i++)
+        for (unsigned int i = 1; i < entry.first.size(); i++)
         {
             //Create a new varName vector that goes from beginning to end - i
             VarName newName;
             newName.assign(entry.first.begin(), entry.first.end() - i);
 
-            if(DEBUG_MODE_EXTRA)
+            if (DEBUG_MODE_EXTRA)
             {
                 cout << "Testing for presence of [" << keyToString(newName) << "]" << endl;
             }
 
             //Only insert the new definition if it does not already exist
-            if(originalDefTable[node].count(newName) == 0 && expandedDefTable[node].count(newName) == 0)
+            if (originalDefTable[node].count(newName) == 0 && expandedDefTable[node].count(newName) == 0)
             {
                 //Insert the new name as being defined here.
                 expandedDefTable[node][newName] = NodeVec(1, node);
                 changed = true;
 
-                if(DEBUG_MODE_EXTRA)
+                if (DEBUG_MODE_EXTRA)
                 {
                     cout << "Inserted new name [" << keyToString(newName) << "] into defs." << endl;
                 }
@@ -1514,7 +1559,7 @@ bool VariableRenaming::expandMemberDefinitions(cfgNode curNode)
         }
     }
 
-    if(DEBUG_MODE_EXTRA)
+    if (DEBUG_MODE_EXTRA)
     {
         cout << "Expanded Node";
         printDefs(expandedDefTable[node]);
@@ -1526,7 +1571,7 @@ bool VariableRenaming::expandMemberDefinitions(cfgNode curNode)
 bool VariableRenaming::resolveUses(FilteredCFGNode<IsDefUseFilter> curNode, bool *memberRefInserted, NodeVec &changedNodes)
 {
     SgNode* node = curNode.getNode();
-    
+
     bool changed = false;
 
     //We want to resolve the uses at the current node
@@ -1534,34 +1579,35 @@ bool VariableRenaming::resolveUses(FilteredCFGNode<IsDefUseFilter> curNode, bool
     //with the uses
 
 
-    if(DEBUG_MODE)
+    if (DEBUG_MODE)
         cout << "Resolving uses at " << node->class_name() << node << endl;
 
     changed = expandMemberUses(curNode);
 
     //Iterate every use at the current node
+
     foreach(TableEntry::value_type& entry, useTable[node])
     {
         //Check the defs that are active at the current node to find the reaching definition
         //We want to check if there is a definition entry for this use at the current node
-        if(defTable[node].find(entry.first) != defTable[node].end())
+        if (defTable[node].find(entry.first) != defTable[node].end())
         {
             //There is a definition entry. Now we want to see if the use is already up to date
-            if(useTable[node][entry.first] != defTable[node][entry.first])
+            if (useTable[node][entry.first] != defTable[node][entry.first])
             {
                 //The use was not up to date, so we update it
                 changed = true;
                 //Overwrite the use with this definition location(s).
                 useTable[node][entry.first] = defTable[node][entry.first];
-            }            
+            }
         }
         else
         {
             //If there are no defs for this use at this node, then we have a multi-part name
             //that has not been expanded. Thus, we want to expand it.
             *memberRefInserted = insertExpandedDefsForUse(curNode, entry.first, changedNodes);
-                        if (*memberRefInserted)
-                                break;
+            if (*memberRefInserted)
+                break;
         }
     }
 
@@ -1573,15 +1619,16 @@ bool VariableRenaming::resolveUses(FilteredCFGNode<IsDefUseFilter> curNode, bool
     //def as the use for this node.
 
     //Iterate every use at the current node
+
     foreach(TableEntry::value_type& entry, useTable[node])
     {
         //If any of these uses are for a variable defined at this node, we will
         //set the flag and correct it later.
-        if(originalDefTable[node].count(entry.first) != 0 || expandedDefTable[node].count(entry.first) != 0)
+        if (originalDefTable[node].count(entry.first) != 0 || expandedDefTable[node].count(entry.first) != 0)
         {
             useTable[node][entry.first] = results[entry.first];
 
-            if(DEBUG_MODE)
+            if (DEBUG_MODE)
                 cout << "Fixed use of local def." << endl;
         }
     }
@@ -1595,7 +1642,7 @@ bool VariableRenaming::expandMemberUses(cfgNode curNode)
 
     bool changed = false;
 
-    if(DEBUG_MODE_EXTRA)
+    if (DEBUG_MODE_EXTRA)
     {
         cout << "Expanding member uses at " << node->class_name() << node << endl;
         cout << "Original Node ";
@@ -1603,40 +1650,41 @@ bool VariableRenaming::expandMemberUses(cfgNode curNode)
     }
 
     //We want to iterate the vars used on this node, and expand them
+
     foreach(TableEntry::value_type& entry, useTable[node])
     {
-        if(DEBUG_MODE_EXTRA)
+        if (DEBUG_MODE_EXTRA)
         {
             cout << "Checking [" << keyToString(entry.first) << "]" << endl;
         }
 
         //Check if the variableName has multiple parts
-        if(entry.first.size() == 1)
+        if (entry.first.size() == 1)
         {
             continue;
         }
 
         //We are dealing with a multi-part variable, loop the entry and expand it
         //Start at one so we don't reinsert same use
-        for(unsigned int i = 1; i < entry.first.size(); i++)
+        for (unsigned int i = 1; i < entry.first.size(); i++)
         {
             //Create a new varName vector that goes from beginning to end - i
             VarName newName;
             newName.assign(entry.first.begin(), entry.first.end() - i);
 
-            if(DEBUG_MODE_EXTRA)
+            if (DEBUG_MODE_EXTRA)
             {
                 cout << "Testing for presence of [" << keyToString(newName) << "]" << endl;
             }
 
             //Only insert the new definition if it does not already exist
-            if(useTable[node].count(newName) == 0)
+            if (useTable[node].count(newName) == 0)
             {
                 //Insert the new name as being used here.
                 useTable[node][newName] = NodeVec(1, node);
                 changed = true;
 
-                if(DEBUG_MODE_EXTRA)
+                if (DEBUG_MODE_EXTRA)
                 {
                     cout << "Inserted new name [" << keyToString(newName) << "] into uses." << endl;
                 }
@@ -1644,7 +1692,7 @@ bool VariableRenaming::expandMemberUses(cfgNode curNode)
         }
     }
 
-    if(DEBUG_MODE_EXTRA)
+    if (DEBUG_MODE_EXTRA)
     {
         cout << "Expanded Node ";
         printUses(useTable[node]);
@@ -1659,18 +1707,18 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, VarName name, N
 
     bool changed = false;
 
-    if(DEBUG_MODE_EXTRA)
+    if (DEBUG_MODE_EXTRA)
     {
         cout << "Checking for needed extra defs for uses at " << node->class_name() << node << endl;
         cout << "Checking for [" << keyToString(name) << "]" << endl;
     }
 
     //Check if the given name has a def at this node
-    if(defTable[node].count(name) != 0)
+    if (defTable[node].count(name) != 0)
     {
-        if(DEBUG_MODE_EXTRA)
+        if (DEBUG_MODE_EXTRA)
             cout << "Already have def." << endl;
-        
+
         //If there is already a def, then nothing changes
         return false;
     }
@@ -1681,17 +1729,17 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, VarName name, N
 
     //Get the root of this name
     VarName rootName;
-    rootName.assign(1,name[0]);
+    rootName.assign(1, name[0]);
 
-        DefUseTable* defInsertionTable = &expandedDefTable;
+    DefUseTable* defInsertionTable = &expandedDefTable;
 
     //We want to see if the name is a class member (no def so far)
-    if(firstDefList.count(rootName) == 0)
+    if (firstDefList.count(rootName) == 0)
     {
-                defInsertionTable = &originalDefTable;
+        defInsertionTable = &originalDefTable;
 
         //Check if the variable is a compiler builtin
-        if(isBuiltinVar(rootName))
+        if (isBuiltinVar(rootName))
         {
             //Add a definition at the start of the function
             SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
@@ -1699,28 +1747,28 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, VarName name, N
 
             firstDefList[rootName] = func;
         }
-        //Check if the variable is declared in a class scope 
-        else if(isSgClassDefinition(SageInterface::getScope(rootName[0])) != NULL)
+            //Check if the variable is declared in a class scope 
+        else if (isSgClassDefinition(SageInterface::getScope(rootName[0])) != NULL)
         {
             //It is declared in class scope.
             //Get our enclosing function definition to insert the first definition into.
 
             SgFunctionDefinition *func = SageInterface::getEnclosingFunctionDefinition(node);
 
-                        if (func == NULL)
-                        {
-                                //In this case, we're not inside the function defintion; we're inside the parameter list
-                                SgFunctionDeclaration* declaration = SageInterface::getEnclosingNode<SgFunctionDeclaration>(node);
-                                ROSE_ASSERT(declaration != NULL);
-                                func = declaration->get_definition();
-                        }
+            if (func == NULL)
+            {
+                //In this case, we're not inside the function defintion; we're inside the parameter list
+                SgFunctionDeclaration* declaration = SageInterface::getEnclosingNode<SgFunctionDeclaration > (node);
+                ROSE_ASSERT(declaration != NULL);
+                func = declaration->get_definition();
+            }
 
-                        ROSE_ASSERT(func != NULL);
+            ROSE_ASSERT(func != NULL);
 
             firstDefList[rootName] = func;
         }
-        //Otherwise, see if it is in namespace scope
-        else if(isSgNamespaceDefinitionStatement(SageInterface::getScope(rootName[0])) != NULL)
+            //Otherwise, see if it is in namespace scope
+        else if (isSgNamespaceDefinitionStatement(SageInterface::getScope(rootName[0])) != NULL)
         {
             //It is declared in namespace scope.
             //Get our enclosing function definition to insert the first definition into.
@@ -1739,41 +1787,41 @@ bool VariableRenaming::insertExpandedDefsForUse(cfgNode curNode, VarName name, N
         }
     }
 
-        SgNode* firstDef = firstDefList[rootName];
-        if (isSgFunctionDefinition(firstDef))
-        {
-                defInsertionTable = &originalDefTable;
-        }
+    SgNode* firstDef = firstDefList[rootName];
+    if (isSgFunctionDefinition(firstDef))
+    {
+        defInsertionTable = &originalDefTable;
+    }
 
     //Start from the end of the name and insert definitions of every part
     //at the first definition point
-    for(int i = 0; i < (signed int)name.size(); i++)
+    for (int i = 0; i < (signed int) name.size(); i++)
     {
         //Create a new varName vector that goes from beginning to end - i
         VarName newName;
         newName.assign(name.begin(), name.end() - i);
 
-        if(DEBUG_MODE_EXTRA)
+        if (DEBUG_MODE_EXTRA)
         {
             cout << "Testing for def of [" << keyToString(newName) << "] at var initial def." << endl;
         }
 
-                
-        if(originalDefTable[firstDef].count(newName) == 0 && expandedDefTable[firstDef].count(newName) == 0)
+
+        if (originalDefTable[firstDef].count(newName) == 0 && expandedDefTable[firstDef].count(newName) == 0)
         {
             (*defInsertionTable)[firstDef][newName].push_back(firstDef);
             changed = true;
             changedNodes.push_back(firstDef);
-            if(DEBUG_MODE_EXTRA)
+            if (DEBUG_MODE_EXTRA)
             {
-                cout << "Inserted def for [" << keyToString(newName) << "] (root) [" << 
-                                                keyToString(rootName) << "] at node " << firstDef << endl;
+                cout << "Inserted def for [" << keyToString(newName) << "] (root) [" <<
+                        keyToString(rootName) << "] at node " << firstDef << endl;
             }
         }
     }
 
-    if(DEBUG_MODE_EXTRA)
-        cout << "Finished inserting references. Changed: " << ((changed)?"true":"false") << endl;
+    if (DEBUG_MODE_EXTRA)
+        cout << "Finished inserting references. Changed: " << ((changed) ? "true" : "false") << endl;
 
     return changed;
 }
@@ -1785,7 +1833,7 @@ int VariableRenaming::getRenameNumberForNode(const VarName& var, SgNode* node) c
     NodeNumRenameTable::const_iterator iter;
     iter = nodeRenameTable.find(var);
 
-    if(iter == nodeRenameTable.end())
+    if (iter == nodeRenameTable.end())
     {
         return -1;
     }
@@ -1794,11 +1842,11 @@ int VariableRenaming::getRenameNumberForNode(const VarName& var, SgNode* node) c
         //Try and get the number for the node
         NodeNumRenameEntry::const_iterator iter2;
         iter2 = (*iter).second.find(node);
-        if(iter2 != (*iter).second.end())
+        if (iter2 != (*iter).second.end())
         {
             return (*iter2).second;
         }
-        //Node not in table
+            //Node not in table
         else
         {
             return -1;
@@ -1812,7 +1860,7 @@ SgNode* VariableRenaming::getNodeForRenameNumber(const VarName& var, int num) co
 
     NumNodeRenameTable::const_iterator iter;
     iter = numRenameTable.find(var);
-    if(iter == numRenameTable.end())
+    if (iter == numRenameTable.end())
     {
         return NULL;
     }
@@ -1821,11 +1869,11 @@ SgNode* VariableRenaming::getNodeForRenameNumber(const VarName& var, int num) co
         //Try and get the node for the number
         NumNodeRenameEntry::const_iterator iter2;
         iter2 = (*iter).second.find(num);
-        if(iter2 != (*iter).second.end())
+        if (iter2 != (*iter).second.end())
         {
             return (*iter2).second;
         }
-        //Number not in table
+            //Number not in table
         else
         {
             return NULL;
@@ -1839,15 +1887,15 @@ int VariableRenaming::getMaxRenameNumberForName(const VarName& var) const
 
     NumNodeRenameTable::const_iterator iter;
     iter = numRenameTable.find(var);
-    if(iter == numRenameTable.end())
+    if (iter == numRenameTable.end())
     {
         return res;
     }
 
     NumNodeRenameEntry::const_iterator iter2;
-    for(iter2 = (*iter).second.begin(); iter2 != (*iter).second.end(); ++iter2)
+    for (iter2 = (*iter).second.begin(); iter2 != (*iter).second.end(); ++iter2)
     {
-        if((*iter2).first > res)
+        if ((*iter2).first > res)
         {
             res = (*iter2).first;
         }
@@ -1861,7 +1909,7 @@ int VariableRenaming::addRenameNumberForNode(const VarName& var, SgNode* node)
     ROSE_ASSERT(node);
 
     //Check if the var/node combination is already in the table.
-    if(nodeRenameTable[var].count(node) == 1)
+    if (nodeRenameTable[var].count(node) == 1)
     {
         return nodeRenameTable[var][node];
     }
@@ -1872,7 +1920,7 @@ int VariableRenaming::addRenameNumberForNode(const VarName& var, SgNode* node)
     nodeRenameTable[var][node] = nextNum;
     numRenameTable[var][nextNum] = node;
 
-    if(DEBUG_MODE)
+    if (DEBUG_MODE)
         cout << "Renaming Added:[" << keyToString(var) << "]:" << nextNum << " - " << node << endl;
 
     return nextNum;
@@ -1883,20 +1931,21 @@ VariableRenaming::NodeVec VariableRenaming::getAllUsesForDef(const VarName& var,
     NodeVec res;
     SgNode* defNode = getNodeForRenameNumber(var, num);
 
-    if(defNode == NULL)
+    if (defNode == NULL)
     {
         res.clear();
         return res;
     }
 
     //Traverse the use Table looking for locations where the def is used
+
     foreach(DefUseTable::value_type& entry, useTable)
     {
         //If this entry contains the variable that we want
-        if(entry.second.count(var) != 0)
+        if (entry.second.count(var) != 0)
         {
             //See if the use vector contains the defining node we want
-            if(std::find(entry.second[var].begin(), entry.second[var].end(), defNode) != entry.second[var].end())
+            if (std::find(entry.second[var].begin(), entry.second[var].end(), defNode) != entry.second[var].end())
             {
                 //Add the current node to list of those using the variable
                 res.push_back(entry.first);
@@ -1914,19 +1963,21 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtNode(SgN
     NumNodeRenameTable res;
 
     //Iterate every variable definition reaching this node
+
     foreach(TableEntry::value_type& entry, defTable[node])
     {
         //Iterate every definition site for this variable
+
         foreach(NodeVec::value_type& defEntry, entry.second)
         {
             //Get the rename number for the current variable at the current def site
             int renameNum = getRenameNumberForNode(entry.first, defEntry);
 
             //If the name is defined at this node
-            if(renameNum > 0)
+            if (renameNum > 0)
             {
                 //If the renumbering is not already in the result
-                if(res[entry.first].count(renameNum) == 0)
+                if (res[entry.first].count(renameNum) == 0)
                 {
                     //Add the renumbering to the result
                     res[entry.first][renameNum] = defEntry;
@@ -1955,25 +2006,27 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtNodeForN
     NumNodeRenameEntry res;
 
     //Iterate every variable definition reaching this node
+
     foreach(TableEntry::value_type& entry, defTable[node])
     {
         //Check that the current var is the one we want.
-        if(entry.first != var)
+        if (entry.first != var)
         {
             continue;
         }
-        
+
         //Iterate every definition site for this variable
+
         foreach(NodeVec::value_type& defEntry, entry.second)
         {
             //Get the rename number for the current variable at the current def site
             int renameNum = getRenameNumberForNode(entry.first, defEntry);
 
             //If the name is defined at this node
-            if(renameNum > 0)
+            if (renameNum > 0)
             {
                 //If the renumbering is not already in the result
-                if(res.count(renameNum) == 0)
+                if (res.count(renameNum) == 0)
                 {
                     //Add the renumbering to the result
                     res[renameNum] = defEntry;
@@ -2002,19 +2055,21 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getUsesAtNode(SgNode* nod
     NumNodeRenameTable res;
 
     //Iterate every variable definition used at this node
+
     foreach(TableEntry::value_type& entry, useTable[node])
     {
         //Iterate every definition site for this variable
+
         foreach(NodeVec::value_type& defEntry, entry.second)
         {
             //Get the rename number for the current variable at the current def site
             int renameNum = getRenameNumberForNode(entry.first, defEntry);
 
             //If the name is defined at this node
-            if(renameNum > 0)
+            if (renameNum > 0)
             {
                 //If the renumbering is not already in the result
-                if(res[entry.first].count(renameNum) == 0)
+                if (res[entry.first].count(renameNum) == 0)
                 {
                     //Add the renumbering to the result
                     res[entry.first][renameNum] = defEntry;
@@ -2038,7 +2093,7 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getUsesAtNode(SgNode* nod
                  * be using itself. This is not technically wrong, since control will
                  * never reach that varRef.
                  */
-                if(DEBUG_MODE)
+                if (DEBUG_MODE)
                 {
                     cout << "Warning: Found use with no entry in rename table." << endl;
                 }
@@ -2056,25 +2111,27 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getUsesAtNodeForName(SgNo
     NumNodeRenameEntry res;
 
     //Iterate every variable use at this node
+
     foreach(TableEntry::value_type& entry, useTable[node])
     {
         //Check that the current var is the one we want.
-        if(entry.first != var)
+        if (entry.first != var)
         {
             continue;
         }
-        
+
         //Iterate every definition site for this variable
+
         foreach(NodeVec::value_type& defEntry, entry.second)
         {
             //Get the rename number for the current variable at the current def site
             int renameNum = getRenameNumberForNode(entry.first, defEntry);
 
             //If the name is defined at this node
-            if(renameNum > 0)
+            if (renameNum > 0)
             {
                 //If the renumbering is not already in the result
-                if(res.count(renameNum) == 0)
+                if (res.count(renameNum) == 0)
                 {
                     //Add the renumbering to the result
                     res[renameNum] = defEntry;
@@ -2098,7 +2155,7 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getUsesAtNodeForName(SgNo
                  * be using itself. This is not technically wrong, since control will
                  * never reach that varRef.
                  */
-                if(DEBUG_MODE)
+                if (DEBUG_MODE)
                 {
                     cout << "Warning: Found use with no entry in rename table." << endl;
                 }
@@ -2111,45 +2168,47 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getUsesAtNodeForName(SgNo
 
 VariableRenaming::NumNodeRenameTable VariableRenaming::getOriginalUsesAtNode(SgNode* node)
 {
-        //The original variables are always attached to higher levels in the AST. For example,
-        //if we have p.x, the dot expression has the varname p.x attached to it, while its left
-        //child has the varname p. Hence, if we get the top nodes in the AST that are variables, we'll have all the
-        //original (not exanded) variables used in the AST.
-        class FindOriginalVariables : public AstTopDownProcessing<bool>
+    //The original variables are always attached to higher levels in the AST. For example,
+    //if we have p.x, the dot expression has the varname p.x attached to it, while its left
+    //child has the varname p. Hence, if we get the top nodes in the AST that are variables, we'll have all the
+    //original (not exanded) variables used in the AST.
+
+    class FindOriginalVariables : public AstTopDownProcessing<bool>
+    {
+    public:
+        set<VariableRenaming::VarName> originalVariablesUsed;
+
+        virtual bool evaluateInheritedAttribute(SgNode* node, bool isParentVariable)
         {
-        public:
-                set<VariableRenaming::VarName> originalVariablesUsed;
+            if (isParentVariable)
+            {
+                return true;
+            }
 
-                virtual bool evaluateInheritedAttribute(SgNode* node, bool isParentVariable)
-                {
-                        if (isParentVariable)
-                        {
-                                return true;
-                        }
-
-                        if (VariableRenaming::getVarName(node) != VariableRenaming::emptyName)
-                        {
-                                originalVariablesUsed.insert(VariableRenaming::getVarName(node));
-                                return true;
-                        }
-                        else
-                        {
-                                return false;
-                        }
-                }
-        };
-        FindOriginalVariables originalVariableUsesTraversal;
-        originalVariableUsesTraversal.traverse(node, false);
-
-        VariableRenaming::NumNodeRenameTable result;
-        foreach(VariableRenaming::VarName varName, originalVariableUsesTraversal.originalVariablesUsed)
-        {
-                ROSE_ASSERT(result.count(varName) == 0);
-                VariableRenaming::NumNodeRenameEntry varDefs = getUsesAtNodeForName(node, varName);
-                result[varName] = varDefs;
+            if (VariableRenaming::getVarName(node) != VariableRenaming::emptyName)
+            {
+                originalVariablesUsed.insert(VariableRenaming::getVarName(node));
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
+    };
+    FindOriginalVariables originalVariableUsesTraversal;
+    originalVariableUsesTraversal.traverse(node, false);
 
-        return result;
+    VariableRenaming::NumNodeRenameTable result;
+
+    foreach(VariableRenaming::VarName varName, originalVariableUsesTraversal.originalVariablesUsed)
+    {
+        ROSE_ASSERT(result.count(varName) == 0);
+        VariableRenaming::NumNodeRenameEntry varDefs = getUsesAtNodeForName(node, varName);
+        result[varName] = varDefs;
+    }
+
+    return result;
 }
 
 VariableRenaming::NumNodeRenameTable VariableRenaming::getDefsAtNode(SgNode* node)
@@ -2158,20 +2217,22 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getDefsAtNode(SgNode* nod
     NumNodeRenameTable expanded = getExpandedDefsAtNode(node);
 
     //Loop the expanded table and insert it into the original table
+
     foreach(NumNodeRenameTable::value_type& entry, expanded)
     {
         //Insert the entry wholesale
-        if(original.count(entry.first) == 0)
+        if (original.count(entry.first) == 0)
         {
             original[entry.first] = entry.second;
         }
-        //Or merge it with an existing one
+            //Or merge it with an existing one
         else
         {
+
             foreach(NumNodeRenameEntry::value_type& tableEntry, entry.second)
             {
                 //Insert the entry wholesale
-                if(original[entry.first].count(tableEntry.first) == 0)
+                if (original[entry.first].count(tableEntry.first) == 0)
                 {
                     original[entry.first][tableEntry.first] = tableEntry.second;
                 }
@@ -2198,10 +2259,11 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getDefsAtNodeForName(SgNo
     NumNodeRenameEntry expanded = getExpandedDefsAtNodeForName(node, var);
 
     //Loop the expanded table and insert it into the original table
+
     foreach(NumNodeRenameEntry::value_type& tableEntry, expanded)
     {
         //Insert the entry wholesale
-        if(original.count(tableEntry.first) == 0)
+        if (original.count(tableEntry.first) == 0)
         {
             original[tableEntry.first] = tableEntry.second;
         }
@@ -2215,7 +2277,6 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getDefsAtNodeForName(SgNo
     return original;
 }
 
-
 VariableRenaming::NumNodeRenameTable VariableRenaming::getOriginalDefsAtNode(SgNode* node)
 {
     //We want to get all the original defs at this node and insert them into the result table
@@ -2223,19 +2284,21 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getOriginalDefsAtNode(SgN
     NumNodeRenameTable res;
 
     //Iterate every variable definition reaching this node
+
     foreach(TableEntry::value_type& entry, originalDefTable[node])
     {
         //Iterate every definition site for this variable
+
         foreach(NodeVec::value_type& defEntry, entry.second)
         {
             //Get the rename number for the current variable at the current def site
             int renameNum = getRenameNumberForNode(entry.first, defEntry);
 
             //If the name is defined at this node
-            if(renameNum > 0)
+            if (renameNum > 0)
             {
                 //If the renumbering is not already in the result
-                if(res[entry.first].count(renameNum) == 0)
+                if (res[entry.first].count(renameNum) == 0)
                 {
                     //Add the renumbering to the result
                     res[entry.first][renameNum] = defEntry;
@@ -2259,7 +2322,7 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getOriginalDefsAtNode(SgN
                  * table for i. This is not technically wrong, since control will never
                  * reach that i++, so it will not have an ordering wrt. the other definitions.
                  */
-                if(DEBUG_MODE)
+                if (DEBUG_MODE)
                 {
                     cout << "Warning: Found original def with no entry in rename table." << endl;
                 }
@@ -2277,25 +2340,27 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getOriginalDefsAtNodeForN
     NumNodeRenameEntry res;
 
     //Iterate every variable use at this node
+
     foreach(TableEntry::value_type& entry, originalDefTable[node])
     {
         //Check that the current var is the one we want.
-        if(entry.first != var)
+        if (entry.first != var)
         {
             continue;
         }
-        
+
         //Iterate every definition site for this variable
+
         foreach(NodeVec::value_type& defEntry, entry.second)
         {
             //Get the rename number for the current variable at the current def site
             int renameNum = getRenameNumberForNode(entry.first, defEntry);
 
             //If the name is defined at this node
-            if(renameNum > 0)
+            if (renameNum > 0)
             {
                 //If the renumbering is not already in the result
-                if(res.count(renameNum) == 0)
+                if (res.count(renameNum) == 0)
                 {
                     //Add the renumbering to the result
                     res[renameNum] = defEntry;
@@ -2319,7 +2384,7 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getOriginalDefsAtNodeForN
                  * table for i. This is not technically wrong, since control will never
                  * reach that i++, so it will not have an ordering wrt. the other definitions.
                  */
-                if(DEBUG_MODE)
+                if (DEBUG_MODE)
                 {
                     cout << "Warning: Found original def with no entry in rename table." << endl;
                 }
@@ -2337,19 +2402,21 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getExpandedDefsAtNode(SgN
     NumNodeRenameTable res;
 
     //Iterate every variable definition expanded on this node
+
     foreach(TableEntry::value_type& entry, expandedDefTable[node])
     {
         //Iterate every definition site for this variable
+
         foreach(NodeVec::value_type& defEntry, entry.second)
         {
             //Get the rename number for the current variable at the current def site
             int renameNum = getRenameNumberForNode(entry.first, defEntry);
 
             //If the name is defined at this node
-            if(renameNum > 0)
+            if (renameNum > 0)
             {
                 //If the renumbering is not already in the result
-                if(res[entry.first].count(renameNum) == 0)
+                if (res[entry.first].count(renameNum) == 0)
                 {
                     //Add the renumbering to the result
                     res[entry.first][renameNum] = defEntry;
@@ -2378,25 +2445,27 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getExpandedDefsAtNodeForN
     NumNodeRenameEntry res;
 
     //Iterate every variable use at this node
+
     foreach(TableEntry::value_type& entry, expandedDefTable[node])
     {
         //Check that the current var is the one we want.
-        if(entry.first != var)
+        if (entry.first != var)
         {
             continue;
         }
 
         //Iterate every definition site for this variable
+
         foreach(NodeVec::value_type& defEntry, entry.second)
         {
             //Get the rename number for the current variable at the current def site
             int renameNum = getRenameNumberForNode(entry.first, defEntry);
 
             //If the name is defined at this node
-            if(renameNum > 0)
+            if (renameNum > 0)
             {
                 //If the renumbering is not already in the result
-                if(res.count(renameNum) == 0)
+                if (res.count(renameNum) == 0)
                 {
                     //Add the renumbering to the result
                     res[renameNum] = defEntry;
@@ -2420,180 +2489,189 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getExpandedDefsAtNodeForN
 
 VariableRenaming::NumNodeRenameTable VariableRenaming::getDefsForSubtree(SgNode* node)
 {
+
     class DefSearchTraversal : public AstSimpleProcessing
-     {
-     public:
-         VariableRenaming::NumNodeRenameTable result;
-         VariableRenaming* varRenamingAnalysis;
+    {
+    public:
+        VariableRenaming::NumNodeRenameTable result;
+        VariableRenaming* varRenamingAnalysis;
 
-         virtual void visit(SgNode* node)
-         {
-             //Look up defs at this particular node
-             VariableRenaming::NumNodeRenameTable defsAtNode = varRenamingAnalysis->getDefsAtNode(node);
+        virtual void visit(SgNode* node)
+        {
+            //Look up defs at this particular node
+            VariableRenaming::NumNodeRenameTable defsAtNode = varRenamingAnalysis->getDefsAtNode(node);
 
-             //Traverse the defs
-             foreach(VariableRenaming::NumNodeRenameTable::value_type& entry, defsAtNode)
-             {
-                 //If this is the first time the var has been seen, add it wholesale
-                 if(result.count(entry.first) == 0)
-                 {
-                     result[entry.first] = entry.second;
-                     continue;
-                 }
-                 //Traverse each definition of the variable
-                 foreach(VariableRenaming::NumNodeRenameEntry::value_type& tableEntry, entry.second)
-                 {
-                     if(result[entry.first].count(tableEntry.first) == 0)
-                     {
-                         result[entry.first][tableEntry.first] = tableEntry.second;
-                     }
-                     else
-                     {
-                         cout << "Error: Same rename number defined on multiple nodes." << endl;
-                         ROSE_ASSERT(false);
-                     }
-                 }
-             }
-         }
-     };
+            //Traverse the defs
 
-     DefSearchTraversal traversal;
-     traversal.varRenamingAnalysis = this;
-     traversal.traverse(node, preorder);
+            foreach(VariableRenaming::NumNodeRenameTable::value_type& entry, defsAtNode)
+            {
+                //If this is the first time the var has been seen, add it wholesale
+                if (result.count(entry.first) == 0)
+                {
+                    result[entry.first] = entry.second;
+                    continue;
+                }
+                //Traverse each definition of the variable
 
-     return traversal.result;
+                foreach(VariableRenaming::NumNodeRenameEntry::value_type& tableEntry, entry.second)
+                {
+                    if (result[entry.first].count(tableEntry.first) == 0)
+                    {
+                        result[entry.first][tableEntry.first] = tableEntry.second;
+                    }
+                    else
+                    {
+                        cout << "Error: Same rename number defined on multiple nodes." << endl;
+                        ROSE_ASSERT(false);
+                    }
+                }
+            }
+        }
+    };
+
+    DefSearchTraversal traversal;
+    traversal.varRenamingAnalysis = this;
+    traversal.traverse(node, preorder);
+
+    return traversal.result;
 }
 
 VariableRenaming::NumNodeRenameTable VariableRenaming::getOriginalDefsForSubtree(SgNode* node)
 {
+
     class DefSearchTraversal : public AstSimpleProcessing
-     {
-     public:
-         VariableRenaming::NumNodeRenameTable result;
-         VariableRenaming* varRenamingAnalysis;
+    {
+    public:
+        VariableRenaming::NumNodeRenameTable result;
+        VariableRenaming* varRenamingAnalysis;
 
-         virtual void visit(SgNode* node)
-         {
-             //Look up defs at this particular node
-             VariableRenaming::NumNodeRenameTable defsAtNode = varRenamingAnalysis->getOriginalDefsAtNode(node);
+        virtual void visit(SgNode* node)
+        {
+            //Look up defs at this particular node
+            VariableRenaming::NumNodeRenameTable defsAtNode = varRenamingAnalysis->getOriginalDefsAtNode(node);
 
-             //Traverse the defs
-             foreach(VariableRenaming::NumNodeRenameTable::value_type& entry, defsAtNode)
-             {
-                 //If this is the first time the var has been seen, add it wholesale
-                 if(result.count(entry.first) == 0)
-                 {
-                     result[entry.first] = entry.second;
-                     continue;
-                 }
-                 //Traverse each definition of the variable
-                 foreach(VariableRenaming::NumNodeRenameEntry::value_type& tableEntry, entry.second)
-                 {
-                     if(result[entry.first].count(tableEntry.first) == 0)
-                     {
-                         result[entry.first][tableEntry.first] = tableEntry.second;
-                     }
-                     else
-                     {
-                         cout << "Error: Same rename number defined on multiple nodes." << endl;
-                         ROSE_ASSERT(false);
-                     }
-                 }
-             }
-         }
-     };
+            //Traverse the defs
 
-     DefSearchTraversal traversal;
-     traversal.varRenamingAnalysis = this;
-     traversal.traverse(node, preorder);
+            foreach(VariableRenaming::NumNodeRenameTable::value_type& entry, defsAtNode)
+            {
+                //If this is the first time the var has been seen, add it wholesale
+                if (result.count(entry.first) == 0)
+                {
+                    result[entry.first] = entry.second;
+                    continue;
+                }
+                //Traverse each definition of the variable
 
-     return traversal.result;
+                foreach(VariableRenaming::NumNodeRenameEntry::value_type& tableEntry, entry.second)
+                {
+                    if (result[entry.first].count(tableEntry.first) == 0)
+                    {
+                        result[entry.first][tableEntry.first] = tableEntry.second;
+                    }
+                    else
+                    {
+                        cout << "Error: Same rename number defined on multiple nodes." << endl;
+                        ROSE_ASSERT(false);
+                    }
+                }
+            }
+        }
+    };
+
+    DefSearchTraversal traversal;
+    traversal.varRenamingAnalysis = this;
+    traversal.traverse(node, preorder);
+
+    return traversal.result;
 }
 
 VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtScopeEnd(SgScopeStatement* bb)
 {
-        if (isSgFunctionDefinition(bb))
-        {
-                bb = isSgFunctionDefinition(bb)->get_body();
-        }
+    if (isSgFunctionDefinition(bb))
+    {
+        bb = isSgFunctionDefinition(bb)->get_body();
+    }
 
-        ROSE_ASSERT(bb);
+    ROSE_ASSERT(bb);
     NumNodeRenameTable result;
 
     //Keep track of visited nodes
     set<SgNode*> visited;
-    
+
     queue<cfgNode> worklist;
 
     cfgNode current = cfgNode(bb->cfgForBeginning());
     worklist.push(current);
 
-    while(!worklist.empty())
+    while (!worklist.empty())
     {
         //Get the node to work on
         current = worklist.front();
-                worklist.pop();
+        worklist.pop();
 
-                SgNode* currentNode = current.getNode();
-                visited.insert(currentNode);
-                
-                //Find if any of the children exit the basic block.
-                cfgEdgeVec outEdges = current.outEdges();
-                foreach(cfgEdge edge, outEdges)
+        SgNode* currentNode = current.getNode();
+        visited.insert(currentNode);
+
+        //Find if any of the children exit the basic block.
+        cfgEdgeVec outEdges = current.outEdges();
+
+        foreach(cfgEdge edge, outEdges)
+        {
+            SgNode* targetNode = edge.target().getNode();
+
+            //Prevent infinite looping
+            if (visited.count(targetNode) > 0)
+            {
+                continue;
+            }
+
+            if (!SageInterface::isAncestor(bb, targetNode))
+            {
+                //This edge leads outside the basic block! Gotta save the variable versions here
+                NumNodeRenameTable temp = getReachingDefsAtNode(currentNode);
+
+                //Merge the tables
+
+                foreach(NumNodeRenameTable::value_type& entry, temp)
                 {
-                        SgNode* targetNode = edge.target().getNode();
+                    //Insert the entry wholesale
+                    if (result.count(entry.first) == 0)
+                    {
+                        result[entry.first] = entry.second;
+                    }
+                        //Or merge it with an existing one
+                    else
+                    {
 
-                        //Prevent infinite looping
-                        if (visited.count(targetNode) > 0)
+                        foreach(NumNodeRenameEntry::value_type& tableEntry, entry.second)
                         {
-                                continue;
-                        }
-
-                        if (!SageInterface::isAncestor(bb, targetNode))
-                        {
-                                //This edge leads outside the basic block! Gotta save the variable versions here
-                                NumNodeRenameTable temp = getReachingDefsAtNode(currentNode);
-
-                                //Merge the tables
-                                foreach(NumNodeRenameTable::value_type& entry, temp)
+                            //Insert the entry wholesale
+                            if (result[entry.first].count(tableEntry.first) == 0)
+                            {
+                                result[entry.first][tableEntry.first] = tableEntry.second;
+                            }
+                            else
+                            {
+                                //Check for equivalence
+                                if (result[entry.first][tableEntry.first] != tableEntry.second)
                                 {
-                                        //Insert the entry wholesale
-                                        if (result.count(entry.first) == 0)
-                                        {
-                                                result[entry.first] = entry.second;
-                                        }
-                                        //Or merge it with an existing one
-                                        else
-                                        {
-                                                foreach(NumNodeRenameEntry::value_type& tableEntry, entry.second)
-                                                {
-                                                        //Insert the entry wholesale
-                                                        if (result[entry.first].count(tableEntry.first) == 0)
-                                                        {
-                                                                result[entry.first][tableEntry.first] = tableEntry.second;
-                                                        }
-                                                        else
-                                                        {
-                                                                //Check for equivalence
-                                                                if (result[entry.first][tableEntry.first] != tableEntry.second)
-                                                                {
-                                                                        cout << "Error: Same Renaming number has two different definition points." << endl;
-                                                                        ROSE_ASSERT(false);
-                                                                }
-                                                        }
-                                                }
-                                        }
+                                    cout << "Error: Same Renaming number has two different definition points." << endl;
+                                    ROSE_ASSERT(false);
                                 }
+                            }
                         }
-                        else
-                        {
-                                //Still in the basic block, add this edge to the worklist
-                                worklist.push(edge.target());
-                        }
+                    }
                 }
+            }
+            else
+            {
+                //Still in the basic block, add this edge to the worklist
+                worklist.push(edge.target());
+            }
+        }
     }
 
-        return result;
+    return result;
 }
 
 VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtFunctionEnd(SgFunctionDefinition* node)
@@ -2603,44 +2681,47 @@ VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtFunction
 
     cfgNode lastNode = cfgNode(node->cfgForEnd());
     cfgEdgeVec lastEdges = lastNode.inEdges();
-    if(lastEdges.size() == 0)
+    if (lastEdges.size() == 0)
     {
         cout << "Error: No incoming edges to end of function definition." << endl;
         ROSE_ASSERT(false);
     }
-    else if(lastEdges.size() == 1)
+    else if (lastEdges.size() == 1)
     {
         return getReachingDefsAtNode(lastEdges[0].source().getNode());
     }
     else
     {
         //Iterate and merge each edge
+
         foreach(cfgEdgeVec::value_type& edge, lastEdges)
         {
             NumNodeRenameTable temp = getReachingDefsAtNode(edge.source().getNode());
 
             //Merge the tables
+
             foreach(NumNodeRenameTable::value_type& entry, temp)
             {
                 //Insert the entry wholesale
-                if(result.count(entry.first) == 0)
+                if (result.count(entry.first) == 0)
                 {
                     result[entry.first] = entry.second;
                 }
-                //Or merge it with an existing one
+                    //Or merge it with an existing one
                 else
                 {
+
                     foreach(NumNodeRenameEntry::value_type& tableEntry, entry.second)
                     {
                         //Insert the entry wholesale
-                        if(result[entry.first].count(tableEntry.first) == 0)
+                        if (result[entry.first].count(tableEntry.first) == 0)
                         {
                             result[entry.first][tableEntry.first] = tableEntry.second;
                         }
                         else
                         {
                             //Check for equivalence
-                            if(result[entry.first][tableEntry.first] != tableEntry.second)
+                            if (result[entry.first][tableEntry.first] != tableEntry.second)
                             {
                                 cout << "Error: Same Renaming number has two different definition points." << endl;
                                 ROSE_ASSERT(false);
@@ -2662,18 +2743,19 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunction
 
     cfgNode lastNode = cfgNode(node->cfgForEnd());
     cfgEdgeVec lastEdges = lastNode.inEdges();
-    if(lastEdges.size() == 0)
+    if (lastEdges.size() == 0)
     {
         cout << "Error: No incoming edges to end of function definition." << endl;
         ROSE_ASSERT(false);
     }
-    else if(lastEdges.size() == 1)
+    else if (lastEdges.size() == 1)
     {
         return getReachingDefsAtNodeForName(lastEdges[0].source().getNode(), var);
     }
     else
     {
         //Iterate and merge each edge
+
         foreach(cfgEdgeVec::value_type& edge, lastEdges)
         {
             NumNodeRenameEntry temp = getReachingDefsAtNodeForName(edge.source().getNode(), var);
@@ -2681,14 +2763,14 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunction
             foreach(NumNodeRenameEntry::value_type& tableEntry, temp)
             {
                 //Insert the entry wholesale
-                if(result.count(tableEntry.first) == 0)
+                if (result.count(tableEntry.first) == 0)
                 {
                     result[tableEntry.first] = tableEntry.second;
                 }
                 else
                 {
                     //Check for equivalence
-                    if(result[tableEntry.first] != tableEntry.second)
+                    if (result[tableEntry.first] != tableEntry.second)
                     {
                         cout << "Error: Same Renaming number has two different definition points." << endl;
                         ROSE_ASSERT(false);
@@ -2703,94 +2785,99 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunction
 
 VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtStatementStart(SgStatement* statement)
 {
-        ROSE_ASSERT(statement);
+    ROSE_ASSERT(statement);
     NumNodeRenameTable result;
 
-        //Get all the incoming edges for the statement. These are UNFILTERED nodes, so we get the true beginning of the statement
-        vector<CFGEdge> inEdges = statement->cfgForBeginning().inEdges();
+    //Get all the incoming edges for the statement. These are UNFILTERED nodes, so we get the true beginning of the statement
+    vector<CFGEdge> inEdges = statement->cfgForBeginning().inEdges();
 
-        //Trace back from an unfiltered node to all the filtered nodes immediately leading to it
-        queue <CFGNode> unfilteredNodes;
-        set<CFGNode> visited;
-        vector<CFGNode> filteredNodes;
+    //Trace back from an unfiltered node to all the filtered nodes immediately leading to it
+    queue <CFGNode> unfilteredNodes;
+    set<CFGNode> visited;
+    vector<CFGNode> filteredNodes;
 
-        //Add all the unfiltered inEdges to the initial worklist
-        foreach (CFGEdge inEdge, inEdges)
+    //Add all the unfiltered inEdges to the initial worklist
+
+    foreach(CFGEdge inEdge, inEdges)
+    {
+        unfilteredNodes.push(inEdge.source());
+    }
+
+    while (!unfilteredNodes.empty())
+    {
+        CFGNode node = unfilteredNodes.front();
+        unfilteredNodes.pop();
+        visited.insert(node);
+
+        //If we reached a filtered node, we're done
+        IsDefUseFilter filter;
+        if (filter(node))
         {
-                unfilteredNodes.push(inEdge.source());
+            filteredNodes.push_back(node);
+        }
+            //This node is unfiltered, explore its parents
+        else
+        {
+
+            foreach(CFGEdge inEdge, node.inEdges())
+            {
+                CFGNode parentNode = inEdge.source();
+                if (visited.count(parentNode) == 0)
+                {
+                    unfilteredNodes.push(parentNode);
+                }
+            }
+        }
+    }
+
+    //Merge in the defs from the reaching CFG nodes that are not children of the current statement
+
+    foreach(CFGNode cfgNode, filteredNodes)
+    {
+        SgNode* sourceNode = cfgNode.getNode();
+        if (statement == sourceNode || SageInterface::isAncestor(statement, sourceNode))
+        {
+            continue;
         }
 
-        while (!unfilteredNodes.empty())
+        NumNodeRenameTable temp = getReachingDefsAtNode(sourceNode);
+
+        //Merge the tables
+        //TODO: Factor this out into a function
+
+        foreach(NumNodeRenameTable::value_type& entry, temp)
         {
-                CFGNode node = unfilteredNodes.front();
-                unfilteredNodes.pop();
-                visited.insert(node);
+            //Insert the entry wholesale
+            if (result.count(entry.first) == 0)
+            {
+                result[entry.first] = entry.second;
+            }
+                //Or merge it with an existing one
+            else
+            {
 
-                //If we reached a filtered node, we're done
-                IsDefUseFilter filter;
-                if (filter(node))
+                foreach(NumNodeRenameEntry::value_type& tableEntry, entry.second)
                 {
-                        filteredNodes.push_back(node);
-                }
-                //This node is unfiltered, explore its parents
-                else
-                {
-                        foreach (CFGEdge inEdge, node.inEdges())
+                    //Insert the entry wholesale
+                    if (result[entry.first].count(tableEntry.first) == 0)
+                    {
+                        result[entry.first][tableEntry.first] = tableEntry.second;
+                    }
+                    else
+                    {
+                        //Check for equivalence
+                        if (result[entry.first][tableEntry.first] != tableEntry.second)
                         {
-                                CFGNode parentNode = inEdge.source();
-                                if (visited.count(parentNode) == 0)
-                                {
-                                        unfilteredNodes.push(parentNode);
-                                }
+                            cout << "Error: Same Renaming number has two different definition points." << endl;
+                            ROSE_ASSERT(false);
                         }
+                    }
                 }
+            }
         }
+    }
 
-        //Merge in the defs from the reaching CFG nodes that are not children of the current statement
-        foreach (CFGNode cfgNode, filteredNodes)
-        {
-                SgNode* sourceNode = cfgNode.getNode();
-                if (statement == sourceNode || SageInterface::isAncestor(statement, sourceNode))
-                {
-                        continue;
-                }
-
-                NumNodeRenameTable temp = getReachingDefsAtNode(sourceNode);
-
-                //Merge the tables
-                //TODO: Factor this out into a function
-                foreach(NumNodeRenameTable::value_type& entry, temp)
-                {
-                        //Insert the entry wholesale
-                        if (result.count(entry.first) == 0)
-                        {
-                                result[entry.first] = entry.second;
-                        }
-                        //Or merge it with an existing one
-                        else
-                        {
-                                foreach(NumNodeRenameEntry::value_type& tableEntry, entry.second)
-                                {
-                                        //Insert the entry wholesale
-                                        if (result[entry.first].count(tableEntry.first) == 0)
-                                        {
-                                                result[entry.first][tableEntry.first] = tableEntry.second;
-                                        }
-                                        else
-                                        {
-                                                //Check for equivalence
-                                                if (result[entry.first][tableEntry.first] != tableEntry.second)
-                                                {
-                                                        cout << "Error: Same Renaming number has two different definition points." << endl;
-                                                        ROSE_ASSERT(false);
-                                                }
-                                        }
-                                }
-                        }
-                }
-        }
-
-        return result;
+    return result;
 }
 
 VariableRenaming::NumNodeRenameTable VariableRenaming::getReachingDefsAtFunctionStart(SgFunctionDefinition* node)
@@ -2805,298 +2892,316 @@ VariableRenaming::NumNodeRenameEntry VariableRenaming::getReachingDefsAtFunction
 
 SgExpression* VariableRenaming::buildVariableReference(const VarName& var, SgScopeStatement* scope)
 {
-     ROSE_ASSERT(var.size() > 0);
+    ROSE_ASSERT(var.size() > 0);
 
-     SgExpression* varsSoFar = SageBuilder::buildVarRefExp(var.front(), scope);
+    SgExpression* varsSoFar = SageBuilder::buildVarRefExp(var.front(), scope);
 
-     for (size_t i = 0; i < var.size(); i++)
-     {
-         SgInitializedName* initName = var[i];
-         if (initName == var.back())
-         {
-             break;
-         }
+    for (size_t i = 0; i < var.size(); i++)
+    {
+        SgInitializedName* initName = var[i];
+        if (initName == var.back())
+        {
+            break;
+        }
 
-         SgVarRefExp* nextVar = SageBuilder::buildVarRefExp(var[i+1], scope);
+        SgVarRefExp* nextVar = SageBuilder::buildVarRefExp(var[i + 1], scope);
 
-         if (isSgPointerType(initName->get_type()))
-         {
-             varsSoFar = SageBuilder::buildArrowExp(varsSoFar, nextVar);
-         }
-         else
-         {
-             varsSoFar = SageBuilder::buildDotExp(varsSoFar, nextVar);
-         }
-     }
+        if (isSgPointerType(initName->get_type()))
+        {
+            varsSoFar = SageBuilder::buildArrowExp(varsSoFar, nextVar);
+        }
+        else
+        {
+            varsSoFar = SageBuilder::buildDotExp(varsSoFar, nextVar);
+        }
+    }
 
-     return varsSoFar;
+    return varsSoFar;
 }
 
 VariableRenaming::ChildUses VariableRenaming::DefsAndUsesTraversal::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttributesList attrs)
 {
+    if (ssa->getDebug())
+    {
+        cout << "---------<" << node->class_name() << node << ">-------" << node << endl;
+    }
+
+    //We want to propagate the def/use information up from the varRefs to the higher expressions.
+    if (SgInitializedName * initName = isSgInitializedName(node))
+    {
+        VarUniqueName * uName = VariableRenaming::getUniqueName(node);
+        ROSE_ASSERT(uName);
+
+        //Add this as a def, unless this initialized name is a preinitialization of a parent class. For example,
+        //in the base of B : A(3) { ... } where A is a superclass of B, an initialized name for A appears.
+        //Clearly, the initialized name for the parent class is not a real variable
+        if (initName->get_preinitialization() != SgInitializedName::e_virtual_base_class
+                && initName->get_preinitialization() != SgInitializedName::e_nonvirtual_base_class)
+        {
+            ssa->getDefTable()[node][uName->getKey()].push_back(node);
+
+            if (ssa->getDebug())
+            {
+                cout << "Defined " << uName->getNameString() << endl;
+            }
+        }
+
+        return ChildUses();
+    }
+        //Catch all variable references
+    else if (isSgVarRefExp(node))
+    {
+        //Get the unique name of the def.
+        VarUniqueName * uName = VariableRenaming::getUniqueName(node);
+
+        //In some cases, a varRef isn't actually part of a variable name. For example,
+        //foo().x where foo returns a structure. x is an SgVarRefExp, but is not part of a variable name.
+        if (uName == NULL)
+        {
+            return ChildUses();
+        }
+
+        //Add this as a use. If it's not a use (e.g. target of an assignment), we'll fix it up later.
+        ssa->getUseTable()[node][uName->getKey()].push_back(node);
+
         if (ssa->getDebug())
         {
-                cout << "---------<" << node->class_name() << node << ">-------" << node << endl;
+            cout << "Found use for " << uName->getNameString() << " at " << node->cfgForBeginning().toStringForDebugging() << endl;
         }
 
-        //We want to propagate the def/use information up from the varRefs to the higher expressions.
-        if (SgInitializedName* initName = isSgInitializedName(node))
-        {
-                VarUniqueName * uName = VariableRenaming::getUniqueName(node);
-                ROSE_ASSERT(uName);
-
-                //Add this as a def, unless this initialized name is a preinitialization of a parent class. For example,
-                //in the base of B : A(3) { ... } where A is a superclass of B, an initialized name for A appears.
-                //Clearly, the initialized name for the parent class is not a real variable
-                if (initName->get_preinitialization() != SgInitializedName::e_virtual_base_class
-                                && initName->get_preinitialization() != SgInitializedName::e_nonvirtual_base_class)
-                {
-                        ssa->getDefTable()[node][uName->getKey()].push_back(node);
-
-                        if (ssa->getDebug())
-                        {
-                                cout << "Defined " << uName->getNameString() << endl;
-                        }
-                }
-
-                return ChildUses();
-        }
-        //Catch all variable references
-        else if (isSgVarRefExp(node))
-        {
-                //Get the unique name of the def.
-                VarUniqueName * uName = VariableRenaming::getUniqueName(node);
-                
-                //In some cases, a varRef isn't actually part of a variable name. For example,
-                //foo().x where foo returns a structure. x is an SgVarRefExp, but is not part of a variable name.
-                if (uName == NULL)
-                {
-                        return ChildUses();
-                }
-
-                //Add this as a use. If it's not a use (e.g. target of an assignment), we'll fix it up later.
-                ssa->getUseTable()[node][uName->getKey()].push_back(node);
-
-                if (ssa->getDebug())
-                {
-                        cout << "Found use for " << uName->getNameString() << " at " << node->cfgForBeginning().toStringForDebugging() << endl;
-                }
-
-                //This varref is both the only use in the subtree and the current variable
-                return ChildUses(node, isSgVarRefExp(node));
-        }
+        //This varref is both the only use in the subtree and the current variable
+        return ChildUses(node, isSgVarRefExp(node));
+    }
         //Catch all types of Binary Operations
-        else if (SgBinaryOp* binaryOp = isSgBinaryOp(node))
-        {
-                ROSE_ASSERT(attrs.size() == 2 && "Error: BinaryOp without exactly 2 children.");
-                ChildUses& lhs = attrs[0];
-                ChildUses& rhs = attrs[1];
+    else if (SgBinaryOp * binaryOp = isSgBinaryOp(node))
+    {
+        ROSE_ASSERT(attrs.size() == 2 && "Error: BinaryOp without exactly 2 children.");
+        ChildUses& lhs = attrs[0];
+        ChildUses& rhs = attrs[1];
 
-                //If we have an assigning operation, we want to list everything on the LHS as being defined
-                //Otherwise, everything is being used.
-                vector<SgNode*> uses;
-                switch (binaryOp->variantT())
+        //If we have an assigning operation, we want to list everything on the LHS as being defined
+        //Otherwise, everything is being used.
+        vector<SgNode*> uses;
+        switch (binaryOp->variantT())
+        {
+                //All the binary ops that define the LHS
+            case V_SgAndAssignOp:
+            case V_SgDivAssignOp:
+            case V_SgIorAssignOp:
+            case V_SgLshiftAssignOp:
+            case V_SgMinusAssignOp:
+            case V_SgModAssignOp:
+            case V_SgMultAssignOp:
+            case V_SgPlusAssignOp:
+            case V_SgPointerAssignOp:
+            case V_SgRshiftAssignOp:
+            case V_SgXorAssignOp:
+            case V_SgAssignOp:
+            {
+                //All the uses from the RHS are propagated
+                uses.insert(uses.end(), rhs.getUses().begin(), rhs.getUses().end());
+
+                //All the uses from the LHS are propagated, unless we're an assign op
+                uses.insert(uses.end(), lhs.getUses().begin(), lhs.getUses().end());
+
+                SgVarRefExp* currentVar = lhs.getCurrentVar();
+
+                if (currentVar != NULL)
                 {
-                        //All the binary ops that define the LHS
-                        case V_SgAndAssignOp:
-                        case V_SgDivAssignOp:
-                        case V_SgIorAssignOp:
-                        case V_SgLshiftAssignOp:
-                        case V_SgMinusAssignOp:
-                        case V_SgModAssignOp:
-                        case V_SgMultAssignOp:
-                        case V_SgPlusAssignOp:
-                        case V_SgPointerAssignOp:
-                        case V_SgRshiftAssignOp:
-                        case V_SgXorAssignOp:
-                        case V_SgAssignOp:
+                    vector<SgNode*>::iterator currVarUse = find(uses.begin(), uses.end(), currentVar);
+
+                    //An assign op doesn't use the var it's defining. So, remove that var from the uses
+                    if (isSgAssignOp(binaryOp))
+                    {
+                        if (currVarUse != uses.end())
                         {
-                                //All the uses from the RHS are propagated
-                                uses.insert(uses.end(), rhs.getUses().begin(), rhs.getUses().end());
-
-                                //All the uses from the LHS are propagated, unless we're an assign op
-                                uses.insert(uses.end(), lhs.getUses().begin(), lhs.getUses().end());
-
-                                SgVarRefExp* currentVar = lhs.getCurrentVar();
-
-                                if (currentVar != NULL)
-                                {
-                                        vector<SgNode*>::iterator currVarUse = find(uses.begin(), uses.end(), currentVar);
-
-                                        //An assign op doesn't use the var it's defining. So, remove that var from the uses
-                                        if (isSgAssignOp(binaryOp))
-                                        {
-                                                if (currVarUse != uses.end())
-                                                {
-                                                        uses.erase(currVarUse);
-                                                }
-
-                                                //Also remove the use from the varRef node, because it's not really a use.
-                                                ssa->getUseTable()[currentVar].clear();
-                                        }
-                                        //All the other ops always use the var they're defining (+=, -=, /=, etc)
-                                        else
-                                        {
-                                                if (currVarUse == uses.end())
-                                                {
-                                                        uses.push_back(currentVar);
-                                                }
-                                        }
-                                }
-
-                                //Set all the uses as being used at this node
-                                addUsesToNode(binaryOp, uses);
-
-                                //Set the current var as being defined here
-                                //It's possible that the LHS has no variable references. For example,
-                                //foo() = 3, where foo() returns a reference
-                                if (currentVar != NULL)
-                                {
-                                        addDefForVarAtNode(currentVar, binaryOp);
-                                }
-
-                                return ChildUses(uses, currentVar);
+                            uses.erase(currVarUse);
                         }
-                        //Otherwise cover all the non-defining Ops
-                        default:
+
+                        //Also remove the use from the varRef node, because it's not really a use.
+                        ssa->getUseTable()[currentVar].clear();
+                    }
+                        //All the other ops always use the var they're defining (+=, -=, /=, etc)
+                    else
+                    {
+                        if (currVarUse == uses.end())
                         {
-                                //We want to set all the varRefs as being used here
-                                std::vector<SgNode*> uses;
-                                uses.insert(uses.end(), lhs.getUses().begin(), lhs.getUses().end());
-                                uses.insert(uses.end(), rhs.getUses().begin(), rhs.getUses().end());
-
-                                //Set all the uses as being used here.
-                                addUsesToNode(binaryOp, uses);
-
-                                //Propagate the current variable up. The rhs variable is the one that could be potentially defined up the tree
-                                return ChildUses(uses, rhs.getCurrentVar());
+                            uses.push_back(currentVar);
                         }
+                    }
                 }
-        }
-        //Catch all unary operations here.
-        else if (isSgUnaryOp(node))
-        {
-                SgUnaryOp* unaryOp = isSgUnaryOp(node);
 
-                //Now handle the uses. All unary operators use everything in their operand
+                //Set all the uses as being used at this node
+                addUsesToNode(binaryOp, uses);
+
+                //Set the current var as being defined here
+                //It's possible that the LHS has no variable references. For example,
+                //foo() = 3, where foo() returns a reference
+                if (currentVar != NULL)
+                {
+                    addDefForVarAtNode(currentVar, binaryOp);
+                }
+
+                return ChildUses(uses, currentVar);
+            }
+                //Otherwise cover all the non-defining Ops
+            default:
+            {
+                //We want to set all the varRefs as being used here
                 std::vector<SgNode*> uses;
-                if (isSgAddressOfOp(unaryOp) && isSgPointerMemberType(unaryOp->get_type()))
-                {
-                        //SgAddressOfOp is special; it's not always a use of its operand. When creating a reference to a member variable,
-                        //we create reference without providing a variable instance. For example,
-                        //              struct foo { int bar; };
-                        //
-                        //              void test()
-                        //              {
-                        //                      int foo::*v = &foo::bar;  <---- There is no use of foo.bar on this line
-                        //                      foo b;
-                        //                      b.*v = 3;
-                        //              }
-                        //In this case, there are no uses in the operand. We also want to delete any uses for the children
-                        vector<SgNode*> successors = SageInterface::querySubTree<SgNode>(unaryOp);
-                        foreach(SgNode* successor, successors)
-                        {
-                                ssa->getUseTable()[successor].clear();
-                        }
-                }
-                else
-                {
-                        //Guard agains unary ops that have no children (exception rethrow statement)
-                        if (attrs.size() > 0)
-                        {
-                                uses.insert(uses.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
-                        }
-                }
-
-                //For these two definition operations, we want to insert a def for the operand
-                SgVarRefExp* currentVar = NULL;
-                if (isSgMinusMinusOp(unaryOp) || isSgPlusPlusOp(unaryOp))
-                {
-                        currentVar = attrs[0].getCurrentVar();
-
-                        //The defs can be empty. For example, foo()++ where foo returns a reference
-                        if (currentVar != NULL)
-                        {
-                                addDefForVarAtNode(currentVar, unaryOp);
-
-                                //++ and -- always use their operand. Make sure it's part of the uses
-                                if (find(uses.begin(), uses.end(), currentVar) == uses.end())
-                                {
-                                        uses.push_back(currentVar);
-                                }
-                        }
-                }
-                //Some other ops also preserve the current var. We don't really distinguish between the pointer variable
-                //and the value to which it points
-                else if (isSgCastExp(unaryOp) || isSgPointerDerefExp(unaryOp) || isSgAddressOfOp(unaryOp))
-                {
-                        currentVar = attrs[0].getCurrentVar();
-                }
+                uses.insert(uses.end(), lhs.getUses().begin(), lhs.getUses().end());
+                uses.insert(uses.end(), rhs.getUses().begin(), rhs.getUses().end());
 
                 //Set all the uses as being used here.
-                addUsesToNode(unaryOp, uses);
+                addUsesToNode(binaryOp, uses);
 
-                //Return the combined uses
-                return ChildUses(uses, currentVar);
+                //Propagate the current variable up. The rhs variable is the one that could be potentially defined up the tree
+                return ChildUses(uses, rhs.getCurrentVar());
+            }
         }
-        else if (isSgStatement(node))
+    }
+        //Catch all unary operations here.
+    else if (isSgUnaryOp(node))
+    {
+        SgUnaryOp* unaryOp = isSgUnaryOp(node);
+
+        //Now handle the uses. All unary operators use everything in their operand
+        std::vector<SgNode*> uses;
+        if (isSgAddressOfOp(unaryOp) && isSgPointerMemberType(unaryOp->get_type()))
         {
-                //Don't propogate uses and defs up to the statement level
-                return ChildUses();
+            //SgAddressOfOp is special; it's not always a use of its operand. When creating a reference to a member variable,
+            //we create reference without providing a variable instance. For example,
+            //              struct foo { int bar; };
+            //
+            //              void test()
+            //              {
+            //                      int foo::*v = &foo::bar;  <---- There is no use of foo.bar on this line
+            //                      foo b;
+            //                      b.*v = 3;
+            //              }
+            //In this case, there are no uses in the operand. We also want to delete any uses for the children
+            vector<SgNode*> successors = SageInterface::querySubTree<SgNode > (unaryOp);
+
+            foreach(SgNode* successor, successors)
+            {
+                ssa->getUseTable()[successor].clear();
+            }
         }
         else
         {
-                //For the default case, we merge the uses of every attribute and pass them upwards
-                std::vector<SgNode*> uses;
-                for (unsigned int i = 0; i < attrs.size(); i++)
-                {
-                        if (ssa->getDebug())
-                        {
-                                cout << "Merging attr[" << i << "]" << endl;
-                        }
-                        uses.insert(uses.end(), attrs[i].getUses().begin(), attrs[i].getUses().end());
-                }
-
-                //Set all the uses as being used here.
-                addUsesToNode(node, uses);
-
-                //We don't propagate the variables here up the tree.
-                return ChildUses(uses, NULL);
+            //Guard agains unary ops that have no children (exception rethrow statement)
+            if (attrs.size() > 0)
+            {
+                uses.insert(uses.end(), attrs[0].getUses().begin(), attrs[0].getUses().end());
+            }
         }
+
+        //For these two definition operations, we want to insert a def for the operand
+        SgVarRefExp* currentVar = NULL;
+        if (isSgMinusMinusOp(unaryOp) || isSgPlusPlusOp(unaryOp))
+        {
+            currentVar = attrs[0].getCurrentVar();
+
+            //The defs can be empty. For example, foo()++ where foo returns a reference
+            if (currentVar != NULL)
+            {
+                addDefForVarAtNode(currentVar, unaryOp);
+
+                //++ and -- always use their operand. Make sure it's part of the uses
+                if (find(uses.begin(), uses.end(), currentVar) == uses.end())
+                {
+                    uses.push_back(currentVar);
+                }
+            }
+        }
+            //Some other ops also preserve the current var. We don't really distinguish between the pointer variable
+            //and the value to which it points
+        else if (isSgCastExp(unaryOp) || isSgPointerDerefExp(unaryOp) || isSgAddressOfOp(unaryOp))
+        {
+            currentVar = attrs[0].getCurrentVar();
+        }
+
+        //Set all the uses as being used here.
+        addUsesToNode(unaryOp, uses);
+
+        //Return the combined uses
+        return ChildUses(uses, currentVar);
+    }
+    else if (isSgDeleteExp(node))
+    {
+        //Deleting a variable definitely modifies it.
+        ROSE_ASSERT(attrs.size() == 1);
+        SgVarRefExp* currentVar = attrs.front().getCurrentVar();
+
+        if (currentVar != NULL)
+        {
+            addDefForVarAtNode(currentVar, node);
+            return ChildUses(attrs.front().getUses());
+        }
+        else
+        {
+            return ChildUses();
+        }
+    }
+    else if (isSgStatement(node))
+    {
+        //Don't propogate uses and defs up to the statement level
+        return ChildUses();
+    }
+    else
+    {
+        //For the default case, we merge the uses of every attribute and pass them upwards
+        std::vector<SgNode*> uses;
+        for (unsigned int i = 0; i < attrs.size(); i++)
+        {
+            if (ssa->getDebug())
+            {
+                cout << "Merging attr[" << i << "]" << endl;
+            }
+            uses.insert(uses.end(), attrs[i].getUses().begin(), attrs[i].getUses().end());
+        }
+
+        //Set all the uses as being used here.
+        addUsesToNode(node, uses);
+
+        //We don't propagate the variables here up the tree.
+        return ChildUses(uses, NULL);
+    }
 }
 
 /** Mark all the uses as occurring at the specified node. */
 void VariableRenaming::DefsAndUsesTraversal::addUsesToNode(SgNode* node, std::vector<SgNode*> uses)
 {
-        foreach(SgNode* useNode, uses)
+
+    foreach(SgNode* useNode, uses)
+    {
+        //Get the unique name of the def.
+        VarUniqueName * uName = VariableRenaming::getUniqueName(useNode);
+        ROSE_ASSERT(uName);
+
+        //Add the varRef as a def at the current node of the ref's uniqueName
+        //We will correct the reference later.
+        ssa->getUseTable()[node][uName->getKey()].push_back(useNode);
+
+        if (ssa->getDebug())
         {
-                //Get the unique name of the def.
-                VarUniqueName * uName = VariableRenaming::getUniqueName(useNode);
-                ROSE_ASSERT(uName);
-
-                //Add the varRef as a def at the current node of the ref's uniqueName
-                //We will correct the reference later.
-                ssa->getUseTable()[node][uName->getKey()].push_back(useNode);
-
-                if (ssa->getDebug())
-                {
-                        cout << "Found use for " << uName->getNameString() << " at " << node->cfgForBeginning().toStringForDebugging() << endl;
-                }
+            cout << "Found use for " << uName->getNameString() << " at " << node->cfgForBeginning().toStringForDebugging() << endl;
         }
+    }
 }
 
 void VariableRenaming::DefsAndUsesTraversal::addDefForVarAtNode(SgVarRefExp* currentVar, SgNode* defNode)
 {
-        const VariableRenaming::VarName& varName = VariableRenaming::getVarName(currentVar);
-        ROSE_ASSERT(varName != VariableRenaming::emptyName);
+    const VariableRenaming::VarName& varName = VariableRenaming::getVarName(currentVar);
+    ROSE_ASSERT(varName != VariableRenaming::emptyName);
 
-        //Add the varRef as a definition at the current node of the ref's uniqueName
-        ssa->getDefTable()[defNode][varName].push_back(defNode);
-        ROSE_ASSERT(ssa->getDefTable()[defNode][varName].size() == 1);
+    //Add the varRef as a definition at the current node of the ref's uniqueName
+    ssa->getDefTable()[defNode][varName].push_back(defNode);
+    ROSE_ASSERT(ssa->getDefTable()[defNode][varName].size() == 1);
 
-        if (ssa->getDebug())
-        {
-                cout << "Found def for " << VariableRenaming::keyToString(varName)
-                                << " at " << defNode->cfgForBeginning().toStringForDebugging() << endl;
-        }
+    if (ssa->getDebug())
+    {
+        cout << "Found def for " << VariableRenaming::keyToString(varName)
+                << " at " << defNode->cfgForBeginning().toStringForDebugging() << endl;
+    }
 }

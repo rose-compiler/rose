@@ -61,6 +61,45 @@ build_noop_index(const std::vector <std::pair <size_t, size_t> > &noops)
 }
 
 void
+AsmUnparser::init()
+{
+    insn_callbacks.pre
+        //.append(&insnAddress)                 /* Using insnRawBytes instead, which also prints addresses. */
+        .append(&insnRawBytes);
+    insn_callbacks.unparse
+        .append(&insnBody);
+    insn_callbacks.post
+        .append(&insnNoEffect)
+        .append(&insnComment)
+        .append(&insnLineTermination);
+
+    //basicblock_callbacks.pre
+        //.append(&basicBlockNoopUpdater)       /* Disabled by default for speed. */
+        //.append(&basicBlockNoopWarning);      /* No-op if basicBlockNoopUpdater isn't used. */
+    basicblock_callbacks.unparse
+        .append(&basicBlockBody);
+    basicblock_callbacks.post
+        .append(&basicBlockSuccessors)
+        .append(&basicBlockLineTermination)
+        .append(&basicBlockCleanup);
+
+    function_callbacks.pre
+        .append(&functionEntryAddress)
+        .append(&functionSeparator)
+        .append(&functionReasons)
+        .append(&functionName)
+        .append(&functionLineTermination);
+    function_callbacks.unparse
+        .append(&functionBody);
+
+    interp_callbacks.pre
+        .append(&interpName);
+    interp_callbacks.unparse
+        .append(&interpBody);
+}
+
+
+void
 AsmUnparser::add_function_labels(SgNode *node)
 {
     struct T1: public SgSimpleProcessing {
@@ -76,156 +115,378 @@ AsmUnparser::add_function_labels(SgNode *node)
     traversal.traverse(node, preorder);
 };
 
-void
-AsmUnparser::unparse(std::ostream &o, SgAsmInstruction *insn)
+bool
+AsmUnparser::is_unparsable_node(SgNode *node)
 {
-    pre(o, insn);
+    if (isSgAsmFunctionDeclaration(node) || isSgAsmInstruction(node) || isSgAsmInterpretation(node))
+        return true;
 
-    if (insn_show_bytes) {
-        HexdumpFormat fmt;
-        fmt.width = 6;                  /* bytes per line of output */
-        fmt.pad_chars = true;           /* character output should be padded */
-
-        SgAsmExecutableFileFormat::hexdump(o, insn->get_address(), &(insn->get_raw_bytes()[0]), insn->get_raw_bytes().size(), fmt);
-    } else {
-        o <<StringUtility::addrToString(insn->get_address()) <<":";
+    SgAsmBlock *block = isSgAsmBlock(node);
+    if (block!=NULL) {
+        const SgAsmStatementPtrList &stmts = block->get_statementList();
+        if (!stmts.empty() && isSgAsmInstruction(stmts.front()))
+            return true;
     }
-    o <<"   " <<unparseInstruction(insn, &labels);
-    if (!insn->get_comment().empty())
-        o << "/* " <<insn->get_comment() << "*/";
-    if (insn_linefeed)
-        o <<"\n";
 
-    post(o, insn);
+    return false;
 }
 
-void
-AsmUnparser::unparse(std::ostream &o, SgAsmBlock *blk)
+SgNode *
+AsmUnparser::find_unparsable_node(SgNode *ast)
 {
-    std::string blk_addrstr = StringUtility::addrToString(blk->get_address());
+    SgNode *root = NULL;
+    try {
+        struct T1: public SgSimpleProcessing {
+            AsmUnparser *unparser;
+            T1(AsmUnparser *unparser): unparser(unparser) {}
+            void visit(SgNode *node) {
+                if (unparser->is_unparsable_node(node))
+                    throw node;
+            }
+        };
+        T1(this).traverse(ast, preorder);
+    } catch (SgNode *node) {
+        root = node;
+    }
+    return root;
+}
 
-    /* The instructions in this block (do not traverse deeper) */
-    const SgAsmStatementPtrList &stmts = blk->get_statementList();
+std::vector<SgNode*>
+AsmUnparser::find_unparsable_nodes(SgNode *ast)
+{
+    struct T1: public AstPrePostProcessing {
+        AsmUnparser *unparser;
+        SgNode *ignore;
+        std::vector<SgNode*> found;
+        T1(AsmUnparser *unparser): unparser(unparser), ignore(NULL) {}
+        void preOrderVisit(SgNode *node) {
+            if (!ignore && unparser->is_unparsable_node(node)) {
+                found.push_back(node);
+                ignore = node;
+            }
+        }
+        void postOrderVisit(SgNode *node) {
+            if (ignore==node)
+                ignore = NULL;
+        }
+    } t1(this);
+    t1.traverse(ast);
+    return t1.found;
+}
+
+/******************************************************************************************************************************
+ *                                      Main unparsing functions
+ ******************************************************************************************************************************/
+
+size_t
+AsmUnparser::unparse(std::ostream &output, SgNode *ast)
+{
+    std::vector<SgNode*> unparsable = find_unparsable_nodes(ast);
+    for (std::vector<SgNode*>::iterator ui=unparsable.begin(); ui!=unparsable.end(); ++ui) {
+        SgNode *node = *ui;
+
+        SgAsmInstruction *insn = isSgAsmInstruction(node);
+        if (insn) {
+            unparse_insn(true, output, insn, (size_t)(-1));
+            continue;
+        }
+
+        SgAsmBlock *block = isSgAsmBlock(node);
+        if (block) {
+            unparse_basicblock(true, output, block);
+            continue;
+        }
+
+        SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
+        if (func) {
+            unparse_function(true, output, func);
+            continue;
+        }
+
+        SgAsmInterpretation *interp = isSgAsmInterpretation(node);
+        if (interp) {
+            unparse_interpretation(true, output, interp);
+            continue;
+        }
+    }
+    return unparsable.size();
+}
+
+bool
+AsmUnparser::unparse_insn(bool enabled, std::ostream &output, SgAsmInstruction *insn, size_t position_in_block)
+{
+    UnparserCallback::InsnArgs args(this, output, insn, position_in_block);
+    enabled = insn_callbacks.pre    .apply(enabled, args);
+    enabled = insn_callbacks.unparse.apply(enabled, args);
+    enabled = insn_callbacks.post   .apply(enabled, args);
+    return enabled;
+}
+
+bool
+AsmUnparser::unparse_basicblock(bool enabled, std::ostream &output, SgAsmBlock *block)
+{
     std::vector<SgAsmInstruction*> insns;
-    insns.reserve(stmts.size());
+    const SgAsmStatementPtrList &stmts = block->get_statementList();
     for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
         if (isSgAsmInstruction(*si))
             insns.push_back(isSgAsmInstruction(*si));
     }
 
-    if (!stmts.empty() && insns.empty()) {
-        /* This must be a "global block" containing function declarations. */
-        for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
-            if (isSgAsmFunctionDeclaration(*si))
-                unparse(o, isSgAsmFunctionDeclaration(*si));
-        }
+    UnparserCallback::BasicBlockArgs args(this, output, block, insns);
+    enabled = basicblock_callbacks.pre    .apply(enabled, args);
+    enabled = basicblock_callbacks.unparse.apply(enabled, args);
+    enabled = basicblock_callbacks.post   .apply(enabled, args);
+    return enabled;
+}
 
-    } else {
-        pre(o, blk); /*only for SgAsmBlock nodes that are basic blocks*/
+bool
+AsmUnparser::unparse_function(bool enabled, std::ostream &output, SgAsmFunctionDeclaration *func)
+{
+    UnparserCallback::FunctionArgs args(this, output, func);
+    enabled = function_callbacks.pre    .apply(enabled, args);
+    enabled = function_callbacks.unparse.apply(enabled, args);
+    enabled = function_callbacks.post   .apply(enabled, args);
+    return enabled;
+}
 
-        /* Remove no-op sequences from the listing. */
-        std::vector<bool> is_noop;
-        if ((blk_detect_noop_seq || blk_remove_noop_seq || blk_show_noop_seq) && !insns.empty()) {
-            typedef std::vector<std::pair<size_t, size_t> > NoopSequences; /* array of index,size pairs */
-            NoopSequences noops = insns.front()->find_noop_subsequences(insns, true, true);
-            if (!noops.empty()) {
-                if (blk_show_noop_seq) {
-                    o <<"Noops:";
-                    for (NoopSequences::iterator ni=noops.begin(); ni!=noops.end(); ++ni)
-                        o <<" (" <<(*ni).first <<"," <<(*ni).second <<")";
-                    o <<"\n";
-                }
-                is_noop = build_noop_index(noops);
-                is_noop.resize(insns.size(), false);
-                if (blk_remove_noop_seq && blk_show_noop_warning) {
-                    size_t nerased = 0;
-                    for (size_t i=0; i<insns.size(); ++i)
-                        if (is_noop[i]) ++nerased;
-                    if (nerased)
-                        o <<StringUtility::addrToString(blk->get_address()) <<": omitting "
-                          <<nerased <<" no-op instruction" <<(1==nerased?"":"s") <<" from this block...\n";
-                }
+bool
+AsmUnparser::unparse_interpretation(bool enabled, std::ostream &output, SgAsmInterpretation *interp)
+{
+    UnparserCallback::InterpretationArgs args(this, output, interp);
+    enabled = interp_callbacks.pre    .apply(enabled, args);
+    enabled = interp_callbacks.unparse.apply(enabled, args);
+    enabled = interp_callbacks.post   .apply(enabled, args);
+    return enabled;
+}
+
+
+
+/******************************************************************************************************************************
+ *                                      Instruction callbacks
+ ******************************************************************************************************************************/
+
+bool
+AsmUnparser::InsnAddress::operator()(bool enabled, const InsnArgs &args)
+{
+    if (enabled)
+        args.output <<StringUtility::addrToString(args.insn->get_address()) <<":";
+    return enabled;
+}
+
+bool
+AsmUnparser::InsnRawBytes::operator()(bool enabled, const InsnArgs &args)
+{
+    if (enabled)
+        SgAsmExecutableFileFormat::hexdump(args.output, args.insn->get_address(), &(args.insn->get_raw_bytes()[0]),
+                                           args.insn->get_raw_bytes().size(), fmt);
+    return enabled;
+}
+
+bool
+AsmUnparser::InsnBody::operator()(bool enabled, const InsnArgs &args)
+{
+    if (enabled)
+        args.output <<"   " <<unparseInstruction(args.insn, &args.unparser->labels);
+    return enabled;
+}
+
+bool
+AsmUnparser::InsnNoEffect::operator()(bool enabled, const InsnArgs &args)
+{
+    if (enabled &&
+        args.position_in_block<args.unparser->insn_is_noop.size() &&
+        args.unparser->insn_is_noop[args.position_in_block])
+        args.output <<" !EFFECT";
+    return enabled;
+}
+
+bool
+AsmUnparser::InsnComment::operator()(bool enabled, const InsnArgs &args)
+{
+    if (enabled && !args.insn->get_comment().empty())
+        args.output <<" /* " <<args.insn->get_comment() <<"*/";
+    return enabled;
+}
+
+bool
+AsmUnparser::InsnLineTermination::operator()(bool enabled, const InsnArgs &args)
+{
+    if (enabled)
+        args.output <<std::endl;
+    return enabled;
+}
+
+/******************************************************************************************************************************
+ *                                      Basic block callbacks
+ ******************************************************************************************************************************/
+
+bool
+AsmUnparser::BasicBlockNoopUpdater::operator()(bool enabled, const BasicBlockArgs &args)
+{
+    args.unparser->insn_is_noop.clear();
+    if (enabled) {
+        typedef std::vector<std::pair<size_t, size_t> > NoopSequences; /* array of index,size pairs */
+        NoopSequences noops = args.insns.front()->find_noop_subsequences(args.insns, true, true);
+        if (!noops.empty()) {
+            args.unparser->insn_is_noop = build_noop_index(noops);
+            if (debug) {
+                args.output <<"No-effect sequences by (index, length):\n";
+                for (NoopSequences::iterator ni=noops.begin(); ni!=noops.end(); ++ni)
+                    args.output <<"    (" <<(*ni).first <<"," <<(*ni).second <<")\n";
             }
         }
-
-        /* The instructions */
-        for (size_t i=0; i<insns.size(); i++) {
-            insn_is_noop_seq = is_noop.empty() ? false : is_noop[i];
-            if (!blk_remove_noop_seq || !insn_is_noop_seq)
-                unparse(o, insns[i]);
-        }
-
-        if (blk_show_successors) {
-            /* Show cached block successors. These are the successors that were probably cached by the instruction
-             * partitioner, which does fairly extensive analysis -- definitely more than just looking at the last
-             * instruction of the block! */
-            o <<"            (successors:";
-            const SgAddressList &sucs = blk->get_cached_successors();
-            for (SgAddressList::const_iterator si=sucs.begin(); si!=sucs.end(); ++si)
-                o <<" " <<StringUtility::addrToString(*si);
-            if (!blk->get_complete_successors())
-                o <<"...";
-            o <<")\n";
-        }
-        post(o, blk);   /* only for SgAsmBlock nodes that are basic blocks */
     }
+    return enabled;
 }
 
-void
-AsmUnparser::unparse(std::ostream &o, SgAsmFunctionDeclaration *func)
+bool
+AsmUnparser::BasicBlockNoopWarning::operator()(bool enabled, const BasicBlockArgs &args)
 {
-    pre(o, func);
+    if (enabled && !args.unparser->insn_is_noop.empty()) {
+        size_t nnoops = 0;
+        for (size_t i=0; i<args.unparser->insn_is_noop.size(); i++) {
+            if (args.unparser->insn_is_noop[i])
+                nnoops++;
+        }
+        if (nnoops>0) {
+            args.output <<StringUtility::addrToString(args.block->get_address()) <<": omitting "
+                        <<nnoops <<" instruction" <<(1==nnoops?"":"s") <<" as no-op sequences from this block.\n";
+        }
+    }
+    return enabled;
+}
 
-    if (func_show_title) {
-        o <<StringUtility::addrToString(func->get_entry_va())
-          <<": ============================ Function (" <<func->reason_str(false) <<")";
-        if (func->get_name().size()>0) {
-            o <<" <" <<func->get_name() <<">";
+bool
+AsmUnparser::BasicBlockBody::operator()(bool enabled, const BasicBlockArgs &args)
+{
+    if (enabled) {
+        for (size_t i=0; i<args.insns.size(); i++)
+            args.unparser->unparse_insn(enabled, args.output, args.insns[i], i);
+    }
+    return enabled;
+}
+
+bool
+AsmUnparser::BasicBlockSuccessors::operator()(bool enabled, const BasicBlockArgs &args)
+{
+    if (enabled) {
+        args.output <<"            (successors:";
+        const SgAsmTargetPtrList &successors = args.block->get_successors();
+        for (SgAsmTargetPtrList::const_iterator si=successors.begin(); si!=successors.end(); ++si)
+            args.output <<" " <<StringUtility::addrToString((*si)->get_address());
+        if (!args.block->get_successors_complete())
+            args.output <<"...";
+        args.output <<")\n";
+    }
+    return enabled;
+}
+
+bool
+AsmUnparser::BasicBlockLineTermination::operator()(bool enabled, const BasicBlockArgs &args)
+{
+    if (enabled)
+        args.output <<std::endl;
+    return enabled;
+}
+
+bool
+AsmUnparser::BasicBlockCleanup::operator()(bool enabled, const BasicBlockArgs &args)
+{
+    args.unparser->insn_is_noop.clear();
+    return enabled;
+}
+
+/******************************************************************************************************************************
+ *                                      Function callbacks
+ ******************************************************************************************************************************/
+
+bool
+AsmUnparser::FunctionEntryAddress::operator()(bool enabled, const FunctionArgs &args)
+{
+    if (enabled)
+        args.output <<StringUtility::addrToString(args.func->get_entry_va()) <<":";
+    return enabled;
+}
+
+bool
+AsmUnparser::FunctionSeparator::operator()(bool enabled, const FunctionArgs &args)
+{
+    if (enabled)
+        args.output <<" ============================ Function";
+    return enabled;
+}
+
+bool
+AsmUnparser::FunctionReasons::operator()(bool enabled, const FunctionArgs &args)
+{
+    if (enabled)
+        args.output <<" (" <<args.func->reason_str(false) <<")";
+    return enabled;
+}
+
+bool
+AsmUnparser::FunctionName::operator()(bool enabled, const FunctionArgs &args)
+{
+    if (enabled) {
+        if (args.func->get_name().empty()) {
+            args.output <<" unknown name";
         } else {
-            o <<" unknown name";
+            args.output <<" <" <<args.func->get_name() <<">";
         }
-        o <<"\n";
     }
-
-    const SgAsmStatementPtrList stmts = func->get_statementList();
-    ROSE_ASSERT(!stmts.empty());
-    for (size_t i=0; i<stmts.size(); ++i) {
-        SgAsmBlock *blk = isSgAsmBlock(stmts[i]);
-        ROSE_ASSERT(blk!=NULL);
-        unparse(o, blk);
-        if (i+1<stmts.size()) o <<"\n";
-    }
-
-    post(o, func);
+    return enabled;
 }
 
-void
-AsmUnparser::unparse(std::ostream &o, SgAsmInterpretation *interp)
+bool
+AsmUnparser::FunctionLineTermination::operator()(bool enabled, const FunctionArgs &args)
 {
-    pre(o, interp);
+    if (enabled)
+        args.output <<std::endl;
+    return enabled;
+}
 
-    if (interp_show_title) {
-        const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+bool
+AsmUnparser::FunctionBody::operator()(bool enabled, const FunctionArgs &args)
+{
+    if (enabled) {
+        const SgAsmStatementPtrList stmts = args.func->get_statementList();
+        for (size_t i=0; i<stmts.size(); i++)
+            args.unparser->unparse(args.output, stmts[i]);
+    }
+    return enabled;
+}
+
+/******************************************************************************************************************************
+ *                                      Interpretation callbacks
+ ******************************************************************************************************************************/
+
+bool
+AsmUnparser::InterpName::operator()(bool enabled, const InterpretationArgs &args)
+{
+    if (enabled) {
+        const SgAsmGenericHeaderPtrList &headers = args.interp->get_headers()->get_headers();
         if (1==headers.size()) {
-            o <<"/* Interpretation " <<headers[0]->format_name() <<" */\n";
+            args.output <<"/* Interpretation " <<headers[0]->format_name() <<" */\n";
         } else {
-            o <<"/* Interpretation including:\n";
+            args.output <<"/* Interpretation including:\n";
             for (size_t i=0; i<headers.size(); i++)
-                o <<" *    " <<headers[i]->format_name() <<" from " <<headers[i]->get_file()->get_name() <<"\n";
-            o <<" */\n";
+                args.output <<" *    " <<headers[i]->format_name() <<" from " <<headers[i]->get_file()->get_name() <<"\n";
+            args.output <<" */\n";
         }
     }
+    return enabled;
+}
 
-    SgAsmBlock *global = interp->get_global_block();
-    if (global) {
-        const SgAsmStatementPtrList stmts = global->get_statementList();
-        for (size_t i=0; i<stmts.size(); ++i) {
-            SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(stmts[i]);
-            ROSE_ASSERT(func!=NULL);
-            unparse(o, func);
-            if (i+1<stmts.size()) o <<"\n";
+bool
+AsmUnparser::InterpBody::operator()(bool enabled, const InterpretationArgs &args)
+{
+    if (enabled) {
+        SgAsmBlock *global = args.interp->get_global_block();
+        if (global) {
+            const SgAsmStatementPtrList stmts = global->get_statementList();
+            for (size_t i=0; i<stmts.size(); ++i)
+                args.unparser->unparse(args.output, stmts[i]);
         }
     }
-
-    post(o, interp);
+    return enabled;
 }
