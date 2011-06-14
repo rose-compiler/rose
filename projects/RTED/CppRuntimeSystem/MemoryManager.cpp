@@ -198,11 +198,14 @@ bool MemoryType::isInitialized(Location addr, size_t len) const
 
     for (size_t i = offset; i < limit; ++i)
     {
-        if ( !initdata[i] ) return false;
+        if ( !byteInitialized(i) ) return false;
     }
 
     return true;
 }
+
+
+
 
 bool MemoryType::initialize(size_t offset, size_t len)
 {

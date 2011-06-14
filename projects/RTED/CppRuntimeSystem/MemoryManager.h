@@ -68,6 +68,12 @@ struct MemoryType
         /// Tests if a part of memory is initialized
         bool  isInitialized(Location addr, size_t len) const;
 
+        /// Tests if the byte at offset ofs is initialized
+        bool  byteInitialized(size_t ofs) const
+        {
+          return initdata[ofs];
+        }
+
         /// Initialized a part of memory
         /// returns true, iff the location was not initialized before
         bool initialize   (size_t ofs, size_t len) ;
@@ -143,6 +149,8 @@ struct MemoryType
           assert( (origin & akCxxHeap) == akCxxHeap );
           origin = kind;
         }
+
+        const TypeData& typeData() const { return typedata; }
 
     private:
         typedef std::pair<TiIter,TiIter> TiIterPair;

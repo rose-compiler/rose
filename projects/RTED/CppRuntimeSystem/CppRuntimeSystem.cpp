@@ -173,9 +173,9 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
         //Display the Debugger after violation occured
 
         if ( ViolationPolicy::Exit == policy )
-            RtedDebug::instance()->addMessage(errmsg.str().c_str(), RtedDebug::ERROR);
+            RtedDebug::instance()->addMessage(errmsg.str(), RtedDebug::ERROR);
         else
-            RtedDebug::instance()->addMessage(errmsg.str().c_str(), RtedDebug::WARNING);
+            RtedDebug::instance()->addMessage(errmsg.str(), RtedDebug::WARNING);
 
         RtedDebug::instance()->startGui(qtDebugger);
     }
