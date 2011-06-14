@@ -3,30 +3,13 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-lib_LTLIBRARIES = libStringParser.la
-libStringParser_la_SOURCES         = AstFromString.cpp ParserBuilder.cpp
-libStringParser_la_includedir      = $(includedir)/string-parser
-libStringParser_la_include_HEADERS = AstFromString.h ParserBuilder.hpp ParserBuilder.tpp
-libStringParser_la_CXXFLAGS        = $(CXXFLAGS)
-
-#noinst_PROGRAMS = hcpragma testParserBuilder
-
-#hcpragma_SOURCES = hcpragma.C hcpragma.h AstFromString.h
-#hcpragma_LDADD = $(ROSE_LIBS) $(top_builddir)/projects/pragmaParser/libparserbuilder.la
-
-#testParserBuilder_SOURCES = testParserBuilder.cpp AstFromString.h ParserBuilder.hpp
-#testParserBuilder_LDADD = $(ROSE_LIBS) $(top_builddir)/projects/pragmaParser/libparserbuilder.la
-
-
 noinst_PROGRAMS = hcpragma testParserBuilder buildFromString
 
-hcpragma_SOURCES = hcpragma.C hcpragma.h AstFromString.cpp AstFromString.h
+hcpragma_SOURCES = hcpragma.C hcpragma.h
 
-testParserBuilder_SOURCES = testParserBuilder.cpp AstFromString.cpp AstFromString.h ParserBuilder.cpp ParserBuilder.hpp
+testParserBuilder_SOURCES = testParserBuilder.cpp
 
-
-buildFromString_SOURCES = buildFromString.C AstFromString.cpp AstFromString.h
-#buildFromString_LDADD = libsageparser.la $(LDADD)
+buildFromString_SOURCES = buildFromString.C
 
 C_TESTCODES_REQUIRED_TO_PASS = parser_input.c
 
@@ -67,5 +50,3 @@ EXTRA_DIST = $(ALL_TESTCODES) README \
 clean-local:
 	rm -f *.o rose_*.* *.out
 	rm -rf QMTest
-
-

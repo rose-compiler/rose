@@ -299,15 +299,18 @@ printBannerToEndStep "configure" $configure_start_time
     #
     # Warning: don't use too much parallelism because the analysis is memory-intensive
     # kwbuildproject returns a non-zero exist status if there are 'Build errors'
+	#
+	# TOO1 (6/2/2010): 	Upgraded hudson-rose-24 to 48Gb of RAM so I've doubled the
+	# 					amount of parallelism from 5 to 10.
     #
     set +e
-    kwbuildproject -host hudson-rose-24 -port 8080 --license-host swordfish.llnl.gov -j5 -o tables rose.out
+    kwbuildproject -host hudson-rose-24 -port 8080 --license-host swordfish.llnl.gov -j${NUM_PROCESS} -o tables rose.out
     set -e
     # There is no clean way to differentiate between analysis errors and internal Klocwork errors
     # aside from parsing the build.log file.
     grep -q "Reports generation stage completed" tables/build.log
     if [ ${PIPESTATUS[0]} -ne 0 -o $? -ne 0 ]  ; then
-       printBanner "Fatal error during 'kwbuildproject -host hudson-rose-24 -port 8080 --license-host swordfish.llnl.gov -j8 -o tables rose.out'. Aborting..."
+       printBanner "Fatal error during 'kwbuildproject -host hudson-rose-24 -port 8080 --license-host swordfish.llnl.gov -j${NUM_PROCESS} -o tables rose.out'. Aborting..."
        exit 3
     fi
 

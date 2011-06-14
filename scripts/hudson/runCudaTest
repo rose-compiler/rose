@@ -225,6 +225,8 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
 
    cd tests/CompileTests/CudaTests
    make -j8 check
+   cd ../NewEDGInterface_C_tests
+   make -j8 check
  # sleep 5
 
    if [ $? -ne 0 ]  ; then

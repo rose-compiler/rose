@@ -1121,7 +1121,8 @@ ROSE_ASSERT(false);
 
                                      // for(it_VecOfNamespInfo = this->NamespacesHashMap[namespace_name].begin(); (b <= bound); ++it_VecOfNamespInfo) {
                                      // for(it_VecOfNamespInfo = find_it->second.begin(); (b <= bound); ++it_VecOfNamespInfo)
-                                        for(it_VecOfNamespInfo = find_it->second.begin(); (b <= bound); ++it_VecOfNamespInfo)
+                                        it_VecOfNamespInfo = find_it->second.begin();
+                                        for(; (b <= bound) && (it_VecOfNamespInfo != find_it->second.end()); ++it_VecOfNamespInfo)
                                            {
                                           // if ((*it_VecOfNamespInfo).VectorOfSymbolInformation.empty() == false)
                                           // printf ("(*it_VecOfNamespInfo).VectorOfSymbolInformation.size() = %zu \n",(*it_VecOfNamespInfo).VectorOfSymbolInformation.size());

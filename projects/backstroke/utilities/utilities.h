@@ -54,7 +54,7 @@ namespace BackstrokeUtility
 	/** Return whether a basic block contains a break statement. */
 	bool hasBreakStmt(SgBasicBlock* body);
 
-	/** If two expressions can be reorderd (in other word, reordering does not change the result). */
+	/** If two expressions can be reordered (in other word, reordering does not change the result). */
 	bool canBeReordered(SgExpression* exp1, SgExpression* exp2);
 
 	/** Tell if a type is a STL container type. */
@@ -99,7 +99,7 @@ namespace BackstrokeUtility
 	/** Remove braces of a basic block in which there is no variable declared. */
 	void removeUselessBraces(SgNode* root);
 
-	/** Remove useless parenthesis of some specific expresssions which will damage the readability. */
+	/** Remove useless parenthesis of some specific expressions which will damage the readability. */
 	void removeUselessParen(SgNode* root);
 
 	/** Returns if an expression modifies any value. */
@@ -128,6 +128,10 @@ namespace BackstrokeUtility
 
 	//! Returns if the first given var is a member of the second one. For example, a.i is a member of a.
 	bool isMemberOf(const VariableRenaming::VarName& var1, const VariableRenaming::VarName& var2);
+
+    //! Returns if a variable declaration is a true one, and not one in if condition, while condition, etc.
+    //! In C++ standard, those declarations in conditions actually are not called declaration.
+    bool isTrueVariableDeclaration(SgVariableDeclaration* varDecl);
 
 }
 

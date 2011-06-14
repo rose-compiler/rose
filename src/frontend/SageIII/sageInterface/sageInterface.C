@@ -5575,12 +5575,16 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
              {
             // Only modify the list once per iteration over the captureList
             // if ((*comments)[*k] == NULL)
-               if (*k == NULL)
-                  {
-                    comments->erase(k);
+                if (*k == NULL)
+                {
+                    k = comments->erase(k);
                     modifiedList = true;
-                  }
-               k++;
+                    continue;
+                }
+                else
+                {
+                    k++;
+                }
              }
         }
    }
@@ -5912,29 +5916,12 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
   {
     deepDelete(oldExp); // avoid dangling node in memory pool
   }
+  else
+  {
+      oldExp->set_parent(NULL);
+  }
 
 } //replaceExpression()
-
-#if 0 // move to header
-// Contributed by Jeremiah
-//! Get all nodes with a certain variant, with an appropriate downcast. FIXME:
-//! there needs to be a static method in each SgNode subclass that returns the
-//! correct variant number.
-template <typename NodeType>
-std::vector<NodeType*> SageInterface::querySubTree(SgNode* top, VariantT variant) {
-
-  Rose_STL_Container<SgNode*> nodes = NodeQuery::querySubTree(top,variant);
-  std::vector<NodeType*> result(nodes.size(), NULL);
-  int count = 0;
-  for (Rose_STL_Container<SgNode*>::const_iterator i = nodes.begin();
-       i != nodes.end(); ++i, ++count) {
-    NodeType* node = dynamic_cast<NodeType*>(*i);
-    ROSE_ASSERT (node);
-    result[count] = node;
-  }
-  return result;
-}
-#endif
 
  SgStatement* SageInterface::getNextStatement(SgStatement * currentStmt)
 {
@@ -13832,8 +13819,8 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
         SgExpression* exp = isSgExpression(n);
         if (exp)
         {
-          string u_name = generateUniqueName(exp,false);
-          AstAttribute * name_attribute = new UniqueNameAttribute(u_name);
+          string u_name = generateUniqueName(exp,false)+"-"+exp->class_name();
+          AstAttribute * name_attribute = new UniqueNameAttribute(u_name); 
           ROSE_ASSERT (name_attribute != NULL);
           exp->addNewAttribute("UniqueNameAttribute",name_attribute);
         }

@@ -13,6 +13,10 @@ class mesgExpr
 	
 	// Returns the subset of domain on which the message expression recv o send is the identity function
 	// or an invalid subdomain is no such subdomain exists (object is heap-allocated)
+	// NOTE: The contents of the range of send must correspond to real processes as do the contents of returned
+	//       subset. However, there is no requirement that the rest of the receivers and senders sets actually exit.
+	//       In a full match they are definitely empty and in a partial match they may be partially empty 
+	//       (e.g. in set i<= .. <j, we match i<= .. <k but we don't know if k < j or k = j).
 	virtual procSet& getIdentityDomain(const mesgExpr& recv, const mesgExpr& send, 
 	                                  const procSet& domain) const=0;
 	
@@ -49,6 +53,8 @@ class mesgExpr
 	
 	// Returns a string representation of this set
 	virtual string str(string indent="") const=0;
+
+	virtual ~mesgExpr();
 };
 
 class nullMesgExpr : virtual public mesgExpr
@@ -151,7 +157,7 @@ public:
 	
 	// Creates a message expression from the given SgExpression, annotating the message expression
 	// bounds with the given process set.
-	OneDmesgExpr(SgExpression* expr, ConstrGraph* cg, int pSet);
+	OneDmesgExpr(SgExpression* expr, ConstrGraph* cg, unsigned int pSet);
 	
 	//~OneDmesgExpr();
 	

@@ -1,5 +1,6 @@
 #include "varSets.h"
 #include<vector>
+#include <set>
 using namespace std;
 
 namespace varSets
@@ -101,6 +102,59 @@ namespace varSets
     initLocalVars(func, getCompilerGen);
     return localScalars[func];
   }
+  
+
+  /*=================================================
+    ============   Function Parameters   ============
+    =================================================*/
+
+  static set <Function> funcParams_initialized;
+  static map <Function, varIDSet> funcParamVars;
+  static map <Function, varIDSet> funcParamArrays;
+  static map <Function, varIDSet> funcParamScalars;
+
+  void initFuncParams(const Function& func, bool getCompilerGen)
+  {
+    if(funcParams_initialized.find(func) == funcParams_initialized.end())
+    {
+      SgInitializedNamePtrList params = func.get_params();
+      for(SgInitializedNamePtrList::iterator itParams = params.begin(); 
+          itParams!=params.end(); itParams++) {
+        
+        // skip over compiler-generated names if necessary
+        if(!getCompilerGen && (*itParams)->get_file_info()->isCompilerGenerated())
+          continue;
+
+        varID var(*itParams);
+    	  funcParamVars[func].insert(var);
+        funcParamArrays[func] = arraysFilter(funcParamVars[func]);
+        funcParamScalars[func] = scalarsFilter(funcParamVars[func]);
+        funcParams_initialized.insert(func);
+      }
+    }
+  }
+
+  // returns the set of variables that are the parameters of the given function
+  varIDSet& getFuncParamVars(const Function& func, bool getCompilerGen)
+  {
+    initFuncParams(func, getCompilerGen);
+    return funcParamVars[func];
+  }
+
+  // returns the set of arrays that are the parameters of the given function
+  varIDSet& getFuncParamArrays(const Function& func, bool getCompilerGen)
+  {
+    initFuncParams(func, getCompilerGen);
+    return localArrays[func];
+  }
+
+  // returns the set of scalars that are the parameters of the given function
+  varIDSet& getFuncParamlScalars(const Function& func, bool getCompilerGen)
+  {
+    initFuncParams(func, getCompilerGen);
+    return localScalars[func];
+  }
+  
   /*=======================================
     ========  Referenced Variables  =======
     =======================================*/
@@ -187,7 +241,7 @@ namespace varSets
   }
 
   // given a set of variables, creates a new set that only contains the 
-  // non-array variables in the original set and returns this set
+  // array variables in the original set and returns this set
   varIDSet arraysFilter(varIDSet& vars)
   {
     varIDSet arrays;
