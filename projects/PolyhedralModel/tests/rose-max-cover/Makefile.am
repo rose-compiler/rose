@@ -15,7 +15,9 @@ traversal_bindir          = $(includedir)/polyhedral-model/rose-max-cover/
 
 
 TEST_CODES = \
-test_1.c
+test_1.c \
+test_2.c \
+test_3.c
 
 
 $(TEST_CODES): $(bin_PROGRAMS)
