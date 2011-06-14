@@ -67,7 +67,6 @@ private:
     std::string tracing_file_name;      /**< Pattern for trace file names. May include %d for thread ID. */
     FILE *tracing_file;                 /**< Stream to which debugging output is sent (or NULL to suppress it) */
     unsigned tracing_flags;             /**< Bit vector of what to trace. See TraceFlags. */
-    RSIM_Callbacks callbacks;           /**< Callbacks for a process, and to initialize callbacks of new threads. */
 
 public:
 
@@ -98,6 +97,15 @@ public:
      * bitwise OR of the facilityBitMask() for each enabled facility. */
     unsigned get_tracing_flags() const;
 
+
+    /**************************************************************************************************************************
+     *                                  Callbacks
+     **************************************************************************************************************************/
+private:
+    RSIM_Callbacks callbacks;           /**< Callbacks for a process, and to initialize callbacks of new threads. */
+
+public:
+
     /** Obtain the set of callbacks for this object.  Many of the process callbacks are used to initialize thread callbacks
      *  when a new thread is created.
      *
@@ -117,6 +125,34 @@ public:
      *
      *  Thread safety:  This method is thread safe. */
     void set_callbacks(const RSIM_Callbacks &cb);
+
+    /** Install a callback object.
+     *
+     *  This is just a convenient way of installing a callback object.  It appends it to the BEFORE slot of the appropriate
+     *  queue.
+     *
+     *  @{ */  // ******* Similar functions in RSIM_Simulator and RSIM_Thread ******
+    void install_callback(RSIM_Callbacks::InsnCallback *cb) {
+        callbacks.add_insn_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::MemoryCallback *cb) {
+        callbacks.add_memory_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::SyscallCallback *cb) {
+        callbacks.add_syscall_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::SignalCallback *cb) {
+        callbacks.add_signal_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::ThreadCallback *cb) {
+        callbacks.add_thread_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::ProcessCallback *cb) {
+        callbacks.add_process_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    /** @} */
+
+
 
     /**************************************************************************************************************************
      *                                  Process memory

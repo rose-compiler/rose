@@ -142,7 +142,6 @@ private:
     RTS_Message *trace_mesg[TRACE_NFACILITIES];         /**< Array indexed by TraceFacility */
     struct timeval last_report;                         /**< Time of last progress report for TRACE_PROGRESS */
     double report_interval;                             /**< Minimum seconds between progress reports for TRACE_PROGRESS */
-    RSIM_Callbacks callbacks;                           /**< Callbacks per thread */
 
     /** Return a string identifying the thread and time called. */
     std::string id();
@@ -165,6 +164,13 @@ public:
     /** Prints information about stack frames. */
     void report_stack_frames(RTS_Message*);
 
+    /**************************************************************************************************************************
+     *                                  Callbacks
+     **************************************************************************************************************************/
+private:
+    RSIM_Callbacks callbacks;                           /**< Callbacks per thread */
+
+public:
     /** Obtain the set of callbacks for this object.
      *
      *  @{ */
@@ -183,6 +189,34 @@ public:
     void set_callbacks(const RSIM_Callbacks &cb) {
         callbacks = cb;
     }
+
+    /** Install a callback object.
+     *
+     *  This is just a convenient way of installing a callback object.  It appends it to the BEFORE slot of the appropriate
+     *  queue.
+     *
+     *  @{ */  // ******* Similar functions in RSIM_Simulator and RSIM_Process ******
+    void install_callback(RSIM_Callbacks::InsnCallback *cb) {
+        callbacks.add_insn_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::MemoryCallback *cb) {
+        callbacks.add_memory_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::SyscallCallback *cb) {
+        callbacks.add_syscall_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::SignalCallback *cb) {
+        callbacks.add_signal_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::ThreadCallback *cb) {
+        callbacks.add_thread_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    void install_callback(RSIM_Callbacks::ProcessCallback *cb) {
+        callbacks.add_process_callback(RSIM_Callbacks::BEFORE, cb);
+    }
+    /** @} */
+
+
 
     /**************************************************************************************************************************
      *                                  System call simulation

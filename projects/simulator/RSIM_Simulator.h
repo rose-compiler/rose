@@ -265,7 +265,7 @@ public:
      *  This is just a convenient way of installing a callback object.  It appends it to the BEFORE slot of the appropriate
      *  queue.
      *
-     *  @{ */
+     *  @{ */  // ******* Similar functions in RSIM_Process and RSIM_Thread ******
     void install_callback(RSIM_Callbacks::InsnCallback *cb) {
         callbacks.add_insn_callback(RSIM_Callbacks::BEFORE, cb);
     }
