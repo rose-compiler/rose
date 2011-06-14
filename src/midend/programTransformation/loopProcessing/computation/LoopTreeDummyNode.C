@@ -1,4 +1,3 @@
-
 #include <sstream>
 #include <vector>
 #include <SymbolicBound.h>
@@ -30,6 +29,11 @@ void LoopTreeRestrLoopRange :: UpdateSwapNode( const SwapNodeInfo &info)
            ResetLoopAlign(); 
            b.ReplaceVars(l);
        }
+       else {
+         ResetLoopAlign(); 
+         LoopTreeGetVarBound boundInfo(Parent());
+         b.Intersect(l.GetVarRestr(GetVar()), &boundInfo);
+       }
    }
 
 std::string LoopTreeRestrLoopRange :: toString() const
@@ -42,9 +46,9 @@ std::string LoopTreeRestrLoopRange :: toString() const
    }
 
 AstNodePtr LoopTreeRestrLoopRange :: 
-CodeGen( LoopTransformInterface &la, const AstNodePtr& c) const
+CodeGen( const AstNodePtr& c) const
    {
-     AstInterface& fa = la;
+     AstInterface& fa = LoopTransformInterface::getAstInterface();
       SymbolicVar ivar = loop.GetAncesLoop()->GetLoopInfo()->GetVar();
       int align = loop.GetLoopAlign();
       SymbolicVal lval = align? b.lb-align : b.lb;
@@ -65,8 +69,7 @@ CodeGen( LoopTransformInterface &la, const AstNodePtr& c) const
       return fa.CreateIf( cond1, c );
    }
 
-// DQ (11/25/2009): Changed name from SelectObject to SelectObjectBase to avoid SelectObject function ambiguity using Microsoft Visual Studio
-LoopTreeNode* ApproachAncesLoop( LoopTreeNode* start, SelectObjectBase<LoopTreeNode*>& sel)
+LoopTreeNode* ApproachAncesLoop( LoopTreeNode* start, SelectObject<LoopTreeNode*>& sel)
 {
    LoopTreeNode* l = 0;
       for (l = start->Parent(); l != 0 && l->ChildCount() == 1; 
@@ -146,8 +149,7 @@ bool LoopTreeRestrLoopRange :: RemoveSelf()
       return false;
 }
 
-// DQ (11/25/2009): Changed name from SelectObject to SelectObjectBase to avoid SelectObject function ambiguity using Microsoft Visual Studio
-class SelectRestrLoopAnces : public SelectObjectBase<LoopTreeNode*>
+class SelectRestrLoopAnces : public SelectObject<LoopTreeNode*>
 {
   LoopTreeRestrLoopRange *node;
  public:
@@ -241,8 +243,8 @@ bool LoopTreeRestrLoopRange :: MergeSibling( int opt)
 
           if (lbr.IsNIL() && ubr.IsNIL())
               continue;
-          LoopTreeRestrLoopRange *nr = new LoopTreeRestrLoopRange(GetRestrLoop(), 0, lbr, ubr);
-          nr->Link(this, AsPrevSibling);
+	  LoopTreeRestrLoopRange *nr = new LoopTreeRestrLoopRange(GetRestrLoop(), 0, lbr, ubr);
+	  nr->Link(this, AsPrevSibling);
           Unlink(); Link(nr, AsLastChild);
           n->Unlink();
           if (opt > 0)
@@ -258,8 +260,7 @@ bool LoopTreeRestrLoopRange :: MergeSibling( int opt)
       return false;
    }
 
-// DQ (11/25/2009): Changed name from SelectObject to SelectObjectBase to avoid SelectObject function ambiguity using Microsoft Visual Studio
-class SelectRelateLoopAnces : public SelectObjectBase<LoopTreeNode*>
+class SelectRelateLoopAnces : public SelectObject<LoopTreeNode*>
 {
   LoopTreeRelateLoopIvar *node;
  public:
@@ -325,9 +326,9 @@ std::string LoopTreeRelateLoopIvar :: toString() const
    }
 
 AstNodePtr LoopTreeRelateLoopIvar :: 
-CodeGen( LoopTransformInterface &la, const AstNodePtr& c) const
+CodeGen( const AstNodePtr& c) const
    { 
-     AstInterface& fa = la;
+     AstInterface& fa = LoopTransformInterface::getAstInterface();
      AstNodePtr cond = fa.CreateBinaryOP(AstInterface::BOP_EQ, GetIvar1().CodeGen(fa),
                                               (GetIvar2()+GetAlign()).CodeGen(fa));
      AstNodePtr result = fa.CreateIf( cond, c);
@@ -378,20 +379,20 @@ std::string LoopTreeReplLoopVar :: toString() const
      return out.str();
    }
 
-AstNodePtr LoopTreeReplLoopVar :: CodeGen( LoopTransformInterface &fa, const AstNodePtr& c) const
+AstNodePtr LoopTreeReplLoopVar :: CodeGen( const AstNodePtr& c) const
   {
     AstNodePtr result = c;
     if ( align != 0 || newval != oldvar ) {
       SymbolicVal val = GetNewVal();
       AstTreeReplaceVar op(oldvar, val); 
-      op(fa, result);
+      op(LoopTransformInterface::getAstInterface(), result);
     }
     return result;
   }
 
 std::string LoopTreeCopyArray::toString() const
 {
-   return config.toString() + CopyArrayConfig::CopyOpt2String(opt);
+   return config.toString();
 }
 
 std::string LoopTreeReplAst::toString() const
@@ -399,47 +400,15 @@ std::string LoopTreeReplAst::toString() const
   return "replace " + AstToString(orig) + " -> " + AstToString(repl);
 }
 
-AstNodePtr LoopTreeReplAst::CodeGen( LoopTransformInterface &fa) const
+AstNodePtr LoopTreeReplAst::CodeGen( ) const
 {
-  AstInterface& ai = fa;
+  AstInterface& ai = LoopTransformInterface::getAstInterface();
   ai.ReplaceAst(orig, repl);
-  AstNodePtr r = LoopTreeNode::CodeGen(fa);
+  AstNodePtr r = LoopTreeNode::CodeGen();
   ai.ReplaceAst(repl, orig);
   return r;
 }
  
 AstNodePtr LoopTreeCopyArray::
-CodeGen( LoopTransformInterface &la, const AstNodePtr& h) const
-{
-   AstInterface& fa = la;
-   AstNodePtr r = fa.CreateBlock();
- 
-   if ( opt & CopyArrayConfig::ALLOC_COPY) { 
-       AstNodePtr alloc = config.allocate_codegen(fa);
-       if (alloc != 0)
-          fa.BlockAppendStmt(r, alloc);
-   }
-   if (opt & CopyArrayConfig::INIT_COPY) {
-       AstNodePtr copy = 
-             config.copy_codegen(la, CopyArrayConfig::INIT_COPY); 
-       fa.BlockAppendStmt(r, copy);
-   }
-   
-   fa.BlockAppendStmt(r, h);
-   if (opt & CopyArrayConfig::SAVE_COPY) {
-       AstNodePtr copy = config.copy_codegen(la, CopyArrayConfig::SAVE_COPY); 
-       fa.BlockAppendStmt(r, copy);
-   }
-   if (opt & CopyArrayConfig::SHIFT_COPY) {
-       AstNodePtr copy = config.copy_codegen(la, CopyArrayConfig::SHIFT_COPY); 
-       fa.BlockAppendStmt(r, copy);
-   }
-   if ((opt & CopyArrayConfig::DELETE_COPY)) {
-       AstNodePtr del = config.delete_codegen(fa);
-       if (del != 0)
-         fa.BlockAppendStmt(r,del); 
-   }
-   return r;
-}
-
-
+CodeGen( const AstNodePtr& c) const
+     { return config.CodeGen( c); }

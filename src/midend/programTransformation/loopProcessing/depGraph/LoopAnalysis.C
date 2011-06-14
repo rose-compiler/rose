@@ -1,5 +1,4 @@
 
-
 #include <LoopAnalysis.h>
 #include <DepRel.h>
 #include <DomainInfo.h>
@@ -111,7 +110,7 @@ operator() ( GraphCreate* g, int level)
        DepDirType dir = r.GetDirType();
        int a1 = r.GetMinAlign(), a2 = r.GetMaxAlign();
        if ( (dir == DEPDIR_EQ && a1 == 0 && a2 == 0) || 
-            ( dir == DEPDIR_GE && a1 >= 0) )
+	    ( dir == DEPDIR_GE && a1 >= 0) )
           continue;
        return false;
      }

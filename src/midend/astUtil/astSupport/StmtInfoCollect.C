@@ -1,6 +1,4 @@
 
-
-
 #include <iostream>
 #include <sstream>
 
@@ -77,7 +75,7 @@ bool StmtInfoCollect ::
 ProcessTree( AstInterface &fa, const AstNodePtr& s, 
                        AstInterface::TraversalVisitType t) 
 {
- if (t == AstInterface::PreVisit) { // previsit
+ if (t == AstInterface::PreVisit) {
 
    if (fa.IsStatement(s)) {
       if (DebugLocalInfoCollect())
@@ -87,7 +85,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
    else  {
       if (DebugLocalInfoCollect()) 
          std::cerr << "previsiting cur node " << AstToString(s) << "\n";
-      if (curstmt == AST_NULL) { //Fixup curstmt if not yet set
+      if (curstmt == AST_NULL) {
         AstNodePtr s1 = fa.GetParent(s);
         for ( ; s1 != AST_NULL && !fa.IsStatement(s1); s1 = fa.GetParent(s1));
         if (s1 != AST_NULL)
@@ -102,18 +100,14 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
    AstInterface::AstNodeList vars, args;
    AstInterface::OperatorEnum opr;
    bool readlhs = false;
-   //Assignment statements
+
    if (fa.IsAssignment(s, &lhs, &rhs, &readlhs)) {
-     // For an assignment statement or expression, 
-     // get its lhs, rhs, and check if lhs is being read also 
      ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
      if (mp == 0 || mp->find(lhs) == mp->end()) {
-       // Add a new stack entry and ModRecord only for lhs not visited before
         modstack.push_back(s);
         modstack.back().modmap[lhs] =  ModRecord( rhs,readlhs); 
      }
    }
-   // Unary ++, --
    else if (fa.IsUnaryOp(s, &opr, &lhs) && 
            (opr == AstInterface::UOP_INCR1 || opr == AstInterface::UOP_DECR1)){
      ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
@@ -122,7 +116,6 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
         modstack.back().modmap[lhs] =  ModRecord( lhs,true); 
      }
    }
-   // Variable declaration statements
    else if (fa.IsVariableDecl( s, &vars, &args)) {
       AstInterface::AstNodeList::const_iterator pv = vars.begin();
       AstInterface::AstNodeList::const_iterator pa = args.begin();
@@ -133,7 +126,6 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
          ++pa;
       }
    }
-   // IO statements
    else  if (fa.IsIOInputStmt(s, &args)) {
      args.reverse();
      modstack.push_back(s);
@@ -146,25 +138,14 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
    else {
      if (fa.IsFunctionCall(s)) {
          if (DebugLocalInfoCollect()) 
-             std::cerr << "StmtInfoCollect::ProcessTree() append function call " << AstToString(s) << std::endl;
+             std::cerr << " append function call " << AstToString(s) << std::endl;
          AppendFuncCall(fa, s);
-         Skip(s); 
+         Skip(s);
      }
-     // Including both scalar and array accesses
      if ( fa.IsMemoryAccess(s)) {
         ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
-        //Get the latest ModMap from modstack
-        //If cannot find a lhs record for s, then s is being read 
-        //  (not a lhs operand)
-        //Or if can find a record for s, but readlhs is true, then s is being read 
-        //  (Is a lhs operand but, readlhs is marked true) 
         if (mp == 0 || mp->find(s) == mp->end() || (*mp)[s].readlhs)
-        { 
-         if (DebugLocalInfoCollect()) 
-             std::cerr << "StmtInfoCollect::ProcessTree() append a memory access " << AstToString(s) << std::endl;
            AppendReadLoc(fa, s);
-        }  
-        // For array reference, also collect references in its subscripts one by one  
         if (fa.IsArrayAccess(s, 0, &args))  {
            for (AstInterface::AstNodeList::const_iterator p = args.begin(); 
                 p != args.end();  ++p) {
@@ -173,10 +154,10 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
            }
            Skip(s);
         }
-      } // end if all memory accesses
+      }
    }   
- }// end of previsit
- else { // only for post-visiting 
+ }
+ else {
       if (DebugLocalInfoCollect()) 
          std::cerr << "postvisiting cur node " << AstToString(s) << "\n";
        if (modstack.size() && modstack.back().root == s) {
@@ -194,7 +175,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
  }
  return true;
 }
-// Collecting Read references from function calls, array accesses, and memory accesses etc.
+
 class CollectReadRefWrap : public CollectObject<AstNodePtr>
 {
   CollectObject< std::pair< AstNodePtr, AstNodePtr> >* collect;
@@ -210,32 +191,9 @@ class CollectReadRefWrap : public CollectObject<AstNodePtr>
   bool operator() ( const AstNodePtr& ref)
    {
       AstInterface::AstNodeList args;
-      // Liao, 11/20/2008, array subscripts could contain type casting, 
-      // especially for template type's operator[], where an integer is converted to template_type<>::size_type
-      // So, we have to strip it off here
-      AstNodePtr s1; 
-      AstInterface::OperatorEnum opr = (AstInterface::OperatorEnum)0;
-      if (fa.IsUnaryOp(ref,&opr,&s1))
-      {
-        if (opr==AstInterface::UOP_CAST)
-        {
-         if (DebugLocalInfoCollect()) 
-           std::cerr << "Collecting read variables from a type casting exp: " << AstToString(ref) << 
-               " within statement: " << AstToString(stmt) << std::endl;
-          operator()(s1);
-        }
-      }
-
-      //Collect read variables from sideEffectInterface for function calls
       if (fa.IsFunctionCall(ref))
-      {
          func->get_read(fa, ref, this); 
-         if (DebugLocalInfoCollect()) 
-           std::cerr << "Collecting read variables from a function call: " << AstToString(ref) << " within statement: " << AstToString(stmt) << std::endl;
-      }  
       else if (fa.IsArrayAccess(ref, 0, &args)) {
-        if (DebugLocalInfoCollect()) 
-           std::cerr << "Collecting read variables from an array access: " << AstToString(ref) << " within statement: " << AstToString(stmt) << std::endl;
         for (AstInterface::AstNodeList::const_iterator p = args.begin(); 
              p != args.end(); ++p) {
                AstNodePtr c = *p;
@@ -244,15 +202,14 @@ class CollectReadRefWrap : public CollectObject<AstNodePtr>
       }
       if (fa.IsMemoryAccess(ref)) {
         if (DebugLocalInfoCollect()) 
-           std::cerr << "CollectReadRefWrap::operator(): found a memory access, appending reading " << AstToString(ref) << " within statement: " << AstToString(stmt) << std::endl;
+           std::cerr << "appending reading " << AstToString(ref) << " : " << AstToString(stmt) << std::endl;
         if (collect != 0)
           (*collect)( std::pair<AstNodePtr, AstNodePtr>(ref, stmt));
       }
       return true;
    }
 };
-// Collect a known mod reference 'ref' for '_stmt'
-// Also collect relevent read references for function calls and array accesses.
+
 class CollectModRefWrap : public CollectReadRefWrap
 {
   CollectObject< std::pair< AstNodePtr, AstNodePtr> >* mod;
@@ -262,11 +219,9 @@ class CollectModRefWrap : public CollectReadRefWrap
                       CollectObject< std::pair<AstNodePtr,AstNodePtr> >* read,
                       CollectObject< std::pair<AstNodePtr,AstNodePtr> >* m)
     : CollectReadRefWrap(_fa, f, _stmt, read), mod(m) {}
-  // 'ref' is a known write access
   bool operator() ( const AstNodePtr& ref)
    {
       AstInterface::AstNodeList args;
-      // Collect read references from function call parameters and array subscripts
       if (fa.IsFunctionCall(ref, 0,&args) || fa.IsArrayAccess(ref, 0, &args)) {
         CollectReadRefWrap read(*this);
         for (AstInterface::AstNodeList::const_iterator p = args.begin(); 
@@ -276,7 +231,7 @@ class CollectModRefWrap : public CollectReadRefWrap
         }
       }
       if (DebugLocalInfoCollect()) 
-          std::cerr << "CollectModRefWrap::operator() appending modifying " << AstToString(ref) << " : " << AstToString(stmt) << std::endl;
+          std::cerr << "appending modifying " << AstToString(ref) << " : " << AstToString(stmt) << std::endl;
       if (mod != 0)
         (*mod)( std::pair<AstNodePtr, AstNodePtr>(ref, stmt));
       return true;
@@ -287,7 +242,7 @@ void StmtSideEffectCollect::
 AppendModLoc( AstInterface& fa, const AstNodePtr& mod, const AstNodePtr& rhs)
     {  
       if (DebugLocalInfoCollect()) {
-          std::cerr << "StmtSideEffectCollect::AppendModLoc() appending modifying " << AstToString(mod) << " = " << AstToString(rhs) << std::endl;
+          std::cerr << "appending modifying " << AstToString(mod) << " = " << AstToString(rhs) << std::endl;
       }
        assert(curstmt != AST_NULL);
        if (killcollect != 0 && rhs != AST_NULL)
@@ -295,15 +250,16 @@ AppendModLoc( AstInterface& fa, const AstNodePtr& mod, const AstNodePtr& rhs)
        if (modcollect != 0)
             (*modcollect)( std::pair<AstNodePtr,AstNodePtr>(mod, curstmt)); 
     }
-void StmtSideEffectCollect::AppendReadLoc( AstInterface& fa, const AstNodePtr& read)
+void StmtSideEffectCollect::
+AppendReadLoc( AstInterface& fa, const AstNodePtr& read)
     {   
       if (DebugLocalInfoCollect()) {
-          std::cerr << "StmtSideEffectCollect::AppendReadLoc() appending reading " << AstToString(read) << std::endl;
+          std::cerr << "appending reading " << AstToString(read) << std::endl;
       }
        if (readcollect != 0)
                (*readcollect)(std::pair<AstNodePtr,AstNodePtr>(read, curstmt)); 
     }
-// Using function 
+
 void StmtSideEffectCollect::
 AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
 {
@@ -377,6 +333,14 @@ std::string Ast2StringMap :: get_string( const AstNodePtr& s)
   return r;
 }
 
+std::string Ast2StringMap :: lookup_string( const AstNodePtr& s) const
+{
+  if ( s == AST_NULL) return "";
+  MapType::const_iterator p = astmap.find(s);
+  if (p == astmap.end())  return "";
+  return (*p).second;
+}
+
 std::string Ast2StringMap :: get_string( const AstNodePtr& s) const
 {
   if ( s == AST_NULL) return "";
@@ -388,14 +352,6 @@ std::string Ast2StringMap :: get_string( const AstNodePtr& s) const
      }
      assert(false);
   }
-  return (*p).second;
-}
-
-std::string Ast2StringMap :: lookup_string( const AstNodePtr& s) const
-{
-  if ( s == AST_NULL) return "";
-  MapType::const_iterator p = astmap.find(s);
-  if (p == astmap.end())  return "";
   return (*p).second;
 }
 
@@ -418,8 +374,7 @@ get_unique_name(AstInterface& fa, const AstNodePtr& _scope, const std::string& v
      return get_unique_name(fname, func, varname);
  }
 
-//! Find the alias group of a variable named 'varname' within 'scope'
-// Create a new alias group if it does not exist for this variable
+
 UF_elem*  StmtVarAliasCollect::VarAliasMap::
 get_alias_map( const std::string& varname, const AstNodePtr& scope)
 {
@@ -490,7 +445,7 @@ AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
 
 bool StmtVarAliasCollect::
 may_alias(AstInterface& fa, const AstNodePtr& r1, 
-          const AstNodePtr& r2)
+	  const AstNodePtr& r2)
 {
   AstNodeType t1, t2;
   if (fa.IsExpression(r1, &t1) == AST_NULL || fa.IsExpression(r2, &t2)==AST_NULL)

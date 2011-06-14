@@ -15,11 +15,8 @@
 #include <LoopTransformInterface.h>
 #include <GraphScope.h>
 /* 
- * From Qing's email on May 20, 2008
- * The LoopTreeDepComp class internally: 
- *  build a dependence graph from the AST, 
- *  then a LoopTree from the AST, 
- *  then a mapping between the LoopTree and the DepGraph based on the internal AST.
+ * QY: The LoopTreeDepComp class 
+ *  build a LoopTree and a corresponding dep graph from an AST
  */
 class LoopTreeDepGraphNode 
    : public MultiGraphObserveNodeTemplate<LoopTreeNode*>,
@@ -30,7 +27,7 @@ class LoopTreeDepGraphNode
    ~LoopTreeDepGraphNode() 
      { 
       LoopTreeNode *s = GetInfo();
-      if (s && s->GetOrigStmt() != AST_NULL)
+      if (s && IsSimpleStmt(s))
         s->DetachObserver(*this);
      }
   void UpdateDeleteNode( const LoopTreeNode *n) { GetInfo() = 0; }
@@ -59,15 +56,14 @@ class LoopTreeDepGraphNode
      : MultiGraphObserveNodeTemplate<LoopTreeNode*>(c, s),
        loopMap(DepInfoGenerator::GetIDDepInfo(s->LoopLevel(),false)), 
        domain(_dm)
-     { if (s->GetOrigStmt() != AST_NULL)
-         s->AttachObserver(*this);
+     { if (IsSimpleStmt(s)) s->AttachObserver(*this);
      }
    LoopTreeDepGraphNode(MultiGraphCreate *c, LoopTreeNode* s,
                         const DepInfo& _loopMap, const DomainCond _dm)
      : MultiGraphObserveNodeTemplate<LoopTreeNode*>(c, s),
        loopMap(_loopMap), domain(_dm)
-     { if (s->GetOrigStmt() != AST_NULL) 
-         s->AttachObserver(*this);
+     { if (IsSimpleStmt(s))
+	 s->AttachObserver(*this);
      }
 
    void UpdateInsertStmtLoop( const InsertStmtLoopInfo& _info)
@@ -137,13 +133,13 @@ class LoopTreeDepGraphCreate
   void UpdateInsertLoop( const InsertLoopInfo &info);
  public:
   LoopTreeDepGraphCreate( const LoopTreeNodeDepMap& m, 
-                          BaseGraphCreate *b = 0 )
+			  BaseGraphCreate *b = 0 )
     : DepInfoGraphCreate<LoopTreeDepGraphNode>(b), map(m) {}
   ~LoopTreeDepGraphCreate();
   
-  void BuildDep( LoopTransformInterface &fa, DepInfoAnal &anal, 
+  void BuildDep( DepInfoAnal &anal, 
                 LoopTreeDepGraphNode *n1, LoopTreeDepGraphNode *n2, 
-                DepType t);
+		DepType t);
 
   void AddNode(LoopTreeDepGraphNode* result);
   LoopTreeDepGraphNode* CreateNode(LoopTreeNode *s, LoopTreeDepGraphNode* that = 0);
@@ -152,7 +148,7 @@ class LoopTreeDepGraphCreate
                                     const DomainCond& c);
   bool DeleteNode( LoopTreeDepGraphNode *n);
   DepInfoEdge* CreateEdge( LoopTreeDepGraphNode *n1, LoopTreeDepGraphNode *n2,
-                           const DepInfo& info);
+			   const DepInfo& info);
   DepInfoEdge* CreateEdgeFromOrigAst( LoopTreeDepGraphNode *n1,
                                       LoopTreeDepGraphNode *n2, const DepInfo& info);
 };
@@ -236,15 +232,15 @@ class LoopTreeDepCompCreate : public LoopTreeDepComp, public MultiGraphObserver
 
   void UpdateDeleteNode( const MultiGraphElem *n);
  public:
-  LoopTreeDepCompCreate( LoopTransformInterface &fa, const AstNodePtr& top, 
+  LoopTreeDepCompCreate( const AstNodePtr& top, 
                          bool buildDepGraph = true);
   ~LoopTreeDepCompCreate(); 
 
-  void BuildDepGraph( LoopTransformInterface &la);
+  void BuildDepGraph();
   void DetachDepGraph();
 
   DepInfoAnal& GetDepAnal() { return anal; }
-  AstNodePtr CodeGen( LoopTransformInterface &fa);
+  AstNodePtr CodeGen();
 
 };
 

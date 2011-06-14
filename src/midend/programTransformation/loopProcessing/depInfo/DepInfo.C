@@ -1,4 +1,3 @@
-
 #include <assert.h>
 
 #include <DepInfo.h>
@@ -7,18 +6,15 @@
 class DepEDDTypeInfo : public DepInfoImpl
 {
   DepType t;
-  DepType st; //Supplementary information when t ==SCALAR_DEP or SCALAR_BACK_DEP
  public:
   DepEDDTypeInfo( DepType _t, int dim1, int dim2, bool p, int cl)
-    : DepInfoImpl( dim1, dim2,p, cl) { t = _t; st = DEPTYPE_NONE; }
+    : DepInfoImpl( dim1, dim2,p, cl) { t = _t; }
   DepEDDTypeInfo( const DepEDDTypeInfo &that) 
     : DepInfoImpl( that ) { t = that.t; }
   virtual ~DepEDDTypeInfo() {}
   virtual DepInfoImpl* Clone() const { return new DepEDDTypeInfo(*this); }
 
   virtual DepType GetDepType() const { return t; }
-  virtual DepType GetScalarDepType() const { return st; }
-  virtual void SetScalarDepType(DepType s_type) { st=s_type; }
 };
 
 class DepEDDRefInfo : public DepEDDTypeInfo
@@ -29,7 +25,7 @@ public:
   virtual AstNodePtr SrcRef() const { return src; }
   virtual AstNodePtr SnkRef() const { return snk; }
   DepEDDRefInfo( DepType _t, int dim1, int dim2, 
-                 AstNodePtr _src, const AstNodePtr& _snk, bool p, int cl)
+		 AstNodePtr _src, const AstNodePtr& _snk, bool p, int cl)
     : DepEDDTypeInfo(_t, dim1, dim2,p,cl), src(_src),  snk(_snk) {}
   DepEDDRefInfo( const DepEDDRefInfo &that) : DepEDDTypeInfo(that), 
        src(that.SrcRef()), snk(that.SnkRef()) {}
@@ -42,8 +38,8 @@ DepInfo DepInfoGenerator:: GetTopDepInfo()
 { 
   return DepInfo();
 }
-                    
-DepInfo DepInfoGenerator::GetBottomDepInfo(int nr, int nc, int commLevel  )
+		    
+DepInfo DepInfoGenerator:: GetBottomDepInfo(int nr, int nc, int commLevel  )
 {
   assert(commLevel <= nr && commLevel <= nc);
   DepInfoImpl *impl = new DepInfoImpl( nr, nc, false, commLevel); 
@@ -70,83 +66,42 @@ DepInfo DepInfoGenerator:: GetDepInfo( int nr, int nc, bool p, int commLevel)
 
 DepInfo DepInfoGenerator:: GetDepInfo( int nr, int nc, DepType t, bool p, int commLevel )
   { return (t==DEPTYPE_NONE)? DepInfo(new DepInfoImpl( nr, nc, p, commLevel)) 
-          : DepInfo(new DepEDDTypeInfo( t, nr, nc, p, commLevel )); }
+		     : DepInfo(new DepEDDTypeInfo( t, nr, nc, p, commLevel )); }
 
 DepInfo DepInfoGenerator:: 
 GetDepInfo( int nr, int nc, DepType t, const AstNodePtr& srcRef, const AstNodePtr& snkRef,
             bool p, int commLevel)
-  {
-    DepInfo result;
-    if ( (t & DEPTYPE_DATA) || (t & DEPTYPE_INPUT) )
-    {
-      result= DepInfo(new DepEDDRefInfo( t, nr, nc, srcRef, snkRef,p, commLevel));
-    }
-    else
-    {
-      result= DepInfo(new DepEDDTypeInfo(t, nr, nc, p, commLevel)) ; 
-    }
-#if 0    
-    // Provide extra information for DEPTYPE_SCALAR and DEPTYPE_BACKSCALAR
-    if  ( (t & DEPTYPE_SCALAR) || (t & DEPTYPE_BACKSCALAR) )
-    {  // how to tell read/write access ??
-       if (srcRef == snkRef) // OUTPUT dependence for scalars
-          result.SetScalarDepType(DEPTYPE_OUTPUT);
-    }
-#endif    
-    return result;
-  }
+  { return ( (t & DEPTYPE_DATA) || (t & DEPTYPE_INPUT) )? 
+                      DepInfo(new DepEDDRefInfo( t, nr, nc, srcRef, snkRef,p, commLevel))
+                     :  DepInfo(new DepEDDTypeInfo(t, nr, nc, p, commLevel)) ; }
 
 std::string DepType2String(DepType t) 
 {
-#if 1
-// Liao, the type could be some combination of several types, 11/13/2008
-  std::string result;
-  
-  if (t&DEPTYPE_CTRL) result += "CTRL_DEP";
-  if (t&DEPTYPE_TRUE) result += " TRUE_DEP";
-  if (t&DEPTYPE_OUTPUT) result+= " OUTPUT_DEP";
-  if (t&DEPTYPE_ANTI) result += " ANTI_DEP";
-  if (t&DEPTYPE_INPUT) result += " INPUT_DEP";
-  
-  if (t&DEPTYPE_SCALAR) result += " SCALAR_DEP";
-  if (t&DEPTYPE_BACKSCALAR) result += " SCALAR_BACK_DEP";
-  if (t&DEPTYPE_IO) result += " IO_DEP";
-  if (t&DEPTYPE_DATA) result += " DATA_DEP";    
-  if (t&DEPTYPE_BACKCTRL) result += " BACKCTRL_DEP";
-  
-  if (t&DEPTYPE_TRANS) result += " TRANS_DEP";
-  if (t&DEPTYPE_NONE) result += " TYPE_NONE";
-  
-  return result +=";";
-#else
   switch (t) {
   case DEPTYPE_CTRL: return "CTRL_DEP;"; 
   case DEPTYPE_TRUE: return  "TRUE_DEP;"; 
   case DEPTYPE_OUTPUT: return  "OUTPUT_DEP;"; 
   case DEPTYPE_ANTI: return  "ANTI_DEP;"; 
   case DEPTYPE_INPUT: return  "INPUT_DEP;"; 
-  
   case DEPTYPE_SCALAR: return  "SCALAR_DEP;"; 
   case DEPTYPE_BACKSCALAR: return  "SCALAR_BACK_DEP;"; 
   case DEPTYPE_IO: return  "IO_DEP;"; 
   case DEPTYPE_DATA: return  "DATA_DEP;"; 
   case DEPTYPE_BACKCTRL: return  "BACKCTRL_DEP;";  
-  
   case DEPTYPE_TRANS: return  "TRANS_DEP;"; 
   case DEPTYPE_NONE : return  "TYPE_NONE"; 
   default: assert(false);
   }
-#endif  
 }
   
 std::string DepInfo :: toString() const
 {
+  int num1, num2;
+  CarryLevels(num1,num2);
   std::stringstream out;
   out << rows() << "*" << cols()<<" ";
   out << DepType2String(GetDepType()) << " commonlevel = " << CommonLevel() << " ";
-  out << "CarryLevel = "<<CarryLevel()<< " ";
-  if ((GetDepType()==DEPTYPE_SCALAR)||(GetDepType()==DEPTYPE_BACKSCALAR))
-    out<< "Scalar dep type "<<DepType2String(GetScalarDepType()) ;
+  out << "CarryLevel = ("<<num1 << "," << num2 << ") ";
   if (is_precise()) 
       out << " Is precise ";
   out << AstToString(SrcRef())<<getAstLocation(SrcRef())<<"->" << AstToString(SnkRef())<<getAstLocation(SnkRef())<<" ";
@@ -179,10 +134,14 @@ bool DepInfo :: operator &= ( const DepInfo &d2)
 
 bool DepInfo:: operator *= ( const DepInfo &info2)
 {
-  assert(cols() == info2.rows());
+  if (cols() == 0) return false;
+  if (cols() != info2.rows()) {
+    std::cerr << "info1=" << toString() << "; info2=" << info2.toString() << "\n"; assert(false);
+  }
   DepInfo info1(*this);
   int commLevel1 = info1.CommonLevel();
-  *this = DepInfoGenerator::GetDepInfo(info1.rows(), info2.cols(), DEPTYPE_TRANS, commLevel1);
+  *this = DepInfoGenerator::GetDepInfo(info1.rows(), info2.cols(), DEPTYPE_TRANS,
+                                       commLevel1);
   for (int i = 0; i < info1.rows(); i++) {
     for (int j = 0; j < info2.cols(); j++) {
       for (int k = 0; k < info1.cols(); k++) {
@@ -209,7 +168,7 @@ bool DepInfo :: ClosureEntries()
     for (int j = 0; j < cols(); j++) {
       DepRel e1 = Entry(i,j);
       if (e1.Closure()) {
-        Entry(i,j) = e1;
+	Entry(i,j) = e1;
         mod = true;
       }
     }
@@ -356,7 +315,7 @@ void DepInfo::InsertLoop( int level, DepDirection dir)
      for (i = 0; i < d1+incr1; ++i)
          Entry(i,level) = DEPDIR_ALL;
   }
-  if (level < CommonLevel() && incr1 && incr2)
+  if (level <= CommonLevel() && incr1 && incr2)
      ++CommonLevel();
   assert( CommonLevel() <= rows() && CommonLevel() <= cols());
 
@@ -453,7 +412,7 @@ int DepInfo:: CarryLevel() const
   return minlevel;
 }
 
-void DepInfo::CarryLevels( int &minLevel, int &maxLevel) const
+void DepInfo :: CarryLevels( int &minLevel, int &maxLevel) const
 {
   minLevel = -1;
   maxLevel = -1;
@@ -467,37 +426,33 @@ void DepInfo::CarryLevels( int &minLevel, int &maxLevel) const
     bool carry = true, notcarry = true;
 
     switch (t) {
-    case DEPDIR_EQ: // same iteration and 0 alignment: must be loop independent
+    case DEPDIR_EQ:
          if (align1 == 0 && align2 == 0)
              carry = false;
          else if (align1 > 0 || align2 < 0)
-             notcarry = false; // with non-zero alignment: must have loop carried dependence at the current level
+             notcarry = false;
          break;
-    case DEPDIR_LE:  // s1 <= s2 +n. n<0, must be loop carried dependence
+    case DEPDIR_LE:
          if ( align2 < 0)
              notcarry = false;
          break;
-    case DEPDIR_GE: // s1 >= s2 + n and min alignment factor (n) >0: 
+    case DEPDIR_GE:
          if (align1 > 0)
             notcarry = carry = false;
     default: break;
     }
     if (carry && minLevel < 0)
-       minLevel = i;
+       minLevel = maxLevel = i;
     if ( ! notcarry ) {
         maxLevel = i;
         break;
     }
   }
   if (minLevel < 0) {
-    //Adjustment for DEPTYPE_BACKSCALAR. It must be loop-carried dependence
-    //For DEPTYPE_SCALAR with two same references to a variable, it also must be loop-carried dependence
      if (GetDepType() == DEPTYPE_BACKSCALAR)
         minLevel = maxLevel = num-1;
-     else if (GetScalarDepType() == DEPTYPE_OUTPUT)
-        minLevel = maxLevel = num-1;
      else
-        minLevel = num;
+        minLevel = maxLevel = num;
   }
 }
 

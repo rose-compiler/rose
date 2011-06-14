@@ -1,21 +1,16 @@
 #ifndef ANALYSIS_INTERFACE_H
 #define ANALYSIS_INTERFACE_H
-// This header provide abstract interfaces to some common program analyses,
-// such as
-// * side effects
-// * alias
 
 #include "FunctionObject.h"
+#include "SymbolicVal.h"
 
 class FunctionSideEffectInterface
 {
  public:
-   //! Store modifying reference nodes (collect) within a function (fc)
   // returns false if unknown function encountered
   virtual bool get_modify(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0) = 0 ;
-   //! Store read reference nodes (collect) within a function (fc)
-  // returns false if unknown function encountered
+
   virtual bool get_read(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0) = 0;
   virtual ~FunctionSideEffectInterface() {}
@@ -63,15 +58,14 @@ class NoFunctionAliasAnalysis : public FunctionAliasInterface
  public:
   virtual bool
     may_alias(AstInterface& fa, const AstNodePtr& fc, const AstNodePtr& result,
-              CollectObject< std::pair<AstNodePtr, int> >& collectalias) 
+	      CollectObject< std::pair<AstNodePtr, int> >& collectalias) 
    { return false; }
   virtual ~NoFunctionAliasAnalysis() {}
 };
-//! Abstract interface to alias analysis
+
 class AliasAnalysisInterface
 {
  public:
-   //! Check if two references r1, r2 may be alias to each other
   virtual bool
      may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2) = 0;
   virtual ~AliasAnalysisInterface() {}
@@ -80,10 +74,59 @@ class AliasAnalysisInterface
 class AssumeNoAlias : public AliasAnalysisInterface
 {
  public:
-  virtual bool
-     may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2)
+  virtual bool may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2)
    { return false; }
 };
 
+// This is the interface to access loop structure stored in AST.
+class LoopInterface
+{
+public:
+  ///  Virtual destructor.
+  virtual ~LoopInterface() {}
+
+  /**
+   *  @param  __fa  AST Interface to access @a __fc.
+   *  @param  __fc  AST node to parse.
+   *  @param  __init  Returns node holding initial statement, if possible.
+   *  @param  __cond  Returns node holding conditional statement, if possible.
+   *  @param  __incr  Returns node holding incremental statement, if possible.
+   *  @param  __body  Returns node holding loop body, if possible.
+   *  @return  Whether the AST __fc is a loop 
+   */
+  virtual bool
+  IsLoop(AstInterface& __fa, const AstNodePtr& __fc,
+         AstNodePtr* __init = 0, AstNodePtr* __cond = 0, AstNodePtr* __incr = 0,
+         //SymbolicVal* __init = 0, SymbolicVal* __cond = 0, SymbolicVal* __incr = 0,
+         AstNodePtr* __body = 0) const = 0;
+  
+  /**
+   *  @param  __fa  AST Interface to access @a __fc.
+   *  @param  __fc  AST node to parse.
+   *  @param  __ivar  Returns node holding iteration variable, if possible.
+   *  @param  __start  Returns node holding initial value, if possible.
+   *  @param  __stop  Returns node holding bound value, if possible.
+   *  @param  __step  Returns node holding increment value, if possible.
+   *  @param  __body  Returns node holding iteration body, if possible.
+   *  @return  Whether the AST __fc is a Fortran-style loop 
+   */
+  virtual bool
+  IsFortranLoop(AstInterface& __fa, const AstNodePtr& __fc,
+        AstNodePtr* __ivar = 0, AstNodePtr* __start = 0, AstNodePtr* __stop = 0, AstNodePtr* __step = 0,
+        AstNodePtr* __body = 0) const = 0;
+};
+
+// interface FunctionInterface
+/**
+ *  @brief  Generic interface to parse/access function AST node.
+ *  @since  11/20/2009, jichi
+ *
+ *  TODO 11/20/2009: 
+ *  This is the interface to access function structure stored in AST.
+ *  Currently supported function structure is:
+ *  - return_type
+ *  - function_name
+ *  -?
+ */
 
 #endif
