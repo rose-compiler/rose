@@ -1630,14 +1630,24 @@ SgNode* EventReverser::RouteGraphEdgeComp::getAstNode(const VGEdge& edge) const
     VGVertex tgt = boost::target(edge, routeGraph);
     
     if (StateSavingEdge* ssEdge = isStateSavingEdge(routeGraph[edge]))
+    {
+        if (ssEdge->cost == 0)
+            return routeGraph[src]->astNode;
         return ssEdge->killer;
+    }
     if (isOperatorNode(routeGraph[tgt]))
-        return routeGraph[tgt]->astNode;   
+        return routeGraph[tgt]->astNode;  
+    if (MuNode* muNode = isMuNode(routeGraph[src]))
+        if (muNode->isCopy)
+            return NULL;
+#if 0
     if (isPhiNode(routeGraph[src]))
         return routeGraph[src]->astNode;
     if (isPhiNode(routeGraph[tgt]))
         return routeGraph[tgt]->astNode;
     return routeGraph[tgt]->astNode;  
+#endif
+    return routeGraph[src]->astNode;  
 }
 
 bool EventReverser::RouteGraphEdgeComp::operator()(
@@ -1657,8 +1667,8 @@ bool EventReverser::RouteGraphEdgeComp::operator()(
     map<SgNode*, int>::const_iterator iter1 = nodeIndexTable.find(node1);
     map<SgNode*, int>::const_iterator iter2 = nodeIndexTable.find(node2);
     
-    int val1 = (iter1 == nodeIndexTable.end()) ? INT_MAX : iter1->second;
-    int val2 = (iter2 == nodeIndexTable.end()) ? INT_MAX : iter2->second;
+    int val1 = (iter1 == nodeIndexTable.end()) ? 0 : iter1->second;
+    int val2 = (iter2 == nodeIndexTable.end()) ? 0 : iter2->second;
     
     return val1 < val2;
     

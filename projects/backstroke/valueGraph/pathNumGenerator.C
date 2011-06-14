@@ -303,7 +303,7 @@ void PathNumManager::getAstNodeIndices(size_t index, map<SgNode*, int>& nodeIndi
     boost::topological_sort(dag, back_inserter(nodes));
     
     int num = 0;
-    foreach (DAGVertex node, nodes)
+    reverse_foreach (DAGVertex node, nodes)
     {
         SgNode* astNode = (*cfg_)[dag[node]]->getNode();
         nodeIndicesTable[astNode] = num++;
@@ -311,7 +311,7 @@ void PathNumManager::getAstNodeIndices(size_t index, map<SgNode*, int>& nodeIndi
     
     // Add a NULL entry to the table because it is possible that some VG node contains
     // a NULL AST node inside.
-    nodeIndicesTable[NULL] = 0;
+    nodeIndicesTable[NULL] = INT_MAX;
 }
 
 #if 0

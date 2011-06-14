@@ -270,7 +270,7 @@ void EventReverser::buildRouteGraph(const map<VGEdge, PathInfo>& routes)
     }
     valuesToRestore_[0].swap(newValuesToRestore);
     
-    //removePhiNodesFromRouteGraph();
+    removePhiNodesFromRouteGraph();
 }
 
 void EventReverser::removePhiNodesFromRouteGraph()
@@ -582,7 +582,7 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
         VGEdge edge = nextEdgeCandidates.top();
         nextEdgeCandidates.pop();
         
-        // If this edge belongs to the route of the given DAG.
+        // If this edge does not belong to the route of the given DAG.
         if (routeGraph_[edge]->paths.count(dagIndex) == 0)
             continue;
             
@@ -636,7 +636,7 @@ void EventReverser::buildReverseCFG(
     getRouteGraphEdgesInProperOrder(dagIndex, result);
     
 #if 1
-    foreach (const VGEdge& edge, result)
+    reverse_foreach (const VGEdge& edge, result)
     {
         VGVertex src = boost::source(edge, valueGraph_);
         VGVertex tgt = boost::target(edge, valueGraph_);
@@ -644,6 +644,7 @@ void EventReverser::buildReverseCFG(
                 << valueGraph_[tgt]->toString() << endl;
         //cout << "!!!" << routeGraph_[edge]->toString() << endl;
     }
+    cout << "\n\n";
 #endif
     
     
@@ -858,6 +859,19 @@ void EventReverser::addReverseCFGNode(
     rvsCFGBasicBlock[paths] = newNode;
 }
 
+namespace 
+{
+    SgNode* removeThisPointer(SgNode* node)
+    {
+        if (SgArrowExp* arrowExp = isSgArrowExp(node))
+        {
+            if (isSgThisExp(arrowExp->get_lhs_operand()))
+                return arrowExp->get_rhs_operand();
+        }
+        return node;
+    }
+}
+
 void EventReverser::generateCodeForBasicBlock(
         const vector<VGEdge>& edges,
         SgScopeStatement* rvsScope,
@@ -985,6 +999,9 @@ void EventReverser::generateCodeForBasicBlock(
         }
         else if (ValueNode* rhsValNode = isValueNode(routeGraph_[tgt]))
         {
+            // Don't generate the expression like a = a.
+            if (valNode->var.name == rhsValNode->var.name)
+                continue;
             // Simple assignment.
             rvsStmt = buildAssignOpertaion(valNode, rhsValNode);
         }
@@ -1254,7 +1271,7 @@ void EventReverser::generateCode(
         while (!outEdges.empty())
         {
             PathSet condPaths = rvsCFG[outEdges.back()];
-                cout << "Path added: " << condPaths << endl;
+            //cout << "Path added: " << condPaths << endl;
             outEdges.pop_back();
             
             // The last edge can get the current scope.
