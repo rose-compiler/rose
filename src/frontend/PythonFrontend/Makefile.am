@@ -20,6 +20,6 @@ include_HEADERS = \
 	SagePythonSupport.C
 
 sageTranslator_PYTHON = sageTranslator.py
-sageTranslatordir = $(libdir)/python/sageTranslator
+sageTranslatordir = $(libdir)/python
 
 EXTRA_DIST = CMakeLists.txt

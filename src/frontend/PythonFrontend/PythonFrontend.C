@@ -14,12 +14,11 @@ int python_main(std::string, SgFile*)
 #else // USE_ROSE_PYTHON_SUPPORT is defined
 
 #include <iostream>
-#include <stdio.h> // TODO remove eventually, switch to iostream
 
 #include "SagePythonInterface.h"
 
 #define ROSE_PYTHON_FRONTEND_MODULE_NAME "sageTranslator"
-#define ROSE_PYTHON_FRONTEND_TRANSLATOR_FXN_NAME "translate" 
+#define ROSE_PYTHON_FRONTEND_TRANSLATOR_FXN_NAME "translate"
 
 using namespace std;
 
@@ -29,13 +28,18 @@ runPythonFrontend(SgFile* file)
     PyObject *pModule, *pFunc;
     PyObject *pValue, *pArgs;
 
-    //PyRun_SimpleString("import os; print 'cwd is', os.getcwd()");
-    //PyRun_SimpleString("import sys; print 'path is', sys.path");
-
     Py_InitModule("sage", SageBuilderMethods);
 
-    //PyRun_SimpleString("import os; print os.getcwd()");
-
+    // Hack to set sys.path (the list of paths that Python uses to look up modules)
+    // so that the subsequent import succeeds. The program first looks in the
+    // installation directory, then the source directory. (Automake's support for
+    // Python does not copy .py (or .pyo, .pyc) into the compile tree).
+    // TODO: find a better way to run/distribute the code in sageTranslator.py
+    stringstream cmd;
+    cmd << "import sys" << endl;
+    cmd << "sys.path.insert(0, '" << ROSE_AUTOMAKE_TOP_SRCDIR << "/src/frontend/PythonFrontend')" << endl;
+    cmd << "sys.path.insert(0, '" << ROSE_INSTALLATION_PATH << "/lib/python')" << endl;
+    PyRun_SimpleString(cmd.str().c_str());
     pModule = PyImport_ImportModule(ROSE_PYTHON_FRONTEND_MODULE_NAME);
 
     if (pModule != NULL) {
@@ -60,22 +64,22 @@ runPythonFrontend(SgFile* file)
                 Py_DECREF(pFunc);
                 Py_DECREF(pModule);
                 PyErr_Print();
-                fprintf(stderr,"Call failed\n");
+                cerr << "Call failed" << endl;
                 return NULL;
             }
         }
         else {
             if (PyErr_Occurred())
                 PyErr_Print();
-            fprintf(stderr, "Cannot find function \"%s\"\n", 
-                    ROSE_PYTHON_FRONTEND_TRANSLATOR_FXN_NAME);
+            cerr << "Cannot find function " <<
+                    ROSE_PYTHON_FRONTEND_TRANSLATOR_FXN_NAME << endl;
         }
         Py_XDECREF(pFunc);
         Py_DECREF(pModule);
     }
     else {
         PyErr_Print();
-        fprintf(stderr, "Failed to load module \"%s\".\n", ROSE_PYTHON_FRONTEND_MODULE_NAME);
+        cerr << "Failed to load module " << ROSE_PYTHON_FRONTEND_MODULE_NAME << endl;
         return NULL;
     }
     return NULL;
