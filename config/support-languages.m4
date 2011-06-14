@@ -296,7 +296,7 @@ AC_ARG_ENABLE([php],
 #########################################################################################
 AC_ARG_ENABLE([python],
 #########################################################################################
-               AS_HELP_STRING([--enable-python],[Enable Python language support in ROSE (default=yes)]),
+               AS_HELP_STRING([--enable-python],[Enable Python language support in ROSE (default=no)]),
                ##########################################################################
                 echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "python"
                 if test $? = 0 ; then 
