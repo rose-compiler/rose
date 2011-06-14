@@ -385,7 +385,8 @@ private:
     void addReverseCFGNode(
         const PathSet& paths, const VGEdge* edge, ReverseCFG& rvsCFG,
         std::map<PathSet, RvsCFGVertex>& rvsCFGBasicBlock,
-        std::map<PathSet, PathSet>& parentTable);
+        std::map<PathSet, PathSet>& parentTable,
+        std::set<int>& dagAdded);
     
     //! Given a DAG index, return all edges of its reversal in the proper order.
     //! This order is decided by topological order from both CFG and route graph.

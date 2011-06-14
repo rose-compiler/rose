@@ -620,6 +620,8 @@ void EventReverser::buildReverseCFG(
     set<VGEdge> visitedEdges;
     map<PathSet, RvsCFGVertex> rvsCFGBasicBlock;
     map<PathSet, PathSet> parentTable;
+    // This set tracks which DAG has been added to the reverse CFG.
+    set<int> dagAdded;
     
     
     // Add a initial node to reverse CFG indicating the entry.
@@ -627,7 +629,8 @@ void EventReverser::buildReverseCFG(
     PathSet allPaths = pathNumManager_->getAllPaths(dagIndex);
     parentTable[allPaths] = allPaths;
     
-    addReverseCFGNode(allPaths, NULL, rvsCFG, rvsCFGBasicBlock, parentTable);
+    addReverseCFGNode(allPaths, NULL, rvsCFG, 
+            rvsCFGBasicBlock, parentTable, dagAdded);
     //rvsCFG[entry].first = allPaths;
     //rvsCFGBasicBlock[allPaths] = entry;
 
@@ -636,7 +639,7 @@ void EventReverser::buildReverseCFG(
     getRouteGraphEdgesInProperOrder(dagIndex, result);
     
 #if 1
-    reverse_foreach (const VGEdge& edge, result)
+    foreach (const VGEdge& edge, result)
     {
         VGVertex src = boost::source(edge, valueGraph_);
         VGVertex tgt = boost::target(edge, valueGraph_);
@@ -648,14 +651,16 @@ void EventReverser::buildReverseCFG(
 #endif
     
     
-    reverse_foreach (const VGEdge& edge, result)
+    foreach (const VGEdge& edge, result)
     {
         const PathSet& paths = routeGraph_[edge]->paths[dagIndex];
-        addReverseCFGNode(paths, &edge, rvsCFG, rvsCFGBasicBlock, parentTable);
+        addReverseCFGNode(paths, &edge, rvsCFG, 
+                rvsCFGBasicBlock, parentTable, dagAdded);
     }
     
     // Add the exit node.
-    addReverseCFGNode(allPaths, NULL, rvsCFG, rvsCFGBasicBlock, parentTable);
+    addReverseCFGNode(allPaths, NULL, rvsCFG, 
+            rvsCFGBasicBlock, parentTable, dagAdded);
     
     //rvsCFG = boost::make_reverse_graph(rvsCFG);
 }
@@ -663,7 +668,8 @@ void EventReverser::buildReverseCFG(
 void EventReverser::addReverseCFGNode(
         const PathSet& paths, const VGEdge* edge, ReverseCFG& rvsCFG,
         map<PathSet, RvsCFGVertex>& rvsCFGBasicBlock,
-        map<PathSet, PathSet>& parentTable)
+        map<PathSet, PathSet>& parentTable,
+        set<int>& dagAdded)
 {
     //const PathSet& paths = routeGraph_[edge]->paths;
     int dagIndex = 0;
@@ -691,11 +697,13 @@ void EventReverser::addReverseCFGNode(
                 boost::out_degree(iter->second, rvsCFG) == 0)
         {
             rvsCFG[iter->second].edges.push_back(*edge);
-            
+      
             // If the given DAG index is greater than 0, this is a MU node.
             // In this case, build a new vertex, and the loop will be inserted
-            // in the front of this basic block later.
-            if (dagIndex > 0)
+            // in the front of this basic block later. Note that the dagAdded set
+            // is used to prevent that a loop is added more than once due to several
+            // MU nodes.
+            if (dagIndex > 0 && dagAdded.count(dagIndex) == 0)
             {
                 // Add the new node.
                 RvsCFGVertex newNode = boost::add_vertex(rvsCFG);
@@ -708,6 +716,7 @@ void EventReverser::addReverseCFGNode(
                 rvsCFG[newEdge] = iter->first;
                 
                 rvsCFGBasicBlock[paths] = newNode;
+                dagAdded.insert(dagIndex);
             }
             return;
         }
@@ -784,7 +793,8 @@ void EventReverser::addReverseCFGNode(
         }
 #endif
         // Join node.
-        else if (visiblePaths.is_subset_of(paths) && parentTable[visiblePaths] == paths)
+        else if (visiblePaths.is_subset_of(paths) 
+                && parentTable[visiblePaths] == paths)
         {
             //cout << "Parent Paths: " << paths << " : " << 
             //        parentTable[parentTable[fullPaths]] << endl;
@@ -799,16 +809,19 @@ void EventReverser::addReverseCFGNode(
         {
             // If the code is structured, we will add a join node here.
             //cout << "***" << visiblePaths << endl;
-            ROSE_ASSERT(parentTable.count(visiblePaths) && parentTable[visiblePaths].size());
+            ROSE_ASSERT(parentTable.count(visiblePaths) 
+                    && parentTable[visiblePaths].size());
             
             PathSet newPaths = parentTable[visiblePaths];
             //cout << newPaths << endl;
             //getchar();
             //if (paths.is_subset_of(newPaths))
             {
-                addReverseCFGNode(newPaths, NULL, rvsCFG, rvsCFGBasicBlock, parentTable);
+                addReverseCFGNode(newPaths, NULL, rvsCFG, 
+                        rvsCFGBasicBlock, parentTable, dagAdded);
                 //goto NEXT;
-                addReverseCFGNode(paths, edge, rvsCFG, rvsCFGBasicBlock, parentTable);
+                addReverseCFGNode(paths, edge, rvsCFG, 
+                        rvsCFGBasicBlock, parentTable, dagAdded);
                 return;
             }
         }
@@ -843,7 +856,8 @@ void EventReverser::addReverseCFGNode(
     // Add new edges.
     foreach (const PathSetVertexPair& pathsVertex, newEdges)
     {
-        RvsCFGEdge newEdge = boost::add_edge(pathsVertex.second, newNode, rvsCFG).first;
+        RvsCFGEdge newEdge = 
+                boost::add_edge(pathsVertex.second, newNode, rvsCFG).first;
         rvsCFG[newEdge] = pathsVertex.first;
     }
 
