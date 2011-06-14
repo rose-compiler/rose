@@ -188,6 +188,7 @@ static void syscall_pause_enter(RSIM_Thread *t, int callno);
 static void syscall_pause_leave(RSIM_Thread *t, int callno);
 static void syscall_pipe(RSIM_Thread *t, int callno);
 static void syscall_pipe_enter(RSIM_Thread *t, int callno);
+static void syscall_pipe_leave(RSIM_Thread *t, int callno);
 static void syscall_prctl(RSIM_Thread *t, int callno);
 static void syscall_prctl_enter(RSIM_Thread *t, int callno);
 static void syscall_read(RSIM_Thread *t, int callno);
@@ -332,7 +333,7 @@ RSIM_Linux32::ctor()
     SC_REG(39,  mkdir,                          default);
     SC_REG(40,  rmdir,                          default);
     SC_REG(41,  dup,                            default);
-    SC_REG(42,  pipe,                           default);
+    SC_REG(42,  pipe,                           pipe);
     SC_REG(45,  brk,                            brk);
     SC_REG(47,  getgid,                         default);
     SC_REG(49,  geteuid,                        default);
@@ -1145,19 +1146,30 @@ syscall_pipe_enter(RSIM_Thread *t, int callno)
 static void
 syscall_pipe(RSIM_Thread *t, int callno)
 {
-    int32_t filedes_kernel[2];
-    size_t  size_filedes = sizeof(int32_t)*2;
+    int32_t guest[2];
+    int host[2];
+    int result = pipe(host);
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
 
-    int filedes[2];
-    int result = pipe(filedes);
+    guest[0] = host[0];
+    guest[1] = host[1];
+    if (sizeof(guest)!=t->get_process()->mem_write(guest, t->syscall_arg(0), sizeof guest)) {
+        close(host[0]);
+        close(host[1]);
+        t->syscall_return(-EFAULT);
+        return;
+    }
 
-    filedes_kernel[0] = filedes[0];
-    filedes_kernel[1] = filedes[1];
-
-    t->get_process()->mem_write(filedes_kernel, t->syscall_arg(0), size_filedes);
-
-    if (-1==result) result = -errno;
     t->syscall_return(result);
+}
+
+static void
+syscall_pipe_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("dP", (size_t)8, print_int_32);
 }
 
 /*******************************************************************************************************************************/
