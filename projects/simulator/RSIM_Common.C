@@ -34,10 +34,20 @@ print_user_desc_32(RTS_Message *m, const uint8_t *_ud, size_t sz)
 }
 
 void
-print_int_32(RTS_Message *m, const uint8_t *ptr, size_t sz)
+print_int_32(RTS_Message *m, const uint8_t *_v, size_t sz)
 {
-    assert(4==sz);
-    m->more("%"PRId32, *(const int32_t*)ptr);
+    const uint32_t *v = (const uint32_t*)_v;
+    assert(sz % 4 == 0);
+    size_t nelmts = sz/4;
+
+    if (1==nelmts) {
+        m->more("%"PRId32, v[0]);
+    } else {
+        m->more("[");
+        for (size_t i=0; i<nelmts; i++)
+            m->more("%s%"PRId32, i?",":"", v[i]);
+        m->more("]");
+    }
 }
 
 void
