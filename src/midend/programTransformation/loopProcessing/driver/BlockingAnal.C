@@ -18,10 +18,10 @@ static SymbolicVal GetDefaultBlockSize(const CompSlice* slice)
        AstInterface& fa = LoopTransformInterface::getAstInterface();
        LoopTransformOptions* opt = LoopTransformOptions::GetInstance();
        if (!opt->DoDynamicTuning()) {
-	    return opt->GetDefaultBlockSize();
+            return opt->GetDefaultBlockSize();
        }
        else {
-	   int dt = opt->GetDynamicTuningIndex();
+           int dt = opt->GetDynamicTuningIndex();
            AstInterface::AstNodeList l;
            l.push_back(fa.CreateConstInt(dt));
 

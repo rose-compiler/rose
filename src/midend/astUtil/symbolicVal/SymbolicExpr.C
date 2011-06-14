@@ -239,7 +239,7 @@ class IntVisitor : public OPHelpVisitor
   SymbolicVal ApplyOP( const SymbolicVal& v)
     { v2 = v; return OPHelpVisitor::ApplyOP(v); }
 
-};	
+};      
 
 class TermVisitor : public OPHelpVisitor
 {

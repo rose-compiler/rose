@@ -102,7 +102,7 @@ class CopyArrayDimensionOpt : public LoopTransformOptions::OptRegistryType
 {
     virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
       {
-	int dim = ReadUnsignedInt(opt,argv,index,"array-copy dimension", 0); 
+        int dim = ReadUnsignedInt(opt,argv,index,"array-copy dimension", 0); 
         opt.SetCopySel( new CopyArrayUnderSizeLimit(dim));
       }
   public:
@@ -113,7 +113,7 @@ class ParameterizeCopyArrayOpt : public LoopTransformOptions::OptRegistryType
 {
     virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
       {
-	int dim = ReadUnsignedInt(opt,argv,index,"array-copy dimension", 0); 
+        int dim = ReadUnsignedInt(opt,argv,index,"array-copy dimension", 0); 
         opt.SetCopySel( new ParameterizeCopyArray(dim));
       }
   public:

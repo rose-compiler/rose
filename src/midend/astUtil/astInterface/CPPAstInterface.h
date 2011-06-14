@@ -15,7 +15,7 @@ class CPPAstInterface : public AstInterface
   //Check if $_s$ is a method call; if yes, grab relevant info.
   bool IsMemberFunctionCall( const AstNodePtr& n, 
                                        AstNodePtr* obj = 0,
-	                               std::string* funcname = 0, 
+                                       std::string* funcname = 0, 
                                        AstNodePtr* access = 0,
                                        AstInterface::AstNodeList* args = 0);
   AstNodePtr CreateFunctionCall( const AstNodePtr& func, 

@@ -318,7 +318,7 @@ bool LoopTransformInterface::IsDynamicFusionEnd(const AstNodePtr& n)
 bool
 LoopTransformInterface::
 IsLoop(const AstNodePtr& s, SymbolicVal* init , SymbolicVal* cond,
-	SymbolicVal* incr, AstNodePtr* body)
+        SymbolicVal* incr, AstNodePtr* body)
 { 
   assert(fa != 0);
   AstNodePtr initast, condast, incrast;

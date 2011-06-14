@@ -26,12 +26,12 @@ class UF_elem
        if (p1 == p2) return;
        
        if (p1->size < p2->size) {
-	 p1->p_group = p2;
-	 p2->size += p1->size;
+         p1->p_group = p2;
+         p2->size += p1->size;
        }
        else {
-	 p2->p_group = p1;
-	 p1->size += p2->size;
+         p2->p_group = p1;
+         p1->size += p2->size;
        }
      } 
    UF_elem * find_group()

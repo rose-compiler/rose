@@ -20,7 +20,7 @@ class BitVectorReprImpl {
       num = (size + intsize-1) / intsize ;
       impl = new unsigned[num];
       for (unsigned i = 0; i < num; ++i) { 
-	impl[i] = 0;
+        impl[i] = 0;
       }
     }
   BitVectorReprImpl( const BitVectorReprImpl& that)
@@ -28,7 +28,7 @@ class BitVectorReprImpl {
     {
       impl = new unsigned[that.num];
       for (unsigned i = 0; i < num; ++i) {
-	impl[i] = that.impl[i];
+        impl[i] = that.impl[i];
       }
     }
   ~BitVectorReprImpl() 
@@ -65,7 +65,7 @@ class BitVectorReprImpl {
   void complement() 
     {
       for (unsigned i = 0; i < num; ++i) {
-	impl[i] = ~impl[i];
+        impl[i] = ~impl[i];
       }
     }
   bool operator ==( const BitVectorReprImpl& that) const
@@ -73,7 +73,7 @@ class BitVectorReprImpl {
     assert(num == that.num);
     for (unsigned i = 0; i < num; ++i) {
       if (impl[i] != that.impl[i])
-	return false;
+        return false;
     }
     return true;
   }
@@ -168,7 +168,7 @@ class BitVectorReprBase
     {
       std::string name = "";
       for ( iterator p = that.datalist.begin(); !p.ReachEnd(); ++p) {
-	DataEntry& cur = *p;
+        DataEntry& cur = *p;
         DoublyLinkedEntryWrap<DataEntry>* e = datalist.AppendLast(cur);
         if (name != cur.name) {
            name = cur.name;
@@ -182,28 +182,28 @@ class BitVectorReprBase
     {
       typename DataMap::iterator mp = datamap.find(n);
       if (mp == datamap.end()) {
-	DoublyLinkedEntryWrap<DataEntry>* cur = datalist.AppendLast(DataEntry(n,d));
-	datamap[n] = cur;
+        DoublyLinkedEntryWrap<DataEntry>* cur = datalist.AppendLast(DataEntry(n,d));
+        datamap[n] = cur;
       }
       else {
-	DoublyLinkedEntryWrap<DataEntry>* lp = (*mp).second;
-	assert( lp->GetEntry().name == n);
-	datalist.InsertAfter( DataEntry(n,d), lp); 
+        DoublyLinkedEntryWrap<DataEntry>* lp = (*mp).second;
+        assert( lp->GetEntry().name == n);
+        datalist.InsertAfter( DataEntry(n,d), lp); 
       }
     }
   void finalize() 
     {
       unsigned index = 0;
       for ( iterator p = begin(); !p.ReachEnd(); ++p, ++index) {
-	DataEntry& cur = *p;
-	cur.index = index;
+        DataEntry& cur = *p;
+        cur.index = index;
       }
     }
   iterator find( const std::string& name) const
     {
       typename DataMap::const_iterator mp = datamap.find(name);
       if (mp == datamap.end()) {
-	return end();
+        return end();
       }
       
       iterator lp( datalist, (*mp).second);  
@@ -230,10 +230,10 @@ class BitVectorReprGenerator
     {
       BitVectorRepr result(base.size());
       for (typename BitVectorReprBase<Name,Data>::iterator p 
-	     = base.find(name);
-	   p != base.end() && base.get_name(p) == name; ++p) {
-	int i = base.get_index( p );
-	result.add_member(i);
+             = base.find(name);
+           p != base.end() && base.get_name(p) == name; ++p) {
+        int i = base.get_index( p );
+        result.add_member(i);
       }
       return result;
     }
@@ -254,7 +254,7 @@ class BitVectorReprGenerator
     }
       
   void delete_member( BitVectorRepr& repr, const Name& name, 
-		      const Data& d) const
+                      const Data& d) const
     {
       typename BitVectorReprBase<Name,Data>::iterator p = base.find(name);
       for ( ; p != base.end() && base.get_data(p) != d; ++p) ;
@@ -263,12 +263,12 @@ class BitVectorReprGenerator
     }
   
   void collect_member( const BitVectorRepr& repr, 
-		       CollectObject<Data>& collect) const
+                       CollectObject<Data>& collect) const
     {
       for (typename BitVectorReprBase<Name,Data>::iterator lp = base.begin();  
-	   lp != base.end(); ++lp) {
-	if (repr.has_member( base.get_index(lp)))
-	  collect( base.get_data(lp) );
+           lp != base.end(); ++lp) {
+        if (repr.has_member( base.get_index(lp)))
+          collect( base.get_data(lp) );
       }
     }
   const BitVectorReprBase<Name,Data>& get_base() const { return base; }

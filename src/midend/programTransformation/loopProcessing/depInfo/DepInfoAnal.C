@@ -24,9 +24,9 @@ extern bool DebugDep();
 
 void PrintResults(const std::string buffer) {
    std::string filename;
-	filename = "roseResults";
+        filename = "roseResults";
    if (CmdOptions::GetInstance()->HasOption("-depAnalOnlyPrintF"))
-	{
+        {
       std::fstream outFile;
       outFile.open(filename.c_str(),std::fstream::out | std::fstream::app);
       if (outFile) {
@@ -93,9 +93,9 @@ DepInfo ComputePrivateDep( DepInfoAnal& anal,
      }
      if (ref.commLevel > 0) {
        if (pos >= 0) 
-	 result.Entry( i,i) = DepRel(DEPDIR_EQ, 0);
+         result.Entry( i,i) = DepRel(DEPDIR_EQ, 0);
        else 
-	 result.Entry( i,i) = DepRel(DEPDIR_LE, -1);
+         result.Entry( i,i) = DepRel(DEPDIR_LE, -1);
      }
      info2.domain.RestrictDepInfo( result, DEP_SINK);
      info1.domain.RestrictDepInfo( result, DEP_SRC);
@@ -229,23 +229,23 @@ DepInfoAnal :: DepInfoAnal(AstInterface& fa)
 {
 
 #ifdef OMEGA
-	if (CmdOptions::GetInstance()->HasOption("-plato"))
-	{
+        if (CmdOptions::GetInstance()->HasOption("-plato"))
+        {
       handle = PlatoTest;
-		PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::PLATO);
-	}
-	else if (CmdOptions::GetInstance()->HasOption("-omega"))
-	{
-		handle = OmegaTest;
-		PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::OMEGA);
-	}
-	else
-	{
-		PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::ADHOC);
-	}
+                PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::PLATO);
+        }
+        else if (CmdOptions::GetInstance()->HasOption("-omega"))
+        {
+                handle = OmegaTest;
+                PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::OMEGA);
+        }
+        else
+        {
+                PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::ADHOC);
+        }
 #endif
-	AstNodePtr root = fa.GetRoot();
-	varmodInfo.Collect(root);
+        AstNodePtr root = fa.GetRoot();
+        varmodInfo.Collect(root);
 }
 
 DepInfoAnal :: DepInfoAnal( AstInterface& fa, DependenceTesting& h)
@@ -261,131 +261,131 @@ void DepInfoAnal :: ComputeArrayDep( const StmtRefDep& ref,
                            DepType deptype, 
                            DepInfoCollect &outDeps, DepInfoCollect &inDeps) 
 {
-	DepInfo d;
+        DepInfo d;
 
 #ifdef OMEGA
         DepInfo plato_d,omega_d;
-	unsigned int test = 0;
-	if (CmdOptions::GetInstance()->HasOption("-omega"))
-		test |= PlatoOmegaInterface::OMEGA;
-	if (CmdOptions::GetInstance()->HasOption("-plato"))
-		test |= PlatoOmegaInterface::PLATO;
-	if (CmdOptions::GetInstance()->HasOption("-adhoc") || !test)
-		test |= PlatoOmegaInterface::ADHOC;
+        unsigned int test = 0;
+        if (CmdOptions::GetInstance()->HasOption("-omega"))
+                test |= PlatoOmegaInterface::OMEGA;
+        if (CmdOptions::GetInstance()->HasOption("-plato"))
+                test |= PlatoOmegaInterface::PLATO;
+        if (CmdOptions::GetInstance()->HasOption("-adhoc") || !test)
+                test |= PlatoOmegaInterface::ADHOC;
 #endif
 
-	if (ref.commLevel > 0 || ref.r1.ref != ref.r2.ref)
-	{
-		/*AstInterface& ai  = fa;
+        if (ref.commLevel > 0 || ref.r1.ref != ref.r2.ref)
+        {
+                /*AstInterface& ai  = fa;
                 AstNodePtr root = ai.GetRoot();
-		ai.get_fileInfo(ref.r1.stmt,&fileName,&lineNo1);
-		ai.get_fileInfo(ref.r2.stmt,&fileName,&lineNo2);
-		ai.get_fileInfo(root,&fileName,&dummy);
-		*/
-		/** Due to the time they take, do only the tests that are
-		*	 called for
-		**/
+                ai.get_fileInfo(ref.r1.stmt,&fileName,&lineNo1);
+                ai.get_fileInfo(ref.r2.stmt,&fileName,&lineNo2);
+                ai.get_fileInfo(root,&fileName,&dummy);
+                */
+                /** Due to the time they take, do only the tests that are
+                *        called for
+                **/
 #ifdef OMEGA
-		switch(test)
-		{
-			case PlatoOmegaInterface::ADHOC :
-			{
-				PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::ADHOC);
+                switch(test)
+                {
+                        case PlatoOmegaInterface::ADHOC :
+                        {
+                                PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::ADHOC);
 #endif
 
-				handle = AdhocTest;
-				d = handle.ComputeArrayDep(*this, ref, deptype);
+                                handle = AdhocTest;
+                                d = handle.ComputeArrayDep(*this, ref, deptype);
 
 #ifdef OMEGA
-			}
-			break;
-			case PlatoOmegaInterface::OMEGA :
-			{
-				handle = OmegaTest;
-				PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::OMEGA);
-				d = omega_d = OmegaTest.ComputeArrayDep(*this, ref, deptype);
-			}
-			break;
-			case PlatoOmegaInterface::PLATO :
-			{
-				handle = PlatoTest;
-				PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::PLATO);
-				d = plato_d = PlatoTest.ComputeArrayDep(*this, ref, deptype);
-			}
-			break;
-			case PlatoOmegaInterface::ADHOC | PlatoOmegaInterface::OMEGA :
-			{
-				handle = AdhocTest;
-				PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::ADHOC);
-				d = handle.ComputeArrayDep(fa, *this, ref, deptype);
-				
-				PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::OMEGA);
-				omega_d = OmegaTest.ComputeArrayDep(fa, *this, ref, deptype);
-			}
-			break;
-			case PlatoOmegaInterface::ADHOC | PlatoOmegaInterface::PLATO :
-			{
-				handle = AdhocTest;
-				PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::ADHOC);
-				d = handle.ComputeArrayDep(fa, *this, ref, deptype);				
+                        }
+                        break;
+                        case PlatoOmegaInterface::OMEGA :
+                        {
+                                handle = OmegaTest;
+                                PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::OMEGA);
+                                d = omega_d = OmegaTest.ComputeArrayDep(*this, ref, deptype);
+                        }
+                        break;
+                        case PlatoOmegaInterface::PLATO :
+                        {
+                                handle = PlatoTest;
+                                PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::PLATO);
+                                d = plato_d = PlatoTest.ComputeArrayDep(*this, ref, deptype);
+                        }
+                        break;
+                        case PlatoOmegaInterface::ADHOC | PlatoOmegaInterface::OMEGA :
+                        {
+                                handle = AdhocTest;
+                                PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::ADHOC);
+                                d = handle.ComputeArrayDep(fa, *this, ref, deptype);
+                                
+                                PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::OMEGA);
+                                omega_d = OmegaTest.ComputeArrayDep(fa, *this, ref, deptype);
+                        }
+                        break;
+                        case PlatoOmegaInterface::ADHOC | PlatoOmegaInterface::PLATO :
+                        {
+                                handle = AdhocTest;
+                                PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::ADHOC);
+                                d = handle.ComputeArrayDep(fa, *this, ref, deptype);                            
 
-				PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::PLATO);
-				plato_d = PlatoTest.ComputeArrayDep(fa, *this, ref, deptype);
-			}
-			break;
-			case PlatoOmegaInterface::OMEGA | PlatoOmegaInterface::PLATO :
-			{
-				handle = OmegaTest;
-				PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::OMEGA);
-				d = omega_d=OmegaTest.ComputeArrayDep(fa, *this, ref, deptype);		
+                                PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::PLATO);
+                                plato_d = PlatoTest.ComputeArrayDep(fa, *this, ref, deptype);
+                        }
+                        break;
+                        case PlatoOmegaInterface::OMEGA | PlatoOmegaInterface::PLATO :
+                        {
+                                handle = OmegaTest;
+                                PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::OMEGA);
+                                d = omega_d=OmegaTest.ComputeArrayDep(fa, *this, ref, deptype);         
 
-				PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::PLATO);
-				plato_d = PlatoTest.ComputeArrayDep(fa, *this, ref, deptype);
-			}
-			break;
-			case PlatoOmegaInterface::ADHOC | PlatoOmegaInterface::OMEGA | PlatoOmegaInterface::PLATO :
-			{
-				handle = AdhocTest;
-				PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::ADHOC);
-				d = handle.ComputeArrayDep(fa, *this, ref, deptype);
+                                PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::PLATO);
+                                plato_d = PlatoTest.ComputeArrayDep(fa, *this, ref, deptype);
+                        }
+                        break;
+                        case PlatoOmegaInterface::ADHOC | PlatoOmegaInterface::OMEGA | PlatoOmegaInterface::PLATO :
+                        {
+                                handle = AdhocTest;
+                                PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::ADHOC);
+                                d = handle.ComputeArrayDep(fa, *this, ref, deptype);
 
-				PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::OMEGA);
-				omega_d = OmegaTest.ComputeArrayDep(fa, *this, ref, deptype);
-				
-				PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::PLATO);
-				plato_d = PlatoTest.ComputeArrayDep(fa, *this, ref, deptype);
+                                PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::OMEGA);
+                                omega_d = OmegaTest.ComputeArrayDep(fa, *this, ref, deptype);
+                                
+                                PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::PLATO);
+                                plato_d = PlatoTest.ComputeArrayDep(fa, *this, ref, deptype);
 
-				DepStats.SetDepChoice(test);
-				if (ref.commLevel > 0)
-				{
-					DepStats.CompareDepTests(test, d, plato_d, omega_d);
-				}
-			}
-			break;
-			default :
-			{
-				handle = AdhocTest;
-				PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::ADHOC);
-				d = handle.ComputeArrayDep(fa, *this, ref, deptype);
-			}
-			break;
-		}
+                                DepStats.SetDepChoice(test);
+                                if (ref.commLevel > 0)
+                                {
+                                        DepStats.CompareDepTests(test, d, plato_d, omega_d);
+                                }
+                        }
+                        break;
+                        default :
+                        {
+                                handle = AdhocTest;
+                                PlatoOmegaInterface::SetDepChoice(PlatoOmegaInterface::ADHOC);
+                                d = handle.ComputeArrayDep(fa, *this, ref, deptype);
+                        }
+                        break;
+                }
 #endif
 
-		if ( !d.IsTop())
-		{
-			if (ref.commLevel > 0) {
-				DepInfo d1 = Reverse(d);
-				SetDepDirection( d1, ref.commLevel, inDeps);
-			}
-			if (ref.commLevel > 0 || ref.r1.ref != ref.r2.ref) {
-				int carryLevel = SetDepDirection( d, ref.commLevel, outDeps);
-				if ( ! d.IsTop() &&
-					!(carryLevel > ref.commLevel && ref.r1.ref == ref.r2.ref) )
-					outDeps( d );
-			}
-		}
-	}
+                if ( !d.IsTop())
+                {
+                        if (ref.commLevel > 0) {
+                                DepInfo d1 = Reverse(d);
+                                SetDepDirection( d1, ref.commLevel, inDeps);
+                        }
+                        if (ref.commLevel > 0 || ref.r1.ref != ref.r2.ref) {
+                                int carryLevel = SetDepDirection( d, ref.commLevel, outDeps);
+                                if ( ! d.IsTop() &&
+                                        !(carryLevel > ref.commLevel && ref.r1.ref == ref.r2.ref) )
+                                        outDeps( d );
+                        }
+                }
+        }
 }
 
 int adhocProbNum = 0;
@@ -484,7 +484,7 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
 
   if (! NormalizeMatrix(analMatrix, analMatrix.size(), dim+1) )
   {  
-	return false;
+        return false;
   }
   if (DebugDep()) 
       std::cerr << "after normalization, relation matrix = \n" << toString(analMatrix) << std::endl;
@@ -501,7 +501,7 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
        if (j == dim && analMatrix[k][j].GetValType() == VAL_CONST && analMatrix[k][j]!=0)
           return DepInfo();
        if (!AnalyzeEquation( analMatrix[k], bounds, boundop,setdep, DepRel(DEPDIR_EQ,0)))
-		 {
+                 {
            precise = false;
            if (DebugDep())
               std::cerr << "unable to analyze equation " << k  << std::endl;
@@ -517,11 +517,11 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
   temp->get_fileInfo(ref.r2.ref,&filename,&lineNo2);
   if (ref.commLevel > 0)
   {
-	  adhocProbNum++;
-	  //adhocDV = PlatoOmegaInterface::DirVector(result);
-  		//buffer << "Prob\t" << adhocProbNum << " between " << lineNo1 << " and " << lineNo2 << "\tAdhoc\t" << DepType2String(result.GetDepType()) << "\tTime\t" << adhocTime << std::endl;
-	  //buffer << "Prob\t" << adhocProbNum << "\tAdhoc\t" << DepType2String(result.GetDepType()) << "\tDV\t" << adhocDV << "\tTime\t" << adhocTime <<  std::endl;
-		//PrintResults(buffer.str());
+          adhocProbNum++;
+          //adhocDV = PlatoOmegaInterface::DirVector(result);
+                //buffer << "Prob\t" << adhocProbNum << " between " << lineNo1 << " and " << lineNo2 << "\tAdhoc\t" << DepType2String(result.GetDepType()) << "\tTime\t" << adhocTime << std::endl;
+          //buffer << "Prob\t" << adhocProbNum << "\tAdhoc\t" << DepType2String(result.GetDepType()) << "\tDV\t" << adhocDV << "\tTime\t" << adhocTime <<  std::endl;
+                //PrintResults(buffer.str());
   }
 #endif
 
