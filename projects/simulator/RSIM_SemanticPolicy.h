@@ -31,7 +31,8 @@ public:
         SegmentInfo(const user_desc_32 &ud) {
             base = ud.base_addr;
             limit = ud.limit_in_pages ? (ud.limit << 12) | 0xfff : ud.limit;
-            present = !ud.seg_not_present && ud.useable;
+            present = true;  // present = !ud.seg_not_present && ud.useable; // NOT USED BY LINUX
+
         }
     };
 
