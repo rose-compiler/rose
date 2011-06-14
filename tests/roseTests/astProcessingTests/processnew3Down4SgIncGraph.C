@@ -4,73 +4,22 @@
 //#include "interproceduralCFG.h"
 #include <string>
 #include <err.h>
-#include "graphProcessing.h"
-#include "graphTemplate.h"
+#include "graphProcessingSgIncGraph.h"
 
 /* Testing the graph traversal mechanism now implementing in AstProcessing.h (inside src/midend/astProcessing/)*/
+
+#include <string>
 
 typedef bool SynthesizedAttribute;
 
 using namespace std;
 using namespace boost;
-
-
-using namespace Backstroke;
-
-struct CFGNodeFilter2
-{
-	// This function will be moved to a source file.
-	bool operator()(const VirtualCFG::CFGNode& cfgNode) const
-	{
-/*
-        
-
-		if (!cfgNode.isInteresting())
-			return false;
-
-		SgNode* node = cfgNode.getNode();
-
-		if (isSgValueExp(node))
-			return false;
-		//if (isSgExpression(node) && isSgExprStatement(node->get_parent()))
-		if (isSgExprStatement(node))
-			return false;
-		if (isSgScopeStatement(node) && !isSgFunctionDefinition(node))
-			return false;
-		if (isSgCommaOpExp(node->get_parent()) && !isSgCommaOpExp(node))
-			return true;
-
-		switch (node->variantT())
-		{
-			case V_SgVarRefExp:
-			case V_SgInitializedName:
-			case V_SgFunctionParameterList:
-			case V_SgAssignInitializer:
-			case V_SgFunctionRefExp:
-			case V_SgPntrArrRefExp:
-			case V_SgExprListExp:
-			case V_SgCastExp:
-			case V_SgForInitStatement:
-			case V_SgCommaOpExp:
-				return false;
-			default:
-				break;
-		}
-*/
-		return true;
-	}
-};
-
-
-
-typedef CFG<CFGNodeFilter2> CFGforT;
-
 /*
 class Int128
 {
 public:
     
-    Int128 operator+( Int128 & rhs)
+    Int128 operator+(const Int128 & rhs)
     {
         Int128 sum;
         sum.high = high + rhs.high;
@@ -80,7 +29,7 @@ public:
             ++sum.high;
         return sum;
     }
-    Int128 operator-( Int128 & rhs)
+    Int128 operator-(const Int128 & rhs)
     {
         Int128 difference;
         difference.high = high - rhs.high;
@@ -90,14 +39,14 @@ public:
             --difference.high;
         return difference;
     }
-    Int128 operator=( Int128 & rhs)
+    Int128 operator=(const Int128 & rhs)
     {
         Int128 equal;
         equal.high = rhs.high;
         equal.low = rhs.low;
         return equal;
     }
-    bool operator==( Int128 & rhs)
+    bool operator==(const Int128 & rhs)
     {
         if (low == rhs.low && high == rhs.high) {
             return true;
@@ -106,7 +55,7 @@ public:
             return false;
         }
     }
-    bool operator!=( Int128 & rhs)
+    bool operator!=(const Int128 & rhs)
     {
         if (low != rhs.low || high != rhs.high) {
             return true;
@@ -115,7 +64,7 @@ public:
             return false;
         }
     }
-    bool operator>=( Int128 & rhs) {
+    bool operator>=(const Int128 & rhs) {
         if (high >= rhs.high) {
             return true;
         }
@@ -131,7 +80,7 @@ public:
             }
         }
     }
-    bool operator<=( Int128 & rhs) {      
+    bool operator<=(const Int128 & rhs) {      
         if (high <= rhs.high) {
             return true;
         }
@@ -162,60 +111,56 @@ class InheritedAttribute
          
          
  	 //Naming paths code
-	 set<vector<CFGforT::Vertex* > > collected_paths;
+	 set<vector<SgGraphNode*> > collected_paths;
          double pathcount;
          
 
-       // Specific ructors are required
+       // Specific constructors are required
 /*
           InheritedAttribute (void) : maxLinesOfOutput(100000) {paths++;};
-          InheritedAttribute (  InheritedAttribute & X ) : maxLinesOfOutput(100000){ paths++; };
+          InheritedAttribute ( const InheritedAttribute & X ) : maxLinesOfOutput(100000){ paths++; };
 */
 
         
-	InheritedAttribute (double p, set<vector<CFGforT::Vertex* > > cp) : pathcount(p), collected_paths(cp) {};
+	InheritedAttribute (double p, set<vector<SgGraphNode*> > cp) : pathcount(p), collected_paths(cp) {};
         InheritedAttribute () {};
 	~InheritedAttribute () {};
    };
 
-
 struct compareSgGraphNode2 {
-    bool operator()( FilteredCFGNode<CFGNodeFilter2>* a,  FilteredCFGNode<CFGNodeFilter2>* b) 
+    bool operator()(const SgGraphNode* a, const SgGraphNode* b) const
     {
         return a==b;
     }
 };
 
 
-class visitorTraversal : public SgGraphTraversal<InheritedAttribute, SynthesizedAttribute, CFGforT>
+class visitorTraversal : public SgGraphTraversal<InheritedAttribute, SynthesizedAttribute>
    {
      public:
        // virtual function must be defined
-          //visitorTraversal();
-//          virtual ~visitorTraversal();
           int numnodes;
           int th;
           int ifstatements;
           int forstatements;
           int tltnodes;
           int maxPthSize;
-          //FilteredCFGNode<CFGNodeFilter2>* endnodeX;
-          //StaticCFG::CFG* SgCFG;
+          //SgGraphNode* endnodeX;
+          StaticCFG::CFG* SgCFG;
           std::set<CFGNode> seenifs;
           std::set<CFGNode> seenfors;
           double pathcountMax;
-          set<CFGforT::Vertex* > seen;
-          vector<FilteredCFGNode<CFGNodeFilter2>*> fornodes;
-          virtual InheritedAttribute evaluateInheritedAttribute(CFGforT::Vertex  &n, vector<InheritedAttribute> &inheritedAttributeSet);
-	  //set<vector<CFGforT::Vertex* > > collect_paths(CFGforT::Vertex  n, set<vector<CFGforT::Vertex > > pathsSoFar);
-          //virtual SynthesizedAttribute evaluateSynthesizedAttribute(FilteredCFGNode<CFGNodeFilter2>* n, InheritedAttribute inh, SynthesizedAttributesList childAttributes);
-          //map<FilteredCFGNode<CFGNodeFilter2>*, InheritedAttribute> graphnodeinheritedordmap2; 
-          virtual void pathAnalyze( vector<int>& pth, bool loop,  set<vector<int> >& incloops);
-          virtual void quickPathAnalyze(vector<int>& pth);
-          //virtual InheritedAttribute subPathAnalyze(std::vector<FilteredCFGNode<CFGNodeFilter2>*>);
-          //virtual void collectSubPaths(std::pair<InheritedAttribute, std::vector<FilteredCFGNode<CFGNodeFilter2>*> > subs, std::set<std::vector<FilteredCFGNode<CFGNodeFilter2>*> > incloops);
-          //virtual int subPathAnalyze(vector<FilteredCFGNode<CFGNodeFilter2>*> pth);
-          std::map<FilteredCFGNode<CFGNodeFilter2>*, int> nodeInts;
+          set<SgGraphNode*> seen;
+          vector<SgGraphNode*> fornodes;
+          virtual InheritedAttribute evaluateInheritedAttribute(SgGraphNode* n, vector<InheritedAttribute> inheritedAttributeSet);
+	  set<vector<SgGraphNode*> > collect_paths(SgGraphNode* n, set<vector<SgGraphNode*> > pathsSoFar);
+          virtual SynthesizedAttribute evaluateSynthesizedAttribute(SgGraphNode* n, InheritedAttribute inh, SynthesizedAttributesList childAttributes);
+          map<SgGraphNode*, InheritedAttribute> graphnodeinheritedordmap2; 
+          virtual void pathAnalyze(vector<SgGraphNode*>& pth, bool loop, set<vector<SgGraphNode*> >& incloops);
+          //virtual InheritedAttribute subPathAnalyze(std::vector<SgGraphNode*>);
+          //virtual void collectSubPaths(std::pair<InheritedAttribute, std::vector<SgGraphNode*> > subs, std::set<std::vector<SgGraphNode*> > incloops);
+          //virtual int subPathAnalyze(vector<SgGraphNode*> pth);
+          std::map<SgGraphNode*, int> nodeInts;
           int currInt;
           int tltsubpaths;
           int pths;
@@ -226,9 +171,9 @@ class visitorTraversal : public SgGraphTraversal<InheritedAttribute, Synthesized
           int loopnodes;
           int subnum;
           int numbots;
-          set<vector<FilteredCFGNode<CFGNodeFilter2>*> > pthstore;
+          set<vector<SgGraphNode*> > pthstore;
           //virtual void displayEvaluation(InheritedAttribute inh);
-          //virtual InheritedAttribute evaluateCoAttribute(InheritedAttribute i1, InheritedAttribute i2, FilteredCFGNode<CFGNodeFilter2>* g1, FilteredCFGNode<CFGNodeFilter2>* g2);
+          //virtual InheritedAttribute evaluateCoAttribute(InheritedAttribute i1, InheritedAttribute i2, SgGraphNode* g1, SgGraphNode* g2);
 
    };
 
@@ -241,65 +186,212 @@ class visitorTraversal : public SgGraphTraversal<InheritedAttribute, Synthesized
 
 
 /*
-//boost::unordered_map<FilteredCFGNode<CFGNodeFilter2>*, InheritedAttribute, boost::hash<FilteredCFGNode<CFGNodeFilter2>*>, compareSgGraphNode2> visitorTraversal::graphnodeinheritedmap2; 
-int visitorTraversal::subPathAnalyze(vector<FilteredCFGNode<CFGNodeFilter2>*> pth, InheritedAttribute defaultAtt) {
-    set<vector<FilteredCFGNode<CFGNodeFilter2>*> > empty;
+//boost::unordered_map<SgGraphNode*, InheritedAttribute, boost::hash<SgGraphNode*>, compareSgGraphNode2> visitorTraversal::graphnodeinheritedmap2; 
+int visitorTraversal::subPathAnalyze(vector<SgGraphNode*> pth, InheritedAttribute defaultAtt) {
+    set<vector<SgGraphNode*> > empty;
     subnum++;
     return subnum;
 }
 */
 /*
-InheritedAttribute visitorTraversal::subPathAnalyze(std::vector<FilteredCFGNode<CFGNodeFilter2>*> sbpt) {
-    std::set<std::vector<FilteredCFGNode<CFGNodeFilter2>*> > lpsNull;
+InheritedAttribute visitorTraversal::subPathAnalyze(std::vector<SgGraphNode*> sbpt) {
+    std::set<std::vector<SgGraphNode*> > lpsNull;
     pathAnalyze(sbpt, false, lpsNull);
 }
 
 
-void visitorTraversal::collectSubPaths(std::pair<InheritedAttribute, std::vector<FilteredCFGNode<CFGNodeFilter2>*> > subs, std::set<std::vector<FilteredCFGNode<CFGNodeFilter2>*> > incloops) {
+void visitorTraversal::collectSubPaths(std::pair<InheritedAttribute, std::vector<SgGraphNode*> > subs, std::set<std::vector<SgGraphNode*> > incloops) {
     pts++;
     sublps += incloops.size();
     return;
 }
 */
-void visitorTraversal::quickPathAnalyze(vector<int>& pth) {
-    pths++;
-    //return;
-}
-
-
-void visitorTraversal::pathAnalyze( vector<int>& pth, bool loop,  set<vector<int> >& incloops) {
+void visitorTraversal::pathAnalyze(vector<SgGraphNode*>& pth, bool loop, set<vector<SgGraphNode*> >& incloops) {
 
     if (loop == true) {
+//    std::cout << "loop: " << loops << " size: " << pth.size() <<  std::endl;
+    //if (pth.size() > 100) {
+    //    std::cout << "bigloop" << std::endl;
+//    for (int i = 0; i < pth.size(); i++) {
+//         CFGNode childcfg = SgCFG->toCFGNode(pth[i]);
+       
+//        std::cout << childcfg.toString() << " ";
+//        }
+
+        
         
         tltnodes += pth.size();
         loops++;
+    //}
+
+        //cout << "node:" << nodeInts[pth[i]] << endl;
+   
     }
 
-   else {
+   // DEBUG
+/*
+   for (int i = 0; i < pth.size(); i++) {
+       if (nodeInts.find(pth[i]) == nodeInts.end()) {
+           nodeInts[pth[i]] = currInt;
+           currInt++;
+       }
+       cout << nodeInts[pth[i]] << "->";
+   }
+   cout << "\n";
+*/
+
+    //std::cout << "pth.size(): " << pth.size() << std::endl;
+    if (pth.size() > maxPthSize) {
+        maxPthSize = pth.size();
+    }
+    if (loop == false) {
+/*          std::cout << "path: " << pths << " size: " << pth.size() <<  std::endl;
+    //if (pth.size() > 100) {
+    //    std::cout << "bigloop" << std::endl;
+    for (int i = 0; i < pth.size(); i++) {
+         CFGNode childcfg = SgCFG->toCFGNode(pth[i]);
+       
+        std::cout << childcfg.toString() << " ";
+        }
+*/
+        incloopsnum += incloops.size();
+        for (std::set<std::vector<SgGraphNode*> >::iterator i = incloops.begin(); i != incloops.end(); i++) {
+            loopnodes += (*i).size();
+            tltnodes += (*i).size();
+        }
         tltnodes += pth.size();
+    //}
+
+        //cout << "node:" << nodeInts[pth[i]] << endl;
+         //std::cout << std::endl;
+        //cout << "pth: " << pths << " contains " << incloops.size() << " potential loops" << endl;
+        //tltnodes += pth.size();
         pths++;
+        //std::cout << pths << std::endl;
 
     }
+    //cout << "path " << pths << " complete!" << endl;
+    
+    //ROSE_ASSERT(pths.find(pth) == pths.end());
+}
+set<vector<SgGraphNode*> > visitorTraversal::collect_paths(SgGraphNode* n, set<vector<SgGraphNode*> > pathsSoFar) {
+    set<vector<SgGraphNode*> > newPathsSoFar;
+    for (set<vector<SgGraphNode*> >::iterator i = pathsSoFar.begin(); i != pathsSoFar.end(); i++) {
+        vector<SgGraphNode*> add = *i;
+        newPathsSoFar.insert(add);
+    }
+    return newPathsSoFar;
 }
 
-InheritedAttribute visitorTraversal::evaluateInheritedAttribute(CFGforT::Vertex  &child, vector<InheritedAttribute> &inheritedAttributesSet) {
-    set<vector<CFGforT::Vertex* > > nullPathList;
+/*
+InheritedAttribute visitorTraversal::evaluateCoAttribute(InheritedAttribute endnodeinh, InheritedAttribute iinh, SgGraphNode* endode, SgGraphNode* inode) {
+    int tmp = iinh.pathcount; 
+    tmp += endnodeinh.pathcount;
+    set<vector<SgGraphNode*> > newpathset;
+    for (set<vector<SgGraphNode*> >::iterator i = endnodeinh.collected_paths.begin(); i != endnodeinh.collected_paths.end(); i++) {
+            vector<SgGraphNode*> newvec;
+            newvec = *i;
+            newvec.push_back(inode);
+            newpathset.insert(newvec);
+    }
+    for (set<vector<SgGraphNode*> >::iterator j = iinh.collected_paths.begin(); j != iinh.collected_paths.end(); j++) {
+        newpathset.insert(*j);
+    } 
+    InheritedAttribute inh2 = InheritedAttribute(tmp, newpathset);
+    displayEvaluation(inh2);
+    return InheritedAttribute(tmp, newpathset);
+}
+
+void visitorTraversal::displayEvaluation(InheritedAttribute inh) {
+ cout << "enumerating paths" << endl;
+        set<string> namearr;
+        set<set<string> > namearrs;
+        set<vector<SgGraphNode*> > newPathList = inh.collected_paths;
+        for (set<vector<SgGraphNode*> >::iterator it = newPathList.begin(); it != newPathList.end(); it++) {
+            vector<SgGraphNode*> cp = *it;
+            for (vector<SgGraphNode*>::iterator jt = cp.begin(); jt != cp.end(); jt++) {
+                cout << (*jt)->get_name() << " ";
+               ROSE_ASSERT(namearr.find((*jt)->get_name()) == namearr.end());
+                namearr.insert((*jt)->get_name());
+            }
+            ROSE_ASSERT(namearrs.find(namearr) == namearrs.end());
+            namearrs.insert(namearr);
+            namearr.clear();
+            cout << endl;
+        }
+        cout << "pathcount: " << inh.pathcount << endl;
+        cout << "should be the same: " << inh.collected_paths.size();
+}
+*/
+
+string printnum(int i) {
+    std::string s;
+    std::stringstream out;
+    out << i;
+    s = out.str();
+    return s;
+}
+
+//InheritedAttribute visitorTraversal::loopSolve(std::set<std::pair<SgGraphNode* begin, SgGraphNode* end> > loops) {
+//    for (std::set<std::pair<SgGraphNode*, SgGraphNode*> >::iterator i = loops.begin(); i != loops.end(); i++) {
+//        InheritedAttribute inh = traverse(cfgb, cfggraph, inheritedAttribute2, nullInherit2, cfgc, false, true)
+
+InheritedAttribute visitorTraversal::evaluateInheritedAttribute(SgGraphNode* child, vector<InheritedAttribute> inheritedAttributesSet) {
+    set<vector<SgGraphNode*> > nullPathList;
     InheritedAttribute nullInherit(0, nullPathList);
     double tmppathcount = 0;
     numnodes++;
+    //std::cout << "executions: " << numnodes << std::endl;
+
+    CFGNode childcfg = SgCFG->toCFGNode(child);
+    //std::cout << "nodes: " << childcfg.toString() << std::endl;
+    //regex expression("SgIfStmt");
+    //regex expression2("SgForStatement");
+    //cout << "node type: " << childcfg.toString() << endl;
+    //bool match2 = regex_search(childcfg.toString(), expression2);
+    //bool match = regex_search(childcfg.toString(), expression);
+    //if (match) {
+    //    cout << "found if statement" << endl;
+    //    cout << childcfg.toString() << endl;
+    //}
+/*
+    if (match) {
+    //cout << "found if statement" << endl;
+    ifstatements += 1;
+    //seenifs.insert(childcfg);
+    }
+    if (match2) {
+    //cout << "found if statement" << endl;
+    forstatements += 1;
+    //seenfors.insert(childcfg);
+    }
+*/
+
+    //else {
+    //cout << "I've seen this somewhere before..." << endl;
+    //}
+    //cout << "name of node: " << child->toString() << endl;
+    //cout << "node name: " << child->id() << endl;
+//    if (numnodes > 1000*th) {
+//        cout << "numnodes = " << numnodes;
+//        th += 1;
+//    }
     
-    set<vector<CFGforT::Vertex* > > newPathList;
+    set<vector<SgGraphNode*> > newPathList;
     
+    //cout << "Number Of Inherited Attributes In Set:" << inheritedAttributesSet.size() << endl;
     if (inheritedAttributesSet.size() != 0) {
+         
+       // cout << "calculating inheritedAttributes" << endl;
 
         for (vector<InheritedAttribute>::iterator i = inheritedAttributesSet.begin(); i != inheritedAttributesSet.end(); i++) {
             
             InheritedAttribute inh = *i;
             
-            if ((*i).pathcount != 0) {
+            if (inh.pathcount != 0) {
             //std::cout << "inh.pathcount: " << inh.pathcount << std::endl;
             //cout << "adding " << inh.pathcount << " to pathcount" << endl;
-            tmppathcount += (*i).pathcount;
+            tmppathcount += inh.pathcount;
             if (pathcountMax < tmppathcount) {
                 if (pathcountMax > 1) {
                     //cout << "new max paths: " << pathcountMax << endl;
@@ -321,18 +413,18 @@ InheritedAttribute visitorTraversal::evaluateInheritedAttribute(CFGforT::Vertex 
             //}
      //else {
 /*            
-            set<vector<FilteredCFGNode<CFGNodeFilter2>*> > colpath = inh.collected_paths;
-            for (set<vector<FilteredCFGNode<CFGNodeFilter2>*> >::iterator k = colpath.begin(); k != colpath.end(); k++) {
+            set<vector<SgGraphNode*> > colpath = inh.collected_paths;
+            for (set<vector<SgGraphNode*> >::iterator k = colpath.begin(); k != colpath.end(); k++) {
             //    cout << "enumerating subpaths" << endl;
-                vector<FilteredCFGNode<CFGNodeFilter2>*> cp1 = *k;
-                for (vector<FilteredCFGNode<CFGNodeFilter2>*>::iterator kt = cp1.begin(); kt != cp1.end(); kt++) {
+                vector<SgGraphNode*> cp1 = *k;
+                for (vector<SgGraphNode*>::iterator kt = cp1.begin(); kt != cp1.end(); kt++) {
                    // cout << (*kt)->get_name() << " ";
                 }
              //   cout << endl;
             }
                   
-            for (set<vector<FilteredCFGNode<CFGNodeFilter2>*> >::iterator j = colpath.begin(); j != colpath.end(); j++) {
- //              vector<FilteredCFGNode<CFGNodeFilter2>*> curpath = *j;
+            for (set<vector<SgGraphNode*> >::iterator j = colpath.begin(); j != colpath.end(); j++) {
+ //              vector<SgGraphNode*> curpath = *j;
  //              curpath.push_back(child);
  //              newPathList.insert(curpath);
             }
@@ -341,9 +433,9 @@ InheritedAttribute visitorTraversal::evaluateInheritedAttribute(CFGforT::Vertex 
         //cout << "enumerating paths" << endl;
         set<string> namearr;
         set<set<string> > namearrs;
-        for (set<vector<FilteredCFGNode<CFGNodeFilter2>*> >::iterator it = newPathList.begin(); it != newPathList.end(); it++) {
-            vector<FilteredCFGNode<CFGNodeFilter2>*> cp = *it;
-            for (vector<FilteredCFGNode<CFGNodeFilter2>*>::iterator jt = cp.begin(); jt != cp.end(); jt++) {
+        for (set<vector<SgGraphNode*> >::iterator it = newPathList.begin(); it != newPathList.end(); it++) {
+            vector<SgGraphNode*> cp = *it;
+            for (vector<SgGraphNode*>::iterator jt = cp.begin(); jt != cp.end(); jt++) {
        //         cout << (*jt)->get_name() << " ";
  //              ROSE_ASSERT(namearr.find((*jt)->get_name()) == namearr.end());
 //                namearr.insert((*jt)->get_name());
@@ -353,7 +445,7 @@ InheritedAttribute visitorTraversal::evaluateInheritedAttribute(CFGforT::Vertex 
 //            namearr.clear();
        //     cout << endl;
         }
-     //   set<vector<FilteredCFGNode<CFGNodeFilter2>*> > cp = collect_paths(child, newPathList);
+     //   set<vector<SgGraphNode*> > cp = collect_paths(child, newPathList);
      //   cout << "Number Of Paths:" << newPathList.size() << endl;
      //   cout << "This should match:" << tmppathcount << endl;
        //    cout << "Number Of Paths:" << tmppathcount << endl;
@@ -370,14 +462,13 @@ InheritedAttribute visitorTraversal::evaluateInheritedAttribute(CFGforT::Vertex 
     //}
 }
 
-/*
 SynthesizedAttribute
-visitorTraversal::evaluateSynthesizedAttribute(FilteredCFGNode<CFGNodeFilter2>* child, InheritedAttribute inhatt, SynthesizedAttributesList synthlist) {
+visitorTraversal::evaluateSynthesizedAttribute(SgGraphNode* child, InheritedAttribute inhatt, SynthesizedAttributesList synthlist) {
   //cout << "evaluatingSynthAtt" << endl;
   //SynthesizedAttribute re = false;
   return false;
 }
-*/
+
 int main(int argc, char *argv[]) {
     double totalpaths;
     totalpaths = 0;
@@ -385,8 +476,8 @@ int main(int argc, char *argv[]) {
   //vector<string> arraystr;
   // Build the AST used by ROSE
   
-//std::cout << "argc: " << argc << std::endl;
-//std::cout << "argv: " << argv << std::endl;
+std::cout << "argc: " << argc << std::endl;
+std::cout << "argv: " << argv << std::endl;
 int one = 1;
 int zero = 0;
 
@@ -397,43 +488,22 @@ int zero = 0;
 
   SgFunctionDefinition* mainDef = mainDefDecl->get_definition();
 
-   //CFGforT*  cfg;
-   //cfg.build(mainDef);
+   StaticCFG::CFG cfg(mainDef);
    
  //cfg.buildFullCFG();
 //cout << "build CFG" << endl;
   //Path* pc = new Path();
   //Path* pcR = new Path();
-//    ROSE_ASSERT(cfgc != NULL);
- //   ROSE_ASSERT(cfgb != NULL);
-    
-/*\\\\\\\\\\\
-        CFGforT::Vertex*  nod = *cfgNode;
-        CFGforT*  gr = *cfg;
-        FilteredCFGNode<CFGNodeFilter2>* cf = &(*gr[nod]);
-*/
-    CFGforT* cfggraph = new CFGforT;
-    //CFGforT*  cfggraph = new CFGforT;
-    cfggraph->build(mainDef);
-    //ROSE_ASSERT(cfggraph != NULL);
-    //CFGforT::Vertex*  cfgb;
-    //CFGforT*  gr = *cfggraph;
-    CFGforT::Vertex* cfgb/* = new CFGforT::Vertex*/;
-    cfgb = &cfggraph->entry_;
-    //ROSE_ASSERT(cfgbV != NULL);
-    
-    CFGforT::Vertex*  cfgc/* = new CFGforT::Vertex*/;
-    cfgc = &cfggraph->exit_;
-    //FilteredCFGNode<CFGNodeFilter2>* cfgb = &(*gr[cfgbV]);
-    //FilteredCFGNode<CFGNodeFilter2>* cfgc = &(*gr[cfgcV]);
-
-    //ROSE_ASSERT(cfgc != NULL);
-
-    //SgIncidenceDirectedGraph* cfggraph2 = new SgIncidenceDirectedGraph();
-    std::set<std::vector<CFGforT::Vertex* > > begincp;
-    std::vector<CFGforT::Vertex* > vec;
+SgGraphNode* cfgb = new SgGraphNode();
+    cfgb = cfg.getEntry();
+    SgGraphNode* cfgc = new SgGraphNode();
+    cfgc = cfg.getExit();
+    SgIncidenceDirectedGraph* cfggraph = new SgIncidenceDirectedGraph();
+    SgIncidenceDirectedGraph* cfggraph2 = new SgIncidenceDirectedGraph();
+    std::set<std::vector<SgGraphNode*> > begincp;
+    std::vector<SgGraphNode*> vec;
     vec.push_back(cfgb);
-    set<vector<CFGforT::Vertex* > > newPathList2;
+    set<vector<SgGraphNode*> > newPathList2;
     InheritedAttribute nullInherit(0, newPathList2);
     
     begincp.insert(vec);
@@ -453,23 +523,16 @@ int zero = 0;
     //cout << "size of edgeout " << edgeout.size() << endl;
     //cout << "size of edgein " << edgein.size() << endl;
     string fileName= StringUtility::stripPathFromFileName(mainDef->get_file_info()->get_filenameString());
-    cfggraph->toDot("dotcheck.dot");
+
   string dotFileName1=fileName+"."+ mainDef->get_declaration()->get_name() +".dot";
 
     // Dump out the full CFG, including bookkeeping nodes
    //cfg.buildFullCFG();
    //cfg.buildFilteredCFG();
-   //cfggraph = cfg.getGraph();
-   //cfggraph2 = cfg.getGraph();
-/*
-   std::set<SgDirectedGraphEdge*> ied = cfggraph->computeEdgeSetIn(cfgc);
-       ROSE_ASSERT(ied.size() >= 1);
-   std::set<SgDirectedGraphEdge*> oed = cfggraph->computeEdgeSetOut(cfgc);
-       ROSE_ASSERT(oed.size() == 0);
-*/
-   
+   cfggraph = cfg.getGraph();
+   cfggraph2 = cfg.getGraph();
    //   cfg.buildFilteredCFG();
-      //cfg.cfgToDot(mainDef, dotFileName1);
+      cfg.cfgToDot(mainDef, dotFileName1);
 
     // Dump out only those nodes which are "interesting" for analyses
 
@@ -502,16 +565,16 @@ int zero = 0;
     vis2->pathcountMax = 0.0;
   
     //CFGNode cfgnode = cfg.toCFGNode(cfgb);
-    //boost::unordered_map<int, std::set<FilteredCFGNode<CFGNodeFilter2>*> > depth;
+    //boost::unordered_map<int, std::set<SgGraphNode*> > depth;
     time_t start, end, start1, end1;
     vis->currInt = 0;
     vis2->currInt = 0;
 
-    //time(&start);
-    //cout << "recursive" << endl;
+    time(&start);
+    cout << "recursive" << endl;
     //InheritedAttribute inhcount = vis->traverse(cfgb, cfggraph, inheritedAttribute, nullInherit, cfgc, true, false);
-    //cout << "recursive complete" << endl;
-    //time(&end);
+    cout << "recursive complete" << endl;
+    time(&end);
     //cout << "recursive solve: " << inhcount.pathcount << endl;
     //cout << "pathevals: " << vis->numnodes << endl;
     time (&start1);
@@ -519,13 +582,13 @@ int zero = 0;
     //vis2->endNodeX = cfgc;
     inheritedAttribute2.pathcount = 1.0;
     vis->tltnodes = 0;
-    InheritedAttribute inhcountP = vis->traverse(*cfgb, cfggraph, inheritedAttribute2, nullInherit2, *cfgc, false, true);
+    InheritedAttribute inhcountP = vis->traverse(cfgb, cfggraph, inheritedAttribute2, nullInherit2, cfgc, false, true);
     //cout << "path complete" << endl;
     cout << "path solve: " << inhcountP.pathcount << endl;
     cout << "maxpathCount: " << vis->pathcountMax;
     //cout << "pathevals: " << vis->numnodes << endl;
-    //cout << "numifs: " << vis->ifstatements << endl;
-    //cout << "numfors: " << vis->forstatements << endl;
+    cout << "numifs: " << vis->ifstatements << endl;
+    cout << "numfors: " << vis->forstatements << endl;
     cout << "total nodes in all paths combined with repetition: " << vis->tltnodes << std::endl;
     cout << "longest path size: " << vis->maxPthSize << std::endl;
     time(&end1);
@@ -537,7 +600,7 @@ int zero = 0;
     //cout << "path solve loop solution: " << vis->nullEdgesPaths << std::endl;
     double diff = difftime(end, start);
     double diffP = difftime(end1, start1);
-    //std::set<FilteredCFGNode<CFGNodeFilter2>*> lps = vis->loopSet;
+    //std::set<SgGraphNode*> lps = vis->loopSet;
 //ROSE_ASSERT(inhcountP.pathcount == vis->pths);
 ROSE_ASSERT(inhcountP.pathcount != 0);
     //cout << "loops: " << lps.size() << endl;
@@ -549,7 +612,7 @@ ROSE_ASSERT(inhcountP.pathcount != 0);
   //cfg.analysis = true;
   //cfg.cfgToDot(mainDef, dotFileNameA);
 /*
-    for (std::set<std::pair<FilteredCFGNode<CFGNodeFilter2>*, FilteredCFGNode<CFGNodeFilter2>*> >::iterator i = lps.begin(); i != lps.end(); i++) {
+    for (std::set<std::pair<SgGraphNode*, SgGraphNode*> >::iterator i = lps.begin(); i != lps.end(); i++) {
         visitorTraversal* visLoop = new visitorTraversal;
         time_t start1L, end1L;
         visLoop->ifstatements = 0;
