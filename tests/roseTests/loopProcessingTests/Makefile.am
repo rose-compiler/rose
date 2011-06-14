@@ -9,10 +9,7 @@ bin_PROGRAMS = LoopProcessor
 
 LoopProcessor_SOURCES = LoopProcessor.C
 
-# DQ (10/18/2004): Switch to using multiple libs (since it is faster)
-# LoopProcessor_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-# LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS) 
 
 ROSE_FLAGS =
 
@@ -32,7 +29,7 @@ if USING_GNU_COMPILER
 endif
 	echo "Commented out loopProcessor due to internal problems..."
 
-EXTRA_DIST = TestDriver mm.C fusiontest1.C lufac.C tridvpk.C rmatmult3.C dgemm.C rose_mm.C.wave-save rose_mm.C.withoutwave-save rose_mm.C.save rose_lufac.C.save rose_lufac_split.C.save rose_tridvpk.C.save rose_rmatmult3.C.save rose_dgemm.C.save rose_fusiontest1.C.save rose_mm_cp0.C.save rose_lufac_cp0.C.save rose_mm_cp2_bk3.C.save funcs.annot rose_mm.C.wave-save rose_mm.C.withoutwave-save rose_lufac.C.wave-save rose_lufac.C.withoutwave-save rose_lufac_split.C.wave-save rose_lufac_split.C.withoutwave-save rose_tridvpk.C.wave-save rose_tridvpk.C.withoutwave-save rose_rmatmult3.C.wave-save rose_rmatmult3.C.withoutwave-save rose_mm.C.wave-save rose_mm.C.withoutwave-save rose_mm_cp0.C.wave-save rose_mm_cp0.C.withoutwave-save rose_lufac_cp0.C.wave-save rose_lufac_cp0.C.withoutwave-save rose_mm_cp2_bk3.C.wave-save rose_mm_cp2_bk3.C.withoutwave-save
+EXTRA_DIST = TestDriver mm.C fusiontest1.C lufac.C tridvpk.C rmatmult3.C dgemm.C rose_mm.C.wave-save rose_mm.C.withoutwave-save rose_mm.C.save rose_lufac.C.save rose_lufac_split.C.save rose_tridvpk.C.save rose_rmatmult3.C.save rose_dgemm.C.save rose_fusiontest1.C.save rose_mm_cp0.C.save rose_lufac_cp0.C.save rose_mm_cp2_bk3.C.save funcs.annot rose_mm.C.wave-save rose_mm.C.withoutwave-save rose_lufac.C.wave-save rose_lufac.C.withoutwave-save rose_lufac_split.C.wave-save rose_lufac_split.C.withoutwave-save rose_tridvpk.C.wave-save rose_tridvpk.C.withoutwave-save rose_rmatmult3.C.wave-save rose_rmatmult3.C.withoutwave-save rose_mm.C.wave-save rose_mm.C.withoutwave-save rose_mm_cp0.C.wave-save rose_mm_cp0.C.withoutwave-save rose_lufac_cp0.C.wave-save rose_lufac_cp0.C.withoutwave-save rose_mm_cp2_bk3.C.wave-save rose_mm_cp2_bk3.C.withoutwave-save  dgemvT.C rose_dgemvT.C.save
 
 test:
 	$(VALGRIND) ./LoopProcessor --edg:no_warnings -w -bs 60 -fs01 $(srcdir)/rmatmult3.C

@@ -1,5 +1,3 @@
-// tps (01/14/2010) : Switching from rose.h to sage3.
-#include "sage3basic.h"
 #include <iostream>
 #include "ProcessAstTree.h"
 
@@ -70,9 +68,9 @@ bool ProcessAstTreeBase:: operator()( AstInterface &fa, const AstNodePtr& s)
       cur = tmp;
       return r;
     }
-//-----------------ProcessAstTree -------------------
+
 bool ProcessAstTree:: ProcessLoop(AstInterface &fa, const AstNodePtr& s, const AstNodePtr& body,
-                               AstInterface::TraversalVisitType t) 
+	                       AstInterface::TraversalVisitType t) 
      { 
         if (t == AstInterface::PreVisit) {
            Skip(s);

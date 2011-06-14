@@ -173,10 +173,11 @@ namespace AutoParallelization
     //AstNodePtr head = AstNodePtrImpl(body);
     fa.SetRoot(head);
 
-    // Call dependence analysis directly on a loop node
-    //LoopTransformInterface la (fa,aliasInfo,funcInfo); 
-    LoopTransformInterface la (fa,*array_interface, annot, array_interface); 
-    LoopTreeDepCompCreate* comp = new LoopTreeDepCompCreate(la,head);// TODO when to release this?
+    LoopTransformInterface::set_astInterface(fa);
+    LoopTransformInterface::set_arrayInfo(array_interface);
+    LoopTransformInterface::set_aliasInfo(array_interface);
+    LoopTransformInterface::set_sideEffectInfo(annot);
+    LoopTreeDepCompCreate* comp = new LoopTreeDepCompCreate(head);// TODO when to release this?
     // Retrieve dependence graph here!
     if (enable_debug) 
     {
@@ -203,7 +204,7 @@ namespace AutoParallelization
       //loop_nodes.Current()->Dump();
       //loop_nodes.Advance();
       //loop_nodes.Current()->Dump();
-      ast_ptr = cur_loop->GetOrigStmt2();
+      ast_ptr = dynamic_cast<LoopTreeLoopNode*>(cur_loop)->GetOrigLoop();
       // cout<<AstToString(ast_ptr)<<endl;
       ROSE_ASSERT(ast_ptr!=NULL);
       SgNode* sg_node = AstNodePtr2Sage(ast_ptr);
@@ -1062,9 +1063,11 @@ namespace AutoParallelization
           // If we have array annotation, use loop transformation interface's IsArrayAccess()
           if (array_interface&& annot)
           {
-            LoopTransformInterface la (fa,*array_interface, annot, array_interface);
-            isArray1= la.IsArrayAccess(info.SrcRef());
-            isArray2= la.IsArrayAccess(info.SnkRef());
+            LoopTransformInterface::set_astInterface(fa);
+            LoopTransformInterface::set_arrayInfo(array_interface);
+            LoopTransformInterface::set_sideEffectInfo(annot);
+            isArray1= LoopTransformInterface::IsArrayAccess(info.SrcRef());
+            isArray2= LoopTransformInterface::IsArrayAccess(info.SnkRef());
           }
           else // use AstInterface's IsArrayAccess() otherwise
           {

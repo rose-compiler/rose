@@ -35,14 +35,13 @@ class  AstTreeDepGraphAnal
       StmtNodeInfo() { node = 0; start = AST_NULL; }
    };
 
-  const DomainCond& GetStmtDomain( LoopTransformInterface &fa, const AstNodePtr& s) 
-     { return impl.GetStmtInfo(fa, s).domain; }
+  const DomainCond& GetStmtDomain( const AstNodePtr& s) 
+     { return impl.GetStmtInfo(s).domain; }
 
-  //! Compute the dependence (one of type set t) between two statements: n1 and n2
-  void ComputeStmtDep(LoopTransformInterface &fa,const StmtNodeInfo& n1, const StmtNodeInfo& n2, int t);
-  void ComputeDataDep(LoopTransformInterface &fa, const StmtNodeInfo& n1,
+  void ComputeStmtDep( const StmtNodeInfo& n1, const StmtNodeInfo& n2, int t);
+  void ComputeDataDep( const StmtNodeInfo& n1,
                       const StmtNodeInfo& n2, DepType t = DEPTYPE_ALL);
-  void ComputeCtrlDep( LoopTransformInterface &fa,const StmtNodeInfo& nc, const StmtNodeInfo& ns,
+  void ComputeCtrlDep( const StmtNodeInfo& nc, const StmtNodeInfo& ns,
                        DepType t = DEPTYPE_CTRL );
 };
 
@@ -52,10 +51,9 @@ class  BuildAstTreeDepGraph : public AstTreeDepGraphAnal,
  private:
    typedef SinglyLinkedListWrap <StmtNodeInfo> StmtStackType;
    StmtStackType stmtNodes, ctrlNodes, gotoNodes, inputNodes, outputNodes;
-   LoopTransformInterface &lf;
  public:
-  BuildAstTreeDepGraph( LoopTransformInterface& _lf, AstTreeDepGraphBuildImpl* g, DepInfoAnal &_impl)
-    : AstTreeDepGraphAnal(g, _impl), lf(_lf) {}
+  BuildAstTreeDepGraph( AstTreeDepGraphBuildImpl* g, DepInfoAnal &_impl)
+    : AstTreeDepGraphAnal(g, _impl) {}
 
   bool ProcessStmt(AstInterface &fa, const AstNodePtr& s);
   bool ProcessGoto(AstInterface &fa, const AstNodePtr& s, const AstNodePtr& dest);
@@ -69,7 +67,7 @@ class  BuildAstTreeDepGraph : public AstTreeDepGraphAnal,
                       AstInterface::TraversalVisitType t);
   GraphAccessInterface::Node* LastProcessedStmt() 
     { return stmtNodes.First()->GetEntry().node; }
-  void TranslateCtrlDeps(LoopTransformInterface &fa);
+  void TranslateCtrlDeps();
 };
 
 #endif

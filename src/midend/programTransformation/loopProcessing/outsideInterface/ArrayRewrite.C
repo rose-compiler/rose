@@ -1,6 +1,4 @@
 
-
-
 #include <ArrayRewrite.h>
 #include <AstInterface.h>
 #include <DepInfoAnal.h>
@@ -41,49 +39,46 @@ class RewriteModArrayAccess : public CreateTmpArray, public TransformAstTree
   // rewrite reads of modified array by creating explicit temperaries
   AstNodePtr stmt, lhs, modarray;
   size_t size;
-  LoopTransformInterface la;
+  CPPAstInterface& ai;
   DepInfoAnal depAnal;
   ArrayInterface& anal;
 public:
-  RewriteModArrayAccess( CPPAstInterface& ai, ArrayInterface& a, 
+  RewriteModArrayAccess( CPPAstInterface& _ai, ArrayInterface& a, 
                          const AstNodePtr& _stmt, const AstNodePtr& _lhs,
                          std::map<std::string, AstNodePtr>& _varmap,
                          std::list<AstNodePtr>& _newstmts)
     : CreateTmpArray(_varmap, _newstmts),
-      stmt(_stmt), lhs(_lhs),
-      la( ai, a, ArrayAnnotation::get_inst(), &a),
-      depAnal(la), anal(a)
+      stmt(_stmt), lhs(_lhs), size(0), ai(_ai), depAnal(_ai), anal(a)
      { 
         AstInterface::AstNodeList subs;
-        if (!ArrayAnnotation::get_inst()->is_access_array_elem( ai, lhs, &modarray, &subs))
+        if (!ArrayAnnotation::get_inst()->is_access_array_elem(ai,lhs, &modarray, &subs))
            assert(false);
         size = subs.size();
       }
   bool operator() (AstInterface& _fa, const AstNodePtr& orig, AstNodePtr& result)
  {
-  CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
   AstNodePtr array;
   AstInterface::AstNodeList subs;
-  if (!ArrayAnnotation::get_inst()->is_access_array_elem(fa, orig, &array, &subs) || subs.size() == 0)
+  if (!ArrayAnnotation::get_inst()->is_access_array_elem(ai, orig, &array, &subs) || subs.size() == 0)
      return false;
   HasDependence test;
-  if (fa.IsSameVarRef( array, modarray)) {
+  if (ai.IsSameVarRef( array, modarray)) {
      assert(size == subs.size());
      DomainCond domain(size);
-     DepInfoAnal::StmtRefDep ref = depAnal.GetStmtRefDep(la,stmt,orig, stmt,lhs);
-     depAnal.ComputeArrayDep( la, ref,DEPTYPE_NONE,test, test);
+     DepInfoAnal::StmtRefDep ref = depAnal.GetStmtRefDep(stmt,orig, stmt,lhs);
+     depAnal.ComputeArrayDep(ref,DEPTYPE_NONE,test, test);
   }
   else 
-     test.get_result() = la.IsAliasedRef(array, modarray);
+     test.get_result() = anal.may_alias(ai, array, modarray);
   if (test.get_result()) {
-      std::string splitname = fa.GetVarName(array) + "_tmp";
-      result = create_tmp_array( fa, array, splitname);
+      std::string splitname = ai.GetVarName(array) + "_tmp";
+      result = create_tmp_array( ai, array, splitname);
       AstInterface::AstNodeList subscopy;
       for (AstInterface::AstNodeList::iterator p = subs.begin(); 
            p != subs.end(); ++p) {
-         subscopy.push_back( fa.CopyAstTree(*p));
+         subscopy.push_back( ai.CopyAstTree(*p));
       }   
-      result = ArrayAnnotation::get_inst()->create_access_array_elem( fa, result, subscopy);
+      result = ArrayAnnotation::get_inst()->create_access_array_elem(ai, result, subscopy);
       return true;
   }
   return false;
@@ -143,7 +138,7 @@ operator()( const SymbolicVal& orig)
     SymbolicFunctionDeclarationGroup elem;
     if (anal.is_array_construct_op( fa, arrayExp, 0, 0, 0, &elem)) {
       if (! elem.get_val( args, result))
-        assert(false);
+	assert(false);
       result = ReplaceVal( result, *this);
     }
     else if (!fa.IsVarRef(arrayExp)) {
@@ -157,7 +152,7 @@ operator()( const SymbolicVal& orig)
       args.clear();
       args.push_back(dim);
       if (! len.get_val( args, result))
-        assert(false);
+	assert(false);
       result = ReplaceVal( result, *this);
     }
     else if (!fa.IsVarRef(arrayExp)) {
@@ -256,22 +251,22 @@ operator () ( AstInterface& _fa, const AstNodePtr& orig, AstNodePtr& result)
          AstNodePtr cur = (*p);
          AstNodePtr ncur = cur;
          if (operator()(fa, cur, ncur))
-             fa.BlockAppendStmt( result, ncur);
+	     fa.BlockAppendStmt( result, ncur);
          else
-             fa.BlockAppendStmt( result, cur);
+	     fa.BlockAppendStmt( result, cur);
       }
       if (reshape) {
          AstInterface::AstNodeList argList;
          for (int i = 0; i < dimension; ++i) {
-           AstNodePtr curlen = lenlist[i].CodeGen(fa);
-           argList.push_back( curlen);
+	   AstNodePtr curlen = lenlist[i].CodeGen(fa);
+	   argList.push_back( curlen);
          }
          AstNodePtr reshapeStmt = ArrayAnnotation::get_inst()->create_reshape_array(fa,modArray, argList);
          fa.BlockAppendStmt(result, reshapeStmt);
       }
       fa.BlockAppendStmt(result, body);
   }
-std::cerr << "modarray rewrite: result = " << AstToString(result) << "\n";
+   //std::cerr << "modarray rewrite: result = " << AstToString(result) << "\n";
    return true;
 }
 

@@ -1093,9 +1093,10 @@ rose_inputCode_LoopOptimization_mm.C: loopProcessor
 # DQ (1/2/2008): This used to work, but it is part of what Qing is fixing.
 	$(VALGRIND) ./loopProcessor $(ROSE_FLAGS) -bk1 -fs0 -c $(srcdir)/inputCode_LoopOptimization_mm.C
 
+#FR (6/8/2011) Bug fixed
 rose_inputCode_LoopOptimization_dgemm.C: loopProcessor
 	@echo "Generate executable from compilation of input code (loopOptimization) ..."
-	./loopProcessor $(ROSE_FLAGS) -bk1 -unroll nvar 16 -c $(srcdir)/inputCode_LoopOptimization_dgemm.C
+	./loopProcessor $(ROSE_FLAGS) -bk1 -unroll 16 -c $(srcdir)/inputCode_LoopOptimization_dgemm.C
 
 rose_inputCode_LoopOptimization_lufac.C: loopProcessor
 	@echo "Generate executable from compilation of input code (loopOptimization) ..."

@@ -8,9 +8,7 @@
 #include <ValuePropagate.h>
 #include <list>
 
-//! Descriptor (string format) of array shape: 
-//    maximum number of dimensions: integer constant or symbol:
-//    size(length) of each dimension: a symbolic function of the dimension number
+
 class ArrayShapeDescriptor {
   SymbolicValDescriptor dimension;
   SymbolicFunctionDeclarationGroup length;
@@ -44,7 +42,7 @@ class ArrayShapeDescriptor {
      length.replace_val(repl);
    }
 };
-// Array element access descriptor: e.g:  elem(i:dim:1:dimension) = this(i$dim);
+
 class ArrayElemDescriptor 
 {
   SymbolicFunctionDeclarationGroup elem;
@@ -64,7 +62,7 @@ class ArrayElemDescriptor
 
   const SymbolicFunctionDeclarationGroup& get_elem()  const { return elem; }
 };
-// Shape + element access
+
 class ArrayDescriptor 
 : public ArrayShapeDescriptor, public ArrayElemDescriptor
 {
@@ -84,7 +82,7 @@ class ArrayDescriptor
      ArrayElemDescriptor :: replace_val(repl);
    }
 };
-// is_array annotation: dimension, length of each dimension, element access function, reshape function
+
 class ArrayDefineDescriptor : public ArrayDescriptor
 {
   SymbolicFunctionDeclarationGroup reshape;
@@ -149,7 +147,7 @@ class ArrayConstructDescriptor
      second.replace_val(repl);
    }
 };
-//! Modify Array[symbolic_value]
+
 class ArrayModifyDescriptor : 
 public OPDescriptorTemp < CollectPair< CloseDescriptor<SymbolicValDescriptor, '(', ')'>, 
                          ArrayDescriptor,0> > 
@@ -173,10 +171,7 @@ class ArrayCollection
   virtual bool read_annot_name( const std::string& annotName) const 
     { return annotName == "array"; }
  public:
-  // DQ (11/30/2009): MSVC reports a warning about use of "this" in preinitialization
-  // list, but I don't think we can modify this code to avoid the warning.
-         ArrayCollection() : CPPTypeCollection<ArrayDefineDescriptor>(this) {}
-
+  ArrayCollection() : CPPTypeCollection<ArrayDefineDescriptor>(this) {}
   void Dump() const 
     { std::cerr << "arrays: \n"; BaseClass::Dump(); }
 };
@@ -215,16 +210,7 @@ class ArrayModifyOpCollection : public OperatorAnnotCollection<ArrayModifyDescri
       OperatorAnnotCollection<ArrayModifyDescriptor>::Dump(); 
     }
 };
-//! Array annotations contains semantics for 
-// * types/classes:    array attributes: dimension, length, 
-// * operators/functions: side effects such as mod/read; and alias information
-// It has its own annotation collectors and associated independent annotation collectors
-// * own: array, array optimization , modify_array, construct_array
-// * independent: operator side effect (OperatorSideEffectAnnotation), inline, alias, value 
-// Please refer to the following paper for details
-// Yi, Qing, and Dan Quinlan, Applying Loop Optimizations to Object-oriented Abstractions
-// Through General Classification of Array Semantics\u201d, the 17th International Workshop on
-// Languages and Compilers for Parallel Computing, West Lafayette, Indiana, USA. Sep. 2004.
+
 class ArrayAnnotation 
     : public FunctionSideEffectInterface,
       public FunctionAliasInterface
@@ -235,18 +221,15 @@ class ArrayAnnotation
   ArrayModifyOpCollection arrayModify;
   ArrayConstructOpCollection arrayConstruct;
   
-  static ArrayAnnotation* inst;// singleton instance
-  //Implementing FunctionAliasInterface::may_alias()
+  static ArrayAnnotation* inst;
+
   virtual bool may_alias(AstInterface& fa, const AstNodePtr& fc, 
                          const AstNodePtr& result,
                          CollectObject< std::pair<AstNodePtr, int> >& collectalias);
-  //Implementing FunctionAliasInterface::allow_alias()
   virtual bool allow_alias(AstInterface& fa, const AstNodePtr& fc, 
                          CollectObject< std::pair<AstNodePtr, int> >& collectalias);
-  //Implementing  FunctionSideEffectInterface::get_modify()                      
   virtual bool get_modify(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0);
-  //Implementing  FunctionSideEffectInterface::get_read()                              
   virtual bool get_read(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0);
   ArrayAnnotation() {}
@@ -266,8 +249,7 @@ class ArrayAnnotation
   bool is_array_construct_op( CPPAstInterface& fa, const AstNodePtr& arrayExp,
                               CPPAstInterface::AstNodeList* alias = 0,
                               ArrayDescriptor* desc = 0, ReplaceParams* repl = 0);
-  //! Check if a node 'orig' is a reference to an array element
-  // If true, return the array node 'array', and the list of subscripts 'args'
+
   bool is_access_array_elem( CPPAstInterface& fa, const AstNodePtr& orig,
                           AstNodePtr* array=0, CPPAstInterface::AstNodeList* args=0);
   bool is_access_array_length( CPPAstInterface& fa, const AstNodePtr& orig,
@@ -281,14 +263,14 @@ class ArrayAnnotation
   SymbolicVal create_access_array_length( const AstNodePtr& array, const SymbolicVal& dim);
   AstNodePtr create_access_array_elem( CPPAstInterface& fa, 
                                         const AstNodePtr& array,
-                                  const CPPAstInterface::AstNodeList& args);
+				  const CPPAstInterface::AstNodeList& args);
   AstNodePtr create_access_array_length( CPPAstInterface& fa, const AstNodePtr& array, 
-                                         int dim);
+					 int dim);
 
   bool is_reshape_array( CPPAstInterface& fa, const AstNodePtr& orig,
-                        AstNodePtr* array=0, CPPAstInterface::AstNodeList* args=0);
+			AstNodePtr* array=0, CPPAstInterface::AstNodeList* args=0);
   AstNodePtr create_reshape_array( CPPAstInterface& fa, const AstNodePtr& array,
-                                  const CPPAstInterface::AstNodeList& args);
+				  const CPPAstInterface::AstNodeList& args);
 };
 
 #endif

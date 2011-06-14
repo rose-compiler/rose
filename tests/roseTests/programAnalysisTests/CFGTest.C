@@ -1,6 +1,6 @@
 
-#include "sage3basic.h"
-#include "setup.h"
+#include <sage3.h>
+
 #include <AstInterface_ROSE.h>
 #include <string>
 #include <iostream>

@@ -1,6 +1,5 @@
-
 #include <stdlib.h>
-
+#include <stdio.h>
 #include <LoopTree.h>
 #include <LoopTreeObserver.h>
 #include <LoopTreeBuild.h>
@@ -8,7 +7,7 @@
 #include <CommandOptions.h>
 #include <LoopTransformInterface.h>
 #include <SymbolicBound.h>
-#include <cstdio> // Liao, 7/10/2009, needed by GCC 4.4.0
+
 bool LoopTreeLoopNode :: SelfRemove() 
 { 
   LoopTreeGetVarBound f(this);
@@ -62,6 +61,13 @@ void LoopTreeNode::UpdateDelete()
       Unlink();
     delete impl;
     impl = 0;
+  }
+}
+void LoopTreeNode::UpdateCodeGen(const AstNodePtr& res) const
+{
+  if (impl != 0) {
+    LoopTreeCodeGenInfo info(this,res);
+    impl->Notify(info);
   }
 }
 
@@ -121,8 +127,7 @@ LoopTreeLoopNode( SymbolicVar _ivar,SymbolicVal _lb, SymbolicVal _ub,
 }
 
 LoopTreeLoopNode::  
-LoopTreeLoopNode( LoopTransformInterface &fa, const AstNodePtr& l)
-    : LoopTreeNode(), orig(l), info(fa, l) 
+LoopTreeLoopNode( const AstNodePtr& l) : LoopTreeNode(), orig(l), info(l) 
 {
   AttachObserver(*this);
 }
@@ -185,21 +190,23 @@ unsigned LoopTreeNode:: NumberOfObservers() const
   return 0;
 }
 
-AstNodePtr LoopTreeNode :: CodeGen( LoopTransformInterface &la) const
+AstNodePtr LoopTreeNode :: CodeGen() const
 {
-  AstInterface& fa = la;
+  AstInterface& fa = LoopTransformInterface::getAstInterface();
   AstNodePtr result = AST_NULL;
   if (ChildCount() == 1) {
-     result = FirstChild()->CodeGen(la);
+     result = FirstChild()->CodeGen();
   }
   else if (ChildCount() > 0) {
      result = fa.CreateBlock();
      for (LoopTreeNode *child = FirstChild(); child != 0; 
           child = child->NextSibling()) {
-         fa.BlockAppendStmt(result, child->CodeGen(la));
+         fa.BlockAppendStmt(result, child->CodeGen());
      }
   }
-  return CodeGen(la, result); 
+  result = CodeGen(result); 
+  UpdateCodeGen(result);
+  return result;
 }
 
 std::string LoopTreeStmtNode :: toString() const
@@ -207,19 +214,24 @@ std::string LoopTreeStmtNode :: toString() const
   return AstToString( start );
 }
 
-AstNodePtr LoopTreeStmtNode :: 
-CodeGen( LoopTransformInterface &la, const AstNodePtr& c) const
+AstNodePtr LoopTreeStmtNode :: CodeGen( const AstNodePtr& c) const
 { 
-   AstInterface& fa = la;
-   return fa.CopyAstTree( start ); 
+  AstInterface& fa = LoopTransformInterface::getAstInterface();
+  AstNodePtr result = fa.CopyAstTree( start ); 
+  if (preAnnot != "")
+     fa.InsertAnnot(result, preAnnot,true);
+  if (postAnnot != "")
+     fa.InsertAnnot(result, postAnnot,false);
+  return result;
 }
 
-LoopInfo :: LoopInfo( LoopTransformInterface &fa, const AstNodePtr& ctrl)
+LoopInfo :: LoopInfo( const AstNodePtr& ctrl)
 {
-  bool succ = fa.IsFortranLoop(ctrl, &GetVar(), 
+  AstInterface& fa = LoopTransformInterface::getAstInterface();
+  bool succ = SymbolicValGenerator::IsFortranLoop(fa, ctrl, &GetVar(), 
                                          &GetBound().lb, &GetBound().ub, &step);
   if (!succ) {
-    succ = fa.IsLoop(ctrl, &GetBound().lb, &step, &GetBound().ub);
+    succ = LoopTransformInterface::IsLoop(ctrl, &GetBound().lb, &step, &GetBound().ub);
     assert(succ);
   }
   else {
@@ -245,28 +257,31 @@ LoopInfo:: LoopInfo( SymbolicVar ivar,SymbolicVal lb, SymbolicVal ub,
 }
 
 std::string LoopTreeLoopNode :: toString() const
-{ return info.toString(); }
+{ return  info.toString(); }
 
-AstNodePtr LoopTreeLoopNode :: 
-CodeGen( LoopTransformInterface &la, const AstNodePtr& c) const
+AstNodePtr LoopTreeLoopNode :: CodeGen( const AstNodePtr& c) const
 {
-  AstInterface& fa = la;
+  AstInterface& fa = LoopTransformInterface::getAstInterface();
+  AstNodePtr result;
   if (info.GetVar().GetVarName() == "") {
-     return fa.CreateLoop(info.GetStep().CodeGen(fa), c);
+     result=fa.CreateLoop(info.GetStep().CodeGen(fa), c);
   }
   else if (info.GetLoopUB() == info.GetLoopLB()) {       
-      AstNodePtr r =  fa.CreateBlock();
-      fa.BlockAppendStmt(r, 
+      result =  fa.CreateBlock();
+      fa.BlockAppendStmt(result, 
             fa.CreateAssignment(info.GetVar().CodeGen(fa),
                                 info.GetLoopLB().CodeGen(fa)));
-      fa.BlockAppendStmt(r, c);
-      return r;
+      fa.BlockAppendStmt(result, c);
   }   
-  else
-      return fa.CreateLoop( info.GetVar().CodeGen(fa), 
+  else result = fa.CreateLoop( info.GetVar().CodeGen(fa), 
                             info.GetLoopLB().CodeGen(fa),
                             info.GetLoopUB().CodeGen(fa), 
                             info.GetStep().CodeGen(fa), c, info.ReverseEnum());
+  if (preAnnot != "")
+     fa.InsertAnnot(result, preAnnot,true);
+  if (postAnnot != "")
+     fa.InsertAnnot(c, postAnnot,true);
+  return result;
 }
 
 std::string LoopTreeNode :: TreeToString() const
@@ -304,7 +319,7 @@ bool LoopTreeNode :: IsPerfectLoopNest() const
   }
 
   for (LoopTreeNode *s = l->FirstChild(); s != 0 ; s = s->NextSibling()) {
-    if (s->GetOrigStmt() == 0)
+    if (s->IncreaseLoopLevel()) /*QY: if s is a loop */
         return false;
   }
   return true;

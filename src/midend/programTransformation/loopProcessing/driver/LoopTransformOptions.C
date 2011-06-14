@@ -1,6 +1,4 @@
 
-
-
 #include <iostream>
 
 #include <LoopTransformOptions.h>
@@ -9,8 +7,7 @@
 #include <FusionAnal.h>
 #include <CommandOptions.h>
 #include <CopyArrayAnal.h>
-
-using namespace std;
+#include <ParallelizeLoop.h>
 
 class DynamicTuning {
   static int dt;  
@@ -28,41 +25,51 @@ bool DynamicTuning::Do()
   return dt > 0;
 }
 
-
-static void ReadDefaultBlockSize(LoopTransformOptions& opt, vector<string>& argv, unsigned index)
+inline unsigned ReadUnsignedInt(LoopTransformOptions& opt, const std::vector<std::string>& argv, unsigned& index, const std::string& name, unsigned def_value)
 {
- assert (index < argv.size());
- int defaultblocksize = atoi(argv[index].c_str());
- if (defaultblocksize <= 1) {
-       std::cerr << "Missing or invalid blocking size: " << argv[index] << "; Use default (16)\n";
-       defaultblocksize = 16;
- } else {
-       argv.erase(argv.begin() + index);
+ int val = -1;
+ if (index+1 < argv.size())
+ {
+      const std::string& content = argv[index+1];
+      if (content[0] <= '9' && content[0] >= '0')   
+      {
+        val = atoi(content.c_str());
+        ++index;
+        std::cerr << name << " is " << val << "\n";
+        return val;
+      }
  }
- opt.SetDefaultBlockSize(defaultblocksize);
+ std::cerr << "Invalid " << name << "; Use default (" << def_value << ")\n";
+ return def_value;
 }
 
-static int ReadDefaultCopyDim(LoopTransformOptions& opt, vector<string>& argv, unsigned index)
+class BlockParameterizeOpt : public LoopTransformOptions::OptRegistryType
 {
- assert (index < argv.size());
- assert (!argv[index].empty());
- int defaultcopysize = 0;
- char hint = argv[index][0]; 
- if (hint >= '0' && hint <= '9' ) {
-       defaultcopysize = atoi(argv[index].c_str());
-       argv.erase(argv.begin() + index);
- }
- else {
-    std::cerr << "invalid array copy dimension: " << argv[index] << "; Use default (0)\n";
- }
- return defaultcopysize;
-}
+    virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv) 
+      { 
+        opt.SetDefaultBlockSize( ReadUnsignedInt(opt,argv,index,"block size", 16));
+        opt.SetBlockSel( new ParameterizeBlocking()); 
+      }
+  public:
+     BlockParameterizeOpt() : OptRegistryType("-bk_poet", " <blocksize> : parameterize the blocking transformation") {}
+};
+
+class POETParallelizeOpt : public LoopTransformOptions::OptRegistryType
+{
+    virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv) 
+      { 
+        opt.SetParBlockSize( ReadUnsignedInt(opt,argv,index,"parallel block size", 256));
+        opt.SetParSel( new ParallelizeBlocking()); 
+      }
+  public:
+     POETParallelizeOpt() : OptRegistryType("-par_poet", " <blocksize> : paralleization transformation using POET") {}
+};
+
 class BlockOuterLoopOpt : public LoopTransformOptions::OptRegistryType
 {
-    virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv) 
+    virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv) 
       { 
-        argv.erase(argv.begin() + index);
-        ReadDefaultBlockSize(opt,argv,index); 
+        opt.SetDefaultBlockSize( ReadUnsignedInt(opt,argv,index,"block size", 16));
         opt.SetBlockSel( new OuterLoopReuseBlocking( 1 )); 
       }
   public:
@@ -71,10 +78,9 @@ class BlockOuterLoopOpt : public LoopTransformOptions::OptRegistryType
 
 class BlockInnerLoopOpt : public LoopTransformOptions::OptRegistryType
 {
-    virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
+    virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
       { 
-        argv.erase(argv.begin() + index);
-        ReadDefaultBlockSize(opt,argv,index); 
+        opt.SetDefaultBlockSize( ReadUnsignedInt(opt,argv,index,"block size", 16));
         opt.SetBlockSel( new InnerLoopReuseBlocking());
       }
   public:
@@ -83,57 +89,66 @@ class BlockInnerLoopOpt : public LoopTransformOptions::OptRegistryType
 
 class BlockAllLoopOpt : public LoopTransformOptions::OptRegistryType
 {
-    virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
+    virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
       {
-        argv.erase(argv.begin() + index);
-        ReadDefaultBlockSize(opt,argv,index); 
+        opt.SetDefaultBlockSize( ReadUnsignedInt(opt,argv,index,"block size", 16));
         opt.SetBlockSel( new AllLoopReuseBlocking());
       }
   public:
      BlockAllLoopOpt() : OptRegistryType("-bk3", " <blocksize> :block all loops") {}
 };
 
-class CopyArrayOpt : public LoopTransformOptions::OptRegistryType
+class CopyArrayDimensionOpt : public LoopTransformOptions::OptRegistryType
 {
-    virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
+    virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
       {
-        argv.erase(argv.begin() + index);
-        int dim = ReadDefaultCopyDim(opt,argv,index); 
+	int dim = ReadUnsignedInt(opt,argv,index,"array-copy dimension", 0); 
         opt.SetCopySel( new CopyArrayUnderSizeLimit(dim));
       }
   public:
-     CopyArrayOpt() : OptRegistryType("-cp", " <copydim> :copy array regions with dimensions <= <copydim>") {}
+     CopyArrayDimensionOpt() : OptRegistryType("-cp", " <copydim> :copy array regions with dimensions <= <copydim>") {}
 };
 
+class ParameterizeCopyArrayOpt : public LoopTransformOptions::OptRegistryType
+{
+    virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
+      {
+	int dim = ReadUnsignedInt(opt,argv,index,"array-copy dimension", 0); 
+        opt.SetCopySel( new ParameterizeCopyArray(dim));
+      }
+  public:
+     ParameterizeCopyArrayOpt() : OptRegistryType("-cp_poet", "<copydim> :parameterize array copy array regions; to be applied together with blocking.") {}
+};
 
 class ReuseInterchangeOpt : public LoopTransformOptions::OptRegistryType
 {
-    virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
-         { argv.erase(argv.begin() + index); opt.SetInterchangeSel( new ArrangeReuseOrder() ); }
+    virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
+         { opt.SetInterchangeSel( new ArrangeReuseOrder() ); }
   public:
      ReuseInterchangeOpt() : OptRegistryType("-ic1", " :loop interchange for more reuses") {}
 };
 
 class FissionOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
-         { argv.erase(argv.begin() + index); opt.SetFusionSel( new LoopNestFusion() ); }
+   virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
+         { opt.SetFusionSel( new LoopNestFusion() ); }
   public:
      FissionOpt() : OptRegistryType("-fs0", " : maximum distribution at all loops") {}
 };
 
 class InnerFissionOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
-         { argv.erase(argv.begin() + index); opt.SetFusionSel( new SameLevelFusion( new InnermostLoopFission() ) ); }
+   virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
+     { 
+       opt.SetFusionSel( new SameLevelFusion( new InnermostLoopFission() ) ); }
   public:
      InnerFissionOpt() : OptRegistryType("-fs01", " : maximum distribution at inner-most loops") {}
 };
 
 class SingleReuseFusionOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
-         { argv.erase(argv.begin() + index); opt.SetFusionSel( new SameLevelFusion( new AnyReuseFusionAnal() ) ); }
+   virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
+      { opt.SetFusionSel( new SameLevelFusion( new AnyReuseFusionAnal() ) ); }
   public:
      SingleReuseFusionOpt() 
         : OptRegistryType("-fs1", " :single-level loop fusion for more reuses") {}
@@ -141,8 +156,8 @@ class SingleReuseFusionOpt : public LoopTransformOptions::OptRegistryType
 
 class MultiReuseFusionOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
-         { argv.erase(argv.begin() + index); opt.SetFusionSel( new MultiLevelFusion( new AnyReuseFusionAnal() ) ); }
+   virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
+         { opt.SetFusionSel( new MultiLevelFusion( new AnyReuseFusionAnal() ) ); }
   public:
     MultiReuseFusionOpt() 
      : OptRegistryType("-fs2",  " :multi-level loop fusion for more reuses") {}
@@ -150,12 +165,9 @@ class MultiReuseFusionOpt : public LoopTransformOptions::OptRegistryType
 
 class SplitLimitOpt : public LoopTransformOptions::OptRegistryType
 {
-   virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
+   virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
          { 
-            argv.erase(argv.begin() + index);
-            assert (index < argv.size());
-            int limit = atoi(argv[index].c_str());
-            argv.erase(argv.begin() + index);
+            int limit = ReadUnsignedInt(opt,argv,index,"split limit", 20);
             opt.SetTransAnalSplitLimit( limit ) ; 
          }
   public:
@@ -165,12 +177,10 @@ class SplitLimitOpt : public LoopTransformOptions::OptRegistryType
 
 class CacheLineSizeOpt : public LoopTransformOptions::OptRegistryType
 { 
-  virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
+  virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
          { 
-           argv.erase(argv.begin() + index);
-           int size = atoi(argv[index].c_str()); 
+           int size = 0;
            opt.SetCacheLineSize(size);
-           argv.erase(argv.begin() + index);
          }
  public:
    CacheLineSizeOpt() : OptRegistryType("-clsize", " <int> :set cache line size") {}
@@ -178,23 +188,21 @@ class CacheLineSizeOpt : public LoopTransformOptions::OptRegistryType
 
 class ReuseDistOpt : public LoopTransformOptions::OptRegistryType
 {
-  virtual void operator()( LoopTransformOptions &opt, unsigned index, vector<string>& argv)
+  virtual void operator()( LoopTransformOptions &opt, unsigned& index, const std::vector<std::string>& argv)
          {
-           argv.erase(argv.begin() + index);
-           assert (index < argv.size());
-           int size = atoi(argv[index].c_str());
+           unsigned size = ReadUnsignedInt(opt,argv,index,"reuse distance", 4);
            opt.SetReuseDistance(size);
-           argv.erase(argv.begin() + index);
          }
  public:
    ReuseDistOpt() : OptRegistryType("-reuse_dist", " <int> :set reuse distance") {}
 };
                                                                                                                                                                                                      
 LoopTransformOptions:: LoopTransformOptions()
-       : bkOp(0), cpOp(0), cacheline(16), reuseDist(8), splitlimit(20)
+       : cpOp(0), parOp(0), cacheline(16), reuseDist(8), splitlimit(20)
 {
    icOp =  new ArrangeOrigNestingOrder() ;
    fsOp = new SameLevelFusion( new OrigLoopFusionAnal() );
+   bkOp = new LoopNoBlocking();
 }
 
 LoopTransformOptions::~LoopTransformOptions() 
@@ -206,7 +214,14 @@ LoopTransformOptions::~LoopTransformOptions()
      delete cpOp;
 }
 
-void LoopTransformOptions::SetBlockSel( LoopBlockingAnal* sel) 
+void LoopTransformOptions::SetParSel( LoopPar* sel) 
+{ 
+  if (parOp != 0) 
+    delete parOp; 
+  parOp = sel; 
+}
+
+void LoopTransformOptions::SetBlockSel( LoopBlocking* sel) 
 { 
   if (bkOp != 0) 
     delete bkOp; 
@@ -244,10 +259,13 @@ LoopTransformOptions* LoopTransformOptions::GetInstance()
 {
   if (inst == 0) {
      inst = new LoopTransformOptions();
+     inst->RegisterOption( new BlockParameterizeOpt);
+     inst->RegisterOption( new POETParallelizeOpt);
      inst->RegisterOption( new BlockOuterLoopOpt);
      inst->RegisterOption( new BlockInnerLoopOpt);
      inst->RegisterOption( new BlockAllLoopOpt);
-     inst->RegisterOption( new CopyArrayOpt);
+     inst->RegisterOption( new CopyArrayDimensionOpt);
+     inst->RegisterOption( new ParameterizeCopyArrayOpt);
      inst->RegisterOption( new ReuseInterchangeOpt);
      inst->RegisterOption( new FissionOpt);
      inst->RegisterOption( new InnerFissionOpt);
@@ -283,24 +301,23 @@ void LoopTransformOptions :: RegisterOption( OptRegistryType* t)
    reg.AppendLast(t);
 }
 
-void LoopTransformOptions :: SetOptions (std::vector<std::string>& argvList)
+void LoopTransformOptions :: 
+SetOptions (const std::vector<std::string>& argvList, std::vector<std::string>* unknown_args)
       {
-        for (size_t i = 1;
-             i < argvList.size() /* May shrink, so this must be checked in every iteration */ ;
-             /* Options should be removed by handlers */ ) {
-            SinglyLinkedListWrap <OptRegistryType*>::Iterator p(reg); 
-            bool isValidOption = false;
-            for ( ; !p.ReachEnd(); ++p) {
-                std::string name = (*p)->GetName();
-                if ( argvList[i] == name) {
-                    (*(*p))(*this, i, argvList);
-                    isValidOption = true;
-                    break;
+        for (unsigned index = 0; index < argvList.size(); ++index)
+        {
+           const std::string& opt_name=argvList[index];
+           SinglyLinkedListWrap <OptRegistryType*>::Iterator p_registry(reg); 
+           for ( ; !p_registry.ReachEnd(); ++p_registry) 
+           {
+                OptRegistryType* reg = *p_registry;
+                if (opt_name == reg->GetName())
+                {
+                    (*reg)(*this, index, argvList);
+                     break;
                 }
-            }
-            if (!isValidOption) {++i;} // Skip this option
-         }
-      }
-
-
-
+           }
+           if (unknown_args != 0 && p_registry.ReachEnd())
+              unknown_args->push_back(opt_name);
+        }
+     }

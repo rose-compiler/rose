@@ -11,9 +11,7 @@ class ProcessAstTreeBase : public ProcessAstNode
   typedef enum {BEFORE = 1, AT = 2, INSIDE = 4, BEFORE_AT = 3, INSIDE_AT = 6} TraverseLocation;
  private:
   struct TraverseState{ 
-      AstNodePtr scope; 
-      int state;  
-      int skip;
+      AstNodePtr scope;  int state;  int skip;
       TraverseState( const AstNodePtr &_scope, int _skip, 
                      TraverseLocation _state)
                     : scope(_scope), state(_state), skip(_skip) {}
@@ -30,7 +28,6 @@ class ProcessAstTreeBase : public ProcessAstNode
   TraverseState GetScope() const;
   void PopScope();
   void PushScope( const AstNodePtr& scope, int skip, TraverseLocation state);
-  //! Inherited from ProcessAstNode
   bool Traverse( AstInterface &fa, const AstNodePtr& s, 
                       AstInterface::TraversalVisitType t);
  protected:
@@ -41,7 +38,6 @@ class ProcessAstTreeBase : public ProcessAstNode
   void SkipUntil( const AstNodePtr& s);
   void SkipOnly( const AstNodePtr& s);
  public:
-  //! Read only traverse
   bool operator()( AstInterface &fa, const AstNodePtr& s);
 
 // DQ (2/18/2008): Added to fix warning from GNU g++
@@ -54,7 +50,7 @@ class ProcessAstTree : public ProcessAstTreeBase
  protected:
   virtual bool ProcessLoop(AstInterface &fa, const AstNodePtr& s, 
                                const AstNodePtr& body,
-                               AstInterface::TraversalVisitType t) ;
+	                       AstInterface::TraversalVisitType t) ;
   virtual bool ProcessIf( AstInterface &fa, const AstNodePtr& s,
                              const AstNodePtr& cond, const AstNodePtr& truebody,
                              const AstNodePtr& falsebody, 
