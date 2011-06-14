@@ -538,12 +538,18 @@ syscall_open(RSIM_Thread *t, int callno)
         t->syscall_return(-EFAULT);
         return;
     }
+
     uint32_t flags=t->syscall_arg(1), mode=(flags & O_CREAT)?t->syscall_arg(2):0;
     int fd = open(filename.c_str(), flags, mode);
     if (-1==fd) {
         t->syscall_return(-errno);
         return;
     }
+
+    std::string prohibited = "/proc/self/";
+    assert(0!=strncmp(filename.c_str(), prohibited.c_str(), prohibited.size()));
+    prohibited = "/proc/" + StringUtility::numberToString(getpid()) + "/";
+    assert(0!=strncmp(filename.c_str(), prohibited.c_str(), prohibited.size()));
 
     t->syscall_return(fd);
 }
