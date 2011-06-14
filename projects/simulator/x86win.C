@@ -7,22 +7,6 @@
 #include "RSIM_Linux32.h"
 #include "RSIM_Adapter.h"
 
-class StackInitializer: public MemoryInitializer {
-public:
-    rose_addr_t newsp;
-    StackInitializer(const std::string &filename, rose_addr_t memaddr, rose_addr_t when, rose_addr_t newsp)
-        : MemoryInitializer(filename, memaddr, when), newsp(newsp) {}
-    virtual StackInitializer *clone() { return this; }
-    virtual bool operator()(bool enabled, const Args &args) {
-        if (!triggered) {
-            enabled = MemoryInitializer::operator()(enabled, args);
-            if (triggered)
-                args.thread->policy.writeGPR(x86_gpr_sp, args.thread->policy.number<32>(newsp));
-        }
-        return enabled;
-    }
-};
-
 /* Simulate RDTSC instruction by prividing values obtained from debugging. */
 class Rdtsc: public RSIM_Callbacks::InsnCallback {
 public:
@@ -60,51 +44,118 @@ public:
     }
 };
 
-/***************************************************************************************************************************
- * The ld-linux.so.2 on Robb's machine executes a couple of instructions that aren't yet handled by ROSE.  So we handle
- * them here.  It turns out that we don't actually need to handle them in order for the linker to still work.
+/** Provides implementations for functions not in ROSE.
  *
- * 0x40014cd0: movd   mmx0, DWORD PTR ds:[eax + 0x04]
- *     10673:1 0.000 0x00014cd5[957]:     stack frames:
- *     10673:1 0.000 0x00014cd5[957]:       #0: bp=0xbfffe0a0 ip=0x00014cd5 in memory region ld-linux.so.2(LOAD#0)
- *     10673:1 0.000 0x00014cd5[957]:       #1: bp=0xbfffe0e8 ip=0x00001238 in memory region ld-linux.so.2(LOAD#0)
- *     10673:1 0.000 0x00014cd5[957]:       #2: bp=0x00000000 ip=0x00000857 in memory region ld-linux.so.2(LOAD#0)
- * 0x40014cd8: movq   QWORD PTR ss:[ebp + 0xd4<-0x2c>], mmx0]
- *     10673:1 0.000 0x00014cdd[959]:     stack frames:
- *     10673:1 0.000 0x00014cdd[959]:       #0: bp=0xbfffe0a0 ip=0x00014cdd in memory region ld-linux.so.2(LOAD#0)
- *     10673:1 0.000 0x00014cdd[959]:       #1: bp=0xbfffe0e8 ip=0x00001238 in memory region ld-linux.so.2(LOAD#0)
- *     10673:1 0.000 0x00014cdd[959]:       #2: bp=0x00000000 ip=0x00000857 in memory region ld-linux.so.2(LOAD#0)
- */
-class LinkerFixups: public RSIM_Callbacks::InsnCallback {
+ *  These few functions are sometimes encountered in ld-linux.so and are important for its correct operation. */
+class UnhandledInstruction: public RSIM_Callbacks::InsnCallback {
 public:
-    rose_addr_t base_va;
-    VirtualMachineSemantics::ValueType<32> v1;
+    struct MmxValue {
+        VirtualMachineSemantics::ValueType<32> lo, hi;
+    };
 
-    LinkerFixups(rose_addr_t base_va)
-        : base_va(base_va) {}
+    MmxValue mmx[8];                    // MMX registers 0-7
 
-    virtual LinkerFixups *clone() { return this; }
-
+    virtual UnhandledInstruction *clone() { return this; }
     virtual bool operator()(bool enabled, const Args &args) {
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
         if (enabled && insn) {
-            rose_addr_t newip = insn->get_address() + insn->get_raw_bytes().size();
+            RTS_Message *m = args.thread->tracing(TRACE_MISC);
             const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
-            if (insn->get_address()==base_va+0x00014cd0 && x86_movd==insn->get_kind()) {
-                std::cerr <<"LinkerFixups: handling " <<unparseInstructionWithAddress(insn) <<"\n";
-                v1 = args.thread->semantics.read32(operands[1]);
-                args.thread->policy.writeIP(args.thread->policy.number<32>(newip));
-                enabled = false; // skip this instruction
-            } else if (insn->get_address()==base_va+0x00014cd8 && x86_movq==insn->get_kind()) {
-                std::cerr <<"LinkerFixups: handling " <<unparseInstructionWithAddress(insn) <<"\n";
-                VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
-                args.thread->policy.writeMemory(x86_segreg_ss, addr, v1, args.thread->policy.true_());
-                addr = args.thread->policy.add<32>(addr, args.thread->policy.number<32>(4));
-                args.thread->policy.writeMemory(x86_segreg_ss, addr, args.thread->policy.number<32>(0),
-                                                args.thread->policy.true_());
-                args.thread->policy.writeIP(args.thread->policy.number<32>(newip));
-                enabled = false; // skip this instruction
+            uint32_t newip_va = insn->get_address() + insn->get_raw_bytes().size();
+            VirtualMachineSemantics::ValueType<32> newip = args.thread->policy.number<32>(newip_va);
+            switch (insn->get_kind()) {
+                case x86_movd: {
+                    assert(2==operands.size());
+                    SgAsmRegisterReferenceExpression *mre = isSgAsmRegisterReferenceExpression(operands[0]);
+                    if (mre && mre->get_descriptor().get_major()==x86_regclass_xmm) {
+                        int mmx_number = mre->get_descriptor().get_minor();
+                        m->mesg("UnhandledInstruction triggered for %s\n", unparseInstruction(insn).c_str());
+                        mmx[mmx_number].lo = args.thread->semantics.read32(operands[1]);
+                        mmx[mmx_number].hi = args.thread->policy.number<32>(0);
+                        args.thread->policy.writeIP(newip);
+                        enabled = false;
+                    }
+                    break;
+                }
+
+                case x86_movq: {
+                    assert(2==operands.size());
+                    SgAsmRegisterReferenceExpression *mre = isSgAsmRegisterReferenceExpression(operands[1]);
+                    if (mre && mre->get_descriptor().get_major()==x86_regclass_xmm) {
+                        int mmx_number = mre->get_descriptor().get_minor();
+                        m->mesg("UnhandledInstruction triggered for %s\n", unparseInstruction(insn).c_str());
+                        VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
+                        args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].lo, args.thread->policy.true_());
+                        addr = args.thread->policy.add<32>(addr, args.thread->policy.number<32>(4));
+                        args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].hi, args.thread->policy.true_());
+                        args.thread->policy.writeIP(newip);
+                        enabled = false;
+                    }
+                    break;
+                }
+
+                default:                // to shut up warnings about the zillion instructions we don't handle here
+                    break;
             }
+        }
+        return enabled;
+    }
+};
+
+/** wine-pthread tries to open /proc/self/maps.  This won't work because that file describes the simulator rather than the
+ * specimen.  Therefore, when this occurs, we create a temporary file and initialize it with information from the specimen's
+ * MemoryMap and open that instead.  NOTE: This appears to only happen during error reporting. */
+class ProcMapsOpen: public RSIM_Simulator::SystemCall::Callback {
+public:
+    bool operator()(bool enabled, const Args &args) {
+        RSIM_Thread *t = args.thread;
+        if (enabled) {
+            uint32_t filename_va = t->syscall_arg(0);
+            bool error;
+            std::string filename = t->get_process()->read_string(filename_va, 0, &error);
+            if (error) {
+                t->syscall_return(-EFAULT);
+                return enabled;
+            }
+
+            if (filename=="/proc/self/maps") {
+                RTS_WRITE(t->get_process()->rwlock()) {
+                    FILE *f = fopen("x-maps", "w");
+                    assert(f);
+                    const std::vector<MemoryMap::MapElement> &me = t->get_process()->get_memory()->get_elements();
+                    for (size_t i=0; i<me.size(); i++) {
+                        unsigned p = me[i].get_mapperms();
+                        fprintf(f, "%08"PRIx64"-%08"PRIx64" %c%c%cp 00000000 00:00 0 %s\n",
+                                me[i].get_va(), me[i].get_va()+me[i].get_size(),
+                                (p & MemoryMap::MM_PROT_READ)  ? 'r' : '-',
+                                (p & MemoryMap::MM_PROT_WRITE) ? 'w' : '-',
+                                (p & MemoryMap::MM_PROT_EXEC)  ? 'x' : '-',
+                                me[i].get_name().c_str());
+                    }
+                    fclose(f);
+                    filename = "x-maps";
+                } RTS_WRITE_END;
+
+                uint32_t flags=t->syscall_arg(1), mode=(flags & O_CREAT)?t->syscall_arg(2):0;
+                int fd = open(filename.c_str(), flags, mode);
+                if (-1==fd) {
+                    t->syscall_return(-errno);
+                    return enabled;
+                }
+                t->syscall_return(fd);
+                return false; // this implementation was successful; skip the rest
+            }
+        }
+        return enabled;
+    }
+};
+
+class MapReporter: public RSIM_Simulator::SystemCall::Callback {
+public:
+    virtual bool operator()(bool enabled, const Args &args) {
+        if (enabled) {
+            RSIM_Process *p = args.thread->get_process();
+            p->mem_showmap(args.thread->tracing(TRACE_MISC), "MapReporter triggered: current memory map:", "    ");
         }
         return enabled;
     }
@@ -113,50 +164,65 @@ public:
 int
 main(int argc, char *argv[], char *envp[])
 {
+    /**************************************************************************************************************************
+     * Create simulator, including setting up all necessary callbacks.  The specimen is not actually loaded into memory until
+     * later.
+     **************************************************************************************************************************/
     RSIM_Linux32 sim;
+    int n = sim.configure(argc, argv, envp);
 
+#if 0
     /* Disassemble when we hit the dynamic linker at 0x68000850 */
     MemoryDisassembler disassembler(0x68000850, false);
     sim.install_callback(&disassembler);
-
-    /* Initialize the stack when we hit the program entry address (filled in below). */
-    StackInitializer stack_initializer("x-real-initial-stack", 0xbffeb000, 0, 0xbfffef70);
-    sim.install_callback(&stack_initializer);
     sim.install_callback(new FunctionReporter);
+#endif
 
     /* Emulate instructions that ROSE doesn't handle yet. */
-    sim.install_callback(new LinkerFixups(0x68000000));
-
-#if 0
-    static uint8_t entry[] = {0x10, 0x93, 0x04, 0x08};
-    sim.install_callback(new MemoryInitializer(entry, sizeof entry, 0xbfffee88, 0x6800252b));
-#endif
-
-#if 0
-    /* Initializing memory stuff */
-    rose_addr_t bp = 0x68000850;
-    MemoryInitializer dd32data("x-real-dd32-data", 0x08054000, bp);
-    sim.install_callback(&dd32data);
-    MemoryInitializer ldsodata("x-real-ldso-data", 0x6801c000, bp);
-    sim.install_callback(&ldsodata);
-    MemoryInitializer preloaddata("x-real-preload-data", 0x7c403000, bp);
-    sim.install_callback(&preloaddata);
-    MemoryInitializer stackdata("x-real-stack", 0xbffeb000, bp);
-    sim.install_callback(&stackdata);
-#endif
+    sim.install_callback(new UnhandledInstruction);
 
     /* Make adjustments for RDTSC instruction after the instruction executes. */
     sim.get_callbacks().add_insn_callback(RSIM_Callbacks::AFTER, new Rdtsc);
 
-    /* Load the specimen */
-    int n = sim.configure(argc, argv, envp);
-    sim.exec(argc-n, argv+n);
+    /* System call handlers */
+    sim.syscall_implementation(5/*open*/)->body.prepend(new ProcMapsOpen);
+    sim.syscall_implementation(243/*set_thread_area*/)->body.prepend(new MapReporter);
 
-    /* Finish initialization */
-    rose_addr_t oep = sim.get_process()->get_ep_orig_va();
-    stack_initializer.when = oep;
+    /**************************************************************************************************************************
+     * Load the specimen into memory, create a process and its initial thread.
+     **************************************************************************************************************************/
     
-    /* Run the simulator */
+    sim.exec(argc-n, argv+n);
+    RSIM_Process *proc = sim.get_process();
+    assert(proc);
+    RSIM_Thread *thread = proc->get_thread(getpid()); /* main thread */
+    assert(thread);
+
+    /* Initialize the stack from data saved when the program was run natively. */
+    {
+        rose_addr_t bottom_of_stack = 0xbffeb000;
+        rose_addr_t new_stack_pointer = bottom_of_stack + 0x13f40; /* points to specimen's argc */
+
+        int fd = open("x-real-initial-stack", O_RDONLY);
+        if (fd>=0) {
+            fprintf(stderr, "Initializing the stack...\n");
+            uint8_t buf[4096];
+            ssize_t nread;
+            while ((nread=read(fd, buf, sizeof buf))>0) {
+                size_t nwritten = proc->mem_write(buf, bottom_of_stack, (size_t)nread);
+                assert(nwritten==(size_t)nread);
+                bottom_of_stack += nwritten;
+            }
+            close(fd);
+        }
+
+        thread->policy.writeGPR(x86_gpr_sp, thread->policy.number<32>(new_stack_pointer));
+    }
+
+    /**************************************************************************************************************************
+     * Allow the specimen to run
+     **************************************************************************************************************************/
+
     sim.activate();
     sim.main_loop();
     sim.deactivate();
