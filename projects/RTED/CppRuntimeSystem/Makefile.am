@@ -4,8 +4,8 @@ RuntimeSystemlibdir = $(libdir)
 RuntimeSystemlib_LTLIBRARIES = libCppRuntimeSystem.la
 
 #~ if ROSE_WITH_UPC
-#~ AM_UPCFLAGS = -DWITH_UPC=1 -DIN_TARGET_LIBS
-#~ RuntimeSystemlib_LTLIBRARIES += libUpcRuntimeSystem.la
+#~ 	AM_UPCFLAGS = -DWITH_UPC=1 -DIN_TARGET_LIBS
+#~ 	RuntimeSystemlib_LTLIBRARIES += libUpcRuntimeSystem.la
 #~ endif
 
 SUBDIRS = DebuggerQt
@@ -49,13 +49,13 @@ libCppRuntimeSystem_la_SOURCES = CppRuntimeSystem.cpp \
 #~ libUpcRuntimeSystem_la_LIBTOOLFLAGS = --tag=CXX
 #~
 #~ ptrops-upc.upc: $(srcdir)/ptrops.c
-	#~ cp $< $@
+#~ 	cp $< $@
 #~
 #~ %-upc.cpp: $(srcdir)/%.cpp
-	#~ $(CXX) -E -DWITH_UPC $(INCLUDES) $< -o $@
+#~ 	$(CXX) -E -DWITH_UPC $(INCLUDES) $< -o $@
 #~
 #~ %-upc.upc: $(srcdir)/%.upc
-	#~ cp $< $@
+#~ 	cp $< $@
 #~
 #~ endif
 
