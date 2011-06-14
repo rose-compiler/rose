@@ -263,14 +263,14 @@ class ArrayAnnotation
   SymbolicVal create_access_array_length( const AstNodePtr& array, const SymbolicVal& dim);
   AstNodePtr create_access_array_elem( CPPAstInterface& fa, 
                                         const AstNodePtr& array,
-				  const CPPAstInterface::AstNodeList& args);
+                                  const CPPAstInterface::AstNodeList& args);
   AstNodePtr create_access_array_length( CPPAstInterface& fa, const AstNodePtr& array, 
-					 int dim);
+                                         int dim);
 
   bool is_reshape_array( CPPAstInterface& fa, const AstNodePtr& orig,
-			AstNodePtr* array=0, CPPAstInterface::AstNodeList* args=0);
+                        AstNodePtr* array=0, CPPAstInterface::AstNodeList* args=0);
   AstNodePtr create_reshape_array( CPPAstInterface& fa, const AstNodePtr& array,
-				  const CPPAstInterface::AstNodeList& args);
+                                  const CPPAstInterface::AstNodeList& args);
 };
 
 #endif

@@ -445,7 +445,7 @@ AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
 
 bool StmtVarAliasCollect::
 may_alias(AstInterface& fa, const AstNodePtr& r1, 
-	  const AstNodePtr& r2)
+          const AstNodePtr& r2)
 {
   AstNodeType t1, t2;
   if (fa.IsExpression(r1, &t1) == AST_NULL || fa.IsExpression(r2, &t2)==AST_NULL)

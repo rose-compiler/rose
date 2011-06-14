@@ -475,7 +475,7 @@ GetMemberFunc( AstInterfaceImpl* scope, SgClassSymbol* c,
            SgType* tp = (*pp)->get_type();
            SgType* ta = (*pa)->get_type();
            string partype, argtype;
-	   scope->GetTypeInfo(AstNodeTypeImpl(tp), 0, &partype);
+           scope->GetTypeInfo(AstNodeTypeImpl(tp), 0, &partype);
            scope->GetTypeInfo(AstNodeTypeImpl(ta), 0, &argtype);
            if (partype != argtype) {
               match = false;
@@ -1251,14 +1251,14 @@ string AstToString( const AstNodePtr& _s)
       // jichi (10/8/2009): Force using Fortran unparser while parsing Fortran file.
       assert(isSgType(s) == 0);
 
-      if (IS_FORTRAN_LANGUAGE()) {	// Fortran AST
+      if (IS_FORTRAN_LANGUAGE()) {      // Fortran AST
         // jichi (12/9/2009): Use C/C++ unparser as fallback.
         try {
           r = r + globalUnparseToString_Fortran(s);
         } catch (const char*) {
           r = r + s->unparseToString();
         }
-      } else	// General AST.
+      } else    // General AST.
         r = r + s->unparseToString();
     }
   }
@@ -1396,17 +1396,17 @@ bool AstInterface:: IsDecls( const AstNodePtr& _s)
           AstNodePtrImpl s(_s);
           switch (s->variantT()) {
             case V_SgVariableDeclaration:
-	    case V_SgClassDeclaration:
-	    case V_SgFunctionDeclaration:
-	    case V_SgDeclarationStatement:
-	    case V_SgEnumDeclaration:
-	    case V_SgTypedefDeclaration: 
-	    case V_SgTemplateDeclaration:
-		 return true;
-	    default:
-		 return false;
-	    }
-	  }
+            case V_SgClassDeclaration:
+            case V_SgFunctionDeclaration:
+            case V_SgDeclarationStatement:
+            case V_SgEnumDeclaration:
+            case V_SgTypedefDeclaration: 
+            case V_SgTemplateDeclaration:
+                 return true;
+            default:
+                 return false;
+            }
+          }
 bool AstInterface:: IsStatement( const AstNodePtr& _s)
 {
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
@@ -1419,7 +1419,7 @@ bool AstInterface::IsExecutableStmt( const AstNodePtr& _s)
   AstNodePtrImpl s(_s);
   switch (s->variantT()) {
   case V_SgFortranDo:
-  //case V_SgFortranNonBlockedDo:	// This kind of Fortran block is temporarily not supported.
+  //case V_SgFortranNonBlockedDo:       // This kind of Fortran block is temporarily not supported.
 
   case V_SgForStatement:
   case V_SgCaseOptionStmt:
@@ -1489,7 +1489,7 @@ AstNodePtr AstInterface::GetNextStmt( const AstNodePtr& s)
 }
 
 bool AstInterface::IsIf( const AstNodePtr& _s, AstNodePtr* cond,
-				AstNodePtr* truebody, AstNodePtr* falsebody) 
+                                AstNodePtr* truebody, AstNodePtr* falsebody) 
 { 
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
   int t = s->variantT();
@@ -1498,22 +1498,22 @@ bool AstInterface::IsIf( const AstNodePtr& _s, AstNodePtr* cond,
     {
       SgIfStmt *is = isSgIfStmt(s);
       if (cond != 0)
-	*cond = AstNodePtrImpl(is->get_conditional());
+        *cond = AstNodePtrImpl(is->get_conditional());
       if (truebody != 0)
-	*truebody = AstNodePtrImpl(is->get_true_body());
+        *truebody = AstNodePtrImpl(is->get_true_body());
       if (falsebody != 0)
-	*falsebody = AstNodePtrImpl(is->get_false_body());
+        *falsebody = AstNodePtrImpl(is->get_false_body());
     }
     break;
   case V_SgCaseOptionStmt:
     {
       SgCaseOptionStmt* cs = isSgCaseOptionStmt(s);
       if (cond != 0)
-	*cond = AstNodePtrImpl(cs->get_key());
+        *cond = AstNodePtrImpl(cs->get_key());
       if (truebody != 0)
-	*truebody = AstNodePtrImpl(cs->get_body());
+        *truebody = AstNodePtrImpl(cs->get_body());
       if (falsebody != 0)
-	*falsebody = AST_NULL;
+        *falsebody = AST_NULL;
     }
     break;
   default:
@@ -1558,9 +1558,9 @@ IsGoto( const AstNodePtr& _s, AstNodePtr* dest)
     if (dest != 0) {
       SgNode *scope = 0;
       for (scope = s->get_parent(); 
-	   scope->variantT() != V_SgFunctionDefinition;
-	   scope = scope->get_parent()){
-	assert(scope != 0);
+           scope->variantT() != V_SgFunctionDefinition;
+           scope = scope->get_parent()){
+        assert(scope != 0);
       }
       *dest = AstNodePtrImpl(scope);
     }
@@ -1570,16 +1570,16 @@ IsGoto( const AstNodePtr& _s, AstNodePtr* dest)
     if (dest != 0) {
       SgNode* scope = 0;
       for (scope = s->get_parent(); ; scope = scope->get_parent()){
-	int t = scope->variantT();
-	if (t == V_SgForStatement || t == V_SgWhileStmt || 
-	    t == V_SgDoWhileStmt)
-	  break;
+        int t = scope->variantT();
+        if (t == V_SgForStatement || t == V_SgWhileStmt || 
+            t == V_SgDoWhileStmt)
+          break;
       }
       if (scope->variantT() == V_SgFortranDo)
         return false;
 
       if (scope->variantT() == V_SgForStatement)
-	scope = isSgForStatement(scope)->get_increment();
+        scope = isSgForStatement(scope)->get_increment();
       *dest = AstNodePtrImpl(scope);
     }
     break;
@@ -1587,10 +1587,10 @@ IsGoto( const AstNodePtr& _s, AstNodePtr* dest)
     if (dest != 0) {
       SgNode* scope = 0;
       for (scope = s->get_parent(); ; scope = scope->get_parent()){
-	int t = scope->variantT();
-	if (t == V_SgForStatement || t == V_SgWhileStmt || 
-	    t == V_SgDoWhileStmt || t == V_SgSwitchStatement)
-	  break;
+        int t = scope->variantT();
+        if (t == V_SgForStatement || t == V_SgWhileStmt || 
+            t == V_SgDoWhileStmt || t == V_SgSwitchStatement)
+          break;
       }
       *dest =  AstNodePtrImpl(scope);
     }
@@ -1661,7 +1661,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
     {
       SgFunctionDefinition *def =  isSgFunctionDefinition(s);
       if (body != 0)
-	*body = AstNodePtrImpl(def->get_body());
+        *body = AstNodePtrImpl(def->get_body());
       d = def->get_declaration();
   }
   
@@ -1670,25 +1670,25 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
     { 
       SgFunctionDeclaration *decl = isSgFunctionDeclaration(d);
       if (returntype != 0)
-	*returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
+        *returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
       if (name != 0) 
-	*name =  string(decl->get_name().str());
+        *name =  string(decl->get_name().str());
       if (paramtype != 0 || params != 0) 
-	l = decl->get_parameterList();
+        l = decl->get_parameterList();
       break;
     }
   case V_SgMemberFunctionDeclaration:
     {
       SgMemberFunctionDeclaration* decl = isSgMemberFunctionDeclaration(d);
       if (returntype != 0)
-	*returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
+        *returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
       if (name != 0) {
-	SgName cn = decl->get_scope()->get_qualified_name(); 
-	SgName fn = decl->get_name();
-	*name =  StripGlobalQualifier(string(cn.str())) + "::" + StripGlobalQualifier(string(fn.str()));
+        SgName cn = decl->get_scope()->get_qualified_name(); 
+        SgName fn = decl->get_name();
+        *name =  StripGlobalQualifier(string(cn.str())) + "::" + StripGlobalQualifier(string(fn.str()));
       }
       if (paramtype != 0 || params != 0) 
-	l = decl->get_parameterList();
+        l = decl->get_parameterList();
       break;
     }
   // Liao, 11/18/2008: add support for instantiated template (member) function declarations  
@@ -1696,28 +1696,28 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
   {
      SgTemplateInstantiationMemberFunctionDecl* decl = isSgTemplateInstantiationMemberFunctionDecl(d);
      if (returntype != 0)
-	*returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
+        *returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
       if (name != 0) {
-	SgName cn = decl->get_scope()->get_qualified_name(); 
-	SgName fn = decl->get_name();
-	*name =  StripGlobalQualifier(string(cn.str())) + "::" + StripGlobalQualifier(string(fn.str()));
+        SgName cn = decl->get_scope()->get_qualified_name(); 
+        SgName fn = decl->get_name();
+        *name =  StripGlobalQualifier(string(cn.str())) + "::" + StripGlobalQualifier(string(fn.str()));
       }
       if (paramtype != 0 || params != 0) 
-	l = decl->get_parameterList();
+        l = decl->get_parameterList();
       break;
   }  
   case V_SgTemplateInstantiationFunctionDecl: 
   {
      SgTemplateInstantiationFunctionDecl* decl = isSgTemplateInstantiationFunctionDecl(d);
      if (returntype != 0)
-	*returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
+        *returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
       if (name != 0) {
-	SgName cn = decl->get_scope()->get_qualified_name(); 
-	SgName fn = decl->get_name();
-	*name =  StripGlobalQualifier(string(cn.str())) + "::" + StripGlobalQualifier(string(fn.str()));
+        SgName cn = decl->get_scope()->get_qualified_name(); 
+        SgName fn = decl->get_name();
+        *name =  StripGlobalQualifier(string(cn.str())) + "::" + StripGlobalQualifier(string(fn.str()));
       }
       if (paramtype != 0 || params != 0) 
-	l = decl->get_parameterList();
+        l = decl->get_parameterList();
       break;
   }  
   
@@ -1727,7 +1727,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
   if (l != 0) {
     SgInitializedNamePtrList& names = l->get_args();
     for (SgInitializedNamePtrList::iterator p = names.begin(); 
-	 p != names.end(); ++p) {
+         p != names.end(); ++p) {
       SgInitializedName* cur = *p;
       if (paramtype != 0)
          paramtype->push_back(AstNodeTypeImpl(cur->get_type())); 
@@ -1761,18 +1761,18 @@ IsAssignment( const AstNodePtr& _s, AstNodePtr* lhs, AstNodePtr* rhs, bool *read
     case V_SgXorAssignOp:
     case V_SgAssignOp:
       {
-	SgBinaryOp* s2 = isSgBinaryOp(exp);
-	if (lhs != 0)
-	  *lhs = AstNodePtrImpl(s2->get_lhs_operand());
-	if (rhs != 0) {
-	  SgNode* init = s2->get_rhs_operand();
-	  if ( init->variantT() == V_SgAssignInitializer) 
+        SgBinaryOp* s2 = isSgBinaryOp(exp);
+        if (lhs != 0)
+          *lhs = AstNodePtrImpl(s2->get_lhs_operand());
+        if (rhs != 0) {
+          SgNode* init = s2->get_rhs_operand();
+          if ( init->variantT() == V_SgAssignInitializer) 
             init = isSgAssignInitializer(init)->get_operand();
-	  *rhs = AstNodePtrImpl(init);
-	}
+          *rhs = AstNodePtrImpl(init);
+        }
         if (readlhs != 0)
            *readlhs = (exp->variantT() != V_SgAssignOp);
-	return true;
+        return true;
       }
     default: return false;
     }
@@ -2005,7 +2005,7 @@ bool AstInterface::IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, strin
             *varname = StripGlobalQualifier(cdef->get_qualified_name())+"::"+StripGlobalQualifier(sb->get_name().str());
          }
          if (vartype != 0)
-	   *vartype = AstNodeTypeImpl(sb->get_type());
+           *vartype = AstNodeTypeImpl(sb->get_type());
       }
       break;
   case V_SgFunctionRefExp:
@@ -2013,9 +2013,9 @@ bool AstInterface::IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, strin
       SgFunctionRefExp *var = isSgFunctionRefExp( exp );
       SgFunctionSymbol *sb = var->get_symbol();
       if (vartype != 0)
-	*vartype = AstNodeTypeImpl(sb->get_type());
+        *vartype = AstNodeTypeImpl(sb->get_type());
       if (varname != 0) {
-	*varname = sb->get_name().str();
+        *varname = sb->get_name().str();
       }
       decl = 0; // sb->get_declaration();
     }
@@ -2025,9 +2025,9 @@ bool AstInterface::IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, strin
       SgVarRefExp *var = isSgVarRefExp( exp );
       SgVariableSymbol *sb = var->get_symbol();
       if (vartype != 0)
-	*vartype = AstNodeTypeImpl(sb->get_type());
+        *vartype = AstNodeTypeImpl(sb->get_type());
       if (varname != 0)
-	*varname = sb->get_name().str();
+        *varname = sb->get_name().str();
       decl = sb->get_declaration();
     }
      break;
@@ -2067,7 +2067,7 @@ bool AstInterface::IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, strin
       SgType* t = var->get_type();
       assert( t != 0);
       if (vartype != 0)
-	*vartype = AstNodeTypeImpl(t);
+        *vartype = AstNodeTypeImpl(t);
       if (varname != 0) {
         *varname = var->get_name().str();
       }
@@ -2384,7 +2384,7 @@ IsArrayAccess( const AstNodePtr& _s, AstNodePtr* array, AstNodeList* index)
             // jichi(9/25/2009): Add Support for SgExprListExp for Fortran array index.
             SgNode* exp = arr->get_rhs_operand();
             switch(exp->variantT()) {
-            case V_SgExprListExp:	// Fortan indices as expression list.
+            case V_SgExprListExp:       // Fortan indices as expression list.
               {
                 SgExprListExp* indexexp = isSgExprListExp(exp);
                 assert(indexexp);
@@ -2862,7 +2862,7 @@ IsExpression( const AstNodePtr& _s, AstNodeType* exptype)
 // Check whether $_s$ is a loop; if yes, grab init, condition, increment, and body
 bool AstInterface::
 IsLoop( const AstNodePtr& _s, AstNodePtr* init, AstNodePtr* cond,
-	AstNodePtr* incr, AstNodePtr* body)
+        AstNodePtr* incr, AstNodePtr* body)
 {
   AstNodePtrImpl s(_s);
   switch (s->variantT()) {
@@ -2870,43 +2870,43 @@ IsLoop( const AstNodePtr& _s, AstNodePtr* init, AstNodePtr* cond,
     {
       SgForStatement *f = isSgForStatement(s.get_ptr());
       if (init != 0) {
-	SgForInitStatement* pinit = f->get_for_init_stmt(); 
+        SgForInitStatement* pinit = f->get_for_init_stmt(); 
         if (pinit != 0 && pinit->get_init_stmt().size() == 0)
            pinit = 0;
-	*init = AstNodePtrImpl(pinit);
+        *init = AstNodePtrImpl(pinit);
       }
       if (incr != 0)
-	*incr = AstNodePtrImpl(f->get_increment());
+        *incr = AstNodePtrImpl(f->get_increment());
       if (cond != 0)
-	*cond = AstNodePtrImpl(f->get_test_expr());
+        *cond = AstNodePtrImpl(f->get_test_expr());
       if (body != 0)
-	*body = AstNodePtrImpl(f->get_loop_body());
+        *body = AstNodePtrImpl(f->get_loop_body());
     }
     break;
   case V_SgWhileStmt:
     {
       SgWhileStmt* w = isSgWhileStmt(s.get_ptr());
       if (init != 0)
-	*init = AST_NULL;
+        *init = AST_NULL;
       if (incr != 0)
-	*incr = AST_NULL;
+        *incr = AST_NULL;
       if (cond != 0)
-	*cond = AstNodePtrImpl(w->get_condition());
+        *cond = AstNodePtrImpl(w->get_condition());
       if (body != 0)
-	*body = AstNodePtrImpl(w->get_body());
+        *body = AstNodePtrImpl(w->get_body());
     }
     break;
   case V_SgDoWhileStmt:
     {
       SgDoWhileStmt *w = isSgDoWhileStmt(s.get_ptr());
       if (init != 0)
-	*init = AST_NULL;
+        *init = AST_NULL;
       if (incr != 0)
-	*incr = AST_NULL;
+        *incr = AST_NULL;
       if (cond != 0)
-	*cond = AstNodePtrImpl(w->get_condition());
+        *cond = AstNodePtrImpl(w->get_condition());
       if (body != 0)
-	*body = AstNodePtrImpl(w->get_body());
+        *body = AstNodePtrImpl(w->get_body());
     }
     break;
 
@@ -2916,13 +2916,13 @@ IsLoop( const AstNodePtr& _s, AstNodePtr* init, AstNodePtr* cond,
     {
       SgFortranDo *f = isSgFortranDo(s.get_ptr());
       if (init != 0)
-	*init = AstNodePtrImpl(f->get_initialization());
+        *init = AstNodePtrImpl(f->get_initialization());
       if (incr != 0)
-	*incr = AstNodePtrImpl(f->get_increment());
+        *incr = AstNodePtrImpl(f->get_increment());
       if (cond != 0)
-	*cond = AstNodePtrImpl(f->get_bound());
+        *cond = AstNodePtrImpl(f->get_bound());
       if (body != 0)
-	*body = AstNodePtrImpl(f->get_body());
+        *body = AstNodePtrImpl(f->get_body());
     }
     break;
 
@@ -3054,7 +3054,7 @@ bool AstInterface::IsPostTestLoop( const AstNodePtr& _s)
 
 AstNodePtr AstInterface::
 CreateLoop( const AstNodePtr& _ivar, const AstNodePtr& _lb, const AstNodePtr& _ub,
-	    const AstNodePtr& _step, const AstNodePtr& _stmts, bool decrementIvar)
+            const AstNodePtr& _step, const AstNodePtr& _stmts, bool decrementIvar)
 { 
   // jichi(9/11/2009): Add in support for SgFortranDo.
   if (IS_FORTRAN_LANGUAGE()) { // Generate fortran loop.
@@ -3347,7 +3347,7 @@ SgFunctionSymbol*
 CreateMinMaxFunction(AstInterfaceImpl* impl, const std::string& name, int numOfPars, bool isMin)
 {
   // jichi (9/30/2009): Add Fortran support
-  if (IS_FORTRAN_LANGUAGE()) {	// Fortran max/min
+  if (IS_FORTRAN_LANGUAGE()) {  // Fortran max/min
     // jichi (9/30/2009): In Fortran, b/c max/min are built-in functions, no new function is defined, but
     // the description of the function (to construct SgFunctionRefExp) is returned instead.
     // Here're the diferences between Fortran implementation and Cxx:
@@ -3356,9 +3356,9 @@ CreateMinMaxFunction(AstInterfaceImpl* impl, const std::string& name, int numOfP
 
     // NOTE: non-built-in min/max function creation for Fortran is not implemented.
     assert(name == (isMin? "min": "max"));
-    assert(numOfPars >= 2);	// Case where argc equals to 1 is not accepted by Fortran max/min.
+    assert(numOfPars >= 2);     // Case where argc equals to 1 is not accepted by Fortran max/min.
 
-    SgType* typeint = GetTypeInt();	// assume all args are int
+    SgType* typeint = GetTypeInt();     // assume all args are int
     std::list<SgInitializedName*> pars; 
     for (int i = 0; i < numOfPars; ++i) { 
       std::string parname = "a";
@@ -3376,7 +3376,7 @@ CreateMinMaxFunction(AstInterfaceImpl* impl, const std::string& name, int numOfP
     SgFunctionType *ft = new SgFunctionType(rtype, has_ellipses);
 
     //SgFunctionDeclaration  *d = new SgFunctionDeclaration(GetFileInfo(), name.c_str(), ft);
-    SgFunctionDefinition* fd = NULL;	// No definition for built-in function.
+    SgFunctionDefinition* fd = NULL;    // No definition for built-in function.
 
     // SgProcedureHeaderStatement extends SgFunctionDeclaration
     SgProcedureHeaderStatement *d = new SgProcedureHeaderStatement(name.c_str(), ft, fd);
@@ -3404,7 +3404,7 @@ CreateMinMaxFunction(AstInterfaceImpl* impl, const std::string& name, int numOfP
 
     return funcSymbol;
 
-  } else {	// Cxx max/min
+  } else {      // Cxx max/min
 
     SgType* typeint = GetTypeInt();
     std::list<SgInitializedName*> pars; 
@@ -3494,7 +3494,7 @@ CreateFunction( string name, int numOfPars)
   // In SLICE, currently only max/min function is needed to create.
   bool isMin = (name == "min");
   bool isMax = (name == "max");
-  if ((isMin || isMax) && ! IS_FORTRAN_LANGUAGE())	// Fortran built-in max/min can take arbitary number of params
+  if ((isMin || isMax) && ! IS_FORTRAN_LANGUAGE())      // Fortran built-in max/min can take arbitary number of params
     name.push_back( (numOfPars == 2)? '2' : '3');
   SgFunctionSymbol* funcSymbol = GetFunc( name);
   if (funcSymbol == 0) {
@@ -3675,7 +3675,7 @@ SgNode* AstInterfaceImpl::
 CreateFunctionCall( SgNode* func, const AstNodeList& args)
 {
   // jichi (9/30/2009): Add in Fortran support
-  assert( HasNullParent(func));	// which implies func is not in the global AST now.
+  assert( HasNullParent(func)); // which implies func is not in the global AST now.
   SgExpression *fr = isSgExpression(func);
 
   SgExprListExp *NEW_EXPR_LIST(argexp);

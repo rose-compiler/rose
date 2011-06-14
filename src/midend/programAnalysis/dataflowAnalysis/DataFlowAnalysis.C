@@ -24,16 +24,16 @@ operator()( AstInterface& fa, const AstNodePtr& head)
       Data inOrig = cur->get_entry_data();
       Data in = inOrig;
       for (NodeIterator pp = GetPredecessors(cur); !pp.ReachEnd(); ++pp) {
-	Node* pred = *pp;
-	Data predout = pred->get_exit_data();
-	in = meet_data(in, predout);
+        Node* pred = *pp;
+        Data predout = pred->get_exit_data();
+        in = meet_data(in, predout);
       }
       if (in != inOrig) {
-	cur->set_entry_data(in);
-	Data outOrig = cur->get_exit_data();
-	cur->apply_transfer_function();
-	if (outOrig != cur->get_exit_data())
-	  change = true;
+        cur->set_entry_data(in);
+        Data outOrig = cur->get_exit_data();
+        cur->apply_transfer_function();
+        if (outOrig != cur->get_exit_data())
+          change = true;
       }
     }  
   }

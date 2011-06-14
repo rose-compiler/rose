@@ -73,9 +73,9 @@ class DepInfoAnal
   AstInterface& get_astInterface() { return varmodInfo.get_astInterface(); }
 
  private:
-	DependenceTesting& handle;
-  	std::map <AstNodePtr, LoopDepInfo, std::less <AstNodePtr> > stmtInfo;
-  	ModifyVariableInfo varmodInfo;
+        DependenceTesting& handle;
+        std::map <AstNodePtr, LoopDepInfo, std::less <AstNodePtr> > stmtInfo;
+        ModifyVariableInfo varmodInfo;
 };
 
 class DependenceTesting{
@@ -118,7 +118,7 @@ class SetDepEntry
        }
        else if ( l2 >= dim1) {
          assert(dep != 0);
-	 SetDepRel( *dep, e, l1, l2-dim1);
+         SetDepRel( *dep, e, l1, l2-dim1);
          if (DebugDep())
             std::cerr << "setting dep entry(" << l1 << ", " << l2-dim1 << ") = " << e.toString() << "\n";
        }
@@ -241,7 +241,7 @@ class MakeUniqueVarGetBound
   ReverseRecMap &reverse;
   void VisitVar( const SymbolicVar& var)
   {
-	  result = GetBound(var);
+          result = GetBound(var);
   }
  public:
    MakeUniqueVarGetBound( ReverseRecMap& r1, DepInfoAnal& a) 

@@ -10,7 +10,7 @@ class DefUseChainNode : public MultiGraphElem
   AstNodePtr ref, stmt;
  public:
   DefUseChainNode( MultiGraphCreate* c, const AstNodePtr& _ref, 
-		   const AstNodePtr& _stmt, bool def)
+                   const AstNodePtr& _stmt, bool def)
     : MultiGraphElem(c), isdef(def), ref(_ref), stmt(_stmt) {}
   bool is_definition() const { return isdef; }
   AstNodePtr get_ref() const { return ref; }
@@ -33,7 +33,7 @@ class DefUseChain
     : VirtualGraphCreateTemplate<Node, Edge>(c) {}
 
   virtual Node* CreateNode( AstInterface& fa, const AstNodePtr& ref, 
-			    const AstNodePtr& stmt, bool def)
+                            const AstNodePtr& stmt, bool def)
     {
       Node* n = new Node(this, ref, stmt, def);
       AddNode(n);
@@ -48,9 +48,9 @@ class DefUseChain
     }
   
   void build( AstInterface& fa,
-	      ReachingDefinitionAnalysis& r, 
+              ReachingDefinitionAnalysis& r, 
               AliasAnalysisInterface& alias,
-	      FunctionSideEffectInterface* f = 0);
+              FunctionSideEffectInterface* f = 0);
   void build(AstInterface& fa, AstNodePtr root,  
              AliasAnalysisInterface* alias = 0, 
              FunctionSideEffectInterface* f = 0);
@@ -77,7 +77,7 @@ class DefaultDUchain : public DefUseChain<DefUseChainNode>
 
 template<class Node>
 void PropagateDefUseChainUpdate( DefUseChain<Node> *graph, 
-				 UpdateDefUseChainNode<Node>& update);
+                                 UpdateDefUseChainNode<Node>& update);
 
 #define TEMPLATE_ONLY
 #include <DefUseChain.C>

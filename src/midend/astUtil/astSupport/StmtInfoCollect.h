@@ -62,8 +62,8 @@ class StmtSideEffectCollect
      : modunknown(false), readunknown(false),funcanal(a), modcollect(0), 
        readcollect(0), killcollect(0) {}
   bool get_side_effect(AstInterface& fa, const AstNodePtr& h,
-		       CollectObject<std::pair<AstNodePtr,AstNodePtr> >* collectmod,
-		       CollectObject<std::pair<AstNodePtr,AstNodePtr> >* collectread = 0,
+                       CollectObject<std::pair<AstNodePtr,AstNodePtr> >* collectmod,
+                       CollectObject<std::pair<AstNodePtr,AstNodePtr> >* collectread = 0,
                        CollectObject<std::pair<AstNodePtr,AstNodePtr> >* collectkill = 0)
     { return operator()( fa, h, collectmod, collectread, collectkill); }
   bool operator()( AstInterface& fa, const AstNodePtr& h, 
@@ -149,7 +149,7 @@ class StmtVarAliasCollect
     : funcanal(a), hasunknown(false), hasresult(false) {}
   void operator()( AstInterface& fa, const AstNodePtr& funcdefinition);
   bool may_alias(AstInterface& fa, const AstNodePtr& r1, 
-		 const AstNodePtr& r2);
+                 const AstNodePtr& r2);
 };
 
 template <class Select>

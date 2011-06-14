@@ -70,7 +70,7 @@ bool ProcessAstTreeBase:: operator()( AstInterface &fa, const AstNodePtr& s)
     }
 
 bool ProcessAstTree:: ProcessLoop(AstInterface &fa, const AstNodePtr& s, const AstNodePtr& body,
-	                       AstInterface::TraversalVisitType t) 
+                               AstInterface::TraversalVisitType t) 
      { 
         if (t == AstInterface::PreVisit) {
            Skip(s);

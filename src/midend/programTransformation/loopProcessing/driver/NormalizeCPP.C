@@ -64,7 +64,7 @@ class NormalizeLoopTraverse : public ProcessAstTree
           AstNodePtr one = fa.CreateConstInt(1);
           SgExpression* new_incr = isSgExpression((SgNode*) one.get_ptr());
           ROSE_ASSERT(new_incr != NULL);
-          incr->set_parent(NULL);	// Detach original increment node from FortranDo.
+          incr->set_parent(NULL);       // Detach original increment node from FortranDo.
           f->set_increment(new_incr);
           new_incr->set_parent(f);
         }

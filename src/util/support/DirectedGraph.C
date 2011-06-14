@@ -4,9 +4,9 @@
 template <class Node, class Edge>
 DirectedGraphEdge<Node,Edge>::DirectedGraphEdge( Node *_src, Node *_snk)
    { 
-	  nodes[0] = _src; nodes[1] = _snk;
+          nodes[0] = _src; nodes[1] = _snk;
           for (int i = 0; i < 2; ++i)
-	        entries[i] = nodes[i]->edges[i].AppendLast( static_cast<Edge*>(this) );
+                entries[i] = nodes[i]->edges[i].AppendLast( static_cast<Edge*>(this) );
    }
 
 template <class Node, class Edge>

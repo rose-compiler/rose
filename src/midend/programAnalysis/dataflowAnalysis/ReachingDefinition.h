@@ -116,12 +116,12 @@ class ReachingDefinitionAnalysis
   ~ReachingDefinitionAnalysis()
     {
       if (g != 0)
-	delete g;
+        delete g;
     }
   void operator() ( AstInterface& fa, const AstNodePtr& h, 
-		 FunctionSideEffectInterface* anal = 0);
+                 FunctionSideEffectInterface* anal = 0);
   void collect_ast( const ReachingDefinitions& repr, 
-		    CollectObject< std::pair<AstNodePtr, AstNodePtr> >& collect);
+                    CollectObject< std::pair<AstNodePtr, AstNodePtr> >& collect);
 
   const ReachingDefinitionGenerator* get_generator() const
     { return g; }
