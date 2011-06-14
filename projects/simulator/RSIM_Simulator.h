@@ -561,7 +561,8 @@ public:
                 : func(func) {}
             void (*func)(RSIM_Thread*, int callno);
             bool operator()(bool b, const Args &a) {
-                func(a.thread, a.callno);
+                if (b)
+                    func(a.thread, a.callno);
                 return b;
             }
         };
