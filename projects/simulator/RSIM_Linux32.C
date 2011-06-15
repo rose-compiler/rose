@@ -100,6 +100,9 @@ static void syscall_fcntl_leave(RSIM_Thread *t, int callno);
 static void syscall_fstatfs(RSIM_Thread *t, int callno);
 static void syscall_fstatfs_enter(RSIM_Thread *t, int callno);
 static void syscall_fstatfs_leave(RSIM_Thread *t, int callno);
+static void syscall_fstatfs64(RSIM_Thread *t, int callno);
+static void syscall_fstatfs64_enter(RSIM_Thread *t, int callno);
+static void syscall_fstatfs64_leave(RSIM_Thread *t, int callno);
 static void syscall_fsync(RSIM_Thread *t, int callno);
 static void syscall_fsync_enter(RSIM_Thread *t, int callno);
 static void syscall_ftruncate(RSIM_Thread *t, int callno);
@@ -414,6 +417,7 @@ RSIM_Linux32::ctor()
     SC_REG(265, clock_gettime,                  clock_gettime);
     SC_REG(266, clock_getres,                   clock_getres);
     SC_REG(268, statfs64,                       statfs64);
+    SC_REG(269, fstatfs64,                      fstatfs64);
     SC_REG(270, tgkill,                         default);
     SC_REG(271, utimes,                         default);
     SC_REG(306, fchmodat,                       default);
@@ -5600,6 +5604,51 @@ syscall_statfs64(RSIM_Thread *t, int callno)
 
 static void
 syscall_statfs64_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave("d--P", sizeof(statfs64_32), print_statfs64_32);
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_fstatfs64_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("fstatfs64", "ddp");
+}
+
+static void
+syscall_fstatfs64(RSIM_Thread *t, int callno)
+{
+    int fd              = t->syscall_arg(0);
+    size_t sb_sz        = t->syscall_arg(1);
+    uint32_t sb_va      = t->syscall_arg(2);
+
+    assert(sb_sz==sizeof(statfs64_32));
+
+    statfs64_32 guest_statfs;
+#ifdef SYS_statfs64 /* host is a 32-bit machine */
+    static statfs64_native host_statfs;
+    int result = syscall(SYS_fstatfs64, fd, sizeof host_statfs, &host_statfs);
+    convert(&guest_statfs, &host_statfs);
+#else           /* host is 64-bit machine */
+    static statfs_native host_statfs;
+    int result = syscall(SYS_statfs, fd, &host_statfs);
+    convert(&guest_statfs, &host_statfs);
+#endif
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+    if (sizeof(guest_statfs)!=t->get_process()->mem_write(&guest_statfs, sb_va, sizeof guest_statfs)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+}
+
+static void
+syscall_fstatfs64_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d--P", sizeof(statfs64_32), print_statfs64_32);
 }
