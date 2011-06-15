@@ -651,6 +651,7 @@ void turnCommaOpExpIntoStmt(SgExpression* exp)
 
 			case V_SgWhileStmt:
 			{
+#if 0
 				SgExprStatement* new_stmt = buildExprStatement(copyExpression(lhs));
 				SgExpression* new_exp = copyExpression(rhs);
 				replaceExpression(comma_op, new_exp);
@@ -661,7 +662,7 @@ void turnCommaOpExpIntoStmt(SgExpression* exp)
 
 				// FIXME!: Now it's not clear how to deal with continue in while. If it's transformed into
 				// goto, then we don't have to put the side effect in condition before continue.
-				
+#endif
 				break;
 			}
 			
