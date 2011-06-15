@@ -12,7 +12,6 @@
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/graph/transpose_graph.hpp>
 #include <boost/tuple/tuple.hpp>
-#include <boost/property_map/vector_property_map.hpp>
 
 
 
