@@ -21,8 +21,10 @@ using namespace SageInterface;
 
 
 PathNumManager::PathNumManager(const BackstrokeCFG* cfg)
-    : cfg_(cfg)
-{
+    :   cfg_(cfg), 
+        backEdges_(cfg_->getAllBackEdges()), 
+        loops_(cfg_->getAllLoops())
+{    
     generatePathNumbers();
     buildNodeCFGVertexMap();
 }
@@ -36,20 +38,61 @@ void PathNumManager::buildNodeCFGVertexMap()
     }
 }
 
+void PathNumManager::buildSuperDAG()
+{
+    foreach (CFGVertex v, boost::vertices(*cfg_))
+    {
+        //if (cfgNodesInLoop.count(v) > 0)
+        //    continue;
+        
+        DAGVertex dagNode = boost::add_vertex(superDag_);
+        superDag_[dagNode] = v;
+        vertexToDagIndex_[v][0] = dagNode;
+    }
+    
+    //cout << boost::num_vertices(*cfg_) << endl;
+    //cout << boost::num_vertices(dag) << endl;
+
+    foreach (const CFGEdge& e, boost::edges(*cfg_))
+    {
+        DAGVertex src = vertexToDagIndex_[boost::source(e, *cfg_)].begin()->second;
+        DAGVertex tgt = vertexToDagIndex_[boost::target(e, *cfg_)].begin()->second;
+        
+        // Ignore back edges.
+        if (backEdges_.count(e) > 0)
+        {
+            continue;
+        }
+        
+        ROSE_ASSERT(vertexToDagIndex_.count(boost::source(e, *cfg_)) > 0);
+        ROSE_ASSERT(vertexToDagIndex_.count(boost::target(e, *cfg_)) > 0);
+        
+        
+        
+        //// If both nodes are in a loop, don't add it to this DAG now.
+        //if (cfgNodesInLoop.count(src) > 0 || cfgNodesInLoop.count(tgt) > 0)
+        //    continue;
+        
+
+        DAGEdge dagEdge = boost::add_edge(src, tgt, superDag_).first;
+        superDag_[dagEdge] = e;
+        edgeToDagIndex_[e][0] = dagEdge;
+    }
+        
+}
+
 void PathNumManager::generatePathNumbers()
 {
     // Get all loops in this CFG.
-    set<CFGEdge> backEdges = cfg_->getAllBackEdges();
-    map<CFGVertex, set<CFGVertex> > loops = cfg_->getAllLoops();
     set<CFGVertex> cfgNodesInLoop;
     
     // Get all CFG nodes in loop.
     typedef pair<CFGVertex, set<CFGVertex> > NodeToNodes;
-    foreach (const NodeToNodes& loop, loops)
+    foreach (const NodeToNodes& loop, loops_)
         cfgNodesInLoop.insert(loop.second.begin(), loop.second.end());
     //cout << cfgNodesInLoop.size() << endl;
     
-    dags_.resize(loops.size() + 1);
+    dags_.resize(loops_.size() + 1);
     //dags_.resize(1);
         
     // Build the first DAG which contains the whole CFG without loops.
@@ -73,7 +116,7 @@ void PathNumManager::generatePathNumbers()
     foreach (const CFGEdge& e, boost::edges(*cfg_))
     {
         // Ignore back edges.
-        if (backEdges.count(e) > 0)
+        if (backEdges_.count(e) > 0)
             continue;
         
         ROSE_ASSERT(vertexToDagIndex_.count(boost::source(e, *cfg_)) > 0);
@@ -127,7 +170,7 @@ void PathNumManager::generatePathNumbers()
 #if 1
     // Then build other dags for loops.
     int dagIdx = 1;
-    foreach (NodeToNodes loop, loops)
+    foreach (NodeToNodes loop, loops_)
     {
         DAG& dag = dags_[dagIdx];
         CFGVertex header = loop.first;
@@ -367,18 +410,23 @@ void PathNumManager::insertPathNumToFwdFunc()
     ROSE_ASSERT(funcDef);
 
     // Insert the declaration of the path number in the front of forward function.
-    string pathNumName = "__num__";
+    string pathNumName = "__num0__";
     SgVariableDeclaration* pathNumDecl =
             SageBuilder::buildVariableDeclaration(
                 pathNumName,
                 SageBuilder::buildIntType(),
                 SageBuilder::buildAssignInitializer(
-                    SageBuilder::buildIntVal(0)));
-    SageInterface::prependStatement(pathNumDecl, funcDef->get_body());
+                    SageBuilder::buildIntVal(0)),
+                funcDef->get_body());
+    prependStatement(pathNumDecl, funcDef->get_body());
 
     //! Insert path number update statement on CFG edges.
     for (size_t i = 0, m = dags_.size(); i != m; ++i)
     {
+        // Each DAG has a different path num name.
+        pathNumName = string("__num") 
+                + boost::lexical_cast<string>(i) + "__";
+        
         typedef map<DAGEdge, int>::value_type EdgeValuePair;
         foreach (const EdgeValuePair& edgeVal, pathNumGenerators_[i]->edgeValues_)
         {
@@ -396,11 +444,11 @@ void PathNumManager::insertPathNumToFwdFunc()
     // the exit of the function.
     
     // Build a push function call.
-    SageBuilder::pushScopeStack(funcDef->get_body());
+    pushScopeStack(funcDef->get_body());
     SgExpression* pathNumVar = SageBuilder::buildVarRefExp(pathNumDecl);
     SgStatement* pushPathNumFuncCall = SageBuilder::buildExprStatement(
             buildPushFunctionCall(pathNumVar));
-    SageBuilder::popScopeStack();
+    popScopeStack();
     
     // For each in edges to exit node of CFG, insert the push functin on that edge.
     foreach (BackstrokeCFG::Vertex cfgNode, 
@@ -411,13 +459,13 @@ void PathNumManager::insertPathNumToFwdFunc()
         // For each return statement, insert the push function before it.
         if (SgReturnStmt* returnStmt = isSgReturnStmt(astNode))
         {
-            SgStatement* pushFuncCall = SageInterface::copyStatement(pushPathNumFuncCall);
-            SageInterface::insertStatementBefore(returnStmt, pushFuncCall);
+            SgStatement* pushFuncCall = copyStatement(pushPathNumFuncCall);
+            insertStatementBefore(returnStmt, pushFuncCall);
         }
     }
-    SageInterface::appendStatement(pushPathNumFuncCall, funcDef->get_body());
+    appendStatement(pushPathNumFuncCall, funcDef->get_body());
     
-    SageInterface::fixVariableReferences(funcDef);
+    fixVariableReferences(funcDef);
 }
 
 namespace
@@ -446,31 +494,39 @@ SgStatement* getLoopStatement(SgNode* header)
 void PathNumManager::insertLoopCounterToFwdFunc()
 {    
     //map<CFGVertex, string> loopCounterNames;
-    int counter = 0;
+    int counter = 1;
     
-    map<CFGVertex, set<CFGVertex> > loops = cfg_->getAllLoops();
     typedef pair<CFGVertex, set<CFGVertex> > NodeToNodes;
-    
-    foreach (const NodeToNodes& headerAndLoopNodes, loops)
+    foreach (const NodeToNodes& headerAndLoopNodes, loops_)
     {
         CFGVertex header = headerAndLoopNodes.first;
         set<CFGVertex> loopNodes = headerAndLoopNodes.second;
         loopNodes.insert(header);
         
-        // Build the counter declaration.
-        string loopCounterName = string("__counter") 
-                + boost::lexical_cast<string>(counter++) + "__";
-        
         SgStatement* loopStmt = getLoopStatement((*cfg_)[header]->getNode());
         ROSE_ASSERT(loopStmt);
+        
+        // Insert the declaration of the path number before the loop stmt.
+        string pathNumName = string("__num") 
+                + boost::lexical_cast<string>(counter) + "__";
+        SgVariableDeclaration* pathNumDecl =
+                buildVariableDeclaration(
+                    pathNumName,
+                    buildIntType(),
+                    buildAssignInitializer(buildIntVal(0)),
+                    getScope(loopStmt));
+        insertStatementBefore(loopStmt, pathNumDecl);
+        
+        // Build the counter declaration.
+        string loopCounterName = string("__counter") 
+                + boost::lexical_cast<string>(counter) + "__";
         SgStatement* loopCounterDecl =
-            SageBuilder::buildVariableDeclaration(
-                loopCounterName,
-                SageBuilder::buildIntType(),
-                SageBuilder::buildAssignInitializer(
-                    SageBuilder::buildIntVal(0)),
-                SageInterface::getScope(loopStmt));
-        SageInterface::insertStatementBefore(loopStmt, loopCounterDecl);
+                buildVariableDeclaration(
+                    loopCounterName,
+                    buildIntType(),
+                    buildAssignInitializer(buildIntVal(0)),
+                    getScope(loopStmt));
+        insertStatementBefore(loopStmt, loopCounterDecl);
         
         foreach (CFGVertex cfgNode, loopNodes)
         {
@@ -479,13 +535,17 @@ void PathNumManager::insertLoopCounterToFwdFunc()
                 CFGVertex tgt = boost::target(cfgEdge, *cfg_);
                 // Backedges
                 if (tgt == header)
-                    insertLoopCounterIncrOnEdge(cfgEdge, loopCounterName);
+                    insertLoopCounterIncrOnEdge(cfgEdge, pathNumName, loopCounterName);
                 // exit edges
                 else if (loopNodes.count(tgt) == 0)
                     insertLoopCounterPushOnEdge(cfgEdge, loopCounterName);
             }
         }
+        
+        ++counter;
+        //fixVariableReferences(getScope(loopStmt));
     }
+    
 }
 
 //namespace 
@@ -519,12 +579,12 @@ void PathNumManager::insertPathNumberOnEdge(
 
     if (SgIfStmt* ifStmt = isSgIfStmt(src))
     {
-        if (SageInterface::isAncestor(src, tgt))
+        if (isAncestor(src, tgt))
         {
-            SgStatement* s = SageInterface::getEnclosingStatement(tgt);
+            SgStatement* s = getEnclosingStatement(tgt);
             if (SgBasicBlock* body = isSgBasicBlock(s))
             {
-                SageInterface::prependStatement(pathNumStmt, body);
+                prependStatement(pathNumStmt, body);
             }
             else
                 ROSE_ASSERT(!"The target of the edge from a if statement is not a basic block!");
@@ -546,7 +606,7 @@ void PathNumManager::insertPathNumberOnEdge(
         {
             if (SgBasicBlock* body = isSgBasicBlock(caseStmt->get_body()))
             {
-                SageInterface::prependStatement(pathNumStmt, body);
+                prependStatement(pathNumStmt, body);
                 
                 // A trick to prevent that the previous case option does not have a break.
                 SgStatement* pathNumStmt2 = buildExprStatement(
@@ -554,7 +614,7 @@ void PathNumManager::insertPathNumberOnEdge(
                                                     buildVarRefExp(pathNumName),
                                                     buildIntVal(val)));
 
-                SageInterface::insertStatementBefore(caseStmt, pathNumStmt2);
+                insertStatementBefore(caseStmt, pathNumStmt2);
             }
             else
             {
@@ -565,7 +625,7 @@ void PathNumManager::insertPathNumberOnEdge(
         {
             if (SgBasicBlock* body = isSgBasicBlock(defaultStmt->get_body()))
             {
-                SageInterface::prependStatement(pathNumStmt, body);
+                prependStatement(pathNumStmt, body);
                 
                 // A trick to prevent that the previous case option does not have a break.
                 SgStatement* pathNumStmt2 = buildExprStatement(
@@ -573,14 +633,14 @@ void PathNumManager::insertPathNumberOnEdge(
                                                     buildVarRefExp(pathNumName),
                                                     buildIntVal(val)));
 
-                SageInterface::insertStatementBefore(defaultStmt, pathNumStmt2);
+                insertStatementBefore(defaultStmt, pathNumStmt2);
             }
             else
             {
                 ROSE_ASSERT(!"The target of the edge from a switch statement is not a basic block!");
             }
         }
-        else if (!SageInterface::isAncestor(src, tgt))
+        else if (!isAncestor(src, tgt))
         {
             // In this case, this switch statement does not have a default option.
             // We build one here.
@@ -592,46 +652,108 @@ void PathNumManager::insertPathNumberOnEdge(
             ROSE_ASSERT(0);
         }
     }
+    
+    else if (SgWhileStmt* whileStmt = isSgWhileStmt(src))
+    {
+        // If the edge points to while body.
+        if (isAncestor(src, tgt))
+        {
+            SgStatement* s = getEnclosingStatement(tgt);
+            if (SgBasicBlock* body = isSgBasicBlock(s))
+            {
+                prependStatement(pathNumStmt, body);
+            }
+            else
+                ROSE_ASSERT(!"The target of the edge from a if statement is not a basic block!");
+            //SageInterface::insertStatementBefore(stmt, pathNumStmt);
+        }
+        else
+        {
+            insertStatementAfter(whileStmt, pathNumStmt);
+            
+            // For all breaks in this while statement, add a -= statement to offset the one
+            // just added after while stmt.
+            foreach (SgBreakStmt* breakStmt, 
+                    querySubTree<SgBreakStmt>(whileStmt, V_SgBreakStmt))
+            {
+                SgStatement* pathNumStmt2 = buildExprStatement(
+                                                    buildMinusAssignOp(
+                                                        buildVarRefExp(pathNumName),
+                                                        buildIntVal(val)));
+                insertStatementBefore(breakStmt, pathNumStmt2);
+            }
+            
+            foreach (SgGotoStatement* gotoStmt, 
+                    querySubTree<SgGotoStatement>(whileStmt, V_SgGotoStatement))
+            {
+                ROSE_ASSERT(!"Cannot handle goto in while stmt!");
+            }
+        }
+    }
 }
 
 void PathNumManager::insertLoopCounterIncrOnEdge(
             const BackstrokeCFG::Edge& cfgEdge,
+            const std::string& pathNumName,
             const std::string& counterName)
 {
-    SgStatement* counterIncrStmt = 
-            buildExprStatement(buildPlusPlusOp(buildVarRefExp(counterName)));
-    
     SgNode* src = (*cfg_)[cfgEdge]->source().getNode();
     //SgNode* tgt = (*cfg_)[cfgEdge]->target().getNode();
+    pushScopeStack(getScope(src));
+    
+    SgStatement* counterIncrStmt = 
+            buildExprStatement(buildPlusPlusOp(buildVarRefExp(counterName)));
+    SgStatement* pushPathNumStmt = 
+            buildExprStatement(buildPushFunctionCall(buildVarRefExp(pathNumName)));
+    SgStatement* setPathNumZeroStmt = 
+            buildExprStatement(buildAssignOp(buildVarRefExp(pathNumName), buildIntVal(0)));
+    
     
     if (SgContinueStmt* contStmt = isSgContinueStmt(src))
+    {
         insertStatementBefore(contStmt, counterIncrStmt);
+        insertStatementBefore(contStmt, pushPathNumStmt);
+        insertStatementBefore(contStmt, setPathNumZeroStmt);
+    }
     else
     {
         SgStatement* stmt = getEnclosingStatement(src);
+        insertStatementAfter(stmt, setPathNumZeroStmt);
+        insertStatementAfter(stmt, pushPathNumStmt);
         insertStatementAfter(stmt, counterIncrStmt);
     }
+    
+    popScopeStack();
 }
 
 void PathNumManager::insertLoopCounterPushOnEdge(
             const BackstrokeCFG::Edge& cfgEdge,
             const std::string& counterName)
 {
+    SgNode* src = (*cfg_)[cfgEdge]->source().getNode();
+    SgNode* tgt = (*cfg_)[cfgEdge]->target().getNode();
+    
+    pushScopeStack(getScope(src));
     
     SgStatement* counterPushStmt = 
             buildExprStatement(buildPushFunctionCall(buildVarRefExp(counterName)));
     
-    SgNode* src = (*cfg_)[cfgEdge]->source().getNode();
     //SgNode* tgt = (*cfg_)[cfgEdge]->target().getNode();
     
-    if (SgBreakStmt* breakStmt = isSgBreakStmt(src))
-        insertStatementBefore(breakStmt, counterPushStmt);
-    else if (SgWhileStmt* whileStmt = isSgWhileStmt(src))
-        insertStatementAfter(breakStmt, counterPushStmt);
+    if (SgWhileStmt* stmt = isSgWhileStmt(src))
+        insertStatementAfter(stmt, counterPushStmt);
+    else if (isSgIfStmt(src))
+    {
+        if (SgBasicBlock* basicBlock = isSgBasicBlock(tgt))
+            prependStatement(counterPushStmt, basicBlock);
+    }
     else
     {
+        cout << src->class_name() << endl;
         ROSE_ASSERT(false);
     }
+    
+    popScopeStack();
 }
 
 void PathNumManager::dagToDot(const DAG& dag, const std::string& filename)

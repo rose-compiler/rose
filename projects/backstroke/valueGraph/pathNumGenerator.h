@@ -127,6 +127,15 @@ class PathNumManager
     //! The first DAG is about the function, and others are all loops.
     std::vector<DAG> dags_;
 
+    //! A DAG including all CFG nodes and is used to get the path numbers.
+    DAG superDag_;
+    
+    //! All back edges in the CFG.
+    std::set<CFGEdge> backEdges_;
+    
+    //! All loops in the CFG.
+    std::map<CFGVertex, std::set<CFGVertex> > loops_;
+    
     //! A table from each CFG vertex to the index of the DAG and the DAG vertex.
     std::map<CFGVertex, std::map<int, DAGVertex> > vertexToDagIndex_;
 
@@ -152,6 +161,8 @@ public:
     PathNumManager(const BackstrokeCFG* cfg);
     ~PathNumManager();
 
+    void buildSuperDAG();
+    
     //! Get path numbers from a AST node.
     PathInfo getPathNumbers(SgNode* node) const;
 
@@ -222,7 +233,8 @@ private:
     //! For a loop counter, insert ++counter on the given CFG edge.
     void insertLoopCounterIncrOnEdge(
             const BackstrokeCFG::Edge& cfgEdge,
-            const std::string& pathNumName);
+            const std::string& pathNumName,
+            const std::string& counterName);
     
     //! For a loop counter, insert push(counter) on the given CFG edge.
     void insertLoopCounterPushOnEdge(

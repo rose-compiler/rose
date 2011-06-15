@@ -167,8 +167,8 @@ void EventReverser::generateCode()
 
     // If the number of path is 1, we don't have to use path numbers.
     //if (pathNum > 1)
-    pathNumManager_->insertPathNumToFwdFunc();
     pathNumManager_->insertLoopCounterToFwdFunc();
+    pathNumManager_->insertPathNumToFwdFunc();
 
     // Finally insert all functions in the code.
     insertFunctions();
@@ -873,6 +873,10 @@ void EventReverser::addReverseCFGNode(
 
     // Update rvsCFGBasicBlock.
     rvsCFGBasicBlock[paths] = newNode;
+    
+    // Add the current dag index to the following set to prevent the Mu point is 
+    // added several times.
+    dagAdded.insert(dagIndex);
 }
 
 namespace 
