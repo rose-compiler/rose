@@ -819,7 +819,7 @@ Grammar::setUpStatements ()
 
   // driscoll6 (6/10/11) Support for Python decorators.
      FunctionDeclaration.setDataPrototype ( "SgExprListExp*", "decoratorList", "",
-                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      FunctionParameterList.setFunctionPrototype ( "HEADER_FUNCTION_PARAMETER_LIST", "../Grammar/Statement.code" );
 
