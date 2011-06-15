@@ -191,6 +191,9 @@ static void syscall_pipe_enter(RSIM_Thread *t, int callno);
 static void syscall_pipe_leave(RSIM_Thread *t, int callno);
 static void syscall_prctl(RSIM_Thread *t, int callno);
 static void syscall_prctl_enter(RSIM_Thread *t, int callno);
+static void syscall_pread64(RSIM_Thread *t, int callno);
+static void syscall_pread64_enter(RSIM_Thread *t, int callno);
+static void syscall_pread64_leave(RSIM_Thread *t, int callno);
 static void syscall_read(RSIM_Thread *t, int callno);
 static void syscall_read_enter(RSIM_Thread *t, int callno);
 static void syscall_read_leave(RSIM_Thread*, int callno);
@@ -384,6 +387,7 @@ RSIM_Linux32::ctor()
     SC_REG(175, rt_sigprocmask,                 rt_sigprocmask);
     SC_REG(176, rt_sigpending,                  rt_sigpending);
     SC_REG(179, rt_sigsuspend,                  rt_sigsuspend);
+    SC_REG(180, pread64,                        pread64);
     SC_REG(183, getcwd,                         getcwd);
     SC_REG(186, sigaltstack,                    sigaltstack);
     SC_REG(191, ugetrlimit,                     ugetrlimit);
@@ -4659,6 +4663,42 @@ syscall_rt_sigsuspend_leave(RSIM_Thread *t, int callno)
         t->tracing(TRACE_SYSCALL)->more("(%d)", t->syscall_info.signo);
         t->tracing(TRACE_SYSCALL)->multipart_end();
     }
+}
+
+/*******************************************************************************************************************************/
+
+static void
+syscall_pread64_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("pread64", "dpdd");
+}
+
+static void
+syscall_pread64(RSIM_Thread *t, int callno)
+{
+    int fd              = t->syscall_arg(0);
+    uint32_t buf_va     = t->syscall_arg(1);
+    uint32_t size       = t->syscall_arg(2);
+    uint32_t offset     = t->syscall_arg(3);
+
+    uint8_t *buf = new uint8_t[size];
+    ssize_t nread = pread64(fd, buf, size, offset);
+    if (-1==nread) {
+        t->syscall_return(-errno);
+    } else if ((size_t)nread != t->get_process()->mem_write(buf, buf_va, (size_t)nread)) {
+        t->syscall_return(-EFAULT);
+    } else {
+        t->syscall_return(nread);
+    }
+
+    delete[] buf;
+}
+
+static void
+syscall_pread64_leave(RSIM_Thread *t, int callno)
+{
+    ssize_t nread = t->syscall_arg(-1);
+    t->syscall_leave("d-b", nread>0?nread:0);
 }
 
 /*******************************************************************************************************************************/
