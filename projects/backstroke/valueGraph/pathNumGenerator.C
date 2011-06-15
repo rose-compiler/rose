@@ -356,7 +356,7 @@ map<PathSet, int> PathNumManager::getPathsIndices(size_t index) const
 }
 #endif
 
-void PathNumManager::insertPathNumberToEvents(const string& pathNumName)
+void PathNumManager::insertPathNumToFwdFunc()
 {
     ROSE_ASSERT(pathNumGenerators_.size() == dags_.size());
 
@@ -365,7 +365,7 @@ void PathNumManager::insertPathNumberToEvents(const string& pathNumName)
     ROSE_ASSERT(funcDef);
 
     // Insert the declaration of the path number in the front of forward function.
-    //string pathNumName = "__num__";
+    string pathNumName = "__num__";
     SgVariableDeclaration* pathNumDecl =
             SageBuilder::buildVariableDeclaration(
                 pathNumName,
@@ -416,6 +416,59 @@ void PathNumManager::insertPathNumberToEvents(const string& pathNumName)
     SageInterface::appendStatement(pushPathNumFuncCall, funcDef->get_body());
     
     SageInterface::fixVariableReferences(funcDef);
+}
+
+namespace
+{
+    
+SgStatement* getLoopStatement(SgNode* header)
+{
+    SgNode* parent = header;
+    while (parent)
+    {
+        switch (parent->variantT())
+        {
+            case V_SgWhileStmt:
+            case V_SgDoWhileStmt:
+            case V_SgForStatement:
+                return isSgStatement(parent);
+            default:
+                parent = parent->get_parent();
+        }
+    }
+    return NULL;
+}
+
+}
+
+void PathNumManager::insertLoopCounterToFwdFunc()
+{    
+    map<CFGVertex, string> loopCounterNames;
+    int counter = 0;
+    
+    foreach (const CFGEdge& cfgEdge, cfg_->getAllBackEdges())
+    {
+        CFGVertex header = boost::target(cfgEdge, *cfg_);
+        if (loopCounterNames.count(header) == 0)
+        {
+            string loopCounterName = string("__counter") 
+                    + boost::lexical_cast<string>(counter++) + "__";
+            loopCounterNames[header] = loopCounterName;
+            
+            SgStatement* loopStmt = getLoopStatement((*cfg_)[header]->getNode());
+            ROSE_ASSERT(loopStmt);
+            SgStatement* loopCounterDecl =
+                SageBuilder::buildVariableDeclaration(
+                    loopCounterName,
+                    SageBuilder::buildIntType(),
+                    SageBuilder::buildAssignInitializer(
+                        SageBuilder::buildIntVal(0)),
+                    SageInterface::getScope(loopStmt));
+            SageInterface::insertStatementBefore(loopStmt, loopCounterDecl);
+            
+        }
+        insertLoopCounterOnEdge(cfgEdge, loopCounterNames[header]);
+    }
 }
 
 //namespace 
@@ -522,6 +575,28 @@ void PathNumManager::insertPathNumberOnEdge(
         {
             ROSE_ASSERT(0);
         }
+    }
+}
+
+void PathNumManager::insertLoopCounterOnEdge(
+            const BackstrokeCFG::Edge& cfgEdge,
+            const std::string& counterName)
+{
+    using namespace SageBuilder;
+    using namespace SageInterface;
+    
+    SgStatement* counterIncrStmt = 
+            buildExprStatement(buildPlusPlusOp(buildVarRefExp(counterName)));
+    
+    SgNode* src = (*cfg_)[cfgEdge]->source().getNode();
+    //SgNode* tgt = (*cfg_)[cfgEdge]->target().getNode();
+    
+    if (SgContinueStmt* contStmt = isSgContinueStmt(src))
+        insertStatementBefore(contStmt, counterIncrStmt);
+    else
+    {
+        SgStatement* stmt = getEnclosingStatement(src);
+        insertStatementAfter(stmt, counterIncrStmt);
     }
 }
 

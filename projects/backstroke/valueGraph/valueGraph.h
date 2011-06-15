@@ -201,7 +201,7 @@ private:
     { return availableValues_[0].find(val) != availableValues_[0].end(); }
     
     //! Build the path number declaration.
-    void buildPathNumDeclaration(const std::string& pathNumName);
+    void buildPathNumDeclForRvsCmtFunc(const std::string& pathNumName);
     
     //! Build the route graph representing search result.
     void buildRouteGraph(const std::map<VGEdge, PathInfo>& routes);

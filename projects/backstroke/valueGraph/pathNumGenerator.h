@@ -194,7 +194,8 @@ public:
     //! in the CFG.
     //std::map<PathSet, int> getPathsIndices(size_t index) const;
 
-    void insertPathNumberToEvents(const std::string& pathNumName);
+    void insertPathNumToFwdFunc();
+    void insertLoopCounterToFwdFunc();
     
     //! Build a graph in dot file representing the given DAG.
     void dagToDot(const DAG& dag, const std::string& filename);
@@ -217,6 +218,10 @@ private:
             const BackstrokeCFG::Edge& cfgEdge,
             const std::string& pathNumName,
             int val);
+    
+    void insertLoopCounterOnEdge(
+            const BackstrokeCFG::Edge& cfgEdge,
+            const std::string& pathNumName);
 };
 
 #if 0

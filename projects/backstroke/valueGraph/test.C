@@ -80,6 +80,9 @@ int main(int argc, char *argv[])
         //    continue;
 
 #if 1
+        Backstroke::FullCFG fullCfg(funcDef);
+        fullCfg.toDot("fullCFG.dot");
+
         Backstroke::BackstrokeCFG cfg(funcDef);
         cfg.toDot(cfgFileName);
         

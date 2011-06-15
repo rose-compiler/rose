@@ -159,7 +159,7 @@ void EventReverser::generateCode()
     
     // If the number of path is 1, we don't have to use path numbers.
     //if (pathNum > 1)
-    buildPathNumDeclaration(pathNumName);
+    buildPathNumDeclForRvsCmtFunc(pathNumName);
     
     // Build all three functions.
     generateCode(0, rvsCFGs, rvsFuncDef_->get_body(), cmtFuncDef_->get_body(), pathNumName);
@@ -167,7 +167,8 @@ void EventReverser::generateCode()
 
     // If the number of path is 1, we don't have to use path numbers.
     //if (pathNum > 1)
-    pathNumManager_->insertPathNumberToEvents(pathNumName);
+    pathNumManager_->insertPathNumToFwdFunc();
+    pathNumManager_->insertLoopCounterToFwdFunc();
 
     // Finally insert all functions in the code.
     insertFunctions();
@@ -176,9 +177,10 @@ void EventReverser::generateCode()
     // Remove them here.
     removeEmptyIfStmt(rvsFuncDef_);
     removeEmptyIfStmt(cmtFuncDef_);
+    SageInterface::fixVariableReferences(fwdFuncDef_->get_body());
 }
 
-void EventReverser::buildPathNumDeclaration(const string& pathNumName)
+void EventReverser::buildPathNumDeclForRvsCmtFunc(const string& pathNumName)
 {
     using namespace SageBuilder;
 
@@ -1182,14 +1184,44 @@ void EventReverser::generateCodeForBasicBlock(
 namespace
 {
     using namespace SageBuilder;
+    using namespace SageInterface;
     
-    SgForStatement* buildLoopForReverseFunction()
+    SgForStatement* buildLoopForReverseFunction(SgScopeStatement* scope = NULL)
     {
-        SgBasicBlock* rvsBody = buildBasicBlock();
-        SgStatement* testStmt = buildExprStatement(buildIntVal(1));
-        SgExpression* incrExpr = buildIntVal(1);
+        static int counter = 0;
+        char inxVarName[32];
+        char sizeVarName[32];
+        sprintf(inxVarName, "__i%d__", counter);
+        sprintf(sizeVarName, "__s%d__", counter);
+        ++counter;
+        
+        pushScopeStack(scope);
+        
+        // Build the initialization statement.
+        SgVariableDeclaration* idxVar = buildVariableDeclaration(
+                inxVarName, buildIntType(), 
+                buildAssignInitializer(buildIntVal(0), buildIntType()));
+        SgVariableDeclaration* sizeVar = buildVariableDeclaration(
+                sizeVarName, buildIntType(), 
+                buildAssignInitializer(
+                    buildPopFunctionCall(buildIntType()), buildIntType()));
+        
+        // Init stmt
+        SgForInitStatement* initStmt = new SgForInitStatement();
+        setOneSourcePositionForTransformation(initStmt);
+        initStmt->append_init_stmt(idxVar);
+        initStmt->append_init_stmt(sizeVar);
+        
+        // Test stmt
+        SgStatement* testStmt = buildExprStatement(buildLessThanOp(
+                buildVarRefExp(idxVar), buildVarRefExp(sizeVar)));
+        // Incr expr
+        SgExpression* incrExpr = buildPlusPlusOp(buildVarRefExp(idxVar));
+        
         SgForStatement* rvsForStmt = 
-                buildForStatement(0, testStmt, incrExpr, rvsBody);
+                buildForStatement(initStmt, testStmt, incrExpr, buildBasicBlock());
+        
+        popScopeStack();
         return rvsForStmt;
     }
 }
@@ -1254,10 +1286,10 @@ void EventReverser::generateCode(
         if (dagIndexInBasicBlock != dagIndex && dagIndexInBasicBlock > 0)
         {
             // Build two loop bodies for reverse and commit events.
-            SgForStatement* rvsForStmt = buildLoopForReverseFunction();
+            SgForStatement* rvsForStmt = buildLoopForReverseFunction(rvsScope);
             appendStatement(rvsForStmt, rvsScope);
             
-            SgForStatement* cmtForStmt = buildLoopForReverseFunction();
+            SgForStatement* cmtForStmt = buildLoopForReverseFunction(cmtScope);
             appendStatement(cmtForStmt, cmtScope);
             
             generateCode(dagIndexInBasicBlock, rvsCFGs, 
