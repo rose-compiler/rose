@@ -39,7 +39,8 @@ echo ""
 #########################################################################################
 #
 ##
-   ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php python opencl"
+  #ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php python opencl"
+   ALL_SUPPORTED_LANGUAGES="binaries c c++ cuda fortran java php        opencl"
 ##
 #
 #########################################################################################
@@ -474,21 +475,6 @@ function print_isLanguageSupported() {
     echo "  - $language"
   fi
 }
-echo ""
-print_isLanguageSupported "Binary analysis" "$support_binaries"
-print_isLanguageSupported "C" "$support_c_language"
-print_isLanguageSupported "C++" "$support_cxx_language"
-print_isLanguageSupported "Cuda" "$support_cuda_language"
-print_isLanguageSupported "Fortran" "$support_fortran_language"
-print_isLanguageSupported "Java" "$support_java_language"
-print_isLanguageSupported "PHP" "$support_php_language"
-print_isLanguageSupported "Python" "$support_python_language"
-print_isLanguageSupported "OpenCL" "$support_opencl_language"
-echo ""
-echo "(+)enabled (-)disabled"
-#AC_MSG_RESULT($LANGUAGES_TO_SUPPORT)
-echo "------------------------------------------------"
-
 #########################################################################################
 #
 #  Enabled only one language: set specific configurations for minimal build of ROSE 
@@ -704,6 +690,21 @@ AM_CONDITIONAL(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT, [test "x$support_binaries" = 
 AM_CONDITIONAL(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT, [test "x$support_cuda_language" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT, [test "x$support_opencl_language" = xyes])
 echo "done"
+
+echo ""
+print_isLanguageSupported "Binary analysis" "$support_binaries"
+print_isLanguageSupported "C" "$support_c_language"
+print_isLanguageSupported "C++" "$support_cxx_language"
+print_isLanguageSupported "Cuda" "$support_cuda_language"
+print_isLanguageSupported "Fortran" "$support_fortran_language"
+print_isLanguageSupported "Java" "$support_java_language"
+print_isLanguageSupported "PHP" "$support_php_language"
+print_isLanguageSupported "Python" "$support_python_language"
+print_isLanguageSupported "OpenCL" "$support_opencl_language"
+echo ""
+echo "(+)enabled (-)disabled"
+#AC_MSG_RESULT($LANGUAGES_TO_SUPPORT)
+echo "------------------------------------------------"
 
 echo "Finished configuring user-specified languages to support"
 # End macro ROSE_SUPPORT_LANGUAGES.
