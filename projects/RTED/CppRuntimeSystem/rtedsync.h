@@ -1,3 +1,7 @@
+/// \file  rtedsync.h
+/// \brief implements an RTED layer over the workzone implementation
+/// \email peter.pirkelbauer@llnl.gov
+
 #ifndef RTED_SYNC_H
 #define RTED_SYNC_H
 

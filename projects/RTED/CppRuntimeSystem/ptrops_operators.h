@@ -1,4 +1,9 @@
 
+/// \file  ptrops_operators.h
+/// \brief provides C++ operators and other operations on RTED's address
+///        abstraction (rted_Address)
+/// \email peter.pirkelbauer@llnl.gov
+
 #ifndef _PTROPS_OPERATORS_H
 #define _PTROPS_OPERATORS_H
 

@@ -1,4 +1,9 @@
-
+///
+/// \file  rted_iface_structs.h
+/// \brief defines structs that are used in RTED's runtime system interface
+/// \note  they are kept sepaerately from RuntimeSystem.h b/c these
+///        structs are used throughout the CppRuntimeSystem implementation.
+/// \email peter.pirkelbauer@llnl.gov
 
 #ifndef _RTED_IFACE_STRUCTS_H
 #define _RTED_IFACE_STRUCTS_H
