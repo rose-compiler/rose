@@ -247,16 +247,13 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
                 sg_params,
                 sg_scope_statement);
 
-    std::vector<SgExpression*> decorator_list;
+    SgExprListExp* decorators = sg_func_decl->get_decoratorList();
     Py_ssize_t decc = PyList_Size(py_decorators);
     for(int i = 0; i < decc; i++) {
         PyObject* py_exp = PyList_GetItem(py_decorators, i);
         SgExpression* exp = PyDecapsulate<SgExpression>(py_exp);
-        decorator_list.push_back(exp);
+        decorators->append_expression(exp);
     }
-    SgExprListExp* decorators = SageBuilder::buildExprListExp(decorator_list);
-    sg_func_decl->set_decoratorList(decorators);
-    decorators->set_parent(sg_func_decl);
 
     PyObject* return_tuple = PyTuple_New(2);
     PyTuple_SetItem(return_tuple, 0, PyEncapsulate(sg_func_decl));
