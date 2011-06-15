@@ -22,6 +22,8 @@
 #include <sys/sem.h>
 #include <sys/shm.h>
 
+// #include <linux/msdos_fs.h>             /* for VFAT_IOCTL_* */
+
 /* Define this if you want strict emulation. When defined, every attempt is made for x86sim to provide an environment as close
  * as possible to running natively on hudson-rose-07.  Note that defining this might cause the simulator to malfunction since
  * some specimens will attempt to execute instructions that are not implemented in the x86 instruction semantics yet. */
@@ -1066,9 +1068,25 @@ struct iovec_32 {
     uint32_t    iov_len;                /* size of buffer in bytes */
 } __attribute__((packed));
 
+// /* Macros for creating ioctl command numbers. See the _IOC macro in linux source code. */
+// extern unsigned invalid_size_arg_for_IOC; /* provoke linker error for invalid size arguments */
+// #define LINUX_IOC_NONE 0u
+// #define LINUX_IOC_WRITE 1u
+// #define LINUX_IOC_READ 2u
+// #define LINUX_IOC_TYPECHECK(t) ((sizeof(t) == sizeof(t[1]) && sizeof(t) < (1 << 14)) ? sizeof(t) : invalid_size_arg_for_IOC)
+// #define LINUX_IOC(dir,type,nr,size) (((dir)<<30) | ((type)<<16) | ((nr)<<8) | (size))
+// #define LINUX_IO(type,nr)            LINUX_IOC(LINUX_IOC_NONE,(type),(nr),0)
+// #define LINUX_IOR(type,nr,size)      LINUX_IOC(LINUX_IOC_READ,(type),(nr),(LINUX_IOC_TYPECHECK(size)))
+// #define LINUX_IOW(type,nr,size)      LINUX_IOC(LINUX_IOC_WRITE,(type),(nr),(LINUX_IOC_TYPECHECK(size)))
+// #define LINUX_IOWR(type,nr,size)     LINUX_IOC(LINUX_IOC_READ|LINUX_IOC_WRITE,(type),(nr),(LINUX_IOC_TYPECHECK(size)))
+// #define LINUX_IOR_BAD(type,nr,size)  LINUX_IOC(LINUX_IOC_READ,(type),(nr),sizeof(size))
+// #define LINUX_IOW_BAD(type,nr,size)  LINUX_IOC(LINUX_IOC_WRITE,(type),(nr),sizeof(size))
+// #define LINUX_IOWR_BAD(type,nr,size) LINUX_IOC(LINUX_IOC_READ|LINUX_IOC_WRITE,(type),(nr),sizeof(size))
+
 /* command values for the ioctl syscall */
 static const Translate ioctl_commands[] = {
     TE(TCGETS), TE(TCSETS), TE(TCSETSW), TE(TCGETA), TE(TIOCGPGRP), TE(TIOCSPGRP), TE(TIOCSWINSZ), TE(TIOCGWINSZ),
+    TE2(0x82187201, VFAT_IOCTL_READDIR_BOTH),
     T_END
 };
  

@@ -1438,6 +1438,11 @@ syscall_ioctl(RSIM_Thread *t, int callno)
             break;
         }
 
+        case 0x82187201: /* VFAT_IOCTL_READDIR_BOTH */
+            /* FIXME: For now assume that we have no vfat filesystems mounted. */
+            t->syscall_return(-ENOTTY);
+            break;
+
         default: {
             fprintf(stderr, "  unhandled ioctl: %u\n", cmd);
             abort();

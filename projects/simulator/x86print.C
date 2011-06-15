@@ -198,6 +198,7 @@ print_time(RTS_Message *m, uint32_t value)
     m->more("%s", buf);
 }
 
+/* letters are documented in RSIM_Thread::syscall_enter() */
 void
 print_single(RTS_Message *m, char fmt, const ArgInfo *info)
 {
