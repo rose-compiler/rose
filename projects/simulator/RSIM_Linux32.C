@@ -1905,6 +1905,224 @@ syscall_fstatfs_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
+/** Returns the first control message header if the control message buffer is large enough to contain a header.  The returned
+ * header is therefore always a complete header, but the control message buffer might not be large enough to contain the
+ * ancillary data that follows the header.  */
+template<class ControlHeader>
+static ControlHeader *cmsg_first(void *control, size_t controllen) {
+    assert(control!=NULL || 0==controllen);
+    return sizeof(ControlHeader)<=controllen ? (ControlHeader*)control : NULL;
+}
+template<class ControlHeader>
+static const ControlHeader *cmsg_first(const void *control, size_t controllen) {
+    assert(control!=NULL || 0==controllen);
+    return sizeof(ControlHeader)<=controllen ? (const ControlHeader*)control : NULL;
+}
+
+/** Returns the next control message header if the control message buffer is large enough to contain a header.  The returned
+ * header is therefore always a complete header, but the control message buffer might not be large enough to contain the
+ * ancillary data that follows the header. */
+template<class ControlHeader>
+static ControlHeader *cmsg_next(void *control, size_t controllen, ControlHeader *cur) {
+    if (!cur) return NULL;
+    assert(control!=NULL && (uint8_t*)cur>=(uint8_t*)control);
+    assert(cur->cmsg_len >= sizeof(ControlHeader));
+    size_t offset = (uint8_t*)cur - (uint8_t*)control + ALIGN_UP(cur->cmsg_len, sizeof(cur->cmsg_len));
+    return offset+sizeof(ControlHeader)<=controllen ? (ControlHeader*)((uint8_t*)control+offset) : NULL;
+}
+template<class ControlHeader>
+static const ControlHeader *cmsg_next(const void *control, size_t controllen, const ControlHeader *cur) {
+    if (!cur) return NULL;
+    assert(control!=NULL && (const uint8_t*)cur>=(const uint8_t*)control);
+    assert(cur->cmsg_len >= sizeof(ControlHeader));
+    size_t offset = (const uint8_t*)cur - (const uint8_t*)control + ALIGN_UP(cur->cmsg_len, sizeof(cur->cmsg_len));
+    return offset+sizeof(ControlHeader)<=controllen ? (const ControlHeader*)((const uint8_t*)control+offset) : NULL;
+}
+
+/** Returns true if the control buffer is large enough to contain the control message's ancillary data. */
+template<class ControlHeader>
+static bool cmsg_payload_complete(const void *control, size_t controllen, const ControlHeader *cur) {
+    assert(cur && (uint8_t*)cur>=(const uint8_t*)control);
+    return (size_t)((uint8_t*)cur-(const uint8_t*)control) + cur->cmsg_len <= controllen;
+}
+
+/** Count the number of control message headers in the control buffer.  The buffer might not be large enough to contain all the
+ *  ancillary data of the last mesage. */
+template<class ControlHeader>
+static size_t cmsg_nmessages(const void *control, size_t controllen) {
+    size_t count=0;
+    for (ControlHeader *ctl=cmsg_first<ControlHeader>(control, controllen);
+         ctl!=NULL;
+         ctl=cmsg_next<ControlHeader>(control, controllen, ctl)) {
+        count++;
+    }
+    return count;
+}
+
+/** Returns the size of the ancillary data for a control message.  The payload might be larger than the control message
+ *  buffer. */
+template<class ControlHeader>
+static size_t cmsg_payload_size(const ControlHeader *ctl) {
+    assert(ctl!=NULL);
+    assert(ctl->cmsg_len >= sizeof(ControlHeader));
+    return ctl->cmsg_len - sizeof(ControlHeader);
+}
+
+/** Returns the size of the ancillary data for a control message, limited by the size of the control message buffer. */
+template<class ControlHeader>
+static size_t cmsg_payload_size(const void *control, size_t controllen, const ControlHeader *ctl) {
+    assert(ctl!=NULL && control!=NULL);
+    assert((uint8_t*)ctl >= (const uint8_t*)control && (uint8_t*)(ctl+1) <= (const uint8_t*)control+controllen);
+    size_t payload_offset = (uint8_t*)(ctl+1) - (const uint8_t*)control;
+    size_t payload_size = cmsg_payload_size(ctl);
+    size_t payload_avail = controllen - payload_offset;
+    return std::min(payload_size, payload_avail);
+}
+
+/** Return the sizeof the buffer needed to hold control messages.  If the payload of the last message is trunctated in the
+ * source, then it will also be truncated in the destination. */
+template<class SourceType, class DestinationType>
+static size_t cmsg_needed(const void *control, size_t controllen)
+{
+    size_t retval = 0;
+    static const DestinationType *dst = NULL; // only used for sizeof(dst->cmsg_len)
+    for (const SourceType *ctl=cmsg_first<SourceType>(control, controllen);
+         ctl!=NULL;
+         ctl=cmsg_next<SourceType>(control, controllen, ctl)) {
+        retval = ALIGN_UP(retval, sizeof(dst->cmsg_len));
+        retval += sizeof(DestinationType) + cmsg_payload_size(control, controllen, ctl);
+    }
+    return retval;
+}
+
+template<class ControlHeader>
+static void cmsg_dump(const void *control, size_t controllen, FILE *f, const std::string prefix="")
+{
+    std::string hexdump_prefix = prefix + "            ";
+    HexdumpFormat fmt;
+    fmt.prefix = hexdump_prefix.c_str();
+    fmt.addr_fmt = "0x%02x:";
+    fmt.multiline = true;
+    fmt.pad_chars = false;
+
+    size_t i = 0;
+    for (const ControlHeader *ctl=cmsg_first<ControlHeader>(control, controllen);
+         ctl!=NULL;
+         ctl=cmsg_next<ControlHeader>(control, controllen, ctl)) {
+        size_t payload_advertised_len = cmsg_payload_size(ctl);
+        size_t payload_actual_len = cmsg_payload_size(control, controllen, ctl);
+        fprintf(f, "%smessage #%zd: size: total=%zu; payload=%zu; actual_payload=%zu\n",
+                prefix.c_str(), i++, (size_t)ctl->cmsg_len, payload_advertised_len, payload_actual_len);
+        SgAsmExecutableFileFormat::hexdump(f, 0, (const unsigned char*)(ctl+1), payload_actual_len, fmt);
+    }
+}
+
+/** Copy the source control message to the destination control message. If the source payload is truncated then the destination
+ *  payload will also be truncated. */
+template<class SourceType, class DestinationType>
+static void cmsg_copy1(const void *src_control, size_t src_controllen, const SourceType *src_ctl,
+                       void *dst_control, size_t dst_controllen, DestinationType *dst_ctl)
+{
+    assert(src_ctl && src_control &&
+           (const uint8_t*)src_ctl>=(const uint8_t*)src_control &&
+           (const uint8_t*)(src_ctl+1)<=(const uint8_t*)src_control+src_controllen);
+    assert(dst_ctl && dst_control &&
+           (uint8_t*)dst_ctl>=(uint8_t*)dst_control &&
+           (uint8_t*)(dst_ctl+1)<=(uint8_t*)dst_control+dst_controllen);
+    dst_ctl->cmsg_len = sizeof(DestinationType) + cmsg_payload_size(src_ctl);
+    dst_ctl->cmsg_level = src_ctl->cmsg_level;
+    dst_ctl->cmsg_type = src_ctl->cmsg_type;
+
+    size_t to_copy = std::min(cmsg_payload_size(src_control, src_controllen, src_ctl),
+                              cmsg_payload_size(dst_control, dst_controllen, dst_ctl));
+    memcpy(dst_ctl+1, src_ctl+1, to_copy);
+}
+
+/** Copy a guest msghdr_32.msg_control array to a host msghdr.msg_control array, allocating space and initializing the host's
+ *  relevant members in its msghdr struct.  Returns zero on success, negative errno on failure. */
+static int
+cmsg_copy_all(RSIM_Thread *t, const msghdr_32 &guest, msghdr &host)
+{
+    int retval = 0;
+    host.msg_control = NULL;
+    host.msg_controllen = 0;
+
+    /* Read the guest control messages */
+    void *guest_control = new uint8_t[guest.msg_controllen];
+    size_t nread = t->get_process()->mem_read(guest_control, guest.msg_control, guest.msg_controllen);
+    if (nread !=guest.msg_controllen)
+        retval = -EFAULT;
+
+    /* Allocate the host buffer */
+    host.msg_controllen = cmsg_needed<cmsghdr_32, cmsghdr>(guest_control, guest.msg_controllen);
+    if (0==host.msg_controllen)
+        return 0;
+    host.msg_control = new uint8_t[host.msg_controllen];
+
+    /* Copy each message from guest to host */
+    cmsghdr_32 *guest_cmsg = cmsg_first<cmsghdr_32>(guest_control,    guest.msg_controllen);
+    cmsghdr    *host_cmsg  = cmsg_first<cmsghdr   >(host.msg_control, host.msg_controllen);
+    while (guest_cmsg) {
+        if (!cmsg_payload_complete(guest_control, guest.msg_controllen, guest_cmsg)) {
+            retval = -EFAULT;
+            break;
+        }
+        cmsg_copy1(guest_control,    guest.msg_controllen, guest_cmsg,
+                   host.msg_control, host.msg_controllen,  host_cmsg);
+                  
+        guest_cmsg = cmsg_next(guest_control,    guest.msg_controllen, guest_cmsg);
+        host_cmsg  = cmsg_next(host.msg_control, host.msg_controllen,  host_cmsg);
+    }
+
+    if (retval) {
+        delete[] (uint8_t*)guest_control;
+        delete[] (uint8_t*)host.msg_control;
+        host.msg_control = NULL;
+        host.msg_controllen = 0;
+    }
+    return retval;
+}
+
+/** Copy host msghdr.msg_control to the guest.  Returns zero on success, negative errno on failure.  Truncation of a message
+ *  due to the guest not supplying a large enough buffer is not an error, but rather results in setting the MSG_CTRUNC flag
+ *  in the msghdr_32 struct. */
+static int
+cmsg_copy_all(RSIM_Thread *t, const msghdr &host, msghdr_32 &guest)
+{
+    int retval = 0;
+
+    size_t guest_controllen = cmsg_needed<cmsghdr, cmsghdr_32>(host.msg_control, host.msg_controllen);
+    if (0==guest_controllen) {
+        guest.msg_controllen = 0;
+        return 0;
+    }
+    
+    guest_controllen = std::min(guest_controllen, (size_t)guest.msg_controllen);
+    void *guest_control = new uint8_t[guest_controllen];
+
+    cmsghdr_32 *guest_cmsg = cmsg_first<cmsghdr_32>(guest_control,    guest_controllen);
+    cmsghdr    *host_cmsg  = cmsg_first<cmsghdr   >(host.msg_control, host.msg_controllen);
+    while (host_cmsg) {
+        assert(guest_cmsg);
+        cmsg_copy1(host.msg_control, host.msg_controllen, host_cmsg,
+                   guest_control,    guest_controllen,    guest_cmsg);
+        if (!cmsg_payload_complete(guest_control, guest_controllen, guest_cmsg))
+            guest.msg_flags |= MSG_CTRUNC;
+        guest_cmsg = cmsg_next(guest_control, guest_controllen, guest_cmsg);
+        host_cmsg = cmsg_next(host.msg_control, host.msg_controllen, host_cmsg);
+    }
+
+    size_t nwritten = t->get_process()->mem_write(guest_control, guest.msg_control, guest_controllen);
+    guest.msg_controllen = nwritten;
+    if (nwritten<guest_controllen) {
+        guest.msg_flags |= MSG_CTRUNC;
+        retval = -EFAULT;
+    }
+
+    delete[] (uint8_t*)guest_control;
+    return retval;
+}
+
 static void
 syscall_socketcall_enter(RSIM_Thread *t, int callno)
 {
@@ -1941,6 +2159,45 @@ syscall_socketcall_enter(RSIM_Thread *t, int callno)
         case 10: /* SYS_RECV */
             if (16==t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
                 t->syscall_enter(a, "recv", "dpdd");
+            } else {
+                t->syscall_enter("socketcall", "fp", socketcall_commands);
+            }
+            break;
+        case 16: /* SYS_SENDMSG */
+            if (12==t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
+                t->syscall_enter(a, "sendmsg", "dPd", sizeof(msghdr_32), print_msghdr_32);
+                RTS_Message *trace = t->tracing(TRACE_SYSCALL);
+                msghdr_32 msghdr;
+                if (trace->get_file() && sizeof(msghdr)==t->get_process()->mem_read(&msghdr, a[1], sizeof msghdr)) {
+                    for (unsigned i=0; i<msghdr.msg_iovlen && i<100; i++) {
+                        uint32_t vasz[2];
+                        if (8==t->get_process()->mem_read(vasz, msghdr.msg_iov+i*8, 8)) {
+                            uint8_t *buf = new uint8_t[vasz[1]];
+                            if (vasz[1]==t->get_process()->mem_read(buf, vasz[0], vasz[1])) {
+                                trace->more("\n    iov #%u: ", i);
+                                print_buffer(trace, vasz[0], buf, vasz[1], 1024);
+                                trace->more("; %"PRIu32" byte%s", vasz[1], 1==vasz[1]?"":"s");
+                            } else {
+                                trace->more("\n    iov #%u: short read of data", i);
+                            }
+                            delete[] buf;
+                        } else {
+                            trace->more("\n    iov #%u: short read of iov", i);
+                            break;
+                        }
+                    }
+                    if (msghdr.msg_iovlen>100)
+                        trace->more("\n    iov ... (%zu in total)\n", (size_t)msghdr.msg_iovlen);
+                    if (msghdr.msg_iovlen>0)
+                        trace->more("\n");
+
+                    if (msghdr.msg_controllen>0 && msghdr.msg_controllen<4096) {
+                        uint8_t control[msghdr.msg_controllen];
+                        size_t nread = t->get_process()->mem_read(control, msghdr.msg_control, msghdr.msg_controllen);
+                        if (nread==msghdr.msg_controllen)
+                            cmsg_dump<cmsghdr_32>((void*)control, msghdr.msg_controllen, trace->get_file(), std::string(16, ' '));
+                    }
+                }
             } else {
                 t->syscall_enter("socketcall", "fp", socketcall_commands);
             }
@@ -2094,6 +2351,76 @@ sys_recvfrom(RSIM_Thread *t, int fd, uint32_t buf_va, uint32_t buf_sz, int flags
 }
 
 static void
+sys_sendmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
+{
+    int retval = 0;
+    RTS_Message *strace = t->tracing(TRACE_SYSCALL);
+
+    /* Read guest information */
+    msghdr_32 guest;
+    if (sizeof(msghdr_32)!=t->get_process()->mem_read(&guest, msghdr_va, sizeof guest)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    if (guest.msg_iovlen<0 || guest.msg_iovlen>1024) {
+        t->syscall_return(-EINVAL);
+        return;
+    }
+    assert(0==guest.msg_namelen);       /* FIXME: not implemented yet [RPM 2011-06-14] */
+
+    if (0==guest.msg_iovlen) {
+        t->syscall_return(0);
+        return;
+    }
+    iovec_32 *guest_iov = new iovec_32[guest.msg_iovlen];
+    size_t guest_iov_sz = guest.msg_iovlen * sizeof(iovec_32);
+    if (guest_iov_sz!=t->get_process()->mem_read(guest_iov, guest.msg_iov, guest_iov_sz)) {
+        strace->more("<segfault reading iov>");
+        retval = -EFAULT;
+    }
+
+    /* Build the host data structure */
+    msghdr host;
+    memset(&host, 0, sizeof host);
+    if (0==retval) {
+        host.msg_name = NULL;
+        host.msg_namelen = 0;
+        host.msg_flags = guest.msg_flags;
+        host.msg_iovlen = guest.msg_iovlen;
+        host.msg_iov = new iovec[guest.msg_iovlen];
+        memset(host.msg_iov, 0, guest.msg_iovlen*sizeof(iovec));
+        for (unsigned i=0; i<guest.msg_iovlen; i++) {
+            host.msg_iov[i].iov_len = guest_iov[i].iov_len;
+            host.msg_iov[i].iov_base = new uint8_t[guest_iov[i].iov_len];
+            size_t nread = t->get_process()->mem_read(host.msg_iov[i].iov_base, guest_iov[i].iov_base, guest_iov[i].iov_len);
+            if (nread<guest_iov[i].iov_len) {
+                retval = -EFAULT;
+                break;
+            }
+        }
+        cmsg_copy_all(t, guest, host);
+    }
+
+    /* The real syscall */
+    if (0==retval) {
+        retval = sendmsg(fd, &host, flags);
+        if (-1==retval)
+            retval = -errno;
+    }
+
+    /* Clean up */
+    if (host.msg_iov) {
+        for (unsigned i=0; i<host.msg_iovlen; i++)
+            delete[] (uint8_t*)host.msg_iov[i].iov_base;
+        delete[] host.msg_iov;
+    }
+    delete[] (uint8_t*)host.msg_control;
+    delete[] guest_iov;
+
+    t->syscall_return(retval);
+}
+
+static void
 sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
 {
     int retval = 0;
@@ -2121,10 +2448,10 @@ sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
     /* Copy to host */
     msghdr host;
     memset(&host, 0, sizeof host);
-    if (0==retval && (host.msg_controllen = guest.msg_controllen) > 0) {
+    if (0==retval && guest.msg_controllen>0) {
+        host.msg_controllen = guest.msg_controllen + (guest.msg_controllen/sizeof(cmsghdr_32))*4; // estimate
         host.msg_control = new uint8_t[host.msg_controllen];
-        if (host.msg_controllen!=t->get_process()->mem_read(host.msg_control, guest.msg_control, guest.msg_controllen))
-            retval = -EFAULT;
+        memset(host.msg_control, 0, host.msg_controllen);
     }
     if (0==retval && (host.msg_iovlen = guest.msg_iovlen) > 0) {
         host.msg_iov = new iovec[guest.msg_iovlen];
@@ -2154,16 +2481,14 @@ sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
         }
     }
 
-    /* Copy control into the guest */
-    if (retval>=0 &&
-        (guest.msg_controllen=host.msg_controllen)>0 &&
-        host.msg_controllen!=t->get_process()->mem_write(host.msg_control, guest.msg_control, host.msg_controllen))
-        retval = -EFAULT;
-
-    /* Copy msghdr into the guest */
-    guest.msg_flags = host.msg_flags;
-    if (retval>=0 && sizeof(guest)!=t->get_process()->mem_write(&guest, msghdr_va, sizeof guest))
-        retval = -EFAULT;
+    /* Copy into the guest */
+    if (retval>=0) {
+        guest.msg_flags = host.msg_flags;
+        if (cmsg_copy_all(t, host, guest)<0)
+            retval = -EFAULT;
+        if (sizeof(guest)!=t->get_process()->mem_write(&guest, msghdr_va, sizeof guest))
+            retval = -EFAULT;
+    }
 
     /* Cleanup */
     for (unsigned idx=0; idx<host.msg_iovlen; idx++)
@@ -2227,6 +2552,15 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             break;
         }
 
+        case 16: {/* SYS_SENDMSG */
+            if (12!=t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
+                t->syscall_return(-EFAULT);
+            } else {
+                sys_sendmsg(t, a[0], a[1], a[2]);
+            }
+            break;
+        }
+            
         case 17: { /* SYS_RECVMSG */
             if (12!=t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
                 t->syscall_return(-EFAULT);
@@ -2246,7 +2580,6 @@ syscall_socketcall(RSIM_Thread *t, int callno)
         case 13: /* SYS_SHUTDOWN */
         case 14: /* SYS_SETSOCKOPT */
         case 15: /* SYS_GETSOCKOPT */
-        case 16: /* SYS_SENDMSG */
         case 18: /* SYS_ACCEPT4 */
         case 19: /* SYS_RECVMMSG */
             t->syscall_return(-ENOSYS);
@@ -2274,7 +2607,7 @@ syscall_socketcall_leave(RSIM_Thread *t, int callno)
                     sizeof(msghdr)==t->get_process()->mem_read(&msghdr, a[2], sizeof msghdr)) {
                     trace->multipart("recvmsg", "");
                     uint32_t nbytes = a[0];
-                    for (unsigned i=0; i<msghdr.msg_iovlen && i<1024 && nbytes>0; i++) {
+                    for (unsigned i=0; i<msghdr.msg_iovlen && i<100 && nbytes>0; i++) {
                         uint32_t vasz[2];
                         if (8==t->get_process()->mem_read(vasz, msghdr.msg_iov+i*8, 8)) {
                             uint32_t nused = std::min(nbytes, vasz[1]);
@@ -2287,6 +2620,14 @@ syscall_socketcall_leave(RSIM_Thread *t, int callno)
                             }
                             delete[] buf;
                         }
+                    }
+                    if (msghdr.msg_iovlen>100)
+                        trace->more("    iov... (%zu in total)\n", (size_t)msghdr.msg_iovlen);
+                    if (msghdr.msg_controllen>0 && msghdr.msg_controllen<4096) {
+                        uint8_t control[msghdr.msg_controllen];
+                        size_t nread = t->get_process()->mem_read(control, msghdr.msg_control, msghdr.msg_controllen);
+                        if (nread==msghdr.msg_controllen)
+                            cmsg_dump<cmsghdr_32>((void*)control, msghdr.msg_controllen, trace->get_file(), std::string(16, ' '));
                     }
                     trace->multipart_end();
                 }

@@ -1021,6 +1021,7 @@ struct sockaddr_32 {
     char        sa_data[14];
 } __attribute__((packed));
 
+/* 32-bit kernel struct for sendmsg() and recvmsg(). */
 struct msghdr_32 {
     uint32_t    msg_name;               /* optional ptr to source address if socket is unconnected */
     uint32_t    msg_namelen;            /* number of bytes pointed to by msg_name */
@@ -1030,6 +1031,35 @@ struct msghdr_32 {
     uint32_t    msg_controllen;         /* number of bytes pointed to by msg_control */
     uint32_t    msg_flags;
 } __attribute__((packed));
+
+/* 32-bit kernel struct to overlay onto parts of the msg_control member of msghdr_32 */
+struct cmsghdr_32 {
+    uint32_t    cmsg_len;               /* data byte count including this header */
+    int32_t     cmsg_level;             /* originating protocol */
+    int32_t     cmsg_type;              /* protocol-specific type */
+} __attribute((packed));
+
+/* Bit flags for msghdr_32.msg_flags */
+static const Translate msghdr_flags[] = {
+    TF3(0x1ffff, 0x00001, MSG_OOB),
+    TF3(0x1ffff, 0x00002, MSG_PEEK),
+    TF3(0x1ffff, 0x00004, MSG_DONTROUTE),
+    TF3(0x1ffff, 0x00008, MSG_CTRUNC),
+    TF3(0x1ffff, 0x00010, MSG_PROBE),
+    TF3(0x1ffff, 0x00020, MSG_TRUNC),
+    TF3(0x1ffff, 0x00040, MSG_DONTWAIT),
+    TF3(0x1ffff, 0x00080, MSG_EOR),
+    TF3(0x1ffff, 0x00100, MSG_WAITALL),
+    TF3(0x1ffff, 0x00200, MSG_FIN),
+    TF3(0x1ffff, 0x00400, MSG_SYN),
+    TF3(0x1ffff, 0x00800, MSG_CONFIRM),
+    TF3(0x1ffff, 0x01000, MSG_RST),
+    TF3(0x1ffff, 0x02000, MSG_ERRQUEUE),
+    TF3(0x1ffff, 0x04000, MSG_NOSIGNAL),
+    TF3(0x1ffff, 0x08000, MSG_MORE),
+    TF3(0x1ffff, 0x10000, MSG_WAITFORONEK),
+    T_END
+};
 
 struct iovec_32 {
     uint32_t    iov_base;               /* address of buffer */
