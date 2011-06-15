@@ -13,6 +13,8 @@ namespace Backstroke
 {
 
 using namespace std;
+using namespace SageBuilder;
+using namespace SageInterface;
 
 #define foreach BOOST_FOREACH
 #define reverse_foreach BOOST_REVERSE_FOREACH
@@ -443,31 +445,46 @@ SgStatement* getLoopStatement(SgNode* header)
 
 void PathNumManager::insertLoopCounterToFwdFunc()
 {    
-    map<CFGVertex, string> loopCounterNames;
+    //map<CFGVertex, string> loopCounterNames;
     int counter = 0;
     
-    foreach (const CFGEdge& cfgEdge, cfg_->getAllBackEdges())
+    map<CFGVertex, set<CFGVertex> > loops = cfg_->getAllLoops();
+    typedef pair<CFGVertex, set<CFGVertex> > NodeToNodes;
+    
+    foreach (const NodeToNodes& headerAndLoopNodes, loops)
     {
-        CFGVertex header = boost::target(cfgEdge, *cfg_);
-        if (loopCounterNames.count(header) == 0)
+        CFGVertex header = headerAndLoopNodes.first;
+        set<CFGVertex> loopNodes = headerAndLoopNodes.second;
+        loopNodes.insert(header);
+        
+        // Build the counter declaration.
+        string loopCounterName = string("__counter") 
+                + boost::lexical_cast<string>(counter++) + "__";
+        
+        SgStatement* loopStmt = getLoopStatement((*cfg_)[header]->getNode());
+        ROSE_ASSERT(loopStmt);
+        SgStatement* loopCounterDecl =
+            SageBuilder::buildVariableDeclaration(
+                loopCounterName,
+                SageBuilder::buildIntType(),
+                SageBuilder::buildAssignInitializer(
+                    SageBuilder::buildIntVal(0)),
+                SageInterface::getScope(loopStmt));
+        SageInterface::insertStatementBefore(loopStmt, loopCounterDecl);
+        
+        foreach (CFGVertex cfgNode, loopNodes)
         {
-            string loopCounterName = string("__counter") 
-                    + boost::lexical_cast<string>(counter++) + "__";
-            loopCounterNames[header] = loopCounterName;
-            
-            SgStatement* loopStmt = getLoopStatement((*cfg_)[header]->getNode());
-            ROSE_ASSERT(loopStmt);
-            SgStatement* loopCounterDecl =
-                SageBuilder::buildVariableDeclaration(
-                    loopCounterName,
-                    SageBuilder::buildIntType(),
-                    SageBuilder::buildAssignInitializer(
-                        SageBuilder::buildIntVal(0)),
-                    SageInterface::getScope(loopStmt));
-            SageInterface::insertStatementBefore(loopStmt, loopCounterDecl);
-            
+            foreach (const CFGEdge& cfgEdge, boost::out_edges(cfgNode, *cfg_))
+            {
+                CFGVertex tgt = boost::target(cfgEdge, *cfg_);
+                // Backedges
+                if (tgt == header)
+                    insertLoopCounterIncrOnEdge(cfgEdge, loopCounterName);
+                // exit edges
+                else if (loopNodes.count(tgt) == 0)
+                    insertLoopCounterPushOnEdge(cfgEdge, loopCounterName);
+            }
         }
-        insertLoopCounterOnEdge(cfgEdge, loopCounterNames[header]);
     }
 }
 
@@ -492,7 +509,6 @@ void PathNumManager::insertPathNumberOnEdge(
         const string& pathNumName,
         int val)
 {
-    using namespace SageBuilder;
     SgStatement* pathNumStmt = buildExprStatement(
                                     buildPlusAssignOp(
                                         buildVarRefExp(pathNumName),
@@ -578,13 +594,10 @@ void PathNumManager::insertPathNumberOnEdge(
     }
 }
 
-void PathNumManager::insertLoopCounterOnEdge(
+void PathNumManager::insertLoopCounterIncrOnEdge(
             const BackstrokeCFG::Edge& cfgEdge,
             const std::string& counterName)
 {
-    using namespace SageBuilder;
-    using namespace SageInterface;
-    
     SgStatement* counterIncrStmt = 
             buildExprStatement(buildPlusPlusOp(buildVarRefExp(counterName)));
     
@@ -597,6 +610,27 @@ void PathNumManager::insertLoopCounterOnEdge(
     {
         SgStatement* stmt = getEnclosingStatement(src);
         insertStatementAfter(stmt, counterIncrStmt);
+    }
+}
+
+void PathNumManager::insertLoopCounterPushOnEdge(
+            const BackstrokeCFG::Edge& cfgEdge,
+            const std::string& counterName)
+{
+    
+    SgStatement* counterPushStmt = 
+            buildExprStatement(buildPushFunctionCall(buildVarRefExp(counterName)));
+    
+    SgNode* src = (*cfg_)[cfgEdge]->source().getNode();
+    //SgNode* tgt = (*cfg_)[cfgEdge]->target().getNode();
+    
+    if (SgBreakStmt* breakStmt = isSgBreakStmt(src))
+        insertStatementBefore(breakStmt, counterPushStmt);
+    else if (SgWhileStmt* whileStmt = isSgWhileStmt(src))
+        insertStatementAfter(breakStmt, counterPushStmt);
+    else
+    {
+        ROSE_ASSERT(false);
     }
 }
 

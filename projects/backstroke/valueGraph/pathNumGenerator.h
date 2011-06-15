@@ -219,7 +219,13 @@ private:
             const std::string& pathNumName,
             int val);
     
-    void insertLoopCounterOnEdge(
+    //! For a loop counter, insert ++counter on the given CFG edge.
+    void insertLoopCounterIncrOnEdge(
+            const BackstrokeCFG::Edge& cfgEdge,
+            const std::string& pathNumName);
+    
+    //! For a loop counter, insert push(counter) on the given CFG edge.
+    void insertLoopCounterPushOnEdge(
             const BackstrokeCFG::Edge& cfgEdge,
             const std::string& pathNumName);
 };
