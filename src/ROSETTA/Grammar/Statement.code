@@ -7821,6 +7821,11 @@ SgFunctionDeclaration::post_construction_initialization()
   // DQ (7/31/2006): Explicit initialization of this data member is required!
   // JJW (8/6/2008): It probably isn't now that p_exceptionSpecification is a vector
      p_exceptionSpecification.clear();
+
+  // driscoll6 (6/15/11) Support for python function decorators.
+     SgExprListExp* decorators = SageBuilder::buildExprListExp();
+     set_decoratorList(decorators);
+     decorators->set_parent(this);
    }
 
 SgType*
