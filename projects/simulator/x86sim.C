@@ -219,9 +219,27 @@ main(int argc, char *argv[], char *envp[])
 #   endif
 
     /***************************************************************************************************************************/
-#if 1 /* Example: providing implementation for instructions not recognized by ROSE proper. */
-    sim.install_callback(new UnhandledInstruction);
+#   if 1 /* EXAMPLE: Showing the current memory map when the specimen is about to dump core. */
+    {
+        struct ShowMmapAtCoredump: public RSIM_Callbacks::ProcessCallback {
+            virtual ShowMmapAtCoredump *clone() { return this; }
+            virtual bool operator()(bool enabled, const Args &args) {
+                if (args.reason==RSIM_Callbacks::ProcessCallback::COREDUMP) {
+                    RTS_Message m(stderr, NULL);
+                    std::string title = "ShowMmapAtCoreDump triggered for process" + StringUtility::numberToString(getpid());
+                    args.process->mem_showmap(&m, title.c_str(), "  ");
+                }
+                return enabled;
+            }
+        };
+        sim.install_callback(new ShowMmapAtCoredump);
+    }
 #endif
+
+    /***************************************************************************************************************************/
+#   if 1 /* Example: providing implementation for instructions not recognized by ROSE proper. */
+    sim.install_callback(new UnhandledInstruction);
+#   endif
 
     /***************************************************************************************************************************
      *                                  The main program...
