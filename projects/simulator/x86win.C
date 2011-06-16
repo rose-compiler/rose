@@ -44,64 +44,6 @@ public:
     }
 };
 
-/** Provides implementations for functions not in ROSE.
- *
- *  These few functions are sometimes encountered in ld-linux.so and are important for its correct operation. */
-class UnhandledInstruction: public RSIM_Callbacks::InsnCallback {
-public:
-    struct MmxValue {
-        VirtualMachineSemantics::ValueType<32> lo, hi;
-    };
-
-    MmxValue mmx[8];                    // MMX registers 0-7
-
-    virtual UnhandledInstruction *clone() { return this; }
-    virtual bool operator()(bool enabled, const Args &args) {
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
-        if (enabled && insn) {
-            RTS_Message *m = args.thread->tracing(TRACE_MISC);
-            const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
-            uint32_t newip_va = insn->get_address() + insn->get_raw_bytes().size();
-            VirtualMachineSemantics::ValueType<32> newip = args.thread->policy.number<32>(newip_va);
-            switch (insn->get_kind()) {
-                case x86_movd: {
-                    assert(2==operands.size());
-                    SgAsmRegisterReferenceExpression *mre = isSgAsmRegisterReferenceExpression(operands[0]);
-                    if (mre && mre->get_descriptor().get_major()==x86_regclass_xmm) {
-                        int mmx_number = mre->get_descriptor().get_minor();
-                        m->mesg("UnhandledInstruction triggered for %s\n", unparseInstruction(insn).c_str());
-                        mmx[mmx_number].lo = args.thread->semantics.read32(operands[1]);
-                        mmx[mmx_number].hi = args.thread->policy.number<32>(0);
-                        args.thread->policy.writeIP(newip);
-                        enabled = false;
-                    }
-                    break;
-                }
-
-                case x86_movq: {
-                    assert(2==operands.size());
-                    SgAsmRegisterReferenceExpression *mre = isSgAsmRegisterReferenceExpression(operands[1]);
-                    if (mre && mre->get_descriptor().get_major()==x86_regclass_xmm) {
-                        int mmx_number = mre->get_descriptor().get_minor();
-                        m->mesg("UnhandledInstruction triggered for %s\n", unparseInstruction(insn).c_str());
-                        VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
-                        args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].lo, args.thread->policy.true_());
-                        addr = args.thread->policy.add<32>(addr, args.thread->policy.number<32>(4));
-                        args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].hi, args.thread->policy.true_());
-                        args.thread->policy.writeIP(newip);
-                        enabled = false;
-                    }
-                    break;
-                }
-
-                default:                // to shut up warnings about the zillion instructions we don't handle here
-                    break;
-            }
-        }
-        return enabled;
-    }
-};
-
 /** wine-pthread tries to open /proc/self/maps.  This won't work because that file describes the simulator rather than the
  * specimen.  Therefore, when this occurs, we create a temporary file and initialize it with information from the specimen's
  * MemoryMap and open that instead.  NOTE: This appears to only happen during error reporting. */

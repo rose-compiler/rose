@@ -325,6 +325,89 @@ public:
     }
 };
 
+/** Provides implementations for functions not in ROSE.
+ *
+ *  These few functions are sometimes encountered in ld-linux.so and are important for its correct operation. */
+class UnhandledInstruction: public RSIM_Callbacks::InsnCallback {
+public:
+    struct MmxValue {
+        VirtualMachineSemantics::ValueType<32> lo, hi;
+    };
 
+    MmxValue mmx[8];                    // MMX registers 0-7
+
+    virtual UnhandledInstruction *clone() { return this; }
+    virtual bool operator()(bool enabled, const Args &args) {
+        static const char *fmt = "UnhandledInstruction triggered for %s\n";
+        SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
+        if (enabled && insn) {
+            RTS_Message *m = args.thread->tracing(TRACE_MISC);
+            const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
+            uint32_t newip_va = insn->get_address() + insn->get_raw_bytes().size();
+            VirtualMachineSemantics::ValueType<32> newip = args.thread->policy.number<32>(newip_va);
+            switch (insn->get_kind()) {
+                case x86_movd: {
+                    assert(2==operands.size());
+                    SgAsmRegisterReferenceExpression *mre = isSgAsmRegisterReferenceExpression(operands[0]);
+                    if (mre && mre->get_descriptor().get_major()==x86_regclass_xmm) {
+                        int mmx_number = mre->get_descriptor().get_minor();
+                        m->mesg(fmt, unparseInstruction(insn).c_str());
+                        mmx[mmx_number].lo = args.thread->semantics.read32(operands[1]);
+                        mmx[mmx_number].hi = args.thread->policy.number<32>(0);
+                        args.thread->policy.writeIP(newip);
+                        enabled = false;
+                    }
+                    break;
+                }
+
+                case x86_movq: {
+                    assert(2==operands.size());
+                    SgAsmRegisterReferenceExpression *mre = isSgAsmRegisterReferenceExpression(operands[1]);
+                    if (mre && mre->get_descriptor().get_major()==x86_regclass_xmm) {
+                        int mmx_number = mre->get_descriptor().get_minor();
+                        m->mesg(fmt, unparseInstruction(insn).c_str());
+                        VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
+                        args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].lo, args.thread->policy.true_());
+                        addr = args.thread->policy.add<32>(addr, args.thread->policy.number<32>(4));
+                        args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].hi, args.thread->policy.true_());
+                        args.thread->policy.writeIP(newip);
+                        enabled = false;
+                    }
+                    break;
+                }
+
+                case x86_stmxcsr: {
+                    /* Store value of mxcsr register (which we don't actually have) to a doubleword in memory.  The value we
+                     * store was obtained by running GDB under "i386 -LRB3", stopping at the first instruction, and looking at
+                     * the mxcsr register. */
+                    m->mesg(fmt, unparseInstruction(insn).c_str());
+                    assert(1==operands.size());
+                    VirtualMachineSemantics::ValueType<32> value = args.thread->policy.number<32>(0x1f80); // from GDB
+                    VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
+                    args.thread->policy.writeMemory(x86_segreg_ss, addr, value, args.thread->policy.true_());
+                    args.thread->policy.writeIP(newip);
+                    enabled = false;
+                    break;
+                }
+
+                case x86_ldmxcsr: {
+                    /* Load the mxcsr register (which we don't actually have) from a doubleword in memory.  We read the memory
+                     * (for possible side effects) but then just throw away the value. */
+                    m->mesg(fmt, unparseInstruction(insn).c_str());
+                    assert(1==operands.size());
+                    VirtualMachineSemantics::ValueType<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
+                    (void)args.thread->policy.readMemory<32>(x86_segreg_ss, addr, args.thread->policy.true_());
+                    args.thread->policy.writeIP(newip);
+                    enabled = false;
+                    break;
+                }
+
+                default:                // to shut up warnings about the zillion instructions we don't handle here
+                    break;
+            }
+        }
+        return enabled;
+    }
+};
 
 #endif
