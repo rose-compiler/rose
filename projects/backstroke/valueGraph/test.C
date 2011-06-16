@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
     c.translate(argc,argv);
 #endif
     set<string> eventList;
+#if 1
     eventList.insert("Handle");
     eventList.insert("StartApp");
     eventList.insert("StopApp");
@@ -37,6 +38,7 @@ int main(int argc, char *argv[])
     //eventList.insert("DataIndication");
     eventList.insert("Timeout");
     eventList.insert("Notify");
+#endif
     eventList.insert("SendPending");
     
     vector<SgFunctionDefinition*> funcDefs;

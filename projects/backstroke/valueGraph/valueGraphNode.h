@@ -323,18 +323,20 @@ struct StateSavingEdge : ValueGraphEdge
 //    :   ValueGraphEdge(cost, dagIdx, paths), 
 //        visiblePathNum(visibleNum), killer(killerNode) {}
     
-    StateSavingEdge(
-            int cost, const PathInfo& paths, const ControlDependences& cd,
-            const std::map<int, PathSet> visiblePaths, 
-            SgNode* killerNode)
+    StateSavingEdge(int cost, const PathInfo& paths, const ControlDependences& cd,
+                    const std::map<int, PathSet> visiblePaths, 
+                    SgNode* killerNode)
     :   ValueGraphEdge(cost, paths, cd), 
-        visiblePaths(visiblePaths), killer(killerNode) 
+        visiblePaths(visiblePaths), 
+        killer(killerNode), 
+        varStored(false)
     {}
     
-    StateSavingEdge(
-            int cost, const PathInfo& paths, const ControlDependences& cd,
-            SgNode* killerNode)
-    :   ValueGraphEdge(cost, paths, cd), killer(killerNode) 
+    StateSavingEdge(int cost, const PathInfo& paths, const ControlDependences& cd,
+                    SgNode* killerNode)
+    :   ValueGraphEdge(cost, paths, cd), 
+        killer(killerNode), 
+        varStored(false) 
     {}
     
 	virtual std::string toString() const;
@@ -345,6 +347,10 @@ struct StateSavingEdge : ValueGraphEdge
 	//int visiblePathNum;
     std::map<int, PathSet> visiblePaths;
     SgNode* killer;
+    
+    //! If state saving is done. It is needed since a SS edge in a loop is traversed
+    //! more than once by difference DAGs.
+    bool varStored;
     
 };
 

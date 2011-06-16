@@ -22,6 +22,8 @@ void EventReverser::buildValueGraph()
     // Process all variable of their last versions.
     processLastVersions();
     
+    valueGraphToDot("VG.dot");
+    
     // Add all phi node edges. This is done at last because a def of a phi node may
     // not be created when this phi node is created.
     addPhiEdges();
@@ -1093,7 +1095,7 @@ void EventReverser::addStateSavingEdges(const VersionedVariable& var, SgNode* as
     
     // Once a variable is defined, it may kill it previous def. Here we detect
     // all it killed defs then add state saving edges for them in this specific
-    //cout << "New Var Defined: " << var.toString() << endl;
+    cout << "New Var Defined: " << var << endl;
     SSA::NodeReachingDefTable defTable = ssa_->getReachingDefsAtNode_(astNode);
     
     typedef SSA::NodeReachingDefTable::value_type reachingDefPair;
@@ -1109,6 +1111,7 @@ void EventReverser::addStateSavingEdges(const VersionedVariable& var, SgNode* as
             //ROSE_ASSERT(version != var.version);
             
             VersionedVariable killedVar(var.name, version);
+            cout << "Killed: " << killedVar << endl;
 
 #if 1
             // It is possible that the phi node is not built at this point.
@@ -1219,7 +1222,10 @@ void EventReverser::addPhiEdges()
     {
         PhiNode* phiNode = isPhiNode(valueGraph_[node]);
         if(phiNode) 
+        {
+            //cout << phiNode->toString() << endl;
             phiNodes.push_back(make_pair(node, phiNode));
+        }
     }
     
     // Get all back edges in CFG.
@@ -1279,7 +1285,7 @@ void EventReverser::addPhiEdges()
                         
                         // A Mu mode can kill the defs from non-back edge. Add state
                         // saving edges here.
-                        addStateSavingEdges(phiNode->var, cfgEdge.target().getNode());
+                        addStateSavingEdges(muNode->var, cfgEdge.target().getNode());
                         
                         // For a Mu node, we duplicate it and connect all Mu edges to it.
                         duplicatedNode = boost::add_vertex(valueGraph_);

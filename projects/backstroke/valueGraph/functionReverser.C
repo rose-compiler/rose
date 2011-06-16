@@ -968,7 +968,7 @@ void EventReverser::generateCodeForBasicBlock(
             // State saving edge.
             if (ssEdge->cost == 0)
                 ;//rvsStmt = buildAssignOpertaion(valNode);
-            else
+            else if (!ssEdge->varStored)
             {
                 // Find the correct location to put the push function call.
                 SgNode* killer = ssEdge->killer;
@@ -1035,6 +1035,8 @@ void EventReverser::generateCodeForBasicBlock(
                 SageInterface::insertStatementBefore(pushLocation, pushFuncStmt); 
                 // Update the location so that the next push is put before this push.
                 pushLocations[killer] = pushFuncStmt;
+                
+                ssEdge->varStored = true;
                 
                 ////instrumentPushFunction(valNode, funcDef_);
                 //rvsStmt = buildRestorationStmt(valNode);
