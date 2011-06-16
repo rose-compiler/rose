@@ -231,7 +231,7 @@ void PathNumManager::generatePathNumbers()
         pathInfo_.push_back(make_pair(i, pathNumGen->getNumberOfPath()));
         
         char filename[16];
-        sprintf(filename, "dag%u.dot", i);
+        sprintf(filename, "dag%d.dot", i);
         dagToDot(dags_[i], filename);
     }
 }
@@ -410,7 +410,7 @@ void PathNumManager::insertPathNumToFwdFunc()
     ROSE_ASSERT(funcDef);
 
     // Insert the declaration of the path number in the front of forward function.
-    string pathNumName = "__num0__";
+    string pathNumName = "__num0";
     SgVariableDeclaration* pathNumDecl =
             SageBuilder::buildVariableDeclaration(
                 pathNumName,
@@ -424,8 +424,7 @@ void PathNumManager::insertPathNumToFwdFunc()
     for (size_t i = 0, m = dags_.size(); i != m; ++i)
     {
         // Each DAG has a different path num name.
-        pathNumName = string("__num") 
-                + boost::lexical_cast<string>(i) + "__";
+        pathNumName = string("__num") + boost::lexical_cast<string>(i);
         
         typedef map<DAGEdge, int>::value_type EdgeValuePair;
         foreach (const EdgeValuePair& edgeVal, pathNumGenerators_[i]->edgeValues_)
@@ -507,8 +506,7 @@ void PathNumManager::insertLoopCounterToFwdFunc()
         ROSE_ASSERT(loopStmt);
         
         // Insert the declaration of the path number before the loop stmt.
-        string pathNumName = string("__num") 
-                + boost::lexical_cast<string>(counter) + "__";
+        string pathNumName = string("__num") + boost::lexical_cast<string>(counter);
         SgVariableDeclaration* pathNumDecl =
                 buildVariableDeclaration(
                     pathNumName,
@@ -518,8 +516,7 @@ void PathNumManager::insertLoopCounterToFwdFunc()
         insertStatementBefore(loopStmt, pathNumDecl);
         
         // Build the counter declaration.
-        string loopCounterName = string("__counter") 
-                + boost::lexical_cast<string>(counter) + "__";
+        string loopCounterName = string("__counter") + boost::lexical_cast<string>(counter);
         SgStatement* loopCounterDecl =
                 buildVariableDeclaration(
                     loopCounterName,
@@ -715,6 +712,28 @@ void PathNumManager::insertLoopCounterIncrOnEdge(
         insertStatementBefore(contStmt, pushPathNumStmt);
         insertStatementBefore(contStmt, setPathNumZeroStmt);
     }
+    else if (SgForStatement* forStmt = isSgForStatement(getLoopStatement(src)))
+    {
+        // For for statement, we can just put the counter increment before continues
+        // and at the end of the for body
+        foreach (SgContinueStmt* contStmt, 
+                querySubTree<SgContinueStmt>(forStmt, V_SgContinueStmt))
+        {
+            // Make sure this continue statement is for this for statement.
+            if (getLoopStatement(contStmt) != forStmt)
+                continue;
+            insertStatementBefore(contStmt, counterIncrStmt);
+            insertStatementBefore(contStmt, pushPathNumStmt);
+            insertStatementBefore(contStmt, setPathNumZeroStmt);
+        }
+        
+        SgBasicBlock* loopBody = isSgBasicBlock(forStmt->get_loop_body());
+        if (loopBody == NULL)
+            ROSE_ASSERT(!"The body of the loop is not a basic block!");
+        appendStatement(counterIncrStmt, loopBody);
+        appendStatement(pushPathNumStmt, loopBody);
+        appendStatement(setPathNumZeroStmt, loopBody);
+    }
     else
     {
         SgStatement* stmt = getEnclosingStatement(src);
@@ -742,10 +761,26 @@ void PathNumManager::insertLoopCounterPushOnEdge(
     
     if (SgWhileStmt* stmt = isSgWhileStmt(src))
         insertStatementAfter(stmt, counterPushStmt);
+    else if (SgForStatement* stmt = isSgForStatement(src))
+        insertStatementAfter(stmt, counterPushStmt);
     else if (isSgIfStmt(src))
     {
         if (SgBasicBlock* basicBlock = isSgBasicBlock(tgt))
-            prependStatement(counterPushStmt, basicBlock);
+        {
+            // We only push the counter if the exit edge goes through return 
+            // statement, not a break statement. That is because for break, there
+            // is another push just after the loop statement.
+            foreach (SgStatement* stmt, basicBlock->get_statements())
+            {
+                if (isSgReturnStmt(stmt))
+                {
+                    prependStatement(counterPushStmt, basicBlock);
+                    break;
+                }
+                else if (isSgGotoStatement(stmt))
+                    ROSE_ASSERT(!"Cannot handle goto here!");
+            }
+        }
     }
     else
     {

@@ -80,35 +80,36 @@ void EventReverser::generateCode()
     availableValues_[0].clear();
     
     // Get all values which are needed or available for all DAGs here.
-    foreach (VGVertex node, boost::vertices(valueGraph_))
-    {
-        if (MuNode* muNode = isMuNode(valueGraph_[node]))
-        {
-            if (muNode->isCopy)
-                ;//availableValues_[muNode->dagIndex].insert(node);
-            else
-                valuesToRestore_[muNode->dagIndex].insert(node);
-        }
-        else if (ValueNode* valNode = isValueNode(valueGraph_[node]))
-        {
-            // Add all constants to available values.
-            if (valNode->isAvailable())
-                availableValues_[0].insert(node);
-        }
-    }
-    // Put root as the available values.
-    availableValues_[0].insert(root_);
-    for (size_t i = 1, s = availableValues_.size(); i != s; ++i)
-    {
-        availableValues_[i].insert(
-            availableValues_[0].begin(), availableValues_[0].end());
-    }
-    
-    
-    map<VGEdge, PathInfo> routes;
+    collectAvailableValues();
 
+    
+    // The following table collects which VG edges are in the final route graph.
+    map<VGEdge, PathInfo> routes;
+    
+    // Process the whole function first to see which variables are needed in loops.
+    size_t pathNum = pathNumManager_->getNumberOfPath(0);
+    for (size_t i = 0; i < pathNum; ++i)
+    {
+        // Search the subgraph then get the shorted paths.
+        set<VGEdge> route = getRouteFromSubGraph(0, i);
+
+        foreach (const VGEdge& edge, route)
+        {
+            PathSet& path = routes[edge][0];
+            if (path.empty()) path.resize(pathNum);
+            path.set(i);
+            
+            // If the target of this edge is a Mu node, put it to values to restore
+            // set of the corresponding DAG.
+            VGVertex tgt = boost::target(edge, valueGraph_);
+            if (MuNode* muNode = isMuNode(valueGraph_[tgt]))
+                valuesToRestore_[muNode->dagIndex].insert(tgt);
+        }
+    }
+
+    // Process other DAGs.
     int dagNum = pathNumManager_->getNumberOfDags();
-    for (int dagIndex = 0; dagIndex < dagNum; ++dagIndex)
+    for (int dagIndex = 1; dagIndex < dagNum; ++dagIndex)
     {
         // Just for DAG 0.
         size_t pathNum = pathNumManager_->getNumberOfPath(dagIndex);
@@ -120,8 +121,7 @@ void EventReverser::generateCode()
             foreach (const VGEdge& edge, route)
             {
                 PathSet& path = routes[edge][dagIndex];
-                if (path.empty())
-                    path.resize(pathNum);
+                if (path.empty()) path.resize(pathNum);
                 path.set(i);
             }
         }
@@ -155,11 +155,11 @@ void EventReverser::generateCode()
     //buildReverseCFG(0, rvsCFG);
     
 
-    string pathNumName = "__num__";
+    string pathNumName = "__num0";
     
     // If the number of path is 1, we don't have to use path numbers.
     //if (pathNum > 1)
-    buildPathNumDeclForRvsCmtFunc(pathNumName);
+    buildPathNumDeclForRvsCmtFunc(pathNumName, rvsFuncDef_->get_body(), cmtFuncDef_->get_body());
     
     // Build all three functions.
     generateCode(0, rvsCFGs, rvsFuncDef_->get_body(), cmtFuncDef_->get_body(), pathNumName);
@@ -180,13 +180,40 @@ void EventReverser::generateCode()
     SageInterface::fixVariableReferences(fwdFuncDef_->get_body());
 }
 
-void EventReverser::buildPathNumDeclForRvsCmtFunc(const string& pathNumName)
+void EventReverser::collectAvailableValues()
+{
+    // Discard all available values here.
+    availableValues_[0].clear();
+    
+    // Get all values which are needed or available for all DAGs here.
+    foreach (VGVertex node, boost::vertices(valueGraph_))
+    {
+        if (ValueNode* valNode = isValueNode(valueGraph_[node]))
+        {
+            // Add all constants to available values.
+            if (valNode->isAvailable())
+                availableValues_[0].insert(node);
+        }
+    }
+    // Put root as the available values.
+    availableValues_[0].insert(root_);
+    for (size_t i = 1, s = availableValues_.size(); i != s; ++i)
+    {
+        availableValues_[i].insert(
+            availableValues_[0].begin(), availableValues_[0].end());
+    }    
+}
+
+void EventReverser::buildPathNumDeclForRvsCmtFunc(
+        const string& pathNumName, 
+        SgScopeStatement* rvsScope,
+        SgScopeStatement* cmtScope)
 {
     using namespace SageBuilder;
 
     // Insert the declaration of the path number in the front of reverse function,
     // and define its value from a pop function call.
-    pushScopeStack(rvsFuncDef_->get_body());
+    pushScopeStack(rvsScope);
     SgVariableDeclaration* pathNumDecl =
             SageBuilder::buildVariableDeclaration(
                 pathNumName,
@@ -198,10 +225,10 @@ void EventReverser::buildPathNumDeclForRvsCmtFunc(const string& pathNumName)
                 buildRestoreFunctionCall(buildVarRefExp(pathNumDecl)));
     popScopeStack();
 
-    SageInterface::prependStatement(restoreNum, rvsFuncDef_->get_body());
-    SageInterface::prependStatement(pathNumDecl, rvsFuncDef_->get_body());
-    SageInterface::prependStatement(SageInterface::copyStatement(restoreNum), cmtFuncDef_->get_body());
-    SageInterface::prependStatement(SageInterface::copyStatement(pathNumDecl), cmtFuncDef_->get_body());
+    SageInterface::prependStatement(restoreNum, rvsScope);
+    SageInterface::prependStatement(pathNumDecl, rvsScope);
+    SageInterface::prependStatement(SageInterface::copyStatement(restoreNum), cmtScope);
+    SageInterface::prependStatement(SageInterface::copyStatement(pathNumDecl), cmtScope);
 }
 
 void EventReverser::buildRouteGraph(const map<VGEdge, PathInfo>& routes)
@@ -1295,6 +1322,13 @@ void EventReverser::generateCode(
             
             SgForStatement* cmtForStmt = buildLoopForReverseFunction(cmtScope);
             appendStatement(cmtForStmt, cmtScope);
+            
+            // Build path num declarations for both rvs and cmt for loops.
+            string pathNumName = "__num" + boost::lexical_cast<string>(dagIndexInBasicBlock);
+            buildPathNumDeclForRvsCmtFunc(
+                    pathNumName, 
+                    isSgScopeStatement(rvsForStmt->get_loop_body()),
+                    isSgScopeStatement(cmtForStmt->get_loop_body()));
             
             generateCode(dagIndexInBasicBlock, rvsCFGs, 
                     isSgScopeStatement(rvsForStmt->get_loop_body()), 

@@ -200,8 +200,14 @@ private:
     bool isAvailableValue(VGVertex val) const
     { return availableValues_[0].find(val) != availableValues_[0].end(); }
     
-    //! Build the path number declaration.
-    void buildPathNumDeclForRvsCmtFunc(const std::string& pathNumName);
+    //! Collect all available values for all DAGs.
+    void collectAvailableValues();
+    
+    //! Build the path number declaration for DAGs.
+    void buildPathNumDeclForRvsCmtFunc(
+        const std::string& pathNumName, 
+        SgScopeStatement* rvsScope,
+        SgScopeStatement* cmtScope);
     
     //! Build the route graph representing search result.
     void buildRouteGraph(const std::map<VGEdge, PathInfo>& routes);
