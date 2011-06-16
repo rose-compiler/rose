@@ -1064,7 +1064,7 @@ RSIM_Process::mem_showmap(RTS_Message *mesg, const char *intro, const char *pref
     if (mesg && mesg->get_file()) {
         RTS_READ(rwlock()) {
             RTS_MESSAGE(*mesg) {
-                mesg->mesg(intro);
+                mesg->mesg("%s", intro);
                 map->dump(mesg->get_file(), prefix);
             } RTS_MESSAGE_END(true);
         } RTS_READ_END;
@@ -1480,6 +1480,8 @@ RSIM_Process::post_fork()
     RSIM_Thread *t = threads.begin()->second;
     threads.clear();
     threads[t->get_tid()] = t;
+
+    t->policy.set_ninsns(0);            /* restart instruction counter for trace output */
 }
 
 /* The "thread" arg must be the calling thread */

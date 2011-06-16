@@ -285,6 +285,12 @@ public:
         return ninsns;
     }
 
+    /** Sets the number instructions processed. This is the same counter incremented at the beginning of each instruction and
+     * returned by get_ninsns(). */
+    void set_ninsns(size_t n) {
+        ninsns = n;
+    }
+
     /** Returns current instruction. Returns the null pointer if no instruction is being processed. */
     SgAsmInstruction *get_insn() const {
         return cur_insn;
