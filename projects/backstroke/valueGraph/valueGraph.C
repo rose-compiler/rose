@@ -1095,7 +1095,7 @@ void EventReverser::addStateSavingEdges(const VersionedVariable& var, SgNode* as
     
     // Once a variable is defined, it may kill it previous def. Here we detect
     // all it killed defs then add state saving edges for them in this specific
-    cout << "New Var Defined: " << var << endl;
+    //cout << "New Var Defined: " << var << endl;
     SSA::NodeReachingDefTable defTable = ssa_->getReachingDefsAtNode_(astNode);
     
     typedef SSA::NodeReachingDefTable::value_type reachingDefPair;
@@ -1111,7 +1111,7 @@ void EventReverser::addStateSavingEdges(const VersionedVariable& var, SgNode* as
             //ROSE_ASSERT(version != var.version);
             
             VersionedVariable killedVar(var.name, version);
-            cout << "Killed: " << killedVar << endl;
+            //cout << "Killed: " << killedVar << endl;
 
 #if 1
             // It is possible that the phi node is not built at this point.
@@ -1223,6 +1223,7 @@ void EventReverser::addPhiEdges()
         PhiNode* phiNode = isPhiNode(valueGraph_[node]);
         if(phiNode) 
         {
+            ROSE_ASSERT(phiNode->var.name.size());
             //cout << phiNode->toString() << endl;
             phiNodes.push_back(make_pair(node, phiNode));
         }
