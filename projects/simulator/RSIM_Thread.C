@@ -905,6 +905,24 @@ RSIM_Thread::exit_robust_list()
     return retval;
 }
 
+void
+RSIM_Thread::do_clear_child_tid()
+{
+    if (clear_child_tid) {
+        tracing(TRACE_SYSCALL)->mesg("clearing child tid...");
+        uint32_t zero = 0;
+        size_t n = get_process()->mem_write(&zero, clear_child_tid, sizeof zero);
+        if (n!=sizeof zero) {
+            tracing(TRACE_SYSCALL)->mesg("cannot write clear_child_tid address 0x%08"PRIx32, clear_child_tid);
+        } else {
+            tracing(TRACE_SYSCALL)->mesg("waking futex 0x%08"PRIx32, clear_child_tid);
+            int nwoke = futex_wake(clear_child_tid);
+            if (nwoke<0)
+                tracing(TRACE_SYSCALL)->mesg("wake futex 0x%08"PRIx32" failed with %d\n", clear_child_tid, nwoke);
+        }
+    }
+}
+
 int
 RSIM_Thread::sys_exit(const RSIM_Process::Exit &e)
 {
@@ -916,19 +934,7 @@ RSIM_Thread::sys_exit(const RSIM_Process::Exit &e)
     exit_robust_list();
 
     /* Clear and signal child TID if necessary (CLONE_CHILD_CLEARTID) */
-    if (clear_child_tid) {
-        tracing(TRACE_SYSCALL)->mesg("clearing child tid...");
-        uint32_t zero = 0;
-        size_t n = process->mem_write(&zero, clear_child_tid, sizeof zero);
-        if (n!=sizeof zero) {
-            tracing(TRACE_SYSCALL)->mesg("cannot write clear_child_tid address 0x%08"PRIx32, clear_child_tid);
-        } else {
-            tracing(TRACE_SYSCALL)->mesg("waking futex 0x%08"PRIx32, clear_child_tid);
-            int nwoke = futex_wake(clear_child_tid);
-            if (nwoke<0)
-                tracing(TRACE_SYSCALL)->mesg("wake futex 0x%08"PRIx32" failed with %d\n", clear_child_tid, nwoke);
-        }
-    }
+    do_clear_child_tid();
 
     /* Remove the child from the process. */
     process->remove_thread(this); /* thread safe */

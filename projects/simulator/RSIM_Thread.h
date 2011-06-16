@@ -122,6 +122,10 @@ public:
     /** Simulate thread exit. Return values is that which would be returned as the status for waitpid. */
     int sys_exit(const RSIM_Process::Exit &e);
 
+    /** Performs the clear_child_tid actions. Namely, writes zero to the specified address and wakes the futex at that
+     *  address.  This should be called when the child exits for any reason, or when the child calls exec. */
+    void do_clear_child_tid();
+
 
 
     /**************************************************************************************************************************

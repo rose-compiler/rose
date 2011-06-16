@@ -758,6 +758,9 @@ syscall_execve(RSIM_Thread *t, int callno)
         sys_envp.push_back(&envp[i][0]);
     sys_envp.push_back(NULL);
 
+    /* Signal the clear_tid address if necessary, since this is sort of like a child exit. */
+    t->do_clear_child_tid();
+
     /* The real system call */
     int result = execve(&filename[0], &sys_argv[0], &sys_envp[0]);
     ROSE_ASSERT(-1==result);
