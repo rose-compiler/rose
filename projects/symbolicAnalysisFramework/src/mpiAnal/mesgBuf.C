@@ -146,7 +146,7 @@ bool mesgBuf::compact()
 		return false;
 	
 	//for(list<mesgExpr&>::iterator it=mesgs.begin(); it!=mesgs.end(); )
-	for(int i=0; i<(mesgs.size()-1); )
+	for(unsigned int i=0; i<(mesgs.size()-1); )
 	{
 		mesgExpr& sendCur = *(mesgs[i]);
 		ROSE_ASSERT(sendCur.numCommOps()!=0 && !sendCur.isNULL());
@@ -182,7 +182,7 @@ bool mesgBuf::compact()
 bool mesgBuf::compactIncremental(int modIndex)
 {
 	bool modified = false;
-	int i;
+	unsigned int i;
 	
 	if(!initialized || isTop)
 		return false;

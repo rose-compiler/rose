@@ -39,7 +39,7 @@ void nodeConstLattice::copy(Lattice* that_arg)
 // returns true if this causes this to change and false otherwise
 bool nodeConstLattice::meetUpdate(Lattice* that_arg)
 {
-	long  oldValID = valID;
+	unsigned long  oldValID = valID;
 	short oldLevel = level;
 	nodeConstLattice* that = dynamic_cast<nodeConstLattice*>(that_arg);
 
@@ -110,7 +110,7 @@ cout << "that: " << that->str("") << "\n";*/
 // returns true if this causes this to change and false otherwise
 bool nodeConstLattice::maxUpdate(nodeConstLattice& that)
 {
-	long  oldValID = valID;
+	unsigned long  oldValID = valID;
 	short oldLevel = level;
 
 /*printf("nodeConstLattice::maxUpdate\n");
@@ -277,7 +277,7 @@ bool nodeConstAnalysis::transfer(const Function& func, const DataflowNode& n, No
 	printf("isSgBinaryOp(n.getNode())=%p\n", isSgBinaryOp(n.getNode()));*/
 	
 	// If this is an assignment operation, grab the left-hand side
-	if(asgnLHS = cfgUtils::getAssignmentLHS(n.getNode()))
+	if((asgnLHS = cfgUtils::getAssignmentLHS(n.getNode())) != NULL)
 	{
 		// If the expression being assigned is a valid variable expression
 		if(varID::isValidVarExp(asgnLHS))
@@ -407,7 +407,7 @@ void printNodeConstAnalysisStates(nodeConstAnalysis* nca, string indent)
 	vector<int> factNames;
 	vector<int> latticeNames;
 	latticeNames.push_back(0);
-	printAnalysisStates pas(nca, factNames, latticeNames, indent);
+	printAnalysisStates pas(nca, factNames, latticeNames, printAnalysisStates::below, indent);
 	UnstructuredPassInterAnalysis upia_pas(pas);
 	upia_pas.runAnalysis();
 }

@@ -83,7 +83,7 @@ class affineInequality: public printable // : public LogicalCond
 	// and sets this constraint to it
 	affineInequality(const affineInequality& xz, const affineInequality& zy/*, bool xZero, bool yZero, DivLattice* divX, DivLattice* divY, varID z*/);
 	
-	bool operator=(const affineInequality& that);
+	void operator=(const affineInequality& that);
 	
 	bool operator==(const affineInequality& that) const;
 	
@@ -92,11 +92,26 @@ class affineInequality: public printable // : public LogicalCond
 	// lexicographic ordering (total order)
 	bool operator<(const affineInequality& that) const;
 	
-	// semantic affineInequality ordering (partial order)
-	// returns true if this affineInequality represents less or more information (less information is 
+	// Semantic affineInequality ordering (partial order)
+	// Returns true if this affineInequality represents less or more information (less information is 
 	// top, more information is bottom) than that for all values of x and y and false otherwise
 	//bool operator<<(const affineInequality& that) const;
+	// !!! NOTE: WE MAY WANT A SEMANTIC LESS-THAN-OR-EQ SINCE THAT CAN BE COMPUTED MORE PRECISELY BASED IN <= INFORMATION
 	bool semLessThan(const affineInequality& that, bool xEqZero, bool yEqZero) const;
+	bool semLessThan(const affineInequality& that, 
+                    const affineInequality* xZero, const affineInequality* zeroX,
+                    const affineInequality* yZero, const affineInequality* zeroY, string indent="") const;
+	bool semLessThanEq(const affineInequality& that, 
+                    bool xIsZeroVar, 
+                    const affineInequality* xZero, const affineInequality* zeroX,
+                    bool yIsZeroVar,
+                    const affineInequality* yZero, const affineInequality* zeroY, string indent="") const;
+	
+	// Semantic affineInequality ordering (partial order), focused on negated inequalities
+	// Returns true if the negation of this affineInequality represents more information (less information is 
+	// top, more information is bottom) than the nagation of that for all values of x and y and false otherwise
+	//bool affineInequality::semLessThanNeg(const affineInequality& that) const
+	bool semLessThanNeg(const affineInequality& that, bool xEqZero, bool yEqZero) const;
 	
 	bool set(const affineInequality& that);
 	
@@ -176,6 +191,8 @@ class affineInequality: public printable // : public LogicalCond
 	string str(string indent="") const;
 	
 	string str(varID x, varID y, string indent="") const;
+	// Prints out the negation of the constraint ax <= by+c
+	string strNeg(varID x, varID y, string indent) const;
 	
 	public:
 	// the basic logical operations that must be supported by any implementation of 
@@ -284,19 +301,18 @@ class affineInequalityFact : public NodeFact
 /********************************
  *** affineInequalitiesPlacer ***
  ********************************/
+// points trueIneqFact and falseIneqFact to freshly allocated objects that represent the true and false
+// branches of the control flow guarded by the given expression. They are set to NULL if our representation
+// cannot represent one of the expressions.
+// doFalseBranch - if =true, falseIneqFact is set to the correct false-branch condition and to NULL otherwise
+void setTrueFalseIneq(SgExpression* expr, 
+                      affineInequalityFact **trueIneqFact, affineInequalityFact **falseIneqFact, 
+                      bool doFalseBranch);
+	                             
 class affineInequalitiesPlacer : public UnstructuredPassIntraAnalysis
 {
 	public:
 	void visit(const Function& func, const DataflowNode& n, NodeState& state);
-	
-	protected:
-		// points trueIneqFact and falseIneqFact to freshly allocated objects that represent the true and false
-	// branches of the control flow guarded by the given expression. They are set to NULL if our representation
-	// cannot represent one of the expressions.
-	// doFalseBranch - if =true, falseIneqFact is set to the correct false-branch condition and to NULL otherwise
-	static void setTrueFalseIneq(SgExpression* expr, 
-	                             affineInequalityFact **trueIneqFact, affineInequalityFact **falseIneqFact, 
-	                             bool doFalseBranch);
 };
 
 /*// Looks over all the conditional statements in the application and associates appropriate 
@@ -325,5 +341,8 @@ void runAffineIneqPlacer(bool printStates=false);
 
 // returns the set of inequalities known to be true at the given DataflowNode
 const set<varAffineInequality>& getAffineIneq(const DataflowNode& n);
+
+// Returns the set of inequalities known to be true at the given DataflowNode's descendants
+list<set<varAffineInequality> > getAffineIneqDesc(const DataflowNode& n);
 
 #endif
