@@ -95,7 +95,7 @@ bool ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 		SgVariableDeclaration* tempVarDeclaration;
 		SgAssignOp* tempVarAssignment;
 		SgExpression* tempVarReference;
-		tie(tempVarDeclaration, tempVarAssignment, tempVarReference) = BackstrokeUtility::CreateTempVariableForExpression(arg, scope, false);
+		tie(tempVarDeclaration, tempVarAssignment, tempVarReference) = BackstrokeUtility::CreateTempVariableForExpression(arg, scope, true);
 
 		//Insert the temporary variable declaration
 		InsertStatement(tempVarDeclaration, functionCallInfo.tempVarDeclarationLocation, functionCallInfo.tempVarDeclarationInsertionMode);
@@ -103,12 +103,14 @@ bool ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
 		//Replace the argument with the new temporary variable
 		SageInterface::replaceExpression(arg, tempVarReference);
 
+#if 0
 		//Build a CommaOp that evaluates the temporary variable and proceeds to the original function call expression
 		SgExpression* placeholderExp = SageBuilder::buildIntVal(7);
 		SgCommaOpExp* comma = SageBuilder::buildCommaOpExp(tempVarAssignment, placeholderExp);
 		SageInterface::replaceExpression(functionCall, comma, true);
 		ROSE_ASSERT(functionCall->get_parent() == NULL);
 		SageInterface::replaceExpression(placeholderExp, functionCall);
+#endif
 	}
 
 	return true;

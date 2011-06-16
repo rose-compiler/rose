@@ -114,6 +114,10 @@ tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> CreateTempVariableForE
 		variableType = SageBuilder::buildPointerType(expressionBaseType);
 	}
 
+    // If the expression is a dereferenced pointer, use a reference to hold it.
+    if (isSgPointerDerefExp(expression))
+        variableType = SageBuilder::buildReferenceType(variableType);
+
 	//Generate a unique variable name
 	string name = BackstrokeUtility::GenerateUniqueVariableName(scope);
 
