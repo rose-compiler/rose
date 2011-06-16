@@ -1679,10 +1679,8 @@ tests:
 	@echo "*********************************************************************************************************************************"
 
 check-local:
-	@echo "Tests for Fortran (from the gfortran tests suit)."
-	@echo "Output the version number of the gfortran being used."
-	@gfortran --version
-	@echo "Run the gfortran testsuit tests...."
+	@echo "Tests for Fortran (from the gfortran tests suite)."
+	@echo "Run the gfortran testsuite tests...."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These Fortran programs must be called externally to the test codes in the "TESTCODES" make variable
 if !ROSE_USING_GFORTRAN_VERSION_4_0
