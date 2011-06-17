@@ -588,7 +588,6 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
     foreach (VGVertex node, boost::vertices(routeGraph_))
         nodePathsTable[node][dagIndex].resize(pathNumManager_->getNumberOfPath(dagIndex));
     
-    set<VGEdge> traversedEdges;
     
 #if 0
     foreach (VGVertex node, boost::vertices(routeGraph_))
@@ -606,10 +605,16 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
         }
     }
 #endif
+    
+    // A set of all traversed edges.
+    set<VGEdge> traversedEdges;
+    
+    // First, push all edges pointing to root.
     foreach (const VGEdge& inEdge, boost::in_edges(routeGraphRoot_, routeGraph_))
     {
         //cout << "Paths on edge: " << routeGraph_[inEdge]->paths << endl;
         nextEdgeCandidates.push(inEdge);
+        traversedEdges.insert(inEdge);
     }
     
     while (!nextEdgeCandidates.empty())
@@ -627,6 +632,18 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
         // The following paths are the paths on this edge.
         PathSet& pathsOnSrc = nodePathsTable[src][dagIndex];
         pathsOnSrc |= routeGraph_[edge]->paths[dagIndex];
+        
+        // If all out edges of this node are not traversed, don't go above.
+        bool visited = true;
+        foreach (const VGEdge& outEdge, boost::out_edges(src, routeGraph_))
+        {
+            if (traversedEdges.count(outEdge) == 0)
+            {
+                visited = false;
+                break;
+            }
+        }
+        if (!visited) continue;
         
         // After updating the traversed path set of the source node of the edge
         // just added to candidates, check all in edges of this source node to see
