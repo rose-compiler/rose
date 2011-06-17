@@ -258,9 +258,11 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall)
                 
                 //if (isVirtual)
                 //cout << funcDecl->get_name().str() << "\t: VIRTUAL3\n\n";
+                //funcRef->get_file_info()->display();
         }
         //isVirtual = true;
     }
+    isVirtual = true;
     
 #endif
 }

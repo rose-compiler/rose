@@ -908,6 +908,9 @@ void EventReverser::addReverseCFGNode(
 
 namespace 
 {
+    using namespace SageInterface;
+    using namespace SageBuilder;
+    
     SgNode* removeThisPointer(SgNode* node)
     {
         if (SgArrowExp* arrowExp = isSgArrowExp(node))
@@ -916,6 +919,56 @@ namespace
                 return arrowExp->get_rhs_operand();
         }
         return node;
+    }
+    
+    boost::tuple<
+        SgMemberFunctionSymbol*,
+        SgMemberFunctionSymbol*,
+        SgMemberFunctionSymbol*>
+    buildThreeFuncDecl(SgClassDefinition* classDef, SgMemberFunctionDeclaration* funcDecl)
+    {
+        SgName funcName = funcDecl->get_name();
+        SgScopeStatement* funcScope = funcDecl->get_scope(); 
+        SgType* returnType = funcDecl->get_orig_return_type();
+        
+        SgMemberFunctionSymbol* fwdSymbol = NULL;
+        SgMemberFunctionSymbol* rvsSymbol = NULL;
+        SgMemberFunctionSymbol* cmtSymbol = NULL;
+        
+        SgName fwdFuncName = funcName + "_forward";
+        SgFunctionDeclaration* fwdFuncDecl = buildNondefiningMemberFunctionDeclaration(
+                        fwdFuncName,
+                        returnType,
+                        isSgFunctionParameterList(
+                            copyStatement(funcDecl->get_parameterList())),
+                        funcScope);
+        
+        SgName rvsFuncName = funcName + "_reverse";
+        SgFunctionDeclaration* rvsFuncDecl = buildNondefiningMemberFunctionDeclaration(
+                        rvsFuncName,
+                        returnType,
+                        isSgFunctionParameterList(
+                            copyStatement(funcDecl->get_parameterList())),
+                        funcScope);
+        
+        SgName cmtFuncName = funcName + "_commit";
+        SgFunctionDeclaration* cmtFuncDecl = buildNondefiningMemberFunctionDeclaration(
+                        cmtFuncName,
+                        returnType,
+                        buildFunctionParameterList(),
+                        funcScope);
+        
+        fwdSymbol = isSgMemberFunctionSymbol(fwdFuncDecl->get_symbol_from_symbol_table());
+        rvsSymbol = isSgMemberFunctionSymbol(rvsFuncDecl->get_symbol_from_symbol_table());
+        cmtSymbol = isSgMemberFunctionSymbol(cmtFuncDecl->get_symbol_from_symbol_table());
+        
+        insertStatementAfter(funcDecl, cmtFuncDecl);
+        insertStatementAfter(funcDecl, rvsFuncDecl);
+        insertStatementAfter(funcDecl, fwdFuncDecl);
+        
+        ROSE_ASSERT(fwdSymbol && rvsSymbol && cmtSymbol);
+        
+        return boost::make_tuple(fwdSymbol, rvsSymbol, cmtSymbol);
     }
 }
 
@@ -1122,7 +1175,15 @@ void EventReverser::generateCodeForBasicBlock(
                 }
                 
                 cout << "Processing Function Call:\t" << funcName << endl;
+                
+                if (!(fwdFuncSymbol && rvsFuncSymbol && cmtFuncSymbol))
+                {
+                    boost::tie(fwdFuncSymbol, rvsFuncSymbol, cmtFuncSymbol) = 
+                            buildThreeFuncDecl(classDef, funcDecl);
+                }
                 ROSE_ASSERT(fwdFuncSymbol && rvsFuncSymbol && cmtFuncSymbol);
+                
+                
 
                 //SgThisExp* thisExp = isSgThisExp(arrowExp->get_lhs_operand());
                 //ROSE_ASSERT(thisExp);

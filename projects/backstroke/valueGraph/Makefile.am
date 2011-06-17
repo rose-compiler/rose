@@ -37,7 +37,7 @@ test:
 #./valueGraph -c temp2.C -I/opt/local/var/macports/software/boost/1.44.0_0/opt/local/include/
 
 #GTNETS_DIR = /home/hou1/MyWork/GTNetS/SRC
-GTNETS_DIR = /home/hou1/GTNetS-MPI/SRC
+GTNETS_DIR = /Users/hou1/MyWork/GTNetS/SRC
 
 #$(GTNETS_DIR)/application.cc 
 #GTNETS_FILES = $(GTNETS_DIR)/application-udpsink.cc $(GTNETS_DIR)/link-real.cc
@@ -52,40 +52,42 @@ $(GTNETS_DIR)/application-udpsink.cc \
 $(GTNETS_DIR)/application-cbr.cc \
 $(GTNETS_DIR)/simulator.cc
 
+GTNETS_FLAG = -I$(GTNETS_DIR) -DNO_DEBUG
+
 
 wlan:
-	./valueGraph -c $(GTNETS_DIR)/wlan.cc -I/home/hou1/GTNetS-MPI/SRC/
+	./valueGraph -c $(GTNETS_DIR)/wlan.cc $(GTNETS_FLAG)
 
 application:
-	./valueGraph -c $(GTNETS_DIR)/application.cc -I/home/hou1/GTNetS-MPI/SRC/
+	./valueGraph -c $(GTNETS_DIR)/application.cc $(GTNETS_FLAG)
 
 link-real:
-	./valueGraph -c $(GTNETS_DIR)/link-real.cc -I/home/hou1/GTNetS-MPI/SRC/
+	./valueGraph -c $(GTNETS_DIR)/link-real.cc $(GTNETS_FLAG)
 
 interface-real:
-	./valueGraph -c $(GTNETS_DIR)/interface-real.cc -I/home/hou1/GTNetS-MPI/SRC/
+	./valueGraph -c $(GTNETS_DIR)/interface-real.cc $(GTNETS_FLAG)
 
 l2proto802:
-	./valueGraph -c $(GTNETS_DIR)/l2proto802.11.cc -I/home/hou1/GTNetS-MPI/SRC/
+	./valueGraph -c $(GTNETS_DIR)/l2proto802.11.cc $(GTNETS_FLAG)
 
 timer:
-	./valueGraph -c $(GTNETS_DIR)/timer.cc -I/home/hou1/GTNetS-MPI/SRC/
+	./valueGraph -c $(GTNETS_DIR)/timer.cc $(GTNETS_FLAG)
 
 udpsink:
-	./valueGraph -c $(GTNETS_DIR)/application-udpsink.cc -I/home/hou1/GTNetS-MPI/SRC/
+	./valueGraph -c $(GTNETS_DIR)/application-udpsink.cc $(GTNETS_FLAG)
 
 udp:
-	./valueGraph -c $(GTNETS_DIR)/udp.cc -I/home/hou1/GTNetS-MPI/SRC/
+	./valueGraph -c $(GTNETS_DIR)/udp.cc $(GTNETS_FLAG)
 
 cbr:
-	./valueGraph -c $(GTNETS_DIR)/application-cbr.cc -I/home/hou1/GTNetS-MPI/SRC/
+	./valueGraph -c $(GTNETS_DIR)/application-cbr.cc $(GTNETS_FLAG)
 
 interface-wireless:
-	./valueGraph -c $(GTNETS_DIR)/interface-wireless.cc -I/home/hou1/GTNetS-MPI/SRC/
+	./valueGraph -c $(GTNETS_DIR)/interface-wireless.cc $(GTNETS_FLAG)
 
 simulator:
-	./valueGraph -c $(GTNETS_DIR)/simulator.cc -I/home/hou1/GTNetS-MPI/SRC/ -I/nfs/apps/mpich2/default/include/ 
+	./valueGraph -c $(GTNETS_DIR)/simulator.cc $(GTNETS_FLAG) 
 
 gtnets:
-	./valueGraph -c $(GTNETS_FILES) -I/home/hou1/GTNetS-MPI/SRC/ -I/nfs/apps/mpich2/default/include/ 
+	./valueGraph -c $(GTNETS_FILES) $(GTNETS_FLAG) 
 
