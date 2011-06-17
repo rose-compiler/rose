@@ -228,40 +228,29 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
 
         BOOST_FOREACH(SgFunctionDeclaration* calleeDeclaration, functionCallees)
         {
-            // if we have a pointer (no function declaration) or a virtual function, create dummy node
-            if (calleeDeclaration == NULL)
-            {
-                ROSE_ASSERT(false); //I'm not sure if this case ever happens
-                SgGraphNode *dummy;
-                dummy = new SgGraphNode("DUMMY");
-                dummy->set_SgNode(calleeDeclaration);
+                        ROSE_ASSERT(calleeDeclaration != NULL);
 
-                returnGraph->addNode(dummy);
-                returnGraph->addDirectedEdge(startingNode, dummy);
-            }
-            else
-            {
-                //This function has been filtered out
-                if (pred(calleeDeclaration) == false)
-                {
-                    continue;
-                }
+                        //This function has been filtered out
+                        if (pred(calleeDeclaration) == false)
+                        {
+                                continue;
+                        }
 
-                iter = graphNodes.find(calleeDeclaration);
-                ROSE_ASSERT(iter != graphNodes.end());
-                SgGraphNode *endNode = iter->second;
+                        iter = graphNodes.find(calleeDeclaration);
+                        ROSE_ASSERT(iter != graphNodes.end());
+                        SgGraphNode *endNode = iter->second;
 
-                if (returnGraph->checkIfDirectedGraphEdgeExists(startingNode, endNode) == false)
-                {
-                    ROSE_ASSERT(startingNode != NULL && endNode != NULL);
-                    returnGraph->addDirectedEdge(startingNode, endNode);
-                }
-                else if (SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL)
-                {
-                    std::cout << "Did not add edge since it already exist" << std::endl;
-                    std::cout << "\tEndNode " << calleeDeclaration->get_name().str() << "\n";
-                }
-            }
+                        if (returnGraph->checkIfDirectedGraphEdgeExists(startingNode, endNode) == false)
+                        {
+                                ROSE_ASSERT(startingNode != NULL && endNode != NULL);
+                                returnGraph->addDirectedEdge(startingNode, endNode);
+                        }
+                        else if (SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL)
+                        {
+                                std::cout << "Did not add edge since it already exist" << std::endl;
+                                std::cout << "\tEndNode " << calleeDeclaration->get_name().str() << "\n";
+                        }
+
             totEdges++;
         }
     }

@@ -154,6 +154,12 @@ tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression*> CreateTempVariableForE
 	return make_tuple(tempVarDeclaration, assignment, varRefExpression);
 }
 
+SgExpression* buildAssert(SgExpression* check)
+{
+	string functionName = "assert";
+	return SageBuilder::buildFunctionCallExp(functionName, buildVoidType(), buildExprListExp(check));
+}
+
 
 vector<SgExpression*> findVarReferences(VariableRenaming::VarName var, SgNode* root)
 {
@@ -710,6 +716,38 @@ bool isTrueVariableDeclaration(SgVariableDeclaration* varDecl)
             return false;
     
     return true;
+}
+
+
+SgType* cleanModifersAndTypeDefs(SgType* t)
+{
+	while (true)
+	{
+		if (isSgModifierType(t))
+		{
+			t = isSgModifierType(t)->get_base_type();
+			continue;
+		}
+		else if (isSgTypedefType(t))
+		{
+			t = isSgTypedefType(t)->get_base_type();
+			continue;
+		}
+		return t;
+	}
+}
+
+
+SgType* removePointerOrReferenceType(SgType* t)
+{
+	t = cleanModifersAndTypeDefs(t);
+	if (isSgPointerType(t))
+		t = isSgPointerType(t)->get_base_type();
+	else if (isSgReferenceType(t))
+		t = isSgReferenceType(t)->get_base_type();
+	
+	t = cleanModifersAndTypeDefs(t);
+	return t;
 }
 
 } // namespace backstroke_util
