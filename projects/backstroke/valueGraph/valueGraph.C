@@ -1056,7 +1056,8 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
         addValueGraphEdge(funcCallVertex, outVertex);
         
         addAvailableValue(outVertex);
-        valuesToRestore_[0].insert(inVertex);
+        foreach (std::set<VGVertex>& values, valuesToRestore_)
+            values.insert(inVertex);
         
         return funcCallVertex;
     }

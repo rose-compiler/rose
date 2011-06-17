@@ -240,6 +240,9 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall)
             isVirtual = true;
             //cout << "UNKNOWN" << "\t: VIRTUAL2\n\n";
         }
+        
+        // TEMP
+        isVirtual = true;
     }
     
     else
@@ -250,19 +253,21 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall)
         
         if (funcRef)
         {
-                //SgMemberFunctionRefExp* funcRef = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
-                SgMemberFunctionDeclaration* funcDecl = funcRef->getAssociatedMemberFunctionDeclaration();
-                //cout << funcDecl->get_name().str() << funcDecl->get_functionModifier().isVirtual() << endl;
-                isVirtual = funcDecl->get_functionModifier().isVirtual();
-                isConst = SageInterface::isConstType(funcDecl->get_type());
-                
-                //if (isVirtual)
-                //cout << funcDecl->get_name().str() << "\t: VIRTUAL3\n\n";
-                //funcRef->get_file_info()->display();
+            //SgMemberFunctionRefExp* funcRef = isSgMemberFunctionRefExp(arrowExp->get_rhs_operand());
+            SgMemberFunctionDeclaration* funcDecl = funcRef->getAssociatedMemberFunctionDeclaration();
+            //cout << funcDecl->get_name().str() << funcDecl->get_functionModifier().isVirtual() << endl;
+            isVirtual = funcDecl->get_functionModifier().isVirtual();
+            isConst = SageInterface::isConstType(funcDecl->get_type());
+
+            //if (isVirtual)
+            //cout << funcDecl->get_name().str() << "\t: VIRTUAL3\n\n";
+            //funcRef->get_file_info()->display();
+            
+            //TEMP
+            isVirtual = true;
         }
         //isVirtual = true;
     }
-    isVirtual = true;
     
 #endif
 }

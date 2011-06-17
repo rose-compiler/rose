@@ -55,13 +55,14 @@ void EventReverser::reverseEvent(SgFunctionDefinition* funcDef)
     valuesToRestore_.resize(dagNum);
     availableValues_.resize(dagNum);
     
+    // First, build the value graph.
+    buildValueGraph();
+    
     generateCode();
 }
 
 void EventReverser::generateCode()
 {
-    // First, build the value graph.
-    buildValueGraph();
         
 #if 0
     // Declare all temporary variables at the beginning of the reverse events.
@@ -75,6 +76,7 @@ void EventReverser::generateCode()
         SageInterface::appendStatement(varDecl, rvsFuncDef_->get_body());
     }
 #endif
+    
     
     // Discard all available values here.
     availableValues_[0].clear();
@@ -106,6 +108,10 @@ void EventReverser::generateCode()
                 valuesToRestore_[muNode->dagIndex].insert(tgt);
         }
     }
+    
+    
+    cout << "\nStart to generate code!\n\n";
+    
 
     // Process other DAGs.
     int dagNum = pathNumManager_->getNumberOfDags();
@@ -1122,6 +1128,7 @@ void EventReverser::generateCodeForBasicBlock(
             // Virtual function call.
             SgFunctionCallExp* funcCallExp = funcCallNode->getFunctionCallExp();
             ROSE_ASSERT(funcCallExp);
+            cout << funcCallExp->unparseToString() << endl;
             SgMemberFunctionRefExp* funcRef = NULL;
             if (SgBinaryOp* binExp = isSgBinaryOp(funcCallExp->get_function()))
                 funcRef = isSgMemberFunctionRefExp(binExp->get_rhs_operand());
