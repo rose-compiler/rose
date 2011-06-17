@@ -1,9 +1,9 @@
 
-
-//
-// creates the interfaces to support RTED on UPC
-//
-// On on UPC code, the interfaces decay to static inline functions
+/// \file ParallelRTS.upc
+///
+/// \brief communication interface for RTED/UPC
+///
+/// \email peter.pirkelbauer@llnl.gov
 
 #ifndef _PARALLEL_RTS_H
 #define _PARALLEL_RTS_H
