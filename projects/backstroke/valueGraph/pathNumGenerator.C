@@ -737,6 +737,8 @@ void PathNumManager::insertLoopCounterIncrOnEdge(
     else
     {
         SgStatement* stmt = getEnclosingStatement(src);
+        if (isSgBasicBlock(stmt))
+            stmt = isSgStatement(stmt->get_parent());
         insertStatementAfter(stmt, setPathNumZeroStmt);
         insertStatementAfter(stmt, pushPathNumStmt);
         insertStatementAfter(stmt, counterIncrStmt);
