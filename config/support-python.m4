@@ -27,7 +27,7 @@ else
    #   PYTHON_LDFLAGS
    #   PYTHON_SITE_PKG
    #   PYTHON_VERSION
-   AX_PYTHON_DEVEL()
+   AX_PYTHON_DEVEL([2.7.0], [3.0.0])
 fi
 
 AC_SUBST(python_path)

@@ -114,15 +114,16 @@ to something else than an empty string.
 	# if the macro parameter ``version'' is set, honour it
 	#
 	if test -n "$1"; then
-		AC_MSG_CHECKING([for a version of Python $1])
-		ac_supports_python_ver=`$PYTHON -c "import sys; \
-			ver = sys.version.split ()[[0]]; \
-			print (ver $1)"`
+		AC_MSG_CHECKING([for a version of Python >= $1, < $2])
+		ac_supports_python_ver=`$PYTHON -c "\
+import sys; \
+ver = sys.version.split ()[[0]]; \
+print ('$1' <= ver < '$2')"`
 		if test "$ac_supports_python_ver" = "True"; then
 		   AC_MSG_RESULT([yes])
 		else
 			AC_MSG_RESULT([no])
-			AC_MSG_ERROR([this package requires Python $1.
+			AC_MSG_ERROR([this package requires Python >= $1 and < $2.
 If you have it installed, but it isn't the default Python
 interpreter in your system path, please pass the PYTHON_VERSION
 variable to configure. See ``configure --help'' for reference.
