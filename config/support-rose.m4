@@ -2191,7 +2191,8 @@ projects/FiniteStateModelChecker/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/HeaderFilesInclusion/Makefile
-projects/MPICodeMotion/Makefile
+projects/MPI_Tools/Makefile
+projects/MPI_Tools/MPICodeMotion/Makefile
 projects/MacroRewrapper/Makefile
 projects/Makefile
 projects/OpenMP_Analysis/Makefile
