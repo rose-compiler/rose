@@ -5200,11 +5200,11 @@ void c_action_scalar_int_constant()
 
 /**
  * Generated rule.
- * hollerith_constant
+ * hollerith_literal_constant
  *
  * @param hollerithConstant T_HOLLERITH token.
  */
-void c_action_hollerith_constant(Token_t *hollerithConstant)
+void c_action_hollerith_literal_constant(Token_t *hollerithConstant)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_hollerith_constant() hollerithConstant = %p = %s \n",hollerithConstant,hollerithConstant != NULL ? hollerithConstant->text : "NULL");
@@ -12223,42 +12223,41 @@ void c_action_exit_stmt(Token_t *label, Token_t *exitKeyword, Token_t *id, Token
 
 /** R845
  * goto_stmt
- *      :       t_go_to label T_EOS
+ *      :   (label)? t_go_to target_label T_EOS
  *
- * @param label The branch target statement label
+ * @param target_label The branch target statement label
  */
-// void c_action_goto_stmt(Token_t * label)
-void c_action_goto_stmt(Token_t *goKeyword, Token_t *toKeyword, Token_t *label, Token_t *eos)
+void c_action_goto_stmt(Token_t *label, Token_t *goKeyword, Token_t *toKeyword,
+                        Token_t *target_label, Token_t *eos)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_goto_stmt() label = %p = %s goKeyword = %p = %s toKeyword = %p = %s \n",
-            // label,label != NULL ? label->text : "NULL",
+          printf ("In c_action_goto_stmt() target_label = %p = %s goKeyword = %p = %s toKeyword = %p = %s \n",
                goKeyword,goKeyword != NULL ? goKeyword->text : "NULL",
                toKeyword,toKeyword != NULL ? toKeyword->text : "NULL",
-               label,label != NULL ? label->text : "NULL");
+               target_label,target_label != NULL ? target_label->text : "NULL");
 
-     ROSE_ASSERT(label != NULL);
-     SgLabelSymbol* label_symbol = buildNumericLabelSymbol(label);
-     ROSE_ASSERT(label_symbol != NULL);
+     ROSE_ASSERT(target_label != NULL);
+     SgLabelSymbol* target_symbol = buildNumericLabelSymbol(target_label);
+     ROSE_ASSERT(target_symbol != NULL);
 
   // This takes a SgStatement as a label, but that is being replaced to take a SgLabelSymbol.
      SgLabelStatement* labelStatement = NULL;
      SgGotoStatement* gotoStatement = new SgGotoStatement(labelStatement);
 
   // Set the generated SgLabelSymbol
-  // gotoStatement->set_label_symbol(label_symbol);
+  // gotoStatement->set_label_symbol(target_symbol);
 
-     SgLabelRefExp* labelRefExp = new SgLabelRefExp(label_symbol);
+     SgLabelRefExp* labelRefExp = new SgLabelRefExp(target_symbol);
      gotoStatement->set_label_expression(labelRefExp);
      labelRefExp->set_parent(gotoStatement);
-     setSourcePosition(labelRefExp,label);
+     setSourcePosition(labelRefExp,target_label);
 
      ROSE_ASSERT(goKeyword != NULL);
      setSourcePosition(gotoStatement,goKeyword);
 
   // When this statement can handle a numericl label (on the statement itself) then 
   // uncomment this line.  This is an OFP bug that was reported 12/20/2007.
-  // setStatementNumericLabel(gotoStatement,label);
+     setStatementNumericLabel(gotoStatement,label);
 
      astScopeStack.front()->append_statement(gotoStatement);
 
