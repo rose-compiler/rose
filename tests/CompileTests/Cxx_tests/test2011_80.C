@@ -10,10 +10,10 @@ struct a {
 // Note that this forward reference to "struct b" is ignored by EDG and thus not represented 
 // in ROSE.  Interestingly this is insufficent to define the scope of "struct b" (need the 
 // defining declaration for that).
-   struct b;
+struct b;
 
 // This will cause the subsequent references to "struct b" to be output with qualification!
-   struct b {};
+// struct b {};
 
 // Redundent references to "struct b" share the same first non-defineding declaration in ROSE.
 // struct b *bpy;

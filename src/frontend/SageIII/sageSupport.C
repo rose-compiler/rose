@@ -2614,6 +2614,14 @@ SgSourceFile::initializeGlobalScope()
      set_globalScope( new SgGlobal( globalScopeFileInfo ) );
      ROSE_ASSERT (get_globalScope() != NULL);
 
+  // DQ (6/15/2011): Added scope to hold unhandled declarations (see test2011_80.C).
+     Sg_File_Info* holdingScopeFileInfo = new Sg_File_Info(sourceFilename,0,0);
+     ROSE_ASSERT (holdingScopeFileInfo != NULL);
+     set_temp_holding_scope( new SgGlobal( holdingScopeFileInfo ) );
+     ROSE_ASSERT (get_temp_holding_scope() != NULL);
+
+     get_temp_holding_scope()->set_parent(this);
+
      if (SageBuilder::symbol_table_case_insensitive_semantics == true)
         {
           get_globalScope()->setCaseInsensitive(true);
@@ -4223,6 +4231,9 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
   // printf ("In the SgSourceFile constructor \n");
 
      set_globalScope(NULL);
+
+  // DQ (6/15/2011): Added scope to hold unhandled declarations (see test2011_80.C).
+     set_temp_holding_scope(NULL);
 
   // This constructor actually makes the call to EDG/OFP to build the AST (via callFrontEnd()).
   // printf ("In SgSourceFile::SgSourceFile(): Calling doSetupForConstructor() \n");

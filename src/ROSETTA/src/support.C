@@ -673,6 +673,14 @@ Grammar::setUpSupport ()
      SourceFile.setDataPrototype   ( "SgTokenPtrList", "token_list", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (9/15/2011): A home for declarations that have no defined scope in the program (see test2011_80.C)
+  // Some declarations (e.g. "struct b* x;" cause a type, and thus a declaration and symbol, to be constructed 
+  // with no clear indication as to which scope into which it should be defined. This has become clear as part
+  // of debugging the name qualification support.  This scope permits use to have a location (holding scope) 
+  // to support this issue in C and C++.  Another example is the a templated class nested in a templated class.
+  // Here we also don't have a location for the declaration and the symbol that is generated for this case.
+     SourceFile.setDataPrototype   ( "SgGlobal*", "temp_holding_scope", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0
   // DQ (9/12/2009): Adding support for new name qualification (not ready yet).
   // DQ (9/11/2009): Added support for mapping id numbers to statement pointers.
