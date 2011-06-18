@@ -1042,6 +1042,7 @@ void EventReverser::generateCodeForBasicBlock(
         ValueNode* valNode = isValueNode(routeGraph_[src]);
         if (valNode == NULL)        continue;
         if (valNode->isAvailable()) continue;
+        if (isSgThisExp(valNode->astNode)) continue;
 
         SgStatement* pushFuncStmt = NULL;
         SgStatement* rvsStmt = NULL;
