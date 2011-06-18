@@ -146,7 +146,7 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
             if (v->isTemp())
             {
                 PathInfo paths = valueGraph_[*(boost::out_edges(valNode, valueGraph_).first)]->paths;
-                if (!paths[dagIndex][pathIndex])
+                if (paths.count(dagIndex) == 0 || !paths[dagIndex][pathIndex])
                 {
                     continue;
                 }
@@ -220,8 +220,8 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
                 continue;
             }
 
-            // If this node is an operator node, add all its operands.
-            if (isOperatorNode(subgraph[node]))
+            // If this node is an operator node or function call node, add all its operands.
+            if (isOperatorNode(subgraph[node]) || isFunctionCallNode(subgraph[node]))
             {
                 RouteWithNodes newRoute = unfinishedRoute;
                 foreach (const VGEdge& edge, boost::out_edges(node, valueGraph_))

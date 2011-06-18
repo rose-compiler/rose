@@ -170,12 +170,17 @@ void EventReverser::generateCode()
     // Build all three functions.
     generateCode(0, rvsCFGs, rvsFuncDef_->get_body(), cmtFuncDef_->get_body(), pathNumName);
 
-
+    
     // If the number of path is 1, we don't have to use path numbers.
     //if (pathNum > 1)
     pathNumManager_->insertLoopCounterToFwdFunc();
     pathNumManager_->insertPathNumToFwdFunc();
 
+    // Replace expressions in replaceTable_.
+    typedef pair<SgExpression*, SgExpression*> ExprPair;
+    foreach (const ExprPair& exprPair, replaceTable_)
+        SageInterface::replaceExpression(exprPair.first, exprPair.second);
+    
     // Finally insert all functions in the code.
     insertFunctions();
     
@@ -1029,6 +1034,8 @@ void EventReverser::generateCodeForBasicBlock(
         //VGVertex node;
         VGVertex src = boost::source(edge, routeGraph_);
         VGVertex tgt = boost::target(edge, routeGraph_);
+        
+        cout << routeGraph_[src]->toString() << "-------->" << routeGraph_[tgt]->toString() << '\n';
 
         ValueNode* valNode = isValueNode(routeGraph_[src]);
         if (valNode == NULL)        continue;
@@ -1145,7 +1152,7 @@ void EventReverser::generateCodeForBasicBlock(
             // Virtual function call.
             SgFunctionCallExp* funcCallExp = funcCallNode->getFunctionCallExp();
             ROSE_ASSERT(funcCallExp);
-            cout << funcCallExp->unparseToString() << endl;
+            cout << "Function: " << funcCallExp->unparseToString() << endl;
             SgMemberFunctionRefExp* funcRef = NULL;
             if (SgBinaryOp* binExp = isSgBinaryOp(funcCallExp->get_function()))
                 funcRef = isSgMemberFunctionRefExp(binExp->get_rhs_operand());
@@ -1213,15 +1220,28 @@ void EventReverser::generateCodeForBasicBlock(
                 //ROSE_ASSERT(thisExp);
                 //ROSE_ASSERT(copyExpression(thisExp));
 
-                SgFunctionCallExp* fwdFuncCall = isSgFunctionCallExp(copyExpression(funcCallExp));
-                if (SgBinaryOp* binExp = isSgBinaryOp(fwdFuncCall->get_function()))
-                    funcRef = isSgMemberFunctionRefExp(binExp->get_rhs_operand());
-                funcRef->set_symbol(fwdFuncSymbol);
+                //SgMemberFunctionRefExp* fwdFuncRef = NULL;
+                //SgMemberFunctionRefExp* rvsFuncRef = NULL;
+                //SgMemberFunctionRefExp* cmtFuncRef = NULL;
+                
+                // Since the same VG node can be traversed more than once, this 
+                // flag indicate if the replacement of this function call is built
+                // or not.
+                bool isFwdFuncCallBuilt = replaceTable_.count(funcCallExp);
+                
+                if (!isFwdFuncCallBuilt)
+                {
+                    SgFunctionCallExp* fwdFuncCall = isSgFunctionCallExp(copyExpression(funcCallExp));
+                    if (SgBinaryOp* binExp = isSgBinaryOp(fwdFuncCall->get_function()))
+                        funcRef = isSgMemberFunctionRefExp(binExp->get_rhs_operand());
+                    funcRef->set_symbol(fwdFuncSymbol);
+                    replaceTable_[funcCallExp] = fwdFuncCall;
+                }
                 // FIXME The following method does not work!!
                 //replaceExpression(arrowExp->get_rhs_operand(), fwdFuncRef);
                 
                 SgFunctionCallExp* rvsFuncCall = isSgFunctionCallExp(copyExpression(funcCallExp));
-                replaceExpression(rvsFuncCall->get_args(), buildExprListExp());
+                //replaceExpression(rvsFuncCall->get_args(), buildExprListExp());
                 if (SgBinaryOp* binExp = isSgBinaryOp(rvsFuncCall->get_function()))
                     funcRef = isSgMemberFunctionRefExp(binExp->get_rhs_operand());
                 funcRef->set_symbol(rvsFuncSymbol);
@@ -1248,7 +1268,7 @@ void EventReverser::generateCodeForBasicBlock(
                 cmtStmt = buildExprStatement(cmtFuncCall);
 #endif
                 
-                replaceExpression(funcCallExp, fwdFuncCall);
+                //replaceExpression(funcCallExp, fwdFuncCall);
                 rvsStmt = buildExprStatement(rvsFuncCall);
                 cmtStmt = buildExprStatement(cmtFuncCall);
             }
@@ -1309,8 +1329,8 @@ namespace
         static int counter = 0;
         char inxVarName[32];
         char sizeVarName[32];
-        sprintf(inxVarName, "__i%d__", counter);
-        sprintf(sizeVarName, "__s%d__", counter);
+        sprintf(inxVarName, "__i%d", counter);
+        sprintf(sizeVarName, "__s%d", counter);
         ++counter;
         
         pushScopeStack(scope);

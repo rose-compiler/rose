@@ -195,6 +195,14 @@ SgStatement* buildAssignOpertaion(ValueNode* lhs, ValueNode* rhs)
         expr = lhs->var.getVarRefExp();
     else
         expr = buildVariable(rhs);
+    
+#if 0
+    if (isSgInitializedName(lhs->astNode) || lhs->isTemp())
+    {
+        SgAssignInitializer* assignInit = buildAssignInitializer(expr, expr->get_type());
+        return buildVariableDeclaration(lhs->str, lhs->getType(), assignInit);
+    }
+#endif
     return buildExprStatement(buildAssignOp(buildVariable(lhs), expr));
 }
 

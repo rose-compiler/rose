@@ -231,7 +231,7 @@ void PathNumManager::generatePathNumbers()
         pathInfo_.push_back(make_pair(i, pathNumGen->getNumberOfPath()));
         
         char filename[16];
-        sprintf(filename, "dag%d.dot", i);
+        sprintf(filename, "dag%l.dot", i);
         dagToDot(dags_[i], filename);
     }
 }

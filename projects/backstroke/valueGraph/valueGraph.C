@@ -19,10 +19,10 @@ void EventReverser::buildValueGraph()
     // First, build the basic part of the value graph.
     buildBasicValueGraph();
 
+    //valueGraphToDot("VG.dot");
+    
     // Process all variable of their last versions.
     processLastVersions();
-    
-    valueGraphToDot("VG.dot");
     
     // Add all phi node edges. This is done at last because a def of a phi node may
     // not be created when this phi node is created.
@@ -1031,12 +1031,53 @@ EventReverser::VGVertex EventReverser::createThisExpNode(SgThisExp* thisExp)
 
 EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp* funcCallExp)
 {
-    //cout << funcCallExp->getAssociatedFunctionDeclaration()->get_name().str() << endl;
+    //cout << funcCallExp->unparseToString() << endl;
     // Build a node for this function call in VG.
     FunctionCallNode* funcCallNode = new FunctionCallNode(funcCallExp);
     VGVertex funcCallVertex = addValueGraphNode(funcCallNode);
     nodeVertexMap_[funcCallExp] = funcCallVertex;
     
+    // Add edges from the function call node to its args.
+    foreach (SgExpression* arg, funcCallExp->get_args()->get_expressions())
+    {
+        ROSE_ASSERT(nodeVertexMap_.count(arg));
+        
+        VGVertex argVertex = nodeVertexMap_[arg];
+        addValueGraphEdge(funcCallVertex, argVertex);
+    }
+    
+    
+    // If the function called is a member one, also connect an edge from the pointer or object
+    // calling this function to the function call node.
+    if (SgBinaryOp* binExp = isSgBinaryOp(funcCallExp->get_function()))
+    {
+        VGVertex caller;
+        SgExpression* lhs = binExp->get_lhs_operand();
+        
+        // Note that this part will be changed once we get how to represent p and *p.
+        if (SgPointerDerefExp* ptrDeref = isSgPointerDerefExp(lhs))
+        {
+            // For this->p, we find p.
+            SgExpression* operand = ptrDeref->get_operand();
+            if (SgArrowExp* arrowExp = isSgArrowExp(operand))
+            {
+                if (isSgThisExp(arrowExp->get_lhs_operand()))
+                {
+                    SgExpression* rhs = arrowExp->get_rhs_operand();
+                    ROSE_ASSERT(nodeVertexMap_.count(rhs));
+        
+                    caller = nodeVertexMap_[rhs];
+                }
+            }
+        }
+        else
+        {
+            ROSE_ASSERT(nodeVertexMap_.count(lhs));
+            caller = nodeVertexMap_[lhs];
+        }
+        
+        addValueGraphEdge(funcCallVertex, caller);
+    }
     
     // For a virtual function call, its inverse is called in reverse function.
     // Black box style inversion is not used.
@@ -1688,7 +1729,7 @@ bool EventReverser::RouteGraphEdgeComp::operator()(
 #endif
 }
 
-void EventReverser::writeValueGraphNode(std::ostream& out, const VGVertex& node) const
+void EventReverser::writeValueGraphNode(std::ostream& out, VGVertex node) const
 {
     string str = valueGraph_[node]->toString();
     if (SgNode* astNode = valueGraph_[node]->astNode)
@@ -1696,6 +1737,14 @@ void EventReverser::writeValueGraphNode(std::ostream& out, const VGVertex& node)
     out << "[label=\"" << str << "\"";
     
     if (node == root_)
+        out << ", color=blue";
+    
+    ValueGraphNode* vgNode = valueGraph_[node];
+    if (isValueNode(vgNode))
+        out << ", color=purple";
+    else if (isFunctionCallNode(vgNode))
+        out << ", color=green";
+    else if (isOperatorNode(vgNode))
         out << ", color=blue";
     
     out << "]";

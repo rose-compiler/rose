@@ -286,7 +286,7 @@ std::string FunctionCallNode::toString() const
     }
     
     if (str == "")
-        str += "NO NAME";
+        str += boost::lexical_cast<string>(astNode);
     
     if (isVirtual)
         str += "\\nVIRTUAL";

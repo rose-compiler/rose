@@ -150,6 +150,9 @@ private:
              std::pair<std::set<VGVertex>,
                        std::set<VGEdge> > > routeNodesAndEdges_;
     
+    //! A table storing the original expressions and their replacement.
+    std::map<SgExpression*, SgExpression*> replaceTable_;
+    
     ////! All backedges in the CFG.
     //std::set<CFGEdge> backEdges_;
 
@@ -297,7 +300,7 @@ private:
                                    const std::set<VGVertex>& valuesToRestore,
                                    const std::set<VGVertex>& availableNodes);
 
-	void writeValueGraphNode(std::ostream& out, const VGVertex& node) const;
+	void writeValueGraphNode(std::ostream& out, VGVertex node) const;
 
 	void writeValueGraphEdge(std::ostream& out, const VGEdge& edge) const;
 
