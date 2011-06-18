@@ -35,6 +35,11 @@ BUGS
 		3; //phi node is not inserted here because a is out of scope. Now 'a' has no valid final version
 	}
 
+-In interprocedural SSA, modifications that are not in scope are not versioned. For example, if we have a virtual function
+ that modifies variables from a subclass, no defs are inserted for those variables.
+  C::foo() {  vfunc(); } //Modification of d is not detected here if d is a member of the subclass D
+  D::vfunc() { d = 3; }
+
 
 TODO (in addition to fixing the above bugs)
 -----
