@@ -987,6 +987,7 @@ void EventReverser::addValueGraphStateSavingEdges(VGVertex src, SgNode* killer)
 //    }
 }
 
+#if 0
 vector<EventReverser::VGEdge>
 EventReverser::addValueGraphStateSavingEdges(VGVertex src)
 {
@@ -1010,12 +1011,13 @@ EventReverser::addValueGraphStateSavingEdges(VGVertex src)
 
     // Get the path information of this edge.
     PathInfo paths = pathNumManager_->getPathNumbers(astNode);
-    valueGraph_[newEdge] = new ValueGraphEdge(cost, paths);
+    valueGraph_[newEdge] = new StateSavingEdge(cost, paths);
 
     // If the variable is killed at the exit of a scope, add a state saving edge to it.
 
     return newEdges;
 }
+#endif
 
 set<EventReverser::VGVertex> EventReverser::getKillers(VGVertex killedNode)
 {
@@ -1211,6 +1213,7 @@ EventReverser::VGVertex EventReverser::createValueNode(SgNode* lhsNode, SgNode* 
         {
             //rhsValNode->var = getVersionedVariable(lhsNode, false);
             rhsValNode->var = var;
+            rhsValNode->astNode = lhsNode;
             varVertexMap_[rhsValNode->var] = rhsVertex;
             nodeVertexMap_[lhsNode] = rhsVertex;
             return rhsVertex;
@@ -1414,21 +1417,12 @@ void EventReverser::addStateSavingEdges()
             valueGraph_[newEdge] = new StateSavingEdge(0, realPaths, controlDeps, NULL);
         }
         
-        // Add 
-        
-#if 0
-
-        addValueGraphStateSavingEdges(v);
-        
-        // for backup
-#if 0
-        int cost  = 0;
-        if (isAvailableValue(v))
-            cost = node->getCost();
-        addStateSavingEdge(v, cost);
-#endif
-        
-#endif
+        // Give every value node one more SS edge.
+        cout << valNode->astNode->unparseToString() << endl;
+        // For workaround of function calls.
+        if (!isSgFunctionCallExp(valNode->astNode) 
+                && SageInterface::isAncestor(funcDef_, valNode->astNode))
+            addValueGraphStateSavingEdges(v, valNode->astNode);
     }
 }
 

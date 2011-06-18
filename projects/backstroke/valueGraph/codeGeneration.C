@@ -29,7 +29,7 @@ SgExpression* buildVariable(ValueNode* node)
 SgStatement* buildVarDeclaration(ValueNode* newVar, SgExpression* expr)
 {
     SgAssignInitializer* init = expr ? buildAssignInitializer(expr) : NULL;
-    return buildVariableDeclaration(newVar->str,
+    return buildVariableDeclaration(newVar->var.name[0]->get_name(),
                                     newVar->getType(),
                                     init);
 }

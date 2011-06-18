@@ -1010,16 +1010,18 @@ void EventReverser::generateCodeForBasicBlock(
     
     pushScopeStack(rvsScope);
 
-#if 0
+#if 1
     // First, declare all temporary variables at the beginning of the reverse events.
-    foreach (VGVertex node, boost::vertices(route))
+    foreach (const VGEdge& edge, edges)
     {
-        ValueNode* valNode = isValueNode(route[node]);
-        if (valNode == NULL) continue;
-        if (valNode->isAvailable()) continue;
+        ValueNode* valNode = isValueNode(valueGraph_[boost::source(edge, valueGraph_)]);
+        //if (valNode->isAvailable()) continue;
+        if (valNode == NULL || valNode->var.name.empty()) continue;
+        if (!SageInterface::isAncestor(funcDef_, valNode->var.name[0]))
+            continue;
 
         SgStatement* varDecl = buildVarDeclaration(valNode);
-        SageInterface::appendStatement(varDecl, scope);
+        SageInterface::appendStatement(varDecl, rvsScope);
     }
 #endif
     

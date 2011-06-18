@@ -347,7 +347,7 @@ private:
      *  @param pathNum The visible incomplete path number on this edge.
 	 *  @returns The new added edges.
 	 */
-    std::vector<VGEdge> addValueGraphStateSavingEdges(VGVertex src);
+    //std::vector<VGEdge> addValueGraphStateSavingEdges(VGVertex src);
 
 	//! Add a phi node to the value graph.
 	//VGVertex createPhiNode(VersionedVariable& var);
