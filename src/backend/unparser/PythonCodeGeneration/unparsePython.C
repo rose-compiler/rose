@@ -194,6 +194,7 @@ void
 Unparse_Python::unparseFunctionDeclaration(SgFunctionDeclaration* func_decl,
                                            SgUnparse_Info& info)
 {
+#if 0 // awaiting resolution of abstract handle bug
     SgExprListExp* decoratorList = func_decl->get_decoratorList();
     SgExpressionPtrList& decorators = decoratorList->get_expressions();
     SgExpressionPtrList::iterator dec_it;
@@ -202,6 +203,7 @@ Unparse_Python::unparseFunctionDeclaration(SgFunctionDeclaration* func_decl,
         unparseExpression(*dec_it, info);
         curprint(string("\n") + ws_prefix(info.get_nestingLevel()));
     }
+#endif
 
     stringstream code0;
     string func_name = func_decl->get_name().getString();
@@ -218,7 +220,9 @@ Unparse_Python::unparseFunctionDeclaration(SgFunctionDeclaration* func_decl,
     unparseStatement(func_decl->get_definition(), info);
     info.dec_nestingLevel();
 
+#if 0 // awaiting resolution of abstract handle bug
     curprint(string("\n") + ws_prefix(info.get_nestingLevel()));
+#endif
 }
 
 void
