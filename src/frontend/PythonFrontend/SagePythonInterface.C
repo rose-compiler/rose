@@ -247,6 +247,7 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
                 sg_params,
                 sg_scope_statement);
 
+#if 0 // awaiting resolution of abstract handle bug
     SgExprListExp* decorators = sg_func_decl->get_decoratorList();
     Py_ssize_t decc = PyList_Size(py_decorators);
     for(int i = 0; i < decc; i++) {
@@ -254,6 +255,7 @@ sage_buildFunctionDef(PyObject *self, PyObject *args)
         SgExpression* exp = PyDecapsulate<SgExpression>(py_exp);
         decorators->append_expression(exp);
     }
+#endif
 
     PyObject* return_tuple = PyTuple_New(2);
     PyTuple_SetItem(return_tuple, 0, PyEncapsulate(sg_func_decl));
