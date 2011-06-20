@@ -35,16 +35,23 @@ RuntimeSystemCppTest_SOURCES = test.cpp
 RuntimeSystemCppTest_LDADD   = libCppRuntimeSystem.la
 
 
+include_HEADERS = rted_iface_structs.h \
+                  ptrops.h \
+                  ptrops_operators.h \
+                  rted_typedefs.h
+
 pkginclude_HEADERS = CppRuntimeSystem.h \
 					 FileManager.h \
 					 Util.h \
 					 MemoryManager.h \
 					 CStdLibManager.h \
-					 VariablesType.h\
-					 RsType.h\
-					 TypeSystem.h\
-					 PointerManager.h\
-					 StackManager.h
+					 VariablesType.h \
+					 RsType.h \
+					 TypeSystem.h \
+					 PointerManager.h \
+					 StackManager.h \
+					 workzone.h \
+					 rtedsync.h
 
 check-local:
 	./RuntimeSystemCppTest
