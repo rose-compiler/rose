@@ -21,7 +21,7 @@ using namespace std;
 string
 RoseHPCT::XMLQuery::getVersion (const XMLNode_t* doc)
 {
-  XMLElemFinder finder ("PROFILE", doc);
+  XMLElemFinder finder ("HPCToolkitExperiment", doc);
   if (finder.getNumMatches () != 1)
     return "";
 
@@ -48,13 +48,13 @@ RoseHPCT::XMLQuery::getMetricTable (const XMLNode_t* doc)
 {
   map<string, string> metrics;
 
-  XMLElemFinder finder ("METRIC", doc);
+  XMLElemFinder finder ("Metric", doc);
   for (XMLElemFinder::ElemList_t::const_iterator i = finder.begin ();
        i != finder.end ();
        ++i)
     {
-      string key = (*i).getAttr ("shortName");
-      string value = (*i).getAttr ("displayName");
+      string key = (*i).getAttr ("i");
+      string value = (*i).getAttr ("n");
       if (key.length())
 	metrics[key] = value;
     }

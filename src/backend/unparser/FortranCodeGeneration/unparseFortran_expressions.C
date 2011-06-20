@@ -578,7 +578,7 @@ FortranCodeGeneration_locatedNode::unparseEqOp(SgExpression* expr, SgUnparse_Inf
         }
        else
         {
-          unparseBinaryOperator(expr, "==", info);
+          unparseBinaryOperator(expr, ".EQ.", info);
         }
    }
 
@@ -597,7 +597,7 @@ FortranCodeGeneration_locatedNode::unparseNeOp(SgExpression* expr, SgUnparse_Inf
         }
        else
         {
-          unparseBinaryOperator(expr, "/=", info);
+          unparseBinaryOperator(expr, ".NE.", info);
         }
    }
 

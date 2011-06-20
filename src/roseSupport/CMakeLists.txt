@@ -8,4 +8,10 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 #add_dependencies( rose_support ROSETTA  )
 ########### install files ###############
 
-install(FILES  transformationSupport.h     optionDeclaration.h     sourceLocationInheritedAttribute.h     roseTranslators.h     utility_functions.h DESTINATION ${INCLUDE_INSTALL_DIR})
+install(FILES  transformationSupport.h
+               optionDeclaration.h
+               sourceLocationInheritedAttribute.h
+               roseTranslators.h
+               utility_functions.h
+	       threadSupport.h
+	DESTINATION ${INCLUDE_INSTALL_DIR})
