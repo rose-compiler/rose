@@ -5,11 +5,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # SUBDIRS = CompileTests roseTests RunTests PerformanceTests CompilerOptionsTests translatorTests
 # SUBDIRS = CompileTests roseTests
 SUBDIRS = CompileTests
-if !ROSE_USE_INSURE
+#if !ROSE_USE_INSURE
 # DQ (4/23/2011): Ignoring this whole directory might be over kill. But I have had problems, 
 # only on Hudson, just compiling a number of these subdirectories.
    SUBDIRS += roseTests
-endif
+#endif
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += RunTests PerformanceTests CompilerOptionsTests translatorTests
