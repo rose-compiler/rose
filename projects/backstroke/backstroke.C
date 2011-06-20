@@ -116,7 +116,7 @@ reverseEvents(EventProcessor* event_processor,
 	foreach(SgGlobal* globalScope, allGlobalScopes)
 	{
 		// Prepend includes to test files.
-		insertHeader("rctypes.h", PreprocessingInfo::after, false, globalScope);
+		insertHeader("backstrokeRuntime.h", PreprocessingInfo::after, false, globalScope);
 		
 		// Fix all variable references here.
 		SageInterface::fixVariableReferences(globalScope);
