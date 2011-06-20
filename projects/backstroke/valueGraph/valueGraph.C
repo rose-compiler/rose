@@ -220,7 +220,7 @@ void EventReverser::buildBasicValueGraph()
             else if (SgFunctionCallExp* funcCall = isSgFunctionCallExp(expr))
             {
                 const SSA::NodeReachingDefTable& defTable =
-                            ssa_->getReachingDefsAtNode(funcCall->get_parent());
+                            ssa_->getOutgoingDefsAtNode(funcCall->get_parent());
 
 #if 1
                 cout << "Print def table:\n";
@@ -911,7 +911,7 @@ EventReverser::VGVertex EventReverser::createValueNode(SgNode* lhsNode, SgNode* 
         // all it killed defs then add state saving edges for them in this specific
         VersionedVariable var = getVersionedVariable(lhsNode, false);
         //cout << "New Var Defined: " << var.toString() << endl;
-        SSA::NodeReachingDefTable defTable = ssa_->getReachingDefsAtNode(lhsNode);
+        SSA::NodeReachingDefTable defTable = ssa_->getOutgoingDefsAtNode(lhsNode);
         typedef SSA::NodeReachingDefTable::value_type reachingDefPair;
         foreach (const reachingDefPair& def, defTable)
         {
@@ -1025,7 +1025,7 @@ void EventReverser::addStateSavingEdges()
                 scope = funcBody;
             
             // Find the last def of this variable in its definition scope.
-            const SSA::NodeReachingDefTable& defTable = ssa_->getReachingDefsAtNode(scope);
+            const SSA::NodeReachingDefTable& defTable = ssa_->getOutgoingDefsAtNode(scope);
             
             const VarName& varName = valNode->var.name;
             SSA::NodeReachingDefTable::const_iterator iter = defTable.find(varName);
@@ -1124,7 +1124,7 @@ VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
         cout << node->get_parent()->get_parent()->class_name() << endl;
 #endif
         const SSA::NodeReachingDefTable& defTable =
-            ssa_->getReachingDefsAtNode(node->get_parent());
+            ssa_->getOutgoingDefsAtNode(node->get_parent());
             //ssa_->getReachingDefsAtNode(node->get_parent()->get_parent());
 
 #if 0
