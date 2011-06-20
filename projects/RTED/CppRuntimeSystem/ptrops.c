@@ -6,7 +6,7 @@
 //   Note, the only UPC compiler supported is GCCUPC with the following
 //     command-line define: upc -DIN_TARGET_LIBS
 //
-//   In non-UPC context, this file can be compiled with a C/C++ compiler
+//   In non-UPC projects, this file can be compiled with a C/C++ compiler
 //
 // \email peter.pirkelbauer@llnl.gov
 
