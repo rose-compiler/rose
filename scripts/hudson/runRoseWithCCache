@@ -21,6 +21,20 @@ LOG_LOCATION="$PWD"
 
 #########################################################################################
 #
+#  BOOST C++ 
+#
+#########################################################################################
+echo "Setting up the [DY]LD_LIBRARY_PATH"
+
+	if test "x$label" = "x64bit-macos-10.6" ; then
+		export DYLD_LIBRARY_PATH="$ROSE_TEST_BOOST_PATH/lib:$DYLD_LIBRARY_PATH"
+	else
+		# tps : 04/26/2010 - Added support for OpenGL for 64bit
+		export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
+	fi
+
+#########################################################################################
+#
 #  UPC
 #
 #  tps : 11/17/2010 Hudson support for UPC - order matters!
