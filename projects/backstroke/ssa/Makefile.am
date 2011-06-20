@@ -20,8 +20,77 @@ EXTRA_DIST =
 
 CLEANFILES = 
 
+C_TESTCODES_REQUIRED_TO_PASS = \
+callee.c \
+caller.c \
+commentTest.c \
+complex_01.c \
+constants.c \
+gconv_info.c \
+math.c \
+old_style_function.c \
+stdio.c \
+test2003_12.c \
+test2004_20.c \
+test2004_21.c \
+test2005_172.c \
+test2005_186.c \
+test2006_14.c \
+test2006_48.c \
+test2006_65.c \
+test2006_100.c \
+test2006_110.c \
+test2006_114.c \
+test2006_132.c \
+test2006_133.c \
+test2006_134.c \
+test2006_135.c \
+test2006_136.c \
+test2007_177.c \
+test2008_01.c \
+test2008_02.c \
+test2009_01.c \
+test2009_02.c \
+test2009_03.c \
+test2009_04.c \
+test2009_07.c \
+test2009_08.c \
+test2009_16.c \
+test2009_17.c \
+test2009_18.c \
+test2009_20.c \
+test2009_21.c \
+test2009_22.c \
+test2010_01.c \
+test2010_02.c \
+test2010_03.c \
+test2010_04.c \
+test2010_06.c \
+test2010_07.c \
+test2010_08.c \
+test2010_09.c \
+test2010_10.c \
+test2010_11.c \
+test2010_12.c \
+test2010_13.c \
+test2010_14.c \
+test2010_15.c \
+test2010_17.c \
+test2011_03.c \
+test2011_04.c \
+test2011_05.c \
+testAnsiC.c \
+testCvsCpp.c \
+test_CplusplusMacro_C.c \
+YardenPragmaPackExample.c \
+Yarden_client.c 
 
-TESTCODES_REQUIRED_TO_PASS = \
+C_FAILURE_TESTCODES = \
+expected failure (need special compile cmd) test2005_168.c \
+gzip.c
+
+
+CXX_TESTCODES_REQUIRED_TO_PASS = \
 test_CplusplusMacro_Cpp.C \
 test2001_01.C \
 test2001_02.C \
@@ -674,7 +743,7 @@ inputBug317.C
 
 # These are currently failing testcodes that should be fixed
 # (as opposed to testcodes that are expected to fail)
-FAILURE_TESTCODES = \
+CXX_FAILURE_TESTCODES = \
 -->Catch statements don't appear in the virtual CFG: (Not SSA BUG) \
 test2006_66.C \
 --> No defs propagated to unreachable code (Have to detect unreachable code) \
@@ -686,22 +755,39 @@ test2005_187.C \
 test2005_114.C \
 test2006_47.C 
 
-
-TEST_Objects = ${TESTCODES_REQUIRED_TO_PASS:.C=.o}
-
 TEST_INCLUDES = \
 	-I$(top_srcdir)/tests/CompileTests/A++Code \
+	-I$(top_srcdir)/tests/CompileTests/C_tests \
 	-I$(top_srcdir)/tests/CompileTests/Cxx_tests 
 
-$(TEST_Objects): ssaTestHarness
-	@cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $(@:.o=.C)
+.PHONY: TEST_C
+TEST_C: 
+	@cp -f $(top_srcdir)/tests/CompileTests/C_tests/*.c . 
+	@$(MAKE) $(C_TESTCODES_REQUIRED_TO_PASS)
+	@rm *.c
+
+.PHONY: $(C_TESTCODES_REQUIRED_TO_PASS)
+$(C_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
+	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
+
+.PHONY: TEST_CXX
+TEST_CXX:
+	@cp -f $(top_srcdir)/tests/CompileTests/Cxx_tests/*.C .
+	@$(MAKE) $(CXX_TESTCODES_REQUIRED_TO_PASS)
+	@rm *.C
+
+.PHONY: $(CXX_TESTCODES_REQUIRED_TO_PASS)
+$(CXX_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
+	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
 
 check-local:
-	@$(MAKE) $(TEST_Objects)
+	@$(MAKE) TEST_C
+if !ROSE_USE_EDG_VERSION_4
+	@$(MAKE) TEST_CXX
+endif
 	@echo "*********************************************************************************************************"
 	@echo "****** ROSE/projects/backstroke/ssa: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************"
 
 clean-local:
-	rm -f *.o *.C
+	rm -f *.o *.c *.C
