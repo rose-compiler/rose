@@ -2193,6 +2193,7 @@ projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/HeaderFilesInclusion/Makefile
 projects/MPI_Tools/Makefile
 projects/MPI_Tools/MPICodeMotion/Makefile
+projects/MPI_Tools/MPIDeterminismAnalysis/Makefile
 projects/MacroRewrapper/Makefile
 projects/Makefile
 projects/OpenMP_Analysis/Makefile
