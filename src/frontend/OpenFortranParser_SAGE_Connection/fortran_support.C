@@ -3140,7 +3140,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
      variableDeclaration->get_declarationModifier().get_accessModifier().setUndefined();
 
   // DQ (11/18/2007): Save the attributes used and clear the astAttributeSpecStack for this declaration
-     while (astAttributeSpecStack.empty() == false)
+     while (astAttributeSpecStack.empty() == false)   // DXN: TODO use the global VarAttrSpec instead
         {
        // printf ("In buildVariableDeclaration(): Process attribute spec %d ",astAttributeSpecStack.front());
           setDeclarationAttributeSpec(variableDeclaration,astAttributeSpecStack.front());
@@ -4261,7 +4261,8 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
                break;
 
           case AttrSpec_POINTER:
-            // printf ("Error: POINTER is an attribute specifier that effects the associated type (no flag is provided) \n");
+          case AttrSpec_COPOINTER:
+            // POINTER/COPOINTER are attribute specifiers that affect the associated type (no flag is provided);
                break;
 
           case AttrSpec_PASS:
@@ -6344,7 +6345,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
 
                     ROSE_ASSERT(!astBaseTypeStack.empty());
 
-                    if (!astTypeStack.empty()) astTypeStack.pop_front();
+                    // if (!astTypeStack.empty()) astTypeStack.pop_front();  // DXN (06/13/2011)
 
                     SgPointerType* pointerType = astTypeStack.empty()?
                             new SgPointerType(astBaseTypeStack.front()):
@@ -6540,7 +6541,7 @@ void AttrSpec::merge(AttrSpec& attrSpec)
 // TODO
 }
 
-// DXN (0510/2011)
+// DXN (05/10/2011): pointer < copointer < codimension < dimension
 SgType* AttrSpec::computeEntityType()
 {
     //SgType* entityType = NULL;
@@ -6550,22 +6551,22 @@ SgType* AttrSpec::computeEntityType()
     {
         // TODO: convert initType to string type with char length
     }
-    if (codimensionAttr)
-    {
-        // TODO
-    }
     if (dimensionAttr)
     {
-        //astExpressionStack.push_front(dimensionAttr);
-        initType = buildArrayType();
+      initType = buildArrayType();
+    }
+    if (codimensionAttr)
+    {
+      initType->set_isCoArray(true);
     }
     if (isCopointer)
     {
-        // TODO
+      initType = new SgPointerType(initType);
+      initType->set_isCoArray(true);             // a copointer is a pointer whose isCoArray flag is true.
     }
     if (isPointer)
     {
-        // TODO
+      initType = new SgPointerType(initType);
     }
 
     return initType; // TODO
@@ -6580,7 +6581,6 @@ SgArrayType* AttrSpec::buildArrayType()
     SgArrayType* arrayType = new SgArrayType(initType,sizeExpression);
     sizeExpression->set_parent(arrayType);
     arrayType->set_dim_info(dimensionAttr);
- // setSourcePosition(expresssionList);
     dimensionAttr->set_parent(arrayType);
     arrayType->set_rank(dimensionAttr->get_expressions().size());
 

@@ -1,4 +1,4 @@
-#include<signal.h>
+#include <signal.h>
 #include "sage3basic.h"
 #include "fortran_support.h"
 #include "FortranParserState.h"
@@ -10,7 +10,7 @@
 
 #define SKIP_C_ACTION_IMPLEMENTATION 0
 #define DXN_DEBUG 1
-#define DXN_CODE 0
+#define DXN_CODE 1
 
 using namespace std;
 
@@ -3003,8 +3003,19 @@ c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos
      buildVariableDeclarationAndCleanupTypeStack(label);
 
 #if DXN_CODE
+
+     SgInitializedNamePtrList&  varList = VarDeclAttrSpec.varDeclaration->get_variables ();
+     SgInitializedName* firstInitializedNameForSourcePosition = varList.front();
+     SgInitializedName* lastInitializedNameForSourcePosition  = varList.back();
+     ROSE_ASSERT(VarDeclAttrSpec.varDeclaration->get_startOfConstruct() != NULL);
+     ROSE_ASSERT(firstInitializedNameForSourcePosition->get_startOfConstruct() != NULL);
+     ROSE_ASSERT(lastInitializedNameForSourcePosition->get_startOfConstruct() != NULL);
+     *(VarDeclAttrSpec.varDeclaration->get_startOfConstruct()) = *(firstInitializedNameForSourcePosition->get_startOfConstruct());
+     *(VarDeclAttrSpec.varDeclaration->get_endOfConstruct())   = *(lastInitializedNameForSourcePosition->get_startOfConstruct());
+
   // DXN (05/09/2011)
      VarDeclAttrSpec.reset();
+
 #endif
 
 #endif
@@ -3138,6 +3149,13 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
         }
 
 #if DXN_CODE
+
+     VarDeclAttrSpec.varDeclaration = new SgVariableDeclaration();
+     setSourcePosition(VarDeclAttrSpec.varDeclaration);
+     VarDeclAttrSpec.varDeclaration->set_parent(getTopOfScopeStack());
+     VarDeclAttrSpec.varDeclaration->set_definingDeclaration(VarDeclAttrSpec.varDeclaration);
+     VarDeclAttrSpec.varDeclaration->get_declarationModifier().get_accessModifier().setUndefined();
+
      VarDeclAttrSpec.initType = astBaseTypeStack.front();
      astBaseTypeStack.pop_front();
 #endif
@@ -3403,6 +3421,11 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
              }
         }
 
+#if DXN_CODE
+
+     setDeclarationAttributeSpec(VarDeclAttrSpec.varDeclaration, attr);
+
+#else
   // DQ (1/23/2011): The dimension attribute will be associated with an attribute pusded by R510 #2 c_action_array_spec_element().
   // DQ (5/20/2008): This is a redundant specifier, it appears to only be used with AttrSpec_PUBLIC or AttrSpec_PRIVATE
   // Push the attribue onto the stack (e.g. dimension)
@@ -3412,6 +3435,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
         {
           astAttributeSpecStack.push_front(attr);
         }
+#endif
 
 #if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
@@ -3471,31 +3495,31 @@ void c_action_entity_decl(Token_t * id)
     // DXN (05/09/2011): update the array spec, coarray spec, char length and initialization of entity decl here
     if (hasInitialization)
     {
-        ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains initialization expression
-        initialization = astExpressionStack.front();
-        astExpressionStack.pop_front();
+      ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains initialization expression
+      initialization = astExpressionStack.front();
+      astExpressionStack.pop_front();
     }
     if (hasCharLength)
     {
-        ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains char_length expression
-        entityAttr.lenExpr = astExpressionStack.front();
-        astExpressionStack.pop_front();
+      ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains char_length expression
+      entityAttr.lenExpr = astExpressionStack.front();
+      astExpressionStack.pop_front();
     }
     if (hasCoarraySpec)
     {
-        ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains all codimension specs
-        SgExprListExp* coarraySpec = isSgExprListExp(astExpressionStack.front());
-        ROSE_ASSERT(coarraySpec);
-        entityAttr.codimensionAttr = coarraySpec;
-        astExpressionStack.pop_front();
+      ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains all codimension specs
+      SgAsteriskShapeExp* coarraySpec = isSgAsteriskShapeExp(astExpressionStack.front());
+      ROSE_ASSERT(coarraySpec);
+      entityAttr.codimensionAttr = coarraySpec;
+      astExpressionStack.pop_front();
     }
     if (hasArraySpec)
     {
-        ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains all dimension attributes
-        SgExprListExp* arraySpec = isSgExprListExp(astExpressionStack.front());
-        ROSE_ASSERT(arraySpec);
-        entityAttr.dimensionAttr = arraySpec;
-        astExpressionStack.pop_front();
+      ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains all dimension attributes
+      SgExprListExp* arraySpec = isSgExprListExp(astExpressionStack.front());
+      ROSE_ASSERT(arraySpec);
+      entityAttr.dimensionAttr = arraySpec;
+      astExpressionStack.pop_front();
     }
 
     SgType* entityType = entityAttr.computeEntityType();  // TODO
@@ -3584,25 +3608,18 @@ void c_action_entity_decl(Token_t * id)
     }
 
     ROSE_ASSERT(initializedName != NULL);
-
-    if (astAttributeSpecStack.empty() == false && astAttributeSpecStack.front()==AttrSpec_COARRAY)  {
-        astAttributeSpecStack.pop_front();
-        initializedName->set_isCoArray(true);
-    }
-    else    {
-        initializedName->set_isCoArray(false);
-    }
-
     setSourcePosition(initializedName,id);
-    astNodeStack.push_front(initializedName);
+
+    VarDeclAttrSpec.varDeclaration->append_variable(initializedName,initializedName->get_initializer());
+    // astNodeStack.push_front(initializedName);
+
     ROSE_ASSERT(!astNameStack.empty());
     astNameStack.pop_front();
     if (!astTypeStack.empty())
         astTypeStack.pop_front();
     ROSE_ASSERT(astTypeStack.empty());
 
-    // !SKIP_C_ACTION_IMPLEMENTATION
-#endif
+#endif  // !SKIP_C_ACTION_IMPLEMENTATION
 
 #else
 
@@ -4001,8 +4018,8 @@ void c_action_entity_decl(Token_t * id)
           astTypeStack.pop_front();
           ROSE_ASSERT(astTypeStack.empty() == true);
        }
-        // !SKIP_C_ACTION_IMPLEMENTATION
-#endif
+
+#endif // !SKIP_C_ACTION_IMPLEMENTATION
 
 #endif
 
@@ -4052,13 +4069,11 @@ void c_action_entity_decl_list__begin()
 
 #if !DXN_CODE
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
-#endif
 
   // This is the start of an entity list (used in variable declarations to hold the variables being declared
   // build the list and add the variable identifiers to the list
   // AstNameListType* nameList = new AstNameListType();
   // astNameListStack.push_front(nameList);
-#if !DXN_CODE
      convertBaseTypeToArrayWhereAppropriate();   // DXN (05/09/2011): TODO - need to break this up into smaller chunks in order isolate and disable the conversion to array type.
                                                  // if this commented out, top of astEpressionStack is not consumed and popped.
 #endif
@@ -4084,19 +4099,19 @@ void c_action_entity_decl_list(int count)
      outputState("At TOP of R504 (list) c_action_entity_decl_list()");
 #endif
 
+#if DXN_CODE
+
+     // SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(NULL,false);
+     ROSE_ASSERT(VarDeclAttrSpec.varDeclaration->get_file_info()->isCompilerGenerated() == false);
+     // cleanupTypeStackAfterDeclaration();
+     ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock || getTopOfScopeStack()->variantT() == V_SgClassDefinition);
+     getTopOfScopeStack()->append_statement(VarDeclAttrSpec.varDeclaration);
+
+#else
+
   // Note that we are not really using the count, but the astNodeStack.size() should match the count.
   // DQ (1/28/2009): Can we assert this!
      ROSE_ASSERT(astNodeStack.size() == (size_t) count);
-
-#if DXN_CODE
-
-     SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(NULL,false);
-     ROSE_ASSERT(variableDeclaration->get_file_info()->isCompilerGenerated() == false);
-     cleanupTypeStackAfterDeclaration();
-     ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock || getTopOfScopeStack()->variantT() == V_SgClassDefinition);
-     getTopOfScopeStack()->append_statement(variableDeclaration);
-
-#else
 
   // DQ (1/28/2009): Refactored this code so it could be called in R442, R501, R504 and R1238.
   // I think this is the earliest point at which this can be called, after this point if
@@ -4449,7 +4464,7 @@ void c_action_array_spec_element(int type)
   // DQ (1/17/2011): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type).
   // printf ("In R510 #2 c_action_array_spec_element(): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type). \n");
 #if !DXN_CODE
-     astAttributeSpecStack.push_front(AttrSpec_DIMENSION);  // DXN (05/10/2011): array spec and dimension attribute are recorded in AttrSpec::Singleton().
+     astAttributeSpecStack.push_front(AttrSpec_DIMENSION);  // array spec and dimension attribute are recorded in VarAttrSpec.
 #endif
 
   // A fundamental problem is that we may not know enough about the size of an array type at this point were we 
@@ -19107,9 +19122,19 @@ void c_action_cleanUp()
 // RICE IMPLEMENTATION
 //------------------------------------------------------------------------
 #if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
-void c_action_coarray_spec(int arg0) 
+void c_action_coarray_spec(int count) 
     {
-     if (arg0 == 1) {
+    raise(SIGINT);
+#if DXN_CODE
+
+    if (count != 1)
+    {
+      cout << "ERROR (Rice CoArray Fortran 2.0): the co-rank must be 1." << endl;
+    }
+    // processMultidimensionalSubscriptsIntoExpressionList(count);  // TODO
+
+#else
+    if (count == 1) {
           astExpressionStack.pop_front();
      } else {
           cout << "ERROR (Rice CoArray Fortran 2.0): the co-rank must be 1." << endl;
@@ -19119,6 +19144,7 @@ void c_action_coarray_spec(int arg0)
           printf ("In c_action_coarray_spec() \n");
 
       astAttributeSpecStack.push_front(AttrSpec_COARRAY);
+#endif
 
    }
 
