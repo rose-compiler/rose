@@ -1961,6 +1961,8 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
      ninfo.unset_CheckAccess();
      info.set_access_attribute(ninfo.get_access_attribute());
 
+#if 0
+
      SgInitializedNamePtrList::iterator i = vardecl->get_variables().begin();
      VariantT variantType = (*i)->get_type()->variantT();
   // printf ("In unparseVarDeclStmt(): variantType = %d \n",(int)variantType);
@@ -2223,6 +2225,19 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
              }
         }
 #endif
+
+#endif
+
+     SgInitializedNamePtrList::iterator p = vardecl->get_variables().begin();
+     unparseVarDecl(vardecl, *p, ninfo);
+     ninfo.set_SkipBaseType();
+     p++;
+     while (p != vardecl->get_variables().end()) {
+         curprint(", ");
+         unparseVarDecl(vardecl, *p, ninfo);
+         p++;
+     }
+
   // After a variable declaration insert a new line
   // curprint(" ! After a variable declaration ");
      unp->cur.insert_newline(1);
@@ -3977,7 +3992,10 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                unp->u_fortran_type->unparseType(type, info);
              }
 #else
-          unp->u_fortran_type->unparseType(type, info);
+          // DXN (06/19/2011): only unparse the base type:
+          SgType* baseType = type->stripType(SgType::STRIP_ARRAY_TYPE);
+          unp->u_fortran_type->unparseType(baseType, info);
+          // unp->u_fortran_type->unparseType(type, info);
 #endif
        // DQ (11/18/2007): Added support for ALLOCATABLE declaration attribute
           SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
@@ -4184,13 +4202,38 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
 
         }
 
+#if 0
        // FMZ (3/23/2009) after the caf translator translates the coarray to be a f90 pointer
        // we are no longer need to keep this unparsed
        // We actually better use intializedName to hold the flag, 
        // since type is shared by more variables
-
-    if (initializedName->get_isCoArray() == true)
+     if (initializedName->get_isCoArray() == true)
                curprint("[*]");
+#endif
+     // DXN (06/19/2011)
+     SgPointerType* pType = isSgPointerType(type);
+     if (pType)  // pType may be a copointer, so look at its base type instead
+     {
+       SgArrayType* arrayType = isSgArrayType(pType->get_base_type());
+       if (arrayType != NULL)
+       {
+         curprint("(");
+         unparseExpression(arrayType->get_dim_info(), info);
+         curprint(")");
+         if (arrayType->get_isCoArray())
+         {
+           curprint("[*]");
+         }
+       }
+       else if (pType->get_base_type()->get_isCoArray())
+       {
+         curprint("[*]");
+       }
+     }
+     else if (type->get_isCoArray())  // type is not a copointer, but is a coarray type
+     {
+       curprint("[*]");
+     }
 
   // Unparse the initializers if any exist
   // printf ("In FortranCodeGeneration_locatedNode::unparseVarDecl(initializedName=%p): variable initializer = %p \n",initializedName,init);

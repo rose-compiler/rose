@@ -419,7 +419,8 @@ UnparseFortran_type::unparsePointerType(SgType* type, SgUnparse_Info& info)
   // DQ (1/16/2011): Plus unparse the base type...(unless it will just output the stripped types name).
      if (pointer_type->get_base_type()->containsInternalTypes() == true)
         {
-          unparseType(pointer_type->get_base_type(), info);
+          if (!isSgArrayType(pointer_type->get_base_type()))  // DXN (06/19/2011): do not unparse array base type
+             unparseType(pointer_type->get_base_type(), info);
         }
 #endif
 

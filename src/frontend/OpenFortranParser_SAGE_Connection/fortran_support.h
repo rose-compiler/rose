@@ -388,12 +388,13 @@ class AttrSpec
 {
 public:
 
+    SgVariableDeclaration* varDeclaration;
     SgType* initType;
     bool isPublic;
     bool isPrivate;
     bool isAllocatable;
     bool isAsynchronous;
-    SgExprListExp* codimensionAttr;  // TODO: for the left hand side of :: in each type declaration
+    SgExpression* codimensionAttr;  // TODO: for the left hand side of :: in each type declaration
     bool isContiguous;
     SgExprListExp* dimensionAttr;  // TODO: for the left hand side of :: in each type declaration
     bool isExternal;
@@ -414,23 +415,24 @@ public:
     SgExpression* kindExpr;  // TODO
     SgExpression* lenExpr;   // TODO
 
-    AttrSpec(SgType* bType = NULL, bool isPub = false, bool isPriv = false, bool isAlloc = false,
-            bool isAsync = false, SgExprListExp* codimAttr = NULL, bool isContig = false,
+    AttrSpec(SgVariableDeclaration* varDecl = NULL, SgType* bType = NULL, bool isPub = false, bool isPriv = false,
+            bool isAlloc = false, bool isAsync = false, SgExpression* codimAttr = NULL, bool isContig = false,
             SgExprListExp* dimAttr = NULL, bool isExtern = false, bool isI = false, bool isO = false,
             bool isIntrin = false, bool hasLangBind = false, bool isOption = false, bool hasParam = false,
             bool isPoint = false, bool isCopoint = false,bool isProt = false, bool isSav = false,
             bool isTarg = false, bool isCotarg = false, bool isVal = false, bool isVol = false,
             SgExpression* kindExp = NULL, SgExpression* lenExp = NULL):
-                initType(bType), isPublic(isPub), isPrivate(isPriv), isAllocatable(isAlloc), isAsynchronous(isAsync),
-                codimensionAttr(codimAttr), isContiguous(isContig), dimensionAttr(dimAttr),
-                isExternal(isExtern), isIn(isI), isOut(isO), isIntrinsic(isIntrin),
-                hasLangBinding(hasLangBind), isOptional(isOption), hasParameter(hasParam), isPointer(isPoint),
-                isCopointer(isCopoint), isProtected(isProt), isSave(isSav), isTarget(isTarg),
-                isCotarget(isCotarg), isValue(isVal), isVolatile(isVol), kindExpr(kindExp), lenExpr(lenExp)
+                varDeclaration(varDecl), initType(bType), isPublic(isPub), isPrivate(isPriv), isAllocatable(isAlloc),
+                isAsynchronous(isAsync), codimensionAttr(codimAttr), isContiguous(isContig), dimensionAttr(dimAttr),
+                isExternal(isExtern), isIn(isI), isOut(isO), isIntrinsic(isIntrin), hasLangBinding(hasLangBind),
+                isOptional(isOption), hasParameter(hasParam), isPointer(isPoint), isCopointer(isCopoint),
+                isProtected(isProt), isSave(isSav), isTarget(isTarg), isCotarget(isCotarg), isValue(isVal),
+                isVolatile(isVol), kindExpr(kindExp), lenExpr(lenExp)
     { }
 
     ~AttrSpec()
     {
+        varDeclaration = NULL;
         initType = NULL;
         codimensionAttr = NULL;
         dimensionAttr = NULL;
@@ -440,10 +442,10 @@ public:
 
     void reset()
     {
-        initType = NULL; isPublic = false; isPrivate = false; isAllocatable - false; isAsynchronous = false;
-        codimensionAttr = NULL; isContiguous = false; dimensionAttr = NULL; isExternal = false;
-        isIn = false; isOut= false; isIntrinsic = false; hasLangBinding = false; isOptional = false;
-        hasParameter = false; isPointer = false; isCopointer = false; isProtected = false;
+        varDeclaration = NULL; initType = NULL; isPublic = false; isPrivate = false; isAllocatable - false;
+        isAsynchronous = false; codimensionAttr = NULL; isContiguous = false; dimensionAttr = NULL;
+        isExternal = false; isIn = false; isOut= false; isIntrinsic = false; hasLangBinding = false;
+        isOptional = false; hasParameter = false; isPointer = false; isCopointer = false; isProtected = false;
         isSave = false; isTarget = false; isCotarget = false; isValue = false; isVolatile = false;
         kindExpr = NULL; lenExpr = NULL;
     }

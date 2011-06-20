@@ -18,10 +18,10 @@ FortranParserState::FortranParserState()
 // Pop out the top of the stack, clean all the member stacks 
 FortranParserState::~FortranParserState()
   {
+      delete varDeclAttrSpec;
       statesStack.pop(); 
       //printf("FortranParserState:: pop out  the stack \n");
       clearStacks();
-      delete varDeclAttrSpec;
   }
 
 
