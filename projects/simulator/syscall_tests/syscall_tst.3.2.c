@@ -163,7 +163,7 @@ void setup(void)
 	tst_sig(NOFORK, DEF_HANDLER, cleanup);
 
 	/* create a temporary filename */
-	sprintf(fname, "%s.%d", fname, getpid());
+	sprintf(fname+strlen(fname), ".%d", getpid());
 
 	/* Pause if that option was specified */
 	TEST_PAUSE;

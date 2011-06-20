@@ -13,7 +13,7 @@ HEADER_NODE_PREDECLARATION_START
 #include "Cxx_Grammar.h"
 
 #include "processSupport.h"
-#define __builtin_constant_p (exp) (0)
+#define __builtin_constant_p(exp) (0)
 
 
 class PreprocessingInfo;
@@ -458,6 +458,9 @@ typedef SgAsmStatementPtrList*              SgAsmStatementPtrListPtr;
 // DQ (3/15/2007): Added support for binaries.
 typedef Rose_STL_Container<SgAsmExpression*> SgAsmExpressionPtrList;
 typedef SgAsmExpressionPtrList*              SgAsmExpressionPtrListPtr;
+
+typedef Rose_STL_Container<SgAsmTarget*> SgAsmTargetPtrList;
+typedef SgAsmTargetPtrList* 		 SgAsmTargetPtrListPtr;
 
 // DQ (3/15/2007): Added support for binaries.
 typedef Rose_STL_Container<SgAsmDeclaration*> SgAsmDeclarationPtrList;

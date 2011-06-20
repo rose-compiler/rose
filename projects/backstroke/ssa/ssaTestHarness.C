@@ -27,8 +27,17 @@ public:
 	virtual void visit(SgNode* node)
 	{
 		/** Compare reaching defs at node. */
-		StaticSingleAssignment::NodeReachingDefTable newReachingDefs = ssa->getReachingDefsAtNode(node);
+		StaticSingleAssignment::NodeReachingDefTable newReachingDefs = ssa->getOutgoingDefsAtNode(node);
 		VariableRenaming::NumNodeRenameTable oldReachingDefs = varRenaming->getReachingDefsAtNode(node);
+		
+		if (isSgFunctionDefinition(node))
+		{
+			newReachingDefs = ssa->getLastVersions(isSgFunctionDefinition(node)->get_declaration());
+			oldReachingDefs = varRenaming->getReachingDefsAtFunctionEnd(isSgFunctionDefinition(node));
+			
+			//FIXME: The StaticSingleAssignment::getLastVersions function is broken
+			return;
+		}
 
 		StaticSingleAssignment::ReachingDefPtr reachingDef;
 		StaticSingleAssignment::VarName var;
@@ -67,24 +76,25 @@ public:
 
 		if (newUses.size() != oldUses.size())
 		{
-			printf("SSA uses at node %s:%d\n", node->class_name().c_str(), node->get_file_info()->get_line());
+			printf("ERROR: Mismatch between variable renaming uses and SSA uses at node ");
+			printf(" %s:%d\nSSA uses:", node->class_name().c_str(), node->get_file_info()->get_line());
 			foreach(const StaticSingleAssignment::NodeReachingDefTable::value_type& varDefPair, newUses)
 			{
-				printf("%s, ", StaticSingleAssignment::varnameToString(varDefPair.first).c_str());
+				printf("\t%s, ", StaticSingleAssignment::varnameToString(varDefPair.first).c_str());
 			}
 			printf("\nVarRenaming uses at node:\n");
 			foreach(const VariableRenaming::NumNodeRenameTable::value_type& varDefsPair, oldUses)
 			{
-				printf("%s, ", VariableRenaming::keyToString(varDefsPair.first).c_str());
+				printf("\t%s, ", VariableRenaming::keyToString(varDefsPair.first).c_str());
 			}
 			printf("\n");
 
-			printf("\nVarRenaming uses:\n");
+			printf("\nVarRenaming uses table:\n");
 			varRenaming->printUses(node);
-			printf("\nVarRenaming defs:\n");
+			printf("\nVarRenaming defs table:\n");
 			varRenaming->printDefs(node);
-			printf("\nSSA defs:\n");
-			foreach (StaticSingleAssignment::NodeReachingDefTable::value_type x, ssa->getReachingDefsAtNode(node))
+			printf("\nSSA defs table:\n");
+			foreach (StaticSingleAssignment::NodeReachingDefTable::value_type x, ssa->getOutgoingDefsAtNode(node))
 			{
 				printf("%s: ", StaticSingleAssignment::varnameToString(x.first).c_str());
 				printNodeSet(x.second->getActualDefinitions());
@@ -145,7 +155,7 @@ int main(int argc, char** argv)
 	if (SgProject::get_verbose() > 0)
 	{
 		generateDOT(*project);
-		generateWholeGraphOfAST("wholeAST");
+		//generateWholeGraphOfAST("wholeAST");
 		
 		//Call graph
 		CallGraphBuilder CGBuilder(project);
@@ -177,6 +187,17 @@ int main(int argc, char** argv)
 	//Run the SSA analysis intraprocedurally
 	StaticSingleAssignment ssa(project);
 	ssa.run(false);
+	
+#if 0
+	vector<SgFunctionDefinition*> functions = SageInterface::querySubTree<SgFunctionDefinition>(project, V_SgFunctionDefinition);
+	foreach (SgFunctionDefinition* function, functions)
+	{
+		if (function->get_declaration()->get_name() != "foo")
+			continue;
+		
+		break;
+	}
+#endif  
 
 	if (SgProject::get_verbose() > 0)
 	{

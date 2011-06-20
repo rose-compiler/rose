@@ -35,12 +35,12 @@
  *  The partitioner organizes instructions into basic blocks by starting at a particular instruction and then looking at its
  *  set of successor addresses. Successor addresses are edges of the eventual control-flow graph (CFG) that are calculated
  *  using instruction semantics, and are available to the end user via SgAsmBlock::get_cached_successors().  It's not always
- *  possible to statically determine the complete set of successors; in this case, get_cached_successors() will return only the
- *  statically known successors and SgAsmBlock::get_complete_successors() will return false.  Because ROSE performs semantic
- *  analysis over all instructions of the basic block (and occassionally related blocks), it can sometimes determine that
- *  instructions that are usually considered to be conditional branches are, in fact, unconditional (e.g., a PUSH followed by a
- *  RET; or a CALL to a block that discards the return address).  ROSE includes unconditional branch instructions and their
- *  targets within the same basic block (provided no other CFG edge comes into the middle of the block).
+ *  possible to statically determine the complete set of successors; in this case, get_cached_successors() will return at least
+ *  one successor whose isAmbiguous() property is true. Because ROSE performs semantic analysis over all instructions of the
+ *  basic block (and occassionally related blocks), it can sometimes determine that instructions that are usually considered to
+ *  be conditional branches are, in fact, unconditional (e.g., a PUSH followed by a RET; or a CALL to a block that discards the
+ *  return address).  ROSE includes unconditional branch instructions and their targets within the same basic block (provided
+ *  no other CFG edge comes into the middle of the block).
  *
  *  The partitioner organizes basic blocks into functions in three phases, all three of which can be run by a single call
  *  to the partitioner() method. The first phase considers all disassembled instructions and other available information such as
@@ -448,6 +448,11 @@ public:
      * existence will include the SgAsmFunctionDeclaration::FUNC_LEFTOVERS bit.  However, if the FUNC_LEFTOVERS bit is not
      * turned on (see set_search()) then uncategorized blocks will not appear in the AST. */
     virtual SgAsmBlock* build_ast();
+
+    /** Update SgAsmTarget block pointers.  This method traverses the specified AST and updates any SgAsmTarget nodes so their
+     *  block pointers point to actual blocks.  The update only happens for SgAsmTarget objects that don't already have a node
+     *  pointer. */
+    virtual void update_targets(SgNode *ast);
     
     /*************************************************************************************************************************
      *                                                 Low-level Functions

@@ -4133,6 +4133,13 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
              {
                curprint(", TARGET");
              }
+#if 0
+          if (variableDeclaration->get_declarationModifier().get_typeModifier().isCoTarget())  // DXN (04/11/2011) TODO
+             {
+               curprint(", COTARGET");
+             }
+
+#endif
 
        // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().isValue() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().isValue() ? "true" : "false");
           if (variableDeclaration->get_declarationModifier().get_typeModifier().isValue() == true)
@@ -4182,8 +4189,7 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
        // We actually better use intializedName to hold the flag, 
        // since type is shared by more variables
 
-       // FMZ (need to keep this in .rmod file)
-    if (initializedName->get_isCoArray() == true && info.outputFortranModFile())
+    if (initializedName->get_isCoArray() == true)
                curprint("[*]");
 
   // Unparse the initializers if any exist

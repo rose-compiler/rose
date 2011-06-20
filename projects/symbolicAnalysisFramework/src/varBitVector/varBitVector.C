@@ -177,7 +177,7 @@ void VarBitVector::uninitialize(bool eraseVarMap)
 bool VarBitVector::setToVal(bool val)
 {
 	VarBitVector::boolPlus newVal(val);
-	setToVal(newVal);	
+	return setToVal(newVal);	
 }
 
 // sets this bitmap to map all variables to the given value

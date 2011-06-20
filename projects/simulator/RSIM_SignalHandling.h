@@ -80,7 +80,7 @@ class RSIM_SignalHandling {
 public:
     RSIM_SignalHandling()
         : mask(0), queue_head(0), queue_tail(0), pending(0), reprocess(0) {
-        pthread_mutex_init(&mutex, NULL);
+        RTS_mutex_init(&mutex, RTS_LAYER_RSIM_SIGNALHANDLING_OBJ, NULL);
         memset(queue, 0, sizeof queue);
         memset(&stack, 0, sizeof stack);
         memset(&pending_info, 0, sizeof pending_info);
@@ -192,14 +192,15 @@ public:
     /** Signal to use when notifying a thread that a signal has been added to its queue. */
     static const int SIG_WAKEUP;
 
-    //@{
     /** Class methods to create signal information objects.  The names (after the "mk_" prefix) correspond to the union member
-     *  names in the siginfo_32 struct. */
+     *  names in the siginfo_32 struct.
+     *
+     *  @{ */
     static siginfo_32 mk_kill(int signo, int code);
     static siginfo_32 mk_sigfault(int signo, int code, uint32_t addr);
     static siginfo_32 mk_rt(int signo, int code);
     static siginfo_32 mk(const siginfo_t*);
-    //@}
+    /** @} */
 
     /** Returns a signal set having only the specified signal. Note: this cannot be named "sigmask" since that's a macro in
      *  some versions of "signal.h".
@@ -295,7 +296,7 @@ private:
     static const size_t QUEUE_SIZE = 20;
     static const int FIRST_RT = 32;     /**< Lowest numbered real-time signal; do not use SIGRTMIN. */
 
-    mutable pthread_mutex_t mutex;      /**< Protects all members of this struct. */
+    mutable RTS_mutex_t mutex;          /**< Protects all members of this struct. */
     sigset_32 mask;                     /**< Masked signals. Bit N is set if signal N+1 is masked. */
     stack_32 stack;                     /**< Possible alternative stack to using during signal handling. */
     siginfo_32 queue[QUEUE_SIZE];       /**< Queue of pending real-time signals. */

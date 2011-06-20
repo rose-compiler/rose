@@ -55,7 +55,7 @@ main ( int argc,  char * argv[] )
    for (int i = 0; i < filenum; ++i) {
      SgSourceFile* sageFile = isSgSourceFile(sageProject->get_fileList()[i]);
      SgGlobal *root = sageFile->get_globalScope();
-     SgDeclarationStatementPtrList& declList = root->get_declarations ();
+     SgDeclarationStatementPtrList declList = root->get_declarations ();
      for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) {
           SgFunctionDeclaration *func = isSgFunctionDeclaration(*p);
           if (func == 0)

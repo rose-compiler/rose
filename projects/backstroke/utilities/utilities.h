@@ -30,6 +30,9 @@ namespace BackstrokeUtility
 	boost::tuple<SgVariableDeclaration*, SgAssignOp*, SgExpression* > CreateTempVariableForExpression(SgExpression* expression,
 			SgScopeStatement* scope, bool initializeInDeclaration);
 
+	//! Returns a call to std::assert, with the specified expression passed as an argument.
+	SgExpression* buildAssert(SgExpression* check);
+	
 	//! Collects all the uses of the given variable in the given subtree. Correctly handles expanded
 	//! variables, such a p.x. All the reference expressions for p.x would be SgDotOp's or SgArrowOp's
 	std::vector<SgExpression*> findVarReferences(VariableRenaming::VarName var, SgNode* root);
@@ -54,7 +57,7 @@ namespace BackstrokeUtility
 	/** Return whether a basic block contains a break statement. */
 	bool hasBreakStmt(SgBasicBlock* body);
 
-	/** If two expressions can be reorderd (in other word, reordering does not change the result). */
+	/** If two expressions can be reordered (in other word, reordering does not change the result). */
 	bool canBeReordered(SgExpression* exp1, SgExpression* exp2);
 
 	/** Tell if a type is a STL container type. */
@@ -99,7 +102,7 @@ namespace BackstrokeUtility
 	/** Remove braces of a basic block in which there is no variable declared. */
 	void removeUselessBraces(SgNode* root);
 
-	/** Remove useless parenthesis of some specific expresssions which will damage the readability. */
+	/** Remove useless parenthesis of some specific expressions which will damage the readability. */
 	void removeUselessParen(SgNode* root);
 
 	/** Returns if an expression modifies any value. */
@@ -129,5 +132,15 @@ namespace BackstrokeUtility
 	//! Returns if the first given var is a member of the second one. For example, a.i is a member of a.
 	bool isMemberOf(const VariableRenaming::VarName& var1, const VariableRenaming::VarName& var2);
 
+    //! Returns if a variable declaration is a true one, and not one in if condition, while condition, etc.
+    //! In C++ standard, those declarations in conditions actually are not called declaration.
+    bool isTrueVariableDeclaration(SgVariableDeclaration* varDecl);
+
+	/** Given a type, remove all outer layers of SgModiferType and SgTypeDefType. */
+	SgType* cleanModifersAndTypeDefs(SgType* t);
+
+	/** Given a type, remove one layer of pointers/reference types. 
+	 * If the type is a pointer-to-pointer, this function just removes the first layer. */
+	SgType* removePointerOrReferenceType(SgType* t);
 }
 

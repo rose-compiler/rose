@@ -1,0 +1,21 @@
+module module_table
+
+   integer(8), allocatable, dimension(:,:) :: table[*]
+
+contains
+
+   subroutine table_init()
+      implicit none
+      integer(8) :: i, j
+
+      allocate(table(0:4, 0:4)[])
+
+      ! note that we don't initialize buffer region
+      do i = 0, 4
+         do j = 0,4
+	    table(i, j) = 42
+	 end do
+      end do
+  end subroutine table_init
+
+end module module_table

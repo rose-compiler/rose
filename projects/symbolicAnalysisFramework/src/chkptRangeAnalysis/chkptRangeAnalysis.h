@@ -20,7 +20,7 @@
 #include "divAnalysis.h"
 #include "sgnAnalysis.h"
 #include "affineInequality.h"
-
+#include "liveDeadVarAnalysis.h"
 #include "ConstrGraph.h"
 
 class ChkptRangeAnalysis;
@@ -41,14 +41,17 @@ class ChkptRangeAnalysis : public IntraFWDataflow
 	protected:
 	static map<varID, Lattice*> constVars;
 	DivAnalysis* divAnalysis;
-	SgnAnalysis* sgnAnalysis;
 	affineInequalitiesPlacer* affIneqPlacer;
 	
+	// The LiveDeadVarsAnalysis that identifies the live/dead state of all application variables.
+	// Needed to create a FiniteVarsExprsProductLattice.
+	LiveDeadVarsAnalysis* ldva; 
+	
 	public:
-	ChkptRangeAnalysis(DivAnalysis* divAnalysis, SgnAnalysis* sgnAnalysis, affineInequalitiesPlacer* affIneqPlacer): IntraFWDataflow()
+	ChkptRangeAnalysis(LiveDeadVarsAnalysis* ldva, DivAnalysis* divAnalysis, affineInequalitiesPlacer* affIneqPlacer): IntraFWDataflow()
 	{
+		this->ldva = ldva;
 		this->divAnalysis = divAnalysis;
-		this->sgnAnalysis = sgnAnalysis;
 		this->affIneqPlacer = affIneqPlacer;
 		rwAccessLabeler::addRWAnnotations(SageInterface::getProject());
 	}

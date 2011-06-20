@@ -76,6 +76,8 @@
 #define VERBOSE 1
 #endif
 
+#define NUMBER_OF_HANDLERS      100
+
 /******************************************************************************/
 /***************************    Test case   ***********************************/
 /******************************************************************************/
@@ -132,12 +134,12 @@ void * threaded( void * arg )
 	/* child */
 	if ( child == ( pid_t ) 0 )
 	{
-		if ( controls[ 0 ] != 10000 )
+		if ( controls[ 0 ] != NUMBER_OF_HANDLERS )
 		{
 			FAILED( "prepare handler skipped some rounds" );
 		}
 
-		if ( controls[ 2 ] != 10000 )
+		if ( controls[ 2 ] != NUMBER_OF_HANDLERS )
 		{
 			FAILED( "child handler skipped some rounds" );
 		}
@@ -146,12 +148,12 @@ void * threaded( void * arg )
 		exit( PTS_PASS );
 	}
 
-	if ( controls[ 0 ] != 10000 )
+	if ( controls[ 0 ] != NUMBER_OF_HANDLERS )
 	{
 		FAILED( "prepare handler skipped some rounds" );
 	}
 
-	if ( controls[ 1 ] != 10000 )
+	if ( controls[ 1 ] != NUMBER_OF_HANDLERS )
 	{
 		FAILED( "parent handler skipped some rounds" );
 	}
@@ -198,7 +200,7 @@ int main( int argc, char * argv[] )
 	}
 
 	/* Register the handlers */
-	for ( i = 0; i < 10000; i++ )
+	for ( i = 0; i < NUMBER_OF_HANDLERS; i++ )
 	{
 		ret = pthread_atfork( prepare, parent, child );
 
