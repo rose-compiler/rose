@@ -23,7 +23,7 @@ push @{$index{lc((/([^\/]+)$/)[0])}||=[]}, $_ for grep {/\.(h|hh|hpp|c|C|cpp)$/}
 # from the %index.
 my $files = FileLister->new(@ARGV);
 while (my $file = $files->next_file) {
-  next unless $file =~ /\/(Makefile\.am|CMakeList\.txt|make_rule\.inc)$/;
+  next unless $file =~ /\/(Makefile\.am|CMakeList\.txt)$/;
   if (open FILE, "<", $file) {
     while (<FILE>) {
       s/#.*//;

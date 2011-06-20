@@ -2355,6 +2355,10 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
        // Handle the function name...
           if (functionDeclaration->get_declarationModifier().isFriend() == true || functionDeclaration->get_specialFunctionModifier().isOperator() == true)
              {
+            // DQ (6/19/2011): We sometimes have to qualify friends if it is to avoid ambiguity (see test2006_159.C).
+            // Maybe a friend declaration should add an SgAlias symbol to the class definition scope's symbol table.
+            // Then simpler rules (no special case) would cause the name qualification to be generated properly.
+
             // Never use name qualification for friend functions or operators. I am more sure of the case of friend functions than operators.
             // Friend functions will have a global scope (though this might change in the future; google "friend global scope injection").
                printf ("Detected a friend of operator function, these are not provided with name qualification. \n");
