@@ -22,7 +22,7 @@ void EventReverser::buildValueGraph()
     //valueGraphToDot("VG.dot");
     
     // Process all variable of their last versions.
-    processLastVersions();
+    addAvailableAndTargetValues();
     
     // Add all phi node edges. This is done at last because a def of a phi node may
     // not be created when this phi node is created.
@@ -105,7 +105,11 @@ void EventReverser::buildBasicValueGraph()
         // Add all parameters of the event to the value graph.
         SgInitializedNamePtrList& paraList = funcDef_->get_declaration()->get_args();
         foreach (SgInitializedName* initName, paraList)
-            createValueNode(initName, NULL);
+        {
+            // The argument may be anonymous.
+            if (initName->get_name() != "")
+                createValueNode(initName);
+        }
     }
     else
     {
@@ -113,6 +117,9 @@ void EventReverser::buildBasicValueGraph()
         SgInitializedNamePtrList& paraList = funcDef_->get_declaration()->get_args();
         foreach (SgInitializedName* initName, paraList)
         {
+            // The argument may be anonymous.
+            if (initName->get_name() == "") continue;
+            
             VGVertex newNode = createValueNode(initName, NULL);
 
             // FIXME State variable may not be parameters.
@@ -218,7 +225,7 @@ void EventReverser::processExpression(SgExpression* expr)
     // Value expression.
     if (SgValueExp* valueExp = isSgValueExp(expr))
     {
-        createValueNode(NULL, valueExp);
+        createValueNode(valueExp);
         //addValueGraphNode(new ValueNode(valueExp), expr);
     }
 
@@ -297,7 +304,7 @@ void EventReverser::processExpression(SgExpression* expr)
                 return;
             }
             ROSE_ASSERT(nodeVertexMap_.count(operand) > 0);
-            createOperatorNode(t, unaryOp, createValueNode(NULL, unaryOp), 
+            createOperatorNode(t, unaryOp, createValueNode(unaryOp), 
                 nodeVertexMap_[operand]);
             break;
 
@@ -354,7 +361,7 @@ void EventReverser::processExpression(SgExpression* expr)
             ROSE_ASSERT(nodeVertexMap_.count(lhs) > 0);
             ROSE_ASSERT(nodeVertexMap_.count(rhs) > 0);
 
-            createOperatorNode(t, binOp, createValueNode(NULL, binOp),
+            createOperatorNode(t, binOp, createValueNode(binOp),
                     nodeVertexMap_[lhs], nodeVertexMap_[rhs]);
             break;
 
@@ -412,6 +419,7 @@ void EventReverser::processVariableReference(SgExpression* expr)
 
     else if (SgArrowExp* arrowExp = isSgArrowExp(expr))
     {
+#if 0
         if (isSgThisExp(arrowExp->get_lhs_operand()))
         {
             SgExpression* rhsExp = arrowExp->get_rhs_operand();
@@ -419,6 +427,34 @@ void EventReverser::processVariableReference(SgExpression* expr)
             // For example, this->a = 0;
             if (nodeVertexMap_.count(rhsExp) > 0)
                 nodeVertexMap_[arrowExp] = nodeVertexMap_[rhsExp];
+        }
+        else
+#endif
+        {
+            VersionedVariable var = getVersionedVariable(arrowExp);
+            if (varVertexMap_.count(var) == 0)
+                createValueNode(arrowExp);
+            else
+                nodeVertexMap_[arrowExp] = varVertexMap_[var];
+            
+            //VersionedVariable var = getVersionedVariable(arrowExp);
+            //cout << "Arrow: " << var.toString() << endl;
+        }
+    }
+    
+    else if (SgDotExp* dotExp = isSgDotExp(expr))
+    {
+        VersionedVariable var = getVersionedVariable(dotExp);
+        //cout << "Dot: " << var.toString() << endl;
+        
+        map<VersionedVariable, VGVertex>::iterator iter = varVertexMap_.find(var);
+        if (iter != varVertexMap_.end())
+        {
+            nodeVertexMap_[dotExp] = iter->second;
+        }
+        else
+        {
+            createValueNode(dotExp);
         }
     }
 
@@ -434,11 +470,12 @@ void EventReverser::processVariableReference(SgExpression* expr)
     else if (SgPointerDerefExp* ptrDerefExp = isSgPointerDerefExp(expr))
     {
         // ...
+       
     }
 
     else if (SgAddressOfOp* addressOfOp = isSgAddressOfOp(expr))
     {
-
+       
     }
 
     else if (SgVarRefExp* varRefExp = isSgVarRefExp(expr))
@@ -460,6 +497,7 @@ void EventReverser::processVariableReference(SgExpression* expr)
 //                        cout << varRefExp->unparseToString() << endl;
 //                        ROSE_ASSERT(varVertexMap_.count(var));
 
+#if 0
             SgDeclarationStatement* varDecl = varRefExp->get_symbol()
                     ->get_declaration()->get_declaration();
 
@@ -467,9 +505,16 @@ void EventReverser::processVariableReference(SgExpression* expr)
             if (isSgClassDefinition(varDecl->get_parent()) && 
                     !SageInterface::isStatic(varDecl))
             {
-                //cout << "New var skipped: " << var << endl;
+                createValueNode(varRefExp);
+                cout << "New var skipped: " << var << endl;
                 return;
             }
+#endif
+            
+            // If this var is not added to VG. This is possible is a variable is modified
+            // by a function call.
+            //createValueNode(varRefExp);
+            cout << "Var ref which is unknown!!! " << var << endl;
         }
     }
 
@@ -490,9 +535,9 @@ void EventReverser::processClassDataMembers(SgClassDefinition* classDef)
             continue;
         foreach (SgInitializedName* initName, varDecl->get_variables())
         {
-            VarName varName(1, initName);
-            VGVertex newNode = createValueNode(initName, NULL);
-            valuesToRestore_[0].insert(newNode);
+            //VarName varName(1, initName);
+            //VGVertex newNode = createValueNode(initName, NULL);
+            //valuesToRestore_[0].insert(newNode);
             stateVariables_.insert(VarName(1, initName));
         }
     }
@@ -631,7 +676,7 @@ EventReverser::PathSetWithIndex EventReverser::addPathsForPhiNodes(
 }
 #endif
 
-void EventReverser::processLastVersions()
+void EventReverser::addAvailableAndTargetValues()
 {
     // Collect all variables visible at the end of the event. It is needed since
     // a data member is not shown from SSA::getLastVersions() for a member event
@@ -643,7 +688,6 @@ void EventReverser::processLastVersions()
     // and determine which variables are avaiable during the search of VG.
     typedef SSA::NodeReachingDefTable::value_type VarNameDefPair;
     foreach (const VarNameDefPair& nameDef,
-             //ssa_->getLastVersions(funcDef_->get_declaration()))
              ssa_->getOutgoingDefsAtNode(funcDef_))
     {
         VarName name = nameDef.first;
@@ -654,7 +698,7 @@ void EventReverser::processLastVersions()
         // For every variable, if it is not added into VG, add it now.
         VersionedVariable var(name, nameDef.second->getRenamingNumber());
                 
-        //cout << "VersionedVariable:\t" << var.toString() << endl;
+        cout << "VersionedVariable:\t" << var.toString() << endl;
         //printVarVertexMap();
         
         if (varVertexMap_.count(var) == 0)
@@ -680,15 +724,19 @@ void EventReverser::processLastVersions()
             // If the variable is a state variable, make it available.
             addAvailableValue(node);
         }
-        else
-        {
-            // If this variable is not the state, it will be killed at the end
-            // of the function. Add it to the killed set, then a state saving edge
-            // is added to it.
-            varsKilledAtEventEnd_.insert(node);
-        }
     }
     
+    // Collect all target values.
+    foreach (VGVertex node, boost::vertices(valueGraph_))
+    {
+        ValueNode* valNode = isValueNode(valueGraph_[node]);
+        if (!valNode) continue;
+        
+        if (stateVariables_.count(valNode->var.name) && valNode->var.version == 0)
+            valuesToRestore_[0].insert(node);
+    }
+    
+#if 0
     // Those data members which are not modified by the event are also available.
     foreach (const VarName& name, stateVariables_)
     {
@@ -699,6 +747,7 @@ void EventReverser::processLastVersions()
             addAvailableValue(varVertexMap_[var]);
         }
     }
+#endif
 }
 
 void EventReverser::addExtraNodesAndEdges()
@@ -1033,22 +1082,89 @@ EventReverser::VGVertex EventReverser::createThisExpNode(SgThisExp* thisExp)
 
 EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp* funcCallExp)
 {
-    //cout << funcCallExp->unparseToString() << endl;
+    cout << funcCallExp->unparseToString() << endl;
+    
     // Build a node for this function call in VG.
-    FunctionCallNode* funcCallNode = new FunctionCallNode(funcCallExp);
-    VGVertex funcCallVertex = addValueGraphNode(funcCallNode);
+    FunctionCallNode* funcCallNode    = new FunctionCallNode(funcCallExp);
+    FunctionCallNode* rvsFuncCallNode = new FunctionCallNode(funcCallExp, true);
+    
+    VGVertex funcCallVertex    = addValueGraphNode(funcCallNode);
+    VGVertex rvsFuncCallVertex = addValueGraphNode(rvsFuncCallNode);
+    
     nodeVertexMap_[funcCallExp] = funcCallVertex;
     
-    // Add edges from the function call node to its args.
-    foreach (SgExpression* arg, funcCallExp->get_args()->get_expressions())
+    // Get all defs from this function call.
+    const SSA::NodeReachingDefTable& defTable = ssa_->getDefsAtNode(funcCallExp);
+    
+        
+    SgExpression* caller = NULL;
+    // If the function called is a member one, also connect an edge from the pointer or object
+    // calling this function to the function call node.
+    if (SgBinaryOp* binExp = isSgBinaryOp(funcCallExp->get_function()))
     {
+        caller = binExp->get_lhs_operand();
+        
+        // Note that this part will be changed once we get how to represent p and *p.
+        if (SgPointerDerefExp* ptrDeref = isSgPointerDerefExp(caller))
+        {
+            // For this->p, we find p.
+            caller = ptrDeref->get_operand();
+#if 0
+            if (SgArrowExp* arrowExp = isSgArrowExp(operand))
+            {
+                if (isSgThisExp(arrowExp->get_lhs_operand()))
+                {
+                    caller = arrowExp->get_rhs_operand();
+                }
+            }
+#endif
+        }
+    }
+    
+    SgExpressionPtrList argList = funcCallExp->get_args()->get_expressions();
+    if (caller) 
+        argList.push_back(caller);
+    
+    // Add edges from the function call node to its args.
+    foreach (SgExpression* arg, argList)
+    {
+        //VersionedVariable var = getVersionedVariable(arg, false);
+        cout << "Arg: " << getVersionedVariable(arg, false).toString() << endl;
         ROSE_ASSERT(nodeVertexMap_.count(arg));
+        //ROSE_ASSERT(var.isNull() ? true : varVertexMap_.count(var));
         
         VGVertex argVertex = nodeVertexMap_[arg];
         addValueGraphEdge(funcCallVertex, argVertex);
+        addValueGraphEdge(argVertex, rvsFuncCallVertex);
+        
+        
+        
+        VersionedVariable var = getVersionedVariable(arg);
+        
+        VarName varName = SSA::getVarName(arg);
+        SSA::NodeReachingDefTable::const_iterator iter = defTable.find(var.name);
+        if (iter != defTable.end())
+        {
+            // If this argument is defined by the function call, create a new node 
+            // for it.
+            var.version = iter->second->getRenamingNumber();
+            // Here we set the AST node of this value to be the function call expression
+            // in order to get its correct path information.
+            ValueNode* valNode = new ValueNode(var, funcCallExp);
+            argVertex = addValueGraphNode(valNode);
+            varVertexMap_[var] = argVertex;
+        }
+        
+        // Add an edge from the value to the function call.
+        addValueGraphEdge(argVertex, funcCallVertex);
+        addValueGraphEdge(rvsFuncCallVertex, argVertex);
+        
+        // Add state saving edges for killed defs.
+        addStateSavingEdges(var, funcCallExp);
     }
     
     
+#if 0
     // If the function called is a member one, also connect an edge from the pointer or object
     // calling this function to the function call node.
     if (SgBinaryOp* binExp = isSgBinaryOp(funcCallExp->get_function()))
@@ -1066,7 +1182,8 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
                 if (isSgThisExp(arrowExp->get_lhs_operand()))
                 {
                     SgExpression* rhs = arrowExp->get_rhs_operand();
-                    ROSE_ASSERT(nodeVertexMap_.count(rhs));
+                    ROSE_ASSERT(nodeVertexMap_.count(rhs) ? true : 
+                        (cout << rhs->unparseToString() << endl, false));
         
                     caller = nodeVertexMap_[rhs];
                 }
@@ -1074,6 +1191,9 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
         }
         else
         {
+            //VersionedVariable var = getVersionedVariable(lhs, false);
+            //ROSE_ASSERT(varVertexMap_.count(var) ? true : 
+            //            (cout << var.toString() << endl, false));
             ROSE_ASSERT(nodeVertexMap_.count(lhs));
             caller = nodeVertexMap_[lhs];
         }
@@ -1113,7 +1233,7 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
     {
         // Build a node for the value defined in this function call in VG.
         VersionedVariable var(pt.first, pt.second->getRenamingNumber());
-        createValueNode(NULL, funcCallExp);
+        createValueNode(funcCallExp);
         
         // Here we set the AST node of this value to be the function call expression
         // in order to get its correct path information.
@@ -1127,6 +1247,7 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
         // Add state saving edges for killed defs.
         addStateSavingEdges(var, funcCallExp);
     }
+#endif
     
     return funcCallVertex;
 }
@@ -1176,6 +1297,26 @@ void EventReverser::addStateSavingEdges(const VersionedVariable& var, SgNode* as
     }
 }
 
+EventReverser::VGVertex EventReverser::createValueNode(SgNode* node)
+{
+    VGVertex newVertex;
+
+    // If rhs node is not created yet, create it first.
+    if (nodeVertexMap_.count(node) == 0)
+    {
+        //ROSE_ASSERT(!"Infeasible path???");
+        VersionedVariable var = getVersionedVariable(node, true);
+        newVertex = addValueGraphNode(new ValueNode(var, node));
+        nodeVertexMap_[node] = newVertex;
+        if (!var.isNull())
+            varVertexMap_[var] = newVertex;
+    }
+    else
+        newVertex = nodeVertexMap_[node];
+
+    return newVertex;
+}
+
 EventReverser::VGVertex EventReverser::createValueNode(SgNode* lhsNode, SgNode* rhsNode)
 {
     VGVertex lhsVertex;
@@ -1196,8 +1337,11 @@ EventReverser::VGVertex EventReverser::createValueNode(SgNode* lhsNode, SgNode* 
         if (nodeVertexMap_.count(rhsNode) == 0)
         {
             //ROSE_ASSERT(!"Infeasible path???");
-            rhsVertex = addValueGraphNode(new ValueNode(rhsNode));
+            VersionedVariable rhsVar = getVersionedVariable(rhsNode, true);
+            rhsVertex = addValueGraphNode(new ValueNode(rhsVar, rhsNode));
             nodeVertexMap_[rhsNode] = rhsVertex;
+            if (!rhsVar.isNull())
+                varVertexMap_[rhsVar] = rhsVertex;
         }
         else
             rhsVertex = nodeVertexMap_[rhsNode];
@@ -1358,18 +1502,18 @@ void EventReverser::addStateSavingEdges()
         ValueNode* valNode = isValueNode(node);
         if (valNode == NULL) continue;
         
-#if 0
         // If the variable in this node is a stack variable, find its scope
         // and add a state saving edge for it containing the scope.
         SgNode* astNode = valNode->astNode;
         if (SgInitializedName* initName = isSgInitializedName(astNode))
         {
+            cout << "@@@" << initName->get_name() << endl;
             // Note that the scope of a variable may be class (data member) or
             // function parameters, in which case we set its scope as function body.
             SgScopeStatement* scope = initName->get_scope();
-            SgBasicBlock* funcBody = funcDef_->get_body();
-            if (!SageInterface::isAncestor(funcBody, scope))
-                scope = funcBody;
+            //SgBasicBlock* funcBody = funcDef_->get_body();
+            if (isSgClassDefinition(scope))
+                continue; //scope = funcBody;
             
             // Find the last def of this variable in its definition scope.
             const SSA::NodeReachingDefTable& defTable = ssa_->getOutgoingDefsAtNode(scope);
@@ -1383,12 +1527,12 @@ void EventReverser::addStateSavingEdges()
                 int version = reachingDef->getRenamingNumber();
                 VersionedVariable var(varName, version);
                 ROSE_ASSERT(varVertexMap_.count(var));
+                
+                cout << "Add a SS edge: " << var.toString() << "--SS-->" << scope->class_name() << "\n\n";
             
                 addValueGraphStateSavingEdges(varVertexMap_[var], scope);
             }
         }
-        
-#endif
         
         // A temporary work-around for lacking of getting last defs for a variable.
         if (isAvailableValue(v))
@@ -1417,12 +1561,14 @@ void EventReverser::addStateSavingEdges()
             valueGraph_[newEdge] = new StateSavingEdge(0, realPaths, controlDeps, NULL);
         }
         
+#if 0
         // Give every value node one more SS edge.
         cout << valNode->astNode->unparseToString() << endl;
         // For workaround of function calls.
         if (!isSgFunctionCallExp(valNode->astNode) 
                 && SageInterface::isAncestor(funcDef_, valNode->astNode))
             addValueGraphStateSavingEdges(v, valNode->astNode);
+#endif
     }
 }
 
@@ -1439,7 +1585,7 @@ VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
     VarName varName = SSA::getVarName(node);
     int version = 0;
 #if 1
-    // The following code is needed since SSA cannot give us the version of date members.
+    // The following code is needed since SSA cannot give us the version of data members.
     SgInitializedName* initName = isSgInitializedName(node);
     if (initName) // && isSgClassDefinition(initName->get_declaration()->get_parent()))
     {
@@ -1484,9 +1630,7 @@ VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
             if (reachingDef->isPhiFunction())
             {
                 VersionedVariable var(varName, version, true);
-#if 0
-                cout << "Found a phi node: " << var.toString() << "\n\n";
-#endif
+                //cout << "Found a phi node: " << var.toString() << "\n\n";
                 //pseudoDefMap_[var] = reachingDef;
                 createPhiNode(var, reachingDef);
                 return var;

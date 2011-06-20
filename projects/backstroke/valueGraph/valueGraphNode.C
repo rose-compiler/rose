@@ -58,7 +58,11 @@ namespace
                 //ROSE_ASSERT(false);
                 return 100;
             case V_SgPointerType:
-                return sizeof(void*);
+            {
+                SgPointerType* pType = isSgPointerType(t);
+                return getCostFromType(pType->get_base_type());
+                //return sizeof(void*);
+            }
             case V_SgTypedefType:
                 return getCostFromType(t->stripTypedefsAndModifiers());
             case V_SgEnumType:
@@ -95,7 +99,10 @@ std::string ValueNode::toString() const
 {
 	ostringstream os;
 	if (SgValueExp* valueExp = isSgValueExp(astNode))
-		os << valueExp->unparseToString() + "\\n";
+    {
+        if (!isSgStringVal(astNode))
+            os << valueExp->unparseToString() + "\\n";
+    }
 
     if (isSgThisExp(astNode))
         os << "THIS";
@@ -204,8 +211,8 @@ std::string OperatorNode::toString() const
     return "OP";
 }
 
-FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall)
-        : ValueGraphNode(funcCall), isVirtual(false), isConst(false)
+FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
+        : ValueGraphNode(funcCall), isReverse(isRvs), isVirtual(false), isConst(false)
 {
     
 #if 1
@@ -287,6 +294,9 @@ std::string FunctionCallNode::toString() const
     
     if (str == "")
         str += boost::lexical_cast<string>(astNode);
+    
+    if (isReverse)
+        str += "\\nREVERSE";
     
     if (isVirtual)
         str += "\\nVIRTUAL";

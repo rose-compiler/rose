@@ -206,13 +206,14 @@ struct OperatorNode : ValueGraphNode
 
 struct FunctionCallNode: ValueGraphNode
 {
-    explicit FunctionCallNode(SgFunctionCallExp* funcCall);
+    explicit FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs = false);
     
     SgFunctionCallExp* getFunctionCallExp() const
     { return isSgFunctionCallExp(astNode); }
     
     virtual std::string toString() const;
     
+    bool isReverse;
     bool isVirtual;
     bool isConst;
 };

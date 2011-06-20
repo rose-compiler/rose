@@ -221,7 +221,7 @@ void PathNumManager::generatePathNumbers()
 
     pathNumGenerators_.resize(dags_.size());
     // For each DAG, generate its path information.
-    for (size_t i = 0, n = dags_.size(); i != n; ++i)
+    for (int i = 0, n = dags_.size(); i != n; ++i)
     {
         PathNumGenerator* pathNumGen = 
                 new PathNumGenerator(dags_[i], entries[i], exits[i]);
@@ -231,7 +231,7 @@ void PathNumManager::generatePathNumbers()
         pathInfo_.push_back(make_pair(i, pathNumGen->getNumberOfPath()));
         
         char filename[16];
-        sprintf(filename, "dag%l.dot", i);
+        sprintf(filename, "dag%d.dot", i);
         dagToDot(dags_[i], filename);
     }
 }

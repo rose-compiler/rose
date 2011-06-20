@@ -1037,7 +1037,7 @@ void EventReverser::generateCodeForBasicBlock(
         VGVertex src = boost::source(edge, routeGraph_);
         VGVertex tgt = boost::target(edge, routeGraph_);
         
-        cout << routeGraph_[src]->toString() << "-------->" << routeGraph_[tgt]->toString() << '\n';
+        //cout << routeGraph_[src]->toString() << "-------->" << routeGraph_[tgt]->toString() << '\n';
 
         ValueNode* valNode = isValueNode(routeGraph_[src]);
         if (valNode == NULL)        continue;

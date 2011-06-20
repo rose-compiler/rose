@@ -130,8 +130,9 @@ private:
     //! All available values, including constant and state variables (last version).
     //std::set<VGVertex> availableValues_
     std::vector<std::set<VGVertex> > availableValues_;
-    //!
-    std::set<VGVertex> varsKilledAtEventEnd_;
+    
+    ////!
+    //std::set<VGVertex> varsKilledAtEventEnd_;
 
 	//! All state variables.
 	std::set<VarName> stateVariables_;
@@ -253,6 +254,10 @@ private:
     //! is the AST ndoe which defines the first parameter.
     void addStateSavingEdges(const VersionedVariable& var, SgNode* astNode);
     
+    
+    //! Create a value node from the given AST node. This node must be a use.
+    VGVertex createValueNode(SgNode* node);
+    
     /** Create a value node from the given AST node.
 	 *
 	 *  @param lhsNode The AST node which contains a lvalue.
@@ -283,7 +288,7 @@ private:
     //! Handle all final defs at the end of the event. This step is needed because
     //! we cannot get the phi node if it is not used. New phi node is added to VG,
     //! and all available variables are found.
-    void processLastVersions();
+    void addAvailableAndTargetValues();
 
     //! Returns if the given edge belongs to the given path.
     bool edgeBelongsToPath(const VGEdge& e, int dagIndex, int pathIndex) const;
