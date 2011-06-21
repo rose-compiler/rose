@@ -8,7 +8,7 @@ AC_PATH_TOOL([LLVM_CONFIG], [llvm-config])
 
 AC_MSG_CHECKING([for Clang include path])
     if test -z "$CLANG_CXXFLAGS"; then
-        llvm_include_path=`$LLVM_CONFIG --cxxflags | sed 's/\n//g'`
+        llvm_include_path=`$LLVM_CONFIG --cxxflags`
         if test -n "${llvm_include_path}"; then
             llvm_include_path="$llvm_include_path"
         fi
