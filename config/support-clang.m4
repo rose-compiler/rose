@@ -19,7 +19,8 @@ AC_SUBST([CLANG_CPPFLAGS])
 
 AC_MSG_CHECKING([for Clang ld flags])
     if test -z "$CLANG_LDFLAGS"; then
-        llvm_ldflags=`$LLVM_CONFIG --ldflags --libs | sed 's/\n//g'`
+        llvm_ldflags=`$LLVM_CONFIG --ldflags`
+        llvm_ldflags+=`$LLVM_CONFIG --libs`
         if test -n "${llvm_ldflags}"; then
             llvm_ldflags="$llvm_ldflags"
         fi
