@@ -66,7 +66,7 @@ deploy_tarballs:
 
 if ROSE_HAS_EDG_SOURCE
 
-SUBDIRS = EDG
+SUBDIRS = EDG Clang
 
 EDG/libroseEDG.la:
 	@echo "Calling make in ../../util"

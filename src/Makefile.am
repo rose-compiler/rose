@@ -13,9 +13,13 @@ INCLUDES = -Winvalid-pch $(ROSE_INCLUDES)
 # more information on this process.
 # libroseEDGlibraries = frontend/CxxFrontend/EDG/libroseEDG.la
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-   libroseEDGlibraries = frontend/CxxFrontend/EDG/libroseEDG.la
+   libroseCxxlibraries = frontend/CxxFrontend/EDG/libroseEDG.la
 else
-   libroseEDGlibraries =
+   libroseCxxlibraries =
+endif
+
+if ROSE_USE_CLANG
+   libroseCxxlibraries += frontend/CxxFrontend/Clang/libroseClangFrontend.la
 endif
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
@@ -79,7 +83,7 @@ libroseLibraries = \
    $(libroseOpenFortranParserlibraries) \
    $(libroseJavaParserlibraries) \
    $(librosePHPlibraries) \
-   $(libroseEDGlibraries) \
+   $(libroseCxxlibraries) \
    $(libroseBinaryLibraries) \
    $(top_builddir)/src/midend/abstractHandle/libabstractHandle.la \
    $(top_builddir)/src/midend/astDiagnostics/libastDiagnostics.la \

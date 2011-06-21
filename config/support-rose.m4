@@ -326,6 +326,14 @@ AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = 
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
 AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_3, [test "x$enable_edg_version43" = xyes])
 
+AC_ARG_ENABLE(clang-frontend, AS_HELP_STRING([--enable-clang-frontend], [Use Clang frontend instead of EDG]))
+AM_CONDITIONAL(ROSE_USE_CLANG, [test "x$enable_clang_frontend" = xyes])
+if test "x$enable_clang_frontend" = "xyes"; then
+  ROSE_SUPPORT_CLANG
+else
+  AC_MSG_NOTICE([Clang frontend support disabled])
+fi
+
 # DQ (1/4/2009) Added support for optional GNU language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
 AC_ARG_ENABLE(gnu-extensions, AS_HELP_STRING([--enable-gnu-extensions], [Enable internal support in ROSE for GNU language extensions]))
@@ -2083,6 +2091,7 @@ src/frontend/CxxFrontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
+src/frontend/CxxFrontend/Clang/Makefile
 src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
