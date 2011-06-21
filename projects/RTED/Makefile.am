@@ -470,10 +470,10 @@ COMPILING_RUNTIME_SYSTEM +=    -I$(dir $(patsubst rted_source/%, $(srcdir)/%, $@
 			   echo -n " done.";
 
 RuntimeSystemCxx.o: $(srcdir)/RuntimeSystem.cpp $(srcdir)/RuntimeSystem.h
-	$(CXX) -g -Wall -Wextra -o $@ -c $<
+	$(CXX) -g -Wall -Wextra $(INCLUDES) -o $@ -c $<
 
 RuntimeSystemUpc.o: $(srcdir)/RuntimeSystem.cpp $(srcdir)/RuntimeSystem.h
-	$(CXX) -g -Wall -Wextra -DWITH_UPC=1 -o $@ -c $<
+	$(CXX) -g -Wall -Wextra -DWITH_UPC=1 $(INCLUDES) -o $@ -c $<
 
 ParallelRTS.o: $(srcdir)/ParallelRTS.upc $(srcdir)/ParallelRTS.h
 	$(UPC) -g -Wall -Wextra -DIN_TARGET_LIBS -DWITH_UPC=1 -o $@ -c $<

@@ -795,18 +795,18 @@ int _rted_InitVariable( rted_TypeDesc    td,
 {
   RuntimeSystem* rs = RuntimeSystem::instance();
 
-  //~ checkpoint( rs, SourcePosition(si), originloc );
-//~
-  //~ if ( diagnostics::message(diagnostics::variable) )
-  //~ {
-    //~ std::stringstream message;
-//~
-    //~ message << "   Init Var at address:  " << address
-            //~ << "   type: " << td.name
-            //~ << "   size: " << size
-            //~ << "   ptrmv: " << pointer_move;
-    //~ rs->printMessage(message.str());
-  //~ }
+  checkpoint( rs, SourcePosition(si), originloc );
+
+  if ( diagnostics::message(diagnostics::variable) )
+  {
+    std::stringstream message;
+
+    message << "   Init Var at address:  " << address
+            << "   type: " << td.name
+            << "   size: " << size
+            << "   ptrmv: " << pointer_move;
+    rs->printMessage(message.str());
+  }
 
   const RsType& rs_type = rs_simpleGetType(*rs->getTypeSystem(), td.name, td.base, class_name, td.desc);
   bool          sendupd = rs->checkMemWrite( address, size, &rs_type );
@@ -816,13 +816,13 @@ int _rted_InitVariable( rted_TypeDesc    td,
   //
   // Note that we cannot call registerPointerChange until after the memory
   // creation is registered, which is done in roseCreateHeap.
-  //~ if ( pointer_move )
-  //~ {
-    //~ const RsPointerType* rp = &dynamic_cast<const RsPointerType&>(rs_type);
-//~
-    //~ rs->registerPointerChange( address, heap_address, rp, false, true /* check leaks */ );
-    //~ sendupd = true;
-  //~ }
+  if ( pointer_move )
+  {
+    const RsPointerType* rp = &dynamic_cast<const RsPointerType&>(rs_type);
+
+    rs->registerPointerChange( address, heap_address, rp, false, true /* check leaks */ );
+    sendupd = true;
+  }
 
   // can be invoked as part of an expression
   return sendupd;
