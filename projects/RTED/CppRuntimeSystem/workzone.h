@@ -1,5 +1,5 @@
 /// \file    workzone.h
-/// \brief   implements lock abstractions. i.e. a simple reader/writer lock
+/// \brief   implements lock abstractions. i.e., a simple reader/writer lock
 ///          and a cooperative safe workzone.
 /// \email   peter.pirkelbauer@llnl.gov
 
