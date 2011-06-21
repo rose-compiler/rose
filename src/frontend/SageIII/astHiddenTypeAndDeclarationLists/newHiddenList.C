@@ -1622,6 +1622,28 @@ HiddenListTraversal::evaluateNameQualificationForTemplateArgumentList (SgTemplat
 #endif
                   }
              }
+            else
+             {
+            // DQ (6/20/2011): This might be a variable reference requiring name qualification (see test2011_87.C and test2011_88.C).
+               SgExpression* expression = templateArgument->get_expression();
+               printf ("Template argument was not a type: expression = %p \n",expression);
+               if (expression != NULL)
+                  {
+                 // Check if this is a variable in which case it might require name qualification.  If we we have to traverse this expression recursively.
+                    printf ("Expression found in SgTemplateArgument = %s \n",expression->class_name().c_str());
+
+                 // We need to traverse this expression and evaluate if any name qualification is required on its pieces (e.g. referenced variables)
+
+                    printf ("Recursive call to newBuildHiddenTypeAndDeclarationLists() with expression = %p = %s \n",expression,expression->class_name().c_str());
+                    newBuildHiddenTypeAndDeclarationLists(expression);
+                    printf ("DONE: Recursive call to newBuildHiddenTypeAndDeclarationLists() with expression = %p = %s \n",expression,expression->class_name().c_str());
+
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+             }
 
           i++;
         }
@@ -3127,8 +3149,27 @@ HiddenListTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVariableDecl
         }
        else
         {
+       // DQ (6/20/2011): We see this case in test2011_87.C.
+       // If it already existes then overwrite the existing information.
+          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(varRefExp);
+          ROSE_ASSERT (i != qualifiedNameMapForNames.end());
+
+          string previousQualifier = i->second.c_str();
+          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+
+          if (i->second != qualifier)
+             {
+               i->second = qualifier;
+
+#if 1
+               printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#if 0
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
           ROSE_ASSERT(false);
+#endif
         }
    }
 
