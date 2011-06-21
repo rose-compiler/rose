@@ -93,7 +93,9 @@ class HiddenListTraversal : public AstTopDownBottomUpProcessing<HiddenListInheri
           int nameQualificationDepth ( SgType* type, SgScopeStatement* currentScope, SgStatement* positionStatement );
 
           int nameQualificationDepthOfParent ( SgDeclarationStatement* declaration, SgScopeStatement* currentScope, SgStatement* positionStatement );
-          int nameQualificationDepthForType  ( SgInitializedName* initializedName, SgStatement* positionStatement );
+       // int nameQualificationDepthForType  ( SgInitializedName* initializedName, SgStatement* positionStatement );
+          int nameQualificationDepthForType  ( SgInitializedName* initializedName, SgScopeStatement* currentScope, SgStatement* positionStatement );
+
 
        // SgName associatedName(SgScopeStatement* scope);
           SgDeclarationStatement* associatedDeclaration ( SgScopeStatement* scope );
