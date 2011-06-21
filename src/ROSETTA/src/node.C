@@ -262,6 +262,19 @@ Grammar::setUpNodes ()
      Node.setDataPrototype("static std::map<SgNode*,std::string>","globalTypeNameMap","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+#if 0
+  // DQ (6/21/2011): Since this type "std::set<SgNode*>" is not supported by our AST file I/O I will 
+  // implement this in a way that does not require such support.
+  // DQ (6/21/2011): Added support for global handling of list of seen declarations to be used to 
+  // support the name qualification.  Name qualification is used at different locations defferently
+  // depending upon if the declaration has been seen and what  sort of scope it was declared in and
+  // if it was a defining declaration, etc.
+  // Node.setDataPrototype("static std::set<SgNode*>","globalReferencedNameSet","",
+  //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     Node.setDataPrototype("static SgNodeSet","globalReferencedNameSet","",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+#endif
+
   // Not clear how to best to this, perhaps ROSETTA should define a function.
   // DQ (11/25/2007): Language classification field.  Now that we are supporting multiple languages
   // it is helpful to have a way to classify the IR nodes as to what language they belong.  Most are

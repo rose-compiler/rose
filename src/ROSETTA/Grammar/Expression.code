@@ -98,6 +98,9 @@ HEADER_START
           virtual bool get_global_qualification_required () const;
           virtual void set_global_qualification_required ( bool global_qualification_required );
 
+       // DQ (6/21/2011): Get the original expression if this is an IR node where it is defined and it is a valid pointer.
+          SgExpression* get_originalExpressionTree() const;
+
 HEADER_END
 
 
@@ -1691,6 +1694,34 @@ SgExpression::set_global_qualification_required ( bool global_qualification_requ
      ROSE_ASSERT(false);
 
   // p_global_qualification_required = global_qualification_required;
+   }
+
+SgExpression*
+SgExpression::get_originalExpressionTree() const
+   {
+  // DQ (6/21/2011): Get the original expression if this is an IR node where it is defined and it is a valid pointer.
+  // The p_originalExpressionTree datamember exists only on these IR nodes:
+  //    SgBinaryOp
+  //    SgValueExp
+  //    SgFunctionRefExp
+  //    SgValueExp
+  //    SgCastExp
+
+     SgExpression* originalExpressionTree = NULL;
+     switch(variantT())
+        {
+          case V_SgBinaryOp:       originalExpressionTree = isSgBinaryOp(this)->get_originalExpressionTree();       break;
+          case V_SgValueExp:       originalExpressionTree = isSgValueExp(this)->get_originalExpressionTree();       break;
+          case V_SgFunctionRefExp: originalExpressionTree = isSgFunctionRefExp(this)->get_originalExpressionTree(); break;
+          case V_SgCastExp:        originalExpressionTree = isSgCastExp(this)->get_originalExpressionTree();        break;
+
+          default:
+             {
+            // For all other cases do nothing, since there is no originalExpressionTree data member.
+             }
+        }
+
+     return originalExpressionTree;
    }
 
 SOURCE_BASECLASS_EXPRESSION_END

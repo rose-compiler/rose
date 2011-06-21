@@ -4052,14 +4052,14 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // Mark that we are no longer processing the first entry 
             // (first variable in a declaration containing multiple "," separated names)
                first = false;
-#if 0
+#if 1
                curprint ( string("\n/* Handle initializers (if any) */ \n"));
 #endif
             // Unparse the initializers if any exist
             // if(tmp_init)
                if ( (tmp_init != NULL) && !ninfo.SkipInitializer())
                   {
-                 // printf ("Initializer tmp_init = %s \n",tmp_init->class_name().c_str());
+                    printf ("Initializer tmp_init = %s \n",tmp_init->class_name().c_str());
 #if 0
                     if ( tmp_init->variant() == ASSIGN_INIT || tmp_init->variant() == AGGREGATE_INIT )
                        {

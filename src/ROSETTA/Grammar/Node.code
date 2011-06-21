@@ -1815,6 +1815,27 @@ HEADER_START
        */
           static void set_globalTypeNameMap ( const std::map<SgNode*,std::string> & X );
 
+#if 0
+       // DQ (6/21/2011): Added support for the state within the name qualification support to be referenced consistantly independent of recursive calls.
+      /*! \brief Access function for name qualification support (for names of types).
+
+          This type name is stored with reference to where the type is used (as required) instead
+          of with the IR node representing the type (which are typically shared) (e.g. function return 
+          type, variable type, etc.).
+       */
+          static std::map<SgNode*> & get_globalReferencedNameSet();
+
+      /*! \brief Access function for name qualification support (for names of declarations that have been seen as we traverse the AST).
+
+          This qualified name is stored with reference to where the name is used (as required) instead
+          of with the IR node of what is names (e.g. function declaration, variable declaration, etc.).
+       */
+          static void set_globalReferencedNameSet ( const std::set<SgNode*> & X );
+#endif
+
+
+
+
      /* name Persistant Attribute Mechanism 
 
          This is the persistant attribute mechanism for attaching attributed to IR nodes across 
@@ -2278,6 +2299,24 @@ SgNode::set_globalTypeNameMap(const std::map<SgNode*,std::string> & X)
      p_globalTypeNameMap = X;
    }
 
+
+#if 0
+  // DQ (6/21/2011): Since this type "std::set<SgNode*>" is not supported by our AST file I/O I will 
+  // implement this in a way that does not require such support.
+// DQ (6/21/2011): Added support for holding the set of seen declarations which is referenced as we travers and compute qualified names.
+std::set<SgNode*> &
+SgNode::get_globalReferencedNameSet()
+   {
+     return p_globalReferencedNameSet;
+   }
+
+// DQ (6/21/2011): Added support for holding the set of seen declarations which is referenced as we travers and compute qualified names.
+void
+SgNode::set_globalReferencedNameSet(const std::set<SgNode*> & X)
+   {
+     p_globalReferencedNameSet = X;
+   }
+#endif
 
 // DQ (4/10/2006): These are the default virtual function definitions (each returns an error)
 void

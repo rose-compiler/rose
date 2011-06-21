@@ -290,10 +290,13 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
           printf ("Calling SgNode::clearGlobalMangledNameMap() \n");
           SgNode::clearGlobalMangledNameMap();
 
-          void newBuildHiddenTypeAndDeclarationLists( SgNode* node );
+        // Build the local set to use to record when declaration that might required qualified references have been seen.
+          std::set<SgNode*> referencedNameSet;
+
+          void newBuildHiddenTypeAndDeclarationLists( SgNode* node, std::set<SgNode*> & referencedNameSet );
           printf ("Developing a new implementation of the hidden list support. \n");
-          newBuildHiddenTypeAndDeclarationLists(file);
-          printf ("DONE: new hidden list support built. \n");
+          newBuildHiddenTypeAndDeclarationLists(file,referencedNameSet);
+          printf ("DONE: new hidden list support built. \n*************************\n\n");
 
 #if 0
        // DQ (5/16/2011): Test clearing the mangled name map (so that unparsing will use the name qualification data in each node).
