@@ -1,7 +1,65 @@
 #include "MpiDeterminismAnalysis.h"
 #include <iostream>
 
-using namespace std;
+using std::cout;
+using std::endl;
+
+DeterminismState getExpectation(SgNode *ast, const char *varName)
+{
+  SgName name(varName);
+
+  Rose_STL_Container<SgNode*> sdNodes = NodeQuery::querySubTree(ast, &name, NodeQuery::VariableDeclarationFromName);
+  if (sdNodes.size() != 1) {
+    cout << "Didn't find target variable " << varName << " in list of size " << sdNodes.size() << endl;
+
+    for (Rose_STL_Container<SgNode*>::iterator i = sdNodes.begin(); i != sdNodes.end(); ++i)
+      cout << "\t" << (*(isSgVariableDeclaration(*i)->get_variables().begin()))->get_name().str() << endl;
+
+    return QUESTIONABLE;
+  }
+
+  SgNode *nSd = *(sdNodes.begin());
+  SgVariableDeclaration *vdSd = dynamic_cast<SgVariableDeclaration *>(nSd);
+  if (!vdSd) {
+    cout << "Node wasn't a variable delaration" << endl;
+    return QUESTIONABLE;
+  }
+
+  SgInitializedName *inSd = vdSd->get_decl_item(name);
+  SgAssignInitializer *aiSd = dynamic_cast<SgAssignInitializer*>(inSd->get_initializer());
+  if (!aiSd) {
+    cout << "Couldn't pull an assignment initializer out" << endl;
+    return QUESTIONABLE;
+  }
+
+  SgIntVal *ivSd = dynamic_cast<SgIntVal*>(aiSd->get_operand());
+  if (!ivSd) {
+    cout << "Assignment wasn't an intval" << endl;
+    return QUESTIONABLE;
+  }
+
+  int value = ivSd->get_value();
+  return value ? DETERMINISTIC : NONDETERMINISTIC;
+}
+
+const char* strFromDet(DeterminismState d)
+{
+  switch (d) {
+  case DETERMINISTIC: return "deterministic";
+  case QUESTIONABLE: return "unclear";
+  case NONDETERMINISTIC: return "NONdeterminisitic";
+  }
+}
+
+void report(DeterminismState actual, DeterminismState expected, const char *kind, int &incorrect, int &imprecise)
+{
+  cout << "\t" << strFromDet(actual) << " (expected " << strFromDet(expected) << ") with respect to receive " << kind << endl;
+  
+  if (QUESTIONABLE == actual && QUESTIONABLE != expected)
+    imprecise++;
+  else if (actual != expected)
+    incorrect++;
+}
 
 int main(int argc, char **argv)
 {
@@ -14,28 +72,18 @@ int main(int argc, char **argv)
   MpiDeterminismAnalysis a;
   MpiDeterminism d = a.traverse(project);
 
-  cout << "Analysis finds that this program is" << endl;
-  cout << "\t";
-  switch (d.source) {
-  case DETERMINISTIC: cout << "deterministic"; break;
-  case QUESTIONABLE: cout << "unclear"; break;
-  case NONDETERMINISTIC: cout << "NONdeterminisitic"; break;
-  }
-  cout << " with respect to receive sources." << endl;
-  cout << "\t";
-  switch (d.tag) {
-  case DETERMINISTIC: cout << "deterministic"; break;
-  case QUESTIONABLE: cout << "unclear"; break;
-  case NONDETERMINISTIC: cout << "NONdeterminisitic"; break;
-  }
-  cout << " with respect to receive tags." << endl;
-  cout << "\t";
-  switch (d.functions) {
-  case DETERMINISTIC: cout << "deterministic"; break;
-  case QUESTIONABLE: cout << "unclear"; break;
-  case NONDETERMINISTIC: cout << "NONdeterminisitic"; break;
-  }
-  cout << " with respect to receive functions called." << endl;
+  DeterminismState sourceExpectation = getExpectation(project, "SOURCE_DETERMINISM");
+  DeterminismState tagExpectation = getExpectation(project, "TAG_DETERMINISM");
+  DeterminismState functionExpectation = getExpectation(project, "FUNCTION_DETERMINISM");
 
-  return 0;
+  int incorrect, imprecise;
+
+  cout << "Analysis finds that this program is" << endl;
+  report(d.source, sourceExpectation, "sources", incorrect, imprecise);
+  report(d.tag, tagExpectation, "tags", incorrect, imprecise);
+  report(d.functions, functionExpectation, "functions", incorrect, imprecise);
+
+  cout << "Analysis was precise in " << 3 - incorrect - imprecise << " cases, imprecise in " << imprecise << " cases, and WRONG in " << incorrect << " cases." << endl;
+
+  return incorrect;
 }
