@@ -806,7 +806,6 @@ NAME_QUALIFICATION_EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2008_04.C
 
 # DQ (6/12/2011): Failing name qualification tests (where we stand):
-# test2007_05.C
 # test2007_13.C
 # test2007_17.C
 # test2007_55.C
