@@ -135,17 +135,17 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
 {
     map<VGVertex, vector<RouteWithCost> > allRoutes;
 
-    foreach (VGVertex valNode, valuesToRestore)
+    foreach (VGVertex valToRestore, valuesToRestore)
     {
         //// A flag for mu node search.
         //bool firstNode = true;
         
         // For dummy nodes.
-        if (ValueNode* v = isValueNode(valueGraph_[valNode]))
+        if (ValueNode* v = isValueNode(valueGraph_[valToRestore]))
         {
             if (v->isTemp())
             {
-                PathInfo paths = valueGraph_[*(boost::out_edges(valNode, valueGraph_).first)]->paths;
+                PathInfo paths = valueGraph_[*(boost::out_edges(valToRestore, valueGraph_).first)]->paths;
                 if (paths.count(dagIndex) == 0 || !paths[dagIndex][pathIndex])
                 {
                     continue;
@@ -155,7 +155,7 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
         
         
         RouteWithNodes route;
-        route.nodes.push_back(make_pair(valNode, valNode));
+        route.nodes.push_back(make_pair(valToRestore, valToRestore));
 
         vector<RouteWithNodes> routes(1, route);
 
@@ -212,7 +212,7 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
                 foreach (const VGEdge& edge, newRoute.edges)
                     newRoute.cost += subgraph[edge]->cost;
 
-                vector<RouteWithCost>& routeWithCost = allRoutes[valNode];
+                vector<RouteWithCost>& routeWithCost = allRoutes[valToRestore];
                 routeWithCost.push_back(RouteWithCost());
                 // Swap instead of copy for performance.
                 routeWithCost.back().first.swap(newRoute.edges);
@@ -300,7 +300,7 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
                     foreach (const VGEdge& edge, newRoute.edges)
                         newRoute.cost += subgraph[edge]->cost;
 
-                    vector<RouteWithCost>& routeWithCost = allRoutes[valNode];
+                    vector<RouteWithCost>& routeWithCost = allRoutes[valToRestore];
                     routeWithCost.push_back(RouteWithCost());
                     // Swap instead of copy for performance.
                     routeWithCost.back().first.swap(newRoute.edges);
@@ -324,28 +324,64 @@ NEXT:
         } // end of while (!unfinishedRoutes.empty())
     } // end of foreach (VGVertex valNode, valuesToRestore)
 
+    
+    
     /**************************************************************************/
     // Now get the route for all state variables.
+    
     // map<VGVertex, vector<RouteWithCost> > allRoutes;
     pair<int, int> path = make_pair(dagIndex, pathIndex);
     set<VGVertex>& nodesInRoute = routeNodesAndEdges_[path].first;
     //set<VGEdge>&   edgesInRoute = routeNodesAndEdges_[path].second;
     set<VGEdge> edgesInRoute;
-
+    
     typedef map<VGVertex, vector<RouteWithCost> >::value_type VertexWithRoute;
+    
+    // The following map stores the cost of each edge and how many times it's shared
+    // by different to-store values.
+    map<VGEdge, pair<int, int> > costForEdges;
+    
+    // Collect cost information.
+    foreach (const VGEdge& edge, boost::edges(subgraph))
+        costForEdges[edge] = make_pair(subgraph[edge]->cost, 0);
+    
+    // Make stats how many times an edge is shared by different to-store values.
     foreach (VertexWithRoute& nodeWithRoute, allRoutes)
     {
-        int minCost = INT_MAX;
+        set<VGEdge> edges;
+        foreach (const RouteWithCost& routeWithCost, nodeWithRoute.second)
+        {
+            foreach (const VGEdge& edge, routeWithCost.first)
+                edges.insert(edge);
+        }
+        
+        foreach (const VGEdge& edge, edges)
+            ++costForEdges[edge].second;
+    }
+    
+
+    foreach (VertexWithRoute& nodeWithRoute, allRoutes)
+    {
+        float minCost = std::numeric_limits<float>::max();
         size_t minIndex;
 
         for (size_t i = 0, m = nodeWithRoute.second.size(); i < m; ++i)
         {
+            float cost = 0;
+            
             RouteWithCost& route = nodeWithRoute.second[i];
             foreach (const VGEdge& edge, route.first)
-                route.second += subgraph[edge]->cost;
-            if (route.second < minCost)
             {
-                minCost = route.second;
+                //route.second += subgraph[edge]->cost;
+                pair<int, int> costWithCounter = costForEdges[edge];
+                // In this way we make an approximation of the real cost in the
+                // final route graph.
+                cost += float(costWithCounter.first) / costWithCounter.second;
+            }
+            
+            if (cost < minCost)
+            {
+                minCost = cost;
                 minIndex = i;
             }
         }
