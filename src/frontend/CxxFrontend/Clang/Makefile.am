@@ -1,8 +1,10 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+AM_CPPFLAGS = $(CLANG_CPPFLAGS)
+AM_LDFLAGS = $(CLANG_LDFLAGS)
+
 INCLUDES = $(ROSE_INCLUDES)
 
-# This will cause the dynamic library to be built (as libroseClangFrontend.so)
 noinst_LTLIBRARIES = libroseClangFrontend.la
 
 libroseClangFrontend_la_DEPENDENCIES =
