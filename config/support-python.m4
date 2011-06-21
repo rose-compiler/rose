@@ -1,7 +1,7 @@
 AC_DEFUN([ROSE_SUPPORT_PYTHON],
 [
 
-if test "$with_python" = no; then
+if test ! "$with_python" = yes; then
    echo "Skipping use of Python support!"
 else
    AC_DEFINE([USE_ROSE_PYTHON_SUPPORT],
