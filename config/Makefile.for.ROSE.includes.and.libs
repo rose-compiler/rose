@@ -213,10 +213,12 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection \
      -I$(top_srcdir)/src/frontend/ECJ_ROSE_Connection \
      -I$(top_srcdir)/src/frontend/PHPFrontend \
+     -I$(top_srcdir)/src/frontend/CxxFrontend/ClangFrontend \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly \
      -I$(top_srcdir)/src/frontend/BinaryFormats \
      -I$(top_srcdir)/src/frontend/BinaryLoader \
      -I$(top_srcdir)/src/frontend/Disassemblers \
+     -I$(top_srcdir)/src/frontend/CxxFrontend/Clang \
      -I$(top_srcdir)/src/backend/unparser \
      -I$(top_srcdir)/src/backend/unparser/formatSupport \
      -I$(top_srcdir)/src/backend/unparser/languageIndependenceSupport \
