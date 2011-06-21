@@ -436,6 +436,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/include 
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Framework 
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Widgets  
+     ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/POET
      ${ROSE_TOP_SRC_DIR}/projects/dataBase 
      ${ROSE_TOP_SRC_DIR}/src/util/graphs 
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/win32/include/

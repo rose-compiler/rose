@@ -41,11 +41,11 @@ rm out
 #${DIFF} ${DIFFOPTIONS} out $srcdir/steensgaardTest2.out1 
 #rm out
 
-echo ./steensgaardTest2 $srcdir/testPtr2.C
-./steensgaardTest2 $srcdir/testPtr2.C  > out
-echo "Calling: ${DIFF} ${DIFFOPTIONS} out $srcdir/steensgaardTest2.out2"
-${DIFF} ${DIFFOPTIONS} out $srcdir/steensgaardTest2.out2
-rm out
+#echo ./steensgaardTest2 $srcdir/testPtr2.C
+#./steensgaardTest2 $srcdir/testPtr2.C  > out
+#echo "Calling: ${DIFF} ${DIFFOPTIONS} out $srcdir/steensgaardTest2.out2"
+#${DIFF} ${DIFFOPTIONS} out $srcdir/steensgaardTest2.out2
+#rm out
 # DQ (2/9/2008): This test fails on my 64-bit Red Hat system using the g++ version 3.4.6 compiler
 #echo "This test fails on my 64-bit Red Hat system using the g++ version 3.4.6 compiler..."
 

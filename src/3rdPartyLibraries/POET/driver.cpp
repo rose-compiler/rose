@@ -685,7 +685,7 @@ int initialize(int argc, char** argv)
      else if (*p == 'm' && *(p+1) == 'd')
           redefine_code=true;
      else if (*p == 'v')
-          std::cerr << "pcg version: " << VERSION << "\n";
+          std::cerr << "pcg version: " << POET_VERSION << "\n";
      else if (*p == 'p') {
          std::string parName;
          char* p1 = p+1;
