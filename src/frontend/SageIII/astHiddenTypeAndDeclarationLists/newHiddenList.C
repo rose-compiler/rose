@@ -169,6 +169,33 @@ HiddenListTraversal::get_qualifiedNameMapForTypes() const
    }
 
 
+int
+numberOfSymbolsWithName( const SgName & name, SgScopeStatement* scope )
+   {
+  // DQ (6/20/2011): This function counts the number of symbols associated with the same name.
+  // This function should be put into the SgScopeStatement for more general use.
+
+  // We might have to have separate functions specific to functions, variables, etc.
+  // This function addresses a requirement associated with a bug demonstrated by test2011_84.C.
+
+     ROSE_ASSERT(scope != NULL);
+     SgSymbol* symbol = scope->lookup_function_symbol(name);
+
+     int count = 0;
+
+     printf ("In numberOfSymbolsWithName(): symbol = %p scope = %p = %s \n",symbol,scope,scope->class_name().c_str());
+
+     while (symbol != NULL)
+        {
+          printf ("     In loop: symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+          count++;
+          symbol = scope->next_any_symbol();
+        }
+
+     printf ("In numberOfSymbolsWithName(): count = %d \n",count);
+     return count;
+   }
+
 SgDeclarationStatement*
 HiddenListTraversal::associatedDeclaration(SgScopeStatement* scope)
    {
@@ -1317,10 +1344,30 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                               ROSE_ASSERT(functionDeclaration != NULL);
                               ROSE_ASSERT(associatedFunctionDeclaration != NULL);
 
+                              printf ("associatedFunctionDeclaration->get_firstNondefiningDeclaration() = %p \n",associatedFunctionDeclaration->get_firstNondefiningDeclaration());
+                              printf ("functionDeclaration->get_firstNondefiningDeclaration()           = %p \n",functionDeclaration->get_firstNondefiningDeclaration());
                               if (associatedFunctionDeclaration->get_firstNondefiningDeclaration() == functionDeclaration->get_firstNondefiningDeclaration())
                                  {
-                                // This function is visible from where it is referenced.
-                                   printf ("This function or member function IS visible from where it is referenced \n");
+                                // DQ (6/20/2011): But we don't check for if there was another declaration that might be a problem (overloaded functions don't count!)...
+                                // This function is visible from where it is referenced. 
+                                   printf ("This function or member function IS visible from where it is referenced (but there could still be ambiguity if this was just the first of several symbols found in the current scope) \n");
+
+                                // But we need to check if there is another such symbol in the same scope that would trigger qualification.
+                                // SgScopeStatement* associatedScope = associatedFunctionDeclaration->get_scope();
+                                // ROSE_ASSERT(associatedScope != NULL);
+                                // printf ("Searching associatedScope = %p = %s \n",associatedScope,associatedScope->class_name().c_str());
+                                   SgClassDefinition* classDefinition = isSgClassDefinition(functionDeclaration->get_parent());
+                                   if (classDefinition != NULL)
+                                      {
+                                        printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+                                        printf ("Searching classDefinition = %p \n",classDefinition);
+
+                                     // int numberOfSymbolsWithMatchingName = numberOfSymbolsWithName(name,associatedScope);
+                                        int numberOfSymbolsWithMatchingName = numberOfSymbolsWithName(name,classDefinition);
+                                        printf ("numberOfSymbolsWithMatchingName = %d \n",numberOfSymbolsWithMatchingName);
+
+                                     // ROSE_ASSERT(numberOfSymbolsWithMatchingName == 1);
+                                      }
                                  }
                                 else
                                  {
@@ -2353,15 +2400,20 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
           traverseType(returnType,functionDeclaration,currentScope,functionDeclaration);
 
        // Handle the function name...
-          if (functionDeclaration->get_declarationModifier().isFriend() == true || functionDeclaration->get_specialFunctionModifier().isOperator() == true)
+       // DQ (6/20/2011): Friend function can be qualified.
+       // if (functionDeclaration->get_declarationModifier().isFriend() == true || functionDeclaration->get_specialFunctionModifier().isOperator() == true)
+          if (functionDeclaration->get_specialFunctionModifier().isOperator() == true)
              {
-            // DQ (6/19/2011): We sometimes have to qualify friends if it is to avoid ambiguity (see test2006_159.C).
-            // Maybe a friend declaration should add an SgAlias symbol to the class definition scope's symbol table.
+            // DQ (6/19/2011): We sometimes have to qualify friends if it is to avoid ambiguity (see test2006_159.C) (but we never qualify an operator, I think).
+            // Maybe a friend declaration should add an SgAliasSymbol to the class definition scope's symbol table.
             // Then simpler rules (no special case) would cause the name qualification to be generated properly.
 
+            // DQ (6/20/2011): Friend function can be qualified and a fix to add a SgAliasSymbol to the class definition scope's symbol table 
+            // should allow it to be handled with greater precission.
             // Never use name qualification for friend functions or operators. I am more sure of the case of friend functions than operators.
             // Friend functions will have a global scope (though this might change in the future; google "friend global scope injection").
-               printf ("Detected a friend of operator function, these are not provided with name qualification. \n");
+            // printf ("Detected a friend or operator function, these are not provided with name qualification. \n");
+               printf ("Detected a operator function, these are not provided with name qualification. \n");
              }
             else
              {

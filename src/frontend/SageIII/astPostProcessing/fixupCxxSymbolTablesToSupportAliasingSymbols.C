@@ -216,7 +216,6 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 #endif
         }
 
-
   // DQ (5/6/2011): Added support to build SgAliasSymbols in derived class scopes that reference the symbols of the base classes associated with protected and public declarations.
      SgClassDefinition* classDefinition = isSgClassDefinition(node);
      if (classDefinition != NULL)
@@ -247,6 +246,41 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 #endif
         }
 
+
+     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
+     if (functionDeclaration != NULL)
+        {
+#if ALIAS_SYMBOL_DEBUGGING
+          printf ("Found a the SgFunctionDeclaration \n");
+#endif
+          SgScopeStatement*  functionScope   = functionDeclaration->get_scope();
+          SgScopeStatement*  currentScope    = isSgScopeStatement(functionDeclaration->get_parent());
+          SgClassDefinition* classDefinition = isSgClassDefinition(currentScope);
+
+          if (classDefinition != NULL)
+             {
+            // This is a function declared in a class definition, test of friend (forget why it is important to test for isOperator().
+               if (functionDeclaration->get_declarationModifier().isFriend() == true || functionDeclaration->get_specialFunctionModifier().isOperator() == true)
+                  {
+                    printf ("Process all friend function with a SgAliasSymbol to where they are declared in another scope (usually global scope) \n");
+#if 0
+                    SgName name = functionDeclaration->get_name();
+
+                    SgSymbol* symbol = functionDeclaration->search_for_symbol_from_symbol_table();
+                    ROSE_ASSERT ( symbol != NULL );
+
+                    SgAliasSymbol* aliasSymbol = new SgAliasSymbol (symbol);
+
+                 // Use the current name and the alias to the symbol
+                    currentScope->insert_symbol(name,aliasSymbol);
+#endif
+#if 0
+                    printf ("Error: friend functions not processed yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+             }
+        }          
    }
 
 
