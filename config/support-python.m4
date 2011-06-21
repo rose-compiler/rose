@@ -1,8 +1,8 @@
 AC_DEFUN([ROSE_SUPPORT_PYTHON],
 [
 
-if test ! "$with_python" = yes; then
-   echo "Skipping use of Python support!"
+if test ! "$enable_python" = yes; then
+   AC_MSG_NOTICE([Skipping use of Python support!])
 else
    AC_DEFINE([USE_ROSE_PYTHON_SUPPORT],
              1,
@@ -22,4 +22,3 @@ fi
 # End macro ROSE_SUPPORT_PYTHON.
 ]
 )
-
