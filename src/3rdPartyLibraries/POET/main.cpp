@@ -28,7 +28,7 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 #include <error_config.h>
 #include <ASTeval.h>
 
-EvaluatePOET* evalPOET = 0;
+extern EvaluatePOET* evalPOET;
 extern bool debug_time;
 
 int main(int argc, char** argv)

@@ -67,6 +67,7 @@
 #define DECL_TRACE(poet,exp,lineNo) (poet).insert_traceDecl(exp,lineNo)
 
 // POET initialization.
+//extern EvaluatePOET* evalPOET = 0;     // needed to link poet
 EvaluatePOET* evalPOET = 0;     // needed to link poet
 
 inline void InsertParamDecl(POETProgram& poet, LocalVar* par, const std::string& msg, int lineNo)
