@@ -1,5 +1,6 @@
 namespace X
    {
+  // int a;
      int namespace_function( int x );
    }
 
@@ -9,5 +10,8 @@ typedef int (*PNF)(int);
 
 void foobar()
    {
+  // DQ (6/20/2011): I think that we are only missing the unparsing of the qualified name in the initializer...
      PNF namespace_function_pointer = X::namespace_function;
+
+  // int b = X::a;
    }

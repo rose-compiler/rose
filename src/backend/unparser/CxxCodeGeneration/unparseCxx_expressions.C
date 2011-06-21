@@ -824,7 +824,7 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
      string func_name = func_ref->get_symbol()->get_name().str();
      int diff = 0; // the length difference between "operator" and function
 
-  // printf ("Inside of Unparse_ExprStmt::unparseFuncRef(): func_name = %s \n",func_name.c_str());
+     printf ("Inside of Unparse_ExprStmt::unparseFuncRef(): func_name = %s \n",func_name.c_str());
 
      ROSE_ASSERT(func_ref->get_symbol() != NULL);
      ROSE_ASSERT(func_ref->get_symbol()->get_declaration() != NULL);
@@ -888,9 +888,12 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
                  // SgName nameQualifier = unp->u_name->generateNameQualifier( declaration, tmp_info );
 
                  // DQ (5/29/2011): Newest refactored support for name qualification.
+                    printf ("In unparseFuncRef(): Looking for name qualification for SgFunctionRefExp = %p \n",func_ref);
                     SgName nameQualifier = func_ref->get_qualified_name_prefix();
 
-                 // printf ("In unparseFuncRef(): nameQualifier = %s \n",nameQualifier.str());
+                    printf ("In unparseFuncRef(): nameQualifier = %s \n",nameQualifier.str());
+                    printf ("SgNode::get_globalQualifiedNameMapForNames().size() = %zu \n",SgNode::get_globalQualifiedNameMapForNames().size());
+                    printf ("In unparseFuncRef(): Testing name in map: for SgFunctionRefExp = %p qualified name = %s \n",func_ref,func_ref->get_qualified_name_prefix().str());
                  // curprint ( "\n /* unparseFuncRef using nameQualifier = " + nameQualifier.str() + " */ \n";
 #if 0
                     SgFunctionCallExp* functionCallExpression = isSgFunctionCallExp(expr->get_parent());
@@ -914,8 +917,8 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
              }
 
        // DQ (12/2/2004): Put a little extra space after the function name (avoids i !=0)
-          curprint (  func_name);
-       // curprint (  func_name + " ";
+          curprint (func_name);
+       // curprint (func_name + " ";
         }
 
   // printDebugInfo("unparseFuncRef, Function Name: ", false); printDebugInfo(func_name.c_str(), true);
@@ -3089,7 +3092,8 @@ Unparse_ExprStmt::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(assn_init != NULL);
   /* code inserted from specification */
 
-  // printf ("In unparseAssnInit(): assn_init->get_is_explicit_cast() = %s \n",(assn_init->get_is_explicit_cast() == true) ? "true" : "false");
+     printf ("In unparseAssnInit(): assn_init->get_is_explicit_cast() = %s \n",(assn_init->get_is_explicit_cast() == true) ? "true" : "false");
+     printf ("In unparseAssnInit(): assn_init->get_operand() = %p = %s \n",assn_init->get_operand(),assn_init->get_operand()->class_name().c_str());
 
      if (assn_init->get_is_explicit_cast() == true)
         {

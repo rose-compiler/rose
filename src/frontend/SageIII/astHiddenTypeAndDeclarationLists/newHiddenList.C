@@ -14,7 +14,7 @@ using namespace std;
 //   2) The filename for this source code should also be changed.
 
 void
-newBuildHiddenTypeAndDeclarationLists( SgNode* node )
+newBuildHiddenTypeAndDeclarationLists( SgNode* node, std::set<SgNode*> & referencedNameSet )
    {
   // This function is the top level API for Name Qualification support.
   // This is the only function that need be seen by ROSE.  This function 
@@ -43,11 +43,15 @@ newBuildHiddenTypeAndDeclarationLists( SgNode* node )
      ROSE_ASSERT(project != NULL);
 #endif
 
+  // Build the local set to use.
+  // std::set<SgNode*> & referencedNameSet;
+
   // DQ (5/28/2011): Initialize the local maps to the static maps in SgNode.  This is requires so the
-  // types used in template arguments can call the unparser to support there gneration of name qualified 
+  // types used in template arguments can call the unparser to support there generation of name qualified 
   // nested types.
   // HiddenListTraversal t;
-     HiddenListTraversal t(SgNode::get_globalQualifiedNameMapForNames(),SgNode::get_globalQualifiedNameMapForTypes(),SgNode::get_globalTypeNameMap());
+  // HiddenListTraversal t(SgNode::get_globalQualifiedNameMapForNames(),SgNode::get_globalQualifiedNameMapForTypes(),SgNode::get_globalTypeNameMap(),SgNode::get_globalReferencedNameSet());
+     HiddenListTraversal t(SgNode::get_globalQualifiedNameMapForNames(),SgNode::get_globalQualifiedNameMapForTypes(),SgNode::get_globalTypeNameMap(),referencedNameSet);
 
      HiddenListInheritedAttribute ih;
 
@@ -117,8 +121,9 @@ HiddenListTraversal::HiddenListTraversal()
   // Default constructor
    }
 #else
-HiddenListTraversal::HiddenListTraversal(std::map<SgNode*,std::string> & input_qualifiedNameMapForNames, std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes,std::map<SgNode*,std::string> & input_typeNameMap)
-   : qualifiedNameMapForNames(input_qualifiedNameMapForNames),
+HiddenListTraversal::HiddenListTraversal(std::map<SgNode*,std::string> & input_qualifiedNameMapForNames, std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes,std::map<SgNode*,std::string> & input_typeNameMap, std::set<SgNode*> & input_referencedNameSet)
+   : referencedNameSet(input_referencedNameSet),
+     qualifiedNameMapForNames(input_qualifiedNameMapForNames),
      qualifiedNameMapForTypes(input_qualifiedNameMapForTypes),
      typeNameMap(input_typeNameMap)
    {
@@ -1635,7 +1640,7 @@ HiddenListTraversal::evaluateNameQualificationForTemplateArgumentList (SgTemplat
                  // We need to traverse this expression and evaluate if any name qualification is required on its pieces (e.g. referenced variables)
 
                     printf ("Recursive call to newBuildHiddenTypeAndDeclarationLists() with expression = %p = %s \n",expression,expression->class_name().c_str());
-                    newBuildHiddenTypeAndDeclarationLists(expression);
+                    newBuildHiddenTypeAndDeclarationLists(expression,referencedNameSet);
                     printf ("DONE: Recursive call to newBuildHiddenTypeAndDeclarationLists() with expression = %p = %s \n",expression,expression->class_name().c_str());
 
 #if 0
@@ -2448,10 +2453,12 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
                     int amountOfNameQualificationRequired = nameQualificationDepth(functionDeclaration,currentScope,functionDeclaration);
                     printf ("SgFunctionDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #if 1
+                 // DQ (21/2011): test2011_89.C demonstrates a case where name wualification of a functionRef expression is required.
                  // DQ (6/9/2011): Support for test2011_78.C (we only qualify function call references where the function has been declared in 
                  // a scope where it could be expected to be defined (e.g. not using a forward declaration in a SgBasicBlock, since the function
                  // definition could not live in the SgBasicBlock.
                     bool skipNameQualification = skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(functionDeclaration);
+                    printf ("Test of functionDeclaration: skipNameQualification = %s \n",skipNameQualification ? "true" : "false");
                     if (skipNameQualification == false)
                          setNameQualification(functionDeclaration,amountOfNameQualificationRequired);
 #else
@@ -2687,6 +2694,7 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
             // a scope where it could be expected to be defined (e.g. not using a forward declaration in a SgBasicBlock, since the function
             // definition could not live in the SgBasicBlock.
                bool skipNameQualification = skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(functionDeclaration);
+               printf ("Test of functionRefExp: skipNameQualification = %s \n",skipNameQualification ? "true" : "false");
                if (skipNameQualification == false)
                     setNameQualification(functionRefExp,functionDeclaration,amountOfNameQualificationRequired);
 #else
@@ -2979,6 +2987,19 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
              }
         }
 
+  // DQ (6/21/2011): Added support for name qualification of expressions contained in originalExpressionTree's where they are stored.
+     SgExpression* expression = isSgExpression(n);
+     if (expression != NULL)
+        {
+          SgExpression* originalExpressionTree = expression->get_originalExpressionTree();
+          if (originalExpressionTree != NULL)
+             {
+            // Note that we have to pass the local copy of the referencedNameSet so that the same set will be used for all recursive calls (see test2011_89.C).
+               printf ("@@@@@@@@@@@@@ Recursive call to the originalExpressionTree = %p = %s \n",originalExpressionTree,originalExpressionTree->class_name().c_str());
+               newBuildHiddenTypeAndDeclarationLists(originalExpressionTree,referencedNameSet);
+               printf ("@@@@@@@@@@@@@ DONE: Recursive call to the originalExpressionTree = %p = %s \n",originalExpressionTree,originalExpressionTree->class_name().c_str());
+             }
+        }
 
   // ******************************************************************************
   // Now that this declaration is pocessed, mark it as being seen (place into set).
@@ -3038,10 +3059,14 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
              }
 
        // if (referencedNameSet.find(firstNondefiningDeclaration) == referencedNameSet.end())
-          if (acceptableDeclarationScope == true && referencedNameSet.find(firstNondefiningDeclaration) == referencedNameSet.end())
+          if (acceptableDeclarationScope == true && firstNondefiningDeclaration != NULL && referencedNameSet.find(firstNondefiningDeclaration) == referencedNameSet.end())
              {
-            // printf ("Adding declaration to set of visited declarations \n");
+               printf ("Adding firstNondefiningDeclaration = %p = %s to set of visited declarations \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
                referencedNameSet.insert(firstNondefiningDeclaration);
+             }
+            else
+             {
+               printf ("firstNondefiningDeclaration = %p NOT added to referencedNameSet \n",firstNondefiningDeclaration);
              }
         }
 
@@ -3114,6 +3139,15 @@ HiddenListTraversal::evaluateSynthesizedAttribute(SgNode* n, HiddenListInherited
 //       SgPseudoDestructorRefExp
 //       SgTemplateParameter
 //
+// Note also that name qualifiction can be required on expressions that are a part of 
+// the originalExpressionTree that represent the expanded representation from constant 
+// folding.  Thus we have to make a recursive call on all valid originalExpressionTree
+// pointers where they are present:
+//     SgBinaryOp
+//     SgValueExp
+//     SgFunctionRefExp
+//     SgValueExp
+//     SgCastExp
 // ************************************************************************************
 
 void
@@ -3202,13 +3236,33 @@ HiddenListTraversal::setNameQualification(SgFunctionRefExp* functionRefExp, SgFu
 
      if (qualifiedNameMapForNames.find(functionRefExp) == qualifiedNameMapForNames.end())
         {
-          printf ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),functionRefExp,functionRefExp->class_name().c_str());
+          printf ("Inserting qualifier for (SgFunctionRefExp) name = %s into list at IR node = %p = %s \n",qualifier.c_str(),functionRefExp,functionRefExp->class_name().c_str());
           qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(functionRefExp,qualifier));
+
+          printf ("Testing name in map: for SgFunctionRefExp = %p qualified name = %s \n",functionRefExp,functionRefExp->get_qualified_name_prefix().str());
+          printf ("SgNode::get_globalQualifiedNameMapForNames().size() = %zu \n",SgNode::get_globalQualifiedNameMapForNames().size());
         }
        else
         {
+       // If it already existes then overwrite the existing information.
+          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(functionRefExp);
+          ROSE_ASSERT (i != qualifiedNameMapForNames.end());
+
+          string previousQualifier = i->second.c_str();
+          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+
+          if (i->second != qualifier)
+             {
+               i->second = qualifier;
+#if 1
+               printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#if 0
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
           ROSE_ASSERT(false);
+#endif
         }
    }
 
@@ -3322,8 +3376,28 @@ HiddenListTraversal::setNameQualification(SgEnumVal* enumVal, SgEnumDeclaration*
         }
        else
         {
+       // If it already existes then overwrite the existing information.
+          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(enumVal);
+          ROSE_ASSERT (i != qualifiedNameMapForNames.end());
+
+          string previousQualifier = i->second.c_str();
+          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+
+       // I think I can do this!
+       // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
+          if (i->second != qualifier)
+             {
+               i->second = qualifier;
+
+#if 1
+               printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#if 0
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
           ROSE_ASSERT(false);
+#endif
         }
    }
 
@@ -3359,8 +3433,10 @@ HiddenListTraversal::setNameQualification ( SgBaseClass* baseClass, SgClassDecla
         }
        else
         {
+#if 1
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
           ROSE_ASSERT(false);
+#endif
         }
    }
 
@@ -3837,8 +3913,33 @@ HiddenListTraversal::setNameQualification(SgExpression* exp, SgDeclarationStatem
         }
        else
         {
+       // DQ (6/21/2011): Now we are catching this case...
+
+       // If it already existes then overwrite the existing information.
+          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(exp);
+          ROSE_ASSERT (i != qualifiedNameMapForTypes.end());
+
+          string previousQualifier = i->second.c_str();
+          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+
+       // I think I can do this!
+       // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
+          if (i->second != qualifier)
+             {
+               i->second = qualifier;
+
+#if 1
+               printf ("WARNING: name in qualifiedNameMapForTypes already exists and is different... \n");
+               ROSE_ASSERT(false);
+#endif
+
+               SgName testNameInMap = exp->get_qualified_name_prefix();
+               printf ("testNameInMap = %s \n",testNameInMap.str());
+             }
+#if 0
           printf ("Error: name in qualifiedNameMapForTypes already exists... \n");
           ROSE_ASSERT(false);
+#endif
         }
    }
 

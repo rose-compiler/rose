@@ -22,7 +22,7 @@
 
 
 // API function for new hidden list support.
-void newBuildHiddenTypeAndDeclarationLists( SgNode* node );
+void newBuildHiddenTypeAndDeclarationLists( SgNode* node, std::set<SgNode*> & referencedNameSet );
 
 
 
@@ -60,7 +60,8 @@ class HiddenListTraversal : public AstTopDownBottomUpProcessing<HiddenListInheri
        // * So we need a function to gather all the name in a class.
 
        // Data
-          std::set<SgNode*> referencedNameSet;
+       // DQ (6/21/2011): since this is used recursively we can't have this be a new set each time.
+          std::set<SgNode*> & referencedNameSet;
 
        // We keep the qualified names as a map of strings with keys defined by the SgNode pointer values.
        // These are referenced to the static data members in SgNode (SgNode::get_globalQualifiedNameMapForNames() 
@@ -82,7 +83,7 @@ class HiddenListTraversal : public AstTopDownBottomUpProcessing<HiddenListInheri
      public:
        // HiddenListTraversal();
        // HiddenListTraversal(SgNode* root);
-          HiddenListTraversal(std::map<SgNode*,std::string> & input_qualifiedNameMapForNames, std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes, std::map<SgNode*,std::string> & input_typeNameMap);
+          HiddenListTraversal(std::map<SgNode*,std::string> & input_qualifiedNameMapForNames, std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes, std::map<SgNode*,std::string> & input_typeNameMap, std::set<SgNode*> & input_referencedNameSet);
 
        // Evaluates how much name qualification is required (typically 0 (no qualification), but sometimes 
        // the depth of the nesting of scopes plus 1 (full qualification with global scoping operator)).
