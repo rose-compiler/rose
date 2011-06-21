@@ -1815,6 +1815,11 @@ AC_SUBST(top_pwd)
 absolute_path_srcdir="`cd $srcdir; pwd`"
 AC_SUBST(absolute_path_srcdir)
 
+# Liao 6/20/2011, store source path without symbolic links, used to have consistent source and compile paths for ROSE 
+# when call graph analysis tests are used.
+res_top_src=$(cd "$srcdir" && pwd -P)
+AC_DEFINE_UNQUOTED([ROSE_SOURCE_TREE_PATH],"$res_top_src",[Location of ROSE Source Tree.])
+
 # This is silly, but it is done to hide an include command (in
 # projects/compass/Makefile.am, including compass-makefile.inc in the build
 # tree) from Automake because the needed include file does not exist when
