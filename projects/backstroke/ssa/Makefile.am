@@ -28,7 +28,6 @@ complex_01.c \
 constants.c \
 gconv_info.c \
 math.c \
-old_style_function.c \
 stdio.c \
 test2003_12.c \
 test2004_20.c \
