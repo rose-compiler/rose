@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-AM_CPPFLAGS = $(CLANG_CPPFLAGS)
-AM_LDFLAGS = $(CLANG_LDFLAGS)
+#AM_CPPFLAGS = $(CLANG_CPPFLAGS)
+#AM_LDFLAGS = $(CLANG_LDFLAGS)
 
 INCLUDES = $(ROSE_INCLUDES)
 
