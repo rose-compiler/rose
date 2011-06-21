@@ -384,6 +384,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/FortranCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/JavaCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PHPCodeGeneration 
+     ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PythonCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/asmUnparser 
      ${ROSE_TOP_SRC_DIR}/src/util 
      ${ROSE_TOP_SRC_DIR}/src/util/support 
