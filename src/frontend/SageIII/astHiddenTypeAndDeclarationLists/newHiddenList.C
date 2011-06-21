@@ -1742,15 +1742,17 @@ HiddenListTraversal::nameQualificationDepth ( SgType* type, SgScopeStatement* cu
      return amountOfNameQualificationRequired;
    }
 
+// int HiddenListTraversal::nameQualificationDepthForType ( SgInitializedName* initializedName, SgStatement* positionStatement )
 int
-HiddenListTraversal::nameQualificationDepthForType ( SgInitializedName* initializedName, SgStatement* positionStatement )
+HiddenListTraversal::nameQualificationDepthForType ( SgInitializedName* initializedName, SgScopeStatement* currentScope, SgStatement* positionStatement )
    {
      ROSE_ASSERT(initializedName   != NULL);
      ROSE_ASSERT(positionStatement != NULL);
 
-     printf ("In nameQualificationDepthForType(): initializedName = %s type = %s \n",initializedName->get_name().str(),initializedName->get_type()->class_name().c_str());
+     printf ("In nameQualificationDepthForType(): initializedName = %s type = %s currentScope = %p = %s \n",initializedName->get_name().str(),initializedName->get_type()->class_name().c_str(),currentScope,currentScope->class_name().c_str());
 
-     return nameQualificationDepth(initializedName->get_type(),initializedName->get_scope(),positionStatement);
+  // return nameQualificationDepth(initializedName->get_type(),initializedName->get_scope(),positionStatement);
+     return nameQualificationDepth(initializedName->get_type(),currentScope,positionStatement);
    }
 
 
@@ -2236,9 +2238,15 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
           SgInitializedName* initializedName = SageInterface::getFirstInitializedName(variableDeclaration);
           ROSE_ASSERT(initializedName != NULL);
 
+       // This is not always the correct current scope (see test2011_70.C for an example).
+          SgScopeStatement* currentScope = SageInterface::getScope(variableDeclaration);
+       // SgScopeStatement* currentScope = isSgScopeStatement(variableDeclaration->get_parent());
+          ROSE_ASSERT(currentScope != NULL);
+
           printf ("================ Calling nameQualificationDepthForType to evaluate the type \n");
        // Compute the depth of name qualification from the current statement:  variableDeclaration.
-          int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,variableDeclaration);
+       // int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,variableDeclaration);
+          int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentScope,variableDeclaration);
           printf ("SgVariableDeclaration's type: amountOfNameQualificationRequiredForType = %d \n",amountOfNameQualificationRequiredForType);
 
        // Not all types have an associated declaration, but some do: examples include classes, typedefs, and enums.
@@ -2252,11 +2260,6 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
              {
                printf ("declaration == NULL: could not put name qualification for the type into the SgInitializedName = %p = %s \n",initializedName,initializedName->get_name().str());
              }
-
-       // This is not always the correct current scope (see test2011_70.C for an example).
-          SgScopeStatement* currentScope = SageInterface::getScope(variableDeclaration);
-       // SgScopeStatement* currentScope = isSgScopeStatement(variableDeclaration->get_parent());
-          ROSE_ASSERT(currentScope != NULL);
 
           printf ("\n++++++++++++++++ Calling nameQualificationDepth to evaluate the name currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
           int amountOfNameQualificationRequiredForName = nameQualificationDepth(initializedName,currentScope,variableDeclaration);
@@ -2347,12 +2350,15 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
              {
                SgStatement* currentStatement = TransformationSupport::getStatement(initializedName);
                ROSE_ASSERT(currentStatement != NULL);
+               printf ("case of SgInitializedName: currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
 
                SgScopeStatement* currentScope = currentStatement->get_scope();
                ROSE_ASSERT(currentScope != NULL);
+               printf ("case of SgInitializedName: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
 
             // int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentScope,currentStatement);
-               int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentStatement);
+            // int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentStatement);
+               int amountOfNameQualificationRequiredForType = nameQualificationDepthForType(initializedName,currentScope,currentStatement);
                printf ("SgInitializedName's (%s) type: amountOfNameQualificationRequiredForType = %d \n",initializedName->get_name().str(),amountOfNameQualificationRequiredForType);
 
                setNameQualification(initializedName,declaration,amountOfNameQualificationRequiredForType);
