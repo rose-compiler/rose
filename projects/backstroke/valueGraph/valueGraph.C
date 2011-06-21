@@ -731,8 +731,11 @@ void EventReverser::addAvailableAndTargetValues()
     {
         ValueNode* valNode = isValueNode(valueGraph_[node]);
         if (!valNode) continue;
+        if (valNode->var.name.empty()) continue;
         
-        if (stateVariables_.count(valNode->var.name) && valNode->var.version == 0)
+        // Only pick the first initialized name.
+        VarName varName(1, valNode->var.name[0]);
+        if (stateVariables_.count(varName) && valNode->var.version == 0)
             valuesToRestore_[0].insert(node);
     }
     

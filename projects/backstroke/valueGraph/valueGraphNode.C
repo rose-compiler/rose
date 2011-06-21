@@ -92,7 +92,21 @@ std::string VersionedVariable::toString() const
 SgExpression* VersionedVariable::getVarRefExp() const
 {
     ROSE_ASSERT(!name.empty());
-    return SageBuilder::buildVarRefExp(name.back());//->get_name());
+    
+    SgExpression* var = SageBuilder::buildVarRefExp(name[0]);
+    
+    for (int i = 1, s = name.size(); i != s; ++i)
+    {
+        SgType* type = var->get_type();
+        
+        SgExpression* exp = SageBuilder::buildVarRefExp(name[i]);
+        if (isSgPointerType(type))
+            var = SageBuilder::buildArrowExp(var, exp);
+        else
+            var = SageBuilder::buildDotExp(var, exp);
+    }
+    
+    return var;
 }
 
 std::string ValueNode::toString() const
