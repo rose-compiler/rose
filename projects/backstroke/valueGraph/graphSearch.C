@@ -219,6 +219,14 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
 
                 continue;
             }
+            
+            // Currently, we forbit the route graph includes any function call nodes
+            // which are not reverse ones. This will be modified in the future.
+            if (FunctionCallNode* funcCallNode = isFunctionCallNode(subgraph[node]))
+            {
+                if (!funcCallNode->isReverse)
+                    continue;
+            }
 
             // If this node is an operator node or function call node, add all its operands.
             if (isOperatorNode(subgraph[node]) || isFunctionCallNode(subgraph[node]))

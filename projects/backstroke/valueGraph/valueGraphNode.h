@@ -325,20 +325,23 @@ struct StateSavingEdge : ValueGraphEdge
 //        visiblePathNum(visibleNum), killer(killerNode) {}
     
     StateSavingEdge(int cost, const PathInfo& paths, const ControlDependences& cd,
-                    const std::map<int, PathSet> visiblePaths, 
-                    SgNode* killerNode)
+                    SgNode* killerNode, bool isKillerScope = false)
     :   ValueGraphEdge(cost, paths, cd), 
-        visiblePaths(visiblePaths), 
         killer(killerNode), 
-        varStored(false)
+        scopeKiller(isKillerScope),
+        varStored(false) 
     {}
     
     StateSavingEdge(int cost, const PathInfo& paths, const ControlDependences& cd,
-                    SgNode* killerNode)
+                    const std::map<int, PathSet> visiblePaths, 
+                    SgNode* killerNode, bool isKillerScope = false)
     :   ValueGraphEdge(cost, paths, cd), 
+        visiblePaths(visiblePaths), 
         killer(killerNode), 
-        varStored(false) 
+        scopeKiller(isKillerScope),
+        varStored(false)
     {}
+    
     
 	virtual std::string toString() const;
     
@@ -348,6 +351,11 @@ struct StateSavingEdge : ValueGraphEdge
 	//int visiblePathNum;
     std::map<int, PathSet> visiblePaths;
     SgNode* killer;
+    
+    //! Indicate if the killer is a scope or not. If the killer is a scope, the SS
+    //! statement is inserted at the end of the scope. Or else, it is inserted before
+    //! the killer statement.
+    bool scopeKiller;
     
     //! If state saving is done. It is needed since a SS edge in a loop is traversed
     //! more than once by difference DAGs.

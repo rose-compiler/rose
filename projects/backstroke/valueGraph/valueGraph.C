@@ -987,7 +987,8 @@ EventReverser::VGEdge EventReverser::addValueGraphOrderedEdge(
     return newEdge;
 }
 
-void EventReverser::addValueGraphStateSavingEdges(VGVertex src, SgNode* killer)
+void EventReverser::addValueGraphStateSavingEdges(
+        VGVertex src, SgNode* killer, bool scopeKiller)
 {
 //    foreach (VGVertex v, availableValues_)
 //    if (ValueNode* valNode = isValueNode(valueGraph_[v]))
@@ -1023,7 +1024,8 @@ void EventReverser::addValueGraphStateSavingEdges(VGVertex src, SgNode* killer)
         paths.erase(paths.find(muNode->dagIndex));
     
     ControlDependences controlDeps = cdg_->getControlDependences(killer);
-    valueGraph_[newEdge] = new StateSavingEdge(cost, paths, controlDeps, killer);
+    valueGraph_[newEdge] = new StateSavingEdge(
+            cost, paths, controlDeps, killer, scopeKiller);
     
     //valueGraph_[newEdge] = new StateSavingEdge(
     //        cost, paths, controlDeps, visiblePaths, killer);
@@ -1167,6 +1169,31 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
     }
     
     
+    // For a virtual function call, its inverse is called in reverse function.
+    // Black box style inversion is not used.
+    if (funcCallNode->isVirtual && !funcCallNode->isConst)
+    {
+        // If the function called is a virtual one, add two dummy value nodes then its
+        // inverse can be generated temporarily. This is a workaround!
+        ValueNode* valueNodeIn  = new ValueNode(funcCallExp);
+        ValueNode* valueNodeOut = new ValueNode(funcCallExp);
+        VGVertex inVertex  = addValueGraphNode(valueNodeIn);
+        VGVertex outVertex = addValueGraphNode(valueNodeOut);
+
+        // Add an edge from the in value to the function call.
+        addValueGraphEdge(inVertex, rvsFuncCallVertex);
+
+        // Add an edge from the in value to the function call.
+        addValueGraphEdge(rvsFuncCallVertex, outVertex);
+        
+        addAvailableValue(outVertex);
+        foreach (std::set<VGVertex>& values, valuesToRestore_)
+            values.insert(inVertex);
+        
+        //return funcCallVertex;
+    }
+    
+    
 #if 0
     // If the function called is a member one, also connect an edge from the pointer or object
     // calling this function to the function call node.
@@ -1204,29 +1231,6 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
         addValueGraphEdge(funcCallVertex, caller);
     }
     
-    // For a virtual function call, its inverse is called in reverse function.
-    // Black box style inversion is not used.
-    if (funcCallNode->isVirtual && !funcCallNode->isConst)
-    {
-        // If the function called is a virtual one, add two dummy value nodes then its
-        // inverse can be generated temporarily. This is a workaround!
-        ValueNode* valueNodeIn  = new ValueNode(funcCallExp);
-        ValueNode* valueNodeOut = new ValueNode(funcCallExp);
-        VGVertex inVertex  = addValueGraphNode(valueNodeIn);
-        VGVertex outVertex = addValueGraphNode(valueNodeOut);
-
-        // Add an edge from the in value to the function call.
-        addValueGraphEdge(inVertex, funcCallVertex);
-
-        // Add an edge from the in value to the function call.
-        addValueGraphEdge(funcCallVertex, outVertex);
-        
-        addAvailableValue(outVertex);
-        foreach (std::set<VGVertex>& values, valuesToRestore_)
-            values.insert(inVertex);
-        
-        return funcCallVertex;
-    }
     
     
     const SSA::NodeReachingDefTable& defTable = ssa_->getDefsAtNode(funcCallExp);
@@ -1518,6 +1522,9 @@ void EventReverser::addStateSavingEdges()
             if (isSgClassDefinition(scope))
                 continue; //scope = funcBody;
             
+            if (SgFunctionDefinition* funcDef = isSgFunctionDefinition(scope))
+                scope = funcDef->get_body();
+            
             // Find the last def of this variable in its definition scope.
             const SSA::NodeReachingDefTable& defTable = ssa_->getOutgoingDefsAtNode(scope);
             
@@ -1533,15 +1540,25 @@ void EventReverser::addStateSavingEdges()
                 
                 cout << "Add a SS edge: " << var.toString() << "--SS-->" << scope->class_name() << "\n\n";
             
-                addValueGraphStateSavingEdges(varVertexMap_[var], scope);
+                addValueGraphStateSavingEdges(varVertexMap_[var], scope, true);
             }
         }
+        
+        // Treat "this" node as an available value
+        // !!! This is a work-around, since this is no version info for this node now.
+        if (isSgThisExp(valNode->astNode))
+        {
+            addAvailableValue(v);
+            //addValueGraphStateSavingEdges(v, funcDef_, true);
+        }
+        
         
         // A temporary work-around for lacking of getting last defs for a variable.
         if (isAvailableValue(v))
         {
-            addValueGraphStateSavingEdges(v, funcDef_);
+            addValueGraphStateSavingEdges(v, funcDef_, true);
         }
+        
         
         // For a mu node, make it available for its own DAG
         // Note this a kind of hack when doing this. A mu node is available in its

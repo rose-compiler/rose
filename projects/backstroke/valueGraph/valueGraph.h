@@ -344,7 +344,7 @@ private:
 	 */
 	VGEdge addValueGraphOrderedEdge(VGVertex src, VGVertex tar, int index);
     
-    void addValueGraphStateSavingEdges(VGVertex src, SgNode* killer);
+    void addValueGraphStateSavingEdges(VGVertex src, SgNode* killer, bool scopeKiller = false);
 
     /** Add new state saving edges to the value graph. The target is the root.
 	 *

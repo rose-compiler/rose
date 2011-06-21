@@ -95,7 +95,7 @@ SgExpression* VersionedVariable::getVarRefExp() const
     
     SgExpression* var = SageBuilder::buildVarRefExp(name[0]);
     
-    for (int i = 1, s = name.size(); i != s; ++i)
+    for (int i = 1, s = name.size(); i < s; ++i)
     {
         SgType* type = var->get_type();
         

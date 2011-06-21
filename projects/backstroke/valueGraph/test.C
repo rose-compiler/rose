@@ -35,10 +35,10 @@ int main(int argc, char *argv[])
     eventList.insert("GetL2Proto");
     eventList.insert("Busy");
     //eventList.insert("Send");
-    eventList.insert("DataIndication");
     eventList.insert("Timeout");
     eventList.insert("Notify");
 #endif
+    eventList.insert("DataIndication");
     //eventList.insert("SendPending");
     
     vector<SgFunctionDefinition*> funcDefs;

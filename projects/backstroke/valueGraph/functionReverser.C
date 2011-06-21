@@ -310,7 +310,7 @@ void EventReverser::buildRouteGraph(const map<VGEdge, PathInfo>& routes)
     }
     valuesToRestore_[0].swap(newValuesToRestore);
     
-    removePhiNodesFromRouteGraph();
+    //removePhiNodesFromRouteGraph();
 }
 
 void EventReverser::removePhiNodesFromRouteGraph()
@@ -622,6 +622,10 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
         traversedEdges.insert(inEdge);
     }
     
+    // For all in edges to the same function call node, only one of those edges
+    // is added to reverse CFG. We use a set to prevent adding several those edges.
+    set<VGVertex> funcCallNodes;
+    
     while (!nextEdgeCandidates.empty())
     {
         VGEdge edge = nextEdgeCandidates.top();
@@ -630,8 +634,20 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
         // If this edge does not belong to the route of the given DAG.
         if (routeGraph_[edge]->paths.count(dagIndex) == 0)
             continue;
-            
-        result.push_back(edge);
+        
+        // Check if an in edge to a function call node has been added.
+        // See definition of 'funcCallNodes'.
+        VGVertex tgt = boost::target(edge, routeGraph_);
+        if (isFunctionCallNode(routeGraph_[tgt]))
+        {
+            if (funcCallNodes.count(tgt) == 0)
+            {
+                funcCallNodes.insert(tgt);
+                result.push_back(edge);
+            }
+        }
+        else
+            result.push_back(edge);
         
         VGVertex src = boost::source(edge, routeGraph_);
         // The following paths are the paths on this edge.
@@ -707,9 +723,8 @@ void EventReverser::buildReverseCFG(
     cout << "\n\n";
 #endif
     
-    
     foreach (const VGEdge& edge, result)
-    {
+    {        
         const PathSet& paths = routeGraph_[edge]->paths[dagIndex];
         addReverseCFGNode(paths, &edge, rvsCFG, 
                 rvsCFGBasicBlock, parentTable, dagAdded);
@@ -718,8 +733,6 @@ void EventReverser::buildReverseCFG(
     // Add the exit node.
     addReverseCFGNode(allPaths, NULL, rvsCFG, 
             rvsCFGBasicBlock, parentTable, dagAdded);
-    
-    //rvsCFG = boost::make_reverse_graph(rvsCFG);
 }
 
 void EventReverser::addReverseCFGNode(
@@ -1067,6 +1080,7 @@ void EventReverser::generateCodeForBasicBlock(
                 else
                     pushLocation = pushLocations[killer];
                 
+                cout << killer->unparseToString() << ' ' << valNode->toString() << endl;
                 
                 pushFuncStmt = buildExprStatement(
                         buildStoreFunctionCall(valNode->var.getVarRefExp()));
@@ -1118,7 +1132,14 @@ void EventReverser::generateCodeForBasicBlock(
                 
                 //SgStatement* pushFuncStmt = buildPushStatement(valNode);
                 
-                SageInterface::insertStatementBefore(pushLocation, pushFuncStmt); 
+                if (ssEdge->scopeKiller)
+                {
+                    ROSE_ASSERT(isSgScopeStatement(pushLocation));
+                    SageInterface::appendStatement(pushFuncStmt, isSgScopeStatement(pushLocation));
+                }
+                else
+                    SageInterface::insertStatementBefore(pushLocation, pushFuncStmt);
+                
                 // Update the location so that the next push is put before this push.
                 pushLocations[killer] = pushFuncStmt;
                 
