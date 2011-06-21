@@ -9,6 +9,7 @@ else (WIN32)
 add_subdirectory(FortranCodeGeneration)
 add_subdirectory(JavaCodeGeneration)
 add_subdirectory(PHPCodeGeneration)
+add_subdirectory(PythonCodeGeneration)
 endif (WIN32)
 
 add_subdirectory(languageIndependenceSupport)
