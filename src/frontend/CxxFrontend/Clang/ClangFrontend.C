@@ -36,50 +36,49 @@
 #include <llvm/Support/raw_ostream.h>
 
 class DotConsumer : public clang::ASTConsumer {
-	protected:
-		clang::Diagnostic & p_diagnostic;
-		const clang::LangOptions & p_lang_options;
+    protected:
+        clang::Diagnostic & p_diagnostic;
+        const clang::LangOptions & p_lang_options;
 
-		std::string p_input_file;
-		llvm::raw_ostream * p_output_file;
+        std::string p_input_file;
+        llvm::raw_ostream * p_output_file;
 
-		clang::ASTContext * p_ast_context;
-		clang::SourceManager * p_source_management;
-		clang::TranslationUnitDecl * p_translation_unit_decl;
+        clang::ASTContext * p_ast_context;
+        clang::SourceManager * p_source_management;
+        clang::TranslationUnitDecl * p_translation_unit_decl;
 
-		clang::FileID p_main_file_id;
-		const char * p_main_file_start;
-		const char * p_main_file_end;
+        clang::FileID p_main_file_id;
+        const char * p_main_file_start;
+        const char * p_main_file_end;
 
-	public:
-		DotConsumer(std::string & input, llvm::raw_ostream * output, clang::Diagnostic & diagnostic, const clang::LangOptions & lang_options) :
-			clang::ASTConsumer(),
-			p_diagnostic(diagnostic),
-			p_lang_options(lang_options),
-			p_input_file(input),
-			p_output_file(output)
-		{}
+    public:
+        DotConsumer(std::string & input, llvm::raw_ostream * output, clang::Diagnostic & diagnostic, const clang::LangOptions & lang_options) :
+            clang::ASTConsumer(),
+            p_diagnostic(diagnostic),
+            p_lang_options(lang_options),
+            p_input_file(input),
+            p_output_file(output)
+        {}
 
-		virtual ~DotConsumer() {}
+        virtual ~DotConsumer() {}
 
-		virtual void Initialize(clang::ASTContext & context) {
-			p_ast_context = &context;
-			p_source_management = &(p_ast_context->getSourceManager());
-			p_translation_unit_decl = p_ast_context->getTranslationUnitDecl();
+        virtual void Initialize(clang::ASTContext & context) {
+            p_ast_context = &context;
+            p_source_management = &(p_ast_context->getSourceManager());
+            p_translation_unit_decl = p_ast_context->getTranslationUnitDecl();
 
-			p_main_file_id = p_source_management->getMainFileID();
+            p_main_file_id = p_source_management->getMainFileID();
 
-			const llvm::MemoryBuffer * main_buffer = p_source_management->getBuffer(p_main_file_id);
+            const llvm::MemoryBuffer * main_buffer = p_source_management->getBuffer(p_main_file_id);
 
-			p_main_file_start = main_buffer->getBufferStart();
-			p_main_file_end   = main_buffer->getBufferEnd();
+            p_main_file_start = main_buffer->getBufferStart();
+            p_main_file_end   = main_buffer->getBufferEnd();
 
-			// FIXME: Do we need a rewriter?
-		}
+            // FIXME: Do we need a rewriter?
+        }
 
-		virtual void HandleTopLevelDecl(clang::DeclGroupRef D) {}
-
-		virtual void HandleTranslationUnit(clang::ASTContext &C) {}
+        virtual void HandleTopLevelDecl(clang::DeclGroupRef D) {}
+        virtual void HandleTranslationUnit(clang::ASTContext &C) {}
 };
 
 int clang_main(int argc, char* argv[], SgSourceFile& sageFile) {
@@ -92,9 +91,9 @@ int clang_main(int argc, char* argv[], SgSourceFile& sageFile) {
 
     clang::FileManager file_manager(file_options);
 
-    clang::DiagnosticIDs diag_id;
+    clang::DiagnosticIDs * diag_id = new clang::DiagnosticIDs();
 
-    const llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diag_id_ptr(&diag_id);
+    const llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diag_id_ptr(diag_id);
 
     clang::Diagnostic diagnostic(diag_id_ptr);
         diagnostic.setSuppressAllDiagnostics(true);
