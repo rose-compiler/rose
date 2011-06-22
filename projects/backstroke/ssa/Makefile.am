@@ -763,7 +763,7 @@ TEST_INCLUDES = \
 TEST_C: 
 	@cp -f $(top_srcdir)/tests/CompileTests/C_tests/*.c . 
 	@$(MAKE) $(C_TESTCODES_REQUIRED_TO_PASS)
-	@rm *.c
+	@rm -f *.c
 
 .PHONY: $(C_TESTCODES_REQUIRED_TO_PASS)
 $(C_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
@@ -773,7 +773,7 @@ $(C_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
 TEST_CXX:
 	@cp -f $(top_srcdir)/tests/CompileTests/Cxx_tests/*.C .
 	@$(MAKE) $(CXX_TESTCODES_REQUIRED_TO_PASS)
-	@rm *.C
+	@rm -f *.C
 
 .PHONY: $(CXX_TESTCODES_REQUIRED_TO_PASS)
 $(CXX_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
