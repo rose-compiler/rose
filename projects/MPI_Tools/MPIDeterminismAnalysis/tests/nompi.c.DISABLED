@@ -1,3 +1,4 @@
+/* Disabled because the test harness currently can't handle input that doesn't include mpi.h at all */
 
 int SOURCE_DETERMINISM = 1;
 int TAG_DETERMINISM = 1;
