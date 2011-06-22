@@ -60,7 +60,7 @@ EXTRA_DIST = TestDriver testfile1.c testfile1.c.cfg testfile1.c.du testfile1.c.r
              testfile3.c testfile3.c.cfg testfile3.c.du testfile3.c.ref \
              testfile4.c testfile4.c.du  testPtr1.C testPtr2.C \
              PtrAnalTest.out1  steensgaardTest1.outx   steensgaardTest2.out2 \
-             PtrAnalTest.out2  steensgaardTest2.out1
+             PtrAnalTest.out2  steensgaardTest2.out1 steensgaardTest1.out
              #trustedAnnotationOutput annotationLanguageParserInputFile.ann
 
 # to deactivate tests comment out check-local
