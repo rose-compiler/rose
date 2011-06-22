@@ -1,6 +1,7 @@
 #include "MpiDeterminismAnalysis.h"
 #include <iostream>
 
+using std::cerr;
 using std::cout;
 using std::endl;
 
@@ -65,7 +66,15 @@ int main(int argc, char **argv)
 {
   SgProject *project = frontend(argc, argv);
 
-  cout << "You must be using the hacked mpi.h that defines things nicely for this to work!" << endl;
+  // Check that the mpi.h included by the program is the hacked
+  // version that defines all the constants as int variables, and not
+  // as macros
+  SgName hacked("MPI_HACKED_HEADER_INCLUDED");
+  Rose_STL_Container<SgNode*> vars = NodeQuery::querySubTree(project, &hacked, NodeQuery::VariableDeclarationFromName);
+  if (vars.size() != 1) {
+    cerr << "You must be using the hacked mpi.h that defines things nicely for this to work!" << endl;
+    return 10;
+  }
 
   //  ConstantPropagationAnalysis cp;
 
