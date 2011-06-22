@@ -131,7 +131,7 @@ class SymbolicConstBoundAnalysis : public SymbolicBoundAnalysis<Stmt,InterfaceAr
   SymbolicBound GetConstBound(const SymbolicVar& var)
        {
          Stmt n;
-         SymbolicBound tmp = GetBound(var, &n);
+         SymbolicBound tmp = SymbolicBoundAnalysis<Stmt,InterfaceArg>::GetBound(var, &n);
          if (n != ances) {
             SymbolicBoundAnalysis<Stmt,InterfaceArg> next(interfaceClass,interfaceClass.GetParent(n),ances); 
             if (tmp.lb.IsNIL())

@@ -14,9 +14,7 @@ typedef MultiGraphElemTemplate<void*> BaseGraphEdge;
 // with additional interfaces to multigraph and graph access
 class BaseGraphCreate 
   : public MultiGraphCreate,
-#if _MSC_VER
           public
-#endif
            GraphAccessTemplate<BaseGraphNode,BaseGraphEdge>
 {
  protected:

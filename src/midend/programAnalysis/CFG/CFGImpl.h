@@ -16,13 +16,13 @@ class CFGImplTemplate
   virtual Node* CreateNode()
         { 
            Node* n = new Node(this);
-           AddNode(n);
+           VirtualGraphCreateTemplate<Node, Edge>::AddNode(n);
            return n;
         }
   virtual void CreateEdge( Node *n1, Node *n2, EdgeType condval) 
         {
            Edge* e = new Edge(condval, this);
-           AddEdge( n1, n2, e);
+           VirtualGraphCreateTemplate<Node, Edge>::AddEdge( n1, n2, e);
         } 
   virtual void AddNodeStmt(Node* n, const AstNodePtr& s) 
         { n->AddNodeStmt(s); }
