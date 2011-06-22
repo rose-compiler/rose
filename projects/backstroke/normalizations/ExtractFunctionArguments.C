@@ -121,7 +121,7 @@ bool ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
  * expression should be pulled out into a temporary variable on a separate line.
  * E.g. if the expression contains a function call, it needs to be normalized, while if it
  * is a constant, there is no need to change it. */
-bool ExtractFunctionArguments::FunctionArgumentNeedsNormalization(SgExpression* argument)
+bool ExtractFunctionArguments::FunctionArgumentNeedsNormalization(SgExpression*& argument)
 {
     while ((isSgPointerDerefExp(argument) || isSgCastExp(argument) || isSgAddressOfOp(argument)))
 	{
@@ -168,7 +168,7 @@ bool ExtractFunctionArguments::SubtreeNeedsNormalization(SgNode* top)
 	Rose_STL_Container<SgNode*> functionCalls = NodeQuery::querySubTree(top, V_SgFunctionCallExp);
 	for (Rose_STL_Container<SgNode*>::const_iterator iter = functionCalls.begin(); iter != functionCalls.end(); iter++)
 	{
-		SgFunctionCallExp* functionCall = isSgFunctionCallExp(*iter);
+		SgExpression* functionCall = isSgFunctionCallExp(*iter);
 		ROSE_ASSERT(functionCall != NULL);
 		if (FunctionArgumentNeedsNormalization(functionCall))
 			return true;
