@@ -445,13 +445,18 @@ class callEdgeRow : public dbRow
 
 
 typedef DatabaseGraph<simpleFuncRow, callEdgeRow,
-                     boost::vecS, boost::vecS, boost::bidirectionalS> CallGraph;
+                     boost::vecS, boost::vecS, boost::bidirectionalS, 
+       boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> >, 
+        boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> >, 
+        boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> > > CallGraph;
 typedef CallGraph::dbgType Graph;
 typedef boost::graph_traits < CallGraph >::vertex_descriptor callVertex;
 typedef boost::property_map<CallGraph, boost::vertex_index_t>::const_type callVertexIndexMap;
 
 typedef DatabaseGraph<varNodeRow, callEdgeRow,
-                     boost::vecS, boost::vecS, boost::bidirectionalS> CallMultiGraph;
+                     boost::vecS, boost::vecS, boost::bidirectionalS, boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> >, 
+        boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> >, 
+        boost::property<boost::vertex_attribute_t, std::map<std::string, std::string> > > CallMultiGraph;
 
 
 // milki (06/16/2010) Redefine for std::string to produce

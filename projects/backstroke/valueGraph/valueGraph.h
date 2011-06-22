@@ -4,7 +4,7 @@
 #include "types.h"
 #include "valueGraphNode.h"
 #include "pathNumGenerator.h"
-#include <ssa/staticSingleAssignment.h>
+#include <staticSingleAssignment.h>
 #include <boost/function.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/filtered_graph.hpp>

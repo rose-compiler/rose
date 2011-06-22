@@ -282,7 +282,12 @@ class DL
 vector<void *> buildLibraryList(SgProject *prj)
    {
      vector<void *> libs;
-     void *libc = dlopen("libc.so.6", RTLD_NOW | RTLD_GLOBAL);
+     void *libc;
+#ifdef __APPLE__
+     libc = dlopen("libc.dylib", RTLD_NOW | RTLD_GLOBAL);
+#else
+     libc = dlopen("libc.so.6", RTLD_NOW | RTLD_GLOBAL);
+#endif
      char *err = dlerror();
      if (err != NULL)
         {

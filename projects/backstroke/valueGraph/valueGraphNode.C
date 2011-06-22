@@ -1,5 +1,5 @@
 #include "valueGraphNode.h"
-#include <ssa/staticSingleAssignment.h>
+#include <staticSingleAssignment.h>
 #include <sageBuilder.h>
 #include <boost/assign/list_inserter.hpp>
 #include <boost/lexical_cast.hpp>
