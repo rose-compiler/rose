@@ -128,9 +128,16 @@ bool ExtractFunctionArguments::FunctionArgumentNeedsNormalization(SgExpression* 
         argument = isSgUnaryOp(argument)->get_operand();
     }
 
+    SgArrowExp* arrowExp = isSgArrowExp(argument);
+    if (arrowExp && isSgThisExp(arrowExp->get_lhs_operand()))
+        argument = arrowExp->get_rhs_operand();
+
+    // Cong: For variable reference, now only SgVerRefExp need not to be normalized.
 	//For right now, move everything but a constant value or an explicit variable access
-	if (BackstrokeUtility::isVariableReference(argument) || isSgValueExp(argument) || isSgFunctionRefExp(argument)
-            || isSgMemberFunctionRefExp(argument))
+	//if (BackstrokeUtility::isVariableReference(argument) || isSgValueExp(argument) || isSgFunctionRefExp(argument)
+    //        || isSgMemberFunctionRefExp(argument))
+	if (isSgVarRefExp(argument) || isSgValueExp(argument) || isSgFunctionRefExp(argument)
+            || isSgMemberFunctionRefExp(argument) || isSgThisExp(argument))
 		return false;
 
 	return true;
