@@ -49,8 +49,9 @@ private:
     //! the table passed in.
     struct RouteGraphEdgeComp
     {
-        RouteGraphEdgeComp(const ValueGraph& routeG, const std::map<SgNode*, int>& nodeIdx)
-        : routeGraph(routeG), nodeIndexTable(nodeIdx) {}
+        RouteGraphEdgeComp(
+            const ValueGraph& routeG, int dagIdx, const std::map<SgNode*, int>& nodeIdx)
+        : routeGraph(routeG), dagIndex(dagIdx), nodeIndexTable(nodeIdx) {}
  
 //        RouteGraphEdgeComp(const ValueGraph& routeG, const std::map<PathSet, int>& pathsIdx)
 //        : routeGraph(routeG), pathsIndexTable(pathsIdx) {}
@@ -59,7 +60,7 @@ private:
         // this edge in reverse CFG.
         SgNode* getAstNode(const VGEdge& edge) const;
         
-        bool operator ()(const VGEdge& edge1, const VGEdge& edge2) const;
+        bool operator()(const VGEdge& edge1, const VGEdge& edge2) const;
 //        {
 //            using namespace std;
 //            cout << routeGraph[edge1]->paths << endl;
@@ -72,6 +73,7 @@ private:
 //        }
         
         const ValueGraph& routeGraph;
+        int dagIndex;
         //const std::map<PathSet, int>& pathsIndexTable;
         const std::map<SgNode*, int>& nodeIndexTable;
     };

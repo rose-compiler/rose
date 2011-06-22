@@ -310,7 +310,7 @@ void EventReverser::buildRouteGraph(const map<VGEdge, PathInfo>& routes)
     }
     valuesToRestore_[0].swap(newValuesToRestore);
     
-    //removePhiNodesFromRouteGraph();
+    removePhiNodesFromRouteGraph();
 }
 
 void EventReverser::removePhiNodesFromRouteGraph()
@@ -587,7 +587,7 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
     
     // A priority queue, in which elements are sorted by its index from edgeIndexTable.
     priority_queue<VGEdge, vector<VGEdge>, RouteGraphEdgeComp>  
-    nextEdgeCandidates(RouteGraphEdgeComp(routeGraph_, nodeIndexTable));
+    nextEdgeCandidates(RouteGraphEdgeComp(routeGraph_, dagIndex, nodeIndexTable));
     
     map<VGVertex, PathInfo> nodePathsTable;
     foreach (VGVertex node, boost::vertices(routeGraph_))
@@ -635,18 +635,28 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
         if (routeGraph_[edge]->paths.count(dagIndex) == 0)
             continue;
         
+        // A flag which decides if this edge will be included.
+        bool edgeNeeded = true;
+        
         // Check if an in edge to a function call node has been added.
         // See definition of 'funcCallNodes'.
         VGVertex tgt = boost::target(edge, routeGraph_);
         if (isFunctionCallNode(routeGraph_[tgt]))
         {
             if (funcCallNodes.count(tgt) == 0)
-            {
                 funcCallNodes.insert(tgt);
-                result.push_back(edge);
-            }
+            else
+                edgeNeeded = false;
         }
-        else
+        
+        // If the edge is a SS one with cost 0.
+        if (StateSavingEdge* ssEdge = isStateSavingEdge(routeGraph_[edge]))
+        {
+            if (ssEdge->cost == 0)
+                edgeNeeded = false;
+        }
+        
+        if (edgeNeeded)
             result.push_back(edge);
         
         VGVertex src = boost::source(edge, routeGraph_);
@@ -1072,10 +1082,14 @@ void EventReverser::generateCodeForBasicBlock(
                 // Find the correct location to put the push function call.
                 SgNode* killer = ssEdge->killer;
                 SgStatement* pushLocation = NULL;
+                
                 if (pushLocations.count(killer) == 0)
                 {
-                    pushLocation = SageInterface::getEnclosingStatement(killer);
-                    pushLocations[killer] = pushLocation;
+                    if (!ssEdge->scopeKiller)
+                    {
+                        pushLocation = SageInterface::getEnclosingStatement(killer);
+                        pushLocations[killer] = pushLocation;
+                    }
                 }
                 else
                     pushLocation = pushLocations[killer];
@@ -1132,10 +1146,10 @@ void EventReverser::generateCodeForBasicBlock(
                 
                 //SgStatement* pushFuncStmt = buildPushStatement(valNode);
                 
-                if (ssEdge->scopeKiller)
+                if (!pushLocation && ssEdge->scopeKiller)
                 {
-                    ROSE_ASSERT(isSgScopeStatement(pushLocation));
-                    SageInterface::appendStatement(pushFuncStmt, isSgScopeStatement(pushLocation));
+                    ROSE_ASSERT(isSgScopeStatement(killer));
+                    SageInterface::appendStatement(pushFuncStmt, isSgScopeStatement(killer));
                 }
                 else
                     SageInterface::insertStatementBefore(pushLocation, pushFuncStmt);

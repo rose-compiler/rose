@@ -365,6 +365,7 @@ NEXT:
         float minCost = std::numeric_limits<float>::max();
         size_t minIndex;
 
+        // Find the route with the minimum cost.
         for (size_t i = 0, m = nodeWithRoute.second.size(); i < m; ++i)
         {
             float cost = 0;

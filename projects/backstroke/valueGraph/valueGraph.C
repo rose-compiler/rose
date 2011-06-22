@@ -513,7 +513,7 @@ void EventReverser::processVariableReference(SgExpression* expr)
             
             // If this var is not added to VG. This is possible is a variable is modified
             // by a function call.
-            //createValueNode(varRefExp);
+            createValueNode(varRefExp);
             cout << "Var ref which is unknown!!! " << var << endl;
         }
     }
@@ -1100,6 +1100,8 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
     
     // Get all defs from this function call.
     const SSA::NodeReachingDefTable& defTable = ssa_->getDefsAtNode(funcCallExp);
+    //const SSA::NodeReachingDefTable& defTable = 
+    //    ssa_->getOutgoingDefsAtNode(SageInterface::getEnclosingStatement(funcCallExp));
     
         
     SgExpression* caller = NULL;
@@ -1134,7 +1136,7 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
     foreach (SgExpression* arg, argList)
     {
         //VersionedVariable var = getVersionedVariable(arg, false);
-        cout << "Arg: " << getVersionedVariable(arg, false).toString() << endl;
+        cout << "Arg: " << arg->unparseToString() << " : " << getVersionedVariable(arg) << endl;
         ROSE_ASSERT(nodeVertexMap_.count(arg));
         //ROSE_ASSERT(var.isNull() ? true : varVertexMap_.count(var));
         
@@ -1153,11 +1155,17 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
             // If this argument is defined by the function call, create a new node 
             // for it.
             var.version = iter->second->getRenamingNumber();
-            // Here we set the AST node of this value to be the function call expression
-            // in order to get its correct path information.
-            ValueNode* valNode = new ValueNode(var, funcCallExp);
-            argVertex = addValueGraphNode(valNode);
-            varVertexMap_[var] = argVertex;
+            
+            if (varVertexMap_.count(var))
+                argVertex = varVertexMap_[var];
+            else
+            {
+                // Here we set the AST node of this value to be the function call expression
+                // in order to get its correct path information.
+                ValueNode* valNode = new ValueNode(var, funcCallExp);
+                argVertex = addValueGraphNode(valNode);
+                varVertexMap_[var] = argVertex;
+            }
         }
         
         // Add an edge from the value to the function call.
@@ -1526,20 +1534,22 @@ void EventReverser::addStateSavingEdges()
                 scope = funcDef->get_body();
             
             // Find the last def of this variable in its definition scope.
-            const SSA::NodeReachingDefTable& defTable = ssa_->getOutgoingDefsAtNode(scope);
+            // !!! Note this is a hack since the bug in SSA.
+            const SSA::NodeReachingDefTable& defTable = ssa_->getOutgoingDefsAtNode(funcDef_);
             
             const VarName& varName = valNode->var.name;
             SSA::NodeReachingDefTable::const_iterator iter = defTable.find(varName);
             //ROSE_ASSERT(iter != defTable.end());
             if (iter != defTable.end())
             {
-                SSA::ReachingDefPtr reachingDef = defTable.find(varName)->second;
+                SSA::ReachingDefPtr reachingDef = iter->second;
                 int version = reachingDef->getRenamingNumber();
                 VersionedVariable var(varName, version);
                 ROSE_ASSERT(varVertexMap_.count(var));
                 
                 cout << "Add a SS edge: " << var.toString() << "--SS-->" << scope->class_name() << "\n\n";
             
+                ROSE_ASSERT(isSgScopeStatement(scope));
                 addValueGraphStateSavingEdges(varVertexMap_[var], scope, true);
             }
         }
@@ -1552,11 +1562,15 @@ void EventReverser::addStateSavingEdges()
             //addValueGraphStateSavingEdges(v, funcDef_, true);
         }
         
+        // A value node which is available should be added to available values set.
+        if (valNode->isAvailable())
+            addAvailableValue(v);
+        
         
         // A temporary work-around for lacking of getting last defs for a variable.
         if (isAvailableValue(v))
         {
-            addValueGraphStateSavingEdges(v, funcDef_, true);
+            addValueGraphStateSavingEdges(v, funcDef_->get_body(), true);
         }
         
         
@@ -1592,7 +1606,7 @@ void EventReverser::addStateSavingEdges()
     }
 }
 
-VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
+VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse /*= true*/)
 {
     if (node == NULL)
         return VersionedVariable();
@@ -1615,7 +1629,10 @@ VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
 #endif
     
     if (varName.empty())
+    {
+        cout << "!!! Cannot find the var name for SgNode: " << node->unparseToString() << ".\n";
         return VersionedVariable(varName, -1);
+    }
     
     ROSE_ASSERT(!varName.empty());
 
@@ -1665,8 +1682,9 @@ VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
         cout << node->get_parent()->get_parent()->class_name() << endl;
 #endif
         const SSA::NodeReachingDefTable& defTable =
-            ssa_->getOutgoingDefsAtNode(node->get_parent());
-            //ssa_->getReachingDefsAtNode(node->get_parent()->get_parent());
+            //ssa_->getOutgoingDefsAtNode(node->get_parent());
+            ssa_->getOutgoingDefsAtNode(SageInterface::getEnclosingStatement(node));
+            //ssa_->getOutgoingDefsAtNode(node->get_parent()->get_parent());
 
 #if 0
         cout << "Print def table:\n";
@@ -1678,7 +1696,7 @@ VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
         SSA::NodeReachingDefTable::const_iterator iter = defTable.find(varName);
         if (iter != defTable.end())
         {
-            SSA::ReachingDefPtr reachingDef = defTable.find(varName)->second;
+            SSA::ReachingDefPtr reachingDef = iter->second;
             version = reachingDef->getRenamingNumber();
         }
         else
@@ -1878,6 +1896,13 @@ bool EventReverser::RouteGraphEdgeComp::operator()(
     int val2 = (iter2 == nodeIndexTable.end()) ? 0 : iter2->second;
     
     return val1 < val2;
+    
+#if 0
+    if (val1 < val2) return true;
+    if (val1 > val2) return false;
+    return routeGraph[edge1]->paths[dagIndex].count() < 
+           routeGraph[edge2]->paths[dagIndex].count();
+#endif
     
 #if 0
     ROSE_ASSERT(pathsIndexTable.count(routeGraph[edge1]->paths));
