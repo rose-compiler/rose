@@ -756,6 +756,30 @@ test2011_90.C \
 test2011_91.C \
 test2011_92.C \
 test2011_93.C \
+   test2005_112.C \
+   test2005_117.C \
+   test2005_154.C \
+   test2005_161.C \
+   test2005_163.C \
+   test2005_179.C \
+   test2005_183.C \
+   test2005_194.C \
+   test2005_199.C \
+   test2006_84.C \
+   test2006_86.C \
+   test2006_121.C \
+   test2006_139.C \
+   test2006_147.C \
+   test2006_151.C \
+   test2006_159.C \
+   test2007_01.C \
+   test2007_05.C \
+   test2007_13.C \
+   test2007_17.C \
+   test2007_55.C \
+   test2007_78.C \
+   test2008_04.C \
+   test2009_37.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -789,31 +813,7 @@ test2010_25.C
 
 # DQ (5/8/2011): These are the new test codes for the new name qualification support.
 # NAME_QUALIFICATION_EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-   test2005_112.C \
-   test2005_117.C \
-   test2005_154.C \
-   test2005_161.C \
-   test2005_163.C \
-   test2005_179.C \
-   test2005_183.C \
-   test2005_194.C \
-   test2005_199.C \
-   test2006_84.C \
-   test2006_86.C \
-   test2006_121.C \
-   test2006_139.C \
-   test2006_147.C \
-   test2006_151.C \
-   test2006_159.C \
-   test2007_01.C \
-   test2007_05.C \
-   test2007_13.C \
-   test2007_17.C \
-   test2007_55.C \
-   test2007_78.C \
-   test2008_04.C \
-   test2009_37.C
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
 
 # DQ (6/21/2011): Failing name qualification tests (where we stand): (all previously passing test codes now pass)
 
