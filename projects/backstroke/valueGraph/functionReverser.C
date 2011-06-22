@@ -282,7 +282,13 @@ void EventReverser::buildRouteGraph(const map<VGEdge, PathInfo>& routes)
         VGEdge e = boost::add_edge(newSrc, newTgt, routeGraph_).first;
         
         ValueGraphEdge* newEdge = valueGraph_[edge]->clone();
-        newEdge->paths = paths;
+        
+        // For SS edge, keep its original paths.
+        if (isStateSavingEdge(newEdge))
+            newEdge->paths = valueGraph_[edge]->paths;
+        else
+            newEdge->paths = paths;
+        
         routeGraph_[e] = newEdge;
     }
     
@@ -310,7 +316,7 @@ void EventReverser::buildRouteGraph(const map<VGEdge, PathInfo>& routes)
     }
     valuesToRestore_[0].swap(newValuesToRestore);
     
-    removePhiNodesFromRouteGraph();
+    //removePhiNodesFromRouteGraph();
 }
 
 void EventReverser::removePhiNodesFromRouteGraph()
@@ -349,6 +355,10 @@ void EventReverser::removePhiNodesFromRouteGraph()
                     continue;
 
                 VGVertex src = boost::source(inEdge, routeGraph_);
+                
+                // At least one of src and tgt should be a value node.
+                if (!isValueNode(routeGraph_[src]) && !isValueNode(routeGraph_[tgt]))
+                    continue;
 
                 // Multiple state saving edges with cost 0 can be merged.
                 // Then we don't have to add a new edge.
@@ -586,8 +596,8 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
 #endif
     
     // A priority queue, in which elements are sorted by its index from edgeIndexTable.
-    priority_queue<VGEdge, vector<VGEdge>, RouteGraphEdgeComp>  
-    nextEdgeCandidates(RouteGraphEdgeComp(routeGraph_, dagIndex, nodeIndexTable));
+    RouteGraphEdgeComp comp(routeGraph_, dagIndex, nodeIndexTable);
+    priority_queue<VGEdge, vector<VGEdge>, RouteGraphEdgeComp> nextEdgeCandidates(comp);
     
     map<VGVertex, PathInfo> nodePathsTable;
     foreach (VGVertex node, boost::vertices(routeGraph_))
@@ -630,6 +640,9 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
     {
         VGEdge edge = nextEdgeCandidates.top();
         nextEdgeCandidates.pop();
+        
+        cout << getSource(edge)->toString() << " ===> " << getTarget(edge)->toString() << "\t" << valueGraph_[edge]->paths[0] << endl;
+        cout << comp.getAstNode(edge)->class_name() << " : " << nodeIndexTable[comp.getAstNode(edge)] << endl;
         
         // If this edge does not belong to the route of the given DAG.
         if (routeGraph_[edge]->paths.count(dagIndex) == 0)
@@ -727,7 +740,8 @@ void EventReverser::buildReverseCFG(
         VGVertex src = boost::source(edge, valueGraph_);
         VGVertex tgt = boost::target(edge, valueGraph_);
         cout << valueGraph_[src]->toString() << " ==> " 
-                << valueGraph_[tgt]->toString() << endl;
+                << valueGraph_[tgt]->toString() << "\t" 
+                << valueGraph_[edge]->paths[0] << endl;
         //cout << "!!!" << routeGraph_[edge]->toString() << endl;
     }
     cout << "\n\n";
@@ -1037,9 +1051,14 @@ void EventReverser::generateCodeForBasicBlock(
     // First, declare all temporary variables at the beginning of the reverse events.
     foreach (const VGEdge& edge, edges)
     {
+        if (!isStateSavingEdge(valueGraph_[edge]))
+            continue;
+        
         ValueNode* valNode = isValueNode(valueGraph_[boost::source(edge, valueGraph_)]);
+        
         //if (valNode->isAvailable()) continue;
         if (valNode == NULL || valNode->var.name.empty()) continue;
+        // If the function definition is not the ancestor of this variable, it is a state variable.
         if (!SageInterface::isAncestor(funcDef_, valNode->var.name[0]))
             continue;
 

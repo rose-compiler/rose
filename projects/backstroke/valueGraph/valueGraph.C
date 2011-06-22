@@ -258,6 +258,12 @@ void EventReverser::processExpression(SgExpression* expr)
 
         createFunctionCallNode(funcCall);
     }
+    
+    else if (SgDeleteExp* delExp = isSgDeleteExp(expr))
+    {
+        cout << "Delete Node: " << getVersionedVariable(delExp->get_variable(), false, delExp) << "\n\n";
+        createValueNode(delExp->get_variable(), NULL);
+    }
 
     // Unary expressions.
     else if (SgUnaryOp* unaryOp = isSgUnaryOp(expr))
@@ -1160,9 +1166,8 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
                 argVertex = varVertexMap_[var];
             else
             {
-                // Here we set the AST node of this value to be the function call expression
-                // in order to get its correct path information.
-                ValueNode* valNode = new ValueNode(var, funcCallExp);
+                //createValueNode(arg, NULL);
+                ValueNode* valNode = new ValueNode(var, arg);
                 argVertex = addValueGraphNode(valNode);
                 varVertexMap_[var] = argVertex;
             }
@@ -1173,7 +1178,7 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
         addValueGraphEdge(rvsFuncCallVertex, argVertex);
         
         // Add state saving edges for killed defs.
-        addStateSavingEdges(var, funcCallExp);
+        addStateSavingEdges(var, arg);
     }
     
     
@@ -1606,10 +1611,14 @@ void EventReverser::addStateSavingEdges()
     }
 }
 
-VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse /*= true*/)
+VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse/*= true*/, SgNode* defNode/*= NULL*/)
 {
     if (node == NULL)
         return VersionedVariable();
+
+    // Workaround for that SSA cannot get the var name for a cast expression.
+    while (SgCastExp* castExp = isSgCastExp(node))
+        node = castExp->get_operand();
     
 #if 0
     cout << node->class_name() << " : " << node->unparseToString() << endl;
@@ -1630,7 +1639,7 @@ VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse /
     
     if (varName.empty())
     {
-        cout << "!!! Cannot find the var name for SgNode: " << node->unparseToString() << ".\n";
+        cout << "!!! Cannot find the var name for SgNode: " << node->class_name() << " " << node->unparseToString() << ".\n";
         return VersionedVariable(varName, -1);
     }
     
@@ -1681,9 +1690,12 @@ VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse /
         cout << node->get_parent()->class_name() << endl;
         cout << node->get_parent()->get_parent()->class_name() << endl;
 #endif
+        if (defNode == NULL)
+            defNode = node->get_parent();
         const SSA::NodeReachingDefTable& defTable =
             //ssa_->getOutgoingDefsAtNode(node->get_parent());
-            ssa_->getOutgoingDefsAtNode(SageInterface::getEnclosingStatement(node));
+            //ssa_->getOutgoingDefsAtNode(SageInterface::getEnclosingStatement(node));
+            ssa_->getDefsAtNode(defNode);
             //ssa_->getOutgoingDefsAtNode(node->get_parent()->get_parent());
 
 #if 0
@@ -1857,7 +1869,23 @@ SgNode* EventReverser::RouteGraphEdgeComp::getAstNode(const VGEdge& edge) const
     if (StateSavingEdge* ssEdge = isStateSavingEdge(routeGraph[edge]))
     {
         if (ssEdge->cost == 0)
-            return routeGraph[src]->astNode;
+        {
+            return SageInterface::getEnclosingFunctionDefinition(routeGraph[src]->astNode);
+            //return routeGraph[src]->astNode;
+        }
+        if (ssEdge->scopeKiller)
+        {
+            // !!! Work-around
+            if (SgBasicBlock* basicBlock = isSgBasicBlock(ssEdge->killer))
+            {
+                if (SgFunctionDefinition* funcDef = isSgFunctionDefinition(basicBlock->get_parent()))
+                    return funcDef;
+                
+                return basicBlock->get_statements().back();
+            }
+            else
+                ROSE_ASSERT(false);
+        }
         return ssEdge->killer;
     }
     if (isOperatorNode(routeGraph[tgt]))
@@ -1872,6 +1900,7 @@ SgNode* EventReverser::RouteGraphEdgeComp::getAstNode(const VGEdge& edge) const
         return routeGraph[tgt]->astNode;
     return routeGraph[tgt]->astNode;  
 #endif
+    
     return routeGraph[src]->astNode;  
 }
 
@@ -1895,9 +1924,9 @@ bool EventReverser::RouteGraphEdgeComp::operator()(
     int val1 = (iter1 == nodeIndexTable.end()) ? 0 : iter1->second;
     int val2 = (iter2 == nodeIndexTable.end()) ? 0 : iter2->second;
     
-    return val1 < val2;
+    //return val1 < val2;
     
-#if 0
+#if 1
     if (val1 < val2) return true;
     if (val1 > val2) return false;
     return routeGraph[edge1]->paths[dagIndex].count() < 

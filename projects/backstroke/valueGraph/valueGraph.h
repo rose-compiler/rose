@@ -186,6 +186,12 @@ public:
 //                 const std::vector<VGVertex>& valuesToRestore);
 	
 private:
+    
+    ValueGraphNode* getSource(const VGEdge& edge) const
+    { return valueGraph_[boost::source(edge, valueGraph_)]; }
+    
+    ValueGraphNode* getTarget(const VGEdge& edge) const
+    { return valueGraph_[boost::target(edge, valueGraph_)]; }
 
     //! Build the main part of the value graph.
     void buildBasicValueGraph();
@@ -375,7 +381,7 @@ private:
 	 *  @param node A SgNode which should be a variable (either a var ref or a declaration).
 	 *  @param isUse Inidicate if the variable is a use or a def.
 	 */
-	VersionedVariable getVersionedVariable(SgNode* node, bool isUse = true);
+	VersionedVariable getVersionedVariable(SgNode* node, bool isUse = true, SgNode* defNode = NULL);
 
     //! For each path, find its corresponding subgraph.
     std::set<VGEdge> getRouteFromSubGraph(int dagIndex, int pathIndex);

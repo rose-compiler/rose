@@ -135,39 +135,13 @@ void PathNumManager::generatePathNumbers()
         dag[dagEdge] = e;
         edgeToDagIndex_[e][0] = dagEdge;
     }
-    
-//    // For each loop, add all its exit edges to the first DAG.
-//    foreach (const NodeToNodes& loop, loops)
-//    {
-//        CFGVertex header = loop.first;
-//        // If this header is in another loop, continue.
-//        if (cfgNodesInLoop.count(header) > 0)
-//            continue;
-//        
-//        foreach (CFGVertex node, loop.second)
-//        {
-//            foreach (const CFGEdge& edge, boost::out_edges(node, *cfg_))
-//            {
-//                CFGVertex tgt = boost::target(edge, *cfg_);
-//                if (cfgNodesInLoop.count(tgt) > 0 || tgt == header)
-//                    continue;
-//                
-//                DAGEdge dagEdge = boost::add_edge(
-//                    vertexToDagIndex_[header].second,
-//                    vertexToDagIndex_[tgt].second, dag).first;
-//                dag[dagEdge] = edge;
-//                edgeToDagIndex_[edge] = make_pair(0, dagEdge);
-//            }
-//        }
-//    }
-    
+        
     // Entries and exits of all DAGs.
     vector<DAGVertex> entries(dags_.size());
     vector<DAGVertex> exits(dags_.size());
     entries[0] = vertexToDagIndex_[cfg_->getEntry()].begin()->second;
     exits[0]   = vertexToDagIndex_[cfg_->getExit()].begin()->second;
     
-#if 1
     // Then build other dags for loops.
     int dagIdx = 1;
     foreach (NodeToNodes loop, loops_)
@@ -217,7 +191,6 @@ void PathNumManager::generatePathNumbers()
         
         ++dagIdx;
     }
-#endif
 
     pathNumGenerators_.resize(dags_.size());
     // For each DAG, generate its path information.

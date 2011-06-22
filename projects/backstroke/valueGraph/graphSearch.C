@@ -179,8 +179,8 @@ set<EventReverser::VGEdge> EventReverser::getReversalRoute(
             // Get the node on the top, and find it out edges.
             VGVertex node = unfinishedRoute.nodes.back().first;
             
-            if (availableNodes.count(node) > 0)
-            //if (tar == root_ || )
+            //if (availableNodes.count(node) > 0)
+            if (node == root_)
             {                
                 //cout << "AVAILABLE: " << valueGraph_[node]->toString() << endl;
                 
@@ -356,7 +356,13 @@ NEXT:
         }
         
         foreach (const VGEdge& edge, edges)
-            ++costForEdges[edge].second;
+        {
+            // A way to force the inverse of each function call is used.
+            if (isSgFunctionCallExp(subgraph[nodeWithRoute.first]->astNode))
+                costForEdges[edge].second += 100;
+            else
+                ++costForEdges[edge].second;
+        }
     }
     
 
