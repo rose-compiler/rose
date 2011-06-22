@@ -111,7 +111,9 @@ int main(int argc, char **argv)
   report(d.tag, tagExpectation, "tags", incorrect, imprecise);
   report(d.functions, functionExpectation, "functions", incorrect, imprecise);
 
-  cout << "Analysis was precise in " << 3 - incorrect - imprecise << " cases, imprecise in " << imprecise << " cases, and WRONG in " << incorrect << " cases." << endl;
+  cout << "Analysis was precise in " << 3 - incorrect - imprecise 
+       << " cases, imprecise in " << imprecise 
+       << " cases, and WRONG in " << incorrect << " cases." << endl;
 
   return incorrect;
 }
