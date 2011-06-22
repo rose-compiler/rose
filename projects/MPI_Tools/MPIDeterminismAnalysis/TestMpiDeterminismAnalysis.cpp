@@ -11,10 +11,10 @@ DeterminismState getExpectation(SgNode *ast, const char *varName)
 
   Rose_STL_Container<SgNode*> sdNodes = NodeQuery::querySubTree(ast, &name, NodeQuery::VariableDeclarationFromName);
   if (sdNodes.size() != 1) {
-    cout << "Didn't find target variable " << varName << " in list of size " << sdNodes.size() << endl;
+    cerr << "Didn't find target variable " << varName << " in list of size " << sdNodes.size() << endl;
 
     for (Rose_STL_Container<SgNode*>::iterator i = sdNodes.begin(); i != sdNodes.end(); ++i)
-      cout << "\t" << (*(isSgVariableDeclaration(*i)->get_variables().begin()))->get_name().str() << endl;
+      cerr << "\t" << (*(isSgVariableDeclaration(*i)->get_variables().begin()))->get_name().str() << endl;
 
     return QUESTIONABLE;
   }
@@ -22,20 +22,20 @@ DeterminismState getExpectation(SgNode *ast, const char *varName)
   SgNode *nSd = *(sdNodes.begin());
   SgVariableDeclaration *vdSd = dynamic_cast<SgVariableDeclaration *>(nSd);
   if (!vdSd) {
-    cout << "Node wasn't a variable delaration" << endl;
+    cerr << "Node wasn't a variable delaration" << endl;
     return QUESTIONABLE;
   }
 
   SgInitializedName *inSd = vdSd->get_decl_item(name);
   SgAssignInitializer *aiSd = dynamic_cast<SgAssignInitializer*>(inSd->get_initializer());
   if (!aiSd) {
-    cout << "Couldn't pull an assignment initializer out" << endl;
+    cerr << "Couldn't pull an assignment initializer out" << endl;
     return QUESTIONABLE;
   }
 
   SgIntVal *ivSd = dynamic_cast<SgIntVal*>(aiSd->get_operand());
   if (!ivSd) {
-    cout << "Assignment wasn't an intval" << endl;
+    cerr << "Assignment wasn't an intval" << endl;
     return QUESTIONABLE;
   }
 
