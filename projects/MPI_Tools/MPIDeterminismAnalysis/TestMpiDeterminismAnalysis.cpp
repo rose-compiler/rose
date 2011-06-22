@@ -41,7 +41,7 @@ DeterminismState getExpectation(SgNode *ast, const char *varName)
   SgNode *nSd = *(sdNodes.begin());
   SgVariableDeclaration *vdSd = dynamic_cast<SgVariableDeclaration *>(nSd);
   if (!vdSd) {
-    cerr << "Node wasn't a variable delaration" << endl;
+    cerr << "Node wasn't a variable declaration" << endl;
     return QUESTIONABLE;
   }
 
