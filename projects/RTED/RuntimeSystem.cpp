@@ -123,12 +123,20 @@ const RsType* rs_getTypeInfo(const TypeSystem& ts, const std::string& type)
 {
   static const RsType* cached = ts.getTypeInfo(type);
 
-  if (cached->getName() != type)
+  const RsType* result = NULL;
+
+  if (cached->getName() == type)
   {
-    cached = ts.getTypeInfo(type);
+    result = cached;
+  }
+  else
+  {
+    result = ts.getTypeInfo(type);
+
+    if (result) cached = result;
   }
 
-  return cached;
+  return result;
 }
 
 
@@ -204,9 +212,6 @@ rs_getArrayElemType(TypeSystem& ts, TypeDesc td, size_t noDimensions, const std:
 
   return rs_simpleGetType(ts, elemtype, td.base, classname, desc);
 }
-
-
-
 
 
 
@@ -771,7 +776,7 @@ int rted_InitVariable( rted_TypeDesc   td,
   assert(!pointer_changed || strcmp( "SgPointerType", td.name) == 0);
 
   const Address heap_address = pointer_changed ? rted_deref(address, td.desc) : nullAddr();
-  const bool    sendupd = _rted_InitVariable( td, address, nullAddr() /*heap_address*/, size, pointer_changed, class_name, si, primaryLoc );
+  const bool    sendupd = _rted_InitVariable( td, address, heap_address, size, pointer_changed, class_name, si, primaryLoc );
 
   if (sendupd)
   {
