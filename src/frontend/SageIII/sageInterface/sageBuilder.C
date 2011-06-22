@@ -941,9 +941,12 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
   if (scope == NULL)
     scope = SageBuilder::topScopeStack();
   ROSE_ASSERT(scope != NULL);
-  ROSE_ASSERT(scope->containsOnlyDeclarations());
   ROSE_ASSERT(name.is_null() == false);
   ROSE_ASSERT(return_type != NULL);
+
+  if (SageInterface::is_Python_language() == false) {
+      ROSE_ASSERT(scope->containsOnlyDeclarations());
+  }
 
   // build function type, manage function type symbol internally
   SgFunctionType * func_type = buildFunctionType(return_type,paralist);
@@ -1018,7 +1021,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* ret
 
   func->set_parent(scope);
   func->set_scope(scope);
-  
+
   // set File_Info as transformation generated
   setSourcePositionForTransformation(func);
   return func;
@@ -3178,6 +3181,33 @@ SgNullStatement* SageBuilder::buildNullStatement_nfi()
   ROSE_ASSERT(result);
   setOneSourcePositionNull(result);
   return result;
+}
+
+//! Build a try statement
+SgTryStmt* SageBuilder::buildTryStmt(SgStatement* body,
+                                     SgCatchOptionStmt* catch0,
+                                     SgCatchOptionStmt* catch1,
+                                     SgCatchOptionStmt* catch2,
+                                     SgCatchOptionStmt* catch3,
+                                     SgCatchOptionStmt* catch4
+                                     ) {
+    ROSE_ASSERT(body != NULL);
+    ROSE_ASSERT(catch0 != NULL);
+
+    SgTryStmt* try_stmt = new SgTryStmt(body);
+    try_stmt->append_catch_statement(catch0);
+
+    if (catch1 != NULL) try_stmt->append_catch_statement(catch1);
+    if (catch2 != NULL) try_stmt->append_catch_statement(catch2);
+    if (catch3 != NULL) try_stmt->append_catch_statement(catch3);
+    if (catch4 != NULL) try_stmt->append_catch_statement(catch4);
+
+    return try_stmt;
+}
+
+//! Build a catch statement
+SgCatchOptionStmt* SageBuilder::buildCatchOptionStmt(SgVariableDeclaration* condition, SgStatement* body) {
+  return new SgCatchOptionStmt(condition, body, /* SgTryStmt*= */ NULL);
 }
 
 // DQ (4/30/2010): Added support for building asm statements.

@@ -4687,6 +4687,7 @@ HEADER_APPLICATION_FILE_START
                e_Java_output_language,    /*!< value used to specify output of Java (for testing Java unparser) */
                e_Promela_output_language, /*!< value used to specify output of Promela for uses with SPIN (unsupported option) */
                e_PHP_output_language,     /*!< value used to specify output of PHP */
+               e_Python_output_language,  /*!< value used to specify output of Python */
                e_last_output_language     /*!< upper bound on the range of values supported for the outputLanguageOption_enum */
              };
 
@@ -4913,6 +4914,7 @@ HEADER_APPLICATION_SOURCE_FILE_START
 // #endif          
           int build_C_and_Cxx_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_PHP_AST();
+          int build_Python_AST();
           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
 
        // DQ (12/19/2008): Added support for translation source position information using CPP linemarkers.
@@ -5149,6 +5151,8 @@ HEADER_APPLICATION_PROJECT_START
           void set_Fortran_only (bool value);
 
           bool get_PHP_only(void) const;
+
+          bool get_Python_only(void) const;
 
           bool get_Java_only (void) const;
           void set_Java_only (bool value);
@@ -5686,6 +5690,10 @@ HEADER_UNPARSE_INFO_START
           bool outputFortranModFile() const;
           void set_outputFortranModFile();
           void unset_outputFortranModFile();
+
+       // driscoll6 (6/6/2011) Mutators for p_nestingLevel
+          void inc_nestingLevel();
+          void dec_nestingLevel();
 
 HEADER_UNPARSE_INFO_END
 
@@ -10944,6 +10952,8 @@ SgFile::initialization()
 
      p_PHP_only                = false;
 
+     p_Python_only             = false;
+
      p_requires_C_preprocessor = false;
 
   // DQ (2/5/2009): Putting this back now, so we have one at the SgProject and one at the SgFile.
@@ -11020,6 +11030,7 @@ X F90_only
 X F95_only
 X F2003_only
 X PHP_only
+X Python_only
 X requires_C_preprocessor
 X binary_only
 X inputFormat
@@ -11273,7 +11284,7 @@ SgFile::compileOutput ( int fileNameIndex )
                   }
                  else
                   {
-                 // This is the case of binary analysis...(nothing to do there)
+                 // This is the case of binary analysis or python...(nothing to do there)
                   }
              }
         }
@@ -11609,6 +11620,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_F2003_only()                         = %s \n",(p_F2003_only == true) ? "true" : "false");
      printf ("     p_CoArrayFortran_only()                = %s \n",(p_CoArrayFortran_only == true) ? "true" : "false");
      printf ("     p_PHP_only()                           = %s \n",(p_PHP_only == true) ? "true" : "false");
+     printf ("     p_Python_only()                        = %s \n",(p_Python_only == true) ? "true" : "false");
 
      printf ("     p_requires_C_preprocessor              = %s \n",(p_requires_C_preprocessor == true) ? "true" : "false");
 
@@ -11691,6 +11703,7 @@ SgFile::display ( const std::string & label ) const
           case SgFile::e_Fortran_output_language: outputLanguageName = "Fortran"; break;
           case SgFile::e_Java_output_language:    outputLanguageName = "Java";    break;
           case SgFile::e_PHP_output_language:     outputLanguageName = "PHP";     break;
+          case SgFile::e_Python_output_language:  outputLanguageName = "Python";  break;
           case SgFile::e_Promela_output_language: outputLanguageName = "Promela"; break;
 
           default:
@@ -11770,6 +11783,7 @@ X F90_only
 X F95_only
 X F2003_only
 X PHP_only
+X Python_only
 X requires_C_preprocessor
 X binary_only
 X inputFormat
@@ -12556,6 +12570,19 @@ SgProject::get_PHP_only (void) const
      return result;
    }
 
+bool
+SgProject::get_Python_only (void) const
+   {
+  // look at how the files are set
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Python_only();
+        }
+     return result;
+   }
+
 void
 SgProject::set_Java_only (bool value)
    {
@@ -12846,6 +12873,9 @@ SgUnparse_Info::SgUnparse_Info (  )
 
   // Test the isSgUnparse_Info() function since it has been problematic
      assert(isSgUnparse_Info(this) != NULL);
+
+  // Initialize the nesting level to 0 (for python).
+       p_nestingLevel = 0;
    }
 
 // DQ (1/5/2008): I think this is a redundant function with the one in sageInterface.C
@@ -12868,6 +12898,9 @@ SgUnparse_Info::SgUnparse_Info ( const SgUnparse_Info & X )
 
      assert (p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
   // assert (SgNO_UNPARSE_INFO.p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
+
+     // Copy nesting level (for python).
+     p_nestingLevel = X.p_nestingLevel;
    }
 
 SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
@@ -13899,6 +13932,19 @@ SgUnparse_Info::getStructureTagList ()
   // Access function for internal STL list
      return p_structureTagProcessingList;
    }
+
+void
+SgUnparse_Info::inc_nestingLevel() {
+    p_nestingLevel += 1;
+}
+
+void
+SgUnparse_Info::dec_nestingLevel() {
+    p_nestingLevel -= 1;
+    if (p_nestingLevel < 0) {
+        cerr << "warning: SgUnparse_Info.p_nestingLevel decremented below zero." << endl;
+    }
+}
 
 SOURCE_UNPARSE_INFO_END
 
