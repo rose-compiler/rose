@@ -15,8 +15,9 @@
 
 # 
 #  test2010_17.C 
+# $(NAME_QUALIFICATION_EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
+
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-$(NAME_QUALIFICATION_EXAMPLE_TESTCODES_REQUIRED_TO_PASS) \
 test_CplusplusMacro_Cpp.C \
 test2001_01.C \
 test2001_02.C \
@@ -680,6 +681,81 @@ test2011_02.C \
 test2011_05.C \
 test2011_06.C \
 test2011_07.C \
+test2011_19.C \
+test2011_20.C \
+test2011_21.C \
+test2011_22.C \
+test2011_23.C \
+test2011_24.C \
+test2011_25.C \
+test2011_26.C \
+test2011_27.C \
+test2011_28.C \
+test2011_29.C \
+test2011_30.C \
+test2011_31.C \
+test2011_32.C \
+test2011_33.C \
+test2011_34.C \
+test2011_35.C \
+test2011_36.C \
+test2011_37.C \
+test2011_38.C \
+test2011_39.C \
+test2011_40.C \
+test2011_41.C \
+test2011_42.C \
+test2011_43.C \
+test2011_44.C \
+test2011_45.C \
+test2011_46.C \
+test2011_47.C \
+test2011_48.C \
+test2011_49.C \
+test2011_50.C \
+test2011_51.C \
+test2011_52.C \
+test2011_53.C \
+test2011_54.C \
+test2011_55.C \
+test2011_56.C \
+test2011_57.C \
+test2011_58.C \
+test2011_59.C \
+test2011_60.C \
+test2011_61.C \
+test2011_62.C \
+test2011_63.C \
+test2011_64.C \
+test2011_65.C \
+test2011_66.C \
+test2011_67.C \
+test2011_68.C \
+test2011_69.C \
+test2011_70.C \
+test2011_71.C \
+test2011_72.C \
+test2011_73.C \
+test2011_74.C \
+test2011_75.C \
+test2011_76.C \
+test2011_77.C \
+test2011_78.C \
+test2011_79.C \
+test2011_80.C \
+test2011_81.C \
+test2011_82.C \
+test2011_83.C \
+test2011_84.C \
+test2011_85.C \
+test2011_86.C \
+test2011_87.C \
+test2011_88.C \
+test2011_89.C \
+test2011_90.C \
+test2011_91.C \
+test2011_92.C \
+test2011_93.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -712,83 +788,8 @@ test2010_25.C
 # test2007_15.C
 
 # DQ (5/8/2011): These are the new test codes for the new name qualification support.
-# EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
-NAME_QUALIFICATION_EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-   test2011_19.C \
-   test2011_20.C \
-   test2011_21.C \
-   test2011_22.C \
-   test2011_23.C \
-   test2011_24.C \
-   test2011_25.C \
-   test2011_26.C \
-   test2011_27.C \
-   test2011_28.C \
-   test2011_29.C \
-   test2011_30.C \
-   test2011_31.C \
-   test2011_32.C \
-   test2011_33.C \
-   test2011_34.C \
-   test2011_35.C \
-   test2011_36.C \
-   test2011_37.C \
-   test2011_38.C \
-   test2011_39.C \
-   test2011_40.C \
-   test2011_41.C \
-   test2011_42.C \
-   test2011_43.C \
-   test2011_44.C \
-   test2011_45.C \
-   test2011_46.C \
-   test2011_47.C \
-   test2011_48.C \
-   test2011_49.C \
-   test2011_50.C \
-   test2011_51.C \
-   test2011_52.C \
-   test2011_53.C \
-   test2011_54.C \
-   test2011_55.C \
-   test2011_56.C \
-   test2011_57.C \
-   test2011_58.C \
-   test2011_59.C \
-   test2011_60.C \
-   test2011_61.C \
-   test2011_62.C \
-   test2011_63.C \
-   test2011_64.C \
-   test2011_65.C \
-   test2011_66.C \
-   test2011_67.C \
-   test2011_68.C \
-   test2011_69.C \
-   test2011_70.C \
-   test2011_71.C \
-   test2011_72.C \
-   test2011_73.C \
-   test2011_74.C \
-   test2011_75.C \
-   test2011_76.C \
-   test2011_77.C \
-   test2011_78.C \
-   test2011_79.C \
-   test2011_80.C \
-   test2011_81.C \
-   test2011_82.C \
-   test2011_83.C \
-   test2011_84.C \
-   test2011_85.C \
-   test2011_86.C \
-   test2011_87.C \
-   test2011_88.C \
-   test2011_89.C \
-   test2011_90.C \
-   test2011_91.C \
-   test2011_92.C \
-   test2011_93.C \
+# NAME_QUALIFICATION_EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2005_112.C \
    test2005_117.C \
    test2005_154.C \

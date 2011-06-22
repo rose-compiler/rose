@@ -363,11 +363,25 @@ RSIM_Process::load(const char *name)
         disassembler->set_progress_reporting(NULL, 0); /* turn off progress reporting */
     }
 
+#if 0
     /* Initialize the brk value to be the lowest page-aligned address that is above the end of the highest mapped address but
      * below 0x40000000 (the stack, and where ld-linux.so.2 might be loaded when loaded high). */
     rose_addr_t free_area = std::max(map->find_last_free(std::max(ld_linux_base_va, (rose_addr_t)0x40000000)),
                                      (rose_addr_t)brk_base);
     brk_va = ALIGN_UP(free_area, PAGE_SIZE);
+#else
+    struct FindInitialBrk: public SgSimpleProcessing {
+        FindInitialBrk(): max_mapped_va(0) {}
+        rose_addr_t max_mapped_va;
+        void visit(SgNode *node) {
+            SgAsmGenericSection *section = isSgAsmGenericSection(node);
+            if (section && section->is_mapped())
+                max_mapped_va = std::max(section->get_mapped_actual_va() + section->get_mapped_size(), max_mapped_va);
+        }
+    } t1;
+    t1.traverse(fhdr, preorder);
+    brk_va = map->find_free(t1.max_mapped_va, PAGE_SIZE, PAGE_SIZE);
+#endif
 
     delete loader;
 
@@ -380,6 +394,9 @@ RSIM_Process::load(const char *name)
 void
 RSIM_Process::dump_core(int signo, std::string base_name)
 {
+    if (!get_callbacks().call_process_callbacks(RSIM_Callbacks::BEFORE, this, RSIM_Callbacks::ProcessCallback::COREDUMP, true))
+        return;
+
     if (base_name.empty())
         base_name = core_base_name;
 
@@ -679,6 +696,9 @@ RSIM_Process::dump_core(int signo, std::string base_name)
     SgAsmExecutableFileFormat::unparseBinaryFormat(base_name, ef);
     //deleteAST(ef); /*FIXME [RPM 2010-09-18]*/
 #endif
+    
+    get_callbacks().call_process_callbacks(RSIM_Callbacks::AFTER, this,
+                                           RSIM_Callbacks::ProcessCallback::COREDUMP, true);
 }
 
 void
@@ -1041,12 +1061,12 @@ RSIM_Process::mem_showmap(RTS_Message *mesg, const char *intro, const char *pref
     if (!prefix) prefix = "    ";
 
     if (mesg && mesg->get_file()) {
-        RTS_MESSAGE(*mesg) {
-            mesg->mesg(intro);
-            RTS_READ(rwlock()) {
+        RTS_READ(rwlock()) {
+            RTS_MESSAGE(*mesg) {
+                mesg->mesg(intro);
                 map->dump(mesg->get_file(), prefix);
-            } RTS_READ_END;
-        } RTS_MESSAGE_END(true);
+            } RTS_MESSAGE_END(true);
+        } RTS_READ_END;
     }
 }
 
@@ -1098,17 +1118,16 @@ RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsig
                      (rose_perms & MemoryMap::MM_PROT_EXEC  ? PROT_EXEC  : 0));
 
     RTS_WRITE(rwlock()) {
-        if (0==start) {
+        if (0==start && 0==(flags & MAP_FIXED)) {
             try {
                 start = map->find_free(mmap_start, aligned_size, PAGE_SIZE);
             } catch (const MemoryMap::NoFreeSpace &e) {
                 start = (rose_addr_t)(int64_t)-ENOMEM;
                 break;
             }
+            if (!mmap_recycle)
+                mmap_start = std::max(mmap_start, start);
         }
-
-        if (!mmap_recycle)
-            mmap_start = std::max(mmap_start, start);
 
         if (flags & MAP_ANONYMOUS) {
             buf = mmap(NULL, size, prot, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
@@ -1426,7 +1445,7 @@ RSIM_Process::clone_thread(RSIM_Thread *thread, unsigned flags, uint32_t parent_
         pthread_t t;
         int err = -pthread_create(&t, NULL, RSIM_Process::clone_thread_helper, &clone_info);
         if (0==err)
-            pthread_cond_wait(&clone_info.cond, &clone_info.mutex); /* wait for child to initialize */
+            pthread_cond_wait(&clone_info.cond, &clone_info.mutex.mutex); /* wait for child to initialize */
     } RTS_MUTEX_END;
     return clone_info.newtid; /* filled in by clone_thread_helper; negative on error */
 }
@@ -1487,9 +1506,16 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
 
     release_mutex:
         clone_info->newtid = tid;
-        pthread_cond_signal(&clone_info->cond);       /* tell parent we're done initializing */
-        clone_info = NULL; /* won't be valid after we release mutex */
     } RTS_MUTEX_END;
+
+    /* Parent is still blocked on pthread_cond_wait because we haven't signalled it yet.  We must signal after we've released
+     * the mutex, because once we signal, the parent could return from clone_thread(), thus removing clone_info from the
+     * stack.  It's not always safe to call pthread_cond_signal without holding the mutex, but in this case it is because we
+     * couldn't have gotten this far (we couldn't have acquired the mutex above) until the parent is inside
+     * pthread_cond_wait(). */
+    pthread_cond_signal(&clone_info->cond);       /* tell parent we're done initializing */
+    clone_info = NULL; /* won't be valid after we signal the parent */
+
     if (tid<0)
         pthread_exit(NULL);
 
@@ -1513,7 +1539,7 @@ RSIM_Process::sys_exit(int status)
             RSIM_Thread *thread = ti->second;
             thread->tracing(TRACE_THREAD)->mesg("process is canceling this thread");
             pthread_cancel(thread->get_real_thread());
-            pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP); /* in case it's blocked */
+            //pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP); /* in case it's blocked */
         }
     } RTS_WRITE_END;
 }
@@ -1548,7 +1574,7 @@ RSIM_Process::sys_kill(pid_t pid, const RSIM_SignalHandling::siginfo_32 &info)
 
     if (pid<0)
         return -EINVAL;
-    if (signo<=0 && (size_t)signo>8*sizeof(RSIM_SignalHandling::sigset_32))
+    if (signo<0 && (size_t)signo>8*sizeof(RSIM_SignalHandling::sigset_32))
         return -EINVAL;
 
     RTS_WRITE(rwlock()) {

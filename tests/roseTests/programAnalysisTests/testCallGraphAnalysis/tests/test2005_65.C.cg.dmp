@@ -1,8 +1,8 @@
 f ->
+foo -> f g1 g2 g3 g4 g5 g6
 g1 ->
 g2 ->
 g3 ->
 g4 ->
 g5 ->
 g6 ->
-foo -> f g1 g2 g3 g4 g5 g6

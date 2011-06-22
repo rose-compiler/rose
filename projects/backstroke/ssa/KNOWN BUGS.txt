@@ -1,6 +1,10 @@
 BUGS
 ----
 
+-StaticSingleAssignment::getLastVersions does not work correctly because variables are filtered when they go out of scope.
+    If a variable should have a phi node as its last version, that phi node might not get inserted because the function
+    is not accessible there.
+
 -SERIOUS INTERPROCEDURAL BUG: Interprocedural definitions are P-defs, or possible definitions, rather than D-defs (definite
 	definitions. As such, they should not (always) kill the previous reaching definition!
 
@@ -11,11 +15,25 @@ BUGS
 
 -Variables used to define the dimensions inside an array declaration are not detected as uses
 
--Dead code is not handled correctly. Uses of a variable inside dead code result in an assertion that there is a use
-   with no reaching definitions.
-
 -The analysis repeatedly traverses the virtual CFG, instead of building a static CFG up front. While this does not impact
    correctness, it is a serious performance detriment
+
+-Interprocedural SSA always does two passes, even if no new defs have to be propagated. This doubles its runtime.
+
+-Serious bug: If a variable goes out of scope, there is not necessarily a phi node that defines its last version. 
+ For example,
+
+	void foo()
+	{
+		{
+			int a;
+			if (a)
+				a = 0;
+			else
+				a = 1;
+		}  //a goes out of scope here
+		3; //phi node is not inserted here because a is out of scope. Now 'a' has no valid final version
+	}
 
 
 TODO (in addition to fixing the above bugs)

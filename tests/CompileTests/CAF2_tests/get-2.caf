@@ -1,0 +1,64 @@
+program test9
+    integer,allocatable::A(:)[*]
+    interface 
+      subroutine foo(A)
+         integer :: A(3,*)[*]
+      end subroutine foo
+     end interface 
+
+    integer :: size,rank,partner
+
+    size = team_size()
+    rank = team_rank()
+
+    partner = size-rank - 1
+
+    allocate(A(9)[])
+
+    A(9) = rank
+
+    call team_barrier()
+
+    if (rank .eq. 0) then
+       A(9) =A(9)[partner]
+       if (A(9) .eq. partner) then 
+          write(*, '(A)') "test9 OK: In caller, remote read (step 1 of 3)"
+       else
+          print *, "Node 0: in caller,A(9) should be ",partner, " but we have A(9)= ", A(9)
+       endif 
+    end if 
+
+    call team_barrier()
+
+    call foo(A(:))
+
+    call team_barrier()
+
+    if (rank .eq. 0) then
+     if (A(9) .eq. 1) then 
+        write(*, '(A)') "test9 OK: in caller, after reset value in callee (step 3 of 3)"
+      else 
+        print *, "test9 failed: in caller, A(9) should be value reseted in the callee (0) instead of ",A(9)
+    end if
+    end if 
+    call team_barrier()
+end
+
+
+subroutine foo(A)
+    integer A(3,*)[*]
+    integer rank
+
+    rank = team_rank()
+
+
+    if (rank .eq. 0)  then 
+      A(3,3) =  A(3,3)[1] 
+      if (A(3,3) .eq. 1) then 
+         write(*, '(A)') "test9 OK: in callee, on node 0, remote read from node 1 (step 2 of 3)"
+      else 
+        write(*, '(A)') "test9 failed: callee should be reset A(3,3)[0] = 1"
+     end if 
+   end if
+
+end

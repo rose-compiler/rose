@@ -31,3 +31,4 @@ Successors: buffer is self contained.
 0x0804833d: c9                |.     |   leave  
 0x0804833e: c3                |.     |   ret    
             (successors:...)
+

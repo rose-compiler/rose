@@ -1,4 +1,3 @@
-#include <signal.h> // SKW DEBUG
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
@@ -139,6 +138,17 @@ SgValueExp::get_constant_folded_value_as_string() const
                s = buffer;
                break;
              }
+          
+         case V_SgLongLongIntVal:
+         {
+            const SgLongLongIntVal* integerValueExpression = isSgLongLongIntVal(this);
+            ROSE_ASSERT(integerValueExpression != NULL);
+            long long int numericValue = integerValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %ld \n",numericValue);
+            snprintf (buffer,max_buffer_size,"%lld",numericValue);
+            s = buffer;
+            break;
+         }
 
        // DQ (10/5/2010): Added case
           case V_SgShortVal: 
@@ -152,6 +162,17 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
+          case V_SgUnsignedShortVal:
+          {
+               const SgUnsignedShortVal* integerValueExpression = isSgUnsignedShortVal(this);
+               ROSE_ASSERT(integerValueExpression != NULL);
+               unsigned short int numericValue = integerValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %ld \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%u",numericValue);
+               s = buffer;
+               break;
+          }
+          
           case V_SgUnsignedLongLongIntVal:
              {
                const SgUnsignedLongLongIntVal* integerValueExpression = isSgUnsignedLongLongIntVal(this);
@@ -5465,7 +5486,17 @@ global_build_classpath()
   // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar", "lib/antlr-runtime-3.0.1.jar") + ":";
   // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar", "lib/stringtemplate-3.1b1.jar") + ":";
   // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
-     classpath += findRoseSupportPathFromSource("src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
+
+     // CER (6/6/2011): Added support for OFP version 0.8.3 which requires antlr-3.3-complete.jar.  
+     //
+     ROSE_ASSERT(ROSE_OFP_MAJOR_VERSION_NUMBER >= 0);
+     ROSE_ASSERT(ROSE_OFP_MINOR_VERSION_NUMBER >= 8);
+     if (ROSE_OFP_PATCH_VERSION_NUMBER >= 3) {
+        classpath += findRoseSupportPathFromSource("src/3rdPartyLibraries/antlr-jars/antlr-3.3-complete.jar", "lib/antlr-3.3-complete.jar") + ":";
+     }
+     else {
+        classpath += findRoseSupportPathFromSource("src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
+     }
 
   // Open Fortran Parser (OFP) support (this is the jar file)
      string ofp_jar_file_name = string("OpenFortranParser-") + StringUtility::numberToString(ROSE_OFP_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_MINOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_PATCH_VERSION_NUMBER) + string(".jar");
@@ -5592,6 +5623,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
           // use a pseudonym for source file in case original extension does not permit preprocessing
              // compute absolute path for pseudonym
+                // TODO: when boost 1.46 is available, use boost::filesystem to get 'dir', 'abs_dir', and 'base'
                 string dir = StringUtility::getPathFromFileName(this->get_unparse_output_filename());
                 string abs_dir = StringUtility::getAbsolutePathFromRelativePath(dir.empty() ? getWorkingDirectory() : dir);  // Windows 'tempnam' requires this
                 string file = StringUtility::stripPathFromFileName(sourceFilename);

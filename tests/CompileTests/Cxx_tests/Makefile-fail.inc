@@ -181,10 +181,6 @@ test2011_15.C \
 test2011_16.C \
 test2011_17.C \
 test2011_18.C \
-test2011_19.C \
-test2011_20.C \
-test2011_21.C \
-test2011_22.C \
 longFile.C \
 certSignalExample.C \
 test2010_26.C

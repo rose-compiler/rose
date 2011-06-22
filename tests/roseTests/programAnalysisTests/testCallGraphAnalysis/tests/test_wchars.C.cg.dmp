@@ -1,6 +1,6 @@
-main -> func_char func_wchar_t
 func_char ->
 func_short ->
-func_wchar_t ->
 func_signed_char ->
 func_unsigned_char ->
+func_wchar_t ->
+main -> func_char func_wchar_t

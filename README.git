@@ -1,3 +1,458 @@
+==============================================================================
+=== Introduction
+==============================================================================
+
+ROSE uses a distributed revision control system (a.k.a., distributed
+source code management system, DSCM) called "Git", which is also used
+by many other open source projects such as the Linux kernel, Perl,
+Eclipse, Gnome, KDE, Android, Debian, and others.  Being
+"distributed", Git uses a slightly different work flow and terminology
+than centralized systems like Subversion and CVS.
+
+If you're coming from a centralized system, you may have to unlearn a
+few of the things you've become accustomed to.  For example, you
+generally don't checkout out a branch from a central repo, but rather
+clone a copy of the entire repository for your own local use.  Also,
+rather than using small, sequential integers to identify revisions,
+Git uses a cryptographic hash (SHA1), although in general you only
+need to ever write the first few characters of the hash--just enough
+to uniquely identify a revision.  Finally, the biggest thing to get
+used to: ALL(!) work is done on local branches--there's no such thing
+in the DSCM world as working directly on a central branch, or checking
+your work directly into a central branch.
+
+Having said that, distributed revision control is a superset of
+centralized revision control, and some projects, including ROSE, set
+up a centralized repository as a policy choice for sharing code
+between developers.  When a developer works on ROSE, they generally
+clone from this central location, and when they've made changes, they
+generally push those changes back to the same central location.
+
+Finally, ROSE has a certain branch naming policy (at least for
+branches in the central repo--you can name your local branches
+whatever you like).  All developer branches should be named using the
+pattern "NAME-WHAT-HOW" where NAME is typically a login name or
+surname; WHAT is a single-word description of the type of work
+perfomed on that branch, such as "bugfixes"; and "HOW", which is
+optional, indicates how various ROSE robots interact with your branch.
+If HOW is "test" then changes made to the branch are automatically
+tested; if HOW is "rc" then changes are tested and if they pass then
+they're merged into the "master" branch (like "trunk" in Subversion).
+For instance, the "matzke-bugfixes-rc" branch is "owned" by Robb
+Matzke (i.e., he's the one that generally makes changes to that
+branch), it probably contains only bug fixes or minor edits, and it's
+being automatically tested and merged into the master branch for
+eventual release to the public.
+
+We will try to give you a fast introduction to git, but you should
+also consider looking up these documents
+
+  http://www.kernel.org/pub/software/scm/git/docs/gittutorial.html
+  http://book.git-scm.com/
+  http://www.sourcemage.org/Git_Guide ( more like a FAQ )
+  http://stackoverflow.com/questions/315911/git-for-beginners-the-definitive-practical-guide
+
+
+==============================================================================
+=== Step 1:  Obtaining a clone of the central repository
+==============================================================================
+
+Before you do any work, you must obtain a copy of the central
+repository.  One of the powers of a distributed revision control
+system like Git is that you can work for extended periods off line and
+still make commits, view revision history, merge between branches,
+etc.  To this end, you work with a copy/clone of the entire
+repository, while in contrast, using Subversion or CVS you would work
+with only the tip of a particular branch.
+
+All git commands are of the form "git COMMAND...".  The online manual
+pages have a hyphen between "git" and COMMAND, as in "man git-clone",
+or you can also type "git help clone" to see the same man page.
+
+To clone from the central ROSE repository to a local directory named
+"rose", use the following command:
+
+ $ git clone CENTRAL_REPO rose
+
+where the format of CENTRAL_REPO is described in the "GIT URLS"
+section of the git-clone man page.  If the central repo is mounted on
+your file system, its just the name of a directory, otherwise you'll
+probably need to use the SSH transport protocol.  Here's some specific
+examples:
+
+ $ git clone /nfs/casc/overture/ROSE/git/ROSE rose
+ $ git clone ssh://dquinlan@tux281.llnl.gov/nfs/casc/overture/ROSE/git/ROSE rose
+ $ git clone matzke@prism:/usr/casc/overture/ROSE/git/ROSE rose
+
+Whenever your local repository makes references to a remote repository
+(like the ROSE central repository), your local repository will contain
+something called a "remote". The default remote is named "origin", and
+encapsulates the information about the remote repository from which
+you cloned, including the location of that repository, the names of
+all its branches, and to which commit (set of changes) each branch
+points. (See "git help remote" for more info).
+
+If you need the C/C++ parser (EDG) source code from the Edison Design
+Group, Inc., then you'll need to create a Git submodule within your
+ROSE repository.  EDG source code is not distributed within the ROSE
+repository due to licensing constraints.
+
+ $ cd rose   # top of your ROSE repository
+ $ git submodule init
+ $ git submodule update
+
+By default, Git will check out a branch named "master".  Initially,
+"master" in your local repo will point to the same commit as "master"
+in the central repository, but you must remember that these are two
+separate branches (the local full name is "refs/heads/master" while
+the remote's full name is "refs/remotes/origin/master"). You NEVER
+work directly on remote branches (they're only used by Git to
+coordinate with other repositories), but only on local branches.
+Although it's OK to work on your local "master", it will be more
+intuitive to work on a local branch having the same name as the branch
+you'll eventually create in the central repository.  Use git-branch to
+create a branch, and git-checkout to make that branch active:
+
+ $ git branch myname-purpose-rc master
+ $ git checkout myname-purpose-rc
+ $ git branch  # shows names of branches
+
+You're now ready to start editing sources.
+
+==============================================================================
+=== The smgit tool for working with submodules
+==============================================================================
+
+Because EDG source code cannot be distributed as part of ROSE, we keep
+it in its own separate Git repository. As you saw previously in the
+sectio about cloning, a Git submodule is a Git repository within
+another Git repository. Unfortunately, submodules add some
+complications to the workflow, but we've written the smgit script to
+deal with them.  The smgit script can be found in the "scripts"
+directory of ROSE.
+
+If you're a developer who actively works on EDG, then instead of
+creating a working branch only in ROSE (like we did above) you might
+want to create a branch of the same name in EDG.  You can either do
+that explicitly using Git commands inside the EDG submodule (located
+at src/frontend/CxxFrontend/EDG within ROSE), or you could have
+created both branches at once with smgit:
+
+ $ smgit branch myname-purpose-rc master
+ $ smgit checkout myname-purpose-rc
+ $ smgit branch   # shows names of branches
+
+==============================================================================
+=== Step 2: Committing your changes
+==============================================================================
+
+To "commit" means to register a set of changes with your local git
+repository, creating a new commit object, identified by SHA1 hash
+value, which contains a list of all files that were changed, how they
+were changed, who changed them, when they were changed, and a
+description.  Each commit object also has references to one (or more,
+in the case of a merge) parent commit.
+
+Committing your changes is a two step process: first pick the changes
+you want to commit, then commit them.  Most of the time you'll want to
+simply commit all the changes you've made, and there's a short cut for
+that (see "git help commit"), but I'm going to describe the two-step
+process because you'll often have made edits that you want to group
+into more than one commit.
+
+Let's say that I've edited src/frontend/Disassemblers/Disassembler.h
+to fix a spelling mistake in the documentation, a couple of
+Makefile.am to fix a bug reported in the build system, and
+projects/simulator/RSIM_Simulator.C has some new command-line parsing
+features.
+
+To get a list of changes, use one or more of these commands. If you
+develop EDG then you might want to replace "git" with "smgit" so you
+don't have to explicitly run the git commands in both EDG and ROSE
+repositories.
+
+ $ git status    # report which files have changed
+ $ git diff      # report what lines changed in tracked files
+ $ qgit --all    # GUI showing commit relationships, etc.
+
+Next you need to select what files (or parts of files) to include in a
+commit.  You do this with the "git add" command, as mentioned in the
+output from "git status".  To add individual changes from files, see
+the "--interactive" switch for "git add".
+
+Once you've selected which changes you want to commit, you generate a
+new commit object with the "git commit" command.  Again, you can
+commit in ROSE and EDG separately, or use "smgit commit" to do both at
+once.  You'll be prompted to enter a description of your changes using
+an editor of your choice.  The description should be a short title,
+followed by a blank line, followed by a description. Some authors
+begin the title with a category in parentheses.  For example:
+
+    (x86sim) Added syscall callbacks; reorganized RSIM_Callbacks class
+    
+    * Added callbacks to be invoked before and after each system call
+      with the ability to skip over system calls.
+    
+    * Reorganized the RSIM_Callbacks class to simplify the interface,
+      cutting the number of methods in half.
+
+Important things to remember about committing:
+
+1. Group related changes together; keep unrelated changes in separate
+   commits.  This will save you headaches later when you (or someone
+   else) needs to merge, cherry pick, rebase, etc.
+
+2. Commit often, and commit small.  For the same reason as above: it
+   simplifies certain workflows that operate in terms of feature
+   sets.  You your one, huge commit contains a ROSE library bug fix
+   and lots of enhancements to your favorite project, it makes it
+   difficult of another developer to quickly grab just the bug fix.
+
+3. The first line of your commit should be a "title", short and
+   descriptive.  This is the only output certain tools will produce
+   for your change.  A developer scanning through a few hundred
+   commits to find something he vaguely remembers doesn't want to see
+   titles that read (actual examples, not to pick on anyone in
+   particular since we all forget sometimes):
+
+      "Run the ROSE-Insure++ build in hudson-rose-23's local scratch
+      space and then rsync this build tree onto hudson-rose-22 for
+      the..." [de575d0e, way to long]
+
+      "I hate git." [a53823f, irrelevant to the change]
+
+      "List of changes: 1) Added Java IR node for ROSE for "import"
+      keyword.  2) Added new Fortran jar file (0.8.2) which we
+      hope..." [deb94f6, irrelevant title, no blank line]
+
+      "try something else" [6d509b6, not descriptive enough]
+
+4. Don't forget the blank line between the title and description.
+   Different tools use different ways to pick out the title, but they
+   all stop at a blank line.
+
+5. Speel chek.  It's not easy to change a commit message once it's
+   been pushed into the central repository and merged into a release
+   branch.  Your description will probably be there effectively
+   forever.
+
+==============================================================================
+=== Step 3:  Pushing your changes to the central repository
+==============================================================================
+
+Centralized revision control systems often treat the act of making a
+change as a single step, but distributed systems generally treat this
+as two steps.  In Git, committing a change (i.e., creating a commit
+object to record a set of changes to files) is a separate act from
+making those changes available to other developers.  The former
+happens only on your local repository and most of your developer
+colleagues won't be obtaining changes directly from you, but rather
+from the central repository. So you need to do what's referred to in
+the Git documentation as "pushing" your commits.
+
+If you've been working on a branch that has the same name locally as
+what it should have in the central repository, then pushing your
+changes is easy. For example:
+
+ $ git push origin myname-feature-rc
+
+where "origin" is the remote branch where your changes are pushed, and
+"myname-feature-rc" is the name of both the local branch on which you
+made changes and the remote branch to which you're pushing those
+changes.  You can get the name of your current branch by running "git
+branch".
+
+Once again, if you're making changes to EDG you'll probably want to
+replace "git" with "smgit".
+
+If you just want to see what would be pushed you can use the
+"--dry-run" switch of "git push", or you can try the "git whatchanged"
+command.  You could also use "git diff", or "qgit --all".
+
+ $ git whatchanged myname-feature-rc ^origin/myname-feature-rc
+
+which means show me what commits are reachable (by following the
+parent pointers) from tip of local branch "myname-feature-rc" but
+which cannot be reached from the tip of the branch of the same name on
+the "origin" remote repository.  See below for how to make sure that
+your locally-stored copy of the remote repository is up-to-date.
+
+Once you push a commit to the central repository you should not edit
+that commit (so called "editing history"). Editing history includes
+using the "--amend" switch of "git commit", rebasing the branch on
+which the commit appears, or any change that would affect the SHA1
+hash of the commit. The one kind of edit that's safe to do in ROSE is
+to delete a remote branch, thus losing the commits on that branch
+(they won't be lost if they're an ancestor of some remaining commit).
+
+==============================================================================
+=== Step 4:  Merging a tested commit into your work space
+==============================================================================
+
+Merging in a distributed revision control system is a local operation,
+and Git is no exception.  But if you're merging something from the
+central repository into your current branch, you might want to first
+make sure that your copy of the central repository is up-to-date.  You
+do that with:
+
+ $ git fetch origin    # or "smgit"
+
+All this does is copy from the origin commits that you don't already
+have locally, and also makes sure all the remote branch names (i.e.,
+"refs/remotes/origin/*") point to the correct commit objects.
+Fetching in no way changes your branch.
+
+ROSE has a robot that looks at branches named "*-rc" in the central
+repository, tests them in a variety of configurations, and if they
+pass merges them into a branch named "master" in the central
+repository (probably named "origin/master" in your clone of the
+central repository).  In order to get those tested changes into your
+working files you need to merge "origin/master" into your current
+branch.  In other words, all commits that can be reached by following
+the parent pointers of the commit pointed to by "origin/master", but
+which cannot be reached from the tip of your current branch, should be
+applied to the tip of your current branch and your current branch
+adjusted to point to the new tip.
+
+To see what changes have been made to "origin/master" that have not
+yet been applied to your branch, use:
+
+ $ git whatchanged origin/master ^HEAD
+
+(The "^" means "not", and HEAD is shorthand for the name of the active
+branch).
+
+There are two kinds of merges you'll likely encounter: fast forwards,
+and recursive.  A fast-forward occurs when "origin/master" (the branch
+you're merging from) already contains everything on your current
+branch. All Git has to do is make your current branch point to the
+same commit as "origin/master".  This can never result in a conflict.
+
+A more common merge is a recursive merge. Simply speaking, this occurs
+when both your branch and origin/master have changed since their
+common ancestor.   When this happens, Git figures out how to
+incorporate both sets of changes into your branch, creating a new
+commit object in the process.  Sometimes this results in a conflict
+that needs to be resolved by a human.
+
+To merge the change on "origin/master" into your current branch, first
+make sure that you don't have any local changes ("git status").  If
+you do, then either create a new branch for merging, or temporarily
+stash your changes (see "git stash").  Then perform the actual merge
+with:
+
+ $ smgit merge origin/master
+
+Merging is one of those actions that is complicated by the presence of
+the EDG submodule. Therefore, you should always use "smgit" rather
+than straight-up "git".
+
+If you get a conflict, see the next section.
+
+==============================================================================
+=== Step 5:  Fixing conflicts
+==============================================================================
+
+Git, and most other distributed revision control systems, have
+exceptionally good merging ability.  They have to, because all work is
+done on branches.  But sometimes you'll encounter situations where a
+similar change was made on both branches (your current branch and the
+one from which you're merging), and Git will complain about a conflict
+when that happens.
+
+By far the easiest way to fix merge conflicts is to use a combination
+of the graphical merge tool "meld" and the Git "mergetool" command.
+First you must install "meld" on your machine if not there
+already. Then configure git's mergetool to use meld by issuing (once)
+the command:
+
+ $ git config --global merge.tool meld
+
+Then, whenever "smgit merge" results in a conflict, run:
+
+ $ git mergetool
+
+Git will fire up "meld" on each conflicting file. You simply look for
+each orange conflict marker, select whether you want the local or
+remote version, make any edits, and save the merged file when you
+quit. When "git mergetool" is done it will allow you to edit the
+description of the merge commit.  As a policy, you should describe how
+you resolved conflicts in each file.  Here's an example (the only
+thing the author had to type was the last two lines):
+
+    Merge remote branch 'origin/master' into rpm-bugfixes-rc
+    
+    Conflicts:
+        projects/backstroke/pluggableReverser/akgulStyleExpressionProcessor.h
+        projects/backstroke/tests/cfgReverseCodeGenerator/CFGReverserMain.C
+                Used remote versions of these two. My local changes were
+                only in whitespace anyway.
+
+
+==============================================================================
+=== Miscellaneous
+==============================================================================
+
+A. Listing your own remote branches
+
+To answer the question, "What branches do I own in the central
+repository?" you first have to know how you name your branches.  I
+prefix all my public branches with "rpm-", so the commands I could use
+are:
+
+ $ git branch -r |grep rpm-
+or
+ $ git remote show origin |grep rpm-
+
+
+B. Deleting old branches
+
+When you no longer need a branch, it can be deleted from the central
+repository.  Don't do this until after the commits on that branch have
+been merged into the central repo's "master" branch, or those commits
+will be forever lost.  If the name of the branch to delete from the
+central repository is "myname-feature-rc", then issue the following
+commands to delete it:
+
+ # Make sure there's no commit not yet on origin/master
+ $ git whatchanged origin/myname-feature-rc ^origin/master
+
+ # Delete the branch
+ $ git push origin :refs/heads/myname-feature-rc
+
+
+C. Pruning stale branches
+
+When someone deletes a branch from the central repository it may still
+show up under your "refs/remotes/origin/*" (i.e., it will be listed by
+commands such as "git branch -r").  You can prune them out of your
+local repo with a command such as:
+
+ $ git remote prune origin
+
+
+
+==============================================================================
+=== Old stuff
+==============================================================================
+
+The remainder of this file contains older information, some of which
+may still be useful...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ##################### How to use smgit #####################
   
 git pull not as well supported as git fetch and get merge used directly:
@@ -17,22 +472,6 @@ Alternative to smgit to checkin:
 
 
 #################### Sources of information on git ####################
-
-We will try to give you a fast introduction to git, but you should also consider looking up these documents
-  http://www.kernel.org/pub/software/scm/git/docs/gittutorial.html
-  http://book.git-scm.com/
-  http://www.sourcemage.org/Git_Guide ( more like a FAQ )
-  http://stackoverflow.com/questions/315911/git-for-beginners-the-definitive-practical-guide
-
-
-The first step of using a ROSE git repository is to create a local copy 
-    
-     git clone /nfs/casc/overture/ROSE/git/ROSE.git git-dq-main-rc
-
-     
-
-on laptop use:
-     git clone ssh://dquinlan@tux281.llnl.gov/nfs/casc/overture/ROSE/git/ROSE.git git-dq-main-rc
 
 
 

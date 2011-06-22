@@ -1,3 +1,3 @@
 foo ->
-main -> foo foobar
 foobar ->
+main -> foo foobar

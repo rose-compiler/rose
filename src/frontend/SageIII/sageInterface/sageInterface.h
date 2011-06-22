@@ -18,6 +18,7 @@ SgFile* determineFileType ( std::vector<std::string> argv, int& nextErrorCode, S
 
 #include "LivenessAnalysis.h"
 #include "abstract_handle.h"
+#include "ClassHierarchyGraph.h"
 
 // DQ (8/19/2004): Moved from ROSE/src/midend/astRewriteMechanism/rewrite.h
 //! A global function for getting the string associated with an enum (which is defined in global scope)
@@ -657,6 +658,11 @@ bool isCopyConstructible(SgType* type);
 //! Is a type assignable?  This may not quite work properly.
 bool isAssignable(SgType* type);
 
+//! Check if a class type is a pure virtual class. True means that there is at least
+//! one pure virtual function that has not been overridden. 
+//! In the case of an incomplete class type (forward declaration), this function returns false.
+bool isPureVirtualClass(SgType* type, const ClassHierarchyWrapper& classHierarchy);
+
 //! Does a type have a trivial (built-in) destructor?
 bool hasTrivialDestructor(SgType* t);
 
@@ -1005,11 +1011,23 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
   \brief Backwards traverse through the AST to find a node, findEnclosingXXX()
 */
 // remember to put const to all arguments.
-//! Traverse back through a node's parents to find the first node matching the desired type and its derived types, includingSelf specifies if the current node is checked.
+
+
+/** Find a node by type using upward traversal.
+ *
+ *  Traverse backward through a specified node's ancestors, starting with the node's parent and progressing to more distant
+ *  ancestors, to find the first node matching the specified or derived type.  If @p includingSelf is true then the
+ *  starting node, @p astNode, is returned if its type matches, otherwise the search starts at the parent of @p astNode.
+ *
+ *  If no ancestor of the requisite type of subtypes is found then this function returns a null pointer.
+ *
+ *  If @p astNode is the null pointer, then the return value is a null pointer. That is, if there is no node, then there cannot
+ *  be an enclosing node of the specified type. */
 template <typename NodeType>
 NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf=false)
 {
-  ROSE_ASSERT(astNode!=NULL);
+  if (NULL==astNode)
+    return NULL;
   if ((includingSelf)&&(dynamic_cast<const NodeType*>(astNode)))
     return const_cast<NodeType*>(dynamic_cast<const NodeType*> (astNode));
 
@@ -1020,7 +1038,7 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf=false
   return const_cast<NodeType*>(dynamic_cast<const NodeType*> (parent));
 }
 
-//! Get the closest scope
+//! Get the closest scope from astNode. Return astNode if it is already a scope.
 SgScopeStatement* getScope(const SgNode* astNode);
 
   //! Traverse back through a node's parents to find the enclosing global scope

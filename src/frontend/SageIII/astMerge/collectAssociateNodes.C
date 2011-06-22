@@ -269,6 +269,7 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
           case V_SgTypeUnsignedShort:
           case V_SgTypeVoid:
           case V_SgTypeWchar:
+          case V_SgTypeCAFTeam:
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
        // Allow this as an IR node into the AST.
           case V_SgPartialFunctionType:

@@ -704,16 +704,13 @@ PTHREAD_TEST_INPUTS_SRC = \
 		    $(srcdir)/pthread_tests/pthread_cond_broadcast.4-1.c \
 		    $(srcdir)/pthread_tests/pthread_cond_broadcast.4-2.c \
 		    $(srcdir)/pthread_tests/pthread_cond_destroy.1-1.c \
-		    $(srcdir)/pthread_tests/pthread_cond_destroy.2-1.c \
 		    $(srcdir)/pthread_tests/pthread_cond_destroy.3-1.c \
 		    $(srcdir)/pthread_tests/pthread_cond_init.1-1.c \
 		    $(srcdir)/pthread_tests/pthread_cond_init.1-2.c \
 		    $(srcdir)/pthread_tests/pthread_cond_init.2-1.c \
 		    $(srcdir)/pthread_tests/pthread_cond_init.2-2.c \
 		    $(srcdir)/pthread_tests/pthread_cond_init.3-1.c \
-		    $(srcdir)/pthread_tests/pthread_cond_init.4-2.c \
 		    $(srcdir)/pthread_tests/pthread_cond_signal.1-1.c \
-		    $(srcdir)/pthread_tests/pthread_cond_signal.1-2.c \
 		    $(srcdir)/pthread_tests/pthread_cond_signal.2-1.c \
 		    $(srcdir)/pthread_tests/pthread_cond_signal.2-2.c \
 		    $(srcdir)/pthread_tests/pthread_cond_signal.4-1.c \
@@ -967,32 +964,53 @@ PTHREAD_TEST_INPUTS_SRC = \
 		    $(srcdir)/pthread_tests/pthread_testcancel.1-1.c \
 		    $(srcdir)/pthread_tests/pthread_testcancel.2-1.c
 
+PTHREAD_INPUTS_FAILING =							\
+		    $(srcdir)/pthread_tests/pthread_mutexattr_getprotocol.1-2.c	\
+		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.1-1.c	\
+		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-1.c	\
+		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-2.c	\
+		    $(srcdir)/pthread_tests/pthread_spin_trylock.1-1.c		\
+		    $(srcdir)/pthread_tests/pthread_cond_init.1-3.c		\
+		    $(srcdir)/pthread_tests/pthread_cond_init.4-1.c		\
+		    $(srcdir)/pthread_tests/pthread_mutex_trylock.1-1.c		\
+		    $(srcdir)/pthread_tests/pthread_mutex_init.5-1.c		\
+		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.2-1.c	\
+		    $(srcdir)/pthread_tests/pthread_barrier_wait.6-1.c		\
+		    $(srcdir)/pthread_tests/pthread_join.6-3.c			\
+		    $(srcdir)/pthread_tests/pthread_cond_wait.2-2.c		\
+		    $(srcdir)/pthread_tests/pthread_cond_broadcast.1-2.c	\
+		    $(srcdir)/pthread_tests/pthread_cond_broadcast.2-3.c	\
+		    $(srcdir)/pthread_tests/pthread_cond_destroy.2-1.c		\
+		    $(srcdir)/pthread_tests/pthread_cond_init.4-2.c		\
+		    $(srcdir)/pthread_tests/pthread_cond_signal.1-2.c \
+		    $(srcdir)/pthread_tests/pthread_once.4-1.c
 
-# compile error in these tests with undeclared variables
+# Details about why things are listed in $(PTHREAD_INPUTS_FAILING)
+# 	compile error in these tests with undeclared variables
 #		    $(srcdir)/pthread_tests/pthread_mutexattr_getprotocol.1-2.c
-#		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.1-1.c \
-#		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-1.c \
-#		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-2.c \
-#
-# these tests just take a very long time
-#
-#		    $(srcdir)/pthread_tests/pthread_spin_trylock.1-1.c \
-#		    $(srcdir)/pthread_tests/pthread_cond_init.1-3.c \
-# this job doesn't stop even when terminated with control c and make terminates
-# it has to be killed by 'kill -9 '
-#		    $(srcdir)/pthread_tests/pthread_cond_init.4-1.c \
-#		    $(srcdir)/pthread_tests/pthread_mutex_trylock.1-1.c \
-#		    $(srcdir)/pthread_tests/pthread_mutex_init.5-1.c \
-#		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.2-1.c \
-#		    $(srcdir)/pthread_tests/pthread_barrier_wait.6-1.c \
-#		    $(srcdir)/pthread_tests/pthread_join.6-3.c \
-#		    $(srcdir)/pthread_tests/pthread_cond_wait.2-2.c \
-#		    $(srcdir)/pthread_tests/pthread_cond_broadcast.1-2.c \
-		    $(srcdir)/pthread_tests/pthread_cond_broadcast.2-3.c \
-#
-# no main function: 
-#		    $(srcdir)/pthread_tests/pthread_once.4-1.c \
-#
+#		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.1-1.c
+#		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-1.c
+#		    $(srcdir)/pthread_tests/pthread_mutexattr_setprotocol.3-2.c
+# 	these tests just take a very long time
+#		    $(srcdir)/pthread_tests/pthread_spin_trylock.1-1.c
+#		    $(srcdir)/pthread_tests/pthread_cond_init.1-3.c
+# 	these jobs doen't stop even when terminated with control c and make terminates
+# 	it has to be killed by 'kill -9 '
+#		    $(srcdir)/pthread_tests/pthread_cond_init.4-1.c
+#		    $(srcdir)/pthread_tests/pthread_mutex_trylock.1-1.c
+#		    $(srcdir)/pthread_tests/pthread_mutex_init.5-1.c
+#		    $(srcdir)/pthread_tests/pthread_mutexattr_settype.2-1.c
+#		    $(srcdir)/pthread_tests/pthread_barrier_wait.6-1.c
+#		    $(srcdir)/pthread_tests/pthread_join.6-3.c
+#		    $(srcdir)/pthread_tests/pthread_cond_wait.2-2.c
+#		    $(srcdir)/pthread_tests/pthread_cond_broadcast.1-2.c
+#		    $(srcdir)/pthread_tests/pthread_cond_broadcast.2-3.c
+# 	no main function: 
+#		    $(srcdir)/pthread_tests/pthread_once.4-1.c
+#	these tests fail when run natively, outside the simulator, within 2 minutes.
+#		    $(srcdir)/pthread_tests/pthread_cond_destroy.2-1.c
+#		    $(srcdir)/pthread_tests/pthread_cond_init.4-2.c
+#		    $(srcdir)/pthread_tests/pthread_cond_signal.1-2.c
 
 PTHREAD_TEST_INCLUDES= \
                     ${srcdir}/pthread_tests/pthread_atfork.testfrmw.c \

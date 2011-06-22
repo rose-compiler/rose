@@ -1,0 +1,17 @@
+program inittest
+
+integer(8), allocatable, dimension(:) :: foo[*]
+
+allocate(foo(1:9)[])
+
+foo = 42
+
+if (42 .eq. foo(5)) then
+   write(*, '(A)') "Test succeeded"
+else
+   print *, "Test failed"
+endif
+
+
+
+end program

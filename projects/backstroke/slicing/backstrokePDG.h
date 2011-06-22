@@ -108,53 +108,49 @@ void PDG<CFGType>::buildPDG(const CFGType& cfg)
 	std::map<CFGNodePtr, VerticesT> cfgNodesToVertices;
 
 	// Add all CDG nodes in the map.
-	typename boost::graph_traits<CDG<CFGType> >::vertex_iterator cvIter, cvEnd;
-	for (boost::tie(cvIter, cvEnd) = vertices(cdg); cvIter != cvEnd; ++cvIter)
-		cfgNodesToVertices[cdg[*cvIter]].get<0>() = *cvIter;
+    foreach (typename CDG<CFGType>::Vertex v, vertices(cdg))
+		cfgNodesToVertices[cdg[v]].get<0>() = v;
 
 	// Add all DDG nodes in the map, and build new PDG nodes.
-	typename boost::graph_traits<DDG<CFGType> >::vertex_iterator dvIter, dvEnd;
-	for (boost::tie(dvIter, dvEnd) = vertices(ddg); dvIter != dvEnd; ++dvIter)
+    foreach (typename DDG<CFGType>::Vertex v, vertices(ddg))
 	{
-		typename std::map<CFGNodePtr, VerticesT>::iterator iter = cfgNodesToVertices.find(ddg[*dvIter]);
+		typename std::map<CFGNodePtr, VerticesT>::iterator iter = cfgNodesToVertices.find(ddg[v]);
 		ROSE_ASSERT(iter != cfgNodesToVertices.end());
 
 		// Add a vertex to PDG.
-		Vertex v = boost::add_vertex(*this);
-		(*this)[v] = ddg[*dvIter];
-		ROSE_ASSERT(ddg[*dvIter]->getNode());
+		Vertex newNode = boost::add_vertex(*this);
+		(*this)[newNode] = ddg[v];
+		ROSE_ASSERT(ddg[v]->getNode());
 		
-		iter->second.get<1>() = *dvIter;
-		iter->second.get<2>() = v;
+		iter->second.get<1>() = v;
+		iter->second.get<2>() = newNode;
 	}
 
 	// Then start to add edges to PDG.
 
 #if 1
 	// Add control dependence edges.
-	typename boost::graph_traits<CDG<CFGType> >::edge_iterator ceIter, ceEnd;
-	for (boost::tie(ceIter, ceEnd) = boost::edges(cdg); ceIter != ceEnd; ++ceIter)
+    foreach (const typename CDG<CFGType>::Edge& e, boost::edges(cdg))
 	{
-		Vertex src = cfgNodesToVertices[cdg[boost::source(*ceIter, cdg)]].get<2>();
-		Vertex tar = cfgNodesToVertices[cdg[boost::target(*ceIter, cdg)]].get<2>();
-		Edge edge = boost::add_edge(src, tar, *this).first;
+		Vertex src = cfgNodesToVertices[cdg[boost::source(e, cdg)]].get<2>();
+		Vertex tar = cfgNodesToVertices[cdg[boost::target(e, cdg)]].get<2>();
+		Edge newEdge = boost::add_edge(src, tar, *this).first;
 
-		PDGEdge& pdgEdge = (*this)[edge];
+		PDGEdge& pdgEdge = (*this)[newEdge];
 		pdgEdge.type = PDGEdge::ControlDependence;
-		pdgEdge.cdEdge = cdg[*ceIter];
+		pdgEdge.cdEdge = cdg[e];
 	}
 
 	// Add data dependence edges.
-	typename boost::graph_traits<DDG<CFGType> >::edge_iterator deIter, deEnd;
-	for (boost::tie(deIter, deEnd) = boost::edges(ddg); deIter != deEnd; ++deIter)
+    foreach (const typename DDG<CFGType>::Edge& e, boost::edges(ddg))
 	{
-		Vertex src = cfgNodesToVertices[ddg[boost::source(*deIter, ddg)]].get<2>();
-		Vertex tar = cfgNodesToVertices[ddg[boost::target(*deIter, ddg)]].get<2>();
+		Vertex src = cfgNodesToVertices[ddg[boost::source(e, ddg)]].get<2>();
+		Vertex tar = cfgNodesToVertices[ddg[boost::target(e, ddg)]].get<2>();
 		Edge edge = boost::add_edge(src, tar, *this).first;
 
 		PDGEdge& pdgEdge = (*this)[edge];
 		pdgEdge.type = PDGEdge::DataDependence;
-		pdgEdge.ddEdge = ddg[*deIter];
+		pdgEdge.ddEdge = ddg[e];
 	}
 #endif
 

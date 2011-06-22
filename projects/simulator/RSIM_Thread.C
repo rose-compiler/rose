@@ -10,6 +10,7 @@
 #include <sys/user.h>
 
 size_t RSIM_Thread::next_sequence_number = 1;
+RTS_mutex_t RSIM_Thread::insn_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_RSIM_THREAD_CLASS);
 
 /* Constructor */
 void
@@ -90,6 +91,7 @@ RSIM_Thread::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list *
         }
         case 'b': {     /* buffer */
             size_t advertised_size = va_arg(*ap, size_t);
+            assert(advertised_size<10*1000*1000);
             info->struct_buf = new uint8_t[advertised_size];
             info->struct_nread = get_process()->mem_read(info->struct_buf, info->val, advertised_size);
             info->struct_size = 64; /* max print width, measured in columns of output */
@@ -97,6 +99,7 @@ RSIM_Thread::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list *
         }
         case 'P': {     /*ptr to a struct*/
             info->struct_size = va_arg(*ap, size_t);
+            assert(info->struct_size<10*1000*1000);
             info->struct_printer = va_arg(*ap, ArgInfo::StructPrinter);
             info->struct_buf = new uint8_t[info->struct_size];
             info->struct_nread = get_process()->mem_read(info->struct_buf, info->val, info->struct_size);
@@ -111,6 +114,7 @@ RSIM_Thread::syscall_enterv(uint32_t *values, const char *name, const char *form
     RTS_Message *m = tracing(TRACE_SYSCALL);
 
     if (m->get_file()) {
+        assert(strlen(format)<=6);
         ArgInfo args[6];
         for (size_t i=0; format[i]; i++)
             syscall_arginfo(format[i], values?values[i]:syscall_arg(i), args+i, app);
@@ -145,41 +149,76 @@ RSIM_Thread::syscall_enter(const char *name, const char *format, ...)
 }
 
 void
-RSIM_Thread::syscall_leave(const char *format, ...) 
+RSIM_Thread::syscall_leavev(uint32_t *values, const char *format, va_list *app) 
 {
-    va_list ap;
-    va_start(ap, format);
+    bool returns_errno = false;
+    if ('d'==format[0]) {
+        returns_errno = true;
+    } else if ('D'==format[0]) {
+        /* same as 'd' except use next letter for non-error return values */
+        returns_errno = true;
+        format++;
+    }
 
     ROSE_ASSERT(strlen(format)>=1);
     RTS_Message *mesg = tracing(TRACE_SYSCALL);
     if (mesg->get_file()) {
         /* System calls return an integer (negative error numbers, non-negative success) */
         ArgInfo info;
-        uint32_t value = policy.readGPR(x86_gpr_ax).known_value();
-        syscall_arginfo(format[0], value, &info, &ap);
+        uint32_t retval = values ? values[0] : policy.readGPR(x86_gpr_ax).known_value();
+        syscall_arginfo(format[0], retval, &info, app);
 
-        RTS_MESSAGE(*mesg) {
-            mesg->more(" = ");
-            print_leave(mesg, format[0], &info);
+        RTS_WRITE(process->rwlock()) {
+            RTS_MESSAGE(*mesg) {
+                mesg->more(" = ");
 
-            /* Additionally, output any other buffer values that were filled in by a successful system call. */
-            int result = (int)(uint32_t)(syscall_arg(-1));
-            if (format[0]!='d' || (result<-1024 || result>=0) || -EINTR==result) {
-                for (size_t i=1; format[i]; i++) {
-                    if ('-'!=format[i]) {
-                        syscall_arginfo(format[i], syscall_arg(i-1), &info, &ap);
-                        if ('P'!=format[i] || 0!=syscall_arg(i-1)) { /* no need to show null pointers */
-                            mesg->more("    result arg%zu = ", i-1);
-                            print_single(mesg, format[i], &info);
-                            mesg->more("\n");
+                /* Return value */
+                int error_number = (int32_t)retval<0 && (int32_t)retval>-256 ? -(int32_t)retval : 0;
+                if (returns_errno && error_number!=0) {
+                    mesg->more("%"PRId32" ", retval);
+                    print_enum(mesg, error_numbers, error_number);
+                    mesg->more(" (%s)\n", strerror(error_number));
+                } else {
+                    print_single(mesg, format[0], &info);
+                    mesg->more("\n");
+                }
+
+                /* Additionally, output any other buffer values that were filled in by a successful system call. */
+                int signed_retval = (int)retval;
+                if (!returns_errno || (signed_retval<-1024 || signed_retval>=0) || -EINTR==signed_retval) {
+                    for (size_t i=1; format[i]; i++) {
+                        if ('-'!=format[i]) {
+                            uint32_t value = values ? values[i] : syscall_arg(i-1);
+                            syscall_arginfo(format[i], value, &info, app);
+                            if ('P'!=format[i] || 0!=value) { /* no need to show null pointers */
+                                mesg->more("    result arg%zu = ", i-1);
+                                print_single(mesg, format[i], &info);
+                                mesg->more("\n");
+                            }
                         }
                     }
                 }
-            }
-            mesg->multipart_end();
-        } RTS_MESSAGE_END(true);
+                mesg->multipart_end();
+            } RTS_MESSAGE_END(true);
+        } RTS_WRITE_END;
     }
+}
 
+void
+RSIM_Thread::syscall_leave(uint32_t *values, const char *format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+    syscall_leavev(values, format, &ap);
+    va_end(ap);
+}
+
+void
+RSIM_Thread::syscall_leave(const char *format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+    syscall_leavev(NULL, format, &ap);
     va_end(ap);
 }
 
@@ -516,7 +555,7 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg)
 {
     if (!mesg || !mesg->get_file())
         return;
-    RTS_MESSAGE(*mesg) {
+    RTS_WRITE(get_process()->rwlock()) {
         mesg->multipart("stack", "stack frames:\n");
         uint32_t bp = policy.readGPR(x86_gpr_bp).known_value();
         uint32_t retaddr, next_bp;
@@ -525,10 +564,23 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg)
                 break;
             if (4!=process->mem_read(&next_bp, bp, 4))
                 break;
-            mesg->more("  #%d: bp=0x%08"PRIx32" ret=0x%08"PRIx32"\n", i, bp, retaddr);
+            mesg->more("  #%d: bp=0x%08"PRIx32" ret=0x%08"PRIx32, i, bp, retaddr);
+
+            /* Try to get the instruction at the return address and print the name of the function in which it appears, if
+             * any. */
+            SgAsmInstruction *insn = process->get_instruction(retaddr);
+            SgAsmFunctionDeclaration *func = SageInterface::getEnclosingNode<SgAsmFunctionDeclaration>(insn);
+            const MemoryMap::MapElement *me = NULL;
+            if (func && !func->get_name().empty()) {
+                mesg->more(" in function %s\n", func->get_name().c_str());
+            } else if ((me=process->get_memory()->find(retaddr)) && !me->get_name().empty()) {
+                mesg->more(" in memory region %s\n", me->get_name().c_str());
+            } else {
+                mesg->more("\n");
+            }
         }
         mesg->multipart_end();
-    } RTS_MESSAGE_END(true);
+    } RTS_WRITE_END;
 }
 
 void
@@ -579,7 +631,9 @@ RSIM_Thread::main()
             bool cb_status = callbacks.call_insn_callbacks(RSIM_Callbacks::BEFORE, this, insn, true);
             if (cb_status) {
                 process->binary_trace_add(this, insn);
-                semantics.processInstruction(insn);
+                RTS_MUTEX(insn_mutex) {
+                    semantics.processInstruction(insn);
+                } RTS_MUTEX_END;
             }
             callbacks.call_insn_callbacks(RSIM_Callbacks::AFTER, this, insn, cb_status);
 
@@ -742,10 +796,89 @@ RSIM_Thread::futex_wake(uint32_t va)
         int *addr = (int*)get_process()->my_addr(va, sizeof(int));
         if (!addr) {
             retval = -EFAULT;
-        } else if (-1 == (retval = syscall(SYS_futex, addr, 1/*FUTEX_WAKE*/))) {
+        } else if (-1 == (retval = syscall(SYS_futex, addr, 1/*FUTEX_WAKE*/, 1/*nwake*/, 0/*timeout*/, 0/*addr2*/, 0/*val3*/))) {
             retval = -errno;
         }
     } RTS_READ_END;
+    return retval;
+}
+
+int
+RSIM_Thread::handle_futex_death(uint32_t futex_va, RTS_Message *trace)
+{
+    uint32_t futex;
+    trace->more("\n  handling death for futex at 0x%08"PRIx32"\n", futex_va);
+
+    if (4!=get_process()->mem_read(&futex, futex_va, 4)) {
+        trace->more("    failed to read futex at 0x%08"PRIx32"\n", futex_va);
+        return -EFAULT;
+    }
+
+    /* If this thread owns the futex then set the FUTEX_OWNER_DIED and signal the futex. */
+    if (get_tid()==(int)(futex & 0x1fffffff)) {
+        /* Set the FUTEX_OWNER_DIED bit */
+        trace->more("    setting FUTEX_OWNER_DIED bit\n");
+        futex |= 0x40000000;
+        if (4!=get_process()->mem_write(&futex, futex_va, 4)) {
+            trace->more("      failed to set FUTEX_OWNER_DIED for futex at 0x%08"PRIx32"\n", futex_va);
+            return -EFAULT;
+        }
+
+        /* Wake another thread there's one waiting */
+        if (futex & 0x80000000) {
+            trace->more("    waking futex 0x%08"PRIx32"\n", futex_va);
+            int result = futex_wake(futex_va);
+            if (result<0) {
+                trace->more("      wake failed for futex at 0x%08"PRIu32"\n", futex_va);
+                return result;
+            }
+        }
+    } else {
+        trace->more("    futex is not owned by this thread; skipping\n");
+    }
+    return 0;
+}
+    
+int
+RSIM_Thread::exit_robust_list()
+{
+    int retval = 0;
+
+    if (0==robust_list_head_va)
+        return 0;
+
+    RTS_Message *trace = tracing(TRACE_THREAD);
+    trace->multipart("futex_death", "exit_robust_list()...");
+
+    robust_list_head_32 head;
+    if (sizeof(head)!=get_process()->mem_read(&head, robust_list_head_va, sizeof head)) {
+        trace->more(" <failed to read robust list head at 0x%08"PRIx32">", robust_list_head_va);
+        retval = -EFAULT;
+    } else {
+        static const size_t max_locks = 1000000;
+        size_t nlocks = 0;
+        uint32_t lock_entry_va = head.next_va;
+        while (lock_entry_va != robust_list_head_va && nlocks++ < max_locks) {
+            /* Don't process futex if it's pending; we'll catch it at the end instead. */
+            if (lock_entry_va != head.pending_va) {
+                uint32_t futex_va = lock_entry_va + head.futex_offset;
+                if ((retval = handle_futex_death(futex_va, trace))<0)
+                    break;
+            }
+        
+            /* Advance lock_entry_va to next item in the list. */
+            if (4!=get_process()->mem_read(&lock_entry_va, lock_entry_va, 4)) {
+                trace->more(" <list pointer read failed at 0x%08"PRIx32">", lock_entry_va);
+                retval = -EFAULT;
+                break;
+            }
+        }
+        if (head.pending_va)
+            retval = handle_futex_death(head.pending_va, trace);
+    }
+
+    trace->more(" done.\n");
+    trace->multipart_end();
     return retval;
 }
 
@@ -756,17 +889,22 @@ RSIM_Thread::sys_exit(const RSIM_Process::Exit &e)
 
     tracing(TRACE_THREAD)->mesg("this thread is terminating%s", e.exit_process?" (for entire process)":"");
 
-    if (robust_list_head_va)
-        tracing(TRACE_MISC)->mesg("warning: robust_list not cleaned up\n"); /* FIXME: see set_robust_list() syscall */
+    /* Clean up robust futexes */
+    exit_robust_list();
 
     /* Clear and signal child TID if necessary (CLONE_CHILD_CLEARTID) */
     if (clear_child_tid) {
-        tracing(TRACE_SYSCALL)->mesg("waking futex 0x%08"PRIx32, clear_child_tid);
+        tracing(TRACE_SYSCALL)->mesg("clearing child tid...");
         uint32_t zero = 0;
         size_t n = process->mem_write(&zero, clear_child_tid, sizeof zero);
-        ROSE_ASSERT(n==sizeof zero);
-        int nwoke = futex_wake(clear_child_tid);
-        ROSE_ASSERT(nwoke>=0);
+        if (n!=sizeof zero) {
+            tracing(TRACE_SYSCALL)->mesg("cannot write clear_child_tid address 0x%08"PRIx32, clear_child_tid);
+        } else {
+            tracing(TRACE_SYSCALL)->mesg("waking futex 0x%08"PRIx32, clear_child_tid);
+            int nwoke = futex_wake(clear_child_tid);
+            if (nwoke<0)
+                tracing(TRACE_SYSCALL)->mesg("wake futex 0x%08"PRIx32" failed with %d\n", clear_child_tid, nwoke);
+        }
     }
 
     /* Remove the child from the process. */
@@ -860,31 +998,43 @@ RSIM_Thread::post_fork()
 void
 RSIM_Thread::emulate_syscall()
 {
-    unsigned callno = policy.readGPR(x86_gpr_ax).known_value();
-    bool cb_status = callbacks.call_syscall_callbacks(RSIM_Callbacks::BEFORE, this, callno, true);
-    if (cb_status) {
-        RSIM_Simulator *sim = get_process()->get_simulator();
-        if (sim->syscall_is_implemented(callno)) {
-            RSIM_Simulator::SystemCall *sc = sim->syscall_implementation(callno);
-            sc->enter.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
-            sc->body .apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
-            sc->leave.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
-        } else {
-            char name[32];
-            sprintf(name, "syscall_%u", callno);
-            tracing(TRACE_MISC)->multipart(name, "syscall_%u(", callno);
-            for (int i=0; i<6; i++)
-                tracing(TRACE_MISC)->more("%s0x%08"PRIx32, i?", ":"", syscall_arg(i));
-            tracing(TRACE_MISC)->more(") is not implemented yet");
-            tracing(TRACE_MISC)->multipart_end();
+    int err = RTS_mutex_unlock(&insn_mutex);
+    assert(!err);
 
-            tracing(TRACE_MISC)->mesg("dumping core...\n");
-            get_process()->dump_core(SIGSYS);
-            report_stack_frames(tracing(TRACE_MISC));
-            abort();
+    try {
+        unsigned callno = policy.readGPR(x86_gpr_ax).known_value();
+        bool cb_status = callbacks.call_syscall_callbacks(RSIM_Callbacks::BEFORE, this, callno, true);
+        if (cb_status) {
+            RSIM_Simulator *sim = get_process()->get_simulator();
+            if (sim->syscall_is_implemented(callno)) {
+                RSIM_Simulator::SystemCall *sc = sim->syscall_implementation(callno);
+                sc->enter.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
+                sc->body .apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
+                sc->leave.apply(true, RSIM_Simulator::SystemCall::Callback::Args(this, callno));
+            } else {
+                char name[32];
+                sprintf(name, "syscall_%u", callno);
+                tracing(TRACE_MISC)->multipart(name, "syscall_%u(", callno);
+                for (int i=0; i<6; i++)
+                    tracing(TRACE_MISC)->more("%s0x%08"PRIx32, i?", ":"", syscall_arg(i));
+                tracing(TRACE_MISC)->more(") is not implemented yet");
+                tracing(TRACE_MISC)->multipart_end();
+
+                tracing(TRACE_MISC)->mesg("dumping core...\n");
+                get_process()->dump_core(SIGSYS);
+                report_stack_frames(tracing(TRACE_MISC));
+                abort();
+            }
         }
+        callbacks.call_syscall_callbacks(RSIM_Callbacks::AFTER, this, callno, cb_status);
+    } catch (...) {
+        err = RTS_mutex_lock(&insn_mutex);
+        assert(!err);
+        throw;
     }
-    callbacks.call_syscall_callbacks(RSIM_Callbacks::AFTER, this, callno, cb_status);
+
+    err = RTS_mutex_lock(&insn_mutex);
+    assert(!err);
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */

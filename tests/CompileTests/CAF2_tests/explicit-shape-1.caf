@@ -1,0 +1,66 @@
+module eshape_variables
+    integer :: A(10)[*]
+end module eshape_variables
+
+program test6
+    use eshape_variables
+    integer :: size
+    integer :: rank 
+    integer :: partner
+
+    size    = team_size()  
+    rank    = team_rank()
+
+    partner =  size-rank-1
+
+    call team_barrier()
+    A(1) = partner
+
+    if (rank .eq. 0)  then
+       if (A(1) .eq. partner)  then 
+           write(*, '(A)') "OK, assign a value to an element of an explicit shape module coarray variable in a subroutine."
+       else 
+          write(*, '(A)') "ERROR: assign value in a subroutine"
+       end if 
+    end if 
+
+    call team_barrier()
+
+    if (rank .eq. 0 ) then 
+        A(1)  =  A(1)[partner]
+    endif
+
+    call team_barrier()
+
+    if (rank .eq. 0 ) then 
+      if (A(1).eq.0) then 
+        write(*, '(A)') "OK, remote read an element of an explicit shape coarray variable."
+      else 
+        write(*, '(A)') "test6 failed: remote read a eshape coarray variable."
+      endif
+    endif
+
+    call team_barrier()
+
+    A(1) = rank
+
+    call team_barrier()
+
+    if (rank .eq. size-1 ) then  
+        A(1)[0]  =  A(1)
+    endif
+
+    call team_barrier()
+
+    if (rank .eq. 0)  then
+       if (A(1) .eq. partner)  then 
+           write(*, '(A)') "OK, remote write an element of an explicit shape module coarray variable in a subroutine."
+       else 
+          write(*, '(A)') "test6 failed: remote write in a subroutine"
+       end if 
+    end if 
+          
+    call team_barrier()
+
+end program 
+

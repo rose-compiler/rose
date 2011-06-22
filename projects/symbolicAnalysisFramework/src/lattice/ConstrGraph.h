@@ -18,65 +18,75 @@
 #include "latticeFull.h"
 #include "affineInequality.h"
 #include "divAnalysis.h"
-#include "sgnAnalysis.h"
+// GB : 2011-03-05 (Removing Sign Lattice Dependence)#include "sgnAnalysis.h"
+#include "liveDeadVarAnalysis.h"
 
+extern int CGDebugLevel;
+extern int CGmeetDebugLevel;
+extern int CGprofileLevel;
+extern int CGdebugTransClosure;
 
-// bottom - relations between each pair of variarbles are unknown or too complex to be representable as affine inequalities (minimal information)
+// top - relations between each pair of variables are unknown or too complex to be representable as affine inequalities (minimal information)
 // intermediate - some concrete information is known about some variable pairs
 // bottom - impossible situation (maximal information) (bottom flag = true)
 
 // By default the constraint graph is = top. Since this implies a top inequality between every pair, we don't 
 // actually maintain such affineInequality objects. Instead, if there is no affineInequality between a pair of
 // variables, this itself implies that this affineInequality=top.
-class ConstrGraph : public virtual InfiniteLattice, public virtual LogicalCond
+class ConstrGraph : public virtual InfiniteLattice, public dottable//, public virtual LogicalCond
 {
+public:
+	// Possible levels of this constraint graph, defined by their information content in ascending order.
+	typedef enum levels {
+		// Uninitialized constraint graph. Uninitialized constraint graphs behave
+		//    just like regular constraint graphs but they are not equal to any other graph
+		//    until they are initialized. Any operation that modifies or reads the state  
+		//    of a constraint graph (not including comparisons or other operations that don't
+		//    access individual variable mappings) causes it to become initialized (if it 
+		//    wasn't already). An uninitialized constraint graph is !=bottom. 
+		//    printing a graph's contents does not make it initialized.
+		uninitialized = 0,
+		// Constraint graph that has no constraints
+		bottom,
+		// This graph's constraints are defined as a conjunction or disjunction of inequalities.
+		// More details are provided in constrType field
+		constrKnown,
+		// The set of constraints in this graph are too complex to be described as a conjunction of inequalities or
+		// a negation of such a conjunction 
+		top};
 protected:
-	// flag indicating whether some of the constraints have changed since the last time
-	// this graph was checked for bottom-ness
-	bool constrChanged;
+	levels level;
 	
-/*	// indicates whether this constraint graph represents a dead array 
-	// (i.e. it contains a negative cycle that goes through $)
-	bool dead;
-*/
-	// indicates whether this constraint graph represents an impossible situation
-	// (i.e. it contains a negative cycle that doesn't go through $)
-	bool bottom;
-
+public:
+	typedef enum {
+		unknown,
+		// This graph's constraints are represented as a conjunction of inequalities.
+		conj,
+		// Constraints are representes as the negation of a conjunction of inequalities. 
+		// This is the same as a disjunction of the negations of the same inequalities.
+		negConj,
+		// This graph's constrants are mutually-inconsistent
+		inconsistent
+	} constrTypes;
+protected:
+	constrTypes constrType;
+	
+	// The function and DataflowNode that this constraint graph corresponds to
+	// as well as the node's state
+	const Function& func;
+	//const DataflowNode& n;
+	const NodeState& state;
+	
 	// Represents constrants (x<=y+c). vars2Value[x] maps to a set of constraint::<y, a, b, c>
 	//map<varID, map<varID, constraint> > vars2Value;
 	map<varID, map<varID, affineInequality> > vars2Value;
 	
-	// Set of arrays whose ranges are being tracked by this constraint graph
-	varIDSet arrays;
-	// Set of scalars that may be relevant for the tracked arrays
-	varIDSet scalars;
-	
-	// Set of external versions of variables. Useful for keeping different constraint graphs synchronized
-	// with each other's invariants while only performing periodic updates.
-	varIDSet externalVars;
-	
-	/*// set of scalar divisibility variables. For each scalar x there exist x' s.t. if x = r (mod d) 
-	// (according to DivAnalysis), the constraint graph will contain the constraint x'*d+r = x
-	varIDSet& divScalars;*/
-	
-	// mapping from arrays to boolean flags. Each flag indicates whether its respective
-	// array's range is empty (true) or not (false)
-	map<varID, bool> emptyRange;
-	
-	// flag indicating whether this constraint graph should be considered initialized
-	//    (the constraints it holds are real) or uninitialized (the constraints 
-	//    do not correspond to a real state). Uninitialized constraint graphs behave
-	//    just like regular constraint graphs but they are not equal to any other graph
-	//    until they are initialized. Any operation that modifies or reads the state  
-	//    of a constraint graph (not including comparisons or other operations that don't
-	//    access individual variable mappings) causes it to become initialized (if it 
-	//    wasn't already). An uninitialized constraint graph is !=bottom. 
-	//    printing a graph's contents does not make it initialized
-	bool initialized;
-	
-	// In order to allow the user to modify the graph in several spots before calling isFeasible()
-	// we allow them to perform their modifications inside a transaction and call isFeasible only
+	// The LiveDeadVarsAnalysis that identifies the live/dead state of all application variables.
+	// Needed to create a FiniteVarsExprsProductLattice.
+	LiveDeadVarsAnalysis* ldva;
+		
+	// To allow the user to modify the graph in several spots before calling isSelfConsistent()
+	// we allow them to perform their modifications inside a transaction and call isSelfConsistent only
 	// at the end of the transaction
 	bool inTransaction;
 	
@@ -85,227 +95,225 @@ protected:
 	//    reason about variables that have the same annotation. When a variable has multiple annotations
 	//    only one matching product lattice will be used.
 	// The annotation ""->NULL matches all variables
-	map<pair<string, void*>, FiniteVariablesProductLattice*> divL;
+	map<pair<string, void*>, FiniteVarsExprsProductLattice*> divL;
 	
 	// The sign lattices associated with the current CFG node
 	// sgnL is a map from annotations to product lattices. Each product lattice will only be used to
 	//   reason about variables that have the same annotation. When a variable has multiple annotations
 	//   only one matching product lattice will be used.
 	// The annotation ""->NULL matches all variables
-	map<pair<string, void*>, FiniteVariablesProductLattice*> sgnL;
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence) map<pair<string, void*>, FiniteVarsExprsProductLattice*> sgnL;
 	
-	// the function that this constraint graph belongs to
-	Function func;
+	// Set of live variables that this constraint graph applies to
+	set<varID> vars;
 	
 	// set of variables for which we have divisibility information
-	set<varID> divVariables;
-	// maps divisibility variables to their original variables
-	//map<varID, varID> divVar2OrigVar;
+	// noDivVars set<varID> divVars;
 	
+	// Flag indicating whether some of the constraints have changed since the last time
+	// this graph was checked for bottom-ness
+	bool constrChanged;
 	// Set of variables the for which we've added constraints since the last transitive closure
-	set<varID> newConstrVars;
+	/* GB 2011-06-02 : newConstrVars->modifiedVars : set<varID> newConstrVars; */
 	// Set of variables the constraints on which have been modified since the last transitive closure
 	set<varID> modifiedVars;
 	
-public:
+
 	/**** Constructors & Destructors ****/
-	ConstrGraph(bool initialized=true);
+	public:
+	// DataflowNode Descriptor object that summarizes the key info about a DataflowNode
+	// in case this ConstrGraph must represent the state of multiple nodes
+	class NodeDesc {
+		public:
+		const DataflowNode& n;
+		const NodeState& state;
+		string annotName;
+		void* annotVal;
+		set<varID> varsToInclude; // Set of variables that must be included in the ConstrGraph that describes this node, even if they are not live
+		NodeDesc(const DataflowNode& n, const NodeState& state, string annotName, void* annotVal, const set<varID>& varsToInclude) : 
+			n(n), state(state), annotName(annotName), annotVal(annotVal), varsToInclude(varsToInclude) {}
+		NodeDesc(const DataflowNode& n, const NodeState& state, string annotName, void* annotVal) : 
+			n(n), state(state), annotName(annotName), annotVal(annotVal) {}
+		NodeDesc(const DataflowNode& n, const NodeState& state) : 
+			n(n), state(state), annotName(""), annotVal(NULL) {}
+		bool operator==(const NodeDesc& that) const { return n==that.n && &state==&(that.state) && annotName==that.annotName && annotVal==that.annotVal && varsToInclude==that.varsToInclude; }
+		bool operator<(const NodeDesc& that) const { 
+			return (n<that.n) ||
+			       (n==that.n && &state< &(that.state)) || 
+			       (n==that.n && &state==&(that.state) && annotName<that.annotName) ||
+			       (n==that.n && &state==&(that.state) && annotName==that.annotName && annotVal<that.annotVal) ||
+			       (n==that.n && &state==&(that.state) && annotName==that.annotName && annotVal==that.annotVal && varsToInclude<that.varsToInclude);
+		}
+	};
 	
-	ConstrGraph(Function func, FiniteVariablesProductLattice* divL, FiniteVariablesProductLattice* sgnL, bool initialized=true);
-	ConstrGraph(Function func, const map<pair<string, void*>, FiniteVariablesProductLattice*>& divL, 
-	            const map<pair<string, void*>, FiniteVariablesProductLattice*>& sgnL, bool initialized=true);
+protected:
+	ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state, bool initialized=false, string indent="");
 	
-	ConstrGraph(const varIDSet& scalars, const varIDSet& arrays, bool initialized=true);
+public:	
+	ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state, 
+	            LiveDeadVarsAnalysis* ldva, FiniteVarsExprsProductLattice* divL, // GB : 2011-03-05 (Removing Sign Lattice Dependence) FiniteVarsExprsProductLattice* sgnL, 
+	            bool initialized=true, string indent="");
+	ConstrGraph(const Function& func, const DataflowNode& n, const NodeState& state, 
+	            LiveDeadVarsAnalysis* ldva, 
+	            const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
+	            // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
+	            bool initialized=true, string indent="");
+	ConstrGraph(const Function& func, const set<NodeDesc>& nodes, const NodeState& state, 
+	            LiveDeadVarsAnalysis* ldva, 
+	            const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
+	            // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
+	            bool initialized=true, string indent="");
 	
-	//ConstrGraph(varIDSet& arrays, varIDSet& scalars, FiniteVariablesProductLattice* divL, bool initialized=true);
+	//ConstrGraph(const varIDSet& scalars, const varIDSet& arrays, bool initialized=true);
 	
-	ConstrGraph(ConstrGraph &that, bool initialized=true);
+	//ConstrGraph(varIDSet& arrays, varIDSet& scalars, FiniteVarsExprsProductLattice* divL, bool initialized=true);
 	
-	ConstrGraph(const ConstrGraph* that, bool initialized=true);
+	ConstrGraph(ConstrGraph &that, bool initialized=true, string indent="");
+	
+	ConstrGraph(const ConstrGraph* that, bool initialized=true, string indent="");
 	
 	// Creates a constraint graph that contains the given set of inequalities, 
 	//// which are assumed to correspond to just scalars
-	ConstrGraph(const set<varAffineInequality>& ineqs, Function func, FiniteVariablesProductLattice* divL, FiniteVariablesProductLattice* sgnL);
-	ConstrGraph(const set<varAffineInequality>& ineqs, Function func,
-	            const map<pair<string, void*>, FiniteVariablesProductLattice*>& divL, 
-	            const map<pair<string, void*>, FiniteVariablesProductLattice*>& sgnL);
+	ConstrGraph(const set<varAffineInequality>& ineqs, const Function& func, const DataflowNode& n, const NodeState& state,
+	            LiveDeadVarsAnalysis* ldva, FiniteVarsExprsProductLattice* divL, 
+	            // GB : 2011-03-05 (Removing Sign Lattice Dependence)FiniteVarsExprsProductLattice* sgnL, 
+	            string indent="");
+	ConstrGraph(const set<varAffineInequality>& ineqs, const Function& func, const DataflowNode& n, const NodeState& state,
+	            LiveDeadVarsAnalysis* ldva, 
+	            const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& divL, 
+	            // GB : 2011-03-05 (Removing Sign Lattice Dependence)const map<pair<string, void*>, FiniteVarsExprsProductLattice*>& sgnL, 
+	            string indent="");
 	
+	protected:
+	// Initialization code that is common to multiple constructors. 
+	// func - The function that the object corresponds to
+	// nodes - set of NodeDesc objects, each of which contains
+	//    n - a Dataflow node this ConstrGraph corresponds to
+	//    state - the NodeState of node n
+	//    annotName/annotVal - the annotation that will be associated with all variables live at node n
+	// initialized - If false, starts this ConstrGraph as uninitialized. If false, starts it at bottom.
+	void initCG(const Function& func, const set<NodeDesc>& nodes, bool initialized, string indent="");
+	
+	public:
 	~ConstrGraph ();
 	
-	// initializes this Lattice to its default state, if it is not already initialized
-	void initialize();
+	// Initializes this Lattice to its default state, if it is not already initialized
+	void initialize(string indent="");
+	void initialize()
+	{ initialize(""); }
 	
-	/***** The sets of arrays and scalars visible in the given function *****/
-	static map<Function, varIDSet> funcVisibleArrays;
-	static map<Function, varIDSet> funcVisibleScalars;
+	// For a given variable returns the corresponding divisibility variable
+	// noDivVars static varID getDivVar(const varID& scalar);
 	
-	// returns the set of arrays visible in this function
-	static varIDSet& getVisibleArrays(Function func);
-	
-	// returns the set of scalarsvisible in this function
-	static varIDSet& getVisibleScalars(Function func);
-	
-	// for a given scalar returns the corresponding divisibility scalar
-	static varID getDivScalar(const varID& scalar);
-	
-	// returns true if the given variable is a divisibility scalar and false otherwise
-	static bool isDivScalar(const varID& scalar);
+	// Returns true if the given variable is a divisibility variable and false otherwise
+	// noDivVars static bool isDivVar(const varID& scalar);
 	
 	// Returns a divisibility product lattice that matches the given variable
-	FiniteVariablesProductLattice* getDivLattice(const varID& var);
+	FiniteVarsExprsProductLattice* getDivLattice(const varID& var, string indent="");
+	
+	string DivLattices2Str(string indent="");
 	
 	// Returns a sign product lattice that matches the given variable
-	FiniteVariablesProductLattice* getSgnLattice(const varID& var);
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence)
+	// FiniteVarsExprsProductLattice* getSgnLattice(const varID& var, string indent="");
 
-	
-	// returns whether the given variable is known in this constraint graph to be an array
-	bool isArray(const varID& array) const;
-	
-	// Adds the given variable to the scalars list, returning true if this causes
+	// Adds the given variable to the variables list, returning true if this causes
 	// the constraint graph to change and false otherwise.
-	bool addScalar(const varID& scalar);
+	bool addVar(const varID& scalar, string indent="");
 	
-	// Removes the given variable and its divisibility scalar (if one exists) from the scalars list
+	// Removes the given variable and its divisibility variables (if one exists) from the variables list
 	// and removes any constraints that involve them. 
 	// Returning true if this causes the constraint graph to change and false otherwise.
-	bool removeScalar(const varID& scalar);
+	bool removeVar(const varID& scalar, string indent="");
 	
-	// Returns a reference to the constraint graph's set of scalars
-	const varIDSet& getScalars() const;
+	// Returns a reference to the constraint graph's set of variables
+	const varIDSet& getVars() const;
 	
-	// Returns a modifiable reference to the constraint graph's set of scalars
-	varIDSet& getScalarsMod();
-	
-	// For each scalar variable not in noExternal create another variable that is identical except that it has a special
-	//    annotation that identifies it as the external view onto the value of this variable. The newly 
-	//    generated external variables will be set to be equal to their original counterparts
-	//    and will default to have no relations with any other variables, even through transitive closures. 
-	//    These variables are used to transfer information about variable state from one constraint graph
-	//    to another. Specially annotated cersions of the external variables will exist in multiple constraint 
-	//    graphs and will periodically be updated in other graphs from this graph based on how the relationships 
-	//    between the external variables and their regular counterparts change in this graph.
-	// If the external variables already exist, their relationships relative to their original counterparts are reset.
-	// Returns true if this causes the constraint graph to change, false otherwise.
-	bool addScalarExternals(varIDSet noExternal);
-	
-	// Looks over all the external versions of all scalars in this constraint graph and looks for all the same variables
-	//    in the tgtCFG constraint graph that also have the given annotation. Then, updates the variables in that 
-	//    from the current relationships in this between the original scalars and their external versions. 
-	//    Thus, if blah <= var' in that and var' = var + 5 in this (var' is the annotated copy of var) then we'll update 
-	//    to blah <= var' - 5 so that now blah is related to var's current value in this constraint graph. 
-	// Returns true if this causes the tgtCG constraint graph to change, false otherwise.
-	bool updateFromScalarExternals(ConstrGraph* tgtCG, string annotName, void* annot);
-	
-	// Returns a reference to the constraint graph's set of externals
-	const varIDSet& getExternals() const;
+	// Returns a modifiable reference to the constraint graph's set of variables
+	varIDSet& getVarsMod();
 	
 	/***** Copying *****/
 	
-	// overwrites the state of this Lattice with that of that Lattice
+	// Overwrites the state of this Lattice with that of that Lattice
 	void copy(Lattice* that);
 
-	// returns a copy of this lattice
+	// Returns a copy of this lattice
 	Lattice* copy() const;
 	
-	// returns a copy of this LogicalCond object
-	LogicalCond* copy();
+	// Returns a copy of this LogicalCond object
+	//LogicalCond* copy();
 	
-	// Copies the state of cg to this constraint graph
+	// Copies the state of that to this constraint graph
 	// Returns true if this causes this constraint graph's state to change
-	bool copyFrom(ConstrGraph &that);
+	bool copyFrom(ConstrGraph &that, string indent="");
 	
-	// Update the state of this constraint graph from that constraint graph, leaving 
-	//    this graph's original contents alone and only modifying the pairs that are in that.
-	// Returns true if this causes this constraint graph's state to change
-	bool updateFrom(ConstrGraph &that);
+	// Copies the state of That into This constraint graph, but mapping constraints of varFrom to varTo, even
+	//    if varFrom is not mapped by This and is only mapped by That. varTo must be mapped by This.
+	// Returns true if this causes this constraint graph's state to change.
+	bool copyFromReplace(ConstrGraph &that, varID varTo, varID varFrom, string indent="");
 	
 	// Copies the given var and its associated constrants from that to this.
 	// Returns true if this causes this constraint graph's state to change; false otherwise.
 	bool copyVar(const ConstrGraph& that, const varID& var);
 	
 protected:
-	/*// returns true if this and cg map the same sets of arrays and false otherwise
-	bool mapsSameArrays(ConstrGraph *cg);
-
-	// determines whether cg1->arrays contains cg2->arrays
-	static bool containsArraySet(ConstrGraph *cg1, ConstrGraph *cg2);
-	
-	// determines whether cg->arrays and cg->emptyRange are different 
-	// from arrays and emptyRange
-	bool diffArrays(ConstrGraph *cg);*/
-	
-	// copies the data of cg->emptyRange to emptyRange and 
-	// returns whether this caused emptyRange to change
-	bool copyArrays(const ConstrGraph &that);
-	
-	// updates the data of cg->emptyRange to emptyRange, leaving 
-	//    this graph's original emptyRange alone and only modifying the entries that are in that.
-	// returns whether this caused emptyRange to change
-	bool updateArrays(const ConstrGraph &that);
-	
-	// determines whether constraints in cg are different from
+	// Determines whether constraints in cg are different from
 	// the constraints in this
-	bool diffConstraints(ConstrGraph &that);
+	bool diffConstraints(ConstrGraph &that, string indent="");
 	
-	// copies the constraints of cg into this constraint graph
-	// returns true if this causes this constraint graph's state to change
-	bool copyConstraints(ConstrGraph &that);
+public:
+	// Copies the constraints of cg into this constraint graph.
+	// Returns true if this causes this constraint graph's state to change.
+	bool copyConstraints(ConstrGraph &that, string indent="");
 	
-	/***** Array Range Management *****/
-	// sets the ranges of all arrays in this constraint graph to not be empty
-	void unEmptyArrayRanges();
-	
-	// sets the ranges of all arrays in this constraint graph to empty
-	// noBottomCheck - flag indicating whether this function should do nothing if this isBottom() returns 
-	//              true (=false) or to not bother checking with isBottom (=true)
-	void emptyArrayRanges(bool noBottomCheck=false);
+	// Copies the constraints of cg associated with varFrom into this constraint graph, 
+	//    but mapping them instead to varTo.
+	// Returns true if this causes this constraint graph's state to change.
+	bool copyConstraintsReplace(ConstrGraph &that, varID varTo, varID varFrom, string indent="");
 	
 	/**** Erasing ****/
 	// erases all constraints from this constraint graph
 	// noBottomCheck - flag indicating whether this function should do nothing if this isBottom() returns 
 	//              true (=false) or to not bother checking with isBottom (=true)
-	void eraseConstraints(bool noBottomCheck=false);
+	void eraseConstraints(bool noBottomCheck=false, string indent="");
 	
 public:
-	// erases all constraints that relate to variable eraseVar and its corresponding divisibility variable 
+	// Erases all constraints that relate to variable eraseVar and its corresponding divisibility variable 
 	// from this constraint graph
-	// returns true if this causes the constraint graph to change and false otherwise
-	// noBottomCheck - flag indicating whether this function should do nothing if this isBottom() returns 
-	//              true (=false) or to not bother checking with isBottom (=true)
-	bool eraseVarConstr(const varID& eraseVar, bool noBottomCheck=false);
-	
-	// erases all constraints that relate to variable eraseVar but not its divisibility variable from 
-	// this constraint graph
 	// Returns true if this causes the constraint graph to change and false otherwise
-	// noBottomCheck - flag indicating whether this function should do nothing if this isBottom() returns 
-	//              true (=false) or to not bother checking with isBottom (=true)
-	bool eraseVarConstrNoDiv(const varID& eraseVar, bool noBottomCheck=false);
+	// noConsistencyCheck - flag indicating whether this function should explicitly check the self-consisteny of this graph (=false)
+	// 							or to not bother checking self-consistency and just return the last-known value (=true)
+	bool eraseVarConstr(const varID& eraseVar, bool noConsistencyCheck=false, string indent="");
 	
-	// erases all constraints between eraseVar and scalars this constraint graph but leave the constraints 
-	// that relate to its divisibility variable alone
+	// Erases all constraints that relate to variable eraseVar but not its divisibility variable from 
+	//    this constraint graph
 	// Returns true if this causes the constraint graph to change and false otherwise
-	// noBottomCheck - flag indicating whether this function should do nothing if this isBottom() returns 
-	//              true (=false) or to not bother checking with isBottom (=true)
-	bool eraseVarConstrNoDivScalars(const varID& eraseVar, bool noBottomCheck=false);
+	// noConsistencyCheck - flag indicating whether this function should explicitly check the self-consisteny of this graph (=false)
+	// 							or to not bother checking self-consistency and just return the last-known value (=true)
+	bool eraseVarConstrNoDiv(const varID& eraseVar, bool noConsistencyCheck=false, string indent="");
 	
-	// erases the ranges of all array variables
-	void eraseAllArrayRanges();
+	// Erases all constraints between eraseVar and scalars in this constraint graph but leave the constraints 
+	//    that relate to its divisibility variable alone
+	// Returns true if this causes the constraint graph to change and false otherwise
+	// noConsistencyCheck - flag indicating whether this function should explicitly check the self-consisteny of this graph (=false)
+	// 							or to not bother checking self-consistency and just return the last-known value (=true)
+	bool eraseVarConstrNoDivVars(const varID& eraseVar, bool noConsistencyCheck=false, string indent="");
 	
 	// Removes any constraints between the given pair of variables
 	// Returns true if this causes the constraint graph to change and false otherwise
-	bool disconnectVars(const varID& x, const varID& y);
+	//bool disconnectVars(const varID& x, const varID& y);
 	
-	// Replaces all instances of origVar with newVar
+	// Replaces all instances of origVar with newVar. Both are assumed to be scalars.
 	// Returns true if this causes the constraint graph to change and false otherwise
-	// noBottomCheck - flag indicating whether this function should do nothing if this isBottom() returns 
-	//              true (=false) or to not bother checking with isBottom (=true)
-	bool replaceVar(const varID& origVar, const varID& newVar, bool noBottomCheck=false);
+	// noConsistencyCheck - flag indicating whether this function should explicitly check the self-consisteny of this graph (=false)
+	// 							or to not bother checking self-consistency and just return the last-known value (=true)
+	bool replaceVar(const varID& origVar, const varID& newVar, bool noConsistencyCheck=false, string indent="");
 	
 	protected:
 	// Used by copyAnnotVars() and mergeAnnotVars() to identify variables that are interesting
 	// from their perspective.
 	bool annotInterestingVar(const varID& var, const set<pair<string, void*> >& noCopyAnnots, const set<varID>& noCopyVars,
-                            const string& annotName, void* annotVal);
+                            const string& annotName, void* annotVal, string indent="");
 	
 	public: 
 	// Copies the constrains on all the variables that have the given annotation (srcAnnotName -> srcAnnotVal).
@@ -322,7 +330,7 @@ public:
 	bool copyAnnotVars(string srcAnnotName, void* srcAnnotVal, 
 	                   string tgtAnnotName, void* tgtAnnotVal,
 	                   const set<pair<string, void*> >& noCopyAnnots,
-	                   const set<varID>& noCopyVars);
+	                   const set<varID>& noCopyVars, string indent="");
 	
 	// Merges the state of the variables in the constraint graph with the [finalAnnotName -> finalAnnotVal] annotation
 	//    with the state of the variables with the [remAnnotName -> remAnnotVal]. Each constraint that involves a variable
@@ -338,13 +346,13 @@ public:
 	bool mergeAnnotVars(const string& finalAnnotName, void* finalAnnotVal, 
 	                    const string& remAnnotName,   void* remAnnotVal,
 	                    const set<pair<string, void*> >& noCopyAnnots,
-	                    const set<varID>& noCopyVars);
+	                    const set<varID>& noCopyVars, string indent="");
 	
 	
 	protected:
 	// Union the current inequality for y in the given subMap of vars2Value with the given affine inequality
 	// Returns true if this causes a change in the subMap, false otherwise.
-	bool unionXYsubMap(map<varID, affineInequality>& subMap, const varID& y, const affineInequality& ineq);
+	bool unionXYsubMap(map<varID, affineInequality>& subMap, const varID& y, const affineInequality& ineq, string indent="");
 	
 	// Merges the given sub-map of var2Vals, just like mergeAnnotVars. Specifically, for every variable in the subMap
 	// that has a [remAnnotName -> remAnnotVal] annotation,
@@ -359,7 +367,7 @@ public:
 	                          string finalAnnotName, void* finalAnnotVal, 
 	                          string remAnnotName,   void* remAnnotVal,
 	                          const set<pair<string, void*> >& noCopyAnnots,
-	                          const set<varID>& noCopyVars);
+	                          const set<varID>& noCopyVars, string indent="");
 	
 	// Support routine for mergeAnnotVars(). Filters out any rem variables in the given set, replacing
 	// them with their corresponding final versions if those final versions are not already in the set
@@ -368,65 +376,115 @@ public:
 	                       string finalAnnotName, void* finalAnnotVal, 
 	                       string remAnnotName,   void* remAnnotVal,
 	                       const set<pair<string, void*> >& noCopyAnnots,
-	                       const set<varID>& noCopyVars);
+	                       const set<varID>& noCopyVars, string indent="");
 	
 	public:
 	                    
 	// Returns true if the given variable has an annotation in the given set and false otherwise.
 	// The variable matches an annotation if its name and value directly match or if the variable
 	// has no annotations and the annotation's name is "".
-	static bool varHasAnnot(const varID& var, const set<pair<string, void*> >& annots);
+	static bool varHasAnnot(const varID& var, const set<pair<string, void*> >& annots, string indent="");
 	
 	// Returns true if the given variable has an annotation in the given set and false otherwise.
 	// The variable matches an annotation if its name and value directly match or if the variable
 	// has no annotations and the annotName=="".
-	static bool varHasAnnot(const varID& var, string annotName, void* annotVal);
+	static bool varHasAnnot(const varID& var, string annotName, void* annotVal, string indent="");
+	
+	// Called by analyses to create a copy of this lattice. However, if this lattice maintains any 
+	//    information on a per-variable basis, these per-variable mappings must be converted from 
+	//    the current set of variables to another set. This may be needed during function calls, 
+	//    when dataflow information from the caller/callee needs to be transferred to the callee/calleer.
+	// We do not force child classes to define their own versions of this function since not all
+	//    Lattices have per-variable information.
+	// varNameMap - maps all variable names that have changed, in each mapping pair, pair->first is the 
+	//              old variable and pair->second is the new variable
+	// func - the function that the copy Lattice will now be associated with
+	void remapVars(const map<varID, varID>& varNameMap, const Function& newFunc) {} 
+	
+	// Called by analyses to copy over from the that Lattice dataflow information into this Lattice.
+	// that contains data for a set of variables and incorporateVars must overwrite the state of just
+	// those variables, while leaving its state for other variables alone.
+	// We do not force child classes to define their own versions of this function since not all
+	//    Lattices have per-variable information.
+	void incorporateVars(Lattice* that) {}
+	
+	// Returns a Lattice that describes the information known within this lattice
+	// about the given expression. By default this could be the entire lattice or any portion of it.
+	// For example, a lattice that maintains lattices for different known variables and expression will 
+	// return a lattice for the given expression. Similarly, a lattice that keeps track of constraints
+	// on values of variables and expressions will return the portion of the lattice that relates to
+	// the given expression. 
+	// It it legal for this function to return NULL if no information is available.
+	// The function's caller is responsible for deallocating the returned object
+	Lattice* project(SgExpression* expr) { return copy(); }
+	
+	// The inverse of project(). The call is provided with an expression and a Lattice that describes
+	// the dataflow state that relates to expression. This Lattice must be of the same type as the lattice
+	// returned by project(). unProject() must incorporate this dataflow state into the overall state it holds.
+	// Call must make an internal copy of the passed-in lattice and the caller is responsible for deallocating it.
+	// Returns true if this causes this to change and false otherwise.
+	bool unProject(SgExpression* expr, Lattice* exprState) { return meetUpdate(exprState, "    "); }
 	
 	// Returns a constraint graph that only includes the constrains in this constraint graph that involve the
 	// variables in focusVars and their respective divisibility variables, if any. 
 	// It is assumed that focusVars only contains scalars and not array ranges.
-	ConstrGraph* getProjection(const varIDSet& focusVars);
+	ConstrGraph* getProjection(const varIDSet& focusVars, string indent="");
 	
 	// Creates a new constraint graph that is the disjoint union of the two given constraint graphs.
 	// The variables in cg1 and cg2 that are not in the noAnnot set, are annotated with cg1Annot and cg2Annot, respectively,
 	// under the name annotName.
 	// cg1 and cg2 are assumed to have identical constraints between variables in the noAnnotset.
-	static ConstrGraph* joinCG(ConstrGraph* cg1, void* cg1Annot, ConstrGraph* cg2, void* cg2Annot, string annotName, const varIDSet& noAnnot);
+	static ConstrGraph* joinCG(ConstrGraph* cg1, void* cg1Annot, ConstrGraph* cg2, void* cg2Annot, 
+	                           string annotName, const varIDSet& noAnnot, string indent="");
 	
 	protected:
 	// Copies the per-variable contents of srcCG to tgtCG, while ensuring that in tgtCG all variables that are not
 	// in noAnnot are annotated with the annotName->annot label. For variables in noAnnot, the function ensures
 	// that tgtCG does not have inconsistent mappings between such variables.
-	static void joinCG_copyState(ConstrGraph* tgtCG, ConstrGraph* srcCG, void* annot, string annotName, const varIDSet& noAnnot);
+	static void joinCG_copyState(ConstrGraph* tgtCG, ConstrGraph* srcCG, void* annot, 
+	                             string annotName, const varIDSet& noAnnot, string indent="");
 	
 	public:
 	// Replaces all references to variables with the given annotName->annot annotation to 
 	// references to variables without the annotation
 	// Returns true if this causes the constraint graph to change and false otherwise
-	bool removeVarAnnot(string annotName, void* annot);
+	bool removeVarAnnot(string annotName, void* annot, string indent="");
 	
 	// Replaces all references to variables with the given annotName->annot annotation to 
 	// references to variables without the annotation
 	// Returns true if this causes the constraint graph to change and false otherwise
 	bool replaceVarAnnot(string oldAnnotName, void* oldAnnot,
-	                     string newAnnotName, void* newAnnot);
+	                     string newAnnotName, void* newAnnot, string indent="");
 	
 	// For all variables that have a string (tgtAnnotName -> tgtAnnotVal) annotation 
 	//    (or if tgtAnnotName=="" and the variable has no annotation), add the annotation
 	//    (newAnnotName -> newAnnotVal).
 	// Returns true if this causes the constraint graph to change and false otherwise
-	bool addVarAnnot(string tgtAnnotName, void* tgtAnnotVal, string newAnnotName, void* newAnnotVal);
+	bool addVarAnnot(string tgtAnnotName, void* tgtAnnotVal, string newAnnotName, void* newAnnotVal, string indent="");
 	
 	// adds a new range into this constraint graph 
 	//void addRange(varID rangeVar);
 	
 public:
 	/**** Transfer Function-Related Updates ****/
-	// updates the constraint graph with the information that x*a = y*b+c
-	// returns true if this causes the constraint graph to change and false otherwise
-	bool assign(const varAffineInequality& cond);
-	bool assign(varID x, varID y, const affineInequality& ineq);
-	bool assign(varID x, varID y, int a, int b, int c);
+	// Negates the constraint graph.
+	// Returns true if this causes the constraint graph to change and false otherwise
+	bool negate(string indent="");
+	
+	// Updates the constraint graph with the information that x*a = y*b+c
+	// Returns true if this causes the constraint graph to change and false otherwise
+	bool assign(const varAffineInequality& cond, string indent="");
+	bool assign(varID x, varID y, const affineInequality& ineq, string indent="");
+	bool assign(varID x, varID y, int a, int b, int c, string indent="");
+	
+	// Updates the constraint graph to record that there are no constraints in the given variable.
+	// Returns true if this causes the constraint graph to change and false otherwise
+	bool assignBot(varID var, string indent="");
+	
+	// Updates the constraint graph to record that the constraints between the given variable and
+	//    other variables are Top.
+	// Returns true if this causes the constraint graph to change and false otherwise
+	bool assignTop(varID var, string indent="");
 	
 /*	// Undoes the i = j + c assignment for backwards analysis
 	void undoAssignment( quad i, quad j, quad c );*/
@@ -438,56 +496,48 @@ public:
 	// Add the condition (x*a <= y*b + c) to this constraint graph. The addition is done via a conjunction operator, 
 	// meaning that the resulting graph will be left with either (x*a <= y*b + c) or the original condition, whichever is stronger.
 	// returns true if this causes the constraint graph to change and false otherwise
-	bool assertCond(const varAffineInequality& cond);
+	bool assertCond(const varAffineInequality& cond, string indent="");
 	
 	// add the condition (x*a <= y*b + c) to this constraint graph
 	// returns true if this causes the constraint graph to change and false otherwise
-	bool assertCond(const varID& x, const varID& y, const affineInequality& ineq);
+	bool assertCond(const varID& x, const varID& y, const affineInequality& ineq, string indent="");
 	
 	// add the condition (x*a <= y*b + c) to this constraint graph
 	// returns true if this causes the constraint graph to change and false otherwise
-	bool assertCond(const varID& x, const varID& y, int a, int b, int c);
+	bool assertCond(const varID& x, const varID& y, int a, int b, int c, string indent="");
 	
 	// add the condition (x*a = y*b + c) to this constraint graph
 	// returns true if this causes the constraint graph to change and false otherwise
-	bool assertEq(const varAffineInequality& cond);
-	bool assertEq(varID x, varID y, const affineInequality& ineq);
-	bool assertEq(const varID& x, const varID& y, int a=1, int b=1, int c=0);
-	
-	// include information from prior passes (initAffineIneqs or DivAnalysis) into this constraint graph
-	//void includePriorPassInfo(DataflowNode n);
-	
-	// Cuts i*b+c from the given array's range if i*b+c is either at the very bottom
-	//    or very bottom of its range. In other words, if (i*b+c)'s range overlaps the  
-	//    array's range on one of its edges, the array's range is reduced by 1 on 
-	//    that edge
-	// returns true if this causes the constraint graph to change and false otherwise
-	bool shortenArrayRange(varID array, varID i, int b, int c);
-	
+	bool assertEq(const varAffineInequality& cond, string indent="");
+	bool assertEq(varID x, varID y, const affineInequality& ineq, string indent="");
+	bool assertEq(const varID& x, const varID& y, int a=1, int b=1, int c=0, string indent="");
+		
 	/**** Dataflow Functions ****/
 	
 	// returns the sign of the given variable
-	affineInequality::signs getVarSign(const varID& var);
-		
+	affineInequality::signs getVarSign(const varID& var, string indent="");
+			
 	// returns true of the given variable is =0 and false otherwise
-	bool isEqZero(const varID& var);
+	bool isEqZero(const varID& var, string indent="");
 	
 	// Returns true if v1*a = v2*b + c and false otherwise
-	bool eqVars(const varID& v1, const varID& v2, int a=1, int b=1, int c=0);
+	bool eqVars(const varID& v1, const varID& v2, int a=1, int b=1, int c=0, string indent="");
+	bool eqVars(const varID& v1, const varID& v2, string indent="")
+	{ return eqVars(v1, v2, 1, 1, 0, indent); }
 	
 	// If v1*a = v2*b + c, sets a, b and c appropriately and returns true. 
 	// Otherwise, returns false.
-	bool isEqVars(const varID& v1, const varID& v2, int& a, int& b, int& c);
+	bool isEqVars(const varID& v1, const varID& v2, int& a, int& b, int& c, string indent="");
 	
 	// Returns a list of variables that are equal to var in this constraint graph as a list of pairs
 	// <x, ineq>, where var*ineq.getA() = x*ineq.getB() + ineq.getC()
-	map<varID, affineInequality> getEqVars(varID var);
+	map<varID, affineInequality> getEqVars(varID var, string indent="");
 	
 	// Returns true if v1*a <= v2*b + c and false otherwise
-	bool lteVars(const varID& v1, const varID& v2, int a=1, int b=1, int c=0);
+	bool lteVars(const varID& v1, const varID& v2, int a=1, int b=1, int c=0, string indent="");
 	
 	// Returns true if v1*a < v2*b + c and false otherwise
-	bool ltVars(const varID& v1, const varID& v2, int a=1, int b=1, int c=0);
+	bool ltVars(const varID& v1, const varID& v2, int a=1, int b=1, int c=0, string indent="");
 	
 	// Class used to iterate over all the constraints x*a <= y*b + c for a given variable x
 	class leIterator
@@ -564,69 +614,132 @@ public:
 	
 	// widens this from that and saves the result in this
 	// returns true if this causes this to change and false otherwise
-	bool widenUpdate(InfiniteLattice* that);
+	bool widenUpdate(InfiniteLattice* that, string indent="");
+	bool widenUpdate(InfiniteLattice* that) { return widenUpdate(that, ""); }
 	
 	// Widens this from that and saves the result in this, while ensuring that if a given constraint
 	// doesn't exist in that, its counterpart in this is not modified
 	// returns true if this causes this to change and false otherwise
-	bool widenUpdateLimitToThat(InfiniteLattice* that);
+	bool widenUpdateLimitToThat(InfiniteLattice* that, string indent="");
+	
+	// Common code for widenUpdate() and widenUpdateLimitToThat()
+	bool widenUpdate_ex(InfiniteLattice* that_arg, bool limitToThat, string indent="");
 	
 	// computes the meet of this and that and saves the result in this
 	// returns true if this causes this to change and false otherwise
 	// The meet is the intersection of constraints: the set of constraints 
 	//    that is common to both constraint graphs. Thus, the result is the loosest
 	//    set of constraints that satisfies both sets and therefore also the information union.
-	bool meetUpdate(Lattice* that);
+	bool meetUpdate(Lattice* that, string indent="");
+	bool meetUpdate(Lattice* that) { return meetUpdate(that, ""); }
 	
 	// Meet this and that and saves the result in this, while ensuring that if a given constraint
 	// doesn't exist in that, its counterpart in this is not modified
 	// returns true if this causes this to change and false otherwise
-	bool meetUpdateLimitToThat(InfiniteLattice* that);
+	bool meetUpdateLimitToThat(InfiniteLattice* that, string indent="");
 		
-	// Unified function for meet and widening
-	// if meet == true, this function computes the meet and if =false, computes the widening
+	// Common code for meetUpdate() and meetUpdateLimitToThat()
+	bool meetUpdate_ex(Lattice* that_arg, bool limitToThat, string indent="");
+	
+	// <from LogicalCond>
+	bool orUpd(LogicalCond& that, string indent="");
+	bool orUpd(LogicalCond& that)
+	{ return orUpd(that, ""); }
+
+	// <from LogicalCond>
+	bool andUpd(LogicalCond& that, string indent="");
+	bool andUpd(LogicalCond& that)
+	{ return andUpd(that, ""); }
+	
+	bool andUpd(ConstrGraph* that, string indent="");
+	bool andUpd(ConstrGraph* that)
+	{ return andUpd(that, ""); }
+	
+	// Unified function for Or(meet), And and Widening
+	// If meet == true, this function computes the meet and if =false, computes the widening.
+	// If OR == true, the function computes the OR of each pair of inequalities and otherwise, computes the AND.
 	// if limitToThat == true, if a given constraint does not exist in that, this has no effect on the meet/widening
-	bool meetwidenUpdate(ConstrGraph* that, bool meet, bool limitToThat);
+	bool OrAndWidenUpdate(ConstrGraph* that, bool meet, bool OR, bool limitToThat, string indent="");
+
 	
-	// <from LogicalCond>
-	bool andUpd(LogicalCond& that);
+	// Portion of OrAndWidenUpdate that deals with x variables for which there exist x->y mapping 
+	// in This but not in That. Increments itThisX and updates modified and modifiedVars in case this 
+	// function modifies the constraint graph.
+	void OrAndWidenUpdate_XinThisNotThat(
+		                            bool OR, bool limitToThat, 
+		                            map<varID, map<varID, affineInequality> >::iterator& itThisX, bool& modified,
+		                            string indent="");
 	
-	bool andUpd(ConstrGraph* that);
+	// Portion of OrAndWidenUpdate that deals with x variables for which there exist x->y mapping 
+	// in That but not in This. Increments itThisX and updates modified and modifiedVars in case this 
+	// function modifies the constraint graph.
+	// additionsToThis - Records the new additions to vars2Value that need to be made after we are done iterating 
+	//      over it. It guaranteed that the keys mapped by the first level of additionsToThis are not mapped
+	//      at the first level by vals2Value.
+	void OrAndWidenUpdate_XinThatNotThis(
+		                            bool OR, bool limitToThat, 
+		                            ConstrGraph* that,
+		                            map<varID, map<varID, affineInequality> >::iterator& itThatX, 
+		                            map<varID, map<varID, affineInequality> >& additionsToThis, 
+		                            bool& modified, string indent="");
 	
-	// <from LogicalCond>
-	bool orUpd(LogicalCond& that);
+	// Portion of OrAndWidenUpdate that deals with x->y pairs for which there exist x->y mapping 
+	// in This but not in That. Increments itThisX and updates modified and modifiedVars in case this 
+	// function modifies the constraint graph.
+	void OrAndWidenUpdate_YinThisNotThat(
+		                            bool OR, bool limitToThat, 
+		                            map<varID, map<varID, affineInequality> >::iterator& itThisX,
+		                            map<varID, affineInequality>::iterator& itThisY, 
+		                            bool& modified, string indent="");
 	
+	// Portion of OrAndWidenUpdate that deals with x->y pairs for which there exist x->y mapping 
+	// in That but not in This. Increments itThisX and updates modified and modifiedVars in case this 
+	// function modifies the constraint graph.
+	// additionsToThis - Records the new additions to vars2Value[itThisX->first] that need to be made after 
+	//      we are done iterating over it. It guaranteed that the keys mapped by additionsToThis are not mapped
+	//      at the first level by vals2Value[itThisX->first].
+	void OrAndWidenUpdate_YinThatNotThis(
+		                            bool OR, bool limitToThat, 
+		                            map<varID, map<varID, affineInequality> >::iterator& itThatX,
+		                            map<varID, affineInequality>::iterator& itThatY, 
+		                            map<varID, affineInequality>& additionsToThis, 
+		                            bool& modified, string indent="");
+		
+	// Computes the transitive closure of the given constraint graph, and updates the graph to be that transitive closure. 
+	// Returns true if this causes the graph to change and false otherwise.
+	bool transitiveClosure(string indent="");
+	protected:
+	bool transitiveClosureDiv(string indent="");
+	void transitiveClosureY(const varID& x, const varID& y, bool& modified, int& numSteps, int& numInfers, bool& iterModified, string indent="");
+	void transitiveClosureZ(const varID& x, const varID& y, const varID& z, bool& modified, int& numSteps, int& numInfers, bool& iterModified, string indent="");
 	
-	// computes the transitive closure of this constraint graph, 
-	// returns 0 if the resulting graph is Bottom
-	// returns -1 if the resulting graph is Dead
-	void transitiveClosure();
-	
-	// computes the transitive closure of the given constraint graph,
+	public:
+	// Computes the transitive closure of the given constraint graph,
 	// focusing on the constraints of scalars that have divisibility variables
 	// we only bother propagating constraints to each such variable through its divisibility variable
-	void divVarsClosure();
+	// Returns true if this causes the graph to change and false otherwise.
+	// noDivVars bool divVarsClosure(string indent="");
 	
 	// The portion of divVarsClosure that is called for every y variable. Thus, given x and x' (x's divisibility variable)
 	// divVarsClosure_perY() is called for every scalar or array y to infer the x->y connection thru x->x'->y and
 	// infer the y->x connection thru x->x'->x
-	bool divVarsClosure_perY(const varID& x, const varID& divX, const varID& y, 
-	                         affineInequality* constrXDivX, affineInequality* constrDivXX/*,
-	                         affineInequality::signs xSign, affineInequality::signs ySign*/);
+	// Returns true if this causes the graph to change and false otherwise.
+	// noDivVars bool divVarsClosure_perY(const varID& x, const varID& divX, const varID& y, 
+	// noDivVars                          affineInequality* constrXDivX, affineInequality* constrDivXX/*,
+	// noDivVars                          affineInequality::signs xSign, affineInequality::signs ySign*/,
+	// noDivVars                          string indent="");
 	
-	// computes the transitive closure of this constraint graph while modifying 
+	// Computes the transitive closure of this constraint graph while modifying 
 	// only the constraints that involve the given variable
-	void localTransClosure(const varID& tgtVar);
+	// Returns true if this causes the graph to change and false otherwise.
+	bool localTransClosure(const varID& tgtVar, string indent="");
 		
 protected:
-	// searches this constraint graph for cycles. 
-	// If it finds a negative cycle that does not go through an array variable, it records this 
-	//    fact and returns 0 (Bottom).
-	// Otherwise, it returns 1.
-	// If isFeasible() finds any negative cycles, it updates the state of this constraint graph
-	//    accordingly, either setting it to bottom or recording that the range of an array is empty.
-	// !checking for feasibility does makes an uninitialized graph into an initialized one!
-	int isFeasible();
+	// Searches this constraint graph for negative cycles, which indicates that the constraints represented
+	//    by the graph are not self-consistent (the code region where the graph holds is unreachable). Modifies
+	//    the level of this graph as needed.
+	// Returns true if this call caused a modification in the graph and false otherwise.
+	bool checkSelfConsistency(string indent="");
 	
 public:
 	
@@ -635,58 +748,98 @@ public:
 	// will be x = x'*d + r
 	// returns true if this causes the constraint graph to be modified (it may not if this 
 	//    information is already in the graph) and false otherwise
-	bool addDivVar(varID var/*, int div, int rem*/, bool killDivVar=false);
+	// noDivVars bool addDivVar(varID var/*, int div, int rem*/, bool killDivVar=false, string indent="");
 	
 	// Disconnect this variable from all other variables except its divisibility variable. This is done 
 	// in order to compute the original variable's relationships while taking its divisibility information 
 	// into account.
 	// Returns true if this causes the constraint graph to be modified and false otherwise
-	bool disconnectDivOrigVar(varID var/*, int div, int rem*/);
+	// noDivVars bool disconnectDivOrigVar(varID var/*, int div, int rem*/, string indent="");
+	
+	// Finds the variable within this constraint graph that corresponds to the given divisibility variable.
+	//    If such a variable exists, returns the pair <variable, true>.
+	//    Otherwise, returns <???, false>.
+	// noDivVars pair<varID, bool> divVar2Var(const varID& divVar, string indent="");
 	
 	// Adds a new divisibility lattice, with the associated anotation
 	// Returns true if this causes the constraint graph to be modified and false otherwise
-	bool addDivL(FiniteVariablesProductLattice* divLattice, string annotName, void* annot);
+	bool addDivL(FiniteVarsExprsProductLattice* divLattice, string annotName, void* annot, string indent="");
 	
 	// Adds a new sign lattice, with the associated anotation
 	// Returns true if this causes the constraint graph to be modified and false otherwise
-	bool addSgnL(FiniteVariablesProductLattice* sgnLattice, string annotName, void* annot);
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence)
+	// bool addSgnL(FiniteVarsExprsProductLattice* sgnLattice, string annotName, void* annot, string indent="");
 	
 	/**** State Accessor Functions *****/
 	// Returns true if this constraint graph includes constraints for the given variable
 	// and false otherwise
-	bool containsVar(const varID& var);
+	bool containsVar(const varID& var, string indent="");
 	
 	// returns the x->y constraint in this constraint graph
-	affineInequality* getVal(varID x, varID y);
+	affineInequality* getVal(varID x, varID y, string indent="");
 	
 	// set the x->y connection in this constraint graph to c
 	// return true if this results this ConstrGraph being changed, false otherwise
 	// xSign, ySign: the default signs for x and y. If they're set to unknown, setVal computes them on its own using getVarSign.
 	//     otherwise, it uses the given signs 
+	// GB : 2011-03-05 (Removing Sign Lattice Dependence)
+	/*bool setVal(varID x, varID y, int a, int b, int c, 
+	            affineInequality::signs xSign=affineInequality::unknownSgn, affineInequality::signs ySign=affineInequality::unknownSgn, 
+	            string indent="");*/
 	bool setVal(varID x, varID y, int a, int b, int c, 
-	            affineInequality::signs xSign=affineInequality::unknownSgn, affineInequality::signs ySign=affineInequality::unknownSgn);
+	            string indent="");
+	/*{ return setVal(x, y, a, b, c, 
+	                // GB : 2011-03-05 (Removing Sign Lattice Dependence)affineInequality::unknownSgn, affineInequality::unknownSgn, 
+	                indent); }*/
 	
-	bool setVal(varID x, varID y, const affineInequality& ineq);
+	bool setVal(varID x, varID y, const affineInequality& ineq, string indent="");
 	
 	// Sets the state of this constraint graph to Uninitialized, without modifying its contents. Thus, 
 	//    the graph will register as uninitalized but when it is next used, its state will already be set up.
 	// Returns true if this causes the constraint graph to be modified and false otherwise.
-	bool setToUninitialized();
+	bool setToUninitialized_KeepState(string indent="");
 	
-	// sets the state of this constraint graph to Bottom
-	// noBottomCheck - flag indicating whether this function should do nothing if this isBottom() returns 
+	// Sets the state of this constraint graph to Bottom
+	// Returns true if this causes the constraint graph to be modified and false otherwise.
+	bool setToBottom(string indent="");
+	
+	// Sets the state of this constraint graph to constrKnown, with the given constraintType
+	// eraseCurConstr - if true, erases the current set of constraints and if false, leaves them alone
+	// Returns true if this causes the constraint graph to be modified and false otherwise.
+	bool setToConstrKnown(constrTypes ct, bool eraseCurConstr=true, string indent="");
+	
+	// Sets the state of this constraint graph to Inconsistent
+	// noConsistencyCheck - flag indicating whether this function should do nothing if this noConsistencyCheck() returns 
 	//              true (=false) or to not bother checking with isBottom (=true)
-	void setToBottom(bool noBottomCheck=false);
+	// Returns true if this causes the constraint graph to be modified and false otherwise.
+	bool setToInconsistent(string indent="");
 	
 	// Sets the state of this constraint graph to top 
 	// If onlyIfNotInit=true, this is only done if the graph is currently uninitialized
-	void setToTop(bool onlyIfNotInit=false);
+	// Returns true if this causes the constraint graph to be modified and false otherwise.
+	bool setToTop(bool onlyIfNotInit=false, string indent="");
 	
-	// returns whether the range of the given array is empty
-	bool isEmptyRange(varID array);
 	
-	// returns whether this constraint graph is bottom
-	bool isBottom();
+	// Returns the level and constraint type of this constraint graph
+	// noConsistencyCheck - flag indicating whether this function should explicitly check the self-consisteny of this graph (=false)
+	// 							or to not bother checking self-consistency and just return the last-known value (=true)
+	pair<levels, constrTypes> getLevel(bool noConsistencyCheck=false, string indent="");
+	
+	// Returns true if this graph is self-consistent and false otherwise
+	// noConsistencyCheck - flag indicating whether this function should explicitly check the self-consisteny of this graph (=false)
+	// 							or to not bother checking self-consistency and just return the last-known value (=true)
+	bool isSelfConsistent(bool noConsistencyCheck=false, string indent="");
+	
+	// Returns true if this graph has valid constraints and is self-consistent
+	// noConsistencyCheck - flag indicating whether this function should explicitly check the self-consisteny of this graph (=false)
+	// 							or to not bother checking self-consistency and just return the last-known value (=true)
+	bool hasConsistentConstraints(bool noConsistencyCheck=false, string indent="");
+
+	// Returns true if this constraint graph is maximal in that it can never reach a higher lattice state: it is
+	//    either top or inconsistent). Returns false if it not maximal.
+	// noConsistencyCheck - flag indicating whether this function should explicitly check the self-consisteny of this graph (=false)
+	// 							or to not bother checking self-consistency and just return the last-known value (=true)
+	bool isMaximalState(bool noConsistencyCheck=false, string indent="");
 	
 	/**** String Output *****/
 	
@@ -695,6 +848,7 @@ public:
 	//    the names of all the arrays that have empty ranges in this constraint graph
 	// There is no \n on the last line of output, even if it is a multi-line string
 	string str(string indent="");
+	void varSetStatusToStream(const set<varID>& vars, ostringstream& outs, bool &needEndl, string indent="");
 	
 //protected:
 	// Returns the string representation of the constraints held by this constraint graph, 
@@ -707,6 +861,14 @@ public:
 	// Otherwise, the bottom variable is checked.
 	string str(string indent, bool useIsBottom);
 	
+	// Returns a string that containts the representation of this constraint graph as a graph in the DOT language
+	// that has the given name
+	string toDOT(string graphName);
+	
+	// Returns a string that containts the representation of this constraint graph as a graph in the DOT language
+	// that has the given name, focusing the graph on just the variables inside focusVars.
+	string toDOT(string graphName, set<varID>& focusVars);
+	
 public:
 	/**** Comparison Functions ****/	
 	bool operator != (ConstrGraph &that);
@@ -718,11 +880,12 @@ public:
 	// Returns true if x*b+c MUST be outside the range of y and false otherwise. 
 	// If two variables are unrelated, it is assumed that there is no information 
 	// about their relationship and mustOutsideRange() thus proceeds conservatively (returns true).
-	bool mustOutsideRange(varID x, int b, int c, varID y);
+	bool mustOutsideRange(varID x, int b, int c, varID y, string indent="");
 	
 	// returns true if this logical condition must be true and false otherwise
 	// <from LogicalCond>
-	bool mayTrue();
+	bool mayTrue(string indent="");
+	bool mayTrue() { return mayTrue(""); }
 		
 /*	// returns true if x+c MUST be inside the range of y and false otherwise
 	// If two variables are unrelated, it is assumed that there is no information 
@@ -730,8 +893,8 @@ public:
 	bool mustInsideRange(varID x, int b, int c, varID y);*/
 	
 	/* Transactions */
-	void beginTransaction();
-	void endTransaction();
+	void beginTransaction(string indent="");
+	void endTransaction(string indent="");
 };
 
 

@@ -1,5 +1,5 @@
 foo ->
 foo ->
-main -> foo foo foo < int >  foo < float > 
-foo < int >  ->
 foo < float >  ->
+foo < int >  ->
+main -> foo foo foo < float >  foo < int > 

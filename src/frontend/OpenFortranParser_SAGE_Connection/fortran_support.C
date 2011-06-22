@@ -4109,7 +4109,6 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
    }
 
 
-// void setDeclarationAttributeSpec ( SgVariableDeclaration* variableDeclaration, int astAttributeSpec )
 void
 setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int astAttributeSpec )
    {
@@ -4219,6 +4218,7 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
           case AttrSpec_OPTIONAL:     variableDeclaration->get_declarationModifier().get_typeModifier().setOptional();     break;
           case AttrSpec_SAVE:         variableDeclaration->get_declarationModifier().get_typeModifier().setSave();         break;
           case AttrSpec_TARGET:       variableDeclaration->get_declarationModifier().get_typeModifier().setTarget();       break;
+          case AttrSpec_COTARGET:     break; // DXN (04/11/2011): TODO
           case AttrSpec_VALUE:        variableDeclaration->get_declarationModifier().get_typeModifier().setValue();        break;
 
        // DQ (8/28/2010): Added support required for type-attributes-spec values (TypeAttrSpec_bind does the same as AttrSpec_BINDC).
@@ -4279,27 +4279,6 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
             // ROSE_ASSERT(false);
                break;
 
-#if ROSE_OFP_MINOR_VERSION_NUMBER == 7
-       // DQ (4/5/2010): These have been removed from OFP 0.8.0
-          case ComponentAttrSpec_dimension_paren:
-#if 0
-            // DQ (8/29/2010): This should be enabled so that we can at least see that it is not implemented.
-            // FMZ 6/15/2009 : this should be ok
-               printf ("Error: ComponentAttrSpec_dimension_paren used as an attribute specifier (unclear how to process this) \n");
-               ROSE_ASSERT(false);
-#endif
-            // Laksono 2009.10.16: This is a Fortran legal syntax to have an array inside a type!
-               variableDeclaration->get_declarationModifier().get_typeModifier().setDimension();
-            // printf ("Error: ComponentAttrSpec_dimension_paren used as an attribute specifier (unclear how to process this) \n");
-            // ROSE_ASSERT(false);
-               break;
-
-          case ComponentAttrSpec_dimension_bracket:
-               printf ("Error: ComponentAttrSpec_dimension_bracket used as an attribute specifier (unclear how to process this) \n");
-               ROSE_ASSERT(false);
-               break;
-#endif
-
           case ComponentAttrSpec_allocatable:
                printf ("Error: ComponentAttrSpec_allocatable used as an attribute specifier (unclear how to process this) \n");
                ROSE_ASSERT(false);
@@ -4316,12 +4295,10 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
                break;
 
           case ComponentAttrSpec_len:
-#if 1
             // DQ (8/28/2010): Uncommented this out (problems here are likely due to another bug where the ComponentAttrSpec_len is not set properly.
             // FMZ 6/15/2009 : this should be ok
                printf ("Error: ComponentAttrSpec_len used as an attribute specifier (unclear how to process this) \n");
                ROSE_ASSERT(false);
-#endif
                break;
 
        // DQ (8/29/2010): Added support for new enum values
@@ -4586,7 +4563,7 @@ convertTypeOnStackToArrayType( int count )
   // Remove the base_type from the astTypeStack, before we push the new arrayType
   // astTypeStack.pop_front();
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of convertTypeOnStackToArrayType()");
 #endif
@@ -6317,7 +6294,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                     outputState("In processAttributeSpecStack(): After processing type for AttrSpec_DIMENSION");
 #endif
                  // Increment as many times as required past this dimension case.
-                    while ((*i == AttrSpec_DIMENSION || *i == ComponentAttrSpec_dimension) )
+                    while (i != astAttributeSpecStack.end() && (*i == AttrSpec_DIMENSION || *i == ComponentAttrSpec_dimension) )
                        {
                          i++;
                        }
@@ -6354,6 +6331,36 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
                     i++;
 
                  // astAttributeSpecStack.pop_front();
+                    break;
+                  }
+
+               case AttrSpec_COPOINTER:
+                  {
+                    if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                         printf ("found a COPOINTER spec \n");
+
+                    ROSE_ASSERT(!astBaseTypeStack.empty());
+
+                    if (!astTypeStack.empty()) astTypeStack.pop_front();
+
+                    SgPointerType* pointerType = astTypeStack.empty()?
+                            new SgPointerType(astBaseTypeStack.front()):
+                            new SgPointerType(astTypeStack.front());  // use the top of astTypeStack as the base type.
+                    pointerType->set_isCoArray(true);                 // a copointer is a pointer whose isCoArray flag is true.
+
+                    if (astTypeStack.empty())
+                       {
+                         astBaseTypeStack.pop_front();
+                         ROSE_ASSERT(astBaseTypeStack.empty());
+                         astBaseTypeStack.push_front(pointerType);
+                       }
+                      else
+                       {
+                         astTypeStack.pop_front();
+                         ROSE_ASSERT(astTypeStack.empty());
+                         astTypeStack.push_front(pointerType);
+                       }
+                    i++;
                     break;
                   }
 
@@ -6405,7 +6412,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
             // subsequent variables.
             // if ( (*j != AttrSpec_DIMENSION) && (*j != ComponentAttrSpec_dimension) )
                if ( (*j != AttrSpec_DIMENSION) && (*j != ComponentAttrSpec_dimension) &&
-                    (*j != AttrSpec_POINTER)   && (*j != ComponentAttrSpec_pointer) )
+                    (*j != AttrSpec_POINTER)   && (*j != ComponentAttrSpec_pointer) && (*j != AttrSpec_COPOINTER))
                   {
                  // printf ("Save the attribute = %d \n",*j);
                     savedAttributes.push_back(*j);

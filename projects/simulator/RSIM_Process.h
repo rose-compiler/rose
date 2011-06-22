@@ -19,7 +19,7 @@ public:
           terminated(false), termination_status(0), core_flags(0), btrace_file(NULL),
           vdso_mapped_va(0), vdso_entry_va(0),
           core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000) {
-        RTS_rwlock_init(&instance_rwlock, NULL);
+        RTS_rwlock_init(&instance_rwlock, RTS_LAYER_RSIM_PROCESS_OBJ, NULL);
         ctor();
     }
 
@@ -40,7 +40,6 @@ private:
 
 public:
 
-    //@{
     /** Returns the read-write lock for this object.
      *
      *  Although most RSIM_Process methods are already thread safe, it is sometimes necessary to protect access to data members
@@ -48,14 +47,16 @@ public:
      *  and RTS_WRITE.  The returned lock is the same lock as the inherently thread-safe methods of this class already use.
      *  See RTS_rwlock_rdlock() and RTS_rwlock_wrlock() for a description of the semantics.
      *
-     *  These locks should be held for as little time as possible, and certainly not over a system call that might block. */
+     *  These locks should be held for as little time as possible, and certainly not over a system call that might block.
+     *
+     *  @{ */
     RTS_rwlock_t &rwlock() {
         return instance_rwlock;
     }
     RTS_rwlock_t &rwlock() const {
         return instance_rwlock;
     }
-    //@}
+    /** @} */
 
 
 
@@ -97,18 +98,19 @@ public:
      * bitwise OR of the facilityBitMask() for each enabled facility. */
     unsigned get_tracing_flags() const;
 
-    //@{
     /** Obtain the set of callbacks for this object.  Many of the process callbacks are used to initialize thread callbacks
      *  when a new thread is created.
      *
-     *  Thread safety:  This method is thread safe.  Furthermore, most methods of the returned object are also thread safe. */
+     *  Thread safety:  This method is thread safe.  Furthermore, most methods of the returned object are also thread safe.
+     *
+     *  @{ */
     RSIM_Callbacks &get_callbacks() {
         return callbacks;
     }
     const RSIM_Callbacks &get_callbacks() const {
         return callbacks;
     }
-    //@}
+    /** @} */
 
     /** Set all callbacks for this process.  Note that callbacks can be added or removed individually by invoking methods on
      *  the callback object return by get_callbacks().
@@ -352,10 +354,10 @@ private:
         Clone(RSIM_Process *process, unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va, const pt_regs_32 &regs)
             : process(process), flags(flags), newtid(-1), seq(-1),
               parent_tid_va(parent_tid_va), child_tls_va(child_tls_va), regs(regs) {
-            pthread_mutex_init(&mutex, NULL);
+            RTS_mutex_init(&mutex, RTS_LAYER_RSIM_PROCESS_CLONE_OBJ, NULL);
             pthread_cond_init(&cond, NULL);
         }
-        pthread_mutex_t mutex;                  /**< Protects entire structure. */
+        RTS_mutex_t mutex;                      /**< Protects entire structure. */
         pthread_cond_t  cond;                   /**< For coordinating between creating thread and created thread. */
         RSIM_Process    *process;               /**< Process creating the new thread. */
         unsigned        flags;                  /**< Various CLONE_* flags passed to the clone system call. */

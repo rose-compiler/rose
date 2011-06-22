@@ -13,6 +13,8 @@ include_HEADERS = chkptRangeAnalysis.h
 noinst_PROGRAMS = selfTest
 selfTest_SOURCES = selfTest.C
 selfTest_LDADD = libSafchkptRangeAnalysis.la \
+                 $(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
+                 $(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
                  $(SAF_BUILD_ROOT)/src/lattice/libSaflattice.la \
                  $(SAF_BUILD_ROOT)/src/common/libSafcommon.la \
                  $(SAF_BUILD_ROOT)/src/cfgUtils/libSafcfgUtils.la \
@@ -21,10 +23,7 @@ selfTest_LDADD = libSafchkptRangeAnalysis.la \
                  $(SAF_BUILD_ROOT)/src/unionFind/libSafunionFind.la \
                  $(SAF_BUILD_ROOT)/src/varBitVector/libSafvarBitVector.la \
 		 $(SAF_BUILD_ROOT)/src/rwAccessLabeler/libSafrwAccessLabeler.la \
-		 $(SAF_BUILD_ROOT)/src/arrIndexLabeler/libSafarrIndexLabeler.la \
-                 $(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la \
-                 $(SAF_BUILD_ROOT)/src/simpleAnalyses/libSafsimpleAnalyses.la \
-                 $(SAF_BUILD_ROOT)/src/analysis/libSafanalysis.la
+		 $(SAF_BUILD_ROOT)/src/arrIndexLabeler/libSafarrIndexLabeler.la
 
 selfTest_LDADD += $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 

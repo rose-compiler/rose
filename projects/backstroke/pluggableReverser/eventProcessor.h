@@ -78,7 +78,10 @@ private:
 	//! This is used for fossil collection
 	SgExpression* popVal_front(SgType* type);
 
+	SgExpression* cloneValueExp(SgExpression* value, SgType* type);
 
+	SgExpression* assignPointerExp(SgExpression* lhs, SgExpression* rhs, SgType* lhsType, SgType* rhsType);
+	
 public:
 
 	EventProcessor(IVariableFilter* varFilter = NULL);
@@ -108,7 +111,7 @@ public:
 	bool checkForInitialVersions(const VariableVersionTable& var_table);
 
 	//! Get all declarations of stacks which store values of different types.
-	std::vector<SgVariableDeclaration*> getAllStackDeclarations() const;
+	std::vector<SgVariableDeclaration*> getStackDeclarationsForLastEvent() const;
 
 	void setVariableRenaming(VariableRenaming* var_renaming)
 	{ var_renaming_ = var_renaming; }

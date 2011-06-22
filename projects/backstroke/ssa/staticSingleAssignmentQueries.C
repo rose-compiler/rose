@@ -479,9 +479,10 @@ bool StaticSingleAssignment::isPrefixOfName(VarName name, VarName prefix)
 	return true;
 }
 
-const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getReachingDefsAtNode(SgNode* node) const
+const static StaticSingleAssignment::NodeReachingDefTable emptyTable;
+
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getOutgoingDefsAtNode(SgNode* node) const
 {
-	const static NodeReachingDefTable emptyTable;
 	GlobalReachingDefTable::const_iterator reachingDefsIter = reachingDefsTable.find(node);
 	if (reachingDefsIter == reachingDefsTable.end())
 	{
@@ -489,13 +490,31 @@ const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getR
 	}
 	else
 	{
-		return reachingDefsIter->second.second;
+		if (isSgFunctionDefinition(node))
+			return reachingDefsIter->second.first;
+		else
+			return reachingDefsIter->second.second;
+	}
+}
+
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getReachingDefsAtNode_(SgNode* node) const
+{
+	GlobalReachingDefTable::const_iterator reachingDefsIter = reachingDefsTable.find(node);
+	if (reachingDefsIter == reachingDefsTable.end())
+	{
+		return emptyTable;
+	}
+	else
+	{
+		if (isSgFunctionDefinition(node))
+			return reachingDefsIter->second.second;
+		else
+			return reachingDefsIter->second.first;
 	}
 }
 
 const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getUsesAtNode(SgNode* node) const
 {
-	const static NodeReachingDefTable emptyTable;
 	UseTable::const_iterator usesIter = useTable.find(node);
 	if (usesIter == useTable.end())
 	{
@@ -504,6 +523,19 @@ const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getU
 	else
 	{
 		return usesIter->second;
+	}
+}
+
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getDefsAtNode(SgNode* node) const
+{
+	boost::unordered_map<SgNode*, NodeReachingDefTable>::const_iterator defsIter = ssaLocalDefTable.find(node);
+	if (defsIter == ssaLocalDefTable.end())
+	{
+		return emptyTable;
+	}
+	else
+	{
+		return defsIter->second;
 	}
 }
 
@@ -611,7 +643,7 @@ StaticSingleAssignment::NodeReachingDefTable StaticSingleAssignment::getLastVers
 
 		void visit(SgNode* node)
 		{
-			const NodeReachingDefTable& reachingDefsHere = ssa->getReachingDefsAtNode(node);
+			const NodeReachingDefTable& reachingDefsHere = ssa->getOutgoingDefsAtNode(node);
 
 			foreach(const NodeReachingDefTable::value_type& varDefPair, reachingDefsHere)
 			{
@@ -628,6 +660,24 @@ StaticSingleAssignment::NodeReachingDefTable StaticSingleAssignment::getLastVers
 	VersionsTraversal defsTrav;
 	defsTrav.ssa = this;
 	defsTrav.traverse(func->get_definingDeclaration(), preorder);
-
-	return defsTrav.lastVersions;
+	NodeReachingDefTable& lastVersions = defsTrav.lastVersions;
+	
+	//We also have to explicitly handle phi nodes inserted at the end of the function.
+	//These are stored as the IN definition of the SgFunctionDefinition node
+	ROSE_ASSERT(func->get_definition() != NULL);
+	GlobalReachingDefTable::const_iterator defsAtSgFunctionDefIter = reachingDefsTable.find(func->get_definition());
+	if (defsAtSgFunctionDefIter != reachingDefsTable.end())
+	{
+		foreach(const NodeReachingDefTable::value_type& varDefPair, defsAtSgFunctionDefIter->second.first)
+		{
+			const VarName& var = varDefPair.first;
+			ROSE_ASSERT(varDefPair.second->getRenamingNumber() >= 0);
+			if (lastVersions.count(var) == 0 || lastVersions[var]->getRenamingNumber() < varDefPair.second->getRenamingNumber())
+			{
+				lastVersions[var] = varDefPair.second;
+			}
+		}
+	}
+	
+	return lastVersions;
 }

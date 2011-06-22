@@ -1,0 +1,50 @@
+program event_test
+
+    event,allocatable:: a_event_recv(:)[*]
+    event,allocatable:: a_event_send(:)[*]
+    event,allocatable:: s_event[*]
+
+    integer(4) :: rank
+    integer(4) :: size
+    integer(4) :: partner_0
+
+    size = team_size()
+    rank = team_rank()
+
+    partner_0 = size-1
+
+    allocate(a_event_recv(10)[])
+    allocate(a_event_send(10)[])
+
+
+    if (rank .eq. 0) then
+      write(*, '(A)') "event_test_1 OK: allocate events"
+    endif 
+    call team_barrier()
+    call event_init(a_event_recv,10)
+    call event_init(a_event_send,10)
+
+    if (rank .eq. 0) then
+      write(*, '(A)') "event_test_1 OK:  event_init"
+    endif 
+
+    call team_barrier()
+
+    if (rank .eq. 0) then
+      call event_notify(a_event_recv(1))
+      write(*, '(A)') "event_test_1 OK: event notify local "
+    else  
+    if (rank .eq. partner_0) then
+      call event_wait(a_event_recv(1)[0@team_world])
+    end if
+    end if 
+
+    call team_barrier()
+
+    if (rank .eq. 0) then
+      write(*, '(A)') "event_test_1 OK: event wait. "
+    end if 
+
+    call team_barrier()
+
+end program event_test

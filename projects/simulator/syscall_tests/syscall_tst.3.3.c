@@ -123,7 +123,7 @@ void setup(void)
 	TEST_PAUSE;
 
 	/* create a temporary filename */
-	sprintf(fifo, "%s.%d", fifo, getpid());
+	sprintf(fifo+strlen(fifo), ".%d", getpid());
 
 	/* Create a temporary directory and cd to it */
 	tst_tmpdir();

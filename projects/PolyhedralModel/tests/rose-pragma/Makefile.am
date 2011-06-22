@@ -1,25 +1,76 @@
 
-include ../../makefile.inc
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-include ../../src/test-rose-pragma/make_rule.inc
+#include ../../makefile.inc
+
+#include ../../src/test-rose-pragma/make_rule.inc
+#include ../../src/rose-pragma/make_rule.inc
+#include ../../src/rose/make_rule.inc
+#include ../../src/common/make_rule.inc
+#include ../../src/maths/make_rule.inc
+#include ../../src/system/make_rule.inc
+
+bin_PROGRAMS = polyhedral-annotation dependency
+
+if ROSE_USE_CLOOG
+bin_PROGRAMS += code-generation generate-all-schedules
+endif
+
+LDADD = ../../src/libPolyModel.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+polyhedral_annotation_SOURCES         = polyhedral-annotation.cpp
+polyhedral_annotation_CXXFLAGS        = \
+  -I $(srcdir)/../../src/ \
+  -I $(srcdir)/../../../pragmaParsing \
+  -I$(PPL_PATH)/include \
+  $(ROSE_INCLUDES)
+polyhedral_annotation_LDADD           = $(LDADD)
+polyhedral_annotation_bindir          = $(includedir)/polyhedral-model/rose-pragma/
+
+dependency_SOURCES         = dependency.cpp
+dependency_CXXFLAGS        = \
+  -I $(srcdir)/../../src/ \
+  -I $(srcdir)/../../../pragmaParsing \
+  -I$(PPL_PATH)/include \
+  $(ROSE_INCLUDES)
+dependency_LDADD           = $(LDADD)
+dependency_bindir          = $(includedir)/polyhedral-model/rose-pragma/
+
+code_generation_SOURCES         = code-generation.cpp
+code_generation_CXXFLAGS        = \
+  -I $(srcdir)/../../src/ \
+  -I $(srcdir)/../../../pragmaParsing \
+  -I$(PPL_PATH)/include \
+  $(ROSE_INCLUDES) \
+  -DCLOOG_INT_GMP -I$(CLOOG_PATH)/include
+code_generation_LDADD           = $(LDADD)
+code_generation_bindir          = $(includedir)/polyhedral-model/rose-pragma/
+
+generate_all_schedules_SOURCES         = generate-all-schedules.cpp
+generate_all_schedules_CXXFLAGS        = \
+  -I $(srcdir)/../../src/ \
+  -I $(srcdir)/../../../pragmaParsing \
+  -I$(PPL_PATH)/include \
+  $(ROSE_INCLUDES) \
+  -DCLOOG_INT_GMP -I$(CLOOG_PATH)/include
+generate_all_schedules_LDADD           = $(LDADD)
+generate_all_schedules_bindir          = $(includedir)/polyhedral-model/rose-pragma/
 
 TEST_CODES = \
 matcolsum.c \
 matsum.c
 
-$(TEST_CODES): $(bin_dir)/test-rose-pragma-polyhedric-annotation \
-				$(bin_dir)/test-rose-pragma-dependency \ 
-				$(bin_dir)/test-rose-pragma-code-generation \
-				$(bin_dir)/test-rose-pragma-generate-all-schedules
-	$(bin_dir)/test-rose-pragma-polyhedric-annotation $(srcdir)/$@ > $(@:.c=.scop)
-	$(bin_dir)/test-rose-pragma-dependency $(srcdir)/$@ > $(@:.c=.deps)
+
+$(TEST_CODES): $(bin_PROGRAMS)
+	./polyhedral-annotation $(srcdir)/test-codes/$@ > $(@:.c=.scop)
+	./dependency $(srcdir)/test-codes/$@ > $(@:.c=.deps)
 if ROSE_USE_CLOOG
-	$(bin_dir)/test-rose-pragma-code-generation $(srcdir)/$@
+	./code-generation $(srcdir)/test-codes/$@
 	@rm -rf $(@:.c=)
 	@mkdir -p $(@:.c=)
-	$(bin_dir)/test-rose-pragma-generate-all-schedules $(srcdir)/$@ $(@:.c=)
+	./generate-all-schedules $(srcdir)/test-codes/$@ $(@:.c=)
 endif
-	
+
 
 check-local:
 	@$(MAKE) $(TEST_CODES)
@@ -27,4 +78,7 @@ check-local:
 clean-local:
 	rm -rf $(TEST_CODES:.c=)
 	rm -f rose_*.c *.scop *.deps
-	
+
+../../src/libPolyModel.la:
+	make -C ../../src
+

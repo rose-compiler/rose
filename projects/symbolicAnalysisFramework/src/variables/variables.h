@@ -29,6 +29,7 @@ void initVariables(SgProject* project);*/
 // virtual base class for other variable expressions
 class variable
 {
+	public:
 	//const char* str();
 	virtual string str() const = 0;
 	
@@ -43,6 +44,8 @@ class variable
 	
 	// returns true if this variable is global and false otherwise
 	virtual bool isGlobal() const=0;
+	
+	virtual ~variable() {}
 };
 
 // type of variable ids, their sets and maps of sets
@@ -107,7 +110,7 @@ class varID : public variable
 	// initializes this object from the given SgInitializedName (assumed that isValidVarExp(name) is true)
 	bool init(SgInitializedName* name);
 	
-	bool operator = (const variable &that);
+	void operator = (const variable &that);
 	
 	// recursive function that pulls the SgInitializedNames of all the SgVarRefExps inside this SgDotExp
 	// returns true on success, false on failure
@@ -194,9 +197,11 @@ public:
 	 *** OUTPUT ***
 	 **************/
 	
-	// string representation of the variable reference
+	// string representation of the variable reference.
+	// If noAnnot is true, excludes annotations from the name.
 	//const char* str();
 	string str() const;
+	string str(bool noAnnot) const;
 	
 	// string representation of the variable reference, with variable/field names augmented with 
 	// the line numbers where they were defined. File names are omitted for brevity	
@@ -207,7 +212,7 @@ public:
 	// with the pointers to their declarations
 	//const char* str_ptr();
 	string str_ptr() const;
-	
+		
 	/**********************
 	 *** SEMANTINC INFO ***
 	 **********************/
@@ -239,6 +244,10 @@ public:
 	// returns this variable's ID
 	long getID() const;
 };
+
+ostream &operator<<(ostream &stream, varID v);
+ostream &operator<<(ostream &stream, const set<varID>::iterator& v);
+//ostream &operator<<(ostream &stream, const set<varID>::const_iterator& v);
 
 //bool operator == ( const varID &one, const varID &two);
 
@@ -274,8 +283,11 @@ typedef map<quad, setQuad *> m_quad2setPtr;
    ###### FUNCTION PROTOTYPES ######
    ################################# */
 
-// convert from variable id to variable name
-std::string getVariableName( varID var );
+// Returns the varID that corresponds to the given SgExpression
+varID SgExpr2Var(SgExpression* expr);
+
+// Returns true if the given expression can be interepreted as a concrete variable
+bool isVarExpr(SgExpression* expr);
 
 // translate from an expression that uses a variable to that variable's unique id
 // currently supported: a (SgVarRefExp), a.i (SgDotExp), 

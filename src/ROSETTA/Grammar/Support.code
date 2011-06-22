@@ -3835,6 +3835,7 @@ HEADER_SYMBOL_TABLE_START
 
       //! Outputs symbol table information (useful for debugging)
           void print( std::string label, VariantT nodeType = V_SgSymbol );
+          void print();
        // void print( std::string label );
 
        // Output to ostream (this function is not implemented)
@@ -7896,6 +7897,11 @@ SgSymbolTable::count_aliases(const SgName & nm) const
      return count;
    }
 
+void
+SgSymbolTable::print( ) // Liao 5/5/2011. Added this to support calling this from gdb
+  {
+    print ("default settings", V_SgSymbol);
+  }
 void
 SgSymbolTable::print( std::string label, VariantT nodeType )
    {
@@ -14729,23 +14735,18 @@ SgIncidenceDirectedGraph::post_construction_initialization()
 
 bool
 SgIncidenceDirectedGraph::checkIfGraphEdgeExists(SgGraphNode* src) {
-  //SgGraphEdgeList* gedges = get_edgesOut();
-  rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesOut();
-  bool exists = false;
-  rose_graph_integer_edge_hash_multimap::iterator it = edges.find(src->get_index());
-  if (it!=edges.end()) {
-    exists=true;
-  }
-  return exists;
+  const rose_graph_integer_edge_hash_multimap& edges = get_node_index_to_edge_multimap_edgesOut();
+  rose_graph_integer_edge_hash_multimap::const_iterator it = edges.find(src->get_index());
+  
+  return (it != edges.end());
 }
 
 std::set <SgGraphEdge*>
 SgIncidenceDirectedGraph::getEdge(SgGraphNode* src) {
-  //SgGraphEdgeList* gedges = get_edgesOut();
-  rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesOut();
+  const rose_graph_integer_edge_hash_multimap& edges = get_node_index_to_edge_multimap_edgesOut();
   set<SgGraphEdge*> medges;
-  rose_graph_integer_edge_hash_multimap::iterator it1, it2;
-  pair <rose_graph_integer_edge_hash_multimap::iterator, rose_graph_integer_edge_hash_multimap::iterator> iter =
+  rose_graph_integer_edge_hash_multimap::const_iterator it1, it2;
+  pair <rose_graph_integer_edge_hash_multimap::const_iterator, rose_graph_integer_edge_hash_multimap::const_iterator> iter =
     edges.equal_range(src->get_index());
   it1 = iter.first;
   it2 = iter.second;
@@ -14765,9 +14766,9 @@ SgIncidenceDirectedGraph::getEdge(SgGraphNode* src) {
 void
 SgIncidenceDirectedGraph::getSuccessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec ) {
   //SgGraphEdgeList* gedges = get_edgesOut();
-  rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesOut();
-  rose_graph_integer_edge_hash_multimap::iterator it1, it2;
-  pair <rose_graph_integer_edge_hash_multimap::iterator, rose_graph_integer_edge_hash_multimap::iterator> iter =
+  const rose_graph_integer_edge_hash_multimap& edges = get_node_index_to_edge_multimap_edgesOut();
+  rose_graph_integer_edge_hash_multimap::const_iterator it1, it2;
+  pair <rose_graph_integer_edge_hash_multimap::const_iterator, rose_graph_integer_edge_hash_multimap::const_iterator> iter =
     edges.equal_range(node->get_index());
   it1 = iter.first;
   it2 = iter.second;
@@ -14823,10 +14824,10 @@ SgIncidenceDirectedGraph::getPredecessors(SgGraphNode* node, std::vector <SgGrap
 set<SgDirectedGraphEdge*>
 SgIncidenceDirectedGraph::getDirectedEdge(SgGraphNode* src, SgGraphNode* trg) {
   //SgGraphEdgeList* gedges = get_edgesOut();
-  rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesOut();
+  const rose_graph_integer_edge_hash_multimap& edges = get_node_index_to_edge_multimap_edgesOut();
   set<SgDirectedGraphEdge*> medges;
-  rose_graph_integer_edge_hash_multimap::iterator it1, it2;
-  pair <rose_graph_integer_edge_hash_multimap::iterator, rose_graph_integer_edge_hash_multimap::iterator> iter =
+  rose_graph_integer_edge_hash_multimap::const_iterator it1, it2;
+  pair <rose_graph_integer_edge_hash_multimap::const_iterator, rose_graph_integer_edge_hash_multimap::const_iterator> iter =
     edges.equal_range(src->get_index());
   it1 = iter.first;
   it2 = iter.second;
@@ -14847,24 +14848,21 @@ SgIncidenceDirectedGraph::checkIfDirectedGraphEdgeExists(SgGraphNode* src, SgGra
     return false;
   if (trg==NULL)
     return false;
-  //  assert(src);
-  //assert(src->get_index());
-    
-  //  SgGraphEdgeList* gedges = get_edgesOut();
-  rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesOut();
-  bool exists = false;
-  rose_graph_integer_edge_hash_multimap::iterator it1, it2;
-  pair <rose_graph_integer_edge_hash_multimap::iterator, rose_graph_integer_edge_hash_multimap::iterator> iter = 
+
+  const rose_graph_integer_edge_hash_multimap& edges = get_node_index_to_edge_multimap_edgesOut();
+
+  rose_graph_integer_edge_hash_multimap::const_iterator it1, it2;
+  pair <rose_graph_integer_edge_hash_multimap::const_iterator, rose_graph_integer_edge_hash_multimap::const_iterator> iter = 
     edges.equal_range(src->get_index());
   it1 = iter.first;
   it2 = iter.second;
   for (;it1!=it2; ++it1) {
     SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it1->second);
-    SgGraphNode* target = isSgGraphNode(edge->get_to());
+    SgGraphNode* target = edge->get_to();
     if (target==trg)
-      exists=true;
+      return true;
   }
-  return exists;
+  return false;
 }
 
 

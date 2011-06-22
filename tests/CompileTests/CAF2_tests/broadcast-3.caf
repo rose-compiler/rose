@@ -1,0 +1,55 @@
+!
+! This program tests broadcasting of namelist variables: scalars and characters
+!
+	program broadcast_nml_var
+	namelist /list/ival, name
+	integer :: ival
+	character(10) :: name, nml_name
+	integer :: nprocs, me
+	integer :: nml_error
+	integer :: nml_in = 10
+	integer :: i, sum_ival, sum_global
+	character(8) :: nml_filename
+	logical :: test_result
+
+	sum_global = 0
+	ival = 0
+	test_result = .true.
+	nprocs = team_size()
+	me = team_rank()
+	sum_ival = nprocs * (nprocs + 1) / 2
+
+	if (me .eq. 0) then	
+	  nml_filename = 'test.in'
+	  open(nml_in, file = nml_filename, status = 'old', iostat = nml_error)
+	  read(nml_in, nml = list, iostat = nml_error)
+	end if
+
+	call team_broadcast(ival, 0_8)
+	call team_broadcast(name, 0_8)
+	nml_ival = ival
+	nml_name = name
+
+	do i = 0, nprocs - 1
+	  if (me .eq. i) then
+	    ival = nml_ival + me
+	  end if
+	  call team_broadcast(ival, i+0_8)
+	  call team_broadcast(name, i+0_8)
+	  if (me .eq. 0) then
+	    if (name .ne. nml_name) test_result = .false.
+	    name = ' '
+	    sum_global = sum_global + ival
+	  end if
+	end do
+
+	if (me .eq. 0) then
+	  if (sum_global .ne. sum_ival) test_result = .false.
+        end if
+
+	if (me .eq. 0) then
+	  if (test_result) write (*, '(A)') 'Test passed.'
+	  if (.not. test_result) write (*, '(A)') 'Test failed.'
+	end if
+
+	end program broadcast_nml_var

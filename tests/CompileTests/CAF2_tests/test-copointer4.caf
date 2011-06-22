@@ -1,0 +1,6 @@
+! copointer to "coscalar"
+program prog4
+ integer, copointer:: cp[*]
+ cp[][2] = 5  
+end program
+

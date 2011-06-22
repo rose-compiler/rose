@@ -22,7 +22,10 @@ libbinaryMidend_la_SOURCES = \
      instructionSemantics/SymbolicSemantics.C \
      instructionSemantics/YicesSolver.C \
      instructionSemantics/VirtualMachineSemantics.C \
-     GraphAlgorithms.C
+     GraphAlgorithms.C \
+     BinaryControlFlow.C \
+     BinaryDominance.C \
+     BinaryFunctionCall.C
 else
 libbinaryMidend_la_SOURCES = dummyBinaryMidend.C
 endif
@@ -59,7 +62,10 @@ include_HEADERS = \
    instructionSemantics/x86InstructionSemantics.h \
    libraryIdentification/functionIdentification.h \
    libraryIdentification/libraryIdentification.h \
-   ether.h
+   ether.h \
+   BinaryControlFlow.h \
+   BinaryDominance.h \
+   BinaryFunctionCall.h
 
 
 EXTRA_DIST = CMakeLists.txt dummyBinaryMidend.C

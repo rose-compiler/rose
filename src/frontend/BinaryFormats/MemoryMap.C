@@ -301,7 +301,7 @@ MemoryMap::insert(MapElement add)
         while (i!=elements.end()) {
             MapElement &old = *i;
             if (add.merge(old)) {
-                elements.erase(i);
+                i = elements.erase(i);
             } else {
                 ++i;
             }
@@ -352,7 +352,7 @@ MemoryMap::erase(MapElement me)
                 tosave.offset += (me.va+me.size) - old.va;
                 saved.push_back(tosave);
             }
-            elements.erase(i);
+            i = elements.erase(i);
         }
 
         /* Now add saved elements back in. */
@@ -550,7 +550,7 @@ MemoryMap::mprotect(const MapElement &region, bool relax/*=false*/)
                 right.set_size(right_sz);
                 created.push_back(right);
 
-                elements.erase(i);
+                i = elements.erase(i);
             } else {
                 /* other is right of region; skip it */
                 i++;
@@ -574,7 +574,7 @@ MemoryMap::mprotect(const MapElement &region, bool relax/*=false*/)
             right.set_mapperms(region.get_mapperms());
             created.push_back(right);
 
-            elements.erase(i);
+            i = elements.erase(i);
         } else {
             /* other contains entire region and extends left and right; split into three parts */
             size_t left_sz = region.get_va() - other.get_va();
@@ -600,7 +600,7 @@ MemoryMap::mprotect(const MapElement &region, bool relax/*=false*/)
             right.set_size(right_sz);
             created.push_back(right);
             
-            elements.erase(i);
+            i = elements.erase(i);
         }
     }
 
