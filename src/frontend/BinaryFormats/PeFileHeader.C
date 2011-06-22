@@ -661,7 +661,7 @@ SgAsmPEFileHeader::reallocate()
          * it here as being the minimum RVA from all the sections defined in the PE Section Table, but not smaller
          * than the value according to the specification. This alternate value is kept if it's already in the parse tree,
          * otherwise we use the correct value. (RPM 2008-10-21) */
-        rose_addr_t min_offset;
+        rose_addr_t min_offset = 0;
         for (size_t i=0, nfound=0; i<all->get_sections().size(); i++) {
             SgAsmPESection *pesec = dynamic_cast<SgAsmPESection*>(all->get_sections()[i]);
             if (pesec && pesec->get_section_entry()!=NULL) {
@@ -732,6 +732,7 @@ SgAsmPEFileHeader::reallocate()
         encode((PE64OptHeader_disk*)oh);
         rvasize_offset = sizeof(PE64OptHeader_disk);
     } else {
+        delete[] oh;
         throw FormatError("unsupported PE word size");
     }
     while (oh_size>p_e_nt_hdr_size) {
@@ -821,7 +822,12 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     time_t t = p_e_time;
     char time_str[128];
-    strftime(time_str, sizeof time_str, "%c", localtime(&t));
+    struct tm *tm = localtime(&t);
+    if (tm) {
+        strftime(time_str, sizeof time_str, "%c", tm);
+    } else {
+        strcpy(time_str, "INVALID");
+    }
 
     SgAsmGenericHeader::dump(f, p, -1);
     fprintf(f, "%s%-*s = 0x%04x (%u)\n",               p, w, "e_cpu_type",          p_e_cpu_type, p_e_cpu_type);
@@ -865,7 +871,8 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_num_rvasize_pairs", p_e_num_rvasize_pairs);
     for (unsigned i = 0; i < p_rvasize_pairs->get_pairs().size(); i++) {
         char p2[256];
-        sprintf(p2, "%s.pair[%d].", p, i);
+        int nprint = snprintf(p2, sizeof p2, "%s.pair[%d].", p, i);
+        assert(nprint<sizeof p2);
         w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p2));
         fprintf(f, "%s%-*s = rva %s,\tsize 0x%08"PRIx64" (%"PRIu64")\n", p2, w, "..",
                 p_rvasize_pairs->get_pairs()[i]->get_e_rva().to_string().c_str(),

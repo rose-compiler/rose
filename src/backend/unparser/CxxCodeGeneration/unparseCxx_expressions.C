@@ -1826,15 +1826,25 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
                     if (lhsClassDeclaration->get_firstNondefiningDeclaration() != functionClassDeclaration->get_firstNondefiningDeclaration())
                        {
 #if 1
-                         printf ("Warning: lhs and member function from different classes (linked though class derivation) \n");
+                        if (SgProject::get_verbose() > 0)
+                        {
+                            printf ("Warning: lhs and member function from different classes (linked though class derivation) \n");
+                        }
                          curprint ( "/* Warning: lhs and member function from different classes (linked though class derivation) */\n ");
 #endif
-                      // set<SgSymbol*> & hiddenList = functionClassDefinition->get_hidden_declaration_list();
-                         printf ("lhsClassDefinition = %p functionClassDefinition = %p \n",lhsClassDefinition,functionClassDefinition);
+
+                         if (SgProject::get_verbose() > 0)
+                         {
+                            printf ("lhsClassDefinition = %p functionClassDefinition = %p \n",lhsClassDefinition,functionClassDefinition);
+                         }
                          ROSE_ASSERT(lhsClassDefinition != NULL || functionClassDefinition != NULL);
-                      // set<SgSymbol*> & hiddenList = lhsClassDefinition->get_hidden_declaration_list();
+
+
                          set<SgSymbol*> & hiddenList = (lhsClassDefinition != NULL) ? lhsClassDefinition->get_hidden_declaration_list() : functionClassDefinition->get_hidden_declaration_list();
-                         printf ("Looking for symbol = %p \n",memberFunctionSymbol);
+                         if (SgProject::get_verbose() > 0)
+                         {
+                            printf ("Looking for symbol = %p \n",memberFunctionSymbol);
+                         }
                          set<SgSymbol*>::iterator hiddenDeclaration = hiddenList.find(memberFunctionSymbol);
                          if ( hiddenDeclaration != hiddenList.end() )
                             {
@@ -2680,7 +2690,7 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
 
   // DQ (6/15/2005): reinterpret_cast always needs parens
      if (addParens == true)
-          curprint ( "/* part of cast */ (");
+          curprint ( " (");
 
   // DQ (6/21/2011): Added support for name qualification.
      info.set_reference_node_for_qualification(cast_op->get_operand());
@@ -3513,7 +3523,6 @@ Unparse_ExprStmt::unparsePseudoDtorRef(SgExpression* expr, SgUnparse_Info & info
    }
 
 // TV (05/06/2010): CUDA, Kernel call unparse
-
 void Unparse_ExprStmt::unparseCudaKernelCall(SgExpression* expr, SgUnparse_Info& info) {
 
      SgCudaKernelCallExp* kernel_call = isSgCudaKernelCallExp(expr);
@@ -3523,7 +3532,7 @@ void Unparse_ExprStmt::unparseCudaKernelCall(SgExpression* expr, SgUnparse_Info&
      
      SgCudaKernelExecConfig * exec_config = isSgCudaKernelExecConfig(kernel_call->get_exec_config());
      ROSE_ASSERT(exec_config != NULL);
-     
+
      curprint ("<<<");
      
      SgExpression * grid_exp = exec_config->get_grid();
