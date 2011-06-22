@@ -12,7 +12,7 @@ add_subdirectory(Disassemblers)
 #TP COMMENTED OUT FOR NOW. ADD LATER
 #if (NOT WIN32)
 add_subdirectory(PHPFrontend)
-add_subdirectory(PythonFrontend)
+#add_subdirectory(PythonFrontend)
 #endif (NOT WIN32)
 
 ########### install files ###############
