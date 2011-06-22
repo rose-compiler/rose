@@ -376,66 +376,66 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
         }
        else
         {
-  // This is the code that was always used before the addition of type names generated from where name qualification of subtypes are required.
-     switch (type->variant())
-        {
-          case T_UNKNOWN:            curprint ( get_type_name(type) + " ");          break;
-          case T_CHAR:
-          case T_SIGNED_CHAR:
-          case T_UNSIGNED_CHAR:
-          case T_SHORT:
-          case T_SIGNED_SHORT:
-          case T_UNSIGNED_SHORT:
-          case T_INT:
-          case T_SIGNED_INT:
-          case T_UNSIGNED_INT:
-          case T_LONG:
-          case T_SIGNED_LONG:
-          case T_UNSIGNED_LONG:
-          case T_VOID:
-          case T_GLOBAL_VOID:
-          case T_WCHAR:
-          case T_FLOAT:
-          case T_DOUBLE:
-          case T_LONG_LONG:
-          case T_UNSIGNED_LONG_LONG:
-          case T_SIGNED_LONG_LONG:
-          case T_LONG_DOUBLE:
-          case T_STRING:
-          case T_BOOL:
-          case T_COMPLEX:
-          case T_IMAGINARY:
-          case T_DEFAULT:
-          case T_ELLIPSE:
+       // This is the code that was always used before the addition of type names generated from where name qualification of subtypes are required.
+          switch (type->variant())
              {
-               if ( ( info.isWithType() && info.SkipBaseType() ) || info.isTypeSecondPart() )
-                  { /* do nothing */; }
-                 else
-                  { curprint ( get_type_name(type) + " "); }
-               break;
-             }
+               case T_UNKNOWN:            curprint ( get_type_name(type) + " ");          break;
+               case T_CHAR:
+               case T_SIGNED_CHAR:
+               case T_UNSIGNED_CHAR:
+               case T_SHORT:
+               case T_SIGNED_SHORT:
+               case T_UNSIGNED_SHORT:
+               case T_INT:
+               case T_SIGNED_INT:
+               case T_UNSIGNED_INT:
+               case T_LONG:
+               case T_SIGNED_LONG:
+               case T_UNSIGNED_LONG:
+               case T_VOID:
+               case T_GLOBAL_VOID:
+               case T_WCHAR:
+               case T_FLOAT:
+               case T_DOUBLE:
+               case T_LONG_LONG:
+               case T_UNSIGNED_LONG_LONG:
+               case T_SIGNED_LONG_LONG:
+               case T_LONG_DOUBLE:
+               case T_STRING:
+               case T_BOOL:
+               case T_COMPLEX:
+               case T_IMAGINARY:
+               case T_DEFAULT:
+               case T_ELLIPSE:
+                  {
+                    if ( ( info.isWithType() && info.SkipBaseType() ) || info.isTypeSecondPart() )
+                       { /* do nothing */; }
+                      else
+                       { curprint ( get_type_name(type) + " "); }
+                    break;
+                  }
 
-          case T_POINTER:            unparsePointerType(type, info);          break;
-          case T_MEMBER_POINTER:     unparseMemberPointerType(type, info);    break;
-          case T_REFERENCE:          unparseReferenceType(type, info);        break;
-       // case T_NAME:               unparseNameType(type, info);             break;
-          case T_CLASS:              unparseClassType(type, info);            break;
-          case T_ENUM:               unparseEnumType(type, info);             break;
-          case T_TYPEDEF:            unparseTypedefType(type, info);          break;
-          case T_MODIFIER:           unparseModifierType(type, info);         break;
-          case T_QUALIFIED_NAME:     unparseQualifiedNameType(type, info);    break;
-          case T_PARTIAL_FUNCTION:
-          case T_FUNCTION:           unparseFunctionType(type, info);         break;
-          case T_MEMBERFUNCTION:     unparseMemberFunctionType(type, info);   break;
-          case T_ARRAY:              unparseArrayType(type, info);            break;
+               case T_POINTER:            unparsePointerType(type, info);          break;
+               case T_MEMBER_POINTER:     unparseMemberPointerType(type, info);    break;
+               case T_REFERENCE:          unparseReferenceType(type, info);        break;
+            // case T_NAME:               unparseNameType(type, info);             break;
+               case T_CLASS:              unparseClassType(type, info);            break;
+               case T_ENUM:               unparseEnumType(type, info);             break;
+               case T_TYPEDEF:            unparseTypedefType(type, info);          break;
+               case T_MODIFIER:           unparseModifierType(type, info);         break;
+               case T_QUALIFIED_NAME:     unparseQualifiedNameType(type, info);    break;
+               case T_PARTIAL_FUNCTION:
+               case T_FUNCTION:           unparseFunctionType(type, info);         break;
+               case T_MEMBERFUNCTION:     unparseMemberFunctionType(type, info);   break;
+               case T_ARRAY:              unparseArrayType(type, info);            break;
 
-          default:
-             {
-               printf("Error: Unparse_Type::unparseType(): Default case reached in switch: Unknown type %p = %s \n",type,type->class_name().c_str());
-               ROSE_ASSERT(false);
-               break;
+               default:
+                  {
+                    printf("Error: Unparse_Type::unparseType(): Default case reached in switch: Unknown type %p = %s \n",type,type->class_name().c_str());
+                    ROSE_ASSERT(false);
+                    break;
+                  }
              }
-        }
         }
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES

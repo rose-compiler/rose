@@ -171,6 +171,12 @@ class HiddenListTraversal : public AstTopDownBottomUpProcessing<HiddenListInheri
        // template parameters if required, my preference is to save the string for the whole time.
           void traverseType ( SgType* type, SgNode* nodeReferenceToType, SgScopeStatement* currentScope, SgStatement* positionStatement );
 
+       // DQ (6/21/2011): Added support to generate function names containging template arguments.
+          void traverseTemplatedFunction(SgFunctionRefExp* functionRefExp, SgNode* nodeReferenceToType, SgScopeStatement* currentScope, SgStatement* positionStatement );
+
+       // DQ (6/21/2011): Added function to store names with associated SgNode IR nodes.
+          void addToNameMap ( SgNode* nodeReferenceToType, std::string typeNameString );
+
        // This extracts the template arguments and calls the function to evaluate them.
           void evaluateTemplateInstantiationDeclaration ( SgDeclarationStatement* declaration, SgScopeStatement* currentScope, SgStatement* positionStatement );
 

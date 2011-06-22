@@ -467,6 +467,8 @@ HiddenListTraversal::requiresTypeElaboration(SgSymbol* symbol)
      ROSE_ASSERT(symbol != NULL);
      switch (symbol->variantT())
         {
+       // DQ (6/21/2011): Added case for SgFunctionSymbol (triggers type elaboration).
+          case V_SgFunctionSymbol:
           case V_SgMemberFunctionSymbol:
           case V_SgVariableSymbol:
                typeElaborationRequired = true;
@@ -1026,55 +1028,8 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                printf ("SageInterface::lookupSymbolInParentScopes(name,currentScope) returned NULL \n");
              }
 
-#if 1
        // Refactored this code to another member function so that it could also support evaluation of declarations found in types (more generally).
           evaluateTemplateInstantiationDeclaration(declaration,currentScope,positionStatement);
-#else
-       // DQ (6/1/2011): Added support for template arguments.
-          switch (declaration->variantT())
-             {
-               case V_SgTemplateInstantiationDecl:
-                  {
-                    SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(declaration);
-                    ROSE_ASSERT(templateInstantiationDeclaration != NULL);
-                    printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
-
-                 // Evaluate all template arguments.
-                    evaluateNameQualificationForTemplateArgumentList (templateInstantiationDeclaration->get_templateArguments(),currentScope,positionStatement);
-                    break;
-                  }
-
-               case V_SgTemplateInstantiationFunctionDecl:
-                  {
-                    SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(declaration);
-                    ROSE_ASSERT(templateInstantiationFunctionDeclaration != NULL);
-                    printf ("$$$$$$$$$ --- templateInstantiationFunctionDeclaration = %p \n",templateInstantiationFunctionDeclaration);
-
-                 // Evaluate all template arguments.
-                    evaluateNameQualificationForTemplateArgumentList (templateInstantiationFunctionDeclaration->get_templateArguments(),currentScope,positionStatement);
-                    break;
-                  }
-
-               case V_SgTemplateInstantiationMemberFunctionDecl:
-                  {
-                    SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(declaration);
-                    printf ("$$$$$$$$$ --- templateInstantiationMemberFunctionDeclaration = %p \n",templateInstantiationMemberFunctionDeclaration);
-                    ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration != NULL);
-
-                 // Evaluate all template arguments.
-                 // evaluateNameQualificationForTemplateArgumentList (templateInstantiationMemberFunctionDeclaration->get_templateArguments(),currentScope,positionStatement);
-                    SgTemplateArgumentPtrList & templateArgumentList = templateInstantiationMemberFunctionDeclaration->get_templateArguments();
-                    evaluateNameQualificationForTemplateArgumentList(templateArgumentList,currentScope,positionStatement);
-                    break;
-                  }
-
-               default:
-                  {
-                    printf ("This IR node does not contain template arguments to process. \n");
-                  }
-                
-             }
-#endif
 
        // At this point if there was any ambiguity in the first matching symbol that was found, then
        // we have resolved this to the correct type of symbol (SgClassSymbol, SgFunctionSymbol, etc.).
@@ -1810,9 +1765,19 @@ HiddenListTraversal::nameQualificationDepth ( SgInitializedName* initializedName
             // amountOfNameQualificationRequired = nameQualificationDepth(associatedDeclaration(initializedName->get_scope()),currentScope,positionStatement) + 1;
             // SgDeclarationStatement* declaration = associatedDeclaration(initializedName->get_scope());
 
+            // DQ (6/21/2011): This assertion fails for test2007_55.C.
             // DQ (6/5/2011): This assertion fails for test2005_114.C.
-               ROSE_ASSERT(declaration != NULL);
-               amountOfNameQualificationRequired = nameQualificationDepth(declaration,currentScope,positionStatement) + 1;
+            // ROSE_ASSERT(declaration != NULL);
+            // amountOfNameQualificationRequired = nameQualificationDepth(declaration,currentScope,positionStatement) + 1;
+               if (declaration != NULL)
+                  {
+                    amountOfNameQualificationRequired = nameQualificationDepth(declaration,currentScope,positionStatement) + 1;
+                  }
+                 else
+                  {
+                 // DQ (6/21/2011): This is the case for test2007_55.C.
+                    printf ("WARNING: there is no associated declaration! \n");
+                  }
              }
             else
              {
@@ -1947,6 +1912,44 @@ TestTraversal::visit(SgNode* n)
 #endif
 
 
+void
+HiddenListTraversal::addToNameMap ( SgNode* nodeReferenceToType, string typeNameString )
+   {
+  // DQ (6/21/2011): This is refactored code used in traverseType() and traverseTemplatedFunction().
+     bool isTemplateName = (typeNameString.find('<') != string::npos) && (typeNameString.find("::") != string::npos);
+     if (isTemplateName == true)
+        {
+          if (typeNameMap.find(nodeReferenceToType) == typeNameMap.end())
+             {
+               printf ("============== Inserting qualifier for name = %s into list at IR node = %p = %s \n",typeNameString.c_str(),nodeReferenceToType,nodeReferenceToType->class_name().c_str());
+               typeNameMap.insert(std::pair<SgNode*,std::string>(nodeReferenceToType,typeNameString));
+             }
+            else
+             {
+            // If it already existes then overwrite the existing information.
+               std::map<SgNode*,std::string>::iterator i = typeNameMap.find(nodeReferenceToType);
+               ROSE_ASSERT (i != typeNameMap.end());
+
+               string previousTypeName = i->second.c_str();
+               printf ("WARNING: replacing previousTypeName = %s with new typeNameString = %s for nodeReferenceToType = %p = %s \n",previousTypeName.c_str(),typeNameString.c_str(),nodeReferenceToType,nodeReferenceToType->class_name().c_str());
+
+               if (i->second != typeNameString)
+                  {
+                    i->second = typeNameString;
+
+#if 1
+                    printf ("Error: name in qualifiedNameMapForNames already exists and is different... nodeReferenceToType = %p = %s \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str());
+                    ROSE_ASSERT(false);
+#endif
+                 }
+#if 0
+               printf ("Error: name in qualifiedNameMapForNames already exists... nodeReferenceToType = %p = %s \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str());
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+   }
+
 
 void
 HiddenListTraversal::traverseType ( SgType* type, SgNode* nodeReferenceToType, SgScopeStatement* currentScope, SgStatement* positionStatement )
@@ -1999,10 +2002,13 @@ HiddenListTraversal::traverseType ( SgType* type, SgNode* nodeReferenceToType, S
              {
                printf ("Error: type names should not be this long... typeNameString.length() = %zu \n",typeNameString.length());
                ROSE_ASSERT(false);
-            }
+             }
 #endif
 
 #if 1
+       // DQ (6/21/2011): Refactored this code for use in traverseTemplatedFunction()
+          addToNameMap(nodeReferenceToType,typeNameString);
+#else
           bool isTemplateName = (typeNameString.find('<') != string::npos) && (typeNameString.find("::") != string::npos);
           if (isTemplateName == true)
              {
@@ -2041,10 +2047,79 @@ HiddenListTraversal::traverseType ( SgType* type, SgNode* nodeReferenceToType, S
         {
        // Output a message when we cheat on this IR node (even if this is a clue for George).
           printf ("Skipping precompuation of string for name qualified type = %p = %s \n",type,type->class_name().c_str());
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
         }
 
      printf ("<<<<< Ending traversal of type: type = %p = %s \n",type,type->class_name().c_str());
    }
+
+
+void
+HiddenListTraversal::traverseTemplatedFunction(SgFunctionRefExp* functionRefExp, SgNode* nodeReferenceToType, SgScopeStatement* currentScope, SgStatement* positionStatement )
+   {
+  // Called using traverseTemplatedFunction(functionRefExp,templateInstantiationFunctionDeclaration,currentScope,currentStatement)
+
+     ROSE_ASSERT(functionRefExp      != NULL);
+     ROSE_ASSERT(nodeReferenceToType != NULL);
+     ROSE_ASSERT(currentScope        != NULL);
+     ROSE_ASSERT(positionStatement   != NULL);
+
+  // printf ("Inside of traverseTemplatedFunction functionRefExp = %p currentScope = %p = %s \n",functionRefExp,currentScope,currentScope->class_name().c_str());
+
+     printf ("<<<<< Starting traversal of traverseTemplatedFunction functionRefExp = %p currentScope = %p = %s \n",functionRefExp,currentScope,currentScope->class_name().c_str());
+
+     
+     bool skipThisFunction = false;
+     if (skipThisFunction == false)
+        {
+          SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(functionRefExp->getAssociatedFunctionDeclaration());
+          if (templateInstantiationFunctionDeclaration != NULL)
+             {
+               printf ("Found a SgTemplateInstantiationFunctionDecl that will have template arguments that might require qualification. name = %s \n",templateInstantiationFunctionDeclaration->get_name().str());
+               evaluateTemplateInstantiationDeclaration(templateInstantiationFunctionDeclaration,currentScope,positionStatement);
+             }
+#if 1
+          SgUnparse_Info* unparseInfoPointer = new SgUnparse_Info();
+          ROSE_ASSERT (unparseInfoPointer != NULL);
+          unparseInfoPointer->set_outputCompilerGeneratedStatements();
+
+       // Avoid unpasing the class definition when unparseing the type.
+          unparseInfoPointer->set_SkipClassDefinition();
+#endif
+#if 1
+       // Associate the unparsing of this type with the statement or scope where it occures.
+       // This is the key to use in the lookup of the qualified name. But this is the correct key....
+       // unparseInfoPointer->set_reference_node_for_qualification(positionStatement);
+       // unparseInfoPointer->set_reference_node_for_qualification(currentScope);
+          unparseInfoPointer->set_reference_node_for_qualification(nodeReferenceToType);
+
+          string functionNameString = globalUnparseToString(functionRefExp,unparseInfoPointer);
+          printf ("++++++++++++++++ functionNameString (globalUnparseToString()) = %s \n",functionNameString.c_str());
+
+       // This is symptematic of an error which causes the whole class to be included with the class 
+       // definition.  This was fixed by calling unparseInfoPointer->set_SkipClassDefinition() above.
+          if (functionNameString.length() > 2000)
+             {
+               printf ("Error: function names should not be this long... functionNameString.length() = %zu \n",functionNameString.length());
+               ROSE_ASSERT(false);
+             }
+#endif
+
+       // DQ (6/21/2011): Refactored this code for use in traverseTemplatedFunction()
+          addToNameMap(nodeReferenceToType,functionNameString);
+        }
+
+     printf ("<<<<< Ending traversal of traverseTemplatedFunction functionRefExp = %p currentScope = %p = %s \n",functionRefExp,currentScope,currentScope->class_name().c_str());
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
 
 
 bool
@@ -2080,7 +2155,7 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
      Sg_File_Info* fileInfo = n->get_file_info();
      if (fileInfo != NULL)
         {
-           printf ("HiddenListTraversal: --- n = %p = %s line %d col = %d file = %s \n",n,n->class_name().c_str(),fileInfo->get_line(),fileInfo->get_col(),fileInfo->get_filenameString().c_str());
+          printf ("HiddenListTraversal: --- n = %p = %s line %d col = %d file = %s \n",n,n->class_name().c_str(),fileInfo->get_line(),fileInfo->get_col(),fileInfo->get_filenameString().c_str());
         }
 
   // Locations where name qualified references can exist:
@@ -2368,7 +2443,6 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
                traverseType(initializedName->get_type(),initializedName,currentScope,currentStatement);
              }
 #endif
-
         }
 
   // Handle references to SgFunctionDeclaration...
@@ -2695,34 +2769,39 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
                int amountOfNameQualificationRequired = nameQualificationDepth(functionDeclaration,currentScope,currentStatement);
                printf ("SgFunctionCallExp's function name: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 
-#if 1
             // DQ (6/9/2011): Support for test2011_78.C (we only qualify function call references where the function has been declared in 
             // a scope where it could be expected to be defined (e.g. not using a forward declaration in a SgBasicBlock, since the function
             // definition could not live in the SgBasicBlock.
                bool skipNameQualification = skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(functionDeclaration);
                printf ("Test of functionRefExp: skipNameQualification = %s \n",skipNameQualification ? "true" : "false");
                if (skipNameQualification == false)
+                  {
                     setNameQualification(functionRefExp,functionDeclaration,amountOfNameQualificationRequired);
-#else
-            // DQ (6/9/2011): Support for test2011_78.C (we only qualify function call references where the function has been declared in 
-            // a scope where it could be expected to be defined (e.g. not using a forward declaration in a SgBasicBlock, since the function
-            // definition could not live in the SgBasicBlock.
-               if (referencedNameSet.find(functionDeclaration->get_firstNondefiningDeclaration()) == referencedNameSet.end())
-                  {
-                    printf ("$$$$$$$$$$ NOT Found: declaration %p = %s in referencedNameSet \n",functionDeclaration,functionDeclaration->get_name().str());
-                    amountOfNameQualificationRequired = 0;
                   }
-                 else
-                  {
-                    printf ("$$$$$$$$$$ FOUND: declaration %p = %s in referencedNameSet \n",functionDeclaration,functionDeclaration->get_name().str());
-                  }
-
-               setNameQualification(functionRefExp,functionDeclaration,amountOfNameQualificationRequired);
-#endif
              }
             else
              {
                printf ("WARNING: functionDeclaration == NULL in SgFunctionCallExp for name qualification support! \n");
+             }
+
+       // If this is a templated function then we have to save the name becuase its templated name might have template arguments that require name qualification.
+          SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(functionRefExp->getAssociatedFunctionDeclaration());
+          if (templateInstantiationFunctionDeclaration != NULL)
+             {
+               printf ("Found a SgTemplateInstantiationFunctionDecl that will have template arguments that might require qualification. name = %s \n",templateInstantiationFunctionDeclaration->get_name().str());
+
+               SgStatement* currentStatement = TransformationSupport::getStatement(functionRefExp);
+               ROSE_ASSERT(currentStatement != NULL);
+
+               SgScopeStatement* currentScope = currentStatement->get_scope();
+               ROSE_ASSERT(currentScope != NULL);
+
+            // traverseTemplatedFunction(functionRefExp,templateInstantiationFunctionDeclaration,currentScope,currentStatement);
+               traverseTemplatedFunction(functionRefExp,functionRefExp,currentScope,currentStatement);
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
              }
         }
 
@@ -2761,6 +2840,19 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
             else
              {
                printf ("WARNING: memberFunctionDeclaration == NULL in SgMemberFunctionCallExp for name qualification support! \n");
+             }
+
+       // If this is a templated function then we have to save the name becuase its templated name might have template arguments that require name qualification.
+          SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(memberFunctionRefExp->getAssociatedMemberFunctionDeclaration());
+          if (templateInstantiationMemberFunctionDeclaration != NULL)
+             {
+               printf ("Found a SgTemplateInstantiationMemberFunctionDecl that will have template arguments that might require qualification. name = %s \n",templateInstantiationMemberFunctionDeclaration->get_name().str());
+
+               printf ("Must handle templated SgMemberFunctionRefExp! \n");
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
              }
         }
 
@@ -3305,8 +3397,25 @@ HiddenListTraversal::setNameQualification(SgMemberFunctionRefExp* functionRefExp
         }
        else
         {
+       // If it already existes then overwrite the existing information.
+          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(functionRefExp);
+          ROSE_ASSERT (i != qualifiedNameMapForNames.end());
+
+          string previousQualifier = i->second.c_str();
+          printf ("WARNING: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+
+          if (i->second != qualifier)
+             {
+               i->second = qualifier;
+#if 1
+               printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#if 0
           printf ("Error: name in qualifiedNameMapForNames already exists... \n");
           ROSE_ASSERT(false);
+#endif
         }
    }
 
