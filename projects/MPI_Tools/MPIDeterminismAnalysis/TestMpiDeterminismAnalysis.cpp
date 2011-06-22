@@ -1,3 +1,22 @@
+/// Test the MPI Determinism analysis against a single test case.
+///
+/// Run this program like any other ROSE-based tool, passing it a
+/// source file or files to work on, and relevant compiler frontend
+/// options. Specifically, the mpi.h distrubuted alongside this must
+/// proceed any other in the #include paths.
+///
+/// For this code to determine if the analysis was correct, the target
+/// code must define three int variables:
+/// - SOURCE_DETERMINISM: whether the program always tells MPI exactly
+///   where messages are coming from
+/// - TAG_DETERMINISM: whether the program always tells MPI exactly
+///   what tags to expect
+/// - FUNCTION_DETERMINISM: whether the program avoids use of
+///   non-determinism via checking for a subset of outstanding
+///   requests (e.g. MPI_Waitany)
+/// If the code is deterministic in a given respect, the variable
+/// should be set to 1. Otherwise, it should be set to 0.
+
 #include "MpiDeterminismAnalysis.h"
 #include <iostream>
 
