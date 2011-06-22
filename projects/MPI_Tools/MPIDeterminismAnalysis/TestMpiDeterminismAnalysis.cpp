@@ -104,7 +104,7 @@ int main(int argc, char **argv)
   DeterminismState tagExpectation = getExpectation(project, "TAG_DETERMINISM");
   DeterminismState functionExpectation = getExpectation(project, "FUNCTION_DETERMINISM");
 
-  int incorrect, imprecise;
+  int incorrect = 0, imprecise = 0;
 
   cout << "Analysis finds that this program is" << endl;
   report(d.source, sourceExpectation, "sources", incorrect, imprecise);
