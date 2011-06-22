@@ -389,12 +389,12 @@ class AttrSpec
 public:
 
     SgVariableDeclaration* varDeclaration;
-    SgType* initType;
+    SgType* baseType;
     bool isPublic;
     bool isPrivate;
     bool isAllocatable;
     bool isAsynchronous;
-    SgExpression* codimensionAttr;  // TODO: for the left hand side of :: in each type declaration
+    SgExprListExp* codimensionAttr;  // TODO: for the left hand side of :: in each type declaration
     bool isContiguous;
     SgExprListExp* dimensionAttr;  // TODO: for the left hand side of :: in each type declaration
     bool isExternal;
@@ -416,13 +416,13 @@ public:
     SgExpression* lenExpr;   // TODO
 
     AttrSpec(SgVariableDeclaration* varDecl = NULL, SgType* bType = NULL, bool isPub = false, bool isPriv = false,
-            bool isAlloc = false, bool isAsync = false, SgExpression* codimAttr = NULL, bool isContig = false,
+            bool isAlloc = false, bool isAsync = false, SgExprListExp* codimAttr = NULL, bool isContig = false,
             SgExprListExp* dimAttr = NULL, bool isExtern = false, bool isI = false, bool isO = false,
             bool isIntrin = false, bool hasLangBind = false, bool isOption = false, bool hasParam = false,
             bool isPoint = false, bool isCopoint = false,bool isProt = false, bool isSav = false,
             bool isTarg = false, bool isCotarg = false, bool isVal = false, bool isVol = false,
             SgExpression* kindExp = NULL, SgExpression* lenExp = NULL):
-                varDeclaration(varDecl), initType(bType), isPublic(isPub), isPrivate(isPriv), isAllocatable(isAlloc),
+                varDeclaration(varDecl), baseType(bType), isPublic(isPub), isPrivate(isPriv), isAllocatable(isAlloc),
                 isAsynchronous(isAsync), codimensionAttr(codimAttr), isContiguous(isContig), dimensionAttr(dimAttr),
                 isExternal(isExtern), isIn(isI), isOut(isO), isIntrinsic(isIntrin), hasLangBinding(hasLangBind),
                 isOptional(isOption), hasParameter(hasParam), isPointer(isPoint), isCopointer(isCopoint),
@@ -433,7 +433,7 @@ public:
     ~AttrSpec()
     {
         varDeclaration = NULL;
-        initType = NULL;
+        baseType = NULL;
         codimensionAttr = NULL;
         dimensionAttr = NULL;
         kindExpr = NULL;
@@ -442,7 +442,7 @@ public:
 
     void reset()
     {
-        varDeclaration = NULL; initType = NULL; isPublic = false; isPrivate = false; isAllocatable - false;
+        varDeclaration = NULL; baseType = NULL; isPublic = false; isPrivate = false; isAllocatable - false;
         isAsynchronous = false; codimensionAttr = NULL; isContiguous = false; dimensionAttr = NULL;
         isExternal = false; isIn = false; isOut= false; isIntrinsic = false; hasLangBinding = false;
         isOptional = false; hasParameter = false; isPointer = false; isCopointer = false; isProtected = false;
@@ -450,17 +450,16 @@ public:
         kindExpr = NULL; lenExpr = NULL;
     }
 
-    // DXN (0510/2011)
     SgType* computeEntityType();
 
+    // Builds a SgArrayType object with dimensionAttr as dim_info
+    // Pre-condition: dimensionAttr != NULL
     SgArrayType* buildArrayType();
 
-    /** Merge this AttrSpec with a given AttrSpec mutating this AttrSpec to contain all attributes from
-     * the given AttrSpec in such a way that the result conforms with Fortran rules.
-     */
-    void merge(AttrSpec& attrSpec);
+    // Transforms baseType into a coarray with codimensionAttr as codim_info
+    // Pre-condition: codimensionAttr != NULL
+    void makeBaseTypeCoArray();
 };
-
 
 // endif for ROSE_FORTRAN_SUPPORT
 #endif

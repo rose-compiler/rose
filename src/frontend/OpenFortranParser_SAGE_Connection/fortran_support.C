@@ -6535,58 +6535,60 @@ buildInitializedNameAndPutOntoStack(const SgName & name, SgType* type, SgInitial
      return initializedName;
    }
 
-// DXN: Singleton to keep track of attribute spec.
-void AttrSpec::merge(AttrSpec& attrSpec)
-{
-// TODO
-}
-
 // DXN (05/10/2011): pointer < copointer < codimension < dimension
 SgType* AttrSpec::computeEntityType()
 {
-    //SgType* entityType = NULL;
-    //ROSE_ASSERT(!astBaseTypeStack.empty());
-    // SgType* baseType = astBaseTypeStack.front();
     if (lenExpr)
     {
         // TODO: convert initType to string type with char length
     }
     if (dimensionAttr)
     {
-      initType = buildArrayType();
+      baseType = buildArrayType();
     }
     if (codimensionAttr)
     {
-      initType->set_isCoArray(true);
+      makeBaseTypeCoArray();
     }
     if (isCopointer)
     {
-      initType = new SgPointerType(initType);
-      initType->set_isCoArray(true);             // a copointer is a pointer whose isCoArray flag is true.
+      baseType = new SgPointerType(baseType);
+      baseType->set_isCoArray(true);             // a copointer is a pointer whose isCoArray flag is true.
     }
     if (isPointer)
     {
-      initType = new SgPointerType(initType);
+      baseType = new SgPointerType(baseType);
     }
-
-    return initType; // TODO
+    return baseType; // TODO
 }
 
 SgArrayType* AttrSpec::buildArrayType()
 {
-    // TODO
-    SgExpression* sizeExpression = new SgNullExpression();
+    SgExpression* sizeExpression = new SgNullExpression();  // this is the so-called index
     setSourcePosition(sizeExpression);
- // Build the array type
-    SgArrayType* arrayType = new SgArrayType(initType,sizeExpression);
+    SgArrayType* arrayType = new SgArrayType(baseType,sizeExpression);
     sizeExpression->set_parent(arrayType);
     arrayType->set_dim_info(dimensionAttr);
     dimensionAttr->set_parent(arrayType);
     arrayType->set_rank(dimensionAttr->get_expressions().size());
-
-#if 1
- // Output debugging information about saved state (stack) information.
-    outputState("At BOTTOM of AttrSpec::buildArrayType()");
-#endif
     return arrayType;
+}
+
+void AttrSpec::makeBaseTypeCoArray()
+{
+//    VariantT varT = baseType->variantT();
+//    if (varT == V_SgTypeChar || varT == V_SgTypeInt || varT == V_SgTypeBool ||
+//        varT == V_SgTypeFloat || varT == V_SgTypeComplex || varT == V_SgTypeDouble)
+    if (!isSgArrayType(baseType))
+    { // build an array of rank 0 to represent a covariable of a non-array type.
+      SgExpression* sizeExpression = new SgNullExpression();
+      setSourcePosition(sizeExpression);
+      SgArrayType* arrayType = new SgArrayType(baseType,sizeExpression);
+      sizeExpression->set_parent(arrayType);
+      arrayType->set_dim_info(codimensionAttr);
+      codimensionAttr->set_parent(arrayType);
+      arrayType->set_rank(0);
+      baseType = arrayType;
+    }
+    baseType->set_isCoArray(true);
 }

@@ -4192,9 +4192,8 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
      if (info.useTypeAttributes() == false)
         {
           SgArrayType* arrayType = isSgArrayType(type);
-          if (arrayType != NULL)
-             {
-            // If this is an array type then output the dim_info expressions
+          if (arrayType != NULL && arrayType->get_rank() > 0)  // "coscalar", a scalar coarray, is implemented as an array of rank 0.
+             {// output the dim_info expressions
                curprint("(");
                unparseExpression(arrayType->get_dim_info(), info);
                curprint(")");
@@ -4215,7 +4214,7 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
      if (pType)  // pType may be a copointer, so look at its base type instead
      {
        SgArrayType* arrayType = isSgArrayType(pType->get_base_type());
-       if (arrayType != NULL)
+       if (arrayType != NULL && arrayType->get_rank() > 0)  // "coscalar", a scalar coarray is implemented as an array of rank 0.
        {
          curprint("(");
          unparseExpression(arrayType->get_dim_info(), info);

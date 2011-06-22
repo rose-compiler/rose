@@ -576,7 +576,8 @@ void c_action_type_param_value(ofp_bool hasExpr, ofp_bool hasAsterisk, ofp_bool 
  */
 void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int type, ofp_bool hasKindSelector)
    {
-  // Save the type on the stack for use later.
+    raise(SIGINT);
+    // Save the type on the stack for use later.
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_intrinsic_type_spec(): keyword1 = %p = %s keyword2 = %p = %s type = %d, hasKindSelector = %s \n",
@@ -1750,12 +1751,29 @@ void c_action_component_def_stmt(int type)
 // void c_action_data_component_def_stmt(Token_t * label, ofp_bool hasSpec)
 void c_action_data_component_def_stmt(Token_t *label, Token_t *eos, ofp_bool hasSpec)
    {
-        // This is where we build the declaration using whatever was pushed onto the stack (nameStack)
+    raise(SIGINT);
+    // This is where we build the declaration using whatever was pushed onto the stack (nameStack)
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_data_component_def_stmt(): label = %p hasSpec = %s \n",label,hasSpec ? "true" : "false");
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
+
+#if DXN_CODE
+
+     setStatementNumericLabel(VarDeclAttrSpec.varDeclaration,label);
+     SgInitializedNamePtrList&  varList = VarDeclAttrSpec.varDeclaration->get_variables ();
+     SgInitializedName* firstInitializedNameForSourcePosition = varList.front();
+     SgInitializedName* lastInitializedNameForSourcePosition  = varList.back();
+     ROSE_ASSERT(VarDeclAttrSpec.varDeclaration->get_startOfConstruct() != NULL);
+     ROSE_ASSERT(firstInitializedNameForSourcePosition->get_startOfConstruct() != NULL);
+     ROSE_ASSERT(lastInitializedNameForSourcePosition->get_startOfConstruct() != NULL);
+     *(VarDeclAttrSpec.varDeclaration->get_startOfConstruct()) = *(firstInitializedNameForSourcePosition->get_startOfConstruct());
+     *(VarDeclAttrSpec.varDeclaration->get_endOfConstruct())   = *(lastInitializedNameForSourcePosition->get_startOfConstruct());
+     VarDeclAttrSpec.reset();
+
+#else
+
   // printf ("astNameStack.size() = %zu \n",astNameStack.size());
 
   // DQ (1/28/2009): The variable declaration may have already been built (if so then the stacks are empty).
@@ -1770,6 +1788,9 @@ void c_action_data_component_def_stmt(Token_t *label, Token_t *eos, ofp_bool has
           ROSE_ASSERT(currentScope->variantT() == V_SgClassDefinition);
           currentScope->append_statement(variableDeclaration);
         }
+
+#endif
+
 #endif
    }
 
@@ -1789,7 +1810,8 @@ void c_action_data_component_def_stmt(Token_t *label, Token_t *eos, ofp_bool has
 // void c_action_component_attr_spec(int specType)
 void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+    raise(SIGINT);
+    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_component_attr_spec(): attrKeyword = %p = %s specType = %d \n",attrKeyword,attrKeyword != NULL ? attrKeyword->text : "NULL",specType);
 
 #if 1
@@ -1824,6 +1846,10 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
                     astBaseTypeStack.push_front(previouslyBuiltType);
                   }
                convertBaseTypeOnStackToPointer();
+#endif
+
+#if DXN_CODE
+               VarDeclAttrSpec.isPointer = true;
 #endif
                break;
              }
@@ -1891,6 +1917,14 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
              {
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("found a ComponentAttrSpec_dimension spec \n");
+#if DXN_CODE
+               // transfer the array spec from the astExpressionStack to the AttrSpec record.
+               ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains all dimension attributes
+               SgExprListExp* dimAttr = isSgExprListExp(astExpressionStack.front());
+               ROSE_ASSERT(dimAttr);
+               VarDeclAttrSpec.dimensionAttr = dimAttr;
+               astExpressionStack.pop_front();
+#endif
                break;
              }
 #endif
@@ -1902,8 +1936,16 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
              }
         }
 
+#if DXN_CODE
+
+     setDeclarationAttributeSpec(VarDeclAttrSpec.varDeclaration, specType);
+
+#else
+
   // Push the attribue onto the stack (e.g. dimension)
      astAttributeSpecStack.push_front(specType);
+
+#endif
 
 #if 1
   // Output debugging information about saved state (stack) information.
@@ -1920,13 +1962,17 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
  */
 void c_action_component_attr_spec_list__begin()
    {
-  // I think this is the correct assertion, but the rest of this rule is not implemented!
+    raise(SIGINT);
+    // I think this is the correct assertion, but the rest of this rule is not implemented!
 
 #if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R441 c_action_component_attr_spec_list__begin()");
 #endif
 
+#if DXN_CODE
+
+#else
   // DQ (1/20/2011): We have to save the astAttributeSpecStack so that we can use the same attribute 
   // stack for processing all variables in the declaration uniformally.  See test2007_248.f90 for an 
   // example.  We will also have to test this support in R441 as well (similar parser action, but for 
@@ -1952,16 +1998,18 @@ void c_action_component_attr_spec_list__begin()
         }
 
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
+#endif
    }
 
 void c_action_component_attr_spec_list(int count)
    {
+    raise(SIGINT);
   // This function R441 is similar to R504 R503-F2008 but is used for declarations in types.
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_component_attr_spec_list(): count = %d (building the SgArrayType) astAttributeSpecStack.size() = %zu \n",count,astAttributeSpecStack.size());
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R441 c_action_component_attr_spec_list()");
 #endif
@@ -1973,7 +2021,7 @@ void c_action_component_attr_spec_list(int count)
   // printf ("In R441 c_action_component_attr_spec_list(): calling c_action_array_spec() \n");
   // c_action_array_spec(count);
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R441 c_action_component_attr_spec_list()");
 #endif
@@ -1996,7 +2044,8 @@ void c_action_component_decl(Token_t * id,
         ofp_bool hasComponentArraySpec, ofp_bool hasCoArraySpec, 
         ofp_bool hasCharLength, ofp_bool hasComponentInitialization)
    {
-        // Build each variable and append it to the current scope!
+    raise(SIGINT);
+    // Build each variable and append it to the current scope!
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_component_decl() id = %p hasComponentArraySpec = %s hasCoArraySpec = %s hasCharLength = %s hasComponentInitialization = %s \n",
@@ -2026,7 +2075,16 @@ void c_action_component_decl(Token_t * id,
  */
 void c_action_component_decl_list__begin()
    {
-  // No action is required here because the scope for the derived type has been defined in R403
+    raise(SIGINT);
+#if DXN_DEBUG
+    // Output debugging information about saved state (stack) information.
+    outputState("At TOP of c_action_component_decl_list__begin()");
+#endif
+
+#if DXN_CODE
+    // TODO
+#else
+    // No action is required here because the scope for the derived type has been defined in R403
 
   // Nothing to do here since we keep a stack and handle items pushed on the the stack later.
   // ROSE_ASSERT(astNameListStack.empty() == true);
@@ -2036,24 +2094,34 @@ void c_action_component_decl_list__begin()
 
   // DQ (8/28/2010): This is not an error, but we might want to handle it better.
   // ROSE_ASSERT(astNameStack.empty() == true);
+#endif
    }
 
 void c_action_component_decl_list(int count)
    {
+    raise(SIGINT);
         // This function R442 R438-F2008 is similar to R504 R503-F2008
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         printf ("R442 R438-F2008 c_action_component_decl_list(): count = %d \n",count);
 
-  // printf ("astNameStack.size() = %zu count = %d \n",astNameStack.size(),count);
-  // ROSE_ASSERT(astNameStack.size() == (size_t)count);
-  // printf ("astNodeStack.size() = %zu count = %d \n",astNodeStack.size(),count);
-     ROSE_ASSERT(astNodeStack.size() == (size_t)count);
-
 #if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R442 c_action_component_decl_list()");
 #endif
+
+#if DXN_CODE
+
+    ROSE_ASSERT(VarDeclAttrSpec.varDeclaration->get_file_info()->isCompilerGenerated() == false);
+    ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock || getTopOfScopeStack()->variantT() == V_SgClassDefinition);
+    getTopOfScopeStack()->append_statement(VarDeclAttrSpec.varDeclaration);
+
+#else
+
+  // printf ("astNameStack.size() = %zu count = %d \n",astNameStack.size(),count);
+  // ROSE_ASSERT(astNameStack.size() == (size_t)count);
+  // printf ("astNodeStack.size() = %zu count = %d \n",astNodeStack.size(),count);
+     ROSE_ASSERT(astNodeStack.size() == (size_t)count);
 
   // DQ (1/20/2011): Refactored the code below so it could be called from R443 as well as R504.
      bool hasArraySpec      = false;
@@ -2067,6 +2135,8 @@ void c_action_component_decl_list(int count)
   // DQ (1/28/2009): Refactored this code so it could be called in R442, R501, R504 and R1238.
   // Note that there is no token for this rule, so we pass in a NULL pointer.
      buildVariableDeclarationAndCleanupTypeStack(NULL);
+
+#endif
 
 #if 1
   // Output debugging information about saved state (stack) information.
@@ -2084,7 +2154,8 @@ void c_action_component_decl_list(int count)
  */
 void c_action_component_array_spec(ofp_bool isExplicit)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+    raise(SIGINT);
+    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_component_array_spec(): isExplicit = %s \n",isExplicit ? "true" : "false");
 
   // DQ (2/23/2008): This is allowed, see test2008_20.f90; explicitly dementioned array in a type.
@@ -2100,15 +2171,19 @@ void c_action_component_array_spec(ofp_bool isExplicit)
   // DQ (1/23/2011): This might be better put into R443 c_action_deferred_shape_spec_list(int count), so that count would be available.
   // DQ (1/18/2011): Called by R510 and R443.
   //   int count = 1;
-     int count = astExpressionStack.size();  // DXN (02/10/2011): the number of SgColonShapeExp, i.e. the dimension of the array.
+     int count = astExpressionStack.size();  // the number of SgColonShapeExp, i.e. the rank of the array.
      processMultidimensionalSubscriptsIntoExpressionList(count);
 
+#if DXN_CODE
+
+#else
   // DQ (1/17/2011): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type).
   // printf ("In R443 c_action_component_array_spec(): Push the ComponentAttrSpec_dimension attribute only the stack to trigger this to be handled as an array (build an array type). \n");
   // astAttributeSpecStack.push_front(AttrSpec_DIMENSION);
      astAttributeSpecStack.push_front(ComponentAttrSpec_dimension);
+#endif
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R443 c_action_component_array_spec()");
 #endif
@@ -2128,13 +2203,14 @@ void c_action_deferred_shape_spec_list__begin()
 
 void c_action_deferred_shape_spec_list(int count)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+    raise(SIGINT);
+    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_deferred_shape_spec_list(): count = %d \n",count);
 
   // At this point we know that this is a deferred shape specification 
   // and that the dimension of the arrya is given by count.
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R443 list c_action_deferred_shape_spec_list()");
 #endif
@@ -2335,8 +2411,8 @@ void c_action_binding_attr_list(int count)
  */
 void c_action_derived_type_spec(Token_t * typeName, ofp_bool hasTypeParamSpecList)
    {
-
-#if 0
+    raise(SIGINT);
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R455 c_action_derived_type_spec()");
 #endif
@@ -2393,7 +2469,7 @@ void c_action_derived_type_spec(Token_t * typeName, ofp_bool hasTypeParamSpecLis
      astTypeStack.push_front(derivedType);
 #endif
 
-#if 0
+#if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R455 c_action_derived_type_spec()");
 #endif
@@ -2999,11 +3075,9 @@ c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos
   // to buildVariableDeclarationAndCleanupTypeStack().
      ROSE_ASSERT (astNodeStack.empty() == true && astBaseTypeStack.empty() == true);
 
-  // DQ (1/28/2009): Refactored this code so it could be called in R442, R501, R504 and R1238.
-     buildVariableDeclarationAndCleanupTypeStack(label);
-
 #if DXN_CODE
 
+     setStatementNumericLabel(VarDeclAttrSpec.varDeclaration,label);
      SgInitializedNamePtrList&  varList = VarDeclAttrSpec.varDeclaration->get_variables ();
      SgInitializedName* firstInitializedNameForSourcePosition = varList.front();
      SgInitializedName* lastInitializedNameForSourcePosition  = varList.back();
@@ -3012,9 +3086,12 @@ c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos
      ROSE_ASSERT(lastInitializedNameForSourcePosition->get_startOfConstruct() != NULL);
      *(VarDeclAttrSpec.varDeclaration->get_startOfConstruct()) = *(firstInitializedNameForSourcePosition->get_startOfConstruct());
      *(VarDeclAttrSpec.varDeclaration->get_endOfConstruct())   = *(lastInitializedNameForSourcePosition->get_startOfConstruct());
-
-  // DXN (05/09/2011)
      VarDeclAttrSpec.reset();
+
+#else
+
+     // DQ (1/28/2009): Refactored this code so it could be called in R442, R501, R504 and R1238.
+        buildVariableDeclarationAndCleanupTypeStack(label);
 
 #endif
 
@@ -3156,7 +3233,7 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
      VarDeclAttrSpec.varDeclaration->set_definingDeclaration(VarDeclAttrSpec.varDeclaration);
      VarDeclAttrSpec.varDeclaration->get_declarationModifier().get_accessModifier().setUndefined();
 
-     VarDeclAttrSpec.initType = astBaseTypeStack.front();
+     VarDeclAttrSpec.baseType = astBaseTypeStack.front();
      astBaseTypeStack.pop_front();
 #endif
 
@@ -3267,7 +3344,7 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
                     printf ("found a DIMENSION spec \n");
 
 #if DXN_CODE
-               // DXN (05/09/2011): transfer the array spec from the astExpressionStack to the AttrSpec record.
+               // transfer the array spec from the astExpressionStack to the AttrSpec record.
                ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains all dimension attributes
                SgExprListExp* dimAttr = isSgExprListExp(astExpressionStack.front());
                ROSE_ASSERT(dimAttr);
@@ -3276,6 +3353,16 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
 #endif
                break;
              }
+
+#if 0
+             // DXN: TODO
+          case AttrSpec_CODIMENSION:
+          {
+              // something analogous to AttrSpec_DIMENSION with codimensionAttr in place of dimensionAttr
+              // the codimAttr is perhaps an SgExprListExp with get_expressions of size 0
+          }
+
+#endif
 
            case AttrSpec_EXTERNAL:
               {
@@ -3486,7 +3573,6 @@ void c_action_entity_decl(Token_t * id)
      outputState("At TOP of R504 R503-F2008 c_action_entity_decl()");
 #endif
 
-
 #if DXN_CODE
 #if !SKIP_C_ACTION_IMPLEMENTATION
     AttrSpec entityAttr = VarDeclAttrSpec;
@@ -3508,7 +3594,7 @@ void c_action_entity_decl(Token_t * id)
     if (hasCoarraySpec)
     {
       ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains all codimension specs
-      SgAsteriskShapeExp* coarraySpec = isSgAsteriskShapeExp(astExpressionStack.front());
+      SgExprListExp* coarraySpec = isSgExprListExp(astExpressionStack.front());
       ROSE_ASSERT(coarraySpec);
       entityAttr.codimensionAttr = coarraySpec;
       astExpressionStack.pop_front();
@@ -3522,26 +3608,32 @@ void c_action_entity_decl(Token_t * id)
       astExpressionStack.pop_front();
     }
 
-    SgType* entityType = entityAttr.computeEntityType();  // TODO
+    SgType* entityType = entityAttr.computeEntityType();
 
     astNameStack.push_front(id);
     AstNameType* nameToken = astNameStack.front();
     SgName name = nameToken->text;
     SgInitializer* initializer = NULL;
+
+#if DXN_DEBUG
+  // Output debugging information about saved state (stack) information.
+     outputState(" c_action_entity_decl(): after computing entity's type:");
+#endif
+
     if (hasInitialization)
     {
         if (isSgClassType(entityType)){
-            SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(initialization);
-            initializer = constructorInitializer;
-            if (initializer != NULL) {
-                astExpressionStack.clear();
-            }
-            else {
+//            SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(initialization);
+//            initializer = constructorInitializer;
+//            if (initializer != NULL) {
+//               astExpressionStack.clear();
+//            }
+//            else {
                 // This is the case of a name in the bind expression.
                 // printf ("This is the case of a name in the bind expression (leave it on the stack and process it later). \n");
                 // DXN (02/11/2011): for example, TYPE(T), bind (C, name = "abc") :: x
                 // see fortran_support.C - processBindingAttribute
-            }
+//            }
         }
         else {
             initializer = new SgAssignInitializer(initialization,NULL);
@@ -4038,7 +4130,6 @@ void c_action_entity_decl(Token_t * id)
  */
 void c_action_entity_decl_list__begin()
    {
-    raise(SIGINT);
   // The use of the astNameListStack has been discontinued, we just use a stack of names (tokens) now!
   // This make for a simpler implementation and I don't think we require the additional complexity.
 
@@ -4067,7 +4158,9 @@ void c_action_entity_decl_list__begin()
                printf ("Warning, astTypeStack.size() = %zu \n",astTypeStack.size());
         }
 
-#if !DXN_CODE
+#if DXN_CODE
+     // TODO
+#else
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
 
   // This is the start of an entity list (used in variable declarations to hold the variables being declared
@@ -4101,9 +4194,7 @@ void c_action_entity_decl_list(int count)
 
 #if DXN_CODE
 
-     // SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(NULL,false);
      ROSE_ASSERT(VarDeclAttrSpec.varDeclaration->get_file_info()->isCompilerGenerated() == false);
-     // cleanupTypeStackAfterDeclaration();
      ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock || getTopOfScopeStack()->variantT() == V_SgClassDefinition);
      getTopOfScopeStack()->append_statement(VarDeclAttrSpec.varDeclaration);
 
@@ -4460,10 +4551,11 @@ void c_action_array_spec_element(int type)
        // DQ (11/20/2007): Changed to push_front to be consistent.
           astExpressionStack.push_front(expression);
         }
-
+#if DXN_CODE
+     // TODO
+#else
   // DQ (1/17/2011): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type).
   // printf ("In R510 #2 c_action_array_spec_element(): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type). \n");
-#if !DXN_CODE
      astAttributeSpecStack.push_front(AttrSpec_DIMENSION);  // array spec and dimension attribute are recorded in VarAttrSpec.
 #endif
 
@@ -19125,13 +19217,22 @@ void c_action_cleanUp()
 void c_action_coarray_spec(int count) 
     {
     raise(SIGINT);
+#if DXN_DEBUG
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of c_action_coarray_spec()");
+#endif
+
 #if DXN_CODE
 
-    if (count != 1)
+    if (count != 1 || !isSgAsteriskShapeExp(astExpressionStack.front()))
     {
-      cout << "ERROR (Rice CoArray Fortran 2.0): the co-rank must be 1." << endl;
+      cout << "WARNING (Rice CoArray Fortran 2.0): the co-rank specification must be an asterisk." << endl;
     }
-    // processMultidimensionalSubscriptsIntoExpressionList(count);  // TODO
+    astExpressionStack.pop_front();  // pop the asterisk expression.
+    // Push an empty SgExprListExp on the astExpressionStack to serve as comdimsion info.
+    SgExprListExp* expresssionList = new SgExprListExp();
+    setSourcePosition(expresssionList);
+    astExpressionStack.push_front(expresssionList);
 
 #else
     if (count == 1) {
@@ -19146,6 +19247,10 @@ void c_action_coarray_spec(int count)
       astAttributeSpecStack.push_front(AttrSpec_COARRAY);
 #endif
 
+#if DXN_DEBUG
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of c_action_coarray_spec()");
+#endif
    }
 
 
