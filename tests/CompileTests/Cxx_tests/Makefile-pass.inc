@@ -756,6 +756,14 @@ test2011_90.C \
 test2011_91.C \
 test2011_92.C \
 test2011_93.C \
+test2011_94.C \
+test2011_95.C \
+test2011_96.C \
+test2011_97.C \
+test2011_98.C \
+test2011_99.C \
+test2011_100.C \
+test2011_101.C \
    test2005_112.C \
    test2005_117.C \
    test2005_154.C \
