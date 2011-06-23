@@ -123,9 +123,13 @@ class PathNumManager
     typedef BackstrokeCFG::Edge   CFGEdge;
 
     const BackstrokeCFG* cfg_;
+    
+    Backstroke::FullCFG fullCfg_;
 
     //! The first DAG is about the function, and others are all loops.
     std::vector<DAG> dags_;
+    
+    std::vector<DAG> auxDags_;
 
     //! A DAG including all CFG nodes and is used to get the path numbers.
     DAG superDag_;
@@ -162,6 +166,9 @@ public:
     ~PathNumManager();
 
     void buildSuperDAG();
+    
+    //! A work around.
+    void buildAuxiliaryDags();
     
     //! Get path numbers from a AST node.
     PathInfo getPathNumbers(SgNode* node) const;

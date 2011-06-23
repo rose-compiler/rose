@@ -22,11 +22,15 @@ using namespace SageInterface;
 
 PathNumManager::PathNumManager(const BackstrokeCFG* cfg)
     :   cfg_(cfg), 
+        fullCfg_(cfg_->getFunctionDefinition()),
         backEdges_(cfg_->getAllBackEdges()), 
         loops_(cfg_->getAllLoops())
 {    
     generatePathNumbers();
     buildNodeCFGVertexMap();
+    
+    // Work-around. May be removed in the future.
+    buildAuxiliaryDags();
 }
 
 void PathNumManager::buildNodeCFGVertexMap()
@@ -209,6 +213,130 @@ void PathNumManager::generatePathNumbers()
     }
 }
 
+void PathNumManager::buildAuxiliaryDags()
+{
+    typedef Backstroke::FullCFG::Vertex CFGVertex;
+    typedef Backstroke::FullCFG::Edge   CFGEdge;
+    
+    Backstroke::FullCFG& fullCFG = fullCfg_;
+    
+    map<CFGVertex, set<CFGVertex> > loops(fullCFG.getAllLoops());
+    set<CFGEdge> backEdges(fullCFG.getAllBackEdges());
+    
+    map<CFGVertex, map<int, DAGVertex> > vertexToDagIndex;
+    map<CFGEdge, map<int, DAGEdge> > edgeToDagIndex;
+    
+// Get all loops in this CFG.
+    set<CFGVertex> cfgNodesInLoop;
+    
+    // Get all CFG nodes in loop.
+    typedef pair<CFGVertex, set<CFGVertex> > NodeToNodes;
+    foreach (const NodeToNodes& loop, loops)
+        cfgNodesInLoop.insert(loop.second.begin(), loop.second.end());
+    //cout << cfgNodesInLoop.size() << endl;
+    
+    auxDags_.resize(loops.size() + 1);
+    //dags_.resize(1);
+        
+    // Build the first DAG which contains the whole CFG without loops.
+    // This is done by removing all back edges.
+    
+    DAG& dag = auxDags_[0];
+
+    foreach (CFGVertex v, boost::vertices(fullCFG))
+    {
+        //if (cfgNodesInLoop.count(v) > 0)
+        //    continue;
+        
+        DAGVertex dagNode = boost::add_vertex(dag);
+        dag[dagNode] = v;
+        vertexToDagIndex[v][0] = dagNode;
+    }
+    
+    //cout << boost::num_vertices(*cfg_) << endl;
+    //cout << boost::num_vertices(dag) << endl;
+
+    foreach (const CFGEdge& e, boost::edges(fullCFG))
+    {
+        // Ignore back edges.
+        if (backEdges.count(e) > 0)
+            continue;
+        
+        ROSE_ASSERT(vertexToDagIndex.count(boost::source(e, fullCFG)) > 0);
+        ROSE_ASSERT(vertexToDagIndex.count(boost::target(e, fullCFG)) > 0);
+        
+        DAGVertex src = vertexToDagIndex[boost::source(e, fullCFG)].begin()->second;
+        DAGVertex tgt = vertexToDagIndex[boost::target(e, fullCFG)].begin()->second;
+        
+        
+        //// If both nodes are in a loop, don't add it to this DAG now.
+        //if (cfgNodesInLoop.count(src) > 0 || cfgNodesInLoop.count(tgt) > 0)
+        //    continue;
+        
+
+        DAGEdge dagEdge = boost::add_edge(src, tgt, dag).first;
+        dag[dagEdge] = e;
+        edgeToDagIndex[e][0] = dagEdge;
+    }
+        
+    // Entries and exits of all DAGs.
+    vector<DAGVertex> entries(auxDags_.size());
+    vector<DAGVertex> exits(auxDags_.size());
+    entries[0] = vertexToDagIndex[fullCFG.getEntry()].begin()->second;
+    exits[0]   = vertexToDagIndex[fullCFG.getExit()].begin()->second;
+    
+    // Then build other dags for loops.
+    int dagIdx = 1;
+    foreach (NodeToNodes loop, loops)
+    {
+        DAG& dag = auxDags_[dagIdx];
+        CFGVertex header = loop.first;
+        //headerToDagIndex[header] = dagIdx;
+        loop.second.insert(header);
+        
+        foreach (CFGVertex cfgNode, loop.second)
+        {
+            DAGVertex dagNode = boost::add_vertex(dag);
+            dag[dagNode] = cfgNode;
+            vertexToDagIndex[cfgNode][dagIdx] = dagNode;
+        }
+        // Set the exit of the CFG as the exit of this DAG.
+        DAGVertex exit = boost::add_vertex(dag);
+        dag[exit] = fullCFG.getExit();
+        vertexToDagIndex[fullCFG.getExit()][dagIdx] = exit;
+        
+        foreach (CFGVertex cfgNode, loop.second)
+        {            
+            foreach (const CFGEdge& edge, boost::out_edges(cfgNode, fullCFG))
+            {
+                DAGVertex dagSrc = vertexToDagIndex[cfgNode][dagIdx];
+                DAGVertex dagTgt;
+                CFGVertex tgt = boost::target(edge, fullCFG);
+                
+                // If the edge is an exit edge, don't add it.
+                if (loop.second.count(tgt) == 0)
+                    continue;
+                
+                // If the edge is a back edge, set its target to the exit.
+                // If the target is a node not in this loop, set it to exit.
+                if (loop.second.count(tgt) == 0 || tgt == header)
+                    dagTgt = exit;
+                else
+                    dagTgt = vertexToDagIndex[tgt][dagIdx];
+                
+                DAGEdge dagEdge = boost::add_edge(dagSrc, dagTgt, dag).first;
+                dag[dagEdge] = edge;
+                edgeToDagIndex[edge][dagIdx] = dagEdge;
+            }
+        }
+        entries[dagIdx] = vertexToDagIndex[header][dagIdx];
+        exits[dagIdx] = exit;
+        
+        ++dagIdx;
+    }    
+}
+
+
 PathNumManager::~PathNumManager()
 {
     foreach (PathNumGenerator* gen, pathNumGenerators_)
@@ -315,7 +443,7 @@ PathInfo PathNumManager::getPathNumbers(
 
 void PathNumManager::getAstNodeIndices(size_t index, map<SgNode*, int>& nodeIndicesTable) const
 {
-    const DAG& dag = dags_[index];
+    const DAG& dag = auxDags_[index];
 
     vector<DAGVertex> nodes;
     boost::topological_sort(dag, back_inserter(nodes));
@@ -323,7 +451,7 @@ void PathNumManager::getAstNodeIndices(size_t index, map<SgNode*, int>& nodeIndi
     int num = 0;
     reverse_foreach (DAGVertex node, nodes)
     {
-        SgNode* astNode = (*cfg_)[dag[node]]->getNode();
+        SgNode* astNode = fullCfg_[dag[node]]->getNode();
         nodeIndicesTable[astNode] = num++;
     }
     

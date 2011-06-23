@@ -78,6 +78,8 @@ void EventReverser::generateCode()
 #endif
     
     
+    cout << "\nStart to generate code!\n\n";
+    
     // Discard all available values here.
     availableValues_[0].clear();
     
@@ -109,10 +111,6 @@ void EventReverser::generateCode()
         }
     }
     
-    
-    cout << "\nStart to generate code!\n\n";
-    
-
     // Process other DAGs.
     int dagNum = pathNumManager_->getNumberOfDags();
     for (int dagIndex = 1; dagIndex < dagNum; ++dagIndex)
@@ -628,8 +626,11 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
     foreach (const VGEdge& inEdge, boost::in_edges(routeGraphRoot_, routeGraph_))
     {
         //cout << "Paths on edge: " << routeGraph_[inEdge]->paths << endl;
-        nextEdgeCandidates.push(inEdge);
-        traversedEdges.insert(inEdge);
+        if (routeGraph_[inEdge]->paths.count(dagIndex) > 0)
+        {
+            nextEdgeCandidates.push(inEdge);
+            traversedEdges.insert(inEdge);
+        }
     }
     
     // For all in edges to the same function call node, only one of those edges
@@ -642,7 +643,10 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
         nextEdgeCandidates.pop();
         
         cout << getSource(edge)->toString() << " ===> " << getTarget(edge)->toString() << "\t" << valueGraph_[edge]->paths[0] << endl;
-        cout << comp.getAstNode(edge)->class_name() << " : " << nodeIndexTable[comp.getAstNode(edge)] << endl;
+        if (comp.getAstNode(edge) == NULL)
+            cout << valueGraph_[edge]->toString() << endl;
+        else
+            cout << comp.getAstNode(edge)->class_name() << " : " << nodeIndexTable[comp.getAstNode(edge)] << endl;
         
         // If this edge does not belong to the route of the given DAG.
         if (routeGraph_[edge]->paths.count(dagIndex) == 0)
@@ -681,7 +685,8 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
         bool visited = true;
         foreach (const VGEdge& outEdge, boost::out_edges(src, routeGraph_))
         {
-            if (traversedEdges.count(outEdge) == 0)
+            if (routeGraph_[outEdge]->paths.count(dagIndex) > 0 
+                    && traversedEdges.count(outEdge) == 0)
             {
                 visited = false;
                 break;
@@ -741,7 +746,7 @@ void EventReverser::buildReverseCFG(
         VGVertex tgt = boost::target(edge, valueGraph_);
         cout << valueGraph_[src]->toString() << " ==> " 
                 << valueGraph_[tgt]->toString() << "\t" 
-                << valueGraph_[edge]->paths[0] << endl;
+                << valueGraph_[edge]->paths[dagIndex] << endl;
         //cout << "!!!" << routeGraph_[edge]->toString() << endl;
     }
     cout << "\n\n";

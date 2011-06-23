@@ -21,16 +21,16 @@ void EventReverser::buildValueGraph()
 
     //valueGraphToDot("VG.dot");
     
-    // Process all variable of their last versions.
-    addAvailableAndTargetValues();
-    
     // Add all phi node edges. This is done at last because a def of a phi node may
     // not be created when this phi node is created.
     addPhiEdges();
 
+    // Collect all available and target values.
+    addAvailableAndTargetValues();
+    
     // Add all state saving edges.
     addStateSavingEdges();
-
+    
     // Add path information to edges.
     //addPathsToEdges();
     
@@ -520,7 +520,7 @@ void EventReverser::processVariableReference(SgExpression* expr)
             // If this var is not added to VG. This is possible is a variable is modified
             // by a function call.
             createValueNode(varRefExp);
-            cout << "Var ref which is unknown!!! " << var << endl;
+            cout << "!!! Var ref which is unknown!!! " << var << endl;
         }
     }
 
@@ -691,7 +691,7 @@ void EventReverser::addAvailableAndTargetValues()
     set<VarName> varNamesAtEventEnd;
     
     // At the end of the event, find the versions of all variables,
-    // and determine which variables are avaiable during the search of VG.
+    // and determine which variables are available during the search of VG.
     typedef SSA::NodeReachingDefTable::value_type VarNameDefPair;
     foreach (const VarNameDefPair& nameDef,
              ssa_->getOutgoingDefsAtNode(funcDef_))
@@ -704,7 +704,7 @@ void EventReverser::addAvailableAndTargetValues()
         // For every variable, if it is not added into VG, add it now.
         VersionedVariable var(name, nameDef.second->getRenamingNumber());
                 
-        cout << "VersionedVariable:\t" << var.toString() << endl;
+        cout << "Versioned variable with last version:\t" << var.toString() << endl;
         //printVarVertexMap();
         
         if (varVertexMap_.count(var) == 0)
@@ -727,6 +727,7 @@ void EventReverser::addAvailableAndTargetValues()
 
         if (isStateVariable(name))
         {
+            cout << "Available Var:\t" << var.toString() << endl;
             // If the variable is a state variable, make it available.
             addAvailableValue(node);
         }
@@ -1025,9 +1026,13 @@ void EventReverser::addValueGraphStateSavingEdges(
     VGEdge newEdge = boost::add_edge(src, root_, valueGraph_).first;
     PathInfo paths = pathNumManager_->getPathNumbers(killer);
     
-    // For a Mu node, we should remove the correspoding paths of the same DAG index.
+    // For a Mu node, we should remove the corresponding paths of the same DAG index.
     if (MuNode* muNode = isMuNode(valueGraph_[src]))
-        paths.erase(paths.find(muNode->dagIndex));
+    {
+        PathInfo::iterator iter = paths.find(muNode->dagIndex);
+        if (iter != paths.end())
+            paths.erase(iter);
+    }
     
     ControlDependences controlDeps = cdg_->getControlDependences(killer);
     valueGraph_[newEdge] = new StateSavingEdge(
@@ -1433,7 +1438,6 @@ void EventReverser::addPhiEdges()
         if(phiNode) 
         {
             ROSE_ASSERT(phiNode->var.name.size());
-            //cout << phiNode->toString() << endl;
             phiNodes.push_back(make_pair(node, phiNode));
         }
     }
@@ -1441,7 +1445,7 @@ void EventReverser::addPhiEdges()
     // Get all back edges in CFG.
     set<BackstrokeCFG::CFGEdgeType> backEdges;
     foreach (const CFGEdge& cfgEdge, cfg_->getAllBackEdges())
-    backEdges.insert(*(*cfg_)[cfgEdge]);
+        backEdges.insert(*(*cfg_)[cfgEdge]);
     
     typedef pair<VGVertex, PhiNode*> VertexPhiNode;
     foreach (const VertexPhiNode& vertexNode, phiNodes)
@@ -1462,7 +1466,6 @@ void EventReverser::addPhiEdges()
         // For every phi function parameter, check if it is also a pseudo def.
         // If it is, add another phi node and connect them. Else, add an edge.
         typedef pair<SSA::ReachingDefPtr, set<ReachingDef::FilteredCfgEdge> > PairT;
-        //pair<SSA::ReachingDefPtr, set<CFGEdge> > defEdgePair;
         foreach (const PairT& defEdgePair, reachingDef->getJoinedDefs())
         {
             SSA::ReachingDefPtr def = defEdgePair.first;
@@ -1470,16 +1473,30 @@ void EventReverser::addPhiEdges()
             int version = def->getRenamingNumber();
             
             VersionedVariable defVar(phiNode->var.name, version);
+            cout << "$$$" << defVar << endl;
             
-            // Currently the extern variables may not be built here. Just skip it.
+            //// Currently the extern variables may not be built here. Just skip it.
             if (varVertexMap_.count(defVar) == 0)
-                continue;
+            {
+                // It is possible that the initial def of a state variable is not added to value graph.
+                //ROSE_ASSERT(version == 0 && phiNode->var.name.size() == 1);
+                if (isStateVariable(phiNode->var.name))
+                    createValueNode(phiNode->var.name[0], NULL);
+                else
+                {
+                    cout << "\n!!! Cannot find the vertex for " << defVar << "\n\n";
+                    continue;
+                }
+            }
             //cout << defVar.toString() << endl;
             //ROSE_ASSERT(varVertexMap_.count(defVar));
             
             // This should be a bug in SSA.
             if (node == varVertexMap_[defVar])
+            {
+                cout << "!!! One of the defs of a phi node is itself!\n";
                 continue;
+            }
 
             foreach (const BackstrokeCFG::CFGEdgeType& cfgEdge, cfgEdges)
             {
@@ -1492,6 +1509,7 @@ void EventReverser::addPhiEdges()
                         
                         valueGraph_[node] = muNode;
                         delete phiNode;
+                        phiNode = muNode;
                         
                         // A Mu mode can kill the defs from non-back edge. Add state
                         // saving edges here.
@@ -1506,7 +1524,12 @@ void EventReverser::addPhiEdges()
                     addValueGraphPhiEdge(duplicatedNode, varVertexMap_[defVar], cfgEdge);
                 }
                 else
+                {
+                    // !!! Work-around. SSA cannot get the correct reaching def for loop headers.
+                    addValueGraphStateSavingEdges(varVertexMap_[defVar], cfgEdge.target().getNode());
+                    
                     addValueGraphPhiEdge(node, varVertexMap_[defVar], cfgEdge);
+                }
             }
         }
     }
@@ -1873,6 +1896,7 @@ SgNode* EventReverser::RouteGraphEdgeComp::getAstNode(const VGEdge& edge) const
             return SageInterface::getEnclosingFunctionDefinition(routeGraph[src]->astNode);
             //return routeGraph[src]->astNode;
         }
+#if 0
         if (ssEdge->scopeKiller)
         {
             // !!! Work-around
@@ -1886,6 +1910,7 @@ SgNode* EventReverser::RouteGraphEdgeComp::getAstNode(const VGEdge& edge) const
             else
                 ROSE_ASSERT(false);
         }
+#endif
         return ssEdge->killer;
     }
     if (isOperatorNode(routeGraph[tgt]))
