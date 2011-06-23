@@ -1,4 +1,4 @@
 
-include ../makefile.inc
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = rose-pragma
+SUBDIRS = rose-pragma rose-max-cover

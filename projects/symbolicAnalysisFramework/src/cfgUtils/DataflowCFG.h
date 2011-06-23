@@ -21,7 +21,7 @@ class DataflowNode {
 	unsigned int getIndex() const {return n.getIndex();}
 	std::vector<DataflowEdge> outEdges() const;
 	std::vector<DataflowEdge> inEdges() const;
-	bool isInteresting() const {return true;}
+	bool isInteresting() const; 
 	bool operator==(const DataflowNode& o) const {return n == o.n;}
 	bool operator!=(const DataflowNode& o) const {return !(*this == o);}
 	bool operator<(const DataflowNode& o) const {return n < o.n;}

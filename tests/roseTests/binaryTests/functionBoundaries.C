@@ -20,26 +20,17 @@ class ShowFunctions : public SgSimpleProcessing {
         if (defn) {
             /* Scan through the function's instructions to find the range of addresses for the function. */
             rose_addr_t func_start=~(rose_addr_t)0, func_end=0;
-            size_t ninsns=0, nbytes=0;
-            SgAsmStatementPtrList func_stmts = defn->get_statementList();
-            for (size_t i=0; i<func_stmts.size(); i++) {
-                SgAsmBlock *bb = isSgAsmBlock(func_stmts[i]);
-                if (bb) {
-                    SgAsmStatementPtrList block_stmts = bb->get_statementList();
-                    for (size_t j=0; j<block_stmts.size(); j++) {
-                        SgAsmInstruction *insn = isSgAsmInstruction(block_stmts[j]);
-                        if (insn) {
-                            ninsns++;
-                            func_start = std::min(func_start, insn->get_address());
-                            func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
-                            nbytes += insn->get_raw_bytes().size();
-                        }
-                    }
-                }
+            size_t nbytes=0;
+            std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(defn);
+            for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+                SgAsmInstruction *insn = *ii;
+                func_start = std::min(func_start, insn->get_address());
+                func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
+                nbytes += insn->get_raw_bytes().size();
             }
 
             /* Reason that this is a function */
-            printf("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" %5zu/%-6zu ", ++nfuncs, func_start, func_end, ninsns, nbytes);
+            printf("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" %5zu/%-6zu ", ++nfuncs, func_start, func_end, insns.size(), nbytes);
             fputs(defn->reason_str(true).c_str(), stdout);
 
             /* Kind of function */

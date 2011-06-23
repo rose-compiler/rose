@@ -1,0 +1,79 @@
+program args_test
+  integer(4) :: count, i
+  character(70) :: v
+  character(160) :: all 
+  character(100) :: some 
+  integer(4) :: length, status
+
+character :: XX(123)
+
+  count = command_argument_count()
+  print *,"count is : ", count
+
+  do i = 1, count - 1
+    call get_command_argument(i, v, length, status)
+    write(*, '(A,I10,A,A,A,I10,A,I10)') "argument", i, "='", v, "' length =", length, "status =", status
+  enddo
+
+  call get_command_argument(count, v, length, status)
+  write(*, '(A,I10)') "argument count is :", count
+  write(*, '(A,A)') "the count_th arg is: ", v
+  write(*, '(A,I10)') "length =", length
+  write(*, '(A,I10)') "status =", status
+
+! no optional arguments
+  call get_command_argument(count)
+  write(*, '(A,I10)') "argument", count
+
+! no length, no status
+  call get_command_argument(count, v)
+  write(*, '(A,I10,A,A)') "argument", count, "=", v
+
+! no status
+  call get_command_argument(count, v, length)
+  write(*, '(A,I10)') "argument", count
+  write(*, '(A)') v
+  write(*, '(A,I10)') "length =", length
+
+! with keyword
+  call get_command_argument(count, v, status=status)
+  write(*, '(A,I10)') "argument", count
+  write(*, '(A)')  v
+  write(*, '(A,I10)') "status =", status
+
+  call get_command_argument(-1, v, length, status)
+  write(*, '(A,I10)') "argument", -1
+  write(*, '(A)') v
+  write(*, '(A,I10)') "length =", length
+  write(*, '(A,I10)') "status =", status
+
+  call get_command(all, length, status)
+  write(*, '(A,A)') "command(160): ", all
+  write(*, '(A,I10)') "length =", length
+  write(*, '(A,I10)') "status =", status
+
+  call get_command(some, length, status)
+  write(*, '(A,A)') "command(100): ", some 
+  write(*, '(A,I10)') "length =", length
+  write(*, '(A,I10)') "status =", status
+
+  call get_command()
+  write(*, '(A)') "get_command without any argument"
+
+  call get_command(some)
+  write(*, '(A,A)') "command(100): ", some
+
+  call get_command(some, length)
+  write(*, '(A,A)') "command(100): ", some 
+  write(*, '(A,I10)') "length =", length
+
+!optional arguments by keyword
+  call get_command(length=length, command=some, status=status)
+  write(*, '(A,A)') "command(100): ", some 
+  write(*, '(A,I10)') "length =", length
+  write(*, '(A,I10)') "status =", status
+
+  call get_command(status=status, command=some)
+  write(*, '(A,A)') "command(100): ", some 
+  write(*, '(A,I10)') "status =", status
+end program args_test

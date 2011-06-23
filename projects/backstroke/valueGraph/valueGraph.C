@@ -1141,7 +1141,7 @@ void EventReverser::addStateSavingEdges()
                 scope = funcBody;
             
             // Find the last def of this variable in its definition scope.
-            const SSA::NodeReachingDefTable& defTable = ssa_->getReachingDefsAtNode(scope);
+            const SSA::NodeReachingDefTable& defTable = ssa_->getOutgoingDefsAtNode(scope);
             
             const VarName& varName = valNode->var.name;
             SSA::NodeReachingDefTable::const_iterator iter = defTable.find(varName);
@@ -1245,7 +1245,7 @@ VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse)
         cout << node->get_parent()->get_parent()->class_name() << endl;
 #endif
         const SSA::NodeReachingDefTable& defTable =
-            ssa_->getReachingDefsAtNode(node->get_parent());
+            ssa_->getOutgoingDefsAtNode(node->get_parent());
             //ssa_->getReachingDefsAtNode(node->get_parent()->get_parent());
 
 #if 0

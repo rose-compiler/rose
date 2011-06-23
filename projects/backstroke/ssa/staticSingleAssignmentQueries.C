@@ -481,7 +481,7 @@ bool StaticSingleAssignment::isPrefixOfName(VarName name, VarName prefix)
 
 const static StaticSingleAssignment::NodeReachingDefTable emptyTable;
 
-const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getReachingDefsAtNode(SgNode* node) const
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getOutgoingDefsAtNode(SgNode* node) const
 {
 	GlobalReachingDefTable::const_iterator reachingDefsIter = reachingDefsTable.find(node);
 	if (reachingDefsIter == reachingDefsTable.end())
@@ -490,7 +490,26 @@ const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getR
 	}
 	else
 	{
-		return reachingDefsIter->second.second;
+		if (isSgFunctionDefinition(node))
+			return reachingDefsIter->second.first;
+		else
+			return reachingDefsIter->second.second;
+	}
+}
+
+const StaticSingleAssignment::NodeReachingDefTable& StaticSingleAssignment::getReachingDefsAtNode_(SgNode* node) const
+{
+	GlobalReachingDefTable::const_iterator reachingDefsIter = reachingDefsTable.find(node);
+	if (reachingDefsIter == reachingDefsTable.end())
+	{
+		return emptyTable;
+	}
+	else
+	{
+		if (isSgFunctionDefinition(node))
+			return reachingDefsIter->second.second;
+		else
+			return reachingDefsIter->second.first;
 	}
 }
 
@@ -624,7 +643,7 @@ StaticSingleAssignment::NodeReachingDefTable StaticSingleAssignment::getLastVers
 
 		void visit(SgNode* node)
 		{
-			const NodeReachingDefTable& reachingDefsHere = ssa->getReachingDefsAtNode(node);
+			const NodeReachingDefTable& reachingDefsHere = ssa->getOutgoingDefsAtNode(node);
 
 			foreach(const NodeReachingDefTable::value_type& varDefPair, reachingDefsHere)
 			{

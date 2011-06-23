@@ -1157,5 +1157,87 @@ bool isCopyConstructible(SgType* type)
     return result + mangleType(type->get_base_type());  
   }
 
+
+bool isPureVirtualClass(SgType* type, const ClassHierarchyWrapper& classHierarchy)
+{
+    SgClassType* classType = isSgClassType(type);
+    if (classType == NULL)
+        return false;
+    
+    SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+    ROSE_ASSERT(classDeclaration != NULL);
+    
+    classDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
+    if (classDeclaration == NULL)
+    {
+        //There's no defining declaration. We really can't tell
+        return false;
+    }
+    SgClassDefinition* classDefinition = classDeclaration->get_definition();
+        
+    //Find all superclasses
+    const ClassHierarchyWrapper::ClassDefSet& ancestors =  classHierarchy.getAncestorClasses(classDefinition);
+    set<SgClassDefinition*> inclusiveAncestors(ancestors.begin(), ancestors.end());
+    inclusiveAncestors.insert(classDefinition);
+    
+    //Find all virtual and concrete functions
+    set<SgMemberFunctionDeclaration*> concreteFunctions, pureVirtualFunctions;
+    foreach(SgClassDefinition* c, inclusiveAncestors)
+    {
+        foreach(SgDeclarationStatement* memberDeclaration, c->get_members())
+        {
+            if (SgMemberFunctionDeclaration* memberFunction = isSgMemberFunctionDeclaration(memberDeclaration))
+            {
+                if (memberFunction->get_functionModifier().isPureVirtual())
+                {
+                    pureVirtualFunctions.insert(memberFunction);
+                }
+                else
+                {
+                    concreteFunctions.insert(memberFunction);
+                }
+            }
+        }
+    }
+    
+    //Check if each virtual function is implemented somewhere
+    foreach (SgMemberFunctionDeclaration* virtualFunction, pureVirtualFunctions)
+    {
+        bool foundConcrete = false;
+        
+        foreach (SgMemberFunctionDeclaration* concreteFunction, concreteFunctions)
+        {
+            if (concreteFunction->get_name() != virtualFunction->get_name())
+                continue;
+            
+            if (concreteFunction->get_args().size() != virtualFunction->get_args().size())
+                continue;
+            
+            bool argsMatch = true;
+            for(size_t i = 0; i < concreteFunction->get_args().size(); i++)
+            {
+                if (concreteFunction->get_args()[i]->get_type() != virtualFunction->get_args()[i]->get_type())
+                {
+                    argsMatch = false;
+                    break;
+                }
+            }
+            
+            if (!argsMatch)
+                continue;
+            
+            foundConcrete = true;
+            break;
+        }
+        
+        //If there's a pure virtual function with no corresponding concrete function, the type is pure virtual
+        if (!foundConcrete)
+        {
+            return true;
+        }
+    }
+    
+    return false;
+}
 } //end of namespace 
 

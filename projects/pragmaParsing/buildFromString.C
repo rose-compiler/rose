@@ -2,7 +2,6 @@
 // test build AST from string
 #include <rose.h>
 #include <stdio.h>
-#include "AstFromString.h"
 
 using namespace std;
 using namespace SageInterface;

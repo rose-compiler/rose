@@ -59,6 +59,8 @@ class SpearAbstractVar
 		return getName()<that.getName() ||
 		       (getName()==that.getName() && varDecl()<that.varDecl());
 	}
+
+	virtual ~SpearAbstractVar() {}
 };
 
 // Represents a Spear variable, including its name and type
@@ -219,6 +221,8 @@ class SpearExpr
 	virtual string str(string indent="")=0;
 	
 	virtual SpearExpr* copy()=0;
+
+	virtual ~SpearExpr();
 };
 
 #endif

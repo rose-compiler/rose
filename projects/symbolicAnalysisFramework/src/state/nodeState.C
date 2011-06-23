@@ -37,7 +37,8 @@ void NodeState::addLattice(const Analysis* analysis, int latticeName, Lattice* l
 	addLattice_ex(dfInfoBelow, analysis, latticeName, l->copy());
 }*/
 
-// sets this node's lattices for this analysis
+// Sets this node's lattices for this analysis, making copies of the provided lattices.
+// This call takes the actual provided lattices and does not make a copy of them.
 void NodeState::setLattices(const Analysis* analysis, vector<Lattice*>& lattices)
 {
 	vector<Lattice*> tmp;
@@ -67,7 +68,7 @@ void NodeState::setLattices(const Analysis* analysis, vector<Lattice*>& lattices
 			dfInfoBelow[(Analysis*)analysis] = tmp;
 	#endif
 	
-	// Set dfInfoAbove and  dfInfoBelow to lattices
+	// Set dfInfoAbove and dfInfoBelow to lattices
 	#ifdef THREADED
 		// set dfInfoAbove to lattices
 		wA->second = lattices;
@@ -82,7 +83,7 @@ void NodeState::setLattices(const Analysis* analysis, vector<Lattice*>& lattices
 		    it!=rA->second.end(); it++)
 		{
 			Lattice* l = (*it)->copy();
-			//cout << "NodeState::setLattices pushing dfInfoBelow: "<<l->str("")<<"\n";
+			//Dbg::dbg << "NodeState::setLattices pushing dfInfoBelow: "<<l->str("")<<"\n";
 			wB->second.push_back(l);
 		}
 		rA.release();
@@ -95,7 +96,7 @@ void NodeState::setLattices(const Analysis* analysis, vector<Lattice*>& lattices
 		    it!=dfInfoAbove[(Analysis*)analysis].end(); it++)
 		{
 			Lattice* l = (*it)->copy();
-			//cout << "NodeState::setLattices pushing dfInfoBelow: "<<l->str("")<<"\n";
+			//Dbg::dbg << "NodeState::setLattices pushing dfInfoBelow: "<<l->str("")<<"\n";
 			dfInfoBelow[(Analysis*)analysis].push_back(l);
 		}
 	#endif
@@ -104,14 +105,14 @@ void NodeState::setLattices(const Analysis* analysis, vector<Lattice*>& lattices
 	for(vector<Lattice*>::iterator it = dfInfoAbove[(Analysis*)analysis].begin(); 
 	    it!=dfInfoAbove[(Analysis*)analysis].end(); it++)
 	{	
-		cout << (*it)->str("    ") << "\n";
+		Dbg::dbg << (*it)->str("    ") << "\n";
 	}*/
 	
 	/*printf("Lattices below: state=%p, analysis=%p\n", this, analysis);
 	for(vector<Lattice*>::iterator it = dfInfoBelow[(Analysis*)analysis].begin(); 
 	    it!=dfInfoBelow[(Analysis*)analysis].end(); it++)
 	{	
-		cout << (*it)->str("    ") << "\n";
+		Dbg::dbg << (*it)->str("    ") << "\n";
 	}*/
 	
 	// Records that this analysis has initialized its state at this node
@@ -154,7 +155,7 @@ void NodeState::setLatticeAbove(const Analysis* analysis, vector<Lattice*>& latt
 	/*printf("Lattices above:\n");
 	for(vector<Lattice*>::iterator it = w->second.begin(); it!=w->second.end(); it++)
 	{	
-		cout << (*it)->str("    ") << "\n";
+		Dbg::dbg << (*it)->str("    ") << "\n";
 	}*/
 	
 	// Records that this analysis has initialized its state at this node
@@ -198,7 +199,7 @@ void NodeState::setLatticeBelow(const Analysis* analysis, vector<Lattice*>& latt
 	for(vector<Lattice*>::iterator it = w->second.begin(); 
 	    w->second.end(); it++)
 	{	
-		cout << (*it)->str("    ") << "\n";
+		Dbg::dbg << (*it)->str("    ") << "\n";
 	}*/
 	
 	// Records that this analysis has initialized its state at this node
@@ -210,7 +211,7 @@ static vector<Lattice*> emptyLatVec;
 // returns the given lattice from above the node, which owned by the given analysis
 Lattice* NodeState::getLatticeAbove(const Analysis* analysis, int latticeName) const
 {
-	getLattice_ex(dfInfoAbove, analysis, latticeName);
+	return getLattice_ex(dfInfoAbove, analysis, latticeName);
 }
 
 // returns the map containing all the lattices from above the node that are owned by the given analysis
@@ -224,6 +225,8 @@ const vector<Lattice*>& NodeState::getLatticeAbove(const Analysis* analysis) con
 			return r->second;
 	#else
 		// if this analysis has registered some lattices at this node, return their vector
+		/*Dbg::dbg << "#dfInfoAbove="<<dfInfoAbove.size()<<"\n";
+		Dbg::dbg << "Analysis "<<analysis<<" found="<<(dfInfoAbove.find((Analysis*)analysis)!=dfInfoAbove.end())<<"\n";*/
 		if(dfInfoAbove.find((Analysis*)analysis)!=dfInfoAbove.end())
 			return dfInfoAbove.find((Analysis*)analysis)->second;
 	#endif
@@ -254,7 +257,7 @@ vector<Lattice*>& NodeState::getLatticeAboveMod(const Analysis* analysis)
 // returns the given lattice from below the node, which owned by the given analysis
 Lattice* NodeState::getLatticeBelow(const Analysis* analysis, int latticeName) const
 {
-	getLattice_ex(dfInfoBelow, analysis, latticeName);
+	return getLattice_ex(dfInfoBelow, analysis, latticeName);
 }
 
 // returns the map containing all the lattices from below the node that are owned by the given analysis
@@ -337,7 +340,7 @@ void NodeState::deleteLatticeBelow(const Analysis* analysis)
 bool NodeState::eqLattices(const vector<Lattice*>& latticesA,
                            const vector<Lattice*>& latticesB)
 {
-//	printf("    latticesA.size()=%d latticesB.size()=%d\n", latticesA.size(), latticesB.size());
+	//printf("    latticesA.size()=%d latticesB.size()=%d\n", latticesA.size(), latticesB.size());
 	if(latticesA.size() != latticesB.size())
 		return false;
 	
@@ -346,11 +349,18 @@ bool NodeState::eqLattices(const vector<Lattice*>& latticesA,
 	    itA != latticesA.end(), itB != latticesB.end();
 	    itA++, itB++)
 	{
-		//Lattice *lA = *itA;
-		//Lattice *lB = *itB;
-/*		cout << "lA = "<<lA->str("    ")<<"\n";
-		cout << "lB = "<<lB->str("    ")<<"\n";*/
-		if(*itA != *itB) return false;
+		Lattice *lA = *itA;
+		Lattice *lB = *itB;
+		/*Dbg::dbg << "        lA = "<<lA->str("    ")<<"\n";
+		Dbg::dbg << "        lB = "<<lB->str("    ")<<"\n";
+		Dbg::dbg << "        lA==lB = "<<(lA==lB)<<"\n";
+		Dbg::dbg << "        *lA==lB = "<<(*lA==lB)<<"\n";*/
+		/*Dbg::dbg << "        *lA==*lB = "<<(*lA==*lB)<<"\n";
+		
+		Dbg::dbg << "        lA!=lB = "<<(lA!=lB)<<"\n";
+		Dbg::dbg << "        *lA!=lB = "<<(*lA!=lB)<<"\n";
+		Dbg::dbg << "        *lA!=*lB = "<<(*lA!=*lB)<<"\n";*/
+		if(*lA != *lB) return false;
 	}
 	
 	return true;
@@ -385,12 +395,12 @@ void NodeState::cloneAnalysisState(const Analysis* srcA, const Analysis* tgtA)
 	for(vector<Lattice*>::const_iterator it = srcLatAbv.begin();
 	    it != srcLatAbv.end(); it++)
 	{ 
-		//cout << "srcLatAbv: "<<(*it)->str("")<<"\n";
+		//Dbg::dbg << "srcLatAbv: "<<(*it)->str("")<<"\n";
 		tgtLatAbv.push_back((*it)->copy()); }
 	for(vector<Lattice*>::const_iterator it = srcLatBel.begin();
 	    it != srcLatBel.end(); it++)
 	{ 
-		//cout << "tgtLatBel: "<<(*it)->str("")<<"\n";
+		//Dbg::dbg << "tgtLatBel: "<<(*it)->str("")<<"\n";
 		tgtLatBel.push_back((*it)->copy()); }
 	//printf("tgtLatAbv.size()=%d  tgtLatBel.size()=%d\n", tgtLatAbv.size(), tgtLatBel.size());
 	
@@ -430,8 +440,8 @@ void NodeState::unionLattices(set<Analysis*>& unionSet, const Analysis* master)
 			for(; (curIt != curLatAbv.end()) && (mstrIt != masterLatAbv.end()); 
 			    curIt++, mstrIt++)
 			{ 
-				//cout <<"        master lattice = "<<(*mstrIt)->str("")<<"\n";
-				//cout <<"        other lattice = "<<(*curIt)->str("")<<"\n";
+				//Dbg::dbg <<"        master lattice = "<<(*mstrIt)->str("")<<"\n";
+				//Dbg::dbg <<"        other lattice = "<<(*curIt)->str("")<<"\n";
 				(*mstrIt)->meetUpdate(*curIt);
 			}
 			
@@ -502,7 +512,7 @@ Lattice* NodeState::getLattice_ex(const LatticeMap& dfMap,
 		if((dfLattices = dfMap.find((Analysis*)analysis)) != dfMap.end())
 		{
 			//printf("dfLattices->first=%p, dfLattices->second.size()=%d\n", dfLattices->first, dfLattices->second.size());
-			if(dfLattices->second.size()>latticeName)
+			if(dfLattices->second.size()>(unsigned int)latticeName)
 				return dfLattices->second.at(latticeName);
 			else
 				return NULL;
@@ -546,7 +556,7 @@ void NodeState::addFact(const Analysis* analysis, int factName, NodeFact* f)
 	{
 		// delete the old fact (if any) and set it to the new fact
 		//if(factsIt->second.find(factName) != factsIt->second.end())
-		if(factName < factsIt->second.size())
+		if((unsigned int)factName < factsIt->second.size())
 		{
 			delete factsIt->second[factName];
 			factsIt->second[factName] = f;
@@ -630,7 +640,7 @@ NodeFact* NodeState::getFact(const Analysis* analysis, int factName) const
 		vector<NodeFact*>::const_iterator it;
 		//printf("NodeState::getFact() factName=%d factsIt->second.size()=%d\n", factName, factsIt->second.size());
 		//if((it = factsIt->second.find(factName)) != factsIt->second.end())
-		if(factName < factsIt->second.size())
+		if((unsigned int)factName < factsIt->second.size())
 		{
 			//return it->second;
 			//return *it;
@@ -777,13 +787,11 @@ void NodeState::initNodeStateMap()
 		DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition());
 		DataflowNode funcCFGEnd = cfgUtils::getFuncEndCFG(func.get_definition());
 		
-		// iterate over all the dataflow nodes in this function
+		// Iterate over all the dataflow nodes in this function
 		for(VirtualCFG::iterator it(funcCFGStart); it!=VirtualCFG::dataflow::end(); it++)
 		{
 			DataflowNode n = *it;
-			//SgNode* sgn = n.getNode();
-			//printf("NodeState::initNodeStateMap() sgn=<%s | %s>\n", sgn->unparseToString().c_str(), sgn->class_name().c_str());
-	
+
 			// the number of NodeStates associated with the given dataflow node
 			int numStates=1;
 			
@@ -792,15 +800,28 @@ void NodeState::initNodeStateMap()
 				numStates=3;*/
 			
 			for(int i=0; i<numStates; i++)
-			{
-				//nodeStateMap[n][i] = new NodeState(/*n*/);
-				//nodeStateMap[n].insert(make_pair(i, new NodeState(n)));
 				nodeStateMap[n].push_back(new NodeState(/*n*/));
-				//printf("                              nodeStateMap[n][i]=%p\n", nodeStateMap[n][i]);
-			}
-			//printf("                              nodeStateMap[n].size()=%d\n", nodeStateMap[n].size());
 		}
 	}
+	
+	/*for(set<FunctionState*>::iterator it=allFuncs.begin(); it!=allFuncs.end(); it++) {
+		const Function& func = (*it)->func;
+		DataflowNode funcCFGStart = cfgUtils::getFuncStartCFG(func.get_definition());
+		DataflowNode funcCFGEnd = cfgUtils::getFuncEndCFG(func.get_definition());
+		for(VirtualCFG::iterator it(funcCFGStart); it!=VirtualCFG::dataflow::end(); it++) {
+			DataflowNode n = *it;
+			
+			Dbg::dbg << "    NodeState::initNodeStateMap() ### sgn="<<n.getNode()<<"=<"<<Dbg::escape(n.getNode()->unparseToString())<<" | "<<n.getNode()->class_name()<<" | "<<n.getIndex()<<">\n";
+			
+			int numStates=1;
+			for(int i=0; i<numStates; i++) {
+				Dbg::dbg << "NodeState::initNodeStateMap() ###    nodeStateMap[n]["<<i<<"]="<<&(nodeStateMap[n][i])<<" nodeStateMap[n]["<<i<<"].initializedAnalyses.size()="<<nodeStateMap[n][i]->initializedAnalyses.size()<<"\n";
+				Dbg::dbg << "NodeState::str() ### #initializedAnalyses="<<nodeStateMap[n][i]->initializedAnalyses.size()<<"\n";
+				for(BoolMap::const_iterator it=nodeStateMap[n][i]->initializedAnalyses.begin(); it!=nodeStateMap[n][i]->initializedAnalyses.end(); it++) 
+					Dbg::dbg << " ###   "<<it->first<<" : "<<it->second<<"\n";
+			}
+		}
+	}*/
 	
 	nodeStateMapInit = true;
 }
@@ -889,6 +910,7 @@ void NodeState::copyLattices_aEQa(Analysis* analysis, NodeState& to, const NodeS
 	LatticeMap::const_accessor rFrom; from.dfInfoAbove.find(rFrom, analysis);
 	copyLattices(wTo->second, rFrom->second);
 	#else
+	ROSE_ASSERT(to.dfInfoAbove.find(analysis)!= to.dfInfoAbove.end());
 	copyLattices(to.dfInfoAbove.find(analysis)->second, from.dfInfoAbove.find(analysis)->second);
 	#endif
 }
@@ -896,11 +918,30 @@ void NodeState::copyLattices_aEQa(Analysis* analysis, NodeState& to, const NodeS
 // copies from's above lattices for analysisA to to's above lattices for analysisB
 void NodeState::copyLattices_aEQa(Analysis* analysisA, NodeState& to, Analysis* analysisB, const NodeState& from)
 {
+	//Dbg::dbg << "        to = "<<to.str(analysisA, "    ")<<"\n";
+	
 	#ifdef THREADED
 	LatticeMap::accessor       wTo;   to.dfInfoAbove.find(wTo, analysisA);
 	LatticeMap::const_accessor rFrom; from.dfInfoAbove.find(rFrom, analysisB);
 	copyLattices(wTo->second, rFrom->second);
 	#else
+	ROSE_ASSERT(to.dfInfoAbove.find(analysisA) != to.dfInfoAbove.end());
+	ROSE_ASSERT(to.dfInfoAbove.find(analysisB) != to.dfInfoAbove.end());
+	
+	//Dbg::dbg << "    copyLattices_aEQa() #to.above="<<to.dfInfoAbove.find(analysisA)->second.size()<<" #from.above="<<from.dfInfoAbove.find(analysisB)->second.size()<<" analysisA="<<analysisA<<" analysisB="<<analysisB<<"\n";
+	
+	vector<Lattice*>::const_iterator itX, itY;
+	for(itX = to.dfInfoAbove.find(analysisA)->second.begin(), itY = from.dfInfoAbove.find(analysisB)->second.begin(); 
+	   itX!=to.dfInfoAbove.find(analysisA)->second.end() && itY!=from.dfInfoAbove.find(analysisB)->second.end(); 
+	   itX++, itY++)
+	{
+		//Dbg::dbg << "        itX = "<<*itX<<" = "<<(*itX)->str("            ")<<"\n"; Dbg::dbg.flush();
+		//Dbg::dbg << "        itY = "<<*itY<<" = "<<(*itY)->str("            ")<<"\n"; Dbg::dbg.flush();
+		//Dbg::dbg << "        ---------------------------\n"; Dbg::dbg.flush();
+		(*itX)->copy(*itY);
+		//dfInfoX.push_back((*itY)->copy());
+	}
+
 	copyLattices(to.dfInfoAbove.find(analysisA)->second, from.dfInfoAbove.find(analysisB)->second);
 	#endif
 }
@@ -913,6 +954,8 @@ void NodeState::copyLattices_bEQa(Analysis* analysis, NodeState& to, const NodeS
 	LatticeMap::const_accessor rFrom; from.dfInfoAbove.find(rFrom, analysis);
 	copyLattices(wTo->second, rFrom->second);
 	#else
+	ROSE_ASSERT(to.dfInfoBelow.find(analysis)!= to.dfInfoBelow.end());
+	ROSE_ASSERT(to.dfInfoAbove.find(analysis)!= to.dfInfoAbove.end());
 	copyLattices(to.dfInfoBelow.find(analysis)->second, from.dfInfoAbove.find(analysis)->second);
 	#endif
 }
@@ -925,6 +968,8 @@ void NodeState::copyLattices_bEQa(Analysis* analysisA, NodeState& to, Analysis* 
 	LatticeMap::const_accessor rFrom; from.dfInfoAbove.find(rFrom, analysisB);
 	copyLattices(wTo->second, rFrom->second);
 	#else
+	ROSE_ASSERT(to.dfInfoBelow.find(analysisA)!= to.dfInfoBelow.end());
+	ROSE_ASSERT(to.dfInfoAbove.find(analysisB)!= to.dfInfoAbove.end());
 	copyLattices(to.dfInfoBelow.find(analysisA)->second, from.dfInfoAbove.find(analysisB)->second);
 	#endif
 }
@@ -937,6 +982,7 @@ void NodeState::copyLattices_bEQb(Analysis* analysis, NodeState& to, const NodeS
 	LatticeMap::const_accessor rFrom; from.dfInfoBelow.find(rFrom, analysis);
 	copyLattices(wTo->second, rFrom->second);
 	#else
+	ROSE_ASSERT(to.dfInfoBelow.find(analysis)!= to.dfInfoBelow.end());
 	copyLattices(to.dfInfoBelow.find(analysis)->second, from.dfInfoBelow.find(analysis)->second);
 	#endif
 }
@@ -949,6 +995,8 @@ void NodeState::copyLattices_aEQb(Analysis* analysis, NodeState& to, const NodeS
 	LatticeMap::const_accessor rFrom; from.dfInfoBelow.find(rFrom, analysis);
 	copyLattices(wTo->second, rFrom->second);
 	#else
+	ROSE_ASSERT(to.dfInfoAbove.find(analysis)!= to.dfInfoAbove.end());
+	ROSE_ASSERT(to.dfInfoBelow.find(analysis)!= to.dfInfoBelow.end());
 	copyLattices(to.dfInfoAbove.find(analysis)->second, from.dfInfoBelow.find(analysis)->second);
 	#endif
 }
@@ -960,18 +1008,24 @@ void NodeState::copyLattices(vector<Lattice*>& dfInfoX, const vector<Lattice*>& 
 	for(vector<Lattice*>::iterator itX = dfInfoX.begin(); itX!=dfInfoX.end(); itX++)
 	{
 		printf("NodeState::copyLattices() deleting %p\n", *itX);
-		cout << "    *itX = " << (*itX)->str("") << "\n";
+		Dbg::dbg << "    *itX = " << (*itX)->str("") << "\n";
 		delete *itX;
 	}
 	dfInfoX.clear();*/
+	ROSE_ASSERT(dfInfoX.size() == dfInfoY.size());
 	
 	// copy lattices
+	//Dbg::dbg << "    copyLattices()\n";
 	vector<Lattice*>::const_iterator itX, itY;
 	for(itX = dfInfoX.begin(), itY = dfInfoY.begin(); 
 	   itX!=dfInfoX.end() && itY!=dfInfoY.end(); 
 	   itX++, itY++)
+	{
+		//Dbg::dbg << "        itX = "<<*itX<<" = "<<(*itX)->str("            ")<<"\n";
+		//Dbg::dbg << "        itY = "<<*itY<<" = "<<(*itY)->str("            ")<<"\n";
 		(*itX)->copy(*itY);
 		//dfInfoX.push_back((*itY)->copy());
+	}
 }
 
 /*void NodeState::operator=(NodeState& that)
@@ -982,3 +1036,38 @@ void NodeState::copyLattices(vector<Lattice*>& dfInfoX, const vector<Lattice*>& 
 	copyLatticesAbove(&that);
 	copyLatticesBelow(&that);
 }*/
+
+string NodeState::str(Analysis* analysis, string indent) const
+{
+	ostringstream oss;
+	
+	// If the analysis has not yet been initialized, say so
+	if(initializedAnalyses.find(analysis) == initializedAnalyses.end()) {
+		oss << "[NodeState: NONE for Analysis]\n";
+	// If it has been initialized, stringify it
+	} else {
+		oss << "[NodeState: \n";
+		ROSE_ASSERT(dfInfoAbove.size() == dfInfoBelow.size());
+		ROSE_ASSERT(dfInfoAbove.find(analysis) != dfInfoAbove.end());
+		ROSE_ASSERT(dfInfoBelow.find(analysis) != dfInfoBelow.end());
+		int i=0;
+		const vector<Lattice*>& latticesAbove = dfInfoAbove.find(analysis)->second;
+		const vector<Lattice*>& latticesBelow = dfInfoBelow.find(analysis)->second;
+		ROSE_ASSERT(latticesAbove.size() == latticesBelow.size());
+		
+		vector<Lattice*>::const_iterator lAbv, lBel;
+		for(lAbv=latticesAbove.begin(), lBel=latticesBelow.begin(); lAbv!=latticesAbove.end(); lAbv++, lBel++, i++) {
+			oss << indent << "    Lattice "<<i<<" Above: "<<*lAbv<<" = "<<(*lAbv)->str(indent+"        ")<<"\n";
+			oss << indent << "    Lattice "<<i<<" Below: "<<*lBel<<" = "<<(*lBel)->str(indent+"        ")<<"\n";
+		}
+		
+		ROSE_ASSERT(facts.find(analysis) != facts.end());
+		i=0;
+		const vector<NodeFact*>& aFacts = facts.find(analysis)->second;
+		for(vector<NodeFact*>::const_iterator fact=aFacts.begin(); fact!=aFacts.end(); fact++, i++)
+			oss << indent << "    Fact "<<i<<": "<<(*fact)->str(indent+"        ")<<"\n";
+		oss << indent << "]";
+	}
+	
+	return oss.str();
+}

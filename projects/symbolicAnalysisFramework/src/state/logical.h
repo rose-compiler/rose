@@ -30,6 +30,8 @@ class LogicalCond
 	virtual LogicalCond* copy()=0;
 	
 	virtual string str(string indent="")=0;
+	
+	virtual ~LogicalCond() {}
 };
 
 #endif

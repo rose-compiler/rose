@@ -166,6 +166,11 @@ namespace ELF{
 #endif
 #endif
 
+// Include PythonFrontend.h if and only if a Python support is required
+#ifdef USE_ROSE_PYTHON_SUPPORT
+#include "PythonFrontend.h"
+#endif
+
 // Support for Xen/Ether hypervisor
 #ifndef _MSC_VER
 #include "ether.h"

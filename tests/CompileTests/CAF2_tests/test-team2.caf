@@ -1,0 +1,6 @@
+program test_team2
+  integer :: coI[*]
+  team team1
+  coI[6@team1] = 77
+end program
+

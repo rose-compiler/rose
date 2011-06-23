@@ -5,6 +5,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/graph/topological_sort.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/shared_ptr.hpp>
 
 
 namespace Backstroke
