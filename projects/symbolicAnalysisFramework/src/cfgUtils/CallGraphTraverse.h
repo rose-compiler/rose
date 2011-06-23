@@ -238,7 +238,7 @@ class CGFunction : public Function
 			}
 		}
 		
-		bool operator == (iterator that)
+		bool operator == (const iterator& that)
 		{
 			// if either iterators are finished, then they're equal iff the other is finished, ignoring any other fields
 			if(finished) return that.finished;
@@ -252,7 +252,7 @@ class CGFunction : public Function
 			       (func == that.func);
 		}
 		
-		bool operator != (iterator that)
+		bool operator != (const iterator& that)
 		{ return !((*this) == that); }
 	};
 	
