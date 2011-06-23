@@ -13,11 +13,11 @@ srcdir=$1
 DIFF="diff"
 DIFFOPTIONS="-U5"
 
-echo ./steensgaardTest1 8
-./steensgaardTest1 8 > out
-echo "Calling: ${DIFF} ${DIFFOPTIONS} out $srcdir/steensgaardTest1.out"
-${DIFF} ${DIFFOPTIONS} out $srcdir/steensgaardTest1.out 
-rm out
+#echo ./steensgaardTest1 8
+#./steensgaardTest1 8 > out
+#echo "Calling: ${DIFF} ${DIFFOPTIONS} out $srcdir/steensgaardTest1.out"
+#${DIFF} ${DIFFOPTIONS} out $srcdir/steensgaardTest1.out 
+#rm out
 
 #FR(06/17/2011): Commented out this test as it's generating 
 #gcc version dependent output

@@ -742,7 +742,7 @@ SgClassSymbol* AstInterfaceImpl :: GetClass( const string& val, char** start)
       classname.push_back(val[size]);
     }
     if (start != 0) {
-      *start = strstr( val.c_str(), "::");
+      *start = const_cast<char*>(strstr( val.c_str(), "::"));
       *start += 2;
     }
 
