@@ -124,6 +124,10 @@ set( phpFrontend_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/PHPFrontend/PHPFrontend.C
      )
 
+#set( pythonFrontend_SRC
+#     ${CMAKE_SOURCE_DIR}/src/frontend/PythonFrontend/PythonFrontend.C
+#     )
+
 set( astFixup_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astFixup/AstFixup.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astFixup/fixupforGnuBackendCompiler.C 
@@ -251,6 +255,7 @@ set (unparser_SRC
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/formatSupport/unparseFormatHelp.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/formatSupport/unparse_format.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/PHPCodeGeneration/unparsePHP.C
+      #${CMAKE_SOURCE_DIR}/src/backend/unparser/PythonCodeGeneration/unparsePython.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/languageIndependenceSupport/modified_sage_isUnaryOp.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/languageIndependenceSupport/unparser_opt.C
       ${CMAKE_SOURCE_DIR}/src/backend/unparser/languageIndependenceSupport/modified_sage.C
@@ -776,6 +781,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${roseBinaryLoader_SRC}
  ${roseAsmUnparser_SRC}
  ${phpFrontend_SRC}
+ #${pythonFrontend_SRC}
  ${libastMerge_SRC}
  ${astFixup_SRC}
  ${midend_src}

@@ -3502,6 +3502,23 @@ SageInterface::is_PHP_language()
    }
 
 bool
+SageInterface::is_Python_language()
+   {
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_Python_only() == true)
+               returnValue = true;
+        }
+
+     return returnValue;
+   }
+
+bool
 SageInterface::is_Cuda_language()
    {
      bool returnValue = false;
