@@ -18,6 +18,7 @@
 #else
 #include <sys/wait.h>
 #include "PHPFrontend.h"
+#include "PythonFrontend.h"
 #endif
 
 #ifdef _MSC_VER
@@ -3015,153 +3016,171 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                                 // file->display("Marked as java file based on file suffix");
                                  }
-                                else
-                                 {
-                                // This is not a source file recognized by ROSE, so it is either a binary executable or library archive or something that we can't process.
+                              else if (CommandlineProcessing::isPythonFileNameSuffix(filenameExtension) == true)
+                              {
+                                  // file = new SgSourceFile ( argv,  project );
+                                  SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+                                  file = sourceFile;
 
-                                // printf ("This still might be a binary file (can not be an object file, since these are not accepted into the fileList by CommandlineProcessing::generateSourceFilenames()) \n");
+                                  file->set_sourceFileUsesPythonFileExtension(true);
 
-                                // Detect if this is a binary (executable) file!
-                                   bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
-                                   bool isLibraryArchive   = isLibraryArchiveFile(sourceFilename);
+                                  file->set_outputLanguage(SgFile::e_Python_output_language);
 
-                                // If -rose:binary was specified and the relatively simple-minded checks of isBinaryExecutableFile()
-                                // and isLibararyArchiveFile() both failed to detect anything, then assume this is an executable.
-                                   if (!isBinaryExecutable && !isLibraryArchive)
-                                       isBinaryExecutable = true;
-                              
-                                // printf ("isBinaryExecutable = %s isLibraryArchive = %s \n",isBinaryExecutable ? "true" : "false",isLibraryArchive ? "true" : "false");
-                                   if (isBinaryExecutable == true || isLibraryArchive == true)
+                                  file->set_Python_only(true);
+                                  file->set_skipfinalCompileStep(true);
+
+                                  // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                                  // Note that file->get_requires_C_preprocessor() should be false.
+                                  ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+                                  sourceFile->initializeGlobalScope();
+                              }
+                              else
+                              {
+                                  // This is not a source file recognized by ROSE, so it is either a binary executable or library archive or something that we can't process.
+
+                                  // printf ("This still might be a binary file (can not be an object file, since these are not accepted into the fileList by CommandlineProcessing::generateSourceFilenames()) \n");
+
+                                  // Detect if this is a binary (executable) file!
+                                  bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
+                                  bool isLibraryArchive   = isLibraryArchiveFile(sourceFilename);
+
+                                  // If -rose:binary was specified and the relatively simple-minded checks of isBinaryExecutableFile()
+                                  // and isLibararyArchiveFile() both failed to detect anything, then assume this is an executable.
+                                  if (!isBinaryExecutable && !isLibraryArchive)
+                                      isBinaryExecutable = true;
+
+                                  // printf ("isBinaryExecutable = %s isLibraryArchive = %s \n",isBinaryExecutable ? "true" : "false",isLibraryArchive ? "true" : "false");
+                                  if (isBinaryExecutable == true || isLibraryArchive == true)
+                                  {
+                                      // Build a SgBinaryComposite to represent either the binary executable or the library archive.
+                                      SgBinaryComposite* binary = new SgBinaryComposite ( argv,  project );
+                                      file = binary;
+
+                                      // This should have already been setup!
+                                      // file->initializeSourcePosition();
+
+                                      file->set_sourceFileUsesBinaryFileExtension(true);
+
+                                      // If this is an object file being processed for binary analysis then mark it as an object 
+                                      // file so that we can trigger analysis to mar the sections that will be disassembled.
+                                      string binaryFileName = file->get_sourceFileNameWithPath();
+                                      if (CommandlineProcessing::isObjectFilename(binaryFileName) == true)
                                       {
-                                     // Build a SgBinaryComposite to represent either the binary executable or the library archive.
-                                        SgBinaryComposite* binary = new SgBinaryComposite ( argv,  project );
-                                        file = binary;
+                                          file->set_isObjectFile(true);
+                                      }
 
-                                     // This should have already been setup!
-                                     // file->initializeSourcePosition();
+                                      // DQ (2/5/2009): Put this at both the SgProject and SgFile levels.
+                                      // DQ (2/4/2009):  This is now a data member on the SgProject instead of on the SgFile.
+                                      file->set_binary_only(true);
 
-                                        file->set_sourceFileUsesBinaryFileExtension(true);
+                                      // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C preprocessor).
+                                      file->set_requires_C_preprocessor(false);
 
-                                     // If this is an object file being processed for binary analysis then mark it as an object 
-                                     // file so that we can trigger analysis to mar the sections that will be disassembled.
-                                        string binaryFileName = file->get_sourceFileNameWithPath();
-                                        if (CommandlineProcessing::isObjectFilename(binaryFileName) == true)
-                                           {
-                                             file->set_isObjectFile(true);
-                                           }
+                                      ROSE_ASSERT(file->get_file_info() != NULL);
 
-                                     // DQ (2/5/2009): Put this at both the SgProject and SgFile levels.
-                                     // DQ (2/4/2009):  This is now a data member on the SgProject instead of on the SgFile.
-                                        file->set_binary_only(true);
-
-                                     // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C preprocessor).
-                                        file->set_requires_C_preprocessor(false);
-
-                                        ROSE_ASSERT(file->get_file_info() != NULL);
-
-                                        if (isLibraryArchive == true)
-                                           {
+                                      if (isLibraryArchive == true)
+                                      {
 #ifdef _MSC_VER
-                                               /* The following block of code deals with *.a library archives files found on
-                                                * Unix systems. I added better temporary file and directory names, but this
-                                                * block of code also has commands that likely won't run on Windows
-                                                * systems, so I'm commenting out the whole block. [RPM 2010-11-03] */
-                                               ROSE_ASSERT(!"Windows not supported");
+                                          /* The following block of code deals with *.a library archives files found on
+                                           * Unix systems. I added better temporary file and directory names, but this
+                                           * block of code also has commands that likely won't run on Windows
+                                           * systems, so I'm commenting out the whole block. [RPM 2010-11-03] */
+                                          ROSE_ASSERT(!"Windows not supported");
 #else
 
                                           // This is the case of processing a library archive (*.a) file. We want to process these files so that 
                                           // we can test the library identification mechanism to build databases of the binary functions in 
                                           // libraries (so that we detect these in staticaly linked binaries).
-                                             ROSE_ASSERT(isBinaryExecutable == false);
+                                          ROSE_ASSERT(isBinaryExecutable == false);
 
                                           // Note that since a archive can contain many *.o files each of these will be a SgAsmGenericFile object and 
                                           // the SgBinaryComposite will contain a list of SgAsmGenericFile objects to hold them all.
-                                             string archiveName = file->get_sourceFileNameWithPath();
+                                          string archiveName = file->get_sourceFileNameWithPath();
 
-                                             printf ("archiveName = %s \n",archiveName.c_str());
+                                          printf ("archiveName = %s \n",archiveName.c_str());
 
                                           // Mark this as a library archive.
-                                             file->set_isLibraryArchive(true);
+                                          file->set_isLibraryArchive(true);
 
                                           // Extract the archive into a temporary directory and create a file in that
                                           // directory that will have the names of objects stored in the archive.  We have
                                           // to be careful about name choices since this function could be called multiple
                                           // times from one process, and by multiple processes.
-                                             static int tmpDirectorySequence = 0;
-                                             string tmpDirectory = "/tmp/ROSE-" + StringUtility::numberToString(getpid()) +
-                                                                   "-" + StringUtility::numberToString(tmpDirectorySequence++);
-                                             string objectNameFile = tmpDirectory + "/object_names.txt";
-                                             string commandLine = "mkdir -p " + tmpDirectory +
-                                                                  "&& cd " + tmpDirectory +
-                                                                  "&& ar -vox " + archiveName +
-                                                                  ">" + objectNameFile;
-                                             printf ("Running System Command: %s \n",commandLine.c_str());
+                                          static int tmpDirectorySequence = 0;
+                                          string tmpDirectory = "/tmp/ROSE-" + StringUtility::numberToString(getpid()) +
+                                              "-" + StringUtility::numberToString(tmpDirectorySequence++);
+                                          string objectNameFile = tmpDirectory + "/object_names.txt";
+                                          string commandLine = "mkdir -p " + tmpDirectory +
+                                              "&& cd " + tmpDirectory +
+                                              "&& ar -vox " + archiveName +
+                                              ">" + objectNameFile;
+                                          printf ("Running System Command: %s \n",commandLine.c_str());
 
                                           // Run the system command...
-                                             system(commandLine.c_str());
+                                          system(commandLine.c_str());
 
-                                             vector<string> wordList = StringUtility::readWordsInFile(objectNameFile);
-                                             vector<string> objectFileList;
+                                          vector<string> wordList = StringUtility::readWordsInFile(objectNameFile);
+                                          vector<string> objectFileList;
 
-                                             for (vector<string>::iterator i = wordList.begin(); i != wordList.end(); i++)
-                                                {
-                                               // Get each word in the file of names (*.o)
-                                                  string word = *i;
-                                               // printf ("word = %s \n",word.c_str());
-                                                  size_t wordSize = word.length();
-                                                  string targetSuffix = ".o";
-                                                  size_t targetSuffixSize = targetSuffix.length();
-                                                  if (wordSize > targetSuffixSize &&
+                                          for (vector<string>::iterator i = wordList.begin(); i != wordList.end(); i++)
+                                          {
+                                              // Get each word in the file of names (*.o)
+                                              string word = *i;
+                                              // printf ("word = %s \n",word.c_str());
+                                              size_t wordSize = word.length();
+                                              string targetSuffix = ".o";
+                                              size_t targetSuffixSize = targetSuffix.length();
+                                              if (wordSize > targetSuffixSize &&
                                                       word.substr(wordSize-targetSuffixSize) == targetSuffix)
-                                                       objectFileList.push_back(tmpDirectory + "/" + word);
-                                                }
+                                                  objectFileList.push_back(tmpDirectory + "/" + word);
+                                          }
 
-                                             for (vector<string>::iterator i = objectFileList.begin(); i != objectFileList.end(); i++)
-                                                {
-                                               // Get each object file name (*.o)
-                                                  string objectFileName = *i;
-                                                  printf ("objectFileName = %s \n",objectFileName.c_str());
-                                                  binary->get_libraryArchiveObjectFileNameList().push_back(objectFileName);
-                                                  printf ("binary->get_libraryArchiveObjectFileNameList().size() = %zu \n",binary->get_libraryArchiveObjectFileNameList().size());
-                                                }
+                                          for (vector<string>::iterator i = objectFileList.begin(); i != objectFileList.end(); i++)
+                                          {
+                                              // Get each object file name (*.o)
+                                              string objectFileName = *i;
+                                              printf ("objectFileName = %s \n",objectFileName.c_str());
+                                              binary->get_libraryArchiveObjectFileNameList().push_back(objectFileName);
+                                              printf ("binary->get_libraryArchiveObjectFileNameList().size() = %zu \n",binary->get_libraryArchiveObjectFileNameList().size());
+                                          }
 #if 0
-                                             printf ("Exiting in processing a library archive file. \n");
+                                          printf ("Exiting in processing a library archive file. \n");
                                           // ROSE_ASSERT(false);
 #endif
 #endif /* _MSC_VER */
-                                           }
+                                      }
 #if 0
-                                        printf ("Processed as a binary file! \n");
+                                      printf ("Processed as a binary file! \n");
 #endif
-                                      }
-                                     else
-                                      {
-                                        file = new SgUnknownFile ( argv,  project );
+                                  }
+                                  else
+                                  {
+                                      file = new SgUnknownFile ( argv,  project );
 
-                                     // This should have already been setup!
-                                     // file->initializeSourcePosition();
+                                      // This should have already been setup!
+                                      // file->initializeSourcePosition();
 
-                                        ROSE_ASSERT(file->get_parent() != NULL);
-                                        ROSE_ASSERT(file->get_parent() == project);
+                                      ROSE_ASSERT(file->get_parent() != NULL);
+                                      ROSE_ASSERT(file->get_parent() == project);
 
-                                     // If all else fails, then output the type of file and exit.
-                                        file->set_sourceFileTypeIsUnknown(true);
-                                        file->set_requires_C_preprocessor(false);
+                                      // If all else fails, then output the type of file and exit.
+                                      file->set_sourceFileTypeIsUnknown(true);
+                                      file->set_requires_C_preprocessor(false);
 
-                                        ROSE_ASSERT(file->get_file_info() != NULL);
-                                     // file->set_parent(project);
+                                      ROSE_ASSERT(file->get_file_info() != NULL);
+                                      // file->set_parent(project);
 
-                                     // DQ (2/3/2009): Uncommented this to report the file type when we don't process it...
-                                     // outputTypeOfFileAndExit(sourceFilename);
-                                        printf ("Warning: This is an unknown file type, not being processed by ROSE \n");
-                                        outputTypeOfFileAndExit(sourceFilename);
-                                      }
-                                 }
+                                      // DQ (2/3/2009): Uncommented this to report the file type when we don't process it...
+                                      // outputTypeOfFileAndExit(sourceFilename);
+                                      printf ("Warning: This is an unknown file type, not being processed by ROSE \n");
+                                      outputTypeOfFileAndExit(sourceFilename);
+                                  }
+                              }
                             }
                        }
                   }
 
-               file->set_sourceFileUsesFortranFileExtension(false);
+                 file->set_sourceFileUsesFortranFileExtension(false);
              }
         }
        else
@@ -6705,6 +6724,17 @@ SgSourceFile::build_PHP_AST()
      return frontendErrorLevel;
    }
 
+int
+SgSourceFile::build_Python_AST()
+   {
+     string pythonFileName = this->get_sourceFileNameWithPath();
+#ifdef ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+     int frontendErrorLevel = python_main(pythonFileName, this);
+#else
+     int frontendErrorLevel = 0;
+#endif
+     return frontendErrorLevel;
+   }
 
 /* Parses a single binary file and adds a SgAsmGenericFile node under this SgBinaryComposite node. */
 void
@@ -6899,16 +6929,30 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                   }
                  else
                   {
-                    frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
-
-                 // DQ (12/29/2008): The newer version of EDG (version 3.10 and 4.0) use different return codes for indicating an error.
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-                 // Any non-zero value indicates an error.
-                    frontend_failed = (frontendErrorLevel != 0);
+                      if ( get_Python_only() == true )
+                         {
+#ifdef ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+                             frontendErrorLevel = build_Python_AST();
+                             frontend_failed = (frontendErrorLevel > 0);
 #else
-                 // non-zero error code can mean warnings were produced, values greater than 3 indicate errors.
-                    frontend_failed = (frontendErrorLevel > 3);
+                             fprintf(stderr, "ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT is not defined. Trying to parse a Python file when Python is not supported (ROSE must be configured using --with-python (default)) \n");
+                             ROSE_ASSERT(false);
 #endif
+
+                         }
+                      else
+                         {
+                             frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
+
+                             // DQ (12/29/2008): The newer version of EDG (version 3.10 and 4.0) use different return codes for indicating an error.
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+                             // Any non-zero value indicates an error.
+                             frontend_failed = (frontendErrorLevel != 0);
+#else
+                             // non-zero error code can mean warnings were produced, values greater than 3 indicate errors.
+                             frontend_failed = (frontendErrorLevel > 3);
+#endif
+                         }
                   }
              }
         }
