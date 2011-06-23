@@ -75,14 +75,14 @@ runPythonFrontend(SgFile* file)
 
 int python_main(std::string filename, SgFile* file)
 {
-    std::cout << "Launching interpreter." << std::endl;
+    //std::cout << "Launching interpreter." << std::endl;
 
     Py_Initialize();
     SgGlobal* sg_global = runPythonFrontend(file);
     Py_Finalize();
 
-    const char* str = (sg_global != NULL) ? "success" : "failed";
-    std::cout << "Interpreter terminated (" << str << ")." << std::endl;
+    //const char* str = (sg_global != NULL) ? "success" : "failed";
+    //std::cout << "Interpreter terminated (" << str << ")." << std::endl;
 
     SgSourceFile* sg_source_file = isSgSourceFile(file);
     sg_source_file->set_globalScope(sg_global);
