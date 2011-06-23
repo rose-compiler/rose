@@ -11054,7 +11054,7 @@ SgClassDefinition::get_declaration() const
      ROSE_ASSERT(this != NULL);
 
      ROSE_ASSERT(get_parent() != NULL);
-     printf ("In SgClassDefinition::get_declaration(): get_parent() = %p = %s \n",get_parent(),get_parent()->class_name().c_str());
+  // printf ("In SgClassDefinition::get_declaration(): get_parent() = %p = %s \n",get_parent(),get_parent()->class_name().c_str());
 
      SgClassDeclaration *decl = isSgClassDeclaration(get_parent());
      assert( get_parent() == NULL || decl != NULL ); 

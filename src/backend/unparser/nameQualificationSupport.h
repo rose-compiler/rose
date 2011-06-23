@@ -28,7 +28,7 @@ class NameQualificationInheritedAttribute
    {
      public:
           NameQualificationInheritedAttribute();
-          NameQualificationInheritedAttribute(const HiddenListInheritedAttribute & X);
+          NameQualificationInheritedAttribute(const NameQualificationInheritedAttribute & X);
    };
 
 

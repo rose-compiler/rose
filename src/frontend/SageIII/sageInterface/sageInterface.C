@@ -4346,10 +4346,10 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
 
      ROSE_ASSERT(cscope != NULL);
 
-     printf ("In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s \n",cscope,cscope->class_name().c_str());
+  // printf ("In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s \n",cscope,cscope->class_name().c_str());
      while ((cscope != NULL) && (symbol == NULL))
         {
-          printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s \n",cscope,cscope->class_name().c_str());
+       // printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s \n",cscope,cscope->class_name().c_str());
           symbol = cscope->lookup_symbol(name);
 
        // debug
@@ -4360,12 +4360,14 @@ SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgSc
             else 
                cscope = NULL;
 
-          printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
+       // printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
         }
 
      if (symbol == NULL)
         {
+#if 0
           printf ("Warning: could not locate the specified name %s in any outer symbol table \n",name.str());
+#endif
        // ROSE_ASSERT(false); 
         }
 
