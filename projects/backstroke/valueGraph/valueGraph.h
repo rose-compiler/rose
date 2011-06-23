@@ -94,6 +94,9 @@ private:
     //! The CFG of the event function.
     BackstrokeCFG* cfg_;
     
+    //! The full CFG of the event function.
+    Backstroke::FullCFG* fullCfg_;
+    
     //! The CDG of the event function.
     BackstrokeCDG* cdg_;
     
@@ -260,7 +263,7 @@ private:
 
     //! Add state saving edges for those killed by the given var. The second parameter
     //! is the AST ndoe which defines the first parameter.
-    void addStateSavingEdges(const VersionedVariable& var, SgNode* astNode);
+    void addStateSavingEdges(const VarName& varName, SgNode* astNode);
     
     
     //! Create a value node from the given AST node. This node must be a use.

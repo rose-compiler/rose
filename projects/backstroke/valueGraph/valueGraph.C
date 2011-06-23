@@ -1190,7 +1190,7 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
                 varVertexMap_[var] = argVertex;
                 
                 // Add state saving edges for killed defs.
-                addStateSavingEdges(var, arg);
+                addStateSavingEdges(var.name, arg);
             }
         }
         
@@ -1290,7 +1290,7 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
     return funcCallVertex;
 }
 
-void EventReverser::addStateSavingEdges(const VersionedVariable& var, SgNode* astNode)
+void EventReverser::addStateSavingEdges(const VarName& varName, SgNode* astNode)
 {
     if (astNode == NULL) return;
     // If the lhs node is a declaration, no state saving is added here.
@@ -1306,14 +1306,14 @@ void EventReverser::addStateSavingEdges(const VersionedVariable& var, SgNode* as
     {
         // FIXME cannot get the correct reaching def for a loop header!!
         
-        if (def.first == var.name)
+        if (def.first == varName)
         {
             //cout << "Killed: " << def.second->getRenamingNumber() << endl;
 
             int version = def.second->getRenamingNumber();
             //ROSE_ASSERT(version != var.version);
             
-            VersionedVariable killedVar(var.name, version);
+            VersionedVariable killedVar(varName, version);
             //cout << "Killed: " << killedVar << endl;
 
 #if 1
@@ -1366,7 +1366,7 @@ EventReverser::VGVertex EventReverser::createValueNode(SgNode* lhsNode, SgNode* 
     if (lhsNode)
     {
         // Add state saving edge here
-        addStateSavingEdges(var, lhsNode);
+        addStateSavingEdges(var.name, lhsNode);
     }
 
     if (rhsNode)
@@ -1526,7 +1526,7 @@ void EventReverser::addPhiEdges()
                         
                         // A Mu mode can kill the defs from non-back edge. Add state
                         // saving edges here.
-                        addStateSavingEdges(muNode->var, cfgEdge.target().getNode());
+                        addStateSavingEdges(muNode->var.name, cfgEdge.target().getNode());
                         
                         // For a Mu node, we duplicate it and connect all Mu edges to it.
                         duplicatedNode = boost::add_vertex(valueGraph_);
@@ -1558,6 +1558,7 @@ void EventReverser::addStateSavingEdges()
         ValueNode* valNode = isValueNode(node);
         if (valNode == NULL) continue;
         
+#if 0
         // If the variable in this node is a stack variable, find its scope
         // and add a state saving edge for it containing the scope.
         SgNode* astNode = valNode->astNode;
@@ -1594,6 +1595,7 @@ void EventReverser::addStateSavingEdges()
                 addValueGraphStateSavingEdges(varVertexMap_[var], scope, true);
             }
         }
+#endif
         
         // Treat "this" node as an available value
         // !!! This is a work-around, since this is no version info for this node now.
@@ -1683,7 +1685,8 @@ void EventReverser::addStateSavingEdges()
 
         SgInitializedName* initName = valNode->var.name[0];
         SgScopeStatement* scope = initName->get_scope();
-        if (isSgClassDefinition(scope)) continue;
+        if (!SageInterface::isAncestor(funcDef_, scope)) 
+            continue;
         
         if (SgFunctionDefinition* funcDef = isSgFunctionDefinition(scope))
             scope = funcDef->get_body();
@@ -1692,6 +1695,47 @@ void EventReverser::addStateSavingEdges()
         
         addValueGraphStateSavingEdges(varVertexMap_[valNode->var], scope, true);
     }
+    
+    
+    // For each scope statement, find all its early exits, and add 
+    // state saving edges for local variables in that scope.
+    map<SgScopeStatement*, vector<SgStatement*> > exitsForScopes;
+    foreach (SgScopeStatement* scope, 
+            BackstrokeUtility::querySubTree<SgScopeStatement>(funcDef_))
+    {
+        exitsForScopes[scope] = BackstrokeUtility::getEarlyExits(scope);
+    }
+    
+    // This set make sure each variable is processed only once.
+    set<SgInitializedName*> processedVars;
+    foreach (VGVertex v, boost::vertices(valueGraph_))
+    {
+        ValueNode* valNode = isValueNode(valueGraph_[v]);
+        if (!valNode || valNode->var.name.size() != 1)
+            continue;
+        
+        SgInitializedName* initName = valNode->var.name[0];
+        if (processedVars.count(initName))
+            continue;
+        
+        SgScopeStatement* scope = initName->get_scope();
+        if (!SageInterface::isAncestor(funcDef_, scope)) 
+            continue;
+        
+        ROSE_ASSERT(exitsForScopes.count(scope));
+        
+        
+        // For each early exit, add a SS edge for this local variable.
+        foreach (SgStatement* exit, exitsForScopes[scope])
+        {
+            cout << "Early exit SS edge: " << initName->get_name() 
+                    << "--SS-->" << exit->class_name() << "\n\n";
+            addStateSavingEdges(VarName(1, initName), exit);
+        }
+        
+        processedVars.insert(initName);
+    }
+    
 }
 
 VersionedVariable EventReverser::getVersionedVariable(SgNode* node, bool isUse/*= true*/, SgNode* defNode/*= NULL*/)

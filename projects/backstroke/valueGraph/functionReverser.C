@@ -28,6 +28,7 @@ EventReverser::EventReverser(SSA* ssa)
 EventReverser::~EventReverser()
 {
     delete cfg_;
+    delete fullCfg_;
     delete cdg_;
     delete pathNumManager_;
 }
@@ -44,6 +45,7 @@ void EventReverser::reverseEvent(SgFunctionDefinition* funcDef)
     buildFunctionBodies();
     
     cfg_ = new BackstrokeCFG(funcDef_);
+    fullCfg_ = new Backstroke::FullCFG(funcDef_);
     cdg_ = new BackstrokeCDG(*cfg_);
     pathNumManager_ = new PathNumManager(cfg_);
 
