@@ -842,6 +842,10 @@ ROSE_SUPPORT_PHP
 
 AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
 
+ROSE_SUPPORT_PYTHON
+
+AM_CONDITIONAL(ROSE_USE_PYTHON,test ! "$with_python" = no)
+
 #ASR
 ROSE_SUPPORT_LLVM
 
@@ -1815,6 +1819,11 @@ AC_SUBST(top_pwd)
 absolute_path_srcdir="`cd $srcdir; pwd`"
 AC_SUBST(absolute_path_srcdir)
 
+# Liao 6/20/2011, store source path without symbolic links, used to have consistent source and compile paths for ROSE 
+# when call graph analysis tests are used.
+res_top_src=$(cd "$srcdir" && pwd -P)
+AC_DEFINE_UNQUOTED([ROSE_SOURCE_TREE_PATH],"$res_top_src",[Location of ROSE Source Tree.])
+
 # This is silly, but it is done to hide an include command (in
 # projects/compass/Makefile.am, including compass-makefile.inc in the build
 # tree) from Automake because the needed include file does not exist when
@@ -2083,6 +2092,7 @@ src/frontend/CxxFrontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
+src/frontend/PythonFrontend/Makefile
 src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
@@ -2191,7 +2201,9 @@ projects/FiniteStateModelChecker/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/HeaderFilesInclusion/Makefile
-projects/MPICodeMotion/Makefile
+projects/MPI_Tools/Makefile
+projects/MPI_Tools/MPICodeMotion/Makefile
+projects/MPI_Tools/MPIDeterminismAnalysis/Makefile
 projects/MacroRewrapper/Makefile
 projects/Makefile
 projects/OpenMP_Analysis/Makefile
@@ -2372,6 +2384,7 @@ tests/CompileTests/CAF2_tests/Makefile
 tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
+tests/CompileTests/Python_tests/Makefile
 tests/CompileTests/UPC_tests/Makefile
 tests/CompileTests/OpenMP_tests/Makefile
 tests/CompileTests/OpenMP_tests/fortran/Makefile
