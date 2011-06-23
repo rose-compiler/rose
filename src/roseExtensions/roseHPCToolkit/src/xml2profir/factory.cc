@@ -27,7 +27,7 @@ using namespace RoseHPCT;
 static IRNode *
 newProgram (const XMLElem& e)
 {
-  return (e.name == "PGM") ? new Program (e.getAttr ("n")) : NULL;
+  return (e.name == "SecFlatProfile") ? new Program (e.getAttr ("n")) : NULL;
 }
 
 static IRNode *
@@ -99,7 +99,7 @@ ProfIRFactory::callCreate (const string& id, IRNodeCreator_t creator) const
 void
 ProfIRFactory::registerDefaults (void)
 {
-  registerType (string ("PGM"), ::newProgram);
+  registerType (string ("SecFlatProfile"), ::newProgram);
   registerType (string ("G"), ::newGroup);
   registerType (string ("LM"), ::newModule);
   registerType (string ("F"), ::newFile);

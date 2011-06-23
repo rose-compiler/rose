@@ -95,7 +95,7 @@ XMLToProfIRConverter::visit (TreeParamPtr_t tree)
     {
       ProfIRFactory_t::instance ().setElement (tree->value);
       IRTree_t::Val_t v =
-	ProfIRFactory_t::instance ().createObject ("PGM");
+	ProfIRFactory_t::instance ().createObject ("SecFlatProfile");
       if (v != NULL)
 	{
 	  prog_root_ = new IRTree_t (v);

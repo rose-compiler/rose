@@ -414,7 +414,7 @@ UnparseFortran_type::unparsePointerType(SgType* type, SgUnparse_Info& info)
           info.set_supressStrippedTypeName();
         }
 
-     curprint(", POINTER");
+     curprint(type->get_isCoArray()? ", COPOINTER": ", POINTER");
 
   // DQ (1/16/2011): Plus unparse the base type...(unless it will just output the stripped types name).
      if (pointer_type->get_base_type()->containsInternalTypes() == true)

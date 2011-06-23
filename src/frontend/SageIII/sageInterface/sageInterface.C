@@ -3495,6 +3495,23 @@ SageInterface::is_PHP_language()
    }
 
 bool
+SageInterface::is_Python_language()
+   {
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_Python_only() == true)
+               returnValue = true;
+        }
+
+     return returnValue;
+   }
+
+bool
 SageInterface::is_Cuda_language()
    {
      bool returnValue = false;
@@ -5575,12 +5592,16 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
              {
             // Only modify the list once per iteration over the captureList
             // if ((*comments)[*k] == NULL)
-               if (*k == NULL)
-                  {
-                    comments->erase(k);
+                if (*k == NULL)
+                {
+                    k = comments->erase(k);
                     modifiedList = true;
-                  }
-               k++;
+                    continue;
+                }
+                else
+                {
+                    k++;
+                }
              }
         }
    }
@@ -13815,8 +13836,8 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
         SgExpression* exp = isSgExpression(n);
         if (exp)
         {
-          string u_name = generateUniqueName(exp,false);
-          AstAttribute * name_attribute = new UniqueNameAttribute(u_name);
+          string u_name = generateUniqueName(exp,false)+"-"+exp->class_name();
+          AstAttribute * name_attribute = new UniqueNameAttribute(u_name); 
           ROSE_ASSERT (name_attribute != NULL);
           exp->addNewAttribute("UniqueNameAttribute",name_attribute);
         }
