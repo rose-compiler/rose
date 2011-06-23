@@ -1,20 +1,15 @@
 #include "sage3basic.h"
-#include "newHiddenList.h"
+#include "nameQualificationSupport.h"
 
 using namespace std;
 
 
-// *******************************************************
-// Main calling function to support hidden list evaluation
-// *******************************************************
-
-// Notes:
-//   1) This name HiddenListTraversal should be changed to something that 
-//      makes it more clear that it is associated with Name Qualification support.
-//   2) The filename for this source code should also be changed.
+// ***********************************************************
+// Main calling function to support name qualification support
+// ***********************************************************
 
 void
-newBuildHiddenTypeAndDeclarationLists( SgNode* node, std::set<SgNode*> & referencedNameSet )
+generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNameSet )
    {
   // This function is the top level API for Name Qualification support.
   // This is the only function that need be seen by ROSE.  This function 
@@ -26,56 +21,19 @@ newBuildHiddenTypeAndDeclarationLists( SgNode* node, std::set<SgNode*> & referen
   //    one to support qualification of IR nodes that are named, and 
   //    one to support name qualification of types.
   // These are passed by reference and references are stored to them in 
-  // the HiddenListTraversal class.
+  // the NameQualificationTraversal class.
 
-  // DQ (8/1/2007): Introduce tracking of performance of ROSE.
-     TimingPerformance timer ("New hidden type and hidden declaration list generation:");
-
-#if 0
-  // SgSourceFile* project = isSgSourceFile(node);
-     SgProject* project = isSgProject(node);
-
-     if (project == NULL)
-        {
-          printf ("Can't process buildHiddenTypeAndDeclarationLists for AST fragment = %p = %s \n",node,node->class_name().c_str());
-          return;
-        }
-     ROSE_ASSERT(project != NULL);
-#endif
-
-  // Build the local set to use.
-  // std::set<SgNode*> & referencedNameSet;
+     TimingPerformance timer ("Name qualification support:");
 
   // DQ (5/28/2011): Initialize the local maps to the static maps in SgNode.  This is requires so the
   // types used in template arguments can call the unparser to support there generation of name qualified 
   // nested types.
-  // HiddenListTraversal t;
-  // HiddenListTraversal t(SgNode::get_globalQualifiedNameMapForNames(),SgNode::get_globalQualifiedNameMapForTypes(),SgNode::get_globalTypeNameMap(),SgNode::get_globalReferencedNameSet());
-     HiddenListTraversal t(SgNode::get_globalQualifiedNameMapForNames(),SgNode::get_globalQualifiedNameMapForTypes(),SgNode::get_globalTypeNameMap(),referencedNameSet);
+     NameQualificationTraversal t(SgNode::get_globalQualifiedNameMapForNames(),SgNode::get_globalQualifiedNameMapForTypes(),SgNode::get_globalTypeNameMap(),referencedNameSet);
 
-     HiddenListInheritedAttribute ih;
+     NameQualificationInheritedAttribute ih;
 
   // Call the traversal.
      t.traverse(node,ih);
-
-  // This does not reset the template names.
-  // reset the names of template class declarations
-  // resetTemplateNames(node);
-
-#if 0
-  // The qualified name lists should not have been setup previously, or at least I have not debugged such a case yet.
-     ROSE_ASSERT(SgNode::get_globalQualifiedNameMapForNames().size() == 0);
-     ROSE_ASSERT(SgNode::get_globalQualifiedNameMapForTypes().size() == 0);
-
-  // We locate the qualified name list in a static data member in SgNode.
-  // this is better than locating it in a global variable and I think better than 
-  // placing it in the Sg_Unparse_Info object (though it could be moved there in 
-  // the future).  The rational for placing it in the SgNode is that it might be 
-  // useful separate from the unparser.
-  // This is a deep copy and might be inifficient...we should evaluate this later.
-     SgNode::set_globalQualifiedNameMapForNames(t.get_qualifiedNameMapForNames());
-     SgNode::set_globalQualifiedNameMapForTypes(t.get_qualifiedNameMapForTypes());
-#endif
    }
 
 
@@ -83,12 +41,12 @@ newBuildHiddenTypeAndDeclarationLists( SgNode* node, std::set<SgNode*> & referen
 // Inherited Attribute
 // *******************
 
-HiddenListInheritedAttribute::HiddenListInheritedAttribute()
+NameQualificationInheritedAttribute::NameQualificationInheritedAttribute()
    {
   // Default constructor
    }
 
-HiddenListInheritedAttribute::HiddenListInheritedAttribute ( const HiddenListInheritedAttribute & X )
+NameQualificationInheritedAttribute::NameQualificationInheritedAttribute ( const NameQualificationInheritedAttribute & X )
    {
   // Copy constructor.
    }
@@ -99,29 +57,23 @@ HiddenListInheritedAttribute::HiddenListInheritedAttribute ( const HiddenListInh
 // Synthesized Attribute
 // *********************
 
-HiddenListSynthesizedAttribute::HiddenListSynthesizedAttribute()
+NameQualificationSynthesizedAttribute::NameQualificationSynthesizedAttribute()
    {
   // Default constructor
    }
 
 
-HiddenListSynthesizedAttribute::HiddenListSynthesizedAttribute ( const HiddenListSynthesizedAttribute & X )
+NameQualificationSynthesizedAttribute::NameQualificationSynthesizedAttribute ( const NameQualificationSynthesizedAttribute & X )
    {
   // Copy constructor.
    }
 
 
 // *******************
-// HiddenListTraversal
+// NameQualificationTraversal
 // *******************
 
-#if 0
-HiddenListTraversal::HiddenListTraversal()
-   {
-  // Default constructor
-   }
-#else
-HiddenListTraversal::HiddenListTraversal(std::map<SgNode*,std::string> & input_qualifiedNameMapForNames, std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes,std::map<SgNode*,std::string> & input_typeNameMap, std::set<SgNode*> & input_referencedNameSet)
+NameQualificationTraversal::NameQualificationTraversal(std::map<SgNode*,std::string> & input_qualifiedNameMapForNames, std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes,std::map<SgNode*,std::string> & input_typeNameMap, std::set<SgNode*> & input_referencedNameSet)
    : referencedNameSet(input_referencedNameSet),
      qualifiedNameMapForNames(input_qualifiedNameMapForNames),
      qualifiedNameMapForTypes(input_qualifiedNameMapForTypes),
@@ -129,46 +81,18 @@ HiddenListTraversal::HiddenListTraversal(std::map<SgNode*,std::string> & input_q
    {
   // Nothing to do here.
    }
-#endif
-
-#if 0
-bool
-HiddenListTraversal::isANamedConstruct(SgNode* n)
-   {
-  // If this is a declaration of a type (e.g. SgclassDeclaration) then return true.
-     return false;
-   }
-#endif
-
-#if 0
-bool
-HiddenListTraversal::containsPossibleNameQualification(SgType* type)
-   {
-  // DQ (6/3/2011): This is part of name qualification support for types.
-  // This function returns true if any part of the type COULD be name qualified.
-  // This function traverses the SgType IR node.
-
-  // How can I traverse a type...?
-
-
-
-
-
-     return false;
-   }
-#endif
 
 
 // DQ (5/28/2011): Added support to set the static global qualified name map in SgNode.
 const std::map<SgNode*,std::string> &
-HiddenListTraversal::get_qualifiedNameMapForNames() const
+NameQualificationTraversal::get_qualifiedNameMapForNames() const
    {
      return qualifiedNameMapForNames;
    }
 
 // DQ (5/28/2011): Added support to set the static global qualified name map in SgNode.
 const std::map<SgNode*,std::string> &
-HiddenListTraversal::get_qualifiedNameMapForTypes() const
+NameQualificationTraversal::get_qualifiedNameMapForTypes() const
    {
      return qualifiedNameMapForTypes;
    }
@@ -202,7 +126,7 @@ numberOfSymbolsWithName( const SgName & name, SgScopeStatement* scope )
    }
 
 SgDeclarationStatement*
-HiddenListTraversal::associatedDeclaration(SgScopeStatement* scope)
+NameQualificationTraversal::associatedDeclaration(SgScopeStatement* scope)
    {
      SgDeclarationStatement* return_declaration = NULL;
      switch (scope->variantT())
@@ -263,7 +187,7 @@ HiddenListTraversal::associatedDeclaration(SgScopeStatement* scope)
        // Catch anything that migh have been missed (and exit so it can be identified and fixed).
           default:
              {
-               printf ("Default reached in HiddenListTraversal::associatedDeclaration() scope = %s \n",scope->class_name().c_str());
+               printf ("Default reached in NameQualificationTraversal::associatedDeclaration() scope = %s \n",scope->class_name().c_str());
                ROSE_ASSERT(false);
              }
         }
@@ -272,7 +196,7 @@ HiddenListTraversal::associatedDeclaration(SgScopeStatement* scope)
    }
 
 SgDeclarationStatement*
-HiddenListTraversal::associatedDeclaration(SgType* type)
+NameQualificationTraversal::associatedDeclaration(SgType* type)
    {
      SgDeclarationStatement* return_declaration = NULL;
 
@@ -323,7 +247,7 @@ HiddenListTraversal::associatedDeclaration(SgType* type)
           case V_SgMemberFunctionType:
              {
             // Not clear if I have to resolve declarations associated with function types.
-               printf ("In HiddenListTraversal::associatedDeclaration(): Case of SgFunctionType not implemented strippedType = %s \n",strippedType->class_name().c_str());
+               printf ("In NameQualificationTraversal::associatedDeclaration(): Case of SgFunctionType not implemented strippedType = %s \n",strippedType->class_name().c_str());
 
                return_declaration = NULL;
                break;
@@ -356,7 +280,7 @@ HiddenListTraversal::associatedDeclaration(SgType* type)
        // Catch anything that migh have been missed (and exit so it can be identified and fixed).
           default:
              {
-               printf ("Default reached in HiddenListTraversal::associatedDeclaration() type = %s strippedType = %s \n",type->class_name().c_str(),strippedType->class_name().c_str());
+               printf ("Default reached in NameQualificationTraversal::associatedDeclaration() type = %s strippedType = %s \n",type->class_name().c_str(),strippedType->class_name().c_str());
                ROSE_ASSERT(false);
              }
         }
@@ -366,7 +290,7 @@ HiddenListTraversal::associatedDeclaration(SgType* type)
 
 
 void
-HiddenListTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclarationStatement* declaration, SgScopeStatement* currentScope, SgStatement* positionStatement )
+NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclarationStatement* declaration, SgScopeStatement* currentScope, SgStatement* positionStatement )
    {
   // DQ (6/1/2011): Added support for template arguments.
      switch (declaration->variantT())
@@ -415,12 +339,12 @@ HiddenListTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclarationSta
 
 
 int
-HiddenListTraversal::nameQualificationDepthOfParent(SgDeclarationStatement* declaration, SgScopeStatement* currentScope, SgStatement* positionStatement )
+NameQualificationTraversal::nameQualificationDepthOfParent(SgDeclarationStatement* declaration, SgScopeStatement* currentScope, SgStatement* positionStatement )
    {
   // Now resolve how much name qualification is required.
      int qualificationDepth = 0;
 
-     printf ("***** Inside of HiddenListTraversal::nameQualificationDepthOfParent() ***** \n");
+     printf ("***** Inside of NameQualificationTraversal::nameQualificationDepthOfParent() ***** \n");
      printf ("   declaration  = %p = %s = %s \n",declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
      printf ("   currentScope = %p = %s = %s \n",currentScope,currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
 
@@ -457,7 +381,7 @@ HiddenListTraversal::nameQualificationDepthOfParent(SgDeclarationStatement* decl
    }
 
 bool
-HiddenListTraversal::requiresTypeElaboration(SgSymbol* symbol)
+NameQualificationTraversal::requiresTypeElaboration(SgSymbol* symbol)
    {
   // DQ (5/14/2011): type elaboration only works between non-types and types.  Different types must be distinquished using name qualification.
   // If this is a type then since all types are given equal weight we need more name qualification to distinquish them.
@@ -484,7 +408,7 @@ HiddenListTraversal::requiresTypeElaboration(SgSymbol* symbol)
 
           default:
              {
-               printf ("Default reached in HiddenListTraversal::requiresTypeElaboration(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+               printf ("Default reached in NameQualificationTraversal::requiresTypeElaboration(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
                ROSE_ASSERT(false);
              }           
         }
@@ -494,9 +418,9 @@ HiddenListTraversal::requiresTypeElaboration(SgSymbol* symbol)
 
 
 
-// int HiddenListTraversal::nameQualificationDepth ( SgScopeStatement* classOrNamespaceDefinition )
+// int NameQualificationTraversal::nameQualificationDepth ( SgScopeStatement* classOrNamespaceDefinition )
 int 
-HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaration, SgScopeStatement* currentScope, SgStatement* positionStatement, bool forceMoreNameQualification )
+NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* declaration, SgScopeStatement* currentScope, SgStatement* positionStatement, bool forceMoreNameQualification )
    {
   // Note that the input must be a declaration because it can include enums (SgDeclarationStatement IR nodes) 
   // that don't have a corresponding definition (SgScopeStatement IR nodes).
@@ -520,7 +444,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
      bool typeElaborationIsRequired = false;
   // bool globalQualifierIsRequired = false;
 
-     printf ("##### Inside of HiddenListTraversal::nameQualificationDepth() ##### \n");
+     printf ("##### Inside of NameQualificationTraversal::nameQualificationDepth() ##### \n");
 
   // The use of SageInterface::generateUniqueName() can cause the unparser to be called and triggers the name 
   // qualification recursively but only for template declaration (SgTemplateInstantiationDecl, I think).
@@ -672,7 +596,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                                  }
                                 else
                                  {
-                                   printf ("In HiddenListTraversal::nameQualificationDepth(): classSymbol == NULL \n");
+                                   printf ("In NameQualificationTraversal::nameQualificationDepth(): classSymbol == NULL \n");
                                  }
                             }
                            else
@@ -715,7 +639,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                                  }
                                 else
                                  {
-                                   printf ("In HiddenListTraversal::nameQualificationDepth(): functionSymbol == NULL \n");
+                                   printf ("In NameQualificationTraversal::nameQualificationDepth(): functionSymbol == NULL \n");
                                  }
                             }
                            else
@@ -754,7 +678,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                                  }
                                 else
                                  {
-                                   printf ("In HiddenListTraversal::nameQualificationDepth(): functionSymbol == NULL \n");
+                                   printf ("In NameQualificationTraversal::nameQualificationDepth(): functionSymbol == NULL \n");
                                  }
                             }
 #if 0
@@ -815,7 +739,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                                  }
                                 else
                                  {
-                                   printf ("In HiddenListTraversal::nameQualificationDepth(): typedefSymbol == NULL \n");
+                                   printf ("In NameQualificationTraversal::nameQualificationDepth(): typedefSymbol == NULL \n");
                                  }
 #else
                            // DQ (5/15/2011): Added this to support where symbol after moving name qualification 
@@ -826,7 +750,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                                  }
                                 else
                                  {
-                                   printf ("In HiddenListTraversal::nameQualificationDepth(): typedefSymbol == NULL \n");
+                                   printf ("In NameQualificationTraversal::nameQualificationDepth(): typedefSymbol == NULL \n");
                                 // Look for a template symbol
                                    symbol = SageInterface::lookupTemplateSymbolInParentScopes(name,currentScope);
                                    ROSE_ASSERT(symbol != NULL);
@@ -941,7 +865,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                                  }
                                 else
                                  {
-                                   printf ("In HiddenListTraversal::nameQualificationDepth(): classSymbol == NULL \n");
+                                   printf ("In NameQualificationTraversal::nameQualificationDepth(): classSymbol == NULL \n");
                                 // Look for a template symbol
                                    symbol = SageInterface::lookupTemplateSymbolInParentScopes(name,currentScope);
 
@@ -1004,7 +928,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
                                  }
                                 else
                                  {
-                                   printf ("In HiddenListTraversal::nameQualificationDepth(): variableSymbol == NULL \n");
+                                   printf ("In NameQualificationTraversal::nameQualificationDepth(): variableSymbol == NULL \n");
                                 // Look for a template symbol
                                    symbol = SageInterface::lookupTemplateSymbolInParentScopes(name,currentScope);
 
@@ -1505,7 +1429,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
              }
         }
 
-     printf ("In HiddenListTraversal::nameQualificationDepth(): Report type elaboration: typeElaborationIsRequired = %s \n",(typeElaborationIsRequired == true) ? "true" : "false");
+     printf ("In NameQualificationTraversal::nameQualificationDepth(): Report type elaboration: typeElaborationIsRequired = %s \n",(typeElaborationIsRequired == true) ? "true" : "false");
 
      return qualificationDepth;
    }
@@ -1513,7 +1437,7 @@ HiddenListTraversal::nameQualificationDepth ( SgDeclarationStatement* declaratio
 
 
 SgDeclarationStatement* 
-HiddenListTraversal::getDeclarationAssociatedWithType( SgType* type )
+NameQualificationTraversal::getDeclarationAssociatedWithType( SgType* type )
    {
   // Note that this function could be eliminated since it only wraps another function.
 
@@ -1543,7 +1467,7 @@ HiddenListTraversal::getDeclarationAssociatedWithType( SgType* type )
 
 // void evaluateNameQualificationForTemplateArgumentList (SgTemplateArgumentPtrList & templateArgumentList, SgScopeStatement* currentScope, SgStatement* positionStatement);
 void
-HiddenListTraversal::evaluateNameQualificationForTemplateArgumentList (SgTemplateArgumentPtrList & templateArgumentList, SgScopeStatement* currentScope, SgStatement* positionStatement)
+NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (SgTemplateArgumentPtrList & templateArgumentList, SgScopeStatement* currentScope, SgStatement* positionStatement)
    {
   // DQ (6/4/2011): Note that test2005_73.C demonstrate where the Template arguments are shared between template instantiations.
 
@@ -1551,7 +1475,7 @@ HiddenListTraversal::evaluateNameQualificationForTemplateArgumentList (SgTemplat
      int counter = 0;
 
      printf ("\n\n*********************************************************************************************************************\n");
-     printf ("Inside of HiddenListTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %zu \n",templateArgumentList.size());
+     printf ("Inside of NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %zu \n",templateArgumentList.size());
      printf ("*********************************************************************************************************************\n");
 
      SgTemplateArgumentPtrList::iterator i = templateArgumentList.begin();
@@ -1635,12 +1559,12 @@ HiddenListTraversal::evaluateNameQualificationForTemplateArgumentList (SgTemplat
         }
 
      printf ("*********************************************************************************************************************\n");
-     printf ("Leaving HiddenListTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %zu \n",templateArgumentList.size());
+     printf ("Leaving NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %zu \n",templateArgumentList.size());
      printf ("*********************************************************************************************************************\n\n");
    }
 
 int
-HiddenListTraversal::nameQualificationDepth ( SgType* type, SgScopeStatement* currentScope, SgStatement* positionStatement )
+NameQualificationTraversal::nameQualificationDepth ( SgType* type, SgScopeStatement* currentScope, SgStatement* positionStatement )
    {
      int amountOfNameQualificationRequired = 0;
 
@@ -1723,9 +1647,9 @@ HiddenListTraversal::nameQualificationDepth ( SgType* type, SgScopeStatement* cu
      return amountOfNameQualificationRequired;
    }
 
-// int HiddenListTraversal::nameQualificationDepthForType ( SgInitializedName* initializedName, SgStatement* positionStatement )
+// int NameQualificationTraversal::nameQualificationDepthForType ( SgInitializedName* initializedName, SgStatement* positionStatement )
 int
-HiddenListTraversal::nameQualificationDepthForType ( SgInitializedName* initializedName, SgScopeStatement* currentScope, SgStatement* positionStatement )
+NameQualificationTraversal::nameQualificationDepthForType ( SgInitializedName* initializedName, SgScopeStatement* currentScope, SgStatement* positionStatement )
    {
      ROSE_ASSERT(initializedName   != NULL);
      ROSE_ASSERT(positionStatement != NULL);
@@ -1738,7 +1662,7 @@ HiddenListTraversal::nameQualificationDepthForType ( SgInitializedName* initiali
 
 
 int
-HiddenListTraversal::nameQualificationDepth ( SgInitializedName* initializedName, SgScopeStatement* currentScope, SgStatement* positionStatement )
+NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initializedName, SgScopeStatement* currentScope, SgStatement* positionStatement )
    {
      int amountOfNameQualificationRequired = 0;
 
@@ -1768,7 +1692,7 @@ HiddenListTraversal::nameQualificationDepth ( SgInitializedName* initializedName
      SgVariableSymbol* variableSymbol = NULL;
      SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name,currentScope);
 
-     printf ("In HiddenListTraversal::nameQualificationDepth(SgInitializedName* = %p): symbol = %p \n",initializedName,symbol);
+     printf ("In NameQualificationTraversal::nameQualificationDepth(SgInitializedName* = %p): symbol = %p \n",initializedName,symbol);
      if (symbol != NULL)
         {
           printf ("Lookup symbol based on name only (via parents starting at currentScope = %p = %s: name = %s symbol = %p = %s) \n",currentScope,currentScope->class_name().c_str(),name.str(),symbol,symbol->class_name().c_str());
@@ -1785,7 +1709,7 @@ HiddenListTraversal::nameQualificationDepth ( SgInitializedName* initializedName
                   }
                  else
                   {
-                    printf ("In HiddenListTraversal::nameQualificationDepth(SgInitializedName*,SgScopeStatement*,SgStatement*): variableSymbol == NULL \n");
+                    printf ("In NameQualificationTraversal::nameQualificationDepth(SgInitializedName*,SgScopeStatement*,SgStatement*): variableSymbol == NULL \n");
                   }
 
             // amountOfNameQualificationRequired = nameQualificationDepth(associatedDeclaration(initializedName->get_scope()),currentScope,positionStatement) + 1;
@@ -1849,7 +1773,7 @@ HiddenListTraversal::nameQualificationDepth ( SgInitializedName* initializedName
             else
              {
             // This can be the case of ??? "catch (Overflow)" (see test2004_43.C) instead of "catch (Overflow xxx)" (see test2011_71.C).
-               printf ("In HiddenListTraversal::nameQualificationDepth(SgInitializedName*): declaration == NULL, why is this? initializedName->get_scope() = %p = %s \n",initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
+               printf ("In NameQualificationTraversal::nameQualificationDepth(SgInitializedName*): declaration == NULL, why is this? initializedName->get_scope() = %p = %s \n",initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
             // ROSE_ASSERT(false);
              }
         }
@@ -1939,7 +1863,7 @@ TestTraversal::visit(SgNode* n)
 
 
 void
-HiddenListTraversal::addToNameMap ( SgNode* nodeReferenceToType, string typeNameString )
+NameQualificationTraversal::addToNameMap ( SgNode* nodeReferenceToType, string typeNameString )
    {
   // DQ (6/21/2011): This is refactored code used in traverseType() and traverseTemplatedFunction().
      bool isTemplateName = (typeNameString.find('<') != string::npos) && (typeNameString.find("::") != string::npos);
@@ -1978,7 +1902,7 @@ HiddenListTraversal::addToNameMap ( SgNode* nodeReferenceToType, string typeName
 
 
 void
-HiddenListTraversal::traverseType ( SgType* type, SgNode* nodeReferenceToType, SgScopeStatement* currentScope, SgStatement* positionStatement )
+NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceToType, SgScopeStatement* currentScope, SgStatement* positionStatement )
    {
   // The type can contain subtypes (e.g. template arguments) and when the subtypes need to be name qualificed the name of the encompassing type 
   // has a name that depends upon its location in the source code (and could vary depending on the positon in a single basic block, I think).
@@ -2084,7 +2008,7 @@ HiddenListTraversal::traverseType ( SgType* type, SgNode* nodeReferenceToType, S
 
 
 void
-HiddenListTraversal::traverseTemplatedFunction(SgFunctionRefExp* functionRefExp, SgNode* nodeReferenceToType, SgScopeStatement* currentScope, SgStatement* positionStatement )
+NameQualificationTraversal::traverseTemplatedFunction(SgFunctionRefExp* functionRefExp, SgNode* nodeReferenceToType, SgScopeStatement* currentScope, SgStatement* positionStatement )
    {
   // Called using traverseTemplatedFunction(functionRefExp,templateInstantiationFunctionDeclaration,currentScope,currentStatement)
 
@@ -2149,7 +2073,7 @@ HiddenListTraversal::traverseTemplatedFunction(SgFunctionRefExp* functionRefExp,
 
 
 bool
-HiddenListTraversal::skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(SgDeclarationStatement* declaration)
+NameQualificationTraversal::skipNameQualificationIfNotProperlyDeclaredWhereDeclarationIsDefinable(SgDeclarationStatement* declaration)
    {
   // DQ (6/9/2011): Support for test2011_78.C (we only qualify function call references where the function has been declared in 
   // a scope where it could be expected to be defined (e.g. not using a forward declaration in a SgBasicBlock, since the function
@@ -2175,18 +2099,18 @@ HiddenListTraversal::skipNameQualificationIfNotProperlyDeclaredWhereDeclarationI
    }
 
 
-HiddenListInheritedAttribute
-HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAttribute inheritedAttribute)
+NameQualificationInheritedAttribute
+NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificationInheritedAttribute inheritedAttribute)
    {
      ROSE_ASSERT(n != NULL);
 
-  // printf ("Inside of HiddenListTraversal::evaluateInheritedAttribute(): node = %p = %s \n",n,n->class_name().c_str());
+  // printf ("Inside of NameQualificationTraversal::evaluateInheritedAttribute(): node = %p = %s \n",n,n->class_name().c_str());
 
   // Extra information about the location of the current node.
      Sg_File_Info* fileInfo = n->get_file_info();
      if (fileInfo != NULL)
         {
-          printf ("HiddenListTraversal: --- n = %p = %s line %d col = %d file = %s \n",n,n->class_name().c_str(),fileInfo->get_line(),fileInfo->get_col(),fileInfo->get_filenameString().c_str());
+          printf ("NameQualificationTraversal: --- n = %p = %s line %d col = %d file = %s \n",n,n->class_name().c_str(),fileInfo->get_line(),fileInfo->get_col(),fileInfo->get_filenameString().c_str());
         }
 
   // Locations where name qualified references can exist:
@@ -3233,18 +3157,18 @@ HiddenListTraversal::evaluateInheritedAttribute(SgNode* n, HiddenListInheritedAt
         }
 
 #if 0
-     printf ("Leaving HiddenListTraversal::evaluateInheritedAttribute(): node = %p = %s \n",n,n->class_name().c_str());
+     printf ("Leaving NameQualificationTraversal::evaluateInheritedAttribute(): node = %p = %s \n",n,n->class_name().c_str());
 #endif
 
-     return HiddenListInheritedAttribute(inheritedAttribute);
+     return NameQualificationInheritedAttribute(inheritedAttribute);
    }
 
 
-HiddenListSynthesizedAttribute
-HiddenListTraversal::evaluateSynthesizedAttribute(SgNode* n, HiddenListInheritedAttribute inheritedAttribute, SynthesizedAttributesList synthesizedAttributeList)
+NameQualificationSynthesizedAttribute
+NameQualificationTraversal::evaluateSynthesizedAttribute(SgNode* n, NameQualificationInheritedAttribute inheritedAttribute, SynthesizedAttributesList synthesizedAttributeList)
    {
   // This is not used now but will likely be used later.
-     HiddenListSynthesizedAttribute returnAttribute;
+     NameQualificationSynthesizedAttribute returnAttribute;
 
      return returnAttribute;
    }
@@ -3313,7 +3237,7 @@ HiddenListTraversal::evaluateSynthesizedAttribute(SgNode* n, HiddenListInherited
 // ************************************************************************************
 
 void
-HiddenListTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVariableDeclaration* variableDeclaration, int amountOfNameQualificationRequired)
+NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVariableDeclaration* variableDeclaration, int amountOfNameQualificationRequired)
    {
   // This is where we hide the details of translating the intepretation of the amountOfNameQualificationRequired
   // which can be greater than the number of nested scopes to a representation that is bounded by the number of 
@@ -3334,9 +3258,9 @@ HiddenListTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVariableDecl
      ROSE_ASSERT(outputTypeEvaluation == false);
      varRefExp->set_type_elaboration_required(outputTypeEvaluation);
 
-     printf ("In HiddenListTraversal::setNameQualification(): varRefExp->get_name_qualification_length()     = %d \n",varRefExp->get_name_qualification_length());
-     printf ("In HiddenListTraversal::setNameQualification(): varRefExp->get_type_elaboration_required()     = %s \n",varRefExp->get_type_elaboration_required() ? "true" : "false");
-     printf ("In HiddenListTraversal::setNameQualification(): varRefExp->get_global_qualification_required() = %s \n",varRefExp->get_global_qualification_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): varRefExp->get_name_qualification_length()     = %d \n",varRefExp->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): varRefExp->get_type_elaboration_required()     = %s \n",varRefExp->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): varRefExp->get_global_qualification_required() = %s \n",varRefExp->get_global_qualification_required() ? "true" : "false");
 
      if (qualifiedNameMapForNames.find(varRefExp) == qualifiedNameMapForNames.end())
         {
@@ -3371,7 +3295,7 @@ HiddenListTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVariableDecl
 
 
 void
-HiddenListTraversal::setNameQualification(SgFunctionRefExp* functionRefExp, SgFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired)
+NameQualificationTraversal::setNameQualification(SgFunctionRefExp* functionRefExp, SgFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired)
    {
   // This is where we hide the details of translating the intepretation of the amountOfNameQualificationRequired
   // which can be greater than the number of nested scopes to a representation that is bounded by the number of 
@@ -3392,9 +3316,9 @@ HiddenListTraversal::setNameQualification(SgFunctionRefExp* functionRefExp, SgFu
      ROSE_ASSERT(outputTypeEvaluation == false);
      functionRefExp->set_type_elaboration_required(outputTypeEvaluation);
 
-     printf ("In HiddenListTraversal::setNameQualification(): functionRefExp->get_name_qualification_length()     = %d \n",functionRefExp->get_name_qualification_length());
-     printf ("In HiddenListTraversal::setNameQualification(): functionRefExp->get_type_elaboration_required()     = %s \n",functionRefExp->get_type_elaboration_required() ? "true" : "false");
-     printf ("In HiddenListTraversal::setNameQualification(): functionRefExp->get_global_qualification_required() = %s \n",functionRefExp->get_global_qualification_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): functionRefExp->get_name_qualification_length()     = %d \n",functionRefExp->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): functionRefExp->get_type_elaboration_required()     = %s \n",functionRefExp->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): functionRefExp->get_global_qualification_required() = %s \n",functionRefExp->get_global_qualification_required() ? "true" : "false");
 
      if (qualifiedNameMapForNames.find(functionRefExp) == qualifiedNameMapForNames.end())
         {
@@ -3429,7 +3353,7 @@ HiddenListTraversal::setNameQualification(SgFunctionRefExp* functionRefExp, SgFu
    }
 
 void
-HiddenListTraversal::setNameQualification(SgMemberFunctionRefExp* functionRefExp, SgMemberFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired)
+NameQualificationTraversal::setNameQualification(SgMemberFunctionRefExp* functionRefExp, SgMemberFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired)
    {
   // This is where we hide the details of translating the intepretation of the amountOfNameQualificationRequired
   // which can be greater than the number of nested scopes to a representation that is bounded by the number of 
@@ -3450,9 +3374,9 @@ HiddenListTraversal::setNameQualification(SgMemberFunctionRefExp* functionRefExp
      ROSE_ASSERT(outputTypeEvaluation == false);
      functionRefExp->set_type_elaboration_required(outputTypeEvaluation);
 
-     printf ("In HiddenListTraversal::setNameQualification(): functionRefExp->get_name_qualification_length()     = %d \n",functionRefExp->get_name_qualification_length());
-     printf ("In HiddenListTraversal::setNameQualification(): functionRefExp->get_type_elaboration_required()     = %s \n",functionRefExp->get_type_elaboration_required() ? "true" : "false");
-     printf ("In HiddenListTraversal::setNameQualification(): functionRefExp->get_global_qualification_required() = %s \n",functionRefExp->get_global_qualification_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): functionRefExp->get_name_qualification_length()     = %d \n",functionRefExp->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): functionRefExp->get_type_elaboration_required()     = %s \n",functionRefExp->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): functionRefExp->get_global_qualification_required() = %s \n",functionRefExp->get_global_qualification_required() ? "true" : "false");
 
      if (qualifiedNameMapForNames.find(functionRefExp) == qualifiedNameMapForNames.end())
         {
@@ -3486,9 +3410,9 @@ HiddenListTraversal::setNameQualification(SgMemberFunctionRefExp* functionRefExp
 
 // DQ (6/4/2011): This function handles a specific case that is demonstrated by test2005_42.C.
 // DQ (6/1/2011): Added support for qualification of the SgConstructorInitializer.
-// void HiddenListTraversal::setNameQualification(SgConstructorInitializer* constructorInitializer, SgMemberFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired)
+// void NameQualificationTraversal::setNameQualification(SgConstructorInitializer* constructorInitializer, SgMemberFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired)
 void
-HiddenListTraversal::setNameQualification(SgConstructorInitializer* constructorInitializer, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired)
+NameQualificationTraversal::setNameQualification(SgConstructorInitializer* constructorInitializer, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired)
    {
   // DQ (6/4/2011): This handles the case of both the declaration being a SgMemberFunctionDeclaration and a SgClassDeclaration.
 
@@ -3506,9 +3430,9 @@ HiddenListTraversal::setNameQualification(SgConstructorInitializer* constructorI
      ROSE_ASSERT(outputTypeEvaluation == false);
      constructorInitializer->set_type_elaboration_required(outputTypeEvaluation);
 
-     printf ("In HiddenListTraversal::setNameQualification(): constructorInitializer->get_name_qualification_length()     = %d \n",constructorInitializer->get_name_qualification_length());
-     printf ("In HiddenListTraversal::setNameQualification(): constructorInitializer->get_type_elaboration_required()     = %s \n",constructorInitializer->get_type_elaboration_required() ? "true" : "false");
-     printf ("In HiddenListTraversal::setNameQualification(): constructorInitializer->get_global_qualification_required() = %s \n",constructorInitializer->get_global_qualification_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): constructorInitializer->get_name_qualification_length()     = %d \n",constructorInitializer->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): constructorInitializer->get_type_elaboration_required()     = %s \n",constructorInitializer->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): constructorInitializer->get_global_qualification_required() = %s \n",constructorInitializer->get_global_qualification_required() ? "true" : "false");
 
      if (qualifiedNameMapForNames.find(constructorInitializer) == qualifiedNameMapForNames.end())
         {
@@ -3528,7 +3452,7 @@ HiddenListTraversal::setNameQualification(SgConstructorInitializer* constructorI
 
 
 void
-HiddenListTraversal::setNameQualification(SgEnumVal* enumVal, SgEnumDeclaration* enumDeclaration, int amountOfNameQualificationRequired)
+NameQualificationTraversal::setNameQualification(SgEnumVal* enumVal, SgEnumDeclaration* enumDeclaration, int amountOfNameQualificationRequired)
    {
   // Setup call to refactored code.
      int  outputNameQualificationLength = 0;
@@ -3544,9 +3468,9 @@ HiddenListTraversal::setNameQualification(SgEnumVal* enumVal, SgEnumDeclaration*
      ROSE_ASSERT(outputTypeEvaluation == false);
      enumVal->set_type_elaboration_required(outputTypeEvaluation);
 
-     printf ("In HiddenListTraversal::setNameQualification(): enumVal->get_name_qualification_length()     = %d \n",enumVal->get_name_qualification_length());
-     printf ("In HiddenListTraversal::setNameQualification(): enumVal->get_type_elaboration_required()     = %s \n",enumVal->get_type_elaboration_required() ? "true" : "false");
-     printf ("In HiddenListTraversal::setNameQualification(): enumVal->get_global_qualification_required() = %s \n",enumVal->get_global_qualification_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): enumVal->get_name_qualification_length()     = %d \n",enumVal->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): enumVal->get_type_elaboration_required()     = %s \n",enumVal->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): enumVal->get_global_qualification_required() = %s \n",enumVal->get_global_qualification_required() ? "true" : "false");
 
      if (qualifiedNameMapForNames.find(enumVal) == qualifiedNameMapForNames.end())
         {
@@ -3582,7 +3506,7 @@ HiddenListTraversal::setNameQualification(SgEnumVal* enumVal, SgEnumDeclaration*
 
 
 void
-HiddenListTraversal::setNameQualification ( SgBaseClass* baseClass, SgClassDeclaration* classDeclaration, int amountOfNameQualificationRequired )
+NameQualificationTraversal::setNameQualification ( SgBaseClass* baseClass, SgClassDeclaration* classDeclaration, int amountOfNameQualificationRequired )
    {
   // Setup call to refactored code.
      int  outputNameQualificationLength = 0;
@@ -3600,9 +3524,9 @@ HiddenListTraversal::setNameQualification ( SgBaseClass* baseClass, SgClassDecla
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
 #if 1
-     printf ("In HiddenListTraversal::setNameQualification(): baseClass->get_name_qualification_length()     = %d \n",baseClass->get_name_qualification_length());
-     printf ("In HiddenListTraversal::setNameQualification(): baseClass->get_type_elaboration_required()     = %s \n",baseClass->get_type_elaboration_required() ? "true" : "false");
-     printf ("In HiddenListTraversal::setNameQualification(): baseClass->get_global_qualification_required() = %s \n",baseClass->get_global_qualification_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): baseClass->get_name_qualification_length()     = %d \n",baseClass->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): baseClass->get_type_elaboration_required()     = %s \n",baseClass->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): baseClass->get_global_qualification_required() = %s \n",baseClass->get_global_qualification_required() ? "true" : "false");
 #endif
 
      if (qualifiedNameMapForNames.find(baseClass) == qualifiedNameMapForNames.end())
@@ -3621,7 +3545,7 @@ HiddenListTraversal::setNameQualification ( SgBaseClass* baseClass, SgClassDecla
 
 
 void
-HiddenListTraversal::setNameQualification ( SgFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired )
+NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired )
    {
   // This takes only a SgFunctionDeclaration since it is where we locate the name qualification information AND
   // is the correct scope from which to iterate backwards through scopes to evaluate what name qualification is required.
@@ -3642,12 +3566,12 @@ HiddenListTraversal::setNameQualification ( SgFunctionDeclaration* functionDecla
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
 #if 1
-     printf ("In HiddenListTraversal::setNameQualification(): functionDeclaration->get_name_qualification_length()     = %d \n",functionDeclaration->get_name_qualification_length());
-     printf ("In HiddenListTraversal::setNameQualification(): functionDeclaration->get_type_elaboration_required()     = %s \n",functionDeclaration->get_type_elaboration_required() ? "true" : "false");
-     printf ("In HiddenListTraversal::setNameQualification(): functionDeclaration->get_global_qualification_required() = %s \n",functionDeclaration->get_global_qualification_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): functionDeclaration->get_name_qualification_length()     = %d \n",functionDeclaration->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): functionDeclaration->get_type_elaboration_required()     = %s \n",functionDeclaration->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): functionDeclaration->get_global_qualification_required() = %s \n",functionDeclaration->get_global_qualification_required() ? "true" : "false");
 
-     printf ("In HiddenListTraversal::setNameQualification(): functionDeclaration = %p firstNondefiningDeclaration() = %p \n",functionDeclaration,functionDeclaration->get_firstNondefiningDeclaration());
-     printf ("In HiddenListTraversal::setNameQualification(): functionDeclaration = %p definingDeclaration()         = %p \n",functionDeclaration,functionDeclaration->get_definingDeclaration());
+     printf ("In NameQualificationTraversal::setNameQualification(): functionDeclaration = %p firstNondefiningDeclaration() = %p \n",functionDeclaration,functionDeclaration->get_firstNondefiningDeclaration());
+     printf ("In NameQualificationTraversal::setNameQualification(): functionDeclaration = %p definingDeclaration()         = %p \n",functionDeclaration,functionDeclaration->get_definingDeclaration());
 #endif
 
      if (qualifiedNameMapForNames.find(functionDeclaration) == qualifiedNameMapForNames.end())
@@ -3682,9 +3606,9 @@ HiddenListTraversal::setNameQualification ( SgFunctionDeclaration* functionDecla
         }
    }
 
-// void HiddenListTraversal::setNameQualificationReturnType ( SgFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired )
+// void NameQualificationTraversal::setNameQualificationReturnType ( SgFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired )
 void
-HiddenListTraversal::setNameQualificationReturnType ( SgFunctionDeclaration* functionDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired ) 
+NameQualificationTraversal::setNameQualificationReturnType ( SgFunctionDeclaration* functionDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired ) 
    {
   // This takes only a SgFunctionDeclaration since it is where we locate the name qualification information AND
   // is the correct scope from which to iterate backwards through scopes to evaluate what name qualification is required.
@@ -3706,9 +3630,9 @@ HiddenListTraversal::setNameQualificationReturnType ( SgFunctionDeclaration* fun
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
 #if 1
-     printf ("In HiddenListTraversal::setNameQualification(): functionDeclaration->get_name_qualification_length_for_return_type()     = %d \n",functionDeclaration->get_name_qualification_length_for_return_type());
-     printf ("In HiddenListTraversal::setNameQualification(): functionDeclaration->get_type_elaboration_required_for_return_type()     = %s \n",functionDeclaration->get_type_elaboration_required_for_return_type() ? "true" : "false");
-     printf ("In HiddenListTraversal::setNameQualification(): functionDeclaration->get_global_qualification_required_for_return_type() = %s \n",functionDeclaration->get_global_qualification_required_for_return_type() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): functionDeclaration->get_name_qualification_length_for_return_type()     = %d \n",functionDeclaration->get_name_qualification_length_for_return_type());
+     printf ("In NameQualificationTraversal::setNameQualification(): functionDeclaration->get_type_elaboration_required_for_return_type()     = %s \n",functionDeclaration->get_type_elaboration_required_for_return_type() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): functionDeclaration->get_global_qualification_required_for_return_type() = %s \n",functionDeclaration->get_global_qualification_required_for_return_type() ? "true" : "false");
 #endif
 
      if (qualifiedNameMapForTypes.find(functionDeclaration) == qualifiedNameMapForTypes.end())
@@ -3745,7 +3669,7 @@ HiddenListTraversal::setNameQualificationReturnType ( SgFunctionDeclaration* fun
 
 
 void
-HiddenListTraversal::setNameQualification ( SgUsingDeclarationStatement* usingDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired )
+NameQualificationTraversal::setNameQualification ( SgUsingDeclarationStatement* usingDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired )
    {
   // Setup call to refactored code.
      int  outputNameQualificationLength = 0;
@@ -3763,9 +3687,9 @@ HiddenListTraversal::setNameQualification ( SgUsingDeclarationStatement* usingDe
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
 #if 1
-     printf ("In HiddenListTraversal::setNameQualification(): usingDeclaration->get_name_qualification_length()     = %d \n",usingDeclaration->get_name_qualification_length());
-     printf ("In HiddenListTraversal::setNameQualification(): usingDeclaration->get_type_elaboration_required()     = %s \n",usingDeclaration->get_type_elaboration_required() ? "true" : "false");
-     printf ("In HiddenListTraversal::setNameQualification(): usingDeclaration->get_global_qualification_required() = %s \n",usingDeclaration->get_global_qualification_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): usingDeclaration->get_name_qualification_length()     = %d \n",usingDeclaration->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): usingDeclaration->get_type_elaboration_required()     = %s \n",usingDeclaration->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): usingDeclaration->get_global_qualification_required() = %s \n",usingDeclaration->get_global_qualification_required() ? "true" : "false");
 #endif
 
      if (qualifiedNameMapForNames.find(usingDeclaration) == qualifiedNameMapForNames.end())
@@ -3782,7 +3706,7 @@ HiddenListTraversal::setNameQualification ( SgUsingDeclarationStatement* usingDe
 
 
 void
-HiddenListTraversal::setNameQualification ( SgUsingDeclarationStatement* usingDeclaration, SgInitializedName* associatedInitializedName, int amountOfNameQualificationRequired )
+NameQualificationTraversal::setNameQualification ( SgUsingDeclarationStatement* usingDeclaration, SgInitializedName* associatedInitializedName, int amountOfNameQualificationRequired )
    {
   // Setup call to refactored code.
      int  outputNameQualificationLength = 0;
@@ -3800,9 +3724,9 @@ HiddenListTraversal::setNameQualification ( SgUsingDeclarationStatement* usingDe
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
 #if 1
-     printf ("In HiddenListTraversal::setNameQualification(): usingDeclaration->get_name_qualification_length()     = %d \n",usingDeclaration->get_name_qualification_length());
-     printf ("In HiddenListTraversal::setNameQualification(): usingDeclaration->get_type_elaboration_required()     = %s \n",usingDeclaration->get_type_elaboration_required() ? "true" : "false");
-     printf ("In HiddenListTraversal::setNameQualification(): usingDeclaration->get_global_qualification_required() = %s \n",usingDeclaration->get_global_qualification_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): usingDeclaration->get_name_qualification_length()     = %d \n",usingDeclaration->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): usingDeclaration->get_type_elaboration_required()     = %s \n",usingDeclaration->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): usingDeclaration->get_global_qualification_required() = %s \n",usingDeclaration->get_global_qualification_required() ? "true" : "false");
 #endif
 
      if (qualifiedNameMapForNames.find(usingDeclaration) == qualifiedNameMapForNames.end())
@@ -3818,7 +3742,7 @@ HiddenListTraversal::setNameQualification ( SgUsingDeclarationStatement* usingDe
    }
 
 void
-HiddenListTraversal::setNameQualification ( SgUsingDirectiveStatement* usingDirective, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired )
+NameQualificationTraversal::setNameQualification ( SgUsingDirectiveStatement* usingDirective, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired )
    {
   // Setup call to refactored code.
      int  outputNameQualificationLength = 0;
@@ -3836,9 +3760,9 @@ HiddenListTraversal::setNameQualification ( SgUsingDirectiveStatement* usingDire
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
 #if 1
-     printf ("In HiddenListTraversal::setNameQualification(): usingDirective->get_name_qualification_length()     = %d \n",usingDirective->get_name_qualification_length());
-     printf ("In HiddenListTraversal::setNameQualification(): usingDirective->get_type_elaboration_required()     = %s \n",usingDirective->get_type_elaboration_required() ? "true" : "false");
-     printf ("In HiddenListTraversal::setNameQualification(): usingDirective->get_global_qualification_required() = %s \n",usingDirective->get_global_qualification_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): usingDirective->get_name_qualification_length()     = %d \n",usingDirective->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): usingDirective->get_type_elaboration_required()     = %s \n",usingDirective->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): usingDirective->get_global_qualification_required() = %s \n",usingDirective->get_global_qualification_required() ? "true" : "false");
 #endif
 
      if (qualifiedNameMapForNames.find(usingDirective) == qualifiedNameMapForNames.end())
@@ -3854,9 +3778,9 @@ HiddenListTraversal::setNameQualification ( SgUsingDirectiveStatement* usingDire
    }
 
 
-// void HiddenListTraversal::setNameQualification(SgInitializedName* initializedName,SgFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired)
+// void NameQualificationTraversal::setNameQualification(SgInitializedName* initializedName,SgFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired)
 void
-HiddenListTraversal::setNameQualification(SgInitializedName* initializedName,SgDeclarationStatement* declaration, int amountOfNameQualificationRequired)
+NameQualificationTraversal::setNameQualification(SgInitializedName* initializedName,SgDeclarationStatement* declaration, int amountOfNameQualificationRequired)
    {
   // This is used to set the name qualification on the return type referenced by the SgInitializedName, and not on the SgInitializedName IR node itself.
 
@@ -3877,9 +3801,9 @@ HiddenListTraversal::setNameQualification(SgInitializedName* initializedName,SgD
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
 #if 1
-     printf ("In HiddenListTraversal::setNameQualification(): initializedName->get_name_qualification_length_for_type()     = %d \n",initializedName->get_name_qualification_length_for_type());
-     printf ("In HiddenListTraversal::setNameQualification(): initializedName->get_type_elaboration_required_for_type()     = %s \n",initializedName->get_type_elaboration_required_for_type() ? "true" : "false");
-     printf ("In HiddenListTraversal::setNameQualification(): initializedName->get_global_qualification_required_for_type() = %s \n",initializedName->get_global_qualification_required_for_type() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): initializedName->get_name_qualification_length_for_type()     = %d \n",initializedName->get_name_qualification_length_for_type());
+     printf ("In NameQualificationTraversal::setNameQualification(): initializedName->get_type_elaboration_required_for_type()     = %s \n",initializedName->get_type_elaboration_required_for_type() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): initializedName->get_global_qualification_required_for_type() = %s \n",initializedName->get_global_qualification_required_for_type() ? "true" : "false");
 #endif
 
      if (qualifiedNameMapForTypes.find(initializedName) == qualifiedNameMapForTypes.end())
@@ -3915,7 +3839,7 @@ HiddenListTraversal::setNameQualification(SgInitializedName* initializedName,SgD
    }
 
 void
-HiddenListTraversal::setNameQualification(SgVariableDeclaration* variableDeclaration,SgDeclarationStatement* declaration, int amountOfNameQualificationRequired)
+NameQualificationTraversal::setNameQualification(SgVariableDeclaration* variableDeclaration,SgDeclarationStatement* declaration, int amountOfNameQualificationRequired)
    {
   // This is used to set the name qualification on the associated SgInitializedName (there is only one per SgVariableDeclaration at present, but this may be changed (fixed) in the future.
 
@@ -3936,9 +3860,9 @@ HiddenListTraversal::setNameQualification(SgVariableDeclaration* variableDeclara
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
 #if 1
-     printf ("In HiddenListTraversal::setNameQualification(): variableDeclaration->get_name_qualification_length()     = %d \n",variableDeclaration->get_name_qualification_length());
-     printf ("In HiddenListTraversal::setNameQualification(): variableDeclaration->get_type_elaboration_required()     = %s \n",variableDeclaration->get_type_elaboration_required() ? "true" : "false");
-     printf ("In HiddenListTraversal::setNameQualification(): variableDeclaration->get_global_qualification_required() = %s \n",variableDeclaration->get_global_qualification_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): variableDeclaration->get_name_qualification_length()     = %d \n",variableDeclaration->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): variableDeclaration->get_type_elaboration_required()     = %s \n",variableDeclaration->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): variableDeclaration->get_global_qualification_required() = %s \n",variableDeclaration->get_global_qualification_required() ? "true" : "false");
 #endif
 
      if (qualifiedNameMapForNames.find(variableDeclaration) == qualifiedNameMapForNames.end())
@@ -3956,7 +3880,7 @@ HiddenListTraversal::setNameQualification(SgVariableDeclaration* variableDeclara
    }
 
 void
-HiddenListTraversal::setNameQualification(SgTypedefDeclaration* typedefDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired)
+NameQualificationTraversal::setNameQualification(SgTypedefDeclaration* typedefDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired)
    {
   // Setup call to refactored code.
      int  outputNameQualificationLength = 0;
@@ -3975,9 +3899,9 @@ HiddenListTraversal::setNameQualification(SgTypedefDeclaration* typedefDeclarati
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
 #if 1
-     printf ("In HiddenListTraversal::setNameQualification(): typedefDeclaration->get_name_qualification_length_for_base_type()     = %d \n",typedefDeclaration->get_name_qualification_length_for_base_type());
-     printf ("In HiddenListTraversal::setNameQualification(): typedefDeclaration->get_type_elaboration_required_for_base_type()     = %s \n",typedefDeclaration->get_type_elaboration_required_for_base_type() ? "true" : "false");
-     printf ("In HiddenListTraversal::setNameQualification(): typedefDeclaration->get_global_qualification_required_for_base_type() = %s \n",typedefDeclaration->get_global_qualification_required_for_base_type() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): typedefDeclaration->get_name_qualification_length_for_base_type()     = %d \n",typedefDeclaration->get_name_qualification_length_for_base_type());
+     printf ("In NameQualificationTraversal::setNameQualification(): typedefDeclaration->get_type_elaboration_required_for_base_type()     = %s \n",typedefDeclaration->get_type_elaboration_required_for_base_type() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): typedefDeclaration->get_global_qualification_required_for_base_type() = %s \n",typedefDeclaration->get_global_qualification_required_for_base_type() ? "true" : "false");
 #endif
 
      if (qualifiedNameMapForTypes.find(typedefDeclaration) == qualifiedNameMapForTypes.end())
@@ -3994,7 +3918,7 @@ HiddenListTraversal::setNameQualification(SgTypedefDeclaration* typedefDeclarati
 
 
 void
-HiddenListTraversal::setNameQualification(SgTemplateArgument* templateArgument, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired)
+NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArgument, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired)
    {
   // This function will generate the qualified name prefix (without the name of the declaration) and add it to 
   // the map of name qualification strings referenced via the IR node that references the SgTemplateArgument.
@@ -4024,10 +3948,10 @@ HiddenListTraversal::setNameQualification(SgTemplateArgument* templateArgument, 
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
 #if 1
-     printf ("In HiddenListTraversal::setNameQualification(): templateArgument                                      = %p \n",templateArgument);
-     printf ("In HiddenListTraversal::setNameQualification(): templateArgument->get_name_qualification_length()     = %d \n",templateArgument->get_name_qualification_length());
-     printf ("In HiddenListTraversal::setNameQualification(): templateArgument->get_type_elaboration_required()     = %s \n",templateArgument->get_type_elaboration_required() ? "true" : "false");
-     printf ("In HiddenListTraversal::setNameQualification(): templateArgument->get_global_qualification_required() = %s \n",templateArgument->get_global_qualification_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): templateArgument                                      = %p \n",templateArgument);
+     printf ("In NameQualificationTraversal::setNameQualification(): templateArgument->get_name_qualification_length()     = %d \n",templateArgument->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): templateArgument->get_type_elaboration_required()     = %s \n",templateArgument->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): templateArgument->get_global_qualification_required() = %s \n",templateArgument->get_global_qualification_required() ? "true" : "false");
 #endif
 
      if (qualifiedNameMapForTypes.find(templateArgument) == qualifiedNameMapForTypes.end())
@@ -4061,9 +3985,9 @@ HiddenListTraversal::setNameQualification(SgTemplateArgument* templateArgument, 
         }
    }
 
-// void HiddenListTraversal::setNameQualification(SgCastExp* castExp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired)
+// void NameQualificationTraversal::setNameQualification(SgCastExp* castExp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired)
 void
-HiddenListTraversal::setNameQualification(SgExpression* exp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired)
+NameQualificationTraversal::setNameQualification(SgExpression* exp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired)
    {
   // Setup call to refactored code.
      int  outputNameQualificationLength = 0;
@@ -4081,9 +4005,9 @@ HiddenListTraversal::setNameQualification(SgExpression* exp, SgDeclarationStatem
   // DQ (6/2/2011): I think that type elaboration could be required for casts, but I am not certain.
      exp->set_type_elaboration_required(outputTypeEvaluation);
 
-     printf ("In HiddenListTraversal::setNameQualification(): exp->get_name_qualification_length()     = %d \n",exp->get_name_qualification_length());
-     printf ("In HiddenListTraversal::setNameQualification(): exp->get_type_elaboration_required()     = %s \n",exp->get_type_elaboration_required() ? "true" : "false");
-     printf ("In HiddenListTraversal::setNameQualification(): exp->get_global_qualification_required() = %s \n",exp->get_global_qualification_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): exp->get_name_qualification_length()     = %d \n",exp->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): exp->get_type_elaboration_required()     = %s \n",exp->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): exp->get_global_qualification_required() = %s \n",exp->get_global_qualification_required() ? "true" : "false");
 
      if (qualifiedNameMapForTypes.find(exp) == qualifiedNameMapForTypes.end())
         {
@@ -4124,7 +4048,7 @@ HiddenListTraversal::setNameQualification(SgExpression* exp, SgDeclarationStatem
 
 
 void
-HiddenListTraversal::setNameQualification(SgClassDeclaration* classDeclaration, int amountOfNameQualificationRequired)
+NameQualificationTraversal::setNameQualification(SgClassDeclaration* classDeclaration, int amountOfNameQualificationRequired)
    {
   // This is used to set the name qualification on the associated SgClassDeclaration.
 
@@ -4145,9 +4069,9 @@ HiddenListTraversal::setNameQualification(SgClassDeclaration* classDeclaration, 
   // There should be no type evaluation required for a variable reference, as I recall.
      ROSE_ASSERT(outputTypeEvaluation == false);
 #if 1
-     printf ("In HiddenListTraversal::setNameQualification(): classDeclaration->get_name_qualification_length()     = %d \n",classDeclaration->get_name_qualification_length());
-     printf ("In HiddenListTraversal::setNameQualification(): classDeclaration->get_type_elaboration_required()     = %s \n",classDeclaration->get_type_elaboration_required() ? "true" : "false");
-     printf ("In HiddenListTraversal::setNameQualification(): classDeclaration->get_global_qualification_required() = %s \n",classDeclaration->get_global_qualification_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): classDeclaration->get_name_qualification_length()     = %d \n",classDeclaration->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): classDeclaration->get_type_elaboration_required()     = %s \n",classDeclaration->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): classDeclaration->get_global_qualification_required() = %s \n",classDeclaration->get_global_qualification_required() ? "true" : "false");
 #endif
 
      if (qualifiedNameMapForNames.find(classDeclaration) == qualifiedNameMapForNames.end())
@@ -4166,7 +4090,7 @@ HiddenListTraversal::setNameQualification(SgClassDeclaration* classDeclaration, 
 
 
 string
-HiddenListTraversal::setNameQualificationSupport(SgScopeStatement* scope, const int inputNameQualificationLength, int & output_amountOfNameQualificationRequired , bool & outputGlobalQualification, bool & outputTypeEvaluation )
+NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope, const int inputNameQualificationLength, int & output_amountOfNameQualificationRequired , bool & outputGlobalQualification, bool & outputTypeEvaluation )
    {
   // This is lower level support for the different overloaded setNameQualification() functions.
   // This function builds up the qualified name as a string and then returns it to be used in 
@@ -4177,7 +4101,7 @@ HiddenListTraversal::setNameQualificationSupport(SgScopeStatement* scope, const 
      outputGlobalQualification                = false;
      outputTypeEvaluation                     = false;
 
-     printf ("In HiddenListTraversal::setNameQualificationSupport(): scope = %p = %s = %s inputNameQualificationLength = %d \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str(),inputNameQualificationLength);
+     printf ("In NameQualificationTraversal::setNameQualificationSupport(): scope = %p = %s = %s inputNameQualificationLength = %d \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str(),inputNameQualificationLength);
 
      for (int i = 0; i < inputNameQualificationLength; i++)
         {
@@ -4302,11 +4226,12 @@ HiddenListTraversal::setNameQualificationSupport(SgScopeStatement* scope, const 
           scope = scope->get_scope();
         }
 
-     printf ("In HiddenListTraversal::setNameQualificationSupport(): outputGlobalQualification = %s output_amountOfNameQualificationRequired = %d qualifierString = %s \n",outputGlobalQualification ? "true" : "false",output_amountOfNameQualificationRequired,qualifierString.c_str());
+     printf ("In NameQualificationTraversal::setNameQualificationSupport(): outputGlobalQualification = %s output_amountOfNameQualificationRequired = %d qualifierString = %s \n",outputGlobalQualification ? "true" : "false",output_amountOfNameQualificationRequired,qualifierString.c_str());
 
   // DQ (6/12/2011): Make sure we have not generated a qualified name with "::::" because of an scope translated to an empty name.
      ROSE_ASSERT(qualifierString.find("::::") == string::npos);
 
      return qualifierString;
    }
+
 

@@ -1,8 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# Include the "." to force the current directory to be compiled 
-# before the subdirectories.
-SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization astFromString
+# DQ (6/22/2011): I think that the astHiddenTypeAndDeclarationLists directory is no longer required in ROSE.
+# SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization astFromString
+SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astVisualization astFromString
 
 # DQ (12/29/2009): This is only used to handle generated code as smaller files.
 SUBDIRS += GENERATED_CODE_DIRECTORY_Cxx_Grammar
@@ -163,9 +163,8 @@ libsage3_la_LIBADD  = \
 	sageInterface/libsageInterface.la \
 	astTokenStream/libastTokenStream.la \
 	virtualCFG/libvirtualCFG.la \
-	astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
-        astVisualization/libastVisualization.la \
-        astFromString/libAstFromString.la
+   astVisualization/libastVisualization.la \
+   astFromString/libAstFromString.la
 else
 libsage3_la_LIBADD  = \
 	astFixup/libastFixup.la \
@@ -173,10 +172,12 @@ libsage3_la_LIBADD  = \
 	astMerge/libastMerge.la \
 	sageInterface/libsageInterface.la \
 	virtualCFG/libvirtualCFG.la \
-	astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la \
-        astVisualization/libastVisualization.la \
-        astFromString/libAstFromString.la
+   astVisualization/libastVisualization.la \
+   astFromString/libAstFromString.la
 endif
+
+# Removed now the the name qualification support in a part of src/backend/unparser.
+# astHiddenTypeAndDeclarationLists/libastHiddenTypeAndDeclarationLists.la 
 
 if ROSE_USE_SMALLER_GENERATED_FILES
    libsage3_la_LIBADD += GENERATED_CODE_DIRECTORY_Cxx_Grammar/libgeneratedIR.la

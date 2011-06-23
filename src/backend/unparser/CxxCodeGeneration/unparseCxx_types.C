@@ -542,6 +542,7 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
        // curprint ( "\n /* Calling unparseType from unparsePointerType */ \n";
 
           unparseType(pointer_type->get_base_type(), info);
+
        // curprint ( "\n /* DONE: Calling unparseType from unparsePointerType */ \n";
 
        // DQ (9/21/2004): Moved this conditional into this branch (to fix test2004_93.C)
@@ -915,7 +916,8 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                  // DQ (5/29/2011): Newest support for name qualification...
                     SgName nameQualifier;
 
-                    ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
+                 // DQ (6/22/2011): I don't think we can assert this for anything than internal testing.  The unparseToString tests will fail with this assertion in place.
+                 // ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
                     if (info.get_reference_node_for_qualification() != NULL)
                        {
                          printf ("In unparseClassType: info.get_reference_node_for_qualification() = %p = %s \n",info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
@@ -1007,7 +1009,8 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                                            }
                                           else
                                            {
-                                             ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
+                                          // DQ (6/22/2011): I don't think we can assert this for anything than internal testing.  The unparseToString tests will fail with this assertion in place.
+                                          // ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
                                              printf ("In unparseClassType: Sorry not implemented case of name qualification for info.get_reference_node_for_qualification() = %s \n",info.get_reference_node_for_qualification()->class_name().c_str());
                                            }
                                       }
@@ -1219,7 +1222,8 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
             // The C++ support is more complex and can require qualified names!
                SgName nameQualifier = unp->u_name->generateNameQualifier( edecl , info );
 #else
-               ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
+            // DQ (6/22/2011): I don't think we can assert this for anything than internal testing.  The unparseToString tests will fail with this assertion in place.
+            // ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
 
 #if 1
             // DQ (6/2/2011): Newest support for name qualification...
@@ -1448,7 +1452,9 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
              }
 #else
             // The C++ support is more complex and can require qualified names!
-               ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
+
+            // DQ (6/22/2011): I don't think we can assert this for anything than internal testing.  The unparseToString tests will fail with this assertion in place.
+            // ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
             // SgName nameQualifier = unp->u_name->generateNameQualifier( tdecl , info );
             // SgName nameQualifier = unp->u_name->generateNameQualifier( tdecl, info, true );
                printf ("info.get_reference_node_for_qualification() = %p = %s \n",info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
