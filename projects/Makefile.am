@@ -13,7 +13,7 @@ SUBDIRS = \
      DocumentationGenerator \
      FiniteStateModelChecker \
      HeaderFilesInclusion \
-     MPICodeMotion \
+     MPI_Tools \
      MacroRewrapper \
      OpenMP_Analysis \
      QtDesignerPlugins \
