@@ -121,7 +121,7 @@ rs_getArrayType(TypeSystem& ts, const size_t* dimDesc, size_t size, const RsType
 static
 const RsType* rs_getTypeInfo(const TypeSystem& ts, const std::string& type)
 {
-  static const RsType* cached = ts.getTypeInfo(type);
+  static const RsType* cached = ts.getTypeInfo("SgTypeInt");
 
   const RsType* result = NULL;
 
