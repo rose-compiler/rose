@@ -1024,7 +1024,21 @@ void EventReverser::addValueGraphStateSavingEdges(
 #endif
     
     VGEdge newEdge = boost::add_edge(src, root_, valueGraph_).first;
-    PathInfo paths = pathNumManager_->getPathNumbers(killer);
+    PathInfo paths;
+    ControlDependences controlDeps;
+    
+    if (killer)
+    {
+        //cout << killer->class_name() << endl;
+        //controlDeps = cdg_->getControlDependences(killer);
+        paths = pathNumManager_->getPathNumbers(killer);
+    }
+    else
+    {
+        // No killer means available for all paths.
+        //controlDeps = ??;
+        paths = pathNumManager_->getAllPaths();
+    }
     
     // For a Mu node, we should remove the corresponding paths of the same DAG index.
     if (MuNode* muNode = isMuNode(valueGraph_[src]))
@@ -1034,7 +1048,6 @@ void EventReverser::addValueGraphStateSavingEdges(
             paths.erase(iter);
     }
     
-    ControlDependences controlDeps = cdg_->getControlDependences(killer);
     valueGraph_[newEdge] = new StateSavingEdge(
             cost, paths, controlDeps, killer, scopeKiller);
     
@@ -1175,15 +1188,15 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
                 ValueNode* valNode = new ValueNode(var, arg);
                 argVertex = addValueGraphNode(valNode);
                 varVertexMap_[var] = argVertex;
+                
+                // Add state saving edges for killed defs.
+                addStateSavingEdges(var, arg);
             }
         }
         
         // Add an edge from the value to the function call.
         addValueGraphEdge(argVertex, funcCallVertex);
         addValueGraphEdge(rvsFuncCallVertex, argVertex);
-        
-        // Add state saving edges for killed defs.
-        addStateSavingEdges(var, arg);
     }
     
     
@@ -1525,8 +1538,8 @@ void EventReverser::addPhiEdges()
                 }
                 else
                 {
-                    // !!! Work-around. SSA cannot get the correct reaching def for loop headers.
-                    addValueGraphStateSavingEdges(varVertexMap_[defVar], cfgEdge.target().getNode());
+                    //// !!! Work-around. SSA cannot get the correct reaching def for loop headers.
+                    //addValueGraphStateSavingEdges(varVertexMap_[defVar], cfgEdge.target().getNode());
                     
                     addValueGraphPhiEdge(node, varVertexMap_[defVar], cfgEdge);
                 }
@@ -1598,7 +1611,7 @@ void EventReverser::addStateSavingEdges()
         // A temporary work-around for lacking of getting last defs for a variable.
         if (isAvailableValue(v))
         {
-            addValueGraphStateSavingEdges(v, funcDef_->get_body(), true);
+            addValueGraphStateSavingEdges(v, NULL);
         }
         
         
@@ -1631,6 +1644,53 @@ void EventReverser::addStateSavingEdges()
                 && SageInterface::isAncestor(funcDef_, valNode->astNode))
             addValueGraphStateSavingEdges(v, valNode->astNode);
 #endif
+    }
+    
+    // !!!Work-around again!!! Now we cannot get the last def for each variable. So if a value node has
+    // no out SS edges, we add one for it. This is for local variables mainly.
+    foreach (VGVertex v, boost::vertices(valueGraph_))
+    {
+        ValueNode* valNode = isValueNode(valueGraph_[v]);
+        if (!valNode || valNode->var.name.size() != 1)
+            continue;
+                
+        bool hasSSOrPhiEdge = false;
+        
+        foreach (const VGEdge& edge, boost::out_edges(v, valueGraph_))
+        {
+            if (isStateSavingEdge(valueGraph_[edge]))
+            {
+                hasSSOrPhiEdge = true;
+                break;
+            }
+        }
+        
+        if (!hasSSOrPhiEdge)
+        {
+            foreach (const VGEdge& edge, boost::in_edges(v, valueGraph_))
+            {
+                // Phi edge is OK.
+                if (isPhiEdge(valueGraph_[edge]))
+                {
+                    hasSSOrPhiEdge = true;
+                    break;
+                }
+            }
+        }
+        
+        if (hasSSOrPhiEdge)
+            continue;
+
+        SgInitializedName* initName = valNode->var.name[0];
+        SgScopeStatement* scope = initName->get_scope();
+        if (isSgClassDefinition(scope)) continue;
+        
+        if (SgFunctionDefinition* funcDef = isSgFunctionDefinition(scope))
+            scope = funcDef->get_body();
+        
+        cout << "Add a SS edge: " << valNode->var.toString() << "--SS-->" << scope->class_name() << "\n\n";
+        
+        addValueGraphStateSavingEdges(varVertexMap_[valNode->var], scope, true);
     }
 }
 

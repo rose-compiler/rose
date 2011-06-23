@@ -106,7 +106,8 @@ void EventReverser::generateCode()
             // If the target of this edge is a Mu node, put it to values to restore
             // set of the corresponding DAG.
             VGVertex tgt = boost::target(edge, valueGraph_);
-            if (MuNode* muNode = isMuNode(valueGraph_[tgt]))
+            MuNode* muNode = isMuNode(valueGraph_[tgt]);
+            if (muNode && !muNode->isCopy)
                 valuesToRestore_[muNode->dagIndex].insert(tgt);
         }
     }
@@ -936,6 +937,7 @@ void EventReverser::addReverseCFGNode(
         // Update parent paths.
         parentTable[oldPaths] = fullPaths;
         
+        cout << oldPaths << endl;
         ROSE_ASSERT(rvsCFGBasicBlock.count(oldPaths) == 0);
 
         // Once the paths info is modified, we modified it by removing
@@ -1075,7 +1077,7 @@ void EventReverser::generateCodeForBasicBlock(
     // This table is used to locate where to push a value. A function call may 
     // modify several values, and the order of those pushes and pops should be correct.
     // Without this table, the order may be wrong.
-    map<SgNode*, SgStatement*> pushLocations;
+    map<SgStatement*, SgStatement*> pushLocations;
 
     // Generate the reverse code in reverse topological order of the route DAG.
     foreach (const VGEdge& edge, edges)
@@ -1084,7 +1086,7 @@ void EventReverser::generateCodeForBasicBlock(
         VGVertex src = boost::source(edge, routeGraph_);
         VGVertex tgt = boost::target(edge, routeGraph_);
         
-        //cout << routeGraph_[src]->toString() << "-------->" << routeGraph_[tgt]->toString() << '\n';
+        //cout << routeGraph_[src]->toString() << "-------->" << routeGraph_[tgt]->toString() << "\n\n";
 
         ValueNode* valNode = isValueNode(routeGraph_[src]);
         if (valNode == NULL)        continue;
@@ -1095,81 +1097,89 @@ void EventReverser::generateCodeForBasicBlock(
         SgStatement* rvsStmt = NULL;
         SgStatement* cmtStmt = NULL;
 
-        if (StateSavingEdge* ssEdge = isStateSavingEdge(routeGraph_[edge]))
+        StateSavingEdge* ssEdge = isStateSavingEdge(routeGraph_[edge]);
+        if (ssEdge && ssEdge->cost > 0)
         {
-#if 1
             // State saving edge.
-            if (ssEdge->cost == 0)
-                ;//rvsStmt = buildAssignOpertaion(valNode);
-            else if (!ssEdge->varStored)
+
+            // Find the correct location to put the push function call.
+            SgStatement* killer = isSgStatement(ssEdge->killer);
+            if (!killer)
+                killer = SageInterface::getEnclosingStatement(ssEdge->killer);
+
+            SgStatement* pushLocation = NULL;
+
+            if (pushLocations.count(killer) == 0)
             {
-                // Find the correct location to put the push function call.
-                SgNode* killer = ssEdge->killer;
-                SgStatement* pushLocation = NULL;
-                
-                if (pushLocations.count(killer) == 0)
+                if (!ssEdge->scopeKiller)
                 {
-                    if (!ssEdge->scopeKiller)
-                    {
-                        pushLocation = SageInterface::getEnclosingStatement(killer);
-                        pushLocations[killer] = pushLocation;
-                    }
+                    pushLocations[killer] = pushLocation = killer;
                 }
-                else
-                    pushLocation = pushLocations[killer];
-                
-                cout << killer->unparseToString() << ' ' << valNode->toString() << endl;
-                
+            }
+            else
+                pushLocation = pushLocations[killer];
+
+            //cout << killer->unparseToString() << ' ' << valNode->toString() << endl;
+
+            // Since a SS edge can appear in several DAGs, the flag varStored indicates
+            // if this variable is already stored in forward function. But in reverse funciton,
+            // several restores are needed.
+            if (!ssEdge->varStored)
+            {
                 pushFuncStmt = buildExprStatement(
                         buildStoreFunctionCall(valNode->var.getVarRefExp()));
+                ssEdge->varStored = true;
+            }
+
+            //instrumentPushFunction(valNode, funcDef_);
+            rvsStmt = buildExprStatement(
+                    buildRestoreFunctionCall(valNode->var.getVarRefExp()));
+
+            // Build the commit statement.
+            cmtStmt = buildPopStatement(valNode->getType());
+
+#if 0
+            // If the variable is a pointer, do a deep copy of it.
+            if (isSgPointerType(valNode->getType()))
+            {
+                pushFuncStmt = buildPushStatementForPointerType(valNode);
 
                 //instrumentPushFunction(valNode, funcDef_);
-                rvsStmt = buildExprStatement(
-                        buildRestoreFunctionCall(valNode->var.getVarRefExp()));
+                rvsStmt = buildExprStatement(buildCommaOpExp(
+                        buildDestroyFunctionCall(valNode->var.getVarRefExp()),
+                        //buildDeleteExp(buildVariable(valNode), 0, 0, 0),
+                        buildRestorationExp(valNode)));
+
+                //rvsStmt = buildRestorationStmt(valNode);
+
+                // Build the commit statement.
+                cmtStmt = buildExprStatement(
+                        buildDestroyFunctionCall(buildPopFunctionCall(valNode->getType())));
+                        //buildDeleteExp(buildPopFunctionCall(valNode->getType()), 0, 0, 0));
+                //cmtStmt = buildExprStatement(buildPopFunctionCall(valNode->getType()));
+            }
+            else
+            {
+                pushFuncStmt = buildPushStatement(valNode);
+
+
+                //instrumentPushFunction(valNode, funcDef_);
+                rvsStmt = buildRestorationStmt(valNode);
 
                 // Build the commit statement.
                 cmtStmt = buildPopStatement(valNode->getType());
-                
-#if 0
-                // If the variable is a pointer, do a deep copy of it.
-                if (isSgPointerType(valNode->getType()))
-                {
-                    pushFuncStmt = buildPushStatementForPointerType(valNode);
-                    
-                    //instrumentPushFunction(valNode, funcDef_);
-                    rvsStmt = buildExprStatement(buildCommaOpExp(
-                            buildDestroyFunctionCall(valNode->var.getVarRefExp()),
-                            //buildDeleteExp(buildVariable(valNode), 0, 0, 0),
-                            buildRestorationExp(valNode)));
-                    
-                    //rvsStmt = buildRestorationStmt(valNode);
-
-                    // Build the commit statement.
-                    cmtStmt = buildExprStatement(
-                            buildDestroyFunctionCall(buildPopFunctionCall(valNode->getType())));
-                            //buildDeleteExp(buildPopFunctionCall(valNode->getType()), 0, 0, 0));
-                    //cmtStmt = buildExprStatement(buildPopFunctionCall(valNode->getType()));
-                }
-                else
-                {
-                    pushFuncStmt = buildPushStatement(valNode);
-                    
-                    
-                    //instrumentPushFunction(valNode, funcDef_);
-                    rvsStmt = buildRestorationStmt(valNode);
-
-                    // Build the commit statement.
-                    cmtStmt = buildPopStatement(valNode->getType());
-                }
+            }
 #endif
-                
-                // State saving here.
-                // For forward event, we instrument a push function before the def.
-                
-                //instrumentPushFunction(valNode, ssEdge->killer);
-                
-                //SgStatement* pushFuncStmt = buildPushStatement(valNode);
-                
+
+            // State saving here.
+            // For forward event, we instrument a push function before the def.
+
+            //instrumentPushFunction(valNode, ssEdge->killer);
+
+            //SgStatement* pushFuncStmt = buildPushStatement(valNode);
+
+            if (pushFuncStmt)
+            {
                 if (!pushLocation && ssEdge->scopeKiller)
                 {
                     ROSE_ASSERT(isSgScopeStatement(killer));
@@ -1177,20 +1187,19 @@ void EventReverser::generateCodeForBasicBlock(
                 }
                 else
                     SageInterface::insertStatementBefore(pushLocation, pushFuncStmt);
-                
+
                 // Update the location so that the next push is put before this push.
-                pushLocations[killer] = pushFuncStmt;
-                
-                ssEdge->varStored = true;
-                
-                ////instrumentPushFunction(valNode, funcDef_);
-                //rvsStmt = buildRestorationStmt(valNode);
-                
-                //// Build the commit statement.
-                //cmtStmt = buildPopStatement(valNode->getType());
+                pushLocations[killer] = pushFuncStmt;   
             }
-#endif
+
+
+            ////instrumentPushFunction(valNode, funcDef_);
+            //rvsStmt = buildRestorationStmt(valNode);
+
+            //// Build the commit statement.
+            //cmtStmt = buildPopStatement(valNode->getType());
         }
+        
         else if (ValueNode* rhsValNode = isValueNode(routeGraph_[tgt]))
         {
             // Don't generate the expression like a = a.
@@ -1199,6 +1208,7 @@ void EventReverser::generateCodeForBasicBlock(
             // Simple assignment.
             rvsStmt = buildAssignOpertaion(valNode, rhsValNode);
         }
+        
         else if (OperatorNode* opNode = isOperatorNode(routeGraph_[tgt]))
         {
             // Rebuild the operation.
@@ -1208,6 +1218,7 @@ void EventReverser::generateCodeForBasicBlock(
 
             rvsStmt = buildOperationStatement(valNode, opNode->type, lhsNode, rhsNode);
         }
+        
         else if (FunctionCallNode* funcCallNode = isFunctionCallNode(routeGraph_[tgt]))
         {
 #if 1

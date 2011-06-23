@@ -197,6 +197,9 @@ public:
         return paths.flip();
     }
     
+    //! For all DAGs, return a path set with all 1 (all paths).
+    PathInfo getAllPaths() const;
+    
     size_t getDagNum() const { return dags_.size(); }
     
     int getLoopDagIndex(SgNode* header) const

@@ -280,12 +280,20 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
             isVirtual = funcDecl->get_functionModifier().isVirtual();
             isConst = SageInterface::isConstType(funcDecl->get_type());
 
+            SgNamespaceDefinitionStatement* nsDef = SageInterface::enclosingNamespaceScope(funcDecl);
+            SgNamespaceDeclarationStatement* nsDecl = nsDef ? nsDef->get_namespaceDeclaration() : NULL;
+            if (nsDecl && nsDecl->get_name() == "std")
+                cout << "\nFound a STD function: " << funcDecl->get_name() << "\n\n";
+            else
+            {
+                isVirtual = true;
+            }
+            
             //if (isVirtual)
             //cout << funcDecl->get_name().str() << "\t: VIRTUAL3\n\n";
             //funcRef->get_file_info()->display();
             
             //TEMP
-            isVirtual = true;
         }
         //isVirtual = true;
     }
@@ -351,7 +359,9 @@ std::string ValueGraphEdge::toString() const
 
 std::string StateSavingEdge::toString() const
 { 
-    std::string str = "SS:";// + boost::lexical_cast<std::string>(visiblePathNum) + "\\n";
+    std::string str = "SS: ";
+    if (killer)
+        str += killer->class_name() + "\\n";// + boost::lexical_cast<std::string>(visiblePathNum) + "\\n";
     return str + ValueGraphEdge::toString();
 }
 

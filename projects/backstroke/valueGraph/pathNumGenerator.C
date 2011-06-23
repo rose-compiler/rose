@@ -388,7 +388,9 @@ PathInfo PathNumManager::getPathNumbers(SgNode* node) const
     foreach (const IndexToDagVertex& idxNode, vertexToDagIndex_.find(cfgNode)->second)
     {
         boost::tie(idx, dagNode) = idxNode;
-        paths[idx] = pathNumGenerators_[idx]->getPaths(dagNode);
+        PathSet p = pathNumGenerators_[idx]->getPaths(dagNode);
+        if (p.any())
+            paths[idx] = p;
     }
     return paths;
 }
@@ -439,6 +441,19 @@ PathInfo PathNumManager::getPathNumbers(
         paths[idx] = pathNumGenerators_[idx]->getPaths(dagEdge);
     }
     return paths;
+}
+
+
+PathInfo PathNumManager::getAllPaths() const
+{
+    PathInfo allPaths;
+    for (size_t i = 0, s = dags_.size(); i < s; ++i)
+    {
+        PathSet paths(getNumberOfPath(i));
+        paths.flip();
+        allPaths[i] = paths;
+    }
+    return allPaths;
 }
 
 void PathNumManager::getAstNodeIndices(size_t index, map<SgNode*, int>& nodeIndicesTable) const
