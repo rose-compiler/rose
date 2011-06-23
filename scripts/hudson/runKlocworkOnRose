@@ -304,7 +304,11 @@ printBannerToEndStep "configure" $configure_start_time
 	# 					amount of parallelism from 5 to 10.
     #
     set +e
+<<<<<<< HEAD
     kwbuildproject -host hudson-rose-24 -port 8080 --license-host swordfish.llnl.gov -j${NUM_PROCESS} -o tables rose.out
+=======
+    kwbuildproject -host hudson-rose-24 -port 8080 --license-host swordfish.llnl.gov -j{$NUM_PROCESS} -o tables rose.out
+>>>>>>> llnl/vulov1-main-test
     set -e
     # There is no clean way to differentiate between analysis errors and internal Klocwork errors
     # aside from parsing the build.log file.

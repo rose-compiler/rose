@@ -105,6 +105,8 @@ namespace CommandlineProcessing
 
           bool isPHPFileNameSuffix ( const std::string & suffix );
 
+          bool isPythonFileNameSuffix ( const std::string & suffix );
+
        // TV (05/17/2010) Support for CUDA
           bool isCudaFileNameSuffix ( const std::string & suffix );
        // TV (05/17/2010) Support for OpenCL
