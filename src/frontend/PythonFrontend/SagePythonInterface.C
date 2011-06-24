@@ -282,7 +282,7 @@ sage_buildGlobal(PyObject *self, PyObject *args)
     sg_global->set_endOfConstruct(new Sg_File_Info(filename, 0, 0));
 
     SgFunctionDeclaration* sg_main_func_decl =
-        SageBuilder::buildDefiningFunctionDeclaration( SgName("__main__"),
+        SageBuilder::buildDefiningFunctionDeclaration( SgName(ROSE_PYTHON_WRAPPER_FXN_NAME),
                 SageBuilder::buildVoidType(),
                 SageBuilder::buildFunctionParameterList(),
                 sg_global);

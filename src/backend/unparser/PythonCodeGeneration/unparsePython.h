@@ -15,6 +15,15 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
      public:
           Unparse_Python(Unparser* unp, std::string fname);
           virtual ~Unparse_Python();
+
+          /* SageIII requires all statements in the global scope to be declaration
+           * statements. Python allows arbitrary expressions, so we've wrapped the
+           * entire program in an implicit __main__() function. When unparsing, we
+           * don't want to to appear, so this function only unparses the body of the
+           * wrapper function.
+           */
+          virtual void unparseWrappedProgram(SgScopeStatement*, SgUnparse_Info&);
+
           virtual void unparseLanguageSpecificStatement(SgStatement*, SgUnparse_Info&);
           virtual void unparseLanguageSpecificExpression(SgExpression*, SgUnparse_Info&);
           virtual void unparseStringVal(SgExpression*, SgUnparse_Info&);
@@ -42,6 +51,8 @@ class Unparse_Python : public UnparseLanguageIndependentConstructs
 
           virtual std::string ws_prefix(int nesting_level);
    };
+
+#define ROSE_PYTHON_WRAPPER_FXN_NAME "__main__"
 
 #define ROSE_PYTHON_ADD_OP      "+"
 #define ROSE_PYTHON_ASSIGN_OP   "="
