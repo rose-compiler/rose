@@ -1875,7 +1875,9 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
        else
         {
        // Output a message when we cheat on this IR node (even if this is a clue for George).
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 0)
           printf ("Skipping precompuation of string for name qualified type = %p = %s \n",type,type->class_name().c_str());
+#endif
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
@@ -2762,8 +2764,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
        // We need to store the information about the required name qualification in the SgVarRefExp IR node.
 
           SgStatement* currentStatement = TransformationSupport::getStatement(varRefExp);
-          ROSE_ASSERT(currentStatement != NULL);
 
+       // DQ (6/23/2011): This test fails for the new name qualification after a transformation in tests/roseTests/programTransformationTests/test1.C
+       // ROSE_ASSERT(currentStatement != NULL);
+          if (currentStatement != NULL)
+             {
        // DQ (5/30/2011): Handle the case of test2011_58.C (index declaration in for loop construct).
        // SgScopeStatement* currentScope = currentStatement->get_scope();
           SgScopeStatement* currentScope = isSgScopeStatement(currentStatement);
@@ -2823,6 +2828,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                printf ("SgVarRefExp's SgDeclarationStatement: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
                setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
+             }
+
+            // End of new test...
              }
         }
 
@@ -2973,6 +2981,14 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
             // DQ (6/22/2011): I think this is true.  This assertion fails for test2006_78.C (a template example code).
             // ROSE_ASSERT(declarationForReferencedNameSet == declaration);
+
+            // DQ (6/23/2011): This assertion fails for the LoopProcessor on tests/roseTests/loopProcessingTests/mm.C
+            // ROSE_ASSERT(declarationForReferencedNameSet != NULL);
+               if (declarationForReferencedNameSet == NULL)
+                  {
+                    declarationForReferencedNameSet = declaration;
+                    ROSE_ASSERT(declarationForReferencedNameSet != NULL);
+                  }
                ROSE_ASSERT(declarationForReferencedNameSet != NULL);
              }
           ROSE_ASSERT(declarationForReferencedNameSet != NULL);
@@ -4134,6 +4150,15 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
 
   // DQ (6/12/2011): Make sure we have not generated a qualified name with "::::" because of an scope translated to an empty name.
      ROSE_ASSERT(qualifierString.find("::::") == string::npos);
+
+  // DQ (6/23/2011): Never generate a qualified name from a pointer value.
+  // This is a bug in the inlining support where the symbol tables are not setup just right.
+     if (qualifierString.substr(0,2) == "0x")
+        {
+          printf ("WARNING: Detected qualified name generated from pointer value 0x..., reset to empty string (inlining does not fixup symbol tables) \n");
+          qualifierString = "";
+        }
+     ROSE_ASSERT(qualifierString.substr(0,2) != "0x");
 
      return qualifierString;
    }

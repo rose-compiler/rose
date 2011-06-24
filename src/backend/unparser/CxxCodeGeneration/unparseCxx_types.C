@@ -175,7 +175,7 @@ string get_type_name(SgType* t)
                                 SgClassDeclaration* decl;
                                 decl = isSgClassDeclaration(class_type->get_declaration());
                 SgName nm = decl->get_qualified_name();
-                printf ("In unparseType(%p): nm = %s \n",t,nm.str());
+             // printf ("In unparseType(%p): nm = %s \n",t,nm.str());
                 if (nm.getString() != "")
                     return nm.getString();
                 else
@@ -345,7 +345,7 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                usingGeneratedNameQualifiedTypeNameString = true;
 
                typeNameString = i->second.c_str();
-               printf ("ssssssssssssssss Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",typeNameString.c_str(),nodeReferenceToType,nodeReferenceToType->class_name().c_str());
+            // printf ("ssssssssssssssss Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",typeNameString.c_str(),nodeReferenceToType,nodeReferenceToType->class_name().c_str());
              }
         }
 #endif
@@ -881,7 +881,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
        // bases typedefed types).
           SgName nm = decl->get_name();
 
-          printf ("In unparseClassType: nm = %s \n",nm.str());
+       // printf ("In unparseClassType: nm = %s \n",nm.str());
 
        // DQ (6/27/2006): nm.is_null() is a better test for an empty name, don't output the qualifier for un-named
        // structs.  This is part of the fix for the Red Hat 7.3 gconv problem (see ChangeLog for details).
@@ -897,7 +897,6 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                   {
 #if 0
                     curprint ( string("\n/* In unparseClassType: info.forceQualifiedNames() = ") + ((info.forceQualifiedNames() == true) ? "true" : "false") + " */ \n");
-
                  // curprint ( "\n/* cdecl->get_need_name_qualifier() = " + (cdecl->get_need_name_qualifier() == true ? "true" : "false") + " */ \n";
                     curprint ( string("\n/* cdecl->get_scope() = ") + cdecl->get_scope()->class_name() + " */\n ");
                     curprint ( string("\n/* info.get_current_namespace() = ") + ((info.get_current_namespace() != NULL) ? info.get_current_namespace()->class_name() : "no namespace in use") + " */\n ";
@@ -908,11 +907,6 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                  // info.display("In unparseClassType: The C++ support is more complex and can require qualified names");
 
                  // The C++ support is more complex and can require qualified names!
-#if 0
-                 // SgName nameQualifier = unp->u_name->generateNameQualifier( decl, info );
-                    SgName nameQualifier = unp->u_name->generateNameQualifier( decl, info, true );
-                 // info.display("Output SgUnparse_Info object to support name qualification");
-#else
                  // DQ (5/29/2011): Newest support for name qualification...
                     SgName nameQualifier;
 
@@ -920,112 +914,18 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                  // ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
                     if (info.get_reference_node_for_qualification() != NULL)
                        {
-                         printf ("In unparseClassType: info.get_reference_node_for_qualification() = %p = %s \n",info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
-#if 1
-#if 1
+                      // printf ("In unparseClassType: info.get_reference_node_for_qualification() = %p = %s \n",info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
+
                       // DQ (6/2/2011): Newest support for name qualification...
                          nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
-#else
-                         SgNode* referencedNode = info.get_reference_node_for_qualification();
-                         switch (referencedNode->variantT())
-                            {
-                              case V_SgInitializedName:
-                                 {
-                                   SgInitializedName* initializedName = isSgInitializedName(referencedNode);
-                                   nameQualifier = initializedName->get_qualified_name_prefix_for_type();
-                                   break;
-                                 }
-
-                              case V_SgFunctionDeclaration:
-                                 {
-                                   SgFunctionDeclaration* node = isSgFunctionDeclaration(referencedNode);
-                                   nameQualifier = node->get_qualified_name_prefix_for_return_type();
-                                   break;
-                                 }
-
-                              case V_SgTypedefDeclaration:
-                                 {
-                                   SgTypedefDeclaration* node = isSgTypedefDeclaration(referencedNode);
-                                   nameQualifier = node->get_qualified_name_prefix_for_base_type();
-                                   break;
-                                 }
-
-                              case V_SgTemplateArgument:
-                                 {
-                                // SgTemplateArgument* node = isSgTemplateArgument(referencedNode);
-                                // nameQualifier = node->get_qualified_name_prefix_for_type();
-                                   break;
-                                 }
-
-                              case V_SgCastExp:
-                                 {
-                                   SgCastExp* node = isSgCastExp(referencedNode);
-                                   nameQualifier = node->get_qualified_name_prefix_for_referenced_type();
-                                   break;
-                                 }
-#if 0
-                              case V_:
-                                 {
-                                   * node = is (referencedNode);
-                                   nameQualifier = node->get_qualified_name_prefix_for_type();
-                                   break;
-                                 }
-#endif
-                              default:
-                                 {
-                                   printf ("In unparseClassType: Sorry not implemented case of name qualification for info.get_reference_node_for_qualification() = %s \n",info.get_reference_node_for_qualification()->class_name().c_str());
-                                   ROSE_ASSERT(false);
-                                 }
-                            }
-#endif
-#else
-                         SgInitializedName* initializedName         = isSgInitializedName(info.get_reference_node_for_qualification());
-                      // ROSE_ASSERT(initializedName != NULL);
-                         if (initializedName != NULL)
-                            {
-                              nameQualifier = initializedName->get_qualified_name_prefix_for_type();
-                            }
-                           else
-                            {
-                              SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(info.get_reference_node_for_qualification());
-                              if (functionDeclaration != NULL)
-                                 {
-                                   nameQualifier = functionDeclaration->get_qualified_name_prefix_for_return_type();
-                                 }
-                                else
-                                 {
-                                   SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(info.get_reference_node_for_qualification());
-                                   if (typedefDeclaration != NULL)
-                                      {
-                                        nameQualifier = typedefDeclaration->get_qualified_name_prefix_for_base_type();
-                                      }
-                                     else
-                                      {
-                                        SgTemplateArgument* templateArgument = isSgTemplateArgument(info.get_reference_node_for_qualification());
-                                        if (templateArgument != NULL)
-                                           {
-                                             printf ("In unparseClassType: Skipping output of name qualification for SgTemplateArgument since it will be output for the type directly. \n");
-                                          // nameQualifier = templateArgument->get_qualified_name_prefix();
-                                           }
-                                          else
-                                           {
-                                          // DQ (6/22/2011): I don't think we can assert this for anything than internal testing.  The unparseToString tests will fail with this assertion in place.
-                                          // ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
-                                             printf ("In unparseClassType: Sorry not implemented case of name qualification for info.get_reference_node_for_qualification() = %s \n",info.get_reference_node_for_qualification()->class_name().c_str());
-                                           }
-                                      }
-                                 }
-                            }
-#endif
                        }
                       else
                        {
-                         printf ("In unparseClassType: info.get_reference_node_for_qualification() == NULL \n");
+                      // printf ("In unparseClassType: info.get_reference_node_for_qualification() == NULL \n");
                        }
-#endif
 
                  // SgName nameQualifier = unp->u_name->generateNameQualifierForType( type , info );
-#if 1
+#if 0
                     printf ("In unparseClassType: nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
                  // curprint ( string("\n/* In unparseClassType: nameQualifier (from unp->u_name->generateNameQualifier function) = ") + nameQualifier + " */ \n ");
 #endif
@@ -1254,7 +1154,7 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                   }
 #endif
 #endif
-               printf ("nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
+            // printf ("nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
 
             // printf ("nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
             // curprint ( "\n/* nameQualifier (from unp->u_name->generateNameQualifier function) = " + nameQualifier + " */ \n ";
@@ -1346,7 +1246,7 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
      SgTypedefType* typedef_type = isSgTypedefType(type);
      ROSE_ASSERT(typedef_type != NULL);
 
-     printf ("Inside of Unparse_Type::unparseTypedefType name = %p = %s \n",typedef_type,typedef_type->get_name().str());
+  // printf ("Inside of Unparse_Type::unparseTypedefType name = %p = %s \n",typedef_type,typedef_type->get_name().str());
   // curprint ( "\n/* Inside of Unparse_Type::unparseTypedefType */ \n";
 
 #if 0
@@ -1457,63 +1357,12 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
             // ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
             // SgName nameQualifier = unp->u_name->generateNameQualifier( tdecl , info );
             // SgName nameQualifier = unp->u_name->generateNameQualifier( tdecl, info, true );
-               printf ("info.get_reference_node_for_qualification() = %p = %s \n",info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
+            // printf ("info.get_reference_node_for_qualification() = %p = %s \n",info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
 
-#if 1
             // DQ (6/2/2011): Newest support for name qualification...
                SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
-#else
-            // DQ (5/29/2011): Newest support for name qualification...
-               SgName nameQualifier;
-               SgInitializedName* initializedName = isSgInitializedName(info.get_reference_node_for_qualification());
-            // ROSE_ASSERT(initializedName != NULL);
-               if (initializedName != NULL)
-                  {
-                    nameQualifier = initializedName->get_qualified_name_prefix_for_type();
-                  }
-                 else
-                  {
-                    SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(info.get_reference_node_for_qualification());
-                    if (typedefDeclaration != NULL)
-                       {
-                         ROSE_ASSERT(typedefDeclaration != NULL);
-                         nameQualifier = typedefDeclaration->get_qualified_name_prefix_for_base_type();
-                       }
-                      else
-                       {
-                         SgExpression* exp = isSgExpression(info.get_reference_node_for_qualification());
-                      // ROSE_ASSERT(exp != NULL);
-                         if (exp != NULL)
-                            {
-                              nameQualifier = exp->get_qualified_name_prefix();
-                            }
-                           else
-                            {
-                              SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(info.get_reference_node_for_qualification());
-                              if (functionDeclaration != NULL)
-                                 {
-                                   nameQualifier = functionDeclaration->get_qualified_name_prefix_for_return_type();
-                                 }
-                                else
-                                 {
-                                   SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(info.get_reference_node_for_qualification());
-                                   if (declarationStatement != NULL)
-                                      {
-                                        nameQualifier = declarationStatement->get_qualified_name_prefix();
-                                      }
-                                     else
-                                      {
-                                        ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
-                                        printf ("In unparseTypedefType(): info.get_reference_node_for_qualification() = %s \n",info.get_reference_node_for_qualification()->class_name().c_str());
-                                     // ROSE_ASSERT(false);
-                                      }
-                                 }
-                            }
-                       }
-                  }
-#endif
 
-               printf ("In unparseTypedefType(): nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
+            // printf ("In unparseTypedefType(): nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
             // curprint ( "\n/* nameQualifier (from unp->u_name->generateNameQualifier function) = " + nameQualifier + " */ \n ";
                curprint ( nameQualifier.str());
                SgName nm = typedef_type->get_name();
@@ -1783,7 +1632,7 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
             // be a node that is unique in the AST.  The type name would have to be saved more directly.  This is likely the support that is ALSO required.
                ninfo2.set_reference_node_for_qualification(func_type);
 
-               printf ("Setting reference_node_for_qualification to SgFunctionType, but this is not correct where name qualification is required. \n");
+            // printf ("Setting reference_node_for_qualification to SgFunctionType, but this is not correct where name qualification is required. \n");
 
                curprint ( "(");
                SgTypePtrList::iterator p = func_type->get_arguments().begin();

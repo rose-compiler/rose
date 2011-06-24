@@ -1600,6 +1600,15 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
+            // DQ (6/23/2011): previously unhandled case ...
+               case V_SgUnparse_Info:
+                  {
+                    key = "__unparse_info_";
+                 // Make the key unique for each SgUnparse_Info object!
+                    key = key + StringUtility::numberToString(node);
+                    break;
+                  }
+
                default:
                   {
                     printf ("Error: default reached in generateUniqueName() node = %p = %s \n",node,node->class_name().c_str());

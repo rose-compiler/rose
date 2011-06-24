@@ -203,7 +203,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                            // ROSE_ASSERT (definingScope->symbol_exists(symbolToMove) == false);
                               if (definingScope->symbol_exists(symbolToMove) == false)
                                  {
-#if 1
+#if 0
                                    printf ("After existence tesst: calling insert symbolToMove = %p = %s = %s into newScope = %p = %s \n",
                                         symbolToMove,symbolToMove->class_name().c_str(),symbolToMove->get_name().str(),definingScope,definingScope->class_name().c_str());
 #endif
