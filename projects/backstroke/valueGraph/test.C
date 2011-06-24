@@ -1,4 +1,5 @@
 #include "valueGraph.h"
+#include <utilities/utilities.h>
 #include <slicing/backstrokeCFG.h>
 #include <boost/lexical_cast.hpp>
 #include <normalizations/expNormalization.h>
@@ -7,6 +8,17 @@ using namespace std;
 using namespace boost;
 
 #define foreach BOOST_FOREACH
+
+// This function is used to help find the last defs of all local variables. This is a word-around
+// due to the problem in SSA.
+void addNullStmtAtScopeEnd(SgFunctionDefinition* funcDef)
+{
+    vector<SgBasicBlock*> scopes = BackstrokeUtility::querySubTree<SgBasicBlock>(funcDef);
+    foreach (SgBasicBlock* scope, scopes)
+    {
+        SageInterface::appendStatement(SageBuilder::buildNullStatement(), scope);
+    }
+}
 
 int main(int argc, char *argv[])
 {
@@ -55,6 +67,8 @@ int main(int argc, char *argv[])
         if (eventList.count(funcName) > 0)
         {
             BackstrokeNorm::normalizeEvent(funcDef->get_declaration());
+            // Add a null statement at the end of all scopes then we can find the last defs of variables.
+            addNullStmtAtScopeEnd(funcDef);
             funcDefs.push_back(funcDef);
         }
     }
