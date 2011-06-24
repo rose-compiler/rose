@@ -1,7 +1,7 @@
 AC_DEFUN([ROSE_SUPPORT_PYTHON],
 [
 
-if test ! "$enable_python" = yes; then
+if test "$support_python_language" != yes; then
    AC_MSG_NOTICE([Skipping use of Python support!])
 else
    AC_DEFINE([USE_ROSE_PYTHON_SUPPORT],
