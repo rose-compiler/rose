@@ -694,7 +694,8 @@ void EventReverser::addAvailableAndTargetValues()
     // and determine which variables are available during the search of VG.
     typedef SSA::NodeReachingDefTable::value_type VarNameDefPair;
     foreach (const VarNameDefPair& nameDef,
-             ssa_->getOutgoingDefsAtNode(funcDef_))
+            ssa_->getLastVersions(funcDef_->get_declaration()))
+             //ssa_->getReachingDefsAtNode_(funcDef_->get_body()->get_statements().back()))
     {
         VarName name = nameDef.first;
         VGVertex node;
@@ -1433,15 +1434,41 @@ EventReverser::VGVertex EventReverser::createOperatorNode(
 
 void EventReverser::addPhiEdges()
 {    
+    typedef SSA::NodeReachingDefTable::value_type VarNameDefPair;
+    
     // At the end of the event, find the versions of all variables. It is possible 
     // that a phi node with the final version is not added to VG yet.
-    typedef SSA::NodeReachingDefTable::value_type VarNameDefPair;
-    foreach (const VarNameDefPair& nameDef,
-             ssa_->getOutgoingDefsAtNode(funcDef_))
+    vector<SgBasicBlock*> basicBlocks = BackstrokeUtility::querySubTree<SgBasicBlock>(funcDef_);
+    foreach (SgBasicBlock* basicBlock, basicBlocks)
+    {
+        foreach (const VarNameDefPair& nameDef, 
+            ssa_->getReachingDefsAtNode_(basicBlock->get_statements().back()))
+        {
+            // For every variable, if it is not added into VG, add it now.
+            VersionedVariable var(nameDef.first, nameDef.second->getRenamingNumber());
+
+            if (varVertexMap_.count(var) == 0)
+            {
+                // Currently an object's member access is not added to VG.
+                if (var.name.size() == 1)
+                {
+                    if (nameDef.second->isPhiFunction())
+                        createPhiNode(var, nameDef.second);
+                    else
+                        cout << "!!!Unhandled variable: " << var << endl;
+                }
+            }
+        }
+    }
+    
+    // Since return statements directly point to CFG exit. We have to call SSA::getLastVersions
+    // to get the final versions.
+    foreach (const VarNameDefPair& nameDef, 
+        ssa_->getLastVersions(funcDef_->get_declaration()))
     {
         // For every variable, if it is not added into VG, add it now.
         VersionedVariable var(nameDef.first, nameDef.second->getRenamingNumber());
-                        
+
         if (varVertexMap_.count(var) == 0)
         {
             // Currently an object's member access is not added to VG.
@@ -1571,7 +1598,7 @@ void EventReverser::addStateSavingEdges()
         if (valNode == NULL) continue;
         
 #if 0
-        // If the variable in this node is a stack variable, find its scope
+        // If the variable in this node is a local variable, find its scope
         // and add a state saving edge for it containing the scope.
         SgNode* astNode = valNode->astNode;
         if (SgInitializedName* initName = isSgInitializedName(astNode))
@@ -1581,30 +1608,33 @@ void EventReverser::addStateSavingEdges()
             // function parameters, in which case we set its scope as function body.
             SgScopeStatement* scope = initName->get_scope();
             //SgBasicBlock* funcBody = funcDef_->get_body();
-            if (isSgClassDefinition(scope))
-                continue; //scope = funcBody;
             
             if (SgFunctionDefinition* funcDef = isSgFunctionDefinition(scope))
                 scope = funcDef->get_body();
             
-            // Find the last def of this variable in its definition scope.
-            // !!! Note this is a hack since the bug in SSA.
-            const SSA::NodeReachingDefTable& defTable = ssa_->getOutgoingDefsAtNode(funcDef_);
-            
-            const VarName& varName = valNode->var.name;
-            SSA::NodeReachingDefTable::const_iterator iter = defTable.find(varName);
-            //ROSE_ASSERT(iter != defTable.end());
-            if (iter != defTable.end())
+            if (SgBasicBlock* basicBlock = isSgBasicBlock(scope))
             {
-                SSA::ReachingDefPtr reachingDef = iter->second;
-                int version = reachingDef->getRenamingNumber();
-                VersionedVariable var(varName, version);
-                ROSE_ASSERT(varVertexMap_.count(var));
-                
-                cout << "Add a SS edge: " << var.toString() << "--SS-->" << scope->class_name() << "\n\n";
-            
-                ROSE_ASSERT(isSgScopeStatement(scope));
-                addValueGraphStateSavingEdges(varVertexMap_[var], scope, true);
+                // Find the last def of this variable in its definition scope.
+                // !!! Note this is a hack since the bug in SSA.
+                ROSE_ASSERT(isSgNullStatement(basicBlock->get_statements().back()));
+                const SSA::NodeReachingDefTable& defTable = 
+                    ssa_->getReachingDefsAtNode_(basicBlock->get_statements().back());
+
+                const VarName& varName = valNode->var.name;
+                SSA::NodeReachingDefTable::const_iterator iter = defTable.find(varName);
+                //ROSE_ASSERT(iter != defTable.end());
+                if (iter != defTable.end())
+                {
+                    SSA::ReachingDefPtr reachingDef = iter->second;
+                    int version = reachingDef->getRenamingNumber();
+                    VersionedVariable var(varName, version);
+                    ROSE_ASSERT(varVertexMap_.count(var));
+
+                    cout << "Add a SS edge: " << var.toString() << "--SS-->" << scope->class_name() << "\n\n";
+
+                    ROSE_ASSERT(isSgScopeStatement(scope));
+                    addValueGraphStateSavingEdges(varVertexMap_[var], scope, true);
+                }       
             }
         }
 #endif
@@ -1660,6 +1690,7 @@ void EventReverser::addStateSavingEdges()
 #endif
     }
     
+#if 0
     // !!!Work-around again!!! Now we cannot get the last def for each variable. So if a value node has
     // no out SS edges, we add one for it. This is for local variables mainly.
     foreach (VGVertex v, boost::vertices(valueGraph_))
@@ -1707,6 +1738,7 @@ void EventReverser::addStateSavingEdges()
         
         addValueGraphStateSavingEdges(varVertexMap_[valNode->var], scope, true);
     }
+#endif
     
     
     // For each scope statement, find all its early exits, and add 
@@ -1731,10 +1763,24 @@ void EventReverser::addStateSavingEdges()
             continue;
         
         SgScopeStatement* scope = initName->get_scope();
+        if (SgFunctionDefinition* funcDef = isSgFunctionDefinition(scope))
+            scope = funcDef->get_body();
+        
         if (!SageInterface::isAncestor(funcDef_, scope)) 
             continue;
         
         ROSE_ASSERT(exitsForScopes.count(scope));
+        
+            
+        // We have added a null statement to every basic block and then we can get the 
+        // reaching defs on this statement to get all last versions of local variables.
+        if (SgBasicBlock* basicBlock = isSgBasicBlock(scope))
+        {
+            cout << "Scope end SS edge: " << initName->get_name() 
+                    << "--SS-->" << basicBlock->class_name() << "\n\n";
+            ROSE_ASSERT(isSgNullStatement(basicBlock->get_statements().back()));
+            addStateSavingEdges(VarName(1, initName), basicBlock->get_statements().back());
+        }
         
         
         // For each early exit, add a SS edge for this local variable.
