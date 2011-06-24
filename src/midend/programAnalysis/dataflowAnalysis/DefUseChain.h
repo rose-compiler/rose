@@ -36,7 +36,7 @@ class DefUseChain
                             const AstNodePtr& stmt, bool def)
     {
       Node* n = new Node(this, ref, stmt, def);
-      AddNode(n);
+      VirtualGraphCreateTemplate<Node, Edge>::AddNode(n);
 
       return n;
     }
