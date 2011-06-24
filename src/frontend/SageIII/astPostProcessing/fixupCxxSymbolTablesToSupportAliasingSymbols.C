@@ -30,14 +30,6 @@ fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node)
    }
 
 
-#if 0
-void
-trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(
-     const SgName & variableName, SgScopeStatement* currentScope, 
-     SgVariableSymbol* & variableSymbol, SgFunctionSymbol* & functionSymbol, 
-     SgClassSymbol* & classSymbol);
-#endif
- 
 void
 FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgAccessModifier::access_modifier_enum accessLevel )
    {
@@ -56,7 +48,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
      if (classDefinition != NULL)
         {
        // If this is a class definition, then we need to make sure that we only for alias symbols for those declarations.
+#if ALIAS_SYMBOL_DEBUGGING
           printf ("Injection of symbols from a class definition needs to respect access privledge (private, protected, public) declarations \n");
+#endif
         }
 
      SgSymbolTable::BaseHashType* internalTable = symbolTable->get_table();
@@ -82,18 +76,21 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
        // Make sure that this is not a SgLabelSymbol, I think these should not be aliased
        // (if only because I don't think that C++ support name qualification for labels).
           ROSE_ASSERT ( isSgLabelSymbol(symbol) == NULL );
-#if 1
+
        // DQ (6/22/2011): For now skip the handling of alias symbol from other scopes.
        // ROSE_ASSERT(isSgAliasSymbol(symbol) == NULL);
           if (isSgAliasSymbol(symbol) != NULL)
              {
+#if ALIAS_SYMBOL_DEBUGGING
                printf ("WARNING: Not clear if we want to nest SgAliasSymbol inside of SgAliasSymbol \n");
+#endif
              }
 
           SgNode* symbolBasis = symbol->get_symbol_basis();
           ROSE_ASSERT(symbolBasis != NULL);
+#if ALIAS_SYMBOL_DEBUGGING
           printf ("symbolBasis = %p = %s \n",symbolBasis,symbolBasis->class_name().c_str());
-
+#endif
        // SgDeclarationStatement* declarationFromSymbol = symbol->get_declaration();
           SgDeclarationStatement* declarationFromSymbol = isSgDeclarationStatement(symbolBasis);
 
@@ -114,8 +111,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                declarationAccessLevel = initializedNameFromSymbol->get_declptr()->get_declarationModifier().get_accessModifier().get_modifier();
              }
 
+#if ALIAS_SYMBOL_DEBUGGING
           printf ("declarationAccessLevel = %d accessLevel = %d \n",declarationAccessLevel,accessLevel);
-
+#endif
           if (declarationAccessLevel >= accessLevel)
              {
             // This declaration is visible, so build an alias.
@@ -123,31 +121,23 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
             // SgAliasSymbol* aliasSymbol = new SgAliasSymbol (SgSymbol *alias=NULL, bool isRenamed=false, SgName new_name="")
                SgAliasSymbol* aliasSymbol = new SgAliasSymbol (symbol);
 
+#if ALIAS_SYMBOL_DEBUGGING
                printf ("Adding symbol to new scope as a SgAliasSymbol = %p \n",aliasSymbol);
-
+#endif
             // Use the current name and the alias to the symbol
                currentScope->insert_symbol(name, aliasSymbol);
              }
             else
              {
+#if ALIAS_SYMBOL_DEBUGGING
                printf ("NO SgAliasSymbol ADDED (wrong permissions): declarationFromSymbol = %p \n",declarationFromSymbol);
+#endif
              }
-#else
+#if 0
        // Older version of code...
        // SgAliasSymbol* aliasSymbol = new SgAliasSymbol (SgSymbol *alias=NULL, bool isRenamed=false, SgName new_name="")
           SgAliasSymbol* aliasSymbol = new SgAliasSymbol (symbol);
 
-#if 0
-       // DQ (5/20/2010): Added test (note that SgEnumFieldSymbol fails this test, since that will resolve to a SgInitializedName and not a SgDeclarationStatement).
-       // SgDeclarationStatement* decl = (SgDeclarationStatement*)aliasSymbol->get_declaration();
-          SgDeclarationStatement* decl = aliasSymbol->get_declaration();
-          if (decl == NULL)
-             {
-            // Investigate this error!
-               printf ("Error in conversion to SgAliasSymbol: original symbol = %p = %s \n",symbol,symbol->class_name().c_str());
-             }
-          ROSE_ASSERT(decl != NULL);
-#endif
        // Use the current name and the alias to the symbol
           currentScope->insert_symbol(name, aliasSymbol);
 #endif
@@ -281,14 +271,14 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                SgBaseClass* baseClass = *i;
                ROSE_ASSERT(baseClass != NULL);
 
-               printf ("baseClass->get_baseClassModifier().displayString()                      = %s \n",baseClass->get_baseClassModifier().displayString().c_str());
-               printf ("baseClass->get_baseClassModifier().get_accessModifier().displayString() = %s \n",baseClass->get_baseClassModifier().get_accessModifier().displayString().c_str());
+            // printf ("baseClass->get_baseClassModifier().displayString()                      = %s \n",baseClass->get_baseClassModifier().displayString().c_str());
+            // printf ("baseClass->get_baseClassModifier().get_accessModifier().displayString() = %s \n",baseClass->get_baseClassModifier().get_accessModifier().displayString().c_str());
 
             // if (baseClass->get_modifier() == SgBaseClass::e_virtual)
                if (baseClass->get_baseClassModifier().get_modifier() == SgBaseClassModifier::e_virtual)
                   {
                  // Not clear if virtual as a modifier effects the handling of alias symbols.
-                    printf ("Not clear if virtual as a modifier effects the handling of alias symbols. \n");
+                 // printf ("Not clear if virtual as a modifier effects the handling of alias symbols. \n");
                   }
 
             // DQ (6/22/2011): Define the access level for alias symbol's declarations to be included.
@@ -302,16 +292,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 
             // We need this function to restrict it's injection of symbol to just those that are associated with public and protected declarations.
                injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,classDefinition,accessLevel);
-#if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
-#endif
+
                i++;
              }
-#if 0
-          printf ("Exiting after evaluation of derived classes: are they visible: \n");
-          ROSE_ASSERT(false);
-#endif
         }
 
 
@@ -330,7 +313,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
             // This is a function declared in a class definition, test of friend (forget why it is important to test for isOperator().
                if (functionDeclaration->get_declarationModifier().isFriend() == true || functionDeclaration->get_specialFunctionModifier().isOperator() == true)
                   {
-                    printf ("Process all friend function with a SgAliasSymbol to where they are declared in another scope (usually global scope) \n");
+                 // printf ("Process all friend function with a SgAliasSymbol to where they are declared in another scope (usually global scope) \n");
 #if 0
                     SgName name = functionDeclaration->get_name();
 

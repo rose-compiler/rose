@@ -101,7 +101,7 @@ ctrl: 28->29 always
 ctrl: 29->30 always
 
  Mapping 
-SgBasicBlock:{char *content = "adlfkj";char *content2 = new char [4UL];char *output = ::foo(content);::goo(::foo);return 0;}:20->29
+SgBasicBlock:{char *content = "adlfkj";char *content2 = new char [4UL];char *output = foo(content);goo(foo);return 0;}:20->29
 SgVariableDeclaration:char *content = "adlfkj";:20->22
 SgInitializedName:content:22v:main-10-content
 SgCastExp:"adlfkj":22v:main-10-content

@@ -1042,7 +1042,7 @@ ResetParentPointers::evaluateInheritedAttribute (
                       // demonstrates that the SgInitializedName build first might only be to support a symbol and not have a
                       // proper parent.
                       // ROSE_ASSERT(previousInitializedName->get_parent() != NULL);
-#if 0
+#if 1
                       // DQ (6/5/2011): Commented out as part of name qualification testing...
                          if (previousInitializedName->get_prev_decl_item() != NULL)
                               ROSE_ASSERT(previousInitializedName->get_parent() != NULL);

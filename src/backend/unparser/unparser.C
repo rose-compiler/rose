@@ -287,26 +287,16 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
           Hidden_List_Computation::buildHiddenTypeAndDeclarationLists(file);
 #else
        // DQ (5/15/2011): Test clearing the mangled name map.
-          printf ("Calling SgNode::clearGlobalMangledNameMap() \n");
+       // printf ("Calling SgNode::clearGlobalMangledNameMap() \n");
           SgNode::clearGlobalMangledNameMap();
 
         // Build the local set to use to record when declaration that might required qualified references have been seen.
           std::set<SgNode*> referencedNameSet;
 
           void generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNameSet );
-          printf ("Developing a new implementation of the name qualification support. \n");
+       // printf ("Developing a new implementation of the name qualification support. \n");
           generateNameQualificationSupport(file,referencedNameSet);
-          printf ("DONE: new name qualification support built. \n*************************\n\n");
-
-#if 0
-       // DQ (5/16/2011): Test clearing the mangled name map (so that unparsing will use the name qualification data in each node).
-       // See if this fixes test2011_54.C
-          printf ("Calling SgNode::clearGlobalMangledNameMap() \n");
-          SgNode::clearGlobalMangledNameMap();
-
-       // DQ (5/15/2011): It might be that the AST symbol tables should be rebuilt after fixing the name qualification.
-          fixupAstSymbolTables(file);
-#endif
+       // printf ("DONE: new name qualification support built. \n*************************\n\n");
 #endif
 
        // DQ (6/5/2007): We actually need this now since the hidden lists are not pushed to lower scopes where they are required.
@@ -1198,7 +1188,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
             // ROSE_ASSERT(false);
 
                SgScopeStatement* scope = templateArgument->get_scope();
-               printf ("SgTemplateArgument case: scope = %p = %s \n",scope,scope->class_name().c_str());
+            // printf ("SgTemplateArgument case: scope = %p = %s \n",scope,scope->class_name().c_str());
                inheritedAttributeInfo.set_current_scope(scope);
              }
 #endif

@@ -458,7 +458,7 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
      ninfoForFunctionName.set_name_qualification_length(funcdecl_stmt->get_name_qualification_length());
      ninfoForFunctionName.set_global_qualification_required(funcdecl_stmt->get_global_qualification_required());
 
-     printf ("In unparse_helper(): funcdecl_stmt->get_name_qualification_length() = %d funcdecl_stmt->get_global_qualification_required() = %s \n",funcdecl_stmt->get_name_qualification_length(),funcdecl_stmt->get_global_qualification_required() ? "true" : "false");
+  // printf ("In unparse_helper(): funcdecl_stmt->get_name_qualification_length() = %d funcdecl_stmt->get_global_qualification_required() = %s \n",funcdecl_stmt->get_name_qualification_length(),funcdecl_stmt->get_global_qualification_required() ? "true" : "false");
 
      if (isSgClassDefinition(funcdecl_stmt->get_parent()))
         {
@@ -468,7 +468,7 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
   // SgName nameQualifier = unp->u_name->generateNameQualifier( funcdecl_stmt , ninfoForFunctionName );
      SgName nameQualifier = funcdecl_stmt->get_qualified_name_prefix();
 #endif
-     printf ("In unparse_helper(): nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
+  // printf ("In unparse_helper(): nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
 
   // DQ (10/12/2006): need to trim off the global scope specifier (I think).
   // curprint( "\n/* Calling trimGlobalScopeQualifier() */\n ");
@@ -953,118 +953,23 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
 
      if (initializedName != NULL)
         {
-#if 0
-       // DQ (9/12/2004): Add the qualification required to resolve the name
-#if 1
-          SgScopeStatement* scope = initializedName->get_scope();
-          if (isSgGlobal(scope) == NULL)
-               curprint ( string(scope->get_qualified_name().str()) + "::");
-          curprint ( initializedName->get_name().str());
-#else
-       // DQ (8/22/2005): Added get_qualified_name() to SgInitializedName class
-          curprint ( initializedName->get_qualified_name().str());
-#endif
-#else
        // DQ (5/12/2011): Support for new name qualification.
-#if 1
        // DQ (6/5/2011): This case is demonstrated by test2005_114.C.
 #if 0
           printf ("I think that this case might not be used...(or we need a test case for it) \n");
           ROSE_ASSERT(false);
 #endif
-#if 0
-       // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
-       // different and so it depends upon where the type is referenced.  Thus the qualified name is 
-       // stored in a map to the IR node that references the type.
-          SgName nameQualifier;
-          if ((usingDeclaration)->get_name_qualification_length() > 0)
-             {
-               printf ("We should have a qualified name in the map for SgUsingDeclarationStatement = %p \n",usingDeclaration);
-
-               std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(usingDeclaration);
-               ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
-               if (i != SgNode::get_globalQualifiedNameMapForNames().end())
-                  {
-                    nameQualifier = i->second;
-                    printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
-                 // curprint(nameQualifier);
-                  }
-
-               printf ("nameQualifier for SgUsingDeclarationStatement = %s \n",nameQualifier.str());
-            // ROSE_ASSERT(false);
-             }
-#else
           SgName nameQualifier = usingDeclaration->get_qualified_name_prefix();
-#endif
-#else
-          SgName nameQualifier = unp->u_name->generateNameQualifier(initializedName,tmp_info1);
-#endif
+
           curprint(nameQualifier.str());
           curprint(initializedName->get_name().str());
-#endif
         }
 
      if (declarationStatement != NULL)
         {
-#if 0
-       // DQ (9/12/2004): Add the qualification required to resolve the name
-          SgScopeStatement* scope = declarationStatement->get_scope();
-#if 1
-       // DQ (8/25/2005) Switched back to implicit hanlding of "::" within qualified names
-       // Since "::" is not generated in the computed qualified name, we have to add it 
-       // explicitly here.
-          if (isSgGlobal(scope) != NULL)
-             {
-            // Avoid ":: ::" as a generated qualified name (not that the qualified name for SgGlobal is "::")
-               curprint ( string("::"));
-             }
-            else
-             {
-               curprint ( string(scope->get_qualified_name().str()) + "::");
-             }
-#else
-       // DQ (8/25/2005): This is the case where we previously names the global scope as "::"
-       // within name qualification.  This was done to handle test2005_144.C but it broke
-       // test2004_80.C So we have moved to an explicit marking of IR nodes using global scope
-       // qualification (since it clearly seems to be required).
-          if (isSgGlobal(scope) != NULL)
-               curprint ( string(scope->get_qualified_name().str()));
-            else
-               curprint ( string(scope->get_qualified_name().str()) + "::");
-#endif
-#else
-#if 1
-#if 0
-       // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
-       // different and so it depends upon where the type is referenced.  Thus the qualified name is 
-       // stored in a map to the IR node that references the type.
-          SgName nameQualifier;
-          if ((usingDeclaration)->get_name_qualification_length() > 0)
-             {
-               printf ("We should have a qualified name in the map for SgUsingDeclarationStatement = %p \n",usingDeclaration);
-
-               std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(usingDeclaration);
-               ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
-               if (i != SgNode::get_globalQualifiedNameMapForNames().end())
-                  {
-                    nameQualifier = i->second;
-                    printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
-                 // curprint(nameQualifier);
-                  }
-
-               printf ("nameQualifier for SgUsingDeclarationStatement = %s \n",nameQualifier.str());
-            // ROSE_ASSERT(false);
-             }
-#else
           SgName nameQualifier = usingDeclaration->get_qualified_name_prefix();
-#endif
-
-#else
-       // DQ (5/12/2011): Support for new name qualification.
-          SgName nameQualifier = unp->u_name->generateNameQualifier(declarationStatement,tmp_info1);
-#endif
           curprint(nameQualifier.str());
-#endif
+
        // Handle the different sorts of declarations explicitly since the existing unparse functions for 
        // declarations are not setup for what the using declaration unparser requires.
           switch (declarationStatement->variantT())
@@ -3944,7 +3849,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                       // DQ (6/5/2011): The initial SgInitializedName need not really be used, but it is present in the AST.
                       // We now reset the symbol to the SgInitializedName that is used in the declaration.
                       // So this test can be removed.
-#if 0
+#if 1
                          if (previousInitializedName->get_prev_decl_item() != NULL)
                               ROSE_ASSERT(previousInitializedName->get_parent() != NULL);
 #else
@@ -4040,7 +3945,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   }
                  else
                   {
-                    printf ("(declStmt != NULL) && (isSgTypedefDeclaration(declStmt) == NULL) == false \n");
+                 // printf ("(declStmt != NULL) && (isSgTypedefDeclaration(declStmt) == NULL) == false \n");
                     unp->u_type->unparseType(tmp_type, ninfo2);
                   }
 #else
@@ -4052,14 +3957,14 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // Mark that we are no longer processing the first entry 
             // (first variable in a declaration containing multiple "," separated names)
                first = false;
-#if 1
+#if 0
                curprint ( string("\n/* Handle initializers (if any) */ \n"));
 #endif
             // Unparse the initializers if any exist
             // if(tmp_init)
                if ( (tmp_init != NULL) && !ninfo.SkipInitializer())
                   {
-                    printf ("Initializer tmp_init = %s \n",tmp_init->class_name().c_str());
+                 // printf ("Initializer tmp_init = %s \n",tmp_init->class_name().c_str());
 #if 0
                     if ( tmp_init->variant() == ASSIGN_INIT || tmp_init->variant() == AGGREGATE_INIT )
                        {
@@ -4153,11 +4058,11 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // statementInfo.display("Debugging the initializer (set SkipClassDefinition");
 
                  // printf ("Unparse the initializer \n");
-                    curprint (string("/* Unparse the initializer */ \n"));
+                 // curprint (string("/* Unparse the initializer */ \n"));
                  // unparseExpression(tmp_init, ninfo);
                     unparseExpression(tmp_init, statementInfo);
                  // printf ("DONE: Unparse the initializer \n");
-                    curprint (string("/* DONE: Unparse the initializer */ \n"));
+                 // curprint (string("/* DONE: Unparse the initializer */ \n"));
                   }
              }
 
@@ -4431,7 +4336,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // DQ (6/5/2011): Newest refactored support for name qualification.
           SgName nameQualifier = classdecl_stmt->get_qualified_name_prefix();
-          printf ("Output SgClassDeclaration = %p = %s qualified name: nameQualifier = %s \n",classdecl_stmt,classdecl_stmt->get_name().str(),nameQualifier.str());
+       // printf ("Output SgClassDeclaration = %p = %s qualified name: nameQualifier = %s \n",classdecl_stmt,classdecl_stmt->get_name().str(),nameQualifier.str());
           curprint (nameQualifier);
 
        // printf ("Output className = %s \n",classdecl_stmt->get_name().str());
@@ -4557,37 +4462,13 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
                ROSE_ASSERT(tmp_decl != NULL);
 
-#if 0
-            // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified 
-            // different and so it depends upon where the type is referenced.  Thus the qualified name is 
-            // stored in a map to the IR node that references the type.
-            // SgName nameQualifier = unp->u_name->generateNameQualifier(*p,tmp_ninfo);
-               SgName nameQualifier;
-               if ((*p)->get_name_qualification_length() > 0)
-                  {
-                    printf ("We should have a qualified name in the map for %p \n",*p);
-
-                    std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(*p);
-                    ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
-                    if (i != SgNode::get_globalQualifiedNameMapForNames().end())
-                       {
-                         nameQualifier = i->second;
-                         printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
-                      // curprint(nameQualifier);
-                       }
-
-                    printf ("nameQualifier for base class = %s \n",nameQualifier.str());
-                 // ROSE_ASSERT(false);
-                  }
-#else
             // SgName nameQualifier = unp->u_name->generateNameQualifier(tmp_decl,tmp_ninfo);
                SgName nameQualifier = (*p)->get_qualified_name_prefix();
-#endif
 
             // Debugging code.
                if (tmp_ninfo.get_name_qualification_length() > 0 || tmp_ninfo.get_global_qualification_required() == true)
                   {
-                    printf ("In Unparse_ExprStmt::unparseClassDefnStmt(): nameQualifier = %s \n",nameQualifier.str());
+                 // printf ("In Unparse_ExprStmt::unparseClassDefnStmt(): nameQualifier = %s \n",nameQualifier.str());
                   }
                curprint(nameQualifier.str());
 

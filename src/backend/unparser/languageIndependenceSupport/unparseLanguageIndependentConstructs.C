@@ -2479,7 +2479,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                  // SgName nameQualifier = unp->u_name->generateNameQualifier(enum_val->get_declaration(),info);
                     SgName nameQualifier = enum_val->get_qualified_name_prefix();
 
-                    printf ("variable's nameQualifier = %s \n",(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
+                 // printf ("variable's nameQualifier = %s \n",(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
                  // ROSE_ASSERT (nameQualifier.is_null() == false);
                     if (nameQualifier.is_null() == false)
                        {

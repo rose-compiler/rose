@@ -130,7 +130,7 @@ FixupAstSymbolTables::visit ( SgNode* node )
      SgScopeStatement* scope = isSgScopeStatement(node);
      if (scope != NULL)
         {
-#if 1
+#if 0
           printf ("AST Fixup: Fixup Symbol Table for %p = %s at: \n",scope,scope->class_name().c_str());
 #endif
           SgSymbolTable* symbolTable = scope->get_symbol_table();
@@ -184,7 +184,11 @@ FixupAstSymbolTables::visit ( SgNode* node )
           SgSymbolTable::BaseHashType* internalTable = symbolTable->get_table();
           ROSE_ASSERT(internalTable != NULL);
 
-#if 1
+
+       // DQ (6/23/2011): Note: Declarations that reference types that have not been seen yet may be placed into the 
+       // wronge scope, then later when we see the correct scope we have a symbol in two or more symbol tables.  The 
+       // code below detects and fixes this problem.
+
        // DQ (6/16/2011): List of symbols we need to remove from symbol tables where they are multibily represented.
           std::vector<SgSymbol*> listOfSymbolsToRemove;
 
@@ -244,7 +248,9 @@ FixupAstSymbolTables::visit ( SgNode* node )
                            // A simple rule that all declarations should follow (now that we have proper global type tables).
                            // ROSE_ASSERT(definingDeclarationType == declarationType);
                               if (definingDeclarationType != declarationType)
-                                 printf ("In fixupSymbolTables.C: Note that definingDeclarationType != declarationType \n");
+                                 {
+                                   printf ("In fixupSymbolTables.C: Note that definingDeclarationType != declarationType \n");
+                                 }
                             }
 
                          SgNamedType* namedType = isSgNamedType(declarationType);
@@ -252,16 +258,16 @@ FixupAstSymbolTables::visit ( SgNode* node )
 
                          SgDeclarationStatement* declarationAssociatedToType = namedType->get_declaration();
                          ROSE_ASSERT(declarationAssociatedToType != NULL);
-
+#if 0
                          printf ("Found a symbol without a matching declaration in the current scope (declList): declarationToFindInScope = %p = %s \n",declarationToFindInScope,declarationToFindInScope->class_name().c_str());
                          printf ("Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) class_name() = %s \n",idx,(*i).first.str(),(*i).second->class_name().c_str());
-
+#endif
                          SgScopeStatement* scopeOfDeclarationToFindInScope      = declarationToFindInScope->get_scope();
                          SgScopeStatement* scopeOfDeclarationAssociatedWithType = declarationAssociatedToType->get_scope();
-
+#if 0
                          printf ("declarationToFindInScope = %p declarationToFindInScope->get_scope() = %p = %s \n",declarationToFindInScope,declarationToFindInScope->get_scope(),declarationToFindInScope->get_scope()->class_name().c_str());
                          printf ("declarationAssociatedToType = %p declarationAssociatedToType->get_scope() = %p = %s \n",declarationAssociatedToType,declarationAssociatedToType->get_scope(),declarationAssociatedToType->get_scope()->class_name().c_str());
-
+#endif
                          if (scopeOfDeclarationToFindInScope != scopeOfDeclarationAssociatedWithType)
                             {
                            // DQ (6/12/2011): Houston, we have a problem!  The trick is to fix it...
@@ -290,37 +296,7 @@ FixupAstSymbolTables::visit ( SgNode* node )
                                  }
                                 else
                                  {
-#if 0
-                                // DQ (6/16/2011): This is what do do if we want the resulting symbol to NOT be in global scope.
-                                   if (scopeOfDeclarationAssociatedWithType_GlobalScope != NULL)
-                                      {
-                                        printf ("Remove the associated symbol in the global scope (other symble table) \n");
-                                        SgClassSymbol* symbol = scopeOfDeclarationAssociatedWithType->lookup_class_symbol(name);
-                                        ROSE_ASSERT(symbol != NULL);
-                                        scopeOfDeclarationAssociatedWithType->remove_symbol(symbol);
-
-                                     // Note that this will cause the parent to be reset to point to the correct symbol table (which is fine).
-                                        symbol->set_parent(NULL);
-
-                                     // Move the declaration to the correct scope (non global scope).
-                                        declarationAssociatedToType->set_scope(scopeOfDeclarationToFindInScope);
-                                        declarationAssociatedToType->set_parent(scopeOfDeclarationToFindInScope);
-
-                                     // Reset the declaration stored in the type
-                                        namedType->set_declaration(classDeclaration);
-                                      }
-                                     else
-                                      {
-                                     // I don't know how to fix this case...
-                                        printf ("Symbol table problem identified, but I don't know how to fix it! \n");
-                                        ROSE_ASSERT(false);
-                                      }
-#else
                                    listOfSymbolsToRemove.push_back(classSymbol);
-
-                                   printf ("Houston, we have a problem!  The trick is to fix it... \n");
-                                // ROSE_ASSERT(false);
-#endif
                                  }
                             }
                       // ROSE_ASSERT (declarationToFindInScope->get_scope() == declarationAssociatedToType->get_scope());
@@ -330,55 +306,12 @@ FixupAstSymbolTables::visit ( SgNode* node )
 
                     default:
                        {
-                         printf ("Ignoring non SgClassSymbols (fixupSymbolTables.C) symbol = %s \n",symbol->class_name().c_str());
+                      // It night be there are are no other types of symbols to consider...
+
+                      // printf ("Ignoring non SgClassSymbols (fixupSymbolTables.C) symbol = %s \n",symbol->class_name().c_str());
                       // ROSE_ASSERT(false);
                        }
                   }
-
-#if 0
-            // DQ (6/12/2011): This test may not be relevant, since it is violated in many common ways 
-            // (e.g. base types of a typedef have declarations that appear in the symbol table but not 
-            // in the associated scope).
-               SgClassDeclaration* classDeclaration = isSgClassDeclaration(declarationToFindInScope);
-               SgTemplateInstantiationDecl* templateClassInstantiationDeclaration = isSgTemplateInstantiationDecl(declarationToFindInScope);
-               
-            // if (declarationToFindInScope != NULL)
-               if (classDeclaration != NULL && templateClassInstantiationDeclaration == NULL)
-                  {
-                 // By handling each kind of scope separately we can avoid making copies of the vectors of pointers that will be searched.
-                 // It is however a linear search through the scope, but only to match pointer values.
-                    if (scope->containsOnlyDeclarations() == true)
-                       {
-                         SgDeclarationStatementPtrList & declList = scope->getDeclarationList();
-                      // if (declList.find(declarationToFindInScope) == declList.end())
-                         if (find(declList.begin(),declList.end(),declarationToFindInScope) == declList.end())
-                            {
-                              printf ("Found a symbol without a matching declaration in the current scope (declList): declarationToFindInScope = %p = %s \n",declarationToFindInScope,declarationToFindInScope->class_name().c_str());
-
-                              printf ("Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) class_name() = %s \n",idx,(*i).first.str(),(*i).second->class_name().c_str());
-#if 0
-                              printf ("Exiting as a test...\n");
-                              ROSE_ASSERT(false);
-#endif
-                            }
-                       }
-                      else
-                       {
-                         SgStatementPtrList & stmtList = scope->getStatementList();
-                      // if (stmtList.find(declarationToFindInScope) == stmtList.end())
-                         if (find(stmtList.begin(),stmtList.end(),declarationToFindInScope) == stmtList.end())
-                            {
-                              printf ("Found a symbol without a matching declaration in the current scope (stmtList): declarationToFindInScope = %p = %s \n",declarationToFindInScope,declarationToFindInScope->class_name().c_str());
-
-                              printf ("Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) class_name() = %s \n",idx,(*i).first.str(),(*i).second->class_name().c_str());
-#if 0
-                              printf ("Exiting as a test...\n");
-                              ROSE_ASSERT(false);
-#endif
-                            }
-                       }
-                  }
-#endif
 
             // Increment iterator!
                i++;
@@ -386,7 +319,6 @@ FixupAstSymbolTables::visit ( SgNode* node )
             // Increment counter!
                idx++;
              }
-#endif
 
        // DQ (6/18/2011): Now that we are through with the symbol table we can support removal of any 
        // identified problematic symbol without worrying about STL iterator invalidation.
@@ -405,119 +337,6 @@ FixupAstSymbolTables::visit ( SgNode* node )
                printf ("Redundant symbol removed...from symbol table \n");
             // ROSE_ASSERT(false);
              }
-
-#if 0
-       // DQ (8/2/2005): this has been moved to the AST consistancy tests
-          SgSymbolTable::hash_iterator i = internalTable->begin();
-          while (i != internalTable->end())
-             {
-            // DQ: removed SgName casting operator to char*
-            // cout << "[" << idx << "] " << (*i).first.str();
-               ROSE_ASSERT ( (*i).first.str() != NULL );
-               ROSE_ASSERT ( isSgSymbol( (*i).second ) != NULL );
-
-            // printf ("Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) sage_class_name() = %s \n",
-            //      idx,(*i).first.str(),(*i).second->sage_class_name());
-
-               SgSymbol* symbol = isSgSymbol((*i).second);
-               ROSE_ASSERT ( symbol != NULL );
-
-            // We have to look at each type of symbol separately!  This is because there is no virtual function,
-            // the reason for this is that each get_declaration() function returns a different type!
-            // ROSE_ASSERT ( symbol->get_declaration() != NULL );
-               switch(symbol->variantT())
-                  {
-                    case V_SgClassSymbol:
-                       {
-                         SgClassSymbol* classSymbol = isSgClassSymbol(symbol);
-                         ROSE_ASSERT(classSymbol != NULL);
-                         ROSE_ASSERT(classSymbol->get_declaration() != NULL);
-                         break;
-                       }
-                    case V_SgDefaultSymbol:
-                       {
-                         printf ("The SgDefaultSymbol should not be present in the AST \n");
-                         ROSE_ASSERT(false);
-                         break;
-                       }
-                    case V_SgEnumFieldSymbol:
-                       {
-                      // Note that the type returned by get_declaration is SgInitializedName and not any sort of SgDeclaration
-                         SgEnumFieldSymbol* enumFieldSymbol = isSgEnumFieldSymbol(symbol);
-                         ROSE_ASSERT(enumFieldSymbol != NULL);
-                         ROSE_ASSERT(enumFieldSymbol->get_declaration() != NULL);
-                         break;
-                       }
-                    case V_SgEnumSymbol:
-                       {
-                         SgEnumSymbol* enumSymbol = isSgEnumSymbol(symbol);
-                         ROSE_ASSERT(enumSymbol != NULL);
-                         ROSE_ASSERT(enumSymbol->get_declaration() != NULL);
-                         break;
-                       }
-                    case V_SgFunctionSymbol:
-                       {
-                         SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(symbol);
-                         ROSE_ASSERT(functionSymbol != NULL);
-                         ROSE_ASSERT(functionSymbol->get_declaration() != NULL);
-                         break;
-                       }
-                    case V_SgFunctionTypeSymbol:
-                       {
-                      // Note that we check the get_type() function here and not get_declaration()
-                         SgFunctionTypeSymbol* functionTypeSymbol = isSgFunctionTypeSymbol(symbol);
-                         ROSE_ASSERT(functionTypeSymbol != NULL);
-                         ROSE_ASSERT(functionTypeSymbol->get_type() != NULL);
-                         break;
-                       }
-                    case V_SgLabelSymbol:
-                       {
-                         SgLabelSymbol* labelSymbol = isSgLabelSymbol(symbol);
-                         ROSE_ASSERT(labelSymbol != NULL);
-                         ROSE_ASSERT(labelSymbol->get_declaration() != NULL);
-                         break;
-                       }
-                    case V_SgNamespaceSymbol:
-                       {
-                         SgNamespaceSymbol* namespaceSymbol = isSgNamespaceSymbol(symbol);
-                         ROSE_ASSERT(namespaceSymbol != NULL);
-                         ROSE_ASSERT(namespaceSymbol->get_declaration() != NULL);
-                         break;
-                       }
-                    case V_SgTemplateSymbol:
-                       {
-                         SgTemplateSymbol* templateSymbol = isSgTemplateSymbol(symbol);
-                         ROSE_ASSERT(templateSymbol != NULL);
-                         ROSE_ASSERT(templateSymbol->get_declaration() != NULL);
-                         break;
-                       }
-                    case V_SgTypedefSymbol:
-                       {
-                         SgTypedefSymbol* typedefSymbol = isSgTypedefSymbol(symbol);
-                         ROSE_ASSERT(typedefSymbol != NULL);
-                         ROSE_ASSERT(typedefSymbol->get_declaration() != NULL);
-                         break;
-                       }
-                    case V_SgVariableSymbol:
-                       {
-                      // Note that the type returned by get_declaration is SgInitializedName and not any sort of SgDeclaration
-                         SgVariableSymbol* variableSymbol = isSgVariableSymbol(symbol);
-                         ROSE_ASSERT(variableSymbol != NULL);
-                         ROSE_ASSERT(variableSymbol->get_declaration() != NULL);
-                         break;
-                       }
-                    default:
-                       {
-                         printf ("Error: default reached in switch (AstFixes.C) symbol = %s \n",symbol->class_name().c_str());
-                         ROSE_ASSERT(false);
-                       }
-                  }
-
-            // Increment iterator!
-               i++;
-             }
-#endif
-
 #if 0
        // debugging
           symbolTable->print("In FixupAstSymbolTables::visit(): printing out the symbol tables");

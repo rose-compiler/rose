@@ -1278,10 +1278,10 @@ SgExpression::get_qualified_name_prefix() const
      if (i != SgNode::get_globalQualifiedNameMapForNames().end())
         {
           nameQualifier = i->second;
-          printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
         }
 
-     printf ("nameQualifier for SgExpression = %p = %p = %s = %s \n",this,const_cast<SgExpression*>(this),class_name().c_str(),nameQualifier.str());
+  // printf ("nameQualifier for SgExpression = %p = %p = %s = %s \n",this,const_cast<SgExpression*>(this),class_name().c_str(),nameQualifier.str());
 
      return nameQualifier;
    }
@@ -1300,10 +1300,10 @@ SgExpression::get_qualified_name_prefix_for_referenced_type() const
      if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
         {
           nameQualifier = i->second;
-          printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
         }
 
-     printf ("nameQualifier for SgExpression referenced type = %s = %s \n",class_name().c_str(),nameQualifier.str());
+  // printf ("nameQualifier for SgExpression referenced type = %s = %s \n",class_name().c_str(),nameQualifier.str());
 
      return nameQualifier;
    }

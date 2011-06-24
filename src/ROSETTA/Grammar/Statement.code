@@ -5839,10 +5839,10 @@ SgDeclarationStatement::get_qualified_name_prefix() const
      if (i != SgNode::get_globalQualifiedNameMapForNames().end())
         {
           nameQualifier = i->second;
-          printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
         }
 
-     printf ("nameQualifier for SgDeclarationStatement = %s = %s \n",class_name().c_str(),nameQualifier.str());
+  // printf ("nameQualifier for SgDeclarationStatement = %s = %s \n",class_name().c_str(),nameQualifier.str());
 
      return nameQualifier;
    }
@@ -8692,10 +8692,10 @@ SgFunctionDeclaration::get_qualified_name_prefix_for_return_type() const
      if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
         {
           nameQualifier = i->second;
-          printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
         }
 
-     printf ("nameQualifier for SgFunctionDeclaration = %s = %s \n",class_name().c_str(),nameQualifier.str());
+  // printf ("nameQualifier for SgFunctionDeclaration = %s = %s \n",class_name().c_str(),nameQualifier.str());
 
      return nameQualifier;
    }
@@ -12305,10 +12305,10 @@ SgTypedefDeclaration::get_qualified_name_prefix_for_base_type() const
      if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
         {
           nameQualifier = i->second;
-          printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+       // printf ("Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
         }
 
-     printf ("nameQualifier for SgFunctionDeclaration = %s = %s \n",class_name().c_str(),nameQualifier.str());
+  // printf ("nameQualifier for SgFunctionDeclaration = %s = %s \n",class_name().c_str(),nameQualifier.str());
 
      return nameQualifier;
    }

@@ -59,6 +59,21 @@ endif
 endif
 	touch $@
 
+# DQ (6/23/2011): Added test makefile rule to support debugging ROSE name qualification.
+generateInput:
+	g++ -E -DROSE_LANGUAGE_MODE=1 -I$(top_builddir)/include-staging/g++_HEADERS -isystem headersWithoutLineDirective -IheadersWithoutLineDirective $(ROSE_INCLUDES) -I$(top_builddir) -IheadersWithoutLineDirective $(srcdir)/testcode_sage3.h.C > test_out.C
+
+test: genStubsAndWrappers testcode_sage3.h.C rose.cabal.in headersWithoutLineDirective
+	mkdir -p ROSE/Sage3/Methods
+if !ROSE_USING_ROSE_ANALYSIS
+if !ROSE_USE_NEW_EDG_INTERFACE
+#	./genStubsAndWrappers -rose:collectAllCommentsAndDirectives -isystem headersWithoutLineDirective -IheadersWithoutLineDirective $(ROSE_INCLUDES) -I$(top_builddir) -IheadersWithoutLineDirective $(srcdir)/testcode_sage3.h.C
+	./genStubsAndWrappers -rose:collectAllCommentsAndDirectives -isystem headersWithoutLineDirective -IheadersWithoutLineDirective $(ROSE_INCLUDES) -I$(top_builddir) -IheadersWithoutLineDirective test_out.C
+endif
+endif
+
+
+
 if !ROSE_USING_ROSE_ANALYSIS
 if !ROSE_USE_NEW_EDG_INTERFACE
 librosehswrap_la_SOURCES = WrapROSE.C WrapSage3.C WrapCxxContainers.C
