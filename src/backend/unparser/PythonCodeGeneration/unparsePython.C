@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include "unparsePython.h"
+#include "abstract_handle.h"
 
 #include <iostream>
 
@@ -15,6 +16,28 @@ Unparse_Python::Unparse_Python(Unparser* unp, std::string fname) :
 
 Unparse_Python::~Unparse_Python()
 {
+
+}
+
+/*
+ * Expects an SgGlobal scope node that includes a single function declaration
+ * with name __main__. This allows us to wrap the program in a __main__ function
+ * (because SageIII requires declaration statements in the global scope) and still
+ * unparse code that resembles the original.
+ */
+void
+Unparse_Python::unparseWrappedProgram(SgScopeStatement* scope, SgUnparse_Info& info) {
+
+    AbstractHandle::abstract_handle* handle = SageBuilder::buildAbstractHandle(scope);
+    SgNode* match = SageInterface::getSgNodeFromAbstractHandleString(handle->toString() +
+        "::FunctionDeclaration<name," + ROSE_PYTHON_WRAPPER_FXN_NAME + ">" +
+        "::FunctionDefinition<numbering,1>" +
+        "::BasicBlock<numbering,1>");
+    SgBasicBlock* program = isSgBasicBlock(match);
+    ROSE_ASSERT(program != NULL);
+
+    info.set_current_scope(program);
+    unparseStatement(program, info);
 }
 
 void
@@ -127,7 +150,10 @@ Unparse_Python::unparseBasicBlock(SgBasicBlock* bblock,
 {
     foreach (SgStatement* child, bblock->get_statements()) {
         curprint( ws_prefix(info.get_nestingLevel()) );
-        unparseStatement(child, info);
+        if (isSgExpression(child))
+            unparseExpression(isSgExpression(child), info);
+        else
+            unparseStatement(child, info);
         curprint("\n");
     }
 }
