@@ -17,3 +17,5 @@ check-local:
 
 clean-local:
 	rm -f *-o
+
+EXTRA_DIST = $(wildcard $(srcdir)/test*.py)
