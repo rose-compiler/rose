@@ -27,7 +27,7 @@ void EventReverser::buildValueGraph()
 
     // Collect all available and target values.
     addAvailableAndTargetValues();
-    
+
     // Add all state saving edges.
     addStateSavingEdges();
     
@@ -707,24 +707,11 @@ void EventReverser::addAvailableAndTargetValues()
         cout << "Versioned variable with last version:\t" << var.toString() << endl;
         //printVarVertexMap();
         
-        if (varVertexMap_.count(var) == 0)
-        {
-            //pseudoDefMap_[var] = nameDef.second;
-
-            // Currently an object's member access is not added to VG.
-            if (var.name.size() == 1)
-            {
-                if (nameDef.second->isPhiFunction())
-                    node = createPhiNode(var, nameDef.second);
-                else
-                {
-                    cout << "Unhandled variable: " << var << endl;
-                }
-            }
-        }
-        else
+        if (varVertexMap_.count(var) > 0)
             node = varVertexMap_[var];
-
+        else
+            cout << "!!!Unhandled variable: " << var << endl;
+            
         if (isStateVariable(name))
         {
             cout << "Available Var:\t" << var.toString() << endl;
@@ -743,7 +730,10 @@ void EventReverser::addAvailableAndTargetValues()
         // Only pick the first initialized name.
         VarName varName(1, valNode->var.name[0]);
         if (stateVariables_.count(varName) && valNode->var.version == 0)
+        {
+            cout << "Target Var:\t" << valNode->var.toString() << endl;
             valuesToRestore_[0].insert(node);
+        }
     }
     
 #if 0
@@ -1443,6 +1433,28 @@ EventReverser::VGVertex EventReverser::createOperatorNode(
 
 void EventReverser::addPhiEdges()
 {    
+    // At the end of the event, find the versions of all variables. It is possible 
+    // that a phi node with the final version is not added to VG yet.
+    typedef SSA::NodeReachingDefTable::value_type VarNameDefPair;
+    foreach (const VarNameDefPair& nameDef,
+             ssa_->getOutgoingDefsAtNode(funcDef_))
+    {
+        // For every variable, if it is not added into VG, add it now.
+        VersionedVariable var(nameDef.first, nameDef.second->getRenamingNumber());
+                        
+        if (varVertexMap_.count(var) == 0)
+        {
+            // Currently an object's member access is not added to VG.
+            if (var.name.size() == 1)
+            {
+                if (nameDef.second->isPhiFunction())
+                    createPhiNode(var, nameDef.second);
+                else
+                    cout << "!!!Unhandled variable: " << var << endl;
+            }
+        }
+    }
+    
     // It is possible that new nodes will be added, so first collect all phi nodes.
     vector<pair<VGVertex, PhiNode*> > phiNodes;
     foreach (VGVertex node, boost::vertices(valueGraph_))
