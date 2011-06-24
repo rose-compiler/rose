@@ -300,26 +300,41 @@ AC_ARG_ENABLE([python],
                AS_HELP_STRING([--enable-python],[Enable Python language support in ROSE (default=no)]),
                ##########################################################################
                 echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "python"
-                if test $? = 0 ; then 
+                if test $? = 0 ; then
                   list_has_python=yes
                 fi
                 case "$enableval" in
                   [yes)]
                   	if test "x$list_has_python" != "xyes" ; then
-                          # --enable-languages does not include python, but --enable-python=yes
-                  	  LANGUAGES_TO_SUPPORT+=" python"
-                        fi
+                        # --enable-languages does not include python, but --enable-python=yes
+                        LANGUAGES_TO_SUPPORT+=" python"
+                    fi
                   	;;
                   [no)]
-                        # remove 'python' from support languages list
-                  	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/python//g'`"
+                    # Fail if --with-python is specified
+                    if test "x$with_python" != "x"; then
+                        AC_MSG_FAILURE([Cannot mix flags --with-python and --enable-python=no])
+                    fi
+
+                    # remove 'python' from support languages list
+                    LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/python//g'`"
                   	;;
                   [*)]
                   	[AC_MSG_FAILURE([--enable-python='$enableval' is not supported. Use 'yes' or 'no'])]
                  	;;
                 esac
+               ,
                ##########################################################################
-               ,)
+
+                # Warn if --with-python is specified
+                if test "x$with_python" != "x"; then
+                    AC_MSG_WARN([--with-python specified without --enable-python. Enabling anyway.])
+                    echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "python"
+                    if test $? != 0 ; then
+                        LANGUAGES_TO_SUPPORT+=" python"
+                    fi
+                fi
+               )
 #########################################################################################
 AC_ARG_ENABLE([opencl],
 #########################################################################################
@@ -873,7 +888,7 @@ AC_ARG_ENABLE([only-python],
                ##########################################################################
                 case "$enableval" in
                   [yes)]
-                  	LANGUAGES_TO_SUPPORT="python"
+                        LANGUAGES_TO_SUPPORT="python"
                         USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION=yes
                   	;;
                   [no)]
