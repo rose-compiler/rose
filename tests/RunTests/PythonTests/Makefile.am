@@ -1,6 +1,6 @@
 ALL_PYTHON_TESTCODES = $(wildcard $(srcdir)/*.py)
 
-TEST_Objects = $(basename $(notdir $(ALL_PYTHON_TESTCODES))).done
+TEST_Objects = $(addsuffix .done, $(basename $(notdir $(ALL_PYTHON_TESTCODES))))
 
 $(TEST_Objects): ../../testTranslator
     bname = $(basename $@)
