@@ -1919,7 +1919,10 @@ void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
                     printf ("found a ComponentAttrSpec_dimension spec \n");
 #if DXN_CODE
                // transfer the array spec from the astExpressionStack to the AttrSpec record.
-               ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains all dimension attributes
+               ROSE_ASSERT(isSgIntVal(astExpressionStack.front()));  // astExpressionStack.front() contains the number of array spec elements for the dimension attribute
+               int count = (isSgIntVal(astExpressionStack.front()))->get_value();
+               astExpressionStack.pop_front();
+               processMultidimensionalSubscriptsIntoExpressionList(count);  // the dimension attribute is now on top of astExpressionStack
                SgExprListExp* dimAttr = isSgExprListExp(astExpressionStack.front());
                ROSE_ASSERT(dimAttr);
                VarDeclAttrSpec.dimensionAttr = dimAttr;
@@ -2158,15 +2161,21 @@ void c_action_component_array_spec(ofp_bool isExplicit)
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_component_array_spec(): isExplicit = %s \n",isExplicit ? "true" : "false");
 
+#if DXN_DEBUG
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R443 c_action_component_array_spec()");
+#endif
+
+#if DXN_CODE
+
+  // do nothing: action has been done in explicit_shape_list or deferred_shape_spec_list
+
+#else
   // DQ (2/23/2008): This is allowed, see test2008_20.f90; explicitly dementioned array in a type.
   // DQ (3/2/2008): This is marked as isExplicit == false even when 
   // the ":" operator is explicit. Test if it is ever true.
   // ROSE_ASSERT(isExplicit == false);
 
-#if 1
-  // Output debugging information about saved state (stack) information.
-     outputState("At TOP of R443 c_action_component_array_spec()");
-#endif
 
   // DQ (1/23/2011): This might be better put into R443 c_action_deferred_shape_spec_list(int count), so that count would be available.
   // DQ (1/18/2011): Called by R510 and R443.
@@ -2174,9 +2183,6 @@ void c_action_component_array_spec(ofp_bool isExplicit)
      int count = astExpressionStack.size();  // the number of SgColonShapeExp, i.e. the rank of the array.
      processMultidimensionalSubscriptsIntoExpressionList(count);
 
-#if DXN_CODE
-
-#else
   // DQ (1/17/2011): Push the AttrSpec_DIMENSION attribute only the stack to trigger this to be handled as an array (build an array type).
   // printf ("In R443 c_action_component_array_spec(): Push the ComponentAttrSpec_dimension attribute only the stack to trigger this to be handled as an array (build an array type). \n");
   // astAttributeSpecStack.push_front(AttrSpec_DIMENSION);
@@ -2224,6 +2230,12 @@ void c_action_deferred_shape_spec_list(int count)
        // We don't have the source position of the ":" expression.
           setSourcePosition(colonExp);
         }
+
+#if DXN_CODE
+     // push the number of array spec elements on the astExpressionStack to be processed later
+      // in attr_spec DIMENSION  and in entity_decl
+      astExpressionStack.push_front(new SgIntVal(count, ""));
+#endif
 
 #if 1
   // Output debugging information about saved state (stack) information.
@@ -2662,8 +2674,13 @@ void c_action_array_constructor()
  */
 void c_action_ac_spec()
    {
+    raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_ac_spec() \n");
+#if DXN_DEBUG
+  // Output debugging information about saved state (stack) information.
+     outputState("In of R466 c_action_ac_spec()");
+#endif
    }
 
 /**
@@ -2673,6 +2690,7 @@ void c_action_ac_spec()
  */
 void c_action_ac_value()
    {
+    raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_ac_value() \n");
 
@@ -2693,7 +2711,8 @@ void c_action_ac_value()
  */
 void c_action_ac_value_list__begin()
    {
-        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+    raise(SIGINT);
+    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_ac_value_list__begin() \n");
 
 #if 1
@@ -2762,7 +2781,8 @@ void c_action_ac_value_list__begin()
 
 void c_action_ac_value_list(int count)
    {
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+    raise(SIGINT);
+    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_ac_value_list(): count = %d \n",count);
 
 #if 1
@@ -2807,6 +2827,7 @@ void c_action_ac_value_list(int count)
  */
 void c_action_ac_implied_do()
    {
+    raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_ac_implied_do() \n");
 
@@ -2949,6 +2970,7 @@ void c_action_ac_implied_do()
  */
 void c_action_ac_implied_do_control( ofp_bool hasStride )
    {
+    raise(SIGINT);
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
         printf ("In c_action_ac_implied_do_control(): hasStride = %s \n",hasStride ? "true" : "false");
 
@@ -3226,7 +3248,7 @@ void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
         }
 
 #if DXN_CODE
-
+// Create a variable declaration for this declaration type spec:
      VarDeclAttrSpec.varDeclaration = new SgVariableDeclaration();
      setSourcePosition(VarDeclAttrSpec.varDeclaration);
      VarDeclAttrSpec.varDeclaration->set_parent(getTopOfScopeStack());
@@ -3345,7 +3367,10 @@ void c_action_attr_spec(Token_t * attrKeyword, int attr)
 
 #if DXN_CODE
                // transfer the array spec from the astExpressionStack to the AttrSpec record.
-               ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains all dimension attributes
+               ROSE_ASSERT(isSgIntVal(astExpressionStack.front()));  // astExpressionStack.front() contains the number of array spec elements for the dimension attribute
+               int count = (isSgIntVal(astExpressionStack.front()))->get_value();
+               astExpressionStack.pop_front();
+               processMultidimensionalSubscriptsIntoExpressionList(count);  // the dimension attribute is now on top of astExpressionStack
                SgExprListExp* dimAttr = isSgExprListExp(astExpressionStack.front());
                ROSE_ASSERT(dimAttr);
                VarDeclAttrSpec.dimensionAttr = dimAttr;
@@ -3601,7 +3626,12 @@ void c_action_entity_decl(Token_t * id)
     }
     if (hasArraySpec)
     {
-      ROSE_ASSERT(!astExpressionStack.empty());  // astExpressionStack.front() contains all dimension attributes
+      SgIntVal * intVal = isSgIntVal(astExpressionStack.front());
+      ROSE_ASSERT(intVal);  // astExpressionStack.front() contains the number of array spec elements for the dimension attribute
+      int count = intVal->get_value();
+      delete intVal;  // must remove it from AST
+      astExpressionStack.pop_front();
+      processMultidimensionalSubscriptsIntoExpressionList(count);  // the dimension attribute is now on top of astExpressionStack
       SgExprListExp* arraySpec = isSgExprListExp(astExpressionStack.front());
       ROSE_ASSERT(arraySpec);
       entityAttr.dimensionAttr = arraySpec;
@@ -4365,6 +4395,7 @@ void c_action_access_spec(Token_t * keyword, int type)
 // void c_action_language_binding_spec(Token_t * id, ofp_bool hasName)
 void c_action_language_binding_spec(Token_t * keyword, Token_t * id, ofp_bool hasName)
    {
+    raise(SIGINT);
     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_language_binding_spec(): keyword = %p = %s id = %p = %s hasName = %s \n",keyword,keyword != NULL ? keyword->text : "NULL",id,id != NULL ? id->text : "NULL",hasName ? "true" : "false");
 
@@ -4414,6 +4445,12 @@ void c_action_array_spec(int count)
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R510 #2 c_action_array_spec()");
 #endif
+#if DXN_CODE
+     // push the number of array spec elements on the astExpressionStack to be processed later
+     // in attr_spec DIMENSION  and in entity_decl
+     astExpressionStack.push_front(new SgIntVal(count, ""));
+
+#else
   // printf ("astBaseTypeStack.empty() = %s \n",astBaseTypeStack.empty() ? "true" : "false");
 
   // DQ (1/17/2011): I think we can assert this now! No, test2007_34.f90 is still a counter example!
@@ -4449,6 +4486,7 @@ void c_action_array_spec(int count)
 
   // DQ (1/18/2011): Called by R510 and R443.
      processMultidimensionalSubscriptsIntoExpressionList(count);
+#endif
 
 #if DXN_DEBUG
   // Output debugging information about saved state (stack) information.
@@ -4459,6 +4497,12 @@ void c_action_array_spec(int count)
 void c_action_array_spec_element(int type)
    {
     raise(SIGINT);
+
+#if DXN_DEBUG
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R510 #3 c_action_array_spec_element()");
+#endif
+
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R510 c_action_array_spec_element(): (value pushed onto astAttributeSpecStack) type = %d \n",type);
 
