@@ -206,16 +206,35 @@ struct OperatorNode : ValueGraphNode
 
 struct FunctionCallNode: ValueGraphNode
 {
+    typedef boost::tuple<std::string, std::string, std::string> FunctionNamesT;
+    
     explicit FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs = false);
     
     SgFunctionCallExp* getFunctionCallExp() const
     { return isSgFunctionCallExp(astNode); }
     
+    //! Returns if a parameter is needed in the reverse functino call.
+    bool isNeededByInverse(SgInitializedName* initName) const
+    { return true; }
+    
+    FunctionNamesT getFunctionNames() const;
+    
     virtual std::string toString() const;
     
+    SgFunctionDeclaration* funcDecl;
+    std::string funcName;
+    
+    //! If this function call node is the reverse one.
     bool isReverse;
+    
+    //! If this function is declared as virtual.
     bool isVirtual;
+    
+    //! If this function is declared as const.
     bool isConst;
+    
+    //! If this function call is from std library.
+    bool isStd;
 };
 
 #if 0

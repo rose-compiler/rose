@@ -719,6 +719,15 @@ void EventReverser::addAvailableAndTargetValues()
             // If the variable is a state variable, make it available.
             addAvailableValue(node);
         }
+        
+        // If this variable is a parameter and has pointer or reference type,
+        // make it available.
+        if (name.size() == 1 && isSgFunctionDefinition(name[0]->get_scope()))
+        {
+            SgType* type = name[0]->get_type();
+            if (isSgPointerType(type) || isSgReferenceType(type))
+                addAvailableValue(node);
+        }
     }
     
     // Collect all target values.
@@ -1208,7 +1217,10 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
         
         // Add an edge from the value to the function call.
         addValueGraphEdge(argVertex, funcCallVertex);
-        addValueGraphEdge(rvsFuncCallVertex, argVertex);
+        
+        // Check if we should connect this argument to the reverse function.
+        if (rvsFuncCallNode->isNeededByInverse(var.name[0]))
+            addValueGraphEdge(rvsFuncCallVertex, argVertex);
     }
     
     

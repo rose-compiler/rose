@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     eventList.insert("PacketRxEnd");
     eventList.insert("GetL2Proto");
     eventList.insert("Busy");
-    //eventList.insert("Send");
+    eventList.insert("Send");
     eventList.insert("Timeout");
     eventList.insert("Notify");
 #endif
@@ -88,8 +88,8 @@ int main(int argc, char *argv[])
 
         //string cfgFileName = "CFG" + boost::lexical_cast<string > (counter) + ".dot";
         //string vgFileName = "VG" + boost::lexical_cast<string > (counter) + ".dot";
-        string cfgFileName = "CFG.dot";
-        string cdgFileName = "CDG.dot";
+        string cfgFileName = funcName + "_CFG.dot";
+        string cdgFileName = funcName + "_CDG.dot";
         string vgFileName = "VG.dot";
 
         //if (!funcDef->get_file_info()->isSameFile(sourceFile))
@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
 
 #if 1
         Backstroke::FullCFG fullCfg(funcDef);
-        fullCfg.toDot("fullCFG.dot");
+        fullCfg.toDot(funcName + "_fullCFG.dot");
 
         Backstroke::BackstrokeCFG cfg(funcDef);
         cfg.toDot(cfgFileName);

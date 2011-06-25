@@ -226,12 +226,12 @@ std::string OperatorNode::toString() const
 }
 
 FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
-        : ValueGraphNode(funcCall), isReverse(isRvs), isVirtual(false), isConst(false)
+        : ValueGraphNode(funcCall), isReverse(isRvs), isVirtual(false), isConst(false), isStd(false)
 {
     
 #if 1
             
-    SgFunctionDeclaration* funcDecl = funcCall->getAssociatedFunctionDeclaration();
+    funcDecl = funcCall->getAssociatedFunctionDeclaration();
     // In some cases, such as function pointers and virtual functions, the function 
     // called cannot be resolved statically; for those cases this function returns NULL.
     if (funcDecl == NULL)
@@ -245,13 +245,14 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
             //if (isSgThisExp(arrowExp->get_lhs_operand()))
         if (funcRef)
         {
-            SgMemberFunctionDeclaration* funcDecl = funcRef->getAssociatedMemberFunctionDeclaration();
+            SgMemberFunctionDeclaration* memFuncDecl = funcRef->getAssociatedMemberFunctionDeclaration();
             //cout << funcDecl->get_name().str() << funcDecl->get_functionModifier().isVirtual() << endl;
-            isVirtual = funcDecl->get_functionModifier().isVirtual();
+            isVirtual = memFuncDecl->get_functionModifier().isVirtual();
             //cout << "@@@" << funcDecl->get_type()->unparseToString() << endl;
             //isConst = SageInterface::isConstType(funcDecl->isDefinedInClass());
-            isConst = funcDecl->isDefinedInClass();
+            isConst = memFuncDecl->isDefinedInClass();
 
+            funcDecl = memFuncDecl;
             //if (isVirtual)
             //cout << funcDecl->get_name().str() << "\t: VIRTUAL1\n\n";
         }
@@ -283,7 +284,10 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
             SgNamespaceDefinitionStatement* nsDef = SageInterface::enclosingNamespaceScope(funcDecl);
             SgNamespaceDeclarationStatement* nsDecl = nsDef ? nsDef->get_namespaceDeclaration() : NULL;
             if (nsDecl && nsDecl->get_name() == "std")
+            {
                 cout << "\nFound a STD function: " << funcDecl->get_name() << "\n\n";
+                isStd = true;
+            }
             else
             {
                 isVirtual = true;
@@ -298,7 +302,33 @@ FunctionCallNode::FunctionCallNode(SgFunctionCallExp* funcCall, bool isRvs)
         //isVirtual = true;
     }
     
+    ROSE_ASSERT(funcDecl);
+    funcName = funcDecl->get_name();
+    
 #endif
+}
+
+FunctionCallNode::FunctionNamesT FunctionCallNode::getFunctionNames() const
+{
+    string fwdName, rvsName, cmtName;
+    if (isStd)
+    {
+        if (funcName == "push_back")
+        {
+            fwdName = "push_back";
+            rvsName = "pop_back";
+            cmtName = "";
+        }
+        
+    }
+    else
+    {
+        fwdName = funcName + "_forward";
+        rvsName = funcName + "_reverse";
+        cmtName = funcName + "_commit";
+    }
+    
+    return FunctionNamesT(fwdName, rvsName, cmtName);
 }
 
 std::string FunctionCallNode::toString() const
