@@ -43,7 +43,7 @@ void EventReverser::buildValueGraph()
     // Assign a global unique name for each node in VG.
     assignNameToNodes();
     
-    valueGraphToDot("VG.dot");
+    valueGraphToDot(funcDef_->get_declaration()->get_name() + "_VG.dot");
 }
 
 namespace
@@ -1113,12 +1113,6 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
     
     nodeVertexMap_[funcCallExp] = funcCallVertex;
     
-    // Get all defs from this function call.
-    const SSA::NodeReachingDefTable& defTable = ssa_->getDefsAtNode(funcCallExp);
-    //const SSA::NodeReachingDefTable& defTable = 
-    //    ssa_->getOutgoingDefsAtNode(SageInterface::getEnclosingStatement(funcCallExp));
-    
-        
     SgExpression* caller = NULL;
     // If the function called is a member one, also connect an edge from the pointer or object
     // calling this function to the function call node.
@@ -1147,23 +1141,50 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
     if (caller) 
         argList.push_back(caller);
     
-    // Add edges from the function call node to its args.
-    foreach (SgExpression* arg, argList)
+    // Get all uses and defs from this function call.
+    const SSA::NodeReachingDefTable& useTable = ssa_->getUsesAtNode(funcCallExp);
+    const SSA::NodeReachingDefTable& defTable = ssa_->getDefsAtNode(funcCallExp);
+    const SSA::NodeReachingDefTable& reachingDefTable = ssa_->getReachingDefsAtNode_(funcCallExp);
+    //const SSA::NodeReachingDefTable& defTable = 
+    //    ssa_->getOutgoingDefsAtNode(SageInterface::getEnclosingStatement(funcCallExp));
+    
+    // Real arguments include those variables which are used or defined 
+    // in the function call and may not be the arguments of this function.
+    set<VGVertex> realArgs;
+    typedef map<VarName, SSA::ReachingDefPtr>::value_type PT;
+    
+    foreach (const PT& nameDef, useTable)
     {
-        //VersionedVariable var = getVersionedVariable(arg, false);
-        cout << "Arg: " << arg->unparseToString() << " : " << getVersionedVariable(arg) << endl;
-        ROSE_ASSERT(nodeVertexMap_.count(arg));
-        //ROSE_ASSERT(var.isNull() ? true : varVertexMap_.count(var));
+        VersionedVariable var(nameDef.first, nameDef.second->getRenamingNumber());
+        ROSE_ASSERT(varVertexMap_.count(var));
+        realArgs.insert(varVertexMap_[var]);
+    }
+    
+    foreach (const PT& nameDef, defTable)
+    {
+        const VarName& name = nameDef.first;
+        ROSE_ASSERT(reachingDefTable.count(name));
+        VersionedVariable var(name, reachingDefTable.find(name)->second->getRenamingNumber());
+        cout << funcCallExp->unparseToString() << " " << var << "\n\n";
         
-        VGVertex argVertex = nodeVertexMap_[arg];
+        if (varVertexMap_.count(var) == 0)
+            createForgottenValueNode(var);
+        
+        realArgs.insert(varVertexMap_[var]);
+    }
+    
+    
+    // Add edges from the function call node to its args.
+    foreach (VGVertex argVertex, realArgs)
+    {
         addValueGraphEdge(funcCallVertex, argVertex);
         addValueGraphEdge(argVertex, rvsFuncCallVertex);
         
         
+        ROSE_ASSERT(isValueNode(valueGraph_[argVertex]));
+        VersionedVariable var = isValueNode(valueGraph_[argVertex])->var;
         
-        VersionedVariable var = getVersionedVariable(arg);
-        
-        VarName varName = SSA::getVarName(arg);
+        //VarName varName = SSA::getVarName(arg);
         SSA::NodeReachingDefTable::const_iterator iter = defTable.find(var.name);
         if (iter != defTable.end())
         {
@@ -1176,12 +1197,12 @@ EventReverser::VGVertex EventReverser::createFunctionCallNode(SgFunctionCallExp*
             else
             {
                 //createValueNode(arg, NULL);
-                ValueNode* valNode = new ValueNode(var, arg);
+                ValueNode* valNode = new ValueNode(var, funcCallExp);
                 argVertex = addValueGraphNode(valNode);
                 varVertexMap_[var] = argVertex;
                 
                 // Add state saving edges for killed defs.
-                addStateSavingEdges(var.name, arg);
+                addStateSavingEdges(var.name, funcCallExp);
             }
         }
         
@@ -1324,6 +1345,25 @@ void EventReverser::addStateSavingEdges(const VarName& varName, SgNode* astNode)
             addValueGraphStateSavingEdges(varVertexMap_[killedVar], astNode);
         }
     }
+}
+
+EventReverser::VGVertex EventReverser::createForgottenValueNode(const VersionedVariable& var)
+{
+    VGVertex newVertex;
+
+    // If rhs node is not created yet, create it first.
+    if (varVertexMap_.count(var) == 0)
+    {
+        //ROSE_ASSERT(!"Infeasible path???");
+        newVertex = addValueGraphNode(new ValueNode(var, funcDef_));
+        //nodeVertexMap_[node] = newVertex;
+        if (!var.isNull())
+            varVertexMap_[var] = newVertex;
+    }
+    else
+        newVertex = varVertexMap_[var];
+
+    return newVertex;
 }
 
 EventReverser::VGVertex EventReverser::createValueNode(SgNode* node)
@@ -1525,23 +1565,30 @@ void EventReverser::addPhiEdges()
             int version = def->getRenamingNumber();
             
             VersionedVariable defVar(phiNode->var.name, version);
-            cout << "$$$" << defVar << endl;
+            cout << "$$$" << defVar << " for phi node: " << phiNode->var << endl;
             
             //// Currently the extern variables may not be built here. Just skip it.
             if (varVertexMap_.count(defVar) == 0)
             {
+                createForgottenValueNode(defVar);
+#if 0
                 // It is possible that the initial def of a state variable is not added to value graph.
+                // It is also possible that object access modifies the versions of all vars, and at this
+                // point, if a.b is changed, we don't have the updated var of a.
                 //ROSE_ASSERT(version == 0 && phiNode->var.name.size() == 1);
+                //if (phiNode->var.name.size() == 1)
                 if (isStateVariable(phiNode->var.name))
                     createValueNode(phiNode->var.name[0], NULL);
                 else
                 {
                     cout << "\n!!! Cannot find the vertex for " << defVar << "\n\n";
-                    continue;
+                    createForgottenValueNode(defVar);
+                    //continue;
                 }
+#endif
             }
             //cout << defVar.toString() << endl;
-            //ROSE_ASSERT(varVertexMap_.count(defVar));
+            ROSE_ASSERT(varVertexMap_.count(defVar));
             
             // This should be a bug in SSA.
             if (node == varVertexMap_[defVar])
@@ -2075,11 +2122,12 @@ SgNode* EventReverser::RouteGraphEdgeComp::getAstNode(const VGEdge& edge) const
 #endif
         return ssEdge->killer;
     }
-    if (isOperatorNode(routeGraph[tgt]))
+    if (isOperatorNode(routeGraph[tgt]) || isFunctionCallNode(routeGraph[tgt]))
         return routeGraph[tgt]->astNode;  
     if (MuNode* muNode = isMuNode(routeGraph[src]))
         if (muNode->isCopy)
             return NULL;
+    
 #if 0
     if (isPhiNode(routeGraph[src]))
         return routeGraph[src]->astNode;
@@ -2091,26 +2139,39 @@ SgNode* EventReverser::RouteGraphEdgeComp::getAstNode(const VGEdge& edge) const
     return routeGraph[src]->astNode;  
 }
 
+int EventReverser::RouteGraphEdgeComp::getEdgeValue(const VGEdge& edge) const
+{
+    SgNode* node = getAstNode(edge);
+    
+    VGVertex src = boost::source(edge, routeGraph);
+    VGVertex tgt = boost::target(edge, routeGraph);
+
+    map<SgNode*, int>::const_iterator iter = nodeIndexTable.find(node);
+    
+    int val = (iter == nodeIndexTable.end()) ? 0 : iter->second;
+    
+    // Because phi node always appears at the beginning of a basic block in CFG, decrease
+    // its value to reflect this fact.
+    if (isPhiNode(routeGraph[src]))    
+        --val;
+    
+    // A functin call parameter should have lower value than the value of function call node.
+    if (isSgFunctionCallExp(node) && isValueNode(routeGraph[tgt]))
+        --val;
+    
+    // Make the value of SS edge smaller to make sure the restore is generated later than its killer.
+    if (isStateSavingEdge(routeGraph[edge]))
+        --val;
+    
+    return val;
+}
+
 bool EventReverser::RouteGraphEdgeComp::operator()(
         const VGEdge& edge1, const VGEdge& edge2) const 
 {
-//    cout << routeGraph[edge1]->paths << endl;
-//    cout << routeGraph[edge2]->paths << endl;
-//
-    // Instead of comparing the index of path set, we compare the index of AST node
-    // here. This is because several pushes in the same scope should correspond several
-    // pops in the reverse order, which the index of path set cannot guarentee.
-    
-    SgNode* node1 = getAstNode(edge1);
-    SgNode* node2 = getAstNode(edge2);
-    //cout << node1->class_name() << endl;
-    //cout << node2->class_name() << endl;
-    map<SgNode*, int>::const_iterator iter1 = nodeIndexTable.find(node1);
-    map<SgNode*, int>::const_iterator iter2 = nodeIndexTable.find(node2);
-    
-    int val1 = (iter1 == nodeIndexTable.end()) ? 0 : iter1->second;
-    int val2 = (iter2 == nodeIndexTable.end()) ? 0 : iter2->second;
-    
+    int val1 = getEdgeValue(edge1);
+    int val2 = getEdgeValue(edge2);
+
     //return val1 < val2;
     
 #if 1

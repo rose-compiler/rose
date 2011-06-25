@@ -467,7 +467,8 @@ void PathNumManager::getAstNodeIndices(size_t index, map<SgNode*, int>& nodeIndi
     reverse_foreach (DAGVertex node, nodes)
     {
         SgNode* astNode = fullCfg_[dag[node]]->getNode();
-        nodeIndicesTable[astNode] = num++;
+        nodeIndicesTable[astNode] = num * 10;
+        num++;
     }
     
     // Add a NULL entry to the table because it is possible that some VG node contains

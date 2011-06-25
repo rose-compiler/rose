@@ -60,6 +60,8 @@ private:
         // this edge in reverse CFG.
         SgNode* getAstNode(const VGEdge& edge) const;
         
+        int getEdgeValue(const VGEdge& edge) const;
+        
         bool operator()(const VGEdge& edge1, const VGEdge& edge2) const;
 //        {
 //            using namespace std;
@@ -265,6 +267,8 @@ private:
     //! is the AST ndoe which defines the first parameter.
     void addStateSavingEdges(const VarName& varName, SgNode* astNode);
     
+    //! A temporary function creating a value node which is not created for some reasons.
+    VGVertex createForgottenValueNode(const VersionedVariable& var);
     
     //! Create a value node from the given AST node. This node must be a use.
     VGVertex createValueNode(SgNode* node);

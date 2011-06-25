@@ -135,7 +135,7 @@ void EventReverser::generateCode()
     }
     
     buildRouteGraph(routes);
-    routeGraphToDot("routeGraph.dot");
+    routeGraphToDot(funcDef_->get_declaration()->get_name() + "_routeGraph.dot");
 
 #if 0
     typedef map<VGEdge, PathSet>::value_type EdgePathPair;
@@ -645,11 +645,11 @@ void EventReverser::getRouteGraphEdgesInProperOrder(int dagIndex, vector<VGEdge>
         VGEdge edge = nextEdgeCandidates.top();
         nextEdgeCandidates.pop();
         
-        cout << getSource(edge)->toString() << " ===> " << getTarget(edge)->toString() << "\t" << valueGraph_[edge]->paths[0] << endl;
+        cout << "> " << getSource(edge)->toString() << " ===> " << getTarget(edge)->toString() << "\t" << valueGraph_[edge]->paths[0] << "\n\n";
         if (comp.getAstNode(edge) == NULL)
-            cout << valueGraph_[edge]->toString() << endl;
+            cout << valueGraph_[edge]->toString() << "\n\n";
         else
-            cout << comp.getAstNode(edge)->class_name() << " : " << nodeIndexTable[comp.getAstNode(edge)] << endl;
+            cout << comp.getAstNode(edge)->unparseToString() << " : " << nodeIndexTable[comp.getAstNode(edge)] << "\n\n";
         
         // If this edge does not belong to the route of the given DAG.
         if (routeGraph_[edge]->paths.count(dagIndex) == 0)
