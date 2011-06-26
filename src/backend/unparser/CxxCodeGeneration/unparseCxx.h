@@ -334,7 +334,11 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 
       // DQ (7/22/2006): Added support for asm operands.
          virtual void unparseAsmOp (SgExpression* expr, SgUnparse_Info& info);
+
+// DQ (6/25/2011): Can we modify this to perm it to be compiler withouth seeing the enum definition?
+//       virtual void unparse_asm_operand_modifier(SgAsmOp::asm_operand_modifier_enum flags);
          virtual void unparse_asm_operand_modifier(SgAsmOp::asm_operand_modifier_enum flags);
+
          std::string unparse_register_name (SgInitializedName::asm_register_name_enum register_name);
 
        // DQ (2/29/2004): Added to support unparsing of template instantiations (similar to class declarations)

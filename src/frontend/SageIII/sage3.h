@@ -1,3 +1,5 @@
+// DQ (6/25/2011): remove to isolate name qualification error
+#if 1
 
 /*
  * this includes the forward declarations of all the sage node classes
@@ -73,7 +75,8 @@
 
 #endif
 
-
+// DQ (6/25/2011): remove to isolate name qualification error
+#endif
 
 
 

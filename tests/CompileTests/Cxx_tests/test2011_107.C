@@ -1,5 +1,7 @@
 #include "vector"
 
+using namespace std;
+
 class xxx {};
 
 class A
@@ -12,6 +14,10 @@ class A
          typedef std::vector<class xxx*> referenced_t;
    };
 
+extern "C" {
+
+void foo();
+
 A::referenced_t* foobar()
    {
      A::referenced_t X;
@@ -21,6 +27,8 @@ A::referenced_t* foobar()
   // return A::referenced_t();
      return 0L;
    }
+}
+
 
 #if 0
 // Failing name qualifications:

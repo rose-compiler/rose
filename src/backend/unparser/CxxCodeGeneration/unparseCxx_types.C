@@ -905,7 +905,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 #endif
 
                  // info.display("In unparseClassType: The C++ support is more complex and can require qualified names");
-
+#if 0
                  // The C++ support is more complex and can require qualified names!
                  // DQ (5/29/2011): Newest support for name qualification...
                     SgName nameQualifier;
@@ -942,6 +942,54 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                          curprint ( string(nm.str()) + " ");
                       // printf ("class type name: nm = %s \n",nm.str());
                        }
+#else
+                 // DQ (6/25/2011): Fixing name qualifiction to work with unparseToString().  In this case we don't 
+                 // have an associated node to reference as a way to lookup the strored name qualification.  In this 
+                 // case we return a fully qualified name.
+                    if (info.get_reference_node_for_qualification() == NULL)
+                       {
+                      // printf ("WARNING: In unparseClassType(): info.get_reference_node_for_qualification() == NULL (assuming this is for unparseToString() \n");
+                         SgName nameQualifierAndType = class_type->get_qualified_name();
+                         curprint(nameQualifierAndType.str());
+                       }
+                      else
+                       {
+                      // DQ (6/2/2011): Newest support for name qualification...
+                         SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
+                      // printf ("nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
+#if 0
+                      // printf ("nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
+                      // curprint ("\n/* nameQualifier (from unp->u_name->generateNameQualifier function) = " + nameQualifier + " */ \n ";
+                         curprint (nameQualifier.str());
+                         SgName nm = class_type->get_name();
+
+                         if (nm.getString() != "")
+                            {
+                           // printf ("Output qualifier of current types to the name = %s \n",nm.str());
+                              curprint ( nm.getString() + " ");
+                            }
+#endif
+                      // SgName nameQualifier = unp->u_name->generateNameQualifierForType( type , info );
+#if 0
+                         printf ("In unparseClassType: nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
+                      // curprint ( string("\n/* In unparseClassType: nameQualifier (from unp->u_name->generateNameQualifier function) = ") + nameQualifier + " */ \n ");
+#endif
+                         curprint ( nameQualifier.str());
+
+                         SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(decl);
+                         if (isSgTemplateInstantiationDecl(decl) != NULL)
+                            {
+                           // Handle case of class template instantiation (code located in unparse_stmt.C)
+                              unp->u_exprStmt->unparseTemplateName(templateInstantiationDeclaration,info);
+                            }
+                           else
+                            {
+                              curprint ( string(nm.str()) + " ");
+                           // printf ("class type name: nm = %s \n",nm.str());
+                            }
+                       }
+#endif
+
                   }
              }
         }
@@ -1069,7 +1117,7 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
           bool definitionWillBeOutput = ( (info.isTypeFirstPart() == true) && !info.SkipClassDefinition() );
        // printf ("definitionWillBeOutput = %s \n",(definitionWillBeOutput == true) ? "true" : "false");
 
-       // DQ (10/14/2004): This code take the namespace into account when a qualified name is required!
+       // DQ (10/14/2004): This code takes the namespace into account when a qualified name is required!
           ROSE_ASSERT(namespaceDefn == NULL || namespaceDefn->get_namespaceDeclaration() != NULL);
           bool outputQualifiedName = ((ptype != NULL) && (info.get_current_context() != ptype)) ||
                                      ((namespaceDefn != NULL) && (info.get_current_namespace() != namespaceDefn->get_namespaceDeclaration()));
@@ -1126,8 +1174,6 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
             // ROSE_ASSERT(info.get_reference_node_for_qualification() != NULL);
 
 #if 1
-            // DQ (6/2/2011): Newest support for name qualification...
-               SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
 #else
             // DQ (5/29/2011): Newest support for name qualification...
                SgName nameQualifier;
@@ -1154,8 +1200,10 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                   }
 #endif
 #endif
-            // printf ("nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
 
+#if 0
+            // DQ (6/2/2011): Newest support for name qualification...
+               SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
             // printf ("nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
             // curprint ( "\n/* nameQualifier (from unp->u_name->generateNameQualifier function) = " + nameQualifier + " */ \n ";
                curprint ( nameQualifier.str());
@@ -1166,6 +1214,34 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                  // printf ("Output qualifier of current types to the name = %s \n",nm.str());
                     curprint ( nm.getString() + " ");
                   }
+#else
+            // DQ (6/25/2011): Fixing name qualifiction to work with unparseToString().  In this case we don't 
+            // have an associated node to reference as a way to lookup the strored name qualification.  In this 
+            // case we return a fully qualified name.
+               if (info.get_reference_node_for_qualification() == NULL)
+                  {
+                 // printf ("WARNING: In unparseEnumType(): info.get_reference_node_for_qualification() == NULL (assuming this is for unparseToString() \n");
+                    SgName nameQualifierAndType = enum_type->get_qualified_name();
+                    curprint(nameQualifierAndType.str());
+                  }
+                 else
+                  {
+                 // DQ (6/2/2011): Newest support for name qualification...
+                    SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
+                 // printf ("nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
+
+                 // printf ("nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
+                 // curprint ("\n/* nameQualifier (from unp->u_name->generateNameQualifier function) = " + nameQualifier + " */ \n ";
+                    curprint (nameQualifier.str());
+                    SgName nm = enum_type->get_name();
+
+                    if (nm.getString() != "")
+                       {
+                      // printf ("Output qualifier of current types to the name = %s \n",nm.str());
+                         curprint ( nm.getString() + " ");
+                       }
+                  }
+#endif
 #endif
              }
         }
@@ -1359,19 +1435,43 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
             // SgName nameQualifier = unp->u_name->generateNameQualifier( tdecl, info, true );
             // printf ("info.get_reference_node_for_qualification() = %p = %s \n",info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
 
+            // printf ("In unparseTypedefType(): info.get_current_scope() = %p \n",info.get_current_scope());
+#if 0
             // DQ (6/2/2011): Newest support for name qualification...
                SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
 
             // printf ("In unparseTypedefType(): nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
             // curprint ( "\n/* nameQualifier (from unp->u_name->generateNameQualifier function) = " + nameQualifier + " */ \n ";
+
                curprint ( nameQualifier.str());
                SgName nm = typedef_type->get_name();
-
                if (nm.getString() != "")
                   {
                  // printf ("Output qualifier of current types to the name = %s \n",nm.str());
                     curprint ( nm.getString() + " ");
                   }
+#else
+            // DQ (6/25/2011): Fixing name qualifiction to work with unparseToString().  In this case we don't 
+            // have an associated node to reference as a way to lookup the strored name qualification.  In this 
+            // case we return a fully qualified name.
+               if (info.get_reference_node_for_qualification() == NULL)
+                  {
+                 // printf ("WARNING: In unparseTypedefType(): info.get_reference_node_for_qualification() == NULL (assuming this is for unparseToString() \n");
+                    SgName nameQualifierAndType = typedef_type->get_qualified_name();
+                    curprint(nameQualifierAndType.str());
+                  }
+                 else
+                  {
+                    SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
+                    curprint(nameQualifier.str());
+                    SgName nm = typedef_type->get_name();
+                    if (nm.getString() != "")
+                       {
+                      // printf ("Output qualifier of current types to the name = %s \n",nm.str());
+                         curprint ( nm.getString() + " ");
+                       }
+                  }
+#endif
 #endif
              }
 #endif
